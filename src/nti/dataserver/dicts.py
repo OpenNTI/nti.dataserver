@@ -91,7 +91,7 @@ class CaseInsensitiveLastModifiedDict(LastModifiedDict):
 	# to go directly to the data member
 
 	def __contains__( self, key ):
-		return self._data.__contains__( _tx_key_insen( key ) )
+		return key is not None and self._data.__contains__( _tx_key_insen( key ) )
 
 	def __iter__( self ):
 		return iter( (k.key for k in self._data) )
@@ -100,6 +100,7 @@ class CaseInsensitiveLastModifiedDict(LastModifiedDict):
 		return self._data[_tx_key_insen(key)]
 
 	def get( self, key, default=None ):
+		if key is None: return default
 		return self._data.get( _tx_key_insen( key ), default )
 
 	def items( self, key=None ):

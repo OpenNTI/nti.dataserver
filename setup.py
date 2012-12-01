@@ -111,6 +111,8 @@ setup(
 		 # which were pulled out of ZODB for better pypy support. We'll switch to it
 		 # when it goes non-alpha. It may require a tweak to our monkey patch if
 		 # has not been fixed.
+		 # ZODB3 now has a 3.11.0a1. JAM is testing it, so don't hard pin this to 3.10.5; updates
+		 # won't get picked up except on a new environment or manually
 		'ZODB3 >= 3.10.5',
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)

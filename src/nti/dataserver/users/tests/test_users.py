@@ -454,6 +454,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		c = PersistentContainedThreadable()
 		c.containerId = 'foo'
 		c.id = 'a'
+		self.ds.root._p_jar.add( c )
 		component.getUtility( zc.intid.IIntIds ).register( c )
 		change = Change( Change.CREATED, c )
 		user._acceptIncomingChange( change )
@@ -471,6 +472,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		reply.containerId = 'foo'
 		reply.id = 'b'
 		reply.inReplyTo = c
+		self.ds.root._p_jar.add( reply )
 		component.getUtility( zc.intid.IIntIds ).register( reply )
 		change = Change( Change.SHARED, reply )
 		user._noticeChange( change )
@@ -484,6 +486,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		reference = PersistentContainedThreadable()
 		reference.containerId = 'foo'
 		reference.id = '3'
+		self.ds.root._p_jar.add( reference )
 		reference.references = [c]
 		component.getUtility( zc.intid.IIntIds ).register( reference )
 		change = Change( Change.SHARED, reference )
