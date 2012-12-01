@@ -211,6 +211,9 @@ from repoze.lru import lru_cache
 def _tx_key_insen(key):
 	return _CaseInsensitiveKey( key ) if key is not None else None
 
+# As of BTrees 4.0.1, None is no longer allowed to be a key
+# or even used in __contains__
+
 @interface.implementer(loc_interfaces.ISublocations)
 class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	"""
@@ -224,7 +227,7 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	# Note that the IContainer contract specifies keys that are strings. None is not allowed.
 
 	def __contains__( self, key ):
-		return _tx_key_insen( key ) in self._SampleContainer__data
+		return key is not None and _tx_key_insen( key ) in self._SampleContainer__data
 
 	def __iter__( self ):
 		# For purposes of evolving, when our parent container
@@ -244,6 +247,7 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		return self._SampleContainer__data[_tx_key_insen(key)]
 
 	def get( self, key, default=None ):
+		if key is None: return default
 		return self._SampleContainer__data.get( _tx_key_insen( key ), default )
 
 	def _setitemf( self, key, value ):
