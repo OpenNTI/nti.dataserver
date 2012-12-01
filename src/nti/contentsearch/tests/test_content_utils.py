@@ -22,7 +22,7 @@ from nti.contentsearch.tests import ConfiguringTestBase
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from hamcrest import (assert_that, is_, is_not, close_to)
+from hamcrest import (assert_that, is_, is_not, close_to, has_length)
 
 class TestContentUtils(ConfiguringTestBase):
 
@@ -60,12 +60,12 @@ class TestContentUtils(ConfiguringTestBase):
 		note = usr.addContainedObject( note ) 
 		adapted = component.getAdapter(note, IContentResolver)
 		assert_that(adapted.get_content(), is_('nothing can be explained'))
-		assert_that(adapted.get_references(), is_([]))
+		assert_that(adapted.get_references(), has_length(0))
 		assert_that(adapted.get_ntiid(), is_not(None))
 		assert_that(adapted.get_creator(), is_('nt@nti.com'))
 		assert_that(adapted.get_containerId(), is_(containerId))
 		assert_that(adapted.get_keywords(), is_(['ichigo']))
-		assert_that(adapted.get_sharedWith(), is_([]))
+		assert_that(adapted.get_sharedWith(), has_length(0))
 		assert_that(adapted.get_last_modified(), is_not(None))
 	
 	@WithMockDSTrans
@@ -96,12 +96,12 @@ class TestContentUtils(ConfiguringTestBase):
 		redaction = user.addContainedObject( redaction )
 		adapted = component.getAdapter(redaction, IContentResolver)
 		assert_that(adapted.get_content(), is_('Have overcome it everytime I have been on the verge of death Fear'))
-		assert_that(adapted.get_references(), is_([]))
+		assert_that(adapted.get_references(), has_length(0))
 		assert_that(adapted.get_ntiid(), is_not(None))
 		assert_that(adapted.get_creator(), is_('kuchiki@bleach.com'))
 		assert_that(adapted.get_containerId(), is_(containerId))
-		assert_that(adapted.get_keywords(), is_([]))
-		assert_that(adapted.get_sharedWith(), is_([]))
+		assert_that(adapted.get_keywords(), has_length(0))
+		assert_that(adapted.get_sharedWith(), has_length(0))
 		assert_that(adapted.get_last_modified(), is_not(None))
 		
 	@WithMockDSTrans
@@ -116,12 +116,12 @@ class TestContentUtils(ConfiguringTestBase):
 		highlight = user.addContainedObject( highlight )
 		adapted = component.getAdapter(highlight, IContentResolver)
 		assert_that(adapted.get_content(), is_('Kon saw it The Secret of a Beautiful Office Lady'))
-		assert_that(adapted.get_references(), is_([]))
+		assert_that(adapted.get_references(), is_(()))
 		assert_that(adapted.get_ntiid(), is_not(None))
 		assert_that(adapted.get_creator(), is_('urahara@bleach.com'))
 		assert_that(adapted.get_containerId(), is_(containerId))
-		assert_that(adapted.get_keywords(), is_([]))
-		assert_that(adapted.get_sharedWith(), is_([]))
+		assert_that(adapted.get_keywords(), has_length(0))
+		assert_that(adapted.get_sharedWith(), has_length(0))
 		assert_that(adapted.get_last_modified(), is_not(None))
 		
 	@WithMockDSTrans
@@ -138,10 +138,10 @@ class TestContentUtils(ConfiguringTestBase):
 	def test_dict_adpater(self):
 		adapted = component.getAdapter(self.note, IContentResolver)
 		assert_that(adapted.get_content(), is_('Eddard Stark Lord of Winterfell'))
-		assert_that(adapted.get_references(), is_([]))
+		assert_that(adapted.get_references(), has_length(0))
 		assert_that(adapted.get_creator(), is_('carlos.sanchez@nextthought.com'))
-		assert_that(adapted.get_keywords(), is_([]))
-		assert_that(adapted.get_sharedWith(), is_([]))
+		assert_that(adapted.get_keywords(), has_length(0))
+		assert_that(adapted.get_sharedWith(), has_length(0))
 		assert_that(adapted.get_last_modified(), is_(close_to(1334000544.120, 0.05)))
 		assert_that(adapted.get_containerId(), is_('tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(adapted.get_ntiid(), is_('tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273'))

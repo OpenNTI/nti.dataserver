@@ -69,8 +69,8 @@ def _process_words(words):
 		elif isinstance(words, collections.Iterable):
 			words = [unicode(w.lower()) for w in words]
 		else:
-			words = []
-	return words or []
+			words = ()
+	return words or ()
 
 @interface.implementer(search_interfaces.IContentResolver)
 class _BasicContentResolver(object):
@@ -130,7 +130,7 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 					ntiid = adapted.get_content()
 			if ntiid:
 				result.add(unicode(ntiid))
-		return list(result) if result else []
+		return list(result) if result else ()
 
 	def get_inReplyTo(self):
 		result = _get_any_attr(self.obj, [inReplyTo_])
@@ -253,7 +253,7 @@ class _DictContentResolver(object):
 				result = ' '.join([x for x in result if x is not None])
 			elif clazz == canvas_:
 				result = []
-				shapes = source.get('shapeList', [])
+				shapes = source.get('shapeList', ())
 				for s in shapes or ():
 					d = self.get_multipart_content(s)
 					if d: result.append(d)
@@ -291,7 +291,7 @@ class _DictContentResolver(object):
 		for name in keyword_fields:
 			data = self._get_attr([name])
 			result.update(_process_words(data))
-		return list(result) if result else []
+		return list(result) if result else ()
 
 	def get_sharedWith(self):
 		data = self.obj.get(sharedWith_, ()) or self.obj.get(flattenedSharingTargetNames_, ())
@@ -308,7 +308,7 @@ class _DictContentResolver(object):
 		result = set()
 		for s in to_list(objects) or ():
 			result.add(unicode(s))
-		return list(result) if result else []
+		return list(result) if result else ()
 
 	def get_inReplyTo(self):
 		result = self.obj.get(inReplyTo_, u'')
