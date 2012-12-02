@@ -3,6 +3,9 @@
 	<include package="zope.component" />
 
 	<utility factory="._nltk._NLTKTaggedSents" provides=".interfaces.INLTKTaggedSents"/>
-	<utility factory="._nltk.get_backoff_ngram_tagger" provides=".interfaces.INLTKBackoffNgramTagger" />
+	<utility factory="._nltk._NLTKBackoffNgramTaggerFactory" provides=".interfaces.INLTKBackoffNgramTaggerFactory" />
+	
+	<utility factory="._nltk.default_nltk_tagger" provides=".interfaces.ITagger" />
+	<utility factory="._nltk.default_nltk_tagger" provides=".interfaces.ITagger" name="en" />
 	
 </configure>

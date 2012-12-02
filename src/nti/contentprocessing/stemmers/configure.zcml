@@ -2,9 +2,12 @@
 <configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
 	<include package="zope.component" />
 
+	<class class="nltk.PorterStemmer">
+		<implements interface=".interfaces.IStemmer" />
+	</class>
+	
 	<utility factory=".PorterStemmer" provides=".interfaces.IStemmer"/>
-	<utility factory=".PorterStemmer" name="porter" 
-			 provides=".interfaces.IStemmer"/>
+	<utility factory=".PorterStemmer" provides=".interfaces.IStemmer" name="porter" />
 	
 	<utility factory="._zopyx.ZopyYXStemmer" name="zopyx" />
 	
