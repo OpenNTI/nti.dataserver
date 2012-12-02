@@ -53,17 +53,16 @@ def get_training_sents(corpus="brown", limit=-1):
     util = util or _NLTKTaggedSents()
     return util(corpus, limit)
 
+@repoze.lru.lru_cache(50)
+@interface.implementer(tagger_interfaces.ITagger)
 def load_tagger_pickle(name):
     result = None
     if os.path.exists(name):
         with gzip.open(name,"rb") as f:
             result = pickle.load(f)
     return result
-
-@repoze.lru.lru_cache(50)
-@interface.implementer(tagger_interfaces.INLTKBackoffNgramTagger)
-def get_backoff_ngram_tagger(ngrams=3, corpus="brown", limit=-1, train_sents=None):
     
+def get_backoff_ngram_tagger(ngrams=3, corpus="brown", limit=-1, train_sents=None):
     tagger = None
     if not train_sents:
         # check for a trained tagger
@@ -78,7 +77,19 @@ def get_backoff_ngram_tagger(ngrams=3, corpus="brown", limit=-1, train_sents=Non
         tagger = DefaultTagger('NN')
         for n in range(1, ngrams+1):
             tagger = NgramTagger(n, train=train_sents, backoff=tagger)
-            
+          
+    interface.alsoProvides(tagger, tagger_interfaces.INLTKBackoffNgramTagger)
+    return tagger
+
+@interface.implementer(tagger_interfaces.INLTKBackoffNgramTaggerFactory)
+class _NLTKBackoffNgramTaggerFactory(object):
+    
+    def __call__(self, ngrams=3, corpus="brown", limit=-1, train_sents=None):
+        return get_backoff_ngram_tagger(ngrams, corpus, limit, train_sents)
+        
+@interface.implementer(tagger_interfaces.ITagger)
+def default_nltk_tagger():
+    tagger = get_backoff_ngram_tagger()
     return tagger
 
 if __name__ == '__main__':

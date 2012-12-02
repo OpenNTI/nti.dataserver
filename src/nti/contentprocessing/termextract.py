@@ -19,8 +19,8 @@ import sys
 from collections import defaultdict
 
 from nti.contentprocessing import split_content
-from nti.contentprocessing.stemmers import PorterStemmer
-from nti.contentprocessing.taggers import get_backoff_ngram_tagger
+from nti.contentprocessing.stemmers import stem_word
+from nti.contentprocessing.taggers import tag_tokens
 
 class DefaultFilter(object):
 
@@ -89,21 +89,19 @@ class TermExtractor(object):
 		
 		return result
 	
-def extract_key_words_from_tokens(tokenized_words, extractor=None, tagger=None, stemmer=None):
-	tagger = tagger or get_backoff_ngram_tagger()
-	stemmer = stemmer or PorterStemmer()
+def extract_key_words_from_tokens(tokenized_words, extractor=None, stemmer=None):
 	extractor = extractor or TermExtractor()
-	tagged_items = tagger.tag(tokenized_words)
 	tagged_terms = []
+	tagged_items = tag_tokens(tokenized_words)
 	for token, tag in tagged_items:
-		root = stemmer.stem(token) if stemmer else token
+		root = stem_word(token)
 		tagged_terms.append((token, tag, root))
 	result = extractor.extract(tagged_terms)
 	return result
 
-def extract_key_words_from_text(content, extractor=None, tagger=None, stemmer=None):
+def extract_key_words_from_text(content, extractor=None):
 	tokenized_words = split_content(content)
-	return extract_key_words_from_tokens(tokenized_words, extractor=extractor, tagger=tagger, stemmer=stemmer)
+	return extract_key_words_from_tokens(tokenized_words, extractor=extractor)
 
 extract_key_words = extract_key_words_from_text
 
