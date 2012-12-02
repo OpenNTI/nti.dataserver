@@ -3,7 +3,7 @@ import unittest
 from zope import component
 
 from nti.contentprocessing.stemmers import interfaces	
-from nti.contentprocessing.stemmers import ZopyYXStemmer
+from nti.contentprocessing.stemmers._zopyx import ZopyYXStemmer
 
 from nti.contentprocessing.tests import ConfiguringTestBase
 
