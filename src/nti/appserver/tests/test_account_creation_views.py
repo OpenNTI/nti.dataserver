@@ -711,7 +711,8 @@ class TestCreateView(_AbstractValidationViewBase):
 		# We sent mail
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
-		assert_that( mailer.queue[0], has_property( 'body', contains_string( 'Parent' ) ) )
+		assert_that( mailer.queue[0], has_property( 'subject', contains_string( 'Confirm' ) ) )
+		assert_that( mailer.queue[0], has_property( 'body', has_length( 2 ) ) )
 		# and destroyed the evidence
 		assert_that( user_interfaces.IUserProfile( new_user ),
 					 has_property( 'contact_email', None ) )
