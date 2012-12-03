@@ -81,8 +81,8 @@ class LovinsStemmer(object):
 		el = 11
 		length = len(word)
 		while el > 0:
-			if (length - el > 1):
-				ending = word[length - el:-1]
+			if (length - el) > 1:
+				ending = word[length - el:]
 				ml = getattr(self, "m_l%s" % el, {})
 				conditionCode = ml.get(ending, None)
 
