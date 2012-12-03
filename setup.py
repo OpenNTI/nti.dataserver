@@ -111,8 +111,10 @@ setup(
 		 # which were pulled out of ZODB for better pypy support. We'll switch to it
 		 # when it goes non-alpha. It may require a tweak to our monkey patch if
 		 # has not been fixed.
-		 # ZODB3 now has a 3.11.0a1. JAM is testing it, so don't hard pin this to 3.10.5; updates
-		 # won't get picked up except on a new environment or manually
+		 # ZODB3 now has a 3.11.0a2 including a 4.x version of each above component.
+		 # JAM is testing it, so don't hard pin this to 3.10.5; updates
+		 # won't get picked up except on a new environment or manually. Depending on the final release,
+		 # we may need to explicitly list each component.
 		'ZODB3 >= 3.10.5',
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
@@ -240,7 +242,7 @@ setup(
 		'z3c.table >= 1.0.0', # Flexible table rendering
 		'zc.dict >= 1.3b1', # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
-		'zc.lockfile >= 1.0.1',
+		'zc.lockfile >= 1.0.2',
 		'zc.queue >= 1.3',
 		'zc.zlibstorage >= 0.1.1', # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
