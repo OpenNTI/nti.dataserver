@@ -34,6 +34,10 @@ class DefaultFilter(object):
 	def __call__(self, word, occur, strength):
 		return (strength == 1 and occur >= self.single_strength_min_occur) or (strength >= self.no_limit_strength)
 
+def term_extract_filter(name=u''):
+	result = component.queryUtility(cp_interfaces.ITermExtractFilter, name=name)
+	return result or DefaultFilter()
+
 @interface.implementer( cp_interfaces.ITermExtractKeyWord )	
 class NormRecord(object):
 	
@@ -58,7 +62,7 @@ class TermExtractor(object):
 	_SEARCH = 0
 
 	def __init__(self, term_filter=None):
-		self.term_filter = term_filter or DefaultFilter()
+		self.term_filter = term_filter or term_extract_filter()
 
 	def _tracker(self, term, norm, multiterm, terms, terms_per_norm):
 		multiterm.append((term, norm))
@@ -99,10 +103,10 @@ class TermExtractor(object):
 		
 		return result
 
-@interface.implementer( cp_interfaces.IKeyWordExtractor )
+@interface.implementer( cp_interfaces.ITermExtractKeyWordExtractor )
 class _DefaultKeyWorExtractor():
 	
-	def __call__(self, content, *args):
+	def __call__(self, content, filtername=u''):
 		
 		if isinstance(content, (list, tuple)):
 			tokenized_words = content
@@ -110,7 +114,8 @@ class _DefaultKeyWorExtractor():
 			tokenized_words = split_content(content)
 			
 		tagged_terms = []
-		extractor = TermExtractor(*args)
+		term_filter = term_extract_filter(filtername)
+		extractor = TermExtractor(term_filter)
 		tagged_items = tag_tokens(tokenized_words)
 		for token, tag in tagged_items:
 			root = stem_word(token)
@@ -118,7 +123,12 @@ class _DefaultKeyWorExtractor():
 		result = extractor.extract(tagged_terms)
 		return result
 
-def extract_key_words(content, *args):
+def extract_key_words(content):
 	extractor = component.getUtility(cp_interfaces.IKeyWordExtractor)
-	result = extractor(content, *args)
+	result = extractor(content)
+	return result
+
+def term_extract_key_words(content, filtername=u''):
+	extractor = component.getUtility(cp_interfaces.ITermExtractKeyWordExtractor)
+	result = extractor(content, filtername)
 	return result
