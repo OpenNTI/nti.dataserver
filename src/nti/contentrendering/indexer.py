@@ -23,7 +23,7 @@ from whoosh import index
 from nti.contentprocessing import split_content
 from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing import get_content_translation_table
-from nti.contentprocessing.termextract import extract_key_words
+from nti.contentprocessing.termextract import term_extract_key_words
 
 from nti.contentfragments.html import _sanitize_user_html_to_text
 
@@ -154,7 +154,7 @@ class _KeyWordFilter(object):
 		return result
 
 def _extract_key_words(tokenized_words, max_words=10):
-	records = extract_key_words(tokenized_words, _KeyWordFilter())
+	records = term_extract_key_words(tokenized_words, "indexer")
 	keywords = []
 	for r in records[:max_words]:
 		word = r.norm
