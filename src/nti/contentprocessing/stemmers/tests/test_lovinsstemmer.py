@@ -6,7 +6,7 @@ from nti.contentprocessing.tests import ConfiguringTestBase
 
 from hamcrest import assert_that, is_
 
-class TestZopyYXStemmer(ConfiguringTestBase):
+class TestLovinsStemmer(ConfiguringTestBase):
 
 	def test_stemmer(self):
 		stemmer = LovinsStemmer()
