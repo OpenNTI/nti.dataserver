@@ -14,7 +14,6 @@ from xml.dom.minidom import Node
 
 import lxml.etree as etree
 
-from zope import component
 from zope import interface
 
 from nltk import clean_html
@@ -22,8 +21,9 @@ from nltk import clean_html
 from whoosh import index
 
 from nti.contentprocessing import split_content
+from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing import get_content_translation_table
-from nti.contentprocessing.termextract import extract_key_words_from_tokens, TermExtractor
+from nti.contentprocessing.termextract import extract_key_words
 
 from nti.contentfragments.html import _sanitize_user_html_to_text
 
@@ -141,6 +141,7 @@ def _get_node_content(node):
 	result = ' '.join(result)
 	return result.strip()
 
+@interface.implementer( cp_interfaces.ITermExtractFilter)
 class _KeyWordFilter(object):
 
 	def __init__(self, single_strength_min_occur=3, max_limit_strength=2):
@@ -152,9 +153,8 @@ class _KeyWordFilter(object):
 		result = result and len(word) > 1
 		return result
 
-def _extract_key_words(tokenized_words, extractor=None, max_words=10):
-	extractor = extractor or TermExtractor(_KeyWordFilter())
-	records = extract_key_words_from_tokens(tokenized_words, extractor=extractor)
+def _extract_key_words(tokenized_words, max_words=10):
+	records = extract_key_words(tokenized_words, _KeyWordFilter())
 	keywords = []
 	for r in records[:max_words]:
 		word = r.norm
