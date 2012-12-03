@@ -63,3 +63,5 @@ class IKeyWordExtractor(interface.Interface):
 		:param *args: Any extra argument used in the keyword extraction
 		"""
 	
+class ITermExtractKeyWordExtractor(IKeyWordExtractor):	
+	pass
