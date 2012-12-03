@@ -34,7 +34,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_approve_coppa(self):
-		"Basic tests of the moderation admin page"		
+		"Basic tests of the coppa admin page"
 		component.provideHandler( eventtesting.events.append, (None,) )
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
@@ -83,7 +83,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.body, does_not( contains_string( 'ossmkitty' ) ) )
 		assert_that( res.body, does_not( contains_string( 'Jason' ) ) )
-		
+
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = users.User.get_user( 'ossmkitty' )
 			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithAgreement ) )
@@ -92,7 +92,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 			assert_that( user_interfaces.IFriendlyNamed( user ), has_property( 'realname', 'Jason' ) )
 			assert_that( user_interfaces.IUserProfile( user ), has_property( 'contact_email', 'jason.madden@nextthought.com' ) )
 			# assert_that( user, has_property( 'transitionTime', greater_than_or_equal_to(now)) )
-			
+
 			upgrade_event = eventtesting.getEvents( app_interfaces.IUserUpgradedEvent )[0]
 			assert_that( upgrade_event, has_property( 'user', user ) )
 			assert_that( upgrade_event, has_property( 'upgraded_interface', site_policies.IMathcountsCoppaUserWithAgreement ) )
@@ -209,7 +209,3 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		environ = self._make_extra_environ()
 		res = testapp.get( path, extra_environ=environ )
 		assert_that( res.status_int, is_( 200 ) )
-
-if __name__ == '__main__':
-	unittest.main()
-	

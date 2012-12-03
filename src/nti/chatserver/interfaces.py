@@ -6,7 +6,7 @@ Interfaces having to do with chat.
 $Id$
 """
 
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function
 
 #pylint: disable=E0213,E0211
 
@@ -58,12 +58,12 @@ class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 	"""
 
 	creator = schema.TextLine( title="Meeting creator", description="User that started the meeting" )
-	
+
 	RoomId = schema.TextLine( title="Meeting identifier", description="Meeting identifier" )
-	
+
 	CreatedTime = schema.Float( title="Meeting creation time",
 							 	description="Meeting creation time" )
-		
+
 	Moderated = schema.Bool( title="Whether the meeting is being moderated or not.",
 							 description="Toggling this changes the policy in use." )
 
@@ -124,11 +124,11 @@ class IMessageInfo(nti_interfaces.IShareableModeledContent, nti_interfaces.IZCon
 	channel = schema.Choice(
 		title="The channel the message was sent to.",
 		vocabulary=CHANNEL_VOCABULARY)
-	
+
 	Status = schema.Choice(
 		title="The status of the message. Set by the server.",
 		vocabulary=STATUS_VOCABULARY )
-	
+
 	Creator = schema.TextLine( title="Message creator", description="User that send this message" )
 
 class IMessageInfoEvent(z_interfaces.IObjectEvent):
@@ -158,7 +158,7 @@ class IMessageInfoPostedToRoomEvent(IMessageInfoEvent):
 @interface.implementer( IMessageInfoPostedToRoomEvent )
 class MessageInfoPostedToRoomEvent(MessageInfoEvent):
 
-	def __init__( self, obj, recipients=(), room=None ):
+	def __init__( self, obj, recipients, room ):
 		super(MessageInfoPostedToRoomEvent,self).__init__( obj )
 		self.recipients = recipients
 		self.room = room

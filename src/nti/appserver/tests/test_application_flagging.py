@@ -14,21 +14,29 @@ from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not as does_not
 
 from zope import interface
+from zope.event import notify
 
 from webtest import TestApp
 
-import os.path
+#import os.path
 
-import urllib
+#import urllib
+import uuid
 
 from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver import contenttypes, users
 from nti.contentrange import contentrange
 
+from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.messageinfo import MessageInfo
+from nti.dataserver.meeting_storage import CreatorBasedAnnotationMeetingStorage
+from nti.dataserver import chat_transcripts
+
+
 from nti.dataserver.tests import mock_dataserver
 
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, PersistentContainedExternal
 
 from urllib import quote as UQ
 
@@ -70,7 +78,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'flag.metoo' ) ) ) )
 
 	@WithSharedApplicationMockDS
-	def test_flag_moderation(self):
+	def test_flag_moderation_note(self):
 		"Basic tests of the moderation admin page"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
@@ -96,6 +104,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
 
 
+		# Fetch the page
 		path = '/dataserver2/@@moderation_admin'
 
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
@@ -145,7 +154,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_flag_moderation_note_content(self):
-		"Basic tests of the moderation admin page"
+		"Test how notes are rendered in moderation view"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 
@@ -175,3 +184,55 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		# TODO: Note that our plain-textification is screwing up at paragraph boundaries.
 		assert_that( res.body, contains_string( 'This part is HTMLAnd spreads across paragraphs.<br />'
 												"<div class='canvas'>&lt;CANVAS OBJECT of length 0 &gt;") )
+	@WithSharedApplicationMockDS
+	def test_flag_moderation_chat_message(self):
+		"Test moderation of a chat message"
+		with mock_dataserver.mock_db_trans( self.ds ) as conn:
+			user = self._create_user()
+			user2 = self._create_user( username='foo@bar.com' )
+			msg_info = MessageInfo()
+			msg_info.Body = ['The first part']
+			msg_info.creator = user.username
+			msg_info.recipients = [user2.username]
+			msg_info.sharedWith = msg_info.recipients
+			msg_info.containerId = 'foobar'
+			# Make sure it has a parent and oid
+			storage = chat_interfaces.IMessageInfoStorage( msg_info )
+			storage.add_message( msg_info )
+
+			room = PersistentContainedExternal()
+			room.creator = user.username
+			room.containerId = msg_info.containerId
+			conn.add( room )
+			meeting_storage = CreatorBasedAnnotationMeetingStorage()
+			meeting_storage.add_room( room )
+
+			room.ID = room.id
+			room_id = room.id
+			msg_info.room = room
+			notify( chat_interfaces.MessageInfoPostedToRoomEvent( msg_info, msg_info.recipients + [msg_info.creator], room ) )
+			assert_that( chat_transcripts.transcript_for_user_in_room( user, room_id ).get_message( msg_info.ID ),
+						 is_( msg_info ) )
+			msg_info.lastModified = 1354558013.779055 # For the date below
+
+
+		testapp = TestApp( self.app )
+
+		# First, give us something to flag
+		for i in (msg_info,):
+			path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % to_external_ntiid_oid( i )
+			path = UQ( path )
+			testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
+
+
+		# Fetch the page
+		path = '/dataserver2/@@moderation_admin'
+
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+
+		assert_that( res.content_type, is_( 'text/html' ) )
+		assert_that( res.body, contains_string( 'The first part' ) )
+		assert_that( res.body, contains_string( '12/3/12 12:06 PM' ) )
+
+		# TODO: Tests for deleting

@@ -314,7 +314,7 @@ def _save_message_to_transcripts_subscriber( msg_info, event ):
 	change.creator = msg_info.Sender
 
 	for owner in set(event.recipients):
-		__traceback_info__ = owner
+		__traceback_info__ = owner, meeting
 		storage = _ts_storage_for( owner )
 		storage.add_message( meeting, msg_info )
 
