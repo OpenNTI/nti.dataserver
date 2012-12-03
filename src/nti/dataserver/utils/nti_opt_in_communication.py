@@ -61,7 +61,7 @@ def _seek_users(useindex=False, verbose=False):
 			continue
 		
 		info = _get_user_info(user)
-		out_t = (str(x) for x in info)
+		out_t = [str(x) for x in info]
 		
 		if verbose:
 			print('\t'.join(out_t))
