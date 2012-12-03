@@ -16,6 +16,9 @@
 	<utility factory="._ngrams_utils._DefaultNgramComputer" />
 	<utility factory="._ngrams_utils._DefaultNgramComputer" name="en" />
 	
+	<utility factory=".termextract._DefaultKeyWorExtractor" />
+	<utility factory=".termextract._DefaultKeyWorExtractor" name="en" />
+	
 	<include package=".stemmers" file="configure.zcml" />
 	<include package=".taggers" file="configure.zcml" />
 	

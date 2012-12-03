@@ -14,14 +14,17 @@
 
 from __future__ import print_function, unicode_literals
 
-import os
-import sys
 from collections import defaultdict
+
+from zope import interface
+from zope import component
 
 from nti.contentprocessing import split_content
 from nti.contentprocessing.stemmers import stem_word
 from nti.contentprocessing.taggers import tag_tokens
+from nti.contentprocessing import interfaces as cp_interfaces
 
+@interface.implementer( cp_interfaces.ITermExtractFilter)	
 class DefaultFilter(object):
 
 	def __init__(self, single_strength_min_occur=3, no_limit_strength=2):
@@ -31,7 +34,10 @@ class DefaultFilter(object):
 	def __call__(self, word, occur, strength):
 		return (strength == 1 and occur >= self.single_strength_min_occur) or (strength >= self.no_limit_strength)
 
+@interface.implementer( cp_interfaces.ITermExtractKeyWord )	
 class NormRecord(object):
+	
+	__slots__ = 'norm', 'occur', 'strength', 'terms', 'token'
 	
 	def __init__(self, norm, occur, strength, terms=()):
 		self.norm = norm
@@ -39,9 +45,13 @@ class NormRecord(object):
 		self.strength = strength
 		self.terms = sorted(terms) if terms else () 
 
+	@property
+	def token(self):
+		return self.norm
+	
 	def __repr__( self ):
 		return "NormRecord(%s, %s, %s, %s)" % (self.norm, self.occur, self.strength, self.terms)
-
+	
 class TermExtractor(object):
 
 	_NOUN = 1
@@ -88,26 +98,27 @@ class TermExtractor(object):
 		result = sorted(result, reverse=True, key=lambda x: x.occur)
 		
 		return result
+
+@interface.implementer( cp_interfaces.IKeyWordExtractor )
+class _DefaultKeyWorExtractor():
 	
-def extract_key_words_from_tokens(tokenized_words, extractor=None, stemmer=None):
-	extractor = extractor or TermExtractor()
-	tagged_terms = []
-	tagged_items = tag_tokens(tokenized_words)
-	for token, tag in tagged_items:
-		root = stem_word(token)
-		tagged_terms.append((token, tag, root))
-	result = extractor.extract(tagged_terms)
+	def __call__(self, content, *args):
+		
+		if isinstance(content, (list, tuple)):
+			tokenized_words = content
+		else:
+			tokenized_words = split_content(content)
+			
+		tagged_terms = []
+		extractor = TermExtractor(*args)
+		tagged_items = tag_tokens(tokenized_words)
+		for token, tag in tagged_items:
+			root = stem_word(token)
+			tagged_terms.append((token, tag, root))
+		result = extractor.extract(tagged_terms)
+		return result
+
+def extract_key_words(content, *args):
+	extractor = component.getUtility(cp_interfaces.IKeyWordExtractor)
+	result = extractor(content, *args)
 	return result
-
-def extract_key_words_from_text(content, extractor=None):
-	tokenized_words = split_content(content)
-	return extract_key_words_from_tokens(tokenized_words, extractor=extractor)
-
-extract_key_words = extract_key_words_from_text
-
-if __name__ == '__main__':
-	args = sys.argv[1:]
-	if args:
-		with open(os.path.expanduser(args[0]),"r") as f:
-			content = f.read()
-		print(extract_key_words(content))
