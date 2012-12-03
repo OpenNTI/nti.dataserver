@@ -162,7 +162,7 @@ from pyramid.renderers import render
 from pyramid.renderers import get_renderer
 from pyramid_mailer.message import Message
 from pyramid_mailer.message import Attachment
-from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
 
 
 CONTACT_EMAIL_RECOVERY_ANNOTATION = __name__ + '.contact_email_recovery_hash'
@@ -257,7 +257,6 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 	text_body = render( 'templates/coppa_consent_request_email.txt',
 						dict(user=user, profile=profile, context=user,master=master),
 						request=event.request )
-	assert text_body
 
 	attachment_filename = 'coppa_consent_request_email_attachment.pdf'
 	attachment_stream = pkg_resources.resource_stream( 'nti.appserver.templates',
@@ -268,24 +267,31 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 
 	message = Message( subject=_("Please Confirm Your Child's NextThought Account"),
 					   recipients=[email],
-					   body=None, # See below
+					   sender='NextThought No Reply <no-reply@nextthought.com>', # match default, required for to_message()
+					   body=text_body,
 					   html=html_body,
 					   attachments=[attachment] )
-	# We have a problem setting the HTML part and the plain text part:
-	# we wind up with a multipart/alternative message with two parts, followed
-	# by the third part for the attachment. In some clients, the attachment is then
-	# treated as an alternative part and not displayed as an attachment
-	# (even though it has content-disposition: attachment), making it very difficult to access.
-	# Setting the disposition to 'inline' only makes it worse (i.e., with 'attachment',
-	# Mail.app demonstrates the problem, but GMail is fine; with 'inline', they both
-	# have the problem).
-	# This can probably be fixed with a suitably complicated MIME structure (multipart/mixed
-	# of two parts, the first part being multipart/alternative itself of two parts, and the second being the attachment),
-	# but that would require testing and it's not clear if it would work (besides being somewhat
-	# complicated to construct).
-	# For now, we live without the text alternative.
+	# It's a bit tricky to do alternative body parts plus attachments. It requires
+	# a nested MIME structure, which Message won't do by default:
+	# multipart/mixed
+	#  |\
+	#  | - multipart/alternative
+	#  |  \
+	#  |   - text/plain
+	#  |   - text/html
+	#  |\
+	#    - application/pdf; content-disposition: attachment
+	#
+	# So we set it up manually here. (If we let Message do its default thing, we
+	# wind up with three alternative parts, making it hard to access the attachment)
+	# (See http://stackoverflow.com/questions/3902455/smtp-multipart-alternative-vs-multipart-mixed)
+	email_msg = message.to_message()
+	payload = email_msg.get_payload()
+	alternatives = MIMEMultipart( _subtype='alternative', _subparts=payload[0:2] )
+	payload[0:2] = [alternatives]
+	email_msg.set_type( 'multipart/mixed' )
 
-	_email_utils.send_pyramid_mailer_mail( message )
+	_email_utils.send_mail( message=email_msg, pyramid_mail_message=message )
 
 	# We can log that we sent the message to the contact person for operational purposes,
 	# but legally we cannot preserve it in the database
