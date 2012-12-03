@@ -17,6 +17,7 @@ import time
 import uuid
 import collections
 import six
+import datetime
 
 from persistent import Persistent
 from persistent.list import PersistentList
@@ -34,11 +35,16 @@ from nti.dataserver.contenttypes.base import _make_getitem
 
 
 from zope import interface
+from zope.dublincore import interfaces as dc_interfaces
 from zope.container.contained import contained
 
 from . import interfaces
 
-@interface.implementer( interfaces.IMessageInfo )
+# TODO: MessageInfo is a mess. Unify better with IContent
+# and the other content types.
+# We manually re-implement IDCTimes (should extend CreatedModDateTrackingObject)
+@interface.implementer( interfaces.IMessageInfo,
+						dc_interfaces.IDCTimes)
 class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 				   Persistent,
 				   datastructures.ExternalizableInstanceDict ):
@@ -80,6 +86,17 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 	createdTime = alias('CreatedTime')
 	lastModified = alias('LastModified')
 	Timestamp = alias('LastModified') # bwc
+	# IDCTimes
+	created = property( lambda self: datetime.datetime.fromtimestamp( self.createdTime ),
+						lambda self, dt: setattr( self, 'createdTime', time.mktime( dt.timetuple() ) ) )
+	modified = property( lambda self: datetime.datetime.fromtimestamp( self.lastModified ),
+						lambda self, dt: self.updateLastModIfGreater( time.mktime( dt.timetuple() ) ) )
+	def updateLastModIfGreater( self, t ): # copied from ModDateTrackingObject
+		"Only if the given time is (not None and) greater than this object's is this object's time changed."
+		if t is not None and t > self.lastModified:
+			self.lastModified = t
+		return self.lastModified
+
 
 	def get_sender_sid( self ):
 		"""

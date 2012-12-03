@@ -313,9 +313,18 @@ class User(Principal):
 
 	@classmethod
 	def get_user( cls, username, dataserver=None, default=None ):
-		""" Returns the User having `username`, else None. """
+		"""
+		Returns the User having ``username``, else None.
+
+		:param basestring username: The username to find. Can also be an instance of
+			this class, in which case it is immediately returned (effectively making this
+			behave like a :mod:`zope.interface` cast. Note that it is this specific
+			class, not :class:`User` in general.
+		"""
+		if isinstance( username, cls ):
+			return username
 		result = cls.get_entity( username, dataserver=dataserver, default=default ) if username else None
-		return result if isinstance( result, User ) else default
+		return result if isinstance( result, User ) else default # but this instance check is the base class
 
 	@classmethod
 	def create_user( cls, dataserver=None, **kwargs ):

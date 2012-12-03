@@ -171,7 +171,7 @@ class _CaseInsensitiveKey(object):
 
 	def __init__( self, key ):
 		if not isinstance( key, basestring ):
-			raise TypeError(key)
+			raise TypeError( "Expected basestring instead of %s (%r)" % (type(key), key))
 		self.key = unicode(key)
 		self._lower_key = self.key.lower()
 

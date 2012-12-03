@@ -80,7 +80,16 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 				parts.append( '<br />'.join( body ) )
 			elif part:
 				parts.append( frg_interfaces.IPlainTextContentFragment( part, None ) or unicode(part) )
-		return '<div>' + '<br />'.join( parts ) + '</div>'
+		return '<div>' + '<br />'.join( parts ) + self._render_suffix(item) + '</div>'
+
+	def _render_suffix( self, item ):
+		# hack for rendering MessageInfo objects to add recipient information.
+		# If we add more of these we need to do something with ZCA
+		recip = getattr( item, 'recipients', None )
+		if recip:
+			return "<br /><span class='chat-recipients'>(Recipients: " + ' '.join( recip ) + ')</span>'
+
+		return ''
 
 class IntIdCheckBoxColumn(column.CheckBoxColumn):
 	"""
@@ -98,13 +107,15 @@ def fake_dc_core_for_times( item ):
 	times = dc_interfaces.IDCTimes( item, None )
 	if times is None:
 		return item # No values to proxy from, no point in doing so
-
+	if dc_interfaces.IZopeDublinCore.providedBy( times ):
+		return times
 	return _FakeDublinCoreProxy( times )
 
-
+# TODO: Make Created and Modified column work for nti.dataserver.interfaces.ICreated/ILastModified
+# That, or finally remove those interfaces
 class CreatedColumn(column.CreatedColumn):
 	"""
-	Column to display the created time of any :class:`nti.dataserver.interfaces.ICreated`
+	Column to display the created time of any :class:`zope.dublincore.interfaces.IDCTimes`
 	"""
 	weight = 3
 	def getSortKey( self, item ):
@@ -115,7 +126,7 @@ class CreatedColumn(column.CreatedColumn):
 
 class ModifiedColumn(column.ModifiedColumn):
 	"""
-	Column to display the modified time of any :class:`nti.dataserver.interfaces.ILastModified`
+	Column to display the modified time of any :class:`zope.dublincore.interfaces.IDCTimes`
 	"""
 
 	weight = 4
