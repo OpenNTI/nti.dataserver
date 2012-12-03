@@ -257,41 +257,38 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 	text_body = render( 'templates/coppa_consent_request_email.txt',
 						dict(user=user, profile=profile, context=user,master=master),
 						request=event.request )
+	assert text_body
 
 	attachment_filename = 'coppa_consent_request_email_attachment.pdf'
-	attachment = pkg_resources.resource_stream( 'nti.appserver.templates',
-												attachment_filename )
+	attachment_stream = pkg_resources.resource_stream( 'nti.appserver.templates',
+													   attachment_filename )
 	# Prefill the fields.
-	attachment = _alter_pdf( attachment, user.username, profile.realname, email )
-	# There are problems using the released version attachments:
-	#https://github.com/Pylons/pyramid_mailer/issues/18
-	# So the workaround is to use the email package directly:
-	attachment = MIMEApplication(attachment.read(), 'pdf' )
-	attachment.add_header('Content-Disposition', 'attachment', filename=attachment_filename)
+	attachment_stream = _alter_pdf( attachment_stream, user.username, profile.realname, email )
+	attachment = Attachment(attachment_filename, "application/pdf", attachment_stream )
 
 	message = Message( subject=_("Please Confirm Your Child's NextThought Account"),
 					   recipients=[email],
-					   sender='no-reply@nextthought.com', # The default, but explicitly needed for the attachment handling below
-					   body=None,
-					   html=html_body)
+					   body=None, # See below
+					   html=html_body,
+					   attachments=[attachment] )
+	# We have a problem setting the HTML part and the plain text part:
+	# we wind up with a multipart/alternative message with two parts, followed
+	# by the third part for the attachment. In some clients, the attachment is then
+	# treated as an alternative part and not displayed as an attachment
+	# (even though it has content-disposition: attachment), making it very difficult to access.
+	# Setting the disposition to 'inline' only makes it worse (i.e., with 'attachment',
+	# Mail.app demonstrates the problem, but GMail is fine; with 'inline', they both
+	# have the problem).
+	# This can probably be fixed with a suitably complicated MIME structure (multipart/mixed
+	# of two parts, the first part being multipart/alternative itself of two parts, and the second being the attachment),
+	# but that would require testing and it's not clear if it would work (besides being somewhat
+	# complicated to construct).
+	# For now, we live without the text alternative.
 
-	# (Add this to ensure we get a multipart message - it will be removed later)
-	message.attach(Attachment('foo.txt', 'text/plain', 'foo'))
-
-
-	email_msg = message.to_message()
-	email_msg.set_payload([p for p in email_msg.get_payload() if p.get_filename() != 'foo.txt'] + [attachment])
-	# The problem with this is that we wind up with a multipart/alternative if we
-	# send the text, html, and pdf, which makes it very hard to get to the PDF.
-	# We need to send multipart/mixed. But if we do that with all three types, they all three wind
-	# up displayed, which is not what we want either since two are alternatives
-	# We must be doing something wrong
-	#email_msg.set_type( 'multipart/mixed' )
-	message.body = text_body # mainly tests
-	_email_utils.send_mail( message=email_msg, pyramid_mail_message=message )
+	_email_utils.send_pyramid_mailer_mail( message )
 
 	# We can log that we sent the message to the contact person for operational purposes,
-	# but we cannot preserve it
+	# but legally we cannot preserve it in the database
 	logger.info( "Will send COPPA consent notice to %s on behalf of %s", email, user.username )
 	setattr( profile, 'contact_email', None )
 
