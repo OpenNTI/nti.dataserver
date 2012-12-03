@@ -857,7 +857,8 @@ class IFavoritable(IAnnotatable):
 class IFlaggable(IAnnotatable):
 	"""
 	Marker interface that promises that an implementing object
-	can be flagged for moderation
+	can be flagged for moderation. Typically, this will be applied
+	to a class of objects.
 	"""
 
 class IGlobalFlagStorage(interface.Interface):

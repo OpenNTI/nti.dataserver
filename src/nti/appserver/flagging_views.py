@@ -9,6 +9,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__('logging').getLogger('__name__')
+from . import MessageFactory as _
 
 from pyramid.security import authenticated_userid
 import pyramid.httpexceptions  as hexc
@@ -31,6 +32,14 @@ FLAG_VIEW = 'flag'
 FLAG_AGAIN_VIEW = 'flag.metoo'
 UNFLAG_VIEW = 'unflag'
 
+class IModeratorDealtWithFlag(interface.Interface):
+	"""
+	Marker interface denoting that an object that is IFlaggable
+	(and cannot lose that interface) has been dealt with by the moderator
+	and shouldn't be subject to further flagging or mutation.
+	"""
+
+
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IFlaggable)
 class FlagLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
@@ -43,6 +52,14 @@ class FlagLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	false_view = FLAG_VIEW
 	true_view = FLAG_AGAIN_VIEW
 	predicate = staticmethod(flagging.flags_object)
+
+	def decorateExternalMapping( self, context, mapping ):
+		# Flagged and handled once. Cannot be flagged again. This
+		# is only used on IMessageInfo objects which are otherwise
+		# immutable. TODO: This probably needs handled differently.
+		if IModeratorDealtWithFlag.providedBy( context ):
+			return
+		super(FlagLinkDecorator,self).decorateExternalMapping( context, mapping )
 
 def _do_flag( f, request ):
 	try:
@@ -104,9 +121,7 @@ def _UnFlagView(request):
 ## form and take the appropriate actions.
 
 
-from z3c.table import column, table
-from zope.dublincore import interfaces as dc_interfaces
-from zope.proxy.decorator import SpecificationDecoratorBase
+from z3c.table import table
 from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
 
 def _moderation_table( request ):
@@ -139,12 +154,37 @@ def moderation_admin_post( request ):
 		for item in the_table.selectedItems:
 			flagging.unflag_object( item, authenticated_userid( request ) )
 	elif 'subFormTable.buttons.delete' in request.POST:
-		# TODO: We should probably do something in this objects place,
+		# TODO: We should probably do something in this object's place,
 		# notify the user they have been moderated. As it is, the object
-		# silently disappears
+		# silently disappears.
+		# Rather than deleting, we could add an interface (IModeratorDealtWithFlag)
+		# but somehow we need to be able to both present it differently to the end user,
+		# and know that it is the result of moderator action (so it can go into
+		# statistics and so on), and remove it from search indexes. If we do this, then we probably need to
+		# make the item immutable from external users, or clear this flag
+		# on mutation. Or something.
+		# Also if we do this, do we want to remove its 'public' visibility? Or for the sake of
+		# threads do we need to leave it?
 		for item in the_table.selectedItems:
-			with item.creator.updates():
-				item.creator.deleteContainedObject( item.containerId, item.id )
+			# TODO: This is not very generic due to the way that
+			# chat transcripts are currently being stored. Furthermore,
+			# it's quite probable that doing something with the chat message
+			# is not properly updating indexes for this same reason; in particular,
+			# we have no way to recapture the complete set of recipients that got the
+			# message due to shadowing, etc
+			try:
+				updater = item.creator.updates()
+			except AttributeError:
+				# Hmm kay. So not something directly contained in a User.
+				# (probably a chat message). Reset its message body (which is
+				# meant to be immutable from external sources), and so this
+				# doesn't quite work
+				item.updateFromExternalObject( {'body': [_("This item has been deleted by the moderator.")] } )
+				flagging.unflag_object( item, authenticated_userid( request ) )
+				interface.alsoProvides( item, IModeratorDealtWithFlag)
+			else:
+				with updater:
+					item.creator.deleteContainedObject( item.containerId, item.id )
 
 	# Else, no action.
 	# Redisplay the page with a get request to avoid the "re-send this POST?" problem

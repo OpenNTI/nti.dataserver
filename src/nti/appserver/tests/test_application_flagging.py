@@ -13,17 +13,15 @@ from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not as does_not
 
+from nti.tests import verifiably_provides
+
 from zope import interface
 from zope.event import notify
 
 from webtest import TestApp
 
-#import os.path
 
-#import urllib
-import uuid
 
-from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver import contenttypes, users
 from nti.contentrange import contentrange
@@ -37,6 +35,7 @@ from nti.dataserver import chat_transcripts
 from nti.dataserver.tests import mock_dataserver
 
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, PersistentContainedExternal
+from .. import flagging_views
 
 from urllib import quote as UQ
 
@@ -235,4 +234,15 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		assert_that( res.body, contains_string( 'The first part' ) )
 		assert_that( res.body, contains_string( '12/3/12 12:06 PM' ) )
 
-		# TODO: Tests for deleting
+
+		form = res.form
+		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
+		res = form.submit( 'subFormTable.buttons.delete', extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 302 ) )
+
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.content_type, is_( 'text/html' ) )
+		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
+		assert_that( res.body, does_not( contains_string( '12/3/12 12:06 PM' ) ) )
+
+		assert_that( msg_info, verifiably_provides( flagging_views.IModeratorDealtWithFlag ) )
