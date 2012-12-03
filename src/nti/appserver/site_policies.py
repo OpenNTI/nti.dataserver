@@ -498,7 +498,8 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	IF_ROOT = nti_interfaces.ICoppaUser
 	IF_WITH_AGREEMENT = nti_interfaces.ICoppaUserWithAgreement
 	IF_WOUT_AGREEMENT = nti_interfaces.ICoppaUserWithoutAgreement
-
+	IF_WITH_AGREEMENT_UPGRADED = nti_interfaces.ICoppaUserWithAgreementUpgraded
+	
 	def upgrade_user( self, user ):
 		if not self.IF_WOUT_AGREEMENT.providedBy( user ):
 			logger.debug( "No need to upgrade user %s that doesn't provide %s", user, self.IF_WOUT_AGREEMENT )
@@ -508,7 +509,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		orig_profile = user_interfaces.IUserProfile( user )
 		# Then adjust the interfaces
 		interface.noLongerProvides( user, self.IF_WOUT_AGREEMENT )
-		interface.alsoProvides( user, self.IF_WITH_AGREEMENT )
+		interface.alsoProvides( user, self.IF_WITH_AGREEMENT_UPGRADED )
 		# Now get the new profile
 		new_profile = user_interfaces.IUserProfile( user )
 		# If they changed, adjust them, copying in any missing data
@@ -632,6 +633,8 @@ class IMathcountsCoppaUserWithoutAgreement(IMathcountsUser, nti_interfaces.ICopp
 	pass
 class IMathcountsCoppaUserWithAgreement(IMathcountsUser, nti_interfaces.ICoppaUserWithAgreement):
 	pass
+class IMathcountsCoppaUserWithAgreementUpgraded(IMathcountsCoppaUserWithAgreement, nti_interfaces.ICoppaUserWithAgreementUpgraded):
+	pass
 
 # Profiles for MC
 from nti.dataserver.users import user_profile
@@ -735,7 +738,8 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 	IF_ROOT = IMathcountsUser
 	IF_WITH_AGREEMENT = IMathcountsCoppaUserWithAgreement
 	IF_WOUT_AGREEMENT = IMathcountsCoppaUserWithoutAgreement
-
+	IF_WITH_AGREEMENT_UPGRADED = IMathcountsCoppaUserWithAgreementUpgraded
+	
 	COM_USERNAME = 'MATHCOUNTS'
 	COM_ALIAS = 'MATHCOUNTS'
 	COM_REALNAME = 'MATHCOUNTS'

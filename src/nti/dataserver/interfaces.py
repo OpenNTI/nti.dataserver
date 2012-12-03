@@ -548,6 +548,13 @@ class ICoppaUserWithAgreement(ICoppaUser):
 	exclusive.
 	"""
 
+class ICoppaUserWithAgreementUpgraded(ICoppaUserWithAgreement):
+	"""
+	A interface for a user that has been upgraded from class:`ICoppaUserWithoutAgreement`
+	we create this class (inheriting from  class:`ICoppaUserWithAgreement`) to distinguish 
+	from users (students) over 13 that automatically get class:`ICoppaUserWithAgreement` when
+	created.
+	"""
 
 class ICoppaUserWithoutAgreement(ICoppaUser):
 	"""
@@ -556,6 +563,7 @@ class ICoppaUserWithoutAgreement(ICoppaUser):
 	then transition to :class:`ICoppaUserWithAgreement`,
 	and the two states are mutually exclusive.
 	"""
+
 
 class IACE(interface.Interface):
 	"""
