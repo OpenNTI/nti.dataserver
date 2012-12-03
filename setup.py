@@ -190,7 +190,7 @@ setup(
 		'pyquery >= 1.2.4',
 		'pyramid >= 1.4b1' ,
 		'pyramid_tm >= 0.5',
-		'pyramid_mailer >= 0.9', # Which uses repoze.sendmail
+		'pyramid_mailer >= 0.10', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 0.9.2',
 		'pyramid_zodbconn >= 0.4',

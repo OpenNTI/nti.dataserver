@@ -1057,7 +1057,7 @@ def main(email=None, uname=None, cname=None):
 
 	from zope import interface
 	from zope.annotation.interfaces import IAttributeAnnotatable
-	@interface.implementer(user_interfaces.IUserProfile,IAttributeAnnotatable)
+	@interface.implementer(user_interfaces.IUserProfile,IAttributeAnnotatable,app_interfaces.IContactEmailRecovery)
 	class FakeUser(object):
 		username = _username
 		contact_email = _contact_email
@@ -1078,7 +1078,7 @@ def main(email=None, uname=None, cname=None):
 
 	import pyramid_mailer
 	from pyramid_mailer.interfaces import IMailer
-	component.provideUtility( pyramid_mailer.Mailer.from_settings( {'mail.queue_path': '/tmp/ds_maildir' } ), IMailer )
+	component.provideUtility( pyramid_mailer.Mailer.from_settings( {'mail.queue_path': '/tmp/ds_maildir', 'mail.default_sender': 'no-reply@nextthought.com' } ), IMailer )
 
 	import nti.appserver.z3c_zpt
 	from pyramid.interfaces import IRendererFactory
