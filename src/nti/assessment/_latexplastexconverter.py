@@ -28,7 +28,7 @@ def _buildDomFromString(docString):
 	document.userdata['jobname'] = 'temp%s' % _counter
 	_counter += 1
 	document.userdata['working-dir'] = tempfile.gettempdir()
-	### FIXME: There's some global state in these objects somewhere.
+	### FIXME: There's some global state in these objects somewhere (still?)
 	### See comments in test_latex
 	tex.parse()
 	return document
@@ -40,10 +40,21 @@ def _simpleLatexDocument(maths):
 	return doc
 
 def _mathTexToDOMNodes(maths):
+	"""
+	Return the DOM if the ``maths`` string is parseable by plastex. If not parseable,
+	returns an empty sequence (or possibly None).
+	"""
 	doc = _simpleLatexDocument(maths)
-	dom = _buildDomFromString(doc)
+	try:
+		dom = _buildDomFromString(doc)
+	except RuntimeError:
+		# plastex is known to throw 'recursion depth exceeded' for certain inputs
+		# I know no way to predict in advance that will happen, but we can
+		# catch it here
+		return ()
 
 	return dom.getElementsByTagName('math')
+
 
 def _response_text_to_latex(response):
 	# Experimentally, plasTeX sometimes has problems with $ display math
@@ -80,7 +91,7 @@ def convert( response ):
 		__traceback_info__ = response.value
 		response_doc = _response_text_to_latex( response.value )
 		dom = _mathTexToDOMNodes( ( response_doc, ) )
-		if len(dom) == 1:
+		if dom is not None and len(dom) == 1:
 			cached_value = (response.value, dom[0])
 			setattr( response, cache_attr, cached_value )
 	return cached_value[1] if cached_value else None

@@ -72,6 +72,15 @@ class TestLatex(ConfiguringTestBase):
 		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
 		assert_that( grader(  ), is_false() )
 
+	def test_grade_plastex_parse_problem(self):
+		soln = solution.QLatexSymbolicMathSolution(u'16')
+		# Seen in real life. The browser's GUI editor makes this relatively
+		# easy to construct. Hopefully it can redisplay it, too
+		rsp = nti.assessment.response.QTextResponse('\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{\\frac{1}{1}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}')
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(), is_false() )
+
 	def test_math_child_is_equal_cases(self):
 		class MathChild(object):
 			OTHER_NODE = 0
