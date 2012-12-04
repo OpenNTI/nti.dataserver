@@ -28,6 +28,10 @@ class _FlaggedEvent(interface.interfaces.ObjectEvent):
 	def __init__( self, o, username ):
 		super(_FlaggedEvent, self).__init__( o )
 		self.username = username
+	
+	@property
+	def context(self):
+		return self.object
 
 @interface.implementer(nti_interfaces.IObjectFlaggedEvent)
 class ObjectFlaggedEvent(_FlaggedEvent):
