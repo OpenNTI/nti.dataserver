@@ -24,7 +24,7 @@ from zope import interface
 
 
 import plasTeX.Imagers
-from plasTeX.Imagers import Image
+from plasTeX.Imagers import Dimension, Image
 import subprocess
 import math
 
@@ -154,6 +154,56 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 	def scaleImages(self): # pragma: no cover
 		raise NotImplementedError("Scaling is done in the converter.")
 
+	def getImage(self, node):
+		"""
+		Get an image from the given node whatever way possible
+
+		This method attempts to find an existing image using the
+		`imageoverride' attribute.  If it finds it, the image is
+		copied to the images directory.  If no image is available, 
+		or there was a problem in getting the image, an image is 
+		generated.
+
+		Arguments:
+		node -- the node to create the image from
+
+		Returns:
+		Image instance
+
+		"""
+		name = getattr(node, 'imageoverride', None)
+		if name is None:
+			return self.newImage(node.source)
+
+		if name in self.staticimages:
+			return self.staticimages[name]
+
+		# Copy or convert the image as needed
+		path = self.newFilename()
+		newext = os.path.splitext(path)[-1]
+		oldext = os.path.splitext(name)[-1]
+		try:
+			directory = os.path.dirname(path)
+			if directory and not os.path.isdir(directory):
+				os.makedirs(directory)
+
+			# Just copy the image for now, any necessary conversions will be handled later.
+			path = os.path.splitext(path)[0] + os.path.splitext(name)[-1]
+			shutil.copyfile(name, path)
+			_t, width, height = _size( path, path )  
+			width = Dimension(width)
+			height = Dimension(height)
+			height.imageUnits = width.imageUnits = self.imageUnits
+
+			img = Image(path, self.ownerDocument.config['images'], width=width, height=height)
+			self.staticimages[name] = img
+			return img
+
+		# If anything fails, just let the imager handle it...
+		except Exception, msg:
+			logger.warning('%s in image "%s".	 Reverting to LaTeX to generate the image.' % (msg, name))
+			pass
+		return self.newImage(node.source)
 
 def _invert(ifile, ofile):
 	#return os.system('convert %s -negate %s' % (ifile, ofile))
@@ -204,8 +254,8 @@ class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchCon
 									 self.__newNameFromOrig(image.path,
 												scale,
 												False)),
-							   math.ceil(image.width * (rsg.imager.defaultScaleFactor/scale)),
-							   math.ceil(image.height * (rsg.imager.defaultScaleFactor/scale)),
+							   math.ceil(int(image.width) * (rsg.imager.defaultScaleFactor/scale)),
+							   math.ceil(int(image.height) * (rsg.imager.defaultScaleFactor/scale)),
 							   image.depth )
 
 				newImage._scaleFactor = scale

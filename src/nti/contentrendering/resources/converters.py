@@ -407,7 +407,8 @@ class ImagerContentUnitRepresentationBatchConverterDriver(object):
 					source = unit.source[:unit.source.index('[')] + unit.source[unit.source.index(']')+1:]
 
 			#TODO newImage completely ignores the concept of imageoverrides
-			new_image = self.imager.newImage(source)
+			new_image = self.imager.getImage(unit)
+			#new_image = self.imager.newImage(source)
 			if not interfaces.IContentUnitRepresentation.providedBy( new_image ):
 				interface.alsoProvides( new_image, interfaces.IFilesystemContentUnitRepresentation )
 				new_image.source = source
