@@ -35,6 +35,8 @@ class TestImagerContentUnitRepresentationBatchConverter(ConfiguringTestBase):
 			fileExtension = '.png'
 			def __init__( self, document ):
 				pass
+			def getImage( self, node ):
+				return Image()
 			def newImage( self, source ):
 				return Image()
 			def close(self): pass
