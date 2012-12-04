@@ -22,7 +22,7 @@ from nti.ntiids import ntiids
 
 def _make_ntiid( document, local, local_prefix='', nttype='HTML' ):
 	local = unicode(local)
-	for char in ntiids._illegal_chars_ + ' ': # XXX Private
+	for char in ntiids._illegal_chars_ + ' -': # XXX Private
 		local = local.replace( char, '_' ) # Note that we're NOT using string.translate: it's not unicode safe
 
 	provider = document.config.get( "NTI", "provider" )
