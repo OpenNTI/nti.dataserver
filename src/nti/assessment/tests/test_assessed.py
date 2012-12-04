@@ -9,7 +9,7 @@ from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_length
 from nti.tests import ConfiguringTestBase, is_true, is_false
-from nti.tests import verifiably_provides
+from nti.tests import validly_provides, verifiably_provides
 from nti.externalization.tests import externalizes
 from nose.tools import assert_raises
 
@@ -48,7 +48,7 @@ class TestAssessedPart(ConfiguringTestBase):
 		update_from_external_object( part, {"submittedResponse": "The text response"}, require_updater=True )
 
 		assert_that( part.submittedResponse, is_( response.QTextResponse( "The text response" ) ) )
-		assert_that( part.submittedResponse, verifiably_provides( interfaces.IQTextResponse ) )
+		assert_that( part.submittedResponse, validly_provides( interfaces.IQTextResponse ) )
 
 class TestAssessedQuestion(ConfiguringTestBase):
 	set_up_packages = (nti.assessment,)

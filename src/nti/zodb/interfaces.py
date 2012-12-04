@@ -13,6 +13,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 from zope import schema
+from nti.utils.schema import Number
 from zope.minmax import interfaces as minmax_interfaces
 
 class ITokenBucket(interface.Interface):
@@ -26,6 +27,7 @@ class ITokenBucket(interface.Interface):
 	"""
 
 	fill_rate = schema.Float( title="The rate in tokens per second at which new tokens arrive.",
+							  default=1.0,
 							  min=0.0)
 	capacity = schema.Float( title="The maximum capacity of the token bucket.",
 							 min=0.0)
@@ -37,6 +39,9 @@ class ITokenBucket(interface.Interface):
 		"""
 		Consume tokens from the bucket.
 
+		:keyword tokens: The fractional number of tokens to consume. The default
+			is to consume one whole token, which is probably what you want.
+
 		:return: True if there were sufficient tokens, otherwise False.
 			If True, then the value of `tokens` will have been reduced.
 		"""
@@ -45,7 +50,7 @@ class INumericValue(minmax_interfaces.IAbstractValue):
 	"""
 	A persistent numeric value with conflict resolution.
 	"""
-	value = schema.Float( title="The numeric value of this object." )
+	value = Number( title="The numeric value of this object." )
 
 	def set(value):
 		"""Change the value of this object to the given value."""
@@ -66,5 +71,9 @@ class INumericCounter(INumericValue):
 	"""
 	A counter that can be incremented. Conflicts are resolved by
 	merging the numeric value of the difference in magnitude of changes.
-	Intented to be used for monotonically increasing counters.
+	Intended to be used for monotonically increasing counters, typically
+	integers.
 	"""
+
+	def increment(amount=1):
+		"Increment the value by the specified amount (which must be non-negative)"

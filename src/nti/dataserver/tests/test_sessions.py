@@ -13,7 +13,7 @@ from zope import interface
 import transaction
 import sys
 
-from nti.tests import verifiably_provides
+from nti.tests import validly_provides as verifiably_provides
 import nti.dataserver.interfaces as nti_interfaces
 from nti.socketio import interfaces as sio_interfaces
 import nti.dataserver.sessions as sessions

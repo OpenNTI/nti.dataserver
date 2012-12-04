@@ -13,7 +13,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authentication
 from nti.dataserver import users
 
-from nti.tests import verifiably_provides
+from nti.tests import validly_provides as verifiably_provides
 from pyramid.testing import DummySecurityPolicy
 from nti.dataserver.tests import mock_dataserver
 

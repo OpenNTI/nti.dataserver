@@ -43,6 +43,13 @@ from zope import component
 from zope.component import handle
 from zope.event import notify
 from zope.schema import interfaces as sch_interfaces
+import numbers
+
+class Number(schema.Float):
+	"""
+	A field that parses like a float from a string, but accepts any number.
+	"""
+	_type = numbers.Number
 
 class InvalidValue(sch_interfaces.InvalidValue):
 	"""

@@ -23,14 +23,18 @@ class ZlibStorageClientStorageURIResolver(repoze.zodbconn.resolvers.ClientStorag
 		# key = (args, tuple(kw items), tuple(dbkw items))
 		dbkw = dict(key[2])
 		orig_kw = dict(key[1])
+
 		def zlibfactory():
+			"Wraps " + uri + " in :class:`zc.slibstorage.ZlibStorage` and returns a :class:`ZODB.DB`"
+
 			# Client storage is very picky: a Unix path must be bytes, not unicode
 			client = ClientStorage( args, **kw )
-			if 'demostorage' in orig_kw:
+			if 'demostorage' in orig_kw: # pragma: no cover
 				client = DemoStorage( base=client )
 
 			zlib = zc.zlibstorage.ZlibStorage( client )
 			return DB( zlib, **dbkw )
+
 		return key, args, kw, zlibfactory
 
 def install_zlib_client_resolver():

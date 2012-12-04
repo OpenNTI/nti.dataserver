@@ -13,7 +13,7 @@ from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not as does_not
 
-from nti.tests import verifiably_provides
+from nti.tests import validly_provides as verifiably_provides
 
 from zope import interface
 from zope.event import notify

@@ -15,7 +15,7 @@ from hamcrest import none
 from nose.tools import assert_raises
 
 import nti.tests
-from nti.tests import verifiably_provides, is_true, is_false
+from nti.tests import validly_provides as verifiably_provides, is_true, is_false
 import nti.dataserver
 
 from nti.dataserver import containers as container, interfaces, datastructures

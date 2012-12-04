@@ -22,7 +22,7 @@ from hamcrest import has_entry
 import fudge
 
 import nti.tests
-from nti.tests import verifiably_provides
+from nti.tests import verifiably_provides, validly_provides
 from nti.tests import is_true, is_false
 
 from nti.zodb import interfaces
@@ -30,7 +30,7 @@ from nti.zodb.tokenbucket import PersistentTokenBucket
 
 def test_provides():
 	bucket = PersistentTokenBucket(80, 1)
-	assert_that( bucket, verifiably_provides( interfaces.ITokenBucket ) )
+	assert_that( bucket, validly_provides( interfaces.ITokenBucket ) )
 
 @fudge.patch('nti.zodb.tokenbucket.time')
 def test_consume(fudge_time):
@@ -38,6 +38,9 @@ def test_consume(fudge_time):
 	fudge_time.is_callable()
 	fudge_time.returns( 0 )
 	bucket = PersistentTokenBucket( 2 )
+
+	assert_that( bucket, validly_provides( interfaces.ITokenBucket ) )
+
 	# at time 0, the bucket has two tokens in it
 	assert_that( bucket.consume( ), is_true() )
 	assert_that( bucket.consume( ), is_true() )
@@ -56,3 +59,6 @@ def test_consume(fudge_time):
 	fudge_time.returns( 3 )
 	assert_that( bucket.consume( 2 ), is_true() )
 	assert_that( bucket.consume( ), is_false() )
+
+	# cover
+	assert_that( repr(bucket), is_( 'PersistentTokenBucket(2.0,1.0)' ) )

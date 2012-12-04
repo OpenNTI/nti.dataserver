@@ -8,7 +8,7 @@ from hamcrest import assert_that, has_length, is_, same_instance, is_not
 from hamcrest import contains
 from nti.dataserver.tests import has_attr, provides
 
-from nti.tests import verifiably_provides
+from nti.tests import validly_provides as verifiably_provides
 
 import nti.tests
 

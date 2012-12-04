@@ -29,7 +29,7 @@ from hamcrest import greater_than
 from hamcrest import has_item
 from hamcrest import greater_than_or_equal_to
 
-from nti.tests import verifiably_provides
+from nti.tests import validly_provides as verifiably_provides
 from nose.tools import assert_raises
 import itertools
 
