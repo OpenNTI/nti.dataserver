@@ -869,6 +869,22 @@ class IFlaggable(IAnnotatable):
 	to a class of objects.
 	"""
 
+from zope.interface.interfaces import IObjectEvent
+
+class IObjectFlaggedEvent(IObjectEvent):
+	"""
+	An event fired when an object has been flagged.
+	"""
+	context = schema.Object(IModeledContent, title="Object flagged")
+	username = schema.TextLine(title="User doing the flagging")
+
+class IObjectUnflaggedEvent(IObjectEvent):
+	"""
+	An event fired when an object has been unflagged.
+	"""
+	context = schema.Object(IModeledContent, title="Object unflagged")
+	username = schema.TextLine(title="User doing the unflagging")
+
 class IGlobalFlagStorage(interface.Interface):
 
 	def flag( context ):

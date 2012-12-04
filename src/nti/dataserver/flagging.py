@@ -11,9 +11,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import intid
 from zope import component
 from zope import interface
-from zope import intid
+from zope.event import notify
 from zope.intid import interfaces as intid_interfaces
 from zope.cachedescriptors.property import CachedProperty
 
@@ -23,6 +24,19 @@ import persistent
 from nti.utils import sets
 from nti.dataserver import interfaces as nti_interfaces
 
+class _FlaggedEvent(interface.interfaces.ObjectEvent):
+	def __init__( self, o, username ):
+		super(_FlaggedEvent, self).__init__( o )
+		self.username = username
+
+@interface.implementer(nti_interfaces.IObjectFlaggedEvent)
+class ObjectFlaggedEvent(_FlaggedEvent):
+	pass
+
+@interface.implementer(nti_interfaces.IObjectUnflaggedEvent)
+class ObjectUnflaggedEvent(_FlaggedEvent):
+	pass
+
 def flag_object( context, username ):
 	"""
 	Cause `username` to flag the object `context` for moderation action.
@@ -31,7 +45,7 @@ def flag_object( context, username ):
 	"""
 
 	component.getAdapter( context, nti_interfaces.IGlobalFlagStorage ).flag( context )
-
+	notify(ObjectFlaggedEvent(context, username))
 
 def flags_object( context, username ):
 	"""
@@ -51,11 +65,11 @@ def unflag_object( context, username ):
 	"""
 
 	component.getAdapter( context, nti_interfaces.IGlobalFlagStorage ).unflag( context )
+	notify(ObjectUnflaggedEvent(context, username))
 
 @component.adapter(nti_interfaces.IFlaggable,  intid_interfaces.IIntIdRemovedEvent )
 def _delete_flagged_object( flaggable, event ):
 	unflag_object( flaggable, None )
-
 
 @interface.implementer(nti_interfaces.IGlobalFlagStorage)
 @component.adapter(nti_interfaces.IFlaggable)
