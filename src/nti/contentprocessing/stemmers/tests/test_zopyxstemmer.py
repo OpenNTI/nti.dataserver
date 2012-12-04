@@ -18,6 +18,7 @@ class TestZopyYXStemmer(ConfiguringTestBase):
 	def test_utility(self):
 		stemmer = component.getUtility(interfaces.IStemmer, "zopyx")
 		assert_that(stemmer.stem('viruses'), is_('virus'))
+		assert_that(stemmer.stem('temptation'), is_('temptat'))
 
 if __name__ == '__main__':
 	unittest.main()
