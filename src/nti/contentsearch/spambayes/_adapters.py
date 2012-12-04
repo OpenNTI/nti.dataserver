@@ -31,34 +31,30 @@ def _EntitySpamClassifierFactory(user):
 @component.adapter(nti_interfaces.IEntity)
 class _EnitySpamManager(_EntitySpamClassifier):
 	
+	family = BTrees.family64
+	
 	def __init__(self):
 		super(_EnitySpamManager, self).__init__()
-		self._marked = BTrees.family64.II.BTree()
+		self._marked = self.family.II.BTree()
 	
 	def _time_to_64bit_int(self, value ):
 		return struct.unpack( b'!Q', struct.pack( b'!d', value ) )[0]
 
 	def _get_uid(self, context):
 		if context is not None:
-			try:
-				_ds_intid = component.getUtility( zope.intid.IIntIds )
-				return _ds_intid.queryId(context)
-			except:
-				pass
+			_ds_intid = component.getUtility( zope.intid.IIntIds )
+			return _ds_intid.queryId(context)
 		return None
 	
 	def _get_context(self, uid):
 		if uid is not None:
-			try:
-				_ds_intid = component.getUtility( zope.intid.IIntIds )
-				return _ds_intid.queryObject(uid)
-			except:
-				pass
+			_ds_intid = component.getUtility( zope.intid.IIntIds )
+			return _ds_intid.queryObject(uid)
 		return None
 
 	def _get_content(self, obj):
 		if isinstance(obj, six.string_types):
-			result = obj
+			result = unicode(obj)
 		else:
 			adapted = component.queryAdapter(obj, cts_interfaces.IContentResolver)
 			result = adapted.get_content() if adapted is not None else None
@@ -68,7 +64,7 @@ class _EnitySpamManager(_EntitySpamClassifier):
 		return result
 			
 	def is_marked(self, obj):
-		uid = obj if isinstance(obj, int) else self._get_uid(obj)
+		uid = obj if isinstance(obj, (int,long)) else self._get_uid(obj)
 		return uid is not None and uid in self._marked
 	
 	is_spam = is_marked
