@@ -28,10 +28,10 @@ def _dict_getattr( instance, name, default=_dict_setattr ):
 	if default is _dict_setattr:
 		try:
 			return instance.__dict__[name]
-		except KeyError:
+		except KeyError: #pragma: no cover
 			raise AttributeError( name )
 	return instance.__dict__.get( name, default )
-def _dict_delattr( instance, name ):
+def _dict_delattr( instance, name ): # pragma: no cover
 	instance.__dict__.pop( name, None )
 
 class UrlProperty(object):
@@ -156,5 +156,5 @@ class UrlProperty(object):
 		for name in self.url_attr_name, self.file_attr_name:
 			try:
 				self._delattr( instance, name )
-			except AttributeError:
+			except AttributeError: #pragma: no cover
 				pass

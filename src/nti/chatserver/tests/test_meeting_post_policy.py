@@ -8,7 +8,7 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that
 from nose.tools import assert_raises
 from nti.chatserver import interfaces
-from nti.tests import verifiably_provides, is_false
+from nti.tests import validly_provides as verifiably_provides, is_false
 
 from nti.chatserver._meeting_post_policy import _MeetingMessagePostPolicy, _ModeratedMeetingMessagePostPolicy, _ModeratedMeetingState
 from nti.chatserver._meeting_post_policy import MessageTooBig

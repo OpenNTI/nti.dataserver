@@ -17,7 +17,7 @@ from hamcrest import contains
 from zope import component
 from zope.intid import interfaces as intid_interfaces
 
-from nti.tests import verifiably_provides
+from nti.tests import validly_provides as verifiably_provides
 from nti.tests import is_true, is_false
 
 from nti.dataserver import interfaces as nti_interfaces

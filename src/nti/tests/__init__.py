@@ -60,6 +60,7 @@ def provides( iface ):
 from zope import interface
 from zope.interface.verify import verifyObject
 from zope.interface.exceptions import Invalid, BrokenImplementation, BrokenMethodImplementation, DoesNotImplement
+from zope.schema import getValidationErrors, ValidationError
 class VerifyProvides(BaseMatcher):
 
 	def __init__( self, iface ):
@@ -94,9 +95,38 @@ class VerifyProvides(BaseMatcher):
 
 
 def verifiably_provides(iface):
-#	return hamcrest.all_of( provides( iface ), VerifyProvides(iface) )
+	"Matches if the object provides the correct interface. NOTE: This does NOT test schema compliance."
 	return VerifyProvides(iface)
 
+class VerifyValidSchema(BaseMatcher):
+	def __init__( self, iface ):
+		super(VerifyValidSchema,self).__init__()
+		self.iface = iface
+
+	def _matches( self, item ):
+		errors = getValidationErrors( self.iface, item )
+		return not errors
+
+	def describe_to( self, description ):
+		description.append_text( 'object validly providing ' ).append( str(self.iface) )
+
+	def describe_mismatch( self, item, mismatch_description ):
+		x = None
+		mismatch_description.append_text( str(type(item))  )
+		errors = getValidationErrors( self.iface, item )
+
+		for attr, exc in errors:
+			try:
+				raise exc
+			except ValidationError:
+				mismatch_description.append_text( ' has attribute "').append_text( attr ).append_text( '" with error "' ).append_text( repr(exc) ).append_text( '"\n\t ' )
+			except Invalid as x:
+				#mismatch_description.append_description_of( item ).append_text( ' has no attr ').append_text( self.attr )
+				mismatch_description.append_text( str(x).replace( '\n', '' ) )
+
+def validly_provides(the_schema):
+	"Matches if the object validly provides the given schema (interface)"
+	return hamcrest.all_of( verifiably_provides( the_schema ), VerifyValidSchema(the_schema) )
 
 class Implements(BaseMatcher):
 

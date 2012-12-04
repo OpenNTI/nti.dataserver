@@ -93,8 +93,11 @@ class _ConstantZeroValue(AbstractNumericValue):
 		super(_ConstantZeroValue,self).__init__( value=0 )
 		assert 'value' not in self.__dict__
 
-	def __getstate__( self ): raise TypeError()
-	def _p_resolveConflict(self, old, committed, new): raise NotImplementedError()
+	def __getstate__( self ):
+		raise TypeError()
+
+	def _p_resolveConflict(self, old, committed, new):
+		raise NotImplementedError()
 
 	value = property( lambda s: 0, lambda s, nv: None )
 
@@ -123,8 +126,9 @@ class MergingCounter(AbstractNumericValue):
 	Intented to be used for monotonically increasing counters.
 	"""
 
-	def increment(self):
-		self.value += 1
+	def increment(self, amount=1):
+		assert amount >= 0
+		self.value += amount
 
 	def _p_resolveConflict( self, oldState, savedState, newState ):
 		saveDiff = savedState - oldState

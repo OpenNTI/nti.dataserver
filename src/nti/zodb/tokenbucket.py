@@ -34,7 +34,7 @@ class PersistentTokenBucket(object):
 
 		:param capacity: The max number of tokens in the bucket (also
 			the initial number of tokens in the bucket.
-		:keyword fill_rate: The rate in tokens per second that
+		:keyword fill_rate: The rate in fractional tokens per second that
 			the bucket will fill.
 		"""
 		self.capacity = float(capacity)
@@ -43,7 +43,7 @@ class PersistentTokenBucket(object):
 		# Conflict resolution: the tokens in the bucket is always
 		# taken as the smallest. Time, of course, marches ever upwards
 		# TODO: This could probably be better
-		self._tokens = minmax.NumericMinimum( capacity )
+		self._tokens = minmax.NumericMinimum( self.capacity )
 		self._timestamp = minmax.NumericMaximum( time() )
 
 	def consume(self, tokens=1):

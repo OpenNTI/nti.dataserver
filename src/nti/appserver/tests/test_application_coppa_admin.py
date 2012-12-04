@@ -10,7 +10,7 @@ from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not as does_not
 from hamcrest import contains
 
-from nti.tests import verifiably_provides
+from nti.tests import validly_provides as verifiably_provides
 
 import time
 import unittest
