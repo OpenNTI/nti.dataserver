@@ -97,7 +97,7 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 			worker._init_server()
 
 	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.gunicorn.loadwsgi')
-	def test_handler_in_server(self, fudge_tmp, fudge_loadwsgi):
+	def test_environ_parse_in_handler(self, fudge_tmp, fudge_loadwsgi):
 		fudge_tmp.is_a_stub()
 		fudge_loadwsgi.is_a_stub()
 		global_conf = {}
@@ -109,16 +109,19 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 		worker = gunicorn.GeventApplicationWorker( None, None, MockSocket(), dummy_app, None, MockConfig, logger)
 		server = worker._init_server()
 
-		# Be sure that everything is set up so that the environment comes out as expeted
+		# Be sure that everything (e.g., ssl header parsing) is set up so that the environment comes out as expected
+		# First, generate a request to read
 		rqst = Request.blank( '/pages?format=json', environ={b'REQUEST_METHOD': b'DELETE'} )
-
 		rqst.headers['X-FORWARDED-PROTOCOL'] = 'ssl'
 		rqst.headers['X-FORWARDED-FOR'] = '10.10.10.10'
-		rfile = StringIO(rqst.as_bytes() + b'\r\n')
+		rfile = StringIO(rqst.as_bytes() + b'\r\n\r\n')
+
+		# Now create a local handler, as if it was accepting a local connection (as in a proxy environment)
 		handler = server.handler_class(None, ('127.0.0.1', 12345), server, rfile) # socket, address, server, rfile
 		rline = handler.read_requestline()
 		handler.read_request( rline )
-		handler.content_length = None
+
+		# Finally, check the resulting environment
 		environ = handler.get_environ()
 
 		assert_that( environ, has_entry( 'wsgi.url_scheme', 'https' ) )
