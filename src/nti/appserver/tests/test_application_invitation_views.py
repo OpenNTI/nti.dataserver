@@ -127,7 +127,9 @@ class TestApplicationInvitationDFLViews(SharedApplicationTestBase):
 																			   'href', ends_with( '/@@' + REL_TRIVIAL_DEFAULT_INVITATION_CODE ) ) ) ) )
 
 		res = testapp.get( path, extra_environ=self._make_extra_environ(username=member_user.username) )
-		assert_that( res.json_body, does_not( has_key( 'Links' ) ) )
+		assert_that( res.json_body, does_not( has_entry( 'Links', has_item( has_entries( 'rel', REL_TRIVIAL_DEFAULT_INVITATION_CODE,
+																						 'href', ends_with( '/@@' + REL_TRIVIAL_DEFAULT_INVITATION_CODE ) ) ) ) ) )
+
 
 		# And the owner is the only one that can fetch it
 		testapp.get( path + '/@@' + str( REL_TRIVIAL_DEFAULT_INVITATION_CODE ),

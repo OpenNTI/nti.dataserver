@@ -24,6 +24,14 @@ from nti.appserver import httpexceptions as hexc
 
 from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
 
+def get_remote_user( request, dataserver=None ):
+	"""
+	Returns the user object corresponding to the authenticated user of the
+	request, or None.
+	"""
+	dataserver = dataserver or request.registry.getUtility( IDataserver )
+	return users.User.get_user( sec.authenticated_userid( request ), dataserver=dataserver )
+
 class AbstractView(object):
 	"""
 	Base class for views. Defines the ``request`` and ``dataserver`` property.
@@ -43,7 +51,7 @@ class AbstractAuthenticatedView(AbstractView):
 		Returns the user object corresponding to the currently authenticated
 		request.
 		"""
-		return users.User.get_user( sec.authenticated_userid( self.request ), dataserver=self.dataserver )
+		return get_remote_user( self.request, self.dataserver )
 
 
 class UploadRequestUtilsMixin(object):

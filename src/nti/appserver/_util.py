@@ -64,8 +64,8 @@ class AbstractTwoStateViewLinkDecorator(object):
 		pass
 
 	def decorateExternalMapping( self, context, mapping ):
-		current_user = authenticated_userid( get_current_request() )
-		if not current_user:
+		current_username = authenticated_userid( get_current_request() )
+		if not current_username:
 			return
 
 		# We only do this for parented objects. Otherwise, we won't
@@ -75,7 +75,7 @@ class AbstractTwoStateViewLinkDecorator(object):
 		if not context.__parent__:
 			return
 
-		predicate_passed = self.predicate( context, current_user )
+		predicate_passed = self.predicate( context, current_username )
 		# We're assuming that because you can see it, you can (un)like it.
 		# this matches the views
 		rel = self.true_view if predicate_passed else self.false_view

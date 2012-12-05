@@ -745,6 +745,11 @@ class IFriendsList(IModeledContent,IEntity):
 		(as Entity objects), resolving weak refs.
 		"""
 
+	def __contains__(friend):
+		"""
+		Is the given entity a member of this friends list?
+		"""
+
 	def addFriend( friend ):
 		"""
 		Adding friends causes our creator to follow them.

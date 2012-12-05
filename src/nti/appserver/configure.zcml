@@ -66,6 +66,8 @@
 	<subscriber factory="._adapters._DFLUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				/>
+	<subscriber factory=".dfl_views.DFLGetMembershipLinkProvider"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<adapter factory=".workspaces._NTIIDEntryExternalizer" />
 	<subscriber factory=".workspaces.ContentUnitInfoHrefDecorator"

@@ -65,6 +65,7 @@ Users and Logon
 	user_logon
 	user_and_site_policies
 	user_groups
+	dfl_views
 
 Tasks
 =====
