@@ -167,6 +167,8 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	policy_server = None
 	_preloaded_app = None
 
+	PREFERRED_MAX_CONNECTIONS = 200
+
 	@classmethod
 	def setup(cls): # pragma: no cover
 		"""
@@ -222,6 +224,18 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		if not self._preloaded_app:
 			logger.info( "Loading app after forking" )
 			self._init_server()
+
+
+		# Tweak the max connections per process if it is at the default (1000)
+		# Large numbers of HTTP connections means large numbers of
+		# database connections; multiply that by the number of processes and number
+		# of machines, and we quickly run out. We probably can't really handle
+		# 1000 simultaneous connections anyway, even though we are non-blocking
+		worker_connections = self.cfg.settings['worker_connections']
+		if worker_connections.value == worker_connections.default and worker_connections.value >= self.PREFERRED_MAX_CONNECTIONS:
+			worker_connections.set( self.PREFERRED_MAX_CONNECTIONS )
+			self.worker_connections = self.PREFERRED_MAX_CONNECTIONS
+
 
 		# Change/update the logging format.
 		# It's impossible to configure this from the ini file because
