@@ -19,6 +19,7 @@ from hamcrest import is_
 from hamcrest import same_instance
 from hamcrest import has_key
 from hamcrest import has_entry
+from hamcrest import has_property
 
 from pyramid.testing import DummyRequest
 from pyramid.request import Request
@@ -140,8 +141,17 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 
 		cfg = gconfig.Config()
 
+		# Default worker_connections config
 		worker = gunicorn.GeventApplicationWorker( None, None, MockSocket(), dummy_app, None, cfg, logger)
 		worker.init_process(_call_super=False)
+		assert_that( worker, has_property( 'worker_connections', gunicorn.GeventApplicationWorker.PREFERRED_MAX_CONNECTIONS ) )
+
+		# Changed config
+		cfg.settings['worker_connections'].set( 300 )
+		worker = gunicorn.GeventApplicationWorker( None, None, MockSocket(), dummy_app, None, cfg, logger)
+		worker.init_process(_call_super=False)
+		assert_that( worker, has_property( 'worker_connections', 300 ) )
+
 
 		factory = worker.server_class
 		assert_that( factory, is_( gunicorn._ServerFactory ) )
