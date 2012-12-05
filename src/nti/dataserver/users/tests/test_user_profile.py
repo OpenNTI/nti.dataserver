@@ -31,6 +31,13 @@ from nti.dataserver.users import interfaces
 from nti.dataserver.users import Everyone
 from nti.dataserver.users import User
 
+def test_email_address_invalid_domain():
+	with assert_raises(interfaces.EmailAddressInvalid):
+		interfaces._checkEmailAddress( 'poop@poop.poop' ) # real-world example
+
+	interfaces._checkEmailAddress( 'poop@poop.poop.com' )
+	interfaces._checkEmailAddress( 'poop@poop.poop.co' )
+
 def test_default_user_profile():
 	user = User( username="foo@bar" )
 

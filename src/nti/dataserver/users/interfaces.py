@@ -30,6 +30,9 @@ from . import MessageFactory as _
 
 import nti.utils.schema
 
+import pkg_resources
+import codecs
+
 class _InvalidData(nti.utils.schema.InvalidValue):
 	"""Invalid Value"""
 
@@ -94,6 +97,9 @@ class OldPasswordDoesNotMatchCurrentPassword(pwd_interfaces.InvalidPassword):
 class PasswordCannotConsistOfOnlyWhitespace(pwd_interfaces.NoPassword):
 	i18n_message = _("Your pasword cannot contain only whitespace. Please try again.")
 
+# Email validation functions. With the exception of _load_valid_domain_list and its use,
+# these are based on some Zope/Plone code
+
 # RFC 2822 local-part: dot-atom or quoted-string
 # characters allowed in atom: A-Za-z0-9!#$%&'*+-/=?^_`{|}~
 # RFC 2821 domain: max 255 characters
@@ -104,12 +110,28 @@ _LOCAL_RE = re.compile(r'([A-Za-z0-9!#$%&\'*+\-/=?^_`{|}~]+'
 # RFC 2821 local-part: max 64 characters
 # RFC 2821 domain: sequence of dot-separated labels
 # characters allowed in label: A-Za-z0-9-, first is a letter
-# Even though the RFC does not allow it all-numeric domains do exist
+# Even though the RFC does not allow it all-numeric labels do exist
 _DOMAIN_RE = re.compile(r'[^@]{1,64}@[A-Za-z0-9][A-Za-z0-9-]*'
                                 r'(\.[A-Za-z0-9][A-Za-z0-9-]*)+$')
 
 EMAIL_RE = re.compile(r"^(\w&.%#$&'\*+-/=?^_`{}|~]+!)*[\w&.%#$&'\*+-/=?^_`{}|~]+@(([0-9a-z]([0-9a-z-]*[0-9a-z])?\.)+[a-z]{2,6}|([0-9]{1,3}\.){3}[0-9]{1,3})$", re.IGNORECASE)
 
+def _load_valid_domain_list(n):
+	# This list will need updated every few years
+	stream = pkg_resources.resource_stream( n, 'tlds-alpha-by-domain.txt' )
+	reader = codecs.getreader('utf-8')(stream)
+	domains = set()
+	for line in reader:
+		line = line.strip()
+		if not line or line.startswith('#'):
+			continue
+		line = line.upper()
+		if line.startswith( 'XN--' ): # skip the weird IDN stuff
+			continue
+		domains.add( line )
+	return domains
+_VALID_DOMAINS = _load_valid_domain_list(__name__)
+del _load_valid_domain_list
 
 def _checkEmailAddress(address):
 	""" Check email address.
@@ -119,6 +141,10 @@ def _checkEmailAddress(address):
 	if not _LOCAL_RE.match(address):
 		raise EmailAddressInvalid(address)
 	if not _DOMAIN_RE.match(address):
+		raise EmailAddressInvalid(address)
+
+	domain = address.rsplit( '.', 1 )[-1]
+	if domain.upper() not in _VALID_DOMAINS:
 		raise EmailAddressInvalid(address)
 	return True
 
@@ -382,7 +408,7 @@ class ICompleteUserProfile(IRestrictedUserProfile):
 		title='Affiliation',
 		description="Your affiliation, such as school name",
 		required=False)
-	
+
 ICompleteUserProfile['home_page'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
 ICompleteUserProfile['description'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
 ICompleteUserProfile['location'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
