@@ -100,4 +100,6 @@
 	<include file="repoze_minimal.zcml" />
 	<include file="whoosh.zcml" />
 	
+	<include package=".spambayes" file="configure.zcml" />
+	
 </configure>
