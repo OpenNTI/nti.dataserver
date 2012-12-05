@@ -67,6 +67,10 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		"""
 		return (x() for x in self._friends_wref_set if x())
 
+	def __contains__( self, entity ):
+		for x in self: # use the generator
+			if entity == x:
+				return True
 
 	def addFriend( self, friend ):
 		"""
@@ -100,6 +104,22 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 				self._on_added_friend( friend )
 
 		return result
+
+	def removeFriend( self, friend ):
+		"""
+		Remove the `friend` from this object.
+
+		:param friend: An entity contained by this object.
+		"""
+		# implemented with _update_friends_from_external so as to let subclasses fire the correct
+		# events
+		if friend in self:
+			friends = list(self)
+			friends.remove( friend )
+			up_count = self._update_friends_from_external( friends )
+			assert up_count == 1
+			self.updateLastMod()
+			return up_count
 
 	@property
 	def NTIID(self):
@@ -273,7 +293,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 
 	def _update_friends_from_external( self, new_friends ):
 		old_friends = set( self )
-		super(DynamicFriendsList,self)._update_friends_from_external( new_friends )
+		result = super(DynamicFriendsList,self)._update_friends_from_external( new_friends )
 		new_friends = set( self )
 
 		# New additions would have been added, we only have to take care of
@@ -282,6 +302,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 		for i_hate_you in ex_friends:
 			i_hate_you.record_no_longer_dynamic_member( self )
 			i_hate_you.stop_following( self )
+		return result
 
 	def accept_shared_data_from( self, source ):
 		"""
