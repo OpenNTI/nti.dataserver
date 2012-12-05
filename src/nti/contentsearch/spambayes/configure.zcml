@@ -21,8 +21,4 @@
 		
 	<utility factory=".tokenizer._ContentTokenizer" name="spam_tokenizer" />
 		
-	<subscriber
-		handler="._subscribers.flag_object"
-		for="nti.dataserver.interfaces.IModeledContent nti.dataserver.interfaces.IObjectFlaggedEvent"/>
-	
 </configure>
