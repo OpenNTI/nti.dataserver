@@ -7,17 +7,21 @@ from webtest import TestApp
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_)
+from hamcrest import (assert_that, is_, has_length)
 
 class TestApplicationUserExporViews(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_user_info_extract(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			self._create_user(external_value={u'email':u"nti@nt.com"})
-			self._create_user(username='rukia@nt.com', external_value={u'email':u'rukia@nt.com'})
-			self._create_user(username='ichigo@nt.com', external_value={u'email':u'ichigo@nt.com'})
-
+			self._create_user(	external_value={u'email':u"nti@nt.com", u'realname':u'steve',
+												u'alias':u'citadel'})
+			self._create_user(	username='rukia@nt.com', 
+								external_value={u'email':u'rukia@nt.com', u'realname':u'rukia',
+												u'alias':u'sode no shirayuki'})
+			self._create_user(	username='ichigo@nt.com', 
+								external_value={u'email':u'ichigo@nt.com', u'realname':u'ichigo', 
+												u'alias':u'zangetsu'})		
 		testapp = TestApp( self.app )
 
 		path = '/dataserver2/@@user_info_extract'
@@ -26,6 +30,10 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 		
 		res = testapp.get( path, extra_environ=environ )
 		assert_that( res.status_int, is_( 200 ) )
+		app_iter = res.app_iter[0].split('\n')[:-1]
+		assert_that(app_iter, has_length(4) )
+		for t in app_iter:
+			assert_that(t.split(','), has_length(4))
 
 if __name__ == '__main__':
 	unittest.main()
