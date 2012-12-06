@@ -9,6 +9,8 @@ $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 
+import cgi
+from collections import Counter
 
 from zope import interface
 from zope import component
@@ -61,8 +63,10 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 		for part in content:
 			if nti_interfaces.ICanvas.providedBy( part ):
 				# TODO: We can do better than this. For one, we could use adapters
-				body = ["<div class='canvas'>&lt;CANVAS OBJECT of length %s &gt;" % len(part)]
+				body = ["<div class='canvas'>&lt;CANVAS OBJECT of length %s&gt;" % len(part)]
+				part_types = Counter()
 				for canvas_part in part:
+					part_types[type(canvas_part).__name__] += 1
 					if hasattr( canvas_part, 'url' ):
 						# Write it out as a link to the image.
 						# TODO: This is a bit of a hack
@@ -76,6 +80,10 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 						# hidden away somewhere?
 						link_external = render_link(link) if nti_interfaces.ILink.providedBy( link ) else link
 						body.append( "<img src='%s' />" % link_external )
+					elif hasattr( canvas_part, 'text' ):
+						body.append( cgi.escape( canvas_part.text ) )
+				for name, cnt in part_types.items():
+					body.append( "&lt;%d %ss&gt;" % (cnt, name) )
 				body.append( '</div>' )
 				parts.append( '<br />'.join( body ) )
 			elif part:

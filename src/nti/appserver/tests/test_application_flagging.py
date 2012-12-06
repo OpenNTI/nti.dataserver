@@ -90,7 +90,9 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 			n2 = contenttypes.Note()
 			n2.applicableRange = contentrange.ContentRangeDescription()
-			n2.updateFromExternalObject( {'body': [u'<p><em>This</em> part is HTML</p>', contenttypes.Canvas()]} )
+			canvas = contenttypes.Canvas()
+			canvas.append( contenttypes.NonpersistentCanvasTextShape( "This text is from the canvas" ) )
+			n2.updateFromExternalObject( {'body': [u'<p><em>This</em> part is HTML</p>', canvas]} )
 			n2.containerId = 'tag:nti:foo'
 			user.addContainedObject( n2 )
 
@@ -112,6 +114,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, contains_string( 'The first part' ) )
 		assert_that( res.body, contains_string( 'This part is HTML' ) )
+		assert_that( res.body, contains_string( 'This text is from the canvas' ) )
 
 		# This should not have changed the implemented/provided lists of the objects
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -182,7 +185,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 		# TODO: Note that our plain-textification is screwing up at paragraph boundaries.
 		assert_that( res.body, contains_string( 'This part is HTMLAnd spreads across paragraphs.<br />'
-												"<div class='canvas'>&lt;CANVAS OBJECT of length 0 &gt;") )
+												"<div class='canvas'>&lt;CANVAS OBJECT of length 0&gt;") )
 	@WithSharedApplicationMockDS
 	def test_flag_moderation_chat_message(self):
 		"Test moderation of a chat message"
