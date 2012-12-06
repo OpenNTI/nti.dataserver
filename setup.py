@@ -297,7 +297,7 @@ setup(
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 3.5.0',
 		'zope.tal >= 3.6.1',
-		'zope.tales >= 3.5.2',
+		'zope.tales >= 3.5.3',
 		'zope.traversing >= 3.14.0',
 		# textindexng3
 		'zopyx.txng3.core >= 3.6.0',
