@@ -251,31 +251,3 @@ def compress_body(request, response, body, check_json_response_type=True):
 		body = strio.getvalue()
 
 	return body
-
-
-import csv
-
-class CSVRenderer(object):
-	
-	def __init__(self, info):
-		pass
-
-	def __call__(self, value, system):
-		fout = StringIO()
-		
-		delimiter = value.get('delimiter', ',')
-		quoting = value.get('quoting', csv.QUOTE_ALL)
-		writer = csv.writer(fout, delimiter=delimiter, quoting=quoting)
-		
-		header = value.get('header', None)
-		if header:
-			writer.writerow(header)
-		
-		rows = value.get('rows', None)
-		if rows:
-			writer.writerows(rows)
-		
-		resp = system['request'].response
-		resp.content_type = 'text/csv; charset=utf-8'
-		resp.content_disposition = 'attachment; filename="report.csv"'
-		return fout.getvalue()
