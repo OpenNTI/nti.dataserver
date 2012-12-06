@@ -14,8 +14,8 @@ from nti.dataserver.users import index as user_index
 import logging
 logger = logging.getLogger( __name__ )
 
-def _get_userids(ent_catalog, ref_index='email'):
-	ref_idx = ent_catalog.get('email', None)
+def _get_userids(ent_catalog, indexname='realname'):
+	ref_idx = ent_catalog.get(indexname, None)
 	rev_index = getattr(ref_idx, '_rev_index', {})
 	result = rev_index.keys() #
 	return result
