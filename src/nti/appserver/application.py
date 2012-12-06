@@ -481,7 +481,7 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.feedback_views' )
 	pyramid_config.scan( 'nti.appserver.invitation_views' )
 	pyramid_config.scan( 'nti.appserver.dfl_views' )
-	pyramid_config.scan( 'nti.appserver.user_utils_views' )
+	pyramid_config.scan( 'nti.appserver.user_export_views' )
 	
 	# Generic user object tree traversal
 	# For the Library/Main URL.
