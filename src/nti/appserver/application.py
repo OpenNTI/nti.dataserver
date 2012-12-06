@@ -300,8 +300,7 @@ def createApplication( http_port,
 
 	pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' ) # must use full spec, we may not have created the pyramid_config object so its working package may be unknown
 	pyramid_config.add_renderer( name='rest', factory='nti.appserver.pyramid_renderers.REST' )
-	pyramid_config.add_renderer( name='csv', factory='nti.appserver.pyramid_renderers.CSVRenderer' )
-	
+
 	# Override the stock Chameleon template renderer to use z3c.pt for better compatibility with
 	# the existing Zope stuff
 	pyramid_config.add_renderer( name='.pt', factory='nti.appserver.z3c_zpt.renderer_factory' )
@@ -482,7 +481,7 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.invitation_views' )
 	pyramid_config.scan( 'nti.appserver.dfl_views' )
 	pyramid_config.scan( 'nti.appserver.user_export_views' )
-	
+
 	# Generic user object tree traversal
 	# For the Library/Main URL.
 	# Gee it sure would be nice if the default (no-name) view would get used.
