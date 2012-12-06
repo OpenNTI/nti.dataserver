@@ -41,8 +41,13 @@ def file_view(request):
 	Some ACL in the parent hierarchy must make this readable.
 	"""
 
-	result = download.Display( request.context, PyramidZopeRequestProxy(request) )()
-	request.response.app_iter = result
+	# For the typical IFile implementation backed by a ZODB blob,
+	# this opens the blob in 'committed' mode and reads the data from a local file.
+	# It is thus transaction and site independent making it safe to pass up through
+	# any tweens that do transaction and site management
+	view = download.Display( request.context, PyramidZopeRequestProxy(request) )
+	app_iter = view()
+	request.response.app_iter = app_iter
 	# The correct mimetype will be set because the IFile is IContentTypeAware
 	# and zope.mimetype provides an adapter from that to IContentInfo, which Display
 	# uses to set the mimetype
