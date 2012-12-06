@@ -108,8 +108,8 @@ class _AppTestBaseMixin(object):
 
 		return result
 
-	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001' ):
-		return users.User.create_user( self.ds, username=username, password=password )
+	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001', **kwargs):
+		return users.User.create_user( self.ds, username=username, password=password, **kwargs)
 
 class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 

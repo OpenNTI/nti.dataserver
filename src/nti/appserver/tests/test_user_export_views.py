@@ -1,37 +1,22 @@
-#!/usr/bin/env python
 from __future__ import print_function
 
 import unittest
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-from hamcrest import is_
-from hamcrest import assert_that
-from hamcrest import has_entry
-from hamcrest import has_item
-
-from hamcrest import contains
-from hamcrest import has_entries
-
-from hamcrest import is_not as does_not
-from hamcrest import ends_with
-
-import anyjson as json
 from webtest import TestApp
 
-import urllib
-
 from nti.dataserver.tests import mock_dataserver
-from nti.dataserver import users
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+
+from hamcrest import (assert_that, is_)
 
 class TestApplicationUserExporViews(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_user_info_extract(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			owner = self._create_user()
+			self._create_user(external_value={u'email':u"nti@nt.com"})
+			self._create_user(username='rukia@nt.com', external_value={u'email':u'rukia@nt.com'})
+			self._create_user(username='ichigo@nt.com', external_value={u'email':u'ichigo@nt.com'})
 
 		testapp = TestApp( self.app )
 
