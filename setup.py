@@ -331,7 +331,7 @@ setup(
 			'pip-tools >= 0.2.1', # command pip-review, pip-dump
 			'pylint >= 0.26.0',
 			'zodbupdate >= 0.5',
-			'zodbbrowser >= 0.10.2',
+			'zodbbrowser >= 0.10.3',
 			'sphinx >= 1.1.3', # Narrative docs
 			'sphinxtheme.readability >= 0.0.6',
 			'repoze.sphinx.autointerface >= 0.7.1',

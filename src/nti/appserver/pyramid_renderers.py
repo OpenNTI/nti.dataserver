@@ -1,9 +1,11 @@
-
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
 """
 Contains renderers for the REST api.
 """
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -75,7 +77,7 @@ def find_content_type( request, data=None ):
 
 	if best_match:
 		# Give back the most specific version possible
-		if best_match.endswith( 'json' ):
+		if best_match.endswith( b'json' ):
 			best_match = app_c_json
 		else:
 			best_match = app_c_plst
@@ -83,7 +85,7 @@ def find_content_type( request, data=None ):
 	# Legacy support: Base the return off of a query param. We
 	# allow this to override the Accept: header to non-default for legacy
 	# reasons (and also for command-line usage)
-	if request.GET.get( 'format' ) == 'plist':
+	if request.GET.get( b'format' ) == b'plist':
 		best_match = app_c_plst
 	elif not best_match:
 		best_match = app_c_json
@@ -134,7 +136,7 @@ def render_externalizable(data, system):
 	response.content_type = str(find_content_type( request, data )) # headers must be bytes
 	if response.content_type.startswith( MIME_BASE ):
 		# Only transform this if it was one of our objects
-		if response.content_type.endswith( 'json' ):
+		if response.content_type.endswith( b'json' ):
 			body = to_json_representation_externalized( body )
 		else:
 			body = to_external_representation( body, EXT_FORMAT_PLIST )
@@ -172,15 +174,15 @@ def default_cache_controller( data, system ):
 		if response.last_modified <= request.if_modified_since:
 			not_mod = pyramid.httpexceptions.HTTPNotModified()
 			not_mod.last_modified = response.last_modified
-			not_mod.cache_control = 'must-revalidate'
-			not_mod.vary = 'Accept'
+			not_mod.cache_control = b'must-revalidate'
+			not_mod.vary = b'Accept'
 			raise not_mod
 
 	# our responses vary based on the Accept parameter, since
 	# that informs representation
-	response.vary = 'Accept'
+	response.vary = b'Accept'
 	# We also need these to be revalidated
-	response.cache_control = 'must-revalidate'
+	response.cache_control = b'must-revalidate'
 
 	# TODO: ETag support. We would like to have this for If-Match as well,
 	# for better deletion and editing of shared resources. For that to work,
@@ -199,7 +201,7 @@ def uncacheable_cache_controller( data, system ):
 	request = system['request']
 	response = request.response
 
-	response.cache_control = 'no-store'
+	response.cache_control = b'no-store'
 	response.last_modified = None
 
 from cStringIO import StringIO
@@ -224,25 +226,28 @@ class REST(object):
 			# This cannot happen
 			raise Exception( "Can only get here with a body" )
 
-		renderer = request.registry.queryAdapter( data, app_interfaces.IResponseRenderer,
-												 default=render_externalizable )
+		renderer = request.registry.queryAdapter( data,
+												  app_interfaces.IResponseRenderer,
+												  default=render_externalizable )
 		body = renderer( data, system )
-		cacher = request.registry.queryAdapter( data, app_interfaces.IResponseCacheController,
+		cacher = request.registry.queryAdapter( data,
+												app_interfaces.IResponseCacheController,
 												default=default_cache_controller )
 		cacher(data, system)
 
-		# We are applying caching here. We probably don't have a proxy in front of us
+		# We are applying compression here. We probably don't have a proxy in front of us
 		# that can filter that (sadly). The Paste gzip middleware seems to have a problem
 		# in our setup...which is actually our fault. If we get any Unicode values
 		# in the headers, gunicorn throws a UnicodeDecodeError. We have to be very careful
-		# about that
+		# about that.
+		# TODO: Insert the paste middleware instead
 		# TODO: Streaming
 		body = compress_body( request, response, body )
 
 		return body
 
 def compress_body(request, response, body, check_json_response_type=True):
-	if (not check_json_response_type or response.content_type.endswith( 'json' )) and 'gzip' in request.accept_encoding:
+	if (not check_json_response_type or response.content_type.endswith( b'json' )) and b'gzip' in request.accept_encoding:
 		response.content_encoding = b'gzip'
 		strio = StringIO()
 		gzipped = gzip.GzipFile( fileobj=strio, mode='wb' )
