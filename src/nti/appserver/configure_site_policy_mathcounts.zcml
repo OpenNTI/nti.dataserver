@@ -29,8 +29,8 @@
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 name="mathcounts.nextthought.com" />
 
-	<!-- On the MC site, NO ONE can upload avatars or create DFLs -->
-	<adapter factory=".site_policies.NoDFLCapabilityFilter"
+	<!-- On the MC site, NO ONE can upload avatars  -->
+	<adapter factory=".site_policies.NoAvatarUploadCapabilityFilter"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
 			 name="mathcounts.nextthought.com" />
