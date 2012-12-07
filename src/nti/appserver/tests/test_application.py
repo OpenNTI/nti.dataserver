@@ -655,8 +655,8 @@ class TestApplication(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS
 	def test_create_update_dynamicfriends_list_content_type(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			user = self._create_user()
-			member = self._create_user( username='troy.daley@nextthought.com' )
+			_ = self._create_user()
+			_ = self._create_user( username='troy.daley@nextthought.com' )
 
 		testapp = TestApp( self.app )
 		ext_obj = {
@@ -690,7 +690,6 @@ class TestApplication(SharedApplicationTestBase):
 		# The owner can edit it to remove the membership
 		data = '[]'
 		path = res.json_body['href'] + '/++fields++friends'
-		from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
 
 		res = testapp.put( str(path),
 						   data,
