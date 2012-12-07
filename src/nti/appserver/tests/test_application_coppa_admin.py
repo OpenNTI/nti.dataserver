@@ -48,7 +48,17 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		environ = self._make_extra_environ()
 		# Have to be in this policy
 		environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
-		res = testapp.get( path, extra_environ=environ )
+
+		# Begin by filtering out the user
+		res = testapp.get( path + b'?usersearch=z', extra_environ=environ )
+		assert_that( res.status_int, is_( 200 ) )
+
+		assert_that( res.content_type, is_( 'text/html' ) )
+		assert_that( res.body, does_not( contains_string( 'ossmkitty' ) ) )
+		assert_that( res.body, does_not( contains_string( 'Jason' ) ) )
+
+		# Ok, now for real
+		res = testapp.get( path , extra_environ=environ )
 		assert_that( res.status_int, is_( 200 ) )
 
 		assert_that( res.content_type, is_( 'text/html' ) )
@@ -57,9 +67,9 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
 		# OK, now let's approve it, then we should be back to an empty page.
 		# First, if we submit without an email, we don't get approval
-
-		form = res.form
+		form = res.forms['subFormTable']
 		form.set( 'table-coppa-admin-selected-0-selectedItems', True, index=0 )
+
 		res = form.submit( 'subFormTable.buttons.approve', extra_environ=environ )
 		assert_that( res.status_int, is_( 302 ) )
 
@@ -71,7 +81,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		assert_that( res.body, contains_string( 'Jason' ) )
 
 		# Now, if we submit with an email, we do get approval
-		form = res.form
+		form = res.forms['subFormTable']
 		form.set( 'table-coppa-admin-selected-0-selectedItems', True, index=0 )
 		for k in form.fields:
 			if 'contactemail' in k:

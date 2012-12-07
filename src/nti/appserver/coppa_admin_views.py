@@ -24,20 +24,31 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from z3c.table import table
 from z3c.table import column
+from z3c.table import batch
 
 from nti.dataserver import authorization as nauth
 
 from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
 
+_USER_FILTER_PARAM = 'usersearch'
+
 def _coppa_table( request ):
 	content = ()
 	site_policy, _pol_name = site_policies.find_site_policy( request )
 	if site_policy and getattr(site_policy, 'IF_WOUT_AGREEMENT', None):
+		iface = site_policy.IF_WOUT_AGREEMENT
 		logger.debug( "Found site policy %s/%s; looking for users that are %s",
-					  site_policy, _pol_name, site_policy.IF_WOUT_AGREEMENT )
+					  site_policy, _pol_name, iface )
 		dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
 		users_folder = nti_interfaces.IShardLayout( dataserver ).users_folder
-		content = [x for x in users_folder.values() if site_policy.IF_WOUT_AGREEMENT.providedBy( x )]
+
+		content = [x for x in users_folder.values() if iface.providedBy( x )]
+
+		# Poor mans user search. We match on the username, which is the most
+		# common use case here
+		if _USER_FILTER_PARAM in request.params:
+			usersearch = request.params[_USER_FILTER_PARAM]
+			content = [x for x in content if usersearch in x.username]
 	else:
 		logger.warn( "No site policy (%s/%s) or policy (%s) does not specify users to find",
 					 site_policy, _pol_name, site_policy )
@@ -89,7 +100,11 @@ def moderation_admin_post( request ):
 
 
 class CoppaAdminTable(table.SequenceTable):
-	pass
+	batchProviderName = 'coppa-admin-batch'
+
+class _CoppaAdminBatchProvider(batch.BatchProvider):
+	"Batch provider that includes the name of our usersearch parameter in the batch links"
+	_request_args = [_USER_FILTER_PARAM] + batch.BatchProvider._request_args
 
 class RealnameColumn(_table_utils.AdaptingGetAttrColumn):
 	header = _('Name')
