@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+from datetime import datetime
 from cStringIO import StringIO
 
 from pyramid.view import view_config
@@ -10,9 +11,18 @@ from zope.catalog.interfaces import ICatalog
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.users import index as user_index
+from nti.dataserver import interfaces as nti_interfaces
 
 import logging
 logger = logging.getLogger( __name__ )
+
+def _write_generator(generator):
+	sio = StringIO()
+	for line in generator():
+		sio.write(line)
+		sio.write("\n")
+	sio.seek(0)
+	return sio
 
 def _get_userids(ent_catalog, indexname='realname'):
 	ref_idx = ent_catalog.get(indexname, None)
@@ -47,16 +57,43 @@ def _get_user_info_extract():
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
 def user_info_extract(request):
-	
-	# write to buffer
-	sio = StringIO()
-	for line in _get_user_info_extract():
-		sio.write(line)
-		sio.write("\n")
-	sio.seek(0)
-	
 	response = request.response
 	response.content_type = b'text/csv; charset=UTF-8'
-	response.content_disposition = b'attachment; filename="report.csv"'
-	response.body_file = sio
+	response.content_disposition = b'attachment; filename="usr_info.csv"'
+	response.body_file = _write_generator(_get_user_info_extract)
+	return response
+
+def _parse_time(t):
+	return datetime.fromtimestamp(t).isoformat() if t else u''
+
+def _get_opt_in_comm():
+	
+	header = ['username', 'email', 'createdTime', 'lastModified', 'lastLoginTime', 'is_copaWithAgg']
+	yield ','.join(header).encode('utf-8')
+	
+	ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
+	users = ent_catalog.searchResults( topics='opt_in_email_communication')
+	_ds_intid = component.getUtility( zope.intid.IIntIds )
+	for user in users:
+		iid = _ds_intid.queryId(user, None)
+		if iid is not None:
+			email = _get_field_info(iid, ent_catalog, 'email')
+			createdTime = _parse_time(getattr(user, 'createdTime', 0 ))
+			lastModified = _parse_time(getattr(user, 'lastModified', 0 ))
+			lastLoginTime = getattr( user, 'lastLoginTime', None )
+			lastLoginTime = _parse_time(lastLoginTime.value) if lastLoginTime is not None else u''
+			is_copaWithAgg = str(nti_interfaces.ICoppaUserWithAgreementUpgraded.providedBy(user))
+			
+			info = [user.username, email, createdTime, lastModified, lastLoginTime, is_copaWithAgg]
+			yield ','.join(info).encode('utf-8')
+			
+@view_config(route_name='objects.generic.traversal',
+			 name='user_opt_in_comm',
+			 request_method='GET',
+			 permission=nauth.ACT_MODERATE)
+def user_opt_in_email_communication(request):
+	response = request.response
+	response.content_type = b'text/csv; charset=UTF-8'
+	response.content_disposition = b'attachment; filename="opt_in.csv"'
+	response.body_file = _write_generator(_get_opt_in_comm)
 	return response
