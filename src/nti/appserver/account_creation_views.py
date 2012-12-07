@@ -141,7 +141,8 @@ def _create_user( request, externalValue, preflight_only=False, require_password
 					  hexc.HTTPUnprocessableEntity,
 					  {'message': str(e),
 					   'field': 'password',
-					   'code': e.__class__.__name__},
+					   'code': e.__class__.__name__,
+					   'value': getattr(e, 'value', None)},
 					  exc_info[2] )
 	except user_interfaces.EmailAddressInvalid as e:
 		exc_info = sys.exc_info()

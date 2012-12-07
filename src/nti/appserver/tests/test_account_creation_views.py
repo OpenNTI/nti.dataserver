@@ -118,7 +118,7 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 
 
 	@WithMockDSTrans
-	def test_create_invalid_password(self):
+	def test_create_short_invalid_password(self):
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'foo@bar.com',
 													 'email': 'foo@bar.com',
@@ -130,6 +130,20 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 		assert_that( exc.exception.json_body, has_entry( 'field', 'password' ) )
 		assert_that( exc.exception.json_body, has_entry( 'message', contains_string( 'Your password is too short. Please choose one at least' ) ) )
 		assert_that( exc.exception.json_body, has_entry( 'code', 'TooShortPassword' ) )
+
+	@WithMockDSTrans
+	def test_create_insecure_invalid_password(self):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'foo@bar.com',
+													 'email': 'foo@bar.com',
+													 'password': 'donald' } )
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			self.the_view( self.request )
+
+
+		assert_that( exc.exception.json_body, has_entry( 'field', 'password' ) )
+		assert_that( exc.exception.json_body, has_entry( 'code', 'InsecurePasswordIsForbidden' ) )
+
 
 
 	@WithMockDSTrans
@@ -873,7 +887,7 @@ class _AbstractApplicationCreateUserTest(SharedApplicationTestBase):
 		app = TestApp( self.app )
 
 		data = to_json_representation( {'Username': 'jason@test.nextthought.com',
-										'password': 'password',
+										'password': 'pass123word',
 										'realname': 'Jason Madden',
 										'email': 'foo@bar.com'	} )
 
@@ -1023,7 +1037,7 @@ class TestApplicationPreflightUser(SharedApplicationTestBase):
 
 		data_with_username_only = {'Username': 'jason@test.nextthought.com'}
 		data_full = {'Username': 'jason@test.nextthought.com',
-					 'password': 'password',
+					 'password': 'pass123word',
 					 'email': 'foo@bar.com'	}
 
 		path = b'/dataserver2/users/@@account.preflight.create'
