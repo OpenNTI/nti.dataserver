@@ -56,7 +56,17 @@
 			alt="NextThought Logo" />
 		</div>
 		</div>
-
+		<div id="search-bar">
+			<!--! No action, reset the paging to the beginning -->
+			<form action="" method="get"
+				  class="search-form"
+				  name="searchForm" id="searchForm">
+				<input type="search" id="usersearch" name="usersearch"
+					   placeholder="Username"
+					   tal:attributes="value request/params/usersearch|None" />
+				<input type="submit" value="Search" />
+			</form>
+		</div>
 		<form action="" method="post"
 			  enctype="multipart/form-data"
 			  class="edit-form"

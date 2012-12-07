@@ -81,6 +81,14 @@
 			 provides="z3c.table.interfaces.IColumnHeader"
 			 for="* * * .coppa_admin_views.RealnameColumn"
 			 />
+	<!-- batch provider -->
+	<adapter
+		name="coppa-admin-batch"
+		factory=".coppa_admin_views._CoppaAdminBatchProvider"
+		for="zope.interface.Interface
+			 zope.publisher.interfaces.browser.IBrowserRequest
+			 z3c.table.interfaces.ITable"
+		/>
 
 	<!-- New Note Email -->
 	<adapter factory="._table_utils.NoteLikeBodyColumn"
