@@ -150,6 +150,12 @@ class Principal(Entity,sharing.SharingSourceMixin):
 		# TODO: Subclass the policy and implement one that does, install that and migrate
 		if np and not np.strip(): # but do allow leading/trailing whitespace
 			raise user_interfaces.PasswordCannotConsistOfOnlyWhitespace()
+		# NOTE: The password policy objects do not have an option to forbid
+		# specific passwords from a list, so we implement that manually here.
+		# TODO: Subclass the policy and implement one that does, as per above
+		if np and np.strip().upper() in user_interfaces._VERBOTEN_PASSWORDS:
+			raise user_interfaces.InsecurePasswordIsForbidden(np)
+
 		self.__dict__['password'] = _Password(np)
 		# otherwise, no change
 	def _del_password(self):

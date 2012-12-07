@@ -97,6 +97,15 @@ class OldPasswordDoesNotMatchCurrentPassword(pwd_interfaces.InvalidPassword):
 class PasswordCannotConsistOfOnlyWhitespace(pwd_interfaces.NoPassword):
 	i18n_message = _("Your pasword cannot contain only whitespace. Please try again.")
 
+class InsecurePasswordIsForbidden(pwd_interfaces.InvalidPassword):
+	i18n_message = _("The password you supplied has been identified by security researches as commonly used and insecure. Please try again.")
+
+	def __init__( self, value=None ):
+		super(InsecurePasswordIsForbidden,self).__init__()
+		if value:
+			self.value = value
+
+
 # Email validation functions. With the exception of _load_valid_domain_list and its use,
 # these are based on some Zope/Plone code
 
@@ -116,9 +125,8 @@ _DOMAIN_RE = re.compile(r'[^@]{1,64}@[A-Za-z0-9][A-Za-z0-9-]*'
 
 EMAIL_RE = re.compile(r"^(\w&.%#$&'\*+-/=?^_`{}|~]+!)*[\w&.%#$&'\*+-/=?^_`{}|~]+@(([0-9a-z]([0-9a-z-]*[0-9a-z])?\.)+[a-z]{2,6}|([0-9]{1,3}\.){3}[0-9]{1,3})$", re.IGNORECASE)
 
-def _load_valid_domain_list(n):
-	# This list will need updated every few years
-	stream = pkg_resources.resource_stream( n, 'tlds-alpha-by-domain.txt' )
+def _load_resource(n, f):
+	stream = pkg_resources.resource_stream( n, f )
 	reader = codecs.getreader('utf-8')(stream)
 	domains = set()
 	for line in reader:
@@ -126,12 +134,23 @@ def _load_valid_domain_list(n):
 		if not line or line.startswith('#'):
 			continue
 		line = line.upper()
-		if line.startswith( 'XN--' ): # skip the weird IDN stuff
+
+		if line.startswith( 'XN--' ):
+			# skip the weird IDN stuff, a legacy from the TLD list
 			continue
 		domains.add( line )
 	return domains
-_VALID_DOMAINS = _load_valid_domain_list(__name__)
-del _load_valid_domain_list
+
+
+# This list will need updated every few years
+_VALID_DOMAINS = _load_resource(__name__,'tlds-alpha-by-domain.txt' )
+# 2012-12-07: This list of passwords, identified by industry researchers,
+# as extremely common and in all the rainbow tables, etc, is forbidden
+# see http://arstechnica.com/gadgets/2012/12/blackberry-has-had-it-up-to-here-with-your-terrible-passwords/
+_VERBOTEN_PASSWORDS = _load_resource( __name__, 'verboten-passwords.txt' )
+
+del _load_resource
+
 
 def _checkEmailAddress(address):
 	""" Check email address.
