@@ -1,0 +1,39 @@
+# -*- mode: html -*-
+
+# This 
+name: ntislidevideo
+<div class="externalvideo" tal:attributes="id self/id">
+<object type="application/vnd.nextthought.slidevideo" itemprop="nti-slide-video">
+<param name="ntiid" tal:attributes="value self/id">
+<param name="type" tal:attributes="value self/type">
+<param name="id" tal:attributes="value self/provider_id">
+<param name="thumbnail" tal:attributes="value self/thumbnail">
+<iframe width="640" height="360" tal:attributes="src self/video_url" frameborder="0" allowfullscreen="true" ></iframe>
+</object>
+</div>
+
+# This encapsulates an individual slide for use in ether normal content 
+# mode or presentation mode.  In normal content mode the object tags
+# fallback processing is used to display an annotatable image of the
+# slide.  In presentation mode the object tag is used to produce the
+# visual represenation of the content.
+name: ntislide
+<object type="application/vnd.nextthought.slide" tal:attributes="data-ntiid self/ntiid">
+<param name="slidetitle" tal:attributes="value self/title">
+<param name="slidenumber" tal:attributes="value self/slidenumber">
+<param name="slideimage" tal:attributes="value self/slideimage/image/full_size/url">
+<param name="slidevideo" tal:condition="exists:self/slidevideo/provider_id" tal:attributes="value self/slidevideo/provider_id">
+<param name="slidevideotype" tal:condition="exists:self/slidevideo/type" tal:attributes="value self/slidevideo/type">
+<param name="slidevideoid" tal:condition="exists:self/slidevideo/id" tal:attributes="value self/slidevideo/id">
+<param name="slidevideothumbnail" tal:condition="exists:self/slidevideo/thumbnail" tal:attributes="value self/slidevideo/thumbnail">
+<param name="slidevideostart" tal:condition="exists:self/slidevideostart" tal:attributes="value self/slidevideostart">
+<param name="slidevideoend" tal:condition="exists:self/slidevideoend" tal:attributes="value self/slidevideoend">
+<span tal:condition="not:self/slideimage/image/resizeable" itemprop="nti-data-markupenabled">
+<img tal:condition="not:self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/slideimage/id; alt self/slideimage/source; style string:width:${self/slideimage/image/width/px};; height:${self/slideimage/image/height/px}; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url" />
+<img tal:condition="self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/slideimage/id; alt self/slideimage/source; style self/slideimage/style/inline; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url" />
+</span>
+<span tal:condition="self/slideimage/image/resizeable" itemprop="nti-data-markupenabled nti-data-resizeable">
+<img tal:condition="not:self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/slideimage/id; alt self/slideimage/source; style string:width:${self/slideimage/image/width/px};; height:${self/slideimage/image/height/px}; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url" />
+<img tal:condition="self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/id; alt self/slideimage/source; style self/slideimage/style/inline; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url" />
+</span>
+</object>
