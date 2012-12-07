@@ -13,6 +13,7 @@ from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not
 from hamcrest import contains
+from hamcrest import has_value
 does_not = is_not
 
 from nti.appserver.application import createApplication
@@ -650,6 +651,64 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.last_modified, is_( none() ) )
 		assert_that( res.json_body['Items'], has_entry( 'boom@nextthought.com',
 														has_entries( 'Last Modified', last_mod, 'href', href ) ) )
+
+	@WithSharedApplicationMockDS
+	def test_create_update_dynamicfriends_list_content_type(self):
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+			member = self._create_user( username='troy.daley@nextthought.com' )
+
+		testapp = TestApp( self.app )
+		ext_obj = {
+			"ContainerId": "FriendsLists",
+			"Username": "boom@nextthought.com",
+			"friends":["troy.daley@nextthought.com"],
+			"realname":"boom",
+			'IsDynamicSharing': True }
+		data = json.dumps( ext_obj )
+
+		# The user creates it
+		path = '/dataserver2/users/sjohnson@nextthought.com/FriendsLists/'
+
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
+		assert_that( res.status_int, is_( 201 ) )
+		assert_that( res.body, contains_string( 'boom@nextthought.com' ) )
+		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
+
+		assert_that( res.json_body, has_entry( 'IsDynamicSharing', True ) )
+
+		# It is visible to the member in a few places
+		resolved_member_res = testapp.get( '/dataserver2/ResolveUser/troy.daley@nextthought.com', extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
+		resolved_member = resolved_member_res.json_body['Items'][0]
+
+		for k in ('DynamicMemberships', 'following', 'Communities'):
+			assert_that( resolved_member, has_entry( k, has_item( has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
+
+		member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/FriendsLists', extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
+		assert_that( member_fl_res.json_body, has_entry( 'Items', has_value( has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
+
+		# The owner can edit it to remove the membership
+		data = '[]'
+		path = res.json_body['href'] + '/++fields++friends'
+		from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
+
+		res = testapp.put( str(path),
+						   data,
+						   extra_environ=self._make_extra_environ(),
+						   headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
+		assert_that( res.json_body, has_entry( 'friends', [] ) )
+
+		# And it is no longer visible to the ex-member
+		resolved_member_res = testapp.get( '/dataserver2/ResolveUser/troy.daley@nextthought.com', extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
+		resolved_member = resolved_member_res.json_body['Items'][0]
+
+		for k in ('DynamicMemberships', 'following', 'Communities'):
+			assert_that( resolved_member, has_entry( k, does_not( has_item( has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) ) )
+
+		member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/FriendsLists', extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
+		assert_that( member_fl_res.json_body, has_entry( 'Items', does_not( has_value( has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) ) )
+
+
 	@WithSharedApplicationMockDS
 	def test_edit_note_returns_editlink(self):
 		"The object returned by POST should have enough ACL to regenerate its Edit link"

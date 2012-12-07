@@ -159,7 +159,9 @@ def test_create_update_dynamic_friendslist():
 
 	assert_that( user3.dynamic_memberships, has_item( fl1 ) )
 	assert_that( to_external_object( user3 ), has_entry( 'Communities', has_item( has_entry( 'realname', 'Friends' ) ) ) )
+
 	assert_that( user2.dynamic_memberships, does_not( has_item( fl1 ) ) )
+	assert_that( to_external_object( user2 ), has_entry( 'Communities', does_not( has_item( has_entry( 'realname', 'Friends' ) ) ) ) )
 
 	# The external form masquerades as a normal FL...
 	x = to_external_object( fl1 )
