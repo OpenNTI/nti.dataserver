@@ -10,26 +10,47 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+#from zope.annotation import interfaces as ant_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
+
 from nti.ntiids import ntiids
 from nti.dataserver import authorization
 from nti.dataserver import authorization_acl as auth_acl
-from zope.annotation import interfaces as ant_interfaces
+
+from nti.utils.property import alias, annotation_alias
 
 @interface.implementer( chat_interfaces.IMeetingContainer )
 class _AbstractMeetingContainerAdapter(object):
+	"""
+	Common base class for persistent meeting container
+	adapter implementations (:class:`nti.chatserver.interfaces.IMeetingContainer`).
 
+
+	Subclasses *must* define :attr:`_allowed_occupants` and *may* define
+	:attr:`_allowed_creators` (if they don't it is the same as :attr:`_allowed_occupants`).
+
+	This object defines the following attributes:
+
+	.. py:attribute:: context
+
+		The context object. The context object *must* be adaptable to :class:`zope.annotation.interfaces.IAnnotations`.
+	"""
+
+	#: The name of the annotation we use to store an active room on the context object.
 	ACTIVE_ROOM_ATTR = __name__ + '.' + '_mr_active_room'
 
 	def __init__( self, container ):
-		self.container = container
+		self.context = container
+
+	container = alias('context')
+	_active_meeting = annotation_alias( ACTIVE_ROOM_ATTR, annotation_property='context', delete=True )
 
 	def _has_active_meeting( self ):
 		"""
 		:return: An active meeting, or None.
 		"""
-		active_meeting = ant_interfaces.IAnnotations(  self.container ).get( self.ACTIVE_ROOM_ATTR, None )
+		active_meeting = self._active_meeting #ant_interfaces.IAnnotations( self.context ).get( self.ACTIVE_ROOM_ATTR, None )
 		if active_meeting and active_meeting.Active:
 			return active_meeting
 		return None
@@ -37,12 +58,12 @@ class _AbstractMeetingContainerAdapter(object):
 	@property
 	def _allowed_occupants( self ):
 		""" A set of the names of users that can be in the meeting. """
-		raise NotImplementedError()
+		raise NotImplementedError() # pragma: no cover
 
 	@property
 	def _allowed_creators( self ):
-		""" A set of people that can create a room. """
-		return self._allowed_occupants
+		""" A set of usernames that can create a room. """
+		return self._allowed_occupants # pragma: no cover
 
 	def enter_active_meeting( self, chatserver, meeting_dict ):
 		# If there is an active meeting, and I'm on the allowed list,
@@ -78,9 +99,9 @@ class _AbstractMeetingContainerAdapter(object):
 		meeting_dict['Occupants'] = occupants
 
 		result = constructor()
-		ant_interfaces.IAnnotations( self.container )[self.ACTIVE_ROOM_ATTR] = result
+		self._active_meeting = result #ant_interfaces.IAnnotations( self.context )[self.ACTIVE_ROOM_ATTR] = result
 
-		result.__parent__ = self.container
+		result.__parent__ = self.context
 		# Apply an ACL allowing some to moderate
 		# FIXME: XXX: This is overriding the IACLProvider registered for meetings.
 		# We should probably implement this by making the object implement a new derived interface
@@ -103,6 +124,7 @@ class _AbstractMeetingContainerAdapter(object):
 		If an active meeting exists and the ``Creator`` is allowed to occupy it,
 		then it will be returned. Otherwise, if the ``Creator`` is allowed to create
 		one then it will be returned.
+
 		:return: A tuple (meeting or None, created). If the first param is not None, the second
 			param will say whether it was already active (False) or freshly created (True).
 		"""
@@ -112,30 +134,44 @@ class _AbstractMeetingContainerAdapter(object):
 		return (self.create_meeting_from_dict( chatserver, meeting_dict, constructor ), True)
 
 	def meeting_became_empty( self, chatserver, meeting ):
-		try:
-			del ant_interfaces.IAnnotations(self.container)[self.ACTIVE_ROOM_ATTR]
-		except KeyError:
-			pass
+		del self._active_meeting
+		#try:
+		#	del ant_interfaces.IAnnotations(self.context)[self.ACTIVE_ROOM_ATTR]
+		#except KeyError:
+		#	pass
 
 @component.adapter( nti_interfaces.IFriendsList )
 class _FriendsListAdapter(_AbstractMeetingContainerAdapter):
+	"""
+	Implements the policy to allow a :class:`nti.dataserver.interfaces.IFriendsList` to
+	be used as a meeting container.
+	"""
 
 	def __init__( self, friends_list ):
 		super(_FriendsListAdapter, self).__init__( friends_list )
 
-	@property
-	def friends_list(self):
-		return self.container
+	friends_list = alias('context')
 
 	@property
 	def _allowed_creators(self):
-		result = set( (self.friends_list.creator.username,) )
-		return result
+		"""
+		Only the owner (creator) of a FriendsList is allow to initiate
+		a new room.
+
+		:return: A fresh :class:`set` of usernames.
+		"""
+
+		return {self.context.creator.username}
 
 	@property
 	def _allowed_occupants( self ):
-		""" A set of the names of users that can be in the meeting. """
-		occupants = { x.username for x in self.friends_list }
+		"""
+		The owner (creator) and all members of the FriendsList are allowed to be occupants
+		of the room..
+
+		:return: A fresh :class:`set` of usernames.
+		"""
+		occupants = { x.username for x in self.context }
 		occupants.add( self.friends_list.creator.username )
 		return occupants
 
@@ -157,19 +193,34 @@ class _FriendsListAdapter(_AbstractMeetingContainerAdapter):
 
 @component.adapter( nti_interfaces.ISectionInfo )
 class _ClassSectionAdapter(_AbstractMeetingContainerAdapter):
+	"""
+	Implements the policy to allow a :class:`nti.dataserver.interfaces.ISectionInfo` (a class section)
+	to be used as a meeting container.
+	"""
 
 	def __init__( self, section ):
 		super(_ClassSectionAdapter,self).__init__( section )
 
 	@property
 	def _allowed_occupants( self ):
-		occupants = set( self.container.Enrolled )
-		occupants = occupants | set( self.container.InstructorInfo.Instructors )
+		"""
+		The instructors and everyone enrolled in the section are allowed to be
+		occupants.
+
+		:return: A fresh :class:`set` of usernames.
+		"""
+		occupants = set( self.context.Enrolled )
+		occupants.update( self.context.InstructorInfo.Instructors )
 		return occupants
 
 	@property
 	def _allowed_creators( self ):
-		return set(self.container.InstructorInfo.Instructors)
+		"""
+		The instructors of a class section are allowed to initiate the room.
+
+		:return: A fresh :class:`set` of usernames.
+		"""
+		return set(self.context.InstructorInfo.Instructors)
 
 	def enter_active_meeting( self, chatserver, meeting_dict ):
 		"""

@@ -738,6 +738,12 @@ class IShareableModeledContent(IShareable,IModeledContent):
 		value_type=schema.TextLine(title="The username or NTIID" ) )
 
 class IFriendsList(IModeledContent,IEntity):
+	"""
+	Define a list of users.
+
+	.. note:: The inheritance from :class:`IEntity` is probably a mistake to be changed;
+		these are not globally named.
+	"""
 
 	def __iter__():
 		"""
@@ -761,7 +767,10 @@ class IFriendsList(IModeledContent,IEntity):
 		"""
 
 class IDynamicSharingTargetFriendsList(IDynamicSharingTarget,IFriendsList):
-	pass
+	"""
+	A type of :class:`IDynamicSharingTarget` that is a list of members.
+	"""
+
 
 from zope.container.constraints import contains
 

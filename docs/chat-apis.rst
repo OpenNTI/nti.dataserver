@@ -1,5 +1,6 @@
-Chat Protocal
-=============
+===============
+ Chat Protocal
+===============
 
 .. code-block:: c
 
@@ -25,7 +26,7 @@ Chat Protocal
 
 
 Channels
---------
+========
 
 Within a chat room, a 'channel' is a separate sideband of information exchange. Besides
 text messages, many operational messages are carried on channels so that
@@ -34,14 +35,14 @@ they may be a part of the transcript.
 Channels are named by strings, such as "DEFAULT."
 
 Security
-~~~~~~~~
+--------
 Channels may be uni-directional or multi-directional. In the case of a moderated
 room, each channel may have different perimissioning; in particular, permissions
 may be based on the particular sender, the particular recipients, and the value
 of certain fields, such as replyTo.
 
 Interface panes
-~~~~~~~~~~~~~~~
+---------------
 In some implementations, some channels may correspond to separate interface
 "panes" or "tabs" or otherwise be displayed and interacted with differently.
 (For example, the default channel may be treated like a typical chat window,
@@ -49,78 +50,74 @@ while the content channel may be used to navigate an existing browser window.)
 
 
 Channels
-~~~~~~~~
+--------
 This section describes the defined channels. An application *MUST IGNORE*
 communication on a channel it doesn't recognize.
 
 DEFAULT
- This channel is the general any-to-all messaging channel. Messages
- on this channel, or messages that have no channel set at all, are
- delivered to all recipients in the room (regardless of the
- recipient setting). The body is uninterpreted by the server. It
- will typically be the same content as a Note (e.g., a string or a
- list of strings and Canvas objects). In moderated rooms, posts to
- this channel must be approved.
-
+	This channel is the general any-to-all messaging channel. Messages
+	on this channel, or messages that have no channel set at all, are
+	delivered to all recipients in the room (regardless of the
+	recipient setting). The body is uninterpreted by the server. It
+	will typically be the same content as a Note (e.g., a string or a
+	list of strings and Canvas objects). In moderated rooms, posts to
+	this channel must be approved.
 WHISPER
- This channel is for messages directed from one user to a subset of
- the other users in the room. (For moderation, if the recipient list
- is the full list of room occupants excluding moderators, this is
- the same as the DEFAULT channel.) The use-case is for private
- conversations between students and assistants. Users may have their
- whispers shadowed by a moderator, meaning that all conversation to
- or from that user on the whisper channel is echoed to the
- moderator. In moderated rooms, the ability to whisper may be
- restricted to particular recipients (TAs). The body is as for the
- DEFAULT channel.
-
+	This channel is for messages directed from one user to a subset of
+	the other users in the room. (For moderation, if the recipient list
+	is the full list of room occupants excluding moderators, this is
+	the same as the DEFAULT channel.) The use-case is for private
+	conversations between students and assistants. Users may have their
+	whispers shadowed by a moderator, meaning that all conversation to
+	or from that user on the whisper channel is echoed to the
+	moderator. In moderated rooms, the ability to whisper may be
+	restricted to particular recipients (TAs). The body is as for the
+	DEFAULT channel.
 CONTENT
- This channel is used to ask recipients to display particular units
- of content. The content is displayed in the way most suitable for
- that content, and replaces previous content like that. The content
- is typically curated content. In moderated rooms, the ability to
- send on this channel may be restricted to particular senders.
+	This channel is used to ask recipients to display particular units
+	of content. The content is displayed in the way most suitable for
+	that content, and replaces previous content like that. The content
+	is typically curated content. In moderated rooms, the ability to
+	send on this channel may be restricted to particular senders.
 
- The body is a dictionary. One key is defined, 'ntiid', whose value
- is a string conforming * to the NTIID specification. The server MAY
- drop any keys in the dictionary it doesn't * recognize. Clients MUST
- ignore unknown keys. The recipients list is ignored and this message
- goes to all occupants.
-
+	The body is a dictionary. One key is defined, 'ntiid', whose value
+	is a string conforming to the NTIID specification. The server MAY
+	drop any keys in the dictionary it doesn't recognize. Clients MUST
+	ignore unknown keys. The recipients list is ignored and this message
+	goes to all occupants.
 POLL
- This channel contains interactive quizzes/assessments and, probably
- most common, student polls. When a message is posted without a
- replyTo set (a privilege restricted to moderators in moderated
- rooms) then its body is a dictionary of polling options (TBD). When
- a replyTo is set on a message that's posted, it is a response to a
- poll (a privilege open to anyone in moderated rooms)--and it must
- refer to a poll; the server MAY drop messages that do not refer to
- polls on this channel. Messages on the DEFAULT or WHISPER channels
- MAY be inReplyTo polls to discuss them. Recipient lists are ignored
- and this message goes to all occupants.
-
+	This channel contains interactive quizzes/assessments and, probably
+	most common, student polls. When a message is posted without a
+	replyTo set (a privilege restricted to moderators in moderated
+	rooms) then its body is a dictionary of polling options (TBD). When
+	a replyTo is set on a message that's posted, it is a response to a
+	poll (a privilege open to anyone in moderated rooms)--and it must
+	refer to a poll; the server MAY drop messages that do not refer to
+	polls on this channel. Messages on the DEFAULT or WHISPER channels
+	MAY be inReplyTo polls to discuss them. Recipient lists are ignored
+	and this message goes to all occupants.
 META
- This channel is used for meta information and meta commands that
- affect other channels. In particular, it is used to request
- interfaces to pin particular messages. In moderated rooms, this
- channel will be restricted to sending by moderators only. Recipient
- lists are ignored and commands are distributed to all occupants
+	This channel is used for meta information and meta commands that
+	affect other channels. In particular, it is used to request
+	interfaces to pin particular messages. In moderated rooms, this
+	channel will be restricted to sending by moderators only. Recipient
+	lists are ignored and commands are distributed to all occupants
 
- The body is a dictionary describing the command. One key is always
- 'channel', naming the channel to apply the action to. The server
- and client MUST drop messages for unsupported channels. Another
- required key is 'action;' the server and client MUST drop messages
- for unsupported actions. The remainder of the dictionary is
- action-specific; the server MAY filter out keys that are unknown
- for the particular action and the client MUST ignore them.
+	The body is a dictionary describing the command. One key is always
+	'channel', naming the channel to apply the action to. The server
+	and client MUST drop messages for unsupported channels. Another
+	required key is 'action;' the server and client MUST drop messages
+	for unsupported actions. The remainder of the dictionary is
+	action-specific; the server MAY filter out keys that are unknown
+	for the particular action and the client MUST ignore them.
 
- The 'pin' action asks the interface to make a particular unit of content
- permanently visible. The way this is done will vary depending on content
- type. The dictionary will contain an 'ntiid' key, as for the CONTENT channel; the ID is
- more likely to be a transient ID referring to a current message in the DEFAULT channel.
+	The 'pin' action asks the interface to make a particular unit of content
+	permanently visible. The way this is done will vary depending on content
+	type. The dictionary will contain an 'ntiid' key, as for the CONTENT channel; the ID is
+	more likely to be a transient ID referring to a current message in the DEFAULT channel.
 
- Pinned content SHOULD accumulate until the 'clearPinned' action is sent. There
- are no other keys in the body.
+	Pinned content SHOULD accumulate until the 'clearPinned' action is sent. There
+	are no other keys in the body.
 
 ::
 
@@ -164,10 +161,10 @@ META
   }
 
 Events
-------
+======
 
 Client to Server
-~~~~~~~~~~~~~~~~
+----------------
 
 For those events documented as returning something, you must request acknowledgment
 of the event. The return value will be delivered in the ack to the message ID
@@ -180,14 +177,18 @@ to `emit` to make this happen; the callback will receive the return value.)
   For an anonymous (transient, person-to-person) room, the RoomId must be
   absent and the Occupants array must be present and containing
   the usernames of the online users to include in the room.
-  An occupant can also be the name of a Friends List belonging to the
+  An occupant can also be the name of a FriendsList belonging to the
   user creating the room; it will be expanded by the server.
+
   To enter a persistent meeting room, send no Occupants, but DO
   set the ContainerId to the id of a persistent meeting container
   (for example, for a FriendsList/study group or class session, the
   id to use as the ContainerId is the 'NTIID' value)
   (If you include Occupants you may be able to start a persistent
-  meeting, but you could not join one already in progress.)
+  meeting, but you could not join one already in progress.) For more
+  on the policies around persistent meeting rooms, see :py:mod:`nti.dataserver.meeting_container_storage`.
+
+
   The server will reply with the enteredRoom message; its ContainerId
   will be the containerId you set (if you set one and were allowed
   to create it).
@@ -208,7 +209,7 @@ to `emit` to make this happen; the callback will receive the return value.)
   Return: whether the message was posted to all rooms
 
 Moderation
-++++++++++
+~~~~~~~~~~
 
 ``chat_approveMessages( mid[] )``
   Cause the messages to be approved.
@@ -226,7 +227,7 @@ Moderation
 
 
 Server to client
-~~~~~~~~~~~~~~~~
+----------------
 
 
 ``chat_enteredRoom( room_info )`` and ``chat_exitedRoom( room_info )``
@@ -266,7 +267,7 @@ Server to client
   posts or receives something on a non-default channel.
 
 Data Events
-~~~~~~~~~~~
+-----------
 
 ``data_noticeIncomingChange( change )``
   Sent when there is a data change, such as something

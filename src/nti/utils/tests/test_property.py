@@ -11,9 +11,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from ..property import dict_alias
+from zope import interface
+from zope.annotation import interfaces as an_interfaces
+
+from ..property import dict_alias, annotation_alias
 
 from hamcrest import assert_that
+from hamcrest import has_entry
 from hamcrest import has_property
 
 def test_dict_alias():
@@ -28,3 +32,28 @@ def test_dict_alias():
 	x.y = 2
 	assert_that( x, has_property( 'y', 2 ) )
 	assert_that( x, has_property( 'x', 2 ) )
+
+
+def test_annotation_alias():
+
+	@interface.implementer(an_interfaces.IAnnotations)
+	class X(dict):
+
+		the_alias = annotation_alias( 'the.key', delete=True, default=1 )
+
+	x = X()
+	# Default value
+	assert_that( x, has_property( 'the_alias', 1 ) )
+
+	# Set
+	x.the_alias = 2
+	assert_that( x, has_property( 'the_alias', 2 ) )
+	assert_that( x, has_entry( 'the.key', 2 ) )
+
+	# del
+	del x.the_alias
+	assert_that( x, has_property( 'the_alias', 1 ) )
+
+	# quiet re-del
+	del x.the_alias
+	assert_that( x, has_property( 'the_alias', 1 ) )
