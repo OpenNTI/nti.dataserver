@@ -161,7 +161,10 @@ class CanvasAffineTransform(object):
 			if k in parsed:
 				val = parsed[k]
 				__traceback_info__ = k, val
-				assert isinstance( val, numbers.Number )
+				if not isinstance( val, numbers.Number ):
+					# match the schema-driven updates
+					raise zope.schema.interfaces.WrongType( val, numbers.Number, k )
+
 				setattr( self, k, val )
 
 	def toExternalDictionary( self, mergeFrom=None ):
