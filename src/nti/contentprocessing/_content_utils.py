@@ -9,6 +9,8 @@ from pkg_resources import resource_filename
 from zope import component
 from zope import interface
 
+from whoosh.support import levenshtein
+
 from nltk.tokenize import RegexpTokenizer
 
 import repoze.lru
@@ -64,6 +66,12 @@ class _DefaultWordSimilarity(object):
 
 	def rank(self, word, terms, reverse=True):
 		result = sorted(terms, key=lambda w: self.compute(word, w), reverse=reverse)
+		return result
+	
+class _LevenshteinWordSimilarity(_DefaultWordSimilarity):
+			
+	def compute(self, a, b):
+		result = levenshtein.relative(a, b)
 		return result
 	
 def rank_words(word, terms, reverse=True):
