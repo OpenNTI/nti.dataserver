@@ -42,7 +42,7 @@ class TestContentUtils(ConfiguringTestBase):
 		terms = sorted(self.sample_words)
 		word = 'stranger'
 		w = rank_words(word, terms)
-		assert_that(w, is_(['bravo', 'delta', 'charlie', 'alfa', 'echo']))
+		assert_that(w, is_(['charlie', 'bravo', 'alfa', 'delta', 'echo']))
 		
 	def test_content_translation_table(self):
 		table = get_content_translation_table()
