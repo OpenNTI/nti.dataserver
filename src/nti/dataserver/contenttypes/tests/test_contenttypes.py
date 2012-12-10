@@ -636,6 +636,10 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
+	def test_canvas_affine_transform_external(self):
+
+		with self.assertRaises( zope.schema.interfaces.WrongType ):
+			CanvasAffineTransform().updateFromExternalObject( {'a': None} )
 
 	@WithMockDS
 	def test_external(self):
