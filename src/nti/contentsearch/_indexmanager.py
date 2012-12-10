@@ -2,14 +2,12 @@ from __future__ import print_function, unicode_literals
 
 import six
 
-from zope import component
 from zope import interface
 from zope.event import notify
 
 from perfmetrics import metric
 
-from nti.dataserver.users import User
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import Entity
 
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._indexagent import handle_index_event
@@ -28,6 +26,7 @@ logger = logging.getLogger( __name__ )
 @interface.implementer( search_interfaces.IIndexManager )
 class IndexManager(object):
 
+	_everyone = None
 	indexmanager = None
 
 	@classmethod
@@ -51,11 +50,13 @@ class IndexManager(object):
 		return 'IndexManager(books=%s, %s)' % (len(self.books), self.useridx_manager_adapter)
 
 	@property
-	def dataserver(self):
-		return component.queryUtility( nti_interfaces.IDataserver )
-
+	def everyone(self):
+		if self._everyone is None:
+			self._everyone = self.get_entity('Everyone')
+		return self._everyone
+	
 	def get_entity(self, username):
-		result = User.get_entity(username, dataserver=self.dataserver)
+		result = Entity.get_entity(username)
 		return result
 
 	def users_exists(self, username):
@@ -64,10 +65,10 @@ class IndexManager(object):
 
 	def get_user_dymamic_memberships(self, username):
 		user = self.get_entity(username)
-		result = list(getattr(user, 'usernames_of_dynamic_memberships', ()))
-		if result and 'Everyone' in result:
-			result.remove('Everyone')
-		result = sorted(result, key=lambda s: s.lower())
+		result = set(getattr(user, 'dynamic_memberships', ()))
+		if self.everyone in result:
+			result.remove(self.everyone)
+		result = sorted(result, key=lambda e: e.username.lower())
 		return result
 
 	@metric
