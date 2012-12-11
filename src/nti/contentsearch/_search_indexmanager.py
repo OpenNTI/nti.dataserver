@@ -53,7 +53,7 @@ class _SearchEntityIndexManager(PersistentMapping):
 			index_owner = self.username.lower()
 			adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 			creator = adapted.get_creator().lower()
-			sharedWith = set([x.lower() for x in adapted.get_sharedWith() or ()])
+			sharedWith = {x.lower() for x in adapted.get_sharedWith() or ()}
 			result = index_owner == creator or index_owner in sharedWith
 		
 		return result
