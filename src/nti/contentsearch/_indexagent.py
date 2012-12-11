@@ -23,7 +23,7 @@ _event_types = { nti_interfaces.SC_CREATED: 'index_user_content',
 _only_delete_by_owner = True
 
 def get_creator(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.ICreatorResolver)
 	return adapted.get_creator()
 
 def _check_event(target, change_type, data_type, data):
@@ -66,15 +66,13 @@ def handle_index_event(indexmanager, target, change, broadcast=None):
 
 	"""
 	if not indexmanager or not target or not change or change.object is None:
-		return
+		return False
 
-	change_object = change.object
 	should_process = True
+	change_object = change.object
 	if not broadcast: # only check if we're not a global broadcast
 		if change.type in (nti_interfaces.SC_CREATED, nti_interfaces.SC_SHARED, nti_interfaces.SC_MODIFIED):
-			entity = target
-			if isinstance( target, six.string_types ):
-				entity = Entity.get_entity( target ) # FIXME: Tightly coupled
+			entity = Entity.get_entity(target) if isinstance(target, six.string_types) else target # FIXME: Tightly coupled
 			should_process = change_object.isSharedDirectlyWith( entity )
 
 	if should_process:

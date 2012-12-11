@@ -1,24 +1,17 @@
 import unittest
 
-from hamcrest import equal_to
-from hamcrest import assert_that
-
+from nti.dataserver.contenttypes import Note
 from nti.dataserver.activitystream_change import Change
+
+from nti.ntiids.ntiids import make_ntiid
+
 from nti.contentsearch._indexagent import _process_event
 
 from nti.contentsearch.tests import ConfiguringTestBase
 
-test_user = 'test.user@nextthought.com'
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-note_add =  {'body': [u'Kenpachi Zaraki'], 'ContainerId': 'tag:nextthought.com,2011-07-14:AOPS-HTML-prealgebra-0', \
-			'Creator': test_user, 'Last Modified': 1321473657.231101, 'text': u'Kenpachi Zaraki',\
-			'OID': '0x39:5573657273', 'ID': '3', 'CreatedTime': 1321473657.230834, 'Class': 'Note'}
-
-
-note_mod = {'body': [u'Kenpachi Zaraki and&nbsp;Yachiru Kusajishi for the 11th Division'], \
-		 	'ContainerId': 'tag:nextthought.com,2011-07-14:AOPS-HTML-prealgebra-0', 'Creator': test_user, \
-		 	'Last Modified': 1321473759.952458, 'text': u'Kenpachi Zaraki and&nbsp;Yachiru Kusajishi for the 11th Division',
-		 	'OID': '0x39:5573657273', 'ID': '3', 'CreatedTime': 1321473657.230834, 'Class': 'Note'}
+from hamcrest import (is_, assert_that)
 
 def decorator(f):
 	def execute(self, *args, **kwargs):
@@ -30,49 +23,64 @@ def decorator(f):
 	execute.__name__ = f.__name__
 	return execute
 
-class MockIndexManager(object):
-
-	def __init__(self):
-		self.exception = None
-
-	@decorator
-	def index_user_content(self, username, type_name=None, data=None, *args, **kwargs):
-		assert_that('Note', equal_to(type_name))
-		assert_that(username, equal_to(test_user))
-		assert_that(note_add, equal_to(data))
-
-	@decorator
-	def update_user_content(self, username, type_name=None, data=None, *args, **kwargs):
-		assert_that('Note', equal_to(type_name))
-		assert_that(username, equal_to(test_user))
-		assert_that(note_mod, equal_to(data))
-
-	@decorator
-	def delete_user_content(self, username, type_name=None, data=None, *args, **kwargs):
-		self.update_user_content(username, type_name, data)
-
 class TestIndexAgent(ConfiguringTestBase):
 
-	indexmanager = None
+	exception = None
+	note_proc = None
+	username = 'nt@nti.com'
 
 	def setUp(self):
 		super(TestIndexAgent, self).setUp()
-		self.indexmanager = MockIndexManager()
+		self.exception = None
+		self.note_proc = None
 
+	def _create_note(self, msg, containerId=None):
+		note = Note()
+		note.body = [unicode(msg)]
+		note.creator = self.username
+		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
+		return note
+	
+	@WithMockDSTrans
 	def test_create(self):
-		_process_event(self.indexmanager, test_user, Change.CREATED, 'Note', note_add)
-		if self.indexmanager.exception:
-			self.fail(str(self.indexmanager.exception))
+		self.note_proc = self._create_note(u'Kenpachi Zaraki')
+		_process_event(self, self.username, Change.CREATED, 'Note', self.note_proc)
+		if self.exception:
+			self.fail(str(self.exception))
 
+	@WithMockDSTrans
 	def test_update(self):
-		_process_event(self.indexmanager, test_user, Change.MODIFIED, 'Note', note_mod)
-		if self.indexmanager.exception:
-			self.fail(str(self.indexmanager.exception))
+		self.note_proc = self._create_note(u'Aizen')
+		_process_event(self, self.username, Change.MODIFIED, 'Note', self.note_proc)
+		if self.exception:
+			self.fail(str(self.exception))
 
+	@WithMockDSTrans
 	def test_delete(self):
-		_process_event(self.indexmanager, test_user, Change.DELETED, 'Note', note_mod)
-		if self.indexmanager.exception:
-			self.fail(str(self.indexmanager.exception))
+		self.note_proc = self._create_note(u'Andy')
+		_process_event(self, self.username, Change.DELETED, 'Note', self.note_proc)
+		if self.exception:
+			self.fail(str(self.exception))
+			
+	@decorator
+	def _check_call(self, username, type_name, data):
+		assert_that('Note', is_(type_name))
+		assert_that(self.note_proc, is_(data))
+		assert_that(username, is_(self.username))
+		
+	# indexmanager
+	
+	@decorator
+	def index_user_content(self, username, type_name=None, data=None):
+		self._check_call(username, type_name, data)
+
+	@decorator
+	def update_user_content(self, username, type_name=None, data=None):
+		self._check_call(username, type_name, data)
+
+	@decorator
+	def delete_user_content(self, username, type_name=None, data=None):
+		self._check_call(username, type_name, data)
 
 if __name__ == '__main__':
 	unittest.main()
