@@ -49,6 +49,7 @@ class _SearchEntityIndexManager(PersistentMapping):
 	def verify_access(self, obj):
 		result = chat_interfaces.IMessageInfo.providedBy(obj) or \
 				 (nti_interfaces.IShareableModeledContent.providedBy(obj) and obj.isSharedDirectlyWith(self.entity))
+
 		if not result:
 			index_owner = self.username.lower()
 			adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
@@ -57,10 +58,6 @@ class _SearchEntityIndexManager(PersistentMapping):
 			result = index_owner == creator or index_owner in sharedWith
 		
 		return result
-
-	@property
-	def dataserver(self):
-		return component.getUtility( nti_interfaces.IDataserver )
 
 	def search(self, query):
 		raise NotImplementedError()
