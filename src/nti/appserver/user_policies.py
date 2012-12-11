@@ -42,6 +42,8 @@ from nti.dataserver.links import Link
 
 from nti.utils.property import annotation_alias
 
+from nti.appserver import site_policies
+
 @component.adapter(nti_interfaces.IModeledContent, IObjectCreatedEvent)
 def dispatch_content_created_to_user_policies( content, event ):
 	component.handle( content, content.creator, event )
@@ -111,6 +113,22 @@ class CoppaUserWithoutAgreementCapabilityFilter(object):
 	def filterCapabilities( self, capabilities ):
 		return set()
 
+@interface.implementer(app_interfaces.IUserCapabilityFilter)
+@component.adapter(nti_interfaces.IUser)
+class MathCountsCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
+
+	def __init__( self, context=None ):
+		super(MathCountsCapabilityFilter, self).__init__(context)
+		self.context = context
+		
+	def filterCapabilities( self, capabilities ):
+		result = super(MathCountsCapabilityFilter, self).filterCapabilities(capabilities)
+		profile = user_interfaces.IUserProfile(self.context) if self.context else None
+		role = getattr(profile, 'role', None)
+		if role is None or role.lower() in ('student', 'other'): #TODO: use string choices
+			result.discard(u'nti.platform.p2p.dynamicfriendslists')
+		return result
+	
 #: This relationship is exposed on Users and in the handshake/ping
 #: when the UI should display it as a link to information about
 #: our "Children's Privacy Policy."
