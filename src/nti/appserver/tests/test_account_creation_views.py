@@ -16,8 +16,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import assert_that
 from hamcrest import has_entry
 from hamcrest import has_entries
 from hamcrest import has_length
@@ -33,6 +34,7 @@ from nti.tests import validly_provides as verifiably_provides
 from nose.tools import assert_raises
 import itertools
 
+from nti.appserver.workspaces import UserService
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.account_creation_views import account_create_view, account_preflight_view
 from nti.appserver import site_policies
@@ -692,7 +694,7 @@ class TestCreateView(_AbstractValidationViewBase):
 													 'birthdate': '1982-01-31',
 													 'alias': 'jason_nextthought_com' }  )
 		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
-			 self.the_view( self.request )
+			self.the_view( self.request )
 
 		assert_that( exc.exception.json_body, has_entry( 'field', 'email' ) )
 
@@ -711,7 +713,7 @@ class TestCreateView(_AbstractValidationViewBase):
 													 'contact_email': 'other',
 													 'alias': 'jason_nextthought_com' }  )
 		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
-			 self.the_view( self.request )
+			self.the_view( self.request )
 
 		assert_that( exc.exception.json_body, has_entry( 'field', 'contact_email' ) )
 
@@ -810,7 +812,60 @@ class TestCreateView(_AbstractValidationViewBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
+	@WithMockDSTrans
+	def test_restricted_capabilities( self ):
+		# see site_policies.[py|zcml]
+		assert_that( self.request.host, is_( 'example.com:80' ) )
+		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason2',
+													 'password': 'temp001',
+													 'realname': 'Joe Bananna',
+													 'birthdate': '1982-01-31',
+													 'affiliation': 'school',
+													 'email': 'foo@bar.com',
+													 'role': 'Student'} )
 
+		new_user = account_create_view( self.request )
+		service = UserService(new_user)
+		ext_object = to_external_object( service )
+		# The user should have some capabilities
+		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.customization.avatar_upload' ))))
+		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.p2p.dynamicfriendslists'))))
+		
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason3',
+													 'password': 'temp001',
+													 'realname': 'Joe Bananna',
+													 'birthdate': '1982-01-31',
+													 'affiliation': 'school',
+													 'email': 'foo@bar.com',
+													 'role': 'Other'} )
+
+		new_user = account_create_view( self.request )
+		service = UserService(new_user)
+		ext_object = to_external_object( service )
+		# The user should have some capabilities
+		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.customization.avatar_upload' ))))
+		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.p2p.dynamicfriendslists'))))
+		
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'jason4',
+													 'password': 'temp001',
+													 'realname': 'Joe Bananna',
+													 'birthdate': '1982-01-31',
+													 'affiliation': 'school',
+													 'email': 'foo@bar.com',
+													 'role': 'Teacher'} )
+
+		new_user = account_create_view( self.request )
+		service = UserService(new_user)
+		ext_object = to_external_object( service )
+		# The user should have some capabilities
+		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.customization.avatar_upload' ))))
+		assert_that( ext_object, has_entry( 'CapabilityList', has_item( u'nti.platform.p2p.dynamicfriendslists')))
+		
 	@WithMockDSTrans
 	def _do_test_create_site_policy( self, host, com_name ):
 		# see site_policies.[py|zcml]
