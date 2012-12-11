@@ -11,6 +11,7 @@ from zope import component
 from nti.dataserver.users import User
 from nti.dataserver.users import Community
 from nti.dataserver.contenttypes import Note
+from nti.dataserver.users import DynamicFriendsList
 
 from nti.ntiids.ntiids import make_ntiid
 
@@ -305,6 +306,38 @@ class _BaseIndexManagerTest(object):
 		hits = toExternalObject(hits)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(ITEMS, has_length(1)))
+		
+	@WithMockDSTrans
+	def test_note_share_dfl(self):
+		ds = mock_dataserver.current_mock_ds
+		ichigo = User.create_user( ds, username='ichigo@nti.com', password='temp001')
+		aizen = User.create_user( ds, username='aizen@nti.com', password='temp001')
+		gin = User.create_user( ds, username='gin@nti.com', password='temp001')
+
+		bleach = DynamicFriendsList(username='bleach')
+		bleach.creator = ichigo # Creator must be set
+		ichigo.addContainedObject( bleach )
+		bleach.addFriend( aizen )
+		bleach.addFriend( gin )
+	
+		note = Note()
+		note.body = [u'Getsuga Tensho']
+		note.creator = 'nti.com'
+		note.containerId = make_ntiid(nttype='bleach', specific='manga')
+		note.addSharingTarget( bleach )
+		note = ichigo.addContainedObject( note )
+
+		self.im = self.create_index_mananger()
+		for c in (ichigo, bleach):
+			self.im.index_user_content(data=note, target=c)
+
+		q = QueryObject(term='getsuga', username=gin.username)
+		hits = self.im.user_data_search(query=q)
+		assert_that(hits, has_length(1))
+		
+		q = QueryObject(term='tensho', username=aizen.username)
+		hits = self.im.user_data_search(query=q)
+		assert_that(hits, has_length(1))
 
 class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
 
@@ -325,7 +358,7 @@ class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
 	def create_index_mananger(self):
 		return create_index_manager_with_repoze()
 
-class TestIndexManagerWithWhoosh(_BaseIndexManagerTest, ConfiguringTestBase):
+class XTestIndexManagerWithWhoosh(_BaseIndexManagerTest, ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
