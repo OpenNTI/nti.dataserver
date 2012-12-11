@@ -211,10 +211,7 @@ class _CanvasTextShapeContentResolver(_BasicContentResolver):
 		return get_content(self.obj.text)
 
 @component.adapter(IDict)
-@interface.implementer(	search_interfaces.IContentResolver,
-						search_interfaces.INTIIDResolver,
-						search_interfaces.IContainerIDResolver,
-						search_interfaces.ILastModifiedResolver)
+@interface.implementer(	search_interfaces.IThreadableContentResolver)
 class _DictContentResolver(object):
 
 	def __init__( self, obj ):

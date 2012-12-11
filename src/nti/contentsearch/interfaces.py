@@ -359,10 +359,19 @@ class ILastModifiedResolver(interface.Interface):
 	def get_last_modified():
 		"""return the last modified date"""
 			
-class IUserContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver, ILastModifiedResolver):
+class ICreatorResolver(interface.Interface):
 	
 	def get_creator():
 		"""return the creator"""
+
+class _ContentMixinResolver(IContentResolver,
+							INTIIDResolver,
+							IContainerIDResolver, 
+							ILastModifiedResolver):
+	pass
+
+class IUserContentResolver(_ContentMixinResolver, ICreatorResolver):
+	pass
 	
 class IThreadableContentResolver(IUserContentResolver):
 	
@@ -402,7 +411,7 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 	def get_recipients():
 		"""return the message recipients"""
 
-class IBookContentResolver(INTIIDResolver, IContainerIDResolver,  IContentResolver, ILastModifiedResolver):
+class IBookContentResolver(_ContentMixinResolver):
 	pass
 		
 # content processing
