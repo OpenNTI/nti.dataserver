@@ -8,6 +8,24 @@ from plasTeX.Base import Command, Crossref, Environment, List
 
 NTIID_TYPE = 'NSD'
 
+def _timeconvert( timestring ):
+	"""Convert a time in the form HH:MM:SS, with hours and minutes optional, to seconds."""
+	_t = timestring.split(':')
+	t_out = 0
+	if len(_t) == 3:
+		if int(_t[1]) >= 60 or int(_t[2]) >= 60:
+			raise ValueError('Invalid time in %s' % timestring)
+		t_out = int(_t[0]) * 3600 + int(_t[1]) * 60 + float(_t[2])
+	elif len(_t) == 2:
+		if int(_t[1]) >= 60:
+			raise ValueError('Invalid time in %s' % timestring)
+		t_out = int(_t[0]) * 60 + float(_t[1])
+	elif len(_t) == 1:
+		t_out = float(_t[0])
+	else:
+		raise ValueError('Invalid time in %s' % timestring)
+	return t_out
+
 class ntislidedeckname(Command):
 	pass
 
@@ -97,8 +115,8 @@ class ntislide(_LocalContentMixin, Environment, plastexids.NTIIDMixin):
 		def digest(self, tex):
 			super(ntislide.ntislidevideoref, self).digest(tex)
 			self.parentNode.slidevideo = self.idref['label']
-			self.parentNode.slidevideostart = self.attributes['options']['start']
-			self.parentNode.slidevideoend = self.attributes['options']['end']
+			self.parentNode.slidevideostart = _timeconvert( self.attributes['options']['start'] )
+			self.parentNode.slidevideoend = _timeconvert(self.attributes['options']['end'])
 
 	class ntislidetext(_LocalContentMixin, Environment):
 		pass

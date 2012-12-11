@@ -17,12 +17,38 @@ from nti.contentrendering.tests import simpleLatexDocumentText
 
 import nti.contentrendering
 from nti.contentrendering.plastexpackages.ntilatexmacros import ntiincludevideo
-from nti.contentrendering.plastexpackages.ntislidedeck import ntislide, ntislidevideo
+from nti.contentrendering.plastexpackages.ntislidedeck import ntislide, ntislidevideo, _timeconvert
 
 def _simpleLatexDocument(maths):
     return simpleLatexDocumentText( preludes=(br'\usepackage{nti.contentrendering.plastexpackages.ntilatexmacros}',
                                               br'\usepackage{nti.contentrendering.plastexpackages.ntislidedeck}'),
                                     bodies=maths )
+
+def test_timeconvert():
+    assert_that( _timeconvert( '25' ), equal_to( 25 ) )
+    assert_that( _timeconvert( '1:25' ), equal_to( 85 ) )
+    assert_that( _timeconvert( '1:0:25' ), equal_to( 3625 ) )
+
+    try:
+        _timeconvert( '1:95' )
+    except ValueError as e:
+        assert_that( unicode(e), equal_to('Invalid time in 1:95'))
+
+    try:
+        _timeconvert( '1:1:95' )
+    except ValueError as e:
+        assert_that( unicode(e), equal_to('Invalid time in 1:1:95'))
+
+    try:
+        _timeconvert( '1:95:25' )
+    except ValueError as e:
+        assert_that( unicode(e), equal_to('Invalid time in 1:95:25'))
+
+    try:
+        _timeconvert( '1:95:95' )
+    except ValueError as e:
+        assert_that( unicode(e), equal_to('Invalid time in 1:95:95'))
+
 
 def test_ntislidevideo():
     example = br"""
@@ -105,6 +131,6 @@ Title Slide
     assert_that( elem.slidenumber, equal_to( elem.ownerDocument.context.counters[elem.counter].value ) )
     assert_that( elem.slideimage, equal_to( elem.childNodes[5] ) )
     assert_that( elem.slidevideo, equal_to( elem.childNodes[7].idref['label'] ) )
-    assert_that( elem.slidevideostart, equal_to( elem.childNodes[7].attributes['options']['start'] ) )
-    assert_that( elem.slidevideoend, equal_to( elem.childNodes[7].attributes['options']['end'] ) )
+    assert_that( elem.slidevideostart, equal_to( _timeconvert(elem.childNodes[7].attributes['options']['start'] )) )
+    assert_that( elem.slidevideoend, equal_to( _timeconvert(elem.childNodes[7].attributes['options']['end'] )) )
 
