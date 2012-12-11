@@ -17,11 +17,9 @@ from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
 import logging
 logger = logging.getLogger( __name__ )
 
-# max number of searchers
-_max_searchers = 1024 #TODO: do this in a config
-
 class _Proxy(ProxyBase):
 	
+	_max_searchers = 256 # Max number of searchers. Set in a config?
 	_semaphore = BoundedSemaphore(_max_searchers)
 	
 	def __init__(self, obj):
@@ -33,8 +31,11 @@ class _Proxy(ProxyBase):
 		return self.obj.__enter__()
 
 	def __exit__(self, *args, **kwargs):
-		result = self.obj.__exit__(*args, **kwargs)
-		self._semaphore.release()
+		result = None
+		try:
+			result = self.obj.__exit__(*args, **kwargs)
+		finally:
+			self._semaphore.release()
 		return result
 		
 @interface.implementer( search_interfaces.IBookIndexManager )
