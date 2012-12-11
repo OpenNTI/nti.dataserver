@@ -21,8 +21,12 @@ logger = logging.getLogger( __name__ )
 class _SearchEntityIndexManager(PersistentMapping):
 	
 	@property
+	def entity(self):
+		return self.__parent__
+	
+	@property
 	def username(self):
-		return self.__parent__.username
+		return self.entity.username
 	
 	def get_username(self):
 		return self.username
@@ -45,6 +49,8 @@ class _SearchEntityIndexManager(PersistentMapping):
 	def verify_access(self, obj):
 		if chat_interfaces.IMessageInfo.providedBy(obj):
 			result = True # Any hit on a message info is accepted
+		elif nti_interfaces.IShareableModeledContent.providedBy(obj) and obj.isSharedDirectlyWith(self.entity):
+			result = True
 		else:
 			adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 			creator = adapted.get_creator().lower()
