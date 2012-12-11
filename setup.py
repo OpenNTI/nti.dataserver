@@ -187,7 +187,7 @@ setup(
 		# jquery-like traversing of python datastructures. lxml, cssselect
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
-		'pyramid >= 1.4b1' ,
+		'pyramid >= 1.4b3' ,
 		'pyramid_tm >= 0.5',
 		'pyramid_mailer >= 0.10', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
@@ -270,8 +270,9 @@ setup(
 		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 3.4.6',
 		'zope.dublincore >= 3.8.2',
+		'zope.error >= 4.0.0',
 		'zope.event >= 4.0.1',
-		'zope.exceptions >= 4.0.2',
+		'zope.exceptions >= 4.0.3',
 		'zope.filerepresentation >= 3.6.1',
 		'zope.file >= 0.6.2',
 		'zope.formlib >= 4.2.0', # Req'd by zope.mimetype among others,
@@ -299,7 +300,7 @@ setup(
 		'zope.tales >= 3.5.3',
 		'zope.traversing >= 3.14.0',
 		# textindexng3
-		'zopyx.txng3.core >= 3.6.0',
+		'zopyx.txng3.core >= 3.6.1.1',
 		'zopyx.txng3.ext >= 3.3.3',
         # Data analysis
         # pandas,
