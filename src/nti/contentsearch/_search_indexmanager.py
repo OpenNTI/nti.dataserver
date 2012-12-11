@@ -47,16 +47,15 @@ class _SearchEntityIndexManager(PersistentMapping):
 		return result
 		
 	def verify_access(self, obj):
-		if chat_interfaces.IMessageInfo.providedBy(obj):
-			result = True # Any hit on a message info is accepted
-		elif nti_interfaces.IShareableModeledContent.providedBy(obj) and obj.isSharedDirectlyWith(self.entity):
-			result = True
-		else:
+		result = chat_interfaces.IMessageInfo.providedBy(obj) or \
+				 (nti_interfaces.IShareableModeledContent.providedBy(obj) and obj.isSharedDirectlyWith(self.entity))
+		if not result:
+			index_owner = self.username.lower()
 			adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 			creator = adapted.get_creator().lower()
 			sharedWith = set([x.lower() for x in adapted.get_sharedWith() or ()])
-			index_owner = self.username.lower()
 			result = index_owner == creator or index_owner in sharedWith
+		
 		return result
 
 	@property
