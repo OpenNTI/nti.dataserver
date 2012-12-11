@@ -358,7 +358,7 @@ class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
 	def create_index_mananger(self):
 		return create_index_manager_with_repoze()
 
-class XTestIndexManagerWithWhoosh(_BaseIndexManagerTest, ConfiguringTestBase):
+class TestIndexManagerWithWhoosh(_BaseIndexManagerTest, ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
