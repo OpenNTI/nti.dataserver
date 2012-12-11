@@ -214,10 +214,10 @@ def _connect_view( request ):
 	# All our errors need to come back as 404 (not 403) otherwise the browser
 	# keeps trying to reconnect this same session
 	if (transport in ws_transports and 'wsgi.websocket' not in environ)\
-	  or (transport not in ws_transports and 'wsgi.websocket' in environ):
-	  # trying to use an upgraded websocket on something that is not websocket transport,
-	  # or vice/versa
-	  raise hexc.HTTPNotFound( 'Incorrect use of websockets' )
+		or (transport not in ws_transports and 'wsgi.websocket' in environ):
+		# trying to use an upgraded websocket on something that is not websocket transport,
+		# or vice/versa
+		raise hexc.HTTPNotFound( 'Incorrect use of websockets' )
 
 	session = _get_session(session_id)
 
