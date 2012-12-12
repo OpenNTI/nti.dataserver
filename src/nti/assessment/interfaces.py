@@ -105,6 +105,15 @@ class IQSingleValuedSolution(IQSolution):
 	value = interface.Attribute( "The correct value" )
 
 
+class IQMultiValuedSolution(IQSolution):
+	"""
+	A solution consisting of a set of values.
+	"""
+	value = schema.List( title="The correct answer selections",
+			     description="The correct answer as a tuple of items which are a zero-based index into the choices list.",
+			     min_length=0,
+			     value_type=schema.TextLine( title="The value" ) )
+
 class IQMathSolution(IQSolution):
 	"""
 	A solution in the math domain. Generally intended to be abstract and
@@ -191,6 +200,37 @@ class IQMultipleChoicePartGrader(IQPartGrader):
 	"""
 
 
+class IQMultipleChoiceMultipleAnswerSolution(IQSolution,IQMultiValuedSolution):
+	"""
+	A solution whose correct answer is drawn from a fixed list
+	of possibilities. The student is expected to choose from
+	the options presented. These will typically be used in isolation as a single part.
+	"""
+
+	value = schema.List( title="The correct answer selections",
+			     description="The correct answer as a tuple of items which are a zero-based index into the choices list.",
+			     min_length=1,
+			     value_type=schema.Int( title="The value",
+						    min=0) )
+
+
+class IQMultipleChoiceMultipleAnswerPart(IQMultipleChoicePart):
+	"""
+	A question part that asks the student to choose between a fixed set
+	of alternatives.
+	"""
+
+	solutions = TypedIterable( title="The multiple-choice solutions",
+				   min_length=1,
+				   value_type=dmschema.Object( IQMultipleChoiceMultipleAnswerSolution, title="Multiple choice / multiple answer solution" ) )
+
+
+class IQMultipleChoiceMultipleAnswerPartGrader(IQPartGrader):
+	"""
+	Specialized interface for grading multiple choice questions.
+	"""
+
+
 class IQFreeResponseSolution(IQSolution,IQSingleValuedSolution):
 	"""
 	A solution whose correct answer is simple text.
@@ -271,6 +311,15 @@ class IQTextResponse(IQResponse):
 
 	value = schema.Text( title="The response text" )
 
+class IQListResponse(IQResponse):
+	"""
+	A response submitted as a list.
+	"""
+
+	value = schema.List( title="The response list",
+			     min_length=1,
+			     value_type=schema.TextLine(title="The value") )
+
 class IQDictResponse(IQResponse):
 	"""
 	A response submitted as a mapping between keys and values.
@@ -282,6 +331,7 @@ class IQDictResponse(IQResponse):
 IQMathSolution.setTaggedValue( 'response_type', IQTextResponse )
 IQFreeResponseSolution.setTaggedValue( 'response_type', IQTextResponse )
 IQMultipleChoiceSolution.setTaggedValue( 'response_type', IQTextResponse )
+IQMultipleChoiceMultipleAnswerSolution.setTaggedValue( 'response_type', IQListResponse )
 IQMatchingSolution.setTaggedValue( 'response_type', IQDictResponse )
 
 def convert_response_for_solution(solution, response):

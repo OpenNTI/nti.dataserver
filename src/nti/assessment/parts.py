@@ -122,6 +122,11 @@ class QMultipleChoicePart(QPart):
 		except AttributeError: # pragma: no cover
 			return NotImplemented
 
+@interface.implementer(interfaces.IQMultipleChoiceMultipleAnswerPart)
+class QMultipleChoiceMultipleAnswerPart(QMultipleChoicePart):
+
+	grader_interface = interfaces.IQMultipleChoiceMultipleAnswerPartGrader
+
 @interface.implementer(interfaces.IQMatchingPart)
 class QMatchingPart(QPart):
 

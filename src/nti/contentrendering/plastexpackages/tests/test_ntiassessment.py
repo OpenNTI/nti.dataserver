@@ -235,6 +235,58 @@ def test_multiple_choice_macros():
 
 	assert_that( question, externalizes( has_entry( 'NTIID', question.ntiid ) ) )
 
+def test_multiple_choice_multiple_answer_macros():
+	example = br"""
+			\begin{naquestion}
+			Arbitrary prefix content goes here.
+			\begin{naqmultiplechoicemultipleanswerpart}
+			   Arbitrary content for this part goes here.
+			   \begin{naqchoices}
+			   		\naqchoice Arbitrary content for the choice.
+					\naqchoice[1] This is part of the right answer.
+					\naqchoice[1] This is the other part of the right answer.
+				\end{naqchoices}
+				\begin{naqsolexplanation}
+					Arbitrary content explaining how the correct solution is arrived at.
+				\end{naqsolexplanation}
+			\end{naqmultiplechoicemultipleanswerpart}
+		\end{naquestion}
+		"""
+
+	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+	assert_that( dom.getElementsByTagName('naquestion'), has_length( 1 ) )
+	assert_that( dom.getElementsByTagName('naquestion')[0], is_( naquestion ) )
+
+	assert_that( dom.getElementsByTagName('naqchoice'), has_length( 3 ) )
+	assert_that( dom.getElementsByTagName('naqsolution'), has_length( 1 ) )
+
+
+	naq = dom.getElementsByTagName('naquestion')[0]
+	part_el = naq.getElementsByTagName( 'naqmultiplechoicemultipleanswerpart' )[0]
+	solns = getattr( part_el, '_asm_solutions' )()
+
+
+	assert_that( solns[0], verifiably_provides( part_el.soln_interface ) )
+	assert_that( solns[0], has_property( 'weight', 1.0 ) )
+
+
+	part = part_el.assessment_object()
+	assert_that( part.solutions, is_( solns ) )
+	assert_that( part, verifiably_provides( part_el.part_interface ) )
+	assert_that( part.content, is_( "Arbitrary content for this part goes here." ) )
+	assert_that( part.explanation, is_( "Arbitrary content explaining how the correct solution is arrived at." ) )
+	assert_that( part, has_property( 'choices', has_length( 3 ) ) )
+	assert_that( part.choices, has_item( 'Arbitrary content for the choice.' ) )
+
+
+	quest_el = dom.getElementsByTagName('naquestion')[0]
+	question = quest_el.assessment_object()
+	assert_that( question.content, is_( 'Arbitrary prefix content goes here.' ) )
+	assert_that( question.parts, contains( part ) )
+	assert_that( question, has_property( 'ntiid', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1' ) )
+
+	assert_that( question, externalizes( has_entry( 'NTIID', question.ntiid ) ) )
+
 def test_matching_macros():
 	example = br"""
 		\begin{naquestion}

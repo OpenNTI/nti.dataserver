@@ -21,6 +21,12 @@ class QTextResponse(TrivialValuedMixin,QResponse):
 	A text response.
 	"""
 
+@interface.implementer(interfaces.IQListResponse)
+class QListResponse(TrivialValuedMixin,QResponse):
+	"""
+	A list response.
+	"""
+
 @interface.implementer(interfaces.IQDictResponse)
 class QDictResponse(TrivialValuedMixin,QResponse):
 	"""

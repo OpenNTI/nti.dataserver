@@ -65,6 +65,33 @@ class TestMultipleChoicePart(ConfiguringTestBase):
 		assert_that( part.grade( 1 ), is_true() )
 		assert_that( part.grade( 0 ), is_false() )
 
+class TestMultipleChoiceMultipleAnswerPart(ConfiguringTestBase):
+	set_up_packages = (nti.assessment,)
+
+	def test_part_provides(self):
+		assert_that( parts.QMultipleChoiceMultipleAnswerPart(), verifiably_provides( interfaces.IQMultipleChoiceMultipleAnswerPart ) )
+		assert_that( parts.QMultipleChoiceMultipleAnswerPart(), externalizes( has_entry( 'Class', 'MultipleChoiceMultipleAnswerPart' ) ) )
+
+		# A bad solution type
+		part = parts.QMultipleChoiceMultipleAnswerPart( solutions=( [ 0, 1 ],) )
+		assert_that( part, verifiably_provides( interfaces.IQMultipleChoiceMultipleAnswerPart ) )
+		assert_that( part, is_( part ) )
+
+		with assert_raises(interface.Invalid):
+			sf = interfaces.IQMultipleChoiceMultipleAnswerPart['solutions']
+			sf.bind( part )
+			sf.validate( part.solutions )
+
+
+	def test_grade(self):
+		solution = solutions.QMultipleChoiceMultipleAnswerSolution( [ 1 ] )
+		choices = ("A", "B", "C")
+		part = parts.QMultipleChoiceMultipleAnswerPart( solutions=(solution,), choices=choices )
+
+		# Submitting the index
+		assert_that( part.grade( [ 1 ] ), is_true() )
+		assert_that( part.grade( [ 0 ] ), is_false() )
+
 class TestMatchingPart(ConfiguringTestBase):
 	set_up_packages = (nti.assessment,)
 

@@ -113,3 +113,16 @@ class QMultipleChoiceSolution(_TrivialValuedMixin,QSolution):
 
 	__eq__ = _eq_
 	__ne__ = _ne_
+
+@interface.implementer(interfaces.IQMultipleChoiceMultipleAnswerSolution)
+class QMultipleChoiceMultipleAnswerSolution(_TrivialValuedMixin,QSolution):
+	"""
+	The answer is defined as a list of selections which best represent
+	the correct answer.
+	"""
+
+	_part_type = parts.QMultipleChoiceMultipleAnswerPart
+
+	__eq__ = _eq_
+	__ne__ = _ne_
+
