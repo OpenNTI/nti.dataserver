@@ -29,6 +29,12 @@ name: naqmultiplechoicepart
 	 <span tal:content="self"></span>
 </div>
 
+name: naqmultiplechoicemultipleanswerpart
+<div class="naquestionpart naqmultiplechoicemultipleanswerpart" tal:attributes="id self/id" >
+	 <a tal:attributes="name self/id"></a>
+	 <span tal:content="self"></span>
+</div>
+
 name: naqchoices
 <ol class="naqchoices">
 	<li tal:repeat="item self" class="naqchoice" tal:content="item" ></li>

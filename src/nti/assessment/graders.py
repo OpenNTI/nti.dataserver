@@ -95,6 +95,18 @@ class MultipleChoiceGrader(EqualityGrader):
 
 		return result
 
+@interface.implementer(interfaces.IQMultipleChoiceMultipleAnswerPartGrader)
+class MultipleChoiceMultipleAnswerGrader(EqualityGrader):
+	"""
+	Grader that grades multiple choice / multiple answer questions by 
+	checking to see if the given list of values matches the solution 
+	value list (they should both be lists of indices, but this allows 
+	choices to be stored as a map and the elements of the solution list 
+	to be a key). 
+	"""
+
+	pass
+
 @interface.implementer(interfaces.IQMatchingPartGrader)
 class MatchingPartGrader(_AbstractGrader):
 	"""

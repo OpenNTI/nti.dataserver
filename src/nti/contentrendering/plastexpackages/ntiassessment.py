@@ -343,6 +343,80 @@ class naqmultiplechoicepart(_AbstractNAQPart):
 		self.insertAfter( _naqsolns, _naqchoices )
 		return res
 
+class naqmultiplechoicemultipleanswerpart(_AbstractNAQPart):
+	"""
+	A multiple-choice / multiple-answer part (usually used as the sole part to a question).
+	It must have a child listing the possible choices; the solutions are collapsed
+	into this child; at least one of them must have a weight equal to 1::.  Further the all
+	solutions with a weight of 1:: are required to be submitted to receive credit for the
+	question
+
+		\begin{naquestion}
+			Arbitrary prefix content goes here.
+			\begin{naqmultiplechoicemultipleanswerpart}
+			        Arbitrary content for this part goes here.
+				\begin{naqchoices}
+			   		\naqchoice Arbitrary content for the choices.
+					\naqchoice[1] This is one part of a right choice.
+					\naqchoice[1] This is another part of a right choice.
+	                        \end{naqchoices}
+				\begin{naqsolexplanation}
+					Arbitrary content explaining how the correct solution is arrived at.
+				\end{naqsolexplanation}
+			\end{naqmultiplechoicemultipleanswerpart}
+		\end{naquestion}
+	"""
+
+	part_interface = as_interfaces.IQMultipleChoiceMultipleAnswerPart
+	part_factory = parts.QMultipleChoiceMultipleAnswerPart
+	soln_interface = as_interfaces.IQMultipleChoiceMultipleAnswerSolution
+
+	def _asm_choices(self):
+		return [x._asm_local_content for x in self.getElementsByTagName( 'naqchoice' )]
+
+	def _asm_object_kwargs(self):
+		return { 'choices': self._asm_choices() }
+
+	def _asm_solutions(self):
+		solutions = []
+		# By definition, there can only be one solution element.
+		solution_el = self.getElementsByTagName( 'naqsolution' )[0]
+
+		solution = self.soln_interface( solution_el.answer )
+		weight = solution_el.attributes['weight']
+		if weight is not None:
+			solution.weight = weight
+		solutions.append( solution )
+
+		return solutions
+
+	def digest( self, tokens ):
+		res = super(naqmultiplechoicemultipleanswerpart,self).digest( tokens )
+		# Validate the document structure: we have a naqchoices child 
+		# with at least two of its own children, and at least one 
+		# weight == 1.  There is no explicit solution
+		_naqchoices = self.getElementsByTagName( 'naqchoices' )
+		assert len(_naqchoices) == 1
+		_naqchoices = _naqchoices[0]
+		assert len(_naqchoices) > 1, "Must have more than one choice"
+		assert any( (_naqchoice.attributes['weight'] == 1.0 for _naqchoice in _naqchoices) )
+		assert len(self.getElementsByTagName( 'naqsolutions' )) == 0
+
+		# Tranform the implicit solutions into a list of 0-based 
+		# indices.
+		_naqsolns = self.ownerDocument.createElement( 'naqsolutions' )
+		_naqsolns.macroMode = _naqsolns.MODE_BEGIN
+		_naqsoln = self.ownerDocument.createElement( 'naqsolution' )
+		_naqsoln.attributes['weight'] = 1.0
+		_naqsoln.argSource = '[1.0]'
+		_naqsoln.answer = []
+		for i, _naqchoice in enumerate(_naqchoices):
+			if _naqchoice.attributes['weight'] and _naqchoice.attributes['weight'] == 1:
+				_naqsoln.answer.append( i )
+		_naqsolns.appendChild( _naqsoln )
+		self.insertAfter( _naqsolns, _naqchoices )
+		return res
+
 class naqmatchingpart(_AbstractNAQPart):
 	"""
 	A matching part (usually used as the sole part to a question).

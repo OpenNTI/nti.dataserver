@@ -71,3 +71,13 @@ class TestFreeResponseSolution(ConfiguringTestBase):
 
 		# SAJ: We are now not case sensitive
 		assert_that( solution.QFreeResponseSolution( "text" ).grade( "Text" ), is_true( ) )
+
+
+class TestMultipleChoiceMultipleAnswerSolution(ConfiguringTestBase):
+	set_up_packages = (nti.assessment,)
+        def test_multiplechoicemultipleanswersolution(self):
+		assert_that( solution.QMultipleChoiceMultipleAnswerSolution( [ 1 ] ).grade( [ 1 ] ), is_true( ) )
+		assert_that( solution.QMultipleChoiceMultipleAnswerSolution( [ 1, 2 ] ).grade( [ 1, 2 ] ), is_true( ) )
+		assert_that( solution.QMultipleChoiceMultipleAnswerSolution( [ 1, 2, 3 ] ).grade( [ 1, 2, 3 ] ), is_true( ) )
+
+		assert_that( solution.QMultipleChoiceMultipleAnswerSolution( [ 1, 2 ] ).grade( [ 2, 1 ] ), is_false( ) )
