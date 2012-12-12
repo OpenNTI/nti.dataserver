@@ -499,7 +499,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	IF_WITH_AGREEMENT = nti_interfaces.ICoppaUserWithAgreement
 	IF_WOUT_AGREEMENT = nti_interfaces.ICoppaUserWithoutAgreement
 	IF_WITH_AGREEMENT_UPGRADED = nti_interfaces.ICoppaUserWithAgreementUpgraded
-	
+
 	def upgrade_user( self, user ):
 		if not self.IF_WOUT_AGREEMENT.providedBy( user ):
 			logger.debug( "No need to upgrade user %s that doesn't provide %s", user, self.IF_WOUT_AGREEMENT )
@@ -521,9 +521,9 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 
 				if getattr( orig_profile, name, None ): # Only copy things that have values. Let defaults be used otherwise
 					setattr( new_profile, name, getattr( orig_profile, name ) )
-					
+
 		# user.transitionTime = time.time()
-			
+
 		notify( app_interfaces.UserUpgradedEvent( user,
 												  restricted_interface=self.IF_WOUT_AGREEMENT, restricted_profile=orig_profile,
 												  upgraded_interface=self.IF_WITH_AGREEMENT, upgraded_profile=new_profile,
@@ -739,7 +739,7 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 	IF_WITH_AGREEMENT = IMathcountsCoppaUserWithAgreement
 	IF_WOUT_AGREEMENT = IMathcountsCoppaUserWithoutAgreement
 	IF_WITH_AGREEMENT_UPGRADED = IMathcountsCoppaUserWithAgreementUpgraded
-	
+
 	COM_USERNAME = 'MATHCOUNTS'
 	COM_ALIAS = 'MATHCOUNTS'
 	COM_REALNAME = 'MATHCOUNTS'

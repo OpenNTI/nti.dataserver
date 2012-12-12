@@ -284,7 +284,8 @@ def account_preflight_view(request):
 	:return: A dictionary containing the Username and any possible ``AvatarURLChoices``. The dictionary
 		also contains a ``ProfileSchema`` key containing a list of dictionaries providing
 		information about what field we would like to have filled out, and in some cases, what values
-		they can have.
+		they can have. Depending on the type of user, this may include some of the
+		additional fields mentioned in :func:`account_create_view`.
 
 	"""
 
@@ -316,6 +317,7 @@ def account_preflight_view(request):
 	preflight_user = _create_user( request, externalValue, preflight_only=True )
 
 	ext_schema = _make_schema( preflight_user, readonly_override=False )
+	ext_schema = _amend_schema_for_account_creation( preflight_user, ext_schema )
 
 	request.response.status_int = 200
 
@@ -462,3 +464,23 @@ def _make_schema( user, readonly_override=None ):
 		ext_schema['realname']['readonly'] = True
 
 	return ext_schema
+
+def _amend_schema_for_account_creation( user, ext_schema ):
+	"""
+	Given a user profile schema, as produced by :func:`_make_schema`,
+	update it to include things that are not part of the profile schema itself but
+	that we want (only) during account creation.
+
+	:return: An updated schema.
+	"""
+	result = ext_schema.copy()
+
+	if not nti_interfaces.ICoppaUserWithoutAgreement.providedBy( user ):
+		# Business rule on 12/12/12: don't provide invitation codes to coppa users
+		item_schema = { 'name': 'invitation_codes',
+						'required': False,
+						'readonly': False,
+						'type': 'list' }
+		result[item_schema['name']] = item_schema
+
+	return result
