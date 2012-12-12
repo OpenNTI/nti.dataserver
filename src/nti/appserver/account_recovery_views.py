@@ -137,6 +137,8 @@ def forgot_passcode_view(request):
 	email_assoc_with_account = _preflight_email_based_request( request  )
 
 	username = request.params.get( 'username' )
+	if username:
+		username = username.strip()
 	if not username:
 		return hexc.HTTPBadRequest(detail="Must provide username")
 
@@ -149,10 +151,9 @@ def forgot_passcode_view(request):
 											request.registry.getUtility(nti_interfaces.IDataserver),
 											username=username	)
 
-	# Ok, we either got one user on no users.
+	# Ok, we either got one user on no users (todo: there seems to be a scenario where we get multiple users?)
 	base_template = 'password_reset_email'
-	if matching_users:
-		assert len(matching_users) == 1
+	if matching_users and len(matching_users) == 1:
 		# We got one user. So we need to generate a token, and
 		# store the timestamped value, while also invalidating any other
 		# tokens we have for this user.
@@ -178,6 +179,8 @@ def forgot_passcode_view(request):
 		reset_url = success_redirect_value
 
 	else:
+		logger.warn( "Failed to find user with username '%s' and email '%s': %s",
+					 username, email_assoc_with_account, matching_users )
 		matching_user = None
 		value = (None,None)
 		reset_url = None
