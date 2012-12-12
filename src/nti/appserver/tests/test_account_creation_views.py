@@ -370,6 +370,9 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( val, has_entry( 'ProfileSchema',
 									 has_entry( 'affiliation',
 												has_entry( 'type', 'nti.appserver.site_policies.school' ) ) ) )
+		assert_that( val, has_entry( 'ProfileSchema',
+									 has_entry( 'invitation_codes',
+												has_entry( 'type', 'list' ) ) ) )
 
 
 	@WithMockDSTrans
@@ -461,6 +464,8 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( val, has_entry( 'ProfileSchema',
 									 has_entry( 'participates_in_mathcounts',
 												has_entry( 'type', 'bool' ) ) ) )
+		assert_that( val, has_entry( 'ProfileSchema',
+									 does_not( has_key( 'invitation_codes' ) ) ) )
 
 
 	@WithMockDSTrans
@@ -814,10 +819,12 @@ class TestCreateView(_AbstractValidationViewBase):
 
 	@WithMockDSTrans
 	def test_restricted_capabilities( self ):
+		# TODO: This test doesn't belong here, it has nothing to do with
+		# creating users. Move it.
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
 		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
-		
+
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason2',
 													 'password': 'temp001',
@@ -833,7 +840,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		# The user should have some capabilities
 		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.customization.avatar_upload' ))))
 		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.p2p.dynamicfriendslists'))))
-		
+
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason3',
 													 'password': 'temp001',
@@ -849,7 +856,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		# The user should have some capabilities
 		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.customization.avatar_upload' ))))
 		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.p2p.dynamicfriendslists'))))
-		
+
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason4',
 													 'password': 'temp001',
@@ -865,7 +872,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		# The user should have some capabilities
 		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.customization.avatar_upload' ))))
 		assert_that( ext_object, has_entry( 'CapabilityList', has_item( u'nti.platform.p2p.dynamicfriendslists')))
-		
+
 	@WithMockDSTrans
 	def _do_test_create_site_policy( self, host, com_name ):
 		# see site_policies.[py|zcml]

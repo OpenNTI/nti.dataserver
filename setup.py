@@ -106,7 +106,7 @@ setup(
 		'ZConfig >= 2.9.3',
 		 # NOTE: ZODB has a new release, 4.0.0a1 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
-		 # will need to additionally include persistent >= 4.0.3 and BTrees >= 4.0.1, and ZEO >= 4.0.0
+		 # will need to additionally include persistent >= 4.0.4 and BTrees >= 4.0.1, and ZEO >= 4.0.0
 		 # which were pulled out of ZODB for better pypy support. We'll switch to it
 		 # when it goes non-alpha. It may require a tweak to our monkey patch if
 		 # has not been fixed.
