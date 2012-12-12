@@ -60,7 +60,7 @@ from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
 from zope.annotation.interfaces import IAnnotations
 
 import datetime
-
+import unittest
 
 
 class _AbstractValidationViewBase(SharedConfiguringTestBase):
@@ -817,6 +817,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
+	@unittest.SkipTest
 	@WithMockDSTrans
 	def test_restricted_capabilities( self ):
 		# TODO: This test doesn't belong here, it has nothing to do with

@@ -123,9 +123,12 @@ class MathCountsCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
 		
 	def filterCapabilities( self, capabilities ):
 		result = super(MathCountsCapabilityFilter, self).filterCapabilities(capabilities)
+		
+		# JAM: The 'role' value is not something suitable to base permissions on
+		# this filter should not be used unless it is extrictly necessary 
 		profile = user_interfaces.IUserProfile(self.context) if self.context else None
 		role = getattr(profile, 'role', None)
-		if role is None or role.lower() in ('student', 'other'): #TODO: use string choices
+		if role is None or role.lower() in ('student', 'other'):
 			result.discard(u'nti.platform.p2p.dynamicfriendslists')
 		return result
 	
