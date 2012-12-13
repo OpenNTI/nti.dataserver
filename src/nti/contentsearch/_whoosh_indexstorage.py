@@ -1,11 +1,14 @@
 from __future__ import print_function, unicode_literals
 
 import os
+import time
+import random
 import binascii
 
 from zope import interface
 
 from whoosh import index
+from whoosh.store import LockError
 from whoosh.index import _DEF_INDEX_NAME
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
@@ -47,6 +50,21 @@ def segment_merge(writer, segments):
 		else:
 			newsegments.append(s)
 	return newsegments
+
+def get_index_writer(index, writer_ctor_args={}, maxiters=40, delay=0.25):
+	counter = 0
+	writer = None
+	while writer is None:
+		try:
+			writer = index.writer(**writer_ctor_args)
+		except LockError, e:
+			counter += 1
+			if counter <= maxiters:
+				x = random.uniform(0.1, delay)
+				time.sleep(x)
+			else:
+				raise e
+	return writer
 
 @interface.implementer( search_interfaces.IWhooshIndexStorage )
 class IndexStorage(object):
