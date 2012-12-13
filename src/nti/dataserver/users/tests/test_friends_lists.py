@@ -17,7 +17,7 @@ from hamcrest import has_property
 from hamcrest import contains
 from hamcrest import is_
 from hamcrest import is_not as does_not
-
+from hamcrest import greater_than_or_equal_to
 import nti.tests
 from nti.tests import is_true, is_false
 
@@ -201,118 +201,132 @@ def test_delete_dynamic_friendslist_clears_memberships():
 from nti.dataserver.tests.test_authorization_acl import permits
 from nti.dataserver import authorization as nauth
 
+def _note_from( creator, text='Hi there' ):
+	owner_note = Note()
+	owner_note.applicableRange = ContentRangeDescription()
+	owner_note.creator = creator
+	owner_note.body = [text]
+	owner_note.containerId = 'tag:nti'
+	return owner_note
+
+def _dfl_sharing_fixture( ds ):
+	"""
+	Create a user owning a DFL. Two other users are added to the dfl.
+
+	:return: A tuple (owner, member1, member2, dfl)
+	"""
+	ds.add_change_listener( users.onChange )
+
+	# Create a user with a DFL and two friends in the DFL
+	owner_user = users.User.create_user( username="OwnerUser@bar" )
+	parent_dfl = users.DynamicFriendsList( username="ParentFriendsList" )
+	parent_dfl.creator = owner_user
+	owner_user.addContainedObject( parent_dfl )
+
+	member_user = users.User.create_user( username="memberuser@bar" )
+	parent_dfl.addFriend( member_user )
+
+	member_user2 = users.User.create_user( username="memberuser2@bar" )
+	parent_dfl.addFriend( member_user2 )
+
+	# Reset notification counts (Circled notices would have gone out)
+	for u in (owner_user, member_user, member_user2):
+		u.notificationCount.value = 0
+
+	return owner_user, member_user, member_user2, parent_dfl
+
+def _assert_that_item_is_in_contained_stream_and_data_with_notification_count( user, item, count=1 ):
+	__traceback_info__ = user, item
+	child_stream = user.getContainedStream( item.containerId )
+	assert_that( child_stream, has_length( count ) )
+	assert_that( child_stream, has_item( has_property( 'object', item ) ) )
+	assert_that( user.notificationCount, has_property( 'value', count ) )
+
+	shared_data = user.getSharedContainer( item.containerId )
+	assert_that( shared_data, has_length( greater_than_or_equal_to( count ) ) )
+	assert_that( shared_data, has_item( item ) )
+
 @WithMockDS(with_changes=True)
 def test_sharing_with_dfl():
 	ds = mock_dataserver.current_mock_ds
 	with mock_dataserver.mock_db_trans( ds ):
-		# Set up listeners
-		ds.add_change_listener( users.onChange )
+		owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture( ds )
 
-		# Create a user with a DFL and two friends in the DFL
-		parent_user = users.User.create_user( username="foo@bar" )
-		parent_dfl = users.DynamicFriendsList( username="ParentFriendsList" )
-		parent_dfl.creator = parent_user
-		parent_user.addContainedObject( parent_dfl )
-
-		child_user = users.User.create_user( username="baz@bar" )
-		parent_dfl.addFriend( child_user )
-
-		other_user = users.User.create_user( username="other@bar" )
-		parent_dfl.addFriend( other_user )
-
-		# Reset notification counts (Circled notices would have gone out)
-		for u in (parent_user, child_user, other_user):
-			u.notificationCount.value = 0
-
-		with parent_user.updates():
+		with owner_user.updates():
 			# Create a note
-			parent_note = Note()
-			parent_note.applicableRange = ContentRangeDescription()
-			parent_note.creator = parent_user
-			parent_note.body = ['Hi there']
-			parent_note.containerId = 'tag:nti'
+			owner_note = _note_from( owner_user )
 
 			# (Check base states)
-			for u in (child_user, other_user):
-				child_stream = u.getContainedStream( parent_note.containerId )
+			for u in (member_user, member_user2):
+				child_stream = u.getContainedStream( owner_note.containerId )
 				assert_that( child_stream, has_length( 0 ) )
 
 			# Share the note with the DFL and thus its two members
-			parent_note.addSharingTarget( parent_dfl )
-			parent_user.addContainedObject( parent_note )
+			owner_note.addSharingTarget( parent_dfl )
+			owner_user.addContainedObject( owner_note )
 
 		# Sharing with the DFL caused broadcast events and notices to go out
 		# to the members of the DFL. These members have the shared object
-		# in their stream
-		for u in (child_user, other_user):
-			__traceback_info__ = u
-			child_stream = u.getContainedStream( parent_note.containerId )
-			assert_that( child_stream, has_length( 1 ) )
-			assert_that( u.notificationCount, has_property( 'value', 1 ) )
+		# in their stream and shared data
+		for u in (member_user, member_user2):
+			_assert_that_item_is_in_contained_stream_and_data_with_notification_count( u, owner_note )
+
 
 
 		# If a member of the DFL replies to the note,
 		# then the same thing happens,
-		with child_user.updates():
-			child_note = Note()
-			child_note.creator = child_user
-			child_note.body = ['A reply']
-			child_note.containerId = 'tag:nti'
-			child_note.applicableRange = ContentRangeDescription()
+		with member_user.updates():
+			child_note = _note_from( member_user, 'A reply' )
 
 			ext_obj = to_external_object( child_note )
-			ext_obj['inReplyTo'] = to_external_ntiid_oid( parent_note )
+			ext_obj['inReplyTo'] = to_external_ntiid_oid( owner_note )
 
 			update_from_external_object( child_note, ext_obj, context=ds )
 
-			assert_that( child_note, has_property( 'inReplyTo', parent_note ) )
-			assert_that( child_note, has_property( 'sharingTargets', set((parent_dfl,parent_user)) ) )
+			assert_that( child_note, has_property( 'inReplyTo', owner_note ) )
+			assert_that( child_note, has_property( 'sharingTargets', set((parent_dfl,owner_user)) ) )
 
-			child_user.addContainedObject( child_note )
+			member_user.addContainedObject( child_note )
 
-		other_stream = other_user.getContainedStream( child_note.containerId )
-		assert_that( other_stream, has_length( 2 ) )
-		assert_that( other_user.notificationCount, has_property( 'value', 2 ) )
-		#parent_stream = parent_user.getContainedStream( parent_note.containerId )
-		#assert_that( parent_stream, has_length( 1 ) )
+		# Notices go out to the other members of the DFL, including the owner
+		_assert_that_item_is_in_contained_stream_and_data_with_notification_count( member_user2, child_note, 2 )
+		_assert_that_item_is_in_contained_stream_and_data_with_notification_count( owner_user, child_note, 1 )
 
 
-		# If a member of the DFL shares something unrelated with the group,
-		# it is visible to the creator in the shared data, in the stream, and
-		# in the notification count
-		parent_user.notificationCount.value = 0
-		with child_user.updates():
-			child_note = Note()
-			child_note.creator = child_user
-			child_note.body = ['From the child']
-			child_note.containerId = 'tag:nti2'
-			child_note.applicableRange = ContentRangeDescription()
+@WithMockDS(with_changes=True)
+def test_sharing_with_dfl_member_shares_top_level():
+	"""
+	If a member of the DFL shares something unrelated with the DFL,
+	it is visible to the creator of the DFL in the shared data, in the stream, and
+	in the notification count
+	"""
+
+	ds = mock_dataserver.current_mock_ds
+	with mock_dataserver.mock_db_trans( ds ):
+		owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture( ds )
+
+		with member_user.updates():
+			child_note = _note_from( member_user, 'From the child' )
 			child_note.addSharingTarget( parent_dfl )
 
 			assert_that( child_note, has_property( 'sharingTargets', set((parent_dfl,)) ) )
 
-			child_user.addContainedObject( child_note )
+			member_user.addContainedObject( child_note )
 
 		# The shared note is in the shared data for the owner of the DFL
-		parent_shared_cont = parent_user.getSharedContainer( child_note.containerId )
-		assert_that( parent_shared_cont, has_length( 1 ) )
-		assert_that( parent_shared_cont, contains( child_note ) )
 		# And in the stream of the owner of the DFL
-		parent_stream = parent_user.getContainedStream( child_note.containerId )
-		assert_that( parent_stream, has_length( 1 ) )
 		# and as a notification for the DFL owner
-		assert_that( parent_user.notificationCount, has_property( 'value', 1 ) )
+		_assert_that_item_is_in_contained_stream_and_data_with_notification_count( owner_user, child_note, 1 )
 
-		# and is in the other member's stream as well
-		other_stream = other_user.getContainedStream( child_note.containerId )
-		assert_that( other_stream, has_length( 1 ) )
-		assert_that( other_user.notificationCount, has_property( 'value', 3 ) )
+
+		# and is in the other member's stream and shared data as well
+		_assert_that_item_is_in_contained_stream_and_data_with_notification_count( member_user2, child_note, 1 )
 
 		# This Note provides ACL access to its creator and the members of the DFL
 		# (TODO: This is implemented by expanding the membership list of the DFL
 		# when the ACL is constructed. The other option is to have the DFL
 		# appear in the principal list of the user, as is done for communities; that
 		# would change this test.)
-		assert_that( child_note, permits( child_user, nauth.ACT_READ ) )
-		assert_that( child_note, permits( parent_user, nauth.ACT_READ ) )
-		assert_that( child_note, permits( other_user, nauth.ACT_READ ) )
+		assert_that( child_note, permits( member_user, nauth.ACT_READ ) )
+		assert_that( child_note, permits( owner_user, nauth.ACT_READ ) )
+		assert_that( child_note, permits( member_user2, nauth.ACT_READ ) )
