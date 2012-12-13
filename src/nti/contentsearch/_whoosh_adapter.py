@@ -1,7 +1,5 @@
 from __future__ import print_function, unicode_literals
 
-import time
-import random
 from hashlib import md5
 
 from gevent.coros import RLock
@@ -10,8 +8,6 @@ from zope import interface
 from zope import component
 from zope.proxy import ProxyBase
 from zope.annotation import factory as an_factory
-
-from whoosh.store import LockError
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -27,6 +23,7 @@ from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import merge_search_results
 from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch._search_results import merge_suggest_results
+from nti.contentsearch._whoosh_indexstorage import get_index_writer
 from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 from nti.contentsearch._search_results import empty_suggest_and_search_results
 from nti.contentsearch._search_results import merge_suggest_and_search_results
@@ -44,21 +41,6 @@ def get_indexname(username, type_name, use_md5=True):
 	else:
 		indexname = "%s_%s" % (username, type_name)
 	return indexname
-
-def get_index_writer(index, writer_ctor_args, maxiters, delay):
-	counter = 0
-	writer = None
-	while writer is None:
-		try:
-			writer = index.writer(**writer_ctor_args)
-		except LockError, e:
-			counter += 1
-			if counter <= maxiters:
-				x = random.uniform(0.1, delay)
-				time.sleep(x)
-			else:
-				raise e
-	return writer
 	
 # proxy class to wrap an whoosh index
 
