@@ -30,7 +30,7 @@
 			 name="mathcounts.nextthought.com" />
 
 	<!-- On the MC site, NO ONE can upload avatars  -->
-	<adapter factory=".site_policies.NoAvatarUploadCapabilityFilter"
+	<adapter factory=".user_policies.MathCountsCapabilityFilter"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
 			 name="mathcounts.nextthought.com" />
