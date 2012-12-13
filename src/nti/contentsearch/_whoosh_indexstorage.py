@@ -176,10 +176,11 @@ class UserDirectoryStorage(DirectoryStorage):
 		return oid_to_path(oid, max_bytes)
 	
 	
-def create_directory_index(indexname, schema, indexdir=None):
+def create_directory_index(indexname, schema, indexdir=None, close_index=True):
 	storage = DirectoryStorage(indexdir)
 	idx = storage.get_or_create_index(indexname=indexname, schema=schema)
-	idx.close()
+	if close_index:
+		idx.close()
 	return idx, storage	
 	
 @interface.implementer( search_interfaces.IWhooshIndexStorage )
