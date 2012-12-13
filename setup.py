@@ -272,7 +272,7 @@ setup(
 		'zope.dublincore >= 3.8.2',
 		'zope.error >= 4.0.0',
 		'zope.event >= 4.0.1',
-		'zope.exceptions >= 4.0.3',
+		'zope.exceptions >= 4.0.4',
 		'zope.filerepresentation >= 3.6.1',
 		'zope.file >= 0.6.2',
 		'zope.formlib >= 4.2.0', # Req'd by zope.mimetype among others,
