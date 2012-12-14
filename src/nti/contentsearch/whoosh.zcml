@@ -8,4 +8,13 @@
 			 for="nti.dataserver.interfaces.IEntity"
 			 provides=".interfaces.IWhooshEntityIndexManager" />
 	
+	<utility factory="._whoosh_user_index._WhooshUserIndex"
+			 provides="._whoosh_user_index.IWhooshUserIndex" />
+			 
+	<!--
+	<subscriber handler="._whoosh_user_index.on_entity_created" />
+	<subscriber handler="._whoosh_user_index.on_entity_modified" />
+	<subscriber handler="._whoosh_user_index.on_entity_deleted" />
+	-->
+	
 </configure>
