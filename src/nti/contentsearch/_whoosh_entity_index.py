@@ -54,10 +54,12 @@ class IWhooshEntityIndex(search_interfaces.IEntityIndex):
 		
 def create_user_schema():
 	analyzer = analysis.NgramWordAnalyzer(minsize=2, maxsize=50, at='start')
-	schema = fields.Schema(	intid = fields.ID(stored=True, unique=True),
+	schema = fields.Schema(	type = fields.ID(stored=False),
+							intid = fields.ID(stored=True, unique=True),
 							username = fields.ID(stored=True, unique=True),
 							alias = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
 							email = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
+							creator = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
 							realname = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
 							t_username = fields.TEXT(stored=False, analyzer=analyzer, phrase=False))
 	return schema
@@ -79,6 +81,10 @@ def populate_index(index):
 	for user in _users.values():
 		data = get_entity_info(user)
 		writer.add_document(**data)
+		friendsLists = getattr(user, "friendsLists", {})
+		for fl in friendsLists.values():
+			data = get_entity_info(fl)
+			writer.add_document(**data)
 	writer_commit(writer, optimize=True)
 
 def _get_lock(path, indexname, timeout=60, delay=0.5):
@@ -112,29 +118,37 @@ def create_index(inmemory=False):
 			lock.close()
 	return result
 
-def get_entity_info(user):
+def _getattr(obj, name, default=None):
+	result = getattr(obj, name, default)
+	result = unicode(result) if result else None
+	
+def get_entity_info(entity):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
-	username = user.username
+	username = entity.username
 	
 	# get intid as unicode
-	intid = _ds_intid.queryId(user, None)
+	intid = _ds_intid.queryId(entity, None)
 	intid = unicode(intid) if intid else None
+	clazz = unicode(entity.__class__.__name__.lower())
 	
-	# parse user profile
-	alias = realname = email = u''
-	if nti_interfaces.IUser.providedBy(user):
-		profile = user_interfaces.IUserProfile(user)
-		email = getattr(profile, 'email', None)
-		alias = getattr(profile, 'alias', None)
-		realname = getattr(profile, 'realname', None)
-	
+	# parse entity profile
+	alias = realname = email = creator = None
+	if nti_interfaces.IUser.providedBy(entity):
+		profile = user_interfaces.IUserProfile(entity)
+		email = _getattr(profile, 'email', None)
+		alias = _getattr(profile, 'alias', None)
+		realname = _getattr(profile, 'realname', None)
+	else:
+		creator = _getattr(entity, 'creator', None) or _getattr(entity, 'Creator', None)
+		creator = unicode(creator.username) if nti_interfaces.IEntity.providedBy(creator) else creator
+		
 	# data to be indexed
-	return {'intid': intid, 'username': username, 
+	return {'intid': intid, 'username': username, 'creator':creator, 'type': clazz,
 			'alias':alias, 'email':email, 'realname':realname, 
 			't_username': username}
 	
 def _create_or_update_entity(iwu_index, entity):
-	result = entity is not None and not nti_interfaces.IFriendsList.providedBy(entity)
+	result = entity is not None
 	if result:
 		data = get_entity_info(entity)
 		writer = iwu_index.writer()
@@ -152,7 +166,7 @@ def on_entity_created( entity, event ):
 		iwu_index.on_entity_created(entity.username)
 	
 def _update_entity(iwu_index, entity):
-	result = entity is not None and not nti_interfaces.IFriendsList.providedBy(entity)
+	result = entity is not None
 	if result:
 		writer = iwu_index.writer()
 		data = get_entity_info(entity)
