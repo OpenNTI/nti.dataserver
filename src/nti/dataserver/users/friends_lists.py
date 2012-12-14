@@ -114,6 +114,10 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		# implemented with _update_friends_from_external so as to let subclasses fire the correct
 		# events
 		if friend in self:
+			jar = self._p_jar
+			if jar:
+				jar.readCurrent( self._friends_wref_set )
+
 			friends = list(self)
 			friends.remove( friend )
 			up_count = self._update_friends_from_external( friends )
