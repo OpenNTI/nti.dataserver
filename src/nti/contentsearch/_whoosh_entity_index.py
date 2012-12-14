@@ -1,8 +1,10 @@
 from __future__ import print_function, unicode_literals
 
+import os
+import six
+import time
 import uuid
 import gevent
-from hashlib import md5
 
 import zope.intid
 from zope import schema
@@ -15,6 +17,8 @@ from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
+import zc.lockfile
+
 from whoosh import fields
 from whoosh import analysis
 from whoosh import ramindex
@@ -24,11 +28,29 @@ from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch import _whoosh_indexstorage as w_idxstorage
 
 import logging
 logger = logging.getLogger( __name__ )
 
+# interfaces
+
+class IWhooshEntityIndex(search_interfaces.IEntityIndex):
+	
+	index = schema.Object(interface.Interface, title='Whoosh index')
+		
+	def writer():
+		"""return an whoosh index writer"""
+		
+	def open():
+		"""open the index"""
+		
+	def close():
+		"""close the index"""
+
+# whoosh index
+		
 def create_user_schema():
 	analyzer = analysis.NgramWordAnalyzer(minsize=2, maxsize=50, at='start')
 	schema = fields.Schema(	intid = fields.ID(stored=True, unique=True),
@@ -38,38 +60,58 @@ def create_user_schema():
 							realname = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
 							t_username = fields.TEXT(stored=False, analyzer=analyzer, phrase=False))
 	return schema
-		
-def create_index(inmemory=True):
-	schema = create_user_schema()
-	if inmemory:
-		result = ramindex.RamIndex(schema)
-	else:
-		m = md5()
-		m.update(str(uuid.uuid4()))
-		indexname = str(m.hexdigest())
-		path = w_idxstorage.prepare_index_directory()
-		result = whoosh_index.create_in(path, schema, indexname)
-	return result
 	
 def get_index_writer(index):
 	return w_idxstorage.get_index_writer(index, w_idxstorage.writer_ctor_args)
 
-def writer_commit(writer):
+def writer_commit(writer, **kwargs):
 	if isinstance(writer, ramindex.RamIndex):
 		writer.commit()
 	else:
-		writer.commit(**w_idxstorage.writer_commit_args)
-
+		commit_args = kwargs or w_idxstorage.writer_commit_args
+		writer.commit(**commit_args)
+			
 def populate_index(index):
 	dataserver = component.getUtility( nti_interfaces.IDataserver )
 	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
 	writer = get_index_writer(index)
 	for user in _users.values():
-		data = get_user_info(user)
+		data = get_entity_info(user)
 		writer.add_document(**data)
-	writer_commit(writer)
+	writer_commit(writer, optimize=True)
 
-def get_user_info(user):
+def _get_lock(path, indexname, timeout=60, delay=0.5):
+	name = indexname + ".zlock"
+	name = os.path.join(path, name)
+	start_time = time.time()
+	while True:
+		try:
+			lock = zc.lockfile.LockFile(name)
+			return lock
+		except zc.lockfile.LockError:
+			if (time.time() - start_time) >= timeout:
+				raise Exception("Timeout occured.")
+			gevent.sleep(delay)
+			
+def create_index(inmemory=False):
+	schema = create_user_schema()
+	if inmemory:
+		result = ramindex.RamIndex(schema)
+	else:
+		indexname = "userindex"
+		dirname = w_idxstorage.prepare_index_directory()
+		lock = _get_lock(dirname, indexname)
+		try:
+			if not whoosh_index.exists_in(dirname, indexname):
+				result = whoosh_index.create_in(dirname, schema, indexname)
+				populate_index(result)
+			else:
+				result = whoosh_index.open_dir(dirname, indexname)
+		finally:
+			lock.close()
+	return result
+
+def get_entity_info(user):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
 	username = user.username
 	
@@ -93,7 +135,7 @@ def get_user_info(user):
 def _create_or_update_entity(iwu_index, entity):
 	result = entity is not None and not nti_interfaces.IFriendsList.providedBy(entity)
 	if result:
-		data = get_user_info(entity)
+		data = get_entity_info(entity)
 		writer = iwu_index.writer()
 		if not iwu_index.exists(entity.username):
 			writer.add_document(**data)
@@ -104,24 +146,24 @@ def _create_or_update_entity(iwu_index, entity):
 
 @component.adapter(nti_interfaces.IEntity, IObjectCreatedEvent)
 def on_entity_created( entity, event ):
-	iwu_index = component.getUtility(IWhooshUserIndex)
+	iwu_index = component.getUtility(IWhooshEntityIndex)
 	if _create_or_update_entity(iwu_index, entity):
-		iwu_index.on_user_created(entity.username)
+		iwu_index.on_entity_created(entity.username)
 	
 def _update_entity(iwu_index, entity):
 	result = entity is not None and not nti_interfaces.IFriendsList.providedBy(entity)
 	if result:
 		writer = iwu_index.writer()
-		data = get_user_info(entity)
+		data = get_entity_info(entity)
 		writer.update_document(**data)
 		writer_commit(writer)
 	return result
 	
 @component.adapter(nti_interfaces.IEntity, IObjectModifiedEvent)
 def on_entity_modified( entity, event ):
-	iwu_index = component.getUtility(IWhooshUserIndex)
+	iwu_index = component.getUtility(IWhooshEntityIndex)
 	if _update_entity(iwu_index, entity):
-		iwu_index.on_user_modified(entity.username)
+		iwu_index.on_entity_modified(entity.username)
 	
 def _delete_entity(iwu_index, entity):
 	writer = iwu_index.writer()
@@ -132,41 +174,22 @@ def _delete_entity(iwu_index, entity):
 	
 @component.adapter(nti_interfaces.IEntity, IObjectRemovedEvent)
 def on_entity_deleted( entity, event ):
-	iwu_index = component.getUtility(IWhooshUserIndex)
+	iwu_index = component.getUtility(IWhooshEntityIndex)
 	count, username = _delete_entity(iwu_index, entity)
-	if count:
-		iwu_index.on_user_deleted(username)
+	if count: iwu_index.on_entity_deleted(username)
 
-class IWhooshUserIndex(interface.Interface):
-	
-	index = schema.Object(interface.Interface, title='Whoosh index')
-	
-	def doc_count(self):
-		"""return number of entities in the index"""
-		
-	def exists(username):
-		"""check if the user name is in this index"""
-		
-	def writer():
-		"""return an whoosh index writer"""
-		
-	def open():
-		"""open the index"""
-		
-	def close():
-		"""close the index"""
-			
-	def on_user_created(username):
-		"""callback for user creation"""
+def _get_entity(entity):
+	if isinstance(entity, six.string_types):
+		result = Entity.get_entity(entity)
+	elif isinstance(entity, (int,long)):
+		_ds_intid = component.getUtility( zope.intid.IIntIds )
+		result = _ds_intid.queryObject(entity)
+	else:
+		result = entity if nti_interfaces.IEntity.providedBy(entity) else None
+	return result
 
-	def on_user_modified(username):
-		"""callback for user modification"""
-		
-	def on_user_deleted(self, username):
-		"""callback for user deletion"""
-	
-@interface.implementer(IWhooshUserIndex)
-class _WhooshUserIndex(object):
+@interface.implementer(IWhooshEntityIndex)
+class _WhooshEntityIndex(object):
 
 	_redis = None
 	_pubsub = None
@@ -186,7 +209,6 @@ class _WhooshUserIndex(object):
 		self._setup_pubsub()
 		# read data from db
 		index = create_index()
-		populate_index(index)
 		# process any changes
 		self._reader = self._setup_listener()
 		return index
@@ -211,18 +233,16 @@ class _WhooshUserIndex(object):
 		if getattr(self, '_reader', None):
 			self._pubsub.unsubscribe(self.queue_name)
 			self._reader.kill()
-			
-	# call backs to publish changes
-	
-	def on_user_created(self, username):
+				
+	def on_entity_created(self, username):
 		msg = repr((0, username, self._uuid))
 		self._publish(msg)
 		
-	def on_user_modified(self, username):
+	def on_entity_modified(self, username):
 		msg = repr((1, username, self._uuid))
 		self._publish(msg)
 		
-	def on_user_deleted(self, username):
+	def on_entity_deleted(self, username):
 		msg = repr((2, username, self._uuid))
 		self._publish(msg)
 					
@@ -258,7 +278,7 @@ class _WhooshUserIndex(object):
 				_sleep = 0.1
 				_retries = 5
 				def f():
-					entity = Entity.get_entity(username)
+					entity = _get_entity(username)
 					result = entity is not None
 					if result:
 						_create_or_update_entity(self, entity)
