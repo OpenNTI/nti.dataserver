@@ -23,8 +23,7 @@ from zope.mimetype import interfaces as mime_interfaces
 from zope.schema import interfaces as sch_interfaces
 
 from nti.dataserver import datastructures
-from nti.dataserver import interfaces as model_interfaces
-nti_interfaces = model_interfaces
+from nti.dataserver import interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as content_interfaces
 
 from nti.externalization.externalization import to_standard_external_dictionary
@@ -91,7 +90,8 @@ def _collections( self, containers ):
 		adapt.__parent__ = self # Right?
 		yield adapt
 
-
+@interface.implementer(app_interfaces.IWorkspace)
+@component.adapter(nti_interfaces.IContainerIterable)
 class ContainerEnumerationWorkspace(_ContainerWrapper):
 	"""
 	A workspace wrapping a container. Location aware.
@@ -100,9 +100,6 @@ class ContainerEnumerationWorkspace(_ContainerWrapper):
 	parent and its name. If the container happens to be a :class:`nti_interfaces.INamedContainer`
 	we will use that name as a last resort. This can be overridden.
 	"""
-	interface.implements(app_interfaces.IWorkspace)
-	component.adapts(model_interfaces.IContainerIterable)
-
 
 	def __init__( self, container ):
 		super(ContainerEnumerationWorkspace,self).__init__( container )
@@ -112,7 +109,7 @@ class ContainerEnumerationWorkspace(_ContainerWrapper):
 		return _collections( self, self._container.itercontainers() )
 
 @interface.implementer(app_interfaces.IContainerCollection)
-@component.adapter(model_interfaces.IHomogeneousTypeContainer)
+@component.adapter(nti_interfaces.IHomogeneousTypeContainer)
 class HomogeneousTypedContainerCollection(_ContainerWrapper):
 
 	def __init__( self, container ):
@@ -130,11 +127,11 @@ class HomogeneousTypedContainerCollection(_ContainerWrapper):
 class UncacheableHomogeneousTypedContainerCollection(HomogeneousTypedContainerCollection):
 	pass
 
-@component.adapter(model_interfaces.IFriendsListContainer)
+@component.adapter(nti_interfaces.IFriendsListContainer)
 class FriendsListContainerCollection(UncacheableHomogeneousTypedContainerCollection):
 	"""
 	Magically adds the dynamic sharing communities that a user is a member of
-	to the FriendsLists collection.
+	to the user's ``FriendsLists`` collection.
 	Hopefully temporary, necessary for the web up to render them.
 
 	..note:: We are correctly not sending back an 'edit' link, but the UI still presents
@@ -162,36 +159,46 @@ class FriendsListContainerCollection(UncacheableHomogeneousTypedContainerCollect
 
 	@property
 	def container(self):
-		if not self._container.__parent__:
-			return self._container
-		# TODO: This needs a test case
-		dfl_communities = self._container.__parent__.dynamic_memberships
-		dfl_communities = [x for x in dfl_communities if model_interfaces.IFriendsList.providedBy( x ) ]
-		if not dfl_communities:
+
+		entity = self._container.__parent__
+		if not entity:
 			return self._container
 
-		fake_container = LocatedExternalDict()
+		dfl_memberships = []
+		for x in entity.dynamic_memberships:
+			if nti_interfaces.IFriendsList.providedBy( x ):
+				if entity in x:
+					dfl_memberships.append( x )
+				else:
+					# XXX Temporary hack of the temporary hack: Filter out some non-members that crept in. There
+					# should be no more new ones after this date, but leave this code here as a warning
+					# for awhile in case any do creep in
+					logger.warning( "Relationship trouble: User %s is no longer a member of %s. Ignoring.", entity, x )
+		if not dfl_memberships:
+			return self._container
+
+		fake_container = LocatedExternalDict( self._container )
 		fake_container.__name__ = self._container.__name__
-		fake_container.__parent__ = self._container.__parent__
-		fake_container.update( self._container )
+		fake_container.__parent__ = entity
+
 		warnings.warn( "Hack for UI: Moving DFLs around." )
-		for v in dfl_communities:
+		for v in dfl_memberships:
 			fake_container[v.NTIID] = v
 		fake_container.lastModified = self._container.lastModified
 		return fake_container
 
+@interface.implementer(mime_interfaces.IContentTypeAware)
+@component.adapter(app_interfaces.ICollection)
 class CollectionContentTypeAware(object):
-	interface.implements(mime_interfaces.IContentTypeAware)
-	component.adapts(app_interfaces.ICollection)
 
 	mime_type = mimetype.nti_mimetype_with_class( 'collection' )
 
 	def __init__( self, collection ):
 		pass
 
+@interface.implementer(app_interfaces.IWorkspace)
+@component.adapter(content_interfaces.IContentPackageLibrary)
 class LibraryWorkspace(object):
-	interface.implements(app_interfaces.IWorkspace)
-	component.adapts(content_interfaces.IContentPackageLibrary)
 
 	def __init__( self, lib ):
 		self._library = lib
@@ -208,9 +215,9 @@ class LibraryWorkspace(object):
 		adapt.__parent__ = self
 		return (adapt,)
 
+@interface.implementer(app_interfaces.ICollection)
+@component.adapter(content_interfaces.IContentPackageLibrary)
 class LibraryCollection(object):
-	interface.implements(app_interfaces.ICollection)
-	component.adapts(content_interfaces.IContentPackageLibrary)
 
 	def __init__( self, lib ):
 		self._library = lib
@@ -228,12 +235,12 @@ class LibraryCollection(object):
 		# Cannot add to library
 		return ()
 
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(LibraryCollection)
 class LibraryCollectionDetailExternalizer(object):
 	"""
 	Externalizes a Library wrapped as a collection.
 	"""
-	interface.implements(ext_interfaces.IExternalObject)
-	component.adapts(LibraryCollection)
 
 	# TODO: This doesn't do a good job of externalizing it,
 	# though. We're skipping all the actual Collection parts
@@ -244,7 +251,7 @@ class LibraryCollectionDetailExternalizer(object):
 	def toExternalObject(self):
 		request = get_current_request()
 		if request:
-			test = lambda x: psec.has_permission( nauth.ACT_READ, model_interfaces.IACLProvider(x), request )
+			test = lambda x: psec.has_permission( nauth.ACT_READ, nti_interfaces.IACLProvider(x), request )
 		else:
 			test = lambda x: True
 		# TODO: Standardize the way ACLs are applied during external writing
@@ -254,12 +261,12 @@ class LibraryCollectionDetailExternalizer(object):
 				 'title': "Library",
 				 'titles' : [toExternalObject(x) for x in library.titles if test(x)] }
 
+@interface.implementer(app_interfaces.IWorkspace)
 class GlobalWorkspace(object):
 	"""
 	Represents things that are global resolvers. Typically, these
 	will not be writable.
 	"""
-	interface.implements(app_interfaces.IWorkspace)
 
 	__parent__ = None
 
@@ -286,11 +293,11 @@ class GlobalWorkspace(object):
 		return [GlobalCollection(self.__parent__, 'Objects'),
 				GlobalCollection(self.__parent__, 'NTIIDs' )]
 
+@interface.implementer(app_interfaces.ICollection)
 class GlobalCollection(object):
 	"""
 	A non-writable collection in the global namespace.
 	"""
-	interface.implements(app_interfaces.ICollection)
 
 	def __init__(self, container, name):
 		self.__parent__ = container
@@ -305,9 +312,9 @@ class GlobalCollection(object):
 	def accepts(self):
 		return ()
 
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(app_interfaces.ICollection)
 class CollectionSummaryExternalizer(object):
-	interface.implements(ext_interfaces.IExternalObject)
-	component.adapts(app_interfaces.ICollection)
 
 	def __init__( self, collection ):
 		self._collection = collection
@@ -323,7 +330,7 @@ class CollectionSummaryExternalizer(object):
 		accepts = collection.accepts
 		if accepts is not None:
 			ext_collection['accepts'] = [mimetype.nti_mimetype_from_object( x ) for x in accepts]
-			if model_interfaces.ISimpleEnclosureContainer.providedBy( collection ):
+			if nti_interfaces.ISimpleEnclosureContainer.providedBy( collection ):
 				ext_collection['accepts'].extend( ('image/*',) )
 				ext_collection['accepts'].extend( ('application/pdf',) )
 			ext_collection['accepts'].sort() # For the convenience of tests
@@ -334,9 +341,9 @@ class CollectionSummaryExternalizer(object):
 
 		return ext_collection
 
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(app_interfaces.IContainerCollection)
 class ContainerCollectionDetailExternalizer(object):
-	interface.implements(ext_interfaces.IExternalObject)
-	component.adapts(app_interfaces.IContainerCollection)
 
 	def __init__(self, collection ):
 		self._collection = collection
@@ -437,9 +444,9 @@ def _magic_link_externalizer(_links):
 			l.target = l
 	return _links
 
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(app_interfaces.IWorkspace)
 class WorkspaceExternalizer(object):
-	interface.implements(ext_interfaces.IExternalObject)
-	component.adapts(app_interfaces.IWorkspace)
 
 	def __init__( self, workspace ):
 		self._workspace = workspace
@@ -475,13 +482,13 @@ def _create_search_links( parent ):
 		interface.alsoProvides( lnk, loc_interfaces.ILocation )
 	return result
 
+@interface.implementer(app_interfaces.IWorkspace)
+@component.adapter(users.User)
 class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	"""
 	Extends the user's typed collections with one
 	to capture page data.
 	"""
-	interface.implements(app_interfaces.IWorkspace)
-	component.adapts(users.User)
 
 	def __init__( self, user ):
 		super(UserEnumerationWorkspace,self).__init__( user )
@@ -509,12 +516,12 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 		result.append( classes )
 		return result
 
+@interface.implementer(app_interfaces.IWorkspace)
 class ProviderEnumerationWorkspace(_ContainerWrapper):
 	"""
 	Given the provider enumeration creates collections for
 	each of those.
 	"""
-	interface.implements(app_interfaces.IWorkspace)
 
 	def __init__( self, providers ):
 		super(ProviderEnumerationWorkspace,self).__init__( providers )
@@ -618,7 +625,7 @@ class _RootNTIIDEntry(_NTIIDEntry):
 		super(_RootNTIIDEntry,self).__init__( parent, ntiids.ROOT )
 
 @interface.implementer(app_interfaces.IContainerCollection)
-@component.adapter(model_interfaces.IUser)
+@component.adapter(nti_interfaces.IUser)
 class _UserPagesCollection(object):
 	"""
 	Turns a User into a ICollection of data for their pages (individual containers).
@@ -665,14 +672,14 @@ class _UserPagesCollection(object):
 		vocab = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( self._user )
 		return (term.token for term in vocab)
 
+@interface.implementer(app_interfaces.IContainerCollection)
+@component.adapter(nti_interfaces.IUser)
 class _UserEnrolledClassSectionsCollection(object):
 	"""
 	Turns a User into an ICollection of data about the individual classes
 	they are enrolled in.
 	"""
 
-	interface.implements(app_interfaces.IContainerCollection)
-	component.adapts(model_interfaces.IUser)
 
 	name = 'EnrolledClassSections'
 	__name__ = name
@@ -692,7 +699,7 @@ class _UserEnrolledClassSectionsCollection(object):
 		# listen for the events that get broadcast by the SectionInfo
 		# and maintain an appropriate cache (on the user?).
 		result = datastructures.LastModifiedCopyingUserList()
-		ds = component.queryUtility( model_interfaces.IDataserver )
+		ds = component.queryUtility( nti_interfaces.IDataserver )
 		for prov_name in (k for k in ds.root['providers'].iterkeys() if not isSyntheticKey( k ) ):
 			provider = ds.root['providers'][prov_name]
 			for clazz in provider.getContainer( 'Classes' ).values():
@@ -703,12 +710,9 @@ class _UserEnrolledClassSectionsCollection(object):
 
 		return result
 
-
+@interface.implementer(app_interfaces.ICollection)
+@component.adapter(nti_interfaces.IProviderOrganization)
 class _ProviderCollection(object):
-	"""
-	"""
-	interface.implements(app_interfaces.ICollection)
-	component.adapts(model_interfaces.IProviderOrganization)
 
 	__parent__ = None
 
@@ -725,7 +729,7 @@ class _ProviderCollection(object):
 		result = ()
 		request = get_current_request()
 		# Can we write to the provider?
-		if request and psec.has_permission( nauth.ACT_CREATE, model_interfaces.IACLProvider(self._provider), request ):
+		if request and psec.has_permission( nauth.ACT_CREATE, nti_interfaces.IACLProvider(self._provider), request ):
 			result = []
 			for container in self._provider.getAllContainers().values():
 				# is it an IHomogeneousTypeContainer?
@@ -735,7 +739,7 @@ class _ProviderCollection(object):
 		return result
 
 @interface.implementer(app_interfaces.IUserService, mime_interfaces.IContentTypeAware)
-@component.adapter(model_interfaces.IUser)
+@component.adapter(nti_interfaces.IUser)
 class UserService(object):
 
 	# Is this an adapter? A multi adapter?
@@ -747,7 +751,7 @@ class UserService(object):
 
 	def __init__( self, user ):
 		self.user = user
-		self.__parent__ = component.getUtility( model_interfaces.IDataserver ).root
+		self.__parent__ = component.getUtility( nti_interfaces.IDataserver ).root
 
 	@property
 	def user_workspace(self):
@@ -776,9 +780,8 @@ class UserService(object):
 			lib_ws.__parent__ = tr
 			result.append( lib_ws )
 
-		ds = component.queryUtility( model_interfaces.IDataserver )
-		#from IPython.core.debugger import Tracer; debug_here = Tracer()
-		#debug_here()
+		ds = component.queryUtility( nti_interfaces.IDataserver )
+
 		if ds:
 			provider_root = location.Location()
 			provider_root.__parent__ = self.__parent__

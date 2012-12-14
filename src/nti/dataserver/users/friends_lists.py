@@ -115,7 +115,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		# events
 		if friend in self:
 			jar = self._p_jar
-			if jar:
+			if jar and self._friends_wref_set._p_jar:
 				jar.readCurrent( self._friends_wref_set )
 
 			friends = list(self)
@@ -348,6 +348,7 @@ class _FriendsListMap(datastructures.AbstractCaseInsensitiveNamedLastModifiedBTr
 
 	contained_type = nti_interfaces.IFriendsList
 	container_name = 'FriendsLists'
+	__name__ = container_name
 
 	@classmethod
 	def external_factory( cls, extDict ):
