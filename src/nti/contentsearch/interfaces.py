@@ -639,3 +639,22 @@ class ISuggestResultsCreator(interface.Interface):
 class ISuggestAndSearchResultsCreator(interface.Interface):
 	def __call__(query):
 		"""return a new instance of a ISuggestAndSearchResults"""
+
+# user index
+
+class IEntityIndex(interface.Interface):
+	
+	def doc_count():
+		"""return number of entities in the index"""
+		
+	def exists(entity):
+		"""check if the entity/user is in this index"""
+		
+	def on_entity_created(entity):
+		"""callback for user creation"""
+
+	def on_entity_modified(entity):
+		"""callback for entity modification"""
+		
+	def on_entity_deleted(entity):
+		"""callback for entity deletion"""

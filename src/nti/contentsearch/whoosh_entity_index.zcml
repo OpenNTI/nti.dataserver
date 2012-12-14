@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	
+	<utility factory="._whoosh_entity_index._WhooshEntityIndex"
+			 provides="._whoosh_entity_index.IWhooshEntityIndex" />
+			 
+	<subscriber handler="._whoosh_entity_index.on_entity_created" />
+	<subscriber handler="._whoosh_entity_index.on_entity_modified" />
+	<subscriber handler="._whoosh_entity_index.on_entity_deleted" />
+	
+</configure>

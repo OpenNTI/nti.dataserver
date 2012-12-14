@@ -1,12 +1,17 @@
+import os
+import shutil
+import tempfile
 import unittest
 
 from zope import component
+from zope.configuration import xmlconfig
 
 from nti.dataserver.users import User
 
 from nti.externalization.internalization import update_from_external_object
 
-from nti.contentsearch._whoosh_user_index import IWhooshUserIndex
+import nti.contentsearch as contentsearch
+from nti.contentsearch._whoosh_entity_index import IWhooshEntityIndex
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_redis import InMemoryMockRedis
@@ -45,8 +50,7 @@ def listen(self):
 		for m in msgs:
 			yield m
 	
-@unittest.SkipTest
-class TestWhooshUserIndex(ConfiguringTestBase):
+class TestWhooshUserIndex(ConfiguringTestBase):		
 
 	@classmethod
 	def setUpClass(cls):
@@ -66,9 +70,16 @@ class TestWhooshUserIndex(ConfiguringTestBase):
 		del InMemoryMockRedis.subscribe
 		del InMemoryMockRedis.unsubscribe
 	
+	def setUp( self ):
+		super(TestWhooshUserIndex,self).setUp()
+		xmlconfig.file("whoosh_entity_index.zcml", contentsearch, context=self.configuration_context)
+		self.db_dir = tempfile.mkdtemp(dir="/tmp")
+		os.environ['DATASERVER_DIR']= self.db_dir
+		
 	def tearDown( self ):
-		uidx_util = component.getUtility(IWhooshUserIndex)
+		uidx_util = component.getUtility(IWhooshEntityIndex)
 		uidx_util.close()
+		shutil.rmtree(self.db_dir, True)
 		super(TestWhooshUserIndex, self).tearDown()
 		
 	def _create_user(self, username='nt@nti.com', password='temp001', external_value={}):
@@ -79,7 +90,7 @@ class TestWhooshUserIndex(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_index_users(self):
 		self._create_user()
-		uidx_util = component.getUtility(IWhooshUserIndex)
+		uidx_util = component.getUtility(IWhooshEntityIndex)
 		assert_that(uidx_util.index, is_not(None))
 		assert_that(uidx_util.doc_count(), is_(2))
 		# check publish messages (subcribe and creation)
