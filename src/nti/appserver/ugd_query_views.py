@@ -176,12 +176,21 @@ def _combine_predicate( new, old ):
 		return new
 	return lambda obj: new(obj) and old(obj)
 
-def _ifollow_predicate_factory( request, and_me=False ):
-	user = request.context.user
-	following = user.following
+def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
+	me = request.context.user
+	following_usernames = set()
 	if and_me:
-		following.add( user.username )
-	return lambda o: getattr( o.creator, 'username', o.creator ) in following
+		following_usernames.add( me.username )
+	for entity in me.entities_followed:
+		entity_username = getattr( entity, 'username', None )
+		if entity_username:
+			following_usernames.add( entity_username )
+		if expand_nested:
+			# Expand things that should be expanded, such as DFLs
+			for nested_username in nti_interfaces.IUsernameIterable(entity, ()):
+				following_usernames.add( nested_username )
+
+	return lambda o: getattr( o.creator, 'username', o.creator ) in following_usernames
 
 def _ifollowandme_predicate_factory( request ):
 	return _ifollow_predicate_factory( request, True )
@@ -335,11 +344,13 @@ class _UGDView(object):
 
 			* ``MeOnly``: it causes only things that I have done to be included.
 
-			* ``IFollow``: it causes only things done by people I am directly following
+			* ``IFollow``: it causes only things done (created) by people I am directly following
 			  to be returned (right now, adding to a FriendsList also defaults to establishing
-			  the following relationship, so you can think of this as "My Contacts"). Note that
-			  this *does not* imply or include things that I have done. This is very efficient.
-			  (Seems weird, but that's the existing behaviour.)
+			  the following relationship, so you can think of this as "My Contacts"). If I am following
+			  a dynamic sharing target that provides an iterable list of members (such as a
+			  :class:`~nti.dataserver.interfaces.IDynamicSharingTargetFriendsList`), then those members are
+			  included as people I am following.
+			  Note that this *does not* imply or include things that I have done. This is very efficient.
 
 			* ``IFollowAndMe``: Just like ``IFollow``, but also adds things that I have done.
 			  Again, this is very efficient.
