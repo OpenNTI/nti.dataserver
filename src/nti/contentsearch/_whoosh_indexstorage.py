@@ -66,12 +66,15 @@ def get_index_writer(index, writer_ctor_args={}, maxiters=40, delay=0.25):
 				raise e
 	return writer
 
+# limitmb: http://packages.python.org/Whoosh/batch.html
+writer_ctor_args = {'limitmb':96}
+writer_commit_args = {'merge':False, 'optimize':False, 'mergetype':segment_merge}
+	
 @interface.implementer( search_interfaces.IWhooshIndexStorage )
 class IndexStorage(object):
 	
-	# limitmb: http://packages.python.org/Whoosh/batch.html
-	default_ctor_args = {'limitmb':96}
-	default_commit_args = {'merge':False, 'optimize':False, 'mergetype':segment_merge}
+	default_ctor_args = writer_ctor_args
+	default_commit_args = writer_commit_args
 
 	def create_index(self, indexname, schema, *args, **kwargs):
 		raise NotImplementedError()
