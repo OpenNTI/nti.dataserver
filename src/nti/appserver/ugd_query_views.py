@@ -39,6 +39,7 @@ from nti.ntiids import ntiids
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
+from nti.dataserver.users import entity
 from nti.dataserver import liking
 from nti.dataserver import authorization as nauth
 from nti.dataserver.mimetype import nti_mimetype_from_object
@@ -275,6 +276,18 @@ class _UGDView(object):
 	def _get_exclude_types(self):
 		return self.__get_list_param( 'exclude' )
 
+	def _get_shared_with_names(self):
+		return self.__get_list_param( 'sharedWith')
+
+	def _get_shared_with( self ):
+		names = self._get_shared_with_names()
+		entities = []
+		for name in names:
+			ent = entity.Entity.get_entity( name )
+			if ent is not None:
+				# TODO: Should there be an access check here?
+				entities.append( ent )
+		return entities
 
 	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
@@ -386,6 +399,15 @@ class _UGDView(object):
 			value for ``exclude`` is ignored. This value should not
 			include ``*/*``.
 
+		sharedWith
+			A comma-separated list of usernames specifying who
+			returned objects must be shared with (in an `OR` fashion).
+			Most commonly used to match a single
+			:class:`~nti.dataserver.interfaces.IDynamicSharingTargetFriendsList`
+			by sending a single NTIID. The behaviour of specifying
+			non-existant or non-accessible usernames is undefined (but
+			probably not good).
+
 		batchSize
 			Integer giving the page size. Must be greater than zero.
 			Paging only happens when this is supplied together with
@@ -454,6 +476,15 @@ class _UGDView(object):
 				the_filter = the_filter[0]( self.request )
 
 			predicate = _combine_predicate( the_filter, predicate )
+
+		shared_with_values = self._get_shared_with()
+		if shared_with_values:
+			def filter_shared_with( x ):
+				x_sharedWith = getattr( x, 'sharedWith', ())
+				for shared_with_value in shared_with_values:
+					if shared_with_value in x_sharedWith:
+						return True
+			predicate = _combine_predicate( filter_shared_with, predicate )
 
 		if predicate:
 			result_list = filter(predicate, result_list)
