@@ -4,6 +4,8 @@ from zope import component
 
 from nti.dataserver.users import User
 
+from nti.externalization.internalization import update_from_external_object
+
 from nti.contentsearch._whoosh_user_index import IWhooshUserIndex
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -43,7 +45,7 @@ def listen(self):
 		for m in msgs:
 			yield m
 	
-@unittest.SkipTest	
+@unittest.SkipTest
 class TestWhooshUserIndex(ConfiguringTestBase):
 
 	@classmethod
@@ -85,11 +87,22 @@ class TestWhooshUserIndex(ConfiguringTestBase):
 		assert_that(msgs, has_length(2)) 
 		
 		# add listener should work
-		self._create_user(username='nt2@nti.com')
+		user= self._create_user(username='nt2@nti.com')
 		assert_that(uidx_util.doc_count(), is_(3))
 		msgs = list(uidx_util._pubsub.listen())
 		assert_that(msgs, has_length(1))
 		
+		# check all  msgs have been consumed
+		msgs = list(uidx_util._pubsub.listen())
+		assert_that(msgs, has_length(0))
+		
+		# modified listener
+		external= {u'email':u'foo@bar.com'}
+		update_from_external_object(user, external)
+		assert_that(uidx_util.doc_count(), is_(3))
+		msgs = list(uidx_util._pubsub.listen())
+		assert_that(msgs, has_length(1))
+			
 		# delete listener
 		User.delete_user('nt2@nti.com')
 		assert_that(uidx_util.doc_count(), is_(2))
