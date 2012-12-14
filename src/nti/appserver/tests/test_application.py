@@ -165,6 +165,14 @@ def WithSharedApplicationMockDS(func):
 		func(self)
 	return f
 
+def WithSharedApplicationMockDSWithChanges(func):
+	@functools.wraps(func)
+	@mock_dataserver.WithMockDS(with_changes=True)
+	def f(self):
+		self.config.registry._zodb_databases = { '': self.ds.db } # 0.3
+		func(self)
+	return f
+
 
 class ApplicationTestBase(_AppTestBaseMixin, ConfiguringTestBase):
 

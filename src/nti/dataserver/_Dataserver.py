@@ -462,7 +462,8 @@ class Dataserver(MinimalDataserver):
 
 	def add_change_listener( self, listener ):
 		""" Adds a listener (a callable object) for changes."""
-		self.changeListeners.append( listener )
+		if listener and listener not in self.changeListeners:
+			self.changeListeners.append( listener )
 
 	def remove_change_listener( self, listener ):
 		self.changeListeners.remove( listener )
