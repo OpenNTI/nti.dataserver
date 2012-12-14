@@ -321,7 +321,14 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 		return False
 
 	def is_accepting_shared_data_from( self, source ):
-		return source is self.creator or source in list(self)
+		"""
+		In contrast to expectations, *anyone* can share with
+		a DFL whether or not they are a member. In this way, it
+		is just like a Community object.
+		"""
+		return True
+		#return source is self.creator or source in list(self)
+
 
 @interface.implementer(nti_interfaces.IUsernameIterable)
 @component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)

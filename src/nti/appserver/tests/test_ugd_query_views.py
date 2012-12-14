@@ -11,6 +11,8 @@ from hamcrest import has_entries
 from hamcrest import has_length
 from hamcrest import has_key
 from hamcrest import contains
+from hamcrest import has_items
+from hamcrest import contains_string
 import fudge
 
 from nti.appserver.ugd_query_views import lists_and_dicts_to_ext_collection
@@ -21,17 +23,19 @@ from nti.appserver.ugd_query_views import _UGDStreamView
 from nti.appserver.ugd_query_views import _UGDAndRecursiveStreamView
 
 from nti.appserver.tests import ConfiguringTestBase
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, WithSharedApplicationMockDSWithChanges
 from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
 import persistent
 import UserList
 from datetime import datetime
+import simplejson as json
 
 from nti.assessment.assessed import QAssessedQuestion
 from nti.dataserver import users
 from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import to_external_object
 from nti.dataserver.datastructures import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
@@ -691,3 +695,59 @@ class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
 								contains(
 									has_entry( 'ID', top_n_id ),
 									has_entry( 'ID', reply_n_id ) ) ) )
+
+
+	@WithSharedApplicationMockDSWithChanges
+	def test_replies_from_non_dfl_member(self):
+		"""
+		If an object is shared with both a DFL and a non-member, then
+		if the non-member replies, it should be visible to the DFL members.
+		NOTE: This is implemented as something of a deliberate security hole, allowing anyone
+		to share with DFLs whether or not they are members. See :class:`nti.dataserver.users.friends_lists.DynamicFriendsLists`
+		"""
+		from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture, _note_from
+		from nti.dataserver.users.tests.test_friends_lists import _assert_that_item_is_in_contained_stream_and_data_with_notification_count
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture( self.ds, owner_username='sjohnson@nextthought.com', passwords='temp001' )
+			other_user = self._create_user( 'non_member_user@baz' )
+
+			owner_note = _note_from( owner_user )
+			with owner_user.updates():
+				owner_note.addSharingTarget( parent_dfl )
+				owner_note.addSharingTarget( other_user )
+				owner_user.addContainedObject( owner_note )
+
+			# Both members and non-members got it
+			for u in (member_user, member_user2, other_user):
+				_assert_that_item_is_in_contained_stream_and_data_with_notification_count( u, owner_note )
+
+			owner_note_ntiid_id = to_external_ntiid_oid( owner_note )
+
+			reply_note = _note_from( other_user )
+			reply_note.inReplyTo = owner_note
+			reply_note_ext = to_external_object( reply_note )
+
+
+		testapp = TestApp( self.app )
+		path = '/dataserver2/users/' + str(other_user.username)
+		res = testapp.post( path, json.dumps( reply_note_ext ), extra_environ=self._make_extra_environ( user=other_user.username ) )
+		# The correct response:
+		assert_that( res.status_int, is_( 201 ) )
+		assert_that( res.json_body, has_entry( 'sharedWith', has_items( owner_user.username, parent_dfl.NTIID ) ) )
+
+		# And it is in the right streams
+		with mock_dataserver.mock_db_trans( self.ds ):
+			reply_note = ntiids.find_object_with_ntiid( res.json_body['NTIID'] )
+			reply_note_ntiid = to_external_ntiid_oid( reply_note )
+			for u, cnt in ((owner_user,1), (member_user,2), (member_user2,2)):
+				__traceback_info__ = u, reply_note
+				u = users.User.get_user( u.username )
+				_assert_that_item_is_in_contained_stream_and_data_with_notification_count( u, reply_note, count=cnt )
+
+		# And it is visible as a reply to all of these people
+		path = '/dataserver2/Objects/' + str(owner_note_ntiid_id) + '/@@replies'
+		res = testapp.get( path, extra_environ=self._make_extra_environ(user=owner_user.username) )
+
+		assert_that( res.body, contains_string( reply_note_ntiid ) )
+		assert_that( res.json_body['Items'], has_length( 1 ) )

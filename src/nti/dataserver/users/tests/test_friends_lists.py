@@ -201,32 +201,34 @@ def test_delete_dynamic_friendslist_clears_memberships():
 from nti.dataserver.tests.test_authorization_acl import permits
 from nti.dataserver import authorization as nauth
 
-def _note_from( creator, text='Hi there' ):
+def _note_from( creator, text='Hi there', containerId='tag:nti' ):
 	owner_note = Note()
 	owner_note.applicableRange = ContentRangeDescription()
 	owner_note.creator = creator
 	owner_note.body = [text]
-	owner_note.containerId = 'tag:nti'
+	owner_note.containerId = containerId
 	return owner_note
 
-def _dfl_sharing_fixture( ds ):
+def _dfl_sharing_fixture( ds, owner_username='OwnerUser@bar', passwords=None ):
 	"""
 	Create a user owning a DFL. Two other users are added to the dfl.
 
 	:return: A tuple (owner, member1, member2, dfl)
 	"""
 	ds.add_change_listener( users.onChange )
-
+	password_kwargs = {}
+	if passwords:
+		password_kwargs = {'password': passwords}
 	# Create a user with a DFL and two friends in the DFL
-	owner_user = users.User.create_user( username="OwnerUser@bar" )
+	owner_user = users.User.create_user( username=owner_username, **password_kwargs )
 	parent_dfl = users.DynamicFriendsList( username="ParentFriendsList" )
 	parent_dfl.creator = owner_user
 	owner_user.addContainedObject( parent_dfl )
 
-	member_user = users.User.create_user( username="memberuser@bar" )
+	member_user = users.User.create_user( username="memberuser@bar", **password_kwargs )
 	parent_dfl.addFriend( member_user )
 
-	member_user2 = users.User.create_user( username="memberuser2@bar" )
+	member_user2 = users.User.create_user( username="memberuser2@bar", **password_kwargs )
 	parent_dfl.addFriend( member_user2 )
 
 	# Reset notification counts (Circled notices would have gone out)
@@ -239,12 +241,12 @@ def _assert_that_item_is_in_contained_stream_and_data_with_notification_count( u
 	__traceback_info__ = user, item
 	child_stream = user.getContainedStream( item.containerId )
 	assert_that( child_stream, has_length( count ) )
-	assert_that( child_stream, has_item( has_property( 'object', item ) ) )
-	assert_that( user.notificationCount, has_property( 'value', count ) )
+	assert_that( child_stream, has_item( has_property( 'object', item ) ), "stream has right item" )
+	assert_that( user.notificationCount, has_property( 'value', count ), "notification count has right size" )
 
 	shared_data = user.getSharedContainer( item.containerId )
-	assert_that( shared_data, has_length( greater_than_or_equal_to( count ) ) )
-	assert_that( shared_data, has_item( item ) )
+	assert_that( shared_data, has_item( item ), "item is in shared data" )
+	assert_that( shared_data, has_length( greater_than_or_equal_to( count ) ), "shared data has right size" )
 
 @WithMockDS(with_changes=True)
 def test_sharing_with_dfl():
