@@ -5,6 +5,7 @@ import six
 import time
 import uuid
 import gevent
+import platform
 
 import zope.intid
 from zope import schema
@@ -194,7 +195,6 @@ class _WhooshEntityIndex(object):
 	_redis = None
 	_pubsub = None
 	_reader = None
-	_uuid = unicode(uuid.uuid4())
 	
 	queue_name = u'nti/usersearch'
 		
@@ -212,6 +212,14 @@ class _WhooshEntityIndex(object):
 		# process any changes
 		self._reader = self._setup_listener()
 		return index
+	
+	@Lazy
+	def _uuid(self):
+		if isinstance(self.index, ramindex.RamIndex):
+			result = unicode(uuid.uuid4())
+		else:
+			result = unicode(platform.node())
+		return result
 	
 	def doc_count(self):
 		with self.index.searcher() as s:
