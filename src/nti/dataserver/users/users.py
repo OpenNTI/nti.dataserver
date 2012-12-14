@@ -767,7 +767,8 @@ class User(Principal):
 		Returns an iterable across the NTIIDs that are relevant to this user.
 		"""
 		# Takes into account our things, things shared directly to us,
-		# and things found in dynamic things we care about
+		# and things found in dynamic things we care about, which includes
+		# our memberships and things we own
 		seen = set()
 
 		for k in self.containers:
@@ -780,7 +781,8 @@ class User(Principal):
 				seen.add( k )
 				yield k
 
-		for com in self.dynamic_memberships:
+		interesting_dynamic_things = set(self.dynamic_memberships) | {x for x in self.friendsLists.values() if nti_interfaces.IDynamicSharingTarget.providedBy(x)}
+		for com in interesting_dynamic_things:
 			if not hasattr( com, 'containersOfShared' ):
 				continue
 			for k in com.containersOfShared:

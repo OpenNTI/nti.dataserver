@@ -298,7 +298,8 @@ def test_sharing_with_dfl_member_shares_top_level():
 	"""
 	If a member of the DFL shares something unrelated with the DFL,
 	it is visible to the creator of the DFL in the shared data, in the stream, and
-	in the notification count
+	in the notification count. It is also in the 'iterntiids' value for all
+	people.
 	"""
 
 	ds = mock_dataserver.current_mock_ds
@@ -330,3 +331,10 @@ def test_sharing_with_dfl_member_shares_top_level():
 		assert_that( child_note, permits( member_user, nauth.ACT_READ ) )
 		assert_that( child_note, permits( owner_user, nauth.ACT_READ ) )
 		assert_that( child_note, permits( member_user2, nauth.ACT_READ ) )
+
+		# Even though the other members do not have data in this NTIID, they
+		# still register that they are interested in it
+		for member in (owner_user, member_user, member_user2):
+			ids = list(member.iterntiids())
+			__traceback_info__ = member, ids
+			assert_that( ids, contains( child_note.containerId ) )
