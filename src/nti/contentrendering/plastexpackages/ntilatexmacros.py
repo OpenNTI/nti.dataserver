@@ -161,6 +161,9 @@ class textneq(Base.Command):
 class textparallel(Base.Command):
 	unicode = u'\u2016'
 
+class textsurd(Base.Command):
+	unicode = u'\u221A'
+
 class textperp(Base.Command):
 	unicode = u'\u22A5'
 
