@@ -42,7 +42,8 @@ def listen(self):
 		msgs, _ = self.pipeline().lrange(topic, 0, -1).delete(topic).execute()
 		for m in msgs:
 			yield m
-		
+	
+@unittest.SkipTest	
 class TestWhooshUserIndex(ConfiguringTestBase):
 
 	@classmethod
