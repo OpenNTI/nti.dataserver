@@ -106,7 +106,7 @@ setup(
 		'ZConfig >= 2.9.3',
 		 # NOTE: ZODB has a new release, 4.0.0a1 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
-		 # will need to additionally include persistent >= 4.0.4 and BTrees >= 4.0.1, and ZEO >= 4.0.0
+		 # will need to additionally include persistent >= 4.0.5 and BTrees >= 4.0.1, and ZEO >= 4.0.0
 		 # which were pulled out of ZODB for better pypy support. We'll switch to it
 		 # when it goes non-alpha. It may require a tweak to our monkey patch if
 		 # has not been fixed.
@@ -153,7 +153,7 @@ setup(
 		# usually requires rebuilding gevent_zeromq. You'll get errors about 'Context has wrong size'.
 		# You may be able to fix it with 'pip install -U --force --no-deps gevent_zeromq'. You may not;
 		# if that doesn't work, the solution is to download gevent_zeromq manually, untar it, and
-		# run 'python setup.py install'. It may be necessary to 'pip uninstall' this (and/or remove it from zite-packages)
+		# run 'python setup.py install'. It may be necessary to 'pip uninstall' this (and/or remove it from site-packages)
 		# before running setup.py.
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
 		'gevent_zeromq >= 0.2.5',

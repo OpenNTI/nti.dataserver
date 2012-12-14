@@ -570,6 +570,13 @@ class User(Principal):
 		member of, plus the friends lists we ourselves have created that are dynamic.
 		"""
 		result = set(super(User,self)._get_dynamic_sharing_targets_for_read())
+		# XXX Temporary hack: Filter out some non-members that crept in. There
+		# should be no more new ones after this date, but leave this code here as a warning
+		# for awhile in case any do creep in
+		for x in list(result):
+			if nti_interfaces.IFriendsList.providedBy( x ) and self not in x:
+				logger.warning( "Relationship trouble: User %s is no longer a member of %s. Ignoring.", self, x )
+				result.discard( x )
 
 		for fl in self.friendsLists.values():
 			if nti_interfaces.IDynamicSharingTarget.providedBy( fl ):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # unittests have too many methods for pylint. pylint can suck it.
 #pylint: disable=R0904
 
@@ -7,11 +7,15 @@ from hamcrest import (assert_that, is_, none,
 					  greater_than_or_equal_to, is_not,
 					  all_of, is_in)
 from hamcrest import contains
+from hamcrest import has_property
+from hamcrest import has_value
+does_not = is_not
+
 from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
 from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
 from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
 from nti.appserver.workspaces import UserService, _UserEnrolledClassSectionsCollection as _UserClassesCollection, _UserPagesCollection as UserPagesCollection
-
+from nti.appserver.workspaces import FriendsListContainerCollection
 
 from nti.appserver import tests
 from nti.appserver import interfaces as app_interfaces
@@ -356,3 +360,37 @@ class TestLibraryCollectionDetailExternalizer(tests.ConfiguringTestBase):
 
 		external = ext_interfaces.IExternalObject( self.library_collection ).toExternalObject()
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
+
+from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
+
+class TestFriendsListContainerCollection(tests.ConfiguringTestBase):
+	set_up_packages = ('nti.dataserver',)
+
+	@mock_dataserver.WithMockDSTrans
+	def test_container_with_dfl_memberships(self):
+		owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture( self.ds )
+
+		owner_fl_cont = FriendsListContainerCollection( owner_user.friendsLists )
+
+		assert_that( owner_fl_cont, has_property( 'container', is_( owner_user.friendsLists ) ) )
+		assert_that( owner_fl_cont, has_property( 'container', has_property( '__name__', 'FriendsLists' ) ) )
+
+		# The member container adds the DFL
+		member_cont = FriendsListContainerCollection( member_user.friendsLists )
+		assert_that( member_cont, has_property( 'container', is_not( member_user.friendsLists ) ) )
+		assert_that( member_cont, has_property( 'container', has_value( parent_dfl ) ) )
+
+		assert_that( member_cont.container, has_property( '__name__', owner_fl_cont.__name__ ) )
+		assert_that( member_cont.container, has_property( '__parent__', member_user ) )
+
+		# Now, if we cheat and remove the member from the DFL, but leave the relationship
+		# in place, then we handle that
+		parent_dfl.removeFriend( member_user )
+		member_user.record_dynamic_membership( parent_dfl )
+		assert_that( list(parent_dfl), does_not( has_item( member_user ) ) )
+		assert_that( list(member_user.dynamic_memberships), has_item( parent_dfl ) )
+
+		assert_that( member_cont, has_property( 'container', is_( member_user.friendsLists ) ) )
+
+		# The same magic happens for _get_dynamic_sharing_targets_for_read
+		assert_that( member_user._get_dynamic_sharing_targets_for_read(), does_not( has_item( parent_dfl ) ) )
