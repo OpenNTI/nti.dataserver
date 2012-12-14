@@ -543,7 +543,7 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 		res = testapp.get( path, params={'filter': 'TopLevel,IFollow', 'accept': contenttypes.Note.mime_type}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
 
-		# The same os above, but with me
+		# The same as above, but with me
 		# TopLevel I follow cuts out the not_followed user. And also me.
 		res = testapp.get( path, params={'filter': 'TopLevel,IFollowAndMe'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 3 ) ) )
@@ -751,3 +751,16 @@ class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
 
 		assert_that( res.body, contains_string( reply_note_ntiid ) )
 		assert_that( res.json_body['Items'], has_length( 1 ) )
+
+		# I can filter out things shared to the group
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + owner_note.containerId + ')/UserGeneratedData'
+		res = testapp.get( path, params={'filter': 'TopLevel', 'sharedWith': parent_dfl.NTIID}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'ID', owner_note_ntiid_id ) ) ) )
+
+		# If I look for things shared just with me, I get nothing
+		res = testapp.get( path, params={'filter': 'TopLevel', 'sharedWith': owner_user.username}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
