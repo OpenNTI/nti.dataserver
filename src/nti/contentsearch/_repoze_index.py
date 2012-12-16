@@ -18,49 +18,61 @@ from nti.contentprocessing import compute_ngrams
 import logging
 logger = logging.getLogger( __name__ )
 
-def get_channel(obj, default):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_channel() or default
-
-def get_containerId(obj, default):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+def get_containerId(obj, default=None):
+	adapted = component.getAdapter(obj, search_interfaces.IContainerIDResolver)
 	return adapted.get_containerId() or default
 
-def get_ntiid(obj, default):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+def get_ntiid(obj, default=None):
+	adapted = component.getAdapter(obj, search_interfaces.INTIIDResolver)
 	return adapted.get_ntiid() or default
 
-def get_creator(obj, default):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+def get_creator(obj, default=None):
+	adapted = component.getAdapter(obj, search_interfaces.ICreatorResolver)
 	return adapted.get_creator() or default
 
-def get_last_modified(obj, default):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+def get_last_modified(obj, default=None):
+	adapted = component.getAdapter(obj, search_interfaces.ILastModifiedResolver)
 	result = adapted.get_last_modified()
 	return result or default
 	
-def get_keywords(obj, default):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+def get_keywords(obj, default=None):
+	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
 	return adapted.get_keywords() or default
 
-def _flatten_list(result, default):
+def _flatten_list(result, default=None):
 	result = ' '.join(result) if result else default
 	return result
 
-def get_references(obj, default):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+def get_sharedWith(obj, default=None):
+	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
+	result = adapted.get_sharedWith()
+	return _flatten_list(result, default)
+
+def get_references(obj, default=None):
+	adapted = component.getAdapter(obj, search_interfaces.INoteContentResolver)
 	result = adapted.get_references()
 	return _flatten_list(result, default)
 
-def get_recipients(obj, default):
+def get_channel(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	return adapted.get_channel() or default
+
+def get_recipients(obj, default=None):
+	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
 	result = adapted.get_recipients()
 	return _flatten_list(result, default)
 
-def get_sharedWith(obj, default):
+def get_replacement_content(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	result = adapted.get_sharedWith()
-	return _flatten_list(result, default)
+	result = adapted.get_replacement_content()
+	return result.lower() if result else None
+get_replacementContent = get_replacement_content
+
+def get_redaction_explanation(obj, default=None):
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	result = adapted.get_redaction_explanation()
+	return result.lower() if result else None
+get_redactionExplanation = get_redaction_explanation
 
 def get_object_content(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
@@ -79,18 +91,6 @@ def get_content_and_ngrams(obj, default=None):
 	n_grams = compute_ngrams(content)
 	result = '%s %s' % (content, n_grams) if content else u''
 	return result or default
-
-def get_replacement_content(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	result = adapted.get_replacement_content()
-	return result.lower() if result else None
-get_replacementContent = get_replacement_content
-
-def get_redaction_explanation(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	result = adapted.get_redaction_explanation()
-	return result.lower() if result else None
-get_redactionExplanation = get_redaction_explanation
 
 def create_catalog(type_name):
 	creator = component.queryUtility(search_interfaces.IRepozeCatalogCreator,  name=type_name)
