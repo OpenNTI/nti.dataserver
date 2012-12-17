@@ -34,11 +34,20 @@ import warnings
 from . import interfaces as app_interfaces
 from . import site_policies
 
+def _is_valid_search( search_term, remote_user ):
+	"""Should the search be executed?
+
+	In addition to enforcing an authenticated user, this places some limits on the
+	size of the query (requiring a minimum) to avoid a search like 'e' which would match
+	basically every user.
+	"""
+	return remote_user and search_term and len(search_term) >= 3
+
 @view_config( route_name='search.users',
 			  renderer='rest',
 			  permission=nauth.ACT_SEARCH,
 			  request_method='GET' )
-class _UserSearchView(object):
+def _UserSearchView(request):
 	"""
 	.. note:: This is extremely inefficient.
 
@@ -47,28 +56,29 @@ class _UserSearchView(object):
 		we are in. (To do that efficiently, we need community indexes).
 	"""
 
-	def __init__(self,request):
-		self.request = request
-		self.dataserver = self.request.registry.getUtility(nti_interfaces.IDataserver)
+	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
 
-	def __call__(self):
-		remote_user = users.User.get_user( sec.authenticated_userid( self.request ), dataserver=self.dataserver )
-		partialMatch = self.request.matchdict['term']
-		partialMatch = unicode(partialMatch or '').lower()
-		# We tend to use this API as a user-resolution service, so
-		# optimize for that case--avoid waking all other users up
-		result = []
+	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=dataserver )
+	partialMatch = request.matchdict['term']
+	partialMatch = unicode(partialMatch or '').lower()
+	# We tend to use this API as a user-resolution service, so
+	# optimize for that case--avoid waking all other users up
+	result = ()
 
-		if partialMatch and remote_user:
-			# NOTE3: We have now stopped allowing this to work for user resolution.
-			# This will probably break many assumptions in the UI about what and when usernames
-			# can be resolved
-			# NOTE2: Going through this API lets some private objects be found
-			# (DynamicFriendsLists, specifically). We should probably lock that down
-			result = _authenticated_search( self.request, remote_user, self.dataserver, partialMatch )
+	if _is_valid_search( partialMatch, remote_user ):
+		# NOTE3: We have now stopped allowing this to work for user resolution.
+		# This will probably break many assumptions in the UI about what and when usernames
+		# can be resolved
+		# NOTE2: Going through this API lets some private objects be found
+		# (DynamicFriendsLists, specifically). We should probably lock that down
+		result = _authenticated_search( request, remote_user, dataserver, partialMatch )
+	elif partialMatch and remote_user:
+		# Even if it's not a valid global search, we still want to
+		# look at things local to the user
+		result = _search_scope_to_remote_user( remote_user, partialMatch )
 
 
-		return _format_result( result, remote_user, self.dataserver )
+	return _format_result( result, remote_user, dataserver )
 
 @view_config( route_name='search.resolve_user',
 			  renderer='rest',
@@ -86,28 +96,33 @@ def _ResolveUserView(request):
 	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
 
 	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=dataserver )
-	partialMatch = request.matchdict['term']
-	partialMatch = unicode(partialMatch or '').lower()
+	exact_match = request.matchdict['term']
+	exact_match = unicode(exact_match or '').lower()
 	entity = None
 
-	if not partialMatch:
+	if not remote_user or not exact_match:
 		pass
-	elif users.Entity.get_entity( partialMatch ):
+	elif users.Entity.get_entity( exact_match ):
 		# NOTE3: We have not stopped allowing this to work for user resolution.
 		# This will probably break many assumptions in the UI about what and when usernames
 		# can be resolved
-		entity = users.Entity.get_entity( partialMatch )
+		entity = users.Entity.get_entity( exact_match )
 		# NOTE2: Going through this API lets some private objects be found
 		# (DynamicFriendsLists, specifically). We should probably lock that down
 	else:
-		scoped = _search_scope_to_remote_user( remote_user, partialMatch, operator.eq )
+		# To avoid ambiguity, we limit this to just friends lists.
+		scoped = _search_scope_to_remote_user( remote_user, exact_match, op=operator.eq, fl_only=True )
+		if not scoped:
+			# Hmm. Ok, try everything else. Note that this could produce ambiguous results
+			# in which case we make an arbitrary choice
+			scoped = _search_scope_to_remote_user( remote_user, exact_match, op=operator.eq, ignore_fl=True )
 		if scoped:
-			entity = scoped[0]
+			entity = scoped.pop() # there can only be one exact match
 
-	result = []
+	result = ()
 	if entity is not None:
 		if _make_visibility_test( remote_user )(entity):
-			result.append( entity )
+			result = (entity,)
 
 	return _format_result( result, remote_user, dataserver )
 
@@ -156,26 +171,36 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 		if entity is not None:
 			result.append( entity )
 
-	result.extend( _search_scope_to_remote_user( remote_user, search_term ) )
 
 	# FIXME: Hack in a policy of limiting searching to overlapping communities
 	test = _make_visibility_test( remote_user )
 	# Filter to things that share a common community
 	result = {x for x in result if test(x)} # ensure a set
 
+	# Add locally matching friends lists, etc. These don't need to go through the
+	# filter since they won't be users
+	result.update( _search_scope_to_remote_user( remote_user, search_term ) )
+
 	return result
 
-def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains ):
-	result = []
-	# Given a remote user, add matching friends lists, too
-	for fl in remote_user.friendsLists.values():
-		if not isinstance( fl, users.Entity ): # pragma: no cover
-			continue
-		names = user_interfaces.IFriendlyNamed( fl )
-		if op( fl.username.lower(), search_term ) \
-		   or op( (names.realname or '').lower(), search_term ) \
-		   or op( (names.alias or '').lower(), search_term ):
-			result.append( fl )
+def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains, fl_only=False, ignore_fl=True ):
+	"""
+	:return: A set of matching objects, if any.
+	"""
+	result = set()
+	if not ignore_fl:
+		# Given a remote user, add matching friends lists, too
+		for fl in remote_user.friendsLists.values():
+			if not isinstance( fl, users.Entity ): # pragma: no cover
+				continue
+			names = user_interfaces.IFriendlyNamed( fl )
+			if op( fl.username.lower(), search_term ) \
+			   or op( (names.realname or '').lower(), search_term ) \
+			   or op( (names.alias or '').lower(), search_term ):
+				result.add( fl )
+	if fl_only:
+		return result
+
 	# Also add enrolled classes
 	# TODO: What about instructors?
 	enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
@@ -183,13 +208,13 @@ def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains
 		# TODO: We really want to be searching the class as well, but
 		# we cannot get there from here
 		if op( section.ID.lower(), search_term ) or op( section.Description.lower(), search_term ):
-			result.append( section )
+			result.add( section )
 
 	if not result:
 		warnings.warn( "Hack for UI: looking at display names of dynamic memberships (communities and DFLs)" )
 		for x in remote_user.dynamic_memberships:
 			if x and op( x.username.lower(), search_term.lower() ):
-				result.append( x )
+				result.add( x )
 				break
 
 	return result

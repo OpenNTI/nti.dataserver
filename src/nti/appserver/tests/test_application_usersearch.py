@@ -145,9 +145,9 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 	def test_user_search_communities(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u1 = self._create_user()
-			user_interfaces.IFriendlyNamed( u1 ).realname = u"sj"
-			u2 = self._create_user( username='sj2@nextthought.com' )
-			u3 = self._create_user( username='sj3@nextthought.com' )
+			user_interfaces.IFriendlyNamed( u1 ).realname = u"sjo"
+			u2 = self._create_user( username='sjo2@nextthought.com' )
+			u3 = self._create_user( username='sjo3@nextthought.com' )
 			community = users.Community.create_community( username='TheCommunity' )
 			u1.join_community( community )
 			u2.join_community( community )
@@ -155,13 +155,13 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		testapp = TestApp( self.app )
 
 		# We can search for ourself
-		path = '/dataserver2/UserSearch/sj'
+		path = '/dataserver2/UserSearch/sjo'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 
 		# We only matched the two that were in the same community
 		assert_that( res.json_body['Items'], has_length( 2 ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sjohnson@nextthought.com' ) ) )
-		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sj2@nextthought.com' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sjo2@nextthought.com' ) ) )
 
 		# Getting a 'Class' value back here really confuses the iPad
 		assert_that( res.json_body, does_not( has_key( 'Class' ) ) )
