@@ -226,59 +226,59 @@ class Book(_SearchableContent):
 
 # ugd content getter 
 
-def get_channel(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_channel()
-
 def get_containerId(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContainerIDResolver)
 	return adapted.get_containerId()
 
 def get_ntiid(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.INTIIDResolver)
 	return adapted.get_ntiid()
 
 def get_creator(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.ICreatorResolver)
 	return adapted.get_creator()
 
 def get_last_modified(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.ILastModifiedResolver)
 	result = adapted.get_last_modified()
 	return datetime.fromtimestamp(result) if result is not None else None
 	
-def get_references(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	result = adapted.get_references()
-	return unicode(','.join(result)) if result else None
-
 def get_keywords(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
 	words = adapted.get_keywords()
 	return unicode(','.join(words)) if words else None
 
-def get_recipients(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	result = adapted.get_recipients()
-	return unicode(','.join(result)) if result else None
-
 def get_sharedWith(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
 	result = adapted.get_sharedWith()
 	return unicode(','.join(result)) if result else None
 
 def get_object_content(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
 	result = adapted.get_content()
 	return result if result else None
 
+def get_references(obj):
+	adapted = component.getAdapter(obj, search_interfaces.INoteContentResolver)
+	result = adapted.get_references()
+	return unicode(','.join(result)) if result else None
+
+def get_channel(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
+	return adapted.get_channel()
+
+def get_recipients(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
+	result = adapted.get_recipients()
+	return unicode(','.join(result)) if result else None
+
 def get_replacement_content(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
 	result = adapted.get_replacement_content()
 	return result if result else None
 	
 def get_redaction_explanation(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
 	result = adapted.get_redaction_explanation()
 	return result if result else None
 
