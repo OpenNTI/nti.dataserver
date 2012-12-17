@@ -140,36 +140,47 @@ def test_update_friends_list():
 	assert_that( list(fl), has_length( 7 ) )
 	assert_that( sorted(fl), contains( user2, user3, user4, user5, user6, user7, user8 ) )
 
-@WithMockDSTrans
+@WithMockDS
 def test_create_update_dynamic_friendslist():
 	ds = mock_dataserver.current_mock_ds
-	user1 = User.create_user( ds, username='foo23' )
-	user2 = User.create_user( ds, username='foo12' )
-	user3 = User.create_user( ds, username='foo13' )
+	with mock_dataserver.mock_db_trans( ds ):
+		user1 = User.create_user( ds, username='foo23' )
+		user2 = User.create_user( ds, username='foo12' )
+		user3 = User.create_user( ds, username='foo13' )
 
-	fl1 = users.DynamicFriendsList(username='Friends')
-	fl1.creator = user1 # Creator must be set
+		fl1 = users.DynamicFriendsList(username='Friends')
+		fl1.creator = user1 # Creator must be set
 
-	user1.addContainedObject( fl1 )
-	fl1.addFriend( user2 )
+		user1.addContainedObject( fl1 )
+		fl1.addFriend( user2 )
 
-	assert_that( user2.dynamic_memberships, has_item( fl1 ) )
+		assert_that( user2.dynamic_memberships, has_item( fl1 ) )
+		assert_that( user2.entities_followed, has_item( fl1 ) )
 
-	fl1.updateFromExternalObject( {'friends': [user3.username]} )
+	for u in user1, user2, user3:
+		u._p_deactivate()
+		u._p_invalidate()
+		assert_that( u, has_property( '__dict__', {} ) )
 
-	assert_that( user3.dynamic_memberships, has_item( fl1 ) )
-	assert_that( to_external_object( user3 ), has_entry( 'Communities', has_item( has_entry( 'realname', 'Friends' ) ) ) )
+	with mock_dataserver.mock_db_trans( ds ) as conn:
+		# This process actually activates the objects directly, immediately, during the
+		# iteration process
+		fl1.updateFromExternalObject( {'friends': [user3.username]} )
 
-	assert_that( user2.dynamic_memberships, does_not( has_item( fl1 ) ) )
-	assert_that( to_external_object( user2 ), has_entry( 'Communities', does_not( has_item( has_entry( 'realname', 'Friends' ) ) ) ) )
+		assert_that( user3.dynamic_memberships, has_item( fl1 ) )
+		assert_that( to_external_object( user3 ), has_entry( 'Communities', has_item( has_entry( 'realname', 'Friends' ) ) ) )
 
-	# The external form masquerades as a normal FL...
-	x = to_external_object( fl1 )
-	assert_that( x, has_entry( 'Class', 'FriendsList' ) )
-	assert_that( x, has_entry( 'MimeType', 'application/vnd.nextthought.friendslist' ) )
-	assert_that( x, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:foo23-MeetingRoom:Group-friends' ) )
-	# ... with one exception
-	assert_that( x, has_entry( 'IsDynamicSharing', True ) )
+		assert_that( user2.dynamic_memberships, does_not( has_item( fl1 ) ) )
+		assert_that( user2.entities_followed, does_not( has_item( fl1 ) ) )
+		assert_that( to_external_object( user2 ), has_entry( 'Communities', does_not( has_item( has_entry( 'realname', 'Friends' ) ) ) ) )
+
+		# The external form masquerades as a normal FL...
+		x = to_external_object( fl1 )
+		assert_that( x, has_entry( 'Class', 'FriendsList' ) )
+		assert_that( x, has_entry( 'MimeType', 'application/vnd.nextthought.friendslist' ) )
+		assert_that( x, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:foo23-MeetingRoom:Group-friends' ) )
+		# ... with one exception
+		assert_that( x, has_entry( 'IsDynamicSharing', True ) )
 
 
 @WithMockDSTrans
