@@ -16,6 +16,8 @@ from zope import component
 from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
 
+from ZODB.utils import u64
+
 from pyramid import security as sec
 from pyramid.view import view_config
 
@@ -147,7 +149,7 @@ def _format_result( result, remote_user, dataserver ):
 def _authenticated_search( request, remote_user, dataserver, search_term ):
 	result = []
 	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
-	user_search_matcher = site_policies.queryAdapterInSite( remote_user, app_interfaces.IUserSearchMatcher, request=request )
+	user_search_matcher = site_policies.queryAdapterInSite( remote_user, app_interfaces.IUserSearchPolicy, request=request )
 	# We used to have some nice heuristics about when to include uid-only
 	# matches. This became much less valuable when we started to never display
 	# anything except uid and sometimes to only want to search on UID:
@@ -158,19 +160,22 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 	## if there are no other matches
 	# Therefore we say screw it and throw that heuristic out the window.
 	for entity_name in _users.iterkeys():
-		# TODO how expensive is it to actually look inside all these
-		# objects?  This almost certainly wakes them up?
-		# Our class name is UserMatchingGet, but we actually
-		# search across all entities, like Communities
-
-		if search_term in entity_name.lower():
-			entity = users.Entity.get_entity( entity_name, dataserver=dataserver )
-		else:
-			entity = user_search_matcher.matches( search_term, entity_name ) if user_search_matcher else None
+		__traceback_info__ = entity_name, search_term
+		entity = None
+		try:
+			if search_term in entity_name.lower():
+				entity = users.Entity.get_entity( entity_name, dataserver=dataserver )
+		except KeyError: # pragma: no cover
+			# Typically POSKeyError
+			logger.warning( "Failed to search entity %s", entity_name )
 
 		if entity is not None:
 			result.append( entity )
 
+	result.extend( user_search_matcher.query( search_term,
+											  # Match Users and Communities here. Do not match IFriendsLists, because that
+											  # would get private objects from other users.
+											  provided=lambda x: nti_interfaces.IUser.providedBy( x ) or nti_interfaces.ICommunity.providedBy(x) ) )
 
 	# FIXME: Hack in a policy of limiting searching to overlapping communities
 	test = _make_visibility_test( remote_user )
@@ -224,6 +229,12 @@ def _make_visibility_test(remote_user):
 	if remote_user:
 		remote_com_names = remote_user.usernames_of_dynamic_memberships - set( ('Everyone',) )
 		def test(x):
+			try:
+				getattr( x, 'username' )
+			except KeyError: # pragma: no cover
+				# typically POSKeyError
+				logger.warning( "Failed to filter entity with id %s", hex(u64(x._p_oid)) )
+				return False
 			# User can see himself
 			if x == remote_user:
 				return True

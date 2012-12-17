@@ -140,7 +140,7 @@ def install_user_catalog( dataserver_folder, intids ):
 	lsm = dataserver_folder.getSiteManager()
 	catalog = Catalog()
 
-	catalog.__name__ = '++etc++entity-catalog'
+	catalog.__name__ = user_index.CATALOG_NAME
 	catalog.__parent__ = dataserver_folder
 	intids.register( catalog )
 	lsm.registerUtility( catalog, provided=ICatalog, name=user_index.CATALOG_NAME )
