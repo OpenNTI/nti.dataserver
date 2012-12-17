@@ -244,7 +244,18 @@ class WillCreateNewEntityEvent(zope.component.interfaces.ObjectEvent):
 		self.ext_value = ext_value
 		self.preflight_only = preflight_only
 
+class IWillDeleteEntityEvent(zope.component.interfaces.IObjectEvent):
+	"""
+	Fired before an :class:`zope.lifecycleevent.interfaces.IObjectRemovedEvent` with
+	an entity that is in the process of being deleted by the factories. 
+	"""
+	
+@interface.implementer(IWillUpdateNewEntityEvent)
+class WillDeleteEntityEvent(zope.component.interfaces.ObjectEvent):
 
+	def __init__( self, obj):
+		super(WillDeleteEntityEvent,self).__init__( obj )
+		
 class IAvatarURLProvider(Interface):
 	"""
 	Something that can provide a display URL. This is separate
