@@ -171,6 +171,8 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		Image instance
 
 		"""
+		allowedTypes = [ '.png', '.jpeg', '.jpg', '.gif' ]
+
 		name = getattr(node, 'imageoverride', None)
 		if name is None:
 			return self.newImage(node.source)
@@ -188,16 +190,17 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 				os.makedirs(directory)
 
 			# Just copy the image for now, any necessary conversions will be handled later.
-			path = os.path.splitext(path)[0] + os.path.splitext(name)[-1]
-			shutil.copyfile(name, path)
-			_t, width, height = _size( path, path )  
-			width = Dimension(width)
-			height = Dimension(height)
-			height.imageUnits = width.imageUnits = self.imageUnits
+			if oldext.lower() in allowedTypes:
+				path = os.path.splitext(path)[0] + os.path.splitext(name)[-1]
+				shutil.copyfile(name, path)
+				_t, width, height = _size( path, path )
+				width = Dimension(width)
+				height = Dimension(height)
+				height.imageUnits = width.imageUnits = self.imageUnits
 
-			img = Image(path, self.ownerDocument.config['images'], width=width, height=height)
-			self.staticimages[name] = img
-			return img
+				img = Image(path, self.ownerDocument.config['images'], width=width, height=height)
+				self.staticimages[name] = img
+				return img
 
 		# If anything fails, just let the imager handle it...
 		except Exception, msg:
