@@ -9,9 +9,7 @@ file:../lib/pywikipedia/#egg=pywikipedia
 # place messes things up
 # -e git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
 git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
-# At this writing, upstream PyMySQL is broken, so we have a fixed clone
-#-e git+https://github.com/petehunt/PyMySQL.git#egg=PyMySQL-dev
--e git+https://github.com/NextThought/PyMySQL.git#egg=PyMySQL-dev
+-e git+https://github.com/petehunt/PyMySQL.git#egg=PyMySQL-dev
 ## Sadly, issue 328 prevents us from using local paths for these things,
 ## if we include the egg name. If we're otherwise very careful,
 ## local paths can be made to work
