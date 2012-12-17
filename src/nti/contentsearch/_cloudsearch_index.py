@@ -120,47 +120,47 @@ def get_object_ngrams(obj):
 	return result
 
 def get_last_modified(data):
-	adapted = component.getAdapter(data, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(data, search_interfaces.ILastModifiedResolver)
 	result = adapted.get_last_modified() or time.time()
 	result = datetime.fromtimestamp(result)
 	result = result.strftime('%Y%m%d%H%M%S')
 	return result
 
-def get_channel(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	return adapted.get_channel() or u''
-
 def get_containerId(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContainerIDResolver)
 	return adapted.get_containerId() or u''
 
 def get_ntiid(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.INTIIDResolver)
 	return adapted.get_ntiid() or u''
 
 def get_creator(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.ICreatorResolver)
 	return adapted.get_creator() or unicode(nti_interfaces.SYSTEM_USER_NAME)
 
-def get_recipients(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	result = adapted.get_recipients()
-	return unicode(' '.join(result)) if result else u''
-
 def get_sharedWith(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
 	result = adapted.get_sharedWith()
 	return unicode(' '.join(result)) if result else u''
 
+def get_keywords(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
+	words = adapted.get_keywords()
+	return unicode(','.join(words)) if words else u''
+
 def get_references(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.INoteContentResolver)
 	result = adapted.get_references()
 	return unicode(','.join(result)) if result else u''
 
-def get_keywords(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	words = adapted.get_keywords()
-	return unicode(','.join(words)) if words else u''
+def get_channel(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
+	return adapted.get_channel() or u''
+
+def get_recipients(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
+	result = adapted.get_recipients()
+	return unicode(' '.join(result)) if result else u''
 
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
