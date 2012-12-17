@@ -64,6 +64,35 @@ def create_user_schema():
 							t_username = fields.TEXT(stored=False, analyzer=analyzer, phrase=False))
 	return schema
 	
+def _getattr(obj, name, default=None):
+	result = getattr(obj, name, default)
+	result = unicode(result) if result else None
+		
+def get_entity_info(entity):
+	_ds_intid = component.getUtility( zope.intid.IIntIds )
+	username = unicode(entity.username)
+	
+	# get intid as unicode
+	intid = _ds_intid.queryId(entity, None)
+	intid = unicode(intid) if intid else None
+	clazz = unicode(entity.__class__.__name__.lower())
+	
+	# parse entity profile
+	alias = realname = email = creator = None
+	if nti_interfaces.IUser.providedBy(entity):
+		profile = user_interfaces.IUserProfile(entity)
+		email = _getattr(profile, 'email', None)
+		alias = _getattr(profile, 'alias', None)
+		realname = _getattr(profile, 'realname', None)
+	else:
+		creator = _getattr(entity, 'creator', None) or _getattr(entity, 'Creator', None)
+		creator = unicode(creator.username) if nti_interfaces.IEntity.providedBy(creator) else creator
+		
+	# data to be indexed
+	return {u'intid': intid, u'username': username, u'creator':creator, u'type': clazz,
+			u'alias':alias, u'email':email, u'realname':realname, 
+			u't_username': username}
+	
 def get_index_writer(index):
 	return w_idxstorage.get_index_writer(index, w_idxstorage.writer_ctor_args)
 
@@ -118,35 +147,6 @@ def create_index(inmemory=False):
 			lock.close()
 	return result
 
-def _getattr(obj, name, default=None):
-	result = getattr(obj, name, default)
-	result = unicode(result) if result else None
-	
-def get_entity_info(entity):
-	_ds_intid = component.getUtility( zope.intid.IIntIds )
-	username = entity.username
-	
-	# get intid as unicode
-	intid = _ds_intid.queryId(entity, None)
-	intid = unicode(intid) if intid else None
-	clazz = unicode(entity.__class__.__name__.lower())
-	
-	# parse entity profile
-	alias = realname = email = creator = None
-	if nti_interfaces.IUser.providedBy(entity):
-		profile = user_interfaces.IUserProfile(entity)
-		email = _getattr(profile, 'email', None)
-		alias = _getattr(profile, 'alias', None)
-		realname = _getattr(profile, 'realname', None)
-	else:
-		creator = _getattr(entity, 'creator', None) or _getattr(entity, 'Creator', None)
-		creator = unicode(creator.username) if nti_interfaces.IEntity.providedBy(creator) else creator
-		
-	# data to be indexed
-	return {'intid': intid, 'username': username, 'creator':creator, 'type': clazz,
-			'alias':alias, 'email':email, 'realname':realname, 
-			't_username': username}
-	
 def _create_or_update_entity(iwu_index, entity):
 	result = entity is not None
 	if result:
@@ -188,7 +188,7 @@ def _delete_entity(iwu_index, entity):
 	return count, username
 	
 @component.adapter(nti_interfaces.IEntity, IObjectRemovedEvent)
-def on_entity_deleted( entity, event ):
+def on_entity_deleted( entity, event ):	
 	iwu_index = component.getUtility(IWhooshEntityIndex)
 	count, username = _delete_entity(iwu_index, entity)
 	if count: iwu_index.on_entity_deleted(username)
