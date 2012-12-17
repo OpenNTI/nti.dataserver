@@ -120,18 +120,18 @@ class MathCountsCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
 	def __init__( self, context=None ):
 		super(MathCountsCapabilityFilter, self).__init__(context)
 		self.context = context
-		
+
 	def filterCapabilities( self, capabilities ):
 		result = super(MathCountsCapabilityFilter, self).filterCapabilities(capabilities)
-		
-		# JAM: The 'role' value is not something suitable to base permissions on
-		# this filter should not be used unless it is extrictly necessary 
+
+		# JAM: The 'role' value is not something suitable to base permissions on (it is never verified)
+		# this filter should NOT be used unless it is extremely necessary
 		profile = user_interfaces.IUserProfile(self.context) if self.context else None
 		role = getattr(profile, 'role', None)
 		if role is None or role.lower() in ('student', 'other'):
 			result.discard(u'nti.platform.p2p.dynamicfriendslists')
 		return result
-	
+
 #: This relationship is exposed on Users and in the handshake/ping
 #: when the UI should display it as a link to information about
 #: our "Children's Privacy Policy."
@@ -367,8 +367,11 @@ def _alter_pdf( pdf_stream, username, child_firstname, parent_email ):
 	The best way to get the document out of Word is to Print, use the
 	PDF option of the Print dialog and 'Save as Adobe PDF', and
 	'Smallest File Size' which puts it right into Acrobat. This is the
-	only way to achieve the ~40K file size (otherwise you get 800K). When using the PDF Optimizer,
-	image optimizations should be unchecked; having it checked seems to embed 300K of Color Space data.
+	only way to achieve the ~40K file size (otherwise you get 800K).
+	When using the PDF Optimizer, image optimizations should be
+	unchecked; having it checked seems to embed 300K of Color Space
+	data. Also, the best results seem to come from simply unembedding all the
+	fonts and setting compatibility to PDF 1.3.
 	"""
 
 	pdf_reader = pyPdf.PdfFileReader( pdf_stream )
@@ -383,9 +386,9 @@ def _alter_pdf( pdf_stream, username, child_firstname, parent_email ):
 	pdf_page[pdf_page.keys()[0]] = page_content
 
 
-	IX_UNAME = 366
-	IX_FNAME = 385
-	IX_EMAIL = 401
+	IX_UNAME = 376
+	IX_FNAME = 395
+	IX_EMAIL = 411
 
 	assert page_content.operations[IX_EMAIL][1] == 'TJ' # TJ being the 'text with placement' operator
 	assert page_content.operations[IX_UNAME][1] == 'TJ'
