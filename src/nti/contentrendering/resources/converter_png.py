@@ -76,9 +76,9 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 	compiler = 'pdflatex'
 	fileExtension = '.png'
 	# SAJ: The relationship between resolution and defaultScaleFator is important to prevent the distortion of
-	# the input images. 
-	resolution = 72 # SAJ: Should be an integer multiple of 72
-	defaultScaleFactor = 1.0 # SAJ: This needs to be equal to resolution/72
+	# the input images. When rasterizing vector graphics, oversampling improves the visual quality of the output.
+	resolution = 144 # SAJ: Integer multiples of 72 work best.
+	defaultScaleFactor = 1.0
 	scaleFactor = 1
 
 	def executeConverter(self, output):
