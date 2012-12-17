@@ -65,7 +65,10 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		(as Entity objects), resolving weak refs.
 		:return: An iterator across a set of `Entity` objects.
 		"""
-		return (x() for x in self._friends_wref_set if x())
+		for wref in self._friends_wref_set:
+			ent = wref()
+			if ent:
+				yield ent
 
 	def __contains__( self, entity ):
 		for x in self: # use the generator
@@ -289,11 +292,11 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 	# An event (see sharing.py) handles when this object is deleted.
 	# If 'Communities' becomes editable, then a new event would need to be
 	# done to handle removing the friend in that case
-	def _on_added_friend( self, friend ):
+	def _on_added_friend( self, new_friend ):
 		assert self.creator, "Must have creator"
-		super(DynamicFriendsList,self)._on_added_friend( friend )
-		friend.record_dynamic_membership( self )
-		friend.follow( self )
+		super(DynamicFriendsList,self)._on_added_friend( new_friend )
+		new_friend.record_dynamic_membership( self )
+		new_friend.follow( self )
 
 	def _update_friends_from_external( self, new_friends ):
 		old_friends = set( self )
@@ -303,9 +306,9 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 		# New additions would have been added, we only have to take care of
 		# removals.
 		ex_friends = old_friends - new_friends
-		for i_hate_you in ex_friends:
-			i_hate_you.record_no_longer_dynamic_member( self )
-			i_hate_you.stop_following( self )
+		for ex_friend in ex_friends:
+			ex_friend.record_no_longer_dynamic_member( self )
+			ex_friend.stop_following( self )
 		return result
 
 	def accept_shared_data_from( self, source ):
