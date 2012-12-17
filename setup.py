@@ -104,7 +104,7 @@ setup(
 		'Pillow >= 1.7.8',
 		'RestrictedPython',
 		'ZConfig >= 2.9.3',
-		 # NOTE: ZODB has a new release, 4.0.0a1 (Notice it's not ZODB3 anymore, so
+		 # NOTE: ZODB has a new release, 4.0.0a4 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
 		 # will need to additionally include persistent >= 4.0.5 and BTrees >= 4.0.1, and ZEO >= 4.0.0
 		 # which were pulled out of ZODB for better pypy support. We'll switch to it
@@ -217,7 +217,7 @@ setup(
 		'repoze.who == 2.0', # 2.1b1 is out, should be drop in, may require changes
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests >= 0.14.2', # HTTP
+		'requests == 0.14.2', # HTTP. NOTE: 1.0.x is out, but not backwards compat. Since some tools (httpie) depend on it, wait until they are ready
 		'scss',
 		'setproctitle >= 1.1.6',
 		'setuptools',
