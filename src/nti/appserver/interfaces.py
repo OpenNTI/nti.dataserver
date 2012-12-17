@@ -336,13 +336,19 @@ class INewObjectTransformer(interface.Interface):
 
 class IUserSearchPolicy(interface.Interface):
 
-	def matches( search_term, entity_name ):
+	def query( search_term, provided=nti_interfaces.IEntity.providedBy ):
 		"""
-		Determine if the entity matches.
-		:return: The entity object, if it matched. Otherwise None.
+		Return all entity objects that match the query.
+
+		:param provided: A predicate used to further filter results.
+			The default value checks for IEntity; you may use a custom value.
+
+		:return: A set of :class:`nti.dataserver.interfaces.IEntity` objects,
+			possibly empty, that match the search term, according to the rules of the
+			policy.
 		"""
 
-IUserSearchMatcher = IUserSearchPolicy # BBB
+
 
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 IContactEmailRecovery = IContactEmailRecovery # BBB

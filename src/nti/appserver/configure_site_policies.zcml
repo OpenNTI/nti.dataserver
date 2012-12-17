@@ -67,7 +67,7 @@
 
 	<utility factory=".site_policies.CollegiateSitePolicyEventListener"
 			 name="collegiate.nextthought.com"/>
-			 
+
 	<utility factory=".site_policies.GenericSitePolicyEventListener"
 			 name=''
 			 zcml:condition="not-have devmode" />

@@ -75,9 +75,15 @@ class WeakRef(object):
 		except KeyError:
 			result = None
 
-		result_username = getattr( result, 'username', None )
-		if result_username is None or result_username.lower() != self.username:
+		try:
+			result_username = getattr( result, 'username', None )
+		except KeyError: # pragma: no cover
+			# Typically (only) a POSKeyError
+			logger.warning( "POSKeyError accessing weak ref to %s", self.username )
 			result = None
+		else:
+			if result_username is None or result_username.lower() != self.username:
+				result = None
 
 		if result is not None:
 			self._v_entity_cache = result

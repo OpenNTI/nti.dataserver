@@ -18,6 +18,7 @@ from hamcrest import has_key
 from hamcrest import is_not as does_not
 
 from zope import interface
+from zope.lifecycleevent import modified
 
 from webtest import TestApp
 from nti.dataserver import users
@@ -137,6 +138,7 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 
+		# We can search for ourself and the other user
 		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 2 ) )
@@ -146,6 +148,7 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u1 = self._create_user()
 			user_interfaces.IFriendlyNamed( u1 ).realname = u"sjo"
+			modified( u1 )
 			u2 = self._create_user( username='sjo2@nextthought.com' )
 			u3 = self._create_user( username='sjo3@nextthought.com' )
 			community = users.Community.create_community( username='TheCommunity' )
@@ -181,9 +184,11 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u1 = self._create_user()
 			interface.alsoProvides( u1, nti_interfaces.ICoppaUser )
+			modified( u1 ) # update catalog
 			u2 = self._create_user( username='sj2@nextthought.com' )
 			user_interfaces.IFriendlyNamed( u2 ).alias = u"Steve"
-			user_interfaces.IFriendlyNamed( u2 ).realname = u"Steve Johnson"
+			user_interfaces.IFriendlyNamed( u2 ).realname = u"Steve Jay Johnson"
+			modified( u2 )
 			community = users.Community.create_community( username='TheCommunity' )
 			u1.join_community( community )
 			u2.join_community( community )
@@ -191,15 +196,24 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		testapp = TestApp( self.app )
 
 
-		# Normal search works
-		path = '/dataserver2/UserSearch/steve'
+		# On a regular site, we can search by alias or realname (Normal search works)
+		path = '/dataserver2/UserSearch/steve' # alias
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sj2@nextthought.com' ) ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'alias', 'Steve' ) ) )
-		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Steve Johnson' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Steve Jay Johnson' ) ) )
+
+		path = '/dataserver2/UserSearch/JAY' # realname
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_length( 1 ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sj2@nextthought.com' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'alias', 'Steve' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Steve Jay Johnson' ) ) )
+
 
 		# MC search is locked down to be only the username
+		path = '/dataserver2/UserSearch/steve' # alias
 		environ = self._make_extra_environ()
 		environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
 		res = testapp.get( path, extra_environ=environ )

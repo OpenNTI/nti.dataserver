@@ -211,6 +211,9 @@ class _UserRealnameStripper(object):
 # 		return ['en']
 
 from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.users import index as user_index
+from zope.catalog.interfaces import ICatalog
+
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
 class _AliasUserSearchPolicy(object):
@@ -222,15 +225,20 @@ class _AliasUserSearchPolicy(object):
 	def __init__( self, *args ):
 		pass
 
-	def matches( self, search_term, entity_name ):
-		entity = users.Entity.get_entity( entity_name )
-		if entity:
-			names = user_interfaces.IFriendlyNamed( entity )
-			return self._entity_matches( entity, names, search_term )
+	_index_names = ('alias',)
 
-	def _entity_matches( self, entity, names, search_term ):
-		if search_term in (names.alias or '').lower():
-			return entity
+	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy ):
+		matches = set()
+		ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
+		for ix in self._index_names:
+			_ix = ent_catalog[ix]
+			for key in _ix._fwd_index.iterkeys(): # TODO: Private field
+				if search_term in key:
+					matches.update( (x for x in ent_catalog.searchResults( **{ix: (key,key)} ) if provided( x ) ) )
+					# TODO: For the multiple-index case, we could be more efficient by unioning the underlying
+					# intid sets before resolving objects. Not sure how much difference that makes
+		return matches
+
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
 class _ComprehensiveUserSearchPolicy(_AliasUserSearchPolicy):
@@ -239,10 +247,7 @@ class _ComprehensiveUserSearchPolicy(_AliasUserSearchPolicy):
 	username.
 	"""
 
-	def _entity_matches( self, entity, names, search_term ):
-		if search_term in (names.realname or '').lower():
-			return entity
-		return super(_ComprehensiveUserSearchPolicy,self)._entity_matches( entity, names, search_term )
+	_index_names = _AliasUserSearchPolicy._index_names + ('realname',)
 
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
@@ -254,8 +259,8 @@ class _NoOpUserSearchPolicy(object):
 	def __init__( self, *args ):
 		pass
 
-	def matches( self, search_term, entity_name ):
-		return None
+	def query( self, search_term, provided=None ):
+		return ()
 
 class _NoOpUserSearchPolicyAndRealnameStripper(_NoOpUserSearchPolicy,_UserRealnameStripper):
 	"""
