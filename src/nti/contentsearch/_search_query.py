@@ -131,9 +131,6 @@ class QueryObject(object, UserDict.DictMixin):
 
 	# -- search --
 	
-	def get_subqueries(self):
-		return _empty_subqueries
-
 	@property
 	def is_empty(self):
 		return not self.term
