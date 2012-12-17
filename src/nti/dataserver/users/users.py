@@ -575,13 +575,25 @@ class User(Principal):
 		# for awhile in case any do creep in
 		for x in list(result):
 			if nti_interfaces.IFriendsList.providedBy( x ) and self not in x:
-				logger.warning( "Relationship trouble: User %s is no longer a member of %s. Ignoring.", self, x )
+				logger.warning( "Relationship trouble: User %s is no longer a member of %s. Ignoring for dynamic read", self, x )
 				result.discard( x )
 
 		for fl in self.friendsLists.values():
 			if nti_interfaces.IDynamicSharingTarget.providedBy( fl ):
 				result.add( fl )
 		return result
+
+	def _get_entities_followed_for_read( self ):
+		result = set(super(User,self)._get_entities_followed_for_read())
+		# XXX Temporary hack: Filter out some non-members that crept in. There
+		# should be no more new ones after this date, but leave this code here as a warning
+		# for awhile in case any do creep in
+		for x in list(result):
+			if nti_interfaces.IFriendsList.providedBy( x ) and self not in x:
+				logger.warning( "Relationship trouble: User %s is no longer a member of %s. Ignoring for followed read", self, x )
+				result.discard( x )
+		return result
+
 
 	def accept_shared_data_from( self, source ):
 		""" Accepts if not ignored; auto-follows as well.
