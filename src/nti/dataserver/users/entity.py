@@ -32,7 +32,6 @@ from ZODB.interfaces import IConnection
 
 from nti.ntiids import ntiids
 
-
 import nti.externalization.internalization
 
 from nti.dataserver import datastructures
@@ -40,8 +39,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces
 
 from nti.externalization.datastructures import InterfaceObjectIO
-
-import nti.apns.interfaces
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -195,10 +192,13 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		doesn't exist, raises :class:`KeyError`.
 		:return: The user that was deleted.
 		"""
+		
 		dataserver = dataserver or _get_shared_dataserver()
 		root_users = dataserver.root[cls._ds_namespace]
-
 		user = root_users[username]
+		
+		notify( interfaces.WillDeleteEntityEvent( user ) )
+	
 		del root_users[username]
 
 		# Also clean it up from whatever shard it happened to come from
