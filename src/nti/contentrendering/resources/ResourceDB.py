@@ -226,12 +226,6 @@ class ResourceDB(object):
 
 	def getResource(self, source, keys):
 
-		# SAJ: Since we filtered the options for includegraphics when we added entries to the resource DB,
-		# we need to filter the options during the lookup phase to ensure there are no accidental misses.
-		if 'includegraphics' in source or 'ntiincludeannotationgraphics' in source or 'ntiincludenoannotationgraphics' in source:
-			if '[' in source and ']' in source:
-				source = source[:source.index('[')] + source[source.index(']')+1:]
-
 		rsrcSet = self._db.get(source)
 
 		if rsrcSet == None:
