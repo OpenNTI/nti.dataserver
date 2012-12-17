@@ -398,17 +398,9 @@ class ImagerContentUnitRepresentationBatchConverterDriver(object):
 	def convert_batch(self, content_units):
 		images = []
 		for unit in content_units:
-			# SAJ: Filter out options for includegraphics to prevent the loss of information from 
-			# resizing the graphic and allow a single resource to be used for all references to a 
-			# graphic.
 			source = unit.source
-			if 'includegraphics' in source or 'ntiincludeannotationgraphics' in source or 'ntiincludenoannotationgraphics' in source:
-				if '[' in source and ']' in source:
-					source = unit.source[:unit.source.index('[')] + unit.source[unit.source.index(']')+1:]
 
-			#TODO newImage completely ignores the concept of imageoverrides
 			new_image = self.imager.getImage(unit)
-			#new_image = self.imager.newImage(source)
 			if not interfaces.IContentUnitRepresentation.providedBy( new_image ):
 				interface.alsoProvides( new_image, interfaces.IFilesystemContentUnitRepresentation )
 				new_image.source = source
