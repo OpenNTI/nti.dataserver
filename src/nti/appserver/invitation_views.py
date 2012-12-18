@@ -104,7 +104,11 @@ class AcceptInvitationsLinkProvider(object):
 # configured persistent invitations (e.g., user-editable)
 # we synthesize the default invitation. It's tied directly to the
 # intid of the actual object we will be joining. Note that as soon
-# as we go persistent, these codes will probably be invalidated
+# as we go persistent, these codes will probably be invalidated.
+# We only generate invitations to IDynamicSharingTargetFriendsList objects, even
+# though in theory this could work for Communities and regular FL too; this is
+# alright because the accept view and the link provider are also tied to the IDynamicSharingTargetFriendsList
+
 class _DefaultJoinEntityInvitation(JoinEntitiesInvitation):
 
 	def _iter_entities(self):
@@ -112,19 +116,21 @@ class _DefaultJoinEntityInvitation(JoinEntitiesInvitation):
 
 class _TrivialDefaultInvitations(ZcmlInvitations):
 
-	def getDefaultInvitationCode(self, dfl):
+	def _getDefaultInvitationCode(self, dfl):
 		iid = component.getUtility( zc_intid.IIntIds ).getId( dfl )
 		return integer_strings.to_external_string( iid )
 
 	def getInvitationByCode( self, code ):
+		__traceback_info__ = code,
 		invite = super(_TrivialDefaultInvitations,self).getInvitationByCode( code )
 		if invite is None:
 			try:
 				iid = integer_strings.from_external_string( code )
 				dfl = component.getUtility( zc_intid.IIntIds ).getObject( iid )
-				invite = _DefaultJoinEntityInvitation( code, dfl )
-				invite.creator = dfl.creator
-			except (KeyError,ValueError):
+				if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy( dfl ):
+					invite = _DefaultJoinEntityInvitation( code, dfl )
+					invite.creator = dfl.creator
+			except (KeyError,ValueError,AttributeError):
 				return None
 		return invite
 
@@ -136,7 +142,7 @@ class _TrivialDefaultInvitations(ZcmlInvitations):
 			  request_method='GET',
 			  name=REL_TRIVIAL_DEFAULT_INVITATION_CODE)
 def get_default_trivial_invitation_code(request):
-	code = component.getUtility(invite_interfaces.IInvitations).getDefaultInvitationCode( request.context )
+	code = component.getUtility(invite_interfaces.IInvitations)._getDefaultInvitationCode( request.context )
 	return {'invitation_code': code}
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
