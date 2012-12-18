@@ -217,7 +217,7 @@ setup(
 		'repoze.who == 2.0', # 2.1b1 is out, should be drop in, may require changes
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests == 0.14.2', # HTTP. NOTE: 1.0.x is out, but not backwards compat. Since some tools (httpie) depend on it, wait until they are ready
+		'requests >= 0.14.2,<1.0', # HTTP. NOTE: 1.0.x is out, but not full backwards compat. Since some tools (httpie) depend on it, wait until they are ready
 		'scss',
 		'setproctitle >= 1.1.6',
 		'setuptools',
@@ -326,7 +326,7 @@ setup(
 			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 			'readline >= 6.2.4.1',
-			'httpie >= 0.3.0',
+			'httpie == 0.3.1', # 0.3.1 explicitly requires requests < 1.0
 			'logilab_astng >= 0.24.1',
 			'pip-tools >= 0.2.1', # command pip-review, pip-dump
 			'pylint >= 0.26.0',
