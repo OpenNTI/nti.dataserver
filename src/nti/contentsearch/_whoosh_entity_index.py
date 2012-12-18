@@ -255,7 +255,10 @@ class _WhooshEntityIndex(object):
 		if getattr(self, '_reader', None):
 			self._pubsub.unsubscribe(self.queue_name)
 			self._reader.kill()
-				
+			
+	def query(self, search_term, remote_user, provided=None):
+		pass
+		
 	def on_entity_created(self, username):
 		msg = repr((0, username, self._uuid))
 		self._publish(msg)
