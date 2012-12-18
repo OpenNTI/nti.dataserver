@@ -768,10 +768,11 @@ class TestMathcountsSitePolicyEventListener(MathcountsSitePolicyEventListener):
 _SITE_LANDING_PAGES = {
 	'mathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1',
 	'testmathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-testmathcounts2013.warm_up_1',
-	'prmia.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-Volume_III.A.2_converted.toc260827905'
+	'prmia.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-Volume_III.A.2_converted.toc260827905',
+	'fintech.nextthought.com': b'tag_nextthought_com_2011-10_PRMIA-HTML-FinTech_Volume_III_A_2_Sample_TOC260827911.html'
 	}
 
-@component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
+@component.adapter(nti_interfaces.IUser, app_interfaces.IUserLogonEvent)
 def send_site_default_landing_page_cookie( user, event ):
 	"""
 	This is a hardcoded logon listener to send a cookie to
@@ -853,6 +854,7 @@ class RwandaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for the rwanda site.
 	"""
+	
 	COM_USERNAME = 'CarnegieMellonUniversity'
 	COM_ALIAS = 'CMU'
 	COM_REALNAME = 'Carnegie Mellon University'
@@ -896,3 +898,26 @@ class CollegiateSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_USERNAME = 'collegiate.nextthought.com'
 	COM_ALIAS = 'Collegiate'
 	COM_REALNAME = 'Collegiate'
+
+@interface.implementer(ISitePolicyUserEventListener)
+class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+	"""
+	Implements the policy for ``fintech.nextthought.com``.
+	"""
+
+	COM_USERNAME = 'fintech.nextthought.com'
+	COM_ALIAS = 'Fintech'
+	COM_REALNAME = 'Fintech'
+	
+	DFL_NAME = u''
+	DFL_OWNER = u''
+
+	def user_created( self, user, event ):
+		super(FintechSitePolicyEventListener, self).user_created(user, event)
+		nti_interfaces.IWeakRef( user )
+		owner = users.User.get_user( self.DFL_OWNER )
+		if False and owner is not None:
+			dfl = owner.getContainedObject('FriendsLists', self.DFL_NAME)
+			if dfl is not None:
+				dfl.addFriend( user )
+	
