@@ -151,7 +151,7 @@ def _format_result( result, remote_user, dataserver ):
 @interface.implementer(app_interfaces.IUsernameMatcher)
 class _UsernameMatcher(object):
 	
-	def query(self, search_term, provided=None):
+	def query(self, search_term, remote_user=None, provided=None):
 		result = []
 		dataserver = component.getUtility(nti_interfaces.IDataserver)
 		_users = nti_interfaces.IShardLayout( dataserver ).users_folder
@@ -185,7 +185,7 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 	user_search_matcher = site_policies.queryAdapterInSite( remote_user, app_interfaces.IUserSearchPolicy, request=request )
 	username_matcher = site_policies.queryUtilityInSite( app_interfaces.IUsernameMatcher, request=request )
 	
-	result = username_matcher.query(search_term)
+	result = username_matcher.query(search_term, remote_user)
 	result.extend( user_search_matcher.query( search_term,
 											  # Match Users and Communities here. Do not match IFriendsLists, because that
 											  # would get private objects from other users.
