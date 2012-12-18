@@ -52,6 +52,11 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 
 		ourself = res.json_body['Items'][0]
 		assert_that( ourself, has_entry( 'Username', 'sjohnson@nextthought.com' ) )
+
+		# we can search for our FL
+		path = '/dataserver2/UserSearch/Friends'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Friends' ) ) )
 		#assert_that( ourself, has_entry( 'FriendsLists', has_key( 'Friends' ) ) )
 
 

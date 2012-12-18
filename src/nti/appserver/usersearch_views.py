@@ -188,7 +188,7 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 
 	return result
 
-def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains, fl_only=False, ignore_fl=True ):
+def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains, fl_only=False, ignore_fl=False ):
 	"""
 	:return: A set of matching objects, if any.
 	"""
