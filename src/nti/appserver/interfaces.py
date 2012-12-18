@@ -336,10 +336,12 @@ class INewObjectTransformer(interface.Interface):
 
 class IUsernameMatcher(interface.Interface):
 
-	def query( search_term, provided=nti_interfaces.IEntity.providedBy ):
+	def query( search_term, remote_user=None, provided=None ):
 		"""
 		Return all entity objects whose username match the query.
 
+		:param remote_user: The user requesting the search.
+			
 		:param provided: A predicate used to further filter results.
 			The default value checks for IEntity; you may use a custom value.
 
