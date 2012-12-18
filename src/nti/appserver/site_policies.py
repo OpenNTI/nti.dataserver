@@ -926,8 +926,8 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
 
 	COM_USERNAME = 'fintech.nextthought.com'
-	COM_ALIAS = 'Fintech'
-	COM_REALNAME = 'Fintech'
+	COM_ALIAS = 'FinTech'
+	COM_REALNAME = 'FinTech'
 	
 	DFL_NAME = u''
 	DFL_OWNER = u''
