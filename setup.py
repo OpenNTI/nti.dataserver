@@ -187,7 +187,7 @@ setup(
 		# jquery-like traversing of python datastructures. lxml, cssselect
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
-		'pyramid >= 1.4b3' ,
+		'pyramid >= 1.4' ,
 		'pyramid_tm >= 0.5',
 		'pyramid_mailer >= 0.10', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
@@ -287,7 +287,7 @@ setup(
 		'zope.location >= 4.0.0',
 		'zope.mimetype >= 1.3.1',
 		'zope.minmax >= 1.1.2',
-		'zope.pagetemplate',
+		'zope.pagetemplate >= 4.0.0',
 		'zope.password >= 3.6.1', # encrypted password management
 		'zope.publisher >= 3.13.1',
 		'zope.processlifetime',
