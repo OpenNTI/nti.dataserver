@@ -650,6 +650,20 @@ class IEntityIndex(interface.Interface):
 	def exists(entity):
 		"""check if the entity/user is in this index"""
 		
+	def query(search_term, remote_user, provided=None):
+		"""
+		Return all entity objects whose username match the query.
+
+		:param remote_user: The user requesting the search.
+			
+		:param provided: A predicate used to further filter results.
+			The default value checks for IEntity; you may use a custom value.
+
+		:return: A set of :class:`nti.dataserver.interfaces.IEntity` objects,
+			possibly empty, that match the search term, according to the rules of the
+			policy.
+		"""
+		
 	def on_entity_created(entity):
 		"""callback for user creation"""
 

@@ -15,6 +15,12 @@ from nti.contentsearch import interfaces as search_interfaces
 phrase_search = re.compile(r'"(?P<text>.*?)"')
 prefix_search = re.compile(r'(?P<text>[^ \t\r\n*]+)[*](?= |$|\\)')
 
+def is_phrase_search(term):
+	return phrase_search.match(term) is not None if term else False
+	
+def is_prefix_search(term):
+	return prefix_search.match(term) is not None if term else False
+	
 @interface.implementer(search_interfaces.ISearchQuery)
 @component.adapter(basestring)
 def _default_query_adapter(query, *args, **kwargs):
@@ -137,11 +143,11 @@ class QueryObject(object, UserDict.DictMixin):
 	
 	@property
 	def is_phrase_search(self):
-		return phrase_search.match(self.term) is not None if self.term else False
+		return is_phrase_search(self.term)
 	
 	@property
 	def is_prefix_search(self):
-		return prefix_search.match(self.term) is not None if self.term else False
+		return is_prefix_search(self.term)
 
 	@property
 	def is_descending_sort_order(self):
