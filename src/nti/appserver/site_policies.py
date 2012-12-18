@@ -88,6 +88,26 @@ def get_possible_site_names(request=None, include_default=False):
 	return result
 
 _marker = object()
+
+def queryUtilityInSite( iface, request=None, site_names=None, default=None, context=None  ):
+	"""
+	Queries for named utilities following the site names, all the way up until the default
+	site name.
+
+	:keyword request: The current request to investigate for site names.
+		If not given, the threadlocal request will be used.
+	:keyword site_names: If given and non-empty, the list of site names to use.
+		Overrides the `request` parameter.
+	"""
+
+	site_names = get_possible_site_names(request, include_default=True)
+	for site in site_names:
+		result = component.queryUtility(iface, name=site, context=context, default=_marker )
+		if result is not _marker:
+			return result
+	return default
+
+
 def queryAdapterInSite( obj, target, request=None, site_names=None, default=None, context=None  ):
 	"""
 	Queries for named adapters following the site names, all the way up until the default

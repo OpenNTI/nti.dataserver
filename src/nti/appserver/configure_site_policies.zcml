@@ -39,6 +39,10 @@
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IUserSearchPolicy" />
 
+	<!-- utility for searching users based on their usernames -->
+	<utility factory=".usersearch_views._UsernameMatcher"
+			 provides=".interfaces.IUsernameMatcher" />
+			 
 	<!--
 	Landing pages for sites. Note that this embeds configuration of its own.
 	-->

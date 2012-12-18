@@ -9,7 +9,9 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+import logging
+logger = logging.getLogger( __name__ )
+
 import operator
 
 from zope import component
@@ -146,32 +148,44 @@ def _format_result( result, remote_user, dataserver ):
 	result.__name__ = 'UserSearch' # TODO: Hmm
 	return result
 
+@interface.implementer(app_interfaces.IUsernameMatcher)
+class _UsernameMatcher(object):
+	
+	def query(self, search_term, provided=None):
+		result = []
+		dataserver = component.getUtility(nti_interfaces.IDataserver)
+		_users = nti_interfaces.IShardLayout( dataserver ).users_folder
+		# We used to have some nice heuristics about when to include uid-only
+		# matches. This became much less valuable when we started to never display
+		# anything except uid and sometimes to only want to search on UID:
+		## Searching the userid is generally not what we want
+		## now that we have username and alias (e.g,
+		## tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
+		## be very confused.). As a compromise, we include them
+		## if there are no other matches
+		# Therefore we say screw it and throw that heuristic out the window.
+		for entity_name in _users.iterkeys():
+			__traceback_info__ = entity_name, search_term
+			entity = None
+			try:
+				if search_term in entity_name.lower():
+					entity = users.Entity.get_entity( entity_name, dataserver=dataserver )
+			except KeyError: # pragma: no cover
+				# Typically POSKeyError
+				logger.warning( "Failed to search entity %s", entity_name )
+	
+			if entity is not None and (provided is None or provided(entity)):
+				result.append( entity )
+				
+		return result
+	
 def _authenticated_search( request, remote_user, dataserver, search_term ):
-	result = []
+	
 	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
 	user_search_matcher = site_policies.queryAdapterInSite( remote_user, app_interfaces.IUserSearchPolicy, request=request )
-	# We used to have some nice heuristics about when to include uid-only
-	# matches. This became much less valuable when we started to never display
-	# anything except uid and sometimes to only want to search on UID:
-	## Searching the userid is generally not what we want
-	## now that we have username and alias (e.g,
-	## tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
-	## be very confused.). As a compromise, we include them
-	## if there are no other matches
-	# Therefore we say screw it and throw that heuristic out the window.
-	for entity_name in _users.iterkeys():
-		__traceback_info__ = entity_name, search_term
-		entity = None
-		try:
-			if search_term in entity_name.lower():
-				entity = users.Entity.get_entity( entity_name, dataserver=dataserver )
-		except KeyError: # pragma: no cover
-			# Typically POSKeyError
-			logger.warning( "Failed to search entity %s", entity_name )
-
-		if entity is not None:
-			result.append( entity )
-
+	username_matcher = site_policies.queryUtilityInSite( app_interfaces.IUsernameMatcher, request=request )
+	
+	result = username_matcher.query(search_term)
 	result.extend( user_search_matcher.query( search_term,
 											  # Match Users and Communities here. Do not match IFriendsLists, because that
 											  # would get private objects from other users.
