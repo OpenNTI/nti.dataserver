@@ -47,6 +47,7 @@
 	<!--
 	General site policies
 	-->
+	
 	<utility factory=".site_policies.MathcountsSitePolicyEventListener"
 			 name="mathcounts.nextthought.com"/>
 
@@ -68,6 +69,9 @@
 	<utility factory=".site_policies.CollegiateSitePolicyEventListener"
 			 name="collegiate.nextthought.com"/>
 
+	<utility factory=".site_policies.FintechSitePolicyEventListener"
+			 name="fintech.nextthought.com"/>
+			 
 	<utility factory=".site_policies.GenericSitePolicyEventListener"
 			 name=''
 			 zcml:condition="not-have devmode" />
