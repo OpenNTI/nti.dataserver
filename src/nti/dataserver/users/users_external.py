@@ -190,11 +190,14 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		# DynamicMemberships/Communities are not currently editable,
 		# and will need special handling of (a) Everyone and (b) DynamicFriendsLists
 		# (proper events could handle the latter)
-		extDict['Communities'] = ext(self.entity.dynamic_memberships, name='') # Deprecated
+		extDict['Communities'] = ext( self.entity.xxx_hack_filter_non_memberships( self.entity.dynamic_memberships,
+																				   log_msg="Relationship trouble. User %s is no longer a member of %s. Ignoring for externalization",
+																				   the_logger=logger),
+									  name='') # Deprecated
 		extDict['DynamicMemberships'] = extDict['Communities']
 
 		# Following is writable
-		extDict['following'] = ext(self.entity.entities_followed)
+		extDict['following'] = ext( self.entity.xxx_hack_filter_non_memberships( self.entity.entities_followed ) )
 		# as is ignoring and accepting
 		extDict['ignoring'] = ext(self.entity.entities_ignoring_shared_data_from)
 		extDict['accepting'] = ext(self.entity.entities_accepting_shared_data_from)

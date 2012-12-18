@@ -165,15 +165,12 @@ class FriendsListContainerCollection(UncacheableHomogeneousTypedContainerCollect
 			return self._container
 
 		dfl_memberships = []
-		for x in entity.dynamic_memberships:
+		for x in entity.xxx_hack_filter_non_memberships( entity.dynamic_memberships,
+														 log_msg="Relationship trouble: User %s is no longer a member of %s. Ignoring for FL container",
+														 the_logger=logger ):
 			if nti_interfaces.IFriendsList.providedBy( x ):
-				if entity in x:
-					dfl_memberships.append( x )
-				else:
-					# XXX Temporary hack of the temporary hack: Filter out some non-members that crept in. There
-					# should be no more new ones after this date, but leave this code here as a warning
-					# for awhile in case any do creep in
-					logger.warning( "Relationship trouble: User %s is no longer a member of %s. Ignoring.", entity, x )
+				dfl_memberships.append( x )
+
 		if not dfl_memberships:
 			return self._container
 

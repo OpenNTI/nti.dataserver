@@ -569,14 +569,8 @@ class User(Principal):
 		Overrides the super method to return both the communities we are a
 		member of, plus the friends lists we ourselves have created that are dynamic.
 		"""
-		result = set(super(User,self)._get_dynamic_sharing_targets_for_read())
-		# XXX Temporary hack: Filter out some non-members that crept in. There
-		# should be no more new ones after this date, but leave this code here as a warning
-		# for awhile in case any do creep in
-		for x in list(result):
-			if nti_interfaces.IFriendsList.providedBy( x ) and self not in x:
-				logger.warning( "Relationship trouble: User %s is no longer a member of %s. Ignoring for dynamic read", self, x )
-				result.discard( x )
+		result = self.xxx_hack_filter_non_memberships( super(User,self)._get_dynamic_sharing_targets_for_read(),
+													   "Relationship trouble: User %s is no longer a member of %s. Ignoring for dynamic read" )
 
 		for fl in self.friendsLists.values():
 			if nti_interfaces.IDynamicSharingTarget.providedBy( fl ):
@@ -584,15 +578,8 @@ class User(Principal):
 		return result
 
 	def _get_entities_followed_for_read( self ):
-		result = set(super(User,self)._get_entities_followed_for_read())
-		# XXX Temporary hack: Filter out some non-members that crept in. There
-		# should be no more new ones after this date, but leave this code here as a warning
-		# for awhile in case any do creep in
-		for x in list(result):
-			if nti_interfaces.IFriendsList.providedBy( x ) and self not in x:
-				logger.warning( "Relationship trouble: User %s is no longer a member of %s. Ignoring for followed read", self, x )
-				result.discard( x )
-		return result
+		return self.xxx_hack_filter_non_memberships( super(User,self)._get_entities_followed_for_read(),
+													 "Relationship trouble: User %s is no longer a member of %s. Ignoring for followed read" )
 
 
 	def accept_shared_data_from( self, source ):
@@ -1050,6 +1037,26 @@ class User(Principal):
 			for device in self.devices.itervalues():
 				if not isinstance( device, Device ): continue
 				apnsCon.sendNotification( device.deviceId, payload )
+
+	def xxx_hack_filter_non_memberships(self, relationships, log_msg=None, the_logger=logger):
+		"""
+		XXX Temporary hack: Filter out some non-members that crept in. There
+		should be no more new ones after this date, but leave this code here as a warning
+		for awhile in case any do creep in.
+
+		:return: set of memberships
+		"""
+		result = set(relationships)
+		discarded = []
+		for x in list(result):
+			if nti_interfaces.IFriendsList.providedBy( x ) and self not in x:
+				discarded.append( x )
+				result.discard( x )
+
+		if discarded and log_msg and the_logger is not None:
+			the_logger.warning( log_msg, self, discarded )
+
+		return result
 
 # We have a few subclasses of User that store some specific
 # information and directly implement some interfaces.
