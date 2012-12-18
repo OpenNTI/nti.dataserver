@@ -20,6 +20,7 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 import zc.lockfile
 
+from whoosh import query
 from whoosh import fields
 from whoosh import analysis
 from whoosh import ramindex
@@ -29,6 +30,8 @@ from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.contentsearch._search_query import is_phrase_search
+from nti.contentsearch._search_query import is_prefix_search
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch import _whoosh_indexstorage as w_idxstorage
 
@@ -54,12 +57,13 @@ class IWhooshEntityIndex(search_interfaces.IEntityIndex):
 		
 def create_user_schema():
 	analyzer = analysis.NgramWordAnalyzer(minsize=2, maxsize=50, at='start')
-	schema = fields.Schema(	type = fields.ID(stored=False),
+	schema = fields.Schema(	creator = fields.ID(stored=True, unique=False),
 							intid = fields.ID(stored=True, unique=True),
 							username = fields.ID(stored=True, unique=True),
+							# stored= False
+							type = fields.ID(stored=False),
 							alias = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
 							email = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
-							creator = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
 							realname = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
 							t_username = fields.TEXT(stored=False, analyzer=analyzer, phrase=False))
 	return schema
@@ -67,6 +71,7 @@ def create_user_schema():
 def _getattr(obj, name, default=None):
 	result = getattr(obj, name, default)
 	result = unicode(result) if result else None
+	return result
 		
 def get_entity_info(entity):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
@@ -85,6 +90,12 @@ def get_entity_info(entity):
 		alias = _getattr(profile, 'alias', None)
 		realname = _getattr(profile, 'realname', None)
 	else:
+		# get friendly names
+		names = user_interfaces.IFriendlyNamed( entity, None )
+		alias = _getattr(names, 'alias', None)
+		realname = _getattr(names, 'realname', None)
+	
+		# set creator
 		creator = _getattr(entity, 'creator', None) or _getattr(entity, 'Creator', None)
 		creator = unicode(creator.username) if nti_interfaces.IEntity.providedBy(creator) else creator
 		
@@ -256,8 +267,43 @@ class _WhooshEntityIndex(object):
 			self._pubsub.unsubscribe(self.queue_name)
 			self._reader.kill()
 			
-	def query(self, search_term, remote_user, provided=None):
-		pass
+	def parse(self, fieldname, term):
+		if is_prefix_search(term):
+			term = query.Wildcard(fieldname, term)
+		elif is_phrase_search(term):
+			rex = analysis.RegexTokenizer()
+			words = [token.text.lower() for token in rex(unicode(term))]
+			term = query.Phrase(fieldname, words)
+		else:
+			term = query.Term(fieldname, term)
+		return term
+	
+	def query(self, search_term, remote_user=None, provided=None):
+		result = []
+		search_term = unicode(search_term)
+		_ds_intid = component.getUtility( zope.intid.IIntIds )
+		remote_user = remote_user.username if nti_interfaces.IEntity.providedBy(remote_user) else remote_user
+		remote_user = remote_user.lower() if isinstance(remote_user, six.string_types) else None
+		
+		ors = [	self.parse('email', search_term),
+				self.parse('alias', search_term),
+				self.parse('realname', search_term),
+				self.parse('t_username', search_term)]
+		bq = query.Or(ors)
+		with self.index.searcher() as s:
+			hits = s.search(bq)
+			for h in hits:
+				intid = long(h['intid'])
+				entity = _ds_intid.queryObject(intid, None)
+				if entity is not None:
+					if nti_interfaces.IFriendsList.providedBy(entity):
+						creator = h['creator'] or u''
+						entity = entity if creator.lower() == remote_user else None
+						
+				if entity and (provided is None or provided(entity)):
+						result.append(entity)
+	
+		return result
 		
 	def on_entity_created(self, username):
 		msg = repr((0, username, self._uuid))

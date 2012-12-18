@@ -120,5 +120,19 @@ class TestWhooshUserIndex(ConfiguringTestBase):
 		msgs = list(uidx_util._pubsub.listen())
 		assert_that(msgs, has_length(1))
 
+	@WithMockDSTrans
+	def test_search_users(self):
+		external_value = {u'realname':u'ichigo', u'email':u'kurosaki@nti.com',
+						  u'alias':u'zangetzu'}
+		ichigo = self._create_user(username=u'ichigo@nti.com', external_value=external_value)
+		uidx_util = component.getUtility(IWhooshEntityIndex)
+		result = uidx_util.query('ichigo')
+		assert_that(result, has_length(1))
+		assert_that(result[0], is_(ichigo))
+		
+		for query in ('zangetzu', 'kuro', 'ic'):
+			result = uidx_util.query(query)
+			assert_that(result, has_length(1))
+		
 if __name__ == '__main__':
 	unittest.main()
