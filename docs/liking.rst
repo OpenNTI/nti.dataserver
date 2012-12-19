@@ -16,21 +16,13 @@ The implementation of the API and storage lives in the
 	:members:
 	:private-members:
 
-	.. data:: LIKE_CAT_NAME
-
-	Category name for 'liking'
-
-
-	.. data:: FAVR_CAT_NAME
-
-	Category name for 'favorites'
 
 Views
 =====
 
 The ability to like/unlike and favorite/unfavorite is exposed as a set
 of links on objects connected to views defined in the
-``nti.appserver.liking_views`` package.
+``nti.appserver.liking_views`` package (See also :class:`nti.appserver.ugd_query_views.ReferenceListBasedDecorator`.)
 
 .. automodule:: nti.appserver.liking_views
 	:members:
