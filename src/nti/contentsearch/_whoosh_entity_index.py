@@ -313,7 +313,7 @@ class _WhooshEntityIndex(object):
 		self._publish(msg)
 		
 	def on_entity_deleted(self, userid):
-		msg = repr((2, unicode(userid), self._uuid))
+		msg = repr((2, userid, self._uuid))
 		self._publish(msg)
 					
 	def _publish(self, msg):
