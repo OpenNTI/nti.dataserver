@@ -26,26 +26,15 @@ from contentratings.storage import UserRatingStorage
 from nti.dataserver import interfaces
 from nti.externalization import interfaces as ext_interfaces
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(interfaces.ILikeable)
-class LikeDecorator(object):
-
-	def __init__( self, ctx ): pass
-
-	def decorateExternalMapping( self, context, mapping ):
-		like_count = 0
-		rating = _lookup_like_rating_for_read( context )
-		if rating:
-			like_count = rating.numberOfRatings
-
-		mapping['LikeCount'] = like_count
-
+#: Category name for liking; use this as the name of the adapter
 LIKE_CAT_NAME = 'likes'
+
+#: Category name for favorites; use this as the name of the adapter
 FAVR_CAT_NAME = 'favorites'
 
 def _lookup_like_rating_for_read( context, cat_name=LIKE_CAT_NAME, safe=False ):
 	"""
-	:param context: Something that is :class:`interfaces.ILikeable`
+	:param context: Something that is :class:`~nti.dataserver.interfaces.ILikeable`
 		and, for now, can be adapted to an :class:`contentratings.IUserRating`
 		with the name of `cat_name`.
 	:param string cat_name: The name of the ratings category to look up. One of
@@ -128,7 +117,7 @@ def like_object( context, username ):
 	"""
 	Like the `context` idempotently.
 
-	:param context: An :class:`interfaces.ILikeable` object.
+	:param context: An :class:`~nti.dataserver.interfaces.ILikeable` object.
 	:param username: The name of the user liking the object. Should not be
 		empty.
 	:return: An object with a boolean value; if action was taken, the value is True-y.
@@ -141,7 +130,7 @@ def unlike_object( context, username ):
 	"""
 	Unlike the `object`, idempotently.
 
-	:param context: An :class:`interfaces.ILikeable` object.
+	:param context: An :class:`~nti.dataserver.interfaces.ILikeable` object.
 	:param username: The name of the user liking the object. Should not be
 		empty.
 	:return: An object with a boolean value; if action was taken, the value is True-y.
@@ -154,7 +143,7 @@ def likes_object( context, username ):
 	"""
 	Determine if the `username` likes the `context`.
 
-	:param context: An :class:`interfaces.ILikeable` object.
+	:param context: An :class:`~nti.dataserver.interfaces.ILikeable` object.
 	:param username: The name of the user liking the object. Should not be
 		empty.
 	:return: An object with a boolean value; if the user likes the object, the value is True-y.
@@ -166,7 +155,7 @@ def like_count( context ):
 	Determine how many distinct users like the `context`.
 
 	:param context: Any object (unlike the rest of the functions, this is
-		not limited to just :class:`interfaces.ILikeable` objects.
+		not limited to just :class:`~nti.dataserver.interfaces.ILikeable` objects).
 	:return: A non-negative integer.
 	"""
 	return _rate_count( context, LIKE_CAT_NAME )
@@ -175,7 +164,7 @@ def favorite_object( context, username ):
 	"""
 	Favorite the `context` idempotently.
 
-	:param context: An :class:`interfaces.IFavoritable` object.
+	:param context: An :class:`~nti.dataserver.interfaces.IFavoritable` object.
 	:param username: The name of the user favoriting the object. Should not be
 		empty.
 	:return: An object with a boolean value; if action was taken, the value is True-y.
@@ -186,9 +175,9 @@ def favorite_object( context, username ):
 
 def unfavorite_object( context, username ):
 	"""
-	Unfavorite the `object`, idempotently.
+	Unfavorite the ``object``, idempotently.
 
-	:param context: An :class:`interfaces.IFavoritable` object.
+	:param context: An :class:`~nti.dataserver.interfaces.IFavoritable` object.
 	:param username: The name of the user unfavoriting the object. Should not be
 		empty.
 	:return: An object with a boolean value; if action was taken, the value is True-y.
@@ -199,9 +188,9 @@ def unfavorite_object( context, username ):
 
 def favorites_object( context, username, safe=False ):
 	"""
-	Determine if the `username` has favorited the `context`.
+	Determine if the ``username`` has favorited the ``context``.
 
-	:param context: An :class:`interfaces.IFavoritable` object.
+	:param context: An :class:`~nti.dataserver.interfaces.IFavoritable` object.
 	:param username: The name of the user possibly favoriting the object. Should not be
 		empty.
 	:keyword bool safe: If ``False`` (the default) then this method can raise an
@@ -213,6 +202,19 @@ def favorites_object( context, username, safe=False ):
 	"""
 	return _rates_object( context, username, FAVR_CAT_NAME, safe=safe )
 
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(interfaces.ILikeable)
+class LikeDecorator(object):
+	"""
+	For :class:`~nti.dataserver.interfaces.ILikeable` objects, records the number of times they
+	have been liked in the ``LikeCount`` value of the external map.
+	"""
+	def __init__( self, ctx ):
+		pass
+
+	def decorateExternalMapping( self, context, mapping ):
+		mapping['LikeCount'] = like_count( context ) # go through the function to be safe
 
 
 from zope.app.container.contained import Contained
@@ -238,7 +240,7 @@ class _BinaryUserRatings(Contained, Persistent):
 	def __init__(self):
 		super(_BinaryUserRatings,self).__init__()
 		# Since we are simply recording the presence or absence of a user,
-		# can can use a simple set
+		# can can use a simple set of strings
 		self._ratings = BTrees.family64.OO.TreeSet()
 		self._length = Length()
 

@@ -378,6 +378,10 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 					 has_entry( 'Items',
 								contains(
 									has_entry( 'ReferencedByCount', 1 ) ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'RecursiveLikeCount', 1 ) ) ) )
 
 		res = testapp.get( path, params={'sortOn': 'LikeCount'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
@@ -410,6 +414,33 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 								contains(
 									has_entry( 'ReferencedByCount', 1 ),
 									has_entry( 'ReferencedByCount', 0 ) ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'RecursiveLikeCount', 1 ),
+									has_entry( 'RecursiveLikeCount', 0 ) ) ) )
+
+
+		res = testapp.get( path, params={'sortOn': 'RecursiveLikeCount'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		# Descending by default
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'ID', top_n_id ),
+									has_entry( 'ID', reply_n_id ) ) ) )
+		# And, if we asked for this info, we get data back about it
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'RecursiveLikeCount', 1 ),
+									has_entry( 'RecursiveLikeCount', 0 ) ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'ReferencedByCount', 1 ),
+									has_entry( 'ReferencedByCount', 0 ) ) ) )
+
 
 		res = testapp.get( path, params={'sortOn': 'lastModified', 'sortOrder': 'descending'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
@@ -632,6 +663,69 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains( has_entry( 'Class', 'TranscriptSummary' ) ) ) )
+
+
+	def test_recursive_like_count(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user( )
+
+			top_n = contenttypes.Note()
+			top_n.applicableRange = contentrange.ContentRangeDescription()
+			top_n.containerId = 'tag:nti:foo'
+			top_n.body = ("Top",)
+			liking.like_object( top_n, 'foo@bar' )
+			user.addContainedObject( top_n )
+			top_n_id = top_n.id
+			top_n.lastModified = 1
+
+			reply_n = contenttypes.Note()
+			reply_n.applicableRange = contentrange.ContentRangeDescription()
+			reply_n.containerId = 'tag:nti:foo'
+			reply_n.body = ('Reply',)
+			reply_n.inReplyTo = top_n
+			reply_n.addReference(top_n)
+			liking.like_object( reply_n, 'foo@bar' )
+			user.addContainedObject( reply_n )
+			reply_n_id = reply_n.id
+			reply_n.lastModified = 2
+
+			top_n_ext_id = to_external_ntiid_oid( top_n )
+
+		testapp = TestApp( self.app )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n.containerId + ')/UserGeneratedData'
+
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+
+		res = testapp.get( path, params={'sortOn': 'RecursiveLikeCount'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		# Descending by default
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'ID', top_n_id ),
+									has_entry( 'ID', reply_n_id ) ) ) )
+		# And, if we asked for this info, we get data back about it
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'RecursiveLikeCount', 2 ),
+									has_entry( 'RecursiveLikeCount', 1 ) ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'ReferencedByCount', 1 ),
+									has_entry( 'ReferencedByCount', 0 ) ) ) )
+
+		res = testapp.get( path, params={'sortOn': 'RecursiveLikeCount', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		# Descending by default
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'ID', reply_n_id ),
+									has_entry( 'ID', top_n_id ) ) ) )
+
 
 
 class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):

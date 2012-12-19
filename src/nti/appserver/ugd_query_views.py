@@ -41,6 +41,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver.users import entity
 from nti.dataserver import liking
+liking_like_count = liking.like_count # minor optimization
 from nti.dataserver import authorization as nauth
 from nti.dataserver.mimetype import nti_mimetype_from_object
 from nti.dataserver.links import Link
@@ -109,6 +110,9 @@ class RefProxy(ProxyBase):
 	referenced_by = property(_referenced_by, _set_referenced_by)
 
 def _build_reference_lists( request, result_list ):
+	if hasattr( request, '_build_reference_lists_proxies' ):
+		return
+
 	proxies = {}
 	setattr( request, '_build_reference_lists_proxies', proxies )
 	fake_proxies = {} # so we only log once
@@ -172,6 +176,18 @@ def _reference_list_length( x ):
 		return len(refs)
 	return -1 # distinguish no refs vs no data
 
+def _reference_list_objects( x ):
+	refs = getattr( x, _REF_ATTRIBUTE, _reference_list_objects )
+	if refs is not _reference_list_objects and refs is not None:
+		return (x() for x in refs)
+	else:
+		return ()
+
+def _reference_list_recursive_like_count( proxy ):
+	return sum( (liking_like_count( x ) for x in _reference_list_objects( proxy ) ),
+				liking_like_count( proxy ))
+
+
 def _combine_predicate( new, old ):
 	if not old:
 		return new
@@ -211,12 +227,14 @@ SORT_KEYS = {
 	# TODO: As such, these aren't particularly cheap
 	'lastModified': functools.partial( to_standard_external_last_modified_time, default=0 ),
 	'createdTime' : functools.partial( to_standard_external_created_time, default=0),
-	'LikeCount': liking.like_count,
-	'ReferencedByCount': ( _build_reference_lists, _reference_list_length )
+	'LikeCount': liking_like_count,
+	'ReferencedByCount': ( _build_reference_lists, _reference_list_length ),
+	'RecursiveLikeCount': (_build_reference_lists, _reference_list_recursive_like_count)
 	}
 SORT_DIRECTION_DEFAULT = {
 	'LikeCount': 'descending',
 	'ReferencedByCount': 'descending',
+	'RecursiveLikeCount': 'descending',
 	'lastModified': 'descending'
 	}
 FILTER_NAMES = {
@@ -339,7 +357,7 @@ class _UGDView(object):
 
 		sortOn
 			The field to sort on. Options are ``lastModified``,
-			``createdTime``, ``LikeCount`` and ``ReferencedByCount``.
+			``createdTime``, ``LikeCount``, ``RecursiveLikeCount``, and ``ReferencedByCount``.
 			Only ``lastModified``, ``createdTime`` are valid for the
 			stream views.
 
@@ -462,10 +480,10 @@ class _UGDView(object):
 			predicate = self._make_exclude_predicate()
 
 		filter_names = self._get_filter_names()
-		# Be nice and make sure the reply count gets included if
+		# Be nice and make sure the reference-based counts get included if
 		# it isn't already and we're after just the top level.
 		# Must do this before filtering
-		if 'TopLevel' in filter_names and sort_key_function is not _reference_list_length:
+		if 'TopLevel' in filter_names and sort_key_function not in (_reference_list_length, _reference_list_recursive_like_count):
 			_build_reference_lists( self.request, result_list )
 
 		for filter_name in filter_names:
@@ -691,9 +709,14 @@ REL_REPLIES = 'replies'
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.INote)
-class RepliesLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
+class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	"""
-	Adds the link to get replies.
+	Decorates the external object based on the presence of things that
+	reference it.
+
+	In particular, this means adding the ``@@replies`` link if there are replies to fetch.
+	It also means including the ``ReferencedByCount`` value if it exists,
+	and calculating the ``RecursiveLikeCount``, if possible.
 	"""
 	false_view = REL_REPLIES
 	true_view = REL_REPLIES
@@ -710,6 +733,11 @@ class RepliesLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 				reply_count = _reference_list_length( proxy )
 				if reply_count >= 0:
 					mapping['ReferencedByCount'] = reply_count
+
+				mapping['RecursiveLikeCount'] = _reference_list_recursive_like_count( proxy )
+
+
+RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
