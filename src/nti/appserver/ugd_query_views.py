@@ -46,6 +46,8 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.mimetype import nti_mimetype_from_object
 from nti.dataserver.links import Link
 
+from nti.utils.property import alias
+
 from z3c.batching.batch import Batch
 
 from perfmetrics import metric, metricmethod
@@ -102,12 +104,9 @@ class RefProxy(ProxyBase):
 	def __init__( self, obj ):
 		super(RefProxy,self).__init__( obj )
 		self._v_referenced_by = None
+		self._v_recursive_like_count = None
 
-	def _referenced_by(self):
-		return self._v_referenced_by
-	def _set_referenced_by( self, nv ):
-		self._v_referenced_by = nv
-	referenced_by = property(_referenced_by, _set_referenced_by)
+	referenced_by = alias( '_v_referenced_by' )
 
 def _build_reference_lists( request, result_list ):
 	if hasattr( request, '_build_reference_lists_proxies' ):
@@ -184,6 +183,8 @@ def _reference_list_objects( x ):
 		return ()
 
 def _reference_list_recursive_like_count( proxy ):
+	# There is probably not much use in caching this? It's just a simple sum
+	# across a list and everything should be in memory after the first time?
 	return sum( (liking_like_count( x ) for x in _reference_list_objects( proxy ) ),
 				liking_like_count( proxy ))
 
