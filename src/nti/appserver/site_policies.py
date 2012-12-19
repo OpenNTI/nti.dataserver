@@ -929,16 +929,19 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_ALIAS = 'FinTech'
 	COM_REALNAME = 'FinTech'
 	
-	DFL_NAME = u'PRM Candidate Group'
+	DFL_NAME = u'prm candidate group'
 	DFL_OWNER = u'fintechken'
 
 	def user_created( self, user, event ):
 		super(FintechSitePolicyEventListener, self).user_created(user, event)
 		nti_interfaces.IWeakRef( user )
 		owner = users.User.get_user( self.DFL_OWNER )
-		dfl = owner.getContainedObject('FriendsLists', self.DFL_NAME) if owner is not None else None
-		if dfl is not None:
-			dfl.addFriend( user )
-		else:
-			warnings.warn("Could not find DFL '%s' for user '%s'" % (self.DFL_NAME, self.DFL_OWNER))
-	
+		friendsLists = getattr(owner, 'friendsLists', {})
+		for fl in friendsLists.values():
+			if not nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(fl):
+				continue
+			names = user_interfaces.IFriendlyNamed( fl )
+			if self.DFL_NAME in (fl.username.lower(), (names.realname or '').lower(), (names.alias or '').lower() ):
+				fl.addFriend( user )
+				logger.info("User '%s' added to DFL '%s" % (user, self.DFL_NAME))
+				break
