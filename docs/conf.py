@@ -34,6 +34,22 @@ try:
 except ImportError:
 	html_theme = 'agogo'
 
+# JAM: repoz.sphinx.autointerface 0.7.1 does not handle cross-refs correctly.
+# A pull request is submitted (https://github.com/repoze/repoze.sphinx.autointerface/pull/3) with a
+# cleaner solution. Until then, this should do the trick.
+if True:
+	from sphinx.domains import ObjType
+	from sphinx.domains.python import PythonDomain
+
+	# Allow the :class: directive to xref interface objects through the search
+	# mechanism, i.e., prefixed with a '.', like :class:`.ITheInterface`
+	# (without this, an exact match is required)
+	PythonDomain.object_types['interface'] = ObjType( 'interface', 'interface', 'obj', 'class')
+	PythonDomain.object_types['class'].roles += ('interface',)
+
+
+
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
