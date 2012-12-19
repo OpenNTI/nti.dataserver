@@ -179,7 +179,7 @@ setup(
 		# followed by compilation failures: fatal error 'Python.h' file not found. So you must
 		# install numpy manually with pip: pip install numpy
 		'numpy >= 1.6.2',
-		'paste',
+		'paste >= 1.7.5.1',
 		'perfmetrics >= 1.0', # easy statsd metrics.
 		'plone.scale >= 1.2.2', # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
@@ -218,9 +218,9 @@ setup(
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
 		'requests >= 0.14.2,<1.0', # HTTP. NOTE: 1.0.x is out, but not full backwards compat. Since some tools (httpie) depend on it, wait until they are ready
-		'scss',
+		'scss >= 0.8.72',
 		'setproctitle >= 1.1.6',
-		'setuptools',
+		'setuptools >= 0.6c11',
 		'simplejson >= 2.6.2',
 		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
 		'six >= 1.2.0',
@@ -252,9 +252,9 @@ setup(
 		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.annotation >= 3.5.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
-		'zope.browser',
+		'zope.browser >= 1.3',
 		'zope.browserpage >= 4.0.0',
-		'zope.browserresource',
+		'zope.browserresource >= 3.12.0',
 		'zope.catalog >= 3.8.2',
 		'zope.cachedescriptors >= 3.5.1',
 		'zope.component >= 4.0.1',
