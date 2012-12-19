@@ -789,7 +789,7 @@ _SITE_LANDING_PAGES = {
 	'mathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1',
 	'testmathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-testmathcounts2013.warm_up_1',
 	'prmia.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-Volume_III.A.2_converted.toc260827905',
-	'fintech.nextthought.com': b'tag_nextthought_com_2011-10_PRMIA-HTML-FinTech_Volume_III_A_2_Sample_TOC260827911.html'
+	'fintech.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-FinTech_PRMIA_RiskCourseSample.framework_for_diagnosing_systemic_risk'
 	}
 
 @component.adapter(nti_interfaces.IUser, app_interfaces.IUserLogonEvent)
