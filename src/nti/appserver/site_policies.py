@@ -39,7 +39,7 @@ from ._email_utils import queue_simple_html_text_email
 import nameparser
 import datetime
 import urllib
-import string
+import warnings
 # import time
 
 def get_possible_site_names(request=None, include_default=False):
@@ -929,15 +929,16 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_ALIAS = 'FinTech'
 	COM_REALNAME = 'FinTech'
 	
-	DFL_NAME = u''
-	DFL_OWNER = u''
+	DFL_NAME = u'PRM Candidate Group'
+	DFL_OWNER = u'fintechken'
 
 	def user_created( self, user, event ):
 		super(FintechSitePolicyEventListener, self).user_created(user, event)
 		nti_interfaces.IWeakRef( user )
 		owner = users.User.get_user( self.DFL_OWNER )
-		if False and owner is not None:
-			dfl = owner.getContainedObject('FriendsLists', self.DFL_NAME)
-			if dfl is not None:
-				dfl.addFriend( user )
+		dfl = owner.getContainedObject('FriendsLists', self.DFL_NAME) if owner is not None else None
+		if dfl is not None:
+			dfl.addFriend( user )
+		else:
+			warnings.warn("Could not find DFL '%s' for user '%s'" % (self.DFL_NAME, self.DFL_OWNER))
 	
