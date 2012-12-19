@@ -15,6 +15,7 @@ from zope import component
 from zope.cachedescriptors.property import Lazy
 
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 import zc.lockfile
@@ -58,12 +59,12 @@ def create_user_schema():
 	analyzer = analysis.NgramWordAnalyzer(minsize=2, maxsize=50, at='start')
 	schema = fields.Schema(	creator = fields.ID(stored=True, unique=False),
 							intid = fields.ID(stored=True, unique=True),
+							username = fields.ID(stored=True, unique=True),
 							# stored= False
-							type = fields.ID(stored=False),
 							alias = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
 							email = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
 							realname = fields.TEXT(stored=False, analyzer=analyzer, phrase=False),
-							username = fields.TEXT(stored=False, analyzer=analyzer, phrase=False))
+							t_username = fields.TEXT(stored=False, analyzer=analyzer, phrase=False))
 	return schema
 	
 def _getattr(obj, name, default=None):
@@ -78,7 +79,6 @@ def get_entity_info(entity):
 	# get intid as unicode
 	intid = _ds_intid.queryId(entity, None)
 	intid = unicode(intid) if intid else None
-	clazz = unicode(entity.__class__.__name__.lower())
 	
 	# parse entity profile
 	alias = realname = email = creator = None
@@ -98,8 +98,9 @@ def get_entity_info(entity):
 		creator = unicode(creator.username) if nti_interfaces.IEntity.providedBy(creator) else creator
 		
 	# data to be indexed
-	return {u'intid': intid, u'username': username, u'creator':creator, u'type': clazz,
-			u'alias':alias, u'email':email, u'realname':realname}
+	return {u'intid': intid, u'username': username, u'creator':creator,
+			u'alias':alias, u'email':email, u'realname':realname, 
+			u't_username': username}
 	
 def get_index_writer(index):
 	return w_idxstorage.get_index_writer(index, w_idxstorage.writer_ctor_args)
@@ -189,20 +190,17 @@ def on_entity_modified( entity, event ):
 		iwu_index.on_entity_modified(entity.username)
 	
 def _delete_entity(iwu_index, entity):
-	count = 0
-	_ds_intid = component.getUtility( zope.intid.IIntIds )
-	intid = _ds_intid.queryId(entity, None)
-	if intid is not None:
-		writer = iwu_index.writer()
-		count = writer.delete_by_term('intid', unicode(intid))
-		writer_commit(writer)
-	return count
+	writer = iwu_index.writer()
+	username = entity.username if nti_interfaces.IEntity.providedBy(entity) else entity
+	count = writer.delete_by_term('username', username)
+	writer_commit(writer)
+	return count, username
 	
-@component.adapter(nti_interfaces.IEntity, user_interfaces.WillDeleteEntityEvent)
+@component.adapter(nti_interfaces.IEntity, IObjectRemovedEvent)
 def on_entity_deleted( entity, event ):	
 	iwu_index = component.getUtility(IWhooshEntityIndex)
-	count = _delete_entity(iwu_index, entity)
-	if count: iwu_index.on_entity_deleted(entity.username)
+	count, username = _delete_entity(iwu_index, entity)
+	if count: iwu_index.on_entity_deleted(username)
 
 def _get_entity(entity):
 	if isinstance(entity, six.string_types):
@@ -288,7 +286,7 @@ class _WhooshEntityIndex(object):
 		ors = [	self.parse('email', search_term),
 				self.parse('alias', search_term),
 				self.parse('realname', search_term),
-				self.parse('username', search_term)]
+				self.parse('t_username', search_term)]
 		bq = query.Or(ors)
 		with self.index.searcher() as s:
 			hits = s.search(bq)
