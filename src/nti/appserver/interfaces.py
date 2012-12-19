@@ -334,22 +334,6 @@ class INewObjectTransformer(interface.Interface):
 # Policies
 ###
 
-class IUsernameMatcher(interface.Interface):
-
-	def query( search_term, remote_user=None, provided=None ):
-		"""
-		Return all entity objects whose username match the query.
-
-		:param remote_user: The user requesting the search.
-			
-		:param provided: A predicate used to further filter results.
-			The default value checks for IEntity; you may use a custom value.
-
-		:return: A set of :class:`nti.dataserver.interfaces.IEntity` objects,
-			possibly empty, that match the search term, according to the rules of the
-			policy.
-		"""
-		
 class IUserSearchPolicy(interface.Interface):
 
 	def query( search_term, provided=nti_interfaces.IEntity.providedBy ):
@@ -363,6 +347,8 @@ class IUserSearchPolicy(interface.Interface):
 			possibly empty, that match the search term, according to the rules of the
 			policy.
 		"""
+
+
 
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 IContactEmailRecovery = IContactEmailRecovery # BBB
