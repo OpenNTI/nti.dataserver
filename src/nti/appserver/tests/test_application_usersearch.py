@@ -13,6 +13,7 @@ from hamcrest import all_of
 from hamcrest import contains_string
 from hamcrest import has_property
 from hamcrest import none
+from hamcrest import has_items
 from hamcrest import has_length
 from hamcrest import has_key
 from hamcrest import is_not as does_not
@@ -94,6 +95,13 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			path = '/dataserver2/%s/Friend' % t
 			res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
 			assert_that( res.json_body['Items'], has_length( cnt ) )
+
+		# The substring match of usersearch can find the community as well
+		path = '/dataserver2/UserSearch/e'
+		res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
+		assert_that( res.json_body['Items'], has_length( 2 ) )
+		assert_that( res.json_body['Items'], has_items( has_entry( 'alias', 'Public' ),
+														has_entry( 'alias', 'Friends' ) ) )
 
 	@WithSharedApplicationMockDS
 	def test_user_search(self):
