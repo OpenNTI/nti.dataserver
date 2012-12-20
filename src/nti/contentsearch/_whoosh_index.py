@@ -174,7 +174,7 @@ def create_book_schema():
 	related: ntiids of related sections
 	ref: chapter reference
 	"""
-	schema = fields.Schema(	docid = fields.ID(stored=True, unique=True),
+	schema = fields.Schema(	docid = fields.ID(stored=True, unique=False),
 							ntiid = fields.ID(stored=True, unique=False),
 							title = fields.TEXT(stored=True, spelling=True),
 				  			last_modified = fields.DATETIME(stored=True),
