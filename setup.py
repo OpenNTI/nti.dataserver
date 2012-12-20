@@ -300,7 +300,7 @@ setup(
 		# Zope.security 3.8.4, in particular, has pinned itself to 4.0, so apparently their port
 		# will need some work.
 		'zope.schema >= 4.2.2',
-		'zope.security == 3.8.3', # 3.8.4 is pinned with zope.proxy 4.0.1
+		'zope.security >= 3.8.3, <=3.8.4', # 3.8.4 is pinned with zope.proxy 4.0.1
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 3.5.0',
 		'zope.tal >= 3.6.1',
