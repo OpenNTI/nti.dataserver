@@ -290,7 +290,7 @@ setup(
 		'zope.pagetemplate >= 4.0.0',
 		'zope.password >= 3.6.1', # encrypted password management
 		'zope.publisher >= 3.13.1',
-		'zope.processlifetime',
+		'zope.processlifetime >= 1.0',
 		'zope.proxy >= 4.0.1',
 		'zope.schema >= 4.2.2',
 		'zope.security >= 3.8.3',
