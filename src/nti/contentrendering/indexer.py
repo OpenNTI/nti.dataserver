@@ -187,11 +187,10 @@ def _index_book_node(writer, node, file_indexing=False):
 		if not content:
 			return
 		
-		docid = "%r %s" % (ntiid, docid)
-		docid = unicode(hashlib.md5(docid).hexdigest())
+		docid = unicode(docid) if docid else None
 		try:
 			content = unicode(content)
-			writer.add_document(#docid=docid,
+			writer.add_document(docid=docid,
 								ntiid=ntiid,
 								title=title,
 								content=content,
@@ -211,7 +210,7 @@ def _index_book_node(writer, node, file_indexing=False):
 		raw_content = _get_page_content(raw_content)
 		tokenized_words = _sanitize_content(raw_content, tokens=True, table=table)
 		if tokenized_words:
-			documents.append(tokenized_words)
+			documents.append((ntiid,tokenized_words))
 	else:
 		# get content
 		def _collector(n, data):
@@ -231,13 +230,14 @@ def _index_book_node(writer, node, file_indexing=False):
 			if n_id or (data_ntiid and data_ntiid != "none"):
 				data = []
 				_collector(n, data)
-				documents.append(data)
+				_id  = data_ntiid or n_id
+				documents.append((_id, data))
 			else:
 				content = _get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
 					tokenized_words = split_content(content)
-					documents.append(tokenized_words)
+					documents.append((None, tokenized_words))
 				
 				for c in n.iterchildren():
 					_traveler(c)
@@ -248,15 +248,14 @@ def _index_book_node(writer, node, file_indexing=False):
 		for n in node.dom(b'div').filter(b'#footnotes'):
 			_traveler(n)
 	
-	# TODO: key word should done on a book basis
-	# compute keywords
+	# TODO: key word should be done on a book basis
 	all_words = []
 	for tokenized_words in documents:
-		all_words.extend(tokenized_words)
+		all_words.extend(tokenized_words[1])
 	keywords = _extract_key_words(all_words)
 	logger.debug("\tkeywords %s", keywords )
 	
-	for docid, tokenized_words in enumerate(documents):
+	for docid, tokenized_words in documents:
 		content = ' '.join(tokenized_words)
 		_to_index(docid, content, keywords)
 		
@@ -266,8 +265,10 @@ def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize
 	if not indexdir:
 		indexdir = os.path.join(contentPath, "indexdir")
 		
-	logger.info('indexing %s(%s)' % (indexname, indexdir))
-	
+	logger.info('Indexing %s(%s)' % (indexname, indexdir))
+	if file_indexing:
+		logger.info('File indexing has been set')
+		
 	idx = get_or_create_index(indexdir, indexname, recreate=recreate_index)
 	writer = idx.writer(optimize=False, merge=False)
 	
