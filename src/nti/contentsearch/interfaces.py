@@ -63,6 +63,11 @@ class IBookIndexManager(ISearcher):
 	def get_ntiid():
 		"return the index ntiid"
 	
+class IWooshBookIndexManager(IBookIndexManager):
+	
+	def close():
+		"close the index"
+		
 class IEntityIndexManager(ISearcher):
 
 	username = schema.TextLine(title="entity name", required=True)

@@ -38,7 +38,7 @@ class _Proxy(ProxyBase):
 			self._semaphore.release()
 		return result
 		
-@interface.implementer( search_interfaces.IBookIndexManager )
+@interface.implementer( search_interfaces.IWooshBookIndexManager )
 class WhooshBookIndexManager(object):
 	
 	def __init__(self, indexname, ntiid=None, storage=None, indexdir=None):
@@ -56,12 +56,15 @@ class WhooshBookIndexManager(object):
 
 	@property
 	def indexid(self):
-		return self.ntiid
+		return self.get_ntiid()
 	
 	@property
 	def indexname(self):
 		return self.get_indexname()
 
+	def get_ntiid(self):
+		return self.ntiid
+	
 	def get_indexname(self):
 		return self.bookidx.indexname
 	
@@ -92,12 +95,6 @@ class WhooshBookIndexManager(object):
 	
 	def close(self):
 		self.bookidx.close()
-
-	def __del__(self):
-		try:
-			self.close()
-		except:
-			pass
 
 def wbm_factory(*args, **kwargs):
 	def f(indexname, *fargs, **fkwargs):
