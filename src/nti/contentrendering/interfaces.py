@@ -5,10 +5,8 @@ from __future__ import unicode_literals, print_function
 # disable "super on old-style class for Components, it is new-style"
 #pylint: disable=E1002
 
-from zope import interface
-from zope import component
 from zope import schema
-
+from zope import interface
 
 class IEclipseMiniDomTOC(interface.Interface):
 	"""
@@ -139,6 +137,18 @@ class IStaticYouTubeEmbedVideoAdder(IStaticVideoAdder):
 	"""
 	Uses static information to add embedded YouTube video references to the book content.
 	"""
+
+class IBookIndexer(interface.Interface):
+	"""
+	Creates an index for a given book
+	"""
+
+	def index(book=None):
+		"""
+		The book to index
+		
+		:param book: The :class:`IRenderedBook`.
+		"""
 
 ####
 ## Transforming content from one format to another
