@@ -292,13 +292,15 @@ setup(
 		'zope.publisher >= 3.13.1',
 		'zope.processlifetime >= 1.0',
 		'zope.proxy == 4.0.1',
-		# NOTE: zope.proxy 4.1.0 is out, but if you upgrade from 4.0.1 to 4.1.0, you must also rebuild
+		# NOTE: zope.proxy 4.1.0 is out with py3k and newer api support, but if you upgrade from 4.0.1 to 4.1.0, you must also rebuild
 		# other C extensions that needed zope.proxy (Symptoms are a 'SystemError: dynamic module not initialized properly').
 		# These include (at least): zope.security.
 		# (However, at the moment, I'm not having success getting everything recompiled in an existing virtual
 		#  environment [it may require uninstalling first], so pinning to 4.0.1 for now---JAM)
+		# Zope.security 3.8.4, in particular, has pinned itself to 4.0, so apparently their port
+		# will need some work.
 		'zope.schema >= 4.2.2',
-		'zope.security >= 3.8.3',
+		'zope.security == 3.8.4', # 3.8.4 is pinned with zope.proxy 4.0.1
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 3.5.0',
 		'zope.tal >= 3.6.1',
