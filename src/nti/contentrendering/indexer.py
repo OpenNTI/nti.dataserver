@@ -255,9 +255,13 @@ def _index_book_node(writer, node, file_indexing=False):
 	keywords = _extract_key_words(all_words)
 	logger.debug("\tkeywords %s", keywords )
 	
+	count = 0
 	for docid, tokenized_words in documents:
 		content = ' '.join(tokenized_words)
 		_to_index(docid, content, keywords)
+		count += 1
+	logger.info("%s document(s) produced" % count)
+	return count
 		
 def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize=True, file_indexing=False):
 	contentPath = book.contentLocation
@@ -274,11 +278,14 @@ def transform(book, indexname=None, indexdir=None, recreate_index=True, optimize
 	
 	toc = book.toc
 	def _loop(topic):
-		_index_book_node(writer, topic, file_indexing=file_indexing)
+		count = _index_book_node(writer, topic, file_indexing=file_indexing)
 		for t in topic.childTopics:
-			_loop(t)			
-	_loop(toc.root_topic)
+			count += _loop(t)
+		return count
+	docs = _loop(toc.root_topic)
+	logger.info("%s total document(s) produced" % docs)
 	
+	# commit changes
 	writer.commit(optimize=False, merge=False)
 	
 	if optimize:
