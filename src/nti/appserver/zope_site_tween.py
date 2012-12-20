@@ -95,25 +95,23 @@ class site_tween(object):
 			# Confirmed and filed against 0.4. Probably still the case with 0.5, but our tests
 			# pass with or without these next two lines. There's no real harm leaving them in, other than
 			# that transaction.commit shows up as being called twice in profiles
-			if request.method == 'GET' and 'socket.io' not in request.url:
-				# GET requests must NEVER have side effects. (Unfortunately, socket.io polling does)
-				# So these transactions can safely be aborted and ignored, reducing contention on commit locks
-				# TODO: It would be cool to open them readonly.
-				# TODO: I don't really know if this is kosher.
-				now = time.time()
-				transaction.abort()
-				done = time.time() # TODO: replace all this with statsd
-				logger.debug( "Aborted side-effect free transaction for %s in %ss", request.url, done - now )
+
+			## FIXME: TODO: Replace all the time logging with something smarter, e.g., statsd/graphite
+
+			if self._is_side_effect_free( request ):
+				# These transactions can safely be aborted and ignored, reducing contention on commit locks
+				# TODO: It would be cool to open them readonly in the first place.
+				# TODO: I don't really know if this is kosher, but it does seem to work so far
+				duration = _timing( transaction.abort )
+				logger.debug( "Aborted side-effect free transaction for %s in %ss", request.url, duration )
 			elif not transaction.isDoomed() and not pyramid_tm.default_commit_veto( request, response ):
 				exc_info = sys.exc_info()
 				try:
-					now = time.time()
-					transaction.commit()
-					done = time.time() # TODO: replace all this with statsd
-					logger.debug( "Committed transaction for %s in %ss", request.url, done - now )
-					if (done - now) > 10.0:
-						# We held locks for a really, really, long time. Why?
-						logger.warn( "Slow running commit for %s in %ss", request.url, done - now )
+					duration = _timing( transaction.commit )
+					logger.debug( "Committed transaction for %s in %ss", request.url, duration )
+					if duration > 6.0:
+						# We held (or attempted to hold) locks for a really, really, long time. Why?
+						logger.warn( "Slow running commit for %s in %ss", request.url, duration )
 				except AssertionError:
 					# We've seen this when we are recalled during retry handling. The higher level
 					# is in the process of throwing a different exception and the transaction is
@@ -138,6 +136,32 @@ class site_tween(object):
 			return response
 		finally:
 			setSite()
+
+	def _is_side_effect_free( self, request ):
+		"""
+		Is the request side-effect free? If the answer is yes, we should be able to quietly abort
+		the transaction and avoid taking out any locks in the DBs.
+		"""
+		if request.method == 'GET':
+			# GET requests must NEVER have side effects.
+			if 'socket.io' in request.url:
+				# (Unfortunately, socket.io polling does)
+				# However, the static resources don't
+				return True if 'static' in request.url else False
+
+			return True
+		# Every non-get probably has side effects
+		return False
+
+def _timing( operation ):
+	"""
+	Run the `operation` callable, returning the number of seconds it took.
+	"""
+	now = time.time()
+	operation()
+	done = time.time()
+	return done - now
+
 
 def site_tween_factory(handler, registry):
 	"""
