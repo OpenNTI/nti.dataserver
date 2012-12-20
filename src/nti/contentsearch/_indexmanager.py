@@ -65,10 +65,9 @@ class IndexManager(object):
 
 	def get_user_dymamic_memberships(self, username):
 		user = self.get_entity(username)
-		result = set(getattr(user, 'dynamic_memberships', ()))
-		if self.everyone in result:
-			result.remove(self.everyone)
-		result = sorted(result, key=lambda e: e.username.lower())
+		result = getattr(user, 'dynamic_memberships', ())
+		result = [x for x in result if x != self.everyone and x is not None]
+		result.sort(key=lambda e: e.username.lower())
 		return result
 
 	@metric
