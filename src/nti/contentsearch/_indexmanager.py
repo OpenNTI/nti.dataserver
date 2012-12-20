@@ -26,7 +26,6 @@ logger = logging.getLogger( __name__ )
 @interface.implementer( search_interfaces.IIndexManager )
 class IndexManager(object):
 
-	_everyone = None
 	indexmanager = None
 
 	@classmethod
@@ -49,12 +48,6 @@ class IndexManager(object):
 	def __repr__( self ):
 		return 'IndexManager(books=%s, %s)' % (len(self.books), self.useridx_manager_adapter)
 
-	@property
-	def everyone(self):
-		if self._everyone is None:
-			self._everyone = self.get_entity('Everyone')
-		return self._everyone
-	
 	def get_entity(self, username):
 		result = Entity.get_entity(username)
 		return result
@@ -65,8 +58,9 @@ class IndexManager(object):
 
 	def get_user_dymamic_memberships(self, username):
 		user = self.get_entity(username)
+		everyone = self.get_entity('Everyone')
 		result = getattr(user, 'dynamic_memberships', ())
-		result = [x for x in result if x != self.everyone and x is not None]
+		result = [x for x in result if x != everyone and x is not None]
 		result.sort(key=lambda e: e.username.lower())
 		return result
 
