@@ -19,6 +19,7 @@ from zope import component
 from zope import interface
 from zope import schema
 from zope.event import notify
+from ZODB import loglevels
 
 from pyramid.threadlocal import get_current_request
 
@@ -39,8 +40,6 @@ from ._email_utils import queue_simple_html_text_email
 import nameparser
 import datetime
 import urllib
-import warnings
-# import time
 
 def get_possible_site_names(request=None, include_default=False):
 	"""
@@ -359,11 +358,11 @@ def _dispatch_to_policy( user, event, func_name ):
 	"""
 	utility, site_name = find_site_policy( )
 	if utility:
-		logger.info( "Site %s wants to handle user creation event %s for %s with %s", site_name, func_name, user, utility )
+		logger.log( loglevels.TRACE, "Site %s wants to handle user creation event %s for %s with %s", site_name, func_name, user, utility )
 		getattr( utility, func_name )( user, event )
 		return True
 
-	logger.info( "No site in %s wanted to handle user event %s for %s", site_name, func_name, user )
+	logger.debug( "No site in %s wanted to handle user event %s for %s", site_name, func_name, user )
 
 
 @component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
@@ -874,7 +873,7 @@ class RwandaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for the rwanda site.
 	"""
-	
+
 	COM_USERNAME = 'CarnegieMellonUniversity'
 	COM_ALIAS = 'CMU'
 	COM_REALNAME = 'Carnegie Mellon University'
@@ -928,7 +927,7 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_USERNAME = 'fintech.nextthought.com'
 	COM_ALIAS = 'FinTech'
 	COM_REALNAME = 'FinTech'
-	
+
 	DFL_NAME = u'prm candidate group'
 	DFL_OWNER = u'fintechken'
 

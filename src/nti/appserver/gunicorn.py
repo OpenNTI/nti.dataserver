@@ -167,7 +167,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	policy_server = None
 	_preloaded_app = None
 
-	PREFERRED_MAX_CONNECTIONS = 200
+	PREFERRED_MAX_CONNECTIONS = 100
 
 	@classmethod
 	def setup(cls): # pragma: no cover
