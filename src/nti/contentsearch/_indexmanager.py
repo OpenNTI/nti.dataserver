@@ -190,5 +190,7 @@ class IndexManager(object):
 		for bm in self.books.itervalues():
 			self._close(bm)
 
-	def _close( self, book_manager ):
-		raise NotImplementedError()
+	def _close( self, bm ):
+		close_m = getattr(bm, 'close', None)
+		if close_m is not None:
+			close_m()
