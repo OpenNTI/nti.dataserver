@@ -183,7 +183,10 @@ setup(
 		'perfmetrics >= 1.0', # easy statsd metrics.
 		'plone.scale >= 1.2.2', # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
-		'pyPDF >= 1.13', # Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
+		# Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?:
+		'pyPDF >= 1.13',
+		# See also z3c.rml for a complete PDF layout and rendering environment, which should
+		# work with page templates as well.
 		# jquery-like traversing of python datastructures. lxml, cssselect
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
@@ -226,7 +229,7 @@ setup(
 		'six >= 1.2.0',
 		#'slimit',
 		'supervisor >= 3.0b1',
-		'transaction >= 1.3.0',
+		'transaction >= 1.3.0, < 1.4', # 1.4.0b1 is out. It looks good but will require a code review for its 'attempts' updates, exception changes, and compat with dm.transaction
 		'webob >= 1.2.3',
 		'whoosh >= 2.4.1',
 		'z3c.baseregistry >= 2.0.0', # ZCML configurable local component registries
@@ -300,7 +303,7 @@ setup(
 		# Zope.security 3.8.4, in particular, has pinned itself to 4.0, so apparently their port
 		# will need some work.
 		'zope.schema >= 4.2.2',
-		'zope.security >= 3.8.3, <=3.8.4', # 3.8.4 is pinned with zope.proxy 4.0.1
+		'zope.security >= 3.8.3, <=3.8.4', # 3.8.4 is pinned with zope.proxy 4.0.1 and *SHOULD* be the installed version. Some people had trouble upgrading from 3.8.3, so temporarily allow it
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 3.5.0',
 		'zope.tal >= 3.6.1',
