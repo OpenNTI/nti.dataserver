@@ -143,11 +143,12 @@ class IBookIndexer(interface.Interface):
 	Creates an index for a given book
 	"""
 
-	def index(book=None):
+	def index(book, indexdir=None):
 		"""
 		The book to index
 		
 		:param book: The :class:`IRenderedBook`.
+		:param indexdir: Output directory
 		"""
 
 ####

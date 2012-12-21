@@ -24,15 +24,16 @@ class TestWhooshIndexer(ConfiguringTestBase):
 		ConfiguringTestBase.tearDown(self)
 		shutil.rmtree(self.idxdir, True)
 
-	def _index_book(self, indexer):
+	def test_default_index_book(self):
 		indexname='biology'
 		path = os.path.join( os.path.dirname( __file__ ),  '../../tests/intro-biology-rendered-book' )
-		book = NoConcurrentPhantomRenderedBook( EmptyMockDocument(), path)
 		
-		idx = indexer.create_index(self.idxdir, indexname)
-		writer = idx.writer(optimize=False, merge=False)	
-		indexer.process_book(book, writer)
-		writer.commit(optimize=False, merge=False)
+		document = EmptyMockDocument()
+		document.userdata['jobname'] = indexname
+		book = NoConcurrentPhantomRenderedBook(document, path)
+		
+		indexer = _DefaultWhooshIndexer()
+		idx = indexer.index(book, self.idxdir)
 		
 		q = Term("keywords", u"mathcounts")
 		with idx.searcher() as s:
@@ -50,9 +51,6 @@ class TestWhooshIndexer(ConfiguringTestBase):
 			assert_that(r, has_length(16))
 		
 		idx.close()
-		
-	def test_default_index__book(self):
-		self._index_book(_DefaultWhooshIndexer())
 		
 	def _index_file(self, path, indexname, nodename, indexer=None):
 		indexer = indexer or _DefaultWhooshIndexer()
