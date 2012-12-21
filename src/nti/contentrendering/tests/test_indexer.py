@@ -14,7 +14,7 @@ class TestIndexer(ConfiguringTestBase):
 		indexer = component.getUtility(cr_interfaces.IBookIndexer)
 		assert_that(indexer, is_not(None))
 		
-		indexer = component.getUtility(cr_interfaces.IBookIndexer, name="file")
+		indexer = component.getUtility(cr_interfaces.IBookIndexer, name="whoosh.file")
 		assert_that(indexer, is_not(None))
 		
 if __name__ == '__main__':

@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 interface.moduleProvides(cr_interfaces.IRenderedBookTransformer )
 		
 def transform(book, indexdir=None, name=''):
-	indexer = component.getUtility(cr_interfaces.IBookIndexer, name=name)
+	indexer = component.queryUtility(cr_interfaces.IBookIndexer, name=name)
+	if indexer is None:
+		indexer = component.getUtility(cr_interfaces.IBookIndexer)
 	indexer.index(book, indexdir)
 	
 def main():
@@ -35,7 +37,6 @@ def main():
 
 	arg_parser = argparse.ArgumentParser( description="Content indexer" )
 	arg_parser.add_argument( 'contentpath', help="Content book location" )
-	arg_parser.add_argument( "-i", "--indexname", dest='indexname', help="Content index name", default=None)
 	arg_parser.add_argument( "-f", "--file_indexing", dest='file_indexing', help="Use file indexing", action='store_true')
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	args = arg_parser.parse_args()
@@ -53,7 +54,7 @@ def main():
 	document.userdata['jobname'] = indexname
 	book = NoConcurrentPhantomRenderedBook(document, contentpath)
 	
-	name = 'file' if file_indexing else ''
+	name = 'whoosh.file' if file_indexing else indexname
 	transform(book, name=name)
 	
 if __name__ == '__main__':
