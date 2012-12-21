@@ -44,7 +44,7 @@ def main():
 	verbose = args.verbose
 	file_indexing = args.file_indexing
 	contentpath = os.path.expanduser(args.contentpath)
-	indexname = args.indexname or os.path.basename(contentpath)
+	indexname = os.path.basename(contentpath)
 	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
 	
 	if verbose:
