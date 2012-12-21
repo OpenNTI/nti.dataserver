@@ -154,7 +154,7 @@ class _DefaultWhooshIndexer(_BasicWhooshIndexer):
 		ntiid = unicode(node.ntiid)
 		content_file = node.location
 		
-		logger.info("Indexing File (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
+		logger.info("Indexing Node (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
 	
 		table = get_content_translation_table()
 		related = node_utils.get_related(node.topic)
