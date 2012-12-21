@@ -43,13 +43,17 @@ def main():
 	verbose = args.verbose
 	file_indexing = args.file_indexing
 	contentpath = os.path.expanduser(args.contentpath)
+	indexname = args.indexname or os.path.basename(contentpath)
 	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
 	
 	if verbose:
 		logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
 		
+	document = EmptyMockDocument()
+	document.userdata['jobname'] = indexname
+	book = NoConcurrentPhantomRenderedBook(document, contentpath)
+	
 	name = 'file' if file_indexing else ''
-	book = NoConcurrentPhantomRenderedBook(EmptyMockDocument(), contentpath)
 	transform(book, name=name)
 	
 if __name__ == '__main__':
