@@ -6,8 +6,6 @@
 
 	<include package="nti.contentprocessing" />
 
-	<utility factory=".indexer._KeyWordFilter" name="indexer" />
-	
 	<!--
 	For items used in rendering, we MUST be sure to use
 	the PlastexTraverser
@@ -40,5 +38,6 @@
 	<include package=".contentchecks" />
 	<include package=".resources" />
 	<include package=".plastexpackages" />
-
+	<include package=".indexing" />
+	
 </configure>

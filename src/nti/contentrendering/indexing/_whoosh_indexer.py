@@ -16,10 +16,10 @@ from whoosh import index
 from nti.contentprocessing import split_content
 from nti.contentprocessing import get_content_translation_table
 
-from nti.contentrendering import interfaces as cr_interfaces
 from nti.contentrendering.indexing import _node_utils as node_utils
 from nti.contentrendering.indexing import _termextract as termextract
 from nti.contentrendering.indexing import _content_utils as content_utils
+from nti.contentrendering.indexing import interfaces as cridxr_interfaces
 
 from nti.contentsearch.whoosh_contenttypes import create_book_schema
 
@@ -31,7 +31,7 @@ page_c_pattern = re.compile("<div class=\"page-contents\">(.*)</body>")
 def get_schema():
 	return create_book_schema()
 
-@interface.implementer(cr_interfaces.IBookIndexer)
+@interface.implementer(cridxr_interfaces.IWhooshBookIndexer)
 class _BasicWhooshIndexer(object):
 	
 	def remove_index_files(self, indexdir, indexname):
