@@ -89,10 +89,10 @@ class _BasicWhooshIndexer(object):
 		docs = _loop(toc.root_topic)
 		return docs
 	
-	def index(self, book):
+	def index(self, book, indexdir=None):
 		indexname = book.jobname
-		contentPath = book.contentLocation
-		indexdir = os.path.join(contentPath, "indexdir")
+		contentPath = os.path.expanduser(book.contentLocation)
+		indexdir = indexdir or os.path.join(contentPath, "indexdir")
 		self.remove_index_files(indexdir, indexname)
 	
 		logger.info('Indexing %s(%s)' % (indexname, indexdir))
@@ -108,6 +108,8 @@ class _BasicWhooshIndexer(object):
 	
 		logger.info( "Optimizing index" )
 		idx.optimize()
+		
+		return idx
 		
 class _BookFileWhooshIndexer(_BasicWhooshIndexer):
 		

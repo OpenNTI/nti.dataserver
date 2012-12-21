@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 interface.moduleProvides(cr_interfaces.IRenderedBookTransformer )
 		
-def transform(book, name=''):
+def transform(book, indexdir=None, name=''):
 	indexer = component.getUtility(cr_interfaces.IBookIndexer, name=name)
-	indexer.index(book)
+	indexer.index(book, indexdir)
 	
 def main():
 	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
