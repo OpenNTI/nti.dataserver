@@ -2,25 +2,25 @@
 
 import os
 import shutil
-
+import tempfile
 import subprocess
+import multiprocessing
+
 # This process is all about external processes so threads
 # are fine to extract max concurrency
 from concurrent.futures import ThreadPoolExecutor # TODO: Convert to nti.contentrendering.ConcurrentExecutor. But beware of exceptions in the called function!
-import multiprocessing
-import tempfile
-import warnings
 
 import logging
 logger = logging.getLogger(__name__)
 
-from . import javascript_path, run_phantom_on_page
+from nti.contentrendering import javascript_path, run_phantom_on_page
 
 javascript = javascript_path( 'rasterize.js')
 thumbnailsLocationName = 'thumbnails'
 
+#import warnings
+#warnings.warn( "Using convert from the PATH" )
 
-warnings.warn( "Using convert from the PATH" )
 def _generateImage(contentdir, page, output):
 	run_phantom_on_page( os.path.join(contentdir, page.location), javascript, (output,), expect_no_output=True )
 	# #print 'Fetching page info for %s' % htmlFile
