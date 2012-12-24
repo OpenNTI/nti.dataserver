@@ -19,3 +19,12 @@ class IWhooshBookIndexer(cr_interfaces.IBookIndexer):
 		:param book: The :class:`IRenderedBook`.
 		:param writer: Whoosh indexwriter
 		"""
+
+	def index(book, indexdir=None, indexname=None):
+		"""
+		Index the specified book 
+		
+		:param book: The :class:`IRenderedBook`.
+		:param indexdir: Output directory
+		:param indexname: Index name
+		"""
