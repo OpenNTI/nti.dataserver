@@ -33,4 +33,4 @@ def extract_key_words(tokenized_words, max_words=10):
 		word = r.norm
 		if r.terms: word = r.terms[0] # pick the first word
 		keywords.append(unicode(word.lower()))
-	return keywords
+	return keywords.sort()
