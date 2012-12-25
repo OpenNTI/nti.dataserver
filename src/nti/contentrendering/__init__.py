@@ -27,8 +27,8 @@ import urllib
 import subprocess
 import anyjson as json
 
-#import warnings
-#warnings.warn( "Using whatever phantomjs is on the path" )
+import warnings
+warnings.warn( "Using whatever phantomjs is on the path" )
 
 _none_key = object()
 def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no_output=False, expect_non_json_output=False ):

@@ -18,8 +18,8 @@ from nti.contentrendering import javascript_path, run_phantom_on_page
 javascript = javascript_path( 'rasterize.js')
 thumbnailsLocationName = 'thumbnails'
 
-#import warnings
-#warnings.warn( "Using convert from the PATH" )
+import warnings
+warnings.warn( "Using convert from the PATH" )
 
 def _generateImage(contentdir, page, output):
 	run_phantom_on_page( os.path.join(contentdir, page.location), javascript, (output,), expect_no_output=True )
