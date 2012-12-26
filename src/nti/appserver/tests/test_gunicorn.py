@@ -89,10 +89,10 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 		dummy_app.app = dummy_app
 		global_conf['__file__'] = ''
 		global_conf['http_port'] = '1'
-		worker = gunicorn.GeventApplicationWorker( None, None, MockSocket(), dummy_app, None, MockConfig, logger)
+		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, MockConfig, logger)
 		worker._init_server()
 
-		worker = gunicorn.GeventApplicationWorker( None, None, MockSocket(), None, None, MockConfig, logger)
+		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], None, None, MockConfig, logger)
 		with assert_raises(Exception):
 			worker._init_server()
 
@@ -106,7 +106,7 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 		dummy_app.app = dummy_app
 		global_conf['__file__'] = ''
 		global_conf['http_port'] = '1'
-		worker = gunicorn.GeventApplicationWorker( None, None, MockSocket(), dummy_app, None, MockConfig, logger)
+		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, MockConfig, logger)
 		server = worker._init_server()
 
 		# Be sure that everything (e.g., ssl header parsing) is set up so that the environment comes out as expected
@@ -145,13 +145,13 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 		cfg = gconfig.Config()
 
 		# Default worker_connections config
-		worker = gunicorn.GeventApplicationWorker( None, None, MockSocket(), dummy_app, None, cfg, logger)
+		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
 		worker.init_process(_call_super=False)
 		assert_that( worker, has_property( 'worker_connections', gunicorn.GeventApplicationWorker.PREFERRED_MAX_CONNECTIONS ) )
 
 		# Changed config
 		cfg.settings['worker_connections'].set( 300 )
-		worker = gunicorn.GeventApplicationWorker( None, None, MockSocket(), dummy_app, None, cfg, logger)
+		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
 		worker.init_process(_call_super=False)
 		assert_that( worker, has_property( 'worker_connections', 300 ) )
 
