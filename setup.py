@@ -158,7 +158,7 @@ setup(
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
 		'gevent_zeromq >= 0.2.5',
 		'greenlet >= 0.4.0',
-		'gunicorn == 0.16.1',
+		'gunicorn == 0.17.0',
 		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
 		 # WSGI middleware for profiling. Defaults to storing
@@ -191,7 +191,7 @@ setup(
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
 		'pyramid >= 1.4' ,
-		'pyramid_tm >= 0.5',
+		'pyramid_tm >= 0.6',
 		'pyramid_mailer >= 0.10', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 0.9.2',

@@ -84,7 +84,7 @@ def _create_flash_socket(cfg, log):
 	sock_type = TCP6Socket if util.is_ipv6(addr[0]) else TCPSocket
 
 	try:
-		result = sock_type(conf, log)
+		result = sock_type(addr, conf, log)
 		log.info( "Listening at %s", result )
 		return result
 	except socket.error, e: # pragma: no cover
@@ -125,6 +125,9 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 	# Our worker uses a custom server, and we depend on that to be able to pass the right
 	# information to gunicorn.http.wsgi.create
 
+	# NOTE: gunicorn 0.17 adds SSL and multiple address support. We do not work
+	# with either of those, just a single non-SSL socket.
+
 	def get_environ(self):
 		# Start with what gevent creates
 		environ = super(_PyWSGIWebSocketHandler,self).get_environ()
@@ -147,7 +150,8 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 			# section 14.36 of HTTP 1.1. Stupid IE).
 			k, v = header.split( b':', 1)
 			request.headers.append( (k.upper(), v.strip()) )
-		_, gunicorn_env = gunicorn.http.wsgi.create(request, self.socket, self.client_address, self.server.worker.address, self.server.worker.cfg)
+		# This is where we require just the single socket. get_environ does not have access to the listener.
+		_, gunicorn_env = gunicorn.http.wsgi.create(request, self.socket, self.client_address, self.server.worker.sockets[0].getsockname(), self.server.worker.cfg)
 
 		environ.update( gunicorn_env )
 		return environ
@@ -254,8 +258,11 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			gun_logger.propagate = False
 
 		self.server_class = _ServerFactory( self )
-		self.socket = gevent.socket.socket(_sock=self.socket)
-		self.app_server.socket = self.socket
+		# Make 0.17 more like 0.16.1: We only work with one address
+		assert len(self.sockets) == 1
+		self.socket = self.sockets[0]
+		self.app_server.socket = self.sockets[0]
+
 		# Everything must be complete and ready to go before we call into
 		# the super, it in turn calls run()
 		# TODO: Errors here get silently swallowed and gunicorn just cycles the worker

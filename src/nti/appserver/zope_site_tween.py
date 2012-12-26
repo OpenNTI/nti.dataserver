@@ -63,7 +63,7 @@ class site_tween(object):
 		site = conn.root()['nti.dataserver']
 		old_site = getSite()
 		# Not sure what circumstances lead to already having a site
-		# here. Have seen it at startup. Force it back to none (?)
+		# here. Have seen it at startup (also with some of the new test machinery). Force it back to none (?)
 		# It is very bad to raise an exception here, it interacts
 		# badly with logging
 		try:
@@ -83,18 +83,15 @@ class site_tween(object):
 			request.environ['nti.early_request_teardown'] = early_request_teardown
 
 			response = self.handler(request)
-			### FIXME:
+			### TODO:
 			# pyramid_tm <= 0.5 has a bug in that if committing raises a retryable exception,
-			# it doesn't actually retry (because commit is inside the __exit__ of a context
-			# manager, and when a context manager is exiting normally (not due to an exception),
-			# it ignores the return value of __exit__, so the loop
-			# doesn't actually loop (i.e., all you can do is raise the exception, you cannot return a value in that scenario,
-			# the context manager machinery will ignore it): the normal return statement trumps).
-			# Thus, we commit here so that an exception is raised and caught.
-			# See https://github.com/Pylons/pyramid_tm/issues/4
-			# Confirmed and filed against 0.4. Probably still the case with 0.5, but our tests
-			# pass with or without these next two lines. There's no real harm leaving them in, other than
-			# that transaction.commit shows up as being called twice in profiles
+			# it doesn't actually retry (see prior versions for detailed reason why), so we committed
+			# manually here.
+			# pyramid_tm >= 0.6 fixes this bug. but in the meantime, we have added logging to our
+			# implementation of commit, and abort in other cases. Thus, we wind up committing twice,
+			# which is low cost, but ugly in profiles. We're getting very little value from pyramid_tm at
+			# this point, so if we want the logging we should add our own tween that handles that and move
+			# this out of this tween
 
 			## FIXME: TODO: Replace all the time logging with something smarter, e.g., statsd/graphite
 
@@ -118,6 +115,7 @@ class site_tween(object):
 					# already toast, so this commit would never work, but we haven't lost anything;
 					# The sad part is that this assertion error overrides the stack trace for what's currently
 					# in progress
+					# TODO: Transaction 1.4.0 changes this to ValueError
 					logger.exception( "Failing to commit; should already be an exception in progress" )
 					if exc_info and exc_info[0]:
 						raise exc_info[0], None, exc_info[2]
