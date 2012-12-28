@@ -21,7 +21,7 @@ from nti.contentrendering.indexing import _termextract as termextract
 from nti.contentrendering.indexing import _content_utils as content_utils
 from nti.contentrendering.indexing import interfaces as cridxr_interfaces
 
-from nti.contentsearch.whoosh_contenttypes import create_book_schema
+from nti.contentsearch import create_book_schema
 
 import logging
 logger = logging.getLogger(__name__)

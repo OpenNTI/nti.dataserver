@@ -44,6 +44,7 @@ for module in (zopyx_coreidx, zopyx_evaluator, zopyx_resultset, ntizopyx_evaluat
 	
 # legacy imports
 from nti.contentsearch.common import indexable_type_names
+from nti.contentsearch._whoosh_index import create_book_schema
 
 def get_indexable_types():
 	return indexable_type_names
