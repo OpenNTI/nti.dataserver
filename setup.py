@@ -317,7 +317,7 @@ setup(
 			'zope.testing >= 4.1.1',
 			'zc.buildout == 1.6.3',
 			'nose-progressive',
-			'pyhamcrest >= 1.6',
+			'pyhamcrest >= 1.7',
 			'WebTest >= 1.4.3',
 			'fakeredis >= 0.3.0',
 			'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
