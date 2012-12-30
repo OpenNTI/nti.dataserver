@@ -76,6 +76,10 @@ class site_tween(object):
 		try:
 			# Now (and only now, that the site is setup since that's when we can access the DB
 			# and get the user) record info in the transaction
+			# NOTE: pyramid_tm >= 0.7 tries to get the /un/authenticated_userid when it opens
+			# the transaction. This doesn't work because pyramid_who and repoze.who attempt to authenticate
+			# immediately when accessing the userid in any fashion, and the DB is not setup yet.
+			# We either need to rethink how we set things up or avoid updating
 			uid = pyramid.security.authenticated_userid( request )
 			if uid:
 				transaction.get().setUser( uid )

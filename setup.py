@@ -86,7 +86,7 @@ setup(
 		#'nose >= 1.2.1',
 		# But it's also listed in extras/test, and it's very hard to upgrade
 		# when that changes
-		#'distribute >= 0.6.32', # Can't seem to include that anywhere
+		#'distribute >= 0.6.33', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
@@ -191,7 +191,7 @@ setup(
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
 		'pyramid >= 1.4' ,
-		'pyramid_tm >= 0.6',
+		'pyramid_tm == 0.6', # see zope_site_tween for why we are on 0.6 even though 0.7 is out
 		'pyramid_mailer >= 0.10', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 0.9.2',
@@ -229,7 +229,7 @@ setup(
 		'six >= 1.2.0',
 		#'slimit',
 		'supervisor >= 3.0b1',
-		'transaction >= 1.3.0, < 1.4', # 1.4.0b1 is out. It looks good but will require a code review for its 'attempts' updates, exception changes, and compat with dm.transaction
+		'transaction == 1.3.0', # 1.4.0b1 is out. It looks good but will require a code review for its 'attempts' updates, exception changes, and compat with dm.transaction
 		'webob >= 1.2.3',
 		'whoosh >= 2.4.1',
 		'z3c.baseregistry >= 2.0.0', # ZCML configurable local component registries
