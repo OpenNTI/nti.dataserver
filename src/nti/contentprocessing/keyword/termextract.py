@@ -22,9 +22,9 @@ from zope import component
 from nti.contentprocessing import split_content
 from nti.contentprocessing.stemmers import stem_word
 from nti.contentprocessing.taggers import tag_tokens
-from nti.contentprocessing import interfaces as cp_interfaces
+from nti.contentprocessing.keyword import interfaces as cpkw_interfaces
 
-@interface.implementer( cp_interfaces.ITermExtractFilter)	
+@interface.implementer( cpkw_interfaces.ITermExtractFilter)	
 class DefaultFilter(object):
 
 	def __init__(self, single_strength_min_occur=3, no_limit_strength=2):
@@ -35,10 +35,10 @@ class DefaultFilter(object):
 		return (strength == 1 and occur >= self.single_strength_min_occur) or (strength >= self.no_limit_strength)
 
 def term_extract_filter(name=u''):
-	result = component.queryUtility(cp_interfaces.ITermExtractFilter, name=name)
+	result = component.queryUtility(cpkw_interfaces.ITermExtractFilter, name=name)
 	return result or DefaultFilter()
 
-@interface.implementer( cp_interfaces.ITermExtractKeyWord )	
+@interface.implementer( cpkw_interfaces.ITermExtractKeyWord )	
 class NormRecord(object):
 	
 	__slots__ = 'norm', 'occur', 'strength', 'terms', 'token'
@@ -103,7 +103,7 @@ class TermExtractor(object):
 		
 		return result
 
-@interface.implementer( cp_interfaces.ITermExtractKeyWordExtractor )
+@interface.implementer( cpkw_interfaces.ITermExtractKeyWordExtractor )
 class _DefaultKeyWorExtractor():
 	
 	def __call__(self, content, filtername=u''):
@@ -123,12 +123,3 @@ class _DefaultKeyWorExtractor():
 		result = extractor.extract(tagged_terms)
 		return result
 
-def extract_key_words(content):
-	extractor = component.getUtility(cp_interfaces.IKeyWordExtractor)
-	result = extractor(content)
-	return result
-
-def term_extract_key_words(content, filtername=u''):
-	extractor = component.getUtility(cp_interfaces.ITermExtractKeyWordExtractor)
-	result = extractor(content, filtername)
-	return result
