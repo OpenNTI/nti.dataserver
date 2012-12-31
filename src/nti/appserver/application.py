@@ -189,11 +189,7 @@ def createApplication( http_port,
 
 	# Our addons
 	# First, ensure that each request is wrapped in default global transaction
-	pyramid_config.include( 'pyramid_tm' )
-	# ...which will veto commit on a 4xx or 5xx response
-	pyramid_config.registry.settings['tm.commit_veto'] = 'pyramid_tm.default_commit_veto'
-	# ...and which will retry a few times. Note this requires the request to be fully buffered
-	pyramid_config.registry.settings['tm.attempts'] = 10
+	pyramid_config.add_tween( 'nti.appserver.tweens.transaction_tween.transaction_tween_factory', under=pyramid.tweens.EXCVIEW )
 
 	# Arrange for a db connection to be opened with each request
 	# if pyramid_zodbconn.get_connection() is called (until called, this does nothing)
@@ -210,9 +206,8 @@ def createApplication( http_port,
 	pyramid_config.registry.zodb_database = server.db # 0.2
 	pyramid_config.registry._zodb_databases = { '': server.db } # 0.3, 0.4
 
-	# Add a tween that ensures we are within a SiteManager. This also has
-	# some logic to clean up some bad transaction handling in pyramid_tm.
-	pyramid_config.add_tween( 'nti.appserver.zope_site_tween.site_tween_factory', under='pyramid_tm.tm_tween_factory' )
+	# Add a tween that ensures we are within a SiteManager.
+	pyramid_config.add_tween( 'nti.appserver.tweens.zope_site_tween.site_tween_factory', under='nti.appserver.tweens.transaction_tween.transaction_tween_factory' )
 
 
 	pyramid_config.include( 'pyramid_zcml' )
