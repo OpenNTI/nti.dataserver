@@ -259,31 +259,31 @@ setup(
 		'zope.browserresource >= 3.12.0',
 		'zope.catalog >= 3.8.2',
 		'zope.cachedescriptors >= 3.5.1',
-		'zope.component >= 4.0.1',
+		'zope.component >= 4.0.2',
 		# Schema vocabularies based on querying ZCA; useful
 		# for views and other metadata
 		'zope.componentvocabulary >= 1.0.1',
-		'zope.configuration >= 4.0.1',
+		'zope.configuration >= 4.0.2',
 		'zope.container >= 3.12.0',
 		'zope.contenttype >= 3.5.5', # A utility module for content-type handling.
-		'zope.copy >= 4.0.0',
+		'zope.copy >= 4.0.1',
 		'zope.datetime >= 3.4.1',
-		'zope.deprecation >= 4.0.1',
+		'zope.deprecation >= 4.0.2',
 		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 3.4.6',
 		'zope.dublincore >= 3.8.2',
 		'zope.error >= 4.0.0',
-		'zope.event >= 4.0.1',
-		'zope.exceptions >= 4.0.4',
+		'zope.event >= 4.0.2',
+		'zope.exceptions >= 4.0.5',
 		'zope.filerepresentation >= 3.6.1',
 		'zope.file >= 0.6.2',
 		'zope.formlib >= 4.2.0', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
 		'zope.hookable >= 4.0.1', # explicitly list this to ensure we get the fast C version. Used by ZCA.
 		'zope.i18n >= 3.8.0',
-		'zope.i18nmessageid >= 4.0.1',
+		'zope.i18nmessageid >= 4.0.2',
 		'zope.index >= 3.6.4',
-		'zope.interface >= 4.0.2',
+		'zope.interface >= 4.0.3',
 		'zope.intid >= 3.7.2',
 		'zope.lifecycleevent >= 3.7.0',
 		'zope.location >= 4.0.0',
@@ -293,7 +293,7 @@ setup(
 		'zope.password >= 3.6.1', # encrypted password management
 		'zope.publisher >= 3.13.1',
 		'zope.processlifetime >= 1.0',
-		'zope.proxy >= 4.1.0', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
+		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.schema >= 4.2.2',
 		'zope.security >= 3.9.0', # 3.9.0 and zope.proxy 4.1.0 go together
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
@@ -314,7 +314,7 @@ setup(
 			'coverage >= 3.6b1', # Test coverage
 			'nose >= 1.2.1',
 			'zope.testing >= 4.1.1',
-			'zc.buildout >= 1.7.0b1',
+			'zc.buildout >= 1.6.3, < 2.0',
 			'nose-progressive',
 			'pyhamcrest >= 1.7',
 			'WebTest >= 1.4.3',
