@@ -2,8 +2,8 @@ from __future__ import print_function, unicode_literals
 
 from zope import interface
 
-from nti.contentprocessing import interfaces as cp_interfaces
-from nti.contentprocessing.termextract import term_extract_key_words
+from nti.contentprocessing.keyword import term_extract_key_words
+from nti.contentprocessing.keyword import interfaces as cp_interfaces
 
 import logging
 logger = logging.getLogger(__name__)

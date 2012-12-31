@@ -1,7 +1,7 @@
 import os
 import unittest
 			
-from nti.contentprocessing.termextract import extract_key_words
+from nti.contentprocessing.keyword import extract_key_words
 		
 from nti.contentprocessing.tests import ConfiguringTestBase
 		

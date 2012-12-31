@@ -1,0 +1,10 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	<include package="zope.component" />
+
+	<utility factory=".termextract.DefaultFilter" />
+	
+	<utility factory=".termextract._DefaultKeyWorExtractor" />
+	<utility factory=".termextract._DefaultKeyWorExtractor" name="en" />
+	
+</configure>
