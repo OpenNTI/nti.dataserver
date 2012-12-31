@@ -24,6 +24,9 @@ from nti.contentprocessing.stemmers import stem_word
 from nti.contentprocessing.taggers import tag_tokens
 from nti.contentprocessing.keyword import interfaces as cpkw_interfaces
 
+import logging
+logger = logging.getLogger( __name__ )
+
 @interface.implementer( cpkw_interfaces.ITermExtractFilter)	
 class DefaultFilter(object):
 
@@ -41,20 +44,28 @@ def term_extract_filter(name=u''):
 @interface.implementer( cpkw_interfaces.ITermExtractKeyWord )	
 class NormRecord(object):
 	
-	__slots__ = 'norm', 'occur', 'strength', 'terms', 'token'
+	__slots__ = ('norm', 'strength', 'frequency', 'terms')
 	
-	def __init__(self, norm, occur, strength, terms=()):
+	def __init__(self, norm, frequency, strength, terms=()):
 		self.norm = norm
-		self.occur = occur
 		self.strength = strength
+		self.frequency = frequency
 		self.terms = sorted(terms) if terms else () 
 
 	@property
 	def token(self):
 		return self.norm
 	
+	@property
+	def relevance(self):
+		return self.frequency
+	
+	@property
+	def occur(self):
+		return self.frequency
+	
 	def __repr__( self ):
-		return "NormRecord(%s, %s, %s, %s)" % (self.norm, self.occur, self.strength, self.terms)
+		return "NormRecord(%s, %s, %s, %s)" % (self.norm, self.relevance, self.strength, self.terms)
 	
 class TermExtractor(object):
 

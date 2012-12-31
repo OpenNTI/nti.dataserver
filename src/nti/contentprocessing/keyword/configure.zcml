@@ -1,10 +1,18 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+<configure 
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:i18n="http://namespaces.zope.org/i18n"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
-
-	<utility factory=".termextract.DefaultFilter" />
+	<include package="zope.formlib" />
 	
-	<utility factory=".termextract._DefaultKeyWorExtractor" />
-	<utility factory=".termextract._DefaultKeyWorExtractor" name="en" />
+	<utility factory="._termextract.DefaultFilter" />
+	
+	<utility factory="._termextract._DefaultKeyWorExtractor" />
+	<utility factory="._termextract._DefaultKeyWorExtractor" name="en" />
+	
+	<class class=".ContentKeyWord">
+		<implements interface=".interfaces.IContentKeyWord" />
+	</class>
 	
 </configure>

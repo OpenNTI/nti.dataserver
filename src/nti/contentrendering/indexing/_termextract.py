@@ -30,7 +30,8 @@ def extract_key_words(tokenized_words, max_words=10):
 	records = term_extract_key_words(tokenized_words, "indexer")
 	keywords = []
 	for r in records[:max_words]:
-		word = r.norm
-		if r.terms: word = r.terms[0] # pick the first word
+		word = r.token
+		terms = getattr(r, 'terms', ())
+		if terms: word = r.terms[0] # pick the first word
 		keywords.append(unicode(word.lower()))
 	return keywords.sort()

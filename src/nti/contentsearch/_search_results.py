@@ -83,9 +83,7 @@ class _PageableSearchResults(_BaseSearchResults):
 		else:
 			return super(_PageableSearchResults, self).__iter__()
 
-
 _IndexHit = namedtuple('_IndexHit', 'obj score query')
-interface.alsoProvides(_IndexHit, search_interfaces.IIndexHit)
 	
 @interface.implementer(search_interfaces.IIndexHitMetaDataTracker)
 class _IndexHitMetaDataTracker(object):

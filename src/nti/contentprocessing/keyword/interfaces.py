@@ -8,13 +8,14 @@ class IContentKeyWord(interface.Interface):
 	represent a key word found in a content
 	"""
 	token = schema.TextLine(title="word token", required=True)
-	frequency = schema.Int(title="word frequency", required=False)
+	relevance = schema.Float(title="word relevance", required=False)
 
 class ITermExtractKeyWord(IContentKeyWord):
 	"""
 	represent a key word found in a content
 	"""
-	strength = schema.Float(title="word strength", required=False)
+	frequency = schema.Int(title="word frequency", required=False)
+	strength = schema.Int(title="word strength", required=False)
 	terms = schema.List(value_type=schema.TextLine(title="Term"), title="terms associated with token", required=False)
 			
 class ITermExtractFilter(interface.Interface):
