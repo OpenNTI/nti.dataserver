@@ -35,6 +35,7 @@ class _AlchemyAPIKeyWorExtractor():
 					keywords = data.get('keywords', ())
 					result = [ContentKeyWord(d['text'], float(d.get('relevance', 0))) for d in keywords]
 			except:
+				result = ()
 				logger.exception('Error while getting keywords from Alchemy')
 							
 		return result

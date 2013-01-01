@@ -92,5 +92,3 @@ def default_nltk_tagger():
     tagger = get_backoff_ngram_tagger()
     return tagger
 
-if __name__ == '__main__':
-    pass
