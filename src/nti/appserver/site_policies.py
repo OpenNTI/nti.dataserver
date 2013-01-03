@@ -16,6 +16,7 @@ logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
 
 from zope import component
+from zope.component.interfaces import IComponents
 from zope import interface
 from zope import schema
 from zope.event import notify
@@ -86,28 +87,38 @@ def get_possible_site_names(request=None, include_default=False):
 		result.append( '' )
 	return result
 
+def _find_site_components(request, include_default=False, site_names=None):
+	site_names = site_names or get_possible_site_names( request=request, include_default=include_default )
+	for site_name in site_names:
+		if not site_name:
+			components = component
+		else:
+			components = component.queryUtility( IComponents, name=site_name )
+
+		if components is not None:
+			return components
+
+
 _marker = object()
 
-def queryUtilityInSite( iface, request=None, site_names=None, default=None, context=None  ):
-	"""
-	Queries for named utilities following the site names, all the way up until the default
-	site name.
+def queryUtilityInSite( iface, request=None, site_names=None, default=None, name='', return_site_name=False ):
+	result = _marker
+	components = _find_site_components( request, include_default=True, site_names=site_names )
+	if components is not None:
+		result = components.queryUtility( iface, default=_marker, name=name )
 
-	:keyword request: The current request to investigate for site names.
-		If not given, the threadlocal request will be used.
-	:keyword site_names: If given and non-empty, the list of site names to use.
-		Overrides the `request` parameter.
-	"""
+	result = result if result is not _marker else default
 
-	site_names = get_possible_site_names(request, include_default=True)
-	for site in site_names:
-		result = component.queryUtility(iface, name=site, context=context, default=_marker )
-		if result is not _marker:
-			return result
-	return default
+	if not return_site_name:
+		return result
 
+	site_name = None
+	if components is not None:
+		site_name = components.__name__ if components.__name__ != component.__name__ else ''
 
-def queryAdapterInSite( obj, target, request=None, site_names=None, default=None, context=None  ):
+	return result, site_name
+
+def queryAdapterInSite( obj, target, request=None, site_names=None, default=None  ):
 	"""
 	Queries for named adapters following the site names, all the way up until the default
 	site name.
@@ -118,19 +129,15 @@ def queryAdapterInSite( obj, target, request=None, site_names=None, default=None
 		Overrides the `request` parameter.
 	"""
 
-	# TODO: Replace this with named IComponents instances and z3c.baseregistry.
-	# That will integrate much better with traversal and will allow them to extend
-	# and override each other
-
-	site_names = get_possible_site_names(request, include_default=True)
-
-	for site in site_names:
-		result = component.queryAdapter( obj, target, name=site, context=context, default=_marker )
+	# This is now beginning to use z3c.baseregistry, but more needs to be done.
+	components = _find_site_components( request, include_default=True, site_names=site_names )
+	if components is not None:
+		result = components.queryAdapter( obj, target, default=_marker )
 		if result is not _marker:
 			return result
 	return default
 
-def queryMultiAdapterInSite( objects, target, request=None, site_names=None, default=None, context=None  ):
+def queryMultiAdapterInSite( objects, target, request=None, site_names=None, default=None  ):
 	"""
 	Queries for named adapters following the site names, all the way up until the default
 	site name.
@@ -141,10 +148,9 @@ def queryMultiAdapterInSite( objects, target, request=None, site_names=None, def
 		Overrides the `request` parameter.
 
 	"""
-	site_names = site_names or get_possible_site_names(request, include_default=True)
-
-	for site in site_names:
-		result = component.queryMultiAdapter( objects, target, name=site, context=context, default=_marker )
+	components = _find_site_components( request, include_default=True, site_names=site_names )
+	if components is not None:
+		result = components.queryMultiAdapter( objects, target, default=_marker )
 		if result is not _marker:
 			return result
 	return default
@@ -201,6 +207,8 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 	def placeNewUser( self, user, users_directory, shards ):
 		placed = False
 		for site_name in get_possible_site_names():
+			# TODO: Convert to z3c.baseregistry components? Nothing is actually implementing
+			# this at the moment.
 			placer = component.queryUtility( nti_interfaces.INewUserPlacer, name=site_name )
 			if placer:
 				placed = True
@@ -248,10 +256,15 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 #
 # Initially, we are taking the simplest approach, and even going so far
 # as to put the actual policies in code (so a config change is a code release).
+#
 # This is starting to get out of hand, though, and the automatic delegation of a real site
 # would be very nice to have. The `EventListener` is now being delegated to for all kinds
 # of random things, many of which have nothing to do with events, such as
-# object externalization decoration
+# object externalization decoration...
+#
+# The first part of this, incorporating z3c.baseregistry objects is done. The next
+# part of that is to integrate with traversal. At some point the ISitePolicy objects die
+# and become simply normal event listeners.
 ####
 
 class ISitePolicyUserEventListener(interface.Interface):
@@ -319,11 +332,12 @@ class SiteBasedExternalObjectDecorator(object):
 		if not request:
 			return
 
-		for site_name in get_possible_site_names( include_default=None ):
-			adapter = component.queryMultiAdapter( (orig_obj, request), ext_interfaces.IExternalObjectDecorator, name=site_name )
+		components = _find_site_components( request, include_default=False )
+		if components is not None:
+			adapter = components.queryMultiAdapter( (orig_obj, request), ext_interfaces.IExternalObjectDecorator )
 			if adapter:
 				adapter.decorateExternalObject( orig_obj, result )
-				break
+
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class LogonLinksCreationStripper(object):
@@ -345,12 +359,12 @@ def find_site_policy( request=None ):
 	:return: A two-tuple of (policy, site_name). If no policy was found
 		then the first value is None and the second value is all applicable site_names found.
 	"""
-	site_names = get_possible_site_names( request=request, include_default=True )
-	for site_name in site_names:
-		utility = component.queryUtility( ISitePolicyUserEventListener, name=site_name )
+	components = _find_site_components( request=request, include_default=True )
+	if components is not None:
+		utility = components.queryUtility( ISitePolicyUserEventListener )
 		if utility:
-			return utility, site_name
-	return None, site_names
+			return utility, components.__name__ if components.__name__ != component.__name__ else ''
+	return None, get_possible_site_names( request=request, include_default=True )
 
 def _dispatch_to_policy( user, event, func_name ):
 	"""

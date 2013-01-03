@@ -2,6 +2,7 @@
 <configure
 	xmlns="http://namespaces.zope.org/zope"
 	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="z3c.baseregistry" file="meta.zcml" />
 	<include package="zope.component" />
 
 	<!-- Dispatch functions to direct events to active site policies. -->
@@ -47,34 +48,8 @@
 	<!--
 	General site policies
 	-->
-	
-	<utility factory=".site_policies.MathcountsSitePolicyEventListener"
-			 name="mathcounts.nextthought.com"/>
-
-	<utility factory=".site_policies.RwandaSitePolicyEventListener"
-			 name="rwanda.nextthought.com"/>
-
-	<utility factory=".site_policies.GenericAdultSitePolicyEventListener"
-			 name="alpha.nextthought.com"/>
-
-	<utility factory=".site_policies.PrmiaSitePolicyEventListener"
-			 name="prmia.nextthought.com"/>
-
-	<utility factory=".site_policies.LawSitePolicyEventListener"
-			 name="law.nextthought.com"/>
-
-	<utility factory=".site_policies.LitWorldSitePolicyEventListener"
-			 name="litworld.nextthought.com"/>
-
-	<utility factory=".site_policies.CollegiateSitePolicyEventListener"
-			 name="collegiate.nextthought.com"/>
-
-	<utility factory=".site_policies.FintechSitePolicyEventListener"
-			 name="fintech.nextthought.com"/>
-			 
 	<utility factory=".site_policies.GenericSitePolicyEventListener"
 			 name=''
 			 zcml:condition="not-have devmode" />
-
 
 </configure>

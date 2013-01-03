@@ -3,15 +3,21 @@
 	xmlns="http://namespaces.zope.org/zope"
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
+	<include package="z3c.baseregistry" file="meta.zcml" />
 
-	<adapter factory=".site_policies.LogonLinksCreationStripper"
-			 for=".logon._Pong pyramid.interfaces.IRequest"
-			 provides="nti.externalization.interfaces.IExternalObjectDecorator"
-			 name="demo.nextthought.com"/>
-	<adapter factory=".site_policies.LogonLinksCreationStripper"
-			 for=".logon._Handshake pyramid.interfaces.IRequest"
-			 provides="nti.externalization.interfaces.IExternalObjectDecorator"
-			 name="demo.nextthought.com"/>
+	<utility
+		component=".sites.DEMO"
+		provides="zope.component.interfaces.IComponents"
+		name="demo.nextthought.com" />
+
+	<registerIn registry=".sites.DEMO">
+		<adapter factory=".site_policies.LogonLinksCreationStripper"
+				 for=".logon._Pong pyramid.interfaces.IRequest"
+				 provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+		<adapter factory=".site_policies.LogonLinksCreationStripper"
+				 for=".logon._Handshake pyramid.interfaces.IRequest"
+				 provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+	</registerIn>
 
 
 </configure>

@@ -341,10 +341,17 @@
 	<!-- User-type policies -->
 	<include package="." file="configure_user_policies.zcml" />
 
-	<include package="." file="configure_site_policy_mathcounts.zcml" />
-	<include package="." file="configure_site_policy_testmathcounts.zcml" />
-	<include package="." file="configure_site_policy_demo.zcml" />
+	<include package="." file="configure_site_policy_alpha.zcml" />
 	<include package="." file="configure_site_policy_collegiate.zcml" />
+	<include package="." file="configure_site_policy_demo.zcml" />
+	<include package="." file="configure_site_policy_fintech.zcml" />
+	<include package="." file="configure_site_policy_law.zcml" />
+	<include package="." file="configure_site_policy_litworld.zcml" />
+	<include package="." file="configure_site_policy_mathcounts.zcml" />
+	<include package="." file="configure_site_policy_prmia.zcml" />
+	<include package="." file="configure_site_policy_rwanda.zcml" />
+	<include package="." file="configure_site_policy_testmathcounts.zcml" />
+
 
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"

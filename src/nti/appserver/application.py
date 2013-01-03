@@ -15,7 +15,7 @@ import sys
 import os
 import random
 
-import nti.dictserver as dictserver
+#import nti.dictserver as dictserver
 import nti.dictserver.storage
 
 
@@ -32,6 +32,7 @@ from nti.dataserver.interfaces import IDataserver
 
 from zope import interface
 from zope import component
+from zope.component.hooks import setHooks
 from zope.configuration import xmlconfig
 from zope.event import notify
 from zope.processlifetime import ProcessStarting
@@ -40,7 +41,7 @@ from zope import lifecycleevent
 import pyramid.config
 import pyramid.authorization
 import pyramid.security
-import pyramid.httpexceptions as hexc
+#import pyramid.httpexceptions as hexc
 import pyramid.registry
 from pyramid.threadlocal import get_current_registry
 
@@ -114,6 +115,7 @@ def createApplication( http_port,
 	server = None
 	# Configure subscribers, etc.
 	try:
+		setHooks() # required for z3c.baseregistry
 		xml_conf_machine = _create_xml_conf_machine( settings )
 		if 'pre_site_zcml' in settings:
 			# One before we load the main config so it has a chance to exclude files

@@ -12,9 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope import component
 
-from nti.appserver import interfaces as app_interfaces
 from nti.appserver import site_policies
 from nti.appserver import httpexceptions as hexc
 
@@ -41,14 +39,12 @@ def logon_site_css_view(request):
 	unconditionally, but we might wind up getting lots of 404 responses which is ugly.
 	"""
 
-	for site_name in site_policies.get_possible_site_names():
-		marker = component.queryUtility( ISiteCSSMarker, name=site_name )
-
-		if marker:
-			new_path = request.path.split( '/' )[1:-1] # the path to the directory
-			new_path.append( site_name )
-			new_path.append( 'site.css' )
-			return hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path ) )
+	marker, site_name = site_policies.queryUtilityInSite( ISiteCSSMarker, request=request, return_site_name=True )
+	if marker:
+		new_path = request.path.split( '/' )[1:-1] # the path to the directory
+		new_path.append( site_name )
+		new_path.append( 'site.css' )
+		return hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path ) )
 
 	# Nothing found
 	request.response.content_type = b'text/css'

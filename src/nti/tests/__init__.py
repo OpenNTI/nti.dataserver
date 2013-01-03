@@ -234,8 +234,8 @@ class ConfiguringTestBase(AbstractTestBase):
 	features = ('devmode',)
 	configuration_context = None
 	def setUp( self ):
-		setHooks()
 		super(ConfiguringTestBase,self).setUp()
+		setHooks() # zope.component.hooks registers a zope.testing.cleanup to reset these
 		self.configuration_context = self.configure_packages( self.set_up_packages, self.features, self.configuration_context )
 
 	def configure_packages(self, set_up_packages=(), features=(), context=None ):
@@ -243,8 +243,8 @@ class ConfiguringTestBase(AbstractTestBase):
 		return self.configuration_context
 
 	def tearDown( self ):
-		super(ConfiguringTestBase,self).tearDown()
 		resetHooks()
+		super(ConfiguringTestBase,self).tearDown()
 
 class SharedConfiguringTestBase(AbstractSharedTestBase):
 	"""
@@ -275,8 +275,8 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 	configuration_context = None
 	@classmethod
 	def setUpClass( cls ):
-		setHooks()
 		super(SharedConfiguringTestBase,cls).setUpClass()
+		setHooks() # zope.component.hooks registers a zope.testing.cleanup to reset these
 		cls.configuration_context = cls.configure_packages( cls.set_up_packages, cls.features, cls.configuration_context )
 
 	@classmethod
@@ -286,8 +286,8 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 
 	@classmethod
 	def tearDownClass( cls ):
-		super(SharedConfiguringTestBase,cls).tearDownClass()
 		resetHooks()
+		super(SharedConfiguringTestBase,cls).tearDownClass()
 
 def module_setup( set_up_packages=(), features=('devmode',)):
 	"""
