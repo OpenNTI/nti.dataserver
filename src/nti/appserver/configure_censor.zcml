@@ -46,13 +46,4 @@
 	<adapter factory=".censor_policies.user_filesystem_censor_policy" />
 	-->
 
-	<!--
-	Except apparently on mathcounts.nextthought.com. There, we
-	censor regardless of who you are.
-	-->
-	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
-			 provides="nti.contentfragments.interfaces.ICensoredContentPolicy"
-			 for="nti.dataserver.interfaces.IUser *"
-			 name="mathcounts.nextthought.com" />
-
 </configure>

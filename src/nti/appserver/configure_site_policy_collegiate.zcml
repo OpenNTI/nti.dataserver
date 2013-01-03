@@ -3,10 +3,21 @@
 	xmlns="http://namespaces.zope.org/zope"
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
+	<include package="z3c.baseregistry" file="meta.zcml" />
 
-	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
-			 provides="nti.contentfragments.interfaces.ICensoredContentPolicy"
-			 for="nti.dataserver.interfaces.IUser *"
-			 name="collegiate.nextthought.com" />
-			 
+	<utility
+		component=".sites.COLLEGIATE"
+		provides="zope.component.interfaces.IComponents"
+		name="collegiate.nextthought.com" />
+
+	<registerIn registry=".sites.COLLEGIATE">
+
+		<utility factory=".site_policies.CollegiateSitePolicyEventListener" />
+
+
+		<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+				 provides="nti.contentfragments.interfaces.ICensoredContentPolicy"
+				 for="nti.dataserver.interfaces.IUser *" />
+	</registerIn>
+
 </configure>

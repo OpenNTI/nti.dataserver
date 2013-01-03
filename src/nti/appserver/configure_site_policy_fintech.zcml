@@ -6,11 +6,11 @@
 	<include package="z3c.baseregistry" file="meta.zcml" />
 
 	<utility
-		component=".sites.TESTMATHCOUNTS"
+		component=".sites.FINTECH"
 		provides="zope.component.interfaces.IComponents"
-		name="testmathcounts.nextthought.com" />
+		name="fintech.nextthought.com" />
 
-	<registerIn registry=".sites.TESTMATHCOUNTS">
-		<utility factory=".site_policies.TestMathcountsSitePolicyEventListener" />
+	<registerIn registry=".sites.FINTECH">
+		<utility factory=".site_policies.FintechSitePolicyEventListener" />
 	</registerIn>
 </configure>

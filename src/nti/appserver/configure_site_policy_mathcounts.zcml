@@ -3,46 +3,75 @@
 	xmlns="http://namespaces.zope.org/zope"
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
+	<include package="z3c.baseregistry" file="meta.zcml" />
 
-	<!-- On the MC site, we will be able to provide choices for avatars based simply on the username string -->
-	<adapter factory="nti.dataserver.users.avatar_urls.StringComputedAvatarURLChoices"
-			 for="basestring"
-			 provides="nti.dataserver.users.interfaces.IAvatarChoices"
-			 name="mathcounts.nextthought.com" />
+	<utility
+		component=".sites.MATHCOUNTS"
+		provides="zope.component.interfaces.IComponents"
+		name="mathcounts.nextthought.com" />
 
-	<!--
-		 On the MC site, we cannot search for users by anything except their username.
-		 Note that for accounts initially created on this site and not modified,
-		 this is the same as the alias, but for other accounts (logged on from different sites)
-		 this is different than alias. We don't search alias, either, and on that site
-		 we force the value returned for alias to be the username as well, even if you
-		 have something else defined.
-	-->
-	<adapter factory="._adapters._NoOpUserSearchPolicyAndRealnameStripper"
-			 for="nti.dataserver.interfaces.IUser"
-			 provides=".interfaces.IUserSearchPolicy"
-			 name="mathcounts.nextthought.com" />
+	<registerIn registry=".sites.MATHCOUNTS">
 
-	<!-- Likewise, we never reveal real names -->
-	<adapter factory="._adapters._NoOpUserSearchPolicyAndRealnameStripper"
-			 provides="nti.externalization.interfaces.IExternalObjectDecorator"
-			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
-			 name="mathcounts.nextthought.com" />
+		<utility factory=".site_policies.MathcountsSitePolicyEventListener" />
 
-	<!-- On the MC site, NO ONE can upload avatars  -->
-	<adapter factory=".user_policies.MathCountsCapabilityFilter"
-			 for="nti.dataserver.interfaces.IUser"
-			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
-			 name="mathcounts.nextthought.com" />
-			 
-	<!-- and coppa kids are more restricted. -->
-	<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
-			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
-			 provides="nti.appserver.interfaces.IUserCapabilityFilter"
-			 name="mathcounts.nextthought.com" />
 
-	<!-- CSS for mathcounts -->
-	<utility factory=".site_policy_views.SiteCSSMarker"
-			 name="mathcounts.nextthought.com" />
+		<!-- On the MC site, we will be able to provide choices for avatars based simply on the username string -->
+		<adapter factory="nti.dataserver.users.avatar_urls.StringComputedAvatarURLChoices"
+				 for="basestring"
+				 provides="nti.dataserver.users.interfaces.IAvatarChoices" />
+
+		<!--
+			On the MC site, we cannot search for users by anything except their username.
+			Note that for accounts initially created on this site and not modified,
+			this is the same as the alias, but for other accounts (logged on from different sites)
+			this is different than alias. We don't search alias, either, and on that site
+			we force the value returned for alias to be the username as well, even if you
+			have something else defined.
+		-->
+		<adapter factory="._adapters._NoOpUserSearchPolicyAndRealnameStripper"
+				 for="nti.dataserver.interfaces.IUser"
+				 provides=".interfaces.IUserSearchPolicy" />
+
+
+		<!-- Likewise, we never reveal real names -->
+		<adapter factory="._adapters._NoOpUserSearchPolicyAndRealnameStripper"
+				 provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
+
+		<!-- On the MC site, NO ONE can upload avatars  -->
+		<adapter factory=".user_policies.MathCountsCapabilityFilter"
+				 for="nti.dataserver.interfaces.IUser"
+				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
+
+		<!-- and coppa kids are more restricted. -->
+		<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
+				 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
+				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
+
+		<!-- CSS for mathcounts -->
+		<utility factory=".site_policy_views.SiteCSSMarker" />
+
+		<!--
+			The policy for censoring things from regular, non-coppa
+			users by default isn't enabled. If desired, it can be added in a
+			site configuration.
+		-->
+		<!--
+			<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+			for="nti.dataserver.interfaces.IUser *" />
+			<adapter factory=".censor_policies.user_filesystem_censor_policy" />
+		-->
+
+		<!--
+			Except apparently on mathcounts.nextthought.com. There, we
+			censor regardless of who you are.
+		-->
+		<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
+				 provides="nti.contentfragments.interfaces.ICensoredContentPolicy"
+				 for="nti.dataserver.interfaces.IUser *" />
+
+
+	</registerIn>
+
 
 </configure>

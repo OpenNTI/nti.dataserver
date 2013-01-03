@@ -81,6 +81,7 @@ def user_change_new_note_emailer( user, change ):
 	# thing to do is look up a named utility. We will use the username. We could also
 	# use the groups the user belongs to in the same way acls do, or we could even look for
 	# sites
+	# TODO: Convert this to z3c.baseregistry?
 	request = get_current_request()
 	names = [user.username] + list(site_policies.get_possible_site_names( request=request, include_default=True ))
 	send = False
