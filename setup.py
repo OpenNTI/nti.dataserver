@@ -106,7 +106,7 @@ setup(
 		'ZConfig >= 2.9.3',
 		 # NOTE: ZODB has a new release, 4.0.0a4 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
-		 # will need to additionally include persistent >= 4.0.5 and BTrees >= 4.0.1, and ZEO >= 4.0.0
+		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.1, and ZEO >= 4.0.0
 		 # which were pulled out of ZODB for better pypy support. We'll switch to it
 		 # when it goes non-alpha. It may require a tweak to our monkey patch if
 		 # has not been fixed.
@@ -135,7 +135,7 @@ setup(
 		'contentratings == 1.0',
 		'cryptacular >= 1.4.1', # see z3c.crypt
 		'cssselect >= 0.7.1', # Used by pyquery
-		'cython >= 0.17.3',
+		'cython >= 0.17.4',
 		# Adds support for detecting aborts to transactions which
 		# otherwise only detect failed commits
 		'dm.transaction.aborthook >= 1.0',
@@ -223,12 +223,12 @@ setup(
 		'scss >= 0.8.72',
 		'setproctitle >= 1.1.6',
 		'setuptools >= 0.6c11',
-		'simplejson >= 3.0.0',
+		'simplejson >= 3.0.5',
 		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
 		'six >= 1.2.0',
 		#'slimit',
 		'supervisor >= 3.0b1',
-		'transaction == 1.3.0', # 1.4.0b1 is out. It looks good but will require a code review for its 'attempts' updates, exception changes, and compat with dm.transaction
+		'transaction >= 1.4.0',
 		'webob >= 1.2.3',
 		'whoosh >= 2.4.1',
 		'z3c.baseregistry >= 2.0.0', # ZCML configurable local component registries
