@@ -41,6 +41,7 @@ def test_create_flash_socket():
 
 import fudge
 class MockConfig(object):
+	is_ssl = False # added 0.17.1
 	max_requests = None
 	debug = False
 	umask = 0

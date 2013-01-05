@@ -106,7 +106,7 @@ setup(
 		'ZConfig >= 2.9.3',
 		 # NOTE: ZODB has a new release, 4.0.0a4 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
-		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.1, and ZEO >= 4.0.0
+		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.3, and ZEO >= 4.0.0
 		 # which were pulled out of ZODB for better pypy support. We'll switch to it
 		 # when it goes non-alpha. It may require a tweak to our monkey patch if
 		 # has not been fixed.
@@ -158,7 +158,7 @@ setup(
 		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
 		'gevent_zeromq >= 0.2.5',
 		'greenlet >= 0.4.0',
-		'gunicorn == 0.17.0',
+		'gunicorn == 0.17.1',
 		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
 		 # WSGI middleware for profiling. Defaults to storing
@@ -229,6 +229,8 @@ setup(
 		#'slimit',
 		'supervisor >= 3.0b1',
 		'transaction >= 1.4.0',
+		# See http://pypi.python.org/pypi/user-agents/ for a high-level
+		# library to do web user agent detection
 		'webob >= 1.2.3',
 		'whoosh >= 2.4.1',
 		'z3c.baseregistry >= 2.0.0', # ZCML configurable local component registries
@@ -322,7 +324,7 @@ setup(
 			'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
 			'fudge'],
 		'tools': [
-			'pyramid_debugtoolbar >= 1.0.3',
+			'pyramid_debugtoolbar >= 1.0.4',
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			'ipython[notebook] >= 0.13.1', # notebook is web based, pulls in tornado
 			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
