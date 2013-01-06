@@ -313,7 +313,7 @@ setup(
 		],
 	extras_require = {
 		'test': [
-			'coverage >= 3.6b1', # Test coverage
+			'coverage >= 3.6', # Test coverage
 			'nose >= 1.2.1',
 			'zope.testing >= 4.1.1',
 			'zc.buildout >= 1.6.3, < 2.0',
