@@ -352,7 +352,7 @@ class LogonLinksCreationStripper(object):
 		result['Links'] = [link for link in result['Links'] if link['rel'] not in ('account.create', 'account.preflight.create')]
 
 
-def find_site_policy( request=None ):
+def find_site_policy( request=None ): # deprecated
 	"""
 	Find a site policy that's currently active, including the default.
 

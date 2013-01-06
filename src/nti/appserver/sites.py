@@ -16,7 +16,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
+import sys
 from z3c.baseregistry.baseregistry import BaseComponents
 
 
@@ -40,3 +40,21 @@ COLLEGIATE = BaseComponents(BASE, name='collegiate.nextthought.com', bases=(BASE
 
 PRMIA = BaseComponents( BASE, name='prmia.nextthought.com', bases=(BASE,))
 FINTECH = BaseComponents( BASE, name='fintech.nextthought.com', bases=(BASE,) )
+
+def _reinit():
+	"""
+	ZCA cleans up the base registry on testing cleanup.
+	This means that our objects no longer have the right resolution order
+	(which is cached when bases are set). This in turn means that new
+	components derived from them can wind up with the wrong resolution
+	order and duplicate registrations. This manifests itself as seeing
+	certain event listeners run twice. The solution is to reset the bases;
+	this works because the order of cleanups is maintained.
+	"""
+
+	for v in sys.modules[__name__].__dict__.values():
+		if isinstance( v, BaseComponents ):
+			v.__bases__ = v.__bases__
+
+from zope.testing.cleanup import addCleanUp
+addCleanUp( _reinit )

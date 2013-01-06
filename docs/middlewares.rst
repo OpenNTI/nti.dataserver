@@ -1,9 +1,10 @@
-=============
- Middlewares
-=============
+========================
+ Middlewares and Tweens
+========================
 
-This document describes the middlewares shipped with the application
-and how they should be installed::
+This document describes the WSGI middlewares and Pyramid tweens shipped with the application
+and how they should be installed. The middlewares must be manually
+configured as follows; the tweens are installed as part of the application::
 
 	[pipeline:dataserver_gunicorn]
 	pipeline =
@@ -40,3 +41,12 @@ Outermost of everything (and around Paste's :class:`~paste.exceptions.errormiddl
 .. automodule:: nti.appserver.cors
 	:members:
 	:private-members:
+
+
+Site
+====
+
+The Zope Component Architecture depends on having access to a "site."
+
+.. automodule:: nti.appserver.tweens.zope_site_tween
+	:members:
