@@ -482,6 +482,11 @@ class TestPreflightView(_AbstractValidationViewBase):
 													 'birthdate': birthdate,
 													 'alias': 'jason_nextthought_com' }  )
 
+		# TODO: As we transition away from manual site policies to configured site policies,
+		# we need to be sure to set up the right site. This is one-off code right now
+		from nti.appserver.tweens.zope_site_tween import get_site_for_request, setSite
+		setSite( get_site_for_request( self.request ) )
+
 		val = self.the_view( self.request )
 		assert_that( val, has_entry( 'AvatarURLChoices', has_length( greater_than_or_equal_to( 8 ) ) ) )
 		assert_that( val, has_entry( 'ProfileSchema', does_not( has_key( 'opt_in_email_communication' ) ) ) )

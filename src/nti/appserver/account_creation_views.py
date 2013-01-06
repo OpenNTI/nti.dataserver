@@ -403,9 +403,7 @@ class ProfileUpgradeDeleteView(user_link_provider.AbstractUserLinkDeleteView):
 
 def _get_avatar_choices_for_username( username, request ):
 	avatar_choices = ()
-	avatar_choices_factory = site_policies.queryAdapterInSite( username,
-															   user_interfaces.IAvatarChoices,
-															   request=request )
+	avatar_choices_factory = component.queryAdapter( username, user_interfaces.IAvatarChoices )
 	if avatar_choices_factory:
 		avatar_choices = avatar_choices_factory.get_choices()
 	return avatar_choices

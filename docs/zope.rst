@@ -156,6 +156,15 @@ zope.component.registry
 
 .. automodule:: zope.component.registry
 
+zope.site
+---------
+
+.. automodule:: zope.site
+
+zope.site.site
+--------------
+
+.. automodule:: zope.site.site
 
 Component Vocabulary
 ====================

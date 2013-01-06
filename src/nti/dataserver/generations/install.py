@@ -26,6 +26,7 @@ def evolve( context ):
 import BTrees
 
 from zope import interface
+from zope import component
 from zope.component.interfaces import ISite
 from zope.site import LocalSiteManager
 from zope.site.folder import Folder, rootFolder
@@ -64,7 +65,9 @@ def install_main( context ):
 	# The root folder
 	root_folder = rootFolder()
 	# The root is generally presumed to be an ISite, so make it so
-	root_sm = LocalSiteManager( None, default_folder=False ) # No parent site, so parent == global
+	root_sm = LocalSiteManager( None, default_folder=False ) # No parent site, so  globalSiteManager == __bases__
+	assert root_sm.__parent__ is None
+	assert root_sm.__bases__ == (component.getGlobalSiteManager(),)
 	conn.add( root_sm ) # Ensure we have a connection so we can become KeyRefs
 	conn.add( root_folder ) # Ensure we have a connection so we can become KeyRefs
 	root_folder.setSiteManager( root_sm )
@@ -78,6 +81,10 @@ def install_main( context ):
 	assert dataserver_folder.__name__ == 'dataserver2'
 
 	lsm = LocalSiteManager( root_sm )
+	assert lsm.__parent__ is root_sm
+	# The LocalSiteManager starts looking at its grandparent to find a site, not
+	# its parent. Thus the base of this is the globalSiteManager as well
+	assert lsm.__bases__ == (component.getGlobalSiteManager(),)
 	# Change the dataserver_folder from IPossibleSite to ISite
 	dataserver_folder.setSiteManager( lsm )
 	assert ISite.providedBy( dataserver_folder )
