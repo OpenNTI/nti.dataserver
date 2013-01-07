@@ -7,6 +7,8 @@ from zope import component
 from zope import interface
 
 from nti.contentprocessing import interfaces as cp_interfaces
+from nti.contentprocessing.concepttagging._concept import Concept
+from nti.contentprocessing.concepttagging._concept import ConceptSource
 from nti.contentprocessing.concepttagging import interfaces as cpct_interfaces
 
 import logging
@@ -35,8 +37,18 @@ class _AlchemyAPIKConceptTaggger():
 				data = r.json
 				
 				if r.status_code ==200 and data.get('status','ERROR') == 'OK':
-					import pprint
-					pprint.pprint(data)
+					result = []
+					for entry in data.get('concepts', ()):
+						sources = []
+						text = relevance = None
+						for k,v in entry.items():
+							if k not in ('text', 'relevance'):
+								sources.append(ConceptSource(k,v))
+							elif k == 'text':
+								text = v
+							elif v is not None:
+								relevance = float(v)
+						result.append(Concept(text, relevance, sources))
 			except:
 				result = ()
 				logger.exception('Error while getting concept tags from Alchemy')
