@@ -184,6 +184,7 @@ setup(
 		'plone.scale >= 1.2.2', # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
 		# Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?:
+		'pyparsing >= 1.5.6, < 2.0.0',
 		'pyPDF >= 1.13',
 		# See also z3c.rml for a complete PDF layout and rendering environment, which should
 		# work with page templates as well.
