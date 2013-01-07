@@ -15,7 +15,7 @@ class TestConceptTagger(ConfiguringTestBase):
 		with open(name, "r") as f:
 			cls.sample_content = f.read()
 			
-	#@unittest.SkipTest
+	@unittest.SkipTest
 	def test_alchemy_cu(self):
 		_AlchemyAPIKConceptTaggger()(self.sample_content)
 		
