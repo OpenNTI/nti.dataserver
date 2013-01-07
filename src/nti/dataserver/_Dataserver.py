@@ -5,7 +5,6 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 import os
 import six
 from urlparse import urlparse
-import contextlib
 
 import gevent.queue
 import gevent.local
@@ -23,8 +22,6 @@ import zope.generations.generations
 import zope.deprecation
 from zc import intid as zc_intid
 from persistent import Persistent
-import transaction
-from zope.component.hooks import site
 
 import redis
 
@@ -69,169 +66,15 @@ class _Change(Persistent):
 		return '_Change( %s, %s )' % (self.change, self.meta)
 
 
-@contextlib.contextmanager
-def _trivial_db_transaction_cm():
-	# TODO: This needs all the retry logic, etc, that we
-	# get in the main app through pyramid_tm
-
-	lsm = component.getSiteManager()
-	conn = IConnection( lsm, None )
-	if conn:
-		logger.warn( 'Reusing existing component connection %s %s', lsm, conn )
-		yield conn
-		return
-
-	ds = component.getUtility( interfaces.IDataserver )
-	transaction.begin()
-	conn = ds.db.open()
-	# If we don't sync, then we can get stale objects that
-	# think they belong to a closed connection
-	# TODO: Are we doing something in the wrong order? Connection
-	# is an ISynchronizer and registers itself with the transaction manager,
-	# so we shouldn't have to do this manually
-	# ... I think the problem was a bad site. I think this can go away.
-	conn.sync()
-	sitemanc = conn.root()['nti.dataserver']
-
-
-	with site( sitemanc ):
-		assert component.getSiteManager() == sitemanc.getSiteManager()
-		assert component.getUtility( interfaces.IDataserver )
-		try:
-			yield conn
-			transaction.commit()
-		except:
-			transaction.abort()
-			raise
-		finally:
-			conn.close()
-
-with hiding_deprecation_warnings():
-	interface.directlyProvides( _trivial_db_transaction_cm, interfaces.IDataserverTransactionContextManager )
-
-
-@contextlib.contextmanager
-def _connection_cm():
-
-	ds = component.getUtility( interfaces.IDataserver )
-	conn = ds.db.open()
-	try:
-		yield conn
-	finally:
-		conn.close()
-
-@contextlib.contextmanager
-def _site_cm(conn):
-	# If we don't sync, then we can get stale objects that
-	# think they belong to a closed connection
-	# TODO: Are we doing something in the wrong order? Connection
-	# is an ISynchronizer and registers itself with the transaction manager,
-	# so we shouldn't have to do this manually
-	# ... I think the problem was a bad site. I think this can go away.
-	#conn.sync()
-	# In fact, it must go away; if we sync the conn, we lose the
-	# current transaction
-	sitemanc = conn.root()['nti.dataserver']
-
-	with site( sitemanc ):
-		if component.getSiteManager() != sitemanc.getSiteManager():
-			raise SiteNotInstalledError( "Hooks not installed?" )
-		if component.getUtility( interfaces.IDataserver ) is None:
-			raise InappropriateSiteError()
-		yield sitemanc
-
-
-def run_job_in_site(func, retries=0, sleep=None,
-					_connection_cm=_connection_cm, _site_cm=_site_cm):
-	"""
-	Runs the function given in `func` in a transaction and dataserver local
-	site manager.
-	:param function func: A function of zero parameters to run. If it has a docstring,
-		that will be used as the transactions note. A transaction will be begun before
-		this function executes, and committed after the function completes. This function may be rerun if
-		retries are requested, so it should be prepared for that.
-	:param int retries: The number of times to retry the transaction and execution of `func` if
-		:class:`transaction.interfaces.TransientError` is raised when committing.
-		Defaults to zero (so the job runs once).
-	:return: The value returned by the first successful invocation of `func`.
-	"""
-	note = func.__doc__
-	if note:
-		note = note.split('\n', 1)[0]
-	else:
-		note = func.__name__
-
-	with _connection_cm() as conn:
-		for i in xrange(retries + 1):
-
-			# Opening the connection registered it with the transaction manager as an ISynchronizer.
-			# Ultimately this results in newTransaction being called on the connection object
-			# at `transaction.begin` time, which in turn syncs the storage. However,
-			# when multi-databases are used, the other connections DO NOT get this called on them
-			# if they are implicitly loaded during the course of object traversal or even explicitly
-			# loaded by name turing an active transaction. This can lead to extra read conflict errors
-			# (particularly with RelStorage which explicitly polls for invalidations at sync time).
-			# (Once a multi-db connection has been used, then the next time it would be sync'd. A multi-db
-			# connection is associated with the same connection to another database for its lifetime, and
-			# when open()'d will sync all other such connections. Corrollary: ALWAYS go through
-			# a connection object to get access to multi databases; never go through the database object itself.)
-
-			# As a workaround, we iterate across all the databases and sync them manually; this increases the
-			# cost of handling transactions for things that do not use the other connections, but ensures
-			# we stay nicely in sync.
-
-			# JAM: 2012-09-03: With the database resharding, evaluating the need for this.
-			# Disabling it.
-			#for db_name, db in conn.db().databases.items():
-			#	__traceback_info__ = i, db_name, db, func
-			#	if db is None: # For compatibility with databases we no longer use
-			#		continue
-			#	c2 = conn.get_connection(db_name)
-			#	if c2 is conn:
-			#		continue
-			#	c2.newTransaction()
-
-			# Now fire 'newTransaction' to the ISynchronizers, including the root connection
-			# This may result in some redundant fires to sub-connections.
-			t = transaction.begin()
-			if i:
-				t.note("%s (retry: %s)" % (note, i))
-			else:
-				t.note(note)
-			try:
-				with _site_cm(conn):
-					result = func()
-					# Commit the transaction while the site is still current
-					# so that any before-commit hooks run with that site
-					# (Though this has the problem that after-commit hooks would have an invalid
-					# site!)
-					t.commit()
-				# No errors, return the result
-				return result
-			except transaction.interfaces.TransientError as e:
-				t.abort()
-				if i == retries:
-					# We failed for the last time
-					raise
-				logger.debug( "Retrying transaction %s on exception (try: %s): %s", func, i, e )
-				if sleep is not None:
-					gevent.sleep( sleep )
-			except transaction.interfaces.DoomedTransaction:
-				raise
-			except ZODB.POSException.StorageError as e:
-				if str(e) == 'Unable to acquire commit lock':
-					# Relstorage locks. Who's holding it? What's this worker doing?
-					# if the problem is some other worker this doesn't help much
-					from nti.appserver._util import dump_stacks
-					import sys
-					body = '\n'.join(dump_stacks())
-					print( body, file=sys.stderr )
-				raise
-			except:
-				t.abort()
-				raise
-
-interface.directlyProvides( run_job_in_site, interfaces.IDataserverTransactionRunner )
+from .site import _connection_cm
+from .site import _site_cm
+from .site import run_job_in_site
+zope.deprecation.deprecated( _connection_cm.__name__,
+							 'Moved to .site' )
+zope.deprecation.deprecated( _site_cm.__name__,
+							 'Moved to .site' )
+zope.deprecation.deprecated( run_job_in_site.__name__,
+							 'Moved to .site' )
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 

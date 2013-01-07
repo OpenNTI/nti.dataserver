@@ -69,6 +69,47 @@ class ContainedExternal(ZContainedMixin):
 class PersistentContainedExternal(ContainedExternal,Persistent):
 	pass
 
+import contextlib
+from ZODB.interfaces import IConnection
+from zope.component.hooks import site as using_site
+import transaction
+
+@contextlib.contextmanager
+def _trivial_db_transaction_cm():
+	# TODO: This needs all the retry logic, etc, that we
+	# get in the main app through pyramid_tm
+
+	lsm = component.getSiteManager()
+	conn = IConnection( lsm, None )
+	if conn:
+		yield conn
+		return
+
+	ds = component.getUtility( nti_interfaces.IDataserver )
+	transaction.begin()
+	conn = ds.db.open()
+	# If we don't sync, then we can get stale objects that
+	# think they belong to a closed connection
+	# TODO: Are we doing something in the wrong order? Connection
+	# is an ISynchronizer and registers itself with the transaction manager,
+	# so we shouldn't have to do this manually
+	# ... I think the problem was a bad site. I think this can go away.
+	conn.sync()
+	sitemanc = conn.root()['nti.dataserver']
+
+
+	with using_site( sitemanc ):
+		assert component.getSiteManager() == sitemanc.getSiteManager()
+		assert component.getUtility( nti_interfaces.IDataserver )
+		try:
+			yield conn
+			transaction.commit()
+		except:
+			transaction.abort()
+			raise
+		finally:
+			conn.close()
+
 from nti.appserver.cors import cors_filter_factory as CORSInjector, cors_option_filter_factory as CORSOptionHandler
 from paste.exceptions.errormiddleware import ErrorMiddleware
 def TestApp(app=_TestApp):
@@ -1265,7 +1306,7 @@ class TestApplicationSearch(ApplicationTestBase):
 
 		# This should not have created index entries for the user.
 		# (Otherwise, theres denial-of-service possibilities)
-		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
+		with _trivial_db_transaction_cm():
 			ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
 			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
 			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
@@ -1287,7 +1328,7 @@ class TestApplicationSearch(ApplicationTestBase):
 		# This should not have created index entries for the user.
 		# (Otherwise, there's denial-of-service possibilities)
 		ixman = pyramid.config.global_registries.last.getUtility( nti.contentsearch.interfaces.IIndexManager )
-		with component.getUtility( nti_interfaces.IDataserverTransactionContextManager )():
+		with _trivial_db_transaction_cm():
 			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
 			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
 

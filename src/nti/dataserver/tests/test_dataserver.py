@@ -12,7 +12,7 @@ import nti.dataserver.contenttypes as contenttypes
 from nti.externalization.oids import to_external_ntiid_oid, toExternalOID
 from nti.externalization.internalization import find_factory_for_class_name
 import nti.dataserver.interfaces as nti_interfaces
-from nti.dataserver._Dataserver import run_job_in_site
+from nti.dataserver.site import run_job_in_site
 from nti.dataserver._Dataserver import get_object_by_oid
 import nti.dataserver
 
