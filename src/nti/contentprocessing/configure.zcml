@@ -16,7 +16,10 @@
 	<utility factory="._ngrams_utils._DefaultNgramComputer" />
 	<utility factory="._ngrams_utils._DefaultNgramComputer" name="en" />
 	
+	<utility factory=".alchemy_api_key"  />
+	
 	<include package=".stemmers" file="configure.zcml" />
 	<include package=".taggers" file="configure.zcml" />
 	<include package=".keyword" file="configure.zcml" />
+	<include package=".concepttagging" file="configure.zcml" />
 </configure>

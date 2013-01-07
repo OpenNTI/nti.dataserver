@@ -6,17 +6,16 @@ import requests
 from zope import component
 from zope import interface
 
-from nti.contentprocessing.keyword import ContentKeyWord
 from nti.contentprocessing import interfaces as cp_interfaces
-from nti.contentprocessing.keyword import interfaces as cpkw_interfaces
+from nti.contentprocessing.concepttagging import interfaces as cpct_interfaces
 
 import logging
 logger = logging.getLogger( __name__ )
 
-@interface.implementer( cpkw_interfaces.IKeyWordExtractor )
-class _AlchemyAPIKeyWorExtractor():
+@interface.implementer( cpct_interfaces.IConceptTagger )
+class _AlchemyAPIKConceptTaggger():
 	
-	url = u'http://access.alchemyapi.com/calls/text/TextGetRankedKeywords'
+	url = u'http://access.alchemyapi.com/calls/text/TextGetRankedConcepts'
 	limit_kb = 150
 	
 	@property
@@ -36,10 +35,10 @@ class _AlchemyAPIKeyWorExtractor():
 				data = r.json
 				
 				if r.status_code ==200 and data.get('status','ERROR') == 'OK':
-					keywords = data.get('keywords', ())
-					result = [ContentKeyWord(d['text'], float(d.get('relevance', 0))) for d in keywords]
+					import pprint
+					pprint.pprint(data)
 			except:
 				result = ()
-				logger.exception('Error while getting keywords from Alchemy')
+				logger.exception('Error while getting concept tags from Alchemy')
 							
 		return result
