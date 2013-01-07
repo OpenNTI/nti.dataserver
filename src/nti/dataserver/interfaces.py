@@ -125,27 +125,13 @@ class INewUserPlacer(interface.Interface):
 		:return: Undefined.
 		"""
 
-class IDataserverTransactionContextManager(interface.Interface):
-	"""
-	Something that manages the setup needed for transactions and
-	components in the dataserver.
-	"""
-
-	def __call__():
-		"""
-		Returns a context manager that will correctly manage the dataserver
-		transactions.
-		"""
-
-deprecated( 'IDataserverTransactionContextManager', 'Prefer IDataserverTransactionRunner' )
-
 class IDataserverTransactionRunner(interface.Interface):
 	"""
 	Something that runs code within a transaction, properly setting up the dataserver
 	and its environment.
 	"""
 
-	def __call__(func, retries=0, sleep=None):
+	def __call__(func, retries=0, sleep=None, site_names=()):
 		"""
 		Runs the function given in `func` in a transaction and dataserver local
 		site manager.
@@ -159,6 +145,9 @@ class IDataserverTransactionRunner(interface.Interface):
 			Defaults to zero (so the job runs once).
 		:param float sleep: If not none, then the greenlet running this function will sleep for
 			this long between retry attempts.
+		:param site_names: Sequence of strings giving the virtual host names
+			to use. See :mod:`nti.dataserver.site` for more details.
+
 		:return: The value returned by the first successful invocation of `func`.
 		"""
 

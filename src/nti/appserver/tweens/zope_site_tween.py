@@ -76,54 +76,6 @@ def _get_possible_site_names(request):
 
 	return result
 
-def _find_site_components(request):
-	site_names = _get_possible_site_names( request )
-	for site_name in site_names:
-		if not site_name:
-			return None
-
-		components = component.queryUtility( comp_interfaces.IComponents, name=site_name )
-
-		if components is not None:
-			return components
-
-# TODO: All this site mucking may be expensive. It has significant possibilities
-# for optimization (caching) using the fact that much of it is read only.
-
-class _BasedSiteManager(_ZLocalSiteManager):
-	"""
-	A site manager that exists simply to have bases, but not to
-	record itself as children of those bases (since that's unnecessary
-	for our purposes and leads to conflicts.
-	"""
-
-	def _setBases( self, bases ):
-		# Bypass the direct superclass.
-		_ZPersistentComponents._setBases( self, bases )
-
-	def __init__( self, site, name, bases ):
-		# Bypass the direct superclass to avoid setting
-		# bases multiple times: NOTE: This means we are fairly tightly coupled
-		_ZPersistentComponents.__init__(self)
-
-		# Locate the site manager
-		self.__parent__ = site
-		self.__name__ = name
-
-		self.__bases__ = bases
-
-	def _newContainerData(self):
-		return None # We won't be used as a folder
-
-@interface.implementer(comp_interfaces.ISite)
-class _TrivialSite(_ZContained):
-
-	def __init__( self, site_manager ):
-		self._sm = site_manager
-
-	def getSiteManager(self):
-		return self._sm
-
 def _early_request_teardown(request):
 	"""
 	Clean up all the things set up by our new request handler and the
@@ -216,31 +168,12 @@ class site_tween(object):
 			except AssertionError:
 				logger.debug( "Should not have a site already in place: %s", old_site, exc_info=True )
 
+from nti.dataserver.site import get_site_for_site_names
 def get_site_for_request( request, site=None ):
 	"""
 	Public for testing purposes only.
 	"""
-	if site is None:
-		site = getSite()
-
-	#assert site.getSiteManager().__bases__ == (component.getGlobalSiteManager(),)
-	# Can we find a named site to use?
-	site_components = _find_site_components( request )
-	if site_components:
-		# Yes we can. The site components are only a partial configuration
-		# and are not persistent, so we need to use two bases
-		# to make it work (order matters). They are also not traversable.
-		#assert site_components.__bases__ == (component.getGlobalSiteManager(),)
-		#gsm = site_components.__bases__[0]
-		#assert site_components.adapters.__bases__ == (gsm.adapters,)
-
-		main_site = site
-		site_manager = _BasedSiteManager( main_site, site_components.__name__, (site_components, main_site.getSiteManager(),) )
-		site = _TrivialSite( site_manager )
-		site.__parent__ = main_site
-		site.__name__ = site_components.__name__
-
-	return site
+	return get_site_for_site_names( _get_possible_site_names( request ), site=site )
 
 def site_tween_factory(handler, registry):
 	"""
