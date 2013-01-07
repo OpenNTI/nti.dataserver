@@ -26,3 +26,7 @@ class IWordSimilarity(interface.Interface):
 		
 	def rank(word, terms, reverse=True):
 		"""return the specified terms based on the distance to the specified word"""
+
+class IAlchemyAPIKey(interface.Interface):
+	"""marker interface for AlchemyAPI"""
+	pass

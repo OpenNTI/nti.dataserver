@@ -2,6 +2,10 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 import re
 
+from zope import interface
+
+from nti.contentprocessing import interfaces as cp_interfaces
+
 import logging
 logger = logging.getLogger( __name__ )
 
@@ -19,3 +23,8 @@ from nti.contentprocessing._content_utils import rank_words
 from nti.contentprocessing._ngrams_utils import compute_ngrams
 from nti.contentprocessing._content_utils import split_content
 from nti.contentprocessing._content_utils import get_content_translation_table
+
+@interface.implementer( cp_interfaces.IAlchemyAPIKey )		
+def alchemy_api_key():
+	#TODO: Get NT API Key
+	return u'afe98c5b8fb8586e930d1b2128386d40c136e6d3'
