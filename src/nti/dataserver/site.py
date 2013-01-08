@@ -187,20 +187,10 @@ def get_site_for_site_names( site_names, site=None ):
 
 	return site
 
-def run_job_in_site(func, retries=0, sleep=None, site_names=(),
-					_connection_cm=_connection_cm, _site_cm=_site_cm):
+def run_job_in_site(func, retries=0, sleep=None, site_names=()):
 	"""
 	Runs the function given in `func` in a transaction and dataserver local
-	site manager.
-	:param function func: A function of zero parameters to run. If it has a docstring,
-		that will be used as the transactions note. A transaction will be begun before
-		this function executes, and committed after the function completes. This function may be rerun if
-		retries are requested, so it should be prepared for that.
-	:param int retries: The number of times to retry the transaction and execution of `func` if
-		:class:`transaction.interfaces.TransientError` is raised when committing.
-		Defaults to zero (so the job runs once).
-	:param site_names: Sequence of strings giving the virtual host names
-		to use.
+	site manager. See :class:`.IDataserverTransactionRunner`
 
 	:return: The value returned by the first successful invocation of `func`.
 	"""
@@ -281,3 +271,4 @@ def run_job_in_site(func, retries=0, sleep=None, site_names=(),
 				raise
 
 interface.directlyProvides( run_job_in_site, interfaces.IDataserverTransactionRunner )
+run_job_in_site.__doc__ = interfaces.IDataserverTransactionRunner['__call__'].getDoc()

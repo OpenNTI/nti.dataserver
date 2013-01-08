@@ -234,13 +234,13 @@ class _SessionEventProxy(object):
 
 
 # For ease of distinguishing in logs we subclass
-class _WebsocketSessionEventProxy(_SessionEventProxy): pass
+class _WebsocketSessionEventProxy(_SessionEventProxy):
+	pass
 
-from nti.dataserver._Dataserver import run_job_in_site as _run_job_in_site
+
 
 def run_job_in_site( *args, **kwargs ):
-	runner = component.queryUtility( nti_interfaces.IDataserverTransactionRunner,
-								   default=_run_job_in_site )
+	runner = component.getUtility( nti_interfaces.IDataserverTransactionRunner )
 	return runner( *args, **kwargs )
 
 @component.adapter( pyramid.interfaces.IRequest )
@@ -266,11 +266,12 @@ class WebsocketTransport(BaseTransport):
 
 	class AbstractWebSocketOperator(object):
 		session_owner = ''
-		def __init__(self, session_id, session_proxy, session_service, websocket ):
+		def __init__(self, session_id, session_proxy, session_service, session_originating_site_names, websocket ):
 			self.session_id = session_id
 			self.session_proxy = session_proxy
 			self.session_service = session_service
 			self.websocket = websocket
+			self.session_originating_site_names = session_originating_site_names
 			self.run_loop = True
 
 		@_catch_all
@@ -306,7 +307,7 @@ class WebsocketTransport(BaseTransport):
 				if not self.run_loop:
 					break
 				try:
-					self.run_loop &= run_job_in_site( self._do_send, retries=10 )
+					self.run_loop &= run_job_in_site( self._do_send, retries=10, site_names=self.session_originating_site_names )
 				except transaction.interfaces.TransientError:
 					# A problem clearing the queue or getting the session.
 					# Generally, these can be ignored, since we'll just try again later
@@ -382,7 +383,7 @@ class WebsocketTransport(BaseTransport):
 				# Try for up to 2 seconds to receive this message. If it fails,
 				# drop it and wait for the next one. That's better than dieing altogether, right?
 				try:
-					self.run_loop &= run_job_in_site( self._do_read, retries=20, sleep=0.1 )
+					self.run_loop &= run_job_in_site( self._do_read, retries=20, sleep=0.1, site_names=self.session_originating_site_names )
 				except transaction.interfaces.TransientError:
 					logger.exception( "Failed to receive message (%s) from websocket; ignoring and continuing %s",
 									  self.message[0:50], self.session_id )
@@ -436,6 +437,7 @@ class WebsocketTransport(BaseTransport):
 		# which loads the session object fresh (if needed)
 
 		session_id = session.session_id
+		session_originating_site_names = session.originating_site_names
 		session_proxy = _WebsocketSessionEventProxy()
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
 
@@ -443,9 +445,9 @@ class WebsocketTransport(BaseTransport):
 		# that they all die together, and that they all do cleanup when they die
 		session_service.set_proxy_session( session_id, session_proxy )
 
-		send_into_ws = self.WebSocketSender( session_id, session_proxy, session_service, websocket )
-		read_from_ws = self.WebSocketReader( session_id, session_proxy, session_service, websocket )
-		ping = self.WebSocketPinger( session_id, session_proxy, session_service, websocket, ping_sleep=ping_sleep )
+		send_into_ws = self.WebSocketSender( session_id, session_proxy, session_service, session_originating_site_names, websocket )
+		read_from_ws = self.WebSocketReader( session_id, session_proxy, session_service, session_originating_site_names, websocket )
+		ping = self.WebSocketPinger( session_id, session_proxy, session_service, session_originating_site_names, websocket, ping_sleep=ping_sleep )
 
 		session_owner = getattr( session, 'owner', '' )
 		if session_owner:

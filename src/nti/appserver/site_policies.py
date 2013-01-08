@@ -63,29 +63,20 @@ def get_possible_site_names(request=None, include_default=False):
 	if not request: # pragma: no cover
 		return () if not include_default else ('',)
 
-	result = []
-
-	if 'origin' in request.headers:
-		# TODO: The port splitting breaks on IPv6
-		# Origin comes in as a complete URL, host and potentially port
-		# Sometimes it comes in blank (unit tests, mostly, that don't use proper HTTP libraries)
-		# so the below is robust against that, as well as deliberately malformed input
-		origin = request.headers['origin']
-		__traceback_info__ = origin
-		if origin and '//' in origin and ':' in origin:
-			host = origin.split( '//' )[1].split( ":" )[0]
-			result.append( host.lower() )
-	if request.host:
-		# Host is a plain name/IP address, and potentially port
-		result.append( request.host.split(':')[0].lower() )
-
-	for blacklisted in ('localhost', '0.0.0.0'):
-		if blacklisted in result:
-			result.remove( blacklisted )
+	# The site tween modifies the request to have these
+	try:
+		site_names = request.possible_site_names
+	except AttributeError:
+		# except in test cases. We should never see this warning
+		# in production
+		logger.warning( "Request has no site_names", exc_info=True )
+		from nti.appserver.tweens.zope_site_tween import _get_possible_site_names
+		site_names = _get_possible_site_names( request )
+		request.possible_site_names = tuple(site_names)
 
 	if include_default:
-		result.append( '' )
-	return result
+		site_names += ('',)
+	return site_names
 
 def _find_site_components(request, include_default=False, site_names=None):
 	site_names = site_names or get_possible_site_names( request=request, include_default=include_default )

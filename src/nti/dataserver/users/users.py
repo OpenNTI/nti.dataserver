@@ -1113,6 +1113,7 @@ def user_devicefeedback( msg ):
 
 	# Be sure we run in the right site and transaction.
 	# Our usual caller is in nti.apns and knows nothing about that.
+	# NOTE: We are not using a site policy here so the listener is limited
 	if IConnection( component.getSiteManager(), None ):
 		feedback()
 	else:

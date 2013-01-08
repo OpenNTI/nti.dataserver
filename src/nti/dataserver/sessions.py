@@ -81,7 +81,6 @@ class SessionService(object):
 				# be very limited in what they do
 
 				try:
-					#_ = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: self._dispatch_message_to_proxy( *msgs ), retries=2 )
 					transaction.begin()
 					_ = self._dispatch_message_to_proxy( *msgs )
 					transaction.commit()

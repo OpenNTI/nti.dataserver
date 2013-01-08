@@ -168,13 +168,13 @@ class _WSWillUpgradeVeto(object):
 	def __init__( self, evt=None ):
 		return
 
-	def can_upgrade( self, wswill_upgrade ):
+	def can_upgrade( self, wswill_upgrade_event ):
 		"""
 		If the session exists and is valid, we can upgrade.
 		"""
 		# Pull the session id out of the path. See
 		# URL_CONNECT
-		environ = wswill_upgrade.environ
+		environ = wswill_upgrade_event.environ
 		sid = environ['PATH_INFO'].split( '/' )[-1]
 		def test():
 			try:
@@ -184,6 +184,7 @@ class _WSWillUpgradeVeto(object):
 				return False
 			else:
 				return True
+		# NOTE: Not running this in any site policies
 		return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( test, retries=3, sleep=0.1 )
 
 def _get_session(session_id):
