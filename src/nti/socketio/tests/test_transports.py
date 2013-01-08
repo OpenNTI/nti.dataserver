@@ -46,6 +46,7 @@ class TestWebSocket(ConfiguringTestBase):
 			protocol = None
 			connected = True
 			last_heartbeat_time = 0
+			originating_site_names = ()
 
 		websocket = WebSocket()
 		handler = Handler()
@@ -97,7 +98,7 @@ class TestWebSocket(ConfiguringTestBase):
 			def get_session( self, sid ): return None
 
 		proxy = socketio_server._WebsocketSessionEventProxy()
-		sender = socketio_server.WebsocketTransport.WebSocketSender( 1, proxy, Service(), None )
+		sender = socketio_server.WebsocketTransport.WebSocketSender( 1, proxy, Service(), (), None )
 
 		# Kill the session on a None-message
 		assert_that( sender._do_send(), is_( False ) )
@@ -136,7 +137,7 @@ class TestWebSocket(ConfiguringTestBase):
 		service = Service()
 		service.session = session
 
-		reader = socketio_server.WebsocketTransport.WebSocketReader( 1, proxy, service, socket )
+		reader = socketio_server.WebsocketTransport.WebSocketReader( 1, proxy, service, (), socket )
 
 
 		reader._run()

@@ -128,6 +128,15 @@ def user_filesystem_censor_policy( user, file_content_unit ):
 		return None
 	return coppa_user_censor_policy( user, file_content_unit )
 
+###
+# TODO: The copying of site names below is probably no longer
+# necessary. While this still happen outside of a request,
+# the transaction runner is establishing the proper context
+# for a site in the ZCA hierarchy automatically. However,
+# it also doesn't hurt anything so it can stay until a test
+# is written to prove it.
+###
+
 @component.adapter( chat_interfaces.IMessageInfo, sio_interfaces.ISocketSessionCreatedObjectEvent )
 def ensure_message_info_has_creator( message, event ):
 	"""

@@ -15,8 +15,14 @@ Request Modifications
 
 After this tween runs, the request has been modified in the following ways.
 
-.. * It has a property called ``possible_site_names``, which is an iterable of the site names
-..  to consider. These site names may be found as c
+* It has a property called ``possible_site_names``, which is an
+  iterable of the virtual site names to consider. This is also in the
+  WSGI environment as ``nti.possible_site_names``. (See :func:`_get_possible_site_names`)
+
+* It has a method called ``early_request_teardown`` for cleaning up
+  resources if the request handler won't actually be returning. This is
+  also in the WSGI environment as ``nti.early_request_teardown`` as a function
+  of the request. (See :func:`_early_request_teardown`.)
 
 .. $Id$
 """
@@ -30,17 +36,8 @@ import transaction
 import pyramid_zodbconn
 import pyramid.security
 
-from zope import interface
-from zope import component
-
-from zope.component import interfaces as comp_interfaces
 
 from zope.component.hooks import setSite, getSite, setHooks, clearSite
-from zope.component.persistentregistry import PersistentComponents as _ZPersistentComponents
-
-from zope.site.site import LocalSiteManager as _ZLocalSiteManager
-from zope.container.contained import Contained as _ZContained
-
 
 def _get_possible_site_names(request):
 	"""
@@ -118,18 +115,28 @@ class site_tween(object):
 		conn.sync()
 		site = conn.root()['nti.dataserver']
 		self._debug_site( site )
+		self._add_properties_to_request( request )
+
 		site = get_site_for_request( request, site )
 
 		setSite( site )
 		try:
 			self._configure_transaction( request )
-			self._add_properties_to_request( request )
+
 
 			return self.handler(request)
 		finally:
 			clearSite()
 
 	def _add_properties_to_request(self, request):
+
+		request.environ['nti.early_request_teardown'] = _early_request_teardown
+		request.environ['nti.possible_site_names'] = tuple(_get_possible_site_names( request ) )
+		# The "proper" way to add properties is with request.set_property, but
+		# this is easier and faster.
+		request.early_request_teardown = _early_request_teardown
+		request.possible_site_names = request.environ['nti.possible_site_names']
+
 		# In [15]: %%timeit
 		#   ....: r = pyramid.request.Request.blank( '/' )
 		#   ....: p(r)
@@ -142,8 +149,7 @@ class site_tween(object):
 		#   ....: r.p
 		#   ....:
 		# 10000 loops, best of 3: 57.4 us per loop
-		# TODO: Expose the possible_site_names?
-		request.environ['nti.early_request_teardown'] = _early_request_teardown
+
 
 	def _configure_transaction( self, request ):
 		# NOTE: We have dropped support for pyramid_tm due to breaking changes in 0.7
@@ -173,7 +179,8 @@ def get_site_for_request( request, site=None ):
 	"""
 	Public for testing purposes only.
 	"""
-	return get_site_for_site_names( _get_possible_site_names( request ), site=site )
+	site_names = getattr( request, 'possible_site_names', None ) or _get_possible_site_names( request )
+	return get_site_for_site_names( site_names, site=site )
 
 def site_tween_factory(handler, registry):
 	"""

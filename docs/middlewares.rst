@@ -53,6 +53,7 @@ Tween
 
 .. automodule:: nti.appserver.tweens.zope_site_tween
 	:members:
+	:private-members:
 
 Model
 -----
