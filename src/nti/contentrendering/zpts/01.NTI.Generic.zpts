@@ -55,4 +55,5 @@ name: pageref
 <a tal:attributes="href self/idref/label/url" class="pageref" tal:content="self/getPageNameForRef">Page Reference</a>
  
 name: caption*
-<div class="caption"><span tal:content="self">Caption text</span></div>
+<div tal:condition="not:self/style" class="caption" data-foo="foobar"><span tal:content="self">Caption text</span></div>
+<div tal:condition="self/style" class="caption" tal:attributes="style self/style/inline"><span tal:content="self">Caption text</span></div>
