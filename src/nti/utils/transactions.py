@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Support for working with the :mod:`transaction` module.
 
@@ -8,6 +9,12 @@ call this if you need such functionality.
 
 """
 #$Id$
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 from zope import interface
 
 import transaction
@@ -15,6 +22,9 @@ import gevent.queue
 
 from dm.transaction.aborthook import add_abort_hooks
 add_abort_hooks = add_abort_hooks # pylint
+
+import sys
+import time
 
 @interface.implementer(transaction.interfaces.IDataManager)
 class ObjectDataManager(object):
@@ -102,7 +112,6 @@ class _QueuePutDataManager(ObjectDataManager):
 	A data manager that checks if the queue is full before putting.
 	Overrides :meth:`tpc_vote` for efficiency.
 	"""
-	interface.implements(transaction.interfaces.IDataManager)
 
 	def __init__(self, queue, method, args=()):
 		super(_QueuePutDataManager,self).__init__( target=queue, call=method, args=args )
@@ -135,3 +144,151 @@ def do( *args, **kwargs ):
 	"""
 	transaction.get().join(
 		ObjectDataManager( *args, **kwargs ) )
+
+
+def _do_commit( tx, description, long_commit_duration ):
+	exc_info = sys.exc_info()
+	try:
+		duration = _timing( tx.commit )
+		logger.debug( "Committed transaction for %s in %ss", description, duration )
+		if duration > long_commit_duration: # pragma: no cover
+			# We held (or attempted to hold) locks for a really, really, long time. Why?
+			logger.warn( "Slow running commit for %s in %ss", description, duration )
+	except (AssertionError,ValueError): # pragma: no cover
+		# We've seen this when we are recalled during retry handling. The higher level
+		# is in the process of throwing a different exception and the transaction is
+		# already toast, so this commit would never work, but we haven't lost anything;
+		# The sad part is that this assertion error overrides the stack trace for what's currently
+		# in progress
+		# TODO: Prior to transaction 1.4.0, this was only an AssertionError. 1.4 makes it a ValueError, which is hard to distinguish and might fail retries?
+		logger.exception( "Failing to commit; should already be an exception in progress" )
+		if exc_info and exc_info[0]:
+			raise exc_info[0], None, exc_info[2]
+
+		raise
+	## except ZODB.POSException.StorageError as e:
+	## 	if str(e) == 'Unable to acquire commit lock':
+	## 		# Relstorage locks. Who's holding it? What's this worker doing?
+	## 		# if the problem is some other worker this doesn't help much.
+	## 		# Of course by definition, we won't catch it in the act if we're running.
+	## 		from ._util import dump_stacks
+	## 		body = '\n'.join(dump_stacks())
+	## 		print( body, file=sys.stderr )
+	## 	raise
+
+def _timing( operation ):
+	"""
+	Run the `operation` callable, returning the number of seconds it took.
+	"""
+	now = time.time()
+	operation()
+	done = time.time()
+	return done - now
+
+class TransactionLoop(object):
+	"""
+	Similar to the transaction attempts mechanism, but less error prone and with added logging and
+	hooks. This object is callable and runs its handler in the transaction loop.
+	"""
+
+	class AbortException(Exception):
+
+		def __init__( self, response, reason ):
+			Exception.__init__( self )
+			self.response = response
+			self.reason = reason
+
+
+	sleep = None
+	attempts = 10
+	long_commit_duration = 6 # seconds
+
+	def __init__( self, handler, retries=None, sleep=None, long_commit_duration=None ):
+		self.handler = handler
+		if retries is not None:
+			self.attempts = retries + 1
+		if long_commit_duration is not None:
+			self.long_commit_duration = long_commit_duration
+		if sleep is not None:
+			self.sleep = sleep
+
+
+	def prep_for_retry( self, number, *args, **kwargs ):
+		"""
+		Called just after a transaction begins if there will be
+		more than one attempt possible. Do any preparation
+		needed to cleanup or prepare reattempts, or raise
+		self.AbortException.
+		"""
+
+	def should_abort_due_to_no_side_effects( self, *args, **kwargs ):
+		"""
+		Called after the handler has run. If the handler should
+		have produced no side effects and the transaction can be aborted
+		as an optimization, return True.
+		"""
+		return False
+
+	def should_veto_commit( self, result, *args, **kwargs ):
+		"""
+		Called after the handler has run. If the result of the handler
+		should abort the transaction, return True.
+		"""
+		return False
+
+	def describe_transaction( self, *args, **kwargs ):
+		return "Unknown"
+
+	def run_handler( self, *args, **kwargs ):
+		return self.handler( *args, **kwargs )
+
+	def __call__( self, *args, **kwargs ):
+		# NOTE: We don't handle repoze.tm being in the pipeline
+
+		number = self.attempts
+		note = self.describe_transaction( *args, **kwargs )
+
+		while number:
+			number -= 1
+			try:
+				tx = transaction.begin()
+				if note and note != "Unknown":
+					tx.note( note )
+				if self.attempts != 1:
+					self.prep_for_retry( number, *args, **kwargs )
+
+				result = self.run_handler( *args, **kwargs )
+
+				# We should still have the same transaction. If we don't,
+				# then we get a ValueError from tx.commit.
+				#assert transaction.get() is tx, "Started new transaction out from under us!"
+
+				if self.should_abort_due_to_no_side_effects( *args, **kwargs ):
+					# These transactions can safely be aborted and ignored, reducing contention on commit locks
+					# TODO: It would be cool to open them readonly in the first place.
+					# TODO: I don't really know if this is kosher, but it does seem to work so far
+					# NOTE: We raise these as an exception instead of aborting in the loop so that
+					# we don't retry if something goes wrong aborting
+					raise self.AbortException( result, "side-effect free" )
+
+				if tx.isDoomed() or self.should_veto_commit( result, *args, **kwargs ):
+					raise self.AbortException( result, "doomed or vetoed" )
+
+				_do_commit( tx, note, self.long_commit_duration )
+
+				return result
+			except self.AbortException as e:
+				duration = _timing( transaction.abort )
+				logger.debug( "Aborted %s transaction for %s in %ss", e.reason, note, duration )
+				return e.response
+			except Exception:
+				exc_info = sys.exc_info()
+				try:
+					transaction.abort() # note: not our tx variable, whatever is current
+					retryable = transaction.manager._retryable(*exc_info[:-1])
+					if number <= 0 or not retryable:
+						raise
+					if self.sleep:
+						gevent.sleep( self.sleep )
+				finally:
+					del exc_info # avoid leak
