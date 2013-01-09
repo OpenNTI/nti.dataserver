@@ -3,6 +3,7 @@
 		   i18n_domain="zope">
 	<include package="zope.component" />
 
+	<utility component=".trans_caption" name="trans_caption"/>
 	<utility component=".transchapters" name="transchapters"/>
 	<utility component=".transmath" name="transmath" />
 	<utility component=".xymatrix" name="xymatrix"/>
