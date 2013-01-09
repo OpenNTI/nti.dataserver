@@ -81,6 +81,7 @@ def _early_request_teardown(request):
 	"""
 
 	transaction.commit()
+	request.environ['nti.early_teardown_happened'] = True
 	pyramid_zodbconn.get_connection(request).close()
 	setSite( None )
 	# Remove the close action that pyramid_zodbconn wants to do.
@@ -107,12 +108,8 @@ class site_tween(object):
 		self.handler = handler
 
 	def __call__( self, request ):
-
-		# Given that we are now using our own traversal module, which
-		# honors the zope traversal hooks that install a site as you travers,
-		# this is probably not necessary anymore as such.
 		conn = pyramid_zodbconn.get_connection( request )
-		conn.sync()
+		#conn.sync() # syncing the conn aborts the transaction.
 		site = conn.root()['nti.dataserver']
 		self._debug_site( site )
 		self._add_properties_to_request( request )
@@ -159,7 +156,7 @@ class site_tween(object):
 		uid = pyramid.security.authenticated_userid( request )
 		if uid:
 			transaction.get().setUser( uid )
-		transaction.get().note( request.url )
+
 
 
 	def _debug_site( self, new_site ):

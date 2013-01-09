@@ -56,8 +56,6 @@ from zope.site.site import LocalSiteManager as _ZLocalSiteManager
 from zope.container.contained import Contained as _ZContained
 
 
-import transaction
-
 from zope.component import interfaces as comp_interfaces
 from nti.dataserver import interfaces
 from nti.dataserver.interfaces import InappropriateSiteError, SiteNotInstalledError
@@ -187,6 +185,42 @@ def get_site_for_site_names( site_names, site=None ):
 
 	return site
 
+from nti.utils.transactions import TransactionLoop
+class _RunJobInSite(TransactionLoop):
+
+	def __init__( self, *args, **kwargs ):
+		self.site_names = kwargs.pop( 'site_names' )
+		super(_RunJobInSite,self).__init__( *args, **kwargs )
+		self.conn = None
+
+	def describe_transaction( self, *args, **kwargs ):
+		func = self.handler
+		note = func.__doc__
+		if note:
+			note = note.split('\n', 1)[0]
+		else:
+			note = func.__name__
+		return note
+
+	def run_handler( self, *args, **kwargs ):
+		with _site_cm(self.conn, self.site_names):
+			result = self.handler( *args, **kwargs )
+
+			# Commit the transaction while the site is still current
+			# so that any before-commit hooks run with that site
+			# (Though this has the problem that after-commit hooks would have an invalid
+			# site!)
+			# JAM: DISABLED because the pyramid requests never ran like this:
+			# they commit after they are done and the site has been removed
+			# t.commit()
+
+			return result
+
+	def __call__( self, *args, **kwargs ):
+		with _connection_cm() as conn:
+			self.conn = conn
+			return super(_RunJobInSite,self).__call__( *args, **kwargs )
+
 def run_job_in_site(func, retries=0, sleep=None, site_names=()):
 	"""
 	Runs the function given in `func` in a transaction and dataserver local
@@ -194,81 +228,39 @@ def run_job_in_site(func, retries=0, sleep=None, site_names=()):
 
 	:return: The value returned by the first successful invocation of `func`.
 	"""
-	note = func.__doc__
-	if note:
-		note = note.split('\n', 1)[0]
-	else:
-		note = func.__name__
 
-	with _connection_cm() as conn:
-		for i in xrange(retries + 1):
-
-			# Opening the connection registered it with the transaction manager as an ISynchronizer.
-			# Ultimately this results in newTransaction being called on the connection object
-			# at `transaction.begin` time, which in turn syncs the storage. However,
-			# when multi-databases are used, the other connections DO NOT get this called on them
-			# if they are implicitly loaded during the course of object traversal or even explicitly
-			# loaded by name turing an active transaction. This can lead to extra read conflict errors
-			# (particularly with RelStorage which explicitly polls for invalidations at sync time).
-			# (Once a multi-db connection has been used, then the next time it would be sync'd. A multi-db
-			# connection is associated with the same connection to another database for its lifetime, and
-			# when open()'d will sync all other such connections. Corrollary: ALWAYS go through
-			# a connection object to get access to multi databases; never go through the database object itself.)
-
-			# As a workaround, we iterate across all the databases and sync them manually; this increases the
-			# cost of handling transactions for things that do not use the other connections, but ensures
-			# we stay nicely in sync.
-
-			# JAM: 2012-09-03: With the database resharding, evaluating the need for this.
-			# Disabling it.
-			#for db_name, db in conn.db().databases.items():
-			#	__traceback_info__ = i, db_name, db, func
-			#	if db is None: # For compatibility with databases we no longer use
-			#		continue
-			#	c2 = conn.get_connection(db_name)
-			#	if c2 is conn:
-			#		continue
-			#	c2.newTransaction()
-
-			# Now fire 'newTransaction' to the ISynchronizers, including the root connection
-			# This may result in some redundant fires to sub-connections.
-			t = transaction.begin()
-			if i:
-				t.note("%s (retry: %s)" % (note, i))
-			else:
-				t.note(note)
-			try:
-				with _site_cm(conn, site_names):
-					result = func()
-					# Commit the transaction while the site is still current
-					# so that any before-commit hooks run with that site
-					# (Though this has the problem that after-commit hooks would have an invalid
-					# site!)
-					t.commit()
-				# No errors, return the result
-				return result
-			except transaction.interfaces.TransientError as e:
-				t.abort()
-				if i == retries:
-					# We failed for the last time
-					raise
-				logger.debug( "Retrying transaction %s on exception (try: %s): %s", func, i, e )
-				if sleep is not None:
-					gevent.sleep( sleep )
-			except transaction.interfaces.DoomedTransaction:
-				raise
-			except ZODB.POSException.StorageError as e:
-				if str(e) == 'Unable to acquire commit lock':
-					# Relstorage locks. Who's holding it? What's this worker doing?
-					# if the problem is some other worker this doesn't help much
-					from nti.appserver._util import dump_stacks
-					import sys
-					body = '\n'.join(dump_stacks())
-					print( body, file=sys.stderr )
-				raise
-			except:
-				t.abort()
-				raise
+	return _RunJobInSite( func, retries=retries, sleep=sleep, site_names=site_names )()
 
 interface.directlyProvides( run_job_in_site, interfaces.IDataserverTransactionRunner )
 run_job_in_site.__doc__ = interfaces.IDataserverTransactionRunner['__call__'].getDoc()
+
+## Legacy notes:
+# Opening the connection registered it with the transaction manager as an ISynchronizer.
+# Ultimately this results in newTransaction being called on the connection object
+# at `transaction.begin` time, which in turn syncs the storage. However,
+# when multi-databases are used, the other connections DO NOT get this called on them
+# if they are implicitly loaded during the course of object traversal or even explicitly
+# loaded by name turing an active transaction. This can lead to extra read conflict errors
+# (particularly with RelStorage which explicitly polls for invalidations at sync time).
+# (Once a multi-db connection has been used, then the next time it would be sync'd. A multi-db
+# connection is associated with the same connection to another database for its lifetime, and
+# when open()'d will sync all other such connections. Corrollary: ALWAYS go through
+# a connection object to get access to multi databases; never go through the database object itself.)
+
+# As a workaround, we iterate across all the databases and sync them manually; this increases the
+# cost of handling transactions for things that do not use the other connections, but ensures
+# we stay nicely in sync.
+
+# JAM: 2012-09-03: With the database resharding, evaluating the need for this.
+# Disabling it.
+#for db_name, db in conn.db().databases.items():
+#	__traceback_info__ = i, db_name, db, func
+#	if db is None: # For compatibility with databases we no longer use
+#		continue
+#	c2 = conn.get_connection(db_name)
+#	if c2 is conn:
+#		continue
+#	c2.newTransaction()
+
+# Now fire 'newTransaction' to the ISynchronizers, including the root connection
+# This may result in some redundant fires to sub-connections.
