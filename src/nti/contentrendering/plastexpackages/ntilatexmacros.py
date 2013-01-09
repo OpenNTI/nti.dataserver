@@ -68,7 +68,7 @@ class ntiincludevideo(_OneText):
 		_t = self.attributes['video_url'].split('/')
 		if 'youtube' in _t[2]:
 			self.attributes['service'] = 'youtube'
-			self.attributes['video_id'] = _t[4].split('?')[0]
+			self.attributes['video_id'] = _t[len(_t)-1].split('?')[0]
 			self.attributes['poster'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/0.jpg'
 			self.attributes['thumbnail'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/1.jpg'
 		return result
