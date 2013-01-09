@@ -23,10 +23,18 @@ import errno
 from pyramid.security import unauthenticated_userid
 from pyramid.threadlocal import get_current_request
 
-
+import gunicorn
 import gunicorn.workers.ggevent as ggevent
 import gunicorn.http.wsgi
-#import gunicorn.sock
+try:
+	# gunicorn 0.17.2 finally finishes the process
+	# of enforcing proper byte bodies (not unicode)
+	# We should be fully compliant with this; make sure we're testing
+	# with it. It also contains important performance optimizations
+	if gunicorn.version_info < (0,17,2):
+		raise ImportError("Gunicorn too old")
+except AttributeError:
+	raise ImportError("Gunicorn too old")
 
 import gevent
 import gevent.socket
@@ -266,6 +274,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# Everything must be complete and ready to go before we call into
 		# the super, it in turn calls run()
 		# TODO: Errors here get silently swallowed and gunicorn just cycles the worker
+		# (But at least as of 0.17.2 they are now reported? Check this.)
 		if _call_super: # pragma: no cover
 			super(GeventApplicationWorker,self).init_process()
 
