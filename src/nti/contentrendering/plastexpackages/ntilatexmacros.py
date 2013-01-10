@@ -7,6 +7,7 @@ from plasTeX import Base, Command, Environment
 
 from plasTeX.Base import Crossref
 
+from nti.contentrendering import plastexids
 from nti.contentrendering.plastexpackages.graphicx import includegraphics
 
 # Monkey patching time
@@ -179,6 +180,9 @@ class textsquare(Base.Command):
 class texttriangle(Base.Command):
 	unicode = u'\u25B3'
 
+class textdoublehyphen(Command):
+	unicode = u'\u002D' + u'\u002D'
+
 # Currency symbols
 class yen(Base.Command):
 	unicode = u'\xA5'
@@ -203,6 +207,17 @@ class nobreak(Base.Command):
 
 class vfrac(Base.Command):
 	args = 'nom denom'
+
+# Misc
+class ntivideoroll(Base.Environment,plastexids.NTIIDMixin):
+	blockType = True
+	_ntiid_cache_map_name = '_ntivideoroll_ntiid_map'
+	_ntiid_allow_missing_title = True
+	_ntiid_suffix = 'ntivideoroll.'
+	_ntiid_type = 'NTIVR'
+
+class ntipreviouspage(Base.Command):
+	pass
 
 def ProcessOptions( options, document ):
 	pass

@@ -8,6 +8,12 @@ name: ntiincludevideo
 # NOTE that this must stay consistent with sectionvideoadder.py (TODO: Can we use this template?)
 <div class="externalvideo" tal:attributes="id self/id"><iframe width="640" height="360" tal:attributes="src self/attributes/video_url" frameborder="0" allowfullscreen="true" ></iframe></div>
 
+name: ntivideoroll
+<object type="application/vnd.nextthought.videoroll" tal:attributes="data-ntiid self/ntiid; data self/ntiid">
+<param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
+<span tal:replace="self"></span>
+</object>
+
 name: vfrac
 <span class="vfrac"><sup class="nom" tal:content="self/attributes/nom"></sup><span class="divider">&#47;</span><sub class="denom" tal:content="self/attributes/denom"></sub></span>
 
@@ -51,3 +57,7 @@ name: ntiincludenoannotationgraphics
 <img tal:condition="not:self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style string:width:${self/image/width/px};; height:${self/image/height/px}; data-nti-image-size self/image/current_size; ddata-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url; data-caption self/title | nothing" />
 <img tal:condition="self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/source; style self/style/inline; data-nti-image-size self/image/current_size; ddata-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url; data-caption self/title | nothing" />
 </span>
+
+name: ntipreviouspage
+<a href="#" onclick="NTIPreviousContent();">Return to previous page</a>
+
