@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+from __future__ import print_function, unicode_literals
 
-import os, sys
+import os 
+import sys
 import urllib2
 from urlparse import urljoin
 from json import JSONEncoder
@@ -122,7 +124,7 @@ def put(file, url, user ='csanchez', password = 'temp001'):
 
 def _put(json, url, user ='csanchez', password = 'temp001'):
 
-	print "\nConnecting to %s ..." % url
+	print("\nConnecting to %s ..." % url)
 	
 	urllib2.build_opener(urllib2.HTTPHandler)
 	request = urllib2.Request(url, data=json)
@@ -147,11 +149,11 @@ if __name__ == '__main__':
 	args = sys.argv[1:]
 	if args:
 		f = lambda a, idx, d: d if len(a) <= idx else a[idx] 
-		id 		= f(args, 1, 'mathcounts-2011-0')
+		id_		= f(args, 1, 'mathcounts-2011-0')
 		server	= f(args, 2, 'http://curie.local:8080')
 		path	= f(args, 3, '/dataserver/quizzes/')
 		idprx	= f(args, 4, '') 
-		send2server(args[0], id, server, path, idprx)
+		send2server(args[0], id_, server, path, idprx)
 		
 		
 		
