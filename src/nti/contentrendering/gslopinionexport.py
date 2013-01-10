@@ -5,23 +5,20 @@ $Revision$
 """
 from __future__ import unicode_literals, print_function
 
-from zope import interface
-import nti.contentrendering
-from nti.contentrendering import interfaces
-from nti.contentfragments import interfaces as frg_interfaces
-
-import requests
-import pyquery
-from lxml import etree
 import os
+import re
+import sys
+import pyquery
+import requests
+from lxml import etree
 
 try:
 	from cStringIO import StringIO
 except ImportError:
 	from StringIO import StringIO
 
-import sys
-import re
+import nti.contentrendering
+from nti.contentfragments import interfaces as frg_interfaces
 
 def _text_of( p ):
 	return etree.tostring( p, encoding=unicode, method='text' )
@@ -213,14 +210,14 @@ def _build_header(title = None, authors = None, base_url = None):
 		 br'\usepackage{graphicx}',
 		 br'\usepackage{ntilatexmacros}',
 		 br'\usepackage{hyperref}']
-        if base_url:
-                lines.append( br'\hyperbaseurl{' + _url_escape(base_url) + b'}' )
-        if title:
-                lines.append( br'\title{' + title + b'}' )
-        if authors:
+	if base_url:
+		lines.append( br'\hyperbaseurl{' + _url_escape(base_url) + b'}' )
+	if title:
+		lines.append( br'\title{' + title + b'}' )
+	if authors:
 		for author in authors:
 			lines.append( br'\author{' + author + b'}' )
-        lines.append( br'\begin{document}' )
+		lines.append( br'\begin{document}' )
 
 	return '\n'.join(lines)
 
@@ -316,8 +313,9 @@ def main():
 	xmlconfig.file( 'configure.zcml', package=nti.contentrendering )
 	url = sys.argv[1]
 	pq = _url_to_pyquery( url )
-	buffer = StringIO()
-	title = _opinion_to_tex( pq, output=buffer, base_url=url )
+	
+	buf = StringIO()
+	title = _opinion_to_tex( pq, output=buf, base_url=url )
 	title = title.replace(' ', '_').replace('.', '_')
 
 	# Make output directory
@@ -325,12 +323,12 @@ def main():
 		os.mkdir(title)
 
 	# Write output tex file
-	with open( os.path.join(title, title + '.tex'), 'wb') as file:
-		file.write( buffer.getvalue() )
+	with open( os.path.join(title, title + '.tex'), 'wb') as f:
+		f.write( buf.getvalue() )
 
 	# Write nti_render_conf.ini
-	with open( os.path.join(title, 'nti_render_conf.ini'), 'wb') as file:
-		file.write( _build_nti_render_conf() )
+	with open( os.path.join(title, 'nti_render_conf.ini'), 'wb') as f:
+		f.write( _build_nti_render_conf() )
 
 if __name__ == '__main__': # pragma: no cover
 	main()

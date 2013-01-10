@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 """
-
-
 $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
 
 import re
 import os
@@ -24,6 +21,9 @@ from urlparse import urljoin
 from urlparse import urlparse
 
 from pyquery import PyQuery as pq
+
+import logging
+logger = logging.getLogger(__name__)
 
 WGET_CMD = [ 'wget', '-q' ]
 
