@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 def findNodes(node, nodeName):
 	nodes = []
 	#print 'looking at node %s'%node

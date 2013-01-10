@@ -1,8 +1,12 @@
 #!/usr/bin/env python
-import  os, cPickle
-import xml.sax
+
+from __future__ import print_function, unicode_literals
+
+import os
 import sys
 import gzip
+import cPickle
+import xml.sax
 
 from xml.sax.handler import ContentHandler
 
@@ -16,7 +20,7 @@ def main(args):
 		createDictionary(args.pop(0), args.pop(0))
 
 	if action == 'lookup':
-		print lookup(args.pop(0), args.pop(0))
+		print(lookup(args.pop(0), args.pop(0)))
 
 def createDictionary(wikidumpname, destname):
 
@@ -53,13 +57,13 @@ def lookup(dicname, term):
 
 	end = time.time()
 
-	print 'Took %s seconds to load the index' % (end-start)
+	print('Took %s seconds to load the index' % (end-start))
 
 	start = time.time()
 	if term not in index:
 		return 'Not found'
 
-	print 'Checking at location %s' % index[term]
+	print('Checking at location %s' % index[term])
 
 	dictionary = gzip.open(dicname+'.bin', 'rb')
 	dictionary.seek(index[term])
@@ -68,7 +72,7 @@ def lookup(dicname, term):
 	dictionary.close()
 	end = time.time()
 
-	print 'Took %s seconds to lookup the entry' % (end-start)
+	print('Took %s seconds to lookup the entry' % (end-start))
 	return res
 
 class WiktionaryDumpHandler(ContentHandler):
@@ -95,7 +99,7 @@ class WiktionaryDumpHandler(ContentHandler):
 		if localname == self.pageLabel:
 			self.insidePage = True
 			self.page = self.page+1
-			print 'Found page %d' % self.page
+			print('Found page %d' % self.page)
 		elif localname == self.nameLabel:
 			self.insideName = True
 			self.name = ''
@@ -131,9 +135,6 @@ class WiktionaryDumpHandler(ContentHandler):
 			self.name = self.name+data
 		elif self.insidePage and self.insideMarkup:
 			self.markup = self.markup + data
-
-
-
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
