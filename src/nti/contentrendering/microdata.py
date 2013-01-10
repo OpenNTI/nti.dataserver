@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 """HTML5 microdata parser for python 2.x/3.x
 
 - it requires lxml
