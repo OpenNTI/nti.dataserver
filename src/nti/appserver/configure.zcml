@@ -280,14 +280,15 @@
 	<!--
 	As we traverse down, if we hit ISites, install them, thus letting
 	ZCA registries be as local as needed.
-	-->
+	NOTE: This is disabled. See zope_site_tween for details. Turning
+	it on loses configuration.
 	<subscriber
 		zcml:condition="installed zope.site"
 		for="zope.component.interfaces.ISite
 			 zope.traversing.interfaces.IBeforeTraverseEvent"
 		handler="zope.site.threadSiteSubscriber"
 		/>
-
+	-->
 
 	<!-- Events -->
 	<!-- Stream events -->

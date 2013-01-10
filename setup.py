@@ -220,7 +220,7 @@ setup(
 		'repoze.who == 2.0', # 2.1b1 is out, should be drop in, may require changes
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests >= 0.14.2,<1.0', # HTTP. NOTE: 1.0.x is out, but not full backwards compat. Since some tools (httpie) depend on it, wait until they are ready
+		'requests >= 0.14.2,<1.0', # HTTP. NOTE: 1.1.x is out, but not full backwards compat. Since some tools (httpie) depend on it, wait until they are ready
 		'scss >= 0.8.72',
 		'setproctitle >= 1.1.6',
 		'setuptools >= 0.6c11',
@@ -318,7 +318,7 @@ setup(
 			'nose >= 1.2.1',
 			'zope.testing >= 4.1.1',
 			'zc.buildout >= 1.6.3, < 2.0',
-			'nose-progressive',
+			'nose-progressive >= 1.4',
 			'pyhamcrest >= 1.7.1',
 			'WebTest >= 1.4.3',
 			'fakeredis >= 0.3.0',
