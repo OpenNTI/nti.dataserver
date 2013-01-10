@@ -112,7 +112,9 @@ class _BasicWhooshIndexer(object):
 		return idx
 		
 class _BookFileWhooshIndexer(_BasicWhooshIndexer):
-		
+	"""
+	Index each topic (file) as a whole. 1 inndex document per topic 
+	"""
 	def _parse_text(self, text, pattern, default=''):
 		m = pattern.search(text, re.M|re.I)
 		return m.groups()[0] if m else default
@@ -150,7 +152,9 @@ class _BookFileWhooshIndexer(_BasicWhooshIndexer):
 		return result
 		
 class _DefaultWhooshIndexer(_BasicWhooshIndexer):
-		
+	"""
+	Indexing topic children nodes that either have an id or data_ntiid attribute
+	"""
 	def process_topic(self, node, writer):
 		title = unicode(node.title)
 		ntiid = unicode(node.ntiid)
