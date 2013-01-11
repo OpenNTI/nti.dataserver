@@ -1,0 +1,73 @@
+# -*- mode: html -*-
+
+name: litclubsession litclubsessionsection
+<div class="litclubsession" tal:attributes="id self/id; ntiid self/ntiid">
+<div tal:replace="self"></div>
+</div>
+
+name: litclubwelcomesection
+<div class="litclubsection litclubsection-welcome" tal:attributes="id self/id; ntiid self/ntiid">
+<div class="litclubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
+name: litclubhellosongsubsection
+<div class="litclubsubsection litclubsubsection-hello">
+<div class="litclubsubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
+name: litclubcheckinsubsection
+<div class="litclubsubsection litclubsubsection-checkin">
+<div class="litclubsubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
+name: litclubcommunitysection
+<div class="litclubsection litclubsection-community" tal:attributes="id self/id; ntiid self/ntiid">
+<div class="litclubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
+name: litclubreadaloudsection
+<div class="litclubsection litclubsection-readaloud" tal:attributes="id self/id; ntiid self/ntiid">
+<div class="litclubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
+name: litclubcheckinsubsection
+<div class="litclubsubsection litclubsubsection-discussion">
+<div class="litclubsubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
+name: litclubcoresection
+<div class="litclubsection litclubsection-coreactivity" tal:attributes="id self/id; ntiid self/ntiid">
+<div class="litclubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
+name: litclubindereadingsection
+<div class="litclubsection litclubsection-independentreading" tal:attributes="id self/id; ntiid self/ntiid">
+<div class="litclubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
+name: litclubwrapupsection
+<div class="litclubsection litclubsection-wrapup" tal:attributes="id self/id; ntiid self/ntiid">
+<div class="litclubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
+name: litclubpraisesubsection
+<div class="litclubsubsection litclubsubsection-praise">
+<div class="litclubsubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
+name: litclubgoodbyesongsubsection
+<div class="litclubsubsection litclubsubsection-goodbye">
+<div class="litclubsubsection title" tal:content="self/title">Title</div>
+<div tal:replace="self"></div>
+</div>
+
