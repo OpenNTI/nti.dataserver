@@ -170,7 +170,7 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 																	toExternalOID( containedObject ) )
 		
 		containerId = getattr( containedObject, StandardInternalFields.CONTAINER_ID, None )
-		logger.debug("User, %s, created object of type, %s, for container, %s.", creator, datatype, containerId)
+		logger.info("User, %s, created object, %s, of type, %s, for container, %s.", creator, containedObject.id, datatype, containerId)
 
 		__traceback_info__ = containedObject
 		assert containedObject.__parent__
@@ -206,10 +206,13 @@ class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixi
 			self._check_object_exists( theObject )
 
 			lastModified = 0
+			objectId = theObject.id
 			if user.deleteContainedObject( theObject.containerId, theObject.id ) is None: # Should fire lifecycleevent.removed
 				raise hexc.HTTPNotFound()
 
 			lastModified = theObject.creator.lastModified
+				
+		logger.info("User, %s, deleted object, %s, from container, %s.", user, objectId, theObject.containerId)
 
 		result = hexc.HTTPNoContent()
 		result.last_modified = lastModified
