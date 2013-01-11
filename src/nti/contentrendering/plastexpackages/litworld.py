@@ -9,6 +9,12 @@ class litclubsession(Base.chapter):
 class litclubsessionsection(Base.section):
     pass
 
+class litclubsection(Base.subsection):
+    pass
+
+class litclubsubsection(Base.subsubsection):
+    pass
+
 class litclubwelcomesection(Base.subsection):
     pass
 
@@ -40,5 +46,46 @@ class litclubpraisesubsection(Base.subsubsection):
     pass
 
 class litclubgoodbyesongsubsection(Base.subsubsection):
+    pass
+
+
+# Alternative presentation of information
+class litclubsectionalt(Base.subsection):
+    pass
+
+class litclubsubsectionalt(Base.subsubsection):
+    pass
+
+class litclubwelcomesectionalt(Base.subsection):
+    pass
+
+class litclubhellosongsubsectionalt(Base.subsubsection):
+    pass
+
+class litclubcheckinsubsectionalt(Base.subsubsection):
+    pass
+
+class litclubcommunitysectionalt(Base.subsection):
+    pass
+
+class litclubreadaloudsectionalt(Base.subsection):
+    pass
+
+class litclubdiscussionsubsectionalt(Base.subsubsection):
+    pass
+
+class litclubcoresectionalt(Base.subsection):
+    pass
+
+class litclubindereadingsectionalt(Base.subsection):
+    pass
+
+class litclubwrapupsectionalt(Base.subsection):
+    pass
+
+class litclubpraisesubsectionalt(Base.subsubsection):
+    pass
+
+class litclubgoodbyesongsubsectionalt(Base.subsubsection):
     pass
 
