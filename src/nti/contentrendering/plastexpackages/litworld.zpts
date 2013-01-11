@@ -35,7 +35,7 @@ name: litclubreadaloudsection
 <div tal:replace="self"></div>
 </div>
 
-name: litclubcheckinsubsection
+name: litclubdiscussionsubsection
 <div class="litclubsubsection litclubsubsection-discussion">
 <div class="litclubsubsection title" tal:content="self/title">Title</div>
 <div tal:replace="self"></div>
