@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Code related to the question interfaces.
@@ -12,8 +11,8 @@ import zope.container.contained
 
 from persistent import Persistent
 
-from . import interfaces
-from ._util import superhash
+from nti.assessment import interfaces
+from nti.assessment._util import superhash
 
 @interface.implementer(interfaces.IQuestion,mime_interfaces.IContentTypeAware)
 class QQuestion(Persistent, zope.container.contained.Contained):
