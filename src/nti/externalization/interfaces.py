@@ -177,22 +177,30 @@ class LocatedExternalDict(dict):
 	"""
 	A dictionary that implements :class:`~nti.externalization.interfaces.ILocatedExternalMapping`. Returned
 	by :func:`~nti.externalization.externalization.to_standard_external_dictionary`.
+
+	This class is not :class:`.IContentTypeAware`, and it indicates so explicitly by declaring a
+	`mime_type` value of None.
 	"""
 
 	__name__ = ''
 	__parent__ = None
 	__acl__ = ()
+	mime_type = None
 
 @interface.implementer( ILocatedExternalSequence )
 class LocatedExternalList(list):
 	"""
 	A list that implements :class:`~nti.externalization.interfaces.ILocatedExternalSequence`. Returned
 	by :func:`~nti.externalization.externalization.to_external_object`.
+
+	This class is not :class:`.IContentTypeAware`, and it indicates so explicitly by declaring a
+	`mime_type` value of None.
 	"""
 
 	__name__ = ''
 	__parent__ = None
 	__acl__ = ()
+	mime_type = None
 
 ### Creating and updating new and existing objects given external forms
 

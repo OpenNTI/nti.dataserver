@@ -341,7 +341,7 @@ class TestApplication(SharedApplicationTestBase):
 		# It should also show up in the RecursiveStream
 		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream'
 		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
-		assert_that( res.content_type, is_( 'application/vnd.nextthought.locatedexternaldict+json'))
+		assert_that( res.content_type, is_( 'application/vnd.nextthought+json'))
 
 		# And the feed
 		path = path + '/feed.atom'
