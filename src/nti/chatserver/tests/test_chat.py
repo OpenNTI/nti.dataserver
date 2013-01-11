@@ -915,7 +915,7 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( sessions[1].socket.events, has_length( 1 ) )
 
 	@WithMockDSTrans
-	def test_send_event_to_users_correct_edit_links(self):
+	def test_send_event_to_users_correct_edit_links_Pyramid_functional(self):
 		"An Edit link is only sent to users that have write permissions."
 		# This is a high-level test involving the appserver as well
 		appserver = dottedname.resolve( 'nti.appserver' )
@@ -923,6 +923,7 @@ class TestChatserver(ConfiguringTestBase):
 		req_fact = dottedname.resolve( 'pyramid.request.Request' )
 		self.configure_packages( (appserver,) )
 		request = req_fact.blank( '/' )
+		request.environ['paste.testing'] = True # see nti.appserver.tests.__init__
 		#request.registry = component.getSiteManager()
 		config = psetUp(registry=component.getSiteManager(),request=request,hook_zca=False)
 		config.setup_registry()
