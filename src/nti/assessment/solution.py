@@ -1,15 +1,13 @@
-#!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
 from zope import interface
-from zope import component
-
-from nti.externalization.externalization import make_repr
-
-from nti.assessment import interfaces
-from nti.assessment import parts
 
 from persistent import Persistent
+from nti.externalization.externalization import make_repr
+
+from nti.assessment import parts
+from nti.assessment import interfaces
+from nti.assessment._util import TrivialValuedMixin as _TrivialValuedMixin
 
 @interface.implementer(interfaces.IQSolution)
 class QSolution(Persistent):
@@ -37,9 +35,6 @@ class QMathSolution(QSolution):
 	"""
 	Base class for the math hierarchy.
 	"""
-
-from ._util import TrivialValuedMixin as _TrivialValuedMixin
-
 
 def _eq_(self, other):
 	try:

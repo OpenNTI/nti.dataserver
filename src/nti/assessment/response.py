@@ -1,11 +1,9 @@
-#!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
 from zope import interface
-from zope import component
 
 from nti.assessment import interfaces
-from ._util import TrivialValuedMixin
+from nti.assessment._util import TrivialValuedMixin
 
 from persistent import Persistent
 
