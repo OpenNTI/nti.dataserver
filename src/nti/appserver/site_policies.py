@@ -67,9 +67,11 @@ def get_possible_site_names(request=None, include_default=False):
 	try:
 		site_names = request.possible_site_names
 	except AttributeError:
-		# except in test cases. We should never see this warning
-		# in production
-		logger.warning( "Request has no site_names", exc_info=True )
+		if not request.environ.get( 'paste.testing' ): # pragma: no cover
+			raise
+			# except in some early test cases. We should never see this warning
+			# in production. (See the WebTest 'Framework Hookse' documentation)
+
 		from nti.appserver.tweens.zope_site_tween import _get_possible_site_names
 		site_names = _get_possible_site_names( request )
 		request.possible_site_names = tuple(site_names)

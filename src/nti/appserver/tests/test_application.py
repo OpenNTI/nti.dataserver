@@ -343,6 +343,7 @@ class TestApplication(SharedApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
 		assert_that( res.content_type, is_( 'application/vnd.nextthought.locatedexternaldict+json'))
 
+		# And the feed
 		path = path + '/feed.atom'
 		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
 		assert_that( res.content_type, is_( 'application/atom+xml'))
@@ -364,15 +365,22 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.body, contains_string( str(contained) ) )
 
 
-	@WithSharedApplicationMockDS
+	@WithSharedApplicationMockDSWithChanges
 	def test_post_pages_collection(self):
+		self.ds.add_change_listener( users.onChange )
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()
-			testapp = TestApp( self.app )
-			containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
-			data = json.serialize( { 'Class': 'Highlight', 'MimeType': 'application/vnd.nextthought.highlight',
-									 'ContainerId': containerId,
-									 'applicableRange': {'Class': 'ContentRangeDescription'}} )
+			_user2 = self._create_user( username='foo@bar' )
+
+		testapp = TestApp( self.app )
+		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_HTML, specific='1234' )
+		data = json.serialize( { 'Class': 'Highlight',
+								 'MimeType': 'application/vnd.nextthought.highlight',
+								 'ContainerId': containerId,
+								 'sharedWith': ['foo@bar'],
+								 'selectedText': 'This is the selected text',
+								 'applicableRange': {'Class': 'ContentRangeDescription'}} )
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
@@ -382,9 +390,17 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.headers, has_entry( 'Location', contains_string( 'http://localhost/dataserver2/users/sjohnson%40nextthought.com/Objects/tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID' ) ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
 
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + containerId + ')/UserGeneratedData'
-		res = testapp.get( path, extra_environ=self._make_extra_environ())
-		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
+		# The object can be found in the UGD sub-collection
+		for username in ('sjohnson@nextthought.com', 'foo@bar'):
+			path = '/dataserver2/users/'+username+'/Pages/' + containerId + '/UserGeneratedData'
+			res = testapp.get( path, extra_environ=self._make_extra_environ(user=username))
+			assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
+
+		# And the feed for the other user (not ourself)
+		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream/feed.atom'
+		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
+		assert_that( res.content_type, is_( 'application/atom+xml'))
+		assert_that( res.body, contains_string( "This is the selected text" ) )
 
 
 		# The pages collection should have complete URLs
@@ -1270,6 +1286,54 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( sect_info, has_entry( 'Username', sect_ntiid ) )
 		assert_that( sect_info, has_entry( 'alias', sect_name ) )
 		assert_that( sect_info, has_key( 'avatarURL' ) )
+
+
+	@WithSharedApplicationMockDSWithChanges
+	def test_note_in_feed(self):
+		self.ds.add_change_listener( users.onChange )
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			_ = self._create_user()
+			_user2 = self._create_user( username='foo@bar' )
+
+		testapp = TestApp( self.app )
+		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_HTML, specific='1234' )
+		data = json.serialize( { 'Class': 'Note',
+								 'MimeType': 'application/vnd.nextthought.note',
+								 'ContainerId': containerId,
+								 'sharedWith': ['foo@bar'],
+								 'selectedText': 'This is the selected text',
+								 'body': ["The note body"],
+								 'applicableRange': {'Class': 'ContentRangeDescription'}} )
+
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 201 ) )
+
+		# And the feed for the other user (not ourself)
+		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream/feed.atom'
+		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
+		assert_that( res.content_type, is_( 'application/atom+xml'))
+		assert_that( res.body, contains_string( "The note body" ) )
+		#atom_res = res
+
+		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream/feed.rss'
+		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
+		assert_that( res.content_type, is_( 'application/rss+xml'))
+		assert_that( res.content_type_params, has_entry( 'charset', 'utf-8' ) )
+		assert_that( res.body, contains_string( "The note body" ) )
+
+		#res._use_unicode = False # otherwise lxml complains when given a Unicode string to decode
+		#pq = res.pyquery
+
+		# We can deal with last modified requests (as is common in fead readers)
+		# by returning not modified
+		testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'),
+					 headers={'If-Modified-Since': res.headers['Last-Modified']},
+					 status=304	)
+
+
+
 
 class TestApplicationSearch(ApplicationTestBase):
 
