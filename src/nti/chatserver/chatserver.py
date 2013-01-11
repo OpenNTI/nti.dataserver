@@ -225,7 +225,7 @@ class Chatserver(object):
 		if msg_info.Sender not in room.occupant_session_names:
 			logger.info( "Dropping message from an occupant not in the room %s %s", room, msg_info )
 			return False
-		logger.debug( "Message for room, %s, with %d occupants, from sender %s.", room_id, len(room.occupant_names), msg_info.Sender)
+		logger.info( "Message for room, %s, with %d occupants, from sender %s.", room_id, len(room.occupant_names), msg_info.Sender)
 		return room.post_message( msg_info )
 
 
@@ -369,7 +369,7 @@ class Chatserver(object):
 		self.rooms.add_room( room )
 		# Now broadcast the room to the occupants
 		room.add_occupant_names( occupants )
-		logger.debug( "Room, %s, created with %d occupant(s).", room.id, len(room.occupant_names))
+		logger.info( "Room, %s, created with %d occupant(s).", room.id, len(room.occupant_names))
 
 		return room
 
@@ -385,7 +385,7 @@ class Chatserver(object):
 		if room:
 			result = room.del_occupant_name( username )
 			if result:
-				logger.debug( "User, %s, exited room, %s, leaving %d occupants.", username, room_id, len(room.occupant_names))
+				logger.info( "User, %s, exited room, %s, leaving %d occupants.", username, room_id, len(room.occupant_names))
 			if not room.occupant_names:
 				# Note that since chat session handlers are not
 				# tied to sessions, just names, and a name can have multiple
