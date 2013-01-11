@@ -551,7 +551,10 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 		# Me only is back to 2
 		res = testapp.get( path, params={'filter': 'TopLevel,MeOnly'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
-		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', hl_id ), has_entry( 'ID', top_n_id ) ) ) )
+		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', hl_id ),
+																  # And it gets the correct reply counts
+																  has_entries( 'ID', top_n_id, 'ReferencedByCount', 1 ) ) ) )
+
 
 		# Me only notes is back to 1
 		res = testapp.get( path, params={'filter': 'TopLevel,MeOnly', 'accept': contenttypes.Note.mime_type }, extra_environ=self._make_extra_environ())
@@ -668,7 +671,8 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 	def test_recursive_like_count(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
-
+			user2 = self._create_user( 'foo@bar' )
+			# A note I own, liked by another user
 			top_n = contenttypes.Note()
 			top_n.applicableRange = contentrange.ContentRangeDescription()
 			top_n.containerId = 'tag:nti:foo'
@@ -677,7 +681,7 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 			user.addContainedObject( top_n )
 			top_n_id = top_n.id
 			top_n.lastModified = 1
-
+			# A reply to a note I own, liked by two users
 			reply_n = contenttypes.Note()
 			reply_n.applicableRange = contentrange.ContentRangeDescription()
 			reply_n.containerId = 'tag:nti:foo'
@@ -685,47 +689,76 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 			reply_n.inReplyTo = top_n
 			reply_n.addReference(top_n)
 			liking.like_object( reply_n, 'foo@bar' )
+			liking.like_object( reply_n, 'foo2@bar' )
 			user.addContainedObject( reply_n )
 			reply_n_id = reply_n.id
 			reply_n.lastModified = 2
 
-			top_n_ext_id = to_external_ntiid_oid( top_n )
+			# A reply to a note I own, created by another user, liked by another user
+			reply_n_o = contenttypes.Note()
+			reply_n_o.applicableRange = contentrange.ContentRangeDescription()
+			reply_n_o.containerId = 'tag:nti:foo'
+			reply_n_o.body = ('Again',)
+			reply_n_o.inReplyTo = top_n
+			reply_n_o.addReference(top_n)
+			liking.like_object( reply_n_o, 'foo2@bar' )
+			user2.addContainedObject( reply_n_o )
+			user._addSharedObject( reply_n_o )
+			reply_n_o_id = reply_n_o.id
+			reply_n_o.lastModified = 2
+
+			#top_n_ext_id = to_external_ntiid_oid( top_n )
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n.containerId + ')/UserGeneratedData'
 
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( res.json_body, has_entry( 'Items', has_length( 3 ) ) )
 
 		res = testapp.get( path, params={'sortOn': 'RecursiveLikeCount'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( res.json_body, has_entry( 'Items', has_length( 3 ) ) )
 		# Descending by default
 		assert_that( res.json_body,
 					 has_entry( 'Items',
 								contains(
 									has_entry( 'ID', top_n_id ),
-									has_entry( 'ID', reply_n_id ) ) ) )
+									has_entry( 'ID', reply_n_id ),
+									has_entry( 'ID', reply_n_o_id ) ) ) )
 		# And, if we asked for this info, we get data back about it
 		assert_that( res.json_body,
 					 has_entry( 'Items',
 								contains(
+									has_entry( 'RecursiveLikeCount', 4 ),
 									has_entry( 'RecursiveLikeCount', 2 ),
 									has_entry( 'RecursiveLikeCount', 1 ) ) ) )
 		assert_that( res.json_body,
 					 has_entry( 'Items',
 								contains(
-									has_entry( 'ReferencedByCount', 1 ),
+									has_entry( 'ReferencedByCount', 2 ),
+									has_entry( 'ReferencedByCount', 0 ),
 									has_entry( 'ReferencedByCount', 0 ) ) ) )
 
 		res = testapp.get( path, params={'sortOn': 'RecursiveLikeCount', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
-		# Descending by default
+		assert_that( res.json_body, has_entry( 'Items', has_length( 3 ) ) )
+		# Sorted ascending
 		assert_that( res.json_body,
 					 has_entry( 'Items',
 								contains(
+									has_entry( 'ID', reply_n_o_id ),
 									has_entry( 'ID', reply_n_id ),
 									has_entry( 'ID', top_n_id ) ) ) )
 
+		# I can request just the things I own and still get valid counts
+		res = testapp.get( path, params={'filter': 'TopLevel,MeOnly',}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'ID', top_n_id ) ) ) )
+		assert_that( res.json_body,
+					 has_entry( 'Items',
+								contains(
+									has_entry( 'RecursiveLikeCount', 4 ) ) ) )
 
 
 class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):

@@ -194,6 +194,32 @@ def _combine_predicate( new, old ):
 		return new
 	return lambda obj: new(obj) and old(obj)
 
+def _meonly_predicate_factory( request ):
+	"""
+	Creates a filter that will return things that only belong to (were created by)
+	the current user.
+
+	Note that this is a manual filtering and requires loading all the
+	data into memory; it can be implemented more efficiently (avoiding
+	loading all the data) by adjusting
+	:meth:`_UGDView.getObjectsForId` to simply *not* load the shared
+	data when the filter is ``MeOnly``. However, profiling (Jan 2013)
+	shows that most of the overhead is actually in externalization and
+	loading and filtering the objects is relatively fast---the
+	difference amounts to less than 15%; this depends, however, on the
+	effectiveness of the storage cache and the amount of objects being
+	filtered out. Doing it manually lets us get accurate values for
+	ReferencedByCount and RecursiveLikeCount.
+	"""
+	me = request.context.user
+	me_uname = me.username
+	def _filter(o):
+		try:
+			return getattr( o.creator, 'username', o.creator ) == me_uname
+		except AttributeError:
+			return False
+	return _filter
+
 def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
 	me = request.context.user
 	following_usernames = set()
@@ -245,8 +271,8 @@ FILTER_NAMES = {
 	'IFollowAndMe': (_ifollowandme_predicate_factory,),
 	'Favorite': (_favorite_predicate_factory,),
 	'Bookmarks': (_bookmark_predicate_factory,),
+	'MeOnly': (_meonly_predicate_factory,),
 	}
-# MeOnly is another valid filter for just things I have done, implemented efficiently
 
 class _MimeFilter(object):
 
@@ -278,6 +304,8 @@ class _UGDView(object):
 		self._sort_filter_batch_result( result )
 		result.__parent__ = self.request.context
 		result.__name__ = ntiid
+		if self.request.method == 'HEAD':
+			result['Items'] = () # avoid externalization
 		return result
 
 	def __get_list_param( self, name ):
@@ -319,7 +347,7 @@ class _UGDView(object):
 
 		__traceback_info__ = user, ntiid
 		mystuffDict = self.get_owned( user, ntiid ) if self.get_owned else ()
-		sharedstuffList = self.get_shared( user, ntiid) if self.get_shared and 'MeOnly' not in self._get_filter_names() else ()
+		sharedstuffList = self.get_shared( user, ntiid) if self.get_shared else () # see comments in _meonly_predicate_factory
 
 		# To determine the existence of the container,
 		# My stuff either exists or it doesn't. The others, being shared,
@@ -482,10 +510,10 @@ class _UGDView(object):
 			predicate = self._make_exclude_predicate()
 
 		filter_names = self._get_filter_names()
-		# Be nice and make sure the reference-based counts get included if
-		# it isn't already and we're after just the top level.
-		# Must do this before filtering
-		if 'TopLevel' in filter_names and sort_key_function not in (_reference_list_length, _reference_list_recursive_like_count):
+		# Be nice and make sure the reference-based counts get included if we are going to be throwing
+		# away all child data
+		# Must do this before filtering (see also comments in _meonly_predicate_factory)
+		if 'TopLevel' in filter_names:
 			_build_reference_lists( self.request, result_list )
 
 		for filter_name in filter_names:
