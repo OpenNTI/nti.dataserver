@@ -84,6 +84,7 @@ class ntislide(_LocalContentMixin, Environment, plastexids.NTIIDMixin):
 	    \end{ntislidetext}
 	\end{ntislide}
 """
+	args = '[ options:dict ]'
 	counter = "ntislide"
 	blockType = True
 	_ntiid_cache_map_name = '_ntislide_ntiid_map'
@@ -91,6 +92,16 @@ class ntislide(_LocalContentMixin, Environment, plastexids.NTIIDMixin):
         _ntiid_suffix = 'nsd.'
         _ntiid_title_attr_name = 'ref'
 	_ntiid_type = NTIID_TYPE
+
+	def invoke(self, tex):
+		_t = super(ntislide, self).invoke(tex)
+		if 'options' not in self.attributes or not self.attributes['options']:
+			self.attributes['options'] = {}
+		if 'presentationonly' not in self.attributes['options']:
+			self.attributes['options']['presentationonly'] = False
+		else:
+			self.style['display'] = 'none'
+		return _t
 
 	def digest(self, tex):
 		super(ntislide, self).digest(tex)
