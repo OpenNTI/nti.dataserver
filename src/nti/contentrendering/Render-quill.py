@@ -1,7 +1,9 @@
-#!/usr/bin/env PYTHONPATH=/Users/jmadden/Projects/AoPS/src/main/ /opt/local/bin/python2.7
+#!/usr/bin/env python
 
-import BaseHTTPServer
+from __future__ import print_function, unicode_literals
+
 import urllib
+import BaseHTTPServer
 
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -28,9 +30,6 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 		</html>""" % texsource
 
 		print >> self.wfile, html
-
-
-
 
 def main():
 	httpd = BaseHTTPServer.HTTPServer( ('', 8080), Handler )

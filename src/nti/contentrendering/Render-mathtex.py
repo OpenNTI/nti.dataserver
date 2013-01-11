@@ -1,7 +1,9 @@
-#!/usr/bin/env PYTHONPATH=/Users/jmadden/Projects/AoPS/src/main/ /opt/local/bin/python2.7
+#!/usr/bin/env python
 
-import BaseHTTPServer
+from __future__ import print_function, unicode_literals
+
 import urllib
+import BaseHTTPServer
 
 from mathtex.mathtex_main import Mathtex
 from mathtex.fonts import UnicodeFonts
@@ -11,20 +13,18 @@ the_unicode = UnicodeFonts( rm='Symbola', default='Symbola' )
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 	def do_GET( self ):
-		print self.path
+		print(self.path)
 
 		self.send_response( 200 )
 		self.send_header( 'Content-Type',  'image/svg+xml' )
 		self.end_headers()
 
 		texsource = '$' + urllib.unquote( self.path.lstrip( '/' ) ) + '$'
-		print texsource
+		print(texsource)
 		m = Mathtex( texsource, the_unicode )
 		# The SVG backend uses PyCairo's SVGSurface, which accepts any
 		# file-like object, not just a filename string, to write to
 		m.save( self.wfile, 'svg' )
-
-
 
 def main():
 	httpd = BaseHTTPServer.HTTPServer( ('', 8080), Handler )
