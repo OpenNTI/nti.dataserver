@@ -127,6 +127,8 @@ class _MeetingMessagePostPolicy(object):
 
 	def post_message( self, msg_info ):
 		"""
+		Post the :class:`.IMessageInfo` to the room.
+
 		:return: A value that can be interpreted as a boolean, indicating success of posting
 			the message. If the value is a number and not a bool object, then it is the
 			number by which the general message count of the room should be incremented (currently only one).

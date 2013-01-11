@@ -140,6 +140,8 @@ class SessionService(object):
 
 	def set_proxy_session( self, session_id, session=None ):
 		"""
+		Establish or remove a session proxy for the given session_id.
+
 		:param session: Something with `queue_message_from_client` and `queue_message_to_client` methods.
 			If `None`, then a proxy session for the `session_id` will be removed (if any)
 		"""
