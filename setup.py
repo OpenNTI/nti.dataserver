@@ -224,7 +224,7 @@ setup(
 		'scss >= 0.8.72',
 		'setproctitle >= 1.1.6',
 		'setuptools >= 0.6c11',
-		'simplejson >= 3.0.5',
+		'simplejson >= 3.0.6',
 		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
 		'six >= 1.2.0',
 		#'slimit',
