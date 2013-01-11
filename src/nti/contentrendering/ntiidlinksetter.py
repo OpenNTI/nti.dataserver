@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # $Id$
-from __future__ import print_function, unicode_literals
-
 import os
 import urllib
 import sys
