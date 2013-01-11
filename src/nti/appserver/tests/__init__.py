@@ -29,7 +29,7 @@ import webtest.lint
 from webtest.lint import check_headers as _orig_check_headers
 def unicode_check_headers(headers):
 	"""
-	Up through at lest WebTest 1.4.0, the middleware in webtest.lint
+	Up through at least WebTest 1.4.0, the middleware in webtest.lint
 	doesn't ensure that header names and values are bytestrings, but
 	this is required (if not in the spec, then in the implementation
 	provided in gevent 1.0rc1). This check causes that to happen.
