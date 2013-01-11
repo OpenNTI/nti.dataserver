@@ -65,6 +65,7 @@ from nti.externalization.externalization import toExternalObject
 from nti.assessment import interfaces as as_interfaces, parts, question
 from nti.contentrendering import plastexids, interfaces as cdr_interfaces
 from nti.contentfragments import interfaces as cfg_interfaces
+from nti.contentrendering.plastexpackages.ntilatexmacros import ntiincludevideo
 
 from plasTeX import Base
 from plasTeX.Base import Crossref
@@ -537,8 +538,7 @@ class naqhint(_LocalContentMixin,Base.List.item):
 	def _after_render( self, rendered ):
 		self._asm_local_content = rendered
 
-class naqvideo(Base.Command):
-	args = 'videourl thumbnail'
+class naqvideo(ntiincludevideo):
 	blockType = True
 
 class naquestion(_LocalContentMixin,Base.Environment,plastexids.NTIIDMixin):

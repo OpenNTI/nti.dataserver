@@ -57,8 +57,8 @@ name: naquestion
 
 name: naqvideo
 <object class="naqvideo" style="display: none" data-ntiid="none">
-<param name="url" tal:attributes="value self/attributes/videourl/source" />
-<param name="thumbnail" tal:attributes="value self/attributes/thumbnail/source" />
+<param name="url" tal:attributes="value self/attributes/video_url" />
+<param name="thumbnail" tal:attributes="value self/attributes/thumbnail" />
 </object>
 
 # Things that shouldn't render, just be placeholders
