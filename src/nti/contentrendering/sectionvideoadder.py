@@ -1,17 +1,15 @@
 #!/usr/bin/env python
-
-from __future__ import print_function, unicode_literals
-
 import os
-import urlparse
-
-from zope import interface
-from zope import component
-
-from nti.contentrendering import interfaces
 
 import logging
 logger = logging.getLogger(__name__)
+
+import urlparse
+
+from . import interfaces
+from zope import interface
+from zope import component
+
 
 def performTransforms(book, context=None):
 	"""
@@ -26,6 +24,7 @@ def performTransforms(book, context=None):
 		result.append( (util, util.transform( book )) )
 
 	return result
+
 
 class AbstractVideoAdder(object):
 

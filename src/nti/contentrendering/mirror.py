@@ -1,5 +1,3 @@
-from __future__ import print_function, unicode_literals
-
 import os
 import six
 import sys
@@ -10,8 +8,6 @@ import thread
 import tempfile
 import html5lib
 import subprocess
-import SocketServer
-import SimpleHTTPServer
 
 from urlparse import urljoin
 from urlparse import urlparse
@@ -181,6 +177,9 @@ def _get_index_dir(url, out_dir):
 						_get_file(url, os.path.join(out_dir,"indexdir"), target, False)
 	finally:
 		_remove_file(tmp)
+
+import SimpleHTTPServer
+import SocketServer
 
 def _launch_server(data_path, port=None):
 
