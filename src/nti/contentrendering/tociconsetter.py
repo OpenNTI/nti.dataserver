@@ -1,20 +1,19 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
+
 import os
 import sys
 
-from . import RenderedBook
-
-import logging
-logger = logging.getLogger(__name__)
-
 from zope import interface
 from zope import component
-from zope.deprecation import deprecate
 from zope.configuration import xmlconfig
 
 import nti.contentrendering
-from . import interfaces
+from nti.contentrendering import interfaces
+from nti.contentrendering import RenderedBook
+
+import logging
+logger = logging.getLogger(__name__)
 
 interface.moduleProvides( interfaces.IRenderedBookTransformer )
 
