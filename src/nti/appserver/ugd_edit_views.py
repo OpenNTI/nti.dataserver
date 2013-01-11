@@ -168,6 +168,9 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		self.request.response.location = self.request.resource_url( owner,
 																	'Objects',
 																	toExternalOID( containedObject ) )
+		
+		containerId = getattr( containedObject, StandardInternalFields.CONTAINER_ID, None )
+		logger.debug("User, %s, created object of type, %s, for container, %s.", creator, datatype, containerId)
 
 		__traceback_info__ = containedObject
 		assert containedObject.__parent__
