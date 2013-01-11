@@ -76,7 +76,7 @@ def feed_view( request ):
 	response = request.response
 
 	stream_view = _RecursiveUGDStreamView(request)
-	ext_dict = stream_view()
+	ext_dict = stream_view() # May raise HTTPNotFound
 	response.last_modified = ext_dict['Last Modified']
 
 	# TODO: This borrows alot from the REST renderers
@@ -120,8 +120,9 @@ def feed_view( request ):
 			)
 
 
-	response.content_type = feed.mime_type
-	response.body = compress_body( request, response, feed.writeString('utf-8'), False )
+	feed_string = feed.writeString( 'utf-8' )
+	response.content_type = feed.mime_type.encode( 'utf-8' )
+	response.body = compress_body( request, response, feed_string, False )
 
 	return response
 

@@ -168,9 +168,9 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		self.request.response.location = self.request.resource_url( owner,
 																	'Objects',
 																	toExternalOID( containedObject ) )
-		
+
 		containerId = getattr( containedObject, StandardInternalFields.CONTAINER_ID, None )
-		logger.info("User, %s, created object, %s, of type, %s, for container, %s.", creator, containedObject.id, datatype, containerId)
+		logger.debug("User '%s' created object '%s'/'%s' for container '%s'", creator, containedObject.id, datatype, containerId)
 
 		__traceback_info__ = containedObject
 		assert containedObject.__parent__
@@ -211,8 +211,8 @@ class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixi
 				raise hexc.HTTPNotFound()
 
 			lastModified = theObject.creator.lastModified
-				
-		logger.info("User, %s, deleted object, %s, from container, %s.", user, objectId, theObject.containerId)
+
+			logger.debug("User '%s' deleted object '%s' from container '%s'", user, objectId, theObject.containerId)
 
 		result = hexc.HTTPNoContent()
 		result.last_modified = lastModified

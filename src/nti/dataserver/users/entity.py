@@ -192,13 +192,13 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		doesn't exist, raises :class:`KeyError`.
 		:return: The user that was deleted.
 		"""
-		
+
 		dataserver = dataserver or _get_shared_dataserver()
 		root_users = dataserver.root[cls._ds_namespace]
 		user = root_users[username]
-		
+
 		notify( interfaces.WillDeleteEntityEvent( user ) )
-	
+
 		del root_users[username]
 
 		# Also clean it up from whatever shard it happened to come from

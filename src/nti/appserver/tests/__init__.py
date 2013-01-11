@@ -48,6 +48,13 @@ def monkey_patch_check_headers():
 		webtest.lint.check_headers = unicode_check_headers
 monkey_patch_check_headers()
 
+def _create_request( self, request_factory, request_args ):
+	self.request = request_factory( *request_args )
+	if request_factory is DummyRequest:
+		# See the WebTest 'Framework Hooks' documentation
+		self.request.environ['paste.testing'] = True
+		self.request.environ['paste.testing_variables'] = {}
+
 class _TestBaseMixin(object):
 	set_up_packages = (nti.appserver,)
 	set_up_mailer = True
@@ -55,7 +62,7 @@ class _TestBaseMixin(object):
 	request = None
 
 	def beginRequest( self, request_factory=DummyRequest, request_args=() ):
-		self.request = request_factory( *request_args )
+		_create_request( self, request_factory, request_args )
 		self.config.begin( request=self.request )
 
 	def get_ds(self):
@@ -89,7 +96,7 @@ class ConfiguringTestBase(_TestBaseMixin,nti.tests.ConfiguringTestBase):
 		super(ConfiguringTestBase,self).setUp()
 
 		if pyramid_request:
-			self.request = request_factory( *request_args )
+			_create_request( self, request_factory, request_args )
 
 		self.config = psetUp(registry=component.getGlobalSiteManager(),request=self.request,hook_zca=False)
 		self.config.setup_registry()

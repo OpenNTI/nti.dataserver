@@ -316,6 +316,7 @@ class _UGDView(object):
 
 		:raises nti.appserver.httpexceptions.HTTPNotFound: If no actual objects can be found.
 		"""
+
 		__traceback_info__ = user, ntiid
 		mystuffDict = self.get_owned( user, ntiid ) if self.get_owned else ()
 		sharedstuffList = self.get_shared( user, ntiid) if self.get_shared and 'MeOnly' not in self._get_filter_names() else ()
