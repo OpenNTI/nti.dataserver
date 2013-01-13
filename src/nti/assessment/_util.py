@@ -9,8 +9,19 @@ _marker = object()
 
 class TrivialValuedMixin(object):
 	value = None
-	def __init__( self, value=None ):
-		super(TrivialValuedMixin,self).__init__()
+	def __init__( self, *args, **kwargs ):
+		"""
+		value is either the first arg (if positional args are given) or the kwarg named
+		such.
+		"""
+		if args:
+			value = args[0]
+		elif 'value' in kwargs:
+			value = kwargs.get( 'value' )
+		else:
+			value = None
+
+		super(TrivialValuedMixin,self).__init__(*args, **kwargs)
 		if value is not None:
 			self.value = value
 

@@ -76,7 +76,7 @@ class VerifyProvides(BaseMatcher):
 			return True
 
 	def describe_to( self, description ):
-		description.append_text( 'object verifiably providing ' ).append( str(self.iface) )
+		description.append_text( 'object verifiably providing ' ).append( str(self.iface.__name__) )
 
 	def describe_mismatch( self, item, mismatch_description ):
 		x = None
@@ -86,7 +86,7 @@ class VerifyProvides(BaseMatcher):
 		except BrokenMethodImplementation as x:
 			mismatch_description.append_text( str(x).replace( '\n', '' ) )
 		except BrokenImplementation as x:
-			mismatch_description.append_text( 'failed to provide attribute "').append_text( x.name ).append_text( '"' )
+			mismatch_description.append_text( ' failed to provide attribute "').append_text( x.name ).append_text( '"' )
 		except DoesNotImplement as x:
 			mismatch_description.append_text( " does not implement the interface; it does implement " ).append_text( str(list(interface.providedBy(item))) )
 		except Invalid as x:

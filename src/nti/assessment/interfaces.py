@@ -1,11 +1,14 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
 from __future__ import unicode_literals, print_function
 
 from zope import interface
 from zope import schema
 
 from nti.utils import schema as dmschema
-
 
 NTIID_TYPE = 'NAQ'
 
@@ -120,6 +123,23 @@ class IQMathSolution(IQSolution):
 	specialized.
 	"""
 
+	allowed_units = TypedIterable( title="Strings naming unit suffixes",
+								 description="""
+									Numbers or expressions may have units. Sometimes the correct
+									answer depends on the correct unit being applied; sometimes the unit is optional,
+									and sometimes there must not be a unit (it is a dimensionless quantity).
+
+									If this attribute is ``None`` (the default) no special handling of units
+									is attempted.
+
+									If this attribute is an empty sequence, no units are accepted.
+
+									If this attribute consists of one or more strings, those are units to accept.
+									Include the empty string (last) to make units optional.""",
+								min_length=0,
+								required=False,
+								value_type=schema.TextLine( title="The unit" ) )
+
 class IQNumericMathSolution(IQMathSolution,IQSingleValuedSolution):
 	"""
 	A solution whose correct answer is numeric in nature, and
@@ -131,7 +151,11 @@ class IQNumericMathSolution(IQMathSolution,IQSingleValuedSolution):
 class IQSymbolicMathSolution(IQMathSolution):
 	"""
 	A solution whose correct answer should be interpreted symbolically.
-	For example, "twelve pi" or "the square root of two".
+	For example, "12π" (twelve pi, not 37.6...) or "√2" (the square root of two, not
+	1.4...).
+
+	This is intended to be further subclassed to support specific types of
+	symbolic interpretation.
 	"""
 
 class IQSymbolicMathPart(IQMathPart):

@@ -22,9 +22,13 @@ Example::
 		   A part has one or more possible solutions. The solutions are of the same type,
 		   determined implicitly by the part type.
 		   \begin{naqsolutions}
-			   \naqsolution[weight] A possible solution. The weight, defaulting to one,
+			   \naqsolution[weight]<unit1, unit2> A possible solution. The weight, defaulting to one,
 				   	is how "correct" this solution is. Some parts may have more compact
 					representations of solutions.
+
+					The units are only valid on math parts. If given, it may be an empty list  to specify
+					that units are forbidden, or a list of optional units that may be included as part of the
+					answer.
 			\end{naqsolutions}
 			\begin{naqhints}
 				\naqhint Arbitrary content giving a hint for how to arrive at the correct
@@ -167,7 +171,11 @@ class naqsolutions(Base.List):
 
 class naqsolution(Base.List.item):
 
-	args = '[weight:float]'
+	args = '[weight:float] <units:list:str>' # We use <> for the units
+                                             # list because () looks
+                                             # like a geometric point,
+                                             # and there are valid
+                                             # answers like that
 
 	def invoke( self, tex ):
 		# TODO: Why is this being done? Does the counter matter?
@@ -176,6 +184,11 @@ class naqsolution(Base.List.item):
 		#ignore the list implementation
 		return Base.Command.invoke(self,tex)
 
+
+	def units_to_html(self):
+		units = self.attributes.get( 'units' )
+		if units:
+			return ','.join( units )
 
 class naqsolexplanation(_LocalContentMixin, Base.Environment):
 	pass
@@ -209,6 +222,17 @@ class _AbstractNAQPart(_LocalContentMixin,Base.Environment):
 			weight = solution_el.attributes['weight']
 			if weight is not None:
 				solution.weight = weight
+
+			if self.soln_interface.isOrExtends( as_interfaces.IQMathSolution ):
+				# Units given? We currently always make units optional, given or not
+				# This can easily be changed or configured
+				allowed_units = solution_el.attributes.get( 'units' )
+				if not allowed_units:
+					allowed_units = ('',)
+				if '' not in allowed_units:
+					allowed_units = list(allowed_units)
+					allowed_units.append( '' )
+				solution.allowed_units = allowed_units
 			solutions.append( solution )
 
 		return solutions
@@ -393,8 +417,8 @@ class naqmultiplechoicemultipleanswerpart(_AbstractNAQPart):
 
 	def digest( self, tokens ):
 		res = super(naqmultiplechoicemultipleanswerpart,self).digest( tokens )
-		# Validate the document structure: we have a naqchoices child 
-		# with at least two of its own children, and at least one 
+		# Validate the document structure: we have a naqchoices child
+		# with at least two of its own children, and at least one
 		# weight == 1.  There is no explicit solution
 		_naqchoices = self.getElementsByTagName( 'naqchoices' )
 		assert len(_naqchoices) == 1
@@ -403,7 +427,7 @@ class naqmultiplechoicemultipleanswerpart(_AbstractNAQPart):
 		assert any( (_naqchoice.attributes['weight'] == 1.0 for _naqchoice in _naqchoices) )
 		assert len(self.getElementsByTagName( 'naqsolutions' )) == 0
 
-		# Tranform the implicit solutions into a list of 0-based 
+		# Tranform the implicit solutions into a list of 0-based
 		# indices.
 		_naqsolns = self.ownerDocument.createElement( 'naqsolutions' )
 		_naqsolns.macroMode = _naqsolns.MODE_BEGIN

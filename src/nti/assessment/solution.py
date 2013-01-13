@@ -17,6 +17,9 @@ class QSolution(Persistent):
 	this object implements and then call the :meth:`_grade` method.
 	"""
 
+	#: Defines the factory used by the :meth:`grade` method to construct
+	#: a IQPart object. Also, instances are only equal if this value
+	#: is equal
 	_part_type = parts.QPart
 
 	weight = 1.0
@@ -35,6 +38,14 @@ class QMathSolution(QSolution):
 	"""
 	Base class for the math hierarchy.
 	"""
+
+	allowed_units = None # No defined unit handling
+
+	def __init__( self, *args, **kwargs ):
+		super(QMathSolution,self).__init__()
+		allowed_units = args[1] if len(args) > 1 else kwargs.get( 'allowed_units' )
+		if allowed_units is not None:
+			self.allowed_units = allowed_units # TODO: Do we need to defensively copy?
 
 def _eq_(self, other):
 	try:
@@ -120,4 +131,3 @@ class QMultipleChoiceMultipleAnswerSolution(_TrivialValuedMixin,QSolution):
 
 	__eq__ = _eq_
 	__ne__ = _ne_
-
