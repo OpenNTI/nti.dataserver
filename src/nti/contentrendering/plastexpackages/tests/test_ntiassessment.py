@@ -7,6 +7,7 @@ from hamcrest import assert_that, is_, has_length, contains_string
 from hamcrest import has_property
 from hamcrest import contains, has_item
 from hamcrest import has_entry
+from hamcrest import is_not as does_not
 import unittest
 
 import anyjson as json
@@ -350,7 +351,7 @@ class _MockRenderedBook(object):
 
 class TestRenderableSymMathPart(unittest.TestCase):
 
-	def _do_test_render( self, label, ntiid, filename='index.html' ):
+	def _do_test_render( self, label, ntiid, filename='index.html', units='' ):
 
 		example = br"""
 		\begin{naquestion}[individual=true]%s
@@ -358,11 +359,11 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			\begin{naqsymmathpart}
 			Arbitrary content goes here.
 			\begin{naqsolutions}
-				\naqsolution Some solution
+				\naqsolution %s Some solution
 			\end{naqsolutions}
 			\end{naqsymmathpart}
 		\end{naquestion}
-		""" % label
+		""" % (label,units)
 
 		with RenderContext(_simpleLatexDocument( (example,) )) as ctx:
 			dom  = ctx.dom
@@ -380,6 +381,11 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			assert_that( index, contains_string( content ) )
 			assert_that( index, contains_string( content2 ) )
 
+			if units:
+				assert_that( index, contains_string( 'data-nti-units="' + units[1:-1] + '"' ) )
+			else:
+				assert_that( index, does_not( contains_string( 'data-nti-units' ) ) )
+
 	def test_render_id(self):
 		"The label for the question becomes part of its NTIID."
 		self._do_test_render( br'\label{testquestion}', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion')
@@ -387,6 +393,8 @@ class TestRenderableSymMathPart(unittest.TestCase):
 	def test_render_counter(self):
 		self._do_test_render( b'', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1' )
 
+	def test_render_units( self ):
+		self._do_test_render( b'', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1', units='<unit1,unit2>')
 
 	def test_assessment_index(self):
 
@@ -402,7 +410,7 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			\begin{naqsymmathpart}
 			Arbitrary content goes here.
 			\begin{naqsolutions}
-				\naqsolution Some solution
+				\naqsolution<unit1,unit2> Some solution
 			\end{naqsolutions}
 			\begin{naqhints}
 				\naqhint Some hint
@@ -452,7 +460,8 @@ class TestRenderableSymMathPart(unittest.TestCase):
 							 'solutions': [{'Class': 'LatexSymbolicMathSolution',
 							   'MimeType': 'application/vnd.nextthought.assessment.latexsymbolicmathsolution',
 							   'value': 'Some solution',
-							   'weight': 1.0}]}]}]},
+							   'weight': 1.0,
+							   'allowed_units': ['unit1','unit2','']}]}]}]},
 						'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion': {'Class': 'Question',
 						 'MimeType': 'application/vnd.nextthought.naquestion',
 						 'NTIID': 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion',
@@ -467,7 +476,8 @@ class TestRenderableSymMathPart(unittest.TestCase):
 						   'solutions': [{'Class': 'LatexSymbolicMathSolution',
 							 'MimeType': 'application/vnd.nextthought.assessment.latexsymbolicmathsolution',
 							 'value': 'Some solution',
-							 'weight': 1.0}]}]}},
+							 'weight': 1.0,
+							 'allowed_units': ['unit1','unit2','']}]}]}},
 					   'NTIID': 'tag:nextthought.com,2011-10:testing-HTML-temp.section_one',
 					   'filename': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html',
 					   'href': 'tag_nextthought_com_2011-10_testing-HTML-temp_section_one.html'}},

@@ -3,7 +3,7 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that
 from nti.tests import ConfiguringTestBase, is_true, is_false
-
+from nti.tests import verifiably_provides
 from zope import interface
 from zope import component
 
@@ -12,6 +12,7 @@ from nti.assessment import response, solution
 from nti.assessment import interfaces
 from nti.assessment._latexplastexdomcompare import _mathChildIsEqual as mce
 
+from .test_solution import grades_right, grades_wrong
 
 class TestLatex(ConfiguringTestBase):
 
@@ -20,13 +21,14 @@ class TestLatex(ConfiguringTestBase):
 	def test_simple_grade(self):
 
 		soln = solution.QLatexSymbolicMathSolution( r"$\frac{1}{2}$" )
+		assert_that( soln, verifiably_provides( interfaces.IQLatexSymbolicMathSolution ) )
 
 		rsp = response.QTextResponse( soln.value )
 
 		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
 		assert_that( grader(  ), is_true() )
+		assert_that( soln, grades_right( soln.value ) )
 
-		assert_that( soln.grade( soln.value ), is_true() )
 
 	def test_simple_grade_with_numeric_parens(self):
 		# We don't get it right, but we don't blow up either
@@ -38,14 +40,50 @@ class TestLatex(ConfiguringTestBase):
 		assert_that( grader(  ), is_false() )
 
 
-	def test_simple_grade_accept_trailing_units(self):
-		soln = solution.QLatexSymbolicMathSolution( r"$\frac{1}{2}$" )
+	def test_simple_grade_require_trailing_units(self):
+		soln = solution.QLatexSymbolicMathSolution( r"$\frac{1}{2}$", ('day',) )
 
 		rsp = response.QTextResponse( soln.value + " day" )
 
 		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
 		assert_that( grader(  ), is_true() )
-		assert_that( soln.grade( soln.value ), is_true() )
+		assert_that( soln, grades_right( soln.value + " day" ) )
+
+		rsp = response.QTextResponse( soln.value )
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(  ), is_false() )
+		assert_that( soln, grades_wrong( soln.value ) )
+
+	def test_simple_grade_optional_trailing_units(self):
+		soln = solution.QLatexSymbolicMathSolution( r"$\frac{1}{2}$", ('day','') )
+
+		rsp = response.QTextResponse( soln.value + " day" )
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(  ), is_true() )
+		assert_that( soln, grades_right( soln.value + " day" ) )
+
+		rsp = response.QTextResponse( soln.value )
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(  ), is_true() )
+		assert_that( soln, grades_right( soln.value ) )
+
+	def test_simple_grade_forbids_trailing_units(self):
+		soln = solution.QLatexSymbolicMathSolution( r"$\frac{1}{2}$", () )
+
+		rsp = response.QTextResponse( soln.value + " day" )
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(  ), is_false() )
+		assert_that( soln, grades_wrong( soln.value + " day" ) )
+
+		rsp = response.QTextResponse( soln.value )
+
+		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
+		assert_that( grader(  ), is_true() )
+		assert_that( soln, grades_right( soln.value ) )
 
 	def test_simple_grade_accept_trailing_percent(self):
 

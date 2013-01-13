@@ -6,8 +6,10 @@ from __future__ import print_function, unicode_literals
 
 import numbers
 
-from nti.assessment import interfaces
 from zope import interface
+
+from nti.assessment import interfaces
+
 
 @staticmethod
 def _id(o): return o
@@ -17,12 +19,20 @@ def _lower(o): return unicode(o).lower()
 
 class _AbstractGrader(object):
 	"""
+	Base class for IQPartGrader objects. These are
+	expected to be registered as a multi-adapter
+	on the part, solution, and response type, thus
+	allowing for a great deal of flexibility in determining
+	a grader for any combination of inputs.
 	"""
 
-	def __init__( self, part, soln, response ):
+	def __init__( self, part, solution, response ):
 		self.part = part
-		self.solution = soln
+		self.solution = solution
 		self.response = response
+
+	def __call__( self ):
+		raise NotImplementedError()
 
 @interface.implementer(interfaces.IQPartGrader)
 class EqualityGrader(_AbstractGrader):
@@ -30,10 +40,15 @@ class EqualityGrader(_AbstractGrader):
 	Grader that simply checks for equality using the python equality operator.
 	"""
 
+	#: This factory function is called on the value of the response
+	#: before checking for equality.
 	solution_converter = _id
 
 	def __call__( self ):
-		return self.solution.value == self.solution_converter(self.response.value)
+		return self._compare( self.solution.value, self.response.value )
+
+	def _compare( self, solution_value, response_value ):
+		return solution_value == self.solution_converter(response_value)
 
 class StringEqualityGrader(EqualityGrader):
 	"""
@@ -44,7 +59,7 @@ class StringEqualityGrader(EqualityGrader):
 
 class LowerStringEqualityGrader(StringEqualityGrader):
 	"""
-	Grader that converts the response to a lowercase string 
+	Grader that converts the response to a lowercase string
 	before doing an equality comparison.
 	"""
 	solution_converter = _lower
@@ -55,6 +70,41 @@ class FloatEqualityGrader(EqualityGrader):
 	doing an equality comparison.
 	"""
 	solution_converter = float
+
+class UnitAwareFloatEqualityGrader(FloatEqualityGrader):
+	"""
+	A grader that handles dealing with units in responses.
+
+	The solution type this is registered for must be an :class:`.IQMathSolution`
+	"""
+
+	def __call__( self ):
+		if self.solution.allowed_units is None: # No special unit handling
+			return super(UnitAwareFloatEqualityGrader,self).__call__()
+
+		if not self.solution.allowed_units: # Units are specifically forbidden
+			# Then the response must parse cleanly as a floating point number,
+			# which happens to be the default behaviour
+			try:
+				return super(UnitAwareFloatEqualityGrader,self).__call__()
+			except ValueError:
+				# Failed to parse. Unlike in the default case, we do have an opinion,
+				# this isn't faulty input and is a wrong answer
+				return False
+
+		# Units may be required, or optional if the last element is the empty string
+		for unit in self.solution.allowed_units:
+			if self.response.value.endswith( unit ):
+				# strip the trailing unit and grade.
+				# This handles unit='cm' and value in ('1.0 cm', '1.0cm')
+				# It also handles unit='', if it comes at the end
+				value = self.response.value[:-len(unit)] if unit else self.response.value
+				__traceback_info__ = self.response.value, unit, value
+				return self._compare( self.solution.value, value )
+
+		# If we get here, there was no unit that matched. Therefore, units were required
+		# and not given
+		return False
 
 @interface.implementer(interfaces.IQMultipleChoicePartGrader)
 class MultipleChoiceGrader(EqualityGrader):
@@ -98,14 +148,13 @@ class MultipleChoiceGrader(EqualityGrader):
 @interface.implementer(interfaces.IQMultipleChoiceMultipleAnswerPartGrader)
 class MultipleChoiceMultipleAnswerGrader(EqualityGrader):
 	"""
-	Grader that grades multiple choice / multiple answer questions by 
-	checking to see if the given list of values matches the solution 
-	value list (they should both be lists of indices, but this allows 
-	choices to be stored as a map and the elements of the solution list 
-	to be a key). 
+	Grader that grades multiple choice / multiple answer questions by
+	checking to see if the given list of values matches the solution
+	value list (they should both be lists of indices, but this allows
+	choices to be stored as a map and the elements of the solution list
+	to be a key).
 	"""
 
-	pass
 
 @interface.implementer(interfaces.IQMatchingPartGrader)
 class MatchingPartGrader(_AbstractGrader):

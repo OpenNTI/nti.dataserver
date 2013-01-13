@@ -62,5 +62,10 @@ name: naqvideo
 </object>
 
 # Things that shouldn't render, just be placeholders
-name: naqsolution naqsolexplanation naqhints naqhint naqsolutions naquestionset
+name: naqsolexplanation naqhints naqhint  naquestionset
 <span tal:attributes="class string:${self/__class__/__name__} hidden" ></span>
+
+name: naqsolutions
+<span tal:attributes="class string:${self/__class__/__name__} hidden" >
+	<span tal:repeat="item self" tal:attributes="class string:${item/__class__/__name__} hidden; data-nti-units item/units_to_html"></span>
+</span>

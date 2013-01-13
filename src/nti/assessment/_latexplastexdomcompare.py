@@ -120,10 +120,31 @@ def grade( solution, response ):
 		logger.warning( "Unable to grade math, assuming wrong", exc_info=True )
 		return False
 
-	solution_dom = converter.convert( solution )
-	response_dom = converter.convert( response )
+	def _grade( s, r ):
+		solution_dom = converter.convert( s )
+		response_dom = converter.convert( r )
+		return _mathIsEqual( solution_dom, response_dom )
 
-	return _mathIsEqual( solution_dom, response_dom )
+	# TODO: This basic algorithm is similar to graders.UnitAwareFloatEqualityGrader
+	if solution.allowed_units is None: # No special unit handling
+		return _grade( solution, response )
+
+	if not solution.allowed_units: # Units are specifically forbidden
+		return _grade( solution, response )
+
+	# Units may be required, or optional if the last element is the empty string
+	for unit in solution.allowed_units:
+		if response.value.endswith( unit ):
+			# strip the trailing unit and grade.
+			# This handles unit='cm' and value in ('1.0 cm', '1.0cm')
+			# It also handles unit='', if it comes at the end
+			value = response.value[:-len(unit)] if unit else response.value
+			__traceback_info__ = response.value, unit, value
+			return _grade( solution, type(response)( value.strip() ) )
+
+	# If we get here, there was no unit that matched. Therefore, units were required
+	# and not given
+	return False
 
 @interface.implementer( interfaces.IQSymbolicMathGrader )
 class Grader(object):
@@ -134,13 +155,16 @@ class Grader(object):
 
 	def __call__( self ):
 		result = grade( self.solution, self.response )
-		if not result and not self.response.value.startswith( '<' ):
+		if not result and not self.response.value.startswith( '<' ) and self.solution.allowed_units is None:
 			# Hmm. Is there some trailing text we should brush away from the response?
 			# Only try if it's not OpenMath XML (which only comes up in test cases now)
+			# NOTE: We now only do this if "default" handling of units is specified; otherwise,
+			# it would already be handled
 			parts = self.response.value.rsplit( ' ', 1 )
 			if len( parts ) == 2:
 				response = type(self.response)( parts[0] )
 				result = grade( self.solution, response )
 				if result:
 					self.response = response
+
 		return result

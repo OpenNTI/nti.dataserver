@@ -83,7 +83,7 @@
 	<adapter factory=".graders.LowerStringEqualityGrader"
 			 name="LowerStringEqualityGrader"
 			 for="* .interfaces.IQSingleValuedSolution .interfaces.IQTextResponse" />
-	<adapter factory=".graders.FloatEqualityGrader"
+	<adapter factory=".graders.UnitAwareFloatEqualityGrader"
 			 for="* .interfaces.IQNumericMathSolution .interfaces.IQTextResponse" />
 	<adapter factory=".graders.MultipleChoiceGrader"
 			 for=".interfaces.IQMultipleChoicePart .interfaces.IQSingleValuedSolution .interfaces.IQTextResponse"
