@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Grading algorithm support.
 """
@@ -12,10 +13,36 @@ from nti.assessment import interfaces
 
 
 @staticmethod
-def _id(o): return o
+def _id(o):
+	return o
+
+
+def __lower(o):
+	# NOTE: This is using the default encoding if the string
+	# isn't already unicode. We expect all strings to actually
+	# be unicode, however. The conversion exists for things
+	# like numbers.
+	return unicode(o).lower()
+
+_lower = staticmethod( __lower )
+
+def __normalize_quotes(string):
+	"""
+	We want curly quotes to compare the same as straight quotes.
+	"""
+	replacements = ( ('“', '"'), # left double
+					 ('”', '"'), # right double
+					 ("‘", "'"), # left single
+					 ("’", "'") ) # right single
+	for bad, good in replacements:
+		string = string.replace( bad, good )
+
+	return string
+_normalize_quotes = staticmethod(__normalize_quotes)
 
 @staticmethod
-def _lower(o): return unicode(o).lower()
+def _lower_normalized(string):
+	return __normalize_quotes( __lower( string ) )
 
 class _AbstractGrader(object):
 	"""
@@ -42,13 +69,17 @@ class EqualityGrader(_AbstractGrader):
 
 	#: This factory function is called on the value of the response
 	#: before checking for equality.
+	response_converter = _id
+
+	#: This factory function is called on the value of the solution
+	#: before checking for equality
 	solution_converter = _id
 
 	def __call__( self ):
 		return self._compare( self.solution.value, self.response.value )
 
 	def _compare( self, solution_value, response_value ):
-		return solution_value == self.solution_converter(response_value)
+		return self.solution_converter(solution_value) == self.response_converter(response_value)
 
 class StringEqualityGrader(EqualityGrader):
 	"""
@@ -56,6 +87,7 @@ class StringEqualityGrader(EqualityGrader):
 	an equality comparison.
 	"""
 	solution_converter = unicode
+	response_converter = unicode
 
 class LowerStringEqualityGrader(StringEqualityGrader):
 	"""
@@ -63,13 +95,22 @@ class LowerStringEqualityGrader(StringEqualityGrader):
 	before doing an equality comparison.
 	"""
 	solution_converter = _lower
+	response_converter = _lower
+
+class LowerQuoteNormalizedStringEqualityGrader(StringEqualityGrader):
+	"""
+	Grader that normalizes quotes and ignores case when comparing
+	strings.
+	"""
+	solution_converter = _lower_normalized
+	response_converter = _lower_normalized
 
 class FloatEqualityGrader(EqualityGrader):
 	"""
 	Grader that converts the response to a number before
 	doing an equality comparison.
 	"""
-	solution_converter = float
+	response_converter = float
 
 class UnitAwareFloatEqualityGrader(FloatEqualityGrader):
 	"""
@@ -157,7 +198,7 @@ class MultipleChoiceMultipleAnswerGrader(EqualityGrader):
 
 
 @interface.implementer(interfaces.IQMatchingPartGrader)
-class MatchingPartGrader(_AbstractGrader):
+class MatchingPartGrader(EqualityGrader):
 	"""
 	Grader that deals with matching. Handles all combinations of int and key solutions
 	and int and key dicts.
@@ -180,8 +221,5 @@ class MatchingPartGrader(_AbstractGrader):
 					result = {}
 		return result
 
-	def __call__( self ):
-		rsp_dict = self._to_int_dict( self.response.value )
-		soln_dict = self._to_int_dict( self.solution.value )
-
-		return rsp_dict == soln_dict # our numeric score could be how many match
+	solution_converter = _to_int_dict
+	response_converter = _to_int_dict

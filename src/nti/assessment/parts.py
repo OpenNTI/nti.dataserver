@@ -147,7 +147,7 @@ class QMatchingPart(QPart):
 @interface.implementer(interfaces.IQFreeResponsePart)
 class QFreeResponsePart(QPart):
 
-	grader_name = 'LowerStringEqualityGrader'
+	grader_name = 'LowerQuoteNormalizedStringEqualityGrader'
 
 	def __eq__( self, other ):
 		try:
