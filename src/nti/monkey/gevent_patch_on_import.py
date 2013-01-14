@@ -242,11 +242,38 @@ else:
 	umysqldb.Connect = Connection
 
 	logger.info( "Monkey-patching RelStorage to recognize new close exceptions" )
-	# Now got to patch relstorage to recognize some exceptions
+	# Now got to patch relstorage to recognize some exceptions. If these
+	# don't get caught, relstorage may not properly close the connection, or fail
+	# to recognize that the connection is already closed
 	import relstorage.adapters.mysql
 	assert relstorage.adapters.mysql.MySQLdb is umysqldb
-	relstorage.adapters.mysql.close_exceptions += (pymysql.err.Error,)
-	relstorage.adapters.mysql.MySQLdbConnectionManager.close_exceptions += (pymysql.err.Error,)
+	# NOTE: as-of the released version of umysqldb at 2013-01-14, the error handling
+	# mapping is broken. Error handling works like this:
+	# A Connection has an errorhandler
+	# A Cursor copies the Connection's errorhandler; both of these direct unexpected exceptions
+	# through the error handler.
+	# pymysql's connections use pymysql.err.defaulterrorhandler, which translates anything
+	# that is NOT a subclass of pymysql.err.Error into that class.
+	# However, umysqldb's defaulterrorhandler simply raises the exception; this is because
+	# many places already manually translate exceptions.
+	# The problem is that while many places do, some places do not.
+	# At this writing, it's not clear if the best thing to do is to add more exceptions
+	# to the lists below, or try to patch defaulterrorhandler.
+	# Since the more limited thing is to add more exceptions, then that's what we do.
+	# (However, changing defaulterrorhandler would probably result in a higher-level exception
+	# from relstorage, a POSException, which might get better handling by the transaction package.
+	# TODO: Investigate that.)
+	for attr in (relstorage.adapters.mysql,
+				 relstorage.adapters.mysql.MySQLdbConnectionManager ):
+		 # close_exceptions: "to ignore when closing the connection"
+		attr.close_exceptions += (pymysql.err.Error, # The one usually mapped to
+								  IOError) # This one can escape mapping
+
+	for attr in (relstorage.adapters.mysql,
+				 relstorage.adapters.mysql.MySQLdbConnectionManager):
+		# disconnected_exceptions: "indicates the connection is disconnected"
+		attr.disconnected_exceptions += (IOError,) # This one can escape mapping; note we don't make pymysql.err.Error indicate disconnection
+
 
 def patch():
 	pass
