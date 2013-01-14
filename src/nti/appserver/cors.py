@@ -29,7 +29,10 @@ import greenlet
 #: will raise them, and they will be caught here. Paste will
 #: catch everything else.
 EXPECTED_EXCEPTIONS = (greenlet.GreenletExit, # During restarts this can be generated
-					   IOError, # Most commonly (almost only) seen buffering request bodies. May have some false negatives, though
+					   # Most commonly (almost only) seen buffering request bodies. May have some false negatives, though.
+					   # Also seen when a umysqldb connection fails; hard to determine when that can be retryable; this
+					   # is one of those false-negatives
+					   IOError,
 					   )
 # Previously this contained:
 # transaction.interfaces.DoomedTransaction, # This should never get here with the transaction middleware in place
@@ -113,8 +116,8 @@ class CORSInjector(object):
 		except EXPECTED_EXCEPTIONS as e:
 			# We don't do anything fancy, just log and continue
 			logger.exception( "Failed to handle request" )
-			result = ('Failed to handle request ' + str(e),)
-			start_request( '500 Internal Server Error', [('Content-Type', 'text/plain')], sys.exc_info() )
+			result = (b'Failed to handle request ' + str(e),)
+			start_request( b'500 Internal Server Error', [(b'Content-Type', b'text/plain')], sys.exc_info() )
 
 		# Everything else we allow to propagate. This might kill the worker and cause it to respawn
 		# If so, it will be printed on stderr and captured by supervisor
