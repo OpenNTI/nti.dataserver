@@ -20,8 +20,6 @@ import wsgiref.headers
 import functools
 
 # Exceptions we will ignore for middleware purposes
-#import transaction
-#import pyramid.httpexceptions
 import greenlet
 
 #: The exceptions in this list will be considered expected
@@ -65,64 +63,80 @@ class CORSInjector(object):
 	""" Inject CORS around any application. Should be wrapped around (before) authentication
 	and before :class:`~paste.exceptions.errormiddleware.ErrorMiddleware`.
 	"""
-	def __init__( self, app ):
-		self.captured = app
 
-	def __call__( self, environ, start_request ):
-		the_start_request = start_request
+	__slots__ = ('_app',)
+
+	def __init__( self, app ):
+		self._app = app
+
+	def __call__( self, environ, start_response ):
 		# Support CORS
-		# Our security policy here is extremely lax, support requests from
-		# everywhere. We are strict about the methods we support.
-		# When we care about security, we are "strongly encouraged" to
-		# check the HOST header matches our actual host name.
-		# HTTP_ORIGIN and -Allow-Origin are space separated lists that
-		# are compared case-sensitively.
 		if 'HTTP_ORIGIN' in environ:
+			start_response = self._CORSInjectingStartResponse( environ, start_response )
+
+		result = None
+		environ.setdefault( b'paste.expected_exceptions', [] ).extend( EXPECTED_EXCEPTIONS )
+		try:
+			result = self._app( environ, start_response )
+		except EXPECTED_EXCEPTIONS as e:
+			# We don't do anything fancy, just log and continue
+			logger.exception( "Failed to handle request" )
+			result = (b'Failed to handle request ' + str(e),)
+			start_response( b'500 Internal Server Error', [(b'Content-Type', b'text/plain')], sys.exc_info() )
+
+		# Everything else we allow to propagate. This might kill the gunicorn worker and cause it to respawn
+		# If so, it will be printed on stderr and captured by supervisor
+
+		return result
+
+	class _CORSInjectingStartResponse(object):
+		"""
+		A callable object that wraps a start_response callable to inject
+		CORS headers.
+
+		Our security policy here is extremely lax, support requests from
+		everywhere. We are strict about the methods we support.
+
+		When we care about security, we are "strongly encouraged" to
+		check the HOST header matches our actual host name.
+		HTTP_ORIGIN and -Allow-Origin are space separated lists that
+		are compared case-sensitively.
+		"""
+		__slots__ = ('_start_response', '_environ')
+
+		def __init__( self, environ, start_response ):
+			self._start_response = start_response
+			self._environ = environ
+
+		def __call__( self, status, headers, exc_info=None ):
 			# For preflight requests, there MUST be a -Request-Method
 			# provided. There also MUST be a -Request-Headers list.
 			# The spec says that, if these two headers are not malformed,
 			# they can effectively be ignored since they could be compared
 			# to unbounded lists. We choose not to even check for them.
-			local_start_request = the_start_request
-			@functools.wraps(local_start_request)
-			def cors_start_request( status, headers, exc_info=None ):
-				theHeaders = wsgiref.headers.Headers( headers )
-				# For simple requests, we only need to set
-				# -Allow-Origin, -Allow-Credentials, and -Expose-Headers.
-				# If we fail, we destroy the browser's cache.
-				# Since we support credentials, we cannot use the * wildcard origin.
-				theHeaders[b'Access-Control-Allow-Origin'] = environ['HTTP_ORIGIN']
-				theHeaders[b'Access-Control-Allow-Credentials'] = b"true" # case-sensitive
-				# We would need to add Access-Control-Expose-Headers to
-				# expose non-simple response headers to the client, even on simple requests
 
-				# All the other values are only needed for preflight requests,
-				# which are OPTIONS
-				if environ['REQUEST_METHOD'] == 'OPTIONS':
-					theHeaders[b'Access-Control-Allow-Methods'] = b'POST, GET, PUT, DELETE, OPTIONS'
-					theHeaders[b'Access-Control-Max-Age'] = b"1728000" # 20 days
-					# TODO: Should we inspect the Access-Control-Request-Headers at all?
-					theHeaders[b'Access-Control-Allow-Headers'] = b'Pragma, Slug, X-Requested-With, Authorization, If-Modified-Since, Content-Type, Origin, Accept, Cookie, Accept-Encoding, Cache-Control'
-					theHeaders[b'Access-Control-Expose-Headers'] = b'Location, Warning'
+			environ = self._environ
+			theHeaders = wsgiref.headers.Headers( headers )
+			# For simple requests, we only need to set
+			# -Allow-Origin, -Allow-Credentials, and -Expose-Headers.
+			# If we fail, we destroy the browser's cache.
+			# Since we support credentials, we cannot use the * wildcard origin.
+			theHeaders[b'Access-Control-Allow-Origin'] = environ['HTTP_ORIGIN']
+			theHeaders[b'Access-Control-Allow-Credentials'] = b"true" # case-sensitive
+			# We would need to add Access-Control-Expose-Headers to
+			# expose non-simple response headers to the client, even on simple requests
 
-				return local_start_request( status, headers, exc_info )
+			# All the other values are only needed for preflight requests,
+			# which are OPTIONS
+			if environ['REQUEST_METHOD'] == b'OPTIONS':
+				theHeaders[b'Access-Control-Allow-Methods'] = b'POST, GET, PUT, DELETE, OPTIONS'
+				theHeaders[b'Access-Control-Max-Age'] = b"1728000" # 20 days
+				# TODO: Should we inspect the Access-Control-Request-Headers at all?
+				theHeaders[b'Access-Control-Allow-Headers'] = b'Pragma, Slug, X-Requested-With, Authorization, If-Modified-Since, Content-Type, Origin, Accept, Cookie, Accept-Encoding, Cache-Control'
+				theHeaders[b'Access-Control-Expose-Headers'] = b'Location, Warning'
 
-			the_start_request = cors_start_request
-		result = None
+			return self._start_response( status, headers, exc_info )
 
-		environ.setdefault( b'paste.expected_exceptions', [] ).extend( EXPECTED_EXCEPTIONS )
-		try:
-			result = self.captured( environ, the_start_request )
-		except EXPECTED_EXCEPTIONS as e:
-			# We don't do anything fancy, just log and continue
-			logger.exception( "Failed to handle request" )
-			result = (b'Failed to handle request ' + str(e),)
-			start_request( b'500 Internal Server Error', [(b'Content-Type', b'text/plain')], sys.exc_info() )
-
-		# Everything else we allow to propagate. This might kill the worker and cause it to respawn
-		# If so, it will be printed on stderr and captured by supervisor
-
-		return result
 
 def cors_filter_factory( app, global_conf=None ):
 	"Paste filter factory to include :class:`CORSInjector`"
@@ -138,19 +152,21 @@ class CORSOptionHandler(object):
 	handle OPTIONS requests.
 	"""
 
+	__slots__ = ('_app',)
+
 	def __init__( self, app ):
-		self.captured = app
+		self._app = app
 
 	def __call__( self, environ, start_response ):
 		# TODO: The OPTIONS method should be better implemented. We are
 		# swallowing all OPTION requests at this level.
 
-		if environ['REQUEST_METHOD'] == 'OPTIONS':
+		if environ['REQUEST_METHOD'] == b'OPTIONS':
 			start_response( b'200 OK', [(b'Content-Type', b'text/plain')] )
-			result = (b"",)
-		else:
-			result = self.captured( environ, start_response )
-		return result
+			return (b'',)
+
+		return self._app( environ, start_response )
+
 
 def cors_option_filter_factory( app, global_conf=None ):
 	"Paste filter factory to include :class:`CORSOptionHandler`"
