@@ -91,7 +91,7 @@ class XHRPollingTransport(BaseTransport):
 
 	def options(self, session):
 		rsp = self.request.response
-		rsp.content_type = 'text/plain'
+		rsp.content_type = b'text/plain'
 		return rsp
 
 	def get(self, session):
@@ -155,14 +155,14 @@ class XHRPollingTransport(BaseTransport):
 		# because our transaction is going to be rolled back
 
 		response = self.request.response
-		response.content_type = 'text/plain'
-		response.headers['Connection'] = 'close'
+		response.content_type = b'text/plain'
+		response.headers[b'Connection'] = b'close'
 		response.body = response_message or session.socket.protocol.make_noop()
 		return response
 
 	def _connect_response(self, session):
 		response = self.request.response
-		response.headers['Connection'] = 'close'
+		response.headers[b'Connection'] = b'close'
 		response.body =  session.socket.protocol.make_connect()
 		return response
 
@@ -176,13 +176,13 @@ class XHRPollingTransport(BaseTransport):
 			# client thinks it should re-connect) that
 			# need to be dealt with...
 			session.connection_confirmed = True
-			if request_method == 'POST' and self.request.content_length:
+			if request_method == b'POST' and self.request.content_length:
 				response = self.post( session, response_message=session.socket.protocol.make_connect() )
 			else:
 				response = self._connect_response( session )
 			return response
 
-		if request_method == 'POST' and not self.request.content_length:
+		if request_method == b'POST' and not self.request.content_length:
 			# We have a session that WAS confirmed, but the client
 			# thinks it is no longer confirmed...we're probably switching transports
 			# due to a hard crash of an instance. So treat this
@@ -190,7 +190,7 @@ class XHRPollingTransport(BaseTransport):
 			response = self._connect_response( session )
 			return response
 
-		if request_method in ("GET", "POST", "OPTIONS"):
+		if request_method in (b"GET", b"POST", b"OPTIONS"):
 			try:
 				return getattr(self, request_method.lower())(session)
 			except ValueError:
