@@ -170,7 +170,8 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 																	toExternalOID( containedObject ) )
 
 		containerId = getattr( containedObject, StandardInternalFields.CONTAINER_ID, None )
-		logger.debug("User '%s' created object '%s'/'%s' for container '%s'", creator, containedObject.id, datatype, containerId)
+		# I think this log message should be info not debug.  It exists to provide statistics not to debug.
+		logger.info("User '%s' created object '%s'/'%s' for container '%s'", creator, containedObject.id, type(containedObject).__name__, containerId)
 
 		__traceback_info__ = containedObject
 		assert containedObject.__parent__
@@ -211,8 +212,9 @@ class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixi
 				raise hexc.HTTPNotFound()
 
 			lastModified = theObject.creator.lastModified
-
-			logger.debug("User '%s' deleted object '%s' from container '%s'", user, objectId, theObject.containerId)
+			
+			# I think this log message should be info not debug.  It exists to provide statistics not to debug.
+			logger.info("User '%s' deleted object '%s'/'%s' from container '%s'", user, objectId, type(theObject).__name__, theObject.containerId)
 
 		result = hexc.HTTPNoContent()
 		result.last_modified = lastModified
@@ -266,7 +268,8 @@ class UGDPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin
 			self._check_object_exists( theObject, creator, containerId, objId )
 
 			self.updateContentObject( theObject, externalValue ) # Should fire lifecycleevent.modified
-
+			# I think this log message should be info not debug.  It exists to provide statistics not to debug.
+			logger.info("User '%s' updated object '%s'/'%s' for container '%s'", creator, theObject.id, type(theObject).__name__, containerId)
 
 		if theObject and theObject == theObject.creator:
 			# Updating a user. Naturally, this is done by
