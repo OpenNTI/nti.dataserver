@@ -80,8 +80,8 @@
 	<!-- Generic grading -->
 	<adapter factory=".graders.StringEqualityGrader"
 			 for="* .interfaces.IQSingleValuedSolution .interfaces.IQTextResponse" />
-	<adapter factory=".graders.LowerStringEqualityGrader"
-			 name="LowerStringEqualityGrader"
+	<adapter factory=".graders.LowerQuoteNormalizedStringEqualityGrader"
+			 name="LowerQuoteNormalizedStringEqualityGrader"
 			 for="* .interfaces.IQSingleValuedSolution .interfaces.IQTextResponse" />
 	<adapter factory=".graders.UnitAwareFloatEqualityGrader"
 			 for="* .interfaces.IQNumericMathSolution .interfaces.IQTextResponse" />

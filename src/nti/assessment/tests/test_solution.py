@@ -1,5 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function, unicode_literals
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 from hamcrest import assert_that, is_, is_not
 from hamcrest import has_entry
@@ -15,9 +20,10 @@ from nti.assessment import interfaces
 
 
 from nti.externalization.externalization import toExternalObject
-from nti.externalization import internalization
-from nti.externalization.internalization import update_from_external_object
+from . import grades_right
+from . import grades_wrong
 
+grades_correct = grades_right
 
 class TestConvert(ConfiguringTestBase):
 
@@ -119,12 +125,21 @@ class TestNumericMathSolution(ConfiguringTestBase):
 
 class TestFreeResponseSolution(ConfiguringTestBase):
 	set_up_packages = (nti.assessment,)
-	def test_grade_string(self):
-		assert_that( solution.QFreeResponseSolution( "text" ).grade( "text" ), is_true( ) )
 
+	def test_grade_simple_string(self):
+		assert_that( solution.QFreeResponseSolution( "text" ), grades_correct( "text" ) )
+
+	def test_grade_string_case_insensitive( self ):
 		# SAJ: We are now not case sensitive
-		assert_that( solution.QFreeResponseSolution( "text" ).grade( "Text" ), is_true( ) )
+		assert_that( solution.QFreeResponseSolution( "text" ), grades_correct( "Text" ) )
 
+	def test_grade_string_quote_replacement(self):
+
+		solution_text =   "“Today” ‘what’" # Note both double and single curly quotes
+		response_text = "\"Today\" 'what'"
+
+		assert_that( solution.QFreeResponseSolution( solution_text ),
+					grades_correct( response_text ) )
 
 class TestMultipleChoiceMultipleAnswerSolution(ConfiguringTestBase):
 	set_up_packages = (nti.assessment,)
@@ -134,30 +149,3 @@ class TestMultipleChoiceMultipleAnswerSolution(ConfiguringTestBase):
 		assert_that( solution.QMultipleChoiceMultipleAnswerSolution( [ 1, 2, 3 ] ), grades_correct( [ 1, 2, 3 ] ) )
 
 		assert_that( solution.QMultipleChoiceMultipleAnswerSolution( [ 1, 2 ] ), grades_wrong( [2, 1] ) )
-
-from hamcrest.core.base_matcher import BaseMatcher
-
-class GradeMatcher(BaseMatcher):
-	def __init__( self, value, response ):
-		super(GradeMatcher,self).__init__()
-		self.value = value
-		self.response = response
-
-	def _matches( self, solution ):
-		return solution.grade( self.response ) == self.value
-
-	def describe_to( self, description ):
-		description.append_text( 'solution that grades ').append_text( str(self.response) ).append_text( ' as ' ).append_text( str(self.value) )
-
-	def describe_mismatch( self, item, mismatch_description ):
-		mismatch_description.append_text( 'solution ' ).append_text( str(type(item) ) ).append_text( ' ' ).append_text( str(item) ).append_text( ' graded ' + self.response + ' as ' + str( not self.value ) )
-
-	def __repr__( self ):
-		return 'solution that grades as ' + str(self.value)
-
-def grades_correct( response ):
-	return GradeMatcher(True, response)
-grades_right = grades_correct
-
-def grades_wrong( response ):
-	return GradeMatcher(False, response )

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 from hamcrest import assert_that, has_entry
 from hamcrest import is_, is_not
 from nti.tests import ConfiguringTestBase, is_true, is_false
@@ -16,6 +19,9 @@ import nti.assessment
 from nti.assessment import interfaces
 from nti.assessment import parts
 from nti.assessment import solution as solutions
+
+from . import grades_right
+from . import grades_wrong
 
 class TestQPart(ConfiguringTestBase):
 
@@ -110,19 +116,19 @@ class TestMatchingPart(ConfiguringTestBase):
 		assert_that( part, is_( part2 ) )
 
 
-		assert_that( part.grade( solution_keys ), is_true() )
-		assert_that( part.grade( solution_nums ), is_true() )
+		assert_that( part, grades_right( solution_keys ) )
+		assert_that( part, grades_right( solution_nums ) )
 
-		assert_that( part.grade( {"A": "Y"} ), is_false() )
+		assert_that( part, grades_wrong( {"A": "Y"} ) )
 
 		part = parts.QMatchingPart( labels=labels, values=values, solutions=(solutions.QMatchingSolution( solution_nums ),) )
 
-		assert_that( part.grade( solution_keys ), is_true() )
-		assert_that( part.grade( solution_nums ), is_true() )
+		assert_that( part, grades_right( solution_keys ) )
+		assert_that( part, grades_right( solution_nums ) )
 
-		assert_that( part.grade( {"A": "Y"} ), is_false() )
+		assert_that( part, grades_wrong( {"A": "Y"} ) )
 
-		assert_that( part.grade( {"A": "Z"} ), is_false() )
+		assert_that( part, grades_wrong( {"A": "Z"} ) )
 
 	def test_eq(self):
 		labels = ("A","B")
