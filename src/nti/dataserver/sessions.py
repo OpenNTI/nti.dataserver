@@ -109,7 +109,9 @@ class SessionService(object):
 					# perspective, there are some indications that so many small transactions was
 					# a net loss as far as the DB goes. A few bigger transactions are more efficient, to a point
 					# although there is a higher risk of conflict
-					sessions = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( lambda: {sid: self.get_session(sid) for sid in watching_sessions}, retries=5, sleep=0.1 )
+					def _get_sessions():
+						return {sid: self.get_session(sid) for sid in watching_sessions}
+					sessions = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( _get_sessions, retries=5, sleep=0.1 )
 				except transaction.interfaces.TransientError:
 					# Try again later
 					logger.debug( "Trying session poll later", exc_info=True )

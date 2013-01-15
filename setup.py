@@ -351,7 +351,9 @@ setup(
 			# See above for python-statsd
 			#'graphite-web >= 0.9.10', # web front end. Requires the /opt/graphite directory. Pulls in twisted.
 			#'carbon >= 0.9.10', # storage daemon. Requires the /opt/graphite directory
-			'whisper >= 0.9.10', # database lib.
+			#'whisper >= 0.9.10', # database lib.
+			# See also https://github.com/hathawsh/graphite_buildout for a buildout to install node's statsd and graphite
+			# locally (you may need to use a different version of node)
 			# Managing translations
 			'Babel >= 0.9.6',
 			'lingua >= 1.3',
