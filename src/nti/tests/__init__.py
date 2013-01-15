@@ -154,13 +154,16 @@ class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 	Base class for testing. Inherits the setup and teardown functions for
 	:class:`zope.testing.cleanup.CleanUp`; one effect this has is to cause
 	the component registry to be reset after every test.
+
+	.. note:: Do not use this when you use :func:`module_setup` and :func:`module_teardown`,
+		as the inherited :meth:`setUp` will undo the effects of the module setup.
 	"""
 	pass
 
 class AbstractSharedTestBase(unittest.TestCase):
 	"""
 	Base class for testing that can share most global data (e.g., ZCML configuration) between unit tests.
-	This is far more efficient, if the global data is otherwise cleaned up.
+	This is far more efficient, if the global data is otherwise cleaned up or not mutated between tests.
 	"""
 
 	@classmethod
@@ -226,7 +229,8 @@ class ConfiguringTestBase(AbstractTestBase):
 
 	.. py:attribute:: configuration_context
 		The :class:`config.ConfigurationMachine` that was used to load configuration data (if any).
-		This can be used by individual methods to load more configuration data.
+		This can be used by individual methods to load more configuration data using
+		:meth:`configure_packages` or the methods from :mod:`zope.configuration`
 
 
 	"""
@@ -262,7 +266,7 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 		A sequence of strings to be added as features before loading the configuration. By default,
 		this is ``devmode``.
 
-	When the meth:`setUp` method runs, one instance attribute is defined:
+	When the meth:`setUp` method runs, one class attribute is defined:
 
 	.. py:attribute:: configuration_context
 		The :class:`config.ConfigurationMachine` that was used to load configuration data (if any).
@@ -313,6 +317,30 @@ def module_teardown():
 	resetHooks()
 	zope.testing.cleanup.tearDown()
 
+# The cleanup that we get by importing just zope.interface and zope.component
+# has a problem:
+# zope.component installs adapter hooks that cause the use of interfaces
+# as functions to direct through the current site manager (as does the global component API).
+# This adapter hook is a cached function of an implementation detail of the site manager:
+# siteManager.adapters.adapter_hook.
+#
+# If no site is ever set, this caches the adapter_hook of the globalSiteManager.
+#
+# When the zope.component cleanup runs, it swizzles out the internals of the
+# globalSiteManager by re-running __init__. However, it does not clear the cached
+# adapter_hook. Thus, subsequent uses of the adapter hook (interface calls, or use
+# of the global component API) continue to use the *old* adapter registry (which is no
+# longer easy to access and inspect, especially when the C hook optimizations are in use)
+# If any non-ZCML registrations are made (or the next test loads a subset of the ZCML the previous test
+# did) then this manifests as strange adapter failures.
+#
+# This is obviously all implementation detail. So rather than "fix" the problem
+# ourself, the solution is to import zope.site.site to ensure that the site gets
+# cleaned up and the adapter_hook cache thrown away
+# This problem never manifests itself in code that has already imported zope.site,
+# and it seems to be an assumption that code that uses zope.component also uses zope.site
+# (though we have some code that doesn't explicitly do so)
+import zope.site.site
 
 
 import nose.plugins
