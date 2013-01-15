@@ -32,7 +32,7 @@ import warnings
 try:
 
 	warnings.warn( "Using whatever phantomjs is on the PATH; supported version 1.8.0; version found at %s is %s"
-				   %(subprocess.check_output(['which', 'phantomjs']), subprocess.check_output( ['phantomjs', '-v'] ) ),
+				   %(subprocess.check_output(['which', 'phantomjs']).strip(), subprocess.check_output( ['phantomjs', '-v'] ).strip() ),
 				   UserWarning, stacklevel=1)
 except subprocess.CalledProcessError:
 	warnings.warn( "Phantomjs not found on the PATH" )
