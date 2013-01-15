@@ -67,6 +67,8 @@ class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 	Moderated = schema.Bool( title="Whether the meeting is being moderated or not.",
 							 description="Toggling this changes the policy in use." )
 
+	Active = schema.Bool( title="Whether the meeting is currently active" )
+
 class IMeetingShouldChangeModerationStateEvent(interface.interfaces.IObjectEvent):
 	"""
 	Emitted when the :class:`IMeeting` will be changing moderation state.
@@ -221,6 +223,7 @@ class IMeetingStorage(Interface):
 		"""
 		Returns the stored room having the given ID, or None
 		if there is no room with that Id stored in this object.
+		This should be sure to only return :class:`IMeeting` objects.
 		"""
 
 	def __getitem__(room_id):
