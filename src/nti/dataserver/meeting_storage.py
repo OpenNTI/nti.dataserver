@@ -62,7 +62,11 @@ class CreatorBasedAnnotationMeetingStorage(object):
 		return result
 
 	def get( self, room_id ):
-		return ntiids.find_object_with_ntiid( room_id )
+		result = ntiids.find_object_with_ntiid( room_id )
+		if chat_interfaces.IMeeting.providedBy( result ):
+			return result
+		if result is not None:
+			logger.debug( "Attempted to use chatserver to find non-meeting with id %s", room_id )
 
 	def add_room( self, room ):
 		check_contained_object_for_storage( room )

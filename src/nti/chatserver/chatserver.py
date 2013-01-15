@@ -99,6 +99,8 @@ class TestingMappingMeetingStorage(object):
 		return self.meetings[room_id]
 
 	def add_room( self, room ):
+		assert interfaces.IMeeting.providedBy( room )
+
 		room.id = ntiids.make_ntiid( provider=room.creator,
 									 nttype=ntiids.TYPE_UUID,
 									 specific=uuid.uuid4().hex )
@@ -108,7 +110,9 @@ class TestingMappingMeetingStorage(object):
 		self.meetings[room.id] = room
 
 	def get( self, room_id ):
-		return self.meetings.get( room_id )
+		obj = self.meetings.get( room_id )
+		if interfaces.IMeeting.providedBy( obj ):
+			return obj
 
 @contextlib.contextmanager
 def _NOP_CM():
