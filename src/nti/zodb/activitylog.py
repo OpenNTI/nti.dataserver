@@ -15,9 +15,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-class ActivityMonitor(object):
+
+class _AbstractActivityMonitor(object):
 	"""
-	ZODB database activity monitor that logs connection transfer information.
+	Base monitor for dealing correctly with chains.
 	"""
 	_base = None
 
@@ -31,10 +32,42 @@ class ActivityMonitor(object):
 		if self._base is not None:
 			self._base.closedConnection(conn)
 		conn.getTransferCounts(True) # Make sure connection counts are cleared
-		logger.debug( "closedConnection=%s", {'loads': loads, 'stores': stores, 'database': db_name } )
+		self._closedConnection( loads, stores, db_name )
+
+	def _closedConnection( self, loads, stores, db_name ):
+		raise NotImplementedError()
 
 	def __getattr__(self, name):
 		return getattr(self._base, name)
+
+class LogActivityMonitor(_AbstractActivityMonitor):
+	"""
+	ZODB database activity monitor that logs connection transfer information.
+	"""
+
+	def _closedConnection(self, loads, stores, db_name ):
+		logger.debug( "closedConnection=%s", {'loads': loads, 'stores': stores, 'database': db_name } )
+
+
+from perfmetrics import statsd_client
+
+class StatsdActivityMonitor(_AbstractActivityMonitor):
+	"""
+	ZODB database activity monitor that stores counters in statsd. Experimental.
+	"""
+
+	def _closedConnection( self, loads, stores, db_name ):
+		statsd = statsd_client()
+		if statsd is None:
+			return
+
+		# Should these be counters or gauges? Or even sets?
+		# counters are aggregated across all instances, gauges (by default) are broken out
+		# by host
+		buf = []
+		statsd.gauge( 'ZODB.DB.' + db_name + '.loads',   loads, buf=buf )
+		statsd.gauge( 'ZODB.DB.' + db_name + '.stores', stores, buf=buf )
+		statsd.sendbuf( buf )
 
 def register_subscriber( event ):
 	"""
@@ -43,4 +76,4 @@ def register_subscriber( event ):
 	"""
 
 	for database in event.database.databases.values():
-		database.setActivityMonitor( ActivityMonitor( database.getActivityMonitor() ) )
+		database.setActivityMonitor( StatsdActivityMonitor( LogActivityMonitor( database.getActivityMonitor() ) ) )

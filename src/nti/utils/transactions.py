@@ -149,7 +149,7 @@ def do( *args, **kwargs ):
 def _do_commit( tx, description, long_commit_duration ):
 	exc_info = sys.exc_info()
 	try:
-		duration = _timing( tx.commit )
+		duration = _timing( tx.commit, 'transaction.commit' )
 		logger.debug( "Committed transaction for %s in %ss", description, duration )
 		if duration > long_commit_duration: # pragma: no cover
 			# We held (or attempted to hold) locks for a really, really, long time. Why?
@@ -175,13 +175,14 @@ def _do_commit( tx, description, long_commit_duration ):
 	## 		body = '\n'.join(dump_stacks())
 	## 		print( body, file=sys.stderr )
 	## 	raise
-
-def _timing( operation ):
+from perfmetrics import Metric
+def _timing( operation, name):
 	"""
 	Run the `operation` callable, returning the number of seconds it took.
 	"""
 	now = time.time()
-	operation()
+	with Metric(name):
+		operation()
 	done = time.time()
 	return done - now
 
@@ -278,13 +279,13 @@ class TransactionLoop(object):
 
 				return result
 			except self.AbortException as e:
-				duration = _timing( transaction.abort )
+				duration = _timing( transaction.abort, 'transaction.abort' )  # note: not our tx variable, whatever is current
 				logger.debug( "Aborted %s transaction for %s in %ss", e.reason, note, duration )
 				return e.response
 			except Exception:
 				exc_info = sys.exc_info()
 				try:
-					transaction.abort() # note: not our tx variable, whatever is current
+					_timing( transaction.abort, 'transaction.abort' ) # note: not our tx variable, whatever is current
 					retryable = transaction.manager._retryable(*exc_info[:-1])
 					if number <= 0 or not retryable:
 						raise
