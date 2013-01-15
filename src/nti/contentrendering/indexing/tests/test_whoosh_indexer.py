@@ -25,7 +25,7 @@ class TestWhooshIndexer(ConfiguringTestBase):
 		ConfiguringTestBase.tearDown(self)
 		shutil.rmtree(self.idxdir, True)
 
-	def test_identifiable_ode_indexer(self):
+	def test_identifiable_node_indexer(self):
 		indexname='biology'
 		path = os.path.join( os.path.dirname( __file__ ),  '../../tests/intro-biology-rendered-book' )
 		
