@@ -3,6 +3,7 @@
 
 	<utility factory="._whoosh_indexer._DefaultWhooshIndexer" />
 	<utility factory="._whoosh_indexer._BookFileWhooshIndexer" name="whoosh.file" />
+	<utility factory="._whoosh_indexer._IdentifiableNodeWhooshIndexer" name="whoosh.idnode" />
 	
 	<utility factory="._termextract._DefaultKeyWordFilter" name="indexer" />
 	

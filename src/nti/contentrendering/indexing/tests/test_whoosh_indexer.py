@@ -8,6 +8,7 @@ from whoosh.query import (Or, Term)
 from nti.contentrendering.RenderedBook import _EclipseTOCMiniDomTopic
 from nti.contentrendering.indexing._whoosh_indexer import _DefaultWhooshIndexer
 from nti.contentrendering.indexing._whoosh_indexer import _BookFileWhooshIndexer
+from nti.contentrendering.indexing._whoosh_indexer import _IdentifiableNodeWhooshIndexer
 from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument 
 
 from nti.contentrendering.tests import ConfiguringTestBase
@@ -24,7 +25,7 @@ class TestWhooshIndexer(ConfiguringTestBase):
 		ConfiguringTestBase.tearDown(self)
 		shutil.rmtree(self.idxdir, True)
 
-	def test_default_index_book(self):
+	def test_identifiable_ode_indexer(self):
 		indexname='biology'
 		path = os.path.join( os.path.dirname( __file__ ),  '../../tests/intro-biology-rendered-book' )
 		
@@ -32,7 +33,7 @@ class TestWhooshIndexer(ConfiguringTestBase):
 		document.userdata['jobname'] = indexname
 		book = NoConcurrentPhantomRenderedBook(document, path)
 		
-		indexer = _DefaultWhooshIndexer()
+		indexer = _IdentifiableNodeWhooshIndexer()
 		idx = indexer.index(book, self.idxdir)
 		
 		q = Term("keywords", u"mathcounts")
