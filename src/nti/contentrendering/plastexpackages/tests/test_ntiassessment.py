@@ -342,6 +342,7 @@ from zope import component
 from zope import interface
 from nti.contentrendering import interfaces as cdr_interfaces
 from nti.contentrendering.resources import ResourceRenderer
+import io
 
 @interface.implementer(cdr_interfaces.IRenderedBook)
 class _MockRenderedBook(object):
@@ -351,7 +352,7 @@ class _MockRenderedBook(object):
 
 class TestRenderableSymMathPart(unittest.TestCase):
 
-	def _do_test_render( self, label, ntiid, filename='index.html', units='' ):
+	def _do_test_render( self, label, ntiid, filename='index.html', units='', units_html=None, input_encoding=None ):
 
 		example = br"""
 		\begin{naquestion}[individual=true]%s
@@ -365,7 +366,7 @@ class TestRenderableSymMathPart(unittest.TestCase):
 		\end{naquestion}
 		""" % (label,units)
 
-		with RenderContext(_simpleLatexDocument( (example,) )) as ctx:
+		with RenderContext(_simpleLatexDocument( (example,) ), output_encoding='utf-8', input_encoding=input_encoding) as ctx:
 			dom  = ctx.dom
 			dom.getElementsByTagName( 'document' )[0].filenameoverride = 'index'
 			render = Renderer()
@@ -374,7 +375,7 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			# TODO: Actual validation of the rendering
 
 
-			index = open(os.path.join(ctx.docdir, filename), 'rU' ).read()
+			index = io.open(os.path.join(ctx.docdir, filename), 'rU', encoding='utf-8' ).read()
 			content = """<object type="application/vnd.nextthought.naquestion" data-ntiid="%(ntiid)s" data="%(ntiid)s""" % { 'ntiid': ntiid }
 			content2 = """<param name="ntiid" value="%(ntiid)s" """ % { 'ntiid': ntiid }
 
@@ -382,19 +383,30 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			assert_that( index, contains_string( content2 ) )
 
 			if units:
-				assert_that( index, contains_string( 'data-nti-units="' + units[1:-1] + '"' ) )
+				units_html = units_html or units[1:-1]
+				assert_that( index, contains_string( 'data-nti-units="' + units_html + '"' ) )
 			else:
 				assert_that( index, does_not( contains_string( 'data-nti-units' ) ) )
 
 	def test_render_id(self):
 		"The label for the question becomes part of its NTIID."
-		self._do_test_render( br'\label{testquestion}', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion')
+		self._do_test_render( r'\label{testquestion}', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion')
 
 	def test_render_counter(self):
-		self._do_test_render( b'', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1' )
+		self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1' )
 
 	def test_render_units( self ):
-		self._do_test_render( b'', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1', units='<unit1,unit2>')
+		self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1', units='<unit1,unit2>')
+
+	def test_render_units_with_percent( self ):
+		self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1', units=r'<unit1,\%>', units_html="unit1,%")
+
+	def test_render_units_with_unicode( self ):
+		self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1', units=r'<m²>', input_encoding='utf-8') # m squared, u'\xb2'
+
+	def test_render_units_with_latex_math_not_allowed( self ):
+		with self.assertRaises(ValueError):
+			self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1', units=r'<$m^2$>')
 
 	def test_assessment_index(self):
 

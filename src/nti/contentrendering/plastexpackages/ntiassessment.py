@@ -171,11 +171,12 @@ class naqsolutions(Base.List):
 
 class naqsolution(Base.List.item):
 
-	args = '[weight:float] <units:list:str>' # We use <> for the units
-                                             # list because () looks
-                                             # like a geometric point,
-                                             # and there are valid
-                                             # answers like that
+	args = '[weight:float] <units>'
+	# We use <> for the units list because () looks like a geometric
+	# point, and there are valid answers like that.
+	# We also do NOT use the :list conversion, because if the units list
+	# has something like an (escaped) % in it, plasTeX fails to tokenize the list
+	# Instead, we work with the TexFragment object ourself
 
 	def invoke( self, tex ):
 		# TODO: Why is this being done? Does the counter matter?
@@ -184,9 +185,23 @@ class naqsolution(Base.List.item):
 		#ignore the list implementation
 		return Base.Command.invoke(self,tex)
 
+	def units_to_text_list(self):
+		"""Find the units, if any, and return a list of their text values"""
+		units = self.attributes.get( 'units' )
+		if units:
+			# Remove trailing delimiter and surrounding whitespace. For consecutive
+			# text parts, we have to split ourself
+			result = []
+			for x in units:
+				# We could get elements (Macro/Command) or strings (plastex.dom.Text)
+				if getattr( x, 'tagName', None ) == 'math':
+					raise ValueError( "Math cannot be roundtripped in units. Try unicode symbols" )
+				x = unicode(x).rstrip( ',' ).strip()
+				result.extend( x.split( ',' ) )
+			return result
 
 	def units_to_html(self):
-		units = self.attributes.get( 'units' )
+		units = self.units_to_text_list()
 		if units:
 			return ','.join( units )
 
@@ -226,7 +241,7 @@ class _AbstractNAQPart(_LocalContentMixin,Base.Environment):
 			if self.soln_interface.isOrExtends( as_interfaces.IQMathSolution ):
 				# Units given? We currently always make units optional, given or not
 				# This can easily be changed or configured
-				allowed_units = solution_el.attributes.get( 'units' )
+				allowed_units = solution_el.units_to_text_list()
 				if not allowed_units:
 					allowed_units = ('',)
 				if '' not in allowed_units:
