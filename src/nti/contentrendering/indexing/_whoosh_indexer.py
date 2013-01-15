@@ -151,7 +151,7 @@ class _BookFileWhooshIndexer(_BasicWhooshIndexer):
 							
 		return result
 		
-class _DefaultWhooshIndexer(_BasicWhooshIndexer):
+class _IdentifiableNodeWhooshIndexer(_BasicWhooshIndexer):
 	"""
 	Indexing topic children nodes that either have an id or data_ntiid attribute
 	"""
@@ -215,3 +215,5 @@ class _DefaultWhooshIndexer(_BasicWhooshIndexer):
 			count += 1
 		logger.info("%s document(s) produced" % count)
 		return count			
+
+_DefaultWhooshIndexer = _BookFileWhooshIndexer
