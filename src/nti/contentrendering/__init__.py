@@ -23,12 +23,19 @@ def javascript_path( js_name ):
 
 
 import os
+import sys
 import urllib
 import subprocess
 import anyjson as json
 
 import warnings
-warnings.warn( "Using whatever phantomjs is on the path" )
+try:
+
+	warnings.warn( "Using whatever phantomjs is on the PATH; supported version 1.8.0; version found at %s is %s"
+				   %(subprocess.check_output(['which', 'phantomjs']), subprocess.check_output( ['phantomjs', '-v'] ) ),
+				   UserWarning, stacklevel=1)
+except subprocess.CalledProcessError:
+	warnings.warn( "Phantomjs not found on the PATH" )
 
 _none_key = object()
 def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no_output=False, expect_non_json_output=False ):
@@ -36,19 +43,25 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 	if not htmlFile.startswith( 'file:' ):
 		htmlFile = urllib.basejoin( 'file://', urllib.pathname2url( os.path.abspath( htmlFile ) ) )
 
-	# Prior to 1.5, a --load-plugins=no was necessary to prohibit loading
-	# plugins, some of which produced console output that screwed our parsing.
-	# In 1.6, this is off by default and the arg is gone.
-
 	# TODO: Rewrite the scripts to use the built-in webserver and communicate
 	# over a socket as opposed to stdout/stderr? As of 1.6, I think this is the recommended approach
 
-	#process = "phantomjs %s %s %s 2>/dev/null" % (scriptName, htmlFile, " ".join([str(x) for x in args]))
 	process = ['phantomjs', scriptName, htmlFile]
 	process.extend( args )
 	logger.debug( "Executing %s", process )
 	# TODO: subprocess.check_output?
-	jsonStr = subprocess.Popen(process, stdout=subprocess.PIPE).communicate()[0].strip()
+	# On OS X, phantomjs produces some output to stderr that's annoying and usually useless,
+	# if truly run headless, about CoreGraphics stuff.
+	stderr = None
+	if sys.platform == 'darwin' and not os.getenv( 'NTI_KEEP_PHANTOMJS_STDERR' ):
+		stderr = open( '/dev/null', 'wb' )
+
+	try:
+		jsonStr = subprocess.check_output( process, stderr=stderr ).strip() #.Popen(process, stdout=subprocess.PIPE, stderr=stderr).communicate()[0].strip()
+	finally:
+		if stderr is not None:
+			stderr.close()
+
 	result = ''
 	if expect_no_output:
 		if jsonStr:
