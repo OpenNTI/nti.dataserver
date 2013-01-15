@@ -57,6 +57,7 @@ class TestBotoCDNKeyMapper(ConfiguringTestBase):
 
 		assert_that( unit.does_sibling_entry_exist( 'bar' ), is_not( same_instance( unit.does_sibling_entry_exist( 'baz' ) ) ) )
 
+
 	def test_key_mapper(self):
 		class Bucket(object):
 			name = None
@@ -77,13 +78,14 @@ class TestBotoCDNKeyMapper(ConfiguringTestBase):
 		key = Key( bucket, 'mathcounts2012/index.html' )
 
 		# by default we assume the bucket
-		assert_that( interfaces.IAbsoluteContentUnitHrefMapper( key ),
+		assert_that( component.getAdapter( key, interfaces.IAbsoluteContentUnitHrefMapper ),
 					 has_property( 'href', 'http://content.nextthought.com/mathcounts2012/index.html' ) )
 
 		# but we can replace that...
-		externalization.map_all_buckets_to( 'cloudfront.amazon.com' )
+		externalization.map_all_buckets_to( 'test_key_mapper.cloudfront.amazon.com' )
+
 		assert_that( interfaces.IAbsoluteContentUnitHrefMapper( key ),
-					 has_property( 'href', '//cloudfront.amazon.com/mathcounts2012/index.html' ) )
+					 has_property( 'href', '//test_key_mapper.cloudfront.amazon.com/mathcounts2012/index.html' ) )
 
 
 	def test_read_contents( self ):

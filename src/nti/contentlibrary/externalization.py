@@ -194,6 +194,15 @@ class CDNS3KeyHrefMapperFactory(object):
 		return CDNS3KeyHrefMapper( key, self.cdn_name )
 
 def map_all_buckets_to( cdn_name ):
-	component.provideAdapter( CDNS3KeyHrefMapperFactory( cdn_name ),
-							  adapts=(interfaces.IS3Key,),
-							  provides=interfaces.IAbsoluteContentUnitHrefMapper )
+	"""
+	WARNING: This API has global effects. Use
+	with extreme caution.
+	"""
+	site_man = component.getGlobalSiteManager()
+	# manually clear any previous registration
+	site_man.unregisterAdapter( required=(interfaces.IS3Key,),
+								provided=interfaces.IAbsoluteContentUnitHrefMapper )
+
+	site_man.registerAdapter( CDNS3KeyHrefMapperFactory( cdn_name ),
+							  required=(interfaces.IS3Key,),
+							  provided=interfaces.IAbsoluteContentUnitHrefMapper )

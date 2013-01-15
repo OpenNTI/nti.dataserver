@@ -1,4 +1,19 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 from hamcrest import assert_that, has_entry, has_entries
 from hamcrest import greater_than_or_equal_to
 from hamcrest import has_key
@@ -14,24 +29,15 @@ import nti.externalization
 from nti.externalization.interfaces import IExternalObject
 
 # Nose module-level setup and teardown
-#setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentlibrary,nti.externalization) )
-#tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.externalization,nti.contentlibrary) )
+tearDownModule = nti.tests.module_teardown
 
-# def setUpModule():
-# 	print("Setting up", __name__ )
-# 	nti.tests.module_setup( set_up_packages=(nti.contentlibrary,nti.externalization) )
-
-# def tearDownModule():
-# 	print("Tearing down", __name__ )
-# 	nti.tests.module_teardown()
-
-from nti.tests import ConfiguringTestBase
+from unittest import TestCase
 import boto.s3.bucket
 import boto.s3.key
 import fudge
 
-class TestExternalization(ConfiguringTestBase):
-	set_up_packages = (nti.contentlibrary, nti.externalization )
+class TestExternalization(TestCase):
 
 	def test_doesnt_dual_escape(self):
 		unit = filesystem.FilesystemContentPackage(
