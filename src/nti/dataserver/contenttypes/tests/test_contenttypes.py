@@ -339,6 +339,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			assert_that( n.inReplyTo, none() )
 
 		with mock_dataserver.mock_db_trans(ds):
+			n = Note()
 			update_from_external_object( n, ext, context=ds )
 			assert_that( n.inReplyTo, is_( n2 ) )
 			assert_that( n.references[0], is_( n2 ) )
@@ -378,6 +379,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 			assert_that( n.inReplyTo, none() )
 
 		with mock_dataserver.mock_db_trans(ds):
+			n = Note()
 			update_from_external_object( n, ext, context=ds )
 			assert_that( n.inReplyTo, is_( n2 ) )
 			assert_that( n.references[0], is_( n2 ) )
