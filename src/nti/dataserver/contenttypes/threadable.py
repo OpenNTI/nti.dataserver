@@ -108,16 +108,8 @@ class ThreadableExternalizableMixin(ThreadableMixin):
 		# No object. Did we have a reference at one time?
 		if ref is not None and self._ext_write_missing_references:
 			# Yes. Can we write something out?
-			# TODO: Very unhappy about this. What's the right abstraction?
-			# Based on intid_wref
-			eid = ref._entity_id
-			# This intid is probably no longer used, but we have no guarantee
-			# of that. We do some trivial manipulation on it to make it less
-			# obvious what it is, and less likely to come into the system when
-			# we don't want it to
-			eid = integer_strings.to_external_string( eid )
-			#eid = eid.encode( 'base64' )
-			return ntiids.make_ntiid( nttype=ntiids.TYPE_MISSING, specific=eid )
+			missing_ref = nti_interfaces.IWeakRefToMissing( ref, None )
+			return missing_ref.make_missing_ntiid() if missing_ref is not None else None
 
 	def updateFromExternalObject( self, parsed, **kwargs ):
 		assert isinstance( parsed, collections.Mapping )

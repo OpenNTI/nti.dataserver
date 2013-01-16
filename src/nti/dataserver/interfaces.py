@@ -1107,7 +1107,7 @@ class ISessionServiceStorage(interface.Interface):
 		"""
 
 ####
-## Weak Refs
+## Weak Refs and related
 ####
 
 class IWeakRef(interface.Interface):
@@ -1145,3 +1145,18 @@ import weakref
 interface.classImplements( weakref.ref, IWeakRef )
 import persistent.wref
 interface.classImplements( persistent.wref.WeakRef, IWeakRef )
+
+class IWeakRefToMissing(IWeakRef):
+	"""
+	A weak reference that knows enough about the object it was
+	referencing to be able to produce a :const:`.TYPE_MISSING` NTIID
+	when the reference is clear (when calling this object returns ``None``).
+	"""
+
+	def make_missing_ntiid():
+		"""
+		Call this when the reference is clear to produce an NTIID
+		that refers to the object that was referenced.
+
+		Calling this before the reference is clear is not defined.
+		"""

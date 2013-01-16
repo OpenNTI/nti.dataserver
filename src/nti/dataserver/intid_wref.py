@@ -22,7 +22,11 @@ from zc import intid as zc_intid
 
 from nti.dataserver import interfaces as nti_interfaces
 
-@interface.implementer(nti_interfaces.IWeakRef)
+from nti.externalization import integer_strings
+from nti.ntiids import ntiids
+
+
+@interface.implementer(nti_interfaces.IWeakRefToMissing)
 class WeakRef(object):
 	"""
 	A weak reference to a content object (generally, anything
@@ -97,3 +101,13 @@ class WeakRef(object):
 
 	def __repr__(self):
 		return "<%s.%s %s>" % (self.__class__.__module__, self.__class__.__name__, self._entity_id)
+
+	def make_missing_ntiid(self):
+		eid = self._entity_id
+		# This intid is probably no longer used, but we have no guarantee
+		# of that. We do some trivial manipulation on it to make it less
+		# obvious what it is, and less likely to come into the system when
+		# we don't want it to
+		eid = integer_strings.to_external_string( eid )
+		# base64 might be nice, but that doesn't play well with ntiids
+		return ntiids.make_ntiid( nttype=ntiids.TYPE_MISSING, specific=eid )
