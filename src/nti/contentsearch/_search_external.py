@@ -9,10 +9,11 @@ from nti.externalization.externalization import toExternalObject
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch._search_hits import get_search_hit
+from nti.contentsearch._search_highlights import HighlightInfo
 from nti.contentsearch._search_highlights import word_fragments_highlight
 
 from nti.contentsearch.common import (	LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS,
-										SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH)
+										SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS)
 
 import logging
 logger = logging.getLogger( __name__ )
@@ -22,10 +23,10 @@ logger = logging.getLogger( __name__ )
 def _word_fragments_highlight(query=None, text=None):
 	query = search_interfaces.ISearchQuery(query, None)
 	if query and text:
-		snippet, fragments = word_fragments_highlight(query, text)
+		result = word_fragments_highlight(query, text)
 	else:
-		snippet, fragments = (text or u'', ())
-	return unicode(snippet), fragments
+		result = HighlightInfo()
+	return result
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _BaseHighlightDecorator(object):
@@ -48,10 +49,11 @@ class _BaseWordSnippetHighlightDecorator(_BaseHighlightDecorator):
 		query = getattr(original, 'query', None)
 		if query:
 			text = external.get(SNIPPET, None)
-			text, fragments = _word_fragments_highlight(query, text)
-			external[SNIPPET] = text
-			if fragments:
-				external[FRAGMENTS] = toExternalObject(fragments)
+			hi = _word_fragments_highlight(query, text)
+			external[SNIPPET] = hi.snippet
+			if hi.fragments:
+				external[FRAGMENTS] = toExternalObject(hi.fragments)
+				external[TOTAL_FRAGMENTS] = hi.total_fragments
 			
 @component.adapter(search_interfaces.IWordSnippetHighlight)
 class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):
