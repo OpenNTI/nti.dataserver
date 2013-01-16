@@ -22,7 +22,7 @@ from hamcrest import has_property
 
 import nti.tests
 
-from nti.zodb.activitylog import ActivityMonitor
+from nti.zodb.activitylog import _AbstractActivityMonitor as ActivityMonitor
 
 def test_base():
 	class Base(object):
