@@ -19,14 +19,33 @@ from nti.ntiids import interfaces
 
 # Well-known IDs
 DATE = "2011-10"
+#: When NTIIDs (usually of a particular type) are arranged into
+#: a tree, or a forest of trees, this NTIID specifies the conceptual
+#: root of the entire tree or forest.
 ROOT = "tag:nextthought.com,2011-10:Root"
 
+#: Used as an opaque identifier to a specific object. This will
+#: not incorporate the object's name or path (when those concepts make
+#: sense). Instead, it points to an object by identity.
 TYPE_OID = 'OID'
+
+#: Currenly unused
 TYPE_UUID = 'UUID'
+
 #: The intid type is not currently used. Instead,
 #: intid is included as a part of the OID, preventing
 #: access using a stale URL after an object is deleted
 TYPE_INTID = 'INTID'
+
+#: Used as an opaque identifier to refer to an object that was
+#: once (weakly) referenced, but can no longer be found. Only the system
+#: will ever generate these, and these are never valid to send
+#: as input to the system; they can never be resolved.
+#: In general, references to the same missing object will produce
+#: the same missing NTIID; however, in some cases, it may be possible
+#: for references to different missing objects to produce the same missing
+#: NTIID. Context will usually make it clear if this has happened.
+TYPE_MISSING = 'Missing'
 
 #: Named entities are globally accessible knowing nothing
 #: more than a simple string name. There should be a defined
@@ -34,7 +53,10 @@ TYPE_INTID = 'INTID'
 #: named entity
 TYPE_NAMED_ENTITY = 'NamedEntity'
 
+#: Subtype of named entities identifying a particular user account
 TYPE_NAMED_ENTITY_USER = TYPE_NAMED_ENTITY + ':User'
+
+#: Subtype of named entities identifying a particular community
 TYPE_NAMED_ENTITY_COMMUNITY = TYPE_NAMED_ENTITY + ':Community'
 
 TYPE_ROOM = 'MeetingRoom'
@@ -49,10 +71,10 @@ TYPE_CLASS_SECTION = 'ClassSection'
 TYPE_MEETINGROOM_GROUP = TYPE_ROOM + ':Group'
 TYPE_MEETINGROOM_CLASS = TYPE_ROOM + ':Class'
 TYPE_MEETINGROOM_SECT  = TYPE_ROOM + ':ClassSection'
-# Transcripts and TranscriptSummaries. Note that
-# they are not subtypes of a common type because they
-# contain quite different information and are used
-# in different ways.
+#: Transcripts and TranscriptSummaries. Note that
+#: they are not subtypes of a common type because they
+#: contain quite different information and are used
+#: in different ways.
 TYPE_TRANSCRIPT = 'Transcript'
 TYPE_TRANSCRIPT_SUMMARY = 'TranscriptSummary'
 

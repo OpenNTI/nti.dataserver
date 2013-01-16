@@ -25,7 +25,7 @@ contained within another object, it may not. (Regardless of this, the
 general term "object" is used throughout this document.)
 
 Next, conventions that are followed. In general, fields which are
-capitalized are immutable once set. Fileds named with a lowercase
+capitalized are immutable once set. Fields named with a lowercase
 letter are subject to modification once an object is created. Arrays
 that are empty may be omitted entirely (however, some types will
 have different rules for the treatment of missing data.)
@@ -288,7 +288,13 @@ These are definitions related to content that a user can generate.
    }
 
    mixin Threadable {
+       // inReplyTo may be the null string, meaning it's never
+	   // been set, it may be a valid, resolvable NTIID meaning it points
+	   // to a current object, or it may be a "Missing" NTIID, meaning
+       // it used to point to an object, but that object is no longer available.
 	   oid_t inReplyTo;
+	   // references is similar to inReplyTo, except that it is always
+       // a list of either resolvable strings or missing strings
 	   oid_t references[];
    }
 
@@ -299,25 +305,47 @@ These are definitions related to content that a user can generate.
    }
 
 .. note:: For a more full explanation of a Redaction object, see
-   :py:class:`nti.dataserver.interfaces.IRedaction`
+   :py:class:`~nti.dataserver.interfaces.IRedaction`
+
+.. note:: For information on threading, and in particular the
+   algorithm to use,  see
+   :py:class:`~nti.dataserver.contenttypes.threadable.ThreadableMixin`,
+   and for information on the externalization of threadable
+   references, see :py:class:`~nti.dataserver.contenttypes.threadable.ThreadableExternalizableMixin`
+
+.. warning:: Although the ``Threadable`` properties ``inReplyTo`` and
+   ``references`` are defined in lower case, they are not (externally) mutable once
+   the object has been created.
 
 Implementation Notes
 --------------------
 
+Base
+~~~~
 .. automodule:: nti.dataserver.contenttypes.base
 	:private-members:
 
+Selected Range
+~~~~~~~~~~~~~~
 .. automodule:: nti.dataserver.contenttypes.selectedrange
 	:private-members:
 	:member-order: bysource
 	:undoc-members:
 
+Highlights
+~~~~~~~~~~
 .. automodule:: nti.dataserver.contenttypes.highlight
 	:private-members:
 
+Threading
+~~~~~~~~~
 .. automodule:: nti.dataserver.contenttypes.threadable
 	:private-members:
+	:member-order: bysource
+	:undoc-members:
 
+Note
+~~~~
 .. automodule:: nti.dataserver.contenttypes.note
 	:private-members:
 

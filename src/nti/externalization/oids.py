@@ -130,6 +130,10 @@ def to_external_ntiid_oid( contained, default_oid=None, add_to_connection=False,
 		setting this to true will attempt to add it to the nearest connection in
 		its containment tree, thus letting it have an OID.
 	"""
+
+	if callable( getattr( contained, 'to_external_ntiid_oid', None ) ):
+		return contained.to_external_ntiid_oid()
+
 	# We really want the external OID, but for those weird time we may not be saved we'll
 	# allow the ID of the object, unless we are explicitly overridden
 	# TODO: can we replace the contained proxy specific logic with the generic methods
