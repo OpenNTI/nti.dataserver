@@ -242,7 +242,8 @@ def _context_fragment(sf, termset, query, maxchars=500, surround=50):
 	sf = _SearchFragment.create_from_terms(snippet, termset, query.is_phrase_search)
 	return sf
 
-def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None, order=highlight.FIRST):
+def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, 
+							 analyzer=None, order=highlight.FIRST):
 
 	# get query terms
 	text = unicode(text)	
