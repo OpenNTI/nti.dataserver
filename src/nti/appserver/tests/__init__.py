@@ -5,7 +5,8 @@ from hamcrest import is_
 
 from pyramid.testing import setUp as psetUp
 from pyramid.testing import tearDown as ptearDown
-from pyramid.testing import DummyRequest
+#from pyramid.testing import DummyRequest
+from nti.tests import ByteHeadersDummyRequest as DummyRequest
 import pyramid.interfaces
 
 

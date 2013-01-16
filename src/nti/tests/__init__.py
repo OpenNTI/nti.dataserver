@@ -389,3 +389,75 @@ class ZopeExceptionLogPatch(nose.plugins.Plugin):
 # using a different base doesn't quite work,
 # some things are still using the old one
 # globalregistry.base = BaseComponents()
+
+from hamcrest import assert_that
+from hamcrest import is_
+
+class TypeCheckedDict(dict):
+
+	def __init__( self, key_class=object, val_class=object ):
+		dict.__init__( self )
+		self.key_class = key_class
+		self.val_class = val_class
+
+	def __setitem__( self, key, val ):
+		assert_that( key, is_( self.key_class ) )
+		assert_that( val, is_( self.val_class ) )
+		dict.__setitem__( self, key, val )
+
+try:
+	from pyramid.testing import DummyRequest as _DummyRequest
+	from pyramid.response import Response as _Response
+	from pyramid.decorator import reify
+	class _HeaderList( list ):
+		# TODO: Very incomplete, but append is the main method
+		# used by webob
+		def __init__(self, other=()):
+			list.__init__( self )
+			for k in other: self.append( k )
+
+		def append( self, k ):
+			__traceback_info__ = k
+			assert_that( k[0], is_( str ), "Header names must be byte strings" )
+			assert_that( k[1], is_( str ), "Header values must be byte strings" )
+			list.append( self, k )
+
+	class ByteHeadersResponse(_Response):
+
+		def __init__( self, *args, **kwargs ):
+			super(_Response,self).__init__( *args, **kwargs )
+			# make the list be right, which is directly assigned to in the
+			# super, bypassing the property
+			self.headerlist = self._headerlist
+
+		def _headerlist__set( self, value ):
+			"Ensure type checking of the headers."
+			super(ByteHeadersResponse,self)._headerlist__set( value )
+			if not isinstance( self._headerlist, _HeaderList ):
+				self._headerlist = _HeaderList( self._headerlist )
+
+		headerlist = property(_Response._headerlist__get, _headerlist__set,
+							  _Response._headerlist__del, doc=_Response._headerlist__get.__doc__)
+
+
+
+	class ByteHeadersDummyRequest(_DummyRequest):
+
+		def __init__( self, **kwargs ):
+			if 'headers' in kwargs:
+				old_headers = kwargs['headers']
+				headers = TypeCheckedDict( str, str )
+				for k, v in old_headers.items():
+					headers[k] = v
+				kwargs['headers']  = headers
+			else:
+				kwargs['headers'] = TypeCheckedDict( str, str )
+			super(ByteHeadersDummyRequest,self).__init__( **kwargs )
+
+		@reify
+		def response( self ):
+			return ByteHeadersResponse()
+			# NOTE: The super implementation consults the registry to find a factory.
+
+except ImportError:
+	pass

@@ -21,7 +21,8 @@ from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import has_property
 
-from pyramid.testing import DummyRequest
+#from pyramid.testing import DummyRequest
+from nti.tests import ByteHeadersDummyRequest as DummyRequest
 from pyramid.request import Request
 from cStringIO import StringIO
 
