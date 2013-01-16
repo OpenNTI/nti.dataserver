@@ -110,12 +110,12 @@ Title Slide
 
     # Check that the ntislidevideo object has the expected children
     elem = dom.getElementsByTagName('ntislide')[0]
-    assert_that( elem.childNodes, has_length( 11 ) )
-    assert_that( elem.childNodes[1], instance_of( label ) )
-    assert_that( elem.childNodes[3], instance_of( ntislide.ntislidetitle ) )
-    assert_that( elem.childNodes[5], instance_of( ntislide.ntislideimage ) )
-    assert_that( elem.childNodes[7], instance_of( ntislide.ntislidevideoref ) )
-    assert_that( elem.childNodes[9], instance_of( ntislide.ntislidetext ) )
+    assert_that( elem.childNodes, has_length( 10 ) )
+    assert_that( elem.childNodes[0], instance_of( label ) )
+    assert_that( elem.childNodes[2], instance_of( ntislide.ntislidetitle ) )
+    assert_that( elem.childNodes[4], instance_of( ntislide.ntislideimage ) )
+    assert_that( elem.childNodes[6], instance_of( ntislide.ntislidevideoref ) )
+    assert_that( elem.childNodes[8], instance_of( ntislide.ntislidetext ) )
 
     # Check that the ntislidevido object has the expected attributes
     assert_that( elem, has_property( 'id' ) )
@@ -127,10 +127,10 @@ Title Slide
     assert_that( elem, has_property( 'slidevideoend' ) )
 
     # Check that the attributes have the expected values
-    assert_that( elem.title, equal_to( elem.childNodes[3].attributes['title'] ) )
+    assert_that( elem.title, equal_to( elem.childNodes[2].attributes['title'] ) )
     assert_that( elem.slidenumber, equal_to( elem.ownerDocument.context.counters[elem.counter].value ) )
-    assert_that( elem.slideimage, equal_to( elem.childNodes[5] ) )
-    assert_that( elem.slidevideo, equal_to( elem.childNodes[7].idref['label'] ) )
-    assert_that( elem.slidevideostart, equal_to( _timeconvert(elem.childNodes[7].attributes['options']['start'] )) )
-    assert_that( elem.slidevideoend, equal_to( _timeconvert(elem.childNodes[7].attributes['options']['end'] )) )
+    assert_that( elem.slideimage, equal_to( elem.childNodes[4] ) )
+    assert_that( elem.slidevideo, equal_to( elem.childNodes[6].idref['label'] ) )
+    assert_that( elem.slidevideostart, equal_to( _timeconvert(elem.childNodes[6].attributes['options']['start'] )) )
+    assert_that( elem.slidevideoend, equal_to( _timeconvert(elem.childNodes[6].attributes['options']['end'] )) )
 
