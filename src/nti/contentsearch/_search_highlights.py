@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import re
+from heapq import nlargest
 from collections import namedtuple
 
 from zope import schema
@@ -204,7 +205,7 @@ def _prune_phrase_terms_fragments(termset, original_snippet, original_fragments)
 	snippet = '...'.join(snippets) if snippets else original_snippet
 	return snippet, fragments
 
-def _context_fragment(sf, termset, query, maxchars=500, surround=50):
+def _context_fragment(sf, termset, query, maxchars=300, surround=50):
 	if not sf.matches:
 		return sf
 	
@@ -242,7 +243,16 @@ def _context_fragment(sf, termset, query, maxchars=500, surround=50):
 	sf = _SearchFragment.create_from_terms(snippet, termset, query.is_phrase_search)
 	return sf
 
-def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3, 
+def top_fragments(fragments, scorer, count=5, order=highlight.FIRST, minscore=1):
+	scored_fragments = ((scorer(f), f) for f in fragments)
+	if count:
+		scored_fragments = nlargest(count, scored_fragments)
+
+	best_fragments = [sf for score, sf in scored_fragments if score > minscore]
+	best_fragments.sort(key=order)
+	return best_fragments
+
+def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5, 
 							 analyzer=None, order=highlight.FIRST):
 
 	# get query terms
@@ -251,6 +261,7 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3,
 	termset = _get_query_terms(query)
 	
 	# prepare fragmenter
+	#TODO: could we have a context scorer?
 	scorer = highlight.BasicFragmentScorer()
 	analyzer = analyzer or _get_default_analyzer()
 	formatter = highlight.NullFormatter() #  highlight.UppercaseFormatter()
@@ -262,7 +273,7 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=3,
 	# compute whoosh fragments
 	tokens = _set_matched_filter(tokens, termset)
 	fragments = fragmenter.fragment_tokens(text, tokens)
-	fragments = highlight.top_fragments(fragments, top, scorer, order)
+	fragments = top_fragments(fragments, scorer, top, order)
 	
 	if fragments:
 		search_fragments = []
