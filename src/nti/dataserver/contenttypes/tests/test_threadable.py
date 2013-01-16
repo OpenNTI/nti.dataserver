@@ -38,13 +38,18 @@ def Note():
 	n.applicableRange = ContentRangeDescription()
 	return n
 
-@interface.implementer(nti_interfaces.IWeakRef)
-class ReferenceObject(object):
+from nti.dataserver.intid_wref import WeakRef
+class ReferenceObject(WeakRef):
+	# Extend the real ref, to get its implementation,
+	# but override the moving parts
 
-	external_ntiid_oid = 'abc'
+	__slots__ = ('external_ntiid_oid', 'ref_is_deleted', 'creator', 'sharingTargets')
 
-	ref_is_deleted = False
-	_entity_id = 1 # Match intid_wref
+	def __init__( self ):
+		# deliberately not calling super
+		self._entity_id = 1
+		self.external_ntiid_oid = 'abc'
+		self.ref_is_deleted = False
 
 	def __call__(self):
 		if not self.ref_is_deleted:
@@ -60,7 +65,7 @@ def test_write_external_reply_to():
 
 	ext = note.toExternalObject()
 
-	assert_that( ext, has_entry( 'inReplyTo', ReferenceObject.external_ntiid_oid ) )
+	assert_that( ext, has_entry( 'inReplyTo', 'abc' ) )
 	assert_that( ext, has_entry( 'references', [] ) )
 
 def test_write_external_reply_to_deleted():
