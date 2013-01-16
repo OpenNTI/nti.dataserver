@@ -340,6 +340,9 @@ def module_teardown():
 # This problem never manifests itself in code that has already imported zope.site,
 # and it seems to be an assumption that code that uses zope.component also uses zope.site
 # (though we have some code that doesn't explicitly do so)
+
+# This is detailed in test_component_broken.txt
+# submitted as https://bugs.launchpad.net/zope.component/+bug/1100501
 import zope.site.site
 
 

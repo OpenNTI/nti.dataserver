@@ -1,0 +1,133 @@
+When zope.component.hooks is loaded, it installs a zope.testing
+cleanup function. However, this cleanup function isn't adequote and
+leaves stale data around, leading zope.interface adapters to
+improperly adapt things (a particular problem when running test suites
+that load different adapter configurations) This problem goes away if zope.site.site is
+imported and installs its cleanup hooks.
+
+Demonstration
+=============
+
+We can demonstrate this with some code.
+
+First we import the basic modules::
+
+	>>> import pkg_resources # to make sure namespace imports work
+	>>> from zope.testing import cleanup
+	>>> from zope import interface
+	>>> from zope import component
+	>>> from zope.component import hooks
+
+Next, we define an interface and two different adapters::
+
+	>>> class II(interface.Interface): pass
+	>>> class O(object): pass
+	>>> class A1(object):
+	...    def __init__( self, *args):
+	...        pass
+	...    def __repr__( self ):
+	...       return "<A1>"
+	>>> class A2(object):
+	...    def __init__( self, *args):
+	...        pass
+	...    def __repr__( self ):
+	...        return "<A2>"
+
+We can now proceed to run our "unit tests". Each of these unit tests
+will begin by installing the component hooks and providing some base
+configuration in the form of registering the A1 adapter::
+
+	>>> hooks.setHooks()
+	>>> component.provideAdapter( A1, adapts=(O,), provides=II )
+
+If we do nothing further, we can get get back the A1 adapter when we
+ask for it from both zope.component, and thanks to the adapter hook, zope.interface::
+
+	>>> component.getAdapter( O(), II )
+	<A1>
+	>>> II( O() )
+	<A1>
+
+Lets suppose some tests start with the base configuration and override
+it, installing the second adapter::
+
+	>>> component.provideAdapter( A2, adapts=(O,), provides=II )
+
+This adapter can now be accessed in both of those places::
+
+	>>> component.getAdapter( O(), II )
+	<A2>
+	>>> II( O() )
+	<A2>
+
+Finally, our test case shuts down and the cleanup is run::
+
+	>>> cleanup.cleanUp()
+
+To demonstrate the problem, let's begin the next test case run with the
+same basic setup as before:::
+
+	>>> hooks.setHooks()
+	>>> component.provideAdapter( A1, adapts=(O,), provides=II )
+
+At this point, we would expect to get back A1 when we ask for
+adapters. If we ask the global site manager directly for it, we're
+alright::
+
+	>>> component.getGlobalSiteManager().queryAdapter( O(), II )
+	<A1>
+
+But if we ask the (hooked) global API, we have a problem::
+
+	>>> component.queryAdapter( O(), II )
+	<A2>
+
+And we haze the same problem if we ask zope.interface::
+
+	>>> II( O() )
+	<A2>
+
+You can see that we get back the A2 registration, which should no
+longer be here, as the cleanup hooks have run. zope.interface's
+cleanup hooks reset the entire global registry, in fact, by re-running
+its __init__ method. What's causing this?
+
+A clue comes in the form of realizing that this doesn't happen all the
+time. In fact, as soon as zope.site.site is imported, it no longer
+happens at all::
+
+	>>> from zope.site import site
+
+zope.site.site installs a cleanup function that calls
+zope.component.hooks.setSite to clear the site::
+
+	>>> cleanup.cleanUp()
+
+Now the next time a test runs, the ancient A2 registration is truly gone::
+
+	>>> hooks.setHooks()
+	>>> component.provideAdapter( A1, adapts=(O,), provides=II )
+
+both from zope.component::
+
+	>>> component.queryAdapter( O(), II )
+	<A1>
+
+and zope.interface::
+
+	>>> II( O() )
+	<A1>
+
+Analysis
+========
+
+In a nutshell, what appears to be happening is that
+zope.component.hooks.SiteInfo caches the adapter_hook of the current
+site manager's `adapters` property the first time it is accessed.
+However, the cleanup for the globalSiteManager completely *replaces*
+its `adapters` property with a new object, leaving SiteInfo holding a
+dangling reference to an adapter registry that is no longer installed
+anywhere. Importing zope.site.site causes the
+zope.component.hooks.setSite to be called to clear out the site, which
+causes the cached adapter_hook to be deleted, thus letting it get a
+new reference to the current adapter registry.
