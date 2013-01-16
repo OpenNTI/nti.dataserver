@@ -252,6 +252,17 @@ class _AbstractNAQPart(_LocalContentMixin,Base.Environment):
 
 		return solutions
 
+	def _asm_solution_label(self):
+		# SAJ: Extract the most prefered unit. If there is none, return an empty string.
+		# The most preferred unit is the first unit of the first solution.
+		label = ''
+		solutions = self.getElementsByTagName( 'naqsolution' )
+		if solutions and self.soln_interface.isOrExtends( as_interfaces.IQMathSolution ):
+			unit_list = solutions[0].units_to_text_list()
+			if unit_list:
+				label = unit_list[0]
+		return label
+
 	def _asm_explanation(self):
 		exp_els = self.getElementsByTagName( 'naqsolexplanation' )
 		assert len(exp_els) <= 1
@@ -278,6 +289,7 @@ class _AbstractNAQPart(_LocalContentMixin,Base.Environment):
 									solutions=self._asm_solutions(),
 									explanation=self._asm_explanation(),
 									hints=self._asm_hints(),
+									answerLabel=self._asm_solution_label(),
 									**self._asm_object_kwargs()	)
 
 		errors = schema.getValidationErrors( self.part_interface, result )

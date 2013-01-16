@@ -69,6 +69,8 @@ class IQPart(interface.Interface):
 								value_type=dmschema.Object(IQSolution, title="A solution for this part")	)
 	explanation = _ContentFragment( title="An explanation of how the solution is arrived at.",
 									default='' )
+	answerLabel = schema.TextLine( title="The most prefered unit of the most preferred solution.",
+									default='' )
 
 	def grade( response ):
 		"""
