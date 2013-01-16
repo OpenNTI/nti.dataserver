@@ -244,14 +244,32 @@ def _context_fragment(sf, termset, query, maxchars=300, surround=50):
 	return sf
 
 def top_fragments(fragments, scorer, count=5, order=highlight.FIRST, minscore=1):
-	scored_fragments = ((scorer(f), f) for f in fragments)
+	scored_fragments = [(scorer(f), f) for f in fragments]
+	total_fragments = len(scored_fragments)
 	if count:
 		scored_fragments = nlargest(count, scored_fragments)
 
 	best_fragments = [sf for score, sf in scored_fragments if score > minscore]
 	best_fragments.sort(key=order)
-	return best_fragments
+	return best_fragments, total_fragments
 
+class HighlightInfo(object):
+	
+	__slots__ = ('snippet', 'fragments', 'total_fragments')
+	
+	def __init__(self, snippet=None, fragments=(), total_fragments=0):
+		self.fragments = fragments
+		self.total_fragments = total_fragments
+		self.snippet = unicode(snippet) if snippet else u''
+		
+	@property
+	def fragment_count(self):
+		return self.total_fragments
+	
+	@property
+	def search_fragments(self):
+		return self.fragments
+	
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5, 
 							 analyzer=None, order=highlight.FIRST):
 
@@ -273,7 +291,7 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 	# compute whoosh fragments
 	tokens = _set_matched_filter(tokens, termset)
 	fragments = fragmenter.fragment_tokens(text, tokens)
-	fragments = top_fragments(fragments, scorer, top, order)
+	fragments, total_fragments = top_fragments(fragments, scorer, top, order)
 	
 	if fragments:
 		search_fragments = []
@@ -282,6 +300,7 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 			search_fragments.append(sf)	
 		snippet = formatter(text, fragments)
 	else:
+		total_fragments = 1
 		sf = _SearchFragment.create_from_terms(text, termset, query.is_phrase_search)
 		sf = _context_fragment(sf, termset, query, maxchars=maxchars, surround=surround)
 		snippet = sf.text
@@ -290,13 +309,8 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 	if query.is_phrase_search:
 		snippet, search_fragments =  _prune_phrase_terms_fragments(termset, snippet, search_fragments)
 	
-	return snippet, search_fragments
-
-def substring_fragments_highlight(query, text):
-	snippet = text
-	termset = _get_terms(query)
-	search_fragments = [_SearchFragment.search_fragments(text, termset)]
-	return snippet, search_fragments
+	result = HighlightInfo(snippet, search_fragments, total_fragments)
+	return result
 
 def word_content_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None):
 	terms = _get_terms(query)
