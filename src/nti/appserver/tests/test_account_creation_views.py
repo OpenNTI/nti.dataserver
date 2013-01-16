@@ -73,7 +73,7 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_create_invalid_realname(self):
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'realname': '123 456_',
@@ -90,7 +90,7 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_create_invalid_invitation_code(self):
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'realname': 'Jason Madden',
@@ -109,7 +109,7 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_valid_invitation_code(self):
 		users.Community.create_entity( username='MATHCOUNTS' )
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'realname': 'Jason Madden',
@@ -121,7 +121,7 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_create_short_invalid_password(self):
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'foo@bar.com',
 													 'email': 'foo@bar.com',
 													 'password': 'a' } )
@@ -135,7 +135,7 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_create_insecure_invalid_password(self):
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'foo@bar.com',
 													 'email': 'foo@bar.com',
 													 'password': 'donald' } )
@@ -150,7 +150,7 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_create_invalid_email( self ):
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass132word',
 													 'email': 'not valid' } )
@@ -336,7 +336,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_birthdate_only_old_user( self ):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 
@@ -378,8 +378,8 @@ class TestPreflightView(_AbstractValidationViewBase):
 	@WithMockDSTrans
 	def test_create_invalid_realname_mathcounts( self ):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
+		self.request.content_type = b'application/vnd.nextthought+json'
 
 		bad_code = 'UsernameCannotBeBlank'
 		birthdate = datetime.date.today().replace( year=datetime.date.today().year - 10 ).isoformat()
@@ -397,7 +397,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 	@WithMockDSTrans
 	def test_create_invalid_username_mathcounts( self ):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
 		self.request.content_type = 'application/vnd.nextthought+json'
 
 		bad_code = 'BlankHumanNameError'
@@ -417,7 +417,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 	@WithMockDSTrans
 	def test_create_special_characters_username_mathcounts( self ):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
 		self.request.content_type = 'application/vnd.nextthought+json'
 
 		bad_code = 'UsernameContainsIllegalChar'
@@ -440,7 +440,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 	@WithMockDSTrans
 	def test_create_mathcounts_policy_birthdate_only_under_13_user( self ):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 
@@ -472,7 +472,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 	def test_create_mathcounts_policy_avatar_choices( self ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		birthdate = datetime.date.today().replace( year=datetime.date.today().year - 10 ).isoformat()
@@ -497,7 +497,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 	def test_create_rwanda_policy_avatar_choices( self ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://rwanda.nextthought.com'
+		self.request.headers[b'origin'] = b'http://rwanda.nextthought.com'
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
@@ -514,7 +514,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 	def test_preflight_username_only_with_email( self ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://rwanda.nextthought.com'
+		self.request.headers[b'origin'] = b'http://rwanda.nextthought.com'
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
@@ -584,7 +584,7 @@ class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 	def _do_test_create_site_policy( self, host, com_name ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://' + host
+		self.request.headers[b'origin'] = b'http://' + host
 
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
@@ -610,13 +610,13 @@ class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 	def test_create_rwanda_policy( self ):
-		self._do_test_create_site_policy( 'rwanda.nextthought.com', 'CarnegieMellonUniversity' )
+		self._do_test_create_site_policy( b'rwanda.nextthought.com', 'CarnegieMellonUniversity' )
 
 	def test_create_law_policy( self ):
-		self._do_test_create_site_policy( 'law.nextthought.com', 'law.nextthought.com' )
+		self._do_test_create_site_policy( b'law.nextthought.com', 'law.nextthought.com' )
 
 	def test_create_prmia_policy( self ):
-		self._do_test_create_site_policy( 'prmia.nextthought.com', 'prmia.nextthought.com' )
+		self._do_test_create_site_policy( b'prmia.nextthought.com', 'prmia.nextthought.com' )
 
 class TestCreateView(_AbstractValidationViewBase):
 
@@ -626,7 +626,7 @@ class TestCreateView(_AbstractValidationViewBase):
 
 	@WithMockDSTrans
 	def test_create_missing_username( self ):
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'password': 'pass123word', 'email': 'foo@bar.com' } )
 		with assert_raises( hexc.HTTPUnprocessableEntity ):
 			self.the_view( self.request )
@@ -634,14 +634,14 @@ class TestCreateView(_AbstractValidationViewBase):
 
 	@WithMockDSTrans
 	def test_create_missing_password(self):
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'foo@bar.com', 'email': 'foo@bar.com' } )
 		with assert_raises( hexc.HTTPUnprocessableEntity ):
 			account_create_view( self.request )
 
 	@WithMockDSTrans
 	def test_create_null_password(self):
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'foo@bar.com',
 													 'email': 'foo@bar.com',
 													 'password': None } )
@@ -658,7 +658,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
 		mock_dataserver.add_memory_shard( self.ds, 'example.com' )
 
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'realname': 'Jason Madden',
@@ -674,7 +674,7 @@ class TestCreateView(_AbstractValidationViewBase):
 	@WithMockDSTrans
 	def test_create_shard_matches_request_origin( self ):
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://content.nextthought.com'
+		self.request.headers[b'origin'] = b'http://content.nextthought.com'
 		mock_dataserver.add_memory_shard( self.ds, 'content.nextthought.com' )
 
 		self.request.content_type = 'application/vnd.nextthought+json'
@@ -694,9 +694,9 @@ class TestCreateView(_AbstractValidationViewBase):
 	def test_create_mathcounts_policy_email_required( self ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
 
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass123word',
@@ -712,9 +712,9 @@ class TestCreateView(_AbstractValidationViewBase):
 	def test_create_mathcounts_policy_contact_email_required_valid( self ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
 
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass123word',
@@ -747,10 +747,10 @@ class TestCreateView(_AbstractValidationViewBase):
 	def test_create_mathcounts_policy( self ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
 		mailer = component.getUtility( ITestMailDelivery )
 
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass123word',
 													 'email': 'foo@bar.com' } )
@@ -829,9 +829,9 @@ class TestCreateView(_AbstractValidationViewBase):
 		# creating users. Move it.
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://mathcounts.nextthought.com'
+		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
 
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason2',
 													 'password': 'temp001',
 													 'realname': 'Joe Bananna',
@@ -847,7 +847,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.customization.avatar_upload' ))))
 		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.p2p.dynamicfriendslists'))))
 
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason3',
 													 'password': 'temp001',
 													 'realname': 'Joe Bananna',
@@ -863,7 +863,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.customization.avatar_upload' ))))
 		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.p2p.dynamicfriendslists'))))
 
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason4',
 													 'password': 'temp001',
 													 'realname': 'Joe Bananna',
@@ -883,9 +883,9 @@ class TestCreateView(_AbstractValidationViewBase):
 	def _do_test_create_site_policy( self, host, com_name ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers['origin'] = 'http://' + host
+		self.request.headers[b'origin'] = b'http://' + host
 
-		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.content_type = b'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'realname': 'Jason Madden',
@@ -910,13 +910,13 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
 	def test_create_rwanda_policy( self ):
-		self._do_test_create_site_policy( 'rwanda.nextthought.com', 'CarnegieMellonUniversity' )
+		self._do_test_create_site_policy( b'rwanda.nextthought.com', 'CarnegieMellonUniversity' )
 
 	def test_create_law_policy( self ):
-		self._do_test_create_site_policy( 'law.nextthought.com', 'law.nextthought.com' )
+		self._do_test_create_site_policy( b'law.nextthought.com', 'law.nextthought.com' )
 
 	def test_create_prmia_policy( self ):
-		self._do_test_create_site_policy( 'prmia.nextthought.com', 'prmia.nextthought.com' )
+		self._do_test_create_site_policy( b'prmia.nextthought.com', 'prmia.nextthought.com' )
 
 
 	@WithMockDSTrans
@@ -929,7 +929,7 @@ class TestCreateView(_AbstractValidationViewBase):
 		utility = Placer()
 		component.provideUtility( utility, provides=INewUserPlacer, name='example.com' )
 		try:
-			self.request.content_type = 'application/vnd.nextthought+json'
+			self.request.content_type = b'application/vnd.nextthought+json'
 			self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 														 'password': 'pass123word',
 														 'realname': 'Jason Madden',

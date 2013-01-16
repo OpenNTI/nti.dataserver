@@ -53,12 +53,12 @@ def _get_possible_site_names(request):
 
 	result = []
 
-	if 'origin' in request.headers:
+	if b'origin' in request.headers:
 		# TODO: The port splitting breaks on IPv6
 		# Origin comes in as a complete URL, host and potentially port
 		# Sometimes it comes in blank (unit tests, mostly, that don't use proper HTTP libraries)
 		# so the below is robust against that, as well as deliberately malformed input
-		origin = request.headers['origin']
+		origin = request.headers[b'origin'].decode('ascii')
 		__traceback_info__ = origin
 		if origin and '//' in origin and ':' in origin:
 			host = origin.split( '//' )[1].split( ":" )[0]

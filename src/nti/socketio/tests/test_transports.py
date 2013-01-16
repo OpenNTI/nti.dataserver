@@ -17,7 +17,8 @@ import nti.socketio.transports as transports
 from nti.appserver.tests import ConfiguringTestBase
 from nti.dataserver.tests import mock_dataserver
 
-from pyramid.testing import DummyRequest
+#from pyramid.testing import DummyRequest
+from nti.tests import ByteHeadersDummyRequest as DummyRequest
 
 class WebSocket(object):
 	server = None

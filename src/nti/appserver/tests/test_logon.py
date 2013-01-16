@@ -16,8 +16,8 @@ from nose.tools import assert_raises
 import zope.testing.loghandler
 
 import pyramid.testing
-from pyramid.testing import DummyRequest
-
+#from pyramid.testing import DummyRequest
+from nti.tests import ByteHeadersDummyRequest as DummyRequest
 
 from zope import component
 from zope import interface
