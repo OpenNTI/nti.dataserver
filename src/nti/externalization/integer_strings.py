@@ -53,10 +53,20 @@ def from_external_string(key):
 	Turn the base [BASE] number [key] into an integer
 
 	:raises ValueError: If the key is invalid or contains illegal characters.
+	:raises UnicodeDecodeError: If the key is a Unicode object, and contains
+		non-ASCII characters (which wouldn't be valid anyway)
 	"""
 
 	if not key:
 		raise ValueError("Improper key" )
+
+	if isinstance( key, unicode ):
+		# Unicode keys cause problems: The _TRANSTABLE is coerced
+		# to Unicode, which fails because it contains non-ASCII values.
+		# So instead, we encode the unicode string to ascii, which, if it is a
+		# valid key, will work
+		key = key.encode( 'ascii' )
+
 
 	key = key[:-1] if key[-1] == _VERSION else key # strip the version if needed
 	key = string.translate( key, _TRANSTABLE ) # translate bad chars
@@ -69,11 +79,10 @@ def from_external_string(key):
 		int_sum += _VOCABULARY.index(char) * pow(_BASE, idx)
 	return int_sum
 
-
 def to_external_string(integer):
 	"""
 	Turn an integer [integer] into a base [BASE] number
-	in string representation
+	in (byte) string representation.
 	"""
 
 	# we won't step into the while if integer is 0
@@ -81,8 +90,11 @@ def to_external_string(integer):
 	if integer == 0:
 		return _ZERO_MARKER
 
-	result = b""
+	result = b''
+	# Simple string concat benchmarks the fastest for this size data,
+	# among a list and an array.array( 'c' )
 	while integer > 0:
 		integer, remainder = divmod( integer, _BASE )
 		result = _VOCABULARY[remainder] + result
+
 	return result
