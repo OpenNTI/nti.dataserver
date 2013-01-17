@@ -9,7 +9,8 @@ from nti.utils.transactions import ObjectDataManager
 
 from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.classifier import Classifier
-
+from nti.contentsearch.spambayes.classifier import BaseWordInfo
+		
 class Trainer(Classifier):
 	
 	def train(self, text, is_spam=True):
@@ -26,7 +27,14 @@ class Trainer(Classifier):
 		tokens = tokenize(unicode(text))
 		return self.spamprob(tokens)
 
+class PersistentWordInfo(Persistent, BaseWordInfo):
+	def __init__(self):
+		self.hamcount = 0
+		self.spamcount = 0
+		
 class PersistentClassifier(Persistent, Trainer):
+	
+	WordInfoClass = PersistentWordInfo
 	
 	def __init__(self, mapfactory=OOBTree):
 		Trainer.__init__(self, mapfactory=mapfactory)
