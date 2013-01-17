@@ -106,7 +106,7 @@ setup(
 		'ZConfig >= 2.9.3',
 		 # NOTE: ZODB has a new release, 4.0.0a4 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
-		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.3, and ZEO >= 4.0.0
+		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.5, and ZEO >= 4.0.0
 		 # which were pulled out of ZODB for better pypy support. We'll switch to it
 		 # when it goes non-alpha. It may require a tweak to our monkey patch if
 		 # has not been fixed.
@@ -161,13 +161,6 @@ setup(
 		'gunicorn >= 0.17.2',
 		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
-		 # WSGI middleware for profiling. Defaults to storing
-		 # data in a sqlite file. Works across multiple gunicorn workers, does
-		 # OK with websockets and greenlets. Needs trivial patch to work (display results) with
-		 # webob 1.2, collects data ok without patch.
-		 # Depends on the system graphviz installation; an alternative is repoze.profile which has
-		 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
-		#'linesman >= 0.2.2', # Conflicts with Pillow. Modify requires.txt as part of the patch
 		'logilab-common >= 0.58.3',
 		'lxml >= 3.0.2', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.3', # Human name parsing
@@ -325,6 +318,12 @@ setup(
 			'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
 			'fudge'],
 		'tools': [
+			# WSGI middleware for profiling. Defaults to storing
+			# data in a sqlite file. Works across multiple gunicorn workers, does
+			# OK with websockets and greenlets.
+			# Depends on the system graphviz installation; an alternative is repoze.profile which has
+			# fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
+		 	#'linesman >= 0.2.3', # Conflicts with Pillow (wants PIL). Can be installed manually with --no-deps
 			'pyramid_debugtoolbar >= 1.0.4',
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			'ipython[notebook] >= 0.13.1', # notebook is web based, pulls in tornado
