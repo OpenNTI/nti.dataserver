@@ -46,6 +46,8 @@ def get_content(text=None, language='en'):
 @component.adapter(basestring)
 class _StringContentResolver(object):
 
+	__slots__ = ('content',)
+	
 	def __init__( self, content ):
 		self.content = content
 
@@ -75,7 +77,7 @@ def _process_words(words):
 @interface.implementer(search_interfaces.IContentResolver)
 class _BasicContentResolver(object):
 	
-	__slots__ = 'obj'
+	__slots__ = ('obj',)
 	
 	def __init__( self, obj ):
 		self.obj = obj
@@ -213,7 +215,9 @@ class _CanvasTextShapeContentResolver(_BasicContentResolver):
 @component.adapter(IDict)
 @interface.implementer(	search_interfaces.IThreadableContentResolver)
 class _DictContentResolver(object):
-
+	
+	__slots__ = ('obj',)
+	
 	def __init__( self, obj ):
 		self.obj = obj
 
