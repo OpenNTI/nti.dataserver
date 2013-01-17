@@ -42,3 +42,7 @@ def test_round_trip():
 	# Big values
 	for i in range(sys.maxint - 2000, sys.maxint):
 		_t( i )
+
+def test_decode_unicode():
+
+	assert_that( integer_strings.from_external_string( u'abcde' ), is_(204869188) )
