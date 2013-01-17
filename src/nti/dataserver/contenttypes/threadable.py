@@ -102,6 +102,7 @@ class ThreadableExternalizableMixin(ThreadableMixin):
 		if obj is not None:
 			result = to_external_ntiid_oid( obj )
 			if not result:
+				__traceback_info__ = self, obj, ref
 				raise ValueError( "Unable to create external reference", obj )
 			return result
 

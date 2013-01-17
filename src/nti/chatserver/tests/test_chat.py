@@ -214,6 +214,7 @@ class TestChatRoom(ConfiguringTestBase):
 			assert_that( room.inReplyTo, none() )
 
 		with mock_dataserver.mock_db_trans(ds):
+			room = chat.Meeting( None )
 			update_from_external_object( room, ext, context=ds )
 			assert_that( room.inReplyTo, is_( n ) )
 			assert_that( room.references[0], is_( n ) )
@@ -673,6 +674,7 @@ class TestChatserver(ConfiguringTestBase):
 		# unless its a reply
 		msg_info = chat.MessageInfo()
 		component.getUtility( zc_intid.IIntIds ).register( msg_info )
+		self.ds.root._p_jar.add( msg_info )
 		msg.inReplyTo = msg_info
 		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( True ) )
 		# only went to moderators
