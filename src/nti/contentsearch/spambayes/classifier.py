@@ -43,7 +43,7 @@ from nti.contentsearch.spambayes import LN2
 from nti.contentsearch.spambayes.statistics.chi2 import chi2Q
 from nti.contentsearch.spambayes import interfaces as sp_interfaces
 
-class _BaseWordInfo(object):
+class BaseWordInfo(object):
 	def update(self, spam, ham):
 		self.spamcount = spam
 		self.hamcount = ham
@@ -54,7 +54,7 @@ class _BaseWordInfo(object):
 	def __repr__(self):
 		return "WordInfo %s" % repr((self.spamcount, self.hamcount))
 	
-class WordInfo(_BaseWordInfo):
+class WordInfo(BaseWordInfo):
 	# A WordInfo is created for each distinct word.  spamcount is the
 	# number of trained spam msgs in which the word appears, and hamcount
 	# the number of trained ham msgs.
