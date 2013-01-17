@@ -21,7 +21,7 @@ class _Stopwords(zopyxStopWords):
         ntisw = component.getUtility(search_interfaces.IStopWords)
         for language in ntisw.available_languages():
             words = ntisw.stopwords(language)
-            words = {s.encode('iso-8859-15').lower(): None for s in words}
+            words = {s.encode('utf-8').lower(): None for s in words}
             self._cache[language] = words
 
     def availableLanguages(self):
