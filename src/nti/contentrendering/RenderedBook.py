@@ -1,70 +1,63 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
-from xml.dom.minidom import parse
-
 import os
-
-from zope.deprecation import deprecate
-from zope import interface
-from BTrees.OOBTree import OOBTree
-
-from nti.utils.minidom import minidom_writexml
-from . import interfaces
-from . import run_phantom_on_page
-_runPhantomOnPage = run_phantom_on_page
-from . import javascript_path
-from . import ConcurrentExecutor
-
+import codecs
+import urllib
 import html5lib
+from pyquery import PyQuery
+from xml.dom.minidom import parse
 from html5lib import treewalkers, serializer, treebuilders
 
-import urllib
-from pyquery import PyQuery
-import codecs
+from zope import interface
+from BTrees.OOBTree import OOBTree
+from zope.deprecation import deprecate
 
+from nti.contentrendering import interfaces
+from nti.contentrendering import javascript_path
+from nti.contentrendering import ConcurrentExecutor
+from nti.contentrendering import run_phantom_on_page
 
+from nti.utils.minidom import minidom_writexml
+
+_runPhantomOnPage = run_phantom_on_page
+
+import logging
+logger = logging.getLogger(__name__)
+
+@interface.implementer(interfaces.IRenderedBook)
 class RenderedBook(object):
 
-	interface.implements(interfaces.IRenderedBook)
-
 	TOC_FILE_NAME = 'eclipse-toc.xml'
-
+	
+	tocFile = None
 	document = None
 	contentLocation = None
-	tocFile = None
 
 	def __init__(self, document, location):
+		self.pages = OOBTree()
+		self.document = document
 		self.contentLocation = os.path.abspath( location )
 		self.tocFile = os.path.join(self.contentLocation, self.TOC_FILE_NAME)
-		self.document = document
-		self.pages = OOBTree()
+
 		self._toc = None
 		self._processPages()
 
-		for pageid, page in self.pages.items():
-			logger.debug( '%s -> %s', pageid, page.ntiid )
+		if logger.isEnabledFor(logging.DEBUG):
+			for pageid, page in self.pages.items():
+				logger.debug( '%s -> %s', pageid, page.ntiid )
 		logger.info( "Book at %s had %d pages", os.path.abspath(location), len(self.pages) )
-
 
 	def _processPages(self):
 		javascript =  javascript_path( 'getPageInfo.js')
-
 		results = self.runPhantomOnPages(javascript)
-
-		pages = {}
-		for pageinfo in results.values():
-			pages[pageinfo['ntiid']] = pageinfo
+		pages = {p['ntiid']:p for p in results.values()}
 
 		def set_info(root):
 			if root.ntiid:
@@ -137,8 +130,8 @@ class RenderedBook(object):
 
 		return results
 
+@interface.implementer(interfaces.IEclipseMiniDomTOC)
 class EclipseTOC(object):
-	interface.implements(interfaces.IEclipseMiniDomTOC)
 
 	def __init__(self, f):
 		self.filename = f
@@ -230,6 +223,7 @@ class EclipseTOC(object):
 		minidom_writexml( self.dom, self.filename )
 
 
+@interface.implementer(interfaces.IEclipseMiniDomTopic)
 class _EclipseTOCMiniDomTopic(object):
 	"""
 	Represents a topic from an eclipse TOC, both the TOC information
@@ -243,15 +237,13 @@ class _EclipseTOCMiniDomTopic(object):
 	topic, toc_dom_node: An minidom Element
 	"""
 
-	interface.implements( interfaces.IEclipseMiniDomTopic )
-
+	ordinal = 1
 	save_dom = True
-
-	modifiedTopic = False
 	modifiedDom = False
+	modifiedTopic = False
+	
 	_dom = None
 	_doc = None
-	ordinal = 1
 	_childTopics = None
 
 	def __init__( self, topic_dom_node,
