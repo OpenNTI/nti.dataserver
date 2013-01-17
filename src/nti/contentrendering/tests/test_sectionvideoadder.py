@@ -1,14 +1,15 @@
-from . import ConfiguringTestBase
-from nti.contentrendering import sectionvideoadder
-from nti.tests import provides
+import os
+import shutil
+import tempfile
+
 from nti.contentrendering import interfaces
+from nti.contentrendering import sectionvideoadder
 from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
 
-import os
-import tempfile
-import shutil
-from hamcrest import assert_that, is_, same_instance
+from nti.tests import provides
+from nti.contentrendering.tests import ConfiguringTestBase
 
+from hamcrest import assert_that, is_, same_instance
 
 def test_class_provides():
 	assert_that( sectionvideoadder.YouTubeRelatedVideoAdder, provides(interfaces.IStaticYouTubeEmbedVideoAdder ) )
