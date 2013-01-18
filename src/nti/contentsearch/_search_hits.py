@@ -2,7 +2,6 @@ from __future__ import print_function, unicode_literals
 
 import six
 import uuid
-import UserDict
 import collections
 
 import zope.intid
@@ -44,26 +43,14 @@ def get_hit_id(obj):
 	return result or unicode(uuid.uuid4())
 
 @interface.implementer(search_interfaces.ISearchHit)
-class _BaseSearchHit(object, UserDict.DictMixin):
+class _BaseSearchHit(dict):
 	def __init__( self, oid=None):
 		self.oid = oid
+		self[CLASS] = HIT
 		self._query = None
-		self._data = {CLASS:HIT}
 				
 	def toExternalObject(self):
-		return self._data
-	
-	def keys(self):
-		return self._data.keys()
-	
-	def __getitem__(self, key):
-		return self._data[key]
-	
-	def __setitem__(self, key, val):
-		self._data[key] = val
-		
-	def __delitem__(self, key):
-		self._data.pop(key)
+		return self
 		
 	def get_query(self):
 		return self._query
@@ -74,31 +61,31 @@ class _BaseSearchHit(object, UserDict.DictMixin):
 	query = property(get_query, set_query)
 	
 	def get_score(self):
-		return self._data.get(SCORE, 1.0)
+		return self.get(SCORE, 1.0)
 	
 	def set_score(self, score=1.0):
-		self._data[SCORE] = score or 1.0
+		self[SCORE] = score or 1.0
 		
 	score = property(get_score, set_score)
 	
 	@property
 	def last_modified(self):
-		return self._data.get(LAST_MODIFIED, 0)
+		return self.get(LAST_MODIFIED, 0)
 	
 	def __repr__(self):
-		return "<%s %r>" % (self.__class__.__name__, self._data)
+		return "%s<%r>" % (self.__class__.__name__, self)
 	
 class _SearchHit(_BaseSearchHit):
 	def __init__( self, original, score=1.0 ):
 		super(_SearchHit, self).__init__(get_hit_id(original))
 		adapted = component.queryAdapter(original, search_interfaces.IContentResolver)
-		self._data[SCORE] = score
-		self._data[TYPE] = original.__class__.__name__
-		self._data[CREATOR] = adapted.get_creator() if adapted else u''
-		self._data[NTIID] = adapted.get_ntiid() if adapted else u''
-		self._data[SNIPPET] = adapted.get_content() if adapted else u''
-		self._data[CONTAINER_ID] = adapted.get_containerId() if adapted else u''
-		self._data[LAST_MODIFIED] = adapted.get_last_modified() if adapted else 0
+		self[SCORE] = score
+		self[TYPE] = original.__class__.__name__
+		self[CREATOR] = adapted.get_creator() if adapted else u''
+		self[NTIID] = adapted.get_ntiid() if adapted else u''
+		self[SNIPPET] = adapted.get_content() if adapted else u''
+		self[CONTAINER_ID] = adapted.get_containerId() if adapted else u''
+		self[LAST_MODIFIED] = adapted.get_last_modified() if adapted else 0
 		
 @component.adapter(nti_interfaces.IHighlight)
 class _HighlightSearchHit(_SearchHit):
@@ -117,27 +104,21 @@ class _MessageInfoSearchHit(_SearchHit):
 	def __init__( self, original, score=1.0 ):
 		super(_MessageInfoSearchHit, self).__init__(original, score)
 		adapted = component.queryAdapter(original, search_interfaces.IContentResolver)
-		self._data[ID] = adapted.get_id() if adapted else u''
+		self[ID] = adapted.get_id() if adapted else u''
 		
 @component.adapter(search_interfaces.IWhooshBookContent)
 class _WhooshBookSearchHit(_BaseSearchHit):
 	
-	__slots__ = ('oid', '_query', '_data')
-	
 	def __init__( self, hit ):
 		super(_WhooshBookSearchHit, self).__init__()
-		self._data[TYPE] = CONTENT
-		self._data[NTIID] = hit[ntiid_]
-		self._data[SNIPPET] = hit[content_]
-		self._data[CONTAINER_ID] = hit[ntiid_]
-		self._data[title_.capitalize()] = hit[title_]
-		self._data[LAST_MODIFIED] = hit[last_modified_]
+		self[TYPE] = CONTENT
+		self[NTIID] = hit[ntiid_]
+		self[SNIPPET] = hit[content_]
+		self[CONTAINER_ID] = hit[ntiid_]
+		self[title_.capitalize()] = hit[title_]
+		self[LAST_MODIFIED] = hit[last_modified_]
 		self.oid = ''.join((hit[ntiid_], u'-', unicode(hit[intid_])))
-			
-	@property
-	def last_modified(self):
-		return self._data.get(LAST_MODIFIED, 0)
-	
+
 def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	if hit is not None:
 		hit.query = query
