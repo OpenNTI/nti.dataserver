@@ -39,8 +39,18 @@ class ThreadableMixin(object):
 	def __init__(self):
 		super(ThreadableMixin,self).__init__()
 
-	def getInReplyTo(self):
-		return self._inReplyTo() if self._inReplyTo else None
+	def getInReplyTo(self, allow_cached=True):
+		"""
+		Exposed for those times when we need explicit control over caching (when possible)
+		"""
+		if self._inReplyTo is None:
+			return None
+
+		if allow_cached or not nti_interfaces.ICachingWeakRef.providedBy( self._inReplyTo ):
+			# The default, works with all reference types, or we can't do it
+			return self._inReplyTo()
+
+		return self._inReplyTo( allow_cached=allow_cached )
 
 	def setInReplyTo( self, value ):
 		self._inReplyTo = nti_interfaces.IWeakRef( value ) if value is not None else None

@@ -20,12 +20,10 @@ from hamcrest import none
 from hamcrest import has_property
 from hamcrest import has_entry
 
-import nti.tests
 from nti.tests import verifiably_provides
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
-from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.externalization.externalization import to_external_object
@@ -55,6 +53,9 @@ class TestWref(ConfiguringTestBase):
 		assert_that( copy, is_( ref ) )
 		assert_that( repr(copy), is_( repr( ref ) ) )
 		assert_that( hash(copy), is_( hash( ref ) ) )
+
+		assert_that( ref, verifiably_provides( nti_interfaces.ICachingWeakRef ) )
+
 
 	@WithMockDSTrans
 	def test_missing( self ):
