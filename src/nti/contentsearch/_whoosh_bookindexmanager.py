@@ -72,7 +72,7 @@ class WhooshBookIndexManager(object):
 		return self.indexname
 
 	def __repr__( self ):
-		return 'WhooshBookIndexManager(indexname=%s)' % self.indexname
+		return '%s(indexname=%s)' % (self.__class__.__name__, self.indexname)
 	
 	@metric
 	def search(self, query, *args, **kwargs):
