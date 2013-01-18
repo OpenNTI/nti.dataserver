@@ -79,4 +79,8 @@ class _SearchEntityIndexManager(PersistentMapping):
 
 	def remove_index(self, type_name):
 		raise NotImplementedError()
+	
+	def __repr__( self ):
+		return '%s(%s)' % (self.__class__.__name__, self.username)
+	
 
