@@ -46,10 +46,10 @@ def get_hit_id(obj):
 @interface.implementer(search_interfaces.ISearchHit)
 class _BaseSearchHit(object, UserDict.DictMixin):
 	def __init__( self, oid=None):
-		self._data = {}
 		self.oid = oid
 		self._query = None
-		
+		self._data = {CLASS:HIT}
+				
 	def toExternalObject(self):
 		return self._data
 	
@@ -92,7 +92,6 @@ class _SearchHit(_BaseSearchHit):
 	def __init__( self, original, score=1.0 ):
 		super(_SearchHit, self).__init__(get_hit_id(original))
 		adapted = component.queryAdapter(original, search_interfaces.IContentResolver)
-		self._data[CLASS] = HIT
 		self._data[SCORE] = score
 		self._data[TYPE] = original.__class__.__name__
 		self._data[CREATOR] = adapted.get_creator() if adapted else u''
@@ -123,9 +122,10 @@ class _MessageInfoSearchHit(_SearchHit):
 @component.adapter(search_interfaces.IWhooshBookContent)
 class _WhooshBookSearchHit(_BaseSearchHit):
 	
+	__slots__ = ('oid', '_query', '_data')
+	
 	def __init__( self, hit ):
 		super(_WhooshBookSearchHit, self).__init__()
-		self._data[CLASS] = HIT	
 		self._data[TYPE] = CONTENT
 		self._data[NTIID] = hit[ntiid_]
 		self._data[SNIPPET] = hit[content_]
