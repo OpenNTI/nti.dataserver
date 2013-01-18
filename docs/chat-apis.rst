@@ -2,6 +2,11 @@
  Chat Protocal
 ===============
 
+Rooms
+=====
+
+Chats are organized into rooms.
+
 .. code-block:: c
 
   //Chat server info
@@ -25,14 +30,61 @@
   }
 
 
-Channels
+Messages
 ========
 
-Within a chat room, a 'channel' is a separate sideband of information exchange. Besides
-text messages, many operational messages are carried on channels so that
-they may be a part of the transcript.
+Once a room is established, occupants of the room (and in some cases,
+non-occupants and the system) communicate by sending *messages* to the
+room (see the events defined below).
+
+Within a chat room, a 'channel' is a separate sideband of information
+exchange. Besides text messages, many operational messages are carried
+on channels so that they may be a part of the transcript.
 
 Channels are named by strings, such as "DEFAULT."
+
+.. code-block:: c
+
+  struct MessageInfo : Object<Contained,Threadable> {
+	  msgid_t ID;
+	  string Creator; //May be 'System'
+	  time_t LastModified; //Time of message on server.
+	  msgid_t ContainerId; //The room to post to.
+	  enum {
+		  DEFAULT,
+		  WHISPER,
+		  CONTENT,
+		  POLL,
+		  META,
+		  STATE
+	  } channel;
+
+	  enum {
+		  st_PENDING,
+		  st_POSTED,
+		  st_SHADOWED,
+		  st_INITIAL
+	  } Status;
+
+	  msgid_t inReplyTo; //parent message id.
+	  Object body; //See info on channels to determine the body.
+
+	  //A list of usernames that should get this message.
+	  //Only important if on the non-default channel.
+	  string[] recipients;
+  }
+
+  struct TranscriptSummary : Object {
+	  readonly RoomInfo RoomInfo;
+	  //set of all usernames that received or sent messages
+	  //contained in this transcript
+	  readonly string[] Contributors;
+  }
+
+  struct Transcript : TranscriptSummary {
+	  MessageInfo Messages[];
+  }
+
 
 Security
 --------
@@ -111,54 +163,52 @@ META
 	action-specific; the server MAY filter out keys that are unknown
 	for the particular action and the client MUST ignore them.
 
-	The 'pin' action asks the interface to make a particular unit of content
-	permanently visible. The way this is done will vary depending on content
-	type. The dictionary will contain an 'ntiid' key, as for the CONTENT channel; the ID is
-	more likely to be a transient ID referring to a current message in the DEFAULT channel.
+	The 'pin' action asks the interface to make a particular unit of
+	content permanently visible. The way this is done will vary
+	depending on content type. The dictionary will contain an 'ntiid'
+	key, as for the CONTENT channel; the ID is more likely to be a
+	transient ID referring to a current message in the DEFAULT
+	channel.
 
-	Pinned content SHOULD accumulate until the 'clearPinned' action is sent. There
-	are no other keys in the body.
+	Pinned content *SHOULD* accumulate until the 'clearPinned' action is
+	sent. There are no other keys in the body.
+STATE
+	The state channel is used for communicating the human user's
+	interaction status with the chat room. Clients will post messages
+	containing these events to the server, and the server, at its sole
+	discretion, will choose to forward these messages to other
+	occupants of the room, or drop them. (In particular, they may be
+	dropped in multi-occupants chats.) Messages on this channel *do
+	not* go to the transcript.
 
-::
+	The body consists of a dictionary with one defined key, ``state``.
+	The values for this key are strings from the following list:
+	"active," "composing," "paused," "inactive," and "gone."
+	Initially, when an occupant enters a room, he is defined to be in
+	the state "active" (that first notice is implicit). The recipt of
+	any message on any channel from a particular occupant also sets
+	his state to "active" (thus clearing any "composing" or "inactive"
+	states, for example).
 
-  struct MessageInfo : Object<Contained,Threadable> {
-	  msgid_t ID;
-	  string Creator; //May be 'System'
-	  time_t LastModified; //Time of message on server.
-	  msgid_t ContainerId; //The rooms to post to.
-	  enum {
-		  DEFAULT,
-		  WHISPER,
-		  CONTENT,
-		  POLL,
-		  META
-	  } channel;
+	The description here borrows heavily from the Jabber protocol:
+	`XMPP-0085: Chat State Notifications <http://xmpp.org/extensions/xep-0085.html>`_.
+	Implementations should generally follow that specification for
+	when and how to generate notices (see Table 1) where it doesn't
+	conflict with this specification. One rule of particular
+	importance is that the client *MUST NOT* generate multiple state
+	events of the same type consecutively. That is, if the client
+	sends a "composing" notice, then it must not send another
+	"composing" notice without sending an intervening notice. (Since
+	receiving a message places the occupant into the "active" state,
+	and occupants receive their own messages, then transitioning from
+	"composing" to "active" after sending a message should be
+	automatic, and the transition to "composing" with its accompanying
+	broadcast should then be allowed again.)
 
-	  enum {
-		  st_PENDING,
-		  st_POSTED,
-		  st_SHADOWED,
-		  st_INITIAL
-	  } Status;
+	Clients are responsible for tracking their own current state and
+	the state of any other occupants in the room if they are
+	interested; the server will not maintain this information.
 
-	  msgid_t inReplyTo; //parent message id.
-	  Object body; //See info on channels to determine the body.
-
-	  //A list of usernames that should get this message.
-	  //Only important if on the non-default channel.
-	  string[] recipients;
-  }
-
-  struct TranscriptSummary : Object {
-	  readonly RoomInfo RoomInfo;
-	  //set of all usernames that received or sent messages
-	  //contained in this transcript
-	  readonly string[] Contributors;
-  }
-
-  struct Transcript : TranscriptSummary {
-	  MessageInfo Messages[];
-  }
 
 Events
 ======
@@ -229,7 +279,6 @@ Moderation
 Server to client
 ----------------
 
-
 ``chat_enteredRoom( room_info )`` and ``chat_exitedRoom( room_info )``
   Sent when you have been added to a room, directly or
   indirectly.
@@ -247,7 +296,9 @@ Server to client
   as true and with moderators listed).
 
 ``chat_presenceForUserChangedTo( username, presence )``
-  Sent when a user in your "buddy list" goes offline/online
+  Sent when a user in your "buddy list" goes offline/online. The
+  currently defined values for ``presence`` are the strings "Online"
+  and "Offline."
 
 ``chat_recvMessage( msg_info )``
   A message arrived in a room you are currently in.
