@@ -3,7 +3,9 @@ from __future__ import unicode_literals, print_function
 from zope import interface
 
 class ITagger(interface.Interface):
-    
+    """
+    Defines a POS tagger
+    """
     def tag(tokens):
         """tag the specified tokens"""
         
