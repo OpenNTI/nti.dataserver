@@ -58,8 +58,8 @@ class WeakRef(object):
 		self._entity_id, self._entity_oid = state
 		self._v_entity_cache = None
 
-	def _cached(self):
-		if self._v_entity_cache is not None:
+	def _cached(self, allow_cached):
+		if allow_cached and self._v_entity_cache is not None:
 			return self._v_entity_cache if self._v_entity_cache else None
 
 		try:
@@ -72,20 +72,16 @@ class WeakRef(object):
 			if result_oid is None or result_oid != self._entity_oid:
 				result = None
 
-		if result is not None:
-			self._v_entity_cache = result
-		else:
-			self._v_entity_cache = False
+		if allow_cached: # only perturb the state if we are allowed to
+			if result is not None:
+				self._v_entity_cache = result
+			else:
+				self._v_entity_cache = False
 
 		return result
 
 	def __call__(self, allow_cached=True):
-		if not allow_cached:
-			self._v_entity_cache = None
-
-		result = self._cached()
-
-		return result
+		return self._cached(allow_cached)
 
 	def __eq__( self, other ):
 		if self is other: return True
