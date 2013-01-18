@@ -72,9 +72,6 @@ class _BaseSearchHit(dict):
 	def last_modified(self):
 		return self.get(LAST_MODIFIED, 0)
 	
-	def __repr__(self):
-		return "%s<%r>" % (self.__class__.__name__, self)
-	
 class _SearchHit(_BaseSearchHit):
 	def __init__( self, original, score=1.0 ):
 		super(_SearchHit, self).__init__(get_hit_id(original))
