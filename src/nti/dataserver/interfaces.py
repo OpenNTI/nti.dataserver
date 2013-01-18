@@ -1099,6 +1099,7 @@ class ISessionServiceStorage(interface.Interface):
 		"""
 		Return a sequence of session objects registered with this object
 		for the given owner.
+
 		:param str session_owner: The name of the session owner. If the owner
 			does not exist or otherwise has no sessions registered, returns an empty
 			sequence.
