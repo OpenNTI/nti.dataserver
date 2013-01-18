@@ -66,8 +66,8 @@ class WeakRef(object):
 		self.username, self._entity_id = state
 		self._v_entity_cache = None
 
-	def _cached(self):
-		if self._v_entity_cache is not None:
+	def _cached(self, allow_cached):
+		if allow_cached and self._v_entity_cache is not None:
 			return self._v_entity_cache if self._v_entity_cache else None
 
 		try:
@@ -85,10 +85,11 @@ class WeakRef(object):
 			if result_username is None or result_username.lower() != self.username:
 				result = None
 
-		if result is not None:
-			self._v_entity_cache = result
-		else:
-			self._v_entity_cache = False
+		if allow_cached: # only perturb the state if we are allowed to
+			if result is not None:
+				self._v_entity_cache = result
+			else:
+				self._v_entity_cache = False
 
 		return result
 
@@ -104,10 +105,7 @@ class WeakRef(object):
 			can use a locally cached value without checking to see if
 			the user still exists.
 		"""
-		if not allow_cached:
-			self._v_entity_cache = None
-
-		result = self._cached()
+		result = self._cached(allow_cached)
 
 		if result is None and return_missing_proxy:
 			factory = return_missing_proxy if callable(return_missing_proxy) else missing_user.MissingEntity
