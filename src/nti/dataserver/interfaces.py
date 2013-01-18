@@ -1160,3 +1160,21 @@ class IWeakRefToMissing(IWeakRef):
 
 		Calling this before the reference is clear is not defined.
 		"""
+
+
+class ICachingWeakRef(IWeakRef):
+	"""
+	A weak ref that, as an implementation detail, may cache the referant.
+	Whether or not to use that cached value is exposed as a keyword argument.
+	"""
+
+	def __call__( allow_cached=True ):
+		"""
+		Resolve the reference, as with :meth:`IWeakRef.call`; however, allows
+		control of caching.
+
+		:keyword allow_cached: If `True` (the default) a cached value can be used. If
+			set to `False`, this will not return a cached value. Note, however, that,
+			in a cluster, this may still return an object that other nodes might consider
+			gone.
+		"""

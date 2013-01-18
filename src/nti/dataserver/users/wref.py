@@ -25,7 +25,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import missing_user
 
 @functools.total_ordering
-@interface.implementer(nti_interfaces.IWeakRef)
+@interface.implementer(nti_interfaces.ICachingWeakRef)
 @component.adapter(nti_interfaces.IEntity)
 class WeakRef(object):
 	"""

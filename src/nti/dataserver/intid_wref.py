@@ -26,7 +26,7 @@ from nti.externalization import integer_strings
 from nti.ntiids import ntiids
 
 
-@interface.implementer(nti_interfaces.IWeakRefToMissing)
+@interface.implementer(nti_interfaces.IWeakRefToMissing,nti_interfaces.ICachingWeakRef)
 class WeakRef(object):
 	"""
 	A weak reference to a content object (generally, anything
@@ -79,10 +79,10 @@ class WeakRef(object):
 
 		return result
 
-	def __call__(self):
-		"""
-		Return the content object, or None if it no longer exists.
-		"""
+	def __call__(self, allow_cached=True):
+		if not allow_cached:
+			self._v_entity_cache = None
+
 		result = self._cached()
 
 		return result

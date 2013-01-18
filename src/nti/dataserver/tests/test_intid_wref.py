@@ -36,7 +36,7 @@ from nti.dataserver import intid_wref as wref
 import BTrees.OOBTree
 import cPickle
 
-class TestWref(ConfiguringTestBase):
+class TestIntidWref(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_pickle( self ):
@@ -55,29 +55,44 @@ class TestWref(ConfiguringTestBase):
 		assert_that( copy, is_( ref ) )
 		assert_that( repr(copy), is_( repr( ref ) ) )
 		assert_that( hash(copy), is_( hash( ref ) ) )
+
+
 		assert_that( ref, verifiably_provides( nti_interfaces.IWeakRef ) )
+		assert_that( ref, verifiably_provides( nti_interfaces.ICachingWeakRef ) )
+		assert_that( ref, verifiably_provides( nti_interfaces.IWeakRefToMissing ) )
+
 
 	@WithMockDSTrans
 	def test_missing( self ):
 		user = users.User.create_user( username='sjohnson@nextthought.com' )
 
+		# Cannot find with invalid intid
 		ref = wref.WeakRef( user )
 		setattr( ref, '_v_entity_cache', None )
 		setattr( ref, '_entity_id', -1 )
-
 		assert_that( ref(), is_( none() ) )
 
+		# cannot find with invalid oid
 		ref = wref.WeakRef( user )
 		assert_that( ref, has_property( '_entity_oid', not_none() ) )
 		setattr( ref, '_v_entity_cache', None )
 		setattr( ref, '_entity_oid', -1 )
 		assert_that( ref(), is_( none() ) )
 
+		# Find it with oid of None (but valid intid)
 		ref = wref.WeakRef( user )
 		assert_that( ref, has_property( '_entity_oid', not_none() ) )
 		setattr( ref, '_v_entity_cache', None )
 		setattr( ref, '_entity_oid', None )
 		assert_that( ref(), is_( user ) )
+
+		# Caching can be controlled
+		ref = wref.WeakRef( user )
+		setattr( ref, '_entity_id', -1 )
+		setattr( ref, '_entity_oid', None )
+		assert_that( ref(), is_( user ) ) # From cache
+
+		assert_that( ref(allow_cached=False), is_( none() ) ) # not from cache
 
 
 	@WithMockDSTrans

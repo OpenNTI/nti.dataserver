@@ -248,6 +248,13 @@ def _bookmark_predicate_factory( request ):
 	is_bm_p = nti_interfaces.IBookmark.providedBy
 	return lambda o: is_fav_p( o ) or is_bm_p( o )
 
+def _toplevel_filter( x ):
+	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
+	try:
+		return x.getInReplyTo( allow_cached=False ) is None
+	except AttributeError:
+		return True # No getInReplyTo means it cannot be a reply, means its toplevel
+
 SORT_KEYS = {
 	# LastModified and createdTime are sorted on the same values we would provide
 	# externally, which might involve an attribute /or/ adapting to IDCTimes.
@@ -265,8 +272,7 @@ SORT_DIRECTION_DEFAULT = {
 	'lastModified': 'descending'
 	}
 FILTER_NAMES = {
-	'TopLevel': lambda x: getattr( x, 'inReplyTo', None ) is None,
-	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
+	'TopLevel': _toplevel_filter,
 	'IFollow': (_ifollow_predicate_factory,),
 	'IFollowAndMe': (_ifollowandme_predicate_factory,),
 	'Favorite': (_favorite_predicate_factory,),
