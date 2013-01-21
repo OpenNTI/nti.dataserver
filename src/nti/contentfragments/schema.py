@@ -9,9 +9,10 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 from zope.schema import Text, TextLine
+
 from nti.utils.schema import Object
 
-from . import interfaces
+from nti.contentfragments import interfaces
 
 class TextUnicodeContentFragment(Object,Text):
 	"""
@@ -50,7 +51,6 @@ class TextLineUnicodeContentFragment(Object,TextLine):
 		if 'default' in kwargs and not self._iface.providedBy( kwargs['default'] ):
 			kwargs['default'] = self._impl( kwargs['default'] )
 		super(TextLineUnicodeContentFragment,self).__init__( self._iface, *args, **kwargs )
-
 
 class LatexFragmentTextLine(TextLineUnicodeContentFragment):
 	"""
