@@ -11,7 +11,10 @@ import re
 from zope import interface
 from zope import component
 
-from . import interfaces
+from nti.contentfragments import interfaces
+
+import logging
+logger = logging.getLogger(__name__)
 
 # Map from unicode to tex name
 _TEX_OPERATORS = [('\u00d7', '\\times'),
@@ -237,5 +240,4 @@ def PlainTextToLatexFragmentConverter(plain_text):
 	accum.extend( [_escape_tex(x) for x in tokens] )
 
 	#
-
 	return interfaces.LatexContentFragment( ' '.join( accum ) )

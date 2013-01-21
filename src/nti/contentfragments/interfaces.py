@@ -2,16 +2,17 @@
 # -*- coding: utf-8 -*-
 """
 Interfaces for working with content fragments.
-
-
 $Id$
 """
 from __future__ import print_function, unicode_literals
 
+import zope.contenttype
+
 from zope import interface
 from zope import component
+from zope.interface.common import sequence
 from zope.mimetype import types as mime_types
-import zope.contenttype
+
 mime_types.setup() # register interface classes and utilities if not already
 
 def _setup():
@@ -35,8 +36,6 @@ class IContentFragment(interface.Interface):
 	Base interface representing different formats that content can
 	be in.
 	"""
-
-from zope.interface.common import sequence
 
 class IUnicodeContentFragment(IContentFragment,sequence.IReadSequence):
 	"""
@@ -68,7 +67,6 @@ class UnicodeContentFragment(unicode):
 			result = self.__class__( result )
 		return result
 
-
 class ILatexContentFragment(IUnicodeContentFragment, mime_types.IContentTypeTextLatex):
 	"""
 	Interface representing content in LaTeX format.
@@ -77,7 +75,6 @@ class ILatexContentFragment(IUnicodeContentFragment, mime_types.IContentTypeText
 @interface.implementer(ILatexContentFragment)
 class LatexContentFragment(UnicodeContentFragment):
 	pass
-
 
 class IHTMLContentFragment(IUnicodeContentFragment, mime_types.IContentTypeTextHtml):
 	"""
