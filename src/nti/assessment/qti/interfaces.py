@@ -6,18 +6,59 @@ from zope import interface
 from nti.assessment.qti.schema import BoolAttribute
 from nti.assessment.qti.schema import TextLineAttribute
 
+# basic
+
+class ITextOrVariable(interface.Interface):
+	__display_name__ = 'textOrVariable'
+
+class IBlock(interface.Interface):
+	__display_name__ = 'block'
+	
+class IInline(interface.Interface):
+	__display_name__ = 'inline'
+		
+class IObjectFlow(interface.Interface):
+	__display_name__ = "objectFlow";
+
+class IFlow(IObjectFlow):
+	__display_name__ = "flow";
+	
+class IFlowStatic(IFlow):
+	__display_name__ = "flowStatic";
+		
+class IBlockStatic(IBlock):
+	__display_name__= "blockStatic";
+	
+class IAtomicBlock(IFlowStatic, IBlockStatic):
+	__display_name__ = "atomicBlock"
+
+class IInlineStatic(IInline):
+	__display_name__ = 'inlineStatic'
+	
+class IAtomicInline(IFlowStatic, IInlineStatic):
+	__display_name__ = "atomicInline"
+
+class ISimpleBlock(IFlowStatic, IBlockStatic):
+	__display_name__ = "simpleBlock";
+		
+class ISimpleInline(IFlowStatic, IInlineStatic):
+	__display_name__ = "simpleInline"
+	
+class ITextRun(IFlowStatic, IInlineStatic, ITextOrVariable):
+	__display_name__ = "textRun"
+	
 class IItemBody(interface.Interface):
 	"""
 	Describe the item's content and information
 	"""
 	__display_name__ = 'itemBody'
 	
+	blocks = schema.List(IBlock, title='The item body blocks', required=False)
 	
 class IAssessmentItem(interface.Interface):
 	"""
 	Encompasses the information that is presented to a candidate and information about how to score the item.
 	"""
-	
 	__display_name__ = 'assessmentItem'
 	
 	identifier = TextLineAttribute(title=u'The principle identifier of the item', required=True)
