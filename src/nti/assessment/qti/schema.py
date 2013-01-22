@@ -5,6 +5,9 @@ from zope.schema import Bool
 from zope.schema import TextLine
 
 class IQTIAttribute(interface.Interface):
+	"""
+	Marker interface for QTI [XML] attributes
+	"""
 	pass
 
 @interface.implementer(IQTIAttribute)
