@@ -33,8 +33,8 @@ from nti.ntiids import ntiids
 from nti.zodb import minmax
 
 import nti.externalization.internalization
-from nti.externalization.persistence import  getPersistentState, setPersistentStateChanged
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
+from nti.externalization.persistence import  getPersistentState, setPersistentStateChanged
 
 from nti.dataserver import dicts
 from nti.dataserver import sharing
@@ -57,8 +57,8 @@ def _get_shared_dataserver(context=None,default=None):
 # query during evolutions.
 BROADCAST_DEFAULT_DS = None
 
-from .entity import Entity
-from . import interfaces as user_interfaces
+from nti.dataserver.users.entity import Entity
+from nti.dataserver.users import interfaces as user_interfaces
 
 SharingTarget = sharing.SharingTargetMixin
 deprecated( 'SharingTarget', 'Prefer sharing.SharingTargetMixin' )

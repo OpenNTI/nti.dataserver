@@ -37,7 +37,7 @@ class TestNTIFollowEntities(ConfiguringTestBase):
 			
 		not_found = nti_join.join_communities(user, comms, follow=True, exitOnError=False)
 		assert_that(not_found, has_length(0))	
-		followed = set(user.following)
+		followed = {e.username for e in user.entities_followed}
 		membership = set(user.usernames_of_dynamic_memberships)
 		assert_that(membership, has_length(6))
 		for n in comms:
