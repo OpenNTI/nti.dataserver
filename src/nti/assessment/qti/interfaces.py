@@ -3,9 +3,27 @@ from __future__ import unicode_literals, print_function
 from zope import schema
 from zope import interface
 
-from nti.assessment.qti.schema import BoolAttribute
-from nti.assessment.qti.schema import TextLineAttribute
+from nti.assessment.qti.schema import (TextLineAttribute, BoolAttribute)
 
+# xml node
+
+class _XmlNode(interface.Interface):
+	"""
+	Marker interface for XML bound objects
+	"""
+	pass
+
+class IAttribute(interface.Interface):
+	parent = schema.Object(_XmlNode, title=u'Parent of this attribute', required=True)
+	name = schema.TextLine(title=u'Parent of this attribute', required=True)
+	
+class IXmlNode(_XmlNode):
+	parent = schema.Object(_XmlNode, title=u'Parent of this node', required=False)
+
+	def getParentRoot():
+		"""
+		Root of this node or node itself
+		"""
 # basic
 
 class ITextOrVariable(interface.Interface):
