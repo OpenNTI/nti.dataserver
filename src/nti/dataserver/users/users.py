@@ -615,6 +615,10 @@ class User(Principal):
 		returns None. """
 		return self.friendsLists.get( name )
 
+	def getFriendsLists( self, name ):
+		""" Returns all the friends lists"""
+		return tuple(self.friendsLists.values())
+	
 	def maybeCreateContainedObjectWithType( self, datatype, externalValue ):
 		if datatype == 'Devices':
 			result = Device(externalValue)
