@@ -203,10 +203,10 @@ class Everyone(Community):
 				del state[k]
 		super(Everyone,self).__setstate__( state )
 
-from .friends_lists import FriendsList
-from .friends_lists import _FriendsListMap # bwc
-from .friends_lists import DynamicFriendsList
-from .friends_lists import _FriendsListUsernameIterable # bwc
+from nti.dataserver.users.friends_lists import FriendsList
+from nti.dataserver.users.friends_lists import _FriendsListMap # bwc
+from nti.dataserver.users.friends_lists import DynamicFriendsList
+from nti.dataserver.users.friends_lists import _FriendsListUsernameIterable # bwc
 
 ShareableMixin = sharing.ShareableMixin
 deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
@@ -953,12 +953,13 @@ class User(Principal):
 		newSharing = obj.sharingTargets
 		seenTargets = set()
 		def sendChangeToUser( user, theChange ):
-			""" Sends at most one change to a user, taking
+			""" Sends at most one change per type to a user, taking
 			into account aliases. """
 
-			if user in seenTargets or user is None or user is self:
+			target_key = (user, theChange.type)
+			if target_key in seenTargets or user is None or user is self:
 				return
-			seenTargets.add( user )
+			seenTargets.add( target_key )
 			# Fire the change off to the user using different threads.
 			self._broadcast_change_to( theChange, target=user )
 
