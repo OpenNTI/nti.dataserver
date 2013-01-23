@@ -8,6 +8,7 @@ from zope.event import notify
 from perfmetrics import metric
 
 from nti.dataserver.users import Entity
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._indexagent import handle_index_event
@@ -56,14 +57,27 @@ class IndexManager(object):
 		result = self.get_entity(username)
 		return result is not None
 
-	def get_user_dymamic_memberships(self, username):
+	def get_dfls(self, username, sort=False):
+		user = self.get_entity(username)
+		fls = getattr(user, 'getFriendsLists', lambda s: ())(user)
+		result = [x for x in fls if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(x)]
+		result = sorted(result, key=lambda e: e.username.lower()) if sort else result
+		return result
+	
+	def get_user_dymamic_memberships(self, username, sort=False):
 		user = self.get_entity(username)
 		everyone = self.get_entity('Everyone')
 		result = getattr(user, 'dynamic_memberships', ())
 		result = [x for x in result if x != everyone and x is not None]
-		result.sort(key=lambda e: e.username.lower())
+		result = sorted(result, key=lambda e: e.username.lower()) if sort else result
 		return result
 
+	def get_search_memberships(self, username):
+		result = self.get_user_dymamic_memberships(username) + self.get_dfls(username)
+		result = {e.username.lower():e for e in result} # make sure there is no duplicate
+		result = sorted(result.values(), key=lambda e: e.username.lower())
+		return result
+	
 	@metric
 	def search(self, query):
 		query = QueryObject.create(query)
@@ -128,10 +142,10 @@ class IndexManager(object):
 			target = self.get_entity( target )
 		result = self.useridx_manager_adapter(target, None) if target and create else None
 		return result
-
+	
 	def _get_search_uims(self, username):
 		result = []
-		for name in [username] + self.get_user_dymamic_memberships(username):
+		for name in [username] + self.get_search_memberships(username):
 			uim = self._get_user_index_manager(name)
 			if uim is not None:
 				result.append(uim)
