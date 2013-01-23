@@ -8,49 +8,45 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__( 'logging' ).getLogger( __name__ )
 
-import warnings
-import numbers
-import functools
 import time
 import six
+import numbers
+import warnings
+import functools
 import collections
 
+import persistent
 from zope import interface
 from zope import component
+from ZODB import loglevels
+from ZODB.interfaces import IConnection
+from zope.deprecation import deprecated
+from zope.component.factory import Factory
 from zope.location import interfaces as loc_interfaces
 from zope.keyreference.interfaces import IKeyReference
-from ZODB import loglevels
-from zope.component.factory import Factory
-from zope.deprecation import deprecated
 
 import zope.intid
 
 from z3c.password import interfaces as pwd_interfaces
 
-import persistent
-
-
 from nti.ntiids import ntiids
 from nti.zodb import minmax
 
+import nti.externalization.internalization
 from nti.externalization.persistence import  getPersistentState, setPersistentStateChanged
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
-import nti.externalization.internalization
 
-
-from nti.dataserver import datastructures
 from nti.dataserver import dicts
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import mimetype
 from nti.dataserver import sharing
+from nti.dataserver import mimetype
+from nti.dataserver import datastructures
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.activitystream_change import Change
+from nti.dataserver.interfaces import IDataserverTransactionRunner
+
 from nti import apns
 
 import nti.apns.interfaces
-
-from ZODB.interfaces import IConnection
-from nti.dataserver.interfaces import IDataserverTransactionRunner
-
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -197,6 +193,7 @@ class Everyone(Community):
 	_avatarURL = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
 	_realname = 'Everyone'
 	_alias = 'Public'
+	
 	def __init__(self):
 		super(Everyone,self).__init__( self._realname )
 
@@ -207,20 +204,19 @@ class Everyone(Community):
 		super(Everyone,self).__setstate__( state )
 
 from .friends_lists import FriendsList
+from .friends_lists import _FriendsListMap # bwc
 from .friends_lists import DynamicFriendsList
 from .friends_lists import _FriendsListUsernameIterable # bwc
-from .friends_lists import _FriendsListMap # bwc
 
 ShareableMixin = sharing.ShareableMixin
 deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
 
-
 @functools.total_ordering
+@interface.implementer( nti_interfaces.IDevice, nti_interfaces.IZContained )
 class Device(persistent.Persistent,
 			 datastructures.CreatedModDateTrackingObject,
 			 ExternalizableDictionaryMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements( nti_interfaces.IDevice, nti_interfaces.IZContained )
 	__external_can_create__ = True
 
 	__name__ = None
@@ -271,9 +267,8 @@ class Device(persistent.Persistent,
 		return self.deviceId.__hash__()
 
 
-
+@interface.implementer( nti_interfaces.IDeviceContainer )
 class _DevicesMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
-	interface.implements(nti_interfaces.IDeviceContainer)
 	contained_type = nti_interfaces.IDevice
 	container_name = 'Devices'
 
@@ -288,13 +283,15 @@ nti_interfaces.IDevice.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 												interfaces=(nti_interfaces.IDevice,)) )
 
 
+@interface.implementer( nti_interfaces.ITranscriptContainer )
 class _TranscriptsMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
-	interface.implements(nti_interfaces.ITranscriptContainer)
 	contained_type = nti_interfaces.ITranscript
 	container_name = 'Transcripts'
 
 
-
+@interface.implementer( nti_interfaces.IContainerIterable,
+						nti_interfaces.IUser,
+						loc_interfaces.ISublocations )
 class User(Principal):
 	"""A user is the central class for data storage. It maintains
 	not only a few distinct pieces of data but also a collection of
@@ -309,10 +306,6 @@ class User(Principal):
 	may not be caught by this and so such objects should be explicitly marked
 	as changed using setPersistentStateChanged() or this object's didUpdateObject()
 	method. """
-
-	interface.implements(nti_interfaces.IContainerIterable,
-						 nti_interfaces.IUser,
-						 loc_interfaces.ISublocations)
 
 	_ds_namespace = 'users'
 	mime_type = 'application/vnd.nextthought.user'
