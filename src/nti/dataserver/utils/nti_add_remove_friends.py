@@ -3,8 +3,6 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
 import sys
 import pprint
 import argparse
@@ -13,13 +11,17 @@ from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
+
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
+
+import logging
+logger = logging.getLogger( __name__ )
 
 def add_remove_friends( owner, name, add_members=(), remove_members=()):
 	thelist = None
 	flname = name.lower()
-	for fl in owner.friendsLists.values():
+	for fl in getattr(owner, 'getFriendsLists', lambda s: ())(owner):
 		if not nti_interfaces.IEntity.providedBy(fl):
 			continue
 		username = fl.username.lower()
