@@ -16,6 +16,9 @@ class IBodyElementAttrGroup(interface.Interface):
 class IPromptAttrGroup(IBodyElementAttrGroup):
 	pass
 	
+class IItemBodyAttrGroup(IBodyElementAttrGroup):
+	pass
+
 class IChoiceAttrGroup(IBodyElementAttrGroup):
 	identifier = TextLineAttribute(title=u'The element identifier', required=True)
 	fixed = BoolAttribute(title=u'Fixed choice attribute', required=False)

@@ -29,47 +29,8 @@ class IXmlNode(_XmlNode):
 class ITextOrVariable(interface.Interface):
 	__display_name__ = 'textOrVariable'
 
-class IBlock(interface.Interface):
-	__display_name__ = 'block'
-	
-class IInline(interface.Interface):
-	__display_name__ = 'inline'
-		
-class IObjectFlow(interface.Interface):
-	__display_name__ = "objectFlow";
-
-class IFlow(IObjectFlow):
-	__display_name__ = "flow";
-	
-class IFlowStatic(IFlow):
-	__display_name__ = "flowStatic";
-		
-class IBlockStatic(IBlock):
-	__display_name__= "blockStatic";
-	
-class IAtomicBlock(IFlowStatic, IBlockStatic):
-	__display_name__ = "atomicBlock"
-
-class IInlineStatic(IInline):
-	__display_name__ = 'inlineStatic'
-	
-class IAtomicInline(IFlowStatic, IInlineStatic):
-	__display_name__ = "atomicInline"
-
-class ISimpleBlock(IFlowStatic, IBlockStatic):
-	__display_name__ = "simpleBlock";
-		
-class ISimpleInline(IFlowStatic, IInlineStatic):
-	__display_name__ = "simpleInline"
-	
-class ITextRun(IFlowStatic, IInlineStatic, ITextOrVariable):
-	__display_name__ = "textRun"
-	
-class IChoice(interface.Interface):
-	__display_name__ = "choice"
-	
-class ISimpleChoice(IChoice):
-	__display_name__ = "simpleChoice"
+class IBodyElement(atr_interfaces.IBodyElementAttrGroup):
+	__display_name__ = 'bodyElement'
 	
 class IItemBody(interface.Interface):
 	"""
