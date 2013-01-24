@@ -5,6 +5,9 @@ from zope import interface
 
 from nti.assessment.qti.attributes import interfaces as atr_interfaces
 
+PARAM_TYPES = (u'DATA', u'REF')
+PARAM_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in PARAM_TYPES] )
+
 # xml node
 
 class _XmlNode(interface.Interface):

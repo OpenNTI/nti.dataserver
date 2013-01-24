@@ -2,10 +2,24 @@ from __future__ import unicode_literals, print_function
 
 from zope import interface
 
-from nti.assessment.qti.schema import (TextLineAttribute, BoolAttribute, IntAttribute)
+from nti.assessment.qti import interfaces as qt_interfaces
+from nti.assessment.qti.schema import (TextLineAttribute, BoolAttribute, IntAttribute, URIAttribute,
+									   ChoiceAttribute, MimeTypeAttribute)
 	
+class IObjectAttrGroup(interface.Interface):
+	data =  URIAttribute(title='Provides a URI for locating the data associated with the object', required=True)
+	type =  MimeTypeAttribute(title='The mimetype',required=True)
+	width =  IntAttribute(title='The width', required=False)
+	length =  IntAttribute(title='The length', required=False)
+
+class IParamAttrGroup(interface.Interface):
+	name =  TextLineAttribute(title='The name of the parameter, as interpreted by the object', required=True)
+	value =  TextLineAttribute(title='The value to pass to the object',required=True)
+	valuetype = ChoiceAttribute(title="The param type", vocabulary=qt_interfaces.PARAM_TYPES_VOCABULARY)
+	type =  MimeTypeAttribute(title='The mimetype',required=False)
+
 class IFlowAttrGroup(interface.Interface):
-	base = TextLineAttribute(title=u'The uri base', required=False, __name__='xml:base')
+	base = URIAttribute(title=u'The uri base', required=False, __name__='xml:base')
 
 class IBodyElementAttrGroup(interface.Interface):
 	id = TextLineAttribute(title=u'The element id', required=False)
