@@ -24,6 +24,28 @@ class IXmlNode(_XmlNode):
 		"""
 		Root of this node or node itself
 		"""
+
+class IBodyElementAttrGroup(interface.Interface):
+	id = TextLineAttribute(title=u'The element id', required=False)
+	klass = TextLineAttribute(title=u'The class', required=False, __name__='class')
+	lang = TextLineAttribute(title=u'The language code (RFC3066)', __name__='xml:lang', required=False, max_length=2, default='en')
+	label = TextLineAttribute(title=u'The label', required=False, max_length=256)
+
+class IFlowAttrGroup(interface.Interface):
+	base = TextLineAttribute(title=u'The uri base', required=False, __name__='xml:base')
+	
+class IPromptAttrGroup(IBodyElementAttrGroup):
+	pass
+	
+class IChoiceAttrGroup(IBodyElementAttrGroup):
+	identifier = TextLineAttribute(title=u'The element identifier', required=True)
+	fixed = BoolAttribute(title=u'Fixed choice attribute', required=False)
+	templateIdentifier = TextLineAttribute(title=u'The template identifier', required=False)
+	showHide = BoolAttribute(title=u'Show hide flag', required=False)
+
+class ISimpleChoiceAttrGroup(IChoiceAttrGroup):
+	pass
+
 # basic
 
 class ITextOrVariable(interface.Interface):
@@ -64,6 +86,12 @@ class ISimpleInline(IFlowStatic, IInlineStatic):
 	
 class ITextRun(IFlowStatic, IInlineStatic, ITextOrVariable):
 	__display_name__ = "textRun"
+	
+class IChoice(interface.Interface):
+	__display_name__ = "choice"
+	
+class ISimpleChoice(IChoice):
+	__display_name__ = "simpleChoice"
 	
 class IItemBody(interface.Interface):
 	"""
