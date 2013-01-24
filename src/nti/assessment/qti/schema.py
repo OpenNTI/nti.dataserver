@@ -1,6 +1,7 @@
 from __future__ import unicode_literals, print_function
 
 from zope import interface
+from zope.schema import Int
 from zope.schema import Bool
 from zope.schema import Object
 from zope.schema import TextLine
@@ -27,4 +28,10 @@ class BoolAttribute(Bool):
 class ObjectAttribute(Object):
 	"""
 	A :class:`Object` type that to mark XML attribute elements
+	"""
+
+@interface.implementer(IQTIAttribute)
+class IntAttribute(Int):
+	"""
+	A :class:`Int` type that to mark XML attribute elements
 	"""
