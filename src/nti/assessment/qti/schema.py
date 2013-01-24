@@ -2,7 +2,10 @@ from __future__ import unicode_literals, print_function
 
 from zope import interface
 from zope.schema import Int
+from zope.schema import URI
 from zope.schema import Bool
+from zope.schema import Float
+from zope.schema import Choice
 from zope.schema import Object
 from zope.schema import TextLine
 
@@ -16,6 +19,12 @@ class IQTIAttribute(interface.Interface):
 class TextLineAttribute(TextLine):
 	"""
 	A :class:`TextLine` type that to mark XML attribute elements
+	"""
+	
+@interface.implementer(IQTIAttribute)
+class URIAttribute(URI):
+	"""
+	A :class:`URI` type that to mark XML attribute elements
 	"""
 	
 @interface.implementer(IQTIAttribute)
@@ -34,4 +43,21 @@ class ObjectAttribute(Object):
 class IntAttribute(Int):
 	"""
 	A :class:`Int` type that to mark XML attribute elements
+	"""
+
+@interface.implementer(IQTIAttribute)
+class FloatAttribute(Float):
+	"""
+	A :class:`Float` type that to mark XML attribute elements
+	"""
+	
+@interface.implementer(IQTIAttribute)
+class ChoiceAttribute(Choice):
+	"""
+	A :class:`Choice` type that to mark XML attribute elements
+	"""
+	
+class MimeTypeAttribute(TextLineAttribute):
+	"""
+	A :class: for mimetype attributes
 	"""
