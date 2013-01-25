@@ -17,6 +17,9 @@ SHOW_HIDE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.Sim
 VIEW_TYPES = (u'author', u'candidate', u'proctor', u'scorer', u'testConstructor', u'tutor')
 VIEW_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in VIEW_TYPES] )
 
+ORIENTATION_TYPES = (u'vertial', u'horizontal')
+ORIENTATION_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in ORIENTATION_TYPES] )
+
 # xml node
 
 class _XmlNode(interface.Interface):
@@ -39,22 +42,14 @@ class IXmlNode(_XmlNode):
 # basic
 
 class ITextOrVariable(interface.Interface):
-	__display_name__ = 'textOrVariable'
+	pass
 
 class IBodyElement(atr_interfaces.IBodyElementAttrGroup):
 	pass
-	
-class IItemBody(interface.Interface):
-	"""
-	Describe the item's content and information
-	"""
-	__display_name__ = 'itemBody'
-	
-	blocks = schema.List(IBlock, title='The item body blocks', required=False)
-	
+		
 class IAssessmentItem(atr_interfaces.IAssessmentItemAttrGroup):
 	"""
 	Encompasses the information that is presented to a candidate and information about how to score the item.
 	"""
 	__display_name__ = 'assessmentItem'	
-	itemBody = schema.Object(IItemBody, title='The item body', required=False)
+	#itemBody = schema.Object(IItemBody, title='The item body', required=False)

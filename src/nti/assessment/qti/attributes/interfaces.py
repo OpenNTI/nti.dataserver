@@ -75,35 +75,80 @@ class IStylesheetAttrGroup(IAttrGroup):
 	href = URIAttribute(title='The identifier or location of the external stylesheet', required=True)
 	type = TextLineAttribute(title="The mimeType", required=True)
 	media = TextLineAttribute(title="An optional media descriptor", required=False)
-	title = TextLineAttribute(title="An optional title for the stylesheet.", required=False)
+	title = TextLineAttribute(title="An optional title for the stylesheet", required=False)
 
 # interaction
 
+class IInteractionAttrGroup(IAttrGroup):
+	responseIdentifier = TextLineAttribute(title=u'The response identifier', required=True)
+	
+class IEndAttemptInteractionAttrGroup(IAttrGroup):
+	title = TextLineAttribute(title="The string that should be displayed to the candidate as a prompt for ending the attempt using this interaction", required=True)
+	
+class IInlineChoiceInteractionAttrGroup(IAttrGroup):
+	shuffle = BoolAttribute(title="If the shuffle attribute is true then the delivery engine must randomize the order in which the choices are " +
+							"presented subject to the fixed attribute.", required=True)
+	
+	required = BoolAttribute(title="If true then a choice must be selected by the candidate in order to form a valid response to the interaction", required=False)
+	
 class IPromptAttrGroup(IBodyElementAttrGroup):
 	pass
 	
-class IItemBodyAttrGroup(IBodyElementAttrGroup):
-	pass
-
 class IChoiceAttrGroup(IBodyElementAttrGroup):
 	identifier = TextLineAttribute(title=u'The element identifier', required=True)
 	fixed = BoolAttribute(title=u'Fixed choice attribute', required=False)
 	templateIdentifier = TextLineAttribute(title=u'The template identifier', required=False)
-	showHide = BoolAttribute(title=u'Show hide flag', required=False)
+	showHide = ChoiceAttribute(title="Determines how the visibility of the choice is controlled", vocabulary=qt_interfaces.SHOW_HIDE_VOCABULARY, required=False)
 
 class ISimpleChoiceAttrGroup(IChoiceAttrGroup):
 	pass
 
-class IInteractionAttrGroup(IBodyElementAttrGroup):
-	responseIdentifier = TextLineAttribute(title=u'The response identifier', required=True)
+class IAssociableChoiceAttrGroup(IAttrGroup):
+	matchGroup = TextLineAttribute(title=u'A set of choices that this choice may be associated with, all others are excluded', required=False)
+	
+class IChoiceInteractionAttrGroup(IAttrGroup):
+	shufle = BoolAttribute(title=u'Shufle flag', required=True, default=False)
+	maxChoices = IntAttribute(title=u'Max choices allowed', required=True, default=1)
+	minChoices = IntAttribute(title=u'Min choices allowed', required=False, default=0)
+
+class IAssociateInteractionAttrGroup(IChoiceInteractionAttrGroup):
+	pass
+
+class ISimpleAssociableChoiceAttrGroup(IAttrGroup):
+	matchMax = IntAttribute(title=u'The maximum number of choices this choice may be associated', required=True)
+	matchMin = IntAttribute(title=u'The minimum number of choices this choice must be associated', required=False, default=0)
+
+class IOrderInteractionAttrGroup(IAttrGroup):
+	shufle = BoolAttribute(title=u'Shufle flag', required=True, default=False)
+	maxChoices = IntAttribute(title=u'Max choices allowed', required=False)
+	minChoices = IntAttribute(title=u'Min choices allowed', required=False)
+	orientation = ChoiceAttribute(title="Determines how the visibility of the choice is controlled",
+								  vocabulary=qt_interfaces.ORIENTATION_TYPES_VOCABULARY, required=False)
+	
+
+class IMatchInteractioAttrGroup(IAttrGroup):
+	shufle = BoolAttribute(title=u'Shufle flag', required=True, default=False)
+	maxAssociations = IntAttribute(title=u'The maximum number of associations', required=True, default=1)
+	minAssociations = IntAttribute(title=u'The minimum number of associations', required=False, default=0)
+
+class IGapMatchInteractioAttrGroup(IAttrGroup):
+	shufle = BoolAttribute(title=u'Shufle flag', required=True, default=False)
+	
+class IGapChoiceAttrGroup(IAttrGroup):
+	matchMax = IntAttribute(title=u'The maximum number of choices this choice may be associated with', required=True)
+	matchMin = IntAttribute(title=u'The minimum number of choices this choice may be associated with', required=False, default=0)
+	
+class IGapImgAttrGroup(IAttrGroup):
+	objectLabel = TextLineAttribute(title=u'An optional label for the image object to be inserted', required=False)
+	
+class IGapAttrGroup(IAttrGroup):
+	required = BoolAttribute(title=u'f true then this gap must be filled', required=False, default=False)
+	
+class IItemBodyAttrGroup(IBodyElementAttrGroup):
+	pass
 
 class IBlockInteractionAttrGroup(IFlowAttrGroup, IInteractionAttrGroup):
 	pass
-	
-class IChoiceInteractionAttrGroup(IFlowAttrGroup, IInteractionAttrGroup):
-	shufle = BoolAttribute(title=u'Shufle flag', required=True)
-	maxChoices = IntAttribute(title=u'Max choices allowed', required=True)
-	minChoices = IntAttribute(title=u'Min choices allowed', required=False)
 
 class IAssessmentItemAttrGroup(IAttrGroup):
 	identifier = TextLineAttribute(title=u'The principle identifier of the item', required=True)
