@@ -5,7 +5,8 @@ from zope import interface
 
 from nti.assessment.qti import interfaces as qt_interfaces
 from nti.assessment.qti.schema import (TextLineAttribute, BoolAttribute, IntAttribute, URIAttribute,
-									   ChoiceAttribute, MimeTypeAttribute, ListAttribute, FloatAttribute)
+									   ChoiceAttribute, MimeTypeAttribute, ListAttribute, FloatAttribute,
+									   ObjectAttribute)
 	
 class IAttrGroup(interface.interface):
 	pass
@@ -17,6 +18,63 @@ class IbodyElementAttrGroup(IAttrGroup):
 	klass = TextLineAttribute(title=u'The class', required=False, __name__='class')
 	lang = TextLineAttribute(title=u'The language code (RFC3066)', required=False, max_length=2, default='en')
 	label = TextLineAttribute(title=u'The label', required=False, max_length=256)
+	
+# variables
+
+class IvalueAttrGroup(IAttrGroup):
+	fieldIdentifier = TextLineAttribute(title=u'The field id', required=False)
+	baseType = ChoiceAttribute(title="The base-type", vocabulary=qt_interfaces.VALUE_TYPES_VOCABULARY, required=False)
+	
+class IdefaultValueAttrGroup(IAttrGroup):
+	interpretation = TextLineAttribute(title=u'A human readable interpretation of the default value', required=False)
+	
+class IvalueDeclarationAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title=u'The id', required=True)
+	cardinality = ChoiceAttribute(title="The variable cardinality", vocabulary=qt_interfaces.CARDINALITY_TYPES_VOCABULARY, required=True)
+	baseType = ChoiceAttribute(title="The base-type", vocabulary=qt_interfaces.VALUE_TYPES_VOCABULARY, required=False)
+	
+class ImappingAttrGroup(IAttrGroup):
+	lowerBound = FloatAttribute(title='The lower bound for the result of mapping a container', required=False)
+	upperBound = FloatAttribute(title='The upper bound for the result of mapping a container', required=False)
+	defaultValue = FloatAttribute(title='The default value from the target set', required=False, default=0)
+
+class ImappingEntryAttrGroup(IAttrGroup):
+	mapKey = ObjectAttribute(title=u'The source value', required=True)
+	mappedValue = FloatAttribute(title='The mapped value', required=True)
+	caseSensitive = BoolAttribute(title='Used to control whether or not a mapEntry string is matched case sensitively', required=True)
+
+class IcorrectResponseAttrGroup(IAttrGroup):
+	interpretation = TextLineAttribute(title=u'A human readable interpretation of the correct value', required=False)
+	
+class IareaMappingAttrGroup(IAttrGroup):
+	lowerBound = FloatAttribute(title='The lower bound for the result of mapping a container', required=False)
+	upperBound = FloatAttribute(title='The upper bound for the result of mapping a container', required=False)
+	defaultValue = FloatAttribute(title='The default value from the target set', required=False, default=0)
+
+class IareaMapEntryAttrGroup(IAttrGroup):
+	shape = ChoiceAttribute(title="The shape of the area", vocabulary=qt_interfaces.SHAPE_TYPES_VOCABULARY, required=True)
+	coords = TextLineAttribute(title='The size and position of the area', required=True)
+	mappedValue = FloatAttribute(title='The mapped value', required=True)
+	
+class IoutcomeDeclarationAttrGroup(IAttrGroup):
+	view = ChoiceAttribute(title='The intended audience for an outcome variable', vocabulary=qt_interfaces.VIEW_TYPES_VOCABULARY, required=False)
+	interpretation = TextLineAttribute(title=u'A human readable interpretation of the variable value', required=False)
+	longInterpretation = URIAttribute(title=u'An optional link to an extended interpretation', required=False)
+	normalMaximum = FloatAttribute(title='Defines the maximum magnitude of numeric outcome variables', required=False)
+	normalMinimum = FloatAttribute(title='Defines the minimum value of numeric outcome variables', required=False)
+	masteryValue = FloatAttribute(title='Defines the mastery value of numeric outcome variables', required=False)
+	
+class IlookupTableAttrGroup(IAttrGroup):
+	defaultValue = ObjectAttribute(title='The default outcome value to be used when no matching tabel entry is found', required=False, default=0)
+	
+class ImatchTableEntryAttrGroup(IAttrGroup):
+	sourceValue = IntAttribute(title='The source integer that must be matched exactly', required=True)
+	targetValue = ObjectAttribute(title=u'The target value that is used to set the outcome when a match is found.', required=True)
+
+class IinterpolationTableEntryAttrGroup(IAttrGroup):
+	sourceValue = FloatAttribute(title='The lower bound for the source value to match this entry', required=True)
+	includeBoundary = BoolAttribute(title='Determines if an exact match of sourceValue matches this entry', required=False, default=True)
+	targetValue = ObjectAttribute(title='The target value that is used to set the outcome when a match is found', required=True)
 	
 # content
 

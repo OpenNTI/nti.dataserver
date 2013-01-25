@@ -3,7 +3,7 @@ from __future__ import unicode_literals, print_function
 from zope import schema
 from zope import interface
 
-from nti.assessment.qti.attributes import interfaces as atr_interfaces
+from nti.assessment.qti.attributes import interfaces as attr_interfaces
 
 PARAM_TYPES = (u'DATA', u'REF')
 PARAM_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in PARAM_TYPES] )
@@ -26,13 +26,20 @@ TEXT_FORMAT_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabu
 SHAPE_TYPES = (u'default', u'rect', u'circle', u'poly', u'ellipse')
 SHAPE_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in SHAPE_TYPES] )
 
+VALUE_TYPES = (	u'identifier', u'boolean', u'integer', u'float', u'string', u'point', u'pair', u'directedPair', u'duration',
+				u'file', u'uri', u'intOrIdentifier')
+VALUE_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in VALUE_TYPES] )
+
+CARDINALITY_TYPES = (u'single', u'multiple', u'ordered', u'record')
+CARDINALITY_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in CARDINALITY_TYPES] )
+
 class ITextOrVariable(interface.Interface):
 	pass
 
-class IbodyElement(atr_interfaces.IbodyElementAttrGroup):
+class IbodyElement(attr_interfaces.IbodyElementAttrGroup):
 	pass
 		
-class IassessmentItem(atr_interfaces.IassessmentItemAttrGroup):
+class IassessmentItem(attr_interfaces.IassessmentItemAttrGroup):
 	"""
 	Encompasses the information that is presented to a candidate and information about how to score the item.
 	"""
