@@ -295,6 +295,25 @@ class IsetOutcomeValueAttrGroup(IAttrGroup):
 class IlookupOutcomeValueAttrGroup(IAttrGroup):
 	identifier = TextLineAttribute(title="The outcome variable to be set", required=True)
 	
+# template
+
+class ItemplateDeclarationAttrGroup(IAttrGroup):
+	paramVariable = BoolAttribute(title="The substituted flag", required=False, default=False)
+	mathVariable = BoolAttribute(title="The substituted flag in MathML expressions", required=False, default=False)
+
+class ItemplateElementAttrGroup(IAttrGroup):
+	showHide = ChoiceAttribute(title="The visibility of the templateElement", vocabulary=qt_interfaces.SHOW_HIDE_VOCABULARY, required=True)
+	identifier = TextLineAttribute(title="The identifier", required=True)
+
+class IsetTemplateValueAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title="The identifier", required=True)
+	
+class IsetCorrectResponseAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title="The identifier", required=True)
+	
+class IsetDefaultValueAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title="The identifier", required=True)
+
 # assessment
 
 class IassessmentItemAttrGroup(IAttrGroup):
