@@ -15,18 +15,12 @@ class IInlineInteraction(cnt_interfaces.IFlow, cnt_interfaces.IInline, IInteract
 
 class IEndAttemptInteraction(IInlineInteraction, attr_interfaces.IEndAttemptInteractionAttrGroup):
 	__display_name__ = "endAttemptInteraction"
-	
-class IInlineChoiceInteraction(IInlineInteraction, attr_interfaces.IInlineChoiceInteractionAttrGroup):
-	__display_name__ = "inlineChoiceInteraction"
-	
-class ITextEntryInteraction(IInlineInteraction):
-	__display_name__ = "textEntryInteraction"
-	
+		
 class IPrompt(qti_interfaces.IBodyElement, IFiniteSequence):
 	__display_name__ = "prompt"
 	values = schema.List(cnt_interfaces.IInlineStatic , title="Choice interactions")
 
-#TODO:  drawingInteraction, extendedTextInteraction, gapMatchInteraction, graphicInteraction, hottextInteraction, mediaInteraction, sliderInteraction, uploadInteraction
+#TODO:  drawingInteraction,  graphicInteraction,  mediaInteraction, sliderInteraction, uploadInteraction
 class IBlockInteraction(cnt_interfaces.IBlock, cnt_interfaces.IFlow, IInteraction):
 	prompt = schema.Object(IPrompt, title='An optional prompt for the interaction', required=False)
 	
@@ -88,3 +82,46 @@ class IGapMatchInteraction(IBlockInteraction, attr_interfaces.IGapMatchInteracti
 	blockStatic  = schema.List(cnt_interfaces.IBlockStatic, title="A piece of content that contains the gaps",  min_length=1)
 	
 # text-based interactions
+
+class IInlineChoice(IChoice):
+	__display_name__ = "inlineChoice"
+
+class IInlineChoiceInteraction(IInlineInteraction, attr_interfaces.IInlineChoiceInteractionAttrGroup, IFiniteSequence):
+	__display_name__ = "inlineChoiceInteraction"
+	values = schema.List(IInlineChoice , title="An ordered list of the choices that are displayed to the user",  min_length=0)
+	
+class IStringInteraction(attr_interfaces.IStringInteractionAttrGroup):
+	pass
+
+class ITextEntryInteraction(IInlineInteraction, IStringInteraction):
+	_display_name__ = "textEntryInteraction"
+
+class IExtendedTextInteractionInteraction(IBlockInteraction, IStringInteraction, attr_interfaces.IExtendedTextInteractionAttrGroup):
+	_display_name__ = "extendedTextInteraction"
+	
+class IHottextInteraction(IBlockInteraction, attr_interfaces.IBlockInteractionAttrGroup, IFiniteSequence):
+	_display_name__ = "hottextInteraction"
+	values = schema.List(cnt_interfaces.IBlockStatic, title="The content of the interaction is simply a piece of content",  min_length=1)
+
+class IHottext(IChoice, cnt_interfaces.IFlowStatic, cnt_interfaces.IInlineStatic, IFiniteSequence):
+	_display_name__ = "hottext"
+	values = schema.List(cnt_interfaces.IInlineStatic, title="The content",  min_length=0)
+
+# graphical interactions
+
+class IHotspot(attr_interfaces.IHotspotAttrGroup):
+	pass
+
+class IHotspotChoice(IChoice, IHotspot):
+	_display_name__ = "hotspotChoice"
+
+class IAssociableHotspot(IAssociableChoice, IHotspot, attr_interfaces.IAssociableHotspotAttrGroup):
+	_display_name__ = "associableHotspot"
+	
+class IGraphicInteraction(IBlockInteraction):
+	object = schema.List(cnt_interfaces.IObject, title="The associated image",  min_length=1, max_length=1)
+	
+class IHotspotInteraction(IGraphicInteraction, IFiniteSequence, attr_interfaces.IAssociableHotspotAttrGroup):
+	_display_name__ = "hotspotInteraction"
+	values = schema.List(IHotspotChoice, title="The ordered choices",  min_length=1)
+	

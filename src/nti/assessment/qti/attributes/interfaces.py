@@ -125,7 +125,6 @@ class IOrderInteractionAttrGroup(IAttrGroup):
 	orientation = ChoiceAttribute(title="Determines how the visibility of the choice is controlled",
 								  vocabulary=qt_interfaces.ORIENTATION_TYPES_VOCABULARY, required=False)
 	
-
 class IMatchInteractioAttrGroup(IAttrGroup):
 	shufle = BoolAttribute(title=u'Shufle flag', required=True, default=False)
 	maxAssociations = IntAttribute(title=u'The maximum number of associations', required=True, default=1)
@@ -144,10 +143,35 @@ class IGapImgAttrGroup(IAttrGroup):
 class IGapAttrGroup(IAttrGroup):
 	required = BoolAttribute(title=u'f true then this gap must be filled', required=False, default=False)
 	
-class IItemBodyAttrGroup(IBodyElementAttrGroup):
-	pass
+class IStringInteractionAttrGroup(IAttrGroup):
+	base = IntAttribute(title=u'The number base', required=False)
+	stringIdentifier = TextLineAttribute(title=u'The actual string entered by the candidate', required=False)
+	expectedLength = IntAttribute(title=u'The hint to the expected length', required=False)
+	patternMask = TextLineAttribute(title=u'The regular expression that the candidate must match', required=False)
+	placeholderText = TextLineAttribute(title=u'Some placeholder text that can be used to vocalize the interactionh', required=False)
 
-class IBlockInteractionAttrGroup(IFlowAttrGroup, IInteractionAttrGroup):
+class IExtendedTextInteractionAttrGroup(IAttrGroup):
+	maxStrings = IntAttribute(title=u'The maximum number of separate strings accepted', required=False)
+	minStrings = IntAttribute(title=u'The minimum number of separate strings accepted', required=False)
+	expectedLines  = IntAttribute(title=u'The expected number of lines of input required.', required=False)
+	format = ChoiceAttribute(title="The format of the tex",
+							 vocabulary=qt_interfaces.TEXT_FORMAT_TYPES_VOCABULARY, required=False)
+
+class IBlockInteractionAttrGroup(IAttrGroup):
+	maxChoices = IntAttribute(title=u'Max choices allowed', required=True, default=1)
+	minChoices = IntAttribute(title=u'Min choices allowed', required=False, default=0)
+
+class IHotspotAttrGroup(IAttrGroup):
+	shape = ChoiceAttribute(title="The shape of the hotspot",
+							 vocabulary=qt_interfaces.SHAPE_TYPES_VOCABULARY, required=True) 
+	coords = TextLineAttribute(title="The size and position of the hotspot, interpreted in conjunction with the shape",required=True) 
+	hotspotLabel = TextLineAttribute(title="The alternative text for this (hot) area of the image",required=False, max_length=256) 
+
+class IAssociableHotspotAttrGroup(IAttrGroup):
+	matchMax = IntAttribute(title=u'The maximum number of choices this choice may be associated with', required=True)
+	matchMin = IntAttribute(title=u'The minimum number of choices this choice may be associated with', required=False, default=0)
+	
+class IItemBodyAttrGroup(IBodyElementAttrGroup):
 	pass
 
 class IAssessmentItemAttrGroup(IAttrGroup):
