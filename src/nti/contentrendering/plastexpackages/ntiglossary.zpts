@@ -1,0 +1,3 @@
+name: ntiglossaryentry
+<a class="ntiglossaryentry" tal:attributes="name string:m${self/id}; href string:#${self/id}" tal:content="self/attributes/entryname">The Glossary Entry</a>
+

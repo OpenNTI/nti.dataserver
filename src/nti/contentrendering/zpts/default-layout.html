@@ -77,6 +77,15 @@
 				</li>
 			</ol>
 		</div>
+		<div id="glossary" class="glossary" tal:condition="self/ownerDocument/userdata/glossary">
+			<ol>
+				<li tal:repeat="entry self/ownerDocument/userdata/glossary"
+					tal:attributes="id entry/id">
+					<span tal:content="entry" >Entry text</span>
+					<a tal:attributes="href string:#m${entry/id}">↩</a>
+				</li>
+			</ol>
+		</div>
 
 	</body>
 </html>
