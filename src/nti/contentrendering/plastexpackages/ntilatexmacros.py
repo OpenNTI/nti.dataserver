@@ -209,11 +209,16 @@ class vfrac(Base.Command):
 	args = 'nom denom'
 
 # Misc
+class ntivideorollname(Base.Command):
+	pass
+
 class ntivideoroll(Base.Environment,plastexids.NTIIDMixin):
+	counter = "ntivideoroll"
 	blockType = True
 	_ntiid_cache_map_name = '_ntivideoroll_ntiid_map'
 	_ntiid_allow_missing_title = True
 	_ntiid_suffix = 'ntivideoroll.'
+	_ntiid_title_attr_name = 'ref'
 	_ntiid_type = 'NTIVR'
 
 class ntiimagecollectionname(Base.Command):
@@ -232,4 +237,5 @@ class ntipreviouspage(Base.Command):
 	pass
 
 def ProcessOptions( options, document ):
+        document.context.newcounter( 'ntivideoroll' )
         document.context.newcounter( 'ntiimagecollection' )
