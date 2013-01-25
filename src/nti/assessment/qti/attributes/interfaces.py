@@ -6,6 +6,15 @@ from nti.assessment.qti import interfaces as qt_interfaces
 from nti.assessment.qti.schema import (TextLineAttribute, BoolAttribute, IntAttribute, URIAttribute,
 									   ChoiceAttribute, MimeTypeAttribute)
 	
+class IBodyElementAttrGroup(interface.Interface):
+	id = TextLineAttribute(title=u'The element id', required=False)
+	klass = TextLineAttribute(title=u'The class', required=False, __name__='class')
+	lang = TextLineAttribute(title=u'The language code (RFC3066)', __name__='xml:lang', required=False, max_length=2, default='en')
+	label = TextLineAttribute(title=u'The label', required=False, max_length=256)
+	
+class IFlowAttrGroup(interface.Interface):
+	base = URIAttribute(title=u'The uri base', required=False, __name__='xml:base')
+	
 class IObjectAttrGroup(interface.Interface):
 	data =  URIAttribute(title='Provides a URI for locating the data associated with the object', required=True)
 	type =  MimeTypeAttribute(title='The mimetype',required=True)
@@ -18,15 +27,23 @@ class IParamAttrGroup(interface.Interface):
 	valuetype = ChoiceAttribute(title="The param type", vocabulary=qt_interfaces.PARAM_TYPES_VOCABULARY)
 	type =  MimeTypeAttribute(title='The mimetype',required=False)
 
-class IFlowAttrGroup(interface.Interface):
-	base = URIAttribute(title=u'The uri base', required=False, __name__='xml:base')
+class IColAttrGroup(interface.Interface):
+	span = IntAttribute(title=u'The col span', required=False)
 
-class IBodyElementAttrGroup(interface.Interface):
-	id = TextLineAttribute(title=u'The element id', required=False)
-	klass = TextLineAttribute(title=u'The class', required=False, __name__='class')
-	lang = TextLineAttribute(title=u'The language code (RFC3066)', __name__='xml:lang', required=False, max_length=2, default='en')
-	label = TextLineAttribute(title=u'The label', required=False, max_length=256)
+class IColGroupAttrGroup(interface.Interface):
+	span = IntAttribute(title=u'The col span', required=False)
 	
+class ITableAttrGroup(interface.Interface):
+	summary = TextLineAttribute(title=u'The table summary', required=False)
+	
+class ITableCellAttrGroup(interface.Interface):
+	headers = TextLineAttribute(title='Specifies one or more header cells a cell is related to', required=False)
+	scope = ChoiceAttribute(title="The param type", vocabulary=qt_interfaces.SCOPE_TABLE_TYPES, required=False)
+	abbr = TextLineAttribute(title='Abbreviated version', required=False)
+	axis = TextLineAttribute(title='Categorizes header cells', required=False)
+	rowspan = IntAttribute(title='Specifies the number of rows a header cell should span', required=False)
+	colspan = IntAttribute(title='Specifies the number of cols a header cell should span', required=False)
+
 class IPromptAttrGroup(IBodyElementAttrGroup):
 	pass
 	

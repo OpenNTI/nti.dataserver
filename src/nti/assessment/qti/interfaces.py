@@ -8,6 +8,9 @@ from nti.assessment.qti.attributes import interfaces as atr_interfaces
 PARAM_TYPES = (u'DATA', u'REF')
 PARAM_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in PARAM_TYPES] )
 
+SCOPE_TABLE_TYPES = (u'col', u'colgroup', u'row', u'rowgroup')
+SCOPE_TABLE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in SCOPE_TABLE_TYPES] )
+
 # xml node
 
 class _XmlNode(interface.Interface):
@@ -33,7 +36,7 @@ class ITextOrVariable(interface.Interface):
 	__display_name__ = 'textOrVariable'
 
 class IBodyElement(atr_interfaces.IBodyElementAttrGroup):
-	__display_name__ = 'bodyElement'
+	pass
 	
 class IItemBody(interface.Interface):
 	"""

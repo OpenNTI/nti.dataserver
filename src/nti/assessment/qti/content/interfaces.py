@@ -17,9 +17,8 @@ class IInline(interface.Interface):
 class IBlock(interface.Interface):
 	__display_name__ = 'block'
 	
-class IFlow(IObjectFlow):
+class IFlow(IObjectFlow, atr_interfaces.IFlowAttrGroup):
 	__display_name__ = "flow"
-	base = TextLineAttribute(title='Base URI', required=False)
 	
 class IInlineStatic(IInline):
 	__display_name__ = 'inlineStatic'
@@ -156,7 +155,7 @@ class IUL(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, IFiniteSequenc
 	__display_name__ = "ul"
 	values = schema.List(IIL, 'il elements contained', min_length=0)
 		
-# Object elements
+# object elements
 
 class IObject(qti_interfaces.IBodyElement, IFlowStatic, IInlineStatic, IFiniteSequence, atr_interfaces.IObjectAttrGroup):
 	__display_name__ = "object"
@@ -165,6 +164,80 @@ class IObject(qti_interfaces.IBodyElement, IFlowStatic, IInlineStatic, IFiniteSe
 class IParam(IObjectFlow, atr_interfaces.IParamAttrGroup):
 	__display_name__ = "param"
 	
+# Presentation Elements
+
+class IB(ISimpleInline):
+	__display_name__ = "b"
+
+class IBig(ISimpleInline):
+	__display_name__ = "big"	
+
+class IHr(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic):
+	__display_name__ = "hr"	
+
+class II(ISimpleInline):
+	__display_name__ = "i"	
+
+class ISmall(ISimpleInline):
+	__display_name__ = "small"	
+
+class ISub(ISimpleInline):
+	__display_name__ = "sub"	
+
+class ISup(ISimpleInline):
+	__display_name__ = "sup"	
+
+class ITt(ISimpleInline):
+	__display_name__ = "tt"	
+
+# Table elements
+
+class ICaption(qti_interfaces.IBodyElement, IFiniteSequence):
+	__display_name__ = "caption"	
+	values = schema.List(IInline, 'inline elements contained', min_length=0)
+
+class ICol(qti_interfaces.IBodyElement, atr_interfaces.IColAttrGroup):
+	__display_name__ = "col"	
 	
+class IColGroup(qti_interfaces.IBodyElement, atr_interfaces.IColGroupAttrGroup, IFiniteSequence):
+	__display_name__ = "colgroup"	
+	values = schema.List(ICol, 'inline elements contained', min_length=0)
+
+class ITableCell(qti_interfaces.IBodyElement, atr_interfaces.ITableCellAttrGroup, IFiniteSequence):
+	values = schema.List(IFlow, 'inline elements contained', min_length=0)
+
+class ITd(ITableCell):
+	__display_name__ = "td"	
+	
+class ITh(ITableCell):
+	__display_name__ = "th"	
+	
+class ITr( qti_interfaces.IBodyElement, IFiniteSequence):
+	__display_name__ = "tr"
+	values = schema.List(ITableCell, 'tableCell elements contained', min_length=0)
+	
+class IThead( qti_interfaces.IBodyElement, IFiniteSequence):
+	__display_name__ = "thead"
+	values = schema.List(ITr, 'tr elements contained', min_length=1)
+	
+class ITFoot( qti_interfaces.IBodyElement, IFiniteSequence):
+	__display_name__ = "tfoot"
+	values = schema.List(ITr, 'tr elements contained', min_length=1)
+	
+class ITBody( qti_interfaces.IBodyElement, IFiniteSequence):
+	__display_name__ = "tbody"
+	values = schema.List(ITr, 'tr elements contained', min_length=1)
+	
+class ITable(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, atr_interfaces.ITableAttrGroup):
+	__display_name__ = "table"	
+	caption = schema.Object(ICaption, title='the table caption')
+	col = schema.List(ICol, title='Table direct col (Must not contain any colgroup elements)', min_length=0, required=False)
+	colgroup = schema.List(IColGroup, title='Table direct colgroups (Must not contain any col elements)', min_length=0, required=False)
+	thead = schema.Object(IThead, title='table head', required=False)
+	tfoot = schema.Object(ITFoot, title='table head', required=False)
+	tbody = schema.List(ITBody, title='table body',  min_length=1, required=True)
+
+
+
 	
 	
