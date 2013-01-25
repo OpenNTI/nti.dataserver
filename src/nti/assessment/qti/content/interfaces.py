@@ -249,7 +249,6 @@ class IA(IAtomicInline, atr_interfaces.IAAttrGroup):
 class IMath(IBlockStatic, IFlowStatic, IInlineStatic):
 	__display_name__ = "math"
 
-	
 # variable element
 
 class IFeedbackElement(atr_interfaces.IFeedBlackAttrGroup):

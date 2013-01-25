@@ -20,6 +20,12 @@ VIEW_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.Si
 ORIENTATION_TYPES = (u'vertial', u'horizontal')
 ORIENTATION_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in ORIENTATION_TYPES] )
 
+TEXT_FORMAT_TYPES = (u'plain', u'preFormatted', u'xhtml')
+TEXT_FORMAT_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in TEXT_FORMAT_TYPES] )
+
+SHAPE_TYPES = (u'default', u'rect', u'circle', u'poly', u'ellipse')
+SHAPE_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in SHAPE_TYPES] )
+
 # xml node
 
 class _XmlNode(interface.Interface):
