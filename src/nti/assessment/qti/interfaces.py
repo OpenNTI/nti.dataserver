@@ -26,34 +26,15 @@ TEXT_FORMAT_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabu
 SHAPE_TYPES = (u'default', u'rect', u'circle', u'poly', u'ellipse')
 SHAPE_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in SHAPE_TYPES] )
 
-# xml node
-
-class _XmlNode(interface.Interface):
-	"""
-	Marker interface for XML bound objects
-	"""
-	pass
-
-class IAttribute(interface.Interface):
-	parent = schema.Object(_XmlNode, title=u'Parent of this attribute', required=True)
-	name = schema.TextLine(title=u'Parent of this attribute', required=True)
-	
-class IXmlNode(_XmlNode):
-	parent = schema.Object(_XmlNode, title=u'Parent of this node', required=False)
-
-	def getParentRoot():
-		"""
-		Root of this node or node itself
-		"""
 # basic
 
 class ITextOrVariable(interface.Interface):
 	pass
 
-class IBodyElement(atr_interfaces.IBodyElementAttrGroup):
+class IbodyElement(atr_interfaces.IbodyElementAttrGroup):
 	pass
 		
-class IAssessmentItem(atr_interfaces.IAssessmentItemAttrGroup):
+class IAssessmentItem(atr_interfaces.IassessmentItemAttrGroup):
 	"""
 	Encompasses the information that is presented to a candidate and information about how to score the item.
 	"""

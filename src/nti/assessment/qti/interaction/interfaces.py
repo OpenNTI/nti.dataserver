@@ -7,141 +7,141 @@ from nti.assessment.qti import interfaces as qti_interfaces
 from nti.assessment.qti.content import interfaces as cnt_interfaces
 from nti.assessment.qti.attributes import interfaces as attr_interfaces
 
-class IInteraction(qti_interfaces.IBodyElement, attr_interfaces.IInteractionAttrGroup):
+class Iinteraction(qti_interfaces.IbodyElement, attr_interfaces.IinteractionAttrGroup):
 	pass
 
-class IInlineInteraction(cnt_interfaces.IFlow, cnt_interfaces.IInline, IInteraction):
+class IinlineInteraction(cnt_interfaces.Iflow, cnt_interfaces.Iinline, Iinteraction):
 	pass
 
-class IEndAttemptInteraction(IInlineInteraction, attr_interfaces.IEndAttemptInteractionAttrGroup):
+class IendAttemptInteraction(IinlineInteraction, attr_interfaces.IendAttemptInteractionAttrGroup):
 	__display_name__ = "endAttemptInteraction"
 		
-class IPrompt(qti_interfaces.IBodyElement, IFiniteSequence):
+class Iprompt(qti_interfaces.IbodyElement, IFiniteSequence):
 	__display_name__ = "prompt"
-	values = schema.List(cnt_interfaces.IInlineStatic , title="Choice interactions")
+	values = schema.List(cnt_interfaces.IinlineStatic , title="Choice interactions")
 
-class IBlockInteraction(cnt_interfaces.IBlock, cnt_interfaces.IFlow, IInteraction):
-	prompt = schema.Object(IPrompt, title='An optional prompt for the interaction', required=False)
+class IBlockInteraction(cnt_interfaces.Iblock, cnt_interfaces.Iflow, Iinteraction):
+	prompt = schema.Object(Iprompt, title='An optional prompt for the interaction', required=False)
 	
-class IChoice(qti_interfaces.IBodyElement, attr_interfaces.IChoiceAttrGroup):
+class Ichoice(qti_interfaces.IbodyElement, attr_interfaces.IchoiceAttrGroup):
 	pass
 
 # simple interactions
 
-class IAssociableChoice(IChoice, attr_interfaces.IAssociableChoiceAttrGroup):
+class IassociableChoice(Ichoice, attr_interfaces.IassociableChoiceAttrGroup):
 	pass
 
-class IGapChoice(IAssociableChoice, attr_interfaces.IGapChoiceAttrGroup):
+class IgapChoice(IassociableChoice, attr_interfaces.IgapChoiceAttrGroup):
 	pass
 
-class IGapText(IGapChoice, IFiniteSequence):
+class IgapText(IgapChoice, IFiniteSequence):
 	__display_name__ = 'gapText'
 	texrOrVariable = schema.List(qti_interfaces.ITextOrVariable, title="The variables", min_length=0)
 	
-class IGapImg(IGapChoice, attr_interfaces.IGapImgAttrGroup, IFiniteSequence):
+class IgapImg(IgapChoice, attr_interfaces.IgapImgAttrGroup, IFiniteSequence):
 	__display_name__ = 'gapImg'
-	object = schema.Object(cnt_interfaces.IObject, title="game images", required=True)
+	object = schema.Object(cnt_interfaces.Iobject, title="game images", required=True)
 	
-class IGap(IAssociableChoice, cnt_interfaces.IInlineStatic, attr_interfaces.IGapAttrGroup):
+class Igap(IassociableChoice, cnt_interfaces.IinlineStatic, attr_interfaces.IgapAttrGroup):
 	__display_name__ = 'gap'
 	
-class ISimpleAssociableChoice(IAssociableChoice, attr_interfaces.ISimpleAssociableChoiceAttrGroup, IFiniteSequence):
+class IsimpleAssociableChoice(IassociableChoice, attr_interfaces.IsimpleAssociableChoiceAttrGroup, IFiniteSequence):
 	__display_name__ = 'simpleAssociableChoice'
-	flowStatic = schema.List(cnt_interfaces.IFlowStatic, title="associableChoice is a choice that contains flowStatic objects", min_length=0)
+	flowStatic = schema.List(cnt_interfaces.IflowStatic, title="associableChoice is a choice that contains flowStatic objects", min_length=0)
 
-class ISimpleChoice(IChoice, attr_interfaces.ISimpleChoiceAttrGroup):
+class IsimpleChoice(Ichoice, attr_interfaces.IsimpleChoiceAttrGroup):
 	__display_name__ = "simpleChoice"
-	flowStatic = schema.List(cnt_interfaces.IFlowStatic, title="simpleChoice is a choice that contains flowStatic objects")
+	flowStatic = schema.List(cnt_interfaces.IflowStatic, title="simpleChoice is a choice that contains flowStatic objects")
 	
-class IAssociateInteraction(IBlockInteraction, attr_interfaces.IAssociateInteractionAttrGroup, IFiniteSequence):
+class IassociateInteraction(IBlockInteraction, attr_interfaces.IassociateInteractionAttrGroup, IFiniteSequence):
 	__display_name__ = "associateInteraction"
-	simpleAssociableChoice = schema.List(ISimpleAssociableChoice , title="An ordered set of choices.", min_length=1)
+	simpleAssociableChoice = schema.List(IsimpleAssociableChoice , title="An ordered set of choices.", min_length=1)
 	
-class IChoiceInteraction(IBlockInteraction, attr_interfaces.IChoiceInteractionAttrGroup, IFiniteSequence):
+class IchoiceInteraction(IBlockInteraction, attr_interfaces.IchoiceInteractionAttrGroup, IFiniteSequence):
 	__display_name__ = "choiceInteraction"
-	simpleChoice = schema.List(ISimpleChoice , title="An ordered list of the choices that are displayed to the user",  min_length=1)
+	simpleChoice = schema.List(IsimpleChoice , title="An ordered list of the choices that are displayed to the user",  min_length=1)
 
-class IOrderInteraction(IBlockInteraction, attr_interfaces.IOrderInteractionAttrGroup, IFiniteSequence):
+class IorderInteraction(IBlockInteraction, attr_interfaces.IorderInteractionAttrGroup, IFiniteSequence):
 	__display_name__ = "orderInteraction"
-	simpleChoice = schema.List(ISimpleChoice , title="An ordered list of the choices that are displayed to the user",  min_length=1)
+	simpleChoice = schema.List(IsimpleChoice , title="An ordered list of the choices that are displayed to the user",  min_length=1)
 
-class ISimpleMatchSet(IFiniteSequence):
+class IsimpleMatchSet(IFiniteSequence):
 	__display_name__ = "simpleMatchSet"
-	simpleAssociableChoice = schema.List(ISimpleAssociableChoice, title="An ordered set of choices for the set.", min_length=0)
+	simpleAssociableChoice = schema.List(IsimpleAssociableChoice, title="An ordered set of choices for the set.", min_length=0)
 	
-class IMatchInteraction(IBlockInteraction, attr_interfaces.IMatchInteractioAttrGroup, IFiniteSequence):
+class ImatchInteraction(IBlockInteraction, attr_interfaces.ImatchInteractionAttrGroup, IFiniteSequence):
 	__display_name__ = "matchInteraction"
-	simpleMatchSet = schema.List(ISimpleMatchSet , title="The two sets of choices",  min_length=2, max_length=2)
+	simpleMatchSet = schema.List(IsimpleMatchSet , title="The two sets of choices",  min_length=2, max_length=2)
 	
-class IGapMatchInteraction(IBlockInteraction, attr_interfaces.IGapMatchInteractioAttrGroup):
+class IgapMatchInteraction(IBlockInteraction, attr_interfaces.IgapMatchInteractionAttrGroup):
 	__display_name__ = "gapMatchInteraction"
-	gapChoice = schema.List(IGapChoice, title="An ordered list of choices for filling the gaps",  min_length=1)
-	blockStatic = schema.List(cnt_interfaces.IBlockStatic, title="A piece of content that contains the gaps",  min_length=1)
+	gapChoice = schema.List(IgapChoice, title="An ordered list of choices for filling the gaps",  min_length=1)
+	blockStatic = schema.List(cnt_interfaces.IblockStatic, title="A piece of content that contains the gaps",  min_length=1)
 	
 # text-based interactions
 
-class IInlineChoice(IChoice, IFiniteSequence):
+class IinlineChoice(Ichoice, IFiniteSequence):
 	__display_name__ = "inlineChoice"
 	textOrVariable = schema.List(qti_interfaces.ITextOrVariable, title="Order list varibles", min_length=0)
 	
-class IInlineChoiceInteraction(IInlineInteraction, attr_interfaces.IInlineChoiceInteractionAttrGroup, IFiniteSequence):
+class IinlineChoiceInteraction(IinlineInteraction, attr_interfaces.IinlineChoiceInteractionAttrGroup, IFiniteSequence):
 	__display_name__ = "inlineChoiceInteraction"
-	inlineChoice = schema.List(IInlineChoice , title="An ordered list of the choices that are displayed to the user",  min_length=0)
+	inlineChoice = schema.List(IinlineChoice , title="An ordered list of the choices that are displayed to the user",  min_length=0)
 	
-class IStringInteraction(attr_interfaces.IStringInteractionAttrGroup):
+class IstringInteraction(attr_interfaces.IstringInteractionAttrGroup):
 	pass
 
-class ITextEntryInteraction(IInlineInteraction, IStringInteraction):
+class ITextEntryInteraction(IinlineInteraction, IstringInteraction):
 	_display_name__ = "textEntryInteraction"
 
-class IExtendedTextInteractionInteraction(IBlockInteraction, IStringInteraction, attr_interfaces.IExtendedTextInteractionAttrGroup):
+class IextendedTextInteraction(IBlockInteraction, IstringInteraction, attr_interfaces.IextendedTextInteractionAttrGroup):
 	_display_name__ = "extendedTextInteraction"
 	
-class IHottextInteraction(IBlockInteraction, attr_interfaces.IHottextInteractionAttrGroup, IFiniteSequence):
+class IhottextInteraction(IBlockInteraction, attr_interfaces.IhottextInteractionAttrGroup, IFiniteSequence):
 	_display_name__ = "hottextInteraction"
-	blockStatic = schema.List(cnt_interfaces.IBlockStatic, title="The ordered content of the interaction is simply a piece of content",  min_length=1)
+	blockStatic = schema.List(cnt_interfaces.IblockStatic, title="The ordered content of the interaction is simply a piece of content",  min_length=1)
 
-class IHottext(IChoice, cnt_interfaces.IFlowStatic, cnt_interfaces.IInlineStatic, IFiniteSequence):
+class Ihottext(Ichoice, cnt_interfaces.IflowStatic, cnt_interfaces.IinlineStatic, IFiniteSequence):
 	_display_name__ = "hottext"
-	inlineStatic = schema.List(cnt_interfaces.IInlineStatic, title="The order content",  min_length=0)
+	inlineStatic = schema.List(cnt_interfaces.IinlineStatic, title="The order content",  min_length=0)
 
 # graphical interactions
 
-class IHotspot(attr_interfaces.IHotspotAttrGroup):
+class Ihotspot(attr_interfaces.IhotspotAttrGroup):
 	pass
 
-class IHotspotChoice(IChoice, IHotspot):
+class IhotspotChoice(Ichoice, Ihotspot):
 	_display_name__ = "hotspotChoice"
 
-class IAssociableHotspot(IAssociableChoice, IHotspot, attr_interfaces.IAssociableHotspotAttrGroup):
+class IassociableHotspot(IassociableChoice, Ihotspot, attr_interfaces.IassociableHotspotAttrGroup):
 	_display_name__ = "associableHotspot"
 	
-class IGraphicInteraction(IBlockInteraction):
-	object = schema.Object(cnt_interfaces.IObject, title="The associated image", required=True)
+class IgraphicInteraction(IBlockInteraction):
+	object = schema.Object(cnt_interfaces.Iobject, title="The associated image", required=True)
 	
-class IHotspotInteraction(IGraphicInteraction, IFiniteSequence, attr_interfaces.IHotspotInteractiontAttrGroup):
+class IhotspotInteraction(IgraphicInteraction, IFiniteSequence, attr_interfaces.IhotspotInteractiontAttrGroup):
 	_display_name__ = "hotspotInteraction"
-	hotspotChoice = schema.List(IHotspotChoice, title="The ordered choices",  min_length=1)
+	hotspotChoice = schema.List(IhotspotChoice, title="The ordered choices",  min_length=1)
 	
-class ISelectPointInteraction(IGraphicInteraction, attr_interfaces.ISelectPointInteractionAttrGroup):
+class IselectPointInteraction(IgraphicInteraction, attr_interfaces.IselectPointInteractionAttrGroup):
 	_display_name__ = "selectPointInteraction"
 	
-class IGraphicOrderInteraction(IGraphicInteraction, IFiniteSequence, attr_interfaces.IGraphicOrderInteractiontAttrGroup):
+class IgraphicOrderInteraction(IgraphicInteraction, IFiniteSequence, attr_interfaces.IgraphicOrderInteractiontAttrGroup):
 	_display_name__ = "graphicOrderInteraction"
-	hotspotChoice = schema.List(IHotspotChoice, title="The ordered choices",  min_length=1)
+	hotspotChoice = schema.List(IhotspotChoice, title="The ordered choices",  min_length=1)
 	
-class IGraphicAssociateInteraction(IGraphicInteraction, IFiniteSequence, attr_interfaces.IGraphicAssociateInteractiontAttrGroup):
+class IgraphicAssociateInteraction(IgraphicInteraction, IFiniteSequence, attr_interfaces.IgraphicAssociateInteractiontAttrGroup):
 	_display_name__ = "graphicAssociateInteraction"
-	associableHotspot = schema.List(IAssociableHotspot , title="The ordered choices",  min_length=1)
+	associableHotspot = schema.List(IassociableHotspot , title="The ordered choices",  min_length=1)
 
-class IGraphicGapMatchInteraction(IGraphicInteraction):
+class IgraphicGapMatchInteraction(IgraphicInteraction):
 	_display_name__ = "graphicGapMatchInteraction"
-	gapImg = schema.List(IGapImg, title="An ordered list of choices for filling the gaps",  min_length=1)
-	associableHotspot  = schema.List(IAssociableHotspot , title="The hotspots that define the gaps that are to be filled by the candidate",  min_length=1)
+	gapImg = schema.List(IgapImg, title="An ordered list of choices for filling the gaps",  min_length=1)
+	associableHotspot  = schema.List(IassociableHotspot , title="The hotspots that define the gaps that are to be filled by the candidate",  min_length=1)
 
 #TODO:  drawingInteraction,   mediaInteraction, sliderInteraction, uploadInteraction
 
-class IPositionObjectInteraction(IInteraction, attr_interfaces.IPositionObjectInteractiontAttrGroup):
+class IpositionObjectInteraction(Iinteraction, attr_interfaces.IpositionObjectInteractiontAttrGroup):
 	_display_name__ = "positionObjectInteraction"
-	object = schema.Object(cnt_interfaces.IObject, title="An ordered list of choices for filling the gaps", required=True)
+	object = schema.Object(cnt_interfaces.Iobject, title="An ordered list of choices for filling the gaps", required=True)
 	
