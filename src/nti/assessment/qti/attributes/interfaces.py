@@ -126,7 +126,7 @@ class IimgAttrGroup(IAttrGroup):
 	
 class IaAttrGroup(IAttrGroup):
 	href = URIAttribute(title='href URI', required=True)
-	type = TextLineAttribute(title="The mimeType", required=False)
+	type = MimeTypeAttribute(title="The mimeType", required=False)
 	
 class IFeedbackAttrGroup(IAttrGroup):
 	outcomeIdentifier = TextLineAttribute(title="The identifier of an outcome", required=True)
@@ -282,6 +282,20 @@ class IuploadInteractionAttrGroup(IAttrGroup):
 	
 class IitemBodyAttrGroup(IbodyElementAttrGroup):
 	pass
+
+# response
+
+class IresponseProcessingAttrGroup(IAttrGroup):
+	template = URIAttribute(title="URI for responseProcessing template",required=False) 
+	templateLocation = URIAttribute(title="responseProcessing template location",required=False) 
+
+class IsetOutcomeValueAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title="The outcome variable to be set", required=True)
+	
+class IlookupOutcomeValueAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title="The outcome variable to be set", required=True)
+	
+# assessment
 
 class IassessmentItemAttrGroup(IAttrGroup):
 	identifier = TextLineAttribute(title=u'The principle identifier of the item', required=True)
