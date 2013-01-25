@@ -46,7 +46,7 @@ def _get_user_info_extract():
 	
 	for iid in userids:
 		u = _ds_intid.queryObject(iid, None)
-		if u is not None:
+		if u is not None and nti_interfaces.IUser.providedBy(u):
 			alias = _get_field_info(iid, ent_catalog, 'alias')
 			email = _get_field_info(iid, ent_catalog, 'email')
 			realname = _get_field_info(iid, ent_catalog, 'realname')
