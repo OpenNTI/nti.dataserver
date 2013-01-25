@@ -7,264 +7,266 @@ from zope.interface.common.sequence import IFiniteSequence
 from nti.assessment.qti import interfaces as qti_interfaces
 from nti.assessment.qti.attributes import interfaces as attr_interfaces
 	
-class IObjectFlow(interface.Interface):
+class IobjectFlow(interface.Interface):
 	pass
 
-class IInline(interface.Interface):
+class Iinline(interface.Interface):
 	pass
 			
-class IBlock(interface.Interface):
+class Iblock(interface.Interface):
 	pass
 	
-class IFlow(IObjectFlow, attr_interfaces.IFlowAttrGroup):
+class Iflow(IobjectFlow, attr_interfaces.IflowAttrGroup):
 	pass
 	
-class IInlineStatic(IInline):
+class IinlineStatic(Iinline):
 	pass
 	
-class IBlockStatic(IBlock):
+class IblockStatic(Iblock):
 	pass
 	
-class IFlowStatic(IFlow):
+class IflowStatic(Iflow):
 	pass
 	
-class ISimpleInline(qti_interfaces.IBodyElement, IFlowStatic, IInlineStatic, IFiniteSequence):
-	inline = schema.List(IInline, 'inline objects contained', min_length=0)
+class IsimpleInline(qti_interfaces.IbodyElement, IflowStatic, IinlineStatic, IFiniteSequence):
+	inline = schema.List(Iinline, 'inline objects contained', min_length=0)
 	
-class ISimpleBlock(IFlowStatic, qti_interfaces.IBodyElement, IBlockStatic, IFiniteSequence):
-	block = schema.List(IBlock, 'block objects contained', min_length=0)
+class IsimpleBlock(IflowStatic, qti_interfaces.IbodyElement, IblockStatic, IFiniteSequence):
+	block = schema.List(Iblock, 'block objects contained', min_length=0)
 	
-class IAtomicInline(IFlowStatic, qti_interfaces.IBodyElement, IInlineStatic):
+class IatomicInline(IflowStatic, qti_interfaces.IbodyElement, IinlineStatic):
 	pass
 	
-class IAtomicBlock(qti_interfaces.IBodyElement, IFlowStatic, IBlockStatic, IFiniteSequence):
-	inline = schema.List(IInline, 'inline objects contained', min_length=0)
+class IAtomicBlock(qti_interfaces.IbodyElement, IflowStatic, IblockStatic, IFiniteSequence):
+	inline = schema.List(Iinline, 'The ordered inline objects contained', min_length=0)
 
-class ITextRun(IFlowStatic, IInlineStatic, qti_interfaces.ITextOrVariable):
+class ITextRun(IflowStatic, IinlineStatic, qti_interfaces.ITextOrVariable):
 	__display_name__ = "textRun"
 	
-class IAbbr(ISimpleInline):
+# xhtml elements
+
+class Iabbr(IsimpleInline):
 	__display_name__ = "abbr"
 	
-class IAcronym(ISimpleInline):
+class Iacronym(IsimpleInline):
 	__display_name__ = "acronym"
 	
-class IAddress(IAtomicBlock):
+class Iaddress(IAtomicBlock):
 	__display_name__ = "address"
 
-class IBlockQuote(ISimpleBlock, attr_interfaces.IBlockQuoteAttrGroup):
+class Iblockquote(IsimpleBlock, attr_interfaces.IblockquoteAttrGroup):
 	__display_name__ = "blockquote"
 	
-class IBr(IAtomicInline):
+class Ibr(IatomicInline):
 	__display_name__ = "br"
 	
-class ICite(ISimpleInline):
+class Icite(IsimpleInline):
 	__display_name__ = "cite"
 	
-class ICode(ISimpleInline):
+class Icode(IsimpleInline):
 	__display_name__ = "code"
 	
-class IDfn(ISimpleInline):
+class Idfn(IsimpleInline):
 	__display_name__ = "dfn"
 	
-class IDiv(IFlowStatic, qti_interfaces.IBodyElement, IBlockStatic, IFiniteSequence):
+class Idiv(IflowStatic, qti_interfaces.IbodyElement, IblockStatic, IFiniteSequence):
 	__display_name__ = "div"
-	flow = schema.List(IFlow, 'flow objects contained', min_length=0)
+	flow = schema.List(Iflow, 'flow objects contained', min_length=0)
 	
-class IEm(ISimpleInline):
+class Iem(IsimpleInline):
 	__display_name__ = "em"
 	
-class IH1(IAtomicBlock):
+class Ih1(IAtomicBlock):
 	__display_name__ = "h1"
 
-class IH2(IAtomicBlock):
+class Ih2(IAtomicBlock):
 	__display_name__ = "h2"
 
-class IH3(IAtomicBlock):
+class Ih3(IAtomicBlock):
 	__display_name__ = "h3"		
 	
-class IH4(IAtomicBlock):
+class Ih4(IAtomicBlock):
 	__display_name__ = "h4"
 	
-class IH5(IAtomicBlock):
+class Ih5(IAtomicBlock):
 	__display_name__ = "h5"
 	
-class IH6(IAtomicBlock):
+class Ih6(IAtomicBlock):
 	__display_name__ = "h6"
 	
-class IKbd(ISimpleInline):
+class Ikbd(IsimpleInline):
 	__display_name__ = "kbd"
 	
-class IP(IAtomicBlock):
+class Ip(IAtomicBlock):
 	__display_name__ = "p"
 	
-class IPre(IAtomicBlock):
+class Ipre(IAtomicBlock):
 	"""
 	Although pre inherits from atomicBlock it must not contain, either directly or indirectly,
 	any of the following objects: img, object, big, small, sub, sup.
 	"""
 	__display_name__ = "pre"
 	
-class IQ(ISimpleInline, attr_interfaces.IQAttrGroup):
+class Iq(IsimpleInline, attr_interfaces.IqAttrGroup):
 	__display_name__ = "q"
 	
-class ISamp(ISimpleInline):
+class Isamp(IsimpleInline):
 	__display_name__ = "samp"
 	
-class ISpan(ISimpleInline):
+class Ispan(IsimpleInline):
 	__display_name__ = "span"
 
-class IStrong(ISimpleInline):
+class Istrong(IsimpleInline):
 	__display_name__ = "strong"
 	
-class IVar(ISimpleInline):
+class Ivar(IsimpleInline):
 	__display_name__ = "var"
 
 # list elements
 
-class IDLElement(qti_interfaces.IBodyElement):
+class IDLElement(qti_interfaces.IbodyElement):
 	pass
 
-class IDL(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, IFiniteSequence):
+class Idl(IblockStatic, qti_interfaces.IbodyElement, IflowStatic, IFiniteSequence):
 	__display_name__ = "dl"
-	dlElement = schema.List(IDLElement, 'dl elements contained', min_length=0)
+	dlElement = schema.List(IDLElement, 'The ordered dl elements contained', min_length=0)
 	
-class IDT(IDLElement, IFiniteSequence):
+class Idt(IDLElement, IFiniteSequence):
 	__display_name__ = "dt"
-	inline = schema.List(IInline, 'inline elements contained', min_length=0)
+	inline = schema.List(Iinline, 'The ordered inline elements contained', min_length=0)
 
-class IDD(IDLElement, IFiniteSequence):
+class Idd(IDLElement, IFiniteSequence):
 	__display_name__ = "dd"
-	flow = schema.List(IFlow, 'flow elements contained', min_length=0)
+	flow = schema.List(Iflow, 'The ordered flow elements contained', min_length=0)
 
-class IIL(qti_interfaces.IBodyElement, IFiniteSequence):
-	__display_name__ = "il"
-	flow = schema.List(IFlow, 'flow elements contained', min_length=0)
+class Ili(qti_interfaces.IbodyElement, IFiniteSequence):
+	__display_name__ = "li"
+	flow = schema.List(Iflow, 'The ordered flow elements contained', min_length=0)
 
-class IOL(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, IFiniteSequence):
+class Iol(IblockStatic, qti_interfaces.IbodyElement, IflowStatic, IFiniteSequence):
 	__display_name__ = "ol"
-	il = schema.List(IIL, 'il elements contained', min_length=0)
+	li = schema.List(Ili, 'The ordered li elements contained', min_length=0)
 	
-class IUL(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, IFiniteSequence):
+class Iul(IblockStatic, qti_interfaces.IbodyElement, IflowStatic, IFiniteSequence):
 	__display_name__ = "ul"
-	il = schema.List(IIL, 'il elements contained', min_length=0)
+	li = schema.List(Ili, 'The ordered li elements contained', min_length=0)
 		
 # object elements
 
-class IObject(qti_interfaces.IBodyElement, IFlowStatic, IInlineStatic, IFiniteSequence, attr_interfaces.IObjectAttrGroup):
+class Iobject(qti_interfaces.IbodyElement, IflowStatic, IinlineStatic, IFiniteSequence, attr_interfaces.IobjectAttrGroup):
 	__display_name__ = "object"
-	objectFlow = schema.List(IObjectFlow, 'objectflow elements contained', min_length=0)
+	objectFlow = schema.List(IobjectFlow, 'The ordered objectflow elements contained', min_length=0)
 
-class IParam(IObjectFlow, attr_interfaces.IParamAttrGroup):
+class Iparam(IobjectFlow, attr_interfaces.IparamAttrGroup):
 	__display_name__ = "param"
 	
 # presentation Elements
 
-class IB(ISimpleInline):
+class Ib(IsimpleInline):
 	__display_name__ = "b"
 
-class IBig(ISimpleInline):
+class Ibig(IsimpleInline):
 	__display_name__ = "big"	
 
-class IHr(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic):
+class Ihr(IblockStatic, qti_interfaces.IbodyElement, IflowStatic):
 	__display_name__ = "hr"	
 
-class II(ISimpleInline):
+class Ii(IsimpleInline):
 	__display_name__ = "i"	
 
-class ISmall(ISimpleInline):
+class Ismall(IsimpleInline):
 	__display_name__ = "small"	
 
-class ISub(ISimpleInline):
+class Isub(IsimpleInline):
 	__display_name__ = "sub"	
 
-class ISup(ISimpleInline):
+class Isup(IsimpleInline):
 	__display_name__ = "sup"	
 
-class ITt(ISimpleInline):
+class Itt(IsimpleInline):
 	__display_name__ = "tt"	
 
 # table elements
 
-class ICaption(qti_interfaces.IBodyElement, IFiniteSequence):
+class Icaption(qti_interfaces.IbodyElement, IFiniteSequence):
 	__display_name__ = "caption"	
-	inline = schema.List(IInline, 'inline elements contained', min_length=0)
+	inline = schema.List(Iinline, 'The ordered inline elements contained', min_length=0)
 
-class ICol(qti_interfaces.IBodyElement, attr_interfaces.IColAttrGroup):
+class Icol(qti_interfaces.IbodyElement, attr_interfaces.IcolAttrGroup):
 	__display_name__ = "col"	
 	
-class IColGroup(qti_interfaces.IBodyElement, attr_interfaces.IColGroupAttrGroup, IFiniteSequence):
+class Icolgroup(qti_interfaces.IbodyElement, attr_interfaces.IcolgroupAttrGroup, IFiniteSequence):
 	__display_name__ = "colgroup"	
-	col = schema.List(ICol, 'col elements contained', min_length=0)
+	col = schema.List(Icol, 'The ordered col elements contained', min_length=0)
 
-class ITableCell(qti_interfaces.IBodyElement, attr_interfaces.ITableCellAttrGroup, IFiniteSequence):
-	flow = schema.List(IFlow, 'flow elements contained', min_length=0)
+class ItableCell(qti_interfaces.IbodyElement, attr_interfaces.ItableCellAttrGroup, IFiniteSequence):
+	flow = schema.List(Iflow, 'The ordered flow elements contained', min_length=0)
 
-class ITd(ITableCell):
+class Itd(ItableCell):
 	__display_name__ = "td"	
 	
-class ITh(ITableCell):
+class Ith(ItableCell):
 	__display_name__ = "th"	
 	
-class ITr( qti_interfaces.IBodyElement, IFiniteSequence):
+class Itr( qti_interfaces.IbodyElement, IFiniteSequence):
 	__display_name__ = "tr"
-	tableCell = schema.List(ITableCell, 'tableCell elements contained', min_length=0)
+	tableCell = schema.List(ItableCell, 'tableCell elements contained', min_length=0)
 	
-class IThead( qti_interfaces.IBodyElement, IFiniteSequence):
+class Ithead( qti_interfaces.IbodyElement, IFiniteSequence):
 	__display_name__ = "thead"
-	tr = schema.List(ITr, 'tr elements contained', min_length=1)
+	tr = schema.List(Itr, 'The ordered tr elements contained', min_length=1)
 	
-class ITFoot( qti_interfaces.IBodyElement, IFiniteSequence):
+class Itfoot( qti_interfaces.IbodyElement, IFiniteSequence):
 	__display_name__ = "tfoot"
-	tr = schema.List(ITr, 'tr elements contained', min_length=1)
+	tr = schema.List(Itr, 'The ordered tr elements contained', min_length=1)
 	
-class ITBody( qti_interfaces.IBodyElement, IFiniteSequence):
+class Itbody( qti_interfaces.IbodyElement, IFiniteSequence):
 	__display_name__ = "tbody"
-	tr = schema.List(ITr, 'tr elements contained', min_length=1)
+	tr = schema.List(Itr, 'The ordered tr elements contained', min_length=1)
 	
-class ITable(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, attr_interfaces.ITableAttrGroup):
+class Itable(IblockStatic, qti_interfaces.IbodyElement, IflowStatic, attr_interfaces.ItableAttrGroup):
 	__display_name__ = "table"	
-	caption = schema.Object(ICaption, title='the table caption')
-	col = schema.List(ICol, title='Table direct col (Must not contain any colgroup elements)', min_length=0, required=False)
-	colgroup = schema.List(IColGroup, title='Table direct colgroups (Must not contain any col elements)', min_length=0, required=False)
-	thead = schema.Object(IThead, title='table head', required=False)
-	tfoot = schema.Object(ITFoot, title='table head', required=False)
-	tbody = schema.List(ITBody, title='table body',  min_length=1, required=True)
+	caption = schema.Object(Icaption, title='the table caption')
+	col = schema.List(Icol, title='Table direct col (Must not contain any colgroup elements)', min_length=0, required=False)
+	colgroup = schema.List(Icolgroup, title='Table direct colgroups (Must not contain any col elements)', min_length=0, required=False)
+	thead = schema.Object(Ithead, title='table head', required=False)
+	tfoot = schema.Object(Itfoot, title='table head', required=False)
+	tbody = schema.List(Itbody, title='table body',  min_length=1, required=True)
 
 # image Element
 
-class IImg(IAtomicInline, attr_interfaces.IImgAttrGroup):
+class Iimg(IatomicInline, attr_interfaces.IimgAttrGroup):
 	__display_name__ = "img"
 
 # hypertext Element
 
-class IA(IAtomicInline, attr_interfaces.IAAttrGroup):
+class Ia(IatomicInline, attr_interfaces.IaAttrGroup):
 	__display_name__ = "a"
 
 # math element
 
-class IMath(IBlockStatic, IFlowStatic, IInlineStatic):
+class Imath(IblockStatic, IflowStatic, IinlineStatic):
 	__display_name__ = "math"
 
 # variable element
 
-class IFeedbackElement(attr_interfaces.IFeedbackAttrGroup):
+class IfeedbackElement(attr_interfaces.IFeedbackAttrGroup):
 	pass
 
-class IFeedbackBlock(IFeedbackElement, ISimpleBlock):
+class IfeedbackBlock(IfeedbackElement, IsimpleBlock):
 	__display_name__ = "feedbackBlock"
 
-class IFeedbackInline(IFeedbackElement, ISimpleInline):
+class IfeedbackInline(IfeedbackElement, IsimpleInline):
 	__display_name__ = "feedbackInline"
 	
-class IRubricBlock(attr_interfaces.IViewAttrGroup):
+class IrubricBlock(attr_interfaces.IviewAttrGroup):
 	__display_name__ = "rubricBlock"
 
 # formatting items with stylesheets
 
-class IStylesheet(attr_interfaces.IStylesheetAttrGroup):
+class Istylesheet(attr_interfaces.IstylesheetAttrGroup):
 	__display_name__ = "stylesheet"
 	
-class IItemBody(qti_interfaces.IBodyElement):
+class IitemBody(qti_interfaces.IbodyElement):
 	__display_name__ = 'itemBody'
-	blocks = schema.List(IBlock, title='The item body blocks', required=False)
+	blocks = schema.List(Iblock, title='The item body blocks', required=False)
