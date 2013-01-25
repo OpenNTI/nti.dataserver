@@ -4,9 +4,8 @@ from zope import schema
 from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
-from nti.assessment.qti.schema import TextLineAttribute
 from nti.assessment.qti import interfaces as qti_interfaces
-from nti.assessment.qti.attributes import interfaces as atr_interfaces
+from nti.assessment.qti.attributes import interfaces as attr_interfaces
 	
 class IObjectFlow(interface.Interface):
 	pass
@@ -17,7 +16,7 @@ class IInline(interface.Interface):
 class IBlock(interface.Interface):
 	pass
 	
-class IFlow(IObjectFlow, atr_interfaces.IFlowAttrGroup):
+class IFlow(IObjectFlow, attr_interfaces.IFlowAttrGroup):
 	pass
 	
 class IInlineStatic(IInline):
@@ -30,16 +29,16 @@ class IFlowStatic(IFlow):
 	pass
 	
 class ISimpleInline(qti_interfaces.IBodyElement, IFlowStatic, IInlineStatic, IFiniteSequence):
-	values = schema.List(IInline, 'inline objects contained', min_length=0)
+	inline = schema.List(IInline, 'inline objects contained', min_length=0)
 	
 class ISimpleBlock(IFlowStatic, qti_interfaces.IBodyElement, IBlockStatic, IFiniteSequence):
-	values = schema.List(IBlock, 'block objects contained', min_length=0)
+	block = schema.List(IBlock, 'block objects contained', min_length=0)
 	
 class IAtomicInline(IFlowStatic, qti_interfaces.IBodyElement, IInlineStatic):
 	pass
 	
 class IAtomicBlock(qti_interfaces.IBodyElement, IFlowStatic, IBlockStatic, IFiniteSequence):
-	values = schema.List(IInline, 'inline objects contained', min_length=0)
+	inline = schema.List(IInline, 'inline objects contained', min_length=0)
 
 class ITextRun(IFlowStatic, IInlineStatic, qti_interfaces.ITextOrVariable):
 	__display_name__ = "textRun"
@@ -53,9 +52,8 @@ class IAcronym(ISimpleInline):
 class IAddress(IAtomicBlock):
 	__display_name__ = "address"
 
-class IBlockQuote(ISimpleBlock):
+class IBlockQuote(ISimpleBlock, attr_interfaces.IBlockQuoteAttrGroup):
 	__display_name__ = "blockquote"
-	cite = TextLineAttribute(title='Citation URI', required=False)
 	
 class IBr(IAtomicInline):
 	__display_name__ = "br"
@@ -71,7 +69,7 @@ class IDfn(ISimpleInline):
 	
 class IDiv(IFlowStatic, qti_interfaces.IBodyElement, IBlockStatic, IFiniteSequence):
 	__display_name__ = "div"
-	values = schema.List(IFlow, 'inline objects contained', min_length=0)
+	flow = schema.List(IFlow, 'flow objects contained', min_length=0)
 	
 class IEm(ISimpleInline):
 	__display_name__ = "em"
@@ -107,9 +105,8 @@ class IPre(IAtomicBlock):
 	"""
 	__display_name__ = "pre"
 	
-class IQ(ISimpleInline):
+class IQ(ISimpleInline, attr_interfaces.IQAttrGroup):
 	__display_name__ = "q"
-	cite = TextLineAttribute(title='Citation URI', required=False)
 	
 class ISamp(ISimpleInline):
 	__display_name__ = "samp"
@@ -130,35 +127,35 @@ class IDLElement(qti_interfaces.IBodyElement):
 
 class IDL(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, IFiniteSequence):
 	__display_name__ = "dl"
-	values = schema.List(IDLElement, 'dl elements contained', min_length=0)
+	dlElement = schema.List(IDLElement, 'dl elements contained', min_length=0)
 	
 class IDT(IDLElement, IFiniteSequence):
 	__display_name__ = "dt"
-	values = schema.List(IInline, 'inline elements contained', min_length=0)
+	inline = schema.List(IInline, 'inline elements contained', min_length=0)
 
 class IDD(IDLElement, IFiniteSequence):
 	__display_name__ = "dd"
-	values = schema.List(IFlow, 'flow elements contained', min_length=0)
+	flow = schema.List(IFlow, 'flow elements contained', min_length=0)
 
 class IIL(qti_interfaces.IBodyElement, IFiniteSequence):
 	__display_name__ = "il"
-	values = schema.List(IFlow, 'flow elements contained', min_length=0)
+	flow = schema.List(IFlow, 'flow elements contained', min_length=0)
 
 class IOL(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, IFiniteSequence):
 	__display_name__ = "ol"
-	values = schema.List(IIL, 'il elements contained', min_length=0)
+	il = schema.List(IIL, 'il elements contained', min_length=0)
 	
 class IUL(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, IFiniteSequence):
 	__display_name__ = "ul"
-	values = schema.List(IIL, 'il elements contained', min_length=0)
+	il = schema.List(IIL, 'il elements contained', min_length=0)
 		
 # object elements
 
-class IObject(qti_interfaces.IBodyElement, IFlowStatic, IInlineStatic, IFiniteSequence, atr_interfaces.IObjectAttrGroup):
+class IObject(qti_interfaces.IBodyElement, IFlowStatic, IInlineStatic, IFiniteSequence, attr_interfaces.IObjectAttrGroup):
 	__display_name__ = "object"
-	values = schema.List(IObjectFlow, 'objectflow elements contained', min_length=0)
+	objectFlow = schema.List(IObjectFlow, 'objectflow elements contained', min_length=0)
 
-class IParam(IObjectFlow, atr_interfaces.IParamAttrGroup):
+class IParam(IObjectFlow, attr_interfaces.IParamAttrGroup):
 	__display_name__ = "param"
 	
 # presentation Elements
@@ -191,17 +188,17 @@ class ITt(ISimpleInline):
 
 class ICaption(qti_interfaces.IBodyElement, IFiniteSequence):
 	__display_name__ = "caption"	
-	values = schema.List(IInline, 'inline elements contained', min_length=0)
+	inline = schema.List(IInline, 'inline elements contained', min_length=0)
 
-class ICol(qti_interfaces.IBodyElement, atr_interfaces.IColAttrGroup):
+class ICol(qti_interfaces.IBodyElement, attr_interfaces.IColAttrGroup):
 	__display_name__ = "col"	
 	
-class IColGroup(qti_interfaces.IBodyElement, atr_interfaces.IColGroupAttrGroup, IFiniteSequence):
+class IColGroup(qti_interfaces.IBodyElement, attr_interfaces.IColGroupAttrGroup, IFiniteSequence):
 	__display_name__ = "colgroup"	
-	values = schema.List(ICol, 'inline elements contained', min_length=0)
+	col = schema.List(ICol, 'col elements contained', min_length=0)
 
-class ITableCell(qti_interfaces.IBodyElement, atr_interfaces.ITableCellAttrGroup, IFiniteSequence):
-	values = schema.List(IFlow, 'inline elements contained', min_length=0)
+class ITableCell(qti_interfaces.IBodyElement, attr_interfaces.ITableCellAttrGroup, IFiniteSequence):
+	flow = schema.List(IFlow, 'flow elements contained', min_length=0)
 
 class ITd(ITableCell):
 	__display_name__ = "td"	
@@ -211,21 +208,21 @@ class ITh(ITableCell):
 	
 class ITr( qti_interfaces.IBodyElement, IFiniteSequence):
 	__display_name__ = "tr"
-	values = schema.List(ITableCell, 'tableCell elements contained', min_length=0)
+	tableCell = schema.List(ITableCell, 'tableCell elements contained', min_length=0)
 	
 class IThead( qti_interfaces.IBodyElement, IFiniteSequence):
 	__display_name__ = "thead"
-	values = schema.List(ITr, 'tr elements contained', min_length=1)
+	tr = schema.List(ITr, 'tr elements contained', min_length=1)
 	
 class ITFoot( qti_interfaces.IBodyElement, IFiniteSequence):
 	__display_name__ = "tfoot"
-	values = schema.List(ITr, 'tr elements contained', min_length=1)
+	tr = schema.List(ITr, 'tr elements contained', min_length=1)
 	
 class ITBody( qti_interfaces.IBodyElement, IFiniteSequence):
 	__display_name__ = "tbody"
-	values = schema.List(ITr, 'tr elements contained', min_length=1)
+	tr = schema.List(ITr, 'tr elements contained', min_length=1)
 	
-class ITable(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, atr_interfaces.ITableAttrGroup):
+class ITable(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, attr_interfaces.ITableAttrGroup):
 	__display_name__ = "table"	
 	caption = schema.Object(ICaption, title='the table caption')
 	col = schema.List(ICol, title='Table direct col (Must not contain any colgroup elements)', min_length=0, required=False)
@@ -236,12 +233,12 @@ class ITable(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, atr_interfa
 
 # image Element
 
-class IImg(IAtomicInline, atr_interfaces.IImgAttrGroup):
+class IImg(IAtomicInline, attr_interfaces.IImgAttrGroup):
 	__display_name__ = "img"
 
 # hypertext Element
 
-class IA(IAtomicInline, atr_interfaces.IAAttrGroup):
+class IA(IAtomicInline, attr_interfaces.IAAttrGroup):
 	__display_name__ = "a"
 
 # math element
@@ -251,7 +248,7 @@ class IMath(IBlockStatic, IFlowStatic, IInlineStatic):
 
 # variable element
 
-class IFeedbackElement(atr_interfaces.IFeedBlackAttrGroup):
+class IFeedbackElement(attr_interfaces.IFeedbackAttrGroup):
 	pass
 
 class IFeedbackBlock(IFeedbackElement, ISimpleBlock):
@@ -260,12 +257,12 @@ class IFeedbackBlock(IFeedbackElement, ISimpleBlock):
 class IFeedbackInline(IFeedbackElement, ISimpleInline):
 	__display_name__ = "feedbackInline"
 	
-class IRubricBlock(atr_interfaces.IViewAttrGroup):
+class IRubricBlock(attr_interfaces.IViewAttrGroup):
 	__display_name__ = "rubricBlock"
 
 # formatting items with stylesheets
 
-class IStylesheet(atr_interfaces.IStylesheetAttrGroup):
+class IStylesheet(attr_interfaces.IStylesheetAttrGroup):
 	__display_name__ = "stylesheet"
 	
 class IItemBody(qti_interfaces.IBodyElement):
