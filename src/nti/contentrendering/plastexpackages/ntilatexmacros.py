@@ -216,8 +216,20 @@ class ntivideoroll(Base.Environment,plastexids.NTIIDMixin):
 	_ntiid_suffix = 'ntivideoroll.'
 	_ntiid_type = 'NTIVR'
 
+class ntiimagecollectionname(Base.Command):
+	pass
+
+class ntiimagecollection(Base.Environment,plastexids.NTIIDMixin):
+	counter = "ntiimagecollection"
+	blockType = True
+	_ntiid_cache_map_name = '_ntiimagecollection_ntiid_map'
+	_ntiid_allow_missing_title = True
+	_ntiid_suffix = 'ntiimagecollection.'
+	_ntiid_title_attr_name = 'ref'
+	_ntiid_type = 'NTIIC'
+
 class ntipreviouspage(Base.Command):
 	pass
 
 def ProcessOptions( options, document ):
-	pass
+        document.context.newcounter( 'ntiimagecollection' )

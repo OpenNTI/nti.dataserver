@@ -14,6 +14,12 @@ name: ntivideoroll
 <span tal:replace="self"></span>
 </object>
 
+name: ntiimagecollection
+<object type="application/vnd.nextthought.image-collection" tal:attributes="data-ntiid self/ntiid; data self/ntiid">
+<param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
+<span tal:replace="self"></span>
+</object>
+
 name: vfrac
 <span class="vfrac"><sup class="nom" tal:content="self/attributes/nom"></sup><span class="divider">&#47;</span><sub class="denom" tal:content="self/attributes/denom"></sub></span>
 
