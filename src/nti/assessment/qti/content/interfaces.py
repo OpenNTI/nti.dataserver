@@ -164,7 +164,7 @@ class IObject(qti_interfaces.IBodyElement, IFlowStatic, IInlineStatic, IFiniteSe
 class IParam(IObjectFlow, atr_interfaces.IParamAttrGroup):
 	__display_name__ = "param"
 	
-# Presentation Elements
+# presentation Elements
 
 class IB(ISimpleInline):
 	__display_name__ = "b"
@@ -190,7 +190,7 @@ class ISup(ISimpleInline):
 class ITt(ISimpleInline):
 	__display_name__ = "tt"	
 
-# Table elements
+# table elements
 
 class ICaption(qti_interfaces.IBodyElement, IFiniteSequence):
 	__display_name__ = "caption"	
@@ -237,7 +237,38 @@ class ITable(IBlockStatic, qti_interfaces.IBodyElement, IFlowStatic, atr_interfa
 	tfoot = schema.Object(ITFoot, title='table head', required=False)
 	tbody = schema.List(ITBody, title='table body',  min_length=1, required=True)
 
+# image Element
 
+class IImg(IAtomicInline, atr_interfaces.IImgAttrGroup):
+	__display_name__ = "img"
+
+# hypertext Element
+
+class IA(IAtomicInline, atr_interfaces.IAAttrGroup):
+	__display_name__ = "a"
+
+# math element
+
+class IMath(IBlockStatic, IFlowStatic, IInlineStatic):
+	__display_name__ = "math"
 
 	
+# variable element
+
+class IFeedbackElement(atr_interfaces.IFeedBlackAttrGroup):
+	pass
+
+class IFeedbackBlock(IFeedbackElement, ISimpleBlock):
+	__display_name__ = "feedbackBlock"
+
+class IFeedbackInline(IFeedbackElement, ISimpleInline):
+	__display_name__ = "feedbackInline"
+	
+class IRubricBlock(atr_interfaces.IViewAttrGroup):
+	__display_name__ = "rubricBlock"
+
+# formatting items with stylesheets
+
+class IStylesheet(atr_interfaces.IStylesheetAttrGroup):
+	__display_name__ = "stylesheet"
 	

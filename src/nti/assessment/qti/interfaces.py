@@ -11,6 +11,12 @@ PARAM_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.S
 SCOPE_TABLE_TYPES = (u'col', u'colgroup', u'row', u'rowgroup')
 SCOPE_TABLE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in SCOPE_TABLE_TYPES] )
 
+SHOW_HIDE_TYPES = (u'show', u'hide')
+SHOW_HIDE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in SHOW_HIDE_TYPES] )
+
+VIEW_TYPES = (u'author', u'candidate', u'proctor', u'scorer', u'testConstructor', u'tutor')
+VIEW_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in VIEW_TYPES] )
+
 # xml node
 
 class _XmlNode(interface.Interface):
