@@ -26,15 +26,13 @@ TEXT_FORMAT_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabu
 SHAPE_TYPES = (u'default', u'rect', u'circle', u'poly', u'ellipse')
 SHAPE_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in SHAPE_TYPES] )
 
-# basic
-
 class ITextOrVariable(interface.Interface):
 	pass
 
 class IbodyElement(atr_interfaces.IbodyElementAttrGroup):
 	pass
 		
-class IAssessmentItem(atr_interfaces.IassessmentItemAttrGroup):
+class IassessmentItem(atr_interfaces.IassessmentItemAttrGroup):
 	"""
 	Encompasses the information that is presented to a candidate and information about how to score the item.
 	"""
