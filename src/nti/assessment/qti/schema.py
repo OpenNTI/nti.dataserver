@@ -4,6 +4,7 @@ from zope import interface
 from zope.schema import Int
 from zope.schema import URI
 from zope.schema import Bool
+from zope.schema import List
 from zope.schema import Float
 from zope.schema import Choice
 from zope.schema import Object
@@ -60,4 +61,9 @@ class ChoiceAttribute(Choice):
 class MimeTypeAttribute(TextLineAttribute):
 	"""
 	A :class: for mimetype attributes
+	"""
+
+class ListAttribute(List):
+	"""
+	A :class:`List` type that to mark XML attribute elements
 	"""
