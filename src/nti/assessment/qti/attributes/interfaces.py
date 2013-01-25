@@ -5,7 +5,7 @@ from zope import interface
 
 from nti.assessment.qti import interfaces as qt_interfaces
 from nti.assessment.qti.schema import (TextLineAttribute, BoolAttribute, IntAttribute, URIAttribute,
-									   ChoiceAttribute, MimeTypeAttribute, ListAttribute)
+									   ChoiceAttribute, MimeTypeAttribute, ListAttribute, FloatAttribute)
 	
 class IAttrGroup(interface.interface):
 	pass
@@ -204,6 +204,24 @@ class IpositionObjectInteractiontAttrGroup(IAttrGroup):
 	maxChoices = IntAttribute(title=u'The maximum number of points that the candidate is allowed to select', required=True)
 	minChoices = IntAttribute(title=u'The minimum number of points that the candidate is allowed to select', required=False, default=0)
 
+class IsliderInteractionAttrGroup(IAttrGroup):
+	lowerBound = FloatAttribute(title="The lower bound", required=True)
+	upperBound = FloatAttribute(title="The upper bound", required=True)
+	step = IntAttribute(title="The steps that the control moves in", required=False)
+	stepLabel = BoolAttribute(title="If the slider should be labeled", required=False, default=False)
+	orientation = ChoiceAttribute(title="Hit to the rendering system",
+								  vocabulary=qt_interfaces.ORIENTATION_TYPES_VOCABULARY, required=False)
+	reverse = BoolAttribute(title="Reverse flag", required=False)
+	
+class ImediaInteractionAttrGroup(IAttrGroup):
+	autostart = BoolAttribute(title="If the media object should begin as soon as it is presented", required=True)
+	minPlays = IntAttribute(title="The minimum number of play times", required=False, default=0)
+	maxPlays = IntAttribute(title="The maxumun number of play times", required=False, default=0)
+	loop = BoolAttribute(title="The continuous play mode", required=False, default=False)
+
+class IuploadInteractionAttrGroup(IAttrGroup):
+	type = MimeTypeAttribute(title="The expected mime-type of the uploaded file", required=False)
+	
 class IitemBodyAttrGroup(IbodyElementAttrGroup):
 	pass
 
