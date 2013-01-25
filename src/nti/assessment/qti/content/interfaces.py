@@ -7,41 +7,38 @@ from zope.interface.common.sequence import IFiniteSequence
 from nti.assessment.qti.schema import TextLineAttribute
 from nti.assessment.qti import interfaces as qti_interfaces
 from nti.assessment.qti.attributes import interfaces as atr_interfaces
-
+	
 class IObjectFlow(interface.Interface):
-	__display_name__ = "objectFlow"
+	pass
 
 class IInline(interface.Interface):
-	__display_name__ = 'inline'
+	pass
 			
 class IBlock(interface.Interface):
-	__display_name__ = 'block'
+	pass
 	
 class IFlow(IObjectFlow, atr_interfaces.IFlowAttrGroup):
-	__display_name__ = "flow"
+	pass
 	
 class IInlineStatic(IInline):
-	__display_name__ = 'inlineStatic'
+	pass
 	
 class IBlockStatic(IBlock):
-	__display_name__= "blockStatic"
+	pass
 	
 class IFlowStatic(IFlow):
-	__display_name__ = "flowStatic"
+	pass
 	
 class ISimpleInline(qti_interfaces.IBodyElement, IFlowStatic, IInlineStatic, IFiniteSequence):
-	__display_name__ = "simpleInline"
 	values = schema.List(IInline, 'inline objects contained', min_length=0)
 	
 class ISimpleBlock(IFlowStatic, qti_interfaces.IBodyElement, IBlockStatic, IFiniteSequence):
-	__display_name__ = "simpleBlock"
 	values = schema.List(IBlock, 'block objects contained', min_length=0)
 	
 class IAtomicInline(IFlowStatic, qti_interfaces.IBodyElement, IInlineStatic):
-	__display_name__ = "atomicInline"
+	pass
 	
 class IAtomicBlock(qti_interfaces.IBodyElement, IFlowStatic, IBlockStatic, IFiniteSequence):
-	__display_name__ = "atomicBlock"
 	values = schema.List(IInline, 'inline objects contained', min_length=0)
 
 class ITextRun(IFlowStatic, IInlineStatic, qti_interfaces.ITextOrVariable):
@@ -272,3 +269,6 @@ class IRubricBlock(atr_interfaces.IViewAttrGroup):
 class IStylesheet(atr_interfaces.IStylesheetAttrGroup):
 	__display_name__ = "stylesheet"
 	
+class IItemBody(qti_interfaces.IBodyElement):
+	__display_name__ = 'itemBody'
+	blocks = schema.List(IBlock, title='The item body blocks', required=False)
