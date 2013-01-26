@@ -6,39 +6,33 @@ from zope.interface.common.sequence import IFiniteSequence
 from nti.assessment.qti.basic import interfaces as basic_interfaces
 from nti.assessment.qti.attributes import interfaces as attr_interfaces
 
-class Ivalue(attr_interfaces.IvalueAttrGroup):
-	__display_name__ = "value"
+class Ivalue(attr_interfaces.IvalueAttrGroup, basic_interfaces.IConcrete):
 	pass
 
-class IdefaultValue(attr_interfaces.IdefaultValueAttrGroup, IFiniteSequence):
-	__display_name__ = "defaultValue"
-	value = schema.List(Ivalue, title="An ordered list of values", min_length=1)
+class IdefaultValue(attr_interfaces.IdefaultValueAttrGroup, IFiniteSequence, basic_interfaces.IConcrete):
+	value = schema.List(schema.Object(Ivalue), title="An ordered list of values", min_length=1)
 
 class IvariableDeclaration(basic_interfaces.IbodyElement, attr_interfaces.IvalueDeclarationAttrGroup):
-	defaultValue = schema.Object(IdefaultValue, title="An optional default value for the variable", min_length=1)
+	defaultValue = schema.Object(IdefaultValue, title="An optional default value for the variable", required=False)
 
-class ImapEntry(attr_interfaces.ImappingEntryAttrGroup):
-	__display_name__ = "mapEntry"
+class ImapEntry(attr_interfaces.ImappingEntryAttrGroup, basic_interfaces.IConcrete):
+	pass
 	
-class Imapping(attr_interfaces.ImappingAttrGroup, IFiniteSequence):
-	__display_name__ = "mapping"
-	mapEntry = schema.List(ImapEntry, title="The map is defined by a set of mapEntries", min_length=1)
+class Imapping(attr_interfaces.ImappingAttrGroup, IFiniteSequence, basic_interfaces.IConcrete):
+	mapEntry = schema.List(schema.Object(ImapEntry), title="The map is defined by a set of mapEntries", min_length=1)
 	
 # response variables
 
-class IareaMapEntry(attr_interfaces.IareaMapEntryAttrGroup):
-	__display_name__ = "areaMapEntry"
+class IareaMapEntry(attr_interfaces.IareaMapEntryAttrGroup, basic_interfaces.IConcrete):
+	pass
 	
-class IareaMapping(attr_interfaces.IareaMappingAttrGroup, IFiniteSequence):
-	__display_name__ = "areaMapping"
-	areaMapEntry = schema.List(IareaMapEntry, title="An ordered list of entries", min_length=1)
+class IareaMapping(attr_interfaces.IareaMappingAttrGroup, IFiniteSequence, basic_interfaces.IConcrete):
+	areaMapEntry = schema.List(schema.Object(IareaMapEntry), title="An ordered list of entries", min_length=1)
 	
-class IcorrectResponse(attr_interfaces.IcorrectResponseAttrGroup, IFiniteSequence):
-	__display_name__ = "correctResponse"
-	value = schema.List(Ivalue, title="An ordered list of values", min_length=1)
+class IcorrectResponse(attr_interfaces.IcorrectResponseAttrGroup, IFiniteSequence, basic_interfaces.IConcrete):
+	value = schema.List(schema.Object(Ivalue), title="An ordered list of values", min_length=1)
 	
-class IresponseDeclaration(IvariableDeclaration):
-	__display_name__ = "responseDeclaration"
+class IresponseDeclaration(IvariableDeclaration, basic_interfaces.IConcrete):
 	correctResponse = schema.Object(IcorrectResponse, title="May indicate the only possible value of the response variable", required=False)
 	mapping = schema.Object(Imapping, title="Response mapping", required=False)
 	areaMapping = schema.Object(IareaMapping, title="Provides an alternative form of mapping", required=False)
@@ -48,21 +42,18 @@ class IresponseDeclaration(IvariableDeclaration):
 class IlookupTable(attr_interfaces.IlookupTableAttrGroup):
 	pass
 	
-class ImatchTableEntry(attr_interfaces.ImatchTableEntryAttrGroup):
-	__display_name__ = "matchTableEntry"
+class ImatchTableEntry(attr_interfaces.ImatchTableEntryAttrGroup, basic_interfaces.IConcrete):
+	pass
 	
-class ImatchTable(IlookupTable, IFiniteSequence):
-	__display_name__ = "matchTable"
-	matchTableEntry = schema.List(ImatchTableEntry, title="An ordered list of entries", min_length=1)
+class ImatchTable(IlookupTable, IFiniteSequence, basic_interfaces.IConcrete):
+	matchTableEntry = schema.List(schema.Object(ImatchTableEntry), title="An ordered list of entries", min_length=1)
 
-class IinterpolationTableEntry(attr_interfaces.IinterpolationTableEntryAttrGroup):
-	__display_name__ = "interpolationTableEntry"
+class IinterpolationTableEntry(attr_interfaces.IinterpolationTableEntryAttrGroup, basic_interfaces.IConcrete):
+	pass
 	
-class IinterpolationTable(IlookupTable, IFiniteSequence):
-	__display_name__ = "interpolationTable"
-	interpolationTableEntry  = schema.List(IinterpolationTableEntry , title="An ordered list of entries", min_length=1)
+class IinterpolationTable(IlookupTable, IFiniteSequence, basic_interfaces.IConcrete):
+	interpolationTableEntry = schema.List(schema.Object(IinterpolationTableEntry), title="An ordered list of entries", min_length=1)
 	
-class IoutcomeDeclaration(IvariableDeclaration, IFiniteSequence, attr_interfaces.IoutcomeDeclarationAttrGroup):
-	__display_name__ = "outcomeDeclaration"
+class IoutcomeDeclaration(IvariableDeclaration, IFiniteSequence, attr_interfaces.IoutcomeDeclarationAttrGroup, basic_interfaces.IConcrete):
 	lookupTable = schema.Object(IlookupTable, title="The lookup table", required=False)
 	
