@@ -3,11 +3,11 @@ from __future__ import unicode_literals, print_function
 from zope import schema
 from zope.interface.common.sequence import IFiniteSequence
 
-from nti.assessment.qti import interfaces as qti_interfaces
+from nti.assessment.qti.basic import interfaces as basic_interfaces
 from nti.assessment.qti.content import interfaces as cnt_interfaces
 from nti.assessment.qti.attributes import interfaces as attr_interfaces
 
-class Iinteraction(qti_interfaces.IbodyElement, attr_interfaces.IinteractionAttrGroup):
+class Iinteraction(basic_interfaces.IbodyElement, attr_interfaces.IinteractionAttrGroup):
 	pass
 
 class IinlineInteraction(cnt_interfaces.Iflow, cnt_interfaces.Iinline, Iinteraction):
@@ -16,14 +16,14 @@ class IinlineInteraction(cnt_interfaces.Iflow, cnt_interfaces.Iinline, Iinteract
 class IendAttemptInteraction(IinlineInteraction, attr_interfaces.IendAttemptInteractionAttrGroup):
 	___display_name__ = "endAttemptInteraction"
 		
-class Iprompt(qti_interfaces.IbodyElement, IFiniteSequence):
+class Iprompt(basic_interfaces.IbodyElement, IFiniteSequence):
 	___display_name__ = "prompt"
 	values = schema.List(cnt_interfaces.IinlineStatic , title="Choice interactions")
 
 class IblockInteraction(cnt_interfaces.Iblock, cnt_interfaces.Iflow, Iinteraction):
 	prompt = schema.Object(Iprompt, title='An optional prompt for the interaction', required=False)
 	
-class Ichoice(qti_interfaces.IbodyElement, attr_interfaces.IchoiceAttrGroup):
+class Ichoice(basic_interfaces.IbodyElement, attr_interfaces.IchoiceAttrGroup):
 	pass
 
 # simple interactions
@@ -36,7 +36,7 @@ class IgapChoice(IassociableChoice, attr_interfaces.IgapChoiceAttrGroup):
 
 class IgapText(IgapChoice, IFiniteSequence):
 	___display_name__ = 'gapText'
-	texrOrVariable = schema.List(qti_interfaces.ITextOrVariable, title="The variables", min_length=0)
+	texrOrVariable = schema.List(basic_interfaces.ITextOrVariable, title="The variables", min_length=0)
 	
 class IgapImg(IgapChoice, attr_interfaces.IgapImgAttrGroup, IFiniteSequence):
 	___display_name__ = 'gapImg'
@@ -82,7 +82,7 @@ class IgapMatchInteraction(IblockInteraction, attr_interfaces.IgapMatchInteracti
 
 class IinlineChoice(Ichoice, IFiniteSequence):
 	___display_name__ = "inlineChoice"
-	textOrVariable = schema.List(qti_interfaces.ITextOrVariable, title="Order list varibles", min_length=0)
+	textOrVariable = schema.List(basic_interfaces.ITextOrVariable, title="Order list varibles", min_length=0)
 	
 class IinlineChoiceInteraction(IinlineInteraction, attr_interfaces.IinlineChoiceInteractionAttrGroup, IFiniteSequence):
 	___display_name__ = "inlineChoiceInteraction"
@@ -169,5 +169,5 @@ class IcustomInteraction(cnt_interfaces.Iblock, cnt_interfaces.Iflow, Iinteracti
 	
 # alternative ways to provide hints and other supplementary material
 
-class IinfoControl(cnt_interfaces.IblockStatic, qti_interfaces.IbodyElement, cnt_interfaces.IflowStatic):
+class IinfoControl(cnt_interfaces.IblockStatic, basic_interfaces.IbodyElement, cnt_interfaces.IflowStatic):
 	__display_name__ = "infoControl"

@@ -8,7 +8,7 @@ from nti.assessment.qti.schema import (TextLineAttribute, BoolAttribute, IntAttr
 									   ChoiceAttribute, MimeTypeAttribute, ListAttribute, FloatAttribute,
 									   ObjectAttribute)
 	
-class IAttrGroup(interface.interface):
+class IAttrGroup(interface.Interface):
 	pass
 
 # basic
@@ -36,10 +36,10 @@ class IvalueDeclarationAttrGroup(IAttrGroup):
 class ImappingAttrGroup(IAttrGroup):
 	lowerBound = FloatAttribute(title='The lower bound for the result of mapping a container', required=False)
 	upperBound = FloatAttribute(title='The upper bound for the result of mapping a container', required=False)
-	defaultValue = FloatAttribute(title='The default value from the target set', required=False, default=0)
+	defaultValue = FloatAttribute(title='The default value from the target set', required=False, default=0.0)
 
 class ImappingEntryAttrGroup(IAttrGroup):
-	mapKey = ObjectAttribute(title=u'The source value', required=True)
+	mapKey = ObjectAttribute(interface.Interface,title=u'The source value', required=True)
 	mappedValue = FloatAttribute(title='The mapped value', required=True)
 	caseSensitive = BoolAttribute(title='Used to control whether or not a mapEntry string is matched case sensitively', required=True)
 
@@ -49,7 +49,7 @@ class IcorrectResponseAttrGroup(IAttrGroup):
 class IareaMappingAttrGroup(IAttrGroup):
 	lowerBound = FloatAttribute(title='The lower bound for the result of mapping a container', required=False)
 	upperBound = FloatAttribute(title='The upper bound for the result of mapping a container', required=False)
-	defaultValue = FloatAttribute(title='The default value from the target set', required=False, default=0)
+	defaultValue = FloatAttribute(title='The default value from the target set', required=False, default=0.0)
 
 class IareaMapEntryAttrGroup(IAttrGroup):
 	shape = ChoiceAttribute(title="The shape of the area", vocabulary=qt_interfaces.SHAPE_TYPES_VOCABULARY, required=True)
@@ -65,16 +65,16 @@ class IoutcomeDeclarationAttrGroup(IAttrGroup):
 	masteryValue = FloatAttribute(title='Defines the mastery value of numeric outcome variables', required=False)
 	
 class IlookupTableAttrGroup(IAttrGroup):
-	defaultValue = ObjectAttribute(title='The default outcome value to be used when no matching tabel entry is found', required=False, default=0)
+	defaultValue = ObjectAttribute(interface.Interface, title='The default outcome value to be used when no matching tabel entry is found', required=False)
 	
 class ImatchTableEntryAttrGroup(IAttrGroup):
 	sourceValue = IntAttribute(title='The source integer that must be matched exactly', required=True)
-	targetValue = ObjectAttribute(title=u'The target value that is used to set the outcome when a match is found.', required=True)
+	targetValue = ObjectAttribute(interface.Interface, title=u'The target value that is used to set the outcome when a match is found.', required=True)
 
 class IinterpolationTableEntryAttrGroup(IAttrGroup):
 	sourceValue = FloatAttribute(title='The lower bound for the source value to match this entry', required=True)
 	includeBoundary = BoolAttribute(title='Determines if an exact match of sourceValue matches this entry', required=False, default=True)
-	targetValue = ObjectAttribute(title='The target value that is used to set the outcome when a match is found', required=True)
+	targetValue = ObjectAttribute(interface.Interface, title='The target value that is used to set the outcome when a match is found', required=True)
 	
 # content
 
@@ -111,7 +111,7 @@ class ItableAttrGroup(IAttrGroup):
 class ItableCellAttrGroup(IAttrGroup):
 	headers = ListAttribute(title='Specifies one or more header cells a cell is related to', required=False,
 							value_type=schema.TextLine(title='the header'))
-	scope = ChoiceAttribute(title="The param type", vocabulary=qt_interfaces.SCOPE_TABLE_TYPES, required=False)
+	scope = ChoiceAttribute(title="The param type", vocabulary=qt_interfaces.SCOPE_TABLE_VOCABULARY, required=False)
 	abbr = TextLineAttribute(title='Abbreviated version', required=False)
 	axis = TextLineAttribute(title='Categorizes header cells', required=False)
 	rowspan = IntAttribute(title='Specifies the number of rows a header cell should span', required=False)
@@ -171,7 +171,7 @@ class IsimpleChoiceAttrGroup(IchoiceAttrGroup):
 
 class IassociableChoiceAttrGroup(IAttrGroup):
 	matchGroup = ListAttribute(	title=u'A set of choices that this choice may be associated with, all others are excluded', required=False,
-								value_type=schema.TextLine('the match group'))
+								value_type=schema.TextLine(title='the match group'))
 	
 class IchoiceInteractionAttrGroup(IAttrGroup):
 	shufle = BoolAttribute(title=u'Shufle flag', required=True, default=False)
