@@ -4,7 +4,7 @@ from zope import schema
 from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
-from nti.assessment.qti import interfaces as qti_interfaces
+from nti.assessment.qti.basic import interfaces as basic_interfaces
 from nti.assessment.qti.content import interfaces as cnt_interfaces
 from nti.assessment.qti.variables import interfaces as var_interfaces
 from nti.assessment.qti.expression import interfaces as exp_interfaces
@@ -13,7 +13,7 @@ from nti.assessment.qti.attributes import interfaces as attr_interfaces
 class ItemplateDeclaration(var_interfaces.IvariableDeclaration, attr_interfaces.ItemplateDeclarationAttrGroup):
 	__display_name__ = "templateDeclaration"
 
-class ItemplateElement(qti_interfaces.IbodyElement, attr_interfaces.ItemplateElementAttrGroup):
+class ItemplateElement(basic_interfaces.IbodyElement, attr_interfaces.ItemplateElementAttrGroup):
 	pass
 
 class ItemplateBlock(cnt_interfaces.IblockStatic, cnt_interfaces.IflowStatic, ItemplateElement, IFiniteSequence):

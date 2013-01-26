@@ -1,9 +1,6 @@
 from __future__ import unicode_literals, print_function
 
 from zope import schema
-from zope import interface
-
-from nti.assessment.qti.attributes import interfaces as attr_interfaces
 
 PARAM_TYPES = (u'DATA', u'REF')
 PARAM_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in PARAM_TYPES] )
@@ -33,15 +30,3 @@ VALUE_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.S
 CARDINALITY_TYPES = (u'single', u'multiple', u'ordered', u'record')
 CARDINALITY_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in CARDINALITY_TYPES] )
 
-class ITextOrVariable(interface.Interface):
-	pass
-
-class IbodyElement(attr_interfaces.IbodyElementAttrGroup):
-	pass
-		
-class IassessmentItem(attr_interfaces.IassessmentItemAttrGroup):
-	"""
-	Encompasses the information that is presented to a candidate and information about how to score the item.
-	"""
-	__display_name__ = 'assessmentItem'	
-	#itemBody = schema.Object(IItemBody, title='The item body', required=False)
