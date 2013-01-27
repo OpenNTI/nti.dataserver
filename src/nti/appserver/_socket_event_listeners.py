@@ -39,7 +39,7 @@ def _notify_friends_of_presence( session, presence, event=None ):
 		return
 
 	# TODO: Better algorithm. Who should this really go to?
-	has_me_in_buddy_list = set(user.following) | set(user.accepting_shared_data_from)
+	has_me_in_buddy_list = {e.username for e in user.entities_followed} | set(user.accepting_shared_data_from)
 	logger.debug( "Notifying %s of presence change of %s/%s to %s for %s", has_me_in_buddy_list, session.owner, session, presence, event )
 	notify( chat_interfaces.PresenceChangedUserNotificationEvent( has_me_in_buddy_list, session.owner, presence ) )
 
