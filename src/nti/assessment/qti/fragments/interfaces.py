@@ -1,0 +1,21 @@
+from __future__ import unicode_literals, print_function
+
+from zope import schema
+
+from nti.assessment.qti.basic import interfaces as basic_interfaces
+from nti.assessment.qti.content import interfaces as cnt_interfaces
+from nti.assessment.qti.outcome import interfaces as out_interfaces
+from nti.assessment.qti.response import interfaces as rsp_interfaces
+from nti.assessment.qti.assessments import interfaces as ast_interfaces
+
+class Iinclude(	cnt_interfaces.IblockStatic, cnt_interfaces.IflowStatic, cnt_interfaces.IinlineStatic, 
+				out_interfaces.IoutcomeRule, rsp_interfaces.IresponseRule, ast_interfaces.IsectionPart, 
+				basic_interfaces.IConcrete):
+	pass
+
+class IresponseProcessingFragment(rsp_interfaces.IresponseRule, basic_interfaces.IConcrete):
+	responseRule = schema.List(schema.Object(rsp_interfaces.IresponseRule), min_length=0, title="Ordered list of response rules")
+
+class IoutcomeProcessingFragment(out_interfaces.IoutcomeRule, basic_interfaces.IConcrete):
+	outcomeRule = schema.List(schema.Object(out_interfaces.IoutcomeRule), min_length=0, title="Ordered list of outcome rules")
+
