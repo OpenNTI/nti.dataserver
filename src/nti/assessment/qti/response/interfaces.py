@@ -17,15 +17,15 @@ class IresponseRule(interface.Interface):
 class IresponseProcessing(attr_interfaces.IresponseProcessingAttrGroup, IFiniteSequence, basic_interfaces.IConcrete):
 	responseRule = schema.List(schema.Object(IresponseRule), title="An ordered list of values", min_length=1)
 
-class IresponseIf(IresponseRule, basic_interfaces.IConcrete):
+class IresponseIf(basic_interfaces.IConcrete):
 	expression = schema.Object(exp_interfaces.Iexpression, title='The expression', required=True)
 	responseRule = schema.List(schema.Object(IresponseRule), title='The ordered response rules', required=False, min_length=0)
 	
-class IresponseElseIf(IresponseRule, basic_interfaces.IConcrete):
+class IresponseElseIf(basic_interfaces.IConcrete):
 	expression = schema.Object(exp_interfaces.Iexpression, title='The expression', required=True)
 	responseRule = schema.List(schema.Object(IresponseRule), title='The ordered response rules', required=False, min_length=0)
 	
-class IresponseElse(IresponseRule, basic_interfaces.IConcrete):
+class IresponseElse(basic_interfaces.IConcrete):
 	responseRule = schema.List(schema.Object(IresponseRule), title='The ordered response rules', required=False, min_length=0)
 	
 class IresponseCondition(IresponseRule, basic_interfaces.IConcrete):
