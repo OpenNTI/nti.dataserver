@@ -67,3 +67,19 @@ class ListAttribute(List):
 	"""
 	A :class:`List` type that to mark XML attribute elements
 	"""
+
+@interface.implementer(IQTIAttribute)
+class IntegerOrVariableRefAttribute(Object):
+	"""
+	A :class:`Object` type that to mark XML attribute element for either an int or a variable ref
+	"""
+	
+@interface.implementer(IQTIAttribute)
+class FloatOrVariableRefAttribute(Object):
+	"""
+	A :class:`Object` type that to mark XML attribute element for either a float or a variable ref
+	"""
+
+@interface.implementer(IQTIAttribute)
+class StringOrVariableRefAttribute(TextLineAttribute):
+	pass

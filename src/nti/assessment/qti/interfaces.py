@@ -38,3 +38,26 @@ SUBMISSION_MODE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabula
 
 FEED_BACK_ACCESS_TYPES = (u'atEnd', u'during')
 FEED_BACK_ACCESS_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in FEED_BACK_ACCESS_TYPES] )
+
+BASE_TYPES = VALUE_TYPES
+BASE_TYPES_VOCABULARY = VALUE_TYPES_VOCABULARY
+
+MATH_CONSTANTS_TYPES = (u'pi', u'e')
+MATH_CONSTANTS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in MATH_CONSTANTS_TYPES] )
+
+STAT_OPERATOR_NAMES = (u'mean', u'sampleVariance', u'sampleSD', u'popVariance', u'popSD')
+STAT_OPERATOR_NAMES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in STAT_OPERATOR_NAMES] )
+
+ROUNDING_MODE_TYPES = (u'significantFigures', u'decimalPlaces')
+ROUNDING_MODE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in ROUNDING_MODE_TYPES] )
+
+MATH_OPERATORS_TYPES = (u'sin', u'decimalPlaces', u'cos', u'tan',u'sec', u'csc',u'cot', u'asin',
+						u'acos', u'atan', u'atan2', u'asec', u'acsc', u'acot', u'sinh', u'cosh',
+						u'tanh', u'sech', u'csch', u'coth', u'log', u'ln', u'exp', u'abs',
+						u'signum', u'floor', u'ceil', u'toDegrees', u'toRadians')
+MATH_OPERATORS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in MATH_OPERATORS_TYPES] )
+
+
+TOLERANCE_MODE_TYPES = (u'exact', u'relative', u'absolute')
+TOLERANCE_MODE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in TOLERANCE_MODE_TYPES] )
+
