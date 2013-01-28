@@ -1,0 +1,66 @@
+from __future__ import unicode_literals, print_function
+
+from zope import schema
+
+from nti.assessment.qti.basic import interfaces as basic_interfaces
+from nti.assessment.qti.content import interfaces as cnt_interfaces
+from nti.assessment.qti.outcome import interfaces as out_interfaces
+from nti.assessment.qti.items import interfaces as items_interfaces
+from nti.assessment.qti.feedback import interfaces as fbck_interfaces
+from nti.assessment.qti.variables import interfaces as var_interfaces
+from nti.assessment.qti.expression import interfaces as exp_interfaces
+from nti.assessment.qti.attributes import interfaces as attr_interfaces
+from nti.assessment.qti.preconditions import interfaces as pre_interfaces
+
+class Iselection(attr_interfaces.IselectionAttrGroup, basic_interfaces.IConcrete):
+	pass
+	
+class Iordering(attr_interfaces.IorderingAttrGroup, basic_interfaces.IConcrete):
+	pass
+
+class ItimeLimits(attr_interfaces.ItimeLimitsAttrGroup, basic_interfaces.IConcrete):
+	pass
+	
+class IvariableMapping(attr_interfaces.IvariableMappingAttrGroup, basic_interfaces.IConcrete):
+	pass
+
+class ItemplateDefault(basic_interfaces.IConcrete):
+	expression = schema.Object(exp_interfaces.Iexpression , title="An expression", required=True)
+
+class Iweight(attr_interfaces.IweightAttrGroup, basic_interfaces.IConcrete):
+	pass
+	
+class IsectionPart(attr_interfaces.IsectionPartAttrGroup):
+	preCondition = schema.List(schema.Object(pre_interfaces.IpreCondition), title="An optional ordered set of conditions evaluated during the test", min_length=0)
+	branchRule = schema.List(schema.Object(pre_interfaces.IbranchRule), title="An optional ordered set of rules evaluated during the test", min_length=0)
+	itemSessionControl = schema.Object(items_interfaces.IitemSessionControl, title="Parameters used to control the allowable states of each item session in this part", required=False)
+	timeLimits = schema.Object(ItimeLimits, title="Optionally controls the amount of time a candidate is allowed for this part of the test", required=False)
+
+class IassessmentSection(attr_interfaces.IassessmentSectionAttrGroup, IsectionPart, basic_interfaces.IConcrete):
+	selection = schema.Object(Iselection, title="The rules used to select which children of the section are to be used for each instance of the test", required=False)
+	ordering = schema.Object(Iordering, title="The rules used to determine the order in which the children of the section are to be arranged", required=False)
+	rubricBlock =  schema.List(schema.Object(cnt_interfaces.IrubricBlock), title="Section rubric is presented to the candidate with each item contained by the section", min_length=0)
+	sectionPart =  schema.List(schema.Object(IsectionPart), title="The ordered list of section parts", min_length=0)
+
+class IassessmentSectionRef(attr_interfaces.IassessmentSectionRefAttrGroup, IsectionPart, basic_interfaces.IConcrete):
+	pass
+
+class IassessmentItemRef(attr_interfaces.IassessmentItemRefAttrGroup, IsectionPart, basic_interfaces.IConcrete):
+	variableMapping = schema.List(schema.Object(IvariableMapping), title="Variable mappings are used to alter the name of an item outcome for the purposes of this test", min_length=0)
+	weight = schema.List(schema.Object(Iweight), title="Weights allow custom values to be defined for scaling an item's outcomes", min_length=0)
+	templateDefault = schema.List(schema.Object(ItemplateDefault), title="WA template default is used to alter the default value", min_length=0)
+	
+class ItestPart(attr_interfaces.ItimeLimitsAttrGroup, basic_interfaces.IConcrete):
+	preCondition = schema.List(schema.Object(pre_interfaces.IpreCondition), title="An optional ordered set of conditions evaluated during the test", min_length=0)
+	branchRule = schema.List(schema.Object(pre_interfaces.IbranchRule), title="An optional ordered set of rules evaluated during the test", min_length=0)
+	itemSessionControl = schema.Object(items_interfaces.IitemSessionControl, title="Parameters used to control the allowable states of each item session in this part", required=False)
+	timeLimits = schema.Object(ItimeLimits, title="Optionally controls the amount of time a candidate is allowed for this part of the test.", required=False)
+	assessmentSection = schema.List(schema.Object(IassessmentSection), title="The items contained in each testPart are arranged into sections and sub-sections", min_length=1)
+	testFeedback = schema.List(schema.Object(fbck_interfaces.ItestFeedback), title="Test-level feedback specific to this part of the test", min_length=0)
+
+class IassessmentTest(attr_interfaces.IassessmentTestAttrGroup, basic_interfaces.IConcrete):
+	outcomeDeclaration = schema.List(schema.Object(var_interfaces.IoutcomeDeclaration), title="Each test has an associated set of outcomes", min_length=0)
+	timeLimits = schema.Object(ItimeLimits, title="Optionally controls the amount of time a candidate is allowed for the entire test", required=False)
+	testPart = schema.List(schema.Object(ItestPart), title="Order list of test parts (sections, sub-sections and so on)", min_length=1)
+	outcomeProcessing = schema.Object(out_interfaces.IoutcomeProcessing, title="The set of rules used for calculating the values of the test outcomes", required=False)
+	testFeedback = schema.List(schema.Object(fbck_interfaces.ItestFeedback), title="The ordered test-level feedback controlled by the test outcomes.", min_length=0)
