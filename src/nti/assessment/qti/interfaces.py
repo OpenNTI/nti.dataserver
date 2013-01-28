@@ -30,3 +30,11 @@ VALUE_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.S
 CARDINALITY_TYPES = (u'single', u'multiple', u'ordered', u'record')
 CARDINALITY_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in CARDINALITY_TYPES] )
 
+NAVIGATION_MODE_TYPES = (u'linear', u'nonlinear')
+NAVIGATION_MODE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in NAVIGATION_MODE_TYPES] )
+
+SUBMISSION_MODE_TYPES = (u'individual', u'simultaneous')
+SUBMISSION_MODE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in SUBMISSION_MODE_TYPES] )
+
+FEED_BACK_ACCESS_TYPES = (u'atEnd', u'during')
+FEED_BACK_ACCESS_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in FEED_BACK_ACCESS_TYPES] )

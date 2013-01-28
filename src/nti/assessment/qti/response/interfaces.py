@@ -15,7 +15,7 @@ class IresponseRule(interface.Interface):
 	pass
 	
 class IresponseProcessing(attr_interfaces.IresponseProcessingAttrGroup, IFiniteSequence, basic_interfaces.IConcrete):
-	value = schema.List(schema.Object(IresponseRule), title="An ordered list of values", min_length=1)
+	responseRule = schema.List(schema.Object(IresponseRule), title="An ordered list of values", min_length=1)
 
 class IresponseIf(IresponseRule, basic_interfaces.IConcrete):
 	expression = schema.Object(exp_interfaces.Iexpression, title='The expression', required=True)

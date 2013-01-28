@@ -19,6 +19,17 @@ class IbodyElementAttrGroup(IAttrGroup):
 	lang = TextLineAttribute(title=u'The language code (RFC3066)', required=False, max_length=2, default='en')
 	label = TextLineAttribute(title=u'The label', required=False, max_length=256)
 	
+# items
+
+class IitemSessionControlAttrGroup(IAttrGroup):
+	maxAttempts = IntAttribute(title=u'The maximum number of attempts allowed', required=False)
+	showFeedback = BoolAttribute(title=u'This constraint affects the visibility of feedback after the end of the last attempt', required=False)
+	allowReview = BoolAttribute(title=u'If set to true the item session is allowed to enter the review state during which the candidate can review the itemBody along with the responses they gave', required=False)
+	showSolution = BoolAttribute(title=u'Show solution flag', required=False, default=False)
+	allowComment = BoolAttribute(title=u'Support the capture of candidate comments', required=False)
+	allowSkipping = BoolAttribute(title=u'An item is defined to be skipped if the candidate has not provided any response', required=False, default=True)
+	validateResponses = BoolAttribute(title=u'Validate any response', required=False, default=True)
+
 # variables
 
 class IvalueAttrGroup(IAttrGroup):
@@ -314,8 +325,68 @@ class IsetCorrectResponseAttrGroup(IAttrGroup):
 class IsetDefaultValueAttrGroup(IAttrGroup):
 	identifier = TextLineAttribute(title="The identifier", required=True)
 
+# modalfeedback
+
+class IImodalFeedbackAttrGroup(IAttrGroup):
+	outcomeIdentifier = TextLineAttribute(title="The outcome identifier", required=True)
+	showHide = ChoiceAttribute(title="The visibility of the modelfeedbackElement", vocabulary=qt_interfaces.SHOW_HIDE_VOCABULARY, required=True)
+	identifier = TextLineAttribute(title="The identifier", required=True)
+	title = TextLineAttribute(title="The title", required=False)
+
 # assessment
 
+class ItimeLimitsAttrGroup(IAttrGroup):
+	minTime = IntAttribute(title='Min time measured in seconds', required=False)
+	maxTime = IntAttribute(title='Max time measured in seconds', required=False)
+	allowLateSubmission = BoolAttribute(title='Late submission flag', required=False)
+
+class ItestPartAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title="The identifier of the test part", required=True)
+	navigationMode = ChoiceAttribute(title="The navigation mode", vocabulary=qt_interfaces.NAVIGATION_MODE_VOCABULARY, required=True)
+	submissionMode = ChoiceAttribute(title="The submission mode", vocabulary=qt_interfaces.SUBMISSION_MODE_VOCABULARY, required=True)
+	
+class IselectionAttrGroup(IAttrGroup):
+	select = IntAttribute(title="The number of child elements to be selected", required=True)
+	withReplacement = BoolAttribute(title="When selecting child elements each element is normally eligible for selection once only", required=False, default=False)
+	
+class IsectionPartAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title="The identifier of the section part", required=True)
+	required = BoolAttribute(title="If a child element is required it must appear (at least once) in the selection", required=True, default=False)
+	fixed = BoolAttribute(title="If a child element is fixed it must never be shuffled", required=False, default=False)
+	
+class IorderingAttrGroup(IAttrGroup):
+	shuffle = BoolAttribute(title="If true causes the order of the child elements to be randomized", required=False, default=False)
+
+class IassessmentSectionAttrGroup(IAttrGroup):
+	title = TextLineAttribute(title="The title", required=True)
+	visible = BoolAttribute(title="A visible section is one that is identifiable by the candidate", required=True)
+	keepTogether = BoolAttribute(title="Keep together flag", required=False, default=True)
+
+class IassessmentSectionRefAttrGroup(IAttrGroup):
+	href = URIAttribute(title="The uri is used to refer to the assessmentSection document file", required=True)
+	
+class IassessmentItemRefAttrGroup(IAttrGroup):
+	href = URIAttribute(title="The uri is used to refer to the assessmentSection document file", required=True)
+	category = ListAttribute(title='Items can optionally be assigned to one or more categories', required=False,
+							 value_type=schema.TextLine(title='the category'))
+	
+class IweightAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title="An item can have any number of weights", required=True)
+	value = IntAttribute(title="Weights are floating point values", required=True)
+	
+class IvariableMappingAttrGroup(IAttrGroup):
+	sourceIdentifier = TextLineAttribute(title="Source identifier", required=True)
+	targetIdentifier = TextLineAttribute(title="Target identifier", required=True)
+	
+class ItemplateDefaultAttrGroup(IAttrGroup):
+	templateIdentifier = TextLineAttribute(title="Template identifier", required=True)
+	
+class IassessmentTestAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title=u'The principle identifier of the test', required=True)
+	title = TextLineAttribute(title=u'The title of an assessmentTest', required=True)
+	toolName = TextLineAttribute(title=u'The label', required=False, max_length=256)
+	toolVersion = TextLineAttribute(title=u'The tool version', required=False, max_length=256)
+	
 class IassessmentItemAttrGroup(IAttrGroup):
 	identifier = TextLineAttribute(title=u'The principle identifier of the item', required=True)
 	title = TextLineAttribute(title=u'The title of an assessmentItem', required=True, default=u'')
@@ -326,3 +397,17 @@ class IassessmentItemAttrGroup(IAttrGroup):
 	toolName = TextLineAttribute(title=u'The tool id name', required=False, max_length=256)
 	toolVersion = TextLineAttribute(title=u'The tool version', required=False, max_length=256)
 	
+# test-level feedback
+
+class ItestFeedbackAttrGroup(IAttrGroup):
+	access = ChoiceAttribute(title="Test feedback is shown to during the test or at the end of the testPart",
+							 vocabulary=qt_interfaces.FEED_BACK_ACCESS_TYPES_VOCABULARY, required=True)
+	outcomeIdentifier = TextLineAttribute(title=u'The outcome identifier', required=True)
+	showHide = ChoiceAttribute(title="The visibility of the feedbackElement", vocabulary=qt_interfaces.SHOW_HIDE_VOCABULARY, required=True)
+	identifier = TextLineAttribute(title=u'The identifier', required=True)
+	title = TextLineAttribute(title=u'The title', required=False)
+	
+# pre-conditions and branching
+
+class IbranchRuleAttrGroup(IAttrGroup):
+	target = TextLineAttribute(title=u'The identifier', required=True)
