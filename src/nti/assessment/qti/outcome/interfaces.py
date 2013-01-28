@@ -29,7 +29,7 @@ class IoutcomeCondition(basic_interfaces.IConcrete):
 	outcomeElseIf = schema.List(schema.Object(IoutcomeElseIf), title='outcome if list', required=False, min_length=0)
 	outcomeElse = schema.Object(IoutcomeElse, title='outcome else', required=False)
 	
-class Iexitoutcome(IoutcomeRule, basic_interfaces.IConcrete):
+class IexitTest(IoutcomeRule, basic_interfaces.IConcrete):
 	pass
 
 	
