@@ -83,3 +83,8 @@ class FloatOrVariableRefAttribute(Object):
 @interface.implementer(IQTIAttribute)
 class StringOrVariableRefAttribute(TextLineAttribute):
 	pass
+
+@interface.implementer(IQTIAttribute)
+class IdentifierRefAttribute(TextLineAttribute):
+	pass
+

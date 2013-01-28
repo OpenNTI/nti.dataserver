@@ -7,7 +7,7 @@ from nti.assessment.qti import interfaces as qt_interfaces
 from nti.assessment.qti.schema import (TextLineAttribute, BoolAttribute, IntAttribute, URIAttribute,
 									   ChoiceAttribute, MimeTypeAttribute, ListAttribute, FloatAttribute,
 									   ObjectAttribute, IntegerOrVariableRefAttribute, FloatOrVariableRefAttribute,
-									   StringOrVariableRefAttribute)
+									   StringOrVariableRefAttribute, IdentifierRefAttribute)
 	
 class IAttrGroup(interface.Interface):
 	pass
@@ -34,14 +34,14 @@ class IitemSessionControlAttrGroup(IAttrGroup):
 # variables
 
 class IvalueAttrGroup(IAttrGroup):
-	fieldIdentifier = TextLineAttribute(title=u'The field id', required=False)
+	fieldIdentifier = IdentifierRefAttribute(title=u'The field id', required=False)
 	baseType = ChoiceAttribute(title="The base-type", vocabulary=qt_interfaces.VALUE_TYPES_VOCABULARY, required=False)
 	
 class IdefaultValueAttrGroup(IAttrGroup):
 	interpretation = TextLineAttribute(title=u'A human readable interpretation of the default value', required=False)
 	
 class IvalueDeclarationAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title=u'The id', required=True)
+	identifier = IdentifierRefAttribute(title=u'The id', required=True)
 	cardinality = ChoiceAttribute(title="The variable cardinality", vocabulary=qt_interfaces.CARDINALITY_TYPES_VOCABULARY, required=True)
 	baseType = ChoiceAttribute(title="The base-type", vocabulary=qt_interfaces.VALUE_TYPES_VOCABULARY, required=False)
 	
@@ -141,10 +141,10 @@ class IaAttrGroup(IAttrGroup):
 	type = MimeTypeAttribute(title="The mimeType", required=False)
 	
 class IFeedbackAttrGroup(IAttrGroup):
-	outcomeIdentifier = TextLineAttribute(title="The identifier of an outcome", required=True)
+	outcomeIdentifier = IdentifierRefAttribute(title="The identifier of an outcome", required=True)
 	showHide = ChoiceAttribute(title="The visibility of the feedbackElement", vocabulary=qt_interfaces.SHOW_HIDE_VOCABULARY, required=True)
-	identifier = TextLineAttribute(title="The identifier that determines the visibility of the feedback " +
-								   "in conjunction with the showHide", required=True)
+	identifier = IdentifierRefAttribute(title="The identifier that determines the visibility of the feedback " +
+								   		"in conjunction with the showHide", required=True)
 	
 class IviewAttrGroup(IAttrGroup):
 	view = TextLineAttribute(title="The views in which the rubric block's content are to be shown.", required=True)
@@ -158,7 +158,7 @@ class IstylesheetAttrGroup(IAttrGroup):
 # interaction
 
 class IinteractionAttrGroup(IAttrGroup):
-	responseIdentifier = TextLineAttribute(title=u'The response identifier', required=True)
+	responseIdentifier = IdentifierRefAttribute(title=u'The response identifier', required=True)
 	
 class IendAttemptInteractionAttrGroup(IAttrGroup):
 	title = TextLineAttribute(title="The string that should be displayed to the candidate as a prompt for ending the attempt using this interaction", required=True)
@@ -173,9 +173,9 @@ class IpromptAttrGroup(IbodyElementAttrGroup):
 	pass
 	
 class IchoiceAttrGroup(IbodyElementAttrGroup):
-	identifier = TextLineAttribute(title=u'The element identifier', required=True)
+	identifier = IdentifierRefAttribute(title=u'The element identifier', required=True)
 	fixed = BoolAttribute(title=u'Fixed choice attribute', required=False)
-	templateIdentifier = TextLineAttribute(title=u'The template identifier', required=False)
+	templateIdentifier = IdentifierRefAttribute(title=u'The template identifier', required=False)
 	showHide = ChoiceAttribute(title="Determines how the visibility of the choice is controlled", vocabulary=qt_interfaces.SHOW_HIDE_VOCABULARY, required=False)
 
 class IsimpleChoiceAttrGroup(IchoiceAttrGroup):
@@ -226,7 +226,7 @@ class IgapAttrGroup(IAttrGroup):
 	
 class IstringInteractionAttrGroup(IAttrGroup):
 	base = IntAttribute(title=u'The number base', required=False)
-	stringIdentifier = TextLineAttribute(title=u'The actual string entered by the candidate', required=False)
+	stringIdentifier = IdentifierRefAttribute(title=u'The actual string entered by the candidate', required=False)
 	expectedLength = IntAttribute(title=u'The hint to the expected length', required=False)
 	patternMask = TextLineAttribute(title=u'The regular expression that the candidate must match', required=False)
 	placeholderText = TextLineAttribute(title=u'Some placeholder text that can be used to vocalize the interactionh', required=False)
@@ -302,10 +302,10 @@ class IresponseProcessingAttrGroup(IAttrGroup):
 	templateLocation = URIAttribute(title="responseProcessing template location",required=False) 
 
 class IsetOutcomeValueAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title="The outcome variable to be set", required=True)
+	identifier = IdentifierRefAttribute(title="The outcome variable to be set", required=True)
 	
 class IlookupOutcomeValueAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title="The outcome variable to be set", required=True)
+	identifier = IdentifierRefAttribute(title="The outcome variable to be set", required=True)
 	
 # template
 
@@ -315,23 +315,23 @@ class ItemplateDeclarationAttrGroup(IAttrGroup):
 
 class ItemplateElementAttrGroup(IAttrGroup):
 	showHide = ChoiceAttribute(title="The visibility of the templateElement", vocabulary=qt_interfaces.SHOW_HIDE_VOCABULARY, required=True)
-	identifier = TextLineAttribute(title="The identifier", required=True)
+	identifier = IdentifierRefAttribute(title="The identifier", required=True)
 
 class IsetTemplateValueAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title="The identifier", required=True)
+	identifier = IdentifierRefAttribute(title="The identifier", required=True)
 	
 class IsetCorrectResponseAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title="The identifier", required=True)
+	identifier = IdentifierRefAttribute(title="The identifier", required=True)
 	
 class IsetDefaultValueAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title="The identifier", required=True)
+	identifier = IdentifierRefAttribute(title="The identifier", required=True)
 
 # modalfeedback
 
 class IImodalFeedbackAttrGroup(IAttrGroup):
-	outcomeIdentifier = TextLineAttribute(title="The outcome identifier", required=True)
+	outcomeIdentifier = IdentifierRefAttribute(title="The outcome identifier", required=True)
 	showHide = ChoiceAttribute(title="The visibility of the modelfeedbackElement", vocabulary=qt_interfaces.SHOW_HIDE_VOCABULARY, required=True)
-	identifier = TextLineAttribute(title="The identifier", required=True)
+	identifier = IdentifierRefAttribute(title="The identifier", required=True)
 	title = TextLineAttribute(title="The title", required=False)
 
 # assessment
@@ -342,7 +342,7 @@ class ItimeLimitsAttrGroup(IAttrGroup):
 	allowLateSubmission = BoolAttribute(title='Late submission flag', required=False)
 
 class ItestPartAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title="The identifier of the test part", required=True)
+	identifier = IdentifierRefAttribute(title="The identifier of the test part", required=True)
 	navigationMode = ChoiceAttribute(title="The navigation mode", vocabulary=qt_interfaces.NAVIGATION_MODE_VOCABULARY, required=True)
 	submissionMode = ChoiceAttribute(title="The submission mode", vocabulary=qt_interfaces.SUBMISSION_MODE_VOCABULARY, required=True)
 	
@@ -351,7 +351,7 @@ class IselectionAttrGroup(IAttrGroup):
 	withReplacement = BoolAttribute(title="When selecting child elements each element is normally eligible for selection once only", required=False, default=False)
 	
 class IsectionPartAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title="The identifier of the section part", required=True)
+	identifier = IdentifierRefAttribute(title="The identifier of the section part", required=True)
 	required = BoolAttribute(title="If a child element is required it must appear (at least once) in the selection", required=True, default=False)
 	fixed = BoolAttribute(title="If a child element is fixed it must never be shuffled", required=False, default=False)
 	
@@ -372,24 +372,24 @@ class IassessmentItemRefAttrGroup(IAttrGroup):
 							 value_type=schema.TextLine(title='the category'))
 	
 class IweightAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title="An item can have any number of weights", required=True)
+	identifier = IdentifierRefAttribute(title="An item can have any number of weights", required=True)
 	value = IntAttribute(title="Weights are floating point values", required=True)
 	
 class IvariableMappingAttrGroup(IAttrGroup):
-	sourceIdentifier = TextLineAttribute(title="Source identifier", required=True)
-	targetIdentifier = TextLineAttribute(title="Target identifier", required=True)
+	sourceIdentifier = IdentifierRefAttribute(title="Source identifier", required=True)
+	targetIdentifier = IdentifierRefAttribute(title="Target identifier", required=True)
 	
 class ItemplateDefaultAttrGroup(IAttrGroup):
-	templateIdentifier = TextLineAttribute(title="Template identifier", required=True)
+	templateIdentifier = IdentifierRefAttribute(title="Template identifier", required=True)
 	
 class IassessmentTestAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title=u'The principle identifier of the test', required=True)
+	identifier = IdentifierRefAttribute(title=u'The principle identifier of the test', required=True)
 	title = TextLineAttribute(title=u'The title of an assessmentTest', required=True)
 	toolName = TextLineAttribute(title=u'The label', required=False, max_length=256)
 	toolVersion = TextLineAttribute(title=u'The tool version', required=False, max_length=256)
 	
 class IassessmentItemAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title=u'The principle identifier of the item', required=True)
+	identifier = IdentifierRefAttribute(title=u'The principle identifier of the item', required=True)
 	title = TextLineAttribute(title=u'The title of an assessmentItem', required=True, default=u'')
 	label = TextLineAttribute(title=u'The label', required=False, max_length=256)
 	lang = TextLineAttribute(title=u'The language code (RFC3066)', required=False, max_length=2)
@@ -403,15 +403,15 @@ class IassessmentItemAttrGroup(IAttrGroup):
 class ItestFeedbackAttrGroup(IAttrGroup):
 	access = ChoiceAttribute(title="Test feedback is shown to during the test or at the end of the testPart",
 							 vocabulary=qt_interfaces.FEED_BACK_ACCESS_TYPES_VOCABULARY, required=True)
-	outcomeIdentifier = TextLineAttribute(title=u'The outcome identifier', required=True)
+	outcomeIdentifier = IdentifierRefAttribute(title=u'The outcome identifier', required=True)
 	showHide = ChoiceAttribute(title="The visibility of the feedbackElement", vocabulary=qt_interfaces.SHOW_HIDE_VOCABULARY, required=True)
-	identifier = TextLineAttribute(title=u'The identifier', required=True)
+	identifier = IdentifierRefAttribute(title=u'The identifier', required=True)
 	title = TextLineAttribute(title=u'The title', required=False)
 	
 # pre-conditions and branching
 
 class IbranchRuleAttrGroup(IAttrGroup):
-	target = TextLineAttribute(title=u'The identifier', required=True)
+	target = IdentifierRefAttribute(title=u'The identifier', required=True)
 
 # expressions
 
@@ -419,20 +419,20 @@ class IbaseValueAttrGroup(IAttrGroup):
 	baseType = ChoiceAttribute(title="The base-type of the value",vocabulary=qt_interfaces.BASE_TYPES_VOCABULARY, required=True)
 
 class IvariableAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title=u'The variable identifier', required=True)
-	weightIdentifier = TextLineAttribute(title=u'An optional weighting to be applied to the value of the variable', required=False)
+	identifier = IdentifierRefAttribute(title=u'The variable identifier', required=True)
+	weightIdentifier = IdentifierRefAttribute(title=u'An optional weighting to be applied to the value of the variable', required=False)
 
 class IdefaultAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title=u'The identifier', required=True)
+	identifier = IdentifierRefAttribute(title=u'The identifier', required=True)
 	
 class IcorrectAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title=u'The identifier', required=True)
+	identifier = IdentifierRefAttribute(title=u'The identifier', required=True)
 	
 class ImapResponseAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title=u'The identifier', required=True)
+	identifier = IdentifierRefAttribute(title=u'The identifier', required=True)
 	
 class ImapResponsePointAttrGroup(IAttrGroup):
-	identifier = TextLineAttribute(title=u'The identifier', required=True)
+	identifier = IdentifierRefAttribute(title=u'The identifier', required=True)
 	
 class ImathConstantAttrGroup(IAttrGroup):
 	name = ChoiceAttribute(title="Constant name", vocabulary=qt_interfaces.MATH_CONSTANTS_VOCABULARY, required=True)
@@ -447,24 +447,24 @@ class IrandomFloatAttrGroup(IAttrGroup):
 	max = FloatOrVariableRefAttribute(interface.Interface, title='Max float value or ref. template variable', required=True)
 	
 class IitemSubsetAttrGroup(IAttrGroup):
-	sectionIdentifier = TextLineAttribute(title='Section identifier', required=True)
+	sectionIdentifier = IdentifierRefAttribute(title='Section identifier', required=True)
 	includeCategory = ListAttribute(title='If specified, only variables from items with a matching category are included', required=False,
 							 		value_type=schema.TextLine(title='the category'))
 	excludeCategory = ListAttribute(title='If specified, only variables from items with no matching category are included', required=False,
 							 		value_type=schema.TextLine(title='the category'))
 	
 class ItestVariablesAttrGroup(IAttrGroup):
-	variableIdentifier = TextLineAttribute(title='Test variable identifier', required=True)
+	variableIdentifier = IdentifierRefAttribute(title='Test variable identifier', required=True)
 	baseType = ChoiceAttribute(title="The base-type of the value",vocabulary=qt_interfaces.BASE_TYPES_VOCABULARY, required=False)
-	weightIdentifier = TextLineAttribute(title='the defined weight is applied to each variable', required=False)
+	weightIdentifier = IdentifierRefAttribute(title='the defined weight is applied to each variable', required=False)
 	
 class IoutcomeMaximumAttrGroup(IAttrGroup):
-	variableIdentifier = TextLineAttribute(title='As per the variableIdentifier attribute of testVariables', required=True)
-	weightIdentifier = TextLineAttribute(title='As per the weightIdentifier attribute of testVariables', required=False)
+	variableIdentifier = IdentifierRefAttribute(title='As per the variableIdentifier attribute of testVariables', required=True)
+	weightIdentifier = IdentifierRefAttribute(title='As per the weightIdentifier attribute of testVariables', required=False)
 	
 class IoutcomeMinimumAttrGroup(IAttrGroup):
-	variableIdentifier = TextLineAttribute(title='As per the variableIdentifier attribute of testVariables', required=True)
-	weightIdentifier = TextLineAttribute(title='As per the weightIdentifier attribute of testVariables', required=False)
+	variableIdentifier = IdentifierRefAttribute(title='As per the variableIdentifier attribute of testVariables', required=True)
+	weightIdentifier = IdentifierRefAttribute(title='As per the weightIdentifier attribute of testVariables', required=False)
 	
 class IroundToAttrGroup(IAttrGroup):
 	roundingMode = ChoiceAttribute(title="The rounding mode", vocabulary=qt_interfaces.ROUNDING_MODE_VOCABULARY, required=True)
@@ -486,7 +486,7 @@ class IsubstringAttrGroup(IAttrGroup):
 	caseSensitive= BoolAttribute(interface.Interface, title='Used to control whether or not the substring is matched case sensitively', required=True, default=True)
 	
 class IfieldValueAttrGroup(IAttrGroup):
-	fieldIdentifier = TextLineAttribute(title='The identifier of the field to be selected', required=True)
+	fieldIdentifier = IdentifierRefAttribute(title='The identifier of the field to be selected', required=True)
 	
 class IanyNAttrGroup(IAttrGroup):
 	min = IntegerOrVariableRefAttribute(interface.Interface, title='The minimum number of sub-expressions that must be true', required=True)
