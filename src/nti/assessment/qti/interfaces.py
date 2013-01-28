@@ -61,3 +61,7 @@ MATH_OPERATORS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabular
 TOLERANCE_MODE_TYPES = (u'exact', u'relative', u'absolute')
 TOLERANCE_MODE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in TOLERANCE_MODE_TYPES] )
 
+DATA_TYPES = (u'boolean', u'coords', u'datetime', u'duration',u'float', u'identifier', u'integer', u'language',
+			  u'length', u'mimeType', u'orientation', u'string', u'string256', u'styleclass', u'valueType', u'view')
+DATA_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in DATA_TYPES] )
+
