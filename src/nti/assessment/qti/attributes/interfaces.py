@@ -479,8 +479,11 @@ class ImathOperatorAttrGroup(IAttrGroup):
 class IrepeatAttrGroup(IAttrGroup):
 	numberRepeats = IntegerOrVariableRefAttribute(interface.Interface, title='The number of repeats', required=True)
 
-class IindexttrGroup(IAttrGroup):
+class IindexAttrGroup(IAttrGroup):
 	n = IntegerOrVariableRefAttribute(interface.Interface, title='The index', required=True)
+	
+class IsubstringAttrGroup(IAttrGroup):
+	caseSensitive= BoolAttribute(interface.Interface, title='Used to control whether or not the substring is matched case sensitively', required=True, default=True)
 	
 class IfieldValueAttrGroup(IAttrGroup):
 	fieldIdentifier = TextLineAttribute(title='The identifier of the field to be selected', required=True)
@@ -502,3 +505,14 @@ class IequalAttrGroup(IAttrGroup):
 	includeLowerBound = BoolAttribute(title=u'Controls whether or not the lower bound is included in the comparison', required=False, default=True)
 	includeLowerBound = BoolAttribute(title=u'Controls whether or not the upper bound is included in the comparison', required=False, default=True)
 	
+class IequalRoundedAttrGroup(IAttrGroup):
+	roundingMode = ChoiceAttribute(title="The tolerance mode", vocabulary=qt_interfaces.ROUNDING_MODE_VOCABULARY, required=True, default='significantFigures')
+	figures = IntegerOrVariableRefAttribute(interface.Interface, title='Numbers are rounded to a given number of significantFigures or decimalPlaces', required=True)
+	
+class IinsideAttrGroup(IAttrGroup):
+	shape = ChoiceAttribute(title="The shape of the area", vocabulary=qt_interfaces.SHAPE_TYPES_VOCABULARY, required=True)
+	coords = TextLineAttribute(title='The size and position of the area', required=True)
+
+class IcustomOperatorAttrGroup(IAttrGroup):
+	klass = TextLineAttribute(title="The class attribute allows simple sub-classes to be name", __name__='class', required=False)
+	definition = URIAttribute(title='A URI that identifies the definition of the custom operator in the global namespace', required=False)
