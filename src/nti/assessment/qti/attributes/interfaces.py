@@ -6,7 +6,8 @@ from zope import interface
 from nti.assessment.qti import interfaces as qt_interfaces
 from nti.assessment.qti.schema import (TextLineAttribute, BoolAttribute, IntAttribute, URIAttribute,
 									   ChoiceAttribute, MimeTypeAttribute, ListAttribute, FloatAttribute,
-									   ObjectAttribute)
+									   ObjectAttribute, IntegerOrVariableRefAttribute, FloatOrVariableRefAttribute,
+									   StringOrVariableRefAttribute)
 	
 class IAttrGroup(interface.Interface):
 	pass
@@ -411,3 +412,93 @@ class ItestFeedbackAttrGroup(IAttrGroup):
 
 class IbranchRuleAttrGroup(IAttrGroup):
 	target = TextLineAttribute(title=u'The identifier', required=True)
+
+# expressions
+
+class IbaseValueAttrGroup(IAttrGroup):
+	baseType = ChoiceAttribute(title="The base-type of the value",vocabulary=qt_interfaces.BASE_TYPES_VOCABULARY, required=True)
+
+class IvariableAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title=u'The variable identifier', required=True)
+	weightIdentifier = TextLineAttribute(title=u'An optional weighting to be applied to the value of the variable', required=False)
+
+class IdefaultAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title=u'The identifier', required=True)
+	
+class IcorrectAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title=u'The identifier', required=True)
+	
+class ImapResponseAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title=u'The identifier', required=True)
+	
+class ImapResponsePointAttrGroup(IAttrGroup):
+	identifier = TextLineAttribute(title=u'The identifier', required=True)
+	
+class ImathConstantAttrGroup(IAttrGroup):
+	name = ChoiceAttribute(title="Constant name", vocabulary=qt_interfaces.MATH_CONSTANTS_VOCABULARY, required=True)
+	
+class IrandomIntegerAttrGroup(IAttrGroup):
+	min = IntegerOrVariableRefAttribute(interface.Interface, title='Min int value or ref. template variable', required=True, default=0)
+	max = IntegerOrVariableRefAttribute(interface.Interface, title='Max int value or ref. template variable', required=True)
+	step = IntegerOrVariableRefAttribute(interface.Interface, title='Step int value or ref. template variable', required=False, default=1)
+
+class IrandomFloatAttrGroup(IAttrGroup):
+	min = FloatOrVariableRefAttribute(interface.Interface, title='Min float value or ref. template variable', required=True, default=0)
+	max = FloatOrVariableRefAttribute(interface.Interface, title='Max float value or ref. template variable', required=True)
+	
+class IitemSubsetAttrGroup(IAttrGroup):
+	sectionIdentifier = TextLineAttribute(title='Section identifier', required=True)
+	includeCategory = ListAttribute(title='If specified, only variables from items with a matching category are included', required=False,
+							 		value_type=schema.TextLine(title='the category'))
+	excludeCategory = ListAttribute(title='If specified, only variables from items with no matching category are included', required=False,
+							 		value_type=schema.TextLine(title='the category'))
+	
+class ItestVariablesAttrGroup(IAttrGroup):
+	variableIdentifier = TextLineAttribute(title='Test variable identifier', required=True)
+	baseType = ChoiceAttribute(title="The base-type of the value",vocabulary=qt_interfaces.BASE_TYPES_VOCABULARY, required=False)
+	weightIdentifier = TextLineAttribute(title='the defined weight is applied to each variable', required=False)
+	
+class IoutcomeMaximumAttrGroup(IAttrGroup):
+	variableIdentifier = TextLineAttribute(title='As per the variableIdentifier attribute of testVariables', required=True)
+	weightIdentifier = TextLineAttribute(title='As per the weightIdentifier attribute of testVariables', required=False)
+	
+class IoutcomeMinimumAttrGroup(IAttrGroup):
+	variableIdentifier = TextLineAttribute(title='As per the variableIdentifier attribute of testVariables', required=True)
+	weightIdentifier = TextLineAttribute(title='As per the weightIdentifier attribute of testVariables', required=False)
+	
+class IroundToAttrGroup(IAttrGroup):
+	roundingMode = ChoiceAttribute(title="The rounding mode", vocabulary=qt_interfaces.ROUNDING_MODE_VOCABULARY, required=True)
+	figures = IntegerOrVariableRefAttribute(interface.Interface, title='The number of figures to round to', required=True)
+	
+class IstatsOperatorAttrGroup(IAttrGroup):
+	name = ChoiceAttribute(title="The rounding mode", vocabulary=qt_interfaces.STAT_OPERATOR_NAMES_VOCABULARY, required=True)
+
+class ImathOperatorAttrGroup(IAttrGroup):
+	name = ChoiceAttribute(title="The math operator", vocabulary=qt_interfaces.MATH_OPERATORS_VOCABULARY, required=True)
+		
+class IrepeatAttrGroup(IAttrGroup):
+	numberRepeats = IntegerOrVariableRefAttribute(interface.Interface, title='The number of repeats', required=True)
+
+class IindexttrGroup(IAttrGroup):
+	n = IntegerOrVariableRefAttribute(interface.Interface, title='The index', required=True)
+	
+class IfieldValueAttrGroup(IAttrGroup):
+	fieldIdentifier = TextLineAttribute(title='The identifier of the field to be selected', required=True)
+	
+class IanyNAttrGroup(IAttrGroup):
+	min = IntegerOrVariableRefAttribute(interface.Interface, title='The minimum number of sub-expressions that must be true', required=True)
+	max = IntegerOrVariableRefAttribute(interface.Interface, title='The maximum number of sub-expressions that may be true', required=True)
+	
+class IstringMatchAttrGroup(IAttrGroup):
+	caseSensitive = BoolAttribute(title='Whether or not the match is to be carried out case sensitively', required=True)
+	substring = BoolAttribute(title='Deprecated attribute', required=False, default=False)
+	
+class IpatternMatchAttrGroup(IAttrGroup):
+	pattern = StringOrVariableRefAttribute(title='The syntax for the regular expression', required=True)
+	
+class IequalAttrGroup(IAttrGroup):
+	toleranceMode = ChoiceAttribute(title="The tolerance mode", vocabulary=qt_interfaces.TOLERANCE_MODE_VOCABULARY, required=True)
+	tolerance = ListAttribute(schema.Object(interface.Interface), title="The tolerance floatOrVariableRef", required=True, min_length=0, max_length=2)
+	includeLowerBound = BoolAttribute(title=u'Controls whether or not the lower bound is included in the comparison', required=False, default=True)
+	includeLowerBound = BoolAttribute(title=u'Controls whether or not the upper bound is included in the comparison', required=False, default=True)
+	
