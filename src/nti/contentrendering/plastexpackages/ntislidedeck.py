@@ -125,9 +125,9 @@ class ntislide(_LocalContentMixin, Environment, plastexids.NTIIDMixin):
 
 		def digest(self, tex):
 			super(ntislide.ntislidevideoref, self).digest(tex)
-			self.parentNode.slidevideo = self.idref['label']
-			self.parentNode.slidevideostart = _timeconvert( self.attributes['options']['start'] )
-			self.parentNode.slidevideoend = _timeconvert(self.attributes['options']['end'])
+			self.starttime = _timeconvert( self.attributes['options']['start'] )
+			self.endtime = _timeconvert(self.attributes['options']['end'])
+			self.parentNode.slidevideo = self
 
 	class ntislidetext(_LocalContentMixin, Environment):
 		pass
