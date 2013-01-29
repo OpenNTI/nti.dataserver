@@ -1,4 +1,4 @@
-from __future__ import unicode_literals, print_function
+from __future__ import unicode_literals, print_function, absolute_import
 
 from zope import schema
 from zope.interface.common.sequence import IFiniteSequence
