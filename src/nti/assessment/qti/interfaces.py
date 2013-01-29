@@ -1,6 +1,9 @@
 from __future__ import unicode_literals, print_function
 
 from zope import schema
+from zope import interface
+
+# vocabulary
 
 PARAM_TYPES = (u'DATA', u'REF')
 PARAM_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in PARAM_TYPES] )
@@ -64,4 +67,12 @@ TOLERANCE_MODE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabular
 DATA_TYPES = (u'boolean', u'coords', u'datetime', u'duration',u'float', u'identifier', u'integer', u'language',
 			  u'length', u'mimeType', u'orientation', u'string', u'string256', u'styleclass', u'valueType', u'view')
 DATA_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in DATA_TYPES] )
+
+# interfaces
+
+class IConcrete(interface.Interface):
+	"""
+	Marker interface for concreate QTI classes
+	"""
+	__display_name__ = interface.Attribute("Display name")
 

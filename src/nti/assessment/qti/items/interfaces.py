@@ -2,7 +2,7 @@ from __future__ import unicode_literals, print_function
 
 from zope import schema
 
-from nti.assessment.qti.basic import interfaces as basic_interfaces
+from nti.assessment.qti import interfaces as qti_interfaces
 from nti.assessment.qti.content import interfaces as cnt_interfaces
 from nti.assessment.qti.response import interfaces as rsp_interfaces
 from nti.assessment.qti.template import interfaces as tmp_interfaces
@@ -10,10 +10,10 @@ from nti.assessment.qti.feedback import interfaces as feed_interfaces
 from nti.assessment.qti.variables import interfaces as var_interfaces
 from nti.assessment.qti.attributes import interfaces as attr_interfaces
 
-class IitemSessionControl(attr_interfaces.IitemSessionControlAttrGroup, basic_interfaces.IConcrete):
+class IitemSessionControl(attr_interfaces.IitemSessionControlAttrGroup, qti_interfaces.IConcrete):
 	pass
 
-class IassessmentItem(attr_interfaces.IassessmentItemAttrGroup, basic_interfaces.IConcrete):
+class IassessmentItem(attr_interfaces.IassessmentItemAttrGroup, qti_interfaces.IConcrete):
 	responseDeclaration = schema.List(schema.Object(var_interfaces.IresponseDeclaration), min_length=0, required=True)
 	outcomeDeclaration = schema.List(schema.Object(var_interfaces.IoutcomeDeclaration), min_length=0, required=True)
 	templateDeclaration = schema.List(schema.Object(tmp_interfaces.ItemplateDeclaration), min_length=0, required=True)
