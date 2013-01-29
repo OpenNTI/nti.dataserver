@@ -6,8 +6,6 @@ import types
 from imp import find_module, load_module, acquire_lock, release_lock
 
 from zope import interface
-
-from nti.assessment.qti import interfaces as qti_interfaces
 	
 import logging
 logger = logging.getLogger(__name__)
@@ -17,7 +15,8 @@ def find_concrete_interfaces():
 	scan all interface modules to get IConcrete interfaces
 	"""
 	result = {}
-	
+	from nti.assessment.qti import interfaces as qti_interfaces
+		
 	def _load_module(path, name):
 		fh = None
 		try:
