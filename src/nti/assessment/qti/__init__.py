@@ -1,4 +1,4 @@
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 import os
 import sys
@@ -16,15 +16,20 @@ def find_concrete_interfaces():
 	"""
 	result = {}
 	from nti.assessment.qti import interfaces as qti_interfaces
-		
+	
+	src_path = os.path.split(qti_interfaces.__file__)[0]
+	path_length = len(src_path)-len(qti_interfaces.__package__)
 	def _load_module(path, name):
+		part = path[path_length:]
+		part = part.replace(os.sep, '.') + '.' + name
+		if part in sys.modules:
+			return sys.modules[part]
+		
 		fh = None
 		try:
 			acquire_lock()
 			fh, filename, desc = find_module(name, [path])
-			if name in sys.modules:
-				del sys.modules[name]
-			result = load_module(name, fh, filename, desc)
+			result = load_module(part, fh, filename, desc)
 			return result
 		finally:
 			if fh: fh.close()
@@ -36,7 +41,6 @@ def find_concrete_interfaces():
 			if type(item) == interface.interface.InterfaceClass and issubclass(item, qti_interfaces.IConcrete):
 				result[item.__name__[1:]] = item
 	
-	src_path = os.path.split(__file__)[0]
 	def _find(path):
 		for p in os.listdir(path):
 			if p.startswith('.') or p.startswith('_'):
@@ -52,3 +56,7 @@ def find_concrete_interfaces():
 	_find(src_path)
 			
 	return result
+
+if __name__ == '__main__':
+	find_concrete_interfaces()
+
