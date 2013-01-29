@@ -483,7 +483,7 @@ class IindexAttrGroup(IAttrGroup):
 	n = IntegerOrVariableRefAttribute(interface.Interface, title='The index', required=True)
 	
 class IsubstringAttrGroup(IAttrGroup):
-	caseSensitive= BoolAttribute(interface.Interface, title='Used to control whether or not the substring is matched case sensitively', required=True, default=True)
+	caseSensitive= BoolAttribute(title='Used to control whether or not the substring is matched case sensitively', required=True, default=True)
 	
 class IfieldValueAttrGroup(IAttrGroup):
 	fieldIdentifier = IdentifierRefAttribute(title='The identifier of the field to be selected', required=True)
