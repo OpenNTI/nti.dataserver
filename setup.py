@@ -135,7 +135,7 @@ setup(
 		'contentratings == 1.0',
 		'cryptacular >= 1.4.1', # see z3c.crypt
 		'cssselect >= 0.7.1', # Used by pyquery
-		'cython >= 0.17.4',
+		'cython >= 0.18',
 		# Adds support for detecting aborts to transactions which
 		# otherwise only detect failed commits
 		'dm.transaction.aborthook >= 1.0',
@@ -162,7 +162,7 @@ setup(
 		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
 		'logilab-common >= 0.58.3',
-		'lxml >= 3.0.2', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
+		'lxml == 3.0.2', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.3', # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
