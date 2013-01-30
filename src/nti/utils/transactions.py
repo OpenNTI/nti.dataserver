@@ -29,11 +29,18 @@ import time
 @interface.implementer(transaction.interfaces.IDataManager)
 class ObjectDataManager(object):
 	"""
-	A generic (and therefore relatively expensive) :class:`transaction.interfaces.IDataManager`
-	that invokes a callable (usually a method of an object) when the transaction finishes successfully.
-	The method should not raise exceptions when invoked, as they will be caught and ignored
-	(to preserve consistency with the rest of the data managers). If there's a chance the method could fail,
-	then whatever actions it does take should not have side-effects.
+	A generic (and therefore relatively expensive)
+	:class:`transaction.interfaces.IDataManager` that invokes a
+	callable (usually a method of an object) when the transaction
+	finishes successfully. The method should not raise exceptions when
+	invoked, as they will be caught and ignored (to preserve
+	consistency with the rest of the data managers). If there's a
+	chance the method could fail, then whatever actions it does take
+	should not have side-effects.
+
+	These data managers have no guaranteed relationship to other data
+	managers in terms of the order of which they commit, except as
+	documented with :meth:`sortKey`.
 	"""
 
 	_EMPTY_KWARGS = {}
@@ -44,7 +51,8 @@ class ObjectDataManager(object):
 		or the `call` argument. (You may always pass the `target` argument, which will
 		be made available on this object for the use of :meth:`tpc_vote`. )
 
-		:param target: An object. Optional if `call` is given.
+		:param target: An object. Optional if `call` is given. If provided, will be used
+			to compute the :meth:`sortKey`.
 		:param string method_name: The name of the attribute to get from `target`. Optional if `callable`
 			is given.
 		:param callable call: A callable object. Ignored if `target` *and* `method_name` are given.
@@ -76,11 +84,36 @@ class ObjectDataManager(object):
 		pass
 
 	def sortKey(self):
-		# We must not use our own ID, those aren't guaranteed
-		# to be monotonically increasing, and we must be sorted
-		# in the order we joined the transaction, for the queue property
-		# (FIFO) to hold. The list.sort() is guaranteed to be stable,
-		# so we can use the same key and we'll stay in the right order
+		"""
+		Return the string value that, when sorted, determines the
+		order in which data managers will get to vote and commit at
+		the end of a transaction. (See
+		:meth:`transaction.interfaces.IDataManager.sortKey`).
+
+		The default implementation of this method uses the ID of
+		either the ``target`` object we were initialized with or the ID of
+		the actual callable we will call. This has the property of
+		ensuring that *all* calls to methods of a particular object
+		instance (when ``target`` is given), or calls to a particular callable
+		(when ``target`` is not given) will execute in the order in which they were
+		added to the transaction.
+
+		.. note:: This relies on an implementation detail of the
+			transaction package, which sorts using :meth:`list.sort`,
+			which is guaranteed to be stable: thus objects using the
+			same key remain in the same relative order. (See
+			:meth:`transaction._transaction.Transaction._commitResources`.)
+
+		To execute only calls to a particular method of a particular instance
+		in the order they are added to the transaction, but allow other
+		methods to execute before or after them, do not provide the ``target``.
+
+		It is not advisable to use the ID of this object (``self``) in
+		the implementation of this method, because the ID values are
+		not guaranteed to be monotonically increasing and thus
+		instances of a particular class that did this would execute in
+		"random" order.
+		"""
 		# It's not clearly documented, but this is supposed to be a string
 		return str(id(self.target) if self.target is not None else id(self.callable))
 
@@ -115,6 +148,9 @@ class _QueuePutDataManager(ObjectDataManager):
 
 	def __init__(self, queue, method, args=()):
 		super(_QueuePutDataManager,self).__init__( target=queue, call=method, args=args )
+		# NOTE: See the `sortKey` method. The use of the queue as the target
+		# is critical to ensure that the FIFO property holds when multiple objects
+		# are added to a queue during a transaction
 
 	def tpc_vote(self, tx):
 		if self.target.full():
