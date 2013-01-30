@@ -174,8 +174,8 @@ setup(
 		'numpy >= 1.6.2',
 		'paste >= 1.7.5.1',
 		'perfmetrics >= 1.0', # easy statsd metrics.
-		'plone.scale >= 1.2.2', # image scaling/storage based on PIL
-		'plone.namedfile >= 2.0', # much like zope.file, but some image-specific goodness.
+		'plone.scale >= 1.3', # image scaling/storage based on PIL
+		'plone.namedfile >= 2.0.1', # much like zope.file, but some image-specific goodness.
 		'pyparsing >= 1.5.6, < 2.0.0',
 		# Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
 		'pyPDF >= 1.13',
@@ -209,7 +209,7 @@ setup(
 		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
-		'repoze.sendmail >= 3.2',
+		'repoze.sendmail == 3.2', # 4.0b1 is out, should be drop in as soon as final
 		'repoze.who == 2.0', # 2.1b1 is out, should be drop in, may require changes
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
@@ -285,7 +285,7 @@ setup(
 		'zope.location >= 4.0.0',
 		'zope.mimetype >= 1.3.1',
 		'zope.minmax >= 1.1.2',
-		'zope.pagetemplate >= 4.0.0',
+		'zope.pagetemplate >= 4.0.1',
 		'zope.password >= 3.6.1', # encrypted password management
 		'zope.publisher >= 3.13.1',
 		'zope.processlifetime >= 1.0',
