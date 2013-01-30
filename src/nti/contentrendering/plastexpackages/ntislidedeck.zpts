@@ -1,9 +1,13 @@
 # -*- mode: html -*-
 
+#
+name: ntislidedeck
+
 # This 
 name: ntislidevideo
 <div class="externalvideo" tal:attributes="id self/id">
 <object type="application/vnd.nextthought.slidevideo" itemprop="nti-slide-video">
+<param name="slidedeckid" tal:condition="exists:self/slidedeck/idref/label/id" tal:attributes="value self/slidedeck/idref/label/id">
 <param name="ntiid" tal:attributes="value self/id">
 <param name="type" tal:attributes="value self/type">
 <param name="id" tal:attributes="value self/provider_id">
@@ -19,6 +23,7 @@ name: ntislidevideo
 # visual represenation of the content.
 name: ntislide
 <object type="application/vnd.nextthought.slide" tal:attributes="data-ntiid self/ntiid; style self/style/inline">
+<param name="slidedeckid" tal:condition="exists:self/slidedeck/idref/label/id" tal:attributes="value self/slidedeck/idref/label/id">
 <param name="slidetitle" tal:attributes="value self/title">
 <param name="slidenumber" tal:attributes="value self/slidenumber">
 <param name="slideimage" tal:attributes="value self/slideimage/image/full_size/url">
