@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -15,8 +21,6 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
-import logging
-logger = logging.getLogger( __name__ )
 
 def add_remove_friends( owner, name, add_members=(), remove_members=()):
 	thelist = None
@@ -32,7 +36,7 @@ def add_remove_friends( owner, name, add_members=(), remove_members=()):
 
 	if thelist is None:
 		return None
-	
+
 	current_friends = {x for x in thelist}
 	to_add = {thelist.get_entity(x) for x in add_members or ()}
 	to_add.discard( None )
@@ -42,7 +46,7 @@ def add_remove_friends( owner, name, add_members=(), remove_members=()):
 	final_friends = current_friends | to_add
 	final_friends = final_friends - to_remove
 	final_friends = {x.username for x in final_friends}
-	
+
 	result = update_from_external_object( thelist, {'friends': list(final_friends)} )
 	return result
 
@@ -53,15 +57,15 @@ def process_params(args):
 		sys.exit( 2 )
 
 	thelist = add_remove_friends(owner, args.name, args.add_members, args.remove_members)
-	
+
 	if thelist is None:
 		print("Friend list not found", args, file=sys.stderr )
 		sys.exit(3)
-	
+
 	if args.verbose:
-		pprint.pprint( to_external_object( thelist ) )	
+		pprint.pprint( to_external_object( thelist ) )
 	return thelist
-		
+
 def main():
 	arg_parser = argparse.ArgumentParser( description="Add/Remvove friends from a FriendsList" )
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
