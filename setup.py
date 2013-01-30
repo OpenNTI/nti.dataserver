@@ -149,14 +149,6 @@ setup(
 		'feedgenerator == 1.5',
 		'futures >= 2.1.3',
 		#'gevent == 1.0rc1', Coming from requirements.txt right now
-		# NOTE: gevent_zeromq and pyzmq are tightly coupled. Updating pyzmq
-		# usually requires rebuilding gevent_zeromq. You'll get errors about 'Context has wrong size'.
-		# You may be able to fix it with 'pip install -U --force --no-deps gevent_zeromq'. You may not;
-		# if that doesn't work, the solution is to download gevent_zeromq manually, untar it, and
-		# run 'python setup.py install'. It may be necessary to 'pip uninstall' this (and/or remove it from site-packages)
-		# before running setup.py.
-		# NOTE2: This will go away soon, merged into pyzmq 2.2dev as zmq.green
-		'gevent_zeromq >= 0.2.5',
 		'greenlet >= 0.4.0',
 		'gunicorn >= 0.17.2',
 		'hiredis >= 0.1.1', # Redis C parser
@@ -190,13 +182,6 @@ setup(
 		'pyramid_zcml >= 0.9.2',
 		'pyramid_zodbconn >= 0.4',
 		'pyramid-openid >= 0.3.4',
-		# Best if the system has ZMQ >= 2.2.0. Can work as far back as 2.1.7 (at least). 2.1.10 or better recommended;
-		# I (JAM) *think* the ZMQ libs are all binary compatible so you can upgrade from 2.1 to 2.2
-		# on the fly without touching the python level.
-		# You may have to install this manually, depending on where zmq is installed.
-		# something like:
-		# pip install --install-option="--zmq=/opt/nti" pyzmq
-		'pyzmq == 2.2.0', # TODO: 2.2.0.1 is out. It includes zmq.green and obsoletes gevent_zeromq. It is incompatible with having gevent_zeromq installed
 		# Monitoring stats and instrumenting code
 		'python-statsd >= 1.5.7', # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd

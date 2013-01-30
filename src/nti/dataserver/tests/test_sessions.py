@@ -33,9 +33,6 @@ class MockSessionService(sessions.SessionService):
 		self.created_users = []
 
 	def _spawn_cluster_listener(self):
-		class PubSocket(object):
-			def send_multipart( self, o ): pass
-		self.pub_socket = PubSocket()
 		return None
 
 	default_owner = 'sjohnson@nti'
