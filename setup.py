@@ -203,8 +203,9 @@ setup(
 		'setproctitle >= 1.1.6',
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.0.7',
-		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
 		'six >= 1.2.0',
+		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
+		'stripe >= 1.7.8', # stripe payments
 		#'slimit',
 		'supervisor >= 3.0b1',
 		'transaction >= 1.4.0',
