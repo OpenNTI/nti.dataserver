@@ -209,8 +209,8 @@ setup(
 		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
-		'repoze.sendmail == 3.2', # 4.0b1 is out, should be drop in as soon as final
-		'repoze.who == 2.0', # 2.1b1 is out, should be drop in, may require changes
+		'repoze.sendmail == 3.2', # 4.0b1 is out and tested to be a drop-in replacement when final
+		'repoze.who == 2.0', # 2.1b1 is out and tested to be a drop-in replacement when final
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
 		'requests >= 0.14.2,<1.0', # HTTP. NOTE: 1.1.x is out, but not full backwards compat. Since some tools (httpie) depend on it, wait until they are ready
