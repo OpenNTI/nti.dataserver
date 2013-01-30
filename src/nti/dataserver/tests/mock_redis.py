@@ -22,3 +22,14 @@ interface.classImplements( fakeredis.FakeStrictRedis, nti_interfaces.IRedisClien
 zope.testing.cleanup.addCleanUp( fakeredis.DATABASES.clear )
 
 InMemoryMockRedis = fakeredis.FakeStrictRedis # BWC alias
+
+if not hasattr( InMemoryMockRedis, 'pubsub' ):
+	# Nark. No pub sub support. Hack in some
+	# basic stuff
+	class PubSub(object):
+		def subscribe(self, channel):
+			pass
+		def listen(self):
+			return ()
+
+	InMemoryMockRedis.publish = lambda s, c, m: None

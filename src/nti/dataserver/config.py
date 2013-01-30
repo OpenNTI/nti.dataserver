@@ -13,7 +13,6 @@ from ConfigParser import SafeConfigParser
 
 from zope import interface
 from nti.dataserver import interfaces as nti_interfaces
-from gevent_zeromq import zmq # If things crash, remove core.so
 
 from nti.zodb.zlibstorage import install_zlib_client_resolver
 
@@ -103,26 +102,28 @@ class _ReadableEnv(object):
 	def log_file( self, name ):
 		return os.path.join( self.env_root, 'var', 'log', name )
 
-	def _create_pubsub_pair(self, pub_addr, sub_addr, connect_sub=True, connect_pub=True):
-		pub_socket = zmq.Context.instance().socket( zmq.PUB )
-		if connect_pub:
-			pub_socket.connect( sub_addr )
+	#from gevent_zeromq import zmq # If things crash, remove core.so
 
-		sub_socket = zmq.Context.instance().socket( zmq.SUB )
-		sub_socket.setsockopt( zmq.SUBSCRIBE, b"" )
-		if connect_sub:
-			sub_socket.connect( pub_addr )
+	# def _create_pubsub_pair(self, pub_addr, sub_addr, connect_sub=True, connect_pub=True):
+	# 	pub_socket = zmq.Context.instance().socket( zmq.PUB )
+	# 	if connect_pub:
+	# 		pub_socket.connect( sub_addr )
 
-		return pub_socket, sub_socket
+	# 	sub_socket = zmq.Context.instance().socket( zmq.SUB )
+	# 	sub_socket.setsockopt( zmq.SUBSCRIBE, b"" )
+	# 	if connect_sub:
+	# 		sub_socket.connect( pub_addr )
 
-	def create_pubsub_pair( self, section_name, connect_sub=True, connect_pub=True ):
-		"""
-		:return: A pair of ZMQ sockets (pub, sub), connected as specified.
-		"""
-		return self._create_pubsub_pair( self.main_conf.get( section_name, 'pub_addr' ),
-										 self.main_conf.get( section_name, 'sub_addr' ),
-										 connect_sub=connect_sub,
-										 connect_pub=connect_pub )
+	# 	return pub_socket, sub_socket
+
+	# def create_pubsub_pair( self, section_name, connect_sub=True, connect_pub=True ):
+	# 	"""
+	# 	:return: A pair of ZMQ sockets (pub, sub), connected as specified.
+	# 	"""
+	# 	return self._create_pubsub_pair( self.main_conf.get( section_name, 'pub_addr' ),
+	# 									 self.main_conf.get( section_name, 'sub_addr' ),
+	# 									 connect_sub=connect_sub,
+	# 									 connect_pub=connect_pub )
 
 class _Env(_ReadableEnv):
 
@@ -218,11 +219,11 @@ def _configure_pubsub( env, name ):
 	env.main_conf.set( name, 'sub_addr', 'ipc://' + sub_file )
 
 def _configure_pubsub_changes( env ):
+	"This is now a no-op, it isn't used"
 
-	_configure_pubsub( env, 'changes' )
 
 def _configure_pubsub_session( env ):
-	_configure_pubsub( env, 'session' )
+	"This is now a no-op, as we switched sessions to Redis pubsub"
 
 def _configure_redis( env ):
 	redis_file = env.run_file( 'redis.sock' )

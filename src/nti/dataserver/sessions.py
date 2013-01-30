@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 """ Session distribution and management. """
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 import logging
 logger = logging.getLogger( __name__ )
-from ZODB import loglevels
 
 import warnings
 import time
-import anyjson as json
+import simplejson as json
+import cPickle as pickle
 import zlib
 import gevent
 
 from zope import interface
 from zope import component
 from zope.event import notify
+
+from zope.cachedescriptors.property import Lazy
 
 from nti.utils import transactions
 import transaction
@@ -40,13 +42,13 @@ class SessionService(object):
 
 	"""
 
-	_redis = None
+	channel_name = 'sessions/cluster_channel'
 
 	def __init__( self ):
 		"""
 		"""
 		self.proxy_sessions = {}
-		self.pub_socket = None
+		#self.pub_socket = None
 		# Note that we have no way to close these greenlets. We depend
 		# on GC of this object to let them die when the last refs to
 		# us do.
@@ -60,15 +62,22 @@ class SessionService(object):
 	def _session_db(self):
 		return component.getUtility( nti_interfaces.ISessionServiceStorage )
 
-	# TODO: This can possibly be replaced with redis pub/sub
+	# NOTE: In the past we used ZMQ for the publish/subscribe functionality.
+	# However, ZMQ uses background threads, which is not compatible with forking,
+	# and we want to be able to fork to use certain other frameworks. Hence, we now
+	# use Redis for pub/sub
 
 	def _spawn_cluster_listener(self):
-		env_settings = component.getUtility( nti_interfaces.IEnvironmentSettings )
-		self.pub_socket, sub_socket = env_settings.create_pubsub_pair( 'session' )
-
 		def read_incoming():
-			while True:
-				msgs = sub_socket.recv_multipart()
+			import sys
+			sub = self._redis.pubsub()
+			sub.subscribe( self.channel_name )
+			for msg_dict in sub.listen():
+				if msg_dict['type'] != 'message':
+					continue
+				__traceback_info__ = msg_dict
+				msgs = msg_dict['data']
+				msgs = pickle.loads( msgs ) # TODO: Compression?
 				# In our background greenlet, we begin and commit
 				# transactions around sending messages to
 				# the proxy queue. If the proxy is transaction aware,
@@ -280,14 +289,17 @@ class SessionService(object):
 		if sess:
 			sess.kill()
 
-	def _get_redis( self ):
-		if self._redis is None:
-			self._redis = component.getUtility( nti_interfaces.IRedisClient )
-			logger.info( "Using redis for session storage" )
-		return self._redis
+	@Lazy
+	def _redis(self):
+		redis = component.getUtility( nti_interfaces.IRedisClient )
+		logger.info( "Using redis for session storage" )
+		return redis
 
 	def _put_msg_to_redis( self, queue_name, msg ):
-		self._get_redis().pipeline().rpush( queue_name, msg ).expire( queue_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
+		self._redis.pipeline().rpush( queue_name, msg ).expire( queue_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
+
+	def _publish_msg_to_redis( self, channel_name, msg ):
+		self._redis.publish( channel_name, msg ) # No need to pipeline
 
 	def _put_msg( self, meth, q_name, session_id, msg ):
 		sess = self._get_session( session_id )
@@ -332,9 +344,9 @@ class SessionService(object):
 		# node of the cluster, and to make the WebSockets case non-blocking (gevent). See also
 		# socketio-server
 		if not self._dispatch_message_to_proxy( session_id, name, msg_str ):
-			transactions.do( target=self.pub_socket,
-							 call=self.pub_socket.send_multipart,
-							 args=([session_id, name, msg_str],) )
+			transactions.do( target=self,
+							 call=self._publish_msg_to_redis,
+							 args=( self.channel_name, pickle.dumps( [session_id, name, msg_str], pickle.HIGHEST_PROTOCOL ),) )
 
 	def queue_message_from_client(self, session_id, msg):
 		self._put_msg( Session.enqueue_message_from_client, 'server_queue', session_id, msg )
@@ -401,14 +413,14 @@ class SessionService(object):
 		# Note that we don't make this transactional. The fact that we got a message
 		# from a client is a good-faith indication the client is still around.
 		key_name = self._heartbeat_key( session_id )
-		self._get_redis().pipeline( ).set( key_name, heartbeat_time or time.time() ).expire( key_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
+		self._redis.pipeline( ).set( key_name, heartbeat_time or time.time() ).expire( key_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
 
 
 	def get_last_heartbeat_time(self, session_id, session=None ):
 		result = 0
 		# TODO: This gets called a fair amount. Do we need to cache?
 		key_name = self._heartbeat_key( session_id )
-		val = self._get_redis().get( key_name )
+		val = self._redis.get( key_name )
 		result = float( val or '0' )
 
 		return result

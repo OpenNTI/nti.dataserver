@@ -28,9 +28,7 @@ pip install --upgrade git+https://github.com/pypa/pip.git#egg=pip
 
 export CFLAGS="-I/opt/local/include -L/opt/local/lib"
 
-echo "Installing pyzmq"
 pip install cython
-pip install --install-option="--zmq=/opt/local" "pyzmq==2.2.0"
 
 PROJECT_PARENT=${2:-~/Projects}
 echo "Checking project out to $PROJECT_PARENT/NextThoughtPlatform"
@@ -85,7 +83,7 @@ if [ "$INSTALL_EXTRAS" ]; then
 		echo "Installing $p"
 		pip install -U ${p}
 	done
-	
+
 	# clean
 	rm -rf $TMPWK_DIR
 fi
