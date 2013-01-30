@@ -29,27 +29,25 @@ def _timeconvert( timestring ):
 class ntislidedeckname(Command):
 	pass
 
-class ntislidedeck(List, plastexids.NTIIDMixin):
-	"""The ntislidedeck environment represents a "PowerPoint" style presentation. The environment consists of a list of references to slides located elsewhere in the content. This allows the slide deck to be handled separately from the indivual slides.  The ability to do this is important since individual slides will be displayed in the content when viewed in the normal reading mode, where as the slide deck construct is only displayed when you enter the slide deck mode of the application.
+class ntislidedeckref(Crossref.ref):
+	"""Used to link a ntislide to a ntislidedeck"""
 
-	*** This is not used right now ***
+	def digest(self, tex):
+		super(ntislidedeckref, self).digest(tex)
+		self.parentNode.slidedeck = self
 
-	\begin{ntislidedeck}
-	    \ntislideref{slidelabel}
-	    \ntislideref{slidelabel}
-	    \ntislideref{slidelabel}
-	    \ntislideref{slidelabel}
-	\end{ntislidedeck}
-
-	\begin[id=presintationId]{ntislidedeck}
-	\end{ntislidedeck}
+class ntislidedeck(Environment, plastexids.NTIIDMixin):
+	"""The ntislidedeck environment stores the metadata for a 'PowerPoint' style presentation.  Each slide that is a part of a presentation uses a ntislidedeckref command to link it to the approriate presentation.
 """
 
+	args = '[ options:dict ]'
 	counter = "ntislidedeck"
 	blockType = True
-
-	class ntislideref(Crossref.ref):
-		pass
+	_ntiid_cache_map_name = '_ntislide_ntiid_map'
+        _ntiid_allow_missing_title = True
+        _ntiid_suffix = 'nsd.'
+        _ntiid_title_attr_name = 'ref'
+	_ntiid_type = NTIID_TYPE
 
 class ntislidevideoname(Command):
         unicode = ''
