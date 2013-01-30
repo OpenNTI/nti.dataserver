@@ -16,6 +16,7 @@ from hamcrest import has_length
 from hamcrest import has_property
 from hamcrest import contains
 from hamcrest import is_
+from hamcrest import is_in
 from hamcrest import is_not as does_not
 from hamcrest import greater_than_or_equal_to
 import nti.tests
@@ -35,6 +36,7 @@ def tearDownModule():
 #from nti.dataserver import interfaces as nti_interfaces
 #from nti.dataserver.users import interfaces
 
+from nti.dataserver.users import DynamicFriendsList
 from nti.dataserver.users import FriendsList
 from nti.dataserver.users import User
 
@@ -162,7 +164,7 @@ def test_create_update_dynamic_friendslist():
 		u._p_invalidate()
 		assert_that( u, has_property( '__dict__', {} ) )
 
-	with mock_dataserver.mock_db_trans( ds ) as conn:
+	with mock_dataserver.mock_db_trans( ds ):
 		# This process actually activates the objects directly, immediately, during the
 		# iteration process
 		fl1.updateFromExternalObject( {'friends': [user3.username]} )
@@ -351,3 +353,40 @@ def test_sharing_with_dfl_member_shares_top_level():
 			ids = list(member.iterntiids())
 			__traceback_info__ = member, ids
 			assert_that( ids, contains( child_note.containerId ) )
+
+@WithMockDS(with_changes=True)
+def test_replace_dfl_sharing_with_a_member():
+	"""
+	After removing the DFL share from a note and replace it with a direct sharing
+	of a DFL member, make sure the note is still accessible
+	"""
+	ds = mock_dataserver.current_mock_ds
+	with mock_dataserver.mock_db_trans(ds):
+		ds.add_change_listener( users.onChange )
+		jmadden = users.User.create_user( username='jmadden@nextthought.com' )
+		sjohnson = users.User.create_user( username='sjohnson@nextthought.com' )
+		
+		ntusrs = DynamicFriendsList(username='ntusrs')
+		ntusrs.creator = jmadden	
+		jmadden.addContainedObject( ntusrs )
+		ntusrs.addFriend( sjohnson )
+					
+		note = Note()
+		note.body = [u'Violent Blades']
+		note.creator = jmadden.username
+		note.containerId = u'c1'
+		
+		with jmadden.updates():
+			note.addSharingTarget( ntusrs )
+			note = jmadden.addContainedObject( note )
+		
+		scnt = sjohnson.getSharedContainer(  u'c1' ) 
+		assert_that(note, is_in(scnt))
+		
+		with jmadden.updates():
+			note = jmadden.getContainedObject(u'c1', note.id)
+			note.clearSharingTargets()
+			note.addSharingTarget( sjohnson )
+		
+		scnt = sjohnson.getSharedContainer(  u'c1' ) 
+		assert_that(note, is_in(scnt))
