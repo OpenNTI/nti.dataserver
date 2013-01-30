@@ -255,8 +255,15 @@ def _nti_request_classifier( environ ):
 	requests in which the browser is being used by an application and we don't
 	want to generate a native authentication dialog.
 	"""
+	try:
+		result = default_request_classifier( environ )
+	except KeyError: # pragma: no cover
+		# repoze.who 2.1 requires certain keys that 2.0 did not.
+		# Not all our test cases provide all these keys. Production should never hit this
+		if not environ.get( 'paste.testing' ):
+			raise
+		result = 'browser'
 
-	result = default_request_classifier( environ )
 	if result == 'browser':
 		# OK, but is it an programmatic browser request where we'd like to
 		# change up the auth rules?
