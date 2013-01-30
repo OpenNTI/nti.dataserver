@@ -8,7 +8,7 @@ from zope import interface
 import logging
 logger = logging.getLogger(__name__)
 
-def find_concrete_interfaces():
+def find_concrete_elements():
 	"""
 	scan all interface modules to get IConcrete interfaces
 	"""
@@ -47,7 +47,4 @@ def find_concrete_interfaces():
 			
 	return result
 
-if __name__ == '__main__':
-	import pprint
-	pprint.pprint(find_concrete_interfaces())
 
