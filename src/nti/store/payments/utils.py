@@ -10,15 +10,6 @@ def is_valid_creditcard_number(s):
 	
 	http://code.activestate.com/recipes/577838-credit-card-validation/
 	http://atlee.ca/blog/2008/05/27/validating-credit-card-numbers-in-python/
-	
-	>>> validate_cc("4111-1111-1111-1111")
-	True
-	>>> validate_cc("4111 1111 1111 1112")
-	False
-	>>> validate_cc("5105105105105100")
-	True
-	>>> validate_cc(5105105105105100)
-	True
 	"""
 	s = re.sub("[^0-9]", "", str(s))
 	regexps = [

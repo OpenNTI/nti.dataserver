@@ -6,6 +6,7 @@ import stripe
 from zope import component
 from zope import interface
 
+from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
 from nti.dataserver.users import User
@@ -19,7 +20,7 @@ class StripeException(Exception):
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer( pay_interfaces.IStripeCustomer)
-class StripeCustomer(interface.Interface):
+class StripeCustomer(Persistent):
 	
 	_purchases = None
 	customer_id = None
