@@ -116,7 +116,7 @@ def _to_external_object_state( obj, state, top_level=False ):
 				# try for the default, but allow passing name of None to disable (?)
 				adapter = state.registry.queryAdapter( obj, IExternalObject, default=None, name='' )
 			if adapter:
-		 		obj = adapter
+				obj = adapter
 
 		# Note that for speed, before calling 'recall' we are performing the primitive check
 		result = obj
