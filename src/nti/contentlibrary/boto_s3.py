@@ -43,6 +43,8 @@ boto.s3.bucket.Bucket.__parent__ = alias( 'connection' )
 boto.s3.key.Key.__bases__ += _WithName,
 boto.s3.key.Key.__parent__ = alias( 'bucket' )
 
+import boto.exception
+
 class NameEqualityKey(boto.s3.key.Key):
 	"""
 	A class that tests for equality based on the name and bucket. Two keys with
@@ -94,6 +96,7 @@ def key_last_modified( key ):
 	"""
 	Return the last modified value of the key in some form thats actually
 	useful, not a goddamn arbitrary format string.
+
 	:return: A float, or None.
 	"""
 	__traceback_info__ = key, key.last_modified
@@ -155,7 +158,17 @@ class BotoS3ContentUnit(ContentUnit):
 
 	@Lazy
 	def lastModified( self ):
-		self._connect_key( )
+		try:
+			self._connect_key( )
+		except boto.exception.StorageResponseError:
+			# The key is probably gone, most likely because the bucket
+			# is in the process of being updated.
+			logger.debug( "Ignoring storage error accessing lastModified", exc_info=True )
+			# Return a flag value (so that `modified` doesn't blow up). This gets cached. Alternatively,
+			# we could raise AttributeError...this is mostly used dynamically with getattr and so
+			# would effectively be a None?
+			return -1
+
 		return key_last_modified( self.key )
 
 	@Lazy
