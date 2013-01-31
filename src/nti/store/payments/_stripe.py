@@ -47,7 +47,7 @@ class _StripeCustomer(Persistent):
 		self.purchases[purchase_id] = item_id
 		
 	def clear_purchases(self):
-		self.purchases().clear()
+		self.purchases.clear()
 		
 	def clear(self):
 		self.active_card = None
