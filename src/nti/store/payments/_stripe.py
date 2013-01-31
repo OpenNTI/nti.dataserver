@@ -5,6 +5,7 @@ import stripe
 
 from zope import component
 from zope import interface
+from zope.annotation import factory as an_factory
 
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
@@ -18,9 +19,9 @@ from nti.store.payments import interfaces as pay_interfaces
 class StripeException(Exception):
 	pass
 
-@component.adapter(nti_interfaces.IEntity)
+@component.adapter(nti_interfaces.IUser)
 @interface.implementer( pay_interfaces.IStripeCustomer)
-class StripeCustomer(Persistent):
+class _StripeCustomer(Persistent):
 	
 	_purchases = None
 	customer_id = None
@@ -52,6 +53,10 @@ class StripeCustomer(Persistent):
 		self.active_card = None
 		self.customer_id = None
 		self.clear_purchases()
+
+def _StripeConsumerFactory(user):
+	result = an_factory(_StripeCustomer)(user)
+	return result
 
 def create_stripe_customer(user, api_key=None):
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
