@@ -331,6 +331,7 @@ setup(
 			#'Pymacs >= 0.25',
 			'virtualenv >= 1.8.4',
 			'pip >= 1.2.1',
+			'mysql-python >= 1.2.4',
 			# Monitoring stats and instrumenting code
 			# See above for python-statsd
 			#'graphite-web >= 0.9.10', # web front end. Requires the /opt/graphite directory. Pulls in twisted.
