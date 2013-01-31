@@ -28,10 +28,11 @@ from ..boto_s3 import _read_key as read_key
 
 from cStringIO import StringIO
 import gzip
+import boto.exception
 
 from nti.tests import ConfiguringTestBase
 
-class TestBotoCDNKeyMapper(ConfiguringTestBase):
+class TestBotoS3(ConfiguringTestBase):
 	set_up_packages = ('nti.externalization', 'nti.contentlibrary')
 
 	def test_does_exist_cached(self):
@@ -56,6 +57,31 @@ class TestBotoCDNKeyMapper(ConfiguringTestBase):
 		assert_that( unit.does_sibling_entry_exist( 'baz' ), is_( same_instance( unit.does_sibling_entry_exist( 'baz' ) ) ) )
 
 		assert_that( unit.does_sibling_entry_exist( 'bar' ), is_not( same_instance( unit.does_sibling_entry_exist( 'baz' ) ) ) )
+
+	def test_response_exception(self):
+		class Bucket(object):
+			def get_key( self, k ):
+				return object()
+
+		class Key(object):
+			bucket = None
+			name = None
+			last_modified = None
+
+			def __init__( self, bucket=None, name=None ):
+				if bucket: self.bucket = bucket
+				if name: self.name = name
+
+
+			def open(self):
+				raise boto.exception.S3ResponseError("404", "Key not found")
+
+		key = Key()
+		key.name = 'foo/bar'
+		key.bucket = Bucket()
+		unit = BotoS3ContentUnit( key=key )
+
+		assert_that( unit.lastModified, is_( -1 ) )
 
 
 	def test_key_mapper(self):
