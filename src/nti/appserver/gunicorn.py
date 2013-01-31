@@ -204,8 +204,14 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			except socket.error:
 				logger.error( "Failed to create flash policy socket" )
 
-		if getattr( self.cfg, 'preload_app', None ): # pragma: no cover
+		if getattr( self.cfg, 'preload_app', None ) and self._preloaded_app is None: # pragma: no cover
 			logger.warn( "Preloading app before forking not supported" )
+			# Must be a class attribute since new worker objects are created by the Arbitrer
+			# TODO: make the dummy_app stuff go away and just do it the way gunicorn
+			# wants to, likewise with the sockets. This will require hooking in at a lower level,
+			# possibly the "Application" level.
+			#GeventApplicationWorker._preloaded_app = self._init_server()
+			#GeventApplicationWorker.app_server = GeventApplicationWorker._preloaded_app
 
 
 	def _init_server( self ):
@@ -229,8 +235,10 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		has forked if we are using ZEO; even though we do not have pthreads that fail to survive
 		the fork, the asyncore connection and ZODB cache do not work properly when forked.
 
-		Also, we have ZMQ background threads. So even if we have, say RelStorage and no ZEO threads,
-		we can still fail to fork properly.
+		At one time, we had ZMQ background threads. So even if we have, say RelStorage and no ZEO threads,
+		we could still fail to fork properly. In theory this restriction is lifted as of 20130130, but
+		that combo needs tested. It also seems that something is wrong with the way we're handling the sockets
+		across the process fork too, such that they don't answer correctly.
 		"""
 		gevent.hub.get_hub() # init the hub in this new thread/process
 		if not self._preloaded_app:
