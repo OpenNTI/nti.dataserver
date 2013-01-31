@@ -16,6 +16,8 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.store.payments import interfaces as pay_interfaces
 
+logger = __import__('logging').getLogger(__name__)
+
 class StripeException(Exception):
 	pass
 
@@ -52,16 +54,32 @@ def _StripeConsumerFactory(user):
 	result = an_factory(_StripeCustomer)(user)
 	return result
 
+def _do_stripe_operation(func, *args, **kwargs):
+	try:
+		result = func(*args, **kwargs)
+		return result
+	except stripe.CardError, e:
+		body = e.json_body
+		raise StripeException('%s(%s)' % (body['error'], body['message']))
+	except stripe.InvalidRequestError, e:
+		raise StripeException(*e.args)
+	except stripe.AuthenticationError, e:
+		raise StripeException(*e.args)
+	except stripe.APIConnectionError, e:
+		# Network communication with Stripe failed
+		raise StripeException(*e.args)
+	except stripe.StripeError, e:
+		raise StripeException(*e.args)
+	except Exception, e:
+		raise StripeException(*e.args)
+	
 def create_stripe_customer(user, api_key=None):
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	profile = user_interfaces.IUserProfile(user)
 	email = getattr(profile, 'email', None)
 	description = getattr(profile, 'description', None)
-	try:
-		customer = stripe.Customer.create(api_key=api_key, email=email, description=description)
-		return customer
-	except Exception, e:
-		raise StripeException(*e.args)
+	customer = _do_stripe_operation(stripe.Customer.create, api_key=api_key, email=email, description=description)
+	return customer
 
 def get_or_create_customer(user, api_key=None):
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
@@ -72,23 +90,17 @@ def get_or_create_customer(user, api_key=None):
 	return adapted
 
 def get_stripe_customer(customer_id, api_key=None):
-	try:
-		customer = stripe.Customer.retrieve(id, api_key)
-		return customer
-	except Exception, e:
-		raise StripeException(*e.args)
+	customer = _do_stripe_operation(stripe.Customer.retrieve, customer_id, api_key)
+	return customer
 	
 def delete_stripe_customer(customer_id, api_key=None):
 	customer = get_stripe_customer(customer_id, api_key)
-	try:
-		if customer:
-			customer.delete()
-			return True
-		return False
-	except Exception, e:
-		raise StripeException(*e.args)
+	if customer:
+		_do_stripe_operation(customer.delete)
+		return True
+	return False
 
-def delete_customer(user, card=None, api_key=None):
+def delete_customer(user, api_key=None):
 	result = False
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	adapted = pay_interfaces.IStripeCustomer(user)
@@ -103,11 +115,8 @@ def update_stripe_customer(customer_id, card=None, email=None, description=None,
 		customer.card = card
 		customer.email = email
 		customer.description = description
-		try:
-			customer.save() 
-			return True
-		except Exception, e:
-			raise StripeException(*e.args)
+		_do_stripe_operation(customer.save)
+		return True
 	return False
 
 def update_customer(user, card=None, api_key=None):
@@ -132,21 +141,19 @@ def create_stripe_token(customer_id=None, number=None, exp_month=None, exp_year=
 				'address_line1': kwargs.get('address_line1', None) or kwargs.get('address', None),
 				'address_line2': kwargs.get('address_line2', None) or kwargs.get('address2', None),
 				'address_city': kwargs.get('address_city', None) or kwargs.get('city', None),
+				'address_state': kwargs.get('address_state', None) or kwargs.get('state', None),
 				'address_zip': kwargs.get('address_zip', None) or kwargs.get('zip', None),
-				'address_country': kwargs.get('address_country', None) or kwargs.get('country', None)
+				'address_country': kwargs.get('address_country', 'None') or kwargs.get('country', None)
 			}
 		data = {'card':cc}
 	else:
 		data = {'customer': customer_id}
 	
-	try:
-		token = stripe.Token.create(api_key=api_key, **data)
-		return token
-	except Exception, e:
-		raise StripeException(*e.args)
+	token = _do_stripe_operation(stripe.Token.create, api_key=api_key, **data)
+	return token
 
 def create_card_token(customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
-	token = create_stripe_token(locals())
+	token = create_stripe_token(customer_id, number, exp_month, exp_year, cvc, api_key, **kwargs)
 	return token.id
 
 def create_stripe_charge(amount, currency='USD', customer_id=None, card=None, description=None, api_key=None):
@@ -157,14 +164,11 @@ def create_stripe_charge(amount, currency='USD', customer_id=None, card=None, de
 	else:
 		data['customer'] = customer_id
 		
-	try:
-		charge = stripe.Charge.create(api_key=api_key, **data)
-		return charge
-	except Exception, e:
-		raise StripeException(*e.args)
+	charge = _do_stripe_operation(stripe.Charge.create, api_key=api_key, **data)
+	return charge
 
 def create_charge(amount, currency='USD', customer_id=None, card=None, description=None, api_key=None):
-	charge = create_stripe_charge(locals())
+	charge = create_stripe_charge(amount, currency, customer_id, card, description, api_key)
 	if charge.failure_message:
 		raise StripeException(charge.failure_message)
 	return charge.id
