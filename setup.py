@@ -114,7 +114,7 @@ setup(
 		 # JAM is testing it, so don't hard pin this to 3.10.5; updates
 		 # won't get picked up except on a new environment or manually. Depending on the final release,
 		 # we may need to explicitly list each component.
-		'ZODB3 == 3.10.5',
+		'ZODB3 >= 3.10.5',
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
 		# 'MySQL-python', # mysql adapter
