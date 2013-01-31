@@ -15,7 +15,9 @@ class TestPaymentUtils(ConfiguringTestBase):
 		assert_that(utils.is_valid_creditcard_number("4111 1111 1111 1112"), is_(False))
 		assert_that(utils.is_valid_creditcard_number("5105105105105100"), is_(True))
 		assert_that(utils.is_valid_creditcard_number(5105105105105100), is_(True))
-	
+		assert_that(utils.is_valid_creditcard_number("111"), is_(False))
+		assert_that(utils.is_valid_creditcard_number("5105105105105XY0"), is_(False))
+		
 	def test_validate_credit_card(self):
 		utils.validate_credit_card(5105105105105100, "01", "12", "647")
 		try:
@@ -31,13 +33,13 @@ class TestPaymentUtils(ConfiguringTestBase):
 			pass
 		
 		try:
-			utils.validate_credit_card("5105105105105100", "1", "3", "647")
+			utils.validate_credit_card("5105105105105100", "10", "3", "647")
 			self.fail()
 		except:
 			pass
 		
 		try:
-			utils.validate_credit_card("5105105105105100", "1", "3", "xx")
+			utils.validate_credit_card("5105105105105100", "01", "13", "xx")
 			self.fail()
 		except:
 			pass
