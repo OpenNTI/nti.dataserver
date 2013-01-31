@@ -27,12 +27,6 @@ class _StripeCustomer(Persistent):
 	customer_id = None
 	active_card = None
 
-	def __init__(self, customer_id=None, active_card=None):
-		if customer_id:
-			self.customer_id = customer_id
-		if active_card:
-			self.active_card = active_card
-		
 	@property
 	def id(self):
 		return self.customer_id

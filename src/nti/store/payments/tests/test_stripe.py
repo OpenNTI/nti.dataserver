@@ -29,6 +29,7 @@ class TestStripe(ConfiguringTestBase):
 		assert_that(adapted.active_card, is_(None))
 		adapted.active_card = 'foo'
 		adapted.customer_id = 'xyz'
+		assert_that(adapted.id, is_('xyz'))
 		assert_that(adapted.customer_id, is_('xyz'))
 		assert_that(adapted.active_card, is_('foo'))
 		adapted.add_purchase('x','y')
