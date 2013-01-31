@@ -3,6 +3,7 @@ from __future__ import unicode_literals, print_function, absolute_import
 import unittest
 
 from nti.store.payments import utils
+
 from nti.store.payments.tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_)
