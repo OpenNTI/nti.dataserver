@@ -16,8 +16,6 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.store.payments import interfaces as pay_interfaces
 
-logger = __import__('logging').getLogger(__name__)
-
 class StripeException(Exception):
 	pass
 
@@ -25,30 +23,30 @@ class StripeException(Exception):
 @interface.implementer( pay_interfaces.IStripeCustomer)
 class _StripeCustomer(Persistent):
 	
-	_purchases = None
+	_charges = None
 	customer_id = None
-	active_card = None
+	card = None
 
 	@property
 	def id(self):
 		return self.customer_id
 	
 	@property
-	def purchases(self):
-		if self._purchases is None:
-			self._purchases = PersistentMapping()
-		return self._purchases
+	def charges(self):
+		if self._charges is None:
+			self._charges = PersistentMapping()
+		return self._charges
 	
-	def add_purchase(self, purchase_id, item_id):
-		self.purchases[purchase_id] = item_id
+	def add_charge(self, purchase_id, item_id):
+		self.charges[purchase_id] = item_id
 		
-	def clear_purchases(self):
-		self.purchases.clear()
+	def clear_charges(self):
+		self.charges.clear()
 		
 	def clear(self):
-		self.active_card = None
+		self.card = None
 		self.customer_id = None
-		self.clear_purchases()
+		self.clear_charges()
 
 def _StripeConsumerFactory(user):
 	result = an_factory(_StripeCustomer)(user)
@@ -82,19 +80,20 @@ def create_stripe_customer(user, api_key=None):
 	return customer
 
 def get_or_create_customer(user, api_key=None):
+	customer = None
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	adapted = pay_interfaces.IStripeCustomer(user)
 	if adapted.customer_id is None:
 		customer = create_stripe_customer(user)
 		adapted.customer_id = customer.id
-	return adapted
+	return (adapted, customer)
 
 def get_stripe_customer(customer_id, api_key=None):
 	customer = _do_stripe_operation(stripe.Customer.retrieve, customer_id, api_key)
 	return customer
 	
-def delete_stripe_customer(customer_id, api_key=None):
-	customer = get_stripe_customer(customer_id, api_key)
+def delete_stripe_customer(customer=None, customer_id=None, api_key=None):
+	customer = customer or get_stripe_customer(customer_id, api_key)
 	if customer:
 		_do_stripe_operation(customer.delete)
 		return True
@@ -105,28 +104,35 @@ def delete_customer(user, api_key=None):
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	adapted = pay_interfaces.IStripeCustomer(user)
 	if adapted.customer_id:
-		result = delete_stripe_customer(adapted.customer_id, api_key)
+		result = delete_stripe_customer(customer_id=adapted.customer_id, api_key=api_key)
 		adapted.clear()
 	return result
 
-def update_stripe_customer(customer_id, card=None, email=None, description=None, api_key=None):
-	customer = get_stripe_customer(customer_id, api_key)
+def update_stripe_customer(customer=None, customer_id=None, email=None, description=None, api_key=None):
+	customer = customer or get_stripe_customer(customer_id, api_key)
 	if customer:
-		customer.card = card
 		customer.email = email
 		customer.description = description
 		_do_stripe_operation(customer.save)
 		return True
 	return False
 
-def update_customer(user, card=None, api_key=None):
+def update_customer(user, customer=None, api_key=None):
+	"""
+	Update a customer
+	
+	:user : username or IUser
+	:customer: Stripe customer
+	:api_key: api_key
+	"""
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	profile = user_interfaces.IUserProfile(user)
 	email = getattr(profile, 'email', None)
 	description = getattr(profile, 'description', None)
-	if profile.customer_id:
-		return update_stripe_customer(	profile.customer_id, 
-										card=card,
+	adapted = pay_interfaces.IStripeCustomer(user)
+	if adapted.customer_id:
+		return update_stripe_customer(	customer=customer,
+										customer_id=adapted.customer_id,
 										email=email,
 										description=description,
 										api_key=api_key)
@@ -172,3 +178,13 @@ def create_charge(amount, currency='USD', customer_id=None, card=None, descripti
 	if charge.failure_message:
 		raise StripeException(charge.failure_message)
 	return charge.id
+
+def process_payment(user, token, amount, currency='USD', ntiid=None, description=None, api_key=None):
+	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	charge_id = create_charge(amount, currency, card=token, description=description, api_key=api_key)
+	adapted = pay_interfaces.IStripeCustomer(user)
+	adapted.card = token
+	if ntiid and charge_id:
+		adapted.add_charge(charge_id, ntiid)
+	return charge_id
+	
