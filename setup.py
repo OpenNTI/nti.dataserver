@@ -125,7 +125,6 @@ setup(
 		'RelStorage >= 1.5.1',
 		'python-memcached >= 1.48', # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
-
 		'anyjson >= 0.3.3',
 		'boto >= 2.7.0', # amazon
 		'brownie >= 0.5.1', # Common utilities

@@ -1,35 +1,17 @@
 Dependencies (macports):
-- zmq22				# 2012-10-24
 - gcc45				# 2012-03-07
 - llvm-gcc-4.2		# 2012-03-07 (Optional)
-
-- py27-cython		# 2011-08-31
-- py27-gevent		# For greenlets, runloop, and sockio. 2011-08-26
-- py27-sphinx		# 1.0.7 for documentation generation
-- py27-lxml			# XML and HTML parsing. v2.3. 2011-09-14
-- py27-html5lib		# 2011-09-14, 0.90, extends lxml's HTML support
-- py27-anyjson		# 2011-09-15, 0.3.1, Wrapper for JSON support
-- py27-nose			# 2011-10-25, 1.1.2, unittest support
-- py27-coverage		# 2011-10-25, 3.5.1, code coverage test module
-
-- py27-yaml			# 2011-11-21 - (Optional)
-- py27-matplotlib	# 2011-11-21 - (Optional)
-- py27-numpy		# 2011-11-21 - (Optional)
+- python27			# 2011-08-31
 
 - nginx				# 2011-12-31, 1.0.11 (Optional)
-- py27-epydoc		# 2012-01-01, 3.0.1
+- py27-epydoc		# 2012-01-01, 3.0.1  (Optional)
 - HAProxy			# 2010-01-04, 1.5dev (Optional)
 - stunnel			# "", latest, (Optional)
 - pypy				# 2012-09-10 (Optional), if it takes a long time to install, try to build with build.jobs=1
 
 - mercurial 		# 2012-02-24 (Optional)
-- py27-hggit		# 2012-02-24 (Optional)
-- libmemcached		# 2012-02-24, 1.0.4
-- mysql5-devel		# "", When you install, link mysql_config5 to mysql_config, try it with configure.compiler=llvm-gcc-4.2 if fail w/o
-
-- SuiteSparse 		# 2012-03-07 - (Optional)
-- swig-python		# 2012-03-07 - (Optional)
-- py27-scipy		# 2012-03-07 - (Optional)
+- libmemcached		# 2012-02-24, 1.0.4 (Optional)
+- mysql5-devel		# "", When you install, link mysql_config5 to mysql_config, try it with configure.compiler=llvm-gcc-4.2 if fail w/o (Optional)
 
 Dependencies for content generation:
 - Full TeX distribution (including extras) - macports
@@ -57,5 +39,3 @@ Dependencies for content generation:
 Dependencies (other):
 - Phusion Passenger # 3.0.9, 2011-10-08
 
-- Optionals (easy_install / pip)
-psutil				# process monitoring
