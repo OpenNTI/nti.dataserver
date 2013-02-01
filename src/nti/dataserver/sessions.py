@@ -69,7 +69,6 @@ class SessionService(object):
 
 	def _spawn_cluster_listener(self):
 		def read_incoming():
-			import sys
 			sub = self._redis.pubsub()
 			sub.subscribe( self.channel_name )
 			for msg_dict in sub.listen():

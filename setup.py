@@ -117,7 +117,7 @@ setup(
 		'ZODB3 >= 3.10.5',
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
-		# 'MySQL-python', # mysql adapter
+		# 'MySQL-python', # mysql adapter--NOT needed, loaded from umysqldb
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
 		# It's currently being installed from requirements.txt because it has no release on pypi.
 		# It depends on umysql, which has been released as 2.5 on pypi
@@ -331,7 +331,6 @@ setup(
 			#'Pymacs >= 0.25',
 			'virtualenv >= 1.8.4',
 			'pip >= 1.2.1',
-			'mysql-python >= 1.2.4',
 			# Monitoring stats and instrumenting code
 			# See above for python-statsd
 			#'graphite-web >= 0.9.10', # web front end. Requires the /opt/graphite directory. Pulls in twisted.
