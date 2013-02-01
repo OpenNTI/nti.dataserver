@@ -20,64 +20,7 @@ import gevent
 import gevent.monkey
 TRACE_GREENLETS = False
 
-if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules: # Don't do this when we are loaded for conflict resolution into somebody else's space
-
-	# As of 2012-10-30 and gevent 1.0rc1, the change in 1.0b4 to patch os.read and os.write
-	# is undone. Comments below left for historical interest
-
-	# The below is fixed as of 2012-09-21. If pserve hangs on a signal, you need to update.
-	# This will be deleted in a few weeks.
-	# import gevent.os
-	# try:
-	# 	gevent.os.__all__.remove('read')
-	# 	gevent.os.__all__.remove('write')
-	# except ValueError:
-	# 	# As of 1.0b4/2012-09-11, os.read and os.write are patched to
-	# 	# operate in non-blocking mode when os is patched. Part of this non-blocking
-	# 	# activity is to catch OSError with errno == EAGAIN, since non-blocking descriptors
-	# 	# will raise EAGAIN when there is nothing to read. However, this breaks if the process
-	# 	# was already expecting to do non-blocking IO and expecting to handle EAGAIN: It no longer
-	# 	# gets these exceptions and may find itself trapped in an infinite loop. Such is the
-	# 	# case with gunicorn.arbitrer. One symptom is that the master doesn't exit on a ^C (as signal
-	# 	# handling is tied to reading from a non-blocking pipe).
-	# 	logger = __import__('logging').getLogger(__name__) # Only import this after the patch, it allocates locks
-	# 	logger.exception( "Failed to remove os.read/write patch. Gevent outdated?")
-	# 	raise
-
-	# As of 2012-10-06, patching sys/std[out/err/in] hangs gunicorn, so be sure it's false (this is marked experimental in 1.0rc1)
-	gevent.monkey.patch_all(sys=False, Event=False)
-	# NOTE: There is an incompatibility with patching 'thread' and the 'multiprocessing' module:
-	logger = __import__('logging').getLogger(__name__) # Only import this after the patch, it allocates locks
-	logger.info( "Monkey patching most libraries for gevent" )
-	# The problem is that multiprocessing.queues.Queue uses a half-duplex multiprocessing.Pipe,
-	# which is implemented with os.pipe() and _multiprocessing.Connection. os.pipe isn't patched
-	# by gevent, as it returns just a fileno. _multiprocessing.Connection is an internal implementation
-	# class implemented in C, which exposes a 'poll(timeout)' method; under the covers, this issues a
-	# (blocking) select() call: hence the need for a real thread. Except for that method, we could
-	# almost replace Connection with gevent.fileobject.SocketAdapter, plus a trivial
-	# patch to os.pipe (below). Sigh, so close. (With a little work, we could replicate that method)
-
-	# import os
-	# import fcntl
-	# os_pipe = os.pipe
-	# def _pipe():
-	#	r, w = os_pipe()
-	#	fcntl.fcntl(r, fcntl.F_SETFL, os.O_NONBLOCK)
-	#	fcntl.fcntl(w, fcntl.F_SETFL, os.O_NONBLOCK)
-	#	return r, w
-	#os.pipe = _pipe
-
-	# However, there is a more serious conflict. We MUST have greenlet local things like
-	# transactions. We can do that with some careful patching. But then we must have
-	# greenlet-aware locks. If we patch them as well, then the ProcessPoolExecutor fails.
-	# Basically there's a conflict between multiprocessing and greenlet locks, or Real threads
-	# and greenlet locks.
-	# So it turns out to be easier to patch the ProcessPoolExecutor to use "threads"
-	# and patch the threading system.
-	import gevent.local
-	import threading
-
-	_threading_local = __import__('_threading_local')
+def _patch_process_pool_executor():
 
 	import concurrent.futures
 	import multiprocessing
@@ -89,6 +32,7 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 		return concurrent.futures.ThreadPoolExecutor( max_workers )
 	concurrent.futures.ProcessPoolExecutor = ProcessPoolExecutor
 
+def _patch_zeo_client_storage_deadlock():
 	# Patch for try/finally missing in ZODB 3.10.5 that can lead to deadlock
 	# See https://bugs.launchpad.net/zodb/+bug/1048644
 	def tpc_begin(self, txn, tid=None, status=' '):
@@ -129,7 +73,7 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	import ZEO.ClientStorage
 	ZEO.ClientStorage.ClientStorage.tpc_begin = tpc_begin
 
-
+def _patch_thread_stop():
 	# The dummy-thread deletes __block, which interacts
 	# badly with forking process with subprocess: after forking,
 	# Thread.__stop is called, which throws an exception
@@ -141,23 +85,7 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 			setattr( self, '_Thread__stopped', True )
 	setattr( threading.Thread, '_Thread__stop', __stop )
 
-
-
-	# depending on the order of imports, we may need to patch
-	# some things up manually.
-	# NOTE: This list is not complete.
-	# NOTE: These things are critical to the operation of the system,
-	# so if they aren't patched due to a bad import order, we
-	# bail
-	import transaction
-	if gevent.local.local not in transaction.ThreadTransactionManager.__bases__:
-		raise TypeError( "Transaction package not monkey patched. Bad import order" )
-
-	import zope.component
-	import zope.component.hooks
-	if gevent.local.local not in type(zope.component.hooks.siteinfo).__bases__:
-		raise TypeError( "zope.component package not monkey patched. Bad import order" )
-
+def _patch_logging():
 	# Patch the logging package to be aware of greenlets and format things
 	# nicely
 	import logging
@@ -181,98 +109,117 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 
 	logging.LogRecord = _LogRecord
 
+
+if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules: # Don't do this when we are loaded for conflict resolution into somebody else's space
+
+	# As of 2012-10-30 and gevent 1.0rc1, the change in 1.0b4 to patch os.read and os.write
+	# is undone. Comments below left for historical interest
+
+	# The below is fixed as of 2012-09-21. If pserve hangs on a signal, you need to update.
+	# This will be deleted in a few weeks.
+	# import gevent.os
+	# try:
+	# 	gevent.os.__all__.remove('read')
+	# 	gevent.os.__all__.remove('write')
+	# except ValueError:
+	# 	# As of 1.0b4/2012-09-11, os.read and os.write are patched to
+	# 	# operate in non-blocking mode when os is patched. Part of this non-blocking
+	# 	# activity is to catch OSError with errno == EAGAIN, since non-blocking descriptors
+	# 	# will raise EAGAIN when there is nothing to read. However, this breaks if the process
+	# 	# was already expecting to do non-blocking IO and expecting to handle EAGAIN: It no longer
+	# 	# gets these exceptions and may find itself trapped in an infinite loop. Such is the
+	# 	# case with gunicorn.arbitrer. One symptom is that the master doesn't exit on a ^C (as signal
+	# 	# handling is tied to reading from a non-blocking pipe).
+	# 	logger = __import__('logging').getLogger(__name__) # Only import this after the patch, it allocates locks
+	# 	logger.exception( "Failed to remove os.read/write patch. Gevent outdated?")
+	# 	raise
+
+	# As of 2012-10-06, patching sys/std[out/err/in] hangs gunicorn, so be sure it's false (this is marked experimental in 1.0rc1)
+	gevent.monkey.patch_all(sys=False, Event=False)
+
+	# NOTE: There is an incompatibility with patching 'thread' and the 'multiprocessing' module:
+	# The problem is that multiprocessing.queues.Queue uses a half-duplex multiprocessing.Pipe,
+	# which is implemented with os.pipe() and _multiprocessing.Connection. os.pipe isn't patched
+	# by gevent, as it returns just a fileno. _multiprocessing.Connection is an internal implementation
+	# class implemented in C, which exposes a 'poll(timeout)' method; under the covers, this issues a
+	# (blocking) select() call: hence the need for a real thread. Except for that method, we could
+	# almost replace Connection with gevent.fileobject.SocketAdapter, plus a trivial
+	# patch to os.pipe (below). Sigh, so close. (With a little work, we could replicate that method)
+
+	# import os
+	# import fcntl
+	# os_pipe = os.pipe
+	# def _pipe():
+	#	r, w = os_pipe()
+	#	fcntl.fcntl(r, fcntl.F_SETFL, os.O_NONBLOCK)
+	#	fcntl.fcntl(w, fcntl.F_SETFL, os.O_NONBLOCK)
+	#	return r, w
+	#os.pipe = _pipe
+
+	# However, there is a more serious conflict. We MUST have greenlet local things like
+	# transactions. We can do that with some careful patching. But then we must have
+	# greenlet-aware locks. If we patch them as well, then the ProcessPoolExecutor fails.
+	# Basically there's a conflict between multiprocessing and greenlet locks, or Real threads
+	# and greenlet locks.
+	# So it turns out to be easier to patch the ProcessPoolExecutor to use "threads"
+	# and let gevent patch the threading system.
+
+	# Now that that's done, we can import some other things:
+
+	logger = __import__('logging').getLogger(__name__) # Only import this after the patch, it allocates locks
+	logger.info( "Monkey patching most libraries for gevent" )
+
+	import gevent.local
+	import threading
+	_threading_local = __import__('_threading_local') # TODO: Why is this imported now?
+
+	# And now the things to patch ProcessPoolExecutor as described
+	_patch_process_pool_executor()
+
+	_patch_zeo_client_storage_deadlock()
+
+	_patch_thread_stop()
+
+
+	# depending on the order of imports, we may need to patch
+	# some things up manually.
+	# NOTE: This list is not complete.
+	# NOTE: These things are critical to the operation of the system,
+	# so if they aren't patched due to a bad import order, we
+	# bail
+	import transaction
+	if gevent.local.local not in transaction.ThreadTransactionManager.__bases__:
+		raise TypeError( "Transaction package not monkey patched. Bad import order" )
+
+	import zope.component
+	import zope.component.hooks
+	if gevent.local.local not in type(zope.component.hooks.siteinfo).__bases__:
+		raise TypeError( "zope.component package not monkey patched. Bad import order" )
+
+	_patch_logging()
+
 	if TRACE_GREENLETS:
 		import greenlet
 		def greenlet_trace( event, origin ):
 			print( "Greenlet switching from", event, "to", origin, file=sys.stderr )
 		greenlet.settrace( greenlet_trace )
 
-	del _LogRecord
+
 	del zope
 	del transaction
 	del threading
 	del _threading_local
+
+
+	logger.info( "Monkey-patching the MySQL driver for RelStorage to work with gevent" )
+
+	# Monkey-patch for RelStorage to use pure-python drivers that are non-blocking
+	from . import relstorage_umysqldb_patch_on_import
+	relstorage_umysqldb_patch_on_import.patch()
+
 else:
 	logger = __import__('logging').getLogger(__name__)
 	logger.info( "Not monkey patching any gevent libraries" )
-
-
-# Monkey-patch for RelStorage to use pure-python drivers that are non-blocking
-try:
-	logger.debug( "Attempting MySQL monkey patch" )
-	import umysqldb
-	import pymysql.err
-except ImportError as e:
-	logger.exception( "Please 'pip install -r requirements.txt' to get non-blocking drivers." )
-	# This early, logging is probably not set up
-	import traceback
-	print( "Please 'pip install -r requirements.txt' to get non-blocking drivers.", file=sys.stderr )
-	traceback.print_exc( e )
-else:
-	logger.info( "Monkey-patching the MySQL driver for RelStorage to work with gevent" )
-
-	umysqldb.install_as_MySQLdb()
-
-	# The underlying umysql driver doesn't handle dicts as arguments
-	# to queries (as of 2012-09-13). Until it does, we need to do that
-	# because RelStorage uses that in a few places
-
-	import umysqldb.connections
-	from umysqldb.connections import encoders, notouch
-	class Connection(umysqldb.connections.Connection):
-
-		def query( self, sql, args=() ):
-			__traceback_info__ = args
-			if isinstance( args, dict ):
-				# First, encode them as strings
-				args = {k: encoders.get(type(v), notouch)(v) for k, v in args.items()}
-				# now format the string
-				sql = sql % args
-				# and delete the now useless args
-				args = ()
-			super(Connection,self).query( sql, args=args )
-
-	# Patching the module itself seems to be not needed because
-	# RelStorage uses 'mysql.Connect' directly. And if we patch the module,
-	# we get into recursive super calls
-	#umysqldb.connections.Connection = Connection
-	# Also patch the re-export of it
-	umysqldb.connect = Connection
-	umysqldb.Connection = Connection
-	umysqldb.Connect = Connection
-
-	logger.info( "Monkey-patching RelStorage to recognize new close exceptions" )
-	# Now got to patch relstorage to recognize some exceptions. If these
-	# don't get caught, relstorage may not properly close the connection, or fail
-	# to recognize that the connection is already closed
-	import relstorage.adapters.mysql
-	assert relstorage.adapters.mysql.MySQLdb is umysqldb
-	# NOTE: as-of the released version of umysqldb at 2013-01-14, the error handling
-	# mapping is broken. Error handling works like this:
-	# A Connection has an errorhandler
-	# A Cursor copies the Connection's errorhandler; both of these direct unexpected exceptions
-	# through the error handler.
-	# pymysql's connections use pymysql.err.defaulterrorhandler, which translates anything
-	# that is NOT a subclass of pymysql.err.Error into that class.
-	# However, umysqldb's defaulterrorhandler simply raises the exception; this is because
-	# many places already manually translate exceptions.
-	# The problem is that while many places do, some places do not.
-	# At this writing, it's not clear if the best thing to do is to add more exceptions
-	# to the lists below, or try to patch defaulterrorhandler.
-	# Since the more limited thing is to add more exceptions, then that's what we do.
-	# (However, changing defaulterrorhandler would probably result in a higher-level exception
-	# from relstorage, a POSException, which might get better handling by the transaction package.
-	# TODO: Investigate that.)
-	for attr in (relstorage.adapters.mysql,
-				 relstorage.adapters.mysql.MySQLdbConnectionManager ):
-		 # close_exceptions: "to ignore when closing the connection"
-		attr.close_exceptions += (pymysql.err.Error, # The one usually mapped to
-								  IOError) # This one can escape mapping
-
-	for attr in (relstorage.adapters.mysql,
-				 relstorage.adapters.mysql.MySQLdbConnectionManager):
-		# disconnected_exceptions: "indicates the connection is disconnected"
-		attr.disconnected_exceptions += (IOError,) # This one can escape mapping; note we don't make pymysql.err.Error indicate disconnection
 
 
 def patch():
