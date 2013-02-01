@@ -23,5 +23,5 @@ class StripePayment(object):
 		description = description or 'Payment for "%s"' % ntiid
 		cid = nti_stripe.process_payment(username, token=token, amount=amount, currency=currency,
 										 ntiid=ntiid, description=description)
-		return {'chargeID': cid}
+		return {'TransactionID': cid}
 		
