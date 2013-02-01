@@ -60,6 +60,9 @@ class ITransactionEvent(component.interfaces.IObjectEvent):
 class ITransactionCompleted(ITransactionEvent):
 	transaction_id = schema.TextLine(title="Transaction identifer")
 	
+class ITransactionFailed(ITransactionEvent):
+	pass
+
 @interface.implementer(ITransactionEvent)
 class TransactionEvent(component.interfaces.ObjectEvent):
 
@@ -85,15 +88,14 @@ class TransactionCompleted(TransactionEvent):
 	def transaction_id(self):
 		self._transaction_id
 	
-@interface.implementer(ITransactionCompleted)
+@interface.implementer(ITransactionFailed)
 class TransactionFailed(TransactionEvent):
 
 	def __init__( self, user, transaction, failure_message=None, failure_code=None):
-		super(TransactionCompleted,self).__init__( user, transaction, TRX_FAILED)
+		super(TransactionFailed,self).__init__( user, transaction, TRX_FAILED)
 		self.failure_code = failure_code 
 		self.failure_message = failure_message
 				
-
 CUSTOMER_CREATED = 'Created'
 CUSTOMER_DELETED = 'Deleted'
 	
