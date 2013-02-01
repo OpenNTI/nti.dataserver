@@ -29,7 +29,7 @@ from zc import intid as zc_intid
 from nti.ntiids import ntiids
 from . import interfaces
 from ._metaclass import _ChatObjectMeta
-from .interfaces import CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNELS
+from .interfaces import CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_STATE, CHANNELS
 from .interfaces import STATUS_POSTED, STATUS_SHADOWED, STATUS_PENDING #, STATUS_INITIAL
 
 class MessageTooBig(sio_interfaces.SocketEventHandlerClientError):
@@ -69,7 +69,9 @@ class _MeetingMessagePostPolicy(object):
 
 
 	def _treat_recipients_like_default_channel( self, msg_info ):
-		return msg_info.is_default_channel() or not msg_info.recipients_without_sender
+		return (msg_info.is_default_channel() # Actually on the default channel
+				or not msg_info.recipients_without_sender # No recipient list
+				or msg_info.channel == CHANNEL_STATE ) # state update
 
 	def _get_recipient_names_for_message( self, msg_info ):
 		if self._treat_recipients_like_default_channel( msg_info ):
@@ -97,12 +99,21 @@ class _MeetingMessagePostPolicy(object):
 		return (recipient_names or self._get_recipient_names_for_message( msg_info )) \
 			   == (set(self._occupant_names) - self._names_excluded_when_considering_all())
 
-	def _is_message_on_supported_channel( self, msg_info ):
+	def _post_message_should_handle_message_channel( self, msg_info ):
 		"""
-		Whether the message is on a channel supported by this
-		room.
+		Called by :meth:`post_message` to determine whether it should be passed through
+		the usual handling rules. This class's implementation of `post_message` applies
+		no security rules and only understands the simplest content types, so we only
+		pass through the basic message types, plus the builtin-in chat status types.
 		"""
-		return (msg_info.channel or CHANNEL_DEFAULT) in (CHANNEL_DEFAULT, CHANNEL_WHISPER)
+		return (msg_info.channel or CHANNEL_DEFAULT) in (CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_STATE)
+
+	def _post_message_should_handle_channel_as_default( self, msg_info ):
+		"""
+		Called if there is no specific handler for the channel. If True, then the default handler
+		will be used. This implementation does not handle any other channels.
+		"""
+		return False
 
 	#: Research indicates that AIM uses a 1024 byte limit for the body (including formatting!)
 	#: while MSN uses a much smaller limit of 400 characters (though that's enforced on the client
@@ -135,9 +146,18 @@ class _MeetingMessagePostPolicy(object):
 		"""
 		# TODO: Got to modify the handler interaction to be able to inform
 		# the client about these problems
-		if not self._is_message_on_supported_channel( msg_info ):
+		if not self._post_message_should_handle_message_channel( msg_info ):
 			logger.debug( "Dropping message on unsupported channel %s", msg_info )
 			return False
+
+		# Then we better have a handler function for it
+		handler = getattr( self,
+						   '_post_message_handle_' + str(msg_info.channel or CHANNEL_DEFAULT),
+						   self._post_message_handle_DEFAULT if self._post_message_should_handle_channel_as_default( msg_info ) else None )
+
+		return handler( msg_info )
+
+	def _post_message_handle_DEFAULT( self, msg_info ):
 
 		if not self._does_message_conform_to_limits( msg_info ):
 			logger.debug( "Dropping message due to size limit" )
@@ -188,6 +208,21 @@ class _MeetingMessagePostPolicy(object):
 		# sharing lists, it doesn't make any difference.
 		#msg_info.sharedWith = BTrees.OOBTree.OOSet( msg_info.sharedWith )
 		return result
+
+	#: Whispers are handled the same as default
+	_post_message_handle_WHISPER = _post_message_handle_DEFAULT
+
+	def _post_message_handle_STATE( self, msg_info ):
+		STATES = ( 'active', 'composing', 'paused', 'inactive', 'gone' )
+		if not isinstance( msg_info.body, collections.Mapping ) \
+		  or 'state' not in msg_info.body or msg_info.body['state'] not in STATES:
+		  return False
+
+		# Ok, great. Send it to everyone without storing it or transcripting it
+		# or incrementing room message counts
+		recipient_names = self._get_recipient_names_for_message( msg_info )
+		self.emit_recvMessage( recipient_names, msg_info )
+		return True
 
 	###
 	# Things this policy doesn't implement
@@ -275,6 +310,7 @@ class _ModeratedMeetingState(Persistent):
 		return msg
 
 def _bypass_for_moderator( f ):
+	"The decorated function simply calls through to the superclass if the message sender is a moderator"
 	@functools.wraps(f)
 	def bypassing( self, msg_info ):
 		if self.is_moderated_by( msg_info.Sender ):
@@ -284,6 +320,7 @@ def _bypass_for_moderator( f ):
 	return bypassing
 
 def _only_for_moderator( f ):
+	"The decorated function can only be called if the message sender is a moderator; otherwise return false"
 	@functools.wraps(f)
 	def enforcing( self, msg_info ):
 		if not self.is_moderated_by( msg_info.Sender ):
@@ -292,6 +329,7 @@ def _only_for_moderator( f ):
 	return enforcing
 
 def _always_true_for_moderator( f ):
+	"The decorated function is always true if the message sender is a moderator; otherwise the function is run"
 	@functools.wraps(f)
 	def bypassing( self, msg_info ):
 		if self.is_moderated_by( msg_info.Sender ):
@@ -332,8 +370,13 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 		"""
 		return self.moderated_by_usernames
 
-	def _is_message_on_supported_channel( self, msg_info ):
+	def _post_message_should_handle_message_channel( self, msg_info ):
+		"If we pass something through to the default :meth:`post_message`, then it should be handled."
 		return (msg_info.channel or CHANNEL_DEFAULT) in CHANNELS
+
+	def _post_message_should_handle_channel_as_default( self, msg_info ):
+		"If we post something through to the default :meth:`post_message`, then handle it as default."
+		return True
 
 	@_always_true_for_moderator
 	def _does_message_conform_to_limits(self, msg_info ):
@@ -380,6 +423,14 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 			self._ensure_message_stored( msg_info )
 			self.emit_recvMessageForShadow( self.moderated_by_usernames, msg_info )
 			notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, self.moderated_by_usernames, self._room ) )
+
+	def _msg_handle_STATE( self, msg_info ):
+		"""
+		Moderated chats (multi-user chats by definition) simply do not transmit state info.
+
+		We may change this to be transmitted just for the moderators.
+		"""
+		return True # handled so don't log, just don't do anything
 
 	@_bypass_for_moderator
 	def _msg_handle_WHISPER( self, msg_info ):
