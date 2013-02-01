@@ -2,28 +2,31 @@ from __future__ import unicode_literals, print_function, absolute_import
 
 import six
 import time
-import uuid
 
 from zope import interface
+from zope.event import notify
+from zope.container import contained as zcontained
+from zope.annotation import interfaces as an_interfaces
 
 from persistent import Persistent
 
+from nti.dataserver.users import User
+from nti.dataserver import interfaces as nti_interfaces
+
 from . import interfaces as store_interfaces
 
-@interface.implementer( store_interfaces.IPurchaseAttempt)
-class PurchaseAttempt(Persistent):
+@interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable)
+class PurchaseAttempt(zcontained.Contained, Persistent):
 	
 	end_time = None
 	failure_code = None
 	failure_message = None
 	
-	def __init__(self, purchase_id, items, processor, state, start_time=None, end_time=None,
+	def __init__(self, items, processor, state, start_time=None, end_time=None,
 				 failure_code=None, failure_message=None):
 		
 		self.state = state
-		self.id = str(uuid.uuid4())
 		self.processor = processor
-		self.purchase_id = purchase_id
 		self.start_time = start_time if start_time else time.time()
 		self.items = frozenset([items]) if isinstance(items, six.string_types) else items			
 		if not end_time:
@@ -32,18 +35,22 @@ class PurchaseAttempt(Persistent):
 			self.failure_code = failure_code
 		if not failure_message:
 			self.failure_message = failure_message
-		
-	def __str__( self ):
-		return "%s,%s" % (self.purchase_id, self.state)
-
+	
 	def __repr__( self ):
-		return "%s(%s,%s,%s,%s)" % (self.__class__, self.id, self.purchase_id, self.state, self.items)
+		return "%s(%s,%s,%s)" % (self.__class__, self.state, self.start_time, self.items)
 	
 	def __eq__( self, other ):
-		return self is other or (isinstance(other, PurchaseAttempt) and self.id == other.id)
-	
-	def __hash__(self):
-		return hash(self.id)
+		return self is other or (isinstance(other, PurchaseAttempt) 
+								 and self.processor == other.processor 
+								 and self.start_time == other.start_time
+								 and self.items == other.items)
+
+	def __hash__( self ):
+		xhash = 47
+		xhash ^= hash(self.processor)
+		xhash ^= hash(self.start_time)
+		xhash ^= hash(self.items)
+		return xhash
 	
 	def has_completed(self):
 		return self.state in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_SUCCESSFUL)
@@ -57,7 +64,14 @@ class PurchaseAttempt(Persistent):
 	def is_pending(self):
 		return self.state in (store_interfaces.PA_STATE_STARTED, store_interfaces.PA_STATE_PENDING)
 	
-def create_purchase_attempt(purchase_id, items, processor, state=store_interfaces.PA_STATE_STARTED, start_time=None):
+def create_purchase_attempt(items, processor, state=store_interfaces.PA_STATE_STARTED, start_time=None):
 	state = state or store_interfaces.PA_STATE_UNKNOWN
 	items = frozenset() if not items else items	
-	return PurchaseAttempt(purchase_id, items, processor, state=state, start_time=start_time)
+	items = frozenset([items]) if isinstance(items, six.string_types) else frozenset(items)	
+	return PurchaseAttempt(items, processor, state=state, start_time=start_time)
+
+def create_purchase_attempt_and_start(user, items, processor, state=store_interfaces.PA_STATE_STARTED, start_time=None):	
+	result = create_purchase_attempt(items, processor, state=state, start_time=start_time)
+	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	notify(store_interfaces.PurchaseAttemptStarted(result, user))
+	return result

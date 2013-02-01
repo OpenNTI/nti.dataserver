@@ -1,6 +1,5 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
-import six
 import stripe
 
 from zope import interface
@@ -15,7 +14,6 @@ from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
-from nti.store import purchase
 from nti.store import interfaces as store_interfaces
 from nti.store.payments import interfaces as pay_interfaces
 
@@ -36,8 +34,8 @@ def _StripeCustomerFactory(user):
 	result = an_factory(_StripeCustomer)(user)
 	return result
 
-@interface.implementer(pay_interfaces.IPaymentProcessor)
-class _StripePaymentManager(Persistent):
+@interface.implementer(pay_interfaces.IStripePaymentProcessor)
+class _StripePaymentProcessor(Persistent):
 	
 	def _do_stripe_operation(self,func, *args, **kwargs):
 		try:
@@ -114,7 +112,6 @@ class _StripePaymentManager(Persistent):
 	
 	# ---------------------------
 
-	
 	def create_customer(self, user, api_key=None):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 		
@@ -172,35 +169,27 @@ class _StripePaymentManager(Persistent):
 			raise StripeException(charge.failure_message)
 		return charge.id
 	
-	def process_payment(self, user, token, amount, currency='USD', items=None, description=None, api_key=None):
-		
-		if items is not None:
-			if isinstance(items, six.string_types):
-				items = frozenset([items])
-			else:
-				items = frozenset(items) 
-		else:
-			items = frozenset()
-			
+	# ---------------------------
+	
+	def process_purchase(self, user, token, purchase, amount, currency, description, api_key=None):
+	
+		assert purchase.is_pending()
+						
 		# we need to create the user first
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 		self.get_or_create_customer(user, api_key=api_key)
 		
-		pa = purchase.create_purchase_attempt(token, items, store_interfaces.STRIPE_PROCESSOR)
-		notify(store_interfaces.PurchaseAttemptStarted(pa, user))
-		
 		try:
 			charge_id = self.create_charge(amount, currency, card=token, description=description, api_key=api_key)
 		
-			notify(store_interfaces.PurchaseAttemptSuccessful(pa, user))
+			notify(store_interfaces.PurchaseAttemptSuccessful(purchase, user))
 			
 			# notify items purchased
-			if items:
-				notify(pay_interfaces.ItemsPurchased(user, items, charge_id))
+			notify(pay_interfaces.ItemsPurchased(user, purchase.items, charge_id))
 			
 			return charge_id
 		except Exception, e:
 			message = str(e)
-			notify(store_interfaces.PurchaseAttemptFailed(pa, user, message))
+			notify(store_interfaces.PurchaseAttemptFailed(purchase, user, message))
 			
 	

@@ -2,8 +2,13 @@ from __future__ import unicode_literals, print_function, absolute_import
 
 import unittest
 
-from nti.dataserver.users import User
+import zope.intid
+from zope import component
 
+from nti.dataserver.users import User
+from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.store import purchase
 from nti.store import interfaces as store_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -11,10 +16,12 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.store.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_not)	
+from hamcrest import (assert_that, is_, is_not, has_length)	
 	
 class TestCustomerAdapter(ConfiguringTestBase):
 		
+	processor = store_interfaces.STRIPE_PROCESSOR
+	
 	def _create_user(self, username='nt@nti.com', password='temp001', **kwargs):
 		ds = mock_dataserver.current_mock_ds
 		ext_value = {'external_value':kwargs}
@@ -23,9 +30,27 @@ class TestCustomerAdapter(ConfiguringTestBase):
 	
 	@WithMockDSTrans
 	def test_purchase_hist(self):
-		user = self._create_user()
-		adapted = store_interfaces.IPurchaseHistory(user)
-		assert_that(adapted, is_not(None))
+		user = self._create_user()		
+		hist = store_interfaces.IPurchaseHistory(user, None)
+		assert_that(hist, is_not(None))
+		
+		pa = purchase.create_purchase_attempt('xyz', self.processor)
+		hist.add_purchase(pa)
+		assert_that(hist, has_length(1))
+		
+		intids = component.queryUtility( zope.intid.IIntIds )
+		assert_that(intids.queryId(pa), is_not(None))
+		
+		pa = purchase.create_purchase_attempt('xyz', self.processor)
+		hist.add_purchase(pa)
+		assert_that(hist, has_length(2))
+		
+		oid = to_external_ntiid_oid(pa)
+		assert_that(hist.get_purchase(oid), is_(pa))
+		
+		hist.remove_purchase(pa)
+		assert_that(hist, has_length(1))
+		
 			
 if __name__ == '__main__':
 	unittest.main()

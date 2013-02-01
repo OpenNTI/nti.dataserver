@@ -24,4 +24,24 @@ class IStripeCustomer(interface.Interface):
 	customer_id = schema.TextLine(title='customer id')
 	
 class IPaymentProcessor(interface.Interface):
-	pass
+	
+	def process_purchase(user, purchase, amount, currency, description):
+		"""
+		Process a purchase attempt
+		
+		:user Entity making the purchase
+		:purchase IPurchaseAttempt object
+		:amount: purchase amount
+		:current: currency ISO code
+		:description: purchase description
+		"""
+		
+class IStripePaymentProcessor(IPaymentProcessor):
+	
+	def process_purchase(user, token, purchase, amount, currency, description):
+		"""
+		Process a purchase attempt
+		
+		:token Credit Card token
+		"""
+
