@@ -4,7 +4,10 @@ import six
 import stripe
 
 from zope import interface
+from zope import component
 from zope.event import notify
+from zope import lifecycleevent 
+from zope.annotation import factory as an_factory
 
 from persistent import Persistent
 
@@ -12,12 +15,26 @@ from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
-from nti.store import transaction
+from nti.store import purchase
 from nti.store import interfaces as store_interfaces
 from nti.store.payments import interfaces as pay_interfaces
 
 class StripeException(Exception):
 	pass
+
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer( pay_interfaces.IStripeCustomer)
+class _StripeCustomer(Persistent):
+	
+	customer_id = None
+	
+	@property
+	def id(self):
+		return self.customer_id
+		
+def _StripeCustomerFactory(user):
+	result = an_factory(_StripeCustomer)(user)
+	return result
 
 @interface.implementer(pay_interfaces.IPaymentProcessor)
 class _StripePaymentManager(Persistent):
@@ -96,10 +113,7 @@ class _StripePaymentManager(Persistent):
 		return charge
 	
 	# ---------------------------
-	
-	def _get_customerId(self, user):
-		adapted = store_interfaces.ICustomer(user)
-		return adapted.getCustomerId(store_interfaces.STRIPE_PROCESSOR)
+
 	
 	def create_customer(self, user, api_key=None):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
@@ -110,28 +124,28 @@ class _StripePaymentManager(Persistent):
 		
 		# create and notify
 		customer = self.create_stripe_customer(email, description, api_key)
-		notify(store_interfaces.customerCreated(user, customer.id, store_interfaces.STRIPE_PROCESSOR))
+		su = pay_interfaces.IStripeCustomer(user)
+		su.customer_id = customer.id
+		lifecycleevent.created( su ) 
 		
-		# save customer id
-		adapted = store_interfaces.ICustomer(user)
-		adapted.setCustomerId(store_interfaces.STRIPE_PROCESSOR, customer.id)
-		
-		return customer
+		return su, customer
 	
 	def get_or_create_customer(self, user, api_key=None):
 		customer = None
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-		if self._get_customerId(user) is None:
-			customer = self.create_customer(user, api_key)			
-		return customer
+		adapted = pay_interfaces.IStripeCustomer(user)
+		if adapted.customer_id is None:
+			adapted, customer = self.create_customer(user, api_key)			
+		return adapted, customer
 
 	def delete_customer(self, user, api_key=None):
 		result = False
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-		customer_id = self._get_customerId(user)
-		if customer_id:
-			result = self.delete_stripe_customer(customer_id=customer_id, api_key=api_key)
-			notify(store_interfaces.customerDeleted(user, customer_id, store_interfaces.STRIPE_PROCESSOR))
+		adapted = pay_interfaces.IStripeCustomer(user)
+		if adapted.customer_id:
+			result = self.delete_stripe_customer(customer_id=adapted.customer_id, api_key=api_key)
+			lifecycleevent.removed(adapted)
+			adapted.customer_id = None
 		return result
 
 	def update_customer(self, user, customer=None, api_key=None):
@@ -139,10 +153,10 @@ class _StripePaymentManager(Persistent):
 		profile = user_interfaces.IUserProfile(user)
 		email = getattr(profile, 'email', None)
 		description = getattr(profile, 'description', None)
-		customer_id = self._get_customerId(user)
-		if customer_id:
+		adapted = pay_interfaces.IStripeCustomer(user)
+		if adapted.customer_id:
 			return self.update_stripe_customer(	customer=customer,
-												customer_id=customer_id,
+												customer_id=adapted.customer_id,
 												email=email,
 												description=description,
 												api_key=api_key)
@@ -160,31 +174,33 @@ class _StripePaymentManager(Persistent):
 	
 	def process_payment(self, user, token, amount, currency='USD', items=None, description=None, api_key=None):
 		
-		if items and isinstance(items, six.string_types):
-			items = (items,)
+		if items is not None:
+			if isinstance(items, six.string_types):
+				items = frozenset([items])
+			else:
+				items = frozenset(items) 
+		else:
+			items = frozenset()
 			
 		# we need to create the user first
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 		self.get_or_create_customer(user, api_key=api_key)
 		
-		trax = transaction.create_transaction(token, store_interfaces.STRIPE_PROCESSOR)
-		notify(store_interfaces.TransactionEvent(user, trax, store_interfaces.TRX_STARTED))
+		pa = purchase.create_purchase_attempt(token, items, store_interfaces.STRIPE_PROCESSOR)
+		notify(store_interfaces.PurchaseAttemptStarted(pa, user))
 		
 		try:
 			charge_id = self.create_charge(amount, currency, card=token, description=description, api_key=api_key)
 		
-			trax.state = store_interfaces.TRX_SUCCESSFUL
-			notify(store_interfaces.TransactionCompleted(user, trax, store_interfaces.TRX_SUCCESSFUL, charge_id))
+			notify(store_interfaces.PurchaseAttemptSuccessful(pa, user))
 			
 			# notify items purchased
-			for iid in items:
-				notify(pay_interfaces.ItemPurchased(user, iid, charge_id))
+			if items:
+				notify(pay_interfaces.ItemsPurchased(user, items, charge_id))
 			
 			return charge_id
 		except Exception, e:
 			message = str(e)
-			trax.failure_message = message
-			trax.state = store_interfaces.TRX_FAILED
-			notify(store_interfaces.TransactionFailed(user, trax, message))
+			notify(store_interfaces.PurchaseAttemptFailed(pa, user, message))
 			
 	

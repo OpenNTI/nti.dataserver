@@ -7,8 +7,8 @@ import unittest
 from nti.dataserver.users import User
 from nti.dataserver.users import interfaces as user_interfaces
 
-#from nti.store import interfaces as store_interfaces
 from nti.store.payments import _stripe as nti_stripe
+from nti.store.payments import interfaces as pay_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -17,7 +17,26 @@ from nti.store.tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, is_not)
 		
-@unittest.SkipTest
+class TestStripeCustomer(ConfiguringTestBase):
+		
+	def _create_user(self, username='nt@nti.com', password='temp001', **kwargs):
+		ds = mock_dataserver.current_mock_ds
+		ext_value = {'external_value':kwargs}
+		usr = User.create_user( ds, username=username, password=password, **ext_value)
+		return usr
+	
+	@WithMockDSTrans
+	def test_adapter(self):
+		user = self._create_user()
+		adapted = pay_interfaces.IStripeCustomer(user)
+		assert_that(adapted, is_not(None))
+		assert_that(adapted.customer_id, is_(None))
+		
+		adapted.customer_id = 'xyz'
+		assert_that(adapted.customer_id, is_('xyz'))
+		
+		
+#@unittest.SkipTest
 class TestStripeOps(ConfiguringTestBase):
 	
 	@classmethod
@@ -54,11 +73,9 @@ class TestStripeOps(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_update_delete_customer(self):
 		user = self._create_random_user()
-		scust = self.manager.get_or_create_customer(user)
+		adapted, scust = self.manager.get_or_create_customer(user)
 		assert_that(scust, is_not(None))
-		
-		#adapted = store_interfaces.ICustomer(user)
-		#assert_that(adapted.getCustomerId(store_interfaces.STRIPE_PROCESSOR), is_not(None))
+		assert_that(adapted.customer_id, is_not(None))
 		
 		profile = user_interfaces.IUserProfile(user)
 		setattr(profile, 'email', 'xyz@nt.com')
@@ -67,6 +84,8 @@ class TestStripeOps(ConfiguringTestBase):
 		
 		r = self.manager.delete_customer(user)
 		assert_that(r, is_(True))
+		adapted = pay_interfaces.IStripeCustomer(user)
+		assert_that(adapted.customer_id, is_(None))
 		
 	@WithMockDSTrans
 	def test_create_token_and_charge(self):
@@ -95,7 +114,7 @@ class TestStripeOps(ConfiguringTestBase):
 										 	zip = "73072",
 										 	state="OK",
 										 	country="USA")
-		cid = self.manager.process_payment(	user, token=t, amount=100,
+		cid = self.manager.process_payment(	user, token=t, amount=100, items=('xyz book',),
 											currency='USD', description="my payment")
 		
 		assert_that(cid, is_not(None))

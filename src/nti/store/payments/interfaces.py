@@ -4,24 +4,24 @@ import time
 
 from zope import schema
 from zope import interface
-from zope import component
 
-from nti.dataserver import interfaces as nti_interfaces
-
-class IItemPurchased(component.interfaces.IObjectEvent):
-	user = schema.Object(nti_interfaces.IUser, title="The entity that made the purchase")
-	ntiid = schema.TextLine(title="Item purchased identifier")
+class IItemsPurchased(interface.Interface):
+	items = interface.Attribute("Iterable of items purchased")
+	user = interface.Attribute("The entity that made the purchase")
 	time = schema.Float(title="Purchase timestamp")
-	transaction_id = schema.TextLine(title="A transaction identifier")
+	purchase_id = schema.TextLine(title="A purchase (trx) identifier")
 
-@interface.implementer(IItemPurchased)
-class ItemPurchased(component.interfaces.ObjectEvent):
+@interface.implementer(IItemsPurchased)
+class ItemsPurchased(object):
 
-	def __init__( self, user, ntiid, trxid, time=time.time()):
-		super(ItemPurchased,self).__init__( user )
+	def __init__( self, user, items, purchase_id, time=time.time()):
 		self.time = time
-		self.ntiid = ntiid
-		self.transaction_id = trxid
+		self.user = user
+		self.items = items
+		self.purchase_id = purchase_id
+	
+class IStripeCustomer(interface.Interface):
+	customer_id = schema.TextLine(title='customer id')
 	
 class IPaymentProcessor(interface.Interface):
 	pass
