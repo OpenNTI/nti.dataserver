@@ -9,10 +9,9 @@ from zope import component
 from nti.dataserver import interfaces as nti_interfaces
 
 class IItemPurchased(component.interfaces.IObjectEvent):
-	user = schema.Object(nti_interfaces.IUser,
-						   title="The entity that made the purchase")
+	user = schema.Object(nti_interfaces.IUser, title="The entity that made the purchase")
 	ntiid = schema.TextLine(title="Item purchsed identifier")
-	time = schema.Float("Purchase timestamp")
+	time = schema.Float(title="Purchase timestamp")
 	transactionid = schema.TextLine(title="A transaction identifier")
 
 @interface.implementer(IItemPurchased)
@@ -31,3 +30,8 @@ class IStripeCustomer(interface.Interface):
 	charges = schema.Dict(title='Customer purchase charges',
 							key_type=schema.TextLine(title='charge id'),
 							value_type=schema.TextLine(title='item purchased id (i.e. NTIID)'))
+	
+	
+
+class IPaymentManager(interface.Interface):
+	pass

@@ -63,37 +63,38 @@ class TestStripeCustomer(_BaseTestStripe, ConfiguringTestBase):
 		assert_that(adapted.customer_id, is_(None))
 		assert_that(adapted.card, is_(None))
 		
-@unittest.SkipTest
+#@unittest.SkipTest
 class TestStripeOps(_BaseTestStripe, ConfiguringTestBase):
 	
 	@classmethod
 	def setUpClass(cls):
 		_BaseTestStripe.setUpClass()
 		cls.customers = set()
+		cls.manager = nti_stripe._StripePaymentManager()
 	
 	@classmethod
 	def tearDownClass(cls):
 		_BaseTestStripe.tearDownClass()
 		for cid in cls.customers:
 			try:
-				nti_stripe.delete_stripe_customer(cid)
+				cls.manager.delete_stripe_customer(cid)
 			except:
 				pass
 		
 	@WithMockDSTrans
 	def test_create_update_delete_customer(self):
 		user = self._create_random_user()
-		adapted, scust = nti_stripe.get_or_create_customer(user)
+		adapted, scust = self.manager.get_or_create_customer(user)
 		
 		assert_that(scust, is_not(None))
 		assert_that(adapted.customer_id, is_not(None))
 		
 		profile = user_interfaces.IUserProfile(user)
 		setattr(profile, 'email', 'xyz@nt.com')
-		r = nti_stripe.update_customer(user, scust)
+		r = self.manager.update_customer(user, scust)
 		assert_that(r, is_(True))
 		
-		r = nti_stripe.delete_customer(user)
+		r = self.manager.delete_customer(user)
 		assert_that(r, is_(True))
 		adapted = pay_interfaces.IStripeCustomer(user)
 		assert_that(adapted.customer_id, is_(None))
@@ -102,40 +103,40 @@ class TestStripeOps(_BaseTestStripe, ConfiguringTestBase):
 		
 	@WithMockDSTrans
 	def test_create_token_and_charge(self):
-		t = nti_stripe.create_card_token(number="5105105105105100", 
-										 exp_month="11",
-										 exp_year="30",
-										 cvc="542",
-										 address="3001 Oak Tree #D16",
-										 city="Norman",
-										 zip = "73072",
-										 state="OK",
-										 country="USA")
+		t = self.manager.create_card_token(	number="5105105105105100", 
+											exp_month="11",
+											exp_year="30",
+											cvc="542",
+											address="3001 Oak Tree #D16",
+											city="Norman",
+											zip = "73072",
+											state="OK",
+											country="USA")
 		assert_that(t, is_not(None))
-		c = nti_stripe.create_charge(100, card=t, description="my charge")
+		c = self.manager.create_charge(100, card=t, description="my charge")
 		assert_that(c, is_not(None))
 		
 	@WithMockDSTrans
 	def test_process_payment(self):
 		user = self._create_random_user()
-		t = nti_stripe.create_card_token(number="5105105105105100", 
-										 exp_month="11",
-										 exp_year="30",
-										 cvc="542",
-										 address="3001 Oak Tree #D16",
-										 city="Norman",
-										 zip = "73072",
-										 state="OK",
-										 country="USA")
-		cid = nti_stripe.process_payment(user, token=t, amount=100,
-										 currency='USD', description="my payment")
+		t = self.manager.create_card_token(	number="5105105105105100", 
+										 	exp_month="11",
+										 	exp_year="30",
+										 	cvc="542",
+										 	address="3001 Oak Tree #D16",
+										 	city="Norman",
+										 	zip = "73072",
+										 	state="OK",
+										 	country="USA")
+		cid = self.manager.process_payment(	user, token=t, amount=100,
+											currency='USD', description="my payment")
 		
 		assert_that(cid, is_not(None))
 		
 		adapted = pay_interfaces.IStripeCustomer(user)
 		assert_that(adapted.card, is_not(None))
 		
-		nti_stripe.delete_customer(user)
+		self.manager.delete_customer(user)
 		
 if __name__ == '__main__':
 	unittest.main()
