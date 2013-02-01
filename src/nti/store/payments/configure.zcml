@@ -2,5 +2,7 @@
 <configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
 	<include package="zope.component" />
 
-	
+	<adapter factory="._stripe._StripeCustomerFactory"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides=".interfaces.IStripeCustomer" />
 </configure>

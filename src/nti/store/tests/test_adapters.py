@@ -22,11 +22,10 @@ class TestCustomerAdapter(ConfiguringTestBase):
 		return usr
 	
 	@WithMockDSTrans
-	def test_adapter(self):
+	def test_purchase_hist(self):
 		user = self._create_user()
-		adapted = store_interfaces.ICustomer(user)
+		adapted = store_interfaces.IPurchaseHistory(user)
 		assert_that(adapted, is_not(None))
-		adapted
 			
 if __name__ == '__main__':
 	unittest.main()
