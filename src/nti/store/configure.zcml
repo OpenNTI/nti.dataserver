@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+	<include package="zope.component" />
+
+	<adapter factory="._adapters._CustomerFactory"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides=".interfaces.ICustomer" />
+	
+	<include package=".payments" file="configure.zcml" />
+	
+</configure>
