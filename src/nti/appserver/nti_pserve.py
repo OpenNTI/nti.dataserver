@@ -15,6 +15,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+# Note that we must not import *anything* before the patch
 from nti.monkey import gevent_patch_on_import
 gevent_patch_on_import.patch()
 
