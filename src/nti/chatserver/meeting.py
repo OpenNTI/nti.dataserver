@@ -172,7 +172,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 
 	def post_message( self, msg_info ):
 		result = self._policy().post_message( msg_info )
-		if result == 1:
+		if result == 1 and result is not True:
 			self._MessageCount.increment()
 		return result
 

@@ -14,6 +14,7 @@ import anyjson as json
 
 from ZODB.DB import DB
 from ZODB.FileStorage import FileStorage
+from ZODB.interfaces import IConnection
 import transaction
 import os
 from zc import intid as zc_intid
@@ -56,6 +57,7 @@ class chat(object):
 	CHANNEL_DEFAULT = chat_interfaces.CHANNEL_DEFAULT
 	CHANNEL_WHISPER = chat_interfaces.CHANNEL_WHISPER
 	CHANNEL_POLL = chat_interfaces.CHANNEL_POLL
+	CHANNEL_STATE = chat_interfaces.CHANNEL_STATE
 
 
 
@@ -288,6 +290,12 @@ class TestChatserver(ConfiguringTestBase):
 		def __getitem__( self, k ):
 			return self.sessions[k]
 
+		def __len__( self ):
+			return len(self.sessions)
+
+		def __iter__( self ):
+			return self.sessions.itervalues()
+
 		def get_session( self, sid ):
 			try:
 				return self.sessions[sid]
@@ -296,6 +304,10 @@ class TestChatserver(ConfiguringTestBase):
 
 		def get_sessions_by_owner( self, owner ):
 			return [x for x in self.sessions.values() if x.owner == owner]
+
+		def clear_all_session_events(self):
+			for session in self:
+				del session.socket.events[:]
 
 	def _create_room( self, otherDict=None, meeting_storage_factory=chat.TestingMappingMeetingStorage ):
 		"""
@@ -570,12 +582,69 @@ class TestChatserver(ConfiguringTestBase):
 		msg.recipients = ['chris'] # But the default channel
 		msg.Body = 'This is the body'
 		chatserver.post_message_to_room( room.ID, msg )
+		assert_that( IConnection( msg, None ), is_( not_none() ) )
 
 		for user in ('sjohnson', 'chris', 'jason'):
 			assert_that( chat_transcripts.transcript_for_user_in_room( user, room.ID ).get_message( msg.ID ), is_( msg ) )
 			user = users.User.get_user( user )
 			tx_id = chat_transcripts._transcript_ntiid( room, user, ntiids.TYPE_TRANSCRIPT )
 			assert_that( ntiids.find_object_with_ntiid( tx_id ).get_message( msg.ID ), is_( msg ) )
+
+	@WithMockDSTrans
+	def test_msg_to_state_channel_unmod_not_in_user_transcript(self):
+		sessions = self.Sessions()
+		sessions[1] = self.Session( 'sjohnson' )
+		sessions[2] = self.Session( 'chris' )
+		sessions[3] = self.Session( 'jason' )
+		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage() )
+		component.provideUtility( chatserver )
+		room = chatserver.create_room_from_dict( {'Occupants': ['jason', 'chris', 'sjohnson'],
+												  'Creator': 'sjohnson',
+												  'ContainerId': 'tag:nextthought.com,2011-10:x-y-z'} )
+		component.getUtility( zc_intid.IIntIds ).register( room )
+
+		sessions.clear_all_session_events()
+
+		msg = chat.MessageInfo()
+		msg.Creator = 'jason'
+		msg.recipients = ['chris'] # but this is ignored
+		msg.channel = chat.CHANNEL_STATE
+		msg.Body = { 'state': 'active' }
+		chatserver.post_message_to_room( room.ID, msg )
+
+		# The msg cannot become an IConnection, because it was never inserted into a parent tree
+		# or saved
+		assert_that( IConnection( msg, None ), is_( none() ) )
+
+		for user in ('sjohnson', 'chris', 'jason'):
+			# No transcript yet
+			assert_that( chat_transcripts.transcript_for_user_in_room( user, room.ID ), is_( none() ) )
+			user = users.User.get_user( user )
+			tx_id = chat_transcripts._transcript_ntiid( room, user, ntiids.TYPE_TRANSCRIPT )
+			assert_that( ntiids.find_object_with_ntiid( tx_id ), is_( none() ) )
+
+		# But all the occupants did get the message
+		for session in sessions:
+			assert_that( session.socket.events, has_length( 1 ) )
+			assert_that( session.socket.events[0]['args'], has_item( has_entry( 'channel', chat.CHANNEL_STATE ) ) )
+
+	@WithMockDSTrans
+	def test_state_channel_ignored_in_moderated_room(self):
+		room, chatserver = self._create_moderated_room()
+		self.sessions.clear_all_session_events()
+
+		msg = chat.MessageInfo()
+		msg.channel = chat.CHANNEL_STATE
+		msg.recipients = ['chris']
+
+		# Even from the moderator
+		msg.Creator = 'sjohnson'
+		# Accepted, but not sent
+		assert_that( chatserver.post_message_to_room( room.ID, msg ), is_( True ) )
+
+		for session in self.sessions:
+			assert_that( session.socket.events, has_length( 0 ) )
+
 
 	@WithMockDSTrans
 	def test_moderator_send_default(self):
