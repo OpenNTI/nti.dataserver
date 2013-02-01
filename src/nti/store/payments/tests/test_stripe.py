@@ -4,9 +4,13 @@ import uuid
 import stripe
 import unittest
 
+from zope import component
+from zope.lifecycleevent import IObjectCreatedEvent, IObjectRemovedEvent
+
 from nti.dataserver.users import User
 from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.store import interfaces as store_interfaces
 from nti.store.payments import _stripe as nti_stripe
 from nti.store.payments import interfaces as pay_interfaces
 
@@ -15,7 +19,8 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.store.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, is_not)
+from zope.component import eventtesting
+from hamcrest import (assert_that, is_, is_not, has_length)
 		
 class TestStripeCustomer(ConfiguringTestBase):
 		
@@ -36,7 +41,7 @@ class TestStripeCustomer(ConfiguringTestBase):
 		assert_that(adapted.customer_id, is_('xyz'))
 		
 		
-#@unittest.SkipTest
+@unittest.SkipTest
 class TestStripeOps(ConfiguringTestBase):
 	
 	@classmethod
@@ -104,6 +109,9 @@ class TestStripeOps(ConfiguringTestBase):
 		
 	@WithMockDSTrans
 	def test_process_payment(self):
+		eventtesting.clearEvents()
+		component.provideHandler( eventtesting.events.append, (None,) )
+		
 		user = self._create_random_user()
 		t = self.manager.create_card_token(	number="5105105105105100", 
 										 	exp_month="11",
@@ -116,10 +124,18 @@ class TestStripeOps(ConfiguringTestBase):
 										 	country="USA")
 		cid = self.manager.process_payment(	user, token=t, amount=100, items=('xyz book',),
 											currency='USD', description="my payment")
-		
 		assert_that(cid, is_not(None))
 		
+		assert_that( eventtesting.getEvents(IObjectCreatedEvent, lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object)), has_length( 1 ) )
+		
+		assert_that(eventtesting.getEvents( store_interfaces.IPurchaseAttemptStarted ),
+				 	has_length( 1 ) )
+			
+		assert_that(eventtesting.getEvents( store_interfaces.IPurchaseAttemptSuccessful ),
+				 	has_length( 1 ) )
+				
 		self.manager.delete_customer(user)
+		assert_that( eventtesting.getEvents( IObjectRemovedEvent, lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object) ), has_length( 1 ) )
 		
 if __name__ == '__main__':
 	unittest.main()
