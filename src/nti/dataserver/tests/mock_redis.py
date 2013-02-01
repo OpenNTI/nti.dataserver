@@ -23,13 +23,43 @@ zope.testing.cleanup.addCleanUp( fakeredis.DATABASES.clear )
 
 InMemoryMockRedis = fakeredis.FakeStrictRedis # BWC alias
 
+# Test for pubsub support and hack in some basics if needed
 if not hasattr( InMemoryMockRedis, 'pubsub' ):
-	# Nark. No pub sub support. Hack in some
-	# basic stuff
 	class PubSub(object):
-		def subscribe(self, channel):
-			pass
-		def listen(self):
-			return ()
 
-	InMemoryMockRedis.publish = lambda s, c, m: None
+		def __init__( self, redis ):
+			self._redis = redis
+			self._subscribed = []
+
+		def subscribe(self, channel):
+			self._subscribed.append( channel )
+			# Which also fires an event into the channel
+			self._redis._get_channel( channel ).append( {'type': 'subscibed'} )
+
+		def listen(self):
+			for channel in self._subscribed:
+				channel = self._redis._get_channel( channel )
+				for msg in channel:
+					yield msg
+				del channel[:]
+
+		def unsubscribe( self, channel ):
+			self._subscribed.remove( channel )
+			# TODO: Should this fire an event?
+
+	InMemoryMockRedis.pubsub = lambda self: PubSub( self )
+
+
+	def publish( self, channel, message ):
+		self._get_channel( channel ).append( message )
+
+	def _get_channel( self, channel ):
+		channels = getattr( self, '_channels', None )
+		if channels is None:
+			channels = {}
+			self._channels = channels
+
+		return channels.setdefault( channel, [] )
+
+	InMemoryMockRedis.publish = publish
+	InMemoryMockRedis._get_channel = _get_channel
