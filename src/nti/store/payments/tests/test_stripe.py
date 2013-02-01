@@ -10,6 +10,7 @@ from zope.lifecycleevent import IObjectCreatedEvent, IObjectRemovedEvent
 from nti.dataserver.users import User
 from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.store import purchase
 from nti.store import interfaces as store_interfaces
 from nti.store.payments import _stripe as nti_stripe
 from nti.store.payments import interfaces as pay_interfaces
@@ -48,19 +49,12 @@ class TestStripeOps(ConfiguringTestBase):
 	def setUpClass(cls):
 		cls.api_key = stripe.api_key
 		stripe.api_key = u'sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp'
-		cls.customers = set()
-		cls.manager = nti_stripe._StripePaymentManager()
+		cls.manager = nti_stripe._StripePaymentProcessor()
 	
 	@classmethod
 	def tearDownClass(cls):
-		for cid in cls.customers:
-			try:
-				cls.manager.delete_stripe_customer(cid)
-			except:
-				pass
 		stripe.api_key = cls.api_key
 	
-		
 	def _create_user(self, username='nt@nti.com', password='temp001', **kwargs):
 		ds = mock_dataserver.current_mock_ds
 		ext_value = {'external_value':kwargs}
@@ -111,8 +105,11 @@ class TestStripeOps(ConfiguringTestBase):
 	def test_process_payment(self):
 		eventtesting.clearEvents()
 		component.provideHandler( eventtesting.events.append, (None,) )
-		
 		user = self._create_random_user()
+		
+		items=('xyz book',)
+		pa = purchase.create_purchase_attempt_and_start(user, items, store_interfaces.STRIPE_PROCESSOR)
+		
 		t = self.manager.create_card_token(	number="5105105105105100", 
 										 	exp_month="11",
 										 	exp_year="30",
@@ -122,11 +119,12 @@ class TestStripeOps(ConfiguringTestBase):
 										 	zip = "73072",
 										 	state="OK",
 										 	country="USA")
-		cid = self.manager.process_payment(	user, token=t, amount=100, items=('xyz book',),
+		cid = self.manager.process_purchase(user=user, token=t, purchase=pa, amount=100,
 											currency='USD', description="my payment")
 		assert_that(cid, is_not(None))
 		
-		assert_that( eventtesting.getEvents(IObjectCreatedEvent, lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object)), has_length( 1 ) )
+		assert_that( eventtesting.getEvents(IObjectCreatedEvent, 
+											lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object)), has_length( 1 ) )
 		
 		assert_that(eventtesting.getEvents( store_interfaces.IPurchaseAttemptStarted ),
 				 	has_length( 1 ) )
@@ -135,7 +133,8 @@ class TestStripeOps(ConfiguringTestBase):
 				 	has_length( 1 ) )
 				
 		self.manager.delete_customer(user)
-		assert_that( eventtesting.getEvents( IObjectRemovedEvent, lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object) ), has_length( 1 ) )
+		assert_that( eventtesting.getEvents( IObjectRemovedEvent,
+											 lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object) ), has_length( 1 ) )
 		
 if __name__ == '__main__':
 	unittest.main()

@@ -17,12 +17,8 @@ PA_STATE_SUCCESSFUL = 'Successful'
 		
 class IPurchaseAttempt(interface.Interface):
 	
-	id = schema.TextLine(title="An internal unique identifier", required=True)
-	
 	processor = schema.Choice(values=(STRIPE_PROCESSOR,AMAZON_PROCESSOR),
 							  title='purchase processor', required=True)
-	
-	purchase_id = schema.TextLine(title="A purchase identifier by the processor", required=True)
 	
 	state = schema.Choice(values=(PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_SUCCESSFUL),
 						  title='purchase state', required=True)

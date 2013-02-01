@@ -2,11 +2,15 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 __docformat__ = "restructuredtext en"
 
+import six
+
 from zope import component
 
 from pyramid.security import authenticated_userid
 
+from .. import purchase 
 from . import interfaces as pay_interfaces
+from .. import interfaces as store_interfaces
 
 class StripePayment(object):
 
@@ -26,9 +30,17 @@ class StripePayment(object):
 		description = request.matchdict.get('description', None)
 		description = description or '%s payment for "%r"' % (username, items)
 		
-		manager = component.getUtility(pay_interfaces.IPaymentProcessor, name="stripe")
-		cid = manager.process_payment(username, token=token, amount=amount, 
-									  currency=currency, items=items, description=description)
+		pa = purchase.create_purchase_attempt_and_start(username, items, store_interfaces.STRIPE_PROCESSOR)
+		
+		manager = component.getUtility(pay_interfaces.IPaymentProcessor, name=store_interfaces.STRIPE_PROCESSOR)
+		cid = manager.process_purchase(	user=username, token=token, amount=amount, 
+										currency=currency, purchase=pa, description=description)
 		
 		return {'TransactionID': cid}
 		
+		
+def create_purchase_attempt(items, processor):
+	if items is not None:
+		items = frozenset([items]) if isinstance(items, six.string_types) else frozenset(items)			
+	return purchase.create_purchase_attempt(items, processor)
+
