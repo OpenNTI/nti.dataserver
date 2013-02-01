@@ -7,26 +7,35 @@ import unittest
 from nti.dataserver.users import User
 from nti.dataserver.users import interfaces as user_interfaces
 
+#from nti.store import interfaces as store_interfaces
 from nti.store.payments import _stripe as nti_stripe
-from nti.store.payments import interfaces as pay_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.store.payments.tests import ConfiguringTestBase
+from nti.store.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, is_not, has_entry, has_length)
-
-class _BaseTestStripe(object):
+from hamcrest import (assert_that, is_, is_not)
+		
+@unittest.SkipTest
+class TestStripeOps(ConfiguringTestBase):
 	
 	@classmethod
 	def setUpClass(cls):
 		cls.api_key = stripe.api_key
-		stripe.api_key = u'sk_test_0x3LXvPmdaWpr4KbNXtii3cL'
-		
+		stripe.api_key = u'sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp'
+		cls.customers = set()
+		cls.manager = nti_stripe._StripePaymentManager()
+	
 	@classmethod
 	def tearDownClass(cls):
+		for cid in cls.customers:
+			try:
+				cls.manager.delete_stripe_customer(cid)
+			except:
+				pass
 		stripe.api_key = cls.api_key
+	
 		
 	def _create_user(self, username='nt@nti.com', password='temp001', **kwargs):
 		ds = mock_dataserver.current_mock_ds
@@ -42,52 +51,14 @@ class _BaseTestStripe(object):
 		user = self._create_user(username=username, email=email, description=desc)
 		return user
 	
-class TestStripeCustomer(_BaseTestStripe, ConfiguringTestBase):
-		
-	@WithMockDSTrans
-	def test_adapter(self):
-		user = self._create_user()
-		adapted = pay_interfaces.IStripeCustomer(user)
-		assert_that(adapted, is_not(None))
-		assert_that(adapted.customer_id, is_(None))
-		assert_that(adapted.card, is_(None))
-		adapted.card = 'foo'
-		adapted.customer_id = 'xyz'
-		assert_that(adapted.id, is_('xyz'))
-		assert_that(adapted.customer_id, is_('xyz'))
-		assert_that(adapted.card, is_('foo'))
-		adapted.add_charge('x','y')
-		assert_that(adapted.charges, has_entry('x','y'))
-		adapted.clear()
-		assert_that(adapted.charges, has_length(0))
-		assert_that(adapted.customer_id, is_(None))
-		assert_that(adapted.card, is_(None))
-		
-#@unittest.SkipTest
-class TestStripeOps(_BaseTestStripe, ConfiguringTestBase):
-	
-	@classmethod
-	def setUpClass(cls):
-		_BaseTestStripe.setUpClass()
-		cls.customers = set()
-		cls.manager = nti_stripe._StripePaymentManager()
-	
-	@classmethod
-	def tearDownClass(cls):
-		_BaseTestStripe.tearDownClass()
-		for cid in cls.customers:
-			try:
-				cls.manager.delete_stripe_customer(cid)
-			except:
-				pass
-		
 	@WithMockDSTrans
 	def test_create_update_delete_customer(self):
 		user = self._create_random_user()
-		adapted, scust = self.manager.get_or_create_customer(user)
-		
+		scust = self.manager.get_or_create_customer(user)
 		assert_that(scust, is_not(None))
-		assert_that(adapted.customer_id, is_not(None))
+		
+		#adapted = store_interfaces.ICustomer(user)
+		#assert_that(adapted.getCustomerId(store_interfaces.STRIPE_PROCESSOR), is_not(None))
 		
 		profile = user_interfaces.IUserProfile(user)
 		setattr(profile, 'email', 'xyz@nt.com')
@@ -96,10 +67,6 @@ class TestStripeOps(_BaseTestStripe, ConfiguringTestBase):
 		
 		r = self.manager.delete_customer(user)
 		assert_that(r, is_(True))
-		adapted = pay_interfaces.IStripeCustomer(user)
-		assert_that(adapted.customer_id, is_(None))
-		assert_that(adapted.card, is_(None))
-		assert_that(adapted.charges, has_length(0))
 		
 	@WithMockDSTrans
 	def test_create_token_and_charge(self):
@@ -132,9 +99,6 @@ class TestStripeOps(_BaseTestStripe, ConfiguringTestBase):
 											currency='USD', description="my payment")
 		
 		assert_that(cid, is_not(None))
-		
-		adapted = pay_interfaces.IStripeCustomer(user)
-		assert_that(adapted.card, is_not(None))
 		
 		self.manager.delete_customer(user)
 		
