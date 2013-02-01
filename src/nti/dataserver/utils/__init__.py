@@ -4,11 +4,12 @@ from __future__ import print_function, unicode_literals
 import logging
 
 import sys
+import functools
 
 from zope.exceptions.exceptionformatter import print_exception
 import zope.exceptions.log
+
 from zope import component
-from zope import interface
 from zope.dottedname import resolve as dottedname
 from zope.component.hooks import setHooks
 from zope.configuration import xmlconfig, config
@@ -43,6 +44,8 @@ def _configure(self=None, set_up_packages=(), features=(), context=None):
 
 		return context
 
+_user_function_failed = object() # sentinel
+class _DataserverCreationFailed(Exception): pass
 
 def run_with_dataserver( environment_dir=None, function=None,
 						 as_main=True, verbose=False,
@@ -75,7 +78,8 @@ def run_with_dataserver( environment_dir=None, function=None,
 	"""
 
 
-	def user_fun():
+	@functools.wraps(function)
+	def run_user_fun_print_exception():
 		"""Run the user-given function in the environment; print exceptions
 		in this env too."""
 		try:
@@ -84,14 +88,25 @@ def run_with_dataserver( environment_dir=None, function=None,
 			print_exception( *sys.exc_info() )
 			raise
 
+	@functools.wraps(function) # yes, two layers, but we do wrap `function`
 	def fun():
-		ds = Dataserver( environment_dir )
+		try:
+			ds = Dataserver( environment_dir )
+		except Exception:
+			# Reraise something we can deal with (in collusion with run), but with the original traceback.
+			# This traceback should be safe.
+			exc_info = sys.exc_info()
+			raise _DataserverCreationFailed( exc_info[1] ), None, exc_info[2]
+
 		component.provideUtility( ds , nti_interfaces.IDataserver)
 
 		try:
-			return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( user_fun )
+			return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( run_user_fun_print_exception )
 		except Exception:
-			pass
+			# If we get here, we are unlikely to be able to print details from the exception; the transaction
+			# will have already terminated, and any __traceback_info__ objects or even the arguments to the
+			# exception are possible invalid Persistent objects. Hence the need to print it up there.
+			return _user_function_failed
 		finally:
 			component.getSiteManager().unregisterUtility( ds, nti_interfaces.IDataserver )
 
@@ -106,7 +121,8 @@ def run( function=None, as_main=True, verbose=False, config_features=(), xmlconf
 	:keyword function function: The function of no parameters to execute.
 	:keyword bool as_main: If ``True`` (the default) assumes this is the main portion
 		of a script and configures the complete environment appropriately, including
-		setting up logging.
+		setting up logging. A failure to do this, or an exception raised from ``function``
+		will exit the program.
 	:keyword bool verbose: If ``True`` (*not* the default), then logging to the console will
 		be at a slightly higher level.
 
@@ -140,6 +156,7 @@ def run( function=None, as_main=True, verbose=False, config_features=(), xmlconf
 
 
 	if _print_exc:
+		@functools.wraps(function)
 		def fun():
 			"""Run the user-given function in the environment; print exceptions
 			in this env too."""
@@ -152,6 +169,21 @@ def run( function=None, as_main=True, verbose=False, config_features=(), xmlconf
 		fun = function
 
 	try:
-		return fun()
+		result = fun()
+	except _DataserverCreationFailed:
+		raise
 	except Exception:
-		pass
+		# If we get here, we are unlikely to be able to print details from the exception; the transaction
+		# will have already terminated, and any __traceback_info__ objects or even the arguments to the
+		# exception are possible invalid Persistent objects. Hence the need to print it up there.
+		result = _user_function_failed
+
+	if result is _user_function_failed:
+		if as_main:
+			print( "Failed to execute", getattr( fun, '__name__', fun ) )
+			sys.exit( 6 )
+		# returning none in this case is backwards compatibile behaviour. we'd really
+		# like to raise...something
+		result = None
+
+	return result
