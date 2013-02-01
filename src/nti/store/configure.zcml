@@ -6,7 +6,7 @@
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.ICustomer" />
 	
-	<subscriber handler="._adapters._send_notification" />
+	<subscriber handler="._adapters._transaction_event" />
 	
 	<include package=".payments" file="configure.zcml" />
 	
