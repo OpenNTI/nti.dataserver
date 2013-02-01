@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
+import six
 import stripe
 
 from zope import interface
@@ -157,27 +158,33 @@ class _StripePaymentManager(Persistent):
 			raise StripeException(charge.failure_message)
 		return charge.id
 	
-	def process_payment(self, user, token, amount, currency='USD', ntiid=None, description=None, api_key=None):
+	def process_payment(self, user, token, amount, currency='USD', items=None, description=None, api_key=None):
 		
+		if items and isinstance(items, six.string_types):
+			items = (items,)
+			
 		# we need to create the user first
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 		self.get_or_create_customer(user, api_key=api_key)
 		
-		trax = transaction.create_transaction(token, store_interfaces.STRIPE_PROCESSOR, state=store_interfaces.TRX_STARTED)
+		trax = transaction.create_transaction(token, store_interfaces.STRIPE_PROCESSOR)
 		notify(store_interfaces.TransactionEvent(user, trax, store_interfaces.TRX_STARTED))
 		
 		try:
 			charge_id = self.create_charge(amount, currency, card=token, description=description, api_key=api_key)
 		
+			trax.state = store_interfaces.TRX_SUCCESSFUL
 			notify(store_interfaces.TransactionCompleted(user, trax, store_interfaces.TRX_SUCCESSFUL, charge_id))
 			
-			# notify item purchased
-			notify(pay_interfaces.ItemPurchased(user, ntiid, charge_id))
+			# notify items purchased
+			for iid in items:
+				notify(pay_interfaces.ItemPurchased(user, iid, charge_id))
 			
 			return charge_id
 		except Exception, e:
 			message = str(e)
 			trax.failure_message = message
+			trax.state = store_interfaces.TRX_FAILED
 			notify(store_interfaces.TransactionFailed(user, trax, message))
 			
 	

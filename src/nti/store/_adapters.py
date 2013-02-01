@@ -79,3 +79,17 @@ class _Customer(Persistent):
 def _CustomerFactory(user):
 	result = an_factory(_Customer)(user)
 	return result
+
+
+@component.adapter(store_interfaces.ITransactionEvent)
+def _transaction_event( trax_event ):
+	pass
+
+@component.adapter(store_interfaces.ITransactionFailed)
+def _transaction_failed( trax_event ):
+	pass
+
+@component.adapter(store_interfaces.ITransactionCompleted)
+def _transaction_completed( trax_event ):
+	pass
+	

@@ -45,6 +45,6 @@ class Transaction(Persistent):
 	def isPending(self):
 		return self.state in (store_interfaces.TRX_STARTED, store_interfaces.TRX_PENDING)
 	
-def create_transaction(trxid, processor, state=None, start_time=None):
+def create_transaction(trxid, processor, state=store_interfaces.TRX_STARTED, start_time=None):
 	state = state or store_interfaces.TRX_UNKNOWN
 	return Transaction(trxid, processor, state=state, start_time=start_time)
