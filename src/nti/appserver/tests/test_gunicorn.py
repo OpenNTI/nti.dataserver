@@ -69,6 +69,9 @@ class MockSocket(object):
 		return None
 	def fileno( self ):
 		return -1
+	def accept( self ):
+		pass
+	family = 1
 
 from gunicorn import config as gconfig
 
@@ -82,7 +85,7 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 		gunicorn.GeventApplicationWorker( None, None, MockSocket(), None, None, MockConfig, logger)
 
 	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.gunicorn.loadwsgi')
-	def test_init_server(self, fudge_tmp, fudge_loadwsgi):
+	def test_load_legacy_app(self, fudge_tmp, fudge_loadwsgi):
 		fudge_tmp.is_a_stub()
 		fudge_loadwsgi.is_a_stub()
 		global_conf = {}
@@ -92,11 +95,11 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 		global_conf['__file__'] = ''
 		global_conf['http_port'] = '1'
 		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, MockConfig, logger)
-		worker._init_server()
+		worker._load_legacy_app()
 
 		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], None, None, MockConfig, logger)
 		with assert_raises(Exception):
-			worker._init_server()
+			worker._load_legacy_app()
 
 	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.gunicorn.loadwsgi')
 	def test_environ_parse_in_handler(self, fudge_tmp, fudge_loadwsgi):
@@ -109,7 +112,8 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 		global_conf['__file__'] = ''
 		global_conf['http_port'] = '1'
 		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, MockConfig, logger)
-		server = worker._init_server()
+		server = gunicorn.WebSocketServer( MockSocket(), dummy_app, handler_class=gunicorn.GeventApplicationWorker.wsgi_handler )
+		server.worker = worker
 
 		# Be sure that everything (e.g., ssl header parsing) is set up so that the environment comes out as expected
 		# First, generate a request to read
@@ -152,6 +156,7 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 		assert_that( worker, has_property( 'worker_connections', gunicorn.GeventApplicationWorker.PREFERRED_MAX_CONNECTIONS ) )
 
 		# Changed config
+		dummy_app.app = dummy_app
 		cfg.settings['worker_connections'].set( 300 )
 		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
 		worker.init_process(_call_super=False)
@@ -162,7 +167,7 @@ class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
 		assert_that( factory, is_( gunicorn._ServerFactory ) )
 
 		spawn = gevent.pool.Pool()
-		server = factory( None, spawn=spawn )
+		server = factory( MockSocket(), spawn=spawn )
 
 		assert_that( server.pool, is_( spawn ) )
 

@@ -84,6 +84,8 @@ class MinimalDataserver(object):
 	Represents the basic connections and nothing more.
 	"""
 
+	db = None
+
 	def __init__(self, parentDir="~/tmp", dataFileName="test.fs", classFactory=None, apnsCertFile=None, daemon=None  ):
 		"""
 		"""
@@ -99,10 +101,27 @@ class MinimalDataserver(object):
 		# TODO: We shouldn't be doing this, it should be passed to us
 		component.getGlobalSiteManager().registerUtility( self.conf )
 		self.redis = self._setup_redis( self.conf )
+
+
+
+		self._parentDir = parentDir
+		self._dataFileName = dataFileName
+
+		self._open_dbs()
+
+		for deprecated in ('_setup_storage', '_setup_launch_zeo', '_setup_storages'):
+			meth = getattr( self, deprecated, None )
+			if meth is not None: # pragma: no cover
+				raise DeprecationWarning( deprecated + " is no longer supported. Remove your method " + str(meth) )
+
+	def _open_dbs(self):
+		if self.db is not None:
+			self.db.close()
+
 		# Although _setup_dbs returns a tuple, we don't actually want to hold a ref
 		# to any database except the root database. All access to multi-databases
 		# should go through an open connection.
-		self.db, _, _ = self._setup_dbs( parentDir, dataFileName, daemon )
+		self.db, _, _ = self._setup_dbs( self._parentDir, self._dataFileName, None )
 
 		# In zope, IDatabaseOpened is fired by XXX.
 		# zope.app.appsetup.bootstrap.bootStrapSubscriber listens for
@@ -118,20 +137,15 @@ class MinimalDataserver(object):
 
 		notify( DatabaseOpened( self.db ) )
 		notify( DatabaseOpenedWithRoot( self.db ) )
-		#ZODB.Connection.resetCaches()
-		self._parentDir = parentDir
-		self._dataFileName = dataFileName
 
-		for deprecated in ('_setup_storage', '_setup_launch_zeo', '_setup_storages'):
-			meth = getattr( self, deprecated, None )
-			if meth is not None: # pragma: no cover
-				raise DeprecationWarning( deprecated + " is no longer supported. Remove your method " + str(meth) )
 
-	def _setup_dbs( self, parentDir, dataFileName, daemon ):
+	def _setup_dbs( self, *args ):
 		"""
 		Creates the database connections. Returns a tuple (userdb, sessiondb, searchdb);
 		The first object in the tuple is the root database, and all databases are arranged
 		in a multi-database setup.
+
+		All arguments are ignored.
 		"""
 		db, ses_db, search_db = self.conf.connect_databases()
 		return db, ses_db, search_db

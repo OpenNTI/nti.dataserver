@@ -213,6 +213,7 @@ def createApplication( http_port,
 	# calling a method on the dataserver (and it doesn't have access to the request); however, it
 	# is weird the way it is currently handled, with static fields of a context manager class.
 	# I think the DS will want to be a transaction.interfaces.ISynchronizer and/or an IDataManager
+	# FIXME: This is intimately tied to the way we set the app up. See also gunicorn.py
 	pyramid_config.registry.zodb_database = server.db # 0.2
 	pyramid_config.registry._zodb_databases = { '': server.db } # 0.3, 0.4
 
