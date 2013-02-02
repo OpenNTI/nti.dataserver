@@ -30,11 +30,11 @@ class PurchaseAttempt(zcontained.Contained, Persistent):
 		self.processor = processor
 		self.start_time = start_time if start_time else time.time()
 		self.items = frozenset([items]) if isinstance(items, six.string_types) else items			
-		if not end_time:
+		if end_time is not None:
 			self.end_time = end_time
-		if not failure_code:
+		if failure_code:
 			self.failure_code = failure_code
-		if not failure_message:
+		if failure_message:
 			self.failure_message = failure_message
 	
 	def __repr__( self ):
