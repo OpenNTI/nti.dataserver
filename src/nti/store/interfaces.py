@@ -25,7 +25,7 @@ class IPurchaseAttempt(interface.Interface):
 	
 	items = schema.FrozenSet(value_type=schema.TextLine(title='the item identifier'), title="Items being purchased")
 	
-	start_time = schema.Float(title='Start time')
+	start_time = schema.Float(title='Start time', required=True)
 	end_time = schema.Float(title='Completion time', required=False)
 	
 	failure_code = schema.Int(title='Failure code', required=False)

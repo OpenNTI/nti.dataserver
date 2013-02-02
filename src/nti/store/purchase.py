@@ -2,6 +2,7 @@ from __future__ import unicode_literals, print_function, absolute_import
 
 import six
 import time
+from datetime import datetime
 
 from zope import interface
 from zope.event import notify
@@ -37,7 +38,8 @@ class PurchaseAttempt(zcontained.Contained, Persistent):
 			self.failure_message = failure_message
 	
 	def __repr__( self ):
-		return "%s(%s,%s,%s)" % (self.__class__, self.state, self.start_time, self.items)
+		d = datetime.fromtimestamp(self.start_time)
+		return "%s(%s,%s,%s)" % (self.__class__, self.state, d, self.items)
 	
 	def __eq__( self, other ):
 		return self is other or (isinstance(other, PurchaseAttempt) 
