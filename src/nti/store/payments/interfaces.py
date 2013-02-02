@@ -45,3 +45,6 @@ class IStripePaymentProcessor(IPaymentProcessor):
 		:token Credit Card token
 		"""
 
+class IStripePurchase(interface.Interface):
+	charge_id = schema.TextLine(title='charge id')
+	
