@@ -5,7 +5,7 @@ Support for running the application with gunicorn.
 You must use our worker (:class:`GeventApplicationWorker`), configured with paster::
 
 	[server:main]
-	use = egg:gunicorn#main
+	use = egg:nti.dataserver#gunicorn
 	host =
 	port = %(http_port)s
 	worker_class =  nti.appserver.gunicorn.GeventApplicationWorker
@@ -173,11 +173,9 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	#: Our custom server requires a custom handler.
 	wsgi_handler = _PyWSGIWebSocketHandler
 
-	app_server = None
 	app = None
 	socket = None
 	policy_server = None
-	_preloaded_app = None
 
 	PREFERRED_MAX_CONNECTIONS = 100
 
@@ -204,47 +202,37 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			except socket.error:
 				logger.error( "Failed to create flash policy socket" )
 
-		if getattr( self.cfg, 'preload_app', None ) and self._preloaded_app is None: # pragma: no cover
+		if getattr( self.cfg, 'preload_app', None ): # pragma: no cover
 			logger.warn( "Preloading app before forking not supported" )
-			# Must be a class attribute since new worker objects are created by the Arbitrer
-			# TODO: make the dummy_app stuff go away and just do it the way gunicorn
-			# wants to, likewise with the sockets. This will require hooking in at a lower level,
-			# possibly the "Application" level.
-			#GeventApplicationWorker._preloaded_app = self._init_server()
-			#GeventApplicationWorker.app_server = GeventApplicationWorker._preloaded_app
 
-
-	def _init_server( self ):
+	def _load_legacy_app( self ):
 		try:
-			dummy_app = self.app.app
-			wsgi_app = loadwsgi.loadapp( 'config:' + dummy_app.global_conf['__file__'], name='dataserver_gunicorn' )
-			self.app_server = WebSocketServer(
-				(dummy_app.kwargs.get( 'host', ''), int(dummy_app.global_conf['http_port'])),
-				wsgi_app,
-				handler_class=self.wsgi_handler)
-			self.app_server.worker = self # See _PyWSGIWebSocketHandler.get_environ
-			return self.app_server
+			if not isinstance( self.app, _PasterServerApplication ):
+				logger.warn( "Deprecated code path, please update your .ini:\n[server:main]\nuse = egg:nti.dataserver#gunicorn" )
+				dummy_app = self.app.app
+				wsgi_app = loadwsgi.loadapp( 'config:' + dummy_app.global_conf['__file__'], name='dataserver_gunicorn' )
+				self.app.app = wsgi_app
+				self.app.callable = wsgi_app
 		except Exception:
-			logger.exception( "Failed to create appserver" )
+			logger.exception( "Failed to load app" )
 			raise
 
 
 	def init_process(self, _call_super=True):
 		"""
 		We must create the appserver only once, and only after the process
-		has forked if we are using ZEO; even though we do not have pthreads that fail to survive
-		the fork, the asyncore connection and ZODB cache do not work properly when forked.
+		has forked if we are using ZEO; the monkey-patched greenlet threads that
+		ZEO spawned are still stopped and shutdown after the fork (so we need to reestablish the database).
 
 		At one time, we had ZMQ background threads. So even if we have, say RelStorage and no ZEO threads,
 		we could still fail to fork properly. In theory this restriction is lifted as of 20130130, but
-		that combo needs tested. It also seems that something is wrong with the way we're handling the sockets
-		across the process fork too, such that they don't answer correctly.
+		that combo needs tested.
+
+		Something also seems wrong with the main socket after preloading, even the /_ops/ping URL doesn't
+		answer...(which makes no sense)
 		"""
 		gevent.hub.get_hub() # init the hub in this new thread/process
-		if not self._preloaded_app:
-			logger.info( "Loading app after forking" )
-			self._init_server()
-
+		self._load_legacy_app()
 
 		# Tweak the max connections per process if it is at the default (1000)
 		# Large numbers of HTTP connections means large numbers of
@@ -277,7 +265,25 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# Make 0.17 more like 0.16.1: We only work with one address
 		assert len(self.sockets) == 1
 		self.socket = self.sockets[0]
-		self.app_server.socket = self.sockets[0]
+
+		# Launch the flash policy listener if we could create it
+		policy_server_sock = getattr( self.cfg, 'policy_server_sock', None )
+		if policy_server_sock is not None:
+			self.policy_server = FlashPolicyServer( policy_server_sock )
+			policy_server_sock.setblocking( 0 )
+			self.policy_server.start()
+			logger.info( "Created flash policy server on %s", policy_server_sock )
+
+
+		if False: # pragma: no cover
+			def print_stacks():
+				from nti.appserver._util import dump_stacks
+				import sys
+				while True:
+					gevent.sleep( 15.0 )
+					print( '\n'.join( dump_stacks() ), file=sys.stderr )
+
+			gevent.spawn( print_stacks )
 
 		# Everything must be complete and ready to go before we call into
 		# the super, it in turn calls run()
@@ -301,28 +307,14 @@ class _ServerFactory(object):
 		self.worker = worker
 
 
-	def __call__( self,  socket, application=None, spawn=None, log=None,
-				  handler_class=None):
-		worker = self.worker
-		# Launch the flash policy listener if we could create it
-		policy_server_sock = getattr( worker.cfg, 'policy_server_sock', None )
-		if policy_server_sock is not None:
-			worker.policy_server = FlashPolicyServer( policy_server_sock )
-			policy_server_sock.setblocking( 0 )
-			worker.policy_server.start()
-			logger.info( "Created flash policy server on %s", policy_server_sock )
+	def __call__( self,  listen_on_socket, application=None, spawn=None, log=None, handler_class=None):
+		app_server = WebSocketServer(
+				listen_on_socket,
+				application,
+				handler_class=handler_class or GeventApplicationWorker.wsgi_handler)
+		app_server.worker = self.worker # See _PyWSGIWebSocketHandler.get_environ # FIXME: Eliminate this
 
-		if False: # pragma: no cover
-			def print_stacks():
-				from nti.appserver._util import dump_stacks
-				import sys
-				while True:
-					gevent.sleep( 15.0 )
-					print( '\n'.join( dump_stacks() ), file=sys.stderr )
-
-			gevent.spawn( print_stacks )
-
-		# The super class will provide a Pool based on the
+		# The worker will provide a Pool based on the
 		# worker_connections setting
 		assert spawn is not None
 		class WorkerGreenlet(spawn.greenlet_class):
@@ -358,25 +350,35 @@ class _ServerFactory(object):
 				return result
 
 		spawn.greenlet_class = WorkerGreenlet
-		worker.app_server.set_spawn(spawn)
+		app_server.set_spawn(spawn)
 		# We want to log with the appropriate logger, which
 		# has monitoring info attached to it
-		worker.app_server.log = log
-
-		# The super class will set the socket to blocking because
-		# it thinks it has monkey patched the system. It hasn't.
-		# Therefore the socket must be non-blocking or we get
-		# the dreaded 'cannot switch to MAINLOOP from MAINLOOP'
-		# (Non blocking is how gevent's baseserver:_tcp_listener sets things up)
-		worker.app_server.socket.setblocking(0)
-
-		# JAM 20121102: See above. This class actually doesn't really do anything anymore.
-		# except act as multiple inheritance. We also can set it up statically
+		app_server.log = log
 
 		# Now, for logging to actually work, we need to replace
 		# the handler class with one that sets up the required values in the
 		# environment, as per ggevent.
+		assert app_server.handler_class is _PyWSGIWebSocketHandler
+		app_server.base_env = ggevent.PyWSGIServer.base_env
+		return app_server
 
-		assert worker.app_server.handler_class is _PyWSGIWebSocketHandler
-		worker.app_server.base_env = ggevent.PyWSGIServer.base_env
-		return worker.app_server
+
+from gunicorn.app.pasterapp import PasterServerApplication
+class _PasterServerApplication(PasterServerApplication):
+	"""
+	Exists to prevent loading of the app multiple times.
+	"""
+
+	def load(self):
+		if self.app is None:
+			self.app = loadwsgi.loadapp(self.cfgurl, name='dataserver_gunicorn', relative_to=self.relpath)
+		return self.app
+
+
+def paste_server_runner(app, gcfg=None, host="127.0.0.1", port=None, *args, **kwargs):
+	"""
+	A paster server entrypoint.
+
+	See :func:`gunicorn.app.pasterapp.paste_server`.
+	"""
+	_PasterServerApplication(None, gcfg=gcfg, host=host, port=port, *args, **kwargs).run()

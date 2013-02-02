@@ -49,7 +49,8 @@ entry_points = {
 		"ops_ping = nti.appserver.wsgi_ping:ping_handler_factory"
 	],
 	"paste.server_runner": [
-		"http = nti.appserver.standalone:server_runner"
+		"http = nti.appserver.standalone:server_runner",
+		"gunicorn = nti.appserver.gunicorn:paste_server_runner"
 	],
 	"nose.plugins.0.10" : [
 		"zopeexceptionlogpatch = nti.tests:ZopeExceptionLogPatch"
