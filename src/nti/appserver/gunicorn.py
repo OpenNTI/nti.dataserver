@@ -220,19 +220,55 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 
 	def init_process(self, _call_super=True):
 		"""
-		We must create the appserver only once, and only after the process
-		has forked if we are using ZEO; the monkey-patched greenlet threads that
-		ZEO spawned are still stopped and shutdown after the fork (so we need to reestablish the database).
+		We must create the appserver only once, and only after the
+		process has forked if we are using ZEO; the monkey-patched
+		greenlet threads that ZEO spawned are still stopped and
+		shutdown after the fork. Something also goes wrong with the
+		ClientStorage._cache; in a nutshell, we need to close and reopen
+		the database.
 
-		At one time, we had ZMQ background threads. So even if we have, say RelStorage and no ZEO threads,
-		we could still fail to fork properly. In theory this restriction is lifted as of 20130130, but
-		that combo needs tested.
+		At one time, we had ZMQ background threads. So even if we
+		have, say RelStorage and no ZEO threads, we could still fail
+		to fork properly. In theory this restriction is lifted as of
+		20130130, but that combo needs tested.
 
-		Something also seems wrong with the main socket after preloading, even the /_ops/ping URL doesn't
-		answer...(which makes no sense)
+		An additional problem is that at DNS (socket.getaddrinfo and
+		friends) hangs after forking if it was used *before* forking.
+		The problem is that the default asynchronous resolver uses the
+		hub's threadpool, which is initialized the first time it is
+		used. Some bug prevents the threadpool from working after fork
+		(it seems that the on_fork listener is not being called; if it
+		gets called things work). The app startup sequence invokes DNS
+		and thus inits the thread pool, so the DNS operations that
+		happen after the fork fail---inparticular, starting the server
+		accesses DNS and so we never get to the point of listening on
+		the socket. One workaround for this is to manually re-init the
+		thread pool if needed; another is to use the Ares resolver.
+		For now, I'm attempting to re-init the thread pool. (TODO:
+		This may be platform specific?)
 		"""
-		gevent.hub.get_hub() # init the hub in this new thread/process
+		# Patch up the thread pool and DNS if needed
+		hub = gevent.hub.get_hub()
+		if self.cfg.preload_app and hub._threadpool is not None and hub._threadpool._size: # same condition it uses
+			hub._threadpool._on_fork()
+
+		# Reload the database if needed
+		if self.cfg.preload_app:
+			# TODO: Generalize this. An event? A fork listener (except that seems to have problems)?
+			from nti.dataserver.interfaces import IDataserver
+			from zope import component
+			ds = component.getUtility( IDataserver )
+			ds._open_dbs()
+
+			# See application.py. FIXME: Tight coupling
+			registry = component.getGlobalSiteManager()
+			registry.zodb_database = ds.db # 0.2
+			registry._zodb_databases = { '': ds.db } # 0.3, 0.4
+
+
+
 		self._load_legacy_app()
+
 
 		# Tweak the max connections per process if it is at the default (1000)
 		# Large numbers of HTTP connections means large numbers of

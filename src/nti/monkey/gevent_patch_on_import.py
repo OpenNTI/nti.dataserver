@@ -80,9 +80,37 @@ def _patch_thread_stop():
 	orig_stop = getattr( threading.Thread, '_Thread__stop' )
 	def __stop(self):
 		if hasattr( self, '_Thread__block' ):
-			orig_stop( self )
+
+			# Now kill the greenlet that's running this thread
+			# In a pthread scenario, the threads die on the fork, so
+			# this is basically the same thing...they just get a chance
+			# to cleanup because of GreenletExit.
+			# We don't need to do this for the main thread, or if
+			# we are dead in the normal process and not during a fork
+			caller = sys._getframe( 1 )
+
+			if self.name != 'MainThread' and caller.f_locals.get( 'self' ) is not self:
+				greenlet_id = self.ident
+				import gc
+				def _make_kill( x ):
+					def k():
+						x.throw()
+						orig_stop( self )
+					return k
+				for ob in gc.get_objects():
+					if id(ob) == greenlet_id and hasattr( ob, 'throw' ):
+						#print( "Thread", self, "killing running greenlet", x )
+						# Note that since this is after a fork, and the fork process replaces
+						# threading._active, the gevent _DummyThread's cleanup process will
+						# throw KeyErrors that get printed on stderr
+						gevent.spawn_later( 0.1, run=_make_kill(ob) )
+						break
+			else:
+				orig_stop( self )
 		else:
 			setattr( self, '_Thread__stopped', True )
+
+
 	setattr( threading.Thread, '_Thread__stop', __stop )
 
 def _patch_logging():
