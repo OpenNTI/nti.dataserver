@@ -7,6 +7,7 @@ from zope import component
 from zope.event import notify
 from zope import lifecycleevent 
 from zope.annotation import factory as an_factory
+from zope.container import contained as zcontained
 
 from persistent import Persistent
 
@@ -32,6 +33,20 @@ class _StripeCustomer(Persistent):
 		
 def _StripeCustomerFactory(user):
 	result = an_factory(_StripeCustomer)(user)
+	return result
+
+@component.adapter(store_interfaces.IPurchaseAttempt)
+@interface.implementer( pay_interfaces.IStripePurchase)
+class _StripePurchase(zcontained.Contained, Persistent):
+	charge_id = None
+	token_id = None
+	
+	@property
+	def purchase(self):
+		return self.__parent__
+	
+def _StripePurchaseFactory(purchase):
+	result = an_factory(_StripePurchase)(purchase)
 	return result
 
 @interface.implementer(pay_interfaces.IStripePaymentProcessor)
@@ -179,8 +194,11 @@ class _StripePaymentProcessor(Persistent):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 		self.get_or_create_customer(user, api_key=api_key)
 		
+		sp = pay_interfaces.IStripePurchase(purchase, None)
+		sp.token_id = token
 		try:
 			charge_id = self.create_charge(amount, currency, card=token, description=description, api_key=api_key)
+			sp.charge_id = charge_id
 		
 			notify(store_interfaces.PurchaseAttemptSuccessful(purchase, user))
 			

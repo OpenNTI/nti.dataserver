@@ -41,7 +41,19 @@ class TestStripeCustomer(ConfiguringTestBase):
 		adapted.customer_id = 'xyz'
 		assert_that(adapted.customer_id, is_('xyz'))
 		
-		
+class TestStripePurchase(ConfiguringTestBase):
+	
+	@WithMockDSTrans
+	def test_adapter(self):
+		items = ('xyz',)
+		pa = purchase.create_purchase_attempt(items, store_interfaces.STRIPE_PROCESSOR)
+		adapted = pay_interfaces.IStripePurchase(pa)
+		adapted.charge_id = 'charge_id'
+		adapted.token_id = 'token_id'
+		assert_that(adapted.purchase, is_(pa))
+		assert_that(adapted.charge_id, is_('charge_id'))
+		assert_that(adapted.token_id, is_('token_id'))
+			
 @unittest.SkipTest
 class TestStripeOps(ConfiguringTestBase):
 	

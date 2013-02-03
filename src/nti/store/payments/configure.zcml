@@ -5,7 +5,11 @@
 	<adapter factory="._stripe._StripeCustomerFactory"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IStripeCustomer" />
-			 
+	
+	<adapter factory="._stripe._StripePurchaseFactory"
+			 for="nti.store.interfaces.IPurchaseAttempt"
+			 provides=".interfaces.IStripePurchase" />
+			 		 
 	<utility factory="._stripe._StripePaymentProcessor" 
 			 name="stripe"
 			 provides=".interfaces.IStripePaymentProcessor" />
