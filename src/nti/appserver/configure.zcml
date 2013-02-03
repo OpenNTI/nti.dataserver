@@ -273,6 +273,14 @@
 	<implements interface=".interfaces.IUncacheableInResponse" />
     </class>
 
+    <!-- Forking events -->
+    <!--
+	 Note that if we are not preloading the app, then this doesn't
+	 get registered in the master process and so never gets hit.
+    -->
+    <subscriber handler=".gunicorn._process_will_fork_listener" />
+    <subscriber handler=".application._configure_pyramid_zodbconn" />
+
     <include package="nti.contentrange" />
     <include package="nti.contentsearch" />
     <include package="nti.socketio" />

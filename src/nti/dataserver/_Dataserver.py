@@ -216,6 +216,18 @@ class MinimalDataserver(object):
 		return resolver.get_object_by_oid( oid_string, ignore_creator=ignore_creator ) if resolver else None
 
 
+# After a fork, the dataserver has to be re-opened if it existed
+# at the time of fork. (Note that if we are not preloading the app,
+# then this config won't even be loaded in the parent process so this
+# won't fire...still, be safe)
+from nti.processlifetime import IProcessDidFork
+@component.adapter(IProcessDidFork)
+def _process_did_fork_listener( event ):
+	ds = component.queryUtility( interfaces.IDataserver )
+	if ds:
+		ds._open_dbs()
+
+
 @interface.implementer(interfaces.IDataserver)
 class Dataserver(MinimalDataserver):
 

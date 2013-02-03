@@ -35,8 +35,9 @@ from zope import component
 from zope.component.hooks import setHooks
 from zope.configuration import xmlconfig
 from zope.event import notify
-from zope.processlifetime import ProcessStarting
+from zope.processlifetime import ProcessStarting, DatabaseOpenedWithRoot, IDatabaseOpenedWithRoot
 from zope import lifecycleevent
+
 
 import pyramid.config
 import pyramid.authorization
@@ -206,16 +207,7 @@ def createApplication( http_port,
 	# TODO: We can probably replace this with something simpler, or else
 	# better integrate this
 	pyramid_config.include( 'pyramid_zodbconn' )
-	# Notice that we're using the db from the DS directly, not requiring construction
-	# of a new DB based on a URI; that is a second option if we don't want the
-	# DS object 'owning' the DB.
-	# NOTE: It is not entirely clear how to get a connection to the dataserver if we're not
-	# calling a method on the dataserver (and it doesn't have access to the request); however, it
-	# is weird the way it is currently handled, with static fields of a context manager class.
-	# I think the DS will want to be a transaction.interfaces.ISynchronizer and/or an IDataManager
-	# FIXME: This is intimately tied to the way we set the app up. See also gunicorn.py
-	pyramid_config.registry.zodb_database = server.db # 0.2
-	pyramid_config.registry._zodb_databases = { '': server.db } # 0.3, 0.4
+	_configure_pyramid_zodbconn( DatabaseOpenedWithRoot( server.db ), pyramid_config.registry )
 
 	# Add a tween that ensures we are within a SiteManager.
 	pyramid_config.add_tween( 'nti.appserver.tweens.zope_site_tween.site_tween_factory', under='nti.appserver.tweens.transaction_tween.transaction_tween_factory' )
@@ -634,6 +626,26 @@ def createApplication( http_port,
 	main = _Main( pyramid_config, http_port=http_port )
 
 	return (main,main) # bwc
+
+
+@component.adapter(IDatabaseOpenedWithRoot)
+def _configure_pyramid_zodbconn( database_event, registry=None ):
+	# Notice that we're using the db from the DS directly, not requiring construction
+	# of a new DB based on a URI; that is a second option if we don't want the
+	# DS object 'owning' the DB. Also listens for database opened events; assumes
+	# that there is only one ZODB open at a time
+
+	# NOTE: It is not entirely clear how to get a connection to the dataserver if we're not
+	# calling a method on the dataserver (and it doesn't have access to the request); however, it
+	# is weird the way it is currently handled, with static fields of a context manager class.
+	# I think the DS will want to be a transaction.interfaces.ISynchronizer and/or an IDataManager
+	if registry is None:
+		# event
+		registry = component.getGlobalSiteManager()
+
+	registry.zodb_database = database_event.database # 0.2
+	registry._zodb_databases = { '': database_event.database } # 0.3, 0.4
+
 
 
 # These two functions exist for the sake of the installed executables
