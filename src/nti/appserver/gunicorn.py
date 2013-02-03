@@ -252,20 +252,8 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		if self.cfg.preload_app and hub._threadpool is not None and hub._threadpool._size: # same condition it uses
 			hub._threadpool._on_fork()
 
-		# Reload the database if needed
-		if self.cfg.preload_app:
-			# TODO: Generalize this. An event? A fork listener (except that seems to have problems)?
-			from nti.dataserver.interfaces import IDataserver
-			from zope import component
-			ds = component.getUtility( IDataserver )
-			ds._open_dbs()
-
-			# See application.py. FIXME: Tight coupling
-			registry = component.getGlobalSiteManager()
-			registry.zodb_database = ds.db # 0.2
-			registry._zodb_databases = { '': ds.db } # 0.3, 0.4
-
-
+		# The Dataserver reloads itself automatically in the preload scenario
+		# based on the post_fork and IProcessDidFork listener
 
 		self._load_legacy_app()
 
@@ -398,12 +386,54 @@ class _ServerFactory(object):
 		app_server.base_env = ggevent.PyWSGIServer.base_env
 		return app_server
 
+# Manage the forking events
+from zope import interface
+from zope import component
+from zope.event import notify
+from nti.processlifetime import IProcessWillFork, ProcessWillFork
+from nti.processlifetime import ProcessDidFork
+
+class _IGunicornWillFork(IProcessWillFork):
+	"""
+	An event specific to gunicorn forking.
+	"""
+
+	arbiter = interface.Attribute( "The master arbiter" )
+	worker = interface.Attribute( "The new worker that will run in the child" )
+
+@interface.implementer(_IGunicornWillFork)
+class _GunicornWillFork(ProcessWillFork):
+
+	def __init__( self, arbiter, worker ):
+		self.arbiter = arbiter
+		self.worker = worker
+
+@component.adapter(_IGunicornWillFork)
+def _process_will_fork_listener( event ):
+	from nti.dataserver import interfaces as nti_interfaces
+	ds = component.queryUtility( nti_interfaces.IDataserver )
+	if ds:
+		# Close the ds in the master, we don't need those connections
+		# sticking around here. It will be reopened in the child
+		ds.close()
+
+
+def _pre_fork( arbiter, worker ):
+	notify( _GunicornWillFork( arbiter, worker ) )
+
+def _post_fork( arbiter, worker ):
+	notify( ProcessDidFork() )
 
 from gunicorn.app.pasterapp import PasterServerApplication
 class _PasterServerApplication(PasterServerApplication):
 	"""
 	Exists to prevent loading of the app multiple times.
 	"""
+
+	def __init__( self, *args, **kwargs ):
+		super(_PasterServerApplication, self).__init__( *args, **kwargs )
+		self.cfg.set( 'pre_fork', _pre_fork )
+		self.cfg.set( 'post_fork', _post_fork )
 
 	def load(self):
 		if self.app is None:

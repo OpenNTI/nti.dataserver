@@ -75,7 +75,14 @@ class MockSocket(object):
 
 from gunicorn import config as gconfig
 
-class TestGeventApplicationWorker(nti.tests.ConfiguringTestBase):
+class TestGeventApplicationWorker(nti.tests.SharedConfiguringTestBase):
+	set_up_packages = ('nti.appserver',)
+
+	def test_prefork(self):
+		gunicorn._pre_fork( 1, 2 )
+
+	def test_postfork( self ):
+		gunicorn._post_fork( 1, 2 )
 
 	@fudge.patch('gunicorn.workers.base.WorkerTmp')
 	def test_init(self, fudge_tmp):
