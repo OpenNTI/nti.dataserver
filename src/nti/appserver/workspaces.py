@@ -39,6 +39,8 @@ from nti.ntiids import ntiids
 from nti.dataserver import authorization as nauth
 from nti.dataserver import traversal as nti_traversal
 
+from nti.utils.property import alias
+
 import nti.appserver.interfaces as app_interfaces
 import nti.appserver.pyramid_renderers as rest
 
@@ -452,10 +454,10 @@ class WorkspaceExternalizer(object):
 		result = LocatedExternalDict()
 		result[StandardExternalFields.CLASS] = 'Workspace'
 		result['Title'] = self._workspace.name or getattr( self._workspace, '__name__', None )
-		_collections = [toExternalObject( collection, name='summary' )
-					   for collection
-					   in self._workspace.collections]
-		result['Items'] = _collections
+		items = [toExternalObject( collection, name='summary' )
+				 for collection
+				 in self._workspace.collections]
+		result['Items'] = items
 		_links = datastructures.find_links( self._workspace )
 		if _links:
 			result[StandardExternalFields.LINKS] = _magic_link_externalizer( _links )
@@ -487,13 +489,15 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	to capture page data.
 	"""
 
+	_user = alias('_container')
+
 	def __init__( self, user ):
 		super(UserEnumerationWorkspace,self).__init__( user )
 		self.__name__ = user.username
 
 	@property
 	def pages_collection(self):
-		pages = app_interfaces.ICollection( self._container )
+		pages = app_interfaces.ICollection( self._user )
 		pages.__parent__ = self
 		return pages
 
@@ -506,7 +510,7 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 		result = list(super(UserEnumerationWorkspace,self).collections)
 		result.append( self.pages_collection )
 
-		classes = component.getAdapter( self._container,
+		classes = component.getAdapter( self._user,
 										app_interfaces.ICollection,
 										name=_UserEnrolledClassSectionsCollection.name )
 		classes.__parent__ = self
@@ -735,6 +739,53 @@ class _ProviderCollection(object):
 					result.append( contained_type )
 		return result
 
+@interface.implementer(app_interfaces.IWorkspace)
+@component.adapter(app_interfaces.IUserService)
+def _user_workspace( user_service ):
+	# The main user workspace lives at /users/ME/
+	user_workspace = UserEnumerationWorkspace( user_service.user )
+	user_workspace.__name__ = user_service.user.username
+	user_workspace.__parent__ = user_service
+	return user_workspace
+
+@interface.implementer(app_interfaces.IWorkspace)
+@component.adapter(app_interfaces.IUserService)
+def _global_workspace( user_service ):
+	global_ws = GlobalWorkspace(parent=user_service.__parent__)
+	assert global_ws.__parent__
+	return global_ws
+
+@interface.implementer(app_interfaces.IWorkspace)
+@component.adapter(app_interfaces.IUserService)
+def _library_workspace( user_service ):
+	_library = component.queryUtility( content_interfaces.IContentPackageLibrary )
+	if _library:
+		# Inject the library at /users/ME/Library
+		tr = location.Location()
+		tr.__parent__ = user_service
+		tr.__name__ = user_service.user.username
+		lib_ws = LibraryWorkspace( _library )
+		lib_ws.__parent__ = tr
+		return lib_ws
+
+@interface.implementer(app_interfaces.IWorkspace)
+@component.adapter(app_interfaces.IUserService)
+def _providers_workspace(user_service):
+	ds = component.getUtility( nti_interfaces.IDataserver )
+
+	provider_root = location.Location()
+	provider_root.__parent__ = user_service.__parent__
+	provider_root.__name__ = 'providers'
+
+	# We want a workspace for providers: each provider
+	# is its own collection and its own entry in the workspace
+	workspace = ProviderEnumerationWorkspace( ds.root['providers'] )
+	workspace.__name__ = 'providers'
+	workspace.__parent__ = user_service.__parent__ # provider_root
+
+	return workspace
+
+
 @interface.implementer(app_interfaces.IUserService, mime_interfaces.IContentTypeAware)
 @component.adapter(nti_interfaces.IUser)
 class UserService(object):
@@ -752,46 +803,17 @@ class UserService(object):
 
 	@property
 	def user_workspace(self):
-		# The main user workspace lives at /users/ME/
-		user_workspace = UserEnumerationWorkspace( self.user )
-		user_workspace.__name__ = self.user.username
-		user_workspace.__parent__ = self
-		return user_workspace
+		return _user_workspace( self )
 
 	@property
 	def workspaces( self ):
-		# The main user workspace lives at /users/ME/
-		result = [self.user_workspace]
-
-		global_ws = GlobalWorkspace(parent=self.__parent__)
-		assert global_ws.__parent__
-		result.append( global_ws )
-
-		_library = component.queryUtility( content_interfaces.IContentPackageLibrary )
-		if _library:
-			# Inject the library at /users/ME/Library
-			tr = location.Location()
-			tr.__parent__ = self
-			tr.__name__ = self.user.username
-			lib_ws = LibraryWorkspace( _library )
-			lib_ws.__parent__ = tr
-			result.append( lib_ws )
-
-		ds = component.queryUtility( nti_interfaces.IDataserver )
-
-		if ds:
-			provider_root = location.Location()
-			provider_root.__parent__ = self.__parent__
-			provider_root.__name__ = 'providers'
-
-			# We want a workspace for providers: each provider
-			# is its own collection and its own entry in the workspace
-			workspace = ProviderEnumerationWorkspace( ds.root['providers'] )
-			workspace.__name__ = 'providers'
-			workspace.__parent__ = self.__parent__ # provider_root
-			result.append( workspace )
-
-		return result
+		"""
+		We query for all subscribers that provide IWorkspace, given an IUserService. This
+		facilitates adding new workspaces from different parts of the code. It also
+		facilitates giving completely different workspaces to different sites (for example,
+		transaction history only if the store is enabled for a site).
+		"""
+		return [workspace for workspace in component.subscribers( [self], app_interfaces.IWorkspace )]
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(app_interfaces.IService)
