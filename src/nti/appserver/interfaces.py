@@ -3,7 +3,7 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 from zope import interface
 from zope import schema
@@ -17,7 +17,8 @@ from nti.contentlibrary import interfaces as lib_interfaces
 from nti.dataserver.interfaces import ILocation
 
 from nti.utils.schema import Object
-from nti.utils.property import alias
+from nti.utils.schema import IndexedIterable as TypedIterable
+
 from dolmen.builtins import IUnicode
 
 ILocationAware = ILocation # b/c
@@ -34,8 +35,11 @@ class IUserRootResource(ILocation):
 ###
 
 class ICollection(ILocation):
-
-	name = interface.Attribute( "The name of this collection." )
+	"""
+	A collection (in the Atom sense) contains individual objects (entries).
+	It may be writable.
+	"""
+	name = schema.TextLine( title="The name of this collection." )
 
 	accepts = interface.Attribute(
 		"""
@@ -44,6 +48,44 @@ class ICollection(ILocation):
 		any valid type. If present but empty, this container will not
 		accept any input.
 		""")
+
+class IContainerCollection(ICollection):
+	"""
+	An :class:`ICollection` based of an :class:`nti.dataserver.interfaces.IContainer`.
+	"""
+
+	container = Object( nti_interfaces.IContainer,
+						title=u"The backing container",
+						readonly=True )
+
+
+class IWorkspace(ILocationAware):
+	"""
+	A workspace (in the Atom sense) is a collection of collections.
+	Collections can exist in multiple workspaces. A collection
+	is also known as a feed (again, in the Atom sense).
+	"""
+	name = schema.TextLine( title="The name of this workspace." )
+
+	collections = TypedIterable( title="The collections of this workspace.",
+								 readonly=True,
+								 value_type=Object(ICollection, title="A collection in this workspace" ) )
+
+class IService(ILocationAware):
+	"""
+	A service (in the Atom sense) is a collection of workspaces.
+	"""
+
+	workspaces = TypedIterable(	title="The workspaces of this service",
+								value_type=Object( IWorkspace, title="Workspaces in the service" ))
+
+class IUserService(IService):
+	"""
+	A service for a particular user.
+	"""
+	user_workspace = Object( IWorkspace, title="The main workspace for the user" )
+	user = Object(nti_interfaces.IUser, title="The user" )
+
 
 class ICreatableObjectFilter(interface.Interface):
 	"""
@@ -66,42 +108,6 @@ class IUserCapabilityFilter(interface.Interface):
 		Given a set of capability strings, return a set filtered to just
 		the ones allowed.
 		"""
-
-class IContainerCollection(ICollection):
-	"""
-	An :class:ICollection based of an :class:nti.dataserver.interfaces.IContainer.
-	"""
-
-	container = schema.InterfaceField(
-		title=u"The backing container",
-		readonly=True )
-
-class IWorkspace(ILocationAware):
-	"""
-	A workspace (in the Atom sense) is a collection of collections.
-	Collections can exist in multiple workspaces. A collection
-	is also known as a feed (again, in the Atom sense).
-	"""
-	name = interface.Attribute( "The name of this workspace." )
-
-	collections = schema.Iterable(
-		u"The collections of this workspace.",
-		readonly=True )
-
-class IService(ILocationAware):
-	"""
-	A service (in the Atom sense) is a collection of workspaces.
-	"""
-
-	workspaces = schema.Iterable(
-		u"The workspaces of this service" )
-
-class IUserService(IService):
-	"""
-	A service for a particular user.
-	"""
-	user_workspace = Object( IWorkspace, title="The main workspace for the user" )
-	user = Object(nti_interfaces.IUser, title="The user" )
 
 class IContentUnitInfo(ILocation, nti_interfaces.ILastModified, nti_interfaces.ILinked):
 	"""
