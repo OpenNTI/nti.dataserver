@@ -47,4 +47,5 @@ class IStripePaymentProcessor(IPaymentProcessor):
 
 class IStripePurchase(interface.Interface):
 	charge_id = schema.TextLine(title='charge id')
+	token_id = schema.TextLine(title='token id')
 	
