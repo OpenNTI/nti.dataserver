@@ -30,7 +30,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		user = self._create_user()		
 		hist = store_interfaces.IPurchaseHistory(user, None)
 		
-		pa = purchase.create_purchase_attempt('xyz', self.processor)
+		pa = purchase.create_purchase_attempt('xyz', self.processor, description='my charge')
 		hist.add_purchase(pa)
 		
 		ext = to_external_object(pa)
@@ -43,6 +43,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext,  has_entry('StartTime', is_not(None)))
 		assert_that(ext,  has_entry('EndTime', is_(None)))
 		assert_that(ext,  has_entry('ErrorMessage', is_(None)))
+		assert_that(ext,  has_entry('Description', is_('my charge')))
 			
 if __name__ == '__main__':
 	unittest.main()

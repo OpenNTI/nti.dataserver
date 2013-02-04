@@ -31,7 +31,7 @@ class StripePayment(object):
 		description = description or '%s payment for "%r"' % (username, items)
 		
 		processor = 'stripe'
-		pa = purchase.create_purchase_attempt_and_start(username, items, processor)
+		pa = purchase.create_purchase_attempt_and_start(username, items, processor, description=description)
 		
 		def process_pay():
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=processor)

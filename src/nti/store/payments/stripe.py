@@ -133,6 +133,10 @@ class _StripePaymentProcessor(Persistent):
 		charge = self._do_stripe_operation(stripe.Charge.create, api_key=api_key, **data)
 		return charge
 	
+	def get_stripe_charge(self, charge_id, api_key=None):
+		charge = self._do_stripe_operation(stripe.Charge.retrieve, charge_id, api_key=api_key)
+		return charge
+	
 	# ---------------------------
 
 	def create_customer(self, user, api_key=None):
@@ -209,7 +213,7 @@ class _StripePaymentProcessor(Persistent):
 		interface.alsoProvides( purchase, pay_interfaces.IStripePurchase )
 		
 		try:
-			charge_id = self.create_charge(amount, currency, card=token, description=description, api_key=api_key)
+			charge_id = self.create_charge(amount, currency, card=token, description=purchase.id, api_key=api_key)
 			sp.ChargeID = charge_id
 		
 			notify(store_interfaces.PurchaseAttemptSuccessful(purchase, user))

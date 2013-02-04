@@ -54,7 +54,7 @@ class TestStripePurchase(ConfiguringTestBase):
 		assert_that(adapted.charge_id, is_('charge_id'))
 		assert_that(adapted.token_id, is_('token_id'))
 			
-@unittest.SkipTest
+#@unittest.SkipTest
 class TestStripeOps(ConfiguringTestBase):
 	
 	@classmethod
@@ -120,7 +120,7 @@ class TestStripeOps(ConfiguringTestBase):
 		user = self._create_random_user()
 		
 		items=('xyz book',)
-		pa = purchase.create_purchase_attempt_and_start(user, items, 'stripe')
+		pa = purchase.create_purchase_attempt_and_start(user, items, 'stripe', description="my charge")
 		assert_that(pa.state, is_(store_interfaces.PA_STATE_STARTED))
 		
 		t = self.manager.create_card_token(	number="5105105105105100", 

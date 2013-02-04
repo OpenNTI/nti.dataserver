@@ -17,7 +17,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.store.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, has_entry)	
+from hamcrest import (assert_that, is_, is_not, has_entry)	
 	
 class TestStoreExternal(ConfiguringTestBase):
 		
@@ -40,6 +40,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		ext = to_external_object(pa)
 		assert_that(ext,  has_entry('ChargeID', is_(None)))
 		assert_that(ext,  has_entry('TokenID', is_(None)))
+		assert_that(ext,  has_entry('OID', is_not(None)))
 		
 			
 if __name__ == '__main__':

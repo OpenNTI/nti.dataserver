@@ -45,6 +45,7 @@ class IPurchaseAttempt(interface.Interface):
 						  title='purchase state', required=True)
 	
 	Items = schema.FrozenSet(value_type=schema.TextLine(title='the item identifier'), title="Items being purchased")
+	Description = schema.TextLine(title='A purchase description', required=False)
 	
 	StartTime = schema.Float(title='Start time', required=True)
 	EndTime = schema.Float(title='Completion time', required=False)

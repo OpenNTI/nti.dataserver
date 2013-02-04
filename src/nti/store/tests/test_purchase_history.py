@@ -37,6 +37,8 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 		hist.add_purchase(pa)
 		assert_that(hist, has_length(1))
 		
+		assert_that(pa.id, is_not(None))
+
 		intids = component.queryUtility( zope.intid.IIntIds )
 		assert_that(intids.queryId(pa), is_not(None))
 		
