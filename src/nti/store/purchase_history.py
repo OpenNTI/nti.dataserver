@@ -19,6 +19,8 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from . import interfaces as store_interfaces
 
+logger = __import__('logging').getLogger( __name__ )
+
 def _time_to_64bit_int( value ):
 	return struct.unpack( b'!Q', struct.pack( b'!d', value ) )[0]
 
@@ -92,8 +94,10 @@ def _PurchaseHistoryFactory(user):
 def _purchase_attempt_started( purchase, event ):
 	purchase.updateLastMod()
 	purchase.State = store_interfaces.PA_STATE_STARTED
-	hist = store_interfaces.IPurchaseHistory(event.user)
+	user = event.user
+	hist = store_interfaces.IPurchaseHistory(user)
 	hist.register_purchase(purchase)
+	logger.info('%s started %s' % (user, purchase))
 	
 @component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful( purchase, event  ):
@@ -101,6 +105,7 @@ def _purchase_attempt_successful( purchase, event  ):
 		purchase.State = store_interfaces.PA_STATE_SUCCESSFUL
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
+		logger.info('%s completed successfully' % (purchase))
 	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 	trxrunner(func, retries=5, sleep=0.1)
 
@@ -114,5 +119,7 @@ def _purchase_attempt_failed( purchase, event  ):
 			purchase.ErrorCode = event.error_code
 		if event.error_message:
 			purchase.ErrorMessage = event.error_message
+		logger.info('%s failed. %s' % (purchase, event.error_message))
+		
 	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 	trxrunner(func, retries=5, sleep=0.1)
