@@ -15,8 +15,8 @@ from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
-from nti.store import interfaces as store_interfaces
-from nti.store.payments import interfaces as pay_interfaces
+from . import interfaces as pay_interfaces
+from .. import interfaces as store_interfaces
 
 class StripeException(Exception):
 	pass
@@ -196,6 +196,10 @@ class _StripePaymentProcessor(Persistent):
 		
 		sp = pay_interfaces.IStripePurchase(purchase, None)
 		sp.token_id = token
+		
+		# set interface for externalization
+		interface.alsoProvides( purchase, pay_interfaces.IStripePurchase )
+		
 		try:
 			charge_id = self.create_charge(amount, currency, card=token, description=description, api_key=api_key)
 			sp.charge_id = charge_id

@@ -5,9 +5,11 @@ from zope import component
 from . import interfaces as payment_interfaces
 
 @component.adapter(payment_interfaces.IStripePurchase)
-class StripePurchaseDecoratory(object):
+class StripePurchaseDecorator(object):
 	def decorateExternalObject(self, original, external):
-		pass
+		ps = component.getAdapter(original, payment_interfaces.IStripePurchase)
+		external['ChargeID'] = ps.charge_id
+		external['TokenID'] = ps.token_id
 	
 def StripePurchaseDecoratorFactory(*args):
-	return StripePurchaseDecoratory()
+	return StripePurchaseDecorator()

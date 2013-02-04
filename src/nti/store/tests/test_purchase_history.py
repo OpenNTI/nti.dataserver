@@ -18,7 +18,7 @@ from nti.store.tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, is_not, has_length)	
 	
-class TestCustomerAdapter(ConfiguringTestBase):
+class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 		
 	processor = store_interfaces.STRIPE_PROCESSOR
 	

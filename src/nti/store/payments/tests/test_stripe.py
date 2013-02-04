@@ -12,7 +12,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.store import purchase
 from nti.store import interfaces as store_interfaces
-from nti.store.payments import _stripe as nti_stripe
+from nti.store.payments import stripe as nti_stripe
 from nti.store.payments import interfaces as pay_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver

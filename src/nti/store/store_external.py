@@ -18,11 +18,11 @@ class _PurchaseAttemptExternalExternalizer(object):
 		eo = {
 				ext_interfaces.StandardExternalFields.CLASS: 'PurchaseAttempt',
 				'State': self.purchase.state,
-				'Items': self.purchase.items,	
+				'Items': list(self.purchase.items),	
 				'Processor': self.purchase.processor,
-				'StartTime': self.purchase.start_time,
-				'Endtime': self.purchase.end_time,
-				'FailureMessage': self.purchase.failure_message
+				'Start Time': self.purchase.start_time,
+				'End Time': self.purchase.end_time,
+				'Failure Message': self.purchase.failure_message
 			 }
 		eo[ext_interfaces.StandardExternalFields.OID] = to_external_ntiid_oid(self.purchase)
 		eo[ext_interfaces.StandardExternalFields.LAST_MODIFIED] = self.purchase.lastModified
