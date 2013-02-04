@@ -63,3 +63,11 @@ if not hasattr( InMemoryMockRedis, 'pubsub' ):
 
 	InMemoryMockRedis.publish = publish
 	InMemoryMockRedis._get_channel = _get_channel
+
+
+# Pretend to have a closeable connection pool
+if not hasattr(InMemoryMockRedis, 'connection_pool' ):
+	class Pool(object):
+		def disconnect(self): pass
+
+	InMemoryMockRedis.connection_pool = property(lambda s: Pool())
