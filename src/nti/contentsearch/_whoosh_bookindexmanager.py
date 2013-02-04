@@ -14,9 +14,6 @@ from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
 
-import logging
-logger = logging.getLogger( __name__ )
-
 class _Proxy(ProxyBase):
 	
 	_max_searchers = 256 # Max number of searchers. Set in a config?

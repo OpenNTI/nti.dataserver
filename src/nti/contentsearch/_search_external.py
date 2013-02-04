@@ -15,9 +15,6 @@ from nti.contentsearch._search_highlights import word_fragments_highlight
 from nti.contentsearch.common import (	LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS,
 										SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS)
 
-import logging
-logger = logging.getLogger( __name__ )
-
 # highlight decorators
 
 def _word_fragments_highlight(query=None, text=None):
