@@ -46,7 +46,7 @@ class TestStripePurchase(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_adapter(self):
 		items = ('xyz',)
-		pa = purchase.create_purchase_attempt(items, store_interfaces.STRIPE_PROCESSOR)
+		pa = purchase.create_purchase_attempt(items, 'stripe')
 		adapted = pay_interfaces.IStripePurchase(pa)
 		adapted.charge_id = 'charge_id'
 		adapted.token_id = 'token_id'
@@ -120,7 +120,7 @@ class TestStripeOps(ConfiguringTestBase):
 		user = self._create_random_user()
 		
 		items=('xyz book',)
-		pa = purchase.create_purchase_attempt_and_start(user, items, store_interfaces.STRIPE_PROCESSOR)
+		pa = purchase.create_purchase_attempt_and_start(user, items, 'stripe')
 		assert_that(pa.state, is_(store_interfaces.PA_STATE_STARTED))
 		
 		t = self.manager.create_card_token(	number="5105105105105100", 

@@ -58,6 +58,8 @@ def _StripePurchaseFactory(purchase):
 @interface.implementer(pay_interfaces.IStripePaymentProcessor)
 class _StripePaymentProcessor(Persistent):
 	
+	name = 'stripe'
+	
 	def _do_stripe_operation(self,func, *args, **kwargs):
 		try:
 			result = func(*args, **kwargs)
