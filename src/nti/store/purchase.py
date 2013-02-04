@@ -6,6 +6,7 @@ from datetime import datetime
 
 from zope import interface
 from zope.event import notify
+from zope.location import ILocation
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 
@@ -19,7 +20,7 @@ from nti.utils.property import alias
 
 from . import interfaces as store_interfaces
 
-@interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable)
+@interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable, ILocation)
 class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
 	
 	EndTime = None
