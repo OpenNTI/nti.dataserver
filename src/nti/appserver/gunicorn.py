@@ -17,8 +17,6 @@ from __future__ import print_function, unicode_literals, absolute_import
 import logging
 logger = logging.getLogger(__name__)
 
-import socket
-import errno
 
 from pyramid.security import unauthenticated_userid
 from pyramid.threadlocal import get_current_request
@@ -42,7 +40,6 @@ import gevent.socket
 from .application_server import FlashPolicyServer
 from .application_server import WebSocketServer
 
-from zope.dottedname import resolve as dottedname
 
 from paste.deploy import loadwsgi
 
@@ -61,47 +58,6 @@ def dummy_app_factory(global_conf, **kwargs):
 	app.global_conf = global_conf
 	app.kwargs = kwargs
 	return app
-
-def _create_flash_socket(cfg, log):
-	"""
-	Create a new socket for the flash policy server (which has to run on a known TCP port)
-	Cribbed from :func:`gunicorn.sock.create_socket`, but without
-	the retries, looking for an existing file descriptor,
-	and the call to sys.exit on failure.
-
-	:raises socket.error: If we fail to create the socket.
-
-	"""
-	# We cannot use create_socket directly (naively), as it fails the integration tests if something is
-	# already using that port (a real instance): it calls sys.exit().
-	# Plus it wants to reuse an existing FD in the environment, which would be the
-	# wrong one.
-
-	util = dottedname.resolve( 'gunicorn.util' )
-	TCP6Socket = dottedname.resolve( 'gunicorn.sock.TCP6Socket' )
-	TCPSocket = dottedname.resolve( 'gunicorn.sock.TCPSocket' )
-
-	class FlashConf(object):
-		address = ('0.0.0.0', getattr(cfg, 'flash_policy_server_port', FlashPolicyServer.NONPRIV_POLICY_PORT) )
-		def __getattr__( self, name ):
-			return getattr( cfg, name )
-	conf = FlashConf( )
-
-	# get it only once
-	addr = conf.address
-	sock_type = TCP6Socket if util.is_ipv6(addr[0]) else TCPSocket
-
-	try:
-		result = sock_type(addr, conf, log)
-		log.info( "Listening at %s", result )
-		return result
-	except socket.error as e: # pragma: no cover
-		if e[0] == errno.EADDRINUSE:
-			log.error("Connection in use: %s", str(addr))
-		elif e[0] == errno.EADDRNOTAVAIL:
-			log.error("Invalid address: %s", str(addr))
-
-		raise
 
 class _PhonyRequest(object):
 	headers = ()
@@ -133,9 +89,6 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 	# Our worker uses a custom server, and we depend on that to be able to pass the right
 	# information to gunicorn.http.wsgi.create
 
-	# NOTE: gunicorn 0.17 adds SSL and multiple address support. We do not work
-	# with either of those, just a single non-SSL socket.
-
 	def get_environ(self):
 		# Start with what gevent creates
 		environ = super(_PyWSGIWebSocketHandler,self).get_environ()
@@ -158,8 +111,10 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 			# section 14.36 of HTTP 1.1. Stupid IE).
 			k, v = header.split( b':', 1)
 			request.headers.append( (k.upper(), v.strip()) )
-		# This is where we require just the single socket. get_environ does not have access to the listener.
-		_, gunicorn_env = gunicorn.http.wsgi.create(request, self.socket, self.client_address, self.server.worker.sockets[0].getsockname(), self.server.worker.cfg)
+
+		# The request arrived on self.socket, which is also environ['gunicorn.sock']. This
+		# is the "listener" argument as well that's needed for deriving the "HOST" value, if not present
+		_, gunicorn_env = gunicorn.http.wsgi.create(request, self.socket, self.client_address, self.socket.getsockname(), self.server.worker.cfg)
 
 		environ.update( gunicorn_env )
 		return environ
@@ -195,18 +150,6 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# in the parent process, pre-fork, once for every worker
 		super(GeventApplicationWorker,self).__init__( *args, **kwargs )
 		# Now we have access to self.cfg and the rest
-		policy_server_sock = getattr( self.cfg, 'policy_server_sock', None )
-		if policy_server_sock is None:
-			try:
-				self.cfg.policy_server_sock = _create_flash_socket( self.cfg, logger )
-			except socket.error:
-				logger.error( "Failed to create flash policy socket" )
-
-		# TODO: The flash socket handling fails when SIGUSR2 is used to re-exec
-		# the process.
-
-		if getattr( self.cfg, 'preload_app', None ): # pragma: no cover
-			logger.warn( "Preloading app before forking not supported" )
 
 	def _load_legacy_app( self ):
 		try:
@@ -289,18 +232,8 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			gun_logger.propagate = False
 
 		self.server_class = _ServerFactory( self )
-		# Make 0.17 more like 0.16.1: We only work with one address
-		assert len(self.sockets) == 1
+		# Make 0.17 more like 0.16.1 (TODO: Needed anymore?)
 		self.socket = self.sockets[0]
-
-		# Launch the flash policy listener if we could create it
-		policy_server_sock = getattr( self.cfg, 'policy_server_sock', None )
-		if policy_server_sock is not None:
-			self.policy_server = FlashPolicyServer( policy_server_sock )
-			policy_server_sock.setblocking( 0 )
-			self.policy_server.start()
-			logger.info( "Created flash policy server on %s", policy_server_sock )
-
 
 		if False: # pragma: no cover
 			def print_stacks():
@@ -320,14 +253,16 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			super(GeventApplicationWorker,self).init_process()
 
 
-
-
 class _ServerFactory(object):
 	"""
 	Given a worker that has already created the app server, does
 	what's necessary to finish initializing it for running (such as
 	messing with socket blocking and adjusting handler classes).
 	Serves as the 'server_class' value.
+
+	Also takes care of creating the flash policy server on its port instead
+	of the application.
+
 	"""
 
 	def __init__( self, worker ):
@@ -335,6 +270,10 @@ class _ServerFactory(object):
 
 
 	def __call__( self,  listen_on_socket, application=None, spawn=None, log=None, handler_class=None):
+		if listen_on_socket.cfg_addr[1] == self.worker.cfg.flash_policy_server_port: # Is this the flash port?
+			logger.info( "Created FlashPolicyServer on %s", listen_on_socket )
+			return FlashPolicyServer( listen_on_socket )
+
 		app_server = WebSocketServer(
 				listen_on_socket,
 				application,
@@ -460,8 +399,9 @@ class _PasterServerApplication(PasterServerApplication):
 	Exists to prevent loading of the app multiple times.
 	"""
 
-	def __init__( self, *args, **kwargs ):
-		super(_PasterServerApplication, self).__init__( *args, **kwargs )
+	def __init__( self, app, gcfg=None, host="127.0.0.1", port=None, *args, **kwargs):
+
+		super(_PasterServerApplication, self).__init__( app, gcfg=gcfg, host=host, port=port, *args, **kwargs )
 		self.cfg.set( 'pre_fork', _pre_fork )
 		self.cfg.set( 'post_fork', _post_fork )
 		self.cfg.set( 'pre_exec', _pre_exec )
@@ -472,6 +412,29 @@ class _PasterServerApplication(PasterServerApplication):
 			if ds_dir:
 				pidfile = os.path.join( ds_dir, 'var', 'gunicorn.pid' )
 				self.cfg.set( 'pidfile',  pidfile )
+
+		assert len( self.cfg.bind ) == 1
+		self._setup_flash_port( self.cfg, gcfg )
+
+	@classmethod # for testing
+	def _setup_flash_port( cls, cfg, global_conf ):
+		# Setup the flash port, if configured.
+		# An empty or missing value means to use the default port.
+		# A positive integer means to use that port. A negative
+		# integer disables the port.
+		# We bind this in the standard fashion so that it survives properly across
+		# fork/exec. It also simplifies things.
+		cfg.flash_policy_server_port = FlashPolicyServer.NONPRIV_POLICY_PORT
+		if global_conf and 'flash_policy_server_port' in global_conf and global_conf['flash_policy_server_port']:
+			port = int(global_conf['flash_policy_server_port'])
+			if port > 0:
+				cfg.flash_policy_server_port = port
+			else:
+				cfg.flash_policy_server_port = None
+
+		if cfg.flash_policy_server_port:
+			cfg.set( 'bind', cfg.bind + [':' + str(cfg.flash_policy_server_port)] )
+
 
 	def load(self):
 		if self.app is None:
