@@ -1,6 +1,6 @@
 #!/bin/bash
 
-workers=`ps -eaf | grep 'gunicorn: worker' | awk '{print $2}'`
+workers=`ps -eaf | grep '[g]unicorn: worker' | awk '{print $2}'`
 # Sending QUIT to a worker asks for a graceful
 # shutdown, waiting for up to the 'graceful_timeout' value
 # Sending HUP to the master causes it to spawn new workers,
