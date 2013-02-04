@@ -465,6 +465,13 @@ class _PasterServerApplication(PasterServerApplication):
 		self.cfg.set( 'pre_fork', _pre_fork )
 		self.cfg.set( 'post_fork', _post_fork )
 		self.cfg.set( 'pre_exec', _pre_exec )
+		if self.cfg.pidfile is None:
+			# Give us a pidfile in the $DATASERVER_DIR var directory
+			import os
+			ds_dir = os.environ.get( 'DATASERVER_DIR' )
+			if ds_dir:
+				pidfile = os.path.join( ds_dir, 'var', 'gunicorn.pid' )
+				self.cfg.set( 'pidfile',  pidfile )
 
 	def load(self):
 		if self.app is None:
