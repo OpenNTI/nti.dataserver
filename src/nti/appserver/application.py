@@ -152,12 +152,10 @@ def createApplication( http_port,
 	else:
 		ds_class = dataserver._Dataserver.Dataserver if not callable(create_ds) else create_ds
 		if process_args:
-			dataDir = "~/tmp"
-			dataFile = "test.fs"
+			dataDir = None
 			if '--dataDir' in sys.argv: dataDir = sys.argv[sys.argv.index('--dataDir') + 1]
-			if '--dataFile' in sys.argv: dataFile = sys.argv[sys.argv.index('--dataFile') + 1]
 			os.environ['DATASERVER_NO_REDIRECT'] = '1'
-			server = ds_class( dataDir, dataFile )
+			server = ds_class( dataDir )
 		else:
 			server = ds_class()
 

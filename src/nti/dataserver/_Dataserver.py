@@ -86,26 +86,24 @@ class MinimalDataserver(object):
 
 	db = None
 
-	def __init__(self, parentDir="~/tmp", dataFileName="test.fs", classFactory=None, apnsCertFile=None, daemon=None  ):
+	def __init__(self, parentDir=None, apnsCertFile=None ):
 		"""
 		"""
-		if classFactory:
-			raise TypeError( "classFactory no longer supported" )
-
-		if parentDir == "~/tmp" and 'DATASERVER_DIR' in os.environ:
+		if parentDir is None and 'DATASERVER_DIR' in os.environ:
 			parentDir = os.environ['DATASERVER_DIR']
-		if dataFileName == 'test.fs' and 'DATASERVER_FILE' in os.environ:
-			dataFileName = os.environ['DATASERVER_FILE']
-		parentDir = os.path.expanduser( parentDir )
-		self.conf = config.temp_get_config( parentDir, demo=DATASERVER_DEMO )
-		# TODO: We shouldn't be doing this, it should be passed to us
-		component.getGlobalSiteManager().registerUtility( self.conf )
-		self.redis = self._setup_redis( self.conf )
-
-
-
+		parentDir = os.path.expanduser( parentDir ) if parentDir else parentDir
 		self._parentDir = parentDir
-		self._dataFileName = dataFileName
+
+		#: Either objects with a 'close' method, or a tuple of (object, method-to-call)
+		self.other_closeables = []
+
+		# TODO: We shouldn't be doing this, it should be passed to us, yes?
+		self.conf = self._setup_conf( self._parentDir, DATASERVER_DEMO )
+		# TODO: Used to register the IEnvironmentSettings in the registry, but
+		# this seems to not be used anywhere
+		#component.getGlobalSiteManager().registerUtility( self.conf )
+
+		self.redis = self._setup_redis( self.conf )
 
 		self._open_dbs()
 
@@ -114,6 +112,9 @@ class MinimalDataserver(object):
 			if meth is not None: # pragma: no cover
 				raise DeprecationWarning( deprecated + " is no longer supported. Remove your method " + str(meth) )
 
+	def _setup_conf( self, environment_dir, demo=False ):
+		return config.temp_get_config( environment_dir, demo=demo )
+
 	def _open_dbs(self):
 		if self.db is not None:
 			self.db.close()
@@ -121,7 +122,7 @@ class MinimalDataserver(object):
 		# Although _setup_dbs returns a tuple, we don't actually want to hold a ref
 		# to any database except the root database. All access to multi-databases
 		# should go through an open connection.
-		self.db, _, _ = self._setup_dbs( self._parentDir, self._dataFileName, None )
+		self.db, _, _ = self._setup_dbs( self._parentDir, None, None ) # TODO: 3 args for backwards compat
 
 		# In zope, IDatabaseOpened is fired by XXX.
 		# zope.app.appsetup.bootstrap.bootStrapSubscriber listens for
@@ -151,6 +152,7 @@ class MinimalDataserver(object):
 		return db, ses_db, search_db
 
 	def _setup_redis( self, conf ):
+		__traceback_info__ = self, conf, conf.main_conf
 		if not conf.main_conf.has_option( 'redis', 'redis_url' ):
 			msg = "YOUR CONFIGURATION IS OUT OF DATE. Please install redis and then run nti_init_env --upgrade-outdated --write-supervisord"
 			logger.warn( msg )
@@ -164,6 +166,7 @@ class MinimalDataserver(object):
 		else:
 			client = redis.StrictRedis.from_url( redis_url )
 		interface.alsoProvides( client, interfaces.IRedisClient )
+		# TODO: Probably shouldn't be doing this
 		component.getGlobalSiteManager().registerUtility( client, interfaces.IRedisClient )
 		return client
 
@@ -198,19 +201,34 @@ class MinimalDataserver(object):
 		return self.dataserver_folder['users']
 
 	def close(self):
-		def _c( n, o, c=None ):
+		def _c( name, obj, close_func=None ):
 			try:
-				if o is not None:
-					f = c or o.close
-					f()
+				if close_func is None:
+					close_func = getattr( obj, 'close', None )
+				if close_func is not None:
+					close_func()
+				else:
+					logger.warning( "Don't know how to close %s = %s", name, obj )
 			except (Exception,AttributeError):
-				logger.warning( 'Failed to close %s = %s', n, o, exc_info=True )
-				raise
+				logger.warning( 'Failed to close %s = %s', name, obj, exc_info=True )
+
 
 		for k,v in self.db.databases.items():
 			_c( k, v )
 
 		_c( 'redis', self.redis, self.redis.connection_pool.disconnect )
+
+		for o in self.other_closeables:
+			c = None
+			if isinstance( o, tuple ):
+				o, c = o
+			_c( o, o, c )
+		del self.other_closeables[:]
+
+		# Clean up what we did to the site manager
+		gsm = component.getGlobalSiteManager()
+		if gsm.queryUtility( interfaces.IRedisClient ) is self.redis:
+			gsm.unregisterUtility( self.redis )
 
 	def get_by_oid( self, oid_string, ignore_creator=False ):
 		resolver = component.queryUtility( interfaces.IOIDResolver )
@@ -228,16 +246,17 @@ from nti.processlifetime import IProcessDidFork
 def _process_did_fork_listener( event ):
 	ds = component.queryUtility( interfaces.IDataserver )
 	if ds:
+		# Re-open in place. pre-fork we called ds.close()
 		ds._open_dbs()
+		ds._setup_redis( ds.conf )
 
 
 @interface.implementer(interfaces.IDataserver)
 class Dataserver(MinimalDataserver):
 
-	def __init__(self, parentDir = "~/tmp", dataFileName="test.fs", classFactory=None, apnsCertFile=None, daemon=None  ):
-		super(Dataserver, self).__init__(parentDir, dataFileName, classFactory, apnsCertFile, daemon )
+	def __init__(self, parentDir=None, apnsCertFile=None  ):
+		super(Dataserver, self).__init__(parentDir, apnsCertFile=apnsCertFile )
 		self.changeListeners = []
-		self.other_closeables = []
 
 		with self.db.transaction() as conn:
 			root = conn.root()
@@ -287,7 +306,7 @@ class Dataserver(MinimalDataserver):
 				logger.debug( "Done receiving changes! %s", os.getpid() )
 		reader = gevent.spawn( read_generic_changes )
 
-		return (changePublisherStream, (reader,))
+		return (changePublisherStream, ((reader,reader.kill),))
 
 	def _setup_session_manager( self ):
 		# The session service will read a component from our local site manager
@@ -300,8 +319,6 @@ class Dataserver(MinimalDataserver):
 
 
 	def _setup_apns( self, apnsCertFile ):
-		_apns = apns.APNS( certFile=apnsCertFile )
-
 		# Here we used to be using an inproc ZMQ socket to listen
 		# for device feedback events. Now we are using zope.event to
 		# distribute these. In the future, if we need to
@@ -309,7 +326,7 @@ class Dataserver(MinimalDataserver):
 		# include that code in the APNS server, or we can start proxying
 		# event objects around.
 
-		return _apns
+		return apns.APNS( certFile=apnsCertFile )
 
 	def get_sessions(self):
 		return self.session_manager
@@ -321,20 +338,12 @@ class Dataserver(MinimalDataserver):
 		if self._apns is self:
 			try:
 				self._apns = self._setup_apns( self._apnsCertFile )
+				self.other_closeables.append( self._apns )
 			except Exception:
 				# Probably a certificate problem
 				logger.warn( "Failed to create APNS connection. Notifications not available" )
 				self._apns = None
 		return self._apns
-
-
-	def close(self):
-		super(Dataserver,self).close( )
-		for x in self.other_closeables:
-			try:
-				x.close()
-			except (AttributeError, TypeError): pass
-		del self.other_closeables[:]
 
 	def add_change_listener( self, listener ):
 		""" Adds a listener (a callable object) for changes."""
@@ -343,6 +352,13 @@ class Dataserver(MinimalDataserver):
 
 	def remove_change_listener( self, listener ):
 		self.changeListeners.remove( listener )
+
+	def close(self):
+		super(Dataserver,self).close()
+		# TODO: We should probably be cleaning up change listeners too, dropping our ref
+		# to them, but we cannot right now because we close pre-fork and only re-open
+		# the database afterwards.
+		#del self.changeListeners[:]
 
 	# Exists as a callable class so that we can coallesce changes to the
 	# same kwargs. Top-level so we can trust isinstance

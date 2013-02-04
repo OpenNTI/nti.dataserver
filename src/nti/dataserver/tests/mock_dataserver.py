@@ -8,6 +8,7 @@ from tempstorage.TemporaryStorage import TemporaryStorage
 
 import nti.dataserver as dataserver
 import nti.dataserver._Dataserver
+from nti.dataserver.config import _make_connect_databases
 
 from zope import component
 from zope.dottedname import resolve as dottedname
@@ -17,12 +18,21 @@ from nti.tests import ConfiguringTestBase as _BaseConfiguringTestBase
 
 from . import mock_redis
 
+class MockConfig(object):
+	zeo_conf = None
+	zeo_client_conf = None
+
 class ChangePassingMockDataserver(dataserver._Dataserver.Dataserver ):
 
 	_mock_database = None
 
 	def __init__( self, *args, **kwargs ):
 		super(ChangePassingMockDataserver,self).__init__(*args, **kwargs)
+
+	def _setup_conf( self, *args, **kwargs ):
+		conf = MockConfig()
+		conf.connect_databases = _make_connect_databases(conf)
+		return conf
 
 	def _setup_change_distribution( self ):
 		return (None, None)
