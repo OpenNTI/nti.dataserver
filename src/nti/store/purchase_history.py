@@ -72,7 +72,7 @@ class _PurchaseHistory(Persistent):
 		
 	def get_purchase_state(self, pid):
 		p = self.get_purchase(pid)
-		return p.state if p else None
+		return p.State if p else None
 	
 	def values(self):
 		for p in self.purchases.values():
@@ -91,15 +91,15 @@ def _PurchaseHistoryFactory(user):
 @component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptStarted)
 def _purchase_attempt_started( purchase, event ):
 	purchase.updateLastMod()
-	purchase.state = store_interfaces.PA_STATE_STARTED
+	purchase.State = store_interfaces.PA_STATE_STARTED
 	hist = store_interfaces.IPurchaseHistory(event.user)
 	hist.register_purchase(purchase)
 	
 @component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful( purchase, event  ):
 	def func():
-		purchase.state = store_interfaces.PA_STATE_SUCCESSFUL
-		purchase.end_time = time.time()
+		purchase.State = store_interfaces.PA_STATE_SUCCESSFUL
+		purchase.EndTime = time.time()
 		purchase.updateLastMod()
 	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 	trxrunner(func, retries=5, sleep=0.1)
@@ -108,9 +108,11 @@ def _purchase_attempt_successful( purchase, event  ):
 def _purchase_attempt_failed( purchase, event  ):
 	def func():
 		purchase.updateLastMod()
-		purchase.end_time = time.time()
-		purchase.state = store_interfaces.PA_STATE_FAILED
-		purchase.failure_code = event.failure_code
-		purchase.failure_message = event.failure_message
+		purchase.EndTime = time.time()
+		purchase.State = store_interfaces.PA_STATE_FAILED
+		if event.error_code:
+			purchase.ErrorCode = event.error_code
+		if event.error_message:
+			purchase.ErrorMessage = event.error_message
 	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 	trxrunner(func, retries=5, sleep=0.1)

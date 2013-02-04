@@ -40,9 +40,9 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext,  has_entry('OID', is_not(None)))
 		assert_that(ext,  has_entry('Last Modified', is_not(None)))
 		assert_that(ext,  has_entry('Processor', 'stripe'))
-		assert_that(ext,  has_entry('Start Time', is_not(None)))
-		assert_that(ext,  has_entry('End Time', is_(None)))
-		assert_that(ext,  has_entry('Failure Message', is_(None)))
+		assert_that(ext,  has_entry('StartTime', is_not(None)))
+		assert_that(ext,  has_entry('EndTime', is_(None)))
+		assert_that(ext,  has_entry('ErrorMessage', is_(None)))
 			
 if __name__ == '__main__':
 	unittest.main()

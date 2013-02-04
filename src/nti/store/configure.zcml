@@ -10,7 +10,7 @@
 	<subscriber handler=".purchase_history._purchase_attempt_successful" />
 	<subscriber handler=".purchase_history._purchase_attempt_failed" />
 	
-	<adapter factory=".store_external._PurchaseAttemptExternalExternalizer" />
+	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	
 	<include package=".payments" file="configure.zcml" />
 	
