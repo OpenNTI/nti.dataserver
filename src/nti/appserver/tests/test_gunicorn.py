@@ -20,6 +20,7 @@ from hamcrest import same_instance
 from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import has_property
+from hamcrest import none
 
 #from pyramid.testing import DummyRequest
 from nti.tests import ByteHeadersDummyRequest as DummyRequest
@@ -32,13 +33,9 @@ import gevent.pool
 from nose.tools import assert_raises
 
 from nti.appserver import gunicorn
+from nti.appserver.gunicorn import _PasterServerApplication
+from nti.appserver.gunicorn import FlashPolicyServer
 
-def test_create_flash_socket():
-
-	with assert_raises( socket.error ):
-		class O(object):
-			flash_policy_server_port = 1
-		gunicorn._create_flash_socket( O, logger )
 
 import fudge
 class MockConfig(object):
@@ -58,6 +55,15 @@ class MockConfig(object):
 	}
 	x_forwarded_for_header = 'X-FORWARDED-FOR'
 	forwarded_allow_ips = '127.0.0.1'
+	bind = ()
+
+	def __init__( self ):
+		self.settings = {}
+
+	def set( self, key, val ):
+		self.settings[key] = val
+		if hasattr( self, key ):
+			setattr( self, key, val )
 
 
 class MockSocket(object):
@@ -72,8 +78,32 @@ class MockSocket(object):
 	def accept( self ):
 		pass
 	family = 1
+	cfg_addr = ('',8081)
 
 from gunicorn import config as gconfig
+
+def test_create_flash_socket():
+	cfg = MockConfig()
+	cfg.bind = ['bind']
+	# No value
+	_PasterServerApplication._setup_flash_port( cfg, {} )
+	assert_that( cfg, has_property( 'flash_policy_server_port', FlashPolicyServer.NONPRIV_POLICY_PORT ) )
+	assert_that( cfg.bind, is_( ['bind', ':' + str(FlashPolicyServer.NONPRIV_POLICY_PORT ) ] ) )
+
+	cfg = MockConfig()
+	cfg.bind = ['bind']
+	# Negative value
+	_PasterServerApplication._setup_flash_port( cfg, {'flash_policy_server_port': '-1'} )
+	assert_that( cfg, has_property( 'flash_policy_server_port', none() ) )
+	assert_that( cfg.bind, is_( ['bind'] ) )
+
+	cfg = MockConfig()
+	cfg.bind = ['bind']
+	# Specified value
+	_PasterServerApplication._setup_flash_port( cfg, {'flash_policy_server_port': '100'} )
+	assert_that( cfg, has_property( 'flash_policy_server_port', 100 ) )
+	assert_that( cfg.bind, is_( ['bind', ':100' ] ) )
+
 
 class TestGeventApplicationWorker(nti.tests.SharedConfiguringTestBase):
 	set_up_packages = ('nti.appserver',)
@@ -135,6 +165,7 @@ class TestGeventApplicationWorker(nti.tests.SharedConfiguringTestBase):
 		handler.read_request( rline )
 
 		# Finally, check the resulting environment
+		handler.socket = MockSocket()
 		environ = handler.get_environ()
 
 		assert_that( environ, has_entry( 'wsgi.url_scheme', 'https' ) )
@@ -156,6 +187,7 @@ class TestGeventApplicationWorker(nti.tests.SharedConfiguringTestBase):
 		global_conf['http_port'] = '1'
 
 		cfg = gconfig.Config()
+		_PasterServerApplication._setup_flash_port( cfg, global_conf )
 
 		# Default worker_connections config
 		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
