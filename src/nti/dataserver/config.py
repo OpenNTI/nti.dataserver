@@ -65,8 +65,8 @@ class _Program(object):
 		self.cmd_line = value
 	command = property(get_command, set_command)
 
+@interface.implementer(nti_interfaces.IEnvironmentSettings)
 class _ReadableEnv(object):
-	interface.implements(nti_interfaces.IEnvironmentSettings)
 	env_root = '/'
 	settings = {}
 	programs = ()
@@ -494,6 +494,9 @@ def _configure_database( env, uris ):
 
 
 def temp_get_config( root, demo=False ):
+	if not root:
+		return None
+
 	env = _Env( root, create=False )
 	install_zlib_client_resolver()
 	pfx = 'demo_' if demo else ''
@@ -504,6 +507,13 @@ def temp_get_config( root, demo=False ):
 	ini = SafeConfigParser()
 	ini.read( env.zeo_client_conf )
 
+	env.connect_databases = _make_connect_databases( env, root=root, ini=ini )
+
+	return env
+
+def _make_connect_databases( env, ini=None, root=None ):
+	if ini is None:
+		ini = {}
 	def connect_databases(  ):
 		__traceback_info__ = root, env.zeo_conf, env.zeo_client_conf, ini
 		env.zeo_launched = True
@@ -517,9 +527,8 @@ def temp_get_config( root, demo=False ):
 		# Sessions/Search DB has gone. Provide access to it if it is still in the config, otherwise
 		# fake it
 		return (db.databases['Users'], db.databases.get('Sessions'), db.databases.get('Search'))
-	env.connect_databases = connect_databases
+	return connect_databases
 
-	return env
 
 def write_configs(root_dir, pserve_ini, update_existing=False, write_supervisord=False):
 	env = _Env( root_dir, create=(not update_existing), only_new=update_existing )

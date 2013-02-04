@@ -262,5 +262,6 @@ class APNS(object):
 	def close( self ):
 		_close( self.connection )
 		self.connection = None
-		if self._feedback_greenlet is not None:
-			self._feedback_greenlet.kill(block=False)
+		for greenlet in self._feedback_greenlet, self._apns_error_greenlet:
+			if greenlet is not None:
+				greenlet.kill(block=False)
