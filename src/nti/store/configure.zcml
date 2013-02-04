@@ -2,15 +2,15 @@
 <configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
 	<include package="zope.component" />
 
-	<adapter factory="._adapters._PurchaseHistoryFactory"
+	<adapter factory=".purchase_history._PurchaseHistoryFactory"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IPurchaseHistory" />
 	
-	<subscriber handler="._adapters._purchase_attempt_started" />
-	<subscriber handler="._adapters._purchase_attempt_successful" />
-	<subscriber handler="._adapters._purchase_attempt_failed" />
+	<subscriber handler=".purchase_history._purchase_attempt_started" />
+	<subscriber handler=".purchase_history._purchase_attempt_successful" />
+	<subscriber handler=".purchase_history._purchase_attempt_failed" />
 	
-	<adapter factory="._store_external._PurchaseAttemptExternalExternalizer" />
+	<adapter factory=".store_external._PurchaseAttemptExternalExternalizer" />
 	
 	<include package=".payments" file="configure.zcml" />
 	
