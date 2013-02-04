@@ -19,9 +19,6 @@ from nti.contentprocessing import default_word_tokenizer_expression
 
 from nti.contentsearch import interfaces as search_interfaces
 
-import logging
-logger = logging.getLogger( __name__ )
-
 WORD_HIGHLIGHT  = "WordHighlight"
 
 _default_analyzer = None

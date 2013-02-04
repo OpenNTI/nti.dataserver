@@ -14,9 +14,6 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.contentsearch import interfaces as search_interfaces
 
-import logging
-logger = logging.getLogger( __name__ )
-
 @interface.implementer( ILocation )
 class _BaseSearchResults(object):
 	

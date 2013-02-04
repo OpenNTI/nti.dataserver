@@ -27,9 +27,6 @@ from nti.contentsearch._whoosh_indexstorage import get_index_writer
 from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 from nti.contentsearch._search_results import empty_suggest_and_search_results
 from nti.contentsearch._search_results import merge_suggest_and_search_results
-
-import logging
-logger = logging.getLogger( __name__ )
 		
 def get_indexname(username, type_name, use_md5=True):
 	type_name = normalize_type_name(type_name)
@@ -65,7 +62,6 @@ def _safe_index_close(index):
 			pass
 		
 def _on_index_removed(key, value):
-	logger.debug('closing index %s' % key)
 	_safe_index_close(value)
 
 whoosh_indices = LFUMap(maxsize=500, on_removal_callback=_on_index_removed)

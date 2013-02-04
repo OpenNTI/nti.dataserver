@@ -23,9 +23,6 @@ from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_
 
 from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_, intid_)
 
-import logging
-logger = logging.getLogger( __name__ )
-
 hit_search_external_fields  = (	CLASS, CREATOR, TYPE, LAST_MODIFIED, NTIID, CONTAINER_ID, SNIPPET, ID, INTID)
 
 def get_uid(obj):

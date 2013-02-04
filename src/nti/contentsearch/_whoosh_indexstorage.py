@@ -14,9 +14,6 @@ from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
 from nti.contentsearch import interfaces as search_interfaces
 
-import logging
-logger = logging.getLogger( __name__ )
-
 def oid_to_path(oid, max_bytes=3):
 	"""
 	Taken from ZODB/blob.py/BushyLayout

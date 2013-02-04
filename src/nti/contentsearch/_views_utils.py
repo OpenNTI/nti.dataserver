@@ -8,9 +8,6 @@ import repoze.lru
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
-import logging
-logger = logging.getLogger( __name__ )
-
 @repoze.lru.lru_cache(300)
 def get_ntiid_path(ntiid, registry=component):
 	result = ()
