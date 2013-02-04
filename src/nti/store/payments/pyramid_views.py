@@ -3,6 +3,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import six
+import gevent
 
 from zope import component
 
@@ -32,11 +33,13 @@ class StripePayment(object):
 		processor = 'stripe'
 		pa = purchase.create_purchase_attempt_and_start(username, items, processor)
 		
-		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=processor)
-		cid = manager.process_purchase(	user=username, token=token, amount=amount, 
-										currency=currency, purchase=pa, description=description)
+		def process_pay():
+			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=processor)
+			manager.process_purchase(user=username, token=token, amount=amount, 
+									 currency=currency, purchase=pa, description=description)
 		
-		return {'TransactionID': cid}
+		gevent.spawn(process_pay)
+		return pa
 		
 		
 def create_purchase_attempt(items, processor):

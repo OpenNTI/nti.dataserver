@@ -90,14 +90,21 @@ def _PurchaseHistoryFactory(user):
 	result = an_factory(_PurchaseHistory)(user)
 	return result
 
+
+def _trx_runner(f, retries=5, sleep=0.1):
+	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+	trxrunner(f, retries=5, sleep=0.1)
+	
 @component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptStarted)
 def _purchase_attempt_started( purchase, event ):
-	purchase.updateLastMod()
-	purchase.State = store_interfaces.PA_STATE_STARTED
-	user = event.user
-	hist = store_interfaces.IPurchaseHistory(user)
-	hist.register_purchase(purchase)
-	logger.info('%s started %s' % (user, purchase))
+	def func():
+		purchase.updateLastMod()
+		purchase.State = store_interfaces.PA_STATE_STARTED
+		user = event.user
+		hist = store_interfaces.IPurchaseHistory(user)
+		hist.register_purchase(purchase)
+		logger.info('%s started %s' % (user, purchase))
+	_trx_runner(func)
 	
 @component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful( purchase, event  ):
@@ -106,8 +113,7 @@ def _purchase_attempt_successful( purchase, event  ):
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
 		logger.info('%s completed successfully' % (purchase))
-	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
-	trxrunner(func, retries=5, sleep=0.1)
+	_trx_runner(func)
 
 @component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptFailed)
 def _purchase_attempt_failed( purchase, event  ):
@@ -120,6 +126,4 @@ def _purchase_attempt_failed( purchase, event  ):
 		if event.error_message:
 			purchase.ErrorMessage = event.error_message
 		logger.info('%s failed. %s' % (purchase, event.error_message))
-		
-	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
-	trxrunner(func, retries=5, sleep=0.1)
+	_trx_runner(func)
