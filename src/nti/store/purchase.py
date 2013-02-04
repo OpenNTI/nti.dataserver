@@ -13,11 +13,12 @@ from persistent import Persistent
 
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.datastructures import ModDateTrackingObject
 
 from . import interfaces as store_interfaces
 
 @interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable)
-class PurchaseAttempt(zcontained.Contained, Persistent):
+class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
 	
 	end_time = None
 	failure_code = None
@@ -72,8 +73,8 @@ def create_purchase_attempt(items, processor, state=store_interfaces.PA_STATE_ST
 	items = frozenset([items]) if isinstance(items, six.string_types) else frozenset(items)	
 	return PurchaseAttempt(items, processor, state=state, start_time=start_time)
 
-def create_purchase_attempt_and_start(user, items, processor, state=store_interfaces.PA_STATE_STARTED, start_time=None):	
-	result = create_purchase_attempt(items, processor, state=state, start_time=start_time)
+def create_purchase_attempt_and_start(user, items, processor, start_time=None):	
+	result = create_purchase_attempt(items, processor, state=store_interfaces.PA_STATE_STARTED, start_time=start_time)
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	notify(store_interfaces.PurchaseAttemptStarted(result, user))
 	return result

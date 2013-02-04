@@ -22,10 +22,9 @@ class TestCustomerAdapter(ConfiguringTestBase):
 		
 	processor = store_interfaces.STRIPE_PROCESSOR
 	
-	def _create_user(self, username='nt@nti.com', password='temp001', **kwargs):
+	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
-		ext_value = {'external_value':kwargs}
-		usr = User.create_user( ds, username=username, password=password, **ext_value)
+		usr = User.create_user( ds, username=username, password=password)
 		return usr
 	
 	@WithMockDSTrans
