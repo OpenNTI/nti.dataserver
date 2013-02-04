@@ -14,7 +14,7 @@
 			 name="stripe"
 			 provides=".interfaces.IStripePaymentProcessor" />
 	
-	<subscriber factory=".payments_external.StripePurchaseDecoratorFactory"
+	<subscriber factory=".externalization.StripePurchaseDecoratorFactory"
 				for=".interfaces.IStripePurchase"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 				
