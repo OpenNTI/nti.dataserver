@@ -5,6 +5,8 @@ import time
 from zope import schema
 from zope import interface
 
+from .. import interfaces as store_interfaces
+
 class IItemsPurchased(interface.Interface):
 	items = interface.Attribute("Iterable of items purchased")
 	user = interface.Attribute("The entity that made the purchase")
@@ -23,20 +25,7 @@ class ItemsPurchased(object):
 class IStripeCustomer(interface.Interface):
 	customer_id = schema.TextLine(title='customer id')
 	
-class IPaymentProcessor(interface.Interface):
-	
-	def process_purchase(user, purchase, amount, currency, description):
-		"""
-		Process a purchase attempt
-		
-		:user Entity making the purchase
-		:purchase IPurchaseAttempt object
-		:amount: purchase amount
-		:current: currency ISO code
-		:description: purchase description
-		"""
-		
-class IStripePaymentProcessor(IPaymentProcessor):
+class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 	
 	def process_purchase(user, token, purchase, amount, currency, description):
 		"""
@@ -46,6 +35,6 @@ class IStripePaymentProcessor(IPaymentProcessor):
 		"""
 
 class IStripePurchase(interface.Interface):
-	charge_id = schema.TextLine(title='charge id')
-	token_id = schema.TextLine(title='token id')
+	ChargeID = schema.TextLine(title='charge id')
+	TokenID = schema.TextLine(title='token id')
 	

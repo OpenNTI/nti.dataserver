@@ -2,6 +2,8 @@
 <configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
 	<include package="zope.component" />
 
+	<include package=".payments" file="configure.zcml" />
+		
 	<adapter factory=".purchase_history._PurchaseHistoryFactory"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IPurchaseHistory" />
@@ -11,7 +13,5 @@
 	<subscriber handler=".purchase_history._purchase_attempt_failed" />
 	
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
-	
-	<include package=".payments" file="configure.zcml" />
 	
 </configure>

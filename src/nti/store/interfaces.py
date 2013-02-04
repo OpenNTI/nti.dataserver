@@ -3,22 +3,43 @@ from __future__ import unicode_literals, print_function, absolute_import
 from zope import schema
 from zope import interface
 from zope import component
+from zope.schema.interfaces import IContextSourceBinder
+from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
 from nti.utils.property import alias
-
-STRIPE_PROCESSOR = 'stripe'
-AMAZON_PROCESSOR = 'amazon'
 
 PA_STATE_UNKNOWN = 'Unknown'
 PA_STATE_FAILED = 'Failed'
 PA_STATE_PENDING = 'Pending'
 PA_STATE_STARTED = 'Started'
 PA_STATE_SUCCESSFUL = 'Successful'
+
+class IPaymentProcessor(interface.Interface):
+	
+	name = schema.TextLine(title='Processor name', required=True)
+	
+	def process_purchase(user, purchase, amount, currency, description):
+		"""
+		Process a purchase attempt
 		
+		:user Entity making the purchase
+		:purchase IPurchaseAttempt object
+		:amount: purchase amount
+		:current: currency ISO code
+		:description: purchase description
+		"""
+	
+class PaymentProcessorVocabulary(UtilityVocabulary):
+	nameOnly = False
+	interface = IPaymentProcessor
+
+def payment_processors(context):
+	return PaymentProcessorVocabulary(context)
+interface.directlyProvides(payment_processors, IContextSourceBinder)
+
 class IPurchaseAttempt(interface.Interface):
 	
-	Processor = schema.Choice(values=(STRIPE_PROCESSOR,AMAZON_PROCESSOR),
-							  title='purchase processor', required=True)
+	Processor = schema.Choice(source=payment_processors, title='purchase processor', required=True)
 	
 	State = schema.Choice(values=(PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_SUCCESSFUL),
 						  title='purchase state', required=True)

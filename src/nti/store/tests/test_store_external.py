@@ -18,7 +18,7 @@ from hamcrest import (assert_that, is_, is_not, has_entry)
 	
 class TestStoreExternal(ConfiguringTestBase):
 		
-	processor = store_interfaces.STRIPE_PROCESSOR
+	processor = 'stripe'
 	
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds

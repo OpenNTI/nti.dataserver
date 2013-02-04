@@ -9,7 +9,6 @@ from zope import component
 from pyramid.security import authenticated_userid
 
 from .. import purchase 
-from . import interfaces as pay_interfaces
 from .. import interfaces as store_interfaces
 
 class StripePayment(object):
@@ -30,9 +29,10 @@ class StripePayment(object):
 		description = request.matchdict.get('description', None)
 		description = description or '%s payment for "%r"' % (username, items)
 		
-		pa = purchase.create_purchase_attempt_and_start(username, items, store_interfaces.STRIPE_PROCESSOR)
+		processor = 'stripe'
+		pa = purchase.create_purchase_attempt_and_start(username, items, processor)
 		
-		manager = component.getUtility(pay_interfaces.IPaymentProcessor, name=store_interfaces.STRIPE_PROCESSOR)
+		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=processor)
 		cid = manager.process_purchase(	user=username, token=token, amount=amount, 
 										currency=currency, purchase=pa, description=description)
 		
