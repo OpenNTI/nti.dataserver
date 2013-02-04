@@ -121,6 +121,7 @@ class TestStripeOps(ConfiguringTestBase):
 		
 		items=('xyz book',)
 		pa = purchase.create_purchase_attempt_and_start(user, items, store_interfaces.STRIPE_PROCESSOR)
+		assert_that(pa.state, is_(store_interfaces.PA_STATE_STARTED))
 		
 		t = self.manager.create_card_token(	number="5105105105105100", 
 										 	exp_month="11",
@@ -134,6 +135,7 @@ class TestStripeOps(ConfiguringTestBase):
 		cid = self.manager.process_purchase(user=user, token=t, purchase=pa, amount=100,
 											currency='USD', description="my payment")
 		assert_that(cid, is_not(None))
+		assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESSFUL))
 		
 		assert_that( eventtesting.getEvents(IObjectCreatedEvent, 
 											lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object)), has_length( 1 ) )

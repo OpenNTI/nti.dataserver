@@ -57,11 +57,13 @@ class _PurchaseHistory(Persistent):
 	add_purchase = register_purchase
 		
 	def remove_purchase(self, purchase):
+		intids = component.queryUtility( zope.intid.IIntIds )
 		self.time_map.pop(_time_to_64bit_int(purchase.start_time), None)
 		try:
 			self.purchases.remove(purchase)
+			intids.unregister(purchase)
 			lifecycleevent.removed(purchase)
-		except KeyError:
+		except:
 			pass
 		
 	def get_purchase(self, pid):
@@ -88,6 +90,7 @@ def _PurchaseHistoryFactory(user):
 
 @component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptStarted)
 def _purchase_attempt_started( purchase, event ):
+	purchase.updateLastMod()
 	purchase.state = store_interfaces.PA_STATE_STARTED
 	hist = store_interfaces.IPurchaseHistory(event.user)
 	hist.register_purchase(purchase)
@@ -97,14 +100,16 @@ def _purchase_attempt_successful( purchase, event  ):
 	def func():
 		purchase.state = store_interfaces.PA_STATE_SUCCESSFUL
 		purchase.end_time = time.time()
+		purchase.updateLastMod()
 	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 	trxrunner(func, retries=5, sleep=0.1)
 
 @component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptFailed)
 def _purchase_attempt_failed( purchase, event  ):
 	def func():
-		purchase.state = store_interfaces.PA_STATE_FAILED
+		purchase.updateLastMod()
 		purchase.end_time = time.time()
+		purchase.state = store_interfaces.PA_STATE_FAILED
 		purchase.failure_code = event.failure_code
 		purchase.failure_message = event.failure_message
 	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
