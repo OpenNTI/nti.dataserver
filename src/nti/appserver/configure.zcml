@@ -279,6 +279,7 @@
 	 get registered in the master process and so never gets hit.
     -->
     <subscriber handler=".gunicorn._process_will_fork_listener" />
+    <subscriber handler=".gunicorn._process_did_fork_will_exec" />
     <subscriber handler=".application._configure_pyramid_zodbconn" />
 
     <include package="nti.contentrange" />

@@ -58,6 +58,10 @@ class SessionService(object):
 
 		transactions.add_abort_hooks()
 
+	def close(self):
+		self.cluster_listener.kill()
+		self._session_watchdog.kill()
+
 	@property
 	def _session_db(self):
 		return component.getUtility( nti_interfaces.ISessionServiceStorage )

@@ -198,16 +198,19 @@ class MinimalDataserver(object):
 		return self.dataserver_folder['users']
 
 	def close(self):
-		def _c( n, o ):
+		def _c( n, o, c=None ):
 			try:
 				if o is not None:
-					o.close()
-			except Exception:
-				logger.warning( 'Failed to close %s', o, exc_info=True )
+					f = c or o.close
+					f()
+			except (Exception,AttributeError):
+				logger.warning( 'Failed to close %s = %s', n, o, exc_info=True )
 				raise
 
 		for k,v in self.db.databases.items():
 			_c( k, v )
+
+		_c( 'redis', self.redis, self.redis.connection_pool.disconnect )
 
 	def get_by_oid( self, oid_string, ignore_creator=False ):
 		resolver = component.queryUtility( interfaces.IOIDResolver )
@@ -234,6 +237,7 @@ class Dataserver(MinimalDataserver):
 	def __init__(self, parentDir = "~/tmp", dataFileName="test.fs", classFactory=None, apnsCertFile=None, daemon=None  ):
 		super(Dataserver, self).__init__(parentDir, dataFileName, classFactory, apnsCertFile, daemon )
 		self.changeListeners = []
+		self.other_closeables = []
 
 		with self.db.transaction() as conn:
 			root = conn.root()
@@ -248,14 +252,17 @@ class Dataserver(MinimalDataserver):
 		room_name = 'meeting_rooms'
 
 		self.session_manager = self._setup_session_manager( )
+		self.other_closeables.append( self.session_manager )
+
 		self.chatserver = self._setup_chat( room_name )
 
 		self._apnsCertFile = apnsCertFile
 		self._apns = self
 
 		# A topic that broadcasts Change events
-		self.changePublisherStream, self.other_closeables = self._setup_change_distribution()
+		self.changePublisherStream, other_closeables = self._setup_change_distribution()
 
+		self.other_closeables.extend( other_closeables or () )
 
 	def _setup_change_distribution( self ):
 		"""
@@ -323,11 +330,11 @@ class Dataserver(MinimalDataserver):
 
 	def close(self):
 		super(Dataserver,self).close( )
-		for x in getattr( self, 'other_closeables', None ) or ():
+		for x in self.other_closeables:
 			try:
 				x.close()
 			except (AttributeError, TypeError): pass
-		self.other_closeables = ()
+		del self.other_closeables[:]
 
 	def add_change_listener( self, listener ):
 		""" Adds a listener (a callable object) for changes."""

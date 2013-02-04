@@ -95,7 +95,7 @@ def _create_flash_socket(cfg, log):
 		result = sock_type(addr, conf, log)
 		log.info( "Listening at %s", result )
 		return result
-	except socket.error, e: # pragma: no cover
+	except socket.error as e: # pragma: no cover
 		if e[0] == errno.EADDRINUSE:
 			log.error("Connection in use: %s", str(addr))
 		elif e[0] == errno.EADDRNOTAVAIL:
@@ -201,6 +201,9 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 				self.cfg.policy_server_sock = _create_flash_socket( self.cfg, logger )
 			except socket.error:
 				logger.error( "Failed to create flash policy socket" )
+
+		# TODO: The flash socket handling fails when SIGUSR2 is used to re-exec
+		# the process.
 
 		if getattr( self.cfg, 'preload_app', None ): # pragma: no cover
 			logger.warn( "Preloading app before forking not supported" )
@@ -401,12 +404,24 @@ class _IGunicornWillFork(IProcessWillFork):
 	arbiter = interface.Attribute( "The master arbiter" )
 	worker = interface.Attribute( "The new worker that will run in the child" )
 
+class _IGunicornDidForkWillExec(interface.Interface):
+	"""
+	An event specific to gunicorn sigusr2 handling.
+	"""
+	arbiter = interface.Attribute( "The current master arbiter; will be going away" )
+
 @interface.implementer(_IGunicornWillFork)
 class _GunicornWillFork(ProcessWillFork):
 
 	def __init__( self, arbiter, worker ):
 		self.arbiter = arbiter
 		self.worker = worker
+
+@interface.implementer(_IGunicornDidForkWillExec)
+class _GunicornDidForkWillExec(object):
+
+	def __init__( self, arbiter ):
+		self.arbiter = arbiter
 
 @component.adapter(_IGunicornWillFork)
 def _process_will_fork_listener( event ):
@@ -417,12 +432,27 @@ def _process_will_fork_listener( event ):
 		# sticking around here. It will be reopened in the child
 		ds.close()
 
+@component.adapter(_IGunicornDidForkWillExec)
+def _process_did_fork_will_exec( event ):
+	# First, kill the DS for good measure
+	_process_will_fork_listener( event )
+	# Now, run component cleanup, etc, for good measure
+	from zope import site
+	site = site
+	from zope.testing import cleanup
+	cleanup.cleanUp()
 
 def _pre_fork( arbiter, worker ):
 	notify( _GunicornWillFork( arbiter, worker ) )
 
 def _post_fork( arbiter, worker ):
 	notify( ProcessDidFork() )
+
+def _pre_exec( arbiter ):
+	# Called during sigusr2 handling from arbiter.reexec(),
+	# just after forking (and in the child process)
+	# but before exec'ing the new master
+	notify( _GunicornDidForkWillExec( arbiter ) )
 
 from gunicorn.app.pasterapp import PasterServerApplication
 class _PasterServerApplication(PasterServerApplication):
@@ -434,6 +464,7 @@ class _PasterServerApplication(PasterServerApplication):
 		super(_PasterServerApplication, self).__init__( *args, **kwargs )
 		self.cfg.set( 'pre_fork', _pre_fork )
 		self.cfg.set( 'post_fork', _post_fork )
+		self.cfg.set( 'pre_exec', _pre_exec )
 
 	def load(self):
 		if self.app is None:
