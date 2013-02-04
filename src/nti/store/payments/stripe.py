@@ -15,6 +15,8 @@ from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.utils.property import alias
+
 from . import interfaces as pay_interfaces
 from .. import interfaces as store_interfaces
 
@@ -38,12 +40,16 @@ def _StripeCustomerFactory(user):
 @component.adapter(store_interfaces.IPurchaseAttempt)
 @interface.implementer( pay_interfaces.IStripePurchase)
 class _StripePurchase(zcontained.Contained, Persistent):
-	charge_id = None
-	token_id = None
+	
+	TokenID = None
+	ChargeID = None
 	
 	@property
 	def purchase(self):
 		return self.__parent__
+	
+	token_id = alias('TokenID')
+	charge_id = alias('ChargeID')
 	
 def _StripePurchaseFactory(purchase):
 	result = an_factory(_StripePurchase)(purchase)
@@ -195,14 +201,14 @@ class _StripePaymentProcessor(Persistent):
 		self.get_or_create_customer(user, api_key=api_key)
 		
 		sp = pay_interfaces.IStripePurchase(purchase, None)
-		sp.token_id = token
+		sp.TokenID = token
 		
 		# set interface for externalization
 		interface.alsoProvides( purchase, pay_interfaces.IStripePurchase )
 		
 		try:
 			charge_id = self.create_charge(amount, currency, card=token, description=description, api_key=api_key)
-			sp.charge_id = charge_id
+			sp.ChargeID = charge_id
 		
 			notify(store_interfaces.PurchaseAttemptSuccessful(purchase, user))
 			
