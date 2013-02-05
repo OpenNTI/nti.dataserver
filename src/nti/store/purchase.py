@@ -4,16 +4,12 @@ import six
 import time
 from datetime import datetime
 
+import persistent
 from zope import interface
-from zope.event import notify
 from zope.location import ILocation
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 
-from persistent import Persistent
-
-from nti.dataserver.users import User
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.datastructures import ModDateTrackingObject
 
 from nti.externalization.oids import to_external_ntiid_oid
@@ -23,7 +19,7 @@ from nti.utils.property import alias
 from . import interfaces as store_interfaces
 
 @interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable, ILocation)
-class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
+class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Persistent):
 	
 	Synced = False
 	EndTime = None
@@ -55,10 +51,10 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
 	processor = alias('Processor')
 	start_time = alias('StartTime')
 	description = alias('Description')
-	
+
 	@property
 	def id(self):
-		return to_external_ntiid_oid(self)
+		return unicode(to_external_ntiid_oid(self))
 	
 	def __repr__( self ):
 		d = datetime.fromtimestamp(self.start_time)
@@ -104,15 +100,8 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
 	def is_synced(self):
 		return self.Synced
 	
-def create_purchase_attempt(items, processor, state=store_interfaces.PA_STATE_STARTED, description=None, start_time=None):
-	state = state or store_interfaces.PA_STATE_UNKNOWN
+def create_purchase_attempt(items, processor, state=store_interfaces.PA_STATE_UNKNOWN, description=None, start_time=None):
 	items = frozenset() if not items else items	
 	items = frozenset([items]) if isinstance(items, six.string_types) else frozenset(items)	
 	return PurchaseAttempt(items=items, processor=processor, description=description, state=state, start_time=start_time)
 
-def create_purchase_attempt_and_start(user, items, processor, description=None, start_time=None):	
-	result = create_purchase_attempt(items=items, processor=processor, description=description, 
-									 state=store_interfaces.PA_STATE_STARTED, start_time=start_time)
-	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-	notify(store_interfaces.PurchaseAttemptStarted(result, user))
-	return result

@@ -14,17 +14,16 @@ import stripe
 import unittest
 
 from zope import component
-from zope.lifecycleevent import IObjectCreatedEvent, IObjectRemovedEvent
 
 from nti.dataserver.users import User
-from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.store import purchase
+from nti.store import purchase_history
 from nti.store import interfaces as store_interfaces
 from nti.store.payments import interfaces as pay_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 
 from nti.store.tests import ConfiguringTestBase
 
@@ -62,23 +61,6 @@ class TestStripeIO(ConfiguringTestBase):
 		return user
 
 	@WithMockDSTrans
-	def xtest_create_update_delete_customer(self):
-		user = self._create_random_user()
-		adapted, scust = self.manager.get_or_create_customer(user)
-		assert_that(scust, is_not(None))
-		assert_that(adapted.customer_id, is_not(None))
-
-		profile = user_interfaces.IUserProfile(user)
-		setattr(profile, 'email', 'xyz@nt.com')
-		r = self.manager.update_customer(user, scust)
-		assert_that(r, is_(True))
-
-		r = self.manager.delete_customer(user)
-		assert_that(r, is_(True))
-		adapted = pay_interfaces.IStripeCustomer(user)
-		assert_that(adapted.customer_id, is_(None))
-
-	@WithMockDSTrans
 	def test_create_token_and_charge(self):
 		t = self.manager.create_card_token(	number="5105105105105100",
 											exp_month="11",
@@ -93,7 +75,7 @@ class TestStripeIO(ConfiguringTestBase):
 		c = self.manager.create_charge(100, card=t, description="my charge")
 		assert_that(c, is_not(None))
 
-	def create_purchase(self, user, purchase, amount=100):
+	def create_purchase(self, username, purchase_id, amount=100):
 		t = self.manager.create_card_token(	number="5105105105105100",
 										 	exp_month="11",
 										 	exp_year="30",
@@ -103,54 +85,83 @@ class TestStripeIO(ConfiguringTestBase):
 										 	zip = "73072",
 										 	state="OK",
 										 	country="USA")
-		cid = self.manager.process_purchase(user=user, token=t, purchase=purchase, amount=amount, currency='USD')
+		
+		cid = self.manager.process_purchase(username=username, token=t,
+											purchase_id=purchase_id, amount=amount, currency='USD')
 		return t, cid
 										
-	@WithMockDSTrans
+	@WithMockDS
 	def test_process_payment(self):
-		user = self._create_random_user()
-
-		items = ('xyz book',)
-		pa = purchase.create_purchase_attempt_and_start(user, items, 'stripe', description="my charge")
-		assert_that(pa.state, is_(store_interfaces.PA_STATE_STARTED))
-
-		tid, cid = self.create_purchase(user, pa, 1000)
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
+			user = self._create_random_user()
+			username = user.username
+		
+		with mock_dataserver.mock_db_trans(ds):
+			items = ('xyz book',)
+			pa = purchase.create_purchase_attempt(items, self.manager.name, description="my charge")
+			purchase_id = purchase_history.register_purchase_attempt(username, pa)
+			assert_that(purchase_id, is_not(None))
+			
+		with mock_dataserver.mock_db_trans(ds):
+			tid, cid = self.create_purchase(username, purchase_id, 1000)
+		
 		assert_that(tid, is_not(None))
 		assert_that(cid, is_not(None))
-		assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESSFUL))
+		
+		with mock_dataserver.mock_db_trans(ds):
+			pa = purchase_history.get_purchase_attempt(purchase_id, username)
+			assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESSFUL))
 
-		assert_that( eventtesting.getEvents(IObjectCreatedEvent,
-											lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object)), has_length( 1 ) )
+		assert_that( eventtesting.getEvents(pay_interfaces.IStripeCustomerCreated), has_length( 1 ) )
 
-		assert_that(eventtesting.getEvents( store_interfaces.IPurchaseAttemptStarted ),
-				 	has_length( 1 ) )
+		assert_that(eventtesting.getEvents( store_interfaces.IPurchaseAttemptStarted ), has_length( 1 ) )
 
-		assert_that(eventtesting.getEvents( store_interfaces.IPurchaseAttemptSuccessful ),
-				 	has_length( 1 ) )
+		assert_that(eventtesting.getEvents( pay_interfaces.IRegisterStripeToken ), has_length( 1 ) )
+		assert_that(eventtesting.getEvents( pay_interfaces.IRegisterStripeCharge ), has_length( 1 ) )
+		
+		assert_that(eventtesting.getEvents( store_interfaces.IPurchaseAttemptSuccessful ), has_length( 1 ) )
 
-		self.manager.delete_customer(user)
-		assert_that( eventtesting.getEvents( IObjectRemovedEvent,
-											 lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object) ), has_length( 1 ) )
+		with mock_dataserver.mock_db_trans(ds):
+			self.manager.delete_customer(username)
+		assert_that( eventtesting.getEvents(pay_interfaces.IStripeCustomerDeleted), has_length( 1 ) )
+		
+		with mock_dataserver.mock_db_trans(ds):
+			user = User.get_user(username)
+			su = pay_interfaces.IStripeCustomer(user)	
+			assert_that(su.customer_id, is_(None))
 		
 	@WithMockDSTrans
 	def test_sync_pending_purchase(self):		
-		user = self._create_random_user()
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
+			user = self._create_random_user()
+			username = user.username
 			
-		items=('xyz book',)
-		pa = purchase.create_purchase_attempt_and_start(user, items, 'stripe', description="my charge")
-		assert_that(pa.state, is_(store_interfaces.PA_STATE_STARTED))
+		with mock_dataserver.mock_db_trans(ds):
+			items = ('xyz book',)
+			pa = purchase.create_purchase_attempt(items, self.manager.name, description="my charge")
+			purchase_id = purchase_history.register_purchase_attempt(username, pa)
+			assert_that(purchase_id, is_not(None))
 			
-		t, cid = self.create_purchase(user, pa, 1000)
-	
-		# mock_dataserver.current_transaction.commit(transaction.manager.get())
-		sp = pay_interfaces.IStripePurchase(pa)
-		assert_that(sp.token_id, is_(t))
-		assert_that(sp.charge_id, is_(cid))
+		with mock_dataserver.mock_db_trans(ds):
+			t, cid = self.create_purchase(username, purchase_id, 1000)
 			
-		pa.state = store_interfaces.PA_STATE_STARTED
-		charge = self.manager.sync_purchase(pa, user=user)
-		assert_that(charge, is_not(None))
-		assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESSFUL))
+		with mock_dataserver.mock_db_trans(ds):
+			pa = purchase_history.get_purchase_attempt(purchase_id, username)
+			sp = pay_interfaces.IStripePurchase(pa)
+			assert_that(sp.token_id, is_(t))
+			assert_that(sp.charge_id, is_(cid))
+			# change state 
+			pa.state = store_interfaces.PA_STATE_STARTED
+			
+		with mock_dataserver.mock_db_trans(ds):
+			charge = self.manager.sync_purchase(purchase_id, username=username)
+			assert_that(charge, is_not(None))
+			
+		with mock_dataserver.mock_db_trans(ds):
+			pa = purchase_history.get_purchase_attempt(purchase_id, username)
+			assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESSFUL))
 		
 if __name__ == '__main__':
 	unittest.main()

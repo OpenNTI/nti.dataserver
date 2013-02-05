@@ -10,6 +10,7 @@ from zope import component
 from pyramid.security import authenticated_userid
 
 from .. import purchase 
+from .. import purchase_history
 from .. import interfaces as store_interfaces
 
 class StripePayment(object):
@@ -31,15 +32,16 @@ class StripePayment(object):
 		description = description or '%s payment for "%r"' % (username, items)
 		
 		processor = 'stripe'
-		pa = purchase.create_purchase_attempt_and_start(username, items, processor, description=description)
+		purchase = purchase.create_purchase_attempt(username, items, processor, description=description)
+		purchase_id = purchase_history.register_purchase_attempt(username, purchase)
 		
 		def process_pay():
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=processor)
-			manager.process_purchase(user=username, token=token, amount=amount, 
-									 currency=currency, purchase=pa, description=description)
+			manager.process_purchase(username=username, token=token, amount=amount, 
+									 currency=currency, purchase_id=purchase_id, description=description)
 		
 		gevent.spawn(process_pay)
-		return pa
+		return purchase
 		
 		
 def create_purchase_attempt(items, processor):
