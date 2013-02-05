@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -17,7 +12,7 @@ from zope.configuration import xmlconfig
 import nti.store as store
 import nti.dataserver as dataserver
 
-from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase as DSSharedConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase as DSSharedConfiguringTestBase
 
 class ConfiguringTestBase(DSSharedConfiguringTestBase):
 	set_up_packages = (dataserver, store)

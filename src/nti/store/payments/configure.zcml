@@ -11,11 +11,11 @@
 			 provides=".interfaces.IStripePurchase" />
 			 		 
 	<utility factory=".stripe_processor._StripePaymentProcessor" 
-			 name="stripe"
-			 provides=".interfaces.IStripePaymentProcessor" />
+			 provides=".interfaces.IStripePaymentProcessor" 
+			 name="stripe" />
 	
-	<subscriber factory=".externalization.StripePurchaseDecoratorFactory"
-				for=".interfaces.IStripePurchase"
+	<subscriber factory=".externalization.PurchaseAttemptDecoratorFactory"
+				for="..interfaces.IPurchaseAttempt"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 				
 </configure>

@@ -2,14 +2,16 @@ from __future__ import print_function, unicode_literals
 
 from zope import component
 
+from .. import interfaces as store_interfaces
 from . import interfaces as payment_interfaces
 
-@component.adapter(payment_interfaces.IStripePurchase)
-class StripePurchaseDecorator(object):
+@component.adapter(store_interfaces.IPurchaseAttempt)
+class PurchaseAttemptDecorator(object):
 	def decorateExternalObject(self, original, external):
-		ps = component.getAdapter(original, payment_interfaces.IStripePurchase)
-		external['ChargeID'] = ps.charge_id
-		external['TokenID'] = ps.token_id
+		if original.Processor == 'stripe':
+			ps = payment_interfaces.IStripePurchase(original)
+			external['ChargeID'] = ps.charge_id
+			external['TokenID'] = ps.token_id
 	
-def StripePurchaseDecoratorFactory(*args):
-	return StripePurchaseDecorator()
+def PurchaseAttemptDecoratorFactory(*args):
+	return PurchaseAttemptDecorator()

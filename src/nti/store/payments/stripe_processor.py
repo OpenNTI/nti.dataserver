@@ -85,7 +85,7 @@ class _StripePaymentProcessor(StripeIO, Persistent):
 	
 	# ---------------------------
 	
-	def process_purchase(self, user, token, purchase, amount, currency, description, api_key=None):
+	def process_purchase(self, user, token, purchase, amount, currency, api_key=None):
 	
 		assert purchase.is_pending()
 						
@@ -96,15 +96,12 @@ class _StripePaymentProcessor(StripeIO, Persistent):
 		sp = pay_interfaces.IStripePurchase(purchase)
 		sp.TokenID = token
 		
-		# set interface for externalization
-		interface.alsoProvides( purchase, pay_interfaces.IStripePurchase )
-		
 		scust = pay_interfaces.IStripeCustomer(user)
 		descid = "%s,%s,%s" % (user.username, scust.customer_id, purchase.id)
 		try:
 			charge_id = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
 			sp.ChargeID = charge_id
-		
+			
 			notify(store_interfaces.PurchaseAttemptSuccessful(purchase, user))
 			
 			# notify items purchased
@@ -128,18 +125,18 @@ class _StripePaymentProcessor(StripeIO, Persistent):
 		sp = pay_interfaces.IStripePurchase(purchase)
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 		if sp.charge_id:
-			charge = self.get_stripe_charge(self, sp.charge_id, api_key=api_key)
+			charge = self.get_stripe_charge(sp.charge_id, api_key=api_key)
 			if charge is None: 
 				# if the charge cannot be found it means there was a db error
 				# or the charge has been deleted from stripe. 
 				message = 'Charge %s/%r for user %s could not be found in Stripe' % (sp.charge_id, purchase.id, user)
 				logger.warn(message)
 		else:
-			start_time = time.mktime(date.fromtimestamp(purchase.lastModified).timetuple())
-			charges = self.get_charges(pid=purchase.pid, start_time=start_time, api_key=api_key)
+			start_time = time.mktime(date.fromtimestamp(purchase.StartTime).timetuple())
+			charges = self.get_charges(pid=purchase.id, start_time=start_time, api_key=api_key)
 			if charges:
 				charge = charges[0]
-			else:
+			elif sp.token_id:
 				token = self.get_stripe_token(sp.token_id, api_key=api_key)
 				if token is None:
 					# if the token cannot be found it means there was a db error

@@ -46,7 +46,7 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
 			self.ErorrMessage = error_message
 		if description:
 			self.Description = description
-		if synced:
+		if synced == True:
 			self.Synced = True
 	
 	state = alias('State')
@@ -77,9 +77,6 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
 		xhash ^= hash(self.Items)
 		return xhash
 	
-	def has_completed(self):
-		return self.State in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_SUCCESSFUL)
-	
 	def has_failed(self):
 		return self.State == store_interfaces.PA_STATE_FAILED
 		
@@ -91,6 +88,18 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
 	
 	def is_refunded(self):
 		return self.State == store_interfaces.PA_STATE_REFUNDED
+	
+	def is_disputed(self):
+		return self.State == store_interfaces.PA_STATE_DISPUTED
+	
+	def is_reserved(self):
+		return self.State == store_interfaces.PA_STATE_RESERVED
+	
+	def is_canceled(self):
+		return self.State == store_interfaces.PA_STATE_CANCELED
+	
+	def has_completed(self):
+		return not (self.is_pending() or self.is_reserved() or self.is_disputed())
 	
 	def is_synced(self):
 		return self.Synced
