@@ -251,7 +251,7 @@ setup(
 		'zope.datetime >= 3.4.1',
 		'zope.deprecation >= 4.0.2',
 		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
-		'zope.dottedname >= 3.4.6',
+		'zope.dottedname >= 4.0.0',
 		'zope.dublincore >= 3.8.2',
 		'zope.error >= 4.0.0',
 		'zope.event >= 4.0.2',

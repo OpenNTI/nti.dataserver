@@ -15,12 +15,14 @@ from hamcrest import is_not as does_not
 from hamcrest import has_property
 from hamcrest import has_key
 from hamcrest import contains_string
+from hamcrest import has_entry
 
 from nose.tools import assert_raises
 
 import nti.tests
 from nti.tests import verifiably_provides
 from nti.tests import is_false
+from nti.dataserver.tests import mock_dataserver
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
 tearDownModule = nti.tests.module_teardown
@@ -30,6 +32,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces
 from nti.dataserver.users import Everyone
 from nti.dataserver.users import User
+from nti.externalization.externalization import to_external_object
 
 def test_email_address_invalid_domain():
 	with assert_raises(interfaces.EmailAddressInvalid):
@@ -120,3 +123,16 @@ def test_everyone_names():
 	names = interfaces.IFriendlyNamed( everyone )
 	assert_that( names, has_property( 'alias', 'Public' ) )
 	assert_that( names, has_property( 'realname', 'Everyone' ) )
+
+@mock_dataserver.WithMockDSTrans
+def test_externalizing_extended_fields():
+	user = User.create_user( username="foo@bar" )
+
+	ext_user = to_external_object( user )
+	assert_that( ext_user, has_entry( 'location', None ) )
+
+	prof = interfaces.ICompleteUserProfile( user )
+	prof.location = 'foo bar'
+
+	ext_user = to_external_object( user )
+	assert_that( ext_user, has_entry( 'location', 'foo bar' ) )
