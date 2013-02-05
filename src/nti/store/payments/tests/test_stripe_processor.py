@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -36,6 +31,7 @@ from nti.store.tests import ConfiguringTestBase
 from zope.component import eventtesting
 from hamcrest import (assert_that, is_, is_not, has_length)
 
+@unittest.SkipTest
 class TestStripeIO(ConfiguringTestBase):
 
 	@classmethod
@@ -65,9 +61,8 @@ class TestStripeIO(ConfiguringTestBase):
 		user = self._create_user(username=username, email=email, description=desc)
 		return user
 
-	@unittest.skip
 	@WithMockDSTrans
-	def test_create_update_delete_customer(self):
+	def xtest_create_update_delete_customer(self):
 		user = self._create_random_user()
 		adapted, scust = self.manager.get_or_create_customer(user)
 		assert_that(scust, is_not(None))
@@ -83,7 +78,6 @@ class TestStripeIO(ConfiguringTestBase):
 		adapted = pay_interfaces.IStripeCustomer(user)
 		assert_that(adapted.customer_id, is_(None))
 
-	@unittest.skip
 	@WithMockDSTrans
 	def test_create_token_and_charge(self):
 		t = self.manager.create_card_token(	number="5105105105105100",
@@ -99,15 +93,7 @@ class TestStripeIO(ConfiguringTestBase):
 		c = self.manager.create_charge(100, card=t, description="my charge")
 		assert_that(c, is_not(None))
 
-	@unittest.skip
-	@WithMockDSTrans
-	def test_process_payment(self):
-		user = self._create_random_user()
-
-		items = ('xyz book',)
-		pa = purchase.create_purchase_attempt_and_start(user, items, 'stripe', description="my charge")
-		assert_that(pa.state, is_(store_interfaces.PA_STATE_STARTED))
-
+	def create_purchase(self, user, purchase, amount=100):
 		t = self.manager.create_card_token(	number="5105105105105100",
 										 	exp_month="11",
 										 	exp_year="30",
@@ -117,8 +103,19 @@ class TestStripeIO(ConfiguringTestBase):
 										 	zip = "73072",
 										 	state="OK",
 										 	country="USA")
-		cid = self.manager.process_purchase(user=user, token=t, purchase=pa, amount=100,
-											currency='USD', description="my payment")
+		cid = self.manager.process_purchase(user=user, token=t, purchase=purchase, amount=amount, currency='USD')
+		return t, cid
+										
+	@WithMockDSTrans
+	def test_process_payment(self):
+		user = self._create_random_user()
+
+		items = ('xyz book',)
+		pa = purchase.create_purchase_attempt_and_start(user, items, 'stripe', description="my charge")
+		assert_that(pa.state, is_(store_interfaces.PA_STATE_STARTED))
+
+		tid, cid = self.create_purchase(user, pa, 1000)
+		assert_that(tid, is_not(None))
 		assert_that(cid, is_not(None))
 		assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESSFUL))
 
@@ -134,3 +131,26 @@ class TestStripeIO(ConfiguringTestBase):
 		self.manager.delete_customer(user)
 		assert_that( eventtesting.getEvents( IObjectRemovedEvent,
 											 lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object) ), has_length( 1 ) )
+		
+	@WithMockDSTrans
+	def test_sync_pending_purchase(self):		
+		user = self._create_random_user()
+			
+		items=('xyz book',)
+		pa = purchase.create_purchase_attempt_and_start(user, items, 'stripe', description="my charge")
+		assert_that(pa.state, is_(store_interfaces.PA_STATE_STARTED))
+			
+		t, cid = self.create_purchase(user, pa, 1000)
+	
+		# mock_dataserver.current_transaction.commit(transaction.manager.get())
+		sp = pay_interfaces.IStripePurchase(pa)
+		assert_that(sp.token_id, is_(t))
+		assert_that(sp.charge_id, is_(cid))
+			
+		pa.state = store_interfaces.PA_STATE_STARTED
+		charge = self.manager.sync_purchase(pa, user=user)
+		assert_that(charge, is_not(None))
+		assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESSFUL))
+		
+if __name__ == '__main__':
+	unittest.main()

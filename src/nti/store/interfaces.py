@@ -12,10 +12,15 @@ PA_STATE_UNKNOWN = u'Unknown'
 PA_STATE_FAILED = u'Failed'
 PA_STATE_PENDING = u'Pending'
 PA_STATE_STARTED = u'Started'
+PA_STATE_DISPUTED = 'Disputed'
 PA_STATE_REFUNDED = u'Refunded'
+PA_STATE_CANCELED = u'Canceled'
+PA_STATE_RESERVED = u'Reserved'
 PA_STATE_SUCCESSFUL = u'Successful'
 
-PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_REFUNDED, PA_STATE_SUCCESSFUL)
+
+PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_DISPUTED,
+			 PA_STATE_REFUNDED, PA_STATE_SUCCESSFUL, PA_STATE_CANCELED, PA_STATE_RESERVED)
 PA_STATE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in PA_STATES] )
 
 class IPaymentProcessor(interface.Interface):
@@ -90,6 +95,27 @@ class IPurchaseAttempt(interface.Interface):
 		"""
 		return if the purchase has been refunded
 		"""
+		
+	def is_disputed():
+		"""
+		return if the purchase has been disputed
+		"""
+	
+	def is_reserved():
+		"""
+		return if the purchase has been reserved with the processor
+		"""
+	
+	def is_canceled():
+		"""
+		return if the purchase has been canceled
+		"""
+	
+	def is_synced():
+		"""
+		return if the purchase has been synchronized with the payment processor
+		"""
+	
 	
 class IPurchaseAttemptSynced(component.interfaces.IObjectEvent):
 	purchase = interface.Attribute("Purchase attempt")

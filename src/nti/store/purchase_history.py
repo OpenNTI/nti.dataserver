@@ -143,3 +143,4 @@ def _purchase_attempt_synced( purchase, event  ):
 		purchase.Synced = True
 		logger.info('%s has been synched' % (purchase))
 	_trx_runner(func)
+

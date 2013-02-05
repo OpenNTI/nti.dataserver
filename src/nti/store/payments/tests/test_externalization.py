@@ -1,8 +1,15 @@
-from __future__ import unicode_literals, print_function, absolute_import
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 import unittest
-
-from zope import interface
 
 from nti.dataserver.users import User
 
@@ -10,7 +17,6 @@ from nti.externalization.externalization import to_external_object
 
 from nti.store import purchase
 from nti.store import interfaces as store_interfaces
-from nti.store.payments import interfaces as pay_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -34,7 +40,6 @@ class TestStoreExternal(ConfiguringTestBase):
 		hist = store_interfaces.IPurchaseHistory(user, None)
 		
 		pa = purchase.create_purchase_attempt('xyz', self.processor)
-		interface.alsoProvides( pa, pay_interfaces.IStripePurchase )
 		hist.add_purchase(pa)
 		
 		ext = to_external_object(pa)
@@ -42,6 +47,5 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext,  has_entry('TokenID', is_(None)))
 		assert_that(ext,  has_entry('OID', is_not(None)))
 		
-			
 if __name__ == '__main__':
 	unittest.main()
