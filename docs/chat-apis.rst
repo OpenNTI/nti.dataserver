@@ -158,7 +158,7 @@ META
 	The body is a dictionary describing the command. One key is always
 	'channel', naming the channel to apply the action to. The server
 	and client MUST drop messages for unsupported channels. Another
-	required key is 'action;' the server and client MUST drop messages
+	required key is 'action;' the server and client *MUST* drop messages
 	for unsupported actions. The remainder of the dictionary is
 	action-specific; the server MAY filter out keys that are unknown
 	for the particular action and the client MUST ignore them.
@@ -177,33 +177,44 @@ STATE
 	interaction status with the chat room. Clients will post messages
 	containing these events to the server, and the server, at its sole
 	discretion, will choose to forward these messages to other
-	occupants of the room, or drop them. (In particular, they may be
+	occupants of the room, or drop them. (In particular, they *MAY* be
 	dropped in multi-occupants chats.) Messages on this channel *do
 	not* go to the transcript.
 
-	The body consists of a dictionary with one defined key, ``state``.
-	The values for this key are strings from the following list:
-	"active," "composing," "paused," "inactive," and "gone."
-	Initially, when an occupant enters a room, he is defined to be in
-	the state "active" (that first notice is implicit). The recipt of
-	any message on any channel from a particular occupant also sets
-	his state to "active" (thus clearing any "composing" or "inactive"
-	states, for example).
+	The body consists of a dictionary with one defined key,
+	``state``. The values for this key are strings from the
+	following list: "active," "composing," "paused," "inactive,"
+	and "gone." (Any unknown keys are dropped.)
+
+	Initially, when an occupant enters a room, he is defined to be
+	in the state "active" (that first notice is implicit or
+	assumed by the client; in other words, 'active' is the
+	default, initial state of a new room occupant). The recipt of
+	any message on any channel from a particular occupant also
+	sets his (the sender's) state to "active" for the receiving
+	client (thus clearing any "composing" or "inactive" states,
+	for example). (The server will never send a state transaction
+	by itself, and in particular will never send an "active" state
+	transition. The sending of "active" states by clients should
+	be rare; the two implicit transitions defined above should
+	minimize the need to send "active" states, thus reducing load
+	for all parties.)
 
 	The description here borrows heavily from the Jabber protocol:
-	`XMPP-0085: Chat State Notifications <http://xmpp.org/extensions/xep-0085.html>`_.
-	Implementations should generally follow that specification for
-	when and how to generate notices (see Table 1) where it doesn't
-	conflict with this specification. One rule of particular
-	importance is that the client *MUST NOT* generate multiple state
-	events of the same type consecutively. That is, if the client
-	sends a "composing" notice, then it must not send another
-	"composing" notice without sending an intervening notice. (Since
-	receiving a message places the occupant into the "active" state,
-	and occupants receive their own messages, then transitioning from
-	"composing" to "active" after sending a message should be
-	automatic, and the transition to "composing" with its accompanying
-	broadcast should then be allowed again.)
+	`XMPP-0085: Chat State Notifications
+	<http://xmpp.org/extensions/xep-0085.html>`_. Implementations
+	should generally follow that specification for when and how to
+	generate notices (see Table 1) where it doesn't conflict with
+	this specification. One rule of particular importance is that
+	the client *MUST NOT* generate multiple state events of the
+	same type consecutively. That is, if the client sends a
+	"composing" notice, then it must not send another "composing"
+	notice without sending an intervening notice. (Since receiving
+	a message places the occupant (sender) into the "active"
+	state, and occupants receive their own messages, then
+	transitioning from "composing" to "active" after sending a
+	message should be automatic, and the transition to "composing"
+	with its accompanying broadcast should then be allowed again.)
 
 	Clients are responsible for tracking their own current state and
 	the state of any other occupants in the room if they are

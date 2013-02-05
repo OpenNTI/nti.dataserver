@@ -220,6 +220,7 @@ class _MeetingMessagePostPolicy(object):
 
 		# Ok, great. Send it to everyone without storing it or transcripting it
 		# or incrementing room message counts
+		msg_info.body = { 'state': msg_info.body['state'] } # drop unknown keys
 		recipient_names = self._get_recipient_names_for_message( msg_info )
 		self.emit_recvMessage( recipient_names, msg_info )
 		return True

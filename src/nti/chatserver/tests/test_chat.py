@@ -1,3 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 
 from hamcrest import assert_that, is_, has_entry
 from hamcrest import has_key,  not_none, is_not
@@ -61,14 +77,10 @@ class chat(object):
 
 
 
-from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans, ConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans,  SharedConfiguringTestBase
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.test_authorization_acl import permits, denies
 from zope.dottedname import resolve as dottedname
-
-from pyramid.testing import setUp as psetUp
-from pyramid.testing import tearDown as ptearDown
-from pyramid.testing import DummyRequest
 
 #import nti.externalization.internalization
 # nti.externalization.internalization.register_legacy_search_module( 'nti.dataserver.users' )
@@ -79,7 +91,7 @@ from pyramid.testing import DummyRequest
 # nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
 
 
-class TestMessageInfo(ConfiguringTestBase):
+class TestMessageInfo(SharedConfiguringTestBase):
 
 
 	def test_interfaces( self ):
@@ -109,7 +121,7 @@ class TestMessageInfo(ConfiguringTestBase):
 
 
 
-class TestChatRoom(ConfiguringTestBase):
+class TestChatRoom(SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_become_moderated(self):
@@ -245,7 +257,7 @@ class TestChatRoom(ConfiguringTestBase):
 		room.approve_message(msg.MessageId)
 		assert_that( room._moderation_state._moderation_queue, is_not(has_key(msg.MessageId)))
 
-class TestChatserver(ConfiguringTestBase):
+class _ChatserverTestBase(SharedConfiguringTestBase):
 
 	class PH(object):
 		def __init__( self, strict_events=False ):
@@ -343,6 +355,8 @@ class TestChatserver(ConfiguringTestBase):
 		assert_that( room.Moderated, is_( True ) )
 		assert_that( room.Moderators, is_( set(['sjohnson']) ) )
 		return room, chatserver
+
+class TestChatserver(_ChatserverTestBase):
 
 	@WithMockDSTrans
 	def test_handler_shadow_user( self ):
@@ -609,7 +623,7 @@ class TestChatserver(ConfiguringTestBase):
 		msg.Creator = 'jason'
 		msg.recipients = ['chris'] # but this is ignored
 		msg.channel = chat.CHANNEL_STATE
-		msg.Body = { 'state': 'active' }
+		msg.Body = { 'state': 'active', 'extra_key_to_drop': True }
 		chatserver.post_message_to_room( room.ID, msg )
 
 		# The msg cannot become an IConnection, because it was never inserted into a parent tree
@@ -626,7 +640,11 @@ class TestChatserver(ConfiguringTestBase):
 		# But all the occupants did get the message
 		for session in sessions:
 			assert_that( session.socket.events, has_length( 1 ) )
-			assert_that( session.socket.events[0]['args'], has_item( has_entry( 'channel', chat.CHANNEL_STATE ) ) )
+			event = session.socket.events[0]
+			__traceback_info__ = session, event
+			assert_that( event['args'], has_item( has_entry( 'channel', chat.CHANNEL_STATE ) ) )
+			# And the body was sanitized
+			assert_that( event['args'][0], has_entry( 'body', {'state': 'active'} ) )
 
 	@WithMockDSTrans
 	def test_state_channel_ignored_in_moderated_room(self):
@@ -985,14 +1003,21 @@ class TestChatserver(ConfiguringTestBase):
 		chatserver.send_event_to_user( 'sjohnson', 'event', [link] )
 		assert_that( sessions[1].socket.events, has_length( 1 ) )
 
+
+from pyramid.testing import setUp as psetUp
+from pyramid.testing import tearDown as ptearDown
+
+
+class TestFunctionalChatserver(_ChatserverTestBase):
+
+	set_up_packages = ('nti.appserver',)
+
 	@WithMockDSTrans
 	def test_send_event_to_users_correct_edit_links_Pyramid_functional(self):
 		"An Edit link is only sent to users that have write permissions."
 		# This is a high-level test involving the appserver as well
-		appserver = dottedname.resolve( 'nti.appserver' )
 		acl_fact = dottedname.resolve('nti.appserver.pyramid_authorization.ACLAuthorizationPolicy' )
 		req_fact = dottedname.resolve( 'pyramid.request.Request' )
-		self.configure_packages( (appserver,) )
 		request = req_fact.blank( '/' )
 		request.environ['paste.testing'] = True # see nti.appserver.tests.__init__
 		#request.registry = component.getSiteManager()
