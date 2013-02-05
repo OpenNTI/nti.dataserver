@@ -1,107 +1,106 @@
 <!-- -*- mode: nxml -*- -->
-<configure
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:ext="http://nextthought.com/ntp/ext"
-	xmlns:zcml="http://namespaces.zope.org/zcml"
-	i18n_domain="zope">
-	<include package="zope.component" />
-	<include package="zope.location" />
+<configure xmlns="http://namespaces.zope.org/zope"
+	   xmlns:ext="http://nextthought.com/ntp/ext"
+	   xmlns:zcml="http://namespaces.zope.org/zcml"
+	   i18n_domain="zope">
+    <include package="zope.component" />
+    <include package="zope.location" />
 
-	<include package="nti.externalization" file="meta.zcml" />
-	<include package="nti.externalization" />
+    <include package="nti.externalization" file="meta.zcml" />
+    <include package="nti.externalization" />
 
-	<ext:registerMimeFactories module=".users" />
-	<ext:registerMimeFactories module=".friends_lists" />
+    <ext:registerMimeFactories module=".users" />
+    <ext:registerMimeFactories module=".friends_lists" />
 
-	<!-- Events -->
-	<subscriber handler=".users.user_devicefeedback" />
-	<subscriber handler=".users.user_willRemoveIntIdForContainedObject" />
-
-
-	<!-- Externalization -->
-	<adapter factory=".users_external._EntitySummaryExternalObject"
-			 name="summary" />
+    <!-- Events -->
+    <subscriber handler=".users.user_devicefeedback" />
+    <subscriber handler=".users.user_willRemoveIntIdForContainedObject" />
 
 
-	<adapter factory=".users_external._EntityExternalObject" />
-	<adapter factory=".users_external._FriendsListExternalObject" />
-
-	<adapter factory=".users_external._UserExternalObject" />
-	<adapter factory=".users_external._UserSummaryExternalObject"
-			 name="summary" />
-	<adapter factory=".users_external._UserPersonalSummaryExternalObject"
-			 name="personal-summary" />
+    <!-- Externalization -->
+    <adapter factory=".users_external._EntitySummaryExternalObject"
+	     name="summary" />
 
 
-	<adapter factory=".users_external._CoppaUserExternalObject" />
-	<adapter factory=".users_external._CoppaUserSummaryExternalObject"
-			 name="summary" />
-	<adapter factory=".users_external._CoppaUserPersonalSummaryExternalObject"
-			 name="personal-summary" />
+    <adapter factory=".users_external._EntityExternalObject" />
+    <adapter factory=".users_external._FriendsListExternalObject" />
 
-	<!-- Groups and ACLs -->
-	<!-- First, make something that can store group names on the user -->
-	<class class=".users.Entity">
-		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
-	</class>
-	<class class=".users.FriendsList">
-		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
-	</class>
-
-	<!-- FriendsLists can iterate usernames -->
-	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
-			 factory=".friends_lists._FriendsListUsernameIterable" />
-	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
-			 factory=".friends_lists._DynamicFriendsListUsernameIterable" />
+    <adapter factory=".users_external._UserExternalObject" />
+    <adapter factory=".users_external._UserSummaryExternalObject"
+	     name="summary" />
+    <adapter factory=".users_external._UserPersonalSummaryExternalObject"
+	     name="personal-summary" />
 
 
-	<!-- WeakRefs to entity objects -->
-	<adapter factory=".wref.WeakRef" />
+    <adapter factory=".users_external._CoppaUserExternalObject" />
+    <adapter factory=".users_external._CoppaUserSummaryExternalObject"
+	     name="summary" />
+    <adapter factory=".users_external._CoppaUserPersonalSummaryExternalObject"
+	     name="personal-summary" />
 
-	<!-- Avatar URLs -->
-	<!-- Default -->
-	<adapter factory=".avatar_urls.AvatarURLFactory"
-			 provides=".interfaces.IAvatarURLProvider" />
-	<adapter factory=".avatar_urls.AvatarURLFactory"
-			 provides=".interfaces.IAvatarURL" />
-	<!-- Named fallback -->
-	<adapter factory=".avatar_urls.GravatarComputedAvatarURL"
-			 provides=".interfaces.IAvatarURLProvider"
-			 name="generated" />
-	<!-- Default for Koppa Kids -->
-	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
-			 provides=".interfaces.IAvatarURLProvider"
-			 for="nti.dataserver.interfaces.ICoppaUser" />
-	<!-- Fallback for KK, just in case -->
-	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
-			 provides=".interfaces.IAvatarURLProvider"
-			 for="nti.dataserver.interfaces.ICoppaUser"
-			 name="generated" />
+    <!-- Groups and ACLs -->
+    <!-- First, make something that can store group names on the user -->
+    <class class=".users.Entity">
+	<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+    </class>
+    <class class=".users.FriendsList">
+	<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+    </class>
 
-	<!-- Default choices for coppa users -->
-	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURLChoices"
-			 provides=".interfaces.IAvatarChoices"
-			 for="nti.dataserver.interfaces.ICoppaUser"
-			 />
-	<!-- And everyone -->
-	<adapter factory=".avatar_urls.EntityGravatarComputedAvatarURLChoices"
-			 provides=".interfaces.IAvatarChoices"
-			 for="nti.dataserver.interfaces.IEntity"
-			 />
-	<adapter factory=".avatar_urls.GravatarComputedAvatarURLChoices"
-			 provides=".interfaces.IAvatarChoices"
-			 for="nti.dataserver.interfaces.IUser"
-			 />
+    <!-- FriendsLists can iterate usernames -->
+    <adapter provides="nti.dataserver.interfaces.IUsernameIterable"
+	     factory=".friends_lists._FriendsListUsernameIterable" />
+    <adapter provides="nti.dataserver.interfaces.IUsernameIterable"
+	     factory=".friends_lists._DynamicFriendsListUsernameIterable" />
 
-	<!-- User profile info -->
-	<!-- Default -->
-	<adapter factory=".interfaces.FriendlyNamedSchemaProvider"
-			 for="nti.dataserver.interfaces.IEntity" />
-	<adapter factory=".user_profile.FriendlyNamedFactory" />
-	<!-- In dev mode, we don't impose too many restrictions by default -->
-	<adapter factory=".user_profile.CompleteUserProfileFactory"
-			 zcml:condition="have devmode" />
-	<adapter factory=".user_profile.EmailRequiredUserProfileFactory"
-			 zcml:condition="not-have devmode" />
+
+    <!-- WeakRefs to entity objects -->
+    <adapter factory=".wref.WeakRef" />
+
+    <!-- Avatar URLs -->
+    <!-- Default -->
+    <adapter factory=".avatar_urls.AvatarURLFactory"
+	     provides=".interfaces.IAvatarURLProvider" />
+    <adapter factory=".avatar_urls.AvatarURLFactory"
+	     provides=".interfaces.IAvatarURL" />
+    <!-- Named fallback -->
+    <adapter factory=".avatar_urls.GravatarComputedAvatarURL"
+	     provides=".interfaces.IAvatarURLProvider"
+	     name="generated" />
+    <!-- Default for Koppa Kids -->
+    <adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
+	     provides=".interfaces.IAvatarURLProvider"
+	     for="nti.dataserver.interfaces.ICoppaUser" />
+    <!-- Fallback for KK, just in case -->
+    <adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
+	     provides=".interfaces.IAvatarURLProvider"
+	     for="nti.dataserver.interfaces.ICoppaUser"
+	     name="generated" />
+
+    <!-- Default choices for coppa users -->
+    <adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURLChoices"
+	     provides=".interfaces.IAvatarChoices"
+	     for="nti.dataserver.interfaces.ICoppaUser"
+	     />
+    <!-- And everyone -->
+    <adapter factory=".avatar_urls.EntityGravatarComputedAvatarURLChoices"
+	     provides=".interfaces.IAvatarChoices"
+	     for="nti.dataserver.interfaces.IEntity"
+	     />
+    <adapter factory=".avatar_urls.GravatarComputedAvatarURLChoices"
+	     provides=".interfaces.IAvatarChoices"
+	     for="nti.dataserver.interfaces.IUser"
+	     />
+
+    <!-- User profile info -->
+    <!-- Default -->
+    <adapter factory=".interfaces.FriendlyNamedSchemaProvider"
+	     for="nti.dataserver.interfaces.IEntity" />
+    <adapter factory=".user_profile.FriendlyNamedFactory" />
+    <!-- In dev mode, we don't impose too many restrictions by default -->
+    <adapter factory=".user_profile.CompleteUserProfileFactory"
+	     zcml:condition="have devmode" />
+    <adapter factory=".user_profile.EmailRequiredUserProfileFactory"
+	     zcml:condition="not-have devmode" />
 
 </configure>

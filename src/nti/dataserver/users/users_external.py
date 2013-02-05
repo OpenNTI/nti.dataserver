@@ -20,6 +20,8 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import to_standard_external_dictionary
 from nti.externalization.oids import to_external_ntiid_oid
 
+from nti.utils.schema import find_most_derived_interface
+
 from . import interfaces
 
 def _avatar_url( entity ):
@@ -205,11 +207,15 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		extDict['Links'] = self._replace_or_add_edit_link_with_self( extDict.get( 'Links', () ) )
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
 
-		most_derived_profile_iface = _ext_find_schema( prof, interfaces.IRestrictedUserProfile )
+		# Ok, we did the standard profile fields. Now, find the most derived interface
+		# for this profile and write the additional fields
+		most_derived_profile_iface = find_most_derived_interface( prof, interfaces.IRestrictedUserProfile )
 		for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
 			if name in extDict or field.queryTaggedValue( interfaces.TAG_HIDDEN_IN_UI ) or interface.interfaces.IMethod.providedBy( field ):
 				continue
-			extDict[name] = field.query( prof )
+			# Save the value from the profile, or if the profile doesn't have it yet,
+			# use the default (if there is one). Otherwise its None
+			extDict[name] = field.query( prof, getattr( field, 'default', None ) )
 
 		return extDict
 
@@ -232,10 +238,8 @@ class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject
 
 	def toExternalObject( self ):
 		extDict = super(_CoppaUserPersonalSummaryExternalObject,self).toExternalObject( )
-		for k in ('affiliation', 'email', 'birthdate', 'contact_email'):
+		for k in ('affiliation', 'email', 'birthdate', 'contact_email', 'location', 'home_page'):
 			extDict[k] = None
 		return extDict
 
 _CoppaUserExternalObject = _CoppaUserPersonalSummaryExternalObject
-
-from nti.utils.schema import find_most_derived_interface as _ext_find_schema
