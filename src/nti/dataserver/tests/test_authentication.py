@@ -26,7 +26,7 @@ def test_effective_prins_no_username():
 	assert_that( authentication.effective_principals( '' ), is_( () ) )
 
 
-class TestPrincipals(mock_dataserver.ConfiguringTestBase):
+class TestPrincipals(mock_dataserver.SharedConfiguringTestBase):
 
 
 	@mock_dataserver.WithMockDSTrans

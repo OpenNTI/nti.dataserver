@@ -153,10 +153,12 @@ class _AppTestBaseMixin(object):
 	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001', **kwargs):
 		return users.User.create_user( self.ds, username=username, password=password, **kwargs)
 
+from zope.component import eventtesting
 class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 
 	set_up_packages = () # None, because configuring the app will do this
 	APP_IN_DEVMODE = True
+	configure_events = False # We have no packages, but we will set up the listeners ourself when configuring the app
 
 	@classmethod
 	def _setup_library(cls, *args, **kwargs):
@@ -176,6 +178,7 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 					   for s in os.listdir( root )
 					   if os.path.isdir( os.path.join( root, s ) )]
 		cls.main.setServeFiles( serveFiles )
+		component.provideHandler( eventtesting.events.append, (None,) )
 
 	def setUp(self):
 		super(SharedApplicationTestBase,self).setUp()

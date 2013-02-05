@@ -24,7 +24,7 @@ from hamcrest import has_property
 from nti.tests import validly_provides as verifiably_provides
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
@@ -36,7 +36,7 @@ from nti.dataserver import intid_wref as wref
 import BTrees.OOBTree
 import cPickle
 
-class TestIntidWref(ConfiguringTestBase):
+class TestIntidWref(SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_pickle( self ):

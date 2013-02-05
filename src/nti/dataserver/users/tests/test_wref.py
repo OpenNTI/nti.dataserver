@@ -23,7 +23,7 @@ from hamcrest import has_entry
 from nti.tests import verifiably_provides
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.externalization.externalization import to_external_object
@@ -34,7 +34,7 @@ from nti.dataserver.users import missing_user
 import BTrees.OOBTree
 import cPickle
 
-class TestWref(ConfiguringTestBase):
+class TestWref(SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_pickle( self ):

@@ -1,10 +1,23 @@
-""" Tests for the dataserver. """
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Helpers for testing.
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+# disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 import os
 import subprocess
 import sys
 
-logger = __import__( 'logging' ).getLogger(__name__)
 
 from hamcrest.core.base_matcher import BaseMatcher
 import hamcrest
@@ -171,8 +184,10 @@ class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 
 class AbstractSharedTestBase(unittest.TestCase):
 	"""
-	Base class for testing that can share most global data (e.g., ZCML configuration) between unit tests.
-	This is far more efficient, if the global data is otherwise cleaned up or not mutated between tests.
+	Base class for testing that can share most global data (e.g., ZCML
+	configuration) between unit tests. This is far more efficient, if
+	the global data (e.g., ZCA component registry) is otherwise
+	cleaned up or not mutated between tests.
 	"""
 
 	@classmethod
@@ -188,12 +203,12 @@ from zope import component
 from zope.configuration import xmlconfig, config
 from zope.component.hooks import setHooks, resetHooks
 from zope.dottedname import resolve as dottedname
+from zope.component import eventtesting
 
 def _configure(self=None, set_up_packages=(), features=('devmode',), context=None):
 
 	# zope.component.globalregistry conveniently adds
 	# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
-
 	if set_up_packages:
 		logger.debug( "Configuring %s with features %s", set_up_packages, features )
 		if context is None:
@@ -222,7 +237,7 @@ class ConfiguringTestBase(AbstractTestBase):
 	"""
 	Test case that can be subclassed when ZCML configuration is desired.
 
-	This class defines two class level attributes:
+	This class defines these class level attributes:
 
 	.. py:attribute:: set_up_packages
 		A sequence of package objects or strings naming packages. These will be configured, in order, using
@@ -233,6 +248,11 @@ class ConfiguringTestBase(AbstractTestBase):
 	.. py:attribute:: features
 		A sequence of strings to be added as features before loading the configuration. By default,
 		this is ``devmode``.
+
+	.. py:attribute:: configure_events
+		A boolean defaulting to True. When true, the :mod:`zope.component.eventtesting` module will
+		be configured. NOTE: If there are any ``set_up_packages`` you are responsibosile for ensuring
+		that the :mod:`zope.component` configuration is loaded.
 
 	When the meth:`setUp` method runs, one instance attribute is defined:
 
@@ -241,21 +261,33 @@ class ConfiguringTestBase(AbstractTestBase):
 		This can be used by individual methods to load more configuration data using
 		:meth:`configure_packages` or the methods from :mod:`zope.configuration`
 
-
 	"""
+
 	set_up_packages = ()
 	features = ('devmode',)
 	configuration_context = None
+	configure_events = True
+
 	def setUp( self ):
 		super(ConfiguringTestBase,self).setUp()
 		setHooks() # zope.component.hooks registers a zope.testing.cleanup to reset these
+		if self.configure_events:
+			if self.set_up_packages:
+				# If zope.component is being configured, we wind up with duplicates if we let
+				# eventtesting fully configure itself
+				component.provideHandler( eventtesting.events.append, (None,) )
+			else:
+				eventtesting.setUp()
 		self.configuration_context = self.configure_packages( self.set_up_packages, self.features, self.configuration_context )
 
-	def configure_packages(self, set_up_packages=(), features=(), context=None ):
+
+	def configure_packages(self, set_up_packages=(), features=(), context=None, configure_events=True ):
 		self.configuration_context = _configure( self, set_up_packages, features, context or self.configuration_context )
 		return self.configuration_context
 
 	def tearDown( self ):
+		# always safe to clear events
+		eventtesting.clearEvents() # redundant with zope.testing.cleanup
 		resetHooks()
 		super(ConfiguringTestBase,self).tearDown()
 
@@ -263,7 +295,7 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 	"""
 	Test case that can be subclassed when ZCML configuration is desired.
 
-	This class defines two class level attributes:
+	This class defines these class level attributes:
 
 	.. py:attribute:: set_up_packages
 		A sequence of package objects or strings naming packages. These will be configured, in order, using
@@ -274,6 +306,12 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 	.. py:attribute:: features
 		A sequence of strings to be added as features before loading the configuration. By default,
 		this is ``devmode``.
+
+	.. py:attribute:: configure_events
+		A boolean defaulting to True. When true, the :mod:`zope.component.eventtesting` module will
+		be configured.  NOTE: If there are any ``set_up_packages`` you are resposionsible for ensuring
+		that the :mod:`zope.component` configuration is loaded.
+
 
 	When the meth:`setUp` method runs, one class attribute is defined:
 
@@ -283,14 +321,22 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 
 
 	"""
+
 	set_up_packages = ()
 	features = ('devmode',)
 	configuration_context = None
+	configure_events = True
+
 	@classmethod
 	def setUpClass( cls ):
 		super(SharedConfiguringTestBase,cls).setUpClass()
 		setHooks() # zope.component.hooks registers a zope.testing.cleanup to reset these
-		cls.configuration_context = cls.configure_packages( cls.set_up_packages, cls.features, cls.configuration_context )
+		if cls.configure_events:
+			if cls.set_up_packages:
+				component.provideHandler( eventtesting.events.append, (None,) )
+			else:
+				eventtesting.setUp()
+		cls.configuration_context = cls.configure_packages( cls.set_up_packages, cls.features, cls.configuration_context)
 
 	@classmethod
 	def configure_packages(cls, set_up_packages=(), features=(), context=None ):
@@ -299,10 +345,19 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 
 	@classmethod
 	def tearDownClass( cls ):
+		# always safe to clear events
+		eventtesting.clearEvents() # redundant with zope.testing.cleanup
+
 		resetHooks()
 		super(SharedConfiguringTestBase,cls).tearDownClass()
 
-def module_setup( set_up_packages=(), features=('devmode',)):
+	def tearDown( self ):
+		# Some tear down needs to happen always
+		eventtesting.clearEvents()
+		transaction.abort() # see comments above
+		super(SharedConfiguringTestBase,self).tearDown()
+
+def module_setup( set_up_packages=(), features=('devmode',), configure_events=True):
 	"""
 	Either import this as ``setUpModule`` at the module level, or call
 	it to perform module level set up from your own function with that name.
@@ -312,6 +367,12 @@ def module_setup( set_up_packages=(), features=('devmode',)):
 	"""
 	zope.testing.cleanup.setUp()
 	setHooks()
+	if configure_events:
+		if set_up_packages:
+			component.provideHandler( eventtesting.events.append, (None,) )
+		else:
+			eventtesting.setUp()
+
 	_configure( set_up_packages=set_up_packages, features=features )
 
 def module_teardown():
@@ -322,7 +383,7 @@ def module_teardown():
 	This is an alternative to using :class:`ConfiguringTestBase`; the two should
 	generally not be mixed in a module.
 	"""
-
+	eventtesting.clearEvents() # redundant with zope.testing.cleanup
 	resetHooks()
 	zope.testing.cleanup.tearDown()
 

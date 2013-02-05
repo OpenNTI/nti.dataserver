@@ -544,7 +544,6 @@ class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 		# username result
 		# events
 		# headers
-		component.provideHandler( eventtesting.events.append, (None,) )
 		self.request.content_type = 'application/vnd.nextthought+json'
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',

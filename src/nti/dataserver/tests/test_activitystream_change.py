@@ -1,8 +1,20 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 
 
 from hamcrest import assert_that, is_, not_none, has_entry
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase, WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase, WithMockDSTrans
 
 
 from zope.interface.verify import verifyObject
@@ -13,7 +25,7 @@ from nti.dataserver.activitystream_change import Change
 from nti.dataserver.users import User
 from nti.externalization.externalization import toExternalObject
 
-class TestChange(ConfiguringTestBase):
+class TestChange(SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_to_external(self):

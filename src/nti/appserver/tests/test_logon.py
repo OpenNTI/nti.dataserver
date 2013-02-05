@@ -75,7 +75,6 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 	@classmethod
 	def setUpClass( self, request_factory=DummyRequest, request_args=() ):
 		super(TestLogon,self).setUpClass( request_factory=request_factory, request_args=request_args )
-		component.provideHandler( eventtesting.events.append, (None,) )
 		component.provideHandler( _handle_user_create_event )
 
 		self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )

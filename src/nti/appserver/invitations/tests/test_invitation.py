@@ -42,7 +42,6 @@ def test_valid_interface():
 
 def test_accept_event():
 	eventtesting.clearEvents()
-	component.provideHandler( eventtesting.events.append, (None,) )
 
 	invite = invitation.PersistentInvitation()
 	invite.accept( invite )
