@@ -1,4 +1,8 @@
-from __future__ import unicode_literals, print_function, absolute_import
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import time
 from datetime import date
@@ -105,7 +109,7 @@ class _StripePaymentProcessor(StripeIO, Persistent):
 			notify(store_interfaces.PurchaseAttemptSuccessful(purchase, user))
 			
 			# notify items purchased
-			notify(pay_interfaces.ItemsPurchased(user, purchase.items, charge_id))
+			notify(pay_interfaces.ItemsPurchased(user, purchase.items, purchase.id))
 			
 			return charge_id
 		except Exception, e:
@@ -156,13 +160,12 @@ class _StripePaymentProcessor(StripeIO, Persistent):
 		if charge:
 			if charge.failure_message:
 				if purchase.has_succeeded():
-					#TODO: Access to items need to be removed
-					pass
+					notify(pay_interfaces.ItemsReturned(user, purchase.items, purchase.id))
 				elif not purchase.has_failed():
 					notify(store_interfaces.PurchaseAttemptFailed(purchase, user, charge.failure_message))
 			elif charge.refunded and not purchase.is_refunded():
 				notify(store_interfaces.PurchaseAttemptRefunded(purchase, user))
-				#TODO: Access to items need to be removed
+				notify(pay_interfaces.ItemsReturned(user, purchase.items, purchase.id))
 			elif charge.paid and not purchase.has_succeeded():
 				notify(store_interfaces.PurchaseAttemptSuccessful(purchase, user))
 				notify(pay_interfaces.ItemsPurchased(user, purchase.items, charge.id))

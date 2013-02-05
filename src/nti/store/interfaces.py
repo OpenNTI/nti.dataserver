@@ -1,4 +1,8 @@
-from __future__ import unicode_literals, print_function, absolute_import
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
@@ -17,7 +21,6 @@ PA_STATE_REFUNDED = u'Refunded'
 PA_STATE_CANCELED = u'Canceled'
 PA_STATE_RESERVED = u'Reserved'
 PA_STATE_SUCCESSFUL = u'Successful'
-
 
 PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_DISPUTED,
 			 PA_STATE_REFUNDED, PA_STATE_SUCCESSFUL, PA_STATE_CANCELED, PA_STATE_RESERVED)

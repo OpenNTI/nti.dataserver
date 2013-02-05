@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -22,7 +17,6 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.store import purchase
 from nti.store import interfaces as store_interfaces
 
-import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.store.tests import ConfiguringTestBase
@@ -61,3 +55,7 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 
 		hist.remove_purchase(pa)
 		assert_that(hist, has_length(1))
+		
+if __name__ == '__main__':
+	unittest.main()
+	
