@@ -1,4 +1,8 @@
-from __future__ import unicode_literals, print_function, absolute_import
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import time
 
@@ -6,12 +10,15 @@ from zope import schema
 from zope import interface
 
 from .. import interfaces as store_interfaces
-
+	
 class IItemsPurchased(interface.Interface):
 	items = interface.Attribute("Iterable of items purchased")
+	time = schema.Float(title="event timestamp", required=False)
+	purchase_id = schema.TextLine(title="The purchase identifier")
 	user = interface.Attribute("The entity that made the purchase")
-	time = schema.Float(title="Purchase timestamp")
-	purchase_id = schema.TextLine(title="A purchase (trx) identifier")
+
+class IItemsReturned(IItemsPurchased):
+	pass
 
 @interface.implementer(IItemsPurchased)
 class ItemsPurchased(object):
@@ -22,6 +29,10 @@ class ItemsPurchased(object):
 		self.items = items
 		self.purchase_id = purchase_id
 	
+@interface.implementer(IItemsReturned)
+class ItemsReturned(ItemsPurchased):
+	pass
+		
 class IStripeCustomer(interface.Interface):
 	customer_id = schema.TextLine(title='customer id')
 	
@@ -35,6 +46,6 @@ class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 		"""
 
 class IStripePurchase(interface.Interface):
-	ChargeID = schema.TextLine(title='charge id')
-	TokenID = schema.TextLine(title='token id')
+	ChargeID = schema.TextLine(title='Charge id', required=False)
+	TokenID = schema.TextLine(title='Token id', required=False)
 	
