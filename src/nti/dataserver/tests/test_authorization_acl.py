@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.7
-from __future__ import print_function, unicode_literals
+#!/usr/bin/env python
+from __future__ import print_function, unicode_literals, absolute_import
 #pylint: disable=R0904
 
 
@@ -21,13 +21,13 @@ from nti.dataserver import authorization as auth
 from nti.dataserver import authorization_acl as auth_acl
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.users import User, FriendsList
-
+from .. import classes
 
 from pyramid.authorization import ACLAuthorizationPolicy
 
-import mock_dataserver
+from . import mock_dataserver
 
-class TestShareableACLProvider(mock_dataserver.ConfiguringTestBase):
+class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_non_shared(self):
@@ -108,9 +108,7 @@ class TestShareableACLProvider(mock_dataserver.ConfiguringTestBase):
 		for action in (auth.ACT_CREATE,auth.ACT_DELETE,auth.ACT_UPDATE):
 			assert_that( acl_prov, denies( 'foo@bar', action ) )
 
-from .. import classes
 
-class TestSectionInfoACLProvider(mock_dataserver.ConfiguringTestBase):
 	def test_section_info_acl_provider(self):
 		section = classes.SectionInfo()
 		# With no instructors, no creator and no one enrolled, I have an ACL
@@ -140,7 +138,7 @@ class TestSectionInfoACLProvider(mock_dataserver.ConfiguringTestBase):
 		assert_that( acl_prov, denies( 'enrolled@bar',
 									   auth.ACT_UPDATE ) )
 
-class TestClassInfoACLProvider(mock_dataserver.ConfiguringTestBase):
+
 	def test_class_info_acl_provider(self):
 		klass = classes.ClassInfo()
 		section = classes.SectionInfo()
@@ -184,7 +182,6 @@ class TestClassInfoACLProvider(mock_dataserver.ConfiguringTestBase):
 		assert_that( acl_prov, denies( 'enrolled@bar',
 									   auth.ACT_UPDATE ) )
 
-class TestFriendsListACLProvider(mock_dataserver.ConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_friends_list_acl_provider(self):
@@ -221,7 +218,7 @@ class TestFriendsListACLProvider(mock_dataserver.ConfiguringTestBase):
 		assert_that( acl_prov, denies( 'enrolled@bar',
 									   auth.ACT_UPDATE ) )
 
-class TestACE(mock_dataserver.ConfiguringTestBase):
+class TestACE(mock_dataserver.SharedConfiguringTestBase):
 
 	def test_to_from_string(self):
 		# To string

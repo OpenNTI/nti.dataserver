@@ -265,30 +265,27 @@ def WithMockDSTrans( func ):
 
 	return nose.tools.make_decorator( func )( with_mock_ds_trans )
 
-
-
-class ConfiguringTestBase(_BaseConfiguringTestBase):
-	"""
-	A test base that does two things: first, sets up the :mod:`nti.dataserver` module
-	during setUp, and second, makes the value of :data:`current_mock_ds` available
-	as a property on this object (when used inside a function decorated with :func:`WithMockDS`
-	or :func:`WithMockDSTrans`).
-	"""
+class _TestBaseMixin(object):
 	set_up_packages = (dataserver,)
 
 	@property
 	def ds(self):
 		return current_mock_ds
 
-class SharedConfiguringTestBase(_BaseSharedConfiguringTestBase):
+
+class ConfiguringTestBase(_TestBaseMixin,_BaseConfiguringTestBase):
 	"""
 	A test base that does two things: first, sets up the :mod:`nti.dataserver` module
 	during setUp, and second, makes the value of :data:`current_mock_ds` available
 	as a property on this object (when used inside a function decorated with :func:`WithMockDS`
 	or :func:`WithMockDSTrans`).
 	"""
-	set_up_packages = (dataserver,)
 
-	@property
-	def ds(self):
-		return current_mock_ds
+
+class SharedConfiguringTestBase(_TestBaseMixin,_BaseSharedConfiguringTestBase):
+	"""
+	A test base that does two things: first, sets up the :mod:`nti.dataserver` module
+	during class setup, and second, makes the value of :data:`current_mock_ds` available
+	as a property on this object (when used inside a function decorated with :func:`WithMockDS`
+	or :func:`WithMockDSTrans`).
+	"""

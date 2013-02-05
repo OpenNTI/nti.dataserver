@@ -9,6 +9,11 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 from hamcrest import assert_that
 from hamcrest import has_entry
 from hamcrest import has_item
@@ -26,11 +31,9 @@ from zope.component import eventtesting
 
 def setUpModule():
 	nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
-	eventtesting.setUp()
 
 def tearDownModule():
 	nti.tests.module_teardown()
-	eventtesting.clearEvents()
 
 #from zope import interface
 #from nti.dataserver import interfaces as nti_interfaces
@@ -365,28 +368,28 @@ def test_replace_dfl_sharing_with_a_member():
 		ds.add_change_listener( users.onChange )
 		jmadden = users.User.create_user( username='jmadden@nextthought.com' )
 		sjohnson = users.User.create_user( username='sjohnson@nextthought.com' )
-		
+
 		ntusrs = DynamicFriendsList(username='ntusrs')
-		ntusrs.creator = jmadden	
+		ntusrs.creator = jmadden
 		jmadden.addContainedObject( ntusrs )
 		ntusrs.addFriend( sjohnson )
-					
+
 		note = Note()
 		note.body = [u'Violent Blades']
 		note.creator = jmadden.username
 		note.containerId = u'c1'
-		
+
 		with jmadden.updates():
 			note.addSharingTarget( ntusrs )
 			note = jmadden.addContainedObject( note )
-		
-		scnt = sjohnson.getSharedContainer(  u'c1' ) 
+
+		scnt = sjohnson.getSharedContainer(  u'c1' )
 		assert_that(note, is_in(scnt))
-		
+
 		with jmadden.updates():
 			note = jmadden.getContainedObject(u'c1', note.id)
 			note.clearSharingTargets()
 			note.addSharingTarget( sjohnson )
-		
-		scnt = sjohnson.getSharedContainer(  u'c1' ) 
+
+		scnt = sjohnson.getSharedContainer(  u'c1' )
 		assert_that(note, is_in(scnt))

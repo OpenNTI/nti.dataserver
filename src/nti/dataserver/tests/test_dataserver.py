@@ -1,9 +1,24 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 
 
 from hamcrest import assert_that, equal_to, is_, none, not_none, has_property, not_none
-import mock_dataserver
+from . import mock_dataserver
 from nose.tools import assert_raises
 
 from nti.ntiids import ntiids
@@ -14,7 +29,7 @@ from nti.externalization.internalization import find_factory_for_class_name
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver.site import run_job_in_site
 from nti.dataserver._Dataserver import get_object_by_oid
-import nti.dataserver
+
 
 import transaction
 import persistent

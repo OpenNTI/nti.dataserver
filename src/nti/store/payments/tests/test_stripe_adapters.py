@@ -1,4 +1,19 @@
-from __future__ import unicode_literals, print_function, absolute_import
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 
 import unittest
 
@@ -13,24 +28,24 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.store.tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, is_not)
-		
+
 class TestStripeAdapters(ConfiguringTestBase):
-		
+
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
-	
+
 	@WithMockDSTrans
 	def test_stripe_customer_adapter(self):
 		user = self._create_user()
 		adapted = pay_interfaces.IStripeCustomer(user)
 		assert_that(adapted, is_not(None))
 		assert_that(adapted.customer_id, is_(None))
-		
+
 		adapted.customer_id = 'xyz'
 		assert_that(adapted.customer_id, is_('xyz'))
-		
+
 	@WithMockDSTrans
 	def test_stripe_purchase_adapter(self):
 		items = ('xyz',)
@@ -41,6 +56,3 @@ class TestStripeAdapters(ConfiguringTestBase):
 		assert_that(adapted.purchase, is_(pa))
 		assert_that(adapted.charge_id, is_('charge_id'))
 		assert_that(adapted.token_id, is_('token_id'))
-					
-if __name__ == '__main__':
-	unittest.main()

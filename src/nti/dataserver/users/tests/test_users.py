@@ -1,4 +1,18 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 from hamcrest import (
 	contains, has_value, is_in, same_instance,
@@ -30,7 +44,6 @@ from nti.externalization.externalization import to_external_object
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from zope.container.interfaces import InvalidItemType
-from zope.component import eventtesting
 from zope.location import interfaces as loc_interfaces
 
 from nti.dataserver.tests import mock_dataserver
@@ -98,7 +111,7 @@ def test_cannot_create_with_invalid_name():
 		users.Entity( username=nti_interfaces.SYSTEM_USER_ID )
 
 
-class TestUser(mock_dataserver.ConfiguringTestBase):
+class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_type_error(self):
@@ -635,9 +648,6 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 		assert_that( intids.getId( note ), is_not( none() ) )
 		intid = intids.getId( note )
 
-		eventtesting.setUp()
-		eventtesting.clearEvents()
-
 		User.delete_user( user1.username )
 
 		# This works because IObjectRemovedEvent is a type of IObjectMovedEvent,
@@ -718,12 +728,7 @@ class TestUser(mock_dataserver.ConfiguringTestBase):
 from zope.event import notify
 from nti.apns import APNSDeviceFeedback
 
-class TestFeedbackEvent(mock_dataserver.ConfiguringTestBase):
-
-	def setUp(self):
-		super(TestFeedbackEvent,self).setUp()
-		eventtesting.clearEvents()
-
+class TestFeedbackEvent(mock_dataserver.SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_devicefeedback(self):
@@ -740,7 +745,7 @@ class TestFeedbackEvent(mock_dataserver.ConfiguringTestBase):
 
 import zope.schema.interfaces
 
-class TestUserNotDevMode(mock_dataserver.ConfiguringTestBase):
+class TestUserNotDevMode(mock_dataserver.SharedConfiguringTestBase):
 	features = ()
 
 	@WithMockDS

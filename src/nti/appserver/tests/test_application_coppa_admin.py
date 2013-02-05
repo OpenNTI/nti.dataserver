@@ -35,7 +35,6 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS
 	def test_approve_coppa(self):
 		"Basic tests of the coppa admin page"
-		component.provideHandler( eventtesting.events.append, (None,) )
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
 			coppa_user = self._create_user( username='ossmkitty' )
@@ -147,7 +146,6 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_post_contact_email_addr_sends_email(self):
-		component.provideHandler( eventtesting.events.append, (None,) )
 		with mock_dataserver.mock_db_trans( self.ds ):
 			coppa_user = self._create_user( username='ossmkitty' )
 			interface.alsoProvides( coppa_user, site_policies.IMathcountsCoppaUserWithoutAgreement )

@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 
 from hamcrest import assert_that, is_, none, not_none
 from hamcrest import has_length
@@ -16,14 +28,14 @@ import cPickle as pickle
 
 
 import unittest
-from .mock_dataserver import ConfiguringTestBase, WithMockDS, WithMockDSTrans, mock_db_trans, current_transaction
+from .mock_dataserver import SharedConfiguringTestBase, WithMockDS, WithMockDSTrans, mock_db_trans, current_transaction
 from nti.chatserver.meeting import _Meeting as Meeting
 from nti.chatserver.messageinfo import MessageInfo
 from nti.chatserver import interfaces as chat_interfaces
 from zope.event import notify
 from persistent.list import PersistentList
 
-class TestChatTranscript(ConfiguringTestBase):
+class TestChatTranscript(SharedConfiguringTestBase):
 	@WithMockDS
 	def test_add_msg_no_container(self):
 		with mock_db_trans():
@@ -83,7 +95,7 @@ class PicklableMsg(persistent.Persistent):
 
 
 
-class TestChatTranscriptEvents(ConfiguringTestBase):
+class TestChatTranscriptEvents(SharedConfiguringTestBase):
 
 	@unittest.skip("Performance testing only; uses cProfile" )
 	def test_cprofile_adding_to_transcripts(self):

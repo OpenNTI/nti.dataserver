@@ -103,7 +103,6 @@ class TestUGDModifyViews(SharedConfiguringTestBase):
 	@classmethod
 	def setUpClass(cls):
 		super(TestUGDModifyViews,cls).setUpClass()
-		component.provideHandler( eventtesting.events.append, (None,) )
 
 	def _establish_context( self, view, user=None, ext_value=None, add_contained_object=False ):
 

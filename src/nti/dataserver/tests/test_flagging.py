@@ -24,7 +24,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import flagging
 from nti.dataserver.contenttypes import Note as _Note
 
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase, WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase, WithMockDSTrans
 
 from nti.contentrange.contentrange import ContentRangeDescription
 def Note():
@@ -32,7 +32,7 @@ def Note():
 	n.applicableRange = ContentRangeDescription()
 	return n
 
-class TestFlagging(ConfiguringTestBase):
+class TestFlagging(SharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_flagging(self):

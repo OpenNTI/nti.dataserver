@@ -36,7 +36,6 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_post_feedback_sends_email(self):
-		component.provideHandler( eventtesting.events.append, (None,) )
 		with mock_dataserver.mock_db_trans( self.ds ):
 			coppa_user = self._create_user( username='ossmkitty' )
 			interface.alsoProvides( coppa_user, site_policies.IMathcountsCoppaUserWithoutAgreement )
@@ -60,7 +59,6 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_post_bad_feedback(self):
-		component.provideHandler( eventtesting.events.append, (None,) )
 		with mock_dataserver.mock_db_trans( self.ds ):
 			coppa_user = self._create_user( username='ossmkitty' )
 

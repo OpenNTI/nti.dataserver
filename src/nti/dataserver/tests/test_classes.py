@@ -19,11 +19,9 @@ from zope.container.interfaces import IContainerModifiedEvent
 
 import mock_dataserver
 
-class TestSection(mock_dataserver.ConfiguringTestBase):
+class TestSection(mock_dataserver.SharedConfiguringTestBase):
 
 	def test_enroll_events(self):
-		eventtesting.setUp()
-		eventtesting.clearEvents()
 		assert_that( eventtesting.getEvents(), has_length( 0 ) )
 
 		section = SectionInfo()
@@ -57,17 +55,13 @@ def clearEvents():
 	eventtesting.clearEvents()
 	del _section_filtered_events[:]
 
-class TestSection(mock_dataserver.ConfiguringTestBase):
+class TestSection(mock_dataserver.SharedConfiguringTestBase):
 
-	def setUp(self):
-		super(TestSection,self).setUp()
+	@classmethod
+	def setUpClass( cls ):
+		super(TestSection,cls).setUpClass()
 		provideHandler( _handle_section_event )
-		# Notice that pyramid configuration hooks up the event
-		# notification process, so if eventtesting does it,
-		# we get duplicates. All we need it to do is register
-		# the catch-all handler
-		provideHandler( eventtesting.events.append, (None,) )
-		clearEvents()
+
 
 	def tearDown(self):
 		clearEvents()
@@ -158,17 +152,7 @@ class TestSection(mock_dataserver.ConfiguringTestBase):
 		# 			 has_item( has_property( 'oldName', 'foo@bar' ) ) )
 
 
-class TestClass(mock_dataserver.ConfiguringTestBase):
-
-	def setUp(self):
-		super(TestClass,self).setUp()
-		# See notes in TestSection
-		provideHandler( eventtesting.events.append, (None,) )
-		clearEvents()
-
-	def tearDown(self):
-		clearEvents()
-		super(TestClass,self).tearDown()
+class TestClass(mock_dataserver.SharedConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_external(self):

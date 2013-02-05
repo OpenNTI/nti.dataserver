@@ -1,4 +1,16 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 
 from hamcrest import assert_that, is_not, is_in, is_, has_entry
 
@@ -9,7 +21,7 @@ from . import implements
 
 from . import mock_dataserver
 
-class TestSimpleEnclosureMixin(mock_dataserver.ConfiguringTestBase):
+class TestSimpleEnclosureMixin(mock_dataserver.SharedConfiguringTestBase):
 	def test_iface(self):
 		assert_that( enclosures.SimplePersistentEnclosure, implements( interfaces.IEnclosedContent ))
 

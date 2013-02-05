@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
@@ -13,7 +24,6 @@ from hamcrest import contains
 
 from zope.annotation import interfaces as an_interfaces
 from zope import component
-import unittest
 from nose.tools import with_setup
 import nti.tests
 from nti.tests import verifiably_provides
@@ -77,7 +87,7 @@ def Redaction():
 	h.applicableRange = ContentRangeDescription()
 	return h
 
-class RedactionTest(mock_dataserver.ConfiguringTestBase):
+class RedactionTest(mock_dataserver.SharedConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_redaction_external(self):
@@ -127,7 +137,7 @@ class RedactionTest(mock_dataserver.ConfiguringTestBase):
 		assert_that( ext, has_entry( 'sharedWith', ['joe@ou.edu'] ) )
 
 
-class _BaseSelectedRangeTest(mock_dataserver.ConfiguringTestBase):
+class _BaseSelectedRangeTest(mock_dataserver.SharedConfiguringTestBase):
 
 	CONSTRUCTOR = staticmethod(Highlight)
 
@@ -193,7 +203,7 @@ class BookmarkTest(_BaseSelectedRangeTest):
 from nti.dataserver import liking
 import contentratings.interfaces
 
-class NoteTest(mock_dataserver.ConfiguringTestBase):
+class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 
 	def test_note_is_favoritable(self):
 		"Notes should be favoritable, and can become IUserRating"
@@ -566,7 +576,6 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_update_sharing_only( self ):
-		component.provideHandler( eventtesting.events.append, (None,) )
 
 		users.User.create_user( username='jason.madden@nextthought.com' )
 		n = Note()
@@ -636,7 +645,7 @@ class NoteTest(mock_dataserver.ConfiguringTestBase):
 
 
 
-class TestCanvas(mock_dataserver.ConfiguringTestBase):
+class TestCanvas(mock_dataserver.SharedConfiguringTestBase):
 
 	def test_canvas_affine_transform_external(self):
 
@@ -737,6 +746,36 @@ class TestCanvas(mock_dataserver.ConfiguringTestBase):
 
 		assert_that( shape.toExternalObject(), has_entry( 'url', None ) )
 
+	def test_update_stroke_width( self ):
+		c = CanvasShape()
+		c.updateFromExternalObject( {"strokeWidth": "3.2pt"} )
+		assert_that( c.strokeWidth, is_( "3.200%" ) )
+
+		c.updateFromExternalObject( {"strokeWidth": "3.2"} )
+		assert_that( c.strokeWidth, is_( "3.200%" ) )
+
+		c.updateFromExternalObject( {"strokeWidth": "2.4%" } )
+		assert_that( c.strokeWidth, is_( "2.400%" ) )
+
+		c.updateFromExternalObject( {"strokeWidth": "99.93%" } )
+		assert_that( c.strokeWidth, is_( "99.930%" ) )
+
+		c.updateFromExternalObject( {"strokeWidth": 0.743521 } )
+		assert_that( c._stroke_width, is_( 0.743521 ) )
+		assert_that( c.strokeWidth, is_( "0.744%" ) )
+
+		c.updateFromExternalObject( {"strokeWidth": 0.3704 } )
+		assert_that( c._stroke_width, is_( 0.3704 ) )
+		assert_that( c.strokeWidth, is_( "0.370%" ) )
+
+
+		with self.assertRaises(AssertionError):
+			c.updateFromExternalObject( { "strokeWidth": -1.2 } )
+
+		with self.assertRaises(AssertionError):
+			c.updateFromExternalObject( { "strokeWidth": 100.1 } )
+
+
 def check_update_props( ext_name='strokeRGBAColor',
 						col_name='strokeColor',
 						opac_name='strokeOpacity',
@@ -785,37 +824,3 @@ def check_update_props( ext_name='strokeRGBAColor',
 def test_update_shape_rgba():
 	yield check_update_props, 'strokeRGBAColor'
 	yield check_update_props, 'fillRGBAColor', 'fillColor', 'fillOpacity', 1.0
-
-class TestStroke(mock_dataserver.ConfiguringTestBase):
-	def test_update_stroke_width( self ):
-		c = CanvasShape()
-		c.updateFromExternalObject( {"strokeWidth": "3.2pt"} )
-		assert_that( c.strokeWidth, is_( "3.200%" ) )
-
-		c.updateFromExternalObject( {"strokeWidth": "3.2"} )
-		assert_that( c.strokeWidth, is_( "3.200%" ) )
-
-		c.updateFromExternalObject( {"strokeWidth": "2.4%" } )
-		assert_that( c.strokeWidth, is_( "2.400%" ) )
-
-		c.updateFromExternalObject( {"strokeWidth": "99.93%" } )
-		assert_that( c.strokeWidth, is_( "99.930%" ) )
-
-		c.updateFromExternalObject( {"strokeWidth": 0.743521 } )
-		assert_that( c._stroke_width, is_( 0.743521 ) )
-		assert_that( c.strokeWidth, is_( "0.744%" ) )
-
-		c.updateFromExternalObject( {"strokeWidth": 0.3704 } )
-		assert_that( c._stroke_width, is_( 0.3704 ) )
-		assert_that( c.strokeWidth, is_( "0.370%" ) )
-
-
-		with self.assertRaises(AssertionError):
-			c.updateFromExternalObject( { "strokeWidth": -1.2 } )
-
-		with self.assertRaises(AssertionError):
-			c.updateFromExternalObject( { "strokeWidth": 100.1 } )
-
-
-if __name__ == '__main__':
-	unittest.main()

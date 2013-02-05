@@ -1,11 +1,26 @@
-#!/usr/bin/env python2.7
-#pylint: disable=R0904
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
 
-import unittest
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+
+
 from hamcrest import assert_that, has_length, contains_string, is_, same_instance, is_not, has_item
-from nti.dataserver.tests import has_attr, provides
+from nti.tests import  verifiably_provides as provides
 from zope.interface.verify import verifyObject
-from zope import component
+
 
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver.interfaces import IPrincipal
@@ -14,9 +29,9 @@ from nti.dataserver.authorization_acl import ace_allowing, ace_denying
 from nti.dataserver.providers import Provider
 
 
-import mock_dataserver
+from . import mock_dataserver
 
-class TestProvider(mock_dataserver.ConfiguringTestBase):
+class TestProvider(mock_dataserver.SharedConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_provider_iface(self):

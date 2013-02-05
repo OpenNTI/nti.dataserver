@@ -13,7 +13,6 @@ from hamcrest import has_length
 from nti.tests import verifiably_provides
 
 from zope.component.hooks import site
-from zope.component import eventtesting
 from zope.event import notify
 
 from zope import component
@@ -34,11 +33,10 @@ import fudge
 class PersistentContained(contained.Contained,persistent.Persistent):
 	pass
 
-class TestInstall(mock_dataserver.ConfiguringTestBase):
+class TestInstall(mock_dataserver.SharedConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_install_creates_intid_utility_and_contained_objects_are_registered(self):
-		eventtesting.setUp(self)
 		intids = component.getUtility( zcid_interfaces.IIntIds )
 		assert_that( intids, verifiably_provides( zcid_interfaces.IIntIds ) )
 
