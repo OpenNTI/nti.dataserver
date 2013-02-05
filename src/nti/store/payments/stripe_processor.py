@@ -139,38 +139,43 @@ class _StripePaymentProcessor(StripeIO):
 			message = str(e)
 			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
 			
-	def get_charges(self, pid=None, username=None, customer=None, start_time=None, end_time=None, api_key=None):
+	def get_charges(self, purchase_id=None, username=None, customer=None, start_time=None, end_time=None, api_key=None):
 		result = []
 		for c in self.get_stripe_charges(start_time=start_time, end_time=end_time, api_key=api_key):
 			desc = c.description
-			if (pid and pid in desc) or (username and username in desc) or (customer and customer in desc):
+			if (purchase_id and purchase_id in desc) or (username and username in desc) or (customer and customer in desc):
 				result.append(c)
 		return result
 	
 	def sync_purchase(self, purchase_id, username, api_key=None):
-		charge = None
 		user = User.get_user(username)
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+		if purchase is None:
+			message = 'Purchase %r for user %s could not be found in dB' % (purchase_id, username)
+			logger.error(message)
+			return None
+		
+		charge = None
 		sp = pay_interfaces.IStripePurchase(purchase)
 		if sp.charge_id:
 			charge = self.get_stripe_charge(sp.charge_id, api_key=api_key)
 			if charge is None: 
 				# if the charge cannot be found it means there was a db error
 				# or the charge has been deleted from stripe. 
-				message = 'Charge %s/%r for user %s could not be found in Stripe' % (sp.charge_id, purchase.id, user)
+				message = 'Charge %s/%r for user %s could not be found in Stripe' % (sp.charge_id, purchase_id, user)
 				logger.warn(message)
 		else:
 			start_time = time.mktime(date.fromtimestamp(purchase.StartTime).timetuple())
-			charges = self.get_charges(pid=purchase.id, start_time=start_time, api_key=api_key)
+			charges = self.get_charges(purchase_id=purchase_id, start_time=start_time, api_key=api_key)
 			if charges:
 				charge = charges[0]
+				notify(pay_interfaces.RegisterStripeCharge(purchase_id, charge.id, username))
 			elif sp.token_id:
 				token = self.get_stripe_token(sp.token_id, api_key=api_key)
 				if token is None:
 					# if the token cannot be found it means there was a db error
 					# or the token has been deleted from stripe.
-					message = 'Purchase %s/%r for user %s could not found in Stripe' % \
-							  (sp.token_id, purchase.id, user)
+					message = 'Purchase %s/%r for user %s could not found in Stripe' % (sp.token_id, purchase_id, username)
 					logger.warn(message)
 					notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
 				elif token.used:
@@ -178,7 +183,7 @@ class _StripePaymentProcessor(StripeIO):
 						# token has been used and no charge has been found, means the transaction failed
 						notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
 				elif not purchase.is_pending(): #no charge and unused token
-					message = 'Purchase %r for user %s has status issues' % (purchase.id, user)
+					message = 'Please check status of purchase %r for user %s' % (purchase_id, username)
 					logger.warn(message)
 					
 		if charge:
