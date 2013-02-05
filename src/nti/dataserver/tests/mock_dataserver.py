@@ -178,11 +178,13 @@ def WithMockDS( *args, **kwargs ):
 
 import contextlib
 
+current_transaction = None
+
 @contextlib.contextmanager
 def mock_db_trans(ds=None):
 	global current_transaction
-	if ds is None:
-		ds = current_mock_ds
+	ds = ds or current_mock_ds
+
 	transaction.begin()
 	conn = ds.db.open()
 	current_transaction = conn
@@ -193,49 +195,23 @@ def mock_db_trans(ds=None):
 		component.provideUtility( ds, nti_interfaces.IDataserver )
 		assert component.getUtility( nti_interfaces.IDataserver )
 
-		yield conn
-		transaction.commit()
-		conn.close()
-
-class faster_mock_db_trans(object):
-	# The class version is moderately faster than the contextlib decorated version,
-	# which is important in benchmarks, but the code is more baroque and possibly
-	# bug prone
-	def __init__( self, ds=None ):
-		self._ds = ds
-		self._old_site = None
-		self._conn = None
-
-	def __enter__( self ):
-		ds = self._ds
-		if ds is None:
-			ds = current_mock_ds
-		transaction.begin()
-		conn = ds.db.open()
-		self._conn = conn
-		global current_transaction
-		current_transaction = conn
-		sitemanc = conn.root()['nti.dataserver']
-
-		self._old_site = getSite()
-		setSite(sitemanc)
-
-		assert component.getSiteManager() == sitemanc.getSiteManager()
-		component.provideUtility( ds, nti_interfaces.IDataserver )
-		assert component.getUtility( nti_interfaces.IDataserver )
-
-		return conn
-
-	def __exit__( self, t, v, tb ):
 		try:
-			if t is None:
-				transaction.commit()
-				self._conn.close()
+			yield conn
+			transaction.commit()
+		except Exception:
+			transaction.abort()
+			raise
 		finally:
-			setSite( self._old_site )
+			conn.close()
+			current_transaction = None
 
 
-current_transaction = None
+	# Now, clean all objects out of the DB cache. This
+	# simulates a real-world scenario where either multiple
+	# connections are in use, or multiple machines, or there is cache
+	# pressure. It finds bugs that otherwise would be hidden by
+	# using the same object across transactions when the cache is the same
+	ds.db.pool.map( lambda conn: conn.cacheMinimize() )
 
 def WithMockDSTrans( func ):
 
@@ -244,24 +220,16 @@ def WithMockDSTrans( func ):
 		global current_mock_ds
 		ds = MockDataserver()
 		current_mock_ds = ds
-		transaction.begin()
-		conn = ds.db.open()
-		current_transaction = conn
-		sitemanc = conn.root()['nti.dataserver']
+
 		setHooks()
-
-		with site( sitemanc ):
-			assert component.getSiteManager() == sitemanc.getSiteManager()
-			component.provideUtility( ds, nti_interfaces.IDataserver )
-			assert component.getUtility( nti_interfaces.IDataserver )
-
-			try:
+		try:
+			with mock_db_trans( ds ):
 				func( *args, **kwargs )
-			finally:
-				current_mock_ds = None
-				current_transaction = None
-				ds.close()
-				resetHooks()
+		finally:
+			current_mock_ds = None
+			current_transaction = None
+			ds.close()
+			resetHooks()
 
 	return nose.tools.make_decorator( func )( with_mock_ds_trans )
 
