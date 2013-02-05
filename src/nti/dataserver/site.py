@@ -168,7 +168,7 @@ def get_site_for_site_names( site_names, site=None ):
 
 	#assert site.getSiteManager().__bases__ == (component.getGlobalSiteManager(),)
 	# Can we find a named site to use?
-	site_components = _find_site_components( site_names )
+	site_components = _find_site_components( site_names ) if site_names else None # micro-opt to not call if no names
 	if site_components:
 		# Yes we can. The site components are only a partial configuration
 		# and are not persistent, so we need to use two bases
