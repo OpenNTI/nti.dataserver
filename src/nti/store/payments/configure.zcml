@@ -2,15 +2,15 @@
 <configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
 	<include package="zope.component" />
 
-	<adapter factory=".stripe._StripeCustomerFactory"
+	<adapter factory=".stripe_adapters._StripeCustomerFactory"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IStripeCustomer" />
 	
-	<adapter factory=".stripe._StripePurchaseFactory"
+	<adapter factory=".stripe_adapters._StripePurchaseFactory"
 			 for="..interfaces.IPurchaseAttempt"
 			 provides=".interfaces.IStripePurchase" />
 			 		 
-	<utility factory=".stripe._StripePaymentProcessor" 
+	<utility factory=".stripe_processor._StripePaymentProcessor" 
 			 name="stripe"
 			 provides=".interfaces.IStripePaymentProcessor" />
 	

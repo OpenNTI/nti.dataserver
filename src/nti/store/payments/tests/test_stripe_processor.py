@@ -1,10 +1,8 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
-import time
 import uuid
 import stripe
 import unittest
-from datetime import date
 
 from zope import component
 from zope.lifecycleevent import IObjectCreatedEvent, IObjectRemovedEvent
@@ -14,7 +12,6 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.store import purchase
 from nti.store import interfaces as store_interfaces
-from nti.store.payments import stripe as nti_stripe
 from nti.store.payments import interfaces as pay_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -23,48 +20,19 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.store.tests import ConfiguringTestBase
 
 from zope.component import eventtesting
-from hamcrest import (assert_that, is_, is_not, has_length, greater_than_or_equal_to)
+from hamcrest import (assert_that, is_, is_not, has_length)
 		
-class TestStripeCustomer(ConfiguringTestBase):
-		
-	def _create_user(self, username='nt@nti.com', password='temp001', **kwargs):
-		ds = mock_dataserver.current_mock_ds
-		ext_value = {'external_value':kwargs}
-		usr = User.create_user( ds, username=username, password=password, **ext_value)
-		return usr
-	
-	@WithMockDSTrans
-	def test_adapter(self):
-		user = self._create_user()
-		adapted = pay_interfaces.IStripeCustomer(user)
-		assert_that(adapted, is_not(None))
-		assert_that(adapted.customer_id, is_(None))
-		
-		adapted.customer_id = 'xyz'
-		assert_that(adapted.customer_id, is_('xyz'))
-		
-class TestStripePurchase(ConfiguringTestBase):
-	
-	@WithMockDSTrans
-	def test_adapter(self):
-		items = ('xyz',)
-		pa = purchase.create_purchase_attempt(items, 'stripe')
-		adapted = pay_interfaces.IStripePurchase(pa)
-		adapted.charge_id = 'charge_id'
-		adapted.token_id = 'token_id'
-		assert_that(adapted.purchase, is_(pa))
-		assert_that(adapted.charge_id, is_('charge_id'))
-		assert_that(adapted.token_id, is_('token_id'))
-			
-@unittest.SkipTest
-class TestStripeOps(ConfiguringTestBase):
+class TestStripeIO(ConfiguringTestBase):
 	
 	@classmethod
 	def setUpClass(cls):
 		cls.api_key = stripe.api_key
 		stripe.api_key = u'sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp'
-		cls.manager = nti_stripe._StripePaymentProcessor()
 	
+	def setUp( self ):
+		super(ConfiguringTestBase,self).setUp()
+		self.manager = component.getUtility(store_interfaces.IPaymentProcessor, name='stripe')
+		
 	@classmethod
 	def tearDownClass(cls):
 		stripe.api_key = cls.api_key
@@ -83,6 +51,7 @@ class TestStripeOps(ConfiguringTestBase):
 		user = self._create_user(username=username, email=email, description=desc)
 		return user
 	
+	@unittest.skip
 	@WithMockDSTrans
 	def test_create_update_delete_customer(self):
 		user = self._create_random_user()
@@ -100,6 +69,7 @@ class TestStripeOps(ConfiguringTestBase):
 		adapted = pay_interfaces.IStripeCustomer(user)
 		assert_that(adapted.customer_id, is_(None))
 		
+	@unittest.skip
 	@WithMockDSTrans
 	def test_create_token_and_charge(self):
 		t = self.manager.create_card_token(	number="5105105105105100", 
@@ -115,6 +85,7 @@ class TestStripeOps(ConfiguringTestBase):
 		c = self.manager.create_charge(100, card=t, description="my charge")
 		assert_that(c, is_not(None))
 		
+	@unittest.skip
 	@WithMockDSTrans
 	def test_process_payment(self):
 		eventtesting.clearEvents()
@@ -151,10 +122,6 @@ class TestStripeOps(ConfiguringTestBase):
 		self.manager.delete_customer(user)
 		assert_that( eventtesting.getEvents( IObjectRemovedEvent,
 											 lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object) ), has_length( 1 ) )
-		
-		start_time = time.mktime(date.today().timetuple())
-		charges = list(self.manager.get_stripe_charges(start_time=start_time, count=50))
-		assert_that(charges, has_length(greater_than_or_equal_to(1)))
 		
 if __name__ == '__main__':
 	unittest.main()
