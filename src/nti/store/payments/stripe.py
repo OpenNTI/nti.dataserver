@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
+import sys
 import stripe
 
 from zope import interface
@@ -122,6 +123,10 @@ class _StripePaymentProcessor(Persistent):
 		token = self._do_stripe_operation(stripe.Token.create, api_key=api_key, **data)
 		return token
 		
+	def get_stripe_token(self, token, api_key=None):
+		token = self._do_stripe_operation(stripe.Token.retrieve,token, api_key=api_key)
+		return token
+	
 	def create_stripe_charge(self, amount, currency='USD', customer_id=None, card=None, description=None, api_key=None):
 		assert customer_id or card
 		data = {'amount':amount, 'currency':currency, 'description':description}
@@ -137,6 +142,35 @@ class _StripePaymentProcessor(Persistent):
 		charge = self._do_stripe_operation(stripe.Charge.retrieve, charge_id, api_key=api_key)
 		return charge
 	
+	def _get_stripe_charges(self, count=10, offset=0, customer=None, api_key=None):
+		charges = self._do_stripe_operation(stripe.Charge.all, count=count, offset=offset, 
+											customer=customer, api_key=api_key)
+		return charges
+	
+	def get_stripe_charges(self, customer=None, start_time=None, end_time=None, count=10, api_key=None):
+		offset = 0
+		start_time = int(start_time) if start_time else 0
+		end_time = int(end_time) if end_time else sys.maxint
+				
+		_loop = True
+		while _loop:
+			charges = self._get_stripe_charges(count=count, offset=offset, customer=customer, api_key=api_key)
+			
+			if not charges.data:
+				_loop = False
+			else:
+				charges = charges.data
+				for c in charges:
+					if c.created >= start_time and c.created <= end_time:
+						yield c
+					
+				offset += len(charges)
+				
+				# since the list of events is ordered desc
+				# stop if an old event is not withing the range
+				if start_time > charges[-1].created:
+					_loop = False
+				
 	# ---------------------------
 
 	def create_customer(self, user, api_key=None):
@@ -212,8 +246,10 @@ class _StripePaymentProcessor(Persistent):
 		# set interface for externalization
 		interface.alsoProvides( purchase, pay_interfaces.IStripePurchase )
 		
+		scust = pay_interfaces.IStripeCustomer(user)
+		descid = "%s,%s,%s" % (user.username, scust.customer_id, purchase.id)
 		try:
-			charge_id = self.create_charge(amount, currency, card=token, description=purchase.id, api_key=api_key)
+			charge_id = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
 			sp.ChargeID = charge_id
 		
 			notify(store_interfaces.PurchaseAttemptSuccessful(purchase, user))

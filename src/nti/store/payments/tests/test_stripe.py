@@ -1,8 +1,10 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
+import time
 import uuid
 import stripe
 import unittest
+from datetime import date
 
 from zope import component
 from zope.lifecycleevent import IObjectCreatedEvent, IObjectRemovedEvent
@@ -21,7 +23,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.store.tests import ConfiguringTestBase
 
 from zope.component import eventtesting
-from hamcrest import (assert_that, is_, is_not, has_length)
+from hamcrest import (assert_that, is_, is_not, has_length, greater_than_or_equal_to)
 		
 class TestStripeCustomer(ConfiguringTestBase):
 		
@@ -54,7 +56,7 @@ class TestStripePurchase(ConfiguringTestBase):
 		assert_that(adapted.charge_id, is_('charge_id'))
 		assert_that(adapted.token_id, is_('token_id'))
 			
-#@unittest.SkipTest
+@unittest.SkipTest
 class TestStripeOps(ConfiguringTestBase):
 	
 	@classmethod
@@ -149,6 +151,10 @@ class TestStripeOps(ConfiguringTestBase):
 		self.manager.delete_customer(user)
 		assert_that( eventtesting.getEvents( IObjectRemovedEvent,
 											 lambda x: pay_interfaces.IStripeCustomer.providedBy(x.object) ), has_length( 1 ) )
+		
+		start_time = time.mktime(date.today().timetuple())
+		charges = list(self.manager.get_stripe_charges(start_time=start_time, count=50))
+		assert_that(charges, has_length(greater_than_or_equal_to(1)))
 		
 if __name__ == '__main__':
 	unittest.main()
