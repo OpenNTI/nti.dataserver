@@ -701,12 +701,12 @@ class IMathcountsCoppaUserWithAgreementUserProfile(user_interfaces.IEmailRequire
 	affiliation = schema.TextLine(
 		title='Affiliation',
 		description="Your affiliation, such as school name",
-		required=False)
+		required=False) # redefined because we tag it
 
 	role = schema.Choice( title="Your role in the organization",
 						  values=("Student", "Teacher", "Coach", "Parent", "Volunteer", "Other"),
 						  default="Other",
-						  required=False)
+						  required=False) # redefined because we tag it
 
 	# When we upgrade accounts, we need to keep the contact email
 	contact_email = ValidTextLine(

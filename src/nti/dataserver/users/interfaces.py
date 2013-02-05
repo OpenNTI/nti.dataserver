@@ -247,15 +247,15 @@ class WillCreateNewEntityEvent(zope.component.interfaces.ObjectEvent):
 class IWillDeleteEntityEvent(zope.component.interfaces.IObjectEvent):
 	"""
 	Fired before an :class:`zope.lifecycleevent.interfaces.IObjectRemovedEvent` with
-	an entity that is in the process of being deleted by the factories. 
+	an entity that is in the process of being deleted by the factories.
 	"""
-	
+
 @interface.implementer(IWillUpdateNewEntityEvent)
 class WillDeleteEntityEvent(zope.component.interfaces.ObjectEvent):
 
 	def __init__( self, obj):
 		super(WillDeleteEntityEvent,self).__init__( obj )
-		
+
 class IAvatarURLProvider(Interface):
 	"""
 	Something that can provide a display URL. This is separate
@@ -439,9 +439,11 @@ class ICompleteUserProfile(IRestrictedUserProfile):
 		description="Your affiliation, such as school name",
 		required=False)
 
-ICompleteUserProfile['home_page'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
-ICompleteUserProfile['description'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
-ICompleteUserProfile['location'].setTaggedValue( TAG_HIDDEN_IN_UI, True )
+	role = schema.TextLine(
+		title='Role',
+		description="Your role within your affiliation",
+		required=False)
+
 
 class IEmailRequiredUserProfile(ICompleteUserProfile):
 	"""
