@@ -56,6 +56,7 @@ class ContainedExternal(ZContainedMixin):
 	def to_container_key(self):
 		return to_external_ntiid_oid(self, default_oid=str(id(self)))
 
+import transaction
 
 class TestUGDQueryViews(ConfiguringTestBase):
 
@@ -108,6 +109,8 @@ class TestUGDQueryViews(ConfiguringTestBase):
 		user._addToStream( C() )
 		view.getObjectsForId( user, 'foobar' )
 
+		transaction.doom()
+
 	@WithMockDSTrans
 	def test_rstream_not_found_404(self):
 		view = _RecursiveUGDStreamView( get_current_request() )
@@ -139,6 +142,8 @@ class TestUGDQueryViews(ConfiguringTestBase):
 		user.streamCache.clear()
 		with self.assertRaises( hexc.HTTPNotFound ):
 			view.getObjectsForId( user, ntiids.ROOT )
+
+		transaction.abort()
 
 	@WithMockDS(with_changes=True)
 	def test_rstream_not_found_following_community(self):
@@ -179,6 +184,7 @@ class TestUGDQueryViews(ConfiguringTestBase):
 			with self.assertRaises(hexc.HTTPNotFound):
 				stream = view.getObjectsForId( user, ntiids.ROOT )
 
+			transaction.doom()
 
 	@WithMockDSTrans
 	def test_ugdrstream_withUGD_not_found_404(self):
@@ -233,6 +239,8 @@ class TestUGDQueryViews(ConfiguringTestBase):
 		assert_that( top_level['Collection'], has_key( 'Items' ) )
 		items = top_level['Collection']['Items']
 		assert_that( items, has_length( 2 ) )
+
+		transaction.doom()
 
 	@WithMockDSTrans
 	def test_rstream_circled(self):
@@ -297,7 +305,7 @@ from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
 from nti.dataserver import liking
 from nti.externalization.oids import to_external_ntiid_oid
-from webtest import TestApp
+from .test_application import TestApp
 
 class TestApplicationUGDQueryViews(ApplicationTestBase):
 
@@ -346,7 +354,7 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 
 			top_n = contenttypes.Note()
 			top_n.applicableRange = contentrange.ContentRangeDescription()
-			top_n.containerId = 'tag:nti:foo'
+			top_n_containerId = top_n.containerId = 'tag:nti:foo'
 			top_n.body = ("Top",)
 			liking.like_object( top_n, 'foo@bar' )
 			user.addContainedObject( top_n )
@@ -366,7 +374,7 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 			top_n_ext_id = to_external_ntiid_oid( top_n )
 
 		testapp = TestApp( self.app )
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n.containerId + ')/UserGeneratedData'
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n_containerId + ')/UserGeneratedData'
 
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
@@ -494,7 +502,7 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 			hl_id = to_external_ntiid_oid( hl )
 
 		# Top level now include the hl
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n.containerId + ')/UserGeneratedData'
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n_containerId + ')/UserGeneratedData'
 		res = testapp.get( path, params={'filter': 'TopLevel'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', hl_id ), has_entry( 'ID', top_n_id ) ) ) )
@@ -675,7 +683,7 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 			# A note I own, liked by another user
 			top_n = contenttypes.Note()
 			top_n.applicableRange = contentrange.ContentRangeDescription()
-			top_n.containerId = 'tag:nti:foo'
+			top_n_containerId = top_n.containerId = 'tag:nti:foo'
 			top_n.body = ("Top",)
 			liking.like_object( top_n, 'foo@bar' )
 			user.addContainedObject( top_n )
@@ -710,7 +718,7 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 			#top_n_ext_id = to_external_ntiid_oid( top_n )
 
 		testapp = TestApp( self.app )
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n.containerId + ')/UserGeneratedData'
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n_containerId + ')/UserGeneratedData'
 
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 3 ) ) )
@@ -772,7 +780,7 @@ class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
 			user = self._create_user( )
 
 			top_n = QAssessedQuestion()
-			top_n.containerId = 'tag:nti:foo'
+			top_n_containerId = top_n.containerId = 'tag:nti:foo'
 			lifecycleevent.created( top_n )
 			user.addContainedObject( top_n )
 			top_n_id = top_n.id
@@ -787,7 +795,7 @@ class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
 
 
 		testapp = TestApp( self.app )
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n.containerId + ')/UserGeneratedData'
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n_containerId + ')/UserGeneratedData'
 
 
 		res = testapp.get( path, params={'sortOn': 'lastModified', 'sortOrder': 'descending'}, extra_environ=self._make_extra_environ())
@@ -838,6 +846,8 @@ class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture( self.ds, owner_username='sjohnson@nextthought.com', passwords='temp001' )
 			other_user = self._create_user( 'non_member_user@baz' )
+			other_user_username = other_user.username
+			owner_user_username = owner_user.username
 
 			owner_note = _note_from( owner_user )
 			with owner_user.updates():
@@ -850,18 +860,20 @@ class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
 				_assert_that_item_is_in_contained_stream_and_data_with_notification_count( u, owner_note )
 
 			owner_note_ntiid_id = to_external_ntiid_oid( owner_note )
+			owner_note_containerId = owner_note.containerId
 
 			reply_note = _note_from( other_user )
 			reply_note.inReplyTo = owner_note
 			reply_note_ext = to_external_object( reply_note )
 
+			parent_dfl_NTIID = parent_dfl.NTIID
 
 		testapp = TestApp( self.app )
-		path = '/dataserver2/users/' + str(other_user.username)
-		res = testapp.post( path, json.dumps( reply_note_ext ), extra_environ=self._make_extra_environ( user=other_user.username ) )
+		path = '/dataserver2/users/' + str(other_user_username)
+		res = testapp.post( path, json.dumps( reply_note_ext ), extra_environ=self._make_extra_environ( user=other_user_username ) )
 		# The correct response:
 		assert_that( res.status_int, is_( 201 ) )
-		assert_that( res.json_body, has_entry( 'sharedWith', has_items( owner_user.username, parent_dfl.NTIID ) ) )
+		assert_that( res.json_body, has_entry( 'sharedWith', has_items( owner_user_username, parent_dfl_NTIID ) ) )
 
 		# And it is in the right streams
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -874,14 +886,14 @@ class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
 
 		# And it is visible as a reply to all of these people
 		path = '/dataserver2/Objects/' + str(owner_note_ntiid_id) + '/@@replies'
-		res = testapp.get( path, extra_environ=self._make_extra_environ(user=owner_user.username) )
+		res = testapp.get( path, extra_environ=self._make_extra_environ(user=owner_user_username) )
 
 		assert_that( res.body, contains_string( reply_note_ntiid ) )
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 
 		# I can filter out things shared to the group
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + owner_note.containerId + ')/UserGeneratedData'
-		res = testapp.get( path, params={'filter': 'TopLevel', 'sharedWith': parent_dfl.NTIID}, extra_environ=self._make_extra_environ())
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + owner_note_containerId + ')/UserGeneratedData'
+		res = testapp.get( path, params={'filter': 'TopLevel', 'sharedWith': parent_dfl_NTIID}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body,
 					 has_entry( 'Items',
@@ -889,5 +901,5 @@ class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
 									has_entry( 'ID', owner_note_ntiid_id ) ) ) )
 
 		# If I look for things shared just with me, I get nothing
-		res = testapp.get( path, params={'filter': 'TopLevel', 'sharedWith': owner_user.username}, extra_environ=self._make_extra_environ())
+		res = testapp.get( path, params={'filter': 'TopLevel', 'sharedWith': owner_user_username}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )

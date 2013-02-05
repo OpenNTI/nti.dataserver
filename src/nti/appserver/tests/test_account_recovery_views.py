@@ -33,7 +33,7 @@ from zope.lifecycleevent import modified, created, added
 import urllib
 import pyramid.httpexceptions as hexc
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
-from webtest import TestApp
+from .test_application import TestApp
 from nti.dataserver.tests import mock_dataserver
 from . import ITestMailDelivery
 
@@ -89,6 +89,7 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 	def test_recover_user_found( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
+			user_username = user.username
 			profile = user_interfaces.IUserProfile( user )
 			created( profile ) # fire events for the profile object to get it indexed
 			added( profile )
@@ -105,7 +106,7 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
-		assert_that( msg, has_property( 'body', contains_string( user.username ) ) )
+		assert_that( msg, has_property( 'body', contains_string( user_username ) ) )
 
 
 class TestApplicationPasswordRecovery(SharedApplicationTestBase):
@@ -179,6 +180,7 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 	def test_recover_user_found( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
+			username = user.username
 			profile = user_interfaces.IUserProfile( user )
 			created( profile ) # Fire events on the profile to get it in the index
 			added( profile )
@@ -191,7 +193,7 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 
 		path = b'/dataserver2/logon.forgot.passcode'
 		data = {'email': 'jason.madden@nextthought.com',
-				'username': user.username,
+				'username': username,
 				'success': 'http://localhost/place'}
 		app.post( path, data, status=204 )
 
@@ -199,12 +201,13 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
 
-		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(user.username) ) ) )
+		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) ) )
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_found_query_in_url( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
+			username = user.username
 			profile = user_interfaces.IUserProfile( user )
 			profile.email = 'jason.madden@nextthought.com'
 			modified( user )
@@ -213,7 +216,7 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 
 		path = b'/dataserver2/logon.forgot.passcode'
 		data = {'email': 'jason.madden@nextthought.com',
-				'username': user.username,
+				'username': username,
 				'success': 'http://localhost/place?host=foo&baz=bar'}
 		app.post( path, data, status=204 )
 
@@ -221,7 +224,7 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
 
-		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?host=foo&baz=bar&username=' + urllib.quote(user.username) ) ) )
+		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?host=foo&baz=bar&username=' + urllib.quote(username) ) ) )
 
 from zope.annotation.interfaces import IAnnotations
 from nti.appserver import account_recovery_views
@@ -269,6 +272,7 @@ class TestApplicationPasswordReset(SharedApplicationTestBase):
 	def test_recover_user_found_with_data( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
+			username = user.username
 			profile = user_interfaces.IUserProfile( user )
 			profile.email = 'jason.madden@nextthought.com'
 			IAnnotations(user)[account_recovery_views._KEY_PASSCODE_RESET] = ('the_id', datetime.datetime.utcnow())
@@ -277,7 +281,7 @@ class TestApplicationPasswordReset(SharedApplicationTestBase):
 
 		path = b'/dataserver2/logon.reset.passcode'
 		data = {'id': 'the_id',
-				'username': user.username,
+				'username': username,
 				'password': 'my_new_pwd'}
 		app.post( path, data, status=200 )
 
@@ -288,6 +292,7 @@ class TestApplicationPasswordReset(SharedApplicationTestBase):
 	def test_recover_user_found_with_data_bad_pwd( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
+			username = user.username
 			profile = user_interfaces.IUserProfile( user )
 			profile.email = 'jason.madden@nextthought.com'
 			IAnnotations(user)[account_recovery_views._KEY_PASSCODE_RESET] = ('the_id', datetime.datetime.utcnow())
@@ -297,7 +302,7 @@ class TestApplicationPasswordReset(SharedApplicationTestBase):
 		path = b'/dataserver2/logon.reset.passcode'
 
 		data = {'id': 'the_id',
-				'username': user.username }
+				'username': username }
 
 		app.post( path, data, status=204 ) # preflights
 
@@ -309,6 +314,6 @@ class TestApplicationPasswordReset(SharedApplicationTestBase):
 
 		# And the annotation key is now gone
 		with mock_dataserver.mock_db_trans( self.ds ):
-			user = users.User.get_user( user.username )
+			user = users.User.get_user( username )
 			annotations = IAnnotations( user )
 			assert_that( annotations, does_not( has_key( account_recovery_views._KEY_PASSCODE_RESET ) ) )

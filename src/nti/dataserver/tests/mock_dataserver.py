@@ -197,7 +197,10 @@ def mock_db_trans(ds=None):
 
 		try:
 			yield conn
-			transaction.commit()
+			if not transaction.isDoomed():
+				transaction.commit()
+			else:
+				transaction.abort()
 		except Exception:
 			transaction.abort()
 			raise
@@ -205,7 +208,12 @@ def mock_db_trans(ds=None):
 			conn.close()
 			current_transaction = None
 
+	reset_db_caches(ds)
 
+def reset_db_caches(ds=None):
+	ds = ds or current_mock_ds or component.queryUtility( nti_interfaces.IDataserver )
+	if ds is None:
+		return
 	# Now, clean all objects out of the DB cache. This
 	# simulates a real-world scenario where either multiple
 	# connections are in use, or multiple machines, or there is cache

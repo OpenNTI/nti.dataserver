@@ -18,7 +18,7 @@ from nti.tests import validly_provides as verifiably_provides
 from zope import interface
 from zope.event import notify
 
-from webtest import TestApp
+from .test_application import TestApp
 
 
 
@@ -51,10 +51,11 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = 'tag:nti:foo'
 			user.addContainedObject( n )
+			n_ext_id = to_external_ntiid_oid( n )
 
 		testapp = TestApp( self.app )
 		data = ''
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % to_external_ntiid_oid( n )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		path = UQ( path )
 		# Initially, unflagged, I get asked to favorite
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
@@ -96,11 +97,14 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			n2.containerId = 'tag:nti:foo'
 			user.addContainedObject( n2 )
 
+			n_ext_id = to_external_ntiid_oid( n )
+			n2_ext_id = to_external_ntiid_oid( n2 )
+
 		testapp = TestApp( self.app )
 
 		# First, give us something to flag
-		for i in (n, n2):
-			path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % to_external_ntiid_oid( i )
+		for i in (n_ext_id, n2_ext_id):
+			path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % i
 			path = UQ( path )
 			testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
 
@@ -166,14 +170,14 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			n2.updateFromExternalObject( {'body': ['<p><em>This</em> part is HTML</p><p>And spreads across paragraphs.</p>',
 												   contenttypes.Canvas()] } )
 			user.addContainedObject( n2 )
+			n2_ext_id = to_external_ntiid_oid( n2 )
 
 		testapp = TestApp( self.app )
 
 		# First, give us something to flag
-		for i in (n2,):
-			path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % to_external_ntiid_oid( i )
-			path = UQ( path )
-			testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n2_ext_id
+		path = UQ( path )
+		testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
 
 
 		path = '/dataserver2/@@moderation_admin'
@@ -216,15 +220,15 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			assert_that( chat_transcripts.transcript_for_user_in_room( user, room_id ).get_message( msg_info.ID ),
 						 is_( msg_info ) )
 			msg_info.lastModified = 1354558013.779055 # For the date below
+			msg_info_ext_id = to_external_ntiid_oid( msg_info )
 
 
 		testapp = TestApp( self.app )
 
 		# First, give us something to flag
-		for i in (msg_info,):
-			path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % to_external_ntiid_oid( i )
-			path = UQ( path )
-			testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' %  msg_info_ext_id
+		path = UQ( path )
+		testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
 
 
 		# Fetch the page
@@ -248,4 +252,6 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
 		assert_that( res.body, does_not( contains_string( '12/3/12 12:06 PM' ) ) )
 
-		assert_that( msg_info, verifiably_provides( flagging_views.IModeratorDealtWithFlag ) )
+		with mock_dataserver.mock_db_trans( self.ds ) as conn:
+			msg_info = conn.get( msg_info._p_oid )
+			assert_that( msg_info, verifiably_provides( flagging_views.IModeratorDealtWithFlag ) )

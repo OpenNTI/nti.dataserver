@@ -8,7 +8,7 @@ from hamcrest import (assert_that, is_, none, starts_with,
 					  has_entry, has_length, has_item, has_key,
 					  contains_string, ends_with, all_of, has_entries)
 from hamcrest import has_property
-from webtest import TestApp
+from .test_application import TestApp
 
 
 
@@ -96,10 +96,11 @@ class TestApplicationZopeFileViews(SharedApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
+			user_username = user.username
 			user_interfaces.IUserProfile( user ).avatarURL = PNG_DATAURL
 
 		testapp = TestApp( self.app )
-		ext_user = testapp.get( '/dataserver2/ResolveUser/' + str(user.username ), extra_environ=self._make_extra_environ() ).json_body
+		ext_user = testapp.get( '/dataserver2/ResolveUser/' + str(user_username ), extra_environ=self._make_extra_environ() ).json_body
 
 		avatar_url = ext_user['Items'][0]['avatarURL']
 		assert_that( avatar_url, starts_with( '/dataserver' ) )

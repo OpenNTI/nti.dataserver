@@ -13,7 +13,7 @@ from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
 
 import unittest
-from webtest import TestApp
+from .test_application import TestApp
 
 import os.path
 

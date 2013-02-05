@@ -35,6 +35,7 @@ from zope import component
 from zc import intid as zc_intid
 from persistent import Persistent
 import urllib
+import transaction
 
 class TestContainerEnumerationWorkspace(tests.ConfiguringTestBase):
 
@@ -172,6 +173,7 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		#['UserGeneratedData', 'RecursiveUserGeneratedData', 'Stream', 'RecursiveStream', 'UserGeneratedDataAndRecursiveStream', 'Glossary']
 		assert_that( ext_obj, has_entry( 'Links', has_length( greater_than_or_equal_to( 6 ) ) ) )
 
+		transaction.doom()
 
 
 

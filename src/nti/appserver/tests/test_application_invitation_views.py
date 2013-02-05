@@ -16,7 +16,7 @@ from hamcrest import is_not as does_not
 from hamcrest import ends_with
 
 import anyjson as json
-from webtest import TestApp
+from .test_application import TestApp
 
 import urllib
 
@@ -104,7 +104,9 @@ class TestApplicationInvitationDFLViews(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			owner = self._create_user()
 			member_user = self._create_user( 'member@foo' )
+			member_user_username = member_user.username
 			other_user = self._create_user( 'otheruser@foo' )
+			other_user_username = other_user.username
 
 
 			fl1 = users.DynamicFriendsList(username='Friends')
@@ -126,14 +128,14 @@ class TestApplicationInvitationDFLViews(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entries( 'rel', REL_TRIVIAL_DEFAULT_INVITATION_CODE,
 																			   'href', ends_with( '/@@' + REL_TRIVIAL_DEFAULT_INVITATION_CODE ) ) ) ) )
 
-		res = testapp.get( path, extra_environ=self._make_extra_environ(username=member_user.username) )
+		res = testapp.get( path, extra_environ=self._make_extra_environ(username=member_user_username) )
 		assert_that( res.json_body, does_not( has_entry( 'Links', has_item( has_entries( 'rel', REL_TRIVIAL_DEFAULT_INVITATION_CODE,
 																						 'href', ends_with( '/@@' + REL_TRIVIAL_DEFAULT_INVITATION_CODE ) ) ) ) ) )
 
 
 		# And the owner is the only one that can fetch it
 		testapp.get( path + '/@@' + str( REL_TRIVIAL_DEFAULT_INVITATION_CODE ),
-					 extra_environ=self._make_extra_environ(username=member_user.username),
+					 extra_environ=self._make_extra_environ(username=member_user_username),
 					 status=403 )
 
 		res = testapp.get( path + '/@@' + str( REL_TRIVIAL_DEFAULT_INVITATION_CODE ),
@@ -145,7 +147,7 @@ class TestApplicationInvitationDFLViews(SharedApplicationTestBase):
 		# And the other user can accept it
 		testapp.post( '/dataserver2/users/otheruser@foo/@@accept-invitations',
 					  json.dumps( {'invitation_codes': [res.json_body['invitation_code']]} ),
-					  extra_environ=self._make_extra_environ(username=other_user.username) )
+					  extra_environ=self._make_extra_environ(username=other_user_username) )
 
 		with mock_dataserver.mock_db_trans( self.ds ):
 			owner = users.User.get_user( owner.username )

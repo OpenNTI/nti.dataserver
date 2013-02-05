@@ -214,13 +214,13 @@ class TestChatRoom(SharedConfiguringTestBase):
 			ext = room.toExternalObject()
 
 
-		assert_that( ext, has_entry( 'inReplyTo', n_ext_id ) )
-		assert_that( ext, has_entry( 'references', only_contains( n_ext_id ) ) )
-		assert_that( ext, has_entry( 'Moderators', [] ) )
-		assert_that( ext, has_entry( 'MessageCount', 0 ) )
-		assert_that( ext, has_entry( 'Moderated', False ) )
-		to_external_representation( room, EXT_FORMAT_JSON )
-		to_external_representation( room, EXT_FORMAT_PLIST )
+			assert_that( ext, has_entry( 'inReplyTo', n_ext_id ) )
+			assert_that( ext, has_entry( 'references', only_contains( n_ext_id ) ) )
+			assert_that( ext, has_entry( 'Moderators', [] ) )
+			assert_that( ext, has_entry( 'MessageCount', 0 ) )
+			assert_that( ext, has_entry( 'Moderated', False ) )
+			to_external_representation( room, EXT_FORMAT_JSON )
+			to_external_representation( room, EXT_FORMAT_PLIST )
 
 		with mock_dataserver.mock_db_trans(ds):
 			room.inReplyTo = None
@@ -1078,3 +1078,6 @@ class TestFunctionalChatserver(_ChatserverTestBase):
 
 		finally:
 			ptearDown()
+
+			# Our test functions are leaking
+			transaction.doom()
