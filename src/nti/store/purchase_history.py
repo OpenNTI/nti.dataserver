@@ -15,6 +15,8 @@ from zope.annotation import factory as an_factory
 from persistent import Persistent
 
 from nti.ntiids import ntiids
+
+from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
 from . import interfaces as store_interfaces
@@ -41,6 +43,7 @@ class _PurchaseHistory(Persistent):
 	def register_purchase(self, purchase):
 		
 		# ensure there is a OID
+		
 		if self._p_jar:
 			self._p_jar.add(purchase)
 		elif self.user._p_jar:
@@ -90,43 +93,63 @@ def _PurchaseHistoryFactory(user):
 	result = an_factory(_PurchaseHistory)(user)
 	return result
 
+def get_purchase_attempt(purchase_id, user=None):
+	if user is not None:
+		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+		hist = store_interfaces.IPurchaseHistory(user)
+		result = hist.get_purchase(purchase_id)
+	else:
+		result = ntiids.find_object_with_ntiid(purchase_id)
+	return result
 
 def _trx_runner(f, retries=5, sleep=0.1):
 	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
-	trxrunner(f, retries=5, sleep=0.1)
-	
-@component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptStarted)
-def _purchase_attempt_started( purchase, event ):
+	trxrunner(f, retries=retries, sleep=sleep)
+
+def register_purchase_attempt(username, purchase):
+	assert getattr( purchase, '_p_oid', None ) is None
+	result = []
 	def func():
-		purchase.updateLastMod()
-		purchase.State = store_interfaces.PA_STATE_STARTED
-		user = event.user
+		user = User.get_user(username)
 		hist = store_interfaces.IPurchaseHistory(user)
 		hist.register_purchase(purchase)
-		logger.info('%s started %s' % (user, purchase))
+		result.append(purchase.id)
+	_trx_runner(func) 
+	return result[0]
+	
+@component.adapter(store_interfaces.IPurchaseAttemptStarted)
+def _purchase_attempt_started( event ):
+	def func():
+		purchase = get_purchase_attempt(event.purchase_id, event.username)
+		purchase.updateLastMod()
+		purchase.State = store_interfaces.PA_STATE_STARTED
+		logger.info('%s started %s' % (event.username, purchase))
 	_trx_runner(func)
 	
-@component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptSuccessful)
-def _purchase_attempt_successful( purchase, event  ):
+@component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
+def _purchase_attempt_successful( event ):
 	def func():
+		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.State = store_interfaces.PA_STATE_SUCCESSFUL
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
 		logger.info('%s completed successfully' % (purchase))
 	_trx_runner(func)
 
-@component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptRefunded)
-def _purchase_attempt_refunded( purchase, event  ):
+@component.adapter(store_interfaces.IPurchaseAttemptRefunded)
+def _purchase_attempt_refunded( event ):
 	def func():
+		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.State = store_interfaces.PA_STATE_REFUNDED
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
 		logger.info('%s has been refunded' % (purchase))
 	_trx_runner(func)
 	
-@component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptFailed)
-def _purchase_attempt_failed( purchase, event  ):
+@component.adapter(store_interfaces.IPurchaseAttemptFailed)
+def _purchase_attempt_failed( event ):
 	def func():
+		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.updateLastMod()
 		purchase.EndTime = time.time()
 		purchase.State = store_interfaces.PA_STATE_FAILED
@@ -137,9 +160,10 @@ def _purchase_attempt_failed( purchase, event  ):
 		logger.info('%s failed. %s' % (purchase, event.error_message))
 	_trx_runner(func)
 
-@component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptSynced)
-def _purchase_attempt_synced( purchase, event  ):
+@component.adapter(store_interfaces.IPurchaseAttemptSynced)
+def _purchase_attempt_synced( event ):
 	def func():
+		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.Synced = True
 		logger.info('%s has been synched' % (purchase))
 	_trx_runner(func)

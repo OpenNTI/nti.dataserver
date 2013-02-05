@@ -30,22 +30,22 @@ class IPaymentProcessor(interface.Interface):
 	
 	name = schema.TextLine(title='Processor name', required=True)
 	
-	def process_purchase(user, purchase, amount, currency, description):
+	def process_purchase(username, purchase_id, amount, currency, description):
 		"""
 		Process a purchase attempt
 		
-		:user Entity making the purchase
-		:purchase IPurchaseAttempt object
+		:username User making the purchase
+		:purchase purchase identifier
 		:amount: purchase amount
 		:current: currency ISO code
 		:description: purchase description
 		"""
 	
-	def sync_purchase(purchase, user=None):
+	def sync_purchase(purchase_id, user=None):
 		"""
 		Synchronized the purchase data with the payment processor info
 		
-		:purchase IPurchaseAttempt object
+		:purchase purchase identifier
 		:user User that made the purchase
 		"""	
 	
@@ -119,64 +119,69 @@ class IPurchaseAttempt(interface.Interface):
 		return if the purchase has been synchronized with the payment processor
 		"""
 	
+class IPurchaseAttemptEvent(interface.Interface):
+	purchase_id = interface.Attribute("Purchase attempt id")
+	username = interface.Attribute("The purchase's entity")
 	
-class IPurchaseAttemptSynced(component.interfaces.IObjectEvent):
-	purchase = interface.Attribute("Purchase attempt")
-	
-class IPurchaseAttemptEvent(IPurchaseAttemptSynced):
-	user = interface.Attribute("The entity that is attempting a purchase")
+class IPurchaseAttemptSynced(IPurchaseAttemptEvent):
+	pass
+
+class IPurchaseAttemptVoided(IPurchaseAttemptEvent):
+	pass
+
+class IPurchaseAttemptStateEvent(IPurchaseAttemptEvent):
 	state = interface.Attribute('Purchase state')
-
-class IPurchaseAttemptStarted(IPurchaseAttemptEvent):
+	
+class IPurchaseAttemptStarted(IPurchaseAttemptStateEvent):
 	pass
 
-class IPurchaseAttemptSuccessful(IPurchaseAttemptEvent):
+class IPurchaseAttemptSuccessful(IPurchaseAttemptStateEvent):
 	pass
 	
-class IPurchaseAttemptFailed(IPurchaseAttemptEvent):
+class IPurchaseAttemptRefunded(IPurchaseAttemptStateEvent):
+	pass
+
+class IPurchaseAttemptFailed(IPurchaseAttemptStateEvent):
 	error_code = interface.Attribute('Failure code')
 	error_message = interface.Attribute('Failure message')
-
-class IPurchaseAttemptRefunded(IPurchaseAttemptEvent):
-	pass
-
-@interface.implementer(IPurchaseAttemptSynced)
-class PurchaseAttemptSynced(component.interfaces.ObjectEvent):
-	purchase = alias('object')
 	
 @interface.implementer(IPurchaseAttemptEvent)
-class PurchaseAttemptEvent(PurchaseAttemptSynced):
+class PurchaseAttemptEvent(object):
+	def __init__( self, purchase_id, username):
+		self.username = username
+		self.purchase_id = purchase_id
 
-	def __init__( self, purchase, user, state):
-		super(PurchaseAttemptEvent,self).__init__( purchase )
-		self.user = user
-		self.state = state
+@interface.implementer(IPurchaseAttemptSynced)
+class PurchaseAttemptSynced(PurchaseAttemptEvent):
+	pass
+
+@interface.implementer(IPurchaseAttemptVoided)
+class PurchaseAttemptVoided(PurchaseAttemptEvent):
+	pass
 
 @interface.implementer(IPurchaseAttemptStarted)
 class PurchaseAttemptStarted(PurchaseAttemptEvent):
-
-	def __init__( self, purchase, user):
-		super(PurchaseAttemptStarted,self).__init__( purchase, user, PA_STATE_STARTED)
+	state = PA_STATE_STARTED
 				
 @interface.implementer(IPurchaseAttemptSuccessful)
 class PurchaseAttemptSuccessful(PurchaseAttemptEvent):
+	state = PA_STATE_SUCCESSFUL
 
-	def __init__( self, purchase, user):
-		super(PurchaseAttemptSuccessful,self).__init__( purchase, user, PA_STATE_SUCCESSFUL)
-
-@interface.implementer(IPurchaseAttemptSuccessful)
+@interface.implementer(IPurchaseAttemptRefunded)
 class PurchaseAttemptRefunded(PurchaseAttemptEvent):
-
-	def __init__( self, purchase, user):
-		super(PurchaseAttemptRefunded,self).__init__( purchase, user, PA_STATE_REFUNDED)
+	state = PA_STATE_REFUNDED
 		
 @interface.implementer(IPurchaseAttemptFailed)
 class PurchaseAttemptFailed(PurchaseAttemptEvent):
-
-	def __init__( self, purchase, user, error_message=None, error_code=None):
-		super(PurchaseAttemptFailed,self).__init__( purchase, user, PA_STATE_FAILED)
-		self.error_code = error_code
+	
+	error_code = None
+	state = PA_STATE_FAILED
+	
+	def __init__( self, purchase_id, username, error_message=None, error_code=None):
+		super(PurchaseAttemptFailed,self).__init__( purchase_id, username)
 		self.error_message = error_message
+		if error_code:
+			self.error_code = error_code
 				
 class IPurchaseHistory(interface.Interface):
 		
@@ -191,6 +196,4 @@ class IPurchaseHistory(interface.Interface):
 		
 	def get_purchase_state(pid):
 		pass
-	
-class ICustomer(interface.Interface):
-	pass
+
