@@ -40,7 +40,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		ext = to_external_object(pa)
 		assert_that(ext,  has_entry('Class', u'PurchaseAttempt'))
 		assert_that(ext,  has_entry('Items', ['xyz']))
-		assert_that(ext,  has_entry('State','Started'))
+		assert_that(ext,  has_entry('State','Unknown'))
 		assert_that(ext,  has_entry('OID', is_not(None)))
 		assert_that(ext,  has_entry('Last Modified', is_not(None)))
 		assert_that(ext,  has_entry('Processor', 'stripe'))
