@@ -23,7 +23,7 @@ from nti.store import interfaces as store_interfaces
 from nti.store.payments import interfaces as pay_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.store.tests import ConfiguringTestBase
 
@@ -75,23 +75,7 @@ class TestStripeIO(ConfiguringTestBase):
 		c = self.manager.create_charge(100, card=t, description="my charge")
 		assert_that(c, is_not(None))
 
-	def create_purchase(self, username, purchase_id, amount=100):
-		t = self.manager.create_card_token(	number="5105105105105100",
-										 	exp_month="11",
-										 	exp_year="30",
-										 	cvc="542",
-										 	address="3001 Oak Tree #D16",
-										 	city="Norman",
-										 	zip = "73072",
-										 	state="OK",
-										 	country="USA")
-		
-		cid = self.manager.process_purchase(username=username, token=t,
-											purchase_id=purchase_id, amount=amount, currency='USD')
-		return t, cid
-										
-	@WithMockDS
-	def test_process_payment(self):
+	def create_purchase(self, items=('xyz',), amount=100):
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
 			user = self._create_random_user()
@@ -102,12 +86,29 @@ class TestStripeIO(ConfiguringTestBase):
 			pa = purchase.create_purchase_attempt(items, self.manager.name, description="my charge")
 			purchase_id = purchase_history.register_purchase_attempt(username, pa)
 			assert_that(purchase_id, is_not(None))
-			
-		with mock_dataserver.mock_db_trans(ds):
-			tid, cid = self.create_purchase(username, purchase_id, 1000)
+				
+		tid = self.manager.create_card_token(number="5105105105105100",
+										 	 exp_month="11",
+										 	 exp_year="30",
+										 	 cvc="542",
+										 	 address="3001 Oak Tree #D16",
+										 	 city="Norman",
+										 	 zip = "73072",
+										 	 state="OK",
+										 	 country="USA")
+		
+		cid = self.manager.process_purchase(username=username, token=tid,
+											purchase_id=purchase_id, amount=amount, currency='USD')
 		
 		assert_that(tid, is_not(None))
 		assert_that(cid, is_not(None))
+		
+		return username, purchase_id, tid, cid 
+										
+	@WithMockDSTrans
+	def test_process_payment(self):
+		ds = self.ds
+		username, purchase_id, _, _ = self.create_purchase()
 		
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
@@ -134,25 +135,15 @@ class TestStripeIO(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_sync_pending_purchase(self):		
 		ds = self.ds
-		with mock_dataserver.mock_db_trans(ds):
-			user = self._create_random_user()
-			username = user.username
-			
-		with mock_dataserver.mock_db_trans(ds):
-			items = ('xyz book',)
-			pa = purchase.create_purchase_attempt(items, self.manager.name, description="my charge")
-			purchase_id = purchase_history.register_purchase_attempt(username, pa)
-			assert_that(purchase_id, is_not(None))
-			
-		with mock_dataserver.mock_db_trans(ds):
-			t, cid = self.create_purchase(username, purchase_id, 1000)
+		username, purchase_id, tid, cid = self.create_purchase()
 			
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
 			sp = pay_interfaces.IStripePurchase(pa)
-			assert_that(sp.token_id, is_(t))
+			assert_that(sp.token_id, is_(tid))
 			assert_that(sp.charge_id, is_(cid))
-			# change state 
+			
+			# change state for synching
 			pa.state = store_interfaces.PA_STATE_STARTED
 			
 		with mock_dataserver.mock_db_trans(ds):
@@ -162,6 +153,71 @@ class TestStripeIO(ConfiguringTestBase):
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
 			assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESSFUL))
+			
+	@WithMockDSTrans
+	def test_sync_invalid_charge_id(self):		
+		ds = self.ds
+		username, purchase_id, _, _ = self.create_purchase()
 		
+		with mock_dataserver.mock_db_trans(ds):
+			pa = purchase_history.get_purchase_attempt(purchase_id, username)
+			sp = pay_interfaces.IStripePurchase(pa)
+			sp.charge_id = 'invalid'
+			
+		with mock_dataserver.mock_db_trans(ds):
+			charge = self.manager.sync_purchase(purchase_id, username=username)
+			assert_that(charge, is_(None))
+			
+	@WithMockDSTrans
+	def test_sync_invalid_missing_charge_id(self):		
+		ds = self.ds
+		username, purchase_id, _, _ = self.create_purchase()
+		
+		with mock_dataserver.mock_db_trans(ds):
+			pa = purchase_history.get_purchase_attempt(purchase_id, username)
+			sp = pay_interfaces.IStripePurchase(pa)
+			sp.charge_id = None
+			
+		with mock_dataserver.mock_db_trans(ds):
+			charge = self.manager.sync_purchase(purchase_id, username=username)
+			assert_that(charge, is_not(None))
+
+	@WithMockDSTrans
+	def test_sync_with_tokens(self):		
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
+			user = self._create_random_user()
+			username = user.username
+			
+		with mock_dataserver.mock_db_trans(ds):
+			items = ('xyz book',)
+			pa = purchase.create_purchase_attempt(items, self.manager.name, description="my charge")
+			purchase_id = purchase_history.register_purchase_attempt(username, pa)
+			
+		# missing token
+		with mock_dataserver.mock_db_trans(ds):
+			charge = self.manager.sync_purchase(purchase_id, username=username)
+			assert_that(charge, is_(None))
+			
+		tid = self.manager.create_card_token(number="5105105105105100",
+										 	 exp_month="11",
+										 	 exp_year="30",
+										 	 cvc="542",
+										 	 address="3001 Oak Tree #D16",
+										 	 city="Norman",
+										 	 zip = "73072",
+										 	 state="OK",
+										 	 country="USA")
+		
+		# unused token
+		with mock_dataserver.mock_db_trans(ds):
+			pa = purchase_history.get_purchase_attempt(purchase_id, username)
+			sp = pay_interfaces.IStripePurchase(pa)
+			sp.TokenID = tid
+			
+		with mock_dataserver.mock_db_trans(ds):
+			charge = self.manager.sync_purchase(purchase_id, username=username)
+			assert_that(charge, is_(None))
+			
 if __name__ == '__main__':
 	unittest.main()
