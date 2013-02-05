@@ -115,6 +115,15 @@ def _purchase_attempt_successful( purchase, event  ):
 		logger.info('%s completed successfully' % (purchase))
 	_trx_runner(func)
 
+@component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptRefunded)
+def _purchase_attempt_refunded( purchase, event  ):
+	def func():
+		purchase.State = store_interfaces.PA_STATE_REFUNDED
+		purchase.EndTime = time.time()
+		purchase.updateLastMod()
+		logger.info('%s has been refunded' % (purchase))
+	_trx_runner(func)
+	
 @component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptFailed)
 def _purchase_attempt_failed( purchase, event  ):
 	def func():
@@ -126,4 +135,11 @@ def _purchase_attempt_failed( purchase, event  ):
 		if event.error_message:
 			purchase.ErrorMessage = event.error_message
 		logger.info('%s failed. %s' % (purchase, event.error_message))
+	_trx_runner(func)
+
+@component.adapter(store_interfaces.IPurchaseAttempt, store_interfaces.IPurchaseAttemptSynced)
+def _purchase_attempt_synced( purchase, event  ):
+	def func():
+		purchase.Synced = True
+		logger.info('%s has been synched' % (purchase))
 	_trx_runner(func)

@@ -25,13 +25,14 @@ from . import interfaces as store_interfaces
 @interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable, ILocation)
 class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
 	
+	Synced = False
 	EndTime = None
 	ErrorCode = None
 	Description = None
 	ErrorMessage = None
 	
 	def __init__(self, items, processor, state, description=None, start_time=None, end_time=None,
-				 error_code=None, error_message=None):
+				 error_code=None, error_message=None, synced=False):
 		
 		self.State = state
 		self.Processor = processor
@@ -45,9 +46,12 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
 			self.ErorrMessage = error_message
 		if description:
 			self.Description = description
+		if synced:
+			self.Synced = True
 	
 	state = alias('State')
 	items = alias('Items')
+	synced = alias('Synced')
 	processor = alias('Processor')
 	start_time = alias('StartTime')
 	description = alias('Description')
@@ -77,13 +81,19 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, Persistent):
 		return self.State in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_SUCCESSFUL)
 	
 	def has_failed(self):
-		return self.State in (store_interfaces.PA_STATE_FAILED)
+		return self.State == store_interfaces.PA_STATE_FAILED
 		
 	def has_succeeded(self):
-		return self.State in (store_interfaces.PA_STATE_SUCCESSFUL)
+		return self.State == store_interfaces.PA_STATE_SUCCESSFUL
 	
 	def is_pending(self):
 		return self.State in (store_interfaces.PA_STATE_STARTED, store_interfaces.PA_STATE_PENDING)
+	
+	def is_refunded(self):
+		return self.State == store_interfaces.PA_STATE_REFUNDED
+	
+	def is_synced(self):
+		return self.Synced
 	
 def create_purchase_attempt(items, processor, state=store_interfaces.PA_STATE_STARTED, description=None, start_time=None):
 	state = state or store_interfaces.PA_STATE_UNKNOWN

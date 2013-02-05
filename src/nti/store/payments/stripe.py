@@ -1,7 +1,9 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
 import sys
+import time
 import stripe
+from datetime import date
 
 from zope import interface
 from zope import component
@@ -20,6 +22,9 @@ from nti.utils.property import alias
 
 from . import interfaces as pay_interfaces
 from .. import interfaces as store_interfaces
+
+import logging
+logger = logging.getLogger( __name__ )
 
 class StripeException(Exception):
 	pass
@@ -147,7 +152,7 @@ class _StripePaymentProcessor(Persistent):
 											customer=customer, api_key=api_key)
 		return charges
 	
-	def get_stripe_charges(self, customer=None, start_time=None, end_time=None, count=10, api_key=None):
+	def get_stripe_charges(self, customer=None, start_time=None, end_time=None, count=50, api_key=None):
 		offset = 0
 		start_time = int(start_time) if start_time else 0
 		end_time = int(end_time) if end_time else sys.maxint
@@ -240,7 +245,7 @@ class _StripePaymentProcessor(Persistent):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 		self.get_or_create_customer(user, api_key=api_key)
 		
-		sp = pay_interfaces.IStripePurchase(purchase, None)
+		sp = pay_interfaces.IStripePurchase(purchase)
 		sp.TokenID = token
 		
 		# set interface for externalization
@@ -262,4 +267,63 @@ class _StripePaymentProcessor(Persistent):
 			message = str(e)
 			notify(store_interfaces.PurchaseAttemptFailed(purchase, user, message))
 			
+	def get_charges(self, pid=None, username=None, customer=None, start_time=None, end_time=None, api_key=None):
+		result = []
+		for c in self.get_stripe_charges(start_time=start_time, end_time=end_time, api_key=api_key):
+			desc = c.description
+			if (pid and pid in desc) or (username and username in desc) or (customer and customer in desc):
+				result.append(c)
+		return result
 	
+	def sync_purchase(self, purchase, user=None, api_key=None):
+		charge = None
+		sp = pay_interfaces.IStripePurchase(purchase)
+		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+		if sp.charge_id:
+			charge = self.get_stripe_charge(self, sp.charge_id, api_key=api_key)
+			if charge is None: 
+				# if the charge cannot be found it means there was a db error
+				# or the charge has been deleted from stripe. 
+				message = 'Charge %s/%r for user %s could not be found in Stripe' % (sp.charge_id, purchase.id, user)
+				logger.warn(message)
+		else:
+			start_time = time.mktime(date.fromtimestamp(purchase.lastModified).timetuple())
+			charges = self.get_charges(pid=purchase.pid, start_time=start_time, api_key=api_key)
+			if charges:
+				charge = charges[0]
+			else:
+				token = self.get_stripe_token(sp.token_id, api_key=api_key)
+				if token is None:
+					# if the token cannot be found it means there was a db error
+					# or the token has been deleted from stripe.
+					message = 'Purchase %s/%r for user %s could not found in Stripe' % \
+							  (sp.token_id, purchase.id, user)
+					logger.warn(message)
+					notify(store_interfaces.PurchaseAttemptFailed(purchase, user, message))
+				elif token.used:
+					if not purchase.has_completed():
+						# token has been used and no charge has been found, means the transaction failed
+						notify(store_interfaces.PurchaseAttemptFailed(purchase, user, message))
+				elif not purchase.is_pending(): #no charge and unused token
+					message = 'Purchase %r for user %s has status issues' % (purchase.id, user)
+					logger.warn(message)
+					
+		if charge:
+			if charge.failure_message:
+				if purchase.has_succeeded():
+					#TODO: Access to items need to be removed
+					pass
+				elif not purchase.has_failed():
+					notify(store_interfaces.PurchaseAttemptFailed(purchase, user, charge.failure_message))
+			elif charge.refunded and not purchase.is_refunded():
+				notify(store_interfaces.PurchaseAttemptRefunded(purchase, user))
+				#TODO: Access to items need to be removed
+			elif charge.paid and not purchase.has_succeeded():
+				notify(store_interfaces.PurchaseAttemptSuccessful(purchase, user))
+				notify(pay_interfaces.ItemsPurchased(user, purchase.items, charge.id))
+				
+			notify(store_interfaces.PurchaseAttemptSynced(purchase))
+				
+		return charge
+
+				
