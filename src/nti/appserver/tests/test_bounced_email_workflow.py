@@ -33,7 +33,7 @@ from nti.dataserver.users.user_profile import make_password_recovery_email_hash
 
 from . import ConfiguringTestBase
 from .test_application import ApplicationTestBase
-from webtest import TestApp
+from .test_application import TestApp
 
 from nti.appserver import bounced_email_workflow
 from nti.appserver import user_link_provider
@@ -111,6 +111,7 @@ class TestApplicationBouncedEmailWorkflow(ApplicationTestBase):
 	def test_delete_states(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
+			user_username = user.username
 			user_link_provider.add_link( user, bounced_email_workflow.REL_INVALID_CONTACT_EMAIL )
 			user_link_provider.add_link( user, bounced_email_workflow.REL_INVALID_EMAIL )
 
@@ -118,7 +119,7 @@ class TestApplicationBouncedEmailWorkflow(ApplicationTestBase):
 		testapp = TestApp( self.app )
 
 		for k in (bounced_email_workflow.REL_INVALID_EMAIL,bounced_email_workflow.REL_INVALID_CONTACT_EMAIL):
-			path =  str('/dataserver2/users/' + user.username + '/@@' + k)
+			path =  str('/dataserver2/users/' + user_username + '/@@' + k)
 			res = testapp.delete( path , extra_environ=self._make_extra_environ() )
 			assert_that( res, has_property( 'status_int', 204 ) )
 

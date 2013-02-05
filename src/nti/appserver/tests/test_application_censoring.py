@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
@@ -12,7 +12,7 @@ from hamcrest import none
 
 import anyjson as json
 import os
-from webtest import TestApp
+from .test_application import TestApp
 from zope import interface
 from zope import component
 
@@ -61,13 +61,14 @@ class _CensorTestMixin(object):
 			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = containerId
 			user.addContainedObject( n )
+			n_ext_id = to_external_ntiid_oid( n )
 
 		testapp = TestApp( self.app )
 
 
 		data = json.dumps( {'body': [bad_val]} )
 
-		path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % to_external_ntiid_oid( n )
+		path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		path = UQ( path )
 		extra_environ = self._make_extra_environ()
 		if environ:

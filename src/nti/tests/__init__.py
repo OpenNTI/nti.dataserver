@@ -170,6 +170,9 @@ import zope.testing.cleanup
 import transaction
 zope.testing.cleanup.addCleanUp( transaction.abort )
 
+# It is helpful to clear weakrefs between tests
+import gc
+zope.testing.cleanup.addCleanUp( gc.collect )
 
 class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 	"""

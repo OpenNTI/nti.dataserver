@@ -8,7 +8,7 @@ from hamcrest import (assert_that, is_, none, starts_with,
 					  has_entry, has_length, has_item, has_key,
 					  contains_string, ends_with, all_of, has_entries)
 
-from webtest import TestApp
+from .test_application import TestApp
 
 from nti.dataserver.tests import mock_dataserver
 

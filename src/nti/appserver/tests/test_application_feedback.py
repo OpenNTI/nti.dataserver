@@ -18,7 +18,7 @@ import anyjson as json
 from zope import interface
 from zope import component
 from zope.component import eventtesting
-from webtest import TestApp
+from .test_application import TestApp
 
 
 

@@ -16,7 +16,7 @@ from hamcrest import is_not as does_not
 from hamcrest import ends_with
 
 import anyjson as json
-from webtest import TestApp
+from .test_application import TestApp
 
 import urllib
 
@@ -32,7 +32,9 @@ class TestApplicationDFLViews(SharedApplicationTestBase):
 	def test_link_in_dfl(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			owner = self._create_user()
+			owner_username = owner.username
 			member_user = self._create_user( 'member@foo' )
+			member_user_username = member_user.username
 			other_user = self._create_user( 'otheruser@foo' )
 
 
@@ -53,7 +55,7 @@ class TestApplicationDFLViews(SharedApplicationTestBase):
 		path = str(path)
 		path = urllib.quote( path )
 
-		res = testapp.get( path, extra_environ=self._make_extra_environ(member_user.username) )
+		res = testapp.get( path, extra_environ=self._make_extra_environ(member_user_username) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entries( 'rel', REL_MY_MEMBERSHIP,
 																			   'href', ends_with( '/@@' + REL_MY_MEMBERSHIP ) ) ) ) )
 
@@ -62,17 +64,17 @@ class TestApplicationDFLViews(SharedApplicationTestBase):
 
 		# And the member can delete it, once
 		testapp.delete( path + '/@@' + str( REL_MY_MEMBERSHIP ),
-						extra_environ=self._make_extra_environ(username=member_user.username) )
+						extra_environ=self._make_extra_environ(username=member_user_username) )
 
 		# after which it 404s
 		testapp.delete( path + '/@@' + str( REL_MY_MEMBERSHIP ),
-						extra_environ=self._make_extra_environ(username=member_user.username),
+						extra_environ=self._make_extra_environ(username=member_user_username),
 						status=404)
 
 		# The member is no longer a member and no longer follows
 		with mock_dataserver.mock_db_trans( self.ds ):
-			owner = users.User.get_user( owner.username )
-			member_user = users.User.get_user( member_user.username )
+			owner = users.User.get_user( owner_username )
+			member_user = users.User.get_user( member_user_username )
 			dfl = owner.getContainedObject( fl1.containerId, fl1.id )
 			assert_that( list(dfl), is_( [other_user] ) )
 

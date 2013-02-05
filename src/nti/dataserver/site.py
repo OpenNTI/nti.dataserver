@@ -117,8 +117,23 @@ class _BasedSiteManager(_ZLocalSiteManager):
 	"""
 	A site manager that exists simply to have bases, but not to
 	record itself as children of those bases (since that's unnecessary
-	for our purposes and leads to conflicts.
+	for our purposes and leads to conflicts).
 	"""
+
+	# Note that the adapter registries in the base objects /will/ have
+	# weak references to this object; it's very hard to stop this. These
+	# will stick around until a gc is run. (For testing purposes,
+	# it is important to GC or you can get weird errors like:
+	# File "zope/interface/adapter.py", line 456, in changed
+	#    super(AdapterLookupBase, self).changed(None)
+	# File "ZODB/Connection.py", line 857, in setstate
+	#    raise ConnectionStateError(msg)
+	#  ConfigurationExecutionError: <class 'ZODB.POSException.ConnectionStateError'>: Shouldn't load state for 0x237f4ee301650a49 when the connection is closed
+	# in:
+	# File "zope/site/configure.zcml", line 13.4-14.71
+	# <implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
+	# Fortunately, Python's GC is precise and refcounting, so as long as we do not leak
+	# refs to these, we're fine
 
 	def _setBases( self, bases ):
 		# Bypass the direct superclass.
@@ -139,6 +154,10 @@ class _BasedSiteManager(_ZLocalSiteManager):
 	def _newContainerData(self): # pragma: no cover
 		return None # We won't be used as a folder
 
+	def __reduce__(self):
+		raise TypeError("Should not be pickled")
+
+
 @interface.implementer(comp_interfaces.ISite)
 class _TrivialSite(_ZContained):
 
@@ -147,6 +166,9 @@ class _TrivialSite(_ZContained):
 
 	def getSiteManager(self):
 		return self._sm
+
+	def __reduce__(self):
+		raise TypeError("Should not be pickled")
 
 def get_site_for_site_names( site_names, site=None ):
 	"""

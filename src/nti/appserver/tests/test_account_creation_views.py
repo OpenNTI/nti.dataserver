@@ -944,7 +944,7 @@ class TestCreateView(_AbstractValidationViewBase):
 			component.getGlobalSiteManager().unregisterUtility( utility, provided=INewUserPlacer, name='example.com' )
 
 from .test_application import ApplicationTestBase, WithSharedApplicationMockDS, SharedApplicationTestBase
-from webtest import TestApp
+from .test_application import TestApp
 from nti.dataserver.tests import mock_dataserver
 
 class _AbstractApplicationCreateUserTest(SharedApplicationTestBase):

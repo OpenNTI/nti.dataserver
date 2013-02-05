@@ -60,6 +60,11 @@ from zope.keyreference.interfaces import IKeyReference
 @interface.implementer(IKeyReference) # IF we don't, we won't get intids
 class ContainedExternal(ZContainedMixin):
 
+	def __str__( self ):
+		if '_str' in self.__dict__:
+			return self._str
+		return "<%s %s>" % (self.__class__.__name__, self.to_container_key())
+
 	def toExternalObject( self ):
 		return str(self)
 	def to_container_key(self):
@@ -112,7 +117,18 @@ def _trivial_db_transaction_cm():
 
 from nti.appserver.cors import cors_filter_factory as CORSInjector, cors_option_filter_factory as CORSOptionHandler
 from paste.exceptions.errormiddleware import ErrorMiddleware
-def TestApp(app=_TestApp):
+
+class ZODBGCMiddleware(object):
+
+	def __init__( self, app ):
+		self.app = app
+
+	def __call__( self, *args, **kwargs ):
+		result = self.app( *args, **kwargs )
+		mock_dataserver.reset_db_caches( )
+		return result
+
+def TestApp(app=_TestApp, **kwargs):
 	"""Sets up the pipeline just like in real life.
 
 	:return: A WebTest testapp.
@@ -122,7 +138,8 @@ def TestApp(app=_TestApp):
 	if app is _TestApp:
 		return None
 
-	return _TestApp( CORSInjector( CORSOptionHandler( ErrorMiddleware( app, debug=True ) ) ) )
+	return _TestApp( CORSInjector( CORSOptionHandler( ErrorMiddleware( ZODBGCMiddleware( app ), debug=True ) ) ),
+					 **kwargs )
 
 class _AppTestBaseMixin(object):
 
@@ -310,12 +327,12 @@ class TestApplication(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()
 			user = self._create_user( )
-			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+			container_id = contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
 			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
 
 		testapp = TestApp( self.app )
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + contained.containerId + ')/UserGeneratedData'
+		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + container_id + ')/UserGeneratedData'
 		#path = urllib.quote( path )
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 
@@ -327,19 +344,22 @@ class TestApplication(SharedApplicationTestBase):
 			contained = PersistentContainedExternal()
 			contained.lastModified = 0
 			user = self._create_user()
-			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+			container_id = contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
+
 			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
+			contained_str = str(contained)
+			contained._str = contained_str
 
 			user2 = self._create_user( username='foo@bar' )
 			user2._addSharedObject( contained )
 
 		testapp = TestApp( self.app )
-		path = '/dataserver2/users/foo@bar/Pages(' + contained.containerId + ')/UserGeneratedData'
+		path = '/dataserver2/users/foo@bar/Pages(' + container_id + ')/UserGeneratedData'
 		#path = urllib.quote( path )
 		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
 
-		assert_that( res.body, contains_string( str(contained) ) )
+		assert_that( res.body, contains_string( contained_str ) )
 
 		# It should also show up in the RecursiveStream
 		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream'
@@ -974,12 +994,13 @@ class TestApplication(SharedApplicationTestBase):
 	def _edit_user_ext_field( self, field, data ):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
+			username = user.username
 			user_ext_id = to_external_ntiid_oid( user )
 
 		testapp = TestApp( self.app )
 
 		# This works for both the OID and direct username paths
-		for path in ('/dataserver2/Objects/%s' % user_ext_id, '/dataserver2/users/' + user.username):
+		for path in ('/dataserver2/Objects/%s' % user_ext_id, '/dataserver2/users/' + username):
 			# Both the classic (direct) and the namespace approach
 			# ONly the namespace is supported
 			for field_segment in ('++fields++' + field, ):
@@ -1027,12 +1048,13 @@ class TestApplication(SharedApplicationTestBase):
 	def test_put_data_to_user( self ):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
+			username = user.username
 			user_ext_id = to_external_ntiid_oid( user )
 
 		testapp = TestApp( self.app )
 
 		# This works for both the OID and direct username paths
-		for path in ('/dataserver2/Objects/%s' % user_ext_id, '/dataserver2/users/' + user.username):
+		for path in ('/dataserver2/Objects/%s' % user_ext_id, '/dataserver2/users/' + username):
 
 			data = json.dumps( {"NotificationCount": 5 } )
 
