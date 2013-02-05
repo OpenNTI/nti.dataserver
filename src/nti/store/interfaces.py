@@ -8,11 +8,15 @@ from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
 from nti.utils.property import alias
 
-PA_STATE_UNKNOWN = 'Unknown'
-PA_STATE_FAILED = 'Failed'
-PA_STATE_PENDING = 'Pending'
-PA_STATE_STARTED = 'Started'
-PA_STATE_SUCCESSFUL = 'Successful'
+PA_STATE_UNKNOWN = u'Unknown'
+PA_STATE_FAILED = u'Failed'
+PA_STATE_PENDING = u'Pending'
+PA_STATE_STARTED = u'Started'
+PA_STATE_REFUNDED = u'Refunded'
+PA_STATE_SUCCESSFUL = u'Successful'
+
+PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_REFUNDED, PA_STATE_SUCCESSFUL)
+PA_STATE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in PA_STATES] )
 
 class IPaymentProcessor(interface.Interface):
 	
@@ -29,6 +33,14 @@ class IPaymentProcessor(interface.Interface):
 		:description: purchase description
 		"""
 	
+	def sync_purchase(purchase, user=None):
+		"""
+		Synchronized the purchase data with the payment processor info
+		
+		:purchase IPurchaseAttempt object
+		:user User that made the purchase
+		"""	
+	
 class PaymentProcessorVocabulary(UtilityVocabulary):
 	nameOnly = False
 	interface = IPaymentProcessor
@@ -41,8 +53,7 @@ class IPurchaseAttempt(interface.Interface):
 	
 	Processor = schema.Choice(source=payment_processors, title='purchase processor', required=True)
 	
-	State = schema.Choice(values=(PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_SUCCESSFUL),
-						  title='purchase state', required=True)
+	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='purchase state', required=True)
 	
 	Items = schema.FrozenSet(value_type=schema.TextLine(title='the item identifier'), title="Items being purchased")
 	Description = schema.TextLine(title='A purchase description', required=False)
@@ -52,6 +63,8 @@ class IPurchaseAttempt(interface.Interface):
 	
 	ErrorCode = schema.Int(title='Failure code', required=False)
 	ErrorMessage = schema.TextLine(title='Failure message', required=False)
+	
+	Synced = schema.Bool(title='if the item has been synchronized with the processors data', required=True)
 	
 	def has_completed():
 		"""
@@ -72,9 +85,16 @@ class IPurchaseAttempt(interface.Interface):
 		"""
 		return if the purchase is pending (started)
 		"""
+		
+	def is_refunded():
+		"""
+		return if the purchase has been refunded
+		"""
 	
-class IPurchaseAttemptEvent(component.interfaces.IObjectEvent):
+class IPurchaseAttemptSynced(component.interfaces.IObjectEvent):
 	purchase = interface.Attribute("Purchase attempt")
+	
+class IPurchaseAttemptEvent(IPurchaseAttemptSynced):
 	user = interface.Attribute("The entity that is attempting a purchase")
 	state = interface.Attribute('Purchase state')
 
@@ -88,16 +108,21 @@ class IPurchaseAttemptFailed(IPurchaseAttemptEvent):
 	error_code = interface.Attribute('Failure code')
 	error_message = interface.Attribute('Failure message')
 
+class IPurchaseAttemptRefunded(IPurchaseAttemptEvent):
+	pass
+
+@interface.implementer(IPurchaseAttemptSynced)
+class PurchaseAttemptSynced(component.interfaces.ObjectEvent):
+	purchase = alias('object')
+	
 @interface.implementer(IPurchaseAttemptEvent)
-class PurchaseAttemptEvent(component.interfaces.ObjectEvent):
+class PurchaseAttemptEvent(PurchaseAttemptSynced):
 
 	def __init__( self, purchase, user, state):
 		super(PurchaseAttemptEvent,self).__init__( purchase )
 		self.user = user
 		self.state = state
-	
-	purchase = alias('object')
-	
+
 @interface.implementer(IPurchaseAttemptStarted)
 class PurchaseAttemptStarted(PurchaseAttemptEvent):
 
@@ -110,6 +135,12 @@ class PurchaseAttemptSuccessful(PurchaseAttemptEvent):
 	def __init__( self, purchase, user):
 		super(PurchaseAttemptSuccessful,self).__init__( purchase, user, PA_STATE_SUCCESSFUL)
 
+@interface.implementer(IPurchaseAttemptSuccessful)
+class PurchaseAttemptRefunded(PurchaseAttemptEvent):
+
+	def __init__( self, purchase, user):
+		super(PurchaseAttemptRefunded,self).__init__( purchase, user, PA_STATE_REFUNDED)
+		
 @interface.implementer(IPurchaseAttemptFailed)
 class PurchaseAttemptFailed(PurchaseAttemptEvent):
 
