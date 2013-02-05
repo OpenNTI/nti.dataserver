@@ -15,6 +15,7 @@ from zope.dottedname import resolve as dottedname
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.tests import ConfiguringTestBase as _BaseConfiguringTestBase
+from nti.tests import SharedConfiguringTestBase as _BaseSharedConfiguringTestBase
 
 from . import mock_redis
 
@@ -267,6 +268,19 @@ def WithMockDSTrans( func ):
 
 
 class ConfiguringTestBase(_BaseConfiguringTestBase):
+	"""
+	A test base that does two things: first, sets up the :mod:`nti.dataserver` module
+	during setUp, and second, makes the value of :data:`current_mock_ds` available
+	as a property on this object (when used inside a function decorated with :func:`WithMockDS`
+	or :func:`WithMockDSTrans`).
+	"""
+	set_up_packages = (dataserver,)
+
+	@property
+	def ds(self):
+		return current_mock_ds
+
+class SharedConfiguringTestBase(_BaseSharedConfiguringTestBase):
 	"""
 	A test base that does two things: first, sets up the :mod:`nti.dataserver` module
 	during setUp, and second, makes the value of :data:`current_mock_ds` available

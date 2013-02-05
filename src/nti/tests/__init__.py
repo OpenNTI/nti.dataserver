@@ -149,6 +149,15 @@ has_attr = hamcrest.library.has_property
 import unittest
 import zope.testing.cleanup
 
+# Ensure that transactions never last past the boundary
+# of a test. If a test begins a transaction and then fails to abort or commit it,
+# subsequent uses of the transaction package may find that they are in a bad
+# state, unable to clean up resources. For example, the dreaded
+# ConnectionStateError: Cannot close a connection joined to a transaction
+import transaction
+zope.testing.cleanup.addCleanUp( transaction.abort )
+
+
 class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 	"""
 	Base class for testing. Inherits the setup and teardown functions for

@@ -14,7 +14,7 @@ import nti.socketio.protocol
 protocol = nti.socketio.protocol
 import nti.socketio.transports as transports
 
-from nti.appserver.tests import ConfiguringTestBase
+from nti.appserver.tests import SharedConfiguringTestBase as ConfiguringTestBase
 from nti.dataserver.tests import mock_dataserver
 
 #from pyramid.testing import DummyRequest
@@ -31,10 +31,9 @@ class WebSocket(object):
 		return self.queue.get()
 
 class TestWebSocket(ConfiguringTestBase):
+
 	@mock_dataserver.WithMockDS
 	def test_websocket_transport_greenlets(self):
-
-
 		class Handler(object):
 			server, session_manager, set_proxy_session, context_manager_callable, handling_session_cm = [None] * 5
 			def __init__(self):
@@ -183,8 +182,6 @@ class MockSession(object):
 class MockSocket(object):
 	protocol = None
 
-
-
 class TestXHRTransport(ConfiguringTestBase):
 
 	def setUp(self):
@@ -230,10 +227,13 @@ class TestXHRTransport(ConfiguringTestBase):
 
 	def test_post_bad_data_kills_transaction( self ):
 		transaction.begin()
-		with self.assertRaises( ValueError ):
-			self.transport.post( self.session )
+		try:
+			with self.assertRaises( ValueError ):
+				self.transport.post( self.session )
 
-		assert_that( transaction.isDoomed(), is_( True ) )
+				assert_that( transaction.isDoomed(), is_( True ) )
+		finally:
+			transaction.abort()
 
 	@mock_dataserver.WithMockDS
 	def test_connect_fresh(self):

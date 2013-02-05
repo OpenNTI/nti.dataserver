@@ -25,11 +25,11 @@ from nti.ntiids import ntiids
 import nti.dataserver.meeting_container_storage as mcs
 from zope.annotation import interfaces as ant_interfaces
 
-from mock_dataserver import WithMockDS, ConfiguringTestBase
+from mock_dataserver import WithMockDS, SharedConfiguringTestBase
 import mock_dataserver
 
 
-class TestMeetingContainer(ConfiguringTestBase):
+class TestMeetingContainer(SharedConfiguringTestBase):
 	occupant_names = ()
 	ID_FL1 = ntiids.make_ntiid( provider='foo@bar', nttype=ntiids.TYPE_MEETINGROOM_GROUP, specific='fl1' )
 
@@ -81,7 +81,7 @@ class MockMeeting(object):
 	occupant_names = ()
 
 
-class TestFriendsListAdaptor( ConfiguringTestBase ):
+class TestFriendsListAdaptor( SharedConfiguringTestBase ):
 	occupant_names = ()
 	@WithMockDS
 	def test_create_and_empty( self ):
@@ -168,7 +168,7 @@ class TestFriendsListAdaptor( ConfiguringTestBase ):
 
 
 
-class TestClassSectionAdapter( ConfiguringTestBase ):
+class TestClassSectionAdapter( SharedConfiguringTestBase ):
 	occupant_names = ()
 	@WithMockDS
 	def test_create_and_empty( self ):
@@ -268,11 +268,3 @@ class TestClassSectionAdapter( ConfiguringTestBase ):
 
 		assert_that( adapt.enter_active_meeting( None, {'Creator': 'sjohnson' } ), is_( self ) )
 		assert_that( self, has_property( 'added_occupants', True ) )
-
-
-
-if __name__ == '__main__':
-#	import logging
-#	logging.basicConfig()
-#	logging.getLogger( 'nti.dataserver.chat' ).setLevel( logging.DEBUG )
-	unittest.main(verbosity=3)
