@@ -53,7 +53,7 @@ def test_session_cannot_change_owner():
 		s.owner = 'me'
 		# Must be assigned at creation time
 
-class TestSessionService(mock_dataserver.ConfiguringTestBase):
+class TestSessionService(mock_dataserver.SharedConfiguringTestBase):
 
 	def setUp(self):
 		super(TestSessionService,self).setUp()

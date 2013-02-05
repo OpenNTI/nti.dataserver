@@ -21,7 +21,7 @@ import persistent
 from zope import component
 
 
-class TestDataserver( mock_dataserver.ConfiguringTestBase ):
+class TestDataserver( mock_dataserver.SharedConfiguringTestBase ):
 
 	@mock_dataserver.WithMockDS
 	def test_run_job_in_site(self):
