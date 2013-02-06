@@ -4,6 +4,7 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import time
 import unittest
 
 import zope.intid
@@ -81,6 +82,33 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 		purchase_id = u'tag:nextthought.com,2011-10:system-OID-0x06cdce28af3dc253:0000000073:XVq3tFG7T82'
 		pa = purchase_history.get_purchase_attempt(purchase_id, user)
 		assert_that(pa, is_(None))
+		
+	@WithMockDSTrans
+	def test_purchase_history(self):
+		now = time.time()
+		t50 = 0
+		user = self._create_user()
+		hist = store_interfaces.IPurchaseHistory(user, None)
+		for i in range(0, 100):
+			items = (str(i),)
+			if i == 50:
+				t50 = time.time()
+			pa = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor)
+			hist.add_purchase(pa)
+		assert_that(hist, has_length(100))
+		
+		lst = list(hist.get_purchase_history())
+		assert_that(lst, has_length(100))
+		
+		lst = list(hist.get_purchase_history(end_time=now))
+		assert_that(lst, has_length(0))
+		
+		lst = list(hist.get_purchase_history(start_time=now))
+		assert_that(lst, has_length(100))
+		
+		lst = list(hist.get_purchase_history(start_time=now, end_time=t50))
+		assert_that(lst, has_length(50))
+		
 		
 if __name__ == '__main__':
 	unittest.main()

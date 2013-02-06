@@ -37,7 +37,7 @@ class StripePayment(object):
 		amount = request.matchdict.get('amount', None)
 		currency = request.matchdict.get('currency', 'USD')
 		description = request.matchdict.get('description', None)
-		description = description or '%s payment for "%r"' % (username, items)
+		description = description or "%s's payment for '%r'" % (username, items)
 	
 		purchase = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor, description=description)
 		purchase_id = purchase_history.register_purchase_attempt(username, purchase)
