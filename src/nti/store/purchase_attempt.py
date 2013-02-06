@@ -63,9 +63,12 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		result = getattr(self.__parent__, 'user', None)
 		return result
 	
+	def __str__( self ):
+		return "%s,%s" % (self.amount, self.items)
+	
 	def __repr__( self ):
 		d = datetime.fromtimestamp(self.start_time)
-		return "%s(%s,%s,%s)" % (self.__class__, self.state, d, self.items)
+		return "%s(%s,%s,%s)" % (self.__class__, d, self.amount, self.items)
 	
 	def __eq__( self, other ):
 		return self is other or (isinstance(other, PurchaseAttempt) 
