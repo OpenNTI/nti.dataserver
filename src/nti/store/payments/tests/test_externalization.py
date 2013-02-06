@@ -15,7 +15,7 @@ from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
 
-from nti.store import purchase
+from nti.store import purchase_attempt
 from nti.store import interfaces as store_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -39,7 +39,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		user = self._create_user()		
 		hist = store_interfaces.IPurchaseHistory(user, None)
 		
-		pa = purchase.create_purchase_attempt('xyz', self.processor)
+		pa = purchase_attempt.create_purchase_attempt(amount=100, items='xyz', processor=self.processor)
 		hist.add_purchase(pa)
 		
 		ext = to_external_object(pa)
