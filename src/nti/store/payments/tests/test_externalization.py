@@ -25,7 +25,7 @@ from nti.store.tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, is_not, has_entry)	
 	
-class TestStoreExternal(ConfiguringTestBase):
+class TestPaymentsExternal(ConfiguringTestBase):
 		
 	processor = 'stripe'
 	
@@ -39,7 +39,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		user = self._create_user()		
 		hist = store_interfaces.IPurchaseHistory(user, None)
 		
-		pa = purchase_attempt.create_purchase_attempt(amount=100, items='xyz', processor=self.processor)
+		pa = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor)
 		hist.add_purchase(pa)
 		
 		ext = to_external_object(pa)

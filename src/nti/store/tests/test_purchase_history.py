@@ -36,7 +36,7 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 		hist = store_interfaces.IPurchaseHistory(user, None)
 		assert_that(hist, is_not(None))
 
-		pa_1 = purchase_attempt.create_purchase_attempt(amount=100, items='xyz', processor=self.processor)
+		pa_1 = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor)
 		hist.add_purchase(pa_1)
 		assert_that(hist, has_length(1))
 
@@ -45,7 +45,7 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 		intids = component.queryUtility( zope.intid.IIntIds )
 		assert_that(intids.queryId(pa_1), is_not(None))
 
-		pa_2 = purchase_attempt.create_purchase_attempt(amount=200, items='zky', processor=self.processor)
+		pa_2 = purchase_attempt.create_purchase_attempt(items='zky', processor=self.processor)
 		hist.add_purchase(pa_2)
 		assert_that(hist, has_length(2))
 

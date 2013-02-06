@@ -27,11 +27,10 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	Description = None
 	ErrorMessage = None
 	
-	def __init__(self, items, processor, state, amount, description=None, start_time=None, end_time=None,
+	def __init__(self, items, processor, state, description=None, start_time=None, end_time=None,
 				 error_code=None, error_message=None, synced=False):
 		
 		self.State = state
-		self.Amount = amount
 		self.Processor = processor
 		self.StartTime = start_time if start_time else time.time()
 		self.Items = frozenset([items]) if isinstance(items, six.string_types) else items			
@@ -48,7 +47,6 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	
 	state = alias('State')
 	items = alias('Items')
-	amount = alias('Amount')
 	synced = alias('Synced')
 	processor = alias('Processor')
 	start_time = alias('StartTime')
@@ -64,18 +62,12 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		return result
 	
 	def __str__( self ):
-		return "%s,%s" % (self.amount, self.items)
+		return "%s,%s" % (self.items, self.state)
 	
 	def __repr__( self ):
 		d = datetime.fromtimestamp(self.start_time)
-		return "%s(%s,%s,%s)" % (self.__class__, d, self.amount, self.items)
+		return "%s(%s,%s,%s)" % (self.__class__, self.processor, d, self.items)
 	
-	def __eq__( self, other ):
-		return self is other or (isinstance(other, PurchaseAttempt) 
-								 and self.Processor == other.Processor 
-								 and self.StartTime == other.StartTime
-								 and self.Items == other.Items)
-
 	def __hash__( self ):
 		xhash = 47
 		xhash ^= hash(self.Processor)
@@ -88,6 +80,9 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		
 	def has_succeeded(self):
 		return self.State == store_interfaces.PA_STATE_SUCCESSFUL
+	
+	def is_unknown(self):
+		return self.State == store_interfaces.PA_STATE_UNKNOWN
 	
 	def is_pending(self):
 		return self.State in (store_interfaces.PA_STATE_STARTED, store_interfaces.PA_STATE_PENDING)
@@ -110,10 +105,9 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	def is_synced(self):
 		return self.Synced
 	
-def create_purchase_attempt(items, amount, processor, state=None, description=None, start_time=None):
+def create_purchase_attempt(items, processor, state=None, description=None, start_time=None):
 	state = state or store_interfaces.PA_STATE_UNKNOWN
 	items = frozenset() if not items else items	
 	items = frozenset([items]) if isinstance(items, six.string_types) else frozenset(items)	
-	return PurchaseAttempt(	amount=float("%.2f" % amount), items=items, processor=processor, description=description,
-							state=state, start_time=start_time)
+	return PurchaseAttempt(items=items, processor=processor, description=description, state=state, start_time=start_time)
 

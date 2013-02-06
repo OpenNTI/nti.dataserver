@@ -1,6 +1,5 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
-import time
 import struct
 import BTrees
 
@@ -79,16 +78,19 @@ class _PurchaseHistory(Persistent):
 	def get_purchase_state(self, pid):
 		p = self.get_purchase(pid)
 		return p.State if p else None
-	
-	def __contains__(self, item):
-		return False
-	
-	def __iter__(self):
-		return iter(self.time_map.values())
+
+	def get_pending_purchase_for(self, items):
+		for p in self.time_map.values():
+			if p.items == items and (p.is_pending() or p.is_unknown()):
+				return p
+		return None
 	
 	def values(self):
 		for p in self.time_map.values():
 			yield p
+	
+	def __iter__(self):
+		return iter(self.time_map.values())
 	
 	def __len__(self):
 		return len(self.purchases)
@@ -100,15 +102,17 @@ def _PurchaseHistoryFactory(user):
 	result = an_factory(_PurchaseHistory)(user)
 	return result
 
-def _trx_runner(f, retries=5, sleep=0.1):
-	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
-	trxrunner(f, retries=retries, sleep=sleep)
-	
 def get_purchase_attempt(purchase_id, user):
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	hist = store_interfaces.IPurchaseHistory(user)
 	result = hist.get_purchase(purchase_id)
 	result = None if result is None or result.creator != user else result
+	return result
+
+def get_pending_purchase_for(user, items):
+	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	hist = store_interfaces.IPurchaseHistory(user)
+	result = hist.get_pending_purchase_for(items)
 	return result
 
 def register_purchase_attempt(username, purchase):
@@ -119,57 +123,6 @@ def register_purchase_attempt(username, purchase):
 		hist = store_interfaces.IPurchaseHistory(user)
 		hist.register_purchase(purchase)
 		result.append(purchase.id)
-	_trx_runner(func) 
+	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func) 
 	return result[0]
-	
-@component.adapter(store_interfaces.IPurchaseAttemptStarted)
-def _purchase_attempt_started( event ):
-	def func():
-		purchase = get_purchase_attempt(event.purchase_id, event.username)
-		purchase.updateLastMod()
-		purchase.State = store_interfaces.PA_STATE_STARTED
-		logger.info('%s started %s' % (event.username, purchase))
-	_trx_runner(func)
-	
-@component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
-def _purchase_attempt_successful( event ):
-	def func():
-		purchase = get_purchase_attempt(event.purchase_id, event.username)
-		purchase.State = store_interfaces.PA_STATE_SUCCESSFUL
-		purchase.EndTime = time.time()
-		purchase.updateLastMod()
-		logger.info('%s completed successfully' % (purchase))
-	_trx_runner(func)
-
-@component.adapter(store_interfaces.IPurchaseAttemptRefunded)
-def _purchase_attempt_refunded( event ):
-	def func():
-		purchase = get_purchase_attempt(event.purchase_id, event.username)
-		purchase.State = store_interfaces.PA_STATE_REFUNDED
-		purchase.EndTime = time.time()
-		purchase.updateLastMod()
-		logger.info('%s has been refunded' % (purchase))
-	_trx_runner(func)
-	
-@component.adapter(store_interfaces.IPurchaseAttemptFailed)
-def _purchase_attempt_failed( event ):
-	def func():
-		purchase = get_purchase_attempt(event.purchase_id, event.username)
-		purchase.updateLastMod()
-		purchase.EndTime = time.time()
-		purchase.State = store_interfaces.PA_STATE_FAILED
-		if event.error_code:
-			purchase.ErrorCode = event.error_code
-		if event.error_message:
-			purchase.ErrorMessage = event.error_message
-		logger.info('%s failed. %s' % (purchase, event.error_message))
-	_trx_runner(func)
-
-@component.adapter(store_interfaces.IPurchaseAttemptSynced)
-def _purchase_attempt_synced( event ):
-	def func():
-		purchase = get_purchase_attempt(event.purchase_id, event.username)
-		purchase.Synced = True
-		logger.info('%s has been synched' % (purchase))
-	_trx_runner(func)
 
