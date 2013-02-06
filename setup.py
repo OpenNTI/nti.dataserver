@@ -126,7 +126,7 @@ setup(
 		'python-memcached >= 1.48', # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
-		'boto >= 2.7.0', # amazon
+		'boto >= 2.8.0', # amazon
 		'brownie >= 0.5.1', # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
@@ -204,7 +204,7 @@ setup(
 		'simplejson >= 3.0.7',
 		'six >= 1.2.0',
 		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
-		'stripe >= 1.7.8', # stripe payments
+		'stripe >= 1.7.9', # stripe payments
 		#'slimit',
 		'supervisor >= 3.0b1',
 		'transaction >= 1.4.0',
