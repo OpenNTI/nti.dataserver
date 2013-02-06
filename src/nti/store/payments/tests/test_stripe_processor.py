@@ -30,20 +30,21 @@ from nti.store.tests import ConfiguringTestBase
 from zope.component import eventtesting
 from hamcrest import (assert_that, is_, is_not, has_length)
 
-@unittest.SkipTest
 class TestStripeProcessor(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
+		super(TestStripeProcessor,cls).setUpClass()
 		cls.api_key = stripe.api_key
 		stripe.api_key = u'sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp'
 
 	def setUp( self ):
-		super(ConfiguringTestBase,self).setUp()
+		super(TestStripeProcessor,self).setUp()
 		self.manager = component.getUtility(store_interfaces.IPaymentProcessor, name='stripe')
 
 	@classmethod
 	def tearDownClass(cls):
+		super(TestStripeProcessor,cls).tearDownClass()
 		stripe.api_key = cls.api_key
 
 	def _create_user(self, username='nt@nti.com', password='temp001', **kwargs):
