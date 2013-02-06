@@ -7,8 +7,8 @@ from __future__ import print_function, unicode_literals
 
 
 
-from nti.tests import ConfiguringTestBase
-from nti.tests import implements, provides
+from nti.tests import SharedConfiguringTestBase
+from nti.tests import implements, verifiably_provides
 
 import nti.contentfragments
 from nti.contentfragments import interfaces
@@ -30,7 +30,7 @@ def _tex_assert( val, answer ):
 	assert_that( _tex_convert( val ), is_(answer) )
 
 
-class TestLatexTransforms(ConfiguringTestBase):
+class TestLatexTransforms(SharedConfiguringTestBase):
 
 	set_up_packages = (nti.contentfragments,)
 
@@ -39,7 +39,7 @@ class TestLatexTransforms(ConfiguringTestBase):
 
 	def test_provides(self):
 		assert_that( contentfragments.PlainTextToLatexFragmentConverter, implements(interfaces.ILatexContentFragment) )
-		assert_that( contentfragments.PlainTextToLatexFragmentConverter('foo'), provides(interfaces.ILatexContentFragment) )
+		assert_that( contentfragments.PlainTextToLatexFragmentConverter('foo'), verifiably_provides(interfaces.ILatexContentFragment) )
 
 	def test_trivial_escapes(self):
 		assert_that( self._convert( '$' ), is_( '\\$' ) )

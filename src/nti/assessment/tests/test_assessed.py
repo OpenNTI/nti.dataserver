@@ -8,6 +8,7 @@ from hamcrest import assert_that, has_entry, is_, has_property, contains
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_length
+from unittest import TestCase
 from nti.tests import ConfiguringTestBase, is_true, is_false
 from nti.tests import validly_provides, verifiably_provides
 from nti.externalization.tests import externalizes
@@ -33,8 +34,14 @@ from nti.assessment.question import QQuestion, QQuestionSet
 
 #pylint: disable=R0904
 
-class TestAssessedPart(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+
+# nose module-level setup
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.assessment,) )
+tearDownModule = nti.tests.module_teardown
+
+
+class TestAssessedPart(TestCase):
+
 
 	def test_externalizes(self):
 		assert_that( assessed.QAssessedPart(), verifiably_provides( interfaces.IQAssessedPart ) )
@@ -50,8 +57,8 @@ class TestAssessedPart(ConfiguringTestBase):
 		assert_that( part.submittedResponse, is_( response.QTextResponse( "The text response" ) ) )
 		assert_that( part.submittedResponse, validly_provides( interfaces.IQTextResponse ) )
 
-class TestAssessedQuestion(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+class TestAssessedQuestion(TestCase):
+
 
 	def test_externalizes(self):
 		assert_that( assessed.QAssessedQuestion(), verifiably_provides( interfaces.IQAssessedQuestion ) )
@@ -71,8 +78,7 @@ class TestAssessedQuestion(ConfiguringTestBase):
 		assert_that( result, has_property( 'questionId', 1 ) )
 		assert_that( result, has_property( 'parts', contains( assessed.QAssessedPart( submittedResponse='correct', assessedValue=1.0 ) ) ) )
 
-class TestAssessedQuestionSet(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+class TestAssessedQuestionSet(TestCase):
 
 	def test_externalizes(self):
 		assert_that( assessed.QAssessedQuestionSet(), verifiably_provides( interfaces.IQAssessedQuestionSet ) )

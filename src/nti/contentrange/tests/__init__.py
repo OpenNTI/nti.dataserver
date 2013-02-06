@@ -10,5 +10,5 @@ import nti.tests
 
 import nti.contentrange
 
-class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
+class ConfiguringTestBase(nti.tests.SharedConfiguringTestBase):
 	set_up_packages = (nti.contentrange,)

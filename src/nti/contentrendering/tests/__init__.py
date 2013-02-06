@@ -26,7 +26,7 @@ from plasTeX.TeX import TeX
 
 import nti.contentrendering
 from nti.contentrendering import nti_render
-from nti.tests import ConfiguringTestBase as _ConfiguringTestBase
+from nti.tests import SharedConfiguringTestBase as _ConfiguringTestBase
 
 class ConfiguringTestBase(_ConfiguringTestBase):
 	set_up_packages = (nti.contentrendering,)

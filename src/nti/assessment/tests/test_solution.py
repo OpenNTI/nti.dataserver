@@ -8,7 +8,8 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, is_, is_not
 from hamcrest import has_entry
-from nti.tests import ConfiguringTestBase, is_true, is_false
+from unittest import TestCase
+from nti.tests import is_true, is_false
 
 from nti.tests import verifiably_provides
 
@@ -25,9 +26,15 @@ from . import grades_wrong
 
 grades_correct = grades_right
 
-class TestConvert(ConfiguringTestBase):
 
-	set_up_packages = (nti.assessment,)
+# nose module-level setup
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.assessment,) )
+tearDownModule = nti.tests.module_teardown
+
+
+
+class TestConvert(TestCase):
+
 
 	def test_not_isolution(self):
 		assert_that( interfaces.convert_response_for_solution( self, self ), is_( self ) )
@@ -40,7 +47,7 @@ class TestConvert(ConfiguringTestBase):
 			interface.implements(interfaces.IQMathSolution)
 
 		assert_that( interfaces.convert_response_for_solution( Soln(), self ), is_( self ) )
-		assert_that( interfaces.convert_response_for_solution( Soln(), self.set_up_packages ), is_( self.set_up_packages ) )
+
 
 	def test_convert_from_string(self):
 		class Soln(object):
@@ -54,8 +61,8 @@ class TestConvert(ConfiguringTestBase):
 
 		assert_that( interfaces.convert_response_for_solution( Soln(), 42 ), is_( response.QTextResponse ) )
 
-class TestNumericMathSolution(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+class TestNumericMathSolution(TestCase):
+
 	def test_grade_numbers(self):
 		assert_that( solution.QNumericMathSolution( 1 ), verifiably_provides( interfaces.IQNumericMathSolution ) )
 
@@ -123,8 +130,8 @@ class TestNumericMathSolution(ConfiguringTestBase):
 		assert soln != soln4 # hit the ne operator
 
 
-class TestFreeResponseSolution(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+class TestFreeResponseSolution(TestCase):
+
 
 	def test_grade_simple_string(self):
 		assert_that( solution.QFreeResponseSolution( "text" ), grades_correct( "text" ) )
@@ -141,8 +148,8 @@ class TestFreeResponseSolution(ConfiguringTestBase):
 		assert_that( solution.QFreeResponseSolution( solution_text ),
 					grades_correct( response_text ) )
 
-class TestMultipleChoiceMultipleAnswerSolution(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+class TestMultipleChoiceMultipleAnswerSolution(TestCase):
+
 	def test_multiplechoicemultipleanswersolution(self):
 		assert_that( solution.QMultipleChoiceMultipleAnswerSolution( [ 1 ] ), grades_correct( [ 1 ] ) )
 		assert_that( solution.QMultipleChoiceMultipleAnswerSolution( [ 1, 2 ] ), grades_correct( [ 1, 2 ] ) )

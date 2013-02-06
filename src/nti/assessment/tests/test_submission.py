@@ -7,7 +7,8 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that, has_entry, is_, has_property, contains, same_instance
 from hamcrest import has_key
 from hamcrest import not_none
-from nti.tests import ConfiguringTestBase, is_true, is_false
+from unittest import TestCase
+from nti.tests import is_true, is_false
 from nti.tests import verifiably_provides
 from nti.externalization.tests import externalizes
 from nose.tools import assert_raises
@@ -27,9 +28,12 @@ from nti.assessment import interfaces
 from nti.assessment import submission
 
 
+# nose module-level setup
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.assessment,) )
+tearDownModule = nti.tests.module_teardown
 
-class TestQuestionSubmission(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+
+class TestQuestionSubmission(TestCase):
 
 	def test_externalizes(self):
 		assert_that( submission.QuestionSubmission(), verifiably_provides( interfaces.IQuestionSubmission ) )
@@ -57,8 +61,7 @@ class TestQuestionSubmission(ConfiguringTestBase):
 		update_from_external_object( submiss, {'questionId': 'foo', "parts": ["The text response"]}, require_updater=True )
 		assert_that( submiss, has_property( "parts", contains( "The text response" ) ) )
 
-class TestQuestionSetSubmission(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+class TestQuestionSetSubmission(TestCase):
 
 	def test_externalizes(self):
 		assert_that( submission.QuestionSetSubmission(), verifiably_provides( interfaces.IQuestionSetSubmission ) )

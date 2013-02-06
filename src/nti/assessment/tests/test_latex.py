@@ -2,7 +2,7 @@
 from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that
-from nti.tests import ConfiguringTestBase, is_true, is_false
+from nti.tests import SharedConfiguringTestBase, is_true, is_false
 from nti.tests import verifiably_provides
 from zope import interface
 from zope import component
@@ -14,7 +14,7 @@ from nti.assessment._latexplastexdomcompare import _mathChildIsEqual as mce
 
 from .test_solution import grades_right, grades_wrong
 
-class TestLatex(ConfiguringTestBase):
+class TestLatex(SharedConfiguringTestBase):
 
 	set_up_packages = (nti.assessment,)
 
