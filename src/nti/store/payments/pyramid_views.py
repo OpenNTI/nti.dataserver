@@ -33,8 +33,7 @@ class StripePayment(object):
 		description = description or '%s payment for "%r"' % (username, items)
 		
 		processor = 'stripe'
-		purchase = purchase_attempt.create_purchase_attempt(amount=amount, items=items, processor=processor, 
-															description=description)
+		purchase = purchase_attempt.create_purchase_attempt(items=items, processor=processor, description=description)
 		purchase_id = purchase_history.register_purchase_attempt(username, purchase)
 		
 		def process_pay():

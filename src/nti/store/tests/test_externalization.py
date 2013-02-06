@@ -34,18 +34,16 @@ class TestStoreExternal(ConfiguringTestBase):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
-		pa = purchase_attempt.create_purchase_attempt(amount=100, items='xyz', 
-													  processor=self.processor, description='my charge')
+		pa = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor, description='my charge')
 		hist.add_purchase(pa)
 
 		ext = to_external_object(pa)
 		assert_that(ext,  has_entry('Class', u'PurchaseAttempt'))
 		assert_that(ext,  has_entry('Items', ['xyz']))
-		assert_that(ext,  has_entry('Amount', 100))
 		assert_that(ext,  has_entry('State','Unknown'))
 		assert_that(ext,  has_entry('OID', is_not(None)))
 		assert_that(ext,  has_entry('Last Modified', is_not(None)))
-		assert_that(ext,  has_entry('Processor', 'stripe'))
+		assert_that(ext,  has_entry('Processor', self.processor))
 		assert_that(ext,  has_entry('StartTime', is_not(None)))
 		assert_that(ext,  has_entry('EndTime', is_(None)))
 		assert_that(ext,  has_entry('ErrorMessage', is_(None)))

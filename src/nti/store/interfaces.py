@@ -60,7 +60,6 @@ class IPurchaseAttempt(interface.Interface):
 	
 	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='Purchase state', required=True)
 	
-	Amount = schema.Float(title='Purchase amount', required=True)
 	Items = schema.FrozenSet(value_type=schema.TextLine(title='The item identifier'), title="Items being purchased")
 	Description = schema.TextLine(title='A purchase description', required=False)
 	
@@ -85,6 +84,11 @@ class IPurchaseAttempt(interface.Interface):
 	def has_succeeded():
 		"""
 		return if the purchase has been successful
+		"""
+		
+	def is_unknown():
+		"""
+		return if state of the purchase is unknown
 		"""
 		
 	def is_pending():

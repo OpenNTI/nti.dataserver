@@ -8,11 +8,11 @@
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IPurchaseHistory" />
 	
-	<subscriber handler=".purchase_history._purchase_attempt_started" />
-	<subscriber handler=".purchase_history._purchase_attempt_successful" />
-	<subscriber handler=".purchase_history._purchase_attempt_failed" />
-	<subscriber handler=".purchase_history._purchase_attempt_refunded" />
-	<subscriber handler=".purchase_history._purchase_attempt_synced" />
+	<subscriber handler="._subscribers._purchase_attempt_started" />
+	<subscriber handler="._subscribers._purchase_attempt_successful" />
+	<subscriber handler="._subscribers._purchase_attempt_failed" />
+	<subscriber handler="._subscribers._purchase_attempt_refunded" />
+	<subscriber handler="._subscribers._purchase_attempt_synced" />
 	
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	
