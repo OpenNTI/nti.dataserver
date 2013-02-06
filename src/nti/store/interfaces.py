@@ -6,11 +6,8 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
-from zope import component
 from zope.schema.interfaces import IContextSourceBinder
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
-
-from nti.utils.property import alias
 
 PA_STATE_UNKNOWN = u'Unknown'
 PA_STATE_FAILED = u'Failed'
@@ -41,7 +38,7 @@ class IPaymentProcessor(interface.Interface):
 		:description: purchase description
 		"""
 	
-	def sync_purchase(purchase_id, user=None):
+	def sync_purchase(purchase_id, username):
 		"""
 		Synchronized the purchase data with the payment processor info
 		

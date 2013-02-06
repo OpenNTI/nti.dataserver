@@ -3,6 +3,7 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import time
 import gevent
 
 from zope import component
@@ -37,7 +38,7 @@ class StripePayment(object):
 		
 		def process_pay():
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=processor)
-			manager.process_purchase(username=username, token=token, amount=amount, 
+			manager.process_purchase(username=username, token=token, amount=int(amount*100), 
 									 currency=currency, purchase_id=purchase_id, description=description)
 		
 		gevent.spawn(process_pay)
@@ -55,5 +56,11 @@ class GetPurchaseAttempt(object):
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
 			request.response.status_int = 404
+		elif purchase.is_pending():
+			start_time = purchase.StartTime
+			# more than 90 secs try to sync
+			if time.time() - start_time >= 90 and not purchase.is_synced():
+				manager = component.getUtility(store_interfaces.IPaymentProcessor, name=purchase.Processor)
+				manager.sync_purchase(purchase_id, username)
 		return purchase
 		
