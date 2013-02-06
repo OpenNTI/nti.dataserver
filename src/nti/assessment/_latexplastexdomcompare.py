@@ -15,17 +15,17 @@ from zope.component.interfaces import ComponentLookupError
 
 from nti.assessment import interfaces
 
-def _mathIsEqual(math1, math2):
-	if math1 is None or math2 is None:
+def _mathIsEqual( solution, response):
+	if solution is None or response is None:
 		# We follow the rules for SQL NULL: it's not equal to anything,
 		# even itself
 		return False
-	return _mathChildrenAreEqual(math1.childNodes, math2.childNodes) or \
-		(_all_text_children(math1) and _all_text_children(math2) and _text_content_equal(math1, math2))
+	return _mathChildrenAreEqual(solution.childNodes, response.childNodes) or \
+		(_all_text_children(solution) and _all_text_children(response) and _text_content_equal(solution, response))
 
-def _mathChildrenAreEqual(children1, children2):
-	math1children = _stripEmptyChildren(children1)
-	math2children = _stripEmptyChildren(children2)
+def _mathChildrenAreEqual(solution, response):
+	math1children = _importantChildNodes(solution)
+	math2children = _importantChildNodes(response)
 
 	if len(math1children) != len(math2children):
 		return False
@@ -39,7 +39,7 @@ def _mathChildrenAreEqual(children1, children2):
 def _importantChildNodes( childNodes ):
 	"""
 	Given the child nodes of a node, return a fresh list of those
-	that are important for comparison purposes. Spaces are not considered important
+	that are important for comparison purposes. Spaces are not considered important.
 	"""
 	return [x for x in childNodes if x.nodeType != x.TEXT_NODE or x.textContent.strip()]
 
@@ -133,13 +133,25 @@ def grade( solution, response ):
 		return _grade( solution, response )
 
 	# Units may be required, or optional if the last element is the empty string
-	for unit in solution.allowed_units:
-		if response.value.endswith( unit ):
+	allowed_units = solution.allowed_units
+	if u'\uFF05' in allowed_units:
+		# The full-width percent is how we tend to write percents in source files
+		# we also want to handle how they come in from the browser, in "\%" (https://trello.com/c/4qdjExxV)
+		allowed_units = ('\\%',) + allowed_units
+	# Before doing this, strip off opening and closing latex display math signs, if they were sent,
+	# so that we can check for units
+	# Only do this if *both* were provided
+	response_value = response.value
+	if response_value and response_value.startswith( '$' ) and response_value.endswith( '$' ) and len(response_value) > 2:
+		response_value = response_value[1:-1]
+
+	for unit in allowed_units:
+		if response_value.endswith( unit ):
 			# strip the trailing unit and grade.
 			# This handles unit='cm' and value in ('1.0 cm', '1.0cm')
 			# It also handles unit='', if it comes at the end
-			value = response.value[:-len(unit)] if unit else response.value
-			__traceback_info__ = response.value, unit, value
+			value = response_value[:-len(unit)] if unit else response_value
+			__traceback_info__ = response_value, unit, value
 			return _grade( solution, type(response)( value.strip() ) )
 
 	# If we get here, there was no unit that matched. Therefore, units were required
@@ -159,12 +171,24 @@ class Grader(object):
 			# Hmm. Is there some trailing text we should brush away from the response?
 			# Only try if it's not OpenMath XML (which only comes up in test cases now)
 			# NOTE: We now only do this if "default" handling of units is specified; otherwise,
-			# it would already be handled
-			parts = self.response.value.rsplit( ' ', 1 )
-			if len( parts ) == 2:
-				response = type(self.response)( parts[0] )
+			# it would already be handled.
+			# NOTE: This is legacy code and can and should go away as soon as all
+			# content is annotated with units.
+			def _regrade( value ):
+				response = type(self.response)( value )
 				result = grade( self.solution, response )
 				if result:
 					self.response = response
+				return result
+
+			parts = self.response.value.rsplit( ' ', 1 ) # strip anything after the last space
+			if len( parts ) == 2:
+				result = _regrade( parts[0] )
+			# this percent handling is added after the unit handling, so it is special cased
+			# since this is a legacy code path. https://trello.com/c/4qdjExxV
+			elif self.response.value.endswith( '\\%' ):
+				result = _regrade( self.response.value[:-2] )
+			elif self.response.value.endswith( '\\%$' ) and self.response.value.startswith( '$' ):
+				result = _regrade( self.response.value[1:-3] )
 
 		return result

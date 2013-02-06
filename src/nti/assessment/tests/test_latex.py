@@ -88,13 +88,21 @@ class TestLatex(SharedConfiguringTestBase):
 	def test_simple_grade_accept_trailing_percent(self):
 
 		soln = solution.QLatexSymbolicMathSolution( "$75$" )
+		assert_that( soln, grades_right( soln.value ) )
 
-		rsp = response.QTextResponse( r"$75 \%$" )
+		responses = (r"$75 \%", r"$75\%", r"75 \%", r"75\%")
 
-		grader = component.getMultiAdapter( (None, soln, rsp), interfaces.IQSymbolicMathGrader )
-		assert_that( grader(  ), is_true() )
+		for r in responses:
+			rsp = response.QTextResponse( r )
+			assert_that( soln, grades_right( rsp ) )
 
-		assert_that( soln.grade( soln.value ), is_true() )
+
+		# With units specified with and without space
+		soln.allowed_units = (u'\uff05',) # full-width percent
+		for r in responses:
+			rsp = response.QTextResponse( r )
+			assert_that( soln, grades_right( rsp ) )
+
 
 	def test_grade_empty(self):
 		rsp = response.QTextResponse( "" )
