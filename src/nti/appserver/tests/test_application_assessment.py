@@ -44,7 +44,9 @@ from .test_application import SharedApplicationTestBase, WithSharedApplicationMo
 from .test_application import TestApp
 
 class TestApplicationAssessment(SharedApplicationTestBase):
-	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
+	child_ntiid =  b'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
+
+	question_ntiid = child_ntiid
 
 	@classmethod
 	def _setup_library( self, *args, **kwargs ):
@@ -65,43 +67,63 @@ class TestApplicationAssessment(SharedApplicationTestBase):
 
 
 	@WithSharedApplicationMockDS
-	def test_fetch_assessment_question(self):
+	def test_fetch_assessment_question_by_ntiid(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
 		testapp = TestApp( self.app )
 		# These inherit the same ACLs as the content they came with
-		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid, status=401 )
+		# So, no authentication requires auth
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.question_ntiid, status=401 )
 
-		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid, extra_environ=self._make_extra_environ() )
+		# provide auth, we can get it.
+		# It is the default return if we specify no content type
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.question_ntiid, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'Class', 'Question' ) )
 
 
-		# And if we ask for pageinfo, we can resolve the page it belonged on
+		# and if we specify plain json
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
+						   headers={'Accept': b'application/json'},
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'Class', 'Question' ) )
+
+
+	@WithSharedApplicationMockDS
+	def test_fetch_assessment_question_by_ntiid_accept_pageinfo(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		testapp = TestApp( self.app )
+
+		# If we fetch the URL of a question, but specif that we accept PageInfo,
+		# that's what we get back (after a redirect)
 		page_info_mt = nti_mimetype_with_class( 'pageinfo' )
 		page_info_mt_json = page_info_mt + '+json'
 
-		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.question_ntiid,
 						   headers={'Accept': str(page_info_mt_json)},
 						   extra_environ=self._make_extra_environ() )
-		assert_that( res.status_int, is_( 303 ) ) # redirect
+		assert_that( res.status_int, is_( 303 ) ) # redirect to the containing page
 
-		res = testapp.get( res.location, headers={'Accept': str(page_info_mt_json)}, extra_environ=self._make_extra_environ() )
+		res = testapp.get( res.location,
+						   headers={'Accept': str(page_info_mt_json)},
+						   extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'Class', 'PageInfo' ) )
+
+
+	@WithSharedApplicationMockDS
+	def test_fetch_assessment_question_by_ntiid_accept_link(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+		testapp = TestApp( self.app )
 
 		# Asking for a link isn't supported
 		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
 						   headers={'Accept': b'application/vnd.nextthought.link+json'},
 						   extra_environ=self._make_extra_environ(),
 						   status=400 )
-
-
-
-		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
-						   headers={'Accept': b'application/json'},
-						   extra_environ=self._make_extra_environ() )
-		assert_that( res.status_int, is_( 200 ) )
 
 
 	@WithSharedApplicationMockDS
