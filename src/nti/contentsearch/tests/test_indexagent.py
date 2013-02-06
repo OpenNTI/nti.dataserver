@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import unittest
 
 from nti.dataserver.contenttypes import Note
@@ -40,7 +53,7 @@ class TestIndexAgent(ConfiguringTestBase):
 		note.creator = self.username
 		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
 		return note
-	
+
 	@WithMockDSTrans
 	def test_create(self):
 		self.note_proc = self._create_note(u'Kenpachi Zaraki')
@@ -61,15 +74,15 @@ class TestIndexAgent(ConfiguringTestBase):
 		_process_event(self, self.username, Change.DELETED, 'Note', self.note_proc)
 		if self.exception:
 			self.fail(str(self.exception))
-			
+
 	@decorator
 	def _check_call(self, username, type_name, data):
 		assert_that('Note', is_(type_name))
 		assert_that(self.note_proc, is_(data))
 		assert_that(username, is_(self.username))
-		
+
 	# indexmanager
-	
+
 	@decorator
 	def index_user_content(self, username, type_name=None, data=None):
 		self._check_call(username, type_name, data)
@@ -81,6 +94,3 @@ class TestIndexAgent(ConfiguringTestBase):
 	@decorator
 	def delete_user_content(self, username, type_name=None, data=None):
 		self._check_call(username, type_name, data)
-
-if __name__ == '__main__':
-	unittest.main()

@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import re
 import os
 import glob
@@ -6,20 +19,21 @@ import textwrap
 import unittest
 
 from nti.contentsearch.spambayes.tokenizer import tokenize
-from nti.contentsearch.spambayes.classifier import Classifier 
+from nti.contentsearch.spambayes.classifier import Classifier
 
 from nti.contentsearch.spambayes.tests import ConfiguringTestBase
 
 class TestHammer(ConfiguringTestBase):
 
 	@classmethod
-	def setUpClass(cls):	
+	def setUpClass(cls):
+		super(TestHammer,cls).setUpClass()
 		path = os.path.dirname(__file__)
 		cls.ham = []
 		for name in glob.glob(os.path.join(path, "_ham*.txt")):
 			with open(name, "r") as f:
 				cls.ham.append(f.read())
-				
+
 		cls.spam = []
 		for name in glob.glob(os.path.join(path, "_spam*.txt")):
 			with open(name, "r") as f:
@@ -32,7 +46,7 @@ class TestHammer(ConfiguringTestBase):
 	def train(self, text, is_spam):
 		tokens = tokenize(text)
 		self.bayes.learn(tokens, is_spam)
-	
+
 	def classify(self, text):
 		tokens = tokenize(text)
 		return self.bayes.spamprob(tokens)
@@ -85,13 +99,10 @@ class TestHammer(ConfiguringTestBase):
 			is_spam = random.choice([True, False])
 			msg = self.make_message(is_spam)
 			prob = self.classify(msg)
-		
-			if i < 10 or i % 100 == 0:
-				print "%6.6d: %d, %.4f" % (i, is_spam, prob)
-				
+
+			#if i < 10 or i % 100 == 0:
+			#	print "%6.6d: %d, %.4f" % (i, is_spam, prob)
+
 			if i == length-1:
 				t = tokenize(msg)
-				print "arc prob %.4f" % self.bayes.arc_spamprob(t)
-
-if __name__ == '__main__':
-	unittest.main()
+				#print "arc prob %.4f" % self.bayes.arc_spamprob(t)

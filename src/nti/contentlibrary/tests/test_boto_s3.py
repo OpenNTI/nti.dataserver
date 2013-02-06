@@ -30,9 +30,9 @@ from cStringIO import StringIO
 import gzip
 import boto.exception
 
-from nti.tests import ConfiguringTestBase
+from nti.tests import SharedConfiguringTestBase
 
-class TestBotoS3(ConfiguringTestBase):
+class TestBotoS3(SharedConfiguringTestBase):
 	set_up_packages = ('nti.externalization', 'nti.contentlibrary')
 
 	def test_does_exist_cached(self):

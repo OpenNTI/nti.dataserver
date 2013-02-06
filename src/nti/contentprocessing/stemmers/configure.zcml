@@ -1,14 +1,14 @@
 <!-- -*- mode: nxml -*- -->
 <configure xmlns="http://namespaces.zope.org/zope"
-	xmlns:ext="http://nextthought.com/ntp/ext"
-	xmlns:zcml="http://namespaces.zope.org/zcml"
-	i18n_domain="zope">
-	
+		   xmlns:ext="http://nextthought.com/ntp/ext"
+		   xmlns:zcml="http://namespaces.zope.org/zcml"
+		   i18n_domain="zope">
+
 	<include package="zope.component" />
 
 	<utility factory="._nltk._PorterStemmer" provides=".interfaces.IStemmer"/>
 	<utility factory="._nltk._PorterStemmer" provides=".interfaces.IStemmer" name="porter" />
-	
+
 	<utility factory="._zopyx.ZopyYXStemmer" name="zopyx" />
-	
+
 </configure>

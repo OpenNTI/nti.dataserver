@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import time
 import shutil
 import tempfile
@@ -24,14 +37,15 @@ from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, is_, 
 _whoosh_index.compute_ngrams = True
 
 class TestWhooshBookIndexManager(ConfiguringTestBase):
-			
+
 	@classmethod
 	def setUpClass(cls):
+		super(TestWhooshBookIndexManager,cls).setUpClass()
 		cls.now = time.time()
 		cls.idx_dir = tempfile.mkdtemp(dir="/tmp")
 		create_directory_index('bleach', create_book_schema(), cls.idx_dir)
-		cls.bim = WhooshBookIndexManager('bleach', indexdir=cls.idx_dir) 
-		
+		cls.bim = WhooshBookIndexManager('bleach', indexdir=cls.idx_dir)
+
 		idx = cls.bim.bookidx
 		writer = idx.writer()
 		for k, x in enumerate(zanpakuto_commands):
@@ -42,38 +56,39 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 								related= u'',
 								last_modified=datetime.fromtimestamp(cls.now))
 		writer.commit()
-			
+
 	@classmethod
 	def tearDownClass(cls):
 		cls.bim.close()
 		shutil.rmtree(cls.idx_dir, True)
-		
-	def test_search(self):		
+		super(TestWhooshBookIndexManager,cls).tearDownClass()
+
+	def test_search(self):
 		hits = toExternalObject(self.bim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
 		assert_that(hits, has_key(ITEMS))
-		
+
 		items = hits[ITEMS]
 		assert_that(items, has_length(1))
-		
+
 		item = items[0]
 		assert_that(item, has_entry(CLASS, HIT))
 		assert_that(item, has_entry(NTIID, is_not(None)))
 		assert_that(item, has_entry(SCORE, is_not(None)))
 		assert_that(item, has_entry(CONTAINER_ID,  is_not(None)))
 		assert_that(item, has_entry(SNIPPET, 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
-		
-	def test_longword_search(self):		
+
+	def test_longword_search(self):
 		hits = toExternalObject(self.bim.search("multiplication"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'multiplication'))
 		assert_that(hits, has_key(ITEMS))
-		
+
 		items = hits[ITEMS]
 		item = items[0]
 		assert_that(item, has_entry(SNIPPET, 'Multiplication and subtraction of fire and ice, show your might'))
-		
+
 	def test_search_start(self):
 		hits = toExternalObject(self.bim.search("ra*"))
 		assert_that(hits, has_entry(HIT_COUNT, 3))
@@ -83,27 +98,27 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		assert_that(items, has_length(3))
 		for item in items:
 			assert_that(item, has_entry(SCORE, is_(1.0)))
-		
+
 	def test_partial_search_start(self):
 		hits = toExternalObject(self.bim.search("bl"))
 		items = hits[ITEMS]
 		assert_that(items, has_length(2))
 		for item in items:
 			assert_that(item, has_entry(SCORE, is_not(None)))
-			
+
 	def test_suggest(self):
 		hits = toExternalObject(self.bim.suggest("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 4))
 		assert_that(hits, has_entry(QUERY, 'ra'))
 		assert_that(hits, has_key(ITEMS))
-		
+
 		items = hits[ITEMS]
 		assert_that(items, has_length(4))
 		assert_that(items, has_item('rage'))
 		assert_that(items, has_item('rankle'))
 		assert_that(items, has_item('rage'))
 		assert_that(items, has_item('rain'))
-		
+
 	def test_suggest_and_search(self):
 		hits = toExternalObject(self.bim.suggest_and_search("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
@@ -111,6 +126,3 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits[ITEMS], has_length(1))
 		assert_that(hits[SUGGESTIONS], has_length(4))
-		
-if __name__ == '__main__':
-	unittest.main()

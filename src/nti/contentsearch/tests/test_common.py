@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import unittest
 from datetime import datetime
 
@@ -20,6 +33,3 @@ class TestCommon(ConfiguringTestBase):
 		s = '1321391468.411328'
 		assert_that(get_datetime(f), is_(get_datetime(s)))
 		assert_that(datetime.now(), less_than_or_equal_to(get_datetime()))
-		
-if __name__ == '__main__':
-	unittest.main()
