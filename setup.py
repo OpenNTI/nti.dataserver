@@ -292,16 +292,18 @@ setup(
 		],
 	extras_require = {
 		'test': [
+			'WebTest >= 1.4.3',
 			'coverage >= 3.6', # Test coverage
+			'fakeredis >= 0.3.0',
+			'fudge',
 			'nose >= 1.2.1',
-			'zope.testing >= 4.1.1',
-			'zc.buildout >= 1.6.3, < 2.0',
+			'nose-timer >= 0.1.2',
 			'nose-progressive >= 1.4',
 			'pyhamcrest >= 1.7.1',
-			'WebTest >= 1.4.3',
-			'fakeredis >= 0.3.0',
 			'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
-			'fudge'],
+			'zc.buildout >= 1.6.3, < 2.0',
+			'zope.testing >= 4.1.1',
+			],
 		'tools': [
 			# WSGI middleware for profiling. Defaults to storing
 			# data in a sqlite file. Works across multiple gunicorn workers, does
@@ -309,28 +311,28 @@ setup(
 			# Depends on the system graphviz installation; an alternative is repoze.profile which has
 			# fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		 	#'linesman >= 0.2.3', # Conflicts with Pillow (wants PIL). Can be installed manually with --no-deps
-			'pyramid_debugtoolbar >= 1.0.4',
+			#'Pymacs >= 0.25',
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
-			'ipython[notebook] >= 0.13.1', # notebook is web based, pulls in tornado
-			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
-			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
-			'readline >= 6.2.4.1',
-			'httpie == 0.3.1', # 0.3.1 explicitly requires requests < 1.0
-			'logilab_astng >= 0.24.1',
-			'pip-tools >= 0.2.1', # command pip-review, pip-dump
-			'pylint >= 0.26.0',
-			'zodbupdate >= 0.5',
-			'zodbbrowser >= 0.10.4',
-			'sphinx >= 1.1.3', # Narrative docs
-			'sphinxtheme.readability >= 0.0.6',
-			'repoze.sphinx.autointerface >= 0.7.1',
-			'sphinxcontrib-programoutput >= 0.8',
 			'epydoc >= 3.0.1', # auto-api docs
+			'httpie == 0.3.1', # 0.3.1 explicitly requires requests < 1.0
+			'ipython[notebook] >= 0.13.1', # notebook is web based, pulls in tornado
+			'logilab_astng >= 0.24.1',
+			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
+			'pip >= 1.2.1',
+			'pip-tools >= 0.2.1', # command pip-review, pip-dump
+			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
+			'pylint >= 0.26.0',
+			'pyramid_debugtoolbar >= 1.0.4',
+			'readline >= 6.2.4.1',
+			'repoze.sphinx.autointerface >= 0.7.1',
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2', # IDE helper for rope
-			#'Pymacs >= 0.25',
+			'sphinx >= 1.1.3', # Narrative docs
+			'sphinxcontrib-programoutput >= 0.8',
+			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.8.4',
-			'pip >= 1.2.1',
+			'zodbbrowser >= 0.10.4',
+			'zodbupdate >= 0.5',
 			# Monitoring stats and instrumenting code
 			# See above for python-statsd
 			#'graphite-web >= 0.9.10', # web front end. Requires the /opt/graphite directory. Pulls in twisted.
