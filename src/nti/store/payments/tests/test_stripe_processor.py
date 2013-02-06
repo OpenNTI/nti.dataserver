@@ -30,7 +30,6 @@ from nti.store.tests import ConfiguringTestBase
 from zope.component import eventtesting
 from hamcrest import (assert_that, is_, is_not, has_length)
 
-@unittest.SkipTest
 class TestStripeProcessor(ConfiguringTestBase):
 
 	@classmethod
