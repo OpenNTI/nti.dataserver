@@ -13,7 +13,7 @@ import unittest
 
 from nti.dataserver.users import User
 
-from nti.store import purchase
+from nti.store import purchase_attempt
 from nti.store.payments import interfaces as pay_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -43,7 +43,7 @@ class TestStripeAdapters(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_stripe_purchase_adapter(self):
 		items = ('xyz',)
-		pa = purchase.create_purchase_attempt(items, 'stripe')
+		pa = purchase_attempt.create_purchase_attempt(amount=100, items=items, processor='stripe')
 		adapted = pay_interfaces.IStripePurchase(pa)
 		adapted.charge_id = 'charge_id'
 		adapted.token_id = 'token_id'

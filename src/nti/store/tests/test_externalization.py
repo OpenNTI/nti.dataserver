@@ -12,7 +12,7 @@ from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
 
-from nti.store import purchase
+from nti.store import purchase_attempt
 from nti.store import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -34,12 +34,14 @@ class TestStoreExternal(ConfiguringTestBase):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
-		pa = purchase.create_purchase_attempt('xyz', self.processor, description='my charge')
+		pa = purchase_attempt.create_purchase_attempt(amount=100, items='xyz', 
+													  processor=self.processor, description='my charge')
 		hist.add_purchase(pa)
 
 		ext = to_external_object(pa)
 		assert_that(ext,  has_entry('Class', u'PurchaseAttempt'))
 		assert_that(ext,  has_entry('Items', ['xyz']))
+		assert_that(ext,  has_entry('Amount', 100))
 		assert_that(ext,  has_entry('State','Unknown'))
 		assert_that(ext,  has_entry('OID', is_not(None)))
 		assert_that(ext,  has_entry('Last Modified', is_not(None)))

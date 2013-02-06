@@ -10,7 +10,7 @@ from zope import component
 
 from pyramid.security import authenticated_userid
 
-from .. import purchase 
+from .. import purchase_attempt
 from .. import purchase_history
 from .. import interfaces as store_interfaces
 
@@ -33,7 +33,8 @@ class StripePayment(object):
 		description = description or '%s payment for "%r"' % (username, items)
 		
 		processor = 'stripe'
-		purchase = purchase.create_purchase_attempt(username, items, processor, description=description)
+		purchase = purchase_attempt.create_purchase_attempt(amount=amount, items=items, processor=processor, 
+															description=description)
 		purchase_id = purchase_history.register_purchase_attempt(username, purchase)
 		
 		def process_pay():

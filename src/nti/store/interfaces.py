@@ -58,9 +58,10 @@ class IPurchaseAttempt(interface.Interface):
 	
 	Processor = schema.Choice(source=payment_processors, title='purchase processor', required=True)
 	
-	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='purchase state', required=True)
+	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='Purchase state', required=True)
 	
-	Items = schema.FrozenSet(value_type=schema.TextLine(title='the item identifier'), title="Items being purchased")
+	Amount = schema.Float(title='Purchase amount', required=True)
+	Items = schema.FrozenSet(value_type=schema.TextLine(title='The item identifier'), title="Items being purchased")
 	Description = schema.TextLine(title='A purchase description', required=False)
 	
 	StartTime = schema.Float(title='Start time', required=True)

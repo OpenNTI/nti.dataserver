@@ -17,7 +17,7 @@ from zope import component
 
 from nti.dataserver.users import User
 
-from nti.store import purchase
+from nti.store import purchase_attempt
 from nti.store import purchase_history
 from nti.store import interfaces as store_interfaces
 from nti.store.payments import interfaces as pay_interfaces
@@ -83,7 +83,8 @@ class TestStripeProcessor(ConfiguringTestBase):
 		
 		with mock_dataserver.mock_db_trans(ds):
 			items = ('xyz book',)
-			pa = purchase.create_purchase_attempt(items, self.manager.name, description="my charge")
+			pa = purchase_attempt.create_purchase_attempt(amount=amount, items=items, processor=self.manager.name, 
+												  description="my charge")
 			purchase_id = purchase_history.register_purchase_attempt(username, pa)
 			assert_that(purchase_id, is_not(None))
 				
@@ -191,7 +192,8 @@ class TestStripeProcessor(ConfiguringTestBase):
 			
 		with mock_dataserver.mock_db_trans(ds):
 			items = ('xyz book',)
-			pa = purchase.create_purchase_attempt(items, self.manager.name, description="my charge")
+			pa = purchase_attempt.create_purchase_attempt(amount=100, items=items,
+														  processor=self.manager.name, description="my charge")
 			purchase_id = purchase_history.register_purchase_attempt(username, pa)
 			
 		# missing token
