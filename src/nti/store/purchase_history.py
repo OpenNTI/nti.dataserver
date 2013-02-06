@@ -1,6 +1,7 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
 import six
+import sys
 import struct
 import BTrees
 
@@ -86,6 +87,15 @@ class _PurchaseHistory(Persistent):
 				return p
 		return None
 	
+	def get_purchase_history(self, start_time=None, end_time=None):
+		start_time = _time_to_64bit_int(start_time or 0)
+		end_time = _time_to_64bit_int(end_time or sys.maxint)
+		for t, p in self.time_map.iteritems():
+			if t > end_time: 
+				break
+			elif t >= start_time and t<= end_time:
+				yield p
+		
 	def values(self):
 		for p in self.time_map.values():
 			yield p
