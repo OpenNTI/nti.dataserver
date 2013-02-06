@@ -1,4 +1,7 @@
-from __future__ import unicode_literals, print_function, absolute_import
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface
 from zope import component

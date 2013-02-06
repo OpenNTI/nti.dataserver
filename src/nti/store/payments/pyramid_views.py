@@ -1,8 +1,8 @@
-from __future__ import print_function, unicode_literals, absolute_import
+# -*- coding: utf-8 -*-
 
+from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import six
 import gevent
 
 from zope import component
@@ -43,9 +43,17 @@ class StripePayment(object):
 		gevent.spawn(process_pay)
 		return purchase
 		
-		
-def create_purchase_attempt(items, processor):
-	if items is not None:
-		items = frozenset([items]) if isinstance(items, six.string_types) else frozenset(items)			
-	return purchase.create_purchase_attempt(items, processor)
+class GetPurchaseAttempt(object):
 
+	def __init__(self, request):
+		self.request = request
+
+	def __call__( self ):
+		request = self.request
+		purchase_id = request.matchdict.get('purchase_id') or request.matchdict.get('OID')
+		username = request.matchdict.get('user', None) or authenticated_userid( request )
+		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+		if purchase is None:
+			request.response.status_int = 404
+		return purchase
+		
