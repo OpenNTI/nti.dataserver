@@ -36,23 +36,29 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 		hist = store_interfaces.IPurchaseHistory(user, None)
 		assert_that(hist, is_not(None))
 
-		pa = purchase.create_purchase_attempt('xyz', self.processor)
-		hist.add_purchase(pa)
+		pa_1 = purchase.create_purchase_attempt('xyz', self.processor)
+		hist.add_purchase(pa_1)
 		assert_that(hist, has_length(1))
 
-		assert_that(pa.id, is_not(None))
+		assert_that(pa_1.id, is_not(None))
 
 		intids = component.queryUtility( zope.intid.IIntIds )
-		assert_that(intids.queryId(pa), is_not(None))
+		assert_that(intids.queryId(pa_1), is_not(None))
 
-		pa = purchase.create_purchase_attempt('xyz', self.processor)
-		hist.add_purchase(pa)
+		pa_2 = purchase.create_purchase_attempt('xyz', self.processor)
+		hist.add_purchase(pa_2)
 		assert_that(hist, has_length(2))
 
-		oid = to_external_ntiid_oid(pa)
-		assert_that(hist.get_purchase(oid), is_(pa))
+		assert_that(list(hist.values()), has_length(2))
+		
+		t = (pa_1,pa_2)
+		ck = all([c in t for c in hist])
+		assert_that(ck, is_(True))
+		
+		oid = to_external_ntiid_oid(pa_2)
+		assert_that(hist.get_purchase(oid), is_(pa_2))
 
-		hist.remove_purchase(pa)
+		hist.remove_purchase(pa_2)
 		assert_that(hist, has_length(1))
 		
 	@WithMockDSTrans

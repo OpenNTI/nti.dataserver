@@ -80,8 +80,11 @@ class _PurchaseHistory(Persistent):
 		p = self.get_purchase(pid)
 		return p.State if p else None
 	
+	def __iter__(self):
+		return iter(self.time_map.values())
+	
 	def values(self):
-		for p in self.purchases.values():
+		for p in self.time_map.values():
 			yield p
 	
 	def __len__(self):
