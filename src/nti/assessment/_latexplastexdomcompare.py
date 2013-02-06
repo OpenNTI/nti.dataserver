@@ -134,10 +134,11 @@ def grade( solution, response ):
 
 	# Units may be required, or optional if the last element is the empty string
 	allowed_units = solution.allowed_units
-	if u'\uFF05' in allowed_units:
+	if u'\uFF05' in allowed_units and '\\%' not in allowed_units:
 		# The full-width percent is how we tend to write percents in source files
 		# we also want to handle how they come in from the browser, in "\%" (https://trello.com/c/4qdjExxV)
-		allowed_units = ('\\%',) + allowed_units
+		allowed_units = list(allowed_units)
+		allowed_units.append('\\%')
 	# Before doing this, strip off opening and closing latex display math signs, if they were sent,
 	# so that we can check for units
 	# Only do this if *both* were provided

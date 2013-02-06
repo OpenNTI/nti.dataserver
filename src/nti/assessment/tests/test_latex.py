@@ -98,7 +98,7 @@ class TestLatex(SharedConfiguringTestBase):
 
 
 		# With units specified with and without space
-		soln.allowed_units = (u'\uff05',) # full-width percent
+		soln.allowed_units = [u'\uff05'] # full-width percent
 		for r in responses:
 			rsp = response.QTextResponse( r )
 			assert_that( soln, grades_right( rsp ) )
