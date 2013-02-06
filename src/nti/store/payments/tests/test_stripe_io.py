@@ -24,11 +24,13 @@ class TestStripeIO(unittest.TestCase):
 	
 	@classmethod
 	def setUpClass(cls):
+		super(TestStripeIO,cls).setUpClass()
 		cls.api_key = stripe.api_key
 		stripe.api_key = u'sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp'
 		
 	@classmethod
 	def tearDownClass(cls):
+		super(TestStripeIO,cls).tearDownClass()
 		stripe.api_key = cls.api_key
 	
 	def test_create_update_delete_customer(self):
