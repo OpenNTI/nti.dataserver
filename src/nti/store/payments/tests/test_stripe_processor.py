@@ -31,7 +31,7 @@ from zope.component import eventtesting
 from hamcrest import (assert_that, is_, is_not, has_length)
 
 @unittest.SkipTest
-class TestStripeIO(ConfiguringTestBase):
+class TestStripeProcessor(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
