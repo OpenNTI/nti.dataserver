@@ -7,7 +7,7 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, has_entry, is_
 from hamcrest import not_none, is_not
-from nti.tests import ConfiguringTestBase
+from nti.tests import SharedConfiguringTestBase
 from nti.tests import verifiably_provides
 from nti.externalization.tests import externalizes
 
@@ -23,7 +23,7 @@ from nti.assessment import interfaces
 
 #pylint: disable=R0904
 
-class TestTextHint(ConfiguringTestBase):
+class TestTextHint(SharedConfiguringTestBase):
 	set_up_packages = (nti.assessment,)
 
 	def test_externalizes(self):

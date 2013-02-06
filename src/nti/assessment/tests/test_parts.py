@@ -6,7 +6,8 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, has_entry
 from hamcrest import is_, is_not
-from nti.tests import ConfiguringTestBase, is_true, is_false
+from unittest import TestCase
+from nti.tests import is_true, is_false
 from nti.tests import verifiably_provides
 from nti.externalization.tests import externalizes
 from nose.tools import assert_raises
@@ -23,9 +24,14 @@ from nti.assessment import solution as solutions
 from . import grades_right
 from . import grades_wrong
 
-class TestQPart(ConfiguringTestBase):
 
-	set_up_packages = (nti.assessment,)
+# nose module-level setup
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.assessment,) )
+tearDownModule = nti.tests.module_teardown
+
+
+
+class TestQPart(TestCase):
 
 	def test_part_provides(self):
 		part = parts.QPart()
@@ -40,8 +46,7 @@ class TestQPart(ConfiguringTestBase):
 			parts.QPart( bad_kw=1 )
 
 
-class TestMultipleChoicePart(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+class TestMultipleChoicePart(TestCase):
 
 	def test_part_provides(self):
 		assert_that( parts.QMultipleChoicePart(), verifiably_provides( interfaces.IQMultipleChoicePart ) )
@@ -71,8 +76,7 @@ class TestMultipleChoicePart(ConfiguringTestBase):
 		assert_that( part.grade( 1 ), is_true() )
 		assert_that( part.grade( 0 ), is_false() )
 
-class TestMultipleChoiceMultipleAnswerPart(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+class TestMultipleChoiceMultipleAnswerPart(TestCase):
 
 	def test_part_provides(self):
 		assert_that( parts.QMultipleChoiceMultipleAnswerPart(), verifiably_provides( interfaces.IQMultipleChoiceMultipleAnswerPart ) )
@@ -98,8 +102,7 @@ class TestMultipleChoiceMultipleAnswerPart(ConfiguringTestBase):
 		assert_that( part.grade( [ 1 ] ), is_true() )
 		assert_that( part.grade( [ 0 ] ), is_false() )
 
-class TestMatchingPart(ConfiguringTestBase):
-	set_up_packages = (nti.assessment,)
+class TestMatchingPart(TestCase):
 
 	def test_grade(self):
 		labels = ("A","B")

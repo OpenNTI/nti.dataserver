@@ -27,19 +27,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 page_c_pattern = re.compile("<div class=\"page-contents\">(.*)</body>")
-	
+
 def get_schema():
 	return create_book_schema()
 
 @interface.implementer(cridxr_interfaces.IWhooshBookIndexer)
 class _BasicWhooshIndexer(object):
-	
+
 	def remove_index_files(self, indexdir, indexname):
 		if os.path.exists(indexdir):
 			pathname = '%s/*%s*' % (indexdir, indexname)
 			for name in glob.glob(pathname):
 				os.remove(name)
-			
+
 	def create_index(self, indexdir, indexname):
 		if not os.path.exists(indexdir):
 			os.makedirs(indexdir)
@@ -48,7 +48,7 @@ class _BasicWhooshIndexer(object):
 
 	def add_document(self,  writer, docid, ntiid, title, content,
 					 related=(), keywords=(), last_modified=None):
-				
+
 		docid = unicode(docid) if docid else None
 		try:
 			content = unicode(content)
@@ -62,8 +62,8 @@ class _BasicWhooshIndexer(object):
 								last_modified=last_modified)
 		except Exception:
 			writer.cancel()
-			raise	
-	
+			raise
+
 	def _get_last_modified(self, node):
 		last_modified = time.time()
 		for n in node.dom(b'meta'):
@@ -71,14 +71,14 @@ class _BasicWhooshIndexer(object):
 				value = node_utils.get_attribute(n, 'content')
 				last_modified = content_utils.parse_last_modified(value)
 				break
-		
+
 		last_modified = last_modified or time.time()
 		last_modified = datetime.fromtimestamp(float(last_modified))
 		return last_modified
-	
+
 	def process_topic(self, node, writer):
 		raise NotImplementedError()
-	
+
 	def process_book(self, book, writer):
 		toc = book.toc
 		def _loop(topic):
@@ -88,32 +88,33 @@ class _BasicWhooshIndexer(object):
 			return count
 		docs = _loop(toc.root_topic)
 		return docs
-	
-	def index(self, book, indexdir=None, indexname=None):
+
+	def index(self, book, indexdir=None, indexname=None, _optimize=True):
 		indexname = indexname or book.jobname
 		contentPath = os.path.expanduser(book.contentLocation)
 		indexdir = indexdir or os.path.join(contentPath, "indexdir")
 		self.remove_index_files(indexdir, indexname)
-	
+
 		logger.info('Indexing %s(%s)' % (indexname, indexdir))
 
 		idx = self.create_index(indexdir, indexname)
 		writer = idx.writer(optimize=False, merge=False)
 		docs = self.process_book(book, writer)
-	
+
 		logger.info("%s total document(s) produced" % docs)
-	
+
 		# commit changes
 		writer.commit(optimize=False, merge=False)
-	
-		logger.info( "Optimizing index" )
-		idx.optimize()
-		
+
+		if _optimize: # for testing
+			logger.info( "Optimizing index" )
+			idx.optimize()
+
 		return idx
-		
+
 class _BookFileWhooshIndexer(_BasicWhooshIndexer):
 	"""
-	Index each topic (file) as a whole. 1 inndex document per topic 
+	Index each topic (file) as a whole. 1 inndex document per topic
 	"""
 	def _parse_text(self, text, pattern, default=''):
 		m = pattern.search(text, re.M|re.I)
@@ -129,13 +130,13 @@ class _BookFileWhooshIndexer(_BasicWhooshIndexer):
 		title = unicode(node.title)
 		ntiid = unicode(node.ntiid)
 		content_file = node.location
-		
+
 		logger.info("Indexing File (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
-	
+
 		table = get_content_translation_table()
 		related = node_utils.get_related(node.topic)
 		last_modified = self._get_last_modified(node)
-		
+
 		result = 0
 		if os.path.exists(content_file):
 			with codecs.open(content_file, "r", encoding='UTF-8') as f:
@@ -148,9 +149,9 @@ class _BookFileWhooshIndexer(_BasicWhooshIndexer):
 				content = ' '.join(tokenized_words)
 				keywords = termextract.extract_key_words(tokenized_words)
 				self.add_document(writer, ntiid, ntiid, title, content, related, keywords, last_modified)
-							
+
 		return result
-		
+
 class _IdentifiableNodeWhooshIndexer(_BasicWhooshIndexer):
 	"""
 	Indexing topic children nodes that either have an id or data_ntiid attribute
@@ -159,15 +160,15 @@ class _IdentifiableNodeWhooshIndexer(_BasicWhooshIndexer):
 		title = unicode(node.title)
 		ntiid = unicode(node.ntiid)
 		content_file = node.location
-		
+
 		logger.info("Indexing Node (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
-	
+
 		table = get_content_translation_table()
 		related = node_utils.get_related(node.topic)
 		last_modified = self._get_last_modified(node)
-		
+
 		documents = []
-		
+
 		def _collector(n, data):
 			if not isinstance(n, etree._Comment):
 				content = node_utils.get_node_content(n)
@@ -175,10 +176,10 @@ class _IdentifiableNodeWhooshIndexer(_BasicWhooshIndexer):
 				if content:
 					tokenized_words = split_content(content)
 					data.extend(tokenized_words)
-					
+
 				for c in n.iterchildren():
 					_collector(c, data)
-				
+
 		def _traveler(n):
 			n_id = node_utils.get_attribute(n, "id")
 			data_ntiid = node_utils.get_attribute(n, "data_ntiid")
@@ -193,27 +194,27 @@ class _IdentifiableNodeWhooshIndexer(_BasicWhooshIndexer):
 				if content:
 					tokenized_words = split_content(content)
 					documents.append((None, tokenized_words))
-				
+
 				for c in n.iterchildren():
 					_traveler(c)
-		
+
 		for n in node.dom(b'div').filter(b'.page-contents'):
 			_traveler(n)
-			
+
 		for n in node.dom(b'div').filter(b'#footnotes'):
 			_traveler(n)
-				
+
 		all_words = []
 		for tokenized_words in documents:
 			all_words.extend(tokenized_words[1])
 		keywords =  termextract.extract_key_words(all_words)
-		
+
 		count = 0
 		for docid, tokenized_words in documents:
 			content = ' '.join(tokenized_words)
 			self.add_document(writer, docid, ntiid, title, content, related, keywords, last_modified)
 			count += 1
 		logger.info("%s document(s) produced" % count)
-		return count			
+		return count
 
 _DefaultWhooshIndexer = _BookFileWhooshIndexer

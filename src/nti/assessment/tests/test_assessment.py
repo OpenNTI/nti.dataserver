@@ -12,7 +12,7 @@ from nti.assessment._latexplastexconverter import _mathTexToDOMNodes as mathTexT
 from nti.assessment._latexplastexdomcompare import _mathIsEqual as mathIsEqual
 import plasTeX
 
-class TestAssessment(nti.tests.ConfiguringTestBase):
+class TestAssessment(nti.tests.SharedConfiguringTestBase):
 	set_up_packages = (nti.assessment,)
 
 	def test_mathTexToDOM(self):
@@ -236,6 +236,3 @@ class MockQuiz(object):
 		if not answers:
 			answers = ['No answer']
 		self.answers = answers
-
-if __name__ == '__main__':
-	unittest.main()

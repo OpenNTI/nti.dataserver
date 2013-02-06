@@ -9,7 +9,7 @@ from nti.contentrendering.RenderedBook import _EclipseTOCMiniDomTopic
 from nti.contentrendering.indexing._whoosh_indexer import _DefaultWhooshIndexer
 from nti.contentrendering.indexing._whoosh_indexer import _BookFileWhooshIndexer
 from nti.contentrendering.indexing._whoosh_indexer import _IdentifiableNodeWhooshIndexer
-from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument 
+from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 
 from nti.contentrendering.tests import ConfiguringTestBase
 
@@ -17,25 +17,29 @@ from hamcrest import assert_that, has_length
 
 class TestWhooshIndexer(ConfiguringTestBase):
 
-	def setUp(self):
-		ConfiguringTestBase.setUp(self)
-		self.idxdir = tempfile.mkdtemp(dir="/tmp")
+	features = () # to load the tagger
 
-	def tearDown(self):
-		ConfiguringTestBase.tearDown(self)
-		shutil.rmtree(self.idxdir, True)
+	@classmethod
+	def setUpClass(cls):
+		super(TestWhooshIndexer,cls).setUpClass()
+		cls.idxdir = tempfile.mkdtemp(dir="/tmp")
+
+	@classmethod
+	def tearDownClass(cls):
+		shutil.rmtree(cls.idxdir, True)
+		super(TestWhooshIndexer,cls).tearDownClass()
 
 	def test_identifiable_node_indexer(self):
 		indexname='biology'
 		path = os.path.join( os.path.dirname( __file__ ),  '../../tests/intro-biology-rendered-book' )
-		
+
 		document = EmptyMockDocument()
 		document.userdata['jobname'] = indexname
 		book = NoConcurrentPhantomRenderedBook(document, path)
-		
+
 		indexer = _IdentifiableNodeWhooshIndexer()
-		idx = indexer.index(book, self.idxdir)
-		
+		idx = indexer.index(book, self.idxdir, _optimize=False)
+
 		q = Term("keywords", u"mathcounts")
 		with idx.searcher() as s:
 			r = s.search(q, limit=None)
@@ -45,23 +49,23 @@ class TestWhooshIndexer(ConfiguringTestBase):
 		with idx.searcher() as s:
 			r = s.search(q, limit=None)
 			assert_that(r, has_length(26))
-			
+
 		q = Or([Term("content", u'homeostasis'),])
 		with idx.searcher() as s:
 			r = s.search(q, limit=None)
 			assert_that(r, has_length(16))
-		
+
 		idx.close()
-		
+
 	def _index_file(self, path, indexname, nodename, indexer=None):
 		indexer = indexer or _DefaultWhooshIndexer()
 		idx = indexer.create_index(self.idxdir, indexname)
-		writer = idx.writer(optimize=False, merge=False)		
+		writer = idx.writer(optimize=False, merge=False)
 		node = _EclipseTOCMiniDomTopic(None, path, path, None, nodename)
 		indexer.process_topic(node, writer)
 		writer.commit(optimize=False, merge=False)
 		return idx
-			
+
 	def test_index_prealgebra(self):
 		indexname='prealgebra'
 		path = os.path.join( os.path.dirname( __file__ ),  'why_start_with_arithmetic_.html' )
@@ -73,7 +77,7 @@ class TestWhooshIndexer(ConfiguringTestBase):
 				assert_that(r, has_length(1))
 		finally:
 			idx.close()
-		
+
 	def test_index_cohen(self):
 		indexname='cohen'
 		indexer = _BookFileWhooshIndexer()
@@ -86,7 +90,3 @@ class TestWhooshIndexer(ConfiguringTestBase):
 				assert_that(r, has_length(1))
 		finally:
 			idx.close()
-		
-if __name__ == '__main__':
-	unittest.main()
-
