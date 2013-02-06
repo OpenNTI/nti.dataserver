@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import os
 import uuid
 import shutil
@@ -29,16 +42,18 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 	def setUpClass(cls):
 		cls.db_dir = tempfile.mkdtemp(dir="/tmp")
 		os.environ['DATASERVER_DIR']= cls.db_dir
-	
+		super(TestWhooshUserAdapter,cls).setUpClass()
+
 	@classmethod
 	def tearDownClass(cls):
 		shutil.rmtree(cls.db_dir, True)
+		super(TestWhooshUserAdapter,cls).tearDownClass()
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
-	
+
 	def _add_notes(self, usr):
 		notes = []
 		conn = mock_dataserver.current_transaction
@@ -48,12 +63,12 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 			note.creator = usr.username
 			note.containerId = make_ntiid(nttype='bleach', specific='manga')
 			if conn: conn.add(note)
-			note = usr.addContainedObject( note ) 
+			note = usr.addContainedObject( note )
 			notes.append(note)
 		return notes
 
 	def _add_user_index_notes(self, do_assert=False):
-		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com' 
+		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com'
 		usr = self._create_user(username=username )
 		notes = self._add_notes(usr)
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
@@ -67,7 +82,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 	def test_query_notes(self):
 		_, usr = self._add_user_index_notes()
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
-		
+
 		hits = toExternalObject(uim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(QUERY, 'shield'))
@@ -89,7 +104,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 	def test_update_note(self):
 		notes, usr = self._add_user_index_notes()
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
-		
+
 		note = notes[5]
 		note.body = [u'Blow It Away']
 		uim.update_content(note)
@@ -106,7 +121,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 	def test_delete_note(self):
 		notes, usr  = self._add_user_index_notes()
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
-		
+
 		note = notes[5]
 		uim.delete_content(note)
 
@@ -118,7 +133,7 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 	def test_suggest(self):
 		_, usr = self._add_user_index_notes()
 		uim = search_interfaces.IWhooshEntityIndexManager(usr, None)
-		
+
 		hits = toExternalObject(uim.suggest("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 4))
 		assert_that(hits, has_entry(QUERY, 'ra'))
@@ -130,6 +145,3 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		assert_that(items, has_item('raise'))
 		assert_that(items, has_item('rain'))
 		assert_that(items, has_item('rankle'))
-
-if __name__ == '__main__':
-	unittest.main()

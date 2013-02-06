@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import os
 import json
 import unittest
@@ -27,15 +40,16 @@ from hamcrest import (assert_that, is_, is_not, close_to, has_length)
 class TestContentUtils(ConfiguringTestBase):
 
 	@classmethod
-	def setUpClass(cls):	
+	def setUpClass(cls):
+		super(TestContentUtils,cls).setUpClass()
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
-			
+
 		path = os.path.join(os.path.dirname(__file__), 'note2.json')
 		with open(path, "r") as f:
 			cls.note = json.load(f)
-		
+
 	def _create_note(self, msg, username, containerId=None, tags=('ichigo',), canvas=None):
 		note = Note()
 		note.tags = tags
@@ -45,19 +59,19 @@ class TestContentUtils(ConfiguringTestBase):
 		note.creator = username
 		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
 		return note
-	
+
 	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
 		ds = ds or mock_dataserver.current_mock_ds
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
-	
+
 	@WithMockDSTrans
 	def test_note_adapter(self):
 		usr = self._create_user()
 		containerId = make_ntiid(nttype='bleach', specific='manga')
 		note = self._create_note('nothing can be explained', usr.username, containerId)
 		mock_dataserver.current_transaction.add(note)
-		note = usr.addContainedObject( note ) 
+		note = usr.addContainedObject( note )
 		adapted = component.getAdapter(note, IContentResolver)
 		assert_that(adapted.get_content(), is_('nothing can be explained'))
 		assert_that(adapted.get_references(), has_length(0))
@@ -67,7 +81,7 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.get_keywords(), is_(['ichigo']))
 		assert_that(adapted.get_sharedWith(), has_length(0))
 		assert_that(adapted.get_last_modified(), is_not(None))
-	
+
 	@WithMockDSTrans
 	def test_note_adapter_canvas(self):
 		c = Canvas()
@@ -78,10 +92,10 @@ class TestContentUtils(ConfiguringTestBase):
 		containerId =  make_ntiid(nttype='bleach', specific='manga')
 		note = self._create_note('New Age', usr.username, containerId, canvas=c)
 		mock_dataserver.current_transaction.add(note)
-		note = usr.addContainedObject( note ) 
+		note = usr.addContainedObject( note )
 		adapted = component.getAdapter(note, IContentResolver)
 		assert_that(adapted.get_content(), is_('New Age Mike Wyzgowski'))
-		
+
 	@WithMockDSTrans
 	def test_redaction_adpater(self):
 		username = 'kuchiki@bleach.com'
@@ -103,7 +117,7 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.get_keywords(), has_length(0))
 		assert_that(adapted.get_sharedWith(), has_length(0))
 		assert_that(adapted.get_last_modified(), is_not(None))
-		
+
 	@WithMockDSTrans
 	def test_highlight_adpater(self):
 		username = 'urahara@bleach.com'
@@ -123,7 +137,7 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.get_keywords(), has_length(0))
 		assert_that(adapted.get_sharedWith(), has_length(0))
 		assert_that(adapted.get_last_modified(), is_not(None))
-		
+
 	@WithMockDSTrans
 	def test_messageinfo_adapter_canvas(self):
 		c = Canvas()
@@ -134,7 +148,7 @@ class TestContentUtils(ConfiguringTestBase):
 		mi.Body = ['Beginning of Despair, the Unreachable Blade', c]
 		adapted = component.getAdapter(mi, IContentResolver)
 		assert_that(adapted.get_content(), is_('Beginning of Despair the Unreachable Blade Ichigo VS Ulquiorra'))
-		
+
 	def test_dict_adpater(self):
 		adapted = component.getAdapter(self.note, IContentResolver)
 		assert_that(adapted.get_content(), is_('Eddard Stark Lord of Winterfell'))
@@ -145,6 +159,6 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.get_last_modified(), is_(close_to(1334000544.120, 0.05)))
 		assert_that(adapted.get_containerId(), is_('tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(adapted.get_ntiid(), is_('tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273'))
-		
+
 if __name__ == '__main__':
 	unittest.main()

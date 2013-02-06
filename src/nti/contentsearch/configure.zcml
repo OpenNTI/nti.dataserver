@@ -3,25 +3,25 @@
 	<include package="zope.component" />
 
 	<include package="nti.contentprocessing" file="configure.zcml" />
-	
+
 	<!-- Externalization -->
-	
+
 	<adapter factory="._search_hits._HighlightSearchHit"
 			 name="search-hit"
 			 provides=".interfaces.ISearchHit" />
-			 
+
 	<adapter factory="._search_hits._NoteSearchHit"
-			 name="search-hit"  
+			 name="search-hit"
 			 provides=".interfaces.ISearchHit" />
-			 
+
 	<adapter factory="._search_hits._MessageInfoSearchHit"
-			 name="search-hit" 
+			 name="search-hit"
 			 provides=".interfaces.ISearchHit" />
-			 
+
 	<adapter factory="._search_hits._RedactionSearchHit"
 			 name="search-hit"
 			 provides=".interfaces.ISearchHit" />
-			  
+
 	<adapter factory="._search_hits._WhooshBookSearchHit"
 			 name="search-hit"
 			 provides=".interfaces.ISearchHit" />
@@ -29,80 +29,80 @@
 	<utility factory="._search_hits._ScoreSearchHitComparator" name="score" />
 	<utility factory="._search_hits._RelevanceSearchHitComparator" name="relevance" />
 	<utility factory="._search_hits._LastModifiedSearchHitComparator" name="last_modified" />
-	
+
 	<adapter factory="._search_external._SearchResultsExternalizer" />
 	<adapter factory="._search_external._SuggestResultsExternalizer" />
 	<adapter factory="._search_external._SuggestAndSearchResultsExternalizer" />
-				 
+
 	<subscriber factory="._search_external.NoSnippetHighlightDecoratorFactory"
 				for=".interfaces.INoSnippetHighlight"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
-				
+
 	<subscriber factory="._search_external.WordSnippetHighlightDecoratorFactory"
 				for=".interfaces.IWordSnippetHighlight"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
-				
+
 	<!-- Content processing -->
-	
+
 	<!-- make sure stop words are registered before zopyx.zcml -->
 	<utility factory="._content_utils._DefaultStopWords" />
-	
+
 	<!-- Content Resolvers -->
 
 	<adapter factory="._content_utils._StringContentResolver"
 			 provides=".interfaces.IContentResolver"
 			 for="basestring" />
-			 
+
 	<adapter factory="._content_utils._DictContentResolver"
 			 provides=".interfaces.IContentResolver"
 			 for="dict" />
-			 
+
 	<adapter factory="._content_utils._HighLightContentResolver"
 			 provides=".interfaces.IHighlightContentResolver"
 			 for="nti.dataserver.interfaces.IHighlight" />
-			
+
 	<adapter factory="._content_utils._RedactionContentResolver"
 			 provides=".interfaces.IRedactionContentResolver"
 			 for="nti.dataserver.interfaces.IRedaction" />
-			 
+
 	<adapter factory="._content_utils._NoteContentResolver"
 			 provides=".interfaces.INoteContentResolver"
 			 for="nti.dataserver.interfaces.INote" />
-		
+
 	<adapter factory="._content_utils._MessageInfoContentResolver"
 			 provides=".interfaces.IMessageInfoContentResolver"
 			 for="nti.chatserver.interfaces.IMessageInfo" />
-			 
+
 	<adapter factory="._content_utils._CanvasShapeContentResolver"
 			 provides=".interfaces.IContentResolver"
 			 for="nti.dataserver.contenttypes.Canvas" />
-			 
+
 	<adapter factory="._content_utils._CanvasTextShapeContentResolver"
 			 provides=".interfaces.IContentResolver"
 			 for="nti.dataserver.contenttypes.CanvasTextShape" />
-			 	 
+
 	<adapter factory="._content_utils._BookContentResolver"
 			 provides=".interfaces.IBookContentResolver"
 			 for=".interfaces.IBookContent" />
-			 
+
 	<!-- Search results -->
-		
+
 	<utility factory="._search_results._SearchResultCreator"  />
 	<utility factory="._search_results._SuggestResultsCreator"  />
 	<utility factory="._search_results._SuggestAndSearchResultsCreator"  />
-	
+
 	<class class="._search_results._IndexHit">
 		<implements interface=".interfaces.IIndexHit" />
 	</class>
-	
+
 	<!-- Search query -->
-	
+
 	<adapter factory="._search_query._default_query_adapter"
 			 provides=".interfaces.ISearchQuery"
 			 for="basestring" />
-	
+
 	<include file="zopyx.zcml" />
 	<include file="repoze_minimal.zcml" />
 	<include file="whoosh.zcml" />
-	
+
 </configure>

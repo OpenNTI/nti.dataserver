@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import os
 import time
 import uuid
@@ -29,58 +42,59 @@ from nti.contentsearch.tests.mock_cloudsearch import MockCloudSearch
 from nti.contentsearch.tests.mock_cloudsearch import MockCloundSearchQueryParser
 
 from hamcrest import (is_not, has_key, has_entry, has_length, assert_that)
-	
-#@unittest.SkipTest	
+
+#@unittest.SkipTest
 class TestCloudSearchAdapter(ConfiguringTestBase):
-	
+
 	aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
 	aws_secret_access_key = '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'
 
 	@classmethod
 	def setUpClass(cls):
+		super(TestCloudSearchAdapter,cls).setUpClass()
 		os.environ['aws_access_key_id']= cls.aws_access_key_id
 		os.environ['aws_secret_access_key']= cls.aws_secret_access_key
-		
+
 	def _register_zcml(self):
 		self.redis = None
 		# import redis
 		# self.redis = redis.StrictRedis( unix_socket_path='/Users/csanchez/tmp/var/redis.sock')
 		# component.provideUtility( self.redis, provides=nti_interfaces.IRedisClient )
-		
+
 		component.provideAdapter(_cloudsearch_adapter._CloudSearchEntityIndexManagerFactory,
 								 adapts=[nti_interfaces.IEntity],
-								 provides=search_interfaces.ICloudSearchEntityIndexManager)	
-		
+								 provides=search_interfaces.ICloudSearchEntityIndexManager)
+
 		component.provideAdapter(_cloudsearch_index._CSNote,
 								 adapts=[nti_interfaces.INote],
-								 provides=search_interfaces.ICloudSearchObject)	
-		
+								 provides=search_interfaces.ICloudSearchObject)
+
 	def _register_zcml_cs(self):
 		self.aws_op_delay = 5
 		self._register_zcml()
-		
+
 		parser = _cloudsearch_query._DefaultCloudSearchQueryParser()
 		component.provideUtility( parser, provides=search_interfaces.ICloudSearchQueryParser )
-		
+
 		self.store = _cloudsearch_store._create_cloudsearch_store()
 		component.provideUtility( self.store, provides=search_interfaces.ICloudSearchStore )
 
 	def _register_zcml_mock(self):
 		self.aws_op_delay = 0.4
 		self._register_zcml()
-		
+
 		parser = MockCloundSearchQueryParser()
 		component.provideUtility( parser, provides=search_interfaces.ICloudSearchQueryParser )
-		
+
 		self.store = MockCloudSearch()
 		component.provideUtility( self.store, provides=search_interfaces.ICloudSearchStore )
-		
+
 	def setUp( self ):
 		super(TestCloudSearchAdapter,self).setUp()
-		self._register_zcml_mock()	
-		
+		self._register_zcml_mock()
+
 	# ---------------------
-	
+
 	def create_note(self, msg, username, containerId=None):
 		note = Note()
 		note.creator = username
@@ -104,25 +118,25 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
 		for note in notes:
 			resp = cim.index_content(note)
-			if do_assert: 
+			if do_assert:
 				assert_that(resp, is_not(None))
 			result.append(resp)
 		return notes, result
-	
+
 	def add_user_index_notes(self):
-		username = unicode(str(uuid.uuid1())) + '@nti.com' 
+		username = unicode(str(uuid.uuid1())) + '@nti.com'
 		usr = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp001' )
 		notes, resps = self.index_notes(usr=usr, do_assert=False)
 		time.sleep(self.aws_op_delay)
 		return usr, notes, resps
-	
+
 	# ---------------------
-	
+
 	@WithMockDSTrans
 	def test_query_notes(self):
 		usr, _, _ = self.add_user_index_notes()
 		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
-		
+
 		results = cim.search("shield")
 		hits = toExternalObject (results)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
@@ -139,7 +153,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 
 		hits = toExternalObject(cim.search("ra*"))
 		assert_that(hits, has_entry(HIT_COUNT, 3))
-		
+
 		hits = toExternalObject(cim.search('"All Waves Rise"'))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 
@@ -147,12 +161,12 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 	def test_update_note(self):
 		usr, notes, _ = self.add_user_index_notes()
 		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
-		
+
 		note = notes[5]
 		note.body = [u'Blow It Away']
 		cim.update_content(note)
 		time.sleep(self.aws_op_delay)
-		
+
 		hits = toExternalObject(cim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
@@ -171,6 +185,3 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		hits = toExternalObject(cim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
 		assert_that(hits, has_entry(QUERY, 'shield'))
-
-if __name__ == '__main__':
-	unittest.main()

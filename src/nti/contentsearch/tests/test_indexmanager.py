@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import os
 import time
 import uuid
@@ -35,10 +48,11 @@ from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_, assert_that, has_length, has_entry)
 
-class _BaseIndexManagerTest(object):
+class _BaseIndexManagerTest(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
+		super(_BaseIndexManagerTest,cls).setUpClass()
 		cls.now = time.time()
 		cls._add_book_data()
 
@@ -63,8 +77,8 @@ class _BaseIndexManagerTest(object):
 	@classmethod
 	def tearDownClass(cls):
 		shutil.rmtree(cls.book_idx_dir, True)
+		super(_BaseIndexManagerTest,cls).tearDownClass()
 
-	# ----------------
 
 	def is_ngram_search_supported(self):
 		features = component.getUtility(search_interfaces.ISearchFeatures)
@@ -306,7 +320,7 @@ class _BaseIndexManagerTest(object):
 		hits = toExternalObject(hits)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry(ITEMS, has_length(1)))
-		
+
 	@WithMockDSTrans
 	def test_note_share_dfl(self):
 		ds = mock_dataserver.current_mock_ds
@@ -319,7 +333,7 @@ class _BaseIndexManagerTest(object):
 		ichigo.addContainedObject( bleach )
 		bleach.addFriend( aizen )
 		bleach.addFriend( gin )
-	
+
 		note = Note()
 		note.body = [u'Getsuga Tensho']
 		note.creator = 'nti.com'
@@ -334,51 +348,30 @@ class _BaseIndexManagerTest(object):
 		q = QueryObject(term='getsuga', username=gin.username)
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(1))
-		
+
 		q = QueryObject(term='tensho', username=aizen.username)
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(1))
 
-class TestIndexManagerWithRepoze(_BaseIndexManagerTest, ConfiguringTestBase):
-
-	@classmethod
-	def setUpClass(cls):
-		_BaseIndexManagerTest.setUpClass()
-
-	@classmethod
-	def tearDownClass(cls):
-		_BaseIndexManagerTest.tearDownClass()
-
-	def setUp(self):
-		ConfiguringTestBase.setUp(self)
-
-	def tearDown(self):
-		ConfiguringTestBase.tearDown(self)
+class TestIndexManagerWithRepoze(_BaseIndexManagerTest):
 
 	def create_index_mananger(self):
 		return create_index_manager_with_repoze()
 
-class TestIndexManagerWithWhoosh(_BaseIndexManagerTest, ConfiguringTestBase):
+class TestIndexManagerWithWhoosh(_BaseIndexManagerTest):
 
 	@classmethod
 	def setUpClass(cls):
-		_BaseIndexManagerTest.setUpClass()
 		cls.whoosh_dir = tempfile.mkdtemp(dir="/tmp")
 		os.environ['DATASERVER_DIR']= cls.whoosh_dir
+		# Yes, this is backwards, but order matters: the factory won't install
+		# the storage if DATASERVER_DIR is not set (which is weird)
+		super(TestIndexManagerWithWhoosh,cls).setUpClass()
 
 	@classmethod
 	def tearDownClass(cls):
-		_BaseIndexManagerTest.tearDownClass()
 		shutil.rmtree(cls.whoosh_dir, True)
-
-	def setUp(self):
-		ConfiguringTestBase.setUp(self)
-
-	def tearDown(self):
-		ConfiguringTestBase.tearDown(self)
+		super(TestIndexManagerWithWhoosh,cls).tearDownClass()
 
 	def create_index_mananger(self):
 		return create_index_manager_with_whoosh(indexdir=self.whoosh_dir, use_md5=False)
-
-if __name__ == '__main__':
-	unittest.main()

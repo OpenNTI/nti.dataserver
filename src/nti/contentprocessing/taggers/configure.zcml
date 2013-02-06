@@ -1,11 +1,18 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+<configure xmlns="http://namespaces.zope.org/zope"
+		   xmlns:zcml="http://namespaces.zope.org/zcml"
+		   i18n_domain="zope">
 	<include package="zope.component" />
 
-	<utility factory="._nltk._NLTKTaggedSents" provides=".interfaces.INLTKTaggedSents"/>
+    <utility factory="._nltk._NLTKTaggedSents" provides=".interfaces.INLTKTaggedSents"/>
 	<utility factory="._nltk._NLTKBackoffNgramTaggerFactory" provides=".interfaces.INLTKBackoffNgramTaggerFactory" />
-	
-	<utility factory="._nltk.default_nltk_tagger" provides=".interfaces.ITagger" />
-	<utility factory="._nltk.default_nltk_tagger" provides=".interfaces.ITagger" name="en" />
-	
+
+	<utility factory="._nltk.default_nltk_tagger"
+			 provides=".interfaces.ITagger"
+			 zcml:condition="not-have devmode"/>
+	<utility factory="._nltk.default_nltk_tagger"
+			 provides=".interfaces.ITagger"
+			 name="en"
+			 zcml:condition="not-have devmode"/>
+
 </configure>

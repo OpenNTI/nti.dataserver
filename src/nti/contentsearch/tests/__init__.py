@@ -3,7 +3,7 @@ from zope.configuration import xmlconfig
 
 import nti.dataserver as dataserver
 import nti.contentsearch as contentsearch
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase as DSConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase as DSConfiguringTestBase
 
 phrases = (	"Yellow brown", "Blue red green render purple?",
 			"Alpha beta", "Gamma delta epsilon omega.",
@@ -33,9 +33,4 @@ zanpakuto_commands =  (	"Shoot To Kill",
 
 
 class ConfiguringTestBase(DSConfiguringTestBase):
-	set_up_packages = (dataserver, contentsearch)
-	
-	def setUp( self ):
-		super(ConfiguringTestBase,self).setUp()
-		xmlconfig.file("repoze_full.zcml", contentsearch, context=self.configuration_context)
-		
+	set_up_packages = (dataserver, contentsearch, ('repoze_full.zcml', contentsearch))

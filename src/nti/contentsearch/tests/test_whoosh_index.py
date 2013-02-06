@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import os
 import time
 import shutil
@@ -32,21 +45,23 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from hamcrest import (assert_that, is_, has_entry, has_key, has_length)
 
 class TestWhooshIndex(ConfiguringTestBase):
-	
+
 	@classmethod
 	def setUpClass(cls):
+		super(TestWhooshIndex,cls).setUpClass()
 		cls.db_dir = tempfile.mkdtemp(dir="/tmp")
 		os.environ['DATASERVER_DIR']= cls.db_dir
-	
+
 	@classmethod
 	def tearDownClass(cls):
 		shutil.rmtree(cls.db_dir, True)
-		
+		super(TestWhooshIndex,cls).tearDownClass()
+
 	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
 		ds = ds or mock_dataserver.current_mock_ds
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
-	
+
 	def _create_ds_note(self):
 		username='nt@nti.com'
 		usr = self._create_user(username=username)
@@ -55,9 +70,9 @@ class TestWhooshIndex(ConfiguringTestBase):
 		note.body = [u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade']
 		note.containerId = make_ntiid(nttype='bleach', specific='manga')
 		mock_dataserver.current_transaction.add(note)
-		note = usr.addContainedObject( note ) 
+		note = usr.addContainedObject( note )
 		return note
-	
+
 	@WithMockDSTrans
 	def test_index_note(self):
 		note = Note()
@@ -72,7 +87,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 			assert_that(d, has_key(ITEMS))
 			items = d[ITEMS]
 			assert_that(items, has_length(1))
-	
+
 	def _create_ds_highlight(self):
 		username='nt@nti.com'
 		usr = self._create_user(username=username)
@@ -80,10 +95,10 @@ class TestWhooshIndex(ConfiguringTestBase):
 		highlight.selectedText = u'You know how to add, subtract, multiply, and divide'
 		highlight.creator = usr.username
 		highlight.containerId =  make_ntiid(nttype='bleach', specific='manga')
-		mock_dataserver.current_transaction.add(highlight) 
+		mock_dataserver.current_transaction.add(highlight)
 		highlight = usr.addContainedObject( highlight )
 		return highlight
-	
+
 	@WithMockDSTrans
 	def test_index_highlight(self):
 		hi = Highlight()
@@ -105,11 +120,11 @@ class TestWhooshIndex(ConfiguringTestBase):
 		redaction.redactionExplanation = 'Eddard Stark'
 		redaction.creator = usr.username
 		redaction.containerId =  make_ntiid(nttype='bleach', specific='manga')
-		mock_dataserver.current_transaction.add(redaction) 
+		mock_dataserver.current_transaction.add(redaction)
 		redaction = usr.addContainedObject( redaction )
 		return redaction
-		
-	@WithMockDSTrans	
+
+	@WithMockDSTrans
 	def test_index_redaction(self):
 		rd = Redaction()
 		schema = rd.get_schema()
@@ -121,7 +136,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 			assert_that(d, has_entry(HIT_COUNT, 1))
 			assert_that(d, has_entry(QUERY, 'stark'))
 			assert_that(d, has_key(ITEMS))
-			
+
 	def test_whoosh_book(self):
 		bk = Book()
 		now = time.time()
@@ -136,7 +151,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 								related= u'',
 								last_modified=datetime.fromtimestamp(now))
 		writer.commit()
-		
+
 		with idx.searcher() as s:
 			d = toExternalObject(bk.search(s, "shield"))
 			assert_that(d, has_entry(HIT_COUNT, 1))
@@ -144,6 +159,3 @@ class TestWhooshIndex(ConfiguringTestBase):
 			assert_that(d, has_key(ITEMS))
 			items = d[ITEMS]
 			assert_that(items, has_length(1))
-			
-if __name__ == '__main__':
-	unittest.main()
