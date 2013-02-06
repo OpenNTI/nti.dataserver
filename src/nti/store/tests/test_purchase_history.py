@@ -4,8 +4,6 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
 import unittest
 
 import zope.intid
@@ -62,10 +60,6 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 		user = self._create_user()
 		purchase_id = u'tag:nextthought.com,2011-10:system-OID-0x06cdce28af3dc253:0000000073:XVq3tFG7T82'
 		pa = purchase_history.get_purchase_attempt(purchase_id, user)
-		assert_that(pa, is_(None))
-		
-		purchase_id = u'tag:nextthought.com,2011-10:system-OID-0x06cdce28af3dc253:0000000073:XXx3tXX9X82'
-		pa = purchase_history.get_purchase_attempt(purchase_id)
 		assert_that(pa, is_(None))
 		
 if __name__ == '__main__':

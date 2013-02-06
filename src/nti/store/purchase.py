@@ -56,6 +56,11 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	def id(self):
 		return unicode(to_external_ntiid_oid(self))
 	
+	@property
+	def creator(self):
+		result = getattr(self.__parent__, 'user', None)
+		return result
+	
 	def __repr__( self ):
 		d = datetime.fromtimestamp(self.start_time)
 		return "%s(%s,%s,%s)" % (self.__class__, self.state, d, self.items)

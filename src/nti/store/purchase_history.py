@@ -53,7 +53,8 @@ class _PurchaseHistory(Persistent):
 		start_time = purchase.start_time
 		self.time_map[_time_to_64bit_int(start_time)] = purchase
 		self.purchases.add(purchase)
-		locate(purchase, repr(purchase))
+		locate(purchase, self, repr(purchase))
+		lifecycleevent.added(purchase)
 		
 		# register w/ intids
 		intids = component.queryUtility( zope.intid.IIntIds )
@@ -93,18 +94,16 @@ def _PurchaseHistoryFactory(user):
 	result = an_factory(_PurchaseHistory)(user)
 	return result
 
-def get_purchase_attempt(purchase_id, user=None):
-	if user is not None:
-		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-		hist = store_interfaces.IPurchaseHistory(user)
-		result = hist.get_purchase(purchase_id)
-	else:
-		result = ntiids.find_object_with_ntiid(purchase_id)
-	return result
-
 def _trx_runner(f, retries=5, sleep=0.1):
 	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 	trxrunner(f, retries=retries, sleep=sleep)
+	
+def get_purchase_attempt(purchase_id, user):
+	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	hist = store_interfaces.IPurchaseHistory(user)
+	result = hist.get_purchase(purchase_id)
+	result = None if result is None or result.creator != user else result
+	return result
 
 def register_purchase_attempt(username, purchase):
 	assert getattr( purchase, '_p_oid', None ) is None
