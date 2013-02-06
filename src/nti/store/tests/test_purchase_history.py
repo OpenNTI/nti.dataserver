@@ -15,6 +15,7 @@ from nti.dataserver.users import User
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.store import purchase
+from nti.store import purchase_history
 from nti.store import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -55,6 +56,17 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 
 		hist.remove_purchase(pa)
 		assert_that(hist, has_length(1))
+		
+	@WithMockDSTrans
+	def test_missing_purchase(self):
+		user = self._create_user()
+		purchase_id = u'tag:nextthought.com,2011-10:system-OID-0x06cdce28af3dc253:0000000073:XVq3tFG7T82'
+		pa = purchase_history.get_purchase_attempt(purchase_id, user)
+		assert_that(pa, is_(None))
+		
+		purchase_id = u'tag:nextthought.com,2011-10:system-OID-0x06cdce28af3dc253:0000000073:XXx3tXX9X82'
+		pa = purchase_history.get_purchase_attempt(purchase_id)
+		assert_that(pa, is_(None))
 		
 if __name__ == '__main__':
 	unittest.main()
