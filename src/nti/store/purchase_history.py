@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
+import six
 import struct
 import BTrees
 
@@ -110,6 +111,8 @@ def get_purchase_attempt(purchase_id, user):
 	return result
 
 def get_pending_purchase_for(user, items):
+	items = frozenset() if not items else items	
+	items = frozenset([items]) if isinstance(items, six.string_types) else frozenset(items)	
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	hist = store_interfaces.IPurchaseHistory(user)
 	result = hist.get_pending_purchase_for(items)

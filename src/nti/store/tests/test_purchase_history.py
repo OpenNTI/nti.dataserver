@@ -62,6 +62,20 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 		assert_that(hist, has_length(1))
 		
 	@WithMockDSTrans
+	def test_pending_purchase(self):
+		user = self._create_user()
+		hist = store_interfaces.IPurchaseHistory(user, None)
+
+		items='xyz'
+		pending = purchase_attempt.create_purchase_attempt(	items=items, processor=self.processor, 
+															state=store_interfaces.PA_STATE_STARTED)
+		hist.add_purchase(pending)
+
+		pa = purchase_history.get_pending_purchase_for(user, items)
+		assert_that(pa, is_not(None))
+		assert_that(pa, is_(pending))
+
+	@WithMockDSTrans
 	def test_missing_purchase(self):
 		user = self._create_user()
 		purchase_id = u'tag:nextthought.com,2011-10:system-OID-0x06cdce28af3dc253:0000000073:XVq3tFG7T82'

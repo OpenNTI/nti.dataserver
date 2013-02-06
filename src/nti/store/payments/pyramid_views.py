@@ -16,29 +16,36 @@ from .. import interfaces as store_interfaces
 
 class StripePayment(object):
 
+	processor = 'stripe'
+	
 	def __init__(self, request):
 		self.request = request
 
 	def __call__( self ):
 		request = self.request
-		token = request.matchdict.get('token')
 		items = request.matchdict.get('items', None)
 		items = items or request.matchdict.get('nttid', None)
-		
-		amount = request.matchdict.get('amount', None)
-		currency = request.matchdict.get('currency', 'USD')
 		username = request.matchdict.get('user', None)
 		username = username or authenticated_userid( request )
+		
+		# check for any pending purchase for the items being bought
+		purchase = purchase_history.get_pending_purchase_for(username, items)
+		if purchase is not None:
+			return purchase
+			
+		token = request.matchdict.get('token')
+		amount = request.matchdict.get('amount', None)
+		currency = request.matchdict.get('currency', 'USD')
 		description = request.matchdict.get('description', None)
 		description = description or '%s payment for "%r"' % (username, items)
-		
-		processor = 'stripe'
-		purchase = purchase_attempt.create_purchase_attempt(items=items, processor=processor, description=description)
+	
+		purchase = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor, description=description)
 		purchase_id = purchase_history.register_purchase_attempt(username, purchase)
 		
 		def process_pay():
-			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=processor)
-			manager.process_purchase(username=username, token=token, amount=int(amount*100), 
+			amount = int(amount * 100.0) # cents
+			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
+			manager.process_purchase(username=username, token=token, amount=amount, 
 									 currency=currency, purchase_id=purchase_id, description=description)
 		
 		gevent.spawn(process_pay)
