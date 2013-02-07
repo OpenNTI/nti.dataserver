@@ -9,18 +9,19 @@ from zope import interface
 from zope.schema.interfaces import IContextSourceBinder
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
-PA_STATE_UNKNOWN = u'Unknown'
 PA_STATE_FAILED = u'Failed'
+PA_STATE_SUCCESS = u'Success'
+PA_STATE_FAILURE = u'Failure'
 PA_STATE_PENDING = u'Pending'
 PA_STATE_STARTED = u'Started'
-PA_STATE_DISPUTED = 'Disputed'
+PA_STATE_UNKNOWN = u'Unknown'
+PA_STATE_DISPUTED = u'Disputed'
 PA_STATE_REFUNDED = u'Refunded'
 PA_STATE_CANCELED = u'Canceled'
 PA_STATE_RESERVED = u'Reserved'
-PA_STATE_SUCCESSFUL = u'Successful'
 
-PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_DISPUTED,
-			 PA_STATE_REFUNDED, PA_STATE_SUCCESSFUL, PA_STATE_CANCELED, PA_STATE_RESERVED)
+PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_FAILURE, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_DISPUTED,
+			 PA_STATE_REFUNDED, PA_STATE_SUCCESS, PA_STATE_CANCELED, PA_STATE_RESERVED)
 PA_STATE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in PA_STATES] )
 
 class IPaymentProcessor(interface.Interface):
@@ -167,7 +168,7 @@ class PurchaseAttemptStarted(PurchaseAttemptEvent):
 				
 @interface.implementer(IPurchaseAttemptSuccessful)
 class PurchaseAttemptSuccessful(PurchaseAttemptEvent):
-	state = PA_STATE_SUCCESSFUL
+	state = PA_STATE_SUCCESS
 
 @interface.implementer(IPurchaseAttemptRefunded)
 class PurchaseAttemptRefunded(PurchaseAttemptEvent):

@@ -113,7 +113,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 		
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
-			assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESSFUL))
+			assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESS))
 
 		assert_that( eventtesting.getEvents(pay_interfaces.IStripeCustomerCreated), has_length( 1 ) )
 
@@ -153,7 +153,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
-			assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESSFUL))
+			assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESS))
 			
 	@WithMockDSTrans
 	def test_sync_invalid_charge_id(self):		

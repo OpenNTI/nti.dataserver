@@ -76,10 +76,10 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		return xhash
 	
 	def has_failed(self):
-		return self.State == store_interfaces.PA_STATE_FAILED
+		return self.State in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE)
 		
 	def has_succeeded(self):
-		return self.State == store_interfaces.PA_STATE_SUCCESSFUL
+		return self.State == store_interfaces.PA_STATE_SUCCESS
 	
 	def is_unknown(self):
 		return self.State == store_interfaces.PA_STATE_UNKNOWN
