@@ -5,6 +5,7 @@ __docformat__ = "restructuredtext en"
 
 import six
 import time
+import functools
 from datetime import datetime
 
 import persistent
@@ -21,6 +22,7 @@ from nti.utils.property import alias
 
 from . import interfaces as store_interfaces
 
+@functools.total_ordering
 @interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable, ILocation)
 class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Persistent):
 	
@@ -74,6 +76,12 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	def __eq__(self, other):
 		return self is other
 		
+	def __lt__(self, other):
+		try:
+			return self.start_time < other.start_time
+		except AttributeError:
+			return NotImplemented
+
 	def __hash__( self ):
 		xhash = 47
 		xhash ^= hash(self.Processor)
