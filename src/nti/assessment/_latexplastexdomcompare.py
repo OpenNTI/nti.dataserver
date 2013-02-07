@@ -138,7 +138,7 @@ def grade( solution, response ):
 		# The full-width percent is how we tend to write percents in source files
 		# we also want to handle how they come in from the browser, in "\%" (https://trello.com/c/4qdjExxV)
 		allowed_units = list(allowed_units)
-		allowed_units.append('\\%')
+		allowed_units.insert(allowed_units.index( u'\uFF05' ), '\\%') # keep these two together, optional must come at end
 	# Before doing this, strip off opening and closing latex display math signs, if they were sent,
 	# so that we can check for units
 	# Only do this if *both* were provided

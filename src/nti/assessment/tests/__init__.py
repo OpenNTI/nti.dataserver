@@ -39,7 +39,11 @@ class GradeMatcher(BaseMatcher):
 		description.append_text( 'solution that grades ').append_text( str(self.response) ).append_text( ' as ' ).append_text( str(self.value) )
 
 	def describe_mismatch( self, item, mismatch_description ):
-		mismatch_description.append_text( 'solution ' ).append_text( str(type(item) ) ).append_text( ' ' ).append_text( str(item) ).append_text( ' graded ' + str(self.response) + ' as ' + str( not self.value ) )
+		mismatch_description.append_text( 'solution ' ).append_text( str(type(item) ) ).append_text( ' ' ).append_text( str(item) )
+		if getattr( item, 'allowed_units', () ):
+			mismatch_description.append_text( " units " + str( item.allowed_units ) )
+
+		mismatch_description.append_text( ' graded ' + str(self.response) + ' as ' + str( not self.value ) )
 
 	def __repr__( self ):
 		return 'solution that grades as ' + str(self.value)

@@ -86,22 +86,29 @@ class TestLatex(SharedConfiguringTestBase):
 		assert_that( soln, grades_right( soln.value ) )
 
 	def test_simple_grade_accept_trailing_percent(self):
+		for soln_text in "$75$", "75": # with/out surrounding $
 
-		soln = solution.QLatexSymbolicMathSolution( "$75$" )
-		assert_that( soln, grades_right( soln.value ) )
+			soln = solution.QLatexSymbolicMathSolution( soln_text )
+			assert_that( soln, grades_right( soln_text ) )
 
-		responses = (r"$75 \%", r"$75\%", r"75 \%", r"75\%")
+			responses = ("75", r"$75 \%$", r"$75\%$", r"75 \%", r"75\%")
 
-		for r in responses:
-			rsp = response.QTextResponse( r )
-			assert_that( soln, grades_right( rsp ) )
+			for r in responses:
+				rsp = response.QTextResponse( r )
+				assert_that( soln, grades_right( rsp ) )
 
+			# With units specified with and without space
+			# required
+			soln.allowed_units = [u'\uff05'] # full-width percent
+			for r in responses[1:]: # the first one can't work, it's missing unit
+				rsp = response.QTextResponse( r )
+				assert_that( soln, grades_right( rsp ) )
 
-		# With units specified with and without space
-		soln.allowed_units = [u'\uff05'] # full-width percent
-		for r in responses:
-			rsp = response.QTextResponse( r )
-			assert_that( soln, grades_right( rsp ) )
+			# optional
+			soln.allowed_units.append( '' )
+			for r in responses:
+				rsp = response.QTextResponse( r )
+				assert_that( soln, grades_right( rsp ) )
 
 
 	def test_grade_empty(self):
