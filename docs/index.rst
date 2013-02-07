@@ -90,6 +90,15 @@ Chat
 	chatserver
 	chat-transcripts
 
+Assessment (Quizzes)
+====================
+
+.. toctree::
+	:maxdepth: 2
+
+	assessment-interfaces
+	assessment-implementation
+
 
 Other Documents
 ===============
@@ -106,8 +115,6 @@ Other Documents
 	socketio-api
 	externalization-api
 
-
-	assessment-interfaces
 
 	library-interfaces
 	apns
