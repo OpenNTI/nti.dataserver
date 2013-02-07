@@ -1,4 +1,9 @@
-from __future__ import print_function, unicode_literals
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
 
 from zope import interface
 
@@ -14,11 +19,11 @@ class QSolution(Persistent):
 	"""
 	Base class for solutions. Its :meth:`grade` method
 	will attempt to transform the input based on the interfaces
-	this object implements and then call the :meth:`_grade` method.
+	this object implements and then call the :meth:`.QPart.grade` method.
 	"""
 
 	#: Defines the factory used by the :meth:`grade` method to construct
-	#: a IQPart object. Also, instances are only equal if this value
+	#: a :class:`.IQPart` object. Also, instances are only equal if this value
 	#: is equal
 	_part_type = parts.QPart
 
@@ -63,8 +68,8 @@ class QNumericMathSolution(_TrivialValuedMixin,QMathSolution):
 	"""
 	Numeric math solution.
 
-	TODO: This grading mechanism is pretty poorly handled and compares
-	by exact equality.
+	.. todo:: This grading mechanism is pretty poorly handled and compares
+		by exact equality.
 	"""
 
 	_part_type = parts.QNumericMathPart

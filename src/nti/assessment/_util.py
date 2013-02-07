@@ -10,10 +10,9 @@ _marker = object()
 class TrivialValuedMixin(object):
 	value = None
 	def __init__( self, *args, **kwargs ):
-		"""
-		value is either the first arg (if positional args are given) or the kwarg named
-		such.
-		"""
+		# The contents of ``self.value`` come from either the first arg (if positional args are given) or the kwarg named
+		# such.
+
 		if args:
 			value = args[0]
 		elif 'value' in kwargs:

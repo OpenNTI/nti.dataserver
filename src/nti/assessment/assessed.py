@@ -5,7 +5,7 @@ Having to do with submitting external data for grading.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 
 logger = __import__('logging').getLogger(__name__)
@@ -95,8 +95,10 @@ class QAssessedQuestionSet(SchemaConfigured,persistent.Persistent):
 def assess_question_submission( submission, questions=None ):
 	"""
 	Assess the given question submission.
-	:return: An :class:`interfaces.IQAssessedQuestion`.
-	:param questions: If given, an :class:`interfaces.IQuestionMap`. If
+
+	:return: An :class:`.interfaces.IQAssessedQuestion`.
+	:param submission: An :class:`.interfaces.IQuestionSubmission`.
+	:param questions: If given, an :class:`.interfaces.IQuestionMap`. If
 		not given, one will be looked up from the component registry.
 	:raises KeyError: If no question can be found for the submission.
 	"""
@@ -118,8 +120,10 @@ def assess_question_submission( submission, questions=None ):
 def assess_question_set_submission( set_submission, questions=None ):
 	"""
 	Assess the given question set submission.
-	:return: An :class:`interfaces.IQAssessedQuestionSet`.
-	:param questions: If given, an :class:`interfaces.IQuestionMap`. If
+
+	:return: An :class:`.interfaces.IQAssessedQuestionSet`.
+	:param set_submission: An :class:`.interfaces.IQuestionSetSubmission`.
+	:param questions: If given, an :class:`.interfaces.IQuestionMap`. If
 		not given, one will be looked up from the component registry.
 	:raises KeyError: If no question can be found for the submission.
 	"""

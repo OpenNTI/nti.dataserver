@@ -1,6 +1,6 @@
-=============
+=======
  Store
-=============
+=======
 
 This document talks about how the nextthought store is implemented.
 
@@ -18,10 +18,10 @@ The implementation of the API and storage lives in the
 
 
 Payments
-=====
+========
 
 This package defines the different ways we implement the purchase of an
-content item 
+content item
 
 Currently there is only one way to process the purchase of an item and it
 is done through stripe
@@ -33,7 +33,7 @@ The implementation of the external interface for payment lives
 in the ``nti.store.payments.pyramid_views`` module.
 
 Payments
----------
+--------
 
 In order to accept a paymet through stripe
 (see :func:`nti.store.pyramid_views.StripePayment`),
