@@ -71,6 +71,9 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		d = datetime.fromtimestamp(self.start_time)
 		return "%s(%s,%s,%s)" % (self.__class__, self.processor, d, self.items)
 	
+	def __eq__(self, other):
+		return self is other
+		
 	def __hash__( self ):
 		xhash = 47
 		xhash ^= hash(self.Processor)
