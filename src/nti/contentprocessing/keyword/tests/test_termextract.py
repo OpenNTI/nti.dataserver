@@ -33,12 +33,13 @@ class TestKeyWordExtract(ConfiguringTestBase):
 	def test_term_extract(self):
 		terms = extract_key_words(self.sample_content)
 		terms = [(r.token, r.frequency, r.strength) for r in terms]
-		assert_that(terms, is_([('blood', 4, 1),
+		assert_that(sorted(terms),
+					is_(sorted([('blood', 4, 1),
 								('virus', 3, 1),
 								('blood vessel', 1, 2),
 								('blood cells', 1, 2),
 								('body works', 1, 2),
-								('blood cells viruses', 1, 3)]))
+								('blood cells viruses', 1, 3)])))
 
 	@unittest.SkipTest
 	def test_alchemy_extract(self):

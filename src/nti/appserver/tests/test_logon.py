@@ -152,8 +152,12 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
-		assert_that( result.links[1].target, is_( '/dataserver2/logon.google?username=jason.madden%40nextthought.com&oidcsum=-1978826904171095151' ) )
-		assert_that( result.links[2].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
+		__traceback_info__ = result.links
+		assert_that( result.links[1].target, contains_string( '/dataserver2/logon.google?') )
+		assert_that( result.links[1].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[1].target, contains_string( 'oidcsum=1290829754' ) )
+
+		assert_that( result.links[0].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
 		#assert_that( result.links[3].target, is_( '/dataserver2' ) )
 		#assert_that( result.links[4].target, is_( '/dataserver2/logon.logout' ) )
 
@@ -176,8 +180,12 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 		self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 7 ) ) )
-		assert_that( result.links[0].target, is_( '/dataserver2/logon.password?username=jason.madden%40nextthought.com' ) )
-		assert_that( result.links[1].target, is_( '/dataserver2/logon.google?username=jason.madden%40nextthought.com&oidcsum=-1978826904171095151' ) )
+		__traceback_info__ = result.links
+		assert_that( result.links[-2].target, contains_string( '/dataserver2/logon.password?' ) )
+		assert_that( result.links[-3].target, contains_string( '/dataserver2/logon.google?') )
+		assert_that( result.links[-3].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[-3].target, contains_string( 'oidcsum=1290829754' ) )
+
 
 		# Give us a specific identity_url, and that changes to open id
 		self.config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
@@ -185,8 +193,12 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 		interface.alsoProvides( user, nti_interfaces.IOpenIdUser )
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 7 ) ) )
-		assert_that( result.links[0].target, is_( '/dataserver2/logon.password?username=jason.madden%40nextthought.com' ) )
-		assert_that( result.links[1].target, is_( '/dataserver2/logon.openid?username=jason.madden%40nextthought.com&openid=http%3A%2F%2Fgoogle.com%2Ffoo&oidcsum=-1978826904171095151' ) )
+		__traceback_info__ = result.links
+		assert_that( result.links[-3].target, is_( '/dataserver2/logon.password?username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[-2].target, contains_string( '/dataserver2/logon.openid?') )
+		assert_that( result.links[-2].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[-2].target, contains_string( 'oidcsum=1290829754' ) )
+		assert_that( result.links[-2].target, contains_string( 'openid=http' ) )
 
 	def test_openid_login( self ):
 		fail = google_login( None, get_current_request() )
@@ -212,8 +224,8 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 				break
 		assert_that( redir_url, is_( not_none() ) )
 		# TODO: These prefixes are probably order dependent and fragile
-		assert_that( redir_url, contains_string( 'ext1=unlimited' ) )
-		assert_that( redir_url, contains_string( 'ax.if_available=ext1' ) )
+		assert_that( redir_url, contains_string( '=unlimited' ) )
+		assert_that( redir_url, contains_string( 'ax.if_available=ext' ) )
 
 		# An openid request to a non-existant domain will fail
 		# to begin negotiation

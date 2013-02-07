@@ -170,36 +170,38 @@ class _Env(_ReadableEnv):
 		ini.add_section( 'rpcinterface:supervisor' )
 		ini.set( 'rpcinterface:supervisor', 'supervisor.rpcinterface_factory', 'supervisor.rpcinterface:make_main_rpcinterface' )
 
+		environment = ['DATASERVER_DIR=%(here)s/../',
+					   'PYTHONHASHSEED=random'] # Secure random against DoS
+
 		for p in self.programs:
-			line = 'program:%s' % p.name
-			ini.add_section( line )
-			ini.set( line, 'command', p.cmd_line)
+			section = 'program:%s' % p.name
+			ini.add_section( section )
+			ini.set( section, 'command', p.cmd_line)
 			if p.priority != _Program.priority:
-				ini.set( line, 'priority', str(p.priority) )
-			ini.set( line, 'environment', 'DATASERVER_DIR=%(here)s/../' )
+				ini.set( section, 'priority', str(p.priority) )
+			ini.set( section, 'environment', ','.join(environment) )
 
 		with open( self.conf_file( 'supervisord.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 
 		# write dev config
-		enviroment = ['DATASERVER_DIR=%(here)s/../']
 
 		command = 'pserve'
 		ini.add_section( 'program:pserve' )
 		ini.set( 'program:pserve', 'command', '%s %s' % (command, pserve_ini) )
-		ini.set( 'program:pserve', 'environment', ','.join(enviroment) )
+		ini.set( 'program:pserve', 'environment', ','.join(environment) )
 		ini.set( 'supervisord', 'nodaemon', 'true' )
 		with open( self.conf_file( 'supervisord_dev.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 
 		# write demo config
-		enviroment.append('DATASERVER_DEMO=1')
+		environment.append('DATASERVER_DEMO=1')
 		zeo_p = _create_zeo_program(self, 'demo_zeo_conf.xml')
 		ini.set('program:zeo', 'command', zeo_p.cmd_line)
-		ini.set('program:pserve', 'environment', ','.join(enviroment) )
+		ini.set('program:pserve', 'environment', ','.join(environment) )
 		for p in self.programs:
 			section = 'program:%s' % p.name
-			ini.set(section, 'environment', ','.join(enviroment))
+			ini.set(section, 'environment', ','.join(environment))
 		with open( self.conf_file( 'supervisord_demo.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 

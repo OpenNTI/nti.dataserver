@@ -6,7 +6,7 @@ logger = logging.getLogger( __name__ )
 
 import sys
 import itertools
-import anyjson as json
+import simplejson as json
 
 from zope import interface
 from zope import component
@@ -172,7 +172,7 @@ class SessionConsumer(object):
 			if message.get( 'id' ):
 				socket_obj.ack( message['id'], [event] )
 			else:
-				socket_obj.send_event( error_type, json.dumps( event ) )
+				socket_obj.send_event( error_type, json.dumps( event, sort_keys=__debug__ ) )
 			return False
 		else:
 			return True

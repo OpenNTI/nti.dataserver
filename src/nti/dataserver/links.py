@@ -14,7 +14,10 @@ from zope import component
 
 import six
 
+import functools
+
 @interface.implementer( interfaces.ILink )
+@functools.total_ordering
 class Link(object):
 	"""
 	Default implementation of ILink.
@@ -68,6 +71,18 @@ class Link(object):
 	def __eq__( self, other ):
 		try:
 			return self is other or (self.rel == other.rel and self.target == other.target and self.elements == other.elements)
+		except AttributeError:
+			return NotImplemented
+
+	def __lt__( self, other ):
+		try:
+			return (self.rel, self.target, self.elements) < (other.rel, other.target, other.elements)
+		except AttributeError:
+			return NotImplemented
+
+	def __gt__( self, other ):
+		try:
+			return (self.rel, self.target, self.elements) > (other.rel, other.target, other.elements)
 		except AttributeError:
 			return NotImplemented
 

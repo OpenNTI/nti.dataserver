@@ -12,7 +12,7 @@ from hamcrest import not_none
 from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not
-from hamcrest import contains
+from hamcrest import contains, contains_inanyorder
 from hamcrest import has_value
 does_not = is_not
 
@@ -1283,7 +1283,7 @@ class TestApplication(SharedApplicationTestBase):
 						   extra_environ=self._make_extra_environ(),
 						   headers={"Content-Type": "application/json" } )
 		assert_that( res.status_int, is_( 200 ) )
-		assert_that( res.json_body, has_entry( 'sharedWith', ['foo@bar', 'jason.madden@nextthought.com'] ) )
+		assert_that( res.json_body, has_entry( 'sharedWith', contains_inanyorder( 'foo@bar', 'jason.madden@nextthought.com' ) ) )
 
 	@WithSharedApplicationMockDS
 	def test_user_search_returns_enrolled_classes(self):
