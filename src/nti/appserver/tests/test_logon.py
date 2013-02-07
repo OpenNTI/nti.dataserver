@@ -101,10 +101,11 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 
 		result = ping( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 6 ) ) )
-		assert_that( result.links[0].target, ends_with( '/dataserver2/handshake' ) )
-		assert_that( result.links[1].target, ends_with( '/dataserver2/users' ) )
-		assert_that( result.links[1].elements, is_( ('@@account.create',) ) )
-		assert_that( result.links[1].target_mime_type, is_( 'application/vnd.nextthought.user' ) )
+		__traceback_info__ = result.links
+		assert_that( result.links[-2].target, ends_with( '/dataserver2/handshake' ) )
+		assert_that( result.links[0].target, ends_with( '/dataserver2/users' ) )
+		assert_that( result.links[0].elements, is_( ('@@account.create',) ) )
+		assert_that( result.links[0].target_mime_type, is_( 'application/vnd.nextthought.user' ) )
 		to_external_representation( result, EXT_FORMAT_JSON, name='wsgi' )
 
 
@@ -153,11 +154,11 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
 		__traceback_info__ = result.links
-		assert_that( result.links[1].target, contains_string( '/dataserver2/logon.google?') )
-		assert_that( result.links[1].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
-		assert_that( result.links[1].target, contains_string( 'oidcsum=1290829754' ) )
+		assert_that( result.links[5].target, contains_string( '/dataserver2/logon.google?') )
+		assert_that( result.links[5].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[5].target, contains_string( 'oidcsum=1290829754' ) )
 
-		assert_that( result.links[0].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[2].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
 		#assert_that( result.links[3].target, is_( '/dataserver2' ) )
 		#assert_that( result.links[4].target, is_( '/dataserver2/logon.logout' ) )
 

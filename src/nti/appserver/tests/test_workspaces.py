@@ -135,9 +135,10 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		assert_that( uew.collections[0].container, has_length( 1 ) )
 		root = uew.collections[0].container[0]
 		ext_obj = to_external_object( root )
+		__traceback_info__ = ext_obj
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
 		assert_that( ext_obj, has_entry( 'Links', has_length( greater_than_or_equal_to( 1 ) ) ) )
-		assert_that( ext_obj['Links'][0], has_entry( 'rel', 'RecursiveStream' ) )
+		assert_that( ext_obj['Links'][1], has_entry( 'rel', 'RecursiveStream' ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_shared_container(self):
@@ -160,11 +161,12 @@ class TestUserEnumerationWorkspace(tests.ConfiguringTestBase):
 		assert_that( uew.collections[2].container, has_length( 2 ) )
 		root = uew.collections[2].container[0]
 		ext_obj = to_external_object( root )
+		__traceback_info__ = ext_obj
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
 		assert_that( ext_obj, has_entry( 'Class', 'PageInfo' ) )
 		assert_that( ext_obj, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 		assert_that( ext_obj, has_entry( 'Links', has_length( greater_than_or_equal_to( 1 ) ) ) )
-		assert_that( ext_obj['Links'][0], has_entry( 'rel', 'RecursiveStream' ) )
+		assert_that( ext_obj['Links'][1], has_entry( 'rel', 'RecursiveStream' ) )
 
 
 		shared = uew.collections[2].container[1]
