@@ -52,7 +52,7 @@ class MockSocketIO(object):
 	socket = property(new_protocol)
 	def incr_hits(self): pass
 
-class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
+class TestSessionConsumer(mock_dataserver.SharedConfiguringTestBase):
 	cons = None
 	handler = None
 	socket = None
@@ -90,6 +90,7 @@ class TestSessionConsumer(mock_dataserver.ConfiguringTestBase):
 		class MockChatServer(object): pass
 		o = MockChatServer()
 		interface.directlyProvides( o, chat_interfaces.IChatserver)
+		# NOTE: This is slightly unsafe in the shared configuration and might leak
 		component.provideUtility( o )
 
 		component.provideSubscriptionAdapter( MockChat )
