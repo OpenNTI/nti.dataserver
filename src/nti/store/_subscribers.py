@@ -11,6 +11,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from . import interfaces as store_interfaces
 from .purchase_history import get_purchase_attempt
+from ._content_roles import _add_users_content_roles
 
 logger = __import__('logging').getLogger( __name__ )
 
@@ -34,6 +35,7 @@ def _purchase_attempt_successful( event ):
 		purchase.State = store_interfaces.PA_STATE_SUCCESS
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
+		_add_users_content_roles(event.username, purchase.Items)
 		logger.info('%s completed successfully' % (purchase))
 	_trx_runner(func)
 
