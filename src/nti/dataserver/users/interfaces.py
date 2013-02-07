@@ -60,7 +60,7 @@ class UsernameContainsIllegalChar(_InvalidData):
 	def __init__( self, username, allowed_chars ):
 		self.username = username
 		allowed_chars = set(allowed_chars) - set( string.letters + string.digits )
-		allowed_chars = ''.join( allowed_chars )
+		allowed_chars = ''.join( sorted(allowed_chars) )
 		self.allowed_chars = allowed_chars
 		if not allowed_chars:
 			allowed_chars = 'no special characters'

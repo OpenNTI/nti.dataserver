@@ -232,6 +232,7 @@ def ping( request ):
 	links.append( Link( handshake_href, rel=REL_HANDSHAKE ) )
 	links.extend( _links_for_authenticated_users( request ) )
 	links.extend( _links_for_unauthenticated_users( request ) )
+	links.sort() # for tests
 	return _Pong( links )
 
 @interface.implementer( ext_interfaces.IExternalObject )
@@ -297,7 +298,7 @@ def handshake(request):
 
 	links.extend( _links_for_authenticated_users( request ) )
 	links.extend( _links_for_unauthenticated_users( request ) )
-
+	links.sort()
 	return _Handshake( links )
 
 @interface.implementer( app_interfaces.ILogonLinkProvider )
@@ -335,7 +336,7 @@ class _SimpleExistingUserFacebookLinkProvider(_SimpleMissingUserFacebookLinkProv
 
 def _prepare_oid_link( request, username, rel, params=() ):
 	query = dict(params)
-	query['oidcsum'] = str(hash(username)) if 'oidcsum' not in query else query['oidcsum']
+	query['oidcsum'] = _checksum(username) if 'oidcsum' not in query else query['oidcsum']
 	query['username'] = username
 	try:
 		return Link( request.route_path( rel, _query=query ),
@@ -394,7 +395,7 @@ class _MissingUserAopsLoginLinkProvider(_MissingUserWhitelistedDomainGoogleLogin
 
 	def params_for( self, user ):
 		aops_username = self.user.username.split( '@' )[0]
-		oidcsum = str( hash( aops_username ) )
+		oidcsum = _checksum( aops_username )
 		# Larry says:
 		# > http://<username>.openid.artofproblemsolving.com
 		# > http://openid.artofproblemsolving.com/<username>
@@ -762,6 +763,9 @@ def _update_users_content_roles( user, idurl, content_roles ):
 
 	member.setGroups( other_provider_roles + roles_to_add )
 
+from zlib import crc32
+def _checksum( username ):
+	return str(crc32(username)) # must be stable across machines
 
 def _openidcallback( context, request, success_dict ):
 	# It seems that the identity_url is actually
@@ -801,7 +805,7 @@ def _openidcallback( context, request, success_dict ):
 	else:
 		username = email
 
-	if str(hash(username)) != oidcsum:
+	if _checksum(username) != oidcsum:
 		   logger.warn( "Checksum mismatch. Logged in multiple times? %s %s", oidcsum, success_dict)
 		   return _create_failure_response(request, error='Username/Email checksum mismatch')
 

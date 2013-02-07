@@ -46,7 +46,7 @@ class QuestionMap(dict):
 
 	def __init__( self ):
 		super(QuestionMap,self).__init__()
-		self.by_file = {}
+		self.by_file = {} # {ntiid => [question]}
 
 	def __process_assessments( self, assessment_item_dict, containing_filename, hierarchy_entry, level_ntiid=None ):
 		for k, v in assessment_item_dict.items():
@@ -137,6 +137,9 @@ class QuestionMap(dict):
 			assert child_index.get( 'filename' ), 'Child must contain valid filename to contain assessments'
 			self.__from_index_entry( child_index, content_package, nearest_containing_ntiid=child_ntiid )
 
+		# For tests and such, sort
+		for questions in self.by_file.values():
+			questions.sort( key=lambda q: q.__name__ )
 
 @component.adapter(lib_interfaces.IContentPackage,IObjectCreatedEvent)
 def add_assessment_items_from_new_content( content_package, event ):

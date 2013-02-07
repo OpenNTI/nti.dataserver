@@ -382,8 +382,13 @@ def _alter_pdf( pdf_stream, username, child_firstname, parent_email ):
 	# doesn't hold the reference)
 	page_content = pyPdf.pdf.ContentStream( pdf_page['/Contents'].getObject(), pdf_page.pdf )
 	# And store the content back in the page, under the NamedObject key, which happens to be equal to the string
-	assert pdf_page.keys()[0] == '/Contents'
-	pdf_page[pdf_page.keys()[0]] = page_content
+	page_key = None
+	for key in pdf_page.keys():
+		if key == '/Contents':
+			page_key = key
+			break
+	assert page_key is not None
+	pdf_page[page_key] = page_content
 
 
 	IX_UNAME = 376

@@ -578,7 +578,7 @@ class _UGDView(object):
 					if batch is not None and batch != result_list:
 						batch_params = self.request.params.copy()
 						batch_params['batchStart'] = batch.start
-						link_next_href = self.request.current_route_path( _query=batch_params )
+						link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
 						link_next = Link( link_next_href, rel=rel )
 						result.setdefault( 'Links', [] ).append( link_next )
 

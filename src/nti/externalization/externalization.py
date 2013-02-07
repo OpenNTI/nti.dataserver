@@ -17,7 +17,7 @@ import BTrees.OOBTree
 import ZODB
 
 import plistlib
-import simplejson as json
+import simplejson as json # import the fast, flexible C version
 
 import six
 import numbers
@@ -275,7 +275,9 @@ def to_json_representation_externalized( obj ):
 	(These things creep in during the object decorator phase and are usually
 	links.)
 	"""
-	return json.dumps( obj, check_circular=False, default=_second_pass_to_external_object )
+	return json.dumps( obj, check_circular=False,
+					   sort_keys=__debug__, # Makes testing easier
+					   default=_second_pass_to_external_object )
 
 def _syntheticKeys( ):
 	return ('OID', 'ID', 'Last Modified', 'Creator', 'ContainerId', 'Class')

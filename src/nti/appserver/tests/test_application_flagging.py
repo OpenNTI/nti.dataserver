@@ -79,7 +79,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_flag_moderation_note(self):
-		"Basic tests of the moderation admin page"
+		"Basic tests of the moderation (flagging) admin page"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 			n = contenttypes.Note()
@@ -128,11 +128,13 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 						 is_( provided_by_n ) )
 
 		# Initially ascending
-		assert_that( res.body, contains_string( '?table-sortOrder=ascending&table-sortOn=table-note-created-' ) )
+		assert_that( res.body, contains_string( 'table-sortOrder=ascending' ) )
+		assert_that( res.body, contains_string( 'table-sortOn=table-note-created-' ) )
 		# So request that
 		res = testapp.get( path + '?table-sortOrder=ascending&table-sortOn=table-note-created-2', extra_environ=self._make_extra_environ() )
 		# and we get the reverse link
-		assert_that( res.body, contains_string( '?table-sortOrder=descending&table-sortOn=table-note-created-2' ) )
+		assert_that( res.body, contains_string( 'table-sortOrder=descending' ) )
+		assert_that( res.body, contains_string( 'table-sortOn=table-note-created-2' ) )
 
 		res = testapp.get( path + '?table-sortOrder=ascending&table-sortOn=table-note-modified-3', extra_environ=self._make_extra_environ() )
 

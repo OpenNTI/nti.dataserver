@@ -4,6 +4,7 @@
 
 
 from hamcrest import assert_that,  is_, contains, has_entry, has_item
+from hamcrest import contains_string
 from nti.dataserver.tests import has_attr
 
 from zope import component
@@ -197,7 +198,7 @@ class TestSessionConsumer(mock_dataserver.SharedConfiguringTestBase):
 		self.handler = h
 		self.cons( self.socket, {'type': 'event', 'name': 'chat_handler', 'args': ("The arg",)} )
 
-		assert_that( self.socket.events, contains( ('server-error', ('{"error-type": "server-error", "message": "The error", "code": "ValueError"}',) )) )
+		assert_that( self.socket.events, contains( ('server-error', ('{"code": "ValueError", "error-type": "server-error", "message": "The error"}',) ) ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_ack_event_exception( self ):

@@ -434,7 +434,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 		assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 		assert_that( e.exception.json_body, has_entry( 'message',
-													  'Username contains an illegal character. Only letters, digits, and +-_. are allowed.' ) )
+													  'Username contains an illegal character. Only letters, digits, and +-._ are allowed.' ) )
 
 
 	@WithMockDSTrans
