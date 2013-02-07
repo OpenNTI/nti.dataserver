@@ -28,7 +28,7 @@ def _purchase_attempt_started( event ):
 def _purchase_attempt_successful( event ):
 	def func():
 		purchase = get_purchase_attempt(event.purchase_id, event.username)
-		purchase.State = store_interfaces.PA_STATE_SUCCESSFUL
+		purchase.State = store_interfaces.PA_STATE_SUCCESS
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
 		logger.info('%s completed successfully' % (purchase))

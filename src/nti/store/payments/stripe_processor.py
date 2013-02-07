@@ -113,7 +113,7 @@ class _StripePaymentProcessor(StripeIO):
 		charge = self.create_stripe_charge(amount, currency, customer_id, card, description, api_key)
 		if charge.failure_message:
 			raise StripeException(charge.failure_message)
-		return charge.id
+		return charge
 	
 	# ---------------------------
 	
@@ -127,13 +127,14 @@ class _StripePaymentProcessor(StripeIO):
 		
 		descid = "%s,%s,%s" % (username, customer_id, purchase_id)
 		try:
-			charge_id = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
+			charge = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
 			
-			notify(pay_interfaces.RegisterStripeCharge(purchase_id, charge_id, username))
+			notify(pay_interfaces.RegisterStripeCharge(purchase_id, charge.id, username))
 			
-			notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
+			if charge.paid:
+				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
 			
-			return charge_id
+			return charge.id
 		except Exception, e:
 			message = str(e)
 			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
