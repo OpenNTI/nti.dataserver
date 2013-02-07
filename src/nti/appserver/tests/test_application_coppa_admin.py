@@ -67,7 +67,13 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		# OK, now let's approve it, then we should be back to an empty page.
 		# First, if we submit without an email, we don't get approval
 		form = res.forms['subFormTable']
-		form.set( 'table-coppa-admin-selected-0-selectedItems', True, index=0 )
+		field_name = None
+		for key in form.fields:
+			if key.startswith( 'table-coppa-admin-selected' ):
+				field_name = key
+				break
+
+		form.set( field_name, True, index=0 )
 
 		res = form.submit( 'subFormTable.buttons.approve', extra_environ=environ )
 		assert_that( res.status_int, is_( 302 ) )
@@ -81,7 +87,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
 		# Now, if we submit with an email, we do get approval
 		form = res.forms['subFormTable']
-		form.set( 'table-coppa-admin-selected-0-selectedItems', True, index=0 )
+		form.set( field_name, True, index=0 )
 		for k in form.fields:
 			if 'contactemail' in k:
 				form.set( k, 'jason.madden@nextthought.com' )

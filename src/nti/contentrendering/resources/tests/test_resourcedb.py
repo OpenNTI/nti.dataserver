@@ -113,7 +113,13 @@ class TestResourceDBTabular(ConfiguringTestBase):
 		# Make sure the hlines make it to the resources
 		# Our verification is simple, based just on equality to existing files. This is probable
 		# fragile.
-		normalized_source= rdb._db.keys()[0]
+		__traceback_info__ = rdb._db
+		normalized_source = None
+		for key in rdb._db.keys():
+			if 'tabular' in key:
+				normalized_source = key
+				break
+		assert_that( normalized_source, is_( not_none() ) )
 
 		resource_png = rdb.getResourcePath( normalized_source, ('png','orig', 1))
 		resource_svg = rdb.getResourcePath( normalized_source, ('svg',) )
