@@ -119,6 +119,8 @@ class ConfiguringTestBase(_TestBaseMixin,nti.tests.ConfiguringTestBase):
 
 class SharedConfiguringTestBase(_TestBaseMixin,nti.tests.SharedConfiguringTestBase):
 
+	HANDLE_GC = True # Must do GCs for ZCA cleanup. See superclass
+
 	_mailer = None
 
 	@classmethod
