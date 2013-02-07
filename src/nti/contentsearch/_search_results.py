@@ -1,23 +1,14 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
-
 
 import six
 from collections import Iterable, namedtuple, defaultdict
 
 from zope import interface
 from zope import component
-from zope.location import ILocation
+from zope.container import contained as zcontained
 from zope.mimetype import interfaces as zmime_interfaces
 
 from z3c.batching.batch import Batch
@@ -26,11 +17,7 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.contentsearch import interfaces as search_interfaces
 
-@interface.implementer( ILocation )
-class _BaseSearchResults(object):
-
-	__name__ = None
-	__parent__ = None
+class _BaseSearchResults(zcontained.Contained):
 
 	def __init__(self, query):
 		assert search_interfaces.ISearchQuery.providedBy(query)
