@@ -14,6 +14,7 @@ import stripe
 import unittest
 
 from zope import component
+from zope.annotation import IAnnotations
 
 from nti.dataserver.users import User
 
@@ -28,7 +29,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.store.tests import ConfiguringTestBase
 
 from zope.component import eventtesting
-from hamcrest import (assert_that, is_, is_not, has_length)
+from hamcrest import (assert_that, is_, is_not, has_length, has_key)
 
 class TestStripeProcessor(ConfiguringTestBase):
 
@@ -125,13 +126,15 @@ class TestStripeProcessor(ConfiguringTestBase):
 		assert_that(eventtesting.getEvents( store_interfaces.IPurchaseAttemptSuccessful ), has_length( 1 ) )
 
 		with mock_dataserver.mock_db_trans(ds):
+			user = User.get_user(username)
+			su = pay_interfaces.IStripeCustomer(user)
+			akey = "%s.%s" % (su.__class__.__module__, su.__class__.__name__)
 			self.manager.delete_customer(username)
 		assert_that( eventtesting.getEvents(pay_interfaces.IStripeCustomerDeleted), has_length( 1 ) )
 		
 		with mock_dataserver.mock_db_trans(ds):
 			user = User.get_user(username)
-			su = pay_interfaces.IStripeCustomer(user)	
-			assert_that(su.customer_id, is_(None))
+			assert_that(IAnnotations(user), is_not(has_key(akey)))
 		
 	@WithMockDSTrans
 	def test_sync_pending_purchase(self):		

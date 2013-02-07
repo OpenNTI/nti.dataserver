@@ -9,6 +9,7 @@ from datetime import date
 from zope import component
 from zope import interface
 from zope.event import notify
+from zope.annotation import IAnnotations
 
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
@@ -37,6 +38,7 @@ def stripe_customer_deleted(event):
 		user = User.get_user(event.username)
 		su = pay_interfaces.IStripeCustomer(user)
 		su.customer_id = None
+		IAnnotations(user).pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 	
 @component.adapter(pay_interfaces.IRegisterStripeToken)
