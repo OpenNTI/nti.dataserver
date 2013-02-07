@@ -3,26 +3,95 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import os
 import hmac
+import time
 import uuid
 import base64
 import hashlib
+import numbers
+from datetime import date
 
+from boto.exception import BotoServerError
 from boto.fps.connection import FPSConnection
 
+SINGLE_USE_PIPIELINE = 'SingleUse'
+AWS_FPS_SANDBOX_HOST = 'fps.sandbox.amazonaws.com'
+
 class FPSException(Exception):
-	pass
+	def __init__(self, error_message, reason=None, status=None):
+		super(FPSException, self).__init__(error_message)
+		self.reason = reason
+		self.status = status
 
 class FPSIO(object):
 	
-	def __init__(self, host='fps.sandbox.amazonaws.com'):
+	def __init__(self):
 		self._connection = None
 		
 	@property
 	def connection(self):
 		if self._connection is None:
-			self._connection = FPSConnection(host=self.aws_host)
+			aws_host = os.getenv('AWS_FPS_HOST', AWS_FPS_SANDBOX_HOST)
+			self._connection = FPSConnection(host=aws_host)
 		return self._connection
+	
+	def signature(self, msg=None):
+		msg = msg or str(uuid.uuid1())
+		secret_access_key = self.connection.provider.secret_key
+		dig = hmac.new(secret_access_key, msg=msg, digestmod=hashlib.sha256).digest()
+		return base64.b64encode(dig).decode() 
+	
+	def _do_fps_operation(self,func, *args, **kwargs):
+		try:
+			result = func(*args, **kwargs)
+			return result
+		except BotoServerError, e:
+			raise FPSException(e.error_message, e.reason, e.status)
+		except Exception, e:
+			raise FPSException(str(e))
+		
+	def get_cbui_url(self, caller_reference, return_url, amount, currency='USD', payment_reason=None, pipeline_name=None):
+		"""
+		Returns a [aws-fps] url to start a payment process
+		
+		:caller_reference:  buyer/caller/NTI transaction reference id
+		:return_url: URL to return to after payment operation (submit/cancalation)
+		"""
+		payment_reason = payment_reason or ''
+		pipeline_name = pipeline_name or SINGLE_USE_PIPIELINE
+		inputs = {
+				'transactionAmount':	amount,
+				'currencyCode':		 	currency,
+				'pipelineName':			pipeline_name,
+				'returnURL':			return_url,
+				'paymentReason':		payment_reason,
+				'CallerReference':		caller_reference
+		}
+		url = self._do_fps_operation(self.connection.cbui_url, **inputs)
+		return url
+
+	def get_account_activity(self, start_date=None):
+		"""
+		Return the transactions starting from the specified date
+		"""
+		start_date = start_date or time.time()
+		if isinstance(start_date, numbers.Real):
+			d = date.fromtimestamp(start_date)
+			start_date = d.strftime("%Y-%m-%d")
+		result = self._do_fps_operation(self.connection.get_account_activity, StartDate=start_date)
+		result = result.GetAccountActivityResult.Transaction # this the list of transactions
+		return result
+	
+	def get_transaction(self, transaction_id):
+		result = self._do_fps_operation(self.connection.get_transaction, TransactionId=transaction_id)
+		result = result.GetTransactionResult.Transaction
+		return result
+	
+	def get_account_balance(self):
+		result = self._do_fps_operation(self.connection.get_account_balance)
+		result = result.GetAccountBalanceResult.AccountBalance
+		return result
 	
 	def _get_token_by_caller(self, reference=None, token=None):
 		"""
@@ -41,41 +110,8 @@ class FPSIO(object):
 		else:
 			result = None
 		return result
-
-	def _get_cbui_url(self, amount, reference, returnURL, currency='USD', paymentReason=None, pipelineName='SingleUse'):
-		"""
-		return an [aws-fps] url to start a payment process
-		
-		amount : transaction amount
-		reference: buyer/caller/NTI transaction reference id
-		returnURL: URL to return to after payment operation (submit/cancalation)
-		pipelineName: Type of payment (see FPSConnection#cbui_url)
-		"""
-		paymentReason = paymentReason or ''
-		inputs = {
-				'transactionAmount':	amount,
-				'currencyCode':		 	currency,
-				'pipelineName':			pipelineName,
-				'returnURL':			returnURL,
-				'paymentReason':		paymentReason,
-				'CallerReference':		reference,
-				'signature':			self.signature()
-		}
-		url = self.connection.cbui_url(**inputs)
-		return url
-
-	def signature(self, msg=None):
-		msg = msg or str(uuid.uuid1())
-		dig = hmac.new(self.aws_secret_access_key, msg=msg, digestmod=hashlib.sha256).digest()
-		return base64.b64encode(dig).decode() 
 	
-	def get_account_activity(self, startDate=None):
-		response = self.connection.get_account_activity(StartDate=startDate)
-		return response
-	
-	def get_account_balance(self):
-		response = self.connection.get_account_balance()
-		return response
+
 	
 	def pay(self, token, amount, currency='USD', reference=None):
 		inputs = {
@@ -87,6 +123,3 @@ class FPSIO(object):
 		result = self.connection.pay(**inputs)
 		return result
 	
-	def get_transaction(self, transaction_id):
-		result = self.connection.get_transaction(TransactionId=transaction_id)
-		return result
