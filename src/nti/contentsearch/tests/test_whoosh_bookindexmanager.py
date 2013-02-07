@@ -33,6 +33,7 @@ from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, is_, has_item)
+from hamcrest import contains_inanyorder
 
 _whoosh_index.compute_ngrams = True
 
@@ -114,15 +115,13 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 
 		items = hits[ITEMS]
 		assert_that(items, has_length(4))
-		assert_that(items, has_item('rage'))
-		assert_that(items, has_item('rankle'))
-		assert_that(items, has_item('rage'))
-		assert_that(items, has_item('rain'))
+		assert_that( items, contains_inanyorder( 'rage', 'rankle', 'rain', 'raise' ) )
+
 
 	def test_suggest_and_search(self):
 		hits = toExternalObject(self.bim.suggest_and_search("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, u'rain'))
+		assert_that(hits, has_entry(QUERY, u'rage'))
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits[ITEMS], has_length(1))
 		assert_that(hits[SUGGESTIONS], has_length(4))
