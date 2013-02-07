@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import hmac
 import uuid
@@ -7,19 +10,18 @@ import hashlib
 
 from boto.fps.connection import FPSConnection
 
-class _FPSPaymentManager(object):
-	def __init__(self, aws_access_key_id, aws_secret_access_key, host='fps.sandbox.amazonaws.com'):
+class FPSException(Exception):
+	pass
+
+class FPSIO(object):
+	
+	def __init__(self, host='fps.sandbox.amazonaws.com'):
 		self._connection = None
-		self.aws_host = host
-		self.aws_access_key_id = aws_access_key_id
-		self.aws_secret_access_key = aws_secret_access_key
 		
 	@property
 	def connection(self):
 		if self._connection is None:
-			self._connection = FPSConnection(host=self.aws_host,
-											 aws_access_key_id=self.aws_access_key_id,
-											 aws_secret_access_key=self.aws_secret_access_key)
+			self._connection = FPSConnection(host=self.aws_host)
 		return self._connection
 	
 	def _get_token_by_caller(self, reference=None, token=None):
@@ -52,45 +54,39 @@ class _FPSPaymentManager(object):
 		paymentReason = paymentReason or ''
 		inputs = {
 				'transactionAmount':	amount,
-				'currencyCode':		 currency,
-				'pipelineName':		 pipelineName,
+				'currencyCode':		 	currency,
+				'pipelineName':			pipelineName,
 				'returnURL':			returnURL,
 				'paymentReason':		paymentReason,
-				'callerReference':	  reference,
+				'CallerReference':		reference,
 				'signature':			self.signature()
 		}
 		url = self.connection.cbui_url(**inputs)
 		return url
 
 	def signature(self, msg=None):
-		"""return unique digital signature for the specified msg"""
 		msg = msg or str(uuid.uuid1())
 		dig = hmac.new(self.aws_secret_access_key, msg=msg, digestmod=hashlib.sha256).digest()
 		return base64.b64encode(dig).decode() 
 	
-	def get_account_activity(self, startDate=None, *args, **kwargs):
-		#TODO: adpater to externable object, format date to YYYY-MM-dD
+	def get_account_activity(self, startDate=None):
 		response = self.connection.get_account_activity(StartDate=startDate)
 		return response
 	
 	def get_account_balance(self):
-		#TODO: adapter to external object
 		response = self.connection.get_account_balance()
 		return response
 	
-	def pay(self, buyerId, amount, currency='USD', **kwargs):
-		#TODO: adapter to external response
-		reference = kwargs.get('reference', None) or kwargs.get('CallerReference', None)
+	def pay(self, token, amount, currency='USD', reference=None):
 		inputs = {
-			'TransactionAmount.Value':   amount,
-			'TransactionAmount.CurrencyCode': currency,
-			'SenderTokenId':  buyerId,
-			'CallerReference':  reference,
+			'TransactionAmount.Value':			amount,
+			'TransactionAmount.CurrencyCode':	currency,
+			'SenderTokenId':					token,
+			'CallerReference':					reference,
 		}
 		result = self.connection.pay(**inputs)
 		return result
 	
-	def get_transaction(self, transactionId):
-		#TODO: adapter to external response
-		result = self.connection.get_transaction(TransactionId=transactionId)
+	def get_transaction(self, transaction_id):
+		result = self.connection.get_transaction(TransactionId=transaction_id)
 		return result

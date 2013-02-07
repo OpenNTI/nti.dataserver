@@ -1,4 +1,7 @@
-from __future__ import unicode_literals, print_function, absolute_import
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import six
 import sys
@@ -21,8 +24,6 @@ from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
 from . import interfaces as store_interfaces
-
-logger = __import__('logging').getLogger( __name__ )
 
 def _time_to_64bit_int( value ):
 	return struct.unpack( b'!Q', struct.pack( b'!d', value ) )[0]
