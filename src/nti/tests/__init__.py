@@ -170,9 +170,7 @@ import zope.testing.cleanup
 import transaction
 zope.testing.cleanup.addCleanUp( transaction.abort )
 
-# It is helpful to clear weakrefs between tests
 import gc
-zope.testing.cleanup.addCleanUp( gc.collect )
 
 class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 	"""
@@ -191,16 +189,38 @@ class AbstractSharedTestBase(unittest.TestCase):
 	configuration) between unit tests. This is far more efficient, if
 	the global data (e.g., ZCA component registry) is otherwise
 	cleaned up or not mutated between tests.
+
+	.. note:: This will be replaced with a nose2 layer.
 	"""
+
+	HANDLE_GC = False
 
 	@classmethod
 	def setUpClass(cls):
+		"""
+		Subclasses must call this method. It cleans up the global state.
+
+		It also disables garbage collection until tearDown is called if HANDLE_GC is True.
+		This way, we can collect just one generation and be sure to
+		clean up any weak references that were created during this
+		run. (Which is necessary, as ZCA heavily uses weak references, and
+		when that is mixed with IComponents instances that are in a ZODB,
+		if weak references persist and aren't cleaned, bad things can happen.
+		See nti.dataserver.site for details.)
+		"""
 		zope.testing.cleanup.cleanUp()
+		if cls.HANDLE_GC:
+			cls.__isenabled = gc.isenabled()
+			gc.disable()
 
 	@classmethod
 	def tearDownClass(cls):
 		zope.testing.cleanup.cleanUp()
-
+		if cls.HANDLE_GC:
+			if cls.__isenabled:
+				gc.enable()
+			gc.collect( 0 ) # collect one generation now to clean up weak refs
+			assert_that( gc.garbage, is_( [] ) )
 
 from zope import component
 from zope.configuration import xmlconfig, config
