@@ -4,11 +4,11 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that
 from nti.tests import SharedConfiguringTestBase, is_true, is_false
 from nti.tests import verifiably_provides
-from zope import interface
 from zope import component
 
 import nti.assessment
 from nti.assessment import response, solution
+from nti.assessment import grade_one_response
 from nti.assessment import interfaces
 from nti.assessment._latexplastexdomcompare import _mathChildIsEqual as mce
 
@@ -93,9 +93,13 @@ class TestLatex(SharedConfiguringTestBase):
 
 			responses = ("75", r"$75 \%$", r"$75\%$", r"75 \%", r"75\%")
 
+			# No units at all. Legacy behaviour.
 			for r in responses:
 				rsp = response.QTextResponse( r )
+				# Directly grade
 				assert_that( soln, grades_right( rsp ) )
+				# The adapter layers also do the right thing
+				assert_that( grade_one_response( r, [soln_text] ), is_true() )
 
 			# With units specified with and without space
 			# required
