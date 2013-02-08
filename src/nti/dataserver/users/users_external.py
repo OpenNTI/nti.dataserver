@@ -1,7 +1,16 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Implementations for user externalization.
 
-import logging
-logger = logging.getLogger( __name__ )
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 
 import random
 
@@ -47,9 +56,9 @@ def _avatar_url( entity ):
 			logger.warn( "Unable to produce avatarURL for %s", entity )
 	return with_url.avatarURL
 
-@component.adapter( nti_interfaces.IEntity )
+
 @interface.implementer( IExternalObject )
-class _EntitySummaryExternalObject(object):
+class _AbstractEntitySummaryExternalObject(object):
 
 	def __init__( self, entity ):
 		self.entity = entity
@@ -78,7 +87,18 @@ class _EntitySummaryExternalObject(object):
 		extDict.__acl__ = auth.ACL( entity )
 		return extDict
 
+@component.adapter( nti_interfaces.IEntity )
+class _EntitySummaryExternalObject(_AbstractEntitySummaryExternalObject):
+	pass
 
+@component.adapter( nti_interfaces.IFriendsList )
+class _FriendListSummaryExternalObject(_AbstractEntitySummaryExternalObject):
+
+	def toExternalObject( self ):
+		extDict = super(_FriendListSummaryExternalObject, self).toExternalObject()
+		extDict['IsDynamicSharing'] = nti_interfaces.IDynamicSharingTarget.providedBy( self.entity )
+		return extDict
+	
 class _EntityExternalObject(_EntitySummaryExternalObject):
 
 	def toExternalObject( self ):

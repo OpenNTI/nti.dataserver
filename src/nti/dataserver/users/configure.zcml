@@ -21,6 +21,8 @@
     <adapter factory=".users_external._EntitySummaryExternalObject"
 	     name="summary" />
 
+	<adapter factory=".users_external._FriendListSummaryExternalObject"
+	     name="summary" />
 
     <adapter factory=".users_external._EntityExternalObject" />
     <adapter factory=".users_external._FriendsListExternalObject" />
