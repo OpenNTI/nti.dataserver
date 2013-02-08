@@ -58,7 +58,7 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 		self.time_map.pop(_time_to_64bit_int(purchase.start_time), None)
 		try:
 			self.purchases.remove(purchase)
-			lifecycleevent.removed(purchase, self, repr(purchase))
+			lifecycleevent.removed(purchase)
 		except:
 			pass
 
