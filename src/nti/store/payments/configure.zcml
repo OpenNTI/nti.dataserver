@@ -19,6 +19,10 @@
 			 provides=".interfaces.IStripePaymentProcessor" 
 			 name="stripe" />
 	
+	<adapter factory=".fps_adapters._FPSPurchaseFactory"
+			 for="..interfaces.IPurchaseAttempt"
+			 provides=".interfaces.IFPSPurchase" />
+			 
 	<subscriber factory=".externalization.PurchaseAttemptDecoratorFactory"
 				for="..interfaces.IPurchaseAttempt"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />

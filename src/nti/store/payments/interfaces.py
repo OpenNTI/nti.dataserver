@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Payment interfaces
 
+$Id: pyramid_views.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -72,4 +76,8 @@ class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 class IStripePurchase(interface.Interface):
 	ChargeID = schema.TextLine(title='Charge id', required=False)
 	TokenID = schema.TextLine(title='Token id', required=False)
+	
+class IFPSPurchase(interface.Interface):
+	TransactionID = schema.TextLine(title='Transaction id', required=False)
+	Token = schema.TextLine(title='Token id', required=False)
 	
