@@ -14,7 +14,6 @@ from datetime import datetime
 
 import persistent
 from zope import interface
-from zope.location import ILocation
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 
@@ -27,7 +26,7 @@ from nti.utils.property import alias
 from . import interfaces as store_interfaces
 
 @functools.total_ordering
-@interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable, ILocation)
+@interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable)
 class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Persistent):
 
 	Synced = False
