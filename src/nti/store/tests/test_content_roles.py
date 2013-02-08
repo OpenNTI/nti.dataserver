@@ -42,6 +42,15 @@ class TestContentRoles(ConfiguringTestBase):
 		roles_added = content_roles._add_users_content_roles(user, items)
 		assert_that(roles_added, is_(0))
 		
+	@WithMockDSTrans
+	def test_remove_users_content_roles(self):		
+		user = self._create_user()
+		items = (u"tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.learning_objectives",)
+		roles_added = content_roles._add_users_content_roles(user, items)
+		assert_that(roles_added, is_(1))
+		
+		roles_removed = content_roles._remove_users_content_roles(user, items)
+		assert_that(roles_removed, is_(1))
 		
 if __name__ == '__main__':
 	unittest.main()

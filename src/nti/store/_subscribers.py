@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+Store content role management.
 
+$Id: pyramid_views.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger( __name__ )
 
 import time
 
@@ -9,11 +15,9 @@ from zope import component
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from . import _content_roles
 from . import interfaces as store_interfaces
 from .purchase_history import get_purchase_attempt
-from ._content_roles import _add_users_content_roles
-
-logger = __import__('logging').getLogger( __name__ )
 
 def _trx_runner(f, retries=5, sleep=0.1):
 	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
@@ -35,7 +39,7 @@ def _purchase_attempt_successful( event ):
 		purchase.State = store_interfaces.PA_STATE_SUCCESS
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
-		_add_users_content_roles(event.username, purchase.Items)
+		_content_roles._add_users_content_roles(event.username, purchase.Items)
 		logger.info('%s completed successfully' % (purchase))
 	_trx_runner(func)
 
@@ -46,6 +50,7 @@ def _purchase_attempt_refunded( event ):
 		purchase.State = store_interfaces.PA_STATE_REFUNDED
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
+		_content_roles._remove_users_content_roles(event.username, purchase.Items)
 		logger.info('%s has been refunded' % (purchase))
 	_trx_runner(func)
 	
