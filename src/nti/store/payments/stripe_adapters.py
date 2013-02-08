@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Stripe purchase adapters.
 
+$Id: pyramid_views.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -27,12 +31,10 @@ class _StripeCustomer(Persistent):
 	def id(self):
 		return self.customer_id
 		
-def _StripeCustomerFactory(user):
-	result = an_factory(_StripeCustomer)(user)
-	return result
+_StripeCustomerFactory = an_factory(_StripeCustomer)
 
 @component.adapter(store_interfaces.IPurchaseAttempt)
-@interface.implementer( pay_interfaces.IStripePurchase)
+@interface.implementer(pay_interfaces.IStripePurchase)
 class _StripePurchase(zcontained.Contained, Persistent):
 	
 	TokenID = None
@@ -45,7 +47,5 @@ class _StripePurchase(zcontained.Contained, Persistent):
 	token_id = alias('TokenID')
 	charge_id = alias('ChargeID')
 	
-def _StripePurchaseFactory(purchase):
-	result = an_factory(_StripePurchase)(purchase)
-	return result
+_StripePurchaseFactory = an_factory(_StripePurchase)
 			

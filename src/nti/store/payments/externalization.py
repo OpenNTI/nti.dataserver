@@ -15,6 +15,10 @@ class PurchaseAttemptDecorator(object):
 			ps = payment_interfaces.IStripePurchase(original)
 			external['ChargeID'] = ps.charge_id
 			external['TokenID'] = ps.token_id
+		elif original.Processor == 'fps':
+			ps = payment_interfaces.IFPSPurchase(original)
+			external['TransactonID'] = ps.transaction_id
+			external['TokenID'] = ps.token_id
 	
 def PurchaseAttemptDecoratorFactory(*args):
 	return PurchaseAttemptDecorator()
