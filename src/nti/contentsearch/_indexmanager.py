@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Search index manager.
 
+$Id: pyramid_views.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -182,21 +186,21 @@ class IndexManager(object):
 		if data is not None:
 			um = self._get_user_index_manager(target)
 		if um is not None and data is not None and um.index_content(data, type_name):
-			notify(search_interfaces.IndexEvent(target, data, search_interfaces.IE_INDEXED))
+			notify(search_interfaces.ObjectIndexedEvent(data, target))
 
 	def update_user_content(self, target, data, type_name=None):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
 		if um is not None and data is not None and um.update_content(data, type_name):
-			notify(search_interfaces.IndexEvent(target, data, search_interfaces.IE_REINDEXED))
+			notify(search_interfaces.ObjectReIndexedEvent(data, target))
 
 	def delete_user_content(self, target, data, type_name=None):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
 		if um is not None and data is not None and um.delete_content(data, type_name):
-			notify(search_interfaces.IndexEvent(target, data, search_interfaces.IE_UNINDEXED))
+			notify(search_interfaces.ObjectUnIndexedEvent(data, target))
 
 	@classmethod
 	def onChange(cls, datasvr, msg, target=None, broadcast=None):

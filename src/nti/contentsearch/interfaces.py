@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+"""
+Search interfaces.
 
+$Id: pyramid_views.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+"""
 from __future__ import print_function, unicode_literals, absolute_import
-__docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
@@ -113,33 +116,36 @@ class IEntityIndexManager(ISearcher):
 
 # index events
 
-IE_INDEXED   = "Indexed"
-IE_REINDEXED = "Reindexed"
-IE_UNINDEXED = "Unindexed"
-
 class IIndexEvent(component.interfaces.IObjectEvent):
-	"""
-	An index event
-	"""
-	target = schema.Object(nti_interfaces.IEntity,
-						   title="The entity in the index event")
+	data = schema.Object(nti_interfaces.IModeledContent, title="The indexed object")
+	user = schema.Object(nti_interfaces.IEntity, title="The entity that indexed the object")
 
-	data = schema.Object(nti_interfaces.IModeledContent,
-						 title="The object in the index event")
+class IObjectIndexed(IIndexEvent):
+	pass
 
-	event_type = schema.Choice(values=(IE_INDEXED, IE_REINDEXED, IE_UNINDEXED),
-							   title="Index event type")
+class IObjectReIndexed(IIndexEvent):
+	pass
 
+class IObjectUnIndexed(IIndexEvent):
+	pass
 
-@interface.implementer(IIndexEvent)
 class IndexEvent(component.interfaces.ObjectEvent):
+	def __init__( self, data, user ):
+		super(IndexEvent,self).__init__( data )
+		self.user = user
 
-	def __init__( self, user, data, event_type ):
-		super(IndexEvent,self).__init__( user )
-		self.data = data
-		self.event_type = event_type
-	target = alias('object')
+@interface.implementer(IObjectIndexed)
+class ObjectIndexedEvent(IndexEvent):
+	pass
 
+@interface.implementer(IObjectReIndexed)
+class ObjectReIndexedEvent(IndexEvent):
+	pass
+
+@interface.implementer(IObjectUnIndexed)
+class ObjectUnIndexedEvent(IndexEvent):
+	pass
+		
 # entity adapters
 
 class IRepozeEntityIndexManager(IEntityIndexManager):
@@ -457,7 +463,6 @@ class IMessageInfoRepozeCatalogFieldCreator(interface.Interface):
 # redis
 
 class IRedisStoreService(interface.Interface):
-
 	queue_name = schema.TextLine(title="Queue name", required=True)
 	sleep_wait_time = schema.Float(title="Message interval", required=True)
 	expiration_time = schema.Float(title="Message redis expiration time", required=True)
@@ -584,16 +589,16 @@ class IRepozeSearchQueryValidator(ISearchQueryValidator):
 
 class IBaseHit(interface.Interface):
 	"""represent a base search hit"""
-	query = schema.Object(ISearchQuery, title="query that produced this hit", required=True, readonly=True)
+	query = interface.Attribute("The query that produced this hit")
 	score = schema.Float(title="hit relevance score", required=True, readonly=True)
 
 class IIndexHit(IBaseHit, IMinimalSequence):
 	"""represent a search hit stored in a ISearchResults"""
-	obj = schema.Object(interface.Interface, title="hit object", required=True, readonly=True)
+	obj = interface.Attribute("The hit object")
 
 class ISearchHit(IBaseHit, IMapping, ext_interfaces.IExternalObject):
 	"""represent an externalized search hit"""
-	oid = schema.TextLine(title="hit unique id", required=True, readonly=True)
+	oid = interface.Attribute("hit unique id")
 	last_modified = schema.Float(title="last modified date for this hit", required=False, readonly=True)
 
 class ISearchHitComparator(interface.Interface):
@@ -610,7 +615,7 @@ class IIndexHitMetaDataTracker(interface.Interface):
 		pass
 
 class IBaseSearchResults(interface.Interface):
-	query = schema.Object(ISearchQuery, title="search query")
+	query = interface.Attribute("Search query")
 
 class ISearchResults(IBaseSearchResults):
 	hits = TypedIterable( value_type=schema.Object(IIndexHit, title="index hit"),
