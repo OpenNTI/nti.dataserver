@@ -1,13 +1,13 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import zope.intid
 from zope import component
 
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._indexmanager import IndexManager
-
-import logging
-logger = logging.getLogger( __name__ )
 
 class _RedisIndexManager(IndexManager):
 

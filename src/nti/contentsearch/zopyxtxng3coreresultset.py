@@ -1,18 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
 
-###########################################################################
-# TextIndexNG V 3
-# The next generation TextIndex for Zope
-#
-# This software is governed by a license. See
-# LICENSE.txt for the terms of this license.
-###########################################################################
-
-"""
-ResultList
-
-$Id: resultset.py 2238 2010-04-07 13:00:36Z zagy $
-"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from BTrees.LLBTree import union as union64
 from BTrees.LLBTree import difference as difference64
@@ -21,9 +10,6 @@ from BTrees.LLBTree import intersection as intersection64
 from zopyx.txng3.core.resultset import ResultSet, WordList
 
 from nti.contentsearch.zopyxtxng3coredoclist import DocidList
-    
-import logging
-logger = logging.getLogger( __name__ )
 
 def intersectionResultSets(sets):
     """ perform intersection of ResultSets """

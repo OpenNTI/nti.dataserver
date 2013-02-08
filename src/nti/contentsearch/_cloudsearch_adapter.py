@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import sys
 
@@ -22,9 +25,6 @@ from nti.contentsearch._search_results import empty_suggest_and_search_results
 
 from nti.contentsearch._search_highlights import (WORD_HIGHLIGHT)
 from nti.contentsearch.common import (username_, content_, intid_, type_)
-
-import logging
-logger = logging.getLogger( __name__ )
 	
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(search_interfaces.ICloudSearchEntityIndexManager)

@@ -1,5 +1,6 @@
-from __future__ import print_function, unicode_literals, absolute_import
+# -*- coding: utf-8 -*-
 
+from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import re
@@ -12,9 +13,6 @@ from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch._views_utils import get_collection
 from nti.contentsearch._content_utils import get_content_translation_table
-
-import logging
-logger = logging.getLogger( __name__ )
 
 def _locate(obj, parent, name=None):
 	# TODO: (Instead of modification info, we should be using etags here, anyway).

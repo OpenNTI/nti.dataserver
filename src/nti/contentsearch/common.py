@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import re
 import six
@@ -10,9 +13,6 @@ from datetime import datetime
 from nti.externalization import interfaces as ext_interfaces
 
 from nti.mimetype.mimetype import MIME_BASE
-
-import logging
-logger = logging.getLogger( __name__ )
 
 ID 				= unicode(ext_interfaces.StandardExternalFields.ID)
 HIT 			= u'Hit'

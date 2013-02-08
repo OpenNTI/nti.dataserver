@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from BTrees.LFBTree import LFBucket
 
@@ -28,9 +31,6 @@ from nti.contentsearch._search_results import empty_search_results
 from nti.contentsearch._search_results import empty_suggest_results
 from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
 from nti.contentsearch._search_results import empty_suggest_and_search_results
-
-import logging
-logger = logging.getLogger( __name__ )
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer( search_interfaces.IRepozeEntityIndexManager)
