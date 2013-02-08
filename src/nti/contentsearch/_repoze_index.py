@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import BTrees
 
@@ -14,9 +17,6 @@ from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
 
 from nti.contentprocessing import compute_ngrams
-
-import logging
-logger = logging.getLogger( __name__ )
 
 def get_containerId(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContainerIDResolver)

@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import six
 import collections
@@ -29,9 +32,6 @@ from nti.contentsearch.common import (text_, body_, selectedText_, replacementCo
 									  container_id_fields, ntiid_fields,  highlight_, note_,
 									  messageinfo_, redaction_, canvas_, canvastextshape_, references_,
 									  inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
-
-import logging
-logger = logging.getLogger( __name__ )
 
 def get_content(text=None, language='en'):
 	result = ()
@@ -338,7 +338,6 @@ class _DictContentResolver(object):
 	def get_recipients(self):
 		data = self.obj.get(recipients_, ())
 		return _process_words(data)
-
 
 @component.adapter(search_interfaces.IBookContent)
 @interface.implementer(search_interfaces.IBookContentResolver)

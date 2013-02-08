@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import time
 import json
@@ -25,9 +28,6 @@ from nti.contentsearch.common import (	CLASS, CREATOR, last_modified_fields, nti
 from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, username_,
 										last_modified_, recipients_, sharedWith_, ntiid_, type_,
 										creator_, containerId_, intid_) 
-
-import logging
-logger = logging.getLogger( __name__ )
 
 # define search fields
 

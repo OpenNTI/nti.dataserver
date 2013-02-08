@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import re
 import numbers
@@ -6,9 +9,6 @@ from datetime import datetime
 
 from whoosh import fields
 import repoze.catalog.query as repquery
-
-import logging
-logger = logging.getLogger( __name__ )
 
 class QueryConverter(object):
 	

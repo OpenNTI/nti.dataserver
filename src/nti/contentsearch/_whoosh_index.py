@@ -1,16 +1,7 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
-
 
 import inspect
 from datetime import datetime
@@ -46,6 +37,8 @@ from nti.contentsearch.common import (	channel_, content_, keywords_, references
 										recipients_, sharedWith_, ntiid_, last_modified_,
 										creator_, containerId_, replacementContent_,
 										redactionExplanation_, intid_, title_, quick_)
+
+logger = __import__('logging').getLogger(__name__)
 
 _default_word_max_dist = 15
 

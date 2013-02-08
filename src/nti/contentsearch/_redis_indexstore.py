@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import zlib
 
@@ -9,12 +12,11 @@ from ZODB import loglevels
 
 from nti.dataserver import interfaces as nti_interfaces
 
+logger = __import__('logging').getLogger(__name__)
+
 SLEEP_WAIT_TIME = 10
 EXPIRATION_TIME_IN_SECS = 60
 DEFAULT_QUEUE_NAME = u'nti/cloudsearch'
-
-import logging
-logger = logging.getLogger( __name__ )
 
 ADD_OPERATION = 'add'
 UPDATE_OPERATION = 'update'

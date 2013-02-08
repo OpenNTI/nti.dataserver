@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import sys
 import inspect
@@ -13,8 +16,7 @@ from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 from nti.contentsearch.common import is_all_query
 from nti.contentsearch import interfaces as search_interfaces
 
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 def allow_keywords(f):
 	spec = inspect.getargspec(f)

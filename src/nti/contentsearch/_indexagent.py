@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import six
 
@@ -12,8 +15,7 @@ from nti.contentsearch import get_indexable_types
 from nti.contentsearch.common import normalize_type_name
 from nti.contentsearch import interfaces as search_interfaces
 
-import logging
-logger = logging.getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 _event_types = { nti_interfaces.SC_CREATED: 'index_user_content',
 				 nti_interfaces.SC_SHARED:  'index_user_content',

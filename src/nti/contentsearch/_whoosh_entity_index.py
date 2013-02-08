@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import os
 import six
@@ -35,8 +38,7 @@ from nti.contentsearch._search_query import is_prefix_search
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch import _whoosh_indexstorage as w_idxstorage
 
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 # interfaces
 

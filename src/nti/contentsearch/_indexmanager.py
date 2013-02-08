@@ -1,4 +1,7 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import six
 
@@ -21,8 +24,7 @@ from nti.contentsearch._search_results import merge_suggest_results
 from nti.contentsearch._search_results import empty_suggest_and_search_results
 from nti.contentsearch._search_results import merge_suggest_and_search_results
 
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 @interface.implementer( search_interfaces.IIndexManager )
 class IndexManager(object):
