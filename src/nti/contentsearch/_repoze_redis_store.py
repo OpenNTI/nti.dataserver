@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Redis based index storage service.
 
+$Id: pyramid_views.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -84,10 +88,10 @@ class _RepozeRedisStorageService(_RedisStorageService):
 						if data is not None:
 							if op == ADD_OPERATION:
 								im.index_content(data)
-								notify(search_interfaces.IndexEvent(entity, data, search_interfaces.IE_INDEXED))
+								notify(search_interfaces.ObjectIndexedEvent(data, entity))
 							else:
 								im.update_content(data)
-								notify(search_interfaces.IndexEvent(entity, data, search_interfaces.IE_REINDEXED))
+								notify(search_interfaces.ObjectReIndexedEvent(data, entity))
 						else:
 							retries += 1  
 							if cumulative <= self.max_cumm_wait_time and retries < self.max_retries:
@@ -101,7 +105,7 @@ class _RepozeRedisStorageService(_RedisStorageService):
 								logger.debug('Cannot find object with id %s', oid)
 					elif op == DELETE_OPERATION:
 						im.unindex_doc(oid)
-						notify(search_interfaces.IndexEvent(entity, data or oid, search_interfaces.IE_UNINDEXED))
+						notify(search_interfaces.ObjectUnIndexedEvent(data, entity))
 					
 				if advance:
 					idx += 1
