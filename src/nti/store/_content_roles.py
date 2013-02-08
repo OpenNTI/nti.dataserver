@@ -2,7 +2,7 @@
 """
 Store content role management.
 
-$Id: pyramid_views.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+$Id: _content_roles.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
