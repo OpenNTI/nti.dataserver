@@ -16,8 +16,8 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope.location import locate
-from zope.location.interfaces import ILocation
 from zope.annotation import factory as an_factory
+from zope.container import contained as zcontained
 
 from persistent import Persistent
 
@@ -32,8 +32,8 @@ def _time_to_64bit_int( value ):
 	return struct.unpack( b'!Q', struct.pack( b'!d', value ) )[0]
 
 @component.adapter(nti_interfaces.IUser)
-@interface.implementer( store_interfaces.IPurchaseHistory, ILocation)
-class _PurchaseHistory(Persistent):
+@interface.implementer( store_interfaces.IPurchaseHistory )
+class _PurchaseHistory(zcontained.Contained, Persistent):
 
 	family = BTrees.family64
 
@@ -58,7 +58,7 @@ class _PurchaseHistory(Persistent):
 		self.time_map.pop(_time_to_64bit_int(purchase.start_time), None)
 		try:
 			self.purchases.remove(purchase)
-			lifecycleevent.removed(purchase)
+			lifecycleevent.removed(purchase, self, repr(purchase))
 		except:
 			pass
 
@@ -120,7 +120,6 @@ def register_purchase_attempt(username, purchase):
 	result = []
 	def func():
 		user = User.get_user(username)
-		user._p_jar.add(purchase) #ensure and oid
 		hist = store_interfaces.IPurchaseHistory(user)
 		hist.register_purchase(purchase)
 		result.append(purchase.id)
