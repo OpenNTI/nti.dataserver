@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Defines purchase attempt object.
 
+$Id: pyramid_views.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -73,9 +77,11 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		d = datetime.fromtimestamp(self.start_time)
 		return "%s(%s,%s,%s)" % (self.__class__, self.processor, d, self.items)
 
-	# FIXME: __eq__ is not consistent with __lt__ and __gt__
 	def __eq__(self, other):
-		return self is other
+		return self is other or (isinstance(other, PurchaseAttempt)
+								 and self.items == other.items
+								 and self.start_time == other.start_time
+								 and self.processor == other.processor)
 
 	def __lt__(self, other):
 		try:

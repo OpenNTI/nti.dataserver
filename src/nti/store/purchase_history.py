@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Defines purchase history.
 
+$Id: pyramid_views.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -8,7 +12,6 @@ import sys
 import struct
 import BTrees
 
-import zope.intid
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -43,35 +46,18 @@ class _PurchaseHistory(Persistent):
 		return self.__parent__
 
 	def register_purchase(self, purchase):
-
-		# ensure there is a OID
-		# FIXME: Why is this necessary? Is it? It shouldn't be
-		if self._p_jar:
-			self._p_jar.add(purchase)
-		elif self.user._p_jar:
-			self.user._p_jar.add(purchase)
-
-		# add to map(s)
 		start_time = purchase.start_time
 		self.time_map[_time_to_64bit_int(start_time)] = purchase
 		self.purchases.add(purchase)
 		locate(purchase, self, repr(purchase))
 		lifecycleevent.added(purchase)
 
-		# register w/ intids
-		# FIXME: Why is this necessary? If the events are correctly set up, this
-		# should be automatic. (Do we even need to register these things?)
-		intids = component.getUtility( zope.intid.IIntIds )
-		intids.register( purchase )
-
 	add_purchase = register_purchase
 
 	def remove_purchase(self, purchase):
-		intids = component.getUtility( zope.intid.IIntIds )
 		self.time_map.pop(_time_to_64bit_int(purchase.start_time), None)
 		try:
 			self.purchases.remove(purchase)
-			intids.unregister(purchase)
 			lifecycleevent.removed(purchase)
 		except:
 			pass
@@ -134,6 +120,7 @@ def register_purchase_attempt(username, purchase):
 	result = []
 	def func():
 		user = User.get_user(username)
+		user._p_jar.add(purchase) #ensure and oid
 		hist = store_interfaces.IPurchaseHistory(user)
 		hist.register_purchase(purchase)
 		result.append(purchase.id)

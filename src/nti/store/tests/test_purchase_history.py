@@ -7,8 +7,6 @@ __docformat__ = "restructuredtext en"
 import time
 import unittest
 
-import zope.intid
-from zope import component
 import BTrees.check
 
 from nti.dataserver.users import User
@@ -23,7 +21,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.store.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, is_not, has_length)
+from hamcrest import (assert_that, is_, has_length)
 from hamcrest import none
 from hamcrest import not_none
 
@@ -39,16 +37,13 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 	def test_purchase_hist(self):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
-		assert_that(hist, is_not(None))
+		assert_that(hist, is_(not_none()))
 
 		pa_1 = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor)
 		hist.add_purchase(pa_1)
 		assert_that(hist, has_length(1))
 
-		assert_that(pa_1.id, is_not(None))
-
-		intids = component.queryUtility( zope.intid.IIntIds )
-		assert_that(intids.queryId(pa_1), is_not(None))
+		assert_that(pa_1.id, is_(not_none()))
 
 		pa_2 = purchase_attempt.create_purchase_attempt(items='zky', processor=self.processor)
 		hist.add_purchase(pa_2)
@@ -139,3 +134,6 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 
 			lst = list(hist.get_purchase_history(start_time=now, end_time=t50))
 			assert_that(lst, has_length(50))
+
+if __name__ == '__main__':
+	unittest.main()
