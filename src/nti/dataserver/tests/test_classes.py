@@ -222,6 +222,7 @@ class TestClass(mock_dataserver.SharedConfiguringTestBase):
 		clazz = ClassInfo( ID='CS5201' )
 		clazz.__parent__ = self.ds.root
 		clazz.Provider = 'NTI'
+		clazz._sections._v_nextid = 1 # deterministic ids
 		section = SectionInfo()
 
 		clazz_ext = toExternalObject( clazz )
@@ -230,6 +231,9 @@ class TestClass(mock_dataserver.SharedConfiguringTestBase):
 		clazz_ext['Sections'] = [section_ext]
 
 		clazz.updateFromExternalObject( clazz_ext )
+
+		__traceback_info__ = list(clazz._sections.keys())
+
 		section.ID = 'CS5201.1'
 		assert_that( clazz['CS5201.1'], is_( section ) )
 		self._assert_add_section_to_class( clazz, clazz['CS5201.1'] )
@@ -239,6 +243,8 @@ class TestClass(mock_dataserver.SharedConfiguringTestBase):
 		clearEvents()
 		clazz_ext['Sections'].append( toExternalObject( section ) )
 		clazz.updateFromExternalObject( clazz_ext )
+		__traceback_info__ = list(clazz._sections.keys())
+
 		section.ID = 'CS5201.2'
 		assert_that( clazz['CS5201.2'], is_( section ) )
 		self._assert_add_section_to_class( clazz, clazz['CS5201.2'] )
@@ -250,6 +256,7 @@ class TestClass(mock_dataserver.SharedConfiguringTestBase):
 		clazz = ClassInfo( ID='CS5201' )
 		clazz.__parent__ = self.ds.root
 		clazz.Provider = 'NTI'
+		clazz._sections._v_nextid = 1 # deterministic id
 		section = SectionInfo()
 
 		clazz_ext = toExternalObject( clazz )

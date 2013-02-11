@@ -1,14 +1,23 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Objects for classrooms.
+
+$Id$
 """
-import logging
-logger = logging.getLogger( __name__ )
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 
 import itertools
 
 from zope import interface
 from zope.component.factory import Factory
 from zope.container.btree import BTreeContainer
+from zope.container.interfaces import INameChooser
 import BTrees
 
 # pylint chokes on from . import ... stuff,
@@ -217,16 +226,10 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 				# So we must manage the update ourself so that relationships don't break
 				if isinstance(ext_sect,SectionInfo): ext_sect = toExternalObject( ext_sect )
 				# Choose a name if one not provided. We assume this
-				# must be an addition. We want to use dots and not dashes
-				# because that interfeces with ntiids so we implement this
-				# on our own instead of the stock INameChooser/contained.NameChooser
+				# must be an addition.
 				sid = ext_sect.get( 'ID' )
 				if not sid:
-					n = 1
-					sid = self.ID + '.' + str(n)
-					while sid in self._sections:
-						n += 1
-						sid = self.ID + '.' + str(n)
+					sid = INameChooser(self._sections).chooseName( self.ID + '.1', ext_sect )
 
 				sent_sids.append( sid )
 				sect = self[sid] if sid in self._sections else SectionInfo( ID=sid )
