@@ -153,8 +153,8 @@ setup(
 		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
 		'logilab-common >= 0.58.3',
-		'lxml == 3.0.2', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
-		'nameparser >= 0.2.3', # Human name parsing
+		'lxml >= 3.1.0', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
+		'nameparser >= 0.2.4', # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
@@ -256,7 +256,7 @@ setup(
 		'zope.error >= 4.0.0',
 		'zope.event >= 4.0.2',
 		'zope.exceptions >= 4.0.5',
-		'zope.filerepresentation >= 3.6.1',
+		'zope.filerepresentation >= 4.0.0',
 		'zope.file >= 0.6.2',
 		'zope.formlib >= 4.2.0', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
@@ -301,7 +301,7 @@ setup(
 			'nose-progressive >= 1.4',
 			'pyhamcrest >= 1.7.1',
 			'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
-			'zc.buildout >= 1.6.3, < 2.0',
+			'zc.buildout >= 2.0.0',
 			'zope.testing >= 4.1.1',
 			],
 		'tools': [
@@ -342,7 +342,7 @@ setup(
 			# locally (you may need to use a different version of node)
 			# Managing translations
 			'Babel >= 0.9.6',
-			'lingua >= 1.3',
+			'lingua >= 1.4',
 			]
 	},
 	message_extractors = { '.': [

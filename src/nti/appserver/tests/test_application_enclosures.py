@@ -63,7 +63,7 @@ class TestApplicationEnclosures(SharedApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		body = json.loads( res.body )
 		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', UQ( '/dataserver2/providers/OU/Classes/CS2051/++adapter++enclosures/SimplePersistentEnclosure' ) ) ) ) )
-		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', UQ( '/dataserver2/providers/OU/Classes/CS2051/++adapter++enclosures/SimplePersistentEnclosure-2' ) ) ) ) )
+		assert_that( body, has_entry( 'Links', has_item( has_entry( 'href', starts_with( UQ( '/dataserver2/providers/OU/Classes/CS2051/++adapter++enclosures/SimplePersistentEnclosure.' ) ) ) ) ) )
 
 		path = '/dataserver2/providers/OU/Classes'
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
