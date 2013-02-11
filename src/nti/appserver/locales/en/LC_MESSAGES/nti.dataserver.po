@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-12-04 09:53-0600\n"
+"POT-Creation-Date: 2013-02-11 10:58-0600\n"
 "PO-Revision-Date: 2012-09-24 22:18-0500\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -19,15 +19,15 @@ msgstr ""
 "Generated-By: Babel 0.9.6\n"
 
 #: src/nti/appserver/account_creation_views.py:130
-#: src/nti/appserver/account_creation_views.py:178
+#: src/nti/appserver/account_creation_views.py:179
 msgid "Please provide your first and last names."
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:169
+#: src/nti/appserver/account_creation_views.py:170
 msgid "Username cannot be blank"
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:201
+#: src/nti/appserver/account_creation_views.py:202
 msgid "That username is not available. Please choose another."
 msgstr ""
 
@@ -35,19 +35,19 @@ msgstr ""
 msgid "NextThought Username Reminder"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:187
+#: src/nti/appserver/account_recovery_views.py:190
 msgid "NextThought Password Reset"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:282
+#: src/nti/appserver/account_recovery_views.py:285
 msgid "Your reset link is not valid. Please request a new one."
 msgstr ""
 
-#: src/nti/appserver/coppa_admin_views.py:95
+#: src/nti/appserver/coppa_admin_views.py:110
 msgid "Name"
 msgstr ""
 
-#: src/nti/appserver/coppa_admin_views.py:104
+#: src/nti/appserver/coppa_admin_views.py:119
 msgid "Contact Email"
 msgstr ""
 
@@ -55,53 +55,53 @@ msgstr ""
 msgid "This item has been deleted by the moderator."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:372
+#: src/nti/appserver/site_policies.py:398
 msgid "Username contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:377
+#: src/nti/appserver/site_policies.py:403
 msgid "Alias contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:437
+#: src/nti/appserver/site_policies.py:463
 msgid "Welcome to NextThought"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:461
+#: src/nti/appserver/site_policies.py:487
 msgid "That username is not valid. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:468
+#: src/nti/appserver/site_policies.py:494
 msgid "Please provide your first name."
 msgstr "Please provide your first and last names."
 
-#: src/nti/appserver/site_policies.py:470
+#: src/nti/appserver/site_policies.py:496
 msgid "Please provide your last name."
 msgstr "Please provide your first and last names."
 
-#: src/nti/appserver/site_policies.py:483
+#: src/nti/appserver/site_policies.py:509
 msgid "Birthdate must be in the past."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:486
+#: src/nti/appserver/site_policies.py:512
 msgid "Birthdate must be at least four years ago."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:489
+#: src/nti/appserver/site_policies.py:515
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:183
+#: src/nti/appserver/user_policies.py:204
 msgid "NextThought Account Confirmation"
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:232
+#: src/nti/appserver/user_policies.py:253
 msgid ""
 "It is too soon to send another consent request email. Please try again "
 "tomorrow."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:268
+#: src/nti/appserver/user_policies.py:289
 msgid "Please Confirm Your Child's NextThought Account"
 msgstr ""
 
@@ -119,36 +119,42 @@ msgid ""
 "and try again."
 msgstr ""
 
-#: src/nti/chatserver/_meeting_post_policy.py:143
+#: src/nti/chatserver/_meeting_post_policy.py:165
 msgid ""
 "The message is too big. It can contain a maximum of ${parts} characters "
 "or shapes"
 msgstr "The message is too big. Please use less text or a smaller whiteboard."
 
-#: src/nti/dataserver/users/interfaces.py:50
+#: src/nti/dataserver/users/interfaces.py:53
 msgid "The username cannot be blank."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:64
+#: src/nti/dataserver/users/interfaces.py:67
 msgid ""
 "Username contains an illegal character. Only letters, digits, and "
 "${allowed_chars} are allowed."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:77
+#: src/nti/dataserver/users/interfaces.py:80
 msgid "The email address you have entered is not valid."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:84
+#: src/nti/dataserver/users/interfaces.py:87
 msgid "The first or last name you have entered is not valid."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:92
+#: src/nti/dataserver/users/interfaces.py:95
 msgid "The password you supplied does not match the current password."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:95
+#: src/nti/dataserver/users/interfaces.py:98
 msgid "Your pasword cannot contain only whitespace. Please try again."
+msgstr ""
+
+#: src/nti/dataserver/users/interfaces.py:101
+msgid ""
+"The password you supplied has been identified by security researches as "
+"commonly used and insecure. Please try again."
 msgstr ""
 
 #: src/nti/dataserver/users/missing_user.py:37
@@ -167,7 +173,7 @@ msgstr ""
 msgid "Deleted User"
 msgstr ""
 
-#: src/nti/utils/schema.py:78
+#: src/nti/utils/schema.py:85
 msgid "${field} is too short."
 msgstr "${field} is too short. Please use at least ${minLength} characters."
 
