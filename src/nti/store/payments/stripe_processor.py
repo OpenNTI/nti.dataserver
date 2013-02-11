@@ -7,7 +7,11 @@ $Id: stripe_processor.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger( __name__ )
+
+import six
 import time
+import anyjson
 from datetime import date
 
 from zope import component
@@ -24,9 +28,6 @@ from .stripe_io import StripeIO
 from .stripe_io import StripeException
 from . import interfaces as pay_interfaces
 from .. import interfaces as store_interfaces
-
-import logging
-logger = logging.getLogger( __name__ )
 
 @component.adapter(pay_interfaces.IStripeCustomerCreated)
 def stripe_customer_created(event):
@@ -131,7 +132,7 @@ class _StripePaymentProcessor(StripeIO):
 		
 		notify(pay_interfaces.RegisterStripeToken(purchase_id, token, username))
 		
-		descid = "%s,%s,%s" % (username, customer_id, purchase_id)
+		descid = "%s:%s:%s" % (username, customer_id, purchase_id)
 		try:
 			charge = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
 			
@@ -207,4 +208,29 @@ class _StripePaymentProcessor(StripeIO):
 				
 		return charge
 
-				
+	def process_event(self, body):
+		try:
+			event = anyjson.loads(body) if isinstance(body, six.string_types) else body
+			etype = event.get('type', None)
+			data = event.get('data', {})
+			if etype in ("charge.succeeded", "charge.refunded", "charge.failed", "charge.dispute.created",
+						 "charge.dispute.updated"):
+				tracks = data.get('description', u'').split(":")
+				username = tracks[0] if len(tracks) >= 3 else u''
+				purchase_id = tracks[2] if len(tracks) >= 3 else u''
+				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+				if purchase:
+					if etype in ("charge.succeeded") and not purchase.has_succeeded():
+						notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
+					elif etype in ("charge.refunded") and not purchase.is_refunded():
+						notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
+					elif etype in ("charge.failed") and not purchase.has_failed():
+						notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username))
+					elif etype in ("charge.dispute.created", "charge.dispute.updated") and not purchase.is_disputed():
+						notify(store_interfaces.PurchaseAttemptDisputed(purchase_id, username))
+			else:
+				logger.debug('Unhandled event type (%s)' % etype)
+			return True
+		except:
+			logger.exception('Error processing stripe event (webhook)')
+			return False
