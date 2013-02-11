@@ -1,4 +1,5 @@
 @ff
+@bbpx
 a1te
 ahg fnpx
 ahgfnpx
@@ -482,10 +483,13 @@ shxra
 shxre
 shxva
 shxx
+shhpx
 shxxnu
 shxxra
 shxxre
 shxxva
+s$px
+sipx
 snegf
 snegl
 snegrq
@@ -516,6 +520,9 @@ snvt
 snvtf
 sphx
 srprf
+s%px
+f&ck
+s&px
 srygpu
 sryngvb
 srypure
