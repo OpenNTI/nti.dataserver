@@ -233,7 +233,7 @@ setup(
 		'zope.app.broken >= 3.6.0', # Improved broken objects
 		'zope.app.component >= 3.9.3', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
-		'zope.annotation >= 3.5.0',
+		'zope.annotation >= 4.0.1',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser >= 2.0.0',
 		'zope.browserpage >= 4.0.0',
@@ -246,7 +246,7 @@ setup(
 		'zope.componentvocabulary >= 1.0.1',
 		'zope.configuration >= 4.0.2',
 		'zope.container >= 3.12.0',
-		'zope.contenttype >= 3.5.5', # A utility module for content-type handling.
+		'zope.contenttype >= 4.0.0', # A utility module for content-type handling.
 		'zope.copy >= 4.0.1',
 		'zope.datetime >= 3.4.1',
 		'zope.deprecation >= 4.0.2',
