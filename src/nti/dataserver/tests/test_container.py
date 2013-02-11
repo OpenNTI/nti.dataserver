@@ -22,12 +22,55 @@ from nti.dataserver import containers as container, interfaces, datastructures
 
 from zope import interface
 from zope.container import contained
+from zope.container.interfaces import INameChooser
 
 from zope import lifecycleevent
 
 # Nose module-level setup and teardown
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.dataserver,) )
 tearDownModule = nti.tests.module_teardown
+
+@interface.implementer(interfaces.ILastModified)
+class Contained(datastructures.CreatedModDateTrackingObject,contained.Contained):
+	pass
+
+def test_name_chooser():
+	c = container.LastModifiedBTreeContainer()
+
+	name_chooser = INameChooser(c)
+	assert_that( name_chooser, is_( container.IdGeneratorNameChooser ) )
+
+	# initial names
+	c['foo.jpg'] = Contained()
+	c['baz'] = Contained()
+
+
+	# bad chars are stripped, and the result is unicode
+	name = name_chooser.chooseName( b'+@hah/bah', None )
+	assert_that( name, is_( unicode ) )
+	assert_that( name, is_( 'hah.bah' ) )
+
+	# assign to the random id so we have deterministic results
+	c._v_nextid = 1
+	name = name_chooser.chooseName( 'foo.jpg', None )
+
+	assert_that( name, is_( 'foo.1.jpg' ) )
+
+	c._v_nextid = 1
+	name = name_chooser.chooseName( 'baz', None )
+	assert_that( name, is_( 'baz.1' ) )
+
+	# trailing dots don't get doubled
+	c._v_nextid = 1
+	c['baz.'] = Contained()
+	name = name_chooser.chooseName( 'baz.', None )
+	assert_that( name, is_( 'baz.1' ) )
+
+	# A final digit is incremented
+	c['biz.1'] = Contained()
+	c._v_nextid = 0
+	name = name_chooser.chooseName( 'biz.1', None )
+	assert_that( name, is_( 'biz.2' ) )
 
 def test_lastModified_container_event():
 
@@ -52,9 +95,7 @@ def test_lastModified_container_event():
 def test_lastModified_in_parent_event():
 	c = container.LastModifiedBTreeContainer()
 
-	@interface.implementer(interfaces.ILastModified)
-	class Contained(datastructures.CreatedModDateTrackingObject,contained.Contained):
-		pass
+
 
 	child = Contained()
 	assert_that( child, verifiably_provides( interfaces.ILastModified ) )

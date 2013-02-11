@@ -15,20 +15,125 @@ from __future__ import print_function, unicode_literals
 import time
 import collections
 import numbers
+from random import randint
 
 from zope import interface
 from zope import component
 from zope.location import interfaces as loc_interfaces
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.container.interfaces import IContainerModifiedEvent
-from zope.container.btree import BTreeContainer
-from zope.container.contained import uncontained
+from zope.container.interfaces import IBTreeContainer
 from zope.annotation import interfaces as annotation
-
 
 from . import interfaces
 
+from zope.container.btree import BTreeContainer
+from zope.container.contained import uncontained
+from zope.container.contained import NameChooser
+
 from nti.zodb.minmax import NumericMaximum, ConstantZeroValue
+
+_MAX_UNIQUEID_ATTEMPTS = 1000
+
+class ExhaustedUniqueIdsError(Exception):
+	pass
+
+class _IdGenerationMixin(object):
+	"""
+	Mix this in to a BTreeContainer to provide id generation.
+	"""
+
+	#: The integer counter for generated ids.
+	_v_nextid = 0
+
+	def generateId(self, prefix='item', suffix='', rand_ceiling=999999999, _nextid=None):
+		"""
+		Returns an (string) ID not used yet by this folder. Use this method directly
+		if you have no client-supplied name to use as a base. (If you have a meaningful
+		or client-supplied name to use as a base, use an :class:`.INameChooser`.)
+
+		The ID is unlikely to collide with other threads and clients.
+		The IDs are sequential to optimize access to objects
+		that are likely to have some relation (i.e., so objects created in the same
+		transaction are stored in the same BTree bucket)
+		"""
+		# JAM: Based on code from Products.BTreeFolder2.BTreeFolder2
+		tree = self._SampleContainer__data
+		n = _nextid or self._v_nextid
+		attempt = 0
+		while True:
+			if n % 4000 != 0 and n <= rand_ceiling: # TODO: 4000 is a magic number. The size of the bucket?
+				the_id = '%s%d%s' % (prefix, n, suffix)
+				if not tree.has_key(the_id):
+					break
+			n = randint(1, rand_ceiling)
+			attempt = attempt + 1
+			if attempt > _MAX_UNIQUEID_ATTEMPTS:
+				# Prevent denial of service
+				raise ExhaustedUniqueIdsError()
+		self._v_nextid = n + 1
+		return the_id
+
+# Go ahead and mix this in to the base BTreeContainer
+BTreeContainer.__bases__ = (_IdGenerationMixin,) + BTreeContainer.__bases__
+
+# zope.container's NameChooser is registered on IWriteContainer, we override
+@component.adapter(IBTreeContainer)
+class IdGeneratorNameChooser(NameChooser):
+	"""
+	A name chooser that uses the built-in ID generator to create a name.
+	It also uses dots instead of dashes, as the superclass does.
+	"""
+
+	def chooseName(self, name, obj):
+		# Unfortunately, the superclass method is entirely
+		# monolithic and we must replace it.
+
+		container = self.context
+
+		# convert to unicode and remove characters that checkName does not allow
+		if not name:
+			name = unicode( obj.__class__.__name__ ) # use __class__, not type(), to work with proxies
+		name = unicode(name) # throw if conversion doesn't work
+		name = name.strip() # no whitespace
+		# remove bad characters
+		name = name.replace('/', '.').lstrip('+@')
+
+		# If it's clean, go with it
+		if name not in container:
+			self.checkName( name, obj )
+			return name
+
+		# otherwise, generate
+
+		# If the name looks like a filename, as in BASE.EXT, then keep the ext part
+		# after the random part
+		dot = name.rfind('.')
+		if dot >= 0:
+			# if name is 'foo.jpg', suffix is '.jpg' and name is 'foo.'.
+			# that way we separate the random part with a ., as in foo.1.jpg
+			suffix = name[dot:]
+			name = name[:dot + 1]
+		else:
+			name = name + '.'
+			suffix = ''
+
+		if suffix == '.':
+			suffix = ''
+
+		# If the suffix is already an int, increment that
+		try:
+			extid = int(suffix[1:])
+			nextid = extid + 1
+		except ValueError:
+			nextid = None
+		else:
+			suffix = ''
+
+		name = container.generateId( name, suffix, _nextid=nextid )
+		# Make sure the name is valid.	We may have started with something bad.
+		self.checkName(name, obj )
+		return name
 
 
 @interface.implementer(interfaces.ILastModified,annotation.IAttributeAnnotatable)

@@ -56,10 +56,11 @@ class TestSimpleEnclosureMixin(mock_dataserver.SharedConfiguringTestBase):
 		content2 = Content()
 		content2.name = 'Name'
 
+		sem._enclosures._v_nextid = 1 # deterministic ids
 		sem.add_enclosure( content2 )
 		assert_that( content.name, is_('Name') )
 		assert_that( sem.enclosures, has_entry( 'Name', content ) )
-		assert_that( content2.name, is_( 'Name-2' ) )
-		assert_that( sem.enclosures, has_entry( 'Name-2', content2 ) )
+		assert_that( content2.name, is_( 'Name.1' ) )
+		assert_that( sem.enclosures, has_entry( 'Name.1', content2 ) )
 
 		assert_that( list( sem.iterenclosures() ), is_( [content,content2] ) )
