@@ -25,6 +25,7 @@ class _FPSPurchase(zcontained.Contained, Persistent):
 	
 	TokenID = None
 	TransactionID = None
+	CallerReference = None
 	
 	@property
 	def purchase(self):
@@ -32,5 +33,7 @@ class _FPSPurchase(zcontained.Contained, Persistent):
 	
 	token_id = alias('TokenID')
 	transaction_id = alias('TransactionID')
+	callerReference = alias('CallerReference')
+	caller_reference = callerReference
 	
 _FPSPurchaseFactory = an_factory(_FPSPurchase)

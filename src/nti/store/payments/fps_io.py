@@ -14,6 +14,7 @@ import uuid
 import base64
 import hashlib
 import numbers
+import urlparse
 from datetime import date
 
 from boto.exception import BotoServerError
@@ -23,10 +24,19 @@ SINGLE_USE_PIPIELINE = 'SingleUse'
 AWS_FPS_SANDBOX_HOST = 'fps.sandbox.amazonaws.com'
 
 class FPSException(Exception):
-	def __init__(self, error_message, reason=None, status=None):
+	
+	data = None
+	status = None
+	reason = None
+	
+	def __init__(self, error_message, reason=None, status=None, data=None):
 		super(FPSException, self).__init__(error_message)
-		self.reason = reason
-		self.status = status
+		if data:
+			self.data = data
+		if reason:
+			self.reason = reason
+		if status:
+			self.status = status
 
 class FPSIO(object):
 	
@@ -112,3 +122,9 @@ class FPSIO(object):
 		result = self.connection.pay(**inputs)
 		return result
 	
+	def parse_aws_response(self, path):
+		parsed_path = urlparse.urlparse(path)
+		result = { k:v for k,v in urlparse.parse_qsl(parsed_path.query) }
+		if 'errorMessage' in result:
+			raise FPSException(result['errorMessage'], data=result)
+		return result
