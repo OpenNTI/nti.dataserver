@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Search results
 
+$Id: _search_results.py 15756 2013-02-11 18:17:31Z carlos.sanchez $
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -126,8 +130,12 @@ class _SearchResults(_PageableSearchResults):
 
 	def get_hits(self):
 		return self._hits
+	
+	def get_hit_meta_data(self):
+		return self._ihitmeta
 
 	hits = property(get_hits)
+	hit_meta_data = property(get_hit_meta_data)
 
 	def _add(self, item):
 		ihit = None
