@@ -78,6 +78,8 @@ class IStripePurchase(interface.Interface):
 	TokenID = schema.TextLine(title='Token id', required=False)
 	
 class IFPSPurchase(interface.Interface):
+	TokenID = schema.TextLine(title='Token id', required=False)
 	TransactionID = schema.TextLine(title='Transaction id', required=False)
-	Token = schema.TextLine(title='Token id', required=False)
+	CallerReference = schema.TextLine(title='NTIID reference id', required=False)
+
 	
