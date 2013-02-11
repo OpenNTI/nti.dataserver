@@ -97,25 +97,10 @@ class FPSIO(object):
 		result = result.GetAccountBalanceResult.AccountBalance
 		return result
 	
-	def _get_token_by_caller(self, reference=None, token=None):
-		"""
-		return meta informacion for the specied token
-		
-		token: senderTokenID return by AWS-fps after a payment operation (cbi)
-		reference: buyer/caller/NTI transaction reference id
-		"""
-		assert reference or token
-		
-		fps = self.connection
-		if token:
-			result = fps.get_token_by_caller(TokenId=token)
-		elif reference:
-			result = fps.get_token_by_caller(CallerReference=reference)
-		else:
-			result = None
+	def get_token_by_caller(self, token):
+		result = self._do_fps_operation(self.connection.get_token_by_caller, TokenId=token)
+		result = result.GetTokenByCallerResult
 		return result
-	
-
 	
 	def pay(self, token, amount, currency='USD', reference=None):
 		inputs = {
