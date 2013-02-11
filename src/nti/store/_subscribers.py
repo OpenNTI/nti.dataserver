@@ -18,10 +18,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from . import _content_roles
 from . import interfaces as store_interfaces
 from .purchase_history import get_purchase_attempt
-
-def _trx_runner(f, retries=5, sleep=0.1):
-	trxrunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
-	trxrunner(f, retries=retries, sleep=sleep)
 	
 @component.adapter(store_interfaces.IPurchaseAttemptStarted)
 def _purchase_attempt_started( event ):
@@ -30,7 +26,7 @@ def _purchase_attempt_started( event ):
 		purchase.updateLastMod()
 		purchase.State = store_interfaces.PA_STATE_STARTED
 		logger.info('%s started %s' % (event.username, purchase))
-	_trx_runner(func)
+	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 	
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful( event ):
@@ -41,7 +37,7 @@ def _purchase_attempt_successful( event ):
 		purchase.updateLastMod()
 		_content_roles._add_users_content_roles(event.username, purchase.Items)
 		logger.info('%s completed successfully' % (purchase))
-	_trx_runner(func)
+	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
 def _purchase_attempt_refunded( event ):
@@ -52,7 +48,16 @@ def _purchase_attempt_refunded( event ):
 		purchase.updateLastMod()
 		_content_roles._remove_users_content_roles(event.username, purchase.Items)
 		logger.info('%s has been refunded' % (purchase))
-	_trx_runner(func)
+	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
+	
+@component.adapter(store_interfaces.IPurchaseAttemptDisputed)
+def _purchase_attempt_disputed( event ):
+	def func():
+		purchase = get_purchase_attempt(event.purchase_id, event.username)
+		purchase.State = store_interfaces.PA_STATE_DISPUTED
+		purchase.updateLastMod()
+		logger.info('%s has been disputed' % (purchase))
+	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 	
 @component.adapter(store_interfaces.IPurchaseAttemptFailed)
 def _purchase_attempt_failed( event ):
@@ -66,7 +71,7 @@ def _purchase_attempt_failed( event ):
 		if event.error_message:
 			purchase.ErrorMessage = event.error_message
 		logger.info('%s failed. %s' % (purchase, event.error_message))
-	_trx_runner(func)
+	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
 @component.adapter(store_interfaces.IPurchaseAttemptSynced)
 def _purchase_attempt_synced( event ):
@@ -74,5 +79,5 @@ def _purchase_attempt_synced( event ):
 		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.Synced = True
 		logger.info('%s has been synched' % (purchase))
-	_trx_runner(func)
+	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
