@@ -235,7 +235,7 @@ setup(
 		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.annotation >= 3.5.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
-		'zope.browser >= 1.3',
+		'zope.browser >= 2.0.0',
 		'zope.browserpage >= 4.0.0',
 		'zope.browserresource >= 3.12.0',
 		'zope.catalog >= 3.8.2',

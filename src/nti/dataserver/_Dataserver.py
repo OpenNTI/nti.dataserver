@@ -236,6 +236,11 @@ class MinimalDataserver(object):
 			logger.warn( "Using dataserver without a proper ISiteManager configuration." )
 		return resolver.get_object_by_oid( oid_string, ignore_creator=ignore_creator ) if resolver else None
 
+	def _reopen( self ):
+		self._open_dbs()
+		self._setup_redis( self.conf )
+
+
 
 # After a fork, the dataserver has to be re-opened if it existed
 # at the time of fork. (Note that if we are not preloading the app,
@@ -247,12 +252,16 @@ def _process_did_fork_listener( event ):
 	ds = component.queryUtility( interfaces.IDataserver )
 	if ds:
 		# Re-open in place. pre-fork we called ds.close()
-		ds._open_dbs()
-		ds._setup_redis( ds.conf )
+		ds._reopen()
 
 
 @interface.implementer(interfaces.IDataserver)
 class Dataserver(MinimalDataserver):
+
+	chatserver = None
+	session_manager = None
+	_apns = None
+	changePublisherStream = None
 
 	def __init__(self, parentDir=None, apnsCertFile=None  ):
 		super(Dataserver, self).__init__(parentDir, apnsCertFile=apnsCertFile )
@@ -267,15 +276,24 @@ class Dataserver(MinimalDataserver):
 			if not root.has_key( 'nti.dataserver' ):
 				raise Exception( "Creating DS against uninitialized DB. Test code?", str(root) )
 
+		self._apnsCertFile = apnsCertFile
 
-		room_name = 'meeting_rooms'
+		self.__setup_volatile()
 
+
+	def _reopen(self):
+		super(Dataserver,self)._reopen()
+		self.__setup_volatile()
+
+
+	def __setup_volatile(self):
+		# handle the things that need opened or reopened following a close
 		self.session_manager = self._setup_session_manager( )
 		self.other_closeables.append( self.session_manager )
 
+		room_name = 'meeting_rooms'
 		self.chatserver = self._setup_chat( room_name )
 
-		self._apnsCertFile = apnsCertFile
 		self._apns = self
 
 		# A topic that broadcasts Change events
