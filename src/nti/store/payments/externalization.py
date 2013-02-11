@@ -17,12 +17,13 @@ class PurchaseAttemptDecorator(object):
 	def decorateExternalObject(self, original, external):
 		if original.Processor == 'stripe':
 			ps = payment_interfaces.IStripePurchase(original)
-			external['ChargeID'] = ps.charge_id
 			external['TokenID'] = ps.token_id
+			external['ChargeID'] = ps.charge_id
 		elif original.Processor == 'fps':
 			ps = payment_interfaces.IFPSPurchase(original)
-			external['TransactonID'] = ps.transaction_id
-			external['TokenID'] = ps.token_id
+			external['TokenID'] = ps.TokenID
+			external['TransactionID'] = ps.TransactionID
+			external['CallerReference'] = ps.CallerReference
 	
 def PurchaseAttemptDecoratorFactory(*args):
 	return PurchaseAttemptDecorator()

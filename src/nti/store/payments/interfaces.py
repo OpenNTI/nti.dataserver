@@ -2,7 +2,7 @@
 """
 Payment interfaces
 
-$Id: interfaces.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+$Id: interfaces.py 15756 2013-02-11 18:17:31Z carlos.sanchez $
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -62,7 +62,7 @@ class RegisterStripeCharge(object):
 # stripe objects
 	
 class IStripeCustomer(interface.Interface):
-	customer_id = schema.TextLine(title='customer id')
+	CustomerID = schema.TextLine(title='customer id')
 	
 class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 	

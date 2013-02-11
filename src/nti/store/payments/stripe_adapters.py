@@ -25,11 +25,13 @@ from .. import interfaces as store_interfaces
 @interface.implementer( pay_interfaces.IStripeCustomer)
 class _StripeCustomer(Persistent):
 	
-	customer_id = None
+	CustomerID = None
 	
 	@property
 	def id(self):
-		return self.customer_id
+		return self.CustomerID
+	
+	customer_id = alias('CustomerID')
 		
 _StripeCustomerFactory = an_factory(_StripeCustomer)
 
