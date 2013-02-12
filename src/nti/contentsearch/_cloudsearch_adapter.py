@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Cloudsearch user search adapter.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -116,6 +120,5 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		for r in results:
 			yield r[intid_]
 
-def _CloudSearchEntityIndexManagerFactory(user):
-	result = an_factory(_CloudSearchEntityIndexManager)(user)
-	return result
+_CloudSearchEntityIndexManagerFactory = an_factory(_CloudSearchEntityIndexManager)
+
