@@ -1,8 +1,17 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
 from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
-#from zope.schema import interfaces as sch_interfaces
+from zope.container import contained as zcontained
+from zope.annotation import interfaces as an_interfaces
 
 from persistent import Persistent
 
@@ -49,6 +58,7 @@ class MetaQTIElement(type):
 			
 		return t
 	
-class QTIElement(Persistent):
+@interface.implementer(an_interfaces.IAttributeAnnotatable)
+class QTIElement(zcontained.Contained, Persistent):
 
 	__metaclass__ = MetaQTIElement
