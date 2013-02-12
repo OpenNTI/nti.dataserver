@@ -489,7 +489,10 @@ class GenericSitePolicyEventListener(object):
 		# Icky. For some random reason we require everyone to provide their real name,
 		# and we force the display name to be derived from it.
 		names = user_interfaces.IFriendlyNamed( user )
-		human_name = nameparser.HumanName( names.realname ) # Raises BlankHumanName if missing
+		# nameparser 0.2.5 no longer raises BlankHumanNameError, so we do
+		if names.realname is None or not names.realname.strip():
+			raise nameparser.parser.BlankHumanNameError()
+		human_name = nameparser.HumanName( names.realname )
 		if not human_name.first:
 			raise MissingFirstName( _("Please provide your first name."), 'realname', names.realname )
 		if not human_name.last:
