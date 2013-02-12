@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
+Defines basic QTI element interfaces
 
 $Id$
 """
