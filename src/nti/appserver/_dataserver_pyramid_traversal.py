@@ -18,7 +18,6 @@ from zope.location import interfaces as loc_interfaces
 import pyramid.traversal
 import pyramid.interfaces
 import pyramid.security as sec
-from pyramid.threadlocal import get_current_request
 
 from nti.ntiids import ntiids
 
@@ -26,6 +25,8 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization_acl as nacl
+
+from nti.utils.property import alias
 
 from nti.appserver import interfaces
 
@@ -47,67 +48,29 @@ def users_root_resource_factory( request ):
 	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
 	return dataserver.root['users']
 
-def find_request( resource ):
-	"""
-	Given one of the resources in this class, walk through the
-	lineage to find the active pyramid request. If one is not found
-	return the current request.
-	"""
-	for res in pyramid.traversal.lineage( resource ):
-		if pyramid.interfaces.IRequest.providedBy( getattr( res, 'request', None ) ):
-			return res.request
 
-	return get_current_request()
-
-def _objects_pseudo_traverse( pseudo_parent, key, remaining_path ):
-	if key == 'Objects':
-		return _ObjectsContainerResource( pseudo_parent, None )
-
-	if key == 'NTIIDs':
-		return _NTIIDsContainerResource( pseudo_parent, None )
-
-	raise loc_interfaces.LocationError( key )
-
-
-@interface.implementer(trv_interfaces.ITraversable)
-@component.adapter(nti_interfaces.IDataserverFolder, pyramid.interfaces.IRequest)
-class Dataserver2RootTraversable(object):
-	"""
-	A traversable for the root folder in the dataserver, providing access to a few
-	of the specialized sub-folders, but not all of them, and providing access to the other special
-	implied resources (Objects and NTIIDs).
-	"""
-
-	# TODO: The implied resources could (should) actually be persistent. That way
-	# they fit nicely and automatically in the resource tree.
-
-	def __init__( self, context, request ):
-		self.context = context
-		self.request = request
-
-	allowed_keys = ('users', 'providers')
-
-	def traverse( self, key, remaining_path ):
-		if key in self.allowed_keys:
-			return self.context[key] # Better be there. Otherwise, KeyError, which fails traversal
-		return _objects_pseudo_traverse( self.context, key, remaining_path )
-
-
-@interface.implementer(trv_interfaces.ITraversable,interfaces.IContainerResource)
+@interface.implementer(trv_interfaces.ITraversable,
+					   interfaces.IContainerResource,
+					   loc_interfaces.ILocation)
 class _ContainerResource(object):
 
 	__acl__ = ()
 
-	def __init__( self, parent, container, name, user ):
-		super(_ContainerResource,self).__init__()
-		self.__parent__ = parent
-		self.__name__ = name
-		self.user = user
-		self.resource = container
-		self.container = container
+	def __init__( self, context, request=None, name=None, parent=None ):
+		"""
+		:param context: A container belonging to a user.
+		"""
+		self.context = context
+		self.request = request
+		self.__name__ = name or getattr( context, '__name__', None )
+		self.__parent__ = parent or getattr( context, '__parent__', None )
 
+	resource = alias('context') # bwc, see, e.g., GenericGetView
+	ntiid = alias('__name__')
 
-	ntiid = property(lambda self: getattr( self, '__name__' ) )
+	@property
+	def user(self):
+		return pyramid.traversal.find_interface( self, nti_interfaces.IUser )
 
 	def traverse( self, key, remaining_path ):
 		contained_object = self.user.getContainedObject( self.__name__, key )
@@ -149,12 +112,11 @@ class _PageContainerResource(_ContainerResource):
 
 class _ObjectsContainerResource(_ContainerResource):
 
-	def __init__( self, parent, user, name='Objects' ):
-		super(_ObjectsContainerResource,self).__init__( parent, None, name, user )
+	def __init__( self, context, request=None, name=None, parent=None ):
+		super(_ObjectsContainerResource,self).__init__( context, request, name=name or 'Objects' )
 
 	def traverse( self, key, remaining_path ):
-		request = find_request( self )
-		ds = request.registry.getUtility(nti_interfaces.IDataserver)
+		ds = self.request.registry.getUtility(nti_interfaces.IDataserver)
 		result = self._getitem_with_ds( ds, key )
 		if result is None: # pragma: no cover
 			raise loc_interfaces.LocationError( key )
@@ -178,54 +140,161 @@ class _NTIIDsContainerResource(_ObjectsContainerResource):
 	This class exists now mostly for backward compat and for the name. It can
 	probably go away.
 	"""
-	def __init__( self, parent, user ):
-		super(_NTIIDsContainerResource,self).__init__( parent, user, name='NTIIDs' )
+	def __init__( self, context, request ):
+		super(_NTIIDsContainerResource,self).__init__( context, request, name='NTIIDs' )
 
+class _PseudoTraversableMixin(object):
+	"""
+	Extend this to support traversing into the Objects and NTIIDs namespaces.
+	"""
 
-@interface.implementer(trv_interfaces.ITraversable)
-@component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
-class UserTraversable(object):
+	#: Special virtual keys beneath this object's context. The value
+	#: is either a factory function or an interface; if an interface,
+	#: it names a global utility we look up.
+	_pseudo_classes_ = { 'Objects': _ObjectsContainerResource,
+						 'NTIIDs': _NTIIDsContainerResource }
 
-	def __init__( self, user, request=None ):
-		self.request = request
-		self.context = self.user = user
-		# Our resource is the user
-		self._pseudo_classes_ = {
-
-								  'Library': lib_interfaces.IContentPackageLibrary,
-								  'Pages': _PagesResource,
-								  'EnrolledClassSections': _AbstractUserPseudoContainerResource }
-
-
-	def traverse( self, key, remaining_path ):
-
-		# First, some pseudo things the user
-		# doesn't actually have
-		try:
-			return _objects_pseudo_traverse( self.context, key, remaining_path )
-		except loc_interfaces.LocationError:
-			pass
+	def _pseudo_traverse( self, key, remaining_path ):
 		if key in self._pseudo_classes_:
 			value = self._pseudo_classes_[key]
 			if interface.interfaces.IInterface.providedBy( value ):
 				# TODO: In some cases, we'll need to proxy this to add the name?
 				# And/Or ACL?s
-				return self.request.registry.getUtility( value )
-			return self._pseudo_classes_[key]( self.context, self.request )
+				resource = self.request.registry.getUtility( value )
+			else:
+				resource = self._pseudo_classes_[key]( self.context, self.request )
 
+			return resource
+
+		raise loc_interfaces.LocationError( key )
+
+
+@interface.implementer(trv_interfaces.ITraversable)
+@component.adapter(nti_interfaces.IDataserverFolder, pyramid.interfaces.IRequest)
+class Dataserver2RootTraversable(_PseudoTraversableMixin):
+	"""
+	A traversable for the root folder in the dataserver, providing access to a few
+	of the specialized sub-folders, but not all of them, and providing access to the other special
+	implied resources (Objects and NTIIDs).
+	"""
+
+	# TODO: The implied resources could (should) actually be persistent. That way
+	# they fit nicely and automatically in the resource tree.
+
+	def __init__( self, context, request ):
+		self.context = context
+		self.request = request
+
+	allowed_keys = ('users', 'providers')
+
+	def traverse( self, key, remaining_path ):
+		if key in self.allowed_keys:
+			return self.context[key] # Better be there. Otherwise, KeyError, which fails traversal
+		return self._pseudo_traverse( key, remaining_path )
+
+
+
+@component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
+class _AbstractUserPseudoContainerResource(object):
+	"""
+	Base class for things that represent pseudo-containers under a user.
+	Exists to provide the ACL for such collections.
+	"""
+
+	def __init__( self, context, request ):
+		self.context = context
+		self.request = request
+		self.__acl__ = nacl.acl_from_aces( nacl.ace_allowing( context, sec.ALL_PERMISSIONS, self ),
+										   nacl.ace_denying_all( self ) )
+	__parent__ = alias('context')
+	user = alias('context')
+	resource = alias('context')
+
+
+
+@interface.implementer(trv_interfaces.ITraversable, interfaces.IPagesResource)
+class _PagesResource(_AbstractUserPseudoContainerResource):
+	"""
+	When requesting /Pages or /Pages(ID), we go through this resource.
+	In the first case, we wind up using the user as the resource,
+	which adapts to a ICollection and lists the NTIIDs.
+	In the latter case, we return a _PageContainerResource.
+	"""
+
+	def traverse( self, key, remaining_path ):
+		resource = None
+		if key == ntiids.ROOT:
+			# The root is always available
+			resource = _PageContainerResource( self, self.request, name=key, parent=self.user )
+		# What about an owned container, or a shared container?
+		elif self.user.getContainer( key ) is not None or self.user.getSharedContainer( key, defaultValue=None ) is not None:
+			resource = _PageContainerResource( self, self.request, name=key, parent=self.user )
+			# Note that the container itself doesn't matter
+			# much, the _PageContainerResource only supports a few child items
+		else:
+			# Nope.
+			raise loc_interfaces.LocationError( key )
+
+
+		# These have the same ACL as the user itself (for now)
+		resource.__acl__ = nacl.ACL( self.user )
+		return resource
+
+
+@interface.implementer(trv_interfaces.ITraversable)
+@component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
+class UserTraversable(_PseudoTraversableMixin):
+
+	_pseudo_classes_ = { 'Library': lib_interfaces.IContentPackageLibrary,
+						 'Pages': _PagesResource,
+						 'EnrolledClassSections': _AbstractUserPseudoContainerResource }
+	_pseudo_classes_.update( _PseudoTraversableMixin._pseudo_classes_ )
+
+	_DENY_ALL = True
+
+	def __init__( self, context, request=None ):
+		self.context = context
+		self.request = request
+
+
+	def traverse( self, key, remaining_path ):
+		# First, some pseudo things the user
+		# doesn't actually have
+
+		try:
+			return self._pseudo_traverse( key, remaining_path )
+		except loc_interfaces.LocationError:
+			pass
 
 		resource = None
-		cont = self.user.getContainer( key )
-		if cont is not None:
-			resource = _ContainerResource( self.context, cont, key, self.user )
+		cont = self.context.getContainer( key )
+		if nti_interfaces.INamedContainer.providedBy( cont ) or nti_interfaces.IHomogeneousTypeContainer.providedBy( cont ):
+			# Provide access here only to specific, special containers, not the generic UGD containers.
+			# IContainerResource has views registered on it for POST and GET, but the GET
+			# is generic, NOT the UGD GET; that's registered for IPageContainer
+			resource = _ContainerResource( cont, self.request )
+			# In the past, we accessed generic containers here for the legacy URL structure,
+			# but the better solution was to change the route configuration to make the legacy
+			# structure match the new structure's traversal
+		elif cont is not None:
+			raise loc_interfaces.LocationError( key ) # It exists, but you cannot access it at this URL
 
-		if resource is None:
-			# OK, assume a new container
-			resource = _NewContainerResource( self.context, None, key, self.user )
+		else:
+			# OK, assume a new container.
+			# TODO: This should be a LocationError as well. But it's not because
+			# of the glossary views. Note that there is a specific unnamed GET view registered
+			# for this resource to make it return a 404
+			resource = _NewContainerResource( None, self.request )
+			resource.__name__ = key
+			resource.__parent__ = self.context
+
 
 		# Allow the owner full permissions.
-		# TODO: What about others?
-		resource.__acl__ = ( (sec.Allow, self.user.username, sec.ALL_PERMISSIONS), )
+		# These are the special containers, and no one else can have them.
+
+		resource.__acl__ = nacl.acl_from_aces( nacl.ace_allowing( self.context, sec.ALL_PERMISSIONS, self ) )
+		if self._DENY_ALL:
+			resource.__acl__ = resource.__acl__ + nacl.ace_denying_all( self )
 
 		return resource
 
@@ -235,9 +304,15 @@ class ProviderTraversable(UserTraversable):
 	Respects the provider's ACL.
 	"""
 
+	# The user-specific things are dropped
+	_pseudo_classes_ = _PseudoTraversableMixin._pseudo_classes_
+
+	_DENY_ALL = False
+
 	def __init__( self, *args, **kwargs ):
 		super(ProviderTraversable,self).__init__( *args, **kwargs )
-		self._pseudo_classes_.clear()
+
+
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(lib_interfaces.IContentPackageLibrary, pyramid.interfaces.IRequest)
@@ -253,48 +328,6 @@ class LibraryTraversable(object):
 		except KeyError:
 			raise loc_interfaces.LocationError( key )
 
-
-@component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
-class _AbstractUserPseudoContainerResource(object):
-	"""
-	Base class for things that represent pseudo-containers under a user.
-	Exists to provide the ACL for such collections.
-	"""
-
-	def __init__( self, context, request ):
-		self.__parent__ = context
-		self.user = context
-		self.resource = context
-		self.request = request
-		self.__acl__ = [ (sec.Allow, self.user.username, sec.ALL_PERMISSIONS),
-						 (sec.Deny, sec.Everyone, sec.ALL_PERMISSIONS) ]
-
-
-@interface.implementer(trv_interfaces.ITraversable, interfaces.IPagesResource)
-class _PagesResource(_AbstractUserPseudoContainerResource):
-	"""
-	When requesting /Pages or /Pages(ID), we go through this resource.
-	In the first case, we wind up using the user as the resource,
-	which adapts to a ICollection and lists the NTIIDs.
-	In the latter case, we return a _PageContainerResource.
-	"""
-
-	def traverse( self, key, remaining_path ):
-		if key == ntiids.ROOT:
-			return _PageContainerResource( self, None, key, self.user )
-		cont = self.user.getContainer( key )
-		if cont is None:
-			# OK, what about container of shared?
-			# Note that the container itself doesn't matter
-			# much, the _PageContainerResource only supports a few child items
-			cont = self.user.getSharedContainer(key, defaultValue=None)
-			if cont is None:
-				# TODO: A user is a sharing.SharingSourceMixin which
-				# seems to never return the default value
-				raise loc_interfaces.LocationError(key)
-
-		resource = _PageContainerResource( self, cont, key, self.user )
-		return resource
 
 ## Attachments/Enclosures
 from zope.traversing.namespace import adapter

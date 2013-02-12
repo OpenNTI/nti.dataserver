@@ -273,6 +273,8 @@ class _DevicesMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 	contained_type = nti_interfaces.IDevice
 	container_name = 'Devices'
 
+	__name__ = container_name
+
 	def __setitem__( self, key, value ):
 		if not isinstance( value, Device ):
 			value = Device( value )
@@ -288,7 +290,7 @@ nti_interfaces.IDevice.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
 class _TranscriptsMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 	contained_type = nti_interfaces.ITranscript
 	container_name = 'Transcripts'
-
+	__name__ = container_name
 
 @interface.implementer( nti_interfaces.IContainerIterable,
 						nti_interfaces.IUser,

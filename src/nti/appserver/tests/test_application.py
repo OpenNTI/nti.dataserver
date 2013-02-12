@@ -531,6 +531,7 @@ class TestApplication(SharedApplicationTestBase):
 		# But we can post it
 		testapp.post( '/dataserver2/users/sjohnson@nextthought.com', data, extra_environ=self._make_extra_environ() )
 		# And then put
+		__traceback_info__ = path
 		testapp.put( path, data, extra_environ=self._make_extra_environ(), status=200 )
 
 	@WithSharedApplicationMockDS
