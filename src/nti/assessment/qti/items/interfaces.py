@@ -1,14 +1,21 @@
+# -*- coding: utf-8 -*-
+"""
+Defines QTI items interfaces
+
+$Id$
+"""
 from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 
-from nti.assessment.qti import interfaces as qti_interfaces
-from nti.assessment.qti.content import interfaces as cnt_interfaces
-from nti.assessment.qti.response import interfaces as rsp_interfaces
-from nti.assessment.qti.template import interfaces as tmp_interfaces
-from nti.assessment.qti.feedback import interfaces as feed_interfaces
-from nti.assessment.qti.variables import interfaces as var_interfaces
-from nti.assessment.qti.attributes import interfaces as attr_interfaces
+from ..qti import interfaces as qti_interfaces
+from ..content import interfaces as cnt_interfaces
+from ..response import interfaces as rsp_interfaces
+from ..template import interfaces as tmp_interfaces
+from ..feedback import interfaces as feed_interfaces
+from ..variables import interfaces as var_interfaces
+from ..attributes import interfaces as attr_interfaces
 
 class IitemSessionControl(attr_interfaces.IitemSessionControlAttrGroup, qti_interfaces.IConcrete):
 	pass
