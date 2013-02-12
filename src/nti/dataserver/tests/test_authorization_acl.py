@@ -268,7 +268,7 @@ class TestACE(mock_dataserver.SharedConfiguringTestBase):
 		from_file = auth_acl.acl_from_file( temp_file )
 		assert_that( from_file, is_( acl ) )
 
-class TestHasPermission(mock_dataserver.ConfiguringTestBase):
+class TestHasPermission(mock_dataserver.SharedConfiguringTestBase):
 
 	def setUp(self):
 		super(TestHasPermission,self).setUp()
@@ -287,29 +287,36 @@ class TestHasPermission(mock_dataserver.ConfiguringTestBase):
 		assert_that( result, has_property( 'msg', 'No ACL found' ) )
 
 	def test_creator_allowed(self):
-		component.provideUtility( ACLAuthorizationPolicy() )
-		result = auth_acl.has_permission( auth.ACT_CREATE, self.note, "sjohnson@nextthought.com", user_factory=lambda s: s )
-		assert_that( bool(result), is_( True ) )
-		assert_that( result, has_property( 'msg', contains_string('ACLAllowed' ) ) )
+		policy = ACLAuthorizationPolicy()
+		try:
+			component.provideUtility( policy  )
+			result = auth_acl.has_permission( auth.ACT_CREATE, self.note, "sjohnson@nextthought.com", user_factory=lambda s: s )
+			assert_that( bool(result), is_( True ) )
+			assert_that( result, has_property( 'msg', contains_string('ACLAllowed' ) ) )
+		finally:
+			component.getGlobalSiteManager().unregisterUtility( policy )
 
 from nti.contentlibrary.filesystem import FilesystemContentPackage
 
-class TestLibraryEntryAclProvider(mock_dataserver.ConfiguringTestBase):
+class TestLibraryEntryAclProvider(mock_dataserver.SharedConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
+		super(TestLibraryEntryAclProvider,cls).setUpClass()
 		cls.temp_dir = tempfile.mkdtemp()
 		cls.library_entry = FilesystemContentPackage()
 		cls.library_entry.filename = os.path.join( cls.temp_dir, 'index.html' )
 		cls.acl_path = os.path.join( cls.temp_dir, '.nti_acl' )
+		component.provideUtility( ACLAuthorizationPolicy() )
 
 	@classmethod
 	def tearDownClass(cls):
 		shutil.rmtree( cls.temp_dir )
+		super(TestLibraryEntryAclProvider,cls).tearDownClass()
 
 	def setUp(self):
 		super(TestLibraryEntryAclProvider,self).setUp()
-		component.provideUtility( ACLAuthorizationPolicy() )
+
 		self.library_entry.ntiid = None
 		try:
 			os.unlink( self.acl_path )

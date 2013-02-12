@@ -12,10 +12,20 @@ import contextlib
 from zope import component
 from zope import interface
 
-import pyramid.security
-
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
+
+def _dynamic_memberships_that_participate_in_security( user ):
+	# Add principals for all the communities that the user is in
+	# These are valid ACL targets because they are in the same namespace
+	# as users (so no need to prefix with community_ or something like that)
+	for community in getattr( user, 'dynamic_memberships', ()): # Mostly tests pass in a non-User user_factory
+		# Make sure it's a valid community
+		# (TODO: Why? Do we not have an IPrincipal adapter for DynamicFriendsLists?
+		# If we did allow them here, that would change the need to expand them
+		# in ACLs)
+		if nti_interfaces.ICommunity.providedBy( community ) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy( community ):
+			yield nti_interfaces.IPrincipal( community )
 
 def effective_principals( username,
 						  registry=component,
@@ -49,25 +59,15 @@ def effective_principals( username,
 											nti_interfaces.IGroupMember ):
 		result.update( adapter.groups )
 
-	# Add principals for all the communities that the user is in
-	# These are valid ACL targets because they are in the same namespace
-	# as users (so no need to prefix with community_ or something like that)
-	for community in getattr( user, 'dynamic_memberships', ()): # Mostly tests pass in a non-User user_factory
-		# Make sure it's a valid community
-		# (TODO: Why? Do we not have an IPrincipal adapter for DynamicFriendsLists?
-		# If we did allow them here, that would change the need to expand them
-		# in ACLs)
-		# TODO: Interfaces
-		if isinstance( community, users.Community ) and not isinstance( community, users.Everyone ):
-			result.add( nti_interfaces.IPrincipal( community ) )
+	result.update( _dynamic_memberships_that_participate_in_security( user ) )
 
 	# These last three will be duplicates of string-only versions
 	# Ensure that the user is in there as a IPrincipal
 	result.update( (nti_interfaces.IPrincipal(username),) )
 	# Add the authenticated and everyone groups
-	result.add( nti_interfaces.IPrincipal( pyramid.security.Everyone ) )
+	result.add( nti_interfaces.IPrincipal( nti_interfaces.EVERYONE_GROUP_NAME ) )
 	if authenticated:
-		result.add( nti_interfaces.IPrincipal( pyramid.security.Authenticated ) )
+		result.add( nti_interfaces.IPrincipal( nti_interfaces.AUTHENTICATED_GROUP_NAME ) )
 	if '@' in username:
 		# Make the domain portion of the username available as a group
 		# TODO: Prefix this, like we do with roles?

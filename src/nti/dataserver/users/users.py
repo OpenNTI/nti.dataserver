@@ -186,6 +186,7 @@ class Community(Entity,sharing.DynamicSharingTargetMixin):
 	def is_accepting_shared_data_from( self, source ):
 		return True
 
+@interface.implementer(nti_interfaces.IUnscopedGlobalCommunity)
 class Everyone(Community):
 	""" A community that represents the entire world. """
 	__external_class_name__ = 'Community'
@@ -193,7 +194,7 @@ class Everyone(Community):
 	_avatarURL = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
 	_realname = 'Everyone'
 	_alias = 'Public'
-	
+
 	def __init__(self):
 		super(Everyone,self).__init__( self._realname )
 
@@ -611,7 +612,7 @@ class User(Principal):
 	def getFriendsLists( self, name ):
 		""" Returns all the friends lists"""
 		return tuple(self.friendsLists.values())
-	
+
 	def maybeCreateContainedObjectWithType( self, datatype, externalValue ):
 		if datatype == 'Devices':
 			result = Device(externalValue)

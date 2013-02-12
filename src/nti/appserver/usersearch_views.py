@@ -236,6 +236,7 @@ def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains
 
 
 def _make_visibility_test(remote_user):
+	# TODO: Hook this up to the ACL support
 	if remote_user:
 		remote_com_names = remote_user.usernames_of_dynamic_memberships - set( ('Everyone',) )
 		def test(x):
