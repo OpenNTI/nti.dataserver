@@ -7,6 +7,9 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import time
+import gevent
+
 from zope import component
 from zope import interface
 from zope.event import notify
@@ -40,9 +43,19 @@ def register_fps_transaction(event):
 class _FPSPaymentProcessor(FPSIO):
 	
 	name = 'fps'
-
-	# ---------------------------
 	
+	def _process_fps_status(self, status, purchase_id, username, error_message=None):
+		result = True
+		if status in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE):
+			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, error_message))
+		elif status == store_interfaces.PA_STATE_RESERVED:
+			notify(store_interfaces.PurchaseAttemptReserved(purchase_id, username))
+		elif status == store_interfaces.PA_STATE_SUCCESS:
+			notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
+		else:
+			result = False
+		return result
+			
 	def process_purchase(self, purchase_id, username, token_id, caller_reference, amount, currency='USD'):
 	
 		notify(store_interfaces.PurchaseAttemptStarted(purchase_id, username))
@@ -52,16 +65,17 @@ class _FPSPaymentProcessor(FPSIO):
 			pay_result = self.pay(token=token_id, amount=amount, currency=currency, reference=caller_reference)
 			notify(pay_interfaces.RegisterFPSTransaction(purchase_id, username, pay_result.TransactionId))
 				
-			if pay_result.TransactionStatus in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE):
-				notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username))
-			elif pay_result.TransactionStatus == store_interfaces.PA_STATE_RESERVED:
-				notify(store_interfaces.PurchaseAttemptReserved(purchase_id, username))
-			elif pay_result.TransactionStatus == store_interfaces.PA_STATE_SUCCESS:
-				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
-			else:
-				#TODO: check status in greenlet
-				pass
-				
+			if not self._process_fps_status(pay_result.TransactionStatus, purchase_id, username):
+				transaction_id = pay_result.TransactionId
+				def process_pay():
+					now = time.time()
+					while (time.time() -  now  < 90):
+						t = self.get_transaction(transaction_id)
+						if self._process_fps_status(t.TransactionStatus, purchase_id, username, t.StatusMessage):
+							break
+						gevent.sleep(5)
+				gevent.spawn(process_pay)
+						
 			return pay_result.TransactionId
 		except FPSException, e:
 			message = e.error_message
