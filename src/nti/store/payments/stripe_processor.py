@@ -130,13 +130,13 @@ class _StripePaymentProcessor(StripeIO):
 						
 		customer_id = self.get_or_create_customer(username, api_key=api_key)
 		
-		notify(pay_interfaces.RegisterStripeToken(purchase_id, token, username))
+		notify(pay_interfaces.RegisterStripeToken(purchase_id, username, token))
 		
 		descid = "%s:%s:%s" % (username, customer_id, purchase_id)
 		try:
 			charge = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
 			
-			notify(pay_interfaces.RegisterStripeCharge(purchase_id, charge.id, username))
+			notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
 			
 			if charge.paid:
 				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
@@ -176,7 +176,7 @@ class _StripePaymentProcessor(StripeIO):
 			charges = self.get_charges(purchase_id=purchase_id, start_time=start_time, api_key=api_key)
 			if charges:
 				charge = charges[0]
-				notify(pay_interfaces.RegisterStripeCharge(purchase_id, charge.id, username))
+				notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
 			elif sp.token_id:
 				token = self.get_stripe_token(sp.token_id, api_key=api_key)
 				if token is None:

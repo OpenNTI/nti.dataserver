@@ -2,6 +2,8 @@
 <configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
 	<include package="zope.component" />
 	
+	<!-- stripe -->
+	
 	<subscriber handler=".stripe_processor.stripe_customer_created" />
 	<subscriber handler=".stripe_processor.stripe_customer_deleted" />
 	<subscriber handler=".stripe_processor.register_stripe_token" />
@@ -19,10 +21,17 @@
 			 provides=".interfaces.IStripePaymentProcessor" 
 			 name="stripe" />
 	
+	<!-- fps -->
+	
+	<subscriber handler=".fps_processor.register_fps_token" />
+	<subscriber handler=".fps_processor.register_fps_transaction" />
+	
 	<adapter factory=".fps_adapters._FPSPurchaseFactory"
 			 for="..interfaces.IPurchaseAttempt"
 			 provides=".interfaces.IFPSPurchase" />
 			 
+	<!-- decorators -->
+	
 	<subscriber factory=".externalization.PurchaseAttemptDecoratorFactory"
 				for="..interfaces.IPurchaseAttempt"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
