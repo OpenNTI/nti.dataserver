@@ -2,7 +2,7 @@
 """
 Stripe io interface.
 
-$Id: stripe_io.py 15718 2013-02-08 03:30:41Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
