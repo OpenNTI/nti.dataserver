@@ -33,31 +33,34 @@ class IStripeCustomerDeleted(IStripeCustomerCreated):
 class StripeCustomerDeleted(StripeCustomerCreated):
 	pass
 
-class IRegisterStripeToken(interface.Interface):
-	token = interface.Attribute("The token identifier")
+class IRegisterPurchaseData(interface.Interface):
 	username = interface.Attribute("The registering username")
 	purchase_id = interface.Attribute("The purchase identifier")
-
-@interface.implementer(IRegisterStripeToken)
-class RegisterStripeToken(object):
-	def __init__( self, purchase_id, token, username=None):
-		self.token = token
+	
+class RegisterPurchaseData(object):
+	def __init__( self, purchase_id, username):
 		self.username = username
 		self.purchase_id = purchase_id
 	
-	token_id = alias('token')
+class IRegisterStripeToken(IRegisterPurchaseData):
+	token = interface.Attribute("The token identifier")
 	
-class IRegisterStripeCharge(interface.Interface):
+@interface.implementer(IRegisterStripeToken)
+class RegisterStripeToken(RegisterPurchaseData):
+	def __init__( self, purchase_id, username, token_id):
+		super(RegisterStripeToken, self).__init__(purchase_id, username)
+		self.token_id = token_id
+
+	token = alias('token_id')
+	
+class IRegisterStripeCharge(IRegisterPurchaseData):
 	charge_id = interface.Attribute("The charge identifier")
-	username = interface.Attribute("The registering username")
-	purchase_id = interface.Attribute("The purchase identifier")
 
 @interface.implementer(IRegisterStripeCharge)
-class RegisterStripeCharge(object):
-	def __init__( self, purchase_id, charge_id, username=None):
-		self.username = username
+class RegisterStripeCharge(RegisterPurchaseData):
+	def __init__( self, purchase_id, username, charge_id):
+		super(RegisterStripeCharge, self).__init__(purchase_id, username)
 		self.charge_id = charge_id
-		self.purchase_id = purchase_id
 		
 # stripe objects
 	
@@ -66,7 +69,7 @@ class IStripeCustomer(interface.Interface):
 	
 class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 	
-	def process_purchase(username, token, purchase_id, amount, currency, description):
+	def process_purchase(purchase_id, username, token_id, amount, currency, description):
 		"""
 		Process a purchase attempt
 		
@@ -81,5 +84,34 @@ class IFPSPurchase(interface.Interface):
 	TokenID = schema.TextLine(title='Token id', required=False)
 	TransactionID = schema.TextLine(title='Transaction id', required=False)
 	CallerReference = schema.TextLine(title='NTIID reference id', required=False)
+	
+class IRegisterFPSToken(IRegisterPurchaseData):
+	token_id = interface.Attribute("The token identifier")
+	caller_reference = interface.Attribute("The nttid caller identifier")
 
+class IRegisterFPSTransaction(IRegisterPurchaseData):
+	transaction_id = interface.Attribute("The purchase identifier")
+
+@interface.implementer(IRegisterFPSToken)
+class RegisterFPSToken(RegisterPurchaseData):
+	def __init__( self, purchase_id, username, token_id, caller_reference):
+		super(RegisterFPSToken, self).__init__(purchase_id, username)
+		self.token_id = token_id
+		self.caller_reference = caller_reference
+
+@interface.implementer(IRegisterFPSTransaction)
+class RegisterFPSTransaction(RegisterPurchaseData):
+	def __init__( self, purchase_id, username, transaction_id):
+		super(RegisterFPSTransaction, self).__init__(purchase_id, username)
+		self.transaction_id = transaction_id
+		
+class IFPSPaymentProcessor(store_interfaces.IPaymentProcessor):
+	
+	def process_purchase(purchase_id, username, token_id, caller_reference, amount, currency, description):
+		"""
+		Process a purchase attempt
+		
+		:token Credit Card token
+		"""
+		
 	

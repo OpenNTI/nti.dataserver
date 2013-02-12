@@ -150,6 +150,9 @@ class IPurchaseAttemptRefunded(IPurchaseAttemptStateEvent):
 class IPurchaseAttemptDisputed(IPurchaseAttemptStateEvent):
 	pass
 
+class IPurchaseAttemptReserved(IPurchaseAttemptStateEvent):
+	pass
+
 class IPurchaseAttemptFailed(IPurchaseAttemptStateEvent):
 	error_code = interface.Attribute('Failure code')
 	error_message = interface.Attribute('Failure message')
@@ -183,6 +186,10 @@ class PurchaseAttemptRefunded(PurchaseAttemptEvent):
 @interface.implementer(IPurchaseAttemptDisputed)
 class PurchaseAttemptDisputed(PurchaseAttemptEvent):
 	state = PA_STATE_DISPUTED
+	
+@interface.implementer(IPurchaseAttemptReserved)
+class PurchaseAttemptReserved(PurchaseAttemptEvent):
+	state = PA_STATE_RESERVED
 	
 @interface.implementer(IPurchaseAttemptFailed)
 class PurchaseAttemptFailed(PurchaseAttemptEvent):
