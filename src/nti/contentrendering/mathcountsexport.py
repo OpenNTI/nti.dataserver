@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Utility to take the XHTML export of the MATHCOUNTS InDesign files and dump it to TeX
-$Revision: 8588 $
+$Revision$
 """
 from __future__ import unicode_literals, print_function
 
