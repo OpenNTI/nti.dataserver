@@ -2,7 +2,7 @@
 """
 Search results
 
-$Id: _search_results.py 15756 2013-02-11 18:17:31Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"

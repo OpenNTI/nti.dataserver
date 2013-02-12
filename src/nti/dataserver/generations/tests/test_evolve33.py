@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id: test_evolve32.py 12983 2012-10-08 15:35:51Z jason.madden $
+$Id$
 """
 from __future__ import print_function, unicode_literals
 

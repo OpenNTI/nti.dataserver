@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id: __init__.py 8519 2012-06-29 22:00:46Z jason.madden $
+$Id$
 """
 from __future__ import print_function, unicode_literals
 
