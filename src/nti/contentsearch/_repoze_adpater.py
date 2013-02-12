@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Repoze user search adapter.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -199,6 +203,4 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 		result = self.remove_catalog(type_name)
 		return result
 
-def _RepozeEntityIndexManagerFactory(user):
-	result = an_factory(_RepozeEntityIndexManager)(user)
-	return result
+_RepozeEntityIndexManagerFactory = an_factory(_RepozeEntityIndexManager)

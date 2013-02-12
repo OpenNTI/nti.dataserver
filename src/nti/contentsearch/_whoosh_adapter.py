@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Whoosh user search adapter.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -235,6 +239,5 @@ class _WhooshEntityIndexManager(_SearchEntityIndexManager):
 		setattr(indexable ,'get_object', self.get_object)
 		return indexable
 	
-def _WhooshEntityIndexManagerFactory(user):
-	result = an_factory(_WhooshEntityIndexManager)(user)
-	return result
+_WhooshEntityIndexManagerFactory = an_factory(_WhooshEntityIndexManager)
+
