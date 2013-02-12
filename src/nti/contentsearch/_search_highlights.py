@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Search highlight functionality
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -74,9 +78,10 @@ def _match_text(self, text):
 	return self.text.lower() == text.lower()
 
 def _range_equals(self, other):
-	result = False
-	if isinstance(other, (list, tuple, _Range)) and len(other) >=2:
-		result = self.start == other[0] and self.end == other[1]
+	result = self is other or (	isinstance(other, (list, tuple, _Range))
+								and len(other) >= 2
+								and self.start == other[0]
+								and self.end == other[1])
 	return result
 	
 _Range = namedtuple('_Range', 'start end text')
