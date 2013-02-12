@@ -1,47 +1,51 @@
-from __future__ import print_function, unicode_literals, generators
+# -*- coding: utf-8 -*-
+"""
+An implementation of a Bayes-like spam classifier.
 
-# An implementation of a Bayes-like spam classifier.
-#
-# Paul Graham's original description:
-#
-#     http://www.paulgraham.com/spam.html
-#
-# A highly fiddled version of that can be retrieved from our CVS repository,
-# via tag Last-Graham.  This made many demonstrated improvements in error
-# rates over Paul's original description.
-#
-# This code implements Gary Robinson's suggestions, the core of which are
-# well explained on his webpage:
-#
-#    http://radio.weblogs.com/0101454/stories/2002/09/16/spamDetection.html
-#
-# This is theoretically cleaner, and in testing has performed at least as
-# well as our highly tuned Graham scheme did, often slightly better, and
-# sometimes much better.  It also has "a middle ground", which people like:
-# the scores under Paul's scheme were almost always very near 0 or very near
-# 1, whether or not the classification was correct.  The false positives
-# and false negatives under Gary's basic scheme (use_gary_combining) generally
-# score in a narrow range around the corpus's best spam_cutoff value.
-# However, it doesn't appear possible to guess the best spam_cutoff value in
-# advance, and it's touchy.
-#
-# The last version of the Gary-combining scheme can be retrieved from our
-# CVS repository via tag Last-Gary.
-#
-# The chi-combining scheme used by default here gets closer to the theoretical
-# basis of Gary's combining scheme, and does give extreme scores, but also
-# has a very useful middle ground (small # of msgs spread across a large range
-# of scores, and good cutoff values aren't touchy).
-#
-# This implementation is due to Tim Peters et alia.
+Paul Graham's original description:
+     http://www.paulgraham.com/spam.html
+
+A highly fiddled version of that can be retrieved from our CVS repository,
+via tag Last-Graham.  This made many demonstrated improvements in error
+rates over Paul's original description.
+
+This code implements Gary Robinson's suggestions, the core of which are
+well explained on his webpage:
+
+   http://radio.weblogs.com/0101454/stories/2002/09/16/spamDetection.html
+
+This is theoretically cleaner, and in testing has performed at least as
+well as our highly tuned Graham scheme did, often slightly better, and
+sometimes much better.  It also has "a middle ground", which people like:
+the scores under Paul's scheme were almost always very near 0 or very near
+1, whether or not the classification was correct.  The false positives
+and false negatives under Gary's basic scheme (use_gary_combining) generally
+score in a narrow range around the corpus's best spam_cutoff value.
+However, it doesn't appear possible to guess the best spam_cutoff value in
+advance, and it's touchy.
+
+The last version of the Gary-combining scheme can be retrieved from our
+CVS repository via tag Last-Gary.
+
+The chi-combining scheme used by default here gets closer to the theoretical
+basis of Gary's combining scheme, and does give extreme scores, but also
+has a very useful middle ground (small # of msgs spread across a large range
+of scores, and good cutoff values aren't touchy).
+
+This implementation is due to Tim Peters et alia.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, generators
+__docformat__ = "restructuredtext en"
 
 from collections import defaultdict
 
 from zope import component
 
-from nti.contentsearch.spambayes import LN2
-from nti.contentsearch.spambayes.statistics.chi2 import chi2Q
-from nti.contentsearch.spambayes import interfaces as sp_interfaces
+from . import LN2
+from .statistics.chi2 import chi2Q
+from . import interfaces as sp_interfaces
 
 class BaseWordInfo(object):
 	def update(self, spam, ham):
@@ -64,7 +68,7 @@ class WordInfo(BaseWordInfo):
 	#
 	# Important:  This is a tiny object.  Use of __slots__ is essential
 	# to conserve memory.
-	__slots__ = 'spamcount', 'hamcount'
+	__slots__ = ('spamcount', 'hamcount')
 	
 	def __init__(self):
 		self.__setstate__((0, 0))
