@@ -1,12 +1,19 @@
+# -*- coding: utf-8 -*-
+"""
+Defines QTI fragment interfaces
+
+$Id$
+"""
 from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 
-from nti.assessment.qti import interfaces as qti_interfaces
-from nti.assessment.qti.content import interfaces as cnt_interfaces
-from nti.assessment.qti.outcome import interfaces as out_interfaces
-from nti.assessment.qti.response import interfaces as rsp_interfaces
-from nti.assessment.qti.assessments import interfaces as ast_interfaces
+from ..qti import interfaces as qti_interfaces
+from ..content import interfaces as cnt_interfaces
+from ..outcome import interfaces as out_interfaces
+from ..response import interfaces as rsp_interfaces
+from ..assessments import interfaces as ast_interfaces
 
 class Iinclude(	cnt_interfaces.IblockStatic, cnt_interfaces.IflowStatic, cnt_interfaces.IinlineStatic, 
 				out_interfaces.IoutcomeRule, rsp_interfaces.IresponseRule, ast_interfaces.IsectionPart, 

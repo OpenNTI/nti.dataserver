@@ -1,10 +1,17 @@
+# -*- coding: utf-8 -*-
+"""
+Defines QTI preconditions interfaces
+
+$Id$
+"""
 from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 
-from nti.assessment.qti import interfaces as qti_interfaces
-from nti.assessment.qti.expression import interfaces as exp_interfaces
-from nti.assessment.qti.attributes import interfaces as attr_interfaces
+from ..qti import interfaces as qti_interfaces
+from ..expression import interfaces as exp_interfaces
+from ..attributes import interfaces as attr_interfaces
 
 class IpreCondition(qti_interfaces.IConcrete):
 	"""

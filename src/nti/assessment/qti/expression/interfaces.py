@@ -1,10 +1,17 @@
+# -*- coding: utf-8 -*-
+"""
+Defines QTI expression interfaces
+
+$Id$
+"""
 from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
 
-from nti.assessment.qti import interfaces as qti_interfaces
-from nti.assessment.qti.attributes import interfaces as attr_interfaces
+from ..qti import interfaces as qti_interfaces
+from ..attributes import interfaces as attr_interfaces
 
 class Iexpression(interface.Interface):
 	pass

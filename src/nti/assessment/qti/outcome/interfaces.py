@@ -1,11 +1,18 @@
+# -*- coding: utf-8 -*-
+"""
+Defines QTI outcome interfaces
+
+$Id$
+"""
 from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
-from nti.assessment.qti import interfaces as qti_interfaces
-from nti.assessment.qti.expression import interfaces as exp_interfaces
+from ..qti import interfaces as qti_interfaces
+from ..expression import interfaces as exp_interfaces
 
 class IoutcomeRule(interface.Interface):
 	pass

@@ -1,11 +1,18 @@
+# -*- coding: utf-8 -*-
+"""
+Defines QTI variables interfaces
+
+$Id$
+"""
 from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope.interface.common.sequence import IFiniteSequence
 
-from nti.assessment.qti import interfaces as qti_interfaces
-from nti.assessment.qti.basic import interfaces as basic_interfaces
-from nti.assessment.qti.attributes import interfaces as attr_interfaces
+from ..qti import interfaces as qti_interfaces
+from ..basic import interfaces as basic_interfaces
+from ..attributes import interfaces as attr_interfaces
 
 class Ivalue(attr_interfaces.IvalueAttrGroup, qti_interfaces.IConcrete):
 	pass
