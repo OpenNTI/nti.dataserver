@@ -1,16 +1,23 @@
-from __future__ import unicode_literals, print_function, absolute_import
+# -*- coding: utf-8 -*-
+"""
+QTI assesments
+
+$Id: interfaces.py 15756 2013-02-11 18:17:31Z carlos.sanchez $
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 
-from nti.assessment.qti import interfaces as qti_interfaces
-from nti.assessment.qti.content import interfaces as cnt_interfaces
-from nti.assessment.qti.outcome import interfaces as out_interfaces
-from nti.assessment.qti.items import interfaces as items_interfaces
-from nti.assessment.qti.feedback import interfaces as fbck_interfaces
-from nti.assessment.qti.variables import interfaces as var_interfaces
-from nti.assessment.qti.expression import interfaces as exp_interfaces
-from nti.assessment.qti.attributes import interfaces as attr_interfaces
-from nti.assessment.qti.preconditions import interfaces as pre_interfaces
+from .. import interfaces as qti_interfaces
+from ..content import interfaces as cnt_interfaces
+from ..outcome import interfaces as out_interfaces
+from ..items import interfaces as items_interfaces
+from ..feedback import interfaces as fbck_interfaces
+from ..variables import interfaces as var_interfaces
+from ..expression import interfaces as exp_interfaces
+from ..attributes import interfaces as attr_interfaces
+from ..preconditions import interfaces as pre_interfaces
 
 class Iselection(attr_interfaces.IselectionAttrGroup, qti_interfaces.IConcrete):
 	pass
