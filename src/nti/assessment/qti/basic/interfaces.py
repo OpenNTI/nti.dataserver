@@ -1,8 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
 from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface
 
-from nti.assessment.qti.attributes import interfaces as attr_interfaces
+from ..attributes import interfaces as attr_interfaces
 
 class IbodyElement(attr_interfaces.IbodyElementAttrGroup):
 	"""

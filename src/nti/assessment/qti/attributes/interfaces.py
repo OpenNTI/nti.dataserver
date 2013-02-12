@@ -1,13 +1,21 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
 from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
 
-from nti.assessment.qti import interfaces as qt_interfaces
-from nti.assessment.qti.schema import (TextLineAttribute, BoolAttribute, IntAttribute, URIAttribute,
-									   ChoiceAttribute, MimeTypeAttribute, ListAttribute, FloatAttribute,
-									   ObjectAttribute, IntegerOrVariableRefAttribute, FloatOrVariableRefAttribute,
-									   StringOrVariableRefAttribute, IdentifierRefAttribute)
+from .. import interfaces as qt_interfaces
+from ..schema import (TextLineAttribute, BoolAttribute, IntAttribute, URIAttribute,
+					  ChoiceAttribute, MimeTypeAttribute, ListAttribute, FloatAttribute,
+					  ObjectAttribute, IntegerOrVariableRefAttribute, FloatOrVariableRefAttribute,
+					  StringOrVariableRefAttribute, IdentifierRefAttribute)
 	
 class IAttrGroup(interface.Interface):
 	pass
