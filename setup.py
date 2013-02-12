@@ -154,7 +154,7 @@ setup(
 		'html5lib == 0.95',
 		'logilab-common >= 0.58.3',
 		'lxml >= 3.1.0', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
-		'nameparser >= 0.2.4', # Human name parsing
+		'nameparser >= 0.2.5', # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
@@ -235,7 +235,7 @@ setup(
 		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.annotation >= 4.0.1',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
-		'zope.browser >= 2.0.0',
+		'zope.browser >= 2.0.1',
 		'zope.browserpage >= 4.0.0',
 		'zope.browserresource >= 3.12.0',
 		'zope.catalog >= 3.8.2',
@@ -256,7 +256,7 @@ setup(
 		'zope.error >= 4.0.0',
 		'zope.event >= 4.0.2',
 		'zope.exceptions >= 4.0.5',
-		'zope.filerepresentation >= 4.0.0',
+		'zope.filerepresentation >= 4.0.1',
 		'zope.file >= 0.6.2',
 		'zope.formlib >= 4.2.0', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
@@ -266,7 +266,7 @@ setup(
 		'zope.index >= 3.6.4',
 		'zope.interface >= 4.0.3',
 		'zope.intid >= 3.7.2',
-		'zope.lifecycleevent >= 3.7.0',
+		'zope.lifecycleevent >= 4.0.1',
 		'zope.location >= 4.0.0',
 		'zope.mimetype >= 1.3.1',
 		'zope.minmax >= 1.1.2',
