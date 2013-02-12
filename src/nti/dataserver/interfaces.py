@@ -330,10 +330,7 @@ SYSTEM_USER_ID = system_user.id
 SYSTEM_USER_NAME = system_user.title.lower()
 EVERYONE_GROUP_NAME = 'system.Everyone'
 AUTHENTICATED_GROUP_NAME = 'system.Authenticated'
-ACE_ACT_ALLOW = "Allow"
-ACE_ACT_DENY = "Deny"
-ALL_PERMISSIONS = None
-ACE_DENY_ALL = None
+
 # Exported policies
 from pyramid.interfaces import IAuthorizationPolicy
 from pyramid.interfaces import IAuthenticationPolicy
@@ -342,7 +339,8 @@ import pyramid.security as _psec
 EVERYONE_USER_NAME = _psec.Everyone
 AUTHENTICATED_GROUP_NAME = _psec.Authenticated
 ACE_ACT_ALLOW = _psec.Allow
-ACT_ACT_DENY = _psec.Deny
+ACE_ACT_DENY = _psec.Deny
+#: Constant for use in an ACL indicating that all permissions
 ALL_PERMISSIONS = _psec.ALL_PERMISSIONS
 ACE_DENY_ALL = _psec.DENY_ALL
 interface.directlyProvides( ALL_PERMISSIONS, IPermission )
@@ -450,6 +448,13 @@ class IDynamicSharingTarget(IEntity):
 class ICommunity(IDynamicSharingTarget):
 	pass
 
+
+class IUnscopedGlobalCommunity(ICommunity):
+	"""
+	A community that is visible across the entire "world". One special case of this
+	is the ``Everyone`` or :const:`EVERYONE_USER_NAME` community. These
+	are generally not considered when computing relationships or visibility between users.
+	"""
 
 class IUser(IEntity,IContainerIterable):
 	"""

@@ -58,7 +58,7 @@ Namespaces
 ==========
 
 Principals, groups, and roles all share a flat namespace. Principals
-(and groups) do not have a prefix. Roles have a prefix ending in ``role:``;
+(and groups and communities) do not have a prefix. Roles have a prefix ending in ``role:``;
 sub-types of roles may have a prefix to that, such as ``content-role:``.
 
 $Id$
@@ -126,7 +126,7 @@ class _PersistentGroupMember(persistent.Persistent,
 
 	@property
 	def groups(self):
-		if '_groups' not in self.__dict__:
+		if not self.hasGroups():
 			return ()
 
 		return (self.GROUP_FACTORY(g) for g in self._groups)

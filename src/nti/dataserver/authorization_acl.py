@@ -1,9 +1,9 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 """
 ACL providers for the various content types.
 """
 
-from __future__ import unicode_literals, print_function
+from __future__ import unicode_literals, print_function, absolute_import
 
 import logging
 logger = logging.getLogger(__name__)
@@ -19,13 +19,14 @@ from nti.utils.property import alias
 from nti.ntiids import ntiids
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import authorization as auth
+from nti.dataserver import authorization
 from nti.dataserver import authentication
 from nti.contentlibrary import interfaces as content_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
 from nti.dataserver import traversal
 
+@interface.implementer( nti_interfaces.IACE )
 class _ACE(object):
 	"""
 	Object to hold a single ACE, permitting more descriptive code and
@@ -34,18 +35,16 @@ class _ACE(object):
 	These objects are persisted in their string forms.
 	"""
 
-	interface.implements( nti_interfaces.IACE )
-
 	@classmethod
 	def allowing( cls, actor=None, permission=None, provenance=None ):
 		"""
-		:return: An :class:`nti_interfaces.IACE` allowing the given `actor` the given `permission.`
+		:return: An :class:`.IACE` allowing the given `actor` the given `permission.`
 
-		:param actor: The :class:`nti_interfaces.IPrincipal` being given the permission.
+		:param actor: The :class:`.IPrincipal` being given the permission.
 			Must be an `IPrincipal` or something that can be converted to it.
-		:param permission: The :class:`nti_interfaces.IPermission` being given.
+		:param permission: The :class:`.IPermission` being given.
 			Must be an `IPermission` or something that can be converted to it,
-			or an interable sequence thereof. Also allowable is :const:`nti_interfaces.ALL_PERMISSIONS`.
+			or an interable sequence thereof. Also allowable is :const:`.ALL_PERMISSIONS`.
 		:param provenance: A string or :class:`type` giving information about where this entry came from.
 		"""
 		return cls( nti_interfaces.ACE_ACT_ALLOW, actor, permission, provenance=provenance )
@@ -53,13 +52,13 @@ class _ACE(object):
 	@classmethod
 	def denying( cls, actor=None, permission=None, provenance=None ):
 		"""
-		:return: An :class:`nti_interfaces.IACE` denying the given `actor` the given `permission.`
+		:return: An :class:`.IACE` denying the given `actor` the given `permission.`
 
-		:param actor: The :class:`nti_interfaces.IPrincipal` being denied the permission.
+		:param actor: The :class:`.IPrincipal` being denied the permission.
 			Must be an `IPrincipal` or something that can be converted to it.
-		:param permission: The :class:`nti_interfaces.IPermission` being denied.
+		:param permission: The :class:`.IPermission` being denied.
 			Must be an `IPermission` or something that can be converted to it,
-			or an interable sequence thereof. Also allowable is :const:`nti_interfaces.ALL_PERMISSIONS`.
+			or an interable sequence thereof. Also allowable is :const:`.ALL_PERMISSIONS`.
 		:param provenance: A string or :class:`type` giving information about where this entry came from.
 		"""
 		return cls( nti_interfaces.ACE_ACT_DENY, actor, permission, provenance=provenance )
@@ -183,7 +182,7 @@ def ACL( obj, default=() ):
 	"""
 	Produce an ACL for the given `obj`. If the object already has an ACL,
 	that will be returned. Otherwise, if it can be adapted into
-	an :class:`IACLProvider` it will be and that will be returned.
+	an :class:`.IACLProvider` it will be and that will be returned.
 	If no ACL can be found, returns an empty iterable (or whatever
 	the value of the `default` parameter is).
 	"""
@@ -195,7 +194,7 @@ def ACLProvider( obj, default=None ):
 	"""
 	Produce an ACL provider for the given `obj`. If the object already has an ACL,
 	the object is its own provider. Otherwise, if it can be adapted into
-	an :class:`IACLProvider` it will be and that will be returned.
+	an :class:`.IACLProvider` it will be and that will be returned.
 	If no ACL provider can be found, returns None (or whatever
 	the value of the `default` parameter is).
 	"""
@@ -212,12 +211,12 @@ def has_permission( permission, context, username, **kwargs ):
 	Checks to see if the user named by ``username`` has been
 	allowed the ``permission`` on (or in) the ``context``.
 
-	:param permission: A string or :class:`nti_interfaces.IPermission` object to check
+	:param permission: A string or :class:`.interfaces.IPermission` object to check
 	:param context: An object that the :func:`ACL` function can get an ACL for.
-	:param username: A user object or username designating a user that :func:`authentication.effective_principals`
+	:param username: A user object or username designating a user that :func:`.authentication.effective_principals`
 		can turn into a set of principals. Additional keyword arguments are passed to this
 		function.
-	:param kwargs: Keyword arguments passed to :func:`authentication.effective_principals`.
+	:param kwargs: Keyword arguments passed to :func:`.authentication.effective_principals`.
 
 
 	:return: An object that behaves like a boolean value but provides a description
@@ -251,12 +250,13 @@ def is_writable( context, username, **kwargs ):
 	A shortcut to :func:``has_permission``; see its docs for details.
 	"""
 
-	return has_permission( auth.ACT_UPDATE, context, username, **kwargs )
+	return has_permission( authorization.ACT_UPDATE, context, username, **kwargs )
 
 from ZODB.POSException import POSKeyError
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(object)
 class ACLDecorator(object):
-	interface.implements(ext_interfaces.IExternalMappingDecorator)
-	component.adapts(object)
 
 	def __init__( self, o ):
 		pass
@@ -308,40 +308,64 @@ def acl_from_aces( *args ):
 	return _ACL( args )
 
 def _add_admin_moderation( acl, provenance ):
-	acl.append( ace_allowing( auth.ROLE_MODERATOR, auth.ACT_MODERATE, provenance ) )
-	acl.append( ace_allowing( auth.ROLE_ADMIN, auth.ACT_MODERATE, provenance ) )
-	acl.append( ace_allowing( auth.ROLE_ADMIN, auth.ACT_COPPA_ADMIN, provenance ) )
+	acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, provenance ) )
+	acl.append( ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_MODERATE, provenance ) )
+	acl.append( ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_COPPA_ADMIN, provenance ) )
 
 
 @interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(nti_interfaces.IEntity)
 class _EntityACLProvider(object):
 	"""
-	ACL provider for class:`nti_interfaces.IEntity` objects. The
+	ACL provider for class:`.interfaces.IEntity` objects. The
 	entity itself is allowed all permissions.
 	"""
 	# TODO: Extend this for other subclasses such as communities?
 	# Define 'roles' and make Users members of roles that represent
 	# their community
 
+	_DENY_ALL = True
+
 	def __init__( self, entity ):
 		self._entity = entity
+
+	def _viewers(self):
+		return ( nti_interfaces.AUTHENTICATED_GROUP_NAME, )
 
 	@property
 	def __acl__( self ):
 		"""
 		The ACL for the entity.
 
-		:return: A fresh, mutable list containing exactly three :class:`_ACE` objects, giving
-			all rights to the entity, read access to authenticated users (is that right?)
-			and denying all rights to everyone else.
 		"""
-		acl = _ACL([ace_allowing( self._entity.username, nti_interfaces.ALL_PERMISSIONS, self ),
-					ace_allowing( pyramid.security.Authenticated, auth.ACT_READ, self),])
+		acl = _ACL([ace_allowing( self._entity.username, nti_interfaces.ALL_PERMISSIONS, self )])
+		for viewer in self._viewers():
+			acl.append( ace_allowing( viewer, authorization.ACT_READ, self) )
 		_add_admin_moderation( acl, self )
-		# Everyone else can do nothing
-		acl.append( _ace_denying_all( _EntityACLProvider ) )
+		if self._DENY_ALL:
+			# Everyone else can do nothing
+			acl.append( _ace_denying_all( _EntityACLProvider ) )
 		return acl
+
+@component.adapter(nti_interfaces.IUser)
+class _UserACLProvider(_EntityACLProvider):
+	"""
+	ACL Provider for :class:`.interfaces.IUser`.
+	"""
+
+	def _viewers(self):
+		# intersecting community members have viewing rights
+		# this is a private function while in flux
+		return authentication._dynamic_memberships_that_participate_in_security( self._entity )
+
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
+class _CoppaUserWithoutAgreementACLProvider(_UserACLProvider):
+	"""
+	ACL Provider for Koppa Kids that limits all access to them.
+	"""
+
+	def _viewers(self):
+		return () # nobody!
 
 @interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(nti_interfaces.ICreated)
@@ -416,7 +440,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		"""
 		result = self._creator_acl()
 		for name in self.__do_get_sharing_target_names():
-			result.append( ace_allowing( name, auth.ACT_READ, AbstractCreatedAndSharedACLProvider ) )
+			result.append( ace_allowing( name, authorization.ACT_READ, AbstractCreatedAndSharedACLProvider ) )
 		if self._DENY_ALL:
 			result.append( _ace_denying_all( AbstractCreatedAndSharedACLProvider ) )
 		return result
@@ -428,7 +452,7 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	Extends the ACL for :class:`nti_interfaces.ICreated` objects to things that
 	are shared.
 
-	Those things that are shared can be viewed (:data:`auth.ACT_READ`) by those they are
+	Those things that are shared can be viewed (:data:`authorization.ACT_READ`) by those they are
 	shared with. (When shared with something that can be adapted to :class:`nti.dataserver.interfaces.IUsernameIterable`,
 	then the complete list of users is expanded into the ACL; the alternative is to have
 	principals appear to be members of all these things, as a group.)
@@ -490,7 +514,7 @@ class _SectionInfoACLProvider(_CreatedACLProvider):
 		result = self._creator_acl()
 		# First, give the user's enrolled viewing
 		for name in self._created.Enrolled:
-			result.append( ace_allowing( name, auth.ACT_READ, _SectionInfoACLProvider ) )
+			result.append( ace_allowing( name, authorization.ACT_READ, _SectionInfoACLProvider ) )
 		# And the instructors get full control
 		for name in (self._created.InstructorInfo or ()).Instructors:
 			result.append( ace_allowing( name, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
@@ -615,8 +639,8 @@ class _DelimitedHierarchyContentUnitACLProvider(_DelimitedHierarchyEntryACLProvi
 		if package is not None and package.ntiid:
 			parts = ntiids.get_parts( package.ntiid )
 			if parts and parts.provider and parts.specific:
-				acl = acl + ace_allowing( auth.role_for_providers_content( parts.provider, parts.specific ),
-										  auth.ACT_READ,
+				acl = acl + ace_allowing( authorization.role_for_providers_content( parts.provider, parts.specific ),
+										  authorization.ACT_READ,
 										  _DelimitedHierarchyContentUnitACLProvider )
 		return acl
 
@@ -633,7 +657,7 @@ class _FriendsListACLProvider(_CreatedACLProvider):
 	def __acl__( self ):
 		result = self._creator_acl()
 		for friend in self._created:
-			result.append( ace_allowing( friend.username, auth.ACT_READ ) )
+			result.append( ace_allowing( friend.username, authorization.ACT_READ ) )
 		# And finally nobody else gets jack squat
 		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
 		return result
@@ -644,7 +668,7 @@ class _DataserverFolderACLProvider(object):
 
 	def __init__( self, context ):
 		# Got to be here after the components are registered
-		acl = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _DataserverFolderACLProvider ),) )
+		acl = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _DataserverFolderACLProvider ),) )
 		_add_admin_moderation( acl, _DataserverFolderACLProvider )
 		self.__acl__ = acl
 
@@ -654,4 +678,4 @@ class _ContentPackageLibraryACLProvider(object):
 
 	def __init__( self, context ):
 		# Got to be here after the components are registered
-		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, auth.ACT_READ, _ContentPackageLibraryACLProvider ), ) )
+		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _ContentPackageLibraryACLProvider ), ) )
