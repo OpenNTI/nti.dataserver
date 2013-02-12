@@ -307,7 +307,9 @@ class IContainerResource(interface.Interface):
 	pass
 
 class IPageContainerResource(interface.Interface):
-	pass
+
+	user = schema.Object( nti_interfaces.IUser, title="The user that owns the page container")
+	ntiid = schema.TextLine( title="The NTIID of the container" )
 
 class INewContainerResource(interface.Interface):
 	pass

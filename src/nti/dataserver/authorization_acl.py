@@ -147,13 +147,15 @@ class _ACE(object):
 									 getattr( self.permission, 'id', self.permission ),
 									 (" := " + provenance if provenance else '' ) )
 
-def _ace_denying_all( provenance ):
+def _ace_denying_all( provenance=None ):
 	return _ACE( *(nti_interfaces.ACE_DENY_ALL + (provenance,) ) )
 
 # Export these ACE functions publicly
 ace_allowing = _ACE.allowing
 ace_denying = _ACE.denying
 ace_from_string = _ACE.from_external_string
+ace_denying_all = _ace_denying_all
+
 
 def acl_from_file( path_or_file ):
 	"""
