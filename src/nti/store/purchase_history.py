@@ -116,6 +116,12 @@ def get_pending_purchases(user):
 	result = list(hist.get_pending_purchases())
 	return result
 
+def get_purchase_history(user, start_time=None, end_time=None):
+	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	hist = store_interfaces.IPurchaseHistory(user)
+	result = list(hist.get_purchase_history(start_time, end_time))
+	return result
+
 def get_pending_purchase_for(user, items):
 	items = to_frozenset(items) 
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user

@@ -42,6 +42,9 @@ class TestContentRoles(ConfiguringTestBase):
 		roles_added = content_roles._add_users_content_roles(user, items)
 		assert_that(roles_added, is_(0))
 		
+		roles = content_roles._get_users_content_roles(user)
+		assert_that(roles, is_([(u'mn', u'miladycosmetology.cosmetology')]))
+		
 	@WithMockDSTrans
 	def test_remove_users_content_roles(self):		
 		user = self._create_user()
