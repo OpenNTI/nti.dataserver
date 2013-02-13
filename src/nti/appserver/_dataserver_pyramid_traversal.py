@@ -64,6 +64,8 @@ class _ContainerResource(object):
 		self.request = request
 		self.__name__ = name or getattr( context, '__name__', None )
 		self.__parent__ = parent or getattr( context, '__parent__', None )
+		self.__acl__ = nacl.ACL( context )
+
 
 	resource = alias('context') # bwc, see, e.g., GenericGetView
 	ntiid = alias('__name__')

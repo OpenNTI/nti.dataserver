@@ -323,6 +323,19 @@ class TestApplication(SharedApplicationTestBase):
 		testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Library/Main', extra_environ=self._make_extra_environ() )
 
 	@WithSharedApplicationMockDS
+	def test_resolve_root_ntiid(self):
+		with mock_dataserver.mock_db_trans( self.ds ):
+			self._create_user()
+
+		testapp = TestApp( self.app )
+		res = testapp.get( '/dataserver2/NTIIDs/' + ntiids.ROOT,
+						   headers={"Accept": 'application/json' },
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
+
+
+	@WithSharedApplicationMockDS
 	def test_path_with_parens(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			contained = ContainedExternal()
