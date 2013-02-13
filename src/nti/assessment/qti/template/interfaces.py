@@ -11,7 +11,7 @@ from zope import schema
 from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
-from ..qti import interfaces as qti_interfaces
+from .. import interfaces as qti_interfaces
 from ..basic import interfaces as basic_interfaces
 from ..content import interfaces as cnt_interfaces
 from ..variables import interfaces as var_interfaces

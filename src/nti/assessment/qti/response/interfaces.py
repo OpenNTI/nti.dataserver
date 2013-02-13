@@ -11,7 +11,7 @@ from zope import schema
 from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
-from ..qti import interfaces as qti_interfaces
+from .. import interfaces as qti_interfaces
 from ..outcome import interfaces as out_interfaces
 from ..expression import interfaces as exp_interfaces
 from ..attributes import interfaces as attr_interfaces
