@@ -7,7 +7,6 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import six
 import sys
 import struct
 import BTrees
@@ -26,6 +25,7 @@ from nti.ntiids import ntiids
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
+from .purchase_attempt import to_frozenset 
 from . import interfaces as store_interfaces
 
 def _time_to_64bit_int( value ):
@@ -70,9 +70,15 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 		p = self.get_purchase(pid)
 		return p.State if p else None
 
-	def get_pending_purchase_for(self, items):
+	def get_pending_purchases(self):
 		for p in self.time_map.values():
-			if p.items == items and (p.is_pending() or p.is_unknown()):
+			if p.is_pending() or p.is_unknown():
+				yield p
+	
+	def get_pending_purchase_for(self, items):
+		items = to_frozenset(items) 
+		for p in self.time_map.values():
+			if p.items.intersection(items) and (p.is_pending() or p.is_unknown()):
 				return p
 		return None
 
@@ -107,9 +113,14 @@ def get_purchase_attempt(purchase_id, user):
 	result = None if result is None or result.creator != user else result
 	return result
 
+def get_pending_purchases(user):
+	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	hist = store_interfaces.IPurchaseHistory(user)
+	result = list(hist.get_pending_purchases())
+	return result
+
 def get_pending_purchase_for(user, items):
-	items = frozenset() if not items else items
-	items = frozenset([items]) if isinstance(items, six.string_types) else frozenset(items)
+	items = to_frozenset(items) 
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	hist = store_interfaces.IPurchaseHistory(user)
 	result = hist.get_pending_purchase_for(items)

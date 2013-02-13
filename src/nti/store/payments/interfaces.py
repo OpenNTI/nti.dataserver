@@ -66,10 +66,11 @@ class RegisterStripeCharge(RegisterPurchaseData):
 	
 class IStripeCustomer(interface.Interface):
 	CustomerID = schema.TextLine(title='customer id')
+	Charges = schema.Set(value_type=schema.TextLine(title='the charge id'), title='customer stripe charges')
 	
 class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 	
-	def process_purchase(purchase_id, username, token_id, amount, currency, description):
+	def process_purchase(purchase_id, username, token, amount, currency, discount_code):
 		"""
 		Process a purchase attempt
 		
