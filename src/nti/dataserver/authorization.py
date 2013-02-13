@@ -97,6 +97,7 @@ ACT_UPDATE   = Permission('nti.actions.update')
 ACT_SEARCH   = Permission('nti.actions.search')
 ACT_MODERATE = Permission('nti.actions.moderate')
 ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
+ACT_IMPERSONATE = Permission('nti.actions.impersonate')
 ACT_READ     = Permission('zope.View')
 
 @interface.implementer(nti_interfaces.IMutableGroupMember)
