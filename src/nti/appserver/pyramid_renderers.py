@@ -9,18 +9,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import simplejson as json
 import collections
 
 import pyramid.httpexceptions
-import pyramid.traversal
 
 from zope import interface
 from zope import component
 
-
-from paste import httpheaders
-HEADER_LAST_MODIFIED = httpheaders.LAST_MODIFIED.name
 
 from zope.mimetype.interfaces import IContentTypeAware
 

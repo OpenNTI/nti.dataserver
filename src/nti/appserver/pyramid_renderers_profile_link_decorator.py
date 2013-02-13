@@ -15,14 +15,10 @@ from nti.externalization import interfaces as ext_interfaces
 
 from nti.externalization.interfaces import StandardExternalFields
 
-
-from zope.location.interfaces import ILocation
-
-from nti.dataserver.interfaces import ICreated, IUser
+from nti.dataserver.interfaces import  IUser
 from nti.dataserver.links import Link
 #from nti.dataserver.links_external import render_link
 #from nti.dataserver.traversal import find_nearest_site
-from nti.externalization.oids import to_external_ntiid_oid
 
 from pyramid import security as psec
 from pyramid.threadlocal import get_current_request

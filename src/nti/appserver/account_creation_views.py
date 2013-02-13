@@ -27,7 +27,6 @@ from zope.event import notify
 
 import zope.schema
 import zope.schema.interfaces
-from zc import intid as zc_intid
 import z3c.password.interfaces
 
 import nti.utils.schema
