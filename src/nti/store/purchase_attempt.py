@@ -106,7 +106,6 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		except AttributeError:
 			return NotImplemented
 
-
 	def __hash__( self ):
 		xhash = 47
 		xhash ^= hash(self.Processor)
