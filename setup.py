@@ -93,16 +93,19 @@ setup(
 		#'setuptools_subversion >= 3.0'
 	],
 	install_requires = [
-		 # Zope Acquisition; used by contentratings implicitly
-		 # cool concept. Pulls in ExtensionClass (which should not be used)
+		# Zope Acquisition; used by contentratings implicitly
+		# cool concept. Pulls in ExtensionClass (which should not be used)
 		'Acquisition >= 4.0a1',
 		'Chameleon >= 2.11',
-		 # 'friendly' fork of PIL, developed by Zope/Plone.
-		 # PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
-		 # is the version that Pillow forked from in 2010 as version 1.0. So
-		 # Pillow is currently way ahead of PIL
+		# 'friendly' fork of PIL, developed by Zope/Plone.
+		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
+		# is the version that Pillow forked from in 2010 as version 1.0. So
+		# Pillow is currently way ahead of PIL
 		'Pillow >= 1.7.8',
 		'RestrictedPython >= 3.6.0',
+		# NOTE: ZConfig 3.x is out, with PyPy and Python3 support. But it returns Unicode
+		# objects, not base strings. The 3.10.5 version of ZODB3 has an issue with that
+		# (dev versions don't?)
 		'ZConfig == 2.9.3',
 		 # NOTE: ZODB has a new release, 4.0.0a4 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
@@ -239,7 +242,7 @@ setup(
 		'zope.browserpage >= 4.0.0',
 		'zope.browserresource >= 3.12.0',
 		'zope.catalog >= 3.8.2',
-		'zope.cachedescriptors >= 3.5.1',
+		'zope.cachedescriptors >= 4.0.0',
 		'zope.component >= 4.0.2',
 		# Schema vocabularies based on querying ZCA; useful
 		# for views and other metadata
@@ -278,7 +281,7 @@ setup(
 		'zope.schema >= 4.2.2',
 		'zope.security >= 3.9.0', # 3.9.0 and zope.proxy 4.1.0 go together
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
-		'zope.size >= 3.5.0',
+		'zope.size >= 4.0.0',
 		'zope.tal >= 3.6.1',
 		'zope.tales >= 3.5.3',
 		'zope.traversing >= 3.14.0',
@@ -331,7 +334,7 @@ setup(
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.8.4',
 			'zc.buildout >= 2.0.0',
-			'z3c.dependencychecker >= 1.8', # unused/used imports
+			'z3c.dependencychecker >= 1.9', # unused/used imports
 			'zodbbrowser >= 0.10.4',
 			'zodbupdate >= 0.5',
 			# Monitoring stats and instrumenting code
