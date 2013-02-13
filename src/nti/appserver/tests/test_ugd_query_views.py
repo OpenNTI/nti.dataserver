@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, absolute_import
+
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
@@ -15,14 +19,17 @@ from hamcrest import has_items
 from hamcrest import contains_string
 import fudge
 
+from pyramid.testing import DummySecurityPolicy
+
 from nti.appserver.ugd_query_views import lists_and_dicts_to_ext_collection
 from nti.appserver.ugd_query_views import _UGDView
 from nti.appserver.ugd_query_views import _RecursiveUGDView
 from nti.appserver.ugd_query_views import _RecursiveUGDStreamView
 from nti.appserver.ugd_query_views import _UGDStreamView
 from nti.appserver.ugd_query_views import _UGDAndRecursiveStreamView
+from nti.appserver import pyramid_authorization
 
-from nti.appserver.tests import ConfiguringTestBase
+from nti.appserver.tests import ConfiguringTestBase, SharedConfiguringTestBase, NewRequestSharedConfiguringTestBase
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, WithSharedApplicationMockDSWithChanges
 from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
@@ -39,7 +46,7 @@ from nti.externalization.externalization import to_external_object
 from nti.dataserver.datastructures import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
-
+import nti.dataserver.contenttypes
 
 from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
@@ -48,7 +55,7 @@ from nti.contentlibrary import interfaces as lib_interfaces
 from zope.keyreference.interfaces import IKeyReference
 from zope import lifecycleevent
 
-@interface.implementer(IKeyReference) # IF we don't, we won't get intids
+@interface.implementer(IKeyReference) # IF we don't, we won't get intids (because this isn't persistent)
 class ContainedExternal(ZContainedMixin):
 
 	def toExternalObject( self ):
@@ -58,7 +65,15 @@ class ContainedExternal(ZContainedMixin):
 
 import transaction
 
-class TestUGDQueryViews(ConfiguringTestBase):
+class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
+
+	HANDLE_GC = False
+
+	@classmethod
+	def setUpClass( cls ):
+		class SecurityPolicy(type(pyramid_authorization.ACLAuthorizationPolicy()), DummySecurityPolicy):
+			pass
+		super(TestUGDQueryViews,cls).setUpClass( security_policy_factory=SecurityPolicy )
 
 	@WithMockDSTrans
 	def test_ugd_not_found_404(self):
@@ -167,7 +182,6 @@ class TestUGDQueryViews(ConfiguringTestBase):
 
 			# Now, user2 can share with the community, and it
 			# appears in user 1's root stream
-			import nti.dataserver.contenttypes
 
 			note = nti.dataserver.contenttypes.Note()
 			note.containerId = ntiids.make_ntiid( provider='ou', specific='test', nttype='test' )
@@ -185,6 +199,78 @@ class TestUGDQueryViews(ConfiguringTestBase):
 				stream = view.getObjectsForId( user, ntiids.ROOT )
 
 			transaction.doom()
+
+	@WithMockDS(with_changes=True)
+	def test_viewing_activity_across_users(self):
+		"""
+		Two users that are members of the same community can directly use each other's UGD view to see
+		things they have shared with each other.
+		"""
+		with mock_dataserver.mock_db_trans( self.ds ):
+			self.ds.add_change_listener( users.onChange )
+
+			# Two users...
+			user = users.User.create_user( self.ds, username='jason.madden@nextthought.com')
+			user2 = users.User.create_user( self.ds, username='steve.johnson@nextthought.com' )
+			# ...sharing a community
+			community = users.Community.create_community( self.ds, username='MathCounts' )
+			user.record_dynamic_membership( community )
+			user2.record_dynamic_membership( community )
+			user.follow( community )
+			user2.follow( community )
+			self.security_policy.groupids = (nti_interfaces.IPrincipal(community.username),
+											 community,
+											 nti_interfaces.IPrincipal( nti_interfaces.EVERYONE_GROUP_NAME) )
+
+			# Can each create something and share it with the community...
+			notes = {}
+			for owner in user, user2:
+				note = nti.dataserver.contenttypes.Note()
+				note.containerId = ntiids.make_ntiid( provider='ou', specific='test', nttype='test' )
+				note.addSharingTarget( community )
+				with owner.updates():
+					owner.addContainedObject( note )
+
+				notes[owner] = note
+
+			# A third user
+			user3 = users.User.create_user( self.ds, username='other@nextthought.com' )
+			# also in the community
+			user3.record_dynamic_membership( community )
+			user3.follow( community )
+
+			# Can have notes to him by each of the users...
+			for owner in user, user2:
+				note = nti.dataserver.contenttypes.Note()
+				note.containerId = ntiids.make_ntiid( provider='ou', specific='test', nttype='test' )
+				note.addSharingTarget( user3 )
+				with owner.updates():
+					owner.addContainedObject( note )
+			# But those notes will never be visible to the alternate user
+
+			# And each user can request the owned objects of the other user
+			for requestor, owner in ((user, user2), (user2, user)):
+				__traceback_info__ = requestor, owner
+				request = get_current_request()
+				class Context(object): pass
+				request.context = Context()
+				request.context.user = owner
+				request.context.ntiid = ntiids.ROOT
+
+				self.security_policy.userid = requestor.username
+				view = _RecursiveUGDView( get_current_request() )
+				assert_that( view.getRemoteUser(), is_( requestor ) )
+
+				objects = view()['Items']
+
+
+				# one object...
+				assert_that( objects, has_length( 1 ) )
+				# the object owned by that user and shared with the community. NOT what is shared
+				assert_that( objects, is_( [notes[owner]] ) )
+
+			transaction.doom()
+
 
 	@WithMockDSTrans
 	def test_ugdrstream_withUGD_not_found_404(self):
@@ -233,8 +319,10 @@ class TestUGDQueryViews(ConfiguringTestBase):
 			user = None
 			ntiid = ntiids.ROOT
 		Context.user = user
+		self.security_policy.userid = user.username
 		view.request.context = Context
-		top_level = view()
+
+		top_level = _UGDAndRecursiveStreamView( get_current_request() )()
 		assert_that( top_level, has_key( 'Collection' ) )
 		assert_that( top_level['Collection'], has_key( 'Items' ) )
 		items = top_level['Collection']['Items']
@@ -300,15 +388,15 @@ def test_lists_and_dicts_to_collection():
 	col1.append( o )
 	yield _check_items, (col1,col2), [o], 42
 
-from .test_application import ApplicationTestBase
+from .test_application import SharedApplicationTestBase
 from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
 from nti.dataserver import liking
-from nti.externalization.oids import to_external_ntiid_oid
 from .test_application import TestApp
 
-class TestApplicationUGDQueryViews(ApplicationTestBase):
+class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
+	@WithSharedApplicationMockDS
 	def test_rstream_circled_exclude(self):
 		"Requesting the root NTIID includes your circling."
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -348,6 +436,7 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 
 
+	@WithSharedApplicationMockDS
 	def test_sort_filter_page(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
@@ -678,6 +767,7 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 											   contains( has_entry( 'Class', 'TranscriptSummary' ) ) ) )
 
 
+	@WithSharedApplicationMockDS
 	def test_recursive_like_count(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
@@ -771,7 +861,6 @@ class TestApplicationUGDQueryViews(ApplicationTestBase):
 									has_entry( 'RecursiveLikeCount', 4 ) ) ) )
 
 
-class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	@fudge.patch( "zope.dublincore.timeannotators.datetime" )
@@ -905,3 +994,74 @@ class TestUGDQueryViewsSharedApplication(SharedApplicationTestBase):
 		# If I look for things shared just with me, I get nothing
 		res = testapp.get( path, params={'filter': 'TopLevel', 'sharedWith': owner_user_username}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
+
+	@WithSharedApplicationMockDSWithChanges
+	def test_viewing_activity_across_users(self):
+		"""
+		Two users that are members of the same community can directly use each other's UGD view to see
+		things they have shared with each other.
+		"""
+		with mock_dataserver.mock_db_trans( self.ds ):
+			self.ds.add_change_listener( users.onChange )
+
+			# Two users...
+			user = self._create_user(  username='jason.madden@nextthought.com')
+			user2 = self._create_user( username='steve.johnson@nextthought.com' )
+			# ...sharing a community
+			community = users.Community.create_community( self.ds, username='MathCounts' )
+			user.record_dynamic_membership( community )
+			user2.record_dynamic_membership( community )
+			user.follow( community )
+			user2.follow( community )
+
+
+			# Can each create something and share it with the community...
+			notes = {}
+			for owner in user, user2:
+				note = nti.dataserver.contenttypes.Note()
+				note.containerId = ntiids.make_ntiid( provider='ou', specific='test', nttype='test' )
+				note.addSharingTarget( community )
+				with owner.updates():
+					owner.addContainedObject( note )
+
+				notes[owner] = note
+
+			# A third user
+			user3 = users.User.create_user( self.ds, username='other@nextthought.com' )
+			# also in the community
+			user3.record_dynamic_membership( community )
+			user3.follow( community )
+
+			# Can have notes to him by each of the users...
+			for owner in user, user2:
+				note = nti.dataserver.contenttypes.Note()
+				note.containerId = ntiids.make_ntiid( provider='ou', specific='test', nttype='test' )
+				note.addSharingTarget( user3 )
+				with owner.updates():
+					owner.addContainedObject( note )
+			# But those notes will never be visible to the alternate user
+
+			# A fourth user, not in the community, can see nothing
+			user4 = self._create_user( username='foo@bar' )
+
+			user_username = user.username
+			user2_username = user2.username
+			user4_username = user4.username
+
+		testapp = TestApp( self.app )
+		# And each user can request the owned objects of the other user
+		for requestor, owner in ((user_username, user2_username), (user2_username, user_username)):
+			__traceback_info__ = requestor, owner
+
+			path = '/dataserver2/users/%s/Pages(%s)/RecursiveUserGeneratedData' % ( owner, ntiids.ROOT )
+			res = testapp.get( str(path),  extra_environ=self._make_extra_environ(user=requestor))
+			# one object...
+			assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+
+
+			# the object owned by that user and shared with the community. NOT what is shared
+			assert_that( res.json_body['Items'][0], has_entry( 'sharedWith', ['MathCounts'] ) )
+
+		# Reuse the same path, just with the different user
+		testapp.get( str( path ), extra_environ=self._make_extra_environ(user=user4_username ),
+					 status=403 )

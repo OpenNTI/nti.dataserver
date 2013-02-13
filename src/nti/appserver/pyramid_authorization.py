@@ -12,7 +12,7 @@ logger = __import__( 'logging' ).getLogger(__name__)
 
 from zope import component
 
-from nti.dataserver.authorization import ACT_UPDATE
+from nti.dataserver.authorization import ACT_UPDATE, ACT_READ
 from nti.dataserver.authorization_acl import ACL
 from nti.dataserver.interfaces import ACLProxy, IAuthenticationPolicy, IAuthorizationPolicy
 
@@ -46,7 +46,7 @@ def ACLAuthorizationPolicy():
 	if pyramid.authorization.lineage is _pyramid_lineage:
 		# patch it
 		logger.debug( "patching pyramid.authorization to use ACL providers" )
-		pyramid.authorization.lineage = _acl_adding_lineage
+		pyramid.authorization.lineage = _lineage_that_ensures_acls
 
 	return pyramid.authorization.ACLAuthorizationPolicy()
 
@@ -59,16 +59,34 @@ _marker = object()
 # memoizing these calls on the current Request object is highly effective:
 # in one test, ~2500 calls were reduced to ~477
 
-class _Fake(object): pass
+class _Fake(object):
+	pass
 
+
+class _Cache(dict):
+	pass
 def _get_cache( obj, name ):
 	cache = getattr( obj, name, None )
 	if cache is None:
-		cache = {}
+		cache = _Cache()
 		setattr( obj, name, cache )
 	return cache
 
-def _acl_adding_lineage(obj):
+
+
+def _clear_caches( ):
+	req = get_current_request()
+	if req is None:
+		return
+
+	for k, v in vars(req).items():
+		if isinstance(v, _Cache):
+			delattr( req, k )
+
+import zope.testing.cleanup
+zope.testing.cleanup.addCleanUp( _clear_caches )
+
+def _lineage_that_ensures_acls(obj):
 	cache = _get_cache( get_current_request() or _Fake(), '_acl_adding_lineage_cache' )
 	for location in _pyramid_lineage(obj):
 		try:
@@ -100,12 +118,27 @@ def is_writable(obj, request=None):
 	Is the given object writable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
+	return _caching_permission_check( '_acl_is_writable_cache', ACT_UPDATE, obj, request )
+
+def is_readable(obj, request=None):
+	"""
+	Is the given object readable by the current user? Yes if the creator matches,
+	or Yes if it is the returned object and we have permission.
+	"""
+	return _caching_permission_check( '_acl_is_readable_cache', ACT_READ, obj, request )
+
+def _caching_permission_check(cache_name, permission, obj, request):
+	"""
+	Check for the permission on the object. Assumes that the creator of the object
+	has full control.
+	"""
 	if request is None:
 		request = get_current_request()
 
-	val = _get_cache( request or _Fake(), '_acl_is_writable_cache' ).get( obj, _marker )
-	if val is not _marker:
-		return val
+	the_cache = _get_cache( request or _Fake(), cache_name )
+	cached_val = the_cache.get( obj, _marker )
+	if cached_val is not _marker:
+		return cached_val
 
 	# Using psec itself is "broken": It doesn't respect the current site
 	# components, even if the request itself does not have a registry.
@@ -113,15 +146,19 @@ def is_writable(obj, request=None):
 	# like the zope.site.threadSiteSubscriber that does the same thing for
 	# pyramid.threadlocal. Here we cheap out
 	# and re-implement has_permission to use the desired registry.
-	result = _has_permission( ACT_UPDATE, obj, request )
+	result = _has_permission( permission, obj, request )
 	if result:
+		the_cache[obj] = result
 		return result
 	# Externalized objects. The direct check and throw is faster
 	# then IExternalizedObject.providedBy and an /in/
 	try:
 		ext_creator_name = obj[StandardExternalFields.CREATOR]
-		return ext_creator_name == psec.authenticated_userid( request )
+		result = ext_creator_name == psec.authenticated_userid( request )
+		the_cache[obj] = result
+		return result
 	except (KeyError,AttributeError,TypeError):
+		the_cache[obj] = False
 		return False
 
 def _has_permission( permission, context, request ):

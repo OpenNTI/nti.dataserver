@@ -25,6 +25,9 @@ from pyramid.threadlocal import get_current_request
 
 from nti.appserver import httpexceptions as hexc
 from nti.appserver import _util
+from nti.appserver import _view_utils
+from nti.appserver._view_utils import get_remote_user
+from nti.appserver.pyramid_authorization import is_readable
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -50,36 +53,43 @@ from nti.utils.property import alias
 
 from z3c.batching.batch import Batch
 
-from perfmetrics import metric, metricmethod
+from perfmetrics import metricmethod
 
-def lists_and_dicts_to_ext_collection( items ):
+def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=id ):
 	""" Given items that may be dictionaries or lists, combines them
 	and externalizes them for return to the user as a dictionary. If the individual items
 	are ModDateTracking (have a lastModified value) then the returned
-	dict will have the maximum value as 'Last Modified' """
+	dict will have the maximum value as 'Last Modified'
+
+	:param callable predicate: Objects will only make it into the final 'Items' list
+		if this function returns true for all of them. Defaults to a True filter.
+	"""
 	result = []
 	# To avoid returning duplicates, we keep track of object
 	# ids and only add one copy.
 	oids = set()
-	items = [item for item in items if item is not None]
+	lists_and_dicts = [item for item in lists_and_dicts if item is not None]
 	lastMod = 0
-	for item in items:
-		lastMod = max( lastMod, getattr( item, 'lastModified', 0) )
-		if hasattr( item, 'itervalues' ):
+	for list_or_dict in lists_and_dicts:
+		lastMod = max( lastMod, getattr( list_or_dict, 'lastModified', 0) )
+		if hasattr( list_or_dict, 'itervalues' ):
 			# ModDateTrackingOOBTrees tend to lose the custom
 			# 'lastModified' attribute during persistence
 			# so if there is a 'Last Modified' entry, go
 			# for that
-			if hasattr( item, 'get' ):
-				lastMod = max( lastMod, item.get( 'Last Modified', 0 ) )
-			item = item.itervalues()
+			if hasattr( list_or_dict, 'get' ):
+				lastMod = max( lastMod, list_or_dict.get( 'Last Modified', 0 ) )
+			to_iter = list_or_dict.itervalues()
+		else:
+			# then it must be a 'list'
+			to_iter = list_or_dict
 		# None would come in because of weak refs, numbers
 		# would come in because of Last Modified.
 		# In the case of shared data, the object might
 		# update but our container wouldn't
 		# know it, so check for internal update times too
-		for x in item:
-			if x is None or isinstance( x, numbers.Number ):
+		for x in to_iter:
+			if x is None or isinstance( x, numbers.Number ) or not predicate(x):
 				continue
 
 			lastMod = max( lastMod, getattr( x, 'lastModified', 0) )
@@ -90,7 +100,8 @@ def lists_and_dicts_to_ext_collection( items ):
 				oids.add( oid )
 			else:
 				add = False
-			if add: result.append( x )
+			if add:
+				result.append( x )
 
 	result = LocatedExternalDict( { 'Last Modified': lastMod, 'Items': result } )
 	return result
@@ -221,7 +232,7 @@ def _meonly_predicate_factory( request ):
 	return _filter
 
 def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
-	me = request.context.user
+	me = get_remote_user(request) # the 'I' means the current user, not the one whose date we look at (not  request.context.user)
 	following_usernames = set()
 	if and_me:
 		following_usernames.add( me.username )
@@ -291,7 +302,7 @@ class _MimeFilter(object):
 	def __call__( self, o ):
 		return self._mimetype_from_object(o) in self.accept_types
 
-class _UGDView(object):
+class _UGDView(_view_utils.AbstractAuthenticatedView):
 	"""
 	The base view for user generated data.
 	"""
@@ -300,13 +311,39 @@ class _UGDView(object):
 	get_shared = users.User.getSharedContainer
 	#get_public = None
 
-	def __init__(self, request ):
-		self.request = request
-		self._my_objects_may_be_empty = True
+	_my_objects_may_be_empty = True
+	_support_cross_user = True
+
+	#: The user object whose data we are requesting. This is not
+	#: necessarily the same as the authenticated remote user;
+	#: additional restrictions apply in that case
+	user = None
+	#: The NTIID of the container whose data we are requesting
+	ntiid = None
+
+	def __init__( self, request ):
+		super(_UGDView,self).__init__( request )
+		if self.request.context:
+			self.user = self.request.context.user
+			self.ntiid = self.request.context.ntiid
+
+	def check_cross_user( self ):
+		if not self._support_cross_user:
+			if self.user != self.getRemoteUser():
+				raise hexc.HTTPForbidden()
+
 
 	def __call__( self ):
-		user, ntiid = self.request.context.user, self.request.context.ntiid
-		result = lists_and_dicts_to_ext_collection( self.getObjectsForId( user, ntiid ) )
+		self.check_cross_user()
+
+		user, ntiid = self.user, self.ntiid
+		the_objects = self.getObjectsForId( user, ntiid )
+		# Apply cross-user security if needed
+		if user != self.getRemoteUser():
+			predicate = is_readable
+		else:
+			predicate = id # always true
+		result = lists_and_dicts_to_ext_collection( the_objects, predicate )
 		self._sort_filter_batch_result( result )
 		result.__parent__ = self.request.context
 		result.__name__ = ntiid
@@ -318,7 +355,7 @@ class _UGDView(object):
 		param = self.request.params.get( name, '' )
 		if param:
 			return param.split( ',' )
-		return ()
+		return []
 
 	def _get_filter_names(self):
 		return self.__get_list_param( 'filter' )
@@ -342,6 +379,38 @@ class _UGDView(object):
 				entities.append( ent )
 		return entities
 
+	@classmethod
+	def do_getObjects( cls, owner, containerId, remote_user,
+					   get_owned=users.User.getContainer,
+					   get_shared=users.User.getSharedContainer,
+					   allow_empty=True ):
+		"""
+		Returns a sequence of values that can be passed to
+		:func:`lists_and_dicts_to_ext_collection`.
+
+		:raises nti.appserver.httpexceptions.HTTPNotFound: If no actual objects can be found.
+		"""
+
+		__traceback_info__ = owner, containerId
+		mystuffDict = get_owned( owner, containerId ) if get_owned else ()
+		if owner == remote_user:
+			# Only consider the shared stuff when the actual user is asking
+			# TODO: Handle this better with ACLs
+			sharedstuffList = get_shared( owner, containerId) if get_shared else () # see comments in _meonly_predicate_factory
+		else:
+			sharedstuffList = ()
+
+		# To determine the existence of the container,
+		# My stuff either exists or it doesn't. The others, being shared,
+		# may be empty or not empty.
+		if (mystuffDict is None \
+			or (not allow_empty and not mystuffDict)) \
+			   and not sharedstuffList:
+
+			raise hexc.HTTPNotFound(containerId)
+
+		return (mystuffDict, sharedstuffList, ()) # Last value is placeholder for get_public, currently not used
+
 	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
 		"""
@@ -350,21 +419,10 @@ class _UGDView(object):
 
 		:raises nti.appserver.httpexceptions.HTTPNotFound: If no actual objects can be found.
 		"""
-
-		__traceback_info__ = user, ntiid
-		mystuffDict = self.get_owned( user, ntiid ) if self.get_owned else ()
-		sharedstuffList = self.get_shared( user, ntiid) if self.get_shared else () # see comments in _meonly_predicate_factory
-
-		# To determine the existence of the container,
-		# My stuff either exists or it doesn't. The others, being shared,
-		# may be empty or not empty.
-		if (mystuffDict is None \
-			or (not self._my_objects_may_be_empty and not mystuffDict)) \
-			   and not sharedstuffList:
-
-			raise hexc.HTTPNotFound(ntiid)
-
-		return (mystuffDict, sharedstuffList, ()) # Last value is placeholder for get_public, currently not used
+		return self.do_getObjects( user, ntiid, self.getRemoteUser(),
+								   get_owned=self.get_owned,
+								   get_shared=self.get_shared,
+								   allow_empty=self._my_objects_may_be_empty )
 
 	_DEFAULT_SORT_ON = 'lastModified'
 	_DEFAULT_BATCH_SIZE = None
@@ -644,21 +702,27 @@ class _ChangeMimeFilter(_MimeFilter):
 
 class _UGDStreamView(_UGDView):
 
+	get_owned = users.User.getContainedStream
+	get_shared = None
+	_my_objects_may_be_empty = False
+	_support_cross_user = False
+
 	def __init__(self, request ):
 		super(_UGDStreamView,self).__init__(request)
-		self.get_owned = users.User.getContainedStream
-		self.get_shared = None
-		self._my_objects_may_be_empty = False
 
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
 
 class _RecursiveUGDStreamView(_RecursiveUGDView):
 
+	_support_cross_user = False
+	_my_objects_may_be_empty = False
+
+	get_owned = users.User.getContainedStream
+	get_shared = None
+
 	def __init__(self,request):
 		super(_RecursiveUGDStreamView,self).__init__(request)
-		self.get_owned = users.User.getContainedStream
-		self.get_shared = None
-		self._my_objects_may_be_empty = False
+
 
 	_DEFAULT_BATCH_SIZE = 100
 	_DEFAULT_BATCH_START = 0
@@ -685,7 +749,13 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 
 
 class _UGDAndRecursiveStreamView(_UGDView):
+	"""
+	Returns both the generated data and the stream data.
 
+	.. warning :: This does not support paging/filtering or cross-user queries.
+	"""
+
+	_support_cross_user = False
 	def __init__(self, request ):
 		super(_UGDAndRecursiveStreamView,self).__init__( request )
 
@@ -694,9 +764,14 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		Overrides the normal mechanism to separate out the page
 		data and the change data in separate keys.
 		"""
-		user, ntiid = self.request.context.user, self.request.context.ntiid
+		# FIXME: This doesn't support paging or filtering or cross-user security
+		user, ntiid = self.user, self.ntiid
+		self.check_cross_user()
+
 		page_data, stream_data = self._getAllObjects( user, ntiid )
-		all_data = []; all_data += page_data; all_data += stream_data
+		all_data = []
+		all_data += page_data
+		all_data += stream_data
 		# The legacy code expects { 'LastMod': 0, 'Items': [] }
 		top_level = lists_and_dicts_to_ext_collection( all_data )
 
@@ -788,10 +863,11 @@ def replies_view(request):
 	"""
 
 	# First collect the objects
-	view = _UGDView( request )
-	view._my_objects_may_be_empty = True
-	objs = view.getObjectsForId( users.User.get_user( psec.authenticated_userid( request ) ),
-								 request.context.containerId )
+
+	the_user = users.User.get_user( psec.authenticated_userid( request ) )
+	objs = _UGDView.do_getObjects( the_user, request.context.containerId, the_user,
+								   allow_empty=True )
+
 	result = lists_and_dicts_to_ext_collection( objs )
 
 	def test(x):

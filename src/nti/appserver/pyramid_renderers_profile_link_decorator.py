@@ -10,38 +10,37 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-# These imports are broken out explicitly for speed (avoid runtime attribute lookup)
+
 from nti.externalization import interfaces as ext_interfaces
+from nti.dataserver import interfaces as nti_interfaces
 
-from nti.externalization.interfaces import StandardExternalFields
+# These imports are broken out explicitly for speed (avoid runtime attribute lookup)
+LINKS = ext_interfaces.StandardExternalFields.LINKS
 
-from nti.dataserver.interfaces import  IUser
+
 from nti.dataserver.links import Link
-#from nti.dataserver.links_external import render_link
-#from nti.dataserver.traversal import find_nearest_site
 
-from pyramid import security as psec
+from pyramid.security import authenticated_userid
 from pyramid.threadlocal import get_current_request
 
-from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE
+from .account_creation_views import REL_ACCOUNT_PROFILE
+_PROFILE_VIEW = '@@' + REL_ACCOUNT_PROFILE
 from ._util import link_belongs_to_user
 
-LINKS = StandardExternalFields.LINKS
-
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(IUser) # TODO: IModeledContent?
+@component.adapter(nti_interfaces.IUser) # TODO: IModeledContent?
 class ProfileLinkDecorator(object):
 
-	def __init__( self, context ): pass
+	def __init__( self, context ):
+		pass
 
 	def decorateExternalMapping( self, context, mapping ):
-		if context.username == psec.authenticated_userid( get_current_request() ):
+		if context.username == authenticated_userid( get_current_request() ):
 
-			mapping.setdefault( LINKS, [] )
+			the_links = mapping.setdefault( LINKS, [] )
 			link = Link( context,
 						 rel=REL_ACCOUNT_PROFILE,
-						 elements=('@@' + REL_ACCOUNT_PROFILE, )	)
+						 elements=(_PROFILE_VIEW,) )
 			link_belongs_to_user( link, context )
-			#if ICreated_providedBy( context ):
 
-			mapping[LINKS].append( link )
+			the_links.append( link )

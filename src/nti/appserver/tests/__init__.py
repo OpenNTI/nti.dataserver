@@ -116,46 +116,60 @@ class ConfiguringTestBase(_TestBaseMixin,nti.tests.ConfiguringTestBase):
 	def tearDown( self ):
 		ptearDown()
 		super(ConfiguringTestBase,self).tearDown()
-
+from nti.appserver import pyramid_authorization
 class SharedConfiguringTestBase(_TestBaseMixin,nti.tests.SharedConfiguringTestBase):
 
 	HANDLE_GC = True # Must do GCs for ZCA cleanup. See superclass
 
 	_mailer = None
 
+	security_policy = None
+
 	@classmethod
-	def setUpClass( self, request_factory=DummyRequest, request_args=() ):
+	def setUpClass( cls, request_factory=DummyRequest, request_args=(), security_policy_factory=None, force_security_policy=True ):
 		"""
 		:return: The `Configurator`, which is also in ``self.config``.
 		"""
 
-		super(SharedConfiguringTestBase,self).setUpClass()
+		super(SharedConfiguringTestBase,cls).setUpClass()
 
-		self.config = psetUp(registry=component.getGlobalSiteManager(),request=self.request,hook_zca=False)
-		self.config.setup_registry()
+		cls.config = psetUp(registry=component.getGlobalSiteManager(),request=cls.request,hook_zca=False)
+		cls.config.setup_registry()
 
-		if self.set_up_mailer:
+		if cls.set_up_mailer:
 			# Must provide the correct zpt template renderer or the email process blows up
 			# See application.py
 			component.provideUtility( z3c_zpt.renderer_factory, pyramid.interfaces.IRendererFactory, name=".pt" )
-			self._mailer = mailer = TestMailDelivery()
+			cls._mailer = mailer = TestMailDelivery()
 			component.provideUtility( mailer, ITestMailDelivery )
 
-		return self.config
+
+		if security_policy_factory:
+			cls.security_policy = security_policy_factory()
+			for iface in pyramid.interfaces.IAuthenticationPolicy, pyramid.interfaces.IAuthorizationPolicy:
+				if iface.providedBy( cls.security_policy ) or force_security_policy:
+					component.provideUtility( cls.security_policy, iface )
+		return cls.config
 
 	ds = property( lambda s: getattr(mock_dataserver, 'current_mock_ds' ) )
 
 	@classmethod
-	def tearDownClass( self ):
+	def tearDownClass( cls ):
 		ptearDown()
-		self._mailer = None
-		super(SharedConfiguringTestBase,self).tearDownClass()
+		cls._mailer = None
+		cls.security_policy = None
+		super(SharedConfiguringTestBase,cls).tearDownClass()
 
 	def setUp( self ):
 		super(SharedConfiguringTestBase,self).setUp()
 		if self._mailer:
 			del self._mailer.queue[:]
 		return self.config
+
+	def tearDown( self ):
+		# Some things have to be done everytime
+		pyramid_authorization._clear_caches()
+		super(SharedConfiguringTestBase,self).tearDown()
 
 class NewRequestSharedConfiguringTestBase(SharedConfiguringTestBase):
 
