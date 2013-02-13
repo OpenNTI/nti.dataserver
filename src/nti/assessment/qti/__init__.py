@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 import os
 import sys
+import importlib
 
 from zope import interface
 
@@ -21,13 +22,15 @@ def find_concrete_elements():
 	
 	src_path = os.path.split(qti_interfaces.__file__)[0]
 	package = getattr(qti_interfaces, '__package__')
-	path_length = len(src_path)-len(package)
+	path_length = len(src_path)-len(package or 'nti.assessment.qti')
+	
 	def _load_module(path, name):
 		part = path[path_length:]
 		part = part.replace(os.sep, '.') + '.' + name
 		if part in sys.modules:
 			return sys.modules[part]
-		return __import__(part)
+		result = importlib.import_module(part)
+		return result
 			
 	def _get_concrete_ifaces(m):
 		for name in dir(m):
@@ -40,15 +43,17 @@ def find_concrete_elements():
 			if p.startswith('.') or p.startswith('_'):
 				continue
 			
-			if os.path.isdir(p):
+			fn = os.path.join(path, p) if not p.startswith(path) else path
+			if os.path.isdir(fn):
 				_find(os.path.join(src_path,p))
-			elif os.path.isfile(p) and path != src_path:
-				name, ext = os.path.splitext(p)
-				if name == "interfaces" and ext == ".py":
+			elif os.path.isfile(fn) and path != src_path:
+				name, ext = os.path.splitext(fn)
+				name = name[len(path) + len(os.sep):]
+				if name.endswith("interfaces") and ext == ".py":
 					m = _load_module(path, name)
 					_get_concrete_ifaces(m)
 	_find(src_path)
-			
+
 	return result
 
 

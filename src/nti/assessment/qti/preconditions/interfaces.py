@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 
-from ..qti import interfaces as qti_interfaces
+from .. import interfaces as qti_interfaces
 from ..expression import interfaces as exp_interfaces
 from ..attributes import interfaces as attr_interfaces
 

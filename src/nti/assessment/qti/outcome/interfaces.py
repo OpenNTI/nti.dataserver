@@ -11,7 +11,7 @@ from zope import schema
 from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
-from ..qti import interfaces as qti_interfaces
+from .. import interfaces as qti_interfaces
 from ..expression import interfaces as exp_interfaces
 
 class IoutcomeRule(interface.Interface):
