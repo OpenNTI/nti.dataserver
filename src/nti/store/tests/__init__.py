@@ -4,11 +4,6 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
-from zope import component
-from zope.configuration import xmlconfig
-
 import nti.store as store
 import nti.dataserver as dataserver
 
