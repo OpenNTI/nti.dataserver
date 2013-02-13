@@ -103,7 +103,7 @@ setup(
 		 # Pillow is currently way ahead of PIL
 		'Pillow >= 1.7.8',
 		'RestrictedPython >= 3.6.0',
-		'ZConfig >= 2.9.3',
+		'ZConfig >= 3.0.1',
 		 # NOTE: ZODB has a new release, 4.0.0a4 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
 		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.5, and ZEO >= 4.0.0
