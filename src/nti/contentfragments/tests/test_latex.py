@@ -74,3 +74,7 @@ class TestLatexTransforms(SharedConfiguringTestBase):
 	def test_punc_terminates_in_sequence(self):
 		_tex_assert( 'is bounded by y = x, x = 5 and y = 1.',
 					 'is bounded by $y = x$, $x = 5$ and $y = 1$.' )
+
+	def test_leading_or_trailing_space( self ):
+		_tex_assert( ' abc ',
+					 is_( ' abc ' ) )

@@ -251,9 +251,8 @@ def PlainTextToLatexFragmentConverter(plain_text):
 	# SAJ: If the fragment starts or ends with a space, respect that
 	if plain_text and plain_text[0].isspace():
 		accum.insert(0, '')
- 
-	if plain_text and plain_text[len(plain_text)-1].isspace():
+
+	if plain_text and plain_text[-1].isspace():
 		accum.append('')
 
-	#
 	return interfaces.LatexContentFragment( ' '.join( accum ) )
