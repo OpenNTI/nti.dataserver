@@ -177,6 +177,13 @@ def PlainTextToLatexFragmentConverter(plain_text):
 	# be to extract the math parsing algorithm from plasTeX; we'd still have to
 	# figure out what makes sense, though
 
+	# SAJ: Before we do anything test and see if we were give a run of pure white
+	# space.  If so, just return what we were given.
+
+	if plain_text.isspace():
+		return interfaces.LatexContentFragment(plain_text)
+
+
 	# First, replace some whitespace sensitive tokens
 	plain_text = plain_text.replace( '. . .', u'\u2026' ) # Ellipsis
 
@@ -240,6 +247,13 @@ def PlainTextToLatexFragmentConverter(plain_text):
 
 	# Any tokens left go in the accumulator
 	accum.extend( [_escape_tex(x) for x in tokens] )
+
+	# SAJ: If the fragment starts or ends with a space, respect that
+	if plain_text and plain_text[0].isspace():
+		accum.insert(0, '')
+ 
+	if plain_text and plain_text[len(plain_text)-1].isspace():
+		accum.append('')
 
 	#
 	return interfaces.LatexContentFragment( ' '.join( accum ) )
