@@ -280,10 +280,9 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 						request=event.request )
 
 	attachment_filename = 'coppa_consent_request_email_attachment.pdf'
-	attachment_stream = pkg_resources.resource_stream( 'nti.appserver.templates',
-													   attachment_filename )
+
 	# Prefill the fields.
-	attachment_stream = _alter_pdf( attachment_stream, user.username, profile.realname, email )
+	attachment_stream = _alter_pdf( attachment_filename, user.username, profile.realname, email )
 	attachment = Attachment(attachment_filename, "application/pdf", attachment_stream )
 
 	message = Message( subject=_("Please Confirm Your Child's NextThought Account"),
@@ -345,8 +344,15 @@ class ContactEmailRecovery(object):
 import pyPdf
 import pyPdf.generic
 from cStringIO import StringIO
+from gevent.lock import RLock
 
-def _alter_pdf( pdf_stream, username, child_firstname, parent_email ):
+# Reading the pristine PDF is fairly time consuming; fortunately, it
+# returns a dict we can clone
+_cached_pages = {} # filename => {page, contents, lock}
+import zope.testing.cleanup
+zope.testing.cleanup.addCleanUp( _cached_pages.clear )
+
+def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 	"""
 	Given a stream to our COPPA pdf, manipulate the fields to include the given data,
 	and return a new read stream.
@@ -374,30 +380,42 @@ def _alter_pdf( pdf_stream, username, child_firstname, parent_email ):
 	fonts and setting compatibility to PDF 1.3.
 	"""
 
-	pdf_reader = pyPdf.PdfFileReader( pdf_stream )
-	assert pdf_reader.numPages == 1
-
-	pdf_page = pdf_reader.getPage( 0 )
-	# Get the content (we have to decode it, if we ask the page to decode it, it
-	# doesn't hold the reference)
-	page_content = pyPdf.pdf.ContentStream( pdf_page['/Contents'].getObject(), pdf_page.pdf )
-	# And store the content back in the page, under the NamedObject key, which happens to be equal to the string
-	page_key = None
-	for key in pdf_page.keys():
-		if key == '/Contents':
-			page_key = key
-			break
-	assert page_key is not None
-	pdf_page[page_key] = page_content
-
-
+	# The locations in the Contents array at which various things are
+	# found
 	IX_UNAME = 376
 	IX_FNAME = 395
 	IX_EMAIL = 411
 
-	assert page_content.operations[IX_EMAIL][1] == 'TJ' # TJ being the 'text with placement' operator
-	assert page_content.operations[IX_UNAME][1] == 'TJ'
-	assert page_content.operations[IX_FNAME][1] == 'TJ'
+	pdf_page, page_content, lock = _cached_pages.get( pdf_filename, (None, None, None) )
+	if pdf_page is None:
+		pdf_stream = pkg_resources.resource_stream( 'nti.appserver.templates',
+													pdf_filename )
+		pdf_reader = pyPdf.PdfFileReader( pdf_stream )
+		assert pdf_reader.numPages == 1
+
+		pdf_page = pdf_reader.getPage( 0 )
+		lock = RLock()
+
+		# Get the content (we have to decode it, if we ask the page to decode it, it
+		# doesn't hold the reference)
+		page_content = pyPdf.pdf.ContentStream( pdf_page['/Contents'].getObject(), pdf_page.pdf )
+		# And store the content back in the page, under the NamedObject key
+		# (which happens to be equal to the string, but IS NOT a string)
+		page_key = None
+		for key in pdf_page.keys():
+			if key == '/Contents':
+				page_key = key
+				break
+		assert page_key is not None
+		pdf_page[page_key] = page_content
+
+		# make sure we have the correct page
+		assert page_content.operations[IX_EMAIL][1] == 'TJ' # TJ being the 'text with placement' operator
+		assert page_content.operations[IX_UNAME][1] == 'TJ'
+		assert page_content.operations[IX_FNAME][1] == 'TJ'
+
+		_cached_pages[pdf_filename] = pdf_page, page_content, lock
+
 
 	def _pdf_clean( text ):
 		# Many punctuation characters are handled specially and overlap
@@ -405,15 +423,16 @@ def _alter_pdf( pdf_stream, username, child_firstname, parent_email ):
 		# We can get pretty close with some padding.
 		return text.replace( '-', '-  ' ).replace( '_', '_  ' ).replace( 'j', 'j ' )
 
-	page_content.operations[IX_EMAIL] = ( [pyPdf.generic.TextStringObject( _pdf_clean(parent_email) )], 'Tj') # Tj being the simple text operator
-	page_content.operations[IX_UNAME] = ( [pyPdf.generic.TextStringObject( _pdf_clean(username) )], 'Tj')
-	page_content.operations[IX_FNAME] = ( [pyPdf.generic.TextStringObject( child_firstname )], 'Tj')
-
-
 	writer = pyPdf.PdfFileWriter()
-	writer.addPage( pdf_page )
-
 	stream = StringIO()
-	writer.write( stream )
+	with lock:
+		page_content.operations[IX_EMAIL] = ( [pyPdf.generic.TextStringObject( _pdf_clean(parent_email) )], 'Tj') # Tj being the simple text operator
+		page_content.operations[IX_UNAME] = ( [pyPdf.generic.TextStringObject( _pdf_clean(username) )], 'Tj')
+		page_content.operations[IX_FNAME] = ( [pyPdf.generic.TextStringObject( child_firstname )], 'Tj')
 
-	return StringIO( stream.getvalue() )
+
+		writer.addPage( pdf_page )
+		writer.write( stream )
+
+	stream.seek( 0 )
+	return stream

@@ -113,15 +113,26 @@ def setupChameleonCache(config=False):
 	"""
 	# Set up a cache for these things to make subsequent renders faster
 
-	result = None
+	cache_dir = None
 	if not 'CHAMELEON_CACHE' in os.environ or not os.path.isdir( os.path.expanduser( os.environ['CHAMELEON_CACHE'] ) ):
-		os.environ['CHAMELEON_CACHE'] = result = make_cache_dir('chameleon_cache')
+		os.environ['CHAMELEON_CACHE'] = cache_dir = make_cache_dir('chameleon_cache')
 	else:
-		result = os.environ['CHAMELEON_CACHE']
+		cache_dir = os.environ['CHAMELEON_CACHE']
 
 	if config:
 		conf_mod = dottedname.resolve('chameleon.config')
-		if conf_mod.CACHE_DIRECTORY is None: # previously imported before we set the environment
-			conf_mod.CACHE_DIRECTORY = result
+		if conf_mod.CACHE_DIRECTORY != cache_dir: # previously imported before we set the environment
+			conf_mod.CACHE_DIRECTORY = cache_dir
+			# Which, crap, means the template is probably also screwed up.
+			# It imports all of this stuff statically, and BaseTemplate
+			# statically creates a default loader at import time
+			temp_mod = dottedname.resolve( 'chameleon.template' )
+			if temp_mod.CACHE_DIRECTORY != conf_mod.CACHE_DIRECTORY:
 
-	return result
+				temp_mod.CACHE_DIRECTORY = conf_mod.CACHE_DIRECTORY
+				temp_mod.BaseTemplate.loader = temp_mod._make_module_loader()
+
+			# Creating these guys with debug or autoreload, as Pyramid does when its debug flags are set,
+			# will override this setting
+
+	return cache_dir

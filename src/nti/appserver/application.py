@@ -138,6 +138,7 @@ def createApplication( http_port,
 
 	logger.debug( 'Began starting dataserver' )
 	setupChameleonCache(config=True)
+
 	server = None
 
 	if IDataserver.providedBy( create_ds ): #not isinstance( create_ds, bool ):

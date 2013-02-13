@@ -14,6 +14,7 @@ from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not
 from hamcrest import contains, contains_inanyorder
 from hamcrest import has_value
+from hamcrest import same_instance
 does_not = is_not
 
 from nti.appserver.application import createApplication
@@ -218,13 +219,28 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 		__show__.on()
 		super(SharedApplicationTestBase,cls).tearDownClass()
 
-def WithSharedApplicationMockDS(func):
-	@functools.wraps(func)
-	@mock_dataserver.WithMockDS
-	def f(self):
-		self.config.registry._zodb_databases = { '': self.ds.db } # 0.3
-		func(self)
-	return f
+def WithSharedApplicationMockDS( *args, **kwargs ):
+
+	if len(args) == 1 and not kwargs:
+		# being used as a decorator
+		func = args[0]
+
+		@functools.wraps(func)
+		@mock_dataserver.WithMockDS
+		def f(self):
+			self.config.registry._zodb_databases = { '': self.ds.db } # 0.3
+			func(self)
+		return f
+
+	# Being used as a decorator factory
+	def factory(func):
+		@functools.wraps(func)
+		@mock_dataserver.WithMockDS(**kwargs)
+		def f(self):
+			self.config.registry._zodb_databases = { '': self.ds.db } # 0.3
+			func(self)
+		return f
+	return factory
 
 def WithSharedApplicationMockDSWithChanges(func):
 	@functools.wraps(func)
@@ -275,6 +291,20 @@ class ApplicationTestBase(_AppTestBaseMixin, ConfiguringTestBase):
 
 
 class TestApplication(SharedApplicationTestBase):
+
+	@WithSharedApplicationMockDS
+	def test_chameleon_caching_config(self):
+		assert_that( self.app, is_( not_none() ) )
+		# chameleon is imported by pyramid.
+		# it is also imported by us. But depending on the order
+		# of imports, chameleon may have gotten initialized too soon
+		# and not be using module loaders. see nti.util
+		import chameleon.config
+		import chameleon.template
+		import chameleon.loader
+		assert_that( chameleon.config.CACHE_DIRECTORY, is_( not_none() ) )
+		assert_that( chameleon.template.CACHE_DIRECTORY, is_( same_instance( chameleon.config.CACHE_DIRECTORY ) ) )
+		assert_that( chameleon.template.BaseTemplate, has_property( 'loader', is_(chameleon.loader.ModuleLoader) ) )
 
 	@WithSharedApplicationMockDS
 	def test_logon_css_site_policy(self):

@@ -979,6 +979,49 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 
+	@unittest.skip("For profiling only. Auto-profiles with cProfile")
+	@WithSharedApplicationMockDS(temporary_filestorage=True)
+	def test_for_profile( self ):
+		import logging
+		logging.getLogger( 'chameleon' ).setLevel( logging.DEBUG )
+		import cProfile
+		cProfile.runctx( 'self._do_test_create_coppa_user_mathcounts_policy()', globals=globals(), locals=locals(), sort='cumulative', filename='TestCreateCoppa.profile' )
+
+		self.fail( 'foo' )
+
+	def _do_test_create_coppa_user_mathcounts_policy( self ):
+
+		app = TestApp( self.app )
+
+		data = to_json_representation(  {'Username': 'jason2_nextthought_com',
+										 'password': 'pass123word',
+										 'realname': 'Joe Bananna',
+										 'birthdate': '2008-01-31', # NOTE: This will break after the year 2021
+										 'affiliation': 'school',
+										 'email': 'foo@bar.com',
+										 'contact_email': 'jason.madden@nextthought.com' } )
+
+		path = b'/dataserver2/users/@@account.create'
+
+		for i in range(50):
+			res = app.post( path, data, extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'} )
+
+			assert_that( res, has_property( 'status_int', 201 ) )
+			assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
+
+			#assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
+			assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
+			assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
+			assert_that( res.json_body, has_entry( 'alias', 'jason2_nextthought_com' ) )
+
+			mailer = component.getUtility( ITestMailDelivery )
+			assert_that( mailer, has_property( 'queue', has_item( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) ) )
+
+			del mailer.queue[:]
+
+			with mock_dataserver.mock_db_trans(self.ds):
+				users.User.delete_user( 'jason2_nextthought_com' )
+
 
 class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
@@ -1045,6 +1088,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		assert_that( mailer, has_property( 'queue', has_item( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) ) )
 
 		del mailer.queue[:]
+
 
 	@WithSharedApplicationMockDS
 	def test_create_user_prmia_policy( self ):
