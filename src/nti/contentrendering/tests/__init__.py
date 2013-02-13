@@ -110,7 +110,7 @@ class RenderContext(object):
 		os.chdir( self.docdir )
 		import nti.contentrendering.plastexids
 		nti.contentrendering.plastexids.patch_all()
-		nti_render.setupChameleonCache()
+		nti_render.setupChameleonCache(config=True)
 		return self
 
 	def __exit__( self, exc_type, exc_value, traceback ):
