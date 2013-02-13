@@ -154,7 +154,7 @@ setup(
 		'html5lib == 0.95',
 		'logilab-common >= 0.58.3',
 		'lxml >= 3.1.0', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
-		'nameparser >= 0.2.5', # Human name parsing
+		'nameparser >= 0.2.6', # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
@@ -301,7 +301,6 @@ setup(
 			'nose-progressive >= 1.4',
 			'pyhamcrest >= 1.7.1',
 			'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
-			'zc.buildout >= 2.0.0',
 			'zope.testing >= 4.1.1',
 			],
 		'tools': [
@@ -331,6 +330,8 @@ setup(
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.8.4',
+			'zc.buildout >= 2.0.0',
+			'z3c.dependencychecker >= 1.8', # unused/used imports
 			'zodbbrowser >= 0.10.4',
 			'zodbupdate >= 0.5',
 			# Monitoring stats and instrumenting code

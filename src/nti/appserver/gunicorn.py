@@ -143,6 +143,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		super (which patches the whole system).
 		"""
 		import nti.monkey.gevent_patch_on_import # But we do import the patches, to make sure we get the patches we do want
+		nti.monkey.gevent_patch_on_import.patch()
 
 
 	def __init__( self, *args, **kwargs ):

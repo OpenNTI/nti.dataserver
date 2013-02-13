@@ -17,7 +17,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import sys
 import wsgiref.headers
-import functools
 
 # Exceptions we will ignore for middleware purposes
 import greenlet
