@@ -60,6 +60,9 @@ def register_stripe_charge(event):
 		purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
 		sp = pay_interfaces.IStripePurchase(purchase)
 		sp.ChargeID = event.charge_id
+		user = User.get_user(event.username)
+		su = pay_interfaces.IStripeCustomer(user)
+		su.Charges.add(event.charge_id)
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 	
 @interface.implementer(pay_interfaces.IStripePaymentProcessor)
@@ -124,9 +127,14 @@ class _StripePaymentProcessor(StripeIO):
 	
 	# ---------------------------
 	
-	def process_purchase(self, purchase_id, username, token, amount, currency, api_key=None):
-	
-		notify(store_interfaces.PurchaseAttemptStarted(purchase_id, username))
+	def process_purchase(self, purchase_id, username, token, amount, currency, discount_code=None, api_key=None):
+		
+		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+		if purchase is None:
+			raise Exception("Purchase attempt not found", purchase_id, username)
+		
+		if not purchase.is_pending():
+			notify(store_interfaces.PurchaseAttemptStarted(purchase_id, username))
 						
 		customer_id = self.get_or_create_customer(username, api_key=api_key)
 		

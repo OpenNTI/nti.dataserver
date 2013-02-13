@@ -25,6 +25,18 @@ from nti.utils.property import alias
 
 from . import interfaces as store_interfaces
 
+def to_frozenset(items=None):
+	result = None
+	if not items:
+		result = frozenset() 
+	elif isinstance(items, frozenset):
+		result = items
+	elif isinstance(items, six.string_types):
+		result = frozenset([items])
+	else:
+		result = frozenset(items)
+	return result
+
 @functools.total_ordering
 @interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable)
 class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Persistent):
@@ -133,7 +145,6 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		return self.Synced
 
 def create_purchase_attempt(items, processor, state=None, description=None, start_time=None):
+	items = to_frozenset(items)
 	state = state or store_interfaces.PA_STATE_UNKNOWN
-	items = frozenset() if not items else items
-	items = frozenset([items]) if isinstance(items, six.string_types) else frozenset(items)
 	return PurchaseAttempt(items=items, processor=processor, description=description, state=state, start_time=start_time)

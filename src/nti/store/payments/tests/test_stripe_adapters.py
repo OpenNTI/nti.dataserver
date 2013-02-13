@@ -36,7 +36,10 @@ class TestStripeAdapters(ConfiguringTestBase):
 		adapted = pay_interfaces.IStripeCustomer(user)
 		assert_that(adapted, is_not(None))
 		assert_that(adapted.customer_id, is_(None))
-
+		
+		adapted.Charges.add('ch_id')
+		assert_that('ch_id' in adapted, is_(True))
+		
 		adapted.customer_id = 'xyz'
 		assert_that(adapted.customer_id, is_('xyz'))
 

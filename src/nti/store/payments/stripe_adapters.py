@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import BTrees
+
 from zope import interface
 from zope import component
 from zope.annotation import factory as an_factory
@@ -23,14 +25,23 @@ from .. import interfaces as store_interfaces
 
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer( pay_interfaces.IStripeCustomer)
-class _StripeCustomer(Persistent):
+class _StripeCustomer(zcontained.Contained, Persistent):
 	
+	family = BTrees.family64
+
 	CustomerID = None
 	
+	def __init__(self):
+		self.Charges = self.family.OO.OOTreeSet()
+		
 	@property
 	def id(self):
 		return self.CustomerID
 	
+	def __contains__(self, charge):
+		return  charge in self.Charges
+	
+	charges = alias('Charges')
 	customer_id = alias('CustomerID')
 		
 _StripeCustomerFactory = an_factory(_StripeCustomer)
