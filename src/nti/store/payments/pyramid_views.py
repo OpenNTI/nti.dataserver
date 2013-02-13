@@ -39,10 +39,16 @@ class StripePayment(object):
 			logger.warn("There is already a pending purchase for item(s) %s" % items)
 			return purchase
 			
+		coupon = request.matchdict.get('coupon', None)
+		if coupon:
+			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
+			if not manager.validate_coupon(coupon):
+				#TODO: raise exception coupon not valid or return with an status error ?
+				pass
+				
 		token = request.matchdict.get('token')
 		amount = request.matchdict.get('amount', None)
 		currency = request.matchdict.get('currency', 'USD')
-		discount_code = request.matchdict.get('discount_code', None)
 				
 		description = request.matchdict.get('description', None)
 		description = description or "%s's payment for '%r'" % (username, items)
@@ -54,7 +60,7 @@ class StripePayment(object):
 			amount = int(amount * 100.0) # cents
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 			manager.process_purchase(purchase_id=purchase_id, username=username, token=token, amount=amount, 
-									 currency=currency, discount_code=discount_code)
+									 currency=currency, coupon=coupon)
 		
 		gevent.spawn(process_pay)
 		return purchase

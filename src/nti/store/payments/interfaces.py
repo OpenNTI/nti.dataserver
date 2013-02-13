@@ -70,7 +70,17 @@ class IStripeCustomer(interface.Interface):
 	
 class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 	
-	def process_purchase(purchase_id, username, token, amount, currency, discount_code):
+	def validate_coupon(coupon):
+		"""
+		validate the specfied coupon
+		"""
+	
+	def apply_coupon(amount, coupon=None):
+		"""
+		apply the specfied coupon to the specfied amount
+		"""
+		
+	def process_purchase(purchase_id, username, token, amount, currency, coupon):
 		"""
 		Process a purchase attempt
 		

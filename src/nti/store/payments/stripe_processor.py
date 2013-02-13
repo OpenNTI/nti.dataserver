@@ -127,7 +127,28 @@ class _StripePaymentProcessor(StripeIO):
 	
 	# ---------------------------
 	
-	def process_purchase(self, purchase_id, username, token, amount, currency, discount_code=None, api_key=None):
+	def validate_coupon(self, coupon, api_key=None):
+		coupon = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
+		result = (coupon is not None)
+		if result:
+			if coupon.duration == u'repeating':
+				result = (coupon.duration_in_months is None or coupon.duration_in_months > 0) and \
+						 (coupon.max_redemptions is None or coupon.max_redemptions > 0) and \
+						 (coupon.redeem_by is None or coupon.redeem_by <= time.time())
+			elif coupon.duration == u'once':
+				result = coupon.redeem_by is None or coupon.redeem_by <= time.time()
+		return result
+		
+	def apply_coupon(self, amount, coupon=None, api_key=None):
+		coupon = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
+		if coupon:
+			if coupon.percent_off is not None:
+				amount = amount * (1 - coupon.percent_off)
+			elif coupon.amount_off is not None:
+				amount -= coupon.amount_off
+		return max(0, amount)
+	
+	def process_purchase(self, purchase_id, username, token, amount, currency, coupon=None, api_key=None):
 		
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
@@ -142,6 +163,7 @@ class _StripePaymentProcessor(StripeIO):
 		
 		descid = "%s:%s:%s" % (username, customer_id, purchase_id)
 		try:
+			amount = self.apply_coupon(amount, coupon, api_key=api_key)
 			charge = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
 			
 			notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
