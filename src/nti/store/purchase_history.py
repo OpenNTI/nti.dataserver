@@ -101,9 +101,6 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 	def __len__(self):
 		return len(self.purchases)
 
-	def __iter(self):
-		return iter(self.purchases)
-
 _PurchaseHistoryFactory = an_factory(_PurchaseHistory)
 
 def get_purchase_attempt(purchase_id, user):
