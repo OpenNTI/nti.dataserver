@@ -144,19 +144,20 @@ def logon_user_with_request( user, request, response=None ):
 	:param user: The user object that should be logged in.
 	:param request: Pyramid request that is active and responsible for the login.
 	:param response: If given, then the response will be given the headers
-		to remember the logon.
+		to remember the logon. Otherwise, the request's response will.
 	:raise ValueError: If the user is None.
 	"""
 
 	# Send the logon event
-	if not user:
-		raise ValueError( "No user given" )
+	if not nti_interfaces.IUser.providedBy( user ):
+		raise ValueError( "No valid user given" )
 
 	notify( app_interfaces.UserLogonEvent( user, request ) )
 
+	response = response or getattr( request, 'response' )
 	if response:
 		response.headers.extend( remember( request, user.username.encode('utf-8') ) )
-
+		response.set_cookie( b'username', user.username.encode( 'utf-8' ) ) # the web app likes this
 
 def dump_stacks():
 	"""

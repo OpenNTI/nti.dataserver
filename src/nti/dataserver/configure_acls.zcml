@@ -1,26 +1,28 @@
 <!-- -*- mode: nxml -*- -->
-<configure
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:ext="http://nextthought.com/ntp/ext"
-	xmlns:zcml="http://namespaces.zope.org/zcml"
-	i18n_domain="zope">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:ext="http://nextthought.com/ntp/ext"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="zope">
 	<include package="zope.component" />
 
 	<!-- ACL/ACE permissions -->
 	<include file="meta.zcml" package="zope.security" />
 
 	<permission
-			id="nti.actions.create"
-			title="Create new object" />
+		id="nti.actions.create"
+		title="Create new object" />
 	<permission
-			id="nti.actions.delete"
-			title="Delete existing object" />
+		id="nti.actions.delete"
+		title="Delete existing object" />
 	<permission
-			id="nti.actions.update"
-			title="Edit existing object" />
+		id="nti.actions.update"
+		title="Edit existing object" />
 	<permission
-			id="nti.actions.moderate"
-			title="Moderate existing objects" />
+		id="nti.actions.moderate"
+		title="Moderate existing objects" />
+	<permission
+		id="nti.actions.impersonate"
+		title="Impersonate another user" />
 
 	<!-- ACL providers -->
 	<adapter factory=".authorization_acl._EntityACLProvider" />

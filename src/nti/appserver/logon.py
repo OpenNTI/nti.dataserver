@@ -16,6 +16,14 @@ Attribute exchange is used to collect permissions from providers. The
 URI used as the `attribute type identifier <http://openid.net/specs/openid-attribute-exchange-1_0.html#attribute-name-definition>`_
 is in :const:`AX_TYPE_CONTENT_ROLES`
 
+
+Impersonation
+=============
+
+Impersonation is exposed at the url :const:`REL_LOGIN_IMPERSONATE`. See
+the function :func:`impersonate_user` for more details.
+
+
 $Id$
 """
 
@@ -79,6 +87,7 @@ REL_HANDSHAKE = 'logon.handshake' #: See :func:`handshake`
 REL_CONTINUE  = 'logon.continue'
 
 REL_LOGIN_NTI_PASSWORD = 'logon.nti.password' #: See :func:`password_logon`
+REL_LOGIN_IMPERSONATE = 'logon.nti.impersonate' #: See :func:`impersonate_user`
 REL_LOGIN_GOOGLE = 'logon.google' #: See :func:`google_login`
 REL_LOGIN_OPENID = 'logon.openid' #: See :func:`openid_login`
 REL_LOGIN_FACEBOOK = 'logon.facebook' #: See :func:`facebook_oauth1`
@@ -204,7 +213,7 @@ def _forgetting( request, redirect_param_name, no_param_class, redirect_value=No
 	response.headers.extend( sec.forget(request) )
 	if error:
 		# TODO: Sending multiple warnings
-		response.headers['Warning'] = error
+		response.headers[b'Warning'] = error.encode('utf-8')
 
 	logger.debug( "Forgetting user %s with %s (%s)", sec.authenticated_userid(request), response, response.headers )
 	return response
@@ -470,29 +479,39 @@ def _create_failure_response( request, failure=None, error=None, error_factory=h
 	return _forgetting( request, 'failure', error_factory, redirect_value=failure, error=error )
 
 def _create_success_response( request, userid=None, success=None ):
-	# Incoming authentication worked. Remember the user, and
-	# either redirect or no-content
-	if success is None:
-		success = request.params.get( 'success' )
-	if success:
-		response = hexc.HTTPSeeOther( location=success )
+	"""
+	Called when authentication was accepted. Returns a response
+	that will remember the `userid` and optionally redirect
+	to the `success` argument or request argument.
+
+	:param userid: If given, the user id we will remember. If not given,
+		then we will remember the currently authenticated user.
+	:param success: If given, a path we will redirect to. If not given, then
+		we will look for a HTTP param of the same name.
+	"""
+	redirect_to = success
+	if redirect_to is None:
+		redirect_to = request.params.get( 'success' )
+
+	if redirect_to:
+		response = hexc.HTTPSeeOther( location=redirect_to )
 	else:
 		response = hexc.HTTPNoContent()
 
 	request.response = response # Make it the same to avoid confusing things that only get the request, e.g., event listeners
-	if userid is None:
-		userid = sec.authenticated_userid( request )
+
+	userid = userid or sec.authenticated_userid( request )
 
 	logon_userid_with_request( userid, request, response )
 
 	return response
 
-
-@view_config(route_name=REL_LOGIN_NTI_PASSWORD, request_method='GET', renderer='rest')
-def password_logon(request):
-	response = None
-
+def _specified_username_logon( request, allow_no_username=True, require_matching_username=True, audit=False ):
+	# This code handles both an existing logged on user and not
 	remote_user = _authenticated_user( request )
+	if not remote_user:
+		return _create_failure_response( request ) # not authenticated or does not exist
+
 	try:
 		desired_usernames = request.params.getall( 'username' ) or []
 	except AttributeError:
@@ -501,22 +520,72 @@ def password_logon(request):
 		if desired_usernames:
 			desired_usernames = [desired_usernames]
 
-	desired_username = None
-
 	if len(desired_usernames) > 1:
 		return _create_failure_response( request, error_factory=hexc.HTTPBadRequest, error='Multiple usernames' )
 
 	if desired_usernames:
 		desired_username = desired_usernames[0].lower()
+	elif allow_no_username:
+		desired_username = remote_user.username.lower()
+	else:
+		return _create_failure_response( request, error_factory=hexc.HTTPBadRequest, error='No username' )
 
-	if not remote_user:
-		response = _create_failure_response( request ) # not authenticated or does not exist
-	elif desired_username and desired_username != remote_user.username.lower():
+
+	if require_matching_username and desired_username != remote_user.username.lower():
 		response = _create_failure_response( request ) # Usually a cookie/param mismatch
 	else:
-		# Note that this also accepts the authentication cookie
-		response = _create_success_response( request )
+		if audit:
+			# TODO: some real auditing scheme
+			logger.info( "[AUDIT] User %s has impersonated %s at %s", remote_user, desired_username, request )
+		response = _create_success_response( request, desired_username )
 	return response
+
+@view_config(route_name=REL_LOGIN_NTI_PASSWORD, request_method='GET', renderer='rest')
+def password_logon(request):
+	"""
+	Found at the path in :const:`REL_LOGIN_NTI_PASSWORD`, this takes authentication credentials
+	(typically basic auth, but anything the app is configured to accept) and logs the user in
+	or
+
+	For extra assurance, the desired username may be sent as the request parameter `username`;
+	if so, it must match the authenticated credentials. Any problems, including failure to authenticate,
+	will result in an HTTP 40x response and may have a ``Warning`` header with
+	additional details.
+
+	The request parameter `success` can be used to indicate a redirection upon successful logon.
+	Likewise, the parameter `failure` can be used for redirection on a failed attempt.
+	"""
+	# Note that this also accepts the authentication cookie, not just the Basic auth
+	return _specified_username_logon( request )
+
+@view_config(route_name=REL_LOGIN_IMPERSONATE,
+			 request_method='GET',
+			 permission=nauth.ACT_IMPERSONATE,
+			 renderer='rest')
+def impersonate_user(request):
+	"""
+	Users with the correct role for the site can get impersonation tickets
+	for other users. (At this writing in Feb 2013, that means any @nextthought.com
+	account can impersonate any user on any site.) The parameters and results
+	are the same as for a normal logon (the authentication cookie is set, and the
+	username cookie is set, both for the newly impersonated user).
+
+	This should be easy to manually activate in the browser by visiting a URL such as
+	``/dataserver2/logon.nti.impersonate?username=FOO&success=/``
+
+	.. note :: This is currently a one-time thing. After you have impersonated, you will
+		need to log out to log back in as your original account.
+
+	See :func:`password_logon`.
+	"""
+
+	# TODO: auditing
+	# TODO: This does the real logon steps for the impersonated user, including firing the events.
+	# Is that what we want? We may want to do some things differently, such as causing some of the
+	# profile links to not be sent back, thus bypassing the app's attempt to request new emails.
+	# Need to think through this some more. Might be able to use the metadata providers in repoze.who,
+	# or sessions to accomplish this.
+	return _specified_username_logon( request, allow_no_username=False, require_matching_username=False, audit=True )
 
 import pyramid_openid.view
 

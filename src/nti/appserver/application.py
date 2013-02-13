@@ -249,6 +249,8 @@ def createApplication( http_port,
 	pyramid_config.add_route( name='logon.ping', pattern='/dataserver2/logon.ping' )
 	pyramid_config.add_route( name='logon.handshake', pattern='/dataserver2/logon.handshake' )
 	pyramid_config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.nti.password' )
+	pyramid_config.add_route( name='logon.nti.impersonate', pattern='/dataserver2/logon.nti.impersonate',
+							  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory' )
 	pyramid_config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
 	from nti.appserver.logon import ROUTE_OPENID_RESPONSE
 	pyramid_config.add_route( name=ROUTE_OPENID_RESPONSE, pattern='/dataserver2/' + ROUTE_OPENID_RESPONSE )

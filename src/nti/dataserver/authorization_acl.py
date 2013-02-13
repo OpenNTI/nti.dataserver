@@ -670,7 +670,13 @@ class _DataserverFolderACLProvider(object):
 
 	def __init__( self, context ):
 		# Got to be here after the components are registered
-		acl = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _DataserverFolderACLProvider ),) )
+		acl = acl_from_aces(
+			# Everyone has read access at the root
+			ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _DataserverFolderACLProvider ),
+			# Global admins also get impersonation rights globally
+			# TODO: We could easily site scope this, or otherwise
+			ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_IMPERSONATE, _DataserverFolderACLProvider )
+			)
 		_add_admin_moderation( acl, _DataserverFolderACLProvider )
 		self.__acl__ = acl
 

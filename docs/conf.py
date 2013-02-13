@@ -61,7 +61,7 @@ extensions = ['sphinx.ext.autodoc',
 			  'sphinx.ext.todo',
 			  'sphinx.ext.viewcode',
 			  'sphinx.ext.intersphinx',
-			  'sphinx.ext.inheritance_diagram',
+			  #'sphinx.ext.inheritance_diagram',
 			  'repoze.sphinx.autointerface',
 			  'sphinxcontrib.programoutput']
 # epydoc is better at inherited members than sphinx, so leave that out of the defaults

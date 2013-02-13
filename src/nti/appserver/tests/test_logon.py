@@ -30,7 +30,10 @@ from nti.appserver.logon import (ping, handshake,password_logon, google_login, o
 from nti.appserver import user_link_provider
 
 from nti.appserver.tests import NewRequestSharedConfiguringTestBase
-#from .test_application import WithSharedApplicationMockDS
+from .test_application import SharedApplicationTestBase
+from .test_application import WithSharedApplicationMockDS
+from .test_application import TestApp
+from nti.dataserver.tests import mock_dataserver
 from pyramid.threadlocal import get_current_request
 
 import pyramid.httpexceptions as hexc
@@ -57,10 +60,35 @@ class DummyView(object):
 	def __call__( self ):
 		return self.response
 
-class TestLogon(NewRequestSharedConfiguringTestBase):
+class TestApplicationLogon(SharedApplicationTestBase):
+
+	@WithSharedApplicationMockDS
+	def test_impersonate(self):
+		with mock_dataserver.mock_db_trans( self.ds ):
+			admin_user = self._create_user( ) # relying on default role
+			other_user = self._create_user( 'nobody@nowhere' )
+			#admin_user_username = admin_user.username
+			other_user_username = other_user.username
+
+		testapp = TestApp( self.app )
+
+		# Forbidden
+		testapp.get( '/dataserver2/logon.nti.impersonate', extra_environ=self._make_extra_environ( username=other_user_username ),
+					 status=403 )
+
+		# Bad request
+		testapp.get( '/dataserver2/logon.nti.impersonate', extra_environ=self._make_extra_environ(  ),
+					 status=400 )
+
+		res = testapp.get( '/dataserver2/logon.nti.impersonate', params={'username': other_user_username},
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
+		assert_that( res.cookies_set, has_entry( 'username', other_user_username ) )
+
+class TestLogonViews(NewRequestSharedConfiguringTestBase):
 
 	def setUp(self):
-		super(TestLogon,self).setUp()
+		super(TestLogonViews,self).setUp()
 		eventtesting.clearEvents()
 		del _user_created_events[:]
 		self.log_handler = zope.testing.loghandler.Handler(self)
@@ -70,11 +98,11 @@ class TestLogon(NewRequestSharedConfiguringTestBase):
 		policy = component.queryUtility( pyramid.interfaces.IAuthenticationPolicy )
 		if policy:
 			component.globalSiteManager.unregisterUtility( policy, provided=pyramid.interfaces.IAuthenticationPolicy )
-		super(TestLogon,self).tearDown()
+		super(TestLogonViews,self).tearDown()
 
 	@classmethod
 	def setUpClass( self, request_factory=DummyRequest, request_args=() ):
-		super(TestLogon,self).setUpClass( request_factory=request_factory, request_args=request_args )
+		super(TestLogonViews,self).setUpClass( request_factory=request_factory, request_args=request_args )
 		component.provideHandler( _handle_user_create_event )
 
 		self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )
