@@ -10,8 +10,8 @@ __docformat__ = "restructuredtext en"
 from zope import interface
 from zope import component
 
-from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.interfaces import IInternalObjectIO
+from nti.externalization.datastructures import InterfaceObjectIO
 
 from . import interfaces
 

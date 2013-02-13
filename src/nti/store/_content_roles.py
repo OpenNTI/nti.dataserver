@@ -84,3 +84,20 @@ def _remove_users_content_roles( user, items ):
 	
 	member.setGroups( list(current_roles.values()) )
 	return current_size - len(current_roles)
+
+def _get_users_content_roles( user ):
+	"""
+	Return a list of tuples with the user content roles 
+
+	:param user: The user object
+	"""
+	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	member = component.getAdapter( user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX )
+	
+	result = []
+	for x in member.groups or ():
+		if x.id.startswith(nauth.CONTENT_ROLE_PREFIX):
+			spl = x.id[len(nauth.CONTENT_ROLE_PREFIX):].split(':')
+			if len(spl) >= 2: 
+				result.append((spl[0], spl[1]))
+	return result
