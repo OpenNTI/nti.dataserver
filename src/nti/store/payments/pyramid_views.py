@@ -13,8 +13,6 @@ import gevent
 
 from zope import component
 
-from nti.appserver import httpexceptions as hexc
-
 from pyramid.security import authenticated_userid
 
 from .. import purchase_attempt
@@ -41,16 +39,11 @@ class StripePayment(object):
 			logger.warn("There is already a pending purchase for item(s) %s" % items)
 			return purchase
 			
-		coupon = request.matchdict.get('coupon', None)
-		if coupon:
-			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
-			if not manager.validate_coupon(coupon):
-				raise hexc.HTTPConflict("Invalid coupon") 
 				
 		token = request.matchdict.get('token')
 		amount = request.matchdict.get('amount', None)
+		coupon = request.matchdict.get('coupon', None)
 		currency = request.matchdict.get('currency', 'USD')
-				
 		description = request.matchdict.get('description', None)
 		description = description or "%s's payment for '%r'" % (username, items)
 	

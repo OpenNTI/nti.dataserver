@@ -127,6 +127,10 @@ class _StripePaymentProcessor(StripeIO):
 	
 	# ---------------------------
 	
+	def _get_coupon(self, coupon,api_key=None):
+		result = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
+		return result
+	
 	def validate_coupon(self, coupon, api_key=None):
 		coupon = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		result = (coupon is not None)
@@ -153,18 +157,24 @@ class _StripePaymentProcessor(StripeIO):
 		
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
-			raise Exception("Purchase attempt not found", purchase_id, username)
+			raise Exception("Purchase attempt (%s, %s) not found" % (username, purchase_id))
 		
-		if not purchase.is_pending():
-			notify(store_interfaces.PurchaseAttemptStarted(purchase_id, username))
-						
-		customer_id = self.get_or_create_customer(username, api_key=api_key)
-		
-		notify(pay_interfaces.RegisterStripeToken(purchase_id, username, token))
-		
-		descid = "%s:%s:%s" % (username, customer_id, purchase_id)
-		try:
+		try:	
+			if not purchase.is_pending():
+				notify(store_interfaces.PurchaseAttemptStarted(purchase_id, username))
+			
+			# validate coupon
+			coupon = self._get_coupon(coupon, api_key=api_key)
+			if coupon is not None and not self.validate_coupon(coupon, api_key=api_key):
+				raise Exception("Invalid coupon")
 			amount = self.apply_coupon(amount, coupon, api_key=api_key)
+
+			# register stripe user and token
+			customer_id = self.get_or_create_customer(username, api_key=api_key)
+			notify(pay_interfaces.RegisterStripeToken(purchase_id, username, token))
+		
+			# charge card, user description for tracking purposes
+			descid = "%s:%s:%s" % (username, customer_id, purchase_id)
 			charge = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
 			
 			notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
