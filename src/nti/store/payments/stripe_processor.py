@@ -134,16 +134,17 @@ class _StripePaymentProcessor(StripeIO):
 			if coupon.duration == u'repeating':
 				result = (coupon.duration_in_months is None or coupon.duration_in_months > 0) and \
 						 (coupon.max_redemptions is None or coupon.max_redemptions > 0) and \
-						 (coupon.redeem_by is None or coupon.redeem_by <= time.time())
+						 (coupon.redeem_by is None or time.time() <= coupon.redeem_by)
 			elif coupon.duration == u'once':
-				result = coupon.redeem_by is None or coupon.redeem_by <= time.time()
+				result = coupon.redeem_by is None or time.time() <= coupon.redeem_by
 		return result
 		
 	def apply_coupon(self, amount, coupon=None, api_key=None):
 		coupon = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		if coupon:
 			if coupon.percent_off is not None:
-				amount = amount * (1 - coupon.percent_off)
+				pcnt = coupon.percent_off/100.0 if coupon.percent_off > 1 else coupon.percent_off
+				amount = amount * (1 - pcnt)
 			elif coupon.amount_off is not None:
 				amount -= coupon.amount_off
 		return max(0, amount)

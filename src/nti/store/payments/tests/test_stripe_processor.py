@@ -9,6 +9,7 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+import time
 import uuid
 import stripe
 import unittest
@@ -231,7 +232,51 @@ class TestStripeProcessor(ConfiguringTestBase):
 			duration_in_months = None
 			
 		c = Coupon()
+		c.duration = 'forever'
 		assert_that(self.manager.validate_coupon(c), is_(True))
+		
+		c.duration = 'once'
+		assert_that(self.manager.validate_coupon(c), is_(True))
+		c.redeem_by = time.time() + 100000
+		assert_that(self.manager.validate_coupon(c), is_(True))
+		c.redeem_by = time.time() - 100000
+		assert_that(self.manager.validate_coupon(c), is_(False))
+		
+		c.duration = 'repeating'
+		assert_that(self.manager.validate_coupon(c), is_(False))
+		c.redeem_by = time.time() + 100000
+		assert_that(self.manager.validate_coupon(c), is_(True))
+		c.redeem_by = None
+		c.max_redemptions = 0
+		assert_that(self.manager.validate_coupon(c), is_(False))
+		c.max_redemptions = 1
+		assert_that(self.manager.validate_coupon(c), is_(True))
+		c.max_redemptions = None
+		c.duration_in_months = 0
+		assert_that(self.manager.validate_coupon(c), is_(False))
+		c.duration_in_months = 10
+		assert_that(self.manager.validate_coupon(c), is_(True))
+		
+	def test_apply_coupon(self):
+		amount = 1000
+		class Coupon(object):
+			amount_off = None
+			percent_off = None
+		
+		c = Coupon()
+		c.percent_off = 0.10
+		amt = self.manager.apply_coupon(amount, c)
+		assert_that(amt, is_(900))
+		
+		c = Coupon()
+		c.percent_off = 20.0
+		amt = self.manager.apply_coupon(amount, c)
+		assert_that(amt, is_(800))
+		
+		c = Coupon()
+		c.amount_off = 200
+		amt = self.manager.apply_coupon(amount, c)
+		assert_that(amt, is_(800))
 	
 if __name__ == '__main__':
 	unittest.main()
