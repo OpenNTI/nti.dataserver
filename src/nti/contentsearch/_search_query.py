@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Search query implementation.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -12,8 +16,8 @@ import collections
 from zope import component
 from zope import interface
 
-from nti.contentsearch.common import descending_
-from nti.contentsearch import interfaces as search_interfaces
+from .common import descending_
+from . import interfaces as search_interfaces
 
 phrase_search = re.compile(r'"(?P<text>.*?)"')
 prefix_search = re.compile(r'(?P<text>[^ \t\r\n*]+)[*](?= |$|\\)')

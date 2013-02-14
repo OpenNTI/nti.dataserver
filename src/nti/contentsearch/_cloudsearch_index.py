@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+Cloudsearch index definition.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
 
 import time
 import json
@@ -18,16 +23,12 @@ from nti.chatserver import interfaces as chat_interfaces
 
 from nti.contentprocessing import compute_ngrams
 
-from nti.contentsearch import interfaces as search_interfaces
-
-from nti.contentsearch.common import get_type_name
-
-from nti.contentsearch.common import (	CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, 
-										container_id_fields)
-
-from nti.contentsearch.common import (	ngrams_, channel_, content_, keywords_, references_, username_,
-										last_modified_, recipients_, sharedWith_, ntiid_, type_,
-										creator_, containerId_, intid_) 
+from . import interfaces as search_interfaces
+from .common import get_type_name
+from .common import (CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, container_id_fields)
+from .common import (ngrams_, channel_, content_, keywords_, references_, username_,
+					 last_modified_, recipients_, sharedWith_, ntiid_, type_,
+					 creator_, containerId_, intid_) 
 
 # define search fields
 

@@ -17,16 +17,16 @@ from perfmetrics import metric
 from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch._indexagent import handle_index_event
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._datastructures import CaseInsensitiveDict
-from nti.contentsearch._search_results import empty_search_results
-from nti.contentsearch._search_results import merge_search_results
-from nti.contentsearch._search_results import empty_suggest_results
-from nti.contentsearch._search_results import merge_suggest_results
-from nti.contentsearch._search_results import empty_suggest_and_search_results
-from nti.contentsearch._search_results import merge_suggest_and_search_results
+from ._search_query import QueryObject
+from ._indexagent import handle_index_event
+from . import interfaces as search_interfaces
+from ._datastructures import CaseInsensitiveDict
+from ._search_results import empty_search_results
+from ._search_results import merge_search_results
+from ._search_results import empty_suggest_results
+from ._search_results import merge_suggest_results
+from ._search_results import empty_suggest_and_search_results
+from ._search_results import merge_suggest_and_search_results
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -127,21 +127,36 @@ class IndexManager(object):
 
 	def content_search(self, query):
 		query = QueryObject.create(query)
-		bm = self.get_book_index_manager(query.indexid)
-		results = bm.search(query) if (bm is not None and not query.is_empty) else None
-		return results if results is not None else empty_search_results(query)
+		results = empty_search_results(query)
+		if not query.is_empty:
+			books = query.searchOn if query.searchOn else (query.indexid,)
+			for book in books:
+				bm = self.get_book_index_manager(book)
+				r = bm.search(query) if bm is not None else None
+				results = merge_search_results(r, results) if r is not None else results
+		return results
 
 	def content_suggest_and_search(self, query):
 		query = QueryObject.create(query)
-		bm = self.get_book_index_manager(query.indexid)
-		results = bm.suggest_and_search(query) if (bm is not None and not query.is_empty) else None
-		return results if results is not None else empty_suggest_and_search_results(query)
+		results = empty_suggest_and_search_results(query)
+		if not query.is_empty:
+			books = query.searchOn if query.searchOn else (query.indexid,)
+			for book in books:
+				bm = self.get_book_index_manager(book)
+				r = bm.suggest_and_search(query) if bm is not None else None
+				results = merge_suggest_and_search_results(r, results) if r is not None else results
+		return results
 
 	def content_suggest(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
-		bm = self.get_book_index_manager(query.indexid)
-		results = bm.suggest(query) if (bm is not None and not query.is_empty) else None
-		return results if results is not None else empty_suggest_results(query)
+		query = QueryObject.create(query)
+		results = empty_suggest_results(query)
+		if not query.is_empty:
+			books = query.searchOn if query.searchOn else (query.indexid,)
+			for book in books:
+				bm = self.get_book_index_manager(book)
+				r = bm.suggest(query) if bm is not None else None
+				results = merge_suggest_results(r, results) if r is not None else results
+		return results
 
 	def _get_user_index_manager(self, target, create=True):
 		if isinstance( target, six.string_types ):
