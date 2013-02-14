@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
+"""
+Base entity search manager
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import zope.intid
 from zope import component
 from zope import interface
-from zope.location.interfaces import ILocation
+from zope.container import contained as zcontained
 from zope.interface.common.mapping import IMapping
 
 from persistent.mapping import PersistentMapping
@@ -15,12 +21,10 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.chatserver import interfaces as chat_interfaces
 
-from nti.contentsearch import interfaces as search_interfaces
+from . import interfaces as search_interfaces
 
-logger = __import__('logging').getLogger(__name__)
-
-@interface.implementer( search_interfaces.IEntityIndexManager, ILocation, IMapping)
-class _SearchEntityIndexManager(PersistentMapping):
+@interface.implementer( search_interfaces.IEntityIndexManager, IMapping)
+class _SearchEntityIndexManager(zcontained.Contained, PersistentMapping):
 	
 	@property
 	def entity(self):

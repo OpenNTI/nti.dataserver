@@ -18,7 +18,6 @@ from repoze.catalog import interfaces as rcat_interfaces
 
 from dolmen.builtins import IDict
 
-from nti.utils.property import alias
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
@@ -565,7 +564,7 @@ class ISearchQuery(interface.Interface):
 
 	limit = schema.Int(title="search results limit", required=False)
 	indexid = schema.TextLine(title="Book content NTIID", required=False)
-	searchOn = schema.Iterable("Content types to search on", required=False)
+	searchOn = schema.Set(value_type=schema.TextLine(title='The ntiid'), title="Content types to search on", required=False)
 	sortOn = schema.TextLine(title="Field or function to sort by", required=False)
 	location = schema.TextLine(title="The reference NTIID where the search was invoked", required=False)
 	sortOrder = schema.TextLine(title="descending or ascending  to sort order", default='descending', required=False)
