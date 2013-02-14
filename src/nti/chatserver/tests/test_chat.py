@@ -35,7 +35,7 @@ import transaction
 import os
 from zc import intid as zc_intid
 from nti.dataserver import authorization_acl as auth_acl
-from pyramid.authorization import ACLAuthorizationPolicy
+from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy
 
 from nti.dataserver.contenttypes import Note, Canvas
 
@@ -122,6 +122,12 @@ class TestMessageInfo(SharedConfiguringTestBase):
 
 
 class TestChatRoom(SharedConfiguringTestBase):
+
+	@classmethod
+	def setUpClass(cls):
+		super(TestChatRoom,cls).setUpClass()
+		component.provideUtility( ACLAuthorizationPolicy() )
+
 
 	@WithMockDSTrans
 	def test_become_moderated(self):
@@ -358,10 +364,18 @@ class _ChatserverTestBase(SharedConfiguringTestBase):
 
 class TestChatserver(_ChatserverTestBase):
 
+	@classmethod
+	def setUpClass(cls):
+		super(TestChatserver,cls).setUpClass()
+		component.provideUtility( ACLAuthorizationPolicy() )
+
+
+
 	@WithMockDSTrans
 	def test_handler_shadow_user( self ):
 		room, chatserver = self._create_moderated_room()
 		sjohn_handler = chat.ChatHandler( chatserver, self.sessions[1] )
+		room.__acl__ = () # override the provider
 		assert_that( sjohn_handler.shadowUsers( room.ID, ['chris'] ),
 					 is_( False ),
 					"No ACL Found" )
@@ -405,12 +419,13 @@ class TestChatserver(_ChatserverTestBase):
 					 is_( none() ) )
 
 	@WithMockDSTrans
-	def test_handler_enter_room_with_occupants_online(self):
+	def test_handler_enter_persistent_room_with_occupants_online(self):
 		d = {'Occupants': ['sjohnson', 'other'],
 			 'ContainerId': 'tag:nextthought.com,2011-10:x-y-z' }
 		sessions = self.Sessions()
 		sessions[1] = self.Session( 'sjohnson' )
 		sessions[2] = self.Session( 'other' )
+		sessions[3] = self.Session( 'not_occupant' )
 		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage() )
 
 		meeting = chat.ChatHandler( chatserver, sessions[1] ).enterRoom( d )
@@ -431,6 +446,20 @@ class TestChatserver(_ChatserverTestBase):
 		assert_that( auth_acl.ACLProvider( meeting ), denies( 'other', 'nti.actions.update' ) )
 		assert_that( auth_acl.ACLProvider( meeting ), permits( 'other', 'zope.View' ) )
 
+		# The other user can exit this meeting...
+		chat.ChatHandler( chatserver, sessions[2] ).exitRoom( meeting.RoomId )
+		assert_that( meeting.historical_occupant_names, has_item( 'other' ) )
+
+		# ... and re-enter
+		assert_that( meeting, permits( 'other', chat_interfaces.ACT_ENTER ) )
+
+		m2 = chat.ChatHandler( chatserver, sessions[2] ).enterRoom( { 'RoomId': meeting.RoomId } )
+		assert_that( m2, is_( meeting ) )
+		assert_that( meeting.occupant_names, has_item( 'other' ) )
+
+		# Some random person cannot
+		m3 = chat.ChatHandler( chatserver, sessions[3] ).enterRoom( { 'RoomId': meeting.RoomId } )
+		assert_that( m3, is_( none() ) )
 
 
 	@WithMockDSTrans

@@ -235,20 +235,26 @@ to `emit` to make this happen; the callback will receive the return value.)
 ``chat_enterRoom( room_info ) -> RoomInfo``
   emit to enter a room and begin getting messages for it.
 
-  For an anonymous (transient, person-to-person) room, the RoomId must be
-  absent and the Occupants array must be present and containing
+  For an anonymous (transient, person-to-person) room, the RoomId *MUST* be
+  absent and the Occupants array *MUST* be present and containing
   the usernames of the online users to include in the room.
   An occupant can also be the name of a FriendsList belonging to the
   user creating the room; it will be expanded by the server.
 
-  To enter a persistent meeting room, send no Occupants, but DO
-  set the ContainerId to the id of a persistent meeting container
-  (for example, for a FriendsList/study group or class session, the
-  id to use as the ContainerId is the 'NTIID' value)
-  (If you include Occupants you may be able to start a persistent
-  meeting, but you could not join one already in progress.) For more
-  on the policies around persistent meeting rooms, see :py:mod:`nti.dataserver.meeting_container_storage`.
+  To enter a persistent meeting room, send no Occupants, and no
+  RoomId, but DO set the ContainerId to the id of a persistent meeting
+  container (for example, for a FriendsList/study group or class
+  session, the id to use as the ContainerId is the 'NTIID' value) (If
+  you include Occupants you may be able to start a persistent meeting,
+  but you could not join one already in progress.) For more on the
+  policies around persistent meeting rooms, see
+  :py:mod:`nti.dataserver.meeting_container_storage`.
 
+  If you send a RoomId, it *SHOULD* refer to an existing meeting room
+  that is active and containing other occupants. If you were
+  previously an occupant of this room, you will rejoin the room. The
+  RoomId takes precedence over any other value (such as ContainerId or
+  Occupants.)
 
   The server will reply with the enteredRoom message; its ContainerId
   will be the containerId you set (if you set one and were allowed

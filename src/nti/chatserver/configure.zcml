@@ -37,7 +37,10 @@
 
 	<permission
 			id="nti.chatserver.actions.moderate"
-			title="" />
+			title="Moderate a chatroom" />
+	<permission
+			id="nti.chatserver.actions.enter"
+			title="Enter an existing chatroom" />
 
 	<adapter factory="._acl._MeetingACLProvider" />
 

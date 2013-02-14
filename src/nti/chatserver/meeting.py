@@ -13,6 +13,7 @@ import collections
 import functools
 
 from nti.utils.property import alias
+from nti.utils.property import read_alias
 from nti.ntiids import ntiids
 from nti.externalization import datastructures
 from nti.zodb.minmax import MergingCounter
@@ -104,6 +105,8 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 	_v_chatserver = None
 	_moderation_state = None
 	_occupant_names = ()
+	#: We use this to decide who can re-enter the room after exiting
+	_historical_occupant_names = ()
 	def __init__( self, chatserver=None ):
 		super(_Meeting,self).__init__()
 		self._v_chatserver = chatserver
@@ -112,6 +115,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		self._MessageCount = MergingCounter( 0 )
 		self.CreatedTime = time.time()
 		self._occupant_names = BTrees.OOBTree.Set()
+		self._historical_occupant_names = BTrees.OOBTree.Set()
 		# Sometimes a room is created with a subset of the occupants that
 		# should receive transcripts. The most notable case of this is
 		# creating a room in reply to something that's shared: everyone
@@ -135,6 +139,8 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		return self._MessageCount.value
 
 	RoomId = alias( 'id' )
+	createdTime = alias('CreatedTime') # ILastModified
+	lastModified = read_alias( 'CreatedTime' ) # ILastModified. Except we don't track it
 
 	ID = RoomId
 	# IZContained
@@ -162,10 +168,17 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 	def occupant_session_names(self):
 		"""
 		:return: An iterable of the names of all active users in this room.
-			See :meth:`occupant_sessions`.
+			See :meth:`occupant_sessions`. Immutable
 		"""
-		return frozenset(self._occupant_names)
+		return set(self._occupant_names) # copy, but still a set to comply with the interface
 	occupant_names = occupant_session_names
+
+	@property
+	def historical_occupant_names(self):
+		"""
+		:return: An immutable iterable of anyone who has even been active in this room.
+		"""
+		return set( self._historical_occupant_names )
 
 	def _policy(self):
 		return interfaces.IMeetingPolicy( self )
@@ -188,7 +201,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 			Set to False when doing bulk updates.
 		"""
 		sess_count_before = len( self._occupant_names )
-		self._occupant_names.add( name )
+		self._occupant_names.add( name ); self._historical_occupant_names.add( name )
 		sess_count_after = len( self._occupant_names )
 		if broadcast and sess_count_after != sess_count_before:
 			# Yay, we added one!
@@ -207,7 +220,7 @@ class _Meeting(contenttypes.ThreadableExternalizableMixin,
 		"""
 		new_members = set(names).difference( self.occupant_names )
 		old_members = self.occupant_names - new_members
-		self._occupant_names.update( new_members )
+		self._occupant_names.update( new_members ); self._historical_occupant_names.update( names )
 		if broadcast:
 			self.emit_enteredRoom( new_members, self )
 			self.emit_roomMembershipChanged( old_members, self )
