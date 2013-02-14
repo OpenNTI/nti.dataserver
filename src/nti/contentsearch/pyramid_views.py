@@ -11,18 +11,18 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 import re
 
 from zope import interface
+from zope.location import locate
 
 from pyramid.security import authenticated_userid
 
-from nti.contentsearch.interfaces import IIndexManager
-from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch._views_utils import get_collection
-from nti.contentsearch._content_utils import get_content_translation_table
+from .interfaces import IIndexManager
+from ._search_query import QueryObject
+from ._views_utils import get_collection
+from ._content_utils import get_content_translation_table
 
 def _locate(obj, parent, name=None):
 	# TODO: (Instead of modification info, we should be using etags here, anyway).
-	obj.__parent__ = parent
-	obj.__name__ = name
+	locate(obj, parent, name)
 	# TODO: Make cachable?
 	from nti.appserver import interfaces as app_interfaces # Avoid circular imports
 	interface.alsoProvides( obj, app_interfaces.IUncacheableInResponse )
@@ -76,6 +76,7 @@ def get_queryobject(request):
 	args['username'] = username
 
 	ntiid = request.matchdict.get('ntiid', None)
+	searchOn = request.matchdict.get('searchOn', None)
 	if ntiid:
 		args['location'] = ntiid
 		indexid = get_collection(ntiid, request.registry)
@@ -83,6 +84,16 @@ def get_queryobject(request):
 			logger.debug("Could not find collection for ntiid '%s'" % ntiid)
 		else:
 			args['indexid'] = indexid
-
+	elif searchOn:
+		nset = set()
+		for ntiid in searchOn.split(','):
+			ntiid = get_collection(ntiid, request.registry)
+			if ntiid is None:
+				logger.debug("Could not find collection for ntiid '%s'" % ntiid)
+			else:
+				nset.add(ntiid)
+		if nset:
+			args['searchOn'] = nset
+			
 	# from IPython.core.debugger import Tracer;  Tracer()() 
 	return QueryObject(**args)
