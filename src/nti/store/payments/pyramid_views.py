@@ -13,6 +13,8 @@ import gevent
 
 from zope import component
 
+from nti.appserver import httpexceptions as hexc
+
 from pyramid.security import authenticated_userid
 
 from .. import purchase_attempt
@@ -43,8 +45,7 @@ class StripePayment(object):
 		if coupon:
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 			if not manager.validate_coupon(coupon):
-				#TODO: raise exception coupon not valid or return with an status error ?
-				pass
+				raise hexc.HTTPConflict("Invalid coupon") 
 				
 		token = request.matchdict.get('token')
 		amount = request.matchdict.get('amount', None)
