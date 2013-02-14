@@ -77,9 +77,14 @@ class FieldValidationMixin(object):
 	A field mixin that causes slightly better errors to be created.
 	"""
 
-	def _reraise_validation_error(self, e, value):
-		if len(e.args) == 1:
-			e.args = (value, e.args[0], self.__name__)
+	def _fixup_validation_error_args( self, e, value ):
+		# Called when the exception has one argument, which is usually, thought not always,
+		# the message
+		e.args = (value, e.args[0], self.__name__)
+
+	def _reraise_validation_error(self, e, value, _raise=False):
+		if len(e.args) == 1: # typically the message is the only thing
+			self._fixup_validation_error_args( e, value )
 		elif isinstance( e, sch_interfaces.TooShort ) and len(e.args) == 2:
 			# Note we're capitalizing the field in the message.
 			e.i18n_message = _('${field} is too short.', mapping={'field': self.__name__.capitalize(), 'minLength': e.args[1]})
@@ -89,6 +94,8 @@ class FieldValidationMixin(object):
 		e.field = self
 		if not getattr( e, 'value', None):
 			e.value  = value
+		if _raise:
+			raise e
 		raise
 
 	def _validate(self, value):
@@ -117,6 +124,38 @@ class ValidTextLine(FieldValidationMixin,schema.TextLine):
 			super(ValidTextLine,self).set( object, value )
 		except sch_interfaces.ValidationError as e:
 			self._reraise_validation_error( e, value )
+
+class HTTPURL(FieldValidationMixin,schema.URI):
+	"""
+	A URI field that ensures and requires its value to be an absolute
+	HTTP/S URL.
+	"""
+
+	def _fixup_validation_error_args( self, e, value ):
+		if isinstance( e, sch_interfaces.InvalidURI ):
+			# This class differs by using the value as the argument, not
+			# a message
+			e.args = ( value, e.__doc__, self.__name__ )
+			e.message = e.i18n_message = e.__doc__
+		else:
+			super(HTTPURL,self)._fixup_validation_error_args( e, value )
+
+	def fromUnicode( self, value ):
+		# This can wind up producing something invalid if an
+		# absolute URI was already given for mailto: for whatever.
+		# None of the regexs (zopes or grubers) flag that as invalid.
+		# so we try to
+		orig_value = value
+		if value:
+			lower = value.lower()
+			if not lower.startswith( 'http://' ) and not lower.startswith( 'https://' ):
+				# assume http
+				value = 'http://' + value
+		result = super(HTTPURL,self).fromUnicode( value )
+		if result.count( ':' ) != 1:
+			self._reraise_validation_error( sch_interfaces.InvalidURI( orig_value ), orig_value, _raise=True )
+
+		return result
 
 class IndexedIterable(schema.List):
 	"""

@@ -409,6 +409,13 @@ def _get_avatar_choices_for_username( username, request ):
 
 
 def _make_schema( user, readonly_override=None ):
+	def _ui_type_from_field_iface( field ):
+		derived_field_iface = find_most_derived_interface( field, zope.schema.interfaces.IField )
+		if derived_field_iface is not zope.schema.interfaces.IField:
+			ui_type = derived_field_iface.getName()
+			ui_type = ui_type[1:] if ui_type.startswith('I') else ui_type
+			return ui_type
+
 	profile_iface = user_interfaces.IUserProfileSchemaProvider( user ).getSchema()
 	profile = profile_iface( user )
 	profile_schema = find_most_derived_interface( profile, profile_iface, possibilities=interface.providedBy(profile) )
@@ -430,18 +437,42 @@ def _make_schema( user, readonly_override=None ):
 		item_schema = {'name': k,
 					   'required': required,
 					   'readonly': readonly,
-					   'min_length': getattr(v, 'min_length', None) }
+					   'min_length': getattr(v, 'min_length', None),
+					   'max_length': getattr(v, 'max_length', None),
+					   }
 		ui_type = v.queryTaggedValue( user_interfaces.TAG_UI_TYPE )
-		if not ui_type and isinstance( getattr( v, '_type', None ), type):
-			ui_type = getattr( v, '_type' ).__name__
-			if ui_type in ('unicode', 'str', 'basestring'):
-				ui_type = 'string'
+		ui_base_type = None
+		if not ui_type:
+			_type = getattr( v, '_type', None )
+			if isinstance( _type, type):
+				ui_type = _type.__name__
+			elif isinstance( _type, tuple ):
+				# Most commonly lists subclasses. Most commonly lists subclasses of strings
+				if all( (issubclass(x,basestring) for x in _type ) ):
+					ui_type = 'basestring'
+			else:
+				ui_type = _ui_type_from_field_iface( v )
 
-		if ui_type:
-			item_schema['type'] = ui_type
+			if ui_type in ('unicode', 'str', 'basestring'):
+				# These are all 'string' type
+
+				# Can we be more specific?
+				ui_type = _ui_type_from_field_iface( v )
+				if ui_type and ui_type not in ('TextLine', 'Text'): # Yes we can
+					ui_base_type = 'string'
+				else:
+					ui_type = 'string'
+					ui_base_type = 'string'
+
+
+		item_schema['type'] = ui_type
+		item_schema['base_type'] = ui_base_type
 
 		if zope.schema.interfaces.IChoice.providedBy( v ) and zope.schema.interfaces.IVocabulary.providedBy( v.vocabulary ):
 			item_schema['choices'] = [x.token for x in v.vocabulary]
+			# common case, these will all be the same type
+			if not item_schema.get( 'base_type' ) and all( (isinstance(x,basestring) for x in item_schema['choices']) ):
+				item_schema['base_type'] = 'string'
 
 
 		ext_schema[k] = item_schema

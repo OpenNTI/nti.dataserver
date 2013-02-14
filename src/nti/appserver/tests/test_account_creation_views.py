@@ -325,6 +325,25 @@ class _AbstractNotDevmodeViewBase(SharedConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'code', 'MissingLastName' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', 'Please provide your first and last names.' ) )
 
+	@WithMockDSTrans
+	def test_create_invalid_homepage( self ):
+
+		self.request.content_type = 'application/vnd.nextthought+json'
+
+		self.request.body = to_json_representation( {'Username': 'this_username_works',
+													 'password': 'pass132word',
+													 'realname': 'Joe Bananna',
+													 'email': 'user@domain.com',
+													 'home_page': 'mailto:foo@bar.com'} )
+		__traceback_info__ = self.request.body
+
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'field', 'home_page' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', 'InvalidURI' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', 'The specified URI is not valid.' ) )
 
 class TestPreflightView(_AbstractValidationViewBase):
 
@@ -347,32 +366,56 @@ class TestPreflightView(_AbstractValidationViewBase):
 		val = self.the_view( self.request )
 
 		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
-		assert_that( val, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
-		assert_that( val, has_entry( 'ProfileSchema', has_entry( 'Username', has_entry( 'min_length', 5 ) ) ) )
-		assert_that( val, has_entry( 'ProfileSchema',
-									 has_entry( 'password',
-												has_entry( 'required', True ) ) ) )
+		assert_that( val, has_key( 'ProfileSchema' ) )
+		profile_schema = val['ProfileSchema']
 
-		assert_that( val, has_entry( 'ProfileSchema',
-									 has_entry( 'realname',
-												has_entry( 'required', True ) ) ) )
+		assert_that( profile_schema, has_key( 'opt_in_email_communication' ) )
+		assert_that( profile_schema, has_entry( 'Username', has_entry( 'min_length', 5 ) ) )
+		assert_that( profile_schema,
+					 has_entry( 'password',
+								has_entry( 'required', True ) ) )
 
-		assert_that( val, has_entry( 'ProfileSchema',
-									 has_entry( 'participates_in_mathcounts',
-												has_entry( 'required', False ) ) ) )
-		assert_that( val, has_entry( 'ProfileSchema',
-									 has_entry( 'participates_in_mathcounts',
-												has_entry( 'type', 'bool' ) ) ) )
+		assert_that( profile_schema,
+					 has_entry( 'realname',
+								has_entry( 'required', True ) ) )
 
-		assert_that( val, has_entry( 'ProfileSchema',
-									 has_entry( 'role',
-												has_key( 'choices' ) ) ) )
-		assert_that( val, has_entry( 'ProfileSchema',
-									 has_entry( 'affiliation',
-												has_entry( 'type', 'nti.appserver.site_policies.school' ) ) ) )
-		assert_that( val, has_entry( 'ProfileSchema',
-									 has_entry( 'invitation_codes',
-												has_entry( 'type', 'list' ) ) ) )
+		assert_that(profile_schema,
+					has_entry( 'participates_in_mathcounts',
+							   has_entry( 'required', False ) ) )
+		assert_that( profile_schema,
+					 has_entry( 'participates_in_mathcounts',
+								has_entry( 'type', 'bool' ) ) )
+
+		assert_that( profile_schema,
+					 has_entry( 'role',
+								has_key( 'choices' ) ) )
+		assert_that( profile_schema,
+					 has_entry( 'role',
+								has_entry( 'base_type', 'string' ) ) )
+
+		assert_that( profile_schema,
+					 has_entry( 'affiliation',
+								has_entry( 'type', 'nti.appserver.site_policies.school' ) ) )
+
+		assert_that( profile_schema,
+					 has_entry( 'home_page',
+								has_entry( 'base_type', 'string' ) ) )
+
+		assert_that( profile_schema,
+					 has_entry( 'home_page',
+								has_entry( 'type', 'URI' ) ) )
+		assert_that( profile_schema,
+					 has_entry( 'avatarURL',
+								has_entry( 'base_type', 'string' ) ) )
+
+		assert_that( profile_schema,
+					 has_entry( 'avatarURL',
+								has_entry( 'type', 'URI' ) ) )
+
+
+		assert_that( profile_schema,
+					 has_entry( 'invitation_codes',
+								has_entry( 'type', 'list' ) ) )
 
 
 	@WithMockDSTrans
