@@ -18,7 +18,6 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from .fps_io import FPSIO
 from .. import purchase_history
-from .fps_io import FPSException
 from . import interfaces as pay_interfaces
 from .. import interfaces as store_interfaces
 	
@@ -71,15 +70,12 @@ class _FPSPaymentProcessor(FPSIO):
 					now = time.time()
 					while (time.time() -  now  < 90):
 						t = self.get_transaction(transaction_id)
-						if self._process_fps_status(t.TransactionStatus, purchase_id, username, t.StatusMessage):
+						if t and self._process_fps_status(t.TransactionStatus, purchase_id, username, t.StatusMessage):
 							break
 						gevent.sleep(5)
 				gevent.spawn(process_pay)
 						
 			return pay_result.TransactionId
-		except FPSException, e:
-			message = e.error_message
-			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
 		except Exception, e:
 			message = str(e)
 			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))

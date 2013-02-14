@@ -19,24 +19,14 @@ from datetime import date
 
 from boto.exception import BotoServerError
 from boto.fps.connection import FPSConnection
+from boto.fps.exception import InvalidTransactionId
+from boto.fps.exception import InvalidCallerReference
 
 SINGLE_USE_PIPIELINE = 'SingleUse'
 AWS_FPS_SANDBOX_HOST = 'fps.sandbox.amazonaws.com'
 
 class FPSException(Exception):
-	
-	data = None
-	status = None
-	reason = None
-	
-	def __init__(self, error_message, reason=None, status=None, data=None):
-		super(FPSException, self).__init__(error_message)
-		if data:
-			self.data = data
-		if reason:
-			self.reason = reason
-		if status:
-			self.status = status
+	pass
 
 class FPSIO(object):
 	
@@ -61,7 +51,7 @@ class FPSIO(object):
 			result = func(*args, **kwargs)
 			return result
 		except BotoServerError, e:
-			raise FPSException(e.error_message, e.reason, e.status)
+			raise e
 		except Exception, e:
 			raise FPSException(str(e))
 		
@@ -98,8 +88,11 @@ class FPSIO(object):
 		return result
 	
 	def get_transaction(self, transaction_id):
-		result = self._do_fps_operation(self.connection.get_transaction, TransactionId=transaction_id)
-		result = result.GetTransactionResult.Transaction
+		try:
+			result = self._do_fps_operation(self.connection.get_transaction, TransactionId=transaction_id)
+			result = result.GetTransactionResult.Transaction
+		except InvalidTransactionId:
+			result = None
 		return result
 	
 	def get_account_balance(self):
@@ -107,9 +100,12 @@ class FPSIO(object):
 		result = result.GetAccountBalanceResult.AccountBalance
 		return result
 	
-	def get_token_by_caller(self, token):
-		result = self._do_fps_operation(self.connection.get_token_by_caller, TokenId=token)
-		result = result.GetTokenByCallerResult
+	def get_token_by_caller(self, token=None, caller_reference=None):
+		try:
+			result = self._do_fps_operation(self.connection.get_token_by_caller, TokenId=token, allerReference=caller_reference)
+			result = result.GetTokenByCallerResult
+		except InvalidCallerReference:
+			result = None
 		return result
 	
 	def pay(self, token, amount, currency='USD', reference=None):
@@ -126,5 +122,5 @@ class FPSIO(object):
 		parsed_path = urlparse.urlparse(path)
 		result = { k:v for k,v in urlparse.parse_qsl(parsed_path.query) }
 		if 'errorMessage' in result:
-			raise FPSException(result['errorMessage'], data=result)
+			raise FPSException(result['errorMessage'])
 		return result

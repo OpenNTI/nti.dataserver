@@ -13,9 +13,6 @@ import stripe
 class StripeException(Exception):
 	pass
 
-class InvalidStripeRequest(StripeException):
-	pass
-
 class StripeIO(object):
 	
 	def _do_stripe_operation(self,func, *args, **kwargs):
@@ -26,14 +23,7 @@ class StripeIO(object):
 			body = e.json_body
 			raise StripeException('%s(%s)' % (body['error'], body['message']))
 		except stripe.InvalidRequestError, e:
-			raise InvalidStripeRequest(*e.args)
-		except stripe.AuthenticationError, e:
-			raise StripeException(*e.args)
-		except stripe.APIConnectionError, e:
-			# Network communication with Stripe failed
-			raise StripeException(*e.args)
-		except stripe.StripeError, e:
-			raise StripeException(*e.args)
+			raise e
 		except Exception, e:
 			raise StripeException(*e.args)
 		
@@ -45,7 +35,7 @@ class StripeIO(object):
 		try:
 			customer = self._do_stripe_operation(stripe.Customer.retrieve, customer_id, api_key)
 			return customer
-		except InvalidStripeRequest:
+		except stripe.InvalidRequestError:
 			return None
 	
 	def delete_stripe_customer(self, customer_id=None, customer=None, api_key=None):
@@ -87,7 +77,7 @@ class StripeIO(object):
 		try:
 			token = self._do_stripe_operation(stripe.Token.retrieve,token, api_key=api_key)
 			return token
-		except InvalidStripeRequest:
+		except stripe.InvalidRequestError:
 			return None
 	
 	def create_stripe_charge(self, amount, currency='USD', customer_id=None, card=None, description=None, api_key=None):
@@ -105,7 +95,7 @@ class StripeIO(object):
 		try:
 			charge = self._do_stripe_operation(stripe.Charge.retrieve, charge_id, api_key=api_key)
 			return charge
-		except InvalidStripeRequest:
+		except stripe.InvalidRequestError:
 			return None
 	
 	def _get_stripe_charges(self, count=10, offset=0, customer=None, api_key=None):
@@ -141,5 +131,5 @@ class StripeIO(object):
 		try:
 			coupon = self._do_stripe_operation(stripe.Coupon.retrieve, coupon_code, api_key=api_key)
 			return coupon	
-		except InvalidStripeRequest:
+		except stripe.InvalidRequestError:
 			return None
