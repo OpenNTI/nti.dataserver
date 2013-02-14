@@ -26,7 +26,7 @@ from zope import component
 from zope import interface
 
 from z3c.table import table
-from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
+from ._pyramid_zope_integrations import PyramidZopeRequestProxy
 
 from ZODB import loglevels
 

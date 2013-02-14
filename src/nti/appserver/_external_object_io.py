@@ -197,10 +197,10 @@ def handle_validation_error( request, validation_error ):
 	# z3c.password and similar (nti.dataserver.users._InvalidData) set this for internationalization
 	# purposes
 	if getattr(validation_error, 'i18n_message', None):
-		msg = translate( validation_error.i18n_message )
+		msg = translate( validation_error.i18n_message, context=request )
 	else:
 		msg = validation_error.message or msg
-		msg = translate(msg)
+		msg = translate(msg, context=request)
 
 	raise_json_error( request,
 					  hexc.HTTPUnprocessableEntity,

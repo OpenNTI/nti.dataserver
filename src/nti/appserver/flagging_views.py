@@ -122,7 +122,7 @@ def _UnFlagView(request):
 
 
 from z3c.table import table
-from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
+from ._pyramid_zope_integrations import PyramidZopeRequestProxy
 
 def _moderation_table( request ):
 	intids = component.getUtility(zc_intid.IIntIds)

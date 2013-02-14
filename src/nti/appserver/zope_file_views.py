@@ -25,7 +25,7 @@ from nti.utils import dataurl
 
 from nti.appserver import traversal
 from nti.appserver import httpexceptions as hexc
-from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
+from ._pyramid_zope_integrations import PyramidZopeRequestProxy
 from nti.appserver._view_utils import UploadRequestUtilsMixin
 
 

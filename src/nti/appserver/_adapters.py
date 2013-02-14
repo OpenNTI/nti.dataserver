@@ -171,9 +171,13 @@ class _DFLUserLikeDecorator(object):
 		external['ID'] = original.NTIID
 
 from nti.dataserver import users
+import nameparser
 from pyramid import security as psec
 from pyramid.threadlocal import get_current_request
 from pyramid.threadlocal import get_current_registry
+from zope.i18n.interfaces import IUserPreferredLanguages
+
+_REALNAME_FIELDS = ('realname', 'NonI18NFirstName', 'NonI18NLastName')
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 @component.adapter(nti_interfaces.IUser)
@@ -194,21 +198,65 @@ class _UserRealnameStripper(object):
 	def decorateExternalObject( self, original, external ):
 		if original.username == psec.authenticated_userid( get_current_request() ):
 			return
-		external['realname'] = None
+		for k in _REALNAME_FIELDS:
+			if k in external:
+				external[k] = None
+
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(nti_interfaces.IUser)
+class _EnglishFirstAndLastNameDecorator(object):
+	"""
+	If a user's first preferred language is English,
+	then assume that they provided a first and last name and return that
+	in the profile data.
+
+	.. note:: This is an incredibly Western and even US centric
+	way of looking at things. The restriction to those that prefer English
+	as their language is an attempt to limit the damage.
+	"""
+
+	def __init__( self, *args ): pass
+
+	def decorateExternalMapping( self, original, external ):
+		realname = external.get( 'realname' )
+		if not realname or '@' in realname or realname == external.get( 'ID' ):
+			return
+
+		preflangs = IUserPreferredLanguages( original, None )
+		if preflangs and 'en' == (preflangs.getPreferredLanguages() or (None,))[0]:
+			human_name = nameparser.HumanName( realname )
+			first = human_name.first or human_name.last
+			last = human_name.last or human_name.first
+
+			if first:
+				external['NonI18NFirstName'] = first
+				external['NonI18NLastName'] = last
+
 
 ### Localization
-## Not currently used, the zope browser version seems to work well enough
-# from zope.i18n.interfaces import IUserPreferredLanguages
 
-# @interface.implementer(IUserPreferredLanguages)
-# @component.adapter(pyramid.interfaces.IRequest)
-# class EnglishPreferredLanguage(object):
 
-# 	def __init__( self, context ):
-# 		pass
+@interface.implementer(IUserPreferredLanguages)
+@component.adapter(nti_interfaces.IUser)
+class _UserPreferredLanguages(object):
+	"""
+	The preferred languages to use when externalizing for a particular user.
 
-# 	def getPreferredLanguages(self):
-# 		return ['en']
+	.. todo:: Right now, this is hardcoded to english. We need to store this.
+
+	"""
+ 	def __init__( self, context ):
+ 		pass
+
+ 	def getPreferredLanguages(self):
+ 		return ('en',)
+# because this is hardcoded, we can be static for now
+_user_preferred_languages = _UserPreferredLanguages(None)
+@interface.implementer(IUserPreferredLanguages)
+@component.adapter(nti_interfaces.IUser)
+def UserPreferredLanguages(user):
+	return _user_preferred_languages
 
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.users import index as user_index

@@ -26,7 +26,7 @@ from nti.dataserver import authorization_acl as auth
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.externalization import to_standard_external_dictionary
+from nti.externalization.externalization import to_standard_external_dictionary, decorate_external_mapping
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.utils.schema import find_most_derived_interface
@@ -63,7 +63,8 @@ class _AbstractEntitySummaryExternalObject(object):
 	def __init__( self, entity ):
 		self.entity = entity
 
-	def toExternalObject( self ):
+	_DECORATE = False
+	def _do_toExternalObject( self ):
 		"""
 		Inspects the context entity and produces its external summary form.
 		:return: Standard dictionary minus Last Modified plus the properties of this class.
@@ -71,7 +72,7 @@ class _AbstractEntitySummaryExternalObject(object):
 
 		"""
 		entity = self.entity
-		extDict = to_standard_external_dictionary( entity )
+		extDict = to_standard_external_dictionary( entity, decorate=False )
 		# Notice that we delete the last modified date. Because this is
 		# not a real representation of the object, we don't want people to cache based
 		# on it.
@@ -87,33 +88,44 @@ class _AbstractEntitySummaryExternalObject(object):
 		extDict.__acl__ = auth.ACL( entity )
 		return extDict
 
+	def toExternalObject( self ):
+		# Break this into two steps to ensure that we only try to
+		# decorate the external mapping when all the objects in the hierarchy
+		# have completed their work and the mapping is complete
+		extDict = self._do_toExternalObject( )
+		if self._DECORATE:
+			decorate_external_mapping( self.entity, extDict )
+		return extDict
+
 @component.adapter( nti_interfaces.IEntity )
 class _EntitySummaryExternalObject(_AbstractEntitySummaryExternalObject):
-	pass
+	_DECORATE = True
 
 @component.adapter( nti_interfaces.IFriendsList )
 class _FriendListSummaryExternalObject(_AbstractEntitySummaryExternalObject):
-
-	def toExternalObject( self ):
-		extDict = super(_FriendListSummaryExternalObject, self).toExternalObject()
+	_DECORATE = True
+	def _do_toExternalObject( self ):
+		extDict = super(_FriendListSummaryExternalObject, self)._do_toExternalObject()
 		extDict['IsDynamicSharing'] = nti_interfaces.IDynamicSharingTarget.providedBy( self.entity )
+
 		return extDict
-	
+
 class _EntityExternalObject(_EntitySummaryExternalObject):
 
-	def toExternalObject( self ):
+	def _do_toExternalObject( self ):
 		""" :return: The value of :meth:`toSummaryExternalObject` """
-		result = super(_EntityExternalObject,self).toExternalObject()
+		result = super(_EntityExternalObject,self)._do_toExternalObject()
 		# restore last modified since we are the true representation
 		result['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
+
 		return result
 
 
 @component.adapter( nti_interfaces.IFriendsList )
 class _FriendsListExternalObject(_EntityExternalObject):
 
-	def toExternalObject(self):
-		extDict = super(_FriendsListExternalObject,self).toExternalObject()
+	def _do_toExternalObject(self):
+		extDict = super(_FriendsListExternalObject,self)._do_toExternalObject()
 		theFriends = []
 		for friend in iter(self.entity): #iter self to weak refs and dups
 			if isinstance( friend, users.Entity ):
@@ -155,8 +167,8 @@ class _FriendsListExternalObject(_EntityExternalObject):
 @component.adapter( nti_interfaces.IUser )
 class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 
-	def toExternalObject( self ):
-		extDict = super(_UserSummaryExternalObject,self).toExternalObject( )
+	def _do_toExternalObject( self ):
+		extDict = super(_UserSummaryExternalObject,self)._do_toExternalObject( )
 
 		# TODO: Is this a privacy concern?
 		extDict['lastLoginTime'] = self.entity.lastLoginTime.value
@@ -168,8 +180,8 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserSummaryExternalObject(_UserSummaryExternalObject):
 
-	def toExternalObject( self ):
-		extDict = super(_CoppaUserSummaryExternalObject,self).toExternalObject( )
+	def _do_toExternalObject( self ):
+		extDict = super(_CoppaUserSummaryExternalObject,self)._do_toExternalObject( )
 		extDict['affiliation'] = None
 		return extDict
 
@@ -177,12 +189,12 @@ class _CoppaUserSummaryExternalObject(_UserSummaryExternalObject):
 @component.adapter( nti_interfaces.IUser )
 class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
-	def toExternalObject( self ):
+	def _do_toExternalObject( self ):
 		"""
 		:return: the externalization intended to be sent when requested by this user.
 		"""
 		from nti.dataserver._Dataserver import InappropriateSiteError # circular imports
-		extDict = super(_UserPersonalSummaryExternalObject,self).toExternalObject()
+		extDict = super(_UserPersonalSummaryExternalObject,self)._do_toExternalObject()
 		def ext( l, name='summary' ):
 			result = []
 			for ent_name in l:
@@ -256,8 +268,8 @@ _UserExternalObject = _UserPersonalSummaryExternalObject
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject):
 
-	def toExternalObject( self ):
-		extDict = super(_CoppaUserPersonalSummaryExternalObject,self).toExternalObject( )
+	def _do_toExternalObject( self ):
+		extDict = super(_CoppaUserPersonalSummaryExternalObject,self)._do_toExternalObject( )
 		for k in ('affiliation', 'email', 'birthdate', 'contact_email', 'location', 'home_page'):
 			extDict[k] = None
 		return extDict
