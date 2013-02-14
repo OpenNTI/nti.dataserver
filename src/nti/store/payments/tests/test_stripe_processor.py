@@ -223,5 +223,15 @@ class TestStripeProcessor(ConfiguringTestBase):
 			charge = self.manager.sync_purchase(purchase_id, username=username)
 			assert_that(charge, is_(None))
 			
+	def test_validate_coupon(self):	
+		class Coupon(object):
+			duration = 'forever'
+			redeem_by = None
+			max_redemptions = None
+			duration_in_months = None
+			
+		c = Coupon()
+		assert_that(self.manager.validate_coupon(c), is_(True))
+	
 if __name__ == '__main__':
 	unittest.main()

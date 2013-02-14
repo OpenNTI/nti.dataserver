@@ -95,5 +95,22 @@ class TestStripeIO(unittest.TestCase):
 		c = sio.get_stripe_customer('cus_unknown')
 		assert_that(c, is_(None))
 		
+	def test_coupon(self):
+		code =  str(uuid.uuid4()).split('-')[0]
+		c = stripe.Coupon.create(percent_off=25,duration='once', id=code)
+		try:
+			sio = stripe_io.StripeIO()
+			coupon = sio.get_coupon(code)
+			assert_that(coupon, is_not(None))
+		finally:
+			c.delete()
+	
+	def test_invalid_coupon(self):
+		code =  'notknown'
+		sio = stripe_io.StripeIO()
+		coupon = sio.get_coupon(code)
+		assert_that(coupon, is_(None))
+		
+		
 if __name__ == '__main__':
 	unittest.main()

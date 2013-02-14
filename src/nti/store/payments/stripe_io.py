@@ -137,9 +137,9 @@ class StripeIO(object):
 				if start_time > charges[-1].created:
 					_loop = False
 
-	def get_coupon(self, coupon_code, api_key):
+	def get_coupon(self, coupon_code, api_key=None):
 		try:
-			coupon = self._do_stripe_operation(stripe.Coupon.retrieve, coupon_code,  api_key=api_key)
+			coupon = self._do_stripe_operation(stripe.Coupon.retrieve, coupon_code, api_key=api_key)
 			return coupon	
 		except InvalidStripeRequest:
 			return None
