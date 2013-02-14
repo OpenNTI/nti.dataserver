@@ -1039,20 +1039,26 @@ class TestFunctionalChatserver(_ChatserverTestBase):
 			# If there's no __parent__, there's no link
 			note.__parent__ = self.ds.root
 
+			# Check the permissions
+			assert_that( note, permits( 'sjohnson', auth.ACT_READ ) )
 			assert_that( note, permits( 'sjohnson', auth.ACT_UPDATE ) )
 			assert_that( note, denies( 'jason', auth.ACT_UPDATE ) )
 			assert_that( note, permits( 'jason', auth.ACT_READ ) )
 
+			# Broadcast the event to the owner
 			chatserver.send_event_to_user( 'sjohnson', 'event', note )
 			assert_that( sessions[1].socket.events, has_length( 1 ) )
-			ext_note = sessions[1].socket.events[0]['args'][0]
-			assert_that( ext_note, has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
+			note_to_owner = sessions[1].socket.events[0]['args'][0]
+			assert_that( note_to_owner, has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
 
+			# Broadcast the event to the shared with
 			chatserver.send_event_to_user( 'jason', 'event', note )
 			assert_that( sessions[2].socket.events, has_length( 1 ) )
-			ext_note2 = sessions[2].socket.events[0]['args'][0]
-			assert_that( ext_note, is_not( ext_note2 ) )
-			assert_that( ext_note2, has_entry( 'Links', is_not( has_item( has_entry( 'rel', 'edit' ) ) ) ) )
+			note_to_shared = sessions[2].socket.events[0]['args'][0]
+			__traceback_info__ = note_to_shared.get( 'Links' )
+			assert_that( note_to_shared, has_entry( 'Links', is_not( has_item( has_entry( 'rel', 'edit' ) ) ) ) )
+			assert_that( note_to_shared, is_not( note_to_owner ) )
+
 
 			msg_info = chat.MessageInfo()
 			msg_info.creator = sessions[1].the_user.username

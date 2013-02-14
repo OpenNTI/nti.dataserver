@@ -136,7 +136,12 @@ def _caching_permission_check(cache_name, permission, obj, request):
 		request = get_current_request()
 
 	the_cache = _get_cache( request or _Fake(), cache_name )
-	cached_val = the_cache.get( obj, _marker )
+	# The authentication information in use can actually change
+	# during the course of a single request due to authentication (used when broadcasting events)
+	# so our cache must be aware of this
+	principals, authn_policy, reg = _get_effective_principals( request )
+
+	cached_val = the_cache.get( (obj, principals), _marker )
 	if cached_val is not _marker:
 		return cached_val
 
@@ -146,30 +151,26 @@ def _caching_permission_check(cache_name, permission, obj, request):
 	# like the zope.site.threadSiteSubscriber that does the same thing for
 	# pyramid.threadlocal. Here we cheap out
 	# and re-implement has_permission to use the desired registry.
-	result = _has_permission( permission, obj, request )
-	if result:
-		the_cache[obj] = result
-		return result
-	# Externalized objects. The direct check and throw is faster
-	# then IExternalizedObject.providedBy and an /in/
-	try:
-		ext_creator_name = obj[StandardExternalFields.CREATOR]
-		result = ext_creator_name == psec.authenticated_userid( request )
-		the_cache[obj] = result
-		return result
-	except (KeyError,AttributeError,TypeError):
-		the_cache[obj] = False
-		return False
+	check_value = _has_permission( permission, obj, reg, authn_policy, principals )
+	if not check_value and authn_policy is not None:
+		# Try externalized objects
 
-def _has_permission( permission, context, request ):
-	"""
-	:param request: The currently active Pyramid HTTP request object, or
-		None. If not provided (and we do not look for a current request),
-		then the global component registry will be used to find Authentication
-		and Authorization policies, and the only principal that will be checked is
-		:const:`pyramid.security.Everyone` (since there will be no identifiable
-		principal from the request).
-	"""
+		# Externalized objects. The direct check and throw is faster
+		# then IExternalizedObject.providedBy and an /in/
+		try:
+			ext_creator_name = obj[StandardExternalFields.CREATOR]
+			auth_userid = authn_policy.authenticated_userid( request )
+
+			check_value = ext_creator_name == auth_userid
+		except (KeyError,AttributeError,TypeError):
+			pass
+
+	the_cache[(obj,principals)] = check_value
+
+	return check_value
+
+def _get_effective_principals( request ):
+	""" Return the principals as a tuple, plus the auth policy and registry (optimization) """
 	try:
 		reg = request.registry
 	except AttributeError:
@@ -177,11 +178,32 @@ def _has_permission( permission, context, request ):
 
 	authn_policy = reg.queryUtility(IAuthenticationPolicy)
 	if authn_policy is None:
+		return (psec.Everyone,), None, reg
+
+
+	principals = authn_policy.effective_principals(request) if request is not None else (psec.Everyone,)
+	return tuple(principals), authn_policy, reg
+
+
+def _has_permission( permission, context, reg, authn_policy, principals  ):
+	"""
+	Check the given permission on the given context object in the given request.
+
+	:param request: The currently active Pyramid HTTP request object, or
+		None. If not provided (and we do not look for a current request),
+		then the global component registry will be used to find Authentication
+		and Authorization policies, and the only principal that will be checked is
+		:const:`pyramid.security.Everyone` (since there will be no identifiable
+		principal from the request).
+
+	:return: A tuple (permission, principals).
+	"""
+	if authn_policy is None:
 		return psec.Allowed('No authentication policy in use.')
 
 	authz_policy = reg.queryUtility(IAuthorizationPolicy)
 	if authz_policy is None: # pragma: no cover
 		raise ValueError('Authentication policy registered without '
 						 'authorization policy') # should never happen
-	principals = authn_policy.effective_principals(request) if request is not None else (psec.Everyone,)
+
 	return authz_policy.permits(context, principals, permission)
