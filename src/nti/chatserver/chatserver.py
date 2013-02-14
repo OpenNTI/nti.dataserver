@@ -20,7 +20,7 @@ from nti.externalization.interfaces import StandardExternalFields as XFields
 from nti.ntiids import ntiids
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import authorization as auth
+from nti.dataserver.authentication import effective_principals
 
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
@@ -36,21 +36,6 @@ class _AlwaysIn(object):
 	def __init__(self): pass
 	def __contains__(self,obj): return True
 
-@interface.implementer(nti_interfaces.IAuthenticationPolicy)
-class _FixedUserAuthenticationPolicy(object):
-	"""
-	See :func:`Chatserver.send_event_to_user`.
-	We implement only the minimum required.
-	"""
-
-	def __init__( self, username ):
-		self.auth_user = username
-
-	def authenticated_userid( self, request ):
-		return self.auth_user
-
-	def effective_principals( self, request ):
-		return auth.effective_principals( self.auth_user )
 
 ####
 # A note on the object model:
@@ -376,6 +361,25 @@ class Chatserver(object):
 		logger.info( "Room, %s, created with %d occupant(s).", room.id, len(room.occupant_names))
 
 		return room
+
+	def enter_existing_meeting( self, room_info, occupant_name ):
+		room_info_dict = dict( room_info ) # in case we modify
+		room_id = room_info_dict['RoomId']
+
+		room = self.get_meeting( room_id )
+		if not room or not room.Active:
+			logger.debug( "%s not re-entering inactive/gone room %s/%s", occupant_name, room, room_id )
+			return None
+
+		# TODO: We could centralize this type of checking with a convenience utility somewhere.
+		authorization_policy = component.queryUtility( nti_interfaces.IAuthorizationPolicy )
+		if authorization_policy is None or authorization_policy.permits( room, effective_principals(occupant_name), interfaces.ACT_ENTER ):
+			# Yes, we can enter
+			logger.debug( "%s re-entering room %s/%s due to auth policy %s", occupant_name, room, room_id, authorization_policy )
+			room.add_occupant_name( occupant_name ) # broadcast the enter room event
+			return room
+
+		# otherwise, return none
 
 	def get_meeting( self, room_id ):
 		return self.rooms.get( room_id )

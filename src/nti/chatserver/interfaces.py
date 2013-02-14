@@ -30,6 +30,7 @@ class IChatEventHandler(sio_interfaces.ISocketEventHandler):
 	"""
 
 ACT_MODERATE = Permission('nti.chatserver.actions.moderate')
+ACT_ENTER = Permission('nti.chatserver.actions.enter')
 
 CHANNEL_DEFAULT = 'DEFAULT'
 CHANNEL_WHISPER = 'WHISPER'
@@ -69,6 +70,10 @@ class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 							 description="Toggling this changes the policy in use." )
 
 	Active = schema.Bool( title="Whether the meeting is currently active" )
+
+	occupant_names = schema.Set( title="A set of the string names of members currently in the meeting; immutable." )
+
+	historical_occupant_names = schema.Set( title="A set of the string names of anyone who has ever been a member of this meeting; immutable." )
 
 class IMeetingShouldChangeModerationStateEvent(interface.interfaces.IObjectEvent):
 	"""

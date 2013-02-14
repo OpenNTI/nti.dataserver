@@ -434,6 +434,13 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 			logger.warn( "POSKeyError getting sharing target names.")
 			return ()
 
+	def _extend_acl_before_deny( self, acl ):
+		"""
+		Called after the creator and sharing target acls have been added, but
+		before the deny-everyone is added. You can add additional options here.
+		"""
+		return
+
 	@property
 	def __acl__( self ):
 		"""
@@ -443,6 +450,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		result = self._creator_acl()
 		for name in self.__do_get_sharing_target_names():
 			result.append( ace_allowing( name, authorization.ACT_READ, AbstractCreatedAndSharedACLProvider ) )
+		self._extend_acl_before_deny( result )
 		if self._DENY_ALL:
 			result.append( _ace_denying_all( AbstractCreatedAndSharedACLProvider ) )
 		return result
@@ -490,6 +498,7 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	@property
 	def __acl__( self ):
+		# Inherit if we are nested. See class comment
 		if nti_interfaces.IShareableModeledContent.providedBy( getattr( self.context, '__parent__', None ) ):
 			return ()
 		return super(_ShareableModeledContentACLProvider,self).__acl__

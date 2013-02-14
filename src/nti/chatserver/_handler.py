@@ -151,7 +151,7 @@ class _ChatHandler(object):
 		msg_info.Sender = self.session.owner
 		msg_info.sender_sid = self.session.session_id
 		result = True
-		# Rate limit all incoming chat messages
+		# Rate limit *all* incoming chat messages
 		state = IChatHandlerSessionState(self.session)
 		if not state.message_post_rate_limit.consume():
 			if 'DATASERVER_SYNC_CHANGES' in os.environ: # hack for testing
@@ -166,15 +166,16 @@ class _ChatHandler(object):
 
 	def enterRoom( self, room_info ):
 		room = None
-		room_info['Creator'] = self.session.owner
+
 		if room_info.get( 'RoomId' ) is not None:
 			# Trying to join an established room
-			# Right now, unsupported.
-			logger.debug( "Cannot enter existing room %s", room_info )
+			# Can only do this if the meeting currently exists and we were once a part of it
+			room = self._chatserver.enter_existing_meeting( room_info, self.session.owner )
 		elif len( room_info.get( 'Occupants', () ) ) == 0 and XFields.CONTAINER_ID in room_info:
 			# No occupants, but a container ID. This must be for something
 			# that can persistently host meetings. We want
 			# to either create or join it.
+			room_info['Creator'] = self.session.owner
 			room_info['Occupants'] = [ (self.session.owner, self.session.session_id ) ]
 			room = self._chatserver.enter_meeting_in_container( room_info )
 		else:
@@ -182,6 +183,7 @@ class _ChatHandler(object):
 			# More than that, make sure it's my session, and any
 			# of my friends lists are expanded. Make sure it has an active
 			# occupant besides me
+			room_info['Creator'] = self.session.owner
 			_discard( room_info.get('Occupants'), self.session.owner )
 			room_info['Occupants'] = list( room_info['Occupants'] )
 			user = self.session_user

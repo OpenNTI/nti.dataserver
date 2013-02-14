@@ -99,7 +99,7 @@ class VerifyProvides(BaseMatcher):
 		except BrokenMethodImplementation as x:
 			mismatch_description.append_text( str(x).replace( '\n', '' ) )
 		except BrokenImplementation as x:
-			mismatch_description.append_text( ' failed to provide attribute "').append_text( x.name ).append_text( '"' )
+			mismatch_description.append_text( ' failed to provide attribute "').append_text( x.name ).append_text( '"' ).append_text( ' from ' ).append_text( self.iface[x.name].interface.getName() )
 		except DoesNotImplement as x:
 			mismatch_description.append_text( " does not implement the interface; it does implement " ).append_text( str(list(interface.providedBy(item))) )
 		except Invalid as x:
