@@ -207,6 +207,9 @@ class _ChatHandler(object):
 		result = self._chatserver.exit_meeting( room_id, self.session.owner )
 		return result
 
+	def addOccupantToRoom( self, room_id, occupant_name ):
+		return self._chatserver.add_occupant_to_existing_meeting( room_id, self.session.owner, occupant_name )
+
 	def makeModerated( self, room_id, flag ):
 
 		room = self._chatserver.get_meeting( room_id )

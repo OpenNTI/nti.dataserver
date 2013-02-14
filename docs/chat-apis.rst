@@ -256,15 +256,14 @@ to `emit` to make this happen; the callback will receive the return value.)
   RoomId takes precedence over any other value (such as ContainerId or
   Occupants.)
 
-  The server will reply with the enteredRoom message; its ContainerId
+  The server will reply with the ``chat_enteredRoom`` message; its ContainerId
   will be the containerId you set (if you set one and were allowed
-  to create it).
-
-``chat_failedToEnterRoom( room_info )``
-  sent if you attempted to enter a room, but failed
+  to create it). If something goes wrong, the server will reply with
+  the ``chat_failedToEnterRoom`` message.
 
 ``chat_exitRoom( room_id ) -> boolean``
-  Emit to stop receiving messages for a room
+  Emit to stop receiving messages for a room. Other occupants of the
+  room will receive the ``chat_roomMembershipChanged`` message.
 
 ``chat_postMessage( msg_info ) -> boolean``
   Post a message into a room. The body must be present, rooms
@@ -274,6 +273,26 @@ to `emit` to make this happen; the callback will receive the return value.)
   (use case: noticing that questions have been replied to)
 
   Return: whether the message was posted to all rooms
+
+``chat_addOccupantToRoom( room_id, occupant ) -> boolean``
+  Request that the server add the (online) occupant name
+  to the identified room. You must be permitted to
+  do this (currently, that means only the creator of the room, and the room must
+  not be persistent).
+
+  As a special condition, if the occupant was previously in the room
+  but has left, the occupant will not be added again. This prevents
+  abuse and annoyance (at least until we have finer grained presence
+  controls).
+
+  If the occupant was added to the room, he will receive the
+  ``chat_enteredRoom`` message. All other occupants will get the
+  ``chat_roomMembershipChanged`` message. The new occupant will only
+  have access to the transcript for messages that arrive after he was
+  added.
+
+  The return value's truth value indicates whether or not the user was
+  added to the room.
 
 Moderation
 ~~~~~~~~~~
@@ -297,8 +316,11 @@ Server to client
 ----------------
 
 ``chat_enteredRoom( room_info )`` and ``chat_exitedRoom( room_info )``
-  Sent when you have been added to a room, directly or
+  Sent when you have been added/removed from a room, directly or
   indirectly.
+
+``chat_failedToEnterRoom( room_info )``
+  sent if you attempted to enter a room, but failed
 
 ``chat_roomMembershipChanged( room_info )``
   Sent when a room you are in has gained/lost a member other

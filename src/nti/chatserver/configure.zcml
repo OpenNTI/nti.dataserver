@@ -41,6 +41,9 @@
 	<permission
 			id="nti.chatserver.actions.enter"
 			title="Enter an existing chatroom" />
+	<permission
+			id="nti.chatserver.actions.add_occupant"
+			title="Enter an existing chatroom" />
 
 	<adapter factory="._acl._MeetingACLProvider" />
 

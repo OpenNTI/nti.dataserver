@@ -381,6 +381,28 @@ class Chatserver(object):
 
 		# otherwise, return none
 
+	def add_occupant_to_existing_meeting( self, room_id, actor_name, occupant_name ):
+		room = self.get_meeting( room_id )
+		if not room \
+		  or not room.Active \
+		  or occupant_name in room.historical_occupant_names \
+		  or hasattr( self.meeting_container_storage.get( room.containerId ), 'meeting_became_empty' ):
+		  # exclude missing rooms, inactive rooms, rooms already left
+		  # by the occupant, and persistent rooms (that have their own
+		  # occupancy rules)
+		  logger.debug( "%s not re-entering inactive/gone/previously-exited/persistent room %s/%s", occupant_name, room, room_id )
+		  return None
+
+		# TODO: We could centralize this type of checking with a convenience utility somewhere.
+		authorization_policy = component.queryUtility( nti_interfaces.IAuthorizationPolicy )
+		if ((authorization_policy is None or authorization_policy.permits( room, effective_principals(actor_name), interfaces.ACT_ADD_OCCUPANT ))
+			and self.get_session_for( occupant_name ) is not None):
+			logger.debug( "%s adding %s to room %s/%s", actor_name, occupant_name, room, room_id )
+			room.add_occupant_name( occupant_name ) # broadcast the enter room event
+			return room
+
+		# otherwise, return none
+
 	def get_meeting( self, room_id ):
 		return self.rooms.get( room_id )
 

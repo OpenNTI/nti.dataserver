@@ -483,7 +483,7 @@ class GenericSitePolicyEventListener(object):
 
 		"""
 		_censor_usernames( user )
-		if user.username.endswith( '@nextthought.com' ) or user.username in (nti_interfaces.SYSTEM_USER_NAME, nti_interfaces.SYSTEM_USER_ID):
+		if user.username.endswith( '@nextthought.com' ) or nti_interfaces.username_is_reserved( user.username ):
 			raise UsernameCannotContainNextthoughtCom( _("That username is not valid. Please choose another."), 'Username', user.username, value=user.username )
 
 		# Icky. For some random reason we require everyone to provide their real name,
