@@ -262,7 +262,7 @@ class IAvatarURLProvider(Interface):
 	from the profile hierarchy to allow delegation of adapters.
 	"""
 
-	avatarURL = schema.URI(
+	avatarURL = schema.URI( # may be data:
 		title="URL of your avatar picture",
 		description="If not provided, one will be generated for you.",
 		required=False )
@@ -272,7 +272,7 @@ class IAvatarURL(Interface):
 	Something that features a display URL.
 	"""
 
-	avatarURL = schema.URI(
+	avatarURL = schema.URI( # may be data:
 		title="URL of your avatar picture",
 		description="If not provided, one will be generated for you.",
 		required=False )
@@ -413,7 +413,7 @@ class ICompleteUserProfile(IRestrictedUserProfile):
 		required=False,
 		default=False )
 
-	home_page = schema.URI(
+	home_page = nti.utils.schema.HTTPURL(
 		title='Home page',
 		description="The URL for your external home page, "
 					  "if you have one.",
@@ -424,6 +424,7 @@ class ICompleteUserProfile(IRestrictedUserProfile):
 		description="A short overview of who you are and what you "
 					  "do. Will be displayed on your author page, linked "
 					  "from the items you create.",
+		max_length=140, # twitter
 		required=False)
 
 	location = schema.TextLine(
@@ -437,11 +438,13 @@ class ICompleteUserProfile(IRestrictedUserProfile):
 	affiliation = schema.TextLine(
 		title='Affiliation',
 		description="Your affiliation, such as school name",
+		max_length=140,
 		required=False)
 
 	role = schema.TextLine(
 		title='Role',
 		description="Your role within your affiliation",
+		max_length=140,
 		required=False)
 
 
