@@ -31,6 +31,7 @@ class IChatEventHandler(sio_interfaces.ISocketEventHandler):
 
 ACT_MODERATE = Permission('nti.chatserver.actions.moderate')
 ACT_ENTER = Permission('nti.chatserver.actions.enter')
+ACT_ADD_OCCUPANT = Permission('nti.chatserver.actions.add_occupant')
 
 CHANNEL_DEFAULT = 'DEFAULT'
 CHANNEL_WHISPER = 'WHISPER'

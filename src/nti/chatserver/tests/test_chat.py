@@ -419,27 +419,33 @@ class TestChatserver(_ChatserverTestBase):
 					 is_( none() ) )
 
 	@WithMockDSTrans
-	def test_handler_enter_persistent_room_with_occupants_online(self):
+	def test_handler_enter_room_with_occupants_online(self):
 		d = {'Occupants': ['sjohnson', 'other'],
 			 'ContainerId': 'tag:nextthought.com,2011-10:x-y-z' }
 		sessions = self.Sessions()
 		sessions[1] = self.Session( 'sjohnson' )
 		sessions[2] = self.Session( 'other' )
 		sessions[3] = self.Session( 'not_occupant' )
+		sessions[4] = self.Session( 'not_occupant2' )
 		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage() )
+		handler1 = chat.ChatHandler( chatserver, sessions[1] )
+		handler2 = chat.ChatHandler( chatserver, sessions[2] )
+		handler3 = chat.ChatHandler( chatserver, sessions[3] )
 
-		meeting = chat.ChatHandler( chatserver, sessions[1] ).enterRoom( d )
+		meeting = handler1.enterRoom( d )
 		assert_that( meeting,
 					 is_( chat.Meeting ) )
 		assert_that( meeting, has_property( 'creator',  'sjohnson' ) )
 		assert_that( toExternalObject( meeting ), has_entry( 'Creator', 'sjohnson' ) )
 
 		# The 'other' user should have received notification to enter the room
-		assert_that( sessions[2].socket.events, has_length( 1 ) )
-		assert_that( sessions[2].socket.events[0], has_entry( 'name', 'chat_enteredRoom' ) )
-		assert_that( sessions[2].socket.events[0], has_entry( 'args', has_item( has_entry( 'Class', 'RoomInfo' ) ) ) )
-		assert_that( sessions[2].socket.events[0]['args'][0], has_key( 'ID' ) )
+		def _check_other_enteredRoom_event(sid=2):
+			assert_that( sessions[sid].socket.events, has_length( 1 ) )
+			assert_that( sessions[sid].socket.events[0], has_entry( 'name', 'chat_enteredRoom' ) )
+			assert_that( sessions[sid].socket.events[0], has_entry( 'args', has_item( has_entry( 'Class', 'RoomInfo' ) ) ) )
+			assert_that( sessions[sid].socket.events[0]['args'][0], has_key( 'ID' ) )
 
+		_check_other_enteredRoom_event()
 		assert_that( auth_acl.ACLProvider( meeting ), permits( 'sjohnson', 'nti.actions.update' ) )
 		assert_that( auth_acl.ACLProvider( meeting ), permits( 'sjohnson', 'zope.View' ) )
 
@@ -447,19 +453,43 @@ class TestChatserver(_ChatserverTestBase):
 		assert_that( auth_acl.ACLProvider( meeting ), permits( 'other', 'zope.View' ) )
 
 		# The other user can exit this meeting...
-		chat.ChatHandler( chatserver, sessions[2] ).exitRoom( meeting.RoomId )
+		handler2.exitRoom( meeting.RoomId )
 		assert_that( meeting.historical_occupant_names, has_item( 'other' ) )
 
 		# ... and re-enter
+		sessions.clear_all_session_events()
 		assert_that( meeting, permits( 'other', chat_interfaces.ACT_ENTER ) )
 
-		m2 = chat.ChatHandler( chatserver, sessions[2] ).enterRoom( { 'RoomId': meeting.RoomId } )
+		m2 = handler2.enterRoom( { 'RoomId': meeting.RoomId } )
 		assert_that( m2, is_( meeting ) )
 		assert_that( meeting.occupant_names, has_item( 'other' ) )
+		# both of them got events
+		_check_other_enteredRoom_event()
+		assert_that( sessions[1].socket.events[0], has_entry( 'name', 'chat_roomMembershipChanged' ) )
 
 		# Some random person cannot
-		m3 = chat.ChatHandler( chatserver, sessions[3] ).enterRoom( { 'RoomId': meeting.RoomId } )
+		m3 = handler3.enterRoom( { 'RoomId': meeting.RoomId } )
 		assert_that( m3, is_( none() ) )
+
+		# But the owner can add this random person
+		sessions.clear_all_session_events()
+
+		result = handler1.addOccupantToRoom( meeting.RoomId, 'not_occupant' )
+		assert_that( result, is_( chat.Meeting ) )
+		assert_that( sessions[1].socket.events[0], has_entry( 'name', 'chat_roomMembershipChanged' ) )
+		assert_that( sessions[2].socket.events[0], has_entry( 'name', 'chat_roomMembershipChanged' ) )
+		_check_other_enteredRoom_event( 3 )
+
+		# Another occupant cannot, though, due to the acl
+		sessions.clear_all_session_events()
+		result = handler2.addOccupantToRoom( meeting.RoomId, 'not_occupant2' )
+		assert_that( result, is_( none() ) )
+
+		# The owner cannot add someone offline
+		assert_that( handler1.addOccupantToRoom( meeting.RoomId, 'offline' ), is_( none() ) )
+
+		# The owner cannot add someone already in/previously exited the room
+		assert_that( handler1.addOccupantToRoom( meeting.RoomId, 'not_occupant' ), is_( none() ) )
 
 
 	@WithMockDSTrans

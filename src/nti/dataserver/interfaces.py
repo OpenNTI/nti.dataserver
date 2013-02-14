@@ -330,6 +330,12 @@ SYSTEM_USER_ID = system_user.id
 SYSTEM_USER_NAME = system_user.title.lower()
 EVERYONE_GROUP_NAME = 'system.Everyone'
 AUTHENTICATED_GROUP_NAME = 'system.Authenticated'
+ME_USER_ID = 'me'
+
+RESERVED_USER_IDS = (SYSTEM_USER_ID, SYSTEM_USER_NAME, EVERYONE_GROUP_NAME, AUTHENTICATED_GROUP_NAME, ME_USER_ID)
+_LOWER_RESERVED_USER_IDS = tuple( (x.lower() for x in RESERVED_USER_IDS) )
+def username_is_reserved( username ):
+	return username and (username.lower() in _LOWER_RESERVED_USER_IDS or username.lower().startswith( 'system.') )
 
 # Exported policies
 from pyramid.interfaces import IAuthorizationPolicy
@@ -420,7 +426,7 @@ class IMutableGroupMember(IGroupMember):
 from nti.utils.schema import ValidTextLine
 
 def valid_entity_username(entity_name):
-	return entity_name and entity_name.lower() not in (SYSTEM_USER_ID.lower(),SYSTEM_USER_NAME.lower())
+	return not username_is_reserved( entity_name )
 
 class IEntity(IZContained, IAnnotatable):
 	username = ValidTextLine(
