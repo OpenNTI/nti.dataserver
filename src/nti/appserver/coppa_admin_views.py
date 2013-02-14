@@ -28,7 +28,7 @@ from z3c.table import batch
 
 from nti.dataserver import authorization as nauth
 
-from nti.appserver.z3c_zpt import PyramidZopeRequestProxy
+from ._pyramid_zope_integrations import PyramidZopeRequestProxy
 
 _USER_FILTER_PARAM = 'usersearch'
 

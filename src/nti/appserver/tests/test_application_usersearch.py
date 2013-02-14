@@ -134,6 +134,8 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 
 		# We should have our name
 		assert_that( res.json_body['Items'][0], has_entry( 'realname', 'Steve Johnson' ) )
+		assert_that( res.json_body['Items'][0], has_entry( 'NonI18NFirstName', 'Steve' ) )
+		assert_that( res.json_body['Items'][0], has_entry( 'NonI18NLastName', 'Johnson' ) )
 
 	@WithSharedApplicationMockDS
 	def test_user_search_subset(self):

@@ -347,15 +347,18 @@ def to_standard_external_created_time( context, default=None, _write_into=None )
 	return holder.get( StandardExternalFields.CREATED_TIME, default )
 
 
-def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker, registry=component):
+def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker, registry=component, decorate=True):
 	"""
 	Returns a dictionary representing the standard externalization of
 	the object. This impl takes care of the standard attributes
 	including OID (from :attr:`~persistent.interfaces.IPersistent._p_oid`) and ID (from ``self.id`` if defined)
 	and Creator (from ``self.creator``).
 
-	If the object has any :class:`~nti.externalization.interfaces.IExternalMappingDecorator` subscribers registered for it,
-	they will be called to decorate the result of this method before it returns.
+	If the object has any
+	:class:`~nti.externalization.interfaces.IExternalMappingDecorator`
+	subscribers registered for it, they will be called to decorate the
+	result of this method before it returns ( *unless* `decorate` is set to
+	False; only do this if you know what you are doing! )
 
 	:param dict mergeFrom: For convenience, if ``mergeFrom`` is not None, then those values will
 		be added to the dictionary created by this method. The keys and
@@ -418,11 +421,14 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 		logger.exception( "Failed to get NTIID for object %s", type(self) ) # printing self probably wants to externalize
 
 
-	for decorator in registry.subscribers( (self,), IExternalMappingDecorator ):
-		decorator.decorateExternalMapping( self, result )
-
+	if decorate:
+		decorate_external_mapping( self, result, registry=registry )
 
 	return result
+
+def decorate_external_mapping( self, result, registry=component ):
+	for decorator in registry.subscribers( (self,), IExternalMappingDecorator ):
+		decorator.decorateExternalMapping( self, result )
 
 toExternalDictionary = to_standard_external_dictionary
 deprecation.deprecated('toExternalDictionary', 'Prefer to_standard_external_dictionary' )

@@ -7,13 +7,22 @@
     <include package="zope.formlib" />
     <include package="nti.dataserver" />
 
+	<!-- I18N -->
+
     <i18n:registerTranslations directory="locales" />
     <!--
-	Let requests be used for negotiating locales in the Zope way.
-	Needed for tables
+		Let requests be used for negotiating locales in the Zope way.
+		Needed for tables based on z3c/ZPT, which use the Zope-based request
     -->
-    <!-- <adapter factory="._adapters.EnglishPreferredLanguage" /> -->
-    <adapter factory="zope.publisher.browser.BrowserLanguages" />
+	<!-- Pyramid requests, via Zope -->
+	<adapter factory="._pyramid_zope_integrations.PyramidBrowserPreferredLanguages" />
+
+	<!-- Zope Requests. This is also cacheable. -->
+    <adapter factory="zope.publisher.browser.ModifiableBrowserLanguages"
+			 provides="zope.i18n.interfaces.IModifiableUserPreferredLanguages"/>
+
+	<!-- Entities -->
+	<adapter factory="._adapters.UserPreferredLanguages" />
 
     <!-- Account Creation -->
     <utility factory=".site_policies.RequestAwareUserPlacer" />
@@ -40,6 +49,8 @@
     <subscriber factory="._adapters._DFLUserLikeDecorator"
 		provides="nti.externalization.interfaces.IExternalObjectDecorator" />
     <subscriber factory=".dfl_views.DFLGetMembershipLinkProvider"
+		provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+    <subscriber factory="._adapters._EnglishFirstAndLastNameDecorator"
 		provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
     <subscriber factory=".contentlibrary_views._ContentUnitAssessmentItemDecorator"

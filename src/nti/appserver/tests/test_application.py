@@ -292,6 +292,13 @@ class ApplicationTestBase(_AppTestBaseMixin, ConfiguringTestBase):
 
 class TestApplication(SharedApplicationTestBase):
 
+	def test_preferred_languages( self ):
+		from zope.i18n.interfaces import IUserPreferredLanguages
+		self.request.environ['HTTP_ACCEPT_LANGUAGE'] = 'en'
+		langs = IUserPreferredLanguages( self.request )
+		assert_that( langs.getPreferredLanguages(), is_( ['en'] ) )
+
+
 	@WithSharedApplicationMockDS
 	def test_chameleon_caching_config(self):
 		assert_that( self.app, is_( not_none() ) )
