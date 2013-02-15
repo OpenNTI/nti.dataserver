@@ -47,6 +47,23 @@ class TestBasicElement(ConfiguringTestBase):
 		except:
 			pass
 
+	def test_simple_list(self):
+		
+		@qti_creator
+		@interface.implementer(exp_interfaces.Imax)
+		class Foo(object):
+			pass
+		
+		@interface.implementer(exp_interfaces.Iexpression)
+		class Exp(object):
+			pass 
+		
+		f = Foo()
+		e = Exp()
+		assert_that(f.expression, is_([]))
+		f.add_expression(e)
+		assert_that(f.expression, is_([e]))
+		assert_that(f.get_expression_list(), is_([e]))
 	
 if __name__ == '__main__':
 	unittest.main()

@@ -7,6 +7,8 @@ $Id$
 from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
+import collections
+
 from zope import schema
 from zope import interface
 from zope.container import contained as zcontained
@@ -14,7 +16,10 @@ from zope.schema import interfaces as sch_intefaces
 from zope.annotation import interfaces as an_interfaces
 
 from persistent import Persistent
+from persistent.list import PersistentList
+from persistent.interfaces import IPersistent
 
+from ..schema import IQTIAttribute
 from .. import interfaces as qti_interfaces
 
 def get_schema_fields(iface):
@@ -35,16 +40,38 @@ def get_schema_fields(iface):
 	_travel(iface, result)
 	return result
 	
-def getter(name, default=None):
+def _getter(name, default=None):
 	def function(self):
 		return getattr(self, name, default)
 	return function
 
-def setter(name, iface=None):
+def _check_value(value, iface=None):
+	if iface is not None and value is not None:
+		assert iface.providedBy(value)
+		
+def _setter(name, iface=None):
 	def function(self, value):
-		if iface is not None and value is not None:
-			assert iface.providedBy(value)
+		_check_value(value, iface)
 		setattr(self, name, value)
+	return function
+
+def _collection_getter(name, factory=list):
+	def function(self):
+		result = getattr(self, name, None)
+		if result is None:
+			result = factory()
+			setattr(self, name, result)
+		return result
+	return function
+
+def _add_collection(name, iface=None):
+	def function(self, value):
+		_check_value(value, iface)
+		collec = getattr(self, name)
+		if isinstance(collec, collections.Sequence):
+			collec.append(value)
+		elif isinstance(collec, collections.Set):
+			collec.add(value)
 	return function
 
 def qti_creator(cls):
@@ -60,20 +87,42 @@ def qti_creator(cls):
 	implemented = getattr(cls, '__implemented__', None)
 	implemented = implemented.flattened() if implemented else ()
 		
+	is_persitent = False
+	
+	attributes = {}
 	definitions = {}
+	
 	for base in implemented:
+		if issubclass(base, IPersistent):
+			is_persitent = True
 		if issubclass(base, qti_interfaces.IQTIElement):
 			r = get_schema_fields(base)
-			definitions.update(r)
+			for k,v in r.items():
+				if IQTIAttribute.providedBy(v):
+					attributes[k] = v
+				else:
+					definitions[k] = v
 			
 	setattr(cls, '_v_definitions', definitions)
+	if attributes:
+		setattr(cls, '_v_attributes', attributes)
+	
+	list_factory = PersistentList if is_persitent else list
 	
 	for k, v in definitions.items():
+		if hasattr(cls, k): 
+			continue
+		
+		pname = "_%s" % k
 		if sch_intefaces.IObject.providedBy(v):
 			iface = v.schema
-			pname = "_%s" % k
-			if not hasattr(cls, k):
-				setattr(cls, k, property(getter(pname), setter(pname, iface)))
+			setattr(cls, k, property(_getter(pname), _setter(pname, iface)))
+		elif sch_intefaces.IList.providedBy(v):
+			setattr(cls, k, property(_collection_getter(pname, list_factory)))
+			setattr(cls, "get_%s_list" % k, _getter(pname))
+			if sch_intefaces.IObject.providedBy(v.value_type):
+				iface = v.value_type.schema
+				setattr(cls, "add_%s" % k, _add_collection(k, iface))
 			
 	return cls
 

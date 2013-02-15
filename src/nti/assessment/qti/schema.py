@@ -7,15 +7,12 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import six
+import numbers
+
+from zope import schema
 from zope import interface
-from zope.schema import Int
-from zope.schema import URI
-from zope.schema import Bool
-from zope.schema import List
-from zope.schema import Float
-from zope.schema import Choice
-from zope.schema import Object
-from zope.schema import TextLine
+from zope.schema import interfaces as schema_interfaces
 
 class IQTIAttribute(interface.Interface):
 	"""
@@ -24,76 +21,110 @@ class IQTIAttribute(interface.Interface):
 	pass
 
 @interface.implementer(IQTIAttribute)
-class TextLineAttribute(TextLine):
+class TextLineAttribute(schema.TextLine):
 	"""
-	A :class:`TextLine` type that to mark XML attribute elements
-	"""
-	
-@interface.implementer(IQTIAttribute)
-class URIAttribute(URI):
-	"""
-	A :class:`URI` type that to mark XML attribute elements
+	A :class:`schema.TextLine` type that to mark XML attribute elements
 	"""
 	
 @interface.implementer(IQTIAttribute)
-class BoolAttribute(Bool):
+class URIAttribute(schema.URI):
 	"""
-	A :class:`Bool` type that to mark XML attribute elements
+	A :class:`schema.URI` type that to mark XML attribute elements
 	"""
 	
 @interface.implementer(IQTIAttribute)
-class ObjectAttribute(Object):
+class BoolAttribute(schema.Bool):
 	"""
-	A :class:`Object` type that to mark XML attribute elements
+	A :class:`schema.Bool` type that to mark XML attribute elements
+	"""
+	
+@interface.implementer(IQTIAttribute)
+class ObjectAttribute(schema.Object):
+	"""
+	A :class:`schema.Object` type that to mark XML attribute elements
 	"""
 
 @interface.implementer(IQTIAttribute)
-class IntAttribute(Int):
+class IntAttribute(schema.Int):
 	"""
-	A :class:`Int` type that to mark XML attribute elements
+	A :class:`schema.Int` type that to mark XML attribute elements
 	"""
 
 @interface.implementer(IQTIAttribute)
-class FloatAttribute(Float):
+class FloatAttribute(schema.Float):
 	"""
-	A :class:`Float` type that to mark XML attribute elements
-	"""
-	
-@interface.implementer(IQTIAttribute)
-class ChoiceAttribute(Choice):
-	"""
-	A :class:`Choice` type that to mark XML attribute elements
+	A :class:`schema.Float` type that to mark XML attribute elements
 	"""
 	
 @interface.implementer(IQTIAttribute)
+class ChoiceAttribute(schema.Choice):
+	"""
+	A :class:`schema.Choice` type that to mark XML attribute elements
+	"""
+	
 class MimeTypeAttribute(TextLineAttribute):
 	"""
 	A :class: for mimetype attributes
 	"""
 
 @interface.implementer(IQTIAttribute)
-class ListAttribute(List):
+class ListAttribute(schema.List):
 	"""
-	A :class:`List` type that to mark XML attribute elements
+	A :class:`schema.List` type that to mark XML attribute elements
 	"""
 
-@interface.implementer(IQTIAttribute)
-class IntegerOrVariableRefAttribute(Object):
-	"""
-	A :class:`Object` type that to mark XML attribute element for either an int or a variable ref
-	"""
+class IntegerOrVariableRefAttribute(TextLineAttribute):
 	
-@interface.implementer(IQTIAttribute)
-class FloatOrVariableRefAttribute(Object):
 	"""
-	A :class:`Object` type that to mark XML attribute element for either a float or a variable ref
+	A :class: to mark XML an attribute element for either an schema.Int or a variable ref (string)
 	"""
+	def _validate(self, value):
+		if not (isinstance(value, six.string_types) or isinstance(value, numbers.Integral)):
+			raise schema_interfaces.WrongType(value)
 
-@interface.implementer(IQTIAttribute)
+		if not self.constraint(value):
+			raise schema_interfaces.ConstraintNotSatisfied(value)
+		
+	def fromUnicode(self, value):
+		s = super(IntegerOrVariableRefAttribute, self).fromUnicode(value)
+		try:
+			value = int(s)
+		except:
+			value = unicode(s)
+		return value
+	
+	def constraint(self, value):
+		if isinstance(value, six.string_types):
+			return '\n' not in value and '\r' not in value
+		return isinstance(value, numbers.Integral)
+	
+class FloatOrVariableRefAttribute(TextLineAttribute):
+	"""
+	A :class: to mark XML attribute element for either a schema.Float or a variable ref (string)
+	"""
+	def _validate(self, value):
+		if not (isinstance(value, six.string_types) or isinstance(value, (numbers.Integral, numbers.Real))):
+			raise schema_interfaces.WrongType(value)
+
+		if not self.constraint(value):
+			raise schema_interfaces.ConstraintNotSatisfied(value)
+		
+	def fromUnicode(self, value):
+		s = super(IntegerOrVariableRefAttribute, self).fromUnicode(value)
+		try:
+			value = float(s)
+		except:
+			value = unicode(s)
+		return value
+	
+	def constraint(self, value):
+		if isinstance(value, six.string_types):
+			return '\n' not in value and '\r' not in value
+		return isinstance(value, (numbers.Integral, numbers.Real))
+	
 class StringOrVariableRefAttribute(TextLineAttribute):
 	pass
 
-@interface.implementer(IQTIAttribute)
 class IdentifierRefAttribute(TextLineAttribute):
 	pass
 
