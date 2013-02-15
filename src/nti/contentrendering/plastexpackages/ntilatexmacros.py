@@ -16,6 +16,7 @@ Base.figure.forcePars = False
 Base.minipage.blockType = True
 Base.parbox.blockType = True
 Base.centerline.blockType = True
+Base.hrule.blockType = True
 
 class _OneText(Base.Command):
 	args = 'text:str'
