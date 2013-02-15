@@ -724,7 +724,7 @@ class IShareable(interface.Interface):
 	def isSharedIndirectlyWith( principal ):
 		"Is this object indirectly shared with the given target?"
 
-	@deprecate("Use the attribute")
+#	@deprecate("Use the attribute") # The deprecation screws up validation because it adds parameters
 	def getFlattenedSharingTargetNames():
 		"""
 		:return: Set of usernames this object is shared with.
