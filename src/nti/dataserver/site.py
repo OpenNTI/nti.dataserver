@@ -156,7 +156,8 @@ class _BasedSiteManager(_ZLocalSiteManager):
 
 	def __reduce__(self):
 		raise TypeError("Should not be pickled")
-
+	def __getstate__(self):
+		raise TypeError("Should not be pickled")
 
 @interface.implementer(comp_interfaces.ISite)
 class _TrivialSite(_ZContained):

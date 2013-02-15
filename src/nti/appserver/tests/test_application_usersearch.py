@@ -126,16 +126,25 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 
 		assert_that( res.body, contains_string( str('sjohnson@nextthought.com') ) )
 
+		sj = res.json_body['Items'][0]
 		# We should have an edit link when we find ourself
-		assert_that( res.json_body['Items'][0], has_entry( 'Links',
-												  has_item( all_of(
-													  has_entry( 'href', "/dataserver2/users/sjohnson%40nextthought.com" ),
-													  has_entry( 'rel', 'edit' ) ) ) ) )
+		assert_that( sj, has_entry( 'Links',
+									has_item(
+										all_of(
+											has_entry( 'href', "/dataserver2/users/sjohnson%40nextthought.com" ),
+											has_entry( 'rel', 'edit' ) ) ) ) )
+		# also the impersonate link
+		assert_that( sj, has_entry( 'Links',
+									has_item(
+										all_of(
+											has_entry( 'href', "/dataserver2/logon.nti.impersonate" ),
+											has_entry( 'rel', 'logon.nti.impersonate' ) ) ) ) )
 
 		# We should have our name
-		assert_that( res.json_body['Items'][0], has_entry( 'realname', 'Steve Johnson' ) )
-		assert_that( res.json_body['Items'][0], has_entry( 'NonI18NFirstName', 'Steve' ) )
-		assert_that( res.json_body['Items'][0], has_entry( 'NonI18NLastName', 'Johnson' ) )
+		assert_that( sj, has_entry( 'realname', 'Steve Johnson' ) )
+		assert_that( sj, has_entry( 'NonI18NFirstName', 'Steve' ) )
+		assert_that( sj, has_entry( 'NonI18NLastName', 'Johnson' ) )
+
 
 	@WithSharedApplicationMockDS
 	def test_user_search_subset(self):

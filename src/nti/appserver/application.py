@@ -169,6 +169,9 @@ def createApplication( http_port,
 	# install a site manager, but fails to put it beneath the global site manager,
 	# leading to some breakage in ZCA apis...this can be fixed by setting the site manager
 	# to have a __bases__ that includes the global site manager.
+	# Hooking won't work because we install our local sites (see site_policies) beneath
+	# the global registry and switch into them, but the pyramid configuration still needs
+	# to be available
 	if pyramid_config is None:
 
 		pyramid_config = pyramid.config.Configurator( registry=component.getGlobalSiteManager(),

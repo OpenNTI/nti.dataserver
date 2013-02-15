@@ -34,8 +34,9 @@ logger = __import__('logging').getLogger(__name__)
 
 import transaction
 import pyramid_zodbconn
-import pyramid.security
-
+from pyramid_zodbconn import get_connection
+from pyramid.security import authenticated_userid
+from pyramid.threadlocal import get_current_request
 
 from zope.component.hooks import setSite, getSite, setHooks, clearSite
 
@@ -82,7 +83,7 @@ def _early_request_teardown(request):
 
 	transaction.commit()
 	request.environ['nti.early_teardown_happened'] = True
-	pyramid_zodbconn.get_connection(request).close()
+	get_connection(request).close()
 	setSite( None )
 	# Remove the close action that pyramid_zodbconn wants to do.
 	# The connection might have been reused by then.
@@ -91,15 +92,38 @@ def _early_request_teardown(request):
 			request.finished_callbacks.remove( callback )
 			break
 
+# Make zope site managers a bit more compatible with pyramid.
+from zope.site.site import LocalSiteManager as _ZLocalSiteManager
+def _notify( self, *events ):
+	for _ in self.subscribers( events, None ):
+		pass
+_ZLocalSiteManager.notify = _notify
+_ZLocalSiteManager.has_listeners = True
+_ZLocalSiteManager.settings = property( lambda s: get_current_request().nti_settings )
+
 class site_tween(object):
 	"""
 	Within the scope of a transaction, gets a connection and installs our
 	site manager. Records the active user and URL in the transaction.
 
-	Public for testing, mocking.
+	Public for testing, mocking. The alternative to using a class is
+	using a closure that captures the handler, but that's not
+	mockable.
 
-	The alternative to using a class is using a closure that captures the handler,
-	but that's not mockable.
+	.. warning ::
+		This only sets the current ZCA site. It *does not*
+		set the request's registry, or Pyramid's current registry
+		(:func:`pyramid.threadlocal.get_current_registry`). These must be
+		left as the global registry. Our sites extend this global registry
+		so it would seem that all the settings would be available.
+		However, Pyramid configures some things lazily and would thus
+		place some configuration in local sites; moreover, this
+		configuration is often not-persistent and causes errors committing
+		transactions (and we don't want to save it anyway). This is
+		specifically seen with renderers and renderer factories. Thus, one
+		must be careful using pyramid APIs that touch the current registry if there is a chance
+		that site-local configuration should be used. Fortunately, these APIs are rare.
+
 	"""
 
 	__slots__ = ('handler',)
@@ -108,7 +132,7 @@ class site_tween(object):
 		self.handler = handler
 
 	def __call__( self, request ):
-		conn = pyramid_zodbconn.get_connection( request )
+		conn = get_connection( request )
 		#conn.sync() # syncing the conn aborts the transaction.
 		site = conn.root()['nti.dataserver']
 		self._debug_site( site )
@@ -117,9 +141,9 @@ class site_tween(object):
 		site = get_site_for_request( request, site )
 
 		setSite( site )
+		# See comments in the class doc about why we cannot set the Pyramid request/current site
 		try:
 			self._configure_transaction( request )
-
 
 			return self.handler(request)
 		finally:
@@ -133,7 +157,7 @@ class site_tween(object):
 		# this is easier and faster.
 		request.early_request_teardown = _early_request_teardown
 		request.possible_site_names = request.environ['nti.possible_site_names']
-
+		request.nti_settings = request.registry.settings # shortcut
 		# In [15]: %%timeit
 		#   ....: r = pyramid.request.Request.blank( '/' )
 		#   ....: p(r)
@@ -153,7 +177,7 @@ class site_tween(object):
 		# and instead require our own .tweens.transaction_tween
 		# Now (and only now, that the site is setup since that's when we can access the DB
 		# and get the user) record info in the transaction
-		uid = pyramid.security.authenticated_userid( request )
+		uid = authenticated_userid( request )
 		if uid:
 			transaction.get().setUser( uid )
 
