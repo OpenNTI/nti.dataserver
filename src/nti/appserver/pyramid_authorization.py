@@ -149,7 +149,7 @@ def _caching_permission_check(cache_name, permission, obj, request):
 	# components, even if the request itself does not have a registry.
 	# One way to fix this (mostly) would be to have a traversal listener
 	# like the zope.site.threadSiteSubscriber that does the same thing for
-	# pyramid.threadlocal. Here we cheap out
+	# pyramid.threadlocal, but see zope_site_tween for why that doesn't work Here we cheap out
 	# and re-implement has_permission to use the desired registry.
 	check_value = _has_permission( permission, obj, reg, authn_policy, principals )
 	if not check_value and authn_policy is not None:
@@ -171,10 +171,7 @@ def _caching_permission_check(cache_name, permission, obj, request):
 
 def _get_effective_principals( request ):
 	""" Return the principals as a tuple, plus the auth policy and registry (optimization) """
-	try:
-		reg = request.registry
-	except AttributeError:
-		reg = component.getSiteManager()
+	reg = component.getSiteManager() # not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
 
 	authn_policy = reg.queryUtility(IAuthenticationPolicy)
 	if authn_policy is None:
@@ -207,3 +204,7 @@ def _has_permission( permission, context, reg, authn_policy, principals  ):
 						 'authorization policy') # should never happen
 
 	return authz_policy.permits(context, principals, permission)
+
+def has_permission( permission, context, request ):
+	principals, authn_policy, reg = _get_effective_principals( request )
+	return _has_permission( permission, context, reg, authn_policy, principals )

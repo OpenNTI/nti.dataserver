@@ -55,6 +55,7 @@ from nti.dataserver import authorization as nauth
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
 from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME, REL_FORGOT_PASSCODE, REL_RESET_PASSCODE
+from nti.appserver.pyramid_authorization import has_permission
 
 from nti.ntiids import ntiids
 
@@ -322,8 +323,8 @@ class _SimpleExistingUserLinkProvider(object):
 
 	def __call__(self):
 		if self.user.has_password():
-			return Link( self.request.route_path( REL_LOGIN_NTI_PASSWORD, _query={'username': self.user.username}),
-						 rel=REL_LOGIN_NTI_PASSWORD )
+			return Link( self.request.route_path( self.rel, _query={'username': self.user.username}),
+						 rel=self.rel )
 
 @interface.implementer( app_interfaces.ILogonLinkProvider )
 @component.adapter( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
@@ -342,6 +343,7 @@ class _SimpleMissingUserFacebookLinkProvider(object):
 @component.adapter( nti_interfaces.IFacebookUser, pyramid.interfaces.IRequest )
 class _SimpleExistingUserFacebookLinkProvider(_SimpleMissingUserFacebookLinkProvider):
 	pass
+
 
 def _prepare_oid_link( request, username, rel, params=() ):
 	query = dict(params)
@@ -586,6 +588,25 @@ def impersonate_user(request):
 	# Need to think through this some more. Might be able to use the metadata providers in repoze.who,
 	# or sessions to accomplish this.
 	return _specified_username_logon( request, allow_no_username=False, require_matching_username=False, audit=True )
+
+@interface.implementer( app_interfaces.IAuthenticatedUserLinkProvider )
+@component.adapter( nti_interfaces.IUser, pyramid.interfaces.IRequest )
+class ImpersonationLinkProvider(object):
+	"""
+	Add the impersonation link if available.
+	"""
+	rel = REL_LOGIN_IMPERSONATE
+
+	def __init__( self, user, req ):
+		self.request = req
+		self.user = user
+
+	def get_links( self ):
+		if has_permission( nauth.ACT_IMPERSONATE, self.user, self.request ):
+			return (Link( self.request.route_path( self.rel ),
+						 rel=self.rel ),)
+		return ()
+
 
 import pyramid_openid.view
 

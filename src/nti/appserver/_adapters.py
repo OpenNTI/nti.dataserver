@@ -345,10 +345,7 @@ class _AuthenticatedUserLinkAdder(object):
 			return
 
 		links = list( external.get( StandardExternalFields.LINKS, () ) )
-		try:
-			reg = request.registry
-		except AttributeError:
-			reg = get_current_registry() # match pyramid.security.authenticated_userid
+		reg = component.getSiteManager() # not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
 
 		for provider in reg.subscribers( (original,request), app_interfaces.IAuthenticatedUserLinkProvider ):
 			links.extend( provider.get_links() )
