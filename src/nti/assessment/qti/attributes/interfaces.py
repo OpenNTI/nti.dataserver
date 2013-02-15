@@ -445,13 +445,13 @@ class ImathConstantAttrGroup(IAttrGroup):
 	name = ChoiceAttribute(title="Constant name", vocabulary=qt_interfaces.MATH_CONSTANTS_VOCABULARY, required=True)
 	
 class IrandomIntegerAttrGroup(IAttrGroup):
-	min = IntegerOrVariableRefAttribute(interface.Interface, title='Min int value or ref. template variable', required=True, default=0)
-	max = IntegerOrVariableRefAttribute(interface.Interface, title='Max int value or ref. template variable', required=True)
-	step = IntegerOrVariableRefAttribute(interface.Interface, title='Step int value or ref. template variable', required=False, default=1)
+	min = IntegerOrVariableRefAttribute(title='Min int value or ref. template variable', required=True, default=0)
+	max = IntegerOrVariableRefAttribute(title='Max int value or ref. template variable', required=True)
+	step = IntegerOrVariableRefAttribute(title='Step int value or ref. template variable', required=False, default=1)
 
 class IrandomFloatAttrGroup(IAttrGroup):
-	min = FloatOrVariableRefAttribute(interface.Interface, title='Min float value or ref. template variable', required=True, default=0)
-	max = FloatOrVariableRefAttribute(interface.Interface, title='Max float value or ref. template variable', required=True)
+	min = FloatOrVariableRefAttribute(title='Min float value or ref. template variable', required=True, default=0)
+	max = FloatOrVariableRefAttribute(title='Max float value or ref. template variable', required=True)
 	
 class IitemSubsetAttrGroup(IAttrGroup):
 	sectionIdentifier = IdentifierRefAttribute(title='Section identifier', required=True)
@@ -475,7 +475,7 @@ class IoutcomeMinimumAttrGroup(IAttrGroup):
 	
 class IroundToAttrGroup(IAttrGroup):
 	roundingMode = ChoiceAttribute(title="The rounding mode", vocabulary=qt_interfaces.ROUNDING_MODE_VOCABULARY, required=True)
-	figures = IntegerOrVariableRefAttribute(interface.Interface, title='The number of figures to round to', required=True)
+	figures = IntegerOrVariableRefAttribute(title='The number of figures to round to', required=True)
 	
 class IstatsOperatorAttrGroup(IAttrGroup):
 	name = ChoiceAttribute(title="The rounding mode", vocabulary=qt_interfaces.STAT_OPERATOR_NAMES_VOCABULARY, required=True)
@@ -484,10 +484,10 @@ class ImathOperatorAttrGroup(IAttrGroup):
 	name = ChoiceAttribute(title="The math operator", vocabulary=qt_interfaces.MATH_OPERATORS_VOCABULARY, required=True)
 		
 class IrepeatAttrGroup(IAttrGroup):
-	numberRepeats = IntegerOrVariableRefAttribute(interface.Interface, title='The number of repeats', required=True)
+	numberRepeats = IntegerOrVariableRefAttribute(title='The number of repeats', required=True)
 
 class IindexAttrGroup(IAttrGroup):
-	n = IntegerOrVariableRefAttribute(interface.Interface, title='The index', required=True)
+	n = IntegerOrVariableRefAttribute(title='The index', required=True)
 	
 class IsubstringAttrGroup(IAttrGroup):
 	caseSensitive= BoolAttribute(title='Used to control whether or not the substring is matched case sensitively', required=True, default=True)
@@ -496,8 +496,8 @@ class IfieldValueAttrGroup(IAttrGroup):
 	fieldIdentifier = IdentifierRefAttribute(title='The identifier of the field to be selected', required=True)
 	
 class IanyNAttrGroup(IAttrGroup):
-	min = IntegerOrVariableRefAttribute(interface.Interface, title='The minimum number of sub-expressions that must be true', required=True)
-	max = IntegerOrVariableRefAttribute(interface.Interface, title='The maximum number of sub-expressions that may be true', required=True)
+	min = IntegerOrVariableRefAttribute(title='The minimum number of sub-expressions that must be true', required=True)
+	max = IntegerOrVariableRefAttribute(title='The maximum number of sub-expressions that may be true', required=True)
 	
 class IstringMatchAttrGroup(IAttrGroup):
 	caseSensitive = BoolAttribute(title='Whether or not the match is to be carried out case sensitively', required=True)
@@ -514,7 +514,7 @@ class IequalAttrGroup(IAttrGroup):
 	
 class IequalRoundedAttrGroup(IAttrGroup):
 	roundingMode = ChoiceAttribute(title="The tolerance mode", vocabulary=qt_interfaces.ROUNDING_MODE_VOCABULARY, required=True, default='significantFigures')
-	figures = IntegerOrVariableRefAttribute(interface.Interface, title='Numbers are rounded to a given number of significantFigures or decimalPlaces', required=True)
+	figures = IntegerOrVariableRefAttribute(title='Numbers are rounded to a given number of significantFigures or decimalPlaces', required=True)
 	
 class IinsideAttrGroup(IAttrGroup):
 	shape = ChoiceAttribute(title="The shape of the area", vocabulary=qt_interfaces.SHAPE_TYPES_VOCABULARY, required=True)
