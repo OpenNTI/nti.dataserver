@@ -108,44 +108,30 @@ class _FPSPaymentProcessor(FPSIO):
 			if trax is None: 
 				message = 'Transaction %s for user %s could not be found in AWS' % (fp.TransactionID, user)
 				logger.warn(message)
-#		else:
-#			start_time = time.mktime(date.fromtimestamp(purchase.StartTime).timetuple())
-#			charges = self.get_charges(purchase_id=purchase_id, start_time=start_time, api_key=)
-#			if charges:
-#				charge = charges[0]
-#				notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
-#			elif sp.token_id:
-#				token = self.get_stripe_token(sp.token_id, api_key=api_key)
-#				if token is None:
-#					# if the token cannot be found it means there was a db error
-#					# or the token has been deleted from stripe.
-#					message = 'Purchase %s/%r for user %s could not found in Stripe' % (sp.token_id, purchase_id, username)
-#					logger.warn(message)
-#					notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
-#				elif token.used:
-#					if not purchase.has_completed():
-#						# token has been used and no charge has been found, means the transaction failed
-#						notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
-#				elif not purchase.is_pending(): #no charge and unused token
-#					message = 'Please check status of purchase %r for user %s' % (purchase_id, username)
-#					logger.warn(message)
-#					
-#		if charge:
-#			if charge.failure_message:
-#				if not purchase.has_failed():
-#					notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, charge.failure_message))
-#			elif charge.refunded:
-#				if not purchase.is_refunded():
-#					notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
-#			elif charge.paid:
-#				if not purchase.has_succeeded():
-#					notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
-#				
-#			notify(store_interfaces.PurchaseAttemptSynced(purchase_id, username))
-#				
-#		return charge
-#	
-#		class IFPSPurchase(interface.Interface):
-#	TokenID = schema.TextLine(title='Token id', required=False)
-#	TransactionID = schema.TextLine(title='Transaction id', required=False)
-#	CallerReference = schema.TextLine(title='NTIID reference id', required=False)
+		else:
+			traxs = None
+			start_time = time.mktime(date.fromtimestamp(purchase.StartTime).timetuple())
+			if fp.TokenID:
+				traxs = self._get_transactions(start_time, token=fp.TokenID)
+			elif fp.CallerReference:
+				traxs = self._get_transactions(start_time, caller_reference=fp.CallerReference)
+			
+			trax = traxs[0] if traxs else None
+			
+		if trax:
+			status = trax.TransactionStatus,
+			if	status in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE) and not purchase.has_failed():
+				notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, trax.StatusMessage))
+			elif status == store_interfaces.PA_STATE_SUCCESS and not purchase.has_succeeded():
+				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
+			elif status == store_interfaces.PA_STATE_CANCELED and not purchase.has_failed():
+				notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, trax.StatusMessage))
+			elif status == store_interfaces.PA_STATE_REFUNDED and not purchase.is_refunded():
+				notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
+			elif status == store_interfaces.PA_STATE_DISPUTED and not purchase.is_disputed():
+				notify(store_interfaces.PurchaseAttemptDisputed(purchase_id, username))
+
+			notify(store_interfaces.PurchaseAttemptSynced(purchase_id, username))
+				
+		return trax
+
