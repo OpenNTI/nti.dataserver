@@ -57,19 +57,6 @@ class IInternalObjectExternalizer(interface.Interface):
 	be externalized.
 	"""
 
-	__external_oids__ = interface.Attribute(
-		"""For objects whose external form includes object references (OIDs),
-		this attribute is a list of key paths that should be resolved. The
-		values for the key paths may be singleton items or mutable sequences.
-		Resolution may involve placing a None value for a key.""")
-
-	__external_resolvers__ = interface.Attribute(
-		""" For objects who need to perform arbitrary resolution from external
-		forms to internal forms, this attribute is a map from key path to
-		a function of three arguments, the dataserver, the parsed object, and the value to resolve.
-		It should return the new value. Note that the function here is at most
-		a class or static method, not an instance method. """)
-
 	__external_can_create__ = interface.Attribute(
 		""" This must be set to true, generally at the class level, for objects
 		that can be created by specifying their Class name. """)
@@ -244,6 +231,19 @@ class IInternalObjectUpdater(interface.Interface):
 	An adapter that can be used to update an internal object from
 	its externalized representation.
 	"""
+
+	__external_oids__ = interface.Attribute(
+		"""For objects whose external form includes object references (OIDs),
+		this attribute is a list of key paths that should be resolved. The
+		values for the key paths may be singleton items or mutable sequences.
+		Resolution may involve placing a None value for a key.""")
+
+	__external_resolvers__ = interface.Attribute(
+		""" For objects who need to perform arbitrary resolution from external
+		forms to internal forms, this attribute is a map from key path to
+		a function of three arguments, the dataserver, the parsed object, and the value to resolve.
+		It should return the new value. Note that the function here is at most
+		a class or static method, not an instance method. """)
 
 	def updateFromExternalObject( externalObject, *args, **kwargs ):
 		"""

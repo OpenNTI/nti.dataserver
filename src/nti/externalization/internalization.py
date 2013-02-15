@@ -132,40 +132,41 @@ def find_factory_for( externalized_object, registry=component ):
 	return factory_finder.find_factory(externalized_object)
 
 
-def _resolve_externals(containedObject, externalObject, registry=component, context=None):
+def _resolve_externals(object_io, updating_object, externalObject, registry=component, context=None ):
 	# Run the resolution steps on the external object
-	if hasattr( containedObject, '__external_oids__'):
-		for keyPath in containedObject.__external_oids__:
-			# TODO: This version is very simple, generalize it
-			if keyPath not in externalObject:
-				continue
-			externalObjectOid = externalObject.get( keyPath )
-			unwrap = False
-			if not isinstance( externalObjectOid, collections.MutableSequence ):
-				externalObjectOid = [externalObjectOid,]
-				unwrap = True
 
-			for i in range(0,len(externalObjectOid)):
-				resolver = registry.queryMultiAdapter( (containedObject,externalObjectOid[i]),
-													   interfaces.IExternalReferenceResolver )
-				if resolver:
-					externalObjectOid[i] = resolver.resolve( externalObjectOid[i] )
-			if unwrap and keyPath in externalObject: # Only put it in if it was there to start with
-				externalObject[keyPath] = externalObjectOid[0]
+	for keyPath in getattr( object_io, '__external_oids__', () ):
+		# TODO: This version is very simple, generalize it
+		if keyPath not in externalObject:
+			continue
+		externalObjectOid = externalObject.get( keyPath )
+		unwrap = False
+		if not isinstance( externalObjectOid, collections.MutableSequence ):
+			externalObjectOid = [externalObjectOid,]
+			unwrap = True
 
-	if hasattr( containedObject, '__external_resolvers__'):
-		for key, value in containedObject.__external_resolvers__.iteritems():
-			if not externalObject.get( key ): continue
-			# classmethods and static methods are implemented with descriptors,
-			# which don't work when accessed through the dictionary in this way,
-			# so we special case it so instances don't have to.
-			if isinstance( value, classmethod ) or isinstance( value, staticmethod ):
-				value = value.__get__( None, containedObject.__class__ )
-			elif len( inspect.getargspec( value )[0] ) == 4: # instance method
-				_value = value
-				value = lambda x, y, z: _value( containedObject, x, y, z )
+		for i in range(0,len(externalObjectOid)):
+			resolver = registry.queryMultiAdapter( (updating_object,externalObjectOid[i]),
+												   interfaces.IExternalReferenceResolver )
+			if resolver:
+				externalObjectOid[i] = resolver.resolve( externalObjectOid[i] )
+		if unwrap and keyPath in externalObject: # Only put it in if it was there to start with
+			externalObject[keyPath] = externalObjectOid[0]
 
-			externalObject[key] = value( context, externalObject, externalObject[key] )
+
+	for ext_key, resolver_func in getattr( object_io, '__external_resolvers__', {} ).iteritems():
+		if not externalObject.get( ext_key ):
+			 continue
+		# classmethods and static methods are implemented with descriptors,
+		# which don't work when accessed through the dictionary in this way,
+		# so we special case it so instances don't have to.
+		if isinstance( resolver_func, classmethod ) or isinstance( resolver_func, staticmethod ):
+			resolver_func = resolver_func.__get__( None, object_io.__class__ )
+		elif len( inspect.getargspec( resolver_func )[0] ) == 4: # instance method
+			_resolver_func = resolver_func
+			resolver_func = lambda x, y, z: _resolver_func( object_io, x, y, z )
+
+		externalObject[ext_key] = resolver_func( context, externalObject, externalObject[ext_key] )
 
 # Things we don't bother trying to internalize
 _primitives = six.string_types + (numbers.Number,bool)
@@ -251,18 +252,21 @@ def update_from_external_object( containedObject, externalObject,
 			externalObject[k] = _recall( k, factory(), v, kwargs ) if factory else v
 
 
-	_resolve_externals( containedObject, externalObject, registry=registry, context=context )
-
 	updater = None
 	if hasattr( containedObject, 'updateFromExternalObject' ):
 		updater = containedObject
-	elif require_updater:
-		updater = registry.getAdapter( containedObject, interfaces.IInternalObjectUpdater )
 	else:
-		updater = registry.queryAdapter( containedObject, interfaces.IInternalObjectUpdater )
+		if require_updater:
+			get = registry.getAdapter
+		else:
+			get = registry.queryAdapter
 
+		updater = get( containedObject, interfaces.IInternalObjectUpdater )
 
 	if updater:
+		# Let the updater resolve externals too
+		_resolve_externals( updater, containedObject, externalObject, registry=registry, context=context )
+
 		updated = None
 		# The signature may vary.
 		argspec = inspect.getargspec( updater.updateFromExternalObject )
