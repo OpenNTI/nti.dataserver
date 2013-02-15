@@ -8,20 +8,19 @@ from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import schema
-from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
 from .. import interfaces as qti_interfaces
 from ..basic import interfaces as basic_interfaces
 from ..attributes import interfaces as attr_interfaces
 	
-class IobjectFlow(interface.Interface):
+class IobjectFlow(qti_interfaces.IQTIElement):
 	pass
 
-class Iinline(interface.Interface):
+class Iinline(qti_interfaces.IQTIElement):
 	pass
 			
-class Iblock(interface.Interface):
+class Iblock(qti_interfaces.IQTIElement):
 	pass
 	
 class Iflow(IobjectFlow, attr_interfaces.IflowAttrGroup):

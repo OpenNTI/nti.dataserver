@@ -8,16 +8,15 @@ from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import schema
-from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
 from .. import interfaces as qti_interfaces
 from ..expression import interfaces as exp_interfaces
 
-class IoutcomeRule(interface.Interface):
+class IoutcomeRule(qti_interfaces.IQTIElement):
 	pass
 	
-class IoutcomeProcessing(interface.Interface, IFiniteSequence, qti_interfaces.IConcrete):
+class IoutcomeProcessing(IFiniteSequence, qti_interfaces.IConcrete):
 	IoutcomeRule = schema.List(schema.Object(IoutcomeRule), title="Order list of outcome rules", min_length=0)
 	
 class IoutcomeIf(qti_interfaces.IConcrete):
