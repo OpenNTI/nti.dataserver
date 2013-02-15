@@ -157,7 +157,7 @@ setup(
 		'html5lib == 0.95',
 		'logilab-common >= 0.58.3',
 		'lxml >= 3.1.0', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
-		'nameparser >= 0.2.6', # Human name parsing
+		'nameparser >= 0.2.7', # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
