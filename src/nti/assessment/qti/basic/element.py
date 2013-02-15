@@ -15,7 +15,7 @@ from zope.annotation import interfaces as an_interfaces
 
 from persistent import Persistent
 
-from nti.assessment.qti import interfaces as qti_interfaces
+from .. import interfaces as qti_interfaces
 
 def get_schema_fields(iface):
 	
@@ -25,6 +25,7 @@ def get_schema_fields(iface):
 		for name in names or ():
 			sch_def = fields.get(name, None)
 			if sch_def:
+				name = getattr(sch_def, '__name__', name)
 				attributes[name] = sch_def
 		
 		for base in iface.getBases() or ():
@@ -65,13 +66,16 @@ def qti_creator(cls):
 			r = get_schema_fields(base)
 			definitions.update(r)
 			
-	setattr(cls,'_v_definitions',definitions)
+	setattr(cls, '_v_definitions', definitions)
 	
 	for k, v in definitions.items():
 		if sch_intefaces.IObject.providedBy(v):
-			iface = None
-			print(dir(v))
-			setattr(cls, k, property(getter(k), setter(k, iface)))
+			iface = v.schema
+			pname = "_%s" % k
+			if not hasattr(cls, k):
+				setattr(cls, k, property(getter(pname), setter(pname, iface)))
+			
+	return cls
 
 	
 @interface.implementer(an_interfaces.IAttributeAnnotatable)

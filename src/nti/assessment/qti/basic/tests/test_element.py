@@ -11,23 +11,41 @@ import unittest
 
 from zope import interface
 
-from nti.assessment.qti.basic._element import qti_creator
-from nti.assessment.qti.content import interfaces as cnt_interfaces
+from nti.assessment.qti.basic.element import qti_creator
+from nti.assessment.qti.expression import interfaces as exp_interfaces
 
 from nti.assessment.qti.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, has_length)
-
-				
-class TestQTIElement(ConfiguringTestBase):
+from hamcrest import (assert_that, is_, none, has_property )
+		
+class TestBasicElement(ConfiguringTestBase):
 	
-	def test_find_concrete_elements(self):
+	def test_simple_object(self):
+		
 		@qti_creator
-		@interface.implementer(cnt_interfaces.IsimpleInline)
-		class A(object):
+		@interface.implementer(exp_interfaces.IintegerToFloat)
+		class Foo(object):
 			pass
 		
-		print(A)
+		@interface.implementer(exp_interfaces.Iexpression)
+		class Exp(object):
+			pass 
+		
+		assert_that(Foo, has_property('_v_definitions'))
+		assert_that(Foo, has_property('expression'))
+		
+		f = Foo()
+		e = Exp()
+		f.expression = e
+		assert_that(f.expression, is_(e))
+		f.expression = None
+		assert_that(f.expression, is_(none()))
+		
+		try:
+			f.expression = 'test'
+			self.fail('Was able to set invalid value')
+		except:
+			pass
 
 	
 if __name__ == '__main__':
