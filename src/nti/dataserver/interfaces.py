@@ -30,6 +30,7 @@ from zope.interface.common.mapping import IFullMapping
 from zope.mimetype import interfaces as mime_interfaces
 
 from nti.contentrange import interfaces as rng_interfaces
+from nti.utils.schema import Object
 
 class ACLLocationProxy(LocationProxy):
 	"""
@@ -97,16 +98,16 @@ class IShardInfo(zope.component.interfaces.IPossibleSite,zope.container.interfac
 
 class IShardLayout(interface.Interface):
 
-	dataserver_folder = schema.Object(IDataserverFolder,
+	dataserver_folder = Object(IDataserverFolder,
 									  title="The root folder for the dataserver in this shard")
 
-	users_folder = schema.Object(zope.site.interfaces.IFolder,
+	users_folder = Object(zope.site.interfaces.IFolder,
 								 title="The folder containing users that live in this shard." )
 
-	shards = schema.Object( zope.container.interfaces.IContained,
+	shards = Object( zope.container.interfaces.IContained,
 							title="The root shard will contain a shards folder.",
 							required=False)
-	root_folder = schema.Object( zope.site.interfaces.IRootFolder,
+	root_folder = Object( zope.site.interfaces.IRootFolder,
 								 title="The root shard will contain the root folder",
 								 required=False )
 
@@ -297,7 +298,7 @@ class IAnchoredRepresentation(IContained):
 	of which are not well understood and need to be better documented. See the Highlight class for
 	a list of known fields.
 	"""
-	applicableRange = schema.Object(rng_interfaces.IContentRangeDescription,
+	applicableRange = Object(rng_interfaces.IContentRangeDescription,
 									title="The range of content to which this representation applies or is anchored." )
 
 class IContainerIterable(interface.Interface):
@@ -480,9 +481,9 @@ class IUserEvent(interface.interfaces.IObjectEvent):
 	"""
 	An object event where the object is a user.
 	"""
-	object = schema.Object(IUser,
+	object = Object(IUser,
 						   title="The User (an alias for user). You can add event listeners based on the interfaces of this object.")
-	user = schema.Object(IUser,
+	user = Object(IUser,
 						 title="The User (an alias for object). You can add event listeners based on the interfaces of this object.")
 from nti.utils.property import alias
 
@@ -712,18 +713,32 @@ class IShareable(interface.Interface):
 		to be empty.
 		"""
 
+	def isSharedWith( principal ):
+		"""
+		Is this object directly or indirectly shared with the given principal?
+		"""
+
+	def isSharedDirectlyWith( principal ):
+		"Is this object directly shared with the given target?"
+
+	def isSharedIndirectlyWith( principal ):
+		"Is this object indirectly shared with the given target?"
+
 	@deprecate("Use the attribute")
 	def getFlattenedSharingTargetNames():
 		"""
 		:return: Set of usernames this object is shared with.
 		"""
 
+	# TODO: How to deprecate this property?
+#	@deprecate("These names are not properly global")
 	flattenedSharingTargetNames = schema.Set(
 		title="The usernames of all the users (including communities, etc) this obj is shared with.",
 		value_type=schema.TextLine(title="The username" ) )
 
-	# TODO: This should add the 'sharingTargets' property and require it? See MessageInfo and
-	# authorization_acl._ShareableModeledContentACLProvider
+	sharingTargets = schema.Set(
+		title="A set of entities this object is directly shared with",
+		value_type=Object(IEntity, title="An entity shared with") )
 
 class IShareableModeledContent(IShareable,IModeledContent):
 	"""
@@ -960,7 +975,7 @@ class ISectionInfo(IModeledContent):
 	Describes a section of a class.
 	"""
 
-	InstructorInfo = schema.Object(
+	InstructorInfo = Object(
 		IInstructorInfo,
 		title="The instructors of the section" )
 

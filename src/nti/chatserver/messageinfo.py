@@ -78,7 +78,11 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 
 	Sender = alias('Creator')
 	creator = alias('Creator')
+
+	# TODO: Must define the sharingTargets property,
+	# this is deprecated
 	flattenedSharingTargetNames = alias('sharedWith') # ISharableModeledContent
+
 	id = read_alias('ID')
 	MessageId = read_alias('ID') # bwc
 	__name__ = alias('ID')

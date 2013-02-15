@@ -8,7 +8,7 @@ import persistent
 import collections
 
 
-from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import IInternalObjectIO, IExternalObject
 from nti.externalization.externalization import stripSyntheticKeysFromExternalDictionary, toExternalObject
 
 
@@ -169,3 +169,15 @@ def _make_getitem( attr_name ):
 				raise KeyError( i )
 
 	return __getitem__
+
+@interface.implementer(IInternalObjectIO)
+class UserContentRootInternalObjectIO(object):
+
+	def __init__( self, context ):
+		self.context = context
+
+	def toExternalObject(self):
+		pass
+
+	def updateFromExternalObject( self, parsed ):
+		pass
