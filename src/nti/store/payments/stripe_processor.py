@@ -174,7 +174,7 @@ class _StripePaymentProcessor(StripeIO):
 			notify(pay_interfaces.RegisterStripeToken(purchase_id, username, token))
 		
 			# charge card, user description for tracking purposes
-			descid = "%s:%s:%s" % (username, customer_id, purchase_id)
+			descid = "%s:%s:%s" % (purchase_id, username, customer_id)
 			charge = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
 			
 			notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
@@ -257,8 +257,8 @@ class _StripePaymentProcessor(StripeIO):
 			if etype in ("charge.succeeded", "charge.refunded", "charge.failed", "charge.dispute.created",
 						 "charge.dispute.updated"):
 				tracks = data.get('description', u'').split(":")
-				username = tracks[0] if len(tracks) >= 3 else u''
-				purchase_id = tracks[2] if len(tracks) >= 3 else u''
+				purchase_id = tracks[0] if len(tracks) >= 2 else u''
+				username = tracks[1] if len(tracks) >= 2 else u''
 				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 				if purchase:
 					if etype in ("charge.succeeded") and not purchase.has_succeeded():
