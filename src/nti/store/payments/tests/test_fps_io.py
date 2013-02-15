@@ -39,7 +39,7 @@ class TestFPSIO(unittest.TestCase):
 		assert_that(s, is_not(None))
 		
 	def test_cbi_url(self):
-		s = self.fpsio.get_cbui_url('foo', 'http://localhost', 300, payment_reason='payment')
+		s = self.fpsio.get_cbui_url('http://localhost', 300, payment_reason='payment')
 		assert_that(s, is_not(None))
 		urlparse.urlparse(s)
 		

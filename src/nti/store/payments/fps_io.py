@@ -55,15 +55,16 @@ class FPSIO(object):
 		except Exception, e:
 			raise FPSException(str(e))
 		
-	def get_cbui_url(self, caller_reference, return_url, amount, currency='USD', payment_reason=None, pipeline_name=None):
+	def get_cbui_url(self, return_url, amount, currency='USD',caller_reference=None, payment_reason=None, pipeline_name=None):
 		"""
 		Returns a [aws-fps] url to start a payment process
 		
-		:caller_reference:  buyer/caller/NTI transaction reference id
 		:return_url: URL to return to after payment operation (submit/cancalation)
+		:caller_reference:  buyer/caller/NTI transaction reference id
 		"""
 		payment_reason = payment_reason or ''
 		pipeline_name = pipeline_name or SINGLE_USE_PIPIELINE
+		caller_reference = caller_reference or str(uuid.uuid1())
 		inputs = {
 				'transactionAmount':	amount,
 				'currencyCode':		 	currency,
