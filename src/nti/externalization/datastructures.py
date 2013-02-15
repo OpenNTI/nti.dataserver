@@ -40,6 +40,8 @@ from .interfaces import LocatedExternalDict, LocatedExternalList
 class ExternalizableDictionaryMixin(object):
 	""" Implements a toExternalDictionary method as a base for subclasses. """
 
+	#: If true, then when asked for the standard dictionary, we will instead
+	#: produce the *minimal* dictionary. See :func:`~to_minimal_standard_external_dictionary`
 	__external_use_minimal_base__ = False
 
 	def __init__(self, *args):
