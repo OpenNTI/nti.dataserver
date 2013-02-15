@@ -823,18 +823,13 @@ class IBookmark(ISelectedRange):
 	but automatically selected by the application).
 	"""
 
-IHIGHLIGHT_STYLE_VOCABULARY = schema.vocabulary.SimpleVocabulary(
-	[schema.vocabulary.SimpleTerm(_x)
-	 for _x
-	 in ('plain','suppressed')])
-
 class IHighlight(ISelectedRange):
 	"""
 	A highlighted portion of content the user wishes to remember.
 	"""
 	style = schema.Choice(
-		title=u'The style of the highlight',
-		vocabulary=IHIGHLIGHT_STYLE_VOCABULARY,
+		title='The style of the highlight',
+		values=('plain', 'suppressed'),
 		default="plain")
 
 from nti.contentfragments import schema as frg_schema
@@ -915,7 +910,7 @@ class INote(IHighlight,IThreadable):
 	body = interface.Attribute(
 		"""
 		An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
-		of :class:`IModeledContent` such as :class:`ICanvas`.
+		of :class:`IModeledContent` such as :class:`ICanvas`.)
 		"""
 		)
 

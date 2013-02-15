@@ -20,4 +20,6 @@
 	<exclude package="zope.file" file="browser.zcml" />
 	<include package="zope.file" />
 
+	<include package=".forums" />
+
 </configure>
