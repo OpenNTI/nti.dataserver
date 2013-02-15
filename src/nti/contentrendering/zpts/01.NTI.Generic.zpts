@@ -57,3 +57,6 @@ name: pageref
 name: caption*
 <div tal:condition="not:self/style" class="caption" data-foo="foobar"><span tal:content="self">Caption text</span></div>
 <div tal:condition="self/style" class="caption" tal:attributes="style self/style/inline"><span tal:content="self">Caption text</span></div>
+
+name: hrule
+<div class="hrule"></div>
