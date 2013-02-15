@@ -29,6 +29,7 @@ from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentfragments import censor
 
 from nti.dataserver import mimetype
+from nti.dataserver.users import entity
 from nti.dataserver import contenttypes
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.base import _make_getitem
@@ -79,9 +80,28 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 	Sender = alias('Creator')
 	creator = alias('Creator')
 
-	# TODO: Must define the sharingTargets property,
 	# this is deprecated
 	flattenedSharingTargetNames = alias('sharedWith') # ISharableModeledContent
+
+	def getFlattenedSharingTargetNames( self ):
+		return self.flattenedSharingTargetNames # this is deprecated too
+
+	@property
+	def sharingTargets(self):
+		result = set()
+		for x in self.sharedWith:
+			x = entity.Entity.get_entity( x )
+			if x:
+				result.add( x )
+
+		return result
+	def clearSharingTargets(self):
+		self.sharedWith = ()
+
+	# TODO; We should probably implement some of these
+	def addSharingTarget(self, *args):
+		raise NotImplementedError()
+	isSharedDirectlyWith = isSharedIndirectlyWith = isSharedWith = addSharingTarget
 
 	id = read_alias('ID')
 	MessageId = read_alias('ID') # bwc

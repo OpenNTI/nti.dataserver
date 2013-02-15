@@ -476,16 +476,11 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	_DENY_ALL = True
 
 	def _get_sharing_target_names( self ):
-		# Certain objects that strictly implement IShareableModeledContent
-		# only provide the names of the sharing targets, not the
-		# actual targets themselves, notably, MessageInfo. These cannot
-		# currently be shared with groups that need to be expanded anyway.
-		if not hasattr( self.context, 'sharingTargets' ):
-			return self.context.flattenedSharingTargetNames
 		result = set()
 		# By expanding in this way, in certain cases we can get
 		# multiple entries for the creator. That's OK, because the creator
 		# ACE comes first, and because they are both 'allow' entries
+		# TODO: See flattenedSharingTargetNames, very similar
 		sharing_targets = self.context.sharingTargets
 		for target in sharing_targets:
 			expanded = nti_interfaces.IUsernameIterable( target, None )
