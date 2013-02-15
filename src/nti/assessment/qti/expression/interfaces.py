@@ -8,12 +8,11 @@ from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import schema
-from zope import interface
 
 from .. import interfaces as qti_interfaces
 from ..attributes import interfaces as attr_interfaces
 
-class Iexpression(interface.Interface):
+class Iexpression(qti_interfaces.IQTIElement):
 	pass
 	
 class IbaseValue(Iexpression, attr_interfaces.IbaseValueAttrGroup, qti_interfaces.IConcrete):

@@ -77,9 +77,14 @@ DATA_TYPES_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.Si
 
 # interfaces
 
-class IConcrete(interface.Interface):
+class IQTIElement(interface.Interface):
 	"""
-	Marker interface for concreate QTI classes
+	Marker interface for QTI classes
+	"""
+	
+class IConcrete(IQTIElement):
+	"""
+	Marker interface for concrete QTI classes
 	"""
 	__display_name__ = interface.Attribute("Display name")
 

@@ -10,9 +10,12 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import interface
 from zope.container import contained as zcontained
+from zope.schema import interfaces as sch_intefaces
 from zope.annotation import interfaces as an_interfaces
 
 from persistent import Persistent
+
+from nti.assessment.qti import interfaces as qti_interfaces
 
 def get_schema_fields(iface):
 	
@@ -22,7 +25,7 @@ def get_schema_fields(iface):
 		for name in names or ():
 			sch_def = fields.get(name, None)
 			if sch_def:
-				attributes[name] = (sch_def, iface)
+				attributes[name] = sch_def
 		
 		for base in iface.getBases() or ():
 			_travel(base, attributes)
@@ -38,26 +41,39 @@ def getter(name, default=None):
 
 def setter(name, iface=None):
 	def function(self, value):
+		if iface is not None and value is not None:
+			assert iface.providedBy(value)
 		setattr(self, name, value)
 	return function
 
-class MetaQTIElement(type):
+def qti_creator(cls):
+	"""
+	Class decorator that checks the implemented interfaces and creates the corresponding schema fields
+	This decorator should be the last decorator called in the class
 	
-	def __new__(cls, name, bases, clsdict):
-		t = type.__new__(cls, name, bases, clsdict)
+	@qti_creator
+	@implementer(I1)
+    class C(object):
+       pass
+	"""
+	implemented = getattr(cls, '__implemented__', None)
+	implemented = implemented.flattened() if implemented else ()
 		
-		# collect all fields
-		fields = {}
-		for base in bases:
-			if issubclass(base, interface.Interface):
-				r = get_schema_fields(base)
-				fields.update(r)
-				
-		#for k, v in fields.items():
+	definitions = {}
+	for base in implemented:
+		if issubclass(base, qti_interfaces.IQTIElement):
+			r = get_schema_fields(base)
+			definitions.update(r)
 			
-		return t
+	setattr(cls,'_v_definitions',definitions)
+	
+	for k, v in definitions.items():
+		if sch_intefaces.IObject.providedBy(v):
+			iface = None
+			print(dir(v))
+			setattr(cls, k, property(getter(k), setter(k, iface)))
+
 	
 @interface.implementer(an_interfaces.IAttributeAnnotatable)
 class QTIElement(zcontained.Contained, Persistent):
-
-	__metaclass__ = MetaQTIElement
+	pass

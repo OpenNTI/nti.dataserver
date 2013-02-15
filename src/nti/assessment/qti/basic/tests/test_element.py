@@ -9,18 +9,27 @@ __docformat__ = "restructuredtext en"
 
 import unittest
 
-from nti.assessment.qti import find_concrete_elements
+from zope import interface
+
+from nti.assessment.qti.basic._element import qti_creator
+from nti.assessment.qti.content import interfaces as cnt_interfaces
 
 from nti.assessment.qti.tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, has_length)
 
-class TestQTIModule(ConfiguringTestBase):
+				
+class TestQTIElement(ConfiguringTestBase):
 	
-	def test_find_concrete_elements(self):		
-		elements = find_concrete_elements()
-		assert_that(elements, has_length(220))
+	def test_find_concrete_elements(self):
+		@qti_creator
+		@interface.implementer(cnt_interfaces.IsimpleInline)
+		class A(object):
+			pass
 		
+		print(A)
+
+	
 if __name__ == '__main__':
 	unittest.main()
 	

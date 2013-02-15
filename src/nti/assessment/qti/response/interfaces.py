@@ -8,7 +8,6 @@ from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import schema
-from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
 from .. import interfaces as qti_interfaces
@@ -18,7 +17,7 @@ from ..attributes import interfaces as attr_interfaces
 
 # generalized response processing
 
-class IresponseRule(interface.Interface):
+class IresponseRule(qti_interfaces.IQTIElement):
 	pass
 	
 class IresponseProcessing(attr_interfaces.IresponseProcessingAttrGroup, IFiniteSequence, qti_interfaces.IConcrete):
