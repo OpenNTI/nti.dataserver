@@ -91,36 +91,6 @@ from zope.dottedname import resolve as dottedname
 # nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
 
 
-class TestMessageInfo(SharedConfiguringTestBase):
-
-
-	def test_interfaces( self ):
-		m = chat.MessageInfo()
-		assert_that( m, verifiably_provides( nti_interfaces.IModeledContent ) )
-
-	@WithMockDSTrans
-	def test_external_body( self ):
-		m = chat.MessageInfo()
-		assert_that( m, verifiably_provides( nti_interfaces.IModeledContent ) )
-		m.Body = 'foo'
-		ext = m.toExternalObject()
-		assert_that( ext['Body'], is_( ext['body'] ) )
-
-		c = Canvas()
-		m.Body = ['foo', c]
-		assert_that( m.Body, is_( ['foo', c] ) )
-		ext = m.toExternalObject()
-		assert_that( ext['Body'], has_length( 2 ) )
-		assert_that( ext['Body'][0], is_('foo' ) )
-		assert_that( ext['Body'][1], has_entries( 'Class', 'Canvas', 'shapeList', [], 'CreatedTime', c.createdTime ) )
-
-		m = chat.MessageInfo()
-		update_from_external_object( m, ext, context=self.ds )
-		assert_that( m.Body[0], is_( 'foo' ) )
-		assert_that( m.Body[1], is_( Canvas ) )
-
-
-
 class TestChatRoom(SharedConfiguringTestBase):
 
 	@classmethod
@@ -1080,7 +1050,9 @@ class TestFunctionalChatserver(_ChatserverTestBase):
 		request = req_fact.blank( '/' )
 		request.environ['paste.testing'] = True # see nti.appserver.tests.__init__
 		#request.registry = component.getSiteManager()
-		config = psetUp(registry=component.getSiteManager(),request=request,hook_zca=False)
+		config = psetUp(registry=component.getGlobalSiteManager(), # because com.getSiteManager() returns the DS LocalSiteManager
+						request=request,
+						hook_zca=False)
 		config.setup_registry()
 		config.testing_securitypolicy( nti_interfaces.IPrincipal( 'sjohnson' ) )
 		config.set_authorization_policy( acl_fact() )

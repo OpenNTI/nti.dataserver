@@ -94,12 +94,15 @@ def _early_request_teardown(request):
 
 # Make zope site managers a bit more compatible with pyramid.
 from zope.site.site import LocalSiteManager as _ZLocalSiteManager
+from zope.cachedescriptors.property import readproperty
 def _notify( self, *events ):
 	for _ in self.subscribers( events, None ):
 		pass
 _ZLocalSiteManager.notify = _notify
 _ZLocalSiteManager.has_listeners = True
-_ZLocalSiteManager.settings = property( lambda s: get_current_request().nti_settings )
+# make the settings a readable property but still overridable
+# on an instance, just in case
+_ZLocalSiteManager.settings = readproperty( lambda s: get_current_request().nti_settings )
 
 class site_tween(object):
 	"""
