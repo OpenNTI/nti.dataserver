@@ -18,6 +18,7 @@ from zope.annotation import interfaces as an_interfaces
 from persistent import Persistent
 from persistent.list import PersistentList
 from persistent.interfaces import IPersistent
+from persistent.mapping import PersistentMapping
 
 from ..schema import IQTIAttribute
 from .. import interfaces as qti_interfaces
@@ -104,10 +105,11 @@ def qti_creator(cls):
 					definitions[k] = v
 			
 	setattr(cls, '_v_definitions', definitions)
-	if attributes:
-		setattr(cls, '_v_attributes', attributes)
+	setattr(cls, '_v_attributes', attributes)
 	
 	list_factory = PersistentList if is_persitent else list
+	map_factory = PersistentMapping if is_persitent else dict
+	setattr(cls, 'attributes', property(_collection_getter('_attributes', map_factory)))
 	
 	for k, v in definitions.items():
 		if hasattr(cls, k): 
