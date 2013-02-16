@@ -32,11 +32,15 @@ class TestBasicElement(ConfiguringTestBase):
 			pass 
 		
 		assert_that(Foo, has_property('_v_definitions'))
+		assert_that(Foo, has_property('_v_attributes'))
+		
 		assert_that(Foo, has_property('expression'))
+		assert_that(Foo, has_property('attributes'))
 		
 		f = Foo()
 		e = Exp()
 		f.expression = e
+		assert_that(f.attributes, is_({}))
 		assert_that(f.expression, is_(e))
 		f.expression = None
 		assert_that(f.expression, is_(none()))
