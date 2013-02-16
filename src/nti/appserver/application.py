@@ -39,6 +39,9 @@ from zope.processlifetime import ProcessStarting, DatabaseOpenedWithRoot, IDatab
 from zope import lifecycleevent
 
 
+from nti.monkey import webob_cookie_escaping_patch_on_import
+webob_cookie_escaping_patch_on_import.patch()
+
 import pyramid.config
 import pyramid.authorization
 import pyramid.security

@@ -80,10 +80,16 @@ class TestApplicationLogon(SharedApplicationTestBase):
 		testapp.get( '/dataserver2/logon.nti.impersonate', extra_environ=self._make_extra_environ(  ),
 					 status=400 )
 
+		# Good request
 		res = testapp.get( '/dataserver2/logon.nti.impersonate', params={'username': other_user_username},
 						   extra_environ=self._make_extra_environ() )
 		assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
 		assert_that( res.cookies_set, has_entry( 'username', other_user_username ) )
+
+		# Test that the username cookie comes back correctly 'raw' as well
+		cookie_headers = res.headers.dict_of_lists()['set-cookie']
+		assert_that( cookie_headers, has_item( 'username=nobody@nowhere; Path=/' ) )
+
 
 class TestLogonViews(NewRequestSharedConfiguringTestBase):
 
