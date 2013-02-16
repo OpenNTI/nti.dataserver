@@ -75,6 +75,17 @@ def _add_collection(name, iface=None):
 			collec.add(value)
 	return function
 
+def _get_attribute(self, name):
+	result = None
+	sch = self._v_attributes.get(name, None)
+	value = self.attributes.get(name, None)
+	if sch is not None and value is not None:
+		result = sch.fromUnicode(value)
+	return result
+
+def _get_raw_attribute(self, name):	
+	return self.attributes.get(name, None)
+
 def qti_creator(cls):
 	"""
 	Class decorator that checks the implemented interfaces and creates the corresponding schema fields
@@ -103,14 +114,21 @@ def qti_creator(cls):
 					attributes[k] = v
 				else:
 					definitions[k] = v
-			
+	
+	# volatile attributes		
 	setattr(cls, '_v_definitions', definitions)
 	setattr(cls, '_v_attributes', attributes)
 	
+	# factories
 	list_factory = PersistentList if is_persitent else list
 	map_factory = PersistentMapping if is_persitent else dict
-	setattr(cls, 'attributes', property(_collection_getter('_attributes', map_factory)))
 	
+	# attributes
+	setattr(cls, 'attributes', property(_collection_getter('_attributes', map_factory)))
+	cls.get_attribute = _get_attribute
+	cls.get_raw_get_attribute = _get_raw_attribute
+	
+	# fields
 	for k, v in definitions.items():
 		if hasattr(cls, k): 
 			continue
