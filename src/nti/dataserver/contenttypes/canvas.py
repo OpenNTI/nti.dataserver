@@ -33,14 +33,14 @@ from zope.container.contained import contained
 import zope.schema.interfaces
 
 
-from .threadable import ThreadableExternalizableMixin
-from .base import UserContentRoot, _make_getitem
 
+from .base import UserContentRoot, _make_getitem
+from .threadable import ThreadableMixin
 #####
 # Whiteboard shapes
 #####
 @interface.implementer(nti_interfaces.ICanvas,nti_interfaces.IZContained)
-class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInstanceDict):
+class Canvas(ThreadableMixin,UserContentRoot):
 
 	# TODO: We're not trying to resolve any incoming external
 	# things. Figure out how we want to do incremental changes
@@ -50,10 +50,6 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 	# persistence of individual shapes so it doesn't do us much good
 	__parent__ = None
 	__name__ = None
-
-	# We write shapes ourself for speed. The list is often long and only
-	# contains _CanvasShape "objects". Note that this means they cannot be decorated
-	_excluded_out_ivars_ = ExternalizableInstanceDict._excluded_out_ivars_.union( ('shapeList', 'viewportRatio') )
 
 	viewportRatio = 1.0
 
@@ -71,42 +67,6 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 
 	__getitem__ = _make_getitem( 'shapeList' )
 
-	def updateFromExternalObject( self, *args, **kwargs ):
-		# Special handling of shapeList to preserve the PersistentList.
-		# (Though this probably doesn't matter. See the note at the top of the class)
-		shapeList = args[0].pop( 'shapeList', self )
-		viewportRatio = args[0].get( 'viewportRatio' )
-		if isinstance( viewportRatio, numbers.Real ) and viewportRatio > 0 and viewportRatio != self.viewportRatio:
-			self.viewportRatio = viewportRatio
-
-		super(Canvas,self).updateFromExternalObject( *args, **kwargs )
-		if shapeList is not self:
-			# Copy the current files. If we find anything that refers
-			# to them as a URL below, swap in the file data and swap out
-			# the URL string
-			# This is tightly couple to the implementation of CanvasUrlShape
-			existing_files = [getattr(x, '_file') for x in self.shapeList if getattr(x, '_file', None )]
-			existing_files = {urlquote(to_external_ntiid_oid(x)): x for x in existing_files}
-			del self.shapeList[:]
-			if shapeList:
-				for shape in shapeList:
-					self.append( shape )
-					if 'url' in shape.__dict__:
-						url = shape.__dict__['url']
-						for existing_file_url, existing_file in existing_files.items():
-							if existing_file_url in url:
-								shape.__dict__['url'] = None
-								shape.__dict__['_file'] = existing_file
-								existing_file.__parent__ = shape
-
-		# be polite and put it back
-		args[0]['shapeList'] = list(self.shapeList)
-
-	def toExternalDictionary( self, mergeFrom=None ):
-		result = super(Canvas,self).toExternalDictionary( mergeFrom=mergeFrom )
-		result['shapeList'] = [x.toExternalObject() for x in self.shapeList]
-		result['viewportRatio'] = self.viewportRatio
-		return result
 
 	def __eq__( self, other ):
 		# TODO: Super properties?
@@ -126,6 +86,64 @@ class Canvas(ThreadableExternalizableMixin, UserContentRoot, ExternalizableInsta
 		Canvas objects are always true, even when containing no shapes.
 		"""
 		return True
+
+from .threadable import ThreadableExternalizableMixin
+from .base import UserContentRootInternalObjectIO
+
+@component.adapter(nti_interfaces.ICanvas)
+class CanvasInternalObjectIO(ThreadableExternalizableMixin,UserContentRootInternalObjectIO):
+
+	# TODO: We're not trying to resolve any incoming external
+	# things. Figure out how we want to do incremental changes
+	# (pushing new shapes while drawing). Should we take the whole thing every
+	# time (and then look for equal object that we already have)? Accept POSTS
+	# of shapes into this object as a "container"? Right now, we have disabled
+	# persistence of individual shapes so it doesn't do us much good
+
+	# We write shapes ourself for speed. The list is often long and only
+	# contains _CanvasShape "objects". Note that this means they cannot be decorated
+	_excluded_out_ivars_ = UserContentRootInternalObjectIO._excluded_out_ivars_.union( ('shapeList', 'viewportRatio') )
+
+	def updateFromExternalObject( self, ext_parsed, **kwargs ):
+		canvas = self.context
+
+		# Special handling of shapeList to preserve the PersistentList.
+		# (Though this probably doesn't matter. See the note at the top of the class)
+		shapeList = ext_parsed.pop( 'shapeList', self )
+		viewportRatio = ext_parsed.pop( 'viewportRatio', self )
+
+		super(CanvasInternalObjectIO,self).updateFromExternalObject( ext_parsed, **kwargs )
+
+		if isinstance( viewportRatio, numbers.Real ) and viewportRatio > 0 and viewportRatio != canvas.viewportRatio:
+			canvas.viewportRatio = viewportRatio
+
+		if shapeList is not self:
+			# Copy the current files. If we find anything that refers
+			# to them as a URL below, swap in the file data and swap out
+			# the URL string
+			# This is tightly couple to the implementation of CanvasUrlShape
+			existing_files = [getattr(x, '_file') for x in canvas.shapeList if getattr(x, '_file', None )]
+			existing_files = {urlquote(to_external_ntiid_oid(x)): x for x in existing_files}
+			del canvas.shapeList[:]
+			if shapeList:
+				for shape in shapeList:
+					canvas.append( shape )
+					if 'url' in shape.__dict__:
+						url = shape.__dict__['url']
+						for existing_file_url, existing_file in existing_files.items():
+							if existing_file_url in url:
+								shape.__dict__['url'] = None
+								shape.__dict__['_file'] = existing_file
+								existing_file.__parent__ = shape
+
+			# be polite and put it back
+			ext_parsed['shapeList'] = list(self.context.shapeList)
+
+	def toExternalObject( self, mergeFrom=None ):
+		result = super(CanvasInternalObjectIO,self).toExternalObject( mergeFrom=mergeFrom )
+		result['shapeList'] = [x.toExternalObject() for x in self.context.shapeList]
+		result['viewportRatio'] = self.context.viewportRatio
+		return result
 
 @interface.implementer(IExternalObject)
 class CanvasAffineTransform(object):

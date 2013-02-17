@@ -7,6 +7,7 @@
 
 	<include package="zope.component" />
 
+	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
@@ -15,6 +16,13 @@
 	<ext:registerMimeFactories module=".highlight" />
 	<ext:registerMimeFactories module=".redaction" />
 	<ext:registerMimeFactories module=".canvas" />
+
+	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
+	<adapter factory=".canvas.CanvasInternalObjectIO" />
+	<adapter factory=".highlight.HighlightInternalObjectIO"/>
+	<adapter factory=".note.NoteInternalObjectIO" />
+	<adapter factory=".redaction.RedactionInternalObjectIO" />
+
 
 	<!-- Blob file URL storage for canvas images -->
 	<exclude package="zope.file" file="browser.zcml" />

@@ -57,7 +57,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		data = ''
 		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		path = UQ( path )
-		# Initially, unflagged, I get asked to favorite
+		# Initially, unflagged, I get asked to flag
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'flag' ) ) ) )
@@ -207,7 +207,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			# Make sure it has a parent and oid
 			storage = chat_interfaces.IMessageInfoStorage( msg_info )
 			storage.add_message( msg_info )
-
+			msg_info.toExternalObject()
 			room = PersistentContainedExternal()
 			room.creator = user.username
 			room.containerId = msg_info.containerId
@@ -227,7 +227,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 		testapp = TestApp( self.app )
 
-		# First, give us something to flag
+		# Flag the message
 		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' %  msg_info_ext_id
 		path = UQ( path )
 		testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )

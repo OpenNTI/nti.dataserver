@@ -467,8 +467,6 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 
 	def test_setting_text_and_body_parts(self):
 		n = Note()
-		with self.assertRaises( ValueError ):
-			n.updateFromExternalObject( {'text': 'foo' } )
 		ext = n.toExternalObject()
 		assert_that( ext, is_not( has_key( 'body' ) ) )
 		assert_that( ext, is_not( has_key( 'text' ) ) )
@@ -607,7 +605,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		ds = self.ds
 		ds.root_connection.add( n )
 		ext = { 'sharedWith': ['jason.madden@nextthought.com'] }
-		n.updateFromExternalObject( ext, dataserver=ds )
+		n.updateFromExternalObject( ext, context=ds )
 
 	@WithMockDSTrans
 	def test_inherit_anchor_properties(self):
