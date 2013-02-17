@@ -76,15 +76,17 @@ class ThreadableMixin(object):
 		except TypeError:
 			pass # The class tuple
 
-class ThreadableExternalizableMixin(ThreadableMixin):
+class ThreadableExternalizableMixin(object):
 	"""
-	Extends :class:`ThreadableMixin` with support for externalizing to and from a dictionary.
+	Works with :class:`ThreadableMixin` with support for externalizing to and from a dictionary.
 	Note that subclasses must extend something that is itself externalizable, and use
 	cooperative super-class to be able to put this in the right order.
 
 	The subclass can customize the way that references are externalized with the value
 	of the :attr:`_ext_write_missing_references` attribute, as well as the methods
 	:meth:`_ext_ref` and :meth:`_ext_can_update_threads`.
+
+	The subclass must define the `_ext_replacement` function as the object being externalized.
 	"""
 
 	__external_oids__ = ['inReplyTo', 'references'] # Cause these to be resolved automatically
@@ -94,12 +96,12 @@ class ThreadableExternalizableMixin(ThreadableMixin):
 	#: for them. Otherwise, there will be a null value or gap. See :const:`nti.ntiids.ntiids.TYPE_MISSING`
 	_ext_write_missing_references = True
 
-	def toExternalObject(self):
-		extDict = super(ThreadableExternalizableMixin,self).toExternalObject()
+	def toExternalObject(self,mergeFrom=None):
+		extDict = super(ThreadableExternalizableMixin,self).toExternalObject(mergeFrom=mergeFrom)
 		assert isinstance( extDict, collections.Mapping )
-
-		extDict['inReplyTo'] = self._ext_ref( self.inReplyTo, self._inReplyTo )
-		extDict['references'] = [ self._ext_ref( ref(), ref ) for ref in self._references ]
+		context = self._ext_replacement()
+		extDict['inReplyTo'] = self._ext_ref( context.inReplyTo, context._inReplyTo )
+		extDict['references'] = [ self._ext_ref( ref(), ref ) for ref in context._references ]
 		return extDict
 
 	def _ext_ref( self, obj, ref ):
@@ -129,19 +131,20 @@ class ThreadableExternalizableMixin(ThreadableMixin):
 		super(ThreadableExternalizableMixin, self).updateFromExternalObject( parsed, **kwargs )
 
 		if self._ext_can_update_threads():
-			self.inReplyTo = inReplyTo
-			self.clearReferences()
+			context = self._ext_replacement()
+			context.inReplyTo = inReplyTo
+			context.clearReferences()
 			for ref in references:
-				self.addReference( ref )
+				context.addReference( ref )
 
 	def _ext_can_update_threads( self ):
 		"""
 		By default, once this object has been created and the thread-related values
 		have been set, they can not be changed by sending external data.
 
-		(This depends on subclasses being
+		(This depends on the context object being
 		:class:`persistent.Persistent`, or otherwise defining the
 		``_p_mtime`` property.)
 		"""
-		mod_time = getattr( self, '_p_mtime', None )
+		mod_time = getattr( self._ext_replacement(), '_p_mtime', None )
 		return not mod_time

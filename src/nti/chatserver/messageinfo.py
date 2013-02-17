@@ -24,7 +24,9 @@ from persistent.list import PersistentList
 
 from nti.utils.property import alias, read_alias
 
-from nti.externalization import datastructures
+from nti.externalization.externalization import to_external_object
+from nti.externalization.internalization import update_from_external_object
+
 from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentfragments import censor
 
@@ -35,8 +37,10 @@ from nti.dataserver import contenttypes
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.base import _make_getitem
 
+from zope.deprecation import deprecate
 
 from zope import interface
+from zope import component
 from zope.dublincore import interfaces as dc_interfaces
 from zope.container.contained import contained
 
@@ -48,9 +52,8 @@ from . import interfaces
 @interface.implementer( interfaces.IMessageInfo,
 						dc_interfaces.IDCTimes)
 class MessageInfo( sharing.AbstractReadableSharedMixin,
-				   contenttypes.ThreadableExternalizableMixin,
-				   Persistent,
-				   datastructures.ExternalizableInstanceDict ):
+				   contenttypes.ThreadableMixin,
+				   Persistent ):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
@@ -58,8 +61,6 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 
 	__external_can_create__ = True
 
-	_excluded_in_ivars_ = { 'MessageId' } | datastructures.ExternalizableInstanceDict._excluded_in_ivars_
-	_update_accepts_type_attrs = True
 	_prefer_oid_ = False
 
 	# The usernames of occupants of the initial room, and others
@@ -124,6 +125,8 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 			self.lastModified = t
 		return self.lastModified
 
+	def updateLastMod( self ):
+		pass
 
 	def get_sender_sid( self ):
 		"""
@@ -163,42 +166,72 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 	def is_default_channel( self ):
 		return self.channel is None or self.channel == interfaces.CHANNEL_DEFAULT
 
-	def toExternalDictionary( self, mergeFrom=None ):
-		result = super(MessageInfo,self).toExternalDictionary( mergeFrom=mergeFrom )
-		if self.body is not None:
+	__getitem__ = _make_getitem( 'body' )
+
+	__ext_ignore_toExternalObject__ = True
+	@deprecate("Prefer to use nti.externalization directly.")
+	def toExternalObject( self ):
+		return to_external_object( self )
+
+	__ext_ignore_updateFromExternalObject__ = True
+	@deprecate("Prefer to use nti.externalization directly.")
+	def updateFromExternalObject( self, ext_object, context=None ):
+		return update_from_external_object( self, ext_object, context=context )
+
+from nti.externalization.datastructures import ExternalizableInstanceDict
+from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
+from zope.proxy import removeAllProxies
+
+@component.adapter(interfaces.IMessageInfo)
+class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,ExternalizableInstanceDict):
+
+	def __init__( self, context ):
+		super(MessageInfoInternalObjectIO,self).__init__()
+		self.context = context
+
+	def _ext_replacement(self):
+		return removeAllProxies(self.context)
+
+	_excluded_in_ivars_ = { 'MessageId' } | ExternalizableInstanceDict._excluded_in_ivars_
+	_update_accepts_type_attrs = True
+	_prefer_oid_ = False
+
+	def toExternalObject( self, mergeFrom=None ):
+		result = super(MessageInfoInternalObjectIO,self).toExternalObject( mergeFrom=mergeFrom )
+		msg = self.context
+		if msg.body is not None:
 			# alias for old code.
 			result['Body'] = result['body']
 		if 'channel' not in result:
 			# Must not have been in the instance dict
 			# TODO: Switch this to interface-driven
-			result['channel'] = self.channel
+			result['channel'] = msg.channel
 		if 'recipients' not in result:
-			result['recipients'] = self.recipients
+			result['recipients'] = msg.recipients
 		return result
 
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		super(MessageInfo,self).updateFromExternalObject( parsed, *args, **kwargs )
+		super(MessageInfoInternalObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )
+		msg = self.context
 		if 'Body' in parsed and 'body' not in parsed:
-			self.body = parsed['Body']
+			msg.body = parsed['Body']
 		if 'Body' or 'body' in parsed:
 			# TODO: Switch to InterfaceIO to avoid doing this manually.
-			if isinstance( self.body, six.string_types ):
-				self.body = censor.censor_assign( frg_interfaces.IUnicodeContentFragment( self.body ), self, 'body' )
-			elif isinstance( self.body, collections.Sequence ):
-				self.body = [censor.censor_assign( frg_interfaces.IUnicodeContentFragment( x ), self, 'body' ) if isinstance(x,six.string_types) else x
+			if isinstance( msg.body, six.string_types ):
+				msg.body = censor.censor_assign( frg_interfaces.IUnicodeContentFragment( msg.body ), msg, 'body' )
+			elif isinstance( msg.body, collections.Sequence ):
+				msg.body = [censor.censor_assign( frg_interfaces.IUnicodeContentFragment( x ), msg, 'body' ) if isinstance(x,six.string_types) else x
 							 for x
-							 in self.body]
-				for i, x in enumerate(self.body):
+							 in msg.body]
+				for i, x in enumerate(msg.body):
 					# Make images work
 					if nti_interfaces.ICanvas.providedBy( x ):
-						contained( x, self, unicode(i) )
+						contained( x, msg, unicode(i) )
 
 		# make recipients be stored as a persistent list.
 		# In theory, this helps when we have to serialize the message object
 		# into the database multiple times, by avoiding extra copies (like when we transcript)
 		# This also results in us copying incoming recipients
-		if self.recipients and 'recipients' in parsed:
-			self.recipients = PersistentList( self.recipients )
-
-	__getitem__ = _make_getitem( 'body' )
+		if msg.recipients and 'recipients' in parsed:
+			msg.recipients = PersistentList( msg.recipients )

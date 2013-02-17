@@ -59,6 +59,7 @@ class FlagLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 		# immutable. TODO: This probably needs handled differently.
 		if IModeratorDealtWithFlag.providedBy( context ):
 			return
+
 		super(FlagLinkDecorator,self).decorateExternalMapping( context, mapping )
 
 def _do_flag( f, request ):

@@ -88,7 +88,8 @@ from ._meeting_post_policy import _ModeratedMeetingState
 _bwc_renames = { 'nti.chatserver.meeting _ModeratedMeetingState': 'nti.chatserver._meeting_post_policy _ModeratedMeetingState' }
 
 @interface.implementer( interfaces.IMeeting )
-class _Meeting(contenttypes.ThreadableExternalizableMixin,
+class _Meeting( contenttypes.ThreadableMixin,
+			    contenttypes.ThreadableExternalizableMixin,
 				Persistent,
 				datastructures.ExternalizableInstanceDict):
 	"""Class to handle distributing messages to clients. """

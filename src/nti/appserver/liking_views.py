@@ -34,7 +34,6 @@ class LikeLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	true_view = 'unlike'
 	predicate = staticmethod(liking.likes_object)
 
-
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=nti_interfaces.ILikeable,

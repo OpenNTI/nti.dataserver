@@ -100,7 +100,7 @@ def default_externalized_object_factory_finder( externalized_object ):
 											  name=class_name )
 			if not factory:
 				factory = find_factory_for_class_name( class_name )
-	except TypeError:
+	except (TypeError,KeyError):
 		return None
 
 	return factory
@@ -230,7 +230,6 @@ def update_from_external_object( containedObject, externalObject,
 		tmp = []
 		for i in externalObject:
 			factory = find_factory_for( i, registry=registry )
-			__traceback_info__ = factory, i
 			tmp.append( _recall( None, factory(), i, kwargs ) if factory else i )
 		return tmp
 
@@ -245,6 +244,7 @@ def update_from_external_object( containedObject, externalObject,
 
 		if isinstance( v, collections.MutableSequence ):
 			# Update the sequence in-place
+			__traceback_info__ = k, v
 			v = _recall( k, (), v, kwargs )
 			externalObject[k] = v
 		else:
@@ -253,7 +253,9 @@ def update_from_external_object( containedObject, externalObject,
 
 
 	updater = None
-	if hasattr( containedObject, 'updateFromExternalObject' ):
+	if hasattr( containedObject, 'updateFromExternalObject' ) and not getattr( containedObject, '__ext_ignore_updateFromExternalObject__', False ):
+		# legacy support. The __ext_ignore_updateFromExternalObject__ allows a transitition to an adapter
+		# without changing existing callers and without triggering infinite recursion
 		updater = containedObject
 	else:
 		if require_updater:

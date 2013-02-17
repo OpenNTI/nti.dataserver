@@ -110,17 +110,23 @@ def _to_external_object_state( obj, state, top_level=False ):
 		# TODO: This is needless for the mapping types and sequence types. rework to avoid.
 		# Benchmarks show that simply moving it into the last block doesn't actually save much
 		# (due to all the type checks in front of it?)
-		if not hasattr( obj, 'toExternalObject' ) and not IExternalObject.providedBy( obj ):
+
+		# This is for legacy code support, to allow existing methods to move to adapters
+		# and call us without infinite recursion
+		obj_has_usable_external_object = hasattr(obj, 'toExternalObject') and not getattr( obj, '__ext_ignore_toExternalObject__', False )
+
+		if not obj_has_usable_external_object and not IExternalObject.providedBy( obj ):
 			adapter = state.registry.queryAdapter( obj, IExternalObject, default=None, name=state.name )
 			if not adapter and state.name != '':
 				# try for the default, but allow passing name of None to disable (?)
 				adapter = state.registry.queryAdapter( obj, IExternalObject, default=None, name='' )
 			if adapter:
 				obj = adapter
+				obj_has_usable_external_object = True
 
 		# Note that for speed, before calling 'recall' we are performing the primitive check
 		result = obj
-		if hasattr( obj, "toExternalObject" ):
+		if obj_has_usable_external_object: # either an adapter or the original object
 			result = obj.toExternalObject()
 		elif hasattr( obj, "toExternalDictionary" ):
 			result = obj.toExternalDictionary()
