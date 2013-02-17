@@ -86,7 +86,7 @@ setup(
 		#'nose >= 1.2.1',
 		# But it's also listed in extras/test, and it's very hard to upgrade
 		# when that changes
-		#'distribute >= 0.6.34', # Can't seem to include that anywhere
+		#'distribute >= 0.6.35', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
@@ -155,7 +155,8 @@ setup(
 		'gunicorn >= 0.17.2',
 		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
-		'logilab-common >= 0.58.3',
+                'isodate >= 0.4.9', # ISO8601 date/time/duration parser and formatter
+		'logilab-common >= 0.59.0',
 		'lxml >= 3.1.0', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.7', # Human name parsing
 		'nltk >= 2.0.4',
@@ -170,7 +171,7 @@ setup(
 		'perfmetrics >= 1.0', # easy statsd metrics.
 		'plone.scale >= 1.3', # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0.1', # much like zope.file, but some image-specific goodness.
-		'pyparsing >= 1.5.6, < 2.0.0',
+		'pyparsing >= 1.5.6, < 2.0.0', # used by matplotlib, experimental in zopyx.txng.core
 		# Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
 		'pyPDF >= 1.13',
 		# See also z3c.rml for a complete PDF layout and rendering environment, which should
@@ -201,7 +202,7 @@ setup(
 		'repoze.zodbconn >= 0.14',
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
 		'requests >= 0.14.2,<1.0', # HTTP. NOTE: 1.1.x is out, but not full backwards compat. Since some tools (httpie) depend on it, wait until they are ready
-		'scss >= 0.8.72',
+		#'scss >= 0.8.72', # we no longer use
 		'setproctitle >= 1.1.6',
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.0.7',
@@ -225,6 +226,7 @@ setup(
 		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
 		# TODO: z3c.ptcompat? We already have zope.pagetemplate listed
 		'z3c.table >= 1.0.0', # Flexible table rendering
+                'zc.blist >= 1.0b2', # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
 		'zc.dict >= 1.3b1', # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
 		'zc.lockfile >= 1.1.0',
@@ -237,9 +239,11 @@ setup(
 		'zope.app.component >= 3.9.3', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.annotation >= 4.0.1',
+                'zope.authentication >= 4.0.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser >= 2.0.1',
 		'zope.browserpage >= 4.0.0',
+                'zope.browsermenu >= 4.0.0', # Browser menu implementation for Zope.
 		'zope.browserresource >= 3.12.0',
 		'zope.catalog >= 3.8.2',
 		'zope.cachedescriptors >= 4.0.0',
@@ -249,8 +253,10 @@ setup(
 		'zope.componentvocabulary >= 1.0.1',
 		'zope.configuration >= 4.0.2',
 		'zope.container >= 3.12.0',
+                'zope.contentprovider >= 3.7.2',
 		'zope.contenttype >= 4.0.0', # A utility module for content-type handling.
 		'zope.copy >= 4.0.1',
+                'zope.copypastemove >= 3.8.0',
 		'zope.datetime >= 3.4.1',
 		'zope.deprecation >= 4.0.2',
 		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
@@ -269,20 +275,24 @@ setup(
 		'zope.index >= 3.6.4',
 		'zope.interface >= 4.0.3',
 		'zope.intid >= 3.7.2',
+                'zope.keyreference >= 3.6.4',
 		'zope.lifecycleevent >= 4.0.1',
 		'zope.location >= 4.0.0',
 		'zope.mimetype >= 1.3.1',
 		'zope.minmax >= 1.1.2',
 		'zope.pagetemplate >= 4.0.1',
 		'zope.password >= 3.6.1', # encrypted password management
+                'zope.pluggableauth >= 1.3', # pluggable authentication for zope.auth; see also repoze.who
 		'zope.publisher >= 3.13.1',
+                'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 1.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.schema >= 4.2.2',
 		'zope.security == 3.9.0', # 3.9.0 and zope.proxy 4.1.0 go together
+                'zope.session >= 3.9.5',
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 4.0.0',
-		'zope.tal >= 3.6.1',
+		'zope.tal >= 4.0.0a1',
 		'zope.tales >= 4.0.0',
 		'zope.traversing >= 3.14.0',
 		# textindexng3
@@ -296,6 +306,7 @@ setup(
 	extras_require = {
 		'test': [
 			'WebTest >= 1.4.3',
+                        'blessings >= 1.5', # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
 			'coverage >= 3.6', # Test coverage
 			'fakeredis >= 0.3.0',
 			'fudge',
@@ -333,7 +344,7 @@ setup(
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.8.4',
-			'zc.buildout >= 2.0.0',
+			'zc.buildout >= 2.0.1',
 			'z3c.dependencychecker >= 1.9', # unused/used imports
 			'zodbbrowser >= 0.10.4',
 			'zodbupdate >= 0.5',
