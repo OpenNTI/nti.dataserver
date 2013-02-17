@@ -400,9 +400,9 @@ def _date_from_string( string ):
 	#   datetime.date.fromtimestamp( zope.datetime.time( string ) )
 	# is simple, but seems to have confusing results, depending on what the
 	# timezone is? If we put in "1982-01-31" we get back <1982-01-30>
-        # This:
+	# This:
 	#   parsed = zope.datetime.parse( string )
 	#   return datetime.date( parsed[0], parsed[1], parsed[2] )
-        # accepts almost anything as a date (so it's great for human interfaces),
-        # but programatically we actually require ISO format
-        return isodate.parse_date( string )
+	# accepts almost anything as a date (so it's great for human interfaces),
+	# but programatically we actually require ISO format
+	return isodate.parse_date( string )

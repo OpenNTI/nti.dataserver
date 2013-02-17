@@ -255,6 +255,16 @@ class _FriendsListUsernameIterable(object):
 	def __iter__(self):
 		return (x.username for x in self.context)
 
+@interface.implementer(nti_interfaces.IEntityIterable)
+@component.adapter(nti_interfaces.IFriendsList)
+class _FriendsListEntityIterable(object):
+
+	def __init__( self, context ):
+		self.context = context
+
+	def __iter__(self):
+		return (x for x in self.context)
+
 from nti.dataserver.sharing import DynamicSharingTargetMixin
 
 @interface.implementer(nti_interfaces.IDynamicSharingTargetFriendsList)
@@ -347,6 +357,22 @@ class _DynamicFriendsListUsernameIterable(_FriendsListUsernameIterable):
 		names = {x.username for x in self.context}
 		names.add( self.context.creator.username )
 		return iter(names)
+
+@interface.implementer(nti_interfaces.IEntityIterable)
+@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
+class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
+	"""
+	Iterates the contained friends, but also includes the creator
+	of the DFL. The primary reason to do this is that the only place
+	this interface is used is with sharing, and this ensures
+	that the creator gets notices.
+	"""
+
+	def __iter__( self ):
+		result = set( super(_DynamicFriendsListEntityIterable,self).__iter__() )
+		result.add( self.context.creator )
+		return iter(result)
+
 
 from nti.dataserver import datastructures
 
