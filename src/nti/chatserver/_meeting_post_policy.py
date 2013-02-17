@@ -201,8 +201,9 @@ class _MeetingMessagePostPolicy(object):
 
 		# Everyone who gets the transcript also
 		# is considered to be on the sharing list
-		msg_info.sharedWith = set(recipient_names)
-		msg_info.sharedWith = msg_info.sharedWith | transcript_owners
+		sharedWith = set(recipient_names)
+		sharedWith.update( transcript_owners )
+		msg_info.setSharedWithUsernames( sharedWith )
 		# In principal, we might be able to share some data and reduce
 		# pickling using a persistent set. In practice, at least for small
 		# sharing lists, it doesn't make any difference.

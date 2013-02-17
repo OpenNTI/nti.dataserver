@@ -512,6 +512,17 @@ class IUsernameIterable(interface.Interface):
 		that have already been deleted.
 		"""
 
+class IEntityIterable(interface.Interface):
+	"""
+	Something that can iterate across entities (usually but not always :class:`IUser`), typically
+	entities somehow contained in or stored in this object (or its context).
+	"""
+
+	def __iter__():
+		"""
+		Return iterator across entity objects.
+		"""
+
 class IOpenIdUser(IUser):
 	"""
 	A user of the system with a known OpenID identity URL.
@@ -687,31 +698,11 @@ class IThreadable(interface.Interface):
 		"""
 		)
 
-class IShareable(interface.Interface):
+class IReadableShared(interface.Interface):
 	"""
 	Something that can be shared with others (made visible to
-	others than its creator.
+	others than its creator. This interface exposes the read side of sharing.
 	"""
-
-	def addSharingTarget( target, actor=None ):
-		"""
-		Allow `target` to see this object. This does not actually make that so,
-		simply records the fact that the target should be able to see this
-		object.
-
-		:param target: Iterable of usernames/users, or a single username/user.
-		:param actor: Ignored, deprecated. In the past, it was used
-			for security purposes, but ACLs should be used
-			for that now.
-
-		"""
-
-	def clearSharingTargets():
-		"""
-		Mark this object as being shared with no one (visible only to the creator).
-		Does not actually change any visibilities. Causes `flattenedSharingTargetNames`
-		to be empty.
-		"""
 
 	def isSharedWith( principal ):
 		"""
@@ -724,21 +715,70 @@ class IShareable(interface.Interface):
 	def isSharedIndirectlyWith( principal ):
 		"Is this object indirectly shared with the given target?"
 
-#	@deprecate("Use the attribute") # The deprecation screws up validation because it adds parameters
-	def getFlattenedSharingTargetNames():
-		"""
-		:return: Set of usernames this object is shared with.
-		"""
+	sharingTargets = schema.Set(
+		title="A set of entities this object is directly shared with (non-recursive, non-flattened)",
+		value_type=Object(IEntity, title="An entity shared with"),
+		readonly=True)
+
+	flattenedSharingTargets = schema.Set(
+		title="A set of entities this object is directly or indirectly shared with (recursive, flattened)",
+		value_type=Object(IEntity, title="An entity shared with"),
+		readonly=True)
 
 	# TODO: How to deprecate this property?
 #	@deprecate("These names are not properly global")
 	flattenedSharingTargetNames = schema.Set(
 		title="The usernames of all the users (including communities, etc) this obj is shared with.",
-		value_type=schema.TextLine(title="The username" ) )
+		description=" This is a convenience property for reporting the usernames of all "
+			" entities this object is shared with, directly or indirectly. Note that the usernames reported "
+			" here are not necessarily globally unique and may not be resolvable as such.",
+		value_type=schema.TextLine(title="The username" ),
+		readonly=True)
 
-	sharingTargets = schema.Set(
-		title="A set of entities this object is directly shared with",
-		value_type=Object(IEntity, title="An entity shared with") )
+
+#	@deprecate("Use the attribute") # The deprecation screws up validation because it adds parameters
+	def getFlattenedSharingTargetNames():
+		"""
+		This is a convenience method for reporting the usernames of all
+		entities this object is shared with. Note that the usernames reported
+		here are not necessarily globally unique and may not be resolvable as such.
+
+		This method is deprecated in favor of the property.
+
+		:return: Set of usernames this object is shared with.
+		"""
+
+class IWritableShared(IReadableShared):
+	"""
+	The writable part of sharing. All mutations are expected to go through
+	this interface, not by adjusting the properties directly.
+	"""
+
+	def addSharingTarget( target ):
+		"""
+		Allow `target` to see this object. This does not actually make that so,
+		simply records the fact that the target should be able to see this
+		object.
+
+		:param target: Iterable of usernames/users, or a single username/user.
+		"""
+
+	def clearSharingTargets():
+		"""
+		Mark this object as being shared with no one (visible only to the creator).
+		Does not actually change any visibilities. Causes `flattenedSharingTargetNames`
+		to be empty.
+		"""
+
+	def updateSharingTargets( replacement_targets ):
+		"""
+		Mark this object as being shared with exactly the entities provided in ``replacement_targets``.
+		Does not actually change any visibilities. Causes `sharingTargets` and `flattenedSharingTargets`
+		to reflect these changes.
+		"""
+
+
+IShareable = IWritableShared # bwc alias
 
 class IShareableModeledContent(IShareable,IModeledContent):
 	"""

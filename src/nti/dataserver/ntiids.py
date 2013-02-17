@@ -123,7 +123,7 @@ def _match( x, container_id, case_sensitive=True ):
 	if case_sensitive:
 		return x if getattr( x, 'NTIID', None ) == container_id else None
 
-	warnings.warn( "Hack for UI: making some NTIIDS case-insensitive." )
+	#warnings.warn( "Hack for UI: making some NTIIDS case-insensitive." )
 	return x if getattr( x, 'NTIID', '' ).lower() == (container_id.lower() or 'B').lower() else None
 
 class _AbstractUserBasedResolver(object):

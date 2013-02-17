@@ -58,7 +58,7 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 
 		n = Note()
 		n.creator = creator
-		n.addSharingTarget( target, n.creator )
+		n.addSharingTarget( target )
 
 		acl_prov = nti_interfaces.IACLProvider( n )
 		assert_that( acl_prov, provides( nti_interfaces.IACLProvider ) )
@@ -90,7 +90,7 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 		target = User.create_user( username='foo@bar' )
 		n = Note()
 		n.creator = creator
-		n.addSharingTarget( target, n.creator )
+		n.addSharingTarget( target )
 
 		acl_prov = nti_interfaces.IACLProvider( n )
 		assert_that( acl_prov, provides( nti_interfaces.IACLProvider ) )

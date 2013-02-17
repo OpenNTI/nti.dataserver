@@ -29,6 +29,7 @@ from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentfragments import censor
 
 from nti.dataserver import mimetype
+from nti.dataserver import sharing
 from nti.dataserver.users import entity
 from nti.dataserver import contenttypes
 from nti.dataserver import interfaces as nti_interfaces
@@ -46,7 +47,8 @@ from . import interfaces
 # We manually re-implement IDCTimes (should extend CreatedModDateTrackingObject)
 @interface.implementer( interfaces.IMessageInfo,
 						dc_interfaces.IDCTimes)
-class MessageInfo( contenttypes.ThreadableExternalizableMixin,
+class MessageInfo( sharing.AbstractReadableSharedMixin,
+				   contenttypes.ThreadableExternalizableMixin,
 				   Persistent,
 				   datastructures.ExternalizableInstanceDict ):
 
@@ -80,12 +82,7 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 	Sender = alias('Creator')
 	creator = alias('Creator')
 
-	# this is deprecated
-	flattenedSharingTargetNames = alias('sharedWith') # ISharableModeledContent
-
-	def getFlattenedSharingTargetNames( self ):
-		return self.flattenedSharingTargetNames # this is deprecated too
-
+	# From AbstractReadableSharedMixin
 	@property
 	def sharingTargets(self):
 		result = set()
@@ -95,13 +92,19 @@ class MessageInfo( contenttypes.ThreadableExternalizableMixin,
 				result.add( x )
 
 		return result
+	# From IWritableSharable
 	def clearSharingTargets(self):
-		self.sharedWith = ()
-
-	# TODO; We should probably implement some of these
-	def addSharingTarget(self, *args):
+		self.sharedWith = MessageInfo.sharedWith
+	# We don't really do sharing with entities, just usernames. So the entity-based
+	# methods are not implemented
+	def addSharingTarget(self, target ):
 		raise NotImplementedError()
-	isSharedDirectlyWith = isSharedIndirectlyWith = isSharedWith = addSharingTarget
+	def updateSharingTargets( self, replacements ):
+		raise NotImplementedError()
+
+	def setSharedWithUsernames( self, usernames ):
+		self.sharedWith = usernames
+
 
 	id = read_alias('ID')
 	MessageId = read_alias('ID') # bwc

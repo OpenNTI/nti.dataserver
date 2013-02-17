@@ -400,8 +400,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			with user1.updates():
 				c_note = user1.getContainedObject( note.containerId, note.id )
 				assert_that( c_note, is_( same_instance( user1._v_updateSet[0][0] ) ) )
-				c_note.addSharingTarget( User.get_user( 'fab@bar', dataserver=mock_dataserver.current_mock_ds ),
-										 actor=user1 )
+				c_note.addSharingTarget( User.get_user( 'fab@bar', dataserver=mock_dataserver.current_mock_ds ) )
 				assert_that( list(c_note.flattenedSharingTargetNames), is_( ['fab@bar'] ) )
 				assert_that( getPersistentState( c_note ), is_( persistent.CHANGED ) )
 				lm = c_note.lastModified
@@ -424,7 +423,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			user1.addContainedObject( note )
 			assert_that( note.id, is_not( none() ) )
 
-			note.addSharingTarget( user2, actor=user1 )
+			note.addSharingTarget( user2 )
 
 		with mock_dataserver.mock_db_trans():
 			user1 = User.get_user( 'foo@bar', dataserver=mock_dataserver.current_mock_ds )

@@ -226,7 +226,7 @@ setup(
 		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
 		# TODO: z3c.ptcompat? We already have zope.pagetemplate listed
 		'z3c.table >= 1.0.0', # Flexible table rendering
-                'zc.blist >= 1.0b2', # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
+		'zc.blist >= 1.0b2', # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
 		'zc.dict >= 1.3b1', # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
 		'zc.lockfile >= 1.1.0',
@@ -239,11 +239,11 @@ setup(
 		'zope.app.component >= 3.9.3', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.annotation >= 4.0.1',
-                'zope.authentication >= 4.0.0',
+		'zope.authentication >= 4.0.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser >= 2.0.1',
 		'zope.browserpage >= 4.0.0',
-                'zope.browsermenu >= 4.0.0', # Browser menu implementation for Zope.
+		'zope.browsermenu >= 4.0.0', # Browser menu implementation for Zope.
 		'zope.browserresource >= 3.12.0',
 		'zope.catalog >= 3.8.2',
 		'zope.cachedescriptors >= 4.0.0',
@@ -253,10 +253,10 @@ setup(
 		'zope.componentvocabulary >= 1.0.1',
 		'zope.configuration >= 4.0.2',
 		'zope.container >= 3.12.0',
-                'zope.contentprovider >= 3.7.2',
+		'zope.contentprovider >= 3.7.2',
 		'zope.contenttype >= 4.0.0', # A utility module for content-type handling.
 		'zope.copy >= 4.0.1',
-                'zope.copypastemove >= 3.8.0',
+		'zope.copypastemove >= 3.8.0',
 		'zope.datetime >= 3.4.1',
 		'zope.deprecation >= 4.0.2',
 		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
@@ -275,21 +275,21 @@ setup(
 		'zope.index >= 3.6.4',
 		'zope.interface >= 4.0.3',
 		'zope.intid >= 3.7.2',
-                'zope.keyreference >= 3.6.4',
+		'zope.keyreference >= 3.6.4',
 		'zope.lifecycleevent >= 4.0.1',
 		'zope.location >= 4.0.0',
 		'zope.mimetype >= 1.3.1',
 		'zope.minmax >= 1.1.2',
 		'zope.pagetemplate >= 4.0.1',
 		'zope.password >= 3.6.1', # encrypted password management
-                'zope.pluggableauth >= 1.3', # pluggable authentication for zope.auth; see also repoze.who
+		'zope.pluggableauth >= 1.3', # pluggable authentication for zope.auth; see also repoze.who
 		'zope.publisher >= 3.13.1',
-                'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
+		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 1.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.schema >= 4.2.2',
 		'zope.security == 3.9.0', # 3.9.0 and zope.proxy 4.1.0 go together
-                'zope.session >= 3.9.5',
+		'zope.session >= 3.9.5',
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 4.0.0',
 		'zope.tal >= 4.0.0a1',
@@ -306,7 +306,7 @@ setup(
 	extras_require = {
 		'test': [
 			'WebTest >= 1.4.3',
-                        'blessings >= 1.5', # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
+			'blessings >= 1.5', # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
 			'coverage >= 3.6', # Test coverage
 			'fakeredis >= 0.3.0',
 			'fudge',
@@ -324,7 +324,7 @@ setup(
 			# Depends on the system graphviz installation; an alternative is repoze.profile which has
 			# fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		 	#'linesman >= 0.2.3', # Conflicts with Pillow (wants PIL). Can be installed manually with --no-deps
-			#'Pymacs >= 0.25',
+			#'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			'epydoc >= 3.0.1', # auto-api docs
 			'httpie == 0.3.1', # 0.3.1 explicitly requires requests < 1.0

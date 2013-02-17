@@ -476,20 +476,10 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	_DENY_ALL = True
 
 	def _get_sharing_target_names( self ):
-		result = set()
 		# By expanding in this way, in certain cases we can get
 		# multiple entries for the creator. That's OK, because the creator
 		# ACE comes first, and because they are both 'allow' entries
-		# TODO: See flattenedSharingTargetNames, very similar
-		sharing_targets = self.context.sharingTargets
-		for target in sharing_targets:
-			expanded = nti_interfaces.IUsernameIterable( target, None )
-			if expanded is not None:
-				result.update( expanded )
-			else:
-				result.add( target.username )
-
-		return result
+		return self.context.flattenedSharingTargetNames
 
 	@property
 	def __acl__( self ):
