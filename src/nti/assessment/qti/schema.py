@@ -52,15 +52,6 @@ class BoolAttribute(BaseQTIAttribute, schema.Bool):
 	A :class:`schema.Bool` type that to mark XML attribute elements
 	"""
 	
-@interface.implementer(schema_interfaces.IFromUnicode)
-class ObjectAttribute(BaseQTIAttribute, schema.Object):
-	"""
-	A :class:`schema.Object` type that to mark XML attribute elements
-	"""
-	
-	def fromUnicode(self, value):
-		return unicode(value) if value is not None else None
-	
 class IntAttribute(BaseQTIAttribute, schema.Int):
 	"""
 	A :class:`schema.Int` type that to mark XML attribute elements
