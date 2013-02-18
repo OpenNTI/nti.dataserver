@@ -29,6 +29,10 @@ class IQTIAttribute(interface.Interface):
 @interface.implementer(IQTIAttribute)
 class BaseQTIAttribute(object):
 	
+	def fromUnicode(self, value):
+		result = super(BaseQTIAttribute, self).fromUnicode(value) if value else None
+		return result
+	
 	def toUnicode(self, value):
 		return unicode(value) if value is not None else None
 	
@@ -95,7 +99,9 @@ class ListAttribute(BaseQTIAttribute, schema.List):
 		if isinstance(value, six.string_types):
 			result = unicode(value)
 		elif isinstance(value, Iterable):
-			result = ' '.join(value)
+			func = unicode if not IQTIAttribute.providedBy(self.value_type) else self.value_type.toUnicode
+			result = [func(x) for x in value]
+			result = ' '.join(result)
 		else:
 			result = super(ListAttribute, self).toUnicode(value)
 		return result
@@ -113,12 +119,13 @@ class IntegerOrVariableRefAttribute(TextLineAttribute):
 			raise schema_interfaces.ConstraintNotSatisfied(value)
 		
 	def fromUnicode(self, value):
-		s = super(IntegerOrVariableRefAttribute, self).fromUnicode(value)
-		try:
-			value = int(s)
-		except:
-			value = unicode(s)
-		return value
+		result = super(IntegerOrVariableRefAttribute, self).fromUnicode(value)
+		if result:
+			try:
+				result = int(result)
+			except:
+				result = unicode(result)
+		return result
 	
 	def constraint(self, value):
 		if isinstance(value, six.string_types):
@@ -137,12 +144,13 @@ class FloatOrVariableRefAttribute(TextLineAttribute):
 			raise schema_interfaces.ConstraintNotSatisfied(value)
 		
 	def fromUnicode(self, value):
-		s = super(FloatOrVariableRefAttribute, self).fromUnicode(value)
-		try:
-			value = float(s)
-		except:
-			value = unicode(s)
-		return value
+		result = super(FloatOrVariableRefAttribute, self).fromUnicode(value)
+		if result:
+			try:
+				result = float(result)
+			except:
+				result = unicode(result)
+		return result
 	
 	def constraint(self, value):
 		if isinstance(value, six.string_types):
