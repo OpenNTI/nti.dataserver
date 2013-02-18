@@ -32,9 +32,10 @@ def _add_users_content_roles( user, items ):
 	:param items: List of ntiids
 	"""
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-	member = component.getAdapter( user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX )
-	if not items and not member.hasGroups():
+	if not user or not items:
 		return 0
+	
+	member = component.getAdapter( user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX )
 	
 	roles_to_add = set()
 	current_roles = {x.id:x for x in member.groups}
@@ -62,8 +63,11 @@ def _remove_users_content_roles( user, items ):
 	:param items: List of ntiids
 	"""
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	if not user or not items:
+		return 0
+	
 	member = component.getAdapter( user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX )
-	if not items and not member.hasGroups():
+	if not member.hasGroups():
 		return 0
 
 	roles_to_remove = set()

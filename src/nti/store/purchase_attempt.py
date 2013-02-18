@@ -7,6 +7,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import re
 import six
 import time
 import functools
@@ -25,17 +26,30 @@ from nti.utils.property import alias
 
 from . import interfaces as store_interfaces
 
-def to_frozenset(items=None):
+def _from_unicode(value):
+	result = value.split(',')
+	result = re.findall("[^\s]+", value) if len(result)<=1 else result
+	return result
+	
+def _to_collection(items=None, factory=list):
 	result = None
 	if not items:
-		result = frozenset() 
-	elif isinstance(items, frozenset):
+		result = factory() 
+	elif isinstance(items, factory):
 		result = items
 	elif isinstance(items, six.string_types):
-		result = frozenset([items])
+		result = factory(_from_unicode(items))
 	else:
-		result = frozenset(items)
+		result = factory(items)
 	return result
+
+def to_list(items=None):
+	return _to_collection(items, list)
+
+def to_frozenset(items=None):
+	return _to_collection(items, frozenset)
+
+_marker_frozenset = frozenset()
 
 @functools.total_ordering
 @interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable)
@@ -46,14 +60,17 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	ErrorCode = None
 	Description = None
 	ErrorMessage = None
-
+	OnBehalfOf = _marker_frozenset
+	
 	def __init__(self, items, processor, state, description=None, start_time=None, end_time=None,
-				 error_code=None, error_message=None, synced=False):
+				 on_behalf_of=None, error_code=None, error_message=None, synced=False):
 
 		self.State = state
 		self.Processor = processor
+		self.Items = to_frozenset(items)
 		self.StartTime = start_time if start_time else time.time()
-		self.Items = frozenset([items]) if isinstance(items, six.string_types) else items
+		if on_behalf_of:
+			self.OnBehalfOf = to_frozenset(on_behalf_of)
 		if end_time is not None:
 			self.EndTime = end_time
 		if error_code:
@@ -70,6 +87,7 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	synced = alias('Synced')
 	processor = alias('Processor')
 	start_time = alias('StartTime')
+	on_behalf_of = alias('OnBehalfOf')
 	description = alias('Description')
 
 	@property
@@ -92,7 +110,8 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		return self is other or (isinstance(other, PurchaseAttempt)
 								 and self.items == other.items
 								 and self.start_time == other.start_time
-								 and self.processor == other.processor)
+								 and self.processor == other.processor
+								 and self.on_behalf_of == other.on_behalf_of)
 
 	def __lt__(self, other):
 		try:
@@ -111,8 +130,13 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		xhash ^= hash(self.Processor)
 		xhash ^= hash(self.StartTime)
 		xhash ^= hash(self.Items)
+		xhash ^= hash(self.OnBehalfOf)
 		return xhash
 
+	def actors(self):
+		result = self.on_behalf_of.union(set([self.creator.username]))
+		return result
+	
 	def has_failed(self):
 		return self.State in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE, store_interfaces.PA_STATE_CANCELED)
 
@@ -143,7 +167,8 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	def is_synced(self):
 		return self.Synced
 
-def create_purchase_attempt(items, processor, state=None, description=None, start_time=None):
+def create_purchase_attempt(items, processor, on_behalf_of=None, state=None, description=None, start_time=None):
 	items = to_frozenset(items)
 	state = state or store_interfaces.PA_STATE_UNKNOWN
-	return PurchaseAttempt(items=items, processor=processor, description=description, state=state, start_time=start_time)
+	return PurchaseAttempt(	items=items, processor=processor, description=description, 
+							state=state, start_time=start_time, on_behalf_of=on_behalf_of)

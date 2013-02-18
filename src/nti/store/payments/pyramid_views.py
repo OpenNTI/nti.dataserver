@@ -45,9 +45,11 @@ class StripePayment(object):
 		coupon = request.matchdict.get('coupon', None)
 		currency = request.matchdict.get('currency', 'USD')
 		description = request.matchdict.get('description', None)
+		on_behalf_of = request.matchdict.get('on_behalf_of', None)
 		description = description or "%s's payment for '%r'" % (username, items)
 	
-		purchase = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor, description=description)
+		purchase = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor,
+															description=description, on_behalf_of=on_behalf_of)
 		purchase_id = purchase_history.register_purchase_attempt(username, purchase)
 		
 		def process_pay():
