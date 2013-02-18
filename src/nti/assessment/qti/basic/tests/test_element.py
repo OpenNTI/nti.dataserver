@@ -16,7 +16,7 @@ from nti.assessment.qti.expression import interfaces as exp_interfaces
 
 from nti.assessment.qti.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, none, has_property )
+from hamcrest import (assert_that, is_, none, has_property, has_entry)
 		
 class TestBasicElement(ConfiguringTestBase):
 	
@@ -83,7 +83,10 @@ class TestBasicElement(ConfiguringTestBase):
 		assert_that(f.min, is_(0))
 		assert_that(f.max, is_('maxval'))
 		
-	
+		attributes = f.get_attributes()
+		assert_that(attributes, has_entry('min', 0))
+		assert_that(attributes, has_entry('max', 'maxval'))
+		
 if __name__ == '__main__':
 	unittest.main()
 	
