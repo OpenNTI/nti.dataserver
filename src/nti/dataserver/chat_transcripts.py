@@ -74,20 +74,27 @@ biggest win is simply reducing all the transactions to one. There's
 probably a big win in unifying the indexes. Try an KeywordIndex.
 
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 import logging
 logger = logging.getLogger( __name__ )
 
+import time
+
 from nti.ntiids import ntiids
+
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver.activitystream import enqueue_change
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
+
 from nti.dataserver import mimetype
 from nti.dataserver import users
 from nti.dataserver import datastructures
 from nti.dataserver import links
+
+from nti.utils.property import read_alias
 
 import nti.externalization.datastructures
 from nti.externalization.datastructures import LocatedExternalDict
@@ -361,7 +368,7 @@ def list_transcripts_for_user( username ):
 	storage = _ts_storage_for( username )
 	return storage.transcript_summaries
 
-@interface.implementer(nti_interfaces.ITranscriptSummary, ext_interfaces.IInternalObjectIO)
+@interface.implementer(nti_interfaces.ITranscriptSummary)
 @component.adapter(_IMeetingTranscriptStorage)
 def TranscriptSummaryAdapter(meeting_storage):
 	"""
@@ -378,20 +385,34 @@ def TranscriptSummaryAdapter(meeting_storage):
 		logger.exception( "Meeting object gone missing." )
 		return None
 
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(_IMeetingTranscriptStorage)
+def _MeetingTranscriptStorageExternalObjectAdapter(meeting_storage):
+	summary = nti_interfaces.ITranscriptSummary( meeting_storage )
+	return ext_interfaces.IInternalObjectIO(summary)
+
 @interface.implementer(nti_interfaces.IZContained,
 					   nti_interfaces.ILinked,
-					   nti_interfaces.ITranscriptSummary,
-					   ext_interfaces.IInternalObjectIO) # TODO: Strip this out, make schema driven
+					   nti_interfaces.ITranscriptSummary)
 @component.adapter(_IMeetingTranscriptStorage)
-class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanceDict):
+class TranscriptSummary(object):
 	"""
 	The transcript summary for a user in a room.
 	"""
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	__parent__ = None
+	__name__ = None
+	id = read_alias('__name__')
+
 	links = ()
 	_NTIID_TYPE_ = ntiids.TYPE_TRANSCRIPT_SUMMARY
+
+	# BWC aliases
+	ContainerId = read_alias('containerId')
+	NTIID = read_alias( '__name__' )
+	LastModified = read_alias('lastModified')
+
 
 	def __init__( self, meeting_storage ):
 		"""
@@ -403,21 +424,22 @@ class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanc
 		assert room.ID
 		self.creator = meeting_storage.creator
 		self.RoomInfo = room
-		self.ContainerId = room.ID
-		self.NTIID = None
-		#if ntiids.is_ntiid_of_type( room.containerId, ntiids.TYPE_MEETINGROOM ):
-			#self.NTIID = _transcript_ntiid( room, self.creator, self._NTIID_TYPE_ )
-		self.NTIID = _transcript_ntiid( room, self.creator.username, self._NTIID_TYPE_ )
+		self.containerId = room.ID
+		self.__parent__ = room
+		self.__name__ = _transcript_ntiid( room, self.creator.username, self._NTIID_TYPE_ )
 
 		# TODO: What should the LastModified be? The room doesn't
 		# currently track it. We're using the max for our messages, which may not be right?
-		last_modified = 0
+		created_time = time.time()
+		last_modified = 0.0
 		contributors = set()
 		for message in meeting_storage.itervalues():
-			last_modified = max( last_modified, getattr( message, 'LastModified', 0 ) )
+			last_modified = max( last_modified, getattr( message, 'LastModified', 0.0 ) )
+			created_time = min( created_time, getattr( message, 'createdTime', created_time ) )
 			contributors.update( getattr(message, 'sharedWith', ()) or () )
 
-		self.LastModified = last_modified
+		self.lastModified = last_modified
+		self.createdTime = created_time
 		self.Contributors = contributors
 
 		self.links = self._create_links( meeting_storage )
@@ -432,9 +454,13 @@ class TranscriptSummary(nti.externalization.datastructures.ExternalizableInstanc
 		""" # because they hold other persistent objects that are meant to be weak-refd
 		raise TypeError()
 
-	@property
-	def __name__(self):
-		return self.NTIID
+
+from nti.externalization.datastructures import InterfaceObjectIO
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(nti_interfaces.ITranscriptSummary)
+class TranscriptSummaryInternalObjectIO(InterfaceObjectIO):
+	_ext_iface_upper_bound = nti_interfaces.ITranscriptSummary
 
 # For purposes of filtering during UGD queries, make the objects that store
 # messages appear to be transcript summaries, since that is what they will
@@ -462,10 +488,6 @@ class Transcript(TranscriptSummary):
 	@Lazy
 	def Messages(self):
 		return list( self._meeting_storage.itervalues() )
-
-	def toExternalObject(self,mergeFrom=None):
-		len(self.Messages) # Get in the instance dict if not already so it externalizes
-		return super(Transcript,self).toExternalObject(mergeFrom=mergeFrom)
 
 	def _create_links( self, meeting_storage ):
 		return ()

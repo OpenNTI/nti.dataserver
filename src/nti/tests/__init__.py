@@ -138,7 +138,7 @@ class VerifyValidSchema(BaseMatcher):
 				mismatch_description.append_text( str(x).replace( '\n', '' ) )
 
 def validly_provides(the_schema):
-	"Matches if the object validly provides the given schema (interface)"
+	"Matches if the object verifiably and validly provides the given schema (interface)"
 	return hamcrest.all_of( verifiably_provides( the_schema ), VerifyValidSchema(the_schema) )
 
 class Implements(BaseMatcher):
