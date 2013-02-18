@@ -167,23 +167,28 @@ class _FriendsListExternalObject(_EntityExternalObject):
 @component.adapter( nti_interfaces.IUser )
 class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 
+	#: Even in summary (i.e. to other people), we want to publish all these fields
+	#: because it looks better
+	public_summary_profile_fields = ( 'affiliation', 'home_page', 'description', 'location', 'role' )
+	# These could probably be put as tags on the interface fields, but the number of
+	# profile interfaces in use makes that a chore. At the moment, this is the simpler option
+
 	def _do_toExternalObject( self ):
 		extDict = super(_UserSummaryExternalObject,self)._do_toExternalObject( )
 
-		# TODO: Is this a privacy concern?
 		extDict['lastLoginTime'] = self.entity.lastLoginTime.value
 		extDict['NotificationCount'] = self.entity.notificationCount.value
-		prof = interfaces.IUserProfile( self.entity )
-		extDict['affiliation'] = getattr( prof, 'affiliation', None )
+		if self.public_summary_profile_fields:
+			prof = interfaces.IUserProfile( self.entity )
+			for f in self.public_summary_profile_fields:
+				extDict[f] = getattr( prof, f, None )
 		return extDict
 
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserSummaryExternalObject(_UserSummaryExternalObject):
-
-	def _do_toExternalObject( self ):
-		extDict = super(_CoppaUserSummaryExternalObject,self)._do_toExternalObject( )
-		extDict['affiliation'] = None
-		return extDict
+	#: Privacy is very important for the precious children. None of their profile
+	#: fields are public to other people.
+	public_summary_profile_fields = ()
 
 
 @component.adapter( nti_interfaces.IUser )
