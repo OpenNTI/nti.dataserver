@@ -137,7 +137,7 @@ class FloatOrVariableRefAttribute(TextLineAttribute):
 			raise schema_interfaces.ConstraintNotSatisfied(value)
 		
 	def fromUnicode(self, value):
-		s = super(IntegerOrVariableRefAttribute, self).fromUnicode(value)
+		s = super(FloatOrVariableRefAttribute, self).fromUnicode(value)
 		try:
 			value = float(s)
 		except:

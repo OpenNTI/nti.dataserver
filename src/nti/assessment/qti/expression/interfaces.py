@@ -109,7 +109,7 @@ class Iordered(Iexpression, qti_interfaces.IConcrete):
 class IcontainerSize(Iexpression, qti_interfaces.IConcrete):
 	expression = schema.Object(Iexpression, title="The eval sub-expression", required=True)
 
-class IisNull(Iexpression, attr_interfaces.IstatsOperatorAttrGroup, qti_interfaces.IConcrete):
+class IisNull(Iexpression, qti_interfaces.IConcrete):
 	expression = schema.Object(Iexpression, title="The eval sub-expression", required=True)
 
 class Iindex(Iexpression, attr_interfaces.IindexAttrGroup, qti_interfaces.IConcrete):
