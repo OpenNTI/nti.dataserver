@@ -14,6 +14,7 @@
 		Let requests be used for negotiating locales in the Zope way.
 		Needed for tables based on z3c/ZPT, which use the Zope-based request
 	-->
+	<!-- Languages -->
 	<!-- Pyramid requests, via Zope -->
 	<adapter factory="._pyramid_zope_integrations.PyramidBrowserPreferredLanguages" />
 
@@ -21,8 +22,15 @@
 	<adapter factory="zope.publisher.browser.ModifiableBrowserLanguages"
 			 provides="zope.i18n.interfaces.IModifiableUserPreferredLanguages"/>
 
+
 	<!-- Entities -->
 	<adapter factory="._adapters.UserPreferredLanguages" />
+
+	<!-- Charsets -->
+	<adapter factory="._pyramid_zope_integrations.PyramidBrowserPreferredCharsets" />
+	<adapter factory="zope.publisher.http.HTTPCharsets"
+			 provides="zope.i18n.interfaces.IUserPreferredCharsets" />
+	<!-- __________________ -->
 
 	<!-- Account Creation -->
 	<utility factory=".site_policies.RequestAwareUserPlacer" />

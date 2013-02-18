@@ -270,7 +270,7 @@ setup(
 		'zope.formlib >= 4.2.0', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
 		'zope.hookable >= 4.0.1', # explicitly list this to ensure we get the fast C version. Used by ZCA.
-		'zope.i18n >= 3.8.0',
+		'zope.i18n >= 3.8.0', # 4.0.0a4 is out; works fine. upgrade when official
 		'zope.i18nmessageid >= 4.0.2',
 		'zope.index >= 3.6.4',
 		'zope.interface >= 4.0.3',
@@ -288,7 +288,9 @@ setup(
 		'zope.processlifetime >= 1.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.schema >= 4.2.2',
-		'zope.security == 3.9.0', # 3.9.0 and zope.proxy 4.1.0 go together
+		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together
+		# There is a zope.security. 4.0 out; why can't we use it?
+		'zope.security == 3.9.0',
 		'zope.session >= 3.9.5',
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 4.0.0',

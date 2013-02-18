@@ -292,12 +292,18 @@ class ApplicationTestBase(_AppTestBaseMixin, ConfiguringTestBase):
 
 class TestApplication(SharedApplicationTestBase):
 
-	def test_preferred_languages( self ):
+	def test_locale_negotionion( self ):
 		from zope.i18n.interfaces import IUserPreferredLanguages
 		self.request.environ['HTTP_ACCEPT_LANGUAGE'] = 'en'
 		langs = IUserPreferredLanguages( self.request )
 		assert_that( langs.getPreferredLanguages(), is_( ['en'] ) )
 
+		from zope.i18n.interfaces import IUserPreferredCharsets
+		chars = IUserPreferredCharsets( self.request )
+		assert_that( chars.getPreferredCharsets(), is_( ['utf-8'] ) ) # default
+
+		self.request.environ['HTTP_ACCEPT_CHARSET'] = 'iso-8859-1'
+		assert_that( chars.getPreferredCharsets(), is_( ['iso-8859-1'] ) )
 
 	@WithSharedApplicationMockDS
 	def test_chameleon_caching_config(self):
