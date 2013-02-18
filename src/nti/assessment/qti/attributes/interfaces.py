@@ -508,9 +508,9 @@ class IpatternMatchAttrGroup(IAttrGroup):
 	
 class IequalAttrGroup(IAttrGroup):
 	toleranceMode = ChoiceAttribute(title="The tolerance mode", vocabulary=qt_interfaces.TOLERANCE_MODE_VOCABULARY, required=True)
-	tolerance = ListAttribute(schema.Object(interface.Interface), title="The tolerance floatOrVariableRef", required=True, min_length=0, max_length=2)
+	tolerance = ListAttribute(FloatOrVariableRefAttribute(), title="The tolerance floatOrVariableRef", required=True, min_length=0, max_length=2)
 	includeLowerBound = BoolAttribute(title=u'Controls whether or not the lower bound is included in the comparison', required=False, default=True)
-	includeLowerBound = BoolAttribute(title=u'Controls whether or not the upper bound is included in the comparison', required=False, default=True)
+	includeUpperBound = BoolAttribute(title=u'Controls whether or not the upper bound is included in the comparison', required=False, default=True)
 	
 class IequalRoundedAttrGroup(IAttrGroup):
 	roundingMode = ChoiceAttribute(title="The tolerance mode", vocabulary=qt_interfaces.ROUNDING_MODE_VOCABULARY, required=True, default='significantFigures')
