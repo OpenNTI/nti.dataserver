@@ -519,10 +519,10 @@ def createApplication( http_port,
 							 renderer='rest', context='nti.appserver.interfaces.INewContainerResource',
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
-							 renderer='rest', context='nti.appserver.interfaces.IUserResource',
+							 renderer='rest', context=nti_interfaces.IUser,
 							 permission=nauth.ACT_CREATE, request_method='POST' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._method_not_allowed',
-							 renderer='rest', context='nti.appserver.interfaces.IUserResource',
+							 renderer='rest', context=nti_interfaces.IUser,
 							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
 							 renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
@@ -554,7 +554,7 @@ def createApplication( http_port,
 							 permission=nauth.ACT_UPDATE, request_method='PUT' )
 	# And the user itself can be put to
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
-							 renderer='rest', context='nti.appserver.interfaces.IUserResource',
+							 renderer='rest', context=nti_interfaces.IUser,
 							 permission=nauth.ACT_UPDATE, request_method='PUT' )
 
 

@@ -314,9 +314,6 @@ class IPageContainerResource(interface.Interface):
 class INewContainerResource(interface.Interface):
 	pass
 
-class IUserResource(interface.Interface):
-	pass
-
 class IPagesResource(interface.Interface):
 	pass
 ###
