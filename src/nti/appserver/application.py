@@ -112,6 +112,7 @@ def createApplication( http_port,
 					   process_args=False,
 					   create_ds=True,
 					   pyramid_config=None,
+					   force_create_indexmanager=False, # For testing
 					   **settings ):
 	"""
 	:return: A tuple (wsgi app, _Main)
@@ -309,7 +310,7 @@ def createApplication( http_port,
 	pyramid_config.add_renderer( name='.pt', factory='nti.appserver.z3c_zpt.renderer_factory' )
 
 	indexmanager = None
-	if create_ds:
+	if create_ds or force_create_indexmanager:
 		# This may be excluded by a previous setting in site.zcml, and replaced with something else
 		xml_conf_machine = xmlconfig.file( 'configure_indexmanager.zcml',  package=nti.appserver, context=xml_conf_machine )
 
