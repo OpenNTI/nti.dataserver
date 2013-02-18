@@ -49,10 +49,10 @@ class SocketIOSocket(object):
 		self.send( self.protocol.make_ack( msg_id, params ) )
 
 
-
+@interface.implementer(interfaces.ISocketIOMessage)
 class AbstractMessage(dict):
-	interface.implements(interfaces.ISocketIOMessage)
 	msg_type = -1
+
 Message = AbstractMessage
 # 'disconnect'
 # 'connect'
@@ -92,11 +92,9 @@ class NoopMessage(AbstractMessage):
 	msg_type = 8
 
 
-
+@interface.implementer( interfaces.ISocketIOProtocolFormatter )
 class SocketIOProtocolFormatter1(object):
 	"""Parsing functions for version 1 of the socketio protocol."""
-
-	interface.implements( interfaces.ISocketIOProtocolFormatter )
 
 	_LIGHTWEIGHT_FRAME_DELIM      = b'\xff\xfd'     # u'\ufffd', the opening byte of a lightweight framing
 	_LIGHTWEIGHT_FRAME_UTF8_DELIM = b'\xef\xbf\xbd' # utf-8 encoding of u'\ufffd'

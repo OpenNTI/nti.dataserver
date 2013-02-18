@@ -41,6 +41,7 @@ from nti.dataserver.contenttypes import Note, Canvas
 
 from nti.externalization.oids import toExternalOID, to_external_ntiid_oid
 from nti.externalization.externalization import to_external_representation, toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
+from nti.externalization.externalization import to_json_representation_externalized
 from nti.externalization.internalization import update_from_external_object
 from nti.externalization import externalization
 from nti.ntiids import ntiids
@@ -242,7 +243,8 @@ class _ChatserverTestBase(SharedConfiguringTestBase):
 		def send_event( self, name, *args ):
 			event =  {'name':name, 'args':args}
 			if self.strict_events:
-				json.dumps( event )
+				# See socketio.protocol
+				to_json_representation_externalized( event )
 			self.events.append( event )
 
 
@@ -1023,11 +1025,11 @@ class TestChatserver(_ChatserverTestBase):
 		chatserver = chat.Chatserver( sessions )
 
 		link = links.Link( '/foo', rel='favorite' )
-		# Top-level still fails
-		with assert_raises( TypeError ):
-			chatserver.send_event_to_user( 'sjohnson', 'event', link )
+		# Top-level works
+		chatserver.send_event_to_user( 'sjohnson', 'event', link )
+		assert_that( sessions[1].socket.events, has_length( 1 ) )
 
-
+		sessions.clear_all_session_events()
 		# Nested works, though
 		chatserver.send_event_to_user( 'sjohnson', 'event', [link] )
 		assert_that( sessions[1].socket.events, has_length( 1 ) )
