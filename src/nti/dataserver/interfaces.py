@@ -842,11 +842,23 @@ class IDevice(IModeledContent): pass
 class IDeviceContainer(INamedContainer):
 	contains(IDevice)
 
-class ITranscript(IModeledContent): pass
+class ITranscriptSummary(IModeledContent):
+
+	Contributors = schema.Set( title="All the usernames of people who participated in the conversation",
+							   value_type=schema.TextLine(title="The username"),
+							   readonly=True )
+	RoomInfo = interface.Attribute( "The meeting where the conversation took place" )
+
+class ITranscript(ITranscriptSummary):
+	Messages = schema.List( title="All the messages contained in the conversation",
+							readonly=True )
+	def get_message( msg_id ):
+		"Return a message with that id"
+
 class ITranscriptContainer(INamedContainer):
 	contains(ITranscript)
 
-class ITranscriptSummary(IModeledContent): pass
+
 
 
 class ICanvas(IShareableModeledContent, IThreadable):

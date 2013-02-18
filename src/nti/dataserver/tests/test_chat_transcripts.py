@@ -12,8 +12,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-from hamcrest import assert_that, is_, none, not_none
+from hamcrest import assert_that, is_,  not_none
 from hamcrest import has_length
+from hamcrest import has_entry
+from hamcrest import contains
 from nose.tools import assert_raises
 
 from nti.dataserver import users
@@ -21,6 +23,7 @@ from nti.dataserver import chat_transcripts
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization import oids
+from nti.externalization.externalization import to_external_object
 from zope import component
 from zc import intid as zc_intid
 import persistent
@@ -28,11 +31,13 @@ import cPickle as pickle
 
 
 import unittest
-from .mock_dataserver import SharedConfiguringTestBase, WithMockDS, WithMockDSTrans, mock_db_trans, current_transaction
+from nti.tests import validly_provides as verifiably_provides
+
+from .mock_dataserver import SharedConfiguringTestBase, WithMockDS,  mock_db_trans
 from nti.chatserver.meeting import _Meeting as Meeting
 from nti.chatserver.messageinfo import MessageInfo
 from nti.chatserver import interfaces as chat_interfaces
-from zope.event import notify
+
 from persistent.list import PersistentList
 
 class TestChatTranscript(SharedConfiguringTestBase):
@@ -64,11 +69,18 @@ class TestChatTranscript(SharedConfiguringTestBase):
 					ID = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID-1'
 					id = ID
 
+					def toExternalObject(self):
+						return "Meet"
+
 				class Msg(persistent.Persistent):
 					containerId = Meet.ID
 					ID = 42
-					LastModified = 1
-					sharedWith = ()
+					LastModified = 1.0
+					sharedWith = ('me',)
+
+
+					def toExternalObject(self):
+						return "Msg"
 
 				msg = Msg()
 				component.getUtility( zc_intid.IIntIds ).register( msg )
@@ -78,7 +90,24 @@ class TestChatTranscript(SharedConfiguringTestBase):
 
 				assert_that( msg_storage, is_( not_none() ) )
 				assert_that( nti_interfaces.ITranscriptSummary( msg_storage ), is_( not_none() ) )
+				assert_that( nti_interfaces.ITranscriptSummary( msg_storage ), verifiably_provides( nti_interfaces.ITranscriptSummary ) )
+
+				assert_that( nti_interfaces.ITranscript( msg_storage ), verifiably_provides( nti_interfaces.ITranscript ) )
 				assert_that( ext_interfaces.IExternalObject( msg_storage ), is_( not_none() ) )
+
+				ext_obj = to_external_object( msg_storage )
+				assert_that( ext_obj, has_entry( 'Class', 'TranscriptSummary' ) )
+				assert_that( ext_obj, has_entry( 'Contributors', ['me'] ) )
+				assert_that( ext_obj, has_entry( 'RoomInfo', 'Meet' ) )
+				assert_that( ext_obj, has_entry( 'Links', contains( has_entry( 'rel', 'transcript' ) ) ) )
+
+				transcript = storage.transcript_for_meeting( Meet.ID )
+				assert_that( transcript, verifiably_provides( nti_interfaces.ITranscript ) )
+
+				ext_obj = to_external_object( transcript )
+				assert_that( ext_obj, has_entry( 'Class', 'Transcript' ) )
+				assert_that( ext_obj, has_entry( 'Contributors', ['me'] ) )
+				assert_that( ext_obj, has_entry( 'Messages', ['Msg'] ) )
 
 
 class PicklableMeet(persistent.Persistent):
