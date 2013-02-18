@@ -52,9 +52,6 @@ class Note(ThreadableMixin,Highlight):
 
 	def __init__(self):
 		super(Note,self).__init__()
-		# NOTE: we are not putting body in the instance dict.
-		# this means that we don't externalize it until specifically set.
-		# This is mostly for test purposes, so that we can round-trip a default note
 
 	__getitem__ = _make_getitem( 'body' )
 
@@ -132,6 +129,12 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 
 		# convert mutable lists to immutable tuples
 		note.body = tuple( [_sanitize(x) for x in body] )
+
+	def toExternalObject( self ):
+		ext = super(NoteInternalObjectIO,self).toExternalObject()
+		if ext['body'] in ( Note.body, [''] ): # don't write out the base state, it confuses updating
+			del ext['body']
+		return ext
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		# Only updates to the body are accepted

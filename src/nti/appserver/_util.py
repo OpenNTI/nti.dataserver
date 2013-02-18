@@ -111,6 +111,10 @@ class _UncacheableInResponseProxy(SpecificationDecoratorBase):
 	which defeats the point.
 	"""
 
+	# when/if these are pickled, they are pickled as their original type,
+	# not the proxy.
+
+
 
 def uncached_in_response( context ):
 	"""

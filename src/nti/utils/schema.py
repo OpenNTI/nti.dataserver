@@ -165,6 +165,12 @@ class IndexedIterable(schema.List):
 	"""
 	_type = None # Override from super to not force a list
 
+class UniqueIterable(schema.Set):
+	"""
+	An arbitrary iterable, not necessarily an actual :class:`set` object and
+	not necessarily iterable, but one whose contents are unique.
+	"""
+	_type = None # Override to not force a set
 
 def find_most_derived_interface( ext_self, iface_upper_bound, possibilities=None ):
 	"""

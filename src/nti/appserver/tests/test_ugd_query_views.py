@@ -43,6 +43,7 @@ from nti.dataserver import users
 from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
+from nti.externalization.externalization import to_json_representation as to_external_representation
 from nti.dataserver.datastructures import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
@@ -955,13 +956,13 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
 			reply_note = _note_from( other_user )
 			reply_note.inReplyTo = owner_note
-			reply_note_ext = to_external_object( reply_note )
+			reply_note_ext_json = to_external_representation( reply_note )
 
 			parent_dfl_NTIID = parent_dfl.NTIID
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/' + str(other_user_username)
-		res = testapp.post( path, json.dumps( reply_note_ext ), extra_environ=self._make_extra_environ( user=other_user_username ) )
+		res = testapp.post( path, reply_note_ext_json, extra_environ=self._make_extra_environ( user=other_user_username ) )
 		# The correct response:
 		assert_that( res.status_int, is_( 201 ) )
 		assert_that( res.json_body, has_entry( 'sharedWith', has_items( owner_user_username, parent_dfl_NTIID ) ) )

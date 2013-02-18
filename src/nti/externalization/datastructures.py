@@ -105,8 +105,8 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 
 	def _ext_getattr( self, ext_self, k ):
 		"""
-		Return the attributed of the `ext_self` object with the external name `k`.
-		If the attribute does not exist, should raise.
+		Return the attribute of the `ext_self` object with the external name `k`.
+		If the attribute does not exist, should raise (typically :class:`AttributeError`)
 		"""
 		raise NotImplementedError() # pragma: no cover
 
@@ -115,7 +115,7 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 		Return only the names of attributes that should be externalized.
 		These values will be used as keys in the external dictionary.
 
-		See :meth:_ext_all_possible_keys. This implementation then filters out
+		See :meth:`_ext_all_possible_keys`. This implementation then filters out
 		*private* attributes (those beginning with an underscore),
 		and those listed in `_excluded_in_ivars_.`
 		"""
@@ -142,6 +142,7 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 				continue
 
 			attr_val = self._ext_getattr( ext_self, k )
+			__traceback_info__ = k, attr_val
 			result[k] = toExternalObject( attr_val ) if k not in primitive_ext_keys else attr_val
 
 			try: #if ILocation.providedBy( result[k] ):
