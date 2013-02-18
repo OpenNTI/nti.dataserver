@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 import six
 import numbers
+from collections import Iterable
 
 from zope import schema
 from zope import interface
@@ -18,46 +19,49 @@ class IQTIAttribute(interface.Interface):
 	"""
 	Marker interface for QTI [XML] attributes
 	"""
-	pass
-
+	
+	def toUnicode(value):
+		"""
+		Transform the specified value to unicode
+		"""
+			
 @interface.implementer(IQTIAttribute)
-class TextLineAttribute(schema.TextLine):
+class BaseQTIAttribute(object):
+	
+	def toUnicode(self, value):
+		return unicode(value) if value is not None else None
+	
+class TextLineAttribute(BaseQTIAttribute, schema.TextLine):
 	"""
 	A :class:`schema.TextLine` type that to mark XML attribute elements
 	"""
 	
-@interface.implementer(IQTIAttribute)
-class URIAttribute(schema.URI):
+class URIAttribute(BaseQTIAttribute, schema.URI):
 	"""
 	A :class:`schema.URI` type that to mark XML attribute elements
 	"""
-	
-@interface.implementer(IQTIAttribute)
-class BoolAttribute(schema.Bool):
+
+class BoolAttribute(BaseQTIAttribute, schema.Bool):
 	"""
 	A :class:`schema.Bool` type that to mark XML attribute elements
 	"""
 	
-@interface.implementer(IQTIAttribute)
-class ObjectAttribute(schema.Object):
+class ObjectAttribute(BaseQTIAttribute, schema.Object):
 	"""
 	A :class:`schema.Object` type that to mark XML attribute elements
 	"""
 
-@interface.implementer(IQTIAttribute)
-class IntAttribute(schema.Int):
+class IntAttribute(BaseQTIAttribute, schema.Int):
 	"""
 	A :class:`schema.Int` type that to mark XML attribute elements
 	"""
 
-@interface.implementer(IQTIAttribute)
-class FloatAttribute(schema.Float):
+class FloatAttribute(BaseQTIAttribute, schema.Float):
 	"""
 	A :class:`schema.Float` type that to mark XML attribute elements
 	"""
-	
-@interface.implementer(IQTIAttribute)
-class ChoiceAttribute(schema.Choice):
+
+class ChoiceAttribute(BaseQTIAttribute, schema.Choice):
 	"""
 	A :class:`schema.Choice` type that to mark XML attribute elements
 	"""
@@ -67,12 +71,20 @@ class MimeTypeAttribute(TextLineAttribute):
 	A :class: for mimetype attributes
 	"""
 
-@interface.implementer(IQTIAttribute)
-class ListAttribute(schema.List):
+class ListAttribute(BaseQTIAttribute, schema.List):
 	"""
 	A :class:`schema.List` type that to mark XML attribute elements
 	"""
-
+	
+	def toUnicode(self, value):
+		if isinstance(value, six.string_types):
+			result = unicode(value)
+		elif isinstance(value, Iterable):
+			result = ' '.join(value)
+		else:
+			result = super(ListAttribute, self).toUnicode(value)
+		return result
+			
 class IntegerOrVariableRefAttribute(TextLineAttribute):
 	
 	"""
