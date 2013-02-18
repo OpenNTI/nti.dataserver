@@ -7,18 +7,18 @@ $Id$
 from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
+import six
 import collections
 
 from zope import schema
 from zope import interface
 from zope.container import contained as zcontained
-from zope.schema import interfaces as sch_intefaces
+from zope.schema import interfaces as sch_interfaces
 from zope.annotation import interfaces as an_interfaces
 
 from persistent import Persistent
 from persistent.list import PersistentList
 from persistent.interfaces import IPersistent
-from persistent.mapping import PersistentMapping
 
 from ..schema import IQTIAttribute
 from .. import interfaces as qti_interfaces
@@ -75,16 +75,23 @@ def _add_collection(name, iface=None):
 			collec.add(value)
 	return function
 
-def _get_attribute(self, name):
-	result = None
-	sch = self._v_attributes.get(name, None)
-	value = self.attributes.get(name, None)
-	if sch is not None and value is not None:
-		result = sch.fromUnicode(value)
-	return result
+def _attribute_setter(name, sch_def):
+	def function(self, value):
+		if value is not None:
+			if isinstance(value, six.string_types):
+				value = sch_def.fromUnicode(value)
+			else:
+				sch_def.validate(value)
+		setattr(self, name, value)
+	return function
 
-def _get_raw_attribute(self, name):	
-	return self.attributes.get(name, None)
+def _get_attributes(self):
+	result = {}
+	for k in self._v_attributes.keys():
+		v = getattr(self, k, None)
+		if v is not None:
+			result[k] = v
+	return result
 
 def qti_creator(cls):
 	"""
@@ -121,12 +128,6 @@ def qti_creator(cls):
 	
 	# factories
 	list_factory = PersistentList if is_persitent else list
-	map_factory = PersistentMapping if is_persitent else dict
-	
-	# attributes
-	setattr(cls, 'attributes', property(_collection_getter('_attributes', map_factory)))
-	cls.get_attribute = _get_attribute
-	cls.get_raw_get_attribute = _get_raw_attribute
 	
 	# fields
 	for k, v in definitions.items():
@@ -134,16 +135,25 @@ def qti_creator(cls):
 			continue
 		
 		pname = "_%s" % k
-		if sch_intefaces.IObject.providedBy(v):
+		if sch_interfaces.IObject.providedBy(v):
 			iface = v.schema
 			setattr(cls, k, property(_getter(pname), _setter(pname, iface)))
-		elif sch_intefaces.IList.providedBy(v):
+		elif sch_interfaces.IText.providedBy(v):
+			setattr(cls, k, property(_getter(pname), _setter(pname)))
+		elif sch_interfaces.IList.providedBy(v):
 			setattr(cls, k, property(_collection_getter(pname, list_factory)))
 			setattr(cls, "get_%s_list" % k, _getter(pname))
-			if sch_intefaces.IObject.providedBy(v.value_type):
+			if sch_interfaces.IObject.providedBy(v.value_type) or sch_interfaces.IText.providedBy(v.value_type):
 				iface = v.value_type.schema
 				setattr(cls, "add_%s" % k, _add_collection(k, iface))
 			
+	# attributes
+	for k,v in attributes:
+		if hasattr(cls, k): continue
+		pname = "_%s" % k
+		setattr(cls, k, property(_getter(pname), _attribute_setter(pname, v)))
+	
+	setattr(cls, "get_attributes", _get_attributes)
 	return cls
 
 	
