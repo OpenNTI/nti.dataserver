@@ -13,7 +13,7 @@ from zope import interface
 from .. import interfaces as qt_interfaces
 from ..schema import (TextLineAttribute, BoolAttribute, IntAttribute, URIAttribute,
 					  ChoiceAttribute, MimeTypeAttribute, ListAttribute, FloatAttribute,
-					  ObjectAttribute, IntegerOrVariableRefAttribute, FloatOrVariableRefAttribute,
+					  IntegerOrVariableRefAttribute, FloatOrVariableRefAttribute,
 					  StringOrVariableRefAttribute, IdentifierRefAttribute)
 	
 class IAttrGroup(interface.Interface):
@@ -58,7 +58,7 @@ class ImappingAttrGroup(IAttrGroup):
 	defaultValue = FloatAttribute(title='The default value from the target set', required=False, default=0.0)
 
 class ImappingEntryAttrGroup(IAttrGroup):
-	mapKey = ObjectAttribute(interface.Interface,title=u'The source value', required=True)
+	mapKey = TextLineAttribute(interface.Interface,title=u'The source value', required=True)
 	mappedValue = FloatAttribute(title='The mapped value', required=True)
 	caseSensitive = BoolAttribute(title='Used to control whether or not a mapEntry string is matched case sensitively', required=True)
 
@@ -84,16 +84,16 @@ class IoutcomeDeclarationAttrGroup(IAttrGroup):
 	masteryValue = FloatAttribute(title='Defines the mastery value of numeric outcome variables', required=False)
 	
 class IlookupTableAttrGroup(IAttrGroup):
-	defaultValue = ObjectAttribute(interface.Interface, title='The default outcome value to be used when no matching tabel entry is found', required=False)
+	defaultValue = TextLineAttribute(title='The default outcome value to be used when no matching tabel entry is found', required=False)
 	
 class ImatchTableEntryAttrGroup(IAttrGroup):
 	sourceValue = IntAttribute(title='The source integer that must be matched exactly', required=True)
-	targetValue = ObjectAttribute(interface.Interface, title=u'The target value that is used to set the outcome when a match is found.', required=True)
+	targetValue = TextLineAttribute(interface.Interface, title=u'The target value that is used to set the outcome when a match is found.', required=True)
 
 class IinterpolationTableEntryAttrGroup(IAttrGroup):
 	sourceValue = FloatAttribute(title='The lower bound for the source value to match this entry', required=True)
 	includeBoundary = BoolAttribute(title='Determines if an exact match of sourceValue matches this entry', required=False, default=True)
-	targetValue = ObjectAttribute(interface.Interface, title='The target value that is used to set the outcome when a match is found', required=True)
+	targetValue = TextLineAttribute(interface.Interface, title='The target value that is used to set the outcome when a match is found', required=True)
 	
 # content
 
