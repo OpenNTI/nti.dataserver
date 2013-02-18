@@ -15,7 +15,8 @@ git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
 ## local paths can be made to work
 ## see https://github.com/pypa/pip/issues/328
 -e ../site-lib/plastex-dist
--e ../site-lib/context
+# context not currently used
+#-e ../site-lib/context
 -e ../site-lib/geventwebsocket
 # Gunicorn dev for testing
 # -e git+https://github.com/benoitc/gunicorn.git#egg=gunicorn-dev
