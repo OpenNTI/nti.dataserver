@@ -13,10 +13,11 @@ from zope import interface
 
 from nti.assessment.qti.basic.element import qti_creator
 from nti.assessment.qti.expression import interfaces as exp_interfaces
+from nti.assessment.qti.attributes import interfaces as attr_interfaces
 
 from nti.assessment.qti.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, none, has_property, has_entry)
+from hamcrest import (assert_that, is_, none, has_property, has_entry, has_length)
 		
 class TestBasicElement(ConfiguringTestBase):
 	
@@ -86,6 +87,38 @@ class TestBasicElement(ConfiguringTestBase):
 		attributes = f.get_attributes()
 		assert_that(attributes, has_entry('min', 0))
 		assert_that(attributes, has_entry('max', 'maxval'))
+	
+		@qti_creator
+		@interface.implementer(attr_interfaces.IequalAttrGroup)
+		class Foo2(object):
+			pass
+		
+		f = Foo2()
+		assert_that(f, has_property('toleranceMode'))
+		assert_that(f, has_property('tolerance'))
+		assert_that(f, has_property('includeLowerBound'))
+		assert_that(f, has_property('includeUpperBound'))
+		
+		f.tolerance = '1 2'
+		assert_that(f.tolerance, is_([1,2]))
+		f.tolerance = [3,4]
+		assert_that(f.tolerance, is_([3,4]))
+		
+		attributes = f.get_attributes()
+		assert_that(attributes, has_length(1))
+		
+		f.includeLowerBound = True
+		f.includeUpperBound = False
+		attributes = f.get_attributes()
+		assert_that(attributes, has_length(3))
+		
+		@qti_creator
+		@interface.implementer(attr_interfaces.IcustomOperatorAttrGroup)
+		class Foo3(object):
+			pass
+		f = Foo3()
+		assert_that(f, has_property('class'))
+		assert_that(f, has_property('definition'))
 		
 if __name__ == '__main__':
 	unittest.main()

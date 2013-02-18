@@ -22,6 +22,7 @@ from persistent.interfaces import IPersistent
 
 from ..schema import IQTIAttribute
 from .. import interfaces as qti_interfaces
+from ..attributes import interfaces as attr_interfaces
 
 def get_schema_fields(iface):
 	
@@ -114,7 +115,7 @@ def qti_creator(cls):
 	for base in implemented:
 		if issubclass(base, IPersistent):
 			is_persitent = True
-		if issubclass(base, qti_interfaces.IQTIElement):
+		if issubclass(base, qti_interfaces.IQTIElement) or issubclass(base, attr_interfaces.IAttrGroup):
 			r = get_schema_fields(base)
 			for k,v in r.items():
 				if IQTIAttribute.providedBy(v):
