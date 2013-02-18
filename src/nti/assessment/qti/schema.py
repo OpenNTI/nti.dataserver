@@ -7,6 +7,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import re
 import six
 import numbers
 from collections import Iterable
@@ -41,16 +42,21 @@ class URIAttribute(BaseQTIAttribute, schema.URI):
 	A :class:`schema.URI` type that to mark XML attribute elements
 	"""
 
+@interface.implementer(schema_interfaces.IFromUnicode)
 class BoolAttribute(BaseQTIAttribute, schema.Bool):
 	"""
 	A :class:`schema.Bool` type that to mark XML attribute elements
 	"""
 	
+@interface.implementer(schema_interfaces.IFromUnicode)
 class ObjectAttribute(BaseQTIAttribute, schema.Object):
 	"""
 	A :class:`schema.Object` type that to mark XML attribute elements
 	"""
-
+	
+	def fromUnicode(self, value):
+		return unicode(value) if value is not None else None
+	
 class IntAttribute(BaseQTIAttribute, schema.Int):
 	"""
 	A :class:`schema.Int` type that to mark XML attribute elements
@@ -71,10 +77,19 @@ class MimeTypeAttribute(TextLineAttribute):
 	A :class: for mimetype attributes
 	"""
 
+@interface.implementer(schema_interfaces.IFromUnicode)
 class ListAttribute(BaseQTIAttribute, schema.List):
 	"""
 	A :class:`schema.List` type that to mark XML attribute elements
 	"""
+	
+	pattern = re.compile("[^\s]+")
+	
+	def fromUnicode(self, value):
+		result = []
+		for p in self.pattern.findall(value or ''):
+			result.append(self.value_type.fromUnicode(p))
+		return result
 	
 	def toUnicode(self, value):
 		if isinstance(value, six.string_types):
