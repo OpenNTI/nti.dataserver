@@ -224,7 +224,7 @@ setup(
 		#'z3c.coverage >= 1.3.0', # TODO: Do we need this?
 		'z3c.password >= 0.11.1', # password policies
 		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
-		# TODO: z3c.ptcompat? We already have zope.pagetemplate listed
+		'z3c.ptcompat >= 1.0.1', # Make zope.pagetemplate also use the Chameleon-based ZPT
 		'z3c.table >= 1.0.0', # Flexible table rendering
 		'zc.blist >= 1.0b2', # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
 		'zc.dict >= 1.3b1', # BTree based dicts that are subclassable
@@ -289,7 +289,7 @@ setup(
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.schema >= 4.2.2',
 		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
-		# A 4.0.0a3 is out and works fine. officially upgrade when final
+		# A 4.0.0a3 is out and works fine. officially upgrade when final. But this requires an extra: 'zope.security[untrustedpython] >= 4.0.0a3'
 		'zope.security >= 3.9.0',
 		'zope.session >= 3.9.5',
 		'zope.site >= 3.9.2', # local, persistent ZCA sites

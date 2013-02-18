@@ -258,6 +258,7 @@
 	<!-- UI Rendering -->
 	<include package="." file="configure_tables.zcml" />
 	<include package="." file="configure_feeds.zcml" />
+	<include package="z3c.ptcompat" /> <!-- regular pagetemplate usage uses chamelean engine -->
 	<!-- Content censoring -->
 	<include package="." file="configure_censor.zcml" />
 
