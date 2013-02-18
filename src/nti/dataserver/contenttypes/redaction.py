@@ -23,6 +23,7 @@ from .selectedrange import SelectedRangeInternalObjectIO
 
 @component.adapter(nti_interfaces.IRedaction)
 class RedactionInternalObjectIO(SelectedRangeInternalObjectIO):
-
-	_schema_fields_to_validate_ = SelectedRangeInternalObjectIO._schema_fields_to_validate_ + ('replacementContent','redactionExplanation')
-	_schema_to_validate_ = nti_interfaces.IRedaction
+	_ext_iface_upper_bound = nti_interfaces.IRedaction
+	validate_after_update = True
+	#_schema_fields_to_validate_ = SelectedRangeInternalObjectIO._schema_fields_to_validate_ + ('replacementContent','redactionExplanation')
+	#_schema_to_validate_ = nti_interfaces.IRedaction

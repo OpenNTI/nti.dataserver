@@ -18,6 +18,7 @@ from zope.security.permission import Permission
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.socketio import interfaces as sio_interfaces
+from nti.utils.schema import UniqueIterable
 
 class IChatserver(Interface):
 	pass
@@ -139,6 +140,15 @@ class IMessageInfo(nti_interfaces.IShareableModeledContent, nti_interfaces.IZCon
 		vocabulary=STATUS_VOCABULARY )
 
 	Creator = schema.TextLine( title="Message creator", description="User that send this message" )
+
+	body = interface.Attribute("""The content of the body depends on the channel"""	)
+
+	recipients = UniqueIterable(
+		title="The names of all the recipients of the message.",
+		description="""The actual recipients of the message, whether or not they are
+			named in the message itself. Includes people who just get the transcript.""",
+		value_type=schema.TextLine() )
+
 
 class IMessageInfoEvent(z_interfaces.IObjectEvent):
 	"""

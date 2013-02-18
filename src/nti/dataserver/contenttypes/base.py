@@ -75,12 +75,13 @@ def _make_getitem( attr_name ):
 	return __getitem__
 
 from nti.externalization.interfaces import IInternalObjectIO
-from nti.externalization.datastructures import ExternalizableInstanceDict
+from nti.externalization.datastructures import InterfaceObjectIO
+from nti.utils.property import alias
 from zope.proxy import removeAllProxies
 
 @component.adapter(nti_interfaces.IModeledContent)
 @interface.implementer(IInternalObjectIO)
-class UserContentRootInternalObjectIO(ExternalizableInstanceDict):
+class UserContentRootInternalObjectIO(InterfaceObjectIO):
 
 	#: By default, if an update comes in with only new sharing information,
 	#: and we have been previously saved, then we do not clear our
@@ -88,15 +89,20 @@ class UserContentRootInternalObjectIO(ExternalizableInstanceDict):
 	#: to ``False``.
 	canUpdateSharingOnly = True
 
+	_ext_iface_upper_bound = nti_interfaces.IModeledContent
+	validate_after_update = True
+
+	# NOTE: inReplyTo and 'references' do not really belong here
+	_excluded_out_ivars_ = { 'flattenedSharingTargetNames', 'flattenedSharingTargets', 'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
+
 	def __init__( self, context ):
-		super(UserContentRootInternalObjectIO,self).__init__()
-		self.context = context
+		super(UserContentRootInternalObjectIO,self).__init__(context)
+
+	context = alias('_ext_self')
 
 	def _ext_replacement(self):
 		# TODO: The intid utility doesn't find objects if they are proxied. It unwraps
 		# the security proxy, but we (the appserver) may be putting an Uncached proxy around them.
-		# A further problem is that for our __dict__ based IO, this fails miserably to get
-		# all the attributes, because the proxy has its own __dict__, it seems
 		# So we are unwrapping that here. Who should really be doing that?
 		# TODO: This could break externalization triggered off interfaces added with a proxy
 		# See also chatserver.messageinfo.
@@ -163,15 +169,12 @@ class UserContentRootInternalObjectIO(ExternalizableInstanceDict):
 		# and then to call super. When super returns, handle the special case
 		sharedWith = parsed.pop( 'sharedWith', () )
 
-
 		if self._is_update_sharing_only( parsed ):
 			# In this state, we have received an update only for sharing.
 			# and so do not need to do anything else. We're a saved
 			# object already. If we're not saved already, we cannot
 			# be created with just this
 			pass
-#		elif len(stripSyntheticKeysFromExternalDictionary( dict( parsed ) )) == 0:
-#			raise ValueError( "Updating non-saved object: The body must have some data, cannot be empty" )
 
 		self.context.updateLastMod()
 		super(UserContentRootInternalObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )

@@ -178,23 +178,36 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 	def updateFromExternalObject( self, ext_object, context=None ):
 		return update_from_external_object( self, ext_object, context=context )
 
-from nti.externalization.datastructures import ExternalizableInstanceDict
+from nti.externalization.datastructures import InterfaceObjectIO
 from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 from zope.proxy import removeAllProxies
 
 @component.adapter(interfaces.IMessageInfo)
-class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,ExternalizableInstanceDict):
+class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,InterfaceObjectIO):
+
+	_ext_iface_upper_bound = interfaces.IMessageInfo
+	validate_after_update = False
+
+	# NOTE: inReplyTo and 'references' do not really belong here
+	_excluded_out_ivars_ = { 'MessageId', 'flattenedSharingTargetNames', 'flattenedSharingTargets', 'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
+
 
 	def __init__( self, context ):
-		super(MessageInfoInternalObjectIO,self).__init__()
-		self.context = context
+		super(MessageInfoInternalObjectIO,self).__init__(context)
 
-	def _ext_replacement(self):
-		return removeAllProxies(self.context)
+	context = alias('_ext_self')
 
-	_excluded_in_ivars_ = { 'MessageId' } | ExternalizableInstanceDict._excluded_in_ivars_
+	_excluded_in_ivars_ = { 'MessageId', 'sharedWith' } | InterfaceObjectIO._excluded_in_ivars_
 	_update_accepts_type_attrs = True
 	_prefer_oid_ = False
+
+	def _ext_replacement(self):
+		# TODO: The intid utility doesn't find objects if they are proxied. It unwraps
+		# the security proxy, but we (the appserver) may be putting an Uncached proxy around them.
+		# So we are unwrapping that here. Who should really be doing that?
+		# TODO: This could break externalization triggered off interfaces added with a proxy
+		# See also nti.dataserver.contenttypes.base
+		return removeAllProxies(self.context)
 
 	def toExternalObject( self, mergeFrom=None ):
 		result = super(MessageInfoInternalObjectIO,self).toExternalObject( mergeFrom=mergeFrom )
@@ -202,12 +215,8 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,ExternalizableIn
 		if msg.body is not None:
 			# alias for old code.
 			result['Body'] = result['body']
-		if 'channel' not in result:
-			# Must not have been in the instance dict
-			# TODO: Switch this to interface-driven
-			result['channel'] = msg.channel
-		if 'recipients' not in result:
-			result['recipients'] = msg.recipients
+		assert 'channel' in result
+		assert 'recipients' in result
 		return result
 
 
