@@ -187,7 +187,8 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 		__show__.off()
 		#self.ds = mock_dataserver.MockDataserver()
 		super(SharedApplicationTestBase,cls).setUpClass()
-		cls.app, cls.main = createApplication( 8080, cls._setup_library(), create_ds=False, pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE )
+		cls.app, cls.main = createApplication( 8080, cls._setup_library(), create_ds=False, force_create_indexmanager=True,
+											   pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE )
 
 		root = '/Library/WebServer/Documents/'
 		# We'll volunteer to serve all the files in the root directory
@@ -1417,9 +1418,9 @@ class TestApplication(SharedApplicationTestBase):
 
 
 
-class TestApplicationSearch(ApplicationTestBase):
+class TestApplicationSearch(SharedApplicationTestBase):
 
-
+	@WithSharedApplicationMockDS
 	def test_search_empty_term_user_ugd_book(self):
 		"Searching with an empty term returns empty results"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -1438,7 +1439,7 @@ class TestApplicationSearch(ApplicationTestBase):
 				res = testapp.get( path, extra_environ=self._make_extra_environ())
 				assert_that( res.status_int, is_( 200 ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_ugd_search_no_data_returns_empty(self):
 		"Any search term against a user whose index DNE returns empty results"
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -1457,7 +1458,7 @@ class TestApplicationSearch(ApplicationTestBase):
 			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
 			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_ugd_search_other_user(self):
 		"Security prevents searching other user's data"
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -1479,7 +1480,9 @@ class TestApplicationSearch(ApplicationTestBase):
 			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
 
 
+	@WithSharedApplicationMockDSWithChanges
 	def test_post_share_delete_highlight(self):
+		self.ds.add_change_listener( users.onChange )
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()
 			self._create_user( username='foo@bar' )
@@ -1520,8 +1523,6 @@ class TestApplicationSearch(ApplicationTestBase):
 		res = testapp.get( str(path), extra_environ=self._make_extra_environ(user=b'foo@bar'),
 						   status=404)
 
-
-	test_post_share_delete_highlight.mock_ds_factory = mock_dataserver.ChangePassingMockDataserver
 
 
 def _create_class(ds, usernames_to_enroll=()):

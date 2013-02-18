@@ -288,8 +288,9 @@ setup(
 		'zope.processlifetime >= 1.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.schema >= 4.2.2',
-		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together
-		'zope.security >= 4.0.0a3',
+		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
+		# A 4.0.0a3 is out and works fine. officially upgrade when final
+		'zope.security >= 3.9.0',
 		'zope.session >= 3.9.5',
 		'zope.site >= 3.9.2', # local, persistent ZCA sites
 		'zope.size >= 4.0.0',

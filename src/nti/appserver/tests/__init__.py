@@ -80,7 +80,7 @@ class _TestBaseMixin(object):
 
 	def doesnt_have_permission( self, permission ):
 		return HasPermission( False, permission, self.request )
-
+TestBaseMixin = _TestBaseMixin
 class ConfiguringTestBase(_TestBaseMixin,nti.tests.ConfiguringTestBase):
 	"""
 	Attributes:
