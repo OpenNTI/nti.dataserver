@@ -43,10 +43,6 @@
 
 	<adapter factory="._dataserver_pyramid_traversal.ProviderTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
-	<class class="nti.dataserver.users.User">
-		<!-- Migration -->
-		<implements interface="nti.appserver.interfaces.IUserResource" />
-	</class>
 
 	<include package="." file="configure_workspaces.zcml" />
 

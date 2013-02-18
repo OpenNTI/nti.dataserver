@@ -72,7 +72,7 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		context = self.request.context
 		# If our context contains a user resource, then that's where we should be trying to
 		# create things
-		owner_root = traversal.find_interface( context, app_interfaces.IUserResource )
+		owner_root = traversal.find_interface( context, nti_interfaces.IUser )
 		if owner_root is not None:
 			owner_root = getattr( owner_root, 'user', owner_root ) # migration compat
 		if owner_root is None:
@@ -212,7 +212,7 @@ class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixi
 				raise hexc.HTTPNotFound()
 
 			lastModified = theObject.creator.lastModified
-			
+
 			# I think this log message should be info not debug.  It exists to provide statistics not to debug.
 			logger.info("User '%s' deleted object '%s'/'%s' from container '%s'", user, objectId, type(theObject).__name__, theObject.containerId)
 
