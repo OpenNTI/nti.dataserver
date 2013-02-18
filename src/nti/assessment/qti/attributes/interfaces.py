@@ -58,7 +58,7 @@ class ImappingAttrGroup(IAttrGroup):
 	defaultValue = FloatAttribute(title='The default value from the target set', required=False, default=0.0)
 
 class ImappingEntryAttrGroup(IAttrGroup):
-	mapKey = TextLineAttribute(interface.Interface,title=u'The source value', required=True)
+	mapKey = TextLineAttribute(title=u'The source value', required=True)
 	mappedValue = FloatAttribute(title='The mapped value', required=True)
 	caseSensitive = BoolAttribute(title='Used to control whether or not a mapEntry string is matched case sensitively', required=True)
 
@@ -88,12 +88,12 @@ class IlookupTableAttrGroup(IAttrGroup):
 	
 class ImatchTableEntryAttrGroup(IAttrGroup):
 	sourceValue = IntAttribute(title='The source integer that must be matched exactly', required=True)
-	targetValue = TextLineAttribute(interface.Interface, title=u'The target value that is used to set the outcome when a match is found.', required=True)
+	targetValue = TextLineAttribute(title=u'The target value that is used to set the outcome when a match is found.', required=True)
 
 class IinterpolationTableEntryAttrGroup(IAttrGroup):
 	sourceValue = FloatAttribute(title='The lower bound for the source value to match this entry', required=True)
 	includeBoundary = BoolAttribute(title='Determines if an exact match of sourceValue matches this entry', required=False, default=True)
-	targetValue = TextLineAttribute(interface.Interface, title='The target value that is used to set the outcome when a match is found', required=True)
+	targetValue = TextLineAttribute(title='The target value that is used to set the outcome when a match is found', required=True)
 	
 # content
 
