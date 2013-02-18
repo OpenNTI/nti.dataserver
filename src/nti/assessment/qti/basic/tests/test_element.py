@@ -67,6 +67,22 @@ class TestBasicElement(ConfiguringTestBase):
 		f.add_expression(e)
 		assert_that(f.expression, is_([e]))
 		assert_that(f.get_expression_list(), is_([e]))
+		
+	def test_attributes(self):
+		
+		@qti_creator
+		@interface.implementer(exp_interfaces.IrandomFloat)
+		class Foo(object):
+			pass
+		
+		f = Foo()
+		assert_that(f, has_property('min'))
+		assert_that(f, has_property('max'))
+		f.min = 0
+		f.max = 'maxval'
+		assert_that(f.min, is_(0))
+		assert_that(f.max, is_('maxval'))
+		
 	
 if __name__ == '__main__':
 	unittest.main()

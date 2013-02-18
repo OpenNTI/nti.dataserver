@@ -148,7 +148,7 @@ def qti_creator(cls):
 				setattr(cls, "add_%s" % k, _add_collection(k, iface))
 			
 	# attributes
-	for k,v in attributes:
+	for k,v in attributes.items():
 		if hasattr(cls, k): continue
 		pname = "_%s" % k
 		setattr(cls, k, property(_getter(pname), _attribute_setter(pname, v)))
