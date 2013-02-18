@@ -81,7 +81,7 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 		for p in self.time_map.values():
 			if (p.is_pending() or p.is_unknown()) and \
 				p.items.intersection(items) and \
-				(not on_behalf_of or p.actors.intersection(on_behalf_of)):
+				(not on_behalf_of or p.actors().intersection(on_behalf_of)):
 				return p
 		return None
 

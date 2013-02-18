@@ -4,6 +4,9 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 import time
 import unittest
 
@@ -21,9 +24,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.store.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, has_length)
-from hamcrest import none
-from hamcrest import not_none
+from hamcrest import (assert_that, is_, has_length, none, not_none)
 
 class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 
@@ -74,6 +75,19 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 		pa = purchase_history.get_pending_purchase_for(user, items)
 		assert_that(pa, is_( not_none() ) )
 		assert_that(pa, is_(pending))
+		
+		pending = purchase_attempt.create_purchase_attempt(	items=items, processor=self.processor, on_behalf_of=('u1,u2'),
+															state=store_interfaces.PA_STATE_STARTED)
+		hist.add_purchase(pending)
+		
+		pa = purchase_history.get_pending_purchase_for(user, items, ('u1',))
+		assert_that(pa, is_( not_none() ) )
+		pa = purchase_history.get_pending_purchase_for(user, items, ('nt@nti.com',))
+		assert_that(pa, is_( not_none() ) )
+		pa = purchase_history.get_pending_purchase_for(user, items, ('u2',))
+		assert_that(pa, is_( not_none() ) )
+		pa = purchase_history.get_pending_purchase_for(user, items, ('u3',))
+		assert_that(pa, is_( none() ) )
 
 	@WithMockDSTrans
 	def test_missing_purchase(self):
