@@ -37,7 +37,7 @@ class IContentFragment(interface.Interface):
 	be in.
 	"""
 
-class IUnicodeContentFragment(IContentFragment,sequence.IReadSequence):
+class IUnicodeContentFragment(IContentFragment,sequence.IReadSequence): # TODO: dolmen.builtins.IUnicode?
 	"""
 	Content represented as a unicode string.
 
@@ -171,6 +171,7 @@ class ICensoredUnicodeContentFragment(IUnicodeContentFragment):
 	sanitizing HTML, which always follows the same process.
 	"""
 
+@interface.implementer(ICensoredUnicodeContentFragment)
 class CensoredUnicodeContentFragment(_AddMixin,UnicodeContentFragment):
 	pass
 

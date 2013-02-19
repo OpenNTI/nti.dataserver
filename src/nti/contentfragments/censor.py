@@ -34,13 +34,14 @@ def punkt_re_char():
 	# content processing uses content fragments
 	from nti.contentprocessing import default_punk_char_expression
 	return default_punk_char_expression
-	
-def _get_censored_fragment(org_fragment, new_fragment):
+
+def _get_censored_fragment(org_fragment, new_fragment, factory=interfaces.CensoredUnicodeContentFragment):
 	try:
 		result = org_fragment.censored( new_fragment )
 	except AttributeError:
-		result = interfaces.CensoredUnicodeContentFragment( new_fragment )
-		interface.alsoProvides( result, interfaces.ICensoredUnicodeContentFragment )
+		result = factory( new_fragment )
+		if not interfaces.ICensoredUnicodeContentFragment.providedBy( result ):
+			interface.alsoProvides( result, interfaces.ICensoredUnicodeContentFragment )
 	return result
 
 @interface.implementer(interfaces.ICensoredContentStrategy)
@@ -110,14 +111,14 @@ class RegExpMatchScanner(BasicScanner):
 			all_patterns.add(self.create_regexp(w))
 		all_patterns.update(patterns or ())
 		self.patterns = tuple(all_patterns)
-		
+
 	def do_scan(self, content_fragment, yielded):
 		for p in self.patterns:
 			for m in p.finditer(content_fragment):
 				match_range = m.span()
 				if self.test_range(match_range, yielded):
 					yield match_range
-					
+
 	@classmethod
 	def create_regexp(cls, word, flags=re.I):
 		r=[]
@@ -126,7 +127,7 @@ class RegExpMatchScanner(BasicScanner):
 			if not c.isspace() and not c in punkt_re_char() and i < len(word)-1:
 				r.append("(%s)*" % punkt_re_char())
 		e = ''.join(r)
-		p = re.compile(e, flags)	
+		p = re.compile(e, flags)
 		return p
 
 @interface.implementer(interfaces.ICensoredContentScanner)
@@ -172,7 +173,7 @@ class PipeLineMatchScanner(BasicScanner):
 
 	def __init__( self, scanners=()):
 		self.scanners = tuple(scanners)
-		
+
 	def do_scan( self, content_fragment, ranges=[]):
 		content_fragment = content_fragment.lower()
 		for s in self.scanners:
@@ -189,15 +190,15 @@ def _word_profanity_scanner():
 	"""
 	white_words_path = resource_filename( __name__, 'white_list.txt' )
 	prohibited_words_path = resource_filename( __name__, 'prohibited_words.txt' )
-	
+
 	with open(white_words_path, 'rU') as src:
 		white_words = {x.strip().lower() for x in src.readlines()}
-		
+
 	with open(prohibited_words_path, 'rU') as src:
 		prohibited_words = {x.encode('rot13').strip().lower() for x in src.readlines()}
-		
+
 	return WordMatchScanner(white_words, prohibited_words)
-	
+
 @interface.implementer(interfaces.ICensoredContentScanner)
 def _word_plus_trivial_profanity_scanner():
 	profanity_list_path = resource_filename( __name__, 'profanity_list.txt')
@@ -250,8 +251,9 @@ class DefaultCensoredContentPolicy(object):
 						setattr(node, name, text)
 
 			docstr = unicode(etree.tostring(doc))
-			result = interfaces.CensoredHTMLContentFragment(docstr)
-		except:
+			# be sure to return the best interface
+			result = _get_censored_fragment( fragment, docstr, interfaces.CensoredHTMLContentFragment )
+		except Exception: # TODO: What exception?
 			result = self.censor_text(fragment, target)
 		return result
 
@@ -294,7 +296,7 @@ def censor_assign( fragment, target, field_name ):
 def _default_profanity_terms():
 	file_path = resource_filename( __name__, 'profanity_list.txt' )
 	with open(file_path, 'rU') as src:
-		words = (unicode(x.encode('rot13').strip()) for x in src.readlines() )
+		words = [unicode(x.encode('rot13').strip()) for x in src.readlines() ]
 	terms = [ SimpleTerm(value=word, token=repr(word)) for word in words ]
 	map(lambda x: interface.alsoProvides( x, interfaces.IProfanityTerm ), terms)
 	return SimpleVocabulary(terms)

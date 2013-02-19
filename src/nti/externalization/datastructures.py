@@ -354,9 +354,11 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		# If we make it this far, then validate the object.
 		# TODO: Should probably just make sure that there are no /new/ validation errors added
 		# Best we can do right now is skip this step if asked
-		errors = None
 		if self.validate_after_update:
-			errors = schema.getValidationErrors( self._iface, self._ext_self )
+			self._validate_after_update(self._iface, self._ext_self)
+
+	def _validate_after_update( self, iface, ext_self ):
+		errors = schema.getValidationErrors( iface, ext_self )
 		if errors:
 			__traceback_info__ = errors
 			try:

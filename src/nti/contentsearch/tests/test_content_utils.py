@@ -53,9 +53,10 @@ class TestContentUtils(ConfiguringTestBase):
 	def _create_note(self, msg, username, containerId=None, tags=('ichigo',), canvas=None):
 		note = Note()
 		note.tags = tags
-		note.body = [unicode(msg)]
+		body = [unicode(msg)]
 		if canvas:
-			note.body.append(canvas)
+			body.append( canvas )
+		note.body = body
 		note.creator = username
 		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
 		return note

@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import unittest
 
 import nti.dataserver
@@ -19,14 +32,14 @@ from nti.tests import ConfiguringTestBase
 from hamcrest import (assert_that, is_, has_entry)
 
 class TestNTIDeleteUserObjects(ConfiguringTestBase):
-	
+
 	set_up_packages = (nti.dataserver,nti.contentsearch)
-			
+
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
-		
+
 	def create_note(self, text, user, containerId=None, inReplyTo=None, references=()):
 		note = Note()
 		note.body = [text]
@@ -36,7 +49,7 @@ class TestNTIDeleteUserObjects(ConfiguringTestBase):
 			note.addReference(r)
 		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
 		mock_dataserver.current_transaction.add(note)
-		note = user.addContainedObject( note ) 	
+		note = user.addContainedObject( note )
 		return note
 
 	@WithMockDSTrans
@@ -48,8 +61,3 @@ class TestNTIDeleteUserObjects(ConfiguringTestBase):
 		assert_that(cmap, has_entry('note', is_(1)))
 		note = ntiids.find_object_with_ntiid(oid)
 		assert_that(note, is_(None))
-		
-if __name__ == '__main__':
-	unittest.main()
-	
-		

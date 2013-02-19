@@ -452,7 +452,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 	def test_must_provide_body_text(self):
 		n = Note()
 		# No parts
-		with self.assertRaises( zope.schema.interfaces.RequiredMissing ):
+		with self.assertRaises( zope.schema.interfaces.ValidationError ):
 			n.updateFromExternalObject( { 'body': [] } )
 
 		# Empty part
@@ -471,9 +471,10 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( ext, is_not( has_key( 'body' ) ) )
 		assert_that( ext, is_not( has_key( 'text' ) ) )
 
-		n.updateFromExternalObject( {'body': 'body' } )
-		ext = n.toExternalObject()
-		assert_that( ext['body'][0], is_( 'body' ) )
+		# Raw strings are not supported
+		with self.assertRaises( zope.schema.interfaces.WrongType ):
+			n.updateFromExternalObject( {'body': 'body' } )
+
 
 		n.updateFromExternalObject( {'body': ['First', 'second'] } )
 		ext = n.toExternalObject()
@@ -617,7 +618,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 
 		child = Note()
 		child.inReplyTo = n
-		child.updateFromExternalObject( {'inReplyTo': n, 'body': ('body') } )
+		child.updateFromExternalObject( {'inReplyTo': n, 'body': ('body',) } )
 
 		assert_that( child.applicableRange, is_( n.applicableRange ) )
 
@@ -637,7 +638,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 			child.inReplyTo = n
 			conn.add( child )
 			assert_that( child, has_property( '_p_jar', not_none() ) )
-			child.updateFromExternalObject( {'inReplyTo': n, 'body': ('body') } )
+			child.updateFromExternalObject( {'inReplyTo': n, 'body': ('body',) } )
 
 			assert_that( child.applicableRange, is_( n.applicableRange ) )
 

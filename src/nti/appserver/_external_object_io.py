@@ -94,13 +94,16 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		# that can be represented as ascii as str objects if the input was a bytestring.
 		# The only way to get it to return unicode is if the input is unicode, or
 		# to use a hook to do so incrementally. The hook saves allocating the entire request body
-		# as a unicode string in memory
-		def _read_body_strings_unicode(pairs):
-			return dict( ( (k, (unicode(v, request.charset) if isinstance(v, str) else v))
-						   for k, v
-						   in pairs) )
+		# as a unicode string in memory and is marginally faster in some cases. However,
+		# the hooks gets to be complicated if it correctly catches everything (inside arrays,
+		# for example; the function below misses them) so decoding to unicode up front
+		# is simpler
+		#def _read_body_strings_unicode(pairs):
+		#	return dict( ( (k, (unicode(v, request.charset) if isinstance(v, str) else v))
+		#				   for k, v
+		#				   in pairs) )
 
-		value = simplejson.loads(value, object_pairs_hook=_read_body_strings_unicode)
+		value = simplejson.loads(unicode(value, request.charset))
 
 		if not isinstance( value, expected_type ):
 			raise TypeError( type(value) )

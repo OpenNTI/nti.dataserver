@@ -25,11 +25,14 @@ from zope.proxy import ProxyBase
 import zope.site.interfaces
 
 from zope.mimetype import interfaces as mime_interfaces
-
+from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentrange import interfaces as rng_interfaces
 from nti.contentrange.contentrange import ContentRangeDescription
 
 from nti.utils.schema import Object
+from nti.utils.schema import ObjectLen
+from nti.utils.schema import ObjectOr
+from nti.utils.schema import ListOrTuple
 from nti.utils.schema import DecodingValidTextLine
 
 class ACLLocationProxy(LocationProxy):
@@ -948,12 +951,17 @@ class INote(IHighlight,IThreadable):
 	"""
 	A user-created note attached to other content.
 	"""
-	body = interface.Attribute(
-		"""
+	body = ListOrTuple( title="The body of this note",
+		description="""
 		An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
 		of :class:`IModeledContent` such as :class:`ICanvas`.)
-		"""
-		)
+		""",
+		value_type=ObjectOr( (ObjectLen(frg_interfaces.ISanitizedHTMLContentFragment,min_length=1),
+							  ObjectLen(frg_interfaces.IPlainTextContentFragment,min_length=1),
+							  Object(ICanvas)),
+							 title="A body part of a note" ),
+		min_length=1,
+		required=False)
 
 ### Changes related to content objects/users
 SC_CREATED  = "Created"
