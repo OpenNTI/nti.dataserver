@@ -80,7 +80,7 @@ class _FPSPaymentProcessor(FPSIO):
 				gevent.spawn(process_pay)
 						
 			return pay_result.TransactionId
-		except Exception, e:
+		except Exception as e:
 			message = str(e)
 			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
 			
@@ -97,8 +97,7 @@ class _FPSPaymentProcessor(FPSIO):
 		user = User.get_user(username)
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
-			message = 'Purchase %r for user %s could not be found in dB' % (purchase_id, username)
-			logger.error(message)
+			logger.error('Purchase %r for user %s could not be found in dB' , purchase_id, username)
 			return None
 
 		trax = None
@@ -106,8 +105,7 @@ class _FPSPaymentProcessor(FPSIO):
 		if fp.TransactionID:
 			trax = self.get_transaction(fp.TransactionID)
 			if trax is None: 
-				message = 'Transaction %s for user %s could not be found in AWS' % (fp.TransactionID, user)
-				logger.warn(message)
+				logger.warn('Transaction %s for user %s could not be found in AWS', fp.TransactionID, user)
 		else:
 			traxs = None
 			start_time = time.mktime(date.fromtimestamp(purchase.StartTime).timetuple())

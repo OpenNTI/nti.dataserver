@@ -50,9 +50,9 @@ class FPSIO(object):
 		try:
 			result = func(*args, **kwargs)
 			return result
-		except BotoServerError, e:
+		except BotoServerError as e:
 			raise e
-		except Exception, e:
+		except Exception as e:
 			raise FPSException(str(e))
 		
 	def get_cbui_url(self, return_url, amount, currency='USD',caller_reference=None, payment_reason=None, pipeline_name=None):
