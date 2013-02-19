@@ -20,11 +20,52 @@ from zope import interface
 from ZODB.interfaces import IConnection
 from zope.annotation import interfaces as an_interfaces
 from zope.container.contained import contained
-import zope.schema.interfaces
+from zope.container.interfaces import IContained
 
+import zope.schema.interfaces
+from zope.schema.fieldproperty import FieldProperty
 from .highlight import Highlight
 from .threadable import ThreadableMixin
 from .base import _make_getitem
+
+class _BodyFieldProperty(FieldProperty):
+	# TODO: Generalize me?
+	# This currently exists for legacy support (test cases)
+
+	def __init__( self, field, name=None ):
+		super(_BodyFieldProperty,self).__init__( field, name=name )
+		self._field = field
+
+	def __set__( self, inst, value ):
+		if value and isinstance( value, list ):
+			value = tuple(value)
+		try:
+			super(_BodyFieldProperty,self).__set__( inst, value )
+		except zope.schema.interfaces.ValidationError:
+			# Hmm. try to adapt
+			value = [x.decode('utf-8') if isinstance(x, str) else x for x in value] # allow ascii strings for old app tests
+			super(_BodyFieldProperty, self).__set__( inst, tuple( (self._field.value_type.fromObject(x) for x in value ) ) )
+
+
+		# Assuming all went well, take ownership of each object in the body,
+		# censoring the others
+		# TODO: Move this code to a special type of IListField? Or keep it in a
+		# FieldProperty? Needs some thought. As it stands, IList doesn't
+		# fire ObjectAssigned events when its set method is called
+		children = []
+		for i, child in enumerate( self.__get__( inst, None ) ):
+			if IContained.providedBy( child ):
+				contained( child, inst, unicode(i) )
+				jar = IConnection( child, None ) # Use either its pre-existing jar, or the notes
+				if jar and not getattr( child, '_p_oid', None ):
+					jar.add( child )
+			child = censor.censor_assign( child, inst, 'body' )
+			children.append( child )
+		# Now replace the children. All the validation has been done already
+		# (NOTE: That may not be true, if censoring is broken and returns
+		# objects that no longer implement the same interfaces; that shouldn't be the case
+		# but if it is, then updateFromExternalObject will fail to validate the schema)
+		inst.__dict__[self._FieldProperty__name] = tuple( children )
 
 @interface.implementer(nti_interfaces.INote,
 					    # requires annotations
@@ -47,8 +88,7 @@ class Note(ThreadableMixin,Highlight):
 	#: We override the default highlight style to suppress it.
 	style = 'suppressed'
 
-	#: The default body consists of one empty string
-	body = ("",)
+	body = _BodyFieldProperty(nti_interfaces.INote['body']) # uses the 'body' in the dict, which is compatible with persistent objects
 
 	def __init__(self):
 		super(Note,self).__init__()
@@ -68,7 +108,7 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 		to the best of our ability.
 		"""
 		note = self.context
-		if not note or note.body == ("",):
+		if not note or not note.body or note.body == ("",):
 			# Our initial state. Empty body, nothing to resolve against.
 			return body
 
@@ -93,46 +133,10 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 
 	__external_resolvers__ = { 'body': _resolve_external_body }
 
-	def _update_body( self, note, body ):
-		# Support text and body as input
-		# Support raw body, not wrapped
-		if isinstance( body, six.string_types ):
-			body = ( body, )
 
-		if not body:
-			raise zope.schema.interfaces.RequiredMissing('Must supply body')
-
-		# Verify that the body contains supported types, if
-		# sent from the client.
-		for i, x in enumerate(body):
-			__traceback_info__ = i, x
-			if not isinstance(x, basestring) and not nti_interfaces.ICanvas.providedBy( x ):
-				raise zope.schema.interfaces.WrongContainedType()
-			if isinstance( x, basestring ) and len(x) == 0:
-				raise zope.schema.interfaces.TooShort()
-			if nti_interfaces.ICanvas.providedBy( x ):
-				contained( x, note, unicode(i) )
-				jar = IConnection( x, None )
-				if jar and not getattr( x, '_p_oid', None ): # If we have a connection, make sure the canvas does too
-					jar.add( x )
-
-
-		# Sanitize the body. Anything that can become a fragment, do so, incidentally
-		# sanitizing and censoring it along the way.
-		def _sanitize(x):
-			if frg_interfaces.IHTMLContentFragment.providedBy( x ) and not frg_interfaces.ISanitizedHTMLContentFragment.providedBy( x ):
-				x = frg_interfaces.ISanitizedHTMLContentFragment( x )
-			else:
-				x = frg_interfaces.IUnicodeContentFragment( x, x )
-			x = censor.censor_assign(x, note, 'body' )
-			return x
-
-		# convert mutable lists to immutable tuples
-		note.body = tuple( [_sanitize(x) for x in body] )
-
-	def toExternalObject( self ):
-		ext = super(NoteInternalObjectIO,self).toExternalObject()
-		if ext['body'] in ( Note.body, [''] ): # don't write out the base state, it confuses updating
+	def toExternalObject( self, mergeFrom=None ):
+		ext = super(NoteInternalObjectIO,self).toExternalObject(mergeFrom=mergeFrom)
+		if ext['body'] in ( Note.body, [''], None ): # don't write out the base state, it confuses updating and isn't valid
 			del ext['body']
 		return ext
 
@@ -140,13 +144,9 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 		# Only updates to the body are accepted
 		parsed.pop( 'text', None )
 
-		body = parsed.pop( 'body', self )
 		super(NoteInternalObjectIO, self).updateFromExternalObject( parsed, *args, **kwargs )
 
 		note = self.context
-		__traceback_info__ = note, body, parsed
-		if body is not self:
-			self._update_body( note, body )
 
 		# If we are newly created, and a reply, then
 		# we want to use our policy settings to determine the sharing

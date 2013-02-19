@@ -49,7 +49,7 @@
 			 for=".interfaces.IPlainTextContentFragment"
 			 provides=".interfaces.ILatexContentFragment" />
 	<adapter factory=".latex.PlainTextToLatexFragmentConverter"
-			 for="unicode"
+			 for="dolmen.builtins.IUnicode"
 			 provides=".interfaces.ILatexContentFragment" />
 
 	<!--
@@ -57,7 +57,7 @@
 	TODO: Is this right?
 	-->
 	<adapter factory=".interfaces.HTMLContentFragment"
-			 for="unicode"
+			 for="dolmen.builtins.IUnicode"
 			 provides=".interfaces.IHTMLContentFragment" />
 
 	<!--
@@ -65,40 +65,64 @@
 	This will either create a plain text or HTML fragment.
 	-->
 	<adapter factory=".html.sanitize_user_html"
-			 for="str"
+			 for="dolmen.builtins.IString"
 			 provides=".interfaces.IUnicodeContentFragment" />
 	<adapter factory=".html.sanitize_user_html"
-			 for="unicode"
+			 for="dolmen.builtins.IUnicode"
 			 provides=".interfaces.IUnicodeContentFragment" />
 	<!-- This is something of a lie. It might sanitize to plain text -->
 	<adapter factory=".html.sanitize_user_html"
 			 for=".interfaces.IHTMLContentFragment"
 			 provides=".interfaces.ISanitizedHTMLContentFragment" />
 
+	<!--
+		If they specifically ask for plain text, make sure we can
+		answer that
+	-->
 	<adapter factory=".html._sanitize_user_html_to_text"
-			 for="str"
+			 for="dolmen.builtins.IUnicode"
+			 provides=".interfaces.IPlainTextContentFragment" />
+
+	<!--
+		Likewise, if they ask for sanitized HTML, do our best
+		to provide that. It might actually result in sanitized text,
+		however.
+	-->
+	<adapter factory=".html.sanitize_user_html"
+			 for="dolmen.builtins.IUnicode"
+			 provides=".interfaces.ISanitizedHTMLContentFragment" />
+
+
+	<adapter factory=".html._sanitize_user_html_to_text"
+			 for="dolmen.builtins.IString"
 			 name="text"
 			 provides=".interfaces.IPlainTextContentFragment" />
 	<adapter factory=".html._sanitize_user_html_to_text"
-			 for="unicode"
+			 for="dolmen.builtins.IUnicode"
 			 name="text"
 			 provides=".interfaces.IPlainTextContentFragment" />
 
 	<!--
-	We can (more cheaply) convert things that are already
-	HTML to plain text.
+		We can (more cheaply) convert things that are already
+		HTML to plain text.
 	-->
 	<adapter factory=".html._html_to_sanitized_text"
+			 for=".interfaces.IHTMLContentFragment"
 			 provides=".interfaces.IPlainTextContentFragment" />
 	<adapter factory=".html._sanitized_html_to_sanitized_text"
+			 for=".interfaces.ISanitizedHTMLContentFragment"
 			 provides=".interfaces.IPlainTextContentFragment" />
+
 	<!-- Register these with the text name too for convenience. -->
 	<adapter factory=".html._html_to_sanitized_text"
 			 name="text"
+			 for=".interfaces.IHTMLContentFragment"
 			 provides=".interfaces.IPlainTextContentFragment" />
 	<adapter factory=".html._sanitized_html_to_sanitized_text"
 			 name="text"
+			 for=".interfaces.ISanitizedHTMLContentFragment"
 			 provides=".interfaces.IPlainTextContentFragment" />
+
 	<adapter factory=".interfaces._plain_text_to_plain_text"
 			 name="text" />
 

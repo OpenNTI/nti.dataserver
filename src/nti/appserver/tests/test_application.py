@@ -129,6 +129,17 @@ class ZODBGCMiddleware(object):
 		mock_dataserver.reset_db_caches( )
 		return result
 
+class _UnicodeTestApp(_TestApp):
+	"To make using unicode literals easier"
+	def get( self, path, *args, **kwargs ):
+		return super(_UnicodeTestApp,self).get( str(path), *args, **kwargs )
+	def put( self, path, *args, **kwargs ):
+		return super(_UnicodeTestApp,self).put( str(path), *args, **kwargs )
+	def post( self, path, *args, **kwargs ):
+		return super(_UnicodeTestApp,self).post( str(path), *args, **kwargs )
+
+_TestApp = _UnicodeTestApp
+
 def TestApp(app=_TestApp, **kwargs):
 	"""Sets up the pipeline just like in real life.
 

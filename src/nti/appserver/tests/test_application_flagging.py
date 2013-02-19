@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+from __future__ import print_function, absolute_import, unicode_literals
 
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
@@ -55,7 +55,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 		testapp = TestApp( self.app )
 		data = ''
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
+		path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		path = UQ( path )
 		# Initially, unflagged, I get asked to flag
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
@@ -64,13 +64,13 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 		# So I do
 		__traceback_info__ = res.json_body
-		res = testapp.post( path + '/@@flag', data, extra_environ=self._make_extra_environ() )
+		res = testapp.post( path + b'/@@flag', data, extra_environ=self._make_extra_environ() )
 		# and now I'm asked to re-flag
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'flag.metoo' ) ) ) )
 
 		# And I can repeat
-		res = testapp.post( path + '/@@flag.metoo', data, extra_environ=self._make_extra_environ() )
+		res = testapp.post( path + b'/@@flag.metoo', data, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'LikeCount', 0 ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'like' ) ) ) )
@@ -104,13 +104,13 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 		# First, give us something to flag
 		for i in (n_ext_id, n2_ext_id):
-			path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % i
+			path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % i
 			path = UQ( path )
-			testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
+			testapp.post( path + b'/@@flag', '', extra_environ=self._make_extra_environ() )
 
 
 		# Fetch the page
-		path = '/dataserver2/@@moderation_admin'
+		path = b'/dataserver2/@@moderation_admin'
 
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
@@ -177,12 +177,12 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		testapp = TestApp( self.app )
 
 		# First, give us something to flag
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n2_ext_id
+		path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n2_ext_id
 		path = UQ( path )
-		testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
+		testapp.post( path + b'/@@flag', '', extra_environ=self._make_extra_environ() )
 
 
-		path = '/dataserver2/@@moderation_admin'
+		path = b'/dataserver2/@@moderation_admin'
 
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
@@ -228,13 +228,13 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		testapp = TestApp( self.app )
 
 		# Flag the message
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' %  msg_info_ext_id
+		path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/%s' %  msg_info_ext_id
 		path = UQ( path )
-		testapp.post( path + '/@@flag', '', extra_environ=self._make_extra_environ() )
+		testapp.post( path + b'/@@flag', '', extra_environ=self._make_extra_environ() )
 
 
 		# Fetch the page
-		path = '/dataserver2/@@moderation_admin'
+		path = b'/dataserver2/@@moderation_admin'
 
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )

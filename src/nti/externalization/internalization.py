@@ -320,7 +320,7 @@ def validate_field_value( self, field_name, field, value ):
 	field = field.bind( self )
 	try:
 		if isinstance(value, unicode) and sch_interfaces.IFromUnicode.providedBy( field ):
-			value = field.fromUnicode( value )
+			value = field.fromUnicode( value ) # implies validation
 		else:
 			field.validate( value )
 	except sch_interfaces.SchemaNotProvided as e:
@@ -359,17 +359,35 @@ def validate_field_value( self, field_name, field, value ):
 			raise exc_info[0], exc_info[1], exc_info[2]
 	except sch_interfaces.WrongContainedType as e:
 		# We failed to set a sequence. This would be of simple (non externalized)
-		# types. Try to adapt each value to what the sequence wants, just as above,
+		# types.
+		# Try to adapt each value to what the sequence wants, just as above,
 		# if the error is one that may be solved via simple adaptation
-
+		# TODO: This is also thrown from IObject fields when validating the fields of the object
 		exc_info = sys.exc_info()
 		if not e.args or not all( (isinstance(x,sch_interfaces.SchemaNotProvided) for x in e.args[0] ) ):
 			raise
 
+		# IObject provides `schema`, which is an interface, so we can adapt
+		# using it. Some other things do not, for example nti.utils.schema.ObjectOr.
+		# They might provide a `fromObject` function to do the conversion
+		converter = lambda x: x
+		if hasattr( field.value_type, 'fromObject' ):
+			converter = field.value_type.fromObject
+		elif hasattr( field.value_type, 'schema' ):
+			converter = field.value_type.schema
 		try:
-			value = [field.value_type.schema( v ) for v in value]
+			value = [converter( v ) for v in value]
+		except TypeError:
+			# TypeError means we couldn't adapt, in which case we want
+			# to raise the original error. If we could adapt,
+			# but the converter does its own validation (e.g., fromObject)
+			# then we want to let that validation error rise
+			raise exc_info[0], exc_info[1], exc_info[2]
+
+		# Now try to set the converted value
+		try:
 			field.validate( value )
-		except (TypeError,sch_interfaces.ValidationError):
+		except sch_interfaces.ValidationError:
 			# Nope. TypeError means we couldn't adapt, and a
 			# validation error means we could adapt, but it still wasn't
 			# right. Raise the original SchemaValidationError.
