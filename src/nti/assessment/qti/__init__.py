@@ -45,9 +45,9 @@ class _ElementFinder(object):
 			key = self._item_key(name)
 			result[key] = item
 	
-	def _find(self, path):
+	def _find(self, wpath):
 		result = {}
-		for path, _, files in os.walk(path):
+		for path, _, files in os.walk(wpath):
 			for p in files:
 				name, ext = os.path.splitext(p)
 				if self._filename_predicate(name, ext):
@@ -76,7 +76,7 @@ class _IConcreteFinder(_ElementFinder):
 				item != qti_interfaces.IConcrete
 	
 	def _filename_predicate(self, name, ext):
-		return name.endswith("interfaces") and ext == ".pyc"
+		return name.endswith("interfaces") and ext == ".py"
 				
 def find_concrete_interfaces():
 	"""

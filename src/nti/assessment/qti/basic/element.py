@@ -8,6 +8,7 @@ from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
 import six
+import warnings
 import collections
 
 from zope import schema
@@ -132,14 +133,12 @@ def qti_creator(cls):
 	
 	# fields
 	for k, v in definitions.items():
-		if hasattr(cls, k): 
-			continue
-		
+		if hasattr(cls, k): continue
 		pname = "_%s" % k
 		if sch_interfaces.IObject.providedBy(v):
 			iface = v.schema
 			setattr(cls, k, property(_getter(pname), _setter(pname, iface)))
-		elif sch_interfaces.IText.providedBy(v):
+		elif sch_interfaces.IText.providedBy(v) or sch_interfaces.IChoice.providedBy(v):
 			setattr(cls, k, property(_getter(pname), _setter(pname)))
 		elif sch_interfaces.IList.providedBy(v):
 			setattr(cls, k, property(_collection_getter(pname, list_factory)))
@@ -147,6 +146,10 @@ def qti_creator(cls):
 			if sch_interfaces.IObject.providedBy(v.value_type) or sch_interfaces.IText.providedBy(v.value_type):
 				iface = v.value_type.schema
 				setattr(cls, "add_%s" % k, _add_collection(k, iface))
+			else:
+				warnings.warn("unhandled list type %s" % v.value_type)
+		else:
+			warnings.warn("unhandled field %s (%s)" % (k,v))
 			
 	# attributes
 	for k,v in attributes.items():
@@ -157,7 +160,6 @@ def qti_creator(cls):
 	setattr(cls, "get_attributes", _get_attributes)
 	return cls
 
-	
 @interface.implementer(an_interfaces.IAttributeAnnotatable)
 class QTIElement(zcontained.Contained, Persistent):
 	pass
