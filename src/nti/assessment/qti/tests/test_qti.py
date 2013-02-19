@@ -7,7 +7,7 @@ __docformat__ = "restructuredtext en"
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-from .. import find_concrete_elements
+from .. import find_concrete_interfaces
 
 from . import ConfiguringTestBase
 
@@ -15,8 +15,8 @@ from hamcrest import (assert_that, has_length)
 
 class TestQTIModule(ConfiguringTestBase):
 	
-	def test_find_concrete_elements(self):		
-		elements = find_concrete_elements()
+	def test_find_concrete_interfaces(self):		
+		elements = find_concrete_interfaces()
 		assert_that(elements, has_length(220))
 
 	
