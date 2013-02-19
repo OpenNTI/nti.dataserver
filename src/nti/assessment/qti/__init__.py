@@ -13,7 +13,7 @@ import importlib
 
 from zope import interface
 
-def find_concrete_elements():
+def find_concrete_interfaces():
 	"""
 	scan all interface modules to get IConcrete interfaces
 	"""
