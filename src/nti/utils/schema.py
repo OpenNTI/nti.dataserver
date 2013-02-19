@@ -125,6 +125,17 @@ class ValidTextLine(FieldValidationMixin,schema.TextLine):
 		except sch_interfaces.ValidationError as e:
 			self._reraise_validation_error( e, value )
 
+class DecodingValidTextLine(ValidTextLine):
+	"""
+	A text type that will attempt to decode non-unicode
+	data as UTF-8.
+	"""
+
+	def fromUnicode( self, value ):
+		if not isinstance( value, self._type ):
+			value = value.decode( 'utf-8' ) # let raise UnicodeDecodeError
+		super(DecodingValidTextLine,self).fromUnicode( value )
+
 class HTTPURL(FieldValidationMixin,schema.URI):
 	"""
 	A URI field that ensures and requires its value to be an absolute

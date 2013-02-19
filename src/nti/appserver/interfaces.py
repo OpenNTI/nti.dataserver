@@ -14,7 +14,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from pyramid import interfaces as pyramid_interfaces
 
 from nti.contentlibrary import interfaces as lib_interfaces
-from nti.dataserver.interfaces import ILocation
+from zope.location.interfaces import ILocation
 
 from nti.utils.schema import Object
 from nti.utils.schema import IndexedIterable as TypedIterable

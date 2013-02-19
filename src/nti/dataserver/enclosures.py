@@ -1,8 +1,15 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Relating to enclosures.
+
+$Id$
 """
-import time
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import persistent
 import persistent.list # Req'd, despite pylint
@@ -10,13 +17,16 @@ import persistent.list # Req'd, despite pylint
 from zope.mimetype.interfaces import IContentTypeAware
 from zope import interface
 from zope.container.interfaces import INameChooser
-from zope.container.btree import BTreeContainer
 
 from nti.dataserver import interfaces
 from nti.dataserver import datastructures
 from nti.dataserver import containers
 
+from nti.utils.property import alias
 
+@interface.implementer( interfaces.IEnclosedContent,
+						IContentTypeAware,
+						interfaces.IZContained )
 class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, persistent.Persistent):
 	"""
 	A trivial implementation of a persistent enclosure.
@@ -24,14 +34,12 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 	use Blobs. Consider the :module:`zope.file` package. See also zope.dublincore.
 	"""
 
-	interface.implements( interfaces.IEnclosedContent,
-						  IContentTypeAware,
-						  interfaces.IZContained )
-
 	creator = None
 	lastModified = 0
 	createdTime = 0
 	__parent__ = None
+	__name__ = alias('name')
+	_data = None
 
 	def __init__( self, name, data='', mime_type='text/plain' ):
 		super(SimplePersistentEnclosure,self).__init__()
@@ -46,12 +54,6 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 			state['_data'] = state['data']
 			del state['data']
 		super(SimplePersistentEnclosure,self).__setstate__( state )
-
-	def _get__name__( self ):
-		return self.name
-	def _set__name__( self, name ):
-		self.name = name
-	__name__ = property( _get__name__, _set__name__ )
 
 	def _get_data( self ):
 		return self._data
@@ -68,6 +70,7 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 		if not result:
 			result = datastructures.to_external_ntiid_oid( self )
 		return result
+
 from zope.location import locate
 
 class SimpleEnclosureMixin(object):
@@ -75,7 +78,7 @@ class SimpleEnclosureMixin(object):
 	Provides a basic level of support for enclosures to any object.
 
 	Operates by using an instance variable, `_enclosures` to store a
-	zope.container.IContainer of names to enclosures.
+	:class:`.IContainer` of names to enclosures.
 	"""
 
 	_enclosures = None

@@ -37,6 +37,8 @@ from zope.annotation import interfaces as an_interfaces
 
 from nti.dataserver import links
 
+from nti.utils.property import alias
+
 from persistent import Persistent
 from persistent.list import PersistentList
 
@@ -139,16 +141,9 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 			section.Provider = nc
 	creator = property(_get_creator,_set_creator)
 
-	def _get__name__(self):
-		return self.ID
-	def _set__name__(self,n):
-		pass
-	__name__ = property(_get__name__,_set__name__)
 
-	def _get_id(self): return self.ID
-	def _set_id(self, nid): self.ID = nid
-	id = property( _get_id, _set_id )
-
+	__name__ = alias('ID')
+	id = alias('ID')
 	__parent__ = None
 
 	def add_section( self, section ):
@@ -289,18 +284,6 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		#self._enrolled.container_name = self._enrolled.__name__
 		self.__name__ = self.ID
 		self.__parent__ = None
-
-	# def __setstate__( self, state ):
-	# 	if state.get( 'Enrolled', None ) is not None:
-	# 		self._enrolled = BTreeContainer()
-	# 		self._enrolled.__name__ = 'Enrolled'
-	# 		self._enrolled.__parent__ = self
-	# 		_add_container_iface( self._enrolled, nti_interfaces.IEnrolledContainer )
-	# 		for n in state['Enrolled']: self._enrolled[n] = n
-	# 		del state['Enrolled']
-	# 		state['_enrolled'] = self._enrolled
-	# 	super(SectionInfo,self).__setstate__( state )
-	# 	_add_container_iface( self._enrolled, nti_interfaces.IEnrolledContainer )
 
 
 	def __eq__( self, other ):

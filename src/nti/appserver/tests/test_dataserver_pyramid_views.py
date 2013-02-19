@@ -113,8 +113,8 @@ class TestUGDModifyViews(SharedConfiguringTestBase):
 		resource = user
 		if add_contained_object:
 			con_obj = _ContainedObject()
-			con_obj.containerId = 'abc'
-			con_obj.id = '123'
+			con_obj.containerId = u'abc'
+			con_obj.id = u'123'
 			user.addContainedObject( con_obj )
 			resource = con_obj
 			con_obj.lastModified = 0

@@ -862,7 +862,7 @@ class TestApplication(SharedApplicationTestBase):
 
 			n = contenttypes.Note()
 			n.applicableRange = contentrange.ContentRangeDescription()
-			n.containerId = 'tag:nti:foo'
+			n.containerId = u'tag:nti:foo'
 			user.addContainedObject( n )
 			n_ext_id = to_external_ntiid_oid( n )
 
@@ -884,7 +884,7 @@ class TestApplication(SharedApplicationTestBase):
 
 			n = contenttypes.Note()
 			n.applicableRange = contentrange.ContentRangeDescription()
-			n.containerId = 'tag:nti:foo'
+			n.containerId = u'tag:nti:foo'
 			user.addContainedObject( n )
 			n_ext_id = to_external_ntiid_oid( n )
 
@@ -930,7 +930,7 @@ class TestApplication(SharedApplicationTestBase):
 
 			n = contenttypes.Note()
 			n.applicableRange = contentrange.ContentRangeDescription()
-			n.containerId = 'tag:nti:foo'
+			n.containerId = u'tag:nti:foo'
 			user.addContainedObject( n )
 			n_ext_id = to_external_ntiid_oid( n )
 
@@ -974,7 +974,7 @@ class TestApplication(SharedApplicationTestBase):
 
 			n = contenttypes.Note()
 			n.applicableRange = contentrange.ContentRangeDescription()
-			n.containerId = 'tag:nti:foo'
+			n.containerId = u'tag:nti:foo'
 			user.addContainedObject( n )
 			assert_that( n.sharingTargets, is_( set() ) )
 			n_ext_id = to_external_ntiid_oid( n )
@@ -1002,7 +1002,7 @@ class TestApplication(SharedApplicationTestBase):
 		testapp = TestApp( self.app )
 		n = contenttypes.Note()
 		n.applicableRange = contentrange.ContentRangeDescription()
-		n.containerId = 'tag:nti:foo'
+		n.containerId = u'tag:nti:foo'
 
 		# Note that we externalize before we attempt to add the sharing data,
 		# because the sharingTargets field is externalized in a special way
@@ -1027,7 +1027,7 @@ class TestApplication(SharedApplicationTestBase):
 
 			n = contenttypes.Note()
 			n.applicableRange = contentrange.ContentRangeDescription()
-			n.containerId = 'tag:nti:foo'
+			n.containerId = u'tag:nti:foo'
 			user.addContainedObject( n )
 			assert_that( n.sharingTargets, is_( set() ) )
 			n_ext_id = to_external_ntiid_oid( n )
@@ -1325,7 +1325,7 @@ class TestApplication(SharedApplicationTestBase):
 
 			n = contenttypes.Note()
 			n.applicableRange = contentrange.ContentRangeDescription()
-			n.containerId = 'tag:nti:foo'
+			n.containerId = u'tag:nti:foo'
 			user.addContainedObject( n )
 			assert_that( n.sharingTargets, is_( set() ) )
 			n_ext_id = to_external_ntiid_oid( n )
@@ -1528,7 +1528,7 @@ class TestApplicationSearch(SharedApplicationTestBase):
 def _create_class(ds, usernames_to_enroll=()):
 	provider = providers.Provider.create_provider( ds, username='OU' )
 	klass = provider.maybeCreateContainedObjectWithType(  'Classes', None )
-	klass.containerId = 'Classes'
+	klass.containerId = u'Classes'
 	klass.ID = 'CS2051'
 	klass.Description = 'CS Class'
 	mock_dataserver.current_transaction.add( klass )
