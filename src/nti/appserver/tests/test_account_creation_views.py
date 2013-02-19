@@ -381,17 +381,14 @@ class TestPreflightView(_AbstractValidationViewBase):
 
 		assert_that(profile_schema,
 					has_entry( 'participates_in_mathcounts',
-							   has_entry( 'required', False ) ) )
-		assert_that( profile_schema,
-					 has_entry( 'participates_in_mathcounts',
-								has_entry( 'type', 'bool' ) ) )
+							   has_entries( 'required', False,
+											'type', 'bool' ) ) )
+
 
 		assert_that( profile_schema,
 					 has_entry( 'role',
-								has_key( 'choices' ) ) )
-		assert_that( profile_schema,
-					 has_entry( 'role',
-								has_entry( 'base_type', 'string' ) ) )
+								has_entries( 'choices', is_(list),
+											 'base_type', 'string' ) ) )
 
 		assert_that( profile_schema,
 					 has_entry( 'affiliation',
@@ -399,18 +396,18 @@ class TestPreflightView(_AbstractValidationViewBase):
 
 		assert_that( profile_schema,
 					 has_entry( 'home_page',
-								has_entry( 'base_type', 'string' ) ) )
-
-		assert_that( profile_schema,
-					 has_entry( 'home_page',
-								has_entry( 'type', 'URI' ) ) )
-		assert_that( profile_schema,
-					 has_entry( 'avatarURL',
-								has_entry( 'base_type', 'string' ) ) )
+								has_entries( 'base_type', 'string',
+											'type', 'URI' ) ) )
 
 		assert_that( profile_schema,
 					 has_entry( 'avatarURL',
-								has_entry( 'type', 'URI' ) ) )
+								has_entries( 'base_type', 'string',
+											 'type', 'URI' ) ) )
+
+		assert_that( profile_schema,
+					 has_entry( 'email',
+								has_entries( 'base_type', 'string',
+											 'type', user_interfaces.UI_TYPE_EMAIL ) ) )
 
 
 		assert_that( profile_schema,
@@ -496,19 +493,27 @@ class TestPreflightView(_AbstractValidationViewBase):
 		val = self.the_view( self.request )
 
 		assert_that( val, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
-		assert_that( val, has_entry( 'ProfileSchema', does_not( has_key( 'opt_in_email_communication' ) ) ) )
-		assert_that( val, has_entry( 'ProfileSchema',
-									 has_entry( 'contact_email',
-												has_entry( 'required', True ) ) ) )
+		assert_that( val, has_key( 'ProfileSchema' ) )
+		profile_schema = val['ProfileSchema']
 
-		assert_that( val, has_entry( 'ProfileSchema',
-									 has_entry( 'participates_in_mathcounts',
-												has_entry( 'required', False ) ) ) )
-		assert_that( val, has_entry( 'ProfileSchema',
-									 has_entry( 'participates_in_mathcounts',
-												has_entry( 'type', 'bool' ) ) ) )
-		assert_that( val, has_entry( 'ProfileSchema',
-									 does_not( has_key( 'invitation_codes' ) ) ) )
+		assert_that( profile_schema, does_not( has_key( 'opt_in_email_communication' ) ) )
+		assert_that( profile_schema, has_entry( 'contact_email',
+												has_entry( 'required', True ) ) )
+
+		assert_that( profile_schema, has_entry( 'participates_in_mathcounts',
+												has_entries( 'required', False,
+															 'type', 'bool' ) ) )
+		assert_that( profile_schema, does_not( has_key( 'invitation_codes' ) ) )
+
+		assert_that( profile_schema,
+					 has_entry( 'contact_email',
+								has_entries( 'base_type', 'string',
+											 'type', user_interfaces.UI_TYPE_EMAIL ) ) )
+		assert_that( profile_schema,
+					 has_entry( 'email',
+								has_entries( 'base_type', 'string',
+											 'type', user_interfaces.UI_TYPE_HASHED_EMAIL ) ) )
+
 
 
 	@WithMockDSTrans
