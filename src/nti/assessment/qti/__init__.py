@@ -14,7 +14,7 @@ import importlib
 
 from zope import interface
 
-from .basic.element import QTIElement
+from .basic.elements import QTIElement
 from . import interfaces as qti_interfaces
 
 class _ElementFinder(object):
@@ -98,7 +98,7 @@ class _QTIFinder(_ElementFinder):
 				qti_interfaces.IConcrete in implemented
 	
 	def _filename_predicate(self, name, ext):
-		return name.endswith("element") and ext == ".py"
+		return name.endswith("elements") and ext == ".py"
 				
 def find_concrete_interfaces():
 	"""
