@@ -205,7 +205,7 @@ setup(
 		#'scss >= 0.8.72', # we no longer use
 		'setproctitle >= 1.1.6',
 		'setuptools >= 0.6c11',
-		'simplejson >= 3.0.7',
+		'simplejson >= 3.0.8',
 		'six >= 1.2.0',
 		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
 		'stripe >= 1.7.9', # stripe payments
@@ -255,7 +255,7 @@ setup(
 		'zope.container >= 3.12.0',
 		'zope.contentprovider >= 3.7.2',
 		'zope.contenttype >= 4.0.0', # A utility module for content-type handling.
-		'zope.copy >= 4.0.1',
+		'zope.copy >= 4.0.2',
 		'zope.copypastemove >= 3.8.0',
 		'zope.datetime >= 3.4.1',
 		'zope.deprecation >= 4.0.2',
@@ -277,7 +277,7 @@ setup(
 		'zope.intid >= 3.7.2',
 		'zope.keyreference >= 3.6.4',
 		'zope.lifecycleevent >= 4.0.1',
-		'zope.location >= 4.0.0',
+		'zope.location >= 4.0.1',
 		'zope.mimetype >= 1.3.1',
 		'zope.minmax >= 1.1.2',
 		'zope.pagetemplate >= 4.0.1',
