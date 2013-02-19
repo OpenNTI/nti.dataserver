@@ -12,6 +12,7 @@ import unittest
 from zope import interface
 
 from nti.assessment.qti.basic.element import qti_creator
+from nti.assessment.qti.content import interfaces as cnt_interfaces
 from nti.assessment.qti.expression import interfaces as exp_interfaces
 from nti.assessment.qti.attributes import interfaces as attr_interfaces
 
@@ -120,6 +121,23 @@ class TestBasicElement(ConfiguringTestBase):
 		assert_that(f, has_property('class'))
 		assert_that(f, has_property('definition'))
 		
+	def test_sequence(self):
+		@qti_creator
+		@interface.implementer(cnt_interfaces.IsimpleInline)
+		class Foo(object):
+			pass
+	
+		@interface.implementer(cnt_interfaces.Iinline)
+		class Inline(object):
+			pass
+
+		f = Foo()
+		assert_that(f, has_length(0))
+		inl = Inline()
+		f.inline.append(inl)
+		assert_that(f, has_length(1))
+		assert_that(f[0], is_(inl))
+	
 if __name__ == '__main__':
 	unittest.main()
 	
