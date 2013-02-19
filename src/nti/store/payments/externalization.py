@@ -14,6 +14,7 @@ from . import interfaces as payment_interfaces
 
 @component.adapter(store_interfaces.IPurchaseAttempt)
 class PurchaseAttemptDecorator(object):
+	
 	def decorateExternalObject(self, original, external):
 		if original.Processor == 'stripe':
 			ps = payment_interfaces.IStripePurchase(original)

@@ -9,8 +9,8 @@ __docformat__ = "restructuredtext en"
 
 import BTrees
 
-from zope import interface
 from zope import component
+from zope import interface
 from zope.annotation import factory as an_factory
 from zope.container import contained as zcontained
 

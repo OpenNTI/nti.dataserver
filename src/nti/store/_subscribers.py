@@ -19,7 +19,7 @@ from . import _content_roles
 from . import interfaces as store_interfaces
 from .purchase_history import get_purchase_attempt
 
-def _get_contentrole_users(purchase):
+def _get_content_role_users(purchase):
 	on_behalf_of = purchase.on_behalf_of
 	return on_behalf_of if on_behalf_of else (purchase.creator.username,)
 
@@ -39,7 +39,7 @@ def _purchase_attempt_successful( event ):
 		purchase.State = store_interfaces.PA_STATE_SUCCESS
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
-		for uname in _get_contentrole_users(purchase):
+		for uname in _get_content_role_users(purchase):
 			_content_roles._add_users_content_roles(uname, purchase.Items)
 		logger.info('%s completed successfully' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
@@ -51,7 +51,7 @@ def _purchase_attempt_refunded( event ):
 		purchase.State = store_interfaces.PA_STATE_REFUNDED
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
-		for uname in _get_contentrole_users(purchase):
+		for uname in _get_content_role_users(purchase):
 			_content_roles._remove_users_content_roles(uname, purchase.Items)
 		logger.info('%s has been refunded' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)

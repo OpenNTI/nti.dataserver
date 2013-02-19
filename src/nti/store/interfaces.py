@@ -198,7 +198,7 @@ class PurchaseAttemptFailed(PurchaseAttemptEvent):
 	error_code = None
 	state = PA_STATE_FAILED
 
-	def __init__( self, purchase_id, username, error_message=None, error_code=None):
+	def __init__(self, purchase_id, username, error_message=None, error_code=None):
 		super(PurchaseAttemptFailed,self).__init__( purchase_id, username)
 		self.error_message = error_message
 		if error_code:
@@ -216,4 +216,7 @@ class IPurchaseHistory(interface.Interface):
 		pass
 
 	def get_purchase_state(pid):
+		pass
+	
+	def get_purchase_history(start_time=None, end_time=None):
 		pass

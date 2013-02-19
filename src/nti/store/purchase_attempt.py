@@ -168,7 +168,6 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		return self.Synced
 
 def create_purchase_attempt(items, processor, on_behalf_of=None, state=None, description=None, start_time=None):
-	items = to_frozenset(items)
 	state = state or store_interfaces.PA_STATE_UNKNOWN
 	return PurchaseAttempt(	items=items, processor=processor, description=description,
 							state=state, start_time=start_time, on_behalf_of=on_behalf_of)
