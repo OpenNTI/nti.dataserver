@@ -14,7 +14,7 @@ class StripeException(Exception):
 	pass
 
 class StripeIO(object):
-	
+
 	def _do_stripe_operation(self,func, *args, **kwargs):
 		try:
 			result = func(*args, **kwargs)
@@ -26,7 +26,7 @@ class StripeIO(object):
 			raise e
 		except Exception, e:
 			raise StripeException(*e.args)
-		
+
 	def create_stripe_customer(self, email, description=None, api_key=None):
 		customer = self._do_stripe_operation(stripe.Customer.create, api_key=api_key, email=email, description=description)
 		return customer
@@ -37,14 +37,14 @@ class StripeIO(object):
 			return customer
 		except stripe.InvalidRequestError:
 			return None
-	
+
 	def delete_stripe_customer(self, customer_id=None, customer=None, api_key=None):
 		customer = customer or self.get_stripe_customer(customer_id, api_key)
 		if customer:
 			self._do_stripe_operation(customer.delete)
 			return True
 		return False
-	
+
 	def update_stripe_customer(self, customer_id=None, email=None, description=None, customer=None, api_key=None):
 		customer = customer or self.get_stripe_customer(customer_id, api_key)
 		if customer:
@@ -53,11 +53,11 @@ class StripeIO(object):
 			self._do_stripe_operation(customer.save)
 			return True
 		return False
-	
+
 	def create_stripe_token(self, customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
 		if not customer_id:
 			cvc = str(cvc) if cvc else None
-			cc = {	'number': number, 'exp_month':exp_month, 
+			cc = {	'number': number, 'exp_month':exp_month,
 					'exp_year': exp_year, 'cvc': cvc,
 					'address_line1': kwargs.get('address_line1', None) or kwargs.get('address', None),
 					'address_line2': kwargs.get('address_line2', None) or kwargs.get('address2', None),
@@ -69,17 +69,17 @@ class StripeIO(object):
 			data = {'card':cc}
 		else:
 			data = {'customer': customer_id}
-		
+
 		token = self._do_stripe_operation(stripe.Token.create, api_key=api_key, **data)
 		return token
-		
+
 	def get_stripe_token(self, token, api_key=None):
 		try:
 			token = self._do_stripe_operation(stripe.Token.retrieve,token, api_key=api_key)
 			return token
 		except stripe.InvalidRequestError:
 			return None
-	
+
 	def create_stripe_charge(self, amount, currency='USD', customer_id=None, card=None, description=None, api_key=None):
 		assert customer_id or card
 		data = {'amount':amount, 'currency':currency, 'description':description}
@@ -87,31 +87,31 @@ class StripeIO(object):
 			data['card'] = card
 		else:
 			data['customer'] = customer_id
-			
+
 		charge = self._do_stripe_operation(stripe.Charge.create, api_key=api_key, **data)
 		return charge
-	
+
 	def get_stripe_charge(self, charge_id, api_key=None):
 		try:
 			charge = self._do_stripe_operation(stripe.Charge.retrieve, charge_id, api_key=api_key)
 			return charge
 		except stripe.InvalidRequestError:
 			return None
-	
+
 	def _get_stripe_charges(self, count=10, offset=0, customer=None, api_key=None):
-		charges = self._do_stripe_operation(stripe.Charge.all, count=count, offset=offset, 
+		charges = self._do_stripe_operation(stripe.Charge.all, count=count, offset=offset,
 											customer=customer, api_key=api_key)
 		return charges
-	
+
 	def get_stripe_charges(self, customer=None, start_time=None, end_time=None, count=50, api_key=None):
 		offset = 0
 		start_time = int(start_time) if start_time else 0
 		end_time = int(end_time) if end_time else sys.maxint
-				
+
 		_loop = True
 		while _loop:
 			charges = self._get_stripe_charges(count=count, offset=offset, customer=customer, api_key=api_key)
-			
+
 			if not charges.data:
 				_loop = False
 			else:
@@ -119,9 +119,9 @@ class StripeIO(object):
 				for c in charges:
 					if c.created >= start_time and c.created <= end_time:
 						yield c
-					
+
 				offset += len(charges)
-				
+
 				# since the list of events is ordered desc
 				# stop if an old event is not withing the range
 				if start_time > charges[-1].created:
@@ -130,6 +130,6 @@ class StripeIO(object):
 	def get_coupon(self, coupon_code, api_key=None):
 		try:
 			coupon = self._do_stripe_operation(stripe.Coupon.retrieve, coupon_code, api_key=api_key)
-			return coupon	
+			return coupon
 		except stripe.InvalidRequestError:
 			return None

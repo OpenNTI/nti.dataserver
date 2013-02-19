@@ -22,7 +22,7 @@ from .purchase_history import get_purchase_attempt
 def _get_contentrole_users(purchase):
 	on_behalf_of = purchase.on_behalf_of
 	return on_behalf_of if on_behalf_of else (purchase.creator.username,)
-	
+
 @component.adapter(store_interfaces.IPurchaseAttemptStarted)
 def _purchase_attempt_started( event ):
 	def func():
@@ -31,7 +31,7 @@ def _purchase_attempt_started( event ):
 		purchase.State = store_interfaces.PA_STATE_STARTED
 		logger.info('%s started %s' % (event.username, purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	
+
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful( event ):
 	def func():
@@ -55,7 +55,7 @@ def _purchase_attempt_refunded( event ):
 			_content_roles._remove_users_content_roles(uname, purchase.Items)
 		logger.info('%s has been refunded' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	
+
 @component.adapter(store_interfaces.IPurchaseAttemptDisputed)
 def _purchase_attempt_disputed( event ):
 	def func():
@@ -64,7 +64,7 @@ def _purchase_attempt_disputed( event ):
 		purchase.updateLastMod()
 		logger.info('%s has been disputed' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	
+
 @component.adapter(store_interfaces.IPurchaseAttemptFailed)
 def _purchase_attempt_failed( event ):
 	def func():
@@ -86,4 +86,3 @@ def _purchase_attempt_synced( event ):
 		purchase.Synced = True
 		logger.info('%s has been synched' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-

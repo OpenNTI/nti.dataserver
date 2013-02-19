@@ -30,11 +30,11 @@ def _from_unicode(value):
 	result = value.split(',')
 	result = re.findall("[^\s]+", value) if len(result)<=1 else result
 	return result
-	
+
 def _to_collection(items=None, factory=list):
 	result = None
 	if not items:
-		result = factory() 
+		result = factory()
 	elif isinstance(items, factory):
 		result = items
 	elif isinstance(items, six.string_types):
@@ -61,7 +61,7 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	Description = None
 	ErrorMessage = None
 	OnBehalfOf = _marker_frozenset
-	
+
 	def __init__(self, items, processor, state, description=None, start_time=None, end_time=None,
 				 on_behalf_of=None, error_code=None, error_message=None, synced=False):
 
@@ -136,7 +136,7 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	def actors(self):
 		result = self.on_behalf_of.union(set([self.creator.username]))
 		return result
-	
+
 	def has_failed(self):
 		return self.State in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE, store_interfaces.PA_STATE_CANCELED)
 
@@ -170,5 +170,5 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 def create_purchase_attempt(items, processor, on_behalf_of=None, state=None, description=None, start_time=None):
 	items = to_frozenset(items)
 	state = state or store_interfaces.PA_STATE_UNKNOWN
-	return PurchaseAttempt(	items=items, processor=processor, description=description, 
+	return PurchaseAttempt(	items=items, processor=processor, description=description,
 							state=state, start_time=start_time, on_behalf_of=on_behalf_of)
