@@ -7,22 +7,33 @@ __docformat__ = "restructuredtext en"
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-from ..elements import AssessmentTest
+import os
 
-from nti.assessment.qti.tests import ConfiguringTestBase
+from .. import elements
 
-from hamcrest import (assert_that, has_property)
+from ... import find_concrete_classes
+from ... import find_concrete_interfaces
+
+from ...tests import ConfiguringTestBase
+
+from hamcrest import (assert_that, has_property, has_length)
 		
-class TestAssesmentsElement(ConfiguringTestBase):
+class TestAssesmentsElements(ConfiguringTestBase):
 	
 	def test_assessmentTest(self):
 	
-		assert_that(AssessmentTest, has_property('_v_definitions'))
-		assert_that(AssessmentTest, has_property('_v_attributes'))
+		assert_that(elements.AssessmentTest, has_property('_v_definitions'))
+		assert_that(elements.AssessmentTest, has_property('_v_attributes'))
 		
-		f = AssessmentTest()
+		f = elements.AssessmentTest()
 		assert_that(f, has_property('outcomeDeclaration'))
 		assert_that(f, has_property('timeLimits'))
 		assert_that(f, has_property('testPart'))
 		assert_that(f, has_property('outcomeProcessing'))
 		assert_that(f, has_property('testFeedback'))
+
+	def test_consistency(self):
+		path = os.path.dirname(elements.__file__)
+		classes = find_concrete_classes(path)
+		interfaces = find_concrete_interfaces(path)
+		assert_that(classes, has_length(len(interfaces)))
