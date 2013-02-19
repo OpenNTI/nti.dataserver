@@ -22,6 +22,6 @@ class TestQTIModule(ConfiguringTestBase):
 		
 	def test_find_concrete_classes(self):		
 		elements = find_concrete_classes()
-		assert_that(elements, has_length(11))
+		assert_that(elements, has_length(24))
 
 	
