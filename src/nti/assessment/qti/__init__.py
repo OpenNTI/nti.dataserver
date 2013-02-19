@@ -56,8 +56,9 @@ class _ElementFinder(object):
 					self._get_concrete_element(m, result)
 		return result
 					
-	def __call__(self):		
-		result = self._find(self.qti_path)
+	def __call__(self, path=None):		
+		path = path or self.qti_path
+		result = self._find(path)
 		return result
 	
 class _IConcreteFinder(_ElementFinder):
@@ -100,17 +101,17 @@ class _QTIFinder(_ElementFinder):
 	def _filename_predicate(self, name, ext):
 		return name.endswith("elements") and ext == ".py"
 				
-def find_concrete_interfaces():
+def find_concrete_interfaces(path=None):
 	"""
 	scan all interface modules to get IConcrete interfaces
 	"""
-	result = _IConcreteFinder()()
+	result = _IConcreteFinder()(path)
 	return result
 
-def find_concrete_classes():
+def find_concrete_classes(path=None):
 	"""
 	scan all classes modules to get IConcrete interfaces
 	"""
-	result = _QTIFinder()()
+	result = _QTIFinder()(path)
 	return result
 
