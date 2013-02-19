@@ -444,7 +444,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
 			top_n = contenttypes.Note()
 			top_n.applicableRange = contentrange.ContentRangeDescription()
-			top_n_containerId = top_n.containerId = 'tag:nti:foo'
+			top_n_containerId = top_n.containerId = u'tag:nti:foo'
 			top_n.body = ("Top",)
 			liking.like_object( top_n, 'foo@bar' )
 			user.addContainedObject( top_n )
@@ -453,7 +453,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
 			reply_n = contenttypes.Note()
 			reply_n.applicableRange = contentrange.ContentRangeDescription()
-			reply_n.containerId = 'tag:nti:foo'
+			reply_n.containerId = u'tag:nti:foo'
 			reply_n.body = ('Reply',)
 			reply_n.inReplyTo = top_n
 			reply_n.addReference(top_n)
@@ -588,7 +588,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 			user = users.User.get_user( user.username )
 			hl = contenttypes.Highlight()
 			hl.applicableRange = contentrange.ContentRangeDescription()
-			hl.containerId = 'tag:nti:foo'
+			hl.containerId = u'tag:nti:foo'
 			user.addContainedObject( hl )
 			hl.lastModified = 3
 			hl_id = to_external_ntiid_oid( hl )
@@ -624,7 +624,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
 			hl = contenttypes.Highlight()
 			hl.applicableRange = contentrange.ContentRangeDescription()
-			hl.containerId = 'tag:nti:foo'
+			hl.containerId = u'tag:nti:foo'
 			hl.creator = user_i_follow
 			user_i_follow.addContainedObject( hl )
 			hl.lastModified = 5
@@ -633,7 +633,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
 			hl = contenttypes.Highlight()
 			hl.applicableRange = contentrange.ContentRangeDescription()
-			hl.containerId = 'tag:nti:foo'
+			hl.containerId = u'tag:nti:foo'
 			hl.creator = user_not_followed
 			user_not_followed.addContainedObject( hl )
 			hl.lastModified = 4
@@ -708,7 +708,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
 			fav = contenttypes.Note()
 			fav.applicableRange = contentrange.ContentRangeDescription()
-			fav.containerId = 'tag:nti:foo'
+			fav.containerId = u'tag:nti:foo'
 			fav.creator = user_i_follow
 			user_i_follow.addContainedObject( fav )
 			fav.lastModified = 6
@@ -753,7 +753,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 			msg = Msg()
 			meet = Meet()
 
-			meet.containerId = 'tag:nti:foo'
+			meet.containerId = u'tag:nti:foo'
 			meet.ID = 'the_meeting'
 			msg.containerId = meet.containerId
 			msg.ID = '42'
@@ -776,7 +776,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 			# A note I own, liked by another user
 			top_n = contenttypes.Note()
 			top_n.applicableRange = contentrange.ContentRangeDescription()
-			top_n_containerId = top_n.containerId = 'tag:nti:foo'
+			top_n_containerId = top_n.containerId = u'tag:nti:foo'
 			top_n.body = ("Top",)
 			liking.like_object( top_n, 'foo@bar' )
 			user.addContainedObject( top_n )
@@ -785,7 +785,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 			# A reply to a note I own, liked by two users
 			reply_n = contenttypes.Note()
 			reply_n.applicableRange = contentrange.ContentRangeDescription()
-			reply_n.containerId = 'tag:nti:foo'
+			reply_n.containerId = u'tag:nti:foo'
 			reply_n.body = ('Reply',)
 			reply_n.inReplyTo = top_n
 			reply_n.addReference(top_n)
@@ -798,7 +798,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 			# A reply to a note I own, created by another user, liked by another user
 			reply_n_o = contenttypes.Note()
 			reply_n_o.applicableRange = contentrange.ContentRangeDescription()
-			reply_n_o.containerId = 'tag:nti:foo'
+			reply_n_o.containerId = u'tag:nti:foo'
 			reply_n_o.body = ('Again',)
 			reply_n_o.inReplyTo = top_n
 			reply_n_o.addReference(top_n)
@@ -872,7 +872,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 			user = self._create_user( )
 
 			top_n = QAssessedQuestion()
-			top_n_containerId = top_n.containerId = 'tag:nti:foo'
+			top_n_containerId = top_n.containerId = u'tag:nti:foo'
 			lifecycleevent.created( top_n )
 			user.addContainedObject( top_n )
 			top_n_id = top_n.id
@@ -880,7 +880,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 			now.returns( datetime.fromtimestamp( 2 ) )
 
 			reply_n = QAssessedQuestion()
-			reply_n.containerId = 'tag:nti:foo'
+			reply_n.containerId = u'tag:nti:foo'
 			lifecycleevent.created( reply_n )
 			user.addContainedObject( reply_n )
 			reply_n_id = reply_n.id

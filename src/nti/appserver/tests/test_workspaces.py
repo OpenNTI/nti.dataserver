@@ -292,7 +292,7 @@ class TestUserClassesCollection(unittest.TestCase,tests.TestBaseMixin):
 		ou = providers.Provider.create_provider( self.ds, username='OU' )
 
 		clazz = ClassInfo( ID='CS5201' )
-		clazz.containerId = 'Classes'
+		clazz.containerId = u'Classes'
 		ou.addContainedObject( clazz )
 		section = SectionInfo( ID='CS5201.501' )
 		clazz.add_section( section )

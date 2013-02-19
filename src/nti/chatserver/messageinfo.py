@@ -74,7 +74,7 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 
 	def __init__( self ):
 		super(MessageInfo,self).__init__()
-		self.ID = uuid.uuid4().hex
+		self.ID = unicode(uuid.uuid4().hex)
 		self._v_sender_sid = None # volatile. The session id of the sender.
 		self.LastModified = time.time()
 		self.CreatedTime = self.LastModified

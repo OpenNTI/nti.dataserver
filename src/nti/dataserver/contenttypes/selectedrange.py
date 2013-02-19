@@ -13,8 +13,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from .base import UserContentRoot
 
-# See comments in UserContentRoot about being IZContained. We add it here to minimize the impact
-@interface.implementer(nti_interfaces.IZContained, nti_interfaces.ISelectedRange)
+@interface.implementer(nti_interfaces.ISelectedRange)
 class SelectedRange(UserContentRoot):
 	"""
 	Base implementation of selected ranges in the DOM. Intended to be used
@@ -30,9 +29,6 @@ class SelectedRange(UserContentRoot):
 	# most directly matches what the externalization is.
 	tags = ()
 	AutoTags = ()
-
-	__parent__ = None
-	__name__ = alias('id')
 
 	def __init__( self ):
 		super(SelectedRange,self).__init__()

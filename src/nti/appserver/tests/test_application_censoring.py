@@ -108,7 +108,7 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 
 		chat_message = MessageInfo()
 		# ContainerIDs are required or censoring by default kicks in (depending on config)
-		chat_message.containerId = 'tag:foo'
+		chat_message.containerId = u'tag:foo'
 
 		args = session_consumer._convert_message_args_to_objects( None, Session(), { 'args': [to_external_object( chat_message )] } )
 
@@ -129,7 +129,7 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 				originating_site_names = ('mathcounts.nextthought.com','')
 
 			chat_message = MessageInfo()
-			chat_message.containerId = 'tag:foo'
+			chat_message.containerId = u'tag:foo'
 			chat_message.body = [bad_val]
 
 			args = session_consumer._convert_message_args_to_objects( None, Session(), { 'args': [to_external_object( chat_message )] } )

@@ -11,26 +11,26 @@ __docformat__ = "restructuredtext en"
 
 #logger = __import__('logging').getLogger(__name__)
 
-import warnings
-import itertools
+from zope import interface
+from zope import schema
 
-from zope import interface, schema
-from zope.deprecation import deprecated, deprecate
-from zope.mimetype.interfaces import IContentTypeAware, IContentType
+from zope.mimetype.interfaces import IContentTypeAware
 from zope.annotation.interfaces import IAnnotatable
-
 from zope.container.interfaces import IContainer as IZContainer
 from zope.container.interfaces import IContainerNamesContainer as IZContainerNamesContainer
-from zope.location.interfaces import ILocation, IContained as IZContained
+from zope.location.interfaces import IContained as IZContained
 from zope.location.location import LocationProxy
+
 from zope.proxy import ProxyBase
 import zope.site.interfaces
 
-from zope.interface.common.mapping import IFullMapping
 from zope.mimetype import interfaces as mime_interfaces
 
 from nti.contentrange import interfaces as rng_interfaces
+from nti.contentrange.contentrange import ContentRangeDescription
+
 from nti.utils.schema import Object
+from nti.utils.schema import DecodingValidTextLine
 
 class ACLLocationProxy(LocationProxy):
 	"""
@@ -99,17 +99,17 @@ class IShardInfo(zope.component.interfaces.IPossibleSite,zope.container.interfac
 class IShardLayout(interface.Interface):
 
 	dataserver_folder = Object(IDataserverFolder,
-									  title="The root folder for the dataserver in this shard")
+							   title="The root folder for the dataserver in this shard")
 
 	users_folder = Object(zope.site.interfaces.IFolder,
-								 title="The folder containing users that live in this shard." )
+						  title="The folder containing users that live in this shard." )
 
 	shards = Object( zope.container.interfaces.IContained,
-							title="The root shard will contain a shards folder.",
-							required=False)
+					 title="The root shard will contain a shards folder.",
+					 required=False)
 	root_folder = Object( zope.site.interfaces.IRootFolder,
-								 title="The root shard will contain the root folder",
-								 required=False )
+						  title="The root shard will contain the root folder",
+						  required=False )
 
 class INewUserPlacer(interface.Interface):
 
@@ -166,21 +166,6 @@ class IOIDResolver(interface.Interface):
 class IEnvironmentSettings(interface.Interface):
 	pass
 
-from nti.externalization.interfaces import IExternalObject, IExternalObjectDecorator
-deprecated( "IExternalObject", "Use nti.externalization" )
-deprecated( "IExternalObjectDecorator", "Use nti.externalization" )
-
-
-from nti.contentlibrary.interfaces import IContentPackageLibrary as ILibrary, IContentPackage as ILibraryEntry, IContentUnit as ILibraryTOCEntry
-deprecated( "ILibrary", "Use nti.contentlibrary" )
-deprecated( "ILibraryEntry", "Use nti.contentlibrary" )
-deprecated( "ILibraryTOCEntry", "Use nti.contentlibrary" )
-
-ILINK_VOCABULARY = schema.vocabulary.SimpleVocabulary(
-	[schema.vocabulary.SimpleTerm(_x)
-	 for _x
-	 in ('related', 'alternate', 'self', 'enclosure', 'edit', 'like', 'unlike', 'content' )])
-
 class ILink(interface.Interface):
 	"""
 	A relationship between the containing entity and
@@ -189,7 +174,7 @@ class ILink(interface.Interface):
 
 	rel = schema.Choice(
 		title=u'The type of relationship',
-		vocabulary=ILINK_VOCABULARY)
+		values=('related', 'alternate', 'self', 'enclosure', 'edit', 'like', 'unlike', 'content' ))
 
 	target = interface.Attribute(
 		"""
@@ -205,7 +190,7 @@ class ILink(interface.Interface):
 
 		This is useful for things like view names or namespace traversals.""")
 
-	target_mime_type = schema.TextLine(
+	target_mime_type = DecodingValidTextLine(
 		title='Target Mime Type',
 		description="The mime type explicitly specified for the target object, if any",
 		constraint=mime_interfaces.mimeTypeConstraint,
@@ -273,33 +258,31 @@ class ICreated(interface.Interface):
 	"""
 	creator = interface.Attribute( "The creator of this object." )
 
-# TODO: Replace with zope.location.interface.IContained
-class IContained(interface.Interface):
+
+class IContained(IZContained):
 	"""
 	Something logically contained inside exactly one (named) :class:`IContainer`.
+	Most uses of this should now use :class:`zope.container.interfaces.IContained`.
+	(This class previously did not extend that interface; it does now.)
 	"""
 
-	containerId = interface.Attribute(
-		"""
-		The ID (name) of the container to which this object belongs.
-		""")
-	id = interface.Attribute(
-		"""
-		The locally unique ID (name) of this object in the container it belongs.
-		""")
+	# For BWC, these are not required
+	containerId = DecodingValidTextLine( title="The ID (name) of the container to which this object belongs. Should match the __parent__.__name__",
+										 required=False)
+	id = DecodingValidTextLine(title="The locally unique ID (name) of this object in the container it belongs. Should match the __name__",
+							   required=False)
+
 
 class IAnchoredRepresentation(IContained):
 	"""
 	Something not only contained within a container, but that has a
 	specific position within the rendered representation of that
 	container.
-
-	There are currently a wide range of fields associated with such a representation, many
-	of which are not well understood and need to be better documented. See the Highlight class for
-	a list of known fields.
 	"""
 	applicableRange = Object(rng_interfaces.IContentRangeDescription,
-									title="The range of content to which this representation applies or is anchored." )
+							 defaultFactory=ContentRangeDescription,
+							 title="The range of content to which this representation applies or is anchored.",
+							 description="The default is an empty, unplaced anchor.")
 
 class IContainerIterable(interface.Interface):
 	"""
@@ -317,6 +300,7 @@ class IContainerIterable(interface.Interface):
 
 # some aliases
 from zope.security.interfaces import IPrincipal
+IPrincipal = IPrincipal # prevent warning
 from zope.security.interfaces import IGroup
 from zope.security.interfaces import IGroupAwarePrincipal
 from zope.security.interfaces import IPermission
@@ -340,6 +324,7 @@ def username_is_reserved( username ):
 
 # Exported policies
 from pyramid.interfaces import IAuthorizationPolicy
+IAuthorizationPolicy = IAuthorizationPolicy # prevent unused warning
 from pyramid.interfaces import IAuthenticationPolicy
 import pyramid.security as _psec
 
@@ -424,13 +409,12 @@ class IMutableGroupMember(IGroupMember):
 			to which the member now belongs.
 		"""
 
-from nti.utils.schema import ValidTextLine
 
 def valid_entity_username(entity_name):
 	return not username_is_reserved( entity_name )
 
 class IEntity(IZContained, IAnnotatable):
-	username = ValidTextLine(
+	username = DecodingValidTextLine(
 		title=u'The username',
 		constraint=valid_entity_username
 		)
@@ -468,7 +452,7 @@ class IUser(IEntity,IContainerIterable):
 	A user of the system. Notice this is not an IPrincipal.
 	This interface needs finished and fleshed out.
 	"""
-	username = ValidTextLine(
+	username = DecodingValidTextLine(
 		title=u'The username',
 		min_length=5 )
 
@@ -528,7 +512,7 @@ class IOpenIdUser(IUser):
 	A user of the system with a known OpenID identity URL.
 	"""
 
-	identity_url = schema.TextLine( title=u"The user's claimed identity URL" )
+	identity_url = DecodingValidTextLine( title=u"The user's claimed identity URL" )
 
 
 class IFacebookUser(IUser):
@@ -536,7 +520,7 @@ class IFacebookUser(IUser):
 	A user of the system with a known Facebook identity URL.
 	"""
 
-	facebook_url = schema.TextLine( title=u"The user's claimed identity URL" )
+	facebook_url = DecodingValidTextLine( title=u"The user's claimed identity URL" )
 
 class ICoppaUser(IUser):
 	"""
@@ -645,21 +629,8 @@ class IEnclosedContent(IContent,IContained,IContentTypeAware):
 	name = interface.Attribute( "The human-readable name of this content." )
 	data = interface.Attribute( "The actual enclosed content." )
 
-class IEnclosureIterable(interface.Interface):
-	"""
-	Something that can enumerate the enclosures it contains.
-	"""
+class ISimpleEnclosureContainer(interface.Interface):
 
-	def iterenclosures():
-		"""
-		:return: An iteration across the :class:`IContent` contained
-			within this object.
-		"""
-
-deprecated( 'IEnclosureIterable', 'Implement ISimpleEnclosureContainer instead' )
-
-class ISimpleEnclosureContainer( #IContainerNamesContainer,
-								 IEnclosureIterable):
 	"""
 	Something that contains enclosures.
 	"""
@@ -680,6 +651,11 @@ class ISimpleEnclosureContainer( #IContainerNamesContainer,
 		Delete the enclosure having the given name.
 		:raises KeyError: If no such enclosure exists.
 		"""
+ 	def iterenclosures():
+ 		"""
+ 		:return: An iteration across the :class:`IContent` contained
+ 			within this object.
+ 		"""
 
 ### Particular content types
 
@@ -732,7 +708,7 @@ class IReadableShared(interface.Interface):
 		description=" This is a convenience property for reporting the usernames of all "
 			" entities this object is shared with, directly or indirectly. Note that the usernames reported "
 			" here are not necessarily globally unique and may not be resolvable as such.",
-		value_type=schema.TextLine(title="The username" ),
+		value_type=DecodingValidTextLine(title="The username" ),
 		readonly=True)
 
 
@@ -790,7 +766,7 @@ class IShareableModeledContent(IShareable,IModeledContent):
 	# with the correct interface. See nti.externalization.internalization.update_from_external_object
 	sharedWith = schema.Set(
 		title="An alias for `flattenedSharingTargetNames`, taking externalization of local usernames into account",
-		value_type=schema.TextLine(title="The username or NTIID" ) )
+		value_type=DecodingValidTextLine(title="The username or NTIID" ) )
 
 class IFriendsList(IModeledContent,IEntity):
 	"""
@@ -845,7 +821,7 @@ class IDeviceContainer(INamedContainer):
 class ITranscriptSummary(IModeledContent):
 
 	Contributors = schema.Set( title="All the usernames of people who participated in the conversation",
-							   value_type=schema.TextLine(title="The username"),
+							   value_type=DecodingValidTextLine(title="The username"),
 							   readonly=True )
 	RoomInfo = interface.Attribute( "The meeting where the conversation took place" )
 
@@ -857,8 +833,6 @@ class ITranscript(ITranscriptSummary):
 
 class ITranscriptContainer(INamedContainer):
 	contains(ITranscript)
-
-
 
 
 class ICanvas(IShareableModeledContent, IThreadable):
@@ -945,7 +919,7 @@ class IFlaggable(IAnnotatable):
 	to a class of objects.
 	"""
 
-from zope.interface.interfaces import IObjectEvent
+#from zope.interface.interfaces import IObjectEvent
 
 class IGlobalFlagStorage(interface.Interface):
 
@@ -1011,7 +985,7 @@ class IClassInfo(IModeledContent):
 		:return: The section of this class with the given ID, or raise KeyError.
 		"""
 
-	Provider = schema.TextLine( title="The username of the provider" )
+	Provider = DecodingValidTextLine( title="The username of the provider" )
 
 	def add_section( section ):
 		"Adds a new :class:ISectionInfo to this class."
@@ -1119,14 +1093,6 @@ class ISessionService(interface.Interface):
 		Returns an existing, probably alive :class:`ISocketSession` having the
 		given ID.
 		"""
-
-# from nti.socketio.interfaces import ISocketSession, ISocketSessionEvent, ISocketSessionConnectedEvent, ISocketSessionDisconnectedEvent, ISocketEventHandler
-# deprecated( 'ISocketSession', 'Prefer nti.socketio' )
-# deprecated( 'ISocketSessionEvent', 'Prefer nti.socketio' )
-# deprecated( 'ISocketSessionConnectedEvent', 'Prefer nti.socketio' )
-# deprecated( 'ISocketSessionDisconnectedEvent', 'Prefer nti.socketio' )
-# deprecated( 'ISocketSessionEventHandler', 'Prefer nti.socketio' )
-
 
 class ISessionServiceStorage(interface.Interface):
 	"""

@@ -49,7 +49,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 			n = contenttypes.Note()
 			n.applicableRange = contentrange.ContentRangeDescription()
-			n.containerId = 'tag:nti:foo'
+			n.containerId = u'tag:nti:foo'
 			user.addContainedObject( n )
 			n_ext_id = to_external_ntiid_oid( n )
 
@@ -84,7 +84,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			user = self._create_user()
 			n = contenttypes.Note()
 			n.applicableRange = contentrange.ContentRangeDescription()
-			n.containerId = 'tag:nti:foo'
+			n.containerId = u'tag:nti:foo'
 			n.updateFromExternalObject( {'body': ['The first part']} )
 			user.addContainedObject( n )
 			provided_by_n = list(interface.providedBy( n ).flattened())
@@ -94,7 +94,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			canvas = contenttypes.Canvas()
 			canvas.append( contenttypes.NonpersistentCanvasTextShape( "This text is from the canvas" ) )
 			n2.updateFromExternalObject( {'body': [u'<p><em>This</em> part is HTML</p>', canvas]} )
-			n2.containerId = 'tag:nti:foo'
+			n2.containerId = u'tag:nti:foo'
 			user.addContainedObject( n2 )
 
 			n_ext_id = to_external_ntiid_oid( n )
@@ -168,7 +168,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 			n2 = contenttypes.Note()
 			n2.applicableRange = contentrange.ContentRangeDescription()
-			n2.containerId = 'tag:nti:foo'
+			n2.containerId = u'tag:nti:foo'
 			n2.updateFromExternalObject( {'body': ['<p><em>This</em> part is HTML</p><p>And spreads across paragraphs.</p>',
 												   contenttypes.Canvas()] } )
 			user.addContainedObject( n2 )
@@ -203,7 +203,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			msg_info.creator = user.username
 			msg_info.recipients = [user2.username]
 			msg_info.sharedWith = msg_info.recipients
-			msg_info.containerId = 'foobar'
+			msg_info.containerId = u'foobar'
 			# Make sure it has a parent and oid
 			storage = chat_interfaces.IMessageInfoStorage( msg_info )
 			storage.add_message( msg_info )

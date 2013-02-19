@@ -19,6 +19,8 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.ntiids import ntiids
 
+from nti.utils.property import alias
+
 from zope import interface
 from zope import component
 from zope.deprecation import deprecate
@@ -27,11 +29,8 @@ def _get_entity( username, dataserver=None ):
 	return users.Entity.get_entity( username, dataserver=dataserver, _namespace=users.User._ds_namespace )
 
 
-# TODO: These objects should probably implement IZContained (__name__,__parent__). Otherwise they
-# often wind up wrapped in container proxy objects, which is confusing. There may be
-# traversal implications to that though, that need to be considered. See also classes.py
 @interface.implementer(nti_interfaces.IModeledContent)
-class UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, datastructures.CreatedModDateTrackingObject, persistent.Persistent):
+class UserContentRoot(sharing.ShareableMixin, datastructures.ZContainedMixin, datastructures.CreatedModDateTrackingObject, persistent.Persistent):
 	"""
 	Base implementation of behaviours expected for contenttypes. Should be the primary
 	superclass for subclasses.
@@ -44,6 +43,12 @@ class UserContentRoot(sharing.ShareableMixin, datastructures.ContainedMixin, dat
 	#: It is allowed to create instances of these classes from
 	#: external data.
 	__external_can_create__ = True
+
+	__name__ = alias('id') # this was previously at SelectedRange, but everything extends SelectedRange
+
+	# TODO: Define containerId as an alias for __parent__.__name__ ? Right now they are completely separate,
+	# and the __parent__ relationship is in fact initially established by the setting of containerId
+	# in incoming data
 
 	def __init__(self):
 		super(UserContentRoot,self).__init__()
@@ -76,7 +81,6 @@ def _make_getitem( attr_name ):
 
 from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.datastructures import InterfaceObjectIO
-from nti.utils.property import alias
 from zope.proxy import removeAllProxies
 
 @component.adapter(nti_interfaces.IModeledContent)
