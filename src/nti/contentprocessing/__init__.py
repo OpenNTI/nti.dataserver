@@ -1,13 +1,17 @@
+# -*- coding: utf-8 -*-
+"""
+Content processing module
+
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import re
 
 from zope import interface
 
 from nti.contentprocessing import interfaces as cp_interfaces
-
-import logging
-logger = logging.getLogger( __name__ )
 
 # define global constants
 default_ngram_minsize = 2
