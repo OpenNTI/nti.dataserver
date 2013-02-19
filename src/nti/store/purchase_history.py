@@ -25,7 +25,7 @@ from nti.ntiids import ntiids
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
-from .purchase_attempt import to_frozenset 
+from .purchase_attempt import to_frozenset
 from . import interfaces as store_interfaces
 
 def _time_to_64bit_int( value ):
@@ -58,9 +58,11 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 		self.time_map.pop(_time_to_64bit_int(purchase.start_time), None)
 		try:
 			self.purchases.remove(purchase)
-			lifecycleevent.removed(purchase)
-		except:
+		except KeyError:
 			pass
+		else:
+			# Let this throw if needs to: abort the transaction
+			lifecycleevent.removed(purchase)
 
 	def get_purchase(self, pid):
 		result = ntiids.find_object_with_ntiid(pid )
@@ -74,9 +76,9 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 		for p in self.time_map.values():
 			if p.is_pending() or p.is_unknown():
 				yield p
-	
+
 	def get_pending_purchase_for(self, items, on_behalf_of=None):
-		items = to_frozenset(items) 
+		items = to_frozenset(items)
 		on_behalf_of = to_frozenset(on_behalf_of)
 		for p in self.time_map.values():
 			if (p.is_pending() or p.is_unknown()) and \
@@ -126,7 +128,7 @@ def get_purchase_history(user, start_time=None, end_time=None):
 	return result
 
 def get_pending_purchase_for(user, items, on_behalf_of=None):
-	items = to_frozenset(items) 
+	items = to_frozenset(items)
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	hist = store_interfaces.IPurchaseHistory(user)
 	result = hist.get_pending_purchase_for(items, on_behalf_of)

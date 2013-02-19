@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger( __name__ )
 
 import six
 import time
-import anyjson
+import simplejson as json
 from datetime import date
 
 from zope import component
@@ -45,7 +45,7 @@ def stripe_customer_deleted(event):
 		su.customer_id = None
 		IAnnotations(user).pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	
+
 @component.adapter(pay_interfaces.IRegisterStripeToken)
 def register_stripe_token(event):
 	def func():
@@ -53,7 +53,7 @@ def register_stripe_token(event):
 		sp = pay_interfaces.IStripePurchase(purchase)
 		sp.TokenID = event.token
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	
+
 @component.adapter(pay_interfaces.IRegisterStripeCharge)
 def register_stripe_charge(event):
 	def func():
@@ -64,24 +64,24 @@ def register_stripe_charge(event):
 		su = pay_interfaces.IStripeCustomer(user)
 		su.Charges.add(event.charge_id)
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	
+
 @interface.implementer(pay_interfaces.IStripePaymentProcessor)
 class _StripePaymentProcessor(StripeIO):
-	
+
 	name = 'stripe'
 
 	def create_customer(self, user, api_key=None):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-		
+
 		profile = user_interfaces.IUserProfile(user)
 		email = getattr(profile, 'email', None)
 		description = getattr(profile, 'description', None)
-	
+
 		customer = self.create_stripe_customer(email, description, api_key)
 		notify(pay_interfaces.StripeCustomerCreated(user.username, customer.id))
-		
+
 		return customer
-	
+
 	def get_or_create_customer(self, user, api_key=None):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 		adapted = pay_interfaces.IStripeCustomer(user)
@@ -114,23 +114,23 @@ class _StripePaymentProcessor(StripeIO):
 												description=description,
 												api_key=api_key)
 		return False
-	
+
 	def create_card_token(self, customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
 		token = self.create_stripe_token(customer_id, number, exp_month, exp_year, cvc, api_key, **kwargs)
 		return token.id
-	
+
 	def create_charge(self, amount, currency='USD', customer_id=None, card=None, description=None, api_key=None):
 		charge = self.create_stripe_charge(amount, currency, customer_id, card, description, api_key)
 		if charge.failure_message:
 			raise StripeException(charge.failure_message)
 		return charge
-	
+
 	# ---------------------------
-	
+
 	def _get_coupon(self, coupon,api_key=None):
 		result = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		return result
-	
+
 	def validate_coupon(self, coupon, api_key=None):
 		coupon = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		result = (coupon is not None)
@@ -142,7 +142,7 @@ class _StripePaymentProcessor(StripeIO):
 			elif coupon.duration == u'once':
 				result = coupon.redeem_by is None or time.time() <= coupon.redeem_by
 		return result
-		
+
 	def apply_coupon(self, amount, coupon=None, api_key=None):
 		coupon = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		if coupon:
@@ -152,41 +152,41 @@ class _StripePaymentProcessor(StripeIO):
 			elif coupon.amount_off is not None:
 				amount -= coupon.amount_off
 		return max(0, amount)
-	
+
 	def process_purchase(self, purchase_id, username, token, amount, currency, coupon=None, api_key=None):
-		
+
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
 			raise Exception("Purchase attempt (%s, %s) not found" % (username, purchase_id))
-		
-		try:	
+
+		try:
 			if not purchase.is_pending():
 				notify(store_interfaces.PurchaseAttemptStarted(purchase_id, username))
-			
+
 			# validate coupon
 			coupon = self._get_coupon(coupon, api_key=api_key)
 			if coupon is not None and not self.validate_coupon(coupon, api_key=api_key):
-				raise Exception("Invalid coupon")
+				raise ValueError("Invalid coupon")
 			amount = self.apply_coupon(amount, coupon, api_key=api_key)
 
 			# register stripe user and token
 			customer_id = self.get_or_create_customer(username, api_key=api_key)
 			notify(pay_interfaces.RegisterStripeToken(purchase_id, username, token))
-		
+
 			# charge card, user description for tracking purposes
 			descid = "%s:%s:%s" % (purchase_id, username, customer_id)
 			charge = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
-			
+
 			notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
-			
+
 			if charge.paid:
 				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
-			
+
 			return charge.id
-		except Exception, e:
+		except Exception as e:
 			message = str(e)
 			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
-			
+
 	def get_charges(self, purchase_id=None, username=None, customer=None, start_time=None, end_time=None, api_key=None):
 		result = []
 		for c in self.get_stripe_charges(start_time=start_time, end_time=end_time, api_key=api_key):
@@ -194,36 +194,34 @@ class _StripePaymentProcessor(StripeIO):
 			if (purchase_id and purchase_id in desc) or (username and username in desc) or (customer and customer in desc):
 				result.append(c)
 		return result
-	
+
 	def sync_purchase(self, purchase_id, username, api_key=None):
 		user = User.get_user(username)
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
-			message = 'Purchase %r for user %s could not be found in dB' % (purchase_id, username)
-			logger.error(message)
+			logger.error('Purchase %r for user %s could not be found in dB', purchase_id, username)
 			return None
-		
+
 		charge = None
 		sp = pay_interfaces.IStripePurchase(purchase)
-		if sp.charge_id:
-			charge = self.get_stripe_charge(sp.charge_id, api_key=api_key)
-			if charge is None: 
+		if sp.ChargeID:
+			charge = self.get_stripe_charge(sp.ChargeID, api_key=api_key)
+			if charge is None:
 				# if the charge cannot be found it means there was a db error
-				# or the charge has been deleted from stripe. 
-				message = 'Charge %s/%r for user %s could not be found in Stripe' % (sp.charge_id, purchase_id, user)
-				logger.warn(message)
+				# or the charge has been deleted from stripe.
+				logger.warn('Charge %s/%r for user %s could not be found in Stripe', sp.ChargeID, purchase_id, user)
 		else:
 			start_time = time.mktime(date.fromtimestamp(purchase.StartTime).timetuple())
 			charges = self.get_charges(purchase_id=purchase_id, start_time=start_time, api_key=api_key)
 			if charges:
 				charge = charges[0]
 				notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
-			elif sp.token_id:
-				token = self.get_stripe_token(sp.token_id, api_key=api_key)
+			elif sp.TokenID:
+				token = self.get_stripe_token(sp.TokenID, api_key=api_key)
 				if token is None:
 					# if the token cannot be found it means there was a db error
 					# or the token has been deleted from stripe.
-					message = 'Purchase %s/%r for user %s could not found in Stripe' % (sp.token_id, purchase_id, username)
+					message = 'Purchase %s/%r for user %s could not found in Stripe' % (sp.TokenID, purchase_id, username)
 					logger.warn(message)
 					notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
 				elif token.used:
@@ -231,9 +229,8 @@ class _StripePaymentProcessor(StripeIO):
 						# token has been used and no charge has been found, means the transaction failed
 						notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
 				elif not purchase.is_pending(): #no charge and unused token
-					message = 'Please check status of purchase %r for user %s' % (purchase_id, username)
-					logger.warn(message)
-					
+					logger.warn('Please check status of purchase %r for user %s', purchase_id, username)
+
 		if charge:
 			if charge.failure_message:
 				if not purchase.has_failed():
@@ -244,14 +241,14 @@ class _StripePaymentProcessor(StripeIO):
 			elif charge.paid:
 				if not purchase.has_succeeded():
 					notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
-				
+
 			notify(store_interfaces.PurchaseAttemptSynced(purchase_id, username))
-				
+
 		return charge
 
 	def process_event(self, body):
 		try:
-			event = anyjson.loads(body) if isinstance(body, six.string_types) else body
+			event = json.loads(body) if isinstance(body, six.string_types) else body
 			etype = event.get('type', None)
 			data = event.get('data', {})
 			if etype in ("charge.succeeded", "charge.refunded", "charge.failed", "charge.dispute.created",
@@ -272,6 +269,6 @@ class _StripePaymentProcessor(StripeIO):
 			else:
 				logger.debug('Unhandled event type (%s)' % etype)
 			return True
-		except:
+		except Exception:
 			logger.exception('Error processing stripe event (webhook)')
 			return False
