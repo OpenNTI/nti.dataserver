@@ -1,20 +1,24 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+NGRAM processing utilities
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+import repoze.lru
 
 from zope import component
 from zope import interface
 
 from whoosh import analysis
 
-import repoze.lru
-
 from nti.contentprocessing import default_ngram_minsize
 from nti.contentprocessing import default_ngram_maxsize
 from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing._content_utils import split_content
 from nti.contentprocessing import default_word_tokenizer_expression
-
-import logging
-logger = logging.getLogger( __name__ )
 
 def _text_or_token(token, text_only=False):
 	return token.text if text_only else token.copy()
