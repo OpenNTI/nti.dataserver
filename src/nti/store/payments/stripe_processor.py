@@ -69,7 +69,8 @@ def register_stripe_charge(event):
 class _StripePaymentProcessor(StripeIO):
 
 	name = 'stripe'
-
+	events = ("charge.succeeded", "charge.refunded", "charge.failed", "charge.dispute.created", "charge.dispute.updated")
+	
 	def create_customer(self, user, api_key=None):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 
@@ -251,8 +252,7 @@ class _StripePaymentProcessor(StripeIO):
 			event = json.loads(body) if isinstance(body, six.string_types) else body
 			etype = event.get('type', None)
 			data = event.get('data', {})
-			if etype in ("charge.succeeded", "charge.refunded", "charge.failed", "charge.dispute.created",
-						 "charge.dispute.updated"):
+			if etype in self.events:
 				tracks = data.get('description', u'').split(":")
 				purchase_id = tracks[0] if len(tracks) >= 2 else u''
 				username = tracks[1] if len(tracks) >= 2 else u''

@@ -22,6 +22,7 @@ class IStripeCustomerCreated(interface.Interface):
 
 @interface.implementer(IStripeCustomerCreated)
 class StripeCustomerCreated(object):
+
 	def __init__( self, username, customer_id):
 		self.username = username
 		self.customer_id = customer_id
@@ -38,6 +39,7 @@ class IRegisterPurchaseData(interface.Interface):
 	purchase_id = interface.Attribute("The purchase identifier")
 
 class RegisterPurchaseData(object):
+
 	def __init__( self, purchase_id, username):
 		self.username = username
 		self.purchase_id = purchase_id
@@ -47,6 +49,7 @@ class IRegisterStripeToken(IRegisterPurchaseData):
 
 @interface.implementer(IRegisterStripeToken)
 class RegisterStripeToken(RegisterPurchaseData):
+
 	def __init__( self, purchase_id, username, token_id):
 		super(RegisterStripeToken, self).__init__(purchase_id, username)
 		self.token_id = token_id
@@ -58,6 +61,7 @@ class IRegisterStripeCharge(IRegisterPurchaseData):
 
 @interface.implementer(IRegisterStripeCharge)
 class RegisterStripeCharge(RegisterPurchaseData):
+
 	def __init__( self, purchase_id, username, charge_id):
 		super(RegisterStripeCharge, self).__init__(purchase_id, username)
 		self.charge_id = charge_id
