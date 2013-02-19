@@ -9,8 +9,8 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 
-from ..basic.element import QTIElement
-from ..basic.element import qti_creator
+from ..basic.elements import QTIElement
+from ..basic.elements import qti_creator
 from . import interfaces as ast_interfaces
 
 @qti_creator

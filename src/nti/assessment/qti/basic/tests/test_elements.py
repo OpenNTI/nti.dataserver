@@ -11,7 +11,7 @@ import unittest
 
 from zope import interface
 
-from nti.assessment.qti.basic.element import qti_creator
+from nti.assessment.qti.basic.elements import qti_creator
 from nti.assessment.qti.content import interfaces as cnt_interfaces
 from nti.assessment.qti.expression import interfaces as exp_interfaces
 from nti.assessment.qti.attributes import interfaces as attr_interfaces
