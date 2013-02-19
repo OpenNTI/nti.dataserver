@@ -19,12 +19,12 @@ class StripeIO(object):
 		try:
 			result = func(*args, **kwargs)
 			return result
-		except stripe.CardError, e:
+		except stripe.CardError as e:
 			body = e.json_body
 			raise StripeException('%s(%s)' % (body['error'], body['message']))
-		except stripe.InvalidRequestError, e:
+		except stripe.InvalidRequestError as e:
 			raise e
-		except Exception, e:
+		except Exception as e:
 			raise StripeException(*e.args)
 
 	def create_stripe_customer(self, email, description=None, api_key=None):
