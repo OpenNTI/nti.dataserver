@@ -1,4 +1,11 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+ZOPYX based stemmers
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface
 
