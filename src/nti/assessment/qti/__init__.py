@@ -9,51 +9,80 @@ __docformat__ = "restructuredtext en"
 
 import os
 import sys
+import inspect
 import importlib
 
 from zope import interface
 
-def find_concrete_interfaces():
-	"""
-	scan all interface modules to get IConcrete interfaces
-	"""
-	result = {}
-	from nti.assessment.qti import interfaces as qti_interfaces
+from . import interfaces as qti_interfaces
+
+class _ElementFinder(object):
 	
-	src_path = os.path.split(qti_interfaces.__file__)[0]
-	package = getattr(qti_interfaces, '__package__')
-	path_length = len(src_path)-len(package or 'nti.assessment.qti')
-	
-	def _load_module(path, name):
-		part = path[path_length:]
+	def __init__(self):
+		self.qti_path = os.path.split(qti_interfaces.__file__)[0]
+		package = getattr(qti_interfaces, '__package__')
+		self.path_length = len(self.qti_path)-len(package or 'nti.assessment.qti')
+		
+	def _load_module(self, path, name):
+		part = path[self.path_length:]
 		part = part.replace(os.sep, '.') + '.' + name
 		if part in sys.modules:
 			return sys.modules[part]
 		result = importlib.import_module(part)
 		return result
 			
-	def _get_concrete_ifaces(m):
-		for name in dir(m):
-			item = getattr(m, name, None)
-			if type(item) == interface.interface.InterfaceClass and issubclass(item, qti_interfaces.IConcrete):
-				result[item.__name__[1:]] = item
+	def _item_key(self, name):
+		return name
 	
-	def _find(path):
-		for p in os.listdir(path):
-			if p.startswith('.') or p.startswith('_'):
-				continue
-			
-			fn = os.path.join(path, p) if not p.startswith(path) else path
-			if os.path.isdir(fn):
-				_find(os.path.join(src_path,p))
-			elif os.path.isfile(fn) and path != src_path:
-				name, ext = os.path.splitext(fn)
-				name = name[len(path) + len(os.sep):]
-				if name.endswith("interfaces") and ext == ".py":
-					m = _load_module(path, name)
-					_get_concrete_ifaces(m)
-	_find(src_path)
+	def _item_predicate(self, item):
+		return False
+	
+	def _filename_predicate(self, name, ext):
+		return True
+				
+	def _get_concrete_element(self, m, result):
+		for name, item in inspect.getmembers(m, self._item_predicate):
+			key = self._item_key(name)
+			result[key] = item
+	
+	def _find(self, path):
+		result = {}
+		for path, _, files in os.walk(path):
+			for p in files:
+				name, ext = os.path.splitext(p)
+				if self._filename_predicate(name, ext):
+					m = self._load_module(path, name)
+					self._get_concrete_element(m, result)
+		return result
+					
+	def __call__(self):		
+		result = self._find(self.qti_path)
+		return result
+	
+class _IConcreteFinder(_ElementFinder):
+	
+	singleton = None
 
+	def __new__(cls, *args, **kwargs):
+		if not cls.singleton:
+			cls.singleton = super(_IConcreteFinder, cls).__new__(cls, *args, **kwargs)
+		return cls.singleton
+		
+	def _item_key(self, name):
+		return name[1:]
+	
+	def _item_predicate(self, item):
+		return 	type(item) == interface.interface.InterfaceClass and issubclass(item, qti_interfaces.IConcrete) and \
+				item != qti_interfaces.IConcrete
+	
+	def _filename_predicate(self, name, ext):
+		return name.endswith("interfaces") and ext == ".pyc"
+				
+def find_concrete_interfaces():
+	"""
+	scan all interface modules to get IConcrete interfaces
+	"""
+	result = _IConcreteFinder()()
 	return result
 
 
