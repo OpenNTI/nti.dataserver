@@ -16,6 +16,7 @@ from zope import interface
 from zope.container import contained as zcontained
 from zope.schema import interfaces as sch_interfaces
 from zope.annotation import interfaces as an_interfaces
+from zope.interface.common.sequence import IFiniteSequence
 
 from persistent import Persistent
 from persistent.list import PersistentList
@@ -95,6 +96,32 @@ def _get_attributes(self):
 			result[k] = v
 	return result
 
+def _make_getitem(attr):
+	def __getitem__(self, index):
+		return getattr(self,attr)[index]
+	return __getitem__
+
+def _make_setitem(attr):
+	def __setitem__(self, key, value):
+		getattr(self,attr)[key] = value
+	return __setitem__
+
+def _make_iter(attr):
+	def __iter__(self):
+		return iter(getattr(self,attr))
+	return __iter__
+
+def _make_len(attr):
+	def __len__(self):
+		return len(getattr(self,attr))
+	return __len__
+
+def _make_sequence(cls, attr):
+	cls.__len__ = _make_len(attr)
+	cls.__iter__ = _make_iter(attr)
+	cls.__getitem__ = _make_getitem(attr)
+	cls.__setitem__ = _make_setitem(attr)
+
 def qti_creator(cls):
 	"""
 	Class decorator that checks the implemented interfaces and creates the corresponding schema fields
@@ -109,6 +136,7 @@ def qti_creator(cls):
 	implemented = implemented.flattened() if implemented else ()
 		
 	is_persitent = False
+	is_finite_sequence = False
 	
 	attributes = {}
 	definitions = {}
@@ -116,6 +144,8 @@ def qti_creator(cls):
 	for base in implemented:
 		if issubclass(base, IPersistent):
 			is_persitent = True
+		if issubclass(base, IFiniteSequence):
+			is_finite_sequence = True
 		if issubclass(base, qti_interfaces.IQTIElement) or issubclass(base, attr_interfaces.IAttrGroup):
 			r = get_schema_fields(base)
 			for k,v in r.items():
@@ -123,6 +153,9 @@ def qti_creator(cls):
 					attributes[k] = v
 				else:
 					definitions[k] = v
+	
+	
+	is_finite_sequence = is_finite_sequence and len(definitions) == 1
 	
 	# volatile attributes		
 	setattr(cls, '_v_definitions', definitions)
@@ -141,6 +174,7 @@ def qti_creator(cls):
 		elif sch_interfaces.IText.providedBy(v) or sch_interfaces.IChoice.providedBy(v):
 			setattr(cls, k, property(_getter(pname), _setter(pname)))
 		elif sch_interfaces.IList.providedBy(v):
+			_make_sequence(cls, k)
 			setattr(cls, k, property(_collection_getter(pname, list_factory)))
 			setattr(cls, "get_%s_list" % k, _getter(pname))
 			if sch_interfaces.IObject.providedBy(v.value_type) or sch_interfaces.IText.providedBy(v.value_type):
