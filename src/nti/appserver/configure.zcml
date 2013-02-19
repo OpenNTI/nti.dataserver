@@ -84,9 +84,15 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
-	<!-- Flagging -->
+	<!--
+		 ********
+		 Flagging
+		 ********
+	-->
 	<subscriber factory=".flagging_views.FlagLinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator"	/>
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<!-- Chat -->
 	<!-- Make messages appear as flaggable -->
 	<class class="nti.chatserver.messageinfo.MessageInfo">
 		<!-- Making it flaggable... -->
@@ -95,6 +101,19 @@
 		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
 		<!-- NOTE: That gets zope.dublincore involved in updating modification times -->
 	</class>
+	<!--
+		Because of the message flagging, which does not update modification
+		times, and the fact that Transcripts are non-persistent
+		objects which derive their own mod times from message mod
+		times, caching these is unreliable, so disable it.
+		See Trello #876 https://trello.com/c/wXdPC0Xx
+		TODO: That's a really blunt tool. Do better.
+	-->
+	<class class="nti.dataserver.chat_transcripts.TranscriptSummary">
+		<implements interface=".interfaces.IUncacheableInResponse" />
+	</class>
+
+	<!-- ******** -->
 
 	<!-- Favorites/liking -->
 	<subscriber factory=".liking_views.FavoriteLinkDecorator"
@@ -197,9 +216,9 @@
 	access to the many objects that are ISimpleEnclosureContainer.
 	We're not ready for that yet.
 	<adapter
-	for="nti.dataserver.interfaces.ISimpleEnclosureContainer"
-	factory="._adapters.EnclosureTraversable"
-	provides="zope.traversing.interfaces.ITraversable" />
+		for="nti.dataserver.interfaces.ISimpleEnclosureContainer"
+		factory="._adapters.EnclosureTraversable"
+		provides="zope.traversing.interfaces.ITraversable" />
 	-->
 	<adapter name="enclosures"
 			 for="nti.dataserver.interfaces.ISimpleEnclosureContainer pyramid.interfaces.IRequest"
@@ -212,11 +231,9 @@
 	NOTE: This is disabled. See zope_site_tween for details. Turning
 	it on loses configuration.
 	<subscriber
-	zcml:condition="installed zope.site"
-	for="zope.component.interfaces.ISite
-	zope.traversing.interfaces.IBeforeTraverseEvent"
-	handler="zope.site.threadSiteSubscriber"
-	/>
+		zcml:condition="installed zope.site"
+		for="zope.component.interfaces.ISite zope.traversing.interfaces.IBeforeTraverseEvent"
+		handler="zope.site.threadSiteSubscriber" />
 	-->
 
 	<!-- Events -->
@@ -228,17 +245,17 @@
 	<subscriber handler="._socket_event_listeners.session_connected_broadcaster" />
 
 	<subscriber factory="._socket_event_listeners._UserPresenceExternalDecoratorFactory"
-		for="nti.dataserver.interfaces.IUser"
-		provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+				for="nti.dataserver.interfaces.IUser"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
 	<subscriber factory=".dataserver_socketio_views._WSWillUpgradeVeto"
-		provides="geventwebsocket.interfaces.IWSWillUpgradeVeto"
-		for="geventwebsocket.interfaces.IWSWillUpgradeEvent" />
+				provides="geventwebsocket.interfaces.IWSWillUpgradeVeto"
+				for="geventwebsocket.interfaces.IWSWillUpgradeEvent" />
 
 	<!-- Friends Lists are uncachable due to the nested user changing
 	 presence -->
 	<class class="nti.dataserver.users.FriendsList">
-	<implements interface=".interfaces.IUncacheableInResponse" />
+		<implements interface=".interfaces.IUncacheableInResponse" />
 	</class>
 
 	<!-- Forking events -->
@@ -293,15 +310,16 @@
 
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"
-		 for="*"
-		 factory=".pyramid_auth.OUAdminFactory"
-		 provides="nti.dataserver.interfaces.IGroupMember"
-		 zcml:condition="have devmode" />
+			 for="*"
+			 factory=".pyramid_auth.OUAdminFactory"
+			 provides="nti.dataserver.interfaces.IGroupMember"
+			 zcml:condition="have devmode" />
 
 	<adapter name="NextthoughtDotComAdmin"
-		 for="nti.dataserver.interfaces.IUser"
-		 factory=".pyramid_auth.NextthoughtDotComAdmin"
-		 provides="nti.dataserver.interfaces.IGroupMember" />
+			 for="nti.dataserver.interfaces.IUser"
+			 factory=".pyramid_auth.NextthoughtDotComAdmin"
+			 provides="nti.dataserver.interfaces.IGroupMember" />
+
 	<include package="." file="configure_invitations.zcml" />
 
 </configure>
