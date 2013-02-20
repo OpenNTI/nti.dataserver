@@ -252,7 +252,12 @@ setup(
 		# for views and other metadata
 		'zope.componentvocabulary >= 1.0.1',
 		'zope.configuration >= 4.0.2',
-		'zope.container >= 3.12.0',
+		# zope.container 4.0.0a1 is out. It does nice things for Folder. But the alpha release
+		# also breaks compatibility with old pickles of Folder (despite comments to the contrary)
+		# AttributeError: 'Folder' object has no attribute '_SampleContainer__data
+		# Until they fix it, pin to 3.12.0
+		#'zope.container[zcml,zodb] >= 4.0.0a1',
+		'zope.container == 3.12.0',
 		'zope.contentprovider >= 3.7.2',
 		'zope.contenttype >= 4.0.1', # A utility module for content-type handling.
 		'zope.copy >= 4.0.2',
@@ -296,7 +301,7 @@ setup(
 		'zope.size >= 4.0.0',
 		'zope.tal >= 4.0.0a1',
 		'zope.tales >= 4.0.0',
-		'zope.traversing >= 3.14.0',
+		'zope.traversing == 3.14.0', # 4.0.0a1 is out and required for zope.container 4, but see comments about it
 		# textindexng3
 		'zopyx.txng3.core >= 3.6.1.1',
 		'zopyx.txng3.ext >= 3.3.3',
