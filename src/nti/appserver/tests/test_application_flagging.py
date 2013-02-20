@@ -202,7 +202,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			msg_info.Body = ['The first part']
 			msg_info.creator = user.username
 			msg_info.recipients = [user2.username]
-			msg_info.sharedWith = msg_info.recipients
+			msg_info.sharedWith = set(msg_info.recipients)
 			msg_info.containerId = u'foobar'
 			# Make sure it has a parent and oid
 			storage = chat_interfaces.IMessageInfoStorage( msg_info )

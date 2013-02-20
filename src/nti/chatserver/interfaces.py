@@ -18,7 +18,9 @@ from zope.security.permission import Permission
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.socketio import interfaces as sio_interfaces
+
 from nti.utils.schema import UniqueIterable
+from nti.utils.schema import Variant
 
 class IChatserver(Interface):
 	pass
@@ -41,16 +43,13 @@ CHANNEL_POLL    = 'POLL'
 CHANNEL_META    = 'META'
 CHANNEL_STATE   = 'STATE'
 CHANNELS = (CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_CONTENT, CHANNEL_POLL, CHANNEL_META, CHANNEL_STATE)
-CHANNEL_VOCABULARY = schema.vocabulary.SimpleVocabulary(
-	[schema.vocabulary.SimpleTerm( _x ) for _x in CHANNELS] )
 
 STATUS_INITIAL = 'st_INITIAL'
 STATUS_PENDING = 'st_PENDING'
 STATUS_POSTED  = 'st_POSTED'
 STATUS_SHADOWED = 'st_SHADOWED'
 STATUSES = (STATUS_INITIAL,STATUS_PENDING,STATUS_POSTED,STATUS_SHADOWED)
-STATUS_VOCABULARY = schema.vocabulary.SimpleVocabulary(
-	[schema.vocabulary.SimpleTerm( _x ) for _x in STATUSES] )
+
 
 class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 	"""
@@ -133,15 +132,17 @@ class IMessageInfo(nti_interfaces.IShareableModeledContent, nti_interfaces.IZCon
 	# as works for Notes
 	channel = schema.Choice(
 		title="The channel the message was sent to.",
-		vocabulary=CHANNEL_VOCABULARY)
+		values=CHANNELS )
 
 	Status = schema.Choice(
 		title="The status of the message. Set by the server.",
-		vocabulary=STATUS_VOCABULARY )
+		values=STATUSES )
 
 	Creator = schema.TextLine( title="Message creator", description="User that send this message" )
 
-	body = interface.Attribute("""The content of the body depends on the channel"""	)
+	body = Variant( (schema.Dict( key_type=schema.TextLine() ), #, value_type=schema.TextLine() ),
+					 nti_interfaces.CompoundModeledContentBody()),
+					 description="The body is either a dictionary of string keys and values, or a Note body")
 
 	recipients = UniqueIterable(
 		title="The names of all the recipients of the message.",

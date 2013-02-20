@@ -20,6 +20,7 @@ from hamcrest import has_key,  not_none, is_not
 from hamcrest import same_instance, has_length, none, contains, same_instance
 from hamcrest import has_entries, only_contains, has_item, has_property
 from nti.tests import validly_provides as verifiably_provides, provides
+from nti.tests import is_empty
 from nose.tools import assert_raises
 
 from zope import interface, component
@@ -861,7 +862,7 @@ class TestChatserver(_ChatserverTestBase):
 		msg.Body = 'This is the body'
 		msg.channel = chat.CHANNEL_WHISPER
 		chatserver.post_message_to_room( room.ID, msg ) # jason whispers to Chris AND sjohnson
-		assert_that( msg.sharedWith, is_( () ) )
+		assert_that( msg.sharedWith, is_empty() )
 
 		# It should not be in anyone's transcript
 		assert_that( chat_transcripts.transcript_for_user_in_room( 'sjohnson', room.ID ),
@@ -883,7 +884,7 @@ class TestChatserver(_ChatserverTestBase):
 		msg.Body = 'This is the body'
 		msg.channel = chat.CHANNEL_WHISPER
 		chatserver.post_message_to_room( room.ID, msg ) # jason whispers to Chris
-		assert_that( msg.sharedWith, is_( () ) )
+		assert_that( msg.sharedWith, is_empty() )
 
 		# No one has it, it got dropped.
 		for user in ('chris', 'jason'):

@@ -1,14 +1,22 @@
 #!/usr/bin/env python
-""" Handles a socket.io session. """
+# -*- coding: utf-8 -*-
+"""
+Handles a socket.io session.
 
-import logging
-logger = logging.getLogger( __name__ )
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import sys
 import itertools
 import simplejson as json
 
 from zope import interface
+from zope.interface.exceptions import Invalid
 from zope import component
 from zope.event import notify
 from zope.i18n import translate
@@ -114,6 +122,7 @@ class SessionConsumer(object):
 				# Note that we're converting the input to objects for each
 				# handler in the list. This could be a little inefficient in the case
 				# of multiple handlers that come from related packages.
+				__traceback_info__ = h, session, message
 				args = _convert_message_args_to_objects( h, session, message )
 
 				result = h(*args)
@@ -158,7 +167,7 @@ class SessionConsumer(object):
 		except component.ComponentLookupError: # pragma: no cover
 			# This is a programming error we can and should fix
 			raise
-		except StandardError as e:
+		except (StandardError, Invalid) as e: # schema validation extends Invalid, and NOT StandardError
 			savepoint.rollback() # could potentially raise InvalidSavepointRollbackError
 
 			if sio_interfaces.ISocketEventHandlerClientError.providedBy( e ):

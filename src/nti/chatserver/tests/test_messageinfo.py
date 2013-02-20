@@ -43,8 +43,6 @@ from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans,  SharedConfiguringTestBase
 
 
-
-
 class TestMessageInfo(SharedConfiguringTestBase):
 
 
@@ -54,6 +52,7 @@ class TestMessageInfo(SharedConfiguringTestBase):
 		m.sharedWith = set()
 		m.creator = ''
 		m.__name__ = ''
+		m.body = 'foo'
 		assert_that( m, verifiably_provides( chat_interfaces.IMessageInfo ) )
 
 	@WithMockDSTrans
@@ -61,6 +60,7 @@ class TestMessageInfo(SharedConfiguringTestBase):
 		m = messageinfo.MessageInfo()
 		assert_that( m, verifiably_provides( nti_interfaces.IModeledContent ) )
 		m.Body = 'foo'
+		m.Creator = 'Jason'
 		ext = to_external_object( m )
 		assert_that( ext['Body'], is_( ext['body'] ) )
 

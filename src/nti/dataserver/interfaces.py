@@ -31,8 +31,8 @@ from nti.contentrange.contentrange import ContentRangeDescription
 
 from nti.utils.schema import Object
 from nti.utils.schema import ObjectLen
-from nti.utils.schema import ObjectOr
-from nti.utils.schema import ListOrTuple
+from nti.utils.schema import Variant
+from nti.utils.schema import ListOrTupleFromObject
 from nti.utils.schema import DecodingValidTextLine
 
 class ACLLocationProxy(LocationProxy):
@@ -947,21 +947,28 @@ class IGlobalFlagStorage(interface.Interface):
 		this storage.
 		"""
 
+def CompoundModeledContentBody():
+	"""
+	Returns a :class:`zope.schema.interfaces.IField` representing
+	the way that a compound body of user-generated content is modeled.
+	"""
+
+	return ListOrTupleFromObject( title="The body of this object",
+								description="""An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
+									of :class:`IModeledContent` such as :class:`ICanvas`.)
+									""",
+								value_type=Variant( (ObjectLen(frg_interfaces.ISanitizedHTMLContentFragment,min_length=1),
+													 ObjectLen(frg_interfaces.IPlainTextContentFragment,min_length=1),
+													 Object(ICanvas)),
+													 title="A body part of a note" ),
+								 min_length=1,
+								 required=False)
+
 class INote(IHighlight,IThreadable):
 	"""
 	A user-created note attached to other content.
 	"""
-	body = ListOrTuple( title="The body of this note",
-		description="""
-		An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
-		of :class:`IModeledContent` such as :class:`ICanvas`.)
-		""",
-		value_type=ObjectOr( (ObjectLen(frg_interfaces.ISanitizedHTMLContentFragment,min_length=1),
-							  ObjectLen(frg_interfaces.IPlainTextContentFragment,min_length=1),
-							  Object(ICanvas)),
-							 title="A body part of a note" ),
-		min_length=1,
-		required=False)
+	body = CompoundModeledContentBody()
 
 ### Changes related to content objects/users
 SC_CREATED  = "Created"

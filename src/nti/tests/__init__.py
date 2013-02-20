@@ -157,6 +157,44 @@ class Implements(BaseMatcher):
 def implements( iface ):
 	return Implements( iface )
 
+
+class ValidatedBy(BaseMatcher):
+
+	def __init__( self, field ):
+		super(ValidatedBy,self).__init__()
+		self.field = field
+
+	def _matches( self, data ):
+		try:
+			self.field.validate( data )
+		except Exception:
+			return False
+		else:
+			return True
+
+	def describe_to( self, description ):
+		description.append_text( 'data validated by' ).append( repr(self.field) )
+
+	def describe_mismatch( self, item, mismatch_description ):
+		ex = None
+		try:
+			self.field.validate( item )
+		except Exception as e:
+			ex = e
+
+		mismatch_description.append_text( repr( self.field ) ).append_text( ' failed to validate ' ).append_text( repr( item ) ).append_text( ' with ' ).append_text( repr( ex ) )
+
+def validated_by( field ):
+	""" Matches if the data is validated by the given IField """
+	return ValidatedBy( field )
+from hamcrest import is_not
+def not_validated_by( field ):
+	""" Matches if the data is NOT validated by the given IField. """
+	return is_not( validated_by( field ) )
+from hamcrest import has_length
+def is_empty():
+	return has_length( 0 )
+
 has_attr = hamcrest.library.has_property
 
 import unittest

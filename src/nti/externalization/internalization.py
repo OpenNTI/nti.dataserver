@@ -368,15 +368,21 @@ def validate_field_value( self, field_name, field, value ):
 			raise
 
 		# IObject provides `schema`, which is an interface, so we can adapt
-		# using it. Some other things do not, for example nti.utils.schema.ObjectOr.
+		# using it. Some other things do not, for example nti.utils.schema.Variant
 		# They might provide a `fromObject` function to do the conversion
+		# The field may be able to handle the whole thing by itself or we may need
+		# to do the individual objects
 		converter = lambda x: x
-		if hasattr( field.value_type, 'fromObject' ):
+		loop = True
+		if hasattr( field, 'fromObject' ):
+			converter = field.fromObject
+			loop = False
+		elif hasattr( field.value_type, 'fromObject' ):
 			converter = field.value_type.fromObject
 		elif hasattr( field.value_type, 'schema' ):
 			converter = field.value_type.schema
 		try:
-			value = [converter( v ) for v in value]
+			value = [converter( v ) for v in value] if loop else converter(value)
 		except TypeError:
 			# TypeError means we couldn't adapt, in which case we want
 			# to raise the original error. If we could adapt,

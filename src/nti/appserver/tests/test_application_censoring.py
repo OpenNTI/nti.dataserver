@@ -9,6 +9,7 @@ from hamcrest import has_entry
 from hamcrest import is_
 from hamcrest import has_property
 from hamcrest import none
+from hamcrest import only_contains
 
 import anyjson as json
 import os
@@ -41,8 +42,8 @@ from nti.socketio import session_consumer
 #class TestApplicationAssessment(ApplicationTestBase):
 #	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
 
-bad_val = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' )
-censored_val = 'This is ******* stupid, you ************ *******'
+bad_val = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' ).decode( 'utf-8' )
+censored_val = u'This is ******* stupid, you ************ *******'
 
 class _CensorTestMixin(object):
 
@@ -104,16 +105,18 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 
 		@interface.implementer(sio_interfaces.ISocketSession)
 		class Session(object):
-			owner = self
+			owner = u'me'
 
 		chat_message = MessageInfo()
+		chat_message.body = 'a body'
 		# ContainerIDs are required or censoring by default kicks in (depending on config)
 		chat_message.containerId = u'tag:foo'
 
 		args = session_consumer._convert_message_args_to_objects( None, Session(), { 'args': [to_external_object( chat_message )] } )
 
 		assert_that( args[0], is_( MessageInfo ) )
-		assert_that( args[0], has_property( 'creator', self ) )
+		assert_that( args[0], has_property( 'creator', Session.owner ) )
+		args[0].creator = self
 
 		assert_that( nti.appserver.censor_policies.creator_and_location_censor_policy( '', args[0] ),
 					 is_( none() ) )
@@ -139,7 +142,7 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 
 			#nti.contentfragments.censor.censor_assign( [bad_val], args[0], 'body' )
 
-			assert_that( args[0], has_property( 'body', [censored_val] ) )
+			assert_that( args[0], has_property( 'body', only_contains( censored_val ) ) )
 
 class TestApplicationCensoringWithDefaultPolicyForAllUsers(_CensorTestMixin,SharedApplicationTestBase):
 

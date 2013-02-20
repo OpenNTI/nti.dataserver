@@ -9,7 +9,8 @@ thus always import `Object` from this module
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+
 from . import MessageFactory as _
 from dm.zope.schema.schema import SchemaConfigured, schemadict, Object as ObjectBase
 ObjectBase.check_declaration = True
@@ -21,7 +22,9 @@ from zope import component
 from zope.component import handle
 from zope.event import notify
 from zope.schema import interfaces as sch_interfaces
+
 import numbers
+import collections
 
 class PermissiveSchemaConfigured(SchemaConfigured):
 	"""
@@ -44,6 +47,106 @@ class PermissiveSchemaConfigured(SchemaConfigured):
 				if k not in _schema:
 					kwargs.pop( k )
 			super(PermissiveSchemaConfigured,self).__init__( **kwargs )
+
+
+class IBeforeSchemaFieldAssignedEvent(interface.Interface):
+	"""
+	An event sent when certain schema fields will be assigning
+	an object to a property of another object.
+	"""
+	object = interface.Attribute("The object that is going to be assigned. Subscribers may modify this")
+
+	name = interface.Attribute("The name of the attribute under which the object "
+					 "will be assigned.")
+
+	context = interface.Attribute("The context object where the object will be "
+						"assigned to.")
+
+# Make this a base of the zope interface so our handlers
+# are compatible
+sch_interfaces.IBeforeObjectAssignedEvent.__bases__ = (IBeforeSchemaFieldAssignedEvent,)
+
+@interface.implementer(IBeforeSchemaFieldAssignedEvent)
+class BeforeSchemaFieldAssignedEvent(object):
+
+	def __init__( self, obj, name, context ):
+		self.object = obj
+		self.name = name
+		self.context = context
+
+class IBeforeTextAssignedEvent(IBeforeSchemaFieldAssignedEvent):
+	"""
+	Event for assigning text.
+	"""
+
+	object = schema.Text(title="The text being assigned.")
+
+class IBeforeTextLineAssignedEvent(IBeforeTextAssignedEvent): # ITextLine extends IText
+	"""
+	Event for assigning text lines.
+	"""
+
+	object = schema.TextLine(title="The text being assigned.")
+
+class IBeforeContainerAssignedEvent(IBeforeSchemaFieldAssignedEvent):
+	"""
+	Event for assigning containers (__contains__).
+	"""
+
+class IBeforeIterableAssignedEvent(IBeforeContainerAssignedEvent):
+	"""
+	Event for assigning iterables.
+	"""
+
+class IBeforeCollectionAssignedEvent(IBeforeIterableAssignedEvent):
+	"""
+	Event for assigning collections.
+	"""
+
+	object = interface.Attribute( "The collection being assigned. May or may not be mutable." )
+
+class IBeforeSequenceAssignedEvent(IBeforeCollectionAssignedEvent):
+	"""
+	Event for assigning sequences.
+	"""
+
+	object = interface.Attribute( "The sequence being assigned. May or may not be mutable." )
+
+class IBeforeDictAssignedEvent(IBeforeIterableAssignedEvent):
+	"""
+	Event for assigning dicts.
+	"""
+
+# The hierarchy is IContainer > IIterable > ICollection > ISequence > [ITuple, IList]
+# Also:            IContainer > IIterable > IDict
+
+@interface.implementer(IBeforeTextAssignedEvent)
+class BeforeTextAssignedEvent(BeforeSchemaFieldAssignedEvent):
+	pass
+
+@interface.implementer(IBeforeTextLineAssignedEvent)
+class BeforeTextLineAssignedEvent(BeforeTextAssignedEvent):
+	pass
+
+@interface.implementer(IBeforeSequenceAssignedEvent)
+class BeforeSequenceAssignedEvent(BeforeSchemaFieldAssignedEvent):
+	pass
+
+@interface.implementer(IBeforeDictAssignedEvent)
+class BeforeDictAssignedEvent(BeforeSchemaFieldAssignedEvent):
+	pass
+
+from zope.schema._field import BeforeObjectAssignedEvent
+
+def _do_set( self, context, value, cls, factory ):
+	try:
+		event = factory(value, self.__name__, context )
+		notify(event)
+		value = event.object
+		super(cls, self).set( context, value )
+	except sch_interfaces.ValidationError as e:
+		self._reraise_validation_error( e, value )
+
 
 class InvalidValue(sch_interfaces.InvalidValue):
 	"""
@@ -109,8 +212,27 @@ class Object(FieldValidationMixin,ObjectBase):
 	def _fixup_validation_error_no_args(self, e, value ):
 		e.args = (value, e.__doc__, self.__name__, self.schema, list(interface.providedBy( value ) ))
 
+class IFromObject(interface.Interface):
+	"""
+	Something that can convert one type of object to another,
+	following validation rules (see :class:`zope.schema.interfaces.IFromUnicode`)
+	"""
 
-class ObjectOr(FieldValidationMixin,schema.Field):
+	def fromObject( obj ):
+		"""
+		Attempt to convert the object to the required type following
+		the rules of this object. Raises a TypeError or :class:`zope.schema.interfaces.ValidationError`
+		if this isn't possible.
+		"""
+
+class IVariant(sch_interfaces.IField,IFromObject):
+	"""
+	Similar to :class:`zope.schema.interfaces.IObject`, but
+	representing one of several different types.
+	"""
+
+@interface.implementer(IVariant)
+class Variant(FieldValidationMixin,schema.Field):
 	"""
 	Similar to :class:`zope.schema.Object`, but accepts one of many non-overlapping
 	interfaces.
@@ -118,26 +240,26 @@ class ObjectOr(FieldValidationMixin,schema.Field):
 
 	def __init__( self, fields, **kwargs ):
 		"""
-		:param fields: A list or tuple of :class:`zope.schema.Object` instances.
+		:param fields: A list or tuple of field instances.
 
 		"""
-		if not fields or not all( (sch_interfaces.IObject.providedBy( x ) for x in fields ) ):
+		if not fields or not all( (sch_interfaces.IField.providedBy( x ) for x in fields ) ):
 			raise sch_interfaces.WrongType()
 
 		self.fields = list(fields)
-		super(ObjectOr,self).__init__( **kwargs )
+		super(Variant,self).__init__( **kwargs )
 
 		if self.__name__:
 			for field in self.fields:
 				field.__name__ = field.__name__ or self.__name__
 
 	def bind( self, obj ):
-		clone = super(ObjectOr,self).bind( obj )
+		clone = super(Variant,self).bind( obj )
 		clone.fields = [x.bind( obj ) for x in clone.fields]
 		return clone
 
 	def _validate( self, value ):
-		super(ObjectOr,self)._validate( value )
+		super(Variant,self)._validate( value )
 		for field in self.fields:
 			try:
 				field.validate( value )
@@ -154,13 +276,26 @@ class ObjectOr(FieldValidationMixin,schema.Field):
 		Similar to `fromUnicode`, attempts to turn the given object into something
 		acceptable and valid for this field. Raises a TypeError, ValueError, or
 		schema ValidationError if this cannot be done. Adaptation is attempted in the order
-		in which fields were given to the constructor.
+		in which fields were given to the constructor. Some fields cannot be used to adapt.
 		"""
 
 		for field in self.fields:
 			try:
+				# Three possible ways to convert: adapting the schema of an IObject,
+				# using a nested field that is IFromObject, or an IFromUnicode if the object
+				# is a string.
+
+				converter = None
+				# Most common to least common
+				if sch_interfaces.IObject.providedBy( field ):
+					converter = field.schema
+				elif sch_interfaces.IFromUnicode.providedBy( field ) and isinstance( obj, basestring ):
+					converter = field.fromUnicode
+				elif IFromObject.providedBy( field ):
+					converter = field.fromObject
+
 				# Try to convert and validate
-				adapted = field.schema( obj )
+				adapted = converter( obj )
 			except (TypeError, sch_interfaces.ValidationError):
 				# Nope, no good
 				pass
@@ -180,6 +315,18 @@ class ObjectOr(FieldValidationMixin,schema.Field):
 		# We get here if nothing worked and re-raise the last exception
 		raise
 
+	def set( self, context, value ):
+		# Try to determine the most appropriate event to fire
+		# Order matters. It would kind of be nice to direct this to the appropriate
+		# field itself, but that's sort of hard.
+		types = ( (basestring, BeforeTextAssignedEvent),
+				  (collections.Mapping, BeforeDictAssignedEvent),
+				  (collections.Sequence, BeforeSequenceAssignedEvent),
+				  (object, BeforeObjectAssignedEvent) )
+		for kind, factory in types:
+			if isinstance( value, kind ):
+				_do_set( self, context, value, Variant, factory )
+				return
 
 class ObjectLen(FieldValidationMixin,schema.MinMaxLen,ObjectBase): # order matters
 	"""
@@ -203,82 +350,6 @@ class Number(FieldValidationMixin,schema.Float):
 	A field that parses like a float from a string, but accepts any number.
 	"""
 	_type = numbers.Number
-
-class IBeforeSchemaFieldAssignedEvent(interface.Interface):
-	"""
-	An event sent when certain schema fields will be assigning
-	an object to a property of another object.
-	"""
-	object = interface.Attribute("The object that is going to be assigned. Subscribers may modify this")
-
-	name = interface.Attribute("The name of the attribute under which the object "
-					 "will be assigned.")
-
-	context = interface.Attribute("The context object where the object will be "
-						"assigned to.")
-
-# Make this a base of the zope interface so our handlers
-# are compatible
-sch_interfaces.IBeforeObjectAssignedEvent.__bases__ = (IBeforeSchemaFieldAssignedEvent,)
-
-@interface.implementer(IBeforeSchemaFieldAssignedEvent)
-class BeforeSchemaFieldAssignedEvent(object):
-
-	def __init__( self, obj, name, context ):
-		self.object = obj
-		self.name = name
-		self.context = context
-
-class IBeforeTextAssignedEvent(IBeforeSchemaFieldAssignedEvent):
-	"""
-	Event for assigning text.
-	"""
-
-	object = schema.Text(title="The text being assigned.")
-
-class IBeforeTextLineAssignedEvent(IBeforeTextAssignedEvent): # ITextLine extends IText
-	"""
-	Event for assigning text lines.
-	"""
-
-	object = schema.TextLine(title="The text being assigned.")
-
-class IBeforeCollectionAssignedEvent(IBeforeSchemaFieldAssignedEvent):
-	"""
-	Event for assigning collections.
-	"""
-
-	object = interface.Attribute( "The collection being assigned. May or may not be mutable." )
-
-class IBeforeSequenceAssignedEvent(IBeforeCollectionAssignedEvent):
-	"""
-	Event for assigning sequences.
-	"""
-
-	object = interface.Attribute( "The sequence being assigned. May or may not be mutable." )
-
-# The hierarchy is IContainer > IIterable > ICollection > ISequence > [ITuple, IList]
-
-@interface.implementer(IBeforeTextAssignedEvent)
-class BeforeTextAssignedEvent(BeforeSchemaFieldAssignedEvent):
-	pass
-
-@interface.implementer(IBeforeTextLineAssignedEvent)
-class BeforeTextLineAssignedEvent(BeforeTextAssignedEvent):
-	pass
-
-@interface.implementer(IBeforeSequenceAssignedEvent)
-class BeforeSequenceAssignedEvent(BeforeSchemaFieldAssignedEvent):
-	pass
-
-def _do_set( self, context, value, cls, factory ):
-	try:
-		event = factory(value, self.__name__, context )
-		notify(event)
-		value = event.object
-		super(cls, self).set( context, value )
-	except sch_interfaces.ValidationError as e:
-		self._reraise_validation_error( e, value )
 
 class ValidText(FieldValidationMixin,schema.Text):
 	"""
@@ -362,6 +433,24 @@ class IndexedIterable(FieldValidationMixin,schema.List):
 
 class ListOrTuple(IndexedIterable):
 	_type = (list,tuple)
+
+@interface.implementer(IFromObject)
+class ListOrTupleFromObject(ListOrTuple):
+	"""
+	The field_type MUST be a variant
+	"""
+
+	def __init__( self, *args, **kwargs ):
+		super(ListOrTupleFromObject,self).__init__( *args, **kwargs )
+		if not IFromObject.providedBy( self.value_type ):
+			raise sch_interfaces.WrongType()
+
+	def fromObject( self, context ):
+		if not isinstance( context, self._type ):
+			raise sch_interfaces.WrongType( context, self._type )
+
+		return [self.value_type.fromObject( x ) for x in context]
+
 
 class UniqueIterable(FieldValidationMixin,schema.Set):
 	"""

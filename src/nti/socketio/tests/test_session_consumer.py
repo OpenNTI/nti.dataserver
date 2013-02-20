@@ -153,7 +153,7 @@ class TestSessionConsumer(mock_dataserver.SharedConfiguringTestBase):
 		self.evt_handlers['chat'] = [x]
 		self.cons( self.socket, {'type': 'event',
 								 'name': 'chat_theEvent',
-								 'args': ({ 'Class': 'MessageInfo' },) } )
+								 'args': ({ 'Class': 'MessageInfo', 'Creator': u'foo', 'body': [u'baz'] },) } )
 
 		assert_that( x.obj, is_( messageinfo.MessageInfo ) )
 

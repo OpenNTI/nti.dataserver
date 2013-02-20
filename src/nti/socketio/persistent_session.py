@@ -58,7 +58,7 @@ class AbstractSession(persistent.Persistent):
 
 		self._hits = minmax.MergingCounter( 0 )
 		self._last_heartbeat_time = minmax.NumericMaximum( 0 )
-		self.__dict__['owner'] = owner
+		self.__dict__['owner'] = owner.decode( 'utf-8' ) if isinstance( owner, str ) else owner
 
 	def _p_resolveConflict(self, oldState, savedState, newState):
 		logger.debug( "Resolving conflict in sessions between %s and %s", savedState, newState )
