@@ -61,7 +61,7 @@ from zc import intid as zc_intid
 def test_sanitize_html_contenttypes():
 	text = '<html><body><span style="color: rgb(0, 0, 0);">Hi, all.  I\'ve found the following </span><font color="#0000ff"><u>video series </u></font>to be very helpful as you learn algebra.  Let me know if questions or if you find others.</body></html>\n'
 	shape = CanvasTextShape()
-	shape.updateFromExternalObject( {'text': text} )
+	update_from_external_object( shape, {'text': text} )
 	assert_that( shape, has_property( 'text', "Hi, all.  I've found the following video series to be very helpful as you learn algebra.  Let me know if questions or if you find others.\n" ) )
 
 
@@ -98,20 +98,20 @@ class RedactionTest(mock_dataserver.SharedConfiguringTestBase):
 
 		# Must provide applicable range
 		with self.assertRaises(zope.schema.interfaces.RequiredMissing):
-			redaction.updateFromExternalObject( {'unknownkey': 'foo'} )
+			update_from_external_object( redaction, {'unknownkey': 'foo'} )
 
-		redaction.updateFromExternalObject( {'applicableRange': ContentRangeDescription(), 'selectedText': u'foo' } )
-		assert_that( redaction.toExternalObject(), has_entry( 'Class', 'Redaction' ) )
+		update_from_external_object( redaction, {'applicableRange': ContentRangeDescription(), 'selectedText': u'foo' } )
+		assert_that( to_external_object( redaction ), has_entry( 'Class', 'Redaction' ) )
 		with self.assertRaises(zope.schema.interfaces.RequiredMissing):
-			redaction.updateFromExternalObject( {'selectedText': None} )
+			update_from_external_object( redaction, {'selectedText': None} )
 		with self.assertRaises(zope.schema.interfaces.WrongType):
-			redaction.updateFromExternalObject( {'selectedText': b''} )
+			update_from_external_object( redaction, {'selectedText': b''} )
 
 		redaction.selectedText = u'the text'
 
 		# Setting replacementContent and redactionExplanation
 		# sanitize
-		redaction.updateFromExternalObject( { 'replacementContent': u'<html><body>Hi.</body></html>',
+		update_from_external_object( redaction, { 'replacementContent': u'<html><body>Hi.</body></html>',
 											  'redactionExplanation': u'<html><body>Hi.</body></html>' } )
 		for k in ('replacementContent','redactionExplanation'):
 			assert_that( redaction, has_property( k, u'Hi.' ) )
@@ -126,14 +126,14 @@ class RedactionTest(mock_dataserver.SharedConfiguringTestBase):
 
 		bad_val = nti.contentfragments.interfaces.PlainTextContentFragment( 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' ) )
 
-		redaction.updateFromExternalObject( { 'replacementContent': bad_val,
+		update_from_external_object( redaction, { 'replacementContent': bad_val,
 											  'redactionExplanation': bad_val } )
 		for k in ('replacementContent','redactionExplanation'):
 			assert_that( redaction, has_property( k,  'This is ******* stupid, you ************ *******' ) )
 			assert_that( redaction, has_property( k, verifiably_provides( frg_interfaces.ICensoredPlainTextContentFragment ) ) )
 
 		redaction.addSharingTarget( joe )
-		ext = redaction.toExternalObject()
+		ext = to_external_object( redaction )
 		assert_that( ext, has_entry( 'sharedWith', set(['joe@ou.edu']) ) )
 
 
@@ -148,25 +148,25 @@ class _BaseSelectedRangeTest(mock_dataserver.SharedConfiguringTestBase):
 		#del h.applicableRange
 		#del h.selectedText
 		ext = { 'selectedText': u'', 'applicableRange': ContentRangeDescription() }
-		h.updateFromExternalObject( ext, self.ds )
+		update_from_external_object( h, ext, context=self.ds )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_external_tags(self):
 		ext = { 'tags': ['foo'], 'AutoTags': ['bar'] }
 		highlight = self.CONSTRUCTOR()
-		highlight.updateFromExternalObject( ext, self.ds )
+		update_from_external_object( highlight, ext, context=self.ds )
 
 		assert_that( highlight.AutoTags, is_( () ) )
 		assert_that( highlight.tags, is_( ['foo'] ) )
 
 		# They are lowercased
 		ext = { 'tags': ['Baz'] }
-		highlight.updateFromExternalObject( ext, self.ds )
+		update_from_external_object( highlight, ext, context=self.ds )
 		assert_that( highlight.tags, is_( ['baz'] ) )
 
 		# Bad ones are filtered
 		ext = { 'tags': ['<html>Hi'] }
-		highlight.updateFromExternalObject( ext, self.ds )
+		update_from_external_object( highlight, ext, context=self.ds )
 		assert_that( highlight.tags, is_( () ) )
 
 	def test_external_style(self):
@@ -174,11 +174,11 @@ class _BaseSelectedRangeTest(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( highlight.style, is_( 'plain' ) )
 
 		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
-			highlight.updateFromExternalObject( {'style':'redaction'} )
+			update_from_external_object( highlight, {'style':'redaction'} )
 
 
 		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
-			highlight.updateFromExternalObject( {'style':'F00B4R'} )
+			update_from_external_object( highlight, {'style':'F00B4R'} )
 
 
 class HighlightTest(_BaseSelectedRangeTest):
@@ -189,11 +189,11 @@ class HighlightTest(_BaseSelectedRangeTest):
 		assert_that( highlight, verifiably_provides( nti_interfaces.IHighlight ) )
 
 		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
-			highlight.updateFromExternalObject( {'style':'redaction'} )
+			update_from_external_object( highlight, {'style':'redaction'} )
 
 
 		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
-			highlight.updateFromExternalObject( {'style':'F00B4R'} )
+			update_from_external_object( highlight, {'style':'F00B4R'} )
 
 
 class BookmarkTest(_BaseSelectedRangeTest):
@@ -338,7 +338,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 			n2_ext_id = to_external_ntiid_oid( n2 )
 
 		with mock_dataserver.mock_db_trans(ds):
-			ext = n.toExternalObject()
+			ext = to_external_object( n )
 
 		assert_that( ext, has_entry( 'inReplyTo', n2_ext_id ) )
 
@@ -377,7 +377,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 			n2_ext_id = to_external_ntiid_oid( n2 )
 
 		with mock_dataserver.mock_db_trans(ds):
-			ext = n.toExternalObject()
+			ext = to_external_object( n )
 
 		assert_that( ext, has_entry( 'inReplyTo', n2_ext_id ) )
 		assert_that( ext, has_entry( 'references', only_contains( n2_ext_id ) ) )
@@ -453,37 +453,37 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		n = Note()
 		# No parts
 		with self.assertRaises( zope.schema.interfaces.ValidationError ):
-			n.updateFromExternalObject( { 'body': [] } )
+			update_from_external_object( n, { 'body': [] } )
 
 		# Empty part
 		with self.assertRaises( zope.schema.interfaces.TooShort ):
-			n.updateFromExternalObject( { 'body': [''] } )
+			update_from_external_object( n, { 'body': [''] } )
 
 	def test_body_text_is_sanitized(self):
 		n = Note()
-		n.updateFromExternalObject( { 'body': ['<html><body>Hi.</body></html>'] } )
-		ext = n.toExternalObject()
+		update_from_external_object( n, { 'body': ['<html><body>Hi.</body></html>'] } )
+		ext = to_external_object( n )
 		assert_that( ext['body'], is_( ['Hi.'] ) )
 
 	def test_setting_text_and_body_parts(self):
 		n = Note()
-		ext = n.toExternalObject()
+		ext = to_external_object( n )
 		assert_that( ext, is_not( has_key( 'body' ) ) )
 		assert_that( ext, is_not( has_key( 'text' ) ) )
 
 		# Raw strings are not supported
 		with self.assertRaises( zope.schema.interfaces.WrongType ):
-			n.updateFromExternalObject( {'body': 'body' } )
+			update_from_external_object( n, {'body': 'body' } )
 
 
-		n.updateFromExternalObject( {'body': ['First', 'second'] } )
-		ext = n.toExternalObject()
+		update_from_external_object( n, {'body': ['First', 'second'] } )
+		ext = to_external_object( n )
 		assert_that( ext['body'][0], is_('First') )
 		assert_that( ext['body'][1] ,is_('second') )
 
 		# If both, text is ignored.
-		n.updateFromExternalObject( {'body': ['First', 'second'], 'text': 'foo' } )
-		ext = n.toExternalObject()
+		update_from_external_object( n, {'body': ['First', 'second'], 'text': 'foo' } )
+		ext = to_external_object( n )
 		assert_that( ext['body'][0], is_('First') )
 		assert_that( ext['body'][1] ,is_('second') )
 
@@ -494,7 +494,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 
 		n.body = [c]
 		n.updateLastMod()
-		ext = n.toExternalObject()
+		ext = to_external_object( n )
 		del ext['Last Modified']
 		del ext['CreatedTime']
 		assert_that( ext, has_entries( "Class", "Note",
@@ -515,7 +515,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		n.body = [c]
 		c[0].closed = 1
 		n.updateLastMod()
-		ext = n.toExternalObject()
+		ext = to_external_object( n )
 		del ext['Last Modified']
 		del ext['CreatedTime']
 		assert_that( ext, has_entries( "Class", "Note",
@@ -540,7 +540,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 
 		n.body = [c]
 		n.updateLastMod()
-		ext = n.toExternalObject()
+		ext = to_external_object( n )
 		del ext['Last Modified']
 		del ext['CreatedTime']
 		assert_that( ext, has_entries( "MimeType", "application/vnd.nextthought.note",
@@ -560,16 +560,16 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 	def test_external_body_hyperlink(self):
 		n = Note()
 		html = frg_interfaces.IHTMLContentFragment(u'<html><head/><body><p>At www.nextthought.com</p></body></html>')
-		n.updateFromExternalObject( { 'body': [html] } )
-		ext = n.toExternalObject()
+		update_from_external_object( n, { 'body': [html] } )
+		ext = to_external_object( n )
 		assert_that( ext['body'], is_( [u'<html><body><p>At <a href="http://www.nextthought.com">www.nextthought.com</a></p></body></html>'] ) )
 
 
 
 	def test_external_body_hyperlink_incoming_plain(self):
 		n = Note()
-		n.updateFromExternalObject( { 'body': ["So visit www.nextthought.com and see for yourself."] } )
-		ext = n.toExternalObject()
+		update_from_external_object( n, { 'body': ["So visit www.nextthought.com and see for yourself."] } )
+		ext = to_external_object( n )
 		assert_that( ext['body'], is_( [u'<html><body>So visit <a href="http://www.nextthought.com">www.nextthought.com</a> and see for yourself.</body></html>'] ) )
 
 
@@ -606,7 +606,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		ds = self.ds
 		ds.root_connection.add( n )
 		ext = { 'sharedWith': ['jason.madden@nextthought.com'] }
-		n.updateFromExternalObject( ext, context=ds )
+		update_from_external_object( n, ext, context=ds )
 
 	@WithMockDSTrans
 	def test_inherit_anchor_properties(self):
@@ -618,7 +618,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 
 		child = Note()
 		child.inReplyTo = n
-		child.updateFromExternalObject( {'inReplyTo': n, 'body': ('body',) } )
+		update_from_external_object( child, {'inReplyTo': n, 'body': ('body',) } )
 
 		assert_that( child.applicableRange, is_( n.applicableRange ) )
 
@@ -638,7 +638,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 			child.inReplyTo = n
 			conn.add( child )
 			assert_that( child, has_property( '_p_jar', not_none() ) )
-			child.updateFromExternalObject( {'inReplyTo': n, 'body': ('body',) } )
+			update_from_external_object( child, {'inReplyTo': n, 'body': ('body',) } )
 
 			assert_that( child.applicableRange, is_( n.applicableRange ) )
 
@@ -663,7 +663,7 @@ class TestCanvas(mock_dataserver.SharedConfiguringTestBase):
 		canvas.append( shape1 )
 		canvas.append( shape2 )
 
-		ext = canvas.toExternalObject()
+		ext = to_external_object( canvas )
 		tx_ext_list = ('Class', 'CanvasAffineTransform', 'a', 1, 'b', 0, 'c', 0, 'd', 1, 'tx', 0, 'ty', 0 )
 		tx_ext = has_entries( *tx_ext_list )
 
@@ -726,7 +726,7 @@ class TestCanvas(mock_dataserver.SharedConfiguringTestBase):
 			assert_that( shape, is_( shape3 ) )
 			assert_that( shape, has_property( 'url', 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==' ) )
 
-			assert_that( shape.toExternalObject(), has_entry( 'url', is_( Link ) ) )
+			assert_that( to_external_object( shape ), has_entry( 'url', is_( Link ) ) )
 			assert_that( shape3.__dict__, has_entry( '_file', has_property( 'mimeType', b'image/gif' ) ) )
 
 
@@ -736,42 +736,42 @@ class TestCanvas(mock_dataserver.SharedConfiguringTestBase):
 			update_from_external_object( shape, shape4.toExternalObject(), context=ds )
 		assert_that( shape, is_( shape4 ) )
 
-		assert_that( shape.toExternalObject(), has_entry( 'url', '/path/to/relative/image.png' ) )
+		assert_that( to_external_object( shape ), has_entry( 'url', '/path/to/relative/image.png' ) )
 
 		# Null values for the URL are currently allowed
 		with mock_dataserver.mock_db_trans(ds):
 			update_from_external_object( shape, {'url': None}, context=ds )
 
-		assert_that( shape.toExternalObject(), has_entry( 'url', None ) )
+		assert_that( to_external_object( shape ), has_entry( 'url', None ) )
 
 	def test_update_stroke_width( self ):
 		c = CanvasShape()
-		c.updateFromExternalObject( {"strokeWidth": "3.2pt"} )
+		update_from_external_object( c, {"strokeWidth": "3.2pt"} )
 		assert_that( c.strokeWidth, is_( "3.200%" ) )
 
-		c.updateFromExternalObject( {"strokeWidth": "3.2"} )
+		update_from_external_object( c, {"strokeWidth": "3.2"} )
 		assert_that( c.strokeWidth, is_( "3.200%" ) )
 
-		c.updateFromExternalObject( {"strokeWidth": "2.4%" } )
+		update_from_external_object( c, {"strokeWidth": "2.4%" } )
 		assert_that( c.strokeWidth, is_( "2.400%" ) )
 
-		c.updateFromExternalObject( {"strokeWidth": "99.93%" } )
+		update_from_external_object( c, {"strokeWidth": "99.93%" } )
 		assert_that( c.strokeWidth, is_( "99.930%" ) )
 
-		c.updateFromExternalObject( {"strokeWidth": 0.743521 } )
+		update_from_external_object( c, {"strokeWidth": 0.743521 } )
 		assert_that( c._stroke_width, is_( 0.743521 ) )
 		assert_that( c.strokeWidth, is_( "0.744%" ) )
 
-		c.updateFromExternalObject( {"strokeWidth": 0.3704 } )
+		update_from_external_object( c, {"strokeWidth": 0.3704 } )
 		assert_that( c._stroke_width, is_( 0.3704 ) )
 		assert_that( c.strokeWidth, is_( "0.370%" ) )
 
 
 		with self.assertRaises(AssertionError):
-			c.updateFromExternalObject( { "strokeWidth": -1.2 } )
+			update_from_external_object( c, { "strokeWidth": -1.2 } )
 
 		with self.assertRaises(AssertionError):
-			c.updateFromExternalObject( { "strokeWidth": 100.1 } )
+			update_from_external_object( c, { "strokeWidth": 100.1 } )
 
 
 def check_update_props( ext_name='strokeRGBAColor',
@@ -785,36 +785,36 @@ def check_update_props( ext_name='strokeRGBAColor',
 	def get_opac(): return getattr( c, opac_name )
 	def get_ext(): return getattr( c, ext_name )
 
-	c.updateFromExternalObject( { ext_name: "1.0 0.5 0.5" } )
+	update_from_external_object( c, { ext_name: "1.0 0.5 0.5" } )
 	assert_that( get_col(), is_( "rgb(255.0,127.5,127.5)" ) )
 	assert_that( get_opac(), is_( def_opac ) )
 
-	c.updateFromExternalObject( { ext_name: "1.0 0.5 0.3 0.5" } )
+	update_from_external_object( c, { ext_name: "1.0 0.5 0.3 0.5" } )
 	assert_that( get_opac(), is_( 0.5 ) )
 	assert_that( get_col(), is_( "rgb(255.0,127.5,76.5)" ) )
 
 	# Updating again without opacity cause opacity to go back to default
-	c.updateFromExternalObject( { ext_name: "1.0 0.5 0.5" } )
+	update_from_external_object( c, { ext_name: "1.0 0.5 0.5" } )
 	assert_that( get_col(), is_( "rgb(255.0,127.5,127.5)" ) )
 	assert_that( get_opac(), is_( 1.0 ) )
 
-	c.updateFromExternalObject( { opac_name: 0.75 } )
+	update_from_external_object( c, { opac_name: 0.75 } )
 	assert_that( get_col(), is_( "rgb(255.0,127.5,127.5)" ) )
 	assert_that( get_opac(), is_( 0.75 ) )
 	assert_that( get_ext(), is_( "1.000 0.500 0.500 0.75" ) )
 
-	c.updateFromExternalObject( { col_name: "rgb( 221.0, 128.1,21.0   )" } )
+	update_from_external_object( c, { col_name: "rgb( 221.0, 128.1,21.0   )" } )
 	assert_that( get_opac(), is_( 0.75 ) )
 	assert_that( get_col(), is_( "rgb(221.0,128.1,21.0)" ) )
 	assert_that( get_ext(), is_( "0.867 0.502 0.082 0.75" ) )
 
-	c.updateFromExternalObject( { col_name: "rgb( 231.0, 124.1, 21.0   )", opac_name: "0.33" } )
+	update_from_external_object( c, { col_name: "rgb( 231.0, 124.1, 21.0   )", opac_name: "0.33" } )
 	assert_that( get_opac(), is_( 0.33 ) )
 	assert_that( get_col(), is_( "rgb(231.0,124.1,21.0)" ) )
 	assert_that( get_ext(), is_( "0.906 0.487 0.082 0.33" ) )
 
 	# bad values don't change anything
-	c.updateFromExternalObject( { col_name: "rgb( 21.0, 18.1, F0   )" } )
+	update_from_external_object( c, { col_name: "rgb( 21.0, 18.1, F0   )" } )
 	assert_that( get_opac(), is_( 0.33 ) )
 	assert_that( get_col(), is_( "rgb(231.0,124.1,21.0)" ) )
 

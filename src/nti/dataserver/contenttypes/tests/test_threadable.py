@@ -29,6 +29,9 @@ tearDownModule = nti.tests.module_teardown
 
 from nti.dataserver.contenttypes import Note as _Note
 from nti.contentrange.contentrange import ContentRangeDescription
+from nti.externalization.externalization import to_external_object
+from nti.externalization.internalization import update_from_external_object
+
 
 class _Mutable_P_Mtime_Note(_Note):
 	_p_mtime = None
@@ -63,7 +66,7 @@ def test_write_external_reply_to():
 	note = Note()
 	note.inReplyTo = top
 
-	ext = note.toExternalObject()
+	ext = to_external_object( note )
 
 	assert_that( ext, has_entry( 'inReplyTo', 'abc' ) )
 	assert_that( ext, has_entry( 'references', [] ) )
@@ -79,7 +82,7 @@ def test_write_external_reply_to_deleted():
 
 	child.ref_is_deleted = True
 	top.ref_is_deleted = True
-	ext = note.toExternalObject()
+	ext = to_external_object( note )
 
 	assert_that( ext, has_entry( 'inReplyTo', 'tag:nextthought.com,2011-10:Missing-x' ) )
 	assert_that( ext, has_entry( 'references', ['tag:nextthought.com,2011-10:Missing-y'] ) )
@@ -89,13 +92,13 @@ def test_update_external_reply_to():
 	top = ReferenceObject()
 	note = Note()
 
-	ext = note.toExternalObject()
+	ext = to_external_object( note )
 	ext['applicableRange'] = ContentRangeDescription()
 
 	ext['inReplyTo'] = top
 	top.sharingTargets = () # required by note's first update
 	top.creator = None
-	note.updateFromExternalObject( ext )
+	update_from_external_object( note, ext )
 
 	assert_that( note.inReplyTo, is_( top ) )
 
@@ -105,7 +108,7 @@ def test_update_external_reply_to():
 	ext['inReplyTo'] = ReferenceObject()
 	ext['references'] = [ReferenceObject()]
 	# and it doesn't change
-	note.updateFromExternalObject( ext )
+	update_from_external_object( note, ext )
 
 	assert_that( note.inReplyTo, is_( top ) )
 	assert_that( note.references, has_length( 0 ) )

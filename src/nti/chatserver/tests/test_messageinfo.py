@@ -29,7 +29,7 @@ from nti.tests import validly_provides as verifiably_provides
 
 from nti.dataserver.contenttypes import Canvas
 
-
+from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
 
@@ -61,13 +61,13 @@ class TestMessageInfo(SharedConfiguringTestBase):
 		m = messageinfo.MessageInfo()
 		assert_that( m, verifiably_provides( nti_interfaces.IModeledContent ) )
 		m.Body = 'foo'
-		ext = m.toExternalObject()
+		ext = to_external_object( m )
 		assert_that( ext['Body'], is_( ext['body'] ) )
 
 		c = Canvas()
 		m.Body = ['foo', c]
 		assert_that( m.Body, is_( ['foo', c] ) )
-		ext = m.toExternalObject()
+		ext = to_external_object( m )
 		assert_that( ext['Body'], has_length( 2 ) )
 		assert_that( ext['Body'][0], is_('foo' ) )
 		assert_that( ext['Body'][1], has_entries( 'Class', 'Canvas', 'shapeList', [], 'CreatedTime', c.createdTime ) )

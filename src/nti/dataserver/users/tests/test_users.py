@@ -41,6 +41,7 @@ from nti.tests import verifiably_provides
 
 from nti.externalization.persistence import getPersistentState
 from nti.externalization.externalization import to_external_object
+from nti.externalization.internalization import update_from_external_object
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from zope.container.interfaces import InvalidItemType
@@ -166,7 +167,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( created.id, is_( 'deadbeef' ) )
 		assert_that( created.deviceId, is_( 'deadbeef'.decode( 'hex' ) ) )
 		assert_that( created.containerId, is_( 'Devices' ) )
-		assert_that( created.toExternalObject(), has_entry( 'ID', 'deadbeef' ) )
+		assert_that( to_external_object( created ), has_entry( 'ID', 'deadbeef' ) )
 		assert_that( created, is_( created ) )
 
 		user.addContainedObject( created )
@@ -178,13 +179,13 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 		user.lastLoginTime.value = 1
 		user.notificationCount.value = 5
 
-		user.updateFromExternalObject( {'lastLoginTime': 2} )
+		update_from_external_object( user, {'lastLoginTime': 2} )
 		assert_that( user.lastLoginTime, has_property( 'value', 2 ) )
 		assert_that( user.notificationCount, has_property( 'value', 0 ) )
 
 		user.lastLoginTime.value = 1
 		user.notificationCount.value = 5
-		user.updateFromExternalObject( {'NotificationCount': 2} )
+		update_from_external_object( user, {'NotificationCount': 2} )
 		assert_that( user.lastLoginTime, has_property( 'value', 1 ) )
 		assert_that( user.notificationCount, has_property( 'value', 2 ) )
 
@@ -199,7 +200,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			with user.updates( ):
 				fl = user.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friends' } )
 				user.addContainedObject( fl )
-				fl.updateFromExternalObject( {'friends':  ['friend@bar'] } )
+				update_from_external_object( fl, {'friends':  ['friend@bar'] } )
 
 			user2_stream = user2.getContainedStream( '' )
 			assert_that( user2_stream, has_length( 1 ) )
@@ -333,7 +334,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 			with user1.updates():
 				the_note = user1.getContainedObject( note.containerId, note.id )
-				the_note.updateFromExternalObject( {'sharedWith': [friends_list.NTIID] } )
+				update_from_external_object( the_note, {'sharedWith': [friends_list.NTIID] } )
 
 			assert_that( note.id, is_not( none() ) )
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
@@ -341,7 +342,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 			with user1.updates():
 				the_note = user1.getContainedObject( note.containerId, note.id )
-				the_note.updateFromExternalObject( {'sharedWith': [] } )
+				update_from_external_object( the_note, {'sharedWith': [] } )
 
 			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 
@@ -366,7 +367,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 			with user1.updates():
 				the_note = user1.getContainedObject( note.containerId, note.id )
-				the_note.updateFromExternalObject( {'sharedWith': [friends_list.NTIID] } )
+				update_from_external_object( the_note, {'sharedWith': [friends_list.NTIID] } )
 
 			assert_that( note.id, is_not( none() ) )
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
@@ -374,7 +375,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 			with user1.updates():
 				the_note = user1.getContainedObject( note.containerId, note.id )
-				the_note.updateFromExternalObject( {'sharedWith': [] } )
+				update_from_external_object( the_note, {'sharedWith': [] } )
 
 			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 
@@ -753,7 +754,7 @@ class TestUserNotDevMode(mock_dataserver.SharedConfiguringTestBase):
 			user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
 			# with an mtime of None we cannot create invalid
 			with assert_raises( zope.schema.interfaces.RequiredMissing ):
-				user.updateFromExternalObject( {} )
+				update_from_external_object( user, {} )
 
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = User.get_user( 'sjohnson@nextthought.com' )
@@ -761,4 +762,4 @@ class TestUserNotDevMode(mock_dataserver.SharedConfiguringTestBase):
 			# data; presumably the profile changed
 			assert_that( user._p_mtime, greater_than( 0 ) )
 
-			user.updateFromExternalObject( {} )
+			update_from_external_object( user, {} )
