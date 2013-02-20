@@ -321,11 +321,11 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 	#: The NTIID of the container whose data we are requesting
 	ntiid = None
 
-	def __init__( self, request ):
+	def __init__( self, request, the_user=None, the_ntiid=None ):
 		super(_UGDView,self).__init__( request )
 		if self.request.context:
-			self.user = self.request.context.user
-			self.ntiid = self.request.context.ntiid
+			self.user = the_user or self.request.context.user
+			self.ntiid = the_ntiid or self.request.context.ntiid
 
 	def check_cross_user( self ):
 		if not self._support_cross_user:
@@ -642,6 +642,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 			result['Items'] = result_list
 
+		return result
 
 class _RecursiveUGDView(_UGDView):
 
@@ -828,6 +829,10 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	In particular, this means adding the ``@@replies`` link if there are replies to fetch.
 	It also means including the ``ReferencedByCount`` value if it exists,
 	and calculating the ``RecursiveLikeCount``, if possible.
+
+	The replies link accepts the same parameters as the UGD views (see
+	:meth:`_UGDView._sort_filter_batch_result`); most useful are the batching and sorting
+	parameters.
 	"""
 	false_view = REL_REPLIES
 	true_view = REL_REPLIES
@@ -875,4 +880,6 @@ def replies_view(request):
 	result_list = filter( test,
 						  result['Items'] )
 	result['Items'] = result_list
-	return result
+
+	# Not all the params make sense, but batching does
+	return _UGDView( request, the_user, request.context.containerId )._sort_filter_batch_result( result )

@@ -582,6 +582,9 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', reply_n_id ) ) ) )
 
+		# And they support paging
+		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '2'}, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
 
 		# Now add a highlight and test type filtering
 		with mock_dataserver.mock_db_trans(self.ds):
