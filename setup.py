@@ -244,7 +244,7 @@ setup(
 		'zope.browser >= 2.0.1',
 		'zope.browserpage >= 4.0.0',
 		'zope.browsermenu >= 4.0.0', # Browser menu implementation for Zope.
-		'zope.browserresource >= 3.12.0',
+		'zope.browserresource >= 4.0.0',
 		'zope.catalog >= 3.8.2',
 		'zope.cachedescriptors >= 4.0.0',
 		'zope.component >= 4.0.2',
@@ -254,14 +254,14 @@ setup(
 		'zope.configuration >= 4.0.2',
 		'zope.container >= 3.12.0',
 		'zope.contentprovider >= 3.7.2',
-		'zope.contenttype >= 4.0.0', # A utility module for content-type handling.
+		'zope.contenttype >= 4.0.1', # A utility module for content-type handling.
 		'zope.copy >= 4.0.2',
 		'zope.copypastemove >= 3.8.0',
 		'zope.datetime >= 4.0.0',
 		'zope.deprecation >= 4.0.2',
 		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 4.0.0',
-		'zope.dublincore >= 3.8.2',
+		'zope.dublincore >= 4.0.0',
 		'zope.error >= 4.0.0',
 		'zope.event >= 4.0.2',
 		'zope.exceptions >= 4.0.5',
@@ -279,7 +279,7 @@ setup(
 		'zope.lifecycleevent >= 4.0.1',
 		'zope.location >= 4.0.1',
 		'zope.mimetype >= 1.3.1',
-		'zope.minmax >= 1.1.2',
+		'zope.minmax >= 2.0.0',
 		'zope.pagetemplate >= 4.0.1',
 		'zope.password >= 3.6.1', # encrypted password management
 		'zope.pluggableauth >= 1.3', # pluggable authentication for zope.auth; see also repoze.who
