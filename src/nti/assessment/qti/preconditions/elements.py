@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Defines a QTI assesments element
+Defines a QTI precondition elements
 
 $Id$
 """
