@@ -24,7 +24,8 @@ from .fps_io import FPSIO
 from .. import purchase_history
 from . import interfaces as pay_interfaces
 from .. import interfaces as store_interfaces
-	
+from ._payment_processor import _BasePaymentProcessor
+
 @component.adapter(pay_interfaces.IRegisterFPSToken)
 def register_fps_token(event):
 	def func():
@@ -43,7 +44,7 @@ def register_fps_transaction(event):
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 	
 @interface.implementer(pay_interfaces.IFPSPaymentProcessor)
-class _FPSPaymentProcessor(FPSIO):
+class _FPSPaymentProcessor(_BasePaymentProcessor, FPSIO):
 	
 	name = 'fps'
 	

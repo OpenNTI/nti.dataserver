@@ -28,6 +28,7 @@ from .stripe_io import StripeIO
 from .stripe_io import StripeException
 from . import interfaces as pay_interfaces
 from .. import interfaces as store_interfaces
+from ._payment_processor import _BasePaymentProcessor
 
 @component.adapter(pay_interfaces.IStripeCustomerCreated)
 def stripe_customer_created(event):
@@ -66,7 +67,7 @@ def register_stripe_charge(event):
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
 @interface.implementer(pay_interfaces.IStripePaymentProcessor)
-class _StripePaymentProcessor(StripeIO):
+class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 
 	name = 'stripe'
 	events = ("charge.succeeded", "charge.refunded", "charge.failed", "charge.dispute.created", "charge.dispute.updated")
