@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Defines a QTI fragment elements
+Defines QTI fragment elements
 
 $Id$
 """

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Defines a QTI outcome elements
+Defines QTI outcome elements
 
 $Id$
 """

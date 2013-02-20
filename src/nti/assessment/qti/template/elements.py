@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Defines a QTI template element
+Defines QTI template element
 
 $Id$
 """
