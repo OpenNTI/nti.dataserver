@@ -19,9 +19,7 @@ class TestQTIModule(ConfiguringTestBase):
 	def test_find_concrete_interfaces(self):		
 		elements = find_concrete_interfaces()
 		assert_that(elements, has_length(220))
-		
+	
 	def test_find_concrete_classes(self):		
 		elements = find_concrete_classes()
-		assert_that(elements, has_length(24))
-
-	
+		assert_that(elements, has_length(40))
