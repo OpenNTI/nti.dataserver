@@ -44,7 +44,7 @@ class ItemplateRule(qti_interfaces.IQTIElement):
 class ItemplateProcessing(qti_interfaces.IConcrete):
 	templateRule = schema.List(schema.Object(ItemplateRule), title="The ordered list of templateRule elements", min_length=1)
 
-class templateConstraint (ItemplateRule, IFiniteSequence, qti_interfaces.IConcrete):
+class ItemplateConstraint(ItemplateRule, IFiniteSequence, qti_interfaces.IConcrete):
 	expression = schema.List(schema.Object(exp_interfaces.Iexpression), title="The expressions", min_length=0)
 
 class ItemplateIf(qti_interfaces.IConcrete):
@@ -74,6 +74,3 @@ class IsetDefaultValue(ItemplateRule, attr_interfaces.IsetDefaultValueAttrGroup,
 
 class IexitTemplate(ItemplateRule, qti_interfaces.IConcrete):
 	pass
-
-
-
