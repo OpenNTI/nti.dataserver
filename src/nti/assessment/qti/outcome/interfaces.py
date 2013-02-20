@@ -30,7 +30,7 @@ class IoutcomeElseIf(qti_interfaces.IConcrete):
 class IoutcomeElse(qti_interfaces.IConcrete):
 	outcomeRule = schema.List(schema.Object(IoutcomeRule), title='The ordered outcome rules', required=False, min_length=0)
 	
-class IoutcomeCondition(qti_interfaces.IConcrete):
+class IoutcomeCondition(IoutcomeRule, qti_interfaces.IConcrete):
 	outcomeIf = schema.Object(IoutcomeIf, title='outcome if', required=True)
 	outcomeElseIf = schema.List(schema.Object(IoutcomeElseIf), title='outcome if list', required=False, min_length=0)
 	outcomeElse = schema.Object(IoutcomeElse, title='outcome else', required=False)
