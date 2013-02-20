@@ -269,7 +269,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( ext, has_entry( 'LikeCount', 0 ) )
 
 	def _do_test_rate_changes_last_mod( self, like, unlike ):
-		container = containers.LastModifiedBTreeContainer()
+		container = containers.CheckingLastModifiedBTreeContainer()
 		n = Note()
 		container['Note'] = n
 

@@ -16,7 +16,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.contentfragments import interfaces as frg_interfaces
 
 from zope.container.interfaces import IContentContainer, IContained
-from zope.container.constraints import contains, containers
+from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 
 from nti.utils import schema
 
@@ -26,7 +26,7 @@ class IBoard(IContentContainer,IContained,nti_interfaces.ITitledContent): # impl
 	usually this number is relatively small). Each forum is distinctly named
 	within this board.
 	"""
-	contains(".IForum")
+	contains(b".IForum")
 
 class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledContent):
 	"""
@@ -34,7 +34,7 @@ class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledConten
 	many topics and is folderish. Forums are a level of permissioning, with only certain people
 	being allowed to view the contents of the forum and add new topics.
 	"""
-	contains(".ITopic")
+	contains(b".ITopic")
 	containers(IBoard)# Adds __parent__ as required
 
 	__parent__.required = False
@@ -49,7 +49,7 @@ class ITopic(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledConten
 	view the topic or delete it. Deleting it removes all its contained posts.
 
 	"""
-	contains(".IPost")
+	contains(b".IPost")
 	containers(IForum)# Adds __parent__ as required
 	__parent__.required = False
 

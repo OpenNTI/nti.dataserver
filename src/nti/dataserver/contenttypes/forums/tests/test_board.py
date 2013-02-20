@@ -19,15 +19,32 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
+from nose.tools import assert_raises
 
+from zope import interface
 import nti.tests
+from zope.container.interfaces import InvalidItemType
 from nti.tests import verifiably_provides, validly_provides
 
-from ..interfaces import IBoard
+from ..interfaces import IBoard, IForum
 from ..board import Board
+
 
 def test_board_interfaces():
 	post = Board()
 	assert_that( post, verifiably_provides( IBoard ) )
 
 	assert_that( post, validly_provides( IBoard ) )
+
+def test_board_constraints():
+	@interface.implementer(IForum)
+	class Forum(object):
+		__parent__ = __name__ = None
+
+	board = Board()
+	# Allowed
+	board['k'] = Forum()
+
+	with assert_raises( InvalidItemType ):
+		# Not allowed
+		board['z'] = Board()

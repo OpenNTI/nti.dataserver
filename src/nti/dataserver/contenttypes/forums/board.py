@@ -15,19 +15,19 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
+from zope.container.constraints import checkObject
+
 import Acquisition
 from persistent import Persistent
 
 from nti.dataserver import datastructures
 from nti.dataserver import containers
 from nti.dataserver import sharing
-from nti.utils.schema import PermissiveSchemaConfigured
 
-from ..note import BodyFieldProperty
 from zope.schema.fieldproperty import FieldProperty
 
 from . import interfaces as for_interfaces
 
 @interface.implementer(for_interfaces.IBoard)
-class Board(containers.LastModifiedBTreeContainer):
+class Board(containers.CheckingLastModifiedBTreeContainer):
 	title = FieldProperty(for_interfaces.IBoard['title'])

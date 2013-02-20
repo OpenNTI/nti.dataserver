@@ -38,7 +38,7 @@ class PersistentInvitations(persistent.Persistent,contained.Contained):
 	"""
 
 	def __init__(self):
-		self._invitations = containers.LastModifiedBTreeContainer()
+		self._invitations = containers.CheckingLastModifiedBTreeContainer()
 		contained.contained( self._invitations, self, '_invitations' )
 
 	def sublocations(self):

@@ -78,6 +78,7 @@ Tasks
 	flagging
 	ugd_query
 	images
+	blogs_forums
 
 Chat
 ====

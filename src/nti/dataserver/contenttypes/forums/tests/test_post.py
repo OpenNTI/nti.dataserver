@@ -19,11 +19,13 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
+from nose.tools import assert_raises
 
 import nti.tests
 
 from nti.tests import verifiably_provides, validly_provides
-
+from zope.container.interfaces import InvalidContainerType
+from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from ..interfaces import IPost
 from ..post import Post
 
@@ -32,3 +34,8 @@ def test_post_interfaces():
 	assert_that( post, verifiably_provides( IPost ) )
 
 	assert_that( post, validly_provides( IPost ) )
+
+def test_post_constraints():
+	with assert_raises( InvalidContainerType ):
+		container = CheckingLastModifiedBTreeContainer()
+		container['k'] = Post()

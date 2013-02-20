@@ -974,7 +974,7 @@ def CompoundModeledContentBody():
 
 	return ListOrTupleFromObject( title="The body of this object",
 								  description="""An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
-									of :class:`IModeledContent` such as :class:`ICanvas`.)
+									of :class:`.IModeledContent` such as :class:`.ICanvas`.)
 									""",
 								  value_type=Variant( (ObjectLen(frg_interfaces.ISanitizedHTMLContentFragment,min_length=1),
 													 ObjectLen(frg_interfaces.IPlainTextContentFragment,min_length=1),
