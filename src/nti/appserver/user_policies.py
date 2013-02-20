@@ -41,6 +41,7 @@ from ._util import link_belongs_to_user
 from nti.dataserver.links import Link
 
 from nti.utils.property import annotation_alias
+from nti.utils.schema import IBeforeTextAssignedEvent
 
 from nti.appserver import site_policies
 
@@ -207,7 +208,7 @@ def send_consent_ack_email(user, event):
 												   request=event.request )
 
 
-@component.adapter(dolmen.builtins.IUnicode, user_interfaces.IRestrictedUserProfileWithContactEmail, sch_interfaces.IBeforeObjectAssignedEvent)
+@component.adapter(dolmen.builtins.IUnicode, user_interfaces.IRestrictedUserProfileWithContactEmail, IBeforeTextAssignedEvent)
 def send_consent_request_when_contact_email_changes( new_email, profile, event ):
 	"""
 	When users that are still pending an agreement change their contact email, we need to fire a consent

@@ -257,9 +257,11 @@ class DefaultCensoredContentPolicy(object):
 			result = self.censor_text(fragment, target)
 		return result
 
+from nti.utils.schema import IBeforeSchemaFieldAssignedEvent
+from nti.utils.schema import BeforeTextAssignedEvent
 
-@component.adapter(interfaces.IUnicodeContentFragment, interface.Interface, sch_interfaces.IBeforeObjectAssignedEvent)
-def censor_before_object_assigned( fragment, target, event ):
+@component.adapter(interfaces.IUnicodeContentFragment, interface.Interface, IBeforeSchemaFieldAssignedEvent )
+def censor_before_text_assigned( fragment, target, event ):
 	"""
 	Watches for field values to be assigned, and looks for specific policies for the
 	given object and field name to handle censoring. If such a policy is found and returns
@@ -278,20 +280,41 @@ def censor_before_object_assigned( fragment, target, event ):
 										  name=event.name )
 	if policy is not None:
 		censored_fragment = policy.censor( fragment, target )
-		if censored_fragment != fragment:
+		if censored_fragment is not fragment and censored_fragment != fragment:
 			event.object = censored_fragment
+			return event.object, True # as an optimization when we are called directly
 
-from zope.schema._field import BeforeObjectAssignedEvent
-from zope.event import notify
+	return fragment, False
+def censor_before_assign_components_of_sequence( sequence, target, event ):
+	"""
+	Register this adapter for (usually any) sequence, some specific interface target, and
+	the :class:`nti.utils.schema.IBeforeSequenceAssignedEvent` and it will
+	iterate across the fields and attempt to censor each of them.
+
+	This package DOES NOT register this event.
+	"""
+	# There are many optimization opportunities here
+	s2 = []
+	_changed = False
+	evt = BeforeTextAssignedEvent( None, event.name, event.context )
+	for obj in sequence:
+		evt.object = obj
+		val, changed = censor_before_text_assigned( obj, target, evt )
+		_changed |= changed
+		s2.append( val )
+
+	# only copy the list/tuple/whatever if we need to
+	if _changed:
+		event.object = type(event.object)( s2 )
+
 
 def censor_assign( fragment, target, field_name ):
 	"""
 	Perform manual censoring of assigning an object to a field.
 	"""
 
-	evt = BeforeObjectAssignedEvent( fragment, field_name, target )
-	notify( evt )
-	return evt.object
+	evt = BeforeTextAssignedEvent( fragment, field_name, target )
+	return censor_before_text_assigned( fragment, target, evt )[0]
 
 def _default_profanity_terms():
 	file_path = resource_filename( __name__, 'profanity_list.txt' )

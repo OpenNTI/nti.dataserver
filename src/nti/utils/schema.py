@@ -204,26 +204,105 @@ class Number(FieldValidationMixin,schema.Float):
 	"""
 	_type = numbers.Number
 
+class IBeforeSchemaFieldAssignedEvent(interface.Interface):
+	"""
+	An event sent when certain schema fields will be assigning
+	an object to a property of another object.
+	"""
+	object = interface.Attribute("The object that is going to be assigned. Subscribers may modify this")
 
-from zope.schema._field import BeforeObjectAssignedEvent
+	name = interface.Attribute("The name of the attribute under which the object "
+					 "will be assigned.")
+
+	context = interface.Attribute("The context object where the object will be "
+						"assigned to.")
+
+# Make this a base of the zope interface so our handlers
+# are compatible
+sch_interfaces.IBeforeObjectAssignedEvent.__bases__ = (IBeforeSchemaFieldAssignedEvent,)
+
+@interface.implementer(IBeforeSchemaFieldAssignedEvent)
+class BeforeSchemaFieldAssignedEvent(object):
+
+	def __init__( self, obj, name, context ):
+		self.object = obj
+		self.name = name
+		self.context = context
+
+class IBeforeTextAssignedEvent(IBeforeSchemaFieldAssignedEvent):
+	"""
+	Event for assigning text.
+	"""
+
+	object = schema.Text(title="The text being assigned.")
+
+class IBeforeTextLineAssignedEvent(IBeforeTextAssignedEvent): # ITextLine extends IText
+	"""
+	Event for assigning text lines.
+	"""
+
+	object = schema.TextLine(title="The text being assigned.")
+
+class IBeforeCollectionAssignedEvent(IBeforeSchemaFieldAssignedEvent):
+	"""
+	Event for assigning collections.
+	"""
+
+	object = interface.Attribute( "The collection being assigned. May or may not be mutable." )
+
+class IBeforeSequenceAssignedEvent(IBeforeCollectionAssignedEvent):
+	"""
+	Event for assigning sequences.
+	"""
+
+	object = interface.Attribute( "The sequence being assigned. May or may not be mutable." )
+
+# The hierarchy is IContainer > IIterable > ICollection > ISequence > [ITuple, IList]
+
+@interface.implementer(IBeforeTextAssignedEvent)
+class BeforeTextAssignedEvent(BeforeSchemaFieldAssignedEvent):
+	pass
+
+@interface.implementer(IBeforeTextLineAssignedEvent)
+class BeforeTextLineAssignedEvent(BeforeTextAssignedEvent):
+	pass
+
+@interface.implementer(IBeforeSequenceAssignedEvent)
+class BeforeSequenceAssignedEvent(BeforeSchemaFieldAssignedEvent):
+	pass
+
+def _do_set( self, context, value, cls, factory ):
+	try:
+		event = factory(value, self.__name__, context )
+		notify(event)
+		value = event.object
+		super(cls, self).set( context, value )
+	except sch_interfaces.ValidationError as e:
+		self._reraise_validation_error( e, value )
+
+class ValidText(FieldValidationMixin,schema.Text):
+	"""
+	A text line that produces slightly better error messages. They will all
+	have the 'field' property.
+
+	We also fire :class:`IBeforeTextAssignedEvent`, which the normal
+	mechanism does not.
+	"""
+
+	def set( self, context, value ):
+		_do_set( self, context, value, ValidText, BeforeTextAssignedEvent )
 
 class ValidTextLine(FieldValidationMixin,schema.TextLine):
 	"""
 	A text line that produces slightly better error messages. They will all
 	have the 'field' property.
 
-	We also fire BeforeObjectAssignedEvents, which the normal
+	We also fire :class:`IBeforeTextLineAssignedEvent`, which the normal
 	mechanism does not.
 	"""
 
-	def set( self, object, value ):
-		try:
-			event = BeforeObjectAssignedEvent(value, self.__name__, object)
-			notify(event)
-			value = event.object
-			super(ValidTextLine,self).set( object, value )
-		except sch_interfaces.ValidationError as e:
-			self._reraise_validation_error( e, value )
+	def set( self, context, value ):
+		_do_set( self, context, value, ValidTextLine, BeforeTextLineAssignedEvent )
 
 class DecodingValidTextLine(ValidTextLine):
 	"""
@@ -271,10 +350,15 @@ class HTTPURL(FieldValidationMixin,schema.URI):
 class IndexedIterable(FieldValidationMixin,schema.List):
 	"""
 	An arbitrary (indexable) iterable, not necessarily a list or tuple;
-	either of those would be acceptable at any time.
-	The values may be homogeneous by setting the value_type
+	either of those would be acceptable at any time (however, so would a string,
+	so be careful. Try ListOrTuple if that's a problem).
+
+	The values may be homogeneous by setting the value_type.
 	"""
 	_type = None # Override from super to not force a list
+
+	def set( self, context, value ):
+		_do_set( self, context, value, IndexedIterable, BeforeSequenceAssignedEvent )
 
 class ListOrTuple(IndexedIterable):
 	_type = (list,tuple)
@@ -300,12 +384,13 @@ def find_most_derived_interface( ext_self, iface_upper_bound, possibilities=None
 			_iface = iface
 	return _iface
 
-@component.adapter(sch_interfaces.IBeforeObjectAssignedEvent)
+@component.adapter(IBeforeSchemaFieldAssignedEvent)
 def before_object_assigned_event_dispatcher(event):
 	"""
-	Listens for :mod:`zope.schema` to fire :class:`zope.schema.interfaces.IBeforeObjectAssignedEvent`,
+	Listens for :mod:`zope.schema` fields to fire :class:`IBeforeSchemaFieldAssignedEvent`,
 	and re-dispatches these events based on the value being assigned, the object being assigned to,
-	and of course the event.
+	and of course the event (note that :class:`zope.schema.interfaces.IBeforeObjectAssignedEvent` is a
+	sub-interface of :class:`IBeforeSchemaFieldAssignedEvent`).
 
 	This is analogous to :func:`zope.component.event.objectEventNotify`
 	"""
