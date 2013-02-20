@@ -21,14 +21,20 @@ from zope import interface
 from zope import component
 from zope.location import interfaces as loc_interfaces
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+
 from zope.container.interfaces import IContainerModifiedEvent
+from zope.container.interfaces import IContained
 from zope.container.interfaces import IBTreeContainer
+
+from ZODB.interfaces import IConnection
+
 from zope.annotation import interfaces as annotation
 
 from . import interfaces
 
 from zope.container.btree import BTreeContainer
 from zope.container.contained import uncontained
+from zope.container.contained import contained
 from zope.container.contained import NameChooser
 
 from nti.zodb.minmax import NumericMaximum, ConstantZeroValue
@@ -218,6 +224,22 @@ def update_object_modified_time( modified_object, event ):
 	except AttributeError:
 		# this is optional API
 		pass
+
+from nti.utils.schema import IBeforeSequenceAssignedEvent
+@component.adapter( None, interfaces.IModeledContent, IBeforeSequenceAssignedEvent )
+def contain_nested_objects( sequence, parent, event ):
+	"""
+	New, incoming objects like a Canvas need to be added to the parent container
+	when a sequence containing them is set. (e.g., the body of a Note)
+	"""
+	for i, child in enumerate( sequence ):
+		if IContained.providedBy( child ):
+			name = getattr( child, '__name__', None ) or unicode(i)
+			contained( child, parent, name )
+			jar = IConnection( child, None ) # Use either its pre-existing jar, or the parents
+			if jar and not getattr( child, '_p_oid', None ):
+				jar.add( child )
+
 
 class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	"""

@@ -15,8 +15,6 @@ logger = logging.getLogger( __name__ )
 
 import time
 import uuid
-import collections
-import six
 import datetime
 
 from persistent import Persistent
@@ -27,14 +25,11 @@ from nti.utils.property import alias, read_alias
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
-from nti.contentfragments import interfaces as frg_interfaces
-from nti.contentfragments import censor
-
 from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver.users import entity
 from nti.dataserver import contenttypes
-from nti.dataserver import interfaces as nti_interfaces
+#from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.base import _make_getitem
 
 from zope.deprecation import deprecate
@@ -42,9 +37,38 @@ from zope.deprecation import deprecate
 from zope import interface
 from zope import component
 from zope.dublincore import interfaces as dc_interfaces
-from zope.container.contained import contained
+
+from zope.schema import interfaces as sch_interfaces
+from zope.schema.fieldproperty import FieldProperty
 
 from . import interfaces
+
+class _BodyFieldProperty(FieldProperty):
+	# This currently exists for legacy support (test cases)
+
+	def __init__( self, field, name=None ):
+		super(_BodyFieldProperty,self).__init__( field, name=name )
+		self._field = field
+
+	def __set__( self, inst, value ):
+		# Turn bytes into text
+		if isinstance( value, str ):
+			value = value.decode( 'utf-8' )
+		# Wrap single strings automatically
+		if isinstance( value, unicode ):
+			value = (value,)
+		# Make immutable
+		if value and isinstance( value, list ):
+			value = tuple(value)
+		try:
+			super(_BodyFieldProperty,self).__set__( inst, value )
+		except sch_interfaces.ValidationError:
+			# Hmm. try to adapt
+			#value = [x.decode('utf-8') if isinstance(x, str) else x for x in value] # allow ascii strings for old app tests
+			value = self._field.fromObject( value )
+			super(_BodyFieldProperty, self).__set__( inst, value )
+
+
 
 # TODO: MessageInfo is a mess. Unify better with IContent
 # and the other content types.
@@ -67,7 +91,7 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 	# the transcript should go to. Set by policy.
 	sharedWith = ()
 	channel = interfaces.CHANNEL_DEFAULT
-	body = None
+	body = _BodyFieldProperty( interfaces.IMessageInfo['body'] )
 	recipients = ()
 	Creator = None # aka Sender. Forcibly set by the handler
 	containerId = None
@@ -79,6 +103,7 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 		self.LastModified = time.time()
 		self.CreatedTime = self.LastModified
 		self.Status = interfaces.STATUS_INITIAL
+		self.sharedWith = set()
 
 	Sender = alias('Creator')
 	creator = alias('Creator')
@@ -186,7 +211,6 @@ from zope.proxy import removeAllProxies
 class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,InterfaceObjectIO):
 
 	_ext_iface_upper_bound = interfaces.IMessageInfo
-	validate_after_update = False
 
 	# NOTE: inReplyTo and 'references' do not really belong here
 	_excluded_out_ivars_ = { 'MessageId', 'flattenedSharingTargetNames', 'flattenedSharingTargets', 'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
@@ -221,22 +245,11 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,InterfaceObjectI
 
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
+		if 'Body' in parsed and 'body' not in parsed:
+			parsed['body'] = parsed['Body']
+
 		super(MessageInfoInternalObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )
 		msg = self.context
-		if 'Body' in parsed and 'body' not in parsed:
-			msg.body = parsed['Body']
-		if 'Body' or 'body' in parsed:
-			# TODO: Switch to InterfaceIO to avoid doing this manually.
-			if isinstance( msg.body, six.string_types ):
-				msg.body = censor.censor_assign( frg_interfaces.IUnicodeContentFragment( msg.body ), msg, 'body' )
-			elif isinstance( msg.body, collections.Sequence ):
-				msg.body = [censor.censor_assign( frg_interfaces.IUnicodeContentFragment( x ), msg, 'body' ) if isinstance(x,six.string_types) else x
-							 for x
-							 in msg.body]
-				for i, x in enumerate(msg.body):
-					# Make images work
-					if nti_interfaces.ICanvas.providedBy( x ):
-						contained( x, msg, unicode(i) )
 
 		# make recipients be stored as a persistent list.
 		# In theory, this helps when we have to serialize the message object

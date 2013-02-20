@@ -9,18 +9,14 @@ import six
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.internalization import update_from_external_object
-from nti.contentfragments import interfaces as frg_interfaces
-from nti.contentfragments import censor
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from zope import component
 from zope import interface
 
-from ZODB.interfaces import IConnection
+
 from zope.annotation import interfaces as an_interfaces
-from zope.container.contained import contained
-from zope.container.interfaces import IContained
 
 import zope.schema.interfaces
 from zope.schema.fieldproperty import FieldProperty
@@ -29,7 +25,6 @@ from .threadable import ThreadableMixin
 from .base import _make_getitem
 
 class _BodyFieldProperty(FieldProperty):
-	# TODO: Generalize me?
 	# This currently exists for legacy support (test cases)
 
 	def __init__( self, field, name=None ):
@@ -46,17 +41,9 @@ class _BodyFieldProperty(FieldProperty):
 			value = [x.decode('utf-8') if isinstance(x, str) else x for x in value] # allow ascii strings for old app tests
 			super(_BodyFieldProperty, self).__set__( inst, tuple( (self._field.value_type.fromObject(x) for x in value ) ) )
 
+		# Ownership (containment) and censoring are already taken care of by the
+		# event listeners on IBeforeSequenceAssignedEvent
 
-		# Assuming all went well, take ownership of each object in the body.
-		# Censoring is already done, if requested, by the event listeners
-		# on IBeforeSequenceAssignedEvent.
-		# TODO: Generalize the containment?
-		for i, child in enumerate( self.__get__( inst, None ) ):
-			if IContained.providedBy( child ):
-				contained( child, inst, unicode(i) )
-				jar = IConnection( child, None ) # Use either its pre-existing jar, or the notes
-				if jar and not getattr( child, '_p_oid', None ):
-					jar.add( child )
 
 @interface.implementer(nti_interfaces.INote,
 					    # requires annotations

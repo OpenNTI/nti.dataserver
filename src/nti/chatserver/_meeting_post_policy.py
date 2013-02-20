@@ -494,7 +494,7 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 			# sanitize the body
 			msg_info.body = { k: msg_info.body[k] for k in ('channel', 'action') }
 			super(_ModeratedMeetingMessagePostPolicy,self).post_message( msg_info )
-		else: # pragma:
+		else: # pragma: no cover
 			# Impossible to get here due to the check above; left in place
 			# to help us add more actions safely
 			raise AssertionError( 'Meta action ' + str(msg_info.body['action']) )

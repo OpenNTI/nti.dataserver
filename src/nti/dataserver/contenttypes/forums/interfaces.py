@@ -55,7 +55,7 @@ class IStoryTopic(ITopic):
 	have one board with a forum named 'blog': users/<USER>/boards/blog.
 	"""
 
-class IPost(IContained, IAcquirer):
+class IPost(IContained, IAcquirer, nti_interfaces.IModeledContent):
 	"""
 	A post within a topic.
 
@@ -64,3 +64,5 @@ class IPost(IContained, IAcquirer):
 	"""
 
 	containers(ITopic)
+
+	body = nti_interfaces.CompoundModeledContentBody()

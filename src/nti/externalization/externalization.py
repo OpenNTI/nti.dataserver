@@ -398,7 +398,7 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker,
 
 	_choose_field( result, self, StandardExternalFields.CREATOR,
 				   fields=(StandardInternalFields.CREATOR, StandardExternalFields.CREATOR),
-				   converter=str )
+				   converter=unicode )
 
 	to_standard_external_last_modified_time( self, _write_into=result )
 	to_standard_external_created_time( self, _write_into=result )

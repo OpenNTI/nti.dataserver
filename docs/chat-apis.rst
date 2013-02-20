@@ -110,10 +110,9 @@ DEFAULT
 	This channel is the general any-to-all messaging channel. Messages
 	on this channel, or messages that have no channel set at all, are
 	delivered to all recipients in the room (regardless of the
-	recipient setting). The body is uninterpreted by the server. It
-	will typically be the same content as a Note (e.g., a string or a
-	list of strings and Canvas objects). In moderated rooms, posts to
-	this channel must be approved.
+	recipient setting). The body has the same content as a Note (e.g.,
+	a string or a list of strings and Canvas objects). In moderated
+	rooms, posts to this channel must be approved.
 WHISPER
 	This channel is for messages directed from one user to a subset of
 	the other users in the room. (For moderation, if the recipient list

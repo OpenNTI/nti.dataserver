@@ -211,7 +211,7 @@ setup(
 		'stripe >= 1.7.9', # stripe payments
 		#'slimit',
 		'supervisor >= 3.0b1',
-		'transaction >= 1.4.0',
+		'transaction >= 1.4.1',
 		# See http://pypi.python.org/pypi/user-agents/ for a high-level
 		# library to do web user agent detection
 		'webob >= 1.2.3',
