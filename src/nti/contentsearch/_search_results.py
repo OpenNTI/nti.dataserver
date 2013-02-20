@@ -19,7 +19,8 @@ from z3c.batching.batch import Batch
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
-from nti.contentsearch import interfaces as search_interfaces
+from ._search_utils import isorted
+from . import interfaces as search_interfaces
 
 class _BaseSearchResults(zcontained.Contained):
 
@@ -254,6 +255,18 @@ class _SuggestResultsCreator(object):
 class _SuggestAndSearchResultsCreator(object):
 	def __call__(self, query):
 		return _SuggestAndSearchResults(query)
+
+# sort
+
+def sort_hits(hits, reverse=False, sortOn=None):
+	comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortOn) if sortOn else None
+	if comparator is not None:
+		if reverse:
+			comparator = lambda x,y: comparator(y,x)
+		return isorted(hits, comparator)
+	else:
+		iterator = reverse(hits) if reverse else iter(hits)
+		return iterator
 
 # legacy results
 

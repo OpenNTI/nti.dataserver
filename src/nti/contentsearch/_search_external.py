@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Search externalization
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -99,8 +103,9 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		limit = self.query.limit
 		highlight_type = self.highlight_type
 
-		# sort
-		self.results.sort() # FIXME: It's rude to mutate other data structures
+		# FIXME: It's rude to mutate other data structures
+		# this sort the hits in place
+		self.results.sort() 
 
 		# use iterator in case of any paging
 		for hit in self.results:
