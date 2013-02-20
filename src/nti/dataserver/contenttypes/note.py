@@ -24,22 +24,22 @@ from .highlight import Highlight
 from .threadable import ThreadableMixin
 from .base import _make_getitem
 
-class _BodyFieldProperty(FieldProperty):
+class BodyFieldProperty(FieldProperty):
 	# This currently exists for legacy support (test cases)
 
 	def __init__( self, field, name=None ):
-		super(_BodyFieldProperty,self).__init__( field, name=name )
+		super(BodyFieldProperty,self).__init__( field, name=name )
 		self._field = field
 
 	def __set__( self, inst, value ):
 		if value and isinstance( value, list ):
 			value = tuple(value)
 		try:
-			super(_BodyFieldProperty,self).__set__( inst, value )
+			super(BodyFieldProperty,self).__set__( inst, value )
 		except zope.schema.interfaces.ValidationError:
 			# Hmm. try to adapt
 			value = [x.decode('utf-8') if isinstance(x, str) else x for x in value] # allow ascii strings for old app tests
-			super(_BodyFieldProperty, self).__set__( inst, tuple( (self._field.value_type.fromObject(x) for x in value ) ) )
+			super(BodyFieldProperty, self).__set__( inst, tuple( (self._field.value_type.fromObject(x) for x in value ) ) )
 
 		# Ownership (containment) and censoring are already taken care of by the
 		# event listeners on IBeforeSequenceAssignedEvent
@@ -61,12 +61,14 @@ class Note(ThreadableMixin,Highlight):
 	#: when a child reply is created. If the child already has them, they
 	#: are left alone.
 	#: This consists of the anchoring properties
-	_inheritable_properties_ = ( 'applicableRange', )
+	_inheritable_properties_ = ( 'applicableRange', 'title' )
 
 	#: We override the default highlight style to suppress it.
 	style = 'suppressed'
 
-	body = _BodyFieldProperty(nti_interfaces.INote['body']) # uses the 'body' in the dict, which is compatible with persistent objects
+	body = BodyFieldProperty(nti_interfaces.INote['body']) # uses the 'body' in the dict, which is compatible with persistent objects
+
+	title = FieldProperty(nti_interfaces.INote['title'])
 
 	def __init__(self):
 		super(Note,self).__init__()

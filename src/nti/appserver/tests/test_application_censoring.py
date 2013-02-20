@@ -5,7 +5,7 @@ from __future__ import print_function, absolute_import
 #pylint: disable=W0212,R0904
 
 from hamcrest import assert_that
-from hamcrest import has_entry
+from hamcrest import has_entries
 from hamcrest import is_
 from hamcrest import has_property
 from hamcrest import none
@@ -67,7 +67,7 @@ class _CensorTestMixin(object):
 		testapp = TestApp( self.app )
 
 
-		data = json.dumps( {'body': [bad_val]} )
+		data = json.dumps( {'body': [bad_val], 'title': bad_val} )
 
 		path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		path = UQ( path )
@@ -77,9 +77,10 @@ class _CensorTestMixin(object):
 		res = testapp.put( path, data, extra_environ=extra_environ )
 		assert_that( res.status_int, is_( 200 ) )
 
+		exp_val = censored_val if censored else bad_val
 		assert_that( res.json_body,
-					 has_entry( 'body',
-								[censored_val if censored else bad_val ] ) )
+					 has_entries( 'body', only_contains( exp_val ),
+								  'title', exp_val ) )
 
 
 class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):

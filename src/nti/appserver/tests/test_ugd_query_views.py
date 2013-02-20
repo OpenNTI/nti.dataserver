@@ -83,7 +83,7 @@ class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
 		with self.assertRaises(hexc.HTTPNotFound):
 			view.getObjectsForId( user, 'foobar' )
 		# Now if there are objects in there, it won't raise.
-		user.addContainedObject( ContainedExternal('foobar') )
+		user.addContainedObject( ContainedExternal( containerId='foobar') )
 		view.getObjectsForId( user, 'foobar' )
 
 	@WithMockDSTrans
@@ -95,7 +95,7 @@ class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
 			view.getObjectsForId( user, ntiids.ROOT )
 		# Any child of the root throws if (1) the root DNE
 		# and (2) the children are empty
-		c = ContainedExternal( ntiids.make_ntiid( provider='ou', specific='test', nttype='test' ) )
+		c = ContainedExternal( containerId=ntiids.make_ntiid( provider='ou', specific='test', nttype='test' ) )
 		user.addContainedObject( c )
 		assert_that( user.getContainedObject( c.containerId, c.id ), is_( c ) )
 		# so this will work, as it is not empty

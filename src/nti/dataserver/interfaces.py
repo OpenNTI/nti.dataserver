@@ -32,6 +32,8 @@ from nti.contentrange.contentrange import ContentRangeDescription
 from nti.utils.schema import Object
 from nti.utils.schema import ObjectLen
 from nti.utils.schema import Variant
+from nti.utils.schema import Number
+from nti.utils.schema import UniqueIterable
 from nti.utils.schema import ListOrTupleFromObject
 from nti.utils.schema import DecodingValidTextLine
 
@@ -252,8 +254,10 @@ class ILastModified(interface.Interface):
 	Something that tracks a modification timestamp.
 	"""
 	# TODO: Combine/replace this with zope.dublincore.IDCTimes
-	lastModified = schema.Float( title=u"The timestamp at which this object or its contents was last modified." )
-	createdTime = schema.Float( title=u"The timestamp at which this object was created." )
+	lastModified = Number( title=u"The timestamp at which this object or its contents was last modified.",
+						   default=0.0 )
+	createdTime = Number( title=u"The timestamp at which this object was created.",
+						  default=0.0 )
 
 class ICreated(interface.Interface):
 	"""
@@ -694,12 +698,12 @@ class IReadableShared(interface.Interface):
 	def isSharedIndirectlyWith( principal ):
 		"Is this object indirectly shared with the given target?"
 
-	sharingTargets = schema.Set(
+	sharingTargets = UniqueIterable(
 		title="A set of entities this object is directly shared with (non-recursive, non-flattened)",
 		value_type=Object(IEntity, title="An entity shared with"),
 		readonly=True)
 
-	flattenedSharingTargets = schema.Set(
+	flattenedSharingTargets = UniqueIterable(
 		title="A set of entities this object is directly or indirectly shared with (recursive, flattened)",
 		value_type=Object(IEntity, title="An entity shared with"),
 		readonly=True)
@@ -947,6 +951,21 @@ class IGlobalFlagStorage(interface.Interface):
 		this storage.
 		"""
 
+def Title():
+	"""
+	Return a :class:`zope.schema.interfaces.IField` representing
+	the standard title of some object. This should be stored in the `title`
+	field.
+	"""
+	return ObjectLen(frg_interfaces.IPlainTextContentFragment,
+					#min_length=5,
+					max_length=140, # twitter
+					required=False,
+					defaultFactory=frg_interfaces.PlainTextContentFragment,
+					title="The human-readable title of this object",
+					__name__='title')
+
+
 def CompoundModeledContentBody():
 	"""
 	Returns a :class:`zope.schema.interfaces.IField` representing
@@ -954,20 +973,29 @@ def CompoundModeledContentBody():
 	"""
 
 	return ListOrTupleFromObject( title="The body of this object",
-								description="""An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
+								  description="""An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
 									of :class:`IModeledContent` such as :class:`ICanvas`.)
 									""",
-								value_type=Variant( (ObjectLen(frg_interfaces.ISanitizedHTMLContentFragment,min_length=1),
+								  value_type=Variant( (ObjectLen(frg_interfaces.ISanitizedHTMLContentFragment,min_length=1),
 													 ObjectLen(frg_interfaces.IPlainTextContentFragment,min_length=1),
 													 Object(ICanvas)),
 													 title="A body part of a note" ),
-								 min_length=1,
-								 required=False)
+								  min_length=1,
+								  required=False,
+								  __name__='body')
 
-class INote(IHighlight,IThreadable):
+class ITitledContent(interface.Interface):
+	"""
+	A piece of content with a title, either human created or potentially
+	automatically generated. (This differs from, say, a person's honorrific title.)
+	"""
+	title = Title()
+
+class INote(IHighlight,IThreadable,ITitledContent):
 	"""
 	A user-created note attached to other content.
 	"""
+
 	body = CompoundModeledContentBody()
 
 ### Changes related to content objects/users
