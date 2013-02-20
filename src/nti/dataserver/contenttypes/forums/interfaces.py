@@ -13,11 +13,14 @@ from zope import interface
 
 from Acquisition.interfaces import IAcquirer
 from nti.dataserver import interfaces as nti_interfaces
+from nti.contentfragments import interfaces as frg_interfaces
 
-from zope.container.interfaces import IContainer, IContained
+from zope.container.interfaces import IContentContainer, IContained
 from zope.container.constraints import contains, containers
 
-class IBoard(IContainer,IContained): # implementations may be IAcquirer
+from nti.utils import schema
+
+class IBoard(IContentContainer,IContained,nti_interfaces.ITitledContent): # implementations may be IAcquirer
 	"""
 	A board is the outermost object. It contains potentially many forums (though
 	usually this number is relatively small). Each forum is distinctly named
@@ -25,16 +28,18 @@ class IBoard(IContainer,IContained): # implementations may be IAcquirer
 	"""
 	contains(".IForum")
 
-class IForum(IContainer,IContained,IAcquirer):
+class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledContent):
 	"""
 	A forum is contained by a board. A forum itself contains arbitrarily
 	many topics and is folderish. Forums are a level of permissioning, with only certain people
 	being allowed to view the contents of the forum and add new topics.
 	"""
 	contains(".ITopic")
-	containers(IBoard)
+	containers(IBoard)# Adds __parent__ as required
 
-class ITopic(IContainer,IContained,IAcquirer):
+	__parent__.required = False
+
+class ITopic(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledContent):
 	"""
 	A topic is contained by a forum. It is distinctly named within the containing
 	forum (often this name will be auto-generated). A topic contains potentially many posts
@@ -45,7 +50,23 @@ class ITopic(IContainer,IContained,IAcquirer):
 
 	"""
 	contains(".IPost")
-	containers(IForum)
+	containers(IForum)# Adds __parent__ as required
+	__parent__.required = False
+
+
+
+class IPost(IContained, IAcquirer, nti_interfaces.IModeledContent, nti_interfaces.IReadableShared, nti_interfaces.ITitledContent):
+	"""
+	A post within a topic.
+
+	They inherit their permissions from the containing topic (with the exception
+	of the editing permissions for the owner).
+	"""
+
+	containers(ITopic) # Adds __parent__ as required
+	__parent__.required = False
+
+	body = nti_interfaces.CompoundModeledContentBody()
 
 
 class IStoryTopic(ITopic):
@@ -55,14 +76,4 @@ class IStoryTopic(ITopic):
 	have one board with a forum named 'blog': users/<USER>/boards/blog.
 	"""
 
-class IPost(IContained, IAcquirer, nti_interfaces.IModeledContent):
-	"""
-	A post within a topic.
-
-	They inherit their permissions from the containing topic (with the exception
-	of the editing permissions for the owner).
-	"""
-
-	containers(ITopic)
-
-	body = nti_interfaces.CompoundModeledContentBody()
+	story = schema.Object(IPost, title="The main, first post of this topic.")

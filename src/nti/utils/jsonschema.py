@@ -90,7 +90,7 @@ class JsonSchemafier(object):
 			if interface.interfaces.IMethod.providedBy( v ):
 				continue
 			# v could be a schema field or an interface.Attribute
-			if v.queryTaggedValue( TAG_HIDDEN_IN_UI ):
+			if v.queryTaggedValue( TAG_HIDDEN_IN_UI ) or k.startswith( '_' ):
 				continue
 
 			required = v.queryTaggedValue( TAG_REQUIRED_IN_UI ) or getattr( v, 'required', None )

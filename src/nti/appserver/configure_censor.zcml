@@ -6,7 +6,7 @@
 
 	<!--
 	Our dispatcher. Apply it to all the 'body' fields (note and chat message), as well as
-	the replacementContent and redactionExplanation fields
+	the replacementContent and redactionExplanation fields.
 	(IRedaction)
 	-->
 	<subscriber handler="nti.contentfragments.censor.censor_before_assign_components_of_sequence"
@@ -18,6 +18,10 @@
 			 name="replacementContent" />
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"
 			 name="redactionExplanation" />
+	<!-- Also dispatch on titles -->
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="title"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.ITitledContent"/>
 
 	<adapter factory=".censor_policies.coppa_user_censor_policy" />
 
