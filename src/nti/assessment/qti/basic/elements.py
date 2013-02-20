@@ -176,10 +176,10 @@ def qti_creator(cls):
 		elif sch_interfaces.IList.providedBy(v):
 			_make_sequence(cls, k)
 			setattr(cls, k, property(_collection_getter(pname, list_factory)))
-			setattr(cls, "get_%s_list" % k, _getter(pname))
+			setattr(cls, "get_%s_list" % k.lower(), _getter(pname))
 			if sch_interfaces.IObject.providedBy(v.value_type) or sch_interfaces.IText.providedBy(v.value_type):
 				iface = v.value_type.schema
-				setattr(cls, "add_%s" % k, _add_collection(k, iface))
+				setattr(cls, "add_%s" % k.lower(), _add_collection(k, iface))
 			else:
 				warnings.warn("unhandled list type %s" % v.value_type)
 		else:
