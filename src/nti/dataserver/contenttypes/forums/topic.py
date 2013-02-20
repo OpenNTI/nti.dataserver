@@ -30,7 +30,7 @@ from . import interfaces as for_interfaces
 
 @interface.implementer(for_interfaces.ITopic)
 class Topic(Acquisition.Implicit,
-			containers.LastModifiedBTreeContainer):
+			containers.CheckingLastModifiedBTreeContainer):
 	title = FieldProperty(for_interfaces.ITopic['title'])
 
 

@@ -15,18 +15,21 @@ import zope.annotation
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from ZODB.interfaces import IConnection
+from zope.container.interfaces import IBTreeContainer
+from zope.container.constraints import contains
 
 from nti.externalization import oids
 from nti.ntiids import ntiids
 from nti.dataserver import users
 from nti.dataserver.datastructures import check_contained_object_for_storage
-from nti.dataserver.containers import LastModifiedBTreeContainer
+from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
-class IMeetingContainer(zope.container.interfaces.IBTreeContainer): pass
+class IMeetingContainer(IBTreeContainer):
+	contains(chat_interfaces.IMeeting)
 
 @interface.implementer(IMeetingContainer)
 @component.adapter(nti_interfaces.IEntity)
-class _MeetingContainer(LastModifiedBTreeContainer): # TODO: Container constraints
+class _MeetingContainer(CheckingLastModifiedBTreeContainer):
 	pass
 
 EntityMeetingContainerAnnotation = zope.annotation.factory(_MeetingContainer)
@@ -92,9 +95,13 @@ class CreatorBasedAnnotationMeetingStorage(object):
 
 		meeting_container[room.id] = room
 
-@interface.implementer(chat_interfaces.IMessageInfoStorage)
+
+class IMessageInfoContainer(IBTreeContainer, chat_interfaces.IMessageInfoStorage):
+	contains(chat_interfaces.IMessageInfo)
+
+@interface.implementer(IMessageInfoContainer)
 @component.adapter(nti_interfaces.IEntity)
-class _MessageInfoContainer(LastModifiedBTreeContainer): # TODO: Container constraints
+class _MessageInfoContainer(CheckingLastModifiedBTreeContainer): # TODO: Container constraints
 	"""
 	Messages have IDs that are UUIDs, so we use that as the key
 	in the container.

@@ -19,16 +19,38 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
+from nose.tools import assert_raises
 
+from zope import interface
 import nti.tests
 
 from nti.tests import verifiably_provides, validly_provides
 
-from ..interfaces import IForum
+from zope.container.interfaces import InvalidItemType, InvalidContainerType
+
+from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+
+from ..interfaces import IForum, ITopic
 from ..forum import Forum
+
 
 def test_forum_interfaces():
 	post = Forum()
 	assert_that( post, verifiably_provides( IForum ) )
 
 	assert_that( post, validly_provides( IForum ) )
+
+def test_forum_constraints():
+	@interface.implementer(ITopic)
+	class X(object):
+		__parent__ = __name__ = None
+
+	forum = Forum()
+	forum['k'] = X()
+
+	with assert_raises( InvalidItemType ):
+		forum['z'] = Forum()
+
+	with assert_raises( InvalidContainerType ):
+		container = CheckingLastModifiedBTreeContainer()
+		container['k'] = forum

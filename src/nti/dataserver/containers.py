@@ -141,6 +141,11 @@ class IdGeneratorNameChooser(NameChooser):
 		self.checkName(name, obj )
 		return name
 
+from zope.container.constraints import checkObject
+class _CheckObjectOnSetMixin(object):
+	def _setitemf( self, key, value ):
+		checkObject( self, key, value )
+		super(_CheckObjectOnSetMixin,self)._setitemf( key, value )
 
 @interface.implementer(interfaces.ILastModified,annotation.IAttributeAnnotatable)
 class LastModifiedBTreeContainer(BTreeContainer):
@@ -194,6 +199,11 @@ class LastModifiedBTreeContainer(BTreeContainer):
 		return self.items()
 
 collections.Mapping.register( LastModifiedBTreeContainer )
+
+class CheckingLastModifiedBTreeContainer(_CheckObjectOnSetMixin,LastModifiedBTreeContainer):
+	"""
+	A BTree container that validates constraints when items are added.
+	"""
 
 @component.adapter( interfaces.ILastModified, IContainerModifiedEvent )
 def update_container_modified_time( container, event ):
