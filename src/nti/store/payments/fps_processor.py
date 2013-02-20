@@ -23,8 +23,8 @@ from nti.dataserver import interfaces as nti_interfaces
 from .fps_io import FPSIO
 from .. import purchase_history
 from . import interfaces as pay_interfaces
+from ._processor import _BasePaymentProcessor
 from .. import interfaces as store_interfaces
-from ._payment_processor import _BasePaymentProcessor
 
 @component.adapter(pay_interfaces.IRegisterFPSToken)
 def register_fps_token(event):

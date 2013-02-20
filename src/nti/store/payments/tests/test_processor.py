@@ -32,7 +32,7 @@ class TestInvitations(ConfiguringTestBase):
 		return usr
 
 	@WithMockDSTrans
-	def test_create_invitation(self):
+	def test_register_invitation(self):
 		user = self._create_user()
 		c = users.Community.create_community(self.ds, username='Bankai')
 		
