@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Defines QTI precondition elements
+Defines QTI feedback elements
 
 $Id$
 """
@@ -11,14 +11,14 @@ from zope import interface
 
 from ..basic.elements import QTIElement
 from ..basic.elements import qti_creator
-from . import interfaces as pre_interfaces
+from . import interfaces as fbk_interfaces
 
 @qti_creator
-@interface.implementer(pre_interfaces.IpreCondition)
-class PreCondition(QTIElement):
+@interface.implementer(fbk_interfaces.ImodalFeedback)
+class ModalFeedback(QTIElement):
 	pass
 
 @qti_creator
-@interface.implementer(pre_interfaces.IbranchRule)
-class BranchRule(QTIElement):
+@interface.implementer(fbk_interfaces.ItestFeedback)
+class TestFeedback(QTIElement):
 	pass

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Defines a QTI variable elements
+Defines QTI variable elements
 
 $Id$
 """

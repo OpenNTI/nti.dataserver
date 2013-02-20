@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Defines a QTI assesment elements
+Defines QTI assesment elements
 
 $Id$
 """
