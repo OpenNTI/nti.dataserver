@@ -203,7 +203,7 @@ setup(
 		'grequests >= 0.1.0', #replaces requests.async in 0.13
 		'requests >= 0.14.2,<1.0', # HTTP. NOTE: 1.1.x is out, but not full backwards compat. Since some tools (httpie) depend on it, wait until they are ready
 		#'scss >= 0.8.72', # we no longer use
-		'setproctitle >= 1.1.6',
+		'setproctitle >= 1.1.7', # used by gunicorn
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.0.8',
 		'six >= 1.2.0',

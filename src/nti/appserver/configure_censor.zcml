@@ -9,6 +9,8 @@
 	the replacementContent and redactionExplanation fields
 	(IRedaction)
 	-->
+	<subscriber handler="nti.contentfragments.censor.censor_before_assign_components_of_sequence"
+				for="* nti.dataserver.interfaces.IModeledContent nti.utils.schema.IBeforeSequenceAssignedEvent" />
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"
 			 name="body" />
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"

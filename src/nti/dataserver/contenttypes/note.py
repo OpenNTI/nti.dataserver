@@ -47,25 +47,16 @@ class _BodyFieldProperty(FieldProperty):
 			super(_BodyFieldProperty, self).__set__( inst, tuple( (self._field.value_type.fromObject(x) for x in value ) ) )
 
 
-		# Assuming all went well, take ownership of each object in the body,
-		# censoring the others
-		# TODO: Move this code to a special type of IListField? Or keep it in a
-		# FieldProperty? Needs some thought. As it stands, IList doesn't
-		# fire ObjectAssigned events when its set method is called
-		children = []
+		# Assuming all went well, take ownership of each object in the body.
+		# Censoring is already done, if requested, by the event listeners
+		# on IBeforeSequenceAssignedEvent.
+		# TODO: Generalize the containment?
 		for i, child in enumerate( self.__get__( inst, None ) ):
 			if IContained.providedBy( child ):
 				contained( child, inst, unicode(i) )
 				jar = IConnection( child, None ) # Use either its pre-existing jar, or the notes
 				if jar and not getattr( child, '_p_oid', None ):
 					jar.add( child )
-			child = censor.censor_assign( child, inst, 'body' )
-			children.append( child )
-		# Now replace the children. All the validation has been done already
-		# (NOTE: That may not be true, if censoring is broken and returns
-		# objects that no longer implement the same interfaces; that shouldn't be the case
-		# but if it is, then updateFromExternalObject will fail to validate the schema)
-		inst.__dict__[self._FieldProperty__name] = tuple( children )
 
 @interface.implementer(nti_interfaces.INote,
 					    # requires annotations
