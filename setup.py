@@ -257,7 +257,7 @@ setup(
 		'zope.contenttype >= 4.0.0', # A utility module for content-type handling.
 		'zope.copy >= 4.0.2',
 		'zope.copypastemove >= 3.8.0',
-		'zope.datetime >= 3.4.1',
+		'zope.datetime >= 4.0.0',
 		'zope.deprecation >= 4.0.2',
 		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 4.0.0',
@@ -317,7 +317,7 @@ setup(
 			'nose-progressive >= 1.4',
 			'pyhamcrest >= 1.7.1',
 			'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
-			'zope.testing >= 4.1.1',
+			'zope.testing >= 4.1.2',
 			],
 		'tools': [
 			# WSGI middleware for profiling. Defaults to storing
