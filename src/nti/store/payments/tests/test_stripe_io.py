@@ -111,6 +111,5 @@ class TestStripeIO(unittest.TestCase):
 		coupon = sio.get_coupon(code)
 		assert_that(coupon, is_(None))
 		
-		
 if __name__ == '__main__':
 	unittest.main()

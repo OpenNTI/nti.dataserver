@@ -1,15 +1,22 @@
-from __future__ import unicode_literals, print_function, absolute_import
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-import unittest
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from nti.store.payments import utils
-
-from hamcrest import (assert_that, is_)
-from nose.tools import assert_raises
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 from zope.schema import ValidationError
 
-class TestPaymentUtils(unittest.TestCase):
+from .. import utils
+
+from nose.tools import assert_raises
+from hamcrest import (assert_that, is_)
+
+from ...tests import ConfiguringTestBase
+
+class TestPaymentUtils(ConfiguringTestBase):
 
 	def test_is_valid_creditcard_number(self):
 		assert_that(utils.is_valid_creditcard_number("4111-1111-1111-1111"), is_(True))
