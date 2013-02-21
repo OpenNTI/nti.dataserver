@@ -23,7 +23,8 @@ from nose.tools import assert_raises
 
 from zope import interface
 import nti.tests
-
+from Acquisition import Implicit
+from nti.tests import aq_inContextOf
 from nti.tests import verifiably_provides, validly_provides
 
 from zope.container.interfaces import InvalidItemType, InvalidContainerType
@@ -42,11 +43,13 @@ def test_forum_interfaces():
 
 def test_forum_constraints():
 	@interface.implementer(ITopic)
-	class X(object):
+	class X(Implicit):
 		__parent__ = __name__ = None
 
 	forum = Forum()
 	forum['k'] = X()
+
+	assert_that( forum['k'], aq_inContextOf( forum ) )
 
 	with assert_raises( InvalidItemType ):
 		forum['z'] = Forum()

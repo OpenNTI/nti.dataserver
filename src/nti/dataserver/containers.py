@@ -147,6 +147,28 @@ class _CheckObjectOnSetMixin(object):
 		checkObject( self, key, value )
 		super(_CheckObjectOnSetMixin,self)._setitemf( key, value )
 
+from Acquisition.interfaces import IAcquirer
+class AcquireObjectsOnReadMixin(object):
+	"""
+	Mix this in /before/ the container to support implicit
+	acquisition.
+	"""
+
+	def __getitem__( self, key ):
+		result = super(AcquireObjectsOnReadMixin,self).__getitem__( key )
+		if IAcquirer.providedBy( result ):
+			result = result.__of__( self )
+		return result
+
+	def get( self, key, default=None ):
+		result = super(AcquireObjectsOnReadMixin,self).get( key, default=default )
+		# BTreeFolder doesn't wrap the default
+		if IAcquirer.providedBy( result ) and result is not default:
+			result = result.__of__( self )
+		return result
+
+	# TODO: Items? values?
+
 @interface.implementer(interfaces.ILastModified,annotation.IAttributeAnnotatable)
 class LastModifiedBTreeContainer(BTreeContainer):
 	"""

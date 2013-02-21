@@ -184,6 +184,24 @@ class ValidatedBy(BaseMatcher):
 
 		mismatch_description.append_text( repr( self.field ) ).append_text( ' failed to validate ' ).append_text( repr( item ) ).append_text( ' with ' ).append_text( repr( ex ) )
 
+def AqInContextOf(BaseMatcher):
+	def __init__( self, parent ):
+		super(AqInContextOf,self).__init__()
+		self.parent = parent
+
+	def _matches( self, child ):
+		return self.child.aq_inContextOf( self.parent )
+
+	def describe_to( self, description ):
+		description.append_text( 'object in context of').append( repr( self.parent ) )
+
+def aq_inContextOf( parent ):
+	"""
+	Matches if the data is in the acquisition context of
+	the given object.
+	"""
+	return AqInContextOf( parent )
+
 def validated_by( field ):
 	""" Matches if the data is validated by the given IField """
 	return ValidatedBy( field )

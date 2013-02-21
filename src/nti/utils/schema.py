@@ -23,6 +23,10 @@ from zope.component import handle
 from zope.event import notify
 from zope.schema import interfaces as sch_interfaces
 
+from zope.schema.fieldproperty import FieldProperty
+from Acquisition.interfaces import IAcquirer
+from Acquisition import aq_base
+
 import numbers
 import collections
 
@@ -451,13 +455,28 @@ class ListOrTupleFromObject(ListOrTuple):
 
 		return [self.value_type.fromObject( x ) for x in context]
 
-
 class UniqueIterable(FieldValidationMixin,schema.Set):
 	"""
 	An arbitrary iterable, not necessarily an actual :class:`set` object and
 	not necessarily iterable, but one whose contents are unique.
 	"""
 	_type = None # Override to not force a set
+
+class AcquisitionFieldProperty(FieldProperty):
+	"""
+	A field property that supports acquisition. Returned objects
+	will be __of__ the instance, and set objects will always be the unwrapped
+	base.
+	"""
+
+	def __get__( self, instance, klass ):
+		result = super(AcquisitionFieldProperty,self).__get__( instance, klass )
+		if instance is not None and IAcquirer.providedBy( result ): # even defaults get wrapped
+			result = result.__of__( instance )
+		return result
+
+	def __set__( self, instance, value ):
+		super(AcquisitionFieldProperty,self).__set__( instance, aq_base( value ) )
 
 def find_most_derived_interface( ext_self, iface_upper_bound, possibilities=None ):
 	"""

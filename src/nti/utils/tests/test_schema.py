@@ -150,3 +150,41 @@ def test_objectlen():
 
 	with assert_raises( sch_interfaces.TooLong ):
 		olen.validate( 'abcdef' )
+
+
+from nti.tests import aq_inContextOf
+from Acquisition import Implicit
+from ExtensionClass import Base
+from zope import interface
+from ..schema import AcquisitionFieldProperty
+from hamcrest import none
+from hamcrest import is_not
+
+def test_aq_property():
+
+	class IBaz(interface.Interface):
+		pass
+	class IFoo(interface.Interface):
+		ob = Object(IBaz)
+
+	@interface.implementer(IBaz)
+	class Baz(object):
+		pass
+
+	class BazAQ(Implicit,Baz):
+		pass
+
+	@interface.implementer(IFoo)
+	class Foo(Base):
+		ob = AcquisitionFieldProperty(IFoo['ob'])
+
+	assert_that( Foo, has_property( 'ob', is_( AcquisitionFieldProperty ) ) )
+
+	foo = Foo()
+	assert_that( foo, has_property( 'ob', none() ) )
+
+	foo.ob = Baz()
+	assert_that( foo, has_property( 'ob', is_not( aq_inContextOf( foo ) ) ) )
+
+	foo.ob = BazAQ()
+	assert_that( foo, has_property( 'ob', aq_inContextOf( foo ) ) )

@@ -23,6 +23,8 @@ from nose.tools import assert_raises
 
 from zope import interface
 import nti.tests
+from Acquisition import Implicit
+from nti.tests import aq_inContextOf
 from zope.container.interfaces import InvalidItemType
 from nti.tests import verifiably_provides, validly_provides
 
@@ -38,12 +40,15 @@ def test_board_interfaces():
 
 def test_board_constraints():
 	@interface.implementer(IForum)
-	class Forum(object):
+	class Forum(Implicit):
 		__parent__ = __name__ = None
 
 	board = Board()
 	# Allowed
 	board['k'] = Forum()
+
+	# And acquired
+	assert_that( board['k'], aq_inContextOf( board ) )
 
 	with assert_raises( InvalidItemType ):
 		# Not allowed
