@@ -323,6 +323,7 @@
 
 	<!-- Temporary placeholders for forums/blogs until I (JAM) lock
 	the permissioning down -->
-	<adapter factory=".forum_views.DefaultUserForumFactory" />
+	<adapter factory=".forum_views.DefaultUserForumFactory"
+			 zcml:condition="have devmode"/>
 
 </configure>
