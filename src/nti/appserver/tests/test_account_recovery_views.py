@@ -23,11 +23,13 @@ from hamcrest import has_property
 from hamcrest import is_not as does_not
 from hamcrest import has_key
 
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver import users
 from nose.tools import assert_raises
 
 from zope import component
+from zope import interface
 from zope.lifecycleevent import modified, created, added
 
 import urllib
@@ -202,6 +204,36 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 		msg = mailer.queue[0]
 
 		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) ) )
+
+	@WithSharedApplicationMockDS
+	def test_recover_user_found_multiple_matches( self ):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user( )
+			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+			username = user.username
+			profile = user_interfaces.IRestrictedUserProfileWithContactEmail( user )
+			created( profile ) # Fire events on the profile to get it in the index
+			added( profile )
+			profile.email = 'jason.madden@nextthought.com'
+			profile.contact_email = 'jason.madden@nextthought.com'
+			modified( profile )
+			modified( user )
+
+
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.forgot.passcode'
+		data = {'email': 'jason.madden@nextthought.com',
+				'username': username,
+				'success': 'http://localhost/place'}
+		app.post( path, data, status=204 )
+
+		mailer = component.getUtility( ITestMailDelivery )
+		assert_that( mailer.queue, has_length( 1 ) )
+		msg = mailer.queue[0]
+
+		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) ) )
+
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_found_query_in_url( self ):

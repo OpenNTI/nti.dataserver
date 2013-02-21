@@ -136,9 +136,8 @@ def forgot_passcode_view(request):
 
 	email_assoc_with_account = _preflight_email_based_request( request  )
 
-	username = request.params.get( 'username' )
-	if username:
-		username = username.strip()
+	username = request.params.get( 'username' ) or ''
+	username = username.strip()
 	if not username:
 		return hexc.HTTPBadRequest(detail="Must provide username")
 
@@ -148,10 +147,10 @@ def forgot_passcode_view(request):
 
 
 	matching_users = find_users_with_email( email_assoc_with_account,
-											request.registry.getUtility(nti_interfaces.IDataserver),
+											component.getUtility(nti_interfaces.IDataserver),
 											username=username	)
 
-	# Ok, we either got one user on no users (todo: there seems to be a scenario where we get multiple users?)
+	# Ok, we either got one user on no users
 	base_template = 'password_reset_email'
 	if matching_users and len(matching_users) == 1:
 		# We got one user. So we need to generate a token, and
@@ -221,12 +220,16 @@ def find_users_with_email( email, dataserver, username=None, match_info=False ):
 						   ('contact_email', email),
 						   ('password_recovery_email_hash', hashed_email),
 						   ('contact_email_recovery_hash', hashed_email)):
-		matches.update( ((x, match_type) for x in ent_catalog.searchResults( **{match_type: (v,v)} ) ) )
+		# If we're not collecting the match info, then keep the set property based just
+		# on the matches, not the type too. this prevents getting duplicate IUser objects back
+		# in the case that a restricted profile user recorded the same email information
+		# for his own use and his parental contact.
+		record_type = match_type if match_info else ''
+		matches.update( ((x, record_type) for x in ent_catalog.searchResults( **{match_type: (v,v)} ) ) )
 
 	if username:
 		matches = ( (u,match_type) for u, match_type in matches
 					if nti_interfaces.IUser.providedBy( u ) and u.username.lower() == username)
-
 
 	return [x[0] for x in matches] if not match_info else list(matches)
 
