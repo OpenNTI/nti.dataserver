@@ -242,6 +242,9 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 		resource.__acl__ = nacl.ACL( self.user )
 		return resource
 
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+def _BlogResource( context, request ):
+	return IPersonalBlog( context, None ) # Does the user have access to a default forum/blog? If no, 403.
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
@@ -249,7 +252,8 @@ class UserTraversable(_PseudoTraversableMixin):
 
 	_pseudo_classes_ = { 'Library': lib_interfaces.IContentPackageLibrary,
 						 'Pages': _PagesResource,
-						 'EnrolledClassSections': _AbstractUserPseudoContainerResource }
+						 'EnrolledClassSections': _AbstractUserPseudoContainerResource,
+						 'Blog': _BlogResource }
 	_pseudo_classes_.update( _PseudoTraversableMixin._pseudo_classes_ )
 
 	_DENY_ALL = True

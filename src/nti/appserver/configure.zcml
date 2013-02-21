@@ -307,6 +307,7 @@
 	<include package="." file="configure_site_policy_rwanda.zcml" />
 	<include package="." file="configure_site_policy_testmathcounts.zcml" />
 
+	<include package="." file="configure_invitations.zcml" />
 
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"
@@ -320,6 +321,8 @@
 			 factory=".pyramid_auth.NextthoughtDotComAdmin"
 			 provides="nti.dataserver.interfaces.IGroupMember" />
 
-	<include package="." file="configure_invitations.zcml" />
+	<!-- Temporary placeholders for forums/blogs until I (JAM) lock
+	the permissioning down -->
+	<adapter factory=".forum_views.DefaultUserForumFactory" />
 
 </configure>
