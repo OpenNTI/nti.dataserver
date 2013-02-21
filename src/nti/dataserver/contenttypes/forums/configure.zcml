@@ -5,10 +5,29 @@
 			i18n_domain="zope">
 
 	<include package="zope.component" />
+	<include package="nti.contentfragments" />
+	<include package="nti.mimetype" />
 
+	<!-- Externalization -->
+	<adapter factory=".externalization._ForumInternalObjectIO"
+			 for=".interfaces.IBoard" />
+	<adapter factory=".externalization._ForumInternalObjectIO"
+			 for=".interfaces.IForum" />
+	<adapter factory=".externalization._ForumInternalObjectIO"
+			 for=".interfaces.ITopic" />
+	<adapter factory=".externalization._ForumInternalObjectIO"
+			 for=".interfaces.IPost" />
+
+	<!--
+		 Make sure and do this after the .externalization package has
+		 worked its magic.
+	-->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
+	<ext:registerMimeFactories module=".board" />
+	<ext:registerMimeFactories module=".forum" />
+	<ext:registerMimeFactories module=".post" />
+	<ext:registerMimeFactories module=".topic" />
 
-	<!-- <ext:registerMimeFactories module=".note" /> -->
 
 </configure>

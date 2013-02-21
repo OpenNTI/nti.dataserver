@@ -291,7 +291,7 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 			schema will be validated after an object has been updated with :meth:`update_from_external_object`,
 			not just the keys that were assigned.
 		"""
-		super(InterfaceObjectIO, self).__init__( )
+		super(InterfaceObjectIO, self).__init__(  )
 		self._ext_self = ext_self
 		# Cache all of this data that we use. It's required often and, if not quite a bottleneck,
 		# does show up in the profiling data
@@ -376,7 +376,7 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 			if callable(ext_class_name):
 				# Even though the tagged value may have come from a superclass,
 				# give the actual class (interface) we're using
-				ext_class_name = ext_class_name( self._iface, self._ext_replacement )
+				ext_class_name = ext_class_name( self._iface, self._ext_replacement() )
 			if ext_class_name:
 				break
 

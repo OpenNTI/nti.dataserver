@@ -39,15 +39,17 @@ MIME_BASE_PLIST = MIME_BASE + MIME_EXT_PLIST
 
 @interface.implementer( IContentTypeAware )
 @component.adapter( IContentTypeMarker )
-class ContentTypeMarkeTypeAwareAdapter(object):
+class ContentTypeMarkerTypeAwareAdapter(object):
 	"""
 	Makes any :class:IResource into an :class:IContentTypeAware
 	object by using its class name.
 	"""
 
 	def __init__( self, obj ):
-		self.mime_type = nti_mimetype_with_class( type(obj) )
+		self.mime_type = nti_mimetype_with_class( obj.__class__ ) # Not type(obj) to work with proxies
 		self.parameters = None
+
+ContentTypeMarkeTypeAwareAdapter = ContentTypeMarkerTypeAwareAdapter # BBB
 
 _mm_types = weakref.WeakSet()
 class _ClassProperty(property):
@@ -202,7 +204,7 @@ def nti_mimetype_from_object( obj, use_class=True ):
 				return nti_mimetype_with_class( iface.__name__[1:] )
 
 
-	clazz = obj if obj_is_type else type(obj)
+	clazz = obj if obj_is_type else obj.__class__ # NOT type(obj), to play well with proxies
 	if use_class and clazz.__module__.startswith( 'nti.' ):
 		# NOTE: Must be very careful not to try to print the object in this
 		# function. Printing some objects tries to get their external

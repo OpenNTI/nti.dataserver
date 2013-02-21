@@ -478,6 +478,37 @@ class AcquisitionFieldProperty(FieldProperty):
 	def __set__( self, instance, value ):
 		super(AcquisitionFieldProperty,self).__set__( instance, aq_base( value ) )
 
+class UnicodeConvertingFieldProperty(FieldProperty):
+	"""
+	Accepts bytes input for the unicode property if it can be
+	decoded as UTF-8. This is primarily to support legacy test cases
+	and should be removed when all constants are unicode.
+	"""
+
+	def __set__( self, inst, value ):
+		if value and not isinstance(value, unicode):
+			value = value.decode('utf-8')
+		super(UnicodeConvertingFieldProperty,self).__set__( inst, value )
+
+class AdaptingFieldProperty(FieldProperty):
+	"""
+	Primarily for legacy support and testing, adds adaptation to an interface
+	when setting a field. This is most useful when the values are simple literals
+	like strings.
+	"""
+
+	def __init__( self, field, name=None ):
+		if not sch_interfaces.IObject.providedBy( field ):
+			raise sch_interfaces.WrongType()
+		self.schema = field.schema
+		super(AdaptingFieldProperty,self).__init__( field, name=name )
+
+	def __set__( self, inst, value ):
+		try:
+			super(AdaptingFieldProperty,self).__set__( inst, value )
+		except sch_interfaces.SchemaNotProvided:
+			super(AdaptingFieldProperty,self).__set__( inst, self.schema( value ) )
+
 def find_most_derived_interface( ext_self, iface_upper_bound, possibilities=None ):
 	"""
 	Search for the most derived version of the interface `iface_upper_bound`
