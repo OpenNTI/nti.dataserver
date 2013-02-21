@@ -209,6 +209,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			storage.add_message( msg_info )
 			msg_info.toExternalObject()
 			room = PersistentContainedExternal()
+			interface.alsoProvides( room, chat_interfaces.IMeeting )
 			room.creator = user.username
 			room.containerId = msg_info.containerId
 			conn.add( room )
