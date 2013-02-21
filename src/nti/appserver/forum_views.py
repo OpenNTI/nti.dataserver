@@ -24,7 +24,7 @@ from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 from nti.dataserver.contenttypes.forums.topic import StoryTopic
 
-from nti.externalization.oids import toExternalOID
+from nti.externalization.oids import to_external_ntiid_oid
 
 from pyramid.view import view_config
 from zope.container.interfaces import INameChooser
@@ -48,12 +48,13 @@ def _DefaultUserForumFactory(  ):
 @component.adapter(nti_interfaces.IUser)
 def DefaultUserForumFactory(user):
 	forum = zope.annotation.factory(_DefaultUserForumFactory)(user)
-	forum.title = user.username
-	forum.__name__ = unicode(forum.__name__, 'ascii')
-	errors = schema.getValidationErrors( frm_interfaces.IPersonalBlog, forum )
-	if errors:
-		__traceback_info__ = errors
-		raise errors[0][1]
+	if not forum._p_mtime:
+		forum.title = user.username
+		forum.__name__ = unicode(forum.__name__, 'ascii')
+		errors = schema.getValidationErrors( frm_interfaces.IPersonalBlog, forum )
+		if errors:
+			__traceback_info__ = errors
+			raise errors[0][1]
 	return forum
 
 @view_config( route_name='objects.generic.traversal',
@@ -137,7 +138,7 @@ class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMi
 		# the owner's Objects tree.
 		self.request.response.location = self.request.resource_url( owner,
 																	'Objects',
-																	toExternalOID( topic ) )
+																	to_external_ntiid_oid( topic ) )
 
 
 		return topic
