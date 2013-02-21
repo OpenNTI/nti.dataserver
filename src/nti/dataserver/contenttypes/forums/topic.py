@@ -25,11 +25,13 @@ from nti.utils.schema import PermissiveSchemaConfigured
 
 from ..note import BodyFieldProperty
 from zope.schema.fieldproperty import FieldProperty
+from nti.utils.schema import AcquisitionFieldProperty
 
 from . import interfaces as for_interfaces
 
 @interface.implementer(for_interfaces.ITopic)
 class Topic(Acquisition.Implicit,
+			containers.AcquireObjectsOnReadMixin,
 			containers.CheckingLastModifiedBTreeContainer):
 	title = FieldProperty(for_interfaces.ITopic['title'])
 
@@ -37,4 +39,4 @@ class Topic(Acquisition.Implicit,
 @interface.implementer(for_interfaces.IStoryTopic)
 class StoryTopic(Topic):
 
-	story = FieldProperty(for_interfaces.IStoryTopic['story'])
+	story = AcquisitionFieldProperty(for_interfaces.IStoryTopic['story'])

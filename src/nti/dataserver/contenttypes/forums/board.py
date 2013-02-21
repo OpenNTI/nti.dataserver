@@ -17,7 +17,7 @@ from zope import component
 
 from zope.container.constraints import checkObject
 
-import Acquisition
+import ExtensionClass
 from persistent import Persistent
 
 from nti.dataserver import datastructures
@@ -29,5 +29,7 @@ from zope.schema.fieldproperty import FieldProperty
 from . import interfaces as for_interfaces
 
 @interface.implementer(for_interfaces.IBoard)
-class Board(containers.CheckingLastModifiedBTreeContainer):
+class Board(ExtensionClass.Base,
+			containers.AcquireObjectsOnReadMixin,
+			containers.CheckingLastModifiedBTreeContainer):
 	title = FieldProperty(for_interfaces.IBoard['title'])

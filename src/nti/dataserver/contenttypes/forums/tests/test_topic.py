@@ -23,6 +23,7 @@ from nose.tools import assert_raises
 import nti.tests
 
 import nti.tests
+from nti.tests import aq_inContextOf
 from zope.container.interfaces import InvalidItemType, InvalidContainerType
 from nti.tests import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
@@ -37,17 +38,19 @@ def test_topic_interfaces():
 	assert_that( post, validly_provides( ITopic ) )
 
 def test_story_topic_interfaces():
-	post = StoryTopic()
-	assert_that( post, verifiably_provides( IStoryTopic ) )
+	topic = StoryTopic()
+	assert_that( topic, verifiably_provides( IStoryTopic ) )
 
-	post.story = Post()
-	assert_that( post, validly_provides( IStoryTopic ) )
+	topic.story = Post()
+	assert_that( topic, validly_provides( IStoryTopic ) )
+	assert_that( topic.story, aq_inContextOf( topic ) )
 
 def test_topic_constraints():
 
 	topic = Topic()
 
 	topic['k'] = Post()
+	assert_that( topic['k'], aq_inContextOf( topic ) )
 
 	with assert_raises( InvalidItemType ):
 		topic['z'] = Topic()
