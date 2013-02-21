@@ -239,7 +239,7 @@ setup(
 		'zope.app.component >= 3.9.3', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.annotation >= 4.0.1',
-		'zope.authentication >= 4.0.0',
+		'zope.authentication >= 4.1.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser >= 2.0.1',
 		'zope.browserpage >= 4.0.0',
@@ -267,7 +267,7 @@ setup(
 		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 4.0.0',
 		'zope.dublincore >= 4.0.0',
-		'zope.error >= 4.0.0',
+		'zope.error >= 4.1.0',
 		'zope.event >= 4.0.2',
 		'zope.exceptions >= 4.0.5',
 		'zope.filerepresentation >= 4.0.1',
@@ -286,9 +286,9 @@ setup(
 		'zope.mimetype >= 1.3.1',
 		'zope.minmax >= 2.0.0',
 		'zope.pagetemplate >= 4.0.1',
-		'zope.password >= 3.6.1', # encrypted password management
+		'zope.password >= 4.0.0', # encrypted password management
 		'zope.pluggableauth >= 1.3', # pluggable authentication for zope.auth; see also repoze.who
-		'zope.publisher >= 3.13.1',
+		'zope.publisher >= 3.13.1',#4.0.0a1 is out, should be fine
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 1.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
@@ -296,8 +296,8 @@ setup(
 		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
 		# A 4.0.0a3 is out and works fine. officially upgrade when final. But this requires an extra: 'zope.security[untrustedpython] >= 4.0.0a3'
 		'zope.security >= 3.9.0',
-		'zope.session >= 3.9.5',
-		'zope.site >= 3.9.2', # local, persistent ZCA sites
+		'zope.session >= 3.9.5', # 4.0.0a1 is out, should be fine
+		'zope.site >= 3.9.2', # local, persistent ZCA sites. 4.0.0a1 is out and should be fine
 		'zope.size >= 4.0.0',
 		'zope.tal >= 4.0.0a1',
 		'zope.tales >= 4.0.0',
