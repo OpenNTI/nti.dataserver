@@ -256,6 +256,7 @@ setup(
 		# also breaks compatibility with old pickles of Folder (despite comments to the contrary)
 		# AttributeError: 'Folder' object has no attribute '_SampleContainer__data
 		# Until they fix it, pin to 3.12.0
+		# Reported as issue https://github.com/zopefoundation/zope.container/issues/1
 		#'zope.container[zcml,zodb] >= 4.0.0a1',
 		'zope.container == 3.12.0',
 		'zope.contentprovider >= 3.7.2',
