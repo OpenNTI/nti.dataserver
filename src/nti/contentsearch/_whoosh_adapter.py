@@ -18,22 +18,22 @@ from zope.annotation import factory as an_factory
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch.common import get_type_name
-from nti.contentsearch._datastructures import LFUMap
-from nti.contentsearch.common import sort_search_types
-from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch._whoosh_index import get_indexables
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._whoosh_index import get_indexable_object
-from nti.contentsearch._search_results import empty_search_results
-from nti.contentsearch._search_results import merge_search_results
-from nti.contentsearch._search_results import empty_suggest_results
-from nti.contentsearch._search_results import merge_suggest_results
-from nti.contentsearch._whoosh_indexstorage import get_index_writer
-from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
-from nti.contentsearch._search_results import empty_suggest_and_search_results
-from nti.contentsearch._search_results import merge_suggest_and_search_results
+from .common import get_type_name
+from ._datastructures import LFUMap
+from .common import sort_search_types
+from ._search_query import QueryObject
+from .common import normalize_type_name
+from ._whoosh_index import get_indexables
+from . import interfaces as search_interfaces
+from ._whoosh_index import get_indexable_object
+from ._search_results import empty_search_results
+from ._search_results import merge_search_results
+from ._search_results import empty_suggest_results
+from ._search_results import merge_suggest_results
+from ._whoosh_indexstorage import get_index_writer
+from ._search_indexmanager import _SearchEntityIndexManager
+from ._search_results import empty_suggest_and_search_results
+from ._search_results import merge_suggest_and_search_results
 		
 def get_indexname(username, type_name, use_md5=True):
 	type_name = normalize_type_name(type_name)

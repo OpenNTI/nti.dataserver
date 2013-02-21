@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Index agent
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -8,12 +12,12 @@ import six
 from zope import component
 from ZODB import loglevels
 
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import Entity
+from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentsearch import get_indexable_types
-from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch import interfaces as search_interfaces
+from . import get_indexable_types
+from .common import normalize_type_name
+from . import interfaces as search_interfaces
 
 logger = __import__('logging').getLogger(__name__)
 

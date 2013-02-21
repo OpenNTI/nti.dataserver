@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+Whoosh user search adapter.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import inspect
 from datetime import datetime
@@ -21,25 +27,21 @@ from nti.contentprocessing import default_ngram_minsize
 from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing import default_word_tokenizer_pattern
 
-from nti.contentsearch.common import epoch_time
-from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch._whoosh_query import parse_query
-from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
-from nti.contentsearch._datastructures import CaseInsensitiveDict
-from nti.contentsearch._search_results import empty_search_results
-from nti.contentsearch._search_results import empty_suggest_results
+from .common import epoch_time
+from ._search_query import QueryObject
+from ._whoosh_query import parse_query
+from .common import normalize_type_name
+from . import interfaces as search_interfaces
+from ._search_highlights import WORD_HIGHLIGHT
+from ._datastructures import CaseInsensitiveDict
+from ._search_results import empty_search_results
+from ._search_results import empty_suggest_results
+from ._search_results import empty_suggest_and_search_results
 
-from nti.contentsearch._search_results import empty_suggest_and_search_results
-
-from nti.contentsearch.common import (	channel_, content_, keywords_, references_,
-										recipients_, sharedWith_, ntiid_, last_modified_,
-										creator_, containerId_, replacementContent_,
-										redactionExplanation_, intid_, title_, quick_)
-
-logger = __import__('logging').getLogger(__name__)
-
+from .common import (channel_, content_, keywords_, references_,
+					 recipients_, sharedWith_, ntiid_, last_modified_,
+					 creator_, containerId_, replacementContent_,
+					 redactionExplanation_, intid_, title_, quick_)
 _default_word_max_dist = 15
 
 class _SearchableContent(object):
@@ -284,6 +286,11 @@ def get_redaction_explanation(obj):
 	result = adapted.get_redaction_explanation()
 	return result if result else None
 
+def get_post_title(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
+	result = adapted.get_title()
+	return result if result else None
+
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
 	uid = _ds_intid.getId(obj)
@@ -378,31 +385,43 @@ class UserIndexableContent(_SearchableContent):
 			writer.cancel()
 			raise e
 
-def _create_treadable_schema():
+def _create_shareable_schema():
 	schema = _create_user_indexable_content_schema()
-	schema.add(keywords_, fields.KEYWORD(stored=False) )
 	schema.add(sharedWith_, fields.TEXT(stored=False) )
 	return schema
 
-class TreadableIndexableContent(UserIndexableContent):
+class ShareableIndexableContent(UserIndexableContent):
 
-	_schema = _create_treadable_schema()
+	_schema = _create_shareable_schema()
 
 	def get_index_data(self, data):
-		result = super(TreadableIndexableContent, self).get_index_data(data)
-		result[keywords_] = get_keywords(data)
+		result = super(ShareableIndexableContent, self).get_index_data(data)
+		result[sharedWith_] = get_sharedWith(data)
+		return result
+	
+def _create_threadable_schema():
+	schema = _create_shareable_schema()
+	schema.add(keywords_, fields.KEYWORD(stored=False) )
+	return schema
+
+class ThreadableIndexableContent(ShareableIndexableContent):
+
+	_schema = _create_threadable_schema()
+
+	def get_index_data(self, data):
+		result = super(ThreadableIndexableContent, self).get_index_data(data)
 		result[sharedWith_] = get_sharedWith(data)
 		return result
 
 # highlight
 
 def create_highlight_schema():
-	schema = _create_treadable_schema()
+	schema = _create_threadable_schema()
 	schema.add(content_, content_field(stored=False))
 	schema.add(quick_, ngram_field())
 	return schema
 
-class Highlight(TreadableIndexableContent):
+class Highlight(ThreadableIndexableContent):
 
 	__indexable__ = True
 	_schema = create_highlight_schema()
@@ -465,6 +484,26 @@ class MessageInfo(Note):
 		result[channel_] = get_channel(data)
 		result[references_] = get_references(data)
 		return result
+
+# post
+
+def create_post_schema():
+	schema = _create_shareable_schema()
+	schema.add(content_, content_field(stored=False))
+	schema.add(quick_, ngram_field())
+	schema.add(title_, fields.TEXT(stored=False))
+	return schema
+
+class Post(ShareableIndexableContent):
+
+	__indexable__ = True
+	_schema = create_post_schema()
+
+	def get_index_data(self, data):
+		result = super(Post, self).get_index_data(data)
+		result[title_] = get_post_title(data)
+		return result
+
 
 # register indexable objects
 

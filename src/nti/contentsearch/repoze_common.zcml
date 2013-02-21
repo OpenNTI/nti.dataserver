@@ -25,7 +25,8 @@
 	<utility factory="._repoze_index._RepozeHighlightCatalogCreator" name="highlight" />
 	<utility factory="._repoze_index._RepozeRedactionCatalogCreator" name="redaction" />
 	<utility factory="._repoze_index._RepozeMessageInfoCatalogCreator" name="messageinfo" />
-
+	<utility factory="._repoze_index._RepozePostCatalogCreator" name="post" />
+	
 	<!--
 	<utility factory="._repoze_redis_store._RepozeRedisStorageService"  />
 	-->

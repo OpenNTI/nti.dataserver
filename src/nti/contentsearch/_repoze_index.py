@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Repoze index definitions and discriminators.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -13,8 +17,8 @@ from repoze.catalog.indexes.text import CatalogTextIndex
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
+from . import interfaces as search_interfaces
+from .textindexng3 import CatalogTextIndexNG3
 
 from nti.contentprocessing import compute_ngrams
 
@@ -44,7 +48,7 @@ def _flatten_list(result, default=None):
 	return result
 
 def get_sharedWith(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IShareableContentResolver)
 	result = adapted.get_sharedWith()
 	return _flatten_list(result, default)
 
@@ -54,7 +58,7 @@ def get_references(obj, default=None):
 	return _flatten_list(result, default)
 
 def get_channel(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
 	return adapted.get_channel() or default
 
 def get_recipients(obj, default=None):
@@ -63,16 +67,21 @@ def get_recipients(obj, default=None):
 	return _flatten_list(result, default)
 
 def get_replacement_content(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
 	result = adapted.get_replacement_content()
 	return result.lower() if result else None
 get_replacementContent = get_replacement_content
 
 def get_redaction_explanation(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
 	result = adapted.get_redaction_explanation()
 	return result.lower() if result else None
 get_redactionExplanation = get_redaction_explanation
+
+def get_post_title(obj, default=None):
+	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
+	result = adapted.get_title()
+	return result.lower() if result else None
 
 def get_object_content(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
@@ -122,6 +131,9 @@ class _RepozeRedactionCatalogCreator(_RepozeCatalogCreator):
 class _RepozeMessageInfoCatalogCreator(_RepozeCatalogCreator):
 	_iface = search_interfaces.IMessageInfoRepozeCatalogFieldCreator
 
+class _RepozePostCatalogCreator(_RepozeCatalogCreator):
+	_iface = search_interfaces.IPostRepozeCatalogFieldCreator
+	
 # repoze index field creators
 
 def _get_discriminator(name):

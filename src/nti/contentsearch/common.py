@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Search constants and common functions.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -89,6 +93,7 @@ last_modified_fields =  (ext_interfaces.StandardInternalFields.LAST_MODIFIED,
 nti_mimetype_prefix = MIME_BASE + '.'
 
 note_ = u'note'
+post_ = u'post'
 canvas_ = u'canvas'
 highlight_ = u'highlight'
 redaction_ = u'redaction'

@@ -18,6 +18,7 @@ from zope import interface
 from zope import component
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
 from nti.chatserver import interfaces as chat_interfaces
 
@@ -28,7 +29,7 @@ from .common import get_type_name
 from .common import (CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, container_id_fields)
 from .common import (ngrams_, channel_, content_, keywords_, references_, username_,
 					 last_modified_, recipients_, sharedWith_, ntiid_, type_,
-					 creator_, containerId_, intid_) 
+					 creator_, containerId_, intid_, title_) 
 
 # define search fields
 
@@ -87,7 +88,7 @@ def create_search_domain(connection, domain_name='ntisearch', language='en'):
 	# content fields
 	connection.define_index_field(domain_name, content_, 'text', searchable=True, result=False)
 	connection.define_index_field(domain_name, ngrams_, 'text', searchable=True, result=False)
-	
+	connection.define_index_field(domain_name, title_, 'text', searchable=True, result=False)
 	connection.define_index_field(domain_name, recipients_, 'text', searchable=True, result=False)
 	connection.define_index_field(domain_name, _shared_with, 'text', searchable=True, result=False, source_attributes=(sharedWith_,))
 
@@ -140,7 +141,7 @@ def get_creator(obj):
 	return adapted.get_creator() or unicode(nti_interfaces.SYSTEM_USER_NAME)
 
 def get_sharedWith(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IShareableContentResolver)
 	result = adapted.get_sharedWith()
 	return unicode(' '.join(result)) if result else u''
 
@@ -162,6 +163,10 @@ def get_recipients(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
 	result = adapted.get_recipients()
 	return unicode(' '.join(result)) if result else u''
+
+def get_post_title(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
+	return adapted.get_title() or u''
 
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
@@ -198,6 +203,12 @@ class _CSMessageInfo(_AbstractCSObject):
 	def _set_items(self, src):
 		super(_CSMessageInfo, self)._set_items(src)
 
+@component.adapter(for_interfaces.IPost)	
+class _CSPost(_AbstractCSObject):
+	def _set_items(self, src):
+		super(_CSPost, self)._set_items(src)
+		self[title_] = get_post_title(src)
+		
 def to_cloud_object(obj, username):
 	data = search_interfaces.ICloudSearchObject(obj)
 	data[username_] = username
