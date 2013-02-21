@@ -278,7 +278,7 @@ setup(
 		'zope.i18n >= 3.8.0', # 4.0.0a4 is out; works fine. upgrade when official
 		'zope.i18nmessageid >= 4.0.2',
 		'zope.index >= 3.6.4',
-		'zope.interface >= 4.0.3',
+		'zope.interface >= 4.0.4',
 		'zope.intid >= 3.7.2',
 		'zope.keyreference >= 3.6.4',
 		'zope.lifecycleevent >= 4.0.1',
