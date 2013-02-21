@@ -18,18 +18,30 @@ logger = __import__('logging').getLogger(__name__)
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
+from hamcrest import all_of
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_entries
 from hamcrest import has_entry
 from nose.tools import assert_raises
 
 from zope import interface
 import nti.tests
+from nti.tests import is_empty
 from Acquisition import Implicit
 from nti.tests import aq_inContextOf
-from zope.container.interfaces import InvalidItemType
 from nti.tests import verifiably_provides, validly_provides
+
+from nti.externalization.tests import externalizes
+from zope.container.interfaces import InvalidItemType, InvalidContainerType
+
+from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
 from ..interfaces import IBoard, IForum
 from ..board import Board
+
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
+tearDownModule = nti.tests.module_teardown
 
 
 def test_board_interfaces():
@@ -53,3 +65,25 @@ def test_board_constraints():
 	with assert_raises( InvalidItemType ):
 		# Not allowed
 		board['z'] = Board()
+
+def test_blog_externalizes():
+
+	post = Board()
+	post.title = 'foo'
+
+	@interface.implementer(IForum)
+	class X(Implicit):
+		__parent__ = __name__ = None
+
+	assert_that( post,
+				 externalizes( all_of(
+					 has_entries( 'title', 'foo',
+								  'Class', 'Board',
+								  'MimeType', 'application/vnd.nextthought.forums.board',
+								  'ForumCount', 0,
+								  'sharedWith', is_empty() ),
+					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
+
+	post['k'] = X()
+	assert_that( post,
+				 externalizes( has_entry( 'ForumCount', 1 ) ) )

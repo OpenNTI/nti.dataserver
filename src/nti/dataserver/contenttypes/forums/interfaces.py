@@ -19,6 +19,7 @@ from zope.container.interfaces import IContentContainer, IContained
 from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 
 from nti.utils import schema
+from zope.schema import Int
 
 class IBoard(IContentContainer,IContained,nti_interfaces.ITitledContent): # implementations may be IAcquirer
 	"""
@@ -28,6 +29,9 @@ class IBoard(IContentContainer,IContained,nti_interfaces.ITitledContent): # impl
 	"""
 	contains(b".IForum") # copies docs for __setitem__, which we don't want
 	__setitem__.__doc__ = None
+
+	ForumCount = Int( title="The number of forums contained as children of this board",
+					  readonly=True )
 
 class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledContent):
 	"""
@@ -40,6 +44,8 @@ class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledConten
 	containers(IBoard)# Adds __parent__ as required
 
 	__parent__.required = False
+	TopicCount = Int( title="The number of topics contained as children of this forum",
+					  readonly=True )
 
 
 class ITopic(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledContent):
@@ -56,6 +62,9 @@ class ITopic(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledConten
 	__setitem__.__doc__ = None
 	containers(IForum)# Adds __parent__ as required
 	__parent__.required = False
+
+	PostCount = Int( title="The number of comments contained as children of this topic",
+					 readonly=True )
 
 
 

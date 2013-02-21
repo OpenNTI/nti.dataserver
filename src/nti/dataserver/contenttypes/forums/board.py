@@ -24,15 +24,20 @@ from nti.dataserver import datastructures
 from nti.dataserver import containers
 from nti.dataserver import sharing
 
-from zope.schema.fieldproperty import FieldProperty
 
+from nti.utils.schema import AdaptingFieldProperty
 from . import interfaces as for_interfaces
 
 @interface.implementer(for_interfaces.IBoard)
 class Board(ExtensionClass.Base,
 			containers.AcquireObjectsOnReadMixin,
-			containers.CheckingLastModifiedBTreeContainer):
+			containers.CheckingLastModifiedBTreeContainer,
+			sharing.AbstractReadableSharedWithMixin):
 
 	__external_can_create__ = False
 
-	title = FieldProperty(for_interfaces.IBoard['title'])
+	title = AdaptingFieldProperty(for_interfaces.IBoard['title'])
+
+	ForumCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
+
+	sharingTargets = ()

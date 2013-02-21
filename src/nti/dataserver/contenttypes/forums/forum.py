@@ -36,7 +36,7 @@ class Forum(Acquisition.Implicit,
 	title = AdaptingFieldProperty(for_interfaces.IForum['title'])
 
 	sharingTargets = ()
-
+	TopicCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
 
 @interface.implementer(for_interfaces.IPersonalBlog)
 class PersonalBlog(Forum):
