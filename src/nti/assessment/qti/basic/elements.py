@@ -14,6 +14,7 @@ import collections
 from zope import schema
 from zope import interface
 from zope.container import contained as zcontained
+from zope.schema.fieldproperty import FieldProperty
 from zope.schema import interfaces as sch_interfaces
 from zope.annotation import interfaces as an_interfaces
 from zope.interface.common.sequence import IFiniteSequence
@@ -43,20 +44,14 @@ def get_schema_fields(iface):
 	result = {}
 	_travel(iface, result)
 	return result
-	
-def _getter(name, default=None):
-	def function(self):
-		return getattr(self, name, default)
-	return function
 
 def _check_value(value, iface=None):
 	if iface is not None and value is not None:
 		assert iface.providedBy(value)
-		
-def _setter(name, iface=None):
-	def function(self, value):
-		_check_value(value, iface)
-		setattr(self, name, value)
+			
+def _getter(name, default=None):
+	def function(self):
+		return getattr(self, name, default)
 	return function
 
 def _collection_getter(name, factory=list):
@@ -76,6 +71,16 @@ def _add_collection(name, iface=None):
 			collec.append(value)
 		elif isinstance(collec, collections.Set):
 			collec.add(value)
+	return function
+
+_marker = object()
+
+def _attribute_getter(name, sch_def):
+	def function(self):
+		value = self.__dict__.get(name, _marker)
+		if value is _marker:
+			value = getattr(sch_def, 'default', _marker)
+		value = None if value is _marker else value
 	return function
 
 def _attribute_setter(name, sch_def):
@@ -166,17 +171,18 @@ def qti_creator(cls):
 	
 	# fields
 	for k, v in definitions.items():
+		
 		if hasattr(cls, k): continue
-		pname = "_%s" % k
-		if sch_interfaces.IObject.providedBy(v):
-			iface = v.schema
-			setattr(cls, k, property(_getter(pname), _setter(pname, iface)))
-		elif sch_interfaces.IText.providedBy(v) or sch_interfaces.IChoice.providedBy(v):
-			setattr(cls, k, property(_getter(pname), _setter(pname)))
+		
+		if 	sch_interfaces.IObject.providedBy(v) or sch_interfaces.IText.providedBy(v) or  \
+			sch_interfaces.IChoice.providedBy(v):
+		
+			setattr(cls, k, FieldProperty(v, k))
+			
 		elif sch_interfaces.IList.providedBy(v):
 			_make_sequence(cls, k)
-			setattr(cls, k, property(_collection_getter(pname, list_factory)))
-			setattr(cls, "get_%s_list" % k.lower(), _getter(pname))
+			setattr(cls, k, property(_collection_getter(k, list_factory)))
+			setattr(cls, "get_%s_list" % k.lower(), _getter(k))
 			if sch_interfaces.IObject.providedBy(v.value_type) or sch_interfaces.IText.providedBy(v.value_type):
 				iface = v.value_type.schema
 				setattr(cls, "add_%s" % k.lower(), _add_collection(k, iface))
@@ -187,9 +193,11 @@ def qti_creator(cls):
 			
 	# attributes
 	for k,v in attributes.items():
-		if hasattr(cls, k): continue
+		if hasattr(cls, k): 
+			warnings.warn("attribute %s already set" % k)
+			continue
 		pname = "_%s" % k
-		setattr(cls, k, property(_getter(pname), _attribute_setter(pname, v)))
+		setattr(cls, k, property(_attribute_getter(pname), _attribute_setter(pname, v)))
 	
 	setattr(cls, "get_attributes", _get_attributes)
 	return cls
