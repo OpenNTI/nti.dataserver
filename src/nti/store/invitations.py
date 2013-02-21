@@ -30,8 +30,8 @@ class InvitationCapacityExceeded(Exception):
 	
 class _StoreEntityInvitation(JoinEntitiesInvitation):
 	
-	def __init__( self, purchase_id, username, code, entities, capacity=None ):
-		super(_StoreEntityInvitation, self).__init__(code, entities)
+	def __init__( self, purchase_id, username, code, entities=(), capacity=None ):
+		super(_StoreEntityInvitation, self).__init__(code, entities or ())
 		self.creator = username
 		self.capacity = capacity
 		self.purchase_id = purchase_id
@@ -53,7 +53,7 @@ class _StoreEntityInvitation(JoinEntitiesInvitation):
 		else:
 			raise InvitationCapacityExceeded()
 		
-def create_store_invitation(purchase_id, username, entities, capacity=None):
+def create_store_invitation(purchase_id, username, entities=(), capacity=None):
 	purchase = get_purchase_attempt(purchase_id, username)
 	iid = component.getUtility( zc_intid.IIntIds ).getId( purchase )
 	invitation_code = integer_strings.to_external_string( iid )

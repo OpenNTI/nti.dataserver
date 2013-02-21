@@ -51,4 +51,22 @@ class TestInvitations(ConfiguringTestBase):
 		with assert_raises(invitations.InvitationCapacityExceeded):
 			invitation.accept(user2)
 
+	@WithMockDSTrans
+	def test_create_invitation_no_entities(self):
+		user = self._create_user()
+		
+		hist = store_interfaces.IPurchaseHistory(user, None)
+		pa = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor)
+		hist.add_purchase(pa)
 	
+		invitation = invitations.create_store_invitation(pa.id, user.username, capacity=1)
+		assert_that(invitation, is_(not_none()))
+				
+		user2 = self._create_user(username='nt2@nti.com')
+		invitation.accept(user2)
+			
+		user3 = self._create_user(username='nt3@nti.com')
+		with assert_raises(invitations.InvitationCapacityExceeded):
+			invitation.accept(user3)
+
+		
