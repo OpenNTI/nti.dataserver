@@ -1,4 +1,9 @@
-import time
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
 import unittest
 
 from zope import component
@@ -22,7 +27,7 @@ from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch.tests import domain as domain_words
 
-from hamcrest import (assert_that, has_entry, greater_than, has_key, has_length, greater_than_or_equal_to, is_)
+from hamcrest import (assert_that, has_entry, has_key, has_length, greater_than_or_equal_to, is_)
 
 class TestSearchExternal(ConfiguringTestBase):
 			
@@ -43,8 +48,6 @@ class TestSearchExternal(ConfiguringTestBase):
 			
 	@WithMockDSTrans
 	def test_externalize_search_results(self):
-		
-		now = time.time()
 		qo = QueryObject.create("wind")
 		containerId = make_ntiid(nttype='bleach', specific='manga')	
 		searchResults = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
@@ -61,7 +64,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo, has_entry(QUERY, u'wind'))
 		assert_that(eo, has_entry(HIT_COUNT, len(zanpakuto_commands)))
 		assert_that(eo, has_key(LAST_MODIFIED))
-		assert_that(eo[LAST_MODIFIED], greater_than(now))
+		assert_that(eo[LAST_MODIFIED], greater_than_or_equal_to(0))
 		assert_that(eo, has_key(ITEMS))
 		assert_that(eo[ITEMS], has_length(len(zanpakuto_commands)))
 		
@@ -82,7 +85,6 @@ class TestSearchExternal(ConfiguringTestBase):
 		
 	@WithMockDSTrans
 	def test_externalize_search_suggest_results(self):
-		now = time.time()
 		qo = QueryObject.create("theotokos")
 		searchResults = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
 		searchResults.highlight_type = WORD_HIGHLIGHT
@@ -104,7 +106,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo, has_entry(QUERY, u'theotokos'))
 		assert_that(eo, has_entry(HIT_COUNT, len(commands)))
 		assert_that(eo, has_key(LAST_MODIFIED))
-		assert_that(eo[LAST_MODIFIED], greater_than_or_equal_to(now))
+		assert_that(eo[LAST_MODIFIED], greater_than_or_equal_to(0))
 		assert_that(eo, has_key(ITEMS))
 		assert_that(eo[ITEMS], has_length(len(commands)))
 		assert_that(eo[SUGGESTIONS], has_length(len(suggestions)))
