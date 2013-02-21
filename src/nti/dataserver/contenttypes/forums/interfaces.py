@@ -26,7 +26,8 @@ class IBoard(IContentContainer,IContained,nti_interfaces.ITitledContent): # impl
 	usually this number is relatively small). Each forum is distinctly named
 	within this board.
 	"""
-	contains(b".IForum")
+	contains(b".IForum") # copies docs for __setitem__, which we don't want
+	__setitem__.__doc__ = None
 
 class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledContent):
 	"""
@@ -35,6 +36,7 @@ class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledConten
 	being allowed to view the contents of the forum and add new topics.
 	"""
 	contains(b".ITopic")
+	__setitem__.__doc__ = None
 	containers(IBoard)# Adds __parent__ as required
 
 	__parent__.required = False
@@ -50,6 +52,7 @@ class ITopic(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledConten
 
 	"""
 	contains(b".IPost")
+	__setitem__.__doc__ = None
 	containers(IForum)# Adds __parent__ as required
 	__parent__.required = False
 

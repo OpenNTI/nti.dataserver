@@ -22,6 +22,7 @@ from nti.dataserver import sharing
 from nti.utils.schema import PermissiveSchemaConfigured
 
 from ..note import BodyFieldProperty
+from nti.utils.schema import AdaptingFieldProperty
 from zope.schema.fieldproperty import FieldProperty
 
 from . import interfaces as for_interfaces
@@ -37,6 +38,9 @@ class Post(Acquisition.Implicit,
 
 	body = BodyFieldProperty(for_interfaces.IPost['body'])
 
-	title = FieldProperty(for_interfaces.IPost['title'])
+	title = AdaptingFieldProperty(for_interfaces.IPost['title'])
 
 	sharingTargets = ()
+
+	def __eq__( self, other ):
+		return other == (self.id, self.containerId, self.title, self.body, self.creator)

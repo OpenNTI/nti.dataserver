@@ -83,9 +83,8 @@ from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.datastructures import InterfaceObjectIO
 from zope.proxy import removeAllProxies
 
-@component.adapter(nti_interfaces.IModeledContent)
-@interface.implementer(IInternalObjectIO)
-class UserContentRootInternalObjectIO(InterfaceObjectIO):
+
+class UserContentRootInternalObjectIOMixin(object):
 
 	#: By default, if an update comes in with only new sharing information,
 	#: and we have been previously saved, then we do not clear our
@@ -93,14 +92,10 @@ class UserContentRootInternalObjectIO(InterfaceObjectIO):
 	#: to ``False``.
 	canUpdateSharingOnly = True
 
-	_ext_iface_upper_bound = nti_interfaces.IModeledContent
 	validate_after_update = True
 
 	# NOTE: inReplyTo and 'references' do not really belong here
 	_excluded_out_ivars_ = { 'flattenedSharingTargetNames', 'flattenedSharingTargets', 'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
-
-	def __init__( self, context ):
-		super(UserContentRootInternalObjectIO,self).__init__(context)
 
 	context = alias('_ext_self')
 
@@ -113,7 +108,7 @@ class UserContentRootInternalObjectIO(InterfaceObjectIO):
 		return removeAllProxies(self.context)
 
 	def toExternalObject( self, mergeFrom=None ):
-		extDict = super(UserContentRootInternalObjectIO,self).toExternalObject(mergeFrom=mergeFrom)
+		extDict = super(UserContentRootInternalObjectIOMixin,self).toExternalObject(mergeFrom=mergeFrom)
 		extDict['sharedWith'] = self.context.sharedWith
 		return extDict
 
@@ -181,6 +176,18 @@ class UserContentRootInternalObjectIO(InterfaceObjectIO):
 			pass
 
 		self.context.updateLastMod()
-		super(UserContentRootInternalObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )
+		super(UserContentRootInternalObjectIOMixin,self).updateFromExternalObject( parsed, *args, **kwargs )
 
-		self._update_sharing_targets( sharedWith )
+		if nti_interfaces.IWritableShared.providedBy( self.context ):
+			self._update_sharing_targets( sharedWith )
+
+
+@interface.implementer(IInternalObjectIO)
+class UserContentRootInternalObjectIO(UserContentRootInternalObjectIOMixin,InterfaceObjectIO):
+
+	_ext_iface_upper_bound = nti_interfaces.IModeledContent
+
+#	_excluded_out_ivars_ = { 'flattenedSharingTargetNames', 'flattenedSharingTargets', 'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
+
+	def __init__( self, context ):
+		super(UserContentRootInternalObjectIO,self).__init__(context)
