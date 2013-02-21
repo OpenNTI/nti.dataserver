@@ -486,6 +486,7 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.dfl_views' )
 	pyramid_config.scan( 'nti.appserver.user_export_views' )
 
+
 	# Generic user object tree traversal
 	# For the Library/Main URL.
 	# Gee it sure would be nice if the default (no-name) view would get used.
@@ -509,6 +510,7 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.ugd_query_views' )
 	pyramid_config.scan( 'nti.appserver.ugd_feed_views' )
 	pyramid_config.scan( 'nti.appserver.glossary_views' )
+	pyramid_config.scan( 'nti.appserver.forum_views' )
 
 	# Modifying UGD
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',

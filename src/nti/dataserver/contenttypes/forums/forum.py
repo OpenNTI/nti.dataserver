@@ -18,18 +18,26 @@ from zope import component
 import Acquisition
 from persistent import Persistent
 
-from nti.dataserver import datastructures
 from nti.dataserver import containers
 from nti.dataserver import sharing
-from nti.utils.schema import PermissiveSchemaConfigured
 
-from ..note import BodyFieldProperty
-from zope.schema.fieldproperty import FieldProperty
+from nti.utils.schema import AdaptingFieldProperty
+#from zope.schema.fieldproperty import FieldProperty
 
 from . import interfaces as for_interfaces
 
 @interface.implementer(for_interfaces.IForum)
 class Forum(Acquisition.Implicit,
 			containers.AcquireObjectsOnReadMixin,
-			containers.CheckingLastModifiedBTreeContainer):
-	title = FieldProperty(for_interfaces.IForum['title'])
+			containers.CheckingLastModifiedBTreeContainer,
+			sharing.AbstractReadableSharedWithMixin):
+
+	__external_can_create__ = False
+	title = AdaptingFieldProperty(for_interfaces.IForum['title'])
+
+	sharingTargets = ()
+
+
+@interface.implementer(for_interfaces.IPersonalBlog)
+class PersonalBlog(Forum):
+	__external_can_create__ = False

@@ -25,7 +25,7 @@ class _ForumInternalObjectIO(UserContentRootInternalObjectIOMixin,AutoPackageSea
 
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces( cls, frm_interfaces ):
-		return (frm_interfaces.IBoard, frm_interfaces.IForum, frm_interfaces.IPost)
+		return (frm_interfaces.IBoard, frm_interfaces.ITopic, frm_interfaces.IForum, frm_interfaces.IPost)
 
 	@classmethod
 	def _ap_enumerate_module_names( cls ):

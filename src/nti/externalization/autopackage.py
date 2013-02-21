@@ -78,7 +78,6 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 				implementation_name = k
 				implementation_class = v
 				# Does this implement something that should be externalizable?
-				# If so, register it, chopping off the leading 'Q'
 				if any( (iface.queryTaggedValue( '__external_class_name__') for iface in interface.implementedBy(implementation_class)) ):
 					ext_class_name = cls._ap_compute_external_class_name_from_concrete_class( implementation_class )
 

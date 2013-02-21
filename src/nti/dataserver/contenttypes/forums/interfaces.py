@@ -41,6 +41,7 @@ class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledConten
 
 	__parent__.required = False
 
+
 class ITopic(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledContent):
 	"""
 	A topic is contained by a forum. It is distinctly named within the containing
@@ -74,9 +75,22 @@ class IPost(IContained, IAcquirer, nti_interfaces.IModeledContent, nti_interface
 
 class IStoryTopic(ITopic):
 	"""
-	A special kind of topic that starts off with a post to discuss. Blogs will
-	be implemented with this. Users that are allowed to blog will automatically
-	have one board with a forum named 'blog': users/<USER>/boards/blog.
+	A special kind of topic that starts off with a distinguished post to discuss. Blogs will
+	be implemented with this.
 	"""
 
 	story = schema.Object(IPost, title="The main, first post of this topic.")
+
+class IPersonalBlog(IForum):
+	"""
+	A personal blog is a special type of forum, in that it contains only :class:`.IStoryTopic`
+	objects and is contained by an :class:`nti.dataserver.interfaces.IUser`.
+
+	Users that are allowed to blog will automatically
+	have one board with a forum named 'Blog': users/<USER>/Blog
+	"""
+
+	contains(IStoryTopic)
+	__setitem__.__doc__ = None
+	containers(nti_interfaces.IUser)
+	__parent__.required = False

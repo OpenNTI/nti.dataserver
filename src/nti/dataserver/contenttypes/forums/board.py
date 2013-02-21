@@ -32,4 +32,7 @@ from . import interfaces as for_interfaces
 class Board(ExtensionClass.Base,
 			containers.AcquireObjectsOnReadMixin,
 			containers.CheckingLastModifiedBTreeContainer):
+
+	__external_can_create__ = False
+
 	title = FieldProperty(for_interfaces.IBoard['title'])

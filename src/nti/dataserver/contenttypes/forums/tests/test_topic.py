@@ -19,10 +19,18 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
+from hamcrest import all_of
+from hamcrest import is_not
+from hamcrest import has_entries
 from nose.tools import assert_raises
 import nti.tests
 
 import nti.tests
+
+from nti.tests import is_empty
+
+from nti.externalization.tests import externalizes
+
 from nti.tests import aq_inContextOf
 from zope.container.interfaces import InvalidItemType, InvalidContainerType
 from nti.tests import verifiably_provides, validly_provides
@@ -30,6 +38,10 @@ from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from ..interfaces import ITopic, IStoryTopic
 from ..topic import Topic, StoryTopic
 from ..post import Post
+
+
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
+tearDownModule = nti.tests.module_teardown
 
 def test_topic_interfaces():
 	post = Topic()
@@ -59,3 +71,17 @@ def test_topic_constraints():
 	with assert_raises( InvalidContainerType ):
 		container = CheckingLastModifiedBTreeContainer()
 		container['k'] = topic
+
+
+def test_story_topic_externalizes():
+
+	post = StoryTopic()
+	post.title = 'foo'
+
+	assert_that( post,
+				 externalizes( all_of(
+					 has_entries( 'title', 'foo',
+								  'Class', 'StoryTopic',
+								  'MimeType', 'application/vnd.nextthought.forums.storytopic',
+								  'sharedWith', is_empty() ),
+					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )

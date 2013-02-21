@@ -18,21 +18,32 @@ logger = __import__('logging').getLogger(__name__)
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
+from hamcrest import all_of
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_entries
 from hamcrest import has_entry
 from nose.tools import assert_raises
 
 from zope import interface
 import nti.tests
+from nti.tests import is_empty
 from Acquisition import Implicit
 from nti.tests import aq_inContextOf
 from nti.tests import verifiably_provides, validly_provides
 
+from nti.externalization.tests import externalizes
 from zope.container.interfaces import InvalidItemType, InvalidContainerType
 
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
-from ..interfaces import IForum, ITopic
-from ..forum import Forum
+
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
+tearDownModule = nti.tests.module_teardown
+
+
+from ..interfaces import IForum, ITopic, IPersonalBlog
+from ..forum import Forum, PersonalBlog
 
 
 def test_forum_interfaces():
@@ -40,6 +51,13 @@ def test_forum_interfaces():
 	assert_that( post, verifiably_provides( IForum ) )
 
 	assert_that( post, validly_provides( IForum ) )
+
+
+def test_blog_interfaces():
+	post = PersonalBlog()
+	assert_that( post, verifiably_provides( IForum ) )
+	assert_that( post, validly_provides( IForum ) )
+	assert_that( post, validly_provides( IPersonalBlog ) )
 
 def test_forum_constraints():
 	@interface.implementer(ITopic)
@@ -57,3 +75,17 @@ def test_forum_constraints():
 	with assert_raises( InvalidContainerType ):
 		container = CheckingLastModifiedBTreeContainer()
 		container['k'] = forum
+
+
+def test_blog_externalizes():
+
+	post = PersonalBlog()
+	post.title = 'foo'
+
+	assert_that( post,
+				 externalizes( all_of(
+					 has_entries( 'title', 'foo',
+								  'Class', 'PersonalBlog',
+								  'MimeType', 'application/vnd.nextthought.forums.personalblog',
+								  'sharedWith', is_empty() ),
+					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
