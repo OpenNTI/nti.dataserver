@@ -36,6 +36,8 @@ class Topic(Acquisition.Implicit,
 
 	sharingTargets = ()
 
+	PostCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
+
 @interface.implementer(for_interfaces.IStoryTopic)
 class StoryTopic(Topic):
 

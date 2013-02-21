@@ -83,5 +83,10 @@ def test_story_topic_externalizes():
 					 has_entries( 'title', 'foo',
 								  'Class', 'StoryTopic',
 								  'MimeType', 'application/vnd.nextthought.forums.storytopic',
+								  'PostCount', 0,
 								  'sharedWith', is_empty() ),
 					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
+
+	post['k'] = Post()
+	assert_that( post,
+				 externalizes( has_entry( 'PostCount', 1 ) ) )

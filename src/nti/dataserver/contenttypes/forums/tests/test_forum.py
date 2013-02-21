@@ -42,7 +42,7 @@ setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.c
 tearDownModule = nti.tests.module_teardown
 
 
-from ..interfaces import IForum, ITopic, IPersonalBlog
+from ..interfaces import IForum, ITopic, IPersonalBlog, IStoryTopic
 from ..forum import Forum, PersonalBlog
 
 
@@ -82,10 +82,19 @@ def test_blog_externalizes():
 	post = PersonalBlog()
 	post.title = 'foo'
 
+	@interface.implementer(IStoryTopic)
+	class X(Implicit):
+		__parent__ = __name__ = None
+
 	assert_that( post,
 				 externalizes( all_of(
 					 has_entries( 'title', 'foo',
 								  'Class', 'PersonalBlog',
 								  'MimeType', 'application/vnd.nextthought.forums.personalblog',
+								  'TopicCount', 0,
 								  'sharedWith', is_empty() ),
 					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
+
+	post['k'] = X()
+	assert_that( post,
+				 externalizes( has_entry( 'TopicCount', 1 ) ) )
