@@ -45,6 +45,8 @@ def get_schema_fields(iface):
 	_travel(iface, result)
 	return result
 
+_marker = object()
+
 def _check_value(value, iface=None):
 	if iface is not None and value is not None:
 		assert iface.providedBy(value)
@@ -56,10 +58,10 @@ def _getter(name, default=None):
 
 def _collection_getter(name, factory=list):
 	def function(self):
-		result = getattr(self, name, None)
-		if result is None:
+		result = self.__dict__.get(name, _marker)
+		if result is _marker:
 			result = factory()
-			setattr(self, name, result)
+			self.__dict__[name] = result
 		return result
 	return function
 
@@ -73,14 +75,13 @@ def _add_collection(name, iface=None):
 			collec.add(value)
 	return function
 
-_marker = object()
-
 def _attribute_getter(name, sch_def):
 	def function(self):
 		value = self.__dict__.get(name, _marker)
 		if value is _marker:
 			value = getattr(sch_def, 'default', _marker)
 		value = None if value is _marker else value
+		return value
 	return function
 
 def _attribute_setter(name, sch_def):
@@ -90,7 +91,7 @@ def _attribute_setter(name, sch_def):
 				value = sch_def.fromUnicode(value)
 			else:
 				sch_def.validate(value)
-		setattr(self, name, value)
+		self.__dict__[name] = value
 	return function
 
 def _get_attributes(self):
@@ -196,8 +197,7 @@ def qti_creator(cls):
 		if hasattr(cls, k): 
 			warnings.warn("attribute %s already set" % k)
 			continue
-		pname = "_%s" % k
-		setattr(cls, k, property(_attribute_getter(pname), _attribute_setter(pname, v)))
+		setattr(cls, k, property(_attribute_getter(k, v), _attribute_setter(k, v)))
 	
 	setattr(cls, "get_attributes", _get_attributes)
 	return cls

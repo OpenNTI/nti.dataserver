@@ -54,7 +54,7 @@ class TestBasicElement(ConfiguringTestBase):
 		except:
 			pass
 
-	def xtest_simple_list(self):
+	def test_simple_list(self):
 		
 		@qti_creator
 		@interface.implementer(exp_interfaces.Imax)
@@ -72,7 +72,7 @@ class TestBasicElement(ConfiguringTestBase):
 		assert_that(f.expression, is_([e]))
 		assert_that(f.get_expression_list(), is_([e]))
 		
-	def xtest_attributes(self):
+	def test_attributes(self):
 		
 		@qti_creator
 		@interface.implementer(exp_interfaces.IrandomFloat)
@@ -82,13 +82,13 @@ class TestBasicElement(ConfiguringTestBase):
 		f = Foo()
 		assert_that(f, has_property('min'))
 		assert_that(f, has_property('max'))
-		f.min = 0
+		f.min = 100
 		f.max = 'maxval'
-		assert_that(f.min, is_(0))
+		assert_that(f.min, is_(100))
 		assert_that(f.max, is_('maxval'))
 		
 		attributes = f.get_attributes()
-		assert_that(attributes, has_entry('min', 0))
+		assert_that(attributes, has_entry('min', 100))
 		assert_that(attributes, has_entry('max', 'maxval'))
 	
 		@qti_creator
@@ -108,7 +108,7 @@ class TestBasicElement(ConfiguringTestBase):
 		assert_that(f.tolerance, is_([3,4]))
 		
 		attributes = f.get_attributes()
-		assert_that(attributes, has_length(1))
+		assert_that(attributes, has_length(3))
 		
 		f.includeLowerBound = True
 		f.includeUpperBound = False
@@ -123,7 +123,7 @@ class TestBasicElement(ConfiguringTestBase):
 		assert_that(f, has_property('class'))
 		assert_that(f, has_property('definition'))
 		
-	def xtest_sequence(self):
+	def test_sequence(self):
 		@qti_creator
 		@interface.implementer(cnt_interfaces.IsimpleInline)
 		class Foo(object):
