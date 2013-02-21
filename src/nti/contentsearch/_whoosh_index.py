@@ -410,7 +410,7 @@ class ThreadableIndexableContent(ShareableIndexableContent):
 
 	def get_index_data(self, data):
 		result = super(ThreadableIndexableContent, self).get_index_data(data)
-		result[sharedWith_] = get_sharedWith(data)
+		result[keywords_] = get_keywords(data)
 		return result
 
 # highlight
