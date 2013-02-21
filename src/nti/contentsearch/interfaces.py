@@ -379,6 +379,11 @@ class ICreatorResolver(interface.Interface):
 	def get_creator():
 		"""return the creator"""
 
+class IShareableContentResolver(interface.Interface):
+
+	def get_sharedWith():
+		"""return the share with users"""
+		
 class _ContentMixinResolver(IContentResolver,
 							INTIIDResolver,
 							IContainerIDResolver,
@@ -387,14 +392,11 @@ class _ContentMixinResolver(IContentResolver,
 
 class IUserContentResolver(_ContentMixinResolver, ICreatorResolver):
 	pass
-
-class IThreadableContentResolver(IUserContentResolver):
+		
+class IThreadableContentResolver(IUserContentResolver, IShareableContentResolver):
 
 	def get_keywords():
 		"""return the key words"""
-
-	def get_sharedWith():
-		"""return the share with users"""
 
 	def get_inReplyTo():
 		"""return the inReplyTo nttid"""
@@ -426,7 +428,19 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 	def get_recipients():
 		"""return the message recipients"""
 
+class IPostContentResolver(_ContentMixinResolver):
+
+	def get_title():
+		"""return the post/forum title"""
+		
 class IBookContentResolver(_ContentMixinResolver):
+	pass
+
+class IModeledContentResolver(IPostContentResolver,
+							  IMessageInfoContentResolver,
+							  IRedactionContentResolver, 
+							  IHighlightContentResolver,
+							  INoteContentResolver):
 	pass
 
 # content processing
@@ -439,7 +453,7 @@ class IStopWords(interface.Interface):
 	def available_languages():
 		"available languages"
 
-# Catalog creators
+# Catalog creators marker interfaces
 
 class IRepozeCatalogCreator(interface.Interface):
 	pass
@@ -457,6 +471,9 @@ class IRedactionRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
 class IMessageInfoRepozeCatalogFieldCreator(interface.Interface):
+	pass
+
+class IPostRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
 # redis

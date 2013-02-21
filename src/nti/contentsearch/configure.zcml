@@ -21,7 +21,11 @@
 	<adapter factory="._search_hits._RedactionSearchHit"
 			 name="search-hit"
 			 provides=".interfaces.ISearchHit" />
-
+	
+	<adapter factory="._search_hits._PostSearchHit"
+			 name="search-hit"
+			 provides=".interfaces.ISearchHit" />
+			 
 	<adapter factory="._search_hits._WhooshBookSearchHit"
 			 name="search-hit"
 			 provides=".interfaces.ISearchHit" />
@@ -54,7 +58,7 @@
 			 for="basestring" />
 
 	<adapter factory="._content_utils._DictContentResolver"
-			 provides=".interfaces.IContentResolver"
+			 provides=".interfaces.IModeledContentResolver"
 			 for="dict" />
 
 	<adapter factory="._content_utils._HighLightContentResolver"
@@ -81,6 +85,10 @@
 			 provides=".interfaces.IContentResolver"
 			 for="nti.dataserver.contenttypes.CanvasTextShape" />
 
+	<adapter factory="._content_utils._PostContentResolver"
+			 provides=".interfaces.IPostContentResolver"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
+			 
 	<adapter factory="._content_utils._BookContentResolver"
 			 provides=".interfaces.IBookContentResolver"
 			 for=".interfaces.IBookContent" />

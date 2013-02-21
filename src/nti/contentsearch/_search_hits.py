@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Repoze index definitions and discriminators.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -14,17 +18,20 @@ from zope import interface
 import repoze.lru
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
+
 from nti.chatserver import interfaces as chat_interfaces
+
 from nti.externalization import interfaces as ext_interfaces
 
-from nti.contentsearch._views_utils import get_ntiid_path
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
+from ._views_utils import get_ntiid_path
+from . import interfaces as search_interfaces
+from ._search_highlights import WORD_HIGHLIGHT
 
-from nti.contentsearch.common import (	NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-										SNIPPET, HIT, ID, CONTENT, INTID, SCORE, OID)
+from .common import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
+					 SNIPPET, HIT, ID, CONTENT, INTID, SCORE, OID)
 
-from nti.contentsearch.common import ( last_modified_, content_, title_, ntiid_, intid_)
+from .common import ( last_modified_, content_, title_, ntiid_, intid_)
 
 hit_search_external_fields  = (	CLASS, CREATOR, TYPE, LAST_MODIFIED, NTIID, CONTAINER_ID, SNIPPET, ID, INTID)
 
@@ -73,36 +80,46 @@ class _BaseSearchHit(dict):
 		return self.get(LAST_MODIFIED, 0)
 	
 class _SearchHit(_BaseSearchHit):
+	
+	adapter_interface = search_interfaces.IContentResolver
+	
 	def __init__( self, original, score=1.0 ):
 		super(_SearchHit, self).__init__(get_hit_id(original))
-		adapted = component.queryAdapter(original, search_interfaces.IContentResolver)
+		adapted = component.queryAdapter(original, self.adapter_interface)
 		self[SCORE] = score
 		self[TYPE] = original.__class__.__name__
-		self[CREATOR] = adapted.get_creator() if adapted else u''
 		self[NTIID] = adapted.get_ntiid() if adapted else u''
+		self[CREATOR] = adapted.get_creator() if adapted else u''
 		self[SNIPPET] = adapted.get_content() if adapted else u''
 		self[CONTAINER_ID] = adapted.get_containerId() if adapted else u''
 		self[LAST_MODIFIED] = adapted.get_last_modified() if adapted else 0
 		
 @component.adapter(nti_interfaces.IHighlight)
 class _HighlightSearchHit(_SearchHit):
-	pass
+	adapter_interface = search_interfaces.IHighlightContentResolver
 	
 @component.adapter(nti_interfaces.IRedaction)
 class _RedactionSearchHit(_SearchHit):
-	pass
+	adapter_interface = search_interfaces.IRedactionContentResolver
 		
 @component.adapter(nti_interfaces.INote)
 class _NoteSearchHit(_SearchHit):
-	pass
+	adapter_interface = search_interfaces.INoteContentResolver
 	
 @component.adapter(chat_interfaces.IMessageInfo)
 class _MessageInfoSearchHit(_SearchHit):
+	
+	adapter_interface = search_interfaces.IMessageInfoContentResolver
+	
 	def __init__( self, original, score=1.0 ):
 		super(_MessageInfoSearchHit, self).__init__(original, score)
-		adapted = component.queryAdapter(original, search_interfaces.IContentResolver)
+		adapted = component.queryAdapter(original, self.adapter_interface)
 		self[ID] = adapted.get_id() if adapted else u''
 		
+@component.adapter(for_interfaces.IPost)
+class _PostSearchHit(_SearchHit):
+	adapter_interface = search_interfaces.IPostContentResolver
+
 @component.adapter(search_interfaces.IWhooshBookContent)
 class _WhooshBookSearchHit(_BaseSearchHit):
 	
@@ -132,6 +149,8 @@ def get_search_hit(obj, score=1.0, query=None, highlight_type=WORD_HIGHLIGHT):
 	hit.query = query
 	hit = _provide_highlight_snippet(hit, query, highlight_type)
 	return hit
+
+# define search hit comparators
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _ScoreSearchHitComparator(object):
