@@ -65,9 +65,11 @@ def _collection_getter(name, factory=list):
 		return result
 	return function
 
-def _add_collection(name, iface=None):
+def _add_collection(name, sch_def=None):
 	def function(self, value):
-		_check_value(value, iface)
+		if sch_def is not None:
+			sch_def.validate(value)
+			
 		collec = getattr(self, name)
 		if isinstance(collec, collections.Sequence):
 			collec.append(value)
@@ -182,11 +184,14 @@ def qti_creator(cls):
 			
 		elif sch_interfaces.IList.providedBy(v):
 			_make_sequence(cls, k)
-			setattr(cls, k, property(_collection_getter(k, list_factory)))
+			
 			setattr(cls, "get_%s_list" % k.lower(), _getter(k))
-			if sch_interfaces.IObject.providedBy(v.value_type) or sch_interfaces.IText.providedBy(v.value_type):
-				iface = v.value_type.schema
-				setattr(cls, "add_%s" % k.lower(), _add_collection(k, iface))
+			setattr(cls, k, property(_collection_getter(k, list_factory)))
+			
+			if 	sch_interfaces.IObject.providedBy(v.value_type) or sch_interfaces.IText.providedBy(v.value_type) or \
+				sch_interfaces.IChoice.providedBy(v):
+				
+				setattr(cls, "add_%s" % k.lower(), _add_collection(k, v.value_type))
 			else:
 				warnings.warn("unhandled list type %s" % v.value_type)
 		else:
