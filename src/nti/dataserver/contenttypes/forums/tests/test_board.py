@@ -70,6 +70,7 @@ def test_blog_externalizes():
 
 	post = Board()
 	post.title = 'foo'
+	post.description = 'the long\ndescription'
 
 	@interface.implementer(IForum)
 	class X(Implicit):
@@ -78,6 +79,7 @@ def test_blog_externalizes():
 	assert_that( post,
 				 externalizes( all_of(
 					 has_entries( 'title', 'foo',
+								  'description', 'the long\ndescription',
 								  'Class', 'Board',
 								  'MimeType', 'application/vnd.nextthought.forums.board',
 								  'ForumCount', 0,

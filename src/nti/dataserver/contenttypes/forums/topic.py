@@ -33,7 +33,7 @@ class Topic(Acquisition.Implicit,
 			containers.CheckingLastModifiedBTreeContainer,
 			sharing.AbstractReadableSharedWithMixin):
 	title = AdaptingFieldProperty(for_interfaces.ITopic['title'])
-
+	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
 	sharingTargets = ()
 
 	PostCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)

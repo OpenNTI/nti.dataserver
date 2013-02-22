@@ -37,6 +37,7 @@ class Board(ExtensionClass.Base,
 	__external_can_create__ = False
 
 	title = AdaptingFieldProperty(for_interfaces.IBoard['title'])
+	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
 
 	ForumCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
 

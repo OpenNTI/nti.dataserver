@@ -34,7 +34,7 @@ class Forum(Acquisition.Implicit,
 
 	__external_can_create__ = False
 	title = AdaptingFieldProperty(for_interfaces.IForum['title'])
-
+	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
 	sharingTargets = ()
 	TopicCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
 

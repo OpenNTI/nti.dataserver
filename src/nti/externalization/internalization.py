@@ -372,6 +372,7 @@ def validate_field_value( self, field_name, field, value ):
 		# They might provide a `fromObject` function to do the conversion
 		# The field may be able to handle the whole thing by itself or we may need
 		# to do the individual objects
+
 		converter = lambda x: x
 		loop = True
 		if hasattr( field, 'fromObject' ):

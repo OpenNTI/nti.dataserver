@@ -21,7 +21,7 @@ from zope.container.constraints import contains, containers # If passing strings
 from nti.utils import schema
 from zope.schema import Int
 
-class IBoard(IContentContainer,IContained,nti_interfaces.ITitledContent): # implementations may be IAcquirer
+class IBoard(IContentContainer,IContained,nti_interfaces.ITitledDescribedContent): # implementations may be IAcquirer
 	"""
 	A board is the outermost object. It contains potentially many forums (though
 	usually this number is relatively small). Each forum is distinctly named
@@ -33,7 +33,7 @@ class IBoard(IContentContainer,IContained,nti_interfaces.ITitledContent): # impl
 	ForumCount = Int( title="The number of forums contained as children of this board",
 					  readonly=True )
 
-class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledContent):
+class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescribedContent):
 	"""
 	A forum is contained by a board. A forum itself contains arbitrarily
 	many topics and is folderish. Forums are a level of permissioning, with only certain people
@@ -48,7 +48,7 @@ class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledConten
 					  readonly=True )
 
 
-class ITopic(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledContent):
+class ITopic(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescribedContent):
 	"""
 	A topic is contained by a forum. It is distinctly named within the containing
 	forum (often this name will be auto-generated). A topic contains potentially many posts

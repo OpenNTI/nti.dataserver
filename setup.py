@@ -205,7 +205,7 @@ setup(
 		#'scss >= 0.8.72', # we no longer use
 		'setproctitle >= 1.1.7', # used by gunicorn
 		'setuptools >= 0.6c11',
-		'simplejson >= 3.0.9',
+		'simplejson >= 3.1.0',
 		'six >= 1.2.0',
 		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
 		'stripe >= 1.7.9', # stripe payments
