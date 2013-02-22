@@ -89,7 +89,7 @@ def run_with_dataserver( environment_dir=None, function=None,
 			raise
 
 	@functools.wraps(function) # yes, two layers, but we do wrap `function`
-	def fun():
+	def run_user_fun_transaction_wrapper():
 		try:
 			ds = Dataserver( environment_dir )
 		except Exception:
@@ -102,6 +102,14 @@ def run_with_dataserver( environment_dir=None, function=None,
 
 		try:
 			return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( run_user_fun_print_exception )
+		except AttributeError:
+			# we have seen this if the function closed the dataserver manually, but left
+			# the transaction open. Committing then fails. badly.
+			try:
+				print_exception( *sys.exc_info() )
+			except:
+				pass
+			raise
 		except Exception:
 			# If we get here, we are unlikely to be able to print details from the exception; the transaction
 			# will have already terminated, and any __traceback_info__ objects or even the arguments to the
@@ -109,8 +117,12 @@ def run_with_dataserver( environment_dir=None, function=None,
 			return _user_function_failed
 		finally:
 			component.getSiteManager().unregisterUtility( ds, nti_interfaces.IDataserver )
+			try:
+				ds.close()
+			except:
+				pass
 
-	return run( function=fun, as_main=as_main, verbose=verbose,
+	return run( function=run_user_fun_transaction_wrapper, as_main=as_main, verbose=verbose,
 				config_features=config_features,
 				xmlconfig_packages=xmlconfig_packages, _print_exc=False )
 
@@ -168,19 +180,29 @@ def run( function=None, as_main=True, verbose=False, config_features=(), xmlconf
 	else:
 		fun = function
 
+	_user_ex = None
+	_user_ex_str = None
+	_user_ex_repr = None
 	try:
 		result = fun()
 	except _DataserverCreationFailed:
 		raise
-	except Exception:
+	except Exception as _user_ex:
 		# If we get here, we are unlikely to be able to print details from the exception; the transaction
 		# will have already terminated, and any __traceback_info__ objects or even the arguments to the
 		# exception are possible invalid Persistent objects. Hence the need to print it up there.
 		result = _user_function_failed
 
+		try:
+			_user_ex_str = str(_user_ex)
+			_user_ex_repr = str(_user_ex_repr)
+		except:
+			pass
+
+
 	if result is _user_function_failed:
 		if as_main:
-			print( "Failed to execute", getattr( fun, '__name__', fun ) )
+			print( "Failed to execute", getattr( fun, '__name__', fun ), type(_user_ex), _user_ex_str, _user_ex_repr )
 			sys.exit( 6 )
 		# returning none in this case is backwards compatibile behaviour. we'd really
 		# like to raise...something
