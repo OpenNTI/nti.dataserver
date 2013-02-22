@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 import sys
 import argparse
@@ -28,7 +28,7 @@ def follow_entities(user, follow=()):
 			not_found.add(username)
 
 	return (tuple(found), tuple(not_found), tuple(member_of))
-		
+
 def _follow_entities( args ):
 	user = users.User.get_user( args.username )
 	if not user:
@@ -39,15 +39,15 @@ def _follow_entities( args ):
 	if args.verbose:
 		for n in found:
 			print(args.username, "now following", n)
-		
+
 		for n in member_of:
 			print(args.username, "now member of", n)
-		
+
 		for n in not_found:
 			print("No entity", n, "to follow" )
-	
+
 		pprint( to_external_object( user ) )
-		
+
 def main():
 	arg_parser = argparse.ArgumentParser( description="Make a user follow an existing entity; if a community, they also join the community." )
 	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
@@ -63,4 +63,3 @@ def main():
 	env_dir = args.env_dir
 
 	run_with_dataserver( environment_dir=env_dir, function=lambda: _follow_entities(args) )
-

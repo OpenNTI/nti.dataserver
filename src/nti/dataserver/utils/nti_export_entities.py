@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 import os
 import sys
@@ -21,13 +21,13 @@ def export_entities(entities, use_profile=False, export_dir=None, verbose=False)
 	export_dir = os.path.expanduser(export_dir)
 	if not os.path.exists(export_dir):
 		os.makedirs(export_dir)
-		
+
 	ext = 'txt' if use_profile else 'json'
 	utc_datetime = datetime.datetime.utcnow()
 	s = utc_datetime.strftime("%Y-%m-%d-%H%M%SZ")
 	outname = "entities-%s.%s" % (s, ext)
 	outname = os.path.join(export_dir, outname)
-	
+
 	objects = []
 	for entityname in entities:
 		e = entity.Entity.get_entity( entityname )
@@ -60,12 +60,12 @@ def _process_args(args):
 	use_profile = args.profile
 	export_dir = args.export_dir
 	entities = set(args.entities or ())
-	
+
 	if args.all:
 		dataserver = component.getUtility( nti_interfaces.IDataserver)
 		_users = nti_interfaces.IShardLayout( dataserver ).users_folder
 		entities.update(_users.keys())
-		
+
 	entities = sorted(entities)
 	export_entities(entities, use_profile, export_dir, verbose)
 
@@ -85,12 +85,12 @@ def main():
 							 default=None,
 							 help="Output export directory" )
 	args = arg_parser.parse_args()
-	
+
 	env_dir = args.env_dir
 	conf_packages = () if not args.site else ('nti.appserver',)
-	
+
 	# run export
-	run_with_dataserver(environment_dir=env_dir, 
+	run_with_dataserver(environment_dir=env_dir,
 						verbose = args.verbose,
 						xmlconfig_packages=conf_packages,
 						function=lambda: _process_args(args) )
