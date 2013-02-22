@@ -200,15 +200,18 @@ setup(
 		'repoze.sendmail == 3.2', # 4.0b1 is out and tested to be a drop-in replacement when final
 		'repoze.who == 2.0', # 2.1b1 is out and tested to be a drop-in replacement when final
 		'repoze.zodbconn >= 0.14',
-		'grequests >= 0.1.0', #replaces requests.async in 0.13
-		'requests >= 0.14.2,<1.0', # HTTP. NOTE: 1.1.x is out, but not full backwards compat. Since some tools (httpie) depend on it, wait until they are ready
+		 # Requests: http for humans. Requests 1.1.x is depended on by httpie 0.4.
+		 # We use just the generic part of the API and work back to 0.14.
+		 # stripe also depends on just the minimal part of the api (their setup.py doesn't
+		 # give a version) (?). grequests 0.1.0 is not compatible with this.
+		'requests >= 1.1.0',
 		#'scss >= 0.8.72', # we no longer use
 		'setproctitle >= 1.1.7', # used by gunicorn
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.1.0',
 		'six >= 1.2.0',
 		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
-		'stripe >= 1.7.9', # stripe payments
+		'stripe >= 1.7.10', # stripe payments
 		#'slimit',
 		'supervisor >= 3.0b1',
 		'transaction >= 1.4.1',
@@ -335,7 +338,7 @@ setup(
 			#'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			'epydoc >= 3.0.1', # auto-api docs
-			'httpie == 0.3.1', # 0.3.1 explicitly requires requests < 1.0
+			'httpie >= 0.4.0', # 0.4.0 explicitly requires requests > 1.0.4, 0.3.1 explicitly requires requests < 1.0
 			'ipython[notebook] >= 0.13.1', # notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.1',
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
