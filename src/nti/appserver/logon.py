@@ -69,15 +69,6 @@ import logilab.common.cache
 import requests
 import gevent
 from requests.exceptions import RequestException
-# Note that we do not use requests.async/grequests.
-# It wants to monkey patch far too much of the system (on import!)
-# and is not compatible with ZODB (patch to time). We think
-# our patching of socket and ssl in application.py is sufficient (?)
-# TODO: It looks like the incompatibilities are fixed with 1.0. application.py
-# will be doing some work with this. Once confirmed, decide what to do here
-# (the non-async api is prettier, but 'prefetch' might be helpful?)
-#import grequests # >= 0.13.0
-#import requests.async # <= 0.12.1
 
 import urllib
 import urlparse
@@ -972,20 +963,6 @@ def facebook_oauth2(request):
 			token = x[len('access_token='):]
 			break
 
-	# For the data formats, see here:
-	# https://developers.facebook.com/docs/reference/api/user/
-	# Fire off requests for the user's data that we want, plus
-	# the address of his picture. The picture we can use later,
-	# so let it prefetch
-	pic_rsp = requests.get( 'https://graph.facebook.com/me/picture',
-							params={'access_token': token},
-							allow_redirects=False, # This should return a 302, we want the location, not the data
-							timeout=_REQUEST_TIMEOUT,
-							return_response=False,
-							prefetch=True,
-							config={'safe_mode': True} )
-	pic_glet = gevent.spawn(pic_rsp.send)
-
 	data = requests.get( 'https://graph.facebook.com/me',
 						 params={'access_token': token},
 						 timeout=_REQUEST_TIMEOUT )
@@ -994,14 +971,26 @@ def facebook_oauth2(request):
 		logger.warn( "Facebook username returned different emails %s != %s", data['email'], request.session.get('facebook.username') )
 		return _create_failure_response( request, request.session.get('facebook.failure'), error='Facebook resolved to different username' )
 
-	user = _deal_with_external_account( request,
+	user = _deal_with_external_account( request, data['email'], # TODO: Assuming email address == username
 										data['first_name'], data['last_name'],
 										data['email'], data['link'],
 										nti_interfaces.IFacebookUser,
 										users.FacebookUser.create_user )
+
+
+	# For the data formats, see here:
+	# https://developers.facebook.com/docs/reference/api/user/
+	# Fire off requests for the user's data that we want, plus
+	# the address of his picture.
+	pic_rsp = requests.get( 'https://graph.facebook.com/me/picture',
+							params={'access_token': token},
+							allow_redirects=False, # This should return a 302, we want the location, not the data
+							timeout=_REQUEST_TIMEOUT,
+							return_response=False )
+							# TODO: Used to support 'config={safe_mode':True}' to "catch all errors"
+							#config={'safe_mode': True} )
 	# Do we have a facebook picture to use? If so, snag it and use it.
-	pic_glet.join()
-	pic_rsp = pic_rsp.response
+	# TODO: Error handling. TODO: We could do this more async.
 	if pic_rsp.status_code == 302:
 		pic_location = pic_rsp.headers['Location']
 		if pic_location and pic_location != user.avatarURL:

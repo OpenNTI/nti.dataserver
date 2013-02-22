@@ -68,7 +68,7 @@ def echo_image_url(request):
 	# external traffic and we'll pay data transfer charges.
 
 	try:
-		image_response = requests.get( request.params['image_url'], prefetch=False )
+		image_response = requests.get( request.params['image_url'], stream=True ) # stream=False: Download whole body
 		image_response.raise_for_status()
 	except requests.exceptions.HTTPError as e:
 		request.response.status_code = e.response.status_code
