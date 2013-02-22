@@ -16,10 +16,10 @@ from perfmetrics import metric
 
 from whoosh import index
 
-from nti.contentsearch._whoosh_index import Book
-from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
+from ._whoosh_index import Book
+from ._search_query import QueryObject
+from . import interfaces as search_interfaces
+from ._whoosh_indexstorage import DirectoryStorage
 
 class _BoundingProxy(ProxyBase):
 
