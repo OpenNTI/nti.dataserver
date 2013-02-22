@@ -15,7 +15,7 @@ from .. import invitations
 
 class _BasePaymentProcessor(object):
 	
-	def register_invitation(self, purchase_id, username, entities, capacity=None):
+	def register_invitation(self, purchase_id, username, entities=(), capacity=None):
 		utility = component.getUtility( invite_interfaces.IInvitations )
 		invitation = invitations.create_store_invitation(purchase_id, username, entities, capacity)
 		utility.registerInvitation(invitation)

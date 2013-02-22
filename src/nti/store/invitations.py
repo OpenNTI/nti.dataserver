@@ -37,6 +37,9 @@ class _StoreEntityInvitation(JoinEntitiesInvitation):
 		self.purchase_id = purchase_id
 		self._tokens = minmax.NumericMinimum( capacity ) if capacity and capacity > 0 else None
 
+	def token(self):
+		return self._tokens.value
+	
 	def consume(self):
 		if self._tokens is not None:
 			if self._tokens.value > 0:
@@ -53,8 +56,15 @@ class _StoreEntityInvitation(JoinEntitiesInvitation):
 		else:
 			raise InvitationCapacityExceeded()
 		
-def create_store_invitation(purchase_id, username, entities=(), capacity=None):
+def get_invitation_code(purchase_id, username):
 	purchase = get_purchase_attempt(purchase_id, username)
-	iid = component.getUtility( zc_intid.IIntIds ).getId( purchase )
-	invitation_code = integer_strings.to_external_string( iid )
+	if purchase is not None:
+		iid = component.getUtility( zc_intid.IIntIds ).getId( purchase )
+		result = integer_strings.to_external_string( iid )
+	else:
+		result = None
+	return result
+
+def create_store_invitation(purchase_id, username, entities=(), capacity=None):
+	invitation_code = get_invitation_code(purchase_id, username)
 	return _StoreEntityInvitation(purchase_id, username, invitation_code, entities, capacity)
