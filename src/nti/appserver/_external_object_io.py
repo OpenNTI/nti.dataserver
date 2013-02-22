@@ -180,6 +180,7 @@ def handle_validation_error( request, validation_error ):
 	field = getattr( validation_error, 'field', None )
 	msg = ''
 	value = None
+
 	if field:
 		field_name = getattr( field, '__name__', field )
 	if len(validation_error.args) == 3:

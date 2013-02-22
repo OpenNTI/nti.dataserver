@@ -242,6 +242,8 @@ class Variant(FieldValidationMixin,schema.Field):
 	interfaces.
 	"""
 
+	fields = ()
+
 	def __init__( self, fields, **kwargs ):
 		"""
 		:param fields: A list or tuple of field instances.
@@ -250,16 +252,27 @@ class Variant(FieldValidationMixin,schema.Field):
 		if not fields or not all( (sch_interfaces.IField.providedBy( x ) for x in fields ) ):
 			raise sch_interfaces.WrongType()
 
+		# assign our children first so anything we copy to them as a result of the super
+		# constructor (__name__) gets set
 		self.fields = list(fields)
+		for f in self.fields:
+			f.__parent__ = self
+
 		super(Variant,self).__init__( **kwargs )
 
-		if self.__name__:
-			for field in self.fields:
-				field.__name__ = field.__name__ or self.__name__
+	def __get_name( self ):
+		return self.__dict__.get( '__name__', '' )
+	def __set_name( self, name ):
+		self.__dict__['__name__'] = name
+		for field in self.fields:
+			field.__name__ = name
+	__name__ = property( __get_name, __set_name )
 
 	def bind( self, obj ):
 		clone = super(Variant,self).bind( obj )
 		clone.fields = [x.bind( obj ) for x in clone.fields]
+		for f in clone.fields:
+			f.__parent__ = clone
 		return clone
 
 	def _validate( self, value ):

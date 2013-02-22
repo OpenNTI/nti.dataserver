@@ -977,9 +977,10 @@ def CompoundModeledContentBody():
 									of :class:`.IModeledContent` such as :class:`.ICanvas`.)
 									""",
 								  value_type=Variant( (ObjectLen(frg_interfaces.ISanitizedHTMLContentFragment,min_length=1),
-													 ObjectLen(frg_interfaces.IPlainTextContentFragment,min_length=1),
-													 Object(ICanvas)),
-													 title="A body part of a note" ),
+													   ObjectLen(frg_interfaces.IPlainTextContentFragment,min_length=1),
+													   Object(ICanvas)),
+													 title="A body part of a note",
+													 __name__='body'),
 								  min_length=1,
 								  required=False,
 								  __name__='body')

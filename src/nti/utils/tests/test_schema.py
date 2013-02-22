@@ -96,6 +96,30 @@ def test_complex_variant():
 	for d in {'k': 1}, b'foo', [1, 2, 'b']:
 		assert_that( d, not_validated_by( variant ) )
 
+
+	# A name set now is reflected down the line
+	variant.__name__ = 'baz'
+	for f in variant.fields:
+		assert_that( f, has_property( '__name__', 'baz' ) )
+
+	# and in clones
+	clone = variant.bind( object() )
+	for f in clone.fields:
+		assert_that( f, has_property( '__name__', 'baz' ) )
+
+	# which doesn't change the original
+	clone.__name__ = 'biz'
+	for f in clone.fields:
+		assert_that( f, has_property( '__name__', 'biz' ) )
+	for f in variant.fields:
+		assert_that( f, has_property( '__name__', 'baz' ) )
+
+
+	# new objects work too
+	new = Variant( variant.fields, __name__='boo' )
+	for f in new.fields:
+		assert_that( f, has_property( '__name__', 'boo' ) )
+
 from zope.component import eventtesting
 from zope.testing import cleanup
 from nose.tools import with_setup
