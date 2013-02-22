@@ -289,12 +289,12 @@ setup(
 		'zope.location >= 4.0.1',
 		'zope.mimetype >= 1.3.1',
 		'zope.minmax >= 2.0.0',
-		'zope.pagetemplate >= 4.0.1',
+		'zope.pagetemplate >= 4.0.2',
 		'zope.password >= 4.0.0', # encrypted password management
 		'zope.pluggableauth >= 1.3', # pluggable authentication for zope.auth; see also repoze.who
 		'zope.publisher >= 3.13.1',#4.0.0a1 is out, should be fine
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
-		'zope.processlifetime >= 1.0',
+		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.schema >= 4.2.2',
 		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
@@ -304,7 +304,7 @@ setup(
 		'zope.site >= 3.9.2', # local, persistent ZCA sites. 4.0.0a1 is out and should be fine
 		'zope.size >= 4.0.0',
 		'zope.tal >= 4.0.0a1',
-		'zope.tales >= 4.0.0',
+		'zope.tales >= 4.0.1',
 		'zope.traversing == 3.14.0', # 4.0.0a1 is out and required for zope.container 4, but see comments about it
 		# textindexng3
 		'zopyx.txng3.core >= 3.6.1.1',
