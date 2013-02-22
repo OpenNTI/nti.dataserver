@@ -36,6 +36,9 @@ from nti.utils.schema import Number
 from nti.utils.schema import UniqueIterable
 from nti.utils.schema import ListOrTupleFromObject
 from nti.utils.schema import DecodingValidTextLine
+from nti.contentfragments.schema import PlainTextLine
+from nti.contentfragments.schema import PlainText
+from nti.contentfragments.schema import SanitizedHTMLContentFragment
 
 class ACLLocationProxy(LocationProxy):
 	"""
@@ -957,11 +960,10 @@ def Title():
 	the standard title of some object. This should be stored in the `title`
 	field.
 	"""
-	return ObjectLen(frg_interfaces.IPlainTextContentFragment,
+	return PlainTextLine(
 					#min_length=5,
 					max_length=140, # twitter
 					required=False,
-					defaultFactory=frg_interfaces.PlainTextContentFragment,
 					title="The human-readable title of this object",
 					__name__='title')
 
@@ -976,8 +978,8 @@ def CompoundModeledContentBody():
 								  description="""An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
 									of :class:`.IModeledContent` such as :class:`.ICanvas`.)
 									""",
-								  value_type=Variant( (ObjectLen(frg_interfaces.ISanitizedHTMLContentFragment,min_length=1),
-													   ObjectLen(frg_interfaces.IPlainTextContentFragment,min_length=1),
+								  value_type=Variant( (SanitizedHTMLContentFragment(min_length=1),
+													   PlainText(min_length=1),
 													   Object(ICanvas)),
 													 title="A body part of a note",
 													 __name__='body'),
@@ -990,7 +992,17 @@ class ITitledContent(interface.Interface):
 	A piece of content with a title, either human created or potentially
 	automatically generated. (This differs from, say, a person's honorrific title.)
 	"""
-	title = Title()
+	title = Title() # TODO: Use zope.dublincore.IDCDecscriptiveProperties?
+
+from zope.dublincore.interfaces import IDCDescriptiveProperties
+class ITitledDescribedContent(ITitledContent,IDCDescriptiveProperties):
+	"""
+	Extend this class to add the ``title`` and ``description`` properties.
+	This class overrides the :mod:`zope.dublincore` properties with more specific
+	versions.
+	"""
+
+	description = PlainText( title="The human-readable description of this object." )
 
 class INote(IHighlight,IThreadable,ITitledContent):
 	"""
