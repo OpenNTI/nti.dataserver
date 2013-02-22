@@ -49,6 +49,9 @@ def _DefaultUserForumFactory(  ):
 def DefaultUserForumFactory(user):
 	forum = zope.annotation.factory(_DefaultUserForumFactory)(user)
 	if not forum._p_mtime:
+		jar = IConnection( user, None )
+		if jar:
+			jar.add( forum ) # ensure we store with the user
 		forum.title = user.username
 		forum.__name__ = unicode(forum.__name__, 'ascii')
 		errors = schema.getValidationErrors( frm_interfaces.IPersonalBlog, forum )
