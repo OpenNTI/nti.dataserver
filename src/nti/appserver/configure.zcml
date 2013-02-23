@@ -321,9 +321,5 @@
 			 factory=".pyramid_auth.NextthoughtDotComAdmin"
 			 provides="nti.dataserver.interfaces.IGroupMember" />
 
-	<!-- Temporary placeholders for forums/blogs until I (JAM) lock
-	the permissioning down -->
-	<adapter factory=".forum_views.DefaultUserForumFactory"
-			 zcml:condition="have devmode"/>
-
+	<include package="." file="configure_blogs.zcml" />
 </configure>

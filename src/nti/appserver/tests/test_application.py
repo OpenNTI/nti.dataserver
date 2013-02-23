@@ -129,14 +129,24 @@ class ZODBGCMiddleware(object):
 		mock_dataserver.reset_db_caches( )
 		return result
 
+
 class _UnicodeTestApp(_TestApp):
 	"To make using unicode literals easier"
-	def get( self, path, *args, **kwargs ):
-		return super(_UnicodeTestApp,self).get( str(path), *args, **kwargs )
-	def put( self, path, *args, **kwargs ):
-		return super(_UnicodeTestApp,self).put( str(path), *args, **kwargs )
-	def post( self, path, *args, **kwargs ):
-		return super(_UnicodeTestApp,self).post( str(path), *args, **kwargs )
+
+	def _make_( name ):
+		def f( self, path, *args, **kwargs ):
+			return getattr( super(_UnicodeTestApp,self), name )( str(path), *args, **kwargs )
+
+		f.__name__ = name
+		return f
+
+	get = _make_('get')
+	put = _make_('put')
+	post = _make_('post')
+	put_json = _make_('put_json')
+	post_json = _make_('post_json')
+
+	del _make_
 
 _TestApp = _UnicodeTestApp
 

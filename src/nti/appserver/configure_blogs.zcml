@@ -1,0 +1,16 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml"
+	zcml:condition="have devmode" >
+	<!-- Temporary placeholders for forums/blogs until I (JAM) lock
+	the permissioning down -->
+
+	<include package="zope.component" />
+
+	<adapter factory=".forum_views.DefaultUserForumFactory"
+			 zcml:condition="have devmode"/>
+
+	<subscriber handler=".forum_views.match_title_of_post_to_blog" />
+
+</configure>
