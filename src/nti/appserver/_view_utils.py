@@ -14,6 +14,9 @@ logger = __import__('logging').getLogger(__name__)
 
 import sys
 
+import transaction
+from Acquisition import aq_base
+
 from pyramid import security as sec
 
 from nti.dataserver.interfaces import IDataserver
@@ -156,8 +159,33 @@ class ModeledContentUploadRequestUtilsMixin(object):
 	def _transformInput( self, value ):
 		return value
 
+	def findContentType( self, externalValue ):
+		datatype = None
+		# TODO: Which should have priority, class in the data,
+		# or mime-type in the headers (or data?)?
+		if 'Class' in externalValue and externalValue['Class']:
+			# Convert unicode to ascii
+			datatype = str( externalValue['Class'] ) + 's'
+		else:
+			datatype = obj_io.class_name_from_content_type( self.request )
+			datatype = datatype + 's' if datatype else None
+		return datatype
+
+	def createContentObject( self, user, datatype, externalValue, creator ):
+		return obj_io.create_modeled_content_object( self.dataserver, user, datatype, externalValue, creator )
+
+	def createAndCheckContentObject( self, owner, datatype, externalValue, creator, predicate=None ):
+		containedObject = self.createContentObject( owner, datatype, externalValue, creator )
+		if containedObject is None or (predicate and not predicate(containedObject)):
+			transaction.doom()
+			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s", datatype, externalValue )
+			raise hexc.HTTPUnprocessableEntity( 'Unsupported/missing Class' )
+		return containedObject
+
 	def updateContentObject( self, contentObject, externalValue, set_id=False, notify=True ):
-		containedObject = obj_io.update_object_from_external_object( contentObject, externalValue, notify=notify, request=self.request )
+		# We want to be sure to only change values on the actual content object,
+		# not things in its traversal lineage
+		containedObject = obj_io.update_object_from_external_object( aq_base(contentObject), externalValue, notify=notify, request=self.request )
 
 		# If they provided an ID, use it if we can and we need to
 		if set_id and StandardExternalFields.ID in externalValue \

@@ -58,9 +58,6 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 	""" HTTP says POST creates a NEW entity under the Request-URI """
 	# Therefore our context is a container, and we should respond created.
 
-	def createContentObject( self, user, datatype, externalValue, creator ):
-		return obj_io.create_modeled_content_object( self.dataserver, user, datatype, externalValue, creator )
-
 	def __call__( self ):
 		try:
 			return self._do_call()
@@ -82,22 +79,9 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 
 		owner = owner_root if owner_root else creator
 		externalValue = self.readInput()
-		datatype = None
-		# TODO: Which should have priority, class in the data,
-		# or mime-type in the headers (or data?)?
-		if 'Class' in externalValue and externalValue['Class']:
-			# Convert unicode to ascii
-			datatype = str( externalValue['Class'] ) + 's'
-		else:
-			datatype = obj_io.class_name_from_content_type( self.request )
-			datatype = datatype + 's' if datatype else None
+		datatype = self.findContentType( externalValue )
 
-		containedObject = self.createContentObject( owner, datatype, externalValue, creator )
-		if containedObject is None:
-			transaction.doom()
-			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s", datatype, externalValue )
-			raise hexc.HTTPUnprocessableEntity( 'Unsupported/missing Class' )
-
+		containedObject = self.createAndCheckContentObject( owner, datatype, externalValue, creator )
 		with owner.updates():
 			containedObject.creator = creator
 
@@ -268,8 +252,9 @@ class UGDPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin
 			self._check_object_exists( theObject, creator, containerId, objId )
 
 			self.updateContentObject( theObject, externalValue ) # Should fire lifecycleevent.modified
-			# I think this log message should be info not debug.  It exists to provide statistics not to debug.
-			logger.info("User '%s' updated object '%s'/'%s' for container '%s'", creator, theObject.id, type(theObject).__name__, containerId)
+
+		# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
+		logger.info("User '%s' updated object '%s'/'%s' for container '%s'", creator, theObject.id, getattr(theObject,'__class__').__name__, containerId)
 
 		if theObject and theObject == theObject.creator:
 			# Updating a user. Naturally, this is done by

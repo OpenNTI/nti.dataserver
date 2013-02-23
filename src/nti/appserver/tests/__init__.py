@@ -2,7 +2,8 @@ import unittest
 import nti.appserver
 from hamcrest import assert_that
 from hamcrest import is_
-
+from hamcrest import is_not
+from hamcrest import none
 from pyramid.testing import setUp as psetUp
 from pyramid.testing import tearDown as ptearDown
 #from pyramid.testing import DummyRequest
@@ -49,6 +50,19 @@ def monkey_patch_check_headers():
 		webtest.lint.check_headers = unicode_check_headers
 monkey_patch_check_headers()
 
+import simplejson
+import webtest.compat
+import webtest.app
+def monkey_patch_webtest_json_to_simplejson():
+	"""
+	Make webtest use the faster simplejson dump/load functions.
+	"""
+	webtest.compat.loads = simplejson.loads
+	webtest.compat.dumps = simplejson.dumps
+	webtest.app.dumps = simplejson.dumps
+	webtest.app.loads = simplejson.loads
+monkey_patch_webtest_json_to_simplejson()
+
 def _create_request( self, request_factory, request_args ):
 	self.request = request_factory( *request_args )
 	if request_factory is DummyRequest:
@@ -80,6 +94,25 @@ class _TestBaseMixin(object):
 
 	def doesnt_have_permission( self, permission ):
 		return HasPermission( False, permission, self.request )
+
+
+	def link_with_rel( self, ext_obj, rel ):
+		for lnk in ext_obj.get( 'Links', () ):
+			if lnk['rel'] == rel:
+				return lnk
+
+	def link_href_with_rel( self, ext_obj, rel ):
+		link = self.link_with_rel( ext_obj, rel )
+		if link:
+			return link['href']
+
+	def require_link_href_with_rel( self, ext_obj, rel ):
+		link = self.link_href_with_rel( ext_obj, rel )
+		__traceback_info__ = ext_obj
+		assert_that( link, is_not( none() ) )
+		return link
+
+
 TestBaseMixin = _TestBaseMixin
 class ConfiguringTestBase(_TestBaseMixin,nti.tests.ConfiguringTestBase):
 	"""

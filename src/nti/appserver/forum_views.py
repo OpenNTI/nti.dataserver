@@ -69,9 +69,6 @@ class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMi
 	""" HTTP says POST creates a NEW entity under the Request-URI """
 	# Therefore our context is a container, and we should respond created.
 
-	def createContentObject( self, user, datatype, externalValue, creator ):
-		return obj_io.create_modeled_content_object( self.dataserver, user, datatype, externalValue, creator )
-
 	def __call__( self ):
 		try:
 			return self._do_call()
@@ -84,23 +81,9 @@ class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMi
 		externalValue = self.readInput()
 
 		# TODO: Ripped from ugd_edit_views
-		datatype = None
-		# TODO: Which should have priority, class in the data,
-		# or mime-type in the headers (or data?)?
-		if 'Class' in externalValue and externalValue['Class']:
-			# Convert unicode to ascii
-			datatype = str( externalValue['Class'] ) + 's'
-		else:
-			datatype = obj_io.class_name_from_content_type( self.request )
-			datatype = datatype + 's' if datatype else None
+		datatype = self.findContentType( externalValue )
 
-		containedObject = self.createContentObject( owner, datatype, externalValue, creator )
-		if containedObject is None or not frm_interfaces.IPost.providedBy( containedObject ):
-			transaction.doom()
-			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s", datatype, externalValue )
-			raise hexc.HTTPUnprocessableEntity( 'Unsupported/missing Class' )
-
-
+		containedObject = self.createAndCheckContentObject( owner, datatype, externalValue, creator, frm_interfaces.IPost.providedBy )
 		containedObject.creator = creator
 
 		# The process of updating may need to index and create KeyReferences
@@ -121,8 +104,11 @@ class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMi
 		# Now the topic
 		topic = StoryTopic()
 		containedObject.__parent__ = topic
+
 		topic.story = containedObject
+		# Business rule: titles of the personal blog entry match the post
 		topic.title = topic.story.title
+		topic.description = topic.title
 
 
 		name = INameChooser( context ).chooseName( topic.title, topic )
@@ -133,12 +119,13 @@ class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMi
 
 		context[name] = topic # Now store the topic and fire added
 		topic.id = name # match these things
-		containedObject.containerId = topic.id
+		containedObject.containerId = topic.id # TODO:  This is not right, containerId is meant to be global
 
 		lifecycleevent.added( containedObject )
 
 		# Respond with the generic location of the object, within
 		# the owner's Objects tree.
+		self.request.response.status_int = 201 # created
 		self.request.response.location = self.request.resource_url( owner,
 																	'Objects',
 																	to_external_ntiid_oid( topic ) )
@@ -147,10 +134,35 @@ class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMi
 		return topic
 
 from .dataserver_pyramid_views import _GenericGetView as GenericGetView
+from .ugd_edit_views import UGDPutView
+
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_READ,
 			  context=frm_interfaces.IPersonalBlog,
 			  request_method='GET' )
 class BlogGetView(GenericGetView):
-			pass
+	""" Support for simply returning the blog item """
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_READ,
+			  context=frm_interfaces.IPost,
+			  request_method='PUT' )
+class PostPutView(UGDPutView):
+	""" Editing an existing forum post """
+
+	def checkObjectOutFromUserForUpdate( self, *args ):
+		"""
+		Users do not contain these post objects, they live outside that hierarchy
+		(This might need to change.) As a consequence, there is no checking out that happens.
+		"""
+		return self.request.context
+
+from Acquisition import aq_base
+@component.adapter(frm_interfaces.IPost, lifecycleevent.IObjectModifiedEvent)
+def match_title_of_post_to_blog( post, event ):
+	"When the main story of a story topic (blog post) is modified, match the titles"
+
+	if frm_interfaces.IStoryTopic.providedBy( post.__parent__ ) and aq_base(post) is aq_base(post.__parent__.story) and post.title != post.__parent__.title:
+		post.__parent__.title = post.title
