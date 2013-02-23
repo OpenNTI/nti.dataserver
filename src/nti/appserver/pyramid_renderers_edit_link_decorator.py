@@ -69,7 +69,7 @@ class EditLinkDecorator(object):
 				nearest_site = None
 
 			if nearest_site is None:
-				logger.debug( "Not providing edit links for %s, could not find site", type(context) )
+				logger.debug( "Not providing edit links for %s, could not find site", getattr(context, '__class__', type(context)) )
 				return
 
 			mapping.setdefault( LINKS, [] )

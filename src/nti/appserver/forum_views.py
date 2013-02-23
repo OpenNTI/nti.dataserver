@@ -135,29 +135,60 @@ class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMi
 
 from .dataserver_pyramid_views import _GenericGetView as GenericGetView
 from .ugd_edit_views import UGDPutView
+from .ugd_edit_views import UGDDeleteView
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_READ,
 			  context=frm_interfaces.IPersonalBlog,
 			  request_method='GET' )
-class BlogGetView(GenericGetView):
-	""" Support for simply returning the blog item """
-
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_READ,
+			  context=frm_interfaces.IStoryTopic,
+			  request_method='GET' )
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_READ,
 			  context=frm_interfaces.IPost,
-			  request_method='PUT' )
-class PostPutView(UGDPutView):
-	""" Editing an existing forum post """
+			  request_method='GET' )
+class BlogGetView(GenericGetView):
+	""" Support for simply returning the blog item """
 
+class _CheckObjectOutMixin(object):
 	def checkObjectOutFromUserForUpdate( self, *args ):
 		"""
 		Users do not contain these post objects, they live outside that hierarchy
 		(This might need to change.) As a consequence, there is no checking out that happens.
 		"""
 		return self.request.context
+
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_UPDATE,
+			  context=frm_interfaces.IPost,
+			  request_method='PUT' )
+class PostPutView(_CheckObjectOutMixin, UGDPutView):
+	""" Editing an existing forum post """
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_DELETE,
+			  context=frm_interfaces.IPost,
+			  request_method='DELETE' )
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_DELETE,
+			  context=frm_interfaces.IStoryTopic,
+			  request_method='DELETE' )
+class PostOrForumDeleteView(_CheckObjectOutMixin, UGDDeleteView):
+	""" Deleting an existing forum/post """
+
+	def _do_delete_object( self, theObject ):
+		# Delete from enclosing container
+		del aq_base(theObject.__parent__)[theObject.__name__]
+		return theObject
 
 from Acquisition import aq_base
 @component.adapter(frm_interfaces.IPost, lifecycleevent.IObjectModifiedEvent)

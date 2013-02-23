@@ -192,18 +192,20 @@ class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixi
 
 			lastModified = 0
 			objectId = theObject.id
-			if user.deleteContainedObject( theObject.containerId, theObject.id ) is None: # Should fire lifecycleevent.removed
+			if self._do_delete_object( theObject )  is None: # Should fire lifecycleevent.removed
 				raise hexc.HTTPNotFound()
 
 			lastModified = theObject.creator.lastModified
 
-			# I think this log message should be info not debug.  It exists to provide statistics not to debug.
-			logger.info("User '%s' deleted object '%s'/'%s' from container '%s'", user, objectId, type(theObject).__name__, theObject.containerId)
+			# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
+			logger.info("User '%s' deleted object '%s'/'%s' from container '%s'", user, objectId, getattr(theObject,'__class__', type(theObject)).__name__, theObject.containerId)
 
 		result = hexc.HTTPNoContent()
 		result.last_modified = lastModified
 		return result
 
+	def _do_delete_object( self, theObject ):
+		return theObject.creator.deleteContainedObject( theObject.containerId, theObject.id )
 
 class UGDPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin,ModeledContentEditRequestUtilsMixin):
 	""" PUTting to an existing object is possible (but not
@@ -254,7 +256,7 @@ class UGDPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin
 			self.updateContentObject( theObject, externalValue ) # Should fire lifecycleevent.modified
 
 		# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
-		logger.info("User '%s' updated object '%s'/'%s' for container '%s'", creator, theObject.id, getattr(theObject,'__class__').__name__, containerId)
+		logger.info("User '%s' updated object '%s'/'%s' for container '%s'", creator, theObject.id, getattr(theObject,'__class__',type(theObject)).__name__, containerId)
 
 		if theObject and theObject == theObject.creator:
 			# Updating a user. Naturally, this is done by

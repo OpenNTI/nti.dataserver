@@ -8,6 +8,10 @@
 	<include package="nti.contentfragments" />
 	<include package="nti.mimetype" />
 
+	<adapter provides="zope.location.interfaces.ISublocations"
+			 for=".interfaces.IStoryTopic"
+			 factory=".topic.StoryTopicSublocations" />
+
 	<!-- Externalization -->
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IBoard" />

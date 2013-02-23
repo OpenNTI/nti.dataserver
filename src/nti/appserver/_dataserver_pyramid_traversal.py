@@ -112,6 +112,8 @@ class _PageContainerResource(_ContainerResource):
 	def traverse( self, key, remaining_path ):
 		raise loc_interfaces.LocationError( key )
 
+from Acquisition import aq_base
+from Acquisition.interfaces import IAcquirer
 class _ObjectsContainerResource(_ContainerResource):
 
 	def __init__( self, context, request=None, name=None, parent=None ):
@@ -123,6 +125,10 @@ class _ObjectsContainerResource(_ContainerResource):
 		if result is None: # pragma: no cover
 			raise loc_interfaces.LocationError( key )
 
+		# Make these things be acquisition wrapped, just as if we'd traversed
+		# all the way to them (only if not already wrapped)
+		if getattr( result, '__parent__', None ) is not None and IAcquirer.providedBy( result ) and aq_base( result ) is result:
+			result = result.__of__( result.__parent__ )
 		return result
 
 	def _getitem_with_ds( self, ds, key ):

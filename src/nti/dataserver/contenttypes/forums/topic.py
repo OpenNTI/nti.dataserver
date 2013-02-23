@@ -42,3 +42,16 @@ class Topic(Acquisition.Implicit,
 class StoryTopic(Topic):
 
 	story = AcquisitionFieldProperty(for_interfaces.IStoryTopic['story'])
+
+from zope.container.contained import ContainerSublocations
+class StoryTopicSublocations(ContainerSublocations):
+	"""
+	Story topics contain their children and also their story.
+	"""
+
+	def sublocations( self ):
+		for x in super(StoryTopicSublocations,self).sublocations():
+			yield x
+		story = self.container.story
+		if story is not None:
+			yield story

@@ -73,7 +73,6 @@ from zope.location.interfaces import ILocation
 import zope.intid.interfaces as zope_intid_interfaces
 from zc import intid as zc_intid_interfaces
 
-
 @component.adapter(ILocation, IObjectRemovedEvent)
 def removeIntIdSubscriber(ob, event):
 	"""
