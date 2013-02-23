@@ -145,6 +145,7 @@ class _UnicodeTestApp(_TestApp):
 	post = _make_('post')
 	put_json = _make_('put_json')
 	post_json = _make_('post_json')
+	delete = _make_( 'delete' )
 
 	del _make_
 

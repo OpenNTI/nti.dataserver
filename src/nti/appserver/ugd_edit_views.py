@@ -58,12 +58,6 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 	""" HTTP says POST creates a NEW entity under the Request-URI """
 	# Therefore our context is a container, and we should respond created.
 
-	def __call__( self ):
-		try:
-			return self._do_call()
-		except sch_interfaces.ValidationError as e:
-			obj_io.handle_validation_error( self.request, e )
-
 	def _do_call( self ):
 		creator = self.getRemoteUser()
 		context = self.request.context

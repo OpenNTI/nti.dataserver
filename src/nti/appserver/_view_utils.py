@@ -25,6 +25,7 @@ from nti.dataserver import users
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver import httpexceptions as hexc
 
+from zope.schema import interfaces as sch_interfaces
 from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
 
 def get_remote_user( request, dataserver=None ):
@@ -129,6 +130,16 @@ class ModeledContentUploadRequestUtilsMixin(object):
 	"""
 
 	inputClass = dict
+
+	def __call__( self ):
+		"""
+		Subclasses may implement a `_do_call` method if they do not override
+		__call__.
+		"""
+		try:
+			return self._do_call()
+		except sch_interfaces.ValidationError as e:
+			obj_io.handle_validation_error( self.request, e )
 
 	def readInput(self, value=None):
 		"""
