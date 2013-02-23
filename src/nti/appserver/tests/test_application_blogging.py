@@ -19,13 +19,15 @@ from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import is_
 from hamcrest import has_key
+from hamcrest import has_length
 from hamcrest import has_entry
 
 import nti.tests
 
 from .test_application import TestApp
 
-import simplejson as json
+from zope import lifecycleevent
+from zope.component import eventtesting
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver import contenttypes, users
@@ -125,3 +127,40 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		testapp.put_json( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My New Blog/story' ), data )
 		res = testapp.get( entry_url )
 		assert_that( res.json_body, has_entry( 'story', has_entry( 'body', data['body'] ) ) )
+
+	@WithSharedApplicationMockDS
+	def test_user_can_DELETE_existing_blog_entry( self ):
+		"""A StoryTopic can be deleted from its object URL"""
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			_ = self._create_user()
+
+		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
+		entry_url = res.location
+		story_url = self.require_link_href_with_rel( res.json_body['story'], 'edit' )
+
+		eventtesting.clearEvents()
+
+		res = testapp.delete( entry_url )
+		assert_that( res.status_int, is_( 204 ) )
+
+
+		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog' )
+		assert_that( res.json_body, has_entry( 'TopicCount', 0 ) )
+		testapp.get( entry_url, status=404 )
+		testapp.get( story_url, status=404 )
+
+		# When the container was deleted, it fired an ObjectRemovedEvent.
+		# This was dispatched to sublocations and refired, resulting
+		# in intids being removed for all children
+		del_events = eventtesting.getEvents( lifecycleevent.IObjectRemovedEvent )
+		assert_that( del_events, has_length( 1 ) )
+
+		from zope.intid.interfaces import IIntIdRemovedEvent
+		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 2 ) )

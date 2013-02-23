@@ -11,9 +11,11 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 from zope import interface
-from zc.intid import utility as zc_utility
+from zc.intid.utility import IntIds as _ZCIntIds
 
 from nti.dataserver import interfaces as nti_interfaces
+
+from Acquisition import aq_base
 
 # The reason for the __str__ override bypassing KeyError
 # is to get usable exceptions printed from unit tests
@@ -25,22 +27,34 @@ class ObjectMissingError(KeyError):
 
 
 @interface.implementer(nti_interfaces.IZContained)
-class IntIds(zc_utility.IntIds):
+class IntIds(_ZCIntIds):
 
 	__name__ = None
 	__parent__ = None
 
+	# Because this object stores IDs using attributes on the object,
+	# it is important to be sure that the ID is not acquired
+	# from a parent. Hence, all the methods use aq_base to unwrap
+	# the object.
+
+	def queryId( self, ob, default=None ):
+		return _ZCIntIds.queryId( self, aq_base( ob ), default=default )
+
+	def register( self, ob ):
+		return _ZCIntIds.register( self, aq_base( ob ) )
+
 	def getId( self, ob ):
+		ob = aq_base( ob )
 		try:
-			return zc_utility.IntIds.getId( self, ob )
-		except KeyError as k:
+			return _ZCIntIds.getId( self, ob )
+		except KeyError:
 			raise IntIdMissingError( ob, id(ob), self )
 
-	def getObject( self, id ):
+	def getObject( self, ID ):
 		try:
-			return zc_utility.IntIds.getObject( self, id )
-		except KeyError as k:
-			raise ObjectMissingError( id, self )
+			return _ZCIntIds.getObject( self, ID )
+		except KeyError:
+			raise ObjectMissingError( ID, self )
 
 	def __repr__( self ):
 		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__, self.__class__.__name__,
