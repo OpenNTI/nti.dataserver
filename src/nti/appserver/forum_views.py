@@ -60,30 +60,17 @@ def DefaultUserForumFactory(user):
 			raise errors[0][1]
 	return forum
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_CREATE,
-			  context=frm_interfaces.IPersonalBlog,
-			  request_method='POST' )
-class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
+class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
 	""" HTTP says POST creates a NEW entity under the Request-URI """
 	# Therefore our context is a container, and we should respond created.
 
-	def __call__( self ):
-		try:
-			return self._do_call()
-		except sch_interfaces.ValidationError as e:
-			obj_io.handle_validation_error( self.request, e )
-
-	def _do_call( self ):
-		owner = creator = self.getRemoteUser()
-		context = self.request.context
-		externalValue = self.readInput()
-
+	def _read_incoming_post( self ):
 		# TODO: Ripped from ugd_edit_views
+		creator = self.getRemoteUser()
+		externalValue = self.readInput()
 		datatype = self.findContentType( externalValue )
 
-		containedObject = self.createAndCheckContentObject( owner, datatype, externalValue, creator, frm_interfaces.IPost.providedBy )
+		containedObject = self.createAndCheckContentObject( creator, datatype, externalValue, creator, frm_interfaces.IPost.providedBy )
 		containedObject.creator = creator
 
 		# The process of updating may need to index and create KeyReferences
@@ -100,6 +87,21 @@ class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMi
 		self.updateContentObject( containedObject, externalValue, set_id=False, notify=False )
 		# Which just verified the validity of the title.
 
+		return containedObject
+
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_CREATE,
+			  context=frm_interfaces.IPersonalBlog,
+			  request_method='POST' )
+class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
+	""" HTTP says POST creates a NEW entity under the Request-URI """
+	# Therefore our context is a container, and we should respond created.
+
+	def _do_call( self ):
+		blog = self.request.context
+		containedObject = self._read_incoming_post()
 
 		# Now the topic
 		topic = StoryTopic()
@@ -110,14 +112,14 @@ class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMi
 		topic.title = topic.story.title
 		topic.description = topic.title
 
-
-		name = INameChooser( context ).chooseName( topic.title, topic )
+		# For these, the name matters. We want it to be as pretty as we can get
+		name = INameChooser( blog ).chooseName( topic.title, topic )
 
 		lifecycleevent.created( topic )
 		lifecycleevent.created( containedObject )
 
 
-		context[name] = topic # Now store the topic and fire added
+		blog[name] = topic # Now store the topic and fire added
 		topic.id = name # match these things
 		containedObject.containerId = topic.id # TODO:  This is not right, containerId is meant to be global
 
@@ -126,12 +128,41 @@ class ForumPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMi
 		# Respond with the generic location of the object, within
 		# the owner's Objects tree.
 		self.request.response.status_int = 201 # created
-		self.request.response.location = self.request.resource_url( owner,
+		self.request.response.location = self.request.resource_url( self.getRemoteUser(),
 																	'Objects',
 																	to_external_ntiid_oid( topic ) )
 
-
 		return topic
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_CREATE,
+			  context=frm_interfaces.IStoryTopic,
+			  request_method='POST' )
+class TopicPostView(_AbstractIPostPOSTView):
+
+	def _do_call( self ):
+		incoming_post = self._read_incoming_post()
+
+		topic = self.request.context
+
+		# The actual name of these isn't tremendously important
+		name = topic.generateId( prefix='post' )
+
+		lifecycleevent.created( incoming_post )
+
+		topic[name] = incoming_post # Now store the topic and fire added
+		incoming_post.id = name # match these things
+		incoming_post.containerId = topic.id # TODO:  This is not right, containerId is meant to be global
+
+		# Respond with the generic location of the object, within
+		# the owner's Objects tree.
+		self.request.response.status_int = 201 # created
+		self.request.response.location = self.request.resource_url( self.getRemoteUser(),
+																	'Objects',
+																	to_external_ntiid_oid( incoming_post ) )
+
+		return incoming_post
 
 from .dataserver_pyramid_views import _GenericGetView as GenericGetView
 from .ugd_edit_views import UGDPutView
