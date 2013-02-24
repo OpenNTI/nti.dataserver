@@ -171,17 +171,18 @@
 	<!-- Individual field updates -->
 	<!-- Normal traversing of the fields namespace, both with and
 	 without request -->
-	<adapter factory="._adapters.SharedWithExternalFieldTraverser"
-			 for="nti.dataserver.interfaces.IShareableModeledContent pyramid.interfaces.IRequest"
+	<adapter factory="._adapters.GenericModeledContentExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IModeledContent pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 	<adapter factory="._adapters.UserExternalFieldTraverser"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
+	<adapter factory="._view_utils.DispatchingExternalFieldResourceCheckout" />
 
-	<adapter factory="._adapters.SharedWithExternalFieldTraverser"
-			 for="nti.dataserver.interfaces.IShareableModeledContent"
+	<adapter factory="._adapters.GenericModeledContentExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IModeledContent"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 	<adapter factory="._adapters.UserExternalFieldTraverser"

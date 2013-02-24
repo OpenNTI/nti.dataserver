@@ -11,8 +11,23 @@
 	<adapter factory=".forum_views.DefaultUserForumFactory"
 			 zcml:condition="have devmode"/>
 
+	<!-- Object updating -->
 	<subscriber handler=".forum_views.match_title_of_post_to_blog" />
 
+
+	<adapter factory=".forum_views.ForumCheckoutAdapter"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IForum pyramid.interfaces.IRequest"
+			 provides=".interfaces.IUserCheckout" />
+
+	<adapter factory=".forum_views.ForumCheckoutAdapter"
+			 for="nti.dataserver.contenttypes.forums.interfaces.ITopic pyramid.interfaces.IRequest"
+			 provides=".interfaces.IUserCheckout" />
+
+	<adapter factory=".forum_views.ForumCheckoutAdapter"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost pyramid.interfaces.IRequest"
+			 provides=".interfaces.IUserCheckout" />
+
+	<!-- Externalization -->
 	<subscriber factory=".forum_views.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.IBoard"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />

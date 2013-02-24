@@ -15,6 +15,7 @@ logger = __import__('logging').getLogger(__name__)
 from ZODB.interfaces import IConnection
 
 from nti.appserver import _external_object_io as obj_io
+from nti.appserver import interfaces as app_interfaces
 from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
@@ -217,21 +218,28 @@ class ForumContentsGetView(UGDQueryView):
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)
 
-class _CheckObjectOutMixin(object):
+@interface.implementer(app_interfaces.IUserCheckout)
+class ForumCheckoutAdapter(object):
+
+	def __init__( self, context, request ):
+		self.context = context
+		self.request = request
+
 	def checkObjectOutFromUserForUpdate( self, *args ):
 		"""
 		Users do not contain these post objects, they live outside that hierarchy
 		(This might need to change.) As a consequence, there is no checking out that happens.
 		"""
-		return self.request.context
+		return self.context
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_UPDATE,
 			  context=frm_interfaces.IPost,
 			  request_method='PUT' )
-class PostPutView(_CheckObjectOutMixin, UGDPutView):
+class PostPutView(UGDPutView):
 	""" Editing an existing forum post """
+	# Exists entirely for registration sake
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -243,7 +251,7 @@ class PostPutView(_CheckObjectOutMixin, UGDPutView):
 			  permission=nauth.ACT_DELETE,
 			  context=frm_interfaces.IStoryTopic,
 			  request_method='DELETE' )
-class PostOrForumDeleteView(_CheckObjectOutMixin, UGDDeleteView):
+class PostOrForumDeleteView(UGDDeleteView):
 	""" Deleting an existing forum/post """
 
 	def _do_delete_object( self, theObject ):

@@ -16,12 +16,16 @@ import sys
 
 import transaction
 from Acquisition import aq_base
+from zope import interface
+from zope import component
 
+from pyramid.interfaces import IRequest
 from pyramid import security as sec
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver import users
 
+from nti.appserver import interfaces as app_interfaces
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver import httpexceptions as hexc
 
@@ -232,4 +236,28 @@ class ModeledContentEditRequestUtilsMixin(object):
 		"""
 		# TODO: We might need to do some ID massaging here, if the ID is an OID in the old, non-intid
 		# appended form
-		return user.getContainedObject( containerId, objId )
+		return _default_check_object_out_from_user_for_update( self.request.context, self.request,
+															   user, containerId, objId )
+
+def _default_check_object_out_from_user_for_update( context, request, user, containerId, objId ):
+	checkout = component.queryMultiAdapter( (context, request),
+											app_interfaces.IUserCheckout )
+	if checkout:
+		return checkout.checkObjectOutFromUserForUpdate( user, containerId, objId )
+
+	return user.getContainedObject( containerId, objId )
+
+@interface.implementer(app_interfaces.IUserCheckout)
+@component.adapter(app_interfaces.IExternalFieldResource, IRequest)
+class DispatchingExternalFieldResourceCheckout(object):
+	"""
+	If we are wrapping a resource, we want to try to check it out directly.
+	"""
+
+	def __init__( self, context, request ):
+		self.context = context
+		self.request = request
+
+	def checkObjectOutFromUserForUpdate( self, user, containerId, objId ):
+		return _default_check_object_out_from_user_for_update( self.context.context, self.request,
+															   user, containerId, objId )

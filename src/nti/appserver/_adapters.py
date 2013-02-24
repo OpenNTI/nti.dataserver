@@ -19,6 +19,7 @@ from nti.externalization import datastructures
 from nti.externalization import interfaces as ext_interfaces
 
 from nti.utils.schema import find_most_derived_interface
+from nti.utils.property import alias
 
 class EnclosureExternalObject(object):
 	interface.implements( ext_interfaces.IExternalObject )
@@ -62,9 +63,11 @@ class _DefaultExternalFieldResource(object):
 		self.__name__ = key
 		# Initially parent is the object. This may be changed later
 		self.__parent__ = obj
-		self.resource = obj
+		self.context = obj
 		if wrap_value is not None:
 			self.wrap_value = wrap_value
+
+	resource = alias('context')
 
 @interface.implementer(trv_interfaces.ITraversable)
 class _AbstractExternalFieldTraverser(object):
@@ -78,8 +81,14 @@ class _AbstractExternalFieldTraverser(object):
 		self.context = context
 		self.request = request
 
+	_allowed_fields = ()
+	_unwrapped_fields = ()
+
 	def __getitem__( self, key ):
-		raise NotImplementedError()
+		if key not in self._allowed_fields:
+			raise KeyError( key )
+		return _DefaultExternalFieldResource( key, self.context, wrap_value=(None if key not in self._unwrapped_fields else False) )
+
 
 	def traverse( self, name, further_path ):
 		try:
@@ -91,16 +100,35 @@ class _AbstractExternalFieldTraverser(object):
 @component.adapter(nti_interfaces.IShareableModeledContent)
 class SharedWithExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
+	_allowed_fields = ('sharedWith',)
 
-	def __getitem__( self, key ):
-		if key != 'sharedWith':
-			raise KeyError(key)
-		return _DefaultExternalFieldResource( key, self.context )
+@interface.implementer(app_interfaces.IExternalFieldTraversable)
+@component.adapter(nti_interfaces.ITitledContent)
+class TitledExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
+	_allowed_fields = ('title', )
+	#_unwrapped_fields = ('title', )
+
+@component.adapter(nti_interfaces.ITitledDescribedContent)
+class TitledDescribedExternalFieldTraverser(TitledExternalFieldTraverser):
+
+	_allowed_fields = TitledExternalFieldTraverser._allowed_fields + ('description',)
+	#_unwrapped_fields = TitledExternalFieldTraverser._unwrapped_fields + ('description',)
+
+# The inheritance tree for IShareable and ITitledDescribed is disjoint,
+# so a registration for one or the other of those conflicts.
+# This class is a general dispatcher and should be registered for IModeledContent
+@component.adapter(nti_interfaces.IModeledContent)
+class GenericModeledContentExternalFieldTraverser(TitledDescribedExternalFieldTraverser,SharedWithExternalFieldTraverser):
+
+	_allowed_fields = SharedWithExternalFieldTraverser._allowed_fields + TitledDescribedExternalFieldTraverser._allowed_fields + ('body',)
+	_unwrapped_fields = SharedWithExternalFieldTraverser._unwrapped_fields + TitledDescribedExternalFieldTraverser._unwrapped_fields
 
 @interface.implementer(app_interfaces.IExternalFieldTraversable)
 @component.adapter(nti_interfaces.IUser)
 class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
+
+	_unwrapped_fields = ('password',)
 
 	def __init__( self, context, request=None ):
 		super(UserExternalFieldTraverser,self).__init__( context, request=request )
@@ -121,13 +149,6 @@ class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 			allowed_fields.add( k )
 
 		self._allowed_fields = allowed_fields
-
-
-	def __getitem__( self, key ):
-		if key not in self._allowed_fields:
-			raise KeyError(key)
-		return _DefaultExternalFieldResource( key, self.context, wrap_value=(key != "password") )
-
 
 from nti.utils import create_gravatar_url
 
