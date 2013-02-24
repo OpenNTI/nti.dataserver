@@ -26,8 +26,9 @@ from nti.utils.schema import AdaptingFieldProperty
 from nti.utils.schema import AcquisitionFieldProperty
 
 from . import interfaces as for_interfaces
+from zope.annotation import interfaces as an_interfaces
 
-@interface.implementer(for_interfaces.ITopic)
+@interface.implementer(for_interfaces.ITopic, an_interfaces.IAttributeAnnotatable)
 class Topic(Acquisition.Implicit,
 			containers.AcquireObjectsOnReadMixin,
 			containers.CheckingLastModifiedBTreeContainer,

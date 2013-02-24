@@ -18,26 +18,15 @@ logger = __import__('logging').getLogger(__name__)
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import is_
-from hamcrest import has_key
+from hamcrest import contains
 from hamcrest import has_length
 from hamcrest import has_entry
-
-import nti.tests
 
 from .test_application import TestApp
 
 from zope import lifecycleevent
 from zope.component import eventtesting
 from zope.intid.interfaces import IIntIdRemovedEvent
-
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.dataserver import contenttypes, users
-from nti.contentrange import contentrange
-
-from nti.chatserver import interfaces as chat_interfaces
-from nti.chatserver.messageinfo import MessageInfo
-from nti.dataserver.meeting_storage import CreatorBasedAnnotationMeetingStorage
-from nti.dataserver import chat_transcripts
 
 
 from nti.dataserver.tests import mock_dataserver
@@ -51,7 +40,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS
 	def test_user_has_default_blog( self ):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			user = self._create_user()
+			_ = self._create_user()
 
 		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog' )
@@ -59,6 +48,12 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblog+json' ) )
 		assert_that( res.json_body, has_entry( 'title', 'sjohnson@nextthought.com' ) )
 
+		# We have a contents URL
+		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
+		# Make sure we're getting back pretty URLs
+		assert_that( contents_href, is_( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/contents' ) ))
+		# which is empty
+		testapp.get( contents_href, status=200 )
 
 	@WithSharedApplicationMockDS
 	def test_user_can_POST_new_blog_entry( self ):
@@ -79,12 +74,24 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
 		assert_that( res.json_body, has_entry( 'story', has_entry( 'body', data['body'] ) ) )
 		assert_that( res.status_int, is_( 201 ) )
+		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
+		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
+		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
 
 		# The new topic is accessible at its OID URL, plus a pretty URL
 
 		testapp.get( res.location ) # OID URL
 
 		testapp.get( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My New Blog' ) ) # Pretty URL
+
+		# and it has no contents
+		testapp.get( contents_href, status=200 )
+
+		# It shows up in the blog contents
+
+		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog/contents' )
+		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+
 
 	@WithSharedApplicationMockDS
 	def test_user_can_PUT_to_edit_existing_blog_entry( self ):
@@ -181,6 +188,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# Create the blog
 		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
 		entry_url = res.location
+		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
 
 		# (Same user) comments on blog by POSTing a new post
 		data['title'] = 'A comment'
@@ -192,7 +200,8 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
 		assert_that( res.json_body, has_entry( 'body', data['body'] ) )
 		post_url = self.require_link_href_with_rel( res.json_body, 'edit' )
-
+		self.require_link_href_with_rel( res.json_body, 'like' ) # comments can be liked
+		self.require_link_href_with_rel( res.json_body, 'flag' ) # comments can be flagged
 		data['body'] = ['Changed my body']
 		data['title'] = 'Changed my title'
 
@@ -201,9 +210,14 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
 		assert_that( res.json_body, has_entry( 'body', data['body'] ) )
 
-		# confirm it is in the parent
+		# confirm it is in the parent...
 		res = testapp.get( entry_url )
+		# ... metadata
 		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
+
+		# ... actual contents
+		res = testapp.get( entry_contents_url )
+		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 
 		# until we delete it
 		eventtesting.clearEvents()

@@ -26,8 +26,9 @@ from nti.utils.schema import AdaptingFieldProperty
 from zope.schema.fieldproperty import FieldProperty
 
 from . import interfaces as for_interfaces
+from zope.annotation import interfaces as an_interfaces
 
-@interface.implementer(for_interfaces.IPost)
+@interface.implementer(for_interfaces.IPost, an_interfaces.IAttributeAnnotatable)
 class Post(Acquisition.Implicit,
 		   Persistent,
 		   datastructures.ZContainedMixin,
