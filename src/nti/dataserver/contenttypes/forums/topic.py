@@ -44,6 +44,10 @@ class StoryTopic(Topic):
 
 	story = AcquisitionFieldProperty(for_interfaces.IStoryTopic['story'])
 
+@interface.implementer(for_interfaces.IPersonalBlogEntry)
+class PersonalBlogEntry(StoryTopic):
+	creator = None
+
 from zope.container.contained import ContainerSublocations
 class StoryTopicSublocations(ContainerSublocations):
 	"""

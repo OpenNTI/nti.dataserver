@@ -42,7 +42,7 @@ setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.c
 tearDownModule = nti.tests.module_teardown
 
 
-from ..interfaces import IForum, ITopic, IPersonalBlog, IStoryTopic
+from ..interfaces import IForum, ITopic, IPersonalBlog, IStoryTopic, IPersonalBlogEntry
 from ..forum import Forum, PersonalBlog
 
 
@@ -82,7 +82,7 @@ def test_blog_externalizes():
 	post = PersonalBlog()
 	post.title = 'foo'
 
-	@interface.implementer(IStoryTopic)
+	@interface.implementer(IPersonalBlogEntry)
 	class X(Implicit):
 		__parent__ = __name__ = None
 

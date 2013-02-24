@@ -240,6 +240,11 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 		self.users = {}
 		self.testapp = None
 
+	def tearDown(self):
+		self.users = {}
+		self.testapp = None
+		super(SharedApplicationTestBase,self).tearDown()
+
 	@classmethod
 	def tearDownClass(cls):
 		__show__.on()

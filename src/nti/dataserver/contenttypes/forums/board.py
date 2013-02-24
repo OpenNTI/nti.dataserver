@@ -42,3 +42,4 @@ class Board(ExtensionClass.Base,
 	ForumCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
 
 	sharingTargets = ()
+	creator = None
