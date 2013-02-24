@@ -570,6 +570,7 @@ class ICoppaUserWithoutAgreement(ICoppaUser):
 	and the two states are mutually exclusive.
 	"""
 
+### ACLs
 
 class IACE(interface.Interface):
 	"""
@@ -608,6 +609,14 @@ class IACLProvider(interface.Interface):
 	"""
 
 	__acl__ = interface.Attribute( "An :class:`IACL`" )
+
+class IDefaultPublished(interface.Interface):
+	"""
+	A marker interface mixed in to an instance to specify
+	that it has been "published" by its creator, thus sharing
+	it with the default sharing applicable to its creator
+	(whatever that means).
+	"""
 
 ### Content
 

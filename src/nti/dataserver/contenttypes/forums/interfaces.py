@@ -90,16 +90,24 @@ class IStoryTopic(ITopic):
 
 	story = schema.Object(IPost, title="The main, first post of this topic.")
 
-class IPersonalBlog(IForum):
+class IPersonalBlog(IForum, nti_interfaces.ICreated):
 	"""
-	A personal blog is a special type of forum, in that it contains only :class:`.IStoryTopic`
+	A personal blog is a special type of forum, in that it contains only :class:`.IPersonalBlogEntry`
 	objects and is contained by an :class:`nti.dataserver.interfaces.IUser`.
 
 	Users that are allowed to blog will automatically
 	have one board with a forum named 'Blog': users/<USER>/Blog
 	"""
 
-	contains(IStoryTopic)
+	contains(b".IPersonalBlogEntry")
 	__setitem__.__doc__ = None
 	containers(nti_interfaces.IUser)
+	__parent__.required = False
+
+class IPersonalBlogEntry(IStoryTopic, nti_interfaces.ICreated):
+	"""
+	A special kind of story topic that is only contained by blogs.
+	"""
+
+	containers(IPersonalBlog) # Adds __parent__ as required
 	__parent__.required = False

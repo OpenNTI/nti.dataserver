@@ -42,3 +42,4 @@ class Forum(Acquisition.Implicit,
 @interface.implementer(for_interfaces.IPersonalBlog)
 class PersonalBlog(Forum):
 	__external_can_create__ = False
+	creator = None

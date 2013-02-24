@@ -14,7 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from ZODB.interfaces import IConnection
 
-from nti.appserver import _external_object_io as obj_io
+from nti.appserver.traversal import find_interface
+from nti.appserver._util import uncached_in_response
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
@@ -23,7 +24,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
-from nti.dataserver.contenttypes.forums.topic import StoryTopic
+from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
 
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -55,6 +56,7 @@ def DefaultUserForumFactory(user):
 		if jar:
 			jar.add( forum ) # ensure we store with the user
 		forum.title = user.username
+		forum.creator = user
 		errors = schema.getValidationErrors( frm_interfaces.IPersonalBlog, forum )
 		if errors:
 			__traceback_info__ = errors
@@ -105,7 +107,8 @@ class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
 		containedObject = self._read_incoming_post()
 
 		# Now the topic
-		topic = StoryTopic()
+		topic = PersonalBlogEntry()
+		topic.creator = self.getRemoteUser()
 		containedObject.__parent__ = topic
 
 		topic.story = containedObject
@@ -213,7 +216,8 @@ class ForumContentsGetView(UGDQueryView):
 		self.request = request
 		super(ForumContentsGetView,self).__init__( request, the_user=self, the_ntiid=self.request.context.__name__ )
 
-		self.user = self.getRemoteUser()
+		# The user is really the 'owner' of the data
+		self.user = find_interface(  self.request.context, nti_interfaces.IUser )
 
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)
@@ -276,6 +280,9 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
 from nti.dataserver import links
 from zope.container.interfaces import ILocation
+from ._util import AbstractTwoStateViewLinkDecorator
+from ._view_utils import get_remote_user
+from pyramid.threadlocal import get_current_request
 @interface.implementer( ext_interfaces.IExternalMappingDecorator )
 class ForumObjectContentsLinkProvider(object):
 	"""
@@ -291,7 +298,10 @@ class ForumObjectContentsLinkProvider(object):
 		# be able to render the links. A non-parented object is usually
 		# a weakref to an object that has been left around
 		# in somebody's stream.
-		# All forum objects should have fully traversable paths
+		# All forum objects should have fully traversable paths by themself,
+		# without considering acquired info (NTIIDs from the User would mess
+		# up rendering)
+		context = aq_base( context )
 		if not context.__parent__:
 			return
 
@@ -305,3 +315,91 @@ class ForumObjectContentsLinkProvider(object):
 
 		_links = mapping.setdefault( StandardExternalFields.LINKS, [] )
 		_links.append( link )
+
+### Publishing workflow
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(frm_interfaces.IPersonalBlogEntry)
+class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
+	"""
+	Adds the appropriate publish or unpublish link
+	"""
+	false_view = 'publish'
+	true_view = 'unpublish'
+
+	def predicate( self, context, current_username ):
+		if nti_interfaces.IDefaultPublished.providedBy( context ):
+			return True
+
+	def decorateExternalMapping( self, context, mapping ):
+		# Only for the owner
+		current_user = get_remote_user( get_current_request() )
+		if not current_user or current_user != context.creator:
+			return
+		super(PublishLinkDecorator,self).decorateExternalMapping( context, mapping )
+
+from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
+from nti.dataserver.authentication import _dynamic_memberships_that_participate_in_security
+@component.adapter(frm_interfaces.IPersonalBlogEntry)
+class _PersonalBlogEntryACLProvider(AbstractCreatedAndSharedACLProvider):
+
+	_DENY_ALL = True
+	_REQUIRE_CREATOR = True
+
+	# People it is shared with can create within it
+	# as well as see it
+	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,nauth.ACT_CREATE)
+	def _get_sharing_target_names( self ):
+		if nti_interfaces.IDefaultPublished.providedBy( self.context ):
+			# TODO: Using a private function
+			return _dynamic_memberships_that_participate_in_security( find_interface( self.context, nti_interfaces.IUser ) )
+
+		return ()
+
+@component.adapter(frm_interfaces.IPersonalBlog)
+class _PersonalBlogACLProvider(AbstractCreatedAndSharedACLProvider):
+
+	_DENY_ALL = False
+
+	# We want posts to get their own acl, giving the creator full
+	# control. We also want the owner of the topic they are in to get
+	# control too. Hence we subclass this one (rather than ShareableModContentACLProvider)
+	# and turn inheritance on
+
+	def _get_sharing_target_names( self ):
+		return ()
+
+@component.adapter(frm_interfaces.IPost)
+class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
+
+	_DENY_ALL = False
+
+	# We want posts to get their own acl, giving the creator full
+	# control. We also want the owner of the topic they are in to get
+	# control too. Hence we subclass this one (rather than ShareableModContentACLProvider)
+	# and turn inheritance on
+
+	def _get_sharing_target_names( self ):
+		return ()
+
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context=frm_interfaces.IPersonalBlogEntry,
+			  permission=nauth.ACT_UPDATE,
+			  request_method='POST',
+			  name='publish')
+def _PublishView(request):
+	interface.alsoProvides( request.context, nti_interfaces.IDefaultPublished )
+	return uncached_in_response( request.context )
+
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context=frm_interfaces.IPersonalBlogEntry,
+			  permission=nauth.ACT_UPDATE,
+			  request_method='POST',
+			  name='unpublish')
+def _UnpublishView(request):
+	interface.noLongerProvides( request.context, nti_interfaces.IDefaultPublished )
+	return uncached_in_response( request.context )

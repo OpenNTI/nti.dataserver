@@ -19,6 +19,7 @@ from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import is_
 from hamcrest import contains
+from hamcrest import contains_inanyorder
 from hamcrest import has_length
 from hamcrest import has_entry
 
@@ -28,7 +29,7 @@ from zope import lifecycleevent
 from zope.component import eventtesting
 from zope.intid.interfaces import IIntIdRemovedEvent
 
-
+from nti.dataserver import users
 from nti.dataserver.tests import mock_dataserver
 
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, PersistentContainedExternal
@@ -65,7 +66,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
 
 		# Return the representation of the new topic created
-		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.storytopic+json' ) )
+		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
 		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
 		assert_that( res.json_body, has_entry( 'story', has_entry( 'body', data['body'] ) ) )
 		assert_that( res.status_int, is_( 201 ) )
@@ -228,3 +229,108 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		del_events = eventtesting.getEvents( lifecycleevent.IObjectRemovedEvent )
 		assert_that( del_events, has_length( 1 ) )
 		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 1 ) )
+
+	@WithSharedApplicationMockDS
+	def test_user_sharing_community_can_GET_and_POST_new_comments(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user( username='original_user@foo' )
+			user2 = self._create_user( username=user.username + '2' )
+			# make them share a community
+			community = users.Community.create_community( username='TheCommunity' )
+			user.join_community( community )
+			user2.join_community( community )
+			user2_username = user2.username
+			user_username = user.username
+
+
+		testapp = TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
+		testapp2 = TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
+
+		# First user creates the blog entry
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		# Create the blog
+		res = testapp.post_json( '/dataserver2/users/original_user@foo/Blog', data )
+		entry_url = res.location
+		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
+		story_url = self.require_link_href_with_rel( res.json_body['story'], 'edit' )
+		pub_url = self.require_link_href_with_rel( res.json_body, 'publish' )
+
+		# Before its published, the second user can see nothing
+		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
+		assert_that( res.json_body['Items'], has_length( 0 ) )
+
+		# XXX FIXME: This is wrong
+		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog' )
+		assert_that( res.json_body, has_entry( 'TopicCount', 1 ) )
+
+		# When it is published...
+		testapp.post( pub_url )
+
+		# Second user is able to see everything about it...
+
+		# Its entry in the table-of-contents
+		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog' )
+		assert_that( res.json_body, has_entry( 'TopicCount', 1 ) )
+
+		# Its full entry
+		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
+		assert_that( res.json_body['Items'][0], has_entry( 'title', 'My New Blog' ) )
+		assert_that( res.json_body['Items'][0], has_entry( 'story', has_entry( 'body', data['body'] ) ) )
+
+		# It can be fetched by pretty URL
+		res = testapp2.get( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog' ) ) # Pretty URL
+		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
+		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
+		assert_that( res.json_body, has_entry( 'story', has_entry( 'body', data['body'] ) ) )
+		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
+		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
+		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
+
+		# It can be fetched directly
+		testapp2.get( entry_url )
+
+		# it currently has no contents
+		testapp2.get( contents_href, status=200 )
+
+		# The other user can add comments...
+		data['title'] = 'A comment'
+		data['body'] = ['A comment body']
+		# ...both directly...
+		comment1res = testapp2.post_json( entry_url, data )
+		# ...and pretty...
+		data['title'] = 'Another comment'
+		data['body'] = ['more comment body']
+		comment2res = testapp2.post_json( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog' ), data )
+
+		# Which he can update
+		data['title'] = 'Changed my title'
+		testapp2.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data )
+
+		# (Though he cannot update the actual post itself)
+		testapp2.put_json( story_url, data, status=403 )
+
+		# Both visible to the original user
+		res = testapp.get( entry_url )
+		# ... metadata
+		assert_that( res.json_body, has_entry( 'PostCount', 2 ) )
+
+		# ... actual contents
+		res = testapp.get( entry_contents_url )
+		assert_that( res.json_body['Items'], has_length( 2 ) )
+		assert_that( res.json_body['Items'], contains_inanyorder(
+			has_entry( 'title', data['title'] ),
+			has_entry( 'title', 'A comment' ) ) )
+
+		# The original user can delete a comment from the other user
+		testapp.delete( self.require_link_href_with_rel( comment1res.json_body, 'edit' ), status=204 )
+
+		# and the other user can delete his own comment
+		testapp2.delete( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), status=204 )
+
+		# and they are now gone
+		res = testapp.get( entry_url )
+		# ... metadata
+		assert_that( res.json_body, has_entry( 'PostCount', 0 ) )

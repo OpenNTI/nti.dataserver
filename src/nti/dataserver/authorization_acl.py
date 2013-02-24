@@ -381,6 +381,7 @@ class _CreatedACLProvider(object):
 		self._created = created
 
 	context = alias('_created')
+	_REQUIRE_CREATOR = False
 
 	def _creator_acl( self ):
 		"""
@@ -389,9 +390,12 @@ class _CreatedACLProvider(object):
 		:return: A fresh, mutable list containing at most one :class:`_ACE` for
 				the creator (if there is a creator).
 		"""
-		return _ACL([ace_allowing( self._created.creator, nti_interfaces.ALL_PERMISSIONS, self )]
+		result = _ACL([ace_allowing( self._created.creator, nti_interfaces.ALL_PERMISSIONS, self )]
 					if getattr(self._created, 'creator', None ) # They don't all comply with the interface
 					else [])
+		if self._REQUIRE_CREATOR and len(result) != 1:
+			raise ValueError( "Unable to get creator", self._created )
+		return result
 
 	@property
 	def __acl__( self ):
@@ -402,7 +406,7 @@ class _CreatedACLProvider(object):
 				the creator (if there is a creator), and one denying all rights to everyone else.
 		"""
 		acl = self._creator_acl( )
-		acl.append( _ace_denying_all( _CreatedACLProvider ) )
+		acl.append( _ace_denying_all( type(self) ) )
 		return acl
 
 
@@ -420,6 +424,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 	"""
 
 	_DENY_ALL = False
+	_PERMS_FOR_SHARING_TARGETS = (authorization.ACT_READ,)
 
 	def _get_sharing_target_names(self):
 		"""
@@ -449,10 +454,11 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		"""
 		result = self._creator_acl()
 		for name in self.__do_get_sharing_target_names():
-			result.append( ace_allowing( name, authorization.ACT_READ, AbstractCreatedAndSharedACLProvider ) )
+			for perm in self._PERMS_FOR_SHARING_TARGETS:
+				result.append( ace_allowing( name, perm, type(self) ) )
 		self._extend_acl_before_deny( result )
 		if self._DENY_ALL:
-			result.append( _ace_denying_all( AbstractCreatedAndSharedACLProvider ) )
+			result.append( _ace_denying_all( type(self) ) )
 		return result
 
 
