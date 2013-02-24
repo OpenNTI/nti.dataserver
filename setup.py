@@ -297,7 +297,7 @@ setup(
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
-		'zope.schema >= 4.2.2',
+		'zope.schema >= 4.3.1',
 		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
 		# A 4.0.0a3 is out and works fine. officially upgrade when final. But this requires an extra: 'zope.security[untrustedpython] >= 4.0.0a3'
 		'zope.security >= 3.9.0',
