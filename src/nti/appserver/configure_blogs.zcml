@@ -13,4 +13,26 @@
 
 	<subscriber handler=".forum_views.match_title_of_post_to_blog" />
 
+	<subscriber factory=".forum_views.ForumObjectContentsLinkProvider"
+				for="nti.dataserver.contenttypes.forums.interfaces.IBoard"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".forum_views.ForumObjectContentsLinkProvider"
+				for="nti.dataserver.contenttypes.forums.interfaces.IForum"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".forum_views.ForumObjectContentsLinkProvider"
+				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<!-- Make certain classes Likeable -->
+	<class class="nti.dataserver.contenttypes.forums.topic.Topic">
+		<implements interface="nti.dataserver.interfaces.ILikeable" />
+		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+	</class>
+	<class class="nti.dataserver.contenttypes.forums.post.Post">
+		<implements interface="nti.dataserver.interfaces.ILikeable" />
+		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+	</class>
+
 </configure>

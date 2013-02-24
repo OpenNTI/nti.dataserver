@@ -47,13 +47,13 @@ def _DefaultUserForumFactory(  ):
 @interface.implementer(frm_interfaces.IPersonalBlog)
 @component.adapter(nti_interfaces.IUser)
 def DefaultUserForumFactory(user):
-	forum = zope.annotation.factory(_DefaultUserForumFactory)(user)
+	# The right key is critical. 'Blog' is the pretty external name (see dataserver_pyramid_traversal)
+	forum = zope.annotation.factory(_DefaultUserForumFactory, key='Blog')(user)
 	if not forum._p_mtime:
 		jar = IConnection( user, None )
 		if jar:
 			jar.add( forum ) # ensure we store with the user
 		forum.title = user.username
-		forum.__name__ = unicode(forum.__name__, 'ascii')
 		errors = schema.getValidationErrors( frm_interfaces.IPersonalBlog, forum )
 		if errors:
 			__traceback_info__ = errors
@@ -113,6 +113,8 @@ class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
 		topic.description = topic.title
 
 		# For these, the name matters. We want it to be as pretty as we can get
+		# TODO: We probably need to register an IReservedNames that forbids
+		# _VIEW_CONTENTS and maybe some other stuff
 		name = INameChooser( blog ).chooseName( topic.title, topic )
 
 		lifecycleevent.created( topic )
@@ -167,6 +169,7 @@ class TopicPostView(_AbstractIPostPOSTView):
 from .dataserver_pyramid_views import _GenericGetView as GenericGetView
 from .ugd_edit_views import UGDPutView
 from .ugd_edit_views import UGDDeleteView
+from .ugd_query_views import _UGDView as UGDQueryView
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -183,8 +186,36 @@ from .ugd_edit_views import UGDDeleteView
 			  permission=nauth.ACT_READ,
 			  context=frm_interfaces.IPost,
 			  request_method='GET' )
-class BlogGetView(GenericGetView):
+class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
+
+_VIEW_CONTENTS = 'contents'
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_READ,
+			  context=frm_interfaces.IPersonalBlog,
+			  name=_VIEW_CONTENTS,
+			  request_method='GET' )
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_READ,
+			  context=frm_interfaces.IStoryTopic,
+			  name=_VIEW_CONTENTS,
+			  request_method='GET' )
+class ForumContentsGetView(UGDQueryView):
+	""" The /contents view for the forum objects we are using.
+
+	The contents fully support the same sorting and paging parameters as
+	the UGD views. """
+
+	def __init__( self, request ):
+		self.request = request
+		super(ForumContentsGetView,self).__init__( request, the_user=self, the_ntiid=self.request.context.__name__ )
+
+		self.user = self.getRemoteUser()
+
+	def getObjectsForId( self, *args ):
+		return (self.request.context,)
 
 class _CheckObjectOutMixin(object):
 	def checkObjectOutFromUserForUpdate( self, *args ):
@@ -193,7 +224,6 @@ class _CheckObjectOutMixin(object):
 		(This might need to change.) As a consequence, there is no checking out that happens.
 		"""
 		return self.request.context
-
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -228,3 +258,42 @@ def match_title_of_post_to_blog( post, event ):
 
 	if frm_interfaces.IStoryTopic.providedBy( post.__parent__ ) and aq_base(post) is aq_base(post.__parent__.story) and post.title != post.__parent__.title:
 		post.__parent__.title = post.title
+	return
+
+# Notice we do not declare what we adapt--we adapt too many things
+# that share no common ancestor. (We could be declared on IContainer,
+# but its not clear what if any IContainers we externalize besides
+# the forum objects)
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import StandardExternalFields
+from nti.dataserver import links
+from zope.container.interfaces import ILocation
+@interface.implementer( ext_interfaces.IExternalMappingDecorator )
+class ForumObjectContentsLinkProvider(object):
+	"""
+	Decorate forum object externalizations with a link pointing to their
+	children (the contents).
+	"""
+
+	def __init__( self, context ):
+		pass
+
+	def decorateExternalMapping( self, context, mapping ):
+		# We only do this for parented objects. Otherwise, we won't
+		# be able to render the links. A non-parented object is usually
+		# a weakref to an object that has been left around
+		# in somebody's stream.
+		# All forum objects should have fully traversable paths
+		if not context.__parent__:
+			return
+
+
+		# /path/to/forum/topic/contents --> note that contents is not an @@ view,
+		# simply named. This is prettier, but if we need to we can easily @@ it
+		link = links.Link( context, rel=_VIEW_CONTENTS, elements=(_VIEW_CONTENTS,) )
+		interface.alsoProvides( link, ILocation )
+		link.__name__ = ''
+		link.__parent__ = context
+
+		_links = mapping.setdefault( StandardExternalFields.LINKS, [] )
+		_links.append( link )
