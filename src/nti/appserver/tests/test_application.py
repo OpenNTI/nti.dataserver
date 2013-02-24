@@ -237,12 +237,43 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 		self.request.environ[b'HTTP_USER_AGENT'] = b'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6'
 		self.request.environ[b'wsgi.version'] = '1.0'
 
+		self.users = {}
+		self.testapp = None
+
 	@classmethod
 	def tearDownClass(cls):
 		__show__.on()
 		super(SharedApplicationTestBase,cls).tearDownClass()
 
 def WithSharedApplicationMockDS( *args, **kwargs ):
+
+	# Either True, or a sequence of strings naming users. If True,
+	# then the standard user is created. If a sequence, then the standard user,
+	# followed by each named user
+	users_to_create = kwargs.pop( 'users', None )
+
+	testapp = kwargs.pop( 'testapp', None )
+	if testapp:
+		def _make_app(self):
+			if users_to_create is True:
+				self.testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+			else:
+				self.testapp = TestApp( self.app )
+	else:
+		def _make_app( self ):
+			pass
+
+	if users_to_create:
+		def _do_create(self):
+			with mock_dataserver.mock_db_trans( self.ds ):
+				base_user = self._create_user()
+				self.users = { base_user.username: base_user }
+				if users_to_create and users_to_create is not True:
+					for username in users:
+						self.users[username] = self._create_user( username )
+	else:
+		def _do_create(self):
+			pass
 
 	if len(args) == 1 and not kwargs:
 		# being used as a decorator
@@ -252,6 +283,8 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 		@mock_dataserver.WithMockDS
 		def f(self):
 			self.config.registry._zodb_databases = { '': self.ds.db } # 0.3
+			_do_create( self )
+			_make_app( self )
 			func(self)
 		return f
 
@@ -261,6 +294,8 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 		@mock_dataserver.WithMockDS(**kwargs)
 		def f(self):
 			self.config.registry._zodb_databases = { '': self.ds.db } # 0.3
+			_do_create( self )
+			_make_app( self )
 			func(self)
 		return f
 	return factory

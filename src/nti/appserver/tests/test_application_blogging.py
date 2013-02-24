@@ -37,12 +37,9 @@ from urllib import quote as UQ
 
 class TestApplicationBlogging(SharedApplicationTestBase):
 
-	@WithSharedApplicationMockDS
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog( self ):
-		with mock_dataserver.mock_db_trans( self.ds ):
-			_ = self._create_user()
-
-		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+		testapp = self.testapp
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog' )
 
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblog+json' ) )
@@ -55,13 +52,11 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# which is empty
 		testapp.get( contents_href, status=200 )
 
-	@WithSharedApplicationMockDS
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_blog_entry( self ):
 		"""POSTing an IPost to the blog URL automatically creates a new topic"""
-		with mock_dataserver.mock_db_trans( self.ds ):
-			_ = self._create_user()
 
-		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+		testapp = self.testapp
 
 		data = { 'Class': 'Post',
 				 'title': 'My New Blog',
@@ -93,14 +88,11 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 
 
-	@WithSharedApplicationMockDS
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_PUT_to_edit_existing_blog_entry( self ):
 		"""PUTting an IPost to the 'story' of a blog entry edits the story"""
 
-		with mock_dataserver.mock_db_trans( self.ds ):
-			_ = self._create_user()
-
-		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+		testapp = self.testapp
 
 		data = { 'Class': 'Post',
 				 'title': 'My New Blog',
@@ -136,14 +128,22 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.get( entry_url )
 		assert_that( res.json_body, has_entry( 'story', has_entry( 'body', data['body'] ) ) )
 
-	@WithSharedApplicationMockDS
+		# And I can use the 'fields' URL to edit just parts of it, including title and body
+		for field in 'body', 'title':
+			data[field] = 'Edited with fields'
+			if field == 'body': data[field] = [data[field]]
+
+			testapp.put_json( story_url + '/++fields++' + field, data[field] )
+			res = testapp.get( entry_url )
+			assert_that( res.json_body, has_entry( 'story', has_entry( field, data[field] ) ) )
+
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_DELETE_existing_blog_entry( self ):
 		"""A StoryTopic can be deleted from its object URL"""
 
-		with mock_dataserver.mock_db_trans( self.ds ):
-			_ = self._create_user()
-
-		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+		testapp = self.testapp
 
 		data = { 'Class': 'Post',
 				 'title': 'My New Blog',
@@ -173,13 +173,11 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 2 ) )
 
-	@WithSharedApplicationMockDS
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_comment_PUT_to_edit_and_DELETE( self ):
 		"""POSTing an IPost to the URL of an existing IStoryTopic adds a comment"""
-		with mock_dataserver.mock_db_trans( self.ds ):
-			_ = self._create_user()
 
-		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+		testapp = self.testapp
 
 		data = { 'Class': 'Post',
 				 'title': 'My New Blog',

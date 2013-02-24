@@ -316,6 +316,20 @@ class INewContainerResource(interface.Interface):
 
 class IPagesResource(interface.Interface):
 	pass
+
+
+class IUserCheckout(interface.Interface):
+	"""
+	Register to ensure correct access to objects, particularly not deleted
+	objects. Register as a multi-adapter on (context, request).
+	"""
+
+	def checkObjectOutFromUserForUpdate( user, containerId, objId ):
+		"""
+		If the user validly contains the given object, return it. Otherwise return None.
+		"""
+
+
 ###
 # Assessment Support
 ###
