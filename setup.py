@@ -94,9 +94,10 @@ setup(
 	],
 	install_requires = [
 		# Zope Acquisition; used by contentratings implicitly
-		# cool concept. Pulls in ExtensionClass (which should not be used)
-		'Acquisition >= 4.0a1',
+		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
+		'Acquisition >= 4.0',
 		'Chameleon >= 2.11',
+		'ExtensionClass >= 4.0',
 		# 'friendly' fork of PIL, developed by Zope/Plone.
 		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		# is the version that Pillow forked from in 2010 as version 1.0. So
