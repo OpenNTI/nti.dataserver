@@ -40,6 +40,17 @@
 				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
+	<!-- Traversal -->
+	<adapter factory=".forum_views._PostFieldTraverser"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+	<adapter factory=".forum_views._PostFieldTraverser"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+
 	<!-- Make certain classes Likeable -->
 	<class class="nti.dataserver.contenttypes.forums.topic.Topic">
 		<implements interface="nti.dataserver.interfaces.ILikeable" />

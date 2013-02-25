@@ -66,6 +66,9 @@
 	<adapter factory=".contentlibrary_views._DelimitedHierarchyContentUnitPreferencesFactory"
 			 provides=".interfaces.IContentUnitPreferences" />
 
+	<!-- FIXME: These need to be handled at an interface level, not this class level.
+	The intent is to adapt to the UGD containers found in a User, but
+	this also catches forum containers -->
 	<adapter factory=".contentlibrary_views._ContainerFieldsTraversable"
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
 			 provides="zope.traversing.interfaces.ITraversable"

@@ -25,6 +25,7 @@ import warnings
 from zope import interface
 from zope import component
 from zope.location import interfaces as loc_interfaces
+from zope.location.interfaces import LocationError
 from zope.annotation.factory import factory as an_factory
 from zope.traversing import interfaces as trv_interfaces
 
@@ -269,7 +270,7 @@ class _ContainerFieldsTraversable(object):
 		if name == 'sharingPreference':
 			return _with_acl( app_interfaces.IContentUnitPreferences( self.context ) )
 
-		raise KeyError( name ) # pragma: no cover
+		raise LocationError( name ) # pragma: no cover
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(lib_interfaces.IContentUnit)
@@ -299,7 +300,7 @@ class _ContentUnitFieldsTraversable(object):
 				container = remote_user.containers.getOrCreateContainer(ntiid )
 			return _with_acl( app_interfaces.IContentUnitPreferences( container ) )
 
-		raise KeyError( name ) # pragma: no cover
+		raise LocationError( name ) # pragma: no cover
 
 from ._view_utils import AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 @view_config( route_name='objects.generic.traversal',
