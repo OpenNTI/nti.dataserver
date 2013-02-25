@@ -39,6 +39,7 @@ from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry
 from ..topic import Topic, HeadlineTopic, PersonalBlogEntry
 from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost
 
+from ExtensionClass import Base
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
 tearDownModule = nti.tests.module_teardown
@@ -64,11 +65,29 @@ def test_blog_entry():
 	assert_that( topic, verifiably_provides( IHeadlineTopic ) )
 	assert_that( topic, verifiably_provides( ITopic ) )
 
-	topic.headline = PersonalBlogEntryPost()
+	headline = PersonalBlogEntryPost()
+	headline.__parent__ = topic
+	topic.headline = headline
 	assert_that( topic, validly_provides( IPersonalBlogEntry ) )
 	assert_that( topic, validly_provides( IHeadlineTopic ) )
 	assert_that( topic, validly_provides( ITopic ) )
 	assert_that( topic.headline, aq_inContextOf( topic ) )
+
+	# sharing targets are inherited all the way down
+	class Parent(Base):
+		sharingTargets = ()
+
+	parent = Parent()
+	parent.sharingTargets = set( [1, 2, 3] )
+	topic.__parent__ = parent
+	parent.topic = topic
+
+	assert_that( topic.headline, aq_inContextOf( parent ) )
+	assert_that( topic, aq_inContextOf( parent ) )
+
+	assert_that( topic.sharingTargets, is_( parent.sharingTargets ) )
+
+	assert_that( parent.topic.headline.sharingTargets, is_( parent.sharingTargets ) )
 
 def test_topic_constraints():
 
