@@ -299,6 +299,7 @@
 
 	<include package="." file="configure_site_policy_alpha.zcml" />
 	<include package="." file="configure_site_policy_collegiate.zcml" />
+	<include package="." file="configure_site_policy_gloriamundi.zcml" />
 	<include package="." file="configure_site_policy_demo.zcml" />
 	<include package="." file="configure_site_policy_fintech.zcml" />
 	<include package="." file="configure_site_policy_law.zcml" />

@@ -1,0 +1,18 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+	<include package="z3c.baseregistry" file="meta.zcml" />
+
+	<utility
+		component=".sites.GLORIA_MUNDI"
+		provides="zope.component.interfaces.IComponents"
+		name="gloria-mundi.nextthought.com" />
+
+	<registerIn registry=".sites.GLORIA_MUNDI">
+
+		<utility factory=".site_policies.GloriaMundiSitePolicyEventListener" />
+	</registerIn>
+
+</configure>

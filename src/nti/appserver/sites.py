@@ -36,6 +36,7 @@ RWANDA = BaseComponents(BASE,name='rwanda.nextthought.com', bases=(BASE,))
 LAW = BaseComponents(BASE, name='law.nextthought.com', bases=(BASE,))
 LITWORLD = BaseComponents(BASE, name='litworld.nextthought.com', bases=(BASE,))
 COLLEGIATE = BaseComponents(BASE, name='collegiate.nextthought.com', bases=(BASE,))
+GLORIA_MUNDI = BaseComponents(BASE, name='gloria-mundi.nextthought.com', bases=(BASE,))
 
 
 PRMIA = BaseComponents( BASE, name='prmia.nextthought.com', bases=(BASE,))
