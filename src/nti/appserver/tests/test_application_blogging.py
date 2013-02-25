@@ -23,7 +23,7 @@ from hamcrest import contains_inanyorder
 from hamcrest import contains_string
 from hamcrest import has_length
 from hamcrest import has_entry
-
+from nti.tests import is_empty
 from .test_application import TestApp
 
 from zope import lifecycleevent
@@ -177,6 +177,21 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 						  ['Everyone'],
 						  status=404) # same as above
 
+
+		# Nor when putting the whole thing
+		# The entry itself simply cannot be modified (predicate mismatch right now)
+		testapp.put_json( entry_url,
+						  {'sharedWith': ['Everyone']},
+						  status=404 )
+
+		# The story accepts it but ignores it
+		res = testapp.put_json( story_url,
+								{'sharedWith': ['Everyone']},
+								status=200 )
+		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
+
+		res = testapp.get( story_url )
+		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_DELETE_existing_blog_entry( self ):

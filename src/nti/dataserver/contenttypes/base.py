@@ -112,17 +112,6 @@ class UserContentRootInternalObjectIOMixin(object):
 		extDict['sharedWith'] = self.context.sharedWith
 		return extDict
 
-	def _is_update_sharing_only( self, parsed ):
-		"""
-		Call this after invoking this objects (super's) implementation of
-		updateFromExternalObject. If it returns a true value,
-		you should take no action.
-		"""
-		# TODO: I don't like this. It requires all subclasses
-		# to be complicit
-		parsed = stripSyntheticKeysFromExternalDictionary( dict( parsed ) )
-		return len(parsed) == 0 and self.canUpdateSharingOnly and self.context._p_jar
-
 	def _update_sharing_targets( self, sharedWith ):
 		# Replace sharing with the incoming data.
 
@@ -167,13 +156,6 @@ class UserContentRootInternalObjectIOMixin(object):
 		# The pattern for subclasses is to pop the things that need special, non-dict handling,
 		# and then to call super. When super returns, handle the special case
 		sharedWith = parsed.pop( 'sharedWith', () )
-
-		if self._is_update_sharing_only( parsed ):
-			# In this state, we have received an update only for sharing.
-			# and so do not need to do anything else. We're a saved
-			# object already. If we're not saved already, we cannot
-			# be created with just this
-			pass
 
 		self.context.updateLastMod()
 		super(UserContentRootInternalObjectIOMixin,self).updateFromExternalObject( parsed, *args, **kwargs )
