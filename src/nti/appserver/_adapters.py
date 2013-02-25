@@ -89,10 +89,15 @@ class _AbstractExternalFieldTraverser(object):
 			raise KeyError( key )
 		return _DefaultExternalFieldResource( key, self.context, wrap_value=(None if key not in self._unwrapped_fields else False) )
 
+	def __setitem__( self, key, val ): raise TypeError()
+	def __delitem__( self, key ): raise TypeError()
+	def __len__( self ): return len( self._allowed_fields )
 
 	def traverse( self, name, further_path ):
 		try:
 			return self[name]
+		except loc_interfaces.LocationError:
+			raise
 		except KeyError:
 			raise loc_interfaces.LocationError( self.context, name )
 

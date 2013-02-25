@@ -412,6 +412,13 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 	def _get_sharing_target_names( self ):
 		return ()
 
+from ._adapters import GenericModeledContentExternalFieldTraverser
+@component.adapter(frm_interfaces.IPost)
+class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
+	"Disallow updates to the sharedWith field of blog posts/comments"
+	_allowed_fields = tuple( set(GenericModeledContentExternalFieldTraverser._allowed_fields) - set( ('sharedWith',)) )
+
+
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
