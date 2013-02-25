@@ -30,6 +30,7 @@ from nti.externalization.externalization import toExternalObject
 from nti.dataserver import enclosures
 from nti.dataserver import datastructures
 from nti.dataserver import contenttypes
+#from nti.dataserver.contenttypes.note import BodyFieldProperty
 from nti.dataserver import mimetype
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -56,15 +57,14 @@ class ClassScript(contenttypes._UserContentRoot,ExternalizableInstanceDict):
 		:param body: An iterable of parts for the body.
 		"""
 		super(ClassScript,self).__init__()
-		self.body = PersistentList( body )
+		self.body = PersistentList( body ) # TODO: Convert to contenttypes.note.BodyFieldProperty
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(ClassScript, self).updateFromExternalObject( parsed, *args, **kwargs )
-		if self._is_update_sharing_only( parsed ):
-			return
 
 		# TODO: Same issue with Note about resolving objects that may already
-		# exist.
+		# exist. Part of that goes away with BodyFieldProperty. Part of that
+		# needs its same _ext_resolve implementation
 		assert all( [isinstance(x, (basestring,contenttypes.Canvas)) for x in self.body] )
 
 def _add_accepts( collection, ext_collection, accepts=() ):
