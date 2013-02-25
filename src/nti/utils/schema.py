@@ -451,10 +451,29 @@ class IndexedIterable(FieldValidationMixin,schema.List):
 class ListOrTuple(IndexedIterable):
 	_type = (list,tuple)
 
+class _SequenceFromObjectMixin(object):
+	accept_types = None
+	def fromObject( self, context ):
+		check_type = self.accept_types or self._type
+		if check_type is not None and not isinstance( context, check_type ):
+			raise sch_interfaces.WrongType( context, self._type )
+
+		if hasattr( self.value_type, 'fromObject' ):
+			converter = self.value_type.fromObject
+		elif hasattr( self.value_type, 'fromUnicode' ): # here's hoping the values are strings
+			converter = self.value_type.fromUnicode
+
+		result = [converter( x ) for x in context]
+		if isinstance( self._type, type ) and self._type is not list: # single type is a factory
+			result = self._type( result )
+		return result
+
+
 @interface.implementer(IFromObject)
-class ListOrTupleFromObject(ListOrTuple):
+class ListOrTupleFromObject(_SequenceFromObjectMixin, ListOrTuple):
 	"""
-	The field_type MUST be a variant
+	The field_type MUST be a :class:`Variant`, or more generally,
+	something supporting :class:`IFromObject` or :class:`IFromUnicode`
 	"""
 
 	def __init__( self, *args, **kwargs ):
@@ -462,11 +481,25 @@ class ListOrTupleFromObject(ListOrTuple):
 		if not IFromObject.providedBy( self.value_type ):
 			raise sch_interfaces.WrongType()
 
-	def fromObject( self, context ):
-		if not isinstance( context, self._type ):
-			raise sch_interfaces.WrongType( context, self._type )
+@interface.implementer(IFromObject)
+class TupleFromObject(_SequenceFromObjectMixin, FieldValidationMixin, schema.Tuple):
+	"""
+	The field_type MUST be a :class:`Variant`, or more generally,
+	something supporting :class:`IFromObject`. When setting through this object,
+	we will automatically convert lists and only lists to tuples (for convenience coming
+	in through JSON)
+	"""
+	accept_types = (list,tuple)
+	def set( self, context, value ):
+		if isinstance( value, list ):
+			value = tuple( value )
 
-		return [self.value_type.fromObject( x ) for x in context]
+		_do_set( self, context, value, TupleFromObject, BeforeSequenceAssignedEvent )
+
+	def validate( self, value ):
+		if isinstance( value, list ):
+			value = tuple( value )
+		super(TupleFromObject,self).validate( value )
 
 class UniqueIterable(FieldValidationMixin,schema.Set):
 	"""

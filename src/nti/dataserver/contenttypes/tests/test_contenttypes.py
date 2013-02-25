@@ -157,17 +157,17 @@ class _BaseSelectedRangeTest(mock_dataserver.SharedConfiguringTestBase):
 		update_from_external_object( highlight, ext, context=self.ds )
 
 		assert_that( highlight.AutoTags, is_( () ) )
-		assert_that( highlight.tags, is_( ['foo'] ) )
+		assert_that( highlight.tags, contains( 'foo' ) )
 
 		# They are lowercased
 		ext = { 'tags': ['Baz'] }
 		update_from_external_object( highlight, ext, context=self.ds )
-		assert_that( highlight.tags, is_( ['baz'] ) )
+		assert_that( highlight.tags, contains( 'baz' ) )
 
-		# Bad ones are filtered
+		# Bad ones are sanitized
 		ext = { 'tags': ['<html>Hi'] }
 		update_from_external_object( highlight, ext, context=self.ds )
-		assert_that( highlight.tags, is_( () ) )
+		assert_that( highlight.tags, contains( ('hi') ) )
 
 	def test_external_style(self):
 		highlight = Highlight()
