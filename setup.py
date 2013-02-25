@@ -221,7 +221,7 @@ setup(
 		'webob >= 1.2.3',
 		'whoosh >= 2.4.1',
 		'z3c.baseregistry >= 2.0.0', # ZCML configurable local component registries
-		'z3c.batching >= 1.1.0', # result paging. Pulled in by z3c.table
+		'z3c.batching >= 2.0.0', # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt >= 1.1',
@@ -297,7 +297,7 @@ setup(
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
-		'zope.schema >= 4.3.1',
+		'zope.schema >= 4.3.2',
 		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
 		# A 4.0.0a3 is out and works fine. officially upgrade when final. But this requires an extra: 'zope.security[untrustedpython] >= 4.0.0a3'
 		'zope.security >= 3.9.0',
@@ -357,7 +357,7 @@ setup(
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.8.4',
 			'zc.buildout >= 2.0.1',
-			'z3c.dependencychecker >= 1.9', # unused/used imports
+			'z3c.dependencychecker >= 1.10', # unused/used imports
 			'zodbbrowser >= 0.10.4',
 			'zodbupdate >= 0.5',
 			# Monitoring stats and instrumenting code
