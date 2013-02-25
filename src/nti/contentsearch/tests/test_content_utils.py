@@ -20,6 +20,7 @@ from zope import component
 from nti.chatserver.messageinfo import MessageInfo
 
 from nti.dataserver.users import User
+from nti.dataserver.interfaces import INote
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import Redaction
@@ -52,7 +53,7 @@ class TestContentUtils(ConfiguringTestBase):
 
 	def _create_note(self, msg, username, containerId=None, tags=('ichigo',), canvas=None):
 		note = Note()
-		note.tags = tags
+		note.tags = INote['tags'].fromObject( tags )
 		body = [unicode(msg)]
 		if canvas:
 			body.append( canvas )
