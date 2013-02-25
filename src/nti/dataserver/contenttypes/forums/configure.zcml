@@ -9,8 +9,8 @@
 	<include package="nti.mimetype" />
 
 	<adapter provides="zope.location.interfaces.ISublocations"
-			 for=".interfaces.IStoryTopic"
-			 factory=".topic.StoryTopicSublocations" />
+			 for=".interfaces.IHeadlineTopic"
+			 factory=".topic.HeadlineTopicSublocations" />
 
 	<!-- Externalization -->
 	<adapter factory=".externalization._ForumInternalObjectIO"

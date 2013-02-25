@@ -172,7 +172,7 @@ class LocatedExternalDict(dict):
 	__name__ = ''
 	__parent__ = None
 	__acl__ = ()
-	mime_type = None
+	mimeType = None
 
 @interface.implementer( ILocatedExternalSequence )
 class LocatedExternalList(list):
@@ -187,7 +187,7 @@ class LocatedExternalList(list):
 	__name__ = ''
 	__parent__ = None
 	__acl__ = ()
-	mime_type = None
+	mimeType = None
 
 ### Creating and updating new and existing objects given external forms
 

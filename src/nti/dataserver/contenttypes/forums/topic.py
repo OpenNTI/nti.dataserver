@@ -38,24 +38,26 @@ class Topic(Acquisition.Implicit,
 	tags = FieldProperty(for_interfaces.IPost['tags'])
 	PostCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
 
-@interface.implementer(for_interfaces.IStoryTopic)
-class StoryTopic(Topic):
+@interface.implementer(for_interfaces.IHeadlineTopic)
+class HeadlineTopic(Topic):
+	headline = AcquisitionFieldProperty(for_interfaces.IHeadlineTopic['headline'])
 
-	story = AcquisitionFieldProperty(for_interfaces.IStoryTopic['story'])
 
 @interface.implementer(for_interfaces.IPersonalBlogEntry)
-class PersonalBlogEntry(StoryTopic):
+class PersonalBlogEntry(HeadlineTopic):
 	creator = None
+	headline = AcquisitionFieldProperty(for_interfaces.IPersonalBlogEntry['headline'])
+
 
 from zope.container.contained import ContainerSublocations
-class StoryTopicSublocations(ContainerSublocations):
+class HeadlineTopicSublocations(ContainerSublocations):
 	"""
 	Story topics contain their children and also their story.
 	"""
 
 	def sublocations( self ):
-		for x in super(StoryTopicSublocations,self).sublocations():
+		for x in super(HeadlineTopicSublocations,self).sublocations():
 			yield x
-		story = self.container.story
+		story = self.container.headline
 		if story is not None:
 			yield story

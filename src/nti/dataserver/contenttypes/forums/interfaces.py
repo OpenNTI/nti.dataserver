@@ -9,11 +9,15 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-from zope import interface
+# Disable pylint warnings about undefined variables, because it catches
+# all the __setitem__ and __parent__ in the interfaces.
+#pylint: disable=E0602
+
+#from zope import interface
 
 from Acquisition.interfaces import IAcquirer
 from nti.dataserver import interfaces as nti_interfaces
-from nti.contentfragments import interfaces as frg_interfaces
+#from nti.contentfragments import interfaces as frg_interfaces
 
 from zope.container.interfaces import IContentContainer, IContained
 from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
@@ -87,13 +91,21 @@ class IPost(IContained, IAcquirer, nti_interfaces.IModeledContent,
 	body = nti_interfaces.CompoundModeledContentBody()
 
 
-class IStoryTopic(ITopic):
+class IHeadlinePost(IPost):
+	"""
+	The headline post for a headline topic.
+	"""
+	containers(b'.IHeadlineTopic') # Adds __parent__ as required
+	__parent__.required = False
+
+
+class IHeadlineTopic(ITopic):
 	"""
 	A special kind of topic that starts off with a distinguished post to discuss. Blogs will
 	be implemented with this.
 	"""
 
-	story = schema.Object(IPost, title="The main, first post of this topic.")
+	headline = schema.Object(IHeadlinePost, title="The main, first post of this topic.")
 
 class IPersonalBlog(IForum, nti_interfaces.ICreated):
 	"""
@@ -109,11 +121,29 @@ class IPersonalBlog(IForum, nti_interfaces.ICreated):
 	containers(nti_interfaces.IUser)
 	__parent__.required = False
 
-class IPersonalBlogEntry(IStoryTopic,
+class IPersonalBlogEntryPost(IHeadlinePost):
+	"""
+	The headline entry for a blog.
+	"""
+
+	containers(b'.IPersonalBlogEntry') # Adds __parent__ as required
+	__parent__.required = False
+
+
+class IPersonalBlogComment(IPost):
+	containers(b'.IPersonalBlogEntry') # Adds __parent__ as required
+	__parent__.required = False
+
+
+class IPersonalBlogEntry(IHeadlineTopic,
 						 nti_interfaces.ICreated):
 	"""
 	A special kind of story topic that is only contained by blogs.
 	"""
+	contains(b".IPersonalBlogComment")
+	__setitem__.__doc__ = None
 
 	containers(IPersonalBlog) # Adds __parent__ as required
 	__parent__.required = False
+
+	headline = schema.Object(IPersonalBlogEntryPost, title="The main, first post of this topic.")

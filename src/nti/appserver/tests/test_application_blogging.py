@@ -70,7 +70,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# Return the representation of the new topic created
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
 		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
-		assert_that( res.json_body, has_entry( 'story', has_entry( 'body', data['body'] ) ) )
+		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 		assert_that( res.status_int, is_( 201 ) )
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
@@ -101,7 +101,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_PUT_to_edit_existing_blog_entry( self ):
-		"""PUTting an IPost to the 'story' of a blog entry edits the story"""
+		"""PUTting an IPost to the 'headline' of a blog entry edits the story"""
 
 		testapp = self.testapp
 
@@ -112,7 +112,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
 		entry_url = res.location
 		# I can PUT directly to the object URL
-		story_url = self.require_link_href_with_rel( res.json_body['story'], 'edit' )
+		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
 
 		data['body'] = ['An updated body']
 
@@ -120,13 +120,13 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# And check it by getting the whole container
 		res = testapp.get( entry_url )
-		assert_that( res.json_body, has_entry( 'story', has_entry( 'body', data['body'] ) ) )
+		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 
 		# Changing the title changes the title of the container, but NOT the url or ID of anything
 		data['title'] = 'A New Title'
 		testapp.put_json( story_url, data )
 		res = testapp.get( entry_url )
-		assert_that( res.json_body, has_entry( 'story', has_entry( 'title', data['title'] ) ) )
+		assert_that( res.json_body, has_entry( 'headline', has_entry( 'title', data['title'] ) ) )
 		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
 
 		# Pretty URL did not change
@@ -135,9 +135,9 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# I can also PUT to the pretty path to the object
 		data['body'] = ['An even newer body']
 
-		testapp.put_json( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My New Blog/story' ), data )
+		testapp.put_json( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My New Blog/headline' ), data )
 		res = testapp.get( entry_url )
-		assert_that( res.json_body, has_entry( 'story', has_entry( 'body', data['body'] ) ) )
+		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 
 		# And I can use the 'fields' URL to edit just parts of it, including title and body
 		for field in 'body', 'title':
@@ -146,7 +146,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 			testapp.put_json( story_url + '/++fields++' + field, data[field] )
 			res = testapp.get( entry_url )
-			assert_that( res.json_body, has_entry( 'story', has_entry( field, data[field] ) ) )
+			assert_that( res.json_body, has_entry( 'headline', has_entry( field, data[field] ) ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_cannot_change_sharing_on_blog_entry( self ):
@@ -160,7 +160,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
 		entry_url = res.location
-		story_url = self.require_link_href_with_rel( res.json_body['story'], 'edit' )
+		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
 
 		eventtesting.clearEvents()
 
@@ -205,7 +205,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
 		entry_url = res.location
-		story_url = self.require_link_href_with_rel( res.json_body['story'], 'edit' )
+		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
 
 		eventtesting.clearEvents()
 
@@ -308,7 +308,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.post_json( '/dataserver2/users/original_user@foo/Blog', data )
 		entry_url = res.location
 		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
-		story_url = self.require_link_href_with_rel( res.json_body['story'], 'edit' )
+		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
 		pub_url = self.require_link_href_with_rel( res.json_body, 'publish' )
 
 		# Before its published, the second user can see nothing
@@ -331,13 +331,13 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# Its full entry
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
 		assert_that( res.json_body['Items'][0], has_entry( 'title', 'My New Blog' ) )
-		assert_that( res.json_body['Items'][0], has_entry( 'story', has_entry( 'body', data['body'] ) ) )
+		assert_that( res.json_body['Items'][0], has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 
 		# It can be fetched by pretty URL
 		res = testapp2.get( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog' ) ) # Pretty URL
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
 		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
-		assert_that( res.json_body, has_entry( 'story', has_entry( 'body', data['body'] ) ) )
+		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
@@ -357,8 +357,12 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		data['title'] = 'Another comment'
 		data['body'] = ['more comment body']
 		comment2res = testapp2.post_json( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog' ), data )
+		# (Note that although we're just sending in Posts, the location transforms them:
+		assert_that( comment1res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogcomment+json' ) )
+		assert_that( comment1res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.forums.personalblogcomment' ) )
+		# )
 
-		# Which he can update
+		# Both of these the other user can update
 		data['title'] = 'Changed my title'
 		testapp2.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data )
 

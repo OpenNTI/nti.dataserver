@@ -4,7 +4,7 @@
 
 	<subscriber factory=".externalization.MimeTypeDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
-	<adapter factory=".mimetype.ContentTypeMarkeTypeAwareAdapter" />
+	<adapter factory=".mimetype.ContentTypeMarkerTypeAwareAdapter" />
 
 	<!-- Finding objects by mimetype -->
 	<adapter factory=".mimetype.ModeledContentTypeMimeFactory"

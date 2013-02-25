@@ -18,6 +18,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope.dottedname import resolve as dottedname
+from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.externalization.datastructures import ModuleScopedInterfaceObjectIO
 from nti.externalization.internalization import register_legacy_search_module
@@ -83,14 +84,23 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 
 					setattr( _ClassNameRegistry, ext_class_name, implementation_class )
 
-					if not 'mime_type' in implementation_class.__dict__:
+					if not 'mimeType' in implementation_class.__dict__:
 						# NOT hasattr. We don't use hasattr because inheritance would
 						# throw us off. It could be something we added, and iteration order
 						# is not defined (if we got the subclass first we're good, we fail if we
 						# got superclass first)
-						setattr( implementation_class,
-								 'mime_type',
-								 cls._ap_compute_external_mimetype( package_name, implementation_class, ext_class_name ) )
+
+						# legacy check
+						if 'mime_type' in implementation_class.__dict__:
+							setattr( implementation_class, 'mimeType', implementation_class.__dict__['mime_type'] )
+						else:
+							setattr( implementation_class,
+									 'mimeType',
+									 cls._ap_compute_external_mimetype( package_name, implementation_class, ext_class_name ) )
+							setattr( implementation_class, 'mime_type', implementation_class.mimeType )
+
+						if not IContentTypeAware.implementedBy( implementation_class ): # well it does now
+							interface.classImplements( implementation_class, IContentTypeAware )
 
 					# Opt in for creating, unless explicitly disallowed
 					if not hasattr( implementation_class, '__external_can_create__' ):

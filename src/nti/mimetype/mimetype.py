@@ -19,6 +19,8 @@ from zope.mimetype.interfaces import IContentTypeAware, mimeTypeConstraint
 
 from nti.mimetype.interfaces import IContentTypeMarker
 
+from nti.utils.property import alias
+
 # The base mimetype for items in this package.
 # NOTE: Mimetypes should be bytes, not unicode
 MIME_BASE = b'application/vnd.nextthought'
@@ -48,6 +50,8 @@ class ContentTypeMarkerTypeAwareAdapter(object):
 	def __init__( self, obj ):
 		self.mime_type = nti_mimetype_with_class( obj.__class__ ) # Not type(obj) to work with proxies
 		self.parameters = None
+
+	mimeType = alias('mime_type')
 
 ContentTypeMarkeTypeAwareAdapter = ContentTypeMarkerTypeAwareAdapter # BBB
 
@@ -80,12 +84,12 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 	@_ClassProperty
 	@classmethod
 	def mime_types(mcs):
-		return {x.mime_type for x in _mm_types}
+		return {x.mimeType for x in _mm_types}
 
 	@_ClassProperty
 	@classmethod
 	def external_mime_types(mcs):
-		return {x.mime_type for x in _mm_types if getattr(x, '__external_can_create__', False)}
+		return {x.mimeType for x in _mm_types if getattr(x, '__external_can_create__', False)}
 
 	def __new__(mcs, name, bases, cls_dict):
 		new_type = type.__new__( mcs, name, bases, cls_dict )
@@ -93,8 +97,10 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 		# finer control with a class dictionary attribute.)
 		# Also don't overwrite an existing value
 		if not name.startswith( '_' ):
-			if 'mime_type' not in cls_dict:
-				new_type.mime_type = nti_mimetype_with_class( new_type )
+			if 'mime_type' not in cls_dict: # legacy
+				new_type.mimeType = new_type.mime_type = nti_mimetype_with_class( new_type )
+			elif 'mimeType' not in cls_dict:
+				new_type.mimeType = new_type.mime_type
 			new_type.parameters = None
 			interface.classImplements( new_type, IContentTypeAware )
 			_mm_types.add( new_type )
@@ -166,7 +172,7 @@ def nti_mimetype_from_object( obj, use_class=True ):
 	"""
 	Return the mimetype for the object, or None.
 
-	If the object is :class:IContentTypeAware, that value will be
+	If the object is :class:`.IContentTypeAware`, that value will be
 	returned. If it is :class:`interfaces.IModeledContent`, then
 	a value will be derived from that. Otherwise, if it is a recognized
 	class, a value will be derived from that. Finally, if it
@@ -176,12 +182,14 @@ def nti_mimetype_from_object( obj, use_class=True ):
 	:param bool use_class: If true (the default), then the class of the object
 		will be a candidate if nothing else matches.
 	"""
-	# IContentTypeAware
-	if hasattr( obj, 'mime_type' ):
-		return getattr( obj, 'mime_type' )
+	# IContentTypeAware uses mimeType; much of our legacy code has a mime_type
+	for an in 'mimeType', 'mime_type':
+		mt = getattr( obj, an, None )
+		if mt:
+			return mt
 	content_type_aware = IContentTypeAware( obj, None )
 	if content_type_aware:
-		return content_type_aware.mime_type
+		return content_type_aware.mimeType
 
 	if _safe_by( IContentTypeMarker.providedBy, obj ):
 		# Find the IModeledContent subtype that it implements.

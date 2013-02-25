@@ -48,7 +48,7 @@ def find_content_type( request, data=None ):
 		content_type_aware = data if IContentTypeAware.providedBy( data ) \
 							 else request.registry.queryAdapter( data, IContentTypeAware )
 		if content_type_aware:
-			full_type = content_type_aware.mime_type
+			full_type = content_type_aware.mimeType
 		else:
 			full_type = nti_mimetype_from_object( data )
 

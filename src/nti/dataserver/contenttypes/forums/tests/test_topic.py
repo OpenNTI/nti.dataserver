@@ -35,9 +35,9 @@ from nti.tests import aq_inContextOf
 from zope.container.interfaces import InvalidItemType, InvalidContainerType
 from nti.tests import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
-from ..interfaces import ITopic, IStoryTopic, IPersonalBlogEntry
-from ..topic import Topic, StoryTopic, PersonalBlogEntry
-from ..post import Post
+from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry
+from ..topic import Topic, HeadlineTopic, PersonalBlogEntry
+from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost
 
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
@@ -50,21 +50,25 @@ def test_topic_interfaces():
 	assert_that( post, validly_provides( ITopic ) )
 
 def test_story_topic_interfaces():
-	topic = StoryTopic()
-	assert_that( topic, verifiably_provides( IStoryTopic ) )
+	topic = HeadlineTopic()
+	assert_that( topic, verifiably_provides( IHeadlineTopic ) )
 
-	topic.story = Post()
-	assert_that( topic, validly_provides( IStoryTopic ) )
-	assert_that( topic.story, aq_inContextOf( topic ) )
+	topic.headline = HeadlinePost()
+	assert_that( topic, validly_provides( IHeadlineTopic ) )
+	assert_that( topic.headline, aq_inContextOf( topic ) )
 
 
 def test_blog_entry():
 	topic = PersonalBlogEntry()
 	assert_that( topic, verifiably_provides( IPersonalBlogEntry ) )
+	assert_that( topic, verifiably_provides( IHeadlineTopic ) )
+	assert_that( topic, verifiably_provides( ITopic ) )
 
-	topic.story = Post()
+	topic.headline = PersonalBlogEntryPost()
 	assert_that( topic, validly_provides( IPersonalBlogEntry ) )
-	assert_that( topic.story, aq_inContextOf( topic ) )
+	assert_that( topic, validly_provides( IHeadlineTopic ) )
+	assert_that( topic, validly_provides( ITopic ) )
+	assert_that( topic.headline, aq_inContextOf( topic ) )
 
 def test_topic_constraints():
 
@@ -84,14 +88,14 @@ def test_topic_constraints():
 
 def test_story_topic_externalizes():
 
-	post = StoryTopic()
+	post = HeadlineTopic()
 	post.title = 'foo'
 
 	assert_that( post,
 				 externalizes( all_of(
 					 has_entries( 'title', 'foo',
-								  'Class', 'StoryTopic',
-								  'MimeType', 'application/vnd.nextthought.forums.storytopic',
+								  'Class', 'HeadlineTopic',
+								  'MimeType', 'application/vnd.nextthought.forums.headlinetopic',
 								  'PostCount', 0,
 								  'sharedWith', is_empty() ),
 					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
@@ -99,3 +103,26 @@ def test_story_topic_externalizes():
 	post['k'] = Post()
 	assert_that( post,
 				 externalizes( has_entry( 'PostCount', 1 ) ) )
+
+
+
+def test_blog_topic_externalizes():
+
+	post = PersonalBlogEntry()
+	post.title = 'foo'
+
+	assert_that( post,
+				 externalizes( all_of(
+					 has_entries( 'title', 'foo',
+								  'Class', 'PersonalBlogEntry',
+								  'MimeType', 'application/vnd.nextthought.forums.personalblogentry',
+								  'PostCount', 0,
+								  'sharedWith', is_empty() ),
+					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
+
+	post.headline = PersonalBlogEntryPost()
+	post['k'] = PersonalBlogComment()
+	assert_that( post,
+				 externalizes( has_entries(
+								'headline', has_entry( 'Class', 'PersonalBlogEntryPost' ),
+					 			'PostCount', 1 ) ) )

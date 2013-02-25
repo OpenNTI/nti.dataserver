@@ -46,7 +46,7 @@ from nti.dataserver.users import entity
 from nti.dataserver import liking
 liking_like_count = liking.like_count # minor optimization
 from nti.dataserver import authorization as nauth
-from nti.dataserver.mimetype import nti_mimetype_from_object
+from nti.dataserver.mimetype import nti_mimetype_from_object, nti_mimetype_with_class
 from nti.dataserver.links import Link
 
 from nti.utils.property import alias
@@ -104,6 +104,7 @@ def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=id ):
 				result.append( x )
 
 	result = LocatedExternalDict( { 'Last Modified': lastMod, 'Items': result } )
+	result.mimeType = nti_mimetype_with_class( None )
 	return result
 
 _REF_ATTRIBUTE = 'referenced_by'

@@ -26,8 +26,13 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
+from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
+from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
+from nti.dataserver.contenttypes.forums.post import Post
 
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import StandardExternalFields
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
@@ -70,13 +75,30 @@ class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadReque
 	""" HTTP says POST creates a NEW entity under the Request-URI """
 	# Therefore our context is a container, and we should respond created.
 
+	_constraint = frm_interfaces.IPost.providedBy
+
+	_override_content_type = None
+	_allowed_content_types = ()
+
+	def _transformContentType( self, contenttype ):
+		if self._override_content_type and contenttype in self._allowed_content_types:
+			contenttype = self._override_content_type
+		return contenttype
+
 	def _read_incoming_post( self ):
 		# TODO: Ripped from ugd_edit_views
 		creator = self.getRemoteUser()
 		externalValue = self.readInput()
 		datatype = self.findContentType( externalValue )
+		tx_datatype = self._transformContentType( datatype )
+		if tx_datatype is not datatype:
+			datatype = tx_datatype
+			if '/' in datatype:
+				externalValue[StandardExternalFields.MIMETYPE] = datatype
+			else:
+				externalValue[StandardExternalFields.CLASS] = datatype
 
-		containedObject = self.createAndCheckContentObject( creator, datatype, externalValue, creator, frm_interfaces.IPost.providedBy )
+		containedObject = self.createAndCheckContentObject( creator, datatype, externalValue, creator, self._constraint )
 		containedObject.creator = creator
 
 		# The process of updating may need to index and create KeyReferences
@@ -105,6 +127,12 @@ class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
 	""" HTTP says POST creates a NEW entity under the Request-URI """
 	# Therefore our context is a container, and we should respond created.
 
+	_constraint = frm_interfaces.IPersonalBlogEntryPost.providedBy
+
+	_override_content_type = PersonalBlogEntryPost.mime_type
+
+	_allowed_content_types = ('Post', Post.mime_type, 'Posts' )
+
 	def _do_call( self ):
 		blog = self.request.context
 		containedObject = self._read_incoming_post()
@@ -114,9 +142,9 @@ class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
 		topic.creator = self.getRemoteUser()
 		containedObject.__parent__ = topic
 
-		topic.story = containedObject
+		topic.headline = containedObject
 		# Business rule: titles of the personal blog entry match the post
-		topic.title = topic.story.title
+		topic.title = topic.headline.title
 		topic.description = topic.title
 
 		# For these, the name matters. We want it to be as pretty as we can get
@@ -146,9 +174,16 @@ class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_CREATE,
-			  context=frm_interfaces.IStoryTopic,
+			  # NOTE that everywhere we use IHeadlineTopic with different verbs, we must stay at that level.
+			  # we cannot mix this with IPersonalBlogEntry
+			  context=frm_interfaces.IHeadlineTopic,
 			  request_method='POST' )
 class TopicPostView(_AbstractIPostPOSTView):
+
+	_constraint = frm_interfaces.IPersonalBlogComment.providedBy
+
+	_override_content_type = PersonalBlogComment.mime_type
+	_allowed_content_types = ('Post', 'Post.mime_type', 'Posts')
 
 	def _do_call( self ):
 		incoming_post = self._read_incoming_post()
@@ -186,7 +221,7 @@ from .ugd_query_views import _UGDView as UGDQueryView
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_READ,
-			  context=frm_interfaces.IStoryTopic,
+			  context=frm_interfaces.IHeadlineTopic,
 			  request_method='GET' )
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -206,7 +241,7 @@ _VIEW_CONTENTS = 'contents'
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_READ,
-			  context=frm_interfaces.IStoryTopic,
+			  context=frm_interfaces.IHeadlineTopic,
 			  name=_VIEW_CONTENTS,
 			  request_method='GET' )
 class ForumContentsGetView(UGDQueryView):
@@ -227,9 +262,9 @@ class ForumContentsGetView(UGDQueryView):
 
 import datetime
 from .ugd_feed_views import AbstractFeedView
-@view_config( context=frm_interfaces.IStoryTopic,
+@view_config( context=frm_interfaces.IHeadlineTopic,
 			  name='feed.atom' )
-@view_config( context=frm_interfaces.IStoryTopic,
+@view_config( context=frm_interfaces.IHeadlineTopic,
 			  name='feed.rss' )
 @view_config( context=frm_interfaces.IPersonalBlog,
 			  name='feed.atom' )
@@ -248,7 +283,7 @@ class ForumContentsFeedView(AbstractFeedView):
 	def _object_and_creator( self, ipost_or_itopic ):
 		title = ipost_or_itopic.title
 		# The object to render is either the 'story' (blog text) or the post itself
-		data_object = ipost_or_itopic.story if frm_interfaces.IStoryTopic.providedBy( ipost_or_itopic ) else ipost_or_itopic
+		data_object = ipost_or_itopic.headline if frm_interfaces.IHeadlineTopic.providedBy( ipost_or_itopic ) else ipost_or_itopic
 		return data_object, ipost_or_itopic.creator, title, ipost_or_itopic.tags
 
 
@@ -283,7 +318,7 @@ class PostPutView(UGDPutView):
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_DELETE,
-			  context=frm_interfaces.IStoryTopic,
+			  context=frm_interfaces.IHeadlineTopic,
 			  request_method='DELETE' )
 class PostOrForumDeleteView(UGDDeleteView):
 	""" Deleting an existing forum/post """
@@ -298,7 +333,7 @@ from Acquisition import aq_base
 def match_title_of_post_to_blog( post, event ):
 	"When the main story of a story topic (blog post) is modified, match the titles"
 
-	if frm_interfaces.IStoryTopic.providedBy( post.__parent__ ) and aq_base(post) is aq_base(post.__parent__.story) and post.title != post.__parent__.title:
+	if frm_interfaces.IHeadlineTopic.providedBy( post.__parent__ ) and aq_base(post) is aq_base(post.__parent__.headline) and post.title != post.__parent__.title:
 		post.__parent__.title = post.title
 	return
 
@@ -306,8 +341,6 @@ def match_title_of_post_to_blog( post, event ):
 # that share no common ancestor. (We could be declared on IContainer,
 # but its not clear what if any IContainers we externalize besides
 # the forum objects)
-from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.interfaces import StandardExternalFields
 from nti.dataserver import links
 from zope.container.interfaces import ILocation
 from ._util import AbstractTwoStateViewLinkDecorator
