@@ -1,0 +1,11 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:ext="http://nextthought.com/ntp/ext"
+	i18n_domain="zope">
+
+	<include package="." file="meta.zcml" />	
+	<ext:registerQTIFactories module=".assessments.elements" />
+	<ext:registerQTIFactories module=".content.elements" />
+
+</configure>

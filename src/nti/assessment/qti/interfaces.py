@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
+from zope.component.interfaces import IFactory
 
 # vocabulary
 
@@ -86,5 +87,9 @@ class IConcrete(IQTIElement):
 	"""
 	Marker interface for concrete QTI classes
 	"""
-	__display_name__ = interface.Attribute("Display name")
 
+class IQTIObjectFactory(IFactory):
+	"""
+	A factory named for the external mime-type of objects it works with.
+	"""
+	
