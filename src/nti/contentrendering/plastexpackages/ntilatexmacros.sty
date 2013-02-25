@@ -3,9 +3,15 @@
 \ProvidesPackage{ntilatexmacros}[2012/11/12 v0.1 NTI Custom Macro style sheet]
 
 \RequirePackage{graphicx}
+\RequirePackage{color}
+\RequirePackage{xcolor}
 
 % Macro for including graphics with annotation enabled
 \newcommand{\ntiincludeannotationgraphics}[2][]{\includegraphics[#1]{#2}}
 
 % Macro for including graphics with annotation disabled
 \newcommand{\ntiincludenoannotationgraphics}[2][]{\includegraphics[#1]{#2}}
+
+% Macro for displaying modified text
+\definecolor{NTIBlueGreen}{HTML}{1FD26F}
+\newcommand{\modified}[1][]{\uline{\textcolor{NTIBlueGreen}{#1}}}

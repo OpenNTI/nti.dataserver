@@ -67,3 +67,6 @@ name: ntiincludenoannotationgraphics
 name: ntipreviouspage
 <a href="#" onclick="NTIPreviousPage();">Return to previous page</a>
 
+name: modified
+<span class="modified" tal:content="self"></span>
+
