@@ -955,7 +955,7 @@ class GloriaMundiSitePolicyEventListener(_AdultCommunitySitePolicyEventListener)
 				from nti.appserver.invitations import interfaces as invite_interfaces
 				from nti.appserver.invitations.utility import accept_invitations
 				invitations = component.getUtility(invite_interfaces.IInvitations)
-				code = invitations._getDefaultInvitationCode( request.context ) # Yup, private method.
+				code = invitations._getDefaultInvitationCode( obj ) # Yup, private method.
 				accept_invitations( user, [code] )
 
 
