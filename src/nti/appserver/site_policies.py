@@ -944,6 +944,22 @@ class GloriaMundiSitePolicyEventListener(_AdultCommunitySitePolicyEventListener)
 	COM_ALIAS = 'Gloria-Mundi'
 	COM_REALNAME = 'Gloria-Mundi'
 
+	def user_created( self, user, event ):
+		super(GloriaMundiSitePolicyEventListener, self).user_created(user, event)
+		# These people cannot be bothered to type in their own invitation
+		# code, so do it for them. Do it this way so that all the right events
+		# fire.
+		owner = users.User.get_user( 'barrynschachter@gmail.com' )
+		for obj in owner.friendsLists.values():
+			if obj.username == 'gloria-mundi' or user_interfaces.IFriendlyNamed( obj ).alias == 'gloria-mundi' or user_interfaces.IFriendlyNamed( obj ).realname == 'gloria-mundi':
+				from nti.appserver.invitations import interfaces as invite_interfaces
+				from nti.appserver.invitations.utility import accept_invitations
+				invitations = component.getUtility(invite_interfaces.IInvitations)
+				code = invitations._getDefaultInvitationCode( request.context ) # Yup, private method.
+				accept_invitations( user, [code] )
+
+
+
 
 @interface.implementer(ISitePolicyUserEventListener)
 class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
