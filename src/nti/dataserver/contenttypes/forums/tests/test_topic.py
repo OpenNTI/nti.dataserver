@@ -35,8 +35,8 @@ from nti.tests import aq_inContextOf
 from zope.container.interfaces import InvalidItemType, InvalidContainerType
 from nti.tests import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
-from ..interfaces import ITopic, IStoryTopic
-from ..topic import Topic, StoryTopic
+from ..interfaces import ITopic, IStoryTopic, IPersonalBlogEntry
+from ..topic import Topic, StoryTopic, PersonalBlogEntry
 from ..post import Post
 
 
@@ -55,6 +55,15 @@ def test_story_topic_interfaces():
 
 	topic.story = Post()
 	assert_that( topic, validly_provides( IStoryTopic ) )
+	assert_that( topic.story, aq_inContextOf( topic ) )
+
+
+def test_blog_entry():
+	topic = PersonalBlogEntry()
+	assert_that( topic, verifiably_provides( IPersonalBlogEntry ) )
+
+	topic.story = Post()
+	assert_that( topic, validly_provides( IPersonalBlogEntry ) )
 	assert_that( topic.story, aq_inContextOf( topic ) )
 
 def test_topic_constraints():

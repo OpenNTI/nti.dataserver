@@ -40,7 +40,7 @@ class Post(Acquisition.Implicit,
 	body = BodyFieldProperty(for_interfaces.IPost['body'])
 
 	title = AdaptingFieldProperty(for_interfaces.IPost['title'])
-
+	tags = FieldProperty(for_interfaces.IPost['tags'])
 	sharingTargets = ()
 
 	def __eq__( self, other ):

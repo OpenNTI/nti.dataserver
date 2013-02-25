@@ -48,7 +48,9 @@ class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescri
 					  readonly=True )
 
 
-class ITopic(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescribedContent):
+class ITopic(IContentContainer,IContained,IAcquirer,
+			 nti_interfaces.ITitledDescribedContent,
+			 nti_interfaces.IUserTaggedContent):
 	"""
 	A topic is contained by a forum. It is distinctly named within the containing
 	forum (often this name will be auto-generated). A topic contains potentially many posts
@@ -68,7 +70,10 @@ class ITopic(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescri
 
 
 
-class IPost(IContained, IAcquirer, nti_interfaces.IModeledContent, nti_interfaces.IReadableShared, nti_interfaces.ITitledContent):
+class IPost(IContained, IAcquirer, nti_interfaces.IModeledContent,
+			nti_interfaces.IReadableShared,
+			nti_interfaces.ITitledContent,
+			nti_interfaces.IUserTaggedContent):
 	"""
 	A post within a topic.
 
@@ -104,7 +109,8 @@ class IPersonalBlog(IForum, nti_interfaces.ICreated):
 	containers(nti_interfaces.IUser)
 	__parent__.required = False
 
-class IPersonalBlogEntry(IStoryTopic, nti_interfaces.ICreated):
+class IPersonalBlogEntry(IStoryTopic,
+						 nti_interfaces.ICreated):
 	"""
 	A special kind of story topic that is only contained by blogs.
 	"""

@@ -249,7 +249,7 @@ class ForumContentsFeedView(AbstractFeedView):
 		title = ipost_or_itopic.title
 		# The object to render is either the 'story' (blog text) or the post itself
 		data_object = ipost_or_itopic.story if frm_interfaces.IStoryTopic.providedBy( ipost_or_itopic ) else ipost_or_itopic
-		return data_object, ipost_or_itopic.creator, title, getattr( ipost_or_itopic, 'tags', () )
+		return data_object, ipost_or_itopic.creator, title, ipost_or_itopic.tags
 
 
 @interface.implementer(app_interfaces.IUserCheckout)

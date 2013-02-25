@@ -101,7 +101,6 @@ class PlainTextLine(TextLineUnicodeContentFragment):
 	_iface = interfaces.IPlainTextContentFragment
 	_impl = interfaces.PlainTextContentFragment
 
-
 class HTMLContentFragment(TextUnicodeContentFragment):
 	"""
 	A :class:`~zope.schema.Text` type that also requires the object implement

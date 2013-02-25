@@ -34,6 +34,7 @@ from nti.utils.schema import ObjectLen
 from nti.utils.schema import Variant
 from nti.utils.schema import Number
 from nti.utils.schema import UniqueIterable
+from nti.utils.schema import TupleFromObject
 from nti.utils.schema import ListOrTupleFromObject
 from nti.utils.schema import DecodingValidTextLine
 from nti.contentfragments.schema import PlainTextLine
@@ -624,6 +625,77 @@ class IContent(ILastModified,ICreated):
 	"""
 	It's All Content.
 	"""
+
+
+def Title():
+	"""
+	Return a :class:`zope.schema.interfaces.IField` representing
+	the standard title of some object. This should be stored in the `title`
+	field.
+	"""
+	return PlainTextLine(
+					#min_length=5,
+					max_length=140, # twitter
+					required=False,
+					title="The human-readable title of this object",
+					__name__='title')
+
+
+def CompoundModeledContentBody():
+	"""
+	Returns a :class:`zope.schema.interfaces.IField` representing
+	the way that a compound body of user-generated content is modeled.
+	"""
+
+	return ListOrTupleFromObject( title="The body of this object",
+								  description="""An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
+									of :class:`.IModeledContent` such as :class:`.ICanvas`.)
+									""",
+								  value_type=Variant( (SanitizedHTMLContentFragment(min_length=1),
+													   PlainText(min_length=1),
+													   Object(ICanvas)),
+													 title="A body part of a note",
+													 __name__='body'),
+								  min_length=1,
+								  required=False,
+								  __name__='body')
+
+class ITitledContent(interface.Interface):
+	"""
+	A piece of content with a title, either human created or potentially
+	automatically generated. (This differs from, say, a person's honorrific title.)
+	"""
+	title = Title() # TODO: Use zope.dublincore.IDCDecscriptiveProperties?
+
+from zope.dublincore.interfaces import IDCDescriptiveProperties
+class ITitledDescribedContent(ITitledContent,IDCDescriptiveProperties):
+	"""
+	Extend this class to add the ``title`` and ``description`` properties.
+	This class overrides the :mod:`zope.dublincore` properties with more specific
+	versions.
+	"""
+
+	description = PlainText( title="The human-readable description of this object." )
+
+class Tag(PlainTextLine):
+	"""
+	Requires its content to be only one plain text word that is lowercased.
+	"""
+
+	def fromUnicode( self, value ):
+		return super(Tag,self).fromUnicode( value.lower() )
+
+	def constraint( self, value ):
+		return super(Tag,self).constraint( value) and ' ' not in value
+
+class IUserTaggedContent(interface.Interface):
+
+	tags = TupleFromObject( title="Tags applied by the user",
+							value_type=Tag(min_length=1, title="A single tag", __name__='tags'),
+							unique=True,
+							default=())
+
+
 from nti.mimetype import interfaces as mime_interfaces
 class IModeledContent(IContent,IContained,mime_interfaces.IContentTypeMarker):
 	"""
@@ -868,7 +940,7 @@ class ICanvas(IShareableModeledContent, IThreadable):
 		Adds the shape to the top of the list of shapes.
 		"""
 
-class ISelectedRange(IShareableModeledContent,IAnchoredRepresentation):
+class ISelectedRange(IShareableModeledContent,IAnchoredRepresentation, IUserTaggedContent):
 	"""
 	A selected range of content that the user wishes to remember. This interface
 	attaches no semantic meaning to the selection; subclasses will do that.
@@ -963,55 +1035,6 @@ class IGlobalFlagStorage(interface.Interface):
 		this storage.
 		"""
 
-def Title():
-	"""
-	Return a :class:`zope.schema.interfaces.IField` representing
-	the standard title of some object. This should be stored in the `title`
-	field.
-	"""
-	return PlainTextLine(
-					#min_length=5,
-					max_length=140, # twitter
-					required=False,
-					title="The human-readable title of this object",
-					__name__='title')
-
-
-def CompoundModeledContentBody():
-	"""
-	Returns a :class:`zope.schema.interfaces.IField` representing
-	the way that a compound body of user-generated content is modeled.
-	"""
-
-	return ListOrTupleFromObject( title="The body of this object",
-								  description="""An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
-									of :class:`.IModeledContent` such as :class:`.ICanvas`.)
-									""",
-								  value_type=Variant( (SanitizedHTMLContentFragment(min_length=1),
-													   PlainText(min_length=1),
-													   Object(ICanvas)),
-													 title="A body part of a note",
-													 __name__='body'),
-								  min_length=1,
-								  required=False,
-								  __name__='body')
-
-class ITitledContent(interface.Interface):
-	"""
-	A piece of content with a title, either human created or potentially
-	automatically generated. (This differs from, say, a person's honorrific title.)
-	"""
-	title = Title() # TODO: Use zope.dublincore.IDCDecscriptiveProperties?
-
-from zope.dublincore.interfaces import IDCDescriptiveProperties
-class ITitledDescribedContent(ITitledContent,IDCDescriptiveProperties):
-	"""
-	Extend this class to add the ``title`` and ``description`` properties.
-	This class overrides the :mod:`zope.dublincore` properties with more specific
-	versions.
-	"""
-
-	description = PlainText( title="The human-readable description of this object." )
 
 class INote(IHighlight,IThreadable,ITitledContent):
 	"""

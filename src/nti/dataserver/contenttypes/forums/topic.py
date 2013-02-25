@@ -20,9 +20,8 @@ import Acquisition
 from nti.dataserver import containers
 from nti.dataserver import sharing
 
-
+from zope.schema.fieldproperty import FieldProperty
 from nti.utils.schema import AdaptingFieldProperty
-
 from nti.utils.schema import AcquisitionFieldProperty
 
 from . import interfaces as for_interfaces
@@ -36,7 +35,7 @@ class Topic(Acquisition.Implicit,
 	title = AdaptingFieldProperty(for_interfaces.ITopic['title'])
 	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
 	sharingTargets = ()
-
+	tags = FieldProperty(for_interfaces.IPost['tags'])
 	PostCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
 
 @interface.implementer(for_interfaces.IStoryTopic)
