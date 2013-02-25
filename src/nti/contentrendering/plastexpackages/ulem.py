@@ -24,3 +24,6 @@ class dashuline(TextCommand):
 class dotuline(TextCommand):
 	pass
 
+class modified(TextCommand):
+	pass
+
