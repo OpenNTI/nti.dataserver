@@ -62,3 +62,12 @@
 #NTIContent .math.equation {
 	font-size: 130%;
 }
+
+#NTIContent .lineout {
+	text-decoration: line-through;
+}
+
+#NTIContent .modified {
+	text-decoration: underline;
+	color: #1fd26f;
+}
