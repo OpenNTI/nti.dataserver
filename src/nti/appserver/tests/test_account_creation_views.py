@@ -1057,8 +1057,8 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
 			assert_that( res, has_property( 'status_int', 201 ) )
 			assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
 
-			#assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
-			assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
+			#assert_that( app.cookies, has_key( 'nti.auth_tkt' ) )
+			assert_that( app.cookies, has_key( 'nti.landing_page' ) )
 			assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
 			assert_that( res.json_body, has_entry( 'alias', 'jason2_nextthought_com' ) )
 
@@ -1098,8 +1098,8 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		assert_that( res, has_property( 'status_int', 201 ) )
 		assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
 
-		assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
-		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
+		assert_that( app.cookies, has_key( 'nti.auth_tkt' ) )
+		assert_that( app.cookies, has_key( 'nti.landing_page' ) )
 		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
 
 		mailer = component.getUtility( ITestMailDelivery )
@@ -1127,8 +1127,8 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		assert_that( res, has_property( 'status_int', 201 ) )
 		assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
 
-		assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
-		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
+		assert_that( app.cookies, has_key( 'nti.auth_tkt' ) )
+		assert_that( app.cookies, has_key( 'nti.landing_page' ) )
 		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
 		assert_that( res.json_body, has_entry( 'alias', 'jason2_nextthought_com' ) )
 
@@ -1157,8 +1157,8 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		assert_that( res, has_property( 'status_int', 201 ) )
 		assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
 		# The right logon cookies
-		assert_that( res.cookies_set, has_key( 'nti.auth_tkt' ) )
-		assert_that( res.cookies_set, has_key( 'nti.landing_page' ) )
+		assert_that( app.cookies, has_key( 'nti.auth_tkt' ) )
+		assert_that( app.cookies, has_key( 'nti.landing_page' ) )
 		# The right User data
 		assert_that( res.json_body, has_entry( 'Username', 'jason2_nextthought_com' ) )
 		assert_that( res.json_body, has_entry( 'email', 'foo@bar.com' ) )

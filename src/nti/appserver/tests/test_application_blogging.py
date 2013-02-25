@@ -94,7 +94,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog/feed.atom' )
 		assert_that( res.content_type, is_( 'application/atom+xml'))
 		res._use_unicode = False
-		pq = PyQuery( res.testbody, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
+		pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
 		assert_that( pq( b'entry title' ).text(), is_( 'My New Blog' ) )
 		assert_that( pq( b'entry summary' ).text(), is_( 'My first thought' ) )
 
@@ -386,7 +386,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			res = app.get( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog/feed.atom' ) )
 			assert_that( res.content_type, is_( 'application/atom+xml'))
 			res._use_unicode = False
-			pq = PyQuery( res.testbody, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
+			pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
 
 			titles = sorted( [x.text for x in pq( b'entry title' )] )
 			sums = sorted( [x.text for x in pq( b'entry summary')] )
