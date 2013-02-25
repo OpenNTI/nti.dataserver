@@ -950,7 +950,11 @@ class GloriaMundiSitePolicyEventListener(_AdultCommunitySitePolicyEventListener)
 		# code, so do it for them. Do it this way so that all the right events
 		# fire.
 		owner = users.User.get_user( 'barrynschachter@gmail.com' )
+		import numbers
 		for obj in owner.friendsLists.values():
+			if isinstance( obj, numbers.Number ):
+				logger.warn( "Collection %s in user %s has old numeric data in values", owner.friendsLists, owner )
+				continue
 			if obj.username == 'gloria-mundi' or user_interfaces.IFriendlyNamed( obj ).alias == 'gloria-mundi' or user_interfaces.IFriendlyNamed( obj ).realname == 'gloria-mundi':
 				from nti.appserver.invitations import interfaces as invite_interfaces
 				from nti.appserver.invitations.utility import accept_invitations
