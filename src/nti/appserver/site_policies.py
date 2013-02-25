@@ -935,6 +935,17 @@ class CollegiateSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_REALNAME = 'Collegiate'
 
 @interface.implementer(ISitePolicyUserEventListener)
+class GloriaMundiSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+	"""
+	Implements the policy for the Gloria-Mundi site.
+	"""
+
+	COM_USERNAME = 'gloria-mundi.nextthought.com'
+	COM_ALIAS = 'Gloria-Mundi'
+	COM_REALNAME = 'Gloria-Mundi'
+
+
+@interface.implementer(ISitePolicyUserEventListener)
 class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for ``fintech.nextthought.com``.
