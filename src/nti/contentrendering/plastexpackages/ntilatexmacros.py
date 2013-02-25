@@ -6,6 +6,7 @@ import hashlib
 from plasTeX import Base, Command, Environment
 
 from plasTeX.Base import Crossref
+from plasTeX.Base import TextCommand
 
 from nti.contentrendering import plastexids
 from nti.contentrendering.plastexpackages.graphicx import includegraphics
@@ -95,6 +96,10 @@ class textsuperscript(Base.Command):
 
 class textsubscript(Base.Command):
 	args = 'self'
+
+# Custom text treatments
+class modified(TextCommand):
+	pass
 
 # The sidebar environment is to be the base class for other side types such as those from AoPS.
 class sidebar(Environment):
@@ -190,6 +195,10 @@ class yen(Base.Command):
 
 class eur(Base.Command):
 	macroName = 'EUR'
+	unicode = u'\x20AC'
+
+class euro(Base.Command):
+	macroName = 'euro'
 	unicode = u'\x20AC'
 
 class textcent(Base.Command):

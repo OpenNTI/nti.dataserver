@@ -6,6 +6,3 @@ name: uline uuline uwave dashuline dotuline
 name: sout xout
 <span class="lineout" tal:content="self"></span>
 
-name: modified
-<span class="modified" tal:content="self"></span>
-
