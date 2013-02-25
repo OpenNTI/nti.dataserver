@@ -57,4 +57,10 @@
 	<adapter factory=".forum_views._PersonalBlogEntryACLProvider" />
 	<adapter factory=".forum_views._PostACLProvider" />
 
+	<!-- Feeds -->
+	<!-- For purposes of rendering to a feed, posts behave just like notes -->
+	<adapter factory=".ugd_feed_views.NoteFeedRenderer"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
+
+
 </configure>

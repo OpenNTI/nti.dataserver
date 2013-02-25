@@ -22,6 +22,7 @@ from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
@@ -29,6 +30,8 @@ from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
 from nti.externalization.oids import to_external_ntiid_oid
 
 from pyramid.view import view_config
+from pyramid.view import view_defaults
+
 from zope.container.interfaces import INameChooser
 from zope import component
 from zope import interface
@@ -221,6 +224,33 @@ class ForumContentsGetView(UGDQueryView):
 
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)
+
+import datetime
+from .ugd_feed_views import AbstractFeedView
+@view_config( context=frm_interfaces.IStoryTopic,
+			  name='feed.atom' )
+@view_config( context=frm_interfaces.IStoryTopic,
+			  name='feed.rss' )
+@view_config( context=frm_interfaces.IPersonalBlog,
+			  name='feed.atom' )
+@view_config( context=frm_interfaces.IPersonalBlog,
+			  name='feed.rss' )
+@view_defaults( route_name='objects.generic.traversal',
+			  permission=nauth.ACT_READ,
+			  request_method='GET',
+			  http_cache=datetime.timedelta(hours=1))
+class ForumContentsFeedView(AbstractFeedView):
+	_data_callable_factory = ForumContentsGetView
+
+	def _feed_title( self ):
+		return self.request.context.title
+
+	def _object_and_creator( self, ipost_or_itopic ):
+		title = ipost_or_itopic.title
+		# The object to render is either the 'story' (blog text) or the post itself
+		data_object = ipost_or_itopic.story if frm_interfaces.IStoryTopic.providedBy( ipost_or_itopic ) else ipost_or_itopic
+		return data_object, ipost_or_itopic.creator, title, getattr( ipost_or_itopic, 'tags', () )
+
 
 @interface.implementer(app_interfaces.IUserCheckout)
 class ForumCheckoutAdapter(object):

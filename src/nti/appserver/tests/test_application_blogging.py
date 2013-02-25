@@ -20,6 +20,7 @@ from hamcrest import has_property
 from hamcrest import is_
 from hamcrest import contains
 from hamcrest import contains_inanyorder
+from hamcrest import contains_string
 from hamcrest import has_length
 from hamcrest import has_entry
 
@@ -35,6 +36,7 @@ from nti.dataserver.tests import mock_dataserver
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, PersistentContainedExternal
 
 from urllib import quote as UQ
+from pyquery import PyQuery
 
 class TestApplicationBlogging(SharedApplicationTestBase):
 
@@ -87,6 +89,14 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog/contents' )
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+
+		# It also shows up in the blog's data feed
+		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog/feed.atom' )
+		assert_that( res.content_type, is_( 'application/atom+xml'))
+		res._use_unicode = False
+		pq = PyQuery( res.testbody, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
+		assert_that( pq( b'entry title' ).text(), is_( 'My New Blog' ) )
+		assert_that( pq( b'entry summary' ).text(), is_( 'My first thought' ) )
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
@@ -321,8 +331,21 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.get( entry_contents_url )
 		assert_that( res.json_body['Items'], has_length( 2 ) )
 		assert_that( res.json_body['Items'], contains_inanyorder(
-			has_entry( 'title', data['title'] ),
-			has_entry( 'title', 'A comment' ) ) )
+												has_entry( 'title', data['title'] ),
+												has_entry( 'title', 'A comment' ) ) )
+
+		# ... in the blog feed for both users...
+		for app in testapp, testapp2:
+			res = app.get( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog/feed.atom' ) )
+			assert_that( res.content_type, is_( 'application/atom+xml'))
+			res._use_unicode = False
+			pq = PyQuery( res.testbody, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
+
+			titles = sorted( [x.text for x in pq( b'entry title' )] )
+			sums = sorted( [x.text for x in pq( b'entry summary')] )
+			assert_that( titles, contains( 'A comment', 'Changed my title' ) )
+			assert_that( sums, contains( 'A comment body', 'more comment body') )
+
 
 		# The original user can delete a comment from the other user
 		testapp.delete( self.require_link_href_with_rel( comment1res.json_body, 'edit' ), status=204 )
