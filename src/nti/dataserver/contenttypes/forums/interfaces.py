@@ -52,7 +52,9 @@ class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescri
 					  readonly=True )
 
 
-class ITopic(IContentContainer,IContained,IAcquirer,
+class ITopic(IContentContainer,
+			 IContained,
+			 IAcquirer,
 			 nti_interfaces.ITitledDescribedContent,
 			 nti_interfaces.IUserTaggedContent):
 	"""
@@ -136,7 +138,8 @@ class IPersonalBlogComment(IPost):
 
 
 class IPersonalBlogEntry(IHeadlineTopic,
-						 nti_interfaces.ICreated):
+						 nti_interfaces.ICreated,
+						 nti_interfaces.IReadableShared):
 	"""
 	A special kind of story topic that is only contained by blogs.
 	"""

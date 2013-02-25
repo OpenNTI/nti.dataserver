@@ -12,14 +12,13 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope import component
 
 import Acquisition
+from Acquisition import aq_parent
 from persistent import Persistent
 
 from nti.dataserver import datastructures
 from nti.dataserver import sharing
-from nti.utils.schema import PermissiveSchemaConfigured
 
 from ..note import BodyFieldProperty
 from nti.utils.schema import AdaptingFieldProperty
@@ -29,18 +28,19 @@ from . import interfaces as for_interfaces
 from zope.annotation import interfaces as an_interfaces
 
 @interface.implementer(for_interfaces.IPost, an_interfaces.IAttributeAnnotatable)
-class Post(Acquisition.Implicit,
+class Post(
 		   Persistent,
 		   datastructures.ZContainedMixin,
 		   datastructures.CreatedModDateTrackingObject,
 		   sharing.AbstractReadableSharedWithMixin,
-		   PermissiveSchemaConfigured ): # PSC must be last
+		   Acquisition.Implicit):
 
 
 	body = BodyFieldProperty(for_interfaces.IPost['body'])
 
 	title = AdaptingFieldProperty(for_interfaces.IPost['title'])
 	tags = FieldProperty(for_interfaces.IPost['tags'])
+
 	sharingTargets = ()
 
 	def __eq__( self, other ):
@@ -50,10 +50,19 @@ class Post(Acquisition.Implicit,
 class HeadlinePost(Post):
 	pass
 
+# These last two are never permissioned separately, only
+# inherited. The inheritance is expressed through the ACLs, but
+# in is convenient for the actual values to be accessible down here too.
+# We have to do something special to override the default value set in the
+# class we inherit from. cf topic.PersonalBlogEntry
+# TODO: Still not sure this is really correct
+from . import _AcquiredSharingTargetsProperty
+
 @interface.implementer(for_interfaces.IPersonalBlogEntryPost)
 class PersonalBlogEntryPost(HeadlinePost):
-	pass
+
+	sharingTargets = _AcquiredSharingTargetsProperty()
 
 @interface.implementer(for_interfaces.IPersonalBlogComment)
 class PersonalBlogComment(Post):
-	pass
+	sharingTargets = _AcquiredSharingTargetsProperty()

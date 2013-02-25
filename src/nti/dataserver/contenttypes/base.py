@@ -86,12 +86,6 @@ from zope.proxy import removeAllProxies
 
 class UserContentRootInternalObjectIOMixin(object):
 
-	#: By default, if an update comes in with only new sharing information,
-	#: and we have been previously saved, then we do not clear our
-	#: other contents. Subclasses can override this by setting canUpdateSharingOnly
-	#: to ``False``.
-	canUpdateSharingOnly = True
-
 	validate_after_update = True
 
 	# NOTE: inReplyTo and 'references' do not really belong here
@@ -109,7 +103,7 @@ class UserContentRootInternalObjectIOMixin(object):
 
 	def toExternalObject( self, mergeFrom=None ):
 		extDict = super(UserContentRootInternalObjectIOMixin,self).toExternalObject(mergeFrom=mergeFrom)
-		extDict['sharedWith'] = self.context.sharedWith
+		extDict['sharedWith'] = getattr( self.context, 'sharedWith', () ) # optional
 		return extDict
 
 	def _update_sharing_targets( self, sharedWith ):

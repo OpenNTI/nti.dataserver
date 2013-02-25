@@ -140,7 +140,7 @@ class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
 		# Now the topic
 		topic = PersonalBlogEntry()
 		topic.creator = self.getRemoteUser()
-		containedObject.__parent__ = topic
+		containedObject.__parent__ = topic # must set __parent__ first for acquisition to work
 
 		topic.headline = containedObject
 		# Business rule: titles of the personal blog entry match the post

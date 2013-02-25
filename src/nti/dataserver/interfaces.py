@@ -785,11 +785,15 @@ class IReadableShared(interface.Interface):
 	sharingTargets = UniqueIterable(
 		title="A set of entities this object is directly shared with (non-recursive, non-flattened)",
 		value_type=Object(IEntity, title="An entity shared with"),
+		required=False,
+		default=(),
 		readonly=True)
 
 	flattenedSharingTargets = UniqueIterable(
 		title="A set of entities this object is directly or indirectly shared with (recursive, flattened)",
 		value_type=Object(IEntity, title="An entity shared with"),
+		required=False,
+		default=(),
 		readonly=True)
 
 	# TODO: How to deprecate this property?
@@ -800,6 +804,8 @@ class IReadableShared(interface.Interface):
 			" entities this object is shared with, directly or indirectly. Note that the usernames reported "
 			" here are not necessarily globally unique and may not be resolvable as such.",
 		value_type=DecodingValidTextLine(title="The username" ),
+		required=False,
+		defaultFactory=set,
 		readonly=True)
 
 
@@ -857,7 +863,9 @@ class IShareableModeledContent(IShareable,IModeledContent):
 	# with the correct interface. See nti.externalization.internalization.update_from_external_object
 	sharedWith = schema.Set(
 		title="An alias for `flattenedSharingTargetNames`, taking externalization of local usernames into account",
-		value_type=DecodingValidTextLine(title="The username or NTIID" ) )
+		value_type=DecodingValidTextLine(title="The username or NTIID" ),
+		required=False,
+		defaultFactory=set)
 
 class IFriendsList(IModeledContent,IEntity):
 	"""

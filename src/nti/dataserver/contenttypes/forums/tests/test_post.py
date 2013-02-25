@@ -31,6 +31,7 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization import internalization
 
 import nti.tests
+from nti.tests import aq_inContextOf
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
 tearDownModule = nti.tests.module_teardown
@@ -41,7 +42,9 @@ from zope.container.interfaces import InvalidContainerType
 from zope.mimetype.interfaces import IContentTypeAware
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from ..interfaces import IPost, IPersonalBlogComment
-from ..post import Post, PersonalBlogComment
+from ..post import Post, PersonalBlogComment, PersonalBlogEntryPost
+
+from ExtensionClass import Base
 
 def test_post_interfaces():
 	post = Post()
@@ -58,7 +61,38 @@ def test_comment_interfaces():
 	assert_that( post, validly_provides( IPersonalBlogComment ) )
 
 	assert_that( PersonalBlogComment, has_property( 'mimeType', 'application/vnd.nextthought.forums.personalblogcomment' ) )
-	assert_that( post, verifiably_provides( IContentTypeAware ) )
+
+
+def test_comment_sharing_target_aq():
+
+	class Parent(Base):
+		sharingTargets = None
+		child = None
+
+	post = Parent()
+	post.sharingTargets = set( ['a', 'b', 'c'] )
+	child = PersonalBlogComment()
+	child.__parent__ = post
+	post.child = child
+
+	assert_that( post.child, aq_inContextOf( post ) )
+	assert_that( post.child.sharingTargets, is_( post.sharingTargets ) )
+
+def test_blog_post_sharing_target_aq():
+
+	class Parent(Base):
+		sharingTargets = None
+		child = None
+
+	post = Parent()
+	post.sharingTargets = set( ['a', 'b', 'c'] )
+	child = PersonalBlogEntryPost()
+	child.__parent__ = post # PARENT MUST BE SET FIRST
+	post.child = child
+
+	assert_that( post.child, aq_inContextOf( post ) )
+	assert_that( post.child.sharingTargets, is_( post.sharingTargets ) )
+
 
 def test_post_constraints():
 	with assert_raises( InvalidContainerType ):
