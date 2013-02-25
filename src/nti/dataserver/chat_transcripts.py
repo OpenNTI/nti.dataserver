@@ -465,7 +465,7 @@ class TranscriptSummaryInternalObjectIO(InterfaceObjectIO):
 # For purposes of filtering during UGD queries, make the objects that store
 # messages appear to be transcript summaries, since that is what they will
 # externalize as. TODO: This design is wonky
-_AbstractMeetingTranscriptStorage.mime_type = TranscriptSummary.mime_type
+_AbstractMeetingTranscriptStorage.mimeType = TranscriptSummary.mimeType
 
 @interface.implementer(nti_interfaces.ITranscript)
 @component.adapter(_IMeetingTranscriptStorage)

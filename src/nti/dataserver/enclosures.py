@@ -49,6 +49,8 @@ class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, per
 		# Change default modified time from 0 to now
 		self.lastModified = self.createdTime
 
+	mimeType = alias('mime_type')
+
 	def __setstate__( self, state ):
 		if 'data' in state:
 			state['_data'] = state['data']

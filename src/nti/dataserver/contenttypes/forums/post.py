@@ -45,3 +45,15 @@ class Post(Acquisition.Implicit,
 
 	def __eq__( self, other ):
 		return other == (self.id, self.containerId, self.title, self.body, self.creator)
+
+@interface.implementer(for_interfaces.IHeadlinePost)
+class HeadlinePost(Post):
+	pass
+
+@interface.implementer(for_interfaces.IPersonalBlogEntryPost)
+class PersonalBlogEntryPost(HeadlinePost):
+	pass
+
+@interface.implementer(for_interfaces.IPersonalBlogComment)
+class PersonalBlogComment(Post):
+	pass

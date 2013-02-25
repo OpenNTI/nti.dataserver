@@ -139,7 +139,7 @@ def _format_result( result, remote_user, dataserver ):
 	result = LocatedExternalDict( {'Last Modified': 0, 'Items': result} )
 	interface.alsoProvides( result, app_interfaces.IUncacheableInResponse )
 	interface.alsoProvides( result, zmime_interfaces.IContentTypeAware )
-	result.mime_type = nti_mimetype.nti_mimetype_with_class( None )
+	result.mimeType = nti_mimetype.nti_mimetype_with_class( None )
 	result.__parent__ = dataserver.root
 	result.__name__ = 'UserSearch' # TODO: Hmm
 	return result

@@ -190,7 +190,7 @@ class FriendsListContainerCollection(UncacheableHomogeneousTypedContainerCollect
 @component.adapter(app_interfaces.ICollection)
 class CollectionContentTypeAware(object):
 
-	mime_type = mimetype.nti_mimetype_with_class( 'collection' )
+	mimeType = mimetype.nti_mimetype_with_class( 'collection' )
 
 	def __init__( self, collection ):
 		pass
@@ -536,7 +536,7 @@ class ProviderEnumerationWorkspace(_ContainerWrapper):
 class _NTIIDEntry(object):
 
 	__external_class_name__ = 'PageInfo'
-	mime_type = mimetype.nti_mimetype_with_class( __external_class_name__ )
+	mimeType = mimetype.nti_mimetype_with_class( __external_class_name__ )
 
 	# TODO: This list is defined again in dataserver_pyramid_views.py
 	# in the _PageContainerResource
@@ -792,7 +792,7 @@ class UserService(object):
 
 	# Is this an adapter? A multi adapter?
 
-	mime_type = mimetype.nti_mimetype_with_class( 'workspace' )
+	mimeType = mimetype.nti_mimetype_with_class( 'workspace' )
 
 	__name__ = 'users'
 	__parent__ = None

@@ -42,7 +42,7 @@ setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.c
 tearDownModule = nti.tests.module_teardown
 
 
-from ..interfaces import IForum, ITopic, IPersonalBlog, IStoryTopic, IPersonalBlogEntry
+from ..interfaces import IForum, ITopic, IPersonalBlog, IPersonalBlogEntry
 from ..forum import Forum, PersonalBlog
 
 
