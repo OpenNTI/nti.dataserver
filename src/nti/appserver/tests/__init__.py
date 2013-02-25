@@ -63,6 +63,11 @@ def monkey_patch_webtest_json_to_simplejson():
 	webtest.app.loads = simplejson.loads
 monkey_patch_webtest_json_to_simplejson()
 
+def monkey_patch_webtest_form20_to_not_be_stupid():
+	import webtest.forms
+	webtest.forms.Field.value = None # Idiot thing is broken in 2.0
+monkey_patch_webtest_form20_to_not_be_stupid()
+
 def _create_request( self, request_factory, request_args ):
 	self.request = request_factory( *request_args )
 	if request_factory is DummyRequest:
