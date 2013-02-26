@@ -271,9 +271,9 @@ from .ugd_feed_views import AbstractFeedView
 @view_config( context=frm_interfaces.IPersonalBlog,
 			  name='feed.rss' )
 @view_defaults( route_name='objects.generic.traversal',
-			  permission=nauth.ACT_READ,
-			  request_method='GET',
-			  http_cache=datetime.timedelta(hours=1))
+				permission=nauth.ACT_READ,
+				request_method='GET',
+				http_cache=datetime.timedelta(hours=1))
 class ForumContentsFeedView(AbstractFeedView):
 	_data_callable_factory = ForumContentsGetView
 
@@ -368,6 +368,15 @@ class ForumObjectContentsLinkProvider(object):
 		if not context.__parent__:
 			return
 
+		# TODO: This can be generalized by using the component
+		# registry in the same way Pyramid itself does. With a lookup like
+		#   adapters.lookupAll( (IViewClassifier, request.request_iface, context_iface), IView )
+		# you get back a list of (name, view) pairs that are applicable.
+		# ISecuredViews (which include IMultiViews) have a __permitted__ that checks ACLs;
+		# if it doesn't pass then that one is obviously filtered out. IMultiViews have a
+		# match and __permitted__ method, __permitted__ using match(). The main
+		# trouble is filtering out the general views (i.e., those that don't specify an interface)
+		# that we don't want to return for everything
 
 		# /path/to/forum/topic/contents --> note that contents is not an @@ view,
 		# simply named. This is prettier, but if we need to we can easily @@ it

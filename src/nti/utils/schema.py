@@ -269,6 +269,17 @@ class Variant(FieldValidationMixin,schema.Field):
 			field.__name__ = name
 	__name__ = property( __get_name, __set_name )
 
+	def getDoc( self ):
+		doc = super(Variant,self).getDoc()
+		doc += '\nValue is one of:'
+		for field in self.fields:
+			fielddoc = field.getDoc()
+			if not fielddoc:
+				fielddoc = getattr( type(field), '__doc__', '' )
+			if fielddoc:
+				doc += '\n\n\t' + fielddoc
+		return doc
+
 	def bind( self, obj ):
 		clone = super(Variant,self).bind( obj )
 		clone.fields = [x.bind( obj ) for x in clone.fields]
@@ -436,7 +447,27 @@ class HTTPURL(FieldValidationMixin,schema.URI):
 
 		return result
 
-class IndexedIterable(FieldValidationMixin,schema.List):
+class _ValueTypeAddingDocMixin(object):
+	document_value_type = True
+	def getDoc( self ):
+		doc = super(_ValueTypeAddingDocMixin,self).getDoc()
+		if self.document_value_type:
+			value_type = getattr( self, 'value_type', None )
+			if value_type is not None:
+				doc += '\nThe value type is documented as:\n\t' + value_type.getDoc()
+			_type = getattr( self, 'accept_types', getattr( self, '_type', None) )
+			def _class_dir( t ):
+				mod = t.__module__ + '.' if t.__module__ and t.__module__ != '__builtin__' else ''
+				return ':class:`' + mod + t.__name__ + '`'
+
+			if isinstance(_type, type):
+				doc += '\nThe acceptable class is ' + _class_dir( _type )  + '.'
+			elif _type:
+				types = [_class_dir( t ) for t in _type]
+				doc += '\nThe acceptable classes are ' + ' , '.join( types ) + '.'
+		return doc
+
+class IndexedIterable(_ValueTypeAddingDocMixin,FieldValidationMixin,schema.List):
 	"""
 	An arbitrary (indexable) iterable, not necessarily a list or tuple;
 	either of those would be acceptable at any time (however, so would a string,
@@ -483,7 +514,7 @@ class ListOrTupleFromObject(_SequenceFromObjectMixin, ListOrTuple):
 			raise sch_interfaces.WrongType()
 
 @interface.implementer(IFromObject)
-class TupleFromObject(_SequenceFromObjectMixin, FieldValidationMixin, schema.Tuple):
+class TupleFromObject(_ValueTypeAddingDocMixin, _SequenceFromObjectMixin, FieldValidationMixin, schema.Tuple):
 	"""
 	The field_type MUST be a :class:`Variant`, or more generally,
 	something supporting :class:`IFromObject`. When setting through this object,
@@ -502,7 +533,7 @@ class TupleFromObject(_SequenceFromObjectMixin, FieldValidationMixin, schema.Tup
 			value = tuple( value )
 		super(TupleFromObject,self).validate( value )
 
-class UniqueIterable(FieldValidationMixin,schema.Set):
+class UniqueIterable(_ValueTypeAddingDocMixin,FieldValidationMixin,schema.Set):
 	"""
 	An arbitrary iterable, not necessarily an actual :class:`set` object and
 	not necessarily iterable, but one whose contents are unique.

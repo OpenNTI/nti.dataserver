@@ -347,7 +347,7 @@ setup(
 			#'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			'epydoc >= 3.0.1', # auto-api docs
-			'httpie >= 0.4.0', # 0.4.0 explicitly requires requests > 1.0.4, 0.3.1 explicitly requires requests < 1.0
+			'httpie >= 0.4.1', # 0.4.0 explicitly requires requests > 1.0.4, 0.3.1 explicitly requires requests < 1.0
 			'ipython[notebook] >= 0.13.1', # notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.1',
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch

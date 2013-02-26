@@ -79,6 +79,8 @@ def test_variant( ):
 	with assert_raises( TypeError ):
 		syntax_or_lookup.fromObject( object() )
 
+	# cover
+	syntax_or_lookup.getDoc()
 
 def test_complex_variant():
 
@@ -87,7 +89,7 @@ def test_complex_variant():
 	list_of_numbers_field = ListOrTuple( value_type=Number() )
 
 	variant = Variant( (dict_field, string_field, list_of_numbers_field) )
-
+	variant.getDoc() # cover
 	# It takes all these things
 	for d in { 'k': 'v'}, 'foo', [1, 2, 3]:
 		assert_that( d, validated_by( variant ) )
