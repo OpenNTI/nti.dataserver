@@ -211,6 +211,7 @@ class FieldValidationMixin(object):
 		except sch_interfaces.ValidationError as e:
 			self._reraise_validation_error( e, value )
 
+
 class Object(FieldValidationMixin,ObjectBase):
 
 	def _fixup_validation_error_no_args(self, e, value ):
@@ -507,6 +508,19 @@ class UniqueIterable(FieldValidationMixin,schema.Set):
 	not necessarily iterable, but one whose contents are unique.
 	"""
 	_type = None # Override to not force a set
+
+	def __init__( self, *args, **kwargs ):
+		# If they do not specify a min_length in the arguments,
+		# then change it to None. This way we are compatible with
+		# a generator value. Superclass specifies both a class value
+		# and a default argument
+		no_min_length = False
+		if 'min_length' not in kwargs:
+			no_min_length = True
+
+		super(UniqueIterable,self).__init__( *args, **kwargs )
+		if no_min_length:
+			self.min_length = None
 
 class AcquisitionFieldProperty(FieldProperty):
 	"""

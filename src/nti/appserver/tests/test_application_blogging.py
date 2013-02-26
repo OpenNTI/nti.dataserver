@@ -315,7 +315,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 
-		# XXX FIXME: This is wrong
+		# XXX FIXME: This is wrong; TopicCount should be of the visible, not the total, contents
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog' )
 		assert_that( res.json_body, has_entry( 'TopicCount', 1 ) )
 
@@ -323,6 +323,8 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		testapp.post( pub_url )
 
 		# Second user is able to see everything about it...
+		def assert_shared_with_community( data ):
+			assert_that( data,  has_entry( 'sharedWith', contains( 'TheCommunity' ) ) )
 
 		# Its entry in the table-of-contents
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog' )
@@ -332,12 +334,15 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
 		assert_that( res.json_body['Items'][0], has_entry( 'title', 'My New Blog' ) )
 		assert_that( res.json_body['Items'][0], has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
+		assert_shared_with_community( res.json_body['Items'][0] )
 
 		# It can be fetched by pretty URL
 		res = testapp2.get( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog' ) ) # Pretty URL
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
 		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
 		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
+		assert_shared_with_community( res.json_body )
+
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
@@ -371,6 +376,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# Both visible to the original user
 		res = testapp.get( entry_url )
+		unpub_url = self.require_link_href_with_rel( res.json_body, 'unpublish' )
 		# ... metadata
 		assert_that( res.json_body, has_entry( 'PostCount', 2 ) )
 
@@ -380,6 +386,9 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body['Items'], contains_inanyorder(
 												has_entry( 'title', data['title'] ),
 												has_entry( 'title', 'A comment' ) ) )
+		for item in res.json_body['Items']:
+			# sharedWith value trickles down to the comments automatically
+			assert_shared_with_community( item )
 
 		# ... in the blog feed for both users...
 		for app in testapp, testapp2:
@@ -392,6 +401,23 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			sums = sorted( [x.text for x in pq( b'entry summary')] )
 			assert_that( titles, contains( 'A comment', 'Changed my title' ) )
 			assert_that( sums, contains( 'A comment body', 'more comment body') )
+
+
+		# The original user can unpublish...
+		res = testapp.post( unpub_url )
+		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
+		# ... making it invisible to the other user
+		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
+		assert_that( res.json_body['Items'], has_length( 0 ) )
+		testapp2.get( entry_url, status=403 )
+
+		# and it can be republished...
+		res = testapp.post( pub_url )
+		assert_shared_with_community( res.json_body )
+		# ...and made visible again
+		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
+		assert_that( res.json_body['Items'][0], has_entry( 'title', 'My New Blog' ) )
+
 
 
 		# The original user can delete a comment from the other user

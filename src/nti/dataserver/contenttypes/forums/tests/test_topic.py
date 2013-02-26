@@ -73,21 +73,18 @@ def test_blog_entry():
 	assert_that( topic, validly_provides( ITopic ) )
 	assert_that( topic.headline, aq_inContextOf( topic ) )
 
-	# sharing targets are inherited all the way down
+	# test acquisition
 	class Parent(Base):
-		sharingTargets = ()
+		pass
 
 	parent = Parent()
-	parent.sharingTargets = set( [1, 2, 3] )
 	topic.__parent__ = parent
 	parent.topic = topic
 
 	assert_that( topic.headline, aq_inContextOf( parent ) )
 	assert_that( topic, aq_inContextOf( parent ) )
 
-	assert_that( topic.sharingTargets, is_( parent.sharingTargets ) )
 
-	assert_that( parent.topic.headline.sharingTargets, is_( parent.sharingTargets ) )
 
 def test_topic_constraints():
 

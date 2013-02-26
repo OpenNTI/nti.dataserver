@@ -477,9 +477,9 @@ class IUserEvent(interface.interfaces.IObjectEvent):
 	An object event where the object is a user.
 	"""
 	object = Object(IUser,
-						   title="The User (an alias for user). You can add event listeners based on the interfaces of this object.")
+					title="The User (an alias for user). You can add event listeners based on the interfaces of this object.")
 	user = Object(IUser,
-						 title="The User (an alias for object). You can add event listeners based on the interfaces of this object.")
+				  title="The User (an alias for object). You can add event listeners based on the interfaces of this object.")
 from nti.utils.property import alias
 
 @interface.implementer(IUserEvent)

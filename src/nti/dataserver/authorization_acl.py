@@ -428,7 +428,9 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 
 	def _get_sharing_target_names(self):
 		"""
-		Subclasses implement to return an iterable over names that should have read access.
+		Subclasses implement to return an iterable over names (or principals) that should have
+		the access given in :data:`_PERMS_FOR_SHARING_TARGETS`. Each element of the returned
+		sequence will be adapted to an :class:`nti.dataserver.interfaces.IPrincipal`.
 		"""
 		raise NotImplementedError() # pragma: no cover
 
