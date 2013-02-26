@@ -129,9 +129,9 @@ class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
 
 	_constraint = frm_interfaces.IPersonalBlogEntryPost.providedBy
 
-	_override_content_type = PersonalBlogEntryPost.mime_type
+	_override_content_type = PersonalBlogEntryPost.mimeType
 
-	_allowed_content_types = ('Post', Post.mime_type, 'Posts' )
+	_allowed_content_types = ('Post', Post.mimeType, 'Posts' )
 
 	def _do_call( self ):
 		blog = self.request.context
@@ -182,8 +182,8 @@ class TopicPostView(_AbstractIPostPOSTView):
 
 	_constraint = frm_interfaces.IPersonalBlogComment.providedBy
 
-	_override_content_type = PersonalBlogComment.mime_type
-	_allowed_content_types = ('Post', 'Post.mime_type', 'Posts')
+	_override_content_type = PersonalBlogComment.mimeType
+	_allowed_content_types = ('Post', Post.mimeType, 'Posts')
 
 	def _do_call( self ):
 		incoming_post = self._read_incoming_post()
