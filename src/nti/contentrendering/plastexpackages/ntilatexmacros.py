@@ -195,11 +195,10 @@ class yen(Base.Command):
 
 class eur(Base.Command):
 	macroName = 'EUR'
-	unicode = u'\x20AC'
+	unicode = u'\u20AC'
 
 class euro(Base.Command):
-	macroName = 'euro'
-	unicode = u'\x20AC'
+	unicode = u'\u20AC'
 
 class textcent(Base.Command):
 	unicode = u'\xA2'
