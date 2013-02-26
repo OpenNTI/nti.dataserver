@@ -402,7 +402,6 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 		super(PublishLinkDecorator,self).decorateExternalMapping( context, mapping )
 
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
-from nti.dataserver.authentication import _dynamic_memberships_that_participate_in_security
 @component.adapter(frm_interfaces.IPersonalBlogEntry)
 class _PersonalBlogEntryACLProvider(AbstractCreatedAndSharedACLProvider):
 
@@ -413,11 +412,10 @@ class _PersonalBlogEntryACLProvider(AbstractCreatedAndSharedACLProvider):
 	# as well as see it
 	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,nauth.ACT_CREATE)
 	def _get_sharing_target_names( self ):
-		if nti_interfaces.IDefaultPublished.providedBy( self.context ):
-			# TODO: Using a private function
-			return _dynamic_memberships_that_participate_in_security( find_interface( self.context, nti_interfaces.IUser ) )
+		# The PersonalBlogEntry takes care of the right sharing settings itself,
+		# based on the publication status
+		return self.context.sharingTargets
 
-		return ()
 
 @component.adapter(frm_interfaces.IPersonalBlog)
 class _PersonalBlogACLProvider(AbstractCreatedAndSharedACLProvider):

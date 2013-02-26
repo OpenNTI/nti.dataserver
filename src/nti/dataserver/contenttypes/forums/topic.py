@@ -28,35 +28,35 @@ from nti.utils.schema import AcquisitionFieldProperty
 from . import interfaces as for_interfaces
 from zope.annotation import interfaces as an_interfaces
 
-@interface.implementer(for_interfaces.ITopic, an_interfaces.IAttributeAnnotatable)
-class Topic(Acquisition.Implicit,
-			containers.AcquireObjectsOnReadMixin,
-			containers.CheckingLastModifiedBTreeContainer,
-			sharing.AbstractReadableSharedWithMixin):
+class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
+							 containers.CheckingLastModifiedBTreeContainer,
+							 Acquisition.Implicit):
 	title = AdaptingFieldProperty(for_interfaces.ITopic['title'])
 	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
 	sharingTargets = ()
 	tags = FieldProperty(for_interfaces.IPost['tags'])
 	PostCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
 
+
+@interface.implementer(for_interfaces.ITopic, an_interfaces.IAttributeAnnotatable)
+class Topic(_AbstractUnsharedTopic,
+			sharing.AbstractReadableSharedWithMixin):
+	pass
+
+
 @interface.implementer(for_interfaces.IHeadlineTopic)
 class HeadlineTopic(Topic):
 	headline = AcquisitionFieldProperty(for_interfaces.IHeadlineTopic['headline'])
 
 
-# These one is never permissioned separately, only
-# inherited. The inheritance is expressed through the ACLs, but
-# in is convenient for the actual values to be accessible down here too.
-# We have to do something special to override the default value set in the
-# class we inherit from. cf post.PersonalBlog*
-# TODO: Still not sure this is really correct
-from . import _AcquiredSharingTargetsProperty
+# These one is permissioned by publication.
+
 @interface.implementer(for_interfaces.IPersonalBlogEntry)
-class PersonalBlogEntry(HeadlineTopic):
+class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
+						HeadlineTopic):
 	creator = None
 	headline = AcquisitionFieldProperty(for_interfaces.IPersonalBlogEntry['headline'])
 
-	sharingTargets = _AcquiredSharingTargetsProperty()
 
 from zope.container.contained import ContainerSublocations
 class HeadlineTopicSublocations(ContainerSublocations):

@@ -13,9 +13,8 @@ from zope import component
 from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import users
 
-def _dynamic_memberships_that_participate_in_security( user ):
+def _dynamic_memberships_that_participate_in_security( user, as_principals=True ):
 	# Add principals for all the communities that the user is in
 	# These are valid ACL targets because they are in the same namespace
 	# as users (so no need to prefix with community_ or something like that)
@@ -25,12 +24,17 @@ def _dynamic_memberships_that_participate_in_security( user ):
 		# If we did allow them here, that would change the need to expand them
 		# in ACLs)
 		if nti_interfaces.ICommunity.providedBy( community ) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy( community ):
-			yield nti_interfaces.IPrincipal( community )
+			yield nti_interfaces.IPrincipal( community ) if as_principals else community
+
+def _user_factory( username ):
+	# To avoid circular imports (sharing imports us, users imports us, we import users). sigh.
+	from nti.dataserver.users import User
+	return User.get_user( username )
 
 def effective_principals( username,
 						  registry=component,
 						  authenticated=True,
-						  user_factory=users.User.get_user):
+						  user_factory=_user_factory):
 	"""
 	Find and return the principals for the given username. This will include
 	the username itself (obviously), plus a principal for Everyone, plus
