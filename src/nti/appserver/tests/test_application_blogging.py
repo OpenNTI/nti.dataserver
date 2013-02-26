@@ -18,6 +18,8 @@ logger = __import__('logging').getLogger(__name__)
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import is_
+from hamcrest import is_not as does_not
+from hamcrest import has_item
 from hamcrest import contains
 from hamcrest import contains_inanyorder
 from hamcrest import contains_string
@@ -54,6 +56,11 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( contents_href, is_( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/contents' ) ))
 		# which is empty
 		testapp.get( contents_href, status=200 )
+
+		# And thus not in my links
+		res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )
+		assert_that( res.json_body['Items'][0]['Links'], does_not( has_item( has_entry( 'rel', 'Blog' ) ) ) )
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_blog_entry( self ):
@@ -98,6 +105,14 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( pq( b'entry title' ).text(), is_( 'My New Blog' ) )
 		assert_that( pq( b'entry summary' ).text(), is_( 'My first thought' ) )
 
+
+		# And in the user activity view
+		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Activity' )
+		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+
+		# And in his links
+		res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )
+		self.require_link_href_with_rel( res.json_body['Items'][0], 'Blog' )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_PUT_to_edit_existing_blog_entry( self ):
@@ -349,6 +364,10 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# It can be fetched directly
 		testapp2.get( entry_url )
+
+		# It can be seen in the activity stream
+		res = testapp2.get( '/dataserver2/users/original_user@foo/Activity' )
+		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 
 		# it currently has no contents
 		testapp2.get( contents_href, status=200 )

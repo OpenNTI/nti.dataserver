@@ -28,7 +28,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
-from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE
+from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_SCHEMA as REL_ACCOUNT_PROFILE
 
 
 class TestApplicationUserSearch(SharedApplicationTestBase):
@@ -161,6 +161,7 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		path = '/dataserver2/ResolveUser/sjohnson@nextthought.com'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 1 ) )
+		self.require_link_href_with_rel( res.json_body['Items'][0], 'Activity' )
 
 		# We can search for ourself and the other user
 		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
@@ -255,11 +256,12 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
 		res = testapp.get( b'/dataserver2/UserSearch/' + str(u1.username), extra_environ=environ )
 		assert_that( res.json_body['Items'], has_length( 1 ) )
-		links = res.json_body['Items'][0]['Links']
-		assert_that( links, has_item( has_entry( 'rel', 'childrens-privacy' ) ) )
+		found = res.json_body['Items'][0]
+		self.require_link_href_with_rel( found, 'childrens-privacy' )
+
+		prof = self.require_link_href_with_rel( found, REL_ACCOUNT_PROFILE )
 		# At one time, we were double-nesting this link, hence the path check
-		assert_that( links, has_item( has_entries( 'href', '/dataserver2/users/sjohnson%40nextthought.com/@@' + REL_ACCOUNT_PROFILE ,
-												   'rel', REL_ACCOUNT_PROFILE ) ) )
+		assert_that( prof, is_( '/dataserver2/users/sjohnson%40nextthought.com/@@' + REL_ACCOUNT_PROFILE  ) )
 
 	@WithSharedApplicationMockDS
 	def test_search_empty_term_user(self):
