@@ -13,11 +13,13 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import json
-import unittest
+
 
 from zope import component
-
+from zope.mimetype.interfaces import IContentTypeAware
 from nti.dataserver.contenttypes import Note
+
+from nti.tests import verifiably_provides
 
 from nti.ntiids.ntiids import make_ntiid
 
@@ -48,7 +50,9 @@ class TestSearchResults(ConfiguringTestBase):
 		qo = QueryObject.create("test")
 		sr = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
 		assert_that(sr, is_not(None))
-		assert_that(search_interfaces.ISearchResults.providedBy(sr), is_(True))
+		assert_that( sr, verifiably_provides( search_interfaces.ISearchResults ) )
+		assert_that( sr, verifiably_provides( IContentTypeAware ) )
+
 
 		notes = []
 		containerid = make_ntiid(nttype='bleach', specific='manga')
@@ -82,7 +86,9 @@ class TestSearchResults(ConfiguringTestBase):
 		qo = QueryObject.create("test")
 		sr = component.getUtility(search_interfaces.ISuggestResultsCreator)(qo)
 		assert_that(sr, is_not(None))
-		assert_that(search_interfaces.ISuggestResults.providedBy(sr), is_(True))
+		assert_that( sr, verifiably_provides( search_interfaces.ISuggestResults ) )
+		assert_that( sr, verifiably_provides( IContentTypeAware ) )
+
 
 		sr.add_suggestions(domain_words)
 
@@ -105,7 +111,9 @@ class TestSearchResults(ConfiguringTestBase):
 		qo = QueryObject.create("test")
 		sr = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
 		assert_that(sr, is_not(None))
-		assert_that(search_interfaces.ISuggestAndSearchResults.providedBy(sr), is_(True))
+		assert_that( sr, verifiably_provides( search_interfaces.ISuggestAndSearchResults ) )
+		assert_that( sr, verifiably_provides( IContentTypeAware ) )
+
 
 		sr.add_suggestions(domain_words)
 		assert_that(sr.suggestions, has_length(len(domain_words)))

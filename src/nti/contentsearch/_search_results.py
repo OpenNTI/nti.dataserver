@@ -115,7 +115,10 @@ class _MetaSearchResults(type):
 
 	def __new__(cls, name, bases, dct):
 		t = type.__new__(cls, name, bases, dct)
-		t.mime_type = nti_mimetype_with_class( name[1:] )
+		t.mimeType = nti_mimetype_with_class( name[1:] )
+		# legacy, deprecated
+		t.mime_type = t.mimeType
+		t.parameters = dict() # IContentTypeAware
 		return t
 
 @interface.implementer( search_interfaces.ISearchResults,
@@ -131,7 +134,7 @@ class _SearchResults(_PageableSearchResults):
 
 	def get_hits(self):
 		return self._hits
-	
+
 	def get_hit_meta_data(self):
 		return self._ihitmeta
 
@@ -179,7 +182,8 @@ class _SearchResults(_PageableSearchResults):
 
 		return self
 
-@interface.implementer( search_interfaces.ISuggestResults )
+@interface.implementer( search_interfaces.ISuggestResults,
+						zmime_interfaces.IContentTypeAware )
 class _SuggestResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
