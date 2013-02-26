@@ -4,11 +4,13 @@ from __future__ import print_function, unicode_literals
 
 import logging
 logger = logging.getLogger(__name__)
+from . import MessageFactory as _
 
 from zope import interface
 from zope import component
 from zope.location import interfaces as loc_interfaces
 from zope.traversing import interfaces as trv_interfaces
+from zope.i18n import translate
 
 import ZODB
 
@@ -351,7 +353,7 @@ from nti.externalization.interfaces import StandardExternalFields
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IUser)
-class _AuthenticatedUserLinkAdder(object):
+class _AuthenticatedUserLinkAdder1(object):
 	"""
 	When we decorate an user, if the user is ourself, we want to provide
 	the same links that we would at logon time, mostly as a convenience
@@ -377,3 +379,51 @@ class _AuthenticatedUserLinkAdder(object):
 			links.extend( provider.get_links() )
 
 		external[StandardExternalFields.LINKS] = links
+
+_authenticatedUserLinkAdder = _AuthenticatedUserLinkAdder1()
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(nti_interfaces.IUser)
+def _AuthenticatedUserLinkAdder(*args):
+	return _authenticatedUserLinkAdder
+
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(app_interfaces.IDeletedObjectPlaceholder)
+class _DeletedObjectPlaceholderDecorator(object):
+	"""
+	Replaces the title, description, and body of deleted objects with I18N strings.
+	Cleans up some other data too that we don't want out.
+	"""
+
+	title_message = _("This object has been deleted.")
+	description_message = _("This object has been deleted.")
+	body_message = _("This object has been deleted.")
+
+	def __init__( self, *args ):
+		pass
+
+	def decorateExternalObject( self, original, external ):
+		request = get_current_request()
+
+		if 'title' in external:
+			external['title'] = translate( self.title_message, context=request )
+		if 'description' in external:
+			external['description'] = translate( self.description_message, context=request )
+		if 'body' in external:
+			external['body'] = [translate( self.body_message, context=request )]
+
+		if 'tags' in external:
+			external['tags'] = ()
+
+		if StandardExternalFields.LINKS in external:
+			external[StandardExternalFields.LINKS] = [] # because other things may try to append still
+
+		# TODO: What's the best thing here? Change class and mimetype?
+		external['Deleted'] = True
+
+_deletedDecorator = _DeletedObjectPlaceholderDecorator()
+
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(app_interfaces.IDeletedObjectPlaceholder)
+def _DeletedObjectPlaceholderDecoratorFactory(*args):
+	return _deletedDecorator

@@ -42,6 +42,10 @@ class _GenericGetView(AbstractView):
 		# NOTE: We'll take either one of the wrapper classes defined
 		# in this module, or the object itself
 		resource = getattr( self.request.context, 'resource', self.request.context )
+
+		if app_interfaces.IDeletedObjectPlaceholder.providedBy( resource ):
+			raise hexc.HTTPNotFound()
+
 		result = component.queryAdapter( resource,
 										 app_interfaces.ICollection,
 										 name=self.request.traversed[-1] )
