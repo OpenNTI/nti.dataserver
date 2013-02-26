@@ -33,6 +33,8 @@ from zope.component import eventtesting
 from zope.intid.interfaces import IIntIdRemovedEvent
 
 from nti.dataserver import users
+from nti.dataserver import interfaces as nti_interfaces
+from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, PersistentContainedExternal
@@ -385,6 +387,13 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( comment1res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogcomment+json' ) )
 		assert_that( comment1res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.forums.personalblogcomment' ) )
 		# )
+
+		# These created notifications to the author
+		events = eventtesting.getEvents( chat_interfaces.IUserNotificationEvent )
+		assert_that( events, has_length( 2 ) )
+		for evt in events:
+			assert_that( evt.targets, is_( (user_username,) ) )
+			assert_that( evt.args[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
 
 		# Both of these the other user can update
 		data['title'] = 'Changed my title'

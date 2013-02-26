@@ -830,7 +830,7 @@ class User(Principal):
 			# shared object, (object, sharedSet). This allows us to be
 			# smart about how we distribute notifications.
 			self._v_updateSet.append( (obj,obj.sharingTargets)
-									  if isinstance( obj, ShareableMixin)
+									  if nti_interfaces.IReadableShared.providedBy( obj )
 									  else obj )
 
 	def didUpdateObject( self, *objs ):

@@ -22,7 +22,7 @@ from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
+from nti.chatserver import interfaces as chat_interfaces
 
 
 # TODO: FIXME: This solves an order-of-imports issue, where
@@ -52,10 +52,7 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope import schema
-from zope.schema import interfaces as sch_interfaces
 
-import pyramid.httpexceptions  as hexc
-import transaction
 import zope.annotation.factory
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
@@ -490,3 +487,28 @@ def _PublishView(request):
 def _UnpublishView(request):
 	interface.noLongerProvides( request.context, nti_interfaces.IDefaultPublished )
 	return uncached_in_response( request.context )
+
+### Events
+## TODO: Under heavy construction
+###
+from nti.dataserver import activitystream_change
+from zope.event import notify
+
+@component.adapter( frm_interfaces.IPersonalBlogComment, lifecycleevent.IObjectAddedEvent )
+def notify_online_author_of_comment( comment, event ):
+	"""
+	When a comment is added to a blog post, notify the blog's
+	author.
+	"""
+	# TODO: The container ids probably aren't quite right here
+
+	# First, find the author of the blog entry. It will be the parent, the only
+	# user in the lineage
+	author = find_interface( comment, nti_interfaces.IUser )
+
+	# Now, construct the (artificial) change notification. Notice this is never
+	# persisted anywhere
+	change = activitystream_change.Change( nti_interfaces.SC_CREATED, comment )
+	change.creator = comment.creator
+
+	notify( chat_interfaces.DataChangedUserNotificationEvent( (author.username,), change ) )
