@@ -955,7 +955,7 @@ class GloriaMundiSitePolicyEventListener(_AdultCommunitySitePolicyEventListener)
 			if isinstance( obj, numbers.Number ):
 				logger.warn( "Collection %s in user %s has old numeric data in values", owner.friendsLists, owner )
 				continue
-			if obj.username == 'gloria-mundi' or user_interfaces.IFriendlyNamed( obj ).alias == 'gloria-mundi' or user_interfaces.IFriendlyNamed( obj ).realname == 'gloria-mundi':
+			if obj.username == 'Basel-OTC-Margin' or user_interfaces.IFriendlyNamed( obj ).alias == 'Basel-OTC-Margin' or user_interfaces.IFriendlyNamed( obj ).realname == 'Basel-OTC-Margin':
 				from nti.appserver.invitations import interfaces as invite_interfaces
 				from nti.appserver.invitations.utility import accept_invitations
 				invitations = component.getUtility(invite_interfaces.IInvitations)
