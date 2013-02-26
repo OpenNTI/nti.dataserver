@@ -14,6 +14,7 @@ from . import MessageFactory as _
 from pyramid.security import authenticated_userid
 import pyramid.httpexceptions  as hexc
 from pyramid.view import view_config
+from pyramid.request import Request
 
 from zope import interface
 from zope import component
@@ -26,6 +27,7 @@ from nti.dataserver import flagging
 from nti.dataserver import authorization as nauth
 
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.oids import to_external_ntiid_oid
 
 
 FLAG_VIEW = 'flag'
@@ -184,8 +186,25 @@ def moderation_admin_post( request ):
 				flagging.unflag_object( item, authenticated_userid( request ) )
 				interface.alsoProvides( item, IModeratorDealtWithFlag) # TODO: Apply the IDeletedObjectPlaceholder ?
 			else:
-				with updater:
-					item.creator.deleteContainedObject( item.containerId, item.id )
+				# Run the default 'DELETE' action for the complete path to this object
+				# by invoking it as a request. It this way, we get to dispatch based on the
+				# type of object automatically, so long as it has a DELETE action
+				subrequest = Request.blank( '/dataserver2/Objects/' + to_external_ntiid_oid( item ) )
+				subrequest.method = 'DELETE'
+				# Impersonate the creator of the object to get the right permissions.
+				# in this way, ACT_MODERATE automatically implies ACT_DELETE.
+				# TODO: We could also use the nti.dataserver.authentication policy?
+				subrequest.environ['REMOTE_USER'] = item.creator.username
+				subrequest.environ['repoze.who.identity'] = {'repoze.who.userid': item.creator.username}
+				try:
+					response = request.invoke_subrequest( subrequest ) # Don't use tweens, run in same site, same transaction
+				except hexc.HTTPForbidden: # What else to catch?
+					# Hmm. Not allowed to do that. Can we delete it manually?
+					logger.exception( "Failed to delete moderated item; trying again" )
+					with updater:
+						del_item = item.creator.deleteContainedObject( item.containerId, item.id )
+					if del_item is None:
+						logger.warn( "Failed to delete moderated item %s", item )
 
 	# Else, no action.
 	# Redisplay the page with a get request to avoid the "re-send this POST?" problem
