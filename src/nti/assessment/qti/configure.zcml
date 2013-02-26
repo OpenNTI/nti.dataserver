@@ -8,5 +8,12 @@
 	<ext:registerQTIFactories module=".assessments.elements" />
 	<ext:registerQTIFactories module=".feedback.elements" />
 	<ext:registerQTIFactories module=".fragments.elements" />
+	<ext:registerQTIFactories module=".interaction.elements" />
+	<ext:registerQTIFactories module=".items.elements" />
+	<ext:registerQTIFactories module=".outcome.elements" />
+	<ext:registerQTIFactories module=".preconditions.elements" />
+	<ext:registerQTIFactories module=".response.elements" />
+	<ext:registerQTIFactories module=".template.elements" />
+	<ext:registerQTIFactories module=".variables.elements" />
 	
 </configure>
