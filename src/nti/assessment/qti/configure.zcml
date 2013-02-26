@@ -6,6 +6,7 @@
 
 	<include package="." file="meta.zcml" />	
 	<ext:registerQTIFactories module=".assessments.elements" />
+	<ext:registerQTIFactories module=".content.elements" />
 	<ext:registerQTIFactories module=".feedback.elements" />
 	<ext:registerQTIFactories module=".fragments.elements" />
 	<ext:registerQTIFactories module=".interaction.elements" />
