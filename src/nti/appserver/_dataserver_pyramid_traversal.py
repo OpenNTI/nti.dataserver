@@ -18,6 +18,8 @@ from zope.location import interfaces as loc_interfaces
 import pyramid.traversal
 import pyramid.interfaces
 import pyramid.security as sec
+from pyramid.interfaces import IViewClassifier
+from pyramid.interfaces import IView
 
 from nti.ntiids import ntiids
 
@@ -278,6 +280,7 @@ class UserTraversable(_PseudoTraversableMixin):
 		except loc_interfaces.LocationError:
 			pass
 
+
 		resource = None
 		cont = self.context.getContainer( key )
 		if nti_interfaces.INamedContainer.providedBy( cont ) or nti_interfaces.IHomogeneousTypeContainer.providedBy( cont ):
@@ -290,12 +293,19 @@ class UserTraversable(_PseudoTraversableMixin):
 			# structure match the new structure's traversal
 		elif cont is not None:
 			raise loc_interfaces.LocationError( key ) # It exists, but you cannot access it at this URL
-
 		else:
+			if self.request.registry.adapters.lookup( (IViewClassifier, self.request.request_iface, interface.providedBy( self.context )),
+													  IView,
+													  name=key ):
+				# We have a specific view for this location. Therefore, do not try to pretend it
+				# is a new container.
+				raise loc_interfaces.LocationError( key )
+
 			# OK, assume a new container.
 			# TODO: This should be a LocationError as well. But it's not because
 			# of the glossary views. Note that there is a specific unnamed GET view registered
-			# for this resource to make it return a 404
+			# for this resource to make it return a 404.
+			# This complicates the logic above that has to know so many more things
 			resource = _NewContainerResource( None, self.request )
 			resource.__name__ = key
 			resource.__parent__ = self.context

@@ -71,15 +71,15 @@ REL_CREATE_ACCOUNT = "account.create"
 #: at logon ping and handshake time.
 REL_PREFLIGHT_CREATE_ACCOUNT = "account.preflight.create"
 
-
-REL_ACCOUNT_PROFILE = "account.profile"
+#: See :func:`account_profile_schema_view`
+REL_ACCOUNT_PROFILE_SCHEMA = "account.profile" # bad name for BWC
 
 #: The link relationship type that means that the user profile is in need
 #: of an update, possibly because the applicable fields have changed
 #: (e.g., when the user signs a COPPA agreement). This is one of those
 #: links that needs to be DELETEd when the action has been taken: it serves as a flag.
 #: When this link appears, the correct schema for the profile can
-#: be obtained from the :func:`account_profile_view`
+#: be obtained from the :func:`account_profile_schema_view`
 REL_ACCOUNT_PROFILE_UPGRADE = "account.profile.needs.updated"
 
 _PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
@@ -333,12 +333,12 @@ def account_preflight_view(request):
 			'ProfileSchema': ext_schema }
 
 @view_config(route_name='objects.generic.traversal',
-			 name=REL_ACCOUNT_PROFILE,
+			 name=REL_ACCOUNT_PROFILE_SCHEMA,
 			 request_method='GET',
 			 context=nti_interfaces.IUser,
 			 permission=nauth.ACT_UPDATE,
 			 renderer='rest')
-def account_profile_view(request):
+def account_profile_schema_view(request):
 	"""
 	Given an existing user, returns the schema for his profile, the
 	same as when the user was being created.

@@ -646,9 +646,12 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		return result
 
 class _RecursiveUGDView(_UGDView):
-
-	def __init__(self,request):
-		super(_RecursiveUGDView,self).__init__(request)
+	"""
+	Just like a normal :class:`._UGDView`, but recurses through all the NTIID
+	containers beneath the given NTIID. The unnamed container is always included.
+	If the :data:`.ntiids.ROOT` is given, then all NTIID containers of the user
+	are examined (the hierarchy is effectively ignored).
+	"""
 
 	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
@@ -709,9 +712,6 @@ class _UGDStreamView(_UGDView):
 	_my_objects_may_be_empty = False
 	_support_cross_user = False
 
-	def __init__(self, request ):
-		super(_UGDStreamView,self).__init__(request)
-
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
 
 class _RecursiveUGDStreamView(_RecursiveUGDView):
@@ -721,9 +721,6 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 
 	get_owned = users.User.getContainedStream
 	get_shared = None
-
-	def __init__(self,request):
-		super(_RecursiveUGDStreamView,self).__init__(request)
 
 
 	_DEFAULT_BATCH_SIZE = 100

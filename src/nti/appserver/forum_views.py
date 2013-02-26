@@ -23,12 +23,22 @@ from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
+
+
+# TODO: FIXME: This solves an order-of-imports issue, where
+# mimeType fields are only added to the classes when externalization is
+# loaded (usually with ZCML, so in practice this is not a problem,
+# but statically and in isolated unit-tests, it could be)
+from nti.dataserver.contenttypes.forums import externalization as frm_ext
+frm_ext = frm_ext
+
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
 from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
 from nti.dataserver.contenttypes.forums.post import Post
+
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import interfaces as ext_interfaces
