@@ -56,11 +56,19 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 	header = 'Content'
 	attrName = 'body'
 	cssClasses = { 'td': 'content-body' }
+	defaultValue = ()
 
 	def renderCell( self, item ):
 		content = super(NoteLikeBodyColumn,self).renderCell( item )
+		if content is self.defaultValue:
+			# TODO: These hacks are starting to get out of hand.
+			# Need to seriously investigate the zope contentprovider concepts
+			# See also feed_views.py
+			# This hack is for forum entries
+			content = getattr( getattr( item, 'headline', None ), 'body', self.defaultValue )
+
 		parts = []
-		for part in content:
+		for part in content or ():
 			if nti_interfaces.ICanvas.providedBy( part ):
 				# TODO: We can do better than this. For one, we could use adapters
 				body = ["<div class='canvas'>&lt;CANVAS OBJECT of length %s&gt;" % len(part)]
