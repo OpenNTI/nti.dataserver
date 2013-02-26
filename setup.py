@@ -130,6 +130,8 @@ setup(
 		'python-memcached >= 1.48', # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
+		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
+		# See also blist for a tree-structured list
 		'boto >= 2.8.0', # amazon
 		'brownie >= 0.5.1', # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
@@ -306,6 +308,10 @@ setup(
 		'zope.session >= 3.9.5', # 4.0.0a1 is out, should be fine
 		'zope.site >= 3.9.2', # local, persistent ZCA sites. 4.0.0a1 is out and should be fine
 		'zope.size >= 4.0.0',
+		# parser and renderers for the classic Zope "structured text" markup dialect (STX).
+		# STX is a plain text markup in which document structure is signalled primarily by identation.
+		# Pulled in by ...?
+		'zope.structuredtext >= 4.0.0',
 		'zope.tal >= 4.0.0a1',
 		'zope.tales >= 4.0.1',
 		'zope.traversing == 3.14.0', # 4.0.0a1 is out and required for zope.container 4, but see comments about it
