@@ -651,9 +651,9 @@ def CompoundModeledContentBody():
 								  description="""An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
 									of :class:`.IModeledContent` such as :class:`.ICanvas`.)
 									""",
-								  value_type=Variant( (SanitizedHTMLContentFragment(min_length=1),
-													   PlainText(min_length=1),
-													   Object(ICanvas)),
+								  value_type=Variant( (SanitizedHTMLContentFragment(min_length=1, description="HTML content that is sanitized and non-empty"),
+													   PlainText(min_length=1, description="Plain text that is sanitized and non-empty"),
+													   Object(ICanvas, description="A :class:`.ICanvas`")),
 													 title="A body part of a note",
 													 __name__='body'),
 								  min_length=1,
@@ -689,9 +689,12 @@ class Tag(PlainTextLine):
 		return super(Tag,self).constraint( value) and ' ' not in value
 
 class IUserTaggedContent(interface.Interface):
+	"""
+	Something that can contain tags.
+	"""
 
-	tags = TupleFromObject( title="Tags applied by the user",
-							value_type=Tag(min_length=1, title="A single tag", __name__='tags'),
+	tags = TupleFromObject( title="Tags applied by the user.",
+							value_type=Tag(min_length=1, title="A single tag", description=Tag.__doc__, __name__='tags'),
 							unique=True,
 							default=())
 

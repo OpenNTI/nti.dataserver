@@ -221,9 +221,11 @@ These are definitions related to content that a user can generate.
    mixin Taggable {
 	   // Although the tag collections are defined as lists of words,
 	   // in reality they may be treated as unordered sets.
-	   // Spaces in individual terms may be split. Capitilazition may
+	   // Spaces in individual terms MAY be split resulting in
+	   // multiple terms, or it MAY be forbidden. Capitalization MAY
 	   // not be preserved. These are plain text, and any HTML
-	   // will simply cause the term to be discarded
+	   // MAY simply cause the term to be discarded or it may be
+	   // stripped. (These limitations are to make #hashtags easy and familiar)
 
 
 	   // Tags that are added automatically, somehow derived from the data
@@ -305,7 +307,10 @@ These are definitions related to content that a user can generate.
    }
 
 .. note:: For a more full explanation of a Redaction object, see
-   :py:class:`~nti.dataserver.interfaces.IRedaction`
+   :py:class:`~nti.dataserver.interfaces.IRedaction`. Likewise, for
+   the interface definition of the most derived class explained above,
+   see :py:class:`~nti.dataserver.interfaces.INote` and its
+   implementation in :py:class:`~nti.dataserver.contenttypes.Note`.
 
 .. note:: For information on threading, and in particular the
    algorithm to use,  see
