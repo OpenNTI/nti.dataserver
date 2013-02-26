@@ -222,10 +222,11 @@ class ModeledContentEditRequestUtilsMixin(object):
 
 	def _check_object_exists(self, o, cr='', cid='', oid=''):
 		"""
-		If the first argument is None, raises a 404 error. The remaining arguments
-		are used as details in the message.
+		If the first argument is None or has been deleted (is marked
+		with :class:`IDeletedObjectPlaceholder`), raises a 404 error.
+		The remaining arguments are used as details in the message.
 		"""
-		if o is None:
+		if o is None or app_interfaces.IDeletedObjectPlaceholder.providedBy( o ):
 			raise hexc.HTTPNotFound( "No object %s/%s/%s" % (cr, cid,oid))
 
 

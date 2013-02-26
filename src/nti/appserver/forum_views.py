@@ -220,21 +220,14 @@ from .ugd_edit_views import UGDPutView
 from .ugd_edit_views import UGDDeleteView
 from .ugd_query_views import _UGDView as UGDQueryView
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_READ,
-			  context=frm_interfaces.IPersonalBlog,
-			  request_method='GET' )
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_READ,
-			  context=frm_interfaces.IHeadlineTopic,
-			  request_method='GET' )
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_READ,
-			  context=frm_interfaces.IPost,
-			  request_method='GET' )
+@view_config( context=frm_interfaces.IHeadlineTopic )
+@view_config( context=frm_interfaces.IPersonalBlog )
+@view_config( context=frm_interfaces.IPersonalBlogComment )
+@view_config( context=frm_interfaces.IPersonalBlogEntryPost )
+@view_defaults( route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_READ,
+				request_method='GET' )
 class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 
@@ -308,11 +301,13 @@ class ForumCheckoutAdapter(object):
 		"""
 		return self.context
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_UPDATE,
-			  context=frm_interfaces.IPost,
-			  request_method='PUT' )
+@view_config( context=frm_interfaces.IHeadlinePost )
+@view_config( context=frm_interfaces.IPersonalBlogEntryPost )
+@view_config( context=frm_interfaces.IPersonalBlogComment )
+@view_defaults( route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_UPDATE,
+				request_method='PUT' )
 class PostPutView(UGDPutView):
 	""" Editing an existing forum post """
 	# Exists entirely for registration sake
@@ -320,19 +315,41 @@ class PostPutView(UGDPutView):
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_DELETE,
-			  context=frm_interfaces.IPost,
-			  request_method='DELETE' )
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_DELETE,
 			  context=frm_interfaces.IHeadlineTopic,
 			  request_method='DELETE' )
-class PostOrForumDeleteView(UGDDeleteView):
-	""" Deleting an existing forum/post """
+class HeadlineTopicDeleteView(UGDDeleteView):
+	""" Deleting an existing forum """
 
 	def _do_delete_object( self, theObject ):
 		# Delete from enclosing container
 		del aq_base(theObject.__parent__)[theObject.__name__]
+		return theObject
+
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_DELETE,
+			  context=frm_interfaces.IPersonalBlogComment,
+			  request_method='DELETE' )
+class PostDeleteView(UGDDeleteView):
+	""" Deleting an existing blog comment.
+
+	This is somewhat unusual as we leave an object behind to mark
+	the object as deleted (in fact, we leave the original object
+	behind to preserve its timestamps and IDs) we only apply a marker and
+	clear the body.
+	"""
+
+	def _do_delete_object( self, theObject ):
+		deleting = aq_base(theObject)
+		interface.alsoProvides( deleting, app_interfaces.IDeletedObjectPlaceholder )
+
+		# TODO: Events need to fire to unindex, once we figure
+		# out what those are
+		# We are I18N as externalization time
+		deleting.title = None
+		deleting.body = None
+		deleting.tags = ()
 		return theObject
 
 from Acquisition import aq_base

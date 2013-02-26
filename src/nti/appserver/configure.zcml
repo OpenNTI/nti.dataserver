@@ -148,6 +148,8 @@
 
 	<adapter factory="._adapters.EnclosureExternalObject" />
 	<adapter factory="._adapters.BrokenExternalObject" />
+	<subscriber factory="._adapters._DeletedObjectPlaceholderDecoratorFactory"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 	<adapter factory=".pyramid_renderers.render_enclosure_factory" />
 
 	<!-- Assessment -->

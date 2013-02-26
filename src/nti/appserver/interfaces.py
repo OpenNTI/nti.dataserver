@@ -274,6 +274,15 @@ class IUncacheableInResponse(interface.Interface):
 	Marker interface for things that should not be cached.
 	"""
 
+class IDeletedObjectPlaceholder(interface.Interface):
+	"""
+	Marker interface to be applied to things that have actually
+	been deleted, but, for whatever reason, some trace object
+	has to be left behind. These will typically be rendered specially.
+	"""
+	# TODO: Might need to move this down a layer or two so it can
+	# be used in search?
+
 ###
 # Traversing into objects
 ###

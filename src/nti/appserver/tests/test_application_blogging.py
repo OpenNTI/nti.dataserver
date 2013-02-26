@@ -25,6 +25,7 @@ from hamcrest import contains_inanyorder
 from hamcrest import contains_string
 from hamcrest import has_length
 from hamcrest import has_entry
+from hamcrest import has_entries
 from nti.tests import is_empty
 from .test_application import TestApp
 
@@ -293,12 +294,13 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.delete( post_url )
 		assert_that( res.status_int, is_( 204 ) )
 
+		# When it is replaced with placeholders
 		res = testapp.get( entry_url )
-		assert_that( res.json_body, has_entry( 'PostCount', 0 ) )
-
+		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
+		# and nothing was actually deleted yet
 		del_events = eventtesting.getEvents( lifecycleevent.IObjectRemovedEvent )
-		assert_that( del_events, has_length( 1 ) )
-		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 1 ) )
+		assert_that( del_events, has_length( 0 ) )
+		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 0 ) )
 
 	@WithSharedApplicationMockDS
 	def test_user_sharing_community_can_GET_and_POST_new_comments(self):
@@ -455,6 +457,19 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		testapp2.delete( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), status=204 )
 
 		# and they are now gone
+
+		# replaced by placeholders in the contents
+		res = testapp.get( entry_contents_url )
+		assert_that( res.json_body['Items'], has_length( 2 ) )
+		assert_that( res.json_body['Items'], contains_inanyorder(
+												has_entries( 'Deleted', True,  'title', 'This object has been deleted.' ),
+												has_entries( 'Deleted', True,  'title', 'This object has been deleted.' ) ) )
+
+		# and in the metadata
 		res = testapp.get( entry_url )
-		# ... metadata
-		assert_that( res.json_body, has_entry( 'PostCount', 0 ) )
+		assert_that( res.json_body, has_entry( 'PostCount', 2 ) )
+
+		# Even though they still exist at the same place, they cannot be used in any way
+		testapp2.delete( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), status=404 )
+		testapp2.get( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), status=404 )
+		testapp2.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data, status=404 )

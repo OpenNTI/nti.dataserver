@@ -182,7 +182,7 @@ def moderation_admin_post( request ):
 				# doesn't quite work
 				item.updateFromExternalObject( {'body': [_("This item has been deleted by the moderator.")] } )
 				flagging.unflag_object( item, authenticated_userid( request ) )
-				interface.alsoProvides( item, IModeratorDealtWithFlag)
+				interface.alsoProvides( item, IModeratorDealtWithFlag) # TODO: Apply the IDeletedObjectPlaceholder ?
 			else:
 				with updater:
 					item.creator.deleteContainedObject( item.containerId, item.id )
