@@ -197,6 +197,9 @@ def moderation_admin_post( request ):
 				subrequest.environ['REMOTE_USER'] = item.creator.username
 				subrequest.environ['repoze.who.identity'] = {'repoze.who.userid': item.creator.username}
 				try:
+					# Just in case we don't actually delete this item, take it out of the queue
+					flagging.unflag_object( item, authenticated_userid( request ) )
+					interface.alsoProvides( item, IModeratorDealtWithFlag )
 					response = request.invoke_subrequest( subrequest ) # Don't use tweens, run in same site, same transaction
 				except hexc.HTTPForbidden: # What else to catch?
 					# Hmm. Not allowed to do that. Can we delete it manually?

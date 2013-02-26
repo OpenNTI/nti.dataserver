@@ -258,3 +258,81 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans( self.ds ) as conn:
 			msg_info = conn.get( msg_info._p_oid )
 			assert_that( msg_info, verifiably_provides( flagging_views.IModeratorDealtWithFlag ) )
+
+	@WithSharedApplicationMockDS
+	def test_flag_moderation_blog_entry( self ):
+		with mock_dataserver.mock_db_trans( self.ds ) as conn:
+			user = self._create_user()
+
+		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
+		entry_url = res.location
+		flag_url = self.require_link_href_with_rel( res.json_body, 'flag' )
+
+		testapp.post( flag_url ) # flag it
+
+		path = '/dataserver2/@@moderation_admin'
+		res = testapp.get( path )
+
+		assert_that( res.body, contains_string( 'My first thought' ) )
+
+		form = res.form
+		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
+		res = form.submit( 'subFormTable.buttons.delete', extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 302 ) )
+
+
+		# And its gone
+		testapp.get( entry_url, status=404 )
+
+		# and not in the mod queue
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.content_type, is_( 'text/html' ) )
+		assert_that( res.body, does_not( contains_string( 'My first thought' ) ) )
+
+	@WithSharedApplicationMockDS
+	def test_flag_moderation_blog_entry_comment( self ):
+		with mock_dataserver.mock_db_trans( self.ds ) as conn:
+			user = self._create_user()
+		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
+		entry_url = res.location
+
+		# (Same user) comments on blog by POSTing a new post
+		data['title'] = 'A comment'
+		data['body'] = ['This is a comment body']
+
+		res = testapp.post_json( entry_url, data )
+		comment_url = res.location
+		flag_url = self.require_link_href_with_rel( res.json_body, 'flag' )
+
+		testapp.post( flag_url ) # flag it
+
+		path = '/dataserver2/@@moderation_admin'
+		res = testapp.get( path )
+
+		assert_that( res.body, contains_string( data['body'][0] ) )
+
+		form = res.form
+		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
+		res = form.submit( 'subFormTable.buttons.delete', extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 302 ) )
+
+
+		# And its gone
+		testapp.get( comment_url, status=404 )
+
+		# and not in the mod queue anymore
+		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		assert_that( res.content_type, is_( 'text/html' ) )
+		assert_that( res.body, does_not( contains_string( data['body'][0] ) ) )
+		assert_that( res.form.fields, does_not( has_key( 'table-note-selected-0-selectedItems' ) ) )
