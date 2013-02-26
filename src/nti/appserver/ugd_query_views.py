@@ -222,8 +222,12 @@ def _meonly_predicate_factory( request ):
 	effectiveness of the storage cache and the amount of objects being
 	filtered out. Doing it manually lets us get accurate values for
 	ReferencedByCount and RecursiveLikeCount.
+
+	The meaning of "me" defaults to the user who created the data (request.context.user
+	or request.context, if it is a IUser).
+
 	"""
-	me = request.context.user
+	me = request.context.user if not nti_interfaces.IUser.providedBy( request.context ) else request.context # TODO: Can probably use lineage for this.
 	me_uname = me.username
 	def _filter(o):
 		try:

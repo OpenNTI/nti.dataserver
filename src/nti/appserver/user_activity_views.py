@@ -42,14 +42,21 @@ class UserActivityGetView(RecursiveUGDQueryView):
 	This view returns a collection of activity for the specified user, across
 	the entire site (similar to a RecursiveUserGeneratedData query using the Root
 	ntiid.) One difference is that this URL never returns a 404 response, even when initially
-	empty.
+	empty. Another is that the ``MeOnly`` filter is implicit, and refers not to the calling
+	user but the user who's data is being accessed.
 
 	The contents fully support the same sorting and paging parameters as
 	the UGD views. """
 
+
 	def __init__( self, request ):
 		self.request = request
 		super(UserActivityGetView,self).__init__( request, the_user=request.context, the_ntiid=ntiids.ROOT )
+
+	def _get_filter_names( self ):
+		filters = set(super(UserActivityGetView,self)._get_filter_names())
+		filters.add( 'MeOnly' )
+		return filters
 
 
 	def getObjectsForId( self, *args ):

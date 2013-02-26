@@ -39,9 +39,8 @@ def user_change_broadcaster( user, change ):
 	logger.log( loglevels.TRACE, 'Broadcasting incoming change to %s chg: %s', user.username, change.type)
 	notify( chat_interfaces.DataChangedUserNotificationEvent( (user.username,), change ) )
 
-
 class ITemporaryChangeEmailMarker(interface.Interface):
-	"Temporary marker interface, assigned during configuration to a user who wants to get change emails."
+	"Temporary marker interface, assigned using configuration to a user who wants to get change emails."
 
 @interface.implementer(ITemporaryChangeEmailMarker)
 class TemporaryChangeEmailMarker(object):
