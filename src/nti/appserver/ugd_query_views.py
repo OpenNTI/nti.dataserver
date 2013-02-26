@@ -312,6 +312,10 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 	The base view for user generated data.
 	"""
 
+	FILTER_NAMES = FILTER_NAMES
+	SORT_DIRECTION_DEFAULT = SORT_DIRECTION_DEFAULT
+	SORT_KEYS = SORT_KEYS
+
 	get_owned = users.User.getContainer
 	get_shared = users.User.getSharedContainer
 	#get_public = None
@@ -565,8 +569,8 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 		# The request keys match what z3c.table does
 		sort_on = self.request.params.get( 'sortOn', self._DEFAULT_SORT_ON )
-		sort_order = self.request.params.get( 'sortOrder', SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
-		sort_key_function = SORT_KEYS.get( sort_on, SORT_KEYS['lastModified'] )
+		sort_order = self.request.params.get( 'sortOrder', self.SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
+		sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS['lastModified'] )
 
 		# TODO: Which is faster and more efficient? The built-in filter function which allocates
 		# a new list but iterates fast, or iterating in python and removing from the existing list?
@@ -586,9 +590,9 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			_build_reference_lists( self.request, result_list )
 
 		for filter_name in filter_names:
-			if filter_name not in FILTER_NAMES:
+			if filter_name not in self.FILTER_NAMES:
 				continue
-			the_filter = FILTER_NAMES[filter_name]
+			the_filter = self.FILTER_NAMES[filter_name]
 			if isinstance( the_filter, tuple ):
 				the_filter = the_filter[0]( self.request )
 
