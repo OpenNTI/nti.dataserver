@@ -66,6 +66,6 @@ class UserActivityGetView(RecursiveUGDQueryView):
 		except HTTPNotFound:
 			# There is always activity, it just may be empty
 			result = []
-		# Add the blog
-		result.append( frm_interfaces.IPersonalBlog( self.user ) )
+		# Add the blog (possibly missing)
+		result.append( frm_interfaces.IPersonalBlog( self.user, () ) )
 		return result
