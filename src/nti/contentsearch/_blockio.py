@@ -9,10 +9,10 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import BTrees
 from errno import EINVAL
 
 from persistent import Persistent
-from persistent.list import PersistentList
 
 from nti.utils.property import alias
 
@@ -73,18 +73,18 @@ class BlockIO(object):
 
 	block_size = 1024
 	block_factory = Block
-	block_list_factory = list
+	block_storage_factory = list
 		
 	def __init__(self, block_size=None):
 		self.len = 0
 		self._v_pos = 0
-		self.block_list = self.block_list_factory()
+		self.blocks = self.block_storage_factory()
 		if block_size: self.block_size = block_size
 
 	pos = alias("_v_pos")
 	
 	def __len__(self):
-		return len(self.block_list)
+		return len(self.blocks)
 	
 	def __iter__(self):
 		return self
@@ -96,7 +96,7 @@ class BlockIO(object):
 
 	@property
 	def current_block(self):
-		return self.block_list[self.current_block_idx]
+		return self.blocks[self.current_block_idx]
 	
 	@property
 	def current_block_idx(self):
@@ -219,7 +219,10 @@ class BlockIO(object):
 				break
 			line = self.readline()
 		return lines
-
+		
+	def _pop(self):
+		self.blocks.pop()
+		
 	def truncate(self, size=None):
 		"""Truncate the file's size.
 
@@ -241,24 +244,28 @@ class BlockIO(object):
 			return False
 		
 		if size == 0:
-			blocks_to_remove = len(self.block_list)
+			blocks_to_remove = len(self.blocks)
 		else:
-			blocks_to_remove = len(self.block_list) - 1 - self.current_block_idx
+			blocks_to_remove = len(self.blocks) - 1 - self.current_block_idx
 			
 		for _ in xrange(blocks_to_remove):
-			self.block_list.pop()
+			self._pop()
 			
-		if self.block_list:
+		if self.blocks:
 			offset = self.current_block_offset
 			self.current_block.truncate(offset)
 		
 		self.len = size
 		return True
 
+	def _add(self, block):
+		self.blocks.append(block)
+		
 	def _allocate(self, max_bytes):
 		blocks = (max_bytes / self.block_size) + 1
 		for _ in xrange(blocks):
-			self.block_list.append(self.block_factory(self.block_size))
+			block = self.block_factory(self.block_size)
+			self._add(block)
 		
 	def write(self, s):
 		if not s: return
@@ -267,13 +274,13 @@ class BlockIO(object):
 		spos = self.pos
 		slen = self.len
 		if spos > slen: # grow the file
-			lboundary = len(self.block_list) * self.block_size
+			lboundary = len(self.blocks) * self.block_size
 			if spos > lboundary:
 				self._allocate(spos-slen)
 			slen = spos
 			
 		if spos+ls > slen:
-			if not self.block_list: # no blocks
+			if not self.blocks: # no blocks
 				self._allocate(ls)
 			else:
 				bidx = slen / self.block_size
@@ -309,12 +316,15 @@ class BlockIO(object):
 	def flush(self):
 		pass
 
+	def values(self):
+		return iter(self.blocks)
+	
 	def getvalue(self):
 		"""
 		Retrieve the entire contents of the "file"
 		"""
 		result = bytearray()
-		for b in self.block_list:
+		for b in self.values():
 			result.extend(b.read())
 		return result
 
@@ -328,15 +338,25 @@ class PesistentBlock(Persistent, Block):
 class PesistentBlockIO(Persistent, BlockIO):
 	
 	block_factory = PesistentBlock
-	block_list_factory = PersistentList
+	block_storage_factory = BTrees.family64.IO.BTree
+		
+	def _pop(self):
+		self.blocks.pop(self.blocks.maxKey())
+		
+	def _add(self, block):
+		key = 0 if not self.blocks else self.blocks.maxKey() + 1
+		self.blocks[key] = block
+		
+	def values(self):
+		return self.blocks.values()
 	
 	def truncate(self, size=None):
 		if super(PesistentBlockIO, self).truncate(size):
 			self._p_changed = 1
 		
 	def write(self, s):
+		slen = self.len
 		result = super(PesistentBlockIO, self).write(s)
-		if result: self._p_changed = 1
+		if slen != self.len:
+			self._p_changed = 1
 		return result
-
-
