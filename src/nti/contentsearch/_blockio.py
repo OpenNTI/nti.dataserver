@@ -84,7 +84,8 @@ class BlockIO(object):
 	pos = alias("_v_pos")
 	
 	def __len__(self):
-		return len(self.blocks)
+		return self.len
+	size = __len__
 	
 	def __iter__(self):
 		return self
@@ -131,9 +132,6 @@ class BlockIO(object):
 		elif mode == 2:
 			pos += self.len
 		self.pos = max(0, pos)
-
-	def size(self):
-		return self.len
 	
 	def tell(self):
 		return self.pos
@@ -331,16 +329,16 @@ class BlockIO(object):
 			result.extend(b.read())
 		return result
 
-class PesistentBlock(Persistent, Block):
+class PersistentBlock(Persistent, Block):
 	
 	def write(self, s, pos=None):
-		result = super(PesistentBlock, self).write(s, pos)
+		result = super(PersistentBlock, self).write(s, pos)
 		if result: self._p_changed = 1
 		return result
 
-class PesistentBlockIO(Persistent, BlockIO):
+class PersistentBlockIO(Persistent, BlockIO):
 	
-	block_factory = PesistentBlock
+	block_factory = PersistentBlock
 	block_storage_factory = BTrees.family64.IO.BTree
 		
 	def _pop(self):
@@ -354,12 +352,12 @@ class PesistentBlockIO(Persistent, BlockIO):
 		return self.blocks.values()
 	
 	def truncate(self, size=None):
-		if super(PesistentBlockIO, self).truncate(size):
+		if super(PersistentBlockIO, self).truncate(size):
 			self._p_changed = 1
 		
 	def write(self, s):
 		slen = self.len
-		result = super(PesistentBlockIO, self).write(s)
+		result = super(PersistentBlockIO, self).write(s)
 		if slen != self.len:
 			self._p_changed = 1
 		return result
