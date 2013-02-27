@@ -57,6 +57,11 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( blog_entry, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Blog' ) )
 		assert_that( blog_entry, has_entry( 'accepts', has_length( 2 ) ) )
 
+		# Make sure we cannot post these things to the Pages collection
+		[pages_entry] = [x for x in collections if x['Title'] == 'Pages']
+		for blog_accept in blog_entry['accepts']:
+			assert_that( pages_entry['accepts'], does_not( has_item( blog_accept ) ) )
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog( self ):

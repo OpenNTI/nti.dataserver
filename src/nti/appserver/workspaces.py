@@ -22,6 +22,8 @@ from zope.location import interfaces as loc_interfaces
 from zope.mimetype import interfaces as mime_interfaces
 from zope.schema import interfaces as sch_interfaces
 
+from zope.container.constraints import IContainerTypesConstraint
+
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as content_interfaces
@@ -674,8 +676,21 @@ class _UserPagesCollection(object):
 		# We probably need to be more picky, too. Some things like
 		# devices and friendslists are sneaking in here where they
 		# don't belong...even though they can be posted here (?)
+		# The fix is to add the right constraints
 		vocab = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( self._user )
-		return (term.token for term in vocab)
+		for term in vocab:
+			factory = term.value
+			implementing = factory.getInterfaces()
+			parent = implementing.get( '__parent__')
+			if parent and getattr( parent, 'constraint', None ) and IContainerTypesConstraint.providedBy( parent.constraint ):
+				parent_types = parent.constraint.types
+				# Hmm. Ok, right now we don't have constraints correct everywhere.
+				# But when we do have constraints, they are not a general object
+				# type and cant be posted here.
+				if parent_types:
+					continue
+			else:
+				yield term.token
 
 @interface.implementer(app_interfaces.IContainerCollection)
 @component.adapter(app_interfaces.IUserWorkspace)
