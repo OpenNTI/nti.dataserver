@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Whoosh user search adapter.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -19,7 +23,7 @@ from zopyx.txng3.core.config import DEFAULT_ADDITIONAL_CHARS
 
 from repoze.catalog.indexes.common import CatalogIndex
 
-from nti.contentsearch import interfaces as search_interfaces
+from . import interfaces as search_interfaces
 		
 class _Proxy(object):
 	def __init__(self, fields, data):

@@ -13,14 +13,13 @@ from zope import interface
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch import interfaces as search_interfaces
+from ._search_hits import get_search_hit
+from . import interfaces as search_interfaces
+from ._search_highlights import HighlightInfo
+from ._search_highlights import word_fragments_highlight
 
-from nti.contentsearch._search_hits import get_search_hit
-from nti.contentsearch._search_highlights import HighlightInfo
-from nti.contentsearch._search_highlights import word_fragments_highlight
-
-from nti.contentsearch.common import (	LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS,
-										SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS)
+from .common import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS,
+					 SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS)
 
 # highlight decorators
 

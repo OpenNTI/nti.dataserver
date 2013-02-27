@@ -12,8 +12,8 @@ __docformat__ = "restructuredtext en"
 import zope.intid
 from zope import component
 
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._indexmanager import IndexManager
+from ._indexmanager import IndexManager
+from . import interfaces as search_interfaces
 
 class _RedisIndexManager(IndexManager):
 

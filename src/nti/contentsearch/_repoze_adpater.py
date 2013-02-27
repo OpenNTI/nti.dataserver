@@ -19,22 +19,22 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentprocessing import rank_words
 
-from nti.contentsearch.common import is_all_query
-from nti.contentsearch.common import get_type_name
-from nti.contentsearch.common import sort_search_types
-from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch._repoze_query import parse_query
+from .common import is_all_query
+from .common import get_type_name
+from .common import sort_search_types
+from ._search_query import QueryObject
+from ._repoze_query import parse_query
 
-from nti.contentsearch.common import (content_, ngrams_)
-from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch._repoze_index import create_catalog
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.textindexng3 import CatalogTextIndexNG3
-from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
-from nti.contentsearch._search_results import empty_search_results
-from nti.contentsearch._search_results import empty_suggest_results
-from nti.contentsearch._search_indexmanager import _SearchEntityIndexManager
-from nti.contentsearch._search_results import empty_suggest_and_search_results
+from .common import (content_, ngrams_)
+from .common import normalize_type_name
+from ._repoze_index import create_catalog
+from . import interfaces as search_interfaces
+from .textindexng3 import CatalogTextIndexNG3
+from ._search_highlights import WORD_HIGHLIGHT
+from ._search_results import empty_search_results
+from ._search_results import empty_suggest_results
+from ._search_indexmanager import _SearchEntityIndexManager
+from ._search_results import empty_suggest_and_search_results
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer( search_interfaces.IRepozeEntityIndexManager)

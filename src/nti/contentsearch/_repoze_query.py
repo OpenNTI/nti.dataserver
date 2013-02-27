@@ -13,8 +13,8 @@ from zopyx.txng3.core.parsers.english import EnglishQueryParser
 from repoze.catalog.query import Contains as IndexContains
 from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
-from nti.contentsearch.common import is_all_query
-from nti.contentsearch import interfaces as search_interfaces
+from .common import is_all_query
+from . import interfaces as search_interfaces
 
 logger = __import__('logging').getLogger(__name__)
 
