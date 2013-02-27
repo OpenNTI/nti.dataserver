@@ -5,6 +5,7 @@ Interfaces for working with content fragments.
 $Id$
 """
 from __future__ import print_function, unicode_literals
+logger = __import__('logging').getLogger(__name__)
 
 import zope.contenttype
 
@@ -53,7 +54,52 @@ class UnicodeContentFragment(unicode):
 	Subclasses should override the :meth:`__add__` method
 	to return objects that implement the appropriate (most derived, generally)
 	interface.
+
+	This object *DOES NOT* add a dictionary to the :class:`unicode` type.
+	In particular, it should not be weak referenced.
 	"""
+
+	__slots__ = () # actually meaningless, but we simulate this with __getattr__ and __setattr__
+
+	# We do need to allow the things used by zope.interface/zope.component
+	_ZCA_KEYS = ('__provides__',)
+
+	def __getattr( self, name ):
+		raise AttributeError( name )
+
+	def __setattr__( self, name, value ):
+		# We do allow the attributes used by the ZCA
+		if name in self._ZCA_KEYS:
+			unicode.__setattr__( self, name, value )
+			return
+		raise AttributeError( name )
+
+	def __getattribute__( self, name ):
+		if name in ('__dict__', '__weakref__'): # Though this does not actually prevent creating a weak ref
+			raise AttributeError( name )
+		return unicode.__getattribute__( self, name )
+
+	def __setstate__( self, state ):
+		# If we had any state saved due to bad pickles in the past
+		# ignore it. Do support the ZCA attributes
+		if state:
+			for k in self._ZCA_KEYS:
+				v = state.pop( k, self )
+				if v is not self:
+					unicode.__setattr__( self, k, v )
+			# Anything left is bad and not supported
+			if state:
+				logger.warn( "Ignoring bad state for %s: %s", self, state )
+
+
+	def __getstate__( self ):
+		# Support just the ZCA attributes
+		state = unicode.__getattribute__( self, '__dict__' )
+		if state:
+			state = {k: v for k, v in state.items() if k in self._ZCA_KEYS}
+			return state
+
+		return ()
 
 	def __rmul__( self, times ):
 		result = unicode.__rmul__( self, times )

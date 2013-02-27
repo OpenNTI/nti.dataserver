@@ -57,16 +57,19 @@ import zope.annotation.factory
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
 @component.adapter(nti_interfaces.IUser)
-def _DefaultUserForumFactory(  ):
-	forum = PersonalBlog()
-	return forum
-
-@interface.implementer(frm_interfaces.IPersonalBlog)
-@component.adapter(nti_interfaces.IUser)
 def DefaultUserForumFactory(user):
 	# The right key is critical. 'Blog' is the pretty external name (see dataserver_pyramid_traversal)
-	forum = zope.annotation.factory(_DefaultUserForumFactory, key='Blog')(user)
-	if not forum._p_mtime:
+	# We're avoiding the magic of the annotation factory because we need to know when it is created
+	#forum = zope.annotation.factory(_DefaultUserForumFactory, key='Blog')(user)
+	annotations = zope.annotation.interfaces.IAnnotations( user )
+	forum = annotations.get( 'Blog' )
+	if forum is None:
+		forum = PersonalBlog()
+		forum.__parent__ = user
+		forum.__name__ = 'Blog'
+		# TODO: Events?
+		annotations['Blog'] = forum
+
 		jar = IConnection( user, None )
 		if jar:
 			jar.add( forum ) # ensure we store with the user
