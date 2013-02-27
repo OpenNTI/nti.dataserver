@@ -132,6 +132,9 @@ class BlockIO(object):
 			pos += self.len
 		self.pos = max(0, pos)
 
+	def size(self):
+		return self.len
+	
 	def tell(self):
 		return self.pos
 

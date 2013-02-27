@@ -9,17 +9,26 @@ __docformat__ = "restructuredtext en"
 
 import os
 import time
+import BTrees
 import random
 import binascii
 
+from zope import component
 from zope import interface
 
 from whoosh import index
 from whoosh.store import LockError
 from whoosh.index import _DEF_INDEX_NAME
+from whoosh.filedb.filestore import open_index
+from whoosh.filedb.structfile import StructFile
+from whoosh.filedb.filestore import create_index
+from whoosh.filedb.filestore import Storage as WhooshStorage
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
-from nti.contentsearch import interfaces as search_interfaces
+from nti.dataserver import interfaces as nti_interfaces
+
+from ._blockio import PesistentBlockIO
+from . import interfaces as search_interfaces
 
 def oid_to_path(oid, max_bytes=3):
 	"""
@@ -213,3 +222,67 @@ def _create_default_whoosh_storage():
 	if os.getenv('DATASERVER_DIR', None):
 		return UserDirectoryStorage()
 	return None
+
+
+class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage):
+	
+	folder = ''
+	supports_mmap = False
+
+	def __init__(self, *args):
+		BTrees.OOBTree.OOBTree.__init__( self, *args )
+
+	def create_index(self, schema, indexname=_DEF_INDEX_NAME):
+		return create_index(self, schema, indexname)
+
+	def open_index(self, indexname=_DEF_INDEX_NAME, schema=None):
+		return open_index(self, schema, indexname)
+
+	def list(self):
+		return list(self.keys())
+
+	def clean(self):
+		self.clear()
+
+	def total_size(self):
+		return sum(self.file_length(f) for f in self.list())
+
+	def file_exists(self, name):
+		return name in self
+
+	def file_length(self, name):
+		if name not in self:
+			raise NameError(name)
+		return self[name].size()
+
+	def file_modified(self, name):
+		return -1
+
+	def delete_file(self, name):
+		if name not in self:
+			raise NameError(name)
+		del self[name]
+
+	def rename_file(self, name, newname, safe=False):
+		if name not in self:
+			raise NameError(name)
+		if safe and newname in self:
+			raise NameError("File %r exists" % newname)
+
+		content = self[name]
+		del self[name]
+		self[newname] = content
+
+	def create_file(self, name, **kwargs):
+		f = StructFile(PesistentBlockIO(), name=name)
+		self[name] = f
+		return f
+
+	def open_file(self, name, *args, **kwargs):
+		if name not in self:
+			raise NameError(name)
+		return StructFile(self[name], name=name, *args, **kwargs)
+
+	def lock(self, name):
+		redis = component.getUtility(nti_interfaces.IRedisClient)
+		self.locks[name] = redis.lock(timeout=60, sleep=1)

@@ -11,6 +11,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import threading
+
 from zope import interface
 import zope.testing.cleanup
 
@@ -71,3 +73,9 @@ if not hasattr(InMemoryMockRedis, 'connection_pool' ):
 		def disconnect(self): pass
 
 	InMemoryMockRedis.connection_pool = property(lambda s: Pool())
+
+# Pretend to have a lock
+if not hasattr( InMemoryMockRedis, 'lock' ):
+	def _lock(self, *args, **kwargs):
+		return threading.Lock()
+	InMemoryMockRedis.lock = _lock
