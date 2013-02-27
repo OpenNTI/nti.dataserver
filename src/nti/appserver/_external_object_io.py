@@ -11,12 +11,16 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from . import MessageFactory as _
+
 import collections
 import sys
 import simplejson
 
 from zope import component
 from zope import interface
+from zope.container.interfaces import InvalidContainerType
+from zope.container.interfaces import InvalidItemType
 import zope.schema.interfaces
 from zope.i18n import translate
 from z3c.password import interfaces as pwd_interfaces
@@ -130,9 +134,10 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		raise ex, None, tb
 
 def handle_possible_validation_error( request, e ):
+	if request is None:
+		request = get_current_request()
+
 	if isinstance( e, zope.schema.interfaces.ValidationError ):
-		if request is None:
-			request = get_current_request()
 		if request is None:
 			_no_request_validation_error()
 		else:
@@ -142,6 +147,17 @@ def handle_possible_validation_error( request, e ):
 		# That's bad. We probably want this to come up as a 500
 		# so we log it and deal with it
 		raise
+	elif isinstance( e, (InvalidContainerType,InvalidItemType) ):
+		if request is None:
+			_no_request_validation_error()
+
+		if getattr( e, 'field', None ) is None:
+			e.field = 'ContainerId'
+		#if getattr( e, 'value', None ) is None and len(e.args) == 2:
+		#	e.value = str(e.args[1])
+		if getattr( e, 'i18n_message', None ) is None:
+			e.i18n_message = _("You cannot store that type of object here.")
+		handle_validation_error( request, e )
 	elif isinstance( e, (ValueError,interface.Invalid,TypeError,KeyError)): # pragma: no cover
 		# These are all 'validation' errors. Raise them as unprocessable entities
 		# interface.Invalid, in particular, is the root class of zope.schema.ValidationError
