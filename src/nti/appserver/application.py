@@ -546,6 +546,10 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
 							 renderer='rest', context='nti.appserver.interfaces.IPagesResource',
 							 permission=nauth.ACT_CREATE, request_method='POST' )
+	# XXX: FIXME: This is quite ugly. The GenericGetView relies on getting the (undocumented)
+	# 'resource' from the PagesResource and turning it into a ICollection, which is what
+	# we want to return (from the users workspace) for this URL. This relies on the default ICollection
+	# adapter for the user.
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest', context='nti.appserver.interfaces.IPagesResource',
 							 permission=nauth.ACT_READ, request_method='GET' )

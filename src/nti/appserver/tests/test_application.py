@@ -548,7 +548,7 @@ class TestApplication(SharedApplicationTestBase):
 		# The pages collection should have complete URLs
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages'
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
-		body = json.loads( res.body )
+		body = res.json_body
 		links = body['Collection']['Links']
 		assert_that( links, has_item( has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) ) )
 		assert_that( body, has_entry( 'Items', has_length( 2 ) ) )

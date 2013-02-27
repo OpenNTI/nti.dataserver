@@ -1,63 +1,77 @@
 <!-- -*- mode: nxml -*- -->
 <configure xmlns="http://namespaces.zope.org/zope"
-	   xmlns:i18n="http://namespaces.zope.org/i18n"
-	   xmlns:zcml="http://namespaces.zope.org/zcml">
-    <include package="zope.component" />
+		   xmlns:i18n="http://namespaces.zope.org/i18n"
+		   xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
 
-    <adapter factory=".workspaces.ContainerEnumerationWorkspace" />
+	<adapter factory=".workspaces.ContainerEnumerationWorkspace" />
 
-    <adapter factory=".workspaces._UserPagesCollection" name='Pages'/>
-    <!-- The pages adapter is also the default -->
-    <adapter factory=".workspaces._UserPagesCollection" />
-    <adapter factory=".workspaces._UserEnrolledClassSectionsCollection"
-	     name='EnrolledClassSections'/>
+	<!--
+		The user workspace builds its collections through a subscriber list.
+	-->
+	<subscriber factory=".workspaces._UserEnrolledClassSectionsCollection"
+				provides=".interfaces.ICollection"
+				for=".interfaces.IUserWorkspace" />
+	<subscriber factory=".workspaces._UserPagesCollection"
+				provides=".interfaces.ICollection"
+				for=".interfaces.IUserWorkspace" />
+	<!-- One of these collections is also visible as a named adapter for convenience -->
+	<adapter factory=".workspaces._UserEnrolledClassSectionsCollectionFactory"
+			 name='EnrolledClassSections'
+			 for="nti.dataserver.interfaces.IUser" />
+	<!--
+	One of them is the default ICollection adapter. See application.py for why this is
+	wrong.
+	-->
+	<adapter factory=".workspaces._UserPagesCollectionFactory"
+			 for="nti.dataserver.interfaces.IUser" />
 
-    <adapter factory=".workspaces._ProviderCollection" />
-    <adapter factory=".workspaces.HomogeneousTypedContainerCollection" />
-    <!--
+	<adapter factory=".workspaces._ProviderCollection" />
+	<adapter factory=".workspaces.HomogeneousTypedContainerCollection" />
+	<!--
 	As it stands now, returning FriendsLists cannot be cached,
 	because they include dynamic presence information
-    -->
-    <adapter factory=".workspaces.FriendsListContainerCollection"
-	     for="nti.dataserver.interfaces.IFriendsListContainer"
-	     provides=".interfaces.IContainerCollection" />
+	-->
+	<adapter factory=".workspaces.FriendsListContainerCollection"
+			 for="nti.dataserver.interfaces.IFriendsListContainer"
+			 provides=".interfaces.IContainerCollection" />
 
-    <adapter factory=".workspaces.LibraryWorkspace" />
-    <adapter factory=".workspaces.LibraryCollection" />
-    <adapter factory=".workspaces.WorkspaceExternalizer" />
-    <adapter factory=".workspaces.UserService"
-	     provides='.interfaces.IUserService'/>
+	<adapter factory=".workspaces.LibraryWorkspace" />
+	<adapter factory=".workspaces.LibraryCollection" />
+	<adapter factory=".workspaces.WorkspaceExternalizer" />
+	<adapter factory=".workspaces.UserService"
+			 provides='.interfaces.IUserService'/>
 
-    <!--
+	<!--
 	 The UserService queries to find all the workspaces the user
 	 should have.
-    -->
-    <subscriber factory=".workspaces._user_workspace"
-		provides=".interfaces.IWorkspace" />
-    <subscriber factory=".workspaces._global_workspace"
-		provides=".interfaces.IWorkspace" />
-    <subscriber factory=".workspaces._library_workspace"
-		provides=".interfaces.IWorkspace" />
-    <subscriber factory=".workspaces._providers_workspace"
-		provides=".interfaces.IWorkspace" />
+	-->
+	<subscriber factory=".workspaces._user_workspace"
+				provides=".interfaces.IWorkspace" />
+	<subscriber factory=".workspaces._global_workspace"
+				provides=".interfaces.IWorkspace" />
+	<subscriber factory=".workspaces._library_workspace"
+				provides=".interfaces.IWorkspace" />
+	<subscriber factory=".workspaces._providers_workspace"
+				provides=".interfaces.IWorkspace" />
 
-    <adapter factory=".workspaces.ServiceExternalizer" />
-    <adapter factory=".workspaces.UserServiceExternalizer"
-	     for=".interfaces.IUserService" />
-    <adapter factory=".workspaces._NTIIDEntryExternalizer" />
-    <subscriber factory=".workspaces.ContentUnitInfoHrefDecorator"
-		provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
+	<adapter factory=".workspaces.ServiceExternalizer" />
+	<adapter factory=".workspaces.UserServiceExternalizer"
+			 for=".interfaces.IUserService" />
+	<adapter factory=".workspaces._NTIIDEntryExternalizer" />
+	<subscriber factory=".workspaces.ContentUnitInfoHrefDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
 
 
-    <adapter factory=".workspaces.CollectionSummaryExternalizer" />
-    <adapter factory=".workspaces.CollectionSummaryExternalizer"
-	     name="summary"/>
-    <adapter factory=".workspaces.ContainerCollectionDetailExternalizer"
-	     name="detail"/>
-    <adapter factory=".workspaces.LibraryCollectionDetailExternalizer"
-	     name="detail" />
-    <adapter factory=".workspaces.LibraryCollectionDetailExternalizer" />
-    <adapter factory=".workspaces.ContainerCollectionDetailExternalizer" />
-    <adapter factory=".workspaces.CollectionContentTypeAware" />
+	<adapter factory=".workspaces.CollectionSummaryExternalizer" />
+	<adapter factory=".workspaces.CollectionSummaryExternalizer"
+			 name="summary"/>
+	<adapter factory=".workspaces.ContainerCollectionDetailExternalizer"
+			 name="detail"/>
+	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer"
+			 name="detail" />
+	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer" />
+	<adapter factory=".workspaces.ContainerCollectionDetailExternalizer" />
+	<adapter factory=".workspaces.CollectionContentTypeAware" />
 
 </configure>

@@ -481,7 +481,7 @@ def _create_search_links( parent ):
 		interface.alsoProvides( lnk, loc_interfaces.ILocation )
 	return result
 
-@interface.implementer(app_interfaces.IWorkspace)
+@interface.implementer(app_interfaces.IUserWorkspace)
 @component.adapter(users.User)
 class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	"""
@@ -490,6 +490,8 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	"""
 
 	_user = alias('_container')
+	user = alias('_container')
+	context = alias('_container')
 
 	def __init__( self, user ):
 		super(UserEnumerationWorkspace,self).__init__( user )
@@ -497,9 +499,10 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
 	@property
 	def pages_collection(self):
-		pages = app_interfaces.ICollection( self._user )
-		pages.__parent__ = self
-		return pages
+		# TODO: Why is this here?
+		for p in self.collections:
+			if p.__name__ == 'Pages':
+				return p
 
 	@property
 	def links(self):
@@ -508,13 +511,8 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	@property
 	def collections(self):
 		result = list(super(UserEnumerationWorkspace,self).collections)
-		result.append( self.pages_collection )
+		result.extend( component.subscribers( (self,), app_interfaces.ICollection ) )
 
-		classes = component.getAdapter( self._user,
-										app_interfaces.ICollection,
-										name=_UserEnrolledClassSectionsCollection.name )
-		classes.__parent__ = self
-		result.append( classes )
 		return result
 
 @interface.implementer(app_interfaces.IWorkspace)
@@ -626,7 +624,7 @@ class _RootNTIIDEntry(_NTIIDEntry):
 		super(_RootNTIIDEntry,self).__init__( parent, ntiids.ROOT )
 
 @interface.implementer(app_interfaces.IContainerCollection)
-@component.adapter(nti_interfaces.IUser)
+@component.adapter(app_interfaces.IUserWorkspace)
 class _UserPagesCollection(object):
 	"""
 	Turns a User into a ICollection of data for their pages (individual containers).
@@ -636,8 +634,14 @@ class _UserPagesCollection(object):
 	__name__ = name
 	__parent__ = None
 
-	def __init__( self, user ):
-		self._user = user
+	def __init__( self, user_workspace ):
+		self.__parent__ = user_workspace
+
+	@property
+	def _user( self ):
+		# FIXME: See GenericGetView. This is a workaround to it
+		# reparenting us.
+		return getattr( self.__parent__, 'user', self.__parent__ )
 
 	@property
 	def links(self):
@@ -674,10 +678,10 @@ class _UserPagesCollection(object):
 		return (term.token for term in vocab)
 
 @interface.implementer(app_interfaces.IContainerCollection)
-@component.adapter(nti_interfaces.IUser)
+@component.adapter(app_interfaces.IUserWorkspace)
 class _UserEnrolledClassSectionsCollection(object):
 	"""
-	Turns a User into an ICollection of data about the individual classes
+	Turns a UserWorkspace into an ICollection of data about the individual classes
 	they are enrolled in.
 	"""
 
@@ -687,10 +691,12 @@ class _UserEnrolledClassSectionsCollection(object):
 	__parent__ = None
 	accepts = ()
 
-	def __init__( self, user ):
-		self._user = user
-		self.__parent__ = user
+	def __init__( self, user_workspace ):
+		self.__parent__ = user_workspace
 
+	@property
+	def _user(self):
+		return self.__parent__.user
 
 	@property
 	def container(self):
@@ -710,6 +716,19 @@ class _UserEnrolledClassSectionsCollection(object):
 						result.append( section )
 
 		return result
+
+@interface.implementer(app_interfaces.IContainerCollection)
+@component.adapter(nti_interfaces.IUser)
+def _UserEnrolledClassSectionsCollectionFactory( user ):
+	"Used as a shortcut from the user to the enrolled class sections. Deprecated."
+	return _UserEnrolledClassSectionsCollection( UserEnumerationWorkspace( user ) )
+
+@interface.implementer(app_interfaces.IContainerCollection)
+@component.adapter(nti_interfaces.IUser)
+def _UserPagesCollectionFactory( user ):
+	"Used as a shortcut from the user to the pages class sections. Deprecated."
+	return _UserPagesCollection( UserEnumerationWorkspace( user ) )
+
 
 @interface.implementer(app_interfaces.ICollection)
 @component.adapter(nti_interfaces.IProviderOrganization)
@@ -813,7 +832,7 @@ class UserService(object):
 		facilitates giving completely different workspaces to different sites (for example,
 		transaction history only if the store is enabled for a site).
 		"""
-		return [workspace for workspace in component.subscribers( [self], app_interfaces.IWorkspace )]
+		return [workspace for workspace in component.subscribers( (self,), app_interfaces.IWorkspace )]
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(app_interfaces.IService)

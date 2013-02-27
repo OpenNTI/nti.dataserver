@@ -139,8 +139,8 @@ class TestUserEnumerationWorkspace(unittest.TestCase,tests.TestBaseMixin):
 		# Expecting the pages collection at least
 		assert_that( uew.collections, has_length( greater_than_or_equal_to( 1 ) ) )
 		# which in turn has one container
-		assert_that( uew.collections[0].container, has_length( 1 ) )
-		root = uew.collections[0].container[0]
+		assert_that( uew.pages_collection.container, has_length( 1 ) )
+		root = uew.pages_collection.container[0]
 		ext_obj = to_external_object( root )
 		__traceback_info__ = ext_obj
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
@@ -165,8 +165,8 @@ class TestUserEnumerationWorkspace(unittest.TestCase,tests.TestBaseMixin):
 		# Expecting pages collection, devices, friends lists
 		assert_that( uew.collections, has_length( greater_than_or_equal_to( 3 ) ) )
 		# which in turn has two containers, the root and the shared
-		assert_that( uew.collections[2].container, has_length( 2 ) )
-		root = uew.collections[2].container[0]
+		assert_that( uew.pages_collection.container, has_length( 2 ) )
+		root = uew.pages_collection.container[0]
 		ext_obj = to_external_object( root )
 		__traceback_info__ = ext_obj
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
@@ -176,7 +176,7 @@ class TestUserEnumerationWorkspace(unittest.TestCase,tests.TestBaseMixin):
 		assert_that( ext_obj['Links'][1], has_entry( 'rel', 'RecursiveStream' ) )
 
 
-		shared = uew.collections[2].container[1]
+		shared = uew.pages_collection.container[1]
 		ext_obj = to_external_object( shared )
 		assert_that( ext_obj, has_entry( 'ID', PersistentContained.containerId ) )
 		#['UserGeneratedData', 'RecursiveUserGeneratedData', 'Stream', 'RecursiveStream', 'UserGeneratedDataAndRecursiveStream', 'Glossary']
@@ -247,8 +247,8 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 		assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', 'Pages' ),
 																	has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Pages' ) ) ) ) )
 		assert_that( user_ws, has_entry( 'Items', has_item( has_entry( 'Links', has_item( has_entry('Class', 'Link')) ) ) ) )
-		assert_that( user_ws['Items'][2]['Links'][0],
-					 has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) )
+		assert_that( user_ws['Items'], has_item( has_entry( 'Links', has_item(
+			has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) ) ) ) )
 
 		# And a class
 		assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', 'EnrolledClassSections' ),
@@ -262,25 +262,28 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 																 # Because there is no authentication policy in use, we should be able to write to it
 																 'Items', has_item( has_entry( 'accepts', has_item( 'application/vnd.nextthought.classinfo' ) ) ) ) ) )
 
+	@mock_dataserver.WithMockDSTrans
 	def test_user_pages_collection_accepts_only_external_types(self):
 		"A user's Pages collection only claims to accept things that are externally creatable."
 		# We prove this via a negative, so unfortunately this is not such
 		# a great test
-
-		assert_that( 'application/vnd.nextthought.transcriptsummary', is_not( is_in( list(UserPagesCollection(None).accepts) ) ) )
-		assert_that( 'application/vnd.nextthought.canvasurlshape', is_in( list(UserPagesCollection(None).accepts) ) )
-		assert_that( 'application/vnd.nextthought.bookmark', is_in( list(UserPagesCollection(None).accepts) ) )
+		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
+		ws = UEW(user)
+		assert_that( 'application/vnd.nextthought.transcriptsummary', is_not( is_in( list(UserPagesCollection(ws).accepts) ) ) )
+		assert_that( 'application/vnd.nextthought.canvasurlshape', is_in( list(UserPagesCollection(ws).accepts) ) )
+		assert_that( 'application/vnd.nextthought.bookmark', is_in( list(UserPagesCollection(ws).accepts) ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_user_pages_collection_restricted(self):
 		"A set of restrictions apply by default to what can be created"
 
 		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
-		assert_that( 'application/vnd.nextthought.canvasurlshape', is_in( list(UserPagesCollection(user).accepts) ) )
+		ws = UEW(user)
+		assert_that( 'application/vnd.nextthought.canvasurlshape', is_in( list(UserPagesCollection(ws).accepts) ) )
 
 		# Making it ICoppaUser cuts that out
 		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
-		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( list(UserPagesCollection(user).accepts) ) ) )
+		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( list(UserPagesCollection(ws).accepts) ) ) )
 
 
 
@@ -300,7 +303,7 @@ class TestUserClassesCollection(unittest.TestCase,tests.TestBaseMixin):
 
 		assert_that( clazz.__parent__, is_not( none() ) )
 
-		ext_object = toExternalObject( _UserClassesCollection( user ) )
+		ext_object = toExternalObject( _UserClassesCollection( UEW(user) ) )
 		assert_that( ext_object, has_entry( 'Title', 'EnrolledClassSections' ) )
 		#assert_that( ext_object, has_entry( 'Items',
 		#									has_item( has_entry( 'href',
