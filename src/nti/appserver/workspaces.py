@@ -865,8 +865,6 @@ class ServiceExternalizer(object):
 		result['Items'] = [toExternalObject(ws) for ws in self.context.workspaces]
 		return result
 
-from nti.appserver import site_policies
-
 @component.adapter(app_interfaces.IUserService)
 class UserServiceExternalizer(ServiceExternalizer):
 
@@ -880,10 +878,12 @@ class UserServiceExternalizer(ServiceExternalizer):
 							 'nti.platform.p2p.sharing', # Can the user access UGD sharing features?
 							 'nti.platform.p2p.friendslists', # Can the user create new FriendsLists? (Enforced by the vocabulary)
 							 'nti.platform.p2p.dynamicfriendslists', # Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)
-							 'nti.platform.customization.avatar_upload') ) # Can the user upload custom avatar pictures?
-		# TODO: This should probably be subscriber, not adapter, since we have to remember
-		# to register both (see configure-site-policies)
-		cap_filter = site_policies.queryAdapterInSite( self.context.user, app_interfaces.IUserCapabilityFilter )
+							 'nti.platform.customization.avatar_upload', # Can the user upload custom avatar pictures?
+							 'nti.platform.blogging.createblogentry' ) ) # Can the user create new blog entries?
+		# TODO: This should probably be subscriber, not adapter, so that
+		# the logic doesn't have to be centralized in one place and can be additive (actually subtractive)
+		# Or vice-versa, when this becomes dynamic
+		cap_filter = component.queryAdapter( self.context.user, app_interfaces.IUserCapabilityFilter )
 		if cap_filter:
 			capabilities = cap_filter.filterCapabilities( capabilities )
 

@@ -34,6 +34,7 @@ from zope import interface
 from zope.location import location
 from zope.location import interfaces as loc_interfaces
 from zope import component
+from zope.schema import interfaces as sch_interfaces
 from zc import intid as zc_intid
 from persistent import Persistent
 import urllib
@@ -284,6 +285,13 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 		# Making it ICoppaUser cuts that out
 		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( list(UserPagesCollection(ws).accepts) ) ) )
+
+		# and from the vocab
+		vocab = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( user )
+		terms = [x.token for x in vocab]
+		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( terms ) ) )
+		# blogs too
+		assert_that( 'application/vnd.nextthought.forums.post', is_not( is_in( terms ) ) )
 
 
 

@@ -29,7 +29,10 @@
 			 zcml:condition="have devmode" />
 
 	<!-- Filter capabilities -->
-	<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter" />
+	<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
+			 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
+			 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
+
 
 	<!-- Require specific profile info for Koppa Kids -->
 	<!--
@@ -59,7 +62,10 @@
 		 Too bad for them.
 		 NOTE: This is wrong in several ways, chiefly that the
 		 presumed requirement is now site-based, not just user based,
-		 and we cannot express that, so this is definitely a horrible hack.
+		 and we cannot express that, so this is definitely a horrible
+		 hack.
+		 (TODO: We should be able to move this to
+		 configure_mathcounts.zcml now)
 	-->
 	<adapter
 		factory="._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"

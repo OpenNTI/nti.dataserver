@@ -47,10 +47,17 @@ class _CreatableMimeObjectVocabulary(UtilityVocabulary):
 
 @interface.implementer(app_interfaces.ICreatableObjectFilter)
 class _SimpleRestrictedContentObjectFilter(object):
+	from nti.dataserver.contenttypes.forums.post import Post, PersonalBlogEntryPost, HeadlinePost, PersonalBlogComment
+	from nti.dataserver.contenttypes.forums.topic import Topic, HeadlineTopic
 
 	RESTRICTED = ('application/vnd.nextthought.canvasurlshape', #images
 				  'application/vnd.nextthought.redaction',
-				  'application/vnd.nextthought.friendslist' )
+				  'application/vnd.nextthought.friendslist',
+				  # Blogging # TODO: This is in the wrong spot
+				  Post.mimeType, PersonalBlogEntryPost.mimeType,
+				  HeadlinePost.mimeType, PersonalBlogComment.mimeType,
+				  Topic.mimeType, HeadlineTopic.mimeType
+				  )
 
 	def __init__( self, context=None ):
 		pass
@@ -66,13 +73,6 @@ class _ImageAndRedactionRestrictedContentObjectFilter(_SimpleRestrictedContentOb
 	RESTRICTED = ('application/vnd.nextthought.canvasurlshape', #images
 				  'application/vnd.nextthought.redaction' )
 
-	def __init__( self, context=None ):
-		pass
-
-	def filter_creatable_objects( self, terms ):
-		for name in self.RESTRICTED:
-			terms.pop( name, None )
-		return terms
 
 @interface.implementer(sch_interfaces.IVocabularyFactory)
 class _UserCreatableMimeObjectVocabularyFactory(object):
