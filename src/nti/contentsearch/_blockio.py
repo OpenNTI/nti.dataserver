@@ -69,6 +69,8 @@ class Block(object):
 
 class BlockIO(object):
 
+	_v_pos = 0
+
 	block_size = 1024
 	block_factory = Block
 	block_list_factory = list
@@ -83,10 +85,6 @@ class BlockIO(object):
 	
 	def __len__(self):
 		return len(self.block_list)
-	
-	def __setstate__(self, d):
-		super(BlockIO, self).__setstate__(d)
-		self._v_pos = 0
 	
 	def __iter__(self):
 		return self
@@ -240,7 +238,7 @@ class BlockIO(object):
 		elif size < self.pos:
 			self.pos = size
 		elif size >= self.len:
-			return
+			return False
 		
 		if size == 0:
 			blocks_to_remove = len(self.block_list)
@@ -255,6 +253,7 @@ class BlockIO(object):
 			self.current_block.truncate(offset)
 		
 		self.len = size
+		return True
 
 	def _allocate(self, max_bytes):
 		blocks = (max_bytes / self.block_size) + 1
@@ -320,9 +319,24 @@ class BlockIO(object):
 		return result
 
 class PesistentBlock(Persistent, Block):
-	pass
+	
+	def write(self, s, pos=None):
+		result = super(PesistentBlock, self).write(s, pos)
+		if result: self._p_changed = 1
+		return result
 
 class PesistentBlockIO(Persistent, BlockIO):
+	
 	block_factory = PesistentBlock
 	block_list_factory = PersistentList
+	
+	def truncate(self, size=None):
+		if super(PesistentBlockIO, self).truncate(size):
+			self._p_changed = 1
+		
+	def write(self, s):
+		result = super(PesistentBlockIO, self).write(s)
+		if result: self._p_changed = 1
+		return result
+
 

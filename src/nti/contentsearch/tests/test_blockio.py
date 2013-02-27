@@ -7,9 +7,15 @@
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+import shutil
+import tempfile
 import unittest
+import transaction
+
+from ZODB import DB, FileStorage
 
 from nti.contentsearch._blockio import BlockIO
+from nti.contentsearch._blockio import PesistentBlockIO
 
 from hamcrest import (assert_that, is_, has_length)
 
@@ -29,10 +35,18 @@ presidents = (	'George Washington, Independent',
 				)
 class TestBlockIO(unittest.TestCase):
 
-	def _test_blockIO(self, block_size=1024, source=presidents):
+	def setUp(self):
+		super(TestBlockIO, self).setUp()
+		self.io_dir = tempfile.mkdtemp()
+		
+	def tearDown(self):
+		super(TestBlockIO, self).tearDown()
+		shutil.rmtree(self.io_dir, True)
+		
+	def _test_blockIO(self, block_size=1024, source=presidents, io_factory=BlockIO):
 		lines = [x + '\n' for x in source]
 		text = ''.join(lines)
-		f = BlockIO(block_size)
+		f = io_factory(block_size)
 		for line in lines[:-2]:
 			f.write(line)
 		f.writelines(lines[-2:])
@@ -83,7 +97,45 @@ class TestBlockIO(unittest.TestCase):
 		self._test_blockIO(1024)
 		self._test_blockIO(512)
 		self._test_blockIO(8)
+		
+	def test_persistent_io(self):
+		self._test_blockIO(8, io_factory=PesistentBlockIO)
+		self._test_blockIO(512, io_factory=PesistentBlockIO)
 
-if __name__ == '__main__':
-	unittest.main()
-	
+	def _opendb(self, db_file):
+		self.storage = FileStorage.FileStorage(db_file)
+		self.db = DB(self.storage)
+		self.conn = self.db.open()
+		self.dbroot = self.conn.root()
+		
+	def _closedb(self):
+		self.conn.close()
+		self.db.close()
+		
+	def test_persistent_db(self):
+		db_file = tempfile.mktemp(".fs", dir=self.io_dir)
+		self._opendb(db_file)
+		try:
+			transaction.begin()
+			lines = [x + '\n' for x in presidents]
+			source =  ''.join(lines)
+			f = PesistentBlockIO()
+			self.dbroot['filedb'] = f
+			for line in lines:
+				f.write(line)
+			transaction.commit()
+		except:
+			transaction.abort()
+		finally:
+			self._closedb()
+		
+		self._opendb(db_file)
+		try:
+			transaction.begin()
+			f = self.dbroot['filedb']
+			text = ''.join([str(x) for x in f.readlines()])
+			assert_that(text, is_(source))
+			transaction.commit()
+		finally:
+			self._closedb()
+
