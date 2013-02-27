@@ -15,7 +15,7 @@ import transaction
 from ZODB import DB, FileStorage
 
 from nti.contentsearch._blockio import BlockIO
-from nti.contentsearch._blockio import PesistentBlockIO
+from nti.contentsearch._blockio import PersistentBlockIO
 
 from hamcrest import (assert_that, is_, has_length)
 
@@ -99,8 +99,8 @@ class TestBlockIO(unittest.TestCase):
 		self._test_blockIO(8)
 		
 	def test_persistent_io(self):
-		self._test_blockIO(8, io_factory=PesistentBlockIO)
-		self._test_blockIO(512, io_factory=PesistentBlockIO)
+		self._test_blockIO(8, io_factory=PersistentBlockIO)
+		self._test_blockIO(512, io_factory=PersistentBlockIO)
 
 	def _opendb(self, db_file):
 		self.storage = FileStorage.FileStorage(db_file)
@@ -119,7 +119,7 @@ class TestBlockIO(unittest.TestCase):
 			transaction.begin()
 			lines = [x + '\n' for x in presidents]
 			source =  ''.join(lines)
-			f = PesistentBlockIO()
+			f = PersistentBlockIO()
 			self.dbroot['filedb'] = f
 			for line in lines:
 				f.write(line)

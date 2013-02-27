@@ -27,7 +27,7 @@ from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from ._blockio import PesistentBlockIO
+from ._blockio import PersistentBlockIO
 from . import interfaces as search_interfaces
 
 def oid_to_path(oid, max_bytes=3):
@@ -274,7 +274,7 @@ class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage):
 		self[newname] = content
 
 	def create_file(self, name, **kwargs):
-		f = StructFile(PesistentBlockIO(), name=name)
+		f = StructFile(PersistentBlockIO(), name=name)
 		self[name] = f
 		return f
 
