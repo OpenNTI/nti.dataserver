@@ -218,7 +218,7 @@ class _AbstractUserPseudoContainerResource(object):
 										   nacl.ace_denying_all( self ) )
 	__parent__ = alias('context')
 	user = alias('context')
-	resource = alias('context')
+	resource = alias('context') # BWC. See GenericGetView
 
 
 

@@ -79,11 +79,17 @@ class IService(ILocationAware):
 	workspaces = TypedIterable(	title="The workspaces of this service",
 								value_type=Object( IWorkspace, title="Workspaces in the service" ))
 
+class IUserWorkspace(IWorkspace):
+	"""
+	A workspace for a particular user.
+	"""
+	user = Object(nti_interfaces.IUser, title="The user" )
+
 class IUserService(IService):
 	"""
 	A service for a particular user.
 	"""
-	user_workspace = Object( IWorkspace, title="The main workspace for the user" )
+	user_workspace = Object( IUserWorkspace, title="The main workspace for the user" )
 	user = Object(nti_interfaces.IUser, title="The user" )
 
 
