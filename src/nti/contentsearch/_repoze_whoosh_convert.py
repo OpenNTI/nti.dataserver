@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Repoze user search adapter.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -8,6 +12,7 @@ import numbers
 from datetime import datetime
 
 from whoosh import fields
+
 import repoze.catalog.query as repquery
 
 class QueryConverter(object):

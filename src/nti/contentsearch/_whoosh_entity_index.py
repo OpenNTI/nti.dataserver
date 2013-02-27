@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+Whoosh user search adapter.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import six
@@ -33,12 +39,10 @@ from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
-from nti.contentsearch._search_query import is_phrase_search
-from nti.contentsearch._search_query import is_prefix_search
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch import _whoosh_indexstorage as w_idxstorage
-
-logger = __import__('logging').getLogger(__name__)
+from ._search_query import is_phrase_search
+from ._search_query import is_prefix_search
+from . import interfaces as search_interfaces
+from . import _whoosh_indexstorage as w_idxstorage
 
 # interfaces
 

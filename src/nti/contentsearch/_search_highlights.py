@@ -24,7 +24,7 @@ from nti.contentprocessing import default_punk_char_expression
 from nti.contentprocessing import default_word_tokenizer_pattern
 from nti.contentprocessing import default_word_tokenizer_expression
 
-from nti.contentsearch import interfaces as search_interfaces
+from . import interfaces as search_interfaces
 
 WORD_HIGHLIGHT  = "WordHighlight"
 

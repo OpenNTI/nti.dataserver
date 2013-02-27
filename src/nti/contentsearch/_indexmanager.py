@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import six
 
 from zope import interface
@@ -27,8 +29,6 @@ from ._search_results import empty_suggest_results
 from ._search_results import merge_suggest_results
 from ._search_results import empty_suggest_and_search_results
 from ._search_results import merge_suggest_and_search_results
-
-logger = __import__('logging').getLogger(__name__)
 
 @interface.implementer( search_interfaces.IIndexManager )
 class IndexManager(object):

@@ -25,10 +25,10 @@ from boto.cloudsearch import connect_to_region
 from boto.cloudsearch.search import SearchConnection
 from boto.cloudsearch.document import DocumentServiceConnection
 
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._cloudsearch_index import get_cloud_oid
-from nti.contentsearch._cloudsearch_index import to_cloud_object
-from nti.contentsearch._redis_indexstore import _RedisStorageService
+from . import interfaces as search_interfaces
+from ._cloudsearch_index import get_cloud_oid
+from ._cloudsearch_index import to_cloud_object
+from ._redis_indexstore import _RedisStorageService
 
 def find_aws_region(region_name):
 	result = None

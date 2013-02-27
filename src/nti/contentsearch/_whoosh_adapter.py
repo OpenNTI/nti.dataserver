@@ -240,4 +240,3 @@ class _WhooshEntityIndexManager(_SearchEntityIndexManager):
 		return indexable
 	
 _WhooshEntityIndexManagerFactory = an_factory(_WhooshEntityIndexManager)
-

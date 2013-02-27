@@ -504,7 +504,6 @@ class Post(ShareableIndexableContent):
 		result[title_] = get_post_title(data)
 		return result
 
-
 # register indexable objects
 
 _indexables = CaseInsensitiveDict()

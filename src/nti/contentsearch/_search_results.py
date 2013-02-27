@@ -8,7 +8,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import six
-from collections import Iterable, namedtuple, defaultdict
+import collections
 
 from zope import interface
 from zope import component
@@ -84,14 +84,14 @@ class _PageableSearchResults(_BaseSearchResults):
 		else:
 			return super(_PageableSearchResults, self).__iter__()
 
-_IndexHit = namedtuple('_IndexHit', 'obj score query')
+_IndexHit = collections.namedtuple('_IndexHit', 'obj score query')
 
 @interface.implementer(search_interfaces.IIndexHitMetaDataTracker)
 class _IndexHitMetaDataTracker(object):
 
 	def __init__(self):
 		self._last_modified = 0
-		self._container_count = defaultdict(int)
+		self._container_count = collections.defaultdict(int)
 
 	def track(self, ihit):
 		# unique container count
@@ -161,7 +161,7 @@ class _SearchResults(_PageableSearchResults):
 		if search_interfaces.IIndexHit.providedBy(hits) or isinstance(hits, tuple):
 			items = [hits]
 		else:
-			items = [hits] if not isinstance(hits, Iterable) else hits
+			items = [hits] if not isinstance(hits, collections.Iterable) else hits
 
 		for item in items or ():
 			self._add(item)
@@ -202,7 +202,7 @@ class _SuggestResults(_BaseSearchResults):
 	suggestions = hits
 
 	def add_suggestions(self, items):
-		items = [items] if isinstance(items, six.string_types) or not isinstance(items, Iterable) else items
+		items = [items] if isinstance(items, six.string_types) or not isinstance(items, collections.Iterable) else items
 		for item in items or ():
 			if isinstance(item, six.string_types):
 				self._words.add(unicode(item))
