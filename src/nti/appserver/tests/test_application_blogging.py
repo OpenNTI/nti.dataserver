@@ -47,6 +47,18 @@ from pyquery import PyQuery
 class TestApplicationBlogging(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_has_default_blog_in_service_doc( self ):
+		testapp = self.testapp
+		res = testapp.get( '/dataserver2/' )
+		service_doc = res.json_body
+		[collections] = [x['Items'] for x in service_doc['Items'] if x['Title'] == 'sjohnson@nextthought.com']
+		assert_that( collections, has_item( has_entry( 'Title', 'Blog' ) ) )
+		[blog_entry] = [x for x in collections if x['Title'] == 'Blog']
+		assert_that( blog_entry, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Blog' ) )
+		assert_that( blog_entry, has_entry( 'accepts', has_length( 2 ) ) )
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog( self ):
 		testapp = self.testapp
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog' )
@@ -87,7 +99,6 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'code', 'InvalidContainerType' ) )
 		assert_that( res.json_body, has_entry( 'field', 'ContainerId' ) )
 		assert_that( res.json_body, has_entry( 'message', is_not( is_empty() ) ) )
-
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)

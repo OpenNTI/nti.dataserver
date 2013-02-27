@@ -11,6 +11,12 @@
 	<adapter factory=".forum_views.DefaultUserForumFactory"
 			 zcml:condition="have devmode"/>
 
+	<!-- Entry in service doc -->
+	<subscriber factory=".forum_views._UserBlogCollectionFactory"
+				provides=".interfaces.ICollection"
+				for=".interfaces.IUserWorkspace" />
+
+
 	<!-- Object updating -->
 	<subscriber handler=".forum_views.match_title_of_post_to_blog" />
 
