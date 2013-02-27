@@ -144,6 +144,8 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			return self._do_call()
 		except sch_interfaces.ValidationError as e:
 			obj_io.handle_validation_error( self.request, e )
+		except interface.Invalid as e:
+			obj_io.handle_possible_validation_error( self.request, e )
 
 	def readInput(self, value=None):
 		"""

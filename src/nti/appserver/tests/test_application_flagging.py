@@ -259,12 +259,9 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			msg_info = conn.get( msg_info._p_oid )
 			assert_that( msg_info, verifiably_provides( flagging_views.IModeratorDealtWithFlag ) )
 
-	@WithSharedApplicationMockDS
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_flag_moderation_blog_entry( self ):
-		with mock_dataserver.mock_db_trans( self.ds ) as conn:
-			user = self._create_user()
-
-		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
+		testapp = self.testapp
 		data = { 'Class': 'Post',
 				 'title': 'My New Blog',
 				 'body': ['My first thought'] }
@@ -294,12 +291,9 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, does_not( contains_string( 'My first thought' ) ) )
 
-	@WithSharedApplicationMockDS
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_flag_moderation_blog_entry_comment( self ):
-		with mock_dataserver.mock_db_trans( self.ds ) as conn:
-			user = self._create_user()
-		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
-
+		testapp = self.testapp
 		data = { 'Class': 'Post',
 				 'title': 'My New Blog',
 				 'body': ['My first thought'] }

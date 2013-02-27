@@ -19,6 +19,7 @@ from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import is_
 from hamcrest import is_not as does_not
+is_not = does_not
 from hamcrest import has_item
 from hamcrest import contains
 from hamcrest import contains_inanyorder
@@ -63,6 +64,30 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# And thus not in my links
 		res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )
 		assert_that( res.json_body['Items'][0]['Links'], does_not( has_item( has_entry( 'rel', 'Blog' ) ) ) )
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_cannot_POST_new_blog_entry_to_pages( self ):
+		"""POSTing an IPost to the default user URL does nothing"""
+
+		testapp = self.testapp
+
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		# No containerId
+		testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com', data, status=422 )
+		testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Pages', data, status=422 )
+
+		data['ContainerId'] = 'tag:foo:bar'
+		testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com', data, status=422 )
+		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Pages', data, status=422 )
+
+		assert_that( res.json_body, has_entry( 'code', 'InvalidContainerType' ) )
+		assert_that( res.json_body, has_entry( 'field', 'ContainerId' ) )
+		assert_that( res.json_body, has_entry( 'message', is_not( is_empty() ) ) )
+
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
