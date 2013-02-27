@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
+Redis based index mananager.
 
+Index events are sent to redis before they are processed
+
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -18,31 +24,28 @@ class _RedisIndexManager(IndexManager):
 			cls.indexmanager = super(_RedisIndexManager, cls).__new__(cls, *args, **kwargs)
 		return cls.indexmanager
 
-	def get_uid(self, obj):
-		_ds_intid = component.getUtility( zope.intid.IIntIds )
-		return _ds_intid.getId(obj)
-		
-	def _get_service(self):
+	@property
+	def service(self):
 		if self._v_service is None:
 			self._v_service = component.getUtility(search_interfaces.IRedisStoreService)
 		return self._v_service
+	
+	def get_uid(self, obj):
+		_ds_intid = component.getUtility( zope.intid.IIntIds )
+		return _ds_intid.getId(obj)
 
 	def index_user_content(self, target, data, type_name=None):
 		if data is not None and target is not None:
 			docid = self.get_uid(data)
-			service = self._get_service()
-			service.add(docid, username=target.username)
+			self.service.add(docid, username=target.username)
 			return True
 
 	def update_user_content(self, target, data, type_name=None):
 		if data is not None and target is not None:
 			docid = self.get_uid(data)
-			service = self._get_service()
-			service.update(docid, username=target.username)
+			self.service.update(docid, username=target.username)
 
 	def delete_user_content(self, target, data, type_name=None):
 		if data is not None and target is not None:
 			docid = self.get_uid(data)
-			service = self._get_service()
-			service.delete(docid, username=target.username)
-
+			self.service.delete(docid, username=target.username)

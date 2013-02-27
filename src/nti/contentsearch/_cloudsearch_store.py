@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
+"""
+Cloud search store.
 
+Store index events in AWS cloud search
+
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import time
@@ -21,8 +29,6 @@ from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._cloudsearch_index import get_cloud_oid
 from nti.contentsearch._cloudsearch_index import to_cloud_object
 from nti.contentsearch._redis_indexstore import _RedisStorageService
-
-logger = __import__('logging').getLogger(__name__)
 
 def find_aws_region(region_name):
 	result = None
@@ -147,28 +153,6 @@ class _CloudSearchStore(object):
 					logger.error(s)
 			return errors
 
-@interface.implementer(search_interfaces.ICloudSearchStoreService)
-class _CloudSearchStorageService(_RedisStorageService):
-	
-	_store = None
-	
-	def _get_store(self):
-		if self._store is None:
-			self._store = component.getUtility( search_interfaces.ICloudSearchStore  )
-		return self._store
-					
-	def process_messages(self, msgs):
-		store = self._get_store()
-		service = store.get_document_service()
-		for m in msgs:
-			op, docid, username =  m
-			if op in ('add', 'update'):
-				store.add(docid, username, service, False)
-			elif op == 'delete':
-				store.delete(docid, username, service, False)
-		result = service.commit()
-		store.handle_cs_errors(result)
-	
 @interface.implementer(search_interfaces.ICloudSearchStore)
 def _create_cloudsearch_store():
 	aws_access_key_id = os.environ.get('aws_access_key_id', None)
@@ -179,3 +163,26 @@ def _create_cloudsearch_store():
 	else:
 		result = _CloudSearchStore()
 	return result
+
+@interface.implementer(search_interfaces.ICloudSearchStoreService)
+class _CloudSearchStorageService(_RedisStorageService):
+	
+	_store = None
+	
+	@property
+	def store(self):
+		if self._store is None:
+			self._store = component.getUtility(search_interfaces.ICloudSearchStore  )
+		return self._store
+					
+	def process_messages(self, msgs):
+		store = self.store
+		service = store.get_document_service()
+		for m in msgs:
+			op, docid, username =  m
+			if op in ('add', 'update'):
+				store.add(docid, username, service, False)
+			elif op == 'delete':
+				store.delete(docid, username, service, False)
+		result = service.commit()
+		store.handle_cs_errors(result)
