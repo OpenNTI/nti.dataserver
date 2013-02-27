@@ -152,8 +152,13 @@ def get_search_hit(obj, score=1.0, query=None, highlight_type=WORD_HIGHLIGHT):
 
 # define search hit comparators
 
+class _CallableComparator(object):
+	
+	def __call__(self, a, b):
+		return self.compare(a, b)
+	
 @interface.implementer(search_interfaces.ISearchHitComparator)
-class _ScoreSearchHitComparator(object):
+class _ScoreSearchHitComparator(_CallableComparator):
 	
 	@classmethod
 	def get_score(cls, item):
@@ -171,7 +176,7 @@ class _ScoreSearchHitComparator(object):
 		return self.compare_score(a, b)
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
-class _LastModifiedSearchHitComparator(object):
+class _LastModifiedSearchHitComparator(_CallableComparator):
 	
 	@classmethod
 	def get_lm(cls, item):
