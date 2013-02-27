@@ -4,7 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import unittest
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 from zope import component
 
@@ -47,7 +48,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		return notes
 			
 	@WithMockDSTrans
-	def xtest_externalize_search_results(self):
+	def test_externalize_search_results(self):
 		qo = QueryObject.create("wind")
 		containerId = make_ntiid(nttype='bleach', specific='manga')	
 		searchResults = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
@@ -69,7 +70,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo[ITEMS], has_length(len(zanpakuto_commands)))
 		
 	@WithMockDSTrans
-	def xtest_externalize_suggest_results(self):
+	def test_externalize_suggest_results(self):
 		qo = QueryObject.create("bravo")
 		sr = component.getUtility(search_interfaces.ISuggestResultsCreator)(qo)
 		sr.highlight_type = WORD_HIGHLIGHT
@@ -84,7 +85,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo[SUGGESTIONS], has_length(len(domain_words)))
 		
 	@WithMockDSTrans
-	def xtest_externalize_search_suggest_results(self):
+	def test_externalize_search_suggest_results(self):
 		qo = QueryObject.create("theotokos")
 		searchResults = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
 		searchResults.highlight_type = WORD_HIGHLIGHT
@@ -134,6 +135,4 @@ class TestSearchExternal(ConfiguringTestBase):
 		for idx, hit in enumerate(items):
 			score = len(items) - idx
 			assert_that(hit[SCORE], is_(score))
-		
-if __name__ == '__main__':
-	unittest.main()
+
