@@ -145,10 +145,16 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 			__traceback_info__ = k, attr_val
 			result[k] = toExternalObject( attr_val ) if k not in primitive_ext_keys else attr_val
 
-			try: #if ILocation.providedBy( result[k] ):
-				result[k].__parent__ = ext_self
-			except AttributeError:
-				pass
+			if result[k] is not attr_val:
+				# We want to be sure things we externalize have the right parent relationship
+				# but if we are directly externalizing an existing object (e.g., primitive or something
+				# that uses a replacement) we don't want to change the relationship or even set one in the first
+				# place---if the object gets pickled later on, that could really screw things up
+				# (One symptom is InvalidObjectReference from ZODB across transactions/tests)
+				try: #if ILocation.providedBy( result[k] ): (throwing is faster that providedBy)
+					result[k].__parent__ = ext_self
+				except AttributeError:
+					pass
 
 		if StandardExternalFields.ID in result and StandardExternalFields.OID in result \
 			   and self._prefer_oid_ and result[StandardExternalFields.ID] != result[StandardExternalFields.OID]:
