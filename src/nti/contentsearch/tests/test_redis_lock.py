@@ -40,6 +40,3 @@ class TestRedisLock(unittest.TestCase):
 		time.sleep(1.5)
 		with Lock(self.redis):
 			pass
-		
-if __name__ == '__main__':
-	unittest.main()
