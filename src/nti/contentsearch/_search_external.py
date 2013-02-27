@@ -13,6 +13,7 @@ from zope import interface
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject
 
+from ._search_results import sort_hits
 from ._search_hits import get_search_hit
 from . import interfaces as search_interfaces
 from ._search_highlights import HighlightInfo
@@ -100,14 +101,12 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		count = 0
 		last_modified = 0
 		limit = self.query.limit
+		sortOn = self.query.sortOn
 		highlight_type = self.highlight_type
 
-		# FIXME: It's rude to mutate other data structures
-		# this sort the hits in place
-		self.results.sort() 
-
 		# use iterator in case of any paging
-		for hit in self.results:
+		# TODO: handle paging
+		for hit in sort_hits(self.results, sortOn=sortOn):
 
 			if hit is None or hit.obj is None:
 				continue

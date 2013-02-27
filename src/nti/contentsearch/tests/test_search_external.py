@@ -47,7 +47,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		return notes
 			
 	@WithMockDSTrans
-	def test_externalize_search_results(self):
+	def xtest_externalize_search_results(self):
 		qo = QueryObject.create("wind")
 		containerId = make_ntiid(nttype='bleach', specific='manga')	
 		searchResults = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
@@ -69,7 +69,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo[ITEMS], has_length(len(zanpakuto_commands)))
 		
 	@WithMockDSTrans
-	def test_externalize_suggest_results(self):
+	def xtest_externalize_suggest_results(self):
 		qo = QueryObject.create("bravo")
 		sr = component.getUtility(search_interfaces.ISuggestResultsCreator)(qo)
 		sr.highlight_type = WORD_HIGHLIGHT
@@ -84,7 +84,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo[SUGGESTIONS], has_length(len(domain_words)))
 		
 	@WithMockDSTrans
-	def test_externalize_search_suggest_results(self):
+	def xtest_externalize_search_suggest_results(self):
 		qo = QueryObject.create("theotokos")
 		searchResults = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
 		searchResults.highlight_type = WORD_HIGHLIGHT
