@@ -61,7 +61,9 @@ def DefaultUserForumFactory(user):
 	# The right key is critical. 'Blog' is the pretty external name (see dataserver_pyramid_traversal)
 	# We're avoiding the magic of the annotation factory because we need to know when it is created
 	#forum = zope.annotation.factory(_DefaultUserForumFactory, key='Blog')(user)
-	annotations = zope.annotation.interfaces.IAnnotations( user )
+	annotations = zope.annotation.interfaces.IAnnotations( user, None ) # Some types of users (test users usually) are not annotatable
+	if annotations is None:
+		return None
 	forum = annotations.get( _UserBlogCollection.name )
 	if forum is None:
 		forum = PersonalBlog()
