@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 import os
 import time
@@ -40,7 +38,6 @@ from nti.contentsearch.tests.mock_cloudsearch import MockCloundSearchQueryParser
 
 from hamcrest import (is_not, has_key, has_entry, has_length, assert_that)
 
-#@unittest.SkipTest
 class TestCloudSearchAdapter(ConfiguringTestBase):
 
 	aws_access_key_id = 'AKIAJ42UUP2EUMCMCZIQ'
@@ -54,9 +51,6 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 
 	def _register_zcml(self):
 		self.redis = None
-		# import redis
-		# self.redis = redis.StrictRedis( unix_socket_path='/Users/csanchez/tmp/var/redis.sock')
-		# component.provideUtility( self.redis, provides=nti_interfaces.IRedisClient )
 
 		component.provideAdapter(_cloudsearch_adapter._CloudSearchEntityIndexManagerFactory,
 								 adapts=[nti_interfaces.IEntity],

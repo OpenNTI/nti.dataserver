@@ -1,18 +1,24 @@
 # -*- coding: utf-8 -*-
+"""
+Redis storage service.
 
+Defines routines to add,update/delete index events using redis as a
+backing store
+
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import zlib
+logger = __import__('logging').getLogger(__name__)
 
+import zlib
 import gevent
 
 from zope import component
 from ZODB import loglevels
 
 from nti.dataserver import interfaces as nti_interfaces
-
-logger = __import__('logging').getLogger(__name__)
 
 SLEEP_WAIT_TIME = 10
 EXPIRATION_TIME_IN_SECS = 60
@@ -50,7 +56,8 @@ class _RedisStorageService(object):
 		self._v_expiration_time = expiration_time
 		self._v_index_listener = self._spawn_index_listener() if autostart else None
 
-	def _get_redis( self ):
+	@property
+	def redis(self):
 		if self._redis is None:
 			self._redis = component.getUtility( nti_interfaces.IRedisClient )
 		return self._redis
@@ -58,6 +65,8 @@ class _RedisStorageService(object):
 	@property
 	def queue_name(self):
 		return self._v_queue_name
+	
+	# gevent process
 	
 	@property
 	def expiration_time(self):
@@ -83,6 +92,20 @@ class _RedisStorageService(object):
 	
 	def halt(self):
 		self._v_stop = True
+	
+	def _spawn_index_listener(self):
+		
+		def read_index_msgs():
+			while not self.stop:
+				# wait for idx ops
+				gevent.sleep(self.sleep_wait_time)
+				if not self.stop:
+					self.read_process_index_msgs()
+				
+		result = gevent.spawn( read_index_msgs )
+		return result
+	
+	# redis message manipulation
 		
 	def encode_message(self, op, docid, username):
 		msg = repr((op, docid, username))
@@ -101,7 +124,7 @@ class _RedisStorageService(object):
 		self._put_msg(msg)
 	
 	def _get_index_msgs(self):
-		msgs, _ = self._get_redis().pipeline().lrange(self.queue_name, 0, -1).delete(self.queue_name).execute()
+		msgs, _ = self.redis.pipeline().lrange(self.queue_name, 0, -1).delete(self.queue_name).execute()
 		return msgs
 	
 	def _put_msg(self, msg, queue_name=None):
@@ -110,20 +133,8 @@ class _RedisStorageService(object):
 			self._put_msg_to_redis(msg)
 	
 	def _put_msg_to_redis(self, msg):
-		self._get_redis().pipeline().rpush(self.queue_name, msg).expire(self.queue_name, self.expiration_time).execute()
+		self.redis.pipeline().rpush(self.queue_name, msg).expire(self.queue_name, self.expiration_time).execute()
 			
-	def _spawn_index_listener(self):
-		
-		def read_index_msgs():
-			while not self.stop:
-				# wait for idx ops
-				gevent.sleep(self.sleep_wait_time)
-				if not self.stop:
-					self.read_process_index_msgs()
-				
-		result = gevent.spawn( read_index_msgs )
-		return result
-	
 	def _push_back_msgs(self, msgs, encode=True):
 		if msgs:
 			logger.info( "Pushing messages back onto %s on exception", self.queue_name )
@@ -137,7 +148,8 @@ class _RedisStorageService(object):
 			encoded_msgs = self._get_index_msgs()
 			if encoded_msgs:
 				msgs = [eval(zlib.decompress(m)) for m in encoded_msgs]
-				logger.log(loglevels.TRACE, 'Processing %s index event(s) read from redis queue %r', len(encoded_msgs), self.queue_name)
+				logger.log(	loglevels.TRACE, 'Processing %s index event(s) read from redis queue %r', 
+							len(encoded_msgs), self.queue_name)
 				self.process_messages(msgs)			
 		except Exception:
 			self._push_back_msgs(encoded_msgs, encode=False)
@@ -145,4 +157,3 @@ class _RedisStorageService(object):
 	
 	def process_messages(self, msgs):
 		pass
-	
