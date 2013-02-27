@@ -62,13 +62,13 @@ def DefaultUserForumFactory(user):
 	# We're avoiding the magic of the annotation factory because we need to know when it is created
 	#forum = zope.annotation.factory(_DefaultUserForumFactory, key='Blog')(user)
 	annotations = zope.annotation.interfaces.IAnnotations( user )
-	forum = annotations.get( 'Blog' )
+	forum = annotations.get( _UserBlogCollection.name )
 	if forum is None:
 		forum = PersonalBlog()
 		forum.__parent__ = user
-		forum.__name__ = 'Blog'
+		forum.__name__ = _UserBlogCollection.name
 		# TODO: Events?
-		annotations['Blog'] = forum
+		annotations[forum.__name__] = forum
 
 		jar = IConnection( user, None )
 		if jar:
@@ -80,6 +80,36 @@ def DefaultUserForumFactory(user):
 			__traceback_info__ = errors
 			raise errors[0][1]
 	return forum
+
+
+@interface.implementer(app_interfaces.IContainerCollection)
+@component.adapter(app_interfaces.IUserWorkspace)
+class _UserBlogCollection(object):
+	"""
+	Turns a User into a ICollection of data for their blog entries (individual containers).
+	"""
+
+	name = 'Blog'
+	__name__ = name
+	__parent__ = None
+
+	def __init__( self, user_workspace ):
+		self.__parent__ = user_workspace
+
+	@property
+	def container(self):
+		frm_interfaces.IPersonalBlog( self.__parent__.user ).values() # ?
+
+	@property
+	def accepts(self):
+		return (PersonalBlogEntryPost.mimeType, Post.mimeType)
+
+@interface.implementer(app_interfaces.IContainerCollection)
+@component.adapter(app_interfaces.IUserWorkspace)
+def _UserBlogCollectionFactory(workspace):
+	blog = frm_interfaces.IPersonalBlog( workspace.user, None )
+	if blog is not None:
+		return _UserBlogCollection( workspace )
 
 class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
 	""" HTTP says POST creates a NEW entity under the Request-URI """
