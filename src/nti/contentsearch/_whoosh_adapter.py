@@ -49,7 +49,7 @@ def get_indexname(username, type_name, use_md5=True):
 
 # proxy class to wrap an whoosh index
 
-class _NOP_CM(object):
+class _NoLockingProxy(ProxyBase):
 	
 	def __enter__(self):
 		pass
@@ -58,13 +58,10 @@ class _NOP_CM(object):
 		pass
 	
 class _Proxy(ProxyBase):
-	
-	rlock = _NOP_CM()
-	
-	def __init__(self, obj, create=True):
+		
+	def __init__(self, obj):
 		super(_Proxy, self).__init__(obj)
-		if create:
-			self.rlock = RLock()
+		self.rlock = RLock()
 	
 	def __enter__(self):
 		return self.rlock.__enter__()
@@ -268,6 +265,7 @@ _WhooshEntityIndexManagerFactory = an_factory(_WhooshEntityIndexManager)
 class _PersistentWhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 		
 	def __init__(self):
+		super(_BaseWhooshEntityIndexManager, self).__init__()
 		self.storage = PersistentBlockStorage()
 		
 	def _get_or_create_index(self, type_name):
@@ -280,7 +278,7 @@ class _PersistentWhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 			index = self._register_index(type_name, indexname, index)
 		else:
 			index = self.storage.open_index(indexname=indexname, schema=schema)
-			index = _Proxy(index, False)
+			index = _NoLockingProxy(index)
 		return index
 	
 	def remove_index(self, type_name, *args, **kwargs):
@@ -290,4 +288,4 @@ class _PersistentWhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 			return True
 		return False
 
-_PersistentEntityIndexManagerFactory = an_factory(_PersistentWhooshEntityIndexManager)
+_PersistentWhooshEntityIndexManagerFactory = an_factory(_PersistentWhooshEntityIndexManager)

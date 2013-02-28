@@ -9,9 +9,11 @@ import uuid
 import shutil
 import tempfile
 
+from zope import component
+
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
-
+from nti.dataserver import interfaces as nti_interfaces
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
@@ -20,6 +22,7 @@ from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.common import ( HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, NTIID)
 
+from nti.dataserver.tests import mock_redis
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
@@ -41,6 +44,11 @@ class TestWhooshUserAdapter(ConfiguringTestBase):
 		shutil.rmtree(cls.db_dir, True)
 		super(TestWhooshUserAdapter,cls).tearDownClass()
 
+	def setUp(self):
+		super(TestWhooshUserAdapter,self).setUp()
+		self.redis = mock_redis.InMemoryMockRedis()
+		component.provideUtility( self.redis, provides=nti_interfaces.IRedisClient )
+		
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
 		usr = User.create_user( ds, username=username, password=password)
