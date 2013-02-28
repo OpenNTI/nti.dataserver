@@ -286,7 +286,7 @@ setup(
 		'zope.hookable >= 4.0.1', # explicitly list this to ensure we get the fast C version. Used by ZCA.
 		'zope.i18n >= 3.8.0', # 4.0.0a4 is out; works fine. upgrade when official
 		'zope.i18nmessageid >= 4.0.2',
-		'zope.index >= 4.0.0',
+		'zope.index >= 4.0.1',
 		'zope.interface >= 4.0.4',
 		'zope.intid >= 3.7.2',
 		'zope.keyreference >= 3.6.4',
