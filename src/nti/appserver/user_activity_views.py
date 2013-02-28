@@ -16,7 +16,6 @@ from .ugd_query_views import _toplevel_filter
 from .httpexceptions import HTTPNotFound
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from nti.ntiids import ntiids
 
 from nti.dataserver import authorization as nauth
@@ -32,7 +31,7 @@ REL_USER_ACTIVITY = "Activity" # This permits a URL like .../users/$USER/Activit
 def _always_toplevel_filter( x ):
 	try:
 		# IInspectableWeakThreadable required for this
-		return x.isOrWasChildInThread() is False()
+		return x.isOrWasChildInThread() is False
 	except AttributeError:
 		return _toplevel_filter( x )
 
