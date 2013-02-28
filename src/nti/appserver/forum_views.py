@@ -23,6 +23,7 @@ from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
+from nti.contentsearch import interfaces as search_interfaces
 
 
 # TODO: FIXME: This solves an order-of-imports issue, where
@@ -348,6 +349,7 @@ class PostPutView(UGDPutView):
 	""" Editing an existing forum post """
 	# Exists entirely for registration sake
 
+
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_DELETE,
@@ -355,6 +357,9 @@ class PostPutView(UGDPutView):
 			  request_method='DELETE' )
 class HeadlineTopicDeleteView(UGDDeleteView):
 	""" Deleting an existing forum """
+
+	## Deleting winds up in users.users.py:user_willRemoveInteIdForContainedObject,
+	## thus posting the usual activitystream DELETE notifications
 
 	def _do_delete_object( self, theObject ):
 		# Delete from enclosing container
@@ -528,6 +533,8 @@ class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
 			  name='publish')
 def _PublishView(request):
 	interface.alsoProvides( request.context, nti_interfaces.IDefaultPublished )
+	# TODO: Hooked directly up to temp_dispatch_to_indexer
+	temp_dispatch_to_indexer( request.context.headline, None )
 	return uncached_in_response( request.context )
 
 
@@ -539,6 +546,8 @@ def _PublishView(request):
 			  name='unpublish')
 def _UnpublishView(request):
 	interface.noLongerProvides( request.context, nti_interfaces.IDefaultPublished )
+	# TODO: While we have temp_dispatch_to_indexer in place, when we unpublish
+	# do we need to unindex the comments too?
 	return uncached_in_response( request.context )
 
 ### Events
@@ -547,13 +556,20 @@ def _UnpublishView(request):
 from nti.dataserver import activitystream_change
 from zope.event import notify
 
+def _stream_event_for_comment( comment ):
+	# Now, construct the (artificial) change notification. Notice this is never
+	# persisted anywhere
+	change = activitystream_change.Change( nti_interfaces.SC_CREATED, comment )
+	change.creator = comment.creator
+
+	return change
+
 @component.adapter( frm_interfaces.IPersonalBlogComment, lifecycleevent.IObjectAddedEvent )
 def notify_online_author_of_comment( comment, event ):
 	"""
 	When a comment is added to a blog post, notify the blog's
 	author.
 	"""
-	# TODO: The container ids probably aren't quite right here
 
 	# First, find the author of the blog entry. It will be the parent, the only
 	# user in the lineage
@@ -561,7 +577,24 @@ def notify_online_author_of_comment( comment, event ):
 
 	# Now, construct the (artificial) change notification. Notice this is never
 	# persisted anywhere
-	change = activitystream_change.Change( nti_interfaces.SC_CREATED, comment )
-	change.creator = comment.creator
+	change = _stream_event_for_comment( comment )
 
 	notify( chat_interfaces.DataChangedUserNotificationEvent( (author.username,), change ) )
+
+
+@component.adapter( frm_interfaces.IPersonalBlogComment, lifecycleevent.IObjectAddedEvent )
+def temp_dispatch_to_indexer( comment, event ):
+	# Direct dispatch comment posted events for indexing when created
+
+	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
+	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+
+	if indexmanager and dataserver:
+
+		change = _stream_event_for_comment( comment )
+		# Now index the comment for the creator and all the sharing targets. This is just
+		# like what the User object itself does (except we don't need to expand DFL/communities)
+
+		indexmanager.onChange( dataserver, change, comment.creator, broadcast=True ) # The creator gets it as a broadcast
+		for target in comment.sharingTargets:
+			indexmanager.onChange( dataserver, change, target )
