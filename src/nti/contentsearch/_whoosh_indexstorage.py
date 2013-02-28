@@ -304,4 +304,5 @@ class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage, IndexStorage
 
 	def lock(self, name):
 		redis = component.getUtility(nti_interfaces.IRedisClient)
-		return redis.lock(timeout=60, sleep=1)
+		name = "nti/locks/whoosh/%s" % name
+		return redis.lock(name=name, timeout=60, sleep=1)
