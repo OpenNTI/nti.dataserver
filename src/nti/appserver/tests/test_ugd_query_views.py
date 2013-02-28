@@ -465,21 +465,24 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n_containerId + ')/UserGeneratedData'
+		activity_path = '/dataserver2/users/sjohnson@nextthought.com/Activity'
 
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
 
-		res = testapp.get( path, params={'filter': 'TopLevel,MeOnly'}, extra_environ=self._make_extra_environ())
-		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
-		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', top_n_id ) ) ) )
-		assert_that( res.json_body,
-					 has_entry( 'Items',
-								contains(
-									has_entry( 'ReferencedByCount', 1 ) ) ) )
-		assert_that( res.json_body,
-					 has_entry( 'Items',
-								contains(
-									has_entry( 'RecursiveLikeCount', 1 ) ) ) )
+		for _path in path, activity_path:
+			__traceback_info__ = _path
+			res = testapp.get( _path, params={'filter': 'TopLevel,MeOnly'}, extra_environ=self._make_extra_environ())
+			assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+			assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', top_n_id ) ) ) )
+			assert_that( res.json_body,
+						 has_entry( 'Items',
+									contains(
+										has_entry( 'ReferencedByCount', 1 ) ) ) )
+			assert_that( res.json_body,
+						 has_entry( 'Items',
+									contains(
+										has_entry( 'RecursiveLikeCount', 1 ) ) ) )
 
 		res = testapp.get( path, params={'sortOn': 'LikeCount'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
