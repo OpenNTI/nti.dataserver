@@ -4,7 +4,7 @@
 	<utility factory="._whoosh_indexstorage._create_default_whoosh_storage"
 			 provides=".interfaces.IWhooshIndexStorage" />
 
-	<adapter factory="._whoosh_adapter._WhooshEntityIndexManagerFactory"
+	<adapter factory="._whoosh_adapter._PersistentWhooshEntityIndexManagerFactory"
 			 for="nti.dataserver.interfaces.IEntity"
 			 provides=".interfaces.IWhooshEntityIndexManager" />
 
