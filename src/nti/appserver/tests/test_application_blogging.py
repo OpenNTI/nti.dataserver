@@ -33,12 +33,14 @@ from .test_application import TestApp
 from zope import lifecycleevent
 from zope.component import eventtesting
 from zope.intid.interfaces import IIntIdRemovedEvent
+from zope.location.interfaces import ISublocations
 
+from nti.ntiids import ntiids
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.tests import mock_dataserver
-
+from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, PersistentContainedExternal
 
 from urllib import quote as UQ
@@ -123,6 +125,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
 		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 		assert_that( res.json_body, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-My New Blog' ) )
+		assert_that( res.json_body, has_entry( 'ContainerId', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog') )
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
@@ -153,10 +156,43 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# And in the user activity view
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Activity' )
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+		assert_that( res.json_body['Items'], has_length( 1 ) ) # make sure no dups
+
+		# And in the user root recursive data stream
+		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData' )
+		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 
 		# And in his links
 		res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )
 		self.require_link_href_with_rel( res.json_body['Items'][0], 'Blog' )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_blog_entry_resulting_in_blog_being_sublocation( self ):
+		"""Creating a Blog causes it to be a sublocation of the user"""
+		# This way deleting/moving the user correctly causes the blog to be deleted/moved
+
+		testapp = self.testapp
+
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data, status=201 )
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = users.User.get_user( 'sjohnson@nextthought.com' )
+
+			all_subs = set()
+			def _recur( i ):
+				all_subs.add( i )
+				subs = ISublocations( i, None )
+				if subs:
+					for x in subs.sublocations():
+						_recur( x )
+			_recur( user )
+
+			assert_that( all_subs, has_item( is_( PersonalBlog ) ) )
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_PUT_to_edit_existing_blog_entry( self ):

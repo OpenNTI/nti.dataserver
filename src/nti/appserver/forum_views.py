@@ -53,30 +53,31 @@ from zope import interface
 from zope import lifecycleevent
 from zope import schema
 
-import zope.annotation.factory
-
 @interface.implementer(frm_interfaces.IPersonalBlog)
 @component.adapter(nti_interfaces.IUser)
 def DefaultUserForumFactory(user):
 	# The right key is critical. 'Blog' is the pretty external name (see dataserver_pyramid_traversal)
-	# We're avoiding the magic of the annotation factory because we need to know when it is created
-	#forum = zope.annotation.factory(_DefaultUserForumFactory, key='Blog')(user)
-	annotations = zope.annotation.interfaces.IAnnotations( user, None ) # Some types of users (test users usually) are not annotatable
-	if annotations is None:
+
+	containers = getattr( user, 'containers', None ) # some types of users (test users usually) have no containers
+	if containers is None:
 		return None
-	forum = annotations.get( _UserBlogCollection.name )
+
+	# For convenience, we register the container with
+	# both its NTIID and its short name
+	forum = containers.getContainer( _UserBlogCollection.name )
 	if forum is None:
 		forum = PersonalBlog()
 		forum.__parent__ = user
+		forum.creator = user
 		forum.__name__ = _UserBlogCollection.name
+		forum.title = user.username
 		# TODO: Events?
-		annotations[forum.__name__] = forum
+		containers.addContainer( _UserBlogCollection.name, forum, locate=False )
+		containers.addContainer( forum.NTIID, forum, locate=False )
 
 		jar = IConnection( user, None )
 		if jar:
 			jar.add( forum ) # ensure we store with the user
-		forum.title = user.username
-		forum.creator = user
 		errors = schema.getValidationErrors( frm_interfaces.IPersonalBlog, forum )
 		if errors:
 			__traceback_info__ = errors
@@ -100,7 +101,7 @@ class _UserBlogCollection(object):
 
 	@property
 	def container(self):
-		frm_interfaces.IPersonalBlog( self.__parent__.user ).values() # ?
+		return frm_interfaces.IPersonalBlog( self.__parent__.user ).values() # ?
 
 	@property
 	def accepts(self):
@@ -200,6 +201,7 @@ class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
 
 		blog[name] = entry # Now store the topic and fire added
 		entry.id = name # match these things. ID is local within container
+		entry.containerId = blog.NTIID
 		entry_post.containerId = entry.NTIID
 
 		lifecycleevent.added( entry_post )

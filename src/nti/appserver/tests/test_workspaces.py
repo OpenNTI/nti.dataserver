@@ -163,10 +163,11 @@ class TestUserEnumerationWorkspace(unittest.TestCase,tests.TestBaseMixin):
 		user._addSharedObject( pc )
 		uew = UEW( user )
 
-		# Expecting pages collection, devices, friends lists
+		# Expecting pages collection, devices, friends lists, blog, ...
 		assert_that( uew.collections, has_length( greater_than_or_equal_to( 3 ) ) )
-		# which in turn has two containers, the root and the shared
-		assert_that( uew.pages_collection.container, has_length( 2 ) )
+		# the pages collection  in turn has at least two containers, the root and the shared (plus the blog)
+		assert_that( uew.pages_collection.container, has_length( greater_than_or_equal_to(  2 ) ) )
+		# These come in sorted
 		root = uew.pages_collection.container[0]
 		ext_obj = to_external_object( root )
 		__traceback_info__ = ext_obj
@@ -177,7 +178,7 @@ class TestUserEnumerationWorkspace(unittest.TestCase,tests.TestBaseMixin):
 		assert_that( ext_obj['Links'][1], has_entry( 'rel', 'RecursiveStream' ) )
 
 
-		shared = uew.pages_collection.container[1]
+		[shared] = [c for c in uew.pages_collection.container if c.ntiid == PersistentContained.containerId]
 		ext_obj = to_external_object( shared )
 		assert_that( ext_obj, has_entry( 'ID', PersistentContained.containerId ) )
 		#['UserGeneratedData', 'RecursiveUserGeneratedData', 'Stream', 'RecursiveStream', 'UserGeneratedDataAndRecursiveStream', 'Glossary']

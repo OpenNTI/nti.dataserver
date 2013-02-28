@@ -734,9 +734,12 @@ class User(Principal):
 		of his contained objects as well, allowing things like intid cleanup to work.
 		"""
 
-		yield self.friendsLists
-		yield self.devices
 		yield self.containers
+		# Now anything else in containers that we put there that is actually
+		# a child of us (this includes self.friendsLists and self.devices)
+		for v in self.containers.itervalues():
+			if getattr( v, '__parent__', None ) is self:
+				yield v
 
 		# If we have annotations, then if the annotated value thinks of
 		# us as a parent, we need to return that. See zope.annotation.factory

@@ -26,7 +26,7 @@ class LastModifiedDict(zc.dict.Dict):
 	"""
 	A BTree-based persistent dictionary that maintains the
 	data required by :class:`interfaces.ILastModified`. Since this is not a
-	container, this is done when this object is modified.
+	:class:`zope.container.interfaces.IContainer`, this is done when this object is modified.
 	"""
 
 	def __init__( self, *args, **kwargs ):
