@@ -239,10 +239,19 @@ class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage, IndexStorage
 		return gen >= 0
 	
 	def get_or_create_index(self, indexname, schema=None, recreate=True, **kwargs):
+		if recreate and self.index_exists(indexname):
+			self.remove_index(indexname)
+			
 		if not self.index_exists(indexname):
 			return self.create_index(schema=schema, indexname=indexname)
 		else:
 			return self.open_index(indexname=indexname)
+	
+	def remove_index(self, indexname):
+		prefix = "_%s_" % indexname
+		for filename in self.list():
+			if filename.startswith(prefix):
+				self.delete_file(filename) 
 	
 	def storage(self, **kwargs):
 		return self
