@@ -114,7 +114,7 @@ class BlockIO(object):
 		return r
 
 	def close(self):
-		pass
+		self.pos = 0
 
 	def isatty(self):
 		return False
@@ -158,7 +158,7 @@ class BlockIO(object):
 			self.pos += len(r)
 			result.extend(r)
 
-		return result
+		return bytes(result)
 
 	def readline(self, length=None):
 		"""Read one entire line from the file.
@@ -200,7 +200,7 @@ class BlockIO(object):
 			if do_exit:
 				break
 
-		return result
+		return bytes(result)
 
 	def readlines(self, sizehint = 0):
 		"""Read until EOF using readline() and return a list containing the

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Whoosh user search adapter.
+Whoosh index storage.
 
 $Id$
 """
@@ -223,7 +223,6 @@ def _create_default_whoosh_storage():
 		return UserDirectoryStorage()
 	return None
 
-
 class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage):
 	
 	folder = ''
@@ -233,10 +232,10 @@ class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage):
 		BTrees.OOBTree.OOBTree.__init__( self, *args )
 
 	def create_index(self, schema, indexname=_DEF_INDEX_NAME):
-		return create_index(self, schema, indexname)
+		return create_index(self, schema=schema, indexname=indexname)
 
 	def open_index(self, indexname=_DEF_INDEX_NAME, schema=None):
-		return open_index(self, schema, indexname)
+		return open_index(self, schema=schema, indexname=indexname)
 
 	def list(self):
 		return list(self.keys())
@@ -274,8 +273,9 @@ class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage):
 		self[newname] = content
 
 	def create_file(self, name, **kwargs):
-		f = StructFile(PersistentBlockIO(), name=name)
-		self[name] = f
+		pbio = PersistentBlockIO()
+		f = StructFile(pbio, name=name)
+		self[name] = pbio
 		return f
 
 	def open_file(self, name, *args, **kwargs):
@@ -285,4 +285,4 @@ class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage):
 
 	def lock(self, name):
 		redis = component.getUtility(nti_interfaces.IRedisClient)
-		self.locks[name] = redis.lock(timeout=60, sleep=1)
+		return redis.lock(timeout=60, sleep=1)
