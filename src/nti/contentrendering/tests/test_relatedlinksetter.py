@@ -1,15 +1,20 @@
-from . import ConfiguringTestBase
+#!/usr/bin/env python
+
+from unittest import TestCase
 from nti.contentrendering.relatedlinksetter import performTransforms
 from nti.contentrendering.contentchecks import performChecks
-from nti.contentrendering.RenderedBook import RenderedBook
 from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
 
 from nti.contentrendering.contentchecks import mathjaxerror
 import os
 from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_
 
+import nti.tests
 
-class TestTransforms(ConfiguringTestBase):
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.contentrendering',) )
+tearDownModule = nti.tests.module_teardown
+
+class TestTransforms(TestCase):
 
 	def test_transforms(self):
 		book = NoPhantomRenderedBook( EmptyMockDocument(), os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' ) )
@@ -19,7 +24,7 @@ class TestTransforms(ConfiguringTestBase):
 		assert_that( book.toc.dom.getElementsByTagName( "video" )[0].parentNode.parentNode.getAttribute( "ntiid" ),
 					 is_("tag:nextthought.com,2011-10:ck12-HTML-book-tx.1") )
 
-class TestContentChecks(ConfiguringTestBase):
+class TestContentChecks(TestCase):
 
 	def test_checks(self):
 		book = NoPhantomRenderedBook( EmptyMockDocument(), os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' ) )

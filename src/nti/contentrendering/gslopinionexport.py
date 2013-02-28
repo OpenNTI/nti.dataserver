@@ -216,9 +216,9 @@ CONTAINERS = { 'blockquote': 'quote',
 
 def _build_header(title = None, authors = None, base_url = None):
 	lines = [br'\documentclass{book}',
-		 br'\usepackage{graphicx}',
-		 br'\usepackage{ntilatexmacros}',
-		 br'\usepackage{hyperref}']
+			 br'\usepackage{graphicx}',
+			 br'\usepackage{ntilatexmacros}',
+			 br'\usepackage{hyperref}']
 	if base_url:
 		lines.append( br'\hyperbaseurl{' + _url_escape(base_url) + b'}' )
 	if title:
@@ -308,7 +308,7 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 	return name
 
 def _build_nti_render_conf():
-	output ="""[general]
+	output = """[general]
 theme = GoogleScholar-Legal
 
 [NTI]
@@ -316,9 +316,10 @@ provider = USSC
 """
 	return output
 
-def main():
-	from zope.configuration import xmlconfig
-	xmlconfig.file( 'configure.zcml', package=nti.contentrendering )
+def main(_do_config=True):
+	if _do_config: # For tests, if already configured set to False
+		from zope.configuration import xmlconfig
+		xmlconfig.file( 'configure.zcml', package=nti.contentrendering )
 	url = sys.argv[1]
 	pq = _url_to_pyquery( url )
 
