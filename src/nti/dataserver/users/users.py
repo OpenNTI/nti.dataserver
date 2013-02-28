@@ -973,7 +973,7 @@ class User(Principal):
 				# Make this work for DynamicFriendsLists.
 				# TODO: this falls down as soon as nesting is involved, because
 				# we won't be able to resolve by names
-				# NOTE: Because if _get_dynamic_sharing_targets_for_read, there might actually
+				# NOTE: Because of _get_dynamic_sharing_targets_for_read, there might actually
 				# be duplicate change objects that get eliminated at read time.
 				# But this ensures that the stream gets an object, bumps the notification
 				# count, and sends a real-time notice to connected sockets.
