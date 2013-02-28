@@ -116,13 +116,13 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 				 'title': 'My New Blog',
 				 'body': ['My first thought'] }
 
-		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
+		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data, status=201 )
 
 		# Return the representation of the new topic created
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
 		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
 		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
-		assert_that( res.status_int, is_( 201 ) )
+		assert_that( res.json_body, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-My New Blog' ) )
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged

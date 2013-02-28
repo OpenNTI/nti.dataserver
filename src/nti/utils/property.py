@@ -102,3 +102,34 @@ def annotation_alias(annotation_name, annotation_property=None, default=None, de
 
 	return property( fget, fset, fdel,
 					 doc=doc )
+
+from zope.cachedescriptors.property import CachedProperty as _CachedProperty
+
+def CachedProperty(*args):
+	"""
+	Just like :class:`zope.cachedescriptors.property.CachedProperty`, except
+	usable directly as an annotation when given names. Any of these patterns
+	will work:
+
+	* ``@CachedProperty``
+	* ``@CachedProperty()``
+	* ``@CachedProperty('n','n2')``
+
+	"""
+
+	if not args: # @CachedProperty()
+		return _CachedProperty # A callable that produces the decorated function
+
+	arg1 = args[0]
+	names = args[1:]
+	if callable(arg1): # @CachedProperty
+		return _CachedProperty( arg1 )
+
+	# @CachedProperty( 'n' )
+	# Ok, must be a list of string names. Which means we are used like a factory
+	# so we return a callable object to produce the actual decorated function
+	def factory(function):
+		return _CachedProperty( function, arg1, *names )
+	return factory
+
+	return arg1

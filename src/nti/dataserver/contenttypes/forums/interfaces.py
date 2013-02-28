@@ -25,6 +25,29 @@ from zope.container.constraints import contains, containers # If passing strings
 from nti.utils import schema
 from zope.schema import Int
 
+### NTIID values
+
+#: The type of NTIID used for a :class:`IBoard` object
+NTIID_TYPE_BOARD = 'Board'
+
+#: The type of NTIID used for a :class:`IForum` object
+NTIID_TYPE_FORUM = 'Forum'
+
+#: The subtype of NTIID used to represent a :class:`IPersonalBlog`
+NTIID_TYPE_PERSONAL_BLOG = NTIID_TYPE_FORUM + ':PersonalBlog'
+
+#: The type of NTIID used for a :class:`ITopic`
+NTIID_TYPE_TOPIC = 'Topic'
+
+# The subtype of NTIID used to represent a :class:`IPersonalBlogEntry`
+NTIID_TYPE_PERSONAL_BLOG_ENTRY = NTIID_TYPE_TOPIC + ':PersonalBlogEntry'
+
+#: The type of NTIID used to represent an individual :class:`IPost`
+NTIID_TYPE_POST = 'Post'
+
+#: The type of NTIID used to represent a comment within a blog post, an :class:`IPersonalBlogComment`
+NTIID_TYPE_BLOG_COMMENT = NTIID_TYPE_POST + ':PersonalBlogComment'
+
 class IBoard(IContentContainer,IContained,nti_interfaces.ITitledDescribedContent): # implementations may be IAcquirer
 	"""
 	A board is the outermost object. It contains potentially many forums (though
@@ -109,7 +132,7 @@ class IHeadlineTopic(ITopic):
 
 	headline = schema.Object(IHeadlinePost, title="The main, first post of this topic.")
 
-class IPersonalBlog(IForum, nti_interfaces.ICreated):
+class IPersonalBlog(IForum, nti_interfaces.ICreated, nti_interfaces.IShouldHaveTraversablePath):
 	"""
 	A personal blog is a special type of forum, in that it contains only :class:`.IPersonalBlogEntry`
 	objects and is contained by an :class:`nti.dataserver.interfaces.IUser`.
@@ -139,7 +162,8 @@ class IPersonalBlogComment(IPost):
 
 class IPersonalBlogEntry(IHeadlineTopic,
 						 nti_interfaces.ICreated,
-						 nti_interfaces.IReadableShared):
+						 nti_interfaces.IReadableShared,
+						 nti_interfaces.IShouldHaveTraversablePath):
 	"""
 	A special kind of story topic that is only contained by blogs.
 	"""

@@ -14,11 +14,13 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.annotation import interfaces as an_interfaces
 
-from ..property import dict_alias, annotation_alias
+from ..property import dict_alias, annotation_alias, CachedProperty
 
 from hamcrest import assert_that
 from hamcrest import has_entry
 from hamcrest import has_property
+from hamcrest import same_instance
+from hamcrest import is_
 
 def test_dict_alias():
 	class X(object):
@@ -57,3 +59,43 @@ def test_annotation_alias():
 	# quiet re-del
 	del x.the_alias
 	assert_that( x, has_property( 'the_alias', 1 ) )
+
+def test_cached_property():
+
+	# Usable directly
+
+	class X(object):
+
+		@CachedProperty
+		def prop(self):
+			return object()
+
+	x = X()
+	assert_that( x.prop, same_instance( x.prop ) )
+
+	# Usable with names
+
+	class Y(object):
+
+		def __init__( self ):
+			self.dep = 1
+
+		@CachedProperty('dep')
+		def prop(self):
+			return str(self.dep)
+
+	y = Y()
+	assert_that( y.prop, same_instance( y.prop ) )
+	assert_that( y.prop, is_( "1" ) )
+	y.dep = 2
+	assert_that( y.prop, is_( "2" ) )
+	assert_that( y.prop, same_instance( y.prop ) )
+
+	# And, to help refactoring, usable with parens but no names
+	class Z(object):
+		@CachedProperty()
+		def prop(self):
+			return object()
+
+	z = Z()
+	assert_that( z.prop, same_instance( z.prop ) )

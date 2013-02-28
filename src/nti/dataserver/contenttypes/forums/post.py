@@ -14,7 +14,6 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 import Acquisition
-from Acquisition import aq_parent
 from persistent import Persistent
 
 from nti.dataserver import datastructures
@@ -23,6 +22,7 @@ from nti.dataserver import sharing
 from ..note import BodyFieldProperty
 from nti.utils.schema import AdaptingFieldProperty
 from zope.schema.fieldproperty import FieldProperty
+from nti.utils.property import CachedProperty
 
 from . import interfaces as for_interfaces
 from zope.annotation import interfaces as an_interfaces
@@ -66,3 +66,10 @@ class PersonalBlogEntryPost(HeadlinePost):
 @interface.implementer(for_interfaces.IPersonalBlogComment)
 class PersonalBlogComment(Post):
 	sharingTargets = _AcquiredSharingTargetsProperty()
+
+#	@CachedProperty
+#	def NTIID(self):
+#		return ntiids.make_ntiid( date=ntiids.DATE,
+#								  provider=self._creator_username,
+#								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
+#								  specific=ntiids.escape_provider(self.username.lower()))

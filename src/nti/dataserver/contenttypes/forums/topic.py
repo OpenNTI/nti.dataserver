@@ -14,16 +14,16 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-
 import Acquisition
-from Acquisition import aq_parent
 
+from nti.ntiids import ntiids
 from nti.dataserver import containers
 from nti.dataserver import sharing
 
 from zope.schema.fieldproperty import FieldProperty
 from nti.utils.schema import AdaptingFieldProperty
 from nti.utils.schema import AcquisitionFieldProperty
+from nti.utils.property import CachedProperty
 
 from . import interfaces as for_interfaces
 from zope.annotation import interfaces as an_interfaces
@@ -57,6 +57,13 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 	creator = None
 	headline = AcquisitionFieldProperty(for_interfaces.IPersonalBlogEntry['headline'])
 
+	@CachedProperty
+	def NTIID(self):
+		"NTIID is defined only after the creator and id/__name__ are set"
+		return ntiids.make_ntiid( date=ntiids.DATE,
+								  provider=self.creator.username,
+								  nttype=for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY,
+								  specific=self.__name__ ) # will need to escape that
 
 from zope.container.contained import ContainerSublocations
 class HeadlineTopicSublocations(ContainerSublocations):

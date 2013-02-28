@@ -22,6 +22,7 @@ from nti.dataserver import mimetype
 
 from .entity import Entity
 
+from nti.utils.property import CachedProperty
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -42,6 +43,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 	defaultGravatarType = 'wavatar'
 	__external_can_create__ = True
 
+	creator = None # Override poor choice from Entity
 
 	def __init__(self, username=None, avatarURL=None):
 		super(FriendsList,self).__init__(username, avatarURL)
@@ -129,18 +131,18 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 			return up_count
 
 	@property
+	def _creator_username(self):
+		return self.creator.username if self.creator else 'Unknown' # for purposes of caching NTIID
+
+	@CachedProperty('_creator_username', 'username') # Actually those really shouldn't change, right?
 	def NTIID(self):
-		# TODO: Cache this. @CachedProperty?
 		return ntiids.make_ntiid( date=ntiids.DATE,
-								  provider=self.creator.username if self.creator else 'Unknown',
+								  provider=self._creator_username,
 								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
 								  specific=ntiids.escape_provider(self.username.lower()))
 
-	def get_containerId( self ):
-		return 'FriendsLists'
-	def set_containerId( self, cid ):
-		pass
-	containerId = property( get_containerId, set_containerId )
+	containerId = property( lambda self: 'FriendsLists',
+							lambda self, nv: None ) # Ignore attempts to set
 
 
 	def _update_friends_from_external(self, newFriends):

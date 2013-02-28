@@ -207,7 +207,7 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 			del home_shard.users_folder[username]
 		return user
 
-	creator = nti_interfaces.SYSTEM_USER_NAME
+	creator = nti_interfaces.SYSTEM_USER_NAME # TODO: This is probably wrong. creator is generally an entity, this breaks many expectations
 	__parent__ = None
 
 	# % is illegal because we sometimes have to
