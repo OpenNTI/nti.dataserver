@@ -16,6 +16,8 @@ from datetime import datetime
 
 from nti.externalization import interfaces as ext_interfaces
 
+from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
+
 from nti.mimetype.mimetype import MIME_BASE
 
 ID 				= unicode(ext_interfaces.StandardExternalFields.ID)
@@ -101,7 +103,7 @@ messageinfo = u'messageinfo'
 messageinfo_ = u'messageinfo'
 canvastextshape_ = 'canvastextshape'
 
-indexable_type_names = (note_, highlight_, redaction_, messageinfo_)
+indexable_type_names = (note_, highlight_, redaction_, messageinfo_, post_)
 indexable_types_order = { x:p for p,x in enumerate(indexable_type_names) }
 
 ascending_ = u'ascending'
@@ -117,19 +119,17 @@ def epoch_time(dt):
 
 def get_datetime(x=None):
 	f = time.time()
-	if x:
-		f = float(x) if isinstance(x, six.string_types) else x
+	if x: f = float(x) if isinstance(x, six.string_types) else x
 	return datetime.fromtimestamp(f)
 
 def normalize_type_name(x, encode=True):
 	result = ''
-	if x:
-		result =x[0:-1].lower() if x.endswith('s') else x.lower()
+	if x: result = x[0:-1].lower() if x.endswith('s') else x.lower()
 	return unicode(result) if encode else result
 
 def get_type_name(obj):
 	if not isinstance(obj, dict):
-		result = obj.__class__.__name__
+		result = post_ if frm_interfaces.IPost.providedBy(obj) else obj.__class__.__name__
 	elif CLASS in obj:
 		result = obj[CLASS]
 	elif MIME_TYPE in obj:

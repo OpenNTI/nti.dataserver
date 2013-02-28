@@ -200,21 +200,21 @@ class IndexManager(object):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
-		if um is not None and data is not None and um.index_content(data, type_name):
+		if um is not None and data is not None and um.index_content(data, type_name=type_name):
 			notify(search_interfaces.ObjectIndexedEvent(data, target))
 
 	def update_user_content(self, target, data, type_name=None):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
-		if um is not None and data is not None and um.update_content(data, type_name):
+		if um is not None and data is not None and um.update_content(data, type_name=type_name):
 			notify(search_interfaces.ObjectReIndexedEvent(data, target))
 
 	def delete_user_content(self, target, data, type_name=None):
 		um = None
 		if data is not None:
 			um = self._get_user_index_manager(target)
-		if um is not None and data is not None and um.delete_content(data, type_name):
+		if um is not None and data is not None and um.delete_content(data, type_name=type_name):
 			notify(search_interfaces.ObjectUnIndexedEvent(data, target))
 
 	@classmethod
