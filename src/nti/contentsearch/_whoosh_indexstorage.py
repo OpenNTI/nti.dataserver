@@ -18,6 +18,7 @@ from zope import interface
 
 from whoosh import index
 from whoosh.store import LockError
+from whoosh.filedb.fileindex import TOC
 from whoosh.index import _DEF_INDEX_NAME
 from whoosh.filedb.filestore import open_index
 from whoosh.filedb.structfile import StructFile
@@ -96,7 +97,9 @@ class IndexStorage(object):
 		raise NotImplementedError()
 
 	def get_index(self, indexname, *args, **kwargs):
-		raise NotImplementedError()
+		if self.index_exists(indexname, **kwargs):
+			return self.open_index(indexname=indexname, **kwargs)
+		return None
 
 	def get_or_create_index(self, indexname, schema=None, recreate=True, *args, **kwargs):
 		raise NotImplementedError()
@@ -141,12 +144,6 @@ class DirectoryStorage(IndexStorage):
 	def index_exists(self, indexname=_DEF_INDEX_NAME, **kwargs):
 		path = self.get_folder(**kwargs)
 		return index.exists_in(path, indexname)
-
-	def get_index(self, indexname=_DEF_INDEX_NAME, **kwargs):
-		if self.index_exists(indexname, **kwargs):
-			return self.open_index(indexname=indexname, **kwargs)
-		else:
-			return None
 
 	def get_or_create_index(self, indexname=_DEF_INDEX_NAME, schema=None, recreate=False, **kwargs):
 		recreate = self.makedirs(**kwargs) or recreate
@@ -223,7 +220,7 @@ def _create_default_whoosh_storage():
 		return UserDirectoryStorage()
 	return None
 
-class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage):
+class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage, IndexStorage):
 	
 	folder = ''
 	supports_mmap = False
@@ -231,12 +228,25 @@ class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage):
 	def __init__(self, *args):
 		BTrees.OOBTree.OOBTree.__init__( self, *args )
 
-	def create_index(self, schema, indexname=_DEF_INDEX_NAME):
+	def create_index(self, schema, indexname=_DEF_INDEX_NAME, **kwargs):
 		return create_index(self, schema=schema, indexname=indexname)
 
-	def open_index(self, indexname=_DEF_INDEX_NAME, schema=None):
+	def open_index(self, indexname=_DEF_INDEX_NAME, schema=None, **kwargs):
 		return open_index(self, schema=schema, indexname=indexname)
 
+	def index_exists(self, indexname=_DEF_INDEX_NAME, **kwargs):
+		gen = TOC._latest_generation(self, indexname)
+		return gen >= 0
+	
+	def get_or_create_index(self, indexname, schema=None, recreate=True, **kwargs):
+		if not self.index_exists(indexname):
+			return self.create_index(schema=schema, indexname=indexname)
+		else:
+			return self.open_index(indexname=indexname)
+	
+	def storage(self, **kwargs):
+		return self
+	
 	def list(self):
 		return list(self.keys())
 
