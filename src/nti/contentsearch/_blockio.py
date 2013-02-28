@@ -74,6 +74,8 @@ class BlockIO(object):
 	block_size = 1024
 	block_factory = Block
 	block_storage_factory = list
+	
+	return_bytearrays_read = False
 		
 	def __init__(self, block_size=None):
 		self.len = 0
@@ -158,7 +160,7 @@ class BlockIO(object):
 			self.pos += len(r)
 			result.extend(r)
 
-		return bytes(result)
+		return bytes(result) if not self.return_bytearrays_read else result
 
 	def readline(self, length=None):
 		"""Read one entire line from the file.
@@ -200,7 +202,7 @@ class BlockIO(object):
 			if do_exit:
 				break
 
-		return bytes(result)
+		return bytes(result) if not self.return_bytearrays_read else result
 
 	def readlines(self, sizehint = 0):
 		"""Read until EOF using readline() and return a list containing the
