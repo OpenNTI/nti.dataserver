@@ -570,6 +570,9 @@ class _NTIIDEntry(object):
 		result.extend( self.extra_links )
 		return result
 
+	def __repr__( self ):
+		return "<%s.%s %s at %s>" % ( type(self).__module__, type(self).__name__, self.ntiid, hex(id(self)) )
+
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(app_interfaces.IContentUnitInfo)

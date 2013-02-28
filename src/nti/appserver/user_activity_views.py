@@ -67,5 +67,7 @@ class UserActivityGetView(RecursiveUGDQueryView):
 			# There is always activity, it just may be empty
 			result = []
 		# Add the blog (possibly missing)
-		result.append( frm_interfaces.IPersonalBlog( self.user, () ) )
+		# NOTE: This is no longer necessary as the blog is being treated as a container
+		# found in user.containers with an NTIID
+		#result.append( frm_interfaces.IPersonalBlog( self.user, () ) )
 		return result

@@ -49,8 +49,9 @@ class ProfileLinkDecorator(object):
 
 			the_links.append( link )
 		# TODO: This is action at a distance. Refactor these to be cleaner.
-		# Primary reason they are here: speed
-		blog = IAnnotations( context ).get( 'Blog' ) # see forum_views
+		# Primary reason they are here: speed.
+		# notice we DO NOT adapt; it must already exist
+		blog = context.containers.getContainer( 'Blog' ) # see forum_views
 		if blog and is_readable( blog, request ):
 			link = Link( context,
 						 rel='Blog',
