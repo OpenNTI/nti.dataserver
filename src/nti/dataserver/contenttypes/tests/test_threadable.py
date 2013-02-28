@@ -23,6 +23,7 @@ from hamcrest import has_length
 from hamcrest import has_entry
 
 import nti.tests
+from nti.tests import validly_provides
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver','nti.contentrange','nti.contentfragments') )
 tearDownModule = nti.tests.module_teardown
@@ -87,6 +88,8 @@ def test_write_external_reply_to_deleted():
 	assert_that( ext, has_entry( 'inReplyTo', 'tag:nextthought.com,2011-10:Missing-x' ) )
 	assert_that( ext, has_entry( 'references', ['tag:nextthought.com,2011-10:Missing-y'] ) )
 
+
+	assert_that( note, validly_provides( nti_interfaces.IInspectableWeakThreadable) )
 
 def test_update_external_reply_to():
 	top = ReferenceObject()
