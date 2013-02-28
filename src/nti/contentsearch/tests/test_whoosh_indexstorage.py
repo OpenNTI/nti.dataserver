@@ -128,9 +128,3 @@ class TestPersistentBlockStorage(ConfiguringTestBase, _IndexStorageTest):
 		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
 		cls.idx_storage = _PersistentBlockStorage()
 		super(TestPersistentBlockStorage,cls).setUpClass()
-	
-	def _create_index(self, indexname):
-		return self.idx_storage.create_index(indexname=indexname, schema=sample_schema)
-
-	def test_component(self):
-		pass

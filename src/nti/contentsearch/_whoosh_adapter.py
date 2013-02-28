@@ -45,7 +45,7 @@ def get_indexname(username, type_name, use_md5=True):
 	else:
 		indexname = "%s_%s" % (username, type_name)
 	return indexname
-	
+
 # proxy class to wrap an whoosh index
 
 class _Proxy(ProxyBase):
@@ -60,67 +60,41 @@ class _Proxy(ProxyBase):
 		return self.rlock.__exit__(*args, **kwargs)
 
 # lease frequently used map to keep open indices
-	
+		
 def _safe_index_close(index):
 	with index:
 		try:
 			index.close()
 		except:
 			pass
-		
-def _on_index_removed(key, value):
-	_safe_index_close(value)
-
-whoosh_indices = LFUMap(maxsize=500, on_removal_callback=_on_index_removed)
-		
+			
 # entity adapter for whoosh indicies
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer( search_interfaces.IWhooshEntityIndexManager )
-class _WhooshEntityIndexManager(_SearchEntityIndexManager):
+class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 		
 	delay = 0.25
 	maxiters = 40
-	use_md5 = True
+	use_md5 = False
 			
 	@property
-	def storage(self):
-		result = component.getUtility(search_interfaces.IWhooshIndexStorage)
-		return result
-		
-	@property
 	def writer_ctor_args(self):
-		return self.storage.default_ctor_args
+		return self.storage.ctor_args()
 
 	@property
 	def writer_commit_args(self):
-		return self.storage.default_commit_args
+		return self.storage.commit_args()
 		
 	# -------------------
 	
 	def _register_index(self, type_name, index_name, index):
-		index = _Proxy(index)
 		self[type_name] = index_name
-		whoosh_indices[index_name] = index
-		return index
+		return _Proxy(index)
 		
 	def _get_indexname(self, type_name):
 		indexname = get_indexname(self.username, type_name, self.use_md5)
 		return indexname
-	
-	def _get_or_create_index(self, type_name):
-		type_name = normalize_type_name(type_name)
-		indexname = self._get_indexname(type_name)
-		index = whoosh_indices.get(indexname, None)
-		if not index:
-			indexable = self.get_indexable_object(type_name)
-			schema = indexable.get_schema() if indexable else None
-			if schema:
-				index = self.storage.get_or_create_index(indexname=indexname,
-														 schema=schema,
-														 username=self.username)
-				index = self._register_index(type_name, indexname, index)
-		return index
 	
 	def _get_index_writer(self, index):
 		return get_index_writer(index, self.writer_ctor_args, self.maxiters, self.delay)
@@ -227,16 +201,53 @@ class _WhooshEntityIndexManager(_SearchEntityIndexManager):
 
 	def remove_index(self, type_name, *args, **kwargs):
 		type_name = normalize_type_name(type_name)
+		return self.pop(type_name, None)
+		
+	def get_indexable_object(self, type_name):
+		indexable = get_indexable_object(type_name)
+		if not hasattr(indexable, 'get_object'):
+			setattr(indexable ,'get_object', self.get_object)
+		return indexable
+	
+def _on_index_removed(key, value):
+	_safe_index_close(value)
+
+class _WhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
+		
+	use_md5 = True
+	whoosh_indices = LFUMap(maxsize=500, on_removal_callback=_on_index_removed)
+		
+	@property
+	def storage(self):
+		result = component.getUtility(search_interfaces.IWhooshIndexStorage)
+		return result
+	
+	def _register_index(self, type_name, index_name, index):
+		index = super(_WhooshEntityIndexManager, self)._register_index(type_name, index_name, index)
+		self.whoosh_indices[index_name] = index
+		return index
+	
+	def _get_or_create_index(self, type_name):
+		type_name = normalize_type_name(type_name)
+		indexname = self._get_indexname(type_name)
+		index = self.whoosh_indices.get(indexname, None)
+		if not index:
+			indexable = self.get_indexable_object(type_name)
+			schema = indexable.get_schema() if indexable else None
+			if schema:
+				index = self.storage.get_or_create_index(indexname=indexname,
+														 schema=schema,
+														 username=self.username)
+				index = self._register_index(type_name, indexname, index)
+		return index
+	
+	def remove_index(self, type_name, *args, **kwargs):
+		type_name = normalize_type_name(type_name)
 		index = self._get_or_create_index(type_name)
 		if index is not None:
 			with index:
 				self.pop(type_name, None)
-				whoosh_indices.pop(type_name, None)
+				self.whoosh_indices.pop(type_name, None)
 				_safe_index_close(index)
-	
-	def get_indexable_object(self, type_name):
-		indexable = get_indexable_object(type_name)
-		setattr(indexable ,'get_object', self.get_object)
-		return indexable
 	
 _WhooshEntityIndexManagerFactory = an_factory(_WhooshEntityIndexManager)
