@@ -12,6 +12,11 @@
 			 for=".interfaces.IHeadlineTopic"
 			 factory=".topic.HeadlineTopicSublocations" />
 
+	<!-- NTIID resolvers -->
+	<utility factory=".ntiids._BlogResolver" name="Forum:PersonalBlog" />
+	<utility factory=".ntiids._BlogEntryResolver" name="Topic:PersonalBlogEntry" />
+
+
 	<!-- Externalization -->
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IBoard" />
