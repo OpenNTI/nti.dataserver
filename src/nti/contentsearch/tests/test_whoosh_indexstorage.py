@@ -1,20 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
 
 import uuid
 import random
 import shutil
 import tempfile
+import threading
 
 from zope import component
 
@@ -25,13 +19,14 @@ from whoosh.compat import text_type
 from nti.contentsearch.interfaces import IWhooshIndexStorage
 from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
 from nti.contentsearch._whoosh_indexstorage import UserDirectoryStorage
+from nti.contentsearch._whoosh_indexstorage import PersistentBlockStorage
 
 from nti.contentsearch.tests import domain
 from nti.contentsearch.tests import ConfiguringTestBase
 
 sample_schema = fields.Schema(id=fields.ID(stored=True, unique=True), content=fields.TEXT(stored=True))
 
-class _IndexStorageTest(ConfiguringTestBase):
+class _IndexStorageTest(object):
 
 	indexdir  = None
 	idx_storage = None
@@ -45,9 +40,12 @@ class _IndexStorageTest(ConfiguringTestBase):
 	def storage(self):
 		return self.idx_storage
 
+	def _create_index(self, indexname):
+		return self.storage.get_or_create_index(indexname=indexname, schema=sample_schema)
+	
 	def _add_2_index(self, indexname, entries=None):
 
-		index = self.storage.get_or_create_index(indexname=indexname, schema=sample_schema)
+		index = self._create_index(indexname=indexname)
 		writer = index.writer()
 
 		ids = list()
@@ -101,8 +99,8 @@ class _IndexStorageTest(ConfiguringTestBase):
 	def test_component(self):
 		storage = component.getUtility(IWhooshIndexStorage)
 		self.assertTrue(storage != None)
-
-class TestDirectoryStorage(_IndexStorageTest):
+		
+class TestDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
 
 	@classmethod
 	def setUpClass(cls):
@@ -110,10 +108,29 @@ class TestDirectoryStorage(_IndexStorageTest):
 		cls.idx_storage = DirectoryStorage(cls.indexdir)
 		super(TestDirectoryStorage,cls).setUpClass()
 
-class TestUserNameDirectoryStorage( _IndexStorageTest):
+class TestUserNameDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
 
 	@classmethod
 	def setUpClass(cls):
 		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
 		cls.idx_storage = UserDirectoryStorage(cls.indexdir)
 		super(TestUserNameDirectoryStorage,cls).setUpClass()
+		
+
+class _PersistentBlockStorage(PersistentBlockStorage):
+	def lock(self, name):
+		return threading.Lock()
+
+class TestPersistentBlockStorage(ConfiguringTestBase, _IndexStorageTest):
+
+	@classmethod
+	def setUpClass(cls):
+		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
+		cls.idx_storage = _PersistentBlockStorage()
+		super(TestPersistentBlockStorage,cls).setUpClass()
+	
+	def _create_index(self, indexname):
+		return self.idx_storage.create_index(indexname=indexname, schema=sample_schema)
+
+	def test_component(self):
+		pass

@@ -11,6 +11,9 @@ import shutil
 import tempfile
 import unittest
 import transaction
+from struct import calcsize
+
+from whoosh.filedb.structfile import StructFile
 
 from ZODB import DB, FileStorage
 
@@ -139,3 +142,23 @@ class TestBlockIO(unittest.TestCase):
 		finally:
 			self._closedb()
 
+	def test_pack_upack(self):
+		b = PersistentBlockIO()
+		fb = StructFile(b)
+		fb.write_varint(calcsize("!i"))
+		fb.write_varint(calcsize("!Q"))
+		fb.write_varint(calcsize("!f"))
+		fb.write_int(-12345)
+		b.seek(0)
+		
+		sz = fb.read_varint()
+		assert_that(sz, is_(calcsize("!i")))
+		
+		sz = fb.read_varint()
+		assert_that(sz, is_(calcsize("!Q")))
+		
+		sz = fb.read_varint()
+		assert_that(sz, is_(calcsize("!f")))
+		
+		sz = fb.read_int()
+		assert_that(sz, is_(-12345))
