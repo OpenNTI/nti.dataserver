@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from .ugd_query_views import _RecursiveUGDView as RecursiveUGDQueryView
+from .ugd_query_views import _toplevel_filter
 from .httpexceptions import HTTPNotFound
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -27,6 +28,14 @@ from pyramid.view import view_config
 #: Also serves as a view name for that same purpose
 #: (:class:`UserActivityGetView`).
 REL_USER_ACTIVITY = "Activity" # This permits a URL like .../users/$USER/Activity
+
+def _always_toplevel_filter( x ):
+	try:
+		# IInspectableWeakThreadable required for this
+		return x.isOrWasChildInThread() is False()
+	except AttributeError:
+		return _toplevel_filter( x )
+
 
 
 @view_config( route_name='objects.generic.traversal',
@@ -46,8 +55,15 @@ class UserActivityGetView(RecursiveUGDQueryView):
 	user but the user who's data is being accessed.
 
 	The contents fully support the same sorting and paging parameters as
-	the UGD views. """
+	the UGD views with a few exceptions:
 
+	* The definition for a ``TopLevel`` object is changed to mean one that has never been a
+	  child in a thread (instead of just one who is not currently a child in a thread) (where possible).
+
+	"""
+
+	FILTER_NAMES = RecursiveUGDQueryView.FILTER_NAMES.copy()
+	FILTER_NAMES['TopLevel'] = _always_toplevel_filter
 
 	def __init__( self, request ):
 		self.request = request

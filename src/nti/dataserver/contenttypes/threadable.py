@@ -7,18 +7,16 @@ Defines the base behaviours for things that are threadable.
 """
 from __future__ import print_function, unicode_literals, absolute_import
 
+from zope import interface
 import collections
 
 from persistent.list import PersistentList
 
 from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization import integer_strings
-
-from nti.ntiids import ntiids
 
 from nti.dataserver import interfaces as nti_interfaces
 
-
+@interface.implementer(nti_interfaces.IInspectableWeakThreadable)
 class ThreadableMixin(object):
 	"""
 	Defines an object that is client-side threadable. These objects are
@@ -56,6 +54,9 @@ class ThreadableMixin(object):
 		self._inReplyTo = nti_interfaces.IWeakRef( value ) if value is not None else None
 
 	inReplyTo = property( getInReplyTo, setInReplyTo )
+
+	def isOrWasChildInThread(self):
+		return self._inReplyTo is not None or self._references
 
 	@property
 	def references(self):

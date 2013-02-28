@@ -766,16 +766,31 @@ class IThreadable(interface.Interface):
 	"""
 	Something which can be used in an email-like threaded fashion.
 	"""
-	inReplyTo = interface.Attribute(
+
+	inReplyTo = interface.Attribute("""	The object to which this object is directly a reply."""	)
+	references = interface.Attribute("""A sequence of objects this object transiently references.""")
+
+class IWeakThreadable(IThreadable):
+	"""
+	Just like :class:`IThreadable`, except with the expectation that
+	the items in the reply chain are only weakly referenced and that
+	they are automatically cleaned up (after some time) when deleted. Thus,
+	it is not necessarily clear when a ``None`` value for ``inReplyTo``
+	means the item has never had a reply, or the reply has been deleted.
+	"""
+
+class IInspectableWeakThreadable(IWeakThreadable):
+	"""
+	A weakly threaded object that provides information about its
+	historical participation in a thread.
+	"""
+
+	def isOrWasChildInThread():
 		"""
-		The object to which this object is directly a reply.
+		Return a boolean object indicating if this object is or was
+		ever part of a thread chain. If this returns a true value, it
+		implies that at some point ``inRelpyTo`` was non-None.
 		"""
-		)
-	references = interface.Attribute(
-		"""
-		A sequence of objects this object transiently references.
-		"""
-		)
 
 class IReadableShared(interface.Interface):
 	"""
