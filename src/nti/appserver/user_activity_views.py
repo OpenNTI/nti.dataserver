@@ -31,7 +31,7 @@ REL_USER_ACTIVITY = "Activity" # This permits a URL like .../users/$USER/Activit
 def _always_toplevel_filter( x ):
 	try:
 		# IInspectableWeakThreadable required for this
-		return x.isOrWasChildInThread() is False
+		return not x.isOrWasChildInThread()
 	except AttributeError:
 		return _toplevel_filter( x )
 
