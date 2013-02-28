@@ -21,8 +21,10 @@ from hamcrest import has_length
 from hamcrest import has_property
 from hamcrest import contains
 from hamcrest import is_
+from hamcrest import same_instance
 from hamcrest import is_in
 from hamcrest import is_not as does_not
+is_not = does_not
 from hamcrest import greater_than_or_equal_to
 import nti.tests
 from nti.tests import is_true, is_false
@@ -61,6 +63,7 @@ def test_update_friends_list_name():
 		_avatarURL = 'BAD'
 
 	o = FriendsList('MyList')
+	ntiid = o.NTIID
 	ext_value = nti.externalization.externalization.to_external_object( o )
 	assert_that( ext_value, has_entry( 'Username', 'MyList' ) )
 	assert_that( ext_value, has_entry( 'alias', 'MyList' ) )
@@ -73,6 +76,15 @@ def test_update_friends_list_name():
 	assert_that( ext_value, has_entry( 'Username', 'MyList' ) )
 	assert_that( ext_value, has_entry( 'realname', 'My Funny Name' ) )
 	assert_that( ext_value, has_entry( 'alias', 'My Funny Name' ) )
+
+	# NTIID didn't change
+	assert_that( o.NTIID, is_( ntiid ) )
+	# in fact its cached
+	assert_that( o.NTIID, is_( same_instance( ntiid ) ) )
+
+	# Username changing changes it though
+	o.creator = O()
+	assert_that( o.NTIID, is_not( ntiid ) )
 
 @WithMockDSTrans
 def test_update_friends_list():

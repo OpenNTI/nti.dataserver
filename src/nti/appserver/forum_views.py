@@ -177,41 +177,40 @@ class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
 
 	def _do_call( self ):
 		blog = self.request.context
-		containedObject = self._read_incoming_post()
+		entry_post = self._read_incoming_post()
 
 		# Now the topic
-		topic = PersonalBlogEntry()
-		topic.creator = self.getRemoteUser()
-		containedObject.__parent__ = topic # must set __parent__ first for acquisition to work
+		entry = PersonalBlogEntry()
+		entry.creator = self.getRemoteUser()
+		entry_post.__parent__ = entry # must set __parent__ first for acquisition to work
 
-		topic.headline = containedObject
+		entry.headline = entry_post
 		# Business rule: titles of the personal blog entry match the post
-		topic.title = topic.headline.title
-		topic.description = topic.title
+		entry.title = entry.headline.title
+		entry.description = entry.title
 
 		# For these, the name matters. We want it to be as pretty as we can get
 		# TODO: We probably need to register an IReservedNames that forbids
 		# _VIEW_CONTENTS and maybe some other stuff
-		name = INameChooser( blog ).chooseName( topic.title, topic )
+		name = INameChooser( blog ).chooseName( entry.title, entry )
 
-		lifecycleevent.created( topic )
-		lifecycleevent.created( containedObject )
+		lifecycleevent.created( entry )
+		lifecycleevent.created( entry_post )
 
 
-		blog[name] = topic # Now store the topic and fire added
-		topic.id = name # match these things
-		containedObject.containerId = topic.id # TODO:  This is not right, containerId is meant to be global
+		blog[name] = entry # Now store the topic and fire added
+		entry.id = name # match these things. ID is local within container
+		entry_post.containerId = entry.NTIID
 
-		lifecycleevent.added( containedObject )
+		lifecycleevent.added( entry_post )
 
 		# Respond with the generic location of the object, within
 		# the owner's Objects tree.
 		self.request.response.status_int = 201 # created
 		self.request.response.location = self.request.resource_url( self.getRemoteUser(),
 																	'Objects',
-																	to_external_ntiid_oid( topic ) )
-
-		return topic
+																	to_external_ntiid_oid( entry ) )
+		return entry
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -239,7 +238,7 @@ class TopicPostView(_AbstractIPostPOSTView):
 
 		topic[name] = incoming_post # Now store the topic and fire added
 		incoming_post.id = name # match these things
-		incoming_post.containerId = topic.id # TODO:  This is not right, containerId is meant to be global
+		incoming_post.containerId = topic.NTIID
 
 		# Respond with the generic location of the object, within
 		# the owner's Objects tree.

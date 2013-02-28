@@ -424,7 +424,16 @@ class IMutableGroupMember(IGroupMember):
 def valid_entity_username(entity_name):
 	return not username_is_reserved( entity_name )
 
-class IEntity(IZContained, IAnnotatable):
+class IShouldHaveTraversablePath(interface.Interface):
+	"""
+	A marker interface for things that should have a resource
+	path that can be traversed. This is a temporary measure (everything
+	*should* eventually have a resource path) and a non-disruptive
+	way to start requiring ILink externalization to use resource paths
+	exclusively.
+	"""
+
+class IEntity(IZContained, IAnnotatable, IShouldHaveTraversablePath):
 	username = DecodingValidTextLine(
 		title=u'The username',
 		constraint=valid_entity_username
@@ -712,7 +721,7 @@ class IModeledContent(IContent,IContained,mime_interfaces.IContentTypeMarker):
 	# be adding IEnclosedContent dynamically to the enclosed object
 	# instead of wrapping it?)
 
-class IEnclosedContent(IContent,IContained,IContentTypeAware):
+class IEnclosedContent(IContent,IContained,IContentTypeAware, IShouldHaveTraversablePath):
 	"""
 	Content accessible logically within another object.
 	This typically serves as a wrapper around another object, whether

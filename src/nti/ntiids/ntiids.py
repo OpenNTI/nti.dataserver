@@ -59,7 +59,7 @@ TYPE_NAMED_ENTITY_USER = TYPE_NAMED_ENTITY + ':User'
 #: Subtype of named entities identifying a particular community
 TYPE_NAMED_ENTITY_COMMUNITY = TYPE_NAMED_ENTITY + ':Community'
 
-TYPE_ROOM = 'MeetingRoom'
+TYPE_ROOM = 'MeetingRoom' #: AKA an extant "chat" session
 TYPE_MEETINGROOM = TYPE_ROOM
 
 TYPE_HTML = 'HTML'
