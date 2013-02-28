@@ -158,7 +158,7 @@ setup(
 		'gunicorn >= 0.17.2',
 		'hiredis >= 0.1.1', # Redis C parser
 		'html5lib == 0.95',
-                'isodate >= 0.4.9', # ISO8601 date/time/duration parser and formatter
+		'isodate >= 0.4.9', # ISO8601 date/time/duration parser and formatter
 		'logilab-common >= 0.59.0',
 		'lxml >= 3.1.0', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.7', # Human name parsing
@@ -253,7 +253,7 @@ setup(
 		'zope.browserresource >= 4.0.0',
 		'zope.catalog >= 3.8.2',
 		'zope.cachedescriptors >= 4.0.0',
-		'zope.component >= 4.0.2',
+		'zope.component[persistentregistry] >= 4.1.0',
 		# Schema vocabularies based on querying ZCA; useful
 		# for views and other metadata
 		'zope.componentvocabulary >= 1.0.1',
@@ -278,7 +278,7 @@ setup(
 		'zope.dublincore >= 4.0.0',
 		'zope.error >= 4.1.0',
 		'zope.event >= 4.0.2',
-		'zope.exceptions >= 4.0.5',
+		'zope.exceptions >= 4.0.6',
 		'zope.filerepresentation >= 4.0.1',
 		'zope.file >= 0.6.2',
 		'zope.formlib >= 4.2.1', # Req'd by zope.mimetype among others,
@@ -287,7 +287,7 @@ setup(
 		'zope.i18n >= 3.8.0', # 4.0.0a4 is out; works fine. upgrade when official
 		'zope.i18nmessageid >= 4.0.2',
 		'zope.index >= 4.0.1',
-		'zope.interface >= 4.0.4',
+		'zope.interface >= 4.0.5',
 		'zope.intid >= 3.7.2',
 		'zope.keyreference >= 3.6.4',
 		'zope.lifecycleevent >= 4.0.1',
@@ -301,6 +301,7 @@ setup(
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
+		'zope.sequencesort >= 4.0.0', # advanced locale aware sorting
 		'zope.schema >= 4.3.2',
 		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
 		# A 4.0.0a3 is out and works fine. officially upgrade when final. But this requires an extra: 'zope.security[untrustedpython] >= 4.0.0a3'
