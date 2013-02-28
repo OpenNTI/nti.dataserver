@@ -20,7 +20,7 @@ except ImportError:
 import pyquery
 import fudge
 
-class TestGSL(nti.tests.ConfiguringTestBase):
+class TestGSL(nti.tests.SharedConfiguringTestBase):
 	set_up_packages = (nti.contentrendering,)
 
 	def test_runthrough(self):
@@ -44,12 +44,11 @@ class TestGSL(nti.tests.ConfiguringTestBase):
 		contentLocation = 'COHEN_v__CALIFORNIA_'
 		try:
 			os.chdir( '/tmp' )
-			gslopinionexport.main()
-			assert_that( os.path.exists(os.path.join( contentLocation, 'COHEN_v__CALIFORNIA_.tex' ) ), 
+			gslopinionexport.main(_do_config=False) # as we've already loaded it
+			assert_that( os.path.exists(os.path.join( contentLocation, 'COHEN_v__CALIFORNIA_.tex' ) ),
 						    is_(True) )
-			assert_that( os.path.exists(os.path.join( contentLocation, 'nti_render_conf.ini' ) ), 
+			assert_that( os.path.exists(os.path.join( contentLocation, 'nti_render_conf.ini' ) ),
 						    is_(True) )
 		finally:
 			if os.path.exists( contentLocation ):
 				shutil.rmtree( contentLocation )
-
