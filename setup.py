@@ -273,7 +273,7 @@ setup(
 		'zope.copypastemove >= 3.8.0',
 		'zope.datetime >= 4.0.0',
 		'zope.deprecation >= 4.0.2',
-		'zope.deferredimport >= 3.5.3', # useful with zope.deprecation. Req'd by contentratings
+		'zope.deferredimport >= 4.0.0', # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 4.0.0',
 		'zope.dublincore >= 4.0.0',
 		'zope.error >= 4.1.0',

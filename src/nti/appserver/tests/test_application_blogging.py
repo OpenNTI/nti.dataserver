@@ -68,21 +68,27 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog( self ):
 		testapp = self.testapp
-		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog' )
 
-		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblog+json' ) )
-		assert_that( res.json_body, has_entry( 'title', 'sjohnson@nextthought.com' ) )
+		# The blog can be found at a pretty url, and by NTIID
+		pretty_url = '/dataserver2/users/sjohnson@nextthought.com/Blog'
+		ntiid_url = '/dataserver2/NTIIDs/tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog'
+		for url in pretty_url, ntiid_url:
+			res = testapp.get( url )
 
-		# We have a contents URL
-		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
-		# Make sure we're getting back pretty URLs
-		assert_that( contents_href, is_( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/contents' ) ))
-		# which is empty
-		testapp.get( contents_href, status=200 )
+			assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblog+json' ) )
+			assert_that( res.json_body, has_entry( 'title', 'sjohnson@nextthought.com' ) )
 
-		# And thus not in my links
-		res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )
-		assert_that( res.json_body['Items'][0]['Links'], does_not( has_item( has_entry( 'rel', 'Blog' ) ) ) )
+			# We have a contents URL
+			contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
+			# Make sure we're getting back pretty URLs
+			assert_that( contents_href, is_( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/contents' ) ))
+			# which is empty...
+			testapp.get( contents_href, status=200 )
+
+			# ...And thus not in my links
+			res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )
+			assert_that( res.json_body['Items'][0]['Links'], does_not( has_item( has_entry( 'rel', 'Blog' ) ) ) )
+
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
@@ -129,12 +135,13 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
+		entry_url = res.location
+		entry_ntiid = res.json_body['NTIID']
 
-		# The new topic is accessible at its OID URL, plus a pretty URL
+		# The new topic is accessible at its OID URL, its pretty URL, and by NTIID
+		for url in entry_url, UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My New Blog' ), UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
+			testapp.get( url )
 
-		testapp.get( res.location ) # OID URL
-
-		testapp.get( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My New Blog' ) ) # Pretty URL
 
 		# and it has no contents
 		testapp.get( contents_href, status=200 )
@@ -336,16 +343,21 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
 		entry_url = res.location
 		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
+		entry_ntiid = res.json_body['NTIID']
+
 
 		# (Same user) comments on blog by POSTing a new post
 		data['title'] = 'A comment'
 		data['body'] = ['This is a comment body']
 
-		res = testapp.post_json( entry_url, data )
+		res = testapp.post_json( entry_url, data, status=201 )
 
 		assert_that( res.status_int, is_( 201 ) )
 		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
 		assert_that( res.json_body, has_entry( 'body', data['body'] ) )
+		assert_that( res.json_body, has_entry( 'ContainerId', entry_ntiid) )
+
+
 		post_url = self.require_link_href_with_rel( res.json_body, 'edit' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # comments can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # comments can be flagged

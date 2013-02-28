@@ -126,19 +126,33 @@ def _match( x, container_id, case_sensitive=True ):
 	#warnings.warn( "Hack for UI: making some NTIIDS case-insensitive." )
 	return x if getattr( x, 'NTIID', '' ).lower() == (container_id.lower() or 'B').lower() else None
 
-class _AbstractUserBasedResolver(object):
+from abc import ABCMeta, abstractmethod
+class AbstractUserBasedResolver(object):
+	"""
+	A base class for resolving NTIIDs within the context of a user
+	(or other globally named entity). The incoming NTIID should name
+	such an entity in its "provider" portion. This class then
+	resolves the entity and passes it, along with the incoming
+	NTIID string, to the :meth:`_resolve` method.
+
+	"""
+	__metaclass__ = ABCMeta
 
 	namespace = 'users'
 
-	def resolve( self, key ):
-		provider_name = get_provider( key )
+	def resolve( self, ntiid ):
+		provider_name = get_provider( ntiid )
 		user = _resolve_user( provider_name, self.namespace )
 
 		if user:
-			return self._resolve( key, user )
+			return self._resolve( ntiid, user )
 
-	def _resolve( self, key, user ):
+	@abstractmethod
+	def _resolve( self, ntiid, user ):
+		"""Subclasses implement this to finish the resolution in the scope of a user."""
 		raise NotImplementedError()
+
+_AbstractUserBasedResolver = AbstractUserBasedResolver # BWC
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _ClassResolver(_AbstractUserBasedResolver):

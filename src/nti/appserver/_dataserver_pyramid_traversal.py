@@ -130,7 +130,12 @@ class _ObjectsContainerResource(_ContainerResource):
 		# Make these things be acquisition wrapped, just as if we'd traversed
 		# all the way to them (only if not already wrapped)
 		if getattr( result, '__parent__', None ) is not None and IAcquirer.providedBy( result ) and aq_base( result ) is result:
-			result = result.__of__( result.__parent__ )
+			try:
+				result = result.__of__( result.__parent__ )
+			except TypeError:
+				# Thrown for "attempt to wrap extension method using an object that is not an extension class instance."
+				# In other words, result.__parent__ is not ExtensionClass.Base.
+				pass
 		return result
 
 	def _getitem_with_ds( self, ds, key ):
