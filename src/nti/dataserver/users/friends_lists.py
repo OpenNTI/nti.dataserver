@@ -61,10 +61,20 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 			friend.accept_shared_data_from( self.creator )
 			self.creator.follow( friend ) # TODO: used to be an instance check on SharingSource
 
+	def __len__( self ):
+		i = 0
+		for _ in self:
+			i += 1
+		return i
+
+	def __nonzero__( self ):
+		return True # despite what we contain
+
 	def __iter__(self):
 		"""
 		Iterating over a FriendsList iterates over its friends
 		(as Entity objects), resolving weak refs.
+
 		:return: An iterator across a set of `Entity` objects.
 		"""
 		for wref in self._friends_wref_set:

@@ -185,7 +185,7 @@ setup(
 		'pyramid >= 1.4' ,
 		'pyramid_mailer >= 0.10', # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
-		'pyramid_zcml >= 0.9.2',
+		'pyramid_zcml >= 1.0.0',
 		'pyramid_zodbconn >= 0.4',
 		'pyramid-openid >= 0.3.4',
 		# Monitoring stats and instrumenting code
