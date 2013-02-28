@@ -23,25 +23,34 @@ from nti.contentfragments import interfaces as frg_interfaces
 def _text_of( p ):
 	return etree.tostring( p, encoding=unicode, method='text' )
 
-class _ElementPlainTextContentFragment(frg_interfaces.PlainTextContentFragment):
+class _TreePlainTextContentFragment(frg_interfaces.PlainTextContentFragment):
+	__slots__ = frg_interfaces.PlainTextContentFragment.__slots__ + ('children','__parent__')
 	children = ()
+	__parent__ = None
+
+class _ElementPlainTextContentFragment(_TreePlainTextContentFragment):
+	__slots__ = _TreePlainTextContentFragment.__slots__ + ('element',)
+	element = None
 	def __new__( cls, element ):
 		return super(_ElementPlainTextContentFragment,cls).__new__( cls, _text_of( element ) )
 
 	def __init__( self, element=None ):
 		# Note: __new__ does all the actual work, because these are immutable as strings
 		super(_ElementPlainTextContentFragment,self).__init__( _text_of( element ) )
-		self.element = element
+		if element is not None:
+			self.element = element
 
 
 class _Container(frg_interfaces.LatexContentFragment):
-
+	__slots__ = frg_interfaces.LatexContentFragment.__slots__ + ('children','__parent__')
 	children = ()
+	__parent__ = None
 
 	def add_child( self, child ):
 		if self.children == ():
 			self.children = []
 		self.children.append( child )
+		child.__parent__ = self
 
 
 class _WrappedElement(_Container):
@@ -89,9 +98,9 @@ class _href(_Container):
 	def __init__( self, url, text=None ):
 		super(_href,self).__init__( self, '\\href{' + url + '}' )
 		# Note: __new__ does all the actual work, because these are immutable as strings
-		self.add_child( '{' )
+		self.add_child( _TreePlainTextContentFragment( '{' ) )
 		self.add_child( text )
-		self.add_child( '}' )
+		self.add_child( _TreePlainTextContentFragment( '}' ) )
 
 def _url_to_pyquery( url ):
 	# Must use requests, not the url= argument, as
@@ -176,7 +185,7 @@ def _p_to_content(footnotes, p, include_tail=True):
 			_tail(p)
 
 
-	return frg_interfaces.LatexContentFragment( ' '.join( [frg_interfaces.ILatexContentFragment( x ) for x in accum] ) )
+	return _Container( frg_interfaces.LatexContentFragment( ' '.join( [frg_interfaces.ILatexContentFragment( x ) for x in accum] ) ) )
 
 def _find_footnote( footnotes, sup ):
 	# footnote refs
@@ -253,10 +262,9 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 			if ( re.search( r'^Justice [A-Z]*|^Chief Justice [A-Z]*|^MR. JUSTICE [A-Z]*|^MR. CHIEF JUSTICE [A-Z]*', unicode( inc_child.text ) ) ):
 				if ( re.search( r'concurring|dissenting', unicode( inc_child.text ) ) ):
 					section = _Section( inc_child.text.strip() )
-					if hasattr( current, 'parent' ):
-						current = getattr( current, 'parent' ) # Close the nesting. This deals with exactly one level
+					if current.__parent__:
+						current = current.__parent__ # Close the nesting. This deals with exactly one level
 					current.add_child( section )
-					setattr( section, 'parent', current )
 					current = section
 			else:
 				for child in inc_child.getchildren():
@@ -264,10 +272,9 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 						if ( re.search( r'concurring|dissenting', unicode( child.tail ) ) or
 						     re.search( r'dissent|concur', unicode( _text_of( inc_child.itersiblings().next() ) ) ) ):
 							section = _Section( child.tail.strip() )
-							if hasattr( current, 'parent' ):
-								current = getattr( current, 'parent' ) # Close the nesting. This deals with exactly one level
+							if current.__parent__:
+								current = current.__parent__ # Close the nesting. This deals with exactly one level
 							current.add_child( section )
-							setattr( section, 'parent', current )
 							current = section
 			current.add_child( _p_to_content( footnotes, inc_child ) )
 		elif inc_child.tag in CONTAINERS:
@@ -275,9 +282,10 @@ def _opinion_to_tex( doc, output=None, base_url=None ):
 			container = _Container( "\\begin{%s}" % CONTAINERS[inc_child.tag] )
 			content = _p_to_content( footnotes, inc_child )
 			container.add_child( content )
-			container.add_child( frg_interfaces.LatexContentFragment( '\\end{%s}' % CONTAINERS[inc_child.tag] ) )
-			if content or getattr( content, 'children', ()):
+			container.add_child( _Container( '\\end{%s}' % CONTAINERS[inc_child.tag] ) )
+			if content or content.children:
 				current.add_child( container )
+				container.__parent__ = None # reset what add_child did (why?)
 		elif inc_child.tag == 'h2':
 			current.add_child( _p_to_content( footnotes, inc_child ) )
 
@@ -313,7 +321,7 @@ def main():
 	xmlconfig.file( 'configure.zcml', package=nti.contentrendering )
 	url = sys.argv[1]
 	pq = _url_to_pyquery( url )
-	
+
 	buf = StringIO()
 	title = _opinion_to_tex( pq, output=buf, base_url=url )
 	title = title.replace(' ', '_').replace('.', '_')

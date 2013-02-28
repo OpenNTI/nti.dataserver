@@ -56,34 +56,38 @@ class UnicodeContentFragment(unicode):
 	interface.
 
 	This object *DOES NOT* add a dictionary to the :class:`unicode` type.
-	In particular, it should not be weak referenced.
+	In particular, it should not be weak referenced. Subclasses that
+	do not expect to be persisted in the ZODB *may* add additional attributes
+	by adding to the ``__slots__`` field.
 	"""
-
-	__slots__ = () # actually meaningless, but we simulate this with __getattr__ and __setattr__
 
 	# We do need to allow the things used by zope.interface/zope.component
 	_ZCA_KEYS = ('__provides__',)
+
+
+	__slots__ = _ZCA_KEYS # actually meaningless, but we simulate this with __getattr__ and __setattr__
+
 
 	def __getattr( self, name ):
 		raise AttributeError( name )
 
 	def __setattr__( self, name, value ):
 		# We do allow the attributes used by the ZCA
-		if name in self._ZCA_KEYS:
+		if name in self.__slots__:
 			unicode.__setattr__( self, name, value )
 			return
-		raise AttributeError( name )
+		raise AttributeError( name, type(self) )
 
 	def __getattribute__( self, name ):
 		if name in ('__dict__', '__weakref__'): # Though this does not actually prevent creating a weak ref
-			raise AttributeError( name )
+			raise AttributeError( name, type(self) )
 		return unicode.__getattribute__( self, name )
 
 	def __setstate__( self, state ):
 		# If we had any state saved due to bad pickles in the past
 		# ignore it. Do support the ZCA attributes
 		if state:
-			for k in self._ZCA_KEYS:
+			for k in self.__slots__:
 				v = state.pop( k, self )
 				if v is not self:
 					unicode.__setattr__( self, k, v )
@@ -96,7 +100,7 @@ class UnicodeContentFragment(unicode):
 		# Support just the ZCA attributes
 		state = unicode.__getattribute__( self, '__dict__' )
 		if state:
-			state = {k: v for k, v in state.items() if k in self._ZCA_KEYS}
+			state = {k: v for k, v in state.items() if k in self.__slots__}
 			return state
 
 		return ()
@@ -112,6 +116,12 @@ class UnicodeContentFragment(unicode):
 		if result is not self:
 			result = self.__class__( result )
 		return result
+
+	# shut pylint up about 'bad container'; raise same error super does
+	def __delitem__( self, i ):
+		raise TypeError()
+	def __setitem__( self, k, v ):
+		raise TypeError()
 
 class ILatexContentFragment(IUnicodeContentFragment, mime_types.IContentTypeTextLatex):
 	"""
