@@ -16,6 +16,7 @@ from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
 
 from . import get_indexable_types
+from .common import get_type_name
 from .common import normalize_type_name
 from . import interfaces as search_interfaces
 
@@ -82,6 +83,7 @@ def handle_index_event(indexmanager, target, change, broadcast=None):
 			should_process = change_object.isSharedDirectlyWith( entity )
 
 	if should_process:
-		return _process_event(indexmanager, target, change.type, change_object.__class__.__name__, change_object)
+		data_type = get_type_name(change.object)
+		return _process_event(indexmanager, target, change.type, data_type, change_object)
 
 	return False
