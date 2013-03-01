@@ -58,7 +58,7 @@ class _SearchEntityIndexManager(zcontained.Contained, PersistentMapping):
 
 		if not result:
 			index_owner = self.username.lower()
-			adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
+			adapted = component.getAdapter(obj, search_interfaces.IShareableContentResolver)
 			creator = adapted.get_creator().lower()
 			sharedWith = {x.lower() for x in adapted.get_sharedWith() or ()}
 			result = index_owner == creator or index_owner in sharedWith
