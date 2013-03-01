@@ -297,6 +297,7 @@ class TestHasPermission(mock_dataserver.SharedConfiguringTestBase):
 			component.getGlobalSiteManager().unregisterUtility( policy )
 
 from nti.contentlibrary.filesystem import FilesystemContentPackage
+from nti.contentlibrary.contentunit import _clear_caches
 
 class TestLibraryEntryAclProvider(mock_dataserver.SharedConfiguringTestBase):
 
@@ -322,6 +323,7 @@ class TestLibraryEntryAclProvider(mock_dataserver.SharedConfiguringTestBase):
 			os.unlink( self.acl_path )
 		except OSError:
 			pass
+		_clear_caches()
 
 	def test_no_acl_file(self):
 		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
