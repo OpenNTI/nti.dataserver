@@ -170,19 +170,20 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 			if coupon is not None and not self.validate_coupon(coupon, api_key=api_key):
 				raise ValueError("Invalid coupon")
 			amount = self.apply_coupon(amount, coupon, api_key=api_key)
-
+			cents_amount = int(amount * 100.0) # cents
+					
 			# register stripe user and token
 			customer_id = self.get_or_create_customer(username, api_key=api_key)
 			notify(pay_interfaces.RegisterStripeToken(purchase_id, username, token))
 
 			# charge card, user description for tracking purposes
 			descid = "%s:%s:%s" % (purchase_id, username, customer_id)
-			charge = self.create_charge(amount, currency, card=token, description=descid, api_key=api_key)
+			charge = self.create_charge(cents_amount, currency, card=token, description=descid, api_key=api_key)
 
 			notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
 
 			if charge.paid:
-				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
+				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
 
 			return charge.id
 		except Exception as e:
@@ -242,7 +243,9 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 					notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
 			elif charge.paid:
 				if not purchase.has_succeeded():
-					notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
+					amount = charge.amount /100.0
+					currency = charge.currency.upper()
+					notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
 
 			notify(store_interfaces.PurchaseAttemptSynced(purchase_id, username))
 
