@@ -170,6 +170,12 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 			type_name = get_type_name(data) if data else None
 		return normalize_type_name(type_name)
 	
+	def _index_content(self, indexable, writer, data):
+		result = indexable.index_content(writer, data, **self.writer_commit_args)
+		if not result:
+			writer.cancel()
+		return result
+				
 	def index_content(self, data, *args, **kwargs):
 		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
@@ -177,12 +183,15 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 			with index:
 				indexable = self.get_indexable_object(type_name)
 				writer = self._get_index_writer(index)
-				if not indexable.index_content(writer, data, **self.writer_commit_args):
-					writer.cancel()
-				else:
-					return True
+				return self._index_content(indexable, writer, data)
 		return False
 
+	def _update_content(self, indexable, writer, data):
+		result = indexable.update_content(writer, data, **self.writer_commit_args)
+		if not result:
+			writer.cancel()
+		return result
+	
 	def update_content(self, data, *args, **kwargs):
 		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
@@ -190,12 +199,15 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 			with index:
 				indexable = self.get_indexable_object(type_name)
 				writer = self._get_index_writer(index)
-				if not indexable.update_content(writer, data, **self.writer_commit_args):
-					writer.cancel()
-				else:
-					return True
+				return self._update_content(indexable, writer, data)
 		return False
 
+	def _delete_content(self, indexable, writer, data):
+		result = indexable.delete_content(writer, data, **self.writer_commit_args)
+		if not result:
+			writer.cancel()
+		return result
+	
 	def delete_content(self, data, *args, **kwargs):
 		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
@@ -203,10 +215,7 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 			with index:
 				indexable = self.get_indexable_object(type_name)
 				writer = self._get_index_writer(index)
-				if not indexable.delete_content(writer, data, **self.writer_commit_args):
-					writer.cancel()
-				else:
-					return True
+				return self._delete_content(indexable, writer, data)
 		return False
 
 	def remove_index(self, type_name, *args, **kwargs):
