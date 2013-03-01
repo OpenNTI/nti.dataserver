@@ -19,11 +19,11 @@ from zope import interface
 
 import transaction
 try:
-	import gevent
 	from gevent.queue import Full as QFull
+	from gevent import sleep as _sleep
 except ImportError:
 	from Queue import Full as QFull
-	gevent = None
+	from time import sleep as _sleep
 
 from dm.transaction.aborthook import add_abort_hooks
 add_abort_hooks = add_abort_hooks # pylint
@@ -331,6 +331,6 @@ class TransactionLoop(object):
 					if number <= 0 or not retryable:
 						raise
 					if self.sleep:
-						gevent.sleep( self.sleep )
+						_sleep( self.sleep )
 				finally:
 					del exc_info # avoid leak
