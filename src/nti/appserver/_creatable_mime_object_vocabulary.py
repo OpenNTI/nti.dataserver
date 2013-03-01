@@ -28,7 +28,8 @@ from nti.externalization.internalization import default_externalized_object_fact
 from nti.dataserver import users
 
 # TODO: zope.schema.vocabulary provides a vocab registry
-# Should we make use of that?
+# Should we make use of that? Especially since these registries
+# can be ZCA utilities
 
 class _CreatableMimeObjectVocabulary(UtilityVocabulary):
 	"""
