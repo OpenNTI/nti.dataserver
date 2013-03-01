@@ -428,7 +428,9 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 	def get_recipients():
 		"""return the message recipients"""
 
-class IPostContentResolver(_ContentMixinResolver, IShareableContentResolver):
+class IPostContentResolver(_ContentMixinResolver,
+						   ICreatorResolver,
+						   IShareableContentResolver):
 
 	def get_title():
 		"""return the post/forum title"""
