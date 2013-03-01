@@ -1,12 +1,17 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Spambayes Chi2 implementation
 
-from __future__ import print_function, unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import sys
 import random
 import math as _math
 
-from histogram import Hist
+from .histogram import Hist
 
 def chi2Q(x2, v, exp=_math.exp, minf=min):
 	"""
@@ -204,5 +209,3 @@ def showscore(ps, ln=_math.log, ln2=_math.log(2), frexp=_math.frexp):
 	print (" ham prob", H)
 	print ("(S-H+1)/2", score)
 
-if __name__ == '__main__':
-	main()

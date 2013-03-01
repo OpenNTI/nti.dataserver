@@ -1,4 +1,13 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Spambayes email parsing routines
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import re
@@ -13,11 +22,8 @@ import transaction
 
 from email.message import Message as eMessage
 
-from nti.contentsearch.spambayes.tokenizer import tokenize
-from nti.contentsearch.spambayes.storage import SQL3Classifier
-
-import logging
-logger = logging.getLogger( __name__ )
+from ..tokenizer import tokenize
+from ..storage import SQL3Classifier
 
 def _textparts(msg):
 	"""return a set of all msg parts with content maintype 'text'."""
@@ -144,7 +150,7 @@ def get_email_messages(directory, fnfilter='*', indexfile=None, default_spam=Tru
 					is_spam = index.get(filename, default_spam)
 					yield msg, is_spam, source
 			except Exception, e:
-				if logger.isEnabledFor(logging.DEBUG):
+				if logger.isEnabledFor(logger.DEBUG):
 					logger.exception("Could not read message in file '%s'" % source)
 				else:
 					logger.error("Could not read message in file '%s'. %s" % (source, e))

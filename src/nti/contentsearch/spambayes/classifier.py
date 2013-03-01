@@ -588,9 +588,9 @@ Bayes = Classifier
 
 from zope import interface
 
-from nti.contentsearch.spambayes import PERSISTENT_HAM_INT
-from nti.contentsearch.spambayes import PERSISTENT_SPAM_INT
-from nti.contentsearch.spambayes import PERSISTENT_UNSURE_INT
+from . import PERSISTENT_HAM_INT
+from . import PERSISTENT_SPAM_INT
+from . import PERSISTENT_UNSURE_INT
 
 @interface.implementer(sp_interfaces.IProbabilityClassifier)
 class _DefaultProbabilityClassifier(object):

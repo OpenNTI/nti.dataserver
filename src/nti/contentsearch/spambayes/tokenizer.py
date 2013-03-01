@@ -1,4 +1,11 @@
-from __future__ import print_function, unicode_literals, generators
+# -*- coding: utf-8 -*-
+"""
+Spambayes tokenizer
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import six	
 import math
@@ -8,14 +15,14 @@ from zope import interface
 
 from nti.contentprocessing import interfaces as cp_interfaces
 
-from nti.contentsearch.spambayes import LN2
-from nti.contentsearch.spambayes._stripper import has_highbit_char
-from nti.contentsearch.spambayes import interfaces as sps_interfaces
-from nti.contentsearch.spambayes._stripper import _default_translation_table
-from nti.contentsearch.spambayes._stripper import (	crack_uuencode, crack_urls, crack_html_style, 
-													crack_html_comment, crack_noframes)
-from nti.contentsearch.spambayes._stripper import (	word_re, numeric_entity_re, breaking_entity_re, html_re,
-													find_html_virus_clues, numeric_entity_replacer)
+from . import LN2
+from ._stripper import has_highbit_char
+from . import interfaces as sps_interfaces
+from ._stripper import _default_translation_table
+from ._stripper import (crack_uuencode, crack_urls, crack_html_style, crack_html_comment, crack_noframes)
+from ._stripper import (word_re, numeric_entity_re, breaking_entity_re, html_re, find_html_virus_clues, 
+						numeric_entity_replacer)
+
 def log2(n, log=math.log, c=LN2):
 	return log(n)/c
 
