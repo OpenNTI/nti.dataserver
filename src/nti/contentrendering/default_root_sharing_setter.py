@@ -60,7 +60,7 @@ def transform( book, save_toc=True, context=None, group_name=None ):
 	raise Exception( "Failed to add default sharing group to  %s. Either the RenderedBook is malformed or the default sharing group data file is missing." % (book) )
 
 def _handle_toc(toc, book, group_name=None):
-	
+
 	modified = True
 	contentLocation = book.contentLocation
 
@@ -75,7 +75,7 @@ def _handle_toc(toc, book, group_name=None):
 					if line[0] is not '#':
 						# Otherwise the line is a comment
 						sharedWith.append(line.strip())
-		
+
 		sharedWith = ' '.join(sharedWith)
 		index = book.toc.root_topic
 		modified = index.set_default_sharing_group( sharedWith.strip() )

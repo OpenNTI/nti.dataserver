@@ -32,33 +32,33 @@ class TestMicrodata(unittest.TestCase):
 			</div>
 			</body>
 			</html>"""
-		
+
 		ls = items(html)
 		assert_that(ls, has_length(1))
 		d = ls[0]
-		
+
 		assert_that(d, has_length(2))
 		assert_that(d, has_entry('id',''))
 		assert_that(d, has_key(PROPERTIES_KEY))
-		
+
 		d = d[PROPERTIES_KEY]
 		assert_that(d, has_length(3))
 		assert_that(d, has_entry('age',['18']))
 		assert_that(d, has_entry('name',['Taro']))
 		assert_that(d, has_entry('friend', has_length(1)))
-		
+
 		d = d['friend'][0]
 		assert_that(d, has_key(PROPERTIES_KEY))
 		d = d[PROPERTIES_KEY]
 		assert_that(d, has_entry('name',['Jiro']))
 		assert_that(d, has_entry('friend', has_length(1)))
-		
+
 		d = d['friend'][0]
 		assert_that(d, has_key(PROPERTIES_KEY))
 		d = d[PROPERTIES_KEY]
 		assert_that(d, has_entry('name',['Saburo']))
 		assert_that(d, has_entry('friend', has_length(1)))
-		
+
 		d = d['friend'][0]
 		assert_that(d, has_entry(PROPERTIES_KEY, has_length(0)))
 
@@ -71,29 +71,29 @@ class TestMicrodata(unittest.TestCase):
 			   """
 		ls = items(html)
 		assert_that(ls, has_length(1))
-		
+
 		d = ls[0]
 		assert_that(d, has_entry(PROPERTIES_KEY, has_length(2)))
 		d = d[PROPERTIES_KEY]
 		assert_that(d, has_entry('a', ['1','2']))
 		assert_that(d, has_entry('b', ['test']))
-		
+
 	def test_double(self):
 		html = """
 				<div itemscope>
  					<span itemprop="favorite-color favorite-fruit">orange</span>
 				</div>
 			   """
-				
+
 		ls = items(html)
 		assert_that(ls, has_length(1))
 		d = ls[0]
 		assert_that(d, has_entry(PROPERTIES_KEY, has_length(2)))
-		
+
 		d = d[PROPERTIES_KEY]
 		assert_that(d, has_entry('favorite-color', ['orange']))
 		assert_that(d, has_entry('favorite-fruit', ['orange']))
-		
+
 	def test_type(self):
 		html = 	"""
 				<section itemscope itemtype="http://example.org/animals#cat">
@@ -103,19 +103,19 @@ class TestMicrodata(unittest.TestCase):
  					<img itemprop="img" src="hedral.jpeg" alt="" title="Hedral, age 18 months"/>
 				</section>
 				"""
-				
+
 		ls = items(html)
 		assert_that(ls, has_length(1))
-		
+
 		d = ls[0]
 		assert_that(d, has_entry('type', 'http://example.org/animals#cat'))
 		assert_that(d, has_entry(PROPERTIES_KEY, has_length(3)))
-		
+
 		d = d[PROPERTIES_KEY]
 		assert_that(d, has_entry('name', ['Hedral']))
 		assert_that(d, has_entry('img', ['hedral.jpeg']))
 		assert_that(d, has_entry('desc', has_length(1)))
-		
+
 	def test_meta(self):
 		html=	"""
 				<div itemscope itemtype="http://schema.org/Book">
@@ -136,10 +136,10 @@ class TestMicrodata(unittest.TestCase):
 					</div>
 				</div>
 				"""
-	
+
 		ls = items(html)
 		assert_that(ls, has_length(1))
-		
+
 		d = ls[0]
 		assert_that(d, has_key(PROPERTIES_KEY))
 		assert_that(d, has_entry('type', 'http://schema.org/Book'))
@@ -151,19 +151,15 @@ class TestMicrodata(unittest.TestCase):
 		assert_that(d, has_entry('reviewBody', has_length(2)))
 		assert_that(d, has_entry('reviewRating', ['4', '5']))
 		assert_that(d, has_entry('reviews', has_length(2)))
-		
+
 		for d in d['reviews']:
 			self.assert_(isinstance(d, dict))
 			assert_that(d, has_key(PROPERTIES_KEY))
 			assert_that(d, has_entry('type', 'http://schema.org/Review'))
-			
+
 			p = d[PROPERTIES_KEY]
 			assert_that(p, has_key('author'))
 			assert_that(p, has_key('name'))
 			assert_that(p, has_key('datePublished'))
 			assert_that(p, has_key('reviewBody'))
 			assert_that(p, has_key('reviewRating'))
-			
-if __name__ == '__main__':
-	unittest.main()
-	

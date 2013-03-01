@@ -4,10 +4,11 @@
 	<include package="zope.component" />
 	<include package="zope.traversing" /> <!-- For rendering -->
 <!--
-	Doesn't seem to be used/needed. Loading it (non-dev mode)
+	Loading it (non-dev mode)
 	slows script startup way down.
-	<include package="nti.contentprocessing" />
 -->
+	<include package="nti.contentprocessing" />
+
 	<!--
 	For items used in rendering, we MUST be sure to use
 	the PlastexTraverser
