@@ -224,10 +224,18 @@ class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage, IndexStorage
 	
 	folder = ''
 	supports_mmap = False
+	writer_ctor_args = {}
+	writer_commit_args = {'merge':False, 'optimize':False}
 
 	def __init__(self, *args):
 		BTrees.OOBTree.OOBTree.__init__( self, *args )
 
+	def ctor_args(self, *args, **kwargs):
+		return self.writer_ctor_args
+	
+	def commit_args(self, *args, **kwargs):
+		return self.writer_commit_args
+	
 	def create_index(self, schema, indexname=_DEF_INDEX_NAME, **kwargs):
 		return create_index(self, schema=schema, indexname=indexname)
 
