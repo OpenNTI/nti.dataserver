@@ -248,23 +248,23 @@ def get_last_modified(obj):
 	return datetime.fromtimestamp(result) if result is not None else None
 
 def get_keywords(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
-	words = adapted.get_keywords()
+	adapted = component.queryAdapter(obj, search_interfaces.IThreadableContentResolver)
+	words = adapted.get_keywords() if adapted else None
 	return unicode(','.join(words)) if words else None
 
 def get_sharedWith(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
-	result = adapted.get_sharedWith()
+	adapted = component.getAdapter(obj, search_interfaces.IShareableContentResolver)
+	result = adapted.get_sharedWith() if adapted else None
 	return unicode(','.join(result)) if result else None
 
 def get_object_content(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = adapted.get_content()
 	return result if result else None
 
 def get_references(obj):
-	adapted = component.getAdapter(obj, search_interfaces.INoteContentResolver)
-	result = adapted.get_references()
+	adapted = component.queryAdapter(obj, search_interfaces.INoteContentResolver)
+	result = adapted.get_references() if adapted else None
 	return unicode(','.join(result)) if result else None
 
 def get_channel(obj):
@@ -502,6 +502,9 @@ class Post(ShareableIndexableContent):
 	def get_index_data(self, data):
 		result = super(Post, self).get_index_data(data)
 		result[title_] = get_post_title(data)
+		content_to_idx = get_object_content(data)
+		result[content_] = content_to_idx
+		result[quick_] = content_to_idx
 		return result
 
 # register indexable objects

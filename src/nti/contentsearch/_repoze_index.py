@@ -40,21 +40,22 @@ def get_last_modified(obj, default=None):
 	return result or default
 	
 def get_keywords(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
-	return adapted.get_keywords() or default
+	adapted = component.queryAdapter(obj, search_interfaces.IThreadableContentResolver)
+	result = adapted.get_keywords() if adapted else None
+	return result or default
 
 def _flatten_list(result, default=None):
 	result = ' '.join(result) if result else default
 	return result
 
 def get_sharedWith(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IShareableContentResolver)
-	result = adapted.get_sharedWith()
+	adapted = component.queryAdapter(obj, search_interfaces.IShareableContentResolver)
+	result = adapted.get_sharedWith() if adapted else None
 	return _flatten_list(result, default)
 
 def get_references(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.INoteContentResolver)
-	result = adapted.get_references()
+	adapted = component.queryAdapter(obj, search_interfaces.INoteContentResolver)
+	result = adapted.get_references() if adapted else None
 	return _flatten_list(result, default)
 
 def get_channel(obj, default=None):
