@@ -3,10 +3,9 @@
 Objects for working with Eclipse index representations of content packages.
 """
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
-import logging
-logger = logging.getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 from lxml import etree
 

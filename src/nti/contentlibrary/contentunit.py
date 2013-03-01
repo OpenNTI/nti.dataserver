@@ -71,3 +71,22 @@ class ContentPackage(ContentUnit):
 	subjects = ()
 	contributors = ()
 	publisher = ''
+
+
+
+# TODO: We need to do caching of does_sibling_entry_exist and read_contents.
+# does_exist is used by appserver/censor_policies on every object creation/edit
+# which quickly adds up.
+# Right now, our policy for does_exist is a very simple, very dumb cache that we share
+# with all content units, caching questions for 10 minutes.
+# read_contents is not cached
+import repoze.lru
+_exist_cache = repoze.lru.ExpiringLRUCache( 100000, default_timeout=600 ) # this one is big because each entry is small
+_content_cache = repoze.lru.ExpiringLRUCache( 1000, default_timeout=600 ) # this one is smaller because each entry is bigger
+
+def _clear_caches():
+	_exist_cache.clear()
+	_content_cache.clear()
+
+import zope.testing.cleanup
+zope.testing.cleanup.addCleanUp( _clear_caches )
