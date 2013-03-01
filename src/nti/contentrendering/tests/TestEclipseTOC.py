@@ -75,8 +75,3 @@ class TestEclipseTOC(unittest.TestCase):
 		value = node.getAttribute(attrname)
 
 		self.assertEqual(value, attrval, 'For node %s, attribute %s expected value %s but got %s' % (node, attrname, attrval, value))
-
-
-
-if __name__ == '__main__':
-	unittest.main()

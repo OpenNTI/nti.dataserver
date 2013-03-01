@@ -590,7 +590,7 @@ def temp_dispatch_to_indexer( change ):
 
 		comment = change.object
 		change = _stream_event_for_comment( comment )
-		
+
 		# Now index the comment for the creator and all the sharing targets. This is just
 		# like what the User object itself does (except we don't need to expand DFL/communities)
 
@@ -607,8 +607,7 @@ def temp_post_added_to_indexer( comment, event ):
 def temp_post_modified_to_indexer( comment, event ):
 	change = _stream_event_for_comment( comment, nti_interfaces.SC_MODIFIED )
 	temp_dispatch_to_indexer(change)
-
-@component.adapter( frm_interfaces.IPost, lifecycleevent.IObjectRemovedEvent )
-def temp_post_deleted_to_indexer( comment, event ):
-	change = _stream_event_for_comment( comment, nti_interfaces.SC_DELETED )
-	temp_dispatch_to_indexer(change)
+###
+## NOTE: You cannot send a stream change on an object deleted event.
+## See HeadlineTopicDeleteView and the place it points to. This is already
+## handled.
