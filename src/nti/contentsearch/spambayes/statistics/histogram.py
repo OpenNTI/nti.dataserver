@@ -1,10 +1,17 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Spambayes Histogram
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import math
 
 from zope import component
 
-from nti.contentsearch.spambayes import interfaces as sp_interfaces
+from .. import interfaces as sp_interfaces
 
 def _options():
 	result = component.getUtility(sp_interfaces.IHistogramSettings)

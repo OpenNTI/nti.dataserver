@@ -1,8 +1,15 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Spambayes object settings
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface
 
-from nti.contentsearch.spambayes import interfaces as sps_interfaces
+from . import interfaces as sps_interfaces
 
 @interface.implementer(sps_interfaces.ITokenizerSettings)
 class _DefaultTokenizerSettings(object):

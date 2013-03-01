@@ -1,4 +1,11 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Spambayes object adapters
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import six
 import time
@@ -15,9 +22,10 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentfragments import interfaces as frg_interfaces
 
-from nti.contentsearch import interfaces as cts_interfaces
-from nti.contentsearch.spambayes import interfaces as sps_interfaces
-from nti.contentsearch.spambayes.storage import PersistentClassifier
+from .. import interfaces as cts_interfaces
+
+from .storage import PersistentClassifier
+from . import interfaces as sps_interfaces
 
 @interface.implementer(sps_interfaces.ISpamClassifier)
 @component.adapter(nti_interfaces.IEntity)
