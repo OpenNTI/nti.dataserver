@@ -25,6 +25,7 @@ HIT 			= u'Hit'
 OID 			= unicode(ext_interfaces.StandardExternalFields.OID)
 TYPE 			= u'Type'
 BODY			= u'Body'
+POST			= u'Post'
 INTID			= u'INTID'
 SCORE			= u'Score'
 NTIID 			= unicode(ext_interfaces.StandardExternalFields.NTIID)
@@ -103,7 +104,7 @@ messageinfo = u'messageinfo'
 messageinfo_ = u'messageinfo'
 canvastextshape_ = 'canvastextshape'
 
-indexable_type_names = (note_, highlight_, redaction_, messageinfo_, post_)
+indexable_type_names = (note_, post_, highlight_, redaction_, messageinfo_)
 indexable_types_order = { x:p for p,x in enumerate(indexable_type_names) }
 
 ascending_ = u'ascending'
