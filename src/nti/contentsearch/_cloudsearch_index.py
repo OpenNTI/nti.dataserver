@@ -141,18 +141,18 @@ def get_creator(obj):
 	return adapted.get_creator() or unicode(nti_interfaces.SYSTEM_USER_NAME)
 
 def get_sharedWith(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IShareableContentResolver)
-	result = adapted.get_sharedWith()
+	adapted = component.queryAdapter(obj, search_interfaces.IShareableContentResolver)
+	result = adapted.get_sharedWith() if adapted else None
 	return unicode(' '.join(result)) if result else u''
 
 def get_keywords(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IThreadableContentResolver)
-	words = adapted.get_keywords()
+	adapted = component.queryAdapter(obj, search_interfaces.IThreadableContentResolver)
+	words = adapted.get_keywords() if adapted else None
 	return unicode(','.join(words)) if words else u''
 
 def get_references(obj):
-	adapted = component.getAdapter(obj, search_interfaces.INoteContentResolver)
-	result = adapted.get_references()
+	adapted = component.queryAdapter(obj, search_interfaces.INoteContentResolver)
+	result = adapted.get_references() if adapted else None
 	return unicode(','.join(result)) if result else u''
 
 def get_channel(obj):
