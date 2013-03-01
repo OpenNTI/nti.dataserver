@@ -137,10 +137,7 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 		self[CONTAINER_ID] = hit[ntiid_]
 		self[title_.capitalize()] = hit[title_]
 		self[LAST_MODIFIED] = hit[last_modified_]
-	
-	@property
-	def oid(self):
-		return ''.join((self[NTIID], u'-', unicode(self[CONTAINER_ID])))
+		self.oid = ''.join((self[NTIID], u'-', unicode(self[CONTAINER_ID])))
 
 def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	if hit is not None:
