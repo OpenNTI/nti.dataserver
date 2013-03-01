@@ -4,13 +4,15 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 
 import os
 import six
-import gevent
+
 from urlparse import urlparse
 
 try:
+	import gevent
 	import gevent.queue as Queue
 except ImportError:
 	import Queue
+	gevent = None
 
 
 import ZODB.interfaces
