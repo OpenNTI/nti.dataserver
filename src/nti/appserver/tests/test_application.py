@@ -16,6 +16,7 @@ from hamcrest import contains, contains_inanyorder
 from hamcrest import has_value
 from hamcrest import same_instance
 does_not = is_not
+from nti.tests import is_empty
 
 from nti.appserver.application import createApplication
 from nti.contentlibrary.filesystem import StaticFilesystemLibrary as Library
@@ -392,6 +393,21 @@ class TestApplication(SharedApplicationTestBase):
 		# Configured site, redirect
 		res = testapp.get( '/login/resources/css/site.css', extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'}, status=303 )
 		assert_that( res.headers, has_entry( 'Location', ends_with( '/login/resources/css/mathcounts.nextthought.com/site.css' ) ) )
+
+	@WithSharedApplicationMockDS
+	def test_external_coppa_capabilities_mathcounts(self):
+		# See also test_workspaces
+		testapp = TestApp(self.app)
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
+
+
+		res = testapp.get( '/dataserver2',
+						   extra_environ=self._make_extra_environ( HTTP_ORIGIN=b'http://mathcounts.nextthought.com' ),
+						   status=200 )
+		assert_that( res.json_body['CapabilityList'], is_empty() )
+
 
 	@WithSharedApplicationMockDS
 	def test_options_request( self ):

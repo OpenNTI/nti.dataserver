@@ -43,17 +43,18 @@
 				 for="nti.dataserver.interfaces.IUser"
 				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
 
-		<!-- The strict filter for COPPA users without agreements is
-			 inherited.
-			 TODO: r16482 says it isn't, but the test cases say it is.
-			 Write a test case that fails without this included,
-			 otherwise logic says to not override unnecessarily.
-		-->
 		<!--
+			 One would think that the strict filter for COPPA users without agreements is
+			 inherited in this site (from configure_user_policies).
+			 But it isn't. The above registration cancels it out.
+			 A less-precise registration in a child site overrides a
+			 more precise registration from a parent site.
+			 (That's why these need to be subscribers.)
+			 see nti.appserver.tests.test_application:TestApplication.test_external_coppa_capabilities_mathcounts
+		-->
 		<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
 			 	 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
 			 	 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
-		-->
 
 
 		<!-- CSS for mathcounts -->
