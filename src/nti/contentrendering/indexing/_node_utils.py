@@ -1,9 +1,13 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Indexing mindom utilities.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from xml.dom.minidom import Node
-
-import logging
-logger = logging.getLogger(__name__)
 
 def get_ntiid(node):
 	"""

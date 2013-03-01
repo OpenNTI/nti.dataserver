@@ -341,6 +341,14 @@ class IWhooshBookContent(IBookContent, IReadMapping):
 	intid = schema.Int(title="Alias for docnum", required=True)
 	score = schema.Float(title="Search score", required=False, default=1.0)
 
+
+class IBookSchemaCreator(interface.Interface):
+	pass
+
+class IWhooshBookSchemaCreator(IBookSchemaCreator):
+	pass
+
+
 # text highlight types
 
 class IHighlightType(interface.Interface):
@@ -521,54 +529,48 @@ class ICloudSearchObject(IDict):
 
 class ICloudSearchStore(interface.Interface):
 
-	def get_domain(domain_name):
-		"""return the domain with the specified domain"""
+	def get_domain(domain_name=None):
+		"""
+		Return the domain with the specified name
+		"""
 
-	def get_document_service(domain_name):
-		"""return a document service for the specified domain"""
+	def get_document_service(domain_name=None):
+		"""
+		Return a document service for the specified domain
+		"""
 
-	def get_search_service(domain_name):
-		"""return the searchh service for the specified domain"""
+	def get_search_service(domain_name=None):
+		"""
+		Return the searchh service for the specified domain
+		"""
 
 	def get_aws_domains():
-		"""return all aws search domains"""
+		"""
+		Return all aws search domains
+		"""
+		
+	def search(*args, **kwargs):
+		"""
+		Perform a CloudSearch search
+		"""
+	
+	def add(docid, username, service=None, commit=True):
+		"""
+		Index the specified document in CloudSearch
+		"""
+			
+	def delete(docid, username, ommit=True):
+		"""
+		Delete the specified document from CloudSearch
+		"""
+		
+	def handle_cs_errors(errors):
+		"""
+		Handle the specififed CloudSearch error meessages
+		"""
 
 class ICloudSearchStoreService(IRedisStoreService):
-
-	# search service
-
-	def search_cs( *args, **kwargs):
-		"""
-		run a search against cloud search
-		"""
-
-	# document service
-
-	def handle_cs_errors(result, max_display=5, throw=False):
-		"""
-		handle any CloudSearch errors
-
-		:param result CloudSearch results
-		:param max_display Max errors to display
-		:param throw Throw exception if any errors
-		"""
-
-	def add_cs( docid, username):
-		"""
-		index the content from the object with specified doc id
-
-		:param docid document id
-		:param username target user
-		:return error results
-		"""
-
-	def delete_cs( docid, username):
-		"""
-		remove the content from the object with specified doc id
-
-		:param docid document id
-		:param username target user
-		"""
+	store = schema.Object(ICloudSearchStore, title='CloudSearch store')
 
 class ICloudSearchQueryParser(interface.Interface):
 
@@ -649,6 +651,7 @@ class ISearchResults(IBaseSearchResults):
 		pass
 
 class ISuggestResults(IBaseSearchResults):
+	
 	suggestions = TypedIterable(
 		title="suggested words",
 		description="Order may or may not be significant",
@@ -677,35 +680,3 @@ class ISuggestAndSearchResultsCreator(interface.Interface):
 	def __call__(query):
 		"""return a new instance of a ISuggestAndSearchResults"""
 
-# user index
-
-class IEntityIndex(interface.Interface):
-
-	def doc_count():
-		"""return number of entities in the index"""
-
-	def exists(entity):
-		"""check if the entity/user is in this index"""
-
-	def query(search_term, remote_user, provided=None):
-		"""
-		Return all entity objects whose username match the query.
-
-		:param remote_user: The user requesting the search.
-
-		:param provided: A predicate used to further filter results.
-			The default value checks for IEntity; you may use a custom value.
-
-		:return: A set of :class:`nti.dataserver.interfaces.IEntity` objects,
-			possibly empty, that match the search term, according to the rules of the
-			policy.
-		"""
-
-	def on_entity_created(entity):
-		"""callback for user creation"""
-
-	def on_entity_modified(entity):
-		"""callback for entity modification"""
-
-	def on_entity_deleted(entity):
-		"""callback for entity deletion"""

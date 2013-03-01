@@ -12,9 +12,6 @@ from zope import interface
 from nti.contentprocessing.keyword import term_extract_key_words
 from nti.contentprocessing.keyword import interfaces as cp_interfaces
 
-import logging
-logger = logging.getLogger(__name__)
-
 @interface.implementer( cp_interfaces.ITermExtractFilter)
 class _DefaultKeyWordFilter(object):
 

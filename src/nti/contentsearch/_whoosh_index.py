@@ -142,8 +142,8 @@ class _SearchableContent(object):
 
 # content analyzer
 
-def ngram_minmax(lang='en'):
-	ngc_util = component.queryUtility(cp_interfaces.INgramComputer, name=lang)
+def ngram_minmax(name='en'):
+	ngc_util = component.queryUtility(cp_interfaces.INgramComputer, name=name)
 	minsize = ngc_util.minsize if ngc_util else default_ngram_minsize
 	maxsize = ngc_util.maxsize if ngc_util else default_ngram_maxsize
 	return (minsize, maxsize)
@@ -164,30 +164,36 @@ def content_field(stored=True):
 
 # book content
 
-def create_book_schema(lang='en'):
-	"""
-	Book index schema
+@interface.implementer( search_interfaces.IWhooshBookSchemaCreator)
+class _DefaultBookSchemaCreator(object):
+	
+	def __call__(self):
+		"""
+		Book index schema
+	
+		docid: Unique id
+		ntiid: Internal nextthought ID for the chapter/section
+		title: chapter/section title
+		last_modified: chapter/section last modification since the epoch
+		keywords: chapter/section key words
+		content: chapter/section text
+		quick: chapter/section text ngrams
+		related: ntiids of related sections
+		ref: chapter reference
+		"""
+		schema = fields.Schema(	docid = fields.ID(stored=True, unique=False),
+								ntiid = fields.ID(stored=True, unique=False),
+								title = fields.TEXT(stored=True, spelling=True),
+					  			last_modified = fields.DATETIME(stored=True),
+					  			keywords = fields.KEYWORD(stored=True),
+					 			quick = ngram_field(),
+					 			related = fields.KEYWORD(stored=True),
+					 			content = content_field(stored=True))
+		return schema
 
-	docid: Unique id
-	ntiid: Internal nextthought ID for the chapter/section
-	title: chapter/section title
-	last_modified: chapter/section last modification since the epoch
-	keywords: chapter/section key words
-	content: chapter/section text
-	quick: chapter/section text ngrams
-	related: ntiids of related sections
-	ref: chapter reference
-	"""
-	schema = fields.Schema(	docid = fields.ID(stored=True, unique=False),
-							ntiid = fields.ID(stored=True, unique=False),
-							title = fields.TEXT(stored=True, spelling=True),
-				  			last_modified = fields.DATETIME(stored=True),
-				  			keywords = fields.KEYWORD(stored=True),
-				 			quick = ngram_field(lang),
-				 			related = fields.KEYWORD(stored=True),
-				 			content = content_field(stored=True))
-	return schema
-
+def create_book_schema(name='en'):
+	to_call = component.queryUtility(search_interfaces.IWhooshBookSchemaCreator, name=name) or _DefaultBookSchemaCreator()
+	return to_call()
 
 @interface.implementer(search_interfaces.IWhooshBookContent)
 class _BookContent(dict):
@@ -204,8 +210,10 @@ class _BookContent(dict):
 
 class Book(_SearchableContent):
 
-	_schema = create_book_schema()
-
+	@property
+	def _schema(self):
+		return create_book_schema()
+	
 	def get_search_highlight_type(self):
 		return WORD_HIGHLIGHT
 
