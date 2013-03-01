@@ -29,6 +29,8 @@ from nti.appserver import interfaces as app_interfaces
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver import httpexceptions as hexc
 
+from nti.mimetype import mimetype
+
 from zope.schema import interfaces as sch_interfaces
 from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
 
@@ -37,7 +39,7 @@ def get_remote_user( request, dataserver=None ):
 	Returns the user object corresponding to the authenticated user of the
 	request, or None.
 	"""
-	dataserver = dataserver or request.registry.getUtility( IDataserver )
+	dataserver = dataserver or component.getUtility( IDataserver )
 	return users.User.get_user( sec.authenticated_userid( request ), dataserver=dataserver )
 
 class AbstractView(object):
@@ -47,7 +49,7 @@ class AbstractView(object):
 
 	def __init__( self, request ):
 		self.request = request
-		self.dataserver = self.request.registry.getUtility(IDataserver)
+		self.dataserver = component.getUtility(IDataserver)
 
 class AbstractAuthenticatedView(AbstractView):
 	"""
@@ -177,16 +179,33 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		return value
 
 	def findContentType( self, externalValue ):
-		datatype = None
-		# TODO: Which should have priority, class in the data,
-		# or mime-type in the headers (or data?)?
-		if 'Class' in externalValue and externalValue['Class']:
-			# Convert unicode to ascii
-			datatype = str( externalValue['Class'] ) + 's'
-		else:
-			datatype = obj_io.class_name_from_content_type( self.request )
-			datatype = datatype + 's' if datatype else None
-		return datatype
+		"""
+		Attempts to find the best content type (datatype), one that can be used with
+		:meth:`createContentObject`.
+
+		There are multiple places this can come from. In priority order, they are:
+
+		* The ``MimeType`` value in the given data;
+		* The ``ContentType`` header, if it names an NTI content type (any trailing +json will be removed);
+		* Last, the ``Class`` value in the given data
+
+		Note that this method can return either a simple class name, or a Mime type
+		string.
+		"""
+
+		if externalValue.get( 'MimeType' ):
+			return externalValue['MimeType']
+
+		if self.request.content_type and self.request.content_type.startswith( mimetype.MIME_BASE ):
+			datatype = self.request.content_type
+			if datatype.endswith( '+json' ):
+				datatype = datatype[:-5] # strip +json
+			if datatype and datatype != mimetype.MIME_BASE: # prevent taking just the base type
+				return datatype
+
+		if externalValue.get( 'Class' ):
+			return externalValue['Class'] + 's'
+
 
 	def createContentObject( self, user, datatype, externalValue, creator ):
 		return obj_io.create_modeled_content_object( self.dataserver, user, datatype, externalValue, creator )

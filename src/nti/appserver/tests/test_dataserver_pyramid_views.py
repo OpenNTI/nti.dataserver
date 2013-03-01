@@ -202,10 +202,12 @@ class TestUGDModifyViews(SharedConfiguringTestBase):
 	@WithMockDSTrans
 	def test_post_existing_friendslist_id(self):
 		"We get a good error posting to a friendslist that already exists"
+		self.beginRequest()
 		view = _UGDPostView( get_current_request() )
 
 		user, _ = self._establish_context( view, ext_value={'Class': 'FriendsList',
 															'ID': 'Everyone',
+															'Username': 'Everyone',
 															'ContainerId': 'FriendsLists'} )
 		view.getRemoteUser = lambda: user
 		view() # First time fine

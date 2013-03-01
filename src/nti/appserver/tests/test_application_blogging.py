@@ -35,12 +35,17 @@ from zope.component import eventtesting
 from zope.intid.interfaces import IIntIdRemovedEvent
 from zope.location.interfaces import ISublocations
 
+import simplejson as json
+
 from nti.ntiids import ntiids
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.tests import mock_dataserver
+
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
+from nti.dataserver.contenttypes.forums.post import Post
+
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, PersistentContainedExternal
 
 from urllib import quote as UQ
@@ -115,16 +120,68 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_blog_entry( self ):
+	def test_user_can_POST_new_blog_entry_class( self ):
 		"""POSTing an IPost to the blog URL automatically creates a new topic"""
 
-		testapp = self.testapp
+		# With a Class value:
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		self._do_test_user_can_POST_new_blog_entry( data )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_blog_entry_mime_type_only( self ):
+
 
 		data = { 'Class': 'Post',
 				 'title': 'My New Blog',
 				 'body': ['My first thought'] }
 
-		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data, status=201 )
+		# With only a MimeType value:
+		del data['Class']
+		data['MimeType'] = Post.mimeType
+		self._do_test_user_can_POST_new_blog_entry( data )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_blog_entry_both( self ):
+
+		# With a Class value:
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		# With both
+		data['Class'] = 'Post'
+		data['MimeType'] = Post.mimeType
+		self._do_test_user_can_POST_new_blog_entry( data )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_blog_entry_header( self ):
+
+		# With a Class value:
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+
+		# With neither, but a content-type header
+		del data['Class']
+
+		self._do_test_user_can_POST_new_blog_entry( data, content_type=Post.mimeType )
+
+
+	def _do_test_user_can_POST_new_blog_entry( self, data, content_type=None ):
+		testapp = self.testapp
+
+		if not content_type:
+			res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data, status=201 )
+		else:
+			# testapp.post_json forces the content-type header
+			res = testapp.post(  '/dataserver2/users/sjohnson@nextthought.com/Blog',
+								 json.dumps( data ),
+								 headers={b'Content-Type': str(Post.mimeType)},
+								 status=201 )
 
 		# Return the representation of the new topic created
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
