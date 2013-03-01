@@ -52,8 +52,8 @@ def to_frozenset(items=None):
 _marker_frozenset = frozenset()
 
 @functools.total_ordering
-@interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable)
-class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Persistent):
+@interface.implementer(store_interfaces.IPurchaseAttempt)
+class BasePurchaseAttempt(ModDateTrackingObject):
 
 	Synced = False
 	EndTime = None
@@ -90,15 +90,6 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 	on_behalf_of = alias('OnBehalfOf')
 	description = alias('Description')
 
-	@property
-	def id(self):
-		return unicode(to_external_ntiid_oid(self))
-
-	@property
-	def creator(self):
-		result = getattr(self.__parent__, 'user', None)
-		return result
-
 	def __str__( self ):
 		return "%s,%s" % (self.items, self.state)
 
@@ -133,10 +124,6 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 		xhash ^= hash(self.OnBehalfOf)
 		return xhash
 
-	def actors(self):
-		result = self.on_behalf_of.union(set([self.creator.username]))
-		return result
-
 	def has_failed(self):
 		return self.State in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE, store_interfaces.PA_STATE_CANCELED)
 
@@ -166,7 +153,29 @@ class PurchaseAttempt(zcontained.Contained, ModDateTrackingObject, persistent.Pe
 
 	def is_synced(self):
 		return self.Synced
+	
+@interface.implementer(an_interfaces.IAttributeAnnotatable)
+class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, persistent.Persistent):
 
+	@property
+	def id(self):
+		return unicode(to_external_ntiid_oid(self))
+
+	@property
+	def creator(self):
+		result = getattr(self.__parent__, 'user', None)
+		return result
+
+	def actors(self):
+		result = self.on_behalf_of.union(set([self.creator.username]))
+		return result
+
+def create_base_purchase_attempt(purchase):
+	return BasePurchaseAttempt(	items=purchase.Items, processor=purchase.Processor, description=purchase.Description,
+								state=purchase.State, start_time=purchase.StartTime, end_time=purchase.EndTime,
+								on_behalf_of=purchase.OnBehalfOf, error_code=purchase.ErrorCode,
+								error_messag=purchase.ErrorMessage, synced=purchase.Synced)
+			
 def create_purchase_attempt(items, processor, on_behalf_of=None, state=None, description=None, start_time=None):
 	state = state or store_interfaces.PA_STATE_UNKNOWN
 	return PurchaseAttempt(	items=items, processor=processor, description=description,
