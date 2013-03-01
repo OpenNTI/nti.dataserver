@@ -13,9 +13,12 @@ __docformat__ = "restructuredtext en"
 # all the __setitem__ and __parent__ in the interfaces.
 #pylint: disable=E0602
 
-#from zope import interface
-
-from Acquisition.interfaces import IAcquirer
+from zope import interface
+try:
+	from Acquisition.interfaces import IAcquirer
+except ImportError:
+	class IAcquirer(interface.Interface):
+		pass
 from nti.dataserver import interfaces as nti_interfaces
 #from nti.contentfragments import interfaces as frg_interfaces
 

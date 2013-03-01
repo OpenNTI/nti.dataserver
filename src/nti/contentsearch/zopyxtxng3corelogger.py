@@ -10,6 +10,6 @@ def Logger():
 
 PyLogger = Logger
 
-Z2Logger = Logger     
+Z2Logger = Logger
 
 LOG = logger

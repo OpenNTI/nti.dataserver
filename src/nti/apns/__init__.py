@@ -15,6 +15,6 @@ logger = __import__('logging').getLogger(__name__)
 #from .apns import APNSDeviceFeedback, APNSPayload, APNS
 
 # BWC imports for re-export
-from .connection import APNS
-from .interfaces import APNSDeviceFeedback
-from .payload import APNSPayload
+#from .connection import APNS
+#from .interfaces import APNSDeviceFeedback
+#from .payload import APNSPayload

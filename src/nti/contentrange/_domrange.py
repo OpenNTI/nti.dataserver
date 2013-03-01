@@ -9,10 +9,12 @@ import xml.dom
 import sys
 
 class position(object):
-	node, offset = None, 0
-	def __init__(self,node=None,offset=None,parent=None):
+	node = None
+	offset = 0
+	def __init__(self, node=None, offset=None, parent=None):
 		self.parent = parent
-		if node is not None and offset is not None: self.set(node,offset)
+		if node is not None and offset is not None:
+			self.set(node,offset)
 
 	def updating(f):
 		# Call parent range's update function after setting start or end nodes
@@ -37,28 +39,36 @@ class position(object):
 		self.node, self.offset = node.parentNode, childIndex(node) + 1
 
 	def __cmp__(self, other):
-		if self.node == other.node: 
-			return (self.offset).__cmp__(other.offset)
-		self_index, other_index = -1,-1
+		if self.node == other.node:
+			return cmp( self.offset, other.offset )
+
+
+		self_index, other_index = -1, -1
 		ancestor = find_common_ancestor(self.node,other.node)
 		if ancestor is None:
-			return None
+			# FIXME: This isn't right
+			return NotImplemented
 		for i,c in enumerate(ancestor.childNodes):
-			if is_ancestor(c,self.node): self_index = i
-			if is_ancestor(c,other.node): other_index = i
+			if is_ancestor(c,self.node):
+				self_index = i
+			if is_ancestor(c,other.node):
+				other_index = i
 		if is_ancestor(self.node,other.node):
-			if other_index < self.offset: return 1
+			if other_index < self.offset:
+				return 1
 			return -1
 		if is_ancestor(other.node,self.node):
-			if self_index < other.offset: return -1
+			if self_index < other.offset:
+				return -1
 			return 1
-		if other_index < self_index: return 1
+		if other_index < self_index:
+			 return 1
 		return -1
 
 class Range(object):
 
 	ancestor = None
-	collapsed = False;
+	collapsed = False
 	START_TO_START = 0
 	START_TO_END = 1
 	END_TO_START = 2
@@ -73,7 +83,7 @@ class Range(object):
 	def update(self):
 		if self.start.node is not None and self.end.node is not None:
 			self.ancestor = find_common_ancestor(self.start.node,self.end.node)
-		self.collapsed = self.end .__cmp__(self.start) in (0, -1)
+		self.collapsed = self.end <= self.start
 
 	def pointInside(self, node, offset):
 		p = position(node,offset)
@@ -144,7 +154,7 @@ class Range(object):
 	__str__ = stringify
 
 def is_ancestor(ancestor,descendant):
-	if ancestor == descendant: 
+	if ancestor == descendant:
 		return True
 	if ancestor == None or descendant == None:
 		return False

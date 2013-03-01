@@ -12,7 +12,11 @@ import zope.contenttype
 from zope import interface
 from zope import component
 from zope.interface.common import sequence
-from zope.mimetype import types as mime_types
+try:
+	from zope.mimetype import types as mime_types
+except ImportError:
+	# They moved this in zope.mimetype 2.0 (python 3 compat?)
+	from zope.mimetype import mtypes as mime_types
 
 mime_types.setup() # register interface classes and utilities if not already
 

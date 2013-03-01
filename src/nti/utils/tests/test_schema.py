@@ -22,6 +22,8 @@ from hamcrest import has_length
 from hamcrest import contains
 from hamcrest import has_entry
 from nose.tools import assert_raises
+from hamcrest import none
+from hamcrest import is_not
 
 from nti.tests import verifiably_provides, validated_by, not_validated_by
 
@@ -34,6 +36,7 @@ from nti.utils.schema import IBeforeSequenceAssignedEvent
 from nti.utils.schema import IBeforeDictAssignedEvent
 
 from dolmen.builtins import IUnicode
+from zope import interface
 from zope.interface.common import interfaces as cmn_interfaces
 
 from zope.schema import interfaces as sch_interfaces
@@ -177,40 +180,40 @@ def test_objectlen():
 	with assert_raises( sch_interfaces.TooLong ):
 		olen.validate( 'abcdef' )
 
+try:
+	from nti.tests import aq_inContextOf
+	from ..schema import AcquisitionFieldProperty
+	from Acquisition import Implicit
+	from ExtensionClass import Base
+except ImportError:
+	pass
+else:
 
-from nti.tests import aq_inContextOf
-from Acquisition import Implicit
-from ExtensionClass import Base
-from zope import interface
-from ..schema import AcquisitionFieldProperty
-from hamcrest import none
-from hamcrest import is_not
+	def test_aq_property():
 
-def test_aq_property():
+		class IBaz(interface.Interface):
+			pass
+		class IFoo(interface.Interface):
+			ob = Object(IBaz)
 
-	class IBaz(interface.Interface):
-		pass
-	class IFoo(interface.Interface):
-		ob = Object(IBaz)
+		@interface.implementer(IBaz)
+		class Baz(object):
+			pass
 
-	@interface.implementer(IBaz)
-	class Baz(object):
-		pass
+		class BazAQ(Implicit,Baz):
+			pass
 
-	class BazAQ(Implicit,Baz):
-		pass
+		@interface.implementer(IFoo)
+		class Foo(Base):
+			ob = AcquisitionFieldProperty(IFoo['ob'])
 
-	@interface.implementer(IFoo)
-	class Foo(Base):
-		ob = AcquisitionFieldProperty(IFoo['ob'])
+		assert_that( Foo, has_property( 'ob', is_( AcquisitionFieldProperty ) ) )
 
-	assert_that( Foo, has_property( 'ob', is_( AcquisitionFieldProperty ) ) )
+		foo = Foo()
+		assert_that( foo, has_property( 'ob', none() ) )
 
-	foo = Foo()
-	assert_that( foo, has_property( 'ob', none() ) )
+		foo.ob = Baz()
+		assert_that( foo, has_property( 'ob', is_not( aq_inContextOf( foo ) ) ) )
 
-	foo.ob = Baz()
-	assert_that( foo, has_property( 'ob', is_not( aq_inContextOf( foo ) ) ) )
-
-	foo.ob = BazAQ()
-	assert_that( foo, has_property( 'ob', aq_inContextOf( foo ) ) )
+		foo.ob = BazAQ()
+		assert_that( foo, has_property( 'ob', aq_inContextOf( foo ) ) )

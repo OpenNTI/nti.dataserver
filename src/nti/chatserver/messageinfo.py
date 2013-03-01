@@ -28,7 +28,7 @@ from nti.externalization.internalization import update_from_external_object
 from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver.users import entity
-from nti.dataserver import contenttypes
+from nti.dataserver.contenttypes import threadable
 #from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.base import _make_getitem
 
@@ -76,7 +76,7 @@ class _BodyFieldProperty(FieldProperty):
 @interface.implementer( interfaces.IMessageInfo,
 						dc_interfaces.IDCTimes)
 class MessageInfo( sharing.AbstractReadableSharedMixin,
-				   contenttypes.ThreadableMixin,
+				   threadable.ThreadableMixin,
 				   Persistent ):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass

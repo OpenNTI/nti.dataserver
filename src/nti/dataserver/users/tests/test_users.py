@@ -726,7 +726,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 					 has_entry( 'NTIID', 'tag:nextthought.com,2011-10:system-NamedEntity:Community-everyone'))
 
 from zope.event import notify
-from nti.apns import APNSDeviceFeedback
+from nti.apns.interfaces import APNSDeviceFeedback
 
 class TestFeedbackEvent(mock_dataserver.SharedConfiguringTestBase):
 

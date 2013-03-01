@@ -13,10 +13,12 @@ __docformat__ = "restructuredtext en"
 # disable unused import warning
 #pylint: disable=W0611
 
-from .threadable import ThreadableMixin
-from .threadable import ThreadableExternalizableMixin
+# Legacy exports; be careful removing them, some may be in the database...
+# ... but not the mixins
+#from .threadable import ThreadableMixin
+#from .threadable import ThreadableExternalizableMixin
 
-from .base import UserContentRoot as _UserContentRoot
+#from .base import UserContentRoot as _UserContentRoot
 
 from .bookmark import Bookmark
 from .highlight import Highlight

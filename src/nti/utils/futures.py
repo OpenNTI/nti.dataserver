@@ -13,7 +13,11 @@ logger = __import__('logging').getLogger(__name__)
 
 
 import functools
+import multiprocessing
 import concurrent.futures
+
+import platform
+is_pypy = platform.python_implementation() == 'PyPy'
 
 def ConcurrentExecutor(max_workers=None, _throw_exceptions=False):
 	"""
@@ -28,6 +32,11 @@ def ConcurrentExecutor(max_workers=None, _throw_exceptions=False):
 	case and can hang the pool, and has undefined results in the
 	thread case.
 	"""
+	if is_pypy:
+		if max_workers is None:
+			max_workers = multiprocessing.cpu_count()
+		return concurrent.futures.ThreadPoolExecutor( max_workers )
+
 	# Notice that we did not import the direct class because it gets swizzled at
 	# runtime. For that same reason, we subclass dynamically at runtime.
 	if _throw_exceptions:

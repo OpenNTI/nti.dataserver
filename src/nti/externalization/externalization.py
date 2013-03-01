@@ -43,8 +43,14 @@ from .oids import to_external_ntiid_oid
 # and they call back into us, and otherwise we would lose
 # the name that was established at the top level.
 _ex_name_marker = object()
-import gevent.local
-class _ex_name_local_c(gevent.local.local):
+try:
+	import gevent.local
+	_LocalBase = gevent.local.local
+except ImportError:
+	import threading
+	_LocalBase = threading.local
+
+class _ex_name_local_c(_LocalBase):
 	def __init__( self ):
 		super(_ex_name_local_c,self).__init__()
 		self.name = [_ex_name_marker]

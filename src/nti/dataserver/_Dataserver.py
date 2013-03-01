@@ -6,8 +6,11 @@ import os
 import six
 from urlparse import urlparse
 
-import gevent.queue
-import gevent.local
+try:
+	import gevent.queue as Queue
+except ImportError:
+	import Queue
+
 
 import ZODB.interfaces
 from ZODB.interfaces import IConnection
@@ -308,7 +311,7 @@ class Dataserver(MinimalDataserver):
 		# To handle changes synchronously, we execute them before the commit happens
 		# so that their changes are added with the main changes
 
-		changePublisherStream = gevent.queue.Queue()
+		changePublisherStream = Queue.Queue()
 		def read_generic_changes():
 			try:
 				while True:

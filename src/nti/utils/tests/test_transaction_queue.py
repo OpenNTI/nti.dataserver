@@ -7,10 +7,14 @@ from hamcrest import assert_that, is_
 
 import transaction
 
-import gevent.queue
-from gevent.queue import Queue
+try:
+	from gevent.queue import Full
+	from gevent.queue import Queue
+except ImportError:
+	from Queue import Full
+	from Queue import Queue
 
-import nti.deprecated
+
 from nti.utils.transactions import put_nowait
 
 class PutQueueTest(AbstractTestBase):
@@ -68,9 +72,9 @@ class PutQueueTest(AbstractTestBase):
 		put_nowait( queue, self )
 		# still size 1
 		assert_that( queue.qsize(), is_( 1 ) )
-		with self.assertRaises( gevent.queue.Full ) as cm:
+		with self.assertRaises( Full ) as cm:
 			transaction.commit()
 
 
-		assert_that( cm.exception, is_( gevent.queue.Full ) )
+		assert_that( cm.exception, is_( Full ) )
 		assert_that( queue.get(block=False), is_( object ) )

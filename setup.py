@@ -59,6 +59,17 @@ entry_points = {
 	]
 }
 
+import platform
+py_impl = getattr(platform, 'python_implementation', lambda: None)
+IS_PYPY = py_impl() == 'PyPy'
+
+try:
+	import zope.container
+except ImportError:
+	HAVE_ZCONT = True
+else:
+	HAVE_ZCONT = False
+
 setup(
 	name = 'nti.dataserver',
 	version = '0.0',
@@ -95,9 +106,9 @@ setup(
 	install_requires = [
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
-		'Acquisition >= 4.0',
+		'Acquisition >= 4.0' if not IS_PYPY else '', # Extensions don't build on pypy
 		'Chameleon >= 2.11',
-		'ExtensionClass >= 4.0',
+		'ExtensionClass >= 4.0' if not IS_PYPY else '',
 		# 'friendly' fork of PIL, developed by Zope/Plone.
 		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		# is the version that Pillow forked from in 2010 as version 1.0. So
@@ -169,7 +180,7 @@ setup(
 		# Warning: distutils distribution has been initialized, it may be too late to add a subpackage command
 		# followed by compilation failures: fatal error 'Python.h' file not found. So you must
 		# install numpy manually with pip: pip install numpy
-		'numpy >= 1.6.2',
+		'numpy >= 1.7.0' if not IS_PYPY else '',
 		'paste >= 1.7.5.1',
 		'perfmetrics >= 1.0', # easy statsd metrics.
 		'plone.scale >= 1.3', # image scaling/storage based on PIL
@@ -251,19 +262,23 @@ setup(
 		'zope.browserpage >= 4.0.0',
 		'zope.browsermenu >= 4.0.0', # Browser menu implementation for Zope.
 		'zope.browserresource >= 4.0.0',
-		'zope.catalog >= 3.8.2',
+		'zope.catalog >= 3.8.2' if not IS_PYPY else '', # zope.container dependency
 		'zope.cachedescriptors >= 4.0.0',
 		'zope.component[persistentregistry] >= 4.1.0',
 		# Schema vocabularies based on querying ZCA; useful
 		# for views and other metadata
 		'zope.componentvocabulary >= 1.0.1',
 		'zope.configuration >= 4.0.2',
-		#'zope.container[zcml,zodb] >= 4.0.0a3',
-		'zope.container[zcml,zodb] >= 4.0.0a3', # 4.0.0a3 or greater is required in the 4 series
+		# zope.container 4.0.0a3 won't install in pypy; it has no python fallback
+		# for its proxying. A patch to its setup.py can make it install (see https://github.com/zopefoundation/zope.proxy/blob/master/setup.py), but it won't work
+		# reliably; nonetheless it is required because so many other things require zope.container:
+		# z3c.table, zope.catalog, zope.copypastemove, zope.file, zope.intid, zope.pluggableauth, zope.site
+		# If you do install it you can run this script again to get the missing deps
+		'zope.container[zcml,zodb] >= 4.0.0a3' if not IS_PYPY else '', # 4.0.0a3 or greater is required in the 4 series
 		'zope.contentprovider >= 3.7.2',
 		'zope.contenttype >= 4.0.1', # A utility module for content-type handling.
 		'zope.copy >= 4.0.2',
-		'zope.copypastemove >= 3.8.0',
+		'zope.copypastemove >= 3.8.0' if HAVE_ZCONT else '', # zope.container dep
 		'zope.datetime >= 4.0.0',
 		'zope.deprecation >= 4.0.2',
 		'zope.deferredimport >= 4.0.0', # useful with zope.deprecation. Req'd by contentratings
@@ -273,15 +288,15 @@ setup(
 		'zope.event >= 4.0.2',
 		'zope.exceptions >= 4.0.6',
 		'zope.filerepresentation >= 4.0.1',
-		'zope.file >= 0.6.2',
+		'zope.file >= 0.6.2' if HAVE_ZCONT else '', # zope.container dep
 		'zope.formlib >= 4.2.1', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
 		'zope.hookable >= 4.0.1', # explicitly list this to ensure we get the fast C version. Used by ZCA.
-		'zope.i18n >= 3.8.0', # 4.0.0a4 is out; works fine. upgrade when official
+		'zope.i18n >= 4.0.0a4',
 		'zope.i18nmessageid >= 4.0.2',
 		'zope.index >= 4.0.1',
 		'zope.interface >= 4.0.5',
-		'zope.intid >= 3.7.2',
+		'zope.intid >= 3.7.2' if HAVE_ZCONT else '',
 		'zope.keyreference >= 3.6.4',
 		'zope.lifecycleevent >= 4.0.1',
 		'zope.location >= 4.0.1',
@@ -289,18 +304,19 @@ setup(
 		'zope.minmax >= 2.0.0',
 		'zope.pagetemplate >= 4.0.2',
 		'zope.password >= 4.0.0', # encrypted password management
-		'zope.pluggableauth >= 1.3', # pluggable authentication for zope.auth; see also repoze.who
-		'zope.publisher >= 3.13.1',#4.0.0a1 is out, should be fine
+		'zope.pluggableauth >= 1.3' if HAVE_ZCONT else '', # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
+		'zope.publisher >= 4.0.0a3',#4.0.0a1 is out, should be fine
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.sequencesort >= 4.0.0', # advanced locale aware sorting
 		'zope.schema >= 4.3.2',
 		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
-		# A 4.0.0a3 is out and works fine. officially upgrade when final. But this requires an extra: 'zope.security[untrustedpython] >= 4.0.0a3'
-		'zope.security >= 3.9.0',
+		# on pypy, you must manually force the _proxy module to be built.
+		# It should work fine without it, but too manythings actually directly import it
+		'zope.security[zcml,untrustedpython] >= 4.0.0a5',
 		'zope.session >= 3.9.5', # 4.0.0a1 is out, should be fine
-		'zope.site >= 3.9.2', # local, persistent ZCA sites. 4.0.0a1 is out and should be fine
+		'zope.site >= 3.9.2' if HAVE_ZCONT else '', # local, persistent ZCA sites. 4.0.0a1 is out and should be fine; zope.container dep
 		'zope.size >= 4.0.0',
 		# parser and renderers for the classic Zope "structured text" markup dialect (STX).
 		# STX is a plain text markup in which document structure is signalled primarily by identation.
@@ -308,10 +324,10 @@ setup(
 		'zope.structuredtext >= 4.0.0',
 		'zope.tal >= 4.0.0a1',
 		'zope.tales >= 4.0.1',
-		'zope.traversing >= 3.14.0', # 4.0.0a2 is out
+		'zope.traversing >= 4.0.0a2', # 4.0.0a2 is out
 		# textindexng3
-		'zopyx.txng3.core >= 3.6.1.1',
-		'zopyx.txng3.ext >= 3.3.3',
+		'zopyx.txng3.core >= 3.6.1.1' if not IS_PYPY else '', # extensions don't build
+		'zopyx.txng3.ext >= 3.3.3' if not IS_PYPY else '',
         # Data analysis
         # pandas,
         # scikit-learn,
@@ -342,15 +358,15 @@ setup(
 			'dblatex >= 0.3.4', # content rendering, convert docbook to tex
 			'epydoc >= 3.0.1', # auto-api docs
 			'httpie >= 0.4.1', # 0.4.0 explicitly requires requests > 1.0.4, 0.3.1 explicitly requires requests < 1.0
-			'ipython[notebook] >= 0.13.1', # notebook is web based, pulls in tornado
+			'ipython >= 0.13.1', # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.1',
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 			'pip >= 1.2.1',
 			'pip-tools >= 0.2.1', # command pip-review, pip-dump
 			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
-			'pylint >= 0.26.0',
+			'pylint >= 0.26.0' if not IS_PYPY else '',
 			'pyramid_debugtoolbar >= 1.0.4',
-			'readline >= 6.2.4.1',
+			'readline >= 6.2.4.1' if not IS_PYPY else '',
 			'repoze.sphinx.autointerface >= 0.7.1',
 			'rope >= 0.9.4', # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2', # IDE helper for rope
