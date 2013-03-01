@@ -3,17 +3,8 @@ from __future__ import print_function, unicode_literals, absolute_import
 logger = __import__( 'logging' ).getLogger( __name__ )
 
 import os
-import six
 
 from urlparse import urlparse
-
-try:
-	import gevent
-	import gevent.queue as Queue
-except ImportError:
-	import Queue
-	gevent = None
-
 
 import ZODB.interfaces
 from ZODB.interfaces import IConnection
@@ -32,7 +23,7 @@ from persistent import Persistent
 import redis
 
 from nti.externalization import oids
-import nti.apns as apns
+from nti.apns.connection import APNS
 from nti.ntiids import ntiids
 from nti.externalization import interfaces as ext_interfaces
 
@@ -46,9 +37,6 @@ from . import meeting_storage
 
 from . import config
 
-from nti.deprecated import hiding_warnings as hiding_deprecation_warnings
-
-
 ###
 ### Note: There is a bug is some versions of the python interpreter
 ### such that initiating ZEO connections at the module level
@@ -58,18 +46,7 @@ from nti.deprecated import hiding_warnings as hiding_deprecation_warnings
 ### into its own function and call it explicitly.
 ###
 
-from nti.dataserver.interfaces import InappropriateSiteError, SiteNotInstalledError
-
-
-class _Change(Persistent):
-
-	def __init__( self, change, meta ):
-		super(_Change,self).__init__()
-		self.change = change
-		self.meta = meta
-
-	def __repr__( self ):
-		return '_Change( %s, %s )' % (self.change, self.meta)
+from nti.dataserver.interfaces import InappropriateSiteError
 
 
 from .site import _connection_cm
@@ -267,7 +244,7 @@ class Dataserver(MinimalDataserver):
 	chatserver = None
 	session_manager = None
 	_apns = None
-	changePublisherStream = None
+
 
 	def __init__(self, parentDir=None, apnsCertFile=None  ):
 		super(Dataserver, self).__init__(parentDir, apnsCertFile=apnsCertFile )
@@ -302,8 +279,8 @@ class Dataserver(MinimalDataserver):
 
 		self._apns = self
 
-		# A topic that broadcasts Change events
-		self.changePublisherStream, other_closeables = self._setup_change_distribution()
+		# Currently a no-op as we do this all in-process at the moment
+		_, other_closeables = self._setup_change_distribution()
 
 		self.other_closeables.extend( other_closeables or () )
 
@@ -312,25 +289,9 @@ class Dataserver(MinimalDataserver):
 		:return: A tuple of (changePublisherStream, [other closeables])
 		"""
 		# To handle changes synchronously, we execute them before the commit happens
-		# so that their changes are added with the main changes
-
-		changePublisherStream = Queue.Queue()
-		def read_generic_changes():
-			try:
-				while True:
-					logger.debug( "Waiting to receive change %s", os.getpid() )
-					msg = changePublisherStream.get()
-					try:
-						logger.debug( "Received change %s %s", msg, os.getpid() )
-						self._on_recv_change( msg )
-						logger.debug( "Done processing change %s", os.getpid() )
-					except Exception:
-						logger.exception( 'error reading change' )
-			finally:
-				logger.debug( "Done receiving changes! %s", os.getpid() )
-		reader = gevent.spawn( read_generic_changes )
-
-		return (changePublisherStream, ((reader,reader.kill),))
+		# so that their changes are added with the main changes.
+		# But this has to happen in the same greenlet, so this actually is a no-op
+		return (None, ())
 
 	def _setup_session_manager( self ):
 		# The session service will read a component from our local site manager
@@ -350,7 +311,7 @@ class Dataserver(MinimalDataserver):
 		# include that code in the APNS server, or we can start proxying
 		# event objects around.
 
-		return apns.APNS( certFile=apnsCertFile )
+		return APNS( certFile=apnsCertFile )
 
 	def get_sessions(self):
 		return self.session_manager
@@ -384,78 +345,20 @@ class Dataserver(MinimalDataserver):
 		# the database afterwards.
 		#del self.changeListeners[:]
 
-	# Exists as a callable class so that we can coallesce changes to the
-	# same kwargs. Top-level so we can trust isinstance
-	class _OnCommit(object):
-		def __init__(self,ds,_change,kwargs):
-			self._changes = [_change]
-			self.kwargs = dict(kwargs) # Must copy, these tend to be re-used.
-			self.ds = ds
-
-		def add_change( self, _change ):
-			self._changes.append( _change )
-
-		def __call__( self, worked=True ):
-			# Worked defaults do True so that this can be used
-			# as a before-commit hook, which passes no argument
-			if not worked:
-				logger.warning( 'Dropping change on failure to commit' )
-			else:
-				if self._changes:
-					self.ds._on_recv_change( self._changes )
-				else:
-					logger.debug( "There were no OIDs to publish %s", os.getpid() )
-
-				# We are a one-shot object. Changes go or they don't.
-				self._changes = ()
-
-		def __repr__(self):
-			return "<%s.%s object at %s %s>" % (self.__class__.__module__, self.__class__.__name__, id(self), self.kwargs)
-
-	_HOOK_NAME = 'BeforeCommit'
-
 	def enqueue_change( self, change, **kwargs ):
-		""" Distributes a change to all the queued listener functions.
-		The change must be a Persistent object, or at least support __getstate__."""
-		# Posting the change is somewhat tricky. Regular
-		# pickle doesn't work if we have persistent objects
-		# involved (it cannot pickle through the _p_jar and DB objects).
-		# We really don't want to pickle those anyway,
-		# we want to just send their OIDs--/if/ they are in the DB, and stable.
-		# We can almost accomplish this through the use of the ObjectReader/Writer pair,
-		# which is what the DB itself uses. It deals correctly with
-		# cross db references, persistent objects that aren't, yet.
-		# However, there are cases it breaks down, specifically with some types
-		# of persistent object that aren't yet in the database. To solve that and other
-		# ownership questions, we simply stuff the object in the database and
-		# send its ID.
-		_change = _Change( change, dict(kwargs) ) # Must copy, tend to be reused
-		# In the past, we did this with an on-commit hook, but the hook may run
-		# after our site configuration has been removed, so it's best to
-		# do it immediately
-		self._on_recv_change( (_change,) )
+		""" Distributes a change to all the queued listener functions."""
+		# Previous revisions were much more complicated. See them for comments.
+		self._on_recv_change( change, kwargs )
 
-		# # Force the change to be added. Without this,
-		# # sometimes for some reason it doesn't get an OID by
-		# # the time the transaction is committed.
-		# self.root._p_jar.add( _change )
-
-	def _on_recv_change( self, msg ):
+	def _on_recv_change( self, change, kwargs ):
 		"""
 		Given a Change received, distribute it to all registered listeners.
-		:param sequence msg: Sequence of _Change objects. For backwards compatibility,
-			can also be a sequence of OID strings.
 		"""
-
-		for oid in msg:
-			_change = self.get_by_oid( oid ) if isinstance(oid,six.string_types) else oid
-			change = _change.change
-
-			for changeListener in self.changeListeners:
-				changeListener( self, change, **_change.meta )
-				# Since we are doing this synchronously now, we
-				# let the errors propagate so that they rollback the transaction
-				# (Otherwise, we could wind up with half-committed, bad state)
+		for changeListener in self.changeListeners:
+			changeListener( self, change, **kwargs )
+			# Since we are doing this synchronously now, we
+			# let the errors propagate so that they rollback the transaction
+			# (Otherwise, we could wind up with half-committed, bad state)
 
 
 _SynchronousChangeDataserver = Dataserver
