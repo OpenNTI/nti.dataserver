@@ -17,7 +17,7 @@ import platform
 import boto
 
 import nti.contentlibrary.boto_s3
-from nti.contentlibrary.filesystem import
+from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary
 from nti.contentlibrary.externalization import map_all_buckets_to
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
