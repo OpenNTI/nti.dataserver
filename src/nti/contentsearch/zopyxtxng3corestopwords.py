@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Zopyx override for stop words.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -7,7 +11,7 @@ from zope import component
 
 from zopyx.txng3.core.stopwords import Stopwords as zopyxStopWords
 
-from nti.contentsearch import interfaces as search_interfaces
+from . import interfaces as search_interfaces
 
 class _Stopwords(zopyxStopWords):
  
