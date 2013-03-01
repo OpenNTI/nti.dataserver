@@ -123,7 +123,10 @@ class _FPSPaymentProcessor(_BasePaymentProcessor, FPSIO):
 			if	status in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE) and not purchase.has_failed():
 				notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, trax.StatusMessage))
 			elif status == store_interfaces.PA_STATE_SUCCESS and not purchase.has_succeeded():
-				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
+				ta = trax.TransactionAmount
+				amount = float(ta.Value)
+				currency = ta.CurrencyCode	
+				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
 			elif status == store_interfaces.PA_STATE_CANCELED and not purchase.has_failed():
 				notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, trax.StatusMessage))
 			elif status == store_interfaces.PA_STATE_REFUNDED and not purchase.is_refunded():

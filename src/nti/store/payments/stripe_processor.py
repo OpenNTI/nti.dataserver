@@ -243,7 +243,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 					notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
 			elif charge.paid:
 				if not purchase.has_succeeded():
-					amount = charge.amount /100.0
+					amount = charge.amount/100.0
 					currency = charge.currency.upper()
 					notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
 
@@ -263,7 +263,9 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 				if purchase:
 					if etype in ("charge.succeeded") and not purchase.has_succeeded():
-						notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
+						amount = data['amount']/100.0
+						currency = data['currency'].upper()
+						notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
 					elif etype in ("charge.refunded") and not purchase.is_refunded():
 						notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
 					elif etype in ("charge.failed") and not purchase.has_failed():
