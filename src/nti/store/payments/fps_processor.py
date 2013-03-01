@@ -48,14 +48,14 @@ class _FPSPaymentProcessor(_BasePaymentProcessor, FPSIO):
 	
 	name = 'fps'
 	
-	def _process_fps_status(self, status, purchase_id, username, error_message=None):
+	def _process_fps_status(self, status, purchase_id, username, amount, currency='USD', error_message=None):
 		result = True
 		if status in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE):
 			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, error_message))
 		elif status == store_interfaces.PA_STATE_RESERVED:
 			notify(store_interfaces.PurchaseAttemptReserved(purchase_id, username))
 		elif status == store_interfaces.PA_STATE_SUCCESS:
-			notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username))
+			notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
 		else:
 			result = False
 		return result
@@ -75,7 +75,8 @@ class _FPSPaymentProcessor(_BasePaymentProcessor, FPSIO):
 					now = time.time()
 					while (time.time() -  now  < 90):
 						t = self.get_transaction(transaction_id)
-						if t and self._process_fps_status(t.TransactionStatus, purchase_id, username, t.StatusMessage):
+						if t and self._process_fps_status(t.TransactionStatus, purchase_id, username, amount, currency,
+														  t.StatusMessage):
 							break
 						gevent.sleep(5)
 				gevent.spawn(process_pay)

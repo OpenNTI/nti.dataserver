@@ -142,8 +142,8 @@ class _SearchableContent(object):
 
 # content analyzer
 
-def ngram_minmax():
-	ngc_util = component.queryUtility(cp_interfaces.INgramComputer)
+def ngram_minmax(lang='en'):
+	ngc_util = component.queryUtility(cp_interfaces.INgramComputer, name=lang)
 	minsize = ngc_util.minsize if ngc_util else default_ngram_minsize
 	maxsize = ngc_util.maxsize if ngc_util else default_ngram_maxsize
 	return (minsize, maxsize)
@@ -164,7 +164,7 @@ def content_field(stored=True):
 
 # book content
 
-def create_book_schema():
+def create_book_schema(lang='en'):
 	"""
 	Book index schema
 
@@ -183,7 +183,7 @@ def create_book_schema():
 							title = fields.TEXT(stored=True, spelling=True),
 				  			last_modified = fields.DATETIME(stored=True),
 				  			keywords = fields.KEYWORD(stored=True),
-				 			quick = ngram_field(),
+				 			quick = ngram_field(lang),
 				 			related = fields.KEYWORD(stored=True),
 				 			content = content_field(stored=True))
 	return schema

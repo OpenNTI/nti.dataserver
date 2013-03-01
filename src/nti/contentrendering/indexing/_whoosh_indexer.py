@@ -1,4 +1,13 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Whoosh book indexers.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger( __name__ )
 
 import os
 import re
@@ -23,16 +32,11 @@ from nti.contentrendering.indexing import interfaces as cridxr_interfaces
 
 from nti.contentsearch import create_book_schema
 
-import logging
-logger = logging.getLogger(__name__)
-
-page_c_pattern = re.compile("<div class=\"page-contents\">(.*)</body>")
-
-def get_schema():
-	return create_book_schema()
-
 @interface.implementer(cridxr_interfaces.IWhooshBookIndexer)
 class _BasicWhooshIndexer(object):
+		
+	def get_schema(self):
+		return create_book_schema()
 
 	def remove_index_files(self, indexdir, indexname):
 		if os.path.exists(indexdir):
@@ -43,7 +47,7 @@ class _BasicWhooshIndexer(object):
 	def create_index(self, indexdir, indexname):
 		if not os.path.exists(indexdir):
 			os.makedirs(indexdir)
-		ix = index.create_in(indexdir, schema=get_schema(), indexname=indexname)
+		ix = index.create_in(indexdir, schema=self.get_schema(), indexname=indexname)
 		return ix
 
 	def add_document(self,  writer, docid, ntiid, title, content,
@@ -116,13 +120,16 @@ class _BookFileWhooshIndexer(_BasicWhooshIndexer):
 	"""
 	Index each topic (file) as a whole. 1 inndex document per topic
 	"""
+	
+	page_c_pattern = re.compile("<div class=\"page-contents\">(.*)</body>")
+		
 	def _parse_text(self, text, pattern, default=''):
 		m = pattern.search(text, re.M|re.I)
 		return m.groups()[0] if m else default
 
 	def _get_page_content(self, text):
 		c = re.sub('[\n\t\r]','', text)
-		m = page_c_pattern.search(c, re.M|re.I)
+		m = self.page_c_pattern.search(c, re.M|re.I)
 		c = m.groups()[0] if m else u''
 		return c or text
 
@@ -156,6 +163,7 @@ class _IdentifiableNodeWhooshIndexer(_BasicWhooshIndexer):
 	"""
 	Indexing topic children nodes that either have an id or data_ntiid attribute
 	"""
+	
 	def process_topic(self, node, writer):
 		title = unicode(node.title)
 		ntiid = unicode(node.ntiid)

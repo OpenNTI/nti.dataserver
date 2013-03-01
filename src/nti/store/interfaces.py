@@ -179,7 +179,11 @@ class PurchaseAttemptStarted(PurchaseAttemptEvent):
 @interface.implementer(IPurchaseAttemptSuccessful)
 class PurchaseAttemptSuccessful(PurchaseAttemptEvent):
 	state = PA_STATE_SUCCESS
-
+	def __init__( self, purchase_id, username, amount=None, currency=None):
+		super(PurchaseAttemptSuccessful,self).__init__( purchase_id, username)
+		self.amount = amount
+		self.currency = currency
+		
 @interface.implementer(IPurchaseAttemptRefunded)
 class PurchaseAttemptRefunded(PurchaseAttemptEvent):
 	state = PA_STATE_REFUNDED

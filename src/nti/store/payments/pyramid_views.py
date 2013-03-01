@@ -53,7 +53,6 @@ class StripePayment(object):
 		purchase_id = purchase_history.register_purchase_attempt(username, purchase)
 		
 		def process_pay():
-			amount = int(amount * 100.0) # cents
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 			manager.process_purchase(purchase_id=purchase_id, username=username, token=token, amount=amount, 
 									 currency=currency, coupon=coupon)
