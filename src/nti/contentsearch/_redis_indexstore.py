@@ -140,7 +140,7 @@ class _RedisStorageService(object):
 			logger.info( "Pushing messages back onto %s on exception", self.queue_name )
 			msgs.reverse()
 			msgs = [zlib.compress(repr(m)) for m in msgs] if encode else msgs
-			self._redis.lpush(self.queue_name, *msgs)
+			self.redis.lpush(self.queue_name, *msgs)
 		
 	def read_process_index_msgs(self):
 		encoded_msgs = ()
