@@ -25,7 +25,9 @@ from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 
 import io
 import os
-
+import platform
+is_pypy = platform.python_implementation() == 'PyPy'
+from unittest import skipIf
 
 
 TEST_CONTENT = 'NextThoughtGenericTutorial-rendered-book'
@@ -71,7 +73,7 @@ class TestTransforms(ConfiguringTestBase):
 		refData = 'entity0 entity1 entity2 entity3'
 
 		# Open the copy of the rendered book
-		book = RenderedBook.RenderedBook( None, _resource( TEST_CONTENT ) )
+		book = NoConcurrentPhantomRenderedBook( None, _resource( TEST_CONTENT ) )
 
 		# Assert ToC is present
 		assert_that( book, has_property( 'toc', not_none() ) )

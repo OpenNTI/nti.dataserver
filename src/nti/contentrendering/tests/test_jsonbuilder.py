@@ -1,5 +1,7 @@
+
 from . import ConfiguringTestBase
 from nti.contentrendering import RenderedBook
+from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 from nti.contentrendering import jsonpbuilder
 from nti.tests import provides
 from nti.contentrendering import interfaces
@@ -28,7 +30,7 @@ def _verifyJSONPContents( orig_filename, ntiid, jsonpFunctionName ):
 	refData = None
 	with io.open( orig_filename, 'rb') as file:
 		refData = base64.standard_b64encode(file.read())
-		
+
 	assert_that( data, has_item( jsonpFunctionName ) )
 	assert_that( data[1], has_entry('ntiid',  ntiid ) )
 	assert_that( data[1], has_entry('Content-Type', mimetypes.guess_type( orig_filename )[0]) )
@@ -51,7 +53,8 @@ class TestTransforms(ConfiguringTestBase):
 
 		try:
 			# Open the copy of the rendered book
-			book = RenderedBook.RenderedBook( None, book_copy )
+
+			book = NoConcurrentPhantomRenderedBook( None, book_copy )
 
 			# Assert ToC is present
 			assert_that( book, has_property( 'toc', is_not( none() ) ) )
@@ -74,12 +77,12 @@ class TestTransforms(ConfiguringTestBase):
 			# Test that the eclipse-toc.xml.jsonp contains the correct data
 			_verifyJSONPContents( book.toc.filename, book.toc.root_topic.ntiid, 'jsonpToc' )
 			# Test that the index.html.jsonp contains the correct data
-			_verifyJSONPContents( os.path.join(book_copy, book.toc.root_topic.filename), 
+			_verifyJSONPContents( os.path.join(book_copy, book.toc.root_topic.filename),
 					      book.toc.root_topic.ntiid, 'jsonpContent' )
 			# Test that the JSONP version of the root topic icon file  contains the correct data
-			_verifyJSONPContents( os.path.join(book_copy, book.toc.root_topic.get_icon()), 
+			_verifyJSONPContents( os.path.join(book_copy, book.toc.root_topic.get_icon()),
 					      book.toc.root_topic.ntiid, 'jsonpData' )
-			
+
 		finally:
 			# Delete copy of the rendered book
 			shutil.rmtree( book_copy )

@@ -9,17 +9,14 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
-import collections
-import functools
 
 from nti.utils.property import alias
 from nti.utils.property import read_alias
-from nti.ntiids import ntiids
 from nti.externalization import datastructures
 from nti.zodb.minmax import MergingCounter
 
 # TODO: Break this dep
-from nti.dataserver import contenttypes
+from nti.dataserver.contenttypes import threadable
 
 import persistent
 from persistent import Persistent
@@ -88,8 +85,8 @@ from ._meeting_post_policy import _ModeratedMeetingState
 _bwc_renames = { 'nti.chatserver.meeting _ModeratedMeetingState': 'nti.chatserver._meeting_post_policy _ModeratedMeetingState' }
 
 @interface.implementer( interfaces.IMeeting )
-class _Meeting( contenttypes.ThreadableMixin,
-			    contenttypes.ThreadableExternalizableMixin,
+class _Meeting( threadable.ThreadableMixin,
+			    threadable.ThreadableExternalizableMixin,
 				Persistent,
 				datastructures.ExternalizableInstanceDict):
 	"""Class to handle distributing messages to clients. """

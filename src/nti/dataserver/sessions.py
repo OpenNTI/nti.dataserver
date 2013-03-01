@@ -11,7 +11,10 @@ import time
 import simplejson as json
 import cPickle as pickle
 import zlib
-import gevent
+try:
+	import gevent
+except ImportError:
+	gevent = None
 
 from zope import interface
 from zope import component

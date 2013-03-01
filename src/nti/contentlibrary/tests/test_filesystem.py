@@ -22,7 +22,7 @@ import os.path
 
 class TestFilesystemContentUnit(SharedConfiguringTestBase):
 
-	set_up_packages = (nti.contentlibrary, nti.externalization, 'nti.appserver')
+	set_up_packages = (nti.contentlibrary, nti.externalization,)
 
 	def test_filesystem_content_interfaces(self):
 
@@ -36,6 +36,8 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 
 
 	def test_adapter_prefs(self):
+		# TODO: This test does not really belong here
+		self.configure_packages( set_up_packages=('nti.appserver',), features=('devmode',) )
 		import zope.dottedname.resolve as dottedname
 		IPrefs = dottedname.resolve( 'nti.appserver.interfaces.IContentUnitPreferences' )
 

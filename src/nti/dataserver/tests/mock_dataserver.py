@@ -3,7 +3,11 @@
 import ZODB
 
 from ZODB.DemoStorage import DemoStorage
-from ZODB.FileStorage import FileStorage
+try:
+	from ZODB.FileStorage import FileStorage
+except ImportError:
+	# BTrees._fsBTree is missing usually
+	FileStorage = None
 from tempstorage.TemporaryStorage import TemporaryStorage
 
 import nti.dataserver as dataserver

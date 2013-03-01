@@ -102,9 +102,14 @@ class _FixedUserAuthenticationPolicy(object):
 	unauthenticated_userid = _other
 	forget = _other
 
-import gevent.local
+try:
+	import gevent.local
+	_LocalBase = gevent.local.local
+except ImportError:
+	import threading
+	_LocalBase = threading.local
 
-class _ThreadLocalManager(gevent.local.local):
+class _ThreadLocalManager(_LocalBase):
 	def __init__(self, default=None):
 		gevent.local.local.__init__( self )
 		self.stack = []

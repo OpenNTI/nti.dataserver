@@ -44,9 +44,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 
-from nti import apns
-
-import nti.apns.interfaces
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -1022,13 +1019,14 @@ class User(Principal):
 		Distribute the incoming change to any connected devices/sessions.
 		This is an extension point for layers.
 		"""
-		#TODO: Move the device support to a layer too.
+		#TODO: Move this out to a listener somewhere
 		apnsCon = _get_shared_dataserver().apns
 		if not apnsCon:
 			if self.devices:
 				logger.warn( "No APNS connection, not broadcasting change" )
 			return
 		if self.devices:
+			from nti.apns.payload import APNSPayload
 			# If we have any devices, notify them
 			userInfo = None
 			if change.containerId:
@@ -1037,11 +1035,11 @@ class User(Principal):
 				if ntiids.is_valid_ntiid_string( change.containerId ):
 					userInfo = {'url:': change.containerId }
 
-			payload = apns.APNSPayload( badge=self.notificationCount.value,
-										sound='default',
-										# TODO: I18N text for this
-										alert='An object was shared with you', #change.creator.preferredDisplayName + ' shared an object',
-										userInfo=userInfo )
+			payload = APNSPayload( badge=self.notificationCount.value,
+								   sound='default',
+								   # TODO: I18N text for this
+								   alert='An object was shared with you', #change.creator.preferredDisplayName + ' shared an object',
+								   userInfo=userInfo )
 			for device in self.devices.itervalues():
 				if not isinstance( device, Device ): continue
 				apnsCon.sendNotification( device.deviceId, payload )
@@ -1104,7 +1102,8 @@ def user_willRemoveIntIdForContainedObject( contained, event ):
 	if hasattr( contained.creator, '_postDeleteNotification' ):
 		contained.creator._postDeleteNotification( contained )
 
-@component.adapter(nti.apns.interfaces.IDeviceFeedbackEvent)
+from nti.apns import interfaces as apns_interfaces
+@component.adapter(apns_interfaces.IDeviceFeedbackEvent)
 def user_devicefeedback( msg ):
 	def feedback():
 		deviceId = msg.deviceId

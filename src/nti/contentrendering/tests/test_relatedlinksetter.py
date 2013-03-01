@@ -4,6 +4,7 @@ from unittest import TestCase
 from nti.contentrendering.relatedlinksetter import performTransforms
 from nti.contentrendering.contentchecks import performChecks
 from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
+from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 
 from nti.contentrendering.contentchecks import mathjaxerror
 import os
@@ -17,7 +18,7 @@ tearDownModule = nti.tests.module_teardown
 class TestTransforms(TestCase):
 
 	def test_transforms(self):
-		book = NoPhantomRenderedBook( EmptyMockDocument(), os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' ) )
+		book = NoConcurrentPhantomRenderedBook( EmptyMockDocument(), os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' ) )
 		res = performTransforms( book, save_toc=False )
 		assert_that( res, has_length( greater_than_or_equal_to( 3 ) ) )
 		assert_that( book.toc.dom.getElementsByTagName( "video" ), has_length( 1 ) )
@@ -27,11 +28,11 @@ class TestTransforms(TestCase):
 class TestContentChecks(TestCase):
 
 	def test_checks(self):
-		book = NoPhantomRenderedBook( EmptyMockDocument(), os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' ) )
+		book = NoConcurrentPhantomRenderedBook( EmptyMockDocument(), os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' ) )
 		res = performChecks( book )
 		assert_that( res, has_length( greater_than_or_equal_to( 3 ) ) )
 
 	def test_check_mathjax(self):
-		book = NoPhantomRenderedBook( EmptyMockDocument(), os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' ) )
+		book = NoConcurrentPhantomRenderedBook( EmptyMockDocument(), os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' ) )
 		res = mathjaxerror.check( book )
 		assert_that( res, is_( 3 ) )

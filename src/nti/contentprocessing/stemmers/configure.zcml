@@ -9,6 +9,8 @@
 	<utility factory="._nltk._PorterStemmer" provides=".interfaces.IStemmer"/>
 	<utility factory="._nltk._PorterStemmer" provides=".interfaces.IStemmer" name="porter" />
 
-	<utility factory="._zopyx.ZopyYXStemmer" name="zopyx" />
+	<utility factory="._zopyx.ZopyYXStemmer"
+			 name="zopyx"
+			 zcml:condition="installed zopyx.txng3.ext" />
 
 </configure>

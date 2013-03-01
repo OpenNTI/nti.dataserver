@@ -184,7 +184,12 @@ class ValidatedBy(BaseMatcher):
 
 		mismatch_description.append_text( repr( self.field ) ).append_text( ' failed to validate ' ).append_text( repr( item ) ).append_text( ' with ' ).append_text( repr( ex ) )
 
-from Acquisition import aq_inContextOf as _aq_inContextOf
+try:
+	from Acquisition import aq_inContextOf as _aq_inContextOf
+except ImportError:
+	# acquisition not installed
+	def _aq_inContextOf( child, parent ):
+		return False
 class AqInContextOf(BaseMatcher):
 	def __init__( self, parent ):
 		super(AqInContextOf,self).__init__()

@@ -18,7 +18,10 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 import transaction
-import gevent.queue
+try:
+	from gevent.queue import Full as QFull
+except ImportError:
+	from Queue import Full as QFull
 
 from dm.transaction.aborthook import add_abort_hooks
 add_abort_hooks = add_abort_hooks # pylint
@@ -156,7 +159,7 @@ class _QueuePutDataManager(ObjectDataManager):
 		if self.target.full():
 			# TODO: Should this be a transient exception?
 			# So retry logic kicks in?
-			raise gevent.queue.Full()
+			raise QFull()
 
 
 def put_nowait( queue, obj ):

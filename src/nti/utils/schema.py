@@ -24,8 +24,14 @@ from zope.event import notify
 from zope.schema import interfaces as sch_interfaces
 
 from zope.schema.fieldproperty import FieldProperty
-from Acquisition.interfaces import IAcquirer
-from Acquisition import aq_base
+try:
+	from Acquisition.interfaces import IAcquirer
+	from Acquisition import aq_base
+except ImportError:
+	class IAcquirer(interface.Interface):
+		"""Placeholder because Acquisition is not installed"""
+	def aq_base(o):
+		return o
 
 import numbers
 import collections

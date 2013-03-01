@@ -5,7 +5,7 @@ import tempfile
 from nti.contentrendering import interfaces
 from nti.contentrendering import sectionvideoadder
 from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
-
+from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 from nti.tests import provides
 from nti.contentrendering.tests import ConfiguringTestBase
 

@@ -10,8 +10,13 @@ import collections
 
 from zope import component
 
-from zope.container._zope_container_contained import isProxy as _isContainedProxy
-from zope.container._zope_container_contained import getProxiedObject as _getContainedProxiedObject
+try:
+	from zope.container._zope_container_contained import isProxy as _isContainedProxy
+	from zope.container._zope_container_contained import getProxiedObject as _getContainedProxiedObject
+except ImportError: # extension not present on pypy
+	from zope.proxy import isProxy as _isContainedProxy
+	from zope.proxy import getProxiedObject as _getContainedProxiedObject
+
 from zope.proxy import removeAllProxies
 
 from zope.security.management import system_user

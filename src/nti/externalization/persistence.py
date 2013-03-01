@@ -22,8 +22,13 @@ from persistent.wref import WeakRef as PWeakRef
 
 from zope import interface
 
-from zope.container._zope_container_contained import isProxy as _isContainedProxy
-from zope.container._zope_container_contained import getProxiedObject as _getContainedProxiedObject
+
+try:
+	from zope.container._zope_container_contained import isProxy as _isContainedProxy
+	from zope.container._zope_container_contained import getProxiedObject as _getContainedProxiedObject
+except ImportError: # extension not present on pypy
+	from zope.proxy import isProxy as _isContainedProxy
+	from zope.proxy import getProxiedObject as _getContainedProxiedObject
 
 
 from zope.security.management import system_user

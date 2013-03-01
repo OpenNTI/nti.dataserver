@@ -29,7 +29,8 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.dataserver import enclosures
 from nti.dataserver import datastructures
-from nti.dataserver import contenttypes
+from nti.dataserver.contenttypes.base import UserContentRoot
+from nti.dataserver.contenttypes.canvas import Canvas
 #from nti.dataserver.contenttypes.note import BodyFieldProperty
 from nti.dataserver import mimetype
 
@@ -43,7 +44,7 @@ from nti.utils.property import alias
 from persistent import Persistent
 from persistent.list import PersistentList
 
-class ClassScript(contenttypes._UserContentRoot,ExternalizableInstanceDict):
+class ClassScript(UserContentRoot,ExternalizableInstanceDict):
 	"""
 	Default implementation of :class:`IClassScript`
 	"""
@@ -65,7 +66,7 @@ class ClassScript(contenttypes._UserContentRoot,ExternalizableInstanceDict):
 		# TODO: Same issue with Note about resolving objects that may already
 		# exist. Part of that goes away with BodyFieldProperty. Part of that
 		# needs its same _ext_resolve implementation
-		assert all( [isinstance(x, (basestring,contenttypes.Canvas)) for x in self.body] )
+		assert all( [isinstance(x, (basestring,Canvas)) for x in self.body] )
 
 def _add_accepts( collection, ext_collection, accepts=() ):
 	if accepts is not None:
