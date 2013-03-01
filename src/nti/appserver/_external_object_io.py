@@ -57,7 +57,6 @@ def create_modeled_content_object( dataserver, owner, datatype, externalValue, c
 	return result
 
 
-
 def class_name_from_content_type( request ):
 	"""
 	:return: The class name portion of one of our content-types, or None

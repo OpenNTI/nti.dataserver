@@ -616,9 +616,13 @@ class User(Principal):
 		return tuple(self.friendsLists.values())
 
 	def maybeCreateContainedObjectWithType( self, datatype, externalValue ):
-		if datatype == 'Devices':
+		if datatype in ( self.devices.container_name, Device.mimeType ):
 			result = Device(externalValue)
 		else:
+			# FIXME: This is a hack to translate mimetypes to the old
+			# style of name that works with self.containers
+			if datatype == FriendsList.mimeType:
+				datatype = self.friendsLists.container_name
 			result = self.containers.maybeCreateContainedObjectWithType( datatype, externalValue )
 		return result
 

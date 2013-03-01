@@ -53,6 +53,7 @@ monkey_patch_check_headers()
 import simplejson
 import webtest.compat
 import webtest.app
+import webtest.utils
 def monkey_patch_webtest_json_to_simplejson():
 	"""
 	Make webtest use the faster simplejson dump/load functions.
@@ -61,6 +62,8 @@ def monkey_patch_webtest_json_to_simplejson():
 	webtest.compat.dumps = simplejson.dumps
 	webtest.app.dumps = simplejson.dumps
 	webtest.app.loads = simplejson.loads
+	webtest.utils.dumps = simplejson.dumps
+	webtest.utils.loads = simplejson.loads
 monkey_patch_webtest_json_to_simplejson()
 
 def monkey_patch_webtest_form20_to_not_be_stupid():

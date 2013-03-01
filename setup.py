@@ -194,7 +194,7 @@ setup(
 		 # Consider also https://github.com/phensley/gstatsd
 		'pystatsd >= 0.1.6',
 		'pytz >= 2012j',
-		'rdflib >= 3.2.3',
+		'rdflib >= 3.4.0',
 		# Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
 		'redis >= 2.7.2',
 		# There is a nice complete mock for it at fakeredis, installed for tests
@@ -258,15 +258,8 @@ setup(
 		# for views and other metadata
 		'zope.componentvocabulary >= 1.0.1',
 		'zope.configuration >= 4.0.2',
-		# zope.container 4.0.0a2 is out. It does nice things for Folder. But the alpha release
-		# also breaks compatibility with old pickles of Folder (despite comments to the contrary)
-		# AttributeError: 'Folder' object has no attribute '_SampleContainer__data
-		# Until they fix it, pin to 3.12.0
-		# Reported as issue https://github.com/zopefoundation/zope.container/issues/1
-		# Pull request in https://github.com/zopefoundation/zope.container/issues/2 testing with that
-		# version is successful
 		#'zope.container[zcml,zodb] >= 4.0.0a3',
-		'zope.container == 3.12.0',
+		'zope.container[zcml,zodb] >= 4.0.0a3', # 4.0.0a3 or greater is required in the 4 series
 		'zope.contentprovider >= 3.7.2',
 		'zope.contenttype >= 4.0.1', # A utility module for content-type handling.
 		'zope.copy >= 4.0.2',
@@ -315,7 +308,7 @@ setup(
 		'zope.structuredtext >= 4.0.0',
 		'zope.tal >= 4.0.0a1',
 		'zope.tales >= 4.0.1',
-		'zope.traversing == 3.14.0', # 4.0.0a1 is out and required for zope.container 4, but see comments about it
+		'zope.traversing >= 3.14.0', # 4.0.0a2 is out
 		# textindexng3
 		'zopyx.txng3.core >= 3.6.1.1',
 		'zopyx.txng3.ext >= 3.3.3',
