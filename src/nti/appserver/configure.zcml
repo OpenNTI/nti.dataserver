@@ -1,7 +1,8 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope"
-	   xmlns:i18n="http://namespaces.zope.org/i18n"
-	   xmlns:zcml="http://namespaces.zope.org/zcml">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+	
 	<include package="zope.component" />
 	<include package="zope.componentvocabulary" />
 	<include package="zope.formlib" />
@@ -329,4 +330,5 @@
 			 provides="nti.dataserver.interfaces.IGroupMember" />
 
 	<include package="." file="configure_blogs.zcml" />
+	<include package="." file="configure_store.zcml" />
 </configure>
