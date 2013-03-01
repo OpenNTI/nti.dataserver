@@ -24,14 +24,16 @@ from nti.chatserver import interfaces as chat_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
 
+from nti.mimetype import mimetype
+
 from ._views_utils import get_ntiid_path
 from . import interfaces as search_interfaces
 from ._search_highlights import WORD_HIGHLIGHT
 
 from .common import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-					 SNIPPET, HIT, ID, CONTENT, INTID, SCORE, OID)
+					 SNIPPET, HIT, ID, CONTENT, INTID, SCORE, OID, POST, MIME_TYPE)
 
-from .common import ( last_modified_, content_, title_, ntiid_, intid_)
+from .common import ( last_modified_, content_, title_, ntiid_)
 
 hit_search_external_fields  = (	CLASS, CREATOR, TYPE, LAST_MODIFIED, NTIID, CONTAINER_ID, SNIPPET, ID, INTID)
 
@@ -93,6 +95,7 @@ class _SearchHit(_BaseSearchHit):
 		self[SNIPPET] = adapted.get_content() if adapted else u''
 		self[CONTAINER_ID] = adapted.get_containerId() if adapted else u''
 		self[LAST_MODIFIED] = adapted.get_last_modified() if adapted else 0
+		self[MIME_TYPE] = mimetype.nti_mimetype_from_object(original, use_class=False) or u''
 		
 @component.adapter(nti_interfaces.IHighlight)
 class _HighlightSearchHit(_SearchHit):
@@ -119,7 +122,10 @@ class _MessageInfoSearchHit(_SearchHit):
 @component.adapter(for_interfaces.IPost)
 class _PostSearchHit(_SearchHit):
 	adapter_interface = search_interfaces.IPostContentResolver
-
+	def __init__( self, original, score=1.0 ):
+		super(_PostSearchHit, self).__init__(original, score)
+		self[TYPE] = POST
+		
 @component.adapter(search_interfaces.IWhooshBookContent)
 class _WhooshBookSearchHit(_BaseSearchHit):
 	
@@ -131,7 +137,10 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 		self[CONTAINER_ID] = hit[ntiid_]
 		self[title_.capitalize()] = hit[title_]
 		self[LAST_MODIFIED] = hit[last_modified_]
-		self.oid = ''.join((hit[ntiid_], u'-', unicode(hit[intid_])))
+	
+	@property
+	def oid(self):
+		return ''.join((self[NTIID], u'-', unicode(self[CONTAINER_ID])))
 
 def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	if hit is not None:
