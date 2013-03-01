@@ -266,7 +266,7 @@ setup(
 		'zope.cachedescriptors >= 4.0.0',
 		'zope.component[persistentregistry] >= 4.1.0',
 		# Schema vocabularies based on querying ZCA; useful
-		# for views and other metadata
+		# for views and other metadata. cf zope.vocabularyregistry
 		'zope.componentvocabulary >= 1.0.1',
 		'zope.configuration >= 4.0.2',
 		# zope.container 4.0.0a3 won't install in pypy; it has no python fallback
@@ -324,7 +324,10 @@ setup(
 		'zope.structuredtext >= 4.0.0',
 		'zope.tal >= 4.0.0a1',
 		'zope.tales >= 4.0.1',
-		'zope.traversing >= 4.0.0a2', # 4.0.0a2 is out
+		'zope.traversing >= 4.0.0a2',
+		# Plug to make zope.schema's vocabulary registry ZCA
+		# based and thus actually useful
+		'zope.vocabularyregistry >= 1.0.0',
 		# textindexng3
 		'zopyx.txng3.core >= 3.6.1.1' if not IS_PYPY else '', # extensions don't build
 		'zopyx.txng3.ext >= 3.3.3' if not IS_PYPY else '',
