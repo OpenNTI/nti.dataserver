@@ -262,7 +262,7 @@ setup(
 		'zope.browserpage >= 4.0.0',
 		'zope.browsermenu >= 4.0.0', # Browser menu implementation for Zope.
 		'zope.browserresource >= 4.0.0',
-		'zope.catalog >= 3.8.2' if not IS_PYPY else '', # zope.container dependency
+		'zope.catalog >= 3.8.2' if HAVE_ZCONT else '', # zope.container dependency
 		'zope.cachedescriptors >= 4.0.0',
 		'zope.component[persistentregistry] >= 4.1.0',
 		# Schema vocabularies based on querying ZCA; useful

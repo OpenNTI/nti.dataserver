@@ -13,6 +13,7 @@ from cStringIO import StringIO
 import gzip
 
 from nti.utils.property import alias
+import repoze.lru
 
 from .interfaces import IS3ContentUnit
 from .interfaces import IS3ContentPackage
@@ -114,16 +115,10 @@ def key_last_modified( key ):
 		result = time.mktime( result.timetuple() )
 	return result
 
-# TODO: We need to do caching of does_sibling_entry_exist and read_contents.
-# does_exist is used by appserver/censor_policies on every object creation/edit
-# which quickly adds up.
-# Right now, our policy for does_exist is a very simple, very dumb cache that we share
-# with all content units, caching questions for 10 minutes
-import repoze.lru
-_exist_cache = repoze.lru.ExpiringLRUCache( 1000, default_timeout=600 )
-import zope.testing.cleanup
-zope.testing.cleanup.addCleanUp( _exist_cache.clear )
+from .contentunit import _exist_cache
+from .contentunit import _content_cache
 
+@repoze.lru.lru_cache( None, cache=_content_cache ) # first arg is ignored. This caches with the key (key,)
 def _read_key( key ):
 	data = None
 	if key:
@@ -146,7 +141,7 @@ class BotoS3ContentUnit(ContentUnit):
 
 	"""
 
-	key = None
+	key = None # Note: Boto s3.key.Key does not have good == or hash semantics, both are identity based
 
 	def _connect_key(self):
 		"""
@@ -199,7 +194,7 @@ class BotoS3ContentUnit(ContentUnit):
 			data = _read_key( new_key )
 		return data
 
-	@repoze.lru.lru_cache( 1, cache=_exist_cache )
+	@repoze.lru.lru_cache( None, cache=_exist_cache ) # first arg is ignored. This caches with the key (self, sibling_name)
 	def does_sibling_entry_exist( self, sibling_name ):
 		"""
 		:return: Either a Key containing some information about an existing sibling (and which is True)

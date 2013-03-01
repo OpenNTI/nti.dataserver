@@ -17,7 +17,7 @@ import platform
 import boto
 
 import nti.contentlibrary.boto_s3
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as DynamicLibrary
+from nti.contentlibrary.filesystem import
 from nti.contentlibrary.externalization import map_all_buckets_to
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
@@ -40,9 +40,9 @@ def configure_app( global_config,
 	# TODO: This needs to change because it breaks the glossary/dictionary, which
 	# is assumed to be in the deploy_root?
 	if '/' in deploy_root:
-		library = DynamicLibrary( deploy_root )
+		library = EnumerateOnceFilesystemLibrary( deploy_root )
 		# We'll volunteer to serve all the files in the root directory
-		# Note that this is not dynamic (the library is)
+		# Note that this is not dynamic (the library isn't either)
 		# but in production we expect to have static files served by
 		# nginx/apache
 		serveFiles = [ ('/' + s, os.path.join( deploy_root, s) )

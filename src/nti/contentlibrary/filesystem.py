@@ -2,7 +2,7 @@
 """
 Objects for creating IContentLibrary objects based on the filesystem.
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -11,11 +11,11 @@ from os.path import join as path_join
 import datetime
 
 from zope import interface
-from zope.deprecation import deprecate
 from zope.cachedescriptors.property import Lazy
 from zope.location.interfaces import IContained as IZContained
 
-from nti.utils.property import alias
+import repoze.lru
+from nti.utils.property import alias, CachedProperty
 
 from . import eclipse
 from . import library
@@ -69,44 +69,66 @@ class StaticFilesystemLibrary(library.AbstractStaticLibrary):
 		super(StaticFilesystemLibrary,self).__init__( paths=paths )
 
 
+# TODO: The DynamicFilesystemLibrary should be made to work
+# with the `watchdog` library for noticing changes.
+# watchdog uses inotify on linux and fsevents/kqueue on OS X,
+# our two supported platforms. I (JAM) think the only trick might be
+# getting it to work with gevent?
+
 class DynamicFilesystemLibrary(library.AbstractLibrary):
 	"""
 	Implements a library by looking at the contents of a root
-	directory, when needed.
+	directory, everytime needed.
 	"""
+
 	package_factory = staticmethod(_package_factory)
 
 	def __init__( self, root ):
 		super(DynamicFilesystemLibrary,self).__init__()
 		self._root = root
 
-	@property
-	def possible_content_packages(self):
-		return [os.path.join( self._root, p) for p in os.listdir(self._root)
+	def _query_possible_content_packages(self):
+		return [os.path.join( self._root, p)
+				for p in os.listdir(self._root)
 				if os.path.isdir( os.path.join( self._root, p ) )]
+	possible_content_packages = property(_query_possible_content_packages)
 
-Library = StaticFilesystemLibrary
-DynamicLibrary = DynamicFilesystemLibrary
-from zope.deprecation import deprecated
-deprecated( ['Library','DynamicLibrary'], "Prefer StaticFilesystemLibrary and DynamicFilesystemLibrary." )
+class EnumerateOnceFilesystemLibrary(DynamicFilesystemLibrary):
+	"""
+	A library that will examine the to find possible content packages
+	only the very first time that it is requested to. Changes after that
+	point will be ignored.
+	"""
+
+	@CachedProperty
+	def possible_content_packages(self):
+		return tuple( self._query_possible_content_packages() )
 
 @interface.implementer(IFilesystemBucket,IZContained)
 class FilesystemBucket(object):
+	__slots__ = ('name','__parent__')
 
-	def __init__( self, name=None ):
-		if name:
-			self.name = name
-
-	name = None
 	__name__ = alias('name')
 	key = alias('name')
-	__parent__ = None
+
+	def __init__( self, name=None, parent=None ):
+		self.name = name
+		self.__parent__ = parent
 
 	def __eq__(self, other):
 		return self.name == other.name
 
 @interface.implementer(IFilesystemKey,IZContained)
 class FilesystemKey(object):
+	#__slots__ = ('name', 'bucket') # Doesn't play well with CachedProperty
+
+	bucket = None
+	name = None
+
+	__name__ = alias('name')
+	key = alias('name')
+	__parent__ = alias('bucket')
+
 
 	def __init__( self, bucket=None, name=None ):
 		if bucket is not None:
@@ -114,14 +136,7 @@ class FilesystemKey(object):
 		if name is not None:
 			self.name = name
 
-
-	bucket = None
-	name = None
-	__name__ = alias('name')
-	__parent__ = alias('bucket')
-	key = alias('name')
-
-	@property
+	@CachedProperty( 'bucket', 'name' )
 	def absolute_path( self ):
 		return os.path.join( self.bucket.name, self.name ) if self.bucket and self.bucket.name else self.name
 
@@ -137,6 +152,9 @@ class FilesystemKey(object):
 	def __hash__( self ):
 		return hash(self.absolute_path)
 
+from .contentunit import _exist_cache
+from .contentunit import _content_cache
+
 @interface.implementer(IFilesystemContentUnit)
 class FilesystemContentUnit(ContentUnit):
 	"""
@@ -146,8 +164,10 @@ class FilesystemContentUnit(ContentUnit):
 	def _get_key(self):
 		return self.__dict__.get('key', None)
 	def _set_key( self, nk ):
-		if type(nk) == str or type(nk) == unicode:
-			# TODO: Assuming one level of hiearchy
+		if isinstance( nk, basestring ):
+			# OK, the key is a simple string, meaning a path within
+			# a directory.
+			# TODO: Assuming one level of hierarchy
 			bucket_name = os.path.dirname( nk )
 			key_name = os.path.basename( nk )
 			bucket = FilesystemBucket( bucket_name ) if bucket_name else None
@@ -162,9 +182,7 @@ class FilesystemContentUnit(ContentUnit):
 
 	def _get_filename(self):
 		return self.key.absolute_path if self.key else None
-	def _set_filename( self, nf ):
-		self._set_key( nf )
-	filename = property(_get_filename, _set_filename)
+	filename = property(_get_filename, _set_key )
 
 	@Lazy
 	def lastModified( self ):
@@ -186,6 +204,7 @@ class FilesystemContentUnit(ContentUnit):
 			logger.debug( "Failed to get created for %s", self.filename, exc_info=True )
 			return datetime.datetime.utcfromtimestamp( 0 )
 
+	@repoze.lru.lru_cache( None, cache=_content_cache )
 	def read_contents(self):
 		try:
 			return open( self.filename, 'r' ).read()
@@ -202,13 +221,19 @@ class FilesystemContentUnit(ContentUnit):
 		return key
 		#return os.path.join( os.path.dirname( self.filename ), sibling_name )
 
+	@repoze.lru.lru_cache( None, cache=_content_cache ) # first arg is ignored. This caches with the key (self, sibling_name)
+	def _do_read_contents_of_sibling_entry( self, sibling_name ):
+		try:
+			with open( self.make_sibling_key( sibling_name ).absolute_path, 'r' ) as f:
+				return f.read()
+		except (OSError,IOError):
+			return None
+
 	def read_contents_of_sibling_entry( self, sibling_name ):
 		if self.filename:
-			try:
-				return open( self.make_sibling_key( sibling_name ).absolute_path, 'r' ).read()
-			except (OSError,IOError):
-				return None
+			return self._do_read_contents_of_sibling_entry( sibling_name )
 
+	@repoze.lru.lru_cache( None, cache=_exist_cache )
 	def does_sibling_entry_exist( self, sibling_name ):
 		sib_key = self.make_sibling_key( sibling_name )
 		return sib_key if os.path.exists( sib_key.absolute_path ) else None
@@ -217,6 +242,15 @@ class FilesystemContentUnit(ContentUnit):
 		return "<%s.%s '%s' '%s'>" % (self.__class__.__module__, self.__class__.__name__,
 									  self.__name__, self.filename )
 
+
+	def __eq__( self, other ):
+		try:
+			return self.key == other.key and self.__parent__ == other.__parent__
+		except AttributeError:
+			return NotImplemented
+
+	def __hash__( self ):
+		return hash(self.filename)
 
 @interface.implementer(IFilesystemContentPackage)
 class FilesystemContentPackage(ContentPackage,FilesystemContentUnit):

@@ -403,6 +403,9 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
 			f.write( "Allow:jason.madden@nextthought.com:[zope.View]" )
 
+		# clear caches
+		import nti.contentlibrary.contentunit
+		nti.contentlibrary.contentunit._clear_caches()
 		external = ext_interfaces.IExternalObject( self.library_collection ).toExternalObject()
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
 
