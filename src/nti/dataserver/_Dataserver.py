@@ -4,6 +4,7 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 
 import os
 import six
+import gevent
 from urlparse import urlparse
 
 try:
