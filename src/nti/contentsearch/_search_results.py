@@ -65,6 +65,7 @@ class _PageableSearchResults(_BaseSearchResults):
 	def batchSize(self):
 		return self.query.batchSize
 
+	@property
 	def batchStart(self):
 		return self.query.batchStart
 

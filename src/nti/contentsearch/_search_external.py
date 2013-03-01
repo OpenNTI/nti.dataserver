@@ -7,8 +7,12 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import collections
+
 from zope import component
 from zope import interface
+
+from z3c.batching.batch import Batch
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject
@@ -92,6 +96,28 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		super(_SearchResultsExternalizer, self).__init__(results)
 		self.seen = set()
 
+	@property
+	def is_batching(self):
+		return self.results.is_batching
+
+	@property
+	def batchSize(self):
+		return self.results.batchSize
+
+	@property
+	def batchStart(self):
+		return self.results.batchStart
+	
+	def hit_iter(self):
+		sortOn = self.query.sortOn
+		iter_or_seq = sort_hits(self.results, sortOn=sortOn) if sortOn else self.results
+		if self.is_batching:
+			seq = iter_or_seq if isinstance(iter_or_seq, collections.Sequence) else list(iter_or_seq)
+			batch = Batch(seq, start=self.batchStart, size=self.batchSize)
+			return iter(batch)
+		else:
+			return iter(iter_or_seq) if isinstance(iter_or_seq, collections.Sequence) else iter_or_seq
+		
 	def toExternalObject(self):
 		eo = super(_SearchResultsExternalizer, self).toExternalObject()
 		eo[PHRASE_SEARCH] = self.query.is_phrase_search
@@ -101,12 +127,10 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		count = 0
 		last_modified = 0
 		limit = self.query.limit
-		sortOn = self.query.sortOn
 		highlight_type = self.highlight_type
 
 		# use iterator in case of any paging
-		# TODO: handle paging
-		for hit in sort_hits(self.results, sortOn=sortOn):
+		for hit in self.hit_iter():
 
 			if hit is None or hit.obj is None:
 				continue
