@@ -19,9 +19,11 @@ from zope import interface
 
 import transaction
 try:
+	import gevent
 	from gevent.queue import Full as QFull
 except ImportError:
 	from Queue import Full as QFull
+	gevent = None
 
 from dm.transaction.aborthook import add_abort_hooks
 add_abort_hooks = add_abort_hooks # pylint
