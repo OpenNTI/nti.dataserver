@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Zopyx override for result sets.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -9,7 +13,7 @@ from BTrees.LLBTree import intersection as intersection64
 
 from zopyx.txng3.core.resultset import ResultSet, WordList
 
-from nti.contentsearch.zopyxtxng3coredoclist import DocidList
+from .zopyxtxng3coredoclist import DocidList
 
 def intersectionResultSets(sets):
     """ perform intersection of ResultSets """

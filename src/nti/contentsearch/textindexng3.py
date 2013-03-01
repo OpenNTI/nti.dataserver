@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Whoosh user search adapter.
+Defines a zopyx TextIndex.
 
 $Id$
 """

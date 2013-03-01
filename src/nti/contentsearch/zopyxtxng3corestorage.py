@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Zopyx override for index storage.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -20,7 +24,7 @@ from zopyx.txng3.core import widcode as zopyx_widcode
 from zopyx.txng3.core import storage as zopyx_storage
 from zopyx.txng3.core.interfaces import IStorageWithTermFrequency
 	
-from nti.contentsearch.zopyxtxng3coredoclist import DocidList
+from .zopyxtxng3coredoclist import DocidList
 
 class Storage(zopyx_storage.Storage):
 	
@@ -130,7 +134,7 @@ class StorageWithTermFrequency(Storage):
 		return self._frequencies
 
 @interface.implementer(IFactory)
-class _StorageFactory:
+class _StorageFactory(object):
 	
 	def __init__(self, klass):
 		self._klass = klass

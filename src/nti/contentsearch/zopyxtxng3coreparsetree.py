@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+Zopyx override for logger.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import six
 
@@ -11,7 +17,7 @@ def node_splitter(node, splitter):
 	"""Split word nodes with splitter."""
 	
 	if isinstance(node, six.string_types):
-		logging.warn("Incorrect node type. '%r' will be treated as a WordNode" % node)
+		logger.warn("Incorrect node type. '%r' will be treated as a WordNode" % node)
 		node = WordNode(node)
 		
 	v = node.getValue()

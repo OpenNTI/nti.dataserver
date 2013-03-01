@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Zopyx override for query evaluator.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -9,7 +13,7 @@ import collections
 from zopyx.txng3.core import evaluator as zopyx_evaluator
 from zopyx.txng3.core import parsetree as zopyx_parsetree
 
-from nti.contentsearch.zopyxtxng3coreresultset import intersectionResultSets
+from .zopyxtxng3coreresultset import intersectionResultSets
 
 class Evaluator(zopyx_evaluator.Evaluator):
 	

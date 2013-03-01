@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+Define repoze query methods.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import sys
 import inspect
@@ -15,8 +21,6 @@ from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
 from .common import is_all_query
 from . import interfaces as search_interfaces
-
-logger = __import__('logging').getLogger(__name__)
 
 def allow_keywords(f):
 	spec = inspect.getargspec(f)
