@@ -533,8 +533,8 @@ class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
 			  name='publish')
 def _PublishView(request):
 	interface.alsoProvides( request.context, nti_interfaces.IDefaultPublished )
-	# TODO: Hooked directly up to temp_dispatch_to_indexer
-	temp_dispatch_to_indexer( request.context.headline, None )
+	# TODO: Hooked directly up to temp_post_added_to_indexer
+	temp_post_added_to_indexer( request.context.headline, None )
 	return uncached_in_response( request.context )
 
 
@@ -556,10 +556,10 @@ def _UnpublishView(request):
 from nti.dataserver import activitystream_change
 from zope.event import notify
 
-def _stream_event_for_comment( comment ):
+def _stream_event_for_comment( comment, change_type=nti_interfaces.SC_CREATED ):
 	# Now, construct the (artificial) change notification. Notice this is never
 	# persisted anywhere
-	change = activitystream_change.Change( nti_interfaces.SC_CREATED, comment )
+	change = activitystream_change.Change(change_type, comment )
 	change.creator = comment.creator
 
 	return change
@@ -582,19 +582,33 @@ def notify_online_author_of_comment( comment, event ):
 	notify( chat_interfaces.DataChangedUserNotificationEvent( (author.username,), change ) )
 
 
-@component.adapter( frm_interfaces.IPersonalBlogComment, lifecycleevent.IObjectAddedEvent )
-def temp_dispatch_to_indexer( comment, event ):
-	# Direct dispatch comment posted events for indexing when created
-
+def temp_dispatch_to_indexer( change ):
 	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
 	dataserver = component.queryUtility( nti_interfaces.IDataserver )
 
 	if indexmanager and dataserver:
 
+		comment = change.object
 		change = _stream_event_for_comment( comment )
+		
 		# Now index the comment for the creator and all the sharing targets. This is just
 		# like what the User object itself does (except we don't need to expand DFL/communities)
 
 		indexmanager.onChange( dataserver, change, comment.creator, broadcast=True ) # The creator gets it as a broadcast
 		for target in comment.sharingTargets:
 			indexmanager.onChange( dataserver, change, target )
+
+@component.adapter( frm_interfaces.IPost, lifecycleevent.IObjectAddedEvent )
+def temp_post_added_to_indexer( comment, event ):
+	change = _stream_event_for_comment( comment )
+	temp_dispatch_to_indexer(change)
+
+@component.adapter( frm_interfaces.IPost, lifecycleevent.IObjectModifiedEvent )
+def temp_post_modified_to_indexer( comment, event ):
+	change = _stream_event_for_comment( comment, nti_interfaces.SC_MODIFIED )
+	temp_dispatch_to_indexer(change)
+
+@component.adapter( frm_interfaces.IPost, lifecycleevent.IObjectRemovedEvent )
+def temp_post_deleted_to_indexer( comment, event ):
+	change = _stream_event_for_comment( comment, nti_interfaces.SC_DELETED )
+	temp_dispatch_to_indexer(change)
