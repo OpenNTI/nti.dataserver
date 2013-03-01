@@ -25,6 +25,7 @@ from boto.cloudsearch import connect_to_region
 from boto.cloudsearch.search import SearchConnection
 from boto.cloudsearch.document import DocumentServiceConnection
 
+from ._redis_indexstore import sort_messages
 from . import interfaces as search_interfaces
 from ._cloudsearch_index import get_cloud_oid
 from ._cloudsearch_index import to_cloud_object
@@ -172,13 +173,13 @@ class _CloudSearchStorageService(_RedisStorageService):
 	@property
 	def store(self):
 		if self._store is None:
-			self._store = component.getUtility(search_interfaces.ICloudSearchStore  )
+			self._store = component.getUtility(search_interfaces.ICloudSearchStore)
 		return self._store
 					
 	def process_messages(self, msgs):
 		store = self.store
 		service = store.get_document_service()
-		for m in msgs:
+		for m in sort_messages(msgs):
 			op, docid, username =  m
 			if op in ('add', 'update'):
 				store.add(docid, username, service, False)
