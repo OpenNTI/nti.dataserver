@@ -1,4 +1,11 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Indexing content utilities.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import time
 
@@ -7,9 +14,6 @@ from nltk import clean_html
 from nti.contentprocessing import split_content
 
 from nti.contentfragments.html import _sanitize_user_html_to_text
-
-import logging
-logger = logging.getLogger(__name__)
 
 def sanitize_content(text, tokens=False, table=None):
 	"""
