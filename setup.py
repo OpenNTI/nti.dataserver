@@ -148,7 +148,7 @@ setup(
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
-		'contentratings == 1.0',
+		'contentratings == 1.0', # requires small patch to work without acquisition
 		'cryptacular >= 1.4.1', # see z3c.crypt
 		'cssselect >= 0.7.1', # Used by pyquery
 		'cython >= 0.18',
@@ -300,7 +300,7 @@ setup(
 		'zope.keyreference >= 3.6.4',
 		'zope.lifecycleevent >= 4.0.1',
 		'zope.location >= 4.0.1',
-		'zope.mimetype >= 1.3.1',
+		'zope.mimetype == 1.3.1', # freeze on 1.3.1 pending https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
 		'zope.pagetemplate >= 4.0.2',
 		'zope.password >= 4.0.0', # encrypted password management
