@@ -43,6 +43,10 @@
 				 for="nti.dataserver.interfaces.IUser"
 				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
 
+		<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
+			 	 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
+			 	 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
+			 
 		<!-- The strict filter for COPPA users without agreements is inherited -->
 
 		<!-- CSS for mathcounts -->
