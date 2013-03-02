@@ -3,7 +3,18 @@
 	xmlns="http://namespaces.zope.org/zope"
 	xmlns:i18n="http://namespaces.zope.org/i18n"
 	xmlns:zcml="http://namespaces.zope.org/zcml">
-	
+	<!--
+	It is not cleanup to remove these includes. They are required.
+	The meta from zope.component registers the 'utility' directive.
+	The meta from zope.security. registers the 'class' directive.
+	If you do not include them, then this file only works
+	if something that was already loaded into the same configuration
+	context included them, making it order/path dependent, which is bad.
+	-->
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+
 	<utility factory="._termextract.DefaultFilter" />
 
 	<utility factory="._termextract._DefaultKeyWorExtractor" />
