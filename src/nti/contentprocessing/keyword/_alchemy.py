@@ -20,7 +20,7 @@ from .. import interfaces as cp_interfaces
 from . import interfaces as cpkw_interfaces
 
 @interface.implementer( cpkw_interfaces.IKeyWordExtractor )
-class _AlchemyAPIKeyWorExtractor():
+class _AlchemyAPIKeyWorExtractor(object):
 	
 	url = u'http://access.alchemyapi.com/calls/text/TextGetRankedKeywords'
 	limit_kb = 150
@@ -41,7 +41,7 @@ class _AlchemyAPIKeyWorExtractor():
 				r = requests.post(self.url, params=params, headers=headers)
 				data = r.json()
 				
-				if r.status_code ==200 and data.get('status','ERROR') == 'OK':
+				if r.status_code == 200 and data.get('status','ERROR') == 'OK':
 					keywords = data.get('keywords', ())
 					result = [ContentKeyWord(d['text'], float(d.get('relevance', 0))) for d in keywords]
 			except:
