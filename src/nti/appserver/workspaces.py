@@ -11,7 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
+import functools
 import collections
 import warnings
 
@@ -47,7 +47,10 @@ import nti.appserver.interfaces as app_interfaces
 import nti.appserver.pyramid_renderers as rest
 
 from . import traversal
-from pyramid import security as psec
+from .pyramid_authorization import is_readable
+from .pyramid_authorization import is_writable
+from .pyramid_authorization import has_permission
+
 from pyramid.threadlocal import get_current_request
 
 def _find_name( obj ):
@@ -241,6 +244,8 @@ class LibraryCollection(object):
 class LibraryCollectionDetailExternalizer(object):
 	"""
 	Externalizes a Library wrapped as a collection.
+
+	.. note:: This is where ACLs on individual ContentPackages are applied to the elements of the IContentPackageLibrary
 	"""
 
 	# TODO: This doesn't do a good job of externalizing it,
@@ -251,16 +256,16 @@ class LibraryCollectionDetailExternalizer(object):
 
 	def toExternalObject(self):
 		request = get_current_request()
+		test = None
 		if request:
-			test = lambda x: psec.has_permission( nauth.ACT_READ, nti_interfaces.IACLProvider(x), request )
-		else:
-			test = lambda x: True
+			test = functools.partial( is_readable, request=request )
+
 		# TODO: Standardize the way ACLs are applied during external writing
 		# This is weird and bad: we're overwriting what Library itself does
 		library = self._collection.library
 		return { #'icon': library.icon,
 				 'title': "Library",
-				 'titles' : [toExternalObject(x) for x in library.titles if test(x)] }
+				 'titles' : [toExternalObject(x) for x in filter(test, library.titles)] }
 
 @interface.implementer(app_interfaces.IWorkspace)
 class GlobalWorkspace(object):
@@ -393,7 +398,7 @@ class ContainerCollectionDetailExternalizer(object):
 			# We have made a first pass at this below with acl_wrapped which is nearly correct
 			request = get_current_request()
 
-			if request and psec.has_permission( nauth.ACT_UPDATE, v_, request ):
+			if request and is_writable( v_, request ):
 				item.setdefault( StandardExternalFields.LINKS, [] )
 				if not any( [l['rel'] == 'edit' for l in item[StandardExternalFields.LINKS]]):
 					valid_traversal_path = traversal.normal_resource_path( v_ )
@@ -767,7 +772,7 @@ class _ProviderCollection(object):
 		result = ()
 		request = get_current_request()
 		# Can we write to the provider?
-		if request and psec.has_permission( nauth.ACT_CREATE, nti_interfaces.IACLProvider(self._provider), request ):
+		if request and has_permission( nauth.ACT_CREATE, self._provider, request ):
 			result = []
 			for container in self._provider.getAllContainers().values():
 				# is it an IHomogeneousTypeContainer?
