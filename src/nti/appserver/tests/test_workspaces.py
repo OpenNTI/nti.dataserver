@@ -332,6 +332,7 @@ from pyramid.threadlocal import get_current_request
 from pyramid.testing import setUp as psetUp
 from pyramid.testing import tearDown as ptearDown
 from pyramid.testing import DummyRequest
+from nti.appserver import pyramid_authorization
 
 
 class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMixin):
@@ -367,13 +368,13 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
 			def effective_principals( self, request ):
-				return [nti_interfaces.IPrincipal(x) for x in [self.authenticated_userid(request), nti_interfaces.AUTHENTICATED_GROUP_NAME]]
+				return [nti_interfaces.IPrincipal(x) for x in [self.authenticated_userid(request), nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.EVERYONE_GROUP_NAME]]
 		### XXX Breaks test isolation
 		self.beginRequest()
 		self.request.registry = component.getGlobalSiteManager()
 		self.policy = Policy()
 		component.provideUtility( self.policy )
-		self.acl_policy = pyramid.authorization.ACLAuthorizationPolicy()
+		self.acl_policy = pyramid_authorization.ACLAuthorizationPolicy()
 		component.provideUtility( self.acl_policy )
 
 	def tearDown(self):
@@ -395,18 +396,22 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 
 	def test_specific_acl_file(self):
 		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
-			f.write( "Allow:User:[nti.actions.create]" )
+			f.write( "Allow:User:[nti.actions.create]\n" )
+			f.write( 'Deny:system.Everyone:All\n' )
 
-		external = ext_interfaces.IExternalObject( self.library_collection ).toExternalObject()
+		external = to_external_object( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 0 ) ) )
 
+		# Now, grant it to a user
 		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
-			f.write( "Allow:jason.madden@nextthought.com:[zope.View]" )
+			f.write( "Allow:jason.madden@nextthought.com:[zope.View]\n" )
 
 		# clear caches
 		import nti.contentlibrary.contentunit
 		nti.contentlibrary.contentunit._clear_caches()
-		external = ext_interfaces.IExternalObject( self.library_collection ).toExternalObject()
+		self.beginRequest()
+
+		external = to_external_object( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
 
 from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
