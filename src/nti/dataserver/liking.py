@@ -25,6 +25,7 @@ from contentratings.storage import UserRatingStorage
 
 from nti.dataserver import interfaces
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.singleton import SingletonDecorator
 
 #: Category name for liking; use this as the name of the adapter
 LIKE_CAT_NAME = 'likes'
@@ -210,8 +211,7 @@ class LikeDecorator(object):
 	For :class:`~.ILikeable` objects, records the number of times they
 	have been liked in the ``LikeCount`` value of the external map.
 	"""
-	def __init__( self, ctx ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, context, mapping ):
 		mapping['LikeCount'] = like_count( context ) # go through the function to be safe

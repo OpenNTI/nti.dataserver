@@ -21,6 +21,7 @@ import zope.traversing.interfaces
 from nti.dataserver import traversal
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.singleton import SingletonDecorator
 from nti.dataserver.mimetype import nti_mimetype_from_object
 
 from nti.ntiids import ntiids
@@ -153,8 +154,7 @@ class LinkExternalObjectDecorator(object):
 	An object decorator which (comes after the mapping decorators)
 	to clean up any links that are added by decorators that didn't get rendered.
 	"""
-	def __init__( self, context ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, context, obj):
 		if isinstance( obj, _MutableSequence ):

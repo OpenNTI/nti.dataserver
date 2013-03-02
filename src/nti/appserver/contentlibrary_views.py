@@ -44,6 +44,7 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import to_external_object
+from nti.externalization.singleton import SingletonDecorator
 
 def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	"""
@@ -79,9 +80,7 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(app_interfaces.IContentUnitInfo)
 class _ContentUnitAssessmentItemDecorator(object):
-
-	def __init__( self, context ):
-		self.context = context
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, context, result_map ):
 		if context.contentUnit is None:
@@ -154,8 +153,7 @@ def _prefs_present( prefs ):
 class _ContentUnitPreferencesDecorator(object):
 	"Decorates the mapping with the sharing preferences. Contains the algorithm to resolve them."
 
-	def __init__( self, context ):
-		self.context = context
+	__metaclass__ = SingletonDecorator
 
 	def _find_prefs(self, context, remote_user):
 		# Walk up the parent tree of content units (not including the mythical root)

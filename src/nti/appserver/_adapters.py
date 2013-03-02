@@ -19,6 +19,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization import datastructures
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.singleton import SingletonDecorator
 
 from nti.utils.schema import find_most_derived_interface
 from nti.utils.property import alias
@@ -166,10 +167,9 @@ class _SectionInfoUserLikeDecorator(object):
 	For purposes of the web UI, make SectionInfos, the other things that come back
 	from searching, look more like entities.
 	"""
+	__metaclass__ = SingletonDecorator
 	# SectionInfo implements toExternalObject() itself, so the IExternalMappingDecorator
 	# is useless
-	def __init__( self, context ):
-		pass
 
 	def decorateExternalObject( self, original, external ):
 		if 'Username' not in external:
@@ -188,9 +188,7 @@ class _DFLUserLikeDecorator(object):
 	"""
 	For purposes of the web UI, cause DFL to use their unique NTIID as the 'username' field.
 	"""
-
-	def __init__( self, context ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject( self, original, external ):
 		external['Username'] = original.NTIID
@@ -198,11 +196,10 @@ class _DFLUserLikeDecorator(object):
 		# sometimes the Username.
 		external['ID'] = original.NTIID
 
-from nti.dataserver import users
+
 import nameparser
 from pyramid import security as psec
 from pyramid.threadlocal import get_current_request
-from pyramid.threadlocal import get_current_registry
 from zope.i18n.interfaces import IUserPreferredLanguages
 
 _REALNAME_FIELDS = ('realname', 'NonI18NFirstName', 'NonI18NLastName')
@@ -219,9 +216,7 @@ class _UserRealnameStripper(object):
 	tell you what we think your name is. Even though you cannot edit it. And even though
 	it's probably not what you typed in the first place so it will be confusing to you.
 	"""
-
-	def __init__( self, *args ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject( self, original, external ):
 		if original.username == psec.authenticated_userid( get_current_request() ):
@@ -244,7 +239,7 @@ class _EnglishFirstAndLastNameDecorator(object):
 	as their language is an attempt to limit the damage.
 	"""
 
-	def __init__( self, *args ): pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, original, external ):
 		realname = external.get( 'realname' )
@@ -353,15 +348,14 @@ from nti.externalization.interfaces import StandardExternalFields
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IUser)
-class _AuthenticatedUserLinkAdder1(object):
+class _AuthenticatedUserLinkAdder(object):
 	"""
 	When we decorate an user, if the user is ourself, we want to provide
 	the same links that we would at logon time, mostly as a convenience
 	to the client.
 	"""
 
-	def __init__( self, *args ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, original, external ):
 		request = get_current_request()
@@ -380,13 +374,6 @@ class _AuthenticatedUserLinkAdder1(object):
 
 		external[StandardExternalFields.LINKS] = links
 
-_authenticatedUserLinkAdder = _AuthenticatedUserLinkAdder1()
-
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.IUser)
-def _AuthenticatedUserLinkAdder(*args):
-	return _authenticatedUserLinkAdder
-
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 @component.adapter(app_interfaces.IDeletedObjectPlaceholder)
 class _DeletedObjectPlaceholderDecorator(object):
@@ -399,8 +386,7 @@ class _DeletedObjectPlaceholderDecorator(object):
 	description_message = _("This object has been deleted.")
 	body_message = _("This object has been deleted.")
 
-	def __init__( self, *args ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject( self, original, external ):
 		request = get_current_request()
@@ -420,10 +406,3 @@ class _DeletedObjectPlaceholderDecorator(object):
 
 		# TODO: What's the best thing here? Change class and mimetype?
 		external['Deleted'] = True
-
-_deletedDecorator = _DeletedObjectPlaceholderDecorator()
-
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-@component.adapter(app_interfaces.IDeletedObjectPlaceholder)
-def _DeletedObjectPlaceholderDecoratorFactory(*args):
-	return _deletedDecorator

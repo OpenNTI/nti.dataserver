@@ -12,10 +12,10 @@ from zope.annotation.interfaces import IAnnotations
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.dataserver import interfaces as nti_interfaces
+from nti.externalization.singleton import SingletonDecorator
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
 LINKS = ext_interfaces.StandardExternalFields.LINKS
-
 
 from nti.dataserver.links import Link
 
@@ -34,8 +34,7 @@ from .user_activity_views import REL_USER_ACTIVITY
 @component.adapter(nti_interfaces.IUser)
 class ProfileLinkDecorator(object):
 
-	def __init__( self, context ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, context, mapping ):
 		the_links = mapping.setdefault( LINKS, [] )

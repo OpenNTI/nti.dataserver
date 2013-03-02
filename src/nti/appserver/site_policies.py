@@ -30,6 +30,8 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.appserver import interfaces as app_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
+from nti.externalization.singleton import SingletonDecorator
+
 from nti.contentfragments import censor
 from nti.utils.schema import InvalidValue
 from nti.utils.schema import find_most_derived_interface
@@ -316,9 +318,7 @@ class SiteBasedExternalObjectDecorator(object):
 
 	Register this object sparingly, it is expensive.
 	"""
-
-	def __init__( self, *args ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject( self, orig_obj, result ):
 		request = get_current_request()
@@ -337,9 +337,7 @@ class LogonLinksCreationStripper(object):
 	"""
 	Configured for sites that are not allowing account creation through the UI.
 	"""
-
-	def __init__( self, *args ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject( self, orig_obj, result ):
 		result['Links'] = [link for link in result['Links'] if link['rel'] not in ('account.create', 'account.preflight.create')]
