@@ -20,7 +20,7 @@ from ._concept import ConceptSource
 from .. import interfaces as cp_interfaces
 from . import interfaces as cpct_interfaces
 
-@interface.implementer( cpct_interfaces.IConceptTagger )
+@interface.implementer(cpct_interfaces.IConceptTagger)
 class _AlchemyAPIKConceptTaggger(object):
 	
 	url = u'http://access.alchemyapi.com/calls/text/TextGetRankedConcepts'
@@ -40,9 +40,9 @@ class _AlchemyAPIKConceptTaggger(object):
 			params.update(kwargs)
 			try:
 				r = requests.post(self.url, params=params, headers=headers)
-				data = r.json
+				data = r.json()
 				
-				if r.status_code ==200 and data.get('status','ERROR') == 'OK':
+				if r.status_code == 200 and data.get('status','ERROR') == 'OK':
 					result = []
 					for entry in data.get('concepts', ()):
 						sources = []

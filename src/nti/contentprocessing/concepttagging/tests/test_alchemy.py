@@ -12,7 +12,7 @@ import unittest
 			
 from .._alchemy import _AlchemyAPIKConceptTaggger
 
-from ...tests import ConfiguringTestBase
+from . import ConfiguringTestBase
 		
 from hamcrest import (assert_that, is_, is_not, has_length, close_to, has_entry)
 
