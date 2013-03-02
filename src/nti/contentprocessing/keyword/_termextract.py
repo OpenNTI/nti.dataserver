@@ -1,31 +1,21 @@
-##############################################################################
-#
-# Copyright (c) 2009 Zope Foundation and Contributors.
-# All Rights Reserved.
-#
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-#
-##############################################################################
+# -*- coding: utf-8 -*-
+"""
+TermExtract keyword extractor
 
-from __future__ import print_function, unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from collections import defaultdict
 
 from zope import interface
 from zope import component
 
-from nti.contentprocessing import split_content
-from nti.contentprocessing.stemmers import stem_word
-from nti.contentprocessing.taggers import tag_tokens
-from nti.contentprocessing.keyword import interfaces as cpkw_interfaces
-
-import logging
-logger = logging.getLogger( __name__ )
+from .. import split_content
+from ..stemmers import stem_word
+from ..taggers import tag_tokens
+from . import interfaces as cpkw_interfaces
 
 @interface.implementer( cpkw_interfaces.ITermExtractFilter)	
 class DefaultFilter(object):
@@ -133,4 +123,3 @@ class _DefaultKeyWorExtractor():
 			tagged_terms.append((token, tag, root))
 		result = extractor.extract(tagged_terms)
 		return result
-

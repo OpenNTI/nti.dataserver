@@ -24,7 +24,7 @@ from zope import interface
 
 from nltk.tag import DefaultTagger, NgramTagger
 
-from nti.contentprocessing.taggers import interfaces as tagger_interfaces
+from . import interfaces as tagger_interfaces
 
 def nltk_tagged_corpora():
 	result = {}

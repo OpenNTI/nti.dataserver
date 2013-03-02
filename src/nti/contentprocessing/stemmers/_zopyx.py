@@ -11,7 +11,7 @@ from zope import interface
 
 from zopyx.txng3.ext import stemmer
 
-from nti.contentprocessing.stemmers import interfaces as stemmer_interfaces
+from . import interfaces as stemmer_interfaces
 
 @interface.implementer(stemmer_interfaces.IStemmer)
 class ZopyYXStemmer(object):
@@ -22,4 +22,3 @@ class ZopyYXStemmer(object):
         token = unicode(token)
         result = self._stemmer.stem((token,))
         return result[0] if result else token
-

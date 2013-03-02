@@ -1,21 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 import os
 import unittest
 
-from nti.contentprocessing.keyword import extract_key_words
-from nti.contentprocessing.keyword._alchemy import _AlchemyAPIKeyWorExtractor
+from .. import extract_key_words
+from .._alchemy import _AlchemyAPIKeyWorExtractor
 
-from nti.contentprocessing.tests import ConfiguringTestBase
+from ...tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, has_length)
 

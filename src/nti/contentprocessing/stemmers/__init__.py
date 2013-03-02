@@ -12,7 +12,7 @@ import repoze.lru
 from zope import component
 from zope import interface
 
-from nti.contentprocessing.stemmers import interfaces as stemmer_interfaces
+from . import interfaces as stemmer_interfaces
 
 @repoze.lru.lru_cache(1000)
 def stem_word(word, name='porter'):

@@ -10,5 +10,6 @@ __docformat__ = "restructuredtext en"
 from zope import interface
 
 class IStemmer(interface.Interface):
+	
 	def stem(token):
 		"""get the stem of the specified token"""

@@ -1,9 +1,18 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 import os
 import unittest
 			
-from nti.contentprocessing.concepttagging._alchemy import _AlchemyAPIKConceptTaggger
+from .._alchemy import _AlchemyAPIKConceptTaggger
 
-from nti.contentprocessing.tests import ConfiguringTestBase
+from ...tests import ConfiguringTestBase
 		
 from hamcrest import (assert_that, is_, is_not, has_length, close_to, has_entry)
 
@@ -28,7 +37,5 @@ class TestConceptTagger(ConfiguringTestBase):
 		assert_that(sm, has_entry('website', u'http://www.fbi.gov',))
 		assert_that(sm, has_entry(u'dbpedia', u'http://dbpedia.org/resource/Federal_Bureau_of_Investigation'))
 		assert_that(sm, has_entry(u'freebase', u'http://rdf.freebase.com/ns/guid.9202a8c04000641f8000000000017c33'))
-		
-if __name__ == '__main__':
-	unittest.main()
+
 
