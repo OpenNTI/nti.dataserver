@@ -1,4 +1,13 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Alchemy keyword extractor
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import sys
 import requests
@@ -6,12 +15,9 @@ import requests
 from zope import component
 from zope import interface
 
-from nti.contentprocessing.keyword import ContentKeyWord
-from nti.contentprocessing import interfaces as cp_interfaces
-from nti.contentprocessing.keyword import interfaces as cpkw_interfaces
-
-import logging
-logger = logging.getLogger( __name__ )
+from . import ContentKeyWord
+from .. import interfaces as cp_interfaces
+from . import interfaces as cpkw_interfaces
 
 @interface.implementer( cpkw_interfaces.IKeyWordExtractor )
 class _AlchemyAPIKeyWorExtractor():
@@ -33,7 +39,7 @@ class _AlchemyAPIKeyWorExtractor():
 			params.update(kwargs)
 			try:
 				r = requests.post(self.url, params=params, headers=headers)
-				data = r.json
+				data = r.json()
 				
 				if r.status_code ==200 and data.get('status','ERROR') == 'OK':
 					keywords = data.get('keywords', ())

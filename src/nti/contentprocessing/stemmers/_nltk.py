@@ -11,10 +11,11 @@ import nltk
 
 from zope import interface
 
-from nti.contentprocessing.stemmers import interfaces as stemmer_interfaces
+from . import interfaces as stemmer_interfaces
 
 @interface.implementer(stemmer_interfaces.IStemmer)
 class _PorterStemmer(object):
+
     def __init__(self):
         self.stemmer = nltk.PorterStemmer()
 

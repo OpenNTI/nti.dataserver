@@ -1,10 +1,17 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Keyword extractor module
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from collections import namedtuple
 
 from zope import component
 
-from nti.contentprocessing.keyword import interfaces as cpkw_interfaces
+from . import interfaces as cpkw_interfaces
 
 ContentKeyWord = namedtuple('ContentKeyWord', 'token relevance')
 

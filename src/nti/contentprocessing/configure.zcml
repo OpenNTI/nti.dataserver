@@ -1,7 +1,7 @@
 <!-- -*- mode: nxml -*- -->
 <configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
 	<include package="zope.component" />
-
+		
 	<include package="nti.contentfragments" file="configure.zcml" />
 
 	<utility factory="._content_utils._default_content_translation_table"  />
@@ -15,11 +15,11 @@
 	
 	<utility factory="._ngrams_utils._DefaultNgramComputer" />
 	<utility factory="._ngrams_utils._DefaultNgramComputer" name="en" />
-	
+		
 	<utility factory=".alchemy_api_key"  />
-	
 	<include package=".stemmers" file="configure.zcml" />
 	<include package=".taggers" file="configure.zcml" />
-	<include package=".keyword" file="configure.zcml" />
 	<include package=".concepttagging" file="configure.zcml" />
+	<include package=".keyword" file="configure.zcml" />
+	
 </configure>

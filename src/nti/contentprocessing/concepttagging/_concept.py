@@ -1,11 +1,15 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Concept tagging objects
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface
 
-from nti.contentprocessing.concepttagging import interfaces as cpct_interfaces
-
-import logging
-logger = logging.getLogger( __name__ )
+from . import interfaces as cpct_interfaces
 
 @interface.implementer( cpct_interfaces.IConceptSource )
 class ConceptSource(object):
@@ -16,7 +20,6 @@ class ConceptSource(object):
 
 	def __repr__( self ):
 		return '%s(%s, %s)' % (self.__class__, self.source, self.uri)
-
 
 @interface.implementer( cpct_interfaces.IConcept )
 class Concept(object):

@@ -1,4 +1,13 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Alchemy concept tagging
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import sys
 import requests
@@ -6,16 +15,13 @@ import requests
 from zope import component
 from zope import interface
 
-from nti.contentprocessing import interfaces as cp_interfaces
-from nti.contentprocessing.concepttagging._concept import Concept
-from nti.contentprocessing.concepttagging._concept import ConceptSource
-from nti.contentprocessing.concepttagging import interfaces as cpct_interfaces
-
-import logging
-logger = logging.getLogger( __name__ )
+from ._concept import Concept
+from ._concept import ConceptSource
+from .. import interfaces as cp_interfaces
+from . import interfaces as cpct_interfaces
 
 @interface.implementer( cpct_interfaces.IConceptTagger )
-class _AlchemyAPIKConceptTaggger():
+class _AlchemyAPIKConceptTaggger(object):
 	
 	url = u'http://access.alchemyapi.com/calls/text/TextGetRankedConcepts'
 	limit_kb = 150
