@@ -26,6 +26,7 @@ from nti.dataserver.links import Link
 from nti.dataserver.links_external import render_link
 from nti.dataserver.traversal import find_nearest_site
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.singleton import SingletonDecorator
 
 
 ILink_providedBy = ILink.providedBy
@@ -40,8 +41,7 @@ class EditLinkDecorator(object):
 	to generat a URL and we need the OID) that are writable by the current user.
 	"""
 
-	def __init__( self, context ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, context, mapping ):
 		if not getattr( context, '_p_jar', None ):

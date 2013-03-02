@@ -32,6 +32,7 @@ from nti.externalization.externalization import to_standard_external_dictionary
 from nti.externalization.externalization import toExternalObject, isSyntheticKey
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.singleton import SingletonDecorator
 import nti.externalization.interfaces as ext_interfaces
 
 from nti.dataserver import users
@@ -596,7 +597,7 @@ from nti.dataserver.links_external import render_link
 @component.adapter(app_interfaces.IContentUnitInfo) # TODO: IModeledContent?
 class ContentUnitInfoHrefDecorator(object):
 
-	def __init__( self, context ): pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, context, mapping ):
 		if 'href' in mapping:

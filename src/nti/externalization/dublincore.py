@@ -18,6 +18,8 @@ from zope import component
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.singleton import SingletonDecorator
+
 from zope.dublincore import interfaces as dub_interfaces
 
 # Note that its fairly common for things to claim to implement these interfaces,
@@ -33,6 +35,8 @@ class DCExtendedExternalMappingDecorator(object):
 
 	.. note:: We are currently only mapping 'Creator' since that's the only field that ever gets populated.
 	"""
+
+	__metaclass__ = SingletonDecorator
 
 	def __init__( self, context ):
 		pass
@@ -53,6 +57,7 @@ class DCDescriptivePropertiesExternalMappingDecorator(object):
 	Supports the 'DCTitle' and 'DCDescription' fields, as defined in
 	:class:`zope.dublincore.interfaces.IDCDescriptiveProperties`.
 	"""
+	__metaclass__ = SingletonDecorator
 
 	def __init__( self, context ):
 		pass

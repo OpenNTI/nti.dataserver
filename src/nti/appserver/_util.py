@@ -24,6 +24,7 @@ from zope.location.interfaces import ILocation
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization import oids as ext_oids
+from nti.externalization.singleton import SingletonDecorator
 
 from nti.dataserver import links
 from nti.dataserver import users
@@ -39,7 +40,7 @@ class AbstractTwoStateViewLinkDecorator(object):
 	are to views on the original object having the same name as the ``rel`` attribute of the generated
 	link.
 
-	Instances define the following attributes:
+	Subclasses define the following attributes:
 
 	.. py:attribute:: predicate
 
@@ -60,12 +61,12 @@ class AbstractTwoStateViewLinkDecorator(object):
 		which may screw with caching.
 	"""
 
+	__metaclass__ = SingletonDecorator
+
 	false_view = None
 	true_view = None
 	predicate = None
 
-	def __init__( self, ctx ):
-		pass
 
 	def decorateExternalMapping( self, context, mapping ):
 		current_username = authenticated_userid( get_current_request() )

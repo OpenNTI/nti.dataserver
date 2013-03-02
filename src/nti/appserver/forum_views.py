@@ -409,6 +409,7 @@ def match_title_of_post_to_blog( post, event ):
 from nti.dataserver import links
 from zope.container.interfaces import ILocation
 from ._util import AbstractTwoStateViewLinkDecorator
+from nti.externalization.singleton import SingletonDecorator
 from ._view_utils import get_remote_user
 from pyramid.threadlocal import get_current_request
 @interface.implementer( ext_interfaces.IExternalMappingDecorator )
@@ -418,8 +419,7 @@ class ForumObjectContentsLinkProvider(object):
 	children (the contents).
 	"""
 
-	def __init__( self, context ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, context, mapping ):
 		# We only do this for parented objects. Otherwise, we won't

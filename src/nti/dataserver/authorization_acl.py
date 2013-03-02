@@ -25,6 +25,7 @@ from nti.contentlibrary import interfaces as content_interfaces
 from nti.externalization import interfaces as ext_interfaces
 
 from nti.dataserver import traversal
+from nti.externalization.singleton import SingletonDecorator
 
 @interface.implementer( nti_interfaces.IACE )
 class _ACE(object):
@@ -259,9 +260,7 @@ from ZODB.POSException import POSKeyError
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(object)
 class ACLDecorator(object):
-
-	def __init__( self, o ):
-		pass
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, orig, result ):
 		try:
