@@ -166,7 +166,10 @@ class IDelimitedHierarchyContentUnit(IContentUnit,IDelimitedHierarchyEntry):
 	"""
 
 class IDelimitedHierarchyContentPackage(IContentPackage,IDelimitedHierarchyContentUnit):
-	pass
+	"""
+	The unification of :class:`IContentPackage` and :class:`IDelimitedHierarchyEntry`, to make writing adapters
+	easier. All content packages provided by this package will implement this interface.
+	"""
 
 class IS3Bucket(IDelimitedHierarchyBucket): # .boto_s3 will patch these to be IZContained
 	"""

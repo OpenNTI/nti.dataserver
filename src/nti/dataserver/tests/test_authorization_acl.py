@@ -23,7 +23,11 @@ from nti.dataserver.contenttypes import Note
 from nti.dataserver.users import User, FriendsList
 from .. import classes
 
-from pyramid.authorization import ACLAuthorizationPolicy
+try:
+	# FIXME: I'm not really sure where this code should live
+	from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy
+except:
+	from pyramid.authorization import ACLAuthorizationPolicy
 
 from . import mock_dataserver
 
@@ -296,7 +300,7 @@ class TestHasPermission(mock_dataserver.SharedConfiguringTestBase):
 		finally:
 			component.getGlobalSiteManager().unregisterUtility( policy )
 
-from nti.contentlibrary.filesystem import FilesystemContentPackage
+from nti.contentlibrary.filesystem import FilesystemContentPackage, FilesystemContentUnit
 from nti.contentlibrary.contentunit import _clear_caches
 
 class TestLibraryEntryAclProvider(mock_dataserver.SharedConfiguringTestBase):
@@ -307,6 +311,13 @@ class TestLibraryEntryAclProvider(mock_dataserver.SharedConfiguringTestBase):
 		cls.temp_dir = tempfile.mkdtemp()
 		cls.library_entry = FilesystemContentPackage()
 		cls.library_entry.filename = os.path.join( cls.temp_dir, 'index.html' )
+		cls.library_entry.children = []
+		child = FilesystemContentUnit()
+		child.filename = os.path.join( cls.temp_dir, 'child.html' )
+		child.__parent__ = cls.library_entry
+		child.ordinal = 1
+		cls.library_entry.children.append( child )
+
 		cls.acl_path = os.path.join( cls.temp_dir, '.nti_acl' )
 		component.provideUtility( ACLAuthorizationPolicy() )
 
@@ -345,19 +356,11 @@ class TestLibraryEntryAclProvider(mock_dataserver.SharedConfiguringTestBase):
 			f.write( "  \n" ) #This line is blank
 			f.flush()
 
-		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
-		assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
-		assert_that( acl_prov, denies( "OtherUser", auth.ACT_CREATE ) )
+		for context in self.library_entry, self.library_entry.children[0]:
+			acl_prov = nti_interfaces.IACLProvider( context )
+			assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
+			assert_that( acl_prov, denies( "OtherUser", auth.ACT_CREATE ) )
 
-		assert_that( bool(auth_acl.has_permission(auth.ACT_CREATE, self.library_entry, "User", user_factory=lambda s: s)),
-					 is_( True ) )
-		assert_that( bool(auth_acl.has_permission(auth.ACT_CREATE, self.library_entry, "OtherUser", user_factory=lambda s: s)),
-					 is_( False ) )
-
-		assert_that( bool(auth_acl.has_permission(auth.ACT_CREATE, acl_prov, "User", user_factory=lambda s: s)),
-					 is_( True ) )
-		assert_that( bool(auth_acl.has_permission(auth.ACT_CREATE, acl_prov, "OtherUser", user_factory=lambda s: s)),
-					 is_( False ) )
 
 		# Now, with an NTIID
 		self.library_entry.ntiid = 'tag:nextthought.com,2011-10:PRMIA-HTML-Volume_III.A.2_converted.the_prm_handbook_volume_iii'
@@ -367,6 +370,25 @@ class TestLibraryEntryAclProvider(mock_dataserver.SharedConfiguringTestBase):
 
 		assert_that( acl_prov, permits( "content-role:prmia:Volume_III.A.2_converted.the_prm_handbook_volume_iii".lower(), auth.ACT_READ ) )
 		assert_that( acl_prov, permits( nti_interfaces.IGroup("content-role:prmia:Volume_III.A.2_converted.the_prm_handbook_volume_iii".lower()), auth.ACT_READ ) )
+
+		# Now I can write another user in for access to just the child entry
+		with open( self.acl_path + '.1', 'w' ) as f:
+			f.write( 'Allow:OtherUser:All\n' )
+		import nti.contentlibrary.contentunit
+		nti.contentlibrary.contentunit._clear_caches()
+
+		# Nothing changed an the top level
+		context = self.library_entry
+		acl_prov = nti_interfaces.IACLProvider( context )
+		assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
+		assert_that( acl_prov, denies( "OtherUser", auth.ACT_CREATE ) )
+
+		# But the child level now allows access
+		context = self.library_entry.children[0]
+		acl_prov = nti_interfaces.IACLProvider( context )
+		assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
+		assert_that( acl_prov, permits( "OtherUser", auth.ACT_CREATE ) )
+
 
 
 from zope.security.permission import Permission

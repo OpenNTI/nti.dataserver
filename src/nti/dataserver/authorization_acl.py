@@ -13,6 +13,8 @@ import six
 from zope import interface
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
 import pyramid.security
 
 from nti.utils.property import alias
@@ -588,39 +590,54 @@ class _EnclosedContentACLProvider(_CreatedACLProvider):
 		result.extend( ACL( self._created.data ) )
 		return result
 
-class _LibraryTOCEntryACLProvider(object):
-	"""
-	Allows all authenticated users access to library entries.
-	"""
-	interface.implements( nti_interfaces.IACLProvider )
-	component.adapts(content_interfaces.IContentUnit)
-
-	def __init__( self, obj ):
-		self._obj = obj
-		# TODO: Should this be taking into account a parent LibraryEntryACLProvider at all?
-		# If so, how?
-		self.__acl__ = ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _LibraryTOCEntryACLProvider ), )
-
 @interface.implementer( nti_interfaces.IACLProvider )
-@component.adapter( content_interfaces.IDelimitedHierarchyEntry )
-class _DelimitedHierarchyEntryACLProvider(object):
+@component.adapter(content_interfaces.IContentUnit)
+class _TestingLibraryTOCEntryACLProvider(object):
+ 	"""
+ 	Allows all authenticated users access to library entries.
+	This class is for testing only, never for use in a production scenario.
+ 	"""
+ 	def __init__( self, obj ):
+ 		self._obj = obj
+ 		# TODO: Should this be taking into account a parent LibraryEntryACLProvider at all?
+ 		# If so, how?
+ 		self.__acl__ = ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _TestingLibraryTOCEntryACLProvider ), )
+	__parent__ = property(lambda self: self.context.__parent__)
+
+
+# TODO: This could be (and was) registered for a simple IDelimitedHierarchyEntry.
+# There is none of that separate from the contentpackage/unit though, so it shouldn't
+# be needed in that capacity.
+class _AbstractDelimitedHierarchyEntryACLProvider(object):
 	"""
-	Checks a hierarchy entry for the existence of a '.nti_acl' file, and if present,
+	Checks a hierarchy entry for the existence of a file (typically .'.nti_acl'), and if present,
 	reads an ACL from it.
 
 	Otherwise, the ACL allows all authenticated users access.
 	"""
 
 	def __init__( self, context ):
-		acl_string = context.read_contents_of_sibling_entry( '.nti_acl' )
+		self.context = context
+
+	_acl_sibling_entry_name = '.nti_acl'
+	_default_allow = True
+
+	__parent__ = property(lambda self: self.context.__parent__)
+
+	@Lazy
+	def __acl__(self):
+		acl_string = self.context.read_contents_of_sibling_entry( self._acl_sibling_entry_name )
 		if acl_string is not None:
 			try:
-				self.__acl__ = self._acl_from_string(context, acl_string )
+				__acl__ = self._acl_from_string(self.context, acl_string )
 			except (ValueError,AssertionError,TypeError):
-				logger.exception( "Failed to read acl from %s; denying all access.", context )
-				self.__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _DelimitedHierarchyEntryACLProvider ), ) )
+				logger.exception( "Failed to read acl from %s; denying all access.", self.context )
+				__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _AbstractDelimitedHierarchyEntryACLProvider ), ) )
+		elif self._default_allow:
+			__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _AbstractDelimitedHierarchyEntryACLProvider ), ) )
 		else:
-			self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _DelimitedHierarchyEntryACLProvider ), ) )
+			__acl__ = () # Inherit from parent
+		return __acl__
 
 	def _acl_from_string(self, context, acl_string):
 		return _acl_from_ace_lines( acl_string.splitlines(), context )
@@ -628,24 +645,48 @@ class _DelimitedHierarchyEntryACLProvider(object):
 
 
 @interface.implementer( nti_interfaces.IACLProvider )
-@component.adapter( content_interfaces.IDelimitedHierarchyContentUnit )
-class _DelimitedHierarchyContentUnitACLProvider(_DelimitedHierarchyEntryACLProvider):
+@component.adapter( content_interfaces.IDelimitedHierarchyContentPackage )
+class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEntryACLProvider):
 	"""
-	For content units (and packages) that are part of a hierarchy,
+	For content packages that are part of a hierarchy,
 	read the ACL file if they have one, and also add read-access to a pseudo-group
 	based on the (lowercased) NTIID of the closest containing content package.
 	"""
 
 	def _acl_from_string( self, context, acl_string ):
-		acl = super(_DelimitedHierarchyContentUnitACLProvider,self)._acl_from_string( context, acl_string )
+		acl = super(_DelimitedHierarchyContentPackageACLProvider,self)._acl_from_string( context, acl_string )
 		package = traversal.find_interface( context, content_interfaces.IContentPackage, strict=False )
 		if package is not None and package.ntiid:
 			parts = ntiids.get_parts( package.ntiid )
 			if parts and parts.provider and parts.specific:
 				acl = acl + ace_allowing( authorization.role_for_providers_content( parts.provider, parts.specific ),
 										  authorization.ACT_READ,
-										  _DelimitedHierarchyContentUnitACLProvider )
+										  _DelimitedHierarchyContentPackageACLProvider )
 		return acl
+
+@interface.implementer(nti_interfaces.IACLProvider)
+@component.adapter(content_interfaces.IDelimitedHierarchyContentUnit)
+class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntryACLProvider):
+	"""
+	For content units, we look for an acl file matching their ordinal path from
+	the containing content package (e.g., first section of first chapter uses .nti_acl.1.1).
+	If one does not exist, we have no opinion on the ACL and inherit it from our parent.
+	"""
+
+	_default_allow = False
+
+	def __init__( self, context ):
+		super(_DelimitedHierarchyContentUnitACLProvider,self).__init__( context )
+		ordinals = []
+		ordinals.append( context.ordinal )
+		parent = context.__parent__
+		while parent is not None and content_interfaces.IContentUnit.providedBy( parent ) and not content_interfaces.IContentPackage.providedBy( parent ):
+			ordinals.append( parent.ordinal )
+			parent = parent.__parent__
+
+		ordinals.reverse()
+		path = '.'.join( [str(i) for i in ordinals] )
+		self._acl_sibling_entry_name = _AbstractDelimitedHierarchyEntryACLProvider._acl_sibling_entry_name + '.' + path
 
 @component.adapter(nti_interfaces.IFriendsList)
 class _FriendsListACLProvider(_CreatedACLProvider):

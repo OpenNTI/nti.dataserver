@@ -22,8 +22,10 @@ from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 import nti.externalization.internalization
 
 from . import interfaces as app_interfaces
+from nti.dataserver import interfaces as nti_interfaces
 from nti.contentfragments import interfaces as cfg_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.assessment import interfaces as asm_interfaces
 
 def _ntiid_object_hook( k, v, x ):
 	"""
@@ -73,9 +75,9 @@ class QuestionMap(dict):
 					return hierarchy_entry.read_contents_of_sibling_entry( sibling_name )
 
 				# FIXME: This is so very, very wrong
+				# See below.
 				obj.filename = containing_filename
 				obj.read_contents_of_sibling_entry = read_contents_of_sibling_entry
-				interface.alsoProvides( obj, lib_interfaces.IFilesystemEntry )
 
 	def __from_index_entry(self, index, hierarchy_entry, nearest_containing_key=None, nearest_containing_ntiid=None ):
 		"""
@@ -182,3 +184,13 @@ def _populate_question_map_from_text( question_map, asm_index_text, content_pack
 		# was, we might have some data...that's not good, but it's not a show stopper either,
 		# since we shouldn't get content like this out of the rendering process
 		logger.exception( "Failed to load assessment items, invalid assessment_index for %s", content_package )
+
+
+from nti.dataserver.authorization_acl import _AbstractDelimitedHierarchyEntryACLProvider
+
+@component.adapter(asm_interfaces.IQuestion)
+@interface.implementer(nti_interfaces.IACLProvider)
+class _QuestionACLProvider(_AbstractDelimitedHierarchyEntryACLProvider):
+	"""
+	Hacky provider of ACLs. See QuestionMap.
+	"""

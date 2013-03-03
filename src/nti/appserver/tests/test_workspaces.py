@@ -395,7 +395,8 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 
 
 	def test_specific_acl_file(self):
-		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
+		acl_file = os.path.join( self.entry_dir, '.nti_acl' )
+		with open( acl_file, 'w' ) as f:
 			f.write( "Allow:User:[nti.actions.create]\n" )
 			f.write( 'Deny:system.Everyone:All\n' )
 
@@ -403,7 +404,7 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 		assert_that( external, has_entry( 'titles', has_length( 0 ) ) )
 
 		# Now, grant it to a user
-		with open( os.path.join( self.entry_dir, '.nti_acl' ), 'w' ) as f:
+		with open( acl_file, 'w' ) as f:
 			f.write( "Allow:jason.madden@nextthought.com:[zope.View]\n" )
 
 		# clear caches
@@ -413,6 +414,26 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 
 		external = to_external_object( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
+
+
+		# Back to the original entry on the ACL, denying it to everyone
+		with open( acl_file, 'w' ) as f:
+			f.write( "Allow:User:[nti.actions.create]\n" )
+			f.write( 'Deny:system.Everyone:All\n' )
+
+		# But the first chapter is allowed to the user:
+		with open( acl_file + '.1', 'w' ) as f:
+			f.write( "Allow:jason.madden@nextthought.com:[zope.View]\n" )
+
+		# after clearing caches
+		import nti.contentlibrary.contentunit
+		nti.contentlibrary.contentunit._clear_caches()
+		self.beginRequest()
+
+		# it is still visible
+		external = to_external_object( self.library_collection )
+		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
+
 
 from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
 
