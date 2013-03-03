@@ -308,7 +308,7 @@ from zope.component.hooks import setHooks, resetHooks
 from zope.dottedname import resolve as dottedname
 from zope.component import eventtesting
 
-def _configure(self=None, set_up_packages=(), features=('devmode',), context=None):
+def _configure(self=None, set_up_packages=(), features=('devmode','testmode'), context=None):
 
 	# zope.component.globalregistry conveniently adds
 	# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
@@ -350,7 +350,8 @@ class ConfiguringTestBase(AbstractTestBase):
 
 	.. py:attribute:: features
 		A sequence of strings to be added as features before loading the configuration. By default,
-		this is ``devmode``.
+		this is ``devmode`` and ``testmode``. (Devmode is suitable for running the application, testmode
+		is only suitable for unit tests.)
 
 	.. py:attribute:: configure_events
 		A boolean defaulting to True. When true, the :mod:`zope.component.eventtesting` module will
@@ -367,7 +368,7 @@ class ConfiguringTestBase(AbstractTestBase):
 	"""
 
 	set_up_packages = ()
-	features = ('devmode',)
+	features = ('devmode','testmode')
 	configuration_context = None
 	configure_events = True
 
@@ -408,7 +409,7 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 
 	.. py:attribute:: features
 		A sequence of strings to be added as features before loading the configuration. By default,
-		this is ``devmode``.
+		this is ``devmode`` and ``testmode``.
 
 	.. py:attribute:: configure_events
 		A boolean defaulting to True. When true, the :mod:`zope.component.eventtesting` module will
@@ -426,7 +427,7 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 	"""
 
 	set_up_packages = ()
-	features = ('devmode',)
+	features = ('devmode','testmode')
 	configuration_context = None
 	configure_events = True
 
@@ -460,7 +461,7 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 		transaction.abort() # see comments above
 		super(SharedConfiguringTestBase,self).tearDown()
 
-def module_setup( set_up_packages=(), features=('devmode',), configure_events=True):
+def module_setup( set_up_packages=(), features=('devmode','testmode'), configure_events=True):
 	"""
 	Either import this as ``setUpModule`` at the module level, or call
 	it to perform module level set up from your own function with that name.

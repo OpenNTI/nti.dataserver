@@ -41,6 +41,6 @@
 	<adapter factory=".providers._ProviderACLProvider" />
 
 	<adapter factory=".authorization_acl._TestingLibraryTOCEntryACLProvider"
-			 zcml:condition="have devmode" />
+			 zcml:condition="have testmode" />
 
 </configure>
