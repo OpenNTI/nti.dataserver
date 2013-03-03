@@ -62,6 +62,7 @@ class Contains(IndexContains):
 		return Contains(index_name, value, **kwargs)
 
 class DoesNotContain(IndexDoesNotContain):
+	
 	def __init__(self, index_name, value, **kwargs):
 		IndexDoesNotContain.__init__(self, index_name, value)
 		self.params = dict(kwargs)

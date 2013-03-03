@@ -171,4 +171,3 @@ class _DefaultRepozeSearchFeatures(object):
 class _FullRepozeSearchFeatures(object):
 	is_ngram_search_supported = True
 	is_word_suggest_supported = True
-

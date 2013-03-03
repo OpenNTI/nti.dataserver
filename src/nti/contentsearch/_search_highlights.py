@@ -324,4 +324,3 @@ def word_content_highlight(query, text, maxchars=300, surround=50, top=3, analyz
 	formatter = highlight.NullFormatter() # highlight.UppercaseFormatter()
 	result = highlight.highlight(text, terms, analyzer, fragmenter, formatter, top=top)
 	return result
-

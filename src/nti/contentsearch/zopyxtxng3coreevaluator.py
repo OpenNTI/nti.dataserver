@@ -48,4 +48,4 @@ class Evaluator(zopyx_evaluator.Evaluator):
 		                        				rs.getDocids(), 
 		                        		  		words,
 		                        		    	self._getField(node))
-				
+			

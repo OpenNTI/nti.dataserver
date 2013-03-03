@@ -386,5 +386,3 @@ class _DefaultStopWords(object):
 
 	def available_languages(self, ):
 		return ('en',)
-
-

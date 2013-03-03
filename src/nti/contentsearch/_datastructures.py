@@ -26,6 +26,7 @@ class LFUMap(LFUCache):
             self.on_removal_callback(key, value)
 
 class CaseInsensitiveDict(dict):
+
     def __setitem__(self, key, value):
         super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
 
@@ -41,6 +42,7 @@ class CaseInsensitiveDict(dict):
 collections.Mapping.register(CaseInsensitiveDict)
 
 class IterableWrapper(object):
+
     def __init__(self, it, size=0):
         self.it = it
         self.size = size

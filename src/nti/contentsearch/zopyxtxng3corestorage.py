@@ -96,7 +96,6 @@ class Storage(zopyx_storage.Storage):
 				return False
 		return super(Storage, self).hasContigousWordids(docid, wordids)
 
-
 @interface.implementer(IStorageWithTermFrequency)
 class StorageWithTermFrequency(Storage):
 
@@ -119,7 +118,6 @@ class StorageWithTermFrequency(Storage):
 		tree = self._frequencies[docid]
 		for wid,num in occurences.items():
 			tree[wid] = num
-
 
 	def removeDocument(self, docid):
 		# note that removing a non existing document should not

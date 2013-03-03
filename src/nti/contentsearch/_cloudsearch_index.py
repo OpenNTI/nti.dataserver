@@ -212,4 +212,3 @@ def to_cloud_object(obj, username):
 	data = search_interfaces.ICloudSearchObject(obj)
 	data[username_] = username
 	return data
-
