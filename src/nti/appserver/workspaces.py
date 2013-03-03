@@ -246,7 +246,9 @@ class LibraryCollectionDetailExternalizer(object):
 	"""
 	Externalizes a Library wrapped as a collection.
 
-	.. note:: This is where ACLs on individual ContentPackages are applied to the elements of the IContentPackageLibrary
+	.. note:: This is where ACLs on individual ContentPackages are applied to the elements of the IContentPackageLibrary.
+		We say that if either the content package itself is readable, or any one of its top-level children
+		are readable, then we write the object out to the user. This allows sampling of chapters.
 	"""
 
 	# TODO: This doesn't do a good job of externalizing it,
@@ -259,7 +261,12 @@ class LibraryCollectionDetailExternalizer(object):
 		request = get_current_request()
 		test = None
 		if request:
-			test = functools.partial( is_readable, request=request )
+			def test( content_package ):
+				if is_readable( content_package, request ):
+					return True
+				# Nope. What about a top-level child?
+				return any( (is_readable(child, request) for child in content_package.children) )
+
 
 		# TODO: Standardize the way ACLs are applied during external writing
 		# This is weird and bad: we're overwriting what Library itself does
