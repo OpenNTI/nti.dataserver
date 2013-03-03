@@ -223,6 +223,22 @@ def is_empty():
 
 has_attr = hamcrest.library.has_property
 
+# Patch hamcrest for better descriptions of maps (json data)
+from hamcrest.core.base_description import BaseDescription
+from cStringIO import StringIO
+import collections
+import pprint
+_orig_append_description_of = BaseDescription.append_description_of
+def _append_description_of_map(self, value):
+	if not hasattr( value, 'describe_to' ) and isinstance( value, collections.Mapping ):
+		sio = StringIO()
+		pprint.pprint( value, sio )
+		self.append( sio.getvalue() )
+		return self
+	return _orig_append_description_of( self, value )
+
+BaseDescription.append_description_of = _append_description_of_map
+
 import unittest
 import zope.testing.cleanup
 

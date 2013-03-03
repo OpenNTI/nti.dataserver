@@ -50,6 +50,15 @@
 	<subscriber factory=".forum_views.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+	<!--
+		Decorate blog entries. This is configured for modeled content in configure.zcml.
+		This isn't quite right, as these aren't exactly editable, just deletable.
+		But the presence of the 'edit' link is a shortcut the app uses to handle
+		permissioning
+	-->
+	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry" />
 
 	<!-- Traversal -->
 	<adapter factory=".forum_views._PostFieldTraverser"
