@@ -10,4 +10,3 @@ __docformat__ = "restructuredtext en"
 from BTrees.LLBTree import LLTreeSet
 
 DocidList = LLTreeSet
-

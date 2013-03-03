@@ -3,6 +3,8 @@
 			xmlns:ext="http://nextthought.com/ntp/ext"
 			i18n_domain="zope">
 			
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
 	<adapter factory="._adapters._EntitySpamClassifierFactory"

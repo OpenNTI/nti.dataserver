@@ -74,6 +74,7 @@ def WordSnippetHighlightDecoratorFactory(*args):
 
 @interface.implementer(ext_interfaces.IExternalObject)
 class _BaseSearchResultsExternalizer(object):
+	
 	def __init__( self, results ):
 		self.results = results
 

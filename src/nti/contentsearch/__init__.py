@@ -22,17 +22,17 @@ BoolOp.family = BTrees.family64
 BaseIndex.family = BTrees.family64
 CatalogIndex.family = BTrees.family64
 
-from nti.contentsearch import zopyxtxng3corelogger
+from . import zopyxtxng3corelogger
 sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
 try:
 	from zopyx.txng3.core import index as zopyx_coreidx
 	from zopyx.txng3.core import evaluator as zopyx_evaluator
 	from zopyx.txng3.core import resultset as zopyx_resultset
 
-	from nti.contentsearch import zopyxtxng3coreresultset as ntizopy_rs
-	from nti.contentsearch import zopyxtxng3coredoclist as ntizopyx_doclist
-	from nti.contentsearch import zopyxtxng3coreevaluator as ntizopyx_evaluator
-	from nti.contentsearch import zopyxtxng3coreparsetree as ntizopyx_parsetree
+	from . import zopyxtxng3coreresultset as ntizopy_rs
+	from . import zopyxtxng3coredoclist as ntizopyx_doclist
+	from . import zopyxtxng3coreevaluator as ntizopyx_evaluator
+	from . import zopyxtxng3coreparsetree as ntizopyx_parsetree
 
 	# change the evaluator to correct issue in getting the words
 	# from the zopyx.txng3.core.parsetree nodes
@@ -51,8 +51,8 @@ except ImportError:
 	pass
 
 # legacy imports
-from nti.contentsearch.common import indexable_type_names
-from nti.contentsearch._whoosh_index import create_book_schema
+from .common import indexable_type_names
+from ._whoosh_index import create_book_schema
 
 def get_indexable_types():
 	return indexable_type_names

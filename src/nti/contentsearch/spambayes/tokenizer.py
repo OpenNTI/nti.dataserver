@@ -165,4 +165,3 @@ class _ContentTokenizer(object):
 		else:
 			result = list(tokenize(text, *args, **kwargs))
 		return result
-

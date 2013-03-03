@@ -31,4 +31,3 @@ class SplitterFactory:
 		return interface.implementedBy(Splitter)
 
 SplitterFactory = SplitterFactory()
-

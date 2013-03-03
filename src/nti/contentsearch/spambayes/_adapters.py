@@ -111,4 +111,3 @@ class _EnitySpamManager(_EntitySpamClassifier):
 	
 def _EntitySpamManagerFactory(user):
 	return an_factory(_EnitySpamManager)(user)
-

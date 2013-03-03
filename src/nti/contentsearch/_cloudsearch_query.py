@@ -6,16 +6,12 @@ __docformat__ = "restructuredtext en"
 from zope import interface
 from zope import component
 
-from nti.contentsearch.common import normalize_type_name
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.common import (username_, content_, type_, ngrams_)
+from .common import normalize_type_name
+from . import interfaces as search_interfaces
+from .common import (username_, content_, type_, ngrams_)
 
 def adapt_searchOn_types(searchOn=None):
-	if searchOn:
-		searchOn = [normalize_type_name(x) for x in searchOn]
-		return searchOn
-	else:
-		return ()
+	return [normalize_type_name(x) for x in searchOn] if searchOn else ()
 	
 @interface.implementer(search_interfaces.ICloudSearchQueryParser)
 class _DefaultCloudSearchQueryParser(object):

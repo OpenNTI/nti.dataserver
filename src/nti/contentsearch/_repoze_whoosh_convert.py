@@ -107,4 +107,3 @@ class QueryConverter(object):
 	def convert_query(self,q):
 		if str(q) in self.bools: return self.convert_bool_query(q)
 		else: return self.convert_base_query(q)
-

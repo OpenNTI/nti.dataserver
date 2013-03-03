@@ -228,4 +228,3 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 		return self.apply(value, *args, **kwargs)
 	
 	applyEq = applyContains
-

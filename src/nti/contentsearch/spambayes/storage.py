@@ -154,4 +154,3 @@ class SQL3Classifier(Trainer, ObjectDataManager):
 	@property
 	def words(self):
 		return self._wordinfokeys()
-

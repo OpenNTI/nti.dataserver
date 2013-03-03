@@ -254,4 +254,3 @@ def _default_translation_table():
 	
 	non_ascii_translate_tab = ''.join(non_ascii_translate_tab)
 	return non_ascii_translate_tab
-
