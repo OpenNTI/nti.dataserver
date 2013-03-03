@@ -105,6 +105,8 @@ def _create_xml_conf_machine( settings ):
 	if 'devmode' in settings and settings['devmode']:
 		logger.info( "Enabling devmode" )
 		xml_conf_machine.provideFeature( 'devmode' )
+	if 'testmode' in settings and settings['testmode']:
+		xml_conf_machine.provideFeature( 'testmode' )
 	return xml_conf_machine
 
 def createApplication( http_port,

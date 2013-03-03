@@ -211,7 +211,7 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 		#self.ds = mock_dataserver.MockDataserver()
 		super(SharedApplicationTestBase,cls).setUpClass()
 		cls.app, cls.main = createApplication( 8080, cls._setup_library(), create_ds=False, force_create_indexmanager=True,
-											   pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE )
+											   pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE, testmode=True )
 
 		root = '/Library/WebServer/Documents/'
 		# We'll volunteer to serve all the files in the root directory
@@ -329,7 +329,7 @@ class ApplicationTestBase(_AppTestBaseMixin, ConfiguringTestBase):
 		test_func = getattr( self, self._testMethodName )
 		ds_factory = getattr( test_func, 'mock_ds_factory', mock_dataserver.MockDataserver )
 
-		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=ds_factory, pyramid_config=self.config, devmode=self.APP_IN_DEVMODE )
+		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=ds_factory, pyramid_config=self.config, devmode=self.APP_IN_DEVMODE, testmode=True )
 		self.ds = component.getUtility( nti_interfaces.IDataserver )
 		root = '/Library/WebServer/Documents/'
 		# We'll volunteer to serve all the files in the root directory
