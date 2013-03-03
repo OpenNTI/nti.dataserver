@@ -10,7 +10,7 @@ __docformat__ = "restructuredtext en"
 import nti.dataserver as dataserver
 import nti.contentprocessing as contentprocessing
 
-from nti.dataserver.tests.mock_dataserver import ConfiguringTestBase as DSConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase as DSConfiguringTestBase
 
 class ConfiguringTestBase(DSConfiguringTestBase):
 	set_up_packages = (dataserver, contentprocessing)
