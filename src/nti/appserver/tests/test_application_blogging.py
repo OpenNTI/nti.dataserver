@@ -189,9 +189,11 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 		assert_that( res.json_body, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-My New Blog' ) )
 		assert_that( res.json_body, has_entry( 'ContainerId', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog') )
+		assert_that( res.json_body, has_entry( 'href', UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + data['title'] ) ))
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
+		self.require_link_href_with_rel( res.json_body, 'edit' ) # entries can be 'edited' (actually they cannot)
 		entry_url = res.location
 		entry_ntiid = res.json_body['NTIID']
 
@@ -204,9 +206,17 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		testapp.get( contents_href, status=200 )
 
 		# It shows up in the blog contents
-
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog/contents' )
-		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+		blog_items = res.json_body['Items']
+		assert_that( blog_items, contains( has_entry( 'title', data['title'] ) ) )
+		# With its links all intact
+		blog_item = blog_items[0]
+		assert_that( blog_item, has_entry( 'href', UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + data['title'] ) ))
+		self.require_link_href_with_rel( blog_item, 'contents' )
+		self.require_link_href_with_rel( blog_item, 'like' ) # entries can be liked
+		self.require_link_href_with_rel( blog_item, 'flag' ) # entries can be flagged
+		self.require_link_href_with_rel( blog_item, 'edit' ) # entries can be 'edited' (actually they cannot)
+
 
 		# It also shows up in the blog's data feed
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog/feed.atom' )

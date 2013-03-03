@@ -805,8 +805,8 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.body, contains_string( '"boom@nextthought.com"' ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
 
-		assert_that( res.json_body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
-		#assert_that( body, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) )
+
+		assert_that( res.json_body, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) )
 
 	@WithSharedApplicationMockDS
 	def test_create_friends_list_post_user(self):
@@ -824,7 +824,7 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.body, contains_string( '"boom@nextthought.com"' ) )
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
 
-		assert_that( res.json_body, has_entry( 'href', starts_with('/dataserver2/users/sjohnson%40nextthought.com/Objects' ) ))
+		assert_that( res.json_body, has_entry( 'href', is_('/dataserver2/users/sjohnson%40nextthought.com/FriendsLists/boom%40nextthought.com' ) ))
 
 		testapp.delete( str(res.json_body['href']), extra_environ=self._make_extra_environ() )
 

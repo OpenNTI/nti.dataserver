@@ -21,7 +21,7 @@ import persistent.interfaces
 
 from zope.location.interfaces import ILocation
 
-from nti.dataserver.interfaces import ICreated, ILink
+from nti.dataserver.interfaces import ICreated, ILink, IShouldHaveTraversablePath
 from nti.dataserver.links import Link
 from nti.dataserver.links_external import render_link
 from nti.dataserver.traversal import find_nearest_site
@@ -73,7 +73,8 @@ class EditLinkDecorator(object):
 				return
 
 			mapping.setdefault( LINKS, [] )
-			link = Link( to_external_ntiid_oid( context ), rel='edit' )
+			link = Link( to_external_ntiid_oid( context ) if not IShouldHaveTraversablePath.providedBy( context ) else context,
+						 rel='edit' )
 			link.__parent__ = context
 			link.__name__ = ''
 			interface.alsoProvides( link, ILocation )

@@ -115,21 +115,17 @@ setup(
 		# Pillow is currently way ahead of PIL
 		'Pillow >= 1.7.8',
 		'RestrictedPython >= 3.6.0',
-		# NOTE: ZConfig 3.x is out, with PyPy and Python3 support. But it returns Unicode
-		# objects, not base strings. The 3.10.5 version of ZODB3 has an issue with that
-		# (dev versions don't?)
-		'ZConfig == 2.9.3',
+		'ZConfig >= 3.0.3', #3.0.3 reqd for pypy/pythor3 support. requires zodb3 3.11.0a3+
 		 # NOTE: ZODB has a new release, 4.0.0a4 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
 		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.5, and ZEO >= 4.0.0
-		 # which were pulled out of ZODB for better pypy support. We'll switch to it
-		 # when it goes non-alpha. It may require a tweak to our monkey patch if
-		 # has not been fixed.
-		 # ZODB3 now has a 3.11.0a2 including a 4.x version of each above component.
-		 # JAM is testing it, so don't hard pin this to 3.10.5; updates
-		 # won't get picked up except on a new environment or manually. Depending on the final release,
-		 # we may need to explicitly list each component.
-		'ZODB3 >= 3.10.5',
+		 # which were pulled out of ZODB for better pypy support.
+		 # It may require a tweak to our monkey patch if has not been fixed.
+		 # ZODB3 now has a 3.11.0a3 including a 4.x version of each above component.
+		 # This has been in testing for many months and is stable. It is needed
+		 # (even though alpha at the moment) to work with other updated deps.
+		 # Depending on the final release, we may need to explicitly list each component.
+		'ZODB3 >= 3.11.0a3',
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
 		# 'MySQL-python', # mysql adapter--NOT needed, loaded from umysqldb
@@ -302,7 +298,7 @@ setup(
 		'zope.location >= 4.0.1',
 		'zope.mimetype == 1.3.1', # freeze on 1.3.1 pending https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
-		'zope.pagetemplate >= 4.0.2',
+		'zope.pagetemplate >= 4.0.3',
 		'zope.password >= 4.0.0', # encrypted password management
 		'zope.pluggableauth >= 1.3' if HAVE_ZCONT else '', # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		'zope.publisher >= 4.0.0a3',#4.0.0a1 is out, should be fine
