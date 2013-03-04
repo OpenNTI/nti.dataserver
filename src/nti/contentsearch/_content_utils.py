@@ -33,8 +33,8 @@ from . import interfaces as search_interfaces
 
 from .common import (CLASS, BODY, ID)
 from .common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
-					 creator_fields, keyword_fields, last_modified_fields, sharedWith_,
-					 container_id_fields, ntiid_fields,  highlight_, note_, post_,
+					 creator_fields, keyword_fields, last_modified_fields, sharedWith_, tags_,
+					 container_id_fields, ntiid_fields,  highlight_, note_, post_, 
 					 messageinfo_, redaction_, canvas_, canvastextshape_, references_,
 					 title_, inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
 
@@ -226,6 +226,10 @@ class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 	
 	def get_content(self):
 		return self._resolve(self.obj.body)
+	
+	def get_tags(self):
+		tags = self._get_any_attr(tags_)
+		return set(tags) if tags else ()
 	
 @component.adapter(IDict)
 @interface.implementer(	search_interfaces.IHighlightContentResolver,

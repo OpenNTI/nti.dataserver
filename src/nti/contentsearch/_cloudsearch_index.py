@@ -27,7 +27,7 @@ from . import interfaces as search_interfaces
 from .common import get_type_name
 from .common import (CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, container_id_fields)
 from .common import (ngrams_, channel_, content_, keywords_, references_, username_,
-					 last_modified_, recipients_, sharedWith_, ntiid_, type_,
+					 last_modified_, recipients_, sharedWith_, ntiid_, type_, tags_,
 					 creator_, containerId_, intid_, title_) 
 
 # define search fields
@@ -94,7 +94,8 @@ def create_search_domain(connection, domain_name='ntisearch', language='en'):
 	# faceted fields
 	connection.define_index_field(domain_name, keywords_, 'text', searchable=True, result=False, facet=True)
 	connection.define_index_field(domain_name, references_, 'text', searchable=True, result=False, facet=True)
-
+	connection.define_index_field(domain_name, tags_, 'text', searchable=True, result=False, facet=True)
+	
 	# make sure 'content' is the default field if its result=False
 	connection.update_default_search_field(domain_name, content_)
 	
@@ -167,6 +168,11 @@ def get_post_title(obj):
 	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
 	return adapted.get_title() or u''
 
+def get_post_tags(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
+	result = adapted.get_tags()
+	return unicode(','.join(result)) if result else u''
+
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
 	uid = _ds_intid.getId(obj)
@@ -207,6 +213,7 @@ class _CSPost(_AbstractCSObject):
 	def _set_items(self, src):
 		super(_CSPost, self)._set_items(src)
 		self[title_] = get_post_title(src)
+		self[tags_] = get_post_tags(src)
 		
 def to_cloud_object(obj, username):
 	data = search_interfaces.ICloudSearchObject(obj)

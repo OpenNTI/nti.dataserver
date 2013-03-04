@@ -25,7 +25,6 @@ from .common import sort_search_types
 from ._search_query import QueryObject
 from ._repoze_query import parse_query
 
-from .common import (content_, ngrams_)
 from .common import normalize_type_name
 from ._repoze_index import create_catalog
 from . import interfaces as search_interfaces
@@ -35,6 +34,7 @@ from ._search_results import empty_search_results
 from ._search_results import empty_suggest_results
 from ._search_indexmanager import _SearchEntityIndexManager
 from ._search_results import empty_suggest_and_search_results
+from .common import (content_, ngrams_, title_, tags_, post_)
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer( search_interfaces.IRepozeEntityIndexManager)
@@ -80,14 +80,15 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 
 	def _adapt_searchOn_types(self, searchOn=None):
 		catnames = self.get_catalog_names()
-		if searchOn:
-			searchOn = [normalize_type_name(x) for x in searchOn if normalize_type_name(x) in catnames]
-		result = searchOn or catnames
+		result = [normalize_type_name(x) for x in searchOn if normalize_type_name(x) in catnames] if searchOn else catnames
 		result = sort_search_types(result)
 		return result
 
-	def _get_search_fields(self, queryobject):
-		result = (content_,) if queryobject.is_phrase_search or queryobject.is_prefix_search else (ngrams_,)
+	def _get_search_fields(self, queryobject, type_name):
+		if queryobject.is_phrase_search or queryobject.is_prefix_search:
+			result = (content_,) if type_name != post_ else (content_, title_,)
+		else:
+			result = (ngrams_,) if type_name != post_ else (ngrams_, title_, tags_)
 		return result
 	
 	@metricmethod
@@ -99,7 +100,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 		
 	@metricmethod
 	def _do_catalog_query(self, catalog, qo, type_name, search_fields=()):
-		search_fields = search_fields or self._get_search_fields(qo)
+		search_fields = search_fields or self._get_search_fields(qo, type_name)
 		is_all_query, queryobject = parse_query(catalog, search_fields, qo)
 		if is_all_query:
 			result = LFBucket()

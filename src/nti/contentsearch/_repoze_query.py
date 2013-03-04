@@ -12,10 +12,18 @@ logger = __import__('logging').getLogger(__name__)
 import sys
 import inspect
 
+from BTrees.LFBTree import LFBucket
+
 from zope import component
 from zope import interface
 from zopyx.txng3.core.parsers.english import EnglishQueryParser
 
+from repoze.catalog.indexes.text import CatalogTextIndex
+from repoze.catalog.indexes.field import CatalogFieldIndex
+from repoze.catalog.indexes.keyword import CatalogKeywordIndex
+
+from repoze.catalog.query import Eq
+from repoze.catalog.query import Any as IndexAny
 from repoze.catalog.query import Contains as IndexContains
 from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
@@ -82,6 +90,14 @@ class DoesNotContain(IndexDoesNotContain):
 		set_default_indexng3(kwargs)			
 		return DoesNotContain(index_name, value, **kwargs)
 
+class Any(IndexAny):
+
+	def _apply(self, catalog, names):
+		result = super(Any, self)._apply(catalog, names)
+		if not hasattr(result, "items"):
+			result = LFBucket({x:1.0 for x in result})
+		return result
+	
 @interface.implementer( search_interfaces.IRepozeSearchQueryValidator )
 class _DefaultSearchQueryValiator(object):
 	
@@ -107,10 +123,21 @@ def parse_query(catalog, search_fields, qo):
 		if not validate_query(query_term): 
 			query_term = u'-'
 		
+		# from IPython.core.debugger import Tracer;  Tracer()() ## DEBUG ##
 		queryobject = None
 		for fieldname in search_fields:
-			#TODO: contains operation depends on the field type
-			contains = Contains.create_for_indexng3(fieldname, query_term, limit=qo.limit)
-			queryobject = contains if queryobject is None else queryobject | contains
-			
+			query = None
+			idx = catalog.get(fieldname)
+			if search_interfaces.ICatalogTextIndexNG3.providedBy(idx):
+				query = Contains.create_for_indexng3(fieldname, query_term, limit=qo.limit)
+			elif isinstance(idx, CatalogTextIndex):
+				query = IndexContains(fieldname, query_term)
+			elif isinstance(idx, CatalogKeywordIndex):
+				query = Any(fieldname, [query_term])
+			elif isinstance(idx, CatalogFieldIndex):
+				query = Eq(fieldname, query_term)
+				
+			if query:
+				queryobject = query if queryobject is None else queryobject | query
+		
 		return is_all, queryobject

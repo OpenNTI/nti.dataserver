@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Content search generation utilities.
+Content search generation 20.
 
 $Id$
 """
@@ -9,32 +9,27 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+generation = 20
+
 import zope.intid
 from zope import component
 from zc import intid as zc_intid
 from ZODB.POSException import POSKeyError
+from zope.component.hooks import site, setHooks
 
-from nti.dataserver.users import friends_lists
-
+from ..common import post_
 from ..utils import get_uid
-from ..utils import find_all_indexable_pairs
-from .. import interfaces as search_interfaces 
+from ..utils import find_all_posts
+from .. import interfaces as search_interfaces
 from ..utils._repoze_utils import remove_entity_catalogs
-						
-def reindex_ugd(user, users_get, ds_intid):
+
+def reindex_posts(user, users_get, ds_intid):
 	username = user.username
-	logger.debug('Reindexing object(s) for %s' % username)
+	logger.debug('Reindexing posts(s) for %s' % username)
 	
-	counter = 0
-	dfl_names = set()
-	
-	for e, obj in find_all_indexable_pairs(user, user_get=users_get, include_dfls=True):
-		
-		# if we find a DFL clear its catalogs
-		if isinstance(e, friends_lists.DynamicFriendsList) and e.username not in dfl_names:
-			remove_entity_catalogs(e)
-			dfl_names.add(e.username)
-		
+	counter = 0	
+	for e, obj in find_all_posts(user, users_get):
+			
 		rim = search_interfaces.IRepozeEntityIndexManager(e, None)
 		try:
 			catalog = rim.get_create_catalog(obj) if rim is not None else None
@@ -49,29 +44,35 @@ def reindex_ugd(user, users_get, ds_intid):
 			# broken reference for object
 			pass
 	
-	logger.debug('%s object(s) for user %s were reindexed' % (counter, username))
+	logger.debug('%s post object(s) for user %s were reindexed' % (counter, username))
 	
 	return counter
-	
-def reindex_all(context):
+
+def evolve(context):
+	"""
+	Evolve generation 19 to 20 by reindexing posts.
+	"""
+	setHooks()
 	conn = context.connection
 	root = conn.root()
-	container = root['nti.dataserver']
-	lsm = container.getSiteManager()
-	users = context.connection.root()['nti.dataserver']['users']
-	
+	ds_folder = root['nti.dataserver']
+	lsm = ds_folder.getSiteManager()
+
 	ds_intid = lsm.getUtility( provided=zope.intid.IIntIds )
 	component.provideUtility(ds_intid, zope.intid.IIntIds )
 	component.provideUtility(ds_intid, zc_intid.IIntIds )
-	
-	# remove all catalogs first
-	for user in users.values():
-		remove_entity_catalogs(user)
+
+	with site( ds_folder ):
+		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
+
+		users = ds_folder['users']
 		
-	# reindex all users ugd
-	for user in users.values():
-		reindex_ugd(user, users.get, ds_intid)
+		# remove all post catalogs first
+		for user in users.values():
+			remove_entity_catalogs(user, (post_,))
+		
+		# reindex all users ugd
+		for user in users.values():
+			reindex_posts(user, users.get, ds_intid)
 		
 	logger.debug('Evolution done!!!')
-
-		

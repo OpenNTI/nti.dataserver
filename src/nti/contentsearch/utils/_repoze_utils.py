@@ -1,7 +1,14 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Content search repoze utilities.
 
-from nti.contentsearch import get_indexable_types
-from nti.contentsearch import interfaces as search_interfaces
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+from .. import get_indexable_types
+from .. import interfaces as search_interfaces
 
 def remove_rim_catalogs(rim, content_types=()):
 	"""remove all the repoze catalogs from the specified entity manager"""
@@ -23,7 +30,3 @@ def get_catalog_and_docids(entity):
 		catfield = list(catalog.values())[0] if catalog else None
 		if hasattr(catfield, "_indexed"):
 			yield catalog, list(catfield._indexed())
-
-
-
-		

@@ -299,6 +299,11 @@ def get_post_title(obj):
 	result = adapted.get_title()
 	return result if result else None
 
+def get_post_tags(obj):
+	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
+	tags = adapted.get_tags()
+	return unicode(','.join(tags)) if tags else None
+
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
 	uid = _ds_intid.getId(obj)
