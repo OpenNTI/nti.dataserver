@@ -621,6 +621,7 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 
 	_acl_sibling_entry_name = '.nti_acl'
 	_default_allow = True
+	_add_default_deny_to_acl_from_file = False
 
 	__parent__ = property(lambda self: self.context.__parent__)
 
@@ -630,9 +631,17 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 		if acl_string is not None:
 			try:
 				__acl__ = self._acl_from_string(self.context, acl_string )
+				# Empty files (those that do exist but feature no valid ACL lines)
+				# are considered a mistake, an overlooked accident. In the interest of trying
+				# to be secure by default and not allow oversights through, call them out.
+				# This results in default-deny
+				if not __acl__:
+					raise ValueError( "ACL file had no valid contents." )
+				if self._add_default_deny_to_acl_from_file:
+					__acl__.append( _ace_denying_all( 'Default Deny After File ACL' ) )
 			except (ValueError,AssertionError,TypeError):
-				logger.exception( "Failed to read acl from %s; denying all access.", self.context )
-				__acl__ = _ACL( (ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _AbstractDelimitedHierarchyEntryACLProvider ), ) )
+				logger.exception( "Failed to read acl from %s/%s; denying all access.", self.context, self._acl_sibling_entry_name )
+				__acl__ = _ACL( (_ace_denying_all( 'Default Deny Due to Parsing Error' ),) )
 		elif self._default_allow:
 			__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _AbstractDelimitedHierarchyEntryACLProvider ), ) )
 		else:
@@ -651,7 +660,14 @@ class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEn
 	For content packages that are part of a hierarchy,
 	read the ACL file if they have one, and also add read-access to a pseudo-group
 	based on the (lowercased) NTIID of the closest containing content package.
+
+	If they have no ACL, then any authenticated user is granted access to the content.
+
+	If they do have an ACL, then we force the last entry to be a global denial. Thus,
+	if you specifically want to allow everyone, you must put that in the ACL file.
 	"""
+
+	_add_default_deny_to_acl_from_file = True
 
 	def _acl_from_string( self, context, acl_string ):
 		acl = super(_DelimitedHierarchyContentPackageACLProvider,self)._acl_from_string( context, acl_string )
