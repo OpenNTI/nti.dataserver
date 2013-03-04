@@ -14,11 +14,11 @@ from zope import interface
 
 from whoosh import analysis
 
-from nti.contentprocessing import default_ngram_minsize
-from nti.contentprocessing import default_ngram_maxsize
-from nti.contentprocessing import interfaces as cp_interfaces
-from nti.contentprocessing._content_utils import split_content
-from nti.contentprocessing import default_word_tokenizer_expression
+from . import default_ngram_minsize
+from . import default_ngram_maxsize
+from . import interfaces as cp_interfaces
+from ._content_utils import split_content
+from . import default_word_tokenizer_expression
 
 def _text_or_token(token, text_only=False):
 	return token.text if text_only else token.copy()
