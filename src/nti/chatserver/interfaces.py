@@ -21,6 +21,7 @@ from nti.socketio import interfaces as sio_interfaces
 
 from nti.utils.schema import UniqueIterable
 from nti.utils.schema import Variant
+from nti.utils.schema import DecodingValidTextLine
 
 class IChatserver(Interface):
 	pass
@@ -60,9 +61,9 @@ class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 	to be persistent and which is created on demand.
 	"""
 
-	creator = schema.TextLine( title="Meeting creator", description="User that started the meeting" )
+	creator = DecodingValidTextLine( title="Meeting creator", description="User that started the meeting" )
 
-	RoomId = schema.TextLine( title="Meeting identifier", description="Meeting identifier" )
+	RoomId = DecodingValidTextLine( title="Meeting identifier", description="Meeting identifier" )
 
 	CreatedTime = schema.Float( title="Meeting creation time",
 							 	description="Meeting creation time" )
@@ -138,7 +139,7 @@ class IMessageInfo(nti_interfaces.IShareableModeledContent, nti_interfaces.IZCon
 		title="The status of the message. Set by the server.",
 		values=STATUSES )
 
-	Creator = schema.TextLine( title="Message creator", description="User that send this message" )
+	Creator = DecodingValidTextLine( title="Message creator", description="User that send this message" )
 
 	body = Variant( (schema.Dict( key_type=schema.TextLine() ), #, value_type=schema.TextLine() ),
 					 nti_interfaces.CompoundModeledContentBody()),
