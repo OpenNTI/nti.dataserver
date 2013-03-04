@@ -5,7 +5,9 @@ Utility classes and methods for working with zope schemas.
 
 Also patches a bug in the :class:`dm.zope.schema.schema.Object` class
 that requires the default value for ``check_declaration`` to be specified;
-thus always import `Object` from this module
+thus always import `Object` from this module.
+
+.. todo:: This module is big enough it should be factored into a package and sub-modules.
 
 $Id$
 """
@@ -414,12 +416,20 @@ class DecodingValidTextLine(ValidTextLine):
 	"""
 	A text type that will attempt to decode non-unicode
 	data as UTF-8.
+
+	This primarily exists for legacy support (tests and persisted data).
 	"""
 
-	def fromUnicode( self, value ):
-		if not isinstance( value, self._type ):
+	def validate( self, value ):
+		if not isinstance( value, self._type ) and isinstance( value, basestring ):
 			value = value.decode( 'utf-8' ) # let raise UnicodeDecodeError
-		super(DecodingValidTextLine,self).fromUnicode( value )
+		super(DecodingValidTextLine,self).validate( value )
+
+#	def fromUnicode( self, value ):
+#		# fromUnicode calls validate, so this is probably just duplication
+#		if not isinstance( value, self._type ) and isinstance( value, basestring ):
+#			value = value.decode( 'utf-8' ) # let raise UnicodeDecodeError
+#		super(DecodingValidTextLine,self).fromUnicode( value )
 
 class HTTPURL(FieldValidationMixin,schema.URI):
 	"""
@@ -454,6 +464,12 @@ class HTTPURL(FieldValidationMixin,schema.URI):
 		return result
 
 class _ValueTypeAddingDocMixin(object):
+	"""
+	A mixin for fields that wrap a value type field (e.g., Object)
+	to copy the nested documentation to the parent so it is visible
+	in :mod:`repoze.sphinx.autointerface`.
+	"""
+
 	document_value_type = True
 	def getDoc( self ):
 		doc = super(_ValueTypeAddingDocMixin,self).getDoc()

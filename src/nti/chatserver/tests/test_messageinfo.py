@@ -61,6 +61,7 @@ class TestMessageInfo(SharedConfiguringTestBase):
 		assert_that( m, verifiably_provides( nti_interfaces.IModeledContent ) )
 		m.Body = 'foo'
 		m.Creator = 'Jason'
+		assert_that( m, verifiably_provides( chat_interfaces.IMessageInfo ) )
 		ext = to_external_object( m )
 		assert_that( ext['Body'], is_( ext['body'] ) )
 
@@ -76,3 +77,36 @@ class TestMessageInfo(SharedConfiguringTestBase):
 		update_from_external_object( m, ext, context=self.ds )
 		assert_that( m.Body[0], is_( 'foo' ) )
 		assert_that( m.Body[1], is_( Canvas ) )
+
+	def test_update_when_legacy_data_in_creator( self ):
+		m = messageinfo.MessageInfo()
+		assert_that( m, verifiably_provides( nti_interfaces.IModeledContent ) )
+		m.Body = 'foo'
+		m.Creator = 'Jason'
+		assert_that( m, verifiably_provides( chat_interfaces.IMessageInfo ) )
+
+		# Now force the creator to be bytes, bypassing any field conversions
+		# as might happen in legacy data
+		m.__dict__['Creator'] = b'Jason'
+		assert_that( m.Creator, is_( str ) )
+		assert_that( m.creator, is_( str ) )
+		assert_that( m.Sender, is_( str ) )
+
+		# Now update and it doesn't blow up
+		update_from_external_object( m, {} )
+
+	@WithMockDSTrans
+	def test_update_when_legacy_data_in_sharedWith( self ):
+		m = messageinfo.MessageInfo()
+		assert_that( m, verifiably_provides( nti_interfaces.IModeledContent ) )
+		m.Body = 'foo'
+		m.Creator = 'Jason'
+		assert_that( m, verifiably_provides( chat_interfaces.IMessageInfo ) )
+
+		# Now force the creator to be bytes, bypassing any field conversions
+		# as might happen in legacy data
+		data = {b'Foo', b'Bar', 'baz'}
+		m.__dict__['sharedWith'] = data
+		assert_that( m.sharedWith, is_( data ) )
+		# Now update and it doesn't blow up
+		update_from_external_object( m, {} )
