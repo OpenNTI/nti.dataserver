@@ -117,8 +117,13 @@ class _TestBaseMixin(object):
 	def require_link_href_with_rel( self, ext_obj, rel ):
 		link = self.link_href_with_rel( ext_obj, rel )
 		__traceback_info__ = ext_obj
-		assert_that( link, is_not( none() ) )
+		assert_that( link, is_not( none() ), rel )
 		return link
+
+	def forbid_link_with_rel( self, ext_obj, rel ):
+		link = self.link_with_rel( ext_obj, rel )
+		__traceback_info__ = ext_obj, link, rel
+		assert_that( link, is_( none() ), rel )
 
 
 TestBaseMixin = _TestBaseMixin
