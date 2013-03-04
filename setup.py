@@ -120,7 +120,8 @@ setup(
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
 		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.5, and ZEO >= 4.0.0
 		 # which were pulled out of ZODB for better pypy support.
-		 # It may require a tweak to our monkey patch if has not been fixed.
+		 # It may require a tweak to our monkey patch if has not been fixed;
+		 # see https://github.com/zopefoundation/ZEO/pull/1
 		 # ZODB3 now has a 3.11.0a3 including a 4.x version of each above component.
 		 # This has been in testing for many months and is stable. It is needed
 		 # (even though alpha at the moment) to work with other updated deps.

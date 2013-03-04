@@ -33,8 +33,9 @@ def _patch_process_pool_executor():
 	concurrent.futures.ProcessPoolExecutor = ProcessPoolExecutor
 
 def _patch_zeo_client_storage_deadlock():
-	# Patch for try/finally missing in ZODB 3.10.5 that can lead to deadlock
+	# Patch for try/finally missing in ZODB 3.10.5/3.11.0a1 ZEO4.0.0a1 that can lead to deadlock
 	# See https://bugs.launchpad.net/zodb/+bug/1048644
+	# See https://github.com/zopefoundation/ZEO/pull/1
 	def tpc_begin(self, txn, tid=None, status=' '):
 		"""Storage API: begin a transaction."""
 		if self._is_read_only:
