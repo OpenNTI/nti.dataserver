@@ -14,8 +14,12 @@ logger = __import__('logging').getLogger(__name__)
 from nti.dataserver import interfaces as nti_interfaces, users
 from nti.chatserver import interfaces as chat_interfaces
 from nti.socketio import interfaces as sio_interfaces
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.singleton import SingletonDecorator
+
 from zope.event import notify
 from zope import component
+from zope import interface
 
 def _is_user_online(dataserver, username, ignoring_session=None):
 	"""
@@ -71,15 +75,13 @@ def session_connected_broadcaster( session, event ):
 ## it was probably a design mistake to mix the static and dynamic info, and
 ## we need separate URLs to correct that.
 
-def _UserPresenceExternalDecoratorFactory( user ):
-	# TODO: Presence information will depend on who's asking
-	ds = component.queryUtility( nti_interfaces.IDataserver )
-	if user and ds and ds.sessions:
-		return _UserPresenceExternalDecorator( user, ds )
-
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _UserPresenceExternalDecorator(object):
-	def __init__( self, user, ds ):
-		self.ds = ds
+	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject( self, user, result ):
-		result['Presence'] =  "Online" if _is_user_online( self.ds, user.username ) else "Offline"
+		# TODO: Presence information will depend on who's asking
+		ds = component.queryUtility( nti_interfaces.IDataserver )
+		if user and ds and ds.sessions:
+			result['Presence'] =  "Online" if _is_user_online( ds, user.username ) else "Offline"
