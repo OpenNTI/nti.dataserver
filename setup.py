@@ -255,7 +255,7 @@ setup(
 		'zope.authentication >= 4.1.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser >= 2.0.1',
-		'zope.browserpage >= 4.0.0',
+		'zope.browserpage >= 4.1.0a1',
 		'zope.browsermenu >= 4.0.0', # Browser menu implementation for Zope.
 		'zope.browserresource >= 4.0.0',
 		'zope.catalog >= 3.8.2' if HAVE_ZCONT else '', # zope.container dependency
@@ -285,7 +285,7 @@ setup(
 		'zope.exceptions >= 4.0.6',
 		'zope.filerepresentation >= 4.0.1',
 		'zope.file >= 0.6.2' if HAVE_ZCONT else '', # zope.container dep
-		'zope.formlib >= 4.2.1', # Req'd by zope.mimetype among others,
+		'zope.formlib >= 4.3.0a1', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
 		'zope.hookable >= 4.0.1', # explicitly list this to ensure we get the fast C version. Used by ZCA.
 		'zope.i18n >= 4.0.0a4',
@@ -296,7 +296,7 @@ setup(
 		'zope.keyreference >= 3.6.4',
 		'zope.lifecycleevent >= 4.0.1',
 		'zope.location >= 4.0.1',
-		'zope.mimetype == 1.3.1', # freeze on 1.3.1 pending https://github.com/zopefoundation/zope.mimetype/pull/1
+		'zope.mimetype == 1.3.1', # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
 		'zope.pagetemplate >= 4.0.3',
 		'zope.password >= 4.0.0', # encrypted password management
@@ -363,7 +363,7 @@ setup(
 			'pip >= 1.2.1',
 			'pip-tools >= 0.2.1', # command pip-review, pip-dump
 			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
-			'pylint >= 0.26.0' if not IS_PYPY else '',
+			'pylint >= 0.27.0' if not IS_PYPY else '',
 			'pyramid_debugtoolbar >= 1.0.4',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
 			'repoze.sphinx.autointerface >= 0.7.1',
