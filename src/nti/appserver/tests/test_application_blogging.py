@@ -79,13 +79,13 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		ntiid_url = '/dataserver2/NTIIDs/tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog'
 		for url in pretty_url, ntiid_url:
 			res = testapp.get( url )
-
+			blog_res = res
 			assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblog+json' ) )
 			assert_that( res.json_body, has_entry( 'title', 'sjohnson@nextthought.com' ) )
 
 			# We have a contents URL
 			contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
-			# Make sure we're getting back pretty URLs
+			# Make sure we're getting back pretty URLs...
 			assert_that( contents_href, is_( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/contents' ) ))
 			# which is empty...
 			testapp.get( contents_href, status=200 )
@@ -94,7 +94,10 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )
 			assert_that( res.json_body['Items'][0]['Links'], does_not( has_item( has_entry( 'rel', 'Blog' ) ) ) )
 
-
+			# The blog cannot be liked, favorited, flagged
+			self.forbid_link_with_rel( blog_res.json_body, 'like' )
+			self.forbid_link_with_rel( blog_res.json_body, 'flag' )
+			self.forbid_link_with_rel( blog_res.json_body, 'favorite' )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_cannot_POST_new_blog_entry_to_pages( self ):
@@ -193,7 +196,15 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
-		self.require_link_href_with_rel( res.json_body, 'edit' ) # entries can be 'edited' (actually they cannot)
+		self.require_link_href_with_rel( res.json_body, 'edit' ) # entries can be 'edited' (actually they cannot, shortcut for ui)
+		fav_href = self.require_link_href_with_rel( res.json_body, 'favorite' ) # entries can be favorited
+
+		# The headline cannot be any of those things
+		headline_json = res.json_body['headline']
+		self.forbid_link_with_rel( headline_json, 'like' )
+		self.forbid_link_with_rel( headline_json, 'flag' )
+		self.forbid_link_with_rel( headline_json, 'favorite' )
+
 		entry_url = res.location
 		entry_ntiid = res.json_body['NTIID']
 
@@ -235,6 +246,13 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# And in the user root recursive data stream
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData' )
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+
+		# and, if favorited, filtered to the favorites
+		testapp.post( fav_href )
+		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
+						   params={'filter': 'Favorite'})
+		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+		self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
 
 		# And in his links
 		res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )

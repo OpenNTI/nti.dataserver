@@ -71,14 +71,27 @@
 			 name="fields" />
 
 
-	<!-- Make certain classes Likeable -->
-	<class class="nti.dataserver.contenttypes.forums.topic.Topic">
+	<!-- Make certain classes Likeable/Flaggable/Favoritable. -->
+	<!--
+		Note that this is declared at leaf levels:
+		Since it is the blog entry that is DELETEd, and what shows up
+		when listing them, it is the blog entry that is likeable/favoritable.
+		The blog entry post (headline) is not likeable/favoritable.
+		Individual comments, however, are.
+		When this is opened up to general forums, the inheritance hierarchy
+		may need some tweaking to keep this true.
+	-->
+	<class class="nti.dataserver.contenttypes.forums.topic.PersonalBlogEntry">
 		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+		<implements interface="nti.dataserver.interfaces.IFavoritable"
+					zcml:condition="have testmode"/>
 	</class>
-	<class class="nti.dataserver.contenttypes.forums.post.Post">
+	<class class="nti.dataserver.contenttypes.forums.post.PersonalBlogComment">
 		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+		<implements interface="nti.dataserver.interfaces.IFavoritable"
+					zcml:condition="have testmode"/>
 	</class>
 
 	<!-- Publishing workflow -->
