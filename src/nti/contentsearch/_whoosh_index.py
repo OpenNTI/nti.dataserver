@@ -40,7 +40,7 @@ from ._search_results import empty_suggest_and_search_results
 
 from .common import (channel_, content_, keywords_, references_,
 					 recipients_, sharedWith_, ntiid_, last_modified_,
-					 creator_, containerId_, replacementContent_,
+					 creator_, containerId_, replacementContent_, tags_,
 					 redactionExplanation_, intid_, title_, quick_)
 _default_word_max_dist = 15
 
@@ -55,20 +55,9 @@ class _SearchableContent(object):
 	def get_schema(self):
 		return getattr(self, '_schema', None)
 
-	def _get_search_fields(self, queryobject):
-		if queryobject.is_phrase_search or queryobject.is_prefix_search:
-			result = (content_,)
-		else:
-			result = (quick_, content_)
-		return result
-
 	def _parse_query(self, query, **kwargs):
-		parsed_query = None
 		qo = QueryObject.create(query, **kwargs)
-		fieldnames = self._get_search_fields(qo)
-		for fieldname in fieldnames:
-			pq = parse_query(fieldname, qo, self.get_schema())
-			parsed_query = pq | parsed_query if parsed_query else pq
+		parsed_query = parse_query(qo, self.schema, self.__class__.__name__.lower())
 		return qo, parsed_query
 
 	def get_search_highlight_type(self):
@@ -89,8 +78,7 @@ class _SearchableContent(object):
 			suggestions = list(result.suggestions)
 			if suggestions:
 				suggestions = rank_words(qo.term, suggestions)
-				qo.term = suggestions[0]
-				parsed_query = parse_query(content_, qo, self.get_schema())
+				qo, parsed_query = self._parse_query(suggestions[0], **kwargs)
 
 				results = self._execute_search(	searcher,
 											 	parsed_query,
@@ -317,10 +305,6 @@ def get_object_from_ds(uid):
 		logger.debug('Could not find object with id %r' % uid)
 	return result
 
-def is_ngram_search_supported():
-	features = component.getUtility( search_interfaces.ISearchFeatures )
-	return features.is_ngram_search_supported
-
 def _create_user_indexable_content_schema():
 
 	schema = fields.Schema(	intid = fields.ID(stored=True, unique=True),
@@ -505,6 +489,7 @@ def create_post_schema():
 	schema.add(content_, content_field(stored=False))
 	schema.add(quick_, ngram_field())
 	schema.add(title_, fields.TEXT(stored=False))
+	schema.add(tags_, fields.KEYWORD(stored=False))
 	return schema
 
 class Post(ShareableIndexableContent):
@@ -515,6 +500,7 @@ class Post(ShareableIndexableContent):
 	def get_index_data(self, data):
 		result = super(Post, self).get_index_data(data)
 		result[title_] = get_post_title(data)
+		result[tags_] = get_post_tags(data)
 		content_to_idx = get_object_content(data)
 		result[content_] = content_to_idx
 		result[quick_] = content_to_idx

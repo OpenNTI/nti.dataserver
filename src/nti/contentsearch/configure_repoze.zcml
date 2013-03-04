@@ -1,0 +1,46 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	
+	<!-- Database creation and migration -->
+	
+	<utility factory=".generations.install._ContentSearchSchemaManager"
+			 name="nti.dataserver-contentsearch"
+			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
+		
+	<!-- Entity adapters -->
+		
+	<adapter factory="._repoze_adpater._RepozeEntityIndexManagerFactory"
+			 for="nti.dataserver.interfaces.IEntity"
+			 provides=".interfaces.IRepozeEntityIndexManager" />
+			 
+	<!-- Search query -->
+	
+	<utility factory="._repoze_query._DefaultSearchQueryValiator"  />
+	<utility factory="._repoze_query._DefaultSearchQueryValiator" name="en" />
+	
+	<utility factory="._repoze_query._DefaultNoteRepozeQueryParser" name="note" />
+	<utility factory="._repoze_query._DefaultPostRepozeQueryParser" name="post" />
+	<utility factory="._repoze_query._DefaultHighlightRepozeQueryParser" name="highlight" />
+	<utility factory="._repoze_query._DefaultRedactionRepozeQueryParser" name="redaction" />
+	<utility factory="._repoze_query._DefaultMessageinfoRepozeQueryParser" name="messageinfo" />
+
+	<!-- Catalog Creators -->
+	
+	<utility name="content" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
+	<utility name="ngrams" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
+	<utility name="title" provides=".interfaces.IPostRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
+	<utility name="tags" provides=".interfaces.IPostRepozeCatalogFieldCreator" component="._repoze_index._keyword_field_creator" />
+	
+	<utility factory="._repoze_index._RepozeNoteCatalogCreator" name="note" />
+	<utility factory="._repoze_index._RepozePostCatalogCreator" name="post" />
+	<utility factory="._repoze_index._RepozeHighlightCatalogCreator" name="highlight" />
+	<utility factory="._repoze_index._RepozeRedactionCatalogCreator" name="redaction" />
+	<utility factory="._repoze_index._RepozeMessageInfoCatalogCreator" name="messageinfo" />
+	
+</configure>

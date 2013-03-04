@@ -7,11 +7,16 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-from whoosh import fields
+from zope import component
+from zope import interface
+
 from whoosh.query import Term
 from whoosh.qparser import QueryParser
 from whoosh.qparser.dateparse import DateParserPlugin
 from whoosh.qparser import (GtLtPlugin, PrefixPlugin, PhrasePlugin)
+
+from . import interfaces as search_interfaces
+from .common import (content_, quick_, title_, tags_)
 
 default_search_plugins =  (GtLtPlugin, DateParserPlugin, PrefixPlugin, PhrasePlugin)
 
@@ -21,18 +26,48 @@ def create_query_parser(fieldname, schema=None, plugins=default_search_plugins):
 		qparser.add_plugin(pg())
 	return qparser
 
-def parse_subquery(name, value, schema=None, plugins=default_search_plugins, qparser=None):
-	result = None
-	try:
-		qparser = qparser if qparser else create_query_parser(name, schema=schema, plugins=plugins)
-		result = qparser.parse(value)
-	except:
-		result = None
-		
-	result = result if result is not None else Term(name, value)
-	return result
+@interface.implementer( search_interfaces.IWhooshQueryParser )
+class _DefaultWhooshQueryParser(object):
 	
-def parse_query(fieldname, qo, schema_or_names, plugins=default_search_plugins):
-	schema = schema_or_names if isinstance(schema_or_names, fields.Schema) else None	
-	main_query = parse_subquery(fieldname, qo.term, schema=schema, plugins=plugins)
+	def _get_search_fields(self, qo):
+		if qo.is_phrase_search or qo.is_prefix_search:
+			result = (content_,)
+		else:
+			result = (quick_, content_)
+		return result
+	
+	def _get_whoosh_query(self, fieldname, term, schema):
+		try:
+			parser = create_query_parser(fieldname, schema=schema)
+			return parser.parse(term)
+		except:
+			return Term(fieldname, term)
+	
+	def parse(self, qo, schema):
+		parsed_query = None
+		query_term = qo.term
+		search_fields = self._get_search_fields(qo)
+		for fieldname in search_fields:
+			query = self._get_whoosh_query(fieldname, query_term, schema)
+			parsed_query = query | parsed_query if parsed_query else query
+		return parsed_query
+
+_DefaultBookWhooshQueryParser = _DefaultWhooshQueryParser
+_DefaultNoteWhooshQueryParser = _DefaultWhooshQueryParser
+_DefaultHighlightWhooshQueryParser = _DefaultWhooshQueryParser
+_DefaultRedactionWhooshQueryParser = _DefaultWhooshQueryParser
+_DefaultMessageinfoWhooshQueryParser = _DefaultWhooshQueryParser
+
+class _DefaultPostWhooshQueryParser(_DefaultWhooshQueryParser):
+	
+	def _get_search_fields(self, qo):
+		if qo.is_phrase_search or qo.is_prefix_search:
+			result = (content_,)
+		else:
+			result = (quick_, content_, title_, tags_)
+		return result
+
+def parse_query(qo, schema, type_name):
+	parser = component.getUtility(search_interfaces.IWhooshQueryParser, name=type_name)	
+	main_query = parser.parse(qo, schema)
 	return main_query

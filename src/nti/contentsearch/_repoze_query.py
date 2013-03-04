@@ -18,17 +18,29 @@ from zope import component
 from zope import interface
 from zopyx.txng3.core.parsers.english import EnglishQueryParser
 
-from repoze.catalog.indexes.text import CatalogTextIndex
-from repoze.catalog.indexes.field import CatalogFieldIndex
-from repoze.catalog.indexes.keyword import CatalogKeywordIndex
-
-from repoze.catalog.query import Eq
 from repoze.catalog.query import Any as IndexAny
 from repoze.catalog.query import Contains as IndexContains
 from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
 from .common import is_all_query
 from . import interfaces as search_interfaces
+from .common import (content_, ngrams_, title_, tags_)
+
+@interface.implementer( search_interfaces.IRepozeSearchQueryValidator )
+class _DefaultSearchQueryValiator(object):
+	
+	def validate(self, query):
+		query = query.term if search_interfaces.ISearchQuery.providedBy(query) else query
+		try:
+			EnglishQueryParser.parse(query)
+			return True
+		except Exception, e:
+			logger.warn("Error while parsing query '%s'. '%s'" % (query, e))
+			return False
+	
+def validate_query(query, language='en'):
+	validator = component.getUtility(search_interfaces.IRepozeSearchQueryValidator, name=language)
+	return validator.validate(query)
 
 def allow_keywords(f):
 	spec = inspect.getargspec(f)
@@ -98,46 +110,59 @@ class Any(IndexAny):
 			result = LFBucket({x:1.0 for x in result})
 		return result
 	
-@interface.implementer( search_interfaces.IRepozeSearchQueryValidator )
-class _DefaultSearchQueryValiator(object):
+@interface.implementer( search_interfaces.IRepozeQueryParser )
+class _DefaultRepozeQueryParser(object):
 	
-	def validate(self, query):
-		query = query.term if search_interfaces.ISearchQuery.providedBy(query) else query
-		try:
-			EnglishQueryParser.parse(query)
-			return True
-		except Exception, e:
-			logger.warn("Error while parsing query '%s'. '%s'" % (query, e))
-			return False
+	def _get_search_fields(self, qo):
+		if qo.is_phrase_search or qo.is_prefix_search:
+			result = (content_,)
+		else:
+			result = (ngrams_,)
+		return result
 	
-def validate_query(query, language='en'):
-	validator = component.getUtility(search_interfaces.IRepozeSearchQueryValidator, name=language)
-	return validator.validate(query)
+	def _get_repoze_query(self, fieldname, term, **kwargs):
+		return Contains.create_for_indexng3(fieldname, term, **kwargs)
 	
-def parse_query(catalog, search_fields, qo):
+	def parse(self, qo):
+		query_term = qo.term
+		search_fields = self._get_search_fields(qo)
+		queryobject = None
+		for fieldname in search_fields:
+			query = self._get_repoze_query(fieldname, query_term)
+			if query:
+				queryobject = query if queryobject is None else queryobject | query
+		return queryobject
+
+_DefaultNoteRepozeQueryParser = _DefaultRepozeQueryParser
+_DefaultHighlightRepozeQueryParser = _DefaultRepozeQueryParser
+_DefaultRedactionRepozeQueryParser = _DefaultRepozeQueryParser
+_DefaultMessageinfoRepozeQueryParser = _DefaultRepozeQueryParser
+
+class _DefaultPostRepozeQueryParser(_DefaultRepozeQueryParser):
+	
+	def _get_search_fields(self, qo):
+		if qo.is_phrase_search or qo.is_prefix_search:
+			result = (content_,)
+		else:
+			result = (ngrams_, title_, tags_)
+		return result
+	
+	def _get_repoze_query(self, fieldname, term, **kwargs):
+		if fieldname == tags_:
+			result = Any(fieldname, [term])
+		else:
+			result = super(_DefaultPostRepozeQueryParser, self)._get_repoze_query(fieldname, term, **kwargs)
+		return result
+	
+def parse_query(qo, type_name, lang='en'):
 	is_all = is_all_query(qo.term)
 	if is_all:
 		return is_all, None
 	else:
 		query_term = qo.term
-		if not validate_query(query_term): 
+		if not validate_query(query_term, lang): 
 			query_term = u'-'
 		
-		# from IPython.core.debugger import Tracer;  Tracer()() ## DEBUG ##
-		queryobject = None
-		for fieldname in search_fields:
-			query = None
-			idx = catalog.get(fieldname)
-			if search_interfaces.ICatalogTextIndexNG3.providedBy(idx):
-				query = Contains.create_for_indexng3(fieldname, query_term, limit=qo.limit)
-			elif isinstance(idx, CatalogTextIndex):
-				query = IndexContains(fieldname, query_term)
-			elif isinstance(idx, CatalogKeywordIndex):
-				query = Any(fieldname, [query_term])
-			elif isinstance(idx, CatalogFieldIndex):
-				query = Eq(fieldname, query_term)
-				
-			if query:
-				queryobject = query if queryobject is None else queryobject | query
-		
+		parser = component.getUtility(search_interfaces.IRepozeQueryParser, name=type_name)
+		queryobject = parser.parse(qo)
 		return is_all, queryobject

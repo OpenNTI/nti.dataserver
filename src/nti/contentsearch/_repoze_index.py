@@ -168,13 +168,4 @@ def _named_field_creator(catalog, name, iface ):
 def _keyword_field_creator(catalog, name, iface ):
 	discriminator = _get_discriminator(name)
 	catalog[name] = CatalogKeywordIndex( discriminator )
-	
-@interface.implementer(search_interfaces.ISearchFeatures)
-class _DefaultRepozeSearchFeatures(object):
-	is_ngram_search_supported = True
-	is_word_suggest_supported = False
-	
-@interface.implementer(search_interfaces.ISearchFeatures)
-class _FullRepozeSearchFeatures(object):
-	is_ngram_search_supported = True
-	is_word_suggest_supported = True
+

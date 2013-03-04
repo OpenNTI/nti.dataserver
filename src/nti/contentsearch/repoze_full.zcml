@@ -1,12 +1,9 @@
 <!-- -*- mode: nxml -*- -->
 <configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
 	<include package="zope.component" />
-	<include file="repoze_common.zcml" />
+	<include file="configure_repoze.zcml" />
 	
 	<!-- common index field creators -->
-	
-	<utility name="content" provides=".interfaces.IRepozeCatalogFieldCreator"  component="._repoze_index._zopytext_field_creator" />
-	<utility name="ngrams" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
 	
 	<utility name="sharedWith" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._text_field_creator" />
 	<utility name="keywords" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._keyword_field_creator" />	
@@ -29,8 +26,5 @@
 	<utility name="channel" provides=".interfaces.IMessageInfoRepozeCatalogFieldCreator" component="._repoze_index._keyword_field_creator" />
 	<utility name="recipients" provides=".interfaces.IMessageInfoRepozeCatalogFieldCreator" component="._repoze_index._text_field_creator" />
 	<utility name="references" provides=".interfaces.IMessageInfoRepozeCatalogFieldCreator" component="._repoze_index._keyword_field_creator" />
-	
-	<utility component="._repoze_index._FullRepozeSearchFeatures" 
-			 provides=".interfaces.ISearchFeatures" />
-			 
+				 
 </configure>
