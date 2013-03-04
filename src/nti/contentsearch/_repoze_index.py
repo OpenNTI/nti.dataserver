@@ -17,10 +17,10 @@ from repoze.catalog.indexes.text import CatalogTextIndex
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 
+from nti.contentprocessing import compute_ngrams
+
 from . import interfaces as search_interfaces
 from .textindexng3 import CatalogTextIndexNG3
-
-from nti.contentprocessing import compute_ngrams
 
 def get_containerId(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContainerIDResolver)
@@ -39,9 +39,10 @@ def get_last_modified(obj, default=None):
 	result = adapted.get_last_modified()
 	return result or default
 	
-def get_keywords(obj, default=None):
+def get_keywords(obj, default=()):
 	adapted = component.queryAdapter(obj, search_interfaces.IThreadableContentResolver)
 	result = adapted.get_keywords() if adapted else None
+	result = [x.lower() for x in result] if result else None
 	return result or default
 
 def _flatten_list(result, default=None):
@@ -83,6 +84,12 @@ def get_post_title(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
 	result = adapted.get_title()
 	return result.lower() if result else None
+
+def get_post_tags(obj, default=()):
+	adapted = component.queryAdapter(obj, search_interfaces.IPostContentResolver)
+	result = adapted.get_tags() if adapted else None
+	result = [x.lower() for x in result] if result else None
+	return result or default
 
 def get_object_content(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)

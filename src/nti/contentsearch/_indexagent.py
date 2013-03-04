@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import six
 
 from zope import component
@@ -19,8 +21,6 @@ from . import get_indexable_types
 from .common import get_type_name
 from .common import normalize_type_name
 from . import interfaces as search_interfaces
-
-logger = __import__('logging').getLogger(__name__)
 
 _event_types = { nti_interfaces.SC_CREATED: 'index_user_content',
 				 nti_interfaces.SC_SHARED:  'index_user_content',

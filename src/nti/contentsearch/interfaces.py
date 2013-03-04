@@ -443,6 +443,9 @@ class IPostContentResolver(_ContentMixinResolver,
 	def get_title():
 		"""return the post/forum title"""
 		
+	def get_tags():
+		"""return the post/forum tags"""
+		
 class IBookContentResolver(_ContentMixinResolver):
 	pass
 

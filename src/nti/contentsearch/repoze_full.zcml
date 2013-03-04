@@ -30,10 +30,6 @@
 	<utility name="recipients" provides=".interfaces.IMessageInfoRepozeCatalogFieldCreator" component="._repoze_index._text_field_creator" />
 	<utility name="references" provides=".interfaces.IMessageInfoRepozeCatalogFieldCreator" component="._repoze_index._keyword_field_creator" />
 	
-	<!-- post index field creators -->
-	
-	<utility name="title" provides=".interfaces.IPostRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
-	
 	<utility component="._repoze_index._FullRepozeSearchFeatures" 
 			 provides=".interfaces.ISearchFeatures" />
 			 

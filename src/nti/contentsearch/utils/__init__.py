@@ -1,4 +1,11 @@
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Content search utilities.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import zope.intid
 from zope import component
@@ -7,10 +14,11 @@ from zope.generations.utility import findObjectsProviding
 from nti.dataserver import users
 from nti.dataserver.users import friends_lists
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as forum_interfaces
 
-from nti.contentsearch import get_indexable_types
-from nti.contentsearch.common import get_type_name
-from nti.contentsearch import interfaces as search_interfaces
+from .. import get_indexable_types
+from ..common import get_type_name
+from .. import interfaces as search_interfaces
 
 def get_uid(obj, intids=None):
 	intids = intids or component.getUtility( zope.intid.IIntIds )
@@ -32,7 +40,7 @@ def find_user_dfls(user):
 def get_sharedWith(obj):
 	"""return the usernames the specified obejct is shared with"""
 	# from IPython.core.debugger import Tracer;  Tracer()() ## DEBUG ##
-	rsr = search_interfaces.IContentResolver(obj, None)
+	rsr = search_interfaces.IShareableContentResolver(obj, None)
 	result = rsr.get_sharedWith() if rsr is not None else ()
 	return result or ()
 
@@ -66,3 +74,15 @@ def find_all_indexable_pairs(user, user_get=users.Entity.get_entity, include_dfl
 			for obj in container:
 				if get_type_name(obj) in indexable_types:
 					yield (dfl, obj)
+
+def find_all_posts(user, user_get=users.Entity.get_entity):
+	
+	for obj in findObjectsProviding( user, forum_interfaces.IPost):
+			
+		yield (user, obj)
+			
+		# check if object is shared 
+		for uname in get_sharedWith(obj):
+			sharing_user = user_get(uname)
+			if sharing_user and uname != user.username: 
+				yield (sharing_user, obj)
