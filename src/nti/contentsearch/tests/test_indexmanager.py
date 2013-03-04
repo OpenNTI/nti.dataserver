@@ -14,8 +14,6 @@ import shutil
 import tempfile
 from datetime import datetime
 
-from zope import component
-
 from nti.dataserver.users import User
 from nti.dataserver.users import Community
 from nti.dataserver.contenttypes import Note
@@ -27,7 +25,6 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch.common import (ITEMS, HIT_COUNT)
 from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch._whoosh_index import create_book_schema
 from nti.contentsearch._whoosh_indexstorage import create_directory_index
 from nti.contentsearch.indexmanager import create_index_manager_with_repoze
@@ -73,15 +70,6 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 	def tearDownClass(cls):
 		shutil.rmtree(cls.book_idx_dir, True)
 		super(_BaseIndexManagerTest,cls).tearDownClass()
-
-
-	def is_ngram_search_supported(self):
-		features = component.getUtility(search_interfaces.ISearchFeatures)
-		return features.is_ngram_search_supported
-
-	def is_word_suggest_supported(self):
-		features = component.getUtility(search_interfaces.ISearchFeatures)
-		return features.is_word_suggest_supported
 
 	def wait_delay(self):
 		pass
@@ -152,10 +140,6 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_unified_search_ngrams(self):
-
-		if not self.is_ngram_search_supported():
-			return
-
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 		self.wait_delay()
@@ -169,10 +153,6 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_unified_search_suggest(self):
-
-		if not self.is_word_suggest_supported():
-			return
-
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 		self.wait_delay()
@@ -183,10 +163,6 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_unified_search_suggest_and_search(self):
-
-		if not self.is_word_suggest_supported():
-			return
-
 		_, usr = self._add_notes_and_index(('omega radicals', 'the queen of coffee'))
 		self.im.add_book(indexname='bleach', indexdir=self.book_idx_dir)
 		self.wait_delay()
@@ -214,10 +190,6 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_search_notes_suggest(self):
-
-		if not self.is_word_suggest_supported():
-			return
-
 		_, usr = self._add_notes_and_index()
 		self.wait_delay()
 
@@ -227,10 +199,6 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_search_notes_suggest_and_search(self):
-
-		if not self.is_word_suggest_supported():
-			return
-
 		_, usr = self._add_notes_and_index()
 		self.wait_delay()
 

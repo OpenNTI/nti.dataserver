@@ -1,8 +1,21 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
 
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	
 	<utility factory="._whoosh_index._DefaultBookSchemaCreator" />
 	<utility factory="._whoosh_index._DefaultBookSchemaCreator" name="en" />
+	
+	<utility factory="._whoosh_query._DefaultBookWhooshQueryParser" name="book" />
+	<utility factory="._whoosh_query._DefaultNoteWhooshQueryParser" name="note" />
+	<utility factory="._whoosh_query._DefaultPostWhooshQueryParser" name="post" />
+	<utility factory="._whoosh_query._DefaultHighlightWhooshQueryParser" name="highlight" />
+	<utility factory="._whoosh_query._DefaultRedactionWhooshQueryParser" name="redaction" />
+	<utility factory="._whoosh_query._DefaultMessageinfoWhooshQueryParser" name="messageinfo" />
 	
 	<utility factory="._whoosh_indexstorage._create_default_whoosh_storage"
 			 provides=".interfaces.IWhooshIndexStorage" />

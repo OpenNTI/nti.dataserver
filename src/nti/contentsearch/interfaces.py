@@ -33,6 +33,36 @@ class IRepozeDataStore(IFullMapping):
 		:param user: username
 		"""
 
+# search query
+
+class ISearchQuery(interface.Interface):
+	term = schema.TextLine(title="Query search term", required=True)
+	username = schema.TextLine(title="User doing the search", required=True)
+
+	limit = schema.Int(title="search results limit", required=False)
+	indexid = schema.TextLine(title="Book content NTIID", required=False)
+	searchOn = schema.Set(value_type=schema.TextLine(title='The ntiid'), title="Content types to search on", required=False)
+	sortOn = schema.TextLine(title="Field or function to sort by", required=False)
+	location = schema.TextLine(title="The reference NTIID where the search was invoked", required=False)
+	sortOrder = schema.TextLine(title="descending or ascending  to sort order", default='descending', required=False)
+
+	batchSize = schema.Int(title="page size", required=False)
+	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
+
+	is_prefix_search = schema.Bool(title="Returns true if the search is for prefix search", required=True, readonly=True)
+	is_phrase_search = schema.Bool(title="Returns true if the search is for phrase search", required=True, readonly=True)
+	is_descending_sort_order = schema.Bool(title="Returns true if the sortOrder is descending", required=True, default=True, readonly=True)
+
+class ISearchQueryValidator(interface.Interface):
+
+	def validate(query):
+		"""check if the specified search query is valid"""
+
+class ISearchQueryParser(interface.Interface):
+
+	def parse(query):
+		"""parse the specified query"""
+		
 # searcher
 
 class ISearcher(interface.Interface):
@@ -250,27 +280,6 @@ class IIndexManager(interface.Interface):
 		:param type_name: data type
 		"""
 
-# zopyx storage
-
-class ITextIndexNG3(zidx_interfaces.IInjection, zidx_interfaces.IIndexSearch, zidx_interfaces.IStatistics):
-	def suggest(term, threshold, prefix):
-		"""
-		return a list of similar words based on the levenshtein distance
-		"""
-
-	def getLexicon():
-		"""
-		return the zopyx.txng3.core.interfaces.ILexicon for this text index
-		"""
-
-	def setLexicon(lexicon):
-		"""
-		set the zopyx.txng3.core.interfaces.ILexicon for this text index
-		"""
-
-class ICatalogTextIndexNG3(rcat_interfaces.ICatalogIndex, zidx_interfaces.IIndexSort, ITextIndexNG3):
-	pass
-
 # whoosh index storage
 
 class IWhooshIndexStorage(interface.Interface):
@@ -341,13 +350,16 @@ class IWhooshBookContent(IBookContent, IReadMapping):
 	intid = schema.Int(title="Alias for docnum", required=True)
 	score = schema.Float(title="Search score", required=False, default=1.0)
 
-
 class IBookSchemaCreator(interface.Interface):
 	pass
 
 class IWhooshBookSchemaCreator(IBookSchemaCreator):
 	pass
 
+class IWhooshQueryParser(ISearchQueryParser):
+	
+	def parse(qo, schema=None):
+		pass
 
 # text highlight types
 
@@ -466,8 +478,32 @@ class IStopWords(interface.Interface):
 	def available_languages():
 		"available languages"
 
+# zopyx storage
+
+class ITextIndexNG3(zidx_interfaces.IInjection, zidx_interfaces.IIndexSearch, zidx_interfaces.IStatistics):
+	def suggest(term, threshold, prefix):
+		"""
+		return a list of similar words based on the levenshtein distance
+		"""
+
+	def getLexicon():
+		"""
+		return the zopyx.txng3.core.interfaces.ILexicon for this text index
+		"""
+
+	def setLexicon(lexicon):
+		"""
+		set the zopyx.txng3.core.interfaces.ILexicon for this text index
+		"""
+
+class ICatalogTextIndexNG3(rcat_interfaces.ICatalogIndex, zidx_interfaces.IIndexSort, ITextIndexNG3):
+	pass
+
 # Catalog creators marker interfaces
 
+class IRepozeQueryParser(ISearchQueryParser):
+	pass
+		
 class IRepozeCatalogCreator(interface.Interface):
 	pass
 
@@ -487,6 +523,9 @@ class IMessageInfoRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
 class IPostRepozeCatalogFieldCreator(interface.Interface):
+	pass
+
+class IRepozeSearchQueryValidator(ISearchQueryValidator):
 	pass
 
 # redis
@@ -575,37 +614,7 @@ class ICloudSearchStore(interface.Interface):
 class ICloudSearchStoreService(IRedisStoreService):
 	store = schema.Object(ICloudSearchStore, title='CloudSearch store')
 
-class ICloudSearchQueryParser(interface.Interface):
-
-	def parse(qo):
-		"""parse the specified ISearchQuery query object"""
-
-# search query
-
-class ISearchQuery(interface.Interface):
-	term = schema.TextLine(title="Query search term", required=True)
-	username = schema.TextLine(title="User doing the search", required=True)
-
-	limit = schema.Int(title="search results limit", required=False)
-	indexid = schema.TextLine(title="Book content NTIID", required=False)
-	searchOn = schema.Set(value_type=schema.TextLine(title='The ntiid'), title="Content types to search on", required=False)
-	sortOn = schema.TextLine(title="Field or function to sort by", required=False)
-	location = schema.TextLine(title="The reference NTIID where the search was invoked", required=False)
-	sortOrder = schema.TextLine(title="descending or ascending  to sort order", default='descending', required=False)
-
-	batchSize = schema.Int(title="page size", required=False)
-	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
-
-	is_prefix_search = schema.Bool(title="Returns true if the search is for prefix search", required=True, readonly=True)
-	is_phrase_search = schema.Bool(title="Returns true if the search is for phrase search", required=True, readonly=True)
-	is_descending_sort_order = schema.Bool(title="Returns true if the sortOrder is descending", required=True, default=True, readonly=True)
-
-class ISearchQueryValidator(interface.Interface):
-
-	def validate(query):
-		"""check if the specified search query is valid"""
-
-class IRepozeSearchQueryValidator(ISearchQueryValidator):
+class ICloudSearchQueryParser(ISearchQueryParser):
 	pass
 
 # search results

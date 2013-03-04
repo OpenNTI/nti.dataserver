@@ -1,5 +1,10 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
 	<include package="nti.contentprocessing" file="configure.zcml" />
@@ -49,6 +54,7 @@
 	<!-- Content processing -->
 
 	<!-- make sure stop words are registered before zopyx.zcml -->
+	
 	<utility factory="._content_utils._DefaultStopWords" />
 
 	<!-- Content Resolvers -->
@@ -110,7 +116,7 @@
 			 for="basestring" />
 
 	<include file="zopyx.zcml" />
-	<include file="repoze_minimal.zcml" />
+	<include file="configure_repoze.zcml" />
 	<include file="configure_whoosh.zcml" />
 
 </configure>

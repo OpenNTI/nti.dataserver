@@ -1,6 +1,13 @@
-import unittest
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from zope import component
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+import unittest
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
@@ -28,10 +35,6 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		ds = mock_dataserver.current_mock_ds
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
-	
-	def is_word_suggest_supported(self):
-		features = component.getUtility(search_interfaces.ISearchFeatures)
-		return features.is_word_suggest_supported
 	
 	def _create_note(self, msg, username, containerId=None):
 		note = Note()
@@ -140,9 +143,6 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_suggest(self):
-		
-		if not self.is_word_suggest_supported():
-			return
 		
 		usr, _, _ = self._add_user_index_notes()
 		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
@@ -255,7 +255,6 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		
 		hits = rim.search('"ax by"')
 		assert_that(hits, has_length(1))
-		
-	
+
 if __name__ == '__main__':
 	unittest.main()
