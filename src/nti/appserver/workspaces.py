@@ -136,7 +136,7 @@ class UncacheableHomogeneousTypedContainerCollection(HomogeneousTypedContainerCo
 	pass
 
 @component.adapter(nti_interfaces.IFriendsListContainer)
-class FriendsListContainerCollection(UncacheableHomogeneousTypedContainerCollection):
+class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 	"""
 	Magically adds the dynamic sharing communities that a user is a member of
 	to the user's ``FriendsLists`` collection.

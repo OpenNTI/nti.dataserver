@@ -254,7 +254,7 @@
 	<subscriber handler="._socket_event_listeners.session_disconnected_broadcaster" />
 	<subscriber handler="._socket_event_listeners.session_connected_broadcaster" />
 
-	<subscriber factory="._socket_event_listeners._UserPresenceExternalDecoratorFactory"
+	<subscriber factory="._socket_event_listeners._UserPresenceExternalDecorator"
 				for="nti.dataserver.interfaces.IUser"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
@@ -262,9 +262,14 @@
 				provides="geventwebsocket.interfaces.IWSWillUpgradeVeto"
 				for="geventwebsocket.interfaces.IWSWillUpgradeEvent" />
 
-	<!-- Friends Lists are uncachable due to the nested user changing
-	 presence -->
+	<!--
+		 FriendsLists are uncachable due to the nested user changing
+		 presence, both individually and as a group.
+	-->
 	<class class="nti.dataserver.users.FriendsList">
+		<implements interface=".interfaces.IUncacheableInResponse" />
+	</class>
+	<class class=".workspaces.FriendsListContainerCollection">
 		<implements interface=".interfaces.IUncacheableInResponse" />
 	</class>
 
