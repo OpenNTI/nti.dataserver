@@ -24,28 +24,29 @@ from .. import interfaces as search_interfaces
 from ..utils._repoze_utils import remove_entity_catalogs
 
 def reindex_posts(user, users_get, ds_intid):
-	username = user.username
-	logger.debug('Reindexing posts(s) for %s' % username)
-	
 	counter = 0	
-	for e, obj in find_all_posts(user, users_get):
-			
-		rim = search_interfaces.IRepozeEntityIndexManager(e, None)
-		try:
-			catalog = rim.get_create_catalog(obj) if rim is not None else None
-			if catalog is not None:
-				docid = get_uid(obj, ds_intid)
-				if docid is not None:
-					catalog.index_doc(docid, obj)
-					counter = counter + 1
-				else:
-					logger.warn("Cannot find int64 id for %r. Object will not be indexed" % obj)
-		except POSKeyError:
-			# broken reference for object
-			pass
-	
-	logger.debug('%s post object(s) for user %s were reindexed' % (counter, username))
-	
+	try:
+		username = user.username
+		logger.debug('Reindexing posts(s) for %s' % username)
+		for e, obj in find_all_posts(user, users_get):
+			try:
+				rim = search_interfaces.IRepozeEntityIndexManager(e, None)
+				catalog = rim.get_create_catalog(obj) if rim is not None else None
+				if catalog is not None:
+					docid = get_uid(obj, ds_intid)
+					if docid is not None:
+						catalog.index_doc(docid, obj)
+						counter = counter + 1
+					else:
+						logger.warn("Cannot find int64 id for %r. Object will not be indexed" % obj)
+			except POSKeyError:
+				# broken reference for object
+				pass
+		
+		logger.debug('%s post object(s) for user %s were reindexed' % (counter, username))
+	except POSKeyError:
+		# broken reference for user
+		pass
 	return counter
 
 def evolve(context):
