@@ -517,6 +517,7 @@ def module_teardown():
 
 # This is detailed in test_component_broken.txt
 # submitted as https://bugs.launchpad.net/zope.component/+bug/1100501
+# transferred to github as https://github.com/zopefoundation/zope.component/pull/1
 import zope.site.site
 
 

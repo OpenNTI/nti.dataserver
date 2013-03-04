@@ -359,6 +359,7 @@ setup(
 			'epydoc >= 3.0.1', # auto-api docs
 			'httpie >= 0.4.1', # 0.4.0 explicitly requires requests > 1.0.4, 0.3.1 explicitly requires requests < 1.0
 			'ipython >= 0.13.1', # the extra notebook is web based, pulls in tornado
+			'ipdb >= 0.7', # easier access to the ipython debugger
 			'logilab_astng >= 0.24.1',
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 			'pip >= 1.2.1',
