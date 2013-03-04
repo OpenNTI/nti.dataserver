@@ -1,27 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 import time
 import shutil
 import tempfile
-import unittest
 from datetime import datetime
 
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch import _whoosh_index
 from nti.contentsearch._whoosh_index import create_book_schema
 from nti.contentsearch._whoosh_indexstorage import create_directory_index
 from nti.contentsearch._whoosh_bookindexmanager import WhooshBookIndexManager
@@ -32,10 +26,7 @@ from nti.contentsearch.common import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
 
-from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, is_, has_item)
-from hamcrest import contains_inanyorder
-
-_whoosh_index.compute_ngrams = True
+from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, is_, contains_inanyorder)
 
 class TestWhooshBookIndexManager(ConfiguringTestBase):
 
