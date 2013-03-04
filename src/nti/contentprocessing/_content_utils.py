@@ -24,8 +24,8 @@ import repoze.lru
 
 from nti.contentfragments import interfaces as frg_interfaces
 
-from nti.contentprocessing import interfaces as cp_interfaces
-from nti.contentprocessing import default_word_tokenizer_expression
+from . import interfaces as cp_interfaces
+from . import default_word_tokenizer_expression
 
 def get_content_translation_table(language='en'):
 	table = component.queryUtility(cp_interfaces.IContentTranslationTable, name=language)
