@@ -16,7 +16,7 @@ from hamcrest import has_property
 import simplejson as json
 
 from .._question_map import QuestionMap, _populate_question_map_from_text
-
+from nti.dataserver.authorization_acl import ACL
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.appserver,) )
 tearDownModule = nti.tests.module_teardown
 
@@ -102,6 +102,10 @@ def test_create_question_map_captures_set_ntiids(index_string=ASSM_STRING_W_SET)
 	assert_that( question_map[qset_question.ntiid], is_( qset_question ) )
 	assert_that( question_map[qset_question.ntiid], is_( assm_items[1] ) )
 	assert_that( question_map[qset.ntiid], is_( qset ) )
+
+
+	# And it has an ACL
+	assert_that( ACL(qset_question), is_( () ) )
 
 def test_create_question_map_nested_level_with_no_filename():
 

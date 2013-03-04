@@ -194,3 +194,12 @@ class _QuestionACLProvider(_AbstractDelimitedHierarchyEntryACLProvider):
 	"""
 	Hacky provider of ACLs. See QuestionMap.
 	"""
+
+	def __init__( self, question ):
+		super(_QuestionACLProvider, self).__init__( question )
+		# If this question did not come from a containing file, it
+		# won't have the right information associated with it and hence
+		# we can get no ACL through the super class.
+		# Override that here.
+		if not hasattr( question, 'read_contents_of_sibling_entry' ):
+			self.__acl__ = ()
