@@ -2,6 +2,11 @@
 
 from __future__ import print_function, unicode_literals
 
+# Patch for relstorage.
+import nti.monkey.relstorage_umysqldb_patch_on_import
+nti.monkey.relstorage_umysqldb_patch_on_import.patch()
+
+
 import logging
 logger = logging.getLogger(__name__)
 
