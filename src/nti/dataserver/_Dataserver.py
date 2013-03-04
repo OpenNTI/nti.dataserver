@@ -2,6 +2,10 @@
 from __future__ import print_function, unicode_literals, absolute_import
 logger = __import__( 'logging' ).getLogger( __name__ )
 
+# Patch for relstorage.
+import nti.monkey.relstorage_umysqldb_patch_on_import
+nti.monkey.relstorage_umysqldb_patch_on_import.patch()
+
 import os
 
 from urlparse import urlparse
@@ -196,8 +200,14 @@ class MinimalDataserver(object):
 				logger.warning( 'Failed to close %s = %s', name, obj, exc_info=True )
 
 
-		for k,v in self.db.databases.items():
-			_c( k, v )
+		# Close the root database. This closes its storage but leaves
+		# all outstanding connections open (though useless)
+		_c( 'self.db', self.db )
+		# Close any multi databases. Recall, though, that the root database
+		# is itself one of the multi-databases, so don't try to re-close it
+		for db_name, db in self.db.databases.items():
+			if db is not self.db:
+				_c( db_name, db )
 
 		_c( 'redis', self.redis, self.redis.connection_pool.disconnect )
 
