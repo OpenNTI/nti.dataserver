@@ -131,6 +131,7 @@ class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadReque
 
 	def _read_incoming_post( self ):
 		# TODO: Ripped from ugd_edit_views
+		blog = self.request.context
 		creator = self.getRemoteUser()
 		externalValue = self.readInput()
 		datatype = self.findContentType( externalValue )
@@ -144,7 +145,8 @@ class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadReque
 
 		containedObject = self.createAndCheckContentObject( creator, datatype, externalValue, creator, self._constraint )
 		containedObject.creator = creator
-
+		containedObject.containerId = blog.NTIID
+		
 		# The process of updating may need to index and create KeyReferences
 		# so we need to have a jar. We don't have a parent to inherit from just yet
 		# (If we try to set the wrong one, it messes with some events and some
