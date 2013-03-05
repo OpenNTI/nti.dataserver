@@ -37,6 +37,10 @@ capability was required, or an object was protected with an ACL.
 Noting that fact we simplify things here by combining authorization
 with access control and calling the result simply authorization.
 
+.. note::
+   Higher levels may group together collections of permissions or access to
+   defined features and call those "capabilities."
+
 General Principles
 ==================
 
