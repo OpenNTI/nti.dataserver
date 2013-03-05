@@ -128,11 +128,16 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 
 		# Some people enrolled should be able to view it
 		section.enroll( 'enrolled@bar' )
+		# clear the cache
+		del acl_prov.__acl__
 		assert_that( acl_prov, permits( 'enrolled@bar',
 										auth.ACT_READ ) )
 
 		# and an instructor can modify it
 		section.InstructorInfo.Instructors.append( "sjohnson@nti.com" )
+		# clear the cache
+		del acl_prov.__acl__
+
 		assert_that( acl_prov, permits( 'sjohnson@nti.com',
 										auth.ACT_UPDATE ) )
 
@@ -162,6 +167,8 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 		# TODO: Is that right? We should probably be forcing
 		# consistency among providers
 		klass.add_section( section )
+		# clear the cache
+		del acl_prov.__acl__
 		acl = acl_prov.__acl__
 		assert_that( acl, has_length( 2 ) )
 		assert_that( acl[0], is_(auth_acl.ace_allowing( 'role:NTI.Admin', nti_interfaces.ALL_PERMISSIONS ) ) )
@@ -171,12 +178,13 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 		# rights.
 		# Some people enrolled should be able to view it
 		section.enroll( 'enrolled@bar' )
-
+		del acl_prov.__acl__
 		assert_that( acl_prov, permits( 'enrolled@bar',
 										auth.ACT_READ ) )
 
 		# and an instructor can modify it
 		section.InstructorInfo.Instructors.append( "sjohnson@nti.com" )
+		del acl_prov.__acl__
 		assert_that( acl_prov, permits( 'sjohnson@nti.com',
 										auth.ACT_UPDATE ) )
 
@@ -209,6 +217,11 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 
 		friends_list.creator = creator
 		friends_list.addFriend( friend )
+
+		# The acl is cached though...
+		assert_that( acl_prov.__acl__, is_( acl ) )
+		# ... so we have to remove it before continuing
+		del acl_prov.__acl__
 
 		assert_that( acl_prov, permits( 'friend@baz',
 										auth.ACT_READ ) )
