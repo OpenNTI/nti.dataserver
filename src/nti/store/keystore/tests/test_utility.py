@@ -5,10 +5,10 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 #disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+#pylint: disable=W0212,R0904 access
 
-from .. import key
 from .. import utility
+from .. import access_key
 
 from ...tests import ConfiguringTestBase
 
@@ -19,7 +19,7 @@ class TestUtility(ConfiguringTestBase):
 	def test_add_key(self):
 
 		keystore = utility.PersistentKeyStore()
-		pk = key.PersistentKey('mykey', '1234')
+		pk = access_key.PersistentAccessKey('mykey', '1234')
 	
 		keystore.registerKey( pk )
 		assert_that( pk, has_property( 'value', '1234' ) )
