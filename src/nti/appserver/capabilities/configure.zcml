@@ -2,6 +2,11 @@
 
 	<include file="meta.zcml" package="zope.component" />
 	<include file="meta.zcml" package="zope.security" />
+	<include package="zope.vocabularyregistry" />
 
 	<include file="capabilities.zcml" package="." />
+
+	<utility component=".vocabulary.CapabilityNameTokenVocabulary"
+			 provides="zope.schema.interfaces.IVocabularyFactory"
+			 name="nti.appserver.capabilities.vocabulary" />
 </configure>

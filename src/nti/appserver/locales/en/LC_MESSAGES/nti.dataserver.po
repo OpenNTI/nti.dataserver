@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: jason.madden@nextthought.com\n"
-"POT-Creation-Date: 2013-03-05 10:27-0600\n"
+"POT-Creation-Date: 2013-03-05 11:22-0600\n"
 "PO-Revision-Date: 2012-09-24 22:18-0500\n"
 "Last-Translator: Jason Madden <jason.madden@nextthought.com>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -50,6 +50,14 @@ msgstr ""
 
 #: src/nti/appserver/account_recovery_views.py:288
 msgid "Your reset link is not valid. Please request a new one."
+msgstr ""
+
+#: src/nti/appserver/configure_blogs.zcml:18
+msgid "Can the user create new blog entries?"
+msgstr ""
+
+#: src/nti/appserver/configure_blogs.zcml:18
+msgid "Create Blog Entry"
 msgstr ""
 
 #: src/nti/appserver/coppa_admin_views.py:110
@@ -118,26 +126,42 @@ msgstr ""
 msgid "Can the user chat?"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:18
+#: src/nti/appserver/capabilities/capabilities.zcml:15
+msgid "Chat"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:20
 msgid "Can the user access UGD sharing features?"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:22
+#: src/nti/appserver/capabilities/capabilities.zcml:20
+msgid "Sharing"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:25
 msgid "Can the user create new FriendsLists? (Enforced by the vocabulary)"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:25
+msgid "Create FriendsLists"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:30
 msgid ""
 "Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the "
 "vocab)"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:29
+#: src/nti/appserver/capabilities/capabilities.zcml:30
+msgid "Create DynamicFriendsLists"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:35
 msgid "Can the user upload custom avatar pictures?"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:32
-msgid "Can the user create new blog entries?"
+#: src/nti/appserver/capabilities/capabilities.zcml:35
+msgid "Upload Avatar"
 msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:150
@@ -243,3 +267,4 @@ msgstr ""
 #: src/nti/utils/schema.py:205
 msgid "${field} is too short."
 msgstr "${field} is too short. Please use at least ${minLength} characters."
+

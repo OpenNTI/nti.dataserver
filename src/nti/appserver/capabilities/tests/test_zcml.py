@@ -31,7 +31,6 @@ from ..vocabulary import CapabilityNameTokenVocabulary, CapabilityUtilityVocabul
 class TestZcml(nti.tests.ConfiguringTestBase):
 
 	def test_default_registrations(self):
-		# TODO: This is a pretty poor test
 		self.configure_packages( set_up_packages=( ('capabilities.zcml', 'nti.appserver.capabilities',), ) )
 
 		cap_name = 'nti.platform.p2p.chat'
