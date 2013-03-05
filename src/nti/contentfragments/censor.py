@@ -285,6 +285,7 @@ def censor_before_text_assigned( fragment, target, event ):
 			return event.object, True # as an optimization when we are called directly
 
 	return fragment, False
+
 def censor_before_assign_components_of_sequence( sequence, target, event ):
 	"""
 	Register this adapter for (usually any) sequence, some specific interface target, and
@@ -316,10 +317,3 @@ def censor_assign( fragment, target, field_name ):
 	evt = BeforeTextAssignedEvent( fragment, field_name, target )
 	return censor_before_text_assigned( fragment, target, evt )[0]
 
-def _default_profanity_terms():
-	file_path = resource_filename( __name__, 'profanity_list.txt' )
-	with open(file_path, 'rU') as src:
-		words = [unicode(x.encode('rot13').strip()) for x in src.readlines() ]
-	terms = [ SimpleTerm(value=word, token=repr(word)) for word in words ]
-	map(lambda x: interface.alsoProvides( x, interfaces.IProfanityTerm ), terms)
-	return SimpleVocabulary(terms)
