@@ -19,8 +19,8 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from . import interfaces as ks_interfaces
 
-@interface.implementer(ks_interfaces.IKey, an_interfaces.IAttributeAnnotatable)
-class BaseKey(contained.Contained):
+@interface.implementer(ks_interfaces.IAccessKey, an_interfaces.IAttributeAnnotatable)
+class BaseAccessKey(contained.Contained):
 	
 	def __init__(self, alias, value):
 		self.alias = alias
@@ -30,11 +30,11 @@ class BaseKey(contained.Contained):
 	def name(self):
 		return self.alias
 
-class PersistentKey(persistent.Persistent, BaseKey):
+class PersistentAccessKey(persistent.Persistent, BaseAccessKey):
 	pass
 
-class ZcmlKey(BaseKey):
+class ZcmlAccessKey(BaseAccessKey):
 	pass
 
-class RegistrationKey(ZcmlKey):
+class RegistrationAccessKey(ZcmlAccessKey):
 	creator = nti_interfaces.SYSTEM_USER_NAME

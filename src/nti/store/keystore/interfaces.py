@@ -11,7 +11,7 @@ from zope import interface
 from zope.annotation import interfaces as an_interfaces
 from zope.container import interfaces as cnt_interfaces
 
-class IKey(cnt_interfaces.IContained):
+class IAccessKey(cnt_interfaces.IContained):
 	alias = interface.Attribute( "A unique name that identifies this key." )
 	value = interface.Attribute( "The actual key value" )
 
