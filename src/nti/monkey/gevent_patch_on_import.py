@@ -139,6 +139,29 @@ def _patch_logging():
 	logging.LogRecord = _LogRecord
 
 
+def check_threadlocal_status(names=('transaction.ThreadTransactionManager', 'zope.component.hooks.siteinfo', 'pyramid.threadlocal.ThreadLocalManager', 'pyramid.threadlocal.manager')):
+	# depending on the order of imports, we may need to patch
+	# some things up manually.
+	# NOTE: This list is not complete.
+	# NOTE: These things are critical to the operation of the system,
+	# so if they aren't patched due to a bad import order, we
+	# bail
+	import zope.dottedname.resolve as dottedname
+	for name in names:
+		try:
+			obj = dottedname.resolve(name)
+		except ImportError:
+			logger.debug( "Not checking gevent status of %s", name, exc_info=True )
+			continue
+
+		if not isinstance(obj, type):
+			obj = type(obj)
+		logger.debug( "Checking gevent status of %s=%s: %s", name, obj, obj.__bases__ )
+		#print( name, obj, obj.__bases__ )
+		if gevent.local.local not in obj.__bases__:
+			raise TypeError( "%s not monkey patched. Bad import order" % name )
+
+
 if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules: # Don't do this when we are loaded for conflict resolution into somebody else's space
 
 	# As of 2012-10-30 and gevent 1.0rc1, the change in 1.0b4 to patch os.read and os.write
@@ -209,21 +232,7 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 
 	_patch_thread_stop()
 
-
-	# depending on the order of imports, we may need to patch
-	# some things up manually.
-	# NOTE: This list is not complete.
-	# NOTE: These things are critical to the operation of the system,
-	# so if they aren't patched due to a bad import order, we
-	# bail
-	import transaction
-	if gevent.local.local not in transaction.ThreadTransactionManager.__bases__:
-		raise TypeError( "Transaction package not monkey patched. Bad import order" )
-
-	import zope.component
-	import zope.component.hooks
-	if gevent.local.local not in type(zope.component.hooks.siteinfo).__bases__:
-		raise TypeError( "zope.component package not monkey patched. Bad import order" )
+	check_threadlocal_status()
 
 	_patch_logging()
 
@@ -234,8 +243,6 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 		greenlet.settrace( greenlet_trace )
 
 
-	del zope
-	del transaction
 	del threading
 	del _threading_local
 
@@ -249,7 +256,6 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 else:
 	logger = __import__('logging').getLogger(__name__)
 	logger.info( "Not monkey patching any gevent libraries" )
-
 
 def patch():
 	pass
