@@ -82,8 +82,10 @@ get_redactionExplanation = get_redaction_explanation
 
 def get_post_title(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
-	result = adapted.get_title()
-	return result.lower() if result else None
+	title = adapted.get_title()
+	n_grams = compute_ngrams(title)
+	result = '%s %s' % (title, n_grams) if title else u''
+	return result.lower() or default
 
 def get_post_tags(obj, default=()):
 	adapted = component.queryAdapter(obj, search_interfaces.IPostContentResolver)
@@ -169,3 +171,9 @@ def _keyword_field_creator(catalog, name, iface ):
 	discriminator = _get_discriminator(name)
 	catalog[name] = CatalogKeywordIndex( discriminator )
 
+def _post_title_field_creator(catalog, name, iface ):
+	catalog[name] = CatalogTextIndexNG3(name, get_post_title)
+	
+def _post_tags_field_creator(catalog, name, iface ):
+	discriminator = get_post_tags
+	catalog[name] = CatalogKeywordIndex( discriminator )
