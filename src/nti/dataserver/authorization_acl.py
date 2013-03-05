@@ -497,7 +497,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 @component.adapter(nti_interfaces.IShareableModeledContent)
 class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
-	Extends the ACL for :class:`nti_interfaces.ICreated` objects to things that
+	Extends the ACL for :class:`nti.dataserver.interfaces.ICreated` objects to things that
 	are shared.
 
 	Those things that are shared can be viewed (:data:`authorization.ACT_READ`) by those they are
@@ -505,7 +505,7 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	then the complete list of users is expanded into the ACL; the alternative is to have
 	principals appear to be members of all these things, as a group.)
 
-	This is modified: If this object is the child of another IShareableModeledContent,
+	This is modified: If this object is the child of another :class:`.IReadableShared`
 	e.g., a Canvas inside a Note, then the ACL is skipped and just inherited
 	from the parent (so traversal must be appropriate and respected in ACL checks). This
 	prevents problems when denying all access.
@@ -522,7 +522,7 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	@Lazy
 	def __acl__( self ):
 		# Inherit if we are nested. See class comment
-		if nti_interfaces.IShareableModeledContent.providedBy( getattr( self.context, '__parent__', None ) ):
+		if nti_interfaces.IReadableShared.providedBy( getattr( self.context, '__parent__', None ) ):
 			return ()
 		return super(_ShareableModeledContentACLProvider,self).__acl__
 
@@ -627,12 +627,12 @@ class _TestingLibraryTOCEntryACLProvider(object):
 	This class is for testing only, never for use in a production scenario.
  	"""
 
-	def __init__( self, obj ):
- 		self._obj = obj
+	def __init__( self, context ):
+ 		self.context = context
 
 	@property
 	def __parent__( self ):
-		return self._obj.__parent__
+		return self.context.__parent__
 
 	@_LazyOnClass
 	def __acl__(self):
