@@ -389,6 +389,13 @@ class ConfiguringTestBase(AbstractTestBase):
 		self.configuration_context = _configure( self, set_up_packages, features, context or self.configuration_context )
 		return self.configuration_context
 
+	def configure_string( self, zcml_string ):
+		"""
+		Execute the given ZCML string.
+		"""
+		self.configuration_context = xmlconfig.string( zcml_string, self.configuration_context )
+		return self.configuration_context
+
 	def tearDown( self ):
 		# always safe to clear events
 		eventtesting.clearEvents() # redundant with zope.testing.cleanup
@@ -573,15 +580,18 @@ from hamcrest import is_
 
 class TypeCheckedDict(dict):
 
-	def __init__( self, key_class=object, val_class=object ):
+	def __init__( self, key_class=object, val_class=object, notify=None ):
 		dict.__init__( self )
 		self.key_class = key_class
 		self.val_class = val_class
+		self.notify = notify
 
 	def __setitem__( self, key, val ):
 		assert_that( key, is_( self.key_class ) )
 		assert_that( val, is_( self.val_class ) )
 		dict.__setitem__( self, key, val )
+		if self.notify:
+			self.notify( key, val )
 
 try:
 	from pyramid.testing import DummyRequest as _DummyRequest
@@ -624,13 +634,16 @@ try:
 		def __init__( self, **kwargs ):
 			if 'headers' in kwargs:
 				old_headers = kwargs['headers']
-				headers = TypeCheckedDict( str, str )
+				headers = TypeCheckedDict( str, str, self._on_set_header )
 				for k, v in old_headers.items():
 					headers[k] = v
 				kwargs['headers']  = headers
 			else:
-				kwargs['headers'] = TypeCheckedDict( str, str )
+				kwargs['headers'] = TypeCheckedDict( str, str, self._on_set_header )
 			super(ByteHeadersDummyRequest,self).__init__( **kwargs )
+
+		def _on_set_header( self, key, val ):
+			pass
 
 		@reify
 		def response( self ):

@@ -7,7 +7,15 @@ from hamcrest import none
 from pyramid.testing import setUp as psetUp
 from pyramid.testing import tearDown as ptearDown
 #from pyramid.testing import DummyRequest
-from nti.tests import ByteHeadersDummyRequest as DummyRequest
+from nti.tests import ByteHeadersDummyRequest as _ByteHeadersDummyRequest
+
+class DummyRequest(_ByteHeadersDummyRequest):
+	possible_site_names = ()
+	def _on_set_header( self, key, val ):
+		from nti.appserver.tweens.zope_site_tween import _get_possible_site_names
+		site_names = _get_possible_site_names( self )
+		self.possible_site_names = tuple(site_names)
+
 import pyramid.interfaces
 
 
