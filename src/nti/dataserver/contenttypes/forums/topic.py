@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 
 from zope import interface
+from zope import component
 
 import Acquisition
 
@@ -27,7 +28,9 @@ from nti.utils.property import CachedProperty
 
 from . import interfaces as for_interfaces
 from zope.annotation import interfaces as an_interfaces
+from zope.container.interfaces import INameChooser
 
+from zope.container.contained import ContainerSublocations
 class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 							 containers.CheckingLastModifiedBTreeContainer,
 							 Acquisition.Implicit):
@@ -59,13 +62,18 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 
 	@CachedProperty
 	def NTIID(self):
-		"NTIID is defined only after the creator and id/__name__ are set"
+		"""
+		NTIID is defined only after the creator and id/__name__ are set.
+		Our NTIID is derived from the __name__, using that as the specific part.
+		For this to work correctly, our __name__ must be NTIID safe. We provide a name
+		chooser to ensure that.
+		"""
 		return ntiids.make_ntiid( date=ntiids.DATE,
 								  provider=self.creator.username,
 								  nttype=for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY,
-								  specific=self.__name__ ) # will need to escape that
+								  specific=self.__name__ )
 
-from zope.container.contained import ContainerSublocations
+
 class HeadlineTopicSublocations(ContainerSublocations):
 	"""
 	Story topics contain their children and also their story.
@@ -77,3 +85,24 @@ class HeadlineTopicSublocations(ContainerSublocations):
 		story = self.container.headline
 		if story is not None:
 			yield story
+
+@component.adapter(for_interfaces.IPersonalBlog)
+@interface.implementer(INameChooser)
+class PersonalBlogEntryNameChooser(object):
+	"""
+	Handles NTIID-safe name choosing for an entry in a blog.
+	"""
+
+	def __init__( self, context ):
+		self.context = context
+
+	def chooseName( self, name, obj ):
+		# NTIID flatten
+		name = ntiids.make_specific_safe( name )
+		# Now on to the next adapter (Note: this ignores class-based adapters)
+		# First, get the "required" interface list (from the adapter's standpoint),
+		# removing the think we just adapted out
+		remaining = interface.providedBy( self.context ) - for_interfaces.IPersonalBlog
+		# now perform a lookup. The first arg has to be a tuple for whatever reason
+		factory = component.getSiteManager().adapters.lookup( (remaining,), INameChooser )
+		return factory( self.context ).chooseName( name, obj )

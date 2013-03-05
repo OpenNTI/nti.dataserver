@@ -36,3 +36,7 @@ class TestNTIIDS(unittest.TestCase):
 		# This date is 2012-01-05 in UTC, but 2012-01-04 in CST
 		assert_that( ntiids.make_ntiid( date=1325723859.140755, nttype='Test' ),
 					 is_( 'tag:nextthought.com,2012-01-05:Test' ) )
+
+	def test_make_safe( self ):
+		assert_that( ntiids.make_specific_safe( 'Foo%Bar +baz.' ),
+					 is_( 'Foo_Bar__baz_' ) )

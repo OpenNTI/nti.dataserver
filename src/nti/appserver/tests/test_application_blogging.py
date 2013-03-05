@@ -199,9 +199,9 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
 		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
 		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
-		assert_that( res.json_body, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-My New Blog' ) )
+		assert_that( res.json_body, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-My_New_Blog' ) )
 		assert_that( res.json_body, has_entry( 'ContainerId', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog') )
-		assert_that( res.json_body, has_entry( 'href', UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + data['title'] ) ))
+		assert_that( res.json_body, has_entry( 'href', UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + res.json_body['ID'] ) ))
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
@@ -218,7 +218,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		entry_ntiid = res.json_body['NTIID']
 
 		# The new topic is accessible at its OID URL, its pretty URL, and by NTIID
-		for url in entry_url, UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My New Blog' ), UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
+		for url in entry_url, UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My_New_Blog' ), UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
 			testapp.get( url )
 
 
@@ -231,7 +231,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( blog_items, contains( has_entry( 'title', data['title'] ) ) )
 		# With its links all intact
 		blog_item = blog_items[0]
-		assert_that( blog_item, has_entry( 'href', UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + data['title'] ) ))
+		assert_that( blog_item, has_entry( 'href', UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + blog_item['ID'] ) ))
 		self.require_link_href_with_rel( blog_item, 'contents' )
 		self.require_link_href_with_rel( blog_item, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( blog_item, 'flag' ) # entries can be flagged
@@ -326,12 +326,12 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
 
 		# Pretty URL did not change
-		testapp.get( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My New Blog' ) )
+		testapp.get( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My_New_Blog' ) )
 
 		# I can also PUT to the pretty path to the object
 		data['body'] = ['An even newer body']
 
-		testapp.put_json( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My New Blog/headline' ), data )
+		testapp.put_json( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My_New_Blog/headline' ), data )
 		res = testapp.get( entry_url )
 		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 
@@ -519,6 +519,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# Create the blog
 		res = testapp.post_json( '/dataserver2/users/original_user@foo/Blog', data )
 		entry_url = res.location
+		__traceback_info__ = res.json_body
 		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
 		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
 		pub_url = self.require_link_href_with_rel( res.json_body, 'publish' )
@@ -555,9 +556,10 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
 
 		# It can be fetched by pretty URL
-		res = testapp2.get( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog' ) ) # Pretty URL
+		res = testapp2.get( UQ( '/dataserver2/users/original_user@foo/Blog/My_New_Blog' ) ) # Pretty URL
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
 		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
+		assert_that( res.json_body, has_entry( 'ID', 'My_New_Blog' ) )
 		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 		assert_shared_with_community( res.json_body )
 
@@ -583,7 +585,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# ...and pretty...
 		data['title'] = 'Another comment'
 		data['body'] = ['more comment body']
-		comment2res = testapp2.post_json( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog' ), data )
+		comment2res = testapp2.post_json( UQ( '/dataserver2/users/original_user@foo/Blog/My_New_Blog' ), data )
 		# (Note that although we're just sending in Posts, the location transforms them:
 		assert_that( comment1res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogcomment+json' ) )
 		assert_that( comment1res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.forums.personalblogcomment' ) )
@@ -621,7 +623,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# ... in the blog feed for both users...
 		for app in testapp, testapp2:
-			res = app.get( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog/feed.atom' ) )
+			res = app.get( UQ( '/dataserver2/users/original_user@foo/Blog/My_New_Blog/feed.atom' ) )
 			assert_that( res.content_type, is_( 'application/atom+xml'))
 			res._use_unicode = False
 			pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.

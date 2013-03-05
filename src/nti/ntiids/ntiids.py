@@ -12,6 +12,7 @@ import numbers
 import time
 import collections
 import warnings
+import string
 
 from zope import interface
 from zope import component
@@ -157,7 +158,35 @@ def escape_provider( provider ):
 # non-reversible so its less an escape and more a permutation.
 # NOTE: While string.translate is tempting,
 # it cannot be used because we allow the local parts to be Unicode and string.translate
-# works on bytes
+# works on bytes.
+# The below is a basic first part, suitable for many uses, but not a complete solution
+
+_sp_allowed = string.ascii_letters + string.digits
+_sp_removed = b''.join( [chr(x) for x in range(0,256) if chr(x) not in _sp_allowed] )
+_sp_transtable = string.maketrans( _sp_removed, b'_' * len(_sp_removed) )
+
+def make_specific_safe( specific ):
+	"""
+	Given a potential specific part, transform it so that it is valid
+	as part of an NTIID string. This includes removing disallowed characters,
+	and limiting the range of characters.
+
+	.. caution:: This is not a reversible transformation.
+	"""
+	# We start by being extremely safe and limiting it to ascii letters and numbers,
+	# with no punctuation. There are some unicode characters that are dangerous
+	# and used in attacks on certain platforms (not to mention being confusing)
+	# TODO: We will probably want to open this up a bit
+	# TODO: n^2 algorithm
+
+	# Since we are is ascii-land here, easy way to strip all high-chars is to encode
+	specific = specific.encode( 'ascii', 'ignore') if isinstance(specific, unicode) else specific
+	specific = string.translate( specific, _sp_transtable )
+
+	# back to unicode, coming from ascii
+	return specific.decode( 'ascii' )
+
+
 
 def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None ):
 	"""

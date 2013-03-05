@@ -11,6 +11,7 @@
 	<adapter provides="zope.location.interfaces.ISublocations"
 			 for=".interfaces.IHeadlineTopic"
 			 factory=".topic.HeadlineTopicSublocations" />
+	<adapter factory=".topic.PersonalBlogEntryNameChooser" />
 
 	<!-- NTIID resolvers -->
 	<utility factory=".ntiids._BlogResolver" name="Forum:PersonalBlog" />
