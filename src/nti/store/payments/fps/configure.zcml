@@ -7,11 +7,11 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<include package=".stripe" file="configure.zcml" />
-	<include package=".fps" file="configure.zcml" />
-	
-	<subscriber factory=".externalization.PurchaseAttemptDecoratorFactory"
-				for="..interfaces.IPurchaseAttempt"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+	<subscriber handler=".fps_processor.register_fps_token" />
+	<subscriber handler=".fps_processor.register_fps_transaction" />
+
+	<adapter factory=".fps_adapters._FPSPurchaseFactory"
+			 for="...interfaces.IPurchaseAttempt"
+			 provides=".interfaces.IFPSPurchase" />
 
 </configure>

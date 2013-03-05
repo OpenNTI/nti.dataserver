@@ -4,8 +4,12 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
+
+import unittest
 
 from zope.schema import ValidationError
 
@@ -14,9 +18,7 @@ from .. import utils
 from nose.tools import assert_raises
 from hamcrest import (assert_that, is_)
 
-from ...tests import ConfiguringTestBase
-
-class TestPaymentUtils(ConfiguringTestBase):
+class TestPaymentUtils(unittest.TestCase):
 
 	def test_is_valid_creditcard_number(self):
 		assert_that(utils.is_valid_creditcard_number("4111-1111-1111-1111"), is_(True))
