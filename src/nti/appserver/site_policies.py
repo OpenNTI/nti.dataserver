@@ -24,6 +24,7 @@ from ZODB import loglevels
 
 from pyramid.threadlocal import get_current_request
 
+from zope.schema import interfaces as sch_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
@@ -64,19 +65,12 @@ def get_possible_site_names(request=None, include_default=False):
 	request = request or get_current_request()
 	if not request: # pragma: no cover
 		return () if not include_default else ('',)
+	__traceback_info__ = request
 
-	# The site tween modifies the request to have these
-	try:
-		site_names = request.possible_site_names
-	except AttributeError:
-		if not request.environ.get( 'paste.testing' ): # pragma: no cover
-			raise
-			# except in some early test cases. We should never see this warning
-			# in production. (See the WebTest 'Framework Hookse' documentation)
-
-		from nti.appserver.tweens.zope_site_tween import _get_possible_site_names
-		site_names = _get_possible_site_names( request )
-		request.possible_site_names = tuple(site_names)
+	# The site tween modifies the request to have this property,
+	# and our test cases do so as well, even those that don't go through the tweens
+	# (There have been some unexplained cases of an AttributeError here, though?)
+	site_names = request.possible_site_names
 
 	if include_default:
 		site_names += ('',)
@@ -306,7 +300,6 @@ class ISitePolicyUserEventListener(interface.Interface):
 
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 from nti.dataserver import users
-import zope.schema
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class SiteBasedExternalObjectDecorator(object):
@@ -314,22 +307,21 @@ class SiteBasedExternalObjectDecorator(object):
 	Something that can be registered as a subscriber to forward
 	object decoration to objects that do something for a particular site.
 	These object must be registered as multi-adapters for the original object
-	and the active request, and must be named for the site.
+	and the active request within the correct site policy. (Note that they are not
+	subscribers, they get one shot.)
 
 	Register this object sparingly, it is expensive.
 	"""
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalObject( self, orig_obj, result ):
+	def decorateExternalObject( self, orig_obj, ext_obj ):
 		request = get_current_request()
 		if not request:
 			return
 
-		components = _find_site_components( request, include_default=False )
-		if components is not None:
-			adapter = components.queryMultiAdapter( (orig_obj, request), ext_interfaces.IExternalObjectDecorator )
-			if adapter:
-				adapter.decorateExternalObject( orig_obj, result )
+		adapter = component.queryMultiAdapter( (orig_obj, request), ext_interfaces.IExternalObjectDecorator )
+		if adapter:
+			adapter.decorateExternalObject( orig_obj, ext_obj )
 
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
@@ -419,9 +411,9 @@ class UsernameCannotContainRealname(InvalidValue): pass
 class UsernameCannotContainAt(user_interfaces.UsernameContainsIllegalChar): pass
 class UsernameCannotContainNextthoughtCom(InvalidValue): pass
 class FieldContainsCensoredSequence(InvalidValue): pass
-class MissingFirstName(zope.schema.interfaces.RequiredMissing):
+class MissingFirstName(sch_interfaces.RequiredMissing):
 	field = 'realname'
-class MissingLastName(zope.schema.interfaces.RequiredMissing):
+class MissingLastName(sch_interfaces.RequiredMissing):
 	field = 'realname'
 class AtInUsernameImpliesMatchingEmail(InvalidValue): pass
 
