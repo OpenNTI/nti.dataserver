@@ -306,7 +306,7 @@ setup(
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
-		'zope.sequencesort >= 4.0.0', # advanced locale aware sorting
+		'zope.sequencesort >= 4.0.1', # advanced locale aware sorting
 		'zope.schema >= 4.3.2',
 		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
 		# on pypy, you must manually force the _proxy module to be built.
