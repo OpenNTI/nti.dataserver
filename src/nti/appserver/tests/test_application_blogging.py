@@ -29,10 +29,15 @@ from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import has_entries
 from hamcrest import ends_with
+from hamcrest import greater_than
 
 from nti.tests import is_empty
+import fudge
 
 from .test_application import TestApp
+
+import datetime
+import webob.datetime_utils
 
 from zope import lifecycleevent
 from zope.component import eventtesting
@@ -481,7 +486,17 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 0 ) )
 
 	@WithSharedApplicationMockDS
-	def test_user_sharing_community_can_GET_and_POST_new_comments(self):
+	@fudge.patch('time.time')
+	def test_user_sharing_community_can_GET_and_POST_new_comments(self, fake_time):
+		# make time monotonically increasing
+		i = [0]
+		def incr():
+			i[0] += 1
+			return i[0]
+		fake_time.is_callable()
+		fake_time._callable.call_replacement = incr
+		fake_time()
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( username='original_user@foo' )
 			user2 = self._create_user( username=user.username + '2' )
@@ -511,6 +526,8 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# Before its published, the second user can see nothing
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
 		assert_that( res.json_body['Items'], has_length( 0 ) )
+		content_last_mod = res.json_body['Last Modified']
+		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
 
 		# XXX FIXME: This is wrong; TopicCount should be of the visible, not the total, contents
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog' )
@@ -532,6 +549,10 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body['Items'][0], has_entry( 'title', 'My New Blog' ) )
 		assert_that( res.json_body['Items'][0], has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 		assert_shared_with_community( res.json_body['Items'][0] )
+		# Which has an updated last modified
+		assert_that( res.json_body['Last Modified'], greater_than( content_last_mod ) )
+		content_last_mod = res.json_body['Last Modified']
+		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
 
 		# It can be fetched by pretty URL
 		res = testapp2.get( UQ( '/dataserver2/users/original_user@foo/Blog/My New Blog' ) ) # Pretty URL
@@ -622,11 +643,13 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# and it can be republished...
 		res = testapp.post( pub_url )
 		assert_shared_with_community( res.json_body )
-		# ...and made visible again
+		# ...making it visible again
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
 		assert_that( res.json_body['Items'][0], has_entry( 'title', 'My New Blog' ) )
-
-
+		# ... changing last mod date again
+		assert_that( res.json_body['Last Modified'], greater_than( content_last_mod ) )
+		content_last_mod = res.json_body['Last Modified']
+		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
 
 		# The original user can delete a comment from the other user
 		testapp.delete( self.require_link_href_with_rel( comment1res.json_body, 'edit' ), status=204 )
