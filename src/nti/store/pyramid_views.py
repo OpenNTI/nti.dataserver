@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 import six
 import time
+import gevent
 import numbers
 import dateutil.parser
 
@@ -67,7 +68,8 @@ class GetPurchaseAttempt(object):
 			start_time = purchase.StartTime
 			# more than 90 secs try to sync
 			if time.time() - start_time >= 90 and not purchase.is_synced():
-				manager = component.getUtility(store_interfaces.IPaymentProcessor, name=purchase.Processor)
-				manager.sync_purchase(purchase_id, username)
-				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+				def process_sync():
+					manager = component.getUtility(store_interfaces.IPaymentProcessor, name=purchase.Processor)
+					manager.sync_purchase(purchase_id=purchase_id, username=username)
+				gevent.spawn(process_sync)
 		return purchase
