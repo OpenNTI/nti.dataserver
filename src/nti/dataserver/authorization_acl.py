@@ -152,12 +152,15 @@ class _ACE(object):
 
 def _ace_denying_all( provenance=None ):
 	return _ACE( *(nti_interfaces.ACE_DENY_ALL + (provenance,) ) )
+def _ace_allowing_all( provenance=None ):
+	return _ACE( *(nti_interfaces.ACE_ALLOW_ALL + (provenance,) ) )
 
 # Export these ACE functions publicly
 ace_allowing = _ACE.allowing
 ace_denying = _ACE.denying
 ace_from_string = _ACE.from_external_string
 ace_denying_all = _ace_denying_all
+ace_allowing_all = _ace_allowing_all
 
 
 def acl_from_file( path_or_file ):
@@ -310,6 +313,32 @@ def acl_from_aces( *args ):
 
 	return _ACL( args )
 
+class _LazyOnClass(object):
+	"""
+	Like :class:`zope.cachedescriptors.property.Lazy`, but
+	when it caches, it caches on the class itself, not the instance,
+	thus sharing the value. Thus, the value should be immutable and
+	independent of any other state.
+	"""
+
+	def __init__( self, func ):
+		self._func = func
+		self.klass_cache_name = '_v__LazyOnClass_' + self._func.__name__
+
+	def __get__( self, inst, klass ):
+		if inst is None:
+			return self
+
+		# In order to let this be resetable, to keep access
+		# to this object and the original function, we
+		# use a different name
+		klass_cache_name = self.klass_cache_name
+		val = getattr( klass, klass_cache_name, self )
+		if val is self:
+			val = self._func(inst)
+			setattr( klass, klass_cache_name, val )
+		return val
+
 def _add_admin_moderation( acl, provenance ):
 	acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, provenance ) )
 	acl.append( ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_MODERATE, provenance ) )
@@ -335,7 +364,7 @@ class _EntityACLProvider(object):
 	def _viewers(self):
 		return ( nti_interfaces.AUTHENTICATED_GROUP_NAME, )
 
-	@property
+	@Lazy
 	def __acl__( self ):
 		"""
 		The ACL for the entity.
@@ -398,7 +427,7 @@ class _CreatedACLProvider(object):
 			raise ValueError( "Unable to get creator", self._created )
 		return result
 
-	@property
+	@Lazy
 	def __acl__( self ):
 		"""
 		The ACL for the creator.
@@ -449,7 +478,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		"""
 		return
 
-	@property
+	@Lazy
 	def __acl__( self ):
 		"""
 		The ACL for this object. If this class sets :attr:`_DENY_ALL` to ``True`` then everyone
@@ -490,7 +519,7 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 		# ACE comes first, and because they are both 'allow' entries
 		return self.context.flattenedSharingTargetNames
 
-	@property
+	@Lazy
 	def __acl__( self ):
 		# Inherit if we are nested. See class comment
 		if nti_interfaces.IShareableModeledContent.providedBy( getattr( self.context, '__parent__', None ) ):
@@ -514,7 +543,7 @@ class _SectionInfoACLProvider(_CreatedACLProvider):
 	def __init__( self, obj ):
 		super(_SectionInfoACLProvider,self).__init__(obj)
 
-	@property
+	@Lazy
 	def __acl__(self):
 		result = self._creator_acl()
 		# First, give the user's enrolled viewing
@@ -542,7 +571,7 @@ class _ClassInfoACLProvider(_CreatedACLProvider):
 	def __init__( self, obj ):
 		super(_ClassInfoACLProvider,self).__init__(obj)
 
-	@property
+	@Lazy
 	def __acl__(self):
 		# We assume that a given username
 		# will not occur with contradictory rights,
@@ -581,7 +610,7 @@ class _EnclosedContentACLProvider(_CreatedACLProvider):
 	def __init__( self, obj ):
 		super(_EnclosedContentACLProvider,self).__init__( obj )
 
-	@property
+	@Lazy
 	def __acl__( self ):
 		# Give the creator full rights.
 		result = self._creator_acl()
@@ -597,12 +626,18 @@ class _TestingLibraryTOCEntryACLProvider(object):
  	Allows all authenticated users access to library entries.
 	This class is for testing only, never for use in a production scenario.
  	"""
- 	def __init__( self, obj ):
+
+	def __init__( self, obj ):
  		self._obj = obj
- 		# TODO: Should this be taking into account a parent LibraryEntryACLProvider at all?
- 		# If so, how?
- 		self.__acl__ = ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _TestingLibraryTOCEntryACLProvider ), )
-	__parent__ = property(lambda self: self.context.__parent__)
+
+	@property
+	def __parent__( self ):
+		return self._obj.__parent__
+
+	@_LazyOnClass
+	def __acl__(self):
+ 		return ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _TestingLibraryTOCEntryACLProvider ), )
+
 
 
 # TODO: This could be (and was) registered for a simple IDelimitedHierarchyEntry.
@@ -713,20 +748,25 @@ class _FriendsListACLProvider(_CreatedACLProvider):
 	def __init__( self, obj ):
 		super(_FriendsListACLProvider,self).__init__( obj )
 
-	@property
+	@Lazy
 	def __acl__( self ):
 		result = self._creator_acl()
 		for friend in self._created:
 			result.append( ace_allowing( friend.username, authorization.ACT_READ ) )
 		# And finally nobody else gets jack squat
-		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
+		result.append( ace_denying_all( _SectionInfoACLProvider ) )
 		return result
+
 
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter(nti_interfaces.IDataserverFolder)
 class _DataserverFolderACLProvider(object):
 
 	def __init__( self, context ):
+		pass
+
+	@_LazyOnClass
+	def __acl__( self ):
 		# Got to be here after the components are registered
 		acl = acl_from_aces(
 			# Everyone has read access at the root
@@ -736,12 +776,16 @@ class _DataserverFolderACLProvider(object):
 			ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_IMPERSONATE, _DataserverFolderACLProvider )
 			)
 		_add_admin_moderation( acl, _DataserverFolderACLProvider )
-		self.__acl__ = acl
+		return acl
 
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter(content_interfaces.IContentPackageLibrary)
 class _ContentPackageLibraryACLProvider(object):
 
 	def __init__( self, context ):
-		# Got to be here after the components are registered
-		self.__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _ContentPackageLibraryACLProvider ), ) )
+		pass
+
+	@_LazyOnClass
+	def __acl__( self ):
+		# Got to be here after the components are registered, not at the class
+		return _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _ContentPackageLibraryACLProvider ), ) )

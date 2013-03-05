@@ -70,6 +70,20 @@ except ImportError:
 else:
 	HAVE_ZCONT = False
 
+TESTS_REQUIRE = [
+'WebTest >= 2.0', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
+'blessings >= 1.5', # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
+'coverage >= 3.6', # Test coverage
+'fakeredis >= 0.3.0',
+'fudge',
+'nose >= 1.2.1',
+'nose-timer >= 0.1.2',
+'nose-progressive >= 1.4',
+'pyhamcrest >= 1.7.1',
+'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
+'zope.testing >= 4.1.2',
+]
+
 setup(
 	name = 'nti.dataserver',
 	version = '0.0',
@@ -90,7 +104,7 @@ setup(
 		],
 
 	# Support unit tests of package
-#	tests_require = ['z3c.coverage','zope.testing'],
+	tests_require = TESTS_REQUIRE, # Needed for e.g., tox
 	setup_requires = [
 		# If we actually ran tests out of the box on a fresh install, we'd
 		# need this:
@@ -334,19 +348,7 @@ setup(
         # rpy2, -- Requires R installed.
 		],
 	extras_require = {
-		'test': [
-			'WebTest >= 2.0', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
-			'blessings >= 1.5', # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
-			'coverage >= 3.6', # Test coverage
-			'fakeredis >= 0.3.0',
-			'fudge',
-			'nose >= 1.2.1',
-			'nose-timer >= 0.1.2',
-			'nose-progressive >= 1.4',
-			'pyhamcrest >= 1.7.1',
-			'tempstorage >= 2.12.2', # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
-			'zope.testing >= 4.1.2',
-			],
+		'test': TESTS_REQUIRE,
 		'tools': [
 			# WSGI middleware for profiling. Defaults to storing
 			# data in a sqlite file. Works across multiple gunicorn workers, does

@@ -345,8 +345,10 @@ ACE_ACT_ALLOW = _psec.Allow
 ACE_ACT_DENY = _psec.Deny
 #: Constant for use in an ACL indicating that all permissions
 ALL_PERMISSIONS = _psec.ALL_PERMISSIONS
-ACE_DENY_ALL = _psec.DENY_ALL
 interface.directlyProvides( ALL_PERMISSIONS, IPermission )
+
+ACE_DENY_ALL = _psec.DENY_ALL
+ACE_ALLOW_ALL = (ACE_ACT_ALLOW, EVERYONE_USER_NAME, ALL_PERMISSIONS)
 
 import nti.externalization.oids
 nti.externalization.oids.DEFAULT_EXTERNAL_CREATOR = SYSTEM_USER_NAME
