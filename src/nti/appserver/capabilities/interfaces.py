@@ -24,3 +24,7 @@ class ICapability(zsec_interfaces.IPermission):
 	to avoid collisions.
 
 	"""
+
+#: A :class:`zope.schema.interfaces.IVocabularyTokenized` vocabulary
+#: will be available as a registered vocabulary under this name
+VOCAB_NAME = 'nti.appserver.capabilities.vocabulary'

@@ -1,16 +1,24 @@
 <!-- -*- mode: nxml -*- -->
-<configure
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:zcml="http://namespaces.zope.org/zcml"
-	zcml:condition="have devmode" >
-	<!-- Temporary placeholders for forums/blogs until I (JAM) lock
-	the permissioning down -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:cap="http://nextthought.com/ntp/capabilities"
+			i18n_domain='nti.dataserver'
+			zcml:condition="have devmode" >
+	<!--
+		 Temporary placeholders for forums/blogs until I (JAM) lock
+		 the permissioning down
+	-->
 
 	<include package="zope.component" />
+	<include package=".capabilities" file="meta.zcml" />
 
 	<adapter factory=".forum_views.DefaultUserForumFactory"
-			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog"
-			 zcml:condition="have devmode"/>
+			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog" />
+
+	<cap:capability
+		id='nti.platform.blogging.createblogentry'
+		title="Create Blog Entry"
+		description='Can the user create new blog entries?' />
 
 	<!-- Entry in service doc -->
 	<subscriber factory=".forum_views._UserBlogCollectionFactory"

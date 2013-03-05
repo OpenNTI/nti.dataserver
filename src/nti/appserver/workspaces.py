@@ -23,6 +23,8 @@ from zope.schema import interfaces as sch_interfaces
 
 from zope.container.constraints import IContainerTypesConstraint
 
+from zope.schema import vocabulary
+
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as content_interfaces
@@ -45,6 +47,7 @@ from nti.utils.property import alias
 
 import nti.appserver.interfaces as app_interfaces
 import nti.appserver.pyramid_renderers as rest
+from nti.appserver.capabilities import interfaces as cap_interfaces
 
 from . import traversal
 from .pyramid_authorization import is_readable
@@ -885,16 +888,13 @@ class UserServiceExternalizer(ServiceExternalizer):
 
 	def toExternalObject(self):
 		result = super(UserServiceExternalizer,self).toExternalObject()
-		# TODO: This is hardcoded. Needs replaced with something dynamic.
+		# TODO: This is almost hardcoded. Needs replaced with something dynamic.
 		# Querying the utilities for the user, which would be registered for specific
 		# IUser types or something...
-		# TODO: These strings are in several places
-		capabilities = set( ('nti.platform.p2p.chat', # Can the user chat?
-							 'nti.platform.p2p.sharing', # Can the user access UGD sharing features?
-							 'nti.platform.p2p.friendslists', # Can the user create new FriendsLists? (Enforced by the vocabulary)
-							 'nti.platform.p2p.dynamicfriendslists', # Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)
-							 'nti.platform.customization.avatar_upload', # Can the user upload custom avatar pictures?
-							 'nti.platform.blogging.createblogentry' ) ) # Can the user create new blog entries?
+
+		cap_vocab = vocabulary.getVocabularyRegistry().get( None, cap_interfaces.VOCAB_NAME )
+		capabilities = {term.value for term in cap_vocab}
+
 		# TODO: This should probably be subscriber, not adapter, so that
 		# the logic doesn't have to be centralized in one place and can be additive (actually subtractive)
 		# Or vice-versa, when this becomes dynamic

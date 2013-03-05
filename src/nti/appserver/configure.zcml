@@ -11,6 +11,7 @@
 
 	<include package="nti.dataserver" />
 
+	<include package=".capabilities" />
 	<!-- I18N -->
 
 	<i18n:registerTranslations directory="locales" />

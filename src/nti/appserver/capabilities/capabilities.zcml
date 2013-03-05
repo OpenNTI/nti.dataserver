@@ -14,23 +14,27 @@
 	<!-- Some default capabilities -->
 	<cap:capability
 		id='nti.platform.p2p.chat'
-		title='Can the user chat?' />
+		title="Chat"
+		description='Can the user chat?' />
+
 	<cap:capability
 		id='nti.platform.p2p.sharing'
-		title='Can the user access UGD sharing features?' />
+		title="Sharing"
+		description='Can the user access UGD sharing features?' />
 
 	<cap:capability
 		id='nti.platform.p2p.friendslists'
-		title='Can the user create new FriendsLists? (Enforced by the vocabulary)' />
+		title="Create FriendsLists"
+		description='Can the user create new FriendsLists? (Enforced by the vocabulary)' />
+
 	<cap:capability
 		id='nti.platform.p2p.dynamicfriendslists'
-		title='Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)' />
+		title="Create DynamicFriendsLists"
+		description='Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)' />
 
 	<cap:capability
 		id='nti.platform.customization.avatar_upload'
-		title='Can the user upload custom avatar pictures?' />
-	<cap:capability
-		id='nti.platform.blogging.createblogentry'
-		title='Can the user create new blog entries?' />
+		title="Upload Avatar"
+		description='Can the user upload custom avatar pictures?' />
 
 </configure>
