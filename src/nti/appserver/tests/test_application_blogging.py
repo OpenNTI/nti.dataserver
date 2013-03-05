@@ -20,6 +20,7 @@ from hamcrest import has_property
 from hamcrest import is_
 from hamcrest import is_not as does_not
 is_not = does_not
+from hamcrest import not_none
 from hamcrest import has_item
 from hamcrest import contains
 from hamcrest import contains_inanyorder
@@ -27,7 +28,10 @@ from hamcrest import contains_string
 from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import has_entries
+from hamcrest import ends_with
+
 from nti.tests import is_empty
+
 from .test_application import TestApp
 
 from zope import lifecycleevent
@@ -647,3 +651,72 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		testapp2.delete( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), status=404 )
 		testapp2.get( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), status=404 )
 		testapp2.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data, status=404 )
+
+
+	@WithSharedApplicationMockDS
+	def test_post_canvas_image_in_headline_post_produces_fetchable_link( self ):
+		" Images posted as data urls come back as real links which can be fetched "
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user( username='original_user@foo' )
+			user2 = self._create_user( username=user.username + '2' )
+			# make them share a community
+			community = users.Community.create_community( username='TheCommunity' )
+			user.join_community( community )
+			user2.join_community( community )
+			user2_username = user2.username
+			user_username = user.username
+
+
+		testapp = TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
+		testapp2 = TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
+
+
+		canvas_data = {u'Class': 'Canvas',
+					   'ContainerId': 'tag:foo:bar',
+					   u'MimeType': u'application/vnd.nextthought.canvas',
+					   'shapeList': [{u'Class': 'CanvasUrlShape',
+									  u'MimeType': u'application/vnd.nextthought.canvasurlshape',
+									  u'url': u'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
+
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought', canvas_data] }
+
+		# Create the blog
+		res = testapp.post_json( '/dataserver2/users/' + user_username + '/Blog', data )
+		entry_ntiid = res.json_body['NTIID']
+		pub_url = self.require_link_href_with_rel( res.json_body, 'publish' )
+
+		def _check_canvas( res, canvas, acc_to_other=False ):
+			assert_that( canvas, has_entry( 'shapeList', has_length( 1 ) ) )
+			assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'Class', 'CanvasUrlShape' ) ) ) )
+			assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'url', contains_string( '/dataserver2/' ) ) ) ) )
+
+
+			res = testapp.get( canvas['shapeList'][0]['url'] )
+			# The content type is preserved
+			assert_that( res, has_property( 'content_type', 'image/gif' ) )
+			# The modified date is the same as the canvas containing it
+			assert_that( res, has_property( 'last_modified', not_none() ) )
+		#	assert_that( res, has_property( 'last_modified', canvas_res.last_modified ) )
+			# It either can or cannot be accessed by another user
+			testapp2.get( canvas['shapeList'][0]['url'], status=(200 if acc_to_other else 403) )
+
+		_check_canvas( res, res.json_body['headline']['body'][1] )
+
+		# If we "edit" the headline, then nothing breaks
+		headline_edit_link = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
+
+		res = testapp.put_json( headline_edit_link, res.json_body['headline'] )
+		_check_canvas( res, res.json_body['body'][1] )
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			entry = ntiids.find_object_with_ntiid( entry_ntiid )
+			canvas = entry.headline.body[1]
+			url_shape = canvas.shapeList[0]
+			# And it externalizes as a real link because it owns the file data
+			assert_that( url_shape.toExternalObject()['url'], ends_with( '@@view' ) )
+
+		# When published, it is visible to the other user
+		testapp.post( pub_url )
+		_check_canvas( res, res.json_body['body'][1], acc_to_other=True )
