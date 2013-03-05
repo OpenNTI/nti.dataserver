@@ -34,4 +34,5 @@ class _BlogEntryResolver(AbstractUserBasedResolver):
 	def _resolve( self, ntiid, user ):
 		blog_name = ntiids.get_specific( ntiid )
 		blog = frm_interfaces.IPersonalBlog( user, {} )
+		# because of this, __name__ of the entry must be NTIID safe
 		return blog.get( blog_name )

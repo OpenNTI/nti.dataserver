@@ -22,6 +22,7 @@ from hamcrest import has_entry
 from hamcrest import all_of
 from hamcrest import is_not
 from hamcrest import has_entries
+from hamcrest import starts_with
 from nose.tools import assert_raises
 import nti.tests
 
@@ -32,7 +33,7 @@ from nti.tests import is_empty
 from nti.externalization.tests import externalizes
 
 from nti.tests import aq_inContextOf
-from zope.container.interfaces import InvalidItemType, InvalidContainerType
+from zope.container.interfaces import InvalidItemType, InvalidContainerType, INameChooser
 from nti.tests import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry
@@ -41,7 +42,7 @@ from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPos
 
 from ExtensionClass import Base
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments', 'nti.dataserver') )
 tearDownModule = nti.tests.module_teardown
 
 def test_topic_interfaces():
@@ -84,7 +85,17 @@ def test_blog_entry():
 	assert_that( topic.headline, aq_inContextOf( parent ) )
 	assert_that( topic, aq_inContextOf( parent ) )
 
+def test_blog_entry_name_chooser():
+	topic = PersonalBlogEntry()
+	from ..forum import PersonalBlog
+	blog = PersonalBlog()
 
+	name = 'A name'
+	assert_that( INameChooser( blog ).chooseName( name, topic ), is_( 'A_name' ) )
+	blog['A_name'] = topic
+
+	topic = PersonalBlogEntry()
+	assert_that( INameChooser( blog ).chooseName( name, topic ), starts_with( 'A_name.' ) )
 
 def test_topic_constraints():
 
