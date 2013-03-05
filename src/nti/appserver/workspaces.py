@@ -892,7 +892,7 @@ class UserServiceExternalizer(ServiceExternalizer):
 		# Querying the utilities for the user, which would be registered for specific
 		# IUser types or something...
 
-		cap_vocab = vocabulary.getVocabularyRegistry().get( None, cap_interfaces.VOCAB_NAME )
+		cap_vocab = vocabulary.getVocabularyRegistry().get( self.context.user, cap_interfaces.VOCAB_NAME )
 		capabilities = {term.value for term in cap_vocab}
 
 		# TODO: This should probably be subscriber, not adapter, so that

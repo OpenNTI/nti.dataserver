@@ -71,7 +71,7 @@ else:
 	HAVE_ZCONT = False
 
 TESTS_REQUIRE = [
-'WebTest >= 2.0', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
+'WebTest >= 2.0.1', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
 'blessings >= 1.5', # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
 'coverage >= 3.6', # Test coverage
 'fakeredis >= 0.3.0',
