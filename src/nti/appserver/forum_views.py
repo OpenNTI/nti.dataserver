@@ -533,6 +533,7 @@ class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
 			  name='publish')
 def _PublishView(request):
 	interface.alsoProvides( request.context, nti_interfaces.IDefaultPublished )
+	lifecycleevent.modified( request.context )
 	# TODO: Hooked directly up to temp_post_added_to_indexer
 	temp_post_added_to_indexer( request.context.headline, None )
 	return uncached_in_response( request.context )
@@ -546,6 +547,7 @@ def _PublishView(request):
 			  name='unpublish')
 def _UnpublishView(request):
 	interface.noLongerProvides( request.context, nti_interfaces.IDefaultPublished )
+	lifecycleevent.modified( request.context )
 	# TODO: While we have temp_dispatch_to_indexer in place, when we unpublish
 	# do we need to unindex the comments too?
 	return uncached_in_response( request.context )
@@ -582,7 +584,7 @@ def notify_online_author_of_comment( comment, event ):
 	notify( chat_interfaces.DataChangedUserNotificationEvent( (author.username,), change ) )
 
 
-def temp_dispatch_to_indexer( change ):
+def _temp_dispatch_to_indexer( change ):
 	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
 	dataserver = component.queryUtility( nti_interfaces.IDataserver )
 
@@ -601,12 +603,12 @@ def temp_dispatch_to_indexer( change ):
 @component.adapter( frm_interfaces.IPost, lifecycleevent.IObjectAddedEvent )
 def temp_post_added_to_indexer( comment, event ):
 	change = _stream_event_for_comment( comment )
-	temp_dispatch_to_indexer(change)
+	_temp_dispatch_to_indexer(change)
 
 @component.adapter( frm_interfaces.IPost, lifecycleevent.IObjectModifiedEvent )
 def temp_post_modified_to_indexer( comment, event ):
 	change = _stream_event_for_comment( comment, nti_interfaces.SC_MODIFIED )
-	temp_dispatch_to_indexer(change)
+	_temp_dispatch_to_indexer(change)
 ###
 ## NOTE: You cannot send a stream change on an object deleted event.
 ## See HeadlineTopicDeleteView and the place it points to. This is already
