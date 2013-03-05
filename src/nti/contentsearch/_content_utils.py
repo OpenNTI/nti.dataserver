@@ -228,7 +228,7 @@ class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 		return self._resolve(self.obj.body)
 	
 	def get_tags(self):
-		tags = self._get_any_attr(tags_)
+		tags = _get_any_attr(self.obj, (tags_,))
 		return set(tags) if tags else ()
 	
 @component.adapter(IDict)
