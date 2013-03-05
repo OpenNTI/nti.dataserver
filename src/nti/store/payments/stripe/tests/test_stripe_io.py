@@ -15,7 +15,7 @@ import stripe
 import unittest
 from datetime import date
 
-from nti.store.payments import stripe_io
+from .. import stripe_io
 
 from hamcrest import (assert_that, is_, is_not, has_length, greater_than_or_equal_to)
 			
@@ -110,6 +110,3 @@ class TestStripeIO(unittest.TestCase):
 		sio = stripe_io.StripeIO()
 		coupon = sio.get_coupon(code)
 		assert_that(coupon, is_(None))
-		
-if __name__ == '__main__':
-	unittest.main()

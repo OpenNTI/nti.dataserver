@@ -1,25 +1,13 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<!-- stripe -->
-
-	<subscriber handler=".stripe_processor.stripe_customer_created" />
-	<subscriber handler=".stripe_processor.stripe_customer_deleted" />
-	<subscriber handler=".stripe_processor.register_stripe_token" />
-	<subscriber handler=".stripe_processor.register_stripe_charge" />
-
-	<adapter factory=".stripe_adapters._StripeCustomerFactory"
-			 for="nti.dataserver.interfaces.IUser"
-			 provides=".interfaces.IStripeCustomer" />
-
-	<adapter factory=".stripe_adapters._StripePurchaseFactory"
-			 for="..interfaces.IPurchaseAttempt"
-			 provides=".interfaces.IStripePurchase" />
-
-	<utility factory=".stripe_processor._StripePaymentProcessor"
-			 provides=".interfaces.IStripePaymentProcessor"
-			 name="stripe" />
+	<include package=".stripe" file="configure.zcml" />
 
 	<!-- fps -->
 
