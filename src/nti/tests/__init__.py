@@ -218,8 +218,8 @@ def not_validated_by( field ):
 	""" Matches if the data is NOT validated by the given IField. """
 	return is_not( validated_by( field ) )
 from hamcrest import has_length
-def is_empty():
-	return has_length( 0 )
+from hamcrest.library.collection.is_empty import empty
+is_empty = empty # bwc
 
 has_attr = hamcrest.library.has_property
 

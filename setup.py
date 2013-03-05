@@ -393,9 +393,10 @@ setup(
 			'lingua >= 1.4',
 			]
 	},
-	message_extractors = { '.': [
+	message_extractors = { 'src': [
 		('**.py',   'lingua_python', None ),
 		('**.pt',   'lingua_xml', None ),
+		('**.zcml',   'lingua_zcml', None ),
 		]},
 	dependency_links = ['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
 	packages = find_packages('src'),

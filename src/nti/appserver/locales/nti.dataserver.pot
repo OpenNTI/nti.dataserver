@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-02-26 14:38-0600\n"
+"POT-Creation-Date: 2013-03-05 10:27-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,9 +17,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: src/nti/appserver/_adapters.py:398 src/nti/appserver/_adapters.py:399
-#: src/nti/appserver/_adapters.py:400
+#: src/nti/appserver/_adapters.py:385 src/nti/appserver/_adapters.py:386
+#: src/nti/appserver/_adapters.py:387
 msgid "This object has been deleted."
+msgstr ""
+
+#: src/nti/appserver/_external_object_io.py:158
+msgid "You cannot store that type of object here."
 msgstr ""
 
 #: src/nti/appserver/account_creation_views.py:129
@@ -55,43 +59,43 @@ msgstr ""
 msgid "Contact Email"
 msgstr ""
 
-#: src/nti/appserver/flagging_views.py:183
+#: src/nti/appserver/flagging_views.py:185
 msgid "This item has been deleted by the moderator."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:398
+#: src/nti/appserver/site_policies.py:396
 msgid "Username contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:403
+#: src/nti/appserver/site_policies.py:401
 msgid "Alias contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:463
+#: src/nti/appserver/site_policies.py:461
 msgid "Welcome to NextThought"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:487
+#: src/nti/appserver/site_policies.py:485
 msgid "That username is not valid. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:497
+#: src/nti/appserver/site_policies.py:495
 msgid "Please provide your first name."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:499
+#: src/nti/appserver/site_policies.py:497
 msgid "Please provide your last name."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:512
+#: src/nti/appserver/site_policies.py:510
 msgid "Birthdate must be in the past."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:515
+#: src/nti/appserver/site_policies.py:513
 msgid "Birthdate must be at least four years ago."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:518
+#: src/nti/appserver/site_policies.py:516
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
@@ -107,6 +111,30 @@ msgstr ""
 
 #: src/nti/appserver/user_policies.py:289
 msgid "Please Confirm Your Child's NextThought Account"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:15
+msgid "Can the user chat?"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:18
+msgid "Can the user access UGD sharing features?"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:22
+msgid "Can the user create new FriendsLists? (Enforced by the vocabulary)"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:25
+msgid "Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:29
+msgid "Can the user upload custom avatar pictures?"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:32
+msgid "Can the user create new blog entries?"
 msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:150
@@ -127,6 +155,34 @@ msgstr ""
 msgid ""
 "The message is too big. It can contain a maximum of ${parts} characters or "
 "shapes"
+msgstr ""
+
+#: src/nti/dataserver/configure.zcml:71
+msgid "Likes"
+msgstr ""
+
+#: src/nti/dataserver/configure.zcml:76
+msgid "Favorites"
+msgstr ""
+
+#: src/nti/dataserver/configure_acls.zcml:11
+msgid "Create new object"
+msgstr ""
+
+#: src/nti/dataserver/configure_acls.zcml:14
+msgid "Delete existing object"
+msgstr ""
+
+#: src/nti/dataserver/configure_acls.zcml:17
+msgid "Edit existing object"
+msgstr ""
+
+#: src/nti/dataserver/configure_acls.zcml:20
+msgid "Moderate existing objects"
+msgstr ""
+
+#: src/nti/dataserver/configure_acls.zcml:23
+msgid "Impersonate another user"
 msgstr ""
 
 #: src/nti/dataserver/users/interfaces.py:53
@@ -181,7 +237,7 @@ msgstr ""
 msgid "The limit for this invitation code has been exceeded."
 msgstr ""
 
-#: src/nti/utils/schema.py:197
+#: src/nti/utils/schema.py:205
 msgid "${field} is too short."
 msgstr ""
 
