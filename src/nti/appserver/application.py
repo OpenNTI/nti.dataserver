@@ -12,6 +12,8 @@ import nti.dataserver as dataserver
 
 
 import sys
+if 'nti.monkey.gevent_patch_on_import' in sys.modules:
+	sys.modules['nti.monkey.gevent_patch_on_import'].check_threadlocal_status()
 import os
 import random
 
