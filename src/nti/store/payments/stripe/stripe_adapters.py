@@ -20,11 +20,11 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils.property import alias
 
-from . import interfaces as pay_interfaces
-from .. import interfaces as store_interfaces
+from . import interfaces as stripe_interfaces
+from ... import interfaces as store_interfaces
 
 @component.adapter(nti_interfaces.IUser)
-@interface.implementer( pay_interfaces.IStripeCustomer)
+@interface.implementer( stripe_interfaces.IStripeCustomer)
 class _StripeCustomer(zcontained.Contained, Persistent):
 
 	family = BTrees.family64
@@ -47,7 +47,7 @@ class _StripeCustomer(zcontained.Contained, Persistent):
 _StripeCustomerFactory = an_factory(_StripeCustomer)
 
 @component.adapter(store_interfaces.IPurchaseAttempt)
-@interface.implementer(pay_interfaces.IStripePurchase)
+@interface.implementer(stripe_interfaces.IStripePurchase)
 class _StripePurchase(zcontained.Contained, Persistent):
 
 	TokenID = None

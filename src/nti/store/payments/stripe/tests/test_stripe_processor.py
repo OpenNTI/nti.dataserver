@@ -12,22 +12,21 @@ logger = __import__('logging').getLogger(__name__)
 import time
 import uuid
 import stripe
-import unittest
 
 from zope import component
 from zope.annotation import IAnnotations
 
 from nti.dataserver.users import User
 
-from nti.store import purchase_attempt
-from nti.store import purchase_history
-from nti.store import interfaces as store_interfaces
-from nti.store.payments import interfaces as pay_interfaces
+from .... import purchase_attempt
+from .... import purchase_history
+from .. import interfaces as stripe_interfaces
+from .... import interfaces as store_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.store.tests import ConfiguringTestBase
+from . import ConfiguringTestBase
 
 from zope.component import eventtesting
 from hamcrest import (assert_that, is_, is_not, has_length, has_key)
@@ -117,21 +116,21 @@ class TestStripeProcessor(ConfiguringTestBase):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
 			assert_that(pa.state, is_(store_interfaces.PA_STATE_SUCCESS))
 
-		assert_that( eventtesting.getEvents(pay_interfaces.IStripeCustomerCreated), has_length( 1 ) )
+		assert_that( eventtesting.getEvents(stripe_interfaces.IStripeCustomerCreated), has_length( 1 ) )
 
 		assert_that(eventtesting.getEvents( store_interfaces.IPurchaseAttemptStarted ), has_length( 1 ) )
 
-		assert_that(eventtesting.getEvents( pay_interfaces.IRegisterStripeToken ), has_length( 1 ) )
-		assert_that(eventtesting.getEvents( pay_interfaces.IRegisterStripeCharge ), has_length( 1 ) )
+		assert_that(eventtesting.getEvents( stripe_interfaces.IRegisterStripeToken ), has_length( 1 ) )
+		assert_that(eventtesting.getEvents( stripe_interfaces.IRegisterStripeCharge ), has_length( 1 ) )
 		
 		assert_that(eventtesting.getEvents( store_interfaces.IPurchaseAttemptSuccessful ), has_length( 1 ) )
 
 		with mock_dataserver.mock_db_trans(ds):
 			user = User.get_user(username)
-			su = pay_interfaces.IStripeCustomer(user)
+			su = stripe_interfaces.IStripeCustomer(user)
 			akey = "%s.%s" % (su.__class__.__module__, su.__class__.__name__)
 			self.manager.delete_customer(username)
-		assert_that( eventtesting.getEvents(pay_interfaces.IStripeCustomerDeleted), has_length( 1 ) )
+		assert_that( eventtesting.getEvents(stripe_interfaces.IStripeCustomerDeleted), has_length( 1 ) )
 		
 		with mock_dataserver.mock_db_trans(ds):
 			user = User.get_user(username)
@@ -144,7 +143,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
-			sp = pay_interfaces.IStripePurchase(pa)
+			sp = stripe_interfaces.IStripePurchase(pa)
 			assert_that(sp.token_id, is_(tid))
 			assert_that(sp.charge_id, is_(cid))
 			
@@ -166,7 +165,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 		
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
-			sp = pay_interfaces.IStripePurchase(pa)
+			sp = stripe_interfaces.IStripePurchase(pa)
 			sp.charge_id = 'invalid'
 			
 		with mock_dataserver.mock_db_trans(ds):
@@ -180,7 +179,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 		
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
-			sp = pay_interfaces.IStripePurchase(pa)
+			sp = stripe_interfaces.IStripePurchase(pa)
 			sp.charge_id = None
 			
 		with mock_dataserver.mock_db_trans(ds):
@@ -217,7 +216,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 		# unused token
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
-			sp = pay_interfaces.IStripePurchase(pa)
+			sp = stripe_interfaces.IStripePurchase(pa)
 			sp.TokenID = tid
 			
 		with mock_dataserver.mock_db_trans(ds):
@@ -277,6 +276,3 @@ class TestStripeProcessor(ConfiguringTestBase):
 		c.amount_off = 200
 		amt = self.manager.apply_coupon(amount, c)
 		assert_that(amt, is_(800))
-	
-if __name__ == '__main__':
-	unittest.main()

@@ -1,0 +1,34 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:stripe="http://nextthought.com/ntp/stripe">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+
+	<include package="." file="meta.zcml" />
+	
+	<subscriber handler=".stripe_processor.stripe_customer_created" />
+	<subscriber handler=".stripe_processor.stripe_customer_deleted" />
+	<subscriber handler=".stripe_processor.register_stripe_token" />
+	<subscriber handler=".stripe_processor.register_stripe_charge" />
+
+	<adapter factory=".stripe_adapters._StripeCustomerFactory"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides=".interfaces.IStripeCustomer" />
+
+	<adapter factory=".stripe_adapters._StripePurchaseFactory"
+			 for="...interfaces.IPurchaseAttempt"
+			 provides=".interfaces.IStripePurchase" />
+
+	<utility factory=".stripe_processor._StripePaymentProcessor"
+			 provides=".interfaces.IStripePaymentProcessor"
+			 name="stripe" />
+
+	<stripe:registerStripeKey
+		alias="NTI-TEST"
+		value="sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp" />
+		
+</configure>

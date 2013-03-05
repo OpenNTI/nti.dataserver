@@ -23,51 +23,50 @@ from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
-from .. import purchase_history
-from .stripe_io import StripeIO
-from .stripe_io import StripeException
-from . import interfaces as pay_interfaces
-from ._processor import _BasePaymentProcessor
-from .. import interfaces as store_interfaces
+from . import stripe_io
+from ... import purchase_history
+from . import interfaces as stripe_interfaces
+from .._processor import _BasePaymentProcessor
+from ... import interfaces as store_interfaces
 
-@component.adapter(pay_interfaces.IStripeCustomerCreated)
+@component.adapter(stripe_interfaces.IStripeCustomerCreated)
 def stripe_customer_created(event):
 	def func():
 		user = User.get_user(event.username)
-		su = pay_interfaces.IStripeCustomer(user)
+		su = stripe_interfaces.IStripeCustomer(user)
 		su.customer_id = event.customer_id
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
-@component.adapter(pay_interfaces.IStripeCustomerDeleted)
+@component.adapter(stripe_interfaces.IStripeCustomerDeleted)
 def stripe_customer_deleted(event):
 	def func():
 		user = User.get_user(event.username)
-		su = pay_interfaces.IStripeCustomer(user)
+		su = stripe_interfaces.IStripeCustomer(user)
 		su.customer_id = None
 		IAnnotations(user).pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
-@component.adapter(pay_interfaces.IRegisterStripeToken)
+@component.adapter(stripe_interfaces.IRegisterStripeToken)
 def register_stripe_token(event):
 	def func():
 		purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
-		sp = pay_interfaces.IStripePurchase(purchase)
+		sp = stripe_interfaces.IStripePurchase(purchase)
 		sp.TokenID = event.token
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
-@component.adapter(pay_interfaces.IRegisterStripeCharge)
+@component.adapter(stripe_interfaces.IRegisterStripeCharge)
 def register_stripe_charge(event):
 	def func():
 		purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
-		sp = pay_interfaces.IStripePurchase(purchase)
+		sp = stripe_interfaces.IStripePurchase(purchase)
 		sp.ChargeID = event.charge_id
 		user = User.get_user(event.username)
-		su = pay_interfaces.IStripeCustomer(user)
+		su = stripe_interfaces.IStripeCustomer(user)
 		su.Charges.add(event.charge_id)
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
-@interface.implementer(pay_interfaces.IStripePaymentProcessor)
-class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
+@interface.implementer(stripe_interfaces.IStripePaymentProcessor)
+class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 	name = 'stripe'
 	events = ("charge.succeeded", "charge.refunded", "charge.failed", "charge.dispute.created", "charge.dispute.updated")
@@ -80,13 +79,13 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 		description = getattr(profile, 'description', None)
 
 		customer = self.create_stripe_customer(email, description, api_key)
-		notify(pay_interfaces.StripeCustomerCreated(user.username, customer.id))
+		notify(stripe_interfaces.StripeCustomerCreated(user.username, customer.id))
 
 		return customer
 
 	def get_or_create_customer(self, user, api_key=None):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-		adapted = pay_interfaces.IStripeCustomer(user)
+		adapted = stripe_interfaces.IStripeCustomer(user)
 		if adapted.customer_id is None:
 			customer = self.create_customer(user, api_key)
 			result = customer.id
@@ -97,10 +96,10 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 	def delete_customer(self, user, api_key=None):
 		result = False
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-		adapted = pay_interfaces.IStripeCustomer(user)
+		adapted = stripe_interfaces.IStripeCustomer(user)
 		if adapted.customer_id:
 			result = self.delete_stripe_customer(customer_id=adapted.customer_id, api_key=api_key)
-			notify(pay_interfaces.StripeCustomerDeleted(user.username, adapted.customer_id))
+			notify(stripe_interfaces.StripeCustomerDeleted(user.username, adapted.customer_id))
 		return result
 
 	def update_customer(self, user, customer=None, api_key=None):
@@ -108,7 +107,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 		profile = user_interfaces.IUserProfile(user)
 		email = getattr(profile, 'email', None)
 		description = getattr(profile, 'description', None)
-		adapted = pay_interfaces.IStripeCustomer(user)
+		adapted = stripe_interfaces.IStripeCustomer(user)
 		if adapted.customer_id:
 			return self.update_stripe_customer(	customer=customer,
 												customer_id=adapted.customer_id,
@@ -124,7 +123,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 	def create_charge(self, amount, currency='USD', customer_id=None, card=None, description=None, api_key=None):
 		charge = self.create_stripe_charge(amount, currency, customer_id, card, description, api_key)
 		if charge.failure_message:
-			raise StripeException(charge.failure_message)
+			raise stripe_io.StripeException(charge.failure_message)
 		return charge
 
 	# ---------------------------
@@ -174,13 +173,13 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 					
 			# register stripe user and token
 			customer_id = self.get_or_create_customer(username, api_key=api_key)
-			notify(pay_interfaces.RegisterStripeToken(purchase_id, username, token))
+			notify(stripe_interfaces.RegisterStripeToken(purchase_id, username, token))
 
 			# charge card, user description for tracking purposes
 			descid = "%s:%s:%s" % (purchase_id, username, customer_id)
 			charge = self.create_charge(cents_amount, currency, card=token, description=descid, api_key=api_key)
 
-			notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
+			notify(stripe_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
 
 			if charge.paid:
 				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
@@ -206,7 +205,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 			return None
 
 		charge = None
-		sp = pay_interfaces.IStripePurchase(purchase)
+		sp = stripe_interfaces.IStripePurchase(purchase)
 		if sp.ChargeID:
 			charge = self.get_stripe_charge(sp.ChargeID, api_key=api_key)
 			if charge is None:
@@ -218,7 +217,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor,  StripeIO):
 			charges = self.get_charges(purchase_id=purchase_id, start_time=start_time, api_key=api_key)
 			if charges:
 				charge = charges[0]
-				notify(pay_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
+				notify(stripe_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
 			elif sp.TokenID:
 				token = self.get_stripe_token(sp.TokenID, api_key=api_key)
 				if token is None:

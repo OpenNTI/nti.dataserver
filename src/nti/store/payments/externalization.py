@@ -10,18 +10,20 @@ __docformat__ = "restructuredtext en"
 from zope import component
 
 from .. import interfaces as store_interfaces
-from . import interfaces as payment_interfaces
+from .stripe import interfaces as stripe_interfaces
+
+from . import interfaces 
 
 @component.adapter(store_interfaces.IPurchaseAttempt)
 class PurchaseAttemptDecorator(object):
 	
 	def decorateExternalObject(self, original, external):
 		if original.Processor == 'stripe':
-			ps = payment_interfaces.IStripePurchase(original)
+			ps = stripe_interfaces.IStripePurchase(original)
 			external['TokenID'] = ps.token_id
 			external['ChargeID'] = ps.charge_id
 		elif original.Processor == 'fps':
-			ps = payment_interfaces.IFPSPurchase(original)
+			ps = interfaces.IFPSPurchase(original)
 			external['TokenID'] = ps.TokenID
 			external['TransactionID'] = ps.TransactionID
 			external['CallerReference'] = ps.CallerReference
