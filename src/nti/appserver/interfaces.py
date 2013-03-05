@@ -21,7 +21,6 @@ from nti.utils.schema import IndexedIterable as TypedIterable
 
 from dolmen.builtins import IUnicode
 
-ILocationAware = ILocation # b/c
 
 class IUserRootResource(ILocation):
 	"""
@@ -59,7 +58,7 @@ class IContainerCollection(ICollection):
 						readonly=True )
 
 
-class IWorkspace(ILocationAware):
+class IWorkspace(ILocation):
 	"""
 	A workspace (in the Atom sense) is a collection of collections.
 	Collections can exist in multiple workspaces. A collection
@@ -71,7 +70,7 @@ class IWorkspace(ILocationAware):
 								 readonly=True,
 								 value_type=Object(ICollection, title="A collection in this workspace" ) )
 
-class IService(ILocationAware):
+class IService(ILocation):
 	"""
 	A service (in the Atom sense) is a collection of workspaces.
 	"""
