@@ -16,11 +16,11 @@ from persistent import Persistent
 
 from nti.utils.property import alias
 
-from . import interfaces as pay_interfaces
-from .. import interfaces as store_interfaces
+from . import interfaces as fps_interfaces
+from ... import interfaces as store_interfaces
 
 @component.adapter(store_interfaces.IPurchaseAttempt)
-@interface.implementer(pay_interfaces.IFPSPurchase)
+@interface.implementer(fps_interfaces.IFPSPurchase)
 class _FPSPurchase(zcontained.Contained, Persistent):
 	
 	TokenID = None

@@ -20,31 +20,32 @@ from zope.event import notify
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
-from .fps_io import FPSIO
-from .. import purchase_history
-from . import interfaces as pay_interfaces
-from ._processor import _BasePaymentProcessor
-from .. import interfaces as store_interfaces
+from . import fps_io
+from . import interfaces as fps_interfaces
+from .._processor import _BasePaymentProcessor
 
-@component.adapter(pay_interfaces.IRegisterFPSToken)
+from ... import purchase_history
+from ... import interfaces as store_interfaces
+
+@component.adapter(fps_interfaces.IRegisterFPSToken)
 def register_fps_token(event):
 	def func():
 		purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
-		fpsp = pay_interfaces.IFPSPurchase(purchase)
+		fpsp = fps_interfaces.IFPSPurchase(purchase)
 		fpsp.token_id = event.token_id
 		fpsp.caller_reference = event.caller_reference
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 	
-@component.adapter(pay_interfaces.IRegisterFPSTransaction)
+@component.adapter(fps_interfaces.IRegisterFPSTransaction)
 def register_fps_transaction(event):
 	def func():
 		purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
-		fpsp = pay_interfaces.IFPSPurchase(purchase)
+		fpsp = fps_interfaces.IFPSPurchase(purchase)
 		fpsp.transaction_id = event.transaction_id
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 	
-@interface.implementer(pay_interfaces.IFPSPaymentProcessor)
-class _FPSPaymentProcessor(_BasePaymentProcessor, FPSIO):
+@interface.implementer(fps_interfaces.IFPSPaymentProcessor)
+class _FPSPaymentProcessor(_BasePaymentProcessor, fps_io.FPSIO):
 	
 	name = 'fps'
 	
@@ -63,11 +64,11 @@ class _FPSPaymentProcessor(_BasePaymentProcessor, FPSIO):
 	def process_purchase(self, purchase_id, username, token_id, caller_reference, amount, currency='USD'):
 	
 		notify(store_interfaces.PurchaseAttemptStarted(purchase_id, username))
-		notify(pay_interfaces.RegisterFPSToken(purchase_id, username, token_id, caller_reference))
+		notify(fps_interfaces.RegisterFPSToken(purchase_id, username, token_id, caller_reference))
 		
 		try:
 			pay_result = self.pay(token=token_id, amount=amount, currency=currency, reference=caller_reference)
-			notify(pay_interfaces.RegisterFPSTransaction(purchase_id, username, pay_result.TransactionId))
+			notify(fps_interfaces.RegisterFPSTransaction(purchase_id, username, pay_result.TransactionId))
 				
 			if not self._process_fps_status(pay_result.TransactionStatus, purchase_id, username):
 				transaction_id = pay_result.TransactionId
@@ -103,7 +104,7 @@ class _FPSPaymentProcessor(_BasePaymentProcessor, FPSIO):
 			return None
 
 		trax = None
-		fp = pay_interfaces.IFPSPurchase(purchase)
+		fp = fps_interfaces.IFPSPurchase(purchase)
 		if fp.TransactionID:
 			trax = self.get_transaction(fp.TransactionID)
 			if trax is None: 
@@ -137,4 +138,3 @@ class _FPSPaymentProcessor(_BasePaymentProcessor, FPSIO):
 			notify(store_interfaces.PurchaseAttemptSynced(purchase_id, username))
 				
 		return trax
-

@@ -13,7 +13,7 @@ import os
 import unittest
 import urlparse
 
-from nti.store.payments import fps_io
+from .. import fps_io
 
 from hamcrest import (assert_that, instance_of, is_not)
 			
@@ -50,6 +50,3 @@ class TestFPSIO(unittest.TestCase):
 	def test_get_account_balance(self):
 		balance = self.fpsio.get_account_balance()
 		assert_that(balance, is_not(None))
-		
-if __name__ == '__main__':
-	unittest.main()

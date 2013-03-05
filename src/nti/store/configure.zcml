@@ -7,11 +7,6 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	
-	<include package=".keystore" file="meta.zcml" />
-	
-	<utility factory=".keystore.DefaultZCMLKeyStore"
-			 provides=".keystore.interfaces.IKeyStore" />
-			 
 	<include package=".payments" file="configure.zcml" />
 		
 	<adapter factory=".purchase_history._PurchaseHistoryFactory"

@@ -4,6 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
@@ -19,7 +21,7 @@ from ... import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from ...tests import ConfiguringTestBase
+from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, is_not, none)
 

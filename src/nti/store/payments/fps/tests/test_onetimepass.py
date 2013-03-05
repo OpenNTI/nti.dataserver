@@ -4,13 +4,15 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
 import time
 import unittest
 
-from nti.store.payments import _onetimepass as otp
+from .. import _onetimepass as otp
 
 from hamcrest import (assert_that, is_)
 
@@ -37,5 +39,3 @@ class TestOneTimePass(unittest.TestCase):
 		assert_that(otp.valid_hotp(865438, self.secret, last=1, trials=5), is_(False))
 		assert_that(otp.valid_hotp(865438, self.secret, last=4, trials=5), is_(False))
 
-if __name__ == '__main__':
-	unittest.main()
