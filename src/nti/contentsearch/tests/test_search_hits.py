@@ -92,7 +92,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
 		assert_that(d,
-			has_entry(SNIPPET, u'You know how to add subtract multiply and divide In fact you may already know how to solve many of the problems'))
+			has_entry(SNIPPET, u'You know how to add, subtract, multiply, and divide. In fact, you may already know how to solve many of the problems'))
 
 	def test_seach_hit_redaction_dict(self):
 		d = self._externalize(_RedactionSearchHit, self.redaction, '')
@@ -108,7 +108,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'))
-		assert_that(d, has_entry(SNIPPET, u'All Waves Rise now and Become my Shield Lightning Strike now and'))
+		assert_that(d, has_entry(SNIPPET, u'All Waves, Rise now and Become my Shield, Lightning, Strike now and'))
 
 	def test_search_hit_messgeinfo_dict(self):
 		d = self._externalize(_MessageInfoSearchHit, self.messageinfo, '')
