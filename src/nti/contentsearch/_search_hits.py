@@ -28,11 +28,9 @@ from ._views_utils import get_ntiid_path
 from . import interfaces as search_interfaces
 
 from .common import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-					 SNIPPET, HIT, ID, CONTENT, INTID, SCORE, OID, POST, MIME_TYPE)
+					 SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE)
 
 from .common import ( last_modified_, content_, title_, ntiid_)
-
-hit_search_external_fields  = (	CLASS, CREATOR, TYPE, LAST_MODIFIED, NTIID, CONTAINER_ID, SNIPPET, ID, INTID)
 
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
@@ -138,6 +136,8 @@ class _PostSearchHit(_SearchHit):
 	def set_hit_info(self, original, score):
 		adapted = super(_PostSearchHit, self).set_hit_info(original, score)
 		self[TYPE] = POST
+		self.tags = self.get_field(adapted, "get_tags")
+		self.title = self.get_field(adapted, "get_title")
 		return adapted
 		
 @component.adapter(search_interfaces.IWhooshBookContent)
