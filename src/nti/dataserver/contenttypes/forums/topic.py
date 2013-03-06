@@ -74,6 +74,7 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 								  specific=self.__name__ )
 
 
+
 class HeadlineTopicSublocations(ContainerSublocations):
 	"""
 	Story topics contain their children and also their story.
@@ -98,7 +99,12 @@ class PersonalBlogEntryNameChooser(object):
 
 	def chooseName( self, name, obj ):
 		# NTIID flatten
-		name = ntiids.make_specific_safe( name )
+		try:
+			name = ntiids.make_specific_safe( name )
+		except ntiids.InvalidNTIIDError as e:
+			e.field = for_interfaces.IPersonalBlog['title']
+			raise
+
 		# Now on to the next adapter (Note: this ignores class-based adapters)
 		# First, get the "required" interface list (from the adapter's standpoint),
 		# removing the think we just adapted out

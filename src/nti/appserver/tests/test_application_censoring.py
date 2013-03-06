@@ -164,18 +164,13 @@ class TestApplicationCensoringWithDefaultPolicyForAllUsers(_CensorTestMixin,Shar
 		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
 
 	@WithSharedApplicationMockDS
-	def test_censoring_can_be_disabled( self ):
-		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
-								  adapts=(nti.dataserver.interfaces.IUser, None) )
-		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
-		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology", censored=False )
+	def test_censoring_can_be_disabled_by_file_in_library( self ):
+		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
+								   censored=False )
 
 	@WithSharedApplicationMockDS
 	def test_censoring_cannot_be_disabled_for_kids( self ):
-		# The ICoppaUser flag trumps the no-censoring flag
-		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
-								  adapts=(nti.dataserver.interfaces.IUser, None) )
-		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
+		"The ICoppaUser flag trumps the no-censoring flag"
 		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
 								   censored=True,
 								   extra_ifaces=(nti_interfaces.ICoppaUser,) )
