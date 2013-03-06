@@ -73,7 +73,9 @@
 
 		<!--
 			Except apparently on mathcounts.nextthought.com. There, we
-			censor regardless of who you are.
+			censor regardless of who you are or where you are trying
+			to do something. This shortcuts directly to the policy,
+			bypassing location.
 		-->
 		<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
 				 provides="nti.contentfragments.interfaces.ICensoredContentPolicy"

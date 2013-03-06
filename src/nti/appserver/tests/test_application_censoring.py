@@ -113,7 +113,8 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 		# ContainerIDs are required or censoring by default kicks in (depending on config)
 		chat_message.containerId = u'tag:foo'
 
-		args = session_consumer._convert_message_args_to_objects( None, Session(), { 'args': [to_external_object( chat_message )] } )
+		with mock_dataserver.mock_db_trans(self.ds): # for the entity lookup
+			args = session_consumer._convert_message_args_to_objects( None, Session(), { 'args': [to_external_object( chat_message )] } )
 
 		assert_that( args[0], is_( MessageInfo ) )
 		assert_that( args[0], has_property( 'creator', Session.owner ) )
