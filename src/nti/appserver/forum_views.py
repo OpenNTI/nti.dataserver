@@ -546,11 +546,16 @@ def _publication_modified( blog_entry ):
 			  request_method='POST',
 			  name='publish')
 def _PublishView(request):
-	interface.alsoProvides( request.context, nti_interfaces.IDefaultPublished )
-	_publication_modified( request.context )
+	blog_entry = request.context
+	interface.alsoProvides( blog_entry, nti_interfaces.IDefaultPublished )
+	_publication_modified( blog_entry )
 	# TODO: Hooked directly up to temp_post_added_to_indexer
-	temp_post_added_to_indexer( request.context.headline, None )
-	return uncached_in_response( request.context )
+	temp_post_added_to_indexer( blog_entry.headline, None )
+	# TODO: Right now we are dispatching this by hand. Use
+	# events and/or dispatchToSublocations
+	for comment in blog_entry.values(): # TODO: values() doesn't seem to aq wrap?
+		_send_sharing_change_to_sharing_targets( comment.__of__( blog_entry ), blog_entry )
+	return uncached_in_response( blog_entry )
 
 
 @view_config( route_name='objects.generic.traversal',
@@ -560,11 +565,16 @@ def _PublishView(request):
 			  request_method='POST',
 			  name='unpublish')
 def _UnpublishView(request):
-	interface.noLongerProvides( request.context, nti_interfaces.IDefaultPublished )
-	_publication_modified( request.context )
+	blog_entry = request.context
+	interface.noLongerProvides( blog_entry, nti_interfaces.IDefaultPublished )
+	_publication_modified( blog_entry )
 	# TODO: While we have temp_dispatch_to_indexer in place, when we unpublish
 	# do we need to unindex the comments too?
-	return uncached_in_response( request.context )
+	# TODO: Right now we are dispatching this by hand. Use
+	# events and/or dispatchToSublocations
+	for comment in blog_entry.values():
+		_send_sharing_change_to_sharing_targets( comment.__of__( blog_entry ), blog_entry )
+	return uncached_in_response( blog_entry )
 
 ### Events
 ## TODO: Under heavy construction
@@ -580,6 +590,28 @@ def _stream_event_for_comment( comment, change_type=nti_interfaces.SC_CREATED ):
 
 	return change
 
+def _send_stream_event_to_targets( change, targets ):
+	targets = [x for x in targets if nti_interfaces.IDynamicSharingTarget.providedBy( x )]
+	for target in targets:
+		# TODO: Private API
+		# Notice we are not doing what User._postNotification does and expanding the
+		# username iterables (DFLs). This makes a nice compromise in the amount of data
+		# spammed all over, since this isn't realtime
+		target._noticeChange( change, force=True )
+
+def _send_sharing_change_to_sharing_targets(changed_object, published_object):
+	if not nti_interfaces.IDefaultPublished.providedBy( published_object ):
+		change_type = nti_interfaces.SC_DELETED
+		targets = changed_object.sharingTargetsWhenPublished
+	else:
+		change_type = nti_interfaces.SC_SHARED
+		targets = changed_object.sharingTargets
+
+	change = activitystream_change.Change( change_type, changed_object )
+	change.creator = changed_object.creator
+	change.object_is_shareable = False
+	_send_stream_event_to_targets( change, targets )
+
 @component.adapter( frm_interfaces.IPersonalBlogComment, lifecycleevent.IObjectAddedEvent )
 def notify_online_author_of_comment( comment, event ):
 	"""
@@ -590,8 +622,6 @@ def notify_online_author_of_comment( comment, event ):
 	# First, find the author of the blog entry. It will be the parent, the only
 	# user in the lineage
 	blog_author = find_interface( comment, nti_interfaces.IUser )
-	if blog_author == comment.creator:
-		return
 
 	# Now, construct the (artificial) change notification.
 	change = _stream_event_for_comment( comment )
@@ -603,7 +633,13 @@ def notify_online_author_of_comment( comment, event ):
 	# in the shared data
 	assert not comment.isSharedDirectlyWith( blog_author )
 
-	blog_author._noticeChange( change, force=True )
+	if blog_author != comment.creator:
+		blog_author._noticeChange( change, force=True )
+
+	# Also do the same for of the dynamic types it is shared with,
+	# thus sharing the same change object
+	_send_stream_event_to_targets( change, comment.sharingTargets )
+
 
 @component.adapter(frm_interfaces.IPersonalBlogEntry, lifecycleevent.IObjectModifiedEvent)
 def notify_dynamic_memberships_of_blog_entry_publication_change( blog_entry, event ):
@@ -611,23 +647,7 @@ def notify_dynamic_memberships_of_blog_entry_publication_change( blog_entry, eve
 		properties = getattr( modification_description, 'attributes', getattr( modification_description, 'keys', () ) )
 		if 'sharedWith' in properties or 'sharingTargets' in properties:
 			# Ok, the sharing has changed. Send the changes around
-			if not nti_interfaces.IDefaultPublished.providedBy( blog_entry ):
-				change_type = nti_interfaces.SC_DELETED
-				targets = blog_entry.sharingTargetsWhenPublished
-			else:
-				change_type = nti_interfaces.SC_SHARED
-				targets = blog_entry.sharingTargets
-
-			targets = [x for x in targets if nti_interfaces.IDynamicSharingTarget.providedBy( x )]
-			change = activitystream_change.Change( change_type, blog_entry )
-			change.creator = blog_entry.creator
-			change.object_is_shareable = False
-			for target in targets:
-				# TODO: Private API
-				# Notice we are not doing what User._postNotification does and expanding the
-				# username iterables (DFLs). This makes a nice compromise in the amount of data
-				# spammed all over
-				target._noticeChange( change, force=True )
+			_send_sharing_change_to_sharing_targets( blog_entry, blog_entry )
 			break
 
 ### Users have a 'global activity store' that keeps things that we're not

@@ -552,20 +552,33 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			user = self._create_user( username='original_user@foo' )
 			user2 = self._create_user( username=user.username + '2' )
 			user3 = self._create_user( username=user.username + '3' )
+			user_following_2 = self._create_user( username=user.username + '4' )
+			user2_following_2 = self._create_user( username=user.username + '5' )
+
 			# make them share a community
 			community = users.Community.create_community( username='TheCommunity' )
 			user.join_community( community )
 			user2.join_community( community )
-			user2.follow( user )
 			user3.join_community( community )
+			user_following_2.join_community( community )
+			user2_following_2.join_community( community )
+
+			user2.follow( user )
+			user_following_2.follow( user2 )
+			user2_following_2.follow( user2 )
+
 			user2_username = user2.username
 			user_username = user.username
 			user3_username = user3.username
+			user2_follower_username = user_following_2.username
+			user2_follower2_username = user2_following_2.username
 
 
 		testapp = TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
 		testapp2 = TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
 		testapp3 = TestApp( self.app, extra_environ=self._make_extra_environ(username=user3_username) )
+		user2_followerapp = TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_follower_username) )
+		user2_follower2app = TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_follower2_username) )
 
 		# First user creates the blog entry
 		data = { 'Class': 'Post',
@@ -575,6 +588,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# Create the blog
 		res = testapp.post_json( '/dataserver2/users/original_user@foo/Blog', data )
 		entry_url = res.location
+		entry_ntiid = res.json_body['NTIID']
 		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
 		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
 		pub_url = self.require_link_href_with_rel( res.json_body, 'publish' )
@@ -673,6 +687,16 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.get( '/dataserver2/users/' + user_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream' )
 		_has_both_comments( res, items=[change['Item'] for change in res.json_body['Items']] )
 
+		# ... and in the UGD stream of a user following the commentor
+		res = user2_followerapp.get( '/dataserver2/users/' + user2_follower_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream' )
+		_has_both_comments( res, items=[change['Item'] for change in res.json_body['Items']] )
+
+		# (who can mute the conversation, never to see it again)
+		user2_followerapp.put_json( '/dataserver2/users/' + user2_follower_username,
+									 {'mute_conversation': entry_ntiid } )
+		# thus removing them from his stream
+		res = user2_followerapp.get( '/dataserver2/users/' + user2_follower_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=404 )
+
 		# Both of these the other user can update
 		data['title'] = 'Changed my title'
 		testapp2.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data )
@@ -722,8 +746,10 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# ... and in his stream
 		res = testapp2.get( '/dataserver2/users/' + user2_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=404 )
 
+		# ... and the comments vanish from the stream of the other user following the commentor (the one not muted)
+		res = user2_follower2app.get( '/dataserver2/users/' + user2_follower2_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=404 )
 
-		# ... and now the commenting user can still see his comments in his activity
+		# ... but the commenting user can still see his comments in his activity
 		res = testapp2.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
 		_has_both_comments( res )
 		# ... as can the original user, since he can still delete them
@@ -740,6 +766,11 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# ...making it visible again
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
 		assert_that( res.json_body['Items'][0], has_entry( 'title', 'My New Blog' ) )
+
+		res = user2_follower2app.get( '/dataserver2/users/' + user2_follower2_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream' )
+		_has_both_comments( res, items=[change['Item'] for change in res.json_body['Items']] )
+
+
 		# ... changing last mod date again
 		assert_that( res.json_body['Last Modified'], greater_than( content_last_mod ) )
 		content_last_mod = res.json_body['Last Modified']
