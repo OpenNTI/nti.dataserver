@@ -22,8 +22,6 @@ from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
 from nti.chatserver import interfaces as chat_interfaces
 
-from nti.externalization import interfaces as ext_interfaces
-
 from nti.mimetype import mimetype
 
 from ._views_utils import get_ntiid_path
@@ -53,11 +51,17 @@ def get_hit_id(obj):
 
 @interface.implementer(search_interfaces.ISearchHit)
 class _BaseSearchHit(dict):
-	def __init__( self, oid=None):
+	def __init__( self, original, oid=None, score=1.0):
 		self.oid = oid
-		self[CLASS] = HIT
 		self._query = None
+		self.set_hit_info(original, score)
 				
+	def set_hit_info(self, original, score):
+		self[CLASS] = HIT
+		self[SCORE] = score
+		self[TYPE] = original.__class__.__name__
+		self[MIME_TYPE] = mimetype.nti_mimetype_from_object(original, use_class=False) or u''
+		
 	def toExternalObject(self):
 		return self
 		
@@ -86,19 +90,16 @@ class _SearchHit(_BaseSearchHit):
 	adapter_interface = search_interfaces.IUserContentResolver
 	
 	def __init__( self, original, score=1.0 ):
-		super(_SearchHit, self).__init__(get_hit_id(original))
-		self.set_hit_info(original, score)
+		super(_SearchHit, self).__init__(original, get_hit_id(original), score)
 		
 	def set_hit_info(self, original, score):
+		super(_SearchHit, self).set_hit_info(original, score)
 		adapted = component.queryAdapter(original, self.adapter_interface)
-		self[SCORE] = score
-		self[TYPE] = original.__class__.__name__
 		self[NTIID] = self.get_field(adapted, 'get_ntiid')
 		self[CREATOR] = self.get_field(adapted, 'get_creator')
 		self[SNIPPET] = self.get_field(adapted, 'get_content')
 		self[CONTAINER_ID] = self.get_field(adapted, 'get_containerId')
 		self[LAST_MODIFIED] = self.get_field(adapted, 'get_last_modified', 0)
-		self[MIME_TYPE] = mimetype.nti_mimetype_from_object(original, use_class=False) or u''
 		return adapted
 	
 	@classmethod
@@ -147,16 +148,26 @@ class _PostSearchHit(_SearchHit):
 @interface.implementer(search_interfaces.IWhooshBookSearchHit)
 class _WhooshBookSearchHit(_BaseSearchHit):
 	
+	mime_type = "application/vnd.nextthought.bookcontent"
+	
 	def __init__( self, hit ):
-		super(_WhooshBookSearchHit, self).__init__()
+		super(_WhooshBookSearchHit, self).__init__(hit, self.get_oid(hit))
+
+	def set_hit_info(self, hit, score):
+		super(_WhooshBookSearchHit, self).set_hit_info(hit, score)
 		self[TYPE] = CONTENT
 		self[NTIID] = hit[ntiid_]
 		self[SNIPPET] = hit[content_]
+		self[MIME_TYPE] = self.mime_type
 		self[CONTAINER_ID] = hit[ntiid_]
 		self[title_.capitalize()] = hit[title_]
 		self[LAST_MODIFIED] = hit[last_modified_]
-		self.oid = ''.join((self[NTIID], u'-', unicode(self[CONTAINER_ID])))
-
+	
+	@classmethod
+	def get_oid(cls, hit):
+		tpl = (hit[ntiid_], u'-', hit[ntiid_])
+		return unicode(''.join(tpl))
+		
 def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	if hit is not None:
 		hit.query = query
@@ -167,8 +178,7 @@ def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
 	return hit
 
 def get_search_hit(obj, score=1.0, query=None, highlight_type=WORD_HIGHLIGHT):
-	hit = component.queryAdapter( obj, ext_interfaces.IExternalObject, default=None, name='search-hit')
-	hit = hit or _SearchHit(obj)
+	hit = search_interfaces.ISearchHit(obj, None) or _SearchHit(obj)
 	hit.score = score
 	hit.query = query
 	hit = _provide_highlight_snippet(hit, query, highlight_type)
