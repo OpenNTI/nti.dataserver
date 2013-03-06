@@ -1,0 +1,6 @@
+# -*- mode: html -*-
+
+name: enumerate
+<ol class="enumerate" tal:attributes="type self/attributes/type | string:1; start self/options/start | string:1">
+<li tal:repeat="item self" tal:content="item" tal:attributes="value item/position"></li>
+</ol>
