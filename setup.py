@@ -278,7 +278,7 @@ setup(
 		'zope.component[persistentregistry] >= 4.1.0',
 		# Schema vocabularies based on querying ZCA; useful
 		# for views and other metadata. cf zope.vocabularyregistry
-		'zope.componentvocabulary >= 1.0.1',
+		'zope.componentvocabulary >= 2.0.0a1',
 		'zope.configuration >= 4.0.2',
 		# zope.container 4.0.0a3 won't install in pypy; it has no python fallback
 		# for its proxying. A patch to its setup.py can make it install (see https://github.com/zopefoundation/zope.proxy/blob/master/setup.py), but it won't work
@@ -289,7 +289,7 @@ setup(
 		'zope.contentprovider >= 3.7.2',
 		'zope.contenttype >= 4.0.1', # A utility module for content-type handling.
 		'zope.copy >= 4.0.2',
-		'zope.copypastemove >= 3.8.0' if HAVE_ZCONT else '', # zope.container dep
+		'zope.copypastemove[zcml] >= 4.0.0a1' if HAVE_ZCONT else '', # zope.container dep
 		'zope.datetime >= 4.0.0',
 		'zope.deprecation >= 4.0.2',
 		'zope.deferredimport >= 4.0.0', # useful with zope.deprecation. Req'd by contentratings
@@ -308,7 +308,7 @@ setup(
 		'zope.index >= 4.0.1',
 		'zope.interface >= 4.0.5',
 		'zope.intid >= 3.7.2' if HAVE_ZCONT else '',
-		'zope.keyreference >= 3.6.4',
+		'zope.keyreference >= 4.0.0a2',
 		'zope.lifecycleevent >= 4.0.1',
 		'zope.location >= 4.0.1',
 		'zope.mimetype == 1.3.1', # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
