@@ -5,9 +5,9 @@
 	<include package="zope.component" />
 
 	<!--
-	Our dispatcher. Apply it to all the 'body' fields (note and chat message), as well as
-	the replacementContent and redactionExplanation fields.
-	(IRedaction)
+		Our dispatcher. Apply it to all the 'body' fields (note, forum
+		post, and chat message), as well as the replacementContent and
+		redactionExplanation fields (IRedaction)
 	-->
 	<subscriber handler="nti.contentfragments.censor.censor_before_assign_components_of_sequence"
 				for="* nti.dataserver.interfaces.IModeledContent nti.utils.schema.IBeforeSequenceAssignedEvent" />
@@ -23,6 +23,7 @@
 			 name="title"
 			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.ITitledContent"/>
 
+	<!-- Install a global policy for ICoppaUser. -->
 	<adapter factory=".censor_policies.coppa_user_censor_policy" />
 
 	<!-- All FriendsLists names are censored, all the time -->
@@ -43,9 +44,9 @@
 		factory=".censor_policies.message_info_uses_captured_session_info"
 		name="body" />
 	<!--
-	The policy for censoring things from regular, non-coppa
-	users by default isn't enabled. If desired, it can be added in a
-	site configuration.
+		The policy for censoring things from regular, non-coppa
+		users based on location isn't enabled by default. If desired, it can be added in a
+		site configuration.
 	-->
 	<!--
 	<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
