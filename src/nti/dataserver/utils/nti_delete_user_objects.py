@@ -17,9 +17,10 @@ import argparse
 import datetime
 from collections import defaultdict
 
+import ZODB
+
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
-from nti.contentsearch.utils.nti_remove_user_indexed_content import remove_entity_indices
 
 from nti.dataserver.utils.nti_export_user_objects import get_user_objects, to_external_object
 
@@ -29,24 +30,48 @@ def delete_entity_objects( user, object_types=(), extenalize=False):
 	object_types = set(map(lambda x: x.lower(), object_types or ()))
 
 	captured_types = set()
+	broken_objects = set()
 	exported_objects = defaultdict(list)
-
+	
 	counter_map = defaultdict(int)
 	for type_name, adapted, obj in list(get_user_objects( user, object_types)):
 		external = to_external_object(adapted) if extenalize else None
 		with user.updates():
-			objId = obj.id
-			containerId = obj.containerId
-			obj = user.getContainedObject( containerId, objId )
-			if obj is not None and user.deleteContainedObject( containerId, objId ):
+			
+			if ZODB.interfaces.IBroken.providedBy(obj):
+				oid = getattr( obj, 'oid', None ) 
+				pid = getattr( obj, '_p_oid', None ) 
+				if pid:	broken_objects.add(pid)
+				if oid:	broken_objects.add(oid)
 				counter_map[type_name] = counter_map[type_name] +  1
-				captured_types.add(type_name)
-				if external is not None:
-					exported_objects[type_name].append(external)
+			else:
+				objId = obj.id
+				containerId = obj.containerId
+				obj = user.getContainedObject( containerId, objId )
+				if obj is not None and user.deleteContainedObject( containerId, objId ):
+					counter_map[type_name] = counter_map[type_name] +  1
+					captured_types.add(type_name)
+					if external is not None:
+						exported_objects[type_name].append(external)
 
-	if counter_map:
-		remove_entity_indices(user, captured_types)
-		
+	if broken_objects:
+		for container in list(user.containers.values()):
+			for t in list(container.items()):
+				_, obj = t
+				broken = getattr( obj, 'oid', None ) in broken_objects or \
+				  		 getattr( obj, '_p_oid', None ) in broken_objects
+				
+				if not broken:
+					strong = obj if not callable( obj ) else obj()
+					broken = strong is not None and \
+							 getattr( strong, 'oid', None ) in broken_objects and \
+							 getattr( strong, '_p_oid', None ) in broken_objects
+					if broken:
+						obj = strong
+						
+				if broken:
+					user.containers._v_removeFromContainer( container, obj ) 
+
 	return counter_map, exported_objects
 
 def _remove_entity_objects( username, object_types=(), export_dir=None, verbose=False):
