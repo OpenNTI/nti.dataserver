@@ -60,7 +60,7 @@ def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
 @repoze.lru.lru_cache(100)
 def compute_ngrams(text):
 	u = component.getUtility(cp_interfaces.INgramComputer)
-	result = u.compute(text)
+	result = u.compute(text) if text else u''
 	return unicode(result)
 
 @interface.implementer( cp_interfaces.INgramComputer )		
