@@ -1049,8 +1049,8 @@ class TestFunctionalChatserver(_ChatserverTestBase):
 		"An Edit link is only sent to users that have write permissions."
 		# This is a high-level test involving the appserver as well
 		acl_fact = dottedname.resolve('nti.appserver.pyramid_authorization.ACLAuthorizationPolicy' )
-		req_fact = dottedname.resolve( 'pyramid.request.Request' )
-		request = req_fact.blank( '/' )
+		req_fact = dottedname.resolve( 'nti.appserver.tests.DummyRequest' )
+		request = req_fact()
 		request.environ['paste.testing'] = True # see nti.appserver.tests.__init__
 		#request.registry = component.getSiteManager()
 		config = psetUp(registry=component.getGlobalSiteManager(), # because com.getSiteManager() returns the DS LocalSiteManager
