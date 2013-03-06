@@ -341,7 +341,6 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			if self.user != self.getRemoteUser():
 				raise hexc.HTTPForbidden()
 
-
 	def __call__( self ):
 		self.check_cross_user()
 

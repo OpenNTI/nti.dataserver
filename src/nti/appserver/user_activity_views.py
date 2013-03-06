@@ -11,16 +11,22 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
+from zope import component
+from zope.annotation import factory as an_factory
+
 from .ugd_query_views import _RecursiveUGDView as RecursiveUGDQueryView
 from .ugd_query_views import _toplevel_filter
 from .httpexceptions import HTTPNotFound
 
+from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.ntiids import ntiids
 
 from nti.dataserver import authorization as nauth
 from pyramid.view import view_config
 
+from nti.intid.containers import IntidContainedStorage
 
 #: The link relationship type for a link to retrieve activity
 #: for a particular user.
@@ -74,10 +80,10 @@ class UserActivityGetView(RecursiveUGDQueryView):
 		return filters
 
 
-	def getObjectsForId( self, *args ):
+	def getObjectsForId( self, user, ntiid ):
 		# Collect the UGD recursively
 		try:
-			result = list( super(UserActivityGetView,self).getObjectsForId(*args) )
+			result = list( super(UserActivityGetView,self).getObjectsForId(user, ntiid) )
 		except HTTPNotFound:
 			# There is always activity, it just may be empty
 			result = []
@@ -85,4 +91,21 @@ class UserActivityGetView(RecursiveUGDQueryView):
 		# NOTE: This is no longer necessary as the blog is being treated as a container
 		# found in user.containers with an NTIID
 		#result.append( frm_interfaces.IPersonalBlog( self.user, () ) )
+
+		# However, we do need to add the activity, if it exists
+		# FIXME: Note that right now, we are only querying the global store (all the recursion
+		# and iteration is handled in the super). This is probably easy to fix,
+		# but we are also only using the global store (see forum_views)
+
+		activity = app_interfaces.IUserActivityStorage( user, None )
+		if activity:
+			result.append( activity.getContainer( '', () ) )
 		return result
+
+# TODO: This is almost certainly the wrong place for this
+@interface.implementer(app_interfaces.IUserActivityStorage)
+@component.adapter(nti_interfaces.IUser)
+class DefaultUserActivityStorage(IntidContainedStorage):
+	pass
+
+DefaultUserActivityStorageFactory = an_factory(DefaultUserActivityStorage)
