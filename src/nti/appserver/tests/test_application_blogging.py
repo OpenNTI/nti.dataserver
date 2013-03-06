@@ -551,16 +551,20 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( username='original_user@foo' )
 			user2 = self._create_user( username=user.username + '2' )
+			user3 = self._create_user( username=user.username + '3' )
 			# make them share a community
 			community = users.Community.create_community( username='TheCommunity' )
 			user.join_community( community )
 			user2.join_community( community )
+			user3.join_community( community )
 			user2_username = user2.username
 			user_username = user.username
+			user3_username = user3.username
 
 
 		testapp = TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
 		testapp2 = TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
+		testapp3 = TestApp( self.app, extra_environ=self._make_extra_environ(username=user3_username) )
 
 		# First user creates the blog entry
 		data = { 'Class': 'Post',
@@ -684,6 +688,14 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			assert_that( titles, contains( 'A comment', 'Changed my title' ) )
 			assert_that( sums, contains( 'A comment body', 'more comment body') )
 
+		# ... in the commenting user's activity stream, visible to all ...
+		for app in testapp, testapp2, testapp3:
+			res = app.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
+			assert_that( res.json_body['Items'], has_length( 2 ) )
+			assert_that( res.json_body['Items'], contains_inanyorder(
+												has_entry( 'title', data['title'] ),
+												has_entry( 'title', 'A comment' ) ) )
+
 
 		# The original user can unpublish...
 		res = testapp.post( unpub_url )
@@ -692,6 +704,17 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 		testapp2.get( entry_url, status=403 )
+
+		# ... and now the commenting user can still see his comments in his activity
+		res = testapp2.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
+		assert_that( res.json_body['Items'], has_length( 2 ) )
+		# ... as can the original user, since he can still delete them
+		res = testapp.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
+		assert_that( res.json_body['Items'], has_length( 2 ) )
+		# ... but the other community member cannot
+		res = testapp3.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
+		assert_that( res.json_body['Items'], has_length( 0 ) )
+
 
 		# and it can be republished...
 		res = testapp.post( pub_url )
@@ -728,6 +751,10 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		testapp2.get( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), status=404 )
 		testapp2.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data, status=404 )
 
+		# They did get removed from the activity stream, however, for all three users
+		for app in testapp, testapp2, testapp3:
+			res = app.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
+			assert_that( res.json_body['Items'], has_length( 0 ) )
 
 	@WithSharedApplicationMockDS
 	def test_post_canvas_image_in_headline_post_produces_fetchable_link( self ):

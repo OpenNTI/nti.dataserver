@@ -53,6 +53,7 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope import schema
+import zope.intid.interfaces
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
 @component.adapter(nti_interfaces.IUser)
@@ -386,11 +387,13 @@ class PostDeleteView(UGDDeleteView):
 		interface.alsoProvides( deleting, app_interfaces.IDeletedObjectPlaceholder )
 
 		# TODO: Events need to fire to unindex, once we figure
-		# out what those are
+		# out what those are?
 		# We are I18N as externalization time
 		deleting.title = None
 		deleting.body = None
 		deleting.tags = ()
+		# Do remove from the activity stream (todo: make this an event)
+		unstore_created_comment_from_global_activity( deleting, None )
 		return theObject
 
 from Acquisition import aq_base
@@ -575,13 +578,31 @@ def notify_online_author_of_comment( comment, event ):
 
 	# First, find the author of the blog entry. It will be the parent, the only
 	# user in the lineage
-	author = find_interface( comment, nti_interfaces.IUser )
+	blog_author = find_interface( comment, nti_interfaces.IUser )
 
 	# Now, construct the (artificial) change notification. Notice this is never
 	# persisted anywhere
 	change = _stream_event_for_comment( comment )
 
-	notify( chat_interfaces.DataChangedUserNotificationEvent( (author.username,), change ) )
+	notify( chat_interfaces.DataChangedUserNotificationEvent( (blog_author.username,), change ) )
+
+### Users have a 'global activity store' that keeps things that we're not
+# handling as part of their contained objects. This matches the shared object storage
+# in that we don't try to take ownership of it. Users will still see these objects in their
+# activity stream even when the blog is not published, but no one else will
+@component.adapter(frm_interfaces.IPersonalBlogComment, zope.intid.interfaces.IIntIdAddedEvent)
+def store_created_comment_in_global_activity( comment, event ):
+	storage = app_interfaces.IUserActivityStorage( comment.creator, None )
+	# Put these in default storage
+	if storage:
+		storage.addContainedObjectToContainer( comment, '' )
+
+@component.adapter(frm_interfaces.IPersonalBlogComment, zope.intid.interfaces.IIntIdRemovedEvent)
+def unstore_created_comment_from_global_activity( comment, event ):
+	storage = app_interfaces.IUserActivityStorage( comment.creator, None )
+	# Put these in default storage
+	if storage:
+		storage.deleteEqualContainedObjectFromContainer( comment, '' )
 
 
 def _temp_dispatch_to_indexer( change ):

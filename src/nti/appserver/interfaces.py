@@ -385,3 +385,14 @@ class IUserSearchPolicy(interface.Interface):
 
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 IContactEmailRecovery = IContactEmailRecovery # BBB
+
+
+###
+# Additional indexed data storage
+###
+
+class IUserActivityStorage(interface.Interface):
+	"""
+	Storage for objects the user created but that do not belong to him.
+	"""
+	# TODO: This will probably move, not sure where to.

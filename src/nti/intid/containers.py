@@ -15,8 +15,15 @@ from ZODB import loglevels
 from zope import interface
 from zope import component
 
+import BTrees
+import persistent
+from zope.cachedescriptors.property import CachedProperty
+
+from zope.container.contained import Contained
+
 from zope.location import interfaces as loc_interfaces
 from zc import intid as zc_intid
+from nti.utils import sets
 
 from collections import Iterable, Container, Sized, Mapping
 from UserDict import DictMixin
@@ -130,3 +137,91 @@ class IntidResolvingMappingFacade(_AbstractIntidResolvingFacade,DictMixin,Mappin
 
 	def __delitem__( self, key ):
 		raise NotImplementedError()
+
+
+_marker = object()
+
+class IntidContainedStorage(persistent.Persistent,Contained):
+	"""
+	An object that implements something like the interface of
+	:class:`nti.dataserver.datastructures.ContainedStorage`, but in a
+	simpler form using only intids, and assuming that we never need to
+	look objects up by container/localID pairs.
+
+	.. note:: This class and API is provisional.
+
+	"""
+
+	family = BTrees.family64
+
+	def __init__( self, family=None ):
+		super(IntidContainedStorage,self).__init__()
+		if family is not None:
+			self.family = family
+		else:
+			intids = component.queryUtility( zc_intid.IIntIds )
+			if intids:
+				self.family = intids.family
+
+		# Map from string container ids to self.family.II.TreeSet
+		# { 'containerId': II.TreeSet() }
+		# The values in the TreeSet are the intids of the shared
+		# objects
+		self._containers = self.family.OO.BTree()
+
+	def __iter__( self ):
+		return iter(self._containers)
+
+	@CachedProperty # TODO: Is this right? Are we sure that the volatile properties added will go away when ghosted?
+	def containers(self):
+		"""
+		Returns an object that has a `values` method that iterates
+		the list-like (immutable) containers.
+		"""
+		return IntidResolvingMappingFacade( self._containers, allow_missing=True, parent=self, name='SharedContainedObjectStorage' )
+
+	def _check_contained_object_for_storage( self, contained ):
+		pass
+
+	def _get_intid_for_object( self, contained, when_none=_marker ):
+		if contained is None and when_none is not _marker:
+			return when_none
+
+		return component.getUtility( zc_intid.IIntIds ).getId( contained )
+
+
+	def addContainedObjectToContainer( self, contained, containerId='' ):
+		"Defaults to the unnamed container"
+		self._check_contained_object_for_storage( contained )
+
+		container_set = self._containers.get( containerId )
+		if container_set is None:
+			container_set = self.family.II.TreeSet()
+			self._containers[containerId] = container_set
+		container_set.add( self._get_intid_for_object( contained ) )
+		return contained
+
+	def deleteContainedObjectIdFromContainer( self, intid, containerId ):
+		container_set = self._containers.get( containerId )
+		if container_set is not None:
+			return sets.discard_p( container_set, intid )
+
+	def deleteEqualContainedObjectFromContainer( self, contained, containerId='' ):
+		"Defaults to the unnamed container"
+		self._check_contained_object_for_storage( contained )
+		if self.deleteContainedObjectIdFromContainer( self._get_intid_for_object( contained ), containerId ):
+			return contained
+
+	def addContainedObject( self, contained ):
+		"Fetches the containerId from the object."
+		return self.addContainedObjectToContainer( contained, contained.containerId )
+
+	def deleteEqualContainedObject( self, contained, log_level=None ):
+		"Fetches the containerId from the object."
+		return self.deleteEqualContainedObjectFromContainer( contained, contained.containerId )
+
+	def getContainer( self, containerId, defaultValue=None ):
+		return self.containers.get( containerId, default=defaultValue )
+
+	def __repr__( self ):
+		return '<%s at %s/%s>' % (self.__class__.__name__, self.__parent__, self.__name__ )

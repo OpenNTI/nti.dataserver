@@ -74,50 +74,59 @@ from zope.location.interfaces import ILocation
 import zope.intid.interfaces as zope_intid_interfaces
 from zc import intid as zc_intid_interfaces
 
+def _utilities_and_key(ob):
+	utilities = tuple(getAllUtilitiesRegisteredFor(zc_intid_interfaces.IIntIds))
+
+	return utilities, IKeyReference(ob,None) if utilities else None # Don't even bother trying to adapt if no utilities
+
+
 @component.adapter(ILocation, IObjectRemovedEvent)
 def removeIntIdSubscriber(ob, event):
 	"""
-	A subscriber to ObjectRemovedEvent
-
 	Removes the unique ids registered for the object in all the unique
 	id utilities.
-	"""
-	utilities = tuple(getAllUtilitiesRegisteredFor(zc_intid_interfaces.IIntIds))
-	if utilities:
-		key = IKeyReference(ob, None)
-		# Register only objects that adapt to key reference
-		if key is not None:
-			# Notify the catalogs that this object is about to be removed,
-			# if we actually find something to remove
-			fired_event = False
 
-			for utility in utilities:
-				try:
-					if not fired_event and utility.queryId( ob ) is not None:
-						fired_event = True
-						notify(zope_intid_interfaces.IntIdRemovedEvent(ob, event))
-					utility.unregister(ob)
-				except KeyError:
-					pass
+	Just before this happens (for the first time), an
+	:class:`zope.intid.interfaces.IIntIdRemovedEvent` is fired. Notice
+	that this is fired before the id is actually removed from any utility,
+	giving other subscribers time to do their cleanup. Before each
+	utility removes its registration, it will fire :class:`zc.intid.interfaces.IIntIdRemovedEvent`.
+	"""
+	utilities, key = _utilities_and_key( ob )
+	if not utilities or key is None:
+		return
+
+
+	# Notify the catalogs that this object is about to be removed,
+	# if we actually find something to remove
+	fired_event = False
+
+	for utility in utilities:
+		try:
+			if not fired_event and utility.queryId( ob ) is not None:
+				fired_event = True
+				notify(zope_intid_interfaces.IntIdRemovedEvent(ob, event))
+			utility.unregister(ob)
+		except KeyError:
+			pass
 
 @component.adapter(ILocation, IObjectAddedEvent)
 def addIntIdSubscriber(ob, event):
 	"""
-	A subscriber to ObjectAddedEvent
-
-	Registers the object added in all unique id utilities and fires
-	an event for the catalogs.
+	Registers the object in all unique id utilities and fires
+	an event for the catalogs. Notice that each utility will
+	fire :class:`zc.intid.interfaces.IIntIdAddedEvent`; this subscriber
+	will then fire one single :class:`zope.intid.interfaces.IIntIdAddedEvent`.
 	"""
-	utilities = tuple(getAllUtilitiesRegisteredFor(zc_intid_interfaces.IIntIds))
-	if utilities: # assert that there are any utilities
-		key = IKeyReference(ob, None)
-		# Register only objects that adapt to key reference
-		if key is not None:
-			idmap = {}
-			for utility in utilities:
-				idmap[utility] = utility.register(ob)
-			# Notify the catalogs that this object was added.
-			notify(zope_intid_interfaces.IntIdAddedEvent(ob, event, idmap))
+	utilities, key = _utilities_and_key( ob )
+	if not utilities or key is None:
+		return
+
+	idmap = {}
+	for utility in utilities:
+		idmap[utility] = utility.register(ob)
+	# Notify the catalogs that this object was added.
+	notify(zope_intid_interfaces.IntIdAddedEvent(ob, event, idmap))
 
 @component.adapter(zope_intid_interfaces.IIntIdEvent)
 def intIdEventNotify(event):

@@ -14,6 +14,7 @@
 
 	<adapter factory=".forum_views.DefaultUserForumFactory"
 			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog" />
+	<adapter factory=".user_activity_views.DefaultUserActivityStorageFactory" />
 
 	<cap:capability
 		id='nti.platform.blogging.createblogentry'
@@ -34,6 +35,12 @@
 	<subscriber handler=".forum_views.temp_post_added_to_indexer" />
 	<subscriber handler=".forum_views.temp_post_modified_to_indexer" />
 
+	<!-- Activity stream updating -->
+	<subscriber handler=".forum_views.store_created_comment_in_global_activity" />
+	<subscriber handler=".forum_views.unstore_created_comment_from_global_activity" />
+
+
+	<!-- UGD editing compatibility -->
 	<adapter factory=".forum_views.ForumCheckoutAdapter"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IForum pyramid.interfaces.IRequest"
 			 provides=".interfaces.IUserCheckout" />
