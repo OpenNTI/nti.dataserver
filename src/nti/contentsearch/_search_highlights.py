@@ -26,7 +26,35 @@ from nti.contentprocessing import default_word_tokenizer_expression
 
 from . import interfaces as search_interfaces
 
+class HighlightInfo(object):
+	
+	__slots__ = ('snippet', 'fragments', 'total_fragments')
+	
+	def __init__(self, snippet=None, fragments=(), total_fragments=0):
+		self.fragments = fragments
+		self.total_fragments = total_fragments
+		self.snippet = unicode(snippet) if snippet else u''
+		
+	@property
+	def fragment_count(self):
+		return self.total_fragments
+	
+	@property
+	def search_fragments(self):
+		return self.fragments
+	
 _default_analyzer = None
+
+def _get_default_analyzer():
+	global _default_analyzer
+	if _default_analyzer is None:
+		sw_util = component.queryUtility(search_interfaces.IStopWords) 
+		stoplist = sw_util.stopwords() if sw_util else ()
+		analyzers = [analysis.RegexTokenizer(expression=default_word_tokenizer_expression, gaps=False),
+					 analysis.LowercaseFilter(),
+					 analysis.StopFilter(stoplist=stoplist) ]
+		_default_analyzer = analysis.CompositeAnalyzer(*analyzers)
+	return _default_analyzer
 
 def _get_terms(query, pattern=default_word_tokenizer_pattern):
 	pos = 0
@@ -41,27 +69,11 @@ def _get_terms(query, pattern=default_word_tokenizer_pattern):
 	return tuple(terms)
 
 def _get_query_terms(query, pattern=default_word_tokenizer_pattern):
-	result = _get_terms(query.term, default_word_tokenizer_pattern)
+	result = _get_terms(query.term, pattern)
 	if not query.is_phrase_search:
 		result = frozenset(result)
 	return result
 
-def _get_default_analyzer():
-	global _default_analyzer
-	if _default_analyzer is None:
-		sw_util = component.queryUtility(search_interfaces.IStopWords) 
-		stoplist = sw_util.stopwords() if sw_util else ()
-		analyzers = [analysis.RegexTokenizer(expression=default_word_tokenizer_expression, gaps=False),
-					 analysis.LowercaseFilter(),
-					 analysis.StopFilter(stoplist=stoplist) ]
-		_default_analyzer = analysis.CompositeAnalyzer(*analyzers)
-	return _default_analyzer
-
-def _set_matched_filter(tokens, termset):
-	for t in tokens:
-		t.matched = t.text in termset
-		yield t
-	
 _char_tester = re.compile(default_punk_char_expression)
 
 def _is_word_start(idx, text):
@@ -256,6 +268,11 @@ def _no_hit_match(sf, maxchars=300, tokens=()):
 		sf.text = text[:t.endchar] + '...' if tkn else u''
 	return sf
 
+def _set_matched_filter(tokens, termset):
+	for t in tokens:
+		t.matched = t.text in termset
+		yield t
+		
 def top_fragments(fragments, scorer, count=5, order=highlight.FIRST, minscore=1):
 	scored_fragments = [(scorer(f), f) for f in fragments]
 	total_fragments = len(scored_fragments)
@@ -266,23 +283,6 @@ def top_fragments(fragments, scorer, count=5, order=highlight.FIRST, minscore=1)
 	best_fragments.sort(key=order)
 	return best_fragments, total_fragments
 
-class HighlightInfo(object):
-	
-	__slots__ = ('snippet', 'fragments', 'total_fragments')
-	
-	def __init__(self, snippet=None, fragments=(), total_fragments=0):
-		self.fragments = fragments
-		self.total_fragments = total_fragments
-		self.snippet = unicode(snippet) if snippet else u''
-		
-	@property
-	def fragment_count(self):
-		return self.total_fragments
-	
-	@property
-	def search_fragments(self):
-		return self.fragments
-	
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5, 
 							 analyzer=None, order=highlight.FIRST):
 
@@ -335,10 +335,3 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 	result = HighlightInfo(snippet, search_fragments, total_fragments)
 	return result
 
-def word_content_highlight(query, text, maxchars=300, surround=50, top=3, analyzer=None):
-	terms = _get_terms(query)
-	analyzer = analyzer or _get_default_analyzer()
-	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
-	formatter = highlight.NullFormatter() # highlight.UppercaseFormatter()
-	result = highlight.highlight(text, terms, analyzer, fragmenter, formatter, top=top)
-	return result
