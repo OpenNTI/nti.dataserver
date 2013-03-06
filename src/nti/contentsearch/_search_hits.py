@@ -60,10 +60,7 @@ class _BaseSearchHit(dict):
 		self[SCORE] = score
 		self[TYPE] = original.__class__.__name__
 		self[MIME_TYPE] = mimetype.nti_mimetype_from_object(original, use_class=False) or u''
-		
-	def toExternalObject(self):
-		return self
-		
+	
 	def get_query(self):
 		return self._query
 	
@@ -183,6 +180,13 @@ class _CallableComparator(object):
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _ScoreSearchHitComparator(_CallableComparator):
 	
+	singleton = None
+
+	def __new__(cls, *args, **kwargs):
+		if not cls.singleton:
+			cls.singleton = super(_ScoreSearchHitComparator, cls).__new__(cls, *args, **kwargs)
+		return cls.singleton
+	
 	@classmethod
 	def get_score(cls, item):
 		result = item.score if search_interfaces.IBaseHit.providedBy(item) else 1.0
@@ -195,8 +199,9 @@ class _ScoreSearchHitComparator(_CallableComparator):
 		result = cmp(b_score, a_score)
 		return result
 	
-	def compare(self, a, b):
-		return self.compare_score(a, b)
+	@classmethod
+	def compare(cls, a, b):
+		return cls.compare_score(a, b)
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _LastModifiedSearchHitComparator(_CallableComparator):
@@ -215,8 +220,9 @@ class _LastModifiedSearchHitComparator(_CallableComparator):
 		result = cmp(a_lm, b_lm)
 		return result
 	
-	def compare(self, a, b):
-		return self.compare_lm(a, b)
+	@classmethod
+	def compare(cls, a, b):
+		return cls.compare_lm(a, b)
 
 @repoze.lru.lru_cache(300)
 def path_intersection(x, y):
@@ -252,7 +258,7 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 			result = len(ip) * 20
 			result -= len(p) - len(ip)
 			
-		return max(0,result) 
+		return max(0, result) 
 	
 	@classmethod
 	def get_ntiid_path(cls, item):
@@ -275,12 +281,13 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 			result = None
 		return result
 	
-	def compare(self, a, b):
-		location_path = self.get_ntiid_path(a)
-		a_path = get_ntiid_path(self.get_containerId(a))
-		b_path = get_ntiid_path(self.get_containerId(b))
-		a_score = self.score_path(location_path, a_path)
-		b_score = self.score_path(location_path, b_path)
-		result = cmp(b_score, a_score)
-		result = super(_RelevanceSearchHitComparator, self).compare(a, b) if result == 0 else result
+	@classmethod
+	def compare(cls, a, b):
+		location_path = cls.get_ntiid_path(a)
+		a_path = get_ntiid_path(cls.get_containerId(a))
+		b_path = get_ntiid_path(cls.get_containerId(b))
+		a_score_path = cls.score_path(location_path, a_path)
+		b_score_path = cls.score_path(location_path, b_path)
+		result = cmp(b_score_path, a_score_path)
+		result = cls.compare_score(a, b) if result == 0 else result
 		return result

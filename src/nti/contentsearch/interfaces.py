@@ -19,7 +19,6 @@ from repoze.catalog import interfaces as rcat_interfaces
 from dolmen.builtins import IDict
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.externalization import interfaces as ext_interfaces
 
 from nti.utils.schema import IndexedIterable as TypedIterable
 

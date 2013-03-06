@@ -37,6 +37,8 @@ def _word_fragments_highlight(query=None, text=None):
 		result = HighlightInfo()
 	return result
 
+# search hits
+
 @component.adapter(search_interfaces.ISearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class WordSnippetHighlightDecorator(object):
@@ -53,12 +55,11 @@ class WordSnippetHighlightDecorator(object):
 				external[FRAGMENTS] = toExternalObject(hi.fragments)
 				external[TOTAL_FRAGMENTS] = hi.total_fragments
 
-
-# search hits
-
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(search_interfaces.ISearchHit)
 class _SearchHitExternalizer(object):
+	
+	__slots__ = ('hit',)
 	
 	def __init__( self, hit ):
 		self.hit = hit
@@ -71,17 +72,15 @@ class _SearchHitExternalizer(object):
 @interface.implementer(ext_interfaces.IExternalObject)
 class _BaseSearchResultsExternalizer(object):
 	
+	__slots__ = ('results',)
+	
 	def __init__( self, results ):
 		self.results = results
 
 	@property
 	def query(self):
 		return self.results.query
-
-	@property
-	def highlight_type(self):
-		return getattr(self.results, 'highlight_type', None)
-
+	
 	def toExternalObject(self):
 		eo = {QUERY: self.query.term}
 		return eo
@@ -89,6 +88,8 @@ class _BaseSearchResultsExternalizer(object):
 @component.adapter(search_interfaces.ISearchResults)
 class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
+	__slots__ = ('results', 'seen')
+	
 	def __init__( self, results ):
 		super(_SearchResultsExternalizer, self).__init__(results)
 		self.seen = set()
