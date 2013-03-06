@@ -556,6 +556,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			community = users.Community.create_community( username='TheCommunity' )
 			user.join_community( community )
 			user2.join_community( community )
+			user2.follow( user )
 			user3.join_community( community )
 			user2_username = user2.username
 			user_username = user.username
@@ -595,21 +596,21 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		def assert_shared_with_community( data ):
 			assert_that( data,  has_entry( 'sharedWith', contains( 'TheCommunity' ) ) )
 
-		# Its entry in the table-of-contents
+		# ...Its entry in the table-of-contents...
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog' )
 		assert_that( res.json_body, has_entry( 'TopicCount', 1 ) )
 
-		# Its full entry
+		# ...Its full entry...
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
 		assert_that( res.json_body['Items'][0], has_entry( 'title', 'My New Blog' ) )
 		assert_that( res.json_body['Items'][0], has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
 		assert_shared_with_community( res.json_body['Items'][0] )
-		# Which has an updated last modified
+		# ...Which has an updated last modified...
 		assert_that( res.json_body['Last Modified'], greater_than( content_last_mod ) )
 		content_last_mod = res.json_body['Last Modified']
 		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
 
-		# It can be fetched by pretty URL
+		# ...It can be fetched by pretty URL...
 		res = testapp2.get( UQ( '/dataserver2/users/original_user@foo/Blog/My_New_Blog' ) ) # Pretty URL
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
 		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
@@ -621,12 +622,20 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
 
-		# It can be fetched directly
+		# ...It can be fetched directly...
 		testapp2.get( entry_url )
 
-		# It can be seen in the activity stream
+		# ...It can be seen in the activity stream for the author...
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Activity' )
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+
+		# ...And in the main stream of the follower.
+		res = testapp2.get( '/dataserver2/users/' + user2_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream' )
+		assert_that( res.json_body['Items'], has_length( 1 ) )
+		assert_that( res.json_body['Items'][0]['Item'], has_entry( 'title', data['title'] ) )
+
+		# (Though not the non-follower)
+		testapp3.get(  '/dataserver2/users/' + user3_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=404 )
 
 		# it currently has no contents
 		testapp2.get( contents_href, status=200 )
@@ -705,10 +714,14 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# The original user can unpublish...
 		res = testapp.post( unpub_url )
 		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
-		# ... making it invisible to the other user
+		# ... making it invisible to the other user ...
+		# ...directly
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 		testapp2.get( entry_url, status=403 )
+		# ... and in his stream
+		res = testapp2.get( '/dataserver2/users/' + user2_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=404 )
+
 
 		# ... and now the commenting user can still see his comments in his activity
 		res = testapp2.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )

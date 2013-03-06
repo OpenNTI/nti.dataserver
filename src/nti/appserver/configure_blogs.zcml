@@ -38,6 +38,7 @@
 	<!-- Activity stream updating -->
 	<subscriber handler=".forum_views.store_created_comment_in_global_activity" />
 	<subscriber handler=".forum_views.unstore_created_comment_from_global_activity" />
+	<subscriber handler=".forum_views.notify_dynamic_memberships_of_blog_entry_publication_change" />
 
 
 	<!-- UGD editing compatibility -->

@@ -31,7 +31,7 @@ class CapabilityNameTokenVocabulary(object,UtilityNames):
 
 class CapabilityUtilityVocabulary(UtilityVocabulary):
 	interface = interfaces.ICapability
-	# This one enumerates at instance creation  time
+	# This one enumerates at instance creation time
 
 class CapabilityNameVocabulary(CapabilityUtilityVocabulary):
 	nameOnly = True
