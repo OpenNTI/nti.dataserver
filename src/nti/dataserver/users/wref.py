@@ -21,11 +21,12 @@ from zope import component
 from zope import interface
 from zc import intid as zc_intid
 
+from nti.wref import interfaces as wref_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import missing_user
 
 @functools.total_ordering
-@interface.implementer(nti_interfaces.ICachingWeakRef)
+@interface.implementer(wref_interfaces.ICachingWeakRef)
 @component.adapter(nti_interfaces.IEntity)
 class WeakRef(object):
 	"""
@@ -43,7 +44,7 @@ class WeakRef(object):
 
 		The username being referenced. Note that this is normalized to lower case.
 
-	.. todo:: This is very similar to :class:`nti.dataserver.intid_wref.WeakRef`.
+	.. todo:: This is very similar to :class:`nti.intid.wref.WeakRef`.
 
 	"""
 

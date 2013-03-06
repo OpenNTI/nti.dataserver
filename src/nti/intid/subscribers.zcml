@@ -1,0 +1,9 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="nti.dataserver">
+
+	<subscriber handler=".subscribers.removeIntIdSubscriber" />
+	<subscriber handler=".subscribers.addIntIdSubscriber" />
+	<subscriber handler=".subscribers.intIdEventNotify" />
+
+</configure>

@@ -2,18 +2,8 @@
 <configure xmlns="http://namespaces.zope.org/zope"
 		   i18n_domain="zope">
 
-	<adapter factory="persistent.wref.WeakRef"
-			 provides=".interfaces.IWeakRef"
-			 for="persistent.interfaces.IPersistent" />
-
-	<adapter factory=".intid_wref.WeakRef"
+	<adapter factory="nti.intid.wref.WeakRef"
 			 provides=".interfaces.IWeakRef"
 			 for=".interfaces.IModeledContent" />
-
-	<!-- objects implementing no interface -->
-	<adapter factory="weakref.ref"
-			 provides=".interfaces.IWeakRef"
-			 for="" />
-
 
 </configure>
