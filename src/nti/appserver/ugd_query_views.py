@@ -660,12 +660,15 @@ class _RecursiveUGDView(_UGDView):
 	are examined (the hierarchy is effectively ignored).
 	"""
 
+	_iter_ntiids_stream_only=False
+	_iter_ntiids_include_stream=True
+
 	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
 		containers = ()
 
 		if ntiid == ntiids.ROOT:
-			containers = set(user.iterntiids())
+			containers = set(user.iterntiids(include_stream=self._iter_ntiids_include_stream,stream_only=self._iter_ntiids_stream_only))
 		else:
 			library = self.request.registry.getUtility( lib_interfaces.IContentPackageLibrary )
 			tocEntries = library.childrenOfNTIID( ntiid )
@@ -725,6 +728,10 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 
 	_support_cross_user = False
 	_my_objects_may_be_empty = False
+	# It is an optimization to only look in the stream containers.
+	# But if we have to fallback from the stream and look directly in the
+	# shared containers, it is sadly incorrect
+	_iter_ntiids_stream_only = False
 
 	get_owned = users.User.getContainedStream
 	get_shared = None
