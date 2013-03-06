@@ -5,7 +5,7 @@
 	<include package="zope.component" />
 
 	<!--
-		Our dispatcher. Apply it to all the 'body' fields (note, forum
+		Our dispatcher. Apply it to all the 'body' and 'tags' fields (note, forum
 		post, and chat message), as well as the replacementContent and
 		redactionExplanation fields (IRedaction)
 	-->
@@ -14,6 +14,9 @@
 
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"
 			 name="body" />
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="tags" />
+
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"
 			 name="replacementContent" />
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"

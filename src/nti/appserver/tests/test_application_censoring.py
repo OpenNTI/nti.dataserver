@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function, absolute_import
+from __future__ import print_function, absolute_import, unicode_literals
 
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
@@ -42,8 +42,11 @@ from nti.socketio import session_consumer
 #class TestApplicationAssessment(ApplicationTestBase):
 #	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
 
-bad_val = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' ).decode( 'utf-8' )
+bad_val      =  'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode( 'rot13' ).decode( 'utf-8' )
 censored_val = u'This is ******* stupid, you ************ *******'
+
+bad_word      =  'shpxvat'.encode( 'rot13' ).decode( 'utf-8' )
+censored_word = u'*******'
 
 class _CensorTestMixin(object):
 
@@ -67,7 +70,9 @@ class _CensorTestMixin(object):
 		testapp = TestApp( self.app )
 
 
-		data = json.dumps( {'body': [bad_val], 'title': bad_val} )
+		data = json.dumps( {'body': [bad_val],
+							'title': bad_val,
+							'tags': [bad_word]} )
 
 		path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
 		path = UQ( path )
@@ -78,9 +83,11 @@ class _CensorTestMixin(object):
 		assert_that( res.status_int, is_( 200 ) )
 
 		exp_val = censored_val if censored else bad_val
+		exp_word = censored_word if censored else bad_word
 		assert_that( res.json_body,
 					 has_entries( 'body', only_contains( exp_val ),
-								  'title', exp_val ) )
+								  'title', exp_val,
+								  'tags', only_contains( exp_word )) )
 
 
 class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
@@ -99,7 +106,7 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 		"Regardless of who you are this site censors"
 		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
 								   censored=True,
-								   environ={'HTTP_ORIGIN': 'http://mathcounts.nextthought.com'})
+								   environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'})
 
 	@WithSharedApplicationMockDS
 	def test_create_chat_object_events_copy_owner_from_session(self):
