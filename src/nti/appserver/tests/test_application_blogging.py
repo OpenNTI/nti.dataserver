@@ -35,11 +35,13 @@ from nti.tests import is_empty
 import fudge
 
 from .test_application import TestApp
+from . import test_application_censoring
 
 import datetime
 import webob.datetime_utils
 
 from zope import lifecycleevent
+from zope import interface
 from zope.component import eventtesting
 from zope.intid.interfaces import IIntIdRemovedEvent
 from zope.location.interfaces import ISublocations
@@ -59,6 +61,8 @@ from .test_application import SharedApplicationTestBase, WithSharedApplicationMo
 
 from urllib import quote as UQ
 from pyquery import PyQuery
+
+POST_MIME_TYPE = 'application/vnd.nextthought.forums.post'
 
 class TestApplicationBlogging(SharedApplicationTestBase):
 
@@ -152,7 +156,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# With only a MimeType value:
 		del data['Class']
-		data['MimeType'] = Post.mimeType
+		data['MimeType'] = POST_MIME_TYPE
 		self._do_test_user_can_POST_new_blog_entry( data )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
@@ -165,7 +169,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# With both
 		data['Class'] = 'Post'
-		data['MimeType'] = Post.mimeType
+		data['MimeType'] = POST_MIME_TYPE
 		self._do_test_user_can_POST_new_blog_entry( data )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
@@ -182,26 +186,73 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		self._do_test_user_can_POST_new_blog_entry( data, content_type=Post.mimeType )
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_blog_entry_uncensored_by_default( self ):
+		data = { 'Class': 'Post',
+				 'title': test_application_censoring.bad_word,
+				 'body': [test_application_censoring.bad_val] }
 
-	def _do_test_user_can_POST_new_blog_entry( self, data, content_type=None ):
+		data['MimeType'] = Post.mimeType
+		self._do_test_user_can_POST_new_blog_entry( data )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_blog_entry_censoring_for_coppa_user( self ):
+		# There is actually no policy that allows them to create posts
+		# and so this should never really kick in
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = users.User.get_user( self.extra_environ_default_user )
+			interface.alsoProvides( user, nti_interfaces.ICoppaUser )
+
+		# Cannot use an entirely bad title
+		data = { 'Class': 'Post',
+				 'title': test_application_censoring.bad_word,
+				 'body': [test_application_censoring.bad_val] }
+
+		res = self._do_test_user_can_POST_new_blog_entry( data, status_only=422 )
+
+		assert_that( res.json_body, has_entries( 'field', 'title',
+												 'message', 'The value you have used is not valid.') )
+		data['title'] = data['title'] + ' abc'
+		exp_data = data.copy()
+		exp_data['body'] = [test_application_censoring.censored_val]
+		exp_data['title'] = test_application_censoring.censored_word + ' abc'
+		self._do_test_user_can_POST_new_blog_entry( data, expected_data=exp_data )
+
+
+	def _do_test_user_can_POST_new_blog_entry( self, data, content_type=None, status_only=None, expected_data=None ):
 		testapp = self.testapp
 
-		if not content_type:
-			res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data, status=201 )
-		else:
+		kwargs = {'status': 201}
+		meth = testapp.post_json
+		post_data = data
+		if content_type:
+			kwargs['headers'] = {b'Content-Type': str(content_type)}
 			# testapp.post_json forces the content-type header
-			res = testapp.post(  '/dataserver2/users/sjohnson@nextthought.com/Blog',
-								 json.dumps( data ),
-								 headers={b'Content-Type': str(Post.mimeType)},
-								 status=201 )
+			meth = testapp.post
+			post_data = json.dumps( data )
+		if status_only:
+			kwargs['status'] = status_only
 
-		# Return the representation of the new topic created
+		res = meth(  '/dataserver2/users/sjohnson@nextthought.com/Blog',
+					 post_data,
+					 **kwargs )
+
+		if status_only:
+			return res
+
+		# Returns the representation of the new topic created
+		data = expected_data or data
 		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
-		assert_that( res.json_body, has_entry( 'title', 'My New Blog' ) )
-		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
-		assert_that( res.json_body, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-My_New_Blog' ) )
-		assert_that( res.json_body, has_entry( 'ContainerId', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog') )
-		assert_that( res.json_body, has_entry( 'href', UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + res.json_body['ID'] ) ))
+		assert_that( res.json_body, has_entry( 'ID', ntiids.make_specific_safe( data['title'] ) ) )
+		entry_id = res.json_body['ID']
+		assert_that( res.json_body, has_entries( 'title', data['title'],
+												 'NTIID', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-' + entry_id,
+												 'ContainerId', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog',
+												 'href', UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + entry_id ) ))
+
+		assert_that( res.json_body['headline'], has_entries( 'title', data['title'],
+															 'body',  data['body'] ) )
+
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
@@ -218,7 +269,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		entry_ntiid = res.json_body['NTIID']
 
 		# The new topic is accessible at its OID URL, its pretty URL, and by NTIID
-		for url in entry_url, UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My_New_Blog' ), UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
+		for url in entry_url, UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + entry_id ), UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
 			testapp.get( url )
 
 
@@ -243,8 +294,8 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.content_type, is_( 'application/atom+xml'))
 		res._use_unicode = False
 		pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
-		assert_that( pq( b'entry title' ).text(), is_( 'My New Blog' ) )
-		assert_that( pq( b'entry summary' ).text(), is_( 'My first thought' ) )
+		assert_that( pq( b'entry title' ).text(), is_( data['title'] ) )
+		assert_that( pq( b'entry summary' ).text(), is_( data['body'][0] ) )
 
 
 		# And in the user activity view

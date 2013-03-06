@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: jason.madden@nextthought.com\n"
-"POT-Creation-Date: 2013-03-05 11:22-0600\n"
+"POT-Creation-Date: 2013-03-06 09:12-0600\n"
 "PO-Revision-Date: 2012-09-24 22:18-0500\n"
 "Last-Translator: Jason Madden <jason.madden@nextthought.com>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -53,11 +53,11 @@ msgid "Your reset link is not valid. Please request a new one."
 msgstr ""
 
 #: src/nti/appserver/configure_blogs.zcml:18
-msgid "Can the user create new blog entries?"
+msgid "Create Blog Entry"
 msgstr ""
 
 #: src/nti/appserver/configure_blogs.zcml:18
-msgid "Create Blog Entry"
+msgid "Can the user create new blog entries?"
 msgstr ""
 
 #: src/nti/appserver/coppa_admin_views.py:110
@@ -72,39 +72,39 @@ msgstr ""
 msgid "This item has been deleted by the moderator."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:396
+#: src/nti/appserver/site_policies.py:388
 msgid "Username contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:401
+#: src/nti/appserver/site_policies.py:393
 msgid "Alias contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:461
+#: src/nti/appserver/site_policies.py:453
 msgid "Welcome to NextThought"
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:485
+#: src/nti/appserver/site_policies.py:477
 msgid "That username is not valid. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:495
+#: src/nti/appserver/site_policies.py:487
 msgid "Please provide your first name."
 msgstr "Please provide your first and last names."
 
-#: src/nti/appserver/site_policies.py:497
+#: src/nti/appserver/site_policies.py:489
 msgid "Please provide your last name."
 msgstr "Please provide your first and last names."
 
-#: src/nti/appserver/site_policies.py:510
+#: src/nti/appserver/site_policies.py:502
 msgid "Birthdate must be in the past."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:513
+#: src/nti/appserver/site_policies.py:505
 msgid "Birthdate must be at least four years ago."
 msgstr ""
 
-#: src/nti/appserver/site_policies.py:516
+#: src/nti/appserver/site_policies.py:508
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
@@ -123,27 +123,31 @@ msgid "Please Confirm Your Child's NextThought Account"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:15
-msgid "Can the user chat?"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:15
 msgid "Chat"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:20
-msgid "Can the user access UGD sharing features?"
+#: src/nti/appserver/capabilities/capabilities.zcml:15
+msgid "Can the user chat?"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:20
 msgid "Sharing"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:25
-msgid "Can the user create new FriendsLists? (Enforced by the vocabulary)"
+#: src/nti/appserver/capabilities/capabilities.zcml:20
+msgid "Can the user access UGD sharing features?"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:25
 msgid "Create FriendsLists"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:25
+msgid "Can the user create new FriendsLists? (Enforced by the vocabulary)"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:30
+msgid "Create DynamicFriendsLists"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:30
@@ -152,16 +156,12 @@ msgid ""
 "vocab)"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:30
-msgid "Create DynamicFriendsLists"
+#: src/nti/appserver/capabilities/capabilities.zcml:35
+msgid "Upload Avatar"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:35
 msgid "Can the user upload custom avatar pictures?"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:35
-msgid "Upload Avatar"
 msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:150
@@ -212,33 +212,33 @@ msgstr ""
 msgid "Impersonate another user"
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:53
+#: src/nti/dataserver/users/interfaces.py:57
 msgid "The username cannot be blank."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:67
+#: src/nti/dataserver/users/interfaces.py:71
 msgid ""
 "Username contains an illegal character. Only letters, digits, and "
 "${allowed_chars} are allowed."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:80
+#: src/nti/dataserver/users/interfaces.py:84
 msgid "The email address you have entered is not valid."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:87
+#: src/nti/dataserver/users/interfaces.py:91
 msgid "The first or last name you have entered is not valid."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:95
+#: src/nti/dataserver/users/interfaces.py:99
 msgid "The password you supplied does not match the current password."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:98
+#: src/nti/dataserver/users/interfaces.py:102
 msgid "Your pasword cannot contain only whitespace. Please try again."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:101
+#: src/nti/dataserver/users/interfaces.py:105
 msgid ""
 "The password you supplied has been identified by security researches as "
 "commonly used and insecure. Please try again."
@@ -258,6 +258,10 @@ msgstr ""
 
 #: src/nti/dataserver/users/missing_user.py:56
 msgid "Deleted User"
+msgstr ""
+
+#: src/nti/ntiids/ntiids.py:98
+msgid "The value you have used is not valid."
 msgstr ""
 
 #: src/nti/store/invitations.py:29

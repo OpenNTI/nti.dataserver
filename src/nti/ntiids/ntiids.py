@@ -1,9 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Constants and types for dealing with our unique IDs.
 $Revision$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -13,9 +14,13 @@ import time
 import collections
 import warnings
 import string
+import six
+
+from . import MessageFactory as _
 
 from zope import interface
 from zope import component
+from zope.schema import interfaces as sch_interfaces
 from nti.ntiids import interfaces
 
 # Well-known IDs
@@ -84,8 +89,13 @@ TYPE_TRANSCRIPT_SUMMARY = 'TranscriptSummary'
 _illegal_chars_ = r"/\";=?<>#%'{}|^[]" # Space is technically legal (?)
 
 
-class InvalidNTIIDError(ValueError):
-	pass
+class InvalidNTIIDError(sch_interfaces.ValidationError):
+	"""Raised if the NTIID value (or some part of it) is invalid."""
+
+class ImpossibleToMakeSpecificPartSafe(InvalidNTIIDError):
+	"""The supplied value cannot be used safely."""
+
+	i18n_message = _("The value you have used is not valid.")
 
 def validate_ntiid_string( string ):
 	"""
@@ -93,9 +103,12 @@ def validate_ntiid_string( string ):
 
 	:return: The `string`.
 	"""
+	__traceback_info__ = string,
 	try:
-		string = string if isinstance(string,unicode) else unicode(string, 'utf-8') # cannot decode unicode
-	except (UnicodeDecodeError,TypeError):
+		string = string if isinstance(string,six.text_type) else string.decode( 'utf-8' ) # cannot decode unicode
+	except (AttributeError,TypeError):
+		raise InvalidNTIIDError( "Not a string " + repr(string) )
+	except (UnicodeDecodeError,):
 		raise InvalidNTIIDError( "String contains non-utf-8 values " + repr(string) )
 
 	if not string or not string.startswith( 'tag:nextthought.com,20' ):
@@ -163,7 +176,8 @@ def escape_provider( provider ):
 
 _sp_allowed = string.ascii_letters + string.digits
 _sp_removed = b''.join( [chr(x) for x in range(0,256) if chr(x) not in _sp_allowed] )
-_sp_transtable = string.maketrans( _sp_removed, b'_' * len(_sp_removed) )
+_sp_repl_byte = b'_'
+_sp_transtable = string.maketrans( _sp_removed, _sp_repl_byte * len(_sp_removed) )
 
 def make_specific_safe( specific ):
 	"""
@@ -172,6 +186,11 @@ def make_specific_safe( specific ):
 	and limiting the range of characters.
 
 	.. caution:: This is not a reversible transformation.
+
+	:raises InvalidNTIIDError: If this cannot be done. In particular, we refuse
+		to create a safe part that consists entirely of the replacement characters;
+		at least one character originally supplied must be valid. We also refuse
+		to create a zero-length safe part.
 	"""
 	# We start by being extremely safe and limiting it to ascii letters and numbers,
 	# with no punctuation. There are some unicode characters that are dangerous
@@ -182,6 +201,9 @@ def make_specific_safe( specific ):
 	# Since we are is ascii-land here, easy way to strip all high-chars is to encode
 	specific = specific.encode( 'ascii', 'ignore') if isinstance(specific, unicode) else specific
 	specific = string.translate( specific, _sp_transtable )
+
+	if not specific or set(specific) == set(_sp_repl_byte):
+		raise ImpossibleToMakeSpecificPartSafe(specific)
 
 	# back to unicode, coming from ascii
 	return specific.decode( 'ascii' )
@@ -213,7 +235,7 @@ def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None 
 	date_string = None
 	if date is DATE and base is not None:
 		date_string = get_parts(base).date
-	elif isinstance( date, basestring ):
+	elif isinstance( date, six.string_types ):
 		date_string = date
 	else:
 		# Account for 0/None
@@ -259,7 +281,7 @@ def _parse( ntiid ):
 			# type and type spec.
 			return NTIID(None, our_parts[0], our_parts[1], date)
 		return NTIID( our_parts[0], our_parts[1], our_parts[2], date )
-	except ValueError:
+	except (InvalidNTIIDError,ValueError):
 		return NTIID(None,None,None,None)
 
 def get_provider( ntiid ):
