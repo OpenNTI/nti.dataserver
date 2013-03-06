@@ -17,99 +17,41 @@ from repoze.catalog.indexes.text import CatalogTextIndex
 from repoze.catalog.indexes.field import CatalogFieldIndex
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
 
-from nti.contentprocessing import compute_ngrams
-
 from . import interfaces as search_interfaces
 from .textindexng3 import CatalogTextIndexNG3
+from . import _discriminators as discriminators
 
-def get_containerId(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IContainerIDResolver)
-	return adapted.get_containerId() or default
-
-def get_ntiid(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.INTIIDResolver)
-	return adapted.get_ntiid() or default
-
-def get_creator(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.ICreatorResolver)
-	return adapted.get_creator() or default
-
-def get_last_modified(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.ILastModifiedResolver)
-	result = adapted.get_last_modified()
-	return result or default
-	
-def get_keywords(obj, default=()):
-	adapted = component.queryAdapter(obj, search_interfaces.IThreadableContentResolver)
-	result = adapted.get_keywords() if adapted else None
-	result = [x.lower() for x in result] if result else None
-	return result or default
+get_ntiid = discriminators.get_ntiid
+get_channel = discriminators.get_channel
+get_creator = discriminators.get_creator
+get_keywords = discriminators.get_keywords
+get_post_tags = discriminators.get_post_tags
+get_ngrams = discriminators.get_object_ngrams
+get_content = discriminators.get_object_content
+get_containerId = discriminators.get_containerId
+get_last_modified = discriminators.get_last_modified
+get_post_title = discriminators.get_post_title_and_ngrams
+get_content_and_ngrams = discriminators.get_content_and_ngrams
+get_replacementContent = discriminators.get_replacement_content
+get_replacement_content = discriminators.get_replacement_content
+get_redactionExplanation = discriminators.get_redaction_explanation
+get_redaction_explanation = discriminators.get_redaction_explanation
 
 def _flatten_list(result, default=None):
 	result = ' '.join(result) if result else default
 	return result
 
 def get_sharedWith(obj, default=None):
-	adapted = component.queryAdapter(obj, search_interfaces.IShareableContentResolver)
-	result = adapted.get_sharedWith() if adapted else None
+	result = discriminators.get_sharedWith(obj)
 	return _flatten_list(result, default)
 
 def get_references(obj, default=None):
-	adapted = component.queryAdapter(obj, search_interfaces.INoteContentResolver)
-	result = adapted.get_references() if adapted else None
+	result = discriminators.get_references(obj)
 	return _flatten_list(result, default)
-
-def get_channel(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
-	return adapted.get_channel() or default
 
 def get_recipients(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
-	result = adapted.get_recipients()
+	result = discriminators.get_recipients(obj)
 	return _flatten_list(result, default)
-
-def get_replacement_content(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
-	result = adapted.get_replacement_content()
-	return result.lower() if result else None
-get_replacementContent = get_replacement_content
-
-def get_redaction_explanation(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
-	result = adapted.get_redaction_explanation()
-	return result.lower() if result else None
-get_redactionExplanation = get_redaction_explanation
-
-def get_post_title(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
-	title = adapted.get_title()
-	n_grams = compute_ngrams(title)
-	result = '%s %s' % (title, n_grams) if title else u''
-	return result.lower() or default
-
-def get_post_tags(obj, default=()):
-	adapted = component.queryAdapter(obj, search_interfaces.IPostContentResolver)
-	result = adapted.get_tags() if adapted else None
-	result = [x.lower() for x in result] if result else None
-	return result or default
-
-def get_object_content(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	result = adapted.get_content()
-	return result.lower() if result else None
-get_content = get_object_content
-
-def get_object_ngrams(obj, default=None):
-	content = get_object_content(obj, default)
-	n_grams = compute_ngrams(content) if content else default
-	return n_grams if n_grams else default
-get_ngrams = get_object_ngrams
-
-def get_content_and_ngrams(obj, default=None):
-	content = get_object_content(obj)
-	n_grams = compute_ngrams(content)
-	result = '%s %s' % (content, n_grams) if content else u''
-	return result or default
 
 def create_catalog(type_name):
 	creator = component.queryUtility(search_interfaces.IRepozeCatalogCreator,  name=type_name)
