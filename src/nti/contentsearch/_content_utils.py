@@ -201,15 +201,14 @@ class _CanvasTextShapeContentResolver(_BasicContentResolver):
 class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 	
 	def get_title(self):
-		return self.obj.title_
+		return self.obj.title
 	
 	def get_content(self):
 		return self._resolve(self.obj.body)
 	
 	def get_tags(self):
-		result = self.obj.tags_
-		result = set(result) if result else ()
-		return _process_words(result)
+		result = self.obj.tags
+		result = _process_words(set(result)) if result else ()
 	
 @component.adapter(IDict)
 @interface.implementer(	search_interfaces.IHighlightContentResolver,
