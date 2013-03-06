@@ -21,6 +21,8 @@ from . import interfaces as search_interfaces
 from .textindexng3 import CatalogTextIndexNG3
 from . import _discriminators as discriminators
 
+# repoze discriminator functions. Some of them are simply aliases for legacy purposes
+
 get_ntiid = discriminators.get_ntiid
 get_channel = discriminators.get_channel
 get_creator = discriminators.get_creator
