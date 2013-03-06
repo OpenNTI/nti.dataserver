@@ -26,7 +26,6 @@ from nti.mimetype import mimetype
 
 from ._views_utils import get_ntiid_path
 from . import interfaces as search_interfaces
-from ._search_highlights import WORD_HIGHLIGHT
 
 from .common import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 					 SNIPPET, HIT, ID, CONTENT, INTID, SCORE, OID, POST, MIME_TYPE)
@@ -140,7 +139,7 @@ class _PostSearchHit(_SearchHit):
 	adapter_interface = search_interfaces.IPostContentResolver
 	
 	def set_hit_info(self, original, score):
-		adapted = super(_MessageInfoSearchHit, self).set_hit_info(original, score)
+		adapted = super(_PostSearchHit, self).set_hit_info(original, score)
 		self[TYPE] = POST
 		return adapted
 		
@@ -168,20 +167,10 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 		tpl = (hit[ntiid_], u'-', hit[ntiid_])
 		return unicode(''.join(tpl))
 		
-def _provide_highlight_snippet(hit, query=None, highlight_type=WORD_HIGHLIGHT):
-	if hit is not None:
-		hit.query = query
-		if highlight_type == WORD_HIGHLIGHT:
-			interface.alsoProvides( hit, search_interfaces.IWordSnippetHighlight )
-		else:
-			interface.alsoProvides( hit, search_interfaces.INoSnippetHighlight )
-	return hit
-
-def get_search_hit(obj, score=1.0, query=None, highlight_type=WORD_HIGHLIGHT):
+def get_search_hit(obj, score=1.0, query=None):
 	hit = search_interfaces.ISearchHit(obj, None) or _SearchHit(obj)
 	hit.score = score
 	hit.query = query
-	hit = _provide_highlight_snippet(hit, query, highlight_type)
 	return hit
 
 # define search hit comparators

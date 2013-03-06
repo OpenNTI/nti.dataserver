@@ -20,7 +20,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.contentprocessing import rank_words
 
 from .common import content_
-from .common import is_all_query
 from .common import get_type_name
 from .common import sort_search_types
 from ._search_query import QueryObject
@@ -28,7 +27,6 @@ from ._repoze_query import parse_query
 from .common import normalize_type_name
 from ._repoze_index import create_catalog
 from . import interfaces as search_interfaces
-from ._search_highlights import WORD_HIGHLIGHT
 from ._search_results import empty_search_results
 from ._search_results import empty_suggest_results
 from ._search_indexmanager import _SearchEntityIndexManager
@@ -98,10 +96,9 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 			result = queryobject._apply(catalog, names=None)
 		return result
 
-	def _do_search(self, qo, searchOn=(), highlight_type=WORD_HIGHLIGHT, creator_method=None):
+	def _do_search(self, qo, searchOn=(), creator_method=None):
 		creator_method = creator_method or empty_search_results
 		results = creator_method(qo)
-		results.highlight_type = highlight_type
 		if qo.is_empty: return results
 
 		for type_name in searchOn:
@@ -115,8 +112,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_searchOn_types(qo.searchOn)
-		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
-		results = self._do_search(qo, searchOn, highlight_type)
+		results = self._do_search(qo, searchOn)
 		return results
 
 	def suggest(self, query, *args, **kwargs):

@@ -26,8 +26,6 @@ from nti.contentprocessing import default_word_tokenizer_expression
 
 from . import interfaces as search_interfaces
 
-WORD_HIGHLIGHT  = "WordHighlight"
-
 _default_analyzer = None
 
 def _get_terms(query, pattern=default_word_tokenizer_pattern):

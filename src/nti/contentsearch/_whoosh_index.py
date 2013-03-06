@@ -32,7 +32,6 @@ from ._search_query import QueryObject
 from ._whoosh_query import parse_query
 from .common import normalize_type_name
 from . import interfaces as search_interfaces
-from ._search_highlights import WORD_HIGHLIGHT
 from . import _discriminators as discriminators
 from ._datastructures import CaseInsensitiveDict
 from ._search_results import empty_search_results
@@ -61,12 +60,9 @@ class _SearchableContent(object):
 		parsed_query = parse_query(qo, self.schema, self.__class__.__name__.lower())
 		return qo, parsed_query
 
-	def get_search_highlight_type(self):
-		return WORD_HIGHLIGHT
-
 	def search(self, searcher, query, *args, **kwargs):
 		qo, parsed_query = self._parse_query(query, **kwargs)
-		results = self._execute_search(searcher, parsed_query, qo, highlight_type=self.get_search_highlight_type())
+		results = self._execute_search(searcher, parsed_query, qo)
 		return results
 
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
@@ -84,7 +80,6 @@ class _SearchableContent(object):
 				results = self._execute_search(	searcher,
 											 	parsed_query,
 											 	qo,
-											 	highlight_type=self.get_search_highlight_type(),
 											 	creator_method=empty_suggest_and_search_results)
 				results.add_suggestions(suggestions)
 			else:
@@ -102,10 +97,9 @@ class _SearchableContent(object):
 		results.add(records)
 		return results
 
-	def _execute_search(self, searcher, parsed_query, queryobject, docids=None, highlight_type=None, creator_method=None):
+	def _execute_search(self, searcher, parsed_query, queryobject, docids=None, creator_method=None):
 		creator_method = creator_method or empty_search_results
 		results = creator_method(queryobject)
-		results.highlight_type = highlight_type
 
 		# execute search
 		search_hits = searcher.search(parsed_query, limit=None)
@@ -202,9 +196,6 @@ class Book(_SearchableContent):
 	@property
 	def _schema(self):
 		return create_book_schema()
-	
-	def get_search_highlight_type(self):
-		return WORD_HIGHLIGHT
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
@@ -274,9 +265,6 @@ def _create_user_indexable_content_schema():
 	return schema
 
 class UserIndexableContent(_SearchableContent):
-
-	def get_search_highlight_type(self):
-		return WORD_HIGHLIGHT
 
 	def get_index_data(self, data):
 		"""

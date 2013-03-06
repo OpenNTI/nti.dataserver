@@ -36,22 +36,9 @@ def _word_fragments_highlight(query=None, text=None):
 		result = HighlightInfo()
 	return result
 
+@component.adapter(search_interfaces.ISearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _BaseHighlightDecorator(object):
-
-	@classmethod
-	def decorateExternalObject(cls, original, external):
-		pass
-
-@component.adapter(search_interfaces.INoSnippetHighlight)
-class NoSnippetHighlightDecorator(_BaseHighlightDecorator):
-	pass
-
-def NoSnippetHighlightDecoratorFactory(*args):
-	return NoSnippetHighlightDecorator()
-
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _BaseWordSnippetHighlightDecorator(_BaseHighlightDecorator):
+class _BaseWordSnippetHighlightDecorator(object):
 
 	def decorateExternalObject(self, original, external):
 		query = getattr(original, 'query', None)
@@ -63,7 +50,6 @@ class _BaseWordSnippetHighlightDecorator(_BaseHighlightDecorator):
 				external[FRAGMENTS] = toExternalObject(hi.fragments)
 				external[TOTAL_FRAGMENTS] = hi.total_fragments
 
-@component.adapter(search_interfaces.IWordSnippetHighlight)
 class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):
 	pass
 
@@ -128,7 +114,6 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		count = 0
 		last_modified = 0
 		limit = self.query.limit
-		highlight_type = self.highlight_type
 
 		# use iterator in case of any paging
 		for hit in self.hit_iter():
@@ -141,7 +126,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			query = hit.query
 
 			# adapt to a search hit
-			hit = get_search_hit(item, score, query, highlight_type)
+			hit = get_search_hit(item, score, query)
 			if hit.oid in self.seen:
 				continue
 
