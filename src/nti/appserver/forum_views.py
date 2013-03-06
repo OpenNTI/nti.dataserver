@@ -576,6 +576,7 @@ def _stream_event_for_comment( comment, change_type=nti_interfaces.SC_CREATED ):
 	# Now, construct the (artificial) change notification.
 	change = activitystream_change.Change(change_type, comment)
 	change.creator = comment.creator
+	change.object_is_shareable = False
 
 	return change
 
@@ -604,6 +605,30 @@ def notify_online_author_of_comment( comment, event ):
 
 	blog_author._noticeChange( change, force=True )
 
+@component.adapter(frm_interfaces.IPersonalBlogEntry, lifecycleevent.IObjectModifiedEvent)
+def notify_dynamic_memberships_of_blog_entry_publication_change( blog_entry, event ):
+	for modification_description in event.descriptions:
+		properties = getattr( modification_description, 'attributes', getattr( modification_description, 'keys', () ) )
+		if 'sharedWith' in properties or 'sharingTargets' in properties:
+			# Ok, the sharing has changed. Send the changes around
+			if not nti_interfaces.IDefaultPublished.providedBy( blog_entry ):
+				change_type = nti_interfaces.SC_DELETED
+				targets = blog_entry.sharingTargetsWhenPublished
+			else:
+				change_type = nti_interfaces.SC_SHARED
+				targets = blog_entry.sharingTargets
+
+			targets = [x for x in targets if nti_interfaces.IDynamicSharingTarget.providedBy( x )]
+			change = activitystream_change.Change( change_type, blog_entry )
+			change.creator = blog_entry.creator
+			change.object_is_shareable = False
+			for target in targets:
+				# TODO: Private API
+				# Notice we are not doing what User._postNotification does and expanding the
+				# username iterables (DFLs). This makes a nice compromise in the amount of data
+				# spammed all over
+				target._noticeChange( change, force=True )
+			break
 
 ### Users have a 'global activity store' that keeps things that we're not
 # handling as part of their contained objects. This matches the shared object storage

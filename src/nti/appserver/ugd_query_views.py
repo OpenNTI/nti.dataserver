@@ -666,7 +666,6 @@ class _RecursiveUGDView(_UGDView):
 	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
 		containers = ()
-
 		if ntiid == ntiids.ROOT:
 			containers = set(user.iterntiids(include_stream=self._iter_ntiids_include_stream,stream_only=self._iter_ntiids_stream_only))
 		else:
@@ -756,7 +755,7 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 		# If for some reason weak refs aren't clearing when we expect them to, we can
 		# include the above in this clause.
 
-		result['Items'] = [x for x in result['Items'] if x and x.object and x.creator]
+		result['Items'] = [x for x in result['Items'] if x and x.object is not None and x.creator]
 		super(_RecursiveUGDStreamView,self)._sort_filter_batch_result( result )
 
 

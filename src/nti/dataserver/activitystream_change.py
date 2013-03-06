@@ -46,6 +46,7 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	CIRCLED  = nti_interfaces.SC_CIRCLED
 
 	useSummaryExternalObject = False
+	object_is_shareable = None
 
 	__name__ = None
 	__parent__ = None
@@ -98,6 +99,16 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		method returns the same thing as :meth:`object`.
 		"""
 		yield self.object
+
+	def is_object_shareable(self):
+		"""
+		Returns true if the object is supposed to be copied into local shared data.
+		"""
+		# TODO: This is some legacy weirdness. Redo with interfaces/adapters
+		if self.object_is_shareable is not None:
+			return self.object_is_shareable
+
+		return not hasattr( self.object, 'username' ) # This is the real wierdness. Meant to do with CIRCLED?
 
 	def __repr__(self):
 		return "%s('%s',%s)" % (self.__class__.__name__,self.type,type(self.object).__name__)
