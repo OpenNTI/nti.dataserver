@@ -134,7 +134,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
-		assert_that(d, has_entry(SNIPPET, u'It is not enough to mean well we actually have to do well'))
+		assert_that(d, has_entry(SNIPPET, u'It is not enough to mean well, we actually have to do well'))
 
 	@WithMockDSTrans
 	def test_search_hit_hightlight_ds(self):
@@ -151,7 +151,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
-		assert_that(d, has_entry(SNIPPET, u'Kon saw it The Secret of a Beautiful Office Lady'))
+		assert_that(d, has_entry(SNIPPET, u'Kon saw it! The Secret of a Beautiful Office Lady'))
 
 	@WithMockDSTrans
 	def test_search_hit_redaction_ds(self):

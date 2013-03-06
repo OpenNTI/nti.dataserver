@@ -140,7 +140,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		assert_that(hit, has_entry(CLASS, HIT))
 		assert_that(hit, has_entry(NTIID, is_not(None)))
 		assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
-		assert_that(hit, has_entry(SNIPPET, 'All Waves Rise now and Become my Shield Lightning Strike now and Become my Blade'))
+		assert_that(hit, has_entry(SNIPPET, 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 
 		hits = toExternalObject(cim.search("ra*"))
 		assert_that(hits, has_entry(HIT_COUNT, 3))

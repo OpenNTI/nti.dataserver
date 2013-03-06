@@ -56,8 +56,8 @@ class _StringContentResolver(object):
 		self.content = content
 
 	def get_content(self):
-		result = get_content(self.content)
-		return result if result else None
+		result = unicode(self.content) if self.content else None
+		return result
 
 def _process_words(words):
 	if words:
@@ -130,7 +130,7 @@ class _HighLightContentResolver(_ThreadableContentResolver):
 
 	def get_content(self):
 		result = self.obj.selectedText
-		return get_content(result)
+		return result
 
 @component.adapter(nti_interfaces.IRedaction)
 @interface.implementer(search_interfaces.IRedactionContentResolver)
@@ -140,7 +140,7 @@ class _RedactionContentResolver(_HighLightContentResolver):
 		result = [self.get_replacement_content(), self.get_redaction_explanation()]
 		result.append(self.obj.selectedText)
 		result = ' '.join([x for x in result if x is not None])
-		return get_content(result)
+		return result
 
 	def get_replacement_content(self):
 		result = self.obj.replacementContent
@@ -160,7 +160,7 @@ class _PartsContentResolver(object):
 			adapted = component.queryAdapter(item, search_interfaces.IContentResolver)
 			result.append( adapted.get_content()  if adapted else u'')
 		result = ' '.join([x for x in result if x is not None])
-		return get_content(result)
+		return result
 
 @component.adapter(nti_interfaces.INote)
 @interface.implementer(search_interfaces.INoteContentResolver)
