@@ -772,7 +772,7 @@ class User(Principal):
 			   (containerId.startswith( 'tag:nextthought.com' )
 				or containerId[0].islower())
 
-	def iterntiids( self ):
+	def iterntiids( self, include_stream=True, stream_only=False ):
 		"""
 		Returns an iterable across the NTIIDs that are relevant to this user.
 		"""
@@ -780,25 +780,35 @@ class User(Principal):
 		# and things found in dynamic things we care about, which includes
 		# our memberships and things we own
 		seen = set()
+		if not stream_only:
+			for k in self.containers:
+				if self._is_container_ntiid(k) and k not in seen:
+					seen.add( k )
+					yield k
 
-		for k in self.containers:
-			if self._is_container_ntiid(k) and k not in seen:
-				seen.add( k )
-				yield k
-
-		for k in self.containersOfShared:
-			if self._is_container_ntiid(k) and k not in seen:
-				seen.add( k )
-				yield k
+			for k in self.containersOfShared:
+				if self._is_container_ntiid(k) and k not in seen:
+					seen.add( k )
+					yield k
+		if include_stream:
+			for k in self.streamCache:
+				if self._is_container_ntiid(k) and k not in seen:
+					seen.add( k )
+					yield k
 
 		interesting_dynamic_things = set(self.dynamic_memberships) | {x for x in self.friendsLists.values() if nti_interfaces.IDynamicSharingTarget.providedBy(x)}
 		for com in interesting_dynamic_things:
-			if not hasattr( com, 'containersOfShared' ):
-				continue
-			for k in com.containersOfShared:
-				if self._is_container_ntiid( k ) and k not in seen:
-					seen.add( k )
-					yield k
+			if not stream_only and hasattr( com, 'containersOfShared' ):
+				for k in com.containersOfShared:
+					if self._is_container_ntiid( k ) and k not in seen:
+						seen.add( k )
+						yield k
+			if include_stream and hasattr( com, 'streamCache' ):
+				for k in com.streamCache:
+					if self._is_container_ntiid( k ) and k not in seen:
+						seen.add( k )
+						yield k
+
 
 	def itercontainers( self ):
 		# TODO: Not sure about this. Who should be responsible for

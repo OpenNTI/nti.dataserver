@@ -574,7 +574,6 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# Create the blog
 		res = testapp.post_json( '/dataserver2/users/original_user@foo/Blog', data )
 		entry_url = res.location
-		__traceback_info__ = res.json_body
 		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
 		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
 		pub_url = self.require_link_href_with_rel( res.json_body, 'publish' )
@@ -646,12 +645,24 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( comment1res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.forums.personalblogcomment' ) )
 		# )
 
-		# These created notifications to the author
+		def _has_both_comments( res, items=None ):
+			items = items or res.json_body['Items']
+			assert_that( items, has_length( 2 ) )
+			assert_that( items, contains_inanyorder(
+				has_entry( 'title', data['title'] ),
+				has_entry( 'title', 'A comment' ) ) )
+
+		# These created notifications to the author...
+		# ... both on the socket...
 		events = eventtesting.getEvents( chat_interfaces.IUserNotificationEvent )
-		assert_that( events, has_length( 2 ) )
+		assert_that( events, has_length( 3 ) ) # Note that this is three, due to the initial read-conflict-error from the stream cache
 		for evt in events:
 			assert_that( evt.targets, is_( (user_username,) ) )
-			assert_that( evt.args[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
+			#assert_that( evt.args[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
+
+		# ... and in his UGD stream ...
+		res = testapp.get( '/dataserver2/users/' + user_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream' )
+		_has_both_comments( res, items=[change['Item'] for change in res.json_body['Items']] )
 
 		# Both of these the other user can update
 		data['title'] = 'Changed my title'
@@ -668,10 +679,8 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# ... actual contents
 		res = testapp.get( entry_contents_url )
-		assert_that( res.json_body['Items'], has_length( 2 ) )
-		assert_that( res.json_body['Items'], contains_inanyorder(
-												has_entry( 'title', data['title'] ),
-												has_entry( 'title', 'A comment' ) ) )
+		_has_both_comments( res )
+
 		for item in res.json_body['Items']:
 			# sharedWith value trickles down to the comments automatically
 			assert_shared_with_community( item )
@@ -691,11 +700,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# ... in the commenting user's activity stream, visible to all ...
 		for app in testapp, testapp2, testapp3:
 			res = app.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
-			assert_that( res.json_body['Items'], has_length( 2 ) )
-			assert_that( res.json_body['Items'], contains_inanyorder(
-												has_entry( 'title', data['title'] ),
-												has_entry( 'title', 'A comment' ) ) )
-
+			_has_both_comments( res )
 
 		# The original user can unpublish...
 		res = testapp.post( unpub_url )
@@ -707,10 +712,10 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# ... and now the commenting user can still see his comments in his activity
 		res = testapp2.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
-		assert_that( res.json_body['Items'], has_length( 2 ) )
+		_has_both_comments( res )
 		# ... as can the original user, since he can still delete them
 		res = testapp.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
-		assert_that( res.json_body['Items'], has_length( 2 ) )
+		_has_both_comments( res )
 		# ... but the other community member cannot
 		res = testapp3.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
 		assert_that( res.json_body['Items'], has_length( 0 ) )

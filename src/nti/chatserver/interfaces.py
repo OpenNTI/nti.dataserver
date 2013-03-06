@@ -320,6 +320,9 @@ class UserNotificationEvent(object):
 		self.targets = targets
 		self.args = args
 
+	def __repr__( self ):
+		return "<%s.%s %s %s %s>" % (type(self).__module__, type(self).__name__, self.name, self.targets, self.args)
+
 class PresenceChangedUserNotificationEvent(UserNotificationEvent):
 	"""
 	Pre-defined type of user notification for a presence change event.

@@ -240,9 +240,10 @@ class TopicPostView(_AbstractIPostPOSTView):
 
 		lifecycleevent.created( incoming_post )
 
-		topic[name] = incoming_post # Now store the topic and fire added
-		incoming_post.id = name # match these things
+		incoming_post.id = name # match these things before we fire events
 		incoming_post.containerId = topic.NTIID
+
+		topic[name] = incoming_post # Now store the topic and fire added
 
 		# Respond with the generic location of the object, within
 		# the owner's Objects tree.
@@ -526,7 +527,17 @@ class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
 	"Disallow updates to the sharedWith field of blog posts/comments"
 	_allowed_fields = tuple( set(GenericModeledContentExternalFieldTraverser._allowed_fields) - set( ('sharedWith',)) )
 
+def _publication_modified( blog_entry ):
+	"Fire off a modified event when the publication status changes. The event notes the sharing has changed."
+	provides = interface.providedBy( blog_entry )
+	attributes = []
+	for attr_name in 'sharedWith', 'sharingTargets':
+		attr = provides.get( attr_name )
+		if attr:
+			iface_providing = attr.interface
+			attributes.append( lifecycleevent.Attributes( iface_providing, attr_name ) )
 
+	lifecycleevent.modified( blog_entry, *attributes )
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -536,7 +547,7 @@ class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
 			  name='publish')
 def _PublishView(request):
 	interface.alsoProvides( request.context, nti_interfaces.IDefaultPublished )
-	lifecycleevent.modified( request.context )
+	_publication_modified( request.context )
 	# TODO: Hooked directly up to temp_post_added_to_indexer
 	temp_post_added_to_indexer( request.context.headline, None )
 	return uncached_in_response( request.context )
@@ -550,7 +561,7 @@ def _PublishView(request):
 			  name='unpublish')
 def _UnpublishView(request):
 	interface.noLongerProvides( request.context, nti_interfaces.IDefaultPublished )
-	lifecycleevent.modified( request.context )
+	_publication_modified( request.context )
 	# TODO: While we have temp_dispatch_to_indexer in place, when we unpublish
 	# do we need to unindex the comments too?
 	return uncached_in_response( request.context )
@@ -562,9 +573,8 @@ from nti.dataserver import activitystream_change
 from zope.event import notify
 
 def _stream_event_for_comment( comment, change_type=nti_interfaces.SC_CREATED ):
-	# Now, construct the (artificial) change notification. Notice this is never
-	# persisted anywhere
-	change = activitystream_change.Change(change_type, comment )
+	# Now, construct the (artificial) change notification.
+	change = activitystream_change.Change(change_type, comment)
 	change.creator = comment.creator
 
 	return change
@@ -579,12 +589,21 @@ def notify_online_author_of_comment( comment, event ):
 	# First, find the author of the blog entry. It will be the parent, the only
 	# user in the lineage
 	blog_author = find_interface( comment, nti_interfaces.IUser )
+	if blog_author == comment.creator:
+		return
 
-	# Now, construct the (artificial) change notification. Notice this is never
-	# persisted anywhere
+	# Now, construct the (artificial) change notification.
 	change = _stream_event_for_comment( comment )
 
-	notify( chat_interfaces.DataChangedUserNotificationEvent( (blog_author.username,), change ) )
+	# Store it in the author persistently. Notice that this is a private
+	# API, subject to change.
+	# This also has the effect of sending a socket notification, if needed.
+	# Because it is not shared directly with the author, it doesn't go
+	# in the shared data
+	assert not comment.isSharedDirectlyWith( blog_author )
+
+	blog_author._noticeChange( change, force=True )
+
 
 ### Users have a 'global activity store' that keeps things that we're not
 # handling as part of their contained objects. This matches the shared object storage
