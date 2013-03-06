@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Repoze index definitions and discriminators.
+Defines adaptes for search hits and hit comparators.
 
 $Id$
 """
@@ -83,50 +83,68 @@ class _BaseSearchHit(dict):
 	
 class _SearchHit(_BaseSearchHit):
 	
-	adapter_interface = search_interfaces.IContentResolver
+	adapter_interface = search_interfaces.IUserContentResolver
 	
 	def __init__( self, original, score=1.0 ):
 		super(_SearchHit, self).__init__(get_hit_id(original))
+		self.set_hit_info(original, score)
+		
+	def set_hit_info(self, original, score):
 		adapted = component.queryAdapter(original, self.adapter_interface)
 		self[SCORE] = score
 		self[TYPE] = original.__class__.__name__
-		self[NTIID] = adapted.get_ntiid() if adapted else u''
-		self[CREATOR] = adapted.get_creator() if adapted else u''
-		self[SNIPPET] = adapted.get_content() if adapted else u''
-		self[CONTAINER_ID] = adapted.get_containerId() if adapted else u''
-		self[LAST_MODIFIED] = adapted.get_last_modified() if adapted else 0
+		self[NTIID] = self.get_field(adapted, 'get_ntiid')
+		self[CREATOR] = self.get_field(adapted, 'get_creator')
+		self[SNIPPET] = self.get_field(adapted, 'get_content')
+		self[CONTAINER_ID] = self.get_field(adapted, 'get_containerId')
+		self[LAST_MODIFIED] = self.get_field(adapted, 'get_last_modified', 0)
 		self[MIME_TYPE] = mimetype.nti_mimetype_from_object(original, use_class=False) or u''
-		
+		return adapted
+	
+	@classmethod
+	def get_field(cls, adapted, mnane, default=u''):
+		m = getattr(adapted, mnane, None)
+		return m() if m is not None else default
+
+@component.adapter(nti_interfaces.INote)
+@interface.implementer(search_interfaces.INoteSearchHit)
+class _NoteSearchHit(_SearchHit):
+	adapter_interface = search_interfaces.INoteContentResolver
+			
 @component.adapter(nti_interfaces.IHighlight)
+@interface.implementer(search_interfaces.IHighlightSearchHit)
 class _HighlightSearchHit(_SearchHit):
 	adapter_interface = search_interfaces.IHighlightContentResolver
 	
 @component.adapter(nti_interfaces.IRedaction)
+@interface.implementer(search_interfaces.IRedactionSearchHit)
 class _RedactionSearchHit(_SearchHit):
 	adapter_interface = search_interfaces.IRedactionContentResolver
-		
-@component.adapter(nti_interfaces.INote)
-class _NoteSearchHit(_SearchHit):
-	adapter_interface = search_interfaces.INoteContentResolver
 	
 @component.adapter(chat_interfaces.IMessageInfo)
+@interface.implementer(search_interfaces.IMessageInfoSearchHit)
 class _MessageInfoSearchHit(_SearchHit):
 	
 	adapter_interface = search_interfaces.IMessageInfoContentResolver
-	
-	def __init__( self, original, score=1.0 ):
-		super(_MessageInfoSearchHit, self).__init__(original, score)
-		adapted = component.queryAdapter(original, self.adapter_interface)
-		self[ID] = adapted.get_id() if adapted else u''
+		
+	def set_hit_info(self, original, score):
+		adapted = super(_MessageInfoSearchHit, self).set_hit_info(original, score)
+		self[ID] = self.get_field(adapted, "get_id")
+		return adapted
 		
 @component.adapter(for_interfaces.IPost)
+@interface.implementer(search_interfaces.IPostSearchHit)
 class _PostSearchHit(_SearchHit):
+	
 	adapter_interface = search_interfaces.IPostContentResolver
-	def __init__( self, original, score=1.0 ):
-		super(_PostSearchHit, self).__init__(original, score)
+	
+	def set_hit_info(self, original, score):
+		adapted = super(_MessageInfoSearchHit, self).set_hit_info(original, score)
 		self[TYPE] = POST
+		return adapted
 		
 @component.adapter(search_interfaces.IWhooshBookContent)
+@interface.implementer(search_interfaces.IWhooshBookSearchHit)
 class _WhooshBookSearchHit(_BaseSearchHit):
 	
 	def __init__( self, hit ):

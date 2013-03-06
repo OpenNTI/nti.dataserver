@@ -631,9 +631,28 @@ class IIndexHit(IBaseHit, IMinimalSequence):
 class ISearchHit(IBaseHit, IMapping, ext_interfaces.IExternalObject):
 	"""represent an externalized search hit"""
 	oid = interface.Attribute("hit unique id")
-	last_modified = schema.Float(title="last modified date for this hit", required=False, readonly=True)
+	last_modified = interface.Attribute("last modified date for this hit")
+
+class INoteSearchHit(ISearchHit):
+	pass
+
+class IHighlightSearchHit(ISearchHit):
+	pass
+
+class IRedactionSearchHit(ISearchHit):
+	pass
+
+class IMessageInfoSearchHit(ISearchHit):
+	pass
+
+class IPostSearchHit(ISearchHit):
+	pass
+
+class IWhooshBookSearchHit(ISearchHit):
+	pass
 
 class ISearchHitComparator(interface.Interface):
+	
 	def compare(a, b):
 		"""Compare arguments for for order. a or b can beither a IndexHit or ISearchHit"""
 
