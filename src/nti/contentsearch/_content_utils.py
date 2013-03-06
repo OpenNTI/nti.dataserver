@@ -222,7 +222,7 @@ class _CanvasTextShapeContentResolver(_BasicContentResolver):
 class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 	
 	def get_title(self):
-		return _get_any_attr(self.obj, (title_,))
+		return get_content(_get_any_attr(self.obj, (title_,)))
 	
 	def get_content(self):
 		return self._resolve(self.obj.body)
