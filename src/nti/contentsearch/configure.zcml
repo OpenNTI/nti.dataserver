@@ -17,23 +17,23 @@
 
 	<adapter factory="._search_hits._NoteSearchHit"
 			 name="search-hit"
-			 provides=".interfaces.ISearchHit" />
+			 provides=".interfaces.INoteSearchHit" />
 
 	<adapter factory="._search_hits._MessageInfoSearchHit"
 			 name="search-hit"
-			 provides=".interfaces.ISearchHit" />
+			 provides=".interfaces.IMessageInfoSearchHit" />
 
 	<adapter factory="._search_hits._RedactionSearchHit"
 			 name="search-hit"
-			 provides=".interfaces.ISearchHit" />
+			 provides=".interfaces.IRedactionSearchHit" />
 	
 	<adapter factory="._search_hits._PostSearchHit"
 			 name="search-hit"
-			 provides=".interfaces.ISearchHit" />
+			 provides=".interfaces.IPostSearchHit" />
 			 
 	<adapter factory="._search_hits._WhooshBookSearchHit"
 			 name="search-hit"
-			 provides=".interfaces.ISearchHit" />
+			 provides=".interfaces.IWhooshBookSearchHit" />
 
 	<utility factory="._search_hits._ScoreSearchHitComparator" name="score" />
 	<utility factory="._search_hits._RelevanceSearchHitComparator" name="relevance" />
