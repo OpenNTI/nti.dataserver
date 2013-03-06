@@ -361,17 +361,6 @@ class IWhooshQueryParser(ISearchQueryParser):
 	def parse(qo, schema=None):
 		pass
 
-# text highlight types
-
-class IHighlightType(interface.Interface):
-	pass
-
-class INoSnippetHighlight(IHighlightType):
-	pass
-
-class IWordSnippetHighlight(IHighlightType):
-	pass
-
 # user generated content resolvers
 
 class IContentResolver(interface.Interface):

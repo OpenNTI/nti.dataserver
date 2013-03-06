@@ -33,7 +33,6 @@ from nti.contentsearch._search_hits import _HighlightSearchHit
 from nti.contentsearch._search_hits import _RedactionSearchHit
 from nti.contentsearch._search_hits import _WhooshBookSearchHit
 from nti.contentsearch._search_hits import _MessageInfoSearchHit
-from nti.contentsearch._search_hits import _provide_highlight_snippet
 from nti.contentsearch._search_hits import _RelevanceSearchHitComparator as RSHC
 
 from nti.contentsearch.common import (ntiid_, content_, title_, last_modified_, intid_)
@@ -73,7 +72,8 @@ class TestSearchHits(ConfiguringTestBase):
 		return usr
 
 	def _externalize(self, clazz, data, query):
-		d = _provide_highlight_snippet(clazz(data), query)
+		d = clazz(data)
+		d.query = query
 		return toExternalObject(d)
 
 	def test_get_type_name(self):

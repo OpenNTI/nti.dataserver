@@ -18,7 +18,6 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch._search_query import QueryObject
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._search_highlights import WORD_HIGHLIGHT
 from nti.contentsearch.common import (LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, SCORE)
 									
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -52,7 +51,6 @@ class TestSearchExternal(ConfiguringTestBase):
 		qo = QueryObject.create("wind")
 		containerId = make_ntiid(nttype='bleach', specific='manga')	
 		searchResults = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
-		searchResults.highlight_type = WORD_HIGHLIGHT
 		
 		usr = self._create_user()
 		notes = self._create_notes(usr.username, containerId)
@@ -73,7 +71,6 @@ class TestSearchExternal(ConfiguringTestBase):
 	def test_externalize_suggest_results(self):
 		qo = QueryObject.create("bravo")
 		sr = component.getUtility(search_interfaces.ISuggestResultsCreator)(qo)
-		sr.highlight_type = WORD_HIGHLIGHT
 		sr.add_suggestions(domain_words)
 		eo = toExternalObject(sr)
 		assert_that(eo, has_entry(QUERY, u'bravo'))
@@ -88,7 +85,6 @@ class TestSearchExternal(ConfiguringTestBase):
 	def test_externalize_search_suggest_results(self):
 		qo = QueryObject.create("theotokos")
 		searchResults = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
-		searchResults.highlight_type = WORD_HIGHLIGHT
 		
 		suggestions = domain_words[:3]
 		searchResults.add_suggestions(suggestions)
@@ -118,7 +114,6 @@ class TestSearchExternal(ConfiguringTestBase):
 		qo = QueryObject.create("sode no shirayuki", sortOn='relevance')
 		containerId = make_ntiid(nttype='bleach', specific='manga')	
 		searchResults = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
-		searchResults.highlight_type = WORD_HIGHLIGHT
 		
 		usr = self._create_user()
 		notes = self._create_notes(usr.username, containerId)

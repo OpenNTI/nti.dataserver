@@ -47,13 +47,9 @@
 	<adapter factory="._search_external._SuggestResultsExternalizer" />
 	<adapter factory="._search_external._SuggestAndSearchResultsExternalizer" />
 
-	<subscriber factory="._search_external.NoSnippetHighlightDecoratorFactory"
-				for=".interfaces.INoSnippetHighlight"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
-
 	<subscriber factory="._search_external.WordSnippetHighlightDecoratorFactory"
-				for=".interfaces.IWordSnippetHighlight"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for=".interfaces.ISearchHit" />
 
 	<!-- Content processing -->
 

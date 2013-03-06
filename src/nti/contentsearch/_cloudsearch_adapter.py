@@ -17,7 +17,6 @@ from perfmetrics import metricmethod
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from .common import is_all_query
 from ._search_query import QueryObject
 from ._cloudsearch_query import parse_query
 from . import interfaces as search_interfaces
@@ -27,7 +26,6 @@ from ._cloudsearch_index import search_stored_fields
 from ._search_indexmanager import _SearchEntityIndexManager
 from ._search_results import empty_suggest_and_search_results
 
-from ._search_highlights import (WORD_HIGHLIGHT)
 from .common import (username_, content_, intid_, type_)
 	
 @component.adapter(nti_interfaces.IEntity)
@@ -48,10 +46,9 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		result = self.get_object(uid) if uid is not None else None
 		return (result, 1.0)
 		
-	def _do_search(self, qo, highlight_type=WORD_HIGHLIGHT, creator_method=None):
+	def _do_search(self, qo, creator_method=None):
 		creator_method = creator_method or empty_search_results
 		results = creator_method(qo)
-		results.highlight_type = highlight_type
 		if qo.is_empty: return results
 		
 		service = self._get_cs_store()
@@ -71,8 +68,7 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 	@metricmethod
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		highlight_type = None if is_all_query(qo.term) else WORD_HIGHLIGHT
-		results = self._do_search(qo, highlight_type)
+		results = self._do_search(qo)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
