@@ -29,7 +29,7 @@ def get_creator(obj, default=None):
 def get_last_modified(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.ILastModifiedResolver)
 	result = adapted.get_last_modified()
-	return result if result is not None else default
+	return result if result else default
 	
 def get_keywords(obj, default=()):
 	adapted = component.queryAdapter(obj, search_interfaces.IThreadableContentResolver)
@@ -88,13 +88,11 @@ def get_object_content(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
 	result = get_content(adapted.get_content())
 	return result.lower() if result else default
-get_content = get_object_content
 
 def get_object_ngrams(obj, default=None):
 	content = get_object_content(obj, default)
 	n_grams = compute_ngrams(content) if content else default
 	return n_grams if n_grams else default
-get_ngrams = get_object_ngrams
 
 def get_content_and_ngrams(obj, default=None):
 	content = get_object_content(obj)
