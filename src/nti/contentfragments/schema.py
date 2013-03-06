@@ -8,9 +8,8 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
-from zope.schema import Text, TextLine
-
-from nti.utils.schema import Object # For good validation
+# For good validation and events
+from nti.utils.schema import Object, ValidText as Text, ValidTextLine as TextLine
 
 from nti.contentfragments import interfaces
 

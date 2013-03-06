@@ -14,6 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from pyramid.traversal import find_interface
+
 import six
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -27,6 +29,7 @@ from nti.dataserver import users
 from nti.contentfragments import censor
 
 from nti.appserver import site_policies
+from nti.appserver._view_utils import get_remote_user
 
 class IObjectNotTiedToContent(interface.Interface):
 	"""
@@ -42,9 +45,8 @@ class ObjectNotTiedToContent(object):
 	"Direct provider of IObjectNotTiedToContent"
 
 
-
+# No default adapter list, too many things.
 @interface.implementer( frg_interfaces.ICensoredContentPolicy )
-@component.adapter( frg_interfaces.IUnicodeContentFragment, nti_interfaces.IModeledContent )
 def creator_and_location_censor_policy( fragment, target, site_names=None ):
 	"""
 	Attempts to locate a censoring policy, appropriate for the creator
@@ -68,13 +70,18 @@ def creator_and_location_censor_policy( fragment, target, site_names=None ):
 	on creator and location, on the other hand, SHOULD NOT be
 	registered by name. That is implicit in the first dispatch.
 
+	.. note:: The creator is found either as an attribute on the `target`,
+		or, failing that, in the lineage of the object. Finally failing
+		that, we check for the currently active user.
+
 	.. note:: This falls over when we have objects that can be edited
 		by someone besides their creator. Then we would need to be
 		checking the current authenticated principal instead of the
 		creator, or the one that is the most restrictive, or both.
 
 	.. note:: This also slightly falls over for objects that are not contained
-		within content.
+		within content. For those, we dispatch based on the __parent__ if it
+		is not None.
 
 	:keyword list site_names: If given, this is an ordered list of the active sites
 		we should consider when looking for site-wide policies. It can
@@ -83,13 +90,19 @@ def creator_and_location_censor_policy( fragment, target, site_names=None ):
 
 	"""
 
-	creator = None
+	creator = getattr( target, 'creator', None )
 	location = None
 
-	if not target.creator: # Nothing to go off of, must assume the worst
+	if not creator:
+		# Ok, try to find something in the lineage
+		creator = find_interface( target, nti_interfaces.IUser )
+
+	if not creator:
+		creator = get_remote_user()
+
+	if not creator: # Nothing to go off of, must assume the worst
 		return censor.DefaultCensoredContentPolicy()
 
-	creator = target.creator
 	__traceback_info__ = creator, target
 	# Hmm Kay. If we find a string for a creator, try to resolve
 	# it to an entity.
@@ -101,12 +114,15 @@ def creator_and_location_censor_policy( fragment, target, site_names=None ):
 	# the meeting's containerId? As it is, this winds up finding a `location`
 	# of ``None``, which gets matched by the * in the adapter registration
 
-	if target.containerId:
+	if getattr( target, 'containerId', None ):
 		# Try to find a location to put it in.
 		# See comments above about how this is starting to not be appropriate.
 		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
 		content_units = library.pathToNTIID( target.containerId ) if library is not None else None
 		location = content_units[-1] if content_units else None
+
+	if location is None:
+		location = getattr( target, '__parent__', None )
 
 	if location is None:
 		location = ObjectNotTiedToContent
