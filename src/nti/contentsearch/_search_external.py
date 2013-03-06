@@ -15,6 +15,7 @@ from zope import interface
 from z3c.batching.batch import Batch
 
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
 
 from ._search_results import sort_hits
@@ -38,8 +39,10 @@ def _word_fragments_highlight(query=None, text=None):
 
 @component.adapter(search_interfaces.ISearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _BaseWordSnippetHighlightDecorator(object):
+class WordSnippetHighlightDecorator(object):
 
+	__metaclass__ = SingletonDecorator
+	
 	def decorateExternalObject(self, original, external):
 		query = getattr(original, 'query', None)
 		if query:
@@ -49,12 +52,6 @@ class _BaseWordSnippetHighlightDecorator(object):
 			if hi.fragments:
 				external[FRAGMENTS] = toExternalObject(hi.fragments)
 				external[TOTAL_FRAGMENTS] = hi.total_fragments
-
-class WordSnippetHighlightDecorator(_BaseWordSnippetHighlightDecorator):
-	pass
-
-def WordSnippetHighlightDecoratorFactory(*args):
-	return WordSnippetHighlightDecorator()
 
 # search results
 
