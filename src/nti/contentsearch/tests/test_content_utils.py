@@ -131,7 +131,7 @@ class TestContentUtils(ConfiguringTestBase):
 		highlight.containerId = containerId
 		highlight = user.addContainedObject( highlight )
 		adapted = component.getAdapter(highlight, IContentResolver)
-		assert_that(adapted.get_content(), is_('Kon saw it The Secret of a Beautiful Office Lady'))
+		assert_that(adapted.get_content(), is_('Kon saw it! The Secret of a Beautiful Office Lady'))
 		assert_that(adapted.get_references(), is_(()))
 		assert_that(adapted.get_ntiid(), is_not(None))
 		assert_that(adapted.get_creator(), is_('urahara@bleach.com'))
@@ -149,7 +149,7 @@ class TestContentUtils(ConfiguringTestBase):
 		mi = MessageInfo()
 		mi.Body = ['Beginning of Despair, the Unreachable Blade', c]
 		adapted = component.getAdapter(mi, IContentResolver)
-		assert_that(adapted.get_content(), is_('Beginning of Despair the Unreachable Blade Ichigo VS Ulquiorra'))
+		assert_that(adapted.get_content(), is_('Beginning of Despair, the Unreachable Blade Ichigo VS Ulquiorra'))
 
 	def test_dict_adpater(self):
 		adapted = component.getAdapter(self.note, IContentResolver)
