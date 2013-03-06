@@ -92,14 +92,12 @@
 	<class class="nti.dataserver.contenttypes.forums.topic.PersonalBlogEntry">
 		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
-		<implements interface="nti.dataserver.interfaces.IFavoritable"
-					zcml:condition="have testmode"/>
+		<implements interface="nti.dataserver.interfaces.IFavoritable" />
 	</class>
 	<class class="nti.dataserver.contenttypes.forums.post.PersonalBlogComment">
 		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
-		<implements interface="nti.dataserver.interfaces.IFavoritable"
-					zcml:condition="have testmode"/>
+		<implements interface="nti.dataserver.interfaces.IFavoritable" />
 	</class>
 
 	<!-- Publishing workflow -->
