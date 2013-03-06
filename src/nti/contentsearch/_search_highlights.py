@@ -248,6 +248,16 @@ def _context_fragment(sf, termset, query, maxchars=300, surround=50):
 	sf = _SearchFragment.create_from_terms(snippet, termset, query.is_phrase_search)
 	return sf
 
+def _no_hit_match(sf, maxchars=300, tokens=()):
+	text = sf.text
+	if len(text) > maxchars:
+		tkn = None
+		for t in tokens:
+			if t.endchar >= maxchars: break
+			tkn = t
+		sf.text = text[:t.endchar] + '...' if tkn else u''
+	return sf
+
 def top_fragments(fragments, scorer, count=5, order=highlight.FIRST, minscore=1):
 	scored_fragments = [(scorer(f), f) for f in fragments]
 	total_fragments = len(scored_fragments)
@@ -292,13 +302,19 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 	
 	# sadly we need to retokenize to find term matches
 	tokens = analyzer(text, chars=True, mode="query", removestops=False)
-	
+	if len(text) > maxchars:
+		copy_tokens = [t.copy() for t in tokens]
+		tokens = copy_tokens
+	else:
+		copy_tokens = ()
+						
 	# compute whoosh fragments
 	tokens = _set_matched_filter(tokens, termset)
 	fragments = fragmenter.fragment_tokens(text, tokens)
 	fragments, total_fragments = top_fragments(fragments, scorer, top, order)
 	
 	if fragments:
+		del copy_tokens
 		search_fragments = []
 		for f in fragments:
 			sf = _SearchFragment.create_from_whoosh_fragment(f, termset)
@@ -308,6 +324,10 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 		total_fragments = 1
 		sf = _SearchFragment.create_from_terms(text, termset, query.is_phrase_search)
 		sf = _context_fragment(sf, termset, query, maxchars=maxchars, surround=surround)
+		if sf.matches:
+			del copy_tokens
+		else:
+			sf = _no_hit_match(sf, maxchars, copy_tokens)
 		snippet = sf.text
 		search_fragments = [sf]
 		

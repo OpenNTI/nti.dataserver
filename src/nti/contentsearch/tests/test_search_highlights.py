@@ -52,6 +52,10 @@ class TestSearchHighlight(ConfiguringTestBase):
 		assert_that(hi.fragments[0].text, is_(_text))
 		assert_that(hi.fragments[0].matches, is_([(47, 52), (76, 80)]))
 		
+		text = u'The project leader, Prof David Van Essen of Washington University in St Louis, told BBC News'
+		hi = word_fragments_highlight('rain', text,  maxchars=20)
+		assert_that(hi.snippet, is_('The project leader, Prof...')) 
+		
 	def test_word_fragments_multiple(self):
 		text = "Carlos is going on vacation from Mexico to London with a brief stop in New York He forgot to exchange his pesos for " +\
 		"British pounds and must do so in New York He would like to have 2000 British pounds for his trip 12.1 Mexican pesos can be " +\
