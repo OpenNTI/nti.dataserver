@@ -617,7 +617,7 @@ class IIndexHit(IBaseHit, IMinimalSequence):
 	"""represent a search hit stored in a ISearchResults"""
 	obj = interface.Attribute("The hit object")
 
-class ISearchHit(IBaseHit, IMapping, ext_interfaces.IExternalObject):
+class ISearchHit(IBaseHit, IMapping):
 	"""represent an externalized search hit"""
 	oid = interface.Attribute("hit unique id")
 	last_modified = interface.Attribute("last modified date for this hit")

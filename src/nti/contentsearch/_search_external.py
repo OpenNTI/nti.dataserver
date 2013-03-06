@@ -53,6 +53,19 @@ class WordSnippetHighlightDecorator(object):
 				external[FRAGMENTS] = toExternalObject(hi.fragments)
 				external[TOTAL_FRAGMENTS] = hi.total_fragments
 
+
+# search hits
+
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(search_interfaces.ISearchHit)
+class _SearchHitExternalizer(object):
+	
+	def __init__( self, hit ):
+		self.hit = hit
+
+	def toExternalObject(self):
+		return self.hit
+	
 # search results
 
 @interface.implementer(ext_interfaces.IExternalObject)
@@ -122,14 +135,13 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			score = hit.score
 			query = hit.query
 
-			# adapt to a search hit
 			hit = get_search_hit(item, score, query)
 			if hit.oid in self.seen:
 				continue
 
 			self.seen.add(hit.oid)
 			last_modified = max(last_modified, hit.last_modified)
-			# run any decorator
+
 			external = toExternalObject(hit)
 			items.append(external)
 
