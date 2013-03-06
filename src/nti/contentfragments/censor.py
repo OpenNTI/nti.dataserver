@@ -257,10 +257,9 @@ class DefaultCensoredContentPolicy(object):
 			result = self.censor_text(fragment, target)
 		return result
 
-from nti.utils.schema import IBeforeSchemaFieldAssignedEvent
+
 from nti.utils.schema import BeforeTextAssignedEvent
 
-@component.adapter(interfaces.IUnicodeContentFragment, interface.Interface, IBeforeSchemaFieldAssignedEvent )
 def censor_before_text_assigned( fragment, target, event ):
 	"""
 	Watches for field values to be assigned, and looks for specific policies for the
@@ -316,4 +315,3 @@ def censor_assign( fragment, target, field_name ):
 
 	evt = BeforeTextAssignedEvent( fragment, field_name, target )
 	return censor_before_text_assigned( fragment, target, evt )[0]
-

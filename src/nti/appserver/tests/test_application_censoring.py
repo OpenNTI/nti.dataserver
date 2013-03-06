@@ -84,6 +84,7 @@ class _CensorTestMixin(object):
 
 		exp_val = censored_val if censored else bad_val
 		exp_word = censored_word if censored else bad_word
+		__traceback_info__ = res.json_body
 		assert_that( res.json_body,
 					 has_entries( 'body', only_contains( exp_val ),
 								  'title', exp_val,

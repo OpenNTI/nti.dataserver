@@ -131,7 +131,14 @@
 	<!-- Defaults -->
 	<utility factory=".censor._word_plus_trivial_profanity_scanner" />
 	<utility factory=".censor.SimpleReplacementCensoredContentStrategy" />
-	<subscriber handler=".censor.censor_before_text_assigned" />
+
+	<!--
+		 IUnicode is implemented by 'unicode'. Our only IUnicodeContentFragment implementation extends
+		 unicode.
+	-->
+	<subscriber handler=".censor.censor_before_text_assigned"
+				for="dolmen.builtins.IUnicode * nti.utils.schema.IBeforeTextAssignedEvent" />
+
 
 	<utility factory=".urlmatcher.GrubberHyperlinkFormatter" />
 

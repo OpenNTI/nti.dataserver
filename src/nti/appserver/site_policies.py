@@ -695,7 +695,7 @@ class IMathcountsCoppaUserWithAgreementUserProfile(user_interfaces.IEmailRequire
 		required=False,
 		default=False )
 
-	affiliation = schema.TextLine(
+	affiliation = ValidTextLine(
 		title='Affiliation',
 		description="Your affiliation, such as school name",
 		required=False) # redefined because we tag it

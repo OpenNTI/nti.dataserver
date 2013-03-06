@@ -7,24 +7,32 @@
 	<!--
 		Our dispatcher. Apply it to all the 'body' and 'tags' fields (note, forum
 		post, and chat message), as well as the replacementContent and
-		redactionExplanation fields (IRedaction)
+		redactionExplanation fields (IRedaction).
 	-->
 	<subscriber handler="nti.contentfragments.censor.censor_before_assign_components_of_sequence"
 				for="* nti.dataserver.interfaces.IModeledContent nti.utils.schema.IBeforeSequenceAssignedEvent" />
 
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"
-			 name="body" />
+			 name="body"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.IModeledContent"/>
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"
-			 name="tags" />
-
+			 name="tags"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.IUserTaggedContent"/>
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"
-			 name="replacementContent" />
+			 name="replacementContent"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.IModeledContent"/>
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"
-			 name="redactionExplanation" />
-	<!-- Also dispatch on titles -->
+			 name="redactionExplanation"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.IModeledContent"/>
+	<!-- Also dispatch on 'titles' -->
 	<adapter factory=".censor_policies.creator_and_location_censor_policy"
 			 name="title"
 			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.ITitledContent"/>
+	<!-- And descriptions -->
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="description"
+			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.ITitledDescribedContent"/>
+
 
 	<!-- Install a global policy for ICoppaUser. -->
 	<adapter factory=".censor_policies.coppa_user_censor_policy" />
@@ -32,8 +40,28 @@
 	<!-- All FriendsLists names are censored, all the time -->
 	<!-- Just like we do for user account usernames -->
 	<subscriber handler=".site_policies._censor_usernames"
-				for="nti.dataserver.interfaces.IFriendsList
-					 zope.lifecycleevent.IObjectCreatedEvent" />
+				for="nti.dataserver.interfaces.IFriendsList zope.lifecycleevent.IObjectCreatedEvent" />
+
+	<!--
+		 Try to catch some fields in profiles as well, when they are
+		 enabled.
+		 (And yes, IUserProfile doesn't define these fields,
+		 subclasses do, subclasses that only converge back at
+		 IUserProfile.)
+		 These are just required to be regular strings.
+	-->
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="description"
+			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="location"
+			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="affiliation"
+			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
+	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+			 name="role"
+			 for="dolmen.builtins.IUnicode nti.dataserver.users.interfaces.IUserProfile"/>
 
 	<!--
 		 Make sure messages get the right censoring policy by

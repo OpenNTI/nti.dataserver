@@ -21,6 +21,7 @@ from zope import component
 
 from pyramid.interfaces import IRequest
 from pyramid import security as sec
+from pyramid.threadlocal import get_current_request
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver import users
@@ -34,11 +35,12 @@ from nti.mimetype import mimetype
 from zope.schema import interfaces as sch_interfaces
 from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
 
-def get_remote_user( request, dataserver=None ):
+def get_remote_user( request=None, dataserver=None ):
 	"""
 	Returns the user object corresponding to the authenticated user of the
 	request, or None.
 	"""
+	request = request or get_current_request()
 	dataserver = dataserver or component.getUtility( IDataserver )
 	return users.User.get_user( sec.authenticated_userid( request ), dataserver=dataserver )
 
