@@ -1,14 +1,23 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Utility to export user objects.
 
-from __future__ import print_function, unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import sys
 import json
 import argparse
 import datetime
-from collections import Mapping
-from collections import defaultdict
+from collections import Mapping, defaultdict 
+
+import ZODB
 
 from zope.component import getAdapter
 from zope.generations.utility import findObjectsMatching
@@ -25,7 +34,7 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 
 def _get_object_type(obj):
-	result = obj.__class__.__name__
+	result = obj.__class__.__name__ if not ZODB.interfaces.IBroken.providedBy(obj) else 'broken'
 	return result.lower() if result else u''
 
 def _is_transcript(type_name):
@@ -55,12 +64,15 @@ def get_user_objects(user, object_types=()):
 	
 	def condition(x):
 		return 	isinstance(x, DMTS) or \
+				ZODB.interfaces.IBroken.providedBy(x) or \
 				(nti_interfaces.IModeledContent.providedBy(x) and not chat_interfaces.IMessageInfo.providedBy(x))
 				
 	for obj in findObjectsMatching( user, condition):
 		type_name = _get_object_type(obj)
 		if not object_types or type_name in object_types:
-			if isinstance(obj, DMTS):
+			if ZODB.interfaces.IBroken.providedBy(obj):
+				yield 'broken', obj, obj
+			elif isinstance(obj, DMTS):
 				adapted = getAdapter(obj, nti_interfaces.ITranscript)
 				yield 'transcript', adapted, obj
 			else:

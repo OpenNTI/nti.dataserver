@@ -1,6 +1,14 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Utility to delete user objects.
 
-from __future__ import print_function, unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import sys
