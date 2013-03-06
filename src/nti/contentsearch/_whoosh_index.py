@@ -33,6 +33,7 @@ from ._whoosh_query import parse_query
 from .common import normalize_type_name
 from . import interfaces as search_interfaces
 from ._search_highlights import WORD_HIGHLIGHT
+from . import _discriminators as discriminators
 from ._datastructures import CaseInsensitiveDict
 from ._search_results import empty_search_results
 from ._search_results import empty_suggest_results
@@ -226,70 +227,28 @@ class Book(_SearchableContent):
 
 # ugd content getter
 
-def get_containerId(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContainerIDResolver)
-	return adapted.get_containerId()
-
-def get_ntiid(obj):
-	adapted = component.getAdapter(obj, search_interfaces.INTIIDResolver)
-	return adapted.get_ntiid()
-
-def get_creator(obj):
-	adapted = component.getAdapter(obj, search_interfaces.ICreatorResolver)
-	return adapted.get_creator()
-
 def get_last_modified(obj):
-	adapted = component.getAdapter(obj, search_interfaces.ILastModifiedResolver)
-	result = adapted.get_last_modified()
+	result = discriminators.get_last_modified(obj)
 	return datetime.fromtimestamp(result) if result is not None else None
 
 def get_keywords(obj):
-	adapted = component.queryAdapter(obj, search_interfaces.IThreadableContentResolver)
-	words = adapted.get_keywords() if adapted else None
+	words = discriminators.get_keywords(obj)
 	return unicode(','.join(words)) if words else None
 
 def get_sharedWith(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IShareableContentResolver)
-	result = adapted.get_sharedWith() if adapted else None
+	result = discriminators.get_sharedWith(obj)
 	return unicode(','.join(result)) if result else None
-
-def get_object_content(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	result = adapted.get_content()
-	return result if result else None
 
 def get_references(obj):
-	adapted = component.queryAdapter(obj, search_interfaces.INoteContentResolver)
-	result = adapted.get_references() if adapted else None
+	result = discriminators.get_references(obj)
 	return unicode(','.join(result)) if result else None
-
-def get_channel(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
-	return adapted.get_channel()
 
 def get_recipients(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
-	result = adapted.get_recipients()
+	result = discriminators.get_recipients(obj)
 	return unicode(','.join(result)) if result else None
 
-def get_replacement_content(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
-	result = adapted.get_replacement_content()
-	return result if result else None
-
-def get_redaction_explanation(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
-	result = adapted.get_redaction_explanation()
-	return result if result else None
-
-def get_post_title(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
-	result = adapted.get_title()
-	return result if result else None
-
 def get_post_tags(obj):
-	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
-	tags = adapted.get_tags()
+	tags = discriminators.get_post_tags(obj)
 	return unicode(','.join(tags)) if tags else None
 
 def get_uid(obj):
@@ -325,10 +284,10 @@ class UserIndexableContent(_SearchableContent):
 		"""
 		result = {}
 		result[intid_] = get_uid(data)
-		result[ntiid_] = get_ntiid(data)
-		result[creator_] = get_creator(data)
-		result[containerId_] = get_containerId(data)
+		result[ntiid_] = discriminators.get_ntiid(data)
 		result[last_modified_] = get_last_modified(data)
+		result[creator_] = discriminators.get_creator(data)
+		result[containerId_] = discriminators.get_containerId(data)
 		return result
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
@@ -425,9 +384,9 @@ class Highlight(ThreadableIndexableContent):
 
 	def get_index_data(self, data):
 		result = super(Highlight, self).get_index_data(data)
-		content_to_idx = get_object_content(data)
-		result[content_] = content_to_idx
-		result[quick_] = content_to_idx
+		content = discriminators.get_object_content(data)
+		result[quick_] = content
+		result[content_] = content
 		return result
 
 # redaction
@@ -444,8 +403,8 @@ class Redaction(Highlight):
 
 	def get_index_data(self, data):
 		result = super(Redaction, self).get_index_data(data)
-		result[replacementContent_] = get_replacement_content(data)
-		result[redactionExplanation_] = get_redaction_explanation(data)
+		result[replacementContent_] = discriminators.get_replacement_content(data)
+		result[redactionExplanation_] = discriminators.get_redaction_explanation(data)
 		return result
 
 # note
@@ -478,8 +437,8 @@ class MessageInfo(Note):
 
 	def get_index_data(self, data):
 		result = super(MessageInfo, self).get_index_data(data)
-		result[channel_] = get_channel(data)
 		result[references_] = get_references(data)
+		result[channel_] = discriminators.get_channel(data)
 		return result
 
 # post
@@ -499,11 +458,11 @@ class Post(ShareableIndexableContent):
 
 	def get_index_data(self, data):
 		result = super(Post, self).get_index_data(data)
-		result[title_] = get_post_title(data)
 		result[tags_] = get_post_tags(data)
-		content_to_idx = get_object_content(data)
-		result[content_] = content_to_idx
-		result[quick_] = content_to_idx
+		result[title_] = discriminators.get_post_title(data)
+		content = discriminators.get_object_content(data)
+		result[quick_] = content
+		result[content_] = content
 		return result
 
 # register indexable objects
