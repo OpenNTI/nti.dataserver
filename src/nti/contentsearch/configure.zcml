@@ -11,28 +11,32 @@
 
 	<!-- Externalization -->
 
-	<adapter factory="._search_hits._HighlightSearchHit"
-			 name="search-hit"
+	<adapter factory="._search_hits._SearchHit"
+			 for="nti.dataserver.interfaces.IModeledContent"
 			 provides=".interfaces.ISearchHit" />
+			 
+	<adapter factory="._search_hits._HighlightSearchHit"
+			 for="nti.dataserver.interfaces.IHighlight"
+			 provides=".interfaces.IHighlightSearchHit" />
 
 	<adapter factory="._search_hits._NoteSearchHit"
-			 name="search-hit"
+			 for="nti.dataserver.interfaces.INote"
 			 provides=".interfaces.INoteSearchHit" />
 
 	<adapter factory="._search_hits._MessageInfoSearchHit"
-			 name="search-hit"
+			 for="nti.chatserver.interfaces.IMessageInfo"
 			 provides=".interfaces.IMessageInfoSearchHit" />
 
 	<adapter factory="._search_hits._RedactionSearchHit"
-			 name="search-hit"
+			 for="nti.dataserver.interfaces.IRedaction"
 			 provides=".interfaces.IRedactionSearchHit" />
 	
 	<adapter factory="._search_hits._PostSearchHit"
-			 name="search-hit"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
 			 provides=".interfaces.IPostSearchHit" />
 			 
 	<adapter factory="._search_hits._WhooshBookSearchHit"
-			 name="search-hit"
+			 for=".interfaces.IWhooshBookContent"
 			 provides=".interfaces.IWhooshBookSearchHit" />
 
 	<utility factory="._search_hits._ScoreSearchHitComparator" name="score" />
