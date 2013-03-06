@@ -60,7 +60,8 @@ from __future__ import print_function, unicode_literals
 
 from zope import component
 
-from zope.component import getAllUtilitiesRegisteredFor, subscribers, handle
+from zope.component import getAllUtilitiesRegisteredFor
+from zope.component import handle
 from zope.event import notify
 from zope.keyreference.interfaces import IKeyReference
 
