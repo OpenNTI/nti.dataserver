@@ -349,8 +349,11 @@ class IWhooshBookContent(IBookContent, IReadMapping):
 	score = schema.Float(title="Search score", required=False, default=1.0)
 
 class IBookSchemaCreator(interface.Interface):
-	pass
-
+	def create():
+		""" 
+		return a schema to create a book index
+		"""
+		
 class IWhooshBookSchemaCreator(IBookSchemaCreator):
 	pass
 
