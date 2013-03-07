@@ -24,12 +24,31 @@ import repoze.lru
 
 from nti.contentfragments import interfaces as frg_interfaces
 
+from . import default_punk_char_pattern
 from . import interfaces as cp_interfaces
+from . import default_punk_char_expression
+from . import default_word_tokenizer_pattern
 from . import default_word_tokenizer_expression
 
 def get_content_translation_table(language='en'):
 	table = component.queryUtility(cp_interfaces.IContentTranslationTable, name=language)
 	return table or _default_content_translation_table()
+
+@interface.implementer( cp_interfaces.IWordTokenizerExpression )
+def _default_word_tokenizer_expression():
+	return default_word_tokenizer_expression
+
+@interface.implementer( cp_interfaces.IWordTokenizerPattern )
+def _default_word_tokenizer_pattern():
+	return default_word_tokenizer_pattern
+
+@interface.implementer( cp_interfaces.IPunctuationCharExpression )
+def _default_punctuation_char_expression():
+	return default_punk_char_expression
+
+@interface.implementer( cp_interfaces.IPunctuationCharPattern )
+def _default_punctuation_char_pattern():
+	return default_punk_char_pattern
 
 @repoze.lru.lru_cache(500)
 def tokenize_content(text, language='en'):
@@ -48,7 +67,7 @@ def get_content(text=None):
 @interface.implementer( cp_interfaces.IContentTokenizer )
 class _ContentTokenizer(object):
 
-	tokenizer = RegexpTokenizer(default_word_tokenizer_expression,
+	tokenizer = RegexpTokenizer(_default_word_tokenizer_expression(),
 								flags = re.MULTILINE | re.DOTALL | re.UNICODE)
 
 	def tokenize(self, content):
@@ -94,3 +113,5 @@ def _default_content_translation_table():
 		repl = splits[4] or None if len(splits) >= 5 else None
 		result[int(splits[0])] = repl
 	return result
+
+

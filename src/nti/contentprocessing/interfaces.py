@@ -34,6 +34,23 @@ class IWordSimilarity(interface.Interface):
 	def rank(word, terms, reverse=True):
 		"""return the specified terms based on the distance to the specified word"""
 
+
+class IWordTokenizerExpression(interface.Interface):
+	"""marker interface for word tokenizer regular expression"""
+	pass
+
+class IWordTokenizerPattern(interface.Interface):
+	"""marker interface for word tokenizer regular expression pattern"""
+	pass
+
+class IPunctuationCharExpression(interface.Interface):
+	"""marker interface for punctuation regular expression"""
+	pass
+
+class IPunctuationCharPattern(interface.Interface):
+	"""marker interface for punctuation regular expression pattern"""
+	pass
+
 class IAlchemyAPIKey(interface.Interface):
 	"""marker interface for AlchemyAPI"""
 	pass

@@ -17,10 +17,16 @@
 	
 	<utility factory="._content_utils._LevenshteinWordSimilarity"  />
 	<utility factory="._content_utils._LevenshteinWordSimilarity" name="en" />
+			
+	<utility factory="._content_utils._default_word_tokenizer_pattern" name="en"  />
+	<utility factory="._content_utils._default_word_tokenizer_expression" name="en" />
+	
+	<utility factory="._content_utils._default_punctuation_char_pattern" name="en"  />
+	<utility factory="._content_utils._default_punctuation_char_expression" name="en" />
 	
 	<utility factory="._ngrams_utils._DefaultNgramComputer" />
 	<utility factory="._ngrams_utils._DefaultNgramComputer" name="en" />
-		
+	
 	<utility factory=".alchemy_api_key"  />
 	<include package=".stemmers" file="configure.zcml" />
 	<include package=".taggers" file="configure.zcml" />

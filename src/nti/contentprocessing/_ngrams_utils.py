@@ -12,29 +12,11 @@ import repoze.lru
 from zope import component
 from zope import interface
 
-from whoosh import analysis
-
 from . import default_ngram_minsize
 from . import default_ngram_maxsize
 from . import interfaces as cp_interfaces
 from ._content_utils import split_content
-from . import default_word_tokenizer_expression
 
-def _text_or_token(token, text_only=False):
-	return token.text if text_only else token.copy()
-
-def whoosh_ngram_filter(text, minsize=3, maxsize=None, at='start', unique=True, lower=True, text_only=True):
-	maxsize = maxsize or len(text)
-	text = text.lower() if lower else text
-	ng_filter = analysis.NgramFilter(minsize=minsize, maxsize=maxsize, at=at)
-	tokenizer = analysis.RegexTokenizer(expression=default_word_tokenizer_expression)
-	stream = tokenizer(unicode(text))
-	if not unique:
-		result = [_text_or_token(token, text_only) for token in ng_filter(stream)]
-	else:
-		result = {_text_or_token(token, text_only) for token in ng_filter(stream)}
-	return result
-	
 @repoze.lru.lru_cache(5000)
 def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):
 	result = []
@@ -76,4 +58,3 @@ class _DefaultNgramComputer(object):
 		else:
 			result = u''
 		return result
-	
