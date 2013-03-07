@@ -97,11 +97,11 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
 	@property
 	def batchSize(self):
-		return self.results.batchSize
+		return self.query.batchSize
 
 	@property
 	def batchStart(self):
-		return self.results.batchStart
+		return self.query.batchStart
 	
 	@property
 	def hits(self):
