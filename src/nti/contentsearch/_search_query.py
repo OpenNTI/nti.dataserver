@@ -160,6 +160,11 @@ class QueryObject(object, UserDict.DictMixin):
 	def is_descending_sort_order(self):
 		return self.sortOrder == descending_
 	
+	@property
+	def is_batching(self):
+		return self.batchStart is not None and self.batchSize
+	
+
 	# ---------------
 
 	@classmethod

@@ -15,8 +15,6 @@ from zope import component
 from zope.container import contained as zcontained
 from zope.mimetype import interfaces as zmime_interfaces
 
-from z3c.batching.batch import Batch
-
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from ._search_utils import isorted
@@ -54,36 +52,6 @@ class _BaseSearchResults(zcontained.Contained):
 
 	def __iter__(self):
 		return iter(self.hits)
-
-class _PageableSearchResults(_BaseSearchResults):
-
-	@property
-	def is_batching(self):
-		return self.batchStart is not None and self.batchSize
-
-	@property
-	def batchSize(self):
-		return self.query.batchSize
-
-	@property
-	def batchStart(self):
-		return self.query.batchStart
-
-	def _batch(self):
-		return Batch(self.hits, start=self.batchStart, size=self.batchSize)
-
-	def __getitem__(self, n):
-		if self.is_batching:
-			result = self._batch()[n]
-		else:
-			result = super(_PageableSearchResults, self).__getitem__(n)
-		return result
-
-	def __iter__(self):
-		if self.is_batching:
-			return iter(self._batch())
-		else:
-			return super(_PageableSearchResults, self).__iter__()
 
 @interface.implementer(search_interfaces.IIndexHit)
 class _IndexHit(zcontained.Contained):
@@ -135,7 +103,7 @@ class _MetaSearchResults(type):
 
 @interface.implementer( search_interfaces.ISearchResults,
 						zmime_interfaces.IContentTypeAware )
-class _SearchResults(_PageableSearchResults):
+class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
 
@@ -146,11 +114,14 @@ class _SearchResults(_PageableSearchResults):
 
 	def get_hits(self):
 		return self._hits
+	
+	def set_hits(self, hits):
+		self._hits = hits
 
 	def get_hit_meta_data(self):
 		return self._ihitmeta
 
-	hits = property(get_hits)
+	hits = property(get_hits, set_hits)
 	hit_meta_data = property(get_hit_meta_data)
 
 	def _add(self, item):
