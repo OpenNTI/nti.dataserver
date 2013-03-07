@@ -101,6 +101,10 @@
 			 provides=".interfaces.IBookContentResolver"
 			 for=".interfaces.IBookContent" />
 
+	<!-- Search highlights -->
+
+	<utility factory="._search_highlights._create_default_analyzer" name="en" />
+	
 	<!-- Search results -->
 
 	<utility factory="._search_results._SearchResultCreator"  />
