@@ -28,12 +28,13 @@ class BaseView(object):
 	def __init__(self, request):
 		self.request = request
 		
-	def get_query_object(self):
+	@property
+	def query(self):
 		return get_queryobject(self.request)
 	
 	@property
-	def registry(self):
-		return self.request.registry
+	def indexmanager(self):
+		return self.request.registry.getUtility( IIndexManager )
 	
 	def _locate(self, obj, parent):
 		# TODO: (Instead of modification info, we should be using etags here, anyway).
@@ -48,24 +49,19 @@ class SearchView(BaseView):
 	name = 'Search'
 	
 	def __call__( self ):
-		query = self.get_query_object()
-		indexmanager = self.registry.getUtility( IIndexManager )
-		result = self._locate( indexmanager.search( query=query), self.request.root)
+		query = self.query
+		result = self._locate( self.indexmanager.search( query=query), self.request.root)
 		return result
 	
 Search = SearchView
 
-class UserDataSearchView(object):
+class UserDataSearchView(BaseView):
 
 	name = 'UserSearch'
-	
-	def __init__( self, request ):
-		self.request = request
 
 	def __call__( self ):
-		query = get_queryobject(self.request)
-		indexmanager = self.registry.getUtility( IIndexManager )
-		result = self._locate( indexmanager.user_data_search( query=query ), self.request.root )
+		query = self.query
+		result = self._locate( self.indexmanager.user_data_search( query=query ), self.request.root )
 		return result
 
 UserSearch = UserDataSearchView
