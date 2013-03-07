@@ -12,9 +12,14 @@ from zope import interface
 
 from z3c.batching.batch import Batch
 
+from pyramid.threadlocal import get_current_request
+
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.datastructures import LocatedExternalDict
+
+from nti.dataserver.links import Link
 
 from ._search_hits import get_search_hit
 from . import interfaces as search_interfaces
@@ -38,7 +43,7 @@ def _word_fragments_highlight(query=None, text=None):
 
 @component.adapter(search_interfaces.ISearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class WordSnippetHighlightDecorator(object):
+class _WordSnippetHighlightDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 	
@@ -79,7 +84,8 @@ class _BaseSearchResultsExternalizer(object):
 		return self.results.query
 	
 	def toExternalObject(self):
-		eo = {QUERY: self.query.term}
+		eo = LocatedExternalDict()
+		eo[QUERY] = self.query.term
 		return eo
 
 @component.adapter(search_interfaces.ISearchResults)
@@ -110,7 +116,10 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			self.results.sort(sortOn)
 	
 		if self.is_batching:
-			return Batch(self.results.hits, start=self.batchStart, size=self.batchSize)
+			if self.batchStart < len(self.results):
+				return Batch(self.results.hits, start=self.batchStart, size=self.batchSize)
+			else:
+				return ()
 		else:
 			return self.results.hits
 		
@@ -175,3 +184,26 @@ class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestR
 		eo = _SearchResultsExternalizer.toExternalObject(self)
 		eo[SUGGESTIONS] = self.suggestions
 		return eo
+
+@component.adapter(search_interfaces.ISearchResults)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class _SearchResultsLinkDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+	
+	def decorateExternalObject(self, original, external):
+		query = original.query
+		if query.is_batching:
+			request = get_current_request()
+			if request is None: return
+			
+			# Insert links to the next and previous batch
+			result_list = Batch(original.hits, query.batchStart, query.batchSize)
+			next_batch, prev_batch = result_list.next, result_list.previous
+			for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
+				if batch is not None and batch != result_list:
+					batch_params = request.params.copy()
+					batch_params['batchStart'] = batch.start
+					link_next_href = request.current_route_path(_query=sorted(batch_params.items())) 
+					link_next = Link( link_next_href, rel=rel )
+					external.setdefault( 'Links', [] ).append( link_next )
