@@ -208,9 +208,9 @@ class _LastModifiedSearchHitComparator(_CallableComparator):
 	
 	@classmethod
 	def get_lm(cls, item):
-		obj = item.obj if search_interfaces.IBaseHit.providedBy(item) else item
-		rsr = search_interfaces.ILastModifiedResolver(obj, None)
-		result = rsr.get_last_modified() if rsr is not None else 0
+		obj = item.obj if search_interfaces.IIndexHit.providedBy(item) else item
+		adapted = search_interfaces.ILastModifiedResolver(obj, None)
+		result = adapted.get_last_modified() if adapted is not None else 0
 		return result
 	
 	@classmethod
