@@ -22,6 +22,8 @@ default_punk_char_expression = r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|\*
 
 default_word_tokenizer_pattern = re.compile(default_word_tokenizer_expression, re.I | re.MULTILINE | re.DOTALL | re.UNICODE)
 
+default_punk_char_pattern = re.compile(default_punk_char_expression, re.I | re.MULTILINE | re.DOTALL | re.UNICODE)
+
 # export common functions
 from ._content_utils import rank_words
 from ._ngrams_utils import compute_ngrams

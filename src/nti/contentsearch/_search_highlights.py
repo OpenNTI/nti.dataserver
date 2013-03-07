@@ -9,7 +9,6 @@ __docformat__ = "restructuredtext en"
 
 import re
 from heapq import nlargest
-from collections import namedtuple
 
 from zope import schema
 from zope import component
@@ -20,8 +19,9 @@ from whoosh import highlight
 
 from nti.externalization import interfaces as ext_interfaces
 
+from nti.contentprocessing import split_content
+from nti.contentprocessing import default_punk_char_pattern
 from nti.contentprocessing import default_punk_char_expression
-from nti.contentprocessing import default_word_tokenizer_pattern
 from nti.contentprocessing import default_word_tokenizer_expression
 
 from . import interfaces as search_interfaces
@@ -56,47 +56,43 @@ def _get_default_analyzer():
 		_default_analyzer = analysis.CompositeAnalyzer(*analyzers)
 	return _default_analyzer
 
-def _get_terms(query, pattern=default_word_tokenizer_pattern):
-	pos = 0
-	terms = []
-	query = re.sub('[*?]','', query)
-	m = pattern.search(query, pos)
-	while m is not None:
-		pos = m.end()
-		term = query[m.start():pos]
-		terms.append(term.lower())
-		m = pattern.search(query, pos)
-	return tuple(terms)
-
-def _get_query_terms(query, pattern=default_word_tokenizer_pattern):
-	result = _get_terms(query.term, pattern)
-	if not query.is_phrase_search:
-		result = frozenset(result)
+def _get_query_terms(query, lang='en'):
+	result = split_content(query.term.lower(), lang)
 	return result
 
-_char_tester = re.compile(default_punk_char_expression)
-
-def _is_word_start(idx, text):
-	result = idx == 0 or _char_tester.match(text[idx-1])
+def _is_word_start(idx, text, word_start_pattern=default_punk_char_pattern):
+	result = idx == 0 or word_start_pattern.match(text[idx-1])
 	return result
 
-def _is_word_end(idx, text):
-	result = idx == len(text) or _char_tester.match(text[idx])
-	return result
-		
-def _match_text(self, text):
-	return self.text.lower() == text.lower()
-
-def _range_equals(self, other):
-	result = self is other or (	isinstance(other, (list, tuple, _Range))
-								and len(other) >= 2
-								and self.start == other[0]
-								and self.end == other[1])
+def _is_word_end(idx, text, word_end_pattern=default_punk_char_pattern):
+	result = idx == len(text) or word_end_pattern.match(text[idx])
 	return result
 	
-_Range = namedtuple('_Range', 'start end text')
-_Range.match = _match_text
-_Range.__eq__ = _range_equals
+class _Range(object):
+	
+	__slots__ = ('start', 'end', 'text')
+	
+	def __init__(self, start, end, text):
+		self.end = end
+		self.text = text
+		self.start = start
+	
+	def __eq__(self, other):
+		result = self is other or (	isinstance(other, (list, tuple, _Range))
+									and len(other) >= 2
+									and self.start == other[0]
+									and self.end == other[1])
+		return result
+	
+	def __len__(self):
+		return 3
+	
+	def __getitem__(self, index):
+		if index == 0:
+			result = self.start
+		else:
+			result = self.end if index == 1 else self.text
+		return result
 	
 class ISearchFragment(ext_interfaces.IExternalObject):
 	text = schema.TextLine(title="fragment text", required=True)
@@ -195,7 +191,7 @@ def _prune_phrase_terms_fragments(termset, original_snippet, original_fragments)
 		return original_snippet, original_fragments
 	
 	# create a pattern for the phrase terms
-	termset = list(termset) if not isinstance(termset, list) else termset
+	termset = list(termset) if not isinstance(termset, (tuple,list)) else termset
 	pattern = [termset[0]]
 	for i in range(1, len(termset)):
 		pattern.append(default_punk_char_expression)
@@ -220,7 +216,7 @@ def _prune_phrase_terms_fragments(termset, original_snippet, original_fragments)
 	snippet = '...'.join(snippets) if snippets else original_snippet
 	return snippet, fragments
 
-def _context_fragment(sf, termset, query, maxchars=300, surround=50):
+def _context_fragment(sf, termset, query, maxchars=300, surround=50, punkt_pattern=default_punk_char_pattern):
 	if not sf.matches:
 		return sf
 	
@@ -235,7 +231,7 @@ def _context_fragment(sf, termset, query, maxchars=300, surround=50):
 			start = 0
 		else:
 			for idx in range(st, start):
-				if _char_tester.match(text[idx]):
+				if punkt_pattern.match(text[idx]):
 					start = idx + 1
 					break
 		
@@ -245,7 +241,7 @@ def _context_fragment(sf, termset, query, maxchars=300, surround=50):
 			end = _len
 		else:
 			for idx in range(-ed, -end):
-				if _char_tester.match(text[-idx]):
+				if punkt_pattern.match(text[-idx]):
 					end = -idx
 					break
 				
@@ -334,4 +330,3 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 	
 	result = HighlightInfo(snippet, search_fragments, total_fragments)
 	return result
-
