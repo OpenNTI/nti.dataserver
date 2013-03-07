@@ -88,13 +88,16 @@ class _PageableSearchResults(_BaseSearchResults):
 @interface.implementer(search_interfaces.IIndexHit)
 class _IndexHit(zcontained.Contained):
 	
-	__slots__ = ('obj', 'score', 'query', '__parent__', '__name__')
+	__slots__ = ('obj', 'score', '__parent__', '__name__')
 	
-	def __init__(self, obj, score, query):
+	def __init__(self, obj, score):
 		self.obj = obj
 		self.score = score
-		self.query = query
 
+	@property
+	def query(self):
+		return self.__parent__.query
+	
 	def __getitem__(self, index):
 		if index == 0:
 			result = self.obj
@@ -161,16 +164,15 @@ class _SearchResults(_PageableSearchResults):
 		ihit = None
 		if search_interfaces.IIndexHit.providedBy(item):
 			if item.obj is not None:
-				item.query = self.query
 				ihit = item
 		elif isinstance(item, tuple):
 			if item[0] is not None:
-				ihit = _IndexHit(item[0], item[1], self.query)
+				ihit = _IndexHit(item[0], item[1])
 		elif item is not None:
-			ihit = _IndexHit(item, 1.0, self.query)
+			ihit = _IndexHit(item, 1.0)
 
 		if ihit is not None:
-			ihit.__parent__ = self
+			ihit.__parent__ = self #make sure the parent is set
 			self._hits.append(ihit)
 			self._ihitmeta.track(ihit)
 
