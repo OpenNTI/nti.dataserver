@@ -52,7 +52,6 @@ except ImportError:
 
 # legacy imports
 from .common import indexable_type_names
-from ._whoosh_index import create_book_schema
 
 def get_indexable_types():
 	return indexable_type_names

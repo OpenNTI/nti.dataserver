@@ -18,6 +18,7 @@ from datetime import datetime
 
 import lxml.etree as etree
 
+from zope import component
 from zope import interface
 
 from whoosh import index
@@ -30,13 +31,13 @@ from nti.contentrendering.indexing import _termextract as termextract
 from nti.contentrendering.indexing import _content_utils as content_utils
 from nti.contentrendering.indexing import interfaces as cridxr_interfaces
 
-from nti.contentsearch import create_book_schema
+from nti.contentsearch import interfaces as search_interfaces
 
 @interface.implementer(cridxr_interfaces.IWhooshBookIndexer)
 class _BasicWhooshIndexer(object):
 		
-	def get_schema(self):
-		return create_book_schema()
+	def get_schema(self, name='en'):
+		return component.getUtility(search_interfaces.IWhooshBookSchemaCreator, name=name)()
 
 	def remove_index_files(self, indexdir, indexname):
 		if os.path.exists(indexdir):

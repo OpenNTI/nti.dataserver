@@ -9,6 +9,12 @@
 
 	<include package="nti.contentprocessing" file="configure.zcml" />
 
+	<!-- Content processing -->
+
+	<!-- make sure stop words are registered before evertything else -->
+	
+	<utility factory="._content_utils._DefaultStopWords" />
+	
 	<!-- Externalization -->
 
 	<adapter factory="._search_hits._SearchHit"
@@ -52,12 +58,6 @@
 	<subscriber factory="._search_external.WordSnippetHighlightDecorator"
 				for=".interfaces.ISearchHit" 
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<!-- Content processing -->
-
-	<!-- make sure stop words are registered before zopyx.zcml -->
-	
-	<utility factory="._content_utils._DefaultStopWords" />
 
 	<!-- Content Resolvers -->
 
