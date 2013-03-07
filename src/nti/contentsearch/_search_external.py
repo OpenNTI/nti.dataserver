@@ -7,8 +7,6 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import collections
-
 from zope import component
 from zope import interface
 
@@ -18,13 +16,12 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
 
-from ._search_results import sort_hits
 from ._search_hits import get_search_hit
 from . import interfaces as search_interfaces
 from ._search_highlights import HighlightInfo
 from ._search_highlights import word_fragments_highlight
 
-from .common import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS,
+from .common import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
 					 SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS)
 
 # highlight decorators
@@ -96,7 +93,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
 	@property
 	def is_batching(self):
-		return self.results.is_batching
+		return self.query.is_batching
 
 	@property
 	def batchSize(self):
@@ -106,28 +103,29 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 	def batchStart(self):
 		return self.results.batchStart
 	
-	def hit_iter(self):
+	@property
+	def hits(self):
 		sortOn = self.query.sortOn
-		iter_or_seq = sort_hits(self.results, sortOn=sortOn) if sortOn else self.results
+		if sortOn and not self.results.sorted:
+			self.results.sort(sortOn)
+	
 		if self.is_batching:
-			seq = iter_or_seq if isinstance(iter_or_seq, collections.Sequence) else list(iter_or_seq)
-			batch = Batch(seq, start=self.batchStart, size=self.batchSize)
-			return iter(batch)
+			return Batch(self.results.hits, start=self.batchStart, size=self.batchSize)
 		else:
-			return iter(iter_or_seq) if isinstance(iter_or_seq, collections.Sequence) else iter_or_seq
+			return self.results.hits
 		
 	def toExternalObject(self):
 		eo = super(_SearchResultsExternalizer, self).toExternalObject()
-		eo[PHRASE_SEARCH] = self.query.is_phrase_search
 		eo[ITEMS] = items = []
-
+		eo[TOTAL_HIT_COUNT] = len(self.results)
+		eo[PHRASE_SEARCH] = self.query.is_phrase_search
+		
 		# process hits
 		count = 0
 		last_modified = 0
 		limit = self.query.limit
 
-		# use iterator in case of any paging
-		for hit in self.hit_iter():
+		for hit in self.hits:
 
 			if hit is None or hit.obj is None:
 				continue

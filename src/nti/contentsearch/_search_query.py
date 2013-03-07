@@ -164,7 +164,6 @@ class QueryObject(object, UserDict.DictMixin):
 	def is_batching(self):
 		return self.batchStart is not None and self.batchSize
 	
-
 	# ---------------
 
 	@classmethod
