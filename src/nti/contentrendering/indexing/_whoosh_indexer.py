@@ -37,7 +37,8 @@ from nti.contentsearch import interfaces as search_interfaces
 class _BasicWhooshIndexer(object):
 		
 	def get_schema(self, name='en'):
-		return component.getUtility(search_interfaces.IWhooshBookSchemaCreator, name=name)()
+		creator = component.getUtility(search_interfaces.IWhooshBookSchemaCreator, name=name)
+		return creator.create()
 
 	def remove_index_files(self, indexdir, indexname):
 		if os.path.exists(indexdir):

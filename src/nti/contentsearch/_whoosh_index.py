@@ -125,32 +125,34 @@ class _SearchableContent(object):
 
 # content analyzer
 
-def ngram_minmax(name='en'):
-	ngc_util = component.queryUtility(cp_interfaces.INgramComputer, name=name)
+def _ngram_minmax(lang='en'):
+	ngc_util = component.queryUtility(cp_interfaces.INgramComputer, name=lang)
 	minsize = ngc_util.minsize if ngc_util else default_ngram_minsize
 	maxsize = ngc_util.maxsize if ngc_util else default_ngram_maxsize
 	return (minsize, maxsize)
 
-def ngram_field():
-	minsize, maxsize = ngram_minmax()
-	tokenizer = analysis.RegexTokenizer(expression=default_word_tokenizer_pattern)
+def create_ngram_field(lang='en'):
+	minsize, maxsize = _ngram_minmax()
+	expression = component.queryUtility(cp_interfaces.IWordTokenizerExpression, name=lang) or default_word_tokenizer_pattern
+	tokenizer = analysis.RegexTokenizer(expression=expression)
 	return fields.NGRAMWORDS(minsize=minsize, maxsize=maxsize, stored=False, tokenizer=tokenizer, at='start')
 
-def content_analyzer():
-	sw_util = component.queryUtility(search_interfaces.IStopWords)
+def create_content_analyzer(lang='en'):
+	sw_util = component.queryUtility(search_interfaces.IStopWords, name=lang)
+	expression = component.queryUtility(cp_interfaces.IWordTokenizerExpression, name=lang) or default_word_tokenizer_pattern
 	stopwords = sw_util.stopwords() if sw_util else ()
-	analyzer = 	analysis.StandardAnalyzer(expression=default_word_tokenizer_pattern, stoplist=stopwords)
+	analyzer = 	analysis.StandardAnalyzer(expression=expression, stoplist=stopwords)
 	return analyzer
 
-def content_field(stored=True):
-	return fields.TEXT(stored=stored, spelling=True, phrase=True, analyzer=content_analyzer())
+def create_content_field(stored=True):
+	return fields.TEXT(stored=stored, spelling=True, phrase=True, analyzer=create_content_analyzer())
 
 # book content
 
 @interface.implementer( search_interfaces.IWhooshBookSchemaCreator)
 class _DefaultBookSchemaCreator(object):
 	
-	def __call__(self):
+	def create(self):
 		"""
 		Book index schema
 	
@@ -169,14 +171,14 @@ class _DefaultBookSchemaCreator(object):
 								title = fields.TEXT(stored=True, spelling=True),
 					  			last_modified = fields.DATETIME(stored=True),
 					  			keywords = fields.KEYWORD(stored=True),
-					 			quick = ngram_field(),
+					 			quick = create_ngram_field(),
 					 			related = fields.KEYWORD(stored=True),
-					 			content = content_field(stored=True))
+					 			content = create_content_field(stored=True))
 		return schema
 
 def create_book_schema(name='en'):
 	to_call = component.queryUtility(search_interfaces.IWhooshBookSchemaCreator, name=name) or _DefaultBookSchemaCreator()
-	return to_call()
+	return to_call.create()
 
 @interface.implementer(search_interfaces.IWhooshBookContent)
 class _BookContent(dict):
@@ -361,8 +363,8 @@ class ThreadableIndexableContent(ShareableIndexableContent):
 
 def create_highlight_schema():
 	schema = _create_threadable_schema()
-	schema.add(content_, content_field(stored=False))
-	schema.add(quick_, ngram_field())
+	schema.add(content_, create_content_field(stored=False))
+	schema.add(quick_, create_ngram_field())
 	return schema
 
 class Highlight(ThreadableIndexableContent):
@@ -433,8 +435,8 @@ class MessageInfo(Note):
 
 def create_post_schema():
 	schema = _create_shareable_schema()
-	schema.add(content_, content_field(stored=False))
-	schema.add(quick_, ngram_field())
+	schema.add(content_, create_content_field(stored=False))
+	schema.add(quick_, create_ngram_field())
 	schema.add(title_, fields.TEXT(stored=False))
 	schema.add(tags_, fields.KEYWORD(stored=False))
 	return schema
