@@ -324,7 +324,7 @@ setup(
 		'zope.schema >= 4.3.2',
 		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
 		# on pypy, you must manually force the _proxy module to be built.
-		# It should work fine without it, but too manythings actually directly import it
+		# It should work fine without it, but too many things actually directly import it
 		'zope.security[zcml,untrustedpython] >= 4.0.0a5',
 		'zope.session >= 3.9.5', # 4.0.0a1 is out, should be fine
 		'zope.site >= 3.9.2' if HAVE_ZCONT else '', # local, persistent ZCA sites. 4.0.0a1 is out and should be fine; zope.container dep
@@ -364,7 +364,7 @@ setup(
 			'ipdb >= 0.7', # easier access to the ipython debugger
 			'logilab_astng >= 0.24.1',
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
-			'pip >= 1.2.1',
+			'pip >= 1.3.1',
 			'pip-tools >= 0.2.1', # command pip-review, pip-dump
 			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 0.27.0' if not IS_PYPY else '',
@@ -376,7 +376,8 @@ setup(
 			'sphinx >= 1.1.3', # Narrative docs
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
-			'virtualenv >= 1.8.4',
+			'virtualenv >= 1.9.1',
+			'virtualenvwrapper >= 3.6',
 			'zc.buildout >= 2.0.1',
 			'z3c.dependencychecker >= 1.10', # unused/used imports
 			'zodbbrowser >= 0.10.4',
