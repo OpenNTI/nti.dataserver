@@ -36,7 +36,8 @@ class IRepozeDataStore(IFullMapping):
 class ISearchQuery(interface.Interface):
 	term = schema.TextLine(title="Query search term", required=True)
 	username = schema.TextLine(title="User doing the search", required=True)
-
+	language = schema.TextLine(title="Query search term language", required=False, default='en')
+	
 	limit = schema.Int(title="search results limit", required=False)
 	indexid = schema.TextLine(title="Book content NTIID", required=False)
 	searchOn = schema.Set(value_type=schema.TextLine(title='The ntiid'), title="Content types to search on", required=False)
