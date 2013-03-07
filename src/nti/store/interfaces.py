@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
+from zope.location.interfaces import IContained
 from zope.schema.interfaces import IContextSourceBinder
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
@@ -58,7 +59,7 @@ def payment_processors(context):
 	return PaymentProcessorVocabulary(context)
 interface.directlyProvides(payment_processors, IContextSourceBinder)
 
-class IPurchaseAttempt(interface.Interface):
+class IPurchaseAttempt(IContained):
 
 	Processor = schema.Choice(source=payment_processors, title='purchase processor', required=True)
 

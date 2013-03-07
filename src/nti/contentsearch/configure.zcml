@@ -107,10 +107,6 @@
 	<utility factory="._search_results._SuggestResultsCreator"  />
 	<utility factory="._search_results._SuggestAndSearchResultsCreator"  />
 
-	<class class="._search_results._IndexHit">
-		<implements interface=".interfaces.IIndexHit" />
-	</class>
-
 	<!-- Search query -->
 
 	<adapter factory="._search_query._default_query_adapter"
