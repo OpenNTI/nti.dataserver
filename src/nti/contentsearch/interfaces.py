@@ -86,10 +86,6 @@ class ISearcher(interface.Interface):
 		:param query: Search query
 		"""
 
-class ISearchFeatures(interface.Interface):
-	is_ngram_search_supported = schema.Bool(title="Property for ngram search support.", default=False, readonly=True)
-	is_word_suggest_supported = schema.Bool(title="Property for word suggestion support.", default=False, readonly=True)
-
 class IBookIndexManager(ISearcher):
 
 	def get_indexname():
@@ -161,6 +157,10 @@ class IndexEvent(component.interfaces.ObjectEvent):
 		super(IndexEvent,self).__init__( data )
 		self.user = user
 
+	@property
+	def data(self):
+		return self.object
+	
 @interface.implementer(IObjectIndexed)
 class ObjectIndexedEvent(IndexEvent):
 	pass
@@ -699,3 +699,7 @@ class ISuggestAndSearchResultsCreator(interface.Interface):
 	def __call__(query):
 		"""return a new instance of a ISuggestAndSearchResults"""
 
+# highlights
+
+class IWhooshAnalyzer(interface.Interface):
+	pass
