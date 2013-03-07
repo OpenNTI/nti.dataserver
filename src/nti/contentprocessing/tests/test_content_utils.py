@@ -1,11 +1,21 @@
-import unittest
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from nti.contentprocessing._content_utils import rank_words
-from nti.contentprocessing._content_utils import get_content
-from nti.contentprocessing._content_utils import split_content
-from nti.contentprocessing._content_utils import get_content_translation_table
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from nti.contentprocessing.tests import ConfiguringTestBase
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+from zope import component
+
+from .._content_utils import rank_words
+from .._content_utils import get_content
+from .._content_utils import split_content
+from .. import interfaces as cp_interfaces
+from .._content_utils import get_content_translation_table
+
+from  . import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, has_length)
 
@@ -55,5 +65,8 @@ class TestContentUtils(ConfiguringTestBase):
 		t = s.translate(table)
 		assert_that(t, is_("COPTIC OLD NUBIAN VERSE DIVIDER is  deal with it"))
 		
-if __name__ == '__main__':
-	unittest.main()
+	def test_utilities(self):
+		component.getUtility(cp_interfaces.IWordTokenizerPattern, name="en")
+		component.getUtility(cp_interfaces.IWordTokenizerExpression, name="en")
+		component.getUtility(cp_interfaces.IPunctuationCharPattern, name="en")
+		component.getUtility(cp_interfaces.IPunctuationCharExpression, name="en")

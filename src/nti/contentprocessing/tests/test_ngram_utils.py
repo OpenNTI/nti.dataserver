@@ -1,8 +1,15 @@
-import unittest
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from nti.contentprocessing._ngrams_utils import compute_ngrams
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from nti.contentprocessing.tests import ConfiguringTestBase
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+from .._ngrams_utils import compute_ngrams
+
+from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_)
 
