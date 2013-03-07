@@ -55,10 +55,14 @@
 	<adapter factory="._search_external._SuggestResultsExternalizer" />
 	<adapter factory="._search_external._SuggestAndSearchResultsExternalizer" />
 
-	<subscriber factory="._search_external.WordSnippetHighlightDecorator"
+	<subscriber factory="._search_external._WordSnippetHighlightDecorator"
 				for=".interfaces.ISearchHit" 
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
+				
+	<subscriber factory="._search_external._SearchResultsLinkDecorator"
+				for=".interfaces.ISearchResults" 
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
 	<!-- Content Resolvers -->
 
 	<adapter factory="._content_utils._StringContentResolver"
