@@ -129,9 +129,77 @@ class MergingCounter(AbstractNumericValue):
 	def increment(self, amount=1):
 		assert amount >= 0
 		self.value += amount
+		return self
 
 	def _p_resolveConflict( self, oldState, savedState, newState ):
 		saveDiff = savedState - oldState
 		newDiff = newState - oldState
 		savedState = oldState + saveDiff + newDiff
 		return savedState
+
+from .persistentproperty import PropertyHoldingPersistent
+
+class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
+	"""
+	In persistent objects (that extend :class:`nti.zodb.persistentproperty.PersistentPropertyHolder`),
+	use this to hold a merging counter or numeric minimum or maximum.
+	"""
+
+	@interface.implementer(interfaces.INumericCounter)
+	class IncrementingZeroValue(_ConstantZeroValue):
+
+		def __init__( self, name, holder ):
+			_ConstantZeroValue.__init__( self )
+			self.__name__ = name
+			self.holder = holder
+
+		def increment(self, amount=1):
+			setattr( self.holder, self.__name__, amount )
+			return getattr( self.holder, self.__name__ )
+
+		def set( self, value ):
+			if value == 0:
+				return
+			setattr( self.holder, self.__name__, value )
+
+
+	as_number = False
+	def __init__( self, name, factory, as_number=False ):
+		"""
+		Creates a new property.
+
+		:param name: The name of the property; this will be the key in the instance
+			dictionary.
+		"""
+		self.__name__ = name
+		self.factory = factory
+		if as_number:
+			self.as_number = True
+
+	def __get__( self, inst, klass ):
+		if inst is None:
+			return klass
+
+		if self.__name__ in inst.__dict__:
+			value = inst.__dict__[self.__name__]
+			return value.value if self.as_number else value
+
+		return 0 if self.as_number else  self.IncrementingZeroValue( self.__name__, inst )
+
+	def __set__( self, inst, value ):
+		val = inst.__dict__.get( self.__name__, None )
+		if val is None:
+			if value == 0:
+				return # not in dict, but they gave us the default value, so ignore it
+			val = self.factory( value )
+			inst.__dict__[self.__name__] = val
+			inst._p_changed = True
+			if inst._p_jar:
+				inst._p_jar.add( val )
+		else:
+			val.set( value )
+
+	def __delete__( self, inst ):
+		if self.__name__ in inst.__dict__:
+			del inst.__dict__[self.__name__]
+			inst._p_changed = True

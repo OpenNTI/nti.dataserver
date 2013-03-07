@@ -176,7 +176,7 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 	def _do_toExternalObject( self ):
 		extDict = super(_UserSummaryExternalObject,self)._do_toExternalObject( )
 
-		extDict['lastLoginTime'] = self.entity.lastLoginTime.value
+		extDict['lastLoginTime'] = self.entity.lastLoginTime
 		extDict['NotificationCount'] = self.entity.notificationCount.value
 		if self.public_summary_profile_fields:
 			prof = interfaces.IUserProfile( self.entity )

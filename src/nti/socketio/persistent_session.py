@@ -18,8 +18,7 @@ from zope.annotation import IAttributeAnnotatable
 from zope.event import notify
 import zc.queue
 
-import persistent
-
+from nti.zodb.persistentproperty import PersistentPropertyHolder
 from nti.zodb import minmax
 from nti.utils.property import dict_read_alias, alias
 
@@ -30,7 +29,7 @@ from nti.socketio.interfaces import SocketSessionConnectedEvent, SocketSessionDi
 import ZODB.POSException
 
 @interface.implementer(sio_interfaces.ISocketSession,IAttributeAnnotatable)
-class AbstractSession(persistent.Persistent):
+class AbstractSession(PersistentPropertyHolder):
 	"""
 	Abstract base for persistent session implementations. Because this class
 	may be used in a distributed environment, it does not provide
@@ -51,13 +50,14 @@ class AbstractSession(persistent.Persistent):
 	_session_intid = None # from the intid utility
 	originating_site_names = ()
 
+	last_heartbeat_time = minmax.NumericPropertyDefaultingToZero( '_last_heartbeat_time', minmax.NumericMaximum, as_number=True )
+
 	def __init__(self, owner=None):
 		self.creation_time = time.time()
 		self.client_queue = zc.queue.CompositeQueue() # queue for messages to client
 		self.server_queue = zc.queue.CompositeQueue() # queue for messages to server
 
 		self._hits = minmax.MergingCounter( 0 )
-		self._last_heartbeat_time = minmax.NumericMaximum( 0 )
 		self.__dict__['owner'] = owner.decode( 'utf-8' ) if isinstance( owner, str ) else owner
 
 	def _p_resolveConflict(self, oldState, savedState, newState):
@@ -115,12 +115,6 @@ class AbstractSession(persistent.Persistent):
 	id = alias('session_id')
 
 	@property
-	def last_heartbeat_time(self):
-		# Can only read as a property, setting as a property
-		# leads to false conflicts
-		return self._last_heartbeat_time.value
-
-	@property
 	def socket(self):
 		return nti.socketio.protocol.SocketIOSocket( self )
 
@@ -175,7 +169,7 @@ class AbstractSession(persistent.Persistent):
 		# leads to conflicts.
 		# Directly set the .value, avoiding the property, because
 		# the property still causes this object to be considered modified (?)
-		self._last_heartbeat_time.set( time.time() )
+		self.last_heartbeat_time = time.time()
 
 
 	def heartbeat(self):

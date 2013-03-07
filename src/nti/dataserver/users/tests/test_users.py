@@ -176,17 +176,18 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 	def test_clear_notification_count(self):
 		user = User( 'foo@bar', 'temp' )
-		user.lastLoginTime.value = 1
-		user.notificationCount.value = 5
+		user.lastLoginTime = 1
+		user.notificationCount.set( 5 )
 
 		update_from_external_object( user, {'lastLoginTime': 2} )
-		assert_that( user.lastLoginTime, has_property( 'value', 2 ) )
+		assert_that( user.lastLoginTime, is_( 2 ) )
 		assert_that( user.notificationCount, has_property( 'value', 0 ) )
 
-		user.lastLoginTime.value = 1
+		user = User( 'foo@bar', 'temp' )
+		user.lastLoginTime = 1
 		user.notificationCount.value = 5
 		update_from_external_object( user, {'NotificationCount': 2} )
-		assert_that( user.lastLoginTime, has_property( 'value', 1 ) )
+		assert_that( user.lastLoginTime, is_( 1 ) )
 		assert_that( user.notificationCount, has_property( 'value', 2 ) )
 
 

@@ -196,7 +196,7 @@ class TestSessionService(mock_dataserver.SharedConfiguringTestBase):
 		# Now kill them all, silently
 		for session in sessions:
 			session.creation_time = 0
-			session._last_heartbeat_time.value = 0
+			del session.last_heartbeat_time
 
 		# Now we can request them again, get nothing, and not overflow the stack doing so.
 		assert_that( self.session_service.get_sessions_by_owner( session.owner ), is_( [] ) )

@@ -1,4 +1,15 @@
-from __future__ import print_function, unicode_literals
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from datetime import datetime
 from cStringIO import StringIO
@@ -29,7 +40,7 @@ def _get_userids(ent_catalog, indexname='realname'):
 	rev_index = getattr(ref_idx, '_rev_index', {})
 	result = rev_index.keys() #
 	return result
-		
+
 def _get_field_info(userid, ent_catalog, indexname):
 	idx = ent_catalog.get(indexname, None)
 	rev_index = getattr(idx, '_rev_index', {})
@@ -40,10 +51,10 @@ def _get_user_info_extract():
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
 	ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
 	userids = _get_userids(ent_catalog)
-	
+
 	header = ['username', 'realname', 'alias', 'email']
 	yield ','.join(header).encode('utf-8')
-	
+
 	for iid in userids:
 		u = _ds_intid.queryObject(iid, None)
 		if u is not None and nti_interfaces.IUser.providedBy(u):
@@ -51,7 +62,7 @@ def _get_user_info_extract():
 			email = _get_field_info(iid, ent_catalog, 'email')
 			realname = _get_field_info(iid, ent_catalog, 'realname')
 			yield ','.join([u.username, realname, alias, email]).encode('utf-8')
-				
+
 @view_config(route_name='objects.generic.traversal',
 			 name='user_info_extract',
 			 request_method='GET',
@@ -67,10 +78,10 @@ def _parse_time(t):
 	return datetime.fromtimestamp(t).isoformat() if t else u''
 
 def _get_opt_in_comm():
-	
+
 	header = ['username', 'email', 'createdTime', 'lastModified', 'lastLoginTime', 'is_copaWithAgg']
 	yield ','.join(header).encode('utf-8')
-	
+
 	ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
 	users = ent_catalog.searchResults( topics='opt_in_email_communication')
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
@@ -81,12 +92,12 @@ def _get_opt_in_comm():
 			createdTime = _parse_time(getattr(user, 'createdTime', 0 ))
 			lastModified = _parse_time(getattr(user, 'lastModified', 0 ))
 			lastLoginTime = getattr( user, 'lastLoginTime', None )
-			lastLoginTime = _parse_time(lastLoginTime.value) if lastLoginTime is not None else u''
+			lastLoginTime = _parse_time(lastLoginTime) if lastLoginTime is not None else u''
 			is_copaWithAgg = str(nti_interfaces.ICoppaUserWithAgreementUpgraded.providedBy(user))
-			
+
 			info = [user.username, email, createdTime, lastModified, lastLoginTime, is_copaWithAgg]
 			yield ','.join(info).encode('utf-8')
-			
+
 @view_config(route_name='objects.generic.traversal',
 			 name='user_opt_in_comm',
 			 request_method='GET',

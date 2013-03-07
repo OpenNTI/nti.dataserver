@@ -70,10 +70,14 @@ class INumericValue(minmax_interfaces.IAbstractValue):
 class INumericCounter(INumericValue):
 	"""
 	A counter that can be incremented. Conflicts are resolved by
-	merging the numeric value of the difference in magnitude of changes.
-	Intended to be used for monotonically increasing counters, typically
-	integers.
+	merging the numeric value of the difference in magnitude of
+	changes. Intended to be used for monotonically increasing
+	counters, typically integers.
 	"""
 
 	def increment(amount=1):
-		"Increment the value by the specified amount (which must be non-negative)"
+		"""
+		Increment the value by the specified amount (which must be non-negative).
+
+		:return: The counter with the incremented value.
+		"""
