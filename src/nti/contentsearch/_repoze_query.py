@@ -154,14 +154,16 @@ class _DefaultPostRepozeQueryParser(_DefaultRepozeQueryParser):
 			result = super(_DefaultPostRepozeQueryParser, self)._get_repoze_query(fieldname, term, **kwargs)
 		return result
 	
-def parse_query(qo, type_name, lang='en'):
+def parse_query(qo, type_name):
 	is_all = is_all_query(qo.term)
 	if is_all:
 		return is_all, None
 	else:
-		query_term = qo.term
-		if not validate_query(query_term, lang): 
-			query_term = u'-'
+		lang = qo.language
+		if not validate_query(qo.term, lang): 
+			# the query cannot be parsed by zopyx so change it
+			# to avoud an exception during the actual search
+			qo.term = u'-'
 		
 		parser = component.getUtility(search_interfaces.IRepozeQueryParser, name=type_name)
 		queryobject = parser.parse(qo)
