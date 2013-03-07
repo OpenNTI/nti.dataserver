@@ -124,6 +124,5 @@ def get_queryobject(request):
 			raise hexc.HTTPBadRequest()
 		if batch_size <= 0 or batch_start < 0:
 			raise hexc.HTTPBadRequest()
-			
-	# from IPython.core.debugger import Tracer;  Tracer()() 
+
 	return QueryObject(**args)
