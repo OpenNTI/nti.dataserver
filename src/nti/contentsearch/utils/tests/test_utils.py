@@ -1,6 +1,12 @@
-import unittest
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-import nti.dataserver
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.users import DynamicFriendsList
@@ -8,21 +14,17 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.ntiids.ntiids import make_ntiid
 
-import nti.contentsearch
-from nti.contentsearch.utils import find_all_indexable_pairs
+from .. import find_all_indexable_pairs
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.tests import zanpakuto_commands
-
-from nti.tests import ConfiguringTestBase
+from . import zanpakuto_commands
+from . import ConfiguringTestBase
 
 from hamcrest import (is_, has_length, assert_that)
 
 class TestUtils(ConfiguringTestBase):
-
-	set_up_packages = (nti.dataserver, nti.contentsearch)
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
