@@ -78,20 +78,11 @@ class _Range(object):
 		self.start = start
 	
 	def __eq__(self, other):
-		result = self is other or (	isinstance(other, (list, tuple, _Range))
-									and len(other) >= 2
-									and self.start == other[0]
-									and self.end == other[1])
-		return result
-	
-	def __len__(self):
-		return 3
-	
-	def __getitem__(self, index):
-		if index == 0:
-			result = self.start
-		else:
-			result = self.end if index == 1 else self.text
+		result = self is other
+		if not result and isinstance(other, _Range):
+			result = self.start == other.start and self.end == other.end
+		elif not result and isinstance(other, (list, tuple)): # for testing
+			result = len(other) >= 2 and self.start == other[0] and self.end == other[1]
 		return result
 	
 class ISearchFragment(ext_interfaces.IExternalObject):

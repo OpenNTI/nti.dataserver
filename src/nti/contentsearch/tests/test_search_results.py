@@ -66,7 +66,7 @@ class TestSearchResults(ConfiguringTestBase):
 		sr.add(notes)
 		assert_that(len(sr), is_(len(notes)))
 		for x, note in enumerate(notes):
-			assert_that(note, is_(sr[x][0]))
+			assert_that(note, is_(sr[x].obj))
 
 		note = Note()
 		note.body = [u'test']
