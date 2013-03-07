@@ -97,13 +97,6 @@ class _IndexHit(zcontained.Contained):
 	@property
 	def query(self):
 		return self.__parent__.query
-	
-	def __getitem__(self, index):
-		if index == 0:
-			result = self.obj
-		else:
-			result = self.score if index == 1 else self.query
-		return result
 
 @interface.implementer(search_interfaces.IIndexHitMetaDataTracker)
 class _IndexHitMetaDataTracker(object):

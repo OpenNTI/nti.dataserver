@@ -11,7 +11,6 @@ from zope import interface
 from zope import component
 from zope.deprecation import deprecated
 from zope.index import interfaces as zidx_interfaces
-from zope.interface.common.sequence import IMinimalSequence
 from zope.interface.common.mapping import IReadMapping, IMapping, IFullMapping
 
 from repoze.catalog import interfaces as rcat_interfaces
@@ -612,7 +611,7 @@ class IBaseHit(interface.Interface):
 	query = schema.Object(ISearchQuery, title="Search query", required=True)
 	score = schema.Float(title="hit relevance score", required=True)
 
-class IIndexHit(IBaseHit, IMinimalSequence):
+class IIndexHit(IBaseHit):
 	"""represent a search hit stored in a ISearchResults"""
 	obj = interface.Attribute("The hit object")
 
