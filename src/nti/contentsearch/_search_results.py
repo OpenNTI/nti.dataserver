@@ -22,6 +22,8 @@ from . import interfaces as search_interfaces
 
 class _BaseSearchResults(zcontained.Contained):
 
+	sorted = False
+	
 	def __init__(self, query):
 		assert search_interfaces.ISearchQuery.providedBy(query)
 		self._query = query
@@ -114,14 +116,11 @@ class _SearchResults(_BaseSearchResults):
 
 	def get_hits(self):
 		return self._hits
-	
-	def set_hits(self, hits):
-		self._hits = hits
 
 	def get_hit_meta_data(self):
 		return self._ihitmeta
 
-	hits = property(get_hits, set_hits)
+	hits = property(get_hits)
 	hit_meta_data = property(get_hit_meta_data)
 
 	def _add(self, item):
@@ -136,6 +135,7 @@ class _SearchResults(_BaseSearchResults):
 			ihit = _IndexHit(item, 1.0)
 
 		if ihit is not None:
+			self.sorted = False
 			ihit.__parent__ = self #make sure the parent is set
 			self._hits.append(ihit)
 			self._ihitmeta.track(ihit)
@@ -149,10 +149,11 @@ class _SearchResults(_BaseSearchResults):
 		for item in items or ():
 			self._add(item)
 
-	def sort(self):
-		sortOn = self.query.sortOn
-		comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortOn) if sortOn else None
+	def sort(self, sortOn=None):
+		sortOn = sortOn or self.query.sortOn
+		comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortOn)
 		if comparator is not None:
+			self.sorted = True
 			reverse = not self.query.is_descending_sort_order
 			self._hits.sort(comparator.compare, reverse=reverse)
 
@@ -160,6 +161,7 @@ class _SearchResults(_BaseSearchResults):
 		if 	search_interfaces.ISearchResults.providedBy(other) or \
 			search_interfaces.ISuggestAndSearchResults.providedBy(other):
 
+			self.sorted = False
 			self._ihitmeta += other._ihitmeta
 			self._hits.extend(other.hits)
 

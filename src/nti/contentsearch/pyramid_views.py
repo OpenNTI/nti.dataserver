@@ -10,44 +10,65 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 
 import re
 
+import pyramid.httpexceptions as hexc
+from pyramid.security import authenticated_userid
+
 from zope import interface
 from zope.location import locate
-
-from pyramid.security import authenticated_userid
 
 from .interfaces import IIndexManager
 from ._search_query import QueryObject
 from ._views_utils import get_collection
 from ._content_utils import get_content_translation_table
 
-def _locate(obj, parent, name=None):
-	# TODO: (Instead of modification info, we should be using etags here, anyway).
-	locate(obj, parent, name)
-	# TODO: Make cachable?
-	from nti.appserver import interfaces as app_interfaces # Avoid circular imports
-	interface.alsoProvides( obj, app_interfaces.IUncacheableInResponse )
+class BaseView(object):
 	
-	return obj
-
-class Search(object):
-
+	name = None
+	
 	def __init__(self, request):
 		self.request = request
+		
+	def get_query_object(self):
+		return get_queryobject(self.request)
+	
+	@property
+	def registry(self):
+		return self.request.registry
+	
+	def _locate(self, obj, parent):
+		# TODO: (Instead of modification info, we should be using etags here, anyway).
+		locate(obj, parent, self.name)
+		# TODO: Make cachable?
+		from nti.appserver import interfaces as app_interfaces # Avoid circular imports
+		interface.alsoProvides( obj, app_interfaces.IUncacheableInResponse )
+		return obj
+				
+class SearchView(BaseView):
 
+	name = 'Search'
+	
 	def __call__( self ):
-		query = get_queryobject(self.request)
-		indexmanager = self.request.registry.getUtility( IIndexManager )
-		return _locate( indexmanager.search( query=query), self.request.root, 'Search' )
+		query = self.get_query_object()
+		indexmanager = self.registry.getUtility( IIndexManager )
+		result = self._locate( indexmanager.search( query=query), self.request.root)
+		return result
+	
+Search = SearchView
 
-class UserSearch(object):
+class UserDataSearchView(object):
 
+	name = 'UserSearch'
+	
 	def __init__( self, request ):
 		self.request = request
 
 	def __call__( self ):
 		query = get_queryobject(self.request)
-		indexmanager = self.request.registry.getUtility( IIndexManager )
-		return _locate( indexmanager.user_data_search( query=query ), self.request.root, 'UserSearch' )
+		indexmanager = self.registry.getUtility( IIndexManager )
+		result = self._locate( indexmanager.user_data_search( query=query ), self.request.root )
+		return result
+
+UserSearch = UserDataSearchView
 
 _extractor_pe = re.compile('[?*]*(.*)')
 
@@ -94,6 +115,19 @@ def get_queryobject(request):
 				nset.add(ntiid)
 		if nset:
 			args['searchOn'] = nset
+		else:
+			raise hexc.HTTPBadRequest()
+			
+	batch_size = args.get('batchSize', None)
+	batch_start = args.get('batchStart', None)
+	if batch_size is not None and batch_start is not None:
+		try:
+			batch_size = int(batch_size)
+			batch_start = int(batch_start)
+		except ValueError:
+			raise hexc.HTTPBadRequest()
+		if batch_size <= 0 or batch_start < 0:
+			raise hexc.HTTPBadRequest()
 			
 	# from IPython.core.debugger import Tracer;  Tracer()() 
 	return QueryObject(**args)
