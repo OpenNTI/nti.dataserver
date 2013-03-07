@@ -295,7 +295,6 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 	@WithMockDSTrans
 	def test_password_logon_success(self):
 		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
-		user.lastLoginTime.value = 0
 
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
@@ -309,7 +308,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		assert_that( result.headers, has_entry( "Policy", 'jason.madden@nextthought.com' ) )
 		# The event fired
 		assert_that( user.lastLoginTime,
-					 has_property( 'value', greater_than( 0 ) ) )
+					 is_( greater_than( 0 ) ) )
 
         # Or a redirect
 		get_current_request().params['success'] = '/the/url/to/go/to'

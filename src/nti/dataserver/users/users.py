@@ -368,6 +368,19 @@ class User(Principal):
 
 	__external_resolvers__ = { 'ignoring': _resolve_entities, 'accepting': _resolve_entities }
 
+	# For begin/end update pairs we track a depth and we also
+	# record all objects we hand out during this time, posting
+	# notifications only on the last endUpdates
+	_v_updateDepth = 0
+	_v_updateSet = None
+
+	# The last login time is an number of seconds (as with time.time).
+	# When it gets reset, the number of outstanding notifications also
+	# resets. It is writable, number is not...
+	lastLoginTime = minmax.NumericPropertyDefaultingToZero(b'lastLoginTime', minmax.NumericMaximum, as_number=True)
+	# ...although, pending a more sophisticated notification tracking
+	# mechanism, we are allowing notification count to be set
+	notificationCount = minmax.NumericPropertyDefaultingToZero( b'notificationCount', minmax.MergingCounter )
 
 	# TODO: If no AvatarURL is set when externalizing,
 	# send back a gravatar URL for the primary email:
@@ -410,24 +423,6 @@ class User(Principal):
 		self.containers.__name__ = '' # TODO: This is almost certainly wrong. We hack around it
 		self.__install_container_hooks()
 
-		# The last login time is an number of seconds (as with time.time).
-		# When it gets reset, the number of outstanding notifications also
-		# resets. It is writable, number is not...
-		self.lastLoginTime = minmax.Maximum(0)
-		# ...although, pending a more sophisticated notification tracking
-		# mechanism, we are allowing notification count to be set
-		self.notificationCount = minmax.MergingCounter(0)
-
-		# We maintain our own stream. The modification queue posts
-		# items to our stream, we are responsible for organization,
-		# expiration, etc.
-		self.stream = None
-
-		# For begin/end update pairs we track a depth and we also
-		# record all objects we hand out during this time, posting
-		# notifications only on the last endUpdates
-		self._v_updateDepth = 0
-		self._v_updateSet = None
 
 	def __install_container_hooks(self):
 		self.containers.afterAddContainedObject = self._postCreateNotification
@@ -436,6 +431,11 @@ class User(Principal):
 		# TODO: Make the rest use events as well
 
 	def __setstate__( self, state ):
+		# Old objects might have a 'stream' of none? For no particular
+		# reason?
+		if 'stream' in state and state['stream'] is None:
+			del state['stream']
+
 		super(User,self).__setstate__( state )
 		# re-install our hooks that are transient
 		self.__install_container_hooks()
@@ -458,21 +458,21 @@ class User(Principal):
 	NTIID = property(named_entity_ntiid)
 
 	def update_last_login_time(self):
-		self.lastLoginTime.value = time.time()
+		self.lastLoginTime = time.time()
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		with self._NoChangeBroadcast( self ):
 			super(User,self).updateFromExternalObject( parsed, *args, **kwargs )
 			updated = None
 			lastLoginTime = parsed.pop( 'lastLoginTime', None )
-			if isinstance( lastLoginTime, numbers.Number ) and self.lastLoginTime.value < lastLoginTime:
-				self.lastLoginTime.value = lastLoginTime
-				self.notificationCount.value = 0
+			if isinstance( lastLoginTime, numbers.Number ) and self.lastLoginTime < lastLoginTime:
+				self.lastLoginTime = lastLoginTime
+				self.notificationCount = 0 # reset to zero. Note that we don't del the property to keep the same persistent object object
 				updated = True
 
 			notificationCount = parsed.pop( 'NotificationCount', None )
 			if isinstance( notificationCount, numbers.Number ):
-				self.notificationCount.value = notificationCount
+				self.notificationCount = notificationCount
 				updated = True
 
 			if 'password' in parsed:
@@ -1021,7 +1021,7 @@ class User(Principal):
 	def _acceptIncomingChange( self, change, direct=True ):
 		accepted = super(User,self)._acceptIncomingChange( change, direct=direct )
 		if accepted:
-			self.notificationCount.value = self.notificationCount.value + 1
+			self.notificationCount.increment()
 			self._broadcastIncomingChange( change )
 
 	def _broadcastIncomingChange( self, change ):

@@ -37,7 +37,9 @@ from zope.container.contained import uncontained
 from zope.container.contained import contained
 from zope.container.contained import NameChooser
 
-from nti.zodb.minmax import NumericMaximum, ConstantZeroValue
+from nti.zodb.persistentproperty import PersistentPropertyHolder
+from nti.zodb.minmax import NumericMaximum
+from nti.zodb.minmax import NumericPropertyDefaultingToZero
 
 _MAX_UNIQUEID_ATTEMPTS = 1000
 
@@ -174,8 +176,9 @@ except ImportError:
 	class AcquireObjectsOnReadMixin(object):
 		"No-op because Acquisition is not installed."
 		pass
+
 @interface.implementer(interfaces.ILastModified,annotation.IAttributeAnnotatable)
-class LastModifiedBTreeContainer(BTreeContainer):
+class LastModifiedBTreeContainer(PersistentPropertyHolder,BTreeContainer):
 	"""
 	A BTreeContainer that provides storage for lastModified and created
 	attributes (implements the :class:`interfaces.ILastModified` interface).
@@ -188,20 +191,14 @@ class LastModifiedBTreeContainer(BTreeContainer):
 	"""
 
 	createdTime = 0
-	_lastModified = ConstantZeroValue()
+	lastModified = NumericPropertyDefaultingToZero('_lastModified', NumericMaximum, as_number=True )
 
 	def __init__( self ):
 		self.createdTime = time.time()
-		self._lastModified = NumericMaximum(value=0)
 		super(LastModifiedBTreeContainer,self).__init__()
 
-	def _get_lastModified(self):
-		return self._lastModified.value
 	def _set_lastModified(self, lm):
-		# NOTE: Changing this value through the property
-		# will result in false conflicts. Call the setter instead.
-		self._lastModified.value = lm
-	lastModified = property( _get_lastModified, _set_lastModified )
+		self.lastModified = lm
 
 	def updateLastMod(self, t=None ):
 		self._set_lastModified( t if t is not None and t > self.lastModified else time.time() )

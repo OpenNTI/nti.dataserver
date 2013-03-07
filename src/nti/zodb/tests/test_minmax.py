@@ -4,11 +4,12 @@ from __future__ import unicode_literals, print_function, absolute_import
 from hamcrest import assert_that, is_, less_than, greater_than, less_than_or_equal_to
 from hamcrest import same_instance
 from hamcrest import has_property
+from hamcrest import has_key
 
 from nti.tests import validly_provides
 
 from nti.zodb import interfaces
-from nti.zodb.minmax import MergingCounter, NumericMinimum, NumericMaximum, ConstantZeroValue
+from nti.zodb.minmax import MergingCounter, NumericMinimum, NumericMaximum, ConstantZeroValue, NumericPropertyDefaultingToZero
 
 from nose.tools import assert_raises
 import cPickle as pickle
@@ -92,3 +93,88 @@ def test_zero():
 
 	with assert_raises( NotImplementedError ):
 		czv._p_resolveConflict( None, None, None )
+
+from nti.zodb.persistentproperty import PersistentPropertyHolder
+from ZODB import DB
+class WithProperty(PersistentPropertyHolder):
+
+	a = NumericPropertyDefaultingToZero( 'a', NumericMaximum, as_number=True )
+	b = NumericPropertyDefaultingToZero( 'b', MergingCounter )
+
+def test_zero_property_increment():
+	db = DB(None)
+	conn = db.open()
+
+	obj = WithProperty()
+	conn.add( obj )
+
+	assert_that( obj._p_status, is_( 'saved' ) )
+
+	# Just accessing them doesn't change the saved status
+	assert_that( obj.a, is_( 0 ) )
+	assert_that( obj._p_status, is_( 'saved' ) )
+
+	assert_that( obj.b.value, is_( 0 ) )
+	assert_that( obj._p_status, is_( 'saved' ) )
+
+	assert_that( obj.__getstate__(), is_( {} ) )
+
+	# Only when we do something does the status change
+	obj.b.increment()
+	assert_that( obj._p_status, is_( 'changed' ) )
+	assert_that( obj.b, is_( same_instance( obj.b ) ) )
+	assert_that( obj.__getstate__(), has_key( 'b' ) )
+	assert_that( obj.b, is_( MergingCounter ) )
+
+
+def test_zero_property_set():
+	db = DB(None)
+	conn = db.open()
+
+	obj = WithProperty()
+	conn.add( obj )
+
+	assert_that( obj._p_status, is_( 'saved' ) )
+
+	# Just accessing them doesn't change the saved status
+	assert_that( obj.a, is_( 0 ) )
+	assert_that( obj._p_status, is_( 'saved' ) )
+
+	assert_that( obj.b.value, is_( 0 ) )
+	assert_that( obj._p_status, is_( 'saved' ) )
+
+	assert_that( obj.__getstate__(), is_( {} ) )
+
+	# Only when we do something does the status change
+	obj.b.set(3)
+	assert_that( obj._p_status, is_( 'changed' ) )
+	assert_that( obj.b, is_( same_instance( obj.b ) ) )
+	assert_that( obj.__getstate__(), has_key( 'b' ) )
+	assert_that( obj.b.value, is_( 3 ) )
+
+
+
+def test_zero_property_value():
+	db = DB(None)
+	conn = db.open()
+
+	obj = WithProperty()
+	conn.add( obj )
+
+	assert_that( obj._p_status, is_( 'saved' ) )
+
+	# Just accessing them doesn't change the saved status
+	assert_that( obj.a, is_( 0 ) )
+	assert_that( obj._p_status, is_( 'saved' ) )
+
+	assert_that( obj.b.value, is_( 0 ) )
+	assert_that( obj._p_status, is_( 'saved' ) )
+
+	assert_that( obj.__getstate__(), is_( {} ) )
+
+	# Only when we do something does the status change
+	obj.a = 3
+	assert_that( obj._p_status, is_( 'changed' ) )
+	assert_that( obj.a, is_( same_instance( obj.a ) ) )
+	assert_that( obj.__getstate__(), has_key( 'a' ) )
+	assert_that( obj.a, is_( 3 ) )

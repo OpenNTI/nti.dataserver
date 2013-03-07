@@ -17,39 +17,33 @@ from zope import interface
 from . import interfaces
 from .containers import _tx_key_insen
 
-from nti.zodb.minmax import NumericMaximum
+from nti.zodb.persistentproperty import PersistentPropertyHolder
+from nti.zodb.minmax import NumericMaximum, NumericPropertyDefaultingToZero
 
 import zc.dict
 
 @interface.implementer(interfaces.ILastModified)
-class LastModifiedDict(zc.dict.Dict):
+class LastModifiedDict(PersistentPropertyHolder,zc.dict.Dict):
 	"""
 	A BTree-based persistent dictionary that maintains the
 	data required by :class:`interfaces.ILastModified`. Since this is not a
 	:class:`zope.container.interfaces.IContainer`, this is done when this object is modified.
 	"""
 
+	lastModified = NumericPropertyDefaultingToZero('_lastModified', NumericMaximum, as_number=True )
+
 	def __init__( self, *args, **kwargs ):
 		self.createdTime = time.time()
-		self._lastModified = NumericMaximum(value=0)
 		super(LastModifiedDict,self).__init__( *args, **kwargs )
 
-	def _get_lastModified(self):
-		return self._lastModified.value
-	def _set_lastModified(self, lm):
-		# NOTE: Changing this value through the property
-		# will result in false conflicts. Call the setter instead.
-		self._lastModified.value = lm
-	lastModified = property( _get_lastModified, _set_lastModified )
-
 	def updateLastMod(self, t=None ):
-		self._set_lastModified( t if t is not None and t > self.lastModified else time.time() )
+		self.lastModified = t if t is not None and t > self.lastModified else time.time()
 		return self.lastModified
 
 	def updateLastModIfGreater( self, t ):
 		"Only if the given time is (not None and) greater than this object's is this object's time changed."
 		if t is not None and t > self.lastModified:
-			self._set_lastModified( t )
+			self.lastModified = t
 		return self.lastModified
 
 	def pop(self, key, *args ):
