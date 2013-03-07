@@ -21,8 +21,6 @@ from ._search_query import QueryObject
 from ._views_utils import get_collection
 from ._content_utils import get_content_translation_table
 
-from nti.externalization.externalization import toExternalObject
-
 class BaseView(object):
 	
 	name = None
@@ -52,7 +50,7 @@ class SearchView(BaseView):
 	
 	def __call__( self ):
 		query = self.query
-		result = toExternalObject(self.indexmanager.search(query=query))
+		result = self.indexmanager.search(query=query)
 		result = self._locate( result, self.request.root)
 		return result
 	
@@ -64,7 +62,7 @@ class UserDataSearchView(BaseView):
 
 	def __call__( self ):
 		query = self.query
-		result = toExternalObject(self.indexmanager.search(query=query))
+		result = self.indexmanager.search(query=query)
 		result = self._locate(result, self.request.root )
 		return result
 
