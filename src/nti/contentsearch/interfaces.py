@@ -14,6 +14,8 @@ from zope.index import interfaces as zidx_interfaces
 from zope.interface.common.sequence import IMinimalSequence
 from zope.interface.common.mapping import IReadMapping, IMapping, IFullMapping
 
+from Acquisition.interfaces import IAcquirer
+
 from repoze.catalog import interfaces as rcat_interfaces
 
 from dolmen.builtins import IDict
@@ -609,10 +611,10 @@ class ICloudSearchQueryParser(ISearchQueryParser):
 
 class IBaseHit(interface.Interface):
 	"""represent a base search hit"""
-	query = interface.Attribute("The query that produced this hit")
-	score = schema.Float(title="hit relevance score", required=True, readonly=True)
+	query = schema.Object(ISearchQuery, title="Search query", required=True)
+	score = schema.Float(title="hit relevance score", required=True)
 
-class IIndexHit(IBaseHit, IMinimalSequence):
+class IIndexHit(IBaseHit, IAcquirer, IMinimalSequence):
 	"""represent a search hit stored in a ISearchResults"""
 	obj = interface.Attribute("The hit object")
 
@@ -654,9 +656,10 @@ class IIndexHitMetaDataTracker(interface.Interface):
 		pass
 
 class IBaseSearchResults(interface.Interface):
-	query = interface.Attribute("Search query")
+	query = schema.Object(ISearchQuery, title="Search query", required=True)
 
 class ISearchResults(IBaseSearchResults):
+	
 	hits = TypedIterable( value_type=schema.Object(IIndexHit, title="index hit"),
 						  title="IIndexHit objects", required=True, readonly=True)
 

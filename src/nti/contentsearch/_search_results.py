@@ -85,7 +85,22 @@ class _PageableSearchResults(_BaseSearchResults):
 		else:
 			return super(_PageableSearchResults, self).__iter__()
 
-_IndexHit = collections.namedtuple('_IndexHit', 'obj score query')
+@interface.implementer(search_interfaces.IIndexHit)
+class _IndexHit(zcontained.Contained):
+	
+	__slots__ = ('obj', 'score', 'query', '__parent__', '__name__')
+	
+	def __init__(self, obj, score, query):
+		self.obj = obj
+		self.score = score
+		self.query = query
+
+	def __getitem__(self, index):
+		if index == 0:
+			result = self.obj
+		else:
+			result = self.score if index == 1 else self.query
+		return result
 
 @interface.implementer(search_interfaces.IIndexHitMetaDataTracker)
 class _IndexHitMetaDataTracker(object):
@@ -155,6 +170,7 @@ class _SearchResults(_PageableSearchResults):
 			ihit = _IndexHit(item, 1.0, self.query)
 
 		if ihit is not None:
+			ihit.__parent__ = self
 			self._hits.append(ihit)
 			self._ihitmeta.track(ihit)
 
