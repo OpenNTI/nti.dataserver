@@ -19,6 +19,7 @@ import Acquisition
 
 from nti.ntiids import ntiids
 from nti.dataserver import containers
+from nti.dataserver import datastructures
 from nti.dataserver import sharing
 
 from zope.schema.fieldproperty import FieldProperty
@@ -33,6 +34,7 @@ from zope.container.interfaces import INameChooser
 from zope.container.contained import ContainerSublocations
 class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 							 containers.CheckingLastModifiedBTreeContainer,
+							 datastructures.ContainedMixin, # Pulls in nti_interfaces.IContained, containerId, id
 							 Acquisition.Implicit):
 	title = AdaptingFieldProperty(for_interfaces.ITopic['title'])
 	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])

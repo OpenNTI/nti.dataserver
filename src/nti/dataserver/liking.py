@@ -95,10 +95,12 @@ def _unrate_object( context, username, cat_name ):
 
 	rating = _lookup_like_rating_for_read( context, cat_name )
 	if rating and rating.userRating( username ) is not None:
-		rating.remove_rating( username )
+		old_rating = rating.remove_rating( username )
+		assert int(old_rating) is 0
 		# NOTE: The default implementation of a category does not
 		# fire an event on unrating, so we do.
-		notify( contentratings.events.ObjectRatedEvent(context, None, cat_name ) )
+		# Must include the rating so that the listeners can know who did it
+		notify( contentratings.events.ObjectRatedEvent(context, old_rating, cat_name ) )
 		return rating
 
 def _rates_object( context, username, cat_name, safe=False ):
@@ -267,7 +269,7 @@ class _BinaryUserRatings(Contained, Persistent):
 		"""Remove the rating for a given user"""
 		self._ratings.remove(username)
 		self._length.change(-1)
-		return Rating( 1, username )
+		return Rating( 0, username )
 
 	def all_user_ratings(self, include_anon=False):
 		"""
@@ -302,10 +304,9 @@ class _BinaryUserRatings(Contained, Persistent):
 @component.adapter( interfaces.ILastModified, contentratings.interfaces.IObjectRatedEvent )
 def update_last_mod_on_rated( modified_object, event ):
 	"""
-	When an object is rated, its last modified time, and that of its parent,
-	should be updated.
+	When an object is rated (or unrated), its last modified time, and
+	that of its parent, should be updated.
 	"""
-
 
 	# An alternative to this would be to transform IObjectRatedEvent
 	# into IObjectModified event and let the normal handlers for that take over.

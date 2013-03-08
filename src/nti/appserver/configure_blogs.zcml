@@ -34,6 +34,7 @@
 	<subscriber handler=".forum_views.notify_online_author_of_comment" />
 	<subscriber handler=".forum_views.temp_post_added_to_indexer" />
 	<subscriber handler=".forum_views.temp_post_modified_to_indexer" />
+	<subscriber handler=".forum_views.temp_store_favorite_object" />
 
 	<!-- Activity stream updating -->
 	<subscriber handler=".forum_views.store_created_comment_in_global_activity" />

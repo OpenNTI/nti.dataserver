@@ -592,6 +592,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
 		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
 		pub_url = self.require_link_href_with_rel( res.json_body, 'publish' )
+		fav_href = self.require_link_href_with_rel( res.json_body, 'favorite' ) # entries can be favorited
 
 		# Before its published, the second user can see nothing
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
@@ -775,6 +776,22 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body['Last Modified'], greater_than( content_last_mod ) )
 		content_last_mod = res.json_body['Last Modified']
 		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
+
+		# and, if favorited, filtered to the favorites
+		for uname, app in ((user_username, testapp), (user2_username, testapp2)):
+			app.post( fav_href )
+			res = app.get( '/dataserver2/users/' + uname + '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
+							   params={'filter': 'Favorite'})
+			assert_that( res.json_body['Items'], contains( has_entry( 'title', 'My New Blog' ) ) )
+			unfav_href = self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
+
+		for uname, app, status in ((user_username, testapp, 200), (user2_username, testapp2, 404)):
+			app.post( unfav_href )
+			res = app.get( '/dataserver2/users/' + uname + '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
+							   params={'filter': 'Favorite'},
+							   status=status)
+			if status == 200:
+				assert_that( res.json_body['Items'], is_empty() )
 
 		# The original user can delete a comment from the other user
 		testapp.delete( self.require_link_href_with_rel( comment1res.json_body, 'edit' ), status=204 )
