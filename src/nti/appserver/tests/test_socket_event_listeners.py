@@ -42,6 +42,7 @@ class MockSession(object):
 class MockChange(object):
 	type = "Type"
 	object = None
+	send_change_notice = True
 
 class TestEvents(ConfiguringTestBase):
 

@@ -267,7 +267,7 @@ class _FriendsListUsernameIterable(object):
 	def __iter__(self):
 		return (x.username for x in self.context)
 
-@interface.implementer(nti_interfaces.IEntityIterable)
+@interface.implementer(nti_interfaces.IEnumerableEntityContainer)
 @component.adapter(nti_interfaces.IFriendsList)
 class _FriendsListEntityIterable(object):
 
@@ -276,6 +276,9 @@ class _FriendsListEntityIterable(object):
 
 	def __iter__(self):
 		return (x for x in self.context)
+
+	def __contains__(self, other):
+		return other in iter(self)
 
 from nti.dataserver.sharing import DynamicSharingTargetMixin
 
@@ -370,7 +373,6 @@ class _DynamicFriendsListUsernameIterable(_FriendsListUsernameIterable):
 		names.add( self.context.creator.username )
 		return iter(names)
 
-@interface.implementer(nti_interfaces.IEntityIterable)
 @component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
 class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 	"""
