@@ -209,6 +209,7 @@ class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 	def get_tags(self):
 		result = self.obj.tags
 		result = _process_words(set(result)) if result else ()
+		return result
 	
 @component.adapter(IDict)
 @interface.implementer(	search_interfaces.IHighlightContentResolver,
