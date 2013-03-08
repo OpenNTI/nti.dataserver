@@ -29,10 +29,9 @@ from nti.mimetype import mimetype
 from ._views_utils import get_ntiid_path
 from . import interfaces as search_interfaces
 
+from .common import ( last_modified_, content_, title_, ntiid_)
 from .common import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 					 SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE)
-
-from .common import ( last_modified_, content_, title_, ntiid_)
 
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
@@ -148,7 +147,14 @@ class _PostSearchHit(_SearchHit):
 		self.tags = self.get_field(adapted, "get_tags")
 		self.title = self.get_field(adapted, "get_title")
 		return adapted
-		
+	
+	def get_title(self):
+		return self.title or u''
+	
+	def get_tags(self):
+		t = self.tags or ()
+		return unicode(' '.join(t))
+
 @component.adapter(search_interfaces.IWhooshBookContent)
 @interface.implementer(search_interfaces.IWhooshBookSearchHit)
 class _WhooshBookSearchHit(_BaseSearchHit):

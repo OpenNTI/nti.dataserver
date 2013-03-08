@@ -31,6 +31,7 @@ SCORE			= u'Score'
 NTIID 			= unicode(ext_interfaces.StandardExternalFields.NTIID)
 CLASS 			= unicode(ext_interfaces.StandardExternalFields.CLASS)
 QUERY 			= u'Query'
+FIELD 			= u'Field'
 ITEMS			= u'Items'
 CONTENT			= u'Content'
 SNIPPET 		= u'Snippet'
