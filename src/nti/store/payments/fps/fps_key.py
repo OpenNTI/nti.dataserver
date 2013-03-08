@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Stripe access key.
+AWS FPS access key.
 
 $Id$
 """
@@ -12,8 +12,8 @@ from zope import interface
 
 from . import interfaces
 
-@interface.implementer(interfaces.IStripeAccessKey)
-class StripeAccessKey(object):
+@interface.implementer(interfaces.IFPSAccessKey)
+class FPSAccessKey(object):
 
 	__slots__ = ('alias', 'value')
 	

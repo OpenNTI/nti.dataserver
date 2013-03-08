@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Payment interfaces
+FPS Payment interfaces
 
 $Id$
 """
@@ -46,3 +46,6 @@ class IFPSPaymentProcessor(store_interfaces.IPaymentProcessor):
 
 		:token Credit Card token
 		"""
+class IFPSAccessKey(interface.Interface):
+	alias = interface.Attribute( "Key name or alias" )
+	value = interface.Attribute( "The actual key value")

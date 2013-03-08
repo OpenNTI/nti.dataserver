@@ -1,0 +1,14 @@
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:meta="http://namespaces.zope.org/meta">
+
+  <meta:directives namespace="http://nextthought.com/ntp/fps">
+
+	<meta:directive
+		name="registerFPSKey"
+		schema=".zcml.IRegisterFPSKeyDirective"
+		handler=".zcml.registerFPSKey"
+		/>
+  </meta:directives>
+
+</configure>
