@@ -701,7 +701,7 @@ def temp_post_modified_to_indexer( comment, event ):
 
 import contentratings.interfaces
 from nti.dataserver.liking import FAVR_CAT_NAME
-@component.adapter( frm_interfaces.IPersonalBlogEntry, contentratings.interfaces.IObjectRatedEvent )
+
 def temp_store_favorite_object( modified_object, event ):
 	if event.category != FAVR_CAT_NAME:
 		return

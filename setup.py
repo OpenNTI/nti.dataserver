@@ -298,7 +298,7 @@ setup(
 		'zope.error >= 4.1.0',
 		'zope.event >= 4.0.2',
 		'zope.exceptions >= 4.0.6',
-		'zope.filerepresentation >= 4.0.1',
+		'zope.filerepresentation >= 4.0.2',
 		'zope.file >= 0.6.2' if HAVE_ZCONT else '', # zope.container dep
 		'zope.formlib >= 4.3.0a1', # Req'd by zope.mimetype among others,
 		'zope.generations >= 3.7.1',
@@ -309,7 +309,7 @@ setup(
 		'zope.interface >= 4.0.5',
 		'zope.intid >= 3.7.2' if HAVE_ZCONT else '',
 		'zope.keyreference >= 4.0.0a2',
-		'zope.lifecycleevent >= 4.0.1',
+		'zope.lifecycleevent >= 4.0.2',
 		'zope.location >= 4.0.1',
 		'zope.mimetype == 1.3.1', # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
@@ -328,7 +328,7 @@ setup(
 		'zope.security[zcml,untrustedpython] >= 4.0.0a5',
 		'zope.session >= 3.9.5', # 4.0.0a1 is out, should be fine
 		'zope.site >= 3.9.2' if HAVE_ZCONT else '', # local, persistent ZCA sites. 4.0.0a1 is out and should be fine; zope.container dep
-		'zope.size >= 4.0.0',
+		'zope.size >= 4.0.1',
 		# parser and renderers for the classic Zope "structured text" markup dialect (STX).
 		# STX is a plain text markup in which document structure is signalled primarily by identation.
 		# Pulled in by ...?
@@ -377,7 +377,7 @@ setup(
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.9.1',
-			'virtualenvwrapper >= 3.6',
+			'virtualenvwrapper >= 3.6.1',
 			'zc.buildout >= 2.0.1',
 			'z3c.dependencychecker >= 1.10', # unused/used imports
 			'zodbbrowser >= 0.10.4',
