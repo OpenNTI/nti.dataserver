@@ -19,5 +19,5 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(validate_query("note"), is_(True))
 		assert_that(validate_query("car*"), is_(True))
 		assert_that(validate_query("notvalid("), is_(False))
-		assert_that(validate_query('"shared with'), is_(False))
+		assert_that(validate_query('"shared with'), is_(True))
 		assert_that(validate_query('"shared with"'), is_(True))

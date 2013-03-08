@@ -39,15 +39,20 @@ def _can_use_ngram_field(qo):
 class _DefaultSearchQueryValiator(object):
 	
 	def validate(self, query):
-		query = query.term if search_interfaces.ISearchQuery.providedBy(query) else query
+		text = query.term
 		try:
-			EnglishQueryParser.parse(query)
+			#auto complete phrase search
+			if text.startswith('"') and not text.endswith('"'):
+				text += '"'
+				query.term = text
+			EnglishQueryParser.parse(text)
 			return True
 		except Exception, e:
-			logger.warn("Error while parsing query '%s'. '%s'" % (query, e))
+			logger.warn("Error while parsing query '%s'. '%s'" % (text, e))
 			return False
 	
 def validate_query(query, language='en'):
+	query = search_interfaces.ISearchQuery(query)
 	validator = component.getUtility(search_interfaces.IRepozeSearchQueryValidator, name=language)
 	return validator.validate(query)
 
@@ -169,7 +174,7 @@ def parse_query(qo, type_name):
 		return is_all, None
 	else:
 		lang = qo.language
-		if not validate_query(qo.term, lang): 
+		if not validate_query(qo, lang): 
 			# the query cannot be parsed by zopyx so change it
 			# to avoud an exception during the actual search
 			qo.term = u'-'
