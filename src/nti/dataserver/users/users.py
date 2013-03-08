@@ -183,6 +183,19 @@ class Community(Entity,sharing.DynamicSharingTargetMixin):
 	def is_accepting_shared_data_from( self, source ):
 		return True
 
+@interface.implementer(nti_interfaces.IEntityContainer)
+@component.adapter(nti_interfaces.ICommunity)
+class CommunityEntityContainer(object):
+
+	def __init__( self, context ):
+		self.context = context
+
+	def __contains__( self, entity ):
+		try:
+			return self.context in entity.dynamic_memberships
+		except AttributeError:
+			return False
+
 @interface.implementer(nti_interfaces.IUnscopedGlobalCommunity)
 class Everyone(Community):
 	""" A community that represents the entire world. """
@@ -662,7 +675,7 @@ class User(Principal):
 		# A delete notification trumps any other modifications that
 		# might be pending (otherwise we can wind up with weird scenarios
 		# for modification notifications /after/ a delete)
-		if getattr( self, '_v_updateSet', None ) is not None:
+		if self._v_updateSet is not None:
 			self._v_updateSet = [x for x in self._v_updateSet
 								 if ( isinstance(x,tuple) and x[0] != obj ) or (not isinstance(x,tuple) and x != obj)]
 
@@ -824,9 +837,7 @@ class User(Principal):
 		# got here. Thus, we must take care to re-activate it, or
 		# else our hooks and change tracking won't fire.
 		self.__install_container_hooks()
-		if not hasattr( self, '_v_updateDepth' ):
-			self._v_updateDepth = 0 # TODO: Thread local
-		self._v_updateDepth += 1
+		self._v_updateDepth += 1 # TODO: These should be thread local?
 		if self._v_updateDepth == 1:
 			# it would be nice to use a set, but
 			# we're not guaranteed to have hashable objects
@@ -834,7 +845,7 @@ class User(Principal):
 		return self
 
 	def _trackObjectUpdates( self, obj ):
-		if hasattr( self, '_v_updateSet' ) and getattr(self, '_v_updateSet' ) is not None:
+		if self._v_updateSet is not None:
 			if not isinstance( obj, persistent.Persistent ):
 				if isinstance( obj, collections.Sequence ):
 					for x in obj: self._trackObjectUpdates( x )
@@ -900,10 +911,11 @@ class User(Principal):
 				# However, we must be sure that the update depth
 				# regains consistency
 				# FIXME: This is jacked up.
-				if hasattr( self.user, '_v_updateSet' ):
-					del self.user._v_updateSet
-				if hasattr( self.user, '_v_updateDepth' ):
-					del self.user._v_updateDepth
+				for attr in '_v_updateSet', '_v_updateDepth':
+					try:
+						delattr( self.user, attr )
+					except AttributeError:
+						pass
 
 	def updates( self ):
 		"""
@@ -978,6 +990,7 @@ class User(Principal):
 				return
 			seenTargets.add( target_key )
 			# Fire the change off to the user using different threads.
+			logger.log( loglevels.TRACE, "Sending %s change to %s", theChange, user )
 			self._broadcast_change_to( theChange, target=user )
 
 			for nested_username in nti_interfaces.IUsernameIterable(user, ()):
@@ -991,30 +1004,46 @@ class User(Principal):
 				# TODO: Can we make it be just the later? Or remove _get_dynamic_sharing_targets_for_read?
 				sendChangeToUser( self.get_user( nested_username ), theChange )
 
+		modifiedChange = Change( Change.MODIFIED, obj )
+		modifiedChange.creator = self
+
 		if origSharing != newSharing and changeType not in (Change.CREATED,Change.DELETED):
 			# OK, the sharing changed and its not a new or dead
 			# object. People that it used to be shared with will get a
-			# DELETE notice. People that it is now shared with will
+			# DELETE notice (if it is no longer indirectly shared with them at all; if it is, just
+			# a MODIFIED notice). People that it is now shared with will
 			# get a SHARED notice--these people should not later get
 			# a MODIFIED notice for this action.
 			deleteChange = Change( Change.DELETED, obj )
 			deleteChange.creator = self
-			for shunnedPerson in origSharing - newSharing:
-				sendChangeToUser( shunnedPerson, deleteChange )
 			createChange = Change( Change.SHARED, obj )
 			createChange.creator = self
+			for shunnedPerson in origSharing - newSharing:
+				if obj.isSharedWith( shunnedPerson ):
+					# Shared with him indirectly, not directly. We need to be sure
+					# this stuff gets cleared from his caches, thus the delete notice.
+					# but we don't want this to leave us because to the outside world it
+					# is still shared. (Notice we also do NOT send a modified event to this user:
+					# we dont want to put this data back into his caches.)
+					deleteChange.send_change_notice = False
+				else:
+					deleteChange.send_change_notice = True # TODO: mutating this isn't really right, it is a shared persisted object
+				sendChangeToUser( shunnedPerson, deleteChange )
 			for lovedPerson in newSharing - origSharing:
 				sendChangeToUser( lovedPerson, createChange )
-				newSharing.remove( lovedPerson ) # Don't send modify
+				newSharing.remove( lovedPerson ) # Don't send MODIFIED, send SHARED
 
 		# Deleted events won't change the sharing, so there's
 		# no need to look for a union of old and new to send
 		# the delete to.
 
 		# Now broadcast the change to anyone that's left.
-		change = Change( changeType, obj )
-		change.creator = self
-		logger.log( loglevels.TRACE, "Sending %s change to %s", changeType, newSharing )
+		if changeType == Change.MODIFIED:
+			change = modifiedChange
+		else:
+			change = Change( changeType, obj )
+			change.creator = self
+
 		for lovedPerson in newSharing:
 			sendChangeToUser( lovedPerson, change )
 

@@ -38,6 +38,7 @@ from nti.dataserver.contenttypes import Note
 from nti.dataserver.activitystream_change import Change
 from nti.tests import provides
 from nti.tests import verifiably_provides
+from nti.tests import is_false
 
 from nti.externalization.persistence import getPersistentState
 from nti.externalization.externalization import to_external_object
@@ -55,6 +56,7 @@ import persistent.wref
 from nti.ntiids import ntiids
 from nti.contentrange.contentrange import ContentRangeDescription
 import time
+import copy
 
 class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
 	lastModified = 0
@@ -343,8 +345,8 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			assert_that( user2.notificationCount, has_property( 'value', 1 ) ) # original
 
 			with user1.updates():
+				note = user1.getContainedObject( 'c1', note.id )
 				note.updateSharingTargets( (user2,) ) # Now, only directly shared
-				user1.didUpdateObject( note )
 
 			# Nothing changed for the recipient
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
@@ -361,8 +363,8 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			community = users.Community.create_entity( self.ds, username='TheCommunity' )
 
 
-			user1.join_community( community )
-			user2.join_community( community )
+			user1.record_dynamic_membership( community )
+			user2.record_dynamic_membership( community )
 			user2.follow( user1 )
 
 			note = Note()
@@ -381,8 +383,8 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			assert_that( user2.notificationCount, has_property( 'value', 1 ) ) # original
 
 			with user1.updates():
+				note = user1.getContainedObject( 'c1', note.id )
 				note.updateSharingTargets( (user2,) ) # Now, only directly shared
-				user1.didUpdateObject( note )
 
 			# Nothing changed for the recipient
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
@@ -426,8 +428,8 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 
 			with user1.updates():
+				note = user1.getContainedObject( 'c1', note.id )
 				note.updateSharingTargets( (friends_list,) ) # Now, only indirectly shared
-				user1.didUpdateObject( note )
 
 			# Nothing changed for the recipient
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
@@ -446,9 +448,14 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			community = users.Community.create_entity( self.ds, username='TheCommunity' )
 
 
-			user1.join_community( community )
-			user2.join_community( community )
+			user1.record_dynamic_membership( community )
+			user2.record_dynamic_membership( community )
 			user2.follow( user1 )
+			user2_changes = list()
+			def _noticeChange( change ):
+				user2_changes.append( copy.copy( change ) )
+				User._noticeChange( user2, change )
+			user2._noticeChange = _noticeChange
 
 			note = Note()
 			note.body = ['text']
@@ -469,15 +476,30 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
 
 			with user1.updates():
+				note = user1.getContainedObject( 'c1', note.id )
 				note.updateSharingTargets( (community,) ) # Now, only indirectly shared
-				user1.didUpdateObject( note )
 
-			# Nothing changed for the recipient
+			# Nothing changed for the recipient, they just got a modified event
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
 			assert_that( user2.notificationCount, has_property( 'value', 1 ) )
 			stream = user2.getContainedStream( 'c1' )
 			assert_that( stream, has_length( 1 ) )
 			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_MODIFIED ) )
+
+			assert_that( user2_changes, has_length( 2 ) )
+			assert_that( user2_changes[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
+			assert_that( user2_changes[1], has_property( 'type', nti_interfaces.SC_DELETED ) )
+			assert_that( user2_changes[1], has_property( 'send_change_notice', is_false() ) )
+
+			# Now at this point, deleting the object really does remove it
+			with user1.updates():
+				user1.deleteContainedObject( note.containerId, note.id )
+
+			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
+			stream = user2.getContainedStream( 'c1' )
+			assert_that( stream, has_length( 0 ) )
+
+			del user2._noticeChange
 
 
 	@WithMockDS(with_changes=True)

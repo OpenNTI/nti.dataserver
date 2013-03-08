@@ -6,6 +6,7 @@ Functions and architecture for general activity streams.
 from __future__ import print_function, unicode_literals, absolute_import
 
 import persistent
+from operator import setitem
 
 from zope import interface
 from zope import component
@@ -46,7 +47,12 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	CIRCLED  = nti_interfaces.SC_CIRCLED
 
 	useSummaryExternalObject = False
-	object_is_shareable = None
+
+	object_is_shareable = property( lambda self: self.__dict__.get('_v_object_is_shareable', None),
+									lambda self, val: setitem( self.__dict__, '_v_object_is_shareable', val ) )
+	# FIXME: So badly wrong at this level
+	send_change_notice = property(  lambda self: self.__dict__.get('_v_send_change_notice', True), # default to true
+									lambda self, val: setitem( self.__dict__, '_v_send_change_notice', val ) )
 
 	__name__ = None
 	__parent__ = None

@@ -529,6 +529,21 @@ class IEntityIterable(interface.Interface):
 		Return iterator across entity objects.
 		"""
 
+class IEntityContainer(interface.Interface):
+	"""
+	Something that can report whether an entity "belongs" to it.
+	"""
+
+	def __contains__( entity ):
+		"""
+		Is the entity a member of this container?
+		"""
+
+class IEnumerableEntityContainer(IEntityContainer,IEntityIterable):
+	"""
+	Something that can enumerate and report on entity memberships.
+	"""
+
 class IOpenIdUser(IUser):
 	"""
 	A user of the system with a known OpenID identity URL.

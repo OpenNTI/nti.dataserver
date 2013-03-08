@@ -53,13 +53,17 @@
 	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
 			 factory=".friends_lists._FriendsListUsernameIterable" />
 	<adapter factory=".friends_lists._FriendsListEntityIterable"
-			 provides="nti.dataserver.interfaces.IEntityIterable" />
+			 provides="nti.dataserver.interfaces.IEnumerableEntityContainer" />
 
 	<!-- DFLs do so specially -->
 	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
 			 factory=".friends_lists._DynamicFriendsListUsernameIterable" />
-	<adapter provides="nti.dataserver.interfaces.IEntityIterable"
+	<adapter provides="nti.dataserver.interfaces.IEnumerableEntityContainer"
 			 factory=".friends_lists._DynamicFriendsListEntityIterable" />
+
+	<!-- Communities can report memberships -->
+	<adapter provides="nti.dataserver.interfaces.IEntityContainer"
+			 factory=".users.CommunityEntityContainer" />
 
 
 

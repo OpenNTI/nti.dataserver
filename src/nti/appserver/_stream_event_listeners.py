@@ -36,8 +36,9 @@ def user_change_broadcaster( user, change ):
 	Notifies the chat server of data change events so they can be
 	put on the user's socket.
 	"""
-	logger.log( loglevels.TRACE, 'Broadcasting incoming change to %s chg: %s', user.username, change.type)
-	notify( chat_interfaces.DataChangedUserNotificationEvent( (user.username,), change ) )
+	if change.send_change_notice:
+		logger.log( loglevels.TRACE, 'Broadcasting incoming change to %s chg: %s', user.username, change.type)
+		notify( chat_interfaces.DataChangedUserNotificationEvent( (user.username,), change ) )
 
 class ITemporaryChangeEmailMarker(interface.Interface):
 	"Temporary marker interface, assigned using configuration to a user who wants to get change emails."
