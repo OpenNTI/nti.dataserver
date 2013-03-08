@@ -145,7 +145,8 @@ class _PostSearchHit(_SearchHit):
 		result = None
 		if for_interfaces.IHeadlinePost.providedBy(obj):
 			obj = getattr(obj,'__parent__', None)
-		if for_interfaces.IHeadlineTopic.providedBy(obj): 
+		if 	for_interfaces.IHeadlineTopic.providedBy(obj) or \
+			for_interfaces.IPersonalBlogComment.providedBy(obj): 
 			result = getattr(obj,'id', None)
 		return result or u''
 		
