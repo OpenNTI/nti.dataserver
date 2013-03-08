@@ -700,7 +700,9 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# Both of these the other user can update
 		data['title'] = 'Changed my title'
-		testapp2.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data )
+		res = testapp2.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data )
+		comment2_fav_href = self.require_link_href_with_rel( res.json_body, 'favorite' )
+		comment2_title = data['title']
 
 		# (Though he cannot update the actual post itself)
 		testapp2.put_json( story_url, data, status=403 )
@@ -783,6 +785,22 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			res = app.get( '/dataserver2/users/' + uname + '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
 							   params={'filter': 'Favorite'})
 			assert_that( res.json_body['Items'], contains( has_entry( 'title', 'My New Blog' ) ) )
+			unfav_href = self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
+
+		for uname, app, status in ((user_username, testapp, 200), (user2_username, testapp2, 404)):
+			app.post( unfav_href )
+			res = app.get( '/dataserver2/users/' + uname + '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
+							   params={'filter': 'Favorite'},
+							   status=status)
+			if status == 200:
+				assert_that( res.json_body['Items'], is_empty() )
+
+		# Likewise, favoriting comments works
+		for uname, app in ((user_username, testapp), (user2_username, testapp2)):
+			app.post( comment2_fav_href )
+			res = app.get( '/dataserver2/users/' + uname + '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
+							   params={'filter': 'Favorite'})
+			assert_that( res.json_body['Items'], contains( has_entry( 'title', comment2_title ) ) )
 			unfav_href = self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
 
 		for uname, app, status in ((user_username, testapp, 200), (user2_username, testapp2, 404)):
