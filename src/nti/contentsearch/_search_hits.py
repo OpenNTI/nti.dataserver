@@ -17,6 +17,8 @@ from zope import interface
 
 import repoze.lru
 
+from nti.contentfragments import interfaces as frg_interfaces
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
@@ -91,11 +93,17 @@ class _SearchHit(_BaseSearchHit):
 		adapted = component.queryAdapter(original, self.adapter_interface)
 		self[NTIID] = self.get_field(adapted, 'get_ntiid')
 		self[CREATOR] = self.get_field(adapted, 'get_creator')
-		self[SNIPPET] = self.get_field(adapted, 'get_content')
+		self[SNIPPET] = self.get_snippet(adapted)
 		self[CONTAINER_ID] = self.get_field(adapted, 'get_containerId')
 		self[LAST_MODIFIED] = self.get_field(adapted, 'get_last_modified', 0)
 		return adapted
 	
+	@classmethod
+	def get_snippet(cls, adpated):
+		text = cls.get_field(adpated, 'get_content') or u''
+		text = component.getAdapter(text, frg_interfaces.IPlainTextContentFragment, name='text')
+		return text
+		
 	@classmethod
 	def get_field(cls, adapted, mnane, default=u''):
 		m = getattr(adapted, mnane, None)
