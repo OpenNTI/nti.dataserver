@@ -396,3 +396,10 @@ class IUserActivityStorage(interface.Interface):
 	Storage for objects the user created but that do not belong to him.
 	"""
 	# TODO: This will probably move, not sure where to.
+
+class IUserActivityProvider(interface.Interface):
+	"""
+	In the scope of a request, provide the activity data to return.
+	"""
+	# TODO: This will move like the above. There may be a better
+	# interface from zope.contentprovider or something to use

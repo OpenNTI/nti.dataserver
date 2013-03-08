@@ -96,10 +96,9 @@ class UserActivityGetView(RecursiveUGDQueryView):
 		# FIXME: Note that right now, we are only querying the global store (all the recursion
 		# and iteration is handled in the super). This is probably easy to fix,
 		# but we are also only using the global store (see forum_views)
-
-		activity = app_interfaces.IUserActivityStorage( user, None )
-		if activity is not None:
-			result.append( activity.getContainer( '', () ) )
+		activity_provider = component.queryMultiAdapter( (user, self.request), app_interfaces.IUserActivityProvider )
+		if activity_provider:
+			result.append( activity_provider.getActivity() )
 		return result
 
 # TODO: This is almost certainly the wrong place for this
@@ -109,3 +108,14 @@ class DefaultUserActivityStorage(IntidContainedStorage):
 	pass
 
 DefaultUserActivityStorageFactory = an_factory(DefaultUserActivityStorage)
+
+@interface.implementer(app_interfaces.IUserActivityProvider)
+class DefaultUserActivityProvider(object):
+
+	def __init__( self, user, request ):
+		self.user = user
+
+	def getActivity( self ):
+		activity = app_interfaces.IUserActivityStorage( self.user, None )
+		if activity is not None:
+			return activity.getContainer( '', () )
