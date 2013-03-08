@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Payment interfaces
+Stripe Payment interfaces
 
 $Id$
 """
