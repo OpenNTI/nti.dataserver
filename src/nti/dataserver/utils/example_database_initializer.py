@@ -226,7 +226,7 @@ class ExampleDatabaseInitializer(object):
 			args['external_value'] = ext_value
 			user = User.create_user( **args )
 			register_user( user )
-			
+
 			for  c in communities:
 				if	(c.username == self.nti_testers and is_test_user) or \
 					(c.username != self.nti_testers and not is_test_user):
