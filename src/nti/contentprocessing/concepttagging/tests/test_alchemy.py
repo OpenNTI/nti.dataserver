@@ -26,7 +26,7 @@ class TestConceptTagger(ConfiguringTestBase):
 			
 	@unittest.SkipTest
 	def test_alchemy_ct(self):
-		concepts = _AlchemyAPIKConceptTaggger()(self.sample_content)
+		concepts = _AlchemyAPIKConceptTaggger()(self.sample_content, "NTI-TEST")
 		assert_that(concepts, has_length(8))
 		concept = concepts[0]
 		assert_that(concept, is_not(None))
@@ -37,5 +37,3 @@ class TestConceptTagger(ConfiguringTestBase):
 		assert_that(sm, has_entry('website', u'http://www.fbi.gov',))
 		assert_that(sm, has_entry(u'dbpedia', u'http://dbpedia.org/resource/Federal_Bureau_of_Investigation'))
 		assert_that(sm, has_entry(u'freebase', u'http://rdf.freebase.com/ns/guid.9202a8c04000641f8000000000017c33'))
-
-

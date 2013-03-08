@@ -30,7 +30,3 @@ from ._ngrams_utils import compute_ngrams
 from ._content_utils import split_content
 from ._content_utils import get_content_translation_table
 
-@interface.implementer( cp_interfaces.IAlchemyAPIKey )		
-def alchemy_api_key():
-	#TODO: Get NT API Key
-	return u'afe98c5b8fb8586e930d1b2128386d40c136e6d3'
