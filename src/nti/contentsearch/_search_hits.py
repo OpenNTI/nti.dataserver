@@ -136,19 +136,10 @@ class _PostSearchHit(_SearchHit):
 	def set_hit_info(self, original, score):
 		adapted = super(_PostSearchHit, self).set_hit_info(original, score)
 		self[TYPE] = POST
-		self[ID] = self.get_post_id(original)
+		self[ID] = self.get_field(adapted, "get_id")
 		self.tags = self.get_field(adapted, "get_tags")
 		self.title = self.get_field(adapted, "get_title")
 		return adapted
-	
-	def get_post_id(self, obj):
-		result = None
-		if for_interfaces.IHeadlinePost.providedBy(obj):
-			obj = getattr(obj,'__parent__', None)
-		if 	for_interfaces.IHeadlineTopic.providedBy(obj) or \
-			for_interfaces.IPersonalBlogComment.providedBy(obj): 
-			result = getattr(obj,'id', None)
-		return result or u''
 		
 @component.adapter(search_interfaces.IWhooshBookContent)
 @interface.implementer(search_interfaces.IWhooshBookSearchHit)
