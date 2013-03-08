@@ -49,7 +49,7 @@ def reindex_posts(user, users_get, ds_intid):
 		pass
 	return counter
 
-def evolve(context):
+def do_evolve(context):
 	"""
 	Evolve generation 19 to 20 by reindexing posts.
 	"""
@@ -77,3 +77,6 @@ def evolve(context):
 			reindex_posts(user, users.get, ds_intid)
 		
 	logger.debug('Evolution done!!!')
+	
+def evolve(context):
+	pass

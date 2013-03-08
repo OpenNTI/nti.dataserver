@@ -3,6 +3,8 @@ from zope.configuration import xmlconfig
 
 import nti.dataserver as dataserver
 import nti.contentsearch as contentsearch
+from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase as DSConfiguringTestBase
 
 phrases = (	"Yellow brown", "Blue red green render purple?",
@@ -34,3 +36,8 @@ zanpakuto_commands =  (	"Shoot To Kill",
 
 class ConfiguringTestBase(DSConfiguringTestBase):
 	set_up_packages = (dataserver, contentsearch, ('repoze_full.zcml', contentsearch))
+
+
+class ApplicationTestBase(SharedApplicationTestBase):
+	pass
+

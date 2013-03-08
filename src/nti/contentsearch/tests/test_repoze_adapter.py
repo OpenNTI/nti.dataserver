@@ -9,9 +9,13 @@ __docformat__ = "restructuredtext en"
 
 import unittest
 
+from webtest import TestApp
+
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Redaction
+from nti.dataserver.contenttypes.forums.forum import PersonalBlog
+
 from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids.ntiids import make_ntiid
@@ -24,8 +28,11 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
 										NTIID, PHRASE_SEARCH)
 
+
 from nti.contentsearch.tests import zanpakuto_commands
+from nti.contentsearch.tests import ApplicationTestBase
 from nti.contentsearch.tests import ConfiguringTestBase
+from nti.contentsearch.tests import WithSharedApplicationMockDS
 
 from hamcrest import (is_not, has_key, has_item, has_entry, has_length, assert_that)
 
@@ -36,6 +43,19 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
 	
+	def _create_forum(self, user, name='Blog'):
+		containers = user.containers
+		forum = containers.getContainer(name)
+		if forum is None:
+			forum = PersonalBlog()
+			forum.__parent__ = user
+			forum.creator = user
+			forum.__name__ = name
+			forum.title = user.username
+			# TODO: Events?
+			containers.addContainer( name, forum, locate=False )
+			containers.addContainer( forum.NTIID, forum, locate=False )
+			
 	def _create_note(self, msg, username, containerId=None):
 		note = Note()
 		note.body = [unicode(msg)]
@@ -256,6 +276,39 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		
 		hits = rim.search('"ax by"')
 		assert_that(hits, has_length(1))
+	
 
+class TestAppRepozeUserAdapter(ApplicationTestBase):
+	
+	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001', **kwargs):
+		return User.create_user( self.ds, username=username, password=password, **kwargs)
+	
+	@WithSharedApplicationMockDS
+	def test_post_dict(self):
+		
+		username = 'ichigo@bleach.com' 
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user(username=username)
+		
+		data = { 'Class': 'Post',
+				 'title': 'Unohana',
+				 'body': ["Begging her not to die Kenpachi screams out in rage as his opponent fades away"],
+				 'tags': ['yachiru', 'haori'] }
+					
+		testapp = TestApp( self.app )		
+		testapp.post_json( '/dataserver2/users/%s/Blog' % username, data, status=201,
+							extra_environ=self._make_extra_environ(username) )
+		
+		with mock_dataserver.mock_db_trans(self.ds):
+			rim = search_interfaces.IRepozeEntityIndexManager(user, None)
+			hits = rim.search('Kenpachi')
+			assert_that(hits, has_length(1))
+			
+			hits = rim.search('Unohana')
+			assert_that(hits, has_length(1))
+			
+			hits = rim.search('yachiru')
+			assert_that(hits, has_length(1))
+	
 if __name__ == '__main__':
 	unittest.main()
