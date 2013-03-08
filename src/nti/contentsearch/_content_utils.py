@@ -211,6 +211,16 @@ class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 		result = _process_words(set(result)) if result else ()
 		return result
 	
+	def get_id(self):
+		result = None
+		obj = self.obj
+		if for_interfaces.IHeadlinePost.providedBy(obj):
+			obj = getattr(self.obj, '__parent__', None)
+		if 	for_interfaces.IHeadlineTopic.providedBy(obj) or \
+			for_interfaces.IPersonalBlogComment.providedBy(obj): 
+			result = getattr(obj,'id', None)
+		return result or u''
+	
 @component.adapter(IDict)
 @interface.implementer(	search_interfaces.IHighlightContentResolver,
 						search_interfaces.INoteContentResolver,

@@ -443,6 +443,9 @@ class IPostContentResolver(_ContentMixinResolver,
 						   ICreatorResolver,
 						   IShareableContentResolver):
 
+	def get_id():
+		"""return the post id"""
+		
 	def get_title():
 		"""return the post/forum title"""
 		
