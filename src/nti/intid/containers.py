@@ -16,8 +16,11 @@ from zope import interface
 from zope import component
 
 import BTrees
+from BTrees.Length import Length
 import persistent
+
 from zope.cachedescriptors.property import CachedProperty
+from zope.cachedescriptors.property import Lazy
 
 from zope.container.contained import Contained
 
@@ -89,7 +92,6 @@ class IntidResolvingIterable(_AbstractIntidResolvingFacade, Iterable, Container,
 	def __len__( self ):
 		return len(self.context)
 
-
 	def __contains__( self, obj ):
 		"""
 		Is the given object in the container? This is implemented as a linear check.
@@ -133,15 +135,23 @@ class IntidResolvingMappingFacade(_AbstractIntidResolvingFacade,DictMixin,Mappin
 		return '<%s %s/%s>' % (self.__class__.__name__, self.__parent__, self.__name__)
 
 	def __setitem__( self, key, val ):
-		raise NotImplementedError()
+		raise TypeError('Immutable Object')
 
 	def __delitem__( self, key ):
-		raise NotImplementedError()
+		raise TypeError('Immutable Object')
 
+class _LengthIntidResolvingMappingFacade(IntidResolvingMappingFacade):
+
+	def __init__( self, *args, **kwargs ):
+		self._len = kwargs.pop( '_len' )
+		super(_LengthIntidResolvingMappingFacade,self).__init__( *args, **kwargs )
+
+	def __len__(self):
+		return self._len()
 
 _marker = object()
 
-class IntidContainedStorage(persistent.Persistent,Contained):
+class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Container, Sized):
 	"""
 	An object that implements something like the interface of
 	:class:`nti.dataserver.datastructures.ContainedStorage`, but in a
@@ -166,19 +176,38 @@ class IntidContainedStorage(persistent.Persistent,Contained):
 		# Map from string container ids to self.family.II.TreeSet
 		# { 'containerId': II.TreeSet() }
 		# The values in the TreeSet are the intids of the shared
-		# objects
+		# objects. Remember that len() of them is not efficient.
 		self._containers = self.family.OO.BTree()
 
 	def __iter__( self ):
 		return iter(self._containers)
+
+	@Lazy
+	def _IntidContainedStorage__len(self):
+		l = Length()
+		ol = len(self._containers)
+		if ol > 0:
+			l.change(ol)
+		self._p_changed = True
+		return l
+
+	def __len__(self):
+		return self.__len()
+
 
 	@CachedProperty # TODO: Is this right? Are we sure that the volatile properties added will go away when ghosted?
 	def containers(self):
 		"""
 		Returns an object that has a `values` method that iterates
 		the list-like (immutable) containers.
+
+		.. note:: It is not efficient to get the length of the list-like
+			containers; it is however, efficient, to test their boolean
+			status (empty or not) and to get the length of the overall returned
+			object.
 		"""
-		return IntidResolvingMappingFacade( self._containers, allow_missing=True, parent=self, name='SharedContainedObjectStorage' )
+		return _LengthIntidResolvingMappingFacade( self._containers, allow_missing=True, parent=self, name='SharedContainedObjectStorage',
+												   _len=self.__len)
 
 	def _check_contained_object_for_storage( self, contained ):
 		pass
@@ -187,8 +216,10 @@ class IntidContainedStorage(persistent.Persistent,Contained):
 		if contained is None and when_none is not _marker:
 			return when_none
 
-		return component.getUtility( zc_intid.IIntIds ).getId( contained )
+		return self._get_intid_for_object_from_utility( contained )
 
+	def _get_intid_for_object_from_utility(self, contained):
+		return component.getUtility( zc_intid.IIntIds ).getId( contained )
 
 	def addContainedObjectToContainer( self, contained, containerId='' ):
 		"Defaults to the unnamed container"
@@ -196,8 +227,10 @@ class IntidContainedStorage(persistent.Persistent,Contained):
 
 		container_set = self._containers.get( containerId )
 		if container_set is None:
+			_len = self.__len
 			container_set = self.family.II.TreeSet()
 			self._containers[containerId] = container_set
+			_len.change(1)
 		container_set.add( self._get_intid_for_object( contained ) )
 		return contained
 
@@ -223,5 +256,29 @@ class IntidContainedStorage(persistent.Persistent,Contained):
 	def getContainer( self, containerId, defaultValue=None ):
 		return self.containers.get( containerId, default=defaultValue )
 
+	def popContainer( self, containerId, default=_marker ):
+		try:
+			_len = self.__len
+			result = self._containers.pop( containerId )
+			_len.change( -1 )
+			return result
+		except KeyError:
+			if default is not _marker:
+				return default
+			raise
+
 	def __repr__( self ):
 		return '<%s at %s/%s>' % (self.__class__.__name__, self.__parent__, self.__name__ )
+
+	## Some dict-like conveniences
+	__getitem__ = getContainer
+	get = getContainer
+	pop = popContainer
+	def __contains__(self, key):
+		return key in self._containers
+	def keys(self):
+		return self._containers.keys()
+	def values(self):
+		return self.containers.values() # unwrapping
+	def items(self):
+		return self.containers.items() # unwrapping
