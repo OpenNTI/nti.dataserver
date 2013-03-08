@@ -13,7 +13,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-
+# All the patching uses private things so turn that warning off
+#pylint: disable=W0212
 import sys
 
 import gevent
@@ -36,11 +37,14 @@ def _patch_zeo_client_storage_deadlock():
 	# Patch for try/finally missing in ZODB 3.10.5/3.11.0a1 ZEO4.0.0a1 that can lead to deadlock
 	# See https://bugs.launchpad.net/zodb/+bug/1048644
 	# See https://github.com/zopefoundation/ZEO/pull/1
+	from ZODB import POSException
+	import ZEO.ClientStorage
+	from ZEO.ClientStorage import disconnected_stub
+
 	def tpc_begin(self, txn, tid=None, status=' '):
 		"""Storage API: begin a transaction."""
 		if self._is_read_only:
 			raise POSException.ReadOnlyError()
-		#logger.debug( "Taking tpc lock %s %s for %s", self, self._tpc_cond, txn )
 		self._tpc_cond.acquire()
 		try:
 			self._midtxn_disconnect = 0
@@ -54,7 +58,6 @@ def _patch_zeo_client_storage_deadlock():
 
 				self._tpc_cond.wait(30)
 		finally:
-			#logger.debug( "Releasing tpc lock %s %s for %s", self, self._tpc_cond, txn )
 			self._tpc_cond.release()
 
 		self._transaction = txn
@@ -71,7 +74,7 @@ def _patch_zeo_client_storage_deadlock():
 		self._tbuf.clear()
 		self._seriald.clear()
 		del self._serials[:]
-	import ZEO.ClientStorage
+
 	ZEO.ClientStorage.ClientStorage.tpc_begin = tpc_begin
 
 def _patch_thread_stop():
