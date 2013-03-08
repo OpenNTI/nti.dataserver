@@ -12,10 +12,12 @@ from . import interfaces
 from zope import interface
 from zope.minmax._minmax import Maximum, Minimum, AbstractValue
 
-# The Default Max/Min classes exist because, in some circumstances
-# during database creation a plain Maximum/Minimum loses
-# its `value`: __getstate__ raises AttributeError because self.value
-# is not there (for no clear reason!). These classes define it as a default
+# Give all these things a 'set' method, a point for subclasses
+# to potentially override
+def _set(self, value):
+	self.value = value
+assert 'set' not in AbstractValue.__dict__ or AbstractValue.set is _set # catch incompatible changes
+AbstractValue.set = _set
 
 @functools.total_ordering
 @interface.implementer(interfaces.INumericValue)
@@ -28,9 +30,6 @@ class AbstractNumericValue(AbstractValue):
 
 	def __init__( self, value=0 ):
 		super(AbstractNumericValue,self).__init__( value )
-
-	def set(self,value):
-		self.value = value
 
 	# Comparison methods
 	def __eq__( self, other ):
@@ -98,6 +97,9 @@ class _ConstantZeroValue(AbstractNumericValue):
 
 	def _p_resolveConflict(self, old, committed, new):
 		raise NotImplementedError()
+
+	def set( self, value ):
+		pass
 
 	value = property( lambda s: 0, lambda s, nv: None )
 
