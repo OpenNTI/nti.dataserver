@@ -7,8 +7,6 @@ __docformat__ = "restructuredtext en"
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-import unittest
-
 from webtest import TestApp
 
 from nti.dataserver.users import User
@@ -25,8 +23,9 @@ from nti.contentsearch import interfaces as search_interfaces
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
+from nti.contentsearch.common import ( tags_)
 from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
-										NTIID, PHRASE_SEARCH)
+										NTIID, PHRASE_SEARCH, ID, FIELD)
 
 
 from nti.contentsearch.tests import zanpakuto_commands
@@ -276,7 +275,6 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		
 		hits = rim.search('"ax by"')
 		assert_that(hits, has_length(1))
-	
 
 class TestAppRepozeUserAdapter(ApplicationTestBase):
 	
@@ -314,7 +312,5 @@ class TestAppRepozeUserAdapter(ApplicationTestBase):
 			items = hits[ITEMS]
 			assert_that(items, has_length(1))
 			hit = items[0]
-			assert_that(hit, has_entry('ID', 'Unohana'))
-			
-if __name__ == '__main__':
-	unittest.main()
+			assert_that(hit, has_entry(ID, 'Unohana'))
+			assert_that(hit, has_entry(FIELD, tags_))

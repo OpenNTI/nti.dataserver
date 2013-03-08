@@ -29,10 +29,17 @@ class HighlightInfo(object):
 	__slots__ = ('snippet', 'fragments', 'total_fragments')
 	
 	def __init__(self, snippet=None, fragments=(), total_fragments=0):
-		self.fragments = fragments
+		self.fragments = fragments or ()
 		self.total_fragments = total_fragments
 		self.snippet = unicode(snippet) if snippet else u''
 		
+	@property
+	def match_count(self):
+		count = 0
+		for sf in self.fragments:
+			count += len(sf)
+		return count
+	
 	@property
 	def fragment_count(self):
 		return self.total_fragments

@@ -26,8 +26,9 @@ from . import interfaces as search_interfaces
 from ._search_highlights import HighlightInfo
 from ._search_highlights import word_fragments_highlight
 
+from .common import ( tags_, content_, title_)
 from .common import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
-					 SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS)
+					 SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS, FIELD)
 
 # highlight decorators
 
@@ -43,20 +44,46 @@ def _word_fragments_highlight(query=None, text=None):
 
 @component.adapter(search_interfaces.ISearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _WordSnippetHighlightDecorator(object):
+class _SearchHitHighlightDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 	
 	def decorateExternalObject(self, original, external):
-		query = getattr(original, 'query', None)
-		if query:
-			text = external.get(SNIPPET, None)
-			hi = _word_fragments_highlight(query, text)
-			external[SNIPPET] = hi.snippet
-			if hi.fragments:
-				external[FRAGMENTS] = toExternalObject(hi.fragments)
-				external[TOTAL_FRAGMENTS] = hi.total_fragments
+		query = original.query
+		text = external.get(SNIPPET, None)
+		hi = self.hilight_text(query, text)
+		self.set_snippet(hi, external)
 
+	def hilight_text(self, query, text):
+		hi = _word_fragments_highlight(query, text)
+		return hi
+	
+	def set_snippet(self, hi, external):
+		external[SNIPPET] = hi.snippet
+		if hi.fragments:
+			external[FRAGMENTS] = toExternalObject(hi.fragments)
+			external[TOTAL_FRAGMENTS] = hi.total_fragments
+			
+@component.adapter(search_interfaces.IPostSearchHit)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class _PostSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
+	
+	def decorateExternalObject(self, hit, external):
+		query = hit.query
+		content_hi = None
+		sources = ((content_,external.get(SNIPPET, None)), (title_, hit.title), (tags_, hit.get_tags()))
+		for field, text in sources:
+			hi = _word_fragments_highlight(query, text)
+			content_hi = hi if not content_hi else content_hi
+			if hi.match_count > 0:
+				self.set_snippet(hi, external)
+				external[FIELD] = field
+				return
+			
+		if content_hi:
+			external[FIELD] = external[FIELD] = field
+			self.set_snippet(content_hi, external)
+			
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(search_interfaces.ISearchHit)
 class _SearchHitExternalizer(object):
