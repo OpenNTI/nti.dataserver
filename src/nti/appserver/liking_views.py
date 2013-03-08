@@ -37,7 +37,7 @@ class LikeLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=nti_interfaces.ILikeable,
-			  permission=nauth.ACT_READ, # anyone logged in...
+			  permission=nauth.ACT_READ, # anyone that can see the object
 			  request_method='POST',
 			  name='like')
 def _LikeView(request):
@@ -56,7 +56,7 @@ def _LikeView(request):
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=nti_interfaces.ILikeable,
-			  permission=nauth.ACT_READ, # anyone logged in...
+			  permission=nauth.ACT_READ, # anyone that can see the object
 			  request_method='POST',
 			  name='unlike')
 def _UnlikeView(request):
@@ -86,7 +86,7 @@ class FavoriteLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=nti_interfaces.IFavoritable,
-			  permission=nauth.ACT_READ, # anyone logged in...
+			  permission=nauth.ACT_READ, # anyone that can see the object
 			  request_method='POST',
 			  name='favorite')
 def _FavoriteView(request):
@@ -104,7 +104,7 @@ def _FavoriteView(request):
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=nti_interfaces.IFavoritable,
-			  permission=nauth.ACT_READ, # anyone logged in...
+			  permission=nauth.ACT_READ, # anyone that can see the object
 			  request_method='POST',
 			  name='unfavorite')
 def _UnfavoriteView(request):

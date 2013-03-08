@@ -19,6 +19,7 @@ import Acquisition
 from nti.ntiids import ntiids
 
 from nti.dataserver import containers
+from nti.dataserver import datastructures
 from nti.dataserver import sharing
 
 from nti.utils.schema import AdaptingFieldProperty
@@ -31,6 +32,7 @@ from zope.annotation import interfaces as an_interfaces
 class Forum(Acquisition.Implicit,
 			containers.AcquireObjectsOnReadMixin,
 			containers.CheckingLastModifiedBTreeContainer,
+			datastructures.ContainedMixin, # Pulls in nti_interfaces.IContained, containerId, id
 			sharing.AbstractReadableSharedWithMixin):
 
 	__external_can_create__ = False

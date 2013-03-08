@@ -22,9 +22,9 @@ from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
-from nti.chatserver import interfaces as chat_interfaces
 from nti.contentsearch import interfaces as search_interfaces
 
+from nti.dataserver import users
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -698,3 +698,19 @@ def temp_post_modified_to_indexer( comment, event ):
 ## NOTE: You cannot send a stream change on an object deleted event.
 ## See HeadlineTopicDeleteView and the place it points to. This is already
 ## handled.
+
+import contentratings.interfaces
+from nti.dataserver.liking import FAVR_CAT_NAME
+@component.adapter( frm_interfaces.IPersonalBlogEntry, contentratings.interfaces.IObjectRatedEvent )
+def temp_store_favorite_object( modified_object, event ):
+	if event.category != FAVR_CAT_NAME:
+		return
+
+	user = users.User.get_user( event.rating.userid )
+	if not user:
+		return
+	if bool(event.rating):
+		# ok, add it to the shared objects so that it can be seen
+		user._addSharedObject( modified_object )
+	else:
+		user._removeSharedObject( modified_object )

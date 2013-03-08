@@ -322,6 +322,10 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 	_my_objects_may_be_empty = True
 	_support_cross_user = True
+	#: Ordinarily, when we support cross user queries we don't look
+	#: in data shared with the cross user (because it may not be visible to the
+	#: remote user)
+	_force_shared_objects = False
 
 	#: The user object whose data we are requesting. This is not
 	#: necessarily the same as the authenticated remote user;
@@ -401,12 +405,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 		__traceback_info__ = owner, containerId
 		mystuffDict = get_owned( owner, containerId ) if get_owned else ()
-		if owner == remote_user:
-			# Only consider the shared stuff when the actual user is asking
-			# TODO: Handle this better with ACLs
-			sharedstuffList = get_shared( owner, containerId) if get_shared else () # see comments in _meonly_predicate_factory
-		else:
-			sharedstuffList = ()
+		sharedstuffList = get_shared( owner, containerId) if get_shared else () # see comments in _meonly_predicate_factory
 
 		# To determine the existence of the container,
 		# My stuff either exists or it doesn't. The others, being shared,
@@ -427,9 +426,17 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 		:raises nti.appserver.httpexceptions.HTTPNotFound: If no actual objects can be found.
 		"""
-		return self.do_getObjects( user, ntiid, self.getRemoteUser(),
+
+		remote_user = self.getRemoteUser()
+		get_shared = None
+		if self._force_shared_objects or user == remote_user:
+			# Only consider the shared stuff when the actual user is asking
+			# TODO: Handle this better with ACLs
+			get_shared = self.get_shared
+
+		return self.do_getObjects( user, ntiid, remote_user,
 								   get_owned=self.get_owned,
-								   get_shared=self.get_shared,
+								   get_shared=get_shared,
 								   allow_empty=self._my_objects_may_be_empty )
 
 	_DEFAULT_SORT_ON = 'lastModified'

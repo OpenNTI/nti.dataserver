@@ -117,7 +117,7 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		return not hasattr( self.object, 'username' ) # This is the real wierdness. Meant to do with CIRCLED?
 
 	def __repr__(self):
-		return "%s('%s',%s)" % (self.__class__.__name__,self.type,type(self.object).__name__)
+		return "%s('%s',%s)" % (self.__class__.__name__, self.type, self.object.__class__.__name__)
 
 
 @interface.implementer(ext_interfaces.IExternalObject)
