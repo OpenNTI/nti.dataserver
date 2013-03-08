@@ -126,7 +126,6 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 	def toExternalObject(self):
 		eo = super(_SearchResultsExternalizer, self).toExternalObject()
 		eo[ITEMS] = items = []
-		eo[TOTAL_HIT_COUNT] = len(self.results)
 		eo[PHRASE_SEARCH] = self.query.is_phrase_search
 		
 		# process hits
@@ -159,6 +158,10 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
 		eo[HIT_COUNT] = len(items)
 		eo[LAST_MODIFIED] = last_modified
+		
+		if self.query.is_batching:
+			eo[TOTAL_HIT_COUNT] = len(self.results)
+			
 		return eo
 
 @component.adapter(search_interfaces.ISuggestResults)
