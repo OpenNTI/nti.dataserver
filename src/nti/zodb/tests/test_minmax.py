@@ -10,9 +10,16 @@ from nti.tests import validly_provides
 
 from nti.zodb import interfaces
 from nti.zodb.minmax import MergingCounter, NumericMinimum, NumericMaximum, ConstantZeroValue, NumericPropertyDefaultingToZero
+from nti.zodb.minmax import Minimum, Maximum
 
 from nose.tools import assert_raises
 import cPickle as pickle
+
+def test_zope_imports_have_set():
+	for t in Minimum, Maximum:
+		v = t( 0 )
+		v.set( 1 )
+		assert_that( v.value, is_( 1 ) )
 
 def test_comparisons():
 	mc1 = MergingCounter()
