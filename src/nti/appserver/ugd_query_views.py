@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 import logging
 logger = logging.getLogger(__name__)
 
+import sys
 import weakref
 import numbers
 import functools
@@ -687,12 +688,13 @@ class _RecursiveUGDView(_UGDView):
 		# objects with an empty container key, so this takes internal magic
 		containers.add( '' ) # root
 
+		exc_info = None
 		items = []
 		for container in containers:
 			try:
-				items += super(_RecursiveUGDView,self).getObjectsForId( user, container )
+				items.extend( super(_RecursiveUGDView,self).getObjectsForId( user, container ) )
 			except hexc.HTTPNotFound:
-				pass
+				exc_info = sys.exc_info()
 
 		# We are not found iff the root container DNE (empty is OK)
 		# and the children are empty/DNE. In other words, if
@@ -705,14 +707,16 @@ class _RecursiveUGDView(_UGDView):
 			# if each and every one of the items is empty.
 			empty = True
 			for i in items:
+				if not i:
+					continue # Avoid possibly expensive length computation for usually cheaper bool check
 				li = len(i)
 				if li >= 2 or (li == 1 and 'Last Modified' not in i):
 					empty = False
 					break
 
-		if empty:
-			# Let this throw if it did before
-			super(_RecursiveUGDView,self).getObjectsForId( user, ntiid )
+		if empty and exc_info:
+			# Throw the previous not found exception.
+			raise exc_info[0], exc_info[1], exc_info[2]
 
 		return items
 

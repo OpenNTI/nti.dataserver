@@ -658,14 +658,14 @@ def notify_dynamic_memberships_of_blog_entry_publication_change( blog_entry, eve
 def store_created_comment_in_global_activity( comment, event ):
 	storage = app_interfaces.IUserActivityStorage( comment.creator, None )
 	# Put these in default storage
-	if storage:
+	if storage is not None:
 		storage.addContainedObjectToContainer( comment, '' )
 
 @component.adapter(frm_interfaces.IPersonalBlogComment, zope.intid.interfaces.IIntIdRemovedEvent)
 def unstore_created_comment_from_global_activity( comment, event ):
 	storage = app_interfaces.IUserActivityStorage( comment.creator, None )
 	# Put these in default storage
-	if storage:
+	if storage is not None:
 		storage.deleteEqualContainedObjectFromContainer( comment, '' )
 
 
