@@ -130,7 +130,7 @@ class ExampleDatabaseInitializer(object):
 		testUsersCommunity.realname = testUsersCommunity.username
 		testUsersCommunity.alias = self.nti_testers
 
-		return (aopsCommunity, ntiCommunity, testUsersCommunity)
+		return (aopsCommunity, ntiCommunity, mathcountsCommunity, testUsersCommunity)
 
 	def _add_friendslists_to_user( self, for_user ):
 		if for_user.username != 'jason.madden@nextthought.com':
@@ -226,9 +226,10 @@ class ExampleDatabaseInitializer(object):
 			args['external_value'] = ext_value
 			user = User.create_user( **args )
 			register_user( user )
-			for c in communities:
-				if	(c.alias == self.nti_testers and is_test_user) or \
-					(c.alias != self.nti_testers and not is_test_user):
+			
+			for  c in communities:
+				if	(c.username == self.nti_testers and is_test_user) or \
+					(c.username != self.nti_testers and not is_test_user):
 					user.record_dynamic_membership( c )
 					user.follow( c )
 
