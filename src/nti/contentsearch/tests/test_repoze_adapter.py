@@ -275,6 +275,26 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		
 		hits = rim.search('"ax by"')
 		assert_that(hits, has_length(1))
+		
+	@WithMockDSTrans
+	def test_columbia_issue(self):
+		username = 'ichigo@bleach.com'
+		user = self._create_user(username=username )
+		note = Note()
+		note.body = [unicode('light a candle')]
+		note.creator = username
+		note.containerId = make_ntiid(nttype='bleach', specific='manga')
+		note = user.addContainedObject( note )
+		
+		rim = search_interfaces.IRepozeEntityIndexManager(user, None)
+		docid = rim.index_content(note)
+		assert_that(docid, is_not(None))
+
+		hits = rim.search('"light a candle"')
+		assert_that(hits, has_length(1))
+		
+		hits = rim.search("light a candle")
+		assert_that(hits, has_length(1))
 
 class TestAppRepozeUserAdapter(ApplicationTestBase):
 	

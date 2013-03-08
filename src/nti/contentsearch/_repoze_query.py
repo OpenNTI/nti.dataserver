@@ -22,9 +22,18 @@ from repoze.catalog.query import Any as IndexAny
 from repoze.catalog.query import Contains as IndexContains
 from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
+from nti.contentprocessing import split_content
+from nti.contentprocessing import interfaces as cp_interfaces
+
 from .common import is_all_query
 from . import interfaces as search_interfaces
 from .common import (content_, ngrams_, title_, tags_)
+
+def _can_use_ngram_field(qo):
+	tokens = split_content(qo.term)
+	ncomp = component.getUtility(cp_interfaces.INgramComputer, name=qo.language)
+	min_word = min(map(len, tokens))
+	return min_word >= ncomp.minsize
 
 @interface.implementer( search_interfaces.IRepozeSearchQueryValidator )
 class _DefaultSearchQueryValiator(object):
@@ -114,7 +123,7 @@ class Any(IndexAny):
 class _DefaultRepozeQueryParser(object):
 	
 	def _get_search_fields(self, qo):
-		if qo.is_phrase_search or qo.is_prefix_search:
+		if qo.is_phrase_search or qo.is_prefix_search or not _can_use_ngram_field(qo):
 			result = (content_,)
 		else:
 			result = (ngrams_,)
@@ -141,7 +150,7 @@ _DefaultMessageinfoRepozeQueryParser = _DefaultRepozeQueryParser
 class _DefaultPostRepozeQueryParser(_DefaultRepozeQueryParser):
 	
 	def _get_search_fields(self, qo):
-		if qo.is_phrase_search or qo.is_prefix_search:
+		if qo.is_phrase_search or qo.is_prefix_search or not _can_use_ngram_field(qo):
 			result = (content_,)
 		else:
 			result = (ngrams_, title_, tags_)
