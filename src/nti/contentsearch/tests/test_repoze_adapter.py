@@ -309,6 +309,12 @@ class TestAppRepozeUserAdapter(ApplicationTestBase):
 			
 			hits = rim.search('yachiru')
 			assert_that(hits, has_length(1))
-	
+			hits = toExternalObject(hits)
+			assert_that(hits, has_key(ITEMS))
+			items = hits[ITEMS]
+			assert_that(items, has_length(1))
+			hit = items[0]
+			assert_that(hit, has_entry('ID', 'Unohana'))
+			
 if __name__ == '__main__':
 	unittest.main()
