@@ -71,13 +71,18 @@ class _ContentTokenizer(object):
 								flags = re.MULTILINE | re.DOTALL | re.UNICODE)
 
 	def tokenize(self, content):
-		if not content or not isinstance(content, six.string_types):
-			return ()
-
-		plain_text = component.getAdapter( content, frg_interfaces.IPlainTextContentFragment, name='text' )
-		words = self.tokenizer.tokenize(plain_text)
+		if content and isinstance(content, six.string_types):
+			plain_text = self.to_plain_text(content)
+			words = self.tokenizer.tokenize(plain_text)
+		else:
+			words = ()
 		return words
 
+	@classmethod
+	def to_plain_text(cls, content):
+		text = component.getAdapter(content, frg_interfaces.IPlainTextContentFragment, name='text')
+		return text
+	
 @interface.implementer( cp_interfaces.IWordSimilarity )
 class _DefaultWordSimilarity(object):
 
