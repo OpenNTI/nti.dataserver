@@ -14,7 +14,11 @@
 
 	<adapter factory=".forum_views.DefaultUserForumFactory"
 			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog" />
+
 	<adapter factory=".user_activity_views.DefaultUserActivityStorageFactory" />
+	<adapter factory=".user_activity_views.DefaultUserActivityProvider"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+			 zcml:condition="have testmode"/> <!-- The app isn't ready for this yet. Still collect them though. -->
 
 	<cap:capability
 		id='nti.platform.blogging.createblogentry'
