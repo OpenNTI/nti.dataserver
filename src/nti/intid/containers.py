@@ -194,7 +194,6 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 	def __len__(self):
 		return self.__len()
 
-
 	@CachedProperty # TODO: Is this right? Are we sure that the volatile properties added will go away when ghosted?
 	def containers(self):
 		"""

@@ -98,7 +98,7 @@ class UserActivityGetView(RecursiveUGDQueryView):
 		# but we are also only using the global store (see forum_views)
 
 		activity = app_interfaces.IUserActivityStorage( user, None )
-		if activity:
+		if activity is not None:
 			result.append( activity.getContainer( '', () ) )
 		return result
 
