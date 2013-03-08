@@ -118,5 +118,3 @@ def _default_content_translation_table():
 		repl = splits[4] or None if len(splits) >= 5 else None
 		result[int(splits[0])] = repl
 	return result
-
-

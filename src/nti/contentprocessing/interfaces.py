@@ -52,5 +52,5 @@ class IPunctuationCharPattern(interface.Interface):
 	pass
 
 class IAlchemyAPIKey(interface.Interface):
-	"""marker interface for AlchemyAPI"""
-	pass
+	alias = interface.Attribute( "Key name or alias" )
+	value = interface.Attribute( "The actual key value")

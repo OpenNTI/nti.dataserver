@@ -41,7 +41,7 @@ class TestKeyWordExtract(ConfiguringTestBase):
 
 	@unittest.SkipTest
 	def test_alchemy_extract(self):
-		terms = _AlchemyAPIKeyWorExtractor()(self.sample_content)
+		terms = _AlchemyAPIKeyWorExtractor()(self.sample_content, "NTI-TEST")
 		terms = [(r.token, r.relevance) for r in terms]
 		assert_that(terms, has_length(15))
 		assert_that(terms[0], is_((u'blood cells', 0.998273)))

@@ -25,18 +25,15 @@ class _AlchemyAPIKConceptTaggger(object):
 	
 	url = u'http://access.alchemyapi.com/calls/text/TextGetRankedConcepts'
 	limit_kb = 150
-	
-	@property
-	def apikey(self):
-		return component.getUtility(cp_interfaces.IAlchemyAPIKey)
 		
-	def __call__(self, content, **kwargs):
+	def __call__(self, content, keyname, **kwargs):
 		result = ()	
 		content = content or u''
 		size_kb = sys.getsizeof(content)/1024.0
 		if size_kb <= self.limit_kb:
+			apikey = component.getUtility(cp_interfaces.IAlchemyAPIKey, name=keyname)
 			headers = {u'content-type': u'application/x-www-form-urlencoded'}
-			params = {u'text':unicode(content), u'apikey':self.apikey, u'outputMode':u'json'}
+			params = {u'text':unicode(content), u'apikey':apikey.value, u'outputMode':u'json'}
 			params.update(kwargs)
 			try:
 				r = requests.post(self.url, params=params, headers=headers)
