@@ -28,6 +28,7 @@ import nti.tests
 import BTrees
 
 from ..containers import IntidResolvingMappingFacade
+from ..containers import IntidContainedStorage
 
 class TestMappingFacade(nti.tests.AbstractTestBase):
 
@@ -73,3 +74,58 @@ class TestMappingFacade(nti.tests.AbstractTestBase):
 		assert_that( obj, is_( self.utility.data[4] ) )
 
 		assert_that( self.utility.data[4], is_in( facade['b'] ) )
+
+class TestIntidContainedStorage(nti.tests.AbstractTestBase):
+
+	class MockUtility(object):
+
+		data = None
+
+		def getObject( self, key ):
+			return self.data[key]
+
+		def getId( self, obj ):
+			for k, v in self.data.items():
+				if obj == v:
+					return k
+			raise KeyError()
+
+	class FixedUtilityIntidContainedStorage(IntidContainedStorage):
+		utility = None
+		def _get_intid_for_object_from_utility(self, contained):
+			return self.utility.getId( contained )
+
+	def setUp(self):
+		super(TestIntidContainedStorage,self).setUp()
+		self.utility = self.MockUtility()
+		self.utility.data = {i: object() for i in range(10)}
+		self.storage = self.FixedUtilityIntidContainedStorage()
+		self.storage.utility = self.utility
+
+	def test_len(self):
+		storage = self.storage
+		containers = self.storage # the facade stays in sync
+
+		def assert_len( i ):
+			assert_that( storage, has_length( i ) )
+			assert_that( containers, has_length( i ) )
+
+		assert_len( 0 )
+		storage.addContainedObjectToContainer( self.utility.data[1] )
+		assert_len( 1 )
+		storage.addContainedObjectToContainer( self.utility.data[2], 'b' )
+		assert_len( 2 )
+
+		# As it is the length of the containers, removing from a container doesn't
+		# change anything
+		storage.deleteEqualContainedObjectFromContainer( self.utility.data[1] )
+		assert_len( 2 )
+
+		storage.deleteEqualContainedObjectFromContainer( self.utility.data[2], 'b' )
+		assert_len( 2 )
+
+		storage.popContainer( '' )
+		assert_len( 1 )
+
+		storage.popContainer( 'b' )
+		assert_len( 0 )
