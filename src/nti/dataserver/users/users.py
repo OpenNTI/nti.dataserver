@@ -848,7 +848,7 @@ class User(Principal):
 									  else obj )
 
 	def didUpdateObject( self, *objs ):
-		if getattr(self, '_v_updateDepth', 0) > 0:
+		if self._v_updateDepth >= 0:
 			for obj in objs:
 				setPersistentStateChanged( obj )
 				self._trackObjectUpdates( obj )
@@ -856,7 +856,7 @@ class User(Principal):
 	def endUpdates(self):
 		""" Commits any outstanding transaction and posts notifications
 		referring to the updated objects. """
-		if not hasattr(self, '_v_updateSet') or not hasattr(self,'_v_updateDepth'):
+		if self._v_updateDepth <= 0:
 			raise Exception( 'Update depth inconsistent' )
 
 		self._v_updateDepth -= 1
@@ -939,7 +939,7 @@ class User(Principal):
 			del self.ent._broadcast_change_to
 
 	def _postNotification( self, changeType, objAndOrigSharingTuple ):
-		logger.log( loglevels.TRACE, "%s asked to post %s", self, changeType )
+		logger.log( loglevels.TRACE, "%s asked to post %s to %r", self, changeType, objAndOrigSharingTuple )
 		# FIXME: Clean this up, make this not so implicit,
 		# make it go through a central place, make it asnyc, etc.
 

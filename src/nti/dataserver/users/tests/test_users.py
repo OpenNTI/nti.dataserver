@@ -315,6 +315,172 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 
 	@WithMockDS(with_changes=True)
+	def test_share_note_directly_and_indirectly_with_dfl_unshare_with_dfl(self):
+		"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
+
+			friends_list = users.DynamicFriendsList( username='Friends' )
+			friends_list.creator = user1
+			user1.addContainedObject( friends_list )
+			friends_list.addFriend( user2 )
+
+			note = Note()
+			note.body = ['text']
+			note.containerId = 'c1'
+			note.creator = user1.username
+			user2.notificationCount.value = 0
+			with user1.updates():
+				note.addSharingTarget( friends_list ) # indirect sharing
+				note.addSharingTarget( user2 ) # direct sharing
+				user1.addContainedObject( note )
+			assert_that( note.id, is_not( none() ) )
+
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( user2, is_in( note.sharingTargets ) )
+			assert_that( user2.notificationCount, has_property( 'value', 1 ) ) # original
+
+			with user1.updates():
+				note.updateSharingTargets( (user2,) ) # Now, only directly shared
+				user1.didUpdateObject( note )
+
+			# Nothing changed for the recipient
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( user2, is_in( note.sharingTargets ) )
+			assert_that( user2.notificationCount, has_property( 'value', 1 ) )
+
+	@WithMockDS(with_changes=True)
+	def test_share_note_directly_and_indirectly_with_community_unshare_with_community(self):
+		"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
+			community = users.Community.create_entity( self.ds, username='TheCommunity' )
+
+
+			user1.join_community( community )
+			user2.join_community( community )
+			user2.follow( user1 )
+
+			note = Note()
+			note.body = ['text']
+			note.containerId = 'c1'
+			note.creator = user1.username
+			user2.notificationCount.value = 0
+			with user1.updates():
+				note.addSharingTarget( community ) # indirect sharing
+				note.addSharingTarget( user2 ) # direct sharing
+				user1.addContainedObject( note )
+			assert_that( note.id, is_not( none() ) )
+
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( user2, is_in( note.sharingTargets ) )
+			assert_that( user2.notificationCount, has_property( 'value', 1 ) ) # original
+
+			with user1.updates():
+				note.updateSharingTargets( (user2,) ) # Now, only directly shared
+				user1.didUpdateObject( note )
+
+			# Nothing changed for the recipient
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( user2, is_in( note.sharingTargets ) )
+			assert_that( user2.notificationCount, has_property( 'value', 1 ) )
+			stream = user2.getContainedStream( 'c1' )
+			assert_that( stream, has_length( 1 ) )
+			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_MODIFIED ) )
+
+
+	@WithMockDS(with_changes=True)
+	def test_share_note_directly_and_indirectly_with_dfl_unshare_directly(self):
+		"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
+
+			friends_list = users.DynamicFriendsList( username='Friends' )
+			friends_list.creator = user1
+			user1.addContainedObject( friends_list )
+			friends_list.addFriend( user2 )
+
+			note = Note()
+			note.body = ['text']
+			note.containerId = 'c1'
+			note.creator = user1.username
+			user2.notificationCount.value = 0
+			with user1.updates():
+				note.addSharingTarget( friends_list ) # indirect sharing
+				note.addSharingTarget( user2 ) # direct sharing
+				user1.addContainedObject( note )
+			assert_that( note.id, is_not( none() ) )
+
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( user2, is_in( note.sharingTargets ) )
+			assert_that( user2.notificationCount, has_property( 'value', 1 ) ) # original
+			stream = user2.getContainedStream( 'c1' )
+			assert_that( stream, has_length( 1 ) )
+			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
+
+
+			with user1.updates():
+				note.updateSharingTargets( (friends_list,) ) # Now, only indirectly shared
+				user1.didUpdateObject( note )
+
+			# Nothing changed for the recipient
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( user2.notificationCount, has_property( 'value', 1 ) )
+			stream = user2.getContainedStream( 'c1' )
+			assert_that( stream, has_length( 1 ) )
+			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_MODIFIED ) )
+
+	@WithMockDS(with_changes=True)
+	def test_share_note_directly_and_indirectly_with_community_unshare_directly(self):
+		"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
+			community = users.Community.create_entity( self.ds, username='TheCommunity' )
+
+
+			user1.join_community( community )
+			user2.join_community( community )
+			user2.follow( user1 )
+
+			note = Note()
+			note.body = ['text']
+			note.containerId = 'c1'
+			note.creator = user1.username
+			user2.notificationCount.value = 0
+			with user1.updates():
+				note.addSharingTarget( community ) # indirect sharing
+				note.addSharingTarget( user2 ) # direct sharing
+				user1.addContainedObject( note )
+			assert_that( note.id, is_not( none() ) )
+
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( user2, is_in( note.sharingTargets ) )
+			assert_that( user2.notificationCount, has_property( 'value', 1 ) ) # original
+			stream = user2.getContainedStream( 'c1' )
+			assert_that( stream, has_length( 1 ) )
+			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
+
+			with user1.updates():
+				note.updateSharingTargets( (community,) ) # Now, only indirectly shared
+				user1.didUpdateObject( note )
+
+			# Nothing changed for the recipient
+			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+			assert_that( user2.notificationCount, has_property( 'value', 1 ) )
+			stream = user2.getContainedStream( 'c1' )
+			assert_that( stream, has_length( 1 ) )
+			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_MODIFIED ) )
+
+
+	@WithMockDS(with_changes=True)
 	def test_share_unshare_note_with_dynamic_friendslist_external(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self.ds.add_change_listener( users.onChange )
