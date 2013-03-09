@@ -31,18 +31,25 @@ _GENERATION_LINK_KEY = __name__ + '.LinkGenerations'
 @interface.implementer(IAuthenticatedUserLinkProvider)
 class LinkProvider(object):
 
-	def __init__( self, user, request, name=None, url=None, field=None, mime_type=None ):
+	__slots__ = ('user', 'request', '__name__', 'field', 'view_named', 'url', 'mime_type')
+
+	def __init__( self, user, request, name=None, **kwargs ):
 		self.user = user
 		self.request = request
 		self.__name__ = name
-		self.url = url
-		self.mime_type = mime_type
-		self.field = field
+		for k in LinkProvider.__slots__:
+			if getattr( self, k, None ) is None:
+				setattr( self, k, kwargs.pop( k, None ) )
+
+		if kwargs:
+			raise TypeError( "Unknown keyword args", kwargs )
 
 	def get_links( self ):
 		link_name = self.__name__
 		if self.field:
 			elements = ("++fields++" + self.field,)
+		elif self.view_named:
+			elements = ("@@" + self.view_named,)
 		else:
 			# We must handle it
 			elements = ("@@" + VIEW_NAME_NAMED_LINKS, link_name)
@@ -57,6 +64,8 @@ class LinkProvider(object):
 		return "<%s %s %s>" % (self.__class__.__name__, self.__name__, self.url)
 
 class ConditionalLinkProvider(LinkProvider):
+
+	__slots__ = ('minGeneration',)
 
 	def __init__( self, *args, **kwargs ):
 		self.minGeneration = kwargs.pop( 'minGeneration' )

@@ -49,7 +49,7 @@ class IUserLinkDirective(interface.Interface):
 
 	minGeneration = zope.configuration.fields.TextLine(
 		title=_("If given, the minimum required value users must have."),
-		description="""A text string that should be monotonically increasing because it is lexographically compared. For dates, use YYYYMMDD.""",
+		description="""A text string that should be monotonically increasing because it is lexographically compared. For dates, use YYYYMMDD. Mutually exclusive with ``field``.""",
 		required=False )
 
 	url = schema.HTTPURL(
@@ -59,8 +59,14 @@ class IUserLinkDirective(interface.Interface):
 
 	field = zope.configuration.fields.PythonIdentifier(
 		title=_("A field on the user that this will link to, using the ++fields namespace"),
-		description="Mutually exclusive with ``url``",
+		description="Mutually exclusive with ``url`` and ``minGeneration``",
 		required=False )
+
+	view_named = zope.configuration.fields.GlobalObject(
+		title=_("Path to string constant giving the name of a view."),
+		description="If given, this will be used as the destination of the link, thus mutually exclusive with ``field``, ``minGeneration`` and ``url``",
+		required=False,
+		value_type=name)
 
 	mimeType = schema.ValidTextLine(
 		title=_("The mime type expected to be returned by the link"),
@@ -72,7 +78,7 @@ class IUserLinkDirective(interface.Interface):
 		required=False,
 		default=IUser )
 
-def registerUserLink( _context, name=None, named=None, minGeneration=None, url=None, field=None, mimeType=None, for_=IUser ):
+def registerUserLink( _context, name=None, named=None, minGeneration=None, url=None, field=None, view_named=None, mimeType=None, for_=IUser ):
 	if name and named:
 		raise ConfigurationError( "Pick either name or named, not both" )
 	if named:
@@ -86,7 +92,14 @@ def registerUserLink( _context, name=None, named=None, minGeneration=None, url=N
 	if field and url:
 		raise ConfigurationError( "Pick either field or url, not both" )
 
-	kwargs = dict(name=name, url=url, field=field,  mime_type=mimeType)
+	if field and minGeneration:
+		raise ConfigurationError( "Pick either field or minGeneration, not both" ) # because going to a field is handled by its own views
+
+	if view_named and (field or minGeneration or url):
+		raise ConfigurationError( "Pick one of view_named, field, minGeneration, or url" )
+
+	kwargs = dict(name=name, url=url, view_named=view_named, field=field,  mime_type=mimeType)
+
 	if minGeneration:
 		factory = functools.partial( ConditionalLinkProvider, minGeneration=minGeneration, **kwargs )
 	else:

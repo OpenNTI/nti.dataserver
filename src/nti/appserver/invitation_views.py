@@ -83,23 +83,6 @@ def accept_invitations_view( request ):
 
 	return hexc.HTTPNoContent()
 
-@interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
-@component.adapter(nti_interfaces.IUser,pyramid_interfaces.IRequest)
-class AcceptInvitationsLinkProvider(object):
-	"""
-	In the context of a request, ensures that users get a :const:`REL_ACCEPT_INVITATIONS` link.
-	"""
-
-	def __init__( self, user=None, request=None ):
-		self.user = user
-
-	def get_links( self ):
-		link = Link( self.user,
-					 rel=REL_ACCEPT_INVITATIONS,
-					 elements=( '@@' + REL_ACCEPT_INVITATIONS, ) )
-		link_belongs_to_user( link, self.user )
-		return (link,)
-
 # To work better with the ZcmlInvitations, and until we need
 # configured persistent invitations (e.g., user-editable)
 # we synthesize the default invitation. It's tied directly to the
