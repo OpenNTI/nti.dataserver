@@ -10,6 +10,9 @@ __docformat__ = "restructuredtext en"
 from zope import component
 from zope import interface
 
+from math import log
+
+from whoosh import scoring
 from whoosh.query import Term
 from whoosh.qparser import QueryParser
 from whoosh.qparser.dateparse import DateParserPlugin
@@ -19,6 +22,33 @@ from . import interfaces as search_interfaces
 from .common import (content_, quick_, title_, tags_)
 
 default_search_plugins =  (GtLtPlugin, DateParserPlugin, PrefixPlugin, PhrasePlugin)
+
+class CosineScorer(scoring.WeightLengthScorer):
+	
+	def __init__(self, searcher, fieldname, text, qtf=1.0, qmf=1.0):
+		# IDF and average field length are global statistics, so get them from
+		# the top-level searcher
+		parent = searcher.get_parent()  # returns self if no parent
+		self.idf = parent.idf(fieldname, text)		
+		self.qtf = qtf
+		self.qmf = qmf
+		self.setup(searcher, fieldname, text)
+
+	def _score(self, weight, length):
+		DTW = (1.0 + log(weight)) * self.idf
+		QTW = ((0.5 + (0.5 * self.qtf / self.qmf))) * self.idf
+		return DTW * QTW
+
+class CosineScorerModel(scoring.WeightingModel):
+
+	def supports_block_quality(self):
+		return True
+
+	def scorer(self, searcher, fieldname, text, qf=1):
+		if not searcher.schema[fieldname].scorable:
+			return scoring.WeightScorer.for_(searcher, fieldname, text)
+
+		return CosineScorer(searcher, fieldname, text)
 
 def create_query_parser(fieldname, schema=None, plugins=default_search_plugins):
 	qparser = QueryParser(fieldname, schema=schema)
