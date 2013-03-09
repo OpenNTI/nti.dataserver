@@ -167,12 +167,16 @@ def TestApp(app=_TestApp, **kwargs):
 
 class _AppTestBaseMixin(object):
 
+	default_user_extra_interfaces = ()
 	extra_environ_default_user = b'sjohnson@nextthought.COM'
-	def _make_extra_environ(self, user=extra_environ_default_user, update_request=False, **kwargs):
+	def _make_extra_environ(self, user=None, update_request=False, **kwargs):
 		"""
 		The default username is a case-modified version of the default user in :meth:`_create_user`,
 		to test case-insensitive ACLs and login.
 		"""
+		if user is None:
+			user = self.extra_environ_default_user
+
 		if user is self.extra_environ_default_user and 'username' in kwargs:
 			user = str(kwargs.pop( 'username' ) )
 		result = {
@@ -191,8 +195,24 @@ class _AppTestBaseMixin(object):
 
 		return result
 
-	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001', **kwargs):
-		return users.User.create_user( self.ds, username=username, password=password, **kwargs)
+	def _create_user(self, username=None, password='temp001', **kwargs):
+		if username is None:
+			username = self.extra_environ_default_user.lower()
+			ifaces = self.default_user_extra_interfaces
+		else:
+			ifaces = kwargs.pop( 'extra_interfaces', () )
+
+		user = users.User.create_user( self.ds, username=username, password=password, **kwargs)
+		interface.alsoProvides( user, ifaces )
+		return user
+
+	def resolve_user( self, testapp=None, username=None ):
+		if testapp is None:
+			testapp = self.testapp
+		if username is None:
+			username = self.extra_environ_default_user
+
+		return testapp.get( '/dataserver2/ResolveUser/' + username ).json_body['Items'][0]
 
 from zope.component import eventtesting
 class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):

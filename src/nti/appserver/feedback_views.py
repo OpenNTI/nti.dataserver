@@ -68,17 +68,3 @@ def send_feedback_view( request ):
 											   request=request )
 
 	return hexc.HTTPNoContent()
-
-@interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
-@component.adapter(nti_interfaces.IUser,pyramid_interfaces.IRequest)
-class FeedbackLinkProvider(object):
-
-	def __init__( self, user=None, request=None ):
-		self.user = user
-
-	def get_links( self ):
-		link = Link( self.user,
-					 rel=REL_SEND_FEEDBACK,
-					 elements=( '@@' + REL_SEND_FEEDBACK, ) )
-		link_belongs_to_user( link, self.user )
-		return (link,)

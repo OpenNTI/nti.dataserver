@@ -1,38 +1,42 @@
 <!-- -*- mode: nxml -*- -->
 <configure xmlns="http://namespaces.zope.org/zope"
-	   xmlns:i18n="http://namespaces.zope.org/i18n"
-	   xmlns:zcml="http://namespaces.zope.org/zcml">
-    <include package="zope.component" />
+		   xmlns:i18n="http://namespaces.zope.org/i18n"
+		   xmlns:zcml="http://namespaces.zope.org/zcml"
+		   xmlns:link="http://nextthought.com/ntp/link_providers">
 
-    <!-- Logon -->
+	<include package="zope.component" />
+	<include package=".link_providers" file="meta.zcml" />
+
+	<!-- Logon -->
 	<subscriber handler=".logon._user_did_logon" />
 
-    <!-- Local users with passwords get a direct logon link -->
-    <subscriber factory=".logon._SimpleExistingUserLinkProvider"
+	<!-- Local users with passwords get a direct logon link -->
+	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
 				provides=".interfaces.ILogonLinkProvider"/>
-    <!--
+	<!--
 		Users we've never seen before get a logon link too: Security through
 		obscurity and avoiding leaking information. Also, since
 		we are not currently offering any other login types in
 		production, this is necessary to make the login page work out.
-    -->
-    <subscriber factory=".logon._SimpleExistingUserLinkProvider"
+	-->
+	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
 				provides=".interfaces.ILogonLinkProvider"
 				for=".interfaces.IMissingUser pyramid.interfaces.IRequest" />
 
-    <!-- Additional links for logged-in users -->
-    <subscriber factory=".user_link_provider.PersistentUserLinkProvider"
-				provides=".interfaces.IAuthenticatedUserLinkProvider" />
-    <subscriber factory=".feedback_views.FeedbackLinkProvider"
-				provides=".interfaces.IAuthenticatedUserLinkProvider" />
-    <subscriber factory=".invitation_views.AcceptInvitationsLinkProvider"
+	<!-- Additional links for logged-in users -->
+	<subscriber factory=".user_link_provider.PersistentUserLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
-    <subscriber factory=".logon.ImpersonationLinkProvider"
+	<link:userLink named=".feedback_views.REL_SEND_FEEDBACK"
+				   view_named=".feedback_views.REL_SEND_FEEDBACK" />
+	<link:userLink named=".invitation_views.REL_ACCEPT_INVITATIONS"
+				   view_named=".invitation_views.REL_ACCEPT_INVITATIONS" />
+
+	<subscriber factory=".logon.ImpersonationLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
 
-    <!-- All the other logon types are disabled in production -->
+	<!-- All the other logon types are disabled in production -->
 	<configure zcml:condition="have devmode">
 		<subscriber factory=".logon._SimpleMissingUserFacebookLinkProvider"
 					provides=".interfaces.ILogonLinkProvider" />
