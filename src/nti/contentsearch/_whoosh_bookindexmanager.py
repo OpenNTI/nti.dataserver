@@ -20,6 +20,7 @@ from ._whoosh_index import Book
 from ._search_query import QueryObject
 from . import interfaces as search_interfaces
 from ._whoosh_indexstorage import DirectoryStorage
+from ._whoosh_query import CosineScorerModel as CSM
 
 class _BoundingProxy(ProxyBase):
 
@@ -81,19 +82,19 @@ class WhooshBookIndexManager(object):
 	@metric
 	def search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		with _BoundingProxy(self.bookidx.searcher()) as s:
+		with _BoundingProxy(self.bookidx.searcher(weighting=CSM)) as s:
 			results = self.book.search(s, query)
 		return results
 
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		with _BoundingProxy(self.bookidx.searcher()) as s:
+		with _BoundingProxy(self.bookidx.searcher(weighting=CSM)) as s:
 			results = self.book.suggest_and_search(s, query)
 		return results
 
 	def suggest(self, term, *args, **kwargs):
 		query = QueryObject.create(term, **kwargs)
-		with _BoundingProxy(self.bookidx.searcher()) as s:
+		with _BoundingProxy(self.bookidx.searcher(weighting=CSM)) as s:
 			results = self.book.suggest(s, query)
 		return results
 
