@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Appsever adpapters.
-
-Store index events in AWS cloud search
+AppSever adpapters.
 
 $Id$
 """
