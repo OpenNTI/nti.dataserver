@@ -19,7 +19,6 @@ from zope import component
 
 from whoosh import fields
 from whoosh import analysis
-from whoosh import highlight
 
 from nti.contentprocessing import rank_words
 from nti.contentprocessing import default_ngram_maxsize
@@ -103,13 +102,6 @@ class _SearchableContent(object):
 
 		# execute search
 		search_hits = searcher.search(parsed_query, limit=None)
-
-		# set highlight type
-		surround = queryobject.surround
-		maxchars = queryobject.maxchars
-		search_hits.formatter = highlight.NullFormatter() #highlight.UppercaseFormatter()
-		search_hits.fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
-
 		length = len(search_hits)
 		if not length:
 			return results

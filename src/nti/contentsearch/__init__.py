@@ -22,17 +22,17 @@ BoolOp.family = BTrees.family64
 BaseIndex.family = BTrees.family64
 CatalogIndex.family = BTrees.family64
 
-from . import zopyxtxng3corelogger
-sys.modules["zopyx.txng3.core.logger"] = zopyxtxng3corelogger
+from . import zopyxtxng3_logger as ntizopy_logger
+sys.modules["zopyx.txng3.core.logger"] = ntizopy_logger
 try:
 	from zopyx.txng3.core import index as zopyx_coreidx
 	from zopyx.txng3.core import evaluator as zopyx_evaluator
 	from zopyx.txng3.core import resultset as zopyx_resultset
 
-	from . import zopyxtxng3coreresultset as ntizopy_rs
-	from . import zopyxtxng3coredoclist as ntizopyx_doclist
-	from . import zopyxtxng3coreevaluator as ntizopyx_evaluator
-	from . import zopyxtxng3coreparsetree as ntizopyx_parsetree
+	from . import zopyxtxng3_resultset as ntizopy_rs
+	from . import zopyxtxng3_doclist as ntizopyx_doclist
+	from . import zopyxtxng3_evaluator as ntizopyx_evaluator
+	from . import zopyxtxng3_parsetree as ntizopyx_parsetree
 
 	# change the evaluator to correct issue in getting the words
 	# from the zopyx.txng3.core.parsetree nodes
@@ -42,7 +42,7 @@ try:
 	zopyx_coreidx.node_splitter = ntizopyx_parsetree.node_splitter
 
 	for module in (zopyx_coreidx, zopyx_evaluator, zopyx_resultset, ntizopyx_evaluator):
-		module.LOG = zopyxtxng3corelogger.LOG
+		module.LOG = ntizopy_logger.LOG
 		module.DocidList = ntizopyx_doclist.DocidList
 		module.unionResultSets = ntizopy_rs.unionResultSets
 		module.inverseResultSet = ntizopy_rs.inverseResultSet

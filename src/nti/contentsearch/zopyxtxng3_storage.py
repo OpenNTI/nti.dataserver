@@ -24,7 +24,7 @@ from zopyx.txng3.core import widcode as zopyx_widcode
 from zopyx.txng3.core import storage as zopyx_storage
 from zopyx.txng3.core.interfaces import IStorageWithTermFrequency
 	
-from .zopyxtxng3coredoclist import DocidList
+from .zopyxtxng3_doclist import DocidList
 
 class Storage(zopyx_storage.Storage):
 	

@@ -13,7 +13,7 @@ import collections
 from zopyx.txng3.core import evaluator as zopyx_evaluator
 from zopyx.txng3.core import parsetree as zopyx_parsetree
 
-from .zopyxtxng3coreresultset import intersectionResultSets
+from .zopyxtxng3_resultset import intersectionResultSets
 
 class Evaluator(zopyx_evaluator.Evaluator):
 	
