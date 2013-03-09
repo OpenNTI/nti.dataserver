@@ -39,6 +39,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.invitations import interfaces as invite_interfaces
+from nti.appserver.link_providers import interfaces as link_interfaces
 
 from nti.utils.schema import find_most_derived_interface
 from nti.appserver.invitations.utility import accept_invitations
@@ -47,7 +48,7 @@ from nti.appserver._util import logon_user_with_request
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver import site_policies
 from nti.appserver._util import raise_json_error as _raise_error
-from nti.appserver import user_link_provider
+from nti.appserver.link_providers import flag_link_provider
 
 from pyramid.view import view_config
 from pyramid import security as sec
@@ -379,22 +380,18 @@ def request_profile_update_on_user_upgrade(user, event):
 	update. At this time, require the profile to be valid, and allow bypassing some of the
 	normal restrictions on what can be changed in the profile.
 	"""
-	user_link_provider.add_link( user, REL_ACCOUNT_PROFILE_UPGRADE )
+	flag_link_provider.add_link( user, REL_ACCOUNT_PROFILE_UPGRADE )
 	# Apply the marker interface, which vanishes when the user's profile
 	# is updated
 	interface.alsoProvides( user, user_interfaces.IRequireProfileUpdate )
 
-
-class ProfileUpgradeDeleteView(user_link_provider.AbstractUserLinkDeleteView):
-
-	LINK_NAME = REL_ACCOUNT_PROFILE_UPGRADE
-
-	@view_config(name=REL_ACCOUNT_PROFILE_UPGRADE)
-	def __call__( self ):
+@component.adapter(user_interfaces.IRequireProfileUpdate, link_interfaces.IFlagLinkRemovedEvent)
+def link_removed_on_user(user,event):
+	if event.link_name == REL_ACCOUNT_PROFILE_UPGRADE:
 		# If they clear the flag without resetting the profile, take that
 		# ability off. (This is idempotent)
-		interface.noLongerProvides( self.request.context, user_interfaces.IRequireProfileUpdate )
-		return user_link_provider.AbstractUserLinkDeleteView.__call__( self )
+		interface.noLongerProvides( user, user_interfaces.IRequireProfileUpdate )
+
 
 
 

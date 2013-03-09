@@ -24,7 +24,7 @@
 				for=".interfaces.IMissingUser pyramid.interfaces.IRequest" />
 
 	<!-- Additional links for logged-in users -->
-	<subscriber factory=".user_link_provider.PersistentUserLinkProvider"
+	<subscriber factory=".link_providers.flag_link_provider.FlagLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
 	<link:userLink named=".feedback_views.REL_SEND_FEEDBACK"

@@ -15,6 +15,7 @@ from zope import interface
 
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 from zope.annotation.interfaces import IAnnotations
+from .interfaces import IDeletableLinkProvider
 
 from nti.dataserver.links import Link
 from nti.dataserver.dicts import LastModifiedDict
@@ -28,8 +29,30 @@ VIEW_NAME_NAMED_LINKS = 'NamedLinks'
 #: Containing a mapping
 _GENERATION_LINK_KEY = __name__ + '.LinkGenerations'
 
+def _make_link( user, link_rel, field=None, view_named=None, mime_type=None ):
+	if field:
+		elements = ("++fields++" + field,)
+	elif view_named:
+		elements = ("@@" + view_named,)
+	else:
+		# We must handle it
+		elements = ("@@" + VIEW_NAME_NAMED_LINKS, link_rel)
+	link = Link( user,
+				 rel=link_rel,
+				 elements=elements,
+				 target_mime_type=mime_type)
+	link_belongs_to_user( link, user )
+	return link
+
 @interface.implementer(IAuthenticatedUserLinkProvider)
 class LinkProvider(object):
+	"""
+	A basic named link provider that can provide a single link.
+	The link can represent a named pyramid view, a field on the user,
+	an external URL, or something stateful managed within this package.
+
+	Meant to be configured declaratively.
+	"""
 
 	__slots__ = ('user', 'request', '__name__', 'field', 'view_named', 'url', 'mime_type')
 
@@ -45,41 +68,42 @@ class LinkProvider(object):
 			raise TypeError( "Unknown keyword args", kwargs )
 
 	def get_links( self ):
-		link_name = self.__name__
-		if self.field:
-			elements = ("++fields++" + self.field,)
-		elif self.view_named:
-			elements = ("@@" + self.view_named,)
-		else:
-			# We must handle it
-			elements = ("@@" + VIEW_NAME_NAMED_LINKS, link_name)
-		link = Link( self.user,
-					 rel=link_name,
-					 elements=elements,
-					 target_mime_type=self.mime_type)
-		link_belongs_to_user( link, self.user )
+		link = self._make_link_with_rel( self.__name__ )
 		return (link,)
+
+	def _make_link_with_rel( self, rel ):
+		return _make_link( self.user, rel, self.field, self.view_named, self.mime_type )
 
 	def __repr__( self ):
 		return "<%s %s %s>" % (self.__class__.__name__, self.__name__, self.url)
 
-class ConditionalLinkProvider(LinkProvider):
+@interface.implementer(IDeletableLinkProvider)
+class GenerationalLinkProvider(LinkProvider):
+	"""
+	A stateful link provider that tracks some value for a user. If the user's
+	current value is less than the required value, the link is provided.
+	When "deleted", the user's value is set to the current minimum so that in the
+	future, when a new minimum is established, the user again receives the link.
+
+	Meant to be configured declaratively.
+	"""
 
 	__slots__ = ('minGeneration',)
 
 	def __init__( self, *args, **kwargs ):
 		self.minGeneration = kwargs.pop( 'minGeneration' )
-		super(ConditionalLinkProvider,self).__init__( *args, **kwargs )
+		super(GenerationalLinkProvider,self).__init__( *args, **kwargs )
 
 	def get_links( self ):
 		link_dict = IAnnotations( self.user ).get( _GENERATION_LINK_KEY, {} )
 		if link_dict.get( self.__name__, '' ) < self.minGeneration:
 			# They either don't have it, or they have less than needed
-			return super(ConditionalLinkProvider,self).get_links()
+			return super(GenerationalLinkProvider,self).get_links()
 		# They have it and its up to date!
 		return ()
 
-	def match_generation( self ):
+	def delete_link( self, link_name ):
+		assert link_name == self.__name__
 		link_dict = IAnnotations( self.user ).get( _GENERATION_LINK_KEY )
 		if link_dict is None:
 			link_dict = LastModifiedDict()

@@ -27,7 +27,7 @@ import os
 
 from nti.appserver import logon
 from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login, ROUTE_OPENID_RESPONSE, _update_users_content_roles)
-from nti.appserver import user_link_provider
+from nti.appserver.link_providers import flag_link_provider as user_link_provider
 
 from nti.appserver.tests import NewRequestSharedConfiguringTestBase
 from .test_application import SharedApplicationTestBase
