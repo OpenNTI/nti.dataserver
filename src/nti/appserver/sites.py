@@ -44,18 +44,21 @@ FINTECH = BaseComponents( BASE, name='fintech.nextthought.com', bases=(BASE,) )
 
 def _reinit():
 	"""
-	ZCA cleans up the base registry on testing cleanup.
-	This means that our objects no longer have the right resolution order
+	ZCA cleans up the base registry on testing cleanup. It does so by
+	leaving the base registry object in place and swizzling out its internals
+	by calling ``__init__`` again.
+
+	This means that our site objects no longer have the right resolution order
 	(which is cached when bases are set). This in turn means that new
 	components derived from them can wind up with the wrong resolution
-	order and duplicate registrations. This manifests itself as seeing
-	certain event listeners run twice. The solution is to reset the bases;
-	this works because the order of cleanups is maintained.
+	order and duplicate registrations (this manifests itself as seeing
+	certain event listeners run twice, etc.) The solution is for us to also
+	``__init__`` our site objects. This works because the order of cleanups is maintained
+	and so we re-init after ZCA's base registry has re-inited.
 	"""
-
 	for v in sys.modules[__name__].__dict__.values():
 		if isinstance( v, BaseComponents ):
-			v.__bases__ = v.__bases__
+			v.__init__( BASE, name=v.__name__, bases=v.__bases__ )
 
 from zope.testing.cleanup import addCleanUp
 addCleanUp( _reinit )

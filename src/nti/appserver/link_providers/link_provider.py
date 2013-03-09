@@ -43,6 +43,9 @@ class LinkProvider(object):
 		link_belongs_to_user( link, self.user )
 		return (link,)
 
+	def __repr__( self ):
+		return "<%s %s %s>" % (self.__class__.__name__, self.__name__, self.url)
+
 class ConditionalLinkProvider(LinkProvider):
 
 	def __init__( self, *args, **kwargs ):

@@ -18,6 +18,7 @@ HTTPNotFound = _hexc.HTTPNotFound
 HTTPFound = _hexc.HTTPFound
 HTTPNoContent = _hexc.HTTPNoContent
 HTTPMethodNotAllowed = _hexc.HTTPMethodNotAllowed
+HTTPSeeOther = _hexc.HTTPSeeOther
 
 # Dynamically import the rest
 def _copy_pyramid_exceptions():

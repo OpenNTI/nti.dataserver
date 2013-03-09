@@ -30,20 +30,17 @@ from nti.tests import is_empty
 from zope import component
 from zope import interface
 from zope.component.hooks import site
-from zope.schema import vocabulary
+
+from nti.dataserver.site import _TrivialSite
+from nti.appserver.sites import MATHCOUNTS
+
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 from nti.dataserver import users
 from pyramid.request import Request
 
-class TestZcml(nti.tests.ConfiguringTestBase):
-
-	def test_site_registrations(self):
-		"Can we add new registrations in a sub-site?"
-		from nti.appserver import sites
-		self.configure_packages( set_up_packages=(('meta.zcml', 'nti.appserver.link_providers',),) )
-		zcml_string = """
+ZCML_STRING = """
 		<configure xmlns="http://namespaces.zope.org/zope"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
 			xmlns:link="http://nextthought.com/ntp/link_providers"
@@ -52,6 +49,7 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 		<include package="zope.component" />
 		<include package="zope.annotation" />
 		<include package="z3c.baseregistry" file="meta.zcml" />
+		<include package="." file="meta.zcml" />
 
 		<utility
 			component="nti.appserver.sites.MATHCOUNTS"
@@ -67,12 +65,16 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 		</registerIn>
 		</configure>
 		"""
-		self.configure_string( zcml_string )
 
-		from nti.dataserver.site import _TrivialSite
-		from nti.appserver.sites import MATHCOUNTS
+class TestZcml(nti.tests.ConfiguringTestBase):
 
 
+
+	def test_site_registrations(self):
+		"Can we add new registrations in a sub-site?"
+
+		self.configure_string( ZCML_STRING )
+		assert_that( MATHCOUNTS.__bases__, is_( (component.globalSiteManager,) ) )
 		with site( _TrivialSite( MATHCOUNTS ) ):
 			user = users.User( 'foo@bar' )
 			request = Request.blank( '/' )
