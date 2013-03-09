@@ -308,17 +308,19 @@ from zope.component.hooks import setHooks, resetHooks
 from zope.dottedname import resolve as dottedname
 from zope.component import eventtesting
 
-def _configure(self=None, set_up_packages=(), features=('devmode','testmode'), context=None):
+def _configure(self=None, set_up_packages=(), features=('devmode','testmode'), context=None, package=None):
 
 	# zope.component.globalregistry conveniently adds
 	# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
+	if context is None and (features or package):
+		context = config.ConfigurationMachine()
+		context.package = package
+		xmlconfig.registerCommonDirectives( context )
+	for feature in features:
+		context.provideFeature( feature )
+
 	if set_up_packages:
 		logger.debug( "Configuring %s with features %s", set_up_packages, features )
-		if context is None:
-			context = config.ConfigurationMachine()
-			xmlconfig.registerCommonDirectives( context )
-		for feature in features:
-			context.provideFeature( feature )
 
 		for i in set_up_packages:
 			__traceback_info__ = (i, self)
@@ -333,9 +335,9 @@ def _configure(self=None, set_up_packages=(), features=('devmode','testmode'), c
 				package = dottedname.resolve( package )
 			context = xmlconfig.file( filename, package=package, context=context )
 
-		return context
+	return context
 
-
+_marker = object()
 class ConfiguringTestBase(AbstractTestBase):
 	"""
 	Test case that can be subclassed when ZCML configuration is desired.
@@ -382,11 +384,33 @@ class ConfiguringTestBase(AbstractTestBase):
 				component.provideHandler( eventtesting.events.append, (None,) )
 			else:
 				eventtesting.setUp()
-		self.configuration_context = self.configure_packages( self.set_up_packages, self.features, self.configuration_context )
 
+		self.configuration_context = self.configure_packages( set_up_packages=self.set_up_packages,
+															  features=self.features,
+															  context=self.configuration_context,
+															  package=self.get_configuration_package() )
 
-	def configure_packages(self, set_up_packages=(), features=(), context=None, configure_events=True ):
-		self.configuration_context = _configure( self, set_up_packages, features, context or self.configuration_context )
+	def get_configuration_package( self ):
+		"""
+		Return the package that "." means when configuring packages. For test classes that exist
+		in a subpackage called 'tests' in a module beginning with 'test', this defaults to the parent package.
+		E.g., if self is 'nti.appserver.tests.test_app.TestApp' then this is 'nti.appserver'
+		"""
+		module = self.__class__.__module__
+		if module:
+			module_parts = module.split( '.' )
+			if module_parts[-1].startswith( 'test' ) and module_parts[-2] == 'tests':
+				module = '.'.join( module_parts[0:-2] )
+
+			package = sys.modules[module]
+			return package
+
+	def configure_packages(self, set_up_packages=(), features=(), context=_marker, configure_events=True, package=None ):
+		self.configuration_context = _configure( self,
+												 set_up_packages=set_up_packages,
+												 features=features,
+												 context=(context if context is not _marker else self.configuration_context),
+												 package=package)
 		return self.configuration_context
 
 	def configure_string( self, zcml_string ):
@@ -400,6 +424,7 @@ class ConfiguringTestBase(AbstractTestBase):
 		# always safe to clear events
 		eventtesting.clearEvents() # redundant with zope.testing.cleanup
 		resetHooks()
+		del self.configuration_context
 		super(ConfiguringTestBase,self).tearDown()
 
 class SharedConfiguringTestBase(AbstractSharedTestBase):
