@@ -23,4 +23,6 @@
 					  route_name="stacktraces" />
 	</configure>
 
+	<pyramid:scan package=".link_providers.views" />
+
 </configure>

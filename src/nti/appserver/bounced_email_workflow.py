@@ -51,32 +51,12 @@ import boto.sqs.message
 from zope import component
 import zope.interface.exceptions
 
-from pyramid.view import view_config
-
-from nti.appserver import user_link_provider
-from nti.appserver.user_link_provider import AbstractUserLinkDeleteView
+from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.account_recovery_views import find_users_with_email
 
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.utils import run_with_dataserver
-
-class BouncedEmailDeleteView(AbstractUserLinkDeleteView):
-
-	LINK_NAME = REL_INVALID_EMAIL
-
-	@view_config(name=REL_INVALID_EMAIL)
-	def __call__( self ):
-		return AbstractUserLinkDeleteView.__call__( self )
-
-
-class BouncedContactEmailDeleteView(AbstractUserLinkDeleteView):
-
-	LINK_NAME = REL_INVALID_CONTACT_EMAIL
-
-	@view_config(name=REL_INVALID_CONTACT_EMAIL)
-	def __call__( self ):
-		return AbstractUserLinkDeleteView.__call__( self )
 
 def _mark_accounts_with_bounces( email_addrs, dataserver=None ):
 	"""
@@ -106,14 +86,14 @@ def _mark_accounts_with_bounces( email_addrs, dataserver=None ):
 					# this address, then we can keep sending email to it, and bouncing,
 					# which tends to make SES angry. I don't know what we could do, though?
 					logger.debug( "Unable to clear invalid email address for %s", user, exc_info=True)
-				user_link_provider.add_link( user, REL_INVALID_EMAIL )
+				flag_link_provider.add_link( user, REL_INVALID_EMAIL )
 			elif match_type == 'password_recovery_email_hash':
 				# Hmm. Can't really clear it, but this will never get to them
 				# they probably can't logon
-				user_link_provider.add_link( user, REL_INVALID_EMAIL )
+				flag_link_provider.add_link( user, REL_INVALID_EMAIL )
 			else:
 				# all that's left is contact_email (which has two match types)
-				user_link_provider.add_link( user, REL_INVALID_CONTACT_EMAIL )
+				flag_link_provider.add_link( user, REL_INVALID_CONTACT_EMAIL )
 
 
 def process_ses_feedback( messages, dataserver=None, mark_transient=True ):

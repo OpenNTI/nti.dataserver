@@ -94,6 +94,6 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 			assert_that( provider.get_links( ), has_length( 1 ) )
 			assert_that( provider.get_links()[0].elements[-1], is_( 'foo.bar' ) )
 
-			provider.match_generation()
+			provider.delete_link( provider.__name__ )
 
 			assert_that( provider.get_links( ), is_empty() )

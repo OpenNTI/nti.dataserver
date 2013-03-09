@@ -36,7 +36,7 @@ from .test_application import ApplicationTestBase
 from .test_application import TestApp
 
 from nti.appserver import bounced_email_workflow
-from nti.appserver import user_link_provider
+from nti.appserver.link_providers import flag_link_provider as user_link_provider
 
 def _read_msgs(make_perm=False):
 	msg_str = open( os.path.join( os.path.dirname( __file__ ), 'bounced_email_feedback_transients.json' ), 'r' ).read()
@@ -116,12 +116,13 @@ class TestApplicationBouncedEmailWorkflow(ApplicationTestBase):
 			user_link_provider.add_link( user, bounced_email_workflow.REL_INVALID_EMAIL )
 
 
-		testapp = TestApp( self.app )
+		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
 
 		for k in (bounced_email_workflow.REL_INVALID_EMAIL,bounced_email_workflow.REL_INVALID_CONTACT_EMAIL):
-			path =  str('/dataserver2/users/' + user_username + '/@@' + k)
-			res = testapp.delete( path , extra_environ=self._make_extra_environ() )
+			href = self.require_link_href_with_rel( self.resolve_user( testapp, user_username ), k )
+
+			res = testapp.delete( href , extra_environ=self._make_extra_environ() )
 			assert_that( res, has_property( 'status_int', 204 ) )
 
-			res = testapp.delete( path, extra_environ=self._make_extra_environ(), status=404 )
+			res = testapp.delete( href, extra_environ=self._make_extra_environ(), status=404 )
 			assert_that( res, has_property( 'status_int', 404 ) )

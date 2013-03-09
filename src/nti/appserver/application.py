@@ -306,7 +306,6 @@ def createApplication( http_port,
 		except Exception:
 			logger.exception( "Failed to add dictionary server" )
 
-	pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' ) # must use full spec, we may not have created the pyramid_config object so its working package may be unknown
 	pyramid_config.add_renderer( name='rest', factory='nti.appserver.pyramid_renderers.REST' )
 
 	# Override the stock Chameleon template renderer to use z3c.pt for better compatibility with
@@ -490,7 +489,7 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.dfl_views' )
 	pyramid_config.scan( 'nti.appserver.user_export_views' )
 
-
+	pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' ) # must use full spec, we may not have created the pyramid_config object so its working package may be unknown
 	# Generic user object tree traversal
 	# For the Library/Main URL.
 	# Gee it sure would be nice if the default (no-name) view would get used.

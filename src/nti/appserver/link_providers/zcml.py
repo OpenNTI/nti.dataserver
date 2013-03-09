@@ -28,7 +28,7 @@ from pyramid.interfaces import IRequest
 
 from nti.utils import schema
 
-from .link_provider import LinkProvider, ConditionalLinkProvider
+from .link_provider import LinkProvider, GenerationalLinkProvider
 
 class IUserLinkDirective(interface.Interface):
 	"""
@@ -101,7 +101,7 @@ def registerUserLink( _context, name=None, named=None, minGeneration=None, url=N
 	kwargs = dict(name=name, url=url, view_named=view_named, field=field,  mime_type=mimeType)
 
 	if minGeneration:
-		factory = functools.partial( ConditionalLinkProvider, minGeneration=minGeneration, **kwargs )
+		factory = functools.partial( GenerationalLinkProvider, minGeneration=minGeneration, **kwargs )
 	else:
 		factory = functools.partial( LinkProvider, **kwargs )
 	subscriber( _context, for_=(for_, IRequest), factory=factory, provides=IAuthenticatedUserLinkProvider )

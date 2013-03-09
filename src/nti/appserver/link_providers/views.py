@@ -27,21 +27,24 @@ def _find_link_providers( user, request, link_name ):
 	for provider in component.subscribers( (user, request), IAuthenticatedUserLinkProvider ):
 		if getattr( provider, '__name__', '' ) == link_name:
 			providers.append( provider )
+		elif any( (x for x in provider.get_links() if x.rel == link_name) ):
+			providers.append( provider )
 	return providers
 
 def _preflight( request ):
 	if not len(request.subpath) == 1: # exactly one subpath, the link name
-		return hexc.HTTPNotFound()
-	providers = _find_link_providers( request.context, request, request.subpath[0] )
+		return hexc.HTTPNotFound(), None, None
+	link_name = request.subpath[0]
+	providers = _find_link_providers( request.context, request, link_name )
 	if len(providers) != 1: # Too many matches, what to do?
-		return hexc.HTTPNotFound("Too many links: " + str(len(providers)))
+		return hexc.HTTPNotFound("Too many links: " + str(len(providers))), None, None
 	# If it's a conditional link provider, and it's not going to provide a link,
 	# we 404, maintaining the illusion of deletion
 	provider = providers[0]
-	if not provider.get_links():
-		return hexc.HTTPNotFound()
+	if not any( (x for x in provider.get_links() if x.rel == link_name) ): # Conditional that's been un-conditioned
+		return hexc.HTTPNotFound(), None, None
 
-	return provider
+	return None, provider, link_name
 
 @view_config( name=VIEW_NAME_NAMED_LINKS,
 			  route_name='objects.generic.traversal',
@@ -49,9 +52,9 @@ def _preflight( request ):
 			  permission=nauth.ACT_READ,
 			  context=IUser )
 def named_link_get_view( request ):
-	provider = _preflight( request )
-	if not IAuthenticatedUserLinkProvider.providedBy( provider ):
-		return provider # response
+	rsp, provider, _ = _preflight( request )
+	if rsp:
+		return rsp # response
 
 	return hexc.HTTPNoContent() if not provider.url else hexc.HTTPSeeOther( provider.url )
 
@@ -61,13 +64,13 @@ def named_link_get_view( request ):
 			  permission=nauth.ACT_DELETE,
 			  context=IUser )
 def named_link_delete_view( request ):
-	provider = _preflight( request )
-	if not IAuthenticatedUserLinkProvider.providedBy( provider ):
-		return provider # response
+	rsp, provider, link_name = _preflight( request )
+	if rsp:
+		return rsp
 
-	if not getattr( provider, 'match_generation', None ):
+	if not getattr( provider, 'delete_link', None ):
 		return hexc.HTTPForbidden() # Not a conditional, thus cannot be deleted
 
 	# This counts as having taken the action.
-	provider.match_generation()
+	provider.delete_link( link_name )
 	return hexc.HTTPNoContent()

@@ -42,6 +42,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 			user_interfaces.IFriendlyNamed( coppa_user ).realname = u'Jason'
 
 		testapp = TestApp( self.app )
+		kittyapp = TestApp( self.app, extra_environ=self._make_extra_environ('ossmkitty') )
 
 		path = '/dataserver2/@@coppa_admin'
 		environ = self._make_extra_environ()
@@ -121,30 +122,27 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		res = testapp.get( '/dataserver2/users/ossmkitty/@@account.profile',
 						   extra_environ=self._make_extra_environ(username='ossmkitty'), )
 		assert_that( res.json_body, has_entry( 'ProfileSchema', has_entry( 'email', has_entry( 'required', True ) ) ) )
-		res = testapp.put( '/dataserver2/users/ossmkitty/++fields++email',
+		res = kittyapp.put( '/dataserver2/users/ossmkitty/++fields++email',
 						   json.dumps( None ),
-						   extra_environ=self._make_extra_environ(username='ossmkitty'),
 						   status=422 )
 		assert_that( res.json_body, has_entry( 'field', 'email' ) )
 
-		res = testapp.put( '/dataserver2/users/ossmkitty/++fields++email',
+		res = kittyapp.put( '/dataserver2/users/ossmkitty/++fields++email',
 						   json.dumps( 'not_valid' ),
-						   extra_environ=self._make_extra_environ(username='ossmkitty'),
 						   status=422 )
 		assert_that( res.json_body, has_entry( 'field', 'email' ) )
 
 		# We can't actually do anything until we get this email updated
 
-		res = testapp.put( '/dataserver2/users/ossmkitty/++fields++NotificationCount',
+		res = kittyapp.put( '/dataserver2/users/ossmkitty/++fields++NotificationCount',
 						   json.dumps( 1 ),
-						   extra_environ=self._make_extra_environ(username='ossmkitty'),
 						   status=422 )
 		assert_that( res.json_body, has_entry( 'field', 'email' ) )
 
 		# But what the hell, we can go ahead and clear the flag manually
-		testapp.delete( '/dataserver2/users/ossmkitty/@@account.profile.needs.updated',
-						extra_environ=self._make_extra_environ(username='ossmkitty'),
-						status=204 )
+		update_href = self.require_link_href_with_rel( self.resolve_user( kittyapp, 'ossmkitty' ), 'account.profile.needs.updated' )
+		__traceback_info__ = update_href
+		kittyapp.delete( update_href, status=204 )
 
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = users.User.get_user( 'ossmkitty' )
