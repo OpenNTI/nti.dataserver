@@ -4,9 +4,9 @@
 
   <meta:directives namespace="http://nextthought.com/ntp/link_providers">
 	<meta:directive
-		name="namedLink"
-		schema=".zcml.INamedLinkDirective"
-		handler=".zcml.registerNamedLink"
+		name="userLink"
+		schema=".zcml.IUserLinkDirective"
+		handler=".zcml.registerUserLink"
 		/>
 
   </meta:directives>

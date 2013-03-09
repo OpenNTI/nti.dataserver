@@ -57,7 +57,7 @@ ZCML_STRING = """
 			name="mathcounts.nextthought.com" />
 
 		<registerIn registry="nti.appserver.sites.MATHCOUNTS">
-			<link:namedLink
+			<link:userLink
 				name='foo.bar'
 				minGeneration='1234'
 				url='http://example.com'

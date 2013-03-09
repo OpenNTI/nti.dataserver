@@ -31,15 +31,25 @@ _GENERATION_LINK_KEY = __name__ + '.LinkGenerations'
 @interface.implementer(IAuthenticatedUserLinkProvider)
 class LinkProvider(object):
 
-	def __init__( self, user, request, name=None, url=None ):
+	def __init__( self, user, request, name=None, url=None, field=None, mime_type=None ):
 		self.user = user
 		self.request = request
 		self.__name__ = name
 		self.url = url
+		self.mime_type = mime_type
+		self.field = field
 
 	def get_links( self ):
 		link_name = self.__name__
-		link = Link( self.user, rel=link_name, elements=("@@" + VIEW_NAME_NAMED_LINKS, link_name) )
+		if self.field:
+			elements = ("++fields++" + self.field,)
+		else:
+			# We must handle it
+			elements = ("@@" + VIEW_NAME_NAMED_LINKS, link_name)
+		link = Link( self.user,
+					 rel=link_name,
+					 elements=elements,
+					 target_mime_type=self.mime_type)
 		link_belongs_to_user( link, self.user )
 		return (link,)
 

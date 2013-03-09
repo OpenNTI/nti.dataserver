@@ -151,35 +151,6 @@ REL_CHILDRENS_PRIVACY = 'childrens-privacy'
 #:
 REL_CONTACT_EMAIL_SENDS_CONSENT = 'contact-email-sends-consent-request'
 
-@interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
-@component.adapter(nti_interfaces.ICoppaUser,pyramid_interfaces.IRequest)
-class CoppaUserPrivacyPolicyLinkProvider(object):
-
-	def __init__( self, user=None, request=None ):
-		self.user = user
-
-	def get_links( self ):
-		link = Link( 'https://docs.google.com/document/pub?id=1kNo6hwwKwWdhq7jzczAysUWhnsP9RfckIet11pWPW6k',
-					  rel=REL_CHILDRENS_PRIVACY,
-					  target_mime_type='text/html' )
-		link_belongs_to_user( link, self.user )
-		return (link,)
-
-@interface.implementer(app_interfaces.IAuthenticatedUserLinkProvider)
-@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement,pyramid_interfaces.IRequest)
-class CoppaUserWithoutAgreementContactEmailLinkProvider(object):
-
-	def __init__( self, user=None, request=None ):
-		self.user = user
-
-	def get_links( self ):
-		link = Link( self.user,
-					 rel=REL_CONTACT_EMAIL_SENDS_CONSENT,
-					 elements=( '++fields++contact_email', ) )
-		link_belongs_to_user( link, self.user )
-		return (link,)
-
-
 from pyramid.renderers import render
 from pyramid.renderers import get_renderer
 from pyramid_mailer.message import Message
