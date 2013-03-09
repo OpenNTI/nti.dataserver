@@ -13,7 +13,7 @@ from BTrees.LLBTree import intersection as intersection64
 
 from zopyx.txng3.core.resultset import ResultSet, WordList
 
-from .zopyxtxng3coredoclist import DocidList
+from .zopyxtxng3_doclist import DocidList
 
 def intersectionResultSets(sets):
     """ perform intersection of ResultSets """

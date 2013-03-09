@@ -7,10 +7,10 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import math
+
 from zope import component
 from zope import interface
-
-from math import log
 
 from whoosh import scoring
 from whoosh.query import Term
@@ -35,9 +35,10 @@ class CosineScorer(scoring.WeightLengthScorer):
 		self.setup(searcher, fieldname, text)
 
 	def _score(self, weight, length):
-		DTW = (1.0 + log(weight)) * self.idf
+		DTW = (1.0 + math.log(weight)) * self.idf
 		QTW = ((0.5 + (0.5 * self.qtf / self.qmf))) * self.idf
-		return DTW * QTW
+		rank = math.sqrt(DTW * QTW)
+		return rank
 
 class CosineScorerModel(scoring.WeightingModel):
 
