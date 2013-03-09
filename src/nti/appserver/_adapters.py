@@ -1,16 +1,24 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Appsever adpapters.
 
-from __future__ import print_function, unicode_literals
+Store index events in AWS cloud search
 
-import logging
-logger = logging.getLogger(__name__)
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 from . import MessageFactory as _
 
 from zope import interface
 from zope import component
+from zope.i18n import translate
 from zope.location import interfaces as loc_interfaces
 from zope.traversing import interfaces as trv_interfaces
-from zope.i18n import translate
 
 import ZODB
 
@@ -24,9 +32,9 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.utils.schema import find_most_derived_interface
 from nti.utils.property import alias
 
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(nti_interfaces.IEnclosedContent )
 class EnclosureExternalObject(object):
-	interface.implements( ext_interfaces.IExternalObject )
-	component.adapts( nti_interfaces.IEnclosedContent )
 
 	def __init__( self, enclosed ):
 		self.enclosed = enclosed
@@ -35,7 +43,8 @@ class EnclosureExternalObject(object):
 		# TODO: I have no idea how best to do this
 		return datastructures.toExternalObject( self.enclosed.data )
 
-
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(ZODB.interfaces.IBroken)
 class BrokenExternalObject(object):
 	"""
 	Renders broken object. This is mostly for (legacy) logging purposes, as the general NonExternalizableObject support
@@ -44,9 +53,7 @@ class BrokenExternalObject(object):
 	TODO: Consider removing this. Is the logging worth it? Alternately, should the NonExternalizableObject
 	adapter be at the low level externization package or up here?
 	"""
-	interface.implements( ext_interfaces.IExternalObject )
-	component.adapts( ZODB.interfaces.IBroken )
-
+	
 	def __init__( self, broken ):
 		self.broken = broken
 
@@ -269,11 +276,12 @@ class _UserPreferredLanguages(object):
 	.. todo:: Right now, this is hardcoded to english. We need to store this.
 
 	"""
- 	def __init__( self, context ):
- 		pass
+	def __init__( self, context ):
+		pass
 
- 	def getPreferredLanguages(self):
- 		return ('en',)
+	def getPreferredLanguages(self):
+		return ('en',)
+
 # because this is hardcoded, we can be static for now
 _user_preferred_languages = _UserPreferredLanguages(None)
 @interface.implementer(IUserPreferredLanguages)
@@ -406,3 +414,4 @@ class _DeletedObjectPlaceholderDecorator(object):
 
 		# TODO: What's the best thing here? Change class and mimetype?
 		external['Deleted'] = True
+
