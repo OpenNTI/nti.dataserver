@@ -1,8 +1,10 @@
 <!-- -*- mode: nxml -*- -->
-<configure
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:zcml="http://namespaces.zope.org/zcml">
+<configure xmlns="http://namespaces.zope.org/zope"
+		   xmlns:zcml="http://namespaces.zope.org/zcml"
+		   xmlns:link="http://nextthought.com/ntp/link_providers">
+
 	<include package="zope.component" />
+	<include package=".link_providers" file="meta.zcml" />
 
 	<!-- Information used during sending/retrieving contact emails. -->
 	<adapter factory=".user_policies.ContactEmailRecovery" />
@@ -80,11 +82,14 @@
 		for=".site_policies.IMathcountsUser" />
 
 	<!-- Privacy link as needed -->
-	<subscriber factory=".user_policies.CoppaUserPrivacyPolicyLinkProvider"
-				provides=".interfaces.IAuthenticatedUserLinkProvider" />
+	<link:userLink named=".user_policies.REL_CHILDRENS_PRIVACY"
+				   url="https://docs.google.com/document/pub?id=1kNo6hwwKwWdhq7jzczAysUWhnsP9RfckIet11pWPW6k"
+				   for="nti.dataserver.interfaces.ICoppaUser"
+				   mimeType="text/html" />
 
 	<!-- Contact email link as needed -->
-	<subscriber factory=".user_policies.CoppaUserWithoutAgreementContactEmailLinkProvider"
-				provides=".interfaces.IAuthenticatedUserLinkProvider" />
+	<link:userLink named=".user_policies.REL_CONTACT_EMAIL_SENDS_CONSENT"
+				   field="contact_email"
+				   for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement" />
 
 </configure>

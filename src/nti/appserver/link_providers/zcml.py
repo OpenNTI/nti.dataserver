@@ -18,7 +18,9 @@ import functools
 from zope import interface
 
 import zope.configuration.fields
+from zope.configuration.exceptions import ConfigurationError
 from zope.component.zcml import subscriber
+from zope.mimetype.interfaces import mimeTypeConstraint
 
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 from nti.dataserver.interfaces import IUser
@@ -28,22 +30,41 @@ from nti.utils import schema
 
 from .link_provider import LinkProvider, ConditionalLinkProvider
 
-class INamedLinkDirective(interface.Interface):
+class IUserLinkDirective(interface.Interface):
 	"""
 	Register a named link provider.
 	"""
 
-	name = zope.configuration.fields.PythonIdentifier(
+	name = schema.ValidTextLine(
 		title=_("The name of the link."),
-		required=True,
-		)
+		description="This literal value will be used as the relationship type of the link. You must provide either this or ``named``",
+		required=False,
+		min_length=1 )
+
+	named = zope.configuration.fields.GlobalObject(
+		title=_("Path to string constant giving the name."),
+		description="You must give this or ``name``.",
+		required=False,
+		value_type=name)
 
 	minGeneration = zope.configuration.fields.TextLine(
 		title=_("If given, the minimum required value users must have."),
+		description="""A text string that should be monotonically increasing because it is lexographically compared. For dates, use YYYYMMDD.""",
 		required=False )
 
 	url = schema.HTTPURL(
 		title=_("A URL to redirect to on GET"),
+		description="Mutually exclusive with ``field``",
+		required=False )
+
+	field = zope.configuration.fields.PythonIdentifier(
+		title=_("A field on the user that this will link to, using the ++fields namespace"),
+		description="Mutually exclusive with ``url``",
+		required=False )
+
+	mimeType = schema.ValidTextLine(
+		title=_("The mime type expected to be returned by the link"),
+		constraint=mimeTypeConstraint,
 		required=False )
 
 	for_ = zope.configuration.fields.GlobalInterface(
@@ -51,9 +72,23 @@ class INamedLinkDirective(interface.Interface):
 		required=False,
 		default=IUser )
 
-def registerNamedLink( _context, name, minGeneration=None, url=None, for_=IUser ):
+def registerUserLink( _context, name=None, named=None, minGeneration=None, url=None, field=None, mimeType=None, for_=IUser ):
+	if name and named:
+		raise ConfigurationError( "Pick either name or named, not both" )
+	if named:
+		name = named
+	if not name:
+		raise ConfigurationError( "Specify either name or named" )
+
+	if not for_ or not for_.isOrExtends( IUser ):
+		raise ConfigurationError( "For must be a user type" )
+
+	if field and url:
+		raise ConfigurationError( "Pick either field or url, not both" )
+
+	kwargs = dict(name=name, url=url, field=field,  mime_type=mimeType)
 	if minGeneration:
-		factory = functools.partial( ConditionalLinkProvider, name=name, minGeneration=minGeneration, url=url )
+		factory = functools.partial( ConditionalLinkProvider, minGeneration=minGeneration, **kwargs )
 	else:
-		factory = functools.partial( LinkProvider, name=name, url=url )
+		factory = functools.partial( LinkProvider, **kwargs )
 	subscriber( _context, for_=(for_, IRequest), factory=factory, provides=IAuthenticatedUserLinkProvider )
