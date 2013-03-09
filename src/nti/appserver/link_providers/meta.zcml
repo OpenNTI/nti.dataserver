@@ -1,0 +1,13 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:meta="http://namespaces.zope.org/meta">
+
+  <meta:directives namespace="http://nextthought.com/ntp/link_providers">
+	<meta:directive
+		name="namedLink"
+		schema=".zcml.INamedLinkDirective"
+		handler=".zcml.registerNamedLink"
+		/>
+
+  </meta:directives>
+</configure>
