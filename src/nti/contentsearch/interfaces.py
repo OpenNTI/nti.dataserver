@@ -37,7 +37,7 @@ class ISearchQuery(interface.Interface):
 	term = schema.TextLine(title="Query search term", required=True)
 	username = schema.TextLine(title="User doing the search", required=True)
 	language = schema.TextLine(title="Query search term language", required=False, default='en')
-	
+
 	limit = schema.Int(title="search results limit", required=False)
 	indexid = schema.TextLine(title="Book content NTIID", required=False)
 	searchOn = schema.Set(value_type=schema.TextLine(title='The ntiid'), title="Content types to search on", required=False)
@@ -61,7 +61,7 @@ class ISearchQueryParser(interface.Interface):
 
 	def parse(query):
 		"""parse the specified query"""
-		
+
 # searcher
 
 class ISearcher(interface.Interface):
@@ -161,7 +161,7 @@ class IndexEvent(component.interfaces.ObjectEvent):
 	@property
 	def data(self):
 		return self.object
-	
+
 @interface.implementer(IObjectIndexed)
 class ObjectIndexedEvent(IndexEvent):
 	pass
@@ -173,7 +173,7 @@ class ObjectReIndexedEvent(IndexEvent):
 @interface.implementer(IObjectUnIndexed)
 class ObjectUnIndexedEvent(IndexEvent):
 	pass
-		
+
 # entity adapters
 
 class IRepozeEntityIndexManager(IEntityIndexManager):
@@ -351,15 +351,15 @@ class IWhooshBookContent(IBookContent, IReadMapping):
 
 class IBookSchemaCreator(interface.Interface):
 	def create():
-		""" 
+		"""
 		return a schema to create a book index
 		"""
-		
+
 class IWhooshBookSchemaCreator(IBookSchemaCreator):
 	pass
 
 class IWhooshQueryParser(ISearchQueryParser):
-	
+
 	def parse(qo, schema=None):
 		pass
 
@@ -393,8 +393,19 @@ class ICreatorResolver(interface.Interface):
 class IShareableContentResolver(interface.Interface):
 
 	def get_sharedWith():
-		"""return the share with users"""
-		
+		"""
+		Deprecated.
+		Returns the usernames of entities this object is shared with.
+		Note this is not fully reliable as the entity names may not
+		be globally unique.
+		"""
+
+	def get_flattenedSharingTargets():
+		"""
+		Returns the same thing as :class:`.IReadableShared`'s ``flattenedSharingTargets``
+		attribute.
+		"""
+
 class _ContentMixinResolver(IContentResolver,
 							INTIIDResolver,
 							IContainerIDResolver,
@@ -403,7 +414,7 @@ class _ContentMixinResolver(IContentResolver,
 
 class IUserContentResolver(_ContentMixinResolver, ICreatorResolver):
 	pass
-		
+
 class IThreadableContentResolver(IUserContentResolver, IShareableContentResolver):
 
 	def get_keywords():
@@ -445,19 +456,19 @@ class IPostContentResolver(_ContentMixinResolver,
 
 	def get_id():
 		"""return the post id"""
-		
+
 	def get_title():
 		"""return the post/forum title"""
-		
+
 	def get_tags():
 		"""return the post/forum tags"""
-		
+
 class IBookContentResolver(_ContentMixinResolver):
 	pass
 
 class IModeledContentResolver(IPostContentResolver,
 							  IMessageInfoContentResolver,
-							  IRedactionContentResolver, 
+							  IRedactionContentResolver,
 							  IHighlightContentResolver,
 							  INoteContentResolver):
 	pass
@@ -497,7 +508,7 @@ class ICatalogTextIndexNG3(rcat_interfaces.ICatalogIndex, zidx_interfaces.IIndex
 
 class IRepozeQueryParser(ISearchQueryParser):
 	pass
-		
+
 class IRepozeCatalogCreator(interface.Interface):
 	pass
 
@@ -584,22 +595,22 @@ class ICloudSearchStore(interface.Interface):
 		"""
 		Return all aws search domains
 		"""
-		
+
 	def search(*args, **kwargs):
 		"""
 		Perform a CloudSearch search
 		"""
-	
+
 	def add(docid, username, service=None, commit=True):
 		"""
 		Index the specified document in CloudSearch
 		"""
-			
+
 	def delete(docid, username, ommit=True):
 		"""
 		Delete the specified document from CloudSearch
 		"""
-		
+
 	def handle_cs_errors(errors):
 		"""
 		Handle the specififed CloudSearch error meessages
@@ -646,7 +657,7 @@ class IWhooshBookSearchHit(ISearchHit):
 	pass
 
 class ISearchHitComparator(interface.Interface):
-	
+
 	def compare(a, b):
 		"""Compare arguments for for order. a or b can beither a IndexHit or ISearchHit"""
 
@@ -663,7 +674,7 @@ class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="Search query", required=True)
 
 class ISearchResults(IBaseSearchResults):
-	
+
 	hits = TypedIterable( value_type=schema.Object(IIndexHit, title="index hit"),
 						  title="IIndexHit objects", required=True, readonly=True)
 
@@ -677,7 +688,7 @@ class ISearchResults(IBaseSearchResults):
 		pass
 
 class ISuggestResults(IBaseSearchResults):
-	
+
 	suggestions = TypedIterable(
 		title="suggested words",
 		description="Order may or may not be significant",

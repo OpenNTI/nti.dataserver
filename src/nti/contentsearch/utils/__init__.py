@@ -11,8 +11,8 @@ import zope.intid
 from zope import component
 from zope.generations.utility import findObjectsProviding
 
+from nti.deprecated import deprecated
 from nti.dataserver import users
-from nti.dataserver.users import friends_lists
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as forum_interfaces
 
@@ -31,57 +31,53 @@ def find_user_dfls(user):
 	if hasattr(user, "friendsLists"):
 		source = user.friendsLists.values()
 	else:
-		source = findObjectsProviding( user, nti_interfaces.IFriendsList)
+		source = findObjectsProviding(user, nti_interfaces.IFriendsList)
 
 	for obj in source:
 		if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(obj):
 			yield obj
 
+def get_flattenedSharingTargets(context):
+	"""
+	Return the entities the object is shared with, including :class:`.IDynamicSharingTargetFriendsList`
+	objects.
+	"""
+	resolver = search_interfaces.IShareableContentResolver( context, None )
+	if resolver:
+		return resolver.get_flattenedSharingTargets()
+	return ()
+
+@deprecated(replacement=get_flattenedSharingTargets)
 def get_sharedWith(obj):
-	"""return the usernames the specified obejct is shared with"""
+	"""
+	Return the usernames the specified object is shared with.
+	Deprecated as the usernames are not globally unique or resolvable.
+	"""
 	rsr = search_interfaces.IShareableContentResolver(obj, None)
 	result = rsr.get_sharedWith() if rsr is not None else ()
 	return result or ()
 
-def find_all_indexable_pairs(user, user_get=users.Entity.get_entity, include_dfls=False):
+
+def find_all_indexable_pairs(user, user_get=users.Entity.get_entity, include_dfls=False, _providing=nti_interfaces.IModeledContent):
 	"""
 	return a generator with all the objects that need to be indexed.
 	The genertor yield pairs (entity, obj) indicating that the object has to be indexed
 	for the particuluar entity
 	"""
 
-	dfls = []
-	username = user.username
-
 	indexable_types = get_indexable_types()
-	for obj in findObjectsProviding( user, nti_interfaces.IModeledContent ):
-
-		if include_dfls and nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(obj):
-			dfls.append(obj)
-		elif get_type_name(obj) in indexable_types:
-
+	for obj in findObjectsProviding( user, _providing ):
+		if get_type_name(obj) in indexable_types:
 			yield (user, obj)
 
 			# check if object is shared
-			for uname in get_sharedWith(obj):
-				sharing_user = user_get(uname)
-				if sharing_user and uname != username:
-					yield (sharing_user, obj)
-
-	for dfl in dfls:
-		for container in dfl.containersOfShared.containers.values():
-			for obj in container:
-				if get_type_name(obj) in indexable_types:
-					yield (dfl, obj)
+			for shared_with in get_flattenedSharingTargets( obj ):
+				if shared_with and shared_with != user:
+					if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy( shared_with ):
+						if include_dfls:
+							yield (shared_with, obj)
+					else:
+						yield (shared_with, obj)
 
 def find_all_posts(user, user_get=users.Entity.get_entity):
-
-	for obj in findObjectsProviding( user, forum_interfaces.IPost):
-
-		yield (user, obj)
-
-		# check if object is shared
-		for uname in get_sharedWith(obj):
-			sharing_user = user_get(uname)
-			if sharing_user and uname != user.username:
-				yield (sharing_user, obj)
+	return find_all_indexable_pairs( user, include_dfls=False, _providing=forum_interfaces.IPost)
