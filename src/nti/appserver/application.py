@@ -12,8 +12,9 @@ import nti.dataserver as dataserver
 
 
 import sys
-if 'nti.monkey.gevent_patch_on_import' in sys.modules:
+if 'nti.monkey.gevent_patch_on_import' in sys.modules: # DON'T import this; it should already be imported if needed
 	sys.modules['nti.monkey.gevent_patch_on_import'].check_threadlocal_status()
+
 import os
 import random
 
@@ -43,6 +44,10 @@ from zope import lifecycleevent
 
 from nti.monkey import webob_cookie_escaping_patch_on_import
 webob_cookie_escaping_patch_on_import.patch()
+
+from nti.monkey import weberror_filereporter_patch_on_import
+weberror_filereporter_patch_on_import.patch()
+
 
 import pyramid.config
 import pyramid.authorization
