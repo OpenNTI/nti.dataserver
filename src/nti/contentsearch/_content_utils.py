@@ -96,6 +96,11 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 		data = getattr(self.obj, flattenedSharingTargetNames_, ())
 		return _process_words(data)
 
+	def get_flattenedSharingTargets(self):
+		if nti_interfaces.IReadableShared.providedBy( self.obj ):
+			return self.obj.flattenedSharingTargets
+		return ()
+
 	def get_last_modified(self):
 		result = self.obj.lastModified
 		result = float(result) if result is not None else None
