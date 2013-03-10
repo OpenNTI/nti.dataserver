@@ -29,7 +29,6 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.contentfragments import interfaces as frg_interfaces
 
 from nti.appserver import httpexceptions as hexc
-from nti.appserver.pyramid_renderers import compress_body
 from nti.appserver.ugd_query_views import _RecursiveUGDStreamView
 
 from nti.dataserver import authorization as nauth
@@ -129,7 +128,7 @@ class AbstractFeedView(object):
 
 		feed_string = feed.writeString( 'utf-8' )
 		response.content_type = feed.mime_type.encode( 'utf-8' )
-		response.body = compress_body( request, response, feed_string, False )
+		response.body = feed_string
 
 		return response
 
