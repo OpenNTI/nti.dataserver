@@ -230,24 +230,4 @@ class REST(object):
 												default=default_cache_controller )
 		cacher(data, system)
 
-		# We are applying compression here. We probably don't have a proxy in front of us
-		# that can filter that (sadly). The Paste gzip middleware seems to have a problem
-		# in our setup...which is actually our fault. If we get any Unicode values
-		# in the headers, gunicorn throws a UnicodeDecodeError. We have to be very careful
-		# about that.
-		# TODO: Insert the paste middleware instead
-		# TODO: Streaming
-		body = compress_body( request, response, body )
-
 		return body
-
-def compress_body(request, response, body, check_json_response_type=True):
-	if (not check_json_response_type or response.content_type.endswith( b'json' )) and b'gzip' in request.accept_encoding:
-		response.content_encoding = b'gzip'
-		strio = StringIO()
-		gzipped = gzip.GzipFile( fileobj=strio, mode='wb' )
-		gzipped.write( body )
-		gzipped.close()
-		body = strio.getvalue()
-
-	return body

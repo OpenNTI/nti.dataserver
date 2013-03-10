@@ -242,6 +242,7 @@ setup(
 		'transaction >= 1.4.1',
 		# See http://pypi.python.org/pypi/user-agents/ for a high-level
 		# library to do web user agent detection
+		'WebError >= 0.10.3', # Error-handling middleware, extracted from Paste
 		'webob >= 1.2.3',
 		'whoosh >= 2.4.1',
 		'z3c.baseregistry >= 2.0.0', # ZCML configurable local component registries
