@@ -3,7 +3,7 @@
 """
 WebError 0.10.3 has a problem printing the filereporter. When it was lifted from Paste,
 it wasn't modified, but the results of format text were modified to return a tuple,
-thus it causes a TypeError
+thus it causes a TypeError. (Fixed in an unreleased version: https://github.com/Pylons/weberror/pull/2)
 
 $Id$
 """
