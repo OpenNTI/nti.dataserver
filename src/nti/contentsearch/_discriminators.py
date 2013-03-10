@@ -11,8 +11,6 @@ from zope import component
 
 from nti.contentprocessing import compute_ngrams
 
-from nti.dataserver import interfaces as nti_interfaces
-
 from ._content_utils import get_content
 from . import interfaces as search_interfaces
 
@@ -41,8 +39,7 @@ def get_keywords(obj, default=()):
 
 def get_sharedWith(obj, default=None):
 	adapted = component.queryAdapter(obj, search_interfaces.IShareableContentResolver)
-	result = adapted.get_flattenedSharingTargets() if adapted else ()
-	result = [x.username for x in result if nti_interfaces.IEntity.providedBy(x)]
+	result = adapted.get_sharedWith() if adapted else None
 	return result or default
 
 def get_references(obj, default=None):
