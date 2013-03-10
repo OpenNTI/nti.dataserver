@@ -230,7 +230,7 @@ def WithMockDSTrans( func ):
 	def with_mock_ds_trans( *args, **kwargs ):
 		global current_transaction
 		global current_mock_ds
-		ds = MockDataserver()
+		ds = MockDataserver() if not getattr( func, 'with_ds_changes', False ) else ChangePassingMockDataserver()
 		current_mock_ds = ds
 
 		setHooks()

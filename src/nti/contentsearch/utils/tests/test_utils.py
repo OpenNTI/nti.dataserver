@@ -7,6 +7,12 @@ __docformat__ = "restructuredtext en"
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_item
+
+from nti.dataserver import users
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.users import DynamicFriendsList
@@ -22,7 +28,6 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from . import zanpakuto_commands
 from . import ConfiguringTestBase
 
-from hamcrest import (is_, has_length, assert_that)
 
 class TestUtils(ConfiguringTestBase):
 
@@ -74,19 +79,26 @@ class TestUtils(ConfiguringTestBase):
 		self._create_note(u'test', user_1, sharedWith=(user_2,))
 		pairs = list(find_all_indexable_pairs(user_1))
 		assert_that(pairs, has_length(2))
-		assert_that(pairs[0][0], is_(user_1))
-		assert_that(pairs[1][0], is_(user_2))
+		assert_that( pairs, has_item( has_item(user_1) ) )
+		assert_that( pairs, has_item( has_item(user_2) ) )
+
 
 	@WithMockDSTrans
 	def test_find_indexable_pairs_dfl(self):
+		self.ds.add_change_listener( users.onChange )
+
 		user_1 = self._create_user(username='nt1@nti.com')
 		user_2 = self._create_user(username='nt2@nti.com')
 		user_3 = self._create_user(username='nt3@nti.com')
 		dfl = self._create_friends_list(user_1, members=(user_2,))
 		self._create_note(u'test', user_1, sharedWith=(dfl, user_3))
 		pairs = list(find_all_indexable_pairs(user_1,include_dfls=True))
-		pairs.sort()
-		assert_that(pairs, has_length(3))
-		assert_that(pairs[0][0], is_(user_1))
-		assert_that(pairs[1][0], is_(dfl))
-		assert_that(pairs[2][0], is_(user_3))
+
+		__traceback_info__ = pairs
+		assert_that(pairs, has_length(4))
+		assert_that( pairs, has_item( has_item(user_1) ) )
+		assert_that( pairs, has_item( has_item(user_2) ) )
+		assert_that( pairs, has_item( has_item(user_3) ) )
+		assert_that( pairs, has_item( has_item(dfl) ) )
+
+	test_find_indexable_pairs_dfl.with_ds_changes = True

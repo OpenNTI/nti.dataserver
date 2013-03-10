@@ -32,7 +32,7 @@ from . import interfaces as search_interfaces
 
 from .common import (CLASS, BODY, ID)
 from .common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
-					 creator_fields, keyword_fields, last_modified_fields, sharedWith_, 
+					 creator_fields, keyword_fields, last_modified_fields, sharedWith_,
 					 container_id_fields, ntiid_fields,  highlight_, note_, post_, tags_,
 					 messageinfo_, redaction_, canvas_, canvastextshape_, references_,
 					 title_, inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
@@ -51,7 +51,7 @@ def get_content(text=None, language='en'):
 class _StringContentResolver(object):
 
 	__slots__ = ('content',)
-	
+
 	def __init__( self, content ):
 		self.content = content
 
@@ -71,9 +71,9 @@ def _process_words(words):
 
 @interface.implementer(search_interfaces.IContentResolver)
 class _BasicContentResolver(object):
-	
+
 	__slots__ = ('obj',)
-	
+
 	def __init__( self, obj ):
 		self.obj = obj
 
@@ -109,7 +109,7 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 			data = getattr(self.obj, name, None)
 			result.update(_process_words(data))
 		return list(result) if result else []
-	
+
 	def get_references(self):
 		result = set()
 		items = to_list(getattr(self.obj, references_, ()))
@@ -199,28 +199,28 @@ class _CanvasTextShapeContentResolver(_BasicContentResolver):
 @component.adapter(for_interfaces.IPost)
 @interface.implementer(search_interfaces.IPostContentResolver)
 class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
-	
+
 	def get_title(self):
 		return self.obj.title
-	
+
 	def get_content(self):
 		return self._resolve(self.obj.body)
-	
+
 	def get_tags(self):
 		result = self.obj.tags
 		result = _process_words(set(result)) if result else ()
 		return result
-	
+
 	def get_id(self):
 		result = None
 		obj = self.obj
 		if for_interfaces.IHeadlinePost.providedBy(obj):
 			obj = getattr(self.obj, '__parent__', None)
 		if 	for_interfaces.IHeadlineTopic.providedBy(obj) or \
-			for_interfaces.IPersonalBlogComment.providedBy(obj): 
+			for_interfaces.IPersonalBlogComment.providedBy(obj):
 			result = getattr(obj,'id', None)
 		return result or u''
-	
+
 @component.adapter(IDict)
 @interface.implementer(	search_interfaces.IHighlightContentResolver,
 						search_interfaces.INoteContentResolver,
@@ -228,9 +228,9 @@ class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 						search_interfaces.IMessageInfoContentResolver,
 						search_interfaces.IPostContentResolver,)
 class _DictContentResolver(object):
-	
+
 	__slots__ = ('obj',)
-	
+
 	def __init__( self, obj ):
 		self.obj = obj
 
@@ -308,7 +308,7 @@ class _DictContentResolver(object):
 		return list(result) if result else ()
 
 	def get_sharedWith(self):
-		data = self.obj.get(sharedWith_, self.obj.get(flattenedSharingTargetNames_, ())) 
+		data = self.obj.get(sharedWith_, self.obj.get(flattenedSharingTargetNames_, ()))
 		return _process_words(data)
 
 	def get_last_modified(self):
@@ -351,13 +351,13 @@ class _DictContentResolver(object):
 	def get_recipients(self):
 		data = self.obj.get(recipients_, ())
 		return _process_words(data)
-	
+
 	# post content resolver
-	
+
 	def get_title(self):
 		result = self.obj.get(title_, ())
 		return unicode(result) if result else None
-	
+
 	def get_tags(self):
 		result = self.obj.get(tags_, ())
 		return _process_words(result)
@@ -365,10 +365,10 @@ class _DictContentResolver(object):
 @component.adapter(search_interfaces.IBookContent)
 @interface.implementer(search_interfaces.IBookContentResolver)
 class _BookContentResolver(_BasicContentResolver):
-	
+
 	def get_content(self):
 		return self.obj.content
-	
+
 	def get_ntiid(self):
 		return self.obj.ntiid
 	get_containerId = get_ntiid
@@ -378,7 +378,7 @@ class _BookContentResolver(_BasicContentResolver):
 
 @interface.implementer( search_interfaces.IStopWords )
 class _DefaultStopWords(object):
-	
+
 	def stopwords(self, language='en'):
 		return ()
 
