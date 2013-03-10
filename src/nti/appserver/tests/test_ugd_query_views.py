@@ -1012,8 +1012,8 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 			self.ds.add_change_listener( users.onChange )
 
 			# Two users...
-			user = self._create_user(  username='jason.madden@nextthought.com')
-			user2 = self._create_user( username='steve.johnson@nextthought.com' )
+			user = self._create_user(  username='jason.madden@nextthought_com')
+			user2 = self._create_user( username='steve.johnson@nextthought_com' )
 			# ...sharing a community
 			community = users.Community.create_community( self.ds, username='MathCounts' )
 			user.record_dynamic_membership( community )

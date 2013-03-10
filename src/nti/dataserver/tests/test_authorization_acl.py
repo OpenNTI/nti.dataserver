@@ -4,6 +4,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 
 from hamcrest import assert_that, has_length,  is_
+from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not, same_instance
 from hamcrest import has_property
 from hamcrest import contains_string
@@ -46,7 +47,7 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 		verifyObject( nti_interfaces.IACLProvider, acl_prov )
 
 		acl = acl_prov.__acl__
-		assert_that( acl, has_length( 2 ) )
+		assert_that( acl, has_length( greater_than_or_equal_to( 2 ) ) )
 
 		action, actor, permission = acl[0]
 		assert_that( action, is_( nti_interfaces.ACE_ACT_ALLOW ) )
@@ -69,7 +70,7 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 		verifyObject( nti_interfaces.IACLProvider, acl_prov )
 
 		acl = acl_prov.__acl__
-		assert_that( acl, has_length( 3 ) )
+		assert_that( acl, has_length( greater_than_or_equal_to( 3 ) ) )
 
 		action, actor, permission = acl[0]
 		assert_that( action, is_( nti_interfaces.ACE_ACT_ALLOW ) )
@@ -101,7 +102,7 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 		verifyObject( nti_interfaces.IACLProvider, acl_prov )
 
 		acl = acl_prov.__acl__
-		assert_that( acl, has_length( 3 ) )
+		assert_that( acl, has_length(  greater_than_or_equal_to( 3 ) ) )
 
 		for action in (auth.ACT_CREATE,auth.ACT_DELETE,auth.ACT_UPDATE,auth.ACT_READ):
 			assert_that( acl_prov, permits( 'sjohnson@nextthought.com',
@@ -276,10 +277,10 @@ class TestACE(mock_dataserver.SharedConfiguringTestBase):
 
 		acl_prov = nti_interfaces.IACLProvider( n )
 		acl = acl_prov.__acl__
-		acl.write_to_file( '/dev/null' )
+		acl.write_to_file( '/dev/null' ) # cover the string case
 
 		temp_file = tempfile.TemporaryFile( 'w+' )
-		acl.write_to_file( temp_file )
+		acl.write_to_file( temp_file ) # cover the fileobj case
 		temp_file.seek( 0 )
 
 		from_file = auth_acl.acl_from_file( temp_file )

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: jason.madden@nextthought.com\n"
-"POT-Creation-Date: 2013-03-06 09:12-0600\n"
+"POT-Creation-Date: 2013-03-10 16:40-0500\n"
 "PO-Revision-Date: 2012-09-24 22:18-0500\n"
 "Last-Translator: Jason Madden <jason.madden@nextthought.com>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -18,8 +18,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: src/nti/appserver/_adapters.py:385 src/nti/appserver/_adapters.py:386
-#: src/nti/appserver/_adapters.py:387
+#: src/nti/appserver/_adapters.py:391 src/nti/appserver/_adapters.py:392
+#: src/nti/appserver/_adapters.py:393
 msgid "This object has been deleted."
 msgstr ""
 
@@ -27,16 +27,16 @@ msgstr ""
 msgid "You cannot store that type of object here."
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:129
-#: src/nti/appserver/account_creation_views.py:178
+#: src/nti/appserver/account_creation_views.py:130
+#: src/nti/appserver/account_creation_views.py:179
 msgid "Please provide your first and last names."
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:169
+#: src/nti/appserver/account_creation_views.py:170
 msgid "Username cannot be blank"
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:201
+#: src/nti/appserver/account_creation_views.py:202
 msgid "That username is not available. Please choose another."
 msgstr ""
 
@@ -52,12 +52,12 @@ msgstr ""
 msgid "Your reset link is not valid. Please request a new one."
 msgstr ""
 
-#: src/nti/appserver/configure_blogs.zcml:18
-msgid "Create Blog Entry"
+#: src/nti/appserver/configure_blogs.zcml:23
+msgid "Can the user create new blog entries?"
 msgstr ""
 
-#: src/nti/appserver/configure_blogs.zcml:18
-msgid "Can the user create new blog entries?"
+#: src/nti/appserver/configure_blogs.zcml:23
+msgid "Create Blog Entry"
 msgstr ""
 
 #: src/nti/appserver/coppa_admin_views.py:110
@@ -108,46 +108,42 @@ msgstr ""
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:205
+#: src/nti/appserver/user_policies.py:176
 msgid "NextThought Account Confirmation"
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:254
+#: src/nti/appserver/user_policies.py:225
 msgid ""
 "It is too soon to send another consent request email. Please try again "
 "tomorrow."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:289
+#: src/nti/appserver/user_policies.py:260
 msgid "Please Confirm Your Child's NextThought Account"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:15
-msgid "Chat"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:15
 msgid "Can the user chat?"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:20
-msgid "Sharing"
+#: src/nti/appserver/capabilities/capabilities.zcml:15
+msgid "Chat"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:20
 msgid "Can the user access UGD sharing features?"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:25
-msgid "Create FriendsLists"
+#: src/nti/appserver/capabilities/capabilities.zcml:20
+msgid "Sharing"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:25
 msgid "Can the user create new FriendsLists? (Enforced by the vocabulary)"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:30
-msgid "Create DynamicFriendsLists"
+#: src/nti/appserver/capabilities/capabilities.zcml:25
+msgid "Create FriendsLists"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:30
@@ -156,12 +152,16 @@ msgid ""
 "vocab)"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:35
-msgid "Upload Avatar"
+#: src/nti/appserver/capabilities/capabilities.zcml:30
+msgid "Create DynamicFriendsLists"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:35
 msgid "Can the user upload custom avatar pictures?"
+msgstr ""
+
+#: src/nti/appserver/capabilities/capabilities.zcml:35
+msgid "Upload Avatar"
 msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:150
@@ -170,6 +170,34 @@ msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:154
 msgid "The invitation code has expired."
+msgstr ""
+
+#: src/nti/appserver/link_providers/zcml.py:39
+msgid "The name of the link."
+msgstr ""
+
+#: src/nti/appserver/link_providers/zcml.py:45
+msgid "Path to string constant giving the name."
+msgstr ""
+
+#: src/nti/appserver/link_providers/zcml.py:51
+msgid "If given, the minimum required value users must have."
+msgstr ""
+
+#: src/nti/appserver/link_providers/zcml.py:56
+msgid "A URL to redirect to on GET"
+msgstr ""
+
+#: src/nti/appserver/link_providers/zcml.py:61
+msgid "A field on the user that this will link to, using the ++fields namespace"
+msgstr ""
+
+#: src/nti/appserver/link_providers/zcml.py:66
+msgid "Path to string constant giving the name of a view."
+msgstr ""
+
+#: src/nti/appserver/link_providers/zcml.py:72
+msgid "The mime type expected to be returned by the link"
 msgstr ""
 
 #: src/nti/chatserver/_handler.py:56
@@ -184,11 +212,11 @@ msgid ""
 "or shapes"
 msgstr "The message is too big. Please use less text or a smaller whiteboard."
 
-#: src/nti/dataserver/configure.zcml:71
+#: src/nti/dataserver/configure.zcml:74
 msgid "Likes"
 msgstr ""
 
-#: src/nti/dataserver/configure.zcml:76
+#: src/nti/dataserver/configure.zcml:79
 msgid "Favorites"
 msgstr ""
 
@@ -205,10 +233,18 @@ msgid "Edit existing object"
 msgstr ""
 
 #: src/nti/dataserver/configure_acls.zcml:20
-msgid "Moderate existing objects"
+msgid "Search for objects"
 msgstr ""
 
 #: src/nti/dataserver/configure_acls.zcml:23
+msgid "Moderate existing objects"
+msgstr ""
+
+#: src/nti/dataserver/configure_acls.zcml:26
+msgid "Administer COPPA agreements"
+msgstr ""
+
+#: src/nti/dataserver/configure_acls.zcml:29
 msgid "Impersonate another user"
 msgstr ""
 
