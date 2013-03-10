@@ -2,7 +2,7 @@
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:ext="http://nextthought.com/ntp/ext"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
-			i18n_domain="zope">
+			i18n_domain="nti.dataserver">
 	<include package="zope.component" />
 
 	<!-- ACL/ACE permissions -->
@@ -18,8 +18,14 @@
 		id="nti.actions.update"
 		title="Edit existing object" />
 	<permission
+		id="nti.actions.search"
+		title="Search for objects" />
+	<permission
 		id="nti.actions.moderate"
 		title="Moderate existing objects" />
+	<permission
+		id="nti.actions.coppa_admin"
+		title="Administer COPPA agreements" />
 	<permission
 		id="nti.actions.impersonate"
 		title="Impersonate another user" />

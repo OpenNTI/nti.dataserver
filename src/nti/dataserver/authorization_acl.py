@@ -9,6 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import six
+import codecs
 
 from zope import interface
 from zope import component
@@ -69,11 +70,17 @@ class _ACE(object):
 	@classmethod
 	def from_external_string( cls, string, provenance='from_string' ):
 		parts = string.split( ':' )
-		assert len(parts) == 3
+		__traceback_info__ = parts, string, provenance
+		# It happens that we use a : to delimit parts, but that is a valid character
+		# to use in a role name. We arbitrarily decide that it is not a valid character
+		# to use in a permission string. This lets us take the first part as the action
+		# the last part as the permission, and any parts in the middle are joined back up
+		# by colons to form the actor
+		assert len(parts) >= 3
 		action = parts[0]
-		actor = parts[1]
+		actor = ':'.join( parts[1:-1] )
 
-		perms = parts[2]
+		perms = parts[-1]
 		if perms == 'All':
 			perms = nti_interfaces.ALL_PERMISSIONS
 		else:
@@ -100,12 +107,11 @@ class _ACE(object):
 		if permission is nti_interfaces.ALL_PERMISSIONS:
 			self.permission = permission
 		else:
-			self.permission = [(component.queryUtility(nti_interfaces.IPermission, x)
+			self.permission = [(component.getUtility(nti_interfaces.IPermission, x) # permissions MUST be named utilities
 								if not nti_interfaces.IPermission.providedBy(x)
 								else x)
 								for x
 								in permission]
-			self.permission = [x for x in self.permission if x is not None]
 			assert self.permission, "Must provide a permission"
 
 	def __getstate__( self ):
@@ -172,7 +178,7 @@ def acl_from_file( path_or_file ):
 		non-commented (has a leading #) line will be parsed as an ace using :func:`ace_from_string`.
 	"""
 	if isinstance(path_or_file, six.string_types):
-		with open(path_or_file, 'rU') as f:
+		with codecs.open(path_or_file, 'rU', encoding='utf-8') as f:
 			lines = f.readlines()
 			provenance = path_or_file
 	else:
@@ -296,7 +302,7 @@ class _ACL(list):
 				f.write( x.to_external_string() )
 				f.write( '\n' )
 		if isinstance(path_or_file, six.string_types):
-			with open(path_or_file, 'w') as f:
+			with codecs.open(path_or_file, 'w', encoding='utf-8') as f:
 				_write(f)
 		else:
 			_write( path_or_file )
@@ -488,8 +494,8 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		for name in self.__do_get_sharing_target_names():
 			for perm in self._PERMS_FOR_SHARING_TARGETS:
 				result.append( ace_allowing( name, perm, type(self) ) )
-		self._extend_acl_before_deny( result )
 		if self._DENY_ALL:
+			self._extend_acl_before_deny( result )
 			result.append( _ace_denying_all( type(self) ) )
 		return result
 
@@ -519,9 +525,18 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 		# ACE comes first, and because they are both 'allow' entries
 		return self.context.flattenedSharingTargetNames
 
+	def _extend_acl_before_deny( self, acl ):
+		# If we're going to deny, admins and moderators still get the right
+		# privs (?)
+		_add_admin_moderation( acl, self )
+		acl.append( ace_allowing( authorization.ROLE_MODERATOR, nti_interfaces.ALL_PERMISSIONS, self ) )
+		acl.append( ace_allowing( authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, self ) )
+
 	@Lazy
 	def __acl__( self ):
-		# Inherit if we are nested. See class comment
+		# Inherit if we are nested. See class comment. NOTE: We are just checking the direct parent,
+		# not the entire traversal chain; checking to see if anything we are within is IReadableShared
+		# might pull in the wrong permissions, depending on how the nesting goes (?)
 		if nti_interfaces.IReadableShared.providedBy( getattr( self.context, '__parent__', None ) ):
 			return ()
 		return super(_ShareableModeledContentACLProvider,self).__acl__
