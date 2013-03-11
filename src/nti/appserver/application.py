@@ -111,6 +111,9 @@ def _create_xml_conf_machine( settings ):
 	xmlconfig.registerCommonDirectives( xml_conf_machine )
 
 	zcml_features = settings.get( 'zcml_features', () )
+	# Support reading from a string and direct code usage
+	if isinstance( zcml_features, basestring ) and zcml_features:
+		zcml_features = zcml_features.split()
 	zcml_features = set(zcml_features)
 	# BWC aliases
 	for k in 'devmode', 'testmode':
