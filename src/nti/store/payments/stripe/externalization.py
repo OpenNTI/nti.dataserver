@@ -20,9 +20,4 @@ from . import interfaces
 class StripeConnectKeyExternal(InterfaceObjectIO):
 	
 	_ext_iface_upper_bound = interfaces.IStripeConnectKey
-	
-	def toExternalObject( self, mergeFrom=None ):
-		result = super(StripeConnectKeyExternal, self).toExternalObject(mergeFrom)
-		result.pop('PrivateKey', None)
-		result.pop('RefreshToken', None)
-		return result
+	_excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | { 'PrivateKey', 'RefreshToken' }
