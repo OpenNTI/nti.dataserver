@@ -515,6 +515,15 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	e.g., a Canvas inside a Note, then the ACL is skipped and just inherited
 	from the parent (so traversal must be appropriate and respected in ACL checks). This
 	prevents problems when denying all access.
+
+	.. note:: Even in this case, we still give administrators/moderators access
+		to the nested object. This is something of a hack: we don't really want them
+		to have full, indiscriminate access to the parent object because that breaks
+		certain assumptions about sharing (some objects are visible when we don't expect
+		them to be because they weren't shared with you), but we do need access to the inner
+		objects, primarily Canvas objects and the image files they contain.
+
+		This strategy would fail if canvas objects were ever used top-level.
 	"""
 
 	_DENY_ALL = True
@@ -525,12 +534,11 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 		# ACE comes first, and because they are both 'allow' entries
 		return self.context.flattenedSharingTargetNames
 
-	def _extend_acl_before_deny( self, acl ):
-		# If we're going to deny, admins and moderators still get the right
-		# privs (?)
-		_add_admin_moderation( acl, self )
-		acl.append( ace_allowing( authorization.ROLE_MODERATOR, nti_interfaces.ALL_PERMISSIONS, self ) )
-		acl.append( ace_allowing( authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, self ) )
+	def _full_admin_privs( self, acl ):
+		provenance = 'Nested_ShareableModeledContentACLProvider'
+		_add_admin_moderation( acl, provenance )
+		acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_READ, provenance ) )
+		acl.append( ace_allowing( authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, provenance ) )
 
 	@Lazy
 	def __acl__( self ):
@@ -538,7 +546,9 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 		# not the entire traversal chain; checking to see if anything we are within is IReadableShared
 		# might pull in the wrong permissions, depending on how the nesting goes (?)
 		if nti_interfaces.IReadableShared.providedBy( getattr( self.context, '__parent__', None ) ):
-			return ()
+			result = _ACL()
+			self._full_admin_privs( result )
+			return result
 		return super(_ShareableModeledContentACLProvider,self).__acl__
 
 # NOTE: All of the ACLs around classes will change as
