@@ -18,10 +18,11 @@ from pyramid.security import authenticated_userid
 from .. import purchase_attempt
 from .. import purchase_history
 from .. import interfaces as store_interfaces
+from .stripe import pyramid_views as stripe_pyramid
 
-class StripePayment(object):
+class BasePaymentView(object):
 
-	processor = 'stripe'
+	processor = None
 	
 	def __init__(self, request):
 		self.request = request
@@ -38,8 +39,7 @@ class StripePayment(object):
 		if purchase is not None:
 			logger.warn("There is already a pending purchase for item(s) %s" % items)
 			return purchase
-			
-				
+
 		token = request.matchdict.get('token')
 		amount = request.matchdict.get('amount', None)
 		coupon = request.matchdict.get('coupon', None)
@@ -60,5 +60,9 @@ class StripePayment(object):
 		gevent.spawn(process_pay)
 		return purchase
 		
+class StripePaymentView(BasePaymentView):
+	processor = 'stripe'
+
+GetStripeConnectKeyView = stripe_pyramid.GetStripeConnectKeyView
 
 		
