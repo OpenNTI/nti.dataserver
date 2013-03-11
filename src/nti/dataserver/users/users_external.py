@@ -200,7 +200,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		"""
 		from nti.dataserver._Dataserver import InappropriateSiteError # circular imports
 		extDict = super(_UserPersonalSummaryExternalObject,self)._do_toExternalObject()
-		def ext( l, name='summary' ):
+		def _externalize_subordinates( l, name='summary' ):
 			result = []
 			for ent_name in l:
 				__traceback_info__ = name, ent_name
@@ -216,7 +216,13 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 						e = None
 
 				if e:
-					result.append( toExternalObject( e, name=name ) )
+					try:
+						result.append( toExternalObject( e, name=name ) )
+					except TypeError: # Thrown if we fail in certain parts of externalization (e.g., links)
+						# TODO: Better exception?
+						# TODO: It may not be good to do this, that may hide errors that need to be corrected
+						logger.exception( "Failed to externalize subordinate object %r of %r", e, self.entity )
+
 				# It screws up the web app if we return strings here for things that do not yet or
 				# do not anymore exist. Even though we've always done that.
 
@@ -229,17 +235,18 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		# DynamicMemberships/Communities are not currently editable,
 		# and will need special handling of (a) Everyone and (b) DynamicFriendsLists
 		# (proper events could handle the latter)
-		extDict['Communities'] = ext( self.entity.xxx_hack_filter_non_memberships( self.entity.dynamic_memberships,
-																				   log_msg="Relationship trouble. User %s is no longer a member of %s. Ignoring for externalization",
-																				   the_logger=logger),
-									  name='') # Deprecated
+		extDict['Communities'] = _externalize_subordinates(
+									self.entity.xxx_hack_filter_non_memberships( self.entity.dynamic_memberships,
+																				 log_msg="Relationship trouble. User %s is no longer a member of %s. Ignoring for externalization",
+																				 the_logger=logger),
+									name='') # Deprecated
 		extDict['DynamicMemberships'] = extDict['Communities']
 
 		# Following is writable
-		extDict['following'] = ext( self.entity.xxx_hack_filter_non_memberships( self.entity.entities_followed ) )
+		extDict['following'] = _externalize_subordinates( self.entity.xxx_hack_filter_non_memberships( self.entity.entities_followed ) )
 		# as is ignoring and accepting
-		extDict['ignoring'] = ext(self.entity.entities_ignoring_shared_data_from)
-		extDict['accepting'] = ext(self.entity.entities_accepting_shared_data_from)
+		extDict['ignoring'] = _externalize_subordinates(self.entity.entities_ignoring_shared_data_from)
+		extDict['accepting'] = _externalize_subordinates(self.entity.entities_accepting_shared_data_from)
 		extDict['AvatarURLChoices'] = component.getAdapter( self.entity, interfaces.IAvatarChoices ).get_choices()
 		extDict['Links'] = self._replace_or_add_edit_link_with_self( extDict.get( 'Links', () ) )
 		extDict['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
