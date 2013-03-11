@@ -13,6 +13,8 @@ from zope.location.interfaces import IContained
 from zope.schema.interfaces import IContextSourceBinder
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
+from nti.utils import schema as nti_schema
+
 PA_STATE_FAILED = u'Failed'
 PA_STATE_SUCCESS = u'Success'
 PA_STATE_FAILURE = u'Failure'
@@ -30,7 +32,7 @@ PA_STATE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.Simp
 
 class IPaymentProcessor(interface.Interface):
 
-	name = schema.TextLine(title='Processor name', required=True)
+	name = nti_schema.ValidTextLine(title='Processor name', required=True)
 
 	def process_purchase(username, purchase_id, amount, currency, description):
 		"""
@@ -66,14 +68,14 @@ class IPurchaseAttempt(IContained):
 	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='Purchase state', required=True)
 
 	Items = schema.FrozenSet(value_type=schema.TextLine(title='The item identifier'), title="Items being purchased")
-	Description = schema.TextLine(title='A purchase description', required=False)
+	Description = nti_schema.ValidTextLine(title='A purchase description', required=False)
 	OnBehalfOf = schema.FrozenSet(value_type=schema.TextLine(title='username'), title='List of users', required=False, min_length=0)
 
-	StartTime = schema.Float(title='Start time', required=True)
-	EndTime = schema.Float(title='Completion time', required=False)
+	StartTime = nti_schema.Number(title='Start time', required=True)
+	EndTime = nti_schema.Number(title='Completion time', required=False)
 
 	ErrorCode = schema.Int(title='Failure code', required=False)
-	ErrorMessage = schema.TextLine(title='Failure message', required=False)
+	ErrorMessage = nti_schema.ValidTextLine(title='Failure message', required=False)
 
 	Synced = schema.Bool(title='if the item has been synchronized with the processors data', required=True)
 
