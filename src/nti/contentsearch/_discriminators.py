@@ -34,7 +34,6 @@ def get_last_modified(obj, default=None):
 def get_keywords(obj, default=()):
 	adapted = component.queryAdapter(obj, search_interfaces.IThreadableContentResolver)
 	result = adapted.get_keywords() if adapted else None
-	result = [x.lower() for x in result] if result else None
 	return result or default
 
 def get_sharedWith(obj, default=None):
