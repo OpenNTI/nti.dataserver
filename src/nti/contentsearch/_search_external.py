@@ -194,8 +194,6 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 @component.adapter(search_interfaces.ISuggestResults)
 class _SuggestResultsExternalizer(_BaseSearchResultsExternalizer):
 
-	__slots__ = ('results',)
-	
 	@property
 	def suggestions(self):
 		return self.results.suggestions
@@ -211,8 +209,6 @@ class _SuggestResultsExternalizer(_BaseSearchResultsExternalizer):
 
 @component.adapter(search_interfaces.ISuggestAndSearchResults)
 class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestResultsExternalizer):
-
-	__slots__ = ('results', 'seen')
 	
 	def toExternalObject(self):
 		eo = _SearchResultsExternalizer.toExternalObject(self)
