@@ -16,6 +16,8 @@ from zope import schema
 from zope import interface
 from zope.schema import interfaces as schema_interfaces
 
+from nti.utils import schema as nti_schema
+
 class IQTIAttribute(interface.Interface):
 	"""
 	Marker interface for QTI [XML] attributes
@@ -36,7 +38,7 @@ class BaseQTIAttribute(object):
 	def toUnicode(self, value):
 		return unicode(value) if value is not None else None
 	
-class TextLineAttribute(BaseQTIAttribute, schema.TextLine):
+class TextLineAttribute(BaseQTIAttribute, nti_schema.ValidTextLine):
 	"""
 	A :class:`schema.TextLine` type that to mark XML attribute elements
 	"""
