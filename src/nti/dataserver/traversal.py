@@ -5,6 +5,7 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+logger = __import__('logging').getLogger(__name__)
 
 from nti.monkey import traversing_patch_on_import
 traversing_patch_on_import.patch()
@@ -15,6 +16,7 @@ from pyramid.traversal import _join_path_tuple, find_interface as _p_find_interf
 
 from zope import component
 from zope.location import interfaces as loc_interfaces
+from zope.location import LocationIterator
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -24,11 +26,20 @@ def resource_path( res ):
 	# also more strict. It requires strings (not None, for example)
 	# and bottoms out at an IRoot. This helps us get things right.
 	# It is probably also a bit slower.
-	__traceback_info__ = res,
+	_known_parents = [] # TODO: Could probably use a __traceback_supplement__ for this
+	__traceback_info__ = res, _known_parents
 
 	# Ask for the parents; we do this instead of getPath() and url_quote
 	# to work properly with unicode paths through the magic of pyramid
-	parents = loc_interfaces.ILocationInfo( res ).getParents()
+	loc_info = loc_interfaces.ILocationInfo( res )
+	try:
+		parents = loc_info.getParents()
+	except TypeError: # "Not enough context information to get all parents"
+		# This is a programming/design error: some object is not where it should be
+		_known_parents.extend( LocationIterator( res ) )
+		logger.exception( "Failed to get all parents of %r; known parents: %s", res, _known_parents )
+		raise
+
 	if parents:
 		# Take the root off, it's implicit and has a name of None
 		parents.pop()

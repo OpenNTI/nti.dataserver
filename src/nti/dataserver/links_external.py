@@ -96,7 +96,7 @@ def render_link( link, nearest_site=None ):
 	elif traversal.is_valid_resource_path( target ):
 		href = target
 	else:
-		# This will raise a LocationError if something is broken
+		# This will raise a LocationError or TypeError if something is broken
 		# in the chain. That shouldn't happen and needs to be dealt with
 		# at dev time.
 		__traceback_info__ = rel, link.elements # next fun puts target in __traceback_info__
