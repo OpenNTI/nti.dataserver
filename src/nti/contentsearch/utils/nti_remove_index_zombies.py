@@ -1,6 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Remove index zombies entries (deleted content)
 
-from __future__ import print_function, unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import argparse
 
@@ -12,8 +18,8 @@ from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
-from nti.contentsearch.utils import find_user_dfls
-from nti.contentsearch.utils._repoze_utils import get_catalog_and_docids
+from . import find_user_dfls
+from ._repoze_utils import get_catalog_and_docids
 
 def _get_object(uid):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
