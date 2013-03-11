@@ -27,7 +27,7 @@ from nti.contentprocessing import interfaces as cp_interfaces
 
 from .common import is_all_query
 from . import interfaces as search_interfaces
-from .common import (content_, ngrams_, title_, tags_)
+from .common import (content_, ngrams_, title_, tags_, redactionExplanation_, replacementContent_)
 
 def _can_use_ngram_field(qo):
 	tokens = split_content(qo.term)
@@ -149,9 +149,17 @@ class _DefaultRepozeQueryParser(object):
 
 _DefaultNoteRepozeQueryParser = _DefaultRepozeQueryParser
 _DefaultHighlightRepozeQueryParser = _DefaultRepozeQueryParser
-_DefaultRedactionRepozeQueryParser = _DefaultRepozeQueryParser
 _DefaultMessageinfoRepozeQueryParser = _DefaultRepozeQueryParser
 
+class _DefaultRedactionRepozeQueryParser(_DefaultRepozeQueryParser):
+	
+	def _get_search_fields(self, qo):
+		if qo.is_phrase_search or qo.is_prefix_search or not _can_use_ngram_field(qo):
+			result = (content_, redactionExplanation_, replacementContent_)
+		else:
+			result = (ngrams_, redactionExplanation_, replacementContent_)
+		return result
+	
 class _DefaultPostRepozeQueryParser(_DefaultRepozeQueryParser):
 	
 	def _get_search_fields(self, qo):

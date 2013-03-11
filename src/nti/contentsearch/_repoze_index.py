@@ -36,10 +36,10 @@ get_object_ngrams = discriminators.get_object_ngrams
 get_object_content = discriminators.get_object_content
 get_post_title = discriminators.get_post_title_and_ngrams
 get_content_and_ngrams = discriminators.get_content_and_ngrams
-get_replacementContent = discriminators.get_replacement_content
-get_replacement_content = discriminators.get_replacement_content
-get_redactionExplanation = discriminators.get_redaction_explanation
-get_redaction_explanation = discriminators.get_redaction_explanation
+get_replacementContent = discriminators.get_replacement_content_and_ngrams
+get_replacement_content = get_replacementContent
+get_redactionExplanation = discriminators.get_redaction_explanation_and_ngrams
+get_redaction_explanation = get_redactionExplanation
 
 def _flatten_list(result, default=None):
 	result = ' '.join(result) if result else default

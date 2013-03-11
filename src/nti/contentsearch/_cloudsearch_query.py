@@ -8,7 +8,7 @@ from zope import component
 
 from .common import normalize_type_name
 from . import interfaces as search_interfaces
-from .common import (username_, content_, type_, ngrams_, tags_, title_)
+from .common import (username_, content_, type_, ngrams_, tags_, title_, redaction_explanation_, replacement_content_)
 
 def adapt_searchOn_types(searchOn=None):
 	return [normalize_type_name(x) for x in searchOn] if searchOn else ()
@@ -18,9 +18,9 @@ class _DefaultCloudSearchQueryParser(object):
 	
 	def _get_search_fields(self, qo):
 		if qo.is_phrase_search or qo.is_prefix_search:
-			result = (content_,)
+			result = (content_, redaction_explanation_, replacement_content_)
 		else:
-			result = (ngrams_, title_, tags_)
+			result = (ngrams_, title_, tags_, redaction_explanation_, replacement_content_)
 		return result
 	
 	def parse(self, qo, username=None):

@@ -167,7 +167,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
-		assert_that(d, has_entry(SNIPPET, u'overcome it everytime I have been on the verge of death Fear'))
+		assert_that(d, has_entry(SNIPPET, u'overcome it everytime I have been on the verge of death'))
 
 	def test_search_hit_book(self):
 		containerId = make_ntiid(nttype='bleach', specific='manga')

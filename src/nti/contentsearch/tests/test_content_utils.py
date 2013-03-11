@@ -100,13 +100,15 @@ class TestContentUtils(ConfiguringTestBase):
 		user = self._create_user(username=username)
 		redaction = Redaction()
 		redaction.selectedText = u'Fear'
-		redaction.replacementContent = 'redaction'
+		redaction.replacementContent = 'my redaction'
 		redaction.redactionExplanation = 'Have overcome it everytime I have been on the verge of death'
 		redaction.creator = username
 		redaction.containerId = containerId
 		redaction = user.addContainedObject( redaction )
 		adapted = component.getAdapter(redaction, IContentResolver)
-		assert_that(adapted.get_content(), is_('Have overcome it everytime I have been on the verge of death Fear'))
+		assert_that(adapted.get_content(), is_('Fear'))
+		assert_that(adapted.get_replacement_content(), is_('my redaction'))
+		assert_that(adapted.get_redaction_explanation(), is_('Have overcome it everytime I have been on the verge of death'))
 		assert_that(adapted.get_references(), has_length(0))
 		assert_that(adapted.get_ntiid(), is_not(None))
 		assert_that(adapted.get_creator(), is_('kuchiki@bleach.com'))

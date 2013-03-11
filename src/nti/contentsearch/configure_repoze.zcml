@@ -34,8 +34,12 @@
 	
 	<utility name="content" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
 	<utility name="ngrams" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
+	
 	<utility name="title" provides=".interfaces.IPostRepozeCatalogFieldCreator" component="._repoze_index._post_title_field_creator" />
 	<utility name="tags" provides=".interfaces.IPostRepozeCatalogFieldCreator" component="._repoze_index._post_tags_field_creator" />
+	
+	<utility name="replacementContent" provides=".interfaces.IRedactionRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
+	<utility name="redactionExplanation" provides=".interfaces.IRedactionRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
 	
 	<utility factory="._repoze_index._RepozeNoteCatalogCreator" name="note" />
 	<utility factory="._repoze_index._RepozePostCatalogCreator" name="post" />
