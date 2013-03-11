@@ -1,19 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 import os
 import json
-import unittest
 
 from zope import component
 
@@ -162,5 +157,3 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.get_containerId(), is_('tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(adapted.get_ntiid(), is_('tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273'))
 
-if __name__ == '__main__':
-	unittest.main()

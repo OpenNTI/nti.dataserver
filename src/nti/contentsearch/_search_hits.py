@@ -30,6 +30,7 @@ from ._views_utils import get_ntiid_path
 from . import interfaces as search_interfaces
 
 from .common import get_type_name
+from .common import get_sort_order
 from .common import ( last_modified_, content_, title_, ntiid_)
 from .common import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 					 SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE)
@@ -195,14 +196,7 @@ class _CallableComparator(object):
 	
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _ScoreSearchHitComparator(_CallableComparator):
-	
-	singleton = None
 
-	def __new__(cls, *args, **kwargs):
-		if not cls.singleton:
-			cls.singleton = super(_ScoreSearchHitComparator, cls).__new__(cls, *args, **kwargs)
-		return cls.singleton
-	
 	@classmethod
 	def get_score(cls, item):
 		result = item.score if search_interfaces.IBaseHit.providedBy(item) else 1.0
@@ -291,7 +285,7 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 		return result
 	
 	@classmethod
-	def get_type(cls, item):
+	def get_type_name(cls, item):
 		if search_interfaces.ISearchHit.providedBy(item):
 			result = item.get(CLASS, u'')
 		elif search_interfaces.IBaseHit.providedBy(item):
@@ -322,8 +316,8 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 		result = cmp(b_score_path, a_score_path)
 		
 		# compare types.
-		a_type = cls.get_type_name(a)
-		b_type = cls.get_type_name(b)
+		a_type = get_sort_order(cls.get_type_name(a))
+		b_type = get_sort_order(cls.get_type_name(b))
 		result = cmp(a_type, b_type) if result == 0 else result
 		
 		# compare scores. Score comparation at the moment only make sense within the same types
