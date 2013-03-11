@@ -1,6 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Reindex user content 
 
-from __future__ import print_function, unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import os
 import sys
@@ -13,10 +19,10 @@ from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 
 import nti.contentsearch
-from nti.contentsearch.utils import get_uid
-from nti.contentsearch.utils import find_all_indexable_pairs
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.utils._repoze_utils import remove_entity_catalogs
+from . import get_uid
+from . import find_all_indexable_pairs
+from .. import interfaces as search_interfaces
+from ._repoze_utils import remove_entity_catalogs
 			
 def reindex_entity_content(entity, include_dfls=False, verbose=False):
 	
