@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Content search generation 20.
+Content search generation 23.
 
 $Id$
 """
@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 20
+generation = 23
 
 import zope.intid
 from zope import component
@@ -19,16 +19,16 @@ from zope.component.hooks import site, setHooks
 
 from ..common import post_
 from ..utils import get_uid
-from ..utils import find_all_posts
+from ..utils import find_all_redactions
 from .. import interfaces as search_interfaces
 from ..utils._repoze_utils import remove_entity_catalogs
 
-def reindex_posts(user, users_get, ds_intid):
+def reindex_redactions(user, users_get, ds_intid):
 	counter = 0	
 	try:
 		username = user.username
-		logger.debug('Reindexing posts(s) for %s' % username)
-		for e, obj in find_all_posts(user, users_get):
+		logger.debug('Reindexing redaction(s) for %s' % username)
+		for e, obj in find_all_redactions(user, users_get):
 			try:
 				rim = search_interfaces.IRepozeEntityIndexManager(e, None)
 				catalog = rim.get_create_catalog(obj) if rim is not None else None
@@ -43,7 +43,7 @@ def reindex_posts(user, users_get, ds_intid):
 				# broken reference for object
 				pass
 		
-		logger.debug('%s post object(s) for user %s were reindexed' % (counter, username))
+		logger.debug('%s redaction object(s) for user %s were reindexed' % (counter, username))
 	except POSKeyError:
 		# broken reference for user
 		pass
@@ -51,7 +51,7 @@ def reindex_posts(user, users_get, ds_intid):
 
 def do_evolve(context):
 	"""
-	Reindex posts.
+	Reindex redactions.
 	"""
 	setHooks()
 	conn = context.connection
@@ -74,9 +74,13 @@ def do_evolve(context):
 		
 		# reindex all users ugd
 		for user in users.values():
-			reindex_posts(user, users.get, ds_intid)
+			reindex_redactions(user, users.get, ds_intid)
 		
 	logger.debug('Evolution done!!!')
 	
 def evolve(context):
-	pass
+	"""
+	Evolve generation 22 to 23 by reindexing redactions.
+	"""
+	do_evolve(context)
+	
