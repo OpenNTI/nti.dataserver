@@ -84,6 +84,10 @@ class IStripePurchase(interface.Interface):
 	ChargeID = schema.TextLine(title='Charge id', required=False)
 	TokenID = schema.TextLine(title='Token id', required=False)
 
-class IStripeAccessKey(interface.Interface):
-	alias = interface.Attribute( "Key name or alias" )
-	value = interface.Attribute( "The actual key value")
+class IStripeConnectKey(interface.Interface):
+	Alias = schema.TextLine(title='Key name or alias', required=True)
+	PrivateKey = schema.TextLine(title="The private key", required=True)
+	LiveMode = schema.Bool(title="Live mode flag", required=False)
+	StripeUserID = schema.TextLine(title="String user id", required=False)
+	RefreshToken = schema.TextLine(title="Refresh token", required=False)
+	PublicKey = schema.TextLine(title="The private key", required=False)

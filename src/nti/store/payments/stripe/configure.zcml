@@ -27,8 +27,10 @@
 			 provides=".interfaces.IStripePaymentProcessor"
 			 name="stripe" />
 
+	<adapter factory=".externalization.StripeConnectKeyExternal" />
+	
 	<stripe:registerStripeKey
 		alias="NTI-TEST"
-		value="sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp" />
+		private_key="sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp" />
 		
 </configure>

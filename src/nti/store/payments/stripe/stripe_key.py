@@ -10,21 +10,27 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 
+from zope.mimetype import interfaces as zmime_interfaces
+
+from nti.mimetype.mimetype import nti_mimetype_with_class
+
+from nti.utils.property import alias as _
+
 from . import interfaces
 
-@interface.implementer(interfaces.IStripeAccessKey)
-class StripeAccessKey(object):
+@interface.implementer(interfaces.IStripeConnectKey, zmime_interfaces.IContentTypeAware)
+class StripeConnectKey(object):
 
-	__slots__ = ('alias', 'value')
+	__slots__ = ('Alias', 'PrivateKey', 'LiveMode', 'StripeUserID', 'RefreshToken', 'PublicKey', 'mimeType')
 	
-	def __init__( self, alias, value):
-		self.alias = alias
-		self.value = value
+	def __init__( self, alias, private_key, live_mode=None, stripe_user_id=None, refresh_token=None, public_key=None):
+		self.Alias = alias
+		self.LiveMode = live_mode
+		self.PublicKey = public_key
+		self.PrivateKey = private_key
+		self.RefreshToken = refresh_token
+		self.StripeUserID = stripe_user_id
+		self.mimeType = nti_mimetype_with_class(self.__class__)
 
-	@property
-	def name(self):
-		return self.alias
-	
-	@property
-	def key(self):
-		return self.value
+	key = _('PrivateKey')
+	alias = name = _('Alias')
