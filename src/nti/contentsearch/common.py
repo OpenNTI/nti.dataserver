@@ -170,6 +170,9 @@ def to_list(data):
 		data = [data]
 	return data
 
+def get_sort_order(type_name):
+	return indexable_types_order.get(type_name,0)
+
 def sort_search_types(type_names=indexable_type_names):
 	type_names = to_list(type_names)
 	result = sorted(type_names, key=lambda x: indexable_types_order.get(x,0))
