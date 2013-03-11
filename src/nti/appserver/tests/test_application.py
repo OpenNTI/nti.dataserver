@@ -169,6 +169,7 @@ class _AppTestBaseMixin(object):
 
 	default_user_extra_interfaces = ()
 	extra_environ_default_user = b'sjohnson@nextthought.COM'
+	default_origin = b'http://localhost'
 	def _make_extra_environ(self, user=None, update_request=False, **kwargs):
 		"""
 		The default username is a case-modified version of the default user in :meth:`_create_user`,
@@ -181,7 +182,7 @@ class _AppTestBaseMixin(object):
 			user = str(kwargs.pop( 'username' ) )
 		result = {
 			b'HTTP_AUTHORIZATION': b'Basic ' + (user + ':temp001').encode('base64'),
-			b'HTTP_ORIGIN': b'http://localhost', # To trigger CORS
+			b'HTTP_ORIGIN': self.default_origin, # To trigger CORS
 			b'HTTP_USER_AGENT': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/537.6 (KHTML, like Gecko) Chrome/23.0.1239.0 Safari/537.6',
 			b'paste.throw_errors': True, # Cause paste to throw everything in case it gets in the pipeline
 			}
@@ -216,7 +217,7 @@ class _AppTestBaseMixin(object):
 
 from zope.component import eventtesting
 class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
-
+	features = ()
 	set_up_packages = () # None, because configuring the app will do this
 	APP_IN_DEVMODE = True
 	configure_events = False # We have no packages, but we will set up the listeners ourself when configuring the app
@@ -231,7 +232,7 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 		#self.ds = mock_dataserver.MockDataserver()
 		super(SharedApplicationTestBase,cls).setUpClass()
 		cls.app, cls.main = createApplication( 8080, cls._setup_library(), create_ds=False, force_create_indexmanager=True,
-											   pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE, testmode=True )
+											   pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE, testmode=True, zcml_features=cls.features )
 
 		root = '/Library/WebServer/Documents/'
 		# We'll volunteer to serve all the files in the root directory

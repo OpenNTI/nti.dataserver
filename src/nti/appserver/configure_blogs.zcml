@@ -3,17 +3,15 @@
 			xmlns:zcml="http://namespaces.zope.org/zcml"
 			xmlns:cap="http://nextthought.com/ntp/capabilities"
 			i18n_domain='nti.dataserver'
-			zcml:condition="have devmode" >
-	<!--
-		 Temporary placeholders for forums/blogs until I (JAM) lock
-		 the permissioning down
-	-->
+			zcml:condition="have forums">
 
 	<include package="zope.component" />
 	<include package=".capabilities" file="meta.zcml" />
 
 	<adapter factory=".forum_views.DefaultUserForumFactory"
-			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog" />
+			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog"
+			 zcml:condition="have devmode" /> <!-- forums and devmode -->
+
 
 	<adapter factory=".user_activity_views.DefaultUserActivityStorageFactory" />
 	<adapter factory=".user_activity_views.DefaultUserActivityProvider"

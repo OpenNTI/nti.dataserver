@@ -34,7 +34,7 @@ from hamcrest import greater_than
 from nti.tests import is_empty
 import fudge
 
-from .test_application import TestApp
+from .test_application import TestApp as _TestApp
 from . import test_application_censoring
 
 import datetime
@@ -51,13 +51,14 @@ import simplejson as json
 from nti.ntiids import ntiids
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 from nti.dataserver.contenttypes.forums.post import Post
 
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, PersistentContainedExternal
+from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
 from urllib import quote as UQ
 from pyquery import PyQuery
@@ -65,6 +66,9 @@ from pyquery import PyQuery
 POST_MIME_TYPE = 'application/vnd.nextthought.forums.post'
 
 class TestApplicationBlogging(SharedApplicationTestBase):
+
+	features = SharedApplicationTestBase.features + ('forums',)
+	default_origin = b'http://alpha.nextthought.com' # only enabled in this site policy
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog_in_service_doc( self ):
@@ -574,11 +578,11 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			user2_follower2_username = user2_following_2.username
 
 
-		testapp = TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
-		testapp2 = TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
-		testapp3 = TestApp( self.app, extra_environ=self._make_extra_environ(username=user3_username) )
-		user2_followerapp = TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_follower_username) )
-		user2_follower2app = TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_follower2_username) )
+		testapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
+		testapp2 = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
+		testapp3 = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user3_username) )
+		user2_followerapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_follower_username) )
+		user2_follower2app = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_follower2_username) )
 
 		# First user creates the blog entry
 		data = { 'Class': 'Post',
@@ -854,8 +858,8 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			user_username = user.username
 
 
-		testapp = TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
-		testapp2 = TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
+		testapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
+		testapp2 = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
 
 
 		canvas_data = {u'Class': 'Canvas',
@@ -897,12 +901,20 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.put_json( headline_edit_link, res.json_body['headline'] )
 		_check_canvas( res, res.json_body['body'][1] )
 
+		from nti.dataserver.site import get_site_for_site_names
+		from zope import component
+		from zope.component.hooks import site
 		with mock_dataserver.mock_db_trans(self.ds):
-			entry = ntiids.find_object_with_ntiid( entry_ntiid )
-			canvas = entry.headline.body[1]
-			url_shape = canvas.shapeList[0]
-			# And it externalizes as a real link because it owns the file data
-			assert_that( url_shape.toExternalObject()['url'], ends_with( '@@view' ) )
+			with site( get_site_for_site_names( ('alpha.nextthought.com',) ) ):
+				user = users.User.get_user( user_username )
+				assert_that( component.queryAdapter( user, frm_interfaces.IPersonalBlog ), not_none() )
+				__traceback_info__ = entry_ntiid
+				entry = ntiids.find_object_with_ntiid( entry_ntiid )
+				assert_that( entry, is_( not_none() ) )
+				canvas = entry.headline.body[1]
+				url_shape = canvas.shapeList[0]
+				# And it externalizes as a real link because it owns the file data
+				assert_that( url_shape.toExternalObject()['url'], ends_with( '@@view' ) )
 
 		# When published, it is visible to the other user
 		testapp.post( pub_url )
