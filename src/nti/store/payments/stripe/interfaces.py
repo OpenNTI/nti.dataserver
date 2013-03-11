@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import interface
 
+from nti.utils import schema as nti_schema
 from nti.utils.property import alias as _alias
 
 from .. import interfaces as pay_interfaces
@@ -58,8 +59,8 @@ class RegisterStripeCharge(pay_interfaces.RegisterPurchaseData):
 # stripe objects
 
 class IStripeCustomer(interface.Interface):
-	CustomerID = schema.TextLine(title='customer id')
-	Charges = schema.Set(value_type=schema.TextLine(title='the charge id'), title='customer stripe charges')
+	CustomerID = nti_schema.ValidTextLine(title='customer id')
+	Charges = schema.Set(value_type=nti_schema.ValidTextLine(title='the charge id'), title='customer stripe charges')
 
 class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 
@@ -81,13 +82,13 @@ class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 		"""
 
 class IStripePurchase(interface.Interface):
-	ChargeID = schema.TextLine(title='Charge id', required=False)
-	TokenID = schema.TextLine(title='Token id', required=False)
+	ChargeID = nti_schema.ValidTextLine(title='Charge id', required=False)
+	TokenID = nti_schema.ValidTextLine(title='Token id', required=False)
 
 class IStripeConnectKey(interface.Interface):
-	Alias = schema.TextLine(title='Key name or alias', required=True)
-	PrivateKey = schema.TextLine(title="The private key", required=True)
+	Alias = nti_schema.ValidTextLine(title='Key name or alias', required=True)
+	PrivateKey = nti_schema.ValidTextLine(title="The private key", required=True)
 	LiveMode = schema.Bool(title="Live mode flag", required=False)
-	StripeUserID = schema.TextLine(title="String user id", required=False)
-	RefreshToken = schema.TextLine(title="Refresh token", required=False)
-	PublicKey = schema.TextLine(title="The private key", required=False)
+	StripeUserID = nti_schema.ValidTextLine(title="String user id", required=False)
+	RefreshToken = nti_schema.ValidTextLine(title="Refresh token", required=False)
+	PublicKey = nti_schema.ValidTextLine(title="The private key", required=False)

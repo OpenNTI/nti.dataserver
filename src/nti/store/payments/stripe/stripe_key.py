@@ -21,7 +21,7 @@ from . import interfaces
 @interface.implementer(interfaces.IStripeConnectKey, zmime_interfaces.IContentTypeAware)
 class StripeConnectKey(object):
 
-	__slots__ = ('Alias', 'PrivateKey', 'LiveMode', 'StripeUserID', 'RefreshToken', 'PublicKey', 'mimeType')
+	mimeType = nti_mimetype_with_class("StripeConnectKey")
 	
 	def __init__( self, alias, private_key, live_mode=None, stripe_user_id=None, refresh_token=None, public_key=None):
 		self.Alias = alias
@@ -30,7 +30,6 @@ class StripeConnectKey(object):
 		self.PrivateKey = private_key
 		self.RefreshToken = refresh_token
 		self.StripeUserID = stripe_user_id
-		self.mimeType = nti_mimetype_with_class(self.__class__)
 
 	key = _('PrivateKey')
 	alias = name = _('Alias')
