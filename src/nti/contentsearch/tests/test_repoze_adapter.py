@@ -298,6 +298,8 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 
 class TestAppRepozeUserAdapter(ApplicationTestBase):
 	
+	features = ApplicationTestBase.features + ('forums',)
+	
 	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001', **kwargs):
 		return User.create_user( self.ds, username=username, password=password, **kwargs)
 	
