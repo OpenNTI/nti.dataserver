@@ -41,6 +41,8 @@ from urllib import quote as UQ
 
 class TestApplicationFlagging(SharedApplicationTestBase):
 
+	features = SharedApplicationTestBase.features + ('forums',)
+
 	@WithSharedApplicationMockDS
 	def test_flag_note(self):
 		"We get the appropriate @@flag or @@flag.metoo links for a note"

@@ -1,7 +1,8 @@
 <!-- -*- mode: nxml -*- -->
-<configure
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:zcml="http://namespaces.zope.org/zcml">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain='nti.dataserver'>
+
 	<include package="zope.component" />
 	<include package="z3c.baseregistry" file="meta.zcml" />
 
@@ -12,5 +13,10 @@
 
 	<registerIn registry=".sites.ALPHA">
 		<utility factory=".site_policies.GenericAdultSitePolicyEventListener" />
+
+		<adapter factory=".forum_views.DefaultUserForumFactory"
+				 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog"
+				 zcml:condition="have forums" />
+
 	</registerIn>
 </configure>

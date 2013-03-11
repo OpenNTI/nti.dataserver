@@ -109,11 +109,18 @@ class _Main(object):
 def _create_xml_conf_machine( settings ):
 	xml_conf_machine = xmlconfig.ConfigurationMachine()
 	xmlconfig.registerCommonDirectives( xml_conf_machine )
-	if 'devmode' in settings and settings['devmode']:
-		logger.info( "Enabling devmode" )
-		xml_conf_machine.provideFeature( 'devmode' )
-	if 'testmode' in settings and settings['testmode']:
-		xml_conf_machine.provideFeature( 'testmode' )
+
+	zcml_features = settings.get( 'zcml_features', () )
+	zcml_features = set(zcml_features)
+	# BWC aliases
+	for k in 'devmode', 'testmode':
+		if settings.get( k ):
+			zcml_features.add( k )
+
+	for feature in zcml_features:
+		logger.info( "Enabling %s", feature )
+		xml_conf_machine.provideFeature( feature )
+
 	return xml_conf_machine
 
 def createApplication( http_port,
