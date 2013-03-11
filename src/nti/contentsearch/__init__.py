@@ -24,6 +24,13 @@ CatalogIndex.family = BTrees.family64
 
 from . import zopyxtxng3_logger as ntizopy_logger
 sys.modules["zopyx.txng3.core.logger"] = ntizopy_logger
+
+from . import zopyxtxng3_storage as ntizopy_storage
+sys.modules["nti.contentsearch.zopyxtxng3corestorage"] = ntizopy_storage
+
+from . import zopyxtxng3_splitter as ntizopy_splitter
+sys.modules["nti.contentsearch.zopyxtxng3coresplitter"] = ntizopy_splitter
+
 try:
 	from zopyx.txng3.core import index as zopyx_coreidx
 	from zopyx.txng3.core import evaluator as zopyx_evaluator
