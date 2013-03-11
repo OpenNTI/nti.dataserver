@@ -39,12 +39,13 @@ from nti.dataserver import authorization_acl as nacl
 from nti.ntiids import ntiids
 
 from nti.appserver import interfaces as app_interfaces
-
 from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import to_external_object
 from nti.externalization.singleton import SingletonDecorator
+
+from .dataserver_pyramid_views import _GenericGetView as GenericGetView
 
 def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	"""
@@ -431,6 +432,14 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  name=ntiids.ROOT,
-			  permission=nauth.ACT_READ, request_method='GET' )
+			  permission=nauth.ACT_READ,
+			  request_method='GET' )
 def _RootLibraryTOCRedirectView(request):
 	return _LibraryTOCRedirectView( request, default_href='', ntiid=request.view_name)
+
+@view_config( name='Main',
+			  context=lib_interfaces.IContentPackageLibrary,
+			  request_method='GET' )
+class MainLibraryGetView(GenericGetView):
+	"Invoked to return the contents of the 'Main' library."
+	# TODO: This is weirdly coupled to .workspaces.[LibraryWorkspace,LibraryCollection]
