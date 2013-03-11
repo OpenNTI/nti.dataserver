@@ -29,6 +29,7 @@ from nti.mimetype import mimetype
 from ._views_utils import get_ntiid_path
 from . import interfaces as search_interfaces
 
+from .common import get_type_name
 from .common import ( last_modified_, content_, title_, ntiid_)
 from .common import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
 					 SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE)
@@ -278,7 +279,7 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 			result -= len(p) - len(ip)
 			
 		return max(0, result) 
-	
+		
 	@classmethod
 	def get_ntiid_path(cls, item):
 		if isinstance(item, six.string_types):
@@ -288,6 +289,16 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 		else:
 			result = ()
 		return result
+	
+	@classmethod
+	def get_type(cls, item):
+		if search_interfaces.ISearchHit.providedBy(item):
+			result = item.get(CLASS, u'')
+		elif search_interfaces.IBaseHit.providedBy(item):
+			result = get_type_name(item.obj)
+		else:
+			result = u''
+		return result or u''
 			
 	@classmethod
 	def get_containerId(cls, item):
@@ -302,11 +313,20 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 	
 	@classmethod
 	def compare(cls, a, b):
+		# compare location
 		location_path = cls.get_ntiid_path(a)
 		a_path = get_ntiid_path(cls.get_containerId(a))
 		b_path = get_ntiid_path(cls.get_containerId(b))
 		a_score_path = cls.score_path(location_path, a_path)
 		b_score_path = cls.score_path(location_path, b_path)
 		result = cmp(b_score_path, a_score_path)
+		
+		# compare types.
+		a_type = cls.get_type_name(a)
+		b_type = cls.get_type_name(b)
+		result = cmp(a_type, b_type) if result == 0 else result
+		
+		# compare scores. Score comparation at the moment only make sense within the same types
+		# when we go to a unified index this we no longer need to compare the types
 		result = cls.compare_score(a, b) if result == 0 else result
 		return result
