@@ -142,9 +142,7 @@ class _HighLightContentResolver(_ThreadableContentResolver):
 class _RedactionContentResolver(_HighLightContentResolver):
 
 	def get_content(self):
-		result = [self.get_replacement_content(), self.get_redaction_explanation()]
-		result.append(self.obj.selectedText)
-		result = ' '.join([x for x in result if x is not None])
+		result = unicode(self.obj.selectedText)
 		return result
 
 	def get_replacement_content(self):
@@ -154,7 +152,7 @@ class _RedactionContentResolver(_HighLightContentResolver):
 
 	def get_redaction_explanation(self):
 		result = self.obj.redactionExplanation
-		return result
+		return result if result else None
 
 class _PartsContentResolver(object):
 

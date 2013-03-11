@@ -19,7 +19,7 @@ from whoosh.qparser.dateparse import DateParserPlugin
 from whoosh.qparser import (GtLtPlugin, PrefixPlugin, PhrasePlugin)
 
 from . import interfaces as search_interfaces
-from .common import (content_, quick_, title_, tags_)
+from .common import (content_, quick_, title_, tags_, redactionExplanation_, replacementContent_)
 
 default_search_plugins =  (GtLtPlugin, DateParserPlugin, PrefixPlugin, PhrasePlugin)
 
@@ -86,8 +86,16 @@ class _DefaultWhooshQueryParser(object):
 _DefaultBookWhooshQueryParser = _DefaultWhooshQueryParser
 _DefaultNoteWhooshQueryParser = _DefaultWhooshQueryParser
 _DefaultHighlightWhooshQueryParser = _DefaultWhooshQueryParser
-_DefaultRedactionWhooshQueryParser = _DefaultWhooshQueryParser
 _DefaultMessageinfoWhooshQueryParser = _DefaultWhooshQueryParser
+
+class _DefaultRedactionWhooshQueryParser(_DefaultWhooshQueryParser):
+	
+	def _get_search_fields(self, qo):
+		if qo.is_phrase_search or qo.is_prefix_search:
+			result = (content_, redactionExplanation_, replacementContent_)
+		else:
+			result = (quick_, content_, redactionExplanation_, replacementContent_)
+		return result
 
 class _DefaultPostWhooshQueryParser(_DefaultWhooshQueryParser):
 	

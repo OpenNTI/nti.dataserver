@@ -7,7 +7,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-generation = 22
+generation = 23
 
 from zope.generations.generations import SchemaManager
 

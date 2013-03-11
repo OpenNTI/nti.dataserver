@@ -26,7 +26,7 @@ from . import interfaces as search_interfaces
 from ._search_highlights import HighlightInfo
 from ._search_highlights import word_fragments_highlight
 
-from .common import ( tags_, content_, title_)
+from .common import ( tags_, content_, title_, replacementContent_, redactionExplanation_)
 from .common import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
 					 SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS, FIELD)
 
@@ -63,15 +63,12 @@ class _SearchHitHighlightDecorator(object):
 		if hi.fragments:
 			external[FRAGMENTS] = toExternalObject(hi.fragments)
 			external[TOTAL_FRAGMENTS] = hi.total_fragments
-			
-@component.adapter(search_interfaces.IPostSearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _PostSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
+
+class _MultipleFieldSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 	
-	def decorateExternalObject(self, hit, external):
+	def decorate_on_source_fields(self, hit, external, sources):
 		query = hit.query
 		content_hi = None
-		sources = ((content_,external.get(SNIPPET, None)), (title_, hit.title), (tags_, hit.get_tags()))
 		for field, text in sources:
 			hi = _word_fragments_highlight(query, text)
 			content_hi = hi if not content_hi else content_hi
@@ -83,6 +80,26 @@ class _PostSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 		if content_hi:
 			external[FIELD] = external[FIELD] = field
 			self.set_snippet(content_hi, external)
+			
+@component.adapter(search_interfaces.IRedactionSearchHit)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class _RedactionSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
+	
+	def decorateExternalObject(self, hit, external):
+		sources = (	(content_,external.get(SNIPPET, None)), 
+					(replacementContent_, hit.get_replacement_content()), 
+					(redactionExplanation_, hit.get_redaction_explanation()))		
+		self.decorate_on_source_fields(hit, external, sources)
+	
+@component.adapter(search_interfaces.IPostSearchHit)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class _PostSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
+	
+	def decorateExternalObject(self, hit, external):
+		sources = (	(content_,external.get(SNIPPET, None)),
+					(title_, hit.get_title()), 
+					(tags_, hit.get_tags()))	
+		self.decorate_on_source_fields(hit, external, sources)
 			
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(search_interfaces.ISearchHit)

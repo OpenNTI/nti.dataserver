@@ -375,8 +375,8 @@ class Highlight(ThreadableIndexableContent):
 
 def create_redaction_schema():
 	schema = create_highlight_schema()
-	schema.add(replacementContent_, fields.TEXT(stored=False, chars=True, spelling=True))
-	schema.add(redactionExplanation_, fields.TEXT(stored=False, chars=True, spelling=True))
+	schema.add(replacementContent_, create_content_field(stored=False))
+	schema.add(redactionExplanation_, create_content_field(stored=False))
 	return schema
 
 class Redaction(Highlight):

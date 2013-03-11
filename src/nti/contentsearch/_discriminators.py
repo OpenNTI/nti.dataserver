@@ -67,6 +67,18 @@ def get_redaction_explanation(obj, default=None):
 	return result.lower() if result else default
 get_redactionExplanation = get_redaction_explanation
 
+def get_replacement_content_and_ngrams(obj, default=None):
+	result = get_replacement_content(obj, default)
+	ngrams = compute_ngrams(result)
+	result = '%s %s' % (result, ngrams) if result else None
+	return result or default
+
+def get_redaction_explanation_and_ngrams(obj, default=None):
+	result = get_redaction_explanation(obj, default)
+	ngrams = compute_ngrams(result)
+	result = '%s %s' % (result, ngrams) if result else None
+	return result or default
+
 def get_post_title(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
 	result = get_content(adapted.get_title())

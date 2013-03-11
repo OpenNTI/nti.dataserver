@@ -41,7 +41,9 @@ def create_schema():
 							keywords = fields.TEXT(stored=False, spelling=False, phrase=False),
 							references = fields.TEXT(stored=False, spelling=False, phrase=False), 
 							ngrams = fields.NGRAMWORDS(minsize=minsize, maxsize=maxsize, stored=False, at='start'),
-							content = fields.TEXT(stored=False, spelling=True, phrase=True, analyzer=analyzer))
+							content = fields.TEXT(stored=False, spelling=True, phrase=True, analyzer=analyzer),
+							redaction_explanation = fields.TEXT(stored=False, spelling=True, phrase=True, analyzer=analyzer), 
+							replacement_content = fields.TEXT(stored=False, spelling=True, phrase=True, analyzer=analyzer))
 	return schema
 		
 _cs_schema = create_schema()		

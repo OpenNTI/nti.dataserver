@@ -125,6 +125,18 @@ class _HighlightSearchHit(_SearchHit):
 class _RedactionSearchHit(_SearchHit):
 	adapter_interface = search_interfaces.IRedactionContentResolver
 	
+	def set_hit_info(self, original, score):
+		adapted = super(_RedactionSearchHit, self).set_hit_info(original, score)
+		self.replacement_content = self.get_field(adapted, "get_replacement_content")
+		self.redaction_explanation = self.get_field(adapted, "get_redaction_explanation")
+		return adapted
+	
+	def get_replacement_content(self):
+		return self.replacement_content or u''
+	
+	def get_redaction_explanation(self):
+		return self.redaction_explanation or u''
+	
 @component.adapter(chat_interfaces.IMessageInfo)
 @interface.implementer(search_interfaces.IMessageInfoSearchHit)
 class _MessageInfoSearchHit(_SearchHit):

@@ -12,11 +12,6 @@
 	<utility name="containerId" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._named_field_creator" />
 	<utility name="last_modified" provides=".interfaces.IRepozeCatalogFieldCreator" component="._repoze_index._named_field_creator" />
 	
-	<!-- redaction index field creators -->
-	
-	<utility name="replacementContent" provides=".interfaces.IRedactionRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
-	<utility name="redactionExplanation" provides=".interfaces.IRedactionRepozeCatalogFieldCreator" component="._repoze_index._zopytext_field_creator" />
-	
 	<!-- note index field creators -->
 	
 	<utility name="references" provides=".interfaces.INoteRepozeCatalogFieldCreator" component="._repoze_index._text_field_creator" />

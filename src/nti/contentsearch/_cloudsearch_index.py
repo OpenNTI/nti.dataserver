@@ -28,7 +28,8 @@ from . import _discriminators as discriminators
 from .common import (CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, container_id_fields)
 from .common import (ngrams_, channel_, content_, keywords_, references_, username_,
 					 last_modified_, recipients_, sharedWith_, ntiid_, type_, tags_,
-					 creator_, containerId_, intid_, title_) 
+					 creator_, containerId_, intid_, title_, redaction_explanation_, replacement_content_,
+					 redactionExplanation_, replacementContent_) 
 
 # define search fields
 
@@ -82,8 +83,13 @@ def create_search_domain(connection, domain_name='ntisearch', language='en'):
 	connection.define_index_field(domain_name, ngrams_, 'text', searchable=True, result=False)
 	connection.define_index_field(domain_name, title_, 'text', searchable=True, result=False)
 	connection.define_index_field(domain_name, recipients_, 'text', searchable=True, result=False)
-	connection.define_index_field(domain_name, _shared_with, 'text', searchable=True, result=False, source_attributes=(sharedWith_,))
-
+	connection.define_index_field(domain_name, _shared_with, 'text', searchable=True, result=False,
+								  source_attributes=(sharedWith_,))
+	connection.define_index_field(domain_name, replacement_content_, 'text', searchable=True, result=False,
+								  source_attributes=(replacementContent_,))
+	connection.define_index_field(domain_name, redaction_explanation_, 'text', searchable=True, result=False,
+								  source_attributes=(redactionExplanation_,))
+	
 	# faceted fields
 	connection.define_index_field(domain_name, keywords_, 'text', searchable=True, result=False, facet=True)
 	connection.define_index_field(domain_name, references_, 'text', searchable=True, result=False, facet=True)
@@ -141,7 +147,10 @@ class _CSHighlight(_AbstractCSObject):
 
 @component.adapter(nti_interfaces.IRedaction)	
 class _CSRedaction(_AbstractCSObject):
-	pass
+	def _set_items(self, src):
+		super(_CSRedaction, self)._set_items(src)
+		self[replacement_content_] = discriminators.get_replacement_content_and_ngrams(src)
+		self[redaction_explanation_] = discriminators.get_redaction_explanation_and_ngrams(src)
 
 @component.adapter(chat_interfaces.IMessageInfo)	
 class _CSMessageInfo(_AbstractCSObject):
