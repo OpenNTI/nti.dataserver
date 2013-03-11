@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import collections
+
 import BTrees.Length 
 
 from BTrees.IIBTree import IISet as IISet32
@@ -106,17 +108,13 @@ class StorageWithTermFrequency(Storage):
 	def insertDocument(self, docid, widlist):
 		Storage.insertDocument(self, docid, widlist)
 		
-		occurences = {}   # wid -> #(occurences)
+		occurences = collections.defaultdict(int)  # wid -> #(occurences)
 		# num_wids = float(len(widlist))
 		for wid in widlist:
-			if not occurences.has_key(wid):
-				occurences[wid] = 1
-			else:
-				occurences[wid] += 1
+			occurences[wid] += 1
 		
-		self._frequencies[docid] = IIBTree32()
-		tree = self._frequencies[docid]
-		for wid,num in occurences.items():
+		self._frequencies[docid] = tree = IIBTree32()
+		for wid, num in occurences.items():
 			tree[wid] = num
 
 	def removeDocument(self, docid):
