@@ -35,7 +35,7 @@ from .common import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_
 def _word_fragments_highlight(query=None, text=None):
 	query = search_interfaces.ISearchQuery(query, None)
 	if query and text:
-		result = word_fragments_highlight(query, text)
+		result = word_fragments_highlight(query, text, query.language)
 	else:
 		result = HighlightInfo()
 	return result
@@ -194,6 +194,8 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 @component.adapter(search_interfaces.ISuggestResults)
 class _SuggestResultsExternalizer(_BaseSearchResultsExternalizer):
 
+	__slots__ = ('results',)
+	
 	@property
 	def suggestions(self):
 		return self.results.suggestions
@@ -210,6 +212,8 @@ class _SuggestResultsExternalizer(_BaseSearchResultsExternalizer):
 @component.adapter(search_interfaces.ISuggestAndSearchResults)
 class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestResultsExternalizer):
 
+	__slots__ = ('results', 'seen')
+	
 	def toExternalObject(self):
 		eo = _SearchResultsExternalizer.toExternalObject(self)
 		eo[SUGGESTIONS] = self.suggestions
