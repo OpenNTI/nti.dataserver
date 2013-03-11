@@ -311,7 +311,7 @@ setup(
 		'zope.intid >= 3.7.2' if HAVE_ZCONT else '',
 		'zope.keyreference >= 4.0.0a2',
 		'zope.lifecycleevent >= 4.0.2',
-		'zope.location >= 4.0.1',
+		'zope.location >= 4.0.2',
 		'zope.mimetype == 1.3.1', # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
 		'zope.pagetemplate >= 4.0.3',
