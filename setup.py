@@ -270,7 +270,7 @@ setup(
 		'zope.annotation >= 4.1.0',
 		'zope.authentication >= 4.1.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
-		'zope.browser >= 2.0.1',
+		'zope.browser >= 2.0.2',
 		'zope.browserpage >= 4.1.0a1',
 		'zope.browsermenu >= 4.0.0', # Browser menu implementation for Zope.
 		'zope.browserresource >= 4.0.0',
@@ -315,7 +315,7 @@ setup(
 		'zope.mimetype == 1.3.1', # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
 		'zope.pagetemplate >= 4.0.3',
-		'zope.password >= 4.0.0', # encrypted password management
+		'zope.password >= 4.0.1', # encrypted password management
 		'zope.pluggableauth >= 1.3' if HAVE_ZCONT else '', # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		'zope.publisher >= 4.0.0a3',#4.0.0a1 is out, should be fine
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
