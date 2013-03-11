@@ -23,6 +23,38 @@
 					  route_name="stacktraces" />
 	</configure>
 
+	<!-- Traversal -->
+	<pyramid:route name='objects.generic.traversal'
+				   pattern='/dataserver2/*traverse'
+				   factory='._dataserver_pyramid_traversal.dataserver2_root_resource_factory'>
+		The main traversal route.
+	</pyramid:route>
+	<pyramid:view route_name='objects.generic.traversal'
+				  view='nti.appserver.dataserver_pyramid_views._GenericGetView_OFF'
+				  renderer='rest'
+				  permission='zope.View'
+				  request_method='GET'
+				  zcml:condition="have this_is_disabled_because_nothing_seems_to_require_it">
+		We provide a default view that can GET anything we traversed
+		too. (Rethink this, it is too general and we keep having to
+		re-establish it later on anyway.)
+	</pyramid:view>
+
+
+	<pyramid:scan package='.contentlibrary_views' />
+	<pyramid:scan package='.liking_views' />
+	<pyramid:scan package='.flagging_views' />
+	<pyramid:scan package='.coppa_admin_views' />
+	<pyramid:scan package='._hacks' />
+	<pyramid:scan package='.account_creation_views' />
+	<pyramid:scan package='.zope_file_views' />
+	<pyramid:scan package='.assessment_views' />
+	<pyramid:scan package='.bounced_email_workflow' />
+	<pyramid:scan package='.feedback_views' />
+	<pyramid:scan package='.invitation_views' />
+	<pyramid:scan package='.dfl_views' />
+	<pyramid:scan package='.user_export_views' />
+
 	<pyramid:scan package=".link_providers.views" />
 
 </configure>

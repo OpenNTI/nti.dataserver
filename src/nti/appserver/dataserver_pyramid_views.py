@@ -15,6 +15,10 @@ from nti.appserver import httpexceptions as hexc
 from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import AbstractView
 
+from pyramid.view import view_defaults
+
+from nti.dataserver import authorization as nauth
+
 class _ServiceGetView(AbstractAuthenticatedView):
 
 	def __call__( self ):
@@ -25,7 +29,10 @@ class _ServiceGetView(AbstractAuthenticatedView):
 		#service.__parent__ = self.request.context
 		return service
 
-
+@view_defaults(route_name='objects.generic.traversal',
+			   permission=nauth.ACT_READ,
+			   renderer='rest',
+			   request_method='GET')
 class _GenericGetView(AbstractView):
 
 	def __call__( self ):
