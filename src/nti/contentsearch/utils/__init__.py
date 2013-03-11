@@ -81,3 +81,6 @@ def find_all_indexable_pairs(user, user_get=users.Entity.get_entity, include_dfl
 
 def find_all_posts(user, user_get=users.Entity.get_entity):
 	return find_all_indexable_pairs( user, include_dfls=False, _providing=forum_interfaces.IPost)
+
+def find_all_redactions(user, user_get=users.Entity.get_entity):
+	return find_all_indexable_pairs( user, include_dfls=False, _providing=nti_interfaces.IRedaction)
