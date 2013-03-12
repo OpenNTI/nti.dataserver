@@ -42,7 +42,7 @@ def get_content(text=None, language='en'):
 	text = unicode(text) if text else None
 	if text:
 		table = get_content_translation_table(language)
-		result = split_content(text.translate(table))
+		result = split_content(text.translate(table), language)
 	result = ' '.join(result)
 	return unicode(result)
 

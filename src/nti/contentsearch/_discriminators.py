@@ -55,38 +55,38 @@ def get_recipients(obj, default=None):
 	result = adapted.get_recipients()
 	return result or default
 
-def get_replacement_content(obj, default=None):
+def get_replacement_content(obj, default=None, language='en'):
 	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
-	result = get_content(adapted.get_replacement_content())
+	result = get_content(adapted.get_replacement_content(), language)
 	return result.lower() if result else default
 get_replacementContent = get_replacement_content
 
-def get_redaction_explanation(obj, default=None):
+def get_redaction_explanation(obj, default=None, language='en'):
 	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
-	result = get_content(adapted.get_redaction_explanation())
+	result = get_content(adapted.get_redaction_explanation(), language)
 	return result.lower() if result else default
 get_redactionExplanation = get_redaction_explanation
 
-def get_replacement_content_and_ngrams(obj, default=None):
-	result = get_replacement_content(obj, default)
-	ngrams = compute_ngrams(result)
+def get_replacement_content_and_ngrams(obj, default=None, language='en'):
+	result = get_replacement_content(obj, default, language)
+	ngrams = compute_ngrams(result, language)
 	result = '%s %s' % (result, ngrams) if result else None
 	return result or default
 
-def get_redaction_explanation_and_ngrams(obj, default=None):
-	result = get_redaction_explanation(obj, default)
-	ngrams = compute_ngrams(result)
+def get_redaction_explanation_and_ngrams(obj, default=None, language='en'):
+	result = get_redaction_explanation(obj, default, language)
+	ngrams = compute_ngrams(result, language)
 	result = '%s %s' % (result, ngrams) if result else None
 	return result or default
 
-def get_post_title(obj, default=None):
+def get_post_title(obj, default=None, language='en'):
 	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
-	result = get_content(adapted.get_title())
+	result = get_content(adapted.get_title(), language)
 	return result.lower() if result else default
 
-def get_post_title_and_ngrams(obj, default=None):
-	title = get_post_title(obj, default)
-	n_grams = compute_ngrams(title)
+def get_post_title_and_ngrams(obj, default=None, language='en'):
+	title = get_post_title(obj, default, language)
+	n_grams = compute_ngrams(title, language)
 	result = '%s %s' % (title, n_grams) if title else None
 	return result.lower() if result else default
 
@@ -95,18 +95,18 @@ def get_post_tags(obj, default=()):
 	result = adapted.get_tags() or default
 	return result
 
-def get_object_content(obj, default=None):
+def get_object_content(obj, default=None, language='en'):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	result = get_content(adapted.get_content())
+	result = get_content(adapted.get_content(), language)
 	return result.lower() if result else default
 
-def get_object_ngrams(obj, default=None):
-	content = get_object_content(obj, default)
-	n_grams = compute_ngrams(content) if content else default
+def get_object_ngrams(obj, default=None, language='en'):
+	content = get_object_content(obj, default, language)
+	n_grams = compute_ngrams(content, language) if content else default
 	return n_grams if n_grams else default
 
-def get_content_and_ngrams(obj, default=None):
-	content = get_object_content(obj)
-	n_grams = compute_ngrams(content)
+def get_content_and_ngrams(obj, default=None, language='en'):
+	content = get_object_content(obj, language)
+	n_grams = compute_ngrams(content, language)
 	result = '%s %s' % (content, n_grams) if content else u''
 	return result or default
