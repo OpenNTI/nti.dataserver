@@ -518,32 +518,33 @@ class naqmatchingpart(_AbstractNAQPart):
 		# Validate the document structure: we have a naqlabels child with
 		# at least two of its own children, an naqvalues child of equal length
 		# and a proper matching between the two
-		_naqmlabels = self.getElementsByTagName( 'naqmlabels' )
-		assert len(_naqmlabels) == 1
-		_naqmlabels = _naqmlabels[0]
-		assert len(_naqmlabels) > 1, "Must have more than one label; instead got: " + str([x for x in _naqmlabels])
-		_naqmvalues = self.getElementsByTagName( 'naqmvalues' )
-		assert len(_naqmvalues) == 1
-		_naqmvalues = _naqmvalues[0]
-		assert len(_naqmvalues) == len(_naqmlabels), "Must have exactly one value per label"
+		if self.macroMode != Base.Environment.MODE_END:
+			_naqmlabels = self.getElementsByTagName( 'naqmlabels' )
+			assert len(_naqmlabels) == 1
+			_naqmlabels = _naqmlabels[0]
+			assert len(_naqmlabels) > 1, "Must have more than one label; instead got: " + str([x for x in _naqmlabels])
+			_naqmvalues = self.getElementsByTagName( 'naqmvalues' )
+			assert len(_naqmvalues) == 1
+			_naqmvalues = _naqmvalues[0]
+			assert len(_naqmvalues) == len(_naqmlabels), "Must have exactly one value per label"
 
-		for i in range(len(_naqmlabels)):
-			assert any( (_naqmlabel.attributes['answer'] == i for _naqmlabel in _naqmlabels) )
-		assert len(self.getElementsByTagName( 'naqsolutions' )) == 0
+			for i in range(len(_naqmlabels)):
+				assert any( (_naqmlabel.attributes['answer'] == i for _naqmlabel in _naqmlabels) )
+			assert len(self.getElementsByTagName( 'naqsolutions' )) == 0
 
-		# Tranform the implicit solutions into an array
-		_naqsolns = self.ownerDocument.createElement( 'naqsolutions' )
-		_naqsolns.macroMode = _naqsolns.MODE_BEGIN
-		answer = {}
-		for i, _naqmlabel in enumerate(_naqmlabels):
-			answer[i] = _naqmlabel.attributes['answer']
-		_naqsoln = self.ownerDocument.createElement( 'naqsolution' )
-		_naqsoln.attributes['weight'] = 1.0
-		# Also put the attribute into the argument source, for presentation
-		_naqsoln.argSource = '[%s]' % _naqsoln.attributes['weight']
-		_naqsoln.answer = answer
-		_naqsolns.appendChild( _naqsoln )
-		self.insertAfter( _naqsolns, _naqmvalues)
+			# Tranform the implicit solutions into an array
+			_naqsolns = self.ownerDocument.createElement( 'naqsolutions' )
+			_naqsolns.macroMode = _naqsolns.MODE_BEGIN
+			answer = {}
+			for i, _naqmlabel in enumerate(_naqmlabels):
+				answer[i] = _naqmlabel.attributes['answer']
+			_naqsoln = self.ownerDocument.createElement( 'naqsolution' )
+			_naqsoln.attributes['weight'] = 1.0
+			# Also put the attribute into the argument source, for presentation
+			_naqsoln.argSource = '[%s]' % _naqsoln.attributes['weight']
+			_naqsoln.answer = answer
+			_naqsolns.appendChild( _naqsoln )
+			self.insertAfter( _naqsolns, _naqmvalues)
 		return res
 
 class naqchoices(Base.List):
