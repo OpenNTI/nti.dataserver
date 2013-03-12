@@ -46,6 +46,9 @@ name: naqmatchingpart
 	 <span tal:content="self"></span>
 </div>
 
+# No-Op template for the parts of matching questions
+name: naqmlabels naqmlabel naqmvalues naqmvalue
+
 name: naquestion
 <object type="application/vnd.nextthought.naquestion" data-ntiid="the-ntiid" data="the-ntiid" data-canindividual="false" tal:attributes="data-ntiid self/ntiid; data self/ntiid; data-canindividual self/attributes/individual | default">
 <param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
