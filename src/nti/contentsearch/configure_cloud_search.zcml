@@ -1,5 +1,11 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope" i18n_domain="zope">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
 
 	<adapter factory="._cloudsearch_adapter._CloudSearchEntityIndexManagerFactory"
 			 for="nti.dataserver.interfaces.IEntity"
