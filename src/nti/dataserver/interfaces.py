@@ -1110,6 +1110,13 @@ class IStreamChangeEvent(interface.interfaces.IObjectEvent):
 
 	type = interface.Attribute( "One of the constants declared by this class." )
 
+class IDeletedObjectPlaceholder(interface.Interface):
+	"""
+	Marker interface to be applied to things that have actually
+	been deleted, but, for whatever reason, some trace object
+	has to be left behind. These will typically be rendered specially.
+	"""
+
 
 ### Content types for classes
 
