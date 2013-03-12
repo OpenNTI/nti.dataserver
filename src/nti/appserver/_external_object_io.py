@@ -178,26 +178,20 @@ def _no_request_validation_error():
 	exc_info = sys.exc_info()
 	raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
 
-def handle_validation_error( request, validation_error ):
-	"""
-	Handles a :class:`zope.schema.interfaces.ValidationError` within the context
-	of a Pyramid request by raising an :class:`pyramid.httpexceptions.HTTPUnprocessableEntity`
-	error. Call from within the scope of a ``catch`` block.
-
-	:param validation_error: The validation error being processed.
-
-	"""
+def _validation_error_to_dict( request, validation_error ):
 	__traceback_info__ = validation_error
 	# Validation error may be many things, including invalid password by the policy (see above)
 	# Some places try hard to set a good message, some don't.
-	exc_info = sys.exc_info()
 	field_name = None
 	field = getattr( validation_error, 'field', None )
 	msg = ''
 	value = None
+	declared = None
 
 	if field:
 		field_name = getattr( field, '__name__', field )
+		declared = getattr( getattr( field, 'interface', None ), '__name__', None )
+
 	if len(validation_error.args) == 3:
 		# message, field, value
 		field_name = field_name or validation_error.args[1]
@@ -218,13 +212,46 @@ def handle_validation_error( request, validation_error ):
 	if getattr(validation_error, 'i18n_message', None):
 		msg = translate( validation_error.i18n_message, context=request )
 	else:
-		msg = validation_error.message or msg
+		msg = (validation_error.message if not isinstance(validation_error.message,list) else '') or msg
 		msg = translate(msg, context=request)
+
+	result = {'message': msg,
+			  'field': field_name,
+			  'code': validation_error.__class__.__name__,
+			  'value': value,
+			  'declared': declared}
+
+	if getattr( validation_error, 'errors', None ):
+		# see schema._field._validate_sequence
+		# TODO: Now this may be revealing too much info
+		contained_errors = []
+		try:
+			for error in validation_error.errors:
+				contained_errors.append( _validation_error_to_dict( request, error ) )
+		except (KeyError,ValueError,TypeError):
+			pass
+		if contained_errors:
+			result['suberrors'] = contained_errors
+
+	return result
+
+def handle_validation_error( request, validation_error ):
+	"""
+	Handles a :class:`zope.schema.interfaces.ValidationError` within the context
+	of a Pyramid request by raising an :class:`pyramid.httpexceptions.HTTPUnprocessableEntity`
+	error. Call from within the scope of a ``catch`` block.
+
+	This function never returns, it raises an exception.
+
+	:param validation_error: The validation error being processed.
+
+	"""
+	__traceback_info__ = validation_error
+	# Validation error may be many things, including invalid password by the policy (see above)
+	# Some places try hard to set a good message, some don't.
+	exc_info = sys.exc_info()
 
 	raise_json_error( request,
 					  hexc.HTTPUnprocessableEntity,
-					  {'message': msg,
-					   'field': field_name,
-					   'code': validation_error.__class__.__name__,
-					   'value': value },
-					   exc_info[2] )
+					  _validation_error_to_dict( request, validation_error ),
+					  exc_info[2] )
