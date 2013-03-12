@@ -20,6 +20,10 @@ from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.mimetype.mimetype import MIME_BASE
 
+from . import interfaces as search_interfaces
+
+# search constants
+
 ID 				= unicode(ext_interfaces.StandardExternalFields.ID)
 HIT 			= u'Hit'
 OID 			= unicode(ext_interfaces.StandardExternalFields.OID)
@@ -46,9 +50,11 @@ TARGET_OID		= u'TargetOID'
 MESSAGE_INFO	= u'MessageInfo'
 SUGGESTIONS		= u'Suggestions'
 PHRASE_SEARCH 	= u'PhraseSearch'
-TOTAL_HIT_COUNT = u'TotalHitCount'
-CONTAINER_ID	= unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 COLLECTION_ID	= u'CollectionId'
+TYPE_COUNT		= u'Type Count'
+HIT_META_DATA	= u'Hit MetaData'
+TOTAL_HIT_COUNT = u'Total Hit Count'
+CONTAINER_ID	= unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 LAST_MODIFIED	= unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
 
 id_				= unicode(ext_interfaces.StandardInternalFields.ID)
@@ -114,6 +120,8 @@ indexable_types_order = { x:p for p,x in enumerate(indexable_type_names) }
 ascending_ = u'ascending'
 descending_ = u'descending'
 
+# common methods
+
 def epoch_time(dt):
 	if dt:
 		seconds = mktime(dt.timetuple())
@@ -133,7 +141,9 @@ def normalize_type_name(x, encode=True):
 	return unicode(result) if encode else result
 
 def get_type_name(obj):
-	if not isinstance(obj, dict):
+	if search_interfaces.IBookContent.providedBy(obj):
+		result = content_
+	elif not isinstance(obj, dict):
 		result = post_ if frm_interfaces.IPost.providedBy(obj) else obj.__class__.__name__
 	elif CLASS in obj:
 		result = obj[CLASS]
