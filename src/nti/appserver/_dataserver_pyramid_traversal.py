@@ -39,7 +39,11 @@ def root_resource_factory( request ):
 	:return: An :class:`IRootFolder"
 	"""
 	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
-	return dataserver.root_folder
+	root = dataserver.root_folder
+	# TODO: This needs to be in a migration, some of these got missed?
+	if dataserver.dataserver_folder.__name__ not in root:
+		root[dataserver.dataserver_folder.__name__] = dataserver.dataserver_folder
+	return root
 
 def dataserver2_root_resource_factory( request ):
 	"""
