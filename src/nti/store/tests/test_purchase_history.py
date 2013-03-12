@@ -8,7 +8,6 @@ __docformat__ = "restructuredtext en"
 #pylint: disable=W0212,R0904
 
 import time
-import unittest
 
 import BTrees.check
 
@@ -149,5 +148,3 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 			lst = list(hist.get_purchase_history(start_time=now, end_time=t50))
 			assert_that(lst, has_length(50))
 
-if __name__ == '__main__':
-	unittest.main()
