@@ -315,18 +315,15 @@ setup(
 		'zope.mimetype == 1.3.1', # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
 		'zope.pagetemplate >= 4.0.3',
-		'zope.password >= 4.0.1', # encrypted password management
+		'zope.password >= 4.0.2', # encrypted password management
 		'zope.pluggableauth >= 1.3' if HAVE_ZCONT else '', # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		'zope.publisher >= 4.0.0a3',#4.0.0a1 is out, should be fine
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
-		'zope.proxy >= 4.1.1', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
+		'zope.proxy >= 4.1.2', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.sequencesort >= 4.0.1', # advanced locale aware sorting
 		'zope.schema >= 4.3.2',
-		# zope.security >= 3.9.0 and zope.proxy 4.1.x go together.
-		# on pypy, you must manually force the _proxy module to be built.
-		# It should work fine without it, but too many things actually directly import it
-		'zope.security[zcml,untrustedpython] >= 4.0.0a5',
+		'zope.security[zcml,untrustedpython] >= 4.0.0b1', # >= 4.0.0b1 gets PyPy support!
 		'zope.session >= 3.9.5', # 4.0.0a1 is out, should be fine
 		'zope.site >= 3.9.2' if HAVE_ZCONT else '', # local, persistent ZCA sites. 4.0.0a1 is out and should be fine; zope.container dep
 		'zope.size >= 4.0.1',
