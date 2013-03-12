@@ -1525,6 +1525,8 @@ class TestApplicationSearch(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			contained = ContainedExternal()
 			user = self._create_user()
+			user2 = self._create_user('foo@bar')
+			user2_username = user2.username
 			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
 			user.addContainedObject( contained )
 			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
@@ -1537,6 +1539,11 @@ class TestApplicationSearch(SharedApplicationTestBase):
 				path = '/' + ds_path +'/' + search_path + '/'
 				res = testapp.get( path, extra_environ=self._make_extra_environ())
 				assert_that( res.status_int, is_( 200 ) )
+
+				# And access is not allowed for a different user
+				testapp.get( path, extra_environ=self._make_extra_environ(user=user2_username), status=403)
+				# Nor one that doesn't exist
+				testapp.get( path, extra_environ=self._make_extra_environ(user='user_dne@biz'), status=401)
 
 	@WithSharedApplicationMockDS
 	def test_ugd_search_no_data_returns_empty(self):
@@ -1568,7 +1575,7 @@ class TestApplicationSearch(SharedApplicationTestBase):
 		for search_term in ('', 'term'):
 			for ds_path in ('dataserver2',):
 				path = '/' + ds_path +'/users/user@dne.org/Search/RecursiveUserGeneratedData/' + search_term
-				testapp.get( path, extra_environ=self._make_extra_environ(), status=403)
+				testapp.get( path, extra_environ=self._make_extra_environ(), status=404)
 
 
 		# This should not have created index entries for the user.

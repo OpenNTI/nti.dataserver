@@ -32,14 +32,26 @@ from nti.utils.property import alias
 
 from nti.appserver import interfaces
 
+def root_resource_factory( request ):
+	"""
+	Return an object representing the root folder.
+
+	:return: An :class:`IRootFolder"
+	"""
+	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
+	return dataserver.root_folder
+
 def dataserver2_root_resource_factory( request ):
 	"""
 	Returns the object that represents the ``/dataserver2``
-	portion of the url. Used when that part of the URL has been pre-traversed.
+	portion of the url.
+	Used when that part of the URL has been pre-traversed.
+
+	:return: An :class:`IDataserverFolder`
 	"""
 
 	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
-	return dataserver.root
+	return dataserver.dataserver_folder
 
 def users_root_resource_factory( request ):
 	"""
@@ -48,7 +60,7 @@ def users_root_resource_factory( request ):
 	"""
 
 	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
-	return dataserver.root['users']
+	return dataserver.users_folder
 
 
 @interface.implementer(trv_interfaces.ITraversable,

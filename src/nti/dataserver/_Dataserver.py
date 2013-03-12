@@ -158,7 +158,8 @@ class MinimalDataserver(object):
 		return client
 
 	@property
-	def root(self):
+	def dataserver_folder(self):
+		"Returns an object implementing :class:`IDataserverFolder`. This object will have a parent implementing :class:`IRootFolder`"
 		# We expect to be in a transaction and have a site manager
 		# installed that came from the database
 		lsm = component.getSiteManager()
@@ -172,16 +173,25 @@ class MinimalDataserver(object):
 		raise InappropriateSiteError( "Using Dataserver outside of site manager" )
 
 	@property
+	#@zope.deprecation.deprecate("Use dataserver_folder; this returns the same as it, not an IRootFolder.")
+	def root(self):
+		return self.dataserver_folder
+
+
+	@property
+	def root_folder(self):
+		"Return an object implementing :class:`IRootFolder`"
+		return self.dataserver_folder.__parent__
+
+	@property
 	def root_connection(self):
 		"Returns the connection to the root database, the one containing the shard map."
-		return IConnection(self.root)
+		return IConnection(self.dataserver_folder)
 
 	@property
 	def shards(self):
 		"Returns the map of known database shards."
-		return self.root['shards']
-
-	dataserver_folder = root
+		return self.dataserver_folder['shards']
 
 	@property
 	def users_folder(self):
