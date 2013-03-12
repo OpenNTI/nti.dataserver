@@ -15,16 +15,15 @@ from nti.dataserver.contenttypes import Note
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._whoosh_query import create_query_parser
-from nti.contentsearch._whoosh_query import CosineScorerModel as CSM
+from .. import interfaces as search_interfaces
+from .._whoosh_query import create_query_parser
+from .._whoosh_query import CosineScorerModel as CSM
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.tests import ConfiguringTestBase
-
-from nti.contentsearch.tests import zanpakuto_commands
+from . import zanpakuto_commands
+from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, close_to)
 

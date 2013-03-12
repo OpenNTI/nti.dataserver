@@ -1,6 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 import unittest
 
-from nti.contentsearch._search_query import QueryObject
+from .._search_query import QueryObject
 
 from hamcrest import (assert_that, is_)
 
@@ -27,6 +36,3 @@ class TestSearchQuery(unittest.TestCase):
 		assert_that(qo.maxdist, is_(400))
 		assert_that(qo.surround, is_(400))
 		assert_that(qo.username, is_(u'nt'))
-
-if __name__ == '__main__':
-	unittest.main()

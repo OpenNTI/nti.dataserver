@@ -24,12 +24,12 @@ from nti.dataserver.contenttypes import CanvasTextShape
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch.interfaces import IContentResolver
-
-from nti.contentsearch.tests import ConfiguringTestBase
+from ..interfaces import IContentResolver
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
+from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, is_not, close_to, has_length)
 

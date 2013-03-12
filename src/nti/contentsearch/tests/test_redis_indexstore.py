@@ -9,8 +9,8 @@ __docformat__ = "restructuredtext en"
 
 import unittest
 
-from nti.contentsearch._redis_indexstore import sort_messages
-from nti.contentsearch._redis_indexstore import (ADD_OPERATION, UPDATE_OPERATION, DELETE_OPERATION)
+from .._redis_indexstore import sort_messages
+from .._redis_indexstore import (ADD_OPERATION, UPDATE_OPERATION, DELETE_OPERATION)
 
 from hamcrest import (assert_that, is_)
 

@@ -21,24 +21,24 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch.common import get_type_name
-from nti.contentsearch._search_hits import _NoteSearchHit
-from nti.contentsearch._search_external import get_search_hit
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._search_hits import _HighlightSearchHit
-from nti.contentsearch._search_hits import _RedactionSearchHit
-from nti.contentsearch._search_hits import _WhooshBookSearchHit
-from nti.contentsearch._search_hits import _MessageInfoSearchHit
-from nti.contentsearch._search_hits import _RelevanceSearchHitComparator as RSHC
+from ..common import get_type_name
+from .._search_hits import _NoteSearchHit
+from .._search_external import get_search_hit
+from .. import interfaces as search_interfaces
+from .._search_hits import _HighlightSearchHit
+from .._search_hits import _RedactionSearchHit
+from .._search_hits import _WhooshBookSearchHit
+from .._search_hits import _MessageInfoSearchHit
+from .._search_hits import _RelevanceSearchHitComparator as RSHC
 
-from nti.contentsearch.common import (ntiid_, content_, title_, last_modified_, intid_)
-from nti.contentsearch.common import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET, ITEMS)
+from ..constants import (ntiid_, content_, title_, last_modified_, intid_)
+from ..constants import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET, ITEMS)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.tests import zanpakuto_commands
-from nti.contentsearch.tests import ConfiguringTestBase
+from . import zanpakuto_commands
+from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, is_not, has_entry, has_length)
 

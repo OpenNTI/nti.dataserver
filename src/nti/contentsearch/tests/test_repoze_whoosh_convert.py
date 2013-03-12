@@ -7,7 +7,7 @@ import unittest
 from whoosh import fields
 from repoze.catalog import query as repquery
 
-from nti.contentsearch import _repoze_whoosh_convert
+from .. import _repoze_whoosh_convert
 
 from hamcrest import assert_that, is_, any_of
 from hamcrest.core.base_matcher import BaseMatcher

@@ -19,7 +19,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentprocessing import rank_words
 
-from .common import content_
+from .constants import content_
 from .common import get_type_name
 from .common import sort_search_types
 from ._search_query import QueryObject
@@ -27,6 +27,7 @@ from ._repoze_query import parse_query
 from ._repoze_index import create_catalog
 from . import interfaces as search_interfaces
 from .common import normalize_type_name as _ntm
+from .constants import ugd_indexable_type_names
 from ._search_results import empty_search_results
 from ._search_results import empty_suggest_results
 from ._search_indexmanager import _SearchEntityIndexManager
@@ -74,9 +75,12 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 				self.add_catalog(catalog, type_name)
 		return catalog
 
-	def _adapt_searchOn_types(self, searchOn=None):
+	def _valid_type(self, type_name, catnames):
+		return type_name in catnames and type_name in ugd_indexable_type_names
+	
+	def _adapt_search_on_types(self, searchOn=()):
 		catnames = self.get_catalog_names()
-		result = [_ntm(x) for x in searchOn if _ntm(x) in catnames] if searchOn else catnames
+		result = [_ntm(x) for x in searchOn if self._valid_type(x, catnames)] if searchOn else catnames
 		result = sort_search_types(result)
 		return result
 
@@ -111,13 +115,13 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 	@metricmethod
 	def search(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		searchOn = self._adapt_searchOn_types(qo.searchOn)
+		searchOn = self._adapt_search_on_types(qo.searchOn)
 		results = self._do_search(qo, searchOn)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
-		searchOn = self._adapt_searchOn_types(qo.searchOn)
+		searchOn = self._adapt_search_on_types(qo.searchOn)
 		results = empty_suggest_results(qo)
 		if qo.is_empty: return results
 
@@ -134,7 +138,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
 		queryobject = QueryObject.create(query, **kwargs)
-		searchOn = self._adapt_searchOn_types(queryobject.searchOn)
+		searchOn = self._adapt_search_on_types(queryobject.searchOn)
 		if ' ' in queryobject.term or queryobject.is_prefix_search or queryobject.is_phrase_search:
 			results = self._do_search(queryobject,
 									  searchOn,

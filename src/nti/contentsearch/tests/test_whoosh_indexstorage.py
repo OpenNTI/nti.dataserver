@@ -4,6 +4,9 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 import uuid
 import random
 import shutil
@@ -16,13 +19,13 @@ from whoosh import fields
 from whoosh import query
 from whoosh.compat import text_type
 
-from nti.contentsearch.interfaces import IWhooshIndexStorage
-from nti.contentsearch._whoosh_indexstorage import DirectoryStorage
-from nti.contentsearch._whoosh_indexstorage import UserDirectoryStorage
-from nti.contentsearch._whoosh_indexstorage import PersistentBlockStorage
+from ..interfaces import IWhooshIndexStorage
+from .._whoosh_indexstorage import DirectoryStorage
+from .._whoosh_indexstorage import UserDirectoryStorage
+from .._whoosh_indexstorage import PersistentBlockStorage
 
-from nti.contentsearch.tests import domain
-from nti.contentsearch.tests import ConfiguringTestBase
+from . import domain
+from . import ConfiguringTestBase
 
 sample_schema = fields.Schema(id=fields.ID(stored=True, unique=True), content=fields.TEXT(stored=True))
 

@@ -59,7 +59,12 @@ except ImportError:
 	pass
 
 # legacy imports
-from .common import indexable_type_names
+from .constants import indexable_type_names
+from .constants import ugd_indexable_type_names
 
 def get_indexable_types():
 	return indexable_type_names
+
+def get_ugd_indexable_types():
+	return ugd_indexable_type_names
+

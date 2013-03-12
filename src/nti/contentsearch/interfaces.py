@@ -19,6 +19,8 @@ from dolmen.builtins import IDict
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from .constants import indexable_type_names
+
 from nti.utils import schema as nti_schema
 
 deprecated( 'IRepozeDataStore', 'Use lastest index implementation' )
@@ -33,6 +35,9 @@ class IRepozeDataStore(IFullMapping):
 
 # search query
 
+SEARCH_TYPES_VOCABULARY = \
+	schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in indexable_type_names] )
+
 class ISearchQuery(interface.Interface):
 	term = nti_schema.ValidTextLine(title="Query search term", required=True)
 	username = nti_schema.ValidTextLine(title="User doing the search", required=True)
@@ -40,7 +45,7 @@ class ISearchQuery(interface.Interface):
 
 	limit = schema.Int(title="search results limit", required=False)
 	indexid = nti_schema.ValidTextLine(title="Book content NTIID", required=False)
-	searchOn = schema.Set(value_type=nti_schema.ValidTextLine(title='The ntiid'), title="Content types to search on", required=False)
+	searchOn = schema.Set(value_type=schema.Choice(vocabulary=SEARCH_TYPES_VOCABULARY), title="Content types to search on", required=False)
 	sortOn = nti_schema.ValidTextLine(title="Field or function to sort by", required=False)
 	location = nti_schema.ValidTextLine(title="The reference NTIID where the search was invoked", required=False)
 	sortOrder = nti_schema.ValidTextLine(title="descending or ascending  to sort order", default='descending', required=False)

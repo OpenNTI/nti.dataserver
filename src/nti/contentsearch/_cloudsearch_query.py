@@ -8,10 +8,11 @@ from zope import component
 
 from .common import normalize_type_name
 from . import interfaces as search_interfaces
-from .common import (username_, content_, type_, ngrams_, tags_, title_, redaction_explanation_, replacement_content_)
+from .constants import ugd_indexable_type_names
+from .constants import (username_, content_, type_, ngrams_, tags_, title_, redaction_explanation_, replacement_content_)
 
-def adapt_searchOn_types(searchOn=None):
-	return [normalize_type_name(x) for x in searchOn] if searchOn else ()
+def adapt_search_on_types(searchOn=None):
+	return [normalize_type_name(x) for x in searchOn if x in ugd_indexable_type_names] if searchOn else ()
 	
 @interface.implementer(search_interfaces.ICloudSearchQueryParser)
 class _DefaultCloudSearchQueryParser(object):
@@ -25,7 +26,7 @@ class _DefaultCloudSearchQueryParser(object):
 	
 	def parse(self, qo, username=None):
 		username = username or qo.username
-		searchOn = adapt_searchOn_types(qo.searchOn)
+		searchOn = adapt_search_on_types(qo.searchOn)
 		search_fields = self._get_search_fields(qo)
 		
 		bq = ['(and']

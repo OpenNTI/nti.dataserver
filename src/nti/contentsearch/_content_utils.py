@@ -30,12 +30,12 @@ from nti.externalization.oids import to_external_ntiid_oid
 from .common import to_list
 from . import interfaces as search_interfaces
 
-from .common import (CLASS, BODY, ID)
-from .common import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
-					 creator_fields, keyword_fields, last_modified_fields, sharedWith_,
-					 container_id_fields, ntiid_fields,  highlight_, note_, post_, tags_,
-					 messageinfo_, redaction_, canvas_, canvastextshape_, references_,
-					 title_, inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
+from .constants import (CLASS, BODY, ID)
+from .constants import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
+					 	creator_fields, keyword_fields, last_modified_fields, sharedWith_,
+					 	container_id_fields, ntiid_fields,  highlight_, note_, post_, tags_,
+					 	messageinfo_, redaction_, canvas_, canvastextshape_, references_,
+					 	title_, inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
 
 def get_content(text=None, language='en'):
 	result = ()

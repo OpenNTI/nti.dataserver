@@ -4,6 +4,9 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 import os
 import time
 import shutil
@@ -21,18 +24,18 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch._whoosh_index import Note
-from nti.contentsearch._whoosh_index import Book
-from nti.contentsearch._whoosh_index import Highlight
-from nti.contentsearch._whoosh_index import Redaction
-from nti.contentsearch.tests import ConfiguringTestBase
+from .._whoosh_index import Note
+from .._whoosh_index import Book
+from .._whoosh_index import Highlight
+from .._whoosh_index import Redaction
 
-from nti.contentsearch.common import (HIT_COUNT, QUERY, ITEMS)
-
-from nti.contentsearch.tests import zanpakuto_commands
+from ..constants import (HIT_COUNT, QUERY, ITEMS)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
+from . import zanpakuto_commands
+from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, has_entry, has_key, has_length)
 

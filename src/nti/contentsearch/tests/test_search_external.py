@@ -16,17 +16,17 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.common import (	LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, SCORE,
-										HIT_META_DATA, TYPE_COUNT)
+from .._search_query import QueryObject
+from .. import interfaces as search_interfaces
+from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, SCORE,
+						 HIT_META_DATA, TYPE_COUNT)
 									
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.tests import zanpakuto_commands
-from nti.contentsearch.tests import ConfiguringTestBase
-from nti.contentsearch.tests import domain as domain_words
+from . import zanpakuto_commands
+from . import ConfiguringTestBase
+from . import domain as domain_words
 
 from hamcrest import (assert_that, has_entry, has_key, has_length, greater_than_or_equal_to, is_)
 

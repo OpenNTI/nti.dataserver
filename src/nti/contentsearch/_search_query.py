@@ -16,7 +16,7 @@ import collections
 from zope import component
 from zope import interface
 
-from .common import descending_
+from .constants import descending_
 from . import interfaces as search_interfaces
 
 phrase_search = re.compile(r'"(?P<text>.*?)"')

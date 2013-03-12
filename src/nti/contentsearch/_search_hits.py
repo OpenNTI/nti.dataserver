@@ -31,9 +31,9 @@ from . import interfaces as search_interfaces
 
 from .common import get_type_name
 from .common import get_sort_order
-from .common import ( last_modified_, content_, title_, ntiid_)
-from .common import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-					 SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE)
+from .constants import (last_modified_, content_, title_, ntiid_)
+from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
+					 	SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE)
 
 def get_uid(obj):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )

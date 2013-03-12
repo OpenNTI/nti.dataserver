@@ -12,11 +12,11 @@ from nti.dataserver.activitystream_change import Change
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch._indexagent import _process_event
-
-from nti.contentsearch.tests import ConfiguringTestBase
+from .._indexagent import _process_event
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
+from . import ConfiguringTestBase
 
 from hamcrest import (is_, assert_that)
 

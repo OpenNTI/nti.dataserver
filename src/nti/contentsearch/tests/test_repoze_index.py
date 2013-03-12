@@ -1,14 +1,22 @@
-import unittest
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 import BTrees
 
-from nti.contentsearch._repoze_index import create_catalog
+from .._repoze_index import create_catalog
 
-from nti.contentsearch.tests import ConfiguringTestBase
-from nti.contentsearch.common import (	channel_, content_, keywords_, references_, note_, ntiid_,
-										last_modified_, containerId_, creator_, recipients_, sharedWith_, 
-										highlight_, redaction_, replacementContent_, redactionExplanation_,
-										messageinfo_)
+from ..constants import (channel_, content_, keywords_, references_, note_, ntiid_,
+						 last_modified_, containerId_, creator_, recipients_, sharedWith_, 
+						 highlight_, redaction_, replacementContent_, redactionExplanation_,
+						 messageinfo_)
+
+from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, has_key, is_ )
 
@@ -48,6 +56,4 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(catalog, has_key(recipients_))
 		assert_that(catalog, has_key(references_))
 		assert_that(catalog, has_key(content_))
-	
-if __name__ == '__main__':
-	unittest.main()
+

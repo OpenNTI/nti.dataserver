@@ -30,7 +30,7 @@ from nti.contentprocessing import interfaces as cp_interfaces
 
 from .common import is_all_query
 from . import interfaces as search_interfaces
-from .common import (content_, ngrams_, title_, tags_, redactionExplanation_, replacementContent_)
+from .constants import (content_, ngrams_, title_, tags_, redactionExplanation_, replacementContent_)
 
 def _can_use_ngram_field(qo):
 	tokens = split_content(qo.term)
