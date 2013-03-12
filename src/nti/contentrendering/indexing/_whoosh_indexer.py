@@ -26,10 +26,10 @@ from whoosh import index
 from nti.contentprocessing import split_content
 from nti.contentprocessing import get_content_translation_table
 
-from nti.contentrendering.indexing import _node_utils as node_utils
-from nti.contentrendering.indexing import _termextract as termextract
-from nti.contentrendering.indexing import _content_utils as content_utils
-from nti.contentrendering.indexing import interfaces as cridxr_interfaces
+from . import _node_utils as node_utils
+from . import _termextract as termextract
+from . import _content_utils as content_utils
+from . import interfaces as cridxr_interfaces
 
 from nti.contentsearch import interfaces as search_interfaces
 
@@ -85,10 +85,10 @@ class _BasicWhooshIndexer(object):
 	def process_topic(self, node, writer):
 		raise NotImplementedError()
 
-	def process_book(self, book, writer):
+	def process_book(self, book, writer, language='en'):
 		toc = book.toc
 		def _loop(topic):
-			count = self.process_topic(topic, writer)
+			count = self.process_topic(topic, writer, language)
 			for t in topic.childTopics:
 				count += _loop(t)
 			return count
@@ -135,14 +135,14 @@ class _BookFileWhooshIndexer(_BasicWhooshIndexer):
 		c = m.groups()[0] if m else u''
 		return c or text
 
-	def process_topic(self, node, writer):
+	def process_topic(self, node, writer, language='en'):
 		title = unicode(node.title)
 		ntiid = unicode(node.ntiid)
 		content_file = node.location
 
 		logger.info("Indexing File (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
 
-		table = get_content_translation_table()
+		table = get_content_translation_table(language)
 		related = node_utils.get_related(node.topic)
 		last_modified = self._get_last_modified(node)
 
@@ -166,14 +166,14 @@ class _IdentifiableNodeWhooshIndexer(_BasicWhooshIndexer):
 	Indexing topic children nodes that either have an id or data_ntiid attribute
 	"""
 	
-	def process_topic(self, node, writer):
+	def process_topic(self, node, writer, language='en'):
 		title = unicode(node.title)
 		ntiid = unicode(node.ntiid)
 		content_file = node.location
 
 		logger.info("Indexing Node (%s, %s, %s)", os.path.basename(content_file), title, ntiid )
 
-		table = get_content_translation_table()
+		table = get_content_translation_table(language)
 		related = node_utils.get_related(node.topic)
 		last_modified = self._get_last_modified(node)
 

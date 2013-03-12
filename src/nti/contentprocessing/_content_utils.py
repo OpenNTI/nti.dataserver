@@ -58,9 +58,9 @@ def tokenize_content(text, language='en'):
 
 split_content = tokenize_content
 
-def get_content(text=None):
+def get_content(text=None, language="en"):
 	text = unicode(text) if text else None
-	result = split_content(text) if text else ()
+	result = split_content(text, language) if text else ()
 	result = ' '.join(result)
 	return unicode(result)
 
