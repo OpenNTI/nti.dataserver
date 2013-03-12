@@ -109,9 +109,10 @@ def render_externalizable(data, system):
 	except AttributeError: pass
 
 	# Everything possible should have an href on the way out. If we have no other
-	# preference, use the URL that was requested.
+	# preference, and the request did not mutate any state that could invalidate it,
+	# use the URL that was requested.
 	if isinstance( body, collections.MutableMapping ):
-		if 'href' not in body or not nti_traversal.is_valid_resource_path( body['href'] ):
+		if request.method == 'GET' and ('href' not in body or not nti_traversal.is_valid_resource_path( body['href'] )):
 			body['href'] = request.path_qs
 
 	# Search for a last modified value.

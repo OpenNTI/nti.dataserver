@@ -30,6 +30,7 @@ from hamcrest import has_entry
 from hamcrest import has_entries
 from hamcrest import ends_with
 from hamcrest import greater_than
+from hamcrest import has_key
 
 from nti.tests import is_empty
 import fudge
@@ -56,6 +57,7 @@ from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
+from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
 from nti.dataserver.contenttypes.forums.post import Post
 
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
@@ -149,6 +151,31 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 				 'body': ['My first thought'] }
 
 		self._do_test_user_can_POST_new_blog_entry( data )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_blog_flag_returns_same_href( self ):
+		"""POSTing an IPost to the blog URL automatically creates a new topic"""
+
+		# With a Class value:
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		res = self._do_test_user_can_POST_new_blog_entry( data, status_only=201 )
+
+		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
+		self.testapp.get( res.location )
+		blog_res = self.testapp.get( res.json_body['href'] )
+		assert_that( blog_res.json_body, has_entry( 'title', 'My New Blog' ) )
+		assert_that( blog_res.json_body, has_entry( 'MimeType', PersonalBlogEntry.mimeType ) )
+		blog_href = res.json_body['href']
+
+		flag_href = self.require_link_href_with_rel( res.json_body, 'flag' )
+		res2 = self.testapp.post( flag_href )
+
+		assert_that( res2.json_body['href'], is_( blog_href ) )
+		self.require_link_href_with_rel( res2.json_body, 'flag.metoo' )
+		self.forbid_link_with_rel( res2.json_body, 'flag' )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_blog_entry_mime_type_only( self ):
@@ -479,7 +506,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 2 ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_comment_PUT_to_edit_and_DELETE( self ):
+	def test_user_can_POST_new_comment_PUT_to_edit_flag_and_DELETE( self ):
 		"""POSTing an IPost to the URL of an existing IStoryTopic adds a comment"""
 
 		testapp = self.testapp
@@ -505,15 +532,16 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
 		assert_that( res.json_body, has_entry( 'body', data['body'] ) )
 		assert_that( res.json_body, has_entry( 'ContainerId', entry_ntiid) )
+		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
+		post_href = res.json_body['href']
 
-
-		post_url = self.require_link_href_with_rel( res.json_body, 'edit' )
+		edit_url = self.require_link_href_with_rel( res.json_body, 'edit' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # comments can be liked
-		self.require_link_href_with_rel( res.json_body, 'flag' ) # comments can be flagged
+		flag_href = self.require_link_href_with_rel( res.json_body, 'flag' ) # comments can be flagged
 		data['body'] = ['Changed my body']
 		data['title'] = 'Changed my title'
 
-		res = testapp.put_json( post_url, data )
+		res = testapp.put_json( edit_url, data )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
 		assert_that( res.json_body, has_entry( 'body', data['body'] ) )
@@ -527,9 +555,15 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		res = testapp.get( entry_contents_url )
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 
+		# Can be flagged...
+		res = testapp.post( flag_href )
+		# ...returning the same href we started with
+		assert_that( res.json_body['href'], is_( post_href ) )
+		self.require_link_href_with_rel( res.json_body, 'flag.metoo' )
+
 		# until we delete it
 		eventtesting.clearEvents()
-		res = testapp.delete( post_url )
+		res = testapp.delete( edit_url )
 		assert_that( res.status_int, is_( 204 ) )
 
 		# When it is replaced with placeholders
@@ -828,8 +862,15 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		testapp.delete( self.require_link_href_with_rel( comment1res.json_body, 'edit' ), status=204 )
 		# though he cannot edit a comment from that user
 		testapp.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data, status=403 )
-		# (In fact, he doesn't get the link even when he asks directly
+
+		# In fact, he doesn't get the link even when he asks directly
 		self.forbid_link_with_rel( testapp.get( comment2res.json_body['href'] ).json_body, 'edit' )
+		# But he can flag it
+		flag_res = testapp.post( self.require_link_href_with_rel( comment2res.json_body, 'flag' ) )
+		#The mismatched users me we don't get back a href because we were guessing wrong. see pyramid_renderers
+		#assert_that( flag_res.json_body['href'], is_( comment2res.json_body['href'] ) )
+		assert_that( flag_res.json_body, does_not( has_key( 'href' ) ) )
+		self.require_link_href_with_rel( flag_res.json_body, 'flag.metoo' )
 
 		# that comments creator can delete his own post
 		testapp2.delete( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), status=204 )
