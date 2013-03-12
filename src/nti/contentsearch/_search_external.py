@@ -28,7 +28,8 @@ from ._search_highlights import word_fragments_highlight
 
 from .common import ( tags_, content_, title_, replacementContent_, redactionExplanation_)
 from .common import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
-					 SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS, FIELD)
+					 SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS, FIELD, TYPE_COUNT,
+					 HIT_META_DATA)
 
 # highlight decorators
 
@@ -113,12 +114,27 @@ class _SearchHitExternalizer(object):
 	def toExternalObject(self):
 		return self.hit
 	
+# search metadata
+
+@interface.implementer(ext_interfaces.IExternalObject)
+@component.adapter(search_interfaces.IIndexHitMetaData)
+class _IndexHitMetaDataExternalizer(object):
+	
+	__slots__ = ('data',)
+	
+	def __init__( self, data ):
+		self.data = data
+
+	def toExternalObject(self):
+		eo = LocatedExternalDict()
+		eo[LAST_MODIFIED] = self.data.last_modified
+		eo[TYPE_COUNT] = {k.capitalize():v for k,v in self.data.type_count.items()}
+		return eo
+	
 # search results
 
 @interface.implementer(ext_interfaces.IExternalObject)
 class _BaseSearchResultsExternalizer(object):
-	
-	__slots__ = ('results',)
 	
 	def __init__( self, results ):
 		self.results = results
@@ -134,8 +150,6 @@ class _BaseSearchResultsExternalizer(object):
 
 @component.adapter(search_interfaces.ISearchResults)
 class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
-
-	__slots__ = ('results', 'seen')
 	
 	def __init__( self, results ):
 		super(_SearchResultsExternalizer, self).__init__(results)
@@ -202,6 +216,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
 		eo[HIT_COUNT] = len(items)
 		eo[LAST_MODIFIED] = last_modified
+		eo[HIT_META_DATA] = toExternalObject(self.results.get_hit_meta_data())
 		
 		if self.query.is_batching:
 			eo[TOTAL_HIT_COUNT] = len(self.results)
@@ -254,3 +269,4 @@ class _SearchResultsLinkDecorator(object):
 					link_next_href = request.current_route_path(_query=sorted(batch_params.items())) 
 					link_next = Link( link_next_href, rel=rel )
 					external.setdefault( 'Links', [] ).append( link_next )
+

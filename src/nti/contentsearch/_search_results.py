@@ -17,6 +17,7 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
+from .common import get_type_name
 from ._search_utils import isorted
 from . import interfaces as search_interfaces
 
@@ -68,15 +69,24 @@ class _IndexHit(zcontained.Contained):
 	def query(self):
 		return self.__parent__.query
 
-@interface.implementer(search_interfaces.IIndexHitMetaDataTracker)
-class _IndexHitMetaDataTracker(object):
+@interface.implementer(search_interfaces.IIndexHitMetaData)
+class _IndexHitMetaData(object):
 
 	def __init__(self):
 		self._last_modified = 0
+		self._type_count = collections.defaultdict(int)
 		self._container_count = collections.defaultdict(int)
 
+	@property 
+	def last_modified(self):
+		return self._last_modified
+	
+	@property
+	def type_count(self):
+		return self._type_count
+	
 	def track(self, ihit):
-		# unique container count
+		# container count
 		rsr = search_interfaces.IContainerIDResolver(ihit.obj)
 		containerId = rsr.get_containerId() or u'++unknown-container'
 		self._container_count[containerId] = self._container_count[containerId] + 1
@@ -84,13 +94,23 @@ class _IndexHitMetaDataTracker(object):
 		# last modified
 		rsr = search_interfaces.ILastModifiedResolver(ihit.obj)
 		self._last_modified  = max(self._last_modified, rsr.get_last_modified() or 0)
+		
+		# type count
+		type_name = get_type_name(ihit.obj)
+		self._type_count[type_name] = self._type_count[type_name] + 1
 
 	def __iadd__(self, other):
-		# unique container count
+		# container count
 		for k,v in other._container_count.items():
 			self._container_count[k] = self._container_count[k] + v
+		
 		# last modified
 		self._last_modified = max(self._last_modified, other._last_modified)
+		
+		# container count
+		for k,v in other._type_count.items():
+			self._type_count[k] = self._type_count[k] + v
+			
 		return self
 
 class _MetaSearchResults(type):
@@ -112,7 +132,7 @@ class _SearchResults(_BaseSearchResults):
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
-		self._ihitmeta = _IndexHitMetaDataTracker()
+		self._ihitmeta = _IndexHitMetaData()
 
 	def get_hits(self):
 		return self._hits

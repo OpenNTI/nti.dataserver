@@ -67,7 +67,6 @@ class IndexManager(object):
 		user = self.get_entity(username)
 		fls = getattr(user, 'getFriendsLists', lambda s: ())(user)
 		result = [x for x in fls if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(x)]
-		result = sorted(result, key=lambda e: e.username.lower()) if sort else result
 		return result
 	
 	def get_user_dymamic_memberships(self, username, sort=False):
@@ -75,7 +74,6 @@ class IndexManager(object):
 		everyone = self.get_entity('Everyone')
 		result = getattr(user, 'dynamic_memberships', ())
 		result = [x for x in result if x != everyone and x is not None]
-		result = sorted(result, key=lambda e: e.username.lower()) if sort else result
 		return result
 
 	def get_search_memberships(self, username):

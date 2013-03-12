@@ -19,8 +19,7 @@ from dolmen.builtins import IDict
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.utils.schema import ValidTextLine, Number, ValidText
-from nti.utils.schema import IndexedIterable as TypedIterable
+from nti.utils import schema as nti_schema
 
 deprecated( 'IRepozeDataStore', 'Use lastest index implementation' )
 class IRepozeDataStore(IFullMapping):
@@ -35,16 +34,16 @@ class IRepozeDataStore(IFullMapping):
 # search query
 
 class ISearchQuery(interface.Interface):
-	term = ValidTextLine(title="Query search term", required=True)
-	username = ValidTextLine(title="User doing the search", required=True)
-	language = ValidTextLine(title="Query search term language", required=False, default='en')
+	term = nti_schema.ValidTextLine(title="Query search term", required=True)
+	username = nti_schema.ValidTextLine(title="User doing the search", required=True)
+	language = nti_schema.ValidTextLine(title="Query search term language", required=False, default='en')
 
 	limit = schema.Int(title="search results limit", required=False)
-	indexid = ValidTextLine(title="Book content NTIID", required=False)
-	searchOn = schema.Set(value_type=ValidTextLine(title='The ntiid'), title="Content types to search on", required=False)
-	sortOn = ValidTextLine(title="Field or function to sort by", required=False)
-	location = ValidTextLine(title="The reference NTIID where the search was invoked", required=False)
-	sortOrder = ValidTextLine(title="descending or ascending  to sort order", default='descending', required=False)
+	indexid = nti_schema.ValidTextLine(title="Book content NTIID", required=False)
+	searchOn = schema.Set(value_type=nti_schema.ValidTextLine(title='The ntiid'), title="Content types to search on", required=False)
+	sortOn = nti_schema.ValidTextLine(title="Field or function to sort by", required=False)
+	location = nti_schema.ValidTextLine(title="The reference NTIID where the search was invoked", required=False)
+	sortOrder = nti_schema.ValidTextLine(title="descending or ascending  to sort order", default='descending', required=False)
 
 	batchSize = schema.Int(title="page size", required=False)
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
@@ -103,7 +102,7 @@ class IWooshBookIndexManager(IBookIndexManager):
 
 class IEntityIndexManager(ISearcher):
 
-	username = ValidTextLine(title="entity name", required=True)
+	username = nti_schema.ValidTextLine(title="entity name", required=True)
 
 	def index_content(data, type_name=None):
 		"""
@@ -340,15 +339,15 @@ class IWhooshIndexStorage(interface.Interface):
 # book content
 
 class IBookContent(interface.Interface):
-	docnum = schema.Int(title="Document number", required=True)
-	ntiid = Number(title="NTIID", required=True)
-	title = ValidText(title="Content title", required=True)
-	content = ValidText(title="Text content", required=True)
-	last_modified = Number(title="Last modified date", required=True)
+	docnum = schema.Int(title="Document nti_schema.Number", required=True)
+	ntiid = nti_schema.ValidTextLine(title="NTIID", required=True)
+	title = nti_schema.ValidText(title="Content title", required=True)
+	content = nti_schema.ValidText(title="Text content", required=True)
+	last_modified = nti_schema.Number(title="Last modified date", required=True)
 
 class IWhooshBookContent(IBookContent, IReadMapping):
 	intid = schema.Int(title="Alias for docnum", required=True)
-	score = Number(title="Search score", required=False, default=1.0)
+	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
 class IBookSchemaCreator(interface.Interface):
 	def create():
@@ -538,9 +537,9 @@ class IRepozeSearchQueryValidator(ISearchQueryValidator):
 # redis
 
 class IRedisStoreService(interface.Interface):
-	queue_name = ValidTextLine(title="Queue name", required=True)
-	sleep_wait_time = Number(title="Message interval", required=True)
-	expiration_time = Number(title="Message redis expiration time", required=True)
+	queue_name = nti_schema.ValidTextLine(title="Queue name", required=True)
+	sleep_wait_time = nti_schema.Number(title="Message interval", required=True)
+	expiration_time = nti_schema.Number(title="Message redis expiration time", required=True)
 
 	def add(docid, username):
 		"""
@@ -629,7 +628,7 @@ class ICloudSearchQueryParser(ISearchQueryParser):
 class IBaseHit(interface.Interface):
 	"""represent a base search hit"""
 	query = schema.Object(ISearchQuery, title="Search query", required=True)
-	score = Number(title="hit relevance score", required=True)
+	score = nti_schema.Number(title="hit relevance score", required=True)
 
 class IIndexHit(IBaseHit):
 	"""represent a search hit stored in a ISearchResults"""
@@ -663,9 +662,12 @@ class ISearchHitComparator(interface.Interface):
 	def compare(a, b):
 		"""Compare arguments for for order. a or b can beither a IndexHit or ISearchHit"""
 
-class IIndexHitMetaDataTracker(interface.Interface):
+class IIndexHitMetaData(interface.Interface):
 	"""Class to track index hit meta data"""
 
+	last_modified = nti_schema.Number(title="Greatest last modified time", required=True, readonly=True)
+	type_count = schema.Dict(title="Index hit type count", required=True, readonly=True)
+	
 	def track(ihit):
 		"""track any metadata from the specified index hit"""
 
@@ -677,8 +679,11 @@ class IBaseSearchResults(interface.Interface):
 
 class ISearchResults(IBaseSearchResults):
 
-	hits = TypedIterable( value_type=schema.Object(IIndexHit, title="index hit"),
-						  title="IIndexHit objects", required=True, readonly=True)
+	hits = nti_schema.IndexedIterable( 
+				value_type=schema.Object(IIndexHit, title="index hit"),
+				title="IIndexHit objects", 
+				required=True, 
+				readonly=True)
 
 	def add(hit_or_hits):
 		"""add a search hit(s) to this result"""
@@ -691,12 +696,11 @@ class ISearchResults(IBaseSearchResults):
 
 class ISuggestResults(IBaseSearchResults):
 
-	suggestions = TypedIterable(
-		title="suggested words",
-		description="Order may or may not be significant",
-		required=True,
-		readonly=True,
-		value_type=ValidTextLine(title="suggested word") )
+	suggestions = nti_schema.IndexedIterable(
+						title="suggested words",
+						required=True,
+						readonly=True,
+						value_type=nti_schema.ValidTextLine(title="suggested word") )
 
 	def add_suggestions(word_or_words):
 		"""add a word suggestion(s) to this result"""
