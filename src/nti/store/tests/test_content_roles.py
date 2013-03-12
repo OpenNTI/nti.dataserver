@@ -4,8 +4,10 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
 import os
-import unittest
 
 from zope import component
 
@@ -54,7 +56,5 @@ class TestContentRoles(ConfiguringTestBase):
 		
 		roles_removed = content_roles._remove_users_content_roles(user, items)
 		assert_that(roles_removed, is_(1))
-		
-if __name__ == '__main__':
-	unittest.main()
+
 	
