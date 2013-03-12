@@ -794,8 +794,9 @@ class _DataserverFolderACLProvider(object):
 	def __acl__( self ):
 		# Got to be here after the components are registered
 		acl = acl_from_aces(
-			# Everyone has read access at the root
+			# Everyone has read and search access at the root
 			ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _DataserverFolderACLProvider ),
+			ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_SEARCH, _DataserverFolderACLProvider ),
 			# Global admins also get impersonation rights globally
 			# TODO: We could easily site scope this, or otherwise
 			ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_IMPERSONATE, _DataserverFolderACLProvider )

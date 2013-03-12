@@ -205,6 +205,7 @@ def createApplication( http_port,
 		# set it up. So all the arguments it would pass we must pass.
 		# If we fail to do this, things like 'pyramid.includes' don't get processed
 		pyramid_config.setup_registry(debug_logger=logging.getLogger( 'pyramid' ),
+									  root_factory='._dataserver_pyramid_traversal.root_resource_factory',
 									  settings=settings)
 
 		# Note that the pyramid.registry.global_registry remains
@@ -214,6 +215,9 @@ def createApplication( http_port,
 		assert get_current_registry() is pyramid.registry.global_registry
 		pyramid.registry.global_registry.__bases__ = (component.getGlobalSiteManager(),)
 
+	else:
+		# This branch exists only for tests
+		pyramid_config.set_root_factory( 'nti.appserver._dataserver_pyramid_traversal.root_resource_factory' )
 
 	# Our addons
 	# include statsd client support around things we want to time.
@@ -236,7 +240,6 @@ def createApplication( http_port,
 
 	# Add a tween that ensures we are within a SiteManager.
 	pyramid_config.add_tween( 'nti.appserver.tweens.zope_site_tween.site_tween_factory', under='nti.appserver.tweens.transaction_tween.transaction_tween_factory' )
-
 
 	pyramid_config.include( 'pyramid_zcml' )
 	import pyramid_zcml
@@ -346,9 +349,6 @@ def createApplication( http_port,
 	# as if the term did not match anything. (This is what google does; the two alternatives
 	# are to generate a 404--unfriendly and weird--or to treat it as a wildcard matching
 	# everything--makes sense, but not scalable.)
-	class _ContentSearchRootFactory(dict):
-		__acl__ = ( (pyramid.security.Allow, pyramid.security.Authenticated, pyramid.security.ALL_PERMISSIONS), )
-
 
 	question_map = _question_map.QuestionMap()
 	pyramid_config.registry.registerUtility( question_map, app_interfaces.IFileQuestionMap )
@@ -362,38 +362,9 @@ def createApplication( http_port,
 	for title in titles:
 		lifecycleevent.created( title )
 
-	# TODO: ACLs on searching: only the user should be allowed.
-	@interface.implementer(ILocation)
-	class _UserSearchRootFactory(object):
-		"""
-		For searching the data of a particular user. We allow only
-		that user to do so.
-		"""
-		__name__ = 'UserSearch'
-		__parent__ = None
-		def __init__( self, request ):
-			self.__parent__ = request.registry.getUtility( nti_interfaces.IDataserver ).root
-			# TODO: IPrincipals here
-			self.__acl__ = ( (pyramid.security.Allow, request.matchdict['user'], pyramid.security.ALL_PERMISSIONS),
-							 (pyramid.security.Deny,  pyramid.security.Everyone, pyramid.security.ALL_PERMISSIONS) )
-
 	pyramid_config.add_route( name='search.user', pattern='/dataserver2/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}',
-							  factory=_UserSearchRootFactory)
+							  traverse="/dataserver2/users/{user}")
 	pyramid_config.add_view( route_name='search.user',
-							 view='nti.contentsearch.pyramid_views.UserSearch',
-							 renderer='rest',
-							 permission=nauth.ACT_SEARCH)
-
-	pyramid_config.add_route( name='search.users', pattern='/dataserver2/UserSearch/{term:.*}',
-							  factory=_ContentSearchRootFactory)
-	pyramid_config.add_route( name='search.resolve_user', pattern='/dataserver2/ResolveUser/{term:.*}',
-							  factory=_ContentSearchRootFactory)
-	pyramid_config.scan( 'nti.appserver.usersearch_views' )
-
-
-	pyramid_config.add_route( name='search2.user', pattern='/dataserver2/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}',
-							  factory=_UserSearchRootFactory)
-	pyramid_config.add_view( route_name='search2.user',
 							 view='nti.contentsearch.pyramid_views.UserSearch',
 							 renderer='rest',
 							 permission=nauth.ACT_SEARCH)
@@ -401,11 +372,17 @@ def createApplication( http_port,
 	# Unified search for content and user data. It should follow the same
 	# security policies for user data search
 	pyramid_config.add_route( name='search2.unified', pattern='/dataserver2/users/{user}/Search/UnifiedSearch/{ntiid}/{term:.*}',
-							  factory=_UserSearchRootFactory)
+							  traverse="/dataserver2/users/{user}")
 	pyramid_config.add_view( route_name='search2.unified',
 							 view='nti.contentsearch.pyramid_views.Search',
 							 renderer='rest',
 							 permission=nauth.ACT_SEARCH)
+
+	pyramid_config.add_route( name='search.users', pattern='/dataserver2/UserSearch/{term:.*}',
+							  traverse='/dataserver2')
+	pyramid_config.add_route( name='search.resolve_user', pattern='/dataserver2/ResolveUser/{term:.*}',
+							  traverse='/dataserver2')
+	pyramid_config.scan( 'nti.appserver.usersearch_views' )
 
 	logger.debug( 'Finished creating search' )
 

@@ -22,20 +22,20 @@ from ._views_utils import get_collection
 from ._content_utils import get_content_translation_table
 
 class BaseView(object):
-	
+
 	name = None
-	
+
 	def __init__(self, request):
 		self.request = request
-		
+
 	@property
 	def query(self):
 		return get_queryobject(self.request)
-	
+
 	@property
 	def indexmanager(self):
 		return self.request.registry.getUtility( IIndexManager )
-	
+
 	def _locate(self, obj, parent):
 		# TODO: (Instead of modification info, we should be using etags here, anyway).
 		locate(obj, parent, self.name)
@@ -43,17 +43,17 @@ class BaseView(object):
 		from nti.appserver import interfaces as app_interfaces # Avoid circular imports
 		interface.alsoProvides( obj, app_interfaces.IUncacheableInResponse )
 		return obj
-				
+
 class SearchView(BaseView):
 
 	name = 'Search'
-	
+
 	def __call__( self ):
 		query = self.query
 		result = self.indexmanager.search(query=query)
 		result = self._locate( result, self.request.root)
 		return result
-	
+
 Search = SearchView
 
 class UserDataSearchView(BaseView):
@@ -76,16 +76,16 @@ def clean_search_query(query, language='en'):
 	if result:
 		m = _extractor_pe.search(result)
 		result = m.group() if m else u''
-	
+
 	table = get_content_translation_table(language)
 	result = result.translate(table) if result else u''
 	return unicode(result)
 
 def get_queryobject(request):
-	
+
 	# parse params:
 	args = dict(request.params)
-	
+
 	term = request.matchdict.get('term', u'')
 	term = clean_search_query(unicode(term))
 	args['term'] =  term
@@ -115,7 +115,7 @@ def get_queryobject(request):
 			args['searchOn'] = nset
 		else:
 			raise hexc.HTTPBadRequest()
-			
+
 	batch_size = args.get('batchSize', None)
 	batch_start = args.get('batchStart', None)
 	if batch_size is not None and batch_start is not None:
