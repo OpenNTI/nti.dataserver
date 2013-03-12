@@ -199,7 +199,16 @@ class MinimalDataserver(object):
 			except (Exception,AttributeError):
 				logger.warning( 'Failed to close %s = %s', name, obj, exc_info=True )
 
+		# other_closeables were added after our setup completed, so they
+		# could depend on us. Thus they need to be closed first.
+		for o in self.other_closeables:
+			c = None
+			if isinstance( o, tuple ):
+				o, c = o
+			_c( o, o, c )
+		del self.other_closeables[:]
 
+		# Now tear down us.
 		# Close the root database. This closes its storage but leaves
 		# all outstanding connections open (though useless)
 		_c( 'self.db', self.db )
@@ -210,13 +219,6 @@ class MinimalDataserver(object):
 				_c( db_name, db )
 
 		_c( 'redis', self.redis, self.redis.connection_pool.disconnect )
-
-		for o in self.other_closeables:
-			c = None
-			if isinstance( o, tuple ):
-				o, c = o
-			_c( o, o, c )
-		del self.other_closeables[:]
 
 		# Clean up what we did to the site manager
 		gsm = component.getGlobalSiteManager()
