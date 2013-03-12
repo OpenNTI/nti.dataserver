@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-import Acquisition
+from ._compat import Implicit
 from persistent import Persistent
 
 from nti.dataserver import datastructures
@@ -22,7 +22,6 @@ from nti.dataserver import sharing
 from ..note import BodyFieldProperty
 from nti.utils.schema import AdaptingFieldProperty
 from zope.schema.fieldproperty import FieldProperty
-from nti.utils.property import CachedProperty
 
 from . import interfaces as for_interfaces
 from zope.annotation import interfaces as an_interfaces
@@ -33,7 +32,7 @@ class Post(
 		   datastructures.ZContainedMixin,
 		   datastructures.CreatedModDateTrackingObject,
 		   sharing.AbstractReadableSharedWithMixin,
-		   Acquisition.Implicit):
+		   Implicit):
 
 
 	body = BodyFieldProperty(for_interfaces.IPost['body'])

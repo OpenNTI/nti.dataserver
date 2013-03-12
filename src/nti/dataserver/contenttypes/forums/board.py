@@ -17,7 +17,7 @@ from zope import component
 
 from zope.container.constraints import checkObject
 
-import ExtensionClass
+from ._compat import Base
 from persistent import Persistent
 
 from nti.dataserver import datastructures
@@ -29,7 +29,7 @@ from nti.utils.schema import AdaptingFieldProperty
 from . import interfaces as for_interfaces
 
 @interface.implementer(for_interfaces.IBoard)
-class Board(ExtensionClass.Base,
+class Board(Base,
 			containers.AcquireObjectsOnReadMixin,
 			containers.CheckingLastModifiedBTreeContainer,
 			sharing.AbstractReadableSharedWithMixin):

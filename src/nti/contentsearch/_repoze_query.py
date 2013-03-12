@@ -16,7 +16,10 @@ from BTrees.LFBTree import LFBucket
 
 from zope import component
 from zope import interface
-from zopyx.txng3.core.parsers.english import EnglishQueryParser
+try:
+	from zopyx.txng3.core.parsers.english import EnglishQueryParser
+except ImportError: # pypy?
+	EnglishQueryParser = None
 
 from repoze.catalog.query import Any as IndexAny
 from repoze.catalog.query import Contains as IndexContains
@@ -37,7 +40,7 @@ def _can_use_ngram_field(qo):
 
 @interface.implementer( search_interfaces.IRepozeSearchQueryValidator )
 class _DefaultSearchQueryValiator(object):
-	
+
 	def validate(self, query):
 		text = query.term
 		try:
@@ -50,7 +53,7 @@ class _DefaultSearchQueryValiator(object):
 		except Exception, e:
 			logger.warn("Error while parsing query '%s'. '%s'" % (text, e))
 			return False
-	
+
 def validate_query(query, language='en'):
 	query = search_interfaces.ISearchQuery(query)
 	validator = component.getUtility(search_interfaces.IRepozeSearchQueryValidator, name=language)
@@ -59,19 +62,19 @@ def validate_query(query, language='en'):
 def allow_keywords(f):
 	spec = inspect.getargspec(f)
 	return True if spec.keywords else False
-	
+
 def set_default_indexng3(params):
-	# make we always rank so we can limit results		
+	# make we always rank so we can limit results
 	params['ranking'] = True
-		
+
 	# check for limit param
 	if 'limit' in params:
 		value = params.pop('limit')
-		params['ranking_maxhits'] = int(value) if value else sys.maxint 
-	
+		params['ranking_maxhits'] = int(value) if value else sys.maxint
+
 	if 'ranking_maxhits' not in params:
 		params['ranking_maxhits'] = sys.maxint
-			
+
 	return params
 
 class Contains(IndexContains):
@@ -79,24 +82,24 @@ class Contains(IndexContains):
 	def __init__(self, index_name, value, **kwargs):
 		IndexContains.__init__(self, index_name, value)
 		self.params = dict(kwargs)
-	
+
 	def _apply(self, catalog, names):
 		index = self._get_index(catalog)
 		if allow_keywords(index.applyContains):
 			return index.applyContains(self._get_value(names), **self.params)
 		else:
 			return index.applyContains(self._get_value(names))
-		
+
 	def negate(self):
 		return DoesNotContain(self.index_name, self._value, **self.params)
-	
+
 	@classmethod
 	def create_for_indexng3(cls, index_name, value, **kwargs):
 		set_default_indexng3(kwargs)
 		return Contains(index_name, value, **kwargs)
 
 class DoesNotContain(IndexDoesNotContain):
-	
+
 	def __init__(self, index_name, value, **kwargs):
 		IndexDoesNotContain.__init__(self, index_name, value)
 		self.params = dict(kwargs)
@@ -110,10 +113,10 @@ class DoesNotContain(IndexDoesNotContain):
 
 	def negate(self):
 		return Contains(self.index_name, self._value, **self.params)
-	
+
 	@classmethod
 	def create_for_indexng3(cls, index_name, value, **kwargs):
-		set_default_indexng3(kwargs)			
+		set_default_indexng3(kwargs)
 		return DoesNotContain(index_name, value, **kwargs)
 
 class Any(IndexAny):
@@ -123,20 +126,20 @@ class Any(IndexAny):
 		if not hasattr(result, "items"):
 			result = LFBucket({x:1.0 for x in result})
 		return result
-	
+
 @interface.implementer( search_interfaces.IRepozeQueryParser )
 class _DefaultRepozeQueryParser(object):
-	
+
 	def _get_search_fields(self, qo):
 		if qo.is_phrase_search or qo.is_prefix_search or not _can_use_ngram_field(qo):
 			result = (content_,)
 		else:
 			result = (ngrams_,)
 		return result
-	
+
 	def _get_repoze_query(self, fieldname, term, **kwargs):
 		return Contains.create_for_indexng3(fieldname, term, **kwargs)
-	
+
 	def parse(self, qo):
 		query_term = qo.term
 		search_fields = self._get_search_fields(qo)
@@ -152,41 +155,41 @@ _DefaultHighlightRepozeQueryParser = _DefaultRepozeQueryParser
 _DefaultMessageinfoRepozeQueryParser = _DefaultRepozeQueryParser
 
 class _DefaultRedactionRepozeQueryParser(_DefaultRepozeQueryParser):
-	
+
 	def _get_search_fields(self, qo):
 		if qo.is_phrase_search or qo.is_prefix_search or not _can_use_ngram_field(qo):
 			result = (content_, redactionExplanation_, replacementContent_)
 		else:
 			result = (ngrams_, redactionExplanation_, replacementContent_)
 		return result
-	
+
 class _DefaultPostRepozeQueryParser(_DefaultRepozeQueryParser):
-	
+
 	def _get_search_fields(self, qo):
 		if qo.is_phrase_search or qo.is_prefix_search or not _can_use_ngram_field(qo):
 			result = (content_,)
 		else:
 			result = (ngrams_, title_, tags_)
 		return result
-	
+
 	def _get_repoze_query(self, fieldname, term, **kwargs):
 		if fieldname == tags_:
 			result = Any(fieldname, [term])
 		else:
 			result = super(_DefaultPostRepozeQueryParser, self)._get_repoze_query(fieldname, term, **kwargs)
 		return result
-	
+
 def parse_query(qo, type_name):
 	is_all = is_all_query(qo.term)
 	if is_all:
 		return is_all, None
 	else:
 		lang = qo.language
-		if not validate_query(qo, lang): 
+		if not validate_query(qo, lang):
 			# the query cannot be parsed by zopyx so change it
 			# to avoud an exception during the actual search
 			qo.term = u'-'
-		
+
 		parser = component.getUtility(search_interfaces.IRepozeQueryParser, name=type_name)
 		queryobject = parser.parse(qo)
 		return is_all, queryobject

@@ -15,7 +15,7 @@ from zc.intid.utility import IntIds as _ZCIntIds
 
 from zope.container.interfaces import IContained
 
-from Acquisition import aq_base
+from nti.utils._compat import aq_base
 
 # The reason for the __str__ override bypassing KeyError
 # is to get usable exceptions printed from unit tests

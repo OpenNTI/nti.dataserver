@@ -15,8 +15,10 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import os.path
 
-
-import gevent
+try:
+	from gevent import sleep
+except ImportError:
+	from time import sleep
 
 from zc.lockfile import LockFile, LockError
 from zope import component
@@ -86,7 +88,7 @@ def add_s3_index( title, event ):
 			if lock_tries == 30:
 				raise
 			logger.debug( "Waiting for cache lock on %s", title_index_cache_dir )
-			gevent.sleep( 5 * lock_tries )
+			sleep( 5 * lock_tries )
 		else:
 			break
 	try:

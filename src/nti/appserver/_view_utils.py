@@ -14,8 +14,12 @@ logger = __import__('logging').getLogger(__name__)
 
 import sys
 
+try:
+	from Acquisition import aq_base
+except ImportError: #PyPy?
+	def aq_base(o): return o
+
 import transaction
-from Acquisition import aq_base
 from zope import interface
 from zope import component
 

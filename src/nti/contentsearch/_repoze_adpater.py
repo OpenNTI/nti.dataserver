@@ -79,14 +79,14 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 		result = [normalize_type_name(x) for x in searchOn if normalize_type_name(x) in catnames] if searchOn else catnames
 		result = sort_search_types(result)
 		return result
-	
+
 	@metricmethod
 	def _get_hits_from_docids(self, results, doc_weights, type_name):
 		# get all objects from the ds
 		for docid, score in doc_weights.items():
 			obj = self.get_object(docid)
 			results.add((obj, score))
-		
+
 	@metricmethod
 	def _do_catalog_query(self, catalog, qo, type_name):
 		is_all_query, queryobject = parse_query(qo, type_name)
@@ -152,7 +152,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 			results.add_suggestions(suggestions)
 
 		return results
-		
+
 	# ----------------
 
 	def index_content(self, data, type_name=None):
@@ -182,7 +182,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 	def unindex_doc(self, docid):
 		for catalog in self.values():
 			catalog.unindex_doc(docid)
-		
+
 	def remove_index(self, type_name):
 		result = self.remove_catalog(type_name)
 		return result

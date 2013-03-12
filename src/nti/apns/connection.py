@@ -11,9 +11,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import gevent
-from gevent import socket
-from gevent import ssl
+try:
+	import gevent
+	from gevent import socket
+	from gevent import ssl
+except ImportError: # pypy?
+	gevent = None
+	import socket
+	import ssl
 
 import time
 import anyjson as json

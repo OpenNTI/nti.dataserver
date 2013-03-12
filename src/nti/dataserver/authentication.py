@@ -111,7 +111,7 @@ except ImportError:
 
 class _ThreadLocalManager(_LocalBase):
 	def __init__(self, default=None):
-		gevent.local.local.__init__( self )
+		_LocalBase.__init__( self )
 		self.stack = []
 		self.default = default
 

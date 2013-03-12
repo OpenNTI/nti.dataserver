@@ -27,7 +27,7 @@ def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):
 		ngram = text[:size]
 		result.append(ngram)
 	return tuple(result)
-	
+
 def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
 	tokens = split_content(text)
 	result = set() if unique else []
@@ -45,12 +45,12 @@ def compute_ngrams(text, language="en"):
 	result = u.compute(text) if text else u''
 	return unicode(result)
 
-@interface.implementer( cp_interfaces.INgramComputer )		
+@interface.implementer( cp_interfaces.INgramComputer )
 class _DefaultNgramComputer(object):
-	
+
 	minsize = default_ngram_minsize
 	maxsize = default_ngram_maxsize
-	
+
 	def compute(self, text):
 		if text:
 			result = ngram_filter(text, self.minsize, self.maxsize)

@@ -30,7 +30,6 @@ import tempfile
 import anyjson as json
 
 from ZODB.DB import DB
-from ZODB.FileStorage import FileStorage
 from ZODB.interfaces import IConnection
 import transaction
 import os
@@ -121,6 +120,7 @@ class TestChatRoom(SharedConfiguringTestBase):
 	def test_persist_moderated_stays_moderated(self):
 		# We can start with a regular room, persist it,
 		# make it moderated, persist, then load it back as moderated
+		from ZODB.FileStorage import FileStorage # defer import, only used here
 
 		tmp_dir = tempfile.mkdtemp()
 		fs = FileStorage( os.path.join( tmp_dir, "data.fs" ) )

@@ -9,7 +9,10 @@ __docformat__ = "restructuredtext en"
 
 from hashlib import md5
 
-from gevent.coros import RLock
+try:
+	from gevent.lock import RLock
+except ImportError:
+	from threading import RLock
 
 from zope import interface
 from zope import component
@@ -35,7 +38,7 @@ from ._whoosh_indexstorage import PersistentBlockStorage
 from ._search_indexmanager import _SearchEntityIndexManager
 from ._search_results import empty_suggest_and_search_results
 from ._search_results import merge_suggest_and_search_results
-		
+
 def get_indexname(username, type_name, use_md5=True):
 	type_name = normalize_type_name(type_name)
 	if use_md5:
@@ -50,19 +53,19 @@ def get_indexname(username, type_name, use_md5=True):
 # proxy class to wrap an whoosh index
 
 class _NoLockingProxy(ProxyBase):
-	
+
 	def __enter__(self):
 		pass
 
 	def __exit__(self, *args, **kwargs):
 		pass
-	
+
 class _Proxy(ProxyBase):
-		
+
 	def __init__(self, obj):
 		super(_Proxy, self).__init__(obj)
 		self.rlock = RLock()
-	
+
 	def __enter__(self):
 		return self.rlock.__enter__()
 
@@ -70,24 +73,24 @@ class _Proxy(ProxyBase):
 		return self.rlock.__exit__(*args, **kwargs)
 
 # lease frequently used map to keep open indices
-		
+
 def _safe_index_close(index):
 	with index:
 		try:
 			index.close()
-		except:
+		except Exception:
 			pass
-			
+
 # entity adapter for whoosh indicies
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer( search_interfaces.IWhooshEntityIndexManager )
 class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
-		
+
 	delay = 0.25
 	maxiters = 40
 	use_md5 = False
-			
+
 	@property
 	def writer_ctor_args(self):
 		return self.storage.ctor_args()
@@ -95,22 +98,22 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 	@property
 	def writer_commit_args(self):
 		return self.storage.commit_args()
-		
+
 	# -------------------
-	
+
 	def _register_index(self, type_name, index_name, index):
 		self[type_name] = index_name
 		return _Proxy(index)
-		
+
 	def _get_indexname(self, type_name):
 		indexname = get_indexname(self.username, type_name, self.use_md5)
 		return indexname
-	
+
 	def _get_index_writer(self, index):
 		return get_index_writer(index, self.writer_ctor_args, self.maxiters, self.delay)
-	
+
 	# -------------------
-		
+
 	def _adapt_searchOn_types(self, searchOn=None):
 		indexables = get_indexables()
 		if searchOn:
@@ -118,7 +121,7 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 		result = searchOn or indexables
 		result = sort_search_types(result)
 		return result
-	
+
 	def _do_search(self, query, is_ngram_search=False, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_searchOn_types(query.searchOn)
@@ -130,7 +133,7 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 				with index.searcher() as searcher:
 					rs = indexable.search(searcher, query)
 					results = merge_search_results(results, rs)
-		return results	
+		return results
 
 	def search(self, query, *args, **kwargs):
 		results = self._do_search(query, False, **kwargs)
@@ -169,13 +172,13 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 		if not type_name:
 			type_name = get_type_name(data) if data else None
 		return normalize_type_name(type_name)
-	
+
 	def _index_content(self, indexable, writer, data):
 		result = indexable.index_content(writer, data, **self.writer_commit_args)
 		if not result:
 			writer.cancel()
 		return result
-				
+
 	def index_content(self, data, *args, **kwargs):
 		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
@@ -191,7 +194,7 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 		if not result:
 			writer.cancel()
 		return result
-	
+
 	def update_content(self, data, *args, **kwargs):
 		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
@@ -207,7 +210,7 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 		if not result:
 			writer.cancel()
 		return result
-	
+
 	def delete_content(self, data, *args, **kwargs):
 		type_name = self._get_type_name(data, **kwargs)
 		index = self._get_or_create_index(type_name)
@@ -221,31 +224,31 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 	def remove_index(self, type_name, *args, **kwargs):
 		type_name = normalize_type_name(type_name)
 		return self.pop(type_name, None)
-		
+
 	def get_indexable_object(self, type_name):
 		indexable = get_indexable_object(type_name)
 		if not hasattr(indexable, 'get_object'):
 			setattr(indexable ,'get_object', self.get_object)
 		return indexable
-	
+
 def _on_index_removed(key, value):
 	_safe_index_close(value)
 
 class _WhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
-		
+
 	use_md5 = True
 	whoosh_indices = LFUMap(maxsize=500, on_removal_callback=_on_index_removed)
-		
+
 	@property
 	def storage(self):
 		result = component.getUtility(search_interfaces.IWhooshIndexStorage)
 		return result
-	
+
 	def _register_index(self, type_name, index_name, index):
 		index = super(_WhooshEntityIndexManager, self)._register_index(type_name, index_name, index)
 		self.whoosh_indices[index_name] = index
 		return index
-	
+
 	def _get_or_create_index(self, type_name):
 		type_name = normalize_type_name(type_name)
 		indexname = self._get_indexname(type_name)
@@ -259,7 +262,7 @@ class _WhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 														 username=self.username)
 				index = self._register_index(type_name, indexname, index)
 		return index
-	
+
 	def remove_index(self, type_name, *args, **kwargs):
 		type_name = normalize_type_name(type_name)
 		index = self._get_or_create_index(type_name)
@@ -268,15 +271,15 @@ class _WhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 				self.pop(type_name, None)
 				self.whoosh_indices.pop(type_name, None)
 				_safe_index_close(index)
-	
+
 _WhooshEntityIndexManagerFactory = an_factory(_WhooshEntityIndexManager)
 
 class _PersistentWhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
-		
+
 	def __init__(self):
 		super(_BaseWhooshEntityIndexManager, self).__init__()
 		self.storage = PersistentBlockStorage()
-		
+
 	def _get_or_create_index(self, type_name):
 		type_name = normalize_type_name(type_name)
 		indexname = self._get_indexname(type_name)
@@ -289,7 +292,7 @@ class _PersistentWhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 			index = self.storage.open_index(indexname=indexname, schema=schema)
 			index = _NoLockingProxy(index)
 		return index
-	
+
 	def remove_index(self, type_name, *args, **kwargs):
 		if super(_PersistentWhooshEntityIndexManager, self).remove_index(type_name):
 			indexname = self._get_indexname(type_name)

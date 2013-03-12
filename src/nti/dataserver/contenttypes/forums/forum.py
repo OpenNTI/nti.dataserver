@@ -14,7 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-import Acquisition
+from ._compat import Implicit
 
 from nti.ntiids import ntiids
 
@@ -29,7 +29,7 @@ from . import interfaces as for_interfaces
 from zope.annotation import interfaces as an_interfaces
 
 @interface.implementer(for_interfaces.IForum, an_interfaces.IAttributeAnnotatable)
-class Forum(Acquisition.Implicit,
+class Forum(Implicit,
 			containers.AcquireObjectsOnReadMixin,
 			containers.CheckingLastModifiedBTreeContainer,
 			datastructures.ContainedMixin, # Pulls in nti_interfaces.IContained, containerId, id

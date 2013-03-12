@@ -316,7 +316,10 @@ class ContactEmailRecovery(object):
 import pyPdf
 import pyPdf.generic
 from cStringIO import StringIO
-from gevent.lock import RLock
+try:
+	from gevent.lock import RLock
+except ImportError:
+	from threading import RLock
 
 # Reading the pristine PDF is fairly time consuming; fortunately, it
 # returns a dict we can clone

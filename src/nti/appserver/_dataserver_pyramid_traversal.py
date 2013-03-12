@@ -114,8 +114,7 @@ class _PageContainerResource(_ContainerResource):
 	def traverse( self, key, remaining_path ):
 		raise loc_interfaces.LocationError( key )
 
-from Acquisition import aq_base
-from Acquisition.interfaces import IAcquirer
+from nti.utils._compat import aq_base, IAcquirer
 class _ObjectsContainerResource(_ContainerResource):
 
 	def __init__( self, context, request=None, name=None, parent=None ):

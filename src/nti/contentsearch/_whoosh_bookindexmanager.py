@@ -7,7 +7,10 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-from gevent.lock import BoundedSemaphore
+try:
+	from gevent.lock import BoundedSemaphore
+except ImportError:
+	from threading import BoundedSemaphore
 
 from zope import interface
 from zope.proxy import ProxyBase

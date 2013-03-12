@@ -15,7 +15,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-import Acquisition
+from ._compat import Implicit
 
 from nti.ntiids import ntiids
 from nti.dataserver import containers
@@ -35,7 +35,7 @@ from zope.container.contained import ContainerSublocations
 class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 							 containers.CheckingLastModifiedBTreeContainer,
 							 datastructures.ContainedMixin, # Pulls in nti_interfaces.IContained, containerId, id
-							 Acquisition.Implicit):
+							 Implicit):
 	title = AdaptingFieldProperty(for_interfaces.ITopic['title'])
 	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
 	sharingTargets = ()
