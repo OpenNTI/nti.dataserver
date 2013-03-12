@@ -154,7 +154,7 @@ class IPersonalBlogEntryPost(IHeadlinePost):
 	__parent__.required = False
 
 
-class IPersonalBlogComment(IPost):
+class IPersonalBlogComment(IPost, nti_interfaces.IShouldHaveTraversablePath):
 	containers(b'.IPersonalBlogEntry') # Adds __parent__ as required
 	__parent__.required = False
 

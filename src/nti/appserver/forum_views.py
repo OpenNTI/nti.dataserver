@@ -208,12 +208,10 @@ class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
 
 		lifecycleevent.added( entry_post )
 
-		# Respond with the generic location of the object, within
-		# the owner's Objects tree.
+		# Respond with the pretty location of the object, within the blog
 		self.request.response.status_int = 201 # created
-		self.request.response.location = self.request.resource_url( self.getRemoteUser(),
-																	'Objects',
-																	to_external_ntiid_oid( entry ) )
+		self.request.response.location = self.request.resource_path( entry )
+
 		return entry
 
 @view_config( route_name='objects.generic.traversal',
@@ -245,12 +243,9 @@ class TopicPostView(_AbstractIPostPOSTView):
 
 		topic[name] = incoming_post # Now store the topic and fire added
 
-		# Respond with the generic location of the object, within
-		# the owner's Objects tree.
+		# Respond with the pretty location of the object
 		self.request.response.status_int = 201 # created
-		self.request.response.location = self.request.resource_url( self.getRemoteUser(),
-																	'Objects',
-																	to_external_ntiid_oid( incoming_post ) )
+		self.request.response.location = self.request.resource_path( incoming_post )
 
 		return incoming_post
 
