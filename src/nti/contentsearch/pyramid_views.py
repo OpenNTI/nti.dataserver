@@ -18,6 +18,7 @@ from zope.location import locate
 
 from .interfaces import IIndexManager
 from ._search_query import QueryObject
+from .common import normalize_type_name
 from ._views_utils import get_collection
 from ._content_utils import get_content_translation_table
 
@@ -104,7 +105,7 @@ def get_queryobject(request):
 		else:
 			args['indexid'] = indexid
 	elif searchOn:
-		nset = set(searchOn.split(','))
+		nset = {normalize_type_name(e) for e in searchOn.split(',')}
 		args['searchOn'] = nset
 
 	batch_size = args.get('batchSize', None)
