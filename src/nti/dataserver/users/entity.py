@@ -249,14 +249,6 @@ class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 			# cannot be adapted to IKeyReference).
 			self.__parent__ = parent
 
-	def __setstate__( self, state ):
-		if isinstance( state.get( 'username' ), bytes ):
-			# Some much older objects may have a byte string
-			# instead of a unicode string for username/__name__.
-			# This does not play well with validation and containers
-			state['username'] = unicode( state['username'], 'utf-8' )
-		super(Entity,self).__setstate__( state )
-
 	def _get__name__(self):
 		return self.username
 	def _set__name__(self,new_name):
