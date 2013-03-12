@@ -6,7 +6,7 @@ $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 
-logger = __import__( 'logging' ).getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 import re
 
@@ -34,24 +34,24 @@ class BaseView(object):
 
 	@property
 	def indexmanager(self):
-		return self.request.registry.getUtility( IIndexManager )
+		return self.request.registry.getUtility(IIndexManager)
 
 	def _locate(self, obj, parent):
 		# TODO: (Instead of modification info, we should be using etags here, anyway).
 		locate(obj, parent, self.name)
 		# TODO: Make cachable?
-		from nti.appserver import interfaces as app_interfaces # Avoid circular imports
-		interface.alsoProvides( obj, app_interfaces.IUncacheableInResponse )
+		from nti.appserver import interfaces as app_interfaces  # Avoid circular imports
+		interface.alsoProvides(obj, app_interfaces.IUncacheableInResponse)
 		return obj
 
 class SearchView(BaseView):
 
 	name = 'Search'
 
-	def __call__( self ):
+	def __call__(self):
 		query = self.query
 		result = self.indexmanager.search(query=query)
-		result = self._locate( result, self.request.root)
+		result = self._locate(result, self.request.root)
 		return result
 
 Search = SearchView
@@ -60,10 +60,10 @@ class UserDataSearchView(BaseView):
 
 	name = 'UserSearch'
 
-	def __call__( self ):
+	def __call__(self):
 		query = self.query
 		result = self.indexmanager.search(query=query)
-		result = self._locate(result, self.request.root )
+		result = self._locate(result, self.request.root)
 		return result
 
 UserSearch = UserDataSearchView
@@ -71,7 +71,7 @@ UserSearch = UserDataSearchView
 _extractor_pe = re.compile('[?*]*(.*)')
 
 def clean_search_query(query, language='en'):
-	temp = re.sub('[*?]','', query)
+	temp = re.sub('[*?]', '', query)
 	result = unicode(query) if temp else u''
 	if result:
 		m = _extractor_pe.search(result)
@@ -88,10 +88,10 @@ def get_queryobject(request):
 
 	term = request.matchdict.get('term', u'')
 	term = clean_search_query(unicode(term))
-	args['term'] =  term
+	args['term'] = term
 
 	username = request.matchdict.get('user', None)
-	username = username or authenticated_userid( request )
+	username = username or authenticated_userid(request)
 	args['username'] = username
 
 	ntiid = request.matchdict.get('ntiid', None)
@@ -104,17 +104,8 @@ def get_queryobject(request):
 		else:
 			args['indexid'] = indexid
 	elif searchOn:
-		nset = set()
-		for ntiid in searchOn.split(','):
-			ntiid = get_collection(ntiid, request.registry)
-			if ntiid is None:
-				logger.debug("Could not find collection for ntiid '%s'" % ntiid)
-			else:
-				nset.add(ntiid)
-		if nset:
-			args['searchOn'] = nset
-		else:
-			raise hexc.HTTPBadRequest()
+		nset = set(searchOn.split(','))
+		args['searchOn'] = nset
 
 	batch_size = args.get('batchSize', None)
 	batch_start = args.get('batchStart', None)

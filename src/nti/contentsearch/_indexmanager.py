@@ -19,6 +19,7 @@ from perfmetrics import metric
 from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
 
+from .constants import content_
 from ._search_query import QueryObject
 from ._indexagent import handle_index_event
 from . import interfaces as search_interfaces
@@ -30,7 +31,7 @@ from ._search_results import merge_suggest_results
 from ._search_results import empty_suggest_and_search_results
 from ._search_results import merge_suggest_and_search_results
 
-@interface.implementer( search_interfaces.IIndexManager )
+@interface.implementer(search_interfaces.IIndexManager)
 class IndexManager(object):
 
 	indexmanager = None
@@ -49,10 +50,10 @@ class IndexManager(object):
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_adapter = useridx_manager_adapter
 
-	def __str__( self ):
+	def __str__(self):
 		return self.__repr__()
 
-	def __repr__( self ):
+	def __repr__(self):
 		return 'IndexManager(books=%s, %s)' % (len(self.books), self.useridx_manager_adapter)
 
 	def get_entity(self, username):
@@ -68,7 +69,7 @@ class IndexManager(object):
 		fls = getattr(user, 'getFriendsLists', lambda s: ())(user)
 		result = [x for x in fls if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(x)]
 		return result
-	
+
 	def get_user_dymamic_memberships(self, username, sort=False):
 		user = self.get_entity(username)
 		everyone = self.get_entity('Everyone')
@@ -78,10 +79,10 @@ class IndexManager(object):
 
 	def get_search_memberships(self, username):
 		result = self.get_user_dymamic_memberships(username) + self.get_dfls(username)
-		result = {e.username.lower():e for e in result} # make sure there is no duplicate
+		result = {e.username.lower():e for e in result}  # make sure there is no duplicate
 		result = sorted(result.values(), key=lambda e: e.username.lower())
 		return result
-	
+
 	@metric
 	def search(self, query):
 		query = QueryObject.create(query)
@@ -123,11 +124,20 @@ class IndexManager(object):
 				logger.warn("Could not add book index '%s,%r,%r' to index manager" % (indexname, ntiid, kwargs))
 		return result
 
+	def _valid_query(self, query):
+		result = not query.is_empty
+		if result:
+			result = not query.searchOn or content_ in query.searchOn
+		return result
+
+	def _query_books(self, query):
+		return  (query.indexid,)
+
 	def content_search(self, query):
 		query = QueryObject.create(query)
 		results = empty_search_results(query)
-		if not query.is_empty:
-			books = query.searchOn if query.searchOn else (query.indexid,)
+		if self._valid_query(query):
+			books = self._query_books(query)
 			for book in books:
 				bm = self.get_book_index_manager(book)
 				r = bm.search(query) if bm is not None else None
@@ -137,8 +147,8 @@ class IndexManager(object):
 	def content_suggest_and_search(self, query):
 		query = QueryObject.create(query)
 		results = empty_suggest_and_search_results(query)
-		if not query.is_empty:
-			books = query.searchOn if query.searchOn else (query.indexid,)
+		if self._valid_query(query):
+			books = self._query_books(query)
 			for book in books:
 				bm = self.get_book_index_manager(book)
 				r = bm.suggest_and_search(query) if bm is not None else None
@@ -148,8 +158,8 @@ class IndexManager(object):
 	def content_suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query)
 		results = empty_suggest_results(query)
-		if not query.is_empty:
-			books = query.searchOn if query.searchOn else (query.indexid,)
+		if self._valid_query(query):
+			books = self._query_books(query)
 			for book in books:
 				bm = self.get_book_index_manager(book)
 				r = bm.suggest(query) if bm is not None else None
@@ -157,11 +167,11 @@ class IndexManager(object):
 		return results
 
 	def _get_user_index_manager(self, target, create=True):
-		if isinstance( target, six.string_types ):
-			target = self.get_entity( target )
+		if isinstance(target, six.string_types):
+			target = self.get_entity(target)
 		result = self.useridx_manager_adapter(target, None) if target and create else None
 		return result
-	
+
 	def _get_search_uims(self, username):
 		result = []
 		for name in [username] + self.get_search_memberships(username):
@@ -223,7 +233,7 @@ class IndexManager(object):
 		for bm in self.books.itervalues():
 			self._close(bm)
 
-	def _close( self, bm ):
+	def _close(self, bm):
 		close_m = getattr(bm, 'close', None)
 		if close_m is not None:
 			close_m()
