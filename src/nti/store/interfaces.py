@@ -67,9 +67,9 @@ class IPurchaseAttempt(IContained):
 
 	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='Purchase state', required=True)
 
-	Items = schema.FrozenSet(value_type=schema.TextLine(title='The item identifier'), title="Items being purchased")
+	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Items being purchased")
 	Description = nti_schema.ValidTextLine(title='A purchase description', required=False)
-	OnBehalfOf = schema.FrozenSet(value_type=schema.TextLine(title='username'), title='List of users', required=False, min_length=0)
+	OnBehalfOf = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='username'), title='List of users', required=False, min_length=0)
 
 	StartTime = nti_schema.Number(title='Start time', required=True)
 	EndTime = nti_schema.Number(title='Completion time', required=False)

@@ -19,6 +19,7 @@ from dolmen.builtins import IDict
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.utils.schema import ValidTextLine, Number, ValidText
 from nti.utils.schema import IndexedIterable as TypedIterable
 
 deprecated( 'IRepozeDataStore', 'Use lastest index implementation' )
@@ -34,16 +35,16 @@ class IRepozeDataStore(IFullMapping):
 # search query
 
 class ISearchQuery(interface.Interface):
-	term = schema.TextLine(title="Query search term", required=True)
-	username = schema.TextLine(title="User doing the search", required=True)
-	language = schema.TextLine(title="Query search term language", required=False, default='en')
+	term = ValidTextLine(title="Query search term", required=True)
+	username = ValidTextLine(title="User doing the search", required=True)
+	language = ValidTextLine(title="Query search term language", required=False, default='en')
 
 	limit = schema.Int(title="search results limit", required=False)
-	indexid = schema.TextLine(title="Book content NTIID", required=False)
-	searchOn = schema.Set(value_type=schema.TextLine(title='The ntiid'), title="Content types to search on", required=False)
-	sortOn = schema.TextLine(title="Field or function to sort by", required=False)
-	location = schema.TextLine(title="The reference NTIID where the search was invoked", required=False)
-	sortOrder = schema.TextLine(title="descending or ascending  to sort order", default='descending', required=False)
+	indexid = ValidTextLine(title="Book content NTIID", required=False)
+	searchOn = schema.Set(value_type=ValidTextLine(title='The ntiid'), title="Content types to search on", required=False)
+	sortOn = ValidTextLine(title="Field or function to sort by", required=False)
+	location = ValidTextLine(title="The reference NTIID where the search was invoked", required=False)
+	sortOrder = ValidTextLine(title="descending or ascending  to sort order", default='descending', required=False)
 
 	batchSize = schema.Int(title="page size", required=False)
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
@@ -102,7 +103,7 @@ class IWooshBookIndexManager(IBookIndexManager):
 
 class IEntityIndexManager(ISearcher):
 
-	username = schema.TextLine(title="entity name", required=True)
+	username = ValidTextLine(title="entity name", required=True)
 
 	def index_content(data, type_name=None):
 		"""
@@ -340,14 +341,14 @@ class IWhooshIndexStorage(interface.Interface):
 
 class IBookContent(interface.Interface):
 	docnum = schema.Int(title="Document number", required=True)
-	ntiid = schema.Float(title="NTIID", required=True)
-	title = schema.Text(title="Content title", required=True)
-	content = schema.Text(title="Text content", required=True)
-	last_modified = schema.Float(title="Last modified date", required=True)
+	ntiid = Number(title="NTIID", required=True)
+	title = ValidText(title="Content title", required=True)
+	content = ValidText(title="Text content", required=True)
+	last_modified = Number(title="Last modified date", required=True)
 
 class IWhooshBookContent(IBookContent, IReadMapping):
 	intid = schema.Int(title="Alias for docnum", required=True)
-	score = schema.Float(title="Search score", required=False, default=1.0)
+	score = Number(title="Search score", required=False, default=1.0)
 
 class IBookSchemaCreator(interface.Interface):
 	def create():
@@ -486,6 +487,7 @@ class IStopWords(interface.Interface):
 # zopyx storage
 
 class ITextIndexNG3(zidx_interfaces.IInjection, zidx_interfaces.IIndexSearch, zidx_interfaces.IStatistics):
+	
 	def suggest(term, threshold, prefix):
 		"""
 		return a list of similar words based on the levenshtein distance
@@ -536,9 +538,9 @@ class IRepozeSearchQueryValidator(ISearchQueryValidator):
 # redis
 
 class IRedisStoreService(interface.Interface):
-	queue_name = schema.TextLine(title="Queue name", required=True)
-	sleep_wait_time = schema.Float(title="Message interval", required=True)
-	expiration_time = schema.Float(title="Message redis expiration time", required=True)
+	queue_name = ValidTextLine(title="Queue name", required=True)
+	sleep_wait_time = Number(title="Message interval", required=True)
+	expiration_time = Number(title="Message redis expiration time", required=True)
 
 	def add(docid, username):
 		"""
@@ -627,7 +629,7 @@ class ICloudSearchQueryParser(ISearchQueryParser):
 class IBaseHit(interface.Interface):
 	"""represent a base search hit"""
 	query = schema.Object(ISearchQuery, title="Search query", required=True)
-	score = schema.Float(title="hit relevance score", required=True)
+	score = Number(title="hit relevance score", required=True)
 
 class IIndexHit(IBaseHit):
 	"""represent a search hit stored in a ISearchResults"""
@@ -694,7 +696,7 @@ class ISuggestResults(IBaseSearchResults):
 		description="Order may or may not be significant",
 		required=True,
 		readonly=True,
-		value_type=schema.TextLine(title="suggested word") )
+		value_type=ValidTextLine(title="suggested word") )
 
 	def add_suggestions(word_or_words):
 		"""add a word suggestion(s) to this result"""
