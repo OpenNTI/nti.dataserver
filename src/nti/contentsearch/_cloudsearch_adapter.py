@@ -26,7 +26,7 @@ from ._cloudsearch_index import search_stored_fields
 from ._search_indexmanager import _SearchEntityIndexManager
 from ._search_results import empty_suggest_and_search_results
 
-from .common import (username_, content_, intid_, type_)
+from .constants import (username_, content_, intid_, type_)
 	
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(search_interfaces.ICloudSearchEntityIndexManager)

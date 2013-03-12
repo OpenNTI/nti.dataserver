@@ -9,10 +9,10 @@ __docformat__ = "restructuredtext en"
 
 from datetime import datetime
 
-from nti.contentsearch.common import epoch_time
-from nti.contentsearch.common import get_datetime
+from ..common import epoch_time
+from ..common import get_datetime
 
-from nti.contentsearch.tests import ConfiguringTestBase
+from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, less_than_or_equal_to)
 

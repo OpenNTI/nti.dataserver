@@ -25,11 +25,11 @@ from .common import get_type_name
 from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
 
-from .common import (CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, container_id_fields)
-from .common import (ngrams_, channel_, content_, keywords_, references_, username_,
-					 last_modified_, recipients_, sharedWith_, ntiid_, type_, tags_,
-					 creator_, containerId_, intid_, title_, redaction_explanation_, replacement_content_,
-					 redactionExplanation_, replacementContent_) 
+from .constants import (CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, container_id_fields)
+from .constants import (ngrams_, channel_, content_, keywords_, references_, username_,
+						last_modified_, recipients_, sharedWith_, ntiid_, type_, tags_,
+						creator_, containerId_, intid_, title_, redaction_explanation_, replacement_content_,
+						redactionExplanation_, replacementContent_) 
 
 # define search fields
 

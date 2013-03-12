@@ -25,4 +25,3 @@ class TestSearchUtils(unittest.TestCase):
 		comparator = lambda x,y : x > y
 		r = list(isorted(l, comparator))
 		assert_that(r, is_([9, 7, 5, 4, 3, 2, 1]))
-

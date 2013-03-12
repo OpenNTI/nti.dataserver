@@ -37,10 +37,10 @@ from ._search_results import empty_search_results
 from ._search_results import empty_suggest_results
 from ._search_results import empty_suggest_and_search_results
 
-from .common import (channel_, content_, keywords_, references_,
-					 recipients_, sharedWith_, ntiid_, last_modified_,
-					 creator_, containerId_, replacementContent_, tags_,
-					 redactionExplanation_, intid_, title_, quick_)
+from .constants import (channel_, content_, keywords_, references_,
+					 	recipients_, sharedWith_, ntiid_, last_modified_,
+					 	creator_, containerId_, replacementContent_, tags_,
+						redactionExplanation_, intid_, title_, quick_)
 _default_word_max_dist = 15
 
 class _SearchableContent(object):

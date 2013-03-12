@@ -1,10 +1,17 @@
-import unittest
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from nti.contentsearch._content_utils import get_content
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from nti.contentsearch._search_highlights import word_fragments_highlight
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
-from nti.contentsearch.tests import ConfiguringTestBase, zanpakuto_commands
+from .._content_utils import get_content
+
+from .._search_highlights import word_fragments_highlight
+
+from . import ConfiguringTestBase, zanpakuto_commands
 
 from hamcrest import (assert_that, is_, has_length)
 
@@ -113,6 +120,3 @@ class TestSearchHighlight(ConfiguringTestBase):
 		assert_that(hi.snippet, is_(text))
 		assert_that(hi.fragments[0].text, is_(text))
 		assert_that(hi.fragments[0].matches, is_([(51, 57), (58, 61)]))
-		
-if __name__ == '__main__':
-	unittest.main()

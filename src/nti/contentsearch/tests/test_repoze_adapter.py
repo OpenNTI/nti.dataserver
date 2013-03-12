@@ -18,20 +18,18 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch import interfaces as search_interfaces
+from .. import interfaces as search_interfaces
+from ..constants import ( tags_)
+from ..constants import ( HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
+						  NTIID, PHRASE_SEARCH, ID, FIELD)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.common import ( tags_)
-from nti.contentsearch.common import ( 	HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
-										NTIID, PHRASE_SEARCH, ID, FIELD)
-
-
-from nti.contentsearch.tests import zanpakuto_commands
-from nti.contentsearch.tests import ApplicationTestBase
-from nti.contentsearch.tests import ConfiguringTestBase
-from nti.contentsearch.tests import WithSharedApplicationMockDS
+from . import zanpakuto_commands
+from . import ApplicationTestBase
+from . import ConfiguringTestBase
+from . import WithSharedApplicationMockDS
 
 from hamcrest import (is_not, has_key, has_item, has_entry, has_length, assert_that)
 

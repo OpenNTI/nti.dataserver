@@ -21,16 +21,16 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch import interfaces as search_interfaces
+from .. import interfaces as search_interfaces
 
-from nti.contentsearch.common import ( HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, NTIID)
+from ..constants import ( HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, NTIID)
 
 from nti.dataserver.tests import mock_redis
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.tests import zanpakuto_commands
-from nti.contentsearch.tests import ConfiguringTestBase
+from . import zanpakuto_commands
+from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, has_key, has_entry, has_length, is_not, has_item)
 

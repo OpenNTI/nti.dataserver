@@ -26,10 +26,10 @@ from . import interfaces as search_interfaces
 from ._search_highlights import HighlightInfo
 from ._search_highlights import word_fragments_highlight
 
-from .common import ( tags_, content_, title_, replacementContent_, redactionExplanation_)
-from .common import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
-					 SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS, FIELD, TYPE_COUNT,
-					 HIT_META_DATA)
+from .constants import (tags_, content_, title_, replacementContent_, redactionExplanation_)
+from .constants import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
+					 	SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS, FIELD, TYPE_COUNT,
+					 	HIT_META_DATA)
 
 # highlight decorators
 

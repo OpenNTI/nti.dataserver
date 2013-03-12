@@ -20,21 +20,20 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch import interfaces as search_interfaces
+from .. import _cloudsearch_store
+from .. import _cloudsearch_index
+from .. import _cloudsearch_query
+from .. import _cloudsearch_adapter
+from .. import interfaces as search_interfaces
+from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch import _cloudsearch_store
-from nti.contentsearch import _cloudsearch_index
-from nti.contentsearch import _cloudsearch_query
-from nti.contentsearch import _cloudsearch_adapter
-from nti.contentsearch.common import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID)
-
-from nti.contentsearch.tests import zanpakuto_commands
-from nti.contentsearch.tests import ConfiguringTestBase
-from nti.contentsearch.tests.mock_cloudsearch import MockCloudSearch
-from nti.contentsearch.tests.mock_cloudsearch import MockCloundSearchQueryParser
+from . import zanpakuto_commands
+from . import ConfiguringTestBase
+from .mock_cloudsearch import MockCloudSearch
+from .mock_cloudsearch import MockCloundSearchQueryParser
 
 from hamcrest import (is_not, has_key, has_entry, has_length, assert_that)
 

@@ -1,39 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 import os
 import json
 
-
 from zope import component
 from zope.mimetype.interfaces import IContentTypeAware
+
 from nti.dataserver.contenttypes import Note
 
 from nti.tests import verifiably_provides
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._search_results import empty_search_results
-from nti.contentsearch._search_results import empty_suggest_results
-from nti.contentsearch._search_results import merge_search_results
-from nti.contentsearch._search_results import merge_suggest_results
-from nti.contentsearch._search_results import empty_suggest_and_search_results
+from .._search_query import QueryObject
+from .. import interfaces as search_interfaces
+from .._search_results import empty_search_results
+from .._search_results import empty_suggest_results
+from .._search_results import merge_search_results
+from .._search_results import merge_suggest_results
+from .._search_results import empty_suggest_and_search_results
 
-from nti.contentsearch.tests import zanpakuto_commands
-from nti.contentsearch.tests import ConfiguringTestBase
-from nti.contentsearch.tests import domain as domain_words
+from . import zanpakuto_commands
+from . import ConfiguringTestBase
+from . import domain as domain_words
 
 from hamcrest import (assert_that, has_length, is_, is_not, has_item)
 

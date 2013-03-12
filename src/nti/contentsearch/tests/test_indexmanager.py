@@ -23,20 +23,21 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentsearch.common import (ITEMS, HIT_COUNT)
-from nti.contentsearch._search_query import QueryObject
-from nti.contentsearch._whoosh_index import create_book_schema
-from nti.contentsearch._whoosh_indexstorage import create_directory_index
-from nti.contentsearch.indexmanager import create_index_manager_with_repoze
-from nti.contentsearch.indexmanager import create_index_manager_with_whoosh
-from nti.contentsearch._whoosh_bookindexmanager import WhooshBookIndexManager
+from .._search_query import QueryObject
+from .._whoosh_index import create_book_schema
+from .._whoosh_indexstorage import create_directory_index
+from ..indexmanager import create_index_manager_with_repoze
+from ..indexmanager import create_index_manager_with_whoosh
+from .._whoosh_bookindexmanager import WhooshBookIndexManager
+
+from ..constants import (ITEMS, HIT_COUNT)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.tests import phrases
-from nti.contentsearch.tests import zanpakuto_commands
-from nti.contentsearch.tests import ConfiguringTestBase
+from . import phrases
+from . import zanpakuto_commands
+from . import ConfiguringTestBase
 
 from hamcrest import (is_, assert_that, has_length, has_entry)
 

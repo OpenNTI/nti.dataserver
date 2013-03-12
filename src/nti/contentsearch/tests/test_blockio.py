@@ -17,8 +17,8 @@ from whoosh.filedb.structfile import StructFile
 
 from ZODB import DB, FileStorage
 
-from nti.contentsearch._blockio import BlockIO
-from nti.contentsearch._blockio import PersistentBlockIO
+from .._blockio import BlockIO
+from .._blockio import PersistentBlockIO
 
 from hamcrest import (assert_that, is_, has_length)
 

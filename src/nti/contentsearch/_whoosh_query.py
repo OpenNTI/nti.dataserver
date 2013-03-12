@@ -19,7 +19,7 @@ from whoosh.qparser.dateparse import DateParserPlugin
 from whoosh.qparser import (GtLtPlugin, PrefixPlugin, PhrasePlugin)
 
 from . import interfaces as search_interfaces
-from .common import (content_, quick_, title_, tags_, redactionExplanation_, replacementContent_)
+from .constants import (content_, quick_, title_, tags_, redactionExplanation_, replacementContent_)
 
 default_search_plugins =  (GtLtPlugin, DateParserPlugin, PrefixPlugin, PhrasePlugin)
 

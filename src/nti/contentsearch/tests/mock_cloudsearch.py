@@ -11,10 +11,10 @@ from whoosh import ramindex
 
 from nti.contentprocessing import (default_ngram_maxsize, default_ngram_minsize) 
 
-from nti.contentsearch import _cloudsearch_store
-from nti.contentsearch.common import (content_, ngrams_)
-from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._cloudsearch_query import adapt_searchOn_types
+from .. import _cloudsearch_store
+from ..constants import (content_, ngrams_)
+from .. import interfaces as search_interfaces
+from .._cloudsearch_query import adapt_search_on_types
 
 def content_analyzer():
 	sw_util = component.queryUtility(search_interfaces.IStopWords) 
@@ -68,7 +68,7 @@ class MockCloundSearchQueryParser(object):
 			
 		ors=[]
 		ands=[term, query.Term("username", unicode(username))]
-		searchon = adapt_searchOn_types(qo.searchOn)
+		searchon = adapt_search_on_types(qo.searchOn)
 		if searchon:
 			for type_name in searchon:
 				ors.append(query.Term("type", unicode(type_name)))
