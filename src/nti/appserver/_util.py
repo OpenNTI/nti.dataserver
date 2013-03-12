@@ -216,6 +216,10 @@ def dump_stacks_view(request):
 	request.response.content_type = b'text/plain'
 	return request.response
 
+def _json_error_map(o):
+	if isinstance(o, set):
+		return list(o)
+	return unicode(o)
 
 def raise_json_error( request,
 					  factory,
@@ -242,14 +246,14 @@ def raise_json_error( request,
 
 	if accept_type == b'application/json':
 		try:
-			v = json.dumps( v )
+			v = json.dumps( v, ensure_ascii=False, default=_json_error_map )
 		except TypeError:
-			v = str(v)
+			v = json.dumps( {'UnrepresentableError': unicode(v) } )
 	else:
-		v = str(v)
+		v = unicode(v)
 
 	result = factory()
-	result.body = v
+	result.text = v
 	result.content_type = accept_type
 	raise result, None, tb
 

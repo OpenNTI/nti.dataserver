@@ -216,6 +216,13 @@ class FieldValidationMixin(object):
 	def _validate(self, value):
 		try:
 			super(FieldValidationMixin,self)._validate( value )
+		except sch_interfaces.WrongContainedType as e:
+			# args[0] will either be a list of Exceptions or a list of tuples, (name, exception),
+			# depending who did the validating (dm.zope.schema doing the later)
+			e.errors = [arg[1] if isinstance(arg, tuple) else arg for arg in e.args[0]]
+			e.value = value
+			e.field = self
+			raise
 		except sch_interfaces.ValidationError as e:
 			self._reraise_validation_error( e, value )
 
