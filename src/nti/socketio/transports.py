@@ -1,19 +1,33 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
 
-from __future__ import print_function, unicode_literals
 
-import logging
-logger = logging.getLogger( __name__ )
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
 
 import transaction
 import contextlib
-import gevent
+
 import types
 from Queue import Empty
-from gevent.queue import Queue
+try:
+	from gevent import Greenlet
+	from gevent import sleep
+	from gevent.queue import Queue
+except ImportError:
+	from Queue import Queue
+	from greenlet import greenlet as Greenlet
+	from time import sleep
+
 import time
 import socket
 import geventwebsocket.exceptions
@@ -251,11 +265,11 @@ class WebsocketTransport(BaseTransport):
 		super(WebsocketTransport,self).__init__(request)
 		self.websocket = None
 
-	class WebSocketGreenlet(gevent.Greenlet):
+	class WebSocketGreenlet(Greenlet):
 
 		def __init__( self, run=None, *args, **kwargs ):
 			self.ws_operator = run
-			gevent.Greenlet.__init__( self, run, *args, **kwargs )
+			Greenlet.__init__( self, run, *args, **kwargs )
 
 		def ws_ask_to_quit( self ):
 			"""
@@ -412,7 +426,7 @@ class WebsocketTransport(BaseTransport):
 
 		def _run(self):
 			while self.run_loop:
-				gevent.sleep( self.ping_sleep )
+				sleep( self.ping_sleep )
 				if not self.run_loop:
 					break
 				# FIXME: Make time a config?

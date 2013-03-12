@@ -16,7 +16,10 @@ from pyramid.view import view_config
 from zope.file import download
 import zope.file.interfaces
 
-from plone.namedfile import NamedImage
+try:
+	from plone.namedfile import NamedImage
+except ImportError: # pypy? Doesn't make sense
+	NamedImage = None
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces

@@ -300,8 +300,12 @@ class AbstractSharedTestBase(unittest.TestCase):
 		if cls.HANDLE_GC:
 			if cls.__isenabled:
 				gc.enable()
-			gc.collect( 0 ) # collect one generation now to clean up weak refs
-			assert_that( gc.garbage, is_( [] ) )
+			try:
+				gc.collect( 0 ) # collect one generation now to clean up weak refs
+				assert_that( gc.garbage, is_( [] ) )
+			except TypeError:
+				# pypy gc.collect takes no args
+				gc.collect()
 
 from zope import component
 from zope.configuration import xmlconfig, config

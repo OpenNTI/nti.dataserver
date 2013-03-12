@@ -2,14 +2,15 @@
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
-			i18n_domain="zope">
+			i18n_domain="zope"
+			zcml:condition="installed zopyx.txng3">
 
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
 	<include package="zopyx.txng3.core" file="configure.zcml" />
-	
+
 	<utility	provides="zope.component.interfaces.IFactory"
 				component=".zopyxtxng3_splitter.SplitterFactory"
 				name="txng.splitters.default" />
@@ -17,7 +18,7 @@
 	<utility	provides="zopyx.txng3.core.interfaces.ISplitter"
 				factory=".zopyxtxng3_splitter.SplitterFactory"
 				name="txng.splitters.default" />
-				
+
 	<utility	provides="zopyx.txng3.core.interfaces.IStorage"
 				factory=".zopyxtxng3_storage.StorageFactory"
 				name="txng.storages.default" />
@@ -32,13 +33,13 @@
 
 	<utility	provides="zope.component.interfaces.IFactory"
 				component=".zopyxtxng3_storage.StorageWithTermFrequencyFactory"
-				name="txng.storages.term_frequencies" />	
-			
+				name="txng.storages.term_frequencies" />
+
 	<utility	provides="zopyx.txng3.core.interfaces.IRanking"
-				component=".zopyxtxng3_ranking.cosine_ranking" 
-				name="txng.ranking.cosine" />			
-				
+				component=".zopyxtxng3_ranking.cosine_ranking"
+				name="txng.ranking.cosine" />
+
 	<utility	provides="zopyx.txng3.core.interfaces.IStopwords"
 				factory=".zopyxtxng3_stopwords._Stopwords" />
-			 
+
 </configure>

@@ -280,8 +280,10 @@
 	 Note that if we are not preloading the app, then this doesn't
 	 get registered in the master process and so never gets hit.
 	-->
-	<subscriber handler=".gunicorn._process_will_fork_listener" />
-	<subscriber handler=".gunicorn._process_did_fork_will_exec" />
+	<configure zcml:condition="installed gevent">
+		<subscriber handler=".gunicorn._process_will_fork_listener" />
+		<subscriber handler=".gunicorn._process_did_fork_will_exec" />
+	</configure>
 	<subscriber handler=".application._configure_pyramid_zodbconn" />
 
 	<include package="nti.contentrange" />

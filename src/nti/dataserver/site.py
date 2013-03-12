@@ -39,12 +39,6 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 
 import contextlib
 
-import gevent.queue
-import gevent.local
-
-import ZODB.interfaces
-import ZODB.POSException
-
 from zope import interface
 from zope import component
 
@@ -92,7 +86,6 @@ def _site_cm(conn, site_names=()):
 		if component.getUtility( interfaces.IDataserver ) is None: # pragma: no cover
 			raise InappropriateSiteError()
 		yield sitemanc
-
 
 
 def _find_site_components(site_names):

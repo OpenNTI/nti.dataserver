@@ -30,19 +30,22 @@ def _patch_relstorage_for_newer_persistent():
 def _patch():
 	try:
 		import umysqldb
+		import pymysql.err
+		umysqldb.install_as_MySQLdb()
+		import umysqldb.connections
 	except ImportError:
-		import warnings
-		warnings.warn( "Unable to import umysqldb" ) # PyPy?
-		return
-
-	import pymysql.err
-	umysqldb.install_as_MySQLdb()
+		import sys
+		import platform
+		py_impl = getattr(platform, 'python_implementation', lambda: None)
+		if py_impl() == 'PyPy':
+			import warnings
+			warnings.warn( "Unable to use umysqldb" ) # PyPy?
+			return
+		raise
 
 	# The underlying umysql driver doesn't handle dicts as arguments
 	# to queries (as of 2012-09-13). Until it does, we need to do that
 	# because RelStorage uses that in a few places
-
-	import umysqldb.connections
 	from umysqldb.connections import encoders, notouch
 	class Connection(umysqldb.connections.Connection):
 

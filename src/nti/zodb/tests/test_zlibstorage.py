@@ -26,7 +26,7 @@ import fudge
 
 from nti.zodb.zlibstorage import ZlibStorageClientStorageURIResolver
 
-@fudge.patch('nti.zodb.zlibstorage.ClientStorage', 'zc.zlibstorage.ZlibStorage', 'nti.zodb.zlibstorage.DB')
+@fudge.patch('ZEO.ClientStorage.ClientStorage', 'zc.zlibstorage.ZlibStorage', 'ZODB.DB')
 def test_resolve(fudge_cstor, fudge_zstor, fudge_db):
 
 	uri = ('zlibzeo:///dev/null/Users/jmadden/Projects/DsEnvs/AlphaExport/var/zeosocket'

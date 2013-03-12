@@ -21,7 +21,10 @@ import pyramid.security as sec
 import pyramid.httpexceptions as hexc
 import pyramid.interfaces
 
-import gevent
+try:
+	import gevent
+except ImportError:
+	gevent = None
 from geventwebsocket import interfaces as ws_interfaces
 
 

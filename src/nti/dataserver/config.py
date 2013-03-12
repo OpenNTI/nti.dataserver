@@ -484,8 +484,10 @@ def _configure_zeo( env_root ):
 
 	return file_uris
 
-
-from repoze.zodbconn.uri import db_from_uri
+def db_from_uri( uris ):
+	# defer import for pypy
+	from repoze.zodbconn.uri import db_from_uri as _real_db_from_uri
+	return _real_db_from_uri( uris )
 
 from zope.event import notify
 from zope.processlifetime import DatabaseOpened

@@ -397,7 +397,7 @@ class PostDeleteView(UGDDeleteView):
 		unstore_created_comment_from_global_activity( deleting, None )
 		return theObject
 
-from Acquisition import aq_base
+from nti.utils._compat import aq_base
 @component.adapter(frm_interfaces.IPost, lifecycleevent.IObjectModifiedEvent)
 def match_title_of_post_to_blog( post, event ):
 	"When the main story of a story topic (blog post) is modified, match the titles"

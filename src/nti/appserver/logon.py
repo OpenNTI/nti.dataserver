@@ -67,7 +67,6 @@ import pyramid.httpexceptions as hexc
 
 import logilab.common.cache
 import requests
-import gevent
 from requests.exceptions import RequestException
 
 import urllib
