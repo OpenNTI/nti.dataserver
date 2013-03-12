@@ -621,7 +621,7 @@ class User(Principal):
 		returns None. """
 		return self.friendsLists.get( name )
 
-	def getFriendsLists( self, name ):
+	def getFriendsLists( self, name=None ):
 		""" Returns all the friends lists"""
 		return tuple(self.friendsLists.values())
 
