@@ -25,9 +25,9 @@ from .common import get_type_name
 from ._datastructures import LFUMap
 from .common import sort_search_types
 from ._search_query import QueryObject
-from .common import normalize_type_name
 from ._whoosh_index import get_indexables
 from . import interfaces as search_interfaces
+from .common import normalize_type_name as _ntm
 from ._whoosh_index import get_indexable_object
 from ._search_results import empty_search_results
 from ._search_results import merge_search_results
@@ -40,7 +40,7 @@ from ._search_results import empty_suggest_and_search_results
 from ._search_results import merge_suggest_and_search_results
 
 def get_indexname(username, type_name, use_md5=True):
-	type_name = normalize_type_name(type_name)
+	type_name = _ntm(type_name)
 	if use_md5:
 		m = md5()
 		m.update(username)
@@ -116,10 +116,8 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 
 	def _adapt_searchOn_types(self, searchOn=None):
 		indexables = get_indexables()
-		if searchOn:
-			searchOn = [normalize_type_name(x) for x in searchOn if normalize_type_name(x) in indexables]
-		result = searchOn or indexables
-		result = sort_search_types(result)
+		searchOn = [_ntm(x) for x in searchOn if _ntm(x) in indexables] if searchOn else indexables
+		result = sort_search_types(searchOn)
 		return result
 
 	def _do_search(self, query, is_ngram_search=False, **kwargs):
@@ -171,7 +169,7 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 		type_name = kwargs.get('type_name', None) or kwargs.get('typeName', None)
 		if not type_name:
 			type_name = get_type_name(data) if data else None
-		return normalize_type_name(type_name)
+		return _ntm(type_name)
 
 	def _index_content(self, indexable, writer, data):
 		result = indexable.index_content(writer, data, **self.writer_commit_args)
@@ -222,7 +220,7 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 		return False
 
 	def remove_index(self, type_name, *args, **kwargs):
-		type_name = normalize_type_name(type_name)
+		type_name = _ntm(type_name)
 		return self.pop(type_name, None)
 
 	def get_indexable_object(self, type_name):
@@ -250,7 +248,7 @@ class _WhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 		return index
 
 	def _get_or_create_index(self, type_name):
-		type_name = normalize_type_name(type_name)
+		type_name = _ntm(type_name)
 		indexname = self._get_indexname(type_name)
 		index = self.whoosh_indices.get(indexname, None)
 		if not index:
@@ -264,7 +262,7 @@ class _WhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 		return index
 
 	def remove_index(self, type_name, *args, **kwargs):
-		type_name = normalize_type_name(type_name)
+		type_name = _ntm(type_name)
 		index = self._get_or_create_index(type_name)
 		if index is not None:
 			with index:
@@ -281,7 +279,7 @@ class _PersistentWhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 		self.storage = PersistentBlockStorage()
 
 	def _get_or_create_index(self, type_name):
-		type_name = normalize_type_name(type_name)
+		type_name = _ntm(type_name)
 		indexname = self._get_indexname(type_name)
 		indexable = self.get_indexable_object(type_name)
 		schema = indexable.get_schema()

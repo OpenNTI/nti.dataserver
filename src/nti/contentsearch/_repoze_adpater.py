@@ -24,9 +24,9 @@ from .common import get_type_name
 from .common import sort_search_types
 from ._search_query import QueryObject
 from ._repoze_query import parse_query
-from .common import normalize_type_name
 from ._repoze_index import create_catalog
 from . import interfaces as search_interfaces
+from .common import normalize_type_name as _ntm
 from ._search_results import empty_search_results
 from ._search_results import empty_suggest_results
 from ._search_indexmanager import _SearchEntityIndexManager
@@ -66,7 +66,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 		return result
 
 	def get_create_catalog(self, data, type_name=None, create=True):
-		type_name = normalize_type_name(type_name or get_type_name(data))
+		type_name = _ntm(type_name or get_type_name(data))
 		catalog = self.get_catalog(type_name)
 		if not catalog and create:
 			catalog = create_catalog(type_name)
@@ -76,7 +76,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 
 	def _adapt_searchOn_types(self, searchOn=None):
 		catnames = self.get_catalog_names()
-		result = [normalize_type_name(x) for x in searchOn if normalize_type_name(x) in catnames] if searchOn else catnames
+		result = [_ntm(x) for x in searchOn if _ntm(x) in catnames] if searchOn else catnames
 		result = sort_search_types(result)
 		return result
 

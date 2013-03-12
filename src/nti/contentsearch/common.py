@@ -115,7 +115,7 @@ messageinfo_ = u'messageinfo'
 canvastextshape_ = 'canvastextshape'
 
 indexable_type_names = (note_, post_, highlight_, redaction_, messageinfo_)
-indexable_types_order = { x:p for p,x in enumerate(indexable_type_names) }
+indexable_types_order = { x:p+1 for p,x in enumerate(indexable_type_names) }
 
 ascending_ = u'ascending'
 descending_ = u'descending'
