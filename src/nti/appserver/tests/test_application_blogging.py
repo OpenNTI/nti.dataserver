@@ -554,10 +554,10 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( username='original_user@foo' )
-			user2 = self._create_user( username=user.username + '2' )
-			user3 = self._create_user( username=user.username + '3' )
-			user_following_2 = self._create_user( username=user.username + '4' )
-			user2_following_2 = self._create_user( username=user.username + '5' )
+			user2 = self._create_user( username='user2@foo' )
+			user3 = self._create_user( username='user3@foo' )
+			user_following_2 = self._create_user( username='user_following_2@foo' )
+			user2_following_2 = self._create_user( username='user2_following_2@foo' )
 
 			# make them share a community
 			community = users.Community.create_community( username='TheCommunity' )
@@ -843,6 +843,18 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		for app in testapp, testapp2, testapp3:
 			res = app.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
 			assert_that( res.json_body['Items'], has_length( 0 ) )
+
+		# As well as the RecursiveStream
+		for uname, app, status, length in ((user_username, testapp, 404, 0),
+										   (user2_username, testapp2, 200, 1), # He still has the blog notification
+										   (user3_username, testapp3, 404, 0)):
+			__traceback_info__ = uname
+			res = app.get( '/dataserver2/users/' + uname  + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=status )
+			if status == 200:
+				if length == 0:
+					assert_that( res.json_body['Items'], is_empty() )
+				else:
+					assert_that( res.json_body['Items'], has_length(length) )
 
 	@WithSharedApplicationMockDS
 	def test_post_canvas_image_in_headline_post_produces_fetchable_link( self ):

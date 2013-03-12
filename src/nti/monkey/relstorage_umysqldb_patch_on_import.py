@@ -28,7 +28,13 @@ def _patch_relstorage_for_newer_persistent():
 	relstorage.storage.repr = _repr
 
 def _patch():
-	import umysqldb
+	try:
+		import umysqldb
+	except ImportError:
+		import warnings
+		warnings.warn( "Unable to import umysqldb" ) # PyPy?
+		return
+
 	import pymysql.err
 	umysqldb.install_as_MySQLdb()
 
