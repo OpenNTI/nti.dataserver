@@ -124,19 +124,19 @@ class IndexManager(object):
 				logger.warn("Could not add book index '%s,%r,%r' to index manager" % (indexname, ntiid, kwargs))
 		return result
 
-	def _valid_query(self, query):
+	def _is_valid_content_query(self, query):
 		result = not query.is_empty
 		if result:
 			result = not query.searchOn or content_ in query.searchOn
 		return result
 
 	def _query_books(self, query):
-		return  (query.indexid,)
+		return  (query.indexid,) if query.indexid else ()
 
 	def content_search(self, query):
 		query = QueryObject.create(query)
 		results = empty_search_results(query)
-		if self._valid_query(query):
+		if self._is_valid_content_query(query):
 			books = self._query_books(query)
 			for book in books:
 				bm = self.get_book_index_manager(book)
@@ -147,7 +147,7 @@ class IndexManager(object):
 	def content_suggest_and_search(self, query):
 		query = QueryObject.create(query)
 		results = empty_suggest_and_search_results(query)
-		if self._valid_query(query):
+		if self._is_valid_content_query(query):
 			books = self._query_books(query)
 			for book in books:
 				bm = self.get_book_index_manager(book)
@@ -158,7 +158,7 @@ class IndexManager(object):
 	def content_suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query)
 		results = empty_suggest_results(query)
-		if self._valid_query(query):
+		if self._is_valid_content_query(query):
 			books = self._query_books(query)
 			for book in books:
 				bm = self.get_book_index_manager(book)
