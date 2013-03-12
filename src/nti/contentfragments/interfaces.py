@@ -95,8 +95,8 @@ class UnicodeContentFragment(unicode):
 				v = state.pop( k, self )
 				if v is not self:
 					unicode.__setattr__( self, k, v )
-			# Anything left is bad and not supported
-			if state:
+			# Anything left is bad and not supported. __parent__ was extremely common at one point
+			if state and (len(state) > 1 or '__parent__' not in state):
 				logger.warn( "Ignoring bad state for %s: %s", self, state )
 
 

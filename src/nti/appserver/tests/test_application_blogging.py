@@ -588,9 +588,10 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		data = { 'Class': 'Post',
 				 'title': 'My New Blog',
 				 'body': ['My first thought'] }
+		blog_data = data.copy()
 
 		# Create the blog
-		res = testapp.post_json( '/dataserver2/users/original_user@foo/Blog', data )
+		res = testapp.post_json( '/dataserver2/users/original_user@foo/Blog', blog_data )
 		entry_url = res.location
 		entry_ntiid = res.json_body['NTIID']
 		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
@@ -704,6 +705,8 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# Both of these the other user can update
 		data['title'] = 'Changed my title'
+		data['body'] = ['A different comment body']
+		data['sharedWith'] = ['a', 'b', 'c']
 		res = testapp2.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data )
 		comment2_fav_href = self.require_link_href_with_rel( res.json_body, 'favorite' )
 		comment2_title = data['title']
@@ -711,11 +714,17 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# (Though he cannot update the actual post itself)
 		testapp2.put_json( story_url, data, status=403 )
 
+		# (only the real user can do that)
+		blog_data['body'] = ['Changing the blog body']
+		res = testapp.put_json( story_url, blog_data, status=200 )
+		assert_that( res.json_body, has_entry( 'body', blog_data['body'] ) )
+
 		# Both visible to the original user
 		res = testapp.get( entry_url )
 		unpub_url = self.require_link_href_with_rel( res.json_body, 'unpublish' )
 		# ... metadata
 		assert_that( res.json_body, has_entry( 'PostCount', 2 ) )
+
 
 		# ... actual contents
 		res = testapp.get( entry_contents_url )
@@ -735,7 +744,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			titles = sorted( [x.text for x in pq( b'entry title' )] )
 			sums = sorted( [x.text for x in pq( b'entry summary')] )
 			assert_that( titles, contains( 'A comment', 'Changed my title' ) )
-			assert_that( sums, contains( 'A comment body', 'more comment body') )
+			assert_that( sums, contains( 'A comment body', data['body'][0]) )
 
 		# ... in the commenting user's activity stream, visible to all ...
 		for app in testapp, testapp2, testapp3:
