@@ -479,10 +479,27 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 
 	def _extend_acl_before_deny( self, acl ):
 		"""
-		Called after the creator and sharing target acls have been added, but
-		before the deny-everyone is added. You can add additional options here.
+		Called after the creator and sharing target acls have been added, and after optional extensions, but
+		before the deny-everyone is added (and only if it will be added). You can add additional options here.
 		"""
 		return
+
+	def _extend_acl_after_creator_and_sharing( self, acl ):
+		"""
+		Called after the creator and sharing target acls have been added to add
+		optional extensions. A deny-all may be added following this.
+		"""
+		return
+
+	def _extend_with_admin_privs( self, acl, provenance=None ):
+		provenance = provenance or self
+		_add_admin_moderation( acl, provenance )
+		acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_READ, provenance ) )
+		acl.append( ace_allowing( authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, provenance ) )
+
+	def _extend_for_sharing_target( self, target, acl ):
+		for perm in self._PERMS_FOR_SHARING_TARGETS:
+			acl.append( ace_allowing( target, perm, type(self) ) )
 
 	@Lazy
 	def __acl__( self ):
@@ -492,8 +509,8 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		"""
 		result = self._creator_acl()
 		for name in self.__do_get_sharing_target_names():
-			for perm in self._PERMS_FOR_SHARING_TARGETS:
-				result.append( ace_allowing( name, perm, type(self) ) )
+			self._extend_for_sharing_target( name, result )
+		self._extend_acl_after_creator_and_sharing( result )
 		if self._DENY_ALL:
 			self._extend_acl_before_deny( result )
 			result.append( _ace_denying_all( type(self) ) )
@@ -534,12 +551,6 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 		# ACE comes first, and because they are both 'allow' entries
 		return self.context.flattenedSharingTargetNames
 
-	def _full_admin_privs( self, acl ):
-		provenance = 'Nested_ShareableModeledContentACLProvider'
-		_add_admin_moderation( acl, provenance )
-		acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_READ, provenance ) )
-		acl.append( ace_allowing( authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, provenance ) )
-
 	@Lazy
 	def __acl__( self ):
 		# Inherit if we are nested. See class comment. NOTE: We are just checking the direct parent,
@@ -547,7 +558,7 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 		# might pull in the wrong permissions, depending on how the nesting goes (?)
 		if nti_interfaces.IReadableShared.providedBy( getattr( self.context, '__parent__', None ) ):
 			result = _ACL()
-			self._full_admin_privs( result )
+			self._extend_with_admin_privs( result, 'Nested _ShareableModeledContentACLProvider' )
 			return result
 		return super(_ShareableModeledContentACLProvider,self).__acl__
 

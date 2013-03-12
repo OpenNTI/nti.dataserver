@@ -480,6 +480,8 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 		super(PublishLinkDecorator,self).decorateExternalMapping( context, mapping )
 
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
+from nti.dataserver.authorization_acl import ace_allowing
+
 @component.adapter(frm_interfaces.IPersonalBlogEntry)
 class _PersonalBlogEntryACLProvider(AbstractCreatedAndSharedACLProvider):
 
@@ -511,15 +513,23 @@ class _PersonalBlogACLProvider(AbstractCreatedAndSharedACLProvider):
 @component.adapter(frm_interfaces.IPost)
 class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
-	_DENY_ALL = False
+	_DENY_ALL = True
 
 	# We want posts to get their own acl, giving the creator full
 	# control. We also want the owner of the topic they are in to get
-	# control too. Hence we subclass this one (rather than ShareableModContentACLProvider)
-	# and turn inheritance on
+	# some control too: Typically DELETE and moderation ability, but NOT edit
+	# ability (though the application cannot currently distinguish this state
+	# and presents them as uneditable).
 
 	def _get_sharing_target_names( self ):
-		return ()
+		return self.context.__parent__.flattenedSharingTargetNames
+
+	def _extend_acl_after_creator_and_sharing( self, acl ):
+		# Ok, now the topic creator can delete, but not update
+		topic_creator = find_interface( self.context, nti_interfaces.IUser )
+		if topic_creator:
+			acl.append( ace_allowing( topic_creator, nauth.ACT_DELETE, self ) )
+			acl.append( ace_allowing( topic_creator, nauth.ACT_READ, self ) )
 
 from ._adapters import GenericModeledContentExternalFieldTraverser
 @component.adapter(frm_interfaces.IPost)

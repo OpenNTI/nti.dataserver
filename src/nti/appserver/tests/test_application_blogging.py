@@ -826,8 +826,12 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 		# The original user can delete a comment from the other user
 		testapp.delete( self.require_link_href_with_rel( comment1res.json_body, 'edit' ), status=204 )
+		# though he cannot edit a comment from that user
+		testapp.put_json( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), data, status=403 )
+		# (In fact, he doesn't get the link even when he asks directly
+		self.forbid_link_with_rel( testapp.get( comment2res.json_body['href'] ).json_body, 'edit' )
 
-		# and the other user can delete his own comment
+		# that comments creator can delete his own post
 		testapp2.delete( self.require_link_href_with_rel( comment2res.json_body, 'edit' ), status=204 )
 
 		# and they are now gone
