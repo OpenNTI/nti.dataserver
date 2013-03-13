@@ -21,7 +21,7 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.constants import (redaction_, content_, replacementContent_, redactionExplanation_)
 
-from nti.contentsearch.generations.evolve23 import evolve
+from nti.contentsearch.generations.evolve24 import evolve
 
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import  mock_db_trans, WithMockDS
@@ -30,12 +30,12 @@ from nti.deprecated import hides_warnings
 
 from hamcrest import (assert_that, has_length, has_key)
 
-class TestEvolve23(mock_dataserver.ConfiguringTestBase):
+class TestEvolve24(mock_dataserver.ConfiguringTestBase):
 	set_up_packages = (nti.dataserver, nti.contentsearch)
 
 	@hides_warnings
 	@WithMockDS
-	def test_evolve23(self):
+	def test_evolve24(self):
 		with mock_db_trans() as conn:
 			context = fudge.Fake().has_attr(connection=conn)
 			ExampleDatabaseInitializer(max_test_users=0, skip_passwords=True).install(context)

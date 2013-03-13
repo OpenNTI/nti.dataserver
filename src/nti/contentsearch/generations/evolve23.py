@@ -17,14 +17,14 @@ from zc import intid as zc_intid
 from ZODB.POSException import POSKeyError
 from zope.component.hooks import site, setHooks
 
-from ..common import post_
 from ..utils import get_uid
+from ..constants import redaction_
 from ..utils import find_all_redactions
 from .. import interfaces as search_interfaces
 from ..utils._repoze_utils import remove_entity_catalogs
 
 def reindex_redactions(user, users_get, ds_intid):
-	counter = 0	
+	counter = 0
 	try:
 		username = user.username
 		logger.debug('Reindexing redaction(s) for %s' % username)
@@ -42,7 +42,7 @@ def reindex_redactions(user, users_get, ds_intid):
 			except POSKeyError:
 				# broken reference for object
 				pass
-		
+
 		logger.debug('%s redaction object(s) for user %s were reindexed' % (counter, username))
 	except POSKeyError:
 		# broken reference for user
@@ -59,28 +59,24 @@ def do_evolve(context):
 	ds_folder = root['nti.dataserver']
 	lsm = ds_folder.getSiteManager()
 
-	ds_intid = lsm.getUtility( provided=zope.intid.IIntIds )
-	component.provideUtility(ds_intid, zope.intid.IIntIds )
-	component.provideUtility(ds_intid, zc_intid.IIntIds )
+	ds_intid = lsm.getUtility(provided=zope.intid.IIntIds)
+	component.provideUtility(ds_intid, zope.intid.IIntIds)
+	component.provideUtility(ds_intid, zc_intid.IIntIds)
 
-	with site( ds_folder ):
+	with site(ds_folder):
 		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
 
 		users = ds_folder['users']
-		
+
 		# remove all post catalogs first
 		for user in users.values():
-			remove_entity_catalogs(user, (post_,))
-		
+			remove_entity_catalogs(user, (redaction_,))
+
 		# reindex all users ugd
 		for user in users.values():
 			reindex_redactions(user, users.get, ds_intid)
-		
+
 	logger.debug('Evolution done!!!')
-	
+
 def evolve(context):
-	"""
-	Evolve generation 22 to 23 by reindexing redactions.
-	"""
-	do_evolve(context)
-	
+	pass
