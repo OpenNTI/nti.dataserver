@@ -1,0 +1,22 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   xmlns:zcml="http://namespaces.zope.org/zcml"
+		   xmlns:link="http://nextthought.com/ntp/link_providers"
+		   i18n_domain='nti.dataserver'>
+
+	<include package="zope.component" />
+	<include package="z3c.baseregistry" file="meta.zcml" />
+	<include package="nti.appserver.link_providers" file="meta.zcml" />
+
+	<utility
+		component=".sites.COLUMBIA"
+		provides="zope.component.interfaces.IComponents"
+		name="columbia.nextthought.com" />
+
+	<registerIn registry=".sites.COLUMBIA">
+		<link:userLink
+			named='.logon.REL_WELCOME_PAGE'
+			minGeneration='20130313'
+			url='/dataserver2/NTIIDs/tag%3Anextthought.com%2C2011-10%3AAOPS-HTML-prealgebra.prealgebra' />
+	</registerIn>
+</configure>

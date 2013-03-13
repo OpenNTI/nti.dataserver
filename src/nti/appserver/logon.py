@@ -73,6 +73,11 @@ import urllib
 import urlparse
 import anyjson as json
 
+#: Link relationship indicating a welcome page
+#: Fetching the href of this link returns either a content page
+#: or PageInfo structure.
+REL_WELCOME_PAGE = "content.welcome_page"
+
 REL_PING = 'logon.ping' #: See :func:`ping`
 REL_HANDSHAKE = 'logon.handshake' #: See :func:`handshake`
 REL_CONTINUE  = 'logon.continue'
