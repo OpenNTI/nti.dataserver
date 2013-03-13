@@ -9,12 +9,13 @@ from zope import component
 from .common import normalize_type_name
 from . import interfaces as search_interfaces
 from .constants import ugd_indexable_type_names
-from .constants import (username_, content_, type_, ngrams_, tags_, title_, redaction_explanation_, replacement_content_)
+from .constants import (username_, content_, type_, ngrams_, tags_, title_, redaction_explanation_, replacement_content_,
+						invalid_type_)
 
 def adapt_search_on_types(searchOn=None):
 	if searchOn:
 		result = [normalize_type_name(x) for x in searchOn if x in ugd_indexable_type_names]
-		result = result or ('+++invalidtype+++',)
+		result = result or (invalid_type_)
 	else:
 		result = ()
 	return result

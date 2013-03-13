@@ -16,10 +16,12 @@ from pyramid.security import authenticated_userid
 from zope import interface
 from zope.location import locate
 
+from . import constants
 from .interfaces import IIndexManager
 from ._search_query import QueryObject
 from .common import normalize_type_name
 from ._views_utils import get_collection
+from .common import get_type_from_mimetype
 from ._content_utils import get_content_translation_table
 
 class BaseView(object):
@@ -95,8 +97,10 @@ def get_queryobject(request):
 	username = username or authenticated_userid(request)
 	args['username'] = username
 
-	ntiid = request.matchdict.get('ntiid', None)
-	searchOn = request.matchdict.get('searchOn', None)
+	ntiid = args.pop('ntiid', None)
+	accept = args.pop('accept', None)
+	exclude = args.pop('exclude', None)
+	searchOn = args.pop('searchOn', None)
 	if ntiid:
 		args['location'] = ntiid
 		indexid = get_collection(ntiid, request.registry)
@@ -104,9 +108,21 @@ def get_queryobject(request):
 			logger.debug("Could not find collection for ntiid '%s'" % ntiid)
 		else:
 			args['indexid'] = indexid
-	elif searchOn:
+	if searchOn:
 		nset = {normalize_type_name(e) for e in searchOn.split(',')}
-		args['searchOn'] = nset
+		args['searchOn'] = nset or (constants.invalid_type_,)
+	elif accept:
+		aset = set(accept.split(','))
+		if '*/*' not in aset:
+			aset = {get_type_from_mimetype(e) for e in aset} or (constants.invalid_type_,)
+			args['searchOn'] = aset
+	elif exclude:
+		eset = set(exclude.split(','))
+		if '*/*' not in eset:
+			args['searchOn'] = (constants.invalid_type_,)
+		else:
+			eset = {get_type_from_mimetype(e) for e in eset}
+			args['searchOn'] = constants.indexable_type_names - eset
 
 	batch_size = args.get('batchSize', None)
 	batch_start = args.get('batchStart', None)
