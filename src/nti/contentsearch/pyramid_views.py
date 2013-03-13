@@ -84,6 +84,8 @@ def clean_search_query(query, language='en'):
 	result = result.translate(table) if result else u''
 	return unicode(result)
 
+# from IPython.core.debugger import Tracer; Tracer()()
+
 def get_queryobject(request):
 
 	# parse params:
@@ -97,10 +99,10 @@ def get_queryobject(request):
 	username = username or authenticated_userid(request)
 	args['username'] = username
 
-	ntiid = args.pop('ntiid', None)
+	ntiid = request.matchdict.get('ntiid', None)
 	accept = args.pop('accept', None)
 	exclude = args.pop('exclude', None)
-	searchOn = args.pop('searchOn', None)
+	searchOn = request.matchdict.get('searchOn', None)
 	if ntiid:
 		args['location'] = ntiid
 		indexid = get_collection(ntiid, request.registry)
