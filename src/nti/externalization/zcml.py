@@ -66,7 +66,9 @@ def registerMimeFactories( _context, module ):
 			logger.log( loglevels.TRACE, "Registered mime factory utility %s = %s (%s)", k, v, mime_type)
 			component_zcml.utility( _context,
 									provides=interfaces.IMimeObjectFactory,
-									component=_MimeObjectFactory( v, interfaces=list(interface.implementedBy( v )) ),
+									component=_MimeObjectFactory( v,
+																  title=k,
+																  interfaces=list(interface.implementedBy( v )) ),
 									name=mime_type )
 		elif module.__name__ == v_mod_name and (mime_type or ext_create):
 			# There will be lots of things that don't get registered.
