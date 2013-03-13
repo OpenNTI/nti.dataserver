@@ -103,5 +103,5 @@ class EditLinkDecorator(object):
 			try:
 				link = Link(to_external_ntiid_oid( context ) if not IShouldHaveTraversablePath.providedBy( context ) else context)
 				mapping['href'] = render_link( link )['href']
-			except (KeyError,ValueError,AssertionError):
+			except (KeyError,ValueError,AssertionError,TypeError):
 				pass # Nope
