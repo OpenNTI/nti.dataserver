@@ -84,7 +84,7 @@ def clean_search_query(query, language='en'):
 	result = result.translate(table) if result else u''
 	return unicode(result)
 
-# from IPython.core.debugger import Tracer; Tracer()()
+#### from IPython.core.debugger import Tracer; Tracer()() #####
 
 def get_queryobject(request):
 
@@ -102,7 +102,7 @@ def get_queryobject(request):
 	ntiid = request.matchdict.get('ntiid', None)
 	accept = args.pop('accept', None)
 	exclude = args.pop('exclude', None)
-	searchOn = request.matchdict.get('searchOn', None)
+	searchOn = args.pop('searchOn', None)
 	if ntiid:
 		args['location'] = ntiid
 		indexid = get_collection(ntiid, request.registry)

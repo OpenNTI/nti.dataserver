@@ -23,7 +23,7 @@ from .constants import indexable_type_names
 
 from nti.utils import schema as nti_schema
 
-deprecated( 'IRepozeDataStore', 'Use lastest index implementation' )
+deprecated('IRepozeDataStore', 'Use lastest index implementation')
 class IRepozeDataStore(IFullMapping):
 
 	def has_user(username):
@@ -36,7 +36,7 @@ class IRepozeDataStore(IFullMapping):
 # search query
 
 SEARCH_TYPES_VOCABULARY = \
-	schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in indexable_type_names] )
+	schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in indexable_type_names])
 
 class ISearchQuery(interface.Interface):
 	term = nti_schema.ValidTextLine(title="Query search term", required=True)
@@ -159,8 +159,8 @@ class IObjectUnIndexed(IIndexEvent):
 	pass
 
 class IndexEvent(component.interfaces.ObjectEvent):
-	def __init__( self, data, user ):
-		super(IndexEvent,self).__init__( data )
+	def __init__(self, data, user):
+		super(IndexEvent, self).__init__(data)
 		self.user = user
 
 	@property
@@ -491,7 +491,7 @@ class IStopWords(interface.Interface):
 # zopyx storage
 
 class ITextIndexNG3(zidx_interfaces.IInjection, zidx_interfaces.IIndexSearch, zidx_interfaces.IStatistics):
-	
+
 	def suggest(term, threshold, prefix):
 		"""
 		return a list of similar words based on the levenshtein distance
@@ -672,7 +672,8 @@ class IIndexHitMetaData(interface.Interface):
 
 	last_modified = nti_schema.Number(title="Greatest last modified time", required=True, readonly=True)
 	type_count = schema.Dict(title="Index hit type count", required=True, readonly=True)
-	
+	total_hit_count = schema.Int(title='Total hit count', required=True, readonly=True)
+
 	def track(ihit):
 		"""track any metadata from the specified index hit"""
 
@@ -684,10 +685,10 @@ class IBaseSearchResults(interface.Interface):
 
 class ISearchResults(IBaseSearchResults):
 
-	hits = nti_schema.IndexedIterable( 
+	hits = nti_schema.IndexedIterable(
 				value_type=schema.Object(IIndexHit, title="index hit"),
-				title="IIndexHit objects", 
-				required=True, 
+				title="IIndexHit objects",
+				required=True,
 				readonly=True)
 
 	def add(hit_or_hits):
@@ -705,7 +706,7 @@ class ISuggestResults(IBaseSearchResults):
 						title="suggested words",
 						required=True,
 						readonly=True,
-						value_type=nti_schema.ValidTextLine(title="suggested word") )
+						value_type=nti_schema.ValidTextLine(title="suggested word"))
 
 	def add_suggestions(word_or_words):
 		"""add a word suggestion(s) to this result"""

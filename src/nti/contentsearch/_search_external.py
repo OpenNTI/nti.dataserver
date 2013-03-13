@@ -48,7 +48,7 @@ def _word_fragments_highlight(query=None, text=None):
 class _SearchHitHighlightDecorator(object):
 
 	__metaclass__ = SingletonDecorator
-	
+
 	def decorateExternalObject(self, original, external):
 		query = original.query
 		text = external.get(SNIPPET, None)
@@ -58,7 +58,7 @@ class _SearchHitHighlightDecorator(object):
 	def hilight_text(self, query, text):
 		hi = _word_fragments_highlight(query, text)
 		return hi
-	
+
 	def set_snippet(self, hi, external):
 		external[SNIPPET] = hi.snippet
 		if hi.fragments:
@@ -66,7 +66,7 @@ class _SearchHitHighlightDecorator(object):
 			external[TOTAL_FRAGMENTS] = hi.total_fragments
 
 class _MultipleFieldSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
-	
+
 	def decorate_on_source_fields(self, hit, external, sources):
 		query = hit.query
 		content_hi = None
@@ -77,72 +77,73 @@ class _MultipleFieldSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 				self.set_snippet(hi, external)
 				external[FIELD] = field
 				return
-			
+
 		if content_hi:
 			external[FIELD] = external[FIELD] = field
 			self.set_snippet(content_hi, external)
-			
+
 @component.adapter(search_interfaces.IRedactionSearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _RedactionSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
-	
+
 	def decorateExternalObject(self, hit, external):
-		sources = (	(content_,external.get(SNIPPET, None)), 
-					(replacementContent_, hit.get_replacement_content()), 
-					(redactionExplanation_, hit.get_redaction_explanation()))		
+		sources = ((content_, external.get(SNIPPET, None)),
+					(replacementContent_, hit.get_replacement_content()),
+					(redactionExplanation_, hit.get_redaction_explanation()))
 		self.decorate_on_source_fields(hit, external, sources)
-	
+
 @component.adapter(search_interfaces.IPostSearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _PostSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
-	
+
 	def decorateExternalObject(self, hit, external):
-		sources = (	(content_,external.get(SNIPPET, None)),
-					(title_, hit.get_title()), 
-					(tags_, hit.get_tags()))	
+		sources = ((content_, external.get(SNIPPET, None)),
+					(title_, hit.get_title()),
+					(tags_, hit.get_tags()))
 		self.decorate_on_source_fields(hit, external, sources)
-			
+
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(search_interfaces.ISearchHit)
 class _SearchHitExternalizer(object):
-	
+
 	__slots__ = ('hit',)
-	
-	def __init__( self, hit ):
+
+	def __init__(self, hit):
 		self.hit = hit
 
 	def toExternalObject(self):
 		return self.hit
-	
+
 # search metadata
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(search_interfaces.IIndexHitMetaData)
 class _IndexHitMetaDataExternalizer(object):
-	
+
 	__slots__ = ('data',)
-	
-	def __init__( self, data ):
+
+	def __init__(self, data):
 		self.data = data
 
 	def toExternalObject(self):
 		eo = LocatedExternalDict()
 		eo[LAST_MODIFIED] = self.data.last_modified
-		eo[TYPE_COUNT] = {k.capitalize():v for k,v in self.data.type_count.items()}
+		eo[TOTAL_HIT_COUNT] = self.data.total_hit_count
+		eo[TYPE_COUNT] = {k.capitalize():v for k, v in self.data.type_count.items()}
 		return eo
-	
+
 # search results
 
 @interface.implementer(ext_interfaces.IExternalObject)
 class _BaseSearchResultsExternalizer(object):
-	
-	def __init__( self, results ):
+
+	def __init__(self, results):
 		self.results = results
 
 	@property
 	def query(self):
 		return self.results.query
-	
+
 	def toExternalObject(self):
 		eo = LocatedExternalDict()
 		eo[QUERY] = self.query.term
@@ -150,8 +151,8 @@ class _BaseSearchResultsExternalizer(object):
 
 @component.adapter(search_interfaces.ISearchResults)
 class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
-	
-	def __init__( self, results ):
+
+	def __init__(self, results):
 		super(_SearchResultsExternalizer, self).__init__(results)
 		self.seen = set()
 
@@ -166,13 +167,13 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 	@property
 	def batchStart(self):
 		return self.query.batchStart
-	
+
 	@property
 	def hits(self):
 		sortOn = self.query.sortOn
 		if sortOn and not self.results.sorted:
 			self.results.sort(sortOn)
-	
+
 		if self.is_batching:
 			if self.batchStart < len(self.results):
 				return Batch(self.results.hits, start=self.batchStart, size=self.batchSize)
@@ -180,12 +181,12 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 				return ()
 		else:
 			return self.results.hits
-		
+
 	def toExternalObject(self):
 		eo = super(_SearchResultsExternalizer, self).toExternalObject()
 		eo[ITEMS] = items = []
 		eo[PHRASE_SEARCH] = self.query.is_phrase_search
-		
+
 		# process hits
 		count = 0
 		last_modified = 0
@@ -217,10 +218,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 		eo[HIT_COUNT] = len(items)
 		eo[LAST_MODIFIED] = last_modified
 		eo[HIT_META_DATA] = toExternalObject(self.results.get_hit_meta_data())
-		
-		if self.query.is_batching:
-			eo[TOTAL_HIT_COUNT] = len(self.results)
-			
+
 		return eo
 
 @component.adapter(search_interfaces.ISuggestResults)
@@ -241,7 +239,7 @@ class _SuggestResultsExternalizer(_BaseSearchResultsExternalizer):
 
 @component.adapter(search_interfaces.ISuggestAndSearchResults)
 class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestResultsExternalizer):
-	
+
 	def toExternalObject(self):
 		eo = _SearchResultsExternalizer.toExternalObject(self)
 		eo[SUGGESTIONS] = self.suggestions
@@ -252,13 +250,13 @@ class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestR
 class _SearchResultsLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
-	
+
 	def decorateExternalObject(self, original, external):
 		query = original.query
 		if query.is_batching:
 			request = get_current_request()
 			if request is None: return
-			
+
 			# Insert links to the next and previous batch
 			result_list = Batch(original.hits, query.batchStart, query.batchSize)
 			next_batch, prev_batch = result_list.next, result_list.previous
@@ -266,7 +264,7 @@ class _SearchResultsLinkDecorator(object):
 				if batch is not None and batch != result_list:
 					batch_params = request.params.copy()
 					batch_params['batchStart'] = batch.start
-					link_next_href = request.current_route_path(_query=sorted(batch_params.items())) 
-					link_next = Link( link_next_href, rel=rel )
-					external.setdefault( 'Links', [] ).append( link_next )
+					link_next_href = request.current_route_path(_query=sorted(batch_params.items()))
+					link_next = Link(link_next_href, rel=rel)
+					external.setdefault('Links', []).append(link_next)
 
