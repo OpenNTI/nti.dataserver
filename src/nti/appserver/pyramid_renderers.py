@@ -21,7 +21,7 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.externalization.externalization import to_external_representation, toExternalObject,  EXT_FORMAT_PLIST, catch_replace_action
 from nti.externalization.externalization import to_json_representation_externalized
-
+from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
 									 MIME_EXT_PLIST, MIME_EXT_JSON,
 									 nti_mimetype_from_object,
@@ -29,7 +29,8 @@ from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
 
 
 from nti.dataserver import traversal as nti_traversal
-
+from nti.dataserver.links import Link
+from nti.dataserver.links_external import render_link
 
 import nti.appserver.interfaces as app_interfaces
 import nti.dataserver.interfaces as nti_interfaces
@@ -91,6 +92,7 @@ def find_content_type( request, data=None ):
 def render_externalizable(data, system):
 	request = system['request']
 	response = request.response
+	__traceback_info__ = data, request, response, system
 
 	body = toExternalObject( data, name='', registry=request.registry,
 							 # Catch *nested* errors during externalization. We got this far,
@@ -112,8 +114,24 @@ def render_externalizable(data, system):
 	# preference, and the request did not mutate any state that could invalidate it,
 	# use the URL that was requested.
 	if isinstance( body, collections.MutableMapping ):
-		if request.method == 'GET' and ('href' not in body or not nti_traversal.is_valid_resource_path( body['href'] )):
-			body['href'] = request.path_qs
+		if 'href' not in body or not nti_traversal.is_valid_resource_path( body['href'] ):
+			if request.method == 'GET':
+				# safe assumption, send back what we had
+				body['href'] = request.path_qs
+			elif data:
+				# Can we find one?
+				# NOTE: This isn't quite right: There's no guarantee about what object was mutated
+				# or what's being returned. So long as the actual mutation was to the actual resource object
+				# that was returned this is fine, otherwise it's a bit of a lie.
+				# But returning nothing isn't on option we can get away with right now (Mar2013) either due to existing
+				# clients that also make assumptions about how and what resource was manipulated, so go with the lesser of two evils
+				# that mostly works.
+				try:
+					link = Link(to_external_ntiid_oid( data ) if not nti_interfaces.IShouldHaveTraversablePath.providedBy( data ) else data)
+					body['href'] = render_link( link )['href']
+				except (KeyError,ValueError,AssertionError):
+					pass # Nope
+
 
 	# Search for a last modified value.
 	# We take the most recent one we can find
@@ -199,10 +217,6 @@ def uncacheable_cache_controller( data, system ):
 
 	response.cache_control = b'no-store'
 	response.last_modified = None
-
-from cStringIO import StringIO
-import gzip
-
 
 class REST(object):
 

@@ -867,9 +867,8 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		self.forbid_link_with_rel( testapp.get( comment2res.json_body['href'] ).json_body, 'edit' )
 		# But he can flag it
 		flag_res = testapp.post( self.require_link_href_with_rel( comment2res.json_body, 'flag' ) )
-		#The mismatched users me we don't get back a href because we were guessing wrong. see pyramid_renderers
-		#assert_that( flag_res.json_body['href'], is_( comment2res.json_body['href'] ) )
-		assert_that( flag_res.json_body, does_not( has_key( 'href' ) ) )
+
+		assert_that( flag_res.json_body['href'], is_( comment2res.json_body['href'] ) )
 		self.require_link_href_with_rel( flag_res.json_body, 'flag.metoo' )
 
 		# that comments creator can delete his own post
