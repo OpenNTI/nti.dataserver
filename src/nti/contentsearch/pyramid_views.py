@@ -10,6 +10,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import re
 
+from zope import component
+
 import pyramid.httpexceptions as hexc
 from pyramid.security import authenticated_userid
 
@@ -85,26 +87,23 @@ def clean_search_query(query, language='en'):
 
 #### from IPython.core.debugger import Tracer; Tracer()() #####
 
-def get_queryobject(request):
-
+def create_queryobject(username, params, matchdict, registry=component):
 	# parse params:
-	args = dict(request.params)
+	args = dict(params)
 
-	term = request.matchdict.get('term', u'')
+	term = matchdict.get('term', u'')
 	term = clean_search_query(unicode(term))
 	args['term'] = term
 
-	username = request.matchdict.get('user', None)
-	username = username or authenticated_userid(request)
 	args['username'] = username
 
-	ntiid = request.matchdict.get('ntiid', None)
+	ntiid = matchdict.get('ntiid', None)
 	accept = args.pop('accept', None)
 	exclude = args.pop('exclude', None)
 	if ntiid:
 		# make sure we register the location where the search query is being made
 		args['location'] = ntiid
-		indexid = get_collection(ntiid, request.registry)
+		indexid = get_collection(ntiid, registry)
 		if indexid is None:
 			logger.debug("Could not find collection for ntiid '%s'" % ntiid)
 		else:
@@ -117,22 +116,27 @@ def get_queryobject(request):
 			args['searchOn'] = aset or (constants.invalid_type_,)
 	elif exclude:
 		eset = set(exclude.split(','))
-		if '*/*' not in eset:
+		if '*/*' in eset:
 			args['searchOn'] = (constants.invalid_type_,)
 		else:
 			eset = {get_type_from_mimetype(e) for e in eset}
 			eset.discard(None)
 			args['searchOn'] = constants.indexable_type_names - eset
 
-	batch_size = args.get('batchSize', None)
-	batch_start = args.get('batchStart', None)
-	if batch_size is not None and batch_start is not None:
+	batchSize = args.get('batchSize', None)
+	batchStart = args.get('batchStart', None)
+	if batchSize is not None and batchStart is not None:
 		try:
-			batch_size = int(batch_size)
-			batch_start = int(batch_start)
+			batchSize = int(batchSize)
+			batchStart = int(batchStart)
 		except ValueError:
 			raise hexc.HTTPBadRequest()
-		if batch_size <= 0 or batch_start < 0:
+		if batchSize <= 0 or batchStart < 0:
 			raise hexc.HTTPBadRequest()
 
 	return QueryObject(**args)
+
+def get_queryobject(request):
+	username = request.matchdict.get('user', None)
+	username = username or authenticated_userid(request)
+	return create_queryobject(username, request.params, request.matchdict, request.registry)
