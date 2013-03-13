@@ -24,15 +24,15 @@ from . import interfaces as search_interfaces
 class _BaseSearchResults(zcontained.Contained):
 
 	sorted = False
-	
+
 	def __init__(self, query):
 		assert search_interfaces.ISearchQuery.providedBy(query)
 		self._query = query
 
-	def __str__( self ):
+	def __str__(self):
 		return self.__repr__()
 
-	def __repr__( self ):
+	def __repr__(self):
 		return '%s(hits=%s)' % (self.__class__.__name__, self.total)
 
 	@property
@@ -58,9 +58,9 @@ class _BaseSearchResults(zcontained.Contained):
 
 @interface.implementer(search_interfaces.IIndexHit)
 class _IndexHit(zcontained.Contained):
-	
+
 	__slots__ = ('obj', 'score', '__parent__', '__name__')
-	
+
 	def __init__(self, obj, score):
 		self.obj = obj
 		self.score = score
@@ -77,14 +77,18 @@ class _IndexHitMetaData(object):
 		self._type_count = collections.defaultdict(int)
 		self._container_count = collections.defaultdict(int)
 
-	@property 
+	@property
 	def last_modified(self):
 		return self._last_modified
-	
+
 	@property
 	def type_count(self):
 		return self._type_count
-	
+
+	@property
+	def total_hit_count(self):
+		return sum(self._type_count.values())
+
 	def track(self, ihit):
 		# container count
 		rsr = search_interfaces.IContainerIDResolver(ihit.obj)
@@ -93,38 +97,38 @@ class _IndexHitMetaData(object):
 
 		# last modified
 		rsr = search_interfaces.ILastModifiedResolver(ihit.obj)
-		self._last_modified  = max(self._last_modified, rsr.get_last_modified() or 0)
-		
+		self._last_modified = max(self._last_modified, rsr.get_last_modified() or 0)
+
 		# type count
 		type_name = get_type_name(ihit.obj)
 		self._type_count[type_name] = self._type_count[type_name] + 1
 
 	def __iadd__(self, other):
 		# container count
-		for k,v in other._container_count.items():
+		for k, v in other._container_count.items():
 			self._container_count[k] = self._container_count[k] + v
-		
+
 		# last modified
 		self._last_modified = max(self._last_modified, other._last_modified)
-		
+
 		# container count
-		for k,v in other._type_count.items():
+		for k, v in other._type_count.items():
 			self._type_count[k] = self._type_count[k] + v
-			
+
 		return self
 
 class _MetaSearchResults(type):
 
 	def __new__(cls, name, bases, dct):
 		t = type.__new__(cls, name, bases, dct)
-		t.mimeType = nti_mimetype_with_class( name[1:] )
+		t.mimeType = nti_mimetype_with_class(name[1:])
 		# legacy, deprecated
 		t.mime_type = t.mimeType
-		t.parameters = dict() # IContentTypeAware
+		t.parameters = dict()  # IContentTypeAware
 		return t
 
-@interface.implementer( search_interfaces.ISearchResults,
-						zmime_interfaces.IContentTypeAware )
+@interface.implementer(search_interfaces.ISearchResults,
+						zmime_interfaces.IContentTypeAware)
 class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
@@ -156,7 +160,7 @@ class _SearchResults(_BaseSearchResults):
 
 		if ihit is not None:
 			self.sorted = False
-			ihit.__parent__ = self #make sure the parent is set
+			ihit.__parent__ = self  # make sure the parent is set
 			self._hits.append(ihit)
 			self._ihitmeta.track(ihit)
 
@@ -187,8 +191,8 @@ class _SearchResults(_BaseSearchResults):
 
 		return self
 
-@interface.implementer( search_interfaces.ISuggestResults,
-						zmime_interfaces.IContentTypeAware )
+@interface.implementer(search_interfaces.ISuggestResults,
+						zmime_interfaces.IContentTypeAware)
 class _SuggestResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
@@ -220,7 +224,7 @@ class _SuggestResults(_BaseSearchResults):
 			self._words.update(other.suggestions)
 		return self
 
-@interface.implementer( search_interfaces.ISuggestAndSearchResults )
+@interface.implementer(search_interfaces.ISuggestAndSearchResults)
 class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 
 	__metaclass__ = _MetaSearchResults
@@ -250,17 +254,17 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 		_SuggestResults.__iadd__(self, other)
 		return self
 
-@interface.implementer( search_interfaces.ISearchResultsCreator )
+@interface.implementer(search_interfaces.ISearchResultsCreator)
 class _SearchResultCreator(object):
 	def __call__(self, query):
 		return _SearchResults(query)
 
-@interface.implementer( search_interfaces.ISuggestResultsCreator )
+@interface.implementer(search_interfaces.ISuggestResultsCreator)
 class _SuggestResultsCreator(object):
 	def __call__(self, query):
 		return _SuggestResults(query)
 
-@interface.implementer( search_interfaces.ISuggestAndSearchResultsCreator)
+@interface.implementer(search_interfaces.ISuggestAndSearchResultsCreator)
 class _SuggestAndSearchResultsCreator(object):
 	def __call__(self, query):
 		return _SuggestAndSearchResults(query)
@@ -271,7 +275,7 @@ def sort_hits(hits, reverse=False, sortOn=None):
 	comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortOn) if sortOn else None
 	if comparator is not None:
 		if reverse:
-			comparator = lambda x,y: comparator(y,x)
+			comparator = lambda x, y: comparator(y, x)
 		return isorted(hits, comparator)
 	else:
 		iterator = reverse(hits) if reverse else iter(hits)
