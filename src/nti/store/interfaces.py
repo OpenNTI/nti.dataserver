@@ -34,11 +34,11 @@ class IUserAddress(interface.Interface):
 	Street = nti_schema.ValidText(title='Street address', required=False)
 	City = nti_schema.ValidTextLine(title='The city name', required=False)
 	State = nti_schema.ValidTextLine(title='The state', required=False)
-	Zip = nti_schema.ValidTextLine(title='The zip code', required=False)
-	Country = nti_schema.ValidTextLine(title='The country', required=False)
+	Zip = nti_schema.ValidTextLine(title='The zip code', required=False, default=u'')
+	Country = nti_schema.ValidTextLine(title='The country', required=False, default='USA')
 
 class IPaymentCharge(interface.Interface):
-	Amount = schema.Float(title="Change amount", required=True)
+	Amount = schema.Int(title="Change amount", required=True)
 	Created = schema.Float(title="Created timestamp", required=True)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	CardLast4 = schema.Int(title='CreditCard last 4 digists', required=False)
