@@ -112,14 +112,16 @@ def get_queryobject(request):
 	if accept:
 		aset = set(accept.split(','))
 		if '*/*' not in aset:
-			aset = {get_type_from_mimetype(e) for e in aset} or (constants.invalid_type_,)
-			args['searchOn'] = aset
+			aset = {get_type_from_mimetype(e) for e in aset}
+			aset.discard(None)
+			args['searchOn'] = aset or (constants.invalid_type_,)
 	elif exclude:
 		eset = set(exclude.split(','))
 		if '*/*' not in eset:
 			args['searchOn'] = (constants.invalid_type_,)
 		else:
 			eset = {get_type_from_mimetype(e) for e in eset}
+			eset.discard(None)
 			args['searchOn'] = constants.indexable_type_names - eset
 
 	batch_size = args.get('batchSize', None)
