@@ -39,8 +39,9 @@ COLLEGIATE = BaseComponents(BASE, name='collegiate.nextthought.com', bases=(BASE
 GLORIA_MUNDI = BaseComponents(BASE, name='gloria-mundi.nextthought.com', bases=(BASE,))
 
 
-PRMIA = BaseComponents( BASE, name='prmia.nextthought.com', bases=(BASE,))
-FINTECH = BaseComponents( BASE, name='fintech.nextthought.com', bases=(BASE,) )
+PRMIA = BaseComponents(BASE, name='prmia.nextthought.com', bases=(BASE,))
+FINTECH = BaseComponents(BASE, name='fintech.nextthought.com', bases=(BASE,))
+COLUMBIA = BaseComponents(BASE, name='columbia.nextthought.com', bases=(BASE,))
 
 def _reinit():
 	"""
