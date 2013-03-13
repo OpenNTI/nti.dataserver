@@ -1098,7 +1098,7 @@ class User(Principal):
 		discarded = []
 		for x in list(result):
 			if nti_interfaces.IFriendsList.providedBy( x ) and self not in x:
-				discarded.append( x )
+				discarded.append( (x,x.NTIID) )
 				result.discard( x )
 
 		if discarded and log_msg and the_logger is not None:
