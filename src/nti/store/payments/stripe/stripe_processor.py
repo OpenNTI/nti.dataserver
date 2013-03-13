@@ -66,24 +66,29 @@ def register_stripe_charge(event):
 		su.Charges.add(event.charge_id)
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
+def _makenone(s, default=None):
+	if isinstance(s, six.string_types) and s == 'None':
+		s = default
+	return s
+
 def _create_payment_charge(charge):
-	amount = charge.amount / 100.0
+	amount = charge.amount
 	currency = charge.currency.upper()
-	created = charge.created or time.time()
+	created = float(charge.created or time.time())
 	card = getattr(charge, 'card', None)
 	last4 = name = address = None
 	if card is not None:
 		name = card.name
-		last4 = card.last4
-# 		address = payment_charge.UserAddress.create(card.address_line1,
-# 													card.address_line2,
-# 													card.address_city,
-# 													card.address_state,
-# 													card.address_zip,
-# 													card.address_country)
+		last4 = int(card.last4) if card.last4 else None
+		address = payment_charge.UserAddress.create(_makenone(card.address_line1),
+ 													_makenone(card.address_line2),
+ 													_makenone(card.address_city),
+ 													_makenone(card.address_state),
+ 													_makenone(card.address_zip),
+ 													_makenone(card.address_country))
 
-	result = payment_charge.PaymentCharge(amount, currency, created=created,
- 										  last4=last4, address=address, name=name)
+	result = payment_charge.PaymentCharge(Amount=amount, Currency=currency, Created=created,
+										  CardLast4=last4, Address=address, Name=name)
 	return result
 
 @interface.implementer(stripe_interfaces.IStripePaymentProcessor)
