@@ -38,7 +38,11 @@ LINKS = StandardExternalFields.LINKS
 class EditLinkDecorator(object):
 	"""
 	Adds the ``edit`` link relationship to persistent objects (because we have to be able
-	to generat a URL and we need the OID) that are writable by the current user.
+	to generate a URL and we need the OID) that are writable by the current user.
+
+	Also, since this is the most convenient place, decorates objects with a top-level
+	'href' link. This may or may not always be correct and performant. Be careful
+	what you register this for.
 	"""
 
 	__metaclass__ = SingletonDecorator
@@ -90,3 +94,14 @@ class EditLinkDecorator(object):
 			# For cases that we can, make edit and the toplevel href be the same.
 			# this improves caching
 			mapping['href'] = render_link( link, nearest_site=nearest_site )['href']
+
+		elif 'href' not in mapping:
+			# NOTE: This may be a minor perf degredaion? Think through the implications of this
+			# FIXME: temporary place to ensure that everything is always given
+			# a unique, top-level 'href'. The one-and-only client is currently depending upon this.
+			# FIXME: Not duplication of IShouldHaveTraversablePath checks; cf pyramid_renderers
+			try:
+				link = Link(to_external_ntiid_oid( context ) if not IShouldHaveTraversablePath.providedBy( context ) else context)
+				mapping['href'] = render_link( link )['href']
+			except (KeyError,ValueError,AssertionError):
+				pass # Nope
