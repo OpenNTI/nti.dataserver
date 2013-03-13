@@ -19,7 +19,8 @@ from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from . import interfaces as search_interfaces
 
 from .constants import (CLASS, MIME_TYPE)
-from .constants import (content_, post_, indexable_types_order, indexable_type_names, nti_mimetype_prefix)
+from .constants import (content_, post_, indexable_types_order, indexable_type_names,
+						transcript_, messageinfo_, nti_mimetype_prefix)
 
 def epoch_time(dt):
 	if dt:
@@ -54,15 +55,26 @@ def get_type_name(obj):
 		result = None
 	return normalize_type_name(result) if result else u''
 
+def get_type_from_mimetype(mt):
+	mt = mt.lower() if mt else u''
+	if mt.startswith(nti_mimetype_prefix):
+		result = mt[len(nti_mimetype_prefix):]
+		result = messageinfo_ if result == transcript_ else result
+		result = post_ if result.startswith('personalblog') else result
+		result = result if result in indexable_type_names else None
+	else:
+		result = None
+	return normalize_type_name(result) if result else None
+
 class QueryExpr(object):
 	def __init__(self, expr):
 		assert expr is not None, 'must specify a query expression'
 		self.expr = unicode(expr)
 
-	def __str__( self ):
+	def __str__(self):
 		return self.expr
 
-	def __repr__( self ):
+	def __repr__(self):
 		return 'QueryExpr(%s)' % self.expr
 
 _all_re = re.compile('([\?\*])')
@@ -82,9 +94,9 @@ def to_list(data):
 	return data
 
 def get_sort_order(type_name):
-	return indexable_types_order.get(type_name,0)
+	return indexable_types_order.get(type_name, 0)
 
 def sort_search_types(type_names=indexable_type_names):
 	type_names = to_list(type_names)
-	result = sorted(type_names, key=lambda x: indexable_types_order.get(x,0))
+	result = sorted(type_names, key=lambda x: indexable_types_order.get(x, 0))
 	return result
