@@ -20,7 +20,7 @@ from . import interfaces as search_interfaces
 
 from .constants import (CLASS, MIME_TYPE)
 from .constants import (content_, post_, indexable_types_order, indexable_type_names,
-						transcript_, messageinfo_, nti_mimetype_prefix)
+						transcript_, messageinfo_, nti_mimetype_prefix, book_content_)
 
 def epoch_time(dt):
 	if dt:
@@ -59,8 +59,12 @@ def get_type_from_mimetype(mt):
 	mt = mt.lower() if mt else u''
 	if mt.startswith(nti_mimetype_prefix):
 		result = mt[len(nti_mimetype_prefix):]
-		result = messageinfo_ if result == transcript_ else result
-		result = post_ if result.startswith('personalblog') else result
+		if result == book_content_:
+			result = content_
+		elif result == transcript_:
+			result = messageinfo_
+		elif result.startswith('personalblog'):
+			result = post_
 		result = result if result in indexable_type_names else None
 	else:
 		result = None

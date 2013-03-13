@@ -100,6 +100,7 @@ redaction_ = u'redaction'
 transcript_ = 'transcript'
 messageinfo = u'messageinfo'
 messageinfo_ = u'messageinfo'
+book_content_ = u'bookcontent'
 canvastextshape_ = 'canvastextshape'
 invalid_type_ = '++++invalidtype++++'
 
