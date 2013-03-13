@@ -183,6 +183,9 @@ class Community(Entity,sharing.DynamicSharingTargetMixin):
 	def is_accepting_shared_data_from( self, source ):
 		return True
 
+	def addFriend( self, friend ):
+		return True # For compatibility with a FriendsList
+
 @interface.implementer(nti_interfaces.IEntityContainer)
 @component.adapter(nti_interfaces.ICommunity)
 class CommunityEntityContainer(object):
