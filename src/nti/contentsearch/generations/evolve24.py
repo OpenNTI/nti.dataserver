@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Content search generation 12.
+Content search generation 24.
 
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-generation = 12
+generation = 24
 
-from ._utils import reindex_all
+from .evolve23 import do_evolve
 
 def evolve(context):
 	"""
-	Evolve generation 11 to generation 12 by reindexing in the user space
+	Evolve generation 23 to 24 by reindexing redactions.
 	"""
-	reindex_all(context)
+	do_evolve(context)
