@@ -713,7 +713,8 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			assert_that( items, has_length( 2 ) )
 			assert_that( items, contains_inanyorder(
 				has_entry( 'title', data['title'] ),
-				has_entry( 'title', 'A comment' ) ) )
+				has_entry( 'title', 'A comment' ) ),
+				has_key( 'href' ) )
 
 		# These created notifications to the author...
 		# ... both on the socket...
@@ -767,6 +768,8 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		for item in res.json_body['Items']:
 			# sharedWith value trickles down to the comments automatically
 			assert_shared_with_community( item )
+			# and they each have a valid 'href'
+			assert_that( item, has_key( 'href' ) )
 
 		# ... in the blog feed for both users...
 		for app in testapp, testapp2:
