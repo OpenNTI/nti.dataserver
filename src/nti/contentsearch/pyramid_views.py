@@ -19,7 +19,6 @@ from zope.location import locate
 from . import constants
 from .interfaces import IIndexManager
 from ._search_query import QueryObject
-from .common import normalize_type_name
 from ._views_utils import get_collection
 from .common import get_type_from_mimetype
 from ._content_utils import get_content_translation_table
@@ -102,18 +101,15 @@ def get_queryobject(request):
 	ntiid = request.matchdict.get('ntiid', None)
 	accept = args.pop('accept', None)
 	exclude = args.pop('exclude', None)
-	searchOn = args.pop('searchOn', None)
 	if ntiid:
+		# make sure we register the location where the search query is being made
 		args['location'] = ntiid
 		indexid = get_collection(ntiid, request.registry)
 		if indexid is None:
 			logger.debug("Could not find collection for ntiid '%s'" % ntiid)
 		else:
 			args['indexid'] = indexid
-	if searchOn:
-		nset = {normalize_type_name(e) for e in searchOn.split(',')}
-		args['searchOn'] = nset or (constants.invalid_type_,)
-	elif accept:
+	if accept:
 		aset = set(accept.split(','))
 		if '*/*' not in aset:
 			aset = {get_type_from_mimetype(e) for e in aset} or (constants.invalid_type_,)
