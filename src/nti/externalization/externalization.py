@@ -42,22 +42,10 @@ from .oids import to_external_ntiid_oid
 # we must keep thread-local. We call into objects without any context,
 # and they call back into us, and otherwise we would lose
 # the name that was established at the top level.
-_ex_name_marker = object()
-try:
-	import gevent.local
-	_LocalBase = gevent.local.local
-except ImportError:
-	import threading
-	_LocalBase = threading.local
+_NotGiven = object()
 
-class _ex_name_local_c(_LocalBase):
-	def __init__( self ):
-		super(_ex_name_local_c,self).__init__()
-		self.name = [_ex_name_marker]
-		#self._to_ext = {}
-_ex_name_local = _ex_name_local_c
-_ex_name_local.name = [_ex_name_marker]
-#_ex_name_local._to_ext = {}
+from pyramid.threadlocal import ThreadLocalManager
+_manager = ThreadLocalManager(default=lambda: {'name': _NotGiven})
 
 # Things that can be directly externalized
 _primitives = six.string_types + (numbers.Number,bool)
@@ -107,6 +95,7 @@ class _ExternalizationState(object):
 
 	def __init__( self, **kwargs ):
 		self.ext_obj_cache = dict()
+		self.name = ''
 		for k, v in kwargs.iteritems():
 			setattr( self, k, v )
 
@@ -176,7 +165,7 @@ def _to_external_object_state( obj, state, top_level=False ):
 		return state.catch_component_action( obj, t )
 
 
-def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=component,
+def toExternalObject( obj, coerceNone=False, name=_NotGiven, registry=component,
 					  catch_components=(), catch_component_action=None,
 					  default_non_externalizable_replacer=DefaultNonExternalizableReplacer):
 	""" Translates the object into a form suitable for
@@ -200,7 +189,6 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 		then call this object and use the results.
 
 	"""
-#	_ex_name_local._to_ext[type(obj)] = _ex_name_local._to_ext.get( type(obj), 0 ) + 1
 
 	# Catch the primitives up here, quickly
 	if isinstance(obj, _primitives):
@@ -210,17 +198,17 @@ def toExternalObject( obj, coerceNone=False, name=_ex_name_marker, registry=comp
 	v.pop( 'obj' )
 	state = _ExternalizationState( **v )
 
-	if name == _ex_name_marker:
-		name = _ex_name_local.name[-1]
-	if name == _ex_name_marker:
+	if name is _NotGiven:
+		name = _manager.get()['name']
+	if name is _NotGiven:
 		name = ''
-	_ex_name_local.name.append( name )
+	_manager.push( {'name': name} )
 	state.name = name
 
 	try:
 		return _to_external_object_state( obj, state, True )
 	finally:
-		_ex_name_local.name.pop()
+		_manager.pop()
 
 
 to_external_object = toExternalObject
@@ -251,7 +239,7 @@ def _second_pass_to_external_object( obj ):
 		raise TypeError(repr(obj) + " is not JSON serializable")
 	return result
 
-def to_external_representation( obj, ext_format=EXT_FORMAT_PLIST, name=_ex_name_marker, registry=component ):
+def to_external_representation( obj, ext_format=EXT_FORMAT_PLIST, name=_NotGiven, registry=component ):
 	"""
 	Transforms (and returns) the `obj` into its external (string) representation.
 
@@ -359,7 +347,7 @@ def to_standard_external_created_time( context, default=None, _write_into=None )
 	return holder.get( StandardExternalFields.CREATED_TIME, default )
 
 
-def to_standard_external_dictionary( self, mergeFrom=None, name=_ex_name_marker, registry=component, decorate=True):
+def to_standard_external_dictionary( self, mergeFrom=None, name=_NotGiven, registry=component, decorate=True):
 	"""
 	Returns a dictionary representing the standard externalization of
 	the object. This impl takes care of the standard attributes
