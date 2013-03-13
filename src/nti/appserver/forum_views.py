@@ -53,6 +53,7 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope import schema
+from zope.event import notify
 import zope.intid.interfaces
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
@@ -390,6 +391,10 @@ class PostDeleteView(UGDDeleteView):
 		deleting.tags = ()
 		# Do remove from the activity stream (todo: make this an event)
 		unstore_created_comment_from_global_activity( deleting, None )
+		# Because we are not actually removing it, no IObjectRemoved events fire
+		# but we do want to sent a modified event to be sure that timestamps, etc,
+		# get updated.
+		notify( lifecycleevent.ObjectModifiedEvent( deleting ) )
 		return theObject
 
 from nti.utils._compat import aq_base
@@ -585,7 +590,6 @@ def _UnpublishView(request):
 ## TODO: Under heavy construction
 ###
 from nti.dataserver import activitystream_change
-from zope.event import notify
 
 def _stream_event_for_comment( comment, change_type=nti_interfaces.SC_CREATED ):
 	# Now, construct the (artificial) change notification.

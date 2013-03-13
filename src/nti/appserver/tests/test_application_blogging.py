@@ -506,8 +506,17 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 2 ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_comment_PUT_to_edit_flag_and_DELETE( self ):
+	@fudge.patch('time.time')
+	def test_user_can_POST_new_comment_PUT_to_edit_flag_and_DELETE( self, fake_time ):
 		"""POSTing an IPost to the URL of an existing IStoryTopic adds a comment"""
+		# make time monotonically increasing
+		i = [0]
+		def incr():
+			i[0] += 1
+			return i[0]
+		fake_time.is_callable()
+		fake_time._callable.call_replacement = incr
+		fake_time()
 
 		testapp = self.testapp
 
@@ -554,6 +563,7 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# ... actual contents
 		res = testapp.get( entry_contents_url )
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+		contents_mod_time = res.json_body['Last Modified']
 
 		# Can be flagged...
 		res = testapp.post( flag_href )
@@ -573,6 +583,14 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		del_events = eventtesting.getEvents( lifecycleevent.IObjectRemovedEvent )
 		assert_that( del_events, has_length( 0 ) )
 		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 0 ) )
+
+		# But modification events did fire...
+		mod_events = eventtesting.getEvents( lifecycleevent.IObjectModifiedEvent )
+		assert_that( mod_events, has_length( 1 ) )
+		# ...resulting in an updated time for the contents view
+		res = testapp.get( entry_contents_url )
+		assert_that( res.json_body['Last Modified'], is_( greater_than( contents_mod_time ) ) )
+
 
 	@WithSharedApplicationMockDS
 	@fudge.patch('time.time')
