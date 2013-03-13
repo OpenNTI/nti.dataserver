@@ -28,7 +28,22 @@ PA_STATE_RESERVED = u'Reserved'
 
 PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_FAILURE, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_DISPUTED,
 			 PA_STATE_REFUNDED, PA_STATE_SUCCESS, PA_STATE_CANCELED, PA_STATE_RESERVED)
-PA_STATE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm( _x ) for _x in PA_STATES] )
+PA_STATE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PA_STATES])
+
+class IUserAddress(interface.Interface):
+	Street = nti_schema.ValidText(title='Street address', required=False)
+	City = nti_schema.ValidTextLine(title='The city name', required=False)
+	State = nti_schema.ValidTextLine(title='The state', required=False)
+	Zip = nti_schema.ValidTextLine(title='The zip code', required=False)
+	Country = nti_schema.ValidTextLine(title='The country', required=False)
+
+class IPaymentCharge(interface.Interface):
+	Amount = schema.Float(title="Change amount", required=True)
+	Created = schema.Float(title="Created timestamp", required=True)
+	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
+	CardLast4 = schema.Int(title='CreditCard last 4 digists', required=False)
+	Name = nti_schema.ValidTextLine(title='The customer/charge name', required=False)
+	Address = schema.Object(IUserAddress, title='User address', required=False)
 
 class IPaymentProcessor(interface.Interface):
 
@@ -146,7 +161,7 @@ class IPurchaseAttemptStarted(IPurchaseAttemptStateEvent):
 	pass
 
 class IPurchaseAttemptSuccessful(IPurchaseAttemptStateEvent):
-	pass
+	charge = interface.Attribute('Purchase charge')
 
 class IPurchaseAttemptRefunded(IPurchaseAttemptStateEvent):
 	pass
@@ -163,7 +178,7 @@ class IPurchaseAttemptFailed(IPurchaseAttemptStateEvent):
 
 @interface.implementer(IPurchaseAttemptEvent)
 class PurchaseAttemptEvent(object):
-	def __init__( self, purchase_id, username):
+	def __init__(self, purchase_id, username):
 		self.username = username
 		self.purchase_id = purchase_id
 
@@ -182,11 +197,10 @@ class PurchaseAttemptStarted(PurchaseAttemptEvent):
 @interface.implementer(IPurchaseAttemptSuccessful)
 class PurchaseAttemptSuccessful(PurchaseAttemptEvent):
 	state = PA_STATE_SUCCESS
-	def __init__( self, purchase_id, username, amount=None, currency=None):
-		super(PurchaseAttemptSuccessful,self).__init__( purchase_id, username)
-		self.amount = amount
-		self.currency = currency
-		
+	def __init__(self, purchase_id, username, charge=None):
+		super(PurchaseAttemptSuccessful, self).__init__(purchase_id, username)
+		self.charge = charge
+
 @interface.implementer(IPurchaseAttemptRefunded)
 class PurchaseAttemptRefunded(PurchaseAttemptEvent):
 	state = PA_STATE_REFUNDED
@@ -206,7 +220,7 @@ class PurchaseAttemptFailed(PurchaseAttemptEvent):
 	state = PA_STATE_FAILED
 
 	def __init__(self, purchase_id, username, error_message=None, error_code=None):
-		super(PurchaseAttemptFailed,self).__init__( purchase_id, username)
+		super(PurchaseAttemptFailed, self).__init__(purchase_id, username)
 		self.error_message = error_message
 		if error_code:
 			self.error_code = error_code
@@ -224,6 +238,6 @@ class IPurchaseHistory(interface.Interface):
 
 	def get_purchase_state(pid):
 		pass
-	
+
 	def get_purchase_history(start_time=None, end_time=None):
 		pass

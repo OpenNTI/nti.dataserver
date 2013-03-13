@@ -7,7 +7,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 import six
 import time
@@ -24,6 +24,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
 from . import stripe_io
+from ... import payment_charge
 from ... import purchase_history
 from . import interfaces as stripe_interfaces
 from .._processor import _BasePaymentProcessor
@@ -65,12 +66,32 @@ def register_stripe_charge(event):
 		su.Charges.add(event.charge_id)
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
+def _create_payment_charge(charge):
+	amount = charge.amount / 100.0
+	currency = charge.currency.upper()
+	created = charge.created or time.time()
+	card = getattr(charge, 'card', None)
+	last4 = name = address = None
+	if card is not None:
+		name = card.name
+		last4 = card.last4
+# 		address = payment_charge.UserAddress.create(card.address_line1,
+# 													card.address_line2,
+# 													card.address_city,
+# 													card.address_state,
+# 													card.address_zip,
+# 													card.address_country)
+
+	result = payment_charge.PaymentCharge(amount, currency, created=created,
+ 										  last4=last4, address=address, name=name)
+	return result
+
 @interface.implementer(stripe_interfaces.IStripePaymentProcessor)
 class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 	name = 'stripe'
 	events = ("charge.succeeded", "charge.refunded", "charge.failed", "charge.dispute.created", "charge.dispute.updated")
-	
+
 	def create_customer(self, user, api_key=None):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 
@@ -109,7 +130,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		description = getattr(profile, 'description', None)
 		adapted = stripe_interfaces.IStripeCustomer(user)
 		if adapted.customer_id:
-			return self.update_stripe_customer(	customer=customer,
+			return self.update_stripe_customer(customer=customer,
 												customer_id=adapted.customer_id,
 												email=email,
 												description=description,
@@ -128,7 +149,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 	# ---------------------------
 
-	def _get_coupon(self, coupon,api_key=None):
+	def _get_coupon(self, coupon, api_key=None):
 		result = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		return result
 
@@ -148,7 +169,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		coupon = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		if coupon:
 			if coupon.percent_off is not None:
-				pcnt = coupon.percent_off/100.0 if coupon.percent_off > 1 else coupon.percent_off
+				pcnt = coupon.percent_off / 100.0 if coupon.percent_off > 1 else coupon.percent_off
 				amount = amount * (1 - pcnt)
 			elif coupon.amount_off is not None:
 				amount -= coupon.amount_off
@@ -169,8 +190,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			if coupon is not None and not self.validate_coupon(coupon, api_key=api_key):
 				raise ValueError("Invalid coupon")
 			amount = self.apply_coupon(amount, coupon, api_key=api_key)
-			cents_amount = int(amount * 100.0) # cents
-					
+			cents_amount = int(amount * 100.0)  # cents
+
 			# register stripe user and token
 			customer_id = self.get_or_create_customer(username, api_key=api_key)
 			notify(stripe_interfaces.RegisterStripeToken(purchase_id, username, token))
@@ -182,7 +203,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			notify(stripe_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
 
 			if charge.paid:
-				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
+				pc = _create_payment_charge(charge)
+				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, pc))
 
 			return charge.id
 		except Exception as e:
@@ -230,7 +252,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 					if not purchase.has_completed():
 						# token has been used and no charge has been found, means the transaction failed
 						notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
-				elif not purchase.is_pending(): #no charge and unused token
+				elif not purchase.is_pending():  # no charge and unused token
 					logger.warn('Please check status of purchase %r for user %s', purchase_id, username)
 
 		if charge:
@@ -242,9 +264,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 					notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
 			elif charge.paid:
 				if not purchase.has_succeeded():
-					amount = charge.amount/100.0
-					currency = charge.currency.upper()
-					notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
+					pc = _create_payment_charge(charge)
+					notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, pc))
 
 			notify(store_interfaces.PurchaseAttemptSynced(purchase_id, username))
 
@@ -262,7 +283,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 				if purchase:
 					if etype in ("charge.succeeded") and not purchase.has_succeeded():
-						amount = data['amount']/100.0
+						amount = data['amount'] / 100.0
 						currency = data['currency'].upper()
 						notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
 					elif etype in ("charge.refunded") and not purchase.is_refunded():
