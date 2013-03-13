@@ -19,7 +19,7 @@ def join_communities(user, communities=(), follow=False, exitOnError=False):
 		user.record_dynamic_membership( comm )
 		if follow:
 			user.follow( comm )
-		
+
 	return tuple(not_found)
 
 def _process_args( args ):
@@ -32,7 +32,7 @@ def _process_args( args ):
 	if not_found:
 		print( "No community found", args, file=sys.stderr )
 		sys.exit( 3 )
-	
+
 	if args.verbose:
 		print( to_external_object( user ) )
 
@@ -50,4 +50,3 @@ def main():
 
 	env_dir = args.env_dir
 	run_with_dataserver( environment_dir=env_dir, function=lambda: _process_args(args) )
-
