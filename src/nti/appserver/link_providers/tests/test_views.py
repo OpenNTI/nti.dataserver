@@ -19,6 +19,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
+from hamcrest import has_item
 
 import nti.tests
 
@@ -66,7 +67,15 @@ class TestViews(nti.tests.ConfiguringTestBase):
 
 			# finally the stars align
 			interface.alsoProvides( self.user, nti_interfaces.ICoppaUser )
-			assert_that( named_link_get_view( self.request ), is_( HTTPSeeOther ) )
+			result = named_link_get_view( self.request )
+			assert_that( result, is_( HTTPSeeOther ) )
+			assert_that( result.location, is_( '/relative/path' ) )
+			# made absolute on output
+			headerlist = []
+			def start_request( status, headers ):
+				headerlist.extend( headers )
+			result( self.request.environ, start_request )
+			assert_that( headerlist, has_item( ('Location', 'http://localhost/relative/path') ) )
 
 	def test_get_view_wrong_site(self):
 		self._test_common( named_link_get_view )

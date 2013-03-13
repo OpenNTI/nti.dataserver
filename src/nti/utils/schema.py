@@ -438,11 +438,7 @@ class DecodingValidTextLine(ValidTextLine):
 #			value = value.decode( 'utf-8' ) # let raise UnicodeDecodeError
 #		super(DecodingValidTextLine,self).fromUnicode( value )
 
-class HTTPURL(FieldValidationMixin,schema.URI):
-	"""
-	A URI field that ensures and requires its value to be an absolute
-	HTTP/S URL.
-	"""
+class ValidURI(FieldValidationMixin,schema.URI):
 
 	def _fixup_validation_error_args( self, e, value ):
 		if isinstance( e, sch_interfaces.InvalidURI ):
@@ -452,6 +448,12 @@ class HTTPURL(FieldValidationMixin,schema.URI):
 			e.message = e.i18n_message = e.__doc__
 		else:
 			super(HTTPURL,self)._fixup_validation_error_args( e, value )
+
+class HTTPURL(ValidURI):
+	"""
+	A URI field that ensures and requires its value to be an absolute
+	HTTP/S URL.
+	"""
 
 	def fromUnicode( self, value ):
 		# This can wind up producing something invalid if an

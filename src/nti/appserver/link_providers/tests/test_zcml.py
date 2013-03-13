@@ -60,7 +60,7 @@ ZCML_STRING = """
 			<link:userLink
 				name='foo.bar'
 				minGeneration='1234'
-				url='http://example.com'
+				url='/relative/path'
 				for='nti.dataserver.interfaces.ICoppaUser' />
 		</registerIn>
 		</configure>
@@ -88,7 +88,7 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 
 			# Make sure all our properties got where we wanted them
 			provider = providers[0]
-			assert_that( provider.url, is_( 'http://example.com' ) )
+			assert_that( provider.url, is_( '/relative/path' ) )
 			assert_that( provider.minGeneration, is_( '1234' ) )
 
 			assert_that( provider.get_links( ), has_length( 1 ) )

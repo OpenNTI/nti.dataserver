@@ -52,9 +52,9 @@ class IUserLinkDirective(interface.Interface):
 		description="""A text string that should be monotonically increasing because it is lexographically compared. For dates, use YYYYMMDD. Mutually exclusive with ``field``.""",
 		required=False )
 
-	url = schema.HTTPURL(
-		title=_("A URL to redirect to on GET"),
-		description="Mutually exclusive with ``field``",
+	url = schema.ValidTextLine( # Because we want to allow putting in just the path portion of the URL allowing for site-relative urls. But those aren't valid by themselves.
+		title=_("A URI to redirect to on GET"),
+		description="NOTE: This is not enforced to be a complete, valid URL/URI. You are responsible for that. Mutually exclusive with ``field``",
 		required=False )
 
 	field = zope.configuration.fields.PythonIdentifier(
