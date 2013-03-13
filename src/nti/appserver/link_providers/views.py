@@ -56,6 +56,8 @@ def named_link_get_view( request ):
 	if rsp:
 		return rsp # response
 
+	# If the URL is not absolute already, then when the request is written out it will be
+	# made so by pyramid.
 	return hexc.HTTPNoContent() if not provider.url else hexc.HTTPSeeOther( provider.url )
 
 @view_config( name=VIEW_NAME_NAMED_LINKS,
