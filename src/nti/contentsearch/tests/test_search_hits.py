@@ -4,8 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import os
 import json
@@ -46,7 +46,7 @@ class TestSearchHits(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
-		super(TestSearchHits,cls).setUpClass()
+		super(TestSearchHits, cls).setUpClass()
 		path = os.path.join(os.path.dirname(__file__), 'highlight.json')
 		with open(path, "r") as f:
 			cls.hightlight = json.load(f)
@@ -65,7 +65,7 @@ class TestSearchHits(ConfiguringTestBase):
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
-		usr = User.create_user( ds, username=username, password=password)
+		usr = User.create_user(ds, username=username, password=password)
 		return usr
 
 	def _externalize(self, clazz, data, query):
@@ -97,7 +97,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-Howes_converted.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273'))
-		assert_that(d, has_entry(SNIPPET, u'redaction serving a sentence in a Michigan jail'))
+		assert_that(d, has_entry(SNIPPET, u'serving a sentence in a Michigan jail'))
 
 	def test_search_hit_note_dict(self):
 		d = self._externalize(_NoteSearchHit, self.note, 'waves')
@@ -120,10 +120,10 @@ class TestSearchHits(ConfiguringTestBase):
 		usr = self._create_user()
 		note = Note()
 		note.body = [u'It is not enough to mean well, we actually have to do well']
-		note.creator =  usr.username
+		note.creator = usr.username
 		note.containerId = make_ntiid(nttype='bleach', specific='manga')
 		mock_dataserver.current_transaction.add(note)
-		note = usr.addContainedObject( note )
+		note = usr.addContainedObject(note)
 		oidstr = to_external_ntiid_oid(note)
 		d = self._externalize(_NoteSearchHit, note, 'well')
 		assert_that(d, has_entry(CLASS, HIT))
@@ -139,8 +139,8 @@ class TestSearchHits(ConfiguringTestBase):
 		highlight = Highlight()
 		highlight.selectedText = u'Kon saw it! The Secret of a Beautiful Office Lady'
 		highlight.creator = usr.username
-		highlight.containerId =  make_ntiid(nttype='bleach', specific='manga')
-		highlight = usr.addContainedObject( highlight )
+		highlight.containerId = make_ntiid(nttype='bleach', specific='manga')
+		highlight = usr.addContainedObject(highlight)
 		oidstr = to_external_ntiid_oid(highlight)
 		d = self._externalize(_HighlightSearchHit, highlight, 'secret')
 		assert_that(d, has_entry(CLASS, HIT))
@@ -158,8 +158,8 @@ class TestSearchHits(ConfiguringTestBase):
 		redaction.replacementContent = 'redaction'
 		redaction.redactionExplanation = 'Have overcome it everytime I have been on the verge of death'
 		redaction.creator = usr.username
-		redaction.containerId =  make_ntiid(nttype='bleach', specific='manga')
-		redaction = usr.addContainedObject( redaction )
+		redaction.containerId = make_ntiid(nttype='bleach', specific='manga')
+		redaction = usr.addContainedObject(redaction)
 		oidstr = to_external_ntiid_oid(redaction)
 		d = self._externalize(_RedactionSearchHit, redaction, 'death')
 		assert_that(d, has_entry(CLASS, HIT))
@@ -185,28 +185,28 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(SNIPPET, u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 
 	def test_relevance_path_score(self):
-		path = ref = ('a','b','c','d')
+		path = ref = ('a', 'b', 'c', 'd')
 		assert_that(RSHC.score_path(ref, path), is_(10000))
 		path = ref + ('e',)
 		assert_that(RSHC.score_path(ref, path), is_(9000))
-		path = ('a','b','c')
+		path = ('a', 'b', 'c')
 		assert_that(RSHC.score_path(ref, path), is_(60))
 		path = ('a', 'b')
 		assert_that(RSHC.score_path(ref, path), is_(40))
 		path = ('a',)
 		assert_that(RSHC.score_path(ref, path), is_(20))
-		path = ('a','b','c','x')
+		path = ('a', 'b', 'c', 'x')
 		assert_that(RSHC.score_path(ref, path), is_(59))
-		path = ('a','b','c','x', 'y')
+		path = ('a', 'b', 'c', 'x', 'y')
 		assert_that(RSHC.score_path(ref, path), is_(58))
-		path = ('a','b','x', 'y')
+		path = ('a', 'b', 'x', 'y')
 		assert_that(RSHC.score_path(ref, path), is_(38))
-		path = ('a','x', 'y','z')
+		path = ('a', 'x', 'y', 'z')
 		assert_that(RSHC.score_path(ref, path), is_(17))
-		path = ('x', 'y','z')
+		path = ('x', 'y', 'z')
 		assert_that(RSHC.score_path(ref, path), is_(0))
 		assert_that(RSHC.score_path(ref, ()), is_(0))
-		
+
 	@WithMockDSTrans
 	def test_search_hit_relevance(self):
 		usr = self._create_user()
@@ -219,12 +219,12 @@ class TestSearchHits(ConfiguringTestBase):
 				else:
 					ugd = Highlight()
 					ugd.selectedText = unicode(x)
-				ugd.creator =  usr.username
+				ugd.creator = usr.username
 				ugd.containerId = make_ntiid(nttype='bleach', specific='manga%s' % n)
 				mock_dataserver.current_transaction.add(ugd)
-				ugd = usr.addContainedObject( ugd )
+				ugd = usr.addContainedObject(ugd)
 				rim.index_content(ugd)
-			
+
 		query = search_interfaces.ISearchQuery("all")
 		query.location = make_ntiid(nttype='bleach', specific='manga')
 		query.sortOn = 'relevance'
@@ -233,8 +233,7 @@ class TestSearchHits(ConfiguringTestBase):
 		hits = toExternalObject(hits)
 		items = hits[ITEMS]
 		for n, hit in enumerate(items):
-			if n <=2:
+			if n <= 2:
 				assert_that(hit[TYPE], is_('Note'))
 			else:
 				assert_that(hit[TYPE], is_('Highlight'))
-

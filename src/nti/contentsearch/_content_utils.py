@@ -33,7 +33,7 @@ from . import interfaces as search_interfaces
 from .constants import (CLASS, BODY, ID)
 from .constants import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
 					 	creator_fields, keyword_fields, last_modified_fields, sharedWith_,
-					 	container_id_fields, ntiid_fields,  highlight_, note_, post_, tags_,
+					 	container_id_fields, ntiid_fields, highlight_, note_, post_, tags_,
 					 	messageinfo_, redaction_, canvas_, canvastextshape_, references_,
 					 	title_, inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
 
@@ -52,7 +52,7 @@ class _StringContentResolver(object):
 
 	__slots__ = ('content',)
 
-	def __init__( self, content ):
+	def __init__(self, content):
 		self.content = content
 
 	def get_content(self):
@@ -74,13 +74,13 @@ class _BasicContentResolver(object):
 
 	__slots__ = ('obj',)
 
-	def __init__( self, obj ):
+	def __init__(self, obj):
 		self.obj = obj
 
 class _AbstractIndexDataResolver(_BasicContentResolver):
 
 	def get_ntiid(self):
-		return to_external_ntiid_oid( self.obj )
+		return to_external_ntiid_oid(self.obj)
 
 	def get_creator(self):
 		result = self.obj.creator
@@ -97,7 +97,7 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 		return _process_words(data)
 
 	def get_flattenedSharingTargets(self):
-		if nti_interfaces.IReadableShared.providedBy( self.obj ):
+		if nti_interfaces.IReadableShared.providedBy(self.obj):
 			return self.obj.flattenedSharingTargets
 		return ()
 
@@ -161,7 +161,8 @@ class _PartsContentResolver(object):
 		items = to_list(data)
 		for item in items or ():
 			adapted = component.queryAdapter(item, search_interfaces.IContentResolver)
-			result.append( adapted.get_content()  if adapted else u'')
+			if adapted:
+				result.append(adapted.get_content())
 		result = ' '.join([x for x in result if x is not None])
 		return result
 
@@ -221,11 +222,11 @@ class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 			obj = getattr(self.obj, '__parent__', None)
 		if 	for_interfaces.IHeadlineTopic.providedBy(obj) or \
 			for_interfaces.IPersonalBlogComment.providedBy(obj):
-			result = getattr(obj,'id', None)
+			result = getattr(obj, 'id', None)
 		return result or u''
 
 @component.adapter(IDict)
-@interface.implementer(	search_interfaces.IHighlightContentResolver,
+@interface.implementer(search_interfaces.IHighlightContentResolver,
 						search_interfaces.INoteContentResolver,
 						search_interfaces.IRedactionContentResolver,
 						search_interfaces.IMessageInfoContentResolver,
@@ -234,7 +235,7 @@ class _DictContentResolver(object):
 
 	__slots__ = ('obj',)
 
-	def __init__( self, obj ):
+	def __init__(self, obj):
 		self.obj = obj
 
 	def _get_attr(self, names, default=None):
@@ -256,11 +257,7 @@ class _DictContentResolver(object):
 			if clazz == highlight_:
 				result = source.get(selectedText_, u'')
 			elif clazz == redaction_:
-				result = []
-				for field in (replacementContent_, redactionExplanation_, selectedText_):
-					d = source.get(field, u'')
-					if d: result.append(d)
-				result = ' '.join([x for x in result if x is not None])
+				result = source.get(selectedText_, u'')
 			elif clazz == messageinfo_ or clazz == note_ or clazz == post_:
 				result = []
 				data = source.get(body_, source.get(BODY, u''))
@@ -300,7 +297,7 @@ class _DictContentResolver(object):
 		return unicode(result) if result else None
 
 	def get_containerId(self):
-		result =  self._get_attr(container_id_fields)
+		result = self._get_attr(container_id_fields)
 		return unicode(result) if result else None
 
 	def get_keywords(self):
@@ -334,11 +331,11 @@ class _DictContentResolver(object):
 	# redaction content resolver
 
 	def get_replacement_content(self):
-		result = self.obj.get(replacementContent_, u'')
+		result = self.obj.get(replacementContent_, None)
 		return result if result else None
 
 	def get_redaction_explanation(self):
-		result = self.obj.get(redactionExplanation_, u'')
+		result = self.obj.get(redactionExplanation_, None)
 		return result if result else None
 
 	# messageinfo content resolver
@@ -379,11 +376,11 @@ class _BookContentResolver(_BasicContentResolver):
 	def get_last_modified(self):
 		return self.obj.last_modified
 
-@interface.implementer( search_interfaces.IStopWords )
+@interface.implementer(search_interfaces.IStopWords)
 class _DefaultStopWords(object):
 
 	def stopwords(self, language='en'):
 		return ()
 
-	def available_languages(self, ):
+	def available_languages(self,):
 		return ('en',)
