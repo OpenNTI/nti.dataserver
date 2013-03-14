@@ -44,11 +44,10 @@ class ThreadableMixin(object):
 		if self._inReplyTo is None:
 			return None
 
-		if allow_cached or not nti_interfaces.ICachingWeakRef.providedBy( self._inReplyTo ):
-			# The default, works with all reference types, or we can't do it
+		try:
+			return self._inReplyTo(allow_cached=allow_cached)
+		except TypeError: # Not ICachingWeakRef
 			return self._inReplyTo()
-
-		return self._inReplyTo( allow_cached=allow_cached )
 
 	def setInReplyTo( self, value ):
 		self._inReplyTo = nti_interfaces.IWeakRef( value ) if value is not None else None
@@ -63,7 +62,17 @@ class ThreadableMixin(object):
 		if not self._references:
 			return ()
 
-		return [x() for x in self._references if x() is not None]
+		return list(self.getReferences())
+
+	def getReferences(self,allow_cached=True):
+		for ref in (self._references or ()):
+			try:
+				val = ref(allow_cached=allow_cached)
+			except TypeError: # Not ICachingWeakRef
+				val = ref()
+
+			if val is not None:
+				yield val
 
 	def addReference( self, value ):
 		if value is not None:
