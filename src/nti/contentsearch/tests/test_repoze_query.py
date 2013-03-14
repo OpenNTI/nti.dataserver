@@ -4,14 +4,16 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
+from .. import interfaces
 from .._repoze_query import validate_query
+from .._repoze_query import _can_use_ngram_field
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_ )
+from hamcrest import (assert_that, is_)
 
 class TestRepozeIndex(ConfiguringTestBase):
 
@@ -21,3 +23,9 @@ class TestRepozeIndex(ConfiguringTestBase):
 		assert_that(validate_query("notvalid("), is_(False))
 		assert_that(validate_query('"shared with'), is_(True))
 		assert_that(validate_query('"shared with"'), is_(True))
+
+	def test_can_use_ngram_field(self):
+		qo = interfaces.ISearchQuery('(Innovators')
+		assert_that(_can_use_ngram_field(qo), is_(True))
+		qo = interfaces.ISearchQuery('')
+		assert_that(_can_use_ngram_field(qo), is_(False))
