@@ -424,6 +424,11 @@ class ValidBytesLine(FieldValidationMixin,schema.BytesLine):
 	def set( self, context, value ):
 		_do_set( self, context, value, ValidBytesLine, BeforeSchemaFieldAssignedEvent )
 
+class ValidBytes(FieldValidationMixin,schema.Bytes):
+
+	def set( self, context, value ):
+		_do_set( self, context, value, ValidBytes, BeforeSchemaFieldAssignedEvent )
+
 
 class ValidText(FieldValidationMixin,schema.Text):
 	"""
