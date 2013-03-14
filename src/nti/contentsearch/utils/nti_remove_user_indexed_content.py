@@ -22,17 +22,20 @@ from ..common import normalize_type_name as _nrm
 from ._repoze_utils import remove_entity_catalogs
 
 def remove_entity_indices(entity, content_types=(), include_dfls=False):
-	remove_entity_catalogs(entity, content_types)
+	result = remove_entity_catalogs(entity, content_types)
 	if include_dfls:
 		for dfl in find_user_dfls(entity):
-			remove_entity_catalogs(dfl, content_types)
+			result += remove_entity_catalogs(dfl, content_types)
+	return result
 
-def remove_entity_content(username, content_types=(), include_dfls=False):
+def remove_entity_content(username, content_types=(), include_dfls=False, verbose=False):
 	entity = users.Entity.get_entity(username)
 	if not entity:
 		print("user/entity '%s' does not exists" % username, file=sys.stderr)
 		sys.exit(2)
-	remove_entity_indices(entity, content_types, include_dfls)
+	result = remove_entity_indices(entity, content_types, include_dfls)
+	if verbose:
+		print("%s catalog(s) removed for user/entity '%s'" % (result, username), file=sys.stderr)
 
 remove_user_content = remove_entity_content
 
@@ -40,13 +43,15 @@ def main():
 	arg_parser = argparse.ArgumentParser(description="Unindex user content")
 	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username")
-	arg_parser.add_argument('--include_dfls', help="Unindex content in user's dfls", action='store_true', dest='include_dfls')
+	arg_parser.add_argument('-v', '--verbose', help="Verbose output", action='store_true', dest='verbose')
+	arg_parser.add_argument('-i', '--include_dfls', help="Unindex content in user's dfls", action='store_true', dest='include_dfls')
 	arg_parser.add_argument('-t', '--types',
 							 nargs="*",
 							 dest='idx_types',
 							 help="The content type(s) to unindex")
 	args = arg_parser.parse_args()
 
+	verbose = args.verbose
 	username = args.username
 	idx_types = args.idx_types
 	include_dfls = args.include_dfls
@@ -60,8 +65,8 @@ def main():
 			sys.exit(3)
 
 	run_with_dataserver(environment_dir=env_dir,
-						 xmlconfig_packages=(nti.contentsearch,),
-						 function=lambda: remove_entity_content(username, content_types, include_dfls))
+						xmlconfig_packages=(nti.contentsearch,),
+						function=lambda: remove_entity_content(username, content_types, include_dfls, verbose))
 
 if __name__ == '__main__':
 	main()
