@@ -170,16 +170,27 @@ def _build_reference_lists( request, result_list ):
 			proxies[item] = proxy
 
 	for item in result_list:
-		inReplyTo = getattr( item, 'inReplyTo', None )
+		inReplyTo = None
+		try:
+			inReplyTo = item.getInReplyTo(allow_cached=False)
+		except (AttributeError,TypeError):
+			inReplyTo = getattr( item, 'inReplyTo', None )
 		__traceback_info__ = item, inReplyTo, getattr( item, 'containerId', None )
 
 		if inReplyTo is not None:
 			# Also, we must maintain the proxy map ourself because the items we get
 			# back from here are 'real' vs the things we just put in the result list
-			_referenced_by( inReplyTo, item ).append( weakref.ref( item ) )
-		for ref in getattr( item, 'references', () ):
+			_referenced_by( inReplyTo, item ).append( item )
+
+		refs = ()
+		try:
+			refs = item.getReferences(allow_cached=False)
+		except (AttributeError,TypeError):
+			refs = getattr( item, 'references', () )
+
+		for ref in refs:
 			if ref is not None and ref is not inReplyTo:
-				_referenced_by( ref, item ).append( weakref.ref( item ) )
+				_referenced_by( ref, item ).append( item )
 
 def _reference_list_length( x ):
 	refs = getattr( x, _REF_ATTRIBUTE, _reference_list_length )
@@ -192,7 +203,7 @@ def _reference_list_length( x ):
 def _reference_list_objects( x ):
 	refs = getattr( x, _REF_ATTRIBUTE, _reference_list_objects )
 	if refs is not _reference_list_objects and refs is not None:
-		return (x() for x in refs)
+		return refs
 	else:
 		return ()
 
