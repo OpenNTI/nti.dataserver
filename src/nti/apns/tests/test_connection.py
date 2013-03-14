@@ -17,7 +17,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_key
+from hamcrest import has_property
 from hamcrest import contains_string
 from nose.tools import assert_raises
 
@@ -35,8 +35,10 @@ def test_to_packet_bytes():
 	with assert_raises(interface.Invalid):
 		to_packet_bytes( APNSPayload(), deviceid )
 
-	with assert_raises(interface.Invalid):
+	with assert_raises(interface.Invalid) as ex:
 		to_packet_bytes( payload, b'tooshort' )
+
+	assert_that( ex.exception, has_property( 'field', has_property( '__name__', 'deviceId' ) ) )
 
 	packet, _ = to_packet_bytes( payload, deviceid )
 	assert_that( packet, is_( bytes ) )

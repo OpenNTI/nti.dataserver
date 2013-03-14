@@ -10,16 +10,21 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope import schema
 from zope.schema.fieldproperty import createFieldProperties
+
+from zope.schema import Int
+from zope.schema import BytesLine
+from nti.utils.schema import ValidTextLine as TextLine
+from nti.utils.schema import ValidBytesLine as BytesLine
+from zope.schema import Dict
 
 class IDeviceFeedback(interface.Interface):
 	"""
 	Feedback about an invalid device received from APNS.
 	"""
 
-	timestamp = schema.Int( title="The timestamp of the notification?" )
-	deviceId = schema.BytesLine( title="The raw bytes of the device being de-registered.",
+	timestamp = Int( title="The timestamp of the notification?" )
+	deviceId = BytesLine( title="The raw bytes of the device being de-registered.",
 								 min_length=32,
 								 max_length=32)
 
@@ -55,7 +60,7 @@ class INotificationPayload(interface.Interface):
 	""" # Idiotic apple links. I have no confidence that will actually work tomorrow. I mean, look at it
 
 
-	alert = schema.TextLine(
+	alert = TextLine(
 		title="A short, localized string giving the text to display.",
 		description="""
 			The message text of an alert with two buttons: Close and View. If the user taps View, the application is launched.
@@ -63,10 +68,10 @@ class INotificationPayload(interface.Interface):
 			Note that although the APNS service technically support a dictionary for this property, allowing for app-side
 			localization, that is not currently supported by this API.""",
 		required=False)
-	badge = schema.Int(
+	badge = Int(
 		title="The integer to badge the icon with or ``None``",
 		required=False )
-	sound = schema.TextLine(
+	sound = TextLine(
 		title="A string naming the sound to play",
 		description="Either the string ``default``, meaning the default sound, or the name of a sound in the application bundle.",
 		required=False)
@@ -77,9 +82,9 @@ class INotificationPayload(interface.Interface):
 		if not self.alert and not self.sound and self.badge is None:
 			raise interface.Invalid("At least one of alert, badge, or sound must be given")
 
-	userInfo = schema.Dict(
+	userInfo = Dict(
 		title="If not-``None``, a small dictionary of data to encode as JSON and send.",
-		key_type=schema.TextLine(title="JSON property names"),
+		key_type=TextLine(title="JSON property names"),
 		required=False,
 		description="""
 			Custom values must use the JSON structured

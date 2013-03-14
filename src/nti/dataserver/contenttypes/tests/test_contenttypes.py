@@ -169,31 +169,25 @@ class _BaseSelectedRangeTest(mock_dataserver.SharedConfiguringTestBase):
 		update_from_external_object( highlight, ext, context=self.ds )
 		assert_that( highlight.tags, contains( ('hi') ) )
 
-	def test_external_style(self):
-		highlight = Highlight()
-		assert_that( highlight.style, is_( 'plain' ) )
-
-		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
-			update_from_external_object( highlight, {'style':'redaction'} )
-
-
-		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
-			update_from_external_object( highlight, {'style':'F00B4R'} )
 
 
 class HighlightTest(_BaseSelectedRangeTest):
 
 	def test_external_style(self):
-		highlight = Highlight()
+		highlight = self.CONSTRUCTOR()
 		assert_that( highlight.style, is_( 'plain' ) )
-		assert_that( highlight, verifiably_provides( nti_interfaces.IHighlight ) )
 
-		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
+		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied) as ex:
 			update_from_external_object( highlight, {'style':'redaction'} )
 
+		assert_that( ex.exception, has_property( 'field' ) )
+		assert_that( ex.exception.field, has_property( '__name__', 'style' ) )
 
-		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied):
+		with self.assertRaises(zope.schema.interfaces.ConstraintNotSatisfied) as ex:
 			update_from_external_object( highlight, {'style':'F00B4R'} )
+
+		assert_that( ex.exception, has_property( 'field' ) )
+		assert_that( ex.exception.field, has_property( '__name__', 'style' ) )
 
 
 class BookmarkTest(_BaseSelectedRangeTest):
