@@ -14,9 +14,10 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 
 from . import MessageFactory as _
+import sys
+
 from dm.zope.schema.schema import SchemaConfigured, schemadict, Object as ObjectBase
 ObjectBase.check_declaration = True
-
 
 from zope import interface
 from zope import schema
@@ -26,6 +27,7 @@ from zope.event import notify
 from zope.schema import interfaces as sch_interfaces
 
 from zope.schema.fieldproperty import FieldProperty
+from zope.schema.fieldproperty import createFieldProperties # public API
 try:
 	from Acquisition.interfaces import IAcquirer
 	from Acquisition import aq_base
@@ -657,3 +659,29 @@ def before_object_assigned_event_dispatcher(event):
 	"""
 
 	handle( event.object, event.context, event )
+
+def createDirectFieldProperties(__schema, omit=()):
+	"""
+	Like :func:`zope.schema.fieldproperty.createFieldProperties`, except
+	only creates properties for fields directly contained within the
+	given schema; inherited fields from parent interfaces are assummed
+	to be implemented in a base class of the current class.
+	"""
+
+	__my_names = set(__schema.names())
+	__all_names = set(__schema.names(all=True))
+
+	__not_my_names = __all_names - __my_names
+	__not_my_names.update( omit )
+
+	# The existing implementation relies on getframe(1) to find the caller,
+	# which is us. So we do the same and copy to the real caller
+	__frame = None
+	__before = None
+	__before = list(locals().keys())
+	createFieldProperties(__schema,omit=__not_my_names)
+
+	__frame = sys._getframe(1)
+	for k, v in locals().items():
+		if k not in __before:
+			__frame.f_locals[k] = v

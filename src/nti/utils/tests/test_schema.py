@@ -20,10 +20,11 @@ from hamcrest import is_
 from hamcrest import has_property
 from hamcrest import has_length
 from hamcrest import contains
-from hamcrest import has_entry
+from hamcrest import has_key
 from nose.tools import assert_raises
 from hamcrest import none
 from hamcrest import is_not
+does_not = is_not
 
 from nti.tests import verifiably_provides, validated_by, not_validated_by
 
@@ -34,6 +35,8 @@ from nti.utils.schema import ListOrTuple
 from nti.utils.schema import ValidTextLine as TextLine
 from nti.utils.schema import IBeforeSequenceAssignedEvent
 from nti.utils.schema import IBeforeDictAssignedEvent
+from nti.utils.schema import createFieldProperties
+from nti.utils.schema import createDirectFieldProperties
 
 from dolmen.builtins import IUnicode
 from zope import interface
@@ -179,6 +182,27 @@ def test_objectlen():
 
 	with assert_raises( sch_interfaces.TooLong ):
 		olen.validate( 'abcdef' )
+
+def test_create_direct_field_properties():
+	class IA(interface.Interface):
+		a = TextLine(title="a")
+
+	class IB(IA):
+		b = TextLine(title="b")
+
+	class A(object):
+		createFieldProperties(IA)
+
+	class B(object):
+		createDirectFieldProperties(IB)
+
+	assert_that( A.__dict__, has_key( 'a' ) )
+	assert_that( B.__dict__, has_key( 'b' ) )
+	assert_that( B.__dict__, does_not( has_key( 'a' ) ) )
+	# And nothing extra crept in, just the four standard things
+	# __dict__, __doct__, __module__, __weakref__, and b
+	assert_that( B.__dict__, has_length( 5 ) )
+
 
 try:
 	from nti.tests import aq_inContextOf
