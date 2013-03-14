@@ -10,8 +10,6 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import interface
 from zope.location.interfaces import IContained
-from zope.schema.interfaces import IContextSourceBinder
-from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
 from nti.utils import schema as nti_schema
 
@@ -29,6 +27,9 @@ PA_STATE_RESERVED = u'Reserved'
 PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_FAILURE, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_DISPUTED,
 			 PA_STATE_REFUNDED, PA_STATE_SUCCESS, PA_STATE_CANCELED, PA_STATE_RESERVED)
 PA_STATE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PA_STATES])
+
+PAYMENT_PROCESSORS = ('stripe', 'fps')
+PAYMENT_PROCESSORS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PAYMENT_PROCESSORS])
 
 class IUserAddress(interface.Interface):
 	Street = nti_schema.ValidText(title='Street address', required=False)
@@ -68,17 +69,9 @@ class IPaymentProcessor(interface.Interface):
 		:user User that made the purchase
 		"""
 
-class PaymentProcessorVocabulary(UtilityVocabulary):
-	nameOnly = False
-	interface = IPaymentProcessor
-
-def payment_processors(context):
-	return PaymentProcessorVocabulary(context)
-interface.directlyProvides(payment_processors, IContextSourceBinder)
-
 class IPurchaseAttempt(IContained):
 
-	Processor = schema.Choice(source=payment_processors, title='purchase processor', required=True)
+	Processor = schema.Choice(vocabulary=PAYMENT_PROCESSORS_VOCABULARY, title='purchase processor', required=True)
 
 	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='Purchase state', required=True)
 
@@ -92,7 +85,7 @@ class IPurchaseAttempt(IContained):
 	ErrorCode = schema.Int(title='Failure code', required=False)
 	ErrorMessage = nti_schema.ValidTextLine(title='Failure message', required=False)
 
-	Synced = schema.Bool(title='if the item has been synchronized with the processors data', required=True)
+	Synced = schema.Bool(title='if the item has been synchronized with the processors data', required=True, default=False)
 
 	def has_completed():
 		"""

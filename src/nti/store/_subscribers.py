@@ -7,7 +7,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 import time
 
@@ -20,11 +20,11 @@ from . import interfaces as store_interfaces
 from .purchase_history import get_purchase_attempt
 
 def _get_content_role_users(purchase):
-	on_behalf_of = purchase.on_behalf_of
+	on_behalf_of = purchase.OnBehalfOf
 	return on_behalf_of if on_behalf_of else (purchase.creator.username,)
 
 @component.adapter(store_interfaces.IPurchaseAttemptStarted)
-def _purchase_attempt_started( event ):
+def _purchase_attempt_started(event):
 	def func():
 		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.updateLastMod()
@@ -33,7 +33,7 @@ def _purchase_attempt_started( event ):
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
-def _purchase_attempt_successful( event ):
+def _purchase_attempt_successful(event):
 	def func():
 		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.State = store_interfaces.PA_STATE_SUCCESS
@@ -45,7 +45,7 @@ def _purchase_attempt_successful( event ):
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
-def _purchase_attempt_refunded( event ):
+def _purchase_attempt_refunded(event):
 	def func():
 		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.State = store_interfaces.PA_STATE_REFUNDED
@@ -57,7 +57,7 @@ def _purchase_attempt_refunded( event ):
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
 @component.adapter(store_interfaces.IPurchaseAttemptDisputed)
-def _purchase_attempt_disputed( event ):
+def _purchase_attempt_disputed(event):
 	def func():
 		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.State = store_interfaces.PA_STATE_DISPUTED
@@ -66,7 +66,7 @@ def _purchase_attempt_disputed( event ):
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
 @component.adapter(store_interfaces.IPurchaseAttemptFailed)
-def _purchase_attempt_failed( event ):
+def _purchase_attempt_failed(event):
 	def func():
 		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.updateLastMod()
@@ -80,7 +80,7 @@ def _purchase_attempt_failed( event ):
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
 @component.adapter(store_interfaces.IPurchaseAttemptSynced)
-def _purchase_attempt_synced( event ):
+def _purchase_attempt_synced(event):
 	def func():
 		purchase = get_purchase_attempt(event.purchase_id, event.username)
 		purchase.Synced = True

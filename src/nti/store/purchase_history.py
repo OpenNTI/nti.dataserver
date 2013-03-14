@@ -28,11 +28,11 @@ from nti.dataserver import interfaces as nti_interfaces
 from .purchase_attempt import to_frozenset
 from . import interfaces as store_interfaces
 
-def _time_to_64bit_int( value ):
-	return struct.unpack( b'!Q', struct.pack( b'!d', value ) )[0]
+def _time_to_64bit_int(value):
+	return struct.unpack(b'!Q', struct.pack(b'!d', value))[0]
 
 @component.adapter(nti_interfaces.IUser)
-@interface.implementer( store_interfaces.IPurchaseHistory )
+@interface.implementer(store_interfaces.IPurchaseHistory)
 class _PurchaseHistory(zcontained.Contained, Persistent):
 
 	family = BTrees.family64
@@ -46,7 +46,7 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 		return self.__parent__
 
 	def register_purchase(self, purchase):
-		start_time = purchase.start_time
+		start_time = purchase.StartTime
 		self.time_map[_time_to_64bit_int(start_time)] = purchase
 		self.purchases.add(purchase)
 		locate(purchase, self, repr(purchase))
@@ -55,7 +55,7 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 	add_purchase = register_purchase
 
 	def remove_purchase(self, purchase):
-		self.time_map.pop(_time_to_64bit_int(purchase.start_time), None)
+		self.time_map.pop(_time_to_64bit_int(purchase.StartTime), None)
 		try:
 			self.purchases.remove(purchase)
 		except KeyError:
@@ -65,7 +65,7 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 			lifecycleevent.removed(purchase)
 
 	def get_purchase(self, pid):
-		result = ntiids.find_object_with_ntiid(pid )
+		result = ntiids.find_object_with_ntiid(pid)
 		return result
 
 	def get_purchase_state(self, pid):
@@ -82,7 +82,7 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 		on_behalf_of = to_frozenset(on_behalf_of)
 		for p in self.time_map.values():
 			if (p.is_pending() or p.is_unknown()) and \
-				p.items.intersection(items) and \
+				p.Items.intersection(items) and \
 				(not on_behalf_of or p.actors().intersection(on_behalf_of)):
 				return p
 		return None
@@ -93,7 +93,7 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 		for t, p in self.time_map.iteritems():
 			if t > end_time:
 				break
-			elif t >= start_time and t<= end_time:
+			elif t >= start_time and t <= end_time:
 				yield p
 
 	def values(self):
@@ -134,7 +134,7 @@ def get_pending_purchase_for(user, items, on_behalf_of=None):
 	return result
 
 def register_purchase_attempt(username, purchase):
-	assert getattr( purchase, '_p_oid', None ) is None
+	assert getattr(purchase, '_p_oid', None) is None
 	result = []
 	def func():
 		user = User.get_user(username)

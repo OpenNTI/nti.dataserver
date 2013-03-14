@@ -17,18 +17,19 @@ import persistent
 from zope import interface
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
+from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.dataserver.datastructures import ModDateTrackingObject
 
 from nti.externalization.oids import to_external_ntiid_oid
 
-from nti.utils.property import alias
+from nti.utils.schema import SchemaConfigured
 
 from . import interfaces as store_interfaces
 
 def _from_unicode(value):
 	result = value.split(',')
-	result = re.findall("[^\s]+", value) if len(result)<=1 else result
+	result = re.findall("[^\s]+", value) if len(result) <= 1 else result
 	return result
 
 def _to_collection(items=None, factory=list):
@@ -38,7 +39,7 @@ def _to_collection(items=None, factory=list):
 	elif isinstance(items, factory):
 		result = items
 	elif isinstance(items, six.string_types):
-		result = factory(_from_unicode(items))
+		result = factory(_from_unicode(unicode(items)))
 	else:
 		result = factory(items)
 	return result
@@ -49,74 +50,48 @@ def to_list(items=None):
 def to_frozenset(items=None):
 	return _to_collection(items, frozenset)
 
-_marker_frozenset = frozenset()
-
 @functools.total_ordering
 @interface.implementer(store_interfaces.IPurchaseAttempt)
-class BasePurchaseAttempt(ModDateTrackingObject):
+class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 
-	Synced = False
-	EndTime = None
-	ErrorCode = None
-	Description = None
-	ErrorMessage = None
-	OnBehalfOf = _marker_frozenset
+	Items = FP(store_interfaces.IPurchaseAttempt['Items'])
+	Processor = FP(store_interfaces.IPurchaseAttempt['Processor'])
+	State = FP(store_interfaces.IPurchaseAttempt['State'])
+	Description = FP(store_interfaces.IPurchaseAttempt['Description'])
+	StartTime = FP(store_interfaces.IPurchaseAttempt['StartTime'])
+	EndTime = FP(store_interfaces.IPurchaseAttempt['EndTime'])
+	OnBehalfOf = FP(store_interfaces.IPurchaseAttempt['OnBehalfOf'])
+	ErrorCode = FP(store_interfaces.IPurchaseAttempt['ErrorCode'])
+	ErrorMessage = FP(store_interfaces.IPurchaseAttempt['ErrorMessage'])
+	Synced = FP(store_interfaces.IPurchaseAttempt['Synced'])
 
-	def __init__(self, items, processor, state, description=None, start_time=None, end_time=None,
-				 on_behalf_of=None, error_code=None, error_message=None, synced=False):
+	def __str__(self):
+		return "%s,%s" % (self.Items, self.State)
 
-		self.State = state
-		self.Processor = processor
-		self.Items = to_frozenset(items)
-		self.StartTime = start_time if start_time else time.time()
-		if on_behalf_of:
-			self.OnBehalfOf = to_frozenset(on_behalf_of)
-		if end_time is not None:
-			self.EndTime = end_time
-		if error_code:
-			self.ErrorCode = error_code
-		if error_message:
-			self.ErorrMessage = error_message
-		if description:
-			self.Description = description
-		if synced == True:
-			self.Synced = True
-
-	state = alias('State')
-	items = alias('Items')
-	synced = alias('Synced')
-	processor = alias('Processor')
-	start_time = alias('StartTime')
-	on_behalf_of = alias('OnBehalfOf')
-	description = alias('Description')
-
-	def __str__( self ):
-		return "%s,%s" % (self.items, self.state)
-
-	def __repr__( self ):
-		d = datetime.fromtimestamp(self.start_time)
-		return "%s(%s,%s,%s)" % (self.__class__, self.processor, d, self.items)
+	def __repr__(self):
+		d = datetime.fromtimestamp(self.StartTime)
+		return "%s(%s,%s,%s)" % (self.__class__, self.Processor, d, self.Items)
 
 	def __eq__(self, other):
 		return self is other or (isinstance(other, PurchaseAttempt)
-								 and self.items == other.items
-								 and self.start_time == other.start_time
-								 and self.processor == other.processor
-								 and self.on_behalf_of == other.on_behalf_of)
+								 and self.Items == other.Items
+								 and self.StartTime == other.StartTime
+								 and self.Processor == other.Processor
+								 and self.OnBehalfOf == other.OnBehalfOf)
 
 	def __lt__(self, other):
 		try:
-			return self.start_time < other.start_time
+			return self.StartTime < other.StartTime
 		except AttributeError:
 			return NotImplemented
 
-	def __gt__(self,other):
+	def __gt__(self, other):
 		try:
-			return self.start_time > other.start_time
+			return self.StartTime > other.StartTime
 		except AttributeError:
 			return NotImplemented
 
-	def __hash__( self ):
+	def __hash__(self):
 		xhash = 47
 		xhash ^= hash(self.Processor)
 		xhash ^= hash(self.StartTime)
@@ -153,7 +128,7 @@ class BasePurchaseAttempt(ModDateTrackingObject):
 
 	def is_synced(self):
 		return self.Synced
-	
+
 @interface.implementer(an_interfaces.IAttributeAnnotatable)
 class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, persistent.Persistent):
 
@@ -167,16 +142,19 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, persistent.Pers
 		return result
 
 	def actors(self):
-		result = self.on_behalf_of.union(set([self.creator.username]))
+		result = self.OnBehalfOf.union(set([self.creator.username]))
 		return result
 
 def create_base_purchase_attempt(purchase):
-	return BasePurchaseAttempt(	items=purchase.Items, processor=purchase.Processor, description=purchase.Description,
-								state=purchase.State, start_time=purchase.StartTime, end_time=purchase.EndTime,
-								on_behalf_of=purchase.OnBehalfOf, error_code=purchase.ErrorCode,
-								error_messag=purchase.ErrorMessage, synced=purchase.Synced)
-			
+	return BasePurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
+								State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
+								OnBehalfOf=purchase.OnBehalfOf, ErrorCode=purchase.ErrorCode,
+								ErrorMessage=purchase.ErrorMessage, Synced=purchase.Synced)
+
 def create_purchase_attempt(items, processor, on_behalf_of=None, state=None, description=None, start_time=None):
+	items = to_frozenset(items)
+	on_behalf_of = to_frozenset(on_behalf_of)
+	start_time = start_time if start_time else time.time()
 	state = state or store_interfaces.PA_STATE_UNKNOWN
-	return PurchaseAttempt(	items=items, processor=processor, description=description,
-							state=state, start_time=start_time, on_behalf_of=on_behalf_of)
+	return PurchaseAttempt(Items=items, Processor=processor, Description=description,
+							State=state, StartTime=float(start_time), OnBehalfOf=on_behalf_of)
