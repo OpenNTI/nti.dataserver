@@ -1,6 +1,9 @@
 //Copied from http://code.google.com/p/phantomjs/wiki/QuickStart
 var page = require('webpage').create(),
     address, output, size;
+page.onConsoleMessage = function (msg, line, source) {
+	// Silent. Our caller, contentthumbnails.py, expects no output
+};
 
 if (phantom.args.length < 2 || phantom.args.length > 3) {
     console.log('Usage: rasterize.js URL filename');
