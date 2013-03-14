@@ -579,9 +579,13 @@ class ZopeExceptionLogPatch(nose.plugins.Plugin):
 		# Omitting filenames makes things shorter
 		# and generally more readable, but when the last part of the traceback
 		# is in initializing a module, then the filename is the only discriminator
-		formatted_tb = ''.join(format_exception(t, v, tb, with_filenames=False))
-		if 'Module None' in formatted_tb:
-			formatted_tb = ''.join(format_exception(t, v, tb, with_filenames=True))
+
+		# Note that we are joining with a byte string, not a unicode string. Under
+		# python2, tracebacks are byte strings and mixing unicode at this level may
+		# result in UnicodeDecodeError
+		formatted_tb = b''.join(format_exception(t, v, tb, with_filenames=False))
+		if b'Module None' in formatted_tb:
+			formatted_tb = b''.join(format_exception(t, v, tb, with_filenames=True))
 		return (t, formatted_tb, None)
 
 	def formatFailure(self, test, exc_info):
