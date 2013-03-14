@@ -42,6 +42,7 @@ from nti.externalization.externalization import to_standard_external_created_tim
 from nti.ntiids import ntiids
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.sharing import SharingContextCache
 from nti.dataserver import users
 from nti.dataserver.users import entity
 from nti.dataserver import liking
@@ -340,6 +341,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		if self.request.context:
 			self.user = the_user or self.request.context.user
 			self.ntiid = the_ntiid or self.request.context.ntiid
+		self.context_cache = SharingContextCache()
 
 	def check_cross_user( self ):
 		if not self._support_cross_user:
@@ -396,7 +398,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 	def do_getObjects( cls, owner, containerId, remote_user,
 					   get_owned=users.User.getContainer,
 					   get_shared=users.User.getSharedContainer,
-					   allow_empty=True ):
+					   allow_empty=True, context_cache=None ):
 		"""
 		Returns a sequence of values that can be passed to
 		:func:`lists_and_dicts_to_ext_collection`.
@@ -405,8 +407,8 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		"""
 
 		__traceback_info__ = owner, containerId
-		mystuffDict = get_owned( owner, containerId ) if get_owned else ()
-		sharedstuffList = get_shared( owner, containerId) if get_shared else () # see comments in _meonly_predicate_factory
+		mystuffDict = get_owned( owner, containerId, context_cache=context_cache ) if get_owned else ()
+		sharedstuffList = get_shared( owner, containerId, context_cache=context_cache) if get_shared else () # see comments in _meonly_predicate_factory
 
 		# To determine the existence of the container,
 		# My stuff either exists or it doesn't. The others, being shared,
@@ -438,7 +440,8 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		return self.do_getObjects( user, ntiid, remote_user,
 								   get_owned=self.get_owned,
 								   get_shared=get_shared,
-								   allow_empty=self._my_objects_may_be_empty )
+								   allow_empty=self._my_objects_may_be_empty,
+								   context_cache=self.context_cache)
 
 	_DEFAULT_SORT_ON = 'lastModified'
 	_DEFAULT_BATCH_SIZE = None
@@ -816,6 +819,7 @@ class _UGDAndRecursiveStreamView(_UGDView):
 	def _getAllObjects( self, user, ntiid ):
 		pageGet = _UGDView( self.request )
 		streamGet = _RecursiveUGDStreamView( self.request )
+		streamGet.context_cache = pageGet.context_cache
 		streamGet._my_objects_may_be_empty = True
 		page_data = ()
 		try:

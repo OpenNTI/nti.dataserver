@@ -698,7 +698,7 @@ class User(Principal):
 			return self
 		return self.containers.getContainedObject( containerId, containedId, defaultValue )
 
-	def getContainer( self, containerId, defaultValue=None ):
+	def getContainer( self, containerId, defaultValue=None, context_cache=None ):
 		stored_value = self.containers.getContainer( containerId, defaultValue )
 		return stored_value
 
