@@ -336,7 +336,6 @@ def test_matching_macros():
 	assert_that( part, has_property( 'values', has_length( 3 ) ) )
 	assert_that( part.values, has_item( 'Black' ) )
 
-from plasTeX.Renderers.XHTML import Renderer
 from nti.contentrendering.plastexpackages import interfaces
 from zope import component
 from zope import interface
@@ -369,7 +368,7 @@ class TestRenderableSymMathPart(unittest.TestCase):
 		with RenderContext(_simpleLatexDocument( (example,) ), output_encoding='utf-8', input_encoding=input_encoding) as ctx:
 			dom  = ctx.dom
 			dom.getElementsByTagName( 'document' )[0].filenameoverride = 'index'
-			render = Renderer()
+			render = ResourceRenderer.createResourceRenderer('XHTML', None)
 			render.importDirectory( os.path.join( os.path.dirname(__file__), '..' ) )
 			render.render( dom )
 			# TODO: Actual validation of the rendering
@@ -438,8 +437,7 @@ class TestRenderableSymMathPart(unittest.TestCase):
 		with RenderContext(_simpleLatexDocument( (example,) )) as ctx:
 			dom  = ctx.dom
 			dom.getElementsByTagName( 'document' )[0].filenameoverride = 'index'
-			render = Renderer()
-			render.renderableClass = ResourceRenderer.Renderable
+			render = ResourceRenderer.createResourceRenderer( 'XHTML', None )
 			render.importDirectory( os.path.join( os.path.dirname(__file__), '..' ) )
 			render.render( dom )
 

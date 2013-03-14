@@ -39,13 +39,12 @@ def createResourceRenderer(baserenderername, resourcedb, unmix=True):
 	# replace the render method on the instance.
 	# Instead, we dynamically derive a new class and insert it into the Method-Resolution-Order
 	# (inheritance tree) just /before/ BaseRender. Our implementation will not call super, and so
-	# we effectively replace BaseRendere. NOTE: This depends on cooperative subclasses that /do/ call
+	# we effectively replace BaseRender. NOTE: This depends on cooperative subclasses that /do/ call
 	# super
 
 	bases = list( factory.__mro__ )
 	bases.insert( bases.index( BaseRenderer ), _ResourceRenderer )
 
-	factory = type( str('_%sResourceRenderer' % baserenderername), tuple(bases), {} )
 
 	# We also override the template registration method to capture templates
 	# that are registered for rendering a particular type of resource. These
@@ -60,8 +59,14 @@ def createResourceRenderer(baserenderername, resourcedb, unmix=True):
 			self.template_names_by_type.setdefault( options['nti_resource_for'], [] ).insert( 0, options['name'] )
 
 		return result
+	# Likewise for a few other methods that we actually do want to override
+	factory_dict = { 'setTemplate': _setTemplate,
+					 'doJavaHelpFiles': _ResourceRenderer.doJavaHelpFiles,
+					 'doCHMFiles': _ResourceRenderer.doCHMFiles }
 
-	factory.setTemplate = _setTemplate
+
+	factory = type( str('_%sResourceRenderer' % baserenderername), tuple(bases), factory_dict )
+
 	renderer = factory()
 	renderer.renderableClass = Renderable
 	renderer.resourcedb = resourcedb
@@ -150,7 +155,12 @@ class _ResourceRenderer(object):
 				del document.renderer
 				unmix(Node, self.renderableClass)
 
+	# Override some things we never want
+	def doJavaHelpFiles( self, *args, **kwargs ):
+		return
 
+	def doCHMFiles( self, *args, **kwargs ):
+		return
 
 class Renderable(BaseRenderable):
 
@@ -275,10 +285,11 @@ class Renderable(BaseRenderable):
 			current_size = 'full'
 
 
-		# SAJ: Here we determine if the assets support browser resizing.  The only time resizing is not 
+		# SAJ: Here we determine if the assets support browser resizing.  The only time resizing is not
 		# supported is when the requested size is the same size or larger than the largest asset.
 		if current_size == 'oversize':
-			logger.warning( 'Using oversized resource for: %s \nactual size: (%s, %s) \nrequested size: (%s, %s)' % (self.source, assets['1'].width, assets['1'].height, (self.style['width'] if 'width' in self.style else None), (self.style['height'] if 'height' in self.style else None)) )
+			logger.warning( 'Using oversized resource for: %s \nactual size: (%s, %s) \nrequested size: (%s, %s)',
+							self.source, assets['1'].width, assets['1'].height, (self.style['width'] if 'width' in self.style else None), (self.style['height'] if 'height' in self.style else None) )
 			img.resizeable = False
 		elif current_size == 'actual':
 			img.resizeable = False

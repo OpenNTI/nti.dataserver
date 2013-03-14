@@ -3,11 +3,11 @@ if(phantom.args.length < 1){
 }
 
 var page = require('webpage').create();
-page.viewportSize =  {width: 730, height: 964}; //height is 1024 - 60
-page.onConsoleMessage = function (msg) {
-    console.log(' Message from page: ' + msg);
+page.viewportSize =	 {width: 730, height: 964}; //height is 1024 - 60
+page.onConsoleMessage = function (msg, line, source) {
+	//console.warn('// CONSOLE : ' + msg + ' at ' + line + ' in ' + source);
+	//Silent. We expect just the overflows on output
 };
-
 
 var findOverflowedMath = function(){
 	var overflowed = [];
@@ -27,7 +27,7 @@ var onPageOpen = function(status){
 		console.log('Unable to open page');
 	}
 	else {
-		page.injectJs( "jquery-1.7.2.min.js" );
+		page.injectJs( "jquery-1.9.1.min.js" );
 		var overflowedMath = page.evaluate(findOverflowedMath);
 
 		console.log(JSON.stringify(overflowedMath));

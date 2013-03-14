@@ -5,11 +5,13 @@ if(phantom.args.length < 1){
 var page = require('webpage').create();
 page.viewportSize =  {width: 730, height: 964}; //height is 1024 - 60
 
-page.onConsoleMessage = function(msg){
+page.onConsoleMessage = function(msg, line, source){
 	if (msg === 'Exit process'){
 		phantom.exit();
 	}
 	else { //phantom.exit() is async so this must be in an else to avoid spurious output
+		// This is something of an abuse, but the page directly sends us html,
+		// which we write to stdout on a line
 		console.log(msg);
 	}
 };
@@ -39,7 +41,7 @@ var onPageOpen = function(status){
 		phantom.exit();
 	}
 	else {
-		page.injectJs( "jquery-1.7.2.min.js" );
+		page.injectJs( "jquery-1.9.1.min.js" );
 		page.evaluate(processPage);
 	}
 };

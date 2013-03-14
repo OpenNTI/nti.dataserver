@@ -31,7 +31,7 @@ import anyjson as json
 import warnings
 try:
 
-	warnings.warn( "Using whatever phantomjs is on the PATH; supported version 1.8.0; version found at %s is %s"
+	warnings.warn( "Using whatever phantomjs is on the PATH; supported version 1.8.2; version found at %s is %s"
 				   %(subprocess.check_output(['which', 'phantomjs']).strip(), subprocess.check_output( ['phantomjs', '-v'] ).strip() ),
 				   UserWarning, stacklevel=1)
 except subprocess.CalledProcessError:
@@ -48,6 +48,7 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 
 	process = ['phantomjs', scriptName, htmlFile]
 	process.extend( args )
+	__traceback_info__ = process
 	logger.debug( "Executing %s", process )
 	# TODO: subprocess.check_output?
 	# On OS X, phantomjs produces some output to stderr that's annoying and usually useless,
@@ -57,7 +58,8 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 		stderr = open( '/dev/null', 'wb' )
 
 	try:
-		jsonStr = subprocess.check_output( process, stderr=stderr ).strip() #.Popen(process, stdout=subprocess.PIPE, stderr=stderr).communicate()[0].strip()
+		jsonStr = subprocess.check_output( process, stderr=stderr ).strip()
+		__traceback_info__ += (jsonStr,)
 	finally:
 		if stderr is not None:
 			stderr.close()
@@ -74,11 +76,11 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 				result = json.loads(jsonStr)
 			except ValueError:
 				if jsonStr:
-					__traceback_info__ = htmlFile, scriptName
-					# TODO: This should no longer be necessary on 1.6, yes?
-					logger.exception( "Got unparseable output. Trying again" )
+					logger.debug( "Got unparseable output. Trying again", exc_info=True )
 					# We got output. Perhaps there was plugin junk above? Try
 					# again with just the last line.
+					# This often happens if the console log methods are used; unfortunately,
+					# phantom seems to have no way to direct those to stderr
 					result = json.loads( jsonStr.splitlines()[-1] )
 				else:
 					raise
