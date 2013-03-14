@@ -23,15 +23,15 @@ from . import get_uid
 from . import find_all_indexable_pairs
 from .. import interfaces as search_interfaces
 from ._repoze_utils import remove_entity_catalogs
-			
+
 def reindex_entity_content(entity, include_dfls=False, verbose=False):
-	
-	counter = 0	
+
+	counter = 0
 	t = time.time()
-		
+
 	# remove catalogs for main entity
 	remove_entity_catalogs(entity)
-	
+
 	# loop through all user indexable objects
 	for e, obj in find_all_indexable_pairs(entity, include_dfls=include_dfls):
 		rim = search_interfaces.IRepozeEntityIndexManager(e)
@@ -47,24 +47,24 @@ def reindex_entity_content(entity, include_dfls=False, verbose=False):
 		except POSKeyError:
 			# broken reference for object
 			pass
-	
+
 	t = time.time() - t
 	if verbose:
 		print('%s object(s) reindexed for %s in %.2f(s)' % (counter, entity.username, t))
-		
+
 	return counter
 
 def _reindex_process(username, include_dfls=False, verbose=False):
-	entity = users.Entity.get_entity( username )
+	entity = users.Entity.get_entity(username)
 	if not entity:
-		print( "entity '%s' does not exists" % username, file=sys.stderr )
-		sys.exit( 2 )
+		print("entity '%s' does not exists" % username, file=sys.stderr)
+		sys.exit(2)
 	return reindex_entity_content(entity, include_dfls, verbose)
 
 def main():
-	arg_parser = argparse.ArgumentParser( description="Reindex entity content" )
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( 'username', help="The username" )
+	arg_parser = argparse.ArgumentParser(description="Reindex entity content")
+	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
+	arg_parser.add_argument('username', help="The username")
 	arg_parser.add_argument('-v', '--verbose', help="Verbose output", action='store_true', dest='verbose')
 	arg_parser.add_argument('-i', '--include_dfls', help="Reindex content in user's dfls", action='store_true', dest='include_dfls')
 	args = arg_parser.parse_args()
@@ -73,10 +73,10 @@ def main():
 	username = args.username
 	include_dfls = args.include_dfls
 	env_dir = os.path.expanduser(args.env_dir)
-	
-	run_with_dataserver( environment_dir=env_dir,
-						 xmlconfig_packages=(nti.contentsearch,),
-						 function=lambda: _reindex_process(username, include_dfls, verbose) )
+
+	run_with_dataserver(environment_dir=env_dir,
+						xmlconfig_packages=(nti.contentsearch,),
+						function=lambda: _reindex_process(username, include_dfls, verbose))
 
 if __name__ == '__main__':
 	main()

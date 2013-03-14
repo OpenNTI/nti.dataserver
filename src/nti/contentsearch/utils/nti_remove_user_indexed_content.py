@@ -16,8 +16,8 @@ from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 
 import nti.contentsearch
-from .. import get_indexable_types
 from . import find_user_dfls
+from .. import get_indexable_types
 from ..common import normalize_type_name as _nrm
 from ._repoze_utils import remove_entity_catalogs
 
@@ -26,25 +26,25 @@ def remove_entity_indices(entity, content_types=(), include_dfls=False):
 	if include_dfls:
 		for dfl in find_user_dfls(entity):
 			remove_entity_catalogs(dfl, content_types)
-			
+
 def remove_entity_content(username, content_types=(), include_dfls=False):
-	entity = users.Entity.get_entity( username )
+	entity = users.Entity.get_entity(username)
 	if not entity:
-		print( "user/entity '%s' does not exists" % username, file=sys.stderr )
+		print("user/entity '%s' does not exists" % username, file=sys.stderr)
 		sys.exit(2)
 	remove_entity_indices(entity, content_types, include_dfls)
 
 remove_user_content = remove_entity_content
 
 def main():
-	arg_parser = argparse.ArgumentParser( description="Unindex user content" )
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( 'username', help="The username" )
-	arg_parser.add_argument( '--include_dfls', help="Unindex content in user's dfls", action='store_true', dest='include_dfls')
-	arg_parser.add_argument( '-t', '--types',
+	arg_parser = argparse.ArgumentParser(description="Unindex user content")
+	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
+	arg_parser.add_argument('username', help="The username")
+	arg_parser.add_argument('--include_dfls', help="Unindex content in user's dfls", action='store_true', dest='include_dfls')
+	arg_parser.add_argument('-t', '--types',
 							 nargs="*",
 							 dest='idx_types',
-							 help="The content type(s) to unindex" )
+							 help="The content type(s) to unindex")
 	args = arg_parser.parse_args()
 
 	username = args.username
@@ -58,10 +58,10 @@ def main():
 		if not content_types:
 			print("No valid content type(s) were specified")
 			sys.exit(3)
-			
-	run_with_dataserver( environment_dir=env_dir,
+
+	run_with_dataserver(environment_dir=env_dir,
 						 xmlconfig_packages=(nti.contentsearch,),
-						 function=lambda: remove_entity_content(username, content_types, include_dfls) )
-			
+						 function=lambda: remove_entity_content(username, content_types, include_dfls))
+
 if __name__ == '__main__':
 	main()
