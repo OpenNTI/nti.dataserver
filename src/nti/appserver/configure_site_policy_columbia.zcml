@@ -17,6 +17,7 @@
 		<link:userLink
 			named='.logon.REL_WELCOME_PAGE'
 			minGeneration='20130313'
-			url='/dataserver2/NTIIDs/tag%3Anextthought.com%2C2011-10%3AAOPS-HTML-prealgebra.prealgebra' />
+			url='/NextThoughtWebApp/content/welcome/columbia.html'
+			zcml:condition="have devmode"/>
 	</registerIn>
 </configure>
