@@ -18,7 +18,7 @@ from zope import component
 from zope import interface
 try:
 	from zopyx.txng3.core.parsers.english import EnglishQueryParser
-except ImportError: # pypy?
+except ImportError:  # pypy?
 	EnglishQueryParser = None
 
 from repoze.catalog.query import Any as IndexAny
@@ -34,17 +34,18 @@ from .constants import (content_, ngrams_, title_, tags_, redactionExplanation_,
 
 def _can_use_ngram_field(qo):
 	tokens = split_content(qo.term)
+	__traceback_info__ = qo.term, tokens
 	ncomp = component.getUtility(cp_interfaces.INgramComputer, name=qo.language)
-	min_word = min(map(len, tokens))
+	min_word = min(map(len, tokens)) if tokens else 0
 	return min_word >= ncomp.minsize
 
-@interface.implementer( search_interfaces.IRepozeSearchQueryValidator )
+@interface.implementer(search_interfaces.IRepozeSearchQueryValidator)
 class _DefaultSearchQueryValiator(object):
 
 	def validate(self, query):
 		text = query.term
 		try:
-			#auto complete phrase search
+			# auto complete phrase search
 			if text.startswith('"') and not text.endswith('"'):
 				text += '"'
 				query.term = text
@@ -127,7 +128,7 @@ class Any(IndexAny):
 			result = LFBucket({x:1.0 for x in result})
 		return result
 
-@interface.implementer( search_interfaces.IRepozeQueryParser )
+@interface.implementer(search_interfaces.IRepozeQueryParser)
 class _DefaultRepozeQueryParser(object):
 
 	def _get_search_fields(self, qo):

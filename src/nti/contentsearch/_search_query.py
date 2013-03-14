@@ -24,23 +24,23 @@ prefix_search = re.compile(r'(?P<text>[^ \t\r\n*]+)[*](?= |$|\\)')
 
 def is_phrase_search(term):
 	return phrase_search.match(term) is not None if term else False
-	
+
 def is_prefix_search(term):
 	return prefix_search.match(term) is not None if term else False
-	
+
 @interface.implementer(search_interfaces.ISearchQuery)
 @component.adapter(basestring)
 def _default_query_adapter(query, *args, **kwargs):
 	if query is not None:
 		query = QueryObject.create(query, *args, **kwargs)
 	return query
-	
+
 def _getter(name, default=None):
 	def function(self):
 		return self._data.get(name, default)
 	return function
 
-def _setter_str(name, default=None):
+def _setter_str(name, default=u''):
 	def function(self, val):
 		val = val or default
 		val = unicode(val) if isinstance(val, six.string_types) else repr(val)
@@ -75,40 +75,40 @@ def _setter_tuple(name, unique=True):
 	return function
 
 class _MetaQueryObject(type):
-	
+
 	def __new__(cls, name, bases, dct):
 		t = type.__new__(cls, name, bases, dct)
-		
+
 		# string properties
 		for name in t.__str_properties__:
 			df = t.__defaults__.get(name, None)
 			setattr(t, name, property(_getter(name, df), _setter_str(name)))
 		setattr(t, 'query', property(_getter('term'), _setter_str('term')))
-		
+
 		# int properties
 		for name in t.__int_properties__:
 			df = t.__defaults__.get(name, None)
 			setattr(t, name, property(_getter(name, df), _setter_int(name)))
-		
+
 		# float properties
 		for name in t.__float_properties__:
 			df = t.__defaults__.get(name, None)
 			setattr(t, name, property(_getter(name, df), _setter_float(name)))
-			
+
 		# set properties
 		for name in t.__set_properties__:
 			df = t.__defaults__.get(name, None)
 			setattr(t, name, property(_getter(name, df), _setter_tuple(name)))
-			
+
 		return t
-	
+
 _empty_subqueries = {}
 
 @interface.implementer(search_interfaces.ISearchQuery)
 class QueryObject(object, UserDict.DictMixin):
-	
+
 	__metaclass__ = _MetaQueryObject
-	
+
 	__float_properties__ = ('threshold',)
 	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 'batchSize', 'batchStart')
 	__str_properties__ 	 = ('term', 'indexid', 'username', 'location', 'sortOn', 'sortOrder', 'language')
@@ -117,7 +117,7 @@ class QueryObject(object, UserDict.DictMixin):
 
 	__defaults__ 		 = {'surround': 20, 'maxchars' : 300, 'threshold' : 0.4999, 'sortOrder':descending_ ,
 							'limit': sys.maxint, 'language':'en'}
-	
+
 	def __init__(self, *args, **kwargs):
 		self._data = {}
 		for k, v in kwargs.items():
@@ -127,10 +127,10 @@ class QueryObject(object, UserDict.DictMixin):
 	def keys(self):
 		return self._data.keys()
 
-	def __str__( self ):
+	def __str__(self):
 		return self.term
 
-	def __repr__( self ):
+	def __repr__(self):
 		return 'QueryObject(%r)' % self._data
 
 	def __getitem__(self, key):
@@ -143,15 +143,15 @@ class QueryObject(object, UserDict.DictMixin):
 			self._data[key] = unicode(val) if isinstance(val, six.string_types) else val
 
 	# -- search --
-	
+
 	@property
 	def is_empty(self):
 		return not self.term
-	
+
 	@property
 	def is_phrase_search(self):
 		return is_phrase_search(self.term)
-	
+
 	@property
 	def is_prefix_search(self):
 		return is_prefix_search(self.term)
@@ -159,11 +159,11 @@ class QueryObject(object, UserDict.DictMixin):
 	@property
 	def is_descending_sort_order(self):
 		return self.sortOrder == descending_
-	
+
 	@property
 	def is_batching(self):
 		return self.batchStart is not None and self.batchSize
-	
+
 	# ---------------
 
 	@classmethod
