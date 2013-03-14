@@ -119,6 +119,11 @@ class IBeforeCollectionAssignedEvent(IBeforeIterableAssignedEvent):
 
 	object = interface.Attribute( "The collection being assigned. May or may not be mutable." )
 
+class IBeforeSetAssignedEvent(IBeforeCollectionAssignedEvent):
+	"""
+	Event for assigning sets.
+	"""
+
 class IBeforeSequenceAssignedEvent(IBeforeCollectionAssignedEvent):
 	"""
 	Event for assigning sequences.
@@ -133,6 +138,7 @@ class IBeforeDictAssignedEvent(IBeforeIterableAssignedEvent):
 
 # The hierarchy is IContainer > IIterable > ICollection > ISequence > [ITuple, IList]
 # Also:            IContainer > IIterable > IDict
+# Also:            IContainer > IIterable > ISet
 
 @interface.implementer(IBeforeTextAssignedEvent)
 class BeforeTextAssignedEvent(BeforeSchemaFieldAssignedEvent):
@@ -142,9 +148,20 @@ class BeforeTextAssignedEvent(BeforeSchemaFieldAssignedEvent):
 class BeforeTextLineAssignedEvent(BeforeTextAssignedEvent):
 	pass
 
+
+@interface.implementer(IBeforeCollectionAssignedEvent)
+class BeforeCollectionAssignedEvent(BeforeSchemaFieldAssignedEvent):
+	object = None
+
 @interface.implementer(IBeforeSequenceAssignedEvent)
-class BeforeSequenceAssignedEvent(BeforeSchemaFieldAssignedEvent):
+class BeforeSequenceAssignedEvent(BeforeCollectionAssignedEvent):
 	pass
+
+
+@interface.implementer(IBeforeSetAssignedEvent)
+class BeforeSetAssignedEvent(BeforeCollectionAssignedEvent):
+	pass
+
 
 @interface.implementer(IBeforeDictAssignedEvent)
 class BeforeDictAssignedEvent(BeforeSchemaFieldAssignedEvent):
@@ -397,6 +414,17 @@ class Number(FieldValidationMixin,schema.Float):
 	"""
 	_type = numbers.Number
 
+class ValidChoice(FieldValidationMixin,schema.Choice):
+
+	def set( self, context, value ):
+		_do_set( self, context, value, ValidChoice, BeforeSchemaFieldAssignedEvent )
+
+class ValidBytesLine(FieldValidationMixin,schema.BytesLine):
+
+	def set( self, context, value ):
+		_do_set( self, context, value, ValidBytesLine, BeforeSchemaFieldAssignedEvent )
+
+
 class ValidText(FieldValidationMixin,schema.Text):
 	"""
 	A text line that produces slightly better error messages. They will all
@@ -566,7 +594,12 @@ class TupleFromObject(_ValueTypeAddingDocMixin, _SequenceFromObjectMixin, FieldV
 			value = tuple( value )
 		super(TupleFromObject,self).validate( value )
 
-class UniqueIterable(_ValueTypeAddingDocMixin,FieldValidationMixin,schema.Set):
+class ValidSet(_ValueTypeAddingDocMixin,FieldValidationMixin,schema.Set):
+	def set( self, context, value ):
+		_do_set( self, context, value, ValidSet, BeforeSetAssignedEvent )
+
+
+class UniqueIterable(ValidSet):
 	"""
 	An arbitrary iterable, not necessarily an actual :class:`set` object and
 	not necessarily iterable, but one whose contents are unique.

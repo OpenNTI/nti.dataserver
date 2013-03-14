@@ -12,7 +12,7 @@ __docformat__ = "restructuredtext en"
 #logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope import schema
+#from zope import schema
 
 from zope.mimetype.interfaces import IContentTypeAware
 from zope.annotation.interfaces import IAnnotatable
@@ -25,18 +25,22 @@ from zope.proxy import ProxyBase
 import zope.site.interfaces
 
 from zope.mimetype import interfaces as mime_interfaces
-from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentrange import interfaces as rng_interfaces
 from nti.contentrange.contentrange import ContentRangeDescription
 
 from nti.utils.schema import Object
-from nti.utils.schema import ObjectLen
+from nti.utils.schema import ValidChoice as Choice
 from nti.utils.schema import Variant
 from nti.utils.schema import Number
 from nti.utils.schema import UniqueIterable
 from nti.utils.schema import TupleFromObject
 from nti.utils.schema import ListOrTupleFromObject
+from nti.utils.schema import ListOrTuple
 from nti.utils.schema import DecodingValidTextLine
+from nti.utils.schema import ValidText
+from nti.utils.schema import ValidSet as Set
+from zope.schema import Iterable
+
 from nti.contentfragments.schema import PlainTextLine
 from nti.contentfragments.schema import PlainText
 from nti.contentfragments.schema import SanitizedHTMLContentFragment
@@ -181,7 +185,7 @@ class ILink(interface.Interface):
 	some other entity.
 	"""
 
-	rel = schema.Choice(
+	rel = Choice(
 		title=u'The type of relationship',
 		values=('related', 'alternate', 'self', 'enclosure', 'edit', 'like', 'unlike', 'content' ))
 
@@ -193,7 +197,7 @@ class ILink(interface.Interface):
 		will be interpreted as an absolute or relative URI.
 		""" )
 
-	elements = schema.Iterable(
+	elements = Iterable(
 		title="Additional path segments to put after the `target`",
 		description="""Each element must be a string and will be a new URL segment.
 
@@ -216,8 +220,8 @@ class ILinked(interface.Interface):
 	"""
 	Something that possess links to other objects.
 	"""
-	links = schema.Iterable(
-		title=u'Iterator over the ILinks this object contains.')
+	links = Iterable(
+		title=u'Iterator over the ILinks this object contains.' )
 
 ### Containers
 # TODO: Very much of our home-grown container
@@ -395,7 +399,7 @@ class IGroupMember(interface.Interface):
 
 	"""
 
-	groups = schema.Iterable(title=u'Iterate across the IGroups belonged to.')
+	groups = Iterable(title=u'Iterate across the IGroups belonged to.')
 
 # zope.security defines IPrincipal and IGroupAwarePrincipal which extends IPrincipal.
 # It does not offer the concept of something which simply offers a list of groups;
@@ -842,7 +846,7 @@ class IReadableShared(interface.Interface):
 
 	# TODO: How to deprecate this property?
 #	@deprecate("These names are not properly global")
-	flattenedSharingTargetNames = schema.Set(
+	flattenedSharingTargetNames = Set(
 		title="The usernames of all the users (including communities, etc) this obj is shared with.",
 		description=" This is a convenience property for reporting the usernames of all "
 			" entities this object is shared with, directly or indirectly. Note that the usernames reported "
@@ -905,7 +909,7 @@ class IShareableModeledContent(IShareable,IModeledContent):
 	# This is the name of the property we accept externally and update from. If
 	# its not defined in an interface, we can't associate an ObjectModifiedEvent
 	# with the correct interface. See nti.externalization.internalization.update_from_external_object
-	sharedWith = schema.Set(
+	sharedWith = Set(
 		title="An alias for `flattenedSharingTargetNames`, taking externalization of local usernames into account",
 		value_type=DecodingValidTextLine(title="The username or NTIID" ),
 		required=False,
@@ -963,13 +967,13 @@ class IDeviceContainer(INamedContainer):
 
 class ITranscriptSummary(IModeledContent):
 
-	Contributors = schema.Set( title="All the usernames of people who participated in the conversation",
-							   value_type=DecodingValidTextLine(title="The username"),
-							   readonly=True )
+	Contributors = Set( title="All the usernames of people who participated in the conversation",
+						value_type=DecodingValidTextLine(title="The username"),
+						readonly=True )
 	RoomInfo = interface.Attribute( "The meeting where the conversation took place" )
 
 class ITranscript(ITranscriptSummary):
-	Messages = schema.List( title="All the messages contained in the conversation",
+	Messages = ListOrTuple( title="All the messages contained in the conversation",
 							readonly=True )
 	def get_message( msg_id ):
 		"Return a message with that id"
@@ -998,7 +1002,7 @@ class ISelectedRange(IShareableModeledContent,IAnchoredRepresentation, IUserTagg
 	attaches no semantic meaning to the selection; subclasses will do that.
 	"""
 	# TODO: A field class that handles HTML validation/stripping?
-	selectedText = schema.Text( title="The string representation of the DOM Range the user selected, possibly empty." )
+	selectedText = ValidText( title="The string representation of the DOM Range the user selected, possibly empty." )
 
 class IBookmark(ISelectedRange):
 	"""
@@ -1011,7 +1015,7 @@ class IHighlight(ISelectedRange):
 	"""
 	A highlighted portion of content the user wishes to remember.
 	"""
-	style = schema.Choice(
+	style = Choice(
 		title='The style of the highlight',
 		values=('plain', 'suppressed'),
 		default="plain")
@@ -1125,7 +1129,7 @@ class IClassInfo(IModeledContent):
 	Describes a class.
 	"""
 
-	Sections = schema.Iterable( title="The :class:`ISectionInfo` objects for this class." )
+	Sections = Iterable( title="The :class:`ISectionInfo` objects for this class." )
 
 	def __getitem__( section_id ):
 		"""
@@ -1141,7 +1145,7 @@ class IInstructorInfo(IModeledContent):
 	"""
 	Describes the instructor(s) for a class section.
 	"""
-	Instructors = schema.Iterable( title="The usernames of the instructors." )
+	Instructors = Iterable( title="The usernames of the instructors." )
 
 class ISectionInfo(IModeledContent):
 	"""
@@ -1152,7 +1156,7 @@ class ISectionInfo(IModeledContent):
 		IInstructorInfo,
 		title="The instructors of the section" )
 
-	Enrolled = schema.Iterable( title="The usernames of those enrolled." )
+	Enrolled = Iterable( title="The usernames of those enrolled." )
 
 	def enroll(student):
 		"""

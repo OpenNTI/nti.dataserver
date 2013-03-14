@@ -261,7 +261,13 @@ def handle_validation_error( request, validation_error ):
 	# Some places try hard to set a good message, some don't.
 	exc_info = sys.exc_info()
 
+	validation_dict = _validation_error_to_dict( request, validation_error )
+	if not validation_dict.get( 'field' ):
+		# Hmm. This will be mighty confusing on the other end. Maybe we can shed some
+		# light on it with our tracebacks
+		logger.exception( "Validation error without a field" )
+
 	raise_json_error( request,
 					  hexc.HTTPUnprocessableEntity,
-					  _validation_error_to_dict( request, validation_error ),
+					  validation_dict,
 					  exc_info[2] )

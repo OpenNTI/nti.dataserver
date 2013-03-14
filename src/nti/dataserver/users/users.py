@@ -1083,8 +1083,13 @@ class User(Principal):
 								   alert='An object was shared with you', #change.creator.preferredDisplayName + ' shared an object',
 								   userInfo=userInfo )
 			for device in self.devices.itervalues():
-				if not isinstance( device, Device ): continue
-				apnsCon.sendNotification( device.deviceId, payload )
+				if not isinstance( device, Device ):
+					continue
+				__traceback_info__ = device, payload, change
+				try:
+					apnsCon.sendNotification( device.deviceId, payload )
+				except Exception: # Big catch: this is not crucial, we shouldn't hurt anything without it
+					logger.exception("Failed to send APNS notification" )
 
 	def xxx_hack_filter_non_memberships(self, relationships, log_msg=None, the_logger=logger):
 		"""
