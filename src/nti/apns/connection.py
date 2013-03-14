@@ -27,8 +27,10 @@ import struct
 from pkg_resources import resource_filename
 
 from zope import interface
+from zope import schema
 from zope.event import notify
 from . import interfaces as apns_interfaces
+_DEVICEID_FIELD = apns_interfaces.IDeviceFeedbackEvent['deviceId']
 
 
 SERVER_PROD = 'gateway.push.apple.com'
@@ -71,7 +73,7 @@ def to_payload_dictionary_string(payload):
 
 	# Make sure it's ASCII bytes
 	if not isinstance( result, str ):
-		result = result.encode( 'ascii' )
+		result = result.encode( 'utf-8' )
 
 	if len(result) > MAX_PAYLOAD_SIZE:
 		raise ValueError( "Payload too big" )
@@ -85,21 +87,29 @@ def to_packet_bytes(payload, deviceId):
 	:param payload: The payload object.
 	:type payload: :class:`nti.apns.interfaces.INotificationPayload`
 
+	:param bytes deviceId: The 32-byte device id (device token)
+
+	:return: A tuple (packet, packet_identifier)
+
 	.. _enhanced binary format: http://developer.apple.com/library/ios/#DOCUMENTATION/NetworkingInternet/Conceptual/RemoteNotificationsPG/CommunicatingWIthAPS/CommunicatingWIthAPS.html#//apple_ref/doc/uid/TP40008194-CH101-SW4
 	"""
+	_DEVICEID_FIELD.validate( deviceId )
+	errors = schema.getValidationErrors( apns_interfaces.INotificationPayload, payload )
+	if errors:
+		__traceback_info__ = errors
+		raise errors[0][1]
 	# Create a packet in the 'enhanced' format
 	command = 1
 	identifier = id(payload) % 4294967295 # fit into 4 bytes
 	expiry = time.time() + DEFAULT_LIFETIME
-	deviceIdLength = len(deviceId) # should be 32
-	assert deviceIdLength == 32
+
 
 	payloadBytes = to_payload_dictionary_string( payload )
 
-	# 1 byte command, 4 byte id, 4 byte expiry, 2 byte len, 4 byte devid, 2 byte len, payload
+	# 1 byte command, 4 byte id, 4 byte expiry, 2 byte len, 32 byte devid, 2 byte len, payload
 	packet = struct.pack( b'!bIih32sh',
 						  command, identifier, expiry,
-						  deviceIdLength, deviceId,
+						  _DEVICEID_FIELD.max_length, deviceId,
 						  len(payloadBytes) )
 	packet += payloadBytes
 
@@ -228,6 +238,9 @@ class APNS(object):
 				self.connection = connection
 				if self._feedback_greenlet is None:
 					self._read_feedback()
+			except ssl.SSLError:
+				logger.exception( "Failed to connect to APNS; will not try again" )
+				self._makeConnection = lambda *args: None
 			except (IOError,TypeError):
 				# TypeError: must be _socket.socket, not closedsocket
 				logger.exception( "Failed to connect to APNS" )
