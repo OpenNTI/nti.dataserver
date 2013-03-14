@@ -179,7 +179,7 @@ def _no_request_validation_error():
 	raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
 
 def _validation_error_to_dict( request, validation_error ):
-	__traceback_info__ = validation_error
+	__traceback_info__ = type(validation_error), validation_error
 	# Validation error may be many things, including invalid password by the policy (see above)
 	# Some places try hard to set a good message, some don't.
 	field_name = None
@@ -256,7 +256,7 @@ def handle_validation_error( request, validation_error ):
 	:param validation_error: The validation error being processed.
 
 	"""
-	__traceback_info__ = validation_error
+	__traceback_info__ = type(validation_error), validation_error
 	# Validation error may be many things, including invalid password by the policy (see above)
 	# Some places try hard to set a good message, some don't.
 	exc_info = sys.exc_info()
