@@ -26,6 +26,9 @@ class AbstractLibrary(object):
 	package_factory = None
 	possible_content_packages = ()
 
+	__name__ = 'Library'
+	__parent__ = None
+
 	def __init__(self):
 		pass
 

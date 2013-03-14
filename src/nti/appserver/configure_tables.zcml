@@ -30,6 +30,14 @@
 	<adapter factory="._table_utils.NoteLikeBodyColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 provides="z3c.table.interfaces.IColumn" />
+	<adapter factory="._table_utils.KindColumn"
+			 for="* * .flagging_views.ModerationAdminTable"
+			 provides="z3c.table.interfaces.IColumn"
+			 name="note-kind"/>
+	<adapter factory="._table_utils.ContainerColumn"
+			 for="* * .flagging_views.ModerationAdminTable"
+			 provides="z3c.table.interfaces.IColumn"
+			 name="note-container"/>
 
 	<adapter factory="._table_utils.CreatedColumn"
 			 provides="z3c.table.interfaces.IColumn"

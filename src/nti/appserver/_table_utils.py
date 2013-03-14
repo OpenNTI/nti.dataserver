@@ -8,7 +8,7 @@ classes.
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
-
+logger = __import__('logging').getLogger(__name__)
 import cgi
 from collections import Counter
 
@@ -29,6 +29,8 @@ from zope.proxy.decorator import SpecificationDecoratorBase
 from zope.traversing.browser.interfaces import IAbsoluteURL
 
 from nti.dataserver.links_external import render_link
+from nti.ntiids import ntiids
+from pyramid import traversal
 
 @interface.implementer(dc_interfaces.IZopeDublinCore)
 class _FakeDublinCoreProxy(SpecificationDecoratorBase):
@@ -65,7 +67,11 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 			# Need to seriously investigate the zope contentprovider concepts
 			# See also feed_views.py
 			# This hack is for forum entries
-			content = getattr( getattr( item, 'headline', None ), 'body', self.defaultValue )
+			headline = getattr( item, 'headline', None )
+			if headline:
+				content = getattr( headline, 'body', self.defaultValue )
+				content = list( content )
+				content.insert( 0, getattr( headline, 'title', '' ) )
 
 		parts = []
 		for part in content or ():
@@ -161,6 +167,45 @@ class CreatorColumn(column.GetAttrColumn):
 	header = 'Creator'
 	attrName = 'creator'
 
+class KindColumn(column.GetAttrColumn):
+	"""
+	Column to display the kind of an object.
+	"""
+
+	weight = 11
+	header = 'Kind'
+	attrName = 'mimeType'
+
+
+class ContainerColumn(column.GetAttrColumn):
+	"""
+	Column to display the container ID of a column.
+	"""
+
+	weight = 12
+	header = 'ContainerID'
+	attrName = 'containerId'
+
+	def getValue( self, obj ):
+		container_id = super(ContainerColumn,self).getValue( obj )
+		if container_id:
+			try:
+				container = ntiids.find_object_with_ntiid( container_id )
+				container_name = getattr( container, '__name__', self.defaultValue )
+				if ntiids.is_valid_ntiid_string( container_name ):
+					# OK, probably somewhere down in userdata. This is probably not helpful
+					# It could also be an assessment question, NAQ, but those currently do
+					# not have valid __parent__ attributes, sadly
+					return self.defaultValue
+				# Try to make it into a path
+				try:
+					return '/'.join(traversal.resource_path_tuple( container ))
+				except (AttributeError, KeyError, ValueError):
+					return container_name
+			except (ValueError, KeyError, AttributeError):
+				return self.defaultValue
+		return self.defaultValue
+
 class UsernameColumn(column.GetAttrColumn):
 	"""
 	Displays a username
@@ -170,7 +215,7 @@ class UsernameColumn(column.GetAttrColumn):
 
 class AdaptingGetAttrColumn(column.GetAttrColumn):
 	"""
-	Adapts first, then gets the arr.
+	Adapts first, then gets the attribute.
 	"""
 
 	adapt_to = None
