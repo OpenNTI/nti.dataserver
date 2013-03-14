@@ -320,7 +320,7 @@ setup(
 		'zope.publisher >= 4.0.0a3',#4.0.0a1 is out, should be fine
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
-		'zope.proxy >= 4.1.2', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
+		'zope.proxy >= 4.1.3', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.sequencesort >= 4.0.1', # advanced locale aware sorting
 		'zope.schema >= 4.3.2',
 		'zope.security[zcml,untrustedpython] >= 4.0.0b1', # >= 4.0.0b1 gets PyPy support!
