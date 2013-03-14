@@ -17,6 +17,7 @@ from zope import interface
 from . import interfaces as apns_interfaces
 
 from nti.utils.schema import SchemaConfigured
+from zope.schema.fieldproperty import createFieldProperties
 
 
 @interface.implementer(apns_interfaces.INotificationPayload)
@@ -25,7 +26,4 @@ class APNSPayload(SchemaConfigured):
 
 	DEFAULT_SOUND = 'default'
 
-	alert = None
-	badge = None
-	sound = None
-	userInfo = None
+	createFieldProperties(apns_interfaces.INotificationPayload)
