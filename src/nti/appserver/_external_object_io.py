@@ -213,7 +213,17 @@ def _validation_error_to_dict( request, validation_error ):
 		msg = translate( validation_error.i18n_message, context=request )
 	else:
 		msg = (validation_error.message if not isinstance(validation_error.message,list) else '') or msg
-		msg = translate(msg, context=request)
+		try:
+			msg = translate(msg, context=request)
+		except (UnicodeError,KeyError):
+			# We get UnicodeDecodeError when giving a byte-string to translate that contains
+			# non-ASCII (platform) characters. Since the msg can come from arbitrary user data,
+			# this is a fairly easy situation to get into
+			if isinstance(msg,bytes):
+				try:
+					msg = msg.encode('utf-8')
+				except UnicodeError:
+					msg = ''
 
 	result = {'message': msg,
 			  'field': field_name,

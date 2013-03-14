@@ -72,3 +72,24 @@ def test_wrong_contained_type():
 
 	assert_that( exc.exception.json_body, has_entry( 'field', 'field' ) )
 	assert_that( exc.exception.json_body, has_entry( 'suberrors', contains( has_entry( 'suberrors', contains( has_entries( 'declared', 'IThing', 'field', '__name__', 'code', 'WrongType' ) ) ) ) ) )
+
+
+def test_translating_non_unicode_bytes_messages():
+
+	# This one translates fine
+	with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+		try:
+			raise ValidationError( b'abcd' )
+		except ValidationError as e:
+			obj_io.handle_validation_error( DummyRequest(), e )
+
+	assert_that( exc.exception.json_body, has_entry( 'message', 'abcd' ) )
+
+	# This one does not
+	with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+		try:
+			raise ValidationError( b'abcd\xff' )
+		except ValidationError as e:
+			obj_io.handle_validation_error( DummyRequest(), e )
+
+	assert_that( exc.exception.json_body, has_entry( 'message', '' ) )
