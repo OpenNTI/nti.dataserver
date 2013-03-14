@@ -922,12 +922,13 @@ class TestFeedbackEvent(mock_dataserver.SharedConfiguringTestBase):
 	@WithMockDSTrans
 	def test_devicefeedback(self):
 		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
-		device = user.maybeCreateContainedObjectWithType( 'Devices', 'deadbeef' )
+		deviceid = b'b' * 32
+		device = user.maybeCreateContainedObjectWithType( 'Devices', deviceid.encode('hex') )
 		user.addContainedObject( device )
 		assert_that( user.devices, has_value( device ) )
 		assert_that( user.devices, has_length( 1 ) )
 
-		event = APNSDeviceFeedback( 5, 'deadbeef'.decode('hex') )
+		event = APNSDeviceFeedback( 5, deviceid )
 		notify( event )
 
 		assert_that( user.devices, has_length( 0 ) )
