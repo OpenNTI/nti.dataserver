@@ -4,8 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import time
 
@@ -30,7 +30,7 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 	processor = 'stripe'
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
-		usr = User.create_user( self.ds, username=username, password=password)
+		usr = User.create_user(self.ds, username=username, password=password)
 		return usr
 
 	@WithMockDSTrans
@@ -51,7 +51,7 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 
 		assert_that(list(hist.values()), has_length(2))
 
-		t = (pa_1,pa_2)
+		t = (pa_1, pa_2)
 		ck = all([c in t for c in hist])
 		assert_that(ck, is_(True))
 
@@ -66,27 +66,27 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
-		items='xyz'
-		pending = purchase_attempt.create_purchase_attempt(	items=items, processor=self.processor,
+		items = 'xyz'
+		pending = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor,
 															state=store_interfaces.PA_STATE_STARTED)
 		hist.add_purchase(pending)
 
 		pa = purchase_history.get_pending_purchase_for(user, items)
-		assert_that(pa, is_( not_none() ) )
+		assert_that(pa, is_(not_none()))
 		assert_that(pa, is_(pending))
-		
-		pending = purchase_attempt.create_purchase_attempt(	items=items, processor=self.processor, on_behalf_of=('u1,u2'),
+
+		pending = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor, on_behalf_of=('u1,u2'),
 															state=store_interfaces.PA_STATE_STARTED)
 		hist.add_purchase(pending)
-		
+
 		pa = purchase_history.get_pending_purchase_for(user, items, ('u1',))
-		assert_that(pa, is_( not_none() ) )
+		assert_that(pa, is_(not_none()))
 		pa = purchase_history.get_pending_purchase_for(user, items, ('nt@nti.com',))
-		assert_that(pa, is_( not_none() ) )
+		assert_that(pa, is_(not_none()))
 		pa = purchase_history.get_pending_purchase_for(user, items, ('u2',))
-		assert_that(pa, is_( not_none() ) )
+		assert_that(pa, is_(not_none()))
 		pa = purchase_history.get_pending_purchase_for(user, items, ('u3',))
-		assert_that(pa, is_( none() ) )
+		assert_that(pa, is_(none()))
 
 	@WithMockDSTrans
 	def test_missing_purchase(self):
@@ -104,13 +104,13 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 			username = user.username
 
 		def _get_hist():
-			user = User.get_user( username )
+			user = User.get_user(username)
 			hist = store_interfaces.IPurchaseHistory(user)
 			return hist
 
 		for i in range(0, 100):
 
-			items = (str(i),)
+			items = (unicode(i),)
 			if i == 50:
 				t50 = time.time()
 			with mock_dataserver.mock_db_trans(self.ds):
@@ -122,17 +122,17 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 				hist.time_map._check()
 				hist.purchases._check()
 				# check value consistency
-				BTrees.check.check( hist.time_map )
-				BTrees.check.check( hist.purchases )
+				BTrees.check.check(hist.time_map)
+				BTrees.check.check(hist.purchases)
 
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			hist = _get_hist()
 			hist.time_map._check()
 			hist.purchases._check()
-			BTrees.check.check( hist.time_map )
-			BTrees.check.check( hist.purchases )
-			#BTrees.check.display( hist.purchases )
+			BTrees.check.check(hist.time_map)
+			BTrees.check.check(hist.purchases)
+			# BTrees.check.display( hist.purchases )
 
 			assert_that(hist, has_length(100))
 
@@ -147,4 +147,3 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 
 			lst = list(hist.get_purchase_history(start_time=now, end_time=t50))
 			assert_that(lst, has_length(50))
-
