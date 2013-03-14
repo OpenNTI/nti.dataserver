@@ -29,7 +29,8 @@ from ..connection import to_packet_bytes
 
 def test_to_packet_bytes():
 	payload = APNSPayload(alert='alert')
-	deviceid = b'b' * 32
+	# Real-world example of a token
+	deviceid = b'\x90\xc7\xb1\xd5\nA\xc3\xf5\x81\xb4h|\xe1!:\xc7\xd6k\xeaFe\xf4\x04fq\xb3\x08\x04\x17^ ^'
 
 	# We refuse to send invalid payloads or device ids
 	with assert_raises(interface.Invalid):

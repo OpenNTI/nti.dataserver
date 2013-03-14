@@ -15,7 +15,7 @@ from zope.schema.fieldproperty import createFieldProperties
 from zope.schema import Int
 from zope.schema import BytesLine
 from nti.utils.schema import ValidTextLine as TextLine
-from nti.utils.schema import ValidBytesLine as BytesLine
+from nti.utils.schema import ValidBytes as Bytes
 from zope.schema import Dict
 
 class IDeviceFeedback(interface.Interface):
@@ -24,9 +24,9 @@ class IDeviceFeedback(interface.Interface):
 	"""
 
 	timestamp = Int( title="The timestamp of the notification?" )
-	deviceId = BytesLine( title="The raw bytes of the device being de-registered.",
-								 min_length=32,
-								 max_length=32)
+	deviceId = Bytes( title="The raw bytes of the device being de-registered.",
+					  min_length=32,
+					  max_length=32) # Not BytesLine, it may have a newline
 
 class IDeviceFeedbackEvent(IDeviceFeedback):
 	"""
