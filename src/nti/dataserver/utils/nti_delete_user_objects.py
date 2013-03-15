@@ -12,10 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import sys
-import json
 import argparse
 import datetime
-from cStringIO import StringIO
 from collections import defaultdict
 
 import ZODB
@@ -93,19 +91,13 @@ def _remove_entity_objects(username, object_types=(), export_dir=None, verbose=F
 		if export_dir and exported_objects:
 			utc_datetime = datetime.datetime.utcnow()
 			s = utc_datetime.strftime("%Y-%m-%d-%H%M%SZ")
-			for name, objs in exported_objects.items():
-				name = "%s-%s-%s.json" % (username, name, s)
+			for name, exported in exported_objects.items():
+				name = "%s-%s-%s.txt" % (username, name, s)
 				outname = os.path.join(export_dir, name)
 				with open(outname, "w") as fp:
-					sio = StringIO()
-					try:
-						json.dump(objs, sio, indent=4)
-						sio.seek(0)
-						fp.write(sio.read())
-					except:
-						if verbose:
-							sio.seek(0)
-							print('Could not export to json\n%r' % sio.read())
+					for external in exported:
+						fp.write(external)
+						fp.write("\n")
 
 		if verbose:
 			for t, c in counter_map.items():
