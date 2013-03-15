@@ -9,14 +9,14 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from zope import interface
 from zope import component
+from nti.utils.schema import createDirectFieldProperties
 
 from .selectedrange import SelectedRange
 
 @interface.implementer(nti_interfaces.IRedaction)
 class Redaction(SelectedRange):
 
-	replacementContent = None
-	redactionExplanation = None
+	createDirectFieldProperties(nti_interfaces.IRedaction) # replacementContent, redactionExplanation
 
 
 from .selectedrange import SelectedRangeInternalObjectIO

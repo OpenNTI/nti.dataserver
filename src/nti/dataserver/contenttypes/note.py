@@ -44,7 +44,8 @@ class BodyFieldProperty(FieldProperty):
 		# Ownership (containment) and censoring are already taken care of by the
 		# event listeners on IBeforeSequenceAssignedEvent
 
-
+_style_field = nti_interfaces.INote['style'].bind(None)
+_style_field.default = 'suppressed'
 @interface.implementer(nti_interfaces.INote,
 					    # requires annotations
 					   nti_interfaces.ILikeable,
@@ -64,7 +65,7 @@ class Note(ThreadableMixin,Highlight):
 	_inheritable_properties_ = ( 'applicableRange', 'title' )
 
 	#: We override the default highlight style to suppress it.
-	style = 'suppressed'
+	style = FieldProperty(_style_field)
 
 	body = BodyFieldProperty(nti_interfaces.INote['body']) # uses the 'body' in the dict, which is compatible with persistent objects
 

@@ -67,7 +67,6 @@ class TestNTIUpdate(SharedConfiguringTestBase):
 		usr = self._create_user()
 		note = self.create_note(u'my note', usr)
 		assert_that(note.selectedText, is_(u''))
-		assert_that(note.applicableRange, is_(None))
 		note = nti_update.process_update(note.id, self.update_json)
 		assert_that(note.selectedText, is_(u'My selectedText'))
 		assert_that(note.applicableRange, is_not(None))
@@ -91,7 +90,6 @@ class TestNTIUpdate(SharedConfiguringTestBase):
 		note_g = self.create_note("6th Espada in Aizen's Army", grimmjow,
 								  note_a.containerId, inReplyTo=note_a, references=(note_a,))
 		assert_that(note_g.selectedText, is_(u''))
-		assert_that(note_g.applicableRange, is_(None))
 		assert_that(note_g.inReplyTo, is_(note_a))
 		assert_that(note_g.references, is_([note_a]))
 
@@ -127,7 +125,6 @@ class TestNTIUpdate(SharedConfiguringTestBase):
 
 		assert_that(note.inReplyTo, is_(redaction))
 		assert_that(note.references, is_([redaction]))
-		assert_that(note.applicableRange, is_(None))
 
 		# update
 		__traceback_info__ = self.update_json
@@ -139,7 +136,6 @@ class TestNTIUpdate(SharedConfiguringTestBase):
 		assert_that(note.inReplyTo, is_(redaction))
 		assert_that(note.references, is_([redaction]))
 		assert_that(note.selectedText, is_(u''))
-		assert_that(note.applicableRange, is_(None)) # None b/c redacions are not thredable
 
 	@WithMockDSTrans
 	def test_invalid_params(self):
