@@ -12,7 +12,7 @@ __docformat__ = "restructuredtext en"
 
 import os
 import re
-import glob
+import gzip
 
 from zope import component
 
@@ -101,18 +101,26 @@ class TrigramTrainer(object):
 		return self.total_trigrams
 
 	@classmethod
-	def process_files(cls, dpath, minfreq=2, trainer=None, calc_prob=True, tokenize=False):
+	def process_files(cls, dpath, minfreq=2, trainer=None, calc_prob=True, tokenize=False, lang="en"):
 		"""Train content found in files in a particular directory"""
-		trainer = TrigramTrainer() if trainer else trainer
-		for f in glob.glob(os.path.normcase(dpath)):
+		trainer = TrigramTrainer() if trainer is None else trainer
+		for fn in os.listdir(dpath):
+			fn = os.path.join(dpath, fn)
+			if os.path.isdir(fn): continue
 			try:
-				with open(f, "r") as src:
-					text = src.read()
+				if fn.endswith(".gz"):
+					fo = gzip.open(fn)
+				else:
+					fo = open(fn, "r")
+				try:
+					text = fo.read()
 					if tokenize:
-						text = cu.get_content(text)
+						text = cu.get_content(text, lang)
 					else:
-						text = trainer.clean_text_sc(text)
+						text = trainer.clean_text_sc(text, lang)
 					trainer.create_trigrams(text)
+				finally:
+					fo.close()
 			except IOError:
 				pass
 
