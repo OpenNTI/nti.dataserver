@@ -15,9 +15,6 @@ from html5lib import treebuilders
 from zope import interface
 from zope import component
 
-from zope.schema import interfaces as sch_interfaces
-from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
-
 from nti.contentfragments import interfaces
 
 # The algorithms contained in here are trivially simple.
@@ -30,28 +27,28 @@ from nti.contentfragments import interfaces
 
 special_chars = r"?(){}[].^*+-~"
 special_chars_map = {c:u'\\' for c in special_chars}
-def punkt_re_char():
-	# content processing uses content fragments
-	from nti.contentprocessing import default_punk_char_expression
-	return default_punk_char_expression
+def punkt_re_char(lang='en'):
+	# TODO: remove circular dependency, content processing uses content fragments
+	from nti.contentprocessing import interfaces as cp_interfaces
+	return component.getUtility(cp_interfaces.IPunctuationCharExpressionPlus, name=lang)
 
 def _get_censored_fragment(org_fragment, new_fragment, factory=interfaces.CensoredUnicodeContentFragment):
 	try:
-		result = org_fragment.censored( new_fragment )
+		result = org_fragment.censored(new_fragment)
 	except AttributeError:
-		result = factory( new_fragment )
-		if not interfaces.ICensoredUnicodeContentFragment.providedBy( result ):
-			interface.alsoProvides( result, interfaces.ICensoredUnicodeContentFragment )
+		result = factory(new_fragment)
+		if not interfaces.ICensoredUnicodeContentFragment.providedBy(result):
+			interface.alsoProvides(result, interfaces.ICensoredUnicodeContentFragment)
 	return result
 
 @interface.implementer(interfaces.ICensoredContentStrategy)
 class SimpleReplacementCensoredContentStrategy(object):
 
-	def __init__( self, replacement_char='*' ):
+	def __init__(self, replacement_char='*'):
 		self.replacement_char = replacement_char
 		assert len(self.replacement_char) == 1
 
-	def censor_ranges( self, content_fragment, censored_ranges ):
+	def censor_ranges(self, content_fragment, censored_ranges):
 		# Since we will be replacing each range with its equal length
 		# of content and not shortening, then sorting the ranges doesn't matter
 		buf = list(content_fragment)
@@ -59,7 +56,7 @@ class SimpleReplacementCensoredContentStrategy(object):
 		for start, end in censored_ranges:
 			buf[start:end] = self.replacement_char * (end - start)
 
-		new_fragment = ''.join( buf )
+		new_fragment = ''.join(buf)
 		return _get_censored_fragment(content_fragment, new_fragment)
 
 class BasicScanner(object):
@@ -79,15 +76,15 @@ class BasicScanner(object):
 	def do_scan(self, fragment, ranges):
 		pass
 
-	def scan( self, content_fragment ):
-		yielded = [] # A simple, inefficient way of making sure we don't send overlapping ranges
+	def scan(self, content_fragment):
+		yielded = []  # A simple, inefficient way of making sure we don't send overlapping ranges
 		content_fragment = content_fragment.lower()
 		return self.do_scan(content_fragment, yielded)
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 class TrivialMatchScanner(BasicScanner):
 
-	def __init__( self, prohibited_values=() ):
+	def __init__(self, prohibited_values=()):
 		# normalize case, ignore blanks
 		# In this implementation, the most common values should
 		# clearly go at the front of the list
@@ -95,17 +92,17 @@ class TrivialMatchScanner(BasicScanner):
 
 	def do_scan(self, content_fragment, yielded):
 		for x in self.prohibited_values:
-			idx = content_fragment.find( x, 0 )
+			idx = content_fragment.find(x, 0)
 			while (idx != -1):
 				match_range = (idx, idx + len(x))
 				if self.test_range(match_range, yielded):
 					yield match_range
-				idx = content_fragment.find( x, idx + len(x) )
+				idx = content_fragment.find(x, idx + len(x))
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 class RegExpMatchScanner(BasicScanner):
 
-	def __init__( self, patterns=(), words=()):
+	def __init__(self, patterns=(), words=()):
 		all_patterns = set()
 		for w in words or ():
 			all_patterns.add(self.create_regexp(w))
@@ -121,10 +118,10 @@ class RegExpMatchScanner(BasicScanner):
 
 	@classmethod
 	def create_regexp(cls, word, flags=re.I):
-		r=[]
-		for i,c in enumerate(word):
-			r.append(special_chars_map.get(c,u'') + c)
-			if not c.isspace() and not c in punkt_re_char() and i < len(word)-1:
+		r = []
+		for i, c in enumerate(word):
+			r.append(special_chars_map.get(c, u'') + c)
+			if not c.isspace() and not c in punkt_re_char() and i < len(word) - 1:
 				r.append("(%s)*" % punkt_re_char())
 		e = ''.join(r)
 		p = re.compile(e, flags)
@@ -133,13 +130,19 @@ class RegExpMatchScanner(BasicScanner):
 @interface.implementer(interfaces.ICensoredContentScanner)
 class WordMatchScanner(BasicScanner):
 
-	def __init__( self, white_words=(), prohibited_words=() ):
-		self.char_tester = re.compile(punkt_re_char())
+	def __init__(self, white_words=(), prohibited_words=()):
+		self._v_char_tester = None
 		self.white_words = tuple([word.lower() for word in white_words])
 		self.prohibited_words = tuple([word.lower() for word in prohibited_words])
 
+	@property
+	def char_tester(self):
+		if self._v_char_tester is None:
+			self._v_char_tester = re.compile(punkt_re_char())
+		return self._v_char_tester
+
 	def _test_start(self, idx, content_fragment):
-		result = idx == 0 or self.char_tester.match(content_fragment[idx-1])
+		result = idx == 0 or self.char_tester.match(content_fragment[idx - 1])
 		return result
 
 	def _test_end(self, idx, content_fragment):
@@ -149,13 +152,13 @@ class WordMatchScanner(BasicScanner):
 	def _find_ranges(self, word_list, content_fragment):
 		ranges = []
 		for x in word_list:
-			idx = content_fragment.find( x, 0 )
+			idx = content_fragment.find(x, 0)
 			while (idx != -1):
 				endidx = idx + len(x)
 				match_range = (idx, endidx)
 				if self._test_start(idx, content_fragment) and self._test_end(endidx, content_fragment):
 					ranges.append(match_range)
-				idx = content_fragment.find( x, endidx )
+				idx = content_fragment.find(x, endidx)
 		return ranges
 
 	def do_scan(self, content_fragment, white_words_ranges=[]):
@@ -171,10 +174,10 @@ class WordMatchScanner(BasicScanner):
 @interface.implementer(interfaces.ICensoredContentScanner)
 class PipeLineMatchScanner(BasicScanner):
 
-	def __init__( self, scanners=()):
+	def __init__(self, scanners=()):
 		self.scanners = tuple(scanners)
 
-	def do_scan( self, content_fragment, ranges=[]):
+	def do_scan(self, content_fragment, ranges=[]):
 		content_fragment = content_fragment.lower()
 		for s in self.scanners:
 			matched_ranges = s.do_scan(content_fragment, ranges)
@@ -188,8 +191,8 @@ def _word_profanity_scanner():
 	"""
 	External files are stored in rot13.
 	"""
-	white_words_path = resource_filename( __name__, 'white_list.txt' )
-	prohibited_words_path = resource_filename( __name__, 'prohibited_words.txt' )
+	white_words_path = resource_filename(__name__, 'white_list.txt')
+	prohibited_words_path = resource_filename(__name__, 'prohibited_words.txt')
 
 	with open(white_words_path, 'rU') as src:
 		white_words = {x.strip().lower() for x in src.readlines()}
@@ -201,14 +204,14 @@ def _word_profanity_scanner():
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def _word_plus_trivial_profanity_scanner():
-	profanity_list_path = resource_filename( __name__, 'profanity_list.txt')
+	profanity_list_path = resource_filename(__name__, 'profanity_list.txt')
 	with open(profanity_list_path, 'rU') as src:
 		profanity_list = {x.encode('rot13').strip().lower() for x in src.readlines()}
 	return PipeLineMatchScanner([_word_profanity_scanner(), TrivialMatchScanner(profanity_list)])
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def _word_plus_regexp_profanity_scanner():
-	profanity_list_path = resource_filename( __name__, 'profanity_regexp_list.txt')
+	profanity_list_path = resource_filename(__name__, 'profanity_regexp_list.txt')
 	with open(profanity_list_path, 'rU') as src:
 		profanity_list = {x.encode('rot13').strip().lower() for x in src.readlines()}
 	return PipeLineMatchScanner([_word_profanity_scanner(), RegExpMatchScanner(words=profanity_list)])
@@ -223,10 +226,10 @@ class DefaultCensoredContentPolicy(object):
 	you must do that yourself.
 	"""
 
-	def __init__( self, fragment=None, target=None ):
+	def __init__(self, fragment=None, target=None):
 		pass
 
-	def censor( self, fragment, target ):
+	def censor(self, fragment, target):
 		if interfaces.IHTMLContentFragment.providedBy(fragment):
 			result = self.censor_html(fragment, target)
 		else:
@@ -234,33 +237,33 @@ class DefaultCensoredContentPolicy(object):
 		return result
 
 	def censor_text(self, fragment, target):
-		scanner = component.getUtility( interfaces.ICensoredContentScanner )
-		strat = component.getUtility( interfaces.ICensoredContentStrategy )
-		return strat.censor_ranges( fragment, scanner.scan( fragment ) )
+		scanner = component.getUtility(interfaces.ICensoredContentScanner)
+		strat = component.getUtility(interfaces.ICensoredContentStrategy)
+		return strat.censor_ranges(fragment, scanner.scan(fragment))
 
 	def censor_html(self, fragment, target):
 		result = None
 		try:
 			p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False)
-			doc = p.parse( fragment )
+			doc = p.parse(fragment)
 			for node in doc.iter():
 				for name in ('text', 'tail'):
 					text = getattr(node, name, None)
 					if text:
-						text = self.censor_text( interfaces.UnicodeContentFragment(text), target)
+						text = self.censor_text(interfaces.UnicodeContentFragment(text), target)
 						setattr(node, name, text)
 
 			docstr = unicode(etree.tostring(doc))
 			# be sure to return the best interface
-			result = _get_censored_fragment( fragment, docstr, interfaces.CensoredHTMLContentFragment )
-		except Exception: # TODO: What exception?
+			result = _get_censored_fragment(fragment, docstr, interfaces.CensoredHTMLContentFragment)
+		except Exception:  # TODO: What exception?
 			result = self.censor_text(fragment, target)
 		return result
 
 
 from nti.utils.schema import BeforeTextAssignedEvent
 
-def censor_before_text_assigned( fragment, target, event ):
+def censor_before_text_assigned(fragment, target, event):
 	"""
 	Watches for field values to be assigned, and looks for specific policies for the
 	given object and field name to handle censoring. If such a policy is found and returns
@@ -268,24 +271,24 @@ def censor_before_text_assigned( fragment, target, event ):
 	assigned to the target is also updated).
 	"""
 
-	if interfaces.ICensoredUnicodeContentFragment.providedBy( fragment ):
+	if interfaces.ICensoredUnicodeContentFragment.providedBy(fragment):
 		# Nothing to do, already censored
 		return
 
 	# Does somebody want to censor assigning values of fragments' type to objects of
 	# target's type to the field named event.name?
-	policy = component.queryMultiAdapter( (fragment, target),
+	policy = component.queryMultiAdapter((fragment, target),
 										  interfaces.ICensoredContentPolicy,
-										  name=event.name )
+										  name=event.name)
 	if policy is not None:
-		censored_fragment = policy.censor( fragment, target )
+		censored_fragment = policy.censor(fragment, target)
 		if censored_fragment is not fragment and censored_fragment != fragment:
 			event.object = censored_fragment
-			return event.object, True # as an optimization when we are called directly
+			return event.object, True  # as an optimization when we are called directly
 
 	return fragment, False
 
-def censor_before_assign_components_of_sequence( sequence, target, event ):
+def censor_before_assign_components_of_sequence(sequence, target, event):
 	"""
 	Register this adapter for (usually any) sequence, some specific interface target, and
 	the :class:`nti.utils.schema.IBeforeSequenceAssignedEvent` and it will
@@ -296,22 +299,21 @@ def censor_before_assign_components_of_sequence( sequence, target, event ):
 	# There are many optimization opportunities here
 	s2 = []
 	_changed = False
-	evt = BeforeTextAssignedEvent( None, event.name, event.context )
+	evt = BeforeTextAssignedEvent(None, event.name, event.context)
 	for obj in sequence:
 		evt.object = obj
-		val, changed = censor_before_text_assigned( obj, target, evt )
+		val, changed = censor_before_text_assigned(obj, target, evt)
 		_changed |= changed
-		s2.append( val )
+		s2.append(val)
 
 	# only copy the list/tuple/whatever if we need to
 	if _changed:
-		event.object = type(event.object)( s2 )
+		event.object = type(event.object)(s2)
 
 
-def censor_assign( fragment, target, field_name ):
+def censor_assign(fragment, target, field_name):
 	"""
 	Perform manual censoring of assigning an object to a field.
 	"""
-
-	evt = BeforeTextAssignedEvent( fragment, field_name, target )
-	return censor_before_text_assigned( fragment, target, evt )[0]
+	evt = BeforeTextAssignedEvent(fragment, field_name, target)
+	return censor_before_text_assigned(fragment, target, evt)[0]
