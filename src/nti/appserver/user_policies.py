@@ -131,6 +131,8 @@ class MathCountsCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
 		role = getattr(profile, 'role', None)
 		if role is None or role.lower() in ('student', 'other'):
 			result.discard(u'nti.platform.p2p.dynamicfriendslists')
+
+		result.discard('nti.platform.blogging.createblogentry')
 		return result
 
 #: This relationship is exposed on Users and in the handshake/ping

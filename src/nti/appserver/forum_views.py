@@ -87,6 +87,10 @@ def DefaultUserForumFactory(user):
 			raise errors[0][1]
 	return forum
 
+@interface.implementer(frm_interfaces.IPersonalBlog)
+def NoBlogFactory(user):
+	"""Useful as an override when no personal blog is desired but one would otherwise be inherited."""
+	return None
 
 @interface.implementer(app_interfaces.IContainerCollection)
 @component.adapter(app_interfaces.IUserWorkspace)

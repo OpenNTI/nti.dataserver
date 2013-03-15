@@ -9,8 +9,7 @@
 	<include package=".capabilities" file="meta.zcml" />
 
 	<adapter factory=".forum_views.DefaultUserForumFactory"
-			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog"
-			 zcml:condition="have devmode" /> <!-- forums and devmode -->
+			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog" />
 
 
 	<adapter factory=".user_activity_views.DefaultUserActivityStorageFactory" />
