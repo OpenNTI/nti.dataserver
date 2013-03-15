@@ -15,8 +15,12 @@
 
 	<registerIn registry=".sites.COLUMBIA">
 		<link:userLink
-			named='.logon.REL_WELCOME_PAGE'
+			named='.logon.REL_INITIAL_WELCOME_PAGE'
 			minGeneration='20130313'
+			url='/NextThoughtWebApp/content/welcome/columbia/columbia.html'
+			mimeType='text/html'/>
+		<link:userLink
+			named='.logon.REL_PERMANENT_WELCOME_PAGE'
 			url='/NextThoughtWebApp/content/welcome/columbia/columbia.html'
 			mimeType='text/html'/>
 	</registerIn>

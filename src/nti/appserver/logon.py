@@ -75,8 +75,15 @@ import anyjson as json
 
 #: Link relationship indicating a welcome page
 #: Fetching the href of this link returns either a content page
-#: or PageInfo structure.
-REL_WELCOME_PAGE = "content.welcome_page"
+#: or PageInfo structure. The client is expected to DELETE
+#: this link once the user has viewed it.
+REL_INITIAL_WELCOME_PAGE = "content.initial_welcome_page"
+
+#: Link relationship indicating a welcome page
+#: The client is expected to make this relationship
+#: available to the end user at all times. It is NOT a deletable
+#: link.
+REL_PERMANENT_WELCOME_PAGE = 'content.permanent_welcome_page'
 
 REL_PING = 'logon.ping' #: See :func:`ping`
 REL_HANDSHAKE = 'logon.handshake' #: See :func:`handshake`
