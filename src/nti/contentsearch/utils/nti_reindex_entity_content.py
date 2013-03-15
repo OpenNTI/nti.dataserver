@@ -34,9 +34,9 @@ def reindex_entity_content(entity, include_dfls=False, verbose=False):
 
 	# loop through all user indexable objects
 	for e, obj in find_all_indexable_pairs(entity, include_dfls=include_dfls):
-		rim = search_interfaces.IRepozeEntityIndexManager(e)
 		try:
-			catalog = rim.get_create_catalog(obj)
+			rim = search_interfaces.IRepozeEntityIndexManager(e, None)
+			catalog = rim.get_create_catalog(obj) if rim is not None else None
 			if catalog is not None:
 				docid = get_uid(obj)
 				if docid is not None:
