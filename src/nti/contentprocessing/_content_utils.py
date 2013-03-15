@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 import re
 import six
 import difflib
+import unicodedata
 
 from pkg_resources import resource_filename
 
@@ -24,6 +25,8 @@ import repoze.lru
 
 from nti.contentfragments import interfaces as frg_interfaces
 
+from . import space_pattern
+from . import non_alpha_pattern
 from . import default_punk_char_pattern
 from . import interfaces as cp_interfaces
 from . import default_punk_char_expression
@@ -73,6 +76,16 @@ def get_content(text=None, language="en"):
 	result = split_content(text, language) if text else ()
 	result = ' '.join(result)
 	return unicode(result)
+
+def normalize(u, form='NFC'):
+	"""
+	Convert to normalized unicode.
+	Remove non-alpha chars and compress runs of spaces.
+	"""
+	u = unicodedata.normalize(form, u)
+	u = non_alpha_pattern.sub(' ', u)
+	u = space_pattern.sub(' ', u)
+	return u
 
 @interface.implementer(cp_interfaces.IContentTokenizer)
 class _ContentTokenizer(object):
