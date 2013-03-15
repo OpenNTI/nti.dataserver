@@ -16,17 +16,9 @@ from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 
 import nti.contentsearch
-from . import find_user_dfls
 from .. import get_indexable_types
 from ..common import normalize_type_name as _nrm
-from ._repoze_utils import remove_entity_catalogs
-
-def remove_entity_indices(entity, content_types=(), include_dfls=False):
-	result = remove_entity_catalogs(entity, content_types)
-	if include_dfls:
-		for dfl in find_user_dfls(entity):
-			result += remove_entity_catalogs(dfl, content_types)
-	return result
+from ._repoze_utils import remove_entity_indices
 
 def remove_entity_content(username, content_types=(), include_dfls=False, verbose=False):
 	entity = users.Entity.get_entity(username)

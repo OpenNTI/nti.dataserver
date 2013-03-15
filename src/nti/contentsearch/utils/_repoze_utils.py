@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from ZODB.POSException import POSKeyError
 
+from . import find_user_dfls
 from .. import get_indexable_types
 from .. import interfaces as search_interfaces
 
@@ -33,9 +34,19 @@ def remove_entity_catalogs(entity, content_types=()):
 		pass
 	return result
 
+def remove_entity_indices(entity, content_types=(), include_dfls=False):
+	result = remove_entity_catalogs(entity, content_types)
+	if include_dfls:
+		for dfl in find_user_dfls(entity):
+			result += remove_entity_catalogs(dfl, content_types)
+	return result
+
 def get_catalog_and_docids(entity):
-	rim = search_interfaces.IRepozeEntityIndexManager(entity, {})
-	for catalog in rim.values():
-		catfield = list(catalog.values())[0] if catalog else None
-		if hasattr(catfield, "_indexed"):
-			yield catalog, list(catfield._indexed())
+	try:
+		rim = search_interfaces.IRepozeEntityIndexManager(entity, {})
+		for catalog in rim.values():
+			catfield = list(catalog.values())[0] if catalog else None
+			if hasattr(catfield, "_indexed"):
+				yield catalog, list(catfield._indexed())
+	except POSKeyError:
+		pass
