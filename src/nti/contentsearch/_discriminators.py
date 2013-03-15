@@ -7,12 +7,33 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import zope.intid
 from zope import component
 
 from nti.contentprocessing import compute_ngrams
 
 from ._content_utils import get_content
 from . import interfaces as search_interfaces
+
+def get_uid(obj, intids=None):
+	intids = intids or component.getUtility(zope.intid.IIntIds)
+	result = intids.getId(obj)
+	return result
+
+def query_uid(obj, intids=None):
+	intids = intids or component.getUtility(zope.intid.IIntIds)
+	result = intids.queryId(obj)
+	return result
+
+def get_object(uid, intids=None):
+	intids = intids or component.getUtility(zope.intid.IIntIds)
+	result = intids.getObject(int(uid))
+	return result
+
+def query_object(uid, default=None, intids=None):
+	intids = intids or component.getUtility(zope.intid.IIntIds)
+	result = intids.queryObject(int(uid), default)
+	return result
 
 def get_containerId(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.IContainerIDResolver)
@@ -30,7 +51,7 @@ def get_last_modified(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.ILastModifiedResolver)
 	result = adapted.get_last_modified()
 	return result if result else default
-	
+
 def get_keywords(obj, default=()):
 	adapted = component.queryAdapter(obj, search_interfaces.IThreadableContentResolver)
 	result = adapted.get_keywords() if adapted else None
