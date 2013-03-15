@@ -56,7 +56,9 @@ from z3c.batching.batch import Batch
 
 from perfmetrics import metricmethod
 
-def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=id ):
+def _TRUE(x): return True
+
+def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE ):
 	""" Given items that may be dictionaries or lists, combines them
 	and externalizes them for return to the user as a dictionary. If the individual items
 	are ModDateTracking (have a lastModified value) then the returned
@@ -368,11 +370,11 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		user, ntiid = self.user, self.ntiid
 		the_objects = self.getObjectsForId( user, ntiid )
 		# Apply cross-user security if needed
-		if user != self.getRemoteUser():
-			predicate = is_readable
-		else:
-			predicate = id # always true
-		result = lists_and_dicts_to_ext_collection( the_objects, predicate )
+		# XXX Sorting is much cheaper right now, so we do this very last. All unit tests pass this way
+#		if user != self.getRemoteUser():
+#			result = lists_and_dicts_to_ext_collection( the_objects, predicate=is_readable )
+#		else:
+		result = lists_and_dicts_to_ext_collection( the_objects )
 		self._sort_filter_batch_result( result )
 		result.__parent__ = self.request.context
 		result.__name__ = ntiid
@@ -646,6 +648,13 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		result_list.sort( key=sort_key_function,
 						  reverse=(sort_order == 'descending') )
 
+		# Apply cross-user security if needed
+		# Do this after all the filtering because it's the most expensive
+		# filter of all
+		needs_security = False
+		if self.getRemoteUser() != self.user:
+			needs_security = True
+
 
 		batch_size = self.request.params.get( 'batchSize', self._DEFAULT_BATCH_SIZE )
 		batch_start = self.request.params.get( 'batchStart', self._DEFAULT_BATCH_START )
@@ -661,7 +670,18 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			if batch_start >= len(result_list):
 				# Batch raises IndexError
 				result_list = []
+				needs_security = False
 			else:
+				if needs_security:
+					needs_security = False
+					batch = []
+					for i in result_list:
+						if len(batch) > batch_size + batch_start:
+							break
+						if is_readable(i):
+							batch.append( i )
+					result_list = batch
+					result['FilteredTotalItemCount'] = len(result_list) + 1 # XXX We don't actually know...
 				result_list = Batch( result_list, batch_start, batch_size )
 				# Insert links to the next and previous batch
 				next_batch, prev_batch = result_list.next, result_list.previous
@@ -675,6 +695,9 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 			result['Items'] = result_list
 
+		if needs_security:
+			result['Items'] = filter( is_readable, result['Items'] )
+			result['FilteredTotalItemCount'] = len(result_list)
 		return result
 
 class _RecursiveUGDView(_UGDView):
