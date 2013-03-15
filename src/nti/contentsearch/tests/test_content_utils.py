@@ -4,8 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import os
 import json
@@ -22,6 +22,8 @@ from nti.dataserver.contenttypes import Redaction
 from nti.dataserver.contenttypes import Highlight
 from nti.dataserver.contenttypes import CanvasTextShape
 
+from nti.externalization.internalization import update_from_external_object
+
 from nti.ntiids.ntiids import make_ntiid
 
 from ..interfaces import IContentResolver
@@ -37,7 +39,7 @@ class TestContentUtils(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
-		super(TestContentUtils,cls).setUpClass()
+		super(TestContentUtils, cls).setUpClass()
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
@@ -48,10 +50,10 @@ class TestContentUtils(ConfiguringTestBase):
 
 	def _create_note(self, msg, username, containerId=None, tags=('ichigo',), canvas=None):
 		note = Note()
-		note.tags = INote['tags'].fromObject( tags )
+		note.tags = INote['tags'].fromObject(tags)
 		body = [unicode(msg)]
 		if canvas:
-			body.append( canvas )
+			body.append(canvas)
 		note.body = body
 		note.creator = username
 		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
@@ -59,7 +61,7 @@ class TestContentUtils(ConfiguringTestBase):
 
 	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
 		ds = ds or mock_dataserver.current_mock_ds
-		usr = User.create_user( ds, username=username, password=password)
+		usr = User.create_user(ds, username=username, password=password)
 		return usr
 
 	@WithMockDSTrans
@@ -68,7 +70,7 @@ class TestContentUtils(ConfiguringTestBase):
 		containerId = make_ntiid(nttype='bleach', specific='manga')
 		note = self._create_note('nothing can be explained', usr.username, containerId)
 		mock_dataserver.current_transaction.add(note)
-		note = usr.addContainedObject( note )
+		note = usr.addContainedObject(note)
 		adapted = component.getAdapter(note, IContentResolver)
 		assert_that(adapted.get_content(), is_('nothing can be explained'))
 		assert_that(adapted.get_references(), has_length(0))
@@ -86,10 +88,10 @@ class TestContentUtils(ConfiguringTestBase):
 		ct.text = 'Mike Wyzgowski'
 		c.append(ct)
 		usr = self._create_user()
-		containerId =  make_ntiid(nttype='bleach', specific='manga')
+		containerId = make_ntiid(nttype='bleach', specific='manga')
 		note = self._create_note('New Age', usr.username, containerId, canvas=c)
 		mock_dataserver.current_transaction.add(note)
-		note = usr.addContainedObject( note )
+		note = usr.addContainedObject(note)
 		adapted = component.getAdapter(note, IContentResolver)
 		assert_that(adapted.get_content(), is_('New Age Mike Wyzgowski'))
 
@@ -100,11 +102,11 @@ class TestContentUtils(ConfiguringTestBase):
 		user = self._create_user(username=username)
 		redaction = Redaction()
 		redaction.selectedText = u'Fear'
-		redaction.replacementContent = 'my redaction'
-		redaction.redactionExplanation = 'Have overcome it everytime I have been on the verge of death'
+		update_from_external_object(redaction, {'replacementContent': u'my redaction',
+												'redactionExplanation': u'Have overcome it everytime I have been on the verge of death'})
 		redaction.creator = username
 		redaction.containerId = containerId
-		redaction = user.addContainedObject( redaction )
+		redaction = user.addContainedObject(redaction)
 		adapted = component.getAdapter(redaction, IContentResolver)
 		assert_that(adapted.get_content(), is_('Fear'))
 		assert_that(adapted.get_replacement_content(), is_('my redaction'))
@@ -126,7 +128,7 @@ class TestContentUtils(ConfiguringTestBase):
 		highlight.selectedText = u'Kon saw it! The Secret of a Beautiful Office Lady'
 		highlight.creator = username
 		highlight.containerId = containerId
-		highlight = user.addContainedObject( highlight )
+		highlight = user.addContainedObject(highlight)
 		adapted = component.getAdapter(highlight, IContentResolver)
 		assert_that(adapted.get_content(), is_('Kon saw it! The Secret of a Beautiful Office Lady'))
 		assert_that(adapted.get_references(), is_(()))
@@ -141,10 +143,10 @@ class TestContentUtils(ConfiguringTestBase):
 	def test_messageinfo_adapter_canvas(self):
 		c = Canvas()
 		ct = CanvasTextShape()
-		ct.text = 'Ichigo VS Ulquiorra'
+		ct.text = u'Ichigo VS Ulquiorra'
 		c.append(ct)
 		mi = MessageInfo()
-		mi.Body = ['Beginning of Despair, the Unreachable Blade', c]
+		mi.Body = [u'Beginning of Despair, the Unreachable Blade', c]
 		adapted = component.getAdapter(mi, IContentResolver)
 		assert_that(adapted.get_content(), is_('Beginning of Despair, the Unreachable Blade Ichigo VS Ulquiorra'))
 
@@ -158,4 +160,3 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.get_last_modified(), is_(close_to(1334000544.120, 0.05)))
 		assert_that(adapted.get_containerId(), is_('tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(adapted.get_ntiid(), is_('tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273'))
-

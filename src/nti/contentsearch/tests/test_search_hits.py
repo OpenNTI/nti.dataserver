@@ -20,6 +20,7 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.internalization import update_from_external_object
 
 from ..common import get_type_name
 from .._search_hits import _NoteSearchHit
@@ -155,8 +156,8 @@ class TestSearchHits(ConfiguringTestBase):
 		usr = self._create_user()
 		redaction = Redaction()
 		redaction.selectedText = u'Fear'
-		redaction.replacementContent = 'redaction'
-		redaction.redactionExplanation = 'Have overcome it everytime I have been on the verge of death'
+		update_from_external_object(redaction, {'replacementContent': u'redaction',
+												'redactionExplanation': u'Have overcome it everytime I have been on the verge of death'})
 		redaction.creator = usr.username
 		redaction.containerId = make_ntiid(nttype='bleach', specific='manga')
 		redaction = usr.addContainedObject(redaction)

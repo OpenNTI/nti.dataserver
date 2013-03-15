@@ -4,8 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import os
 import time
@@ -23,6 +23,7 @@ from nti.dataserver.contenttypes import Redaction as dsRedaction
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.internalization import update_from_external_object
 
 from .._whoosh_index import Note
 from .._whoosh_index import Book
@@ -43,29 +44,29 @@ class TestWhooshIndex(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
-		super(TestWhooshIndex,cls).setUpClass()
+		super(TestWhooshIndex, cls).setUpClass()
 		cls.db_dir = tempfile.mkdtemp(dir="/tmp")
-		os.environ['DATASERVER_DIR']= cls.db_dir
+		os.environ['DATASERVER_DIR'] = cls.db_dir
 
 	@classmethod
 	def tearDownClass(cls):
 		shutil.rmtree(cls.db_dir, True)
-		super(TestWhooshIndex,cls).tearDownClass()
+		super(TestWhooshIndex, cls).tearDownClass()
 
 	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
 		ds = ds or mock_dataserver.current_mock_ds
-		usr = User.create_user( ds, username=username, password=password)
+		usr = User.create_user(ds, username=username, password=password)
 		return usr
 
 	def _create_ds_note(self):
-		username='nt@nti.com'
+		username = 'nt@nti.com'
 		usr = self._create_user(username=username)
 		note = dsNote()
 		note.creator = username
 		note.body = [u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade']
 		note.containerId = make_ntiid(nttype='bleach', specific='manga')
 		mock_dataserver.current_transaction.add(note)
-		note = usr.addContainedObject( note )
+		note = usr.addContainedObject(note)
 		return note
 
 	@WithMockDSTrans
@@ -84,14 +85,14 @@ class TestWhooshIndex(ConfiguringTestBase):
 			assert_that(items, has_length(1))
 
 	def _create_ds_highlight(self):
-		username='nt@nti.com'
+		username = 'nt@nti.com'
 		usr = self._create_user(username=username)
 		highlight = dsHighlight()
 		highlight.selectedText = u'You know how to add, subtract, multiply, and divide'
 		highlight.creator = usr.username
-		highlight.containerId =  make_ntiid(nttype='bleach', specific='manga')
+		highlight.containerId = make_ntiid(nttype='bleach', specific='manga')
 		mock_dataserver.current_transaction.add(highlight)
-		highlight = usr.addContainedObject( highlight )
+		highlight = usr.addContainedObject(highlight)
 		return highlight
 
 	@WithMockDSTrans
@@ -111,12 +112,12 @@ class TestWhooshIndex(ConfiguringTestBase):
 		usr = self._create_user()
 		redaction = dsRedaction()
 		redaction.selectedText = u'Lord of Winterfell'
-		redaction.replacementContent = 'Game of Thrones'
-		redaction.redactionExplanation = 'Eddard Stark'
+		update_from_external_object(redaction, {'replacementContent': u'Game of Thrones',
+												'redactionExplanation': u'Eddard Stark'})
 		redaction.creator = usr.username
-		redaction.containerId =  make_ntiid(nttype='bleach', specific='manga')
+		redaction.containerId = make_ntiid(nttype='bleach', specific='manga')
 		mock_dataserver.current_transaction.add(redaction)
-		redaction = usr.addContainedObject( redaction )
+		redaction = usr.addContainedObject(redaction)
 		return redaction
 
 	@WithMockDSTrans
@@ -139,11 +140,11 @@ class TestWhooshIndex(ConfiguringTestBase):
 		idx = RamStorage().create_index(schema)
 		writer = idx.writer()
 		for x in zanpakuto_commands:
-			writer.add_document(ntiid = unicode(make_ntiid(nttype='bleach', specific='manga')),
-								title = unicode(x),
-								content = unicode(x),
-								quick = unicode(x),
-								related= u'',
+			writer.add_document(ntiid=unicode(make_ntiid(nttype='bleach', specific='manga')),
+								title=unicode(x),
+								content=unicode(x),
+								quick=unicode(x),
+								related=u'',
 								last_modified=datetime.fromtimestamp(now))
 		writer.commit()
 
