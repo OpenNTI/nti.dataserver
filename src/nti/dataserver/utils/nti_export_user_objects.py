@@ -12,11 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import sys
-import json
 import argparse
 import datetime
-from cStringIO import StringIO
-from collections import Mapping, defaultdict
+from collections import defaultdict
 
 import ZODB
 
@@ -27,12 +25,11 @@ from nti.chatserver import interfaces as chat_interfaces
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver.links_external import render_link
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
-from nti.externalization.externalization import toExternalObject
-from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import to_json_representation_externalized
 
 def _get_object_type(obj):
 	result = obj.__class__.__name__ if not ZODB.interfaces.IBroken.providedBy(obj) else 'broken'
@@ -44,44 +41,32 @@ def _is_transcript(type_name):
 def _has_transcript(object_types):
 	return 'transcript' in object_types or 'messageinfo' in object_types
 
-def _clean_links(obj):
-	if isinstance(obj, Mapping):
-		links = obj.get(StandardExternalFields.LINKS, None)
-		if links is not None:
-			obj[StandardExternalFields.LINKS] = \
-					 [render_link(link) if nti_interfaces.ILink.providedBy(link) else link \
-					  for link in obj[StandardExternalFields.LINKS]]
-
-		url = obj.get('url', None)
-		if nti_interfaces.ILink.providedBy(url):
-			obj['url'] = render_link(url)
-
-		map(_clean_links, obj.values())
-	elif isinstance(obj, (list, tuple)):
-		map(_clean_links, obj)
-	return obj
-
 def get_user_objects(user, object_types=()):
 
 	def condition(x):
 		return 	isinstance(x, DMTS) or \
 				ZODB.interfaces.IBroken.providedBy(x) or \
+				nti_interfaces.ITitledDescribedContent.providedBy(x) or \
 				(nti_interfaces.IModeledContent.providedBy(x) and not chat_interfaces.IMessageInfo.providedBy(x))
 
+	seen = set()
+
 	for obj in findObjectsMatching(user, condition):
-		type_name = _get_object_type(obj)
-		if not object_types or type_name in object_types:
-			if ZODB.interfaces.IBroken.providedBy(obj):
-				yield 'broken', obj, obj
-			elif isinstance(obj, DMTS):
-				adapted = getAdapter(obj, nti_interfaces.ITranscript)
-				yield 'transcript', adapted, obj
-			else:
-				yield type_name, obj, obj
+		oid = to_external_ntiid_oid(obj)
+		if oid not in seen:
+			seen.add(oid)
+			type_name = _get_object_type(obj)
+			if not object_types or type_name in object_types:
+				if ZODB.interfaces.IBroken.providedBy(obj):
+					yield 'broken', obj, obj
+				elif isinstance(obj, DMTS):
+					adapted = getAdapter(obj, nti_interfaces.ITranscript)
+					yield 'transcript', adapted, obj
+				else:
+					yield type_name, obj, obj
 
 def to_external_object(obj):
-	external = toExternalObject(obj)
-	_clean_links(external)
+	external = to_json_representation_externalized(obj)
 	return external
 
 def export_user_objects(username, object_types=(), export_dir="/tmp"):
@@ -108,19 +93,14 @@ def export_user_objects(username, object_types=(), export_dir="/tmp"):
 	out_files = list()
 	utc_datetime = datetime.datetime.utcnow()
 	s = utc_datetime.strftime("%Y-%m-%d-%H%M%SZ")
-	for type_name, objs in result.items():
-		counter = counter + len(objs)
-		name = "%s-%s-%s.json" % (username, type_name, s)
+	for type_name, exported in result.items():
+		counter = counter + len(exported)
+		name = "%s-%s-%s.txt" % (username, type_name, s)
 		outname = os.path.join(export_dir, name)
 		with open(outname, "w") as fp:
-			sio = StringIO()
-			try:
-				json.dump(objs, sio, indent=4)
-				sio.seek(0)
-				fp.write(sio.read())
-			except:
-				sio.seek(0)
-				print('Could not export to json\n%r' % sio.read())
+			for external in exported:
+				fp.write(external)
+				fp.write("\n")
 		out_files.append(outname)
 
 	return out_files
