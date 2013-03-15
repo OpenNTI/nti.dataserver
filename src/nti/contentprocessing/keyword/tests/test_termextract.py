@@ -4,8 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import os
 import unittest
@@ -19,11 +19,11 @@ from hamcrest import (assert_that, is_, has_length)
 
 class TestKeyWordExtract(ConfiguringTestBase):
 
-	features = () # force loading the tagger
+	features = ()  # force loading the tagger
 
 	@classmethod
 	def setUpClass(cls):
-		super(TestKeyWordExtract,cls).setUpClass()
+		super(TestKeyWordExtract, cls).setUpClass()
 		name = os.path.join(os.path.dirname(__file__), 'sample.txt')
 		with open(name, "r") as f:
 			cls.sample_content = f.read()
