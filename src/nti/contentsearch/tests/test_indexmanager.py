@@ -4,8 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import os
 import time
@@ -45,7 +45,7 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
-		super(_BaseIndexManagerTest,cls).setUpClass()
+		super(_BaseIndexManagerTest, cls).setUpClass()
 		cls.now = time.time()
 		cls._add_book_data()
 
@@ -59,18 +59,18 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 		idx = cls.bim.bookidx
 		writer = idx.writer()
 		for k, x in enumerate(phrases):
-			writer.add_document(ntiid = unicode(make_ntiid(provider=str(k), nttype='bleach', specific='manga')),
-								title = unicode(x),
-								content = unicode(x),
-								quick = unicode(x),
-								related= u'',
+			writer.add_document(ntiid=unicode(make_ntiid(provider=str(k), nttype='bleach', specific='manga')),
+								title=unicode(x),
+								content=unicode(x),
+								quick=unicode(x),
+								related=u'',
 								last_modified=datetime.fromtimestamp(cls.now))
 		writer.commit()
 
 	@classmethod
 	def tearDownClass(cls):
 		shutil.rmtree(cls.book_idx_dir, True)
-		super(_BaseIndexManagerTest,cls).tearDownClass()
+		super(_BaseIndexManagerTest, cls).tearDownClass()
 
 	def wait_delay(self):
 		pass
@@ -103,7 +103,7 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 		conn = mock_dataserver.current_transaction
 
 		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com'
-		usr = User.create_user( mock_dataserver.current_mock_ds, username=username, password='temp001' )
+		usr = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp001')
 
 		for x in strings:
 			note = Note()
@@ -111,7 +111,7 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 			note.creator = usr.username
 			note.containerId = make_ntiid(nttype='bleach', specific='manga')
 			conn.add(note)
-			notes.append(usr.addContainedObject( note ))
+			notes.append(usr.addContainedObject(note))
 		return notes, usr
 
 	def _add_notes_to_index(self, im, notes, user):
@@ -228,20 +228,20 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_note_share_comm(self):
 		ds = mock_dataserver.current_mock_ds
-		user_1 = User.create_user( ds, username='nti-1.com', password='temp001')
-		user_2 = User.create_user( ds, username='nti-2.com', password='temp001')
+		user_1 = User.create_user(ds, username='nti-1.com', password='temp001')
+		user_2 = User.create_user(ds, username='nti-2.com', password='temp001')
 
-		c = Community.create_community( ds, username='Bankai')
+		c = Community.create_community(ds, username='Bankai')
 		for u in (user_1, user_2):
-			u.record_dynamic_membership( c )
-			u.follow( c )
+			u.record_dynamic_membership(c)
+			u.follow(c)
 
 		note = Note()
 		note.body = [unicode('Hitsugaya and Madarame performing Jinzen')]
 		note.creator = 'nti.com'
 		note.containerId = make_ntiid(nttype='bleach', specific='manga')
-		note.addSharingTarget( c )
-		note = user_2.addContainedObject( note )
+		note.addSharingTarget(c)
+		note = user_2.addContainedObject(note)
 
 		self.im = self.create_index_mananger()
 		self.im.index_user_content(data=note, target=user_2)
@@ -255,7 +255,7 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_same_content_two_comm(self):
 		ds = mock_dataserver.current_mock_ds
-		user = User.create_user( ds, username='nti.com', password='temp001')
+		user = User.create_user(ds, username='nti.com', password='temp001')
 
 		note = Note()
 		note.body = [unicode('Only a few atain both')]
@@ -264,13 +264,13 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 
 		comms = []
 		for name in ('Bankai', 'Shikai'):
-			c = Community.create_community( ds, username=name)
-			user.record_dynamic_membership( c )
-			user.follow( c )
+			c = Community.create_community(ds, username=name)
+			user.record_dynamic_membership(c)
+			user.follow(c)
 			comms.append(c)
-			note.addSharingTarget( c )
+			note.addSharingTarget(c)
 
-		note = user.addContainedObject( note )
+		note = user.addContainedObject(note)
 
 		self.im = self.create_index_mananger()
 		for c in comms:
@@ -288,22 +288,22 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_note_share_dfl(self):
 		ds = mock_dataserver.current_mock_ds
-		ichigo = User.create_user( ds, username='ichigo@nti.com', password='temp001')
-		aizen = User.create_user( ds, username='aizen@nti.com', password='temp001')
-		gin = User.create_user( ds, username='gin@nti.com', password='temp001')
+		ichigo = User.create_user(ds, username='ichigo@nti.com', password='temp001')
+		aizen = User.create_user(ds, username='aizen@nti.com', password='temp001')
+		gin = User.create_user(ds, username='gin@nti.com', password='temp001')
 
 		bleach = DynamicFriendsList(username='bleach')
-		bleach.creator = ichigo # Creator must be set
-		ichigo.addContainedObject( bleach )
-		bleach.addFriend( aizen )
-		bleach.addFriend( gin )
+		bleach.creator = ichigo  # Creator must be set
+		ichigo.addContainedObject(bleach)
+		bleach.addFriend(aizen)
+		bleach.addFriend(gin)
 
 		note = Note()
 		note.body = [u'Getsuga Tensho']
 		note.creator = 'nti.com'
 		note.containerId = make_ntiid(nttype='bleach', specific='manga')
-		note.addSharingTarget( bleach )
-		note = ichigo.addContainedObject( note )
+		note.addSharingTarget(bleach)
+		note = ichigo.addContainedObject(note)
 
 		self.im = self.create_index_mananger()
 		for c in (ichigo, bleach):
@@ -327,15 +327,15 @@ class TestIndexManagerWithWhoosh(_BaseIndexManagerTest):
 	@classmethod
 	def setUpClass(cls):
 		cls.whoosh_dir = tempfile.mkdtemp(dir="/tmp")
-		os.environ['DATASERVER_DIR']= cls.whoosh_dir
+		os.environ['DATASERVER_DIR'] = cls.whoosh_dir
 		# Yes, this is backwards, but order matters: the factory won't install
 		# the storage if DATASERVER_DIR is not set (which is weird)
-		super(TestIndexManagerWithWhoosh,cls).setUpClass()
+		super(TestIndexManagerWithWhoosh, cls).setUpClass()
 
 	@classmethod
 	def tearDownClass(cls):
 		shutil.rmtree(cls.whoosh_dir, True)
-		super(TestIndexManagerWithWhoosh,cls).tearDownClass()
+		super(TestIndexManagerWithWhoosh, cls).tearDownClass()
 
 	def create_index_mananger(self):
 		return create_index_manager_with_whoosh(indexdir=self.whoosh_dir, use_md5=False)
