@@ -119,7 +119,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, contains_string( 'The first part' ) )
-		assert_that( res.body, contains_string( 'This part is HTML' ) )
+		assert_that( res.body, contains_string( 'part is HTML' ) )
 		assert_that( res.body, contains_string( 'This text is from the canvas' ) )
 
 		# This should not have changed the implemented/provided lists of the objects
@@ -150,7 +150,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
-		assert_that( res.body, contains_string( 'This part is HTML' ) )
+		assert_that( res.body, contains_string( 'part is HTML' ) )
 
 		form = res.form
 		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
@@ -160,7 +160,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, does_not( contains_string( 'The first part' ) ) )
-		assert_that( res.body, does_not( contains_string( 'This part is HTML' ) ) )
+		assert_that( res.body, does_not( contains_string( 'part is HTML' ) ) )
 
 	@WithSharedApplicationMockDS
 	def test_flag_moderation_note_content(self):
@@ -192,7 +192,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 		assert_that( res.content_type, is_( 'text/html' ) )
 
 		# TODO: Note that our plain-textification is screwing up at paragraph boundaries.
-		assert_that( res.body, contains_string( 'This part is HTMLAnd spreads across paragraphs.<br />'
+		assert_that( res.body, contains_string( 'part is HTML</p><p>And spreads across paragraphs.</p><br />'
 												"<div class='canvas'>&lt;CANVAS OBJECT of length 0&gt;") )
 	@WithSharedApplicationMockDS
 	def test_flag_moderation_chat_message(self):

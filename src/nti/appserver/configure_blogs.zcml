@@ -124,7 +124,8 @@
 	<!-- Feeds -->
 	<!-- For purposes of rendering to a feed, posts behave just like notes -->
 	<adapter factory=".ugd_feed_views.NoteFeedRenderer"
-			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
+			 provides="zope.contentprovider.interfaces.IContentProvider"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost * .ugd_feed_views.AbstractFeedView" />
 
 
 </configure>

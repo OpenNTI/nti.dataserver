@@ -107,8 +107,11 @@ class AbstractFeedView(object):
 		for data_item in ext_dict['Items']:
 			data_object, data_creator, data_title, data_categories = self._object_and_creator( data_item )
 
-			renderer = IFeedRenderer( data_object, None )
-			descr = renderer.render() if renderer else ''
+			descr = ''
+			renderer = component.queryMultiAdapter( (data_object, request, self), IContentProvider )
+			if renderer:
+				renderer.update()
+				descr = renderer.render()
 
 			creator_profile = user_interfaces.IUserProfile( data_creator )
 			feed.add_item(
@@ -154,77 +157,47 @@ class UGDFeedView(AbstractFeedView):
 	def _feed_title( self ):
 		return self.request.context.ntiid # TODO: Better title
 
-class IFeedRenderer(interface.Interface):
+from zope.contentprovider.interfaces import IContentProvider
 
-	def render():
-		"""
-		Render to an HTML string the context object.
-		"""
-
-@interface.implementer(IFeedRenderer)
-@component.adapter(nti_interfaces.INote)
-class NoteFeedRenderer(object):
+from ._table_utils import NoteContentProvider
+@interface.implementer(IContentProvider)
+@component.adapter(nti_interfaces.INote, interface.Interface, AbstractFeedView)
+class NoteFeedRenderer(NoteContentProvider):
 	"""
 	Renderers notes in HTML for feeds. Does what it can with canvas objects,
 	which is to include their URL.
 
-	.. note:: This is similar to :class:`nti.appserver._table_utils.NoteBodyColumn`.
-
 	"""
-	def __init__( self, context ):
-		self.context = context
 
-	def render(self):
-		parts = []
-		for part in self.context.body:
-			if nti_interfaces.ICanvas.providedBy( part ):
-				for shape in part.shapeList:
-					url = getattr( shape, 'url', None )
-					if url:
-						ext_url = shape.toExternalObject()['url']
-						if nti_interfaces.ILink.providedBy( ext_url ):
-							ext_url = to_external_representation( ext_url, 'json' )
-						part = "<img src=%s />" % ext_url
-					else:
-						part = None
-			elif frg_interfaces.IHTMLContentFragment.providedBy( part ):
-				parser = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
-				doc = parser.parse( part )
-				body = doc.find('body')
-				if body:
-					part = lxml.etree.tostring( body, method='html', encoding=unicode )
-					part = part[6:-7] # strip the enclosing body tag
-				else:
-					part = None
-			else:
-				part = frg_interfaces.IPlainTextContentFragment( part, None ) or unicode(part)
 
-			if part:
-				parts.append( part )
-		return '<br />'.join( parts )
-
-@interface.implementer(IFeedRenderer)
-@component.adapter(nti_interfaces.ISelectedRange)
+@interface.implementer(IContentProvider)
+@component.adapter(nti_interfaces.ISelectedRange, interface.Interface, AbstractFeedView)
 class SelectedRangeFeedRenderer(object):
 	"""
 	For highlights and the like.
 	"""
 
-	def __init__( self, context ):
+	def __init__( self, context, request, view ):
 		self.context = context
+
+	def update(self):
+		pass
 
 	def render(self):
 		return self.context.selectedText
 
-@interface.implementer(IFeedRenderer)
-@component.adapter(nti_interfaces.IEntity)
+@interface.implementer(IContentProvider)
+@component.adapter(nti_interfaces.IEntity, interface.Interface, AbstractFeedView)
 class EntityFeedRenderer(object):
 	"""
 	For circled users.
 	"""
 
-	def __init__( self, context ):
+	def __init__( self, context, request, view):
 		self.context = context
+
+	def update(self):
+		pass
 
 	def render(self):
 		return self.context.username
