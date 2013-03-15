@@ -27,14 +27,14 @@ def remove_entity_catalogs(entity, content_types=()):
 	result = 0
 	content_types = content_types if content_types else get_indexable_types()
 	try:
-		rim = search_interfaces.IRepozeEntityIndexManager(entity)
-		result = remove_rim_catalogs(rim, content_types)
+		rim = search_interfaces.IRepozeEntityIndexManager(entity, None)
+		result = remove_rim_catalogs(rim, content_types) if rim is not None else 0
 	except POSKeyError:
 		pass
 	return result
 
 def get_catalog_and_docids(entity):
-	rim = search_interfaces.IRepozeEntityIndexManager(entity)
+	rim = search_interfaces.IRepozeEntityIndexManager(entity, {})
 	for catalog in rim.values():
 		catfield = list(catalog.values())[0] if catalog else None
 		if hasattr(catfield, "_indexed"):
