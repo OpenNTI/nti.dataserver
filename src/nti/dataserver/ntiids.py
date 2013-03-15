@@ -225,7 +225,7 @@ class _TranscriptResolver(_AbstractUserBasedResolver):
 
 	def _resolve( self, key, user ):
 		result = chat_interfaces.IUserTranscriptStorage(user).transcript_for_meeting( key )
-		if not result:
+		if result is None: # bool is based on messages
 			logger.debug( "Failed to find transcript given oid: %s", key )
 		return result
 
