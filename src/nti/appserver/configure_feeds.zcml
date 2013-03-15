@@ -4,8 +4,11 @@
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="zope.component" />
 
-	<adapter factory=".ugd_feed_views.NoteFeedRenderer" />
-	<adapter factory=".ugd_feed_views.EntityFeedRenderer" />
-	<adapter factory=".ugd_feed_views.SelectedRangeFeedRenderer" />
+	<adapter factory=".ugd_feed_views.NoteFeedRenderer"
+			 provides="zope.contentprovider.interfaces.IContentProvider"/>
+	<adapter factory=".ugd_feed_views.EntityFeedRenderer"
+			 provides="zope.contentprovider.interfaces.IContentProvider"/>
+	<adapter factory=".ugd_feed_views.SelectedRangeFeedRenderer"
+			 provides="zope.contentprovider.interfaces.IContentProvider"/>
 
 </configure>

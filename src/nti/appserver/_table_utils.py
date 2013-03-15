@@ -36,7 +36,7 @@ from zope.traversing.browser.interfaces import IAbsoluteURL
 from nti.dataserver.links_external import render_link
 from nti.ntiids import ntiids
 from pyramid import traversal
-
+from zope.contentprovider.provider import ContentProviderBase
 
 import html5lib
 from html5lib import treebuilders
@@ -78,17 +78,12 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 			return content_provider.render()
 		return ''
 
-@interface.implementer(cp_interfaces.IContentProvider)
-class AbstractNoteContentProvider(object):
+class AbstractNoteContentProvider(ContentProviderBase):
 	"""
 	Base content provider for something that is note-like
 	(being modeled content and typically having a body that is a :func:`nti.dataserver.interfaces.CompoundModeledContentBody`).
 	"""
 	__metaclass__ = ABCMeta
-
-	def __init__( self, context, request, view ):
-		self.__parent__ = view
-		self.context = context
 
 	def get_body_parts(self):
 		return self.context.body
