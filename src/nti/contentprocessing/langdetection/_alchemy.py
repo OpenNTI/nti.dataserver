@@ -71,7 +71,7 @@ class _AlchemyTextLanguageDectector(object):
 				result = _AlchemyLanguage(ISO_639_1=data.get('iso-639-1'),
 										  ISO_639_2=data.get('iso-639-2', None),
 										  ISO_639_3=data.get('iso-639-3', None),
-										  name=data.get('iso-639-3', None))
+										  name=data.get('language', None))
 		except:
 			result = ()
 			logger.exception('Error while detecting language using Alchemy')
