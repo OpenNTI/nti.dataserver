@@ -9,10 +9,5 @@ __docformat__ = "restructuredtext en"
 
 generation = 24
 
-from .evolve23 import do_evolve
-
 def evolve(context):
-	"""
-	Evolve generation 23 to 24 by reindexing redactions.
-	"""
-	do_evolve(context)
+	pass
