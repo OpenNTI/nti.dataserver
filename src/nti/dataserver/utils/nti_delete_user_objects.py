@@ -23,16 +23,16 @@ from nti.dataserver.utils import run_with_dataserver
 
 from nti.dataserver.utils.nti_export_user_objects import get_user_objects, to_external_object
 
-def delete_entity_objects(user, object_types=(), broken=False, extenalize=False):
+def delete_entity_objects(user, object_class_names=(), broken=False, extenalize=False):
 
-	# normalize object types
-	object_types = set(map(lambda x: x.lower(), object_types or ()))
+	# normalize object class names
+	object_class_names = set(map(lambda x: x.lower(), object_class_names or ()))
 
 	broken_objects = set()
 	exported_objects = defaultdict(list)
 
 	counter_map = defaultdict(int)
-	for type_name, adapted, obj in list(get_user_objects(user, object_types, broken)):
+	for type_name, adapted, obj in list(get_user_objects(user, object_class_names, broken)):
 
 		if ZODB.interfaces.IBroken.providedBy(obj):
 			oid = getattr(obj, 'oid', None)
@@ -74,14 +74,14 @@ def delete_entity_objects(user, object_types=(), broken=False, extenalize=False)
 
 	return counter_map, exported_objects
 
-def _remove_entity_objects(username, object_types=(), broken=False, export_dir=None, verbose=False):
+def _remove_entity_objects(username, object_class_names=(), broken=False, export_dir=None, verbose=False):
 	entity = users.Entity.get_entity(username)
 	if not entity:
 		print("Entity '%s' does not exists" % username, file=sys.stderr)
 		sys.exit(2)
 
 	extenalize = export_dir is not None
-	counter_map, exported_objects = delete_entity_objects(entity, object_types, broken, extenalize)
+	counter_map, exported_objects = delete_entity_objects(entity, object_class_names, broken, extenalize)
 
 	if export_dir:
 		export_dir = os.path.expanduser(export_dir)
@@ -120,8 +120,8 @@ def main():
 							 help="Output export directory")
 	arg_parser.add_argument('-t', '--types',
 							 nargs="*",
-							 dest='object_types',
-							 help="The object type(s) to delete")
+							 dest='object_class_names',
+							 help="The object class names(s) to delete")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument('-b', '--broken', help="Delete broken objects", action='store_true', dest='broken')
 
@@ -132,19 +132,19 @@ def main():
 	username = args.username
 	env_dir = os.path.expanduser(args.env_dir)
 	conf_packages = () if not args.site else ('nti.appserver',)
-	object_types = set(args.object_types) if args.object_types else ()
+	object_class_names = set(args.object_class_names) if args.object_class_names else ()
 	export_dir = os.path.expanduser(args.export_dir)  if args.export_dir else None
 
-	# if want to remove broken objects then and object types is empty
-	# chage behavior to simply remove only broken objects
-	# by setting object_types to be somethind invalid
-	if broken and not object_types:
-		object_types = ('%',)
+	# if we want to remove broken objects and object class names is empty
+	# change the behavior to simply remove only broken objects
+	# by setting object_class_names to be somethind invalid
+	if broken and not object_class_names:
+		object_class_names = ('%',)
 
 	run_with_dataserver(environment_dir=env_dir,
 						verbose=verbose,
 						xmlconfig_packages=conf_packages,
-						function=lambda: _remove_entity_objects(username, object_types, broken, export_dir, verbose))
+						function=lambda: _remove_entity_objects(username, object_class_names, broken, export_dir, verbose))
 
 if __name__ == '__main__':
 	main()
