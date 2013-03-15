@@ -28,7 +28,7 @@ def reindex_redactions(user, users_get, ds_intid):
 	try:
 		username = user.username
 		logger.debug('Reindexing redaction(s) for %s' % username)
-		for e, obj in find_all_redactions(user, users_get):
+		for e, obj in find_all_redactions(user):
 			try:
 				rim = search_interfaces.IRepozeEntityIndexManager(e, None)
 				catalog = rim.get_create_catalog(obj) if rim is not None else None

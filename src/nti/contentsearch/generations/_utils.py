@@ -14,29 +14,19 @@ from zope import component
 from zc import intid as zc_intid
 from ZODB.POSException import POSKeyError
 
-from nti.dataserver.users import friends_lists
-
 from ..utils import find_all_indexable_pairs
 from .. import interfaces as search_interfaces
 from .. import _discriminators as discriminators
-from ..utils._repoze_utils import remove_entity_catalogs
+from ..utils._repoze_utils import remove_entity_indices
 
 def reindex_ugd(user, users_get, ds_intid):
 	username = user.username
 	logger.debug('Reindexing object(s) for %s' % username)
 
 	counter = 0
-	dfl_names = set()
-
-	for e, obj in find_all_indexable_pairs(user, user_get=users_get, include_dfls=True):
-
-		# if we find a DFL clear its catalogs
-		if isinstance(e, friends_lists.DynamicFriendsList) and e.username not in dfl_names:
-			remove_entity_catalogs(e)
-			dfl_names.add(e.username)
-
-		rim = search_interfaces.IRepozeEntityIndexManager(e, None)
+	for e, obj in find_all_indexable_pairs(user):
 		try:
+			rim = search_interfaces.IRepozeEntityIndexManager(e, None)
 			catalog = rim.get_create_catalog(obj) if rim is not None else None
 			if catalog is not None:
 				docid = discriminators.query_uid(obj, ds_intid)
@@ -65,11 +55,10 @@ def reindex_all(context):
 
 	# remove all catalogs first
 	for user in users.values():
-		remove_entity_catalogs(user)
+		remove_entity_indices(user, include_dfls=True)
 
 	# reindex all users ugd
 	for user in users.values():
 		reindex_ugd(user, users.get, ds_intid)
 
-	logger.debug('Evolution done!!!')
-
+	logger.debug('Reindexing done!!!')
