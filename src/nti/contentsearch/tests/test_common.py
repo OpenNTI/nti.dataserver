@@ -34,6 +34,7 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(datetime.now(), less_than_or_equal_to(get_datetime()))
 
 	def test_get_type_from_mimetype(self):
+
 # 		f = component.getUtilitiesFor(IMimeObjectFactory)
 # 		for name, utility in f:
 # 			i = utility.getInterfaces()
@@ -53,4 +54,3 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.xyz'), is_(none()))
 		assert_that(get_type_from_mimetype('foo'), is_(none()))
 		assert_that(get_type_from_mimetype(None), is_(none()))
-

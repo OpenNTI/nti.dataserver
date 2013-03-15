@@ -4,8 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import os
 import time
@@ -44,9 +44,9 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
-		super(TestCloudSearchAdapter,cls).setUpClass()
-		os.environ['aws_access_key_id']= cls.aws_access_key_id
-		os.environ['aws_secret_access_key']= cls.aws_secret_access_key
+		super(TestCloudSearchAdapter, cls).setUpClass()
+		os.environ['aws_access_key_id'] = cls.aws_access_key_id
+		os.environ['aws_secret_access_key'] = cls.aws_secret_access_key
 
 	def _register_zcml(self):
 		self.redis = None
@@ -64,23 +64,23 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		self._register_zcml()
 
 		parser = _cloudsearch_query._DefaultCloudSearchQueryParser()
-		component.provideUtility( parser, provides=search_interfaces.ICloudSearchQueryParser )
+		component.provideUtility(parser, provides=search_interfaces.ICloudSearchQueryParser)
 
 		self.store = _cloudsearch_store._create_cloudsearch_store()
-		component.provideUtility( self.store, provides=search_interfaces.ICloudSearchStore )
+		component.provideUtility(self.store, provides=search_interfaces.ICloudSearchStore)
 
 	def _register_zcml_mock(self):
 		self.aws_op_delay = 0.4
 		self._register_zcml()
 
 		parser = MockCloundSearchQueryParser()
-		component.provideUtility( parser, provides=search_interfaces.ICloudSearchQueryParser )
+		component.provideUtility(parser, provides=search_interfaces.ICloudSearchQueryParser)
 
 		self.store = MockCloudSearch()
-		component.provideUtility( self.store, provides=search_interfaces.ICloudSearchStore )
+		component.provideUtility(self.store, provides=search_interfaces.ICloudSearchStore)
 
-	def setUp( self ):
-		super(TestCloudSearchAdapter,self).setUp()
+	def setUp(self):
+		super(TestCloudSearchAdapter, self).setUp()
 		self._register_zcml_mock()
 
 	# ---------------------
@@ -98,7 +98,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 		for x in zanpakuto_commands:
 			note = self.create_note(x, usr.username)
 			if conn: conn.add(note)
-			note = usr.addContainedObject( note )
+			note = usr.addContainedObject(note)
 			notes.append(note)
 		return notes
 
@@ -115,7 +115,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 
 	def add_user_index_notes(self):
 		username = unicode(str(uuid.uuid1())) + '@nti.com'
-		usr = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp001' )
+		usr = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp001')
 		notes, resps = self.index_notes(usr=usr, do_assert=False)
 		time.sleep(self.aws_op_delay)
 		return usr, notes, resps

@@ -84,4 +84,3 @@ class TestPyramidViews(ConfiguringTestBase):
 			self.fail()
 		except:
 			pass
-
