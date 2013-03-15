@@ -265,13 +265,13 @@ def _connect_view( request ):
 		# See application.py
 		try:
 			environ['nti.early_request_teardown'](request)
-		except Exception:
+		except Exception: # Most commonly a ConflictError or commit
 			# Gotta kill the jobs
 			exc_info = sys.exc_info()
 			logger.exception( "Failed to teardown request; aborting" )
 			try:
 				transaction.doom() # No use trying again
-			except AssertionError:
+			except ValueError:
 				# If the exception was raised while we were actually
 				# committing the transaction, then we won't be able to doom it,
 				# it's too late.
@@ -279,7 +279,7 @@ def _connect_view( request ):
 			transport.kill()
 			for job in jobs_or_response:
 				job.kill()
-			# Re-raise the original, not the assertionError that probably fired
+			# Re-raise the original, not the ValueError that probably fired
 			raise exc_info[0], None, exc_info[2]
 
 
