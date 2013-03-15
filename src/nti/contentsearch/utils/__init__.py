@@ -7,15 +7,20 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+from zope.generations.utility import findObjectsMatching
 from zope.generations.utility import findObjectsProviding
+
+from nti.chatserver import interfaces as chat_interfaces
 
 from nti.dataserver import users
 from nti.deprecated import deprecated
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as forum_interfaces
 
-from .. import get_indexable_types
+from nti.externalization.oids import to_external_ntiid_oid
+
 from ..common import get_type_name
+from .. import get_ugd_indexable_types
 from .. import interfaces as search_interfaces
 from .. import _discriminators as discriminators
 
@@ -52,29 +57,54 @@ def get_sharedWith(obj):
 	return result or ()
 
 
-def find_all_indexable_pairs(user, user_get=users.Entity.get_entity, include_dfls=False, _providing=nti_interfaces.IModeledContent):
+def find_all_indexable_pairs(user, condition=None):
 	"""
 	return a generator with all the objects that need to be indexed.
 	The genertor yield pairs (entity, obj) indicating that the object has to be indexed
 	for the particuluar entity
 	"""
 
-	indexable_types = get_indexable_types()
-	for obj in findObjectsProviding(user, _providing):
+	seen = set()
+	if condition is None:
+		def f(x):
+			return 	nti_interfaces.IModeledContent.providedBy(x) or \
+					forum_interfaces.IPersonalBlogEntry.providedBy(x)
+		condition = f
+
+	indexable_types = get_ugd_indexable_types()
+	for obj in findObjectsMatching(user, condition):
+
 		if get_type_name(obj) in indexable_types:
+			oid = to_external_ntiid_oid(obj)
+			if oid in seen:
+				continue
+			seen.add(oid)
+
 			yield (user, obj)
 
 			# check if object is shared
 			for shared_with in get_flattenedSharingTargets(obj):
 				if shared_with and shared_with != user:
-					if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(shared_with):
-						if include_dfls:
-							yield (shared_with, obj)
-					else:
-						yield (shared_with, obj)
+					yield (shared_with, obj)
 
-def find_all_posts(user, user_get=users.Entity.get_entity):
-	return find_all_indexable_pairs(user, include_dfls=False, _providing=forum_interfaces.IPost)
+def find_all_posts(user):
+	condition = lambda x : 	forum_interfaces.IPost.providedBy(x) or \
+							forum_interfaces.IPersonalBlogEntry.providedBy(x)
+	return find_all_indexable_pairs(user, condition)
 
-def find_all_redactions(user, user_get=users.Entity.get_entity):
-	return find_all_indexable_pairs(user, include_dfls=False, _providing=nti_interfaces.IRedaction)
+def find_all_redactions(user):
+	condition = lambda x : nti_interfaces.IRedaction.providedBy(x)
+	return find_all_indexable_pairs(user, condition)
+
+def find_all_notes(user):
+	condition = lambda x : nti_interfaces.INote.providedBy(x)
+	return find_all_indexable_pairs(user, condition)
+
+def find_all_highlights(user):
+	condition = lambda x : 	nti_interfaces.IHighlight.providedBy(x) and not \
+							nti_interfaces.INote.providedBy(x)
+	return find_all_indexable_pairs(user, condition)
+
+def find_all_messageinfo(user):
+	condition = lambda x : chat_interfaces.IMessageInfo.providedBy(x)
+	return find_all_indexable_pairs(user, condition)

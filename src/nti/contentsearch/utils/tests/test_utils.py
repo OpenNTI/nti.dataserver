@@ -10,11 +10,14 @@ __docformat__ = "restructuredtext en"
 from nti.dataserver import users
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
+from nti.dataserver.contenttypes import Highlight
 from nti.dataserver.users import DynamicFriendsList
 from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.ntiids.ntiids import make_ntiid
 
+from .. import find_all_notes
+from .. import find_all_highlights
 from .. import find_all_indexable_pairs
 from ...constants import note_, redaction_
 from ... import interfaces as search_interfaces
@@ -46,6 +49,17 @@ class TestUtils(ConfiguringTestBase):
 		note = owner.addContainedObject(note)
 		return note
 
+	def _create_highlight(self, msg, owner, containerId=None, sharedWith=()):
+		highlight = Highlight()
+		highlight.selectedText = unicode(msg)
+		highlight.creator = owner.username
+		highlight.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
+		for s in sharedWith or ():
+			highlight.addSharingTarget(s)
+		mock_dataserver.current_transaction.add(highlight)
+		highlight = owner.addContainedObject(highlight)
+		return highlight
+
 	def _create_notes(self, usr=None, sharedWith=()):
 		notes = []
 		usr = usr or self._create_user()
@@ -53,6 +67,14 @@ class TestUtils(ConfiguringTestBase):
 			note = self._create_note(msg, usr, sharedWith=sharedWith)
 			notes.append(note)
 		return notes, usr
+
+	def _create_highlights(self, usr=None, sharedWith=()):
+		result = []
+		usr = usr or self._create_user()
+		for msg in zanpakuto_commands:
+			hi = self._create_highlight(msg, usr, sharedWith=sharedWith)
+			result.append(hi)
+		return result, usr
 
 	def _create_notes_and_index(self, usr=None, sharedWith=()):
 		notes, usr = self._create_notes(usr, sharedWith)
@@ -89,6 +111,20 @@ class TestUtils(ConfiguringTestBase):
 		assert_that(pairs, has_length(len(notes)))
 
 	@WithMockDSTrans
+	def test_find_all_notes(self):
+		notes, user = self._create_notes()
+		pairs = list(find_all_notes(user))
+		assert_that(pairs, has_length(len(notes)))
+		pairs = list(find_all_highlights(user))
+		assert_that(pairs, has_length(0))
+
+	@WithMockDSTrans
+	def test_find_all_highlights(self):
+		his, user = self._create_highlights()
+		pairs = list(find_all_highlights(user))
+		assert_that(pairs, has_length(len(his)))
+
+	@WithMockDSTrans
 	def test_find_indexable_pairs_sharedWith(self):
 		user_1 = self._create_user(username='nt1@nti.com')
 		user_2 = self._create_user(username='nt2@nti.com')
@@ -107,7 +143,7 @@ class TestUtils(ConfiguringTestBase):
 		user_3 = self._create_user(username='nt3@nti.com')
 		dfl = self._create_friends_list(user_1, members=(user_2,))
 		self._create_note(u'test', user_1, sharedWith=(dfl, user_3))
-		pairs = list(find_all_indexable_pairs(user_1, include_dfls=True))
+		pairs = list(find_all_indexable_pairs(user_1))
 
 		__traceback_info__ = pairs
 		assert_that(pairs, has_length(4))

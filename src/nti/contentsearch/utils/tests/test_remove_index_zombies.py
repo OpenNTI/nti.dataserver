@@ -1,4 +1,11 @@
-import unittest
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import nti.dataserver
 from nti.dataserver.users import User
@@ -23,12 +30,12 @@ from hamcrest import (is_, has_length, assert_that)
 class TestReindexUserContent(ConfiguringTestBase):
 
 	set_up_packages = (nti.dataserver, nti.contentsearch)
-	
+
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
-		usr = User.create_user( ds, username=username, password=password)
+		usr = User.create_user(ds, username=username, password=password)
 		return usr
-	
+
 	def _create_note(self, msg, owner, containerId=None, sharedWith=()):
 		note = Note()
 		note.creator = owner
@@ -37,7 +44,7 @@ class TestReindexUserContent(ConfiguringTestBase):
 		for s in sharedWith or ():
 			note.addSharingTarget(s)
 		mock_dataserver.current_transaction.add(note)
-		note = owner.addContainedObject( note ) 
+		note = owner.addContainedObject(note)
 		return note
 
 	def _create_notes(self, usr=None, sharedWith=()):
@@ -55,7 +62,7 @@ class TestReindexUserContent(ConfiguringTestBase):
 			docid = rim.index_content(note)
 			docids.append(docid)
 		return docids
-	
+
 	@WithMockDSTrans
 	def test_remove_zombies(self):
 		notes, user = self._create_notes()
@@ -63,15 +70,15 @@ class TestReindexUserContent(ConfiguringTestBase):
 		catsdocs = list(rpz_utils.get_catalog_and_docids(user))
 		assert_that(catsdocs, has_length(1))
 		assert_that(catsdocs[0][1], has_length(len(zanpakuto_commands)))
-				
+
 		# remove notes
 		with user.updates():
 			for obj in notes:
 				objId = obj.id
 				containerId = obj.containerId
-				obj = user.getContainedObject( containerId, objId )
-				user.deleteContainedObject( containerId, objId )
-				
+				obj = user.getContainedObject(containerId, objId)
+				user.deleteContainedObject(containerId, objId)
+
 		catsdocs = list(rpz_utils.get_catalog_and_docids(user))
 		assert_that(catsdocs, has_length(1))
 		assert_that(catsdocs[0][1], has_length(len(zanpakuto_commands)))
@@ -81,6 +88,3 @@ class TestReindexUserContent(ConfiguringTestBase):
 
 		catsdocs = list(rpz_utils.get_catalog_and_docids(user))
 		assert_that(catsdocs[0][1], has_length(0))
-		
-if __name__ == '__main__':
-	unittest.main()
