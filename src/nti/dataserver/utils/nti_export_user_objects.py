@@ -31,8 +31,11 @@ from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DM
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_json_representation_externalized
 
+broken_object_type = u'broken.object'
+transcript_object_type = u'transcript'
+
 def _get_object_type(obj):
-	result = obj.__class__.__name__ if not ZODB.interfaces.IBroken.providedBy(obj) else 'broken'
+	result = obj.__class__.__name__ if not ZODB.interfaces.IBroken.providedBy(obj) else broken_object_type
 	return result.lower() if result else u''
 
 def _is_transcript(type_name):
@@ -41,35 +44,36 @@ def _is_transcript(type_name):
 def _has_transcript(object_types):
 	return 'transcript' in object_types or 'messageinfo' in object_types
 
-def get_user_objects(user, object_types=()):
+def get_user_objects(user, object_types=(), broken=False):
 
 	def condition(x):
 		return 	isinstance(x, DMTS) or \
-				ZODB.interfaces.IBroken.providedBy(x) or \
+				(ZODB.interfaces.IBroken.providedBy(x) and broken) or \
 				nti_interfaces.ITitledDescribedContent.providedBy(x) or \
 				(nti_interfaces.IModeledContent.providedBy(x) and not chat_interfaces.IMessageInfo.providedBy(x))
 
 	seen = set()
 
 	for obj in findObjectsMatching(user, condition):
-		oid = to_external_ntiid_oid(obj)
-		if oid not in seen:
-			seen.add(oid)
-			type_name = _get_object_type(obj)
-			if not object_types or type_name in object_types:
-				if ZODB.interfaces.IBroken.providedBy(obj):
-					yield 'broken', obj, obj
-				elif isinstance(obj, DMTS):
-					adapted = getAdapter(obj, nti_interfaces.ITranscript)
-					yield 'transcript', adapted, obj
-				else:
-					yield type_name, obj, obj
+		if ZODB.interfaces.IBroken.providedBy(obj):
+			yield broken_object_type, obj, obj
+		else:
+			oid = to_external_ntiid_oid(obj)
+			if oid not in seen:
+				seen.add(oid)
+				type_name = _get_object_type(obj)
+				if not object_types or type_name in object_types:
+					if isinstance(obj, DMTS):
+						adapted = getAdapter(obj, nti_interfaces.ITranscript)
+						yield transcript_object_type, adapted, obj
+					else:
+						yield type_name, obj, obj
 
 def to_external_object(obj):
 	external = to_json_representation_externalized(obj)
 	return external
 
-def export_user_objects(username, object_types=(), export_dir="/tmp"):
+def export_user_objects(username, object_types=(), broken=False, export_dir="/tmp"):
 	user = users.Entity.get_entity(username)
 	if not user:
 		print("User/Entity '%s' does not exists" % username, file=sys.stderr)
@@ -85,7 +89,7 @@ def export_user_objects(username, object_types=(), export_dir="/tmp"):
 	object_types = set(map(lambda x: x.lower(), object_types))
 
 	result = defaultdict(list)
-	for type_name, adapted, _ in get_user_objects(user, object_types):
+	for type_name, adapted, _ in get_user_objects(user, object_types, broken):
 		external = to_external_object(adapted)
 		result[type_name].append(external)
 
@@ -121,11 +125,15 @@ def main():
 							 nargs="*",
 							 dest='object_types',
 							 help="The object type(s) to export")
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('-b', '--broken', help="Return broken objects", action='store_true', dest='broken')
 
 	args = arg_parser.parse_args()
 
 	# gather parameters
+	broken = args.broken
 	env_dir = args.env_dir
+	verbose = args.verbose
 	username = args.username
 	export_dir = args.export_dir or env_dir
 	conf_packages = () if not args.site else ('nti.appserver',)
@@ -133,8 +141,9 @@ def main():
 
 	# run export
 	run_with_dataserver(environment_dir=env_dir,
+						verbose=verbose,
 						xmlconfig_packages=conf_packages,
-						function=lambda: export_user_objects(username, object_types, export_dir))
+						function=lambda: export_user_objects(username, object_types, broken, export_dir))
 
 if __name__ == '__main__':
 	main()
