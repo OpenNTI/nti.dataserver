@@ -6,13 +6,11 @@ from __future__ import print_function, unicode_literals
 
 from zope import interface
 
-from nti.utils.property import alias
-
 
 from nti.dataserver import interfaces as nti_interfaces
 
 from .base import UserContentRoot
-from zope.schema.fieldproperty import FieldProperty
+from nti.utils.schema import createDirectFieldProperties
 
 @interface.implementer(nti_interfaces.ISelectedRange)
 class SelectedRange(UserContentRoot):
@@ -21,16 +19,13 @@ class SelectedRange(UserContentRoot):
 	as a base class.
 	"""
 
-	# TODO: Use FieldProperties? Use SchemaConfiguredObject?
-	selectedText = ''
-	applicableRange = None
-
+	createDirectFieldProperties(nti_interfaces.IAnchoredRepresentation) # applicableRange
+	createDirectFieldProperties(nti_interfaces.ISelectedRange) # selectedText
 	# Tags. It may be better to use objects to represent
 	# the tags and have a single list. The two-field approach
 	# most directly matches what the externalization is.
-	tags = FieldProperty(nti_interfaces.ISelectedRange['tags'])
-
-	AutoTags = ()
+	createDirectFieldProperties(nti_interfaces.IUserTaggedContent) # tags
+	AutoTags = () # not currently in any interface
 
 	def __init__( self ):
 		super(SelectedRange,self).__init__()

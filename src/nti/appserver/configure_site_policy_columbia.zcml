@@ -17,7 +17,7 @@
 		<link:userLink
 			named='.logon.REL_WELCOME_PAGE'
 			minGeneration='20130313'
-			url='/NextThoughtWebApp/content/welcome/columbia.html'
-			zcml:condition="have devmode"/>
+			url='/NextThoughtWebApp/content/welcome/columbia/columbia.html'
+			mimeType='text/html'/>
 	</registerIn>
 </configure>

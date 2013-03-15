@@ -12,7 +12,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from .base import UserContentRoot
 UserContentRoot = UserContentRoot # BWC top-level import
 from .selectedrange import SelectedRange # BWC top-level import
-
+from nti.utils.schema import createDirectFieldProperties
 
 @interface.implementer(nti_interfaces.IHighlight)
 class Highlight(SelectedRange): #, _HighlightBWC):
@@ -20,8 +20,8 @@ class Highlight(SelectedRange): #, _HighlightBWC):
 	Implementation of a highlight.
 	"""
 
-	# TODO: FieldProperty? SchemaConfigured object?
-	style = nti_interfaces.IHighlight['style'].default
+	createDirectFieldProperties(nti_interfaces.IHighlight) # style
+
 
 	def __init__( self ):
 		super(Highlight,self).__init__()

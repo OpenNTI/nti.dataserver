@@ -1002,7 +1002,8 @@ class ISelectedRange(IShareableModeledContent,IAnchoredRepresentation, IUserTagg
 	attaches no semantic meaning to the selection; subclasses will do that.
 	"""
 	# TODO: A field class that handles HTML validation/stripping?
-	selectedText = ValidText( title="The string representation of the DOM Range the user selected, possibly empty." )
+	selectedText = ValidText( title="The string representation of the DOM Range the user selected, possibly empty.",
+							  default='')
 
 class IBookmark(ISelectedRange):
 	"""

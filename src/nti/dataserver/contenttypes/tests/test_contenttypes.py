@@ -94,7 +94,7 @@ class RedactionTest(mock_dataserver.SharedConfiguringTestBase):
 		joe = users.User.create_user( username='joe@ou.edu' )
 
 		redaction = Redaction()
-		redaction.applicableRange = None
+		redaction.__dict__['applicableRange'] = None
 
 		# Must provide applicable range
 		with self.assertRaises(zope.schema.interfaces.RequiredMissing):
