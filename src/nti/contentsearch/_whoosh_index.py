@@ -13,7 +13,6 @@ import inspect
 from datetime import datetime
 from operator import methodcaller
 
-import zope.intid
 from zope import interface
 from zope import component
 
@@ -76,7 +75,7 @@ class _SearchableContent(object):
 				suggestions = rank_words(qo.term, suggestions)
 				qo, parsed_query = self._parse_query(suggestions[0], **kwargs)
 
-				results = self._execute_search(	searcher,
+				results = self._execute_search(searcher,
 											 	parsed_query,
 											 	qo,
 											 	creator_method=empty_suggest_and_search_results)
@@ -141,9 +140,9 @@ def create_content_field(stored=True):
 
 # book content
 
-@interface.implementer( search_interfaces.IWhooshBookSchemaCreator)
+@interface.implementer(search_interfaces.IWhooshBookSchemaCreator)
 class _DefaultBookSchemaCreator(object):
-	
+
 	def create(self):
 		"""
 		Book index schema
@@ -158,14 +157,14 @@ class _DefaultBookSchemaCreator(object):
 		related: ntiids of related sections
 		ref: chapter reference
 		"""
-		schema = fields.Schema(	docid = fields.ID(stored=True, unique=False),
-								ntiid = fields.ID(stored=True, unique=False),
-								title = fields.TEXT(stored=True, spelling=True),
-					  			last_modified = fields.DATETIME(stored=True),
-					  			keywords = fields.KEYWORD(stored=True),
-					 			quick = create_ngram_field(),
-					 			related = fields.KEYWORD(stored=True),
-					 			content = create_content_field(stored=True))
+		schema = fields.Schema(docid=fields.ID(stored=True, unique=False),
+								ntiid=fields.ID(stored=True, unique=False),
+								title=fields.TEXT(stored=True, spelling=True),
+					  			last_modified=fields.DATETIME(stored=True),
+					  			keywords=fields.KEYWORD(stored=True),
+					 			quick=create_ngram_field(),
+					 			related=fields.KEYWORD(stored=True),
+					 			content=create_content_field(stored=True))
 		return schema
 
 def create_book_schema(name='en'):
@@ -180,7 +179,7 @@ class _BookContent(dict):
 	last_modified = property(methodcaller('get', last_modified_))
 	# whoosh specific
 	intid = property(methodcaller('get', intid_))
-	score = property(methodcaller('get','score', 1.0))
+	score = property(methodcaller('get', 'score', 1.0))
 	# alias
 	docnum = property(methodcaller('get', intid_))
 	containerId = property(methodcaller('get', ntiid_))
@@ -201,12 +200,12 @@ class Book(_SearchableContent):
 
 				score = hit.score or 1.0
 				last_modified = epoch_time(hit[last_modified_])
-				data = _BookContent(intid  = docnum,
-									score  = score,
-									ntiid  = hit[ntiid_],
-						 			title  = hit[title_],
-						 			content = hit[content_],
-						 			last_modified = last_modified )
+				data = _BookContent(intid=docnum,
+									score=score,
+									ntiid=hit[ntiid_],
+						 			title=hit[title_],
+						 			content=hit[content_],
+						 			last_modified=last_modified)
 				result.append((data, score))
 		return result
 
@@ -237,25 +236,22 @@ def get_post_tags(obj):
 	return unicode(','.join(tags)) if tags else None
 
 def get_uid(obj):
-	_ds_intid = component.getUtility( zope.intid.IIntIds )
-	uid = _ds_intid.getId(obj)
-	return unicode(str(uid))
+	uid = discriminators.get_uid(obj)
+	return unicode(uid)
 
 def get_object_from_ds(uid):
-	uid = int(uid)
-	_ds_intid = component.getUtility( zope.intid.IIntIds )
-	result = _ds_intid.queryObject(uid, None)
+	result = discriminators.query_object(uid)
 	if result is None:
 		logger.debug('Could not find object with id %r' % uid)
 	return result
 
 def _create_user_indexable_content_schema():
 
-	schema = fields.Schema(	intid = fields.ID(stored=True, unique=True),
-							containerId = fields.ID(stored=False),
-							creator = fields.ID(stored=False),
-				  			last_modified = fields.DATETIME(stored=False),
-				 			ntiid = fields.ID(stored=False))
+	schema = fields.Schema(intid=fields.ID(stored=True, unique=True),
+							containerId=fields.ID(stored=False),
+							creator=fields.ID(stored=False),
+				  			last_modified=fields.DATETIME(stored=False),
+				 			ntiid=fields.ID(stored=False))
 	return schema
 
 class UserIndexableContent(_SearchableContent):
@@ -325,7 +321,7 @@ class UserIndexableContent(_SearchableContent):
 
 def _create_shareable_schema():
 	schema = _create_user_indexable_content_schema()
-	schema.add(sharedWith_, fields.TEXT(stored=False) )
+	schema.add(sharedWith_, fields.TEXT(stored=False))
 	return schema
 
 class ShareableIndexableContent(UserIndexableContent):
@@ -336,10 +332,10 @@ class ShareableIndexableContent(UserIndexableContent):
 		result = super(ShareableIndexableContent, self).get_index_data(data)
 		result[sharedWith_] = get_sharedWith(data)
 		return result
-	
+
 def _create_threadable_schema():
 	schema = _create_shareable_schema()
-	schema.add(keywords_, fields.KEYWORD(stored=False) )
+	schema.add(keywords_, fields.KEYWORD(stored=False))
 	return schema
 
 class ThreadableIndexableContent(ShareableIndexableContent):
@@ -450,7 +446,7 @@ class Post(ShareableIndexableContent):
 # register indexable objects
 
 _indexables = CaseInsensitiveDict()
-for k,v in globals().items():
+for k, v in globals().items():
 	if inspect.isclass(v) and getattr(v, '__indexable__', False):
 		name = normalize_type_name(k)
 		_indexables[name] = v

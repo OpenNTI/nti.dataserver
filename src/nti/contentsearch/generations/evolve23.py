@@ -17,10 +17,10 @@ from zc import intid as zc_intid
 from ZODB.POSException import POSKeyError
 from zope.component.hooks import site, setHooks
 
-from ..utils import get_uid
 from ..constants import redaction_
 from ..utils import find_all_redactions
 from .. import interfaces as search_interfaces
+from .. import _discriminators as discriminators
 from ..utils._repoze_utils import remove_entity_catalogs
 
 def reindex_redactions(user, users_get, ds_intid):
@@ -33,7 +33,7 @@ def reindex_redactions(user, users_get, ds_intid):
 				rim = search_interfaces.IRepozeEntityIndexManager(e, None)
 				catalog = rim.get_create_catalog(obj) if rim is not None else None
 				if catalog is not None:
-					docid = get_uid(obj, ds_intid)
+					docid = discriminators.query_uid(obj, ds_intid)
 					if docid is not None:
 						catalog.index_doc(docid, obj)
 						counter = counter + 1

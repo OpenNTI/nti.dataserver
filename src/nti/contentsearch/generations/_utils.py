@@ -16,9 +16,9 @@ from ZODB.POSException import POSKeyError
 
 from nti.dataserver.users import friends_lists
 
-from ..utils import get_uid
 from ..utils import find_all_indexable_pairs
 from .. import interfaces as search_interfaces
+from .. import _discriminators as discriminators
 from ..utils._repoze_utils import remove_entity_catalogs
 
 def reindex_ugd(user, users_get, ds_intid):
@@ -39,7 +39,7 @@ def reindex_ugd(user, users_get, ds_intid):
 		try:
 			catalog = rim.get_create_catalog(obj) if rim is not None else None
 			if catalog is not None:
-				docid = get_uid(obj, ds_intid)
+				docid = discriminators.query_uid(obj, ds_intid)
 				if docid is not None:
 					catalog.index_doc(docid, obj)
 					counter = counter + 1

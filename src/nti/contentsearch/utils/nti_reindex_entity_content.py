@@ -19,9 +19,10 @@ from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 
 import nti.contentsearch
-from . import get_uid
+
 from . import find_all_indexable_pairs
 from .. import interfaces as search_interfaces
+from .. import _discriminators as discriminators
 from ._repoze_utils import remove_entity_catalogs
 
 def reindex_entity_content(entity, include_dfls=False, verbose=False):
@@ -38,7 +39,7 @@ def reindex_entity_content(entity, include_dfls=False, verbose=False):
 			rim = search_interfaces.IRepozeEntityIndexManager(e, None)
 			catalog = rim.get_create_catalog(obj) if rim is not None else None
 			if catalog is not None:
-				docid = get_uid(obj)
+				docid = discriminators.query_uid(obj)
 				if docid is not None:
 					catalog.index_doc(docid, obj)
 					counter = counter + 1

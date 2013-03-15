@@ -18,13 +18,13 @@ from ZODB.POSException import POSKeyError
 from zope.component.hooks import site, setHooks
 
 from ..common import post_
-from ..utils import get_uid
 from ..utils import find_all_posts
 from .. import interfaces as search_interfaces
+from .. import _discriminators as discriminators
 from ..utils._repoze_utils import remove_entity_catalogs
 
 def reindex_posts(user, users_get, ds_intid):
-	counter = 0	
+	counter = 0
 	try:
 		username = user.username
 		logger.debug('Reindexing posts(s) for %s' % username)
@@ -33,7 +33,7 @@ def reindex_posts(user, users_get, ds_intid):
 				rim = search_interfaces.IRepozeEntityIndexManager(e, None)
 				catalog = rim.get_create_catalog(obj) if rim is not None else None
 				if catalog is not None:
-					docid = get_uid(obj, ds_intid)
+					docid = discriminators.query_uid(obj, ds_intid)
 					if docid is not None:
 						catalog.index_doc(docid, obj)
 						counter = counter + 1
@@ -42,7 +42,7 @@ def reindex_posts(user, users_get, ds_intid):
 			except POSKeyError:
 				# broken reference for object
 				pass
-		
+
 		logger.debug('%s post object(s) for user %s were reindexed' % (counter, username))
 	except POSKeyError:
 		# broken reference for user
@@ -59,24 +59,24 @@ def do_evolve(context):
 	ds_folder = root['nti.dataserver']
 	lsm = ds_folder.getSiteManager()
 
-	ds_intid = lsm.getUtility( provided=zope.intid.IIntIds )
-	component.provideUtility(ds_intid, zope.intid.IIntIds )
-	component.provideUtility(ds_intid, zc_intid.IIntIds )
+	ds_intid = lsm.getUtility(provided=zope.intid.IIntIds)
+	component.provideUtility(ds_intid, zope.intid.IIntIds)
+	component.provideUtility(ds_intid, zc_intid.IIntIds)
 
-	with site( ds_folder ):
+	with site(ds_folder):
 		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
 
 		users = ds_folder['users']
-		
+
 		# remove all post catalogs first
 		for user in users.values():
 			remove_entity_catalogs(user, (post_,))
-		
+
 		# reindex all users ugd
 		for user in users.values():
 			reindex_posts(user, users.get, ds_intid)
-		
+
 	logger.debug('Evolution done!!!')
-	
+
 def evolve(context):
 	pass
