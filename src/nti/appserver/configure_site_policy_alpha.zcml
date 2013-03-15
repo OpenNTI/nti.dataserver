@@ -13,10 +13,5 @@
 
 	<registerIn registry=".sites.ALPHA">
 		<utility factory=".site_policies.GenericAdultSitePolicyEventListener" />
-
-		<adapter factory=".forum_views.DefaultUserForumFactory"
-				 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog"
-				 zcml:condition="have forums" />
-
 	</registerIn>
 </configure>
