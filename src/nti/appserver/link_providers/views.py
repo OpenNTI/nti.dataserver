@@ -71,7 +71,7 @@ def named_link_delete_view( request ):
 		return rsp
 
 	if not getattr( provider, 'delete_link', None ):
-		return hexc.HTTPForbidden() # Not a conditional, thus cannot be deleted
+		return hexc.HTTPMethodNotAllowed() # Not a conditional, thus cannot be deleted
 
 	# This counts as having taken the action.
 	provider.delete_link( link_name )

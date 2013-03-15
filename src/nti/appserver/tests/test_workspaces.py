@@ -42,7 +42,7 @@ import transaction
 
 import nti.tests
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.appserver,) )
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.appserver,), features=('devmode','forums') )
 tearDownModule = nti.tests.module_teardown
 
 class TestContainerEnumerationWorkspace(unittest.TestCase):
@@ -282,6 +282,10 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
 		ws = UEW(user)
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_in( list(UserPagesCollection(ws).accepts) ) )
+		uew_ext = to_external_object( ws )
+		# And the blog, even though it's never been used
+		assert_that( uew_ext['Items'], has_item( has_entry( 'Title', 'Blog' ) ) )
+
 
 		# Making it ICoppaUser cuts that out
 		interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )

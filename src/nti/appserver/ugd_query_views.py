@@ -334,6 +334,11 @@ class _MimeFilter(object):
 	def __call__( self, o ):
 		# We are assuming that everything within a given class tree
 		# will wind up sharing the same accept/exclude status
+		# TODO: If we make a further assumption that each mimetype
+		# maps one-to-one to a leaf class (which is currently the case, Mar13),
+		# then we could query the ZCA factories to find matching mimetypes
+		# at creation time and save the cache building...if the types are creatable
+		# externally
 		if isinstance( o, self._accept_classes ):
 			return True
 		elif isinstance( o, self._exclude_classes ):
