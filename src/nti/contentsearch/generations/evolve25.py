@@ -16,6 +16,8 @@ from zope import component
 from zc import intid as zc_intid
 from zope.component.hooks import site, setHooks
 
+from ZODB.POSException import POSKeyError
+
 from .. import _repoze_index
 from .. import interfaces as search_interfaces
 from ..constants import (redaction_, replacementContent_, redactionExplanation_)
@@ -43,22 +45,26 @@ def do_evolve(context):
 
 		# remove all post catalogs first
 		for user in users.values():
-			rim = search_interfaces.IRepozeEntityIndexManager(user)
-			catalog = rim.get(redaction_, None)
-			if catalog is None:
-				continue
+			try:
+				rim = search_interfaces.IRepozeEntityIndexManager(user, None)
+				catalog = rim.get(redaction_, None)  if rim is not None else None
+				if catalog is None:
+					continue
 
-			reindex = False
-			if replacementContent_ not in catalog:
-				reindex = True
-				_repoze_index._zopytext_field_creator(catalog, replacementContent_, search_interfaces.IRedactionRepozeCatalogFieldCreator)
-			if redactionExplanation_ not in catalog:
-				reindex = True
-				_repoze_index._zopytext_field_creator(catalog, redactionExplanation_, search_interfaces.IRedactionRepozeCatalogFieldCreator)
+				reindex = False
+				if replacementContent_ not in catalog:
+					reindex = True
+					_repoze_index._zopytext_field_creator(catalog, replacementContent_, search_interfaces.IRedactionRepozeCatalogFieldCreator)
+				if redactionExplanation_ not in catalog:
+					reindex = True
+					_repoze_index._zopytext_field_creator(catalog, redactionExplanation_, search_interfaces.IRedactionRepozeCatalogFieldCreator)
 
-			if reindex:
-				logger.debug('Reindexing redactions for %s !!!' % user)
-				reindex_redactions(user, users.get, ds_intid)
+				if reindex:
+					logger.debug('Reindexing redactions for %s !!!' % user)
+					reindex_redactions(user, users.get, ds_intid)
+			except POSKeyError:
+				# broken reference for user
+				pass
 
 	logger.debug('Evolution done!!!')
 
