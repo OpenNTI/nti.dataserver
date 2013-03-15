@@ -314,7 +314,7 @@ setup(
 		'zope.location >= 4.0.2',
 		'zope.mimetype == 1.3.1', # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
-		'zope.pagetemplate >= 4.0.3',
+		'zope.pagetemplate >= 4.0.4',
 		'zope.password >= 4.0.2', # encrypted password management
 		'zope.pluggableauth >= 1.3' if HAVE_ZCONT else '', # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		'zope.publisher >= 4.0.0a4',

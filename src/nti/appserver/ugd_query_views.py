@@ -675,13 +675,19 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 				if needs_security:
 					needs_security = False
 					batch = []
+					# If we can, always put at least a few more than needed
+					# into the result list. This ensures that any client
+					# who is counting items and comparing it to FilteredItemCount
+					# knows if there is more out there. Try to add more than one
+					# to account for varying interpretations of batch_start and other
+					# off-by-one problems
 					for i in result_list:
-						if len(batch) > batch_size + batch_start:
-							break
 						if is_readable(i):
 							batch.append( i )
+						if len(batch) > batch_size + batch_start + 2:
+							break
 					result_list = batch
-					result['FilteredTotalItemCount'] = len(result_list) + 1 # XXX We don't actually know...
+					result['FilteredTotalItemCount'] = len(result_list) # NOTE: This is a minimum
 				result_list = Batch( result_list, batch_start, batch_size )
 				# Insert links to the next and previous batch
 				next_batch, prev_batch = result_list.next, result_list.previous
