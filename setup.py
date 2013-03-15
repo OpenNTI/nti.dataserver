@@ -215,7 +215,7 @@ setup(
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
 		 # Consider also https://github.com/phensley/gstatsd
 		'pystatsd >= 0.1.6',
-		'pytz >= 2012j',
+		'pytz >= 2013b',
 		'rdflib >= 3.4.0',
 		# Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
 		'redis >= 2.7.2',
@@ -294,7 +294,7 @@ setup(
 		'zope.datetime >= 4.0.0',
 		'zope.deprecation >= 4.0.2',
 		'zope.deferredimport >= 4.0.0', # useful with zope.deprecation. Req'd by contentratings
-		'zope.dottedname >= 4.0.0',
+		'zope.dottedname >= 4.0.1',
 		'zope.dublincore >= 4.0.0',
 		'zope.error >= 4.1.0',
 		'zope.event >= 4.0.2',
@@ -364,7 +364,7 @@ setup(
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 			'pip >= 1.3.1',
 			'pip-tools >= 0.2.1', # command pip-review, pip-dump
-			'pudb', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
+			'pudb >= 2013.1', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 0.27.0' if not IS_PYPY else '',
 			'pyramid_debugtoolbar >= 1.0.4',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
