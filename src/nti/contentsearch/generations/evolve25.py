@@ -60,7 +60,6 @@ def do_evolve(context):
 					_repoze_index._zopytext_field_creator(catalog, redactionExplanation_, search_interfaces.IRedactionRepozeCatalogFieldCreator)
 
 				if reindex:
-					logger.debug('Reindexing redactions for %s !!!' % user)
 					reindex_redactions(user, users.get, ds_intid)
 			except POSKeyError:
 				# broken reference for user
