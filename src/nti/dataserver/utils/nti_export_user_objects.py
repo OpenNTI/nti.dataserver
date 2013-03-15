@@ -38,13 +38,16 @@ def _get_object_type(obj):
 	result = obj.__class__.__name__ if not ZODB.interfaces.IBroken.providedBy(obj) else broken_object_type
 	return result.lower() if result else u''
 
-def _is_transcript(type_name):
-	return type_name in ('transcript', 'messageinfo')
+def _is_transcript(name):
+	return name in ('transcript', 'messageinfo')
 
-def _has_transcript(object_types):
-	return 'transcript' in object_types or 'messageinfo' in object_types
+def _has_transcript(object_class_names):
+	return 'transcript' in object_class_names or 'messageinfo' in object_class_names
 
-def get_user_objects(user, object_types=(), broken=False):
+def get_user_objects(user, object_class_names=(), broken=False):
+
+	# normalize object class names
+	object_class_names = set(map(lambda x: x.lower(), object_class_names or ()))
 
 	def condition(x):
 		return 	isinstance(x, DMTS) or \
@@ -62,7 +65,7 @@ def get_user_objects(user, object_types=(), broken=False):
 			if oid not in seen:
 				seen.add(oid)
 				type_name = _get_object_type(obj)
-				if not object_types or type_name in object_types:
+				if not object_class_names or type_name in object_class_names:
 					if isinstance(obj, DMTS):
 						adapted = getAdapter(obj, nti_interfaces.ITranscript)
 						yield transcript_object_type, adapted, obj
@@ -73,7 +76,7 @@ def to_external_object(obj):
 	external = to_json_representation_externalized(obj)
 	return external
 
-def export_user_objects(username, object_types=(), broken=False, export_dir="/tmp"):
+def export_user_objects(username, object_class_names=(), broken=False, export_dir="/tmp"):
 	user = users.Entity.get_entity(username)
 	if not user:
 		print("User/Entity '%s' does not exists" % username, file=sys.stderr)
@@ -86,10 +89,10 @@ def export_user_objects(username, object_types=(), broken=False, export_dir="/tm
 		os.makedirs(export_dir)
 
 	# normalize object types
-	object_types = set(map(lambda x: x.lower(), object_types))
+	object_class_names = set(map(lambda x: x.lower(), object_class_names))
 
 	result = defaultdict(list)
-	for type_name, adapted, _ in get_user_objects(user, object_types, broken):
+	for type_name, adapted, _ in get_user_objects(user, object_class_names, broken):
 		external = to_external_object(adapted)
 		result[type_name].append(external)
 
@@ -123,8 +126,8 @@ def main():
 							 help="Output export directory")
 	arg_parser.add_argument('-t', '--types',
 							 nargs="*",
-							 dest='object_types',
-							 help="The object type(s) to export")
+							 dest='object_class_names',
+							 help="The object class names(s) to export")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument('-b', '--broken', help="Return broken objects", action='store_true', dest='broken')
 
@@ -137,13 +140,13 @@ def main():
 	username = args.username
 	export_dir = args.export_dir or env_dir
 	conf_packages = () if not args.site else ('nti.appserver',)
-	object_types = set(args.object_types) if args.object_types else ()
+	object_class_names = set(args.object_class_names) if args.object_class_names else ()
 
 	# run export
 	run_with_dataserver(environment_dir=env_dir,
 						verbose=verbose,
 						xmlconfig_packages=conf_packages,
-						function=lambda: export_user_objects(username, object_types, broken, export_dir))
+						function=lambda: export_user_objects(username, object_class_names, broken, export_dir))
 
 if __name__ == '__main__':
 	main()
