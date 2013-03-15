@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import os
+
 from ..trigram_trainer import TrigramTrainer
 
 from . import ConfiguringTestBase
@@ -44,3 +46,9 @@ class TestTrigramTrainer(ConfiguringTestBase):
 		assert_that(t.trigrams, has_length(61))
 		assert_that(t.total_trigrams, is_(63))
 
+	def test_process_files(self):
+		dpath = os.path.join(os.path.dirname(__file__), "train")
+		t, _ = TrigramTrainer.process_files(dpath)
+		assert_that(t.characters, is_(132628))
+		assert_that(t.total_trigrams, is_(131026))
+		assert_that(t.trigrams, has_length(2800))
