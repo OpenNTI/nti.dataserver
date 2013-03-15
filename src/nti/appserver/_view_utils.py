@@ -39,6 +39,8 @@ from nti.mimetype import mimetype
 from zope.schema import interfaces as sch_interfaces
 from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
 
+from zope.cachedescriptors.property import Lazy
+
 def get_remote_user( request=None, dataserver=None ):
 	"""
 	Returns the user object corresponding to the authenticated user of the
@@ -69,6 +71,12 @@ class AbstractAuthenticatedView(AbstractView):
 		"""
 		return get_remote_user( self.request, self.dataserver )
 
+	@Lazy
+	def remoteUser(self):
+		"""
+		Returns the remote user for the current request; cached on first use.
+		"""
+		return self.getRemoteUser()
 
 class UploadRequestUtilsMixin(object):
 	"""
