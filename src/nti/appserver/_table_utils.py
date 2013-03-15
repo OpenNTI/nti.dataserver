@@ -9,8 +9,10 @@ $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 logger = __import__('logging').getLogger(__name__)
+
 import cgi
 from collections import Counter
+from abc import ABCMeta #, abstractmethod
 
 from zope import interface
 from zope import component
@@ -19,8 +21,11 @@ from zc import intid as zc_intid
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentfragments import interfaces as frg_interfaces
+from nti.chatserver import interfaces as chat_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 import pyramid.interfaces
 import z3c.table.interfaces
+from zope.contentprovider import interfaces as cp_interfaces
 
 from z3c.table import column
 from zope.dublincore import interfaces as dc_interfaces
@@ -31,6 +36,11 @@ from zope.traversing.browser.interfaces import IAbsoluteURL
 from nti.dataserver.links_external import render_link
 from nti.ntiids import ntiids
 from pyramid import traversal
+
+
+import html5lib
+from html5lib import treebuilders
+import lxml.etree
 
 @interface.implementer(dc_interfaces.IZopeDublinCore)
 class _FakeDublinCoreProxy(SpecificationDecoratorBase):
@@ -61,57 +71,123 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 	defaultValue = ()
 
 	def renderCell( self, item ):
-		content = super(NoteLikeBodyColumn,self).renderCell( item )
-		if content is self.defaultValue:
-			# TODO: These hacks are starting to get out of hand.
-			# Need to seriously investigate the zope contentprovider concepts
-			# See also feed_views.py
-			# This hack is for forum entries
-			headline = getattr( item, 'headline', None )
-			if headline:
-				content = getattr( headline, 'body', self.defaultValue )
-				content = list( content )
-				content.insert( 0, getattr( headline, 'title', '' ) )
+		content_provider = component.queryMultiAdapter( (item, self.request, self),
+														cp_interfaces.IContentProvider )
+		if content_provider:
+			content_provider.update()
+			return content_provider.render()
+		return ''
 
+@interface.implementer(cp_interfaces.IContentProvider)
+class AbstractNoteContentProvider(object):
+	"""
+	Base content provider for something that is note-like
+	(being modeled content and typically having a body that is a :func:`nti.dataserver.interfaces.CompoundModeledContentBody`).
+	"""
+	__metaclass__ = ABCMeta
+
+	def __init__( self, context, request, view ):
+		self.__parent__ = view
+		self.context = context
+
+	def get_body_parts(self):
+		return self.context.body
+
+	def render_body_part( self, part ):
+		if nti_interfaces.ICanvas.providedBy( part ):
+			# TODO: We can do better than this. For one, we could use adapters
+			body = ["<div class='canvas'>&lt;CANVAS OBJECT of length %s&gt;" % len(part)]
+			part_types = Counter()
+			for canvas_part in part:
+				part_types[type(canvas_part).__name__] += 1
+				if hasattr( canvas_part, 'url' ):
+					# Write it out as a link to the image.
+					# TODO: This is a bit of a hack
+					# TODO: Are there any permissions problems with this? Potentially?
+					# The data-url wouldn't have them. In notification emails, this
+					# could also be a problem
+					part_ext = canvas_part.toExternalObject()
+					__traceback_info__ = part_ext
+					link = part_ext['url']
+					# TODO: Apparently there are some unmigrated objects that don't have _file
+					# hidden away somewhere?
+					link_external = render_link(link) if nti_interfaces.ILink.providedBy( link ) else link
+					body.append( "<img src='%s' />" % link_external )
+				elif hasattr( canvas_part, 'text' ):
+					body.append( cgi.escape( canvas_part.text ) )
+			for name, cnt in part_types.items():
+				body.append( "&lt;%d %ss&gt;" % (cnt, name) )
+			body.append( '</div>' )
+			return '<br />'.join( body )
+
+		if frg_interfaces.IHTMLContentFragment.providedBy( part ):
+			parser = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
+			doc = parser.parse( part )
+			body = doc.find('body')
+			if body is not None:
+				part = lxml.etree.tostring( body, method='html', encoding=unicode )
+				result = part[6:-7] # strip the enclosing body tag
+			else:
+				result = ''
+		else:
+			result = frg_interfaces.IPlainTextContentFragment( part, None ) or unicode(part)
+		return result
+
+	def update(self):
+		pass
+
+	def render_prefix(self):
+		return ''
+	def render_suffix(self):
+		return ''
+
+	def render(self):
 		parts = []
-		for part in content or ():
-			if nti_interfaces.ICanvas.providedBy( part ):
-				# TODO: We can do better than this. For one, we could use adapters
-				body = ["<div class='canvas'>&lt;CANVAS OBJECT of length %s&gt;" % len(part)]
-				part_types = Counter()
-				for canvas_part in part:
-					part_types[type(canvas_part).__name__] += 1
-					if hasattr( canvas_part, 'url' ):
-						# Write it out as a link to the image.
-						# TODO: This is a bit of a hack
-						# TODO: Are there any permissions problems with this? Potentially?
-						# The data-url wouldn't have them. In notification emails, this
-						# could also be a problem
-						part_ext = canvas_part.toExternalObject()
-						__traceback_info__ = part_ext
-						link = part_ext['url']
-						# TODO: Apparently there are some unmigrated objects that don't have _file
-						# hidden away somewhere?
-						link_external = render_link(link) if nti_interfaces.ILink.providedBy( link ) else link
-						body.append( "<img src='%s' />" % link_external )
-					elif hasattr( canvas_part, 'text' ):
-						body.append( cgi.escape( canvas_part.text ) )
-				for name, cnt in part_types.items():
-					body.append( "&lt;%d %ss&gt;" % (cnt, name) )
-				body.append( '</div>' )
-				parts.append( '<br />'.join( body ) )
-			elif part:
-				parts.append( frg_interfaces.IPlainTextContentFragment( part, None ) or unicode(part) )
-		return '<div>' + '<br />'.join( parts ) + self._render_suffix(item) + '</div>'
+		parts.append( '<div>' )
+		parts.append( self.render_prefix() )
+		for part in self.get_body_parts():
+			rendered = self.render_body_part( part )
+			if rendered:
+				parts.append( '<br />' )
+				parts.append( rendered )
 
-	def _render_suffix( self, item ):
-		# hack for rendering MessageInfo objects to add recipient information.
-		# If we add more of these we need to do something with ZCA
-		recip = getattr( item, 'recipients', None )
+		parts.append( self.render_suffix() )
+
+		return ''.join( parts )
+
+@interface.implementer(cp_interfaces.IContentProvider)
+@component.adapter(nti_interfaces.INote, interface.Interface, NoteLikeBodyColumn)
+class NoteContentProvider(AbstractNoteContentProvider):
+	pass
+
+@interface.implementer(cp_interfaces.IContentProvider)
+@component.adapter(chat_interfaces.IMessageInfo, interface.Interface, NoteLikeBodyColumn)
+class MessageInfoContentProvider(AbstractNoteContentProvider):
+
+	def get_body_parts(self):
+		return self.context.body
+
+	def render_suffix(self):
+		recip = getattr( self.context, 'recipients', None )
 		if recip:
 			return "<br /><span class='chat-recipients'>(Recipients: " + ' '.join( recip ) + ')</span>'
-
 		return ''
+
+@interface.implementer(cp_interfaces.IContentProvider)
+@component.adapter(frm_interfaces.IHeadlineTopic, interface.Interface, NoteLikeBodyColumn)
+class HeadlineTopicContentProvider(AbstractNoteContentProvider):
+
+	def get_body_parts(self):
+		return self.context.headline.body
+
+	def render_prefix(self):
+		return self.context.headline.title
+
+@interface.implementer(cp_interfaces.IContentProvider)
+@component.adapter(frm_interfaces.IPersonalBlogComment, interface.Interface, NoteLikeBodyColumn)
+class PersonalBlogCommentContentProvider(AbstractNoteContentProvider):
+	pass
+
 
 class IntIdCheckBoxColumn(column.CheckBoxColumn):
 	"""

@@ -58,6 +58,12 @@
 			 for="* * .flagging_views.ModerationAdminTable"
 			 name="note-selected" />
 
+	<!-- Content providers for this table (actually, the NoteLikeBodyColumn) -->
+	<adapter factory="._table_utils.NoteContentProvider" />
+	<adapter factory="._table_utils.MessageInfoContentProvider" />
+	<adapter factory="._table_utils.HeadlineTopicContentProvider" />
+	<adapter factory="._table_utils.PersonalBlogCommentContentProvider" />
+
 	<!-- Coppa admin -->
 	<adapter factory="._table_utils.CreatedColumn"
 			 provides="z3c.table.interfaces.IColumn"
