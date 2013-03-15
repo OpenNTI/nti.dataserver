@@ -287,7 +287,7 @@ setup(
 		# z3c.table, zope.catalog, zope.copypastemove, zope.file, zope.intid, zope.pluggableauth, zope.site
 		# If you do install it you can run this script again to get the missing deps
 		'zope.container[zcml,zodb] >= 4.0.0a3' if not IS_PYPY else '', # 4.0.0a3 or greater is required in the 4 series
-		'zope.contentprovider >= 3.7.2',
+		'zope.contentprovider >= 4.0.0a1',
 		'zope.contenttype >= 4.0.1', # A utility module for content-type handling.
 		'zope.copy >= 4.0.2',
 		'zope.copypastemove[zcml] >= 4.0.0a1' if HAVE_ZCONT else '', # zope.container dep
@@ -317,7 +317,7 @@ setup(
 		'zope.pagetemplate >= 4.0.3',
 		'zope.password >= 4.0.2', # encrypted password management
 		'zope.pluggableauth >= 1.3' if HAVE_ZCONT else '', # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
-		'zope.publisher >= 4.0.0a3',#4.0.0a1 is out, should be fine
+		'zope.publisher >= 4.0.0a4',
 		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.3', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
