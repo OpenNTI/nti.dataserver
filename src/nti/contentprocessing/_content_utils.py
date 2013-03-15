@@ -28,27 +28,37 @@ from . import default_punk_char_pattern
 from . import interfaces as cp_interfaces
 from . import default_punk_char_expression
 from . import default_word_tokenizer_pattern
+from  .import default_punk_char_pattern_plus
 from . import default_word_tokenizer_expression
+from  .import default_punk_char_expression_plus
 
 def get_content_translation_table(language='en'):
 	table = component.queryUtility(cp_interfaces.IContentTranslationTable, name=language)
 	return table or _default_content_translation_table()
 
-@interface.implementer( cp_interfaces.IWordTokenizerExpression )
+@interface.implementer(cp_interfaces.IWordTokenizerExpression)
 def _default_word_tokenizer_expression():
 	return default_word_tokenizer_expression
 
-@interface.implementer( cp_interfaces.IWordTokenizerPattern )
+@interface.implementer(cp_interfaces.IWordTokenizerPattern)
 def _default_word_tokenizer_pattern():
 	return default_word_tokenizer_pattern
 
-@interface.implementer( cp_interfaces.IPunctuationCharExpression )
+@interface.implementer(cp_interfaces.IPunctuationCharExpression)
 def _default_punctuation_char_expression():
 	return default_punk_char_expression
 
-@interface.implementer( cp_interfaces.IPunctuationCharPattern )
+@interface.implementer(cp_interfaces.IPunctuationCharPattern)
 def _default_punctuation_char_pattern():
 	return default_punk_char_pattern
+
+@interface.implementer(cp_interfaces.IPunctuationCharExpressionPlus)
+def _default_punctuation_char_expression_plus():
+	return default_punk_char_expression_plus
+
+@interface.implementer(cp_interfaces.IPunctuationCharPatternPlus)
+def _default_punctuation_char_pattern_plus():
+	return default_punk_char_pattern_plus
 
 @repoze.lru.lru_cache(500)
 def tokenize_content(text, language='en'):
@@ -64,11 +74,11 @@ def get_content(text=None, language="en"):
 	result = ' '.join(result)
 	return unicode(result)
 
-@interface.implementer( cp_interfaces.IContentTokenizer )
+@interface.implementer(cp_interfaces.IContentTokenizer)
 class _ContentTokenizer(object):
 
 	tokenizer = RegexpTokenizer(_default_word_tokenizer_expression(),
-								flags = re.MULTILINE | re.DOTALL | re.UNICODE)
+								flags=re.MULTILINE | re.DOTALL | re.UNICODE)
 
 	def tokenize(self, content):
 		if content and isinstance(content, six.string_types):
@@ -82,8 +92,8 @@ class _ContentTokenizer(object):
 	def to_plain_text(cls, content):
 		text = component.getAdapter(content, frg_interfaces.IPlainTextContentFragment, name='text')
 		return text
-	
-@interface.implementer( cp_interfaces.IWordSimilarity )
+
+@interface.implementer(cp_interfaces.IWordSimilarity)
 class _DefaultWordSimilarity(object):
 
 	def compute(self, a, b):
@@ -105,7 +115,7 @@ def rank_words(word, terms, reverse=True):
 	result = ws.rank(word, terms, reverse)
 	return result
 
-@interface.implementer( cp_interfaces.IContentTranslationTable )
+@interface.implementer(cp_interfaces.IContentTranslationTable)
 def _default_content_translation_table():
 	name = resource_filename(__name__, "punctuation-en.txt")
 	with open(name, 'r') as src:
