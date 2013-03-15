@@ -16,6 +16,8 @@ from nti.dataserver import users
 from nti.dataserver.contenttypes import Redaction
 from nti.dataserver.utils.example_database_initializer import ExampleDatabaseInitializer
 
+from nti.externalization.internalization import update_from_external_object
+
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch import interfaces as search_interfaces
@@ -44,8 +46,8 @@ class TestEvolve24(mock_dataserver.ConfiguringTestBase):
 
 			redaction = Redaction()
 			redaction.selectedText = u'Fear'
-			redaction.replacementContent = 'Ichigo'
-			redaction.redactionExplanation = 'Have overcome it everytime I have been on the verge of death'
+			update_from_external_object(redaction, {'replacementContent': u'Ichigo',
+													'redactionExplanation': u'Have overcome it everytime I have been on the verge of death'})
 			redaction.creator = jason.username
 			redaction.containerId = make_ntiid(nttype='bleach', specific='manga')
 			redaction = jason.addContainedObject(redaction)
