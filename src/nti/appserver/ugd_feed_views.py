@@ -26,21 +26,18 @@ from zope import component
 from zope.dublincore import interfaces as dc_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
-from nti.contentfragments import interfaces as frg_interfaces
+
 
 from nti.appserver import httpexceptions as hexc
 from nti.appserver.ugd_query_views import _RecursiveUGDStreamView
 
 from nti.dataserver import authorization as nauth
 
-from nti.externalization.externalization import to_external_representation
 from nti.externalization.oids import to_external_ntiid_oid
 
-import html5lib
-from html5lib import treebuilders
-#from html5lib.filters._base import Filter as FilterBase
+from zope.contentprovider.interfaces import IContentProvider
+from zope.contentprovider.provider import ContentProviderBase
 
-import lxml.etree
 
 class _BetterDateAtom1Feed(feedgenerator.Atom1Feed):
 	"""
@@ -157,7 +154,6 @@ class UGDFeedView(AbstractFeedView):
 	def _feed_title( self ):
 		return self.request.context.ntiid # TODO: Better title
 
-from zope.contentprovider.interfaces import IContentProvider
 
 from ._table_utils import NoteContentProvider
 @interface.implementer(IContentProvider)
@@ -172,32 +168,20 @@ class NoteFeedRenderer(NoteContentProvider):
 
 @interface.implementer(IContentProvider)
 @component.adapter(nti_interfaces.ISelectedRange, interface.Interface, AbstractFeedView)
-class SelectedRangeFeedRenderer(object):
+class SelectedRangeFeedRenderer(ContentProviderBase):
 	"""
 	For highlights and the like.
 	"""
-
-	def __init__( self, context, request, view ):
-		self.context = context
-
-	def update(self):
-		pass
 
 	def render(self):
 		return self.context.selectedText
 
 @interface.implementer(IContentProvider)
 @component.adapter(nti_interfaces.IEntity, interface.Interface, AbstractFeedView)
-class EntityFeedRenderer(object):
+class EntityFeedRenderer(ContentProviderBase):
 	"""
 	For circled users.
 	"""
-
-	def __init__( self, context, request, view):
-		self.context = context
-
-	def update(self):
-		pass
 
 	def render(self):
 		return self.context.username
