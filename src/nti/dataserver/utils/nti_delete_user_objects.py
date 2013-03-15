@@ -23,33 +23,34 @@ from nti.dataserver.utils import run_with_dataserver
 
 from nti.dataserver.utils.nti_export_user_objects import get_user_objects, to_external_object
 
-def delete_entity_objects(user, object_types=(), extenalize=False):
+def delete_entity_objects(user, object_types=(), broken=False, extenalize=False):
 
 	# normalize object types
 	object_types = set(map(lambda x: x.lower(), object_types or ()))
 
-	captured_types = set()
 	broken_objects = set()
 	exported_objects = defaultdict(list)
 
 	counter_map = defaultdict(int)
-	for type_name, adapted, obj in list(get_user_objects(user, object_types)):
-		external = to_external_object(adapted) if extenalize else None
+	for type_name, adapted, obj in list(get_user_objects(user, object_types, broken)):
 
 		if ZODB.interfaces.IBroken.providedBy(obj):
 			oid = getattr(obj, 'oid', None)
 			pid = getattr(obj, '_p_oid', None)
-			if pid:	broken_objects.add(pid)
-			if oid:	broken_objects.add(oid)
+			if pid:
+				broken_objects.add(pid)
+			if oid:
+				broken_objects.add(oid)
+
 			counter_map[type_name] = counter_map[type_name] + 1
 		else:
+			external = to_external_object(adapted) if extenalize else None
 			with user.updates():
 				objId = obj.id
 				containerId = obj.containerId
 				obj = user.getContainedObject(containerId, objId)
 				if obj is not None and user.deleteContainedObject(containerId, objId):
 					counter_map[type_name] = counter_map[type_name] + 1
-					captured_types.add(type_name)
 					if external is not None:
 						exported_objects[type_name].append(external)
 
@@ -73,14 +74,14 @@ def delete_entity_objects(user, object_types=(), extenalize=False):
 
 	return counter_map, exported_objects
 
-def _remove_entity_objects(username, object_types=(), export_dir=None, verbose=False):
+def _remove_entity_objects(username, object_types=(), broken=False, export_dir=None, verbose=False):
 	entity = users.Entity.get_entity(username)
 	if not entity:
 		print("Entity '%s' does not exists" % username, file=sys.stderr)
 		sys.exit(2)
 
 	extenalize = export_dir is not None
-	counter_map, exported_objects = delete_entity_objects(entity, object_types, extenalize)
+	counter_map, exported_objects = delete_entity_objects(entity, object_types, broken, extenalize)
 
 	if export_dir:
 		export_dir = os.path.expanduser(export_dir)
@@ -109,6 +110,10 @@ def main():
 	arg_parser = argparse.ArgumentParser(description="Export user objects")
 	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username")
+	arg_parser.add_argument('--site',
+							dest='site',
+							action='store_true',
+							help="Application SITE. Use this to get link info")
 	arg_parser.add_argument('-d', '--directory',
 							 dest='export_dir',
 							 default=None,
@@ -118,18 +123,28 @@ def main():
 							 dest='object_types',
 							 help="The object type(s) to delete")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('-b', '--broken', help="Delete broken objects", action='store_true', dest='broken')
 
 	args = arg_parser.parse_args()
 
+	broken = args.broken
 	verbose = args.verbose
 	username = args.username
 	env_dir = os.path.expanduser(args.env_dir)
+	conf_packages = () if not args.site else ('nti.appserver',)
 	object_types = set(args.object_types) if args.object_types else ()
 	export_dir = os.path.expanduser(args.export_dir)  if args.export_dir else None
 
+	# if want to remove broken objects then and object types is empty
+	# chage behavior to simply remove only broken objects
+	# by setting object_types to be somethind invalid
+	if broken and not object_types:
+		object_types = ('%',)
+
 	run_with_dataserver(environment_dir=env_dir,
 						verbose=verbose,
-						function=lambda: _remove_entity_objects(username, object_types, export_dir, verbose))
+						xmlconfig_packages=conf_packages,
+						function=lambda: _remove_entity_objects(username, object_types, broken, export_dir, verbose))
 
 if __name__ == '__main__':
 	main()
