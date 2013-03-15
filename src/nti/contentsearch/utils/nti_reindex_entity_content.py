@@ -69,12 +69,12 @@ def reindex_entity_content(entity, content_type=None, verbose=False):
 
 	return counter
 
-def _reindex_process(username, verbose=False):
+def _reindex_process(username, content_type=None, verbose=False):
 	entity = users.Entity.get_entity(username)
 	if not entity:
 		print("entity '%s' does not exists" % username, file=sys.stderr)
 		sys.exit(2)
-	return reindex_entity_content(entity, verbose)
+	return reindex_entity_content(entity, content_type, verbose)
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Reindex entity content")

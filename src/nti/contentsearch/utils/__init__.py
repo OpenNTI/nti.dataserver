@@ -68,11 +68,14 @@ def find_all_indexable_pairs(user, condition=None):
 	if condition is None:
 		def f(x):
 			return 	nti_interfaces.IModeledContent.providedBy(x) or \
-					forum_interfaces.IPersonalBlogEntry.providedBy(x)
+					forum_interfaces.IHeadlineTopic.providedBy(x)
 		condition = f
 
 	indexable_types = get_ugd_indexable_types()
 	for obj in findObjectsMatching(user, condition):
+
+		if forum_interfaces.IHeadlineTopic.providedBy(obj):
+			obj = obj.headline
 
 		if get_type_name(obj) in indexable_types:
 			oid = to_external_ntiid_oid(obj)
@@ -89,7 +92,7 @@ def find_all_indexable_pairs(user, condition=None):
 
 def find_all_posts(user):
 	condition = lambda x : 	forum_interfaces.IPost.providedBy(x) or \
-							forum_interfaces.IPersonalBlogEntry.providedBy(x)
+							forum_interfaces.IHeadlineTopic.providedBy(x)
 	return find_all_indexable_pairs(user, condition)
 
 def find_all_redactions(user):
