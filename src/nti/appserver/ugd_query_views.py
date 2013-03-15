@@ -10,6 +10,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 import logging
 logger = logging.getLogger(__name__)
+from ZODB import loglevels
 
 import sys
 import numbers
@@ -96,21 +97,26 @@ def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE ):
 		# update but our container wouldn't
 		# know it, so check for internal update times too
 		for x in to_iter:
-			if x is None or isinstance( x, numbers.Number ) or not predicate(x):
+			if x is None or isinstance( x, numbers.Number ):
 				continue
 
-			lastMod = max( lastMod, getattr( x, 'lastModified', 0) )
-			add = True
 			oid = to_external_oid( x, str( id(x) ) )
+			if oid in oids:
+				# avoid dups. This check is slightly less expensive than
+				# some predicates (is_readable) so do it first
+				continue
+			if not predicate(x):
+				continue
 
-			if oid not in oids:
-				oids.add( oid )
-			else:
-				add = False
-			if add:
-				result.append( x )
+			try:
+				lastMod = max( lastMod, x.lastModified )
+			except AttributeError: pass
+
+			oids.add( oid )
+			result.append( x )
 
 	result = LocatedExternalDict( { 'Last Modified': lastMod, 'Items': result } )
+	result.lastModified = lastMod
 	result.mimeType = nti_mimetype_with_class( None )
 	return result
 
@@ -152,12 +158,13 @@ def _build_reference_lists( request, result_list ):
 
 			# In the later two cases, we will report on ID that the client won't be able to find and put into the thread,
 			# so it will appear to be 'deleted'
-			level = logging.DEBUG
-			if hasattr( reference_to, 'inReplyTo' ) and not getattr( reference_to, 'inReplyTo' ):
-				level = logging.WARN # If it was a root object, this is bad. The entire thread could be hidden
-			logger.log( level, "Failed to get proxy for %s/%s/%s. Illegal reference chain from %s/%s?",
-						  reference_to, getattr( reference_to, 'containerId', None ), id(reference_to),
-						  reference_from, getattr( reference_from, 'containerId', None ))
+			level = loglevels.TRACE
+			#if hasattr( reference_to, 'inReplyTo' ) and not getattr( reference_to, 'inReplyTo' ):
+			#	level = logging.WARN # If it was a root object, this is bad. The entire thread could be hidden
+			if logger.isEnabledFor( level ):
+				logger.log( level, "Failed to get proxy for %s/%s/%s. Illegal reference chain from %s/%s?",
+							reference_to, getattr( reference_to, 'containerId', None ), id(reference_to),
+							reference_from, getattr( reference_from, 'containerId', None ))
 			proxy = fake_proxies[reference_to] = RefProxy( reference_to )
 			result = proxy.referenced_by = []
 			return result # return a temp list that's not persistent
@@ -318,12 +325,25 @@ class _MimeFilter(object):
 
 	def __init__( self, accept_types ):
 		self.accept_types = accept_types
+		self._accept_classes = ()
+		self._exclude_classes = ()
 
 	def _mimetype_from_object( self, o ):
 		return nti_mimetype_from_object( o )
 
 	def __call__( self, o ):
-		return self._mimetype_from_object(o) in self.accept_types
+		# We are assuming that everything within a given class tree
+		# will wind up sharing the same accept/exclude status
+		if isinstance( o, self._accept_classes ):
+			return True
+		elif isinstance( o, self._exclude_classes ):
+			return False
+
+		if self._mimetype_from_object(o) in self.accept_types:
+			self._accept_classes += (o.__class__,)
+			return True
+		self._exclude_classes += (o.__class__,)
+		return False
 
 class _UGDView(_view_utils.AbstractAuthenticatedView):
 	"""
@@ -361,8 +381,11 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 	def check_cross_user( self ):
 		if not self._support_cross_user:
-			if self.user != self.getRemoteUser():
+			if self.user != self.remoteUser:
 				raise hexc.HTTPForbidden()
+
+
+	_done_accept_include = False
 
 	def __call__( self ):
 		self.check_cross_user()
@@ -371,10 +394,25 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		the_objects = self.getObjectsForId( user, ntiid )
 		# Apply cross-user security if needed
 		# XXX Sorting is much cheaper right now, so we do this very last. All unit tests pass this way
-#		if user != self.getRemoteUser():
-#			result = lists_and_dicts_to_ext_collection( the_objects, predicate=is_readable )
-#		else:
-		result = lists_and_dicts_to_ext_collection( the_objects )
+		#if user != self.getRemoteUser():
+		#	result = lists_and_dicts_to_ext_collection( the_objects, predicate=is_readable )
+		#else:
+		# In general, we need to keep all the threadable objects before we are going
+		# to apply a filter in order to build the reference lists. However, if we *are* applying
+		# a TopLevel filter in addition to include/exclude, then anything that would
+		# be excluded by type can be thrown away (because replies are always within a type family)
+		# Whether or not this is an obvious win depends on the mix of data and how much we get to throw away...
+		pred = _TRUE
+		if 'TopLevel' in self._get_filter_names():
+			pred = self._make_accept_predicate()
+			if pred is None:
+				pred = self._make_exclude_predicate()
+			if pred is not None:
+				self._done_accept_include = True
+			else:
+				pred = _TRUE
+
+		result = lists_and_dicts_to_ext_collection( the_objects, predicate=pred )
 		self._sort_filter_batch_result( result )
 		result.__parent__ = self.request.context
 		result.__name__ = ntiid
@@ -446,7 +484,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		:raises nti.appserver.httpexceptions.HTTPNotFound: If no actual objects can be found.
 		"""
 
-		remote_user = self.getRemoteUser()
+		remote_user = self.remoteUser
 		get_shared = None
 		if self._force_shared_objects or user == remote_user:
 			# Only consider the shared stuff when the actual user is asking
@@ -603,10 +641,12 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		# Since the list is really an array, removing from it is actually slow
 
 		predicate = None # We build an uber predicate that handles all filtering in one pass through the list
-		predicate = self._make_accept_predicate( )
-		if predicate is None:
-			# accept takes priority over exclude
-			predicate = self._make_exclude_predicate()
+		if not self._done_accept_include:
+			self._done_accept_include = True
+			predicate = self._make_accept_predicate( )
+			if predicate is None:
+				# accept takes priority over exclude
+				predicate = self._make_exclude_predicate()
 
 		filter_names = self._get_filter_names()
 		# Be nice and make sure the reference-based counts get included if we are going to be throwing
@@ -652,7 +692,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		# Do this after all the filtering because it's the most expensive
 		# filter of all
 		needs_security = False
-		if self.getRemoteUser() != self.user:
+		if self.remoteUser != self.user:
 			needs_security = True
 
 
