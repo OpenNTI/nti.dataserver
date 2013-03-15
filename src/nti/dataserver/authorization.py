@@ -174,8 +174,11 @@ class _AbstractPrincipal(object):
 	"""
 	id = ''
 	def __eq__(self,other):
-		return nti_interfaces.IPrincipal.providedBy(other) \
-			and self.id == getattr(other, 'id', None)
+		try:
+			return self is other or self.id == other.id
+		except AttributeError:
+			return NotImplemented
+
 	def __lt__(self,other):
 		return self.id < other.id
 	def __hash__(self):

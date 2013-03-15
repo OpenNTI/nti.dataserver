@@ -12,7 +12,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 import sys
-import weakref
 import numbers
 import functools
 
@@ -73,18 +72,22 @@ def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=id ):
 	lists_and_dicts = [item for item in lists_and_dicts if item is not None]
 	lastMod = 0
 	for list_or_dict in lists_and_dicts:
-		lastMod = max( lastMod, getattr( list_or_dict, 'lastModified', 0) )
-		if hasattr( list_or_dict, 'itervalues' ):
+		try:
+			lastMod = max( lastMod, list_or_dict.lastModified )
+		except AttributeError:
+			pass
+		# about half of these will be lists, half dicts. sigh.
+		try:
 			# ModDateTrackingOOBTrees tend to lose the custom
 			# 'lastModified' attribute during persistence
 			# so if there is a 'Last Modified' entry, go
 			# for that
-			if hasattr( list_or_dict, 'get' ):
-				lastMod = max( lastMod, list_or_dict.get( 'Last Modified', 0 ) )
 			to_iter = list_or_dict.itervalues()
-		else:
+			lastMod = max( lastMod, list_or_dict.get( 'Last Modified', 0 ) )
+		except (AttributeError,TypeError):
 			# then it must be a 'list'
 			to_iter = list_or_dict
+
 		# None would come in because of weak refs, numbers
 		# would come in because of Last Modified.
 		# In the case of shared data, the object might
