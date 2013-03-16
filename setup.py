@@ -71,7 +71,7 @@ else:
 	HAVE_ZCONT = False
 
 TESTS_REQUIRE = [
-'WebTest >= 2.0.1', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
+'WebTest >= 2.0.2', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
 'blessings >= 1.5', # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
 'coverage >= 3.6', # Test coverage
 'fakeredis >= 0.3.1',
@@ -126,8 +126,9 @@ setup(
 		# 'friendly' fork of PIL, developed by Zope/Plone.
 		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		# is the version that Pillow forked from in 2010 as version 1.0. So
-		# Pillow is currently way ahead of PIL
-		'Pillow >= 1.7.8',
+		# Pillow is currently way ahead of PIL. Pillow 2 is Python 3 compatible (and partly pypy)
+		# includes transparent png support, and is much cleaned up, otherwise api compatible with pillow 1/PIL 1
+		'Pillow >= 2.0.0',
 		'RestrictedPython >= 3.6.0',
 		'ZConfig >= 3.0.3', #3.0.3 reqd for pypy/pythor3 support. requires zodb3 3.11.0a3+
 		 # NOTE: ZODB has a new release, 4.0.0a4 (Notice it's not ZODB3 anymore, so
@@ -161,7 +162,7 @@ setup(
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
 		'contentratings == 1.0', # requires small patch to work without acquisition
 		'cryptacular >= 1.4.1', # see z3c.crypt
-		'cssselect >= 0.7.1', # Used by pyquery
+		'cssselect == 0.7.1', # Used by pyquery (0.8 not compatible with pyquery 1.2.4, :first raises AttributeError)
 		'cython >= 0.18',
 		# Adds support for detecting aborts to transactions which
 		# otherwise only detect failed commits
@@ -375,7 +376,7 @@ setup(
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.9.1',
-			'virtualenvwrapper >= 3.6.1',
+			'virtualenvwrapper >= 3.7',
 			'zc.buildout >= 2.0.1',
 			'z3c.dependencychecker >= 1.10', # unused/used imports
 			'zodbbrowser >= 0.10.4',
