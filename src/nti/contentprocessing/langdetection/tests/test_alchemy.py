@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 import os
 import unittest
 
+from .._alchemy import _AlchemyLanguage
 from .._alchemy import _AlchemyTextLanguageDectector
 
 from . import ConfiguringTestBase
@@ -26,7 +27,18 @@ class TestAlchemyLangDetector(ConfiguringTestBase):
 			cls.sample_content_en = f.read()
 
 	@unittest.SkipTest
-	def test_alchemy_ct(self):
+	def test_alchemy_detector(self):
 		lang = _AlchemyTextLanguageDectector()(self.sample_content_en, "NTI-TEST")
 		assert_that(lang, is_not(none()))
 		assert_that(lang.code, is_('en'))
+
+	def test_alchemy_language(self):
+		a = _AlchemyLanguage(ISO_639_1='en', ISO_639_2='a', ISO_639_3='a', name='enlgish')
+		assert_that(a.code, is_('en'))
+		assert_that(hash(a), is_(12928077669116588L))
+		b = _AlchemyLanguage(ISO_639_1='en', ISO_639_2='a', ISO_639_3='a', name='enlgish')
+		assert_that(a, is_(b))
+		assert_that(str(a), is_('en'))
+		assert_that(repr(a), is_('(enlgish,en,a,a)'))
+
+
