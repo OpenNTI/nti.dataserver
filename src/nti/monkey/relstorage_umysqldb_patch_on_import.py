@@ -27,6 +27,37 @@ def _patch_relstorage_for_newer_persistent():
 	import relstorage.storage
 	relstorage.storage.repr = _repr
 
+def _patch_zlibstorage_for_IMVCCStorage():
+	try:
+		from zc.zlibstorage import ZlibStorage
+	except ImportError:
+		return
+
+	if 'new_instance' not in ZlibStorage.__dict__:
+		# ZLibStorage claims to provide the same
+		# interfaces as whatever it is wrapping.
+		# It also passes through any methods it does not implement
+		# to the storage it is wrapping.
+		# If the storage it is wrapping implements IMVCCStorage, then
+		# the wrapping storage provides a 'new_instance' method and
+		# ZLibStorage happily claims to provide the same and passes that
+		# method call through. When a transaction begins and an isolated storage
+		# instance is needed, then, ZLibStorage gets dropped and we lose all
+		# compression.
+		# The only known implementation if IMVCCStorage is RelStorage,
+		# so might as well fix that here.
+		# (Sigh, this means all our databases are currently uncompressed)
+		# TODO: Send this to ZODB-Dev, submit patch
+		def new_instance(self):
+			new_self = type(self).__new__(type(self))
+			new_self.__dict__ = self.__dict__.copy()
+			new_self.base = self.base.new_instance()
+			return new_self
+		ZlibStorage.new_instance = new_instance
+		print( "Patched zlibstorage to work with relstorage." )
+
+
+
 def _patch():
 	try:
 		import umysqldb
@@ -102,6 +133,7 @@ def _patch():
 		attr.disconnected_exceptions += (IOError,) # This one can escape mapping; note we don't make pymysql.err.Error indicate disconnection
 
 	_patch_relstorage_for_newer_persistent()
+	_patch_zlibstorage_for_IMVCCStorage()
 _patch()
 
 def patch():
