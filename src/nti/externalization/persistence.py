@@ -5,11 +5,7 @@ Classes and functions for dealing with persistence in an external context.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
-
-import logging
-logger = logging.getLogger( __name__ )
-
+from __future__ import print_function, unicode_literals, absolute_import
 
 import collections
 
@@ -21,24 +17,15 @@ from persistent.wref import WeakRef as PWeakRef
 
 
 from zope import interface
-
-
-try:
-	from zope.container._zope_container_contained import isProxy as _isContainedProxy
-	from zope.container._zope_container_contained import getProxiedObject as _getContainedProxiedObject
-except ImportError: # extension not present on pypy
-	from zope.proxy import isProxy as _isContainedProxy
-	from zope.proxy import getProxiedObject as _getContainedProxiedObject
-
-
-from zope.security.management import system_user
-
+from nti.utils.proxy import removeAllProxies
 
 from . import datastructures
 from .externalization import toExternalObject
 from .interfaces import IExternalObject
 from .oids import toExternalOID
 
+#disable: accessing protected members
+#pylint: disable=W0212
 
 def getPersistentState( obj ):
 	"""
@@ -50,34 +37,47 @@ def getPersistentState( obj ):
 	this method will be pessimistic and assume the object has
 	been :const:`persistent.CHANGED`.
 	"""
-	if hasattr( obj, '_p_changed' ):
-		if getattr(obj, '_p_changed', False ):
-			# Trust the changed value ahead of the state value,
-			# because it is settable from python but the state
-			# is more implicit.
-			return persistent.CHANGED
-		if getattr( obj, '_p_state', -1 ) == persistent.UPTODATE and getattr( obj, '_p_jar', -1 ) is None:
+	# Certain types of proxies are also Persistent and maintain a state separate from
+	# their wrapped object, notably zope.container.contained.ContainedProxy, as used
+	# in certain containers (such usage is generally deprecated now).
+	# To meet our pessimistic requirement, we will report changed if either the proxy
+	# or the wrapped object does
+
+	try:
+		# Trust the changed value ahead of the state value,
+		# because it is settable from python but the state
+		# is more implicit.
+		return persistent.CHANGED if obj._p_changed else persistent.UPTODATE
+	except AttributeError:
+		pass
+
+	try:
+		if obj._p_state == persistent.UPTODATE and obj._p_jar is None:
 			# In keeping with the pessimistic theme, if it claims to be uptodate, but has never
 			# been saved, we consider that the same as changed
 			return persistent.CHANGED
-		# We supply container classes that wrap objects (that are not IContained/ILocation)
-		# in ContainerProxy classes. The proxy doesn't proxy _p_changed, which
-		# leads to weird behaviour for things that want to notice changes (users.User.endUpdates)
-		# so we need to reflect those changes to the actual object ourself
-		# TODO: Such places should be using events
-		# TODO: Can/should/when should we/ unwrap all proxies using zope.proxy.removeAllProxies?
-		if _isContainedProxy(obj):
-			return getPersistentState( _getContainedProxiedObject( obj ) )
-		return persistent.UPTODATE
-	if hasattr(obj, '_p_state'):
-		return getattr(obj, '_p_state' )
-	return obj.getPersistentState() if hasattr( obj, 'getPersistentState' ) else persistent.CHANGED
+	except AttributeError:
+		pass
+
+	unwrapped = removeAllProxies( obj )
+	if unwrapped is not obj:
+		return getPersistentState( unwrapped )
+
+	try:
+		return obj._p_state
+	except AttributeError:
+		try:
+			return obj.getPersistentState()
+		except AttributeError:
+			return persistent.CHANGED
 
 
 def setPersistentStateChanged( obj ):
 	""" Explicitly marks a persistent object as changed. """
-	if hasattr(obj, '_p_changed' ):
-		setattr(obj, '_p_changed', True )
+	try:
+		obj._p_changed = True
+	except AttributeError:
+		pass
 
 
 def _weakRef_toExternalObject(self):

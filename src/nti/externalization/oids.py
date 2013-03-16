@@ -10,15 +10,6 @@ import collections
 
 from zope import component
 
-try:
-	from zope.container._zope_container_contained import isProxy as _isContainedProxy
-	from zope.container._zope_container_contained import getProxiedObject as _getContainedProxiedObject
-except ImportError: # extension not present on pypy
-	from zope.proxy import isProxy as _isContainedProxy
-	from zope.proxy import getProxiedObject as _getContainedProxiedObject
-
-from zope.proxy import removeAllProxies
-
 from zope.security.management import system_user
 
 from ZODB.interfaces import IConnection
@@ -26,6 +17,11 @@ from zc import intid as zc_intid
 
 from nti.ntiids import ntiids
 from . import integer_strings
+
+from nti.utils.proxy import removeAllProxies
+
+#disable: accessing protected members
+#pylint: disable=W0212
 
 def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=False ):
 	"""
@@ -149,10 +145,6 @@ def to_external_ntiid_oid( contained, default_oid=None, add_to_connection=False,
 
 	# We really want the external OID, but for those weird time we may not be saved we'll
 	# allow the ID of the object, unless we are explicitly overridden
-	# TODO: can we replace the contained proxy specific logic with the generic methods
-	# from zope.proxy? zope.proxy.removeAllProxies?
-	if _isContainedProxy(contained):
-		contained = _getContainedProxiedObject( contained )
 	contained = removeAllProxies( contained )
 
 	# By definition, these are persistent.Persistent objects, so a _v_ attribute
@@ -174,8 +166,8 @@ def to_external_ntiid_oid( contained, default_oid=None, add_to_connection=False,
 
 	creator = getattr( contained, 'creator', DEFAULT_EXTERNAL_CREATOR )
 	ext_oid = ntiids.make_ntiid( provider=(creator
-										if isinstance( creator, six.string_types )
-										else getattr( creator, 'username', DEFAULT_EXTERNAL_CREATOR )),
+										   if isinstance( creator, six.string_types )
+										   else getattr( creator, 'username', DEFAULT_EXTERNAL_CREATOR )),
 								specific=oid,
 								nttype=ntiids.TYPE_OID )
 	try:
