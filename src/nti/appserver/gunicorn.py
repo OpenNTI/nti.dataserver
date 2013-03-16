@@ -198,16 +198,13 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		For now, I'm attempting to re-init the thread pool. (TODO:
 		This may be platform specific?)
 		"""
-		# Patch up the thread pool and DNS if needed
-		hub = gevent.hub.get_hub()
-		if self.cfg.preload_app and hub._threadpool is not None and hub._threadpool._size: # same condition it uses
-			hub._threadpool._on_fork()
+		# Patch up the thread pool and DNS if needed.
+		# NOTE: This is too late to do this, it must be done before we need to reopen the
+		# dataserver; thus it is done in the fork listener now, unconditionally
 
 		# The Dataserver reloads itself automatically in the preload scenario
 		# based on the post_fork and IProcessDidFork listener
-
 		self._load_legacy_app()
-
 
 		# Tweak the max connections per process if it is at the default (1000)
 		# Large numbers of HTTP connections means large numbers of
@@ -390,6 +387,16 @@ def _pre_fork( arbiter, worker ):
 	notify( _GunicornWillFork( arbiter, worker ) )
 
 def _post_fork( arbiter, worker ):
+	# Patch up the thread pool and DNS if needed.
+	# This has to happen before anything that might cause
+	# a greenlet switch, such as making a network connection (over TCP, not unix sockets)
+	# If it fails to happen, the symptom is a process hang with a stacktrace showing
+	# a call to select().
+	# We used to do this in init_worker, but that is too late for RelStorage connections
+	# (opened by the dataservers DidFork listener)
+	hub = gevent.hub.get_hub()
+	if hub._threadpool is not None and hub._threadpool._size: # same condition it uses
+		hub._threadpool._on_fork()
 	notify( ProcessDidFork() )
 
 def _pre_exec( arbiter ):
