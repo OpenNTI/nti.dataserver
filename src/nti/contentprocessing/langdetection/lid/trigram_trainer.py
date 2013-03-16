@@ -19,86 +19,99 @@ from zope import component
 from ...import _content_utils as cu
 from ...import interfaces as cp_intefraces
 
-class TrigramTrainer(object):
+class TrainerData(object):
 
 	def __init__(self):
 		self.trigrams = {}  # tri-grams storage
 		self.characters = 0  # number of characters
 		self.total_trigrams = 0  # number of tri-grams
 
-	@classmethod
-	def g_create_trigrams(cls, text, trigrams, characters, total_trigrams):
-		text = re.sub(r'[\n\r\s]+', r" ", text.lower())
-		characters = characters + len(text)
+	def __iadd__(self, other):
+		if isinstance(other, TrainerData):
+			self.characters += other.characters
+			self.total_trigrams += other.total_trigrams
+			for k, v in other.trigrams.items():
+				self.trigrams.setdefault(k, 0)
+				self.trigrams[k] += v
+		return self
 
-		for i in range(len(text) - 2):
-			total_trigrams += 1
-			trigram = text[i:i + 3]
-			trigrams.setdefault(trigram, 0)
-			trigrams[trigram] += 1
+def create_trigrams(text, data):
+	"""Creates trigrams from characters."""
+	text = re.sub(r'[\n\r\s]+', r" ", text.lower())
+	data.characters = data.characters + len(text)
+	for i in range(len(text) - 2):
+		data.total_trigrams += 1
+		trigram = text[i:i + 3]
+		data.trigrams.setdefault(trigram, 0)
+		data.trigrams[trigram] += 1
 
-		return characters, total_trigrams
+def calc_prob(data):
+	"""Calculate the probabilities for each trigram."""
+	for x in data.trigrams.keys():
+		data.trigrams[x] = float(data.trigrams[x]) / float(data.total_trigrams)
+	return data
+
+def eliminate_frequences(minfreq, data):
+	"""Eliminates all trigrams with a frequency <= minfreq"""
+	for x in data.trigrams.keys():
+		if data.trigrams[x] <= minfreq:
+			value = data.trigrams.pop(x, 0)
+			data.total_trigrams -= value
+	return data
+
+def clean_text_sc(text, lang='en'):
+	"""Eliminates punctuation symbols from the submitted text."""
+	pattern = component.getUtility(cp_intefraces.IPunctuationCharPattern, name=lang)
+	result = re.sub(pattern, ' ', text)
+	return result
+
+def create_trigram_nsc(text, data):
+	text = clean_text_sc(text)
+	return create_trigrams(text, data)
+
+def clean_pbig(data, lang='en'):
+	"""Eliminate tri-grams that contain punctuation marks."""
+	pattern = component.getUtility(cp_intefraces.IPunctuationCharPattern, name=lang)
+	for t in data.trigrams.keys():
+		if pattern.search(t):
+			value = data.trigrams.pop(t, 0)
+			data.total_trigrams -= value
+	return data
+
+class TrigramTrainer(object):
+
+	def __init__(self):
+		self.data = TrainerData()
+
+	@property
+	def trigrams(self):
+		return self.data.trigrams
+
+	@property
+	def total_trigrams(self):
+		return self.data.total_trigrams
+
+	@property
+	def characters(self):
+		return self.data.characters
 
 	def create_trigrams(self, text):
-		"""Creates trigrams from characters."""
-		self.characters, self.total_trigrams = \
-				self.g_create_trigrams(text, self.trigrams, self.characters, self.total_trigrams)
-		return self.characters, self.total_trigrams
-
-	@classmethod
-	def g_calc_prob(cls, trigrams, total_trigrams):
-		for x in trigrams.keys():
-			trigrams[x] = float(trigrams[x]) / float(total_trigrams)
+		return create_trigrams(text, self.data)
 
 	def calc_prob(self):
-		"""Calculate the probabilities for each trigram."""
-		self.g_calc_prob(self.trigrams, self.total_trigrams)
-
-	@classmethod
-	def g_eliminate_frequences(cls, trigrams, minfreq, total_trigrams):
-		for x in trigrams.keys():
-			if trigrams[x] <= minfreq:
-				value = trigrams.pop(x, 0)
-				total_trigrams -= value
-		return total_trigrams
+		return calc_prob(self.data)
 
 	def eliminate_frequences(self, minfreq):
-		"""Eliminates all trigrams with a frequency <= minfreq"""
-		self.total_trigrams = self.g_eliminate_frequences(self.trigrams, minfreq, self.total_trigrams)
-
-	@classmethod
-	def g_create_trigram_nsc(cls, text, trigrams, characters, total_trigrams):
-		text = cls.g_clean_text_sc(text)
-		return cls.g_create_trigrams(text, trigrams, characters, total_trigrams)
+		return eliminate_frequences(minfreq, self.data)
 
 	def create_trigram_nsc(self, text):
-		"""Creates trigrams without punctuation symbols."""
-		self.characters, self.total_trigrams = \
-				self.g_create_trigram_nsc(text, self.trigrams, self.characters, self.total_trigrams)
-		return self.characters, self.total_trigrams
+		return create_trigram_nsc(text, self.data)
 
-	@classmethod
-	def g_clean_text_sc(cls, text, lang='en'):
-		"""Eliminates punctuation symbols from the submitted text."""
-		pattern = component.getUtility(cp_intefraces.IPunctuationCharPattern, name=lang)
-		result = re.sub(pattern, ' ', text)
-		return result
+	def clean_text_sc(self, text, lang='en'):
+		return clean_text_sc(text, lang)
 
-	clean_text_sc = g_clean_text_sc
-
-	@classmethod
-	def g_clean_pbig(cls, trigrams, total_trigrams, lang='en'):
-		pattern = component.getUtility(cp_intefraces.IPunctuationCharPattern, name=lang)
-		for t in trigrams.keys():
-			if pattern.search(t):
-				value = trigrams.pop(t, 0)
-				total_trigrams -= value
-		return total_trigrams
-
-	def clean_pbig(self):
-		"""Eliminate tri-grams that contain punctuation marks."""
-		self.total_trigrams = self.g_clean_pbig(self.trigrams, self.total_trigrams)
-		return self.total_trigrams
+	def clean_pbig(self, lang='en'):
+		return clean_pbig(self.data, lang)
 
 	@classmethod
 	def process_files(cls, dpath, minfreq=2, trainer=None, calc_prob=True, tokenize=False, lang="en"):
