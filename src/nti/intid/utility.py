@@ -38,6 +38,11 @@ class IntIds(_ZCIntIds):
 	# it is important to be sure that the ID is not acquired
 	# from a parent. Hence, all the methods use aq_base to unwrap
 	# the object.
+	# Removing all proxies in general is more tricky; sometimes a zope.container.contained.ContainedProxy
+	# is really what we want to register. Fortunately, most
+	# proxies pass attributes on through to the underlying
+	# object, in which case queryId will take either the proxy or the wrapped object;
+	# alternatively, they define __slots__ and forbid new attributes
 
 	def queryId( self, ob, default=None ):
 		return _ZCIntIds.queryId( self, aq_base( ob ), default=default )

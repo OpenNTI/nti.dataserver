@@ -205,7 +205,7 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 
 from nti.externalization.datastructures import InterfaceObjectIO
 from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
-from zope.proxy import removeAllProxies
+from nti.utils.proxy import removeAllProxies
 
 @component.adapter(interfaces.IMessageInfo)
 class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,InterfaceObjectIO):

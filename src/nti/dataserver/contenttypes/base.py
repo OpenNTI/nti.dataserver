@@ -81,7 +81,7 @@ def _make_getitem( attr_name ):
 
 from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.datastructures import InterfaceObjectIO
-from zope.proxy import removeAllProxies
+from nti.utils.proxy import removeAllProxies
 
 
 class UserContentRootInternalObjectIOMixin(object):
