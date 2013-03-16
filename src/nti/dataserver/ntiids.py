@@ -86,7 +86,12 @@ class _OIDResolver(object):
 
 	def resolve( self, key ):
 		dataserver = component.queryUtility( nti_interfaces.IDataserver )
-		return dataserver.get_by_oid( key, ignore_creator=True ) if dataserver else None
+		try:
+			return dataserver.get_by_oid( key, ignore_creator=True ) if dataserver else None
+		except ValueError:
+			# Unpacking an OID key can raise ValueError if its in the wrong format
+			logger.debug( "Invalid OID NTIID %s", key, exc_info=True )
+			return None # per our spec
 
 def _resolve_user( provider_name, namespace ):
 	dataserver = component.queryUtility( nti_interfaces.IDataserver )
