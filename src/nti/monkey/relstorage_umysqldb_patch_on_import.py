@@ -52,7 +52,8 @@ def _patch_zlibstorage_for_IMVCCStorage():
 			new_self = type(self).__new__(type(self))
 			new_self.__dict__ = self.__dict__.copy()
 			new_self.base = self.base.new_instance()
-			for name in self.copied_methods: # Because these are bound methods, we must re-copy them
+			# Because these are bound methods, we must re-copy them or ivars might be wrong, like _transaction
+			for name in self.copied_methods:
 				v = getattr(new_self.base, name, None)
 				if v is not None:
 					setattr(new_self, name, v)
