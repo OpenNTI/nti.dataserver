@@ -14,8 +14,9 @@ from html5lib import treebuilders
 
 from zope import interface
 from zope import component
+from zope.event import notify
 
-from nti.contentfragments import interfaces
+from . import interfaces
 
 # The algorithms contained in here are trivially simple.
 # We could do much better, for example, with prefix trees.
@@ -25,8 +26,6 @@ from nti.contentfragments import interfaces
 # If efficiency really matters, and we have many different filters we are
 # applying, we would need to do a better job pipelining to avoid copies
 
-special_chars = r"?(){}[].^*+-~"
-special_chars_map = {c:u'\\' for c in special_chars}
 def punkt_re_char(lang='en'):
 	# TODO: remove circular dependency, content processing uses content fragments
 	from nti.contentprocessing import interfaces as cp_interfaces
@@ -102,6 +101,8 @@ class TrivialMatchScanner(BasicScanner):
 @interface.implementer(interfaces.ICensoredContentScanner)
 class RegExpMatchScanner(BasicScanner):
 
+	special_chars_map = {c:u'\\' for c in r"?(){}[].^*+-~"}
+
 	def __init__(self, patterns=(), words=()):
 		all_patterns = set()
 		for w in words or ():
@@ -120,7 +121,7 @@ class RegExpMatchScanner(BasicScanner):
 	def create_regexp(cls, word, flags=re.I):
 		r = []
 		for i, c in enumerate(word):
-			r.append(special_chars_map.get(c, u'') + c)
+			r.append(cls.special_chars_map.get(c, u'') + c)
 			if not c.isspace() and not c in punkt_re_char() and i < len(word) - 1:
 				r.append("(%s)*" % punkt_re_char())
 		e = ''.join(r)
@@ -284,7 +285,13 @@ def censor_before_text_assigned(fragment, target, event):
 		censored_fragment = policy.censor(fragment, target)
 		if censored_fragment is not fragment and censored_fragment != fragment:
 			event.object = censored_fragment
-			return event.object, True  # as an optimization when we are called directly
+
+			# notify censoring
+			context = event.context or target
+			notify(interfaces.CensoredContentEvent(fragment, censored_fragment, event.name, context))
+
+			# as an optimization when we are called directly
+			return event.object, True
 
 	return fragment, False
 
