@@ -18,21 +18,21 @@ except ImportError:
 	# They moved this in zope.mimetype 2.0 (python 3 compat?)
 	from zope.mimetype import mtypes as mime_types
 
-mime_types.setup() # register interface classes and utilities if not already
+mime_types.setup()  # register interface classes and utilities if not already
 
 def _setup():
 	from pkg_resources import resource_filename
-	types_data = resource_filename( 'nti.contentfragments', "types.csv")
+	types_data = resource_filename('nti.contentfragments', "types.csv")
 	# Hmm. So this registers things in the zope.mimetype.types module
 	# The ZCML directive registers them in the specified module (I think)
 	# But we can't use that directive because we need them now in order to
 	# implement them.
-	data = mime_types.read( types_data )
-	ifs = mime_types.getInterfaces( data )
-	mime_types.registerUtilities( ifs, data )
+	data = mime_types.read(types_data)
+	ifs = mime_types.getInterfaces(data)
+	mime_types.registerUtilities(ifs, data)
 
-	mime_map_file = resource_filename( 'nti.contentfragments', 'mime.types' )
-	zope.contenttype.add_files( [mime_map_file] )
+	mime_map_file = resource_filename('nti.contentfragments', 'mime.types')
+	zope.contenttype.add_files([mime_map_file])
 _setup()
 
 
@@ -42,7 +42,7 @@ class IContentFragment(interface.Interface):
 	be in.
 	"""
 
-class IUnicodeContentFragment(IContentFragment,sequence.IReadSequence): # TODO: dolmen.builtins.IUnicode?
+class IUnicodeContentFragment(IContentFragment, sequence.IReadSequence):  # TODO: dolmen.builtins.IUnicode?
 	"""
 	Content represented as a unicode string.
 
@@ -69,62 +69,62 @@ class UnicodeContentFragment(unicode):
 	_ZCA_KEYS = ('__provides__',)
 
 
-	__slots__ = _ZCA_KEYS # actually meaningless, but we simulate this with __getattr__ and __setattr__
+	__slots__ = _ZCA_KEYS  # actually meaningless, but we simulate this with __getattr__ and __setattr__
 
 
-	def __getattr( self, name ):
-		raise AttributeError( name )
+	def __getattr(self, name):
+		raise AttributeError(name)
 
-	def __setattr__( self, name, value ):
+	def __setattr__(self, name, value):
 		# We do allow the attributes used by the ZCA
 		if name in self.__slots__:
-			unicode.__setattr__( self, name, value )
+			unicode.__setattr__(self, name, value)
 			return
-		raise AttributeError( name, type(self) )
+		raise AttributeError(name, type(self))
 
-	def __getattribute__( self, name ):
-		if name in ('__dict__', '__weakref__'): # Though this does not actually prevent creating a weak ref
-			raise AttributeError( name, type(self) )
-		return unicode.__getattribute__( self, name )
+	def __getattribute__(self, name):
+		if name in ('__dict__', '__weakref__'):  # Though this does not actually prevent creating a weak ref
+			raise AttributeError(name, type(self))
+		return unicode.__getattribute__(self, name)
 
-	def __setstate__( self, state ):
+	def __setstate__(self, state):
 		# If we had any state saved due to bad pickles in the past
 		# ignore it. Do support the ZCA attributes
 		if state:
 			for k in self.__slots__:
-				v = state.pop( k, self )
+				v = state.pop(k, self)
 				if v is not self:
-					unicode.__setattr__( self, k, v )
+					unicode.__setattr__(self, k, v)
 			# Anything left is bad and not supported. __parent__ was extremely common at one point
 			if state and (len(state) > 1 or '__parent__' not in state):
-				logger.warn( "Ignoring bad state for %s: %s", self, state )
+				logger.warn("Ignoring bad state for %s: %s", self, state)
 
 
-	def __getstate__( self ):
+	def __getstate__(self):
 		# Support just the ZCA attributes
-		state = unicode.__getattribute__( self, '__dict__' )
+		state = unicode.__getattribute__(self, '__dict__')
 		if state:
 			state = {k: v for k, v in state.items() if k in self.__slots__}
 			return state
 
 		return ()
 
-	def __rmul__( self, times ):
-		result = unicode.__rmul__( self, times )
+	def __rmul__(self, times):
+		result = unicode.__rmul__(self, times)
 		if result is not self:
-			result = self.__class__( result )
+			result = self.__class__(result)
 		return result
 
-	def __mul__( self, times ):
-		result = unicode.__mul__( self, times )
+	def __mul__(self, times):
+		result = unicode.__mul__(self, times)
 		if result is not self:
-			result = self.__class__( result )
+			result = self.__class__(result)
 		return result
 
 	# shut pylint up about 'bad container'; raise same error super does
-	def __delitem__( self, i ):
+	def __delitem__(self, i):
 		raise TypeError()
-	def __setitem__( self, k, v ):
+	def __setitem__(self, k, v):
 		raise TypeError()
 
 class ILatexContentFragment(IUnicodeContentFragment, mime_types.IContentTypeTextLatex):
@@ -141,32 +141,32 @@ class IHTMLContentFragment(IUnicodeContentFragment, mime_types.IContentTypeTextH
 	Interface representing content in HTML format.
 	"""
 
-###
+# ##
 # NOTE The implementations of the add methods go directly to
 # unicode and not up the super() chain to avoid as many extra
 # copies as possible
-###
+# ##
 
-def _add_( self, other, tuples ):
-	result = unicode.__add__( self, other )
+def _add_(self, other, tuples):
+	result = unicode.__add__(self, other)
 	for pair in tuples:
-		if pair[0].providedBy( other ):
-			result = pair[1]( result )
+		if pair[0].providedBy(other):
+			result = pair[1](result)
 			break
 	return result
 
 class _AddMixin(object):
 	_add_rules = ()
 
-	def __add__( self, other ):
-		return _add_( self, other, self._add_rules )
+	def __add__(self, other):
+		return _add_(self, other, self._add_rules)
 
 
 @interface.implementer(IHTMLContentFragment)
-class HTMLContentFragment(_AddMixin,UnicodeContentFragment):
+class HTMLContentFragment(_AddMixin, UnicodeContentFragment):
 	pass
 
-HTMLContentFragment._add_rules =  ((IHTMLContentFragment, HTMLContentFragment),)
+HTMLContentFragment._add_rules = ((IHTMLContentFragment, HTMLContentFragment),)
 
 
 class ISanitizedHTMLContentFragment(IHTMLContentFragment):
@@ -183,10 +183,10 @@ class SanitizedHTMLContentFragment(HTMLContentFragment):
 	pass
 
 # TODO: What about the rules for the other types?
-SanitizedHTMLContentFragment._add_rules = ( (ISanitizedHTMLContentFragment, SanitizedHTMLContentFragment), ) + HTMLContentFragment._add_rules
+SanitizedHTMLContentFragment._add_rules = ((ISanitizedHTMLContentFragment, SanitizedHTMLContentFragment),) + HTMLContentFragment._add_rules
 
 
-class IPlainTextContentFragment(IUnicodeContentFragment,mime_types.IContentTypeTextPlain):
+class IPlainTextContentFragment(IUnicodeContentFragment, mime_types.IContentTypeTextPlain):
 	"""
 	Interface representing content in plain text format.
 	"""
@@ -197,7 +197,7 @@ class PlainTextContentFragment(UnicodeContentFragment):
 
 @interface.implementer(IPlainTextContentFragment)
 @component.adapter(IPlainTextContentFragment)
-def _plain_text_to_plain_text( text ):
+def _plain_text_to_plain_text(text):
 	return text
 
 from zope.schema.interfaces import ITokenizedTerm
@@ -232,33 +232,33 @@ class ICensoredUnicodeContentFragment(IUnicodeContentFragment):
 	"""
 
 @interface.implementer(ICensoredUnicodeContentFragment)
-class CensoredUnicodeContentFragment(_AddMixin,UnicodeContentFragment):
+class CensoredUnicodeContentFragment(_AddMixin, UnicodeContentFragment):
 	pass
 
-CensoredUnicodeContentFragment._add_rules = ((ICensoredUnicodeContentFragment,CensoredUnicodeContentFragment),
-											 (IUnicodeContentFragment,UnicodeContentFragment))
+CensoredUnicodeContentFragment._add_rules = ((ICensoredUnicodeContentFragment, CensoredUnicodeContentFragment),
+											 (IUnicodeContentFragment, UnicodeContentFragment))
 
-class ICensoredPlainTextContentFragment(IPlainTextContentFragment,ICensoredUnicodeContentFragment):
+class ICensoredPlainTextContentFragment(IPlainTextContentFragment, ICensoredUnicodeContentFragment):
 	pass
 
 @interface.implementer(ICensoredPlainTextContentFragment)
 class CensoredPlainTextContentFragment(PlainTextContentFragment):
 	pass
 
-PlainTextContentFragment.censored = lambda s, n: CensoredPlainTextContentFragment( n )
-CensoredPlainTextContentFragment.censored = lambda s, n: CensoredPlainTextContentFragment( n )
+PlainTextContentFragment.censored = lambda s, n: CensoredPlainTextContentFragment(n)
+CensoredPlainTextContentFragment.censored = lambda s, n: CensoredPlainTextContentFragment(n)
 
-class ICensoredHTMLContentFragment(IHTMLContentFragment,ICensoredUnicodeContentFragment):
+class ICensoredHTMLContentFragment(IHTMLContentFragment, ICensoredUnicodeContentFragment):
 	pass
 
 @interface.implementer(ICensoredHTMLContentFragment)
 class CensoredHTMLContentFragment(HTMLContentFragment):
 	pass
 
-CensoredHTMLContentFragment._add_rules = ((ICensoredHTMLContentFragment,CensoredHTMLContentFragment),) + CensoredUnicodeContentFragment._add_rules
-CensoredHTMLContentFragment.censored = lambda s, n: CensoredHTMLContentFragment( n )
+CensoredHTMLContentFragment._add_rules = ((ICensoredHTMLContentFragment, CensoredHTMLContentFragment),) + CensoredUnicodeContentFragment._add_rules
+CensoredHTMLContentFragment.censored = lambda s, n: CensoredHTMLContentFragment(n)
 
-class ICensoredSanitizedHTMLContentFragment(ISanitizedHTMLContentFragment,ICensoredHTMLContentFragment):
+class ICensoredSanitizedHTMLContentFragment(ISanitizedHTMLContentFragment, ICensoredHTMLContentFragment):
 	pass
 
 @interface.implementer(ICensoredSanitizedHTMLContentFragment)
@@ -267,15 +267,15 @@ class CensoredSanitizedHTMLContentFragment(CensoredHTMLContentFragment):
 
 # The rules here place sanitization ahead of censoring, because sanitization
 # can cause security problems for end users; censoring is just offensive
-CensoredSanitizedHTMLContentFragment._add_rules = ( ((ICensoredSanitizedHTMLContentFragment,CensoredSanitizedHTMLContentFragment),
-													 (ISanitizedHTMLContentFragment,SanitizedHTMLContentFragment),)
+CensoredSanitizedHTMLContentFragment._add_rules = (((ICensoredSanitizedHTMLContentFragment, CensoredSanitizedHTMLContentFragment),
+													 (ISanitizedHTMLContentFragment, SanitizedHTMLContentFragment),)
 													 + CensoredHTMLContentFragment._add_rules
-													 + HTMLContentFragment._add_rules )
+													 + HTMLContentFragment._add_rules)
 
-UnicodeContentFragment.censored = lambda s, n: CensoredUnicodeContentFragment( n )
-HTMLContentFragment.censored = lambda s, n: CensoredHTMLContentFragment( n )
-SanitizedHTMLContentFragment.censored = lambda s, n: CensoredSanitizedHTMLContentFragment( n )
-CensoredSanitizedHTMLContentFragment.censored = lambda s, n: CensoredSanitizedHTMLContentFragment( n )
+UnicodeContentFragment.censored = lambda s, n: CensoredUnicodeContentFragment(n)
+HTMLContentFragment.censored = lambda s, n: CensoredHTMLContentFragment(n)
+SanitizedHTMLContentFragment.censored = lambda s, n: CensoredSanitizedHTMLContentFragment(n)
+CensoredSanitizedHTMLContentFragment.censored = lambda s, n: CensoredSanitizedHTMLContentFragment(n)
 
 # See http://code.google.com/p/py-contentfilter/
 # and https://hkn.eecs.berkeley.edu/~dyoo/python/ahocorasick/
@@ -299,7 +299,7 @@ class ICensoredContentScanner(interface.Interface):
 
 	"""
 
-	def scan( content_fragment ):
+	def scan(content_fragment):
 		"""
 		Scan the given content fragment for censored terms and return
 		their positions as a sequence (iterator) of two-tuples (start,
@@ -313,7 +313,7 @@ class ICensoredContentStrategy(interface.Interface):
 	on censoring content.
 	"""
 
-	def censor_ranges( content_fragment, censored_ranges ):
+	def censor_ranges(content_fragment, censored_ranges):
 		"""
 		Censors the content fragment appropriately and returns the censored value.
 		:param content_fragment: The fragment being censored.
@@ -332,7 +332,7 @@ class ICensoredContentPolicy(interface.Interface):
 	to censor with a strategy to censor them
 	"""
 
-	def censor( content_fragment, context ):
+	def censor(content_fragment, context):
 		"""
 		Censors the content fragment appropriately and returns the censored value.
 		:param content_fragment: The fragment being censored.
@@ -347,7 +347,7 @@ class ICensoredContentPolicy(interface.Interface):
 
 class IHyperlinkFormatter(interface.Interface):
 
-	def find_links( text ):
+	def find_links(text):
 		"""
 		Given a string of `text`, look through it for hyperlinks and find them.
 
@@ -355,8 +355,23 @@ class IHyperlinkFormatter(interface.Interface):
 			the plain text and detected links, in order, within the given text.
 		"""
 
-	def format( html_fragment ):
+	def format(html_fragment):
 		"""
 		Process the specified ``IHTMLContentFragment`` and scan through and convert any
 		plain text links recognized by the this object and inserting new ``<a>`` elements,
 		"""
+
+class ICensoredContentEvent(interface.Interface):
+	content_fragment = interface.Attribute("The content that was censored")
+	censored_content = interface.Attribute("The censored content")
+	name = interface.Attribute("The name of the attribute under which the censor content will be assigned.")
+	context = interface.Attribute("The context object where the object will be assigned to.")
+
+@interface.implementer(ICensoredContentEvent)
+class CensoredContentEvent(object):
+
+	def __init__(self, content_fragment, censored_content, name=None, context=None):
+		self.content_fragment = content_fragment
+		self.censored_content = censored_content
+		self.name = name
+		self.context = context
