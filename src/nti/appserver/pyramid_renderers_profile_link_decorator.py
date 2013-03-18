@@ -49,9 +49,12 @@ class ProfileLinkDecorator(object):
 			the_links.append( link )
 		# TODO: This is action at a distance. Refactor these to be cleaner.
 		# Primary reason they are here: speed.
-		# notice we DO NOT adapt; it must already exist
+		# Notice we DO NOT adapt; it must already exist, meaning that the
+		# owner has at one time added content to it. It may not have published
+		# content, though, and it may no longer have any entries
+		# (hence 'not None' rather than __nonzero__)
 		blog = context.containers.getContainer( 'Blog' ) # see forum_views
-		if blog and is_readable( blog, request ):
+		if blog is not None and is_readable( blog, request ):
 			link = Link( context,
 						 rel='Blog',
 						 elements=('Blog',) )
