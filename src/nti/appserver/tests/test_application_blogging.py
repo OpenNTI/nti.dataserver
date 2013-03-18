@@ -829,13 +829,21 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# ... but the other community member cannot
 		res = testapp3.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
 		assert_that( res.json_body['Items'], has_length( 0 ) )
+		# ... and the actual blog entry is not in the activity of the creating user anymore,
+		# as far as the commenting user is concerned
+		res = testapp2.get( UQ( '/dataserver2/users/' + user_username + '/Activity' ) )
+		assert_that( res.json_body, has_entry( 'Items', is_empty() ) )
 
 
 		# and it can be republished...
 		res = testapp.post( pub_url )
 		assert_shared_with_community( res.json_body )
 		# ...making it visible again
+		# directly
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog/contents' )
+		assert_that( res.json_body['Items'][0], has_entry( 'title', 'My New Blog' ) )
+		# in activity
+		res = testapp2.get( UQ( '/dataserver2/users/' + user_username + '/Activity' ) )
 		assert_that( res.json_body['Items'][0], has_entry( 'title', 'My New Blog' ) )
 
 		res = user2_follower2app.get( '/dataserver2/users/' + user2_follower2_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream' )
