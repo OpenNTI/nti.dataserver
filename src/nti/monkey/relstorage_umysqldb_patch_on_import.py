@@ -20,6 +20,7 @@ def _patch_relstorage_for_newer_persistent():
 	# Depending on whether the c extensions are in play, TimeStamp may
 	# be a function or a type...if it is a type, we cannot actually
 	# get to it reliably by name
+	# The fix for this is merged in github master, post 1.5.1
 	def _repr(o):
 		if isinstance(o, pyTimeStamp) or (type(o).__name__ == 'TimeStamp' and type(o).__module__ == 'persistent'):
 			return o.raw()
@@ -47,7 +48,7 @@ def _patch_zlibstorage_for_IMVCCStorage():
 		# The only known implementation if IMVCCStorage is RelStorage,
 		# so might as well fix that here.
 		# (Sigh, this means all our databases are currently uncompressed)
-		# TODO: Send this to ZODB-Dev, submit patch
+		# see https://mail.zope.org/pipermail/zodb-dev/2013-March/014965.html
 		def new_instance(self):
 			new_self = type(self).__new__(type(self))
 			new_self.__dict__ = self.__dict__.copy()
@@ -59,8 +60,6 @@ def _patch_zlibstorage_for_IMVCCStorage():
 					setattr(new_self, name, v)
 			return new_self
 		ZlibStorage.new_instance = new_instance
-		print( "Patched zlibstorage to work with relstorage." )
-
 
 
 def _patch():
@@ -70,7 +69,6 @@ def _patch():
 		umysqldb.install_as_MySQLdb()
 		import umysqldb.connections
 	except ImportError:
-		import sys
 		import platform
 		py_impl = getattr(platform, 'python_implementation', lambda: None)
 		if py_impl() == 'PyPy':
