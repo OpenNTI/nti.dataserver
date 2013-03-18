@@ -9,26 +9,17 @@ __docformat__ = "restructuredtext en"
 
 import os
 import time
-import BTrees
 import random
 import binascii
 
-from zope import component
 from zope import interface
 
 from whoosh import index
 from whoosh.store import LockError
-from whoosh.filedb.fileindex import TOC
 from whoosh.index import _DEF_INDEX_NAME
-from whoosh.filedb.filestore import open_index
-from whoosh.filedb.structfile import StructFile
-from whoosh.filedb.filestore import create_index
-from whoosh.filedb.filestore import Storage as WhooshStorage
+
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
-from nti.dataserver import interfaces as nti_interfaces
-
-from ._blockio import PersistentBlockIO
 from . import interfaces as search_interfaces
 
 def oid_to_path(oid, max_bytes=3):
@@ -38,7 +29,7 @@ def oid_to_path(oid, max_bytes=3):
 	count = 0
 	directories = []
 	for byte in str(oid):
-		count = count+1
+		count = count + 1
 		directories.append('0x%s' % binascii.hexlify(byte))
 		if count >= max_bytes: break
 	return os.path.sep.join(directories)
@@ -84,7 +75,7 @@ def get_index_writer(index, writer_ctor_args={}, maxiters=40, delay=0.25):
 writer_ctor_args = {'limitmb':96}
 writer_commit_args = {'merge':False, 'optimize':False, 'mergetype':segment_merge}
 
-@interface.implementer( search_interfaces.IWhooshIndexStorage )
+@interface.implementer(search_interfaces.IWhooshIndexStorage)
 class IndexStorage(object):
 
 	default_ctor_args = writer_ctor_args
@@ -214,103 +205,8 @@ def create_directory_index(indexname, schema, indexdir=None, close_index=True):
 		idx.close()
 	return idx, storage
 
-@interface.implementer( search_interfaces.IWhooshIndexStorage )
+@interface.implementer(search_interfaces.IWhooshIndexStorage)
 def _create_default_whoosh_storage():
 	if os.getenv('DATASERVER_DIR', None):
 		return UserDirectoryStorage()
 	return None
-
-class PersistentBlockStorage(BTrees.OOBTree.OOBTree, WhooshStorage, IndexStorage):
-	
-	folder = ''
-	supports_mmap = False
-	writer_ctor_args = {}
-	writer_commit_args = {'merge':False, 'optimize':False}
-
-	def __init__(self, *args):
-		BTrees.OOBTree.OOBTree.__init__( self, *args )
-
-	def ctor_args(self, *args, **kwargs):
-		return self.writer_ctor_args
-	
-	def commit_args(self, *args, **kwargs):
-		return self.writer_commit_args
-	
-	def create_index(self, schema, indexname=_DEF_INDEX_NAME, **kwargs):
-		return create_index(self, schema=schema, indexname=indexname)
-
-	def open_index(self, indexname=_DEF_INDEX_NAME, schema=None, **kwargs):
-		return open_index(self, schema=schema, indexname=indexname)
-
-	def index_exists(self, indexname=_DEF_INDEX_NAME, **kwargs):
-		gen = TOC._latest_generation(self, indexname)
-		return gen >= 0
-	
-	def get_or_create_index(self, indexname, schema=None, recreate=True, **kwargs):
-		if recreate and self.index_exists(indexname):
-			self.remove_index(indexname)
-			
-		if not self.index_exists(indexname):
-			return self.create_index(schema=schema, indexname=indexname)
-		else:
-			return self.open_index(indexname=indexname)
-	
-	def remove_index(self, indexname):
-		prefix = "_%s_" % indexname
-		for filename in self.list():
-			if filename.startswith(prefix):
-				self.delete_file(filename) 
-	
-	def storage(self, **kwargs):
-		return self
-	
-	def list(self):
-		return list(self.keys())
-
-	def clean(self):
-		self.clear()
-
-	def total_size(self):
-		return sum(self.file_length(f) for f in self.list())
-
-	def file_exists(self, name):
-		return name in self
-
-	def file_length(self, name):
-		if name not in self:
-			raise NameError(name)
-		return self[name].size()
-
-	def file_modified(self, name):
-		return -1
-
-	def delete_file(self, name):
-		if name not in self:
-			raise NameError(name)
-		del self[name]
-
-	def rename_file(self, name, newname, safe=False):
-		if name not in self:
-			raise NameError(name)
-		if safe and newname in self:
-			raise NameError("File %r exists" % newname)
-
-		content = self[name]
-		del self[name]
-		self[newname] = content
-
-	def create_file(self, name, **kwargs):
-		pbio = PersistentBlockIO()
-		f = StructFile(pbio, name=name)
-		self[name] = pbio
-		return f
-
-	def open_file(self, name, *args, **kwargs):
-		if name not in self:
-			raise NameError(name)
-		return StructFile(self[name], name=name, *args, **kwargs)
-
-	def lock(self, name):
-		redis = component.getUtility(nti_interfaces.IRedisClient)
-		name = "nti/locks/whoosh/%s" % name
-		return redis.lock(name=name, timeout=60, sleep=1)

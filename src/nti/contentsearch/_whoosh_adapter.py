@@ -34,7 +34,6 @@ from ._search_results import merge_search_results
 from ._search_results import empty_suggest_results
 from ._search_results import merge_suggest_results
 from ._whoosh_indexstorage import get_index_writer
-from ._whoosh_indexstorage import PersistentBlockStorage
 from ._search_indexmanager import _SearchEntityIndexManager
 from ._search_results import empty_suggest_and_search_results
 from ._search_results import merge_suggest_and_search_results
@@ -84,7 +83,7 @@ def _safe_index_close(index):
 # entity adapter for whoosh indicies
 
 @component.adapter(nti_interfaces.IEntity)
-@interface.implementer( search_interfaces.IWhooshEntityIndexManager )
+@interface.implementer(search_interfaces.IWhooshEntityIndexManager)
 class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 
 	delay = 0.25
@@ -226,7 +225,7 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 	def get_indexable_object(self, type_name):
 		indexable = get_indexable_object(type_name)
 		if not hasattr(indexable, 'get_object'):
-			setattr(indexable ,'get_object', self.get_object)
+			setattr(indexable , 'get_object', self.get_object)
 		return indexable
 
 def _on_index_removed(key, value):
@@ -271,31 +270,3 @@ class _WhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 				_safe_index_close(index)
 
 _WhooshEntityIndexManagerFactory = an_factory(_WhooshEntityIndexManager)
-
-class _PersistentWhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
-
-	def __init__(self):
-		super(_BaseWhooshEntityIndexManager, self).__init__()
-		self.storage = PersistentBlockStorage()
-
-	def _get_or_create_index(self, type_name):
-		type_name = _ntm(type_name)
-		indexname = self._get_indexname(type_name)
-		indexable = self.get_indexable_object(type_name)
-		schema = indexable.get_schema()
-		if not type_name in self:
-			index = self.storage.create_index(indexname=indexname, schema=schema)
-			index = self._register_index(type_name, indexname, index)
-		else:
-			index = self.storage.open_index(indexname=indexname, schema=schema)
-			index = _NoLockingProxy(index)
-		return index
-
-	def remove_index(self, type_name, *args, **kwargs):
-		if super(_PersistentWhooshEntityIndexManager, self).remove_index(type_name):
-			indexname = self._get_indexname(type_name)
-			self.storage.remove_index(indexname)
-			return True
-		return False
-
-_PersistentWhooshEntityIndexManagerFactory = an_factory(_PersistentWhooshEntityIndexManager)
