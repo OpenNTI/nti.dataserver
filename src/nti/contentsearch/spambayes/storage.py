@@ -45,7 +45,7 @@ class PersistentClassifier(Persistent, Trainer):
 	WordInfoClass = PersistentWordInfo
 
 	def __init__(self, mapfactory=OOBTree):
-		Persistent.__init__()
+		Persistent.__init__(self)
 		Trainer.__init__(self, mapfactory=mapfactory)
 
 PersistentBayes = PersistentClassifier
