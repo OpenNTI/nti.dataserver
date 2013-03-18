@@ -57,13 +57,17 @@ def main():
 	conn, cursor = adapter.connmanager.open_for_load()
 
 	if args.uncompress:
-		clause = 'LIKE'
+		clause = 'LIKE  ".z%%"'
 		action = decompress
 	else:
-		clause = 'NOT LIKE'
+		# Get the uncompressed data that we might want to compress
+		# zlibstorage doesn't bother if the size is less than 20;
+		# for conversion purposes, we won't bother if the size is
+		# less than 40 (arbitrary)
+		clause = 'NOT LIKE ".z%%" AND state_size > 40'
 		action = compress
 
-	query = 'SELECT zoid, tid, state, state_size from object_state where state ' + clause + ' ".z%%" ORDER BY tid DESC' # The most recent transactions first
+	query = 'SELECT zoid, tid, state, state_size from object_state where state ' + clause + ' ORDER BY tid DESC' # The most recent transactions first
 	if args.limit:
 		query += ' LIMIT ' + str(args.limit)
 	totals = 0
