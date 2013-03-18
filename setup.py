@@ -273,7 +273,7 @@ setup(
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser >= 2.0.2',
 		'zope.browserpage >= 4.1.0a1',
-		'zope.browsermenu >= 4.0.0', # Browser menu implementation for Zope.
+		'zope.browsermenu >= 4.1.0a1', # Browser menu implementation for Zope.
 		'zope.browserresource >= 4.0.0',
 		'zope.catalog >= 3.8.2' if HAVE_ZCONT else '', # zope.container dependency
 		'zope.cachedescriptors >= 4.0.0',
@@ -334,7 +334,7 @@ setup(
 		'zope.structuredtext >= 4.0.0',
 		'zope.tal >= 4.0.0a1',
 		'zope.tales >= 4.0.1',
-		'zope.traversing >= 4.0.0a2',
+		'zope.traversing >= 4.0.0a3',
 		# Plug to make zope.schema's vocabulary registry ZCA
 		# based and thus actually useful
 		'zope.vocabularyregistry >= 1.0.0',

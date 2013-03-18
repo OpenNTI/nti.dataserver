@@ -1299,22 +1299,6 @@ class ISessionServiceStorage(interface.Interface):
 			the given user.
 		"""
 
-class IObjectFlaggingEvent(component.interfaces.IObjectEvent):
-	"""
-	An object event for object flagging and unflagging
-	"""
-	username = interface.Attribute("user doing the flagging")
-
-class IObjectFlaggedEvent(IObjectFlaggingEvent):
-	"""
-	An object event for object flagging
-	"""
-
-class IObjectUnflaggedEvent(IObjectFlaggingEvent):
-	"""
-	An object event for object unflagging
-	"""
-
 ####
 # # Weak Refs and related
 ####
