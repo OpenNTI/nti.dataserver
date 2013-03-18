@@ -14,10 +14,10 @@ from zope import interface
 from nti.contentprocessing import interfaces as cp_interfaces
 
 # patch encodings.aliases to recognize 'ansi_x3_4_1968'
-from encodings.aliases import aliases # The aliases dictionary
+from encodings.aliases import aliases  # The aliases dictionary
 if not aliases.has_key('ansi_x3_4_1968'):
 	aliases['ansi_x3_4_1968'] = 'ascii'
-del aliases # Not needed any more
+del aliases  # Not needed any more
 
 has_highbit_char = re.compile(r"[\x80-\xff]").search
 
@@ -59,7 +59,7 @@ class Stripper(object):
 	# return string (no new object is built), and likewise ' '.join([string])
 	# is optimized to return string.  It would actually slow this code down
 	# to special-case these "do nothing" special cases at the Python level!
-	
+
 	def analyze(self, text):
 		i = 0
 		retained = []
@@ -117,6 +117,7 @@ uuencode_begin_re = re.compile(r"""
 uuencode_end_re = re.compile(r"^end\s*\n", re.MULTILINE)
 
 class UUencodeStripper(Stripper):
+
 	def __init__(self):
 		Stripper.__init__(self, uuencode_begin_re.search,
 								uuencode_end_re.search)
@@ -137,11 +138,12 @@ url_re = re.compile(r"""
     # be in html, may or may not be in quotes, etc.  If it's full of %
     # escapes, cool -- that's a clue too.
     ([^\s<>"'\x7f-\xff]+)  # capture the guts
-""", re.VERBOSE)                        # '
+""", re.VERBOSE)  # '
 
 urlsep_re = re.compile(r"[;?:@&=+,$.]")
 
 class URLStripper(Stripper):
+
 	def __init__(self):
 		search = url_re.search
 		Stripper.__init__(self, search, re.compile("").search)
@@ -172,13 +174,14 @@ class URLStripper(Stripper):
 
 received_complaints_re = re.compile(r'\([a-z]+(?:\s+[a-z]+)+\)')
 crack_urls = URLStripper().analyze
-	
+
 # remove html <style gimmicks.
 html_style_start_re = re.compile(r"""
     < \s* style\b [^>]* >
 """, re.VERBOSE)
 
 class StyleStripper(Stripper):
+
 	def __init__(self):
 		Stripper.__init__(self, html_style_start_re.search,
 						  re.compile(r"</style>").search)
@@ -187,6 +190,7 @@ crack_html_style = StyleStripper().analyze
 
 # remove html comments.
 class CommentStripper(Stripper):
+
 	def __init__(self):
 		Stripper.__init__(self,
 						  re.compile(r"<!--|<\s*comment\s*[^>]*>").search,
@@ -196,6 +200,7 @@ crack_html_comment = CommentStripper().analyze
 
 # remove stuff between <noframes> </noframes> tags.
 class NoframesStripper(Stripper):
+
 	def __init__(self):
 		Stripper.__init__(self,
 						  re.compile(r"<\s*noframes\s*>").search,
@@ -213,7 +218,7 @@ virus_re = re.compile(r"""
     < /? \s* (?: script | iframe) \b
 |   \b src= ['"]? cid:
 |   \b (?: height | width) = ['"]? 0
-""", re.VERBOSE)                        # '
+""", re.VERBOSE)  # '
 
 def find_html_virus_clues(text):
 	for bingo in virus_re.findall(text):
@@ -235,10 +240,9 @@ breaking_entity_re = re.compile(r"""
     >
 """, re.VERBOSE)
 
-
 word_re = re.compile("(?x)(?:[A-Z]\\.)+ | \\$?\\d+(?:\\.\\d+)?%? | \\w+(?:[-']\\w+)*", re.MULTILINE | re.DOTALL | re.UNICODE)
 
-@interface.implementer(cp_interfaces.IContentTranslationTable )
+@interface.implementer(cp_interfaces.IContentTranslationTable)
 def _default_translation_table():
 	# for support of the replace_nonascii_chars option, build a string.translate
 	# table that maps all high-bit chars and control chars to a '?' character.
@@ -246,11 +250,11 @@ def _default_translation_table():
 	# leave blank up to (but not including) DEL alone
 	for i in range(32, 127):
 		non_ascii_translate_tab[i] = chr(i)
-	
+
 	# leave "normal" whitespace alone
 	for ch in ' \t\r\n':
 		non_ascii_translate_tab[ord(ch)] = ch
 	del i, ch
-	
+
 	non_ascii_translate_tab = ''.join(non_ascii_translate_tab)
 	return non_ascii_translate_tab

@@ -32,8 +32,7 @@ from . import interfaces as sps_interfaces
 class _EntitySpamClassifier(PersistentClassifier):
 	pass
 
-def _EntitySpamClassifierFactory(user):
-	return an_factory(_EntitySpamClassifier)(user)
+_EntitySpamClassifierFactory = an_factory(_EntitySpamClassifier)
 
 @interface.implementer(sps_interfaces.ISpamManager)
 @component.adapter(nti_interfaces.IEntity)
