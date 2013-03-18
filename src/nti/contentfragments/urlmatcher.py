@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
+An Improved Liberal, Accurate Regex Pattern for Matching URLs
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -18,7 +17,8 @@ from lxml import etree
 from html5lib import treebuilders
 
 from zope import interface
-from nti.contentfragments import interfaces
+
+from . import interfaces
 
 @interface.implementer(interfaces.IHyperlinkFormatter)
 class GrubberHyperlinkFormatter(object):
@@ -47,13 +47,13 @@ class GrubberHyperlinkFormatter(object):
 			text = text[7:]
 		return text
 
-	def find_links( self, text, pattern=grubber_v1_pattern ):
+	def find_links(self, text, pattern=grubber_v1_pattern):
 		result = []
 		m = pattern.search(text)
 		while m:
 			end = m.end()
 			start = m.start()
-			result.append( text[0:start] )
+			result.append(text[0:start])
 
 			href = self._check_href(text[start:end]).strip()
 			e = etree.Element('a', href=href)
@@ -72,14 +72,14 @@ class GrubberHyperlinkFormatter(object):
 		field = 'text' if is_text else 'tail'
 		text = getattr(node, field, None)
 		if text:
-			result = self.find_links( text, pattern=pattern )
+			result = self.find_links(text, pattern=pattern)
 			setattr(node, field, None)
 			for i, e in enumerate(result):
 				if isinstance(e, six.string_types):
 					if i == 0:
 						setattr(node, field, e)
 					else:
-						result[i-1].tail = e
+						result[i - 1].tail = e
 				elif is_text:
 					node.append(e)
 				else:
@@ -95,15 +95,15 @@ class GrubberHyperlinkFormatter(object):
 
 	def format(self, html_fragment):
 		if interfaces.IHTMLContentFragment.providedBy(html_fragment):
-			html_fragment = self._parse_and_linkify( html_fragment, html_fragment.__class__ )
-		elif isinstance( html_fragment, six.string_types ) and self.grubber_v1_pattern.search( html_fragment ):
+			html_fragment = self._parse_and_linkify(html_fragment, html_fragment.__class__)
+		elif isinstance(html_fragment, six.string_types) and self.grubber_v1_pattern.search(html_fragment):
 			# A plain string that matches
-			html_fragment = self._parse_and_linkify( html_fragment, interfaces.HTMLContentFragment )
+			html_fragment = self._parse_and_linkify(html_fragment, interfaces.HTMLContentFragment)
 		return html_fragment
 
-	def _parse_and_linkify( self, content, dest_class ):
-		p = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
-		doc = p.parse( content )
+	def _parse_and_linkify(self, content, dest_class):
+		p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False)
+		doc = p.parse(content)
 		for node in doc.iter():
 			self._link_finder(node)
 
