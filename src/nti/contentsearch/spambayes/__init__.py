@@ -11,7 +11,7 @@ import math
 
 from zope import component
 
-from nti.contentsearch.spambayes import interfaces as sps_interfaces
+from . import interfaces as sps_interfaces
 
 LN2 = math.log(2)
 
