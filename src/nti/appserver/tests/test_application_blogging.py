@@ -806,6 +806,9 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 			res = app.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
 			_has_both_comments( res )
 
+			user_activity_mod_time = res.last_modified
+			user_activity_mod_time_body = res.json_body['Last Modified']
+
 		# The original user can unpublish...
 		res = testapp.post( unpub_url )
 		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
@@ -833,6 +836,16 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# as far as the commenting user is concerned
 		res = testapp2.get( UQ( '/dataserver2/users/' + user_username + '/Activity' ) )
 		assert_that( res.json_body, has_entry( 'Items', is_empty() ) )
+		# All of the mod times were updated
+		assert_that( res.json_body['Last Modified'], is_( greater_than( user_activity_mod_time_body ) ) )
+		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( res.json_body['Last Modified'], webob.datetime_utils.UTC ) ) )
+		# and a conditional request works too
+
+		res = testapp2.get( UQ( '/dataserver2/users/' + user_username + '/Activity' ), headers={'If-Modified-Since': webob.datetime_utils.serialize_date(user_activity_mod_time)} )
+		assert_that( res.json_body, has_entry( 'Items', is_empty() ) )
+		testapp2.get( UQ( '/dataserver2/users/' + user_username + '/Activity' ),
+					  headers={'If-Modified-Since': webob.datetime_utils.serialize_date(res.last_modified)},
+					  status=304)
 
 
 		# and it can be republished...
