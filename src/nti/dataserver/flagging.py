@@ -11,10 +11,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import intid
 from zope import component
 from zope import interface
-from zope.event import notify
+from zope import intid
 from zope.intid import interfaces as intid_interfaces
 from zope.cachedescriptors.property import CachedProperty
 
@@ -24,27 +23,15 @@ import persistent
 from nti.utils import sets
 from nti.dataserver import interfaces as nti_interfaces
 
-class ObjectFlaggingEvent(component.interfaces.ObjectEvent):
-	def __init__(self, context, username=None):
-		super(ObjectFlaggingEvent, self).__init__(context)
-		self.username = username
-
-@interface.implementer(nti_interfaces.IObjectFlaggedEvent)
-class ObjectFlaggedEvent(ObjectFlaggingEvent):
-	pass
-
-@interface.implementer(nti_interfaces.IObjectUnflaggedEvent)
-class ObjectUnflaggedEvent(ObjectFlaggingEvent):
-	pass
-
 def flag_object(context, username):
 	"""
 	Cause `username` to flag the object `context` for moderation action.
 
 	.. note:: Currently, it does not take the username into account.
 	"""
+
 	component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).flag(context)
-	notify(ObjectFlaggedEvent(context, username))
+
 
 def flags_object(context, username):
 	"""
@@ -53,6 +40,7 @@ def flags_object(context, username):
 
 	.. note:: Currently, it does not take the username into account.
 	"""
+
 	return component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).is_flagged(context)
 
 def unflag_object(context, username):
@@ -61,8 +49,8 @@ def unflag_object(context, username):
 
 	.. note:: Currently, it does not take the username into account.
 	"""
+
 	component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).unflag(context)
-	notify(ObjectUnflaggedEvent(context, username))
 
 
 @component.adapter(nti_interfaces.IFlaggable, intid_interfaces.IIntIdRemovedEvent)
