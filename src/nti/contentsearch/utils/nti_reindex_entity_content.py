@@ -12,6 +12,7 @@ import os
 import sys
 import time
 import argparse
+import transaction
 
 from ZODB.POSException import POSKeyError
 
@@ -40,7 +41,7 @@ _func_map = {
 				messageinfo_: find_all_messageinfo
 			}
 
-def reindex_entity_content(entity, content_type=None, verbose=False):
+def reindex_entity_content(entity, content_type=None, savepoint=500, verbose=False):
 
 	counter = 0
 	t = time.time()
@@ -57,6 +58,12 @@ def reindex_entity_content(entity, content_type=None, verbose=False):
 				if docid is not None:
 					catalog.index_doc(docid, obj)
 					counter = counter + 1
+
+					if counter % savepoint == 0:
+						if verbose:
+							print('transaction save point at %s records' % counter)
+						transaction.get().savepoint()
+
 				elif verbose:
 					print("Cannot find int64 id for %r. Object will not be indexed" % obj)
 		except POSKeyError:
@@ -69,18 +76,19 @@ def reindex_entity_content(entity, content_type=None, verbose=False):
 
 	return counter
 
-def _reindex_process(username, content_type=None, verbose=False):
+def _reindex_process(username, content_type=None, savepoint=500, verbose=False):
 	entity = users.Entity.get_entity(username)
 	if not entity:
 		print("entity '%s' does not exists" % username, file=sys.stderr)
 		sys.exit(2)
-	return reindex_entity_content(entity, content_type, verbose)
+	return reindex_entity_content(entity, content_type, savepoint, verbose)
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Reindex entity content")
 	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username")
 	arg_parser.add_argument('-v', '--verbose', help="Verbose output", action='store_true', dest='verbose')
+	arg_parser.add_argument("-s", "--savepoint", help="Save point records", type=int, default=500)
 	arg_parser.add_argument('-t', '--type',
 							dest='content_type',
 							help="The content type to reindex")
@@ -88,6 +96,7 @@ def main():
 
 	verbose = args.verbose
 	username = args.username
+	savepoint = args.savepoint
 	content_type = args.content_type
 	env_dir = os.path.expanduser(args.env_dir)
 
@@ -99,7 +108,7 @@ def main():
 
 	run_with_dataserver(environment_dir=env_dir,
 						xmlconfig_packages=(nti.contentsearch,),
-						function=lambda: _reindex_process(username, content_type, verbose))
+						function=lambda: _reindex_process(username, content_type, savepoint, verbose))
 
 if __name__ == '__main__':
 	main()
