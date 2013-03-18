@@ -1,5 +1,18 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+algorithms for content censoring.
 
+The algorithms contained in here are trivially simple.
+We could do much better, for example, with prefix trees.
+See https://hkn.eecs.berkeley.edu/~dyoo/python/ahocorasick/
+and http://pypi.python.org/pypi/trie/0.1.1
+
+If efficiency really matters, and we have many different filters we are
+applying, we would need to do a better job pipelining to avoid copies
+
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -17,14 +30,6 @@ from zope import component
 from zope.event import notify
 
 from . import interfaces
-
-# The algorithms contained in here are trivially simple.
-# We could do much better, for example, with prefix trees.
-# See https://hkn.eecs.berkeley.edu/~dyoo/python/ahocorasick/
-# and http://pypi.python.org/pypi/trie/0.1.1
-
-# If efficiency really matters, and we have many different filters we are
-# applying, we would need to do a better job pipelining to avoid copies
 
 def punkt_re_char(lang='en'):
 	# TODO: remove circular dependency, content processing uses content fragments
@@ -185,7 +190,6 @@ class PipeLineMatchScanner(BasicScanner):
 			for match_range in matched_ranges:
 				ranges.append(match_range)
 				yield match_range
-
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def _word_profanity_scanner():
