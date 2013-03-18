@@ -1,5 +1,11 @@
 # -*- mode: html -*-
 
+name: chaptertitlesuppressed sectiontitlesuppressed
+<div tal:attributes="id self/id; ntiid self/ntiid; data-ntiid self/ntiid">
+<p class="placeholder"></p>
+<p tal:replace="self"></p>
+</div>
+
 name: ntiincludevideo
 # The things we have links to right now we embed as iframes. This
 # will need to get smarter as there are more types. Note that WebKit

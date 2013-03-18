@@ -30,6 +30,13 @@ class _Ignored(Base.Command):
 	def invoke( self, tex ):
 		return []
 
+# SAJ: Sectioning commands for custom rendering treatment
+class chaptertitlesuppressed( Base.chapter ):
+	pass
+
+class sectiontitlesuppressed( Base.section ):
+	pass
+
 #TODO do pagerefs even make sense in our dom?
 #Try to find an intelligent page name for the reference
 #so we don't have to render the link text as '3'
