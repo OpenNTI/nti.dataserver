@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
+Dataserver interfaces
 
 $Id$
 """
@@ -9,10 +9,11 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#logger = __import__('logging').getLogger(__name__)
+# logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
-#from zope import schema
+# from zope import schema
 
 from zope.mimetype.interfaces import IContentTypeAware
 from zope.annotation.interfaces import IAnnotatable
@@ -52,12 +53,12 @@ class ACLLocationProxy(LocationProxy):
 	"""
 	__slots__ = ('__acl__',) + LocationProxy.__slots__
 
-	def __new__( cls, backing, container=None, name=None, acl=() ):
-		return LocationProxy.__new__( cls, backing, container=container, name=name )
+	def __new__(cls, backing, container=None, name=None, acl=()):
+		return LocationProxy.__new__(cls, backing, container=container, name=name)
 
-	def __init__( self, backing, container=None, name=None, acl=() ):
-		LocationProxy.__init__( self, backing, container=container, name=name )
-		if backing is None: raise TypeError("Cannot wrap None") # Programmer error
+	def __init__(self, backing, container=None, name=None, acl=()):
+		LocationProxy.__init__(self, backing, container=container, name=name)
+		if backing is None: raise TypeError("Cannot wrap None")  # Programmer error
 		self.__acl__ = acl
 
 class ACLProxy(ProxyBase):
@@ -67,19 +68,19 @@ class ACLProxy(ProxyBase):
 	"""
 	__slots__ = ('__acl__',)
 
-	def __new__( cls, backing, acl=() ):
-		return ProxyBase.__new__( cls, backing )
+	def __new__(cls, backing, acl=()):
+		return ProxyBase.__new__(cls, backing)
 
-	def __init__( self, backing, acl=() ):
-		ProxyBase.__init__( self, backing )
+	def __init__(self, backing, acl=()):
+		ProxyBase.__init__(self, backing)
 		self.__acl__ = acl
 
-#pylint: disable=E0213,E0211
+# pylint: disable=E0213,E0211
 
 class IDataserver(interface.Interface):
 	pass
 
-class IRedisClient( interface.Interface ):
+class IRedisClient(interface.Interface):
 	"""
 	A very poor abstraction of a :class:`redis.StrictRedis` client.
 	In general, this should only be used in the lowest low level code and
@@ -99,7 +100,7 @@ class SiteNotInstalledError(AssertionError):
 class IDataserverFolder(zope.site.interfaces.IFolder):
 	pass
 
-class IShardInfo(zope.component.interfaces.IPossibleSite,zope.container.interfaces.IContained):
+class IShardInfo(zope.component.interfaces.IPossibleSite, zope.container.interfaces.IContained):
 	"""
 	Information about a database shared.
 
@@ -115,18 +116,18 @@ class IShardLayout(interface.Interface):
 							   title="The root folder for the dataserver in this shard")
 
 	users_folder = Object(zope.site.interfaces.IFolder,
-						  title="The folder containing users that live in this shard." )
+						  title="The folder containing users that live in this shard.")
 
-	shards = Object( zope.container.interfaces.IContained,
+	shards = Object(zope.container.interfaces.IContained,
 					 title="The root shard will contain a shards folder.",
 					 required=False)
-	root_folder = Object( zope.site.interfaces.IRootFolder,
+	root_folder = Object(zope.site.interfaces.IRootFolder,
 						  title="The root shard will contain the root folder",
-						  required=False )
+						  required=False)
 
 class INewUserPlacer(interface.Interface):
 
-	def placeNewUser( user, root_users_folder, shards ):
+	def placeNewUser(user, root_users_folder, shards):
 		"""
 		Put the `user` into an :class:`ZODB.interfaces.IConnection`, thus establishing
 		the home database of the user.
@@ -166,7 +167,7 @@ class IDataserverTransactionRunner(interface.Interface):
 		"""
 
 class IOIDResolver(interface.Interface):
-	def get_object_by_oid( oid_string, ignore_creator=False ):
+	def get_object_by_oid(oid_string, ignore_creator=False):
 		"""
 		Given an object id string as found in an OID value
 		in an external dictionary, returns the object in the that matches that
@@ -187,7 +188,7 @@ class ILink(interface.Interface):
 
 	rel = Choice(
 		title=u'The type of relationship',
-		values=('related', 'alternate', 'self', 'enclosure', 'edit', 'like', 'unlike', 'content' ))
+		values=('related', 'alternate', 'self', 'enclosure', 'edit', 'like', 'unlike', 'content'))
 
 	target = interface.Attribute(
 		"""
@@ -195,7 +196,7 @@ class ILink(interface.Interface):
 
 		May be an actual object of some type or may be a string. If a string,
 		will be interpreted as an absolute or relative URI.
-		""" )
+		""")
 
 	elements = Iterable(
 		title="Additional path segments to put after the `target`",
@@ -207,7 +208,7 @@ class ILink(interface.Interface):
 		title='Target Mime Type',
 		description="The mime type explicitly specified for the target object, if any",
 		constraint=mime_interfaces.mimeTypeConstraint,
-		required=False )
+		required=False)
 
 class ILinkExternalHrefOnly(ILink):
 	"""
@@ -221,9 +222,9 @@ class ILinked(interface.Interface):
 	Something that possess links to other objects.
 	"""
 	links = Iterable(
-		title=u'Iterator over the ILinks this object contains.' )
+		title=u'Iterator over the ILinks this object contains.')
 
-### Containers
+# ## Containers
 # TODO: Very much of our home-grown container
 # stuff can be replaced by zope.container
 IContainer = IZContainer
@@ -262,16 +263,16 @@ class ILastModified(interface.Interface):
 	Something that tracks a modification timestamp.
 	"""
 	# TODO: Combine/replace this with zope.dublincore.IDCTimes
-	lastModified = Number( title=u"The timestamp at which this object or its contents was last modified.",
-						   default=0.0 )
-	createdTime = Number( title=u"The timestamp at which this object was created.",
-						  default=0.0 )
+	lastModified = Number(title=u"The timestamp at which this object or its contents was last modified.",
+						   default=0.0)
+	createdTime = Number(title=u"The timestamp at which this object was created.",
+						  default=0.0)
 
 class ICreated(interface.Interface):
 	"""
 	Something created by an identified entity.
 	"""
-	creator = interface.Attribute( "The creator of this object." )
+	creator = interface.Attribute("The creator of this object.")
 
 
 class IContained(IZContained):
@@ -282,7 +283,7 @@ class IContained(IZContained):
 	"""
 
 	# For BWC, these are not required
-	containerId = DecodingValidTextLine( title="The ID (name) of the container to which this object belongs. Should match the __parent__.__name__",
+	containerId = DecodingValidTextLine(title="The ID (name) of the container to which this object belongs. Should match the __parent__.__name__",
 										 required=False)
 	id = DecodingValidTextLine(title="The locally unique ID (name) of this object in the container it belongs. Should match the __name__",
 							   required=False)
@@ -311,11 +312,11 @@ class IContainerIterable(interface.Interface):
 		:return: An iteration across the containers held in this object.
 		"""
 
-### Groups/Roles/ACLs
+# ## Groups/Roles/ACLs
 
 # some aliases
 from zope.security.interfaces import IPrincipal
-IPrincipal = IPrincipal # prevent warning
+IPrincipal = IPrincipal  # prevent warning
 from zope.security.interfaces import IGroup
 from zope.security.interfaces import IGroupAwarePrincipal
 from zope.security.interfaces import IPermission
@@ -333,13 +334,13 @@ AUTHENTICATED_GROUP_NAME = 'system.Authenticated'
 ME_USER_ID = 'me'
 
 RESERVED_USER_IDS = (SYSTEM_USER_ID, SYSTEM_USER_NAME, EVERYONE_GROUP_NAME, AUTHENTICATED_GROUP_NAME, ME_USER_ID)
-_LOWER_RESERVED_USER_IDS = tuple( (x.lower() for x in RESERVED_USER_IDS) )
-def username_is_reserved( username ):
-	return username and (username.lower() in _LOWER_RESERVED_USER_IDS or username.lower().startswith( 'system.') )
+_LOWER_RESERVED_USER_IDS = tuple((x.lower() for x in RESERVED_USER_IDS))
+def username_is_reserved(username):
+	return username and (username.lower() in _LOWER_RESERVED_USER_IDS or username.lower().startswith('system.'))
 
 # Exported policies
 from pyramid.interfaces import IAuthorizationPolicy
-IAuthorizationPolicy = IAuthorizationPolicy # prevent unused warning
+IAuthorizationPolicy = IAuthorizationPolicy  # prevent unused warning
 from pyramid.interfaces import IAuthenticationPolicy
 import pyramid.security as _psec
 
@@ -347,9 +348,9 @@ EVERYONE_USER_NAME = _psec.Everyone
 AUTHENTICATED_GROUP_NAME = _psec.Authenticated
 ACE_ACT_ALLOW = _psec.Allow
 ACE_ACT_DENY = _psec.Deny
-#: Constant for use in an ACL indicating that all permissions
+# : Constant for use in an ACL indicating that all permissions
 ALL_PERMISSIONS = _psec.ALL_PERMISSIONS
-interface.directlyProvides( ALL_PERMISSIONS, IPermission )
+interface.directlyProvides(ALL_PERMISSIONS, IPermission)
 
 ACE_DENY_ALL = _psec.DENY_ALL
 ACE_ALLOW_ALL = (ACE_ACT_ALLOW, EVERYONE_USER_NAME, ALL_PERMISSIONS)
@@ -373,7 +374,7 @@ class IImpersonatedAuthenticationPolicy(IAuthenticationPolicy):
 	.. note:: Much of this could probably be better handled with :mod:`zope.security`.
 	"""
 
-	def impersonating_userid( userid ):
+	def impersonating_userid(userid):
 		"""
 		Use this method in a ``with`` statement to make a thread (greenlet) local
 		authentication change. With this in place, the return from :meth:`authenticated_userid`
@@ -428,7 +429,7 @@ class IMutableGroupMember(IGroupMember):
 
 
 def valid_entity_username(entity_name):
-	return not username_is_reserved( entity_name )
+	return not username_is_reserved(entity_name)
 
 class IShouldHaveTraversablePath(interface.Interface):
 	"""
@@ -473,18 +474,18 @@ class IUnscopedGlobalCommunity(ICommunity):
 	are generally not considered when computing relationships or visibility between users.
 	"""
 
-class IUser(IEntity,IContainerIterable):
+class IUser(IEntity, IContainerIterable):
 	"""
 	A user of the system. Notice this is not an IPrincipal.
 	This interface needs finished and fleshed out.
 	"""
 	username = DecodingValidTextLine(
 		title=u'The username',
-		min_length=5 )
+		min_length=5)
 
 	# Note: z3c.password provides a PasswordField we could use here
 	# when we're sure what it does and that validation works out
-	password = interface.Attribute("The password" )
+	password = interface.Attribute("The password")
 
 
 class IUserEvent(interface.interfaces.IObjectEvent):
@@ -500,8 +501,8 @@ from nti.utils.property import alias
 @interface.implementer(IUserEvent)
 class UserEvent(interface.interfaces.ObjectEvent):
 
-	def __init__( self, user ):
-		super(UserEvent,self).__init__( user )
+	def __init__(self, user):
+		super(UserEvent, self).__init__(user)
 
 	user = alias('object')
 
@@ -538,12 +539,12 @@ class IEntityContainer(interface.Interface):
 	Something that can report whether an entity "belongs" to it.
 	"""
 
-	def __contains__( entity ):
+	def __contains__(entity):
 		"""
 		Is the entity a member of this container?
 		"""
 
-class IEnumerableEntityContainer(IEntityContainer,IEntityIterable):
+class IEnumerableEntityContainer(IEntityContainer, IEntityIterable):
 	"""
 	Something that can enumerate and report on entity memberships.
 	"""
@@ -553,7 +554,7 @@ class IOpenIdUser(IUser):
 	A user of the system with a known OpenID identity URL.
 	"""
 
-	identity_url = DecodingValidTextLine( title=u"The user's claimed identity URL" )
+	identity_url = DecodingValidTextLine(title=u"The user's claimed identity URL")
 
 
 class IFacebookUser(IUser):
@@ -561,7 +562,7 @@ class IFacebookUser(IUser):
 	A user of the system with a known Facebook identity URL.
 	"""
 
-	facebook_url = DecodingValidTextLine( title=u"The user's claimed identity URL" )
+	facebook_url = DecodingValidTextLine(title=u"The user's claimed identity URL")
 
 class ICoppaUser(IUser):
 	"""
@@ -601,7 +602,7 @@ class ICoppaUserWithoutAgreement(ICoppaUser):
 	and the two states are mutually exclusive.
 	"""
 
-### ACLs
+# ## ACLs
 
 class IACE(interface.Interface):
 	"""
@@ -639,7 +640,7 @@ class IACLProvider(interface.Interface):
 	Something that can provide an ACL for itself.
 	"""
 
-	__acl__ = interface.Attribute( "An :class:`IACL`" )
+	__acl__ = interface.Attribute("An :class:`IACL`")
 
 class IDefaultPublished(interface.Interface):
 	"""
@@ -649,9 +650,9 @@ class IDefaultPublished(interface.Interface):
 	(whatever that means).
 	"""
 
-### Content
+# ## Content
 
-class IContent(ILastModified,ICreated):
+class IContent(ILastModified, ICreated):
 	"""
 	It's All Content.
 	"""
@@ -664,8 +665,8 @@ def Title():
 	field.
 	"""
 	return PlainTextLine(
-					#min_length=5,
-					max_length=140, # twitter
+					# min_length=5,
+					max_length=140,  # twitter
 					required=False,
 					title="The human-readable title of this object",
 					__name__='title')
@@ -677,11 +678,11 @@ def CompoundModeledContentBody():
 	the way that a compound body of user-generated content is modeled.
 	"""
 
-	return ListOrTupleFromObject( title="The body of this object",
+	return ListOrTupleFromObject(title="The body of this object",
 								  description="""An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
 									of :class:`.IModeledContent` such as :class:`.ICanvas`.)
 									""",
-								  value_type=Variant( (SanitizedHTMLContentFragment(min_length=1, description="HTML content that is sanitized and non-empty"),
+								  value_type=Variant((SanitizedHTMLContentFragment(min_length=1, description="HTML content that is sanitized and non-empty"),
 													   PlainText(min_length=1, description="Plain text that is sanitized and non-empty"),
 													   Object(ICanvas, description="A :class:`.ICanvas`")),
 													 title="A body part of a note",
@@ -695,42 +696,42 @@ class ITitledContent(interface.Interface):
 	A piece of content with a title, either human created or potentially
 	automatically generated. (This differs from, say, a person's honorrific title.)
 	"""
-	title = Title() # TODO: Use zope.dublincore.IDCDecscriptiveProperties?
+	title = Title()  # TODO: Use zope.dublincore.IDCDecscriptiveProperties?
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
-class ITitledDescribedContent(ITitledContent,IDCDescriptiveProperties):
+class ITitledDescribedContent(ITitledContent, IDCDescriptiveProperties):
 	"""
 	Extend this class to add the ``title`` and ``description`` properties.
 	This class overrides the :mod:`zope.dublincore` properties with more specific
 	versions.
 	"""
 
-	description = PlainText( title="The human-readable description of this object." )
+	description = PlainText(title="The human-readable description of this object.")
 
 class Tag(PlainTextLine):
 	"""
 	Requires its content to be only one plain text word that is lowercased.
 	"""
 
-	def fromUnicode( self, value ):
-		return super(Tag,self).fromUnicode( value.lower() )
+	def fromUnicode(self, value):
+		return super(Tag, self).fromUnicode(value.lower())
 
-	def constraint( self, value ):
-		return super(Tag,self).constraint( value) and ' ' not in value
+	def constraint(self, value):
+		return super(Tag, self).constraint(value) and ' ' not in value
 
 class IUserTaggedContent(interface.Interface):
 	"""
 	Something that can contain tags.
 	"""
 
-	tags = TupleFromObject( title="Tags applied by the user.",
+	tags = TupleFromObject(title="Tags applied by the user.",
 							value_type=Tag(min_length=1, title="A single tag", description=Tag.__doc__, __name__='tags'),
 							unique=True,
 							default=())
 
 
 from nti.mimetype import interfaces as mime_interfaces
-class IModeledContent(IContent,IContained,mime_interfaces.IContentTypeMarker):
+class IModeledContent(IContent, IContained, mime_interfaces.IContentTypeMarker):
 	"""
 	Content accessible as objects.
 	Interfaces that extend this MUST directly provide IContentTypeAware.
@@ -742,7 +743,7 @@ class IModeledContent(IContent,IContained,mime_interfaces.IContentTypeMarker):
 	# be adding IEnclosedContent dynamically to the enclosed object
 	# instead of wrapping it?)
 
-class IEnclosedContent(IContent,IContained,IContentTypeAware, IShouldHaveTraversablePath):
+class IEnclosedContent(IContent, IContained, IContentTypeAware, IShouldHaveTraversablePath):
 	"""
 	Content accessible logically within another object.
 	This typically serves as a wrapper around another object, whether
@@ -750,8 +751,8 @@ class IEnclosedContent(IContent,IContained,IContentTypeAware, IShouldHaveTravers
 	its `__parent__` should be this object, and the `creator` should be the same
 	as this object's creator.
 	"""
-	name = interface.Attribute( "The human-readable name of this content." )
-	data = interface.Attribute( "The actual enclosed content." )
+	name = interface.Attribute("The human-readable name of this content.")
+	data = interface.Attribute("The actual enclosed content.")
 
 class ISimpleEnclosureContainer(interface.Interface):
 
@@ -759,18 +760,18 @@ class ISimpleEnclosureContainer(interface.Interface):
 	Something that contains enclosures.
 	"""
 
-	def add_enclosure( enclosure ):
+	def add_enclosure(enclosure):
 		"""
 		Adds the given :class:`IContent` as an enclosure.
 		"""
 
-	def get_enclosure( name ):
+	def get_enclosure(name):
 		"""
 		Return an enclosure having the given name.
 		:raises KeyError: If no such enclosure exists.
 		"""
 
-	def del_enclosure( name ):
+	def del_enclosure(name):
 		"""
 		Delete the enclosure having the given name.
 		:raises KeyError: If no such enclosure exists.
@@ -781,14 +782,14 @@ class ISimpleEnclosureContainer(interface.Interface):
  			within this object.
  		"""
 
-### Particular content types
+# ## Particular content types
 
 class IThreadable(interface.Interface):
 	"""
 	Something which can be used in an email-like threaded fashion.
 	"""
 
-	inReplyTo = interface.Attribute("""	The object to which this object is directly a reply."""	)
+	inReplyTo = interface.Attribute("""	The object to which this object is directly a reply.""")
 	references = interface.Attribute("""A sequence of objects this object transiently references.""")
 
 class IWeakThreadable(IThreadable):
@@ -819,15 +820,15 @@ class IReadableShared(interface.Interface):
 	others than its creator. This interface exposes the read side of sharing.
 	"""
 
-	def isSharedWith( principal ):
+	def isSharedWith(principal):
 		"""
 		Is this object directly or indirectly shared with the given principal?
 		"""
 
-	def isSharedDirectlyWith( principal ):
+	def isSharedDirectlyWith(principal):
 		"Is this object directly shared with the given target?"
 
-	def isSharedIndirectlyWith( principal ):
+	def isSharedIndirectlyWith(principal):
 		"Is this object indirectly shared with the given target?"
 
 	sharingTargets = UniqueIterable(
@@ -845,19 +846,19 @@ class IReadableShared(interface.Interface):
 		readonly=True)
 
 	# TODO: How to deprecate this property?
-#	@deprecate("These names are not properly global")
+# 	@deprecate("These names are not properly global")
 	flattenedSharingTargetNames = Set(
 		title="The usernames of all the users (including communities, etc) this obj is shared with.",
 		description=" This is a convenience property for reporting the usernames of all "
 			" entities this object is shared with, directly or indirectly. Note that the usernames reported "
 			" here are not necessarily globally unique and may not be resolvable as such.",
-		value_type=DecodingValidTextLine(title="The username" ),
+		value_type=DecodingValidTextLine(title="The username"),
 		required=False,
 		defaultFactory=set,
 		readonly=True)
 
 
-#	@deprecate("Use the attribute") # The deprecation screws up validation because it adds parameters
+# 	@deprecate("Use the attribute") # The deprecation screws up validation because it adds parameters
 	def getFlattenedSharingTargetNames():
 		"""
 		This is a convenience method for reporting the usernames of all
@@ -875,7 +876,7 @@ class IWritableShared(IReadableShared):
 	this interface, not by adjusting the properties directly.
 	"""
 
-	def addSharingTarget( target ):
+	def addSharingTarget(target):
 		"""
 		Allow `target` to see this object. This does not actually make that so,
 		simply records the fact that the target should be able to see this
@@ -891,7 +892,7 @@ class IWritableShared(IReadableShared):
 		to be empty.
 		"""
 
-	def updateSharingTargets( replacement_targets ):
+	def updateSharingTargets(replacement_targets):
 		"""
 		Mark this object as being shared with exactly the entities provided in ``replacement_targets``.
 		Does not actually change any visibilities. Causes `sharingTargets` and `flattenedSharingTargets`
@@ -899,9 +900,9 @@ class IWritableShared(IReadableShared):
 		"""
 
 
-IShareable = IWritableShared # bwc alias
+IShareable = IWritableShared  # bwc alias
 
-class IShareableModeledContent(IShareable,IModeledContent):
+class IShareableModeledContent(IShareable, IModeledContent):
 	"""
 	Modeled content that can be shared.
 	"""
@@ -911,11 +912,11 @@ class IShareableModeledContent(IShareable,IModeledContent):
 	# with the correct interface. See nti.externalization.internalization.update_from_external_object
 	sharedWith = Set(
 		title="An alias for `flattenedSharingTargetNames`, taking externalization of local usernames into account",
-		value_type=DecodingValidTextLine(title="The username or NTIID" ),
+		value_type=DecodingValidTextLine(title="The username or NTIID"),
 		required=False,
 		defaultFactory=set)
 
-class IFriendsList(IModeledContent,IEntity):
+class IFriendsList(IModeledContent, IEntity):
 	"""
 	Define a list of users.
 
@@ -934,7 +935,7 @@ class IFriendsList(IModeledContent,IEntity):
 		Is the given entity a member of this friends list?
 		"""
 
-	def addFriend( friend ):
+	def addFriend(friend):
 		"""
 		Adding friends causes our creator to follow them.
 
@@ -944,7 +945,7 @@ class IFriendsList(IModeledContent,IEntity):
 
 		"""
 
-class IDynamicSharingTargetFriendsList(IDynamicSharingTarget,IFriendsList):
+class IDynamicSharingTargetFriendsList(IDynamicSharingTarget, IFriendsList):
 	"""
 	A type of :class:`IDynamicSharingTarget` that is a list of members.
 	"""
@@ -967,15 +968,15 @@ class IDeviceContainer(INamedContainer):
 
 class ITranscriptSummary(IModeledContent):
 
-	Contributors = Set( title="All the usernames of people who participated in the conversation",
+	Contributors = Set(title="All the usernames of people who participated in the conversation",
 						value_type=DecodingValidTextLine(title="The username"),
-						readonly=True )
-	RoomInfo = interface.Attribute( "The meeting where the conversation took place" )
+						readonly=True)
+	RoomInfo = interface.Attribute("The meeting where the conversation took place")
 
 class ITranscript(ITranscriptSummary):
-	Messages = ListOrTuple( title="All the messages contained in the conversation",
-							readonly=True )
-	def get_message( msg_id ):
+	Messages = ListOrTuple(title="All the messages contained in the conversation",
+							readonly=True)
+	def get_message(msg_id):
 		"Return a message with that id"
 
 class ITranscriptContainer(INamedContainer):
@@ -987,22 +988,22 @@ class ICanvas(IShareableModeledContent, IThreadable):
 	A drawing or whiteboard that maintains a Z-ordered list of figures/shapes.
 	"""
 
-	def __getitem__( i ):
+	def __getitem__(i):
 		"""
 		Retrieve the figure/shape at index `i`.
 		"""
-	def append( shape ):
+	def append(shape):
 		"""
 		Adds the shape to the top of the list of shapes.
 		"""
 
-class ISelectedRange(IShareableModeledContent,IAnchoredRepresentation, IUserTaggedContent):
+class ISelectedRange(IShareableModeledContent, IAnchoredRepresentation, IUserTaggedContent):
 	"""
 	A selected range of content that the user wishes to remember. This interface
 	attaches no semantic meaning to the selection; subclasses will do that.
 	"""
 	# TODO: A field class that handles HTML validation/stripping?
-	selectedText = ValidText( title="The string representation of the DOM Range the user selected, possibly empty.",
+	selectedText = ValidText(title="The string representation of the DOM Range the user selected, possibly empty.",
 							  default='')
 
 class IBookmark(ISelectedRange):
@@ -1067,21 +1068,21 @@ class IFlaggable(IAnnotatable):
 	to a class of objects.
 	"""
 
-#from zope.interface.interfaces import IObjectEvent
+# from zope.interface.interfaces import IObjectEvent
 
 class IGlobalFlagStorage(interface.Interface):
 
-	def flag( context ):
+	def flag(context):
 		"""
 		Cause `context`, which should be IFLaggable, to be marked as flagged.
 		"""
 
-	def unflag( context ):
+	def unflag(context):
 		"""
 		Cause `context` to no longer be marked as flagged (if it was)
 		"""
 
-	def is_flagged( context ):
+	def is_flagged(context):
 		"""
 		Return a truth value indicating whether the context object has been flagged.
 		"""
@@ -1093,19 +1094,19 @@ class IGlobalFlagStorage(interface.Interface):
 		"""
 
 
-class INote(IHighlight,IThreadable,ITitledContent):
+class INote(IHighlight, IThreadable, ITitledContent):
 	"""
 	A user-created note attached to other content.
 	"""
 
 	body = CompoundModeledContentBody()
 
-### Changes related to content objects/users
-SC_CREATED  = "Created"
+# ## Changes related to content objects/users
+SC_CREATED = "Created"
 SC_MODIFIED = "Modified"
-SC_DELETED  = "Deleted"
-SC_SHARED   = "Shared"
-SC_CIRCLED  = "Circled"
+SC_DELETED = "Deleted"
+SC_SHARED = "Shared"
+SC_CIRCLED = "Circled"
 
 class IStreamChangeEvent(interface.interfaces.IObjectEvent):
 	"""
@@ -1113,7 +1114,7 @@ class IStreamChangeEvent(interface.interfaces.IObjectEvent):
 	If the object was :class:`IContained`, then this object will be as well.
 	"""
 
-	type = interface.Attribute( "One of the constants declared by this class." )
+	type = interface.Attribute("One of the constants declared by this class.")
 
 class IDeletedObjectPlaceholder(interface.Interface):
 	"""
@@ -1123,30 +1124,30 @@ class IDeletedObjectPlaceholder(interface.Interface):
 	"""
 
 
-### Content types for classes
+# ## Content types for classes
 
 class IClassInfo(IModeledContent):
 	"""
 	Describes a class.
 	"""
 
-	Sections = Iterable( title="The :class:`ISectionInfo` objects for this class." )
+	Sections = Iterable(title="The :class:`ISectionInfo` objects for this class.")
 
-	def __getitem__( section_id ):
+	def __getitem__(section_id):
 		"""
 		:return: The section of this class with the given ID, or raise KeyError.
 		"""
 
-	Provider = DecodingValidTextLine( title="The username of the provider" )
+	Provider = DecodingValidTextLine(title="The username of the provider")
 
-	def add_section( section ):
+	def add_section(section):
 		"Adds a new :class:ISectionInfo to this class."
 
 class IInstructorInfo(IModeledContent):
 	"""
 	Describes the instructor(s) for a class section.
 	"""
-	Instructors = Iterable( title="The usernames of the instructors." )
+	Instructors = Iterable(title="The usernames of the instructors.")
 
 class ISectionInfo(IModeledContent):
 	"""
@@ -1155,9 +1156,9 @@ class ISectionInfo(IModeledContent):
 
 	InstructorInfo = Object(
 		IInstructorInfo,
-		title="The instructors of the section" )
+		title="The instructors of the section")
 
-	Enrolled = Iterable( title="The usernames of those enrolled." )
+	Enrolled = Iterable(title="The usernames of those enrolled.")
 
 	def enroll(student):
 		"""
@@ -1192,7 +1193,7 @@ class IClassScript(IModeledContent):
 		"""
 		)
 
-### Content providers
+# ## Content providers
 
 class IProviderOrganization(IContainerIterable):
 	"""
@@ -1211,7 +1212,7 @@ class IProviderOrganization(IContainerIterable):
 	organization.
 	"""
 
-### Dynamic event handling
+# ## Dynamic event handling
 import nti.socketio.interfaces
 class ISocketProxySession(nti.socketio.interfaces.ISocketIOChannel):
 	pass
@@ -1240,7 +1241,7 @@ class ISessionService(interface.Interface):
 		One is created and stored persistently by this method, and returned.
 		"""
 
-	def get_session( session_id ):
+	def get_session(session_id):
 		"""
 		Returns an existing, probably alive :class:`ISocketSession` having the
 		given ID.
@@ -1251,7 +1252,7 @@ class ISessionServiceStorage(interface.Interface):
 	The data stored by the session service.
 	"""
 
-	def register_session( session ):
+	def register_session(session):
 		"""
 		Register the given session for storage. When this method
 		returns, the ``session`` will have a unique, ASCII string, ``id``
@@ -1263,7 +1264,7 @@ class ISessionServiceStorage(interface.Interface):
 		:return: Undefined.
 		"""
 
-	def unregister_session( session ):
+	def unregister_session(session):
 		"""
 		Cause the given session to no longer be registered with this object.
 		It will no longer be retrievable from :meth:`get_session` and
@@ -1275,7 +1276,7 @@ class ISessionServiceStorage(interface.Interface):
 		:return: Undefined.
 		"""
 
-	def get_session( session_id ):
+	def get_session(session_id):
 		"""
 		Return a :class:`nti.socketio.interfaces.ISocketSession` registered with this object
 		whose ``id`` property matches the `session_id`.
@@ -1286,7 +1287,7 @@ class ISessionServiceStorage(interface.Interface):
 			or, if not registered, None.
 		"""
 
-	def get_sessions_by_owner( session_owner ):
+	def get_sessions_by_owner(session_owner):
 		"""
 		Return a sequence of session objects registered with this object
 		for the given owner.
@@ -1298,8 +1299,24 @@ class ISessionServiceStorage(interface.Interface):
 			the given user.
 		"""
 
+class IObjectFlaggingEvent(component.interfaces.IObjectEvent):
+	"""
+	An object event for object flagging and unflagging
+	"""
+	username = interface.Attribute("user doing the flagging")
+
+class IObjectFlaggedEvent(IObjectFlaggingEvent):
+	"""
+	An object event for object flagging
+	"""
+
+class IObjectUnflaggedEvent(IObjectFlaggingEvent):
+	"""
+	An object event for object unflagging
+	"""
+
 ####
-## Weak Refs and related
+# # Weak Refs and related
 ####
 
 # BWC exports
