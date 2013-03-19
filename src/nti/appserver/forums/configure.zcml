@@ -6,14 +6,14 @@
 			zcml:condition="have forums">
 
 	<include package="zope.component" />
-	<include package=".capabilities" file="meta.zcml" />
+	<include package="nti.appserver.capabilities" file="meta.zcml" />
 
 	<adapter factory="nti.dataserver.contenttypes.forums.forum.PersonalBlogAdapter"
 			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog" />
 
 
-	<adapter factory=".user_activity_views.DefaultUserActivityStorageFactory" />
-	<adapter factory=".user_activity_views.DefaultUserActivityProvider"
+	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityStorageFactory" />
+	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityProvider"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 zcml:condition="have testmode"/> <!-- The app isn't ready for this yet. Still collect them though. -->
 
@@ -23,52 +23,52 @@
 		description='Can the user create new blog entries?' />
 
 	<!-- Entry in service doc -->
-	<subscriber factory=".forum_views._UserBlogCollectionFactory"
-				provides=".interfaces.ICollection"
-				for=".interfaces.IUserWorkspace" />
+	<subscriber factory=".views._UserBlogCollectionFactory"
+				provides="nti.appserver.interfaces.ICollection"
+				for="nti.appserver.interfaces.IUserWorkspace" />
 
 
 	<!-- Object updating -->
-	<subscriber handler=".forum_views.match_title_of_post_to_blog" />
+	<subscriber handler=".views.match_title_of_post_to_blog" />
 
 	<!-- Change broadcasting -->
-	<subscriber handler=".forum_views.notify_online_author_of_comment" />
-	<subscriber handler=".forum_views.temp_post_added_to_indexer" />
-	<subscriber handler=".forum_views.temp_post_modified_to_indexer" />
-	<subscriber handler=".forum_views.temp_store_favorite_object"
+	<subscriber handler=".views.notify_online_author_of_comment" />
+	<subscriber handler=".views.temp_post_added_to_indexer" />
+	<subscriber handler=".views.temp_post_modified_to_indexer" />
+	<subscriber handler=".views.temp_store_favorite_object"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry contentratings.interfaces.IObjectRatedEvent"/>
-	<subscriber handler=".forum_views.temp_store_favorite_object"
+	<subscriber handler=".views.temp_store_favorite_object"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment contentratings.interfaces.IObjectRatedEvent"/>
 
 	<!-- Activity stream updating -->
-	<subscriber handler=".forum_views.store_created_comment_in_global_activity" />
-	<subscriber handler=".forum_views.unstore_created_comment_from_global_activity" />
-	<subscriber handler=".forum_views.notify_dynamic_memberships_of_blog_entry_publication_change" />
+	<subscriber handler=".views.store_created_comment_in_global_activity" />
+	<subscriber handler=".views.unstore_created_comment_from_global_activity" />
+	<subscriber handler=".views.notify_dynamic_memberships_of_blog_entry_publication_change" />
 
 
 	<!-- UGD editing compatibility -->
-	<adapter factory=".forum_views.ForumCheckoutAdapter"
+	<adapter factory=".views.ForumCheckoutAdapter"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IForum pyramid.interfaces.IRequest"
-			 provides=".interfaces.IUserCheckout" />
+			 provides="nti.appserver.interfaces.IUserCheckout" />
 
-	<adapter factory=".forum_views.ForumCheckoutAdapter"
+	<adapter factory=".views.ForumCheckoutAdapter"
 			 for="nti.dataserver.contenttypes.forums.interfaces.ITopic pyramid.interfaces.IRequest"
-			 provides=".interfaces.IUserCheckout" />
+			 provides="nti.appserver.interfaces.IUserCheckout" />
 
-	<adapter factory=".forum_views.ForumCheckoutAdapter"
+	<adapter factory=".views.ForumCheckoutAdapter"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost pyramid.interfaces.IRequest"
-			 provides=".interfaces.IUserCheckout" />
+			 provides="nti.appserver.interfaces.IUserCheckout" />
 
 	<!-- Externalization -->
-	<subscriber factory=".forum_views.ForumObjectContentsLinkProvider"
+	<subscriber factory=".views.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.IBoard"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
-	<subscriber factory=".forum_views.ForumObjectContentsLinkProvider"
+	<subscriber factory=".views.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.IForum"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
-	<subscriber factory=".forum_views.ForumObjectContentsLinkProvider"
+	<subscriber factory=".views.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 	<!--
@@ -77,16 +77,16 @@
 		But the presence of the 'edit' link is a shortcut the app uses to handle
 		permissioning
 	-->
-	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry" />
 
 	<!-- Traversal -->
-	<adapter factory=".forum_views._PostFieldTraverser"
+	<adapter factory=".views._PostFieldTraverser"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
-	<adapter factory=".forum_views._PostFieldTraverser"
+	<adapter factory=".views._PostFieldTraverser"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
@@ -114,17 +114,17 @@
 	</class>
 
 	<!-- Publishing workflow -->
-	<subscriber factory=".forum_views.PublishLinkDecorator"
+	<subscriber factory=".views.PublishLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
-	<adapter factory=".forum_views._PersonalBlogACLProvider" />
-	<adapter factory=".forum_views._PersonalBlogEntryACLProvider" />
-	<adapter factory=".forum_views._PostACLProvider" />
+	<adapter factory=".views._PersonalBlogACLProvider" />
+	<adapter factory=".views._PersonalBlogEntryACLProvider" />
+	<adapter factory=".views._PostACLProvider" />
 
 	<!-- Feeds -->
 	<!-- For purposes of rendering to a feed, posts behave just like notes -->
-	<adapter factory=".ugd_feed_views.NoteFeedRenderer"
+	<adapter factory="nti.appserver.ugd_feed_views.NoteFeedRenderer"
 			 provides="zope.contentprovider.interfaces.IContentProvider"
-			 for="nti.dataserver.contenttypes.forums.interfaces.IPost * .ugd_feed_views.AbstractFeedView" />
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost * nti.appserver.ugd_feed_views.AbstractFeedView" />
 
 
 </configure>

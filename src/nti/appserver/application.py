@@ -434,7 +434,7 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.ugd_query_views' )
 	pyramid_config.scan( 'nti.appserver.ugd_feed_views' )
 	pyramid_config.scan( 'nti.appserver.glossary_views' )
-	pyramid_config.scan( 'nti.appserver.forum_views' )
+	pyramid_config.scan( 'nti.appserver.forums.views' )
 	pyramid_config.scan( 'nti.appserver.user_activity_views' )
 
 	# Modifying UGD
