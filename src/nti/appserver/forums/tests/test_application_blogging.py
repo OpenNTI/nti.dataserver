@@ -1026,3 +1026,116 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		# When published, it is visible to the other user
 		testapp.post( pub_url )
 		_check_canvas( res, res.json_body['body'][1], acc_to_other=True )
+
+
+class TestApplicationCommunityForums(SharedApplicationTestBase):
+
+	features = SharedApplicationTestBase.features + ('forums',)
+	default_community = 'TheCommunity'
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_forum_entry_class( self ):
+		"""POSTing an IPost to the forum URL automatically creates a new topic"""
+
+		# With a Class value:
+		data = { 'Class': 'Post',
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		self._do_test_user_can_POST_new_forum_entry( data )
+
+
+	def _do_test_user_can_POST_new_forum_entry( self, data, content_type=None, status_only=None, expected_data=None ):
+		testapp = self.testapp
+
+		kwargs = {'status': 201}
+		meth = testapp.post_json
+		post_data = data
+		if content_type:
+			kwargs['headers'] = {b'Content-Type': str(content_type)}
+			# testapp.post_json forces the content-type header
+			meth = testapp.post
+			post_data = json.dumps( data )
+		if status_only:
+			kwargs['status'] = status_only
+
+		res = meth(  '/dataserver2/users/TheCommunity/Forum',
+					 post_data,
+					 **kwargs )
+
+		if status_only:
+			return res
+
+		# Returns the representation of the new topic created
+		data = expected_data or data
+		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.communityheadlinetopic+json' ) )
+		assert_that( res.json_body, has_entry( 'ID', ntiids.make_specific_safe( data['title'] ) ) )
+		entry_id = res.json_body['ID']
+		assert_that( res.json_body, has_entries( 'title', data['title'],
+												 'NTIID', 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-' + entry_id,
+												 'ContainerId', 'tag:nextthought.com,2011-10:TheCommunity-Forum:General-Forum',
+												 'href', UQ( '/dataserver2/users/TheCommunity/Forum/' + entry_id ) ))
+
+		assert_that( res.json_body['headline'], has_entries( 'title', data['title'],
+															 'body',  data['body'] ) )
+
+		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
+		#self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
+		#self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
+		self.require_link_href_with_rel( res.json_body, 'edit' ) # entries can be 'edited' (actually they cannot, shortcut for ui)
+		#fav_href = self.require_link_href_with_rel( res.json_body, 'favorite' ) # entries can be favorited
+
+		# The headline cannot be any of those things
+		headline_json = res.json_body['headline']
+		self.forbid_link_with_rel( headline_json, 'like' )
+		self.forbid_link_with_rel( headline_json, 'flag' )
+		self.forbid_link_with_rel( headline_json, 'favorite' )
+
+		entry_url = res.location
+		entry_ntiid = res.json_body['NTIID']
+
+		# The new topic is accessible at its OID URL, its pretty URL, and by NTIID (not yet)
+		for url in entry_url, UQ( '/dataserver2/users/TheCommunity/Forum/' + entry_id ):  #, UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
+			testapp.get( url )
+
+
+		# and it has no contents
+		testapp.get( contents_href, status=200 )
+
+		# It shows up in the blog contents
+		res = testapp.get( '/dataserver2/users/TheCommunity/Forum/contents' )
+		blog_items = res.json_body['Items']
+		assert_that( blog_items, contains( has_entry( 'title', data['title'] ) ) )
+		# With its links all intact
+		blog_item = blog_items[0]
+		assert_that( blog_item, has_entry( 'href', UQ( '/dataserver2/users/TheCommunity/Forum/' + blog_item['ID'] ) ))
+		self.require_link_href_with_rel( blog_item, 'contents' )
+		#self.require_link_href_with_rel( blog_item, 'like' ) # entries can be liked
+		#self.require_link_href_with_rel( blog_item, 'flag' ) # entries can be flagged
+		#self.require_link_href_with_rel( blog_item, 'edit' ) # entries can be 'edited' (actually they cannot)
+
+
+		# It also shows up in the blog's data feed (partially rendered in HTML)
+		res = testapp.get( '/dataserver2/users/TheCommunity/Forum/feed.atom' )
+		assert_that( res.content_type, is_( 'application/atom+xml'))
+		res._use_unicode = False
+		pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
+		assert_that( pq( b'entry title' ).text(), is_( data['title'] ) )
+		assert_that( pq( b'entry summary' ).text(), is_( '<div><br />' + data['body'][0] ) )
+
+
+		# And in the user activity view
+		#res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Activity' )
+		#assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+		#assert_that( res.json_body['Items'], has_length( 1 ) ) # make sure no dups
+
+		# And in the user root recursive data stream
+		#res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData' )
+		#assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+
+		# and, if favorited, filtered to the favorites
+		#testapp.post( fav_href )
+		#res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
+		#				   params={'filter': 'Favorite'})
+		#assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+		#self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )

@@ -37,8 +37,8 @@ from zope.container.interfaces import InvalidItemType, InvalidContainerType, INa
 from nti.tests import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry, IGeneralHeadlineTopic
-from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralTopic, GeneralHeadlineTopic
-from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost, GeneralHeadlinePost, GeneralPost, GeneralComment
+from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralHeadlineTopic
+from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost, GeneralHeadlinePost
 
 from ExtensionClass import Base
 

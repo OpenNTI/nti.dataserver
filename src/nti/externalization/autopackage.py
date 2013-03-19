@@ -84,11 +84,13 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 
 					setattr( _ClassNameRegistry, ext_class_name, implementation_class )
 
-					if not 'mimeType' in implementation_class.__dict__:
+					if not implementation_class.__dict__.get( 'mimeType', None ):
 						# NOT hasattr. We don't use hasattr because inheritance would
 						# throw us off. It could be something we added, and iteration order
 						# is not defined (if we got the subclass first we're good, we fail if we
-						# got superclass first)
+						# got superclass first).
+						# Also, not a simple 'in' check. We want to allow for setting mimeType = None
+						# in the dict for static analysis purposes
 
 						# legacy check
 						if 'mime_type' in implementation_class.__dict__:

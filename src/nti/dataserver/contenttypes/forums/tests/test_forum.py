@@ -19,7 +19,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import all_of
-from hamcrest import none
+from hamcrest import has_property
 from hamcrest import is_not
 from hamcrest import has_entries
 from hamcrest import has_entry
@@ -36,14 +36,14 @@ from nti.externalization.tests import externalizes
 from zope.container.interfaces import InvalidItemType, InvalidContainerType
 
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+from nti.dataserver.users import Community
 
-
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments', 'zope.annotation') )
 tearDownModule = nti.tests.module_teardown
 
 
-from ..interfaces import IForum, ITopic, IPersonalBlog, IPersonalBlogEntry
-from ..forum import Forum, PersonalBlog
+from ..interfaces import IForum, ITopic, IPersonalBlog, IPersonalBlogEntry, IGeneralForum, ICommunityForum
+from ..forum import Forum, PersonalBlog, GeneralForum, CommunityForum
 
 
 def test_forum_interfaces():
@@ -52,12 +52,32 @@ def test_forum_interfaces():
 
 	assert_that( post, validly_provides( IForum ) )
 
+def test_general_forum_interfaces():
+	post = GeneralForum()
+	assert_that( post, verifiably_provides( IGeneralForum ) )
+
+	assert_that( post, validly_provides( IGeneralForum ) )
+
+def test_community_forum_interfaces():
+	post = CommunityForum()
+	assert_that( post, verifiably_provides( ICommunityForum ) )
+
+	assert_that( post, validly_provides( ICommunityForum ) )
+
 
 def test_blog_interfaces():
 	post = PersonalBlog()
 	assert_that( post, verifiably_provides( IForum ) )
 	assert_that( post, validly_provides( IForum ) )
 	assert_that( post, validly_provides( IPersonalBlog ) )
+
+def test_community_adapter():
+
+	community = Community("foo")
+
+	forum = IGeneralForum(community)
+	assert_that( forum, validly_provides( ICommunityForum ) )
+	assert_that( forum, has_property( '__parent__', community ) )
 
 def test_forum_constraints():
 	@interface.implementer(ITopic)

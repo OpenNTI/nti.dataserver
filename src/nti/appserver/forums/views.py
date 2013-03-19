@@ -50,9 +50,11 @@ frm_ext = frm_ext
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
+from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
 from nti.dataserver.contenttypes.forums.post import Post
+from nti.dataserver.contenttypes.forums.post import GeneralHeadlinePost
 
 
 from nti.externalization import interfaces as ext_interfaces
@@ -148,57 +150,71 @@ class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadReque
 
 		return containedObject
 
+class _AbstractForumPostView(_AbstractIPostPOSTView):
+	""" Given an incoming IPost, creates a new topic in the forum """
+
+	_allowed_content_types = ('Post', Post.mimeType, 'Posts' )
+	_factory = None
+
+	def _do_call( self ):
+		forum = self.request.context
+		topic_post = self._read_incoming_post()
+
+		# Now the topic
+		topic = self._factory()
+		topic.creator = self.getRemoteUser()
+		topic_post.__parent__ = topic # must set __parent__ first for acquisition to work
+
+		topic.headline = topic_post
+		# Business rule: titles of the personal blog entry match the post
+		topic.title = topic.headline.title
+		topic.description = topic.title
+
+		# For these, the name matters. We want it to be as pretty as we can get
+		# TODO: We probably need to register an IReservedNames that forbids
+		# _VIEW_CONTENTS and maybe some other stuff
+		name = INameChooser( forum ).chooseName( topic.title, topic )
+
+		lifecycleevent.created( topic )
+		lifecycleevent.created( topic_post )
+
+
+		forum[name] = topic # Now store the topic and fire added
+		topic.id = name # match these things. ID is local within container
+		topic.containerId = forum.NTIID
+		topic_post.containerId = topic.NTIID
+
+		lifecycleevent.added( topic_post )
+
+		# Respond with the pretty location of the object, within the blog
+		self.request.response.status_int = 201 # created
+		self.request.response.location = self.request.resource_path( topic )
+
+		return topic
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_CREATE,
 			  context=frm_interfaces.IPersonalBlog,
 			  request_method='POST' )
-class PersonalBlogEntryPostView(_AbstractIPostPOSTView):
-	""" HTTP says POST creates a NEW entity under the Request-URI """
-	# Therefore our context is a container, and we should respond created.
+class PersonalBlogEntryPostView(_AbstractForumPostView):
+	""" Given an incoming IPost, creates a new topic in the blog """
 
 	_constraint = frm_interfaces.IPersonalBlogEntryPost.providedBy
-
 	_override_content_type = PersonalBlogEntryPost.mimeType
+	_factory = PersonalBlogEntry
 
-	_allowed_content_types = ('Post', Post.mimeType, 'Posts' )
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_CREATE,
+			  context=frm_interfaces.ICommunityForum,
+			  request_method='POST' )
+class CommunityForumPostView(_AbstractForumPostView):
+	""" Given an incoming IPost, creates a new topic in the community forum """
 
-	def _do_call( self ):
-		blog = self.request.context
-		entry_post = self._read_incoming_post()
-
-		# Now the topic
-		entry = PersonalBlogEntry()
-		entry.creator = self.getRemoteUser()
-		entry_post.__parent__ = entry # must set __parent__ first for acquisition to work
-
-		entry.headline = entry_post
-		# Business rule: titles of the personal blog entry match the post
-		entry.title = entry.headline.title
-		entry.description = entry.title
-
-		# For these, the name matters. We want it to be as pretty as we can get
-		# TODO: We probably need to register an IReservedNames that forbids
-		# _VIEW_CONTENTS and maybe some other stuff
-		name = INameChooser( blog ).chooseName( entry.title, entry )
-
-		lifecycleevent.created( entry )
-		lifecycleevent.created( entry_post )
-
-
-		blog[name] = entry # Now store the topic and fire added
-		entry.id = name # match these things. ID is local within container
-		entry.containerId = blog.NTIID
-		entry_post.containerId = entry.NTIID
-
-		lifecycleevent.added( entry_post )
-
-		# Respond with the pretty location of the object, within the blog
-		self.request.response.status_int = 201 # created
-		self.request.response.location = self.request.resource_path( entry )
-
-		return entry
+	_constraint = frm_interfaces.IGeneralHeadlinePost.providedBy
+	_override_content_type = GeneralHeadlinePost.mimeType
+	_factory = CommunityHeadlineTopic
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -237,9 +253,12 @@ class TopicPostView(_AbstractIPostPOSTView):
 
 
 @view_config( context=frm_interfaces.IHeadlineTopic )
-@view_config( context=frm_interfaces.IPersonalBlog )
-@view_config( context=frm_interfaces.IPersonalBlogComment )
-@view_config( context=frm_interfaces.IPersonalBlogEntryPost )
+@view_config( context=frm_interfaces.IForum )
+@view_config( context=frm_interfaces.IPersonalBlog ) # need to re-list this one
+@view_config( context=frm_interfaces.IPersonalBlogComment ) # need to re-list this one
+@view_config( context=frm_interfaces.IPersonalBlogEntryPost ) # need to re-list this one
+@view_config( context=frm_interfaces.ICommunityHeadlineTopic ) # need to re-list
+@view_config( context=frm_interfaces.IPost )
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_READ,
@@ -248,18 +267,14 @@ class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 
 _VIEW_CONTENTS = 'contents'
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_READ,
-			  context=frm_interfaces.IPersonalBlog,
-			  name=_VIEW_CONTENTS,
-			  request_method='GET' )
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_READ,
-			  context=frm_interfaces.IHeadlineTopic,
-			  name=_VIEW_CONTENTS,
-			  request_method='GET' )
+
+@view_config( context=frm_interfaces.IForum )
+@view_config( context=frm_interfaces.IHeadlineTopic )
+@view_defaults( route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_READ,
+				name=_VIEW_CONTENTS,
+				request_method='GET')
 class ForumContentsGetView(UGDQueryView):
 	""" The /contents view for the forum objects we are using.
 
@@ -280,9 +295,9 @@ class ForumContentsGetView(UGDQueryView):
 			  name='feed.atom' )
 @view_config( context=frm_interfaces.IHeadlineTopic,
 			  name='feed.rss' )
-@view_config( context=frm_interfaces.IPersonalBlog,
+@view_config( context=frm_interfaces.IForum,
 			  name='feed.atom' )
-@view_config( context=frm_interfaces.IPersonalBlog,
+@view_config( context=frm_interfaces.IForum,
 			  name='feed.rss' )
 @view_defaults( route_name='objects.generic.traversal',
 				permission=nauth.ACT_READ,
@@ -318,6 +333,7 @@ class ForumCheckoutAdapter(object):
 @view_config( context=frm_interfaces.IHeadlinePost )
 @view_config( context=frm_interfaces.IPersonalBlogEntryPost )
 @view_config( context=frm_interfaces.IPersonalBlogComment )
+@view_config( context=frm_interfaces.IGeneralForumComment )
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_UPDATE,
@@ -390,7 +406,7 @@ def match_title_of_post_to_blog( post, event ):
 # but its not clear what if any IContainers we externalize besides
 # the forum objects)
 
-@interface.implementer( ext_interfaces.IExternalMappingDecorator )
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
 class ForumObjectContentsLinkProvider(object):
 	"""
 	Decorate forum object externalizations with a link pointing to their
@@ -434,7 +450,6 @@ class ForumObjectContentsLinkProvider(object):
 ### Publishing workflow
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(frm_interfaces.IPersonalBlogEntry)
 class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	"""
 	Adds the appropriate publish or unpublish link
