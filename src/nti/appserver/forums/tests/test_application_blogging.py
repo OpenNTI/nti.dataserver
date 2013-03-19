@@ -1034,6 +1034,11 @@ class TestApplicationCommunityForums(SharedApplicationTestBase):
 	default_community = 'TheCommunity'
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_GET_empty_forum(self):
+		"The user can GET the forum for the community"
+		self.testapp.get( '/dataserver2/users/TheCommunity/Forum' )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_forum_entry_class( self ):
 		"""POSTing an IPost to the forum URL automatically creates a new topic"""
 

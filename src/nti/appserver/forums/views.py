@@ -254,6 +254,7 @@ class TopicPostView(_AbstractIPostPOSTView):
 
 @view_config( context=frm_interfaces.IHeadlineTopic )
 @view_config( context=frm_interfaces.IForum )
+@view_config( context=frm_interfaces.ICommunityForum )
 @view_config( context=frm_interfaces.IPersonalBlog ) # need to re-list this one
 @view_config( context=frm_interfaces.IPersonalBlogComment ) # need to re-list this one
 @view_config( context=frm_interfaces.IPersonalBlogEntryPost ) # need to re-list this one
