@@ -83,8 +83,8 @@ REL_ACCOUNT_PROFILE_SCHEMA = "account.profile" # bad name for BWC
 #: be obtained from the :func:`account_profile_schema_view`
 REL_ACCOUNT_PROFILE_UPGRADE = "account.profile.needs.updated"
 
-_PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
-_PLACEHOLDER_REALNAME = 'com.nextthought.account_creation_user WithALastName'
+_PLACEHOLDER_USERNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_USERNAME
+_PLACEHOLDER_REALNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME
 
 def _create_user( request, externalValue, preflight_only=False, require_password=True, user_factory=users.User.create_user ):
 
@@ -160,17 +160,17 @@ def _create_user( request, externalValue, preflight_only=False, require_password
 		e.field = 'invitation_codes'
 		obj_io.handle_validation_error( request, e )
 	except nti.utils.schema.InvalidValue as e:
-		if e.value == _PLACEHOLDER_USERNAME:
+		if e.value is _PLACEHOLDER_USERNAME:
 			# Not quite sure what the conflict actually was, but at least we know
 			# they haven't provided a username value, so make it look like that
 			exc_info = sys.exc_info()
 			_raise_error( request, hexc.HTTPUnprocessableEntity,
 						  {'field': 'Username',
 						   'fields': ['Username', 'realname'],
-						   'message': _('Username cannot be blank'),
+						   'message': user_interfaces.UsernameCannotBeBlank.i18n_message,
 						   'code': 'UsernameCannotBeBlank'},
 						  exc_info[2] )
-		if e.value == desired_userid and externalValue.get( 'realname' ) == _PLACEHOLDER_REALNAME:
+		if e.value == desired_userid and e.value and externalValue.get( 'realname' ) is _PLACEHOLDER_REALNAME:
 			# This is an extreme corner case. You have to work really hard
 			# to trigger this conflict
 			exc_info = sys.exc_info()

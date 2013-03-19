@@ -421,12 +421,18 @@ class TestPreflightView(_AbstractValidationViewBase):
 		self.request.headers[b'origin'] = b'http://mathcounts.nextthought.com'
 		self.request.content_type = b'application/vnd.nextthought+json'
 
-		bad_code = 'UsernameCannotBeBlank'
+		bad_code = 'UsernameCannotContainRealname'
 		birthdate = datetime.date.today().replace( year=datetime.date.today().year - 10 ).isoformat()
 		self.request.body = to_json_representation( { 'birthdate': birthdate,
-													 'realname': 'N K' } )
-		__traceback_info__ = self.request.body
+													  'realname': 'N K' } )
 
+		# This gets by, because we didn't set a username
+		self.the_view( self.request )
+
+		self.request.body = to_json_representation( {'birthdate': birthdate,
+													 'realname': 'name name',
+													 'Username': 'username' } )
+		__traceback_info__ = self.request.body
 
 		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
 			self.the_view( self.request )
@@ -453,6 +459,17 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( e.exception.json_body, has_entry( 'field', 'realname' ) )
 		assert_that( e.exception.json_body, has_entry( 'fields', ['Username', 'realname'] ) )
 		assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
+
+		self.request.body = to_json_representation( { 'birthdate': birthdate,
+													  'Username': '' } )
+		__traceback_info__ = self.request.body
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
+		assert_that( e.exception.json_body, has_entry( 'code', 'UsernameCannotBeBlank' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', 'The username cannot be blank.' ) )
 
 	@WithMockDSTrans
 	def test_create_special_characters_username_mathcounts( self ):
