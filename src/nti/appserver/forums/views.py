@@ -11,8 +11,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import datetime
 
 from ZODB.interfaces import IConnection
+
+from nti.utils._compat import aq_base
 
 from nti.appserver.traversal import find_interface
 from nti.appserver._util import uncached_in_response
@@ -20,11 +23,22 @@ from nti.appserver import interfaces as app_interfaces
 from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
+from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
+from nti.appserver.ugd_edit_views import UGDPutView
+from nti.appserver.ugd_edit_views import UGDDeleteView
+from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
+
+from nti.appserver.ugd_feed_views import AbstractFeedView
+from nti.appserver._adapters import GenericModeledContentExternalFieldTraverser
+from nti.appserver._util import AbstractTwoStateViewLinkDecorator
+from nti.appserver._view_utils import get_remote_user
+
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.dataserver import users
+from nti.dataserver import links
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -34,28 +48,30 @@ from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
-from nti.dataserver.contenttypes.forums.forum import PersonalBlog
+
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
 from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
 from nti.dataserver.contenttypes.forums.post import Post
 
 
-from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.singleton import SingletonDecorator
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
 from zope.container.interfaces import INameChooser
+from zope.container.interfaces import ILocation
 from zope import component
 from zope import interface
 from zope import lifecycleevent
-from zope import schema
+
 from zope.event import notify
 import zope.intid.interfaces
 
+from pyramid.threadlocal import get_current_request
 
 @interface.implementer(app_interfaces.IContainerCollection)
 @component.adapter(app_interfaces.IUserWorkspace)
@@ -219,10 +235,6 @@ class TopicPostView(_AbstractIPostPOSTView):
 
 		return incoming_post
 
-from .dataserver_pyramid_views import _GenericGetView as GenericGetView
-from .ugd_edit_views import UGDPutView
-from .ugd_edit_views import UGDDeleteView
-from .ugd_query_views import _UGDView as UGDQueryView
 
 @view_config( context=frm_interfaces.IHeadlineTopic )
 @view_config( context=frm_interfaces.IPersonalBlog )
@@ -264,8 +276,6 @@ class ForumContentsGetView(UGDQueryView):
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)
 
-import datetime
-from .ugd_feed_views import AbstractFeedView
 @view_config( context=frm_interfaces.IHeadlineTopic,
 			  name='feed.atom' )
 @view_config( context=frm_interfaces.IHeadlineTopic,
@@ -366,7 +376,7 @@ class PostDeleteView(UGDDeleteView):
 		notify( lifecycleevent.ObjectModifiedEvent( deleting ) )
 		return theObject
 
-from nti.utils._compat import aq_base
+
 @component.adapter(frm_interfaces.IPost, lifecycleevent.IObjectModifiedEvent)
 def match_title_of_post_to_blog( post, event ):
 	"When the main story of a story topic (blog post) is modified, match the titles"
@@ -379,12 +389,7 @@ def match_title_of_post_to_blog( post, event ):
 # that share no common ancestor. (We could be declared on IContainer,
 # but its not clear what if any IContainers we externalize besides
 # the forum objects)
-from nti.dataserver import links
-from zope.container.interfaces import ILocation
-from ._util import AbstractTwoStateViewLinkDecorator
-from nti.externalization.singleton import SingletonDecorator
-from ._view_utils import get_remote_user
-from pyramid.threadlocal import get_current_request
+
 @interface.implementer( ext_interfaces.IExternalMappingDecorator )
 class ForumObjectContentsLinkProvider(object):
 	"""
@@ -500,7 +505,7 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 			acl.append( ace_allowing( topic_creator, nauth.ACT_DELETE, self ) )
 			acl.append( ace_allowing( topic_creator, nauth.ACT_READ, self ) )
 
-from ._adapters import GenericModeledContentExternalFieldTraverser
+
 @component.adapter(frm_interfaces.IPost)
 class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
 	"Disallow updates to the sharedWith field of blog posts/comments"

@@ -333,7 +333,7 @@
 
 	<include package="." file="configure_invitations.zcml" />
 
-	<include package="." file="configure_blogs.zcml" />
+	<include package=".forums" />
 
 
 	<!-- Hacky temporary stuff -->

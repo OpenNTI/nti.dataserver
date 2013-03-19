@@ -35,8 +35,8 @@ from hamcrest import has_key
 from nti.tests import is_empty
 import fudge
 
-from .test_application import TestApp as _TestApp
-from . import test_application_censoring
+from nti.appserver.tests.test_application import TestApp as _TestApp
+from nti.appserver.tests import test_application_censoring
 
 import datetime
 import webob.datetime_utils
@@ -60,7 +60,7 @@ from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
 from nti.dataserver.contenttypes.forums.post import Post
 
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
 from urllib import quote as UQ
 from pyquery import PyQuery
