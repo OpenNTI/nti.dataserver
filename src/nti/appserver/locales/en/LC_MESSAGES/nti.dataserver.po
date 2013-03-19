@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: jason.madden@nextthought.com\n"
-"POT-Creation-Date: 2013-03-10 16:40-0500\n"
+"POT-Creation-Date: 2013-03-19 10:48-0500\n"
 "PO-Revision-Date: 2012-09-24 22:18-0500\n"
 "Last-Translator: Jason Madden <jason.madden@nextthought.com>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -50,14 +50,6 @@ msgstr ""
 
 #: src/nti/appserver/account_recovery_views.py:288
 msgid "Your reset link is not valid. Please request a new one."
-msgstr ""
-
-#: src/nti/appserver/configure_blogs.zcml:23
-msgid "Can the user create new blog entries?"
-msgstr ""
-
-#: src/nti/appserver/configure_blogs.zcml:23
-msgid "Create Blog Entry"
 msgstr ""
 
 #: src/nti/appserver/coppa_admin_views.py:110
@@ -108,17 +100,17 @@ msgstr ""
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:176
+#: src/nti/appserver/user_policies.py:178
 msgid "NextThought Account Confirmation"
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:225
+#: src/nti/appserver/user_policies.py:227
 msgid ""
 "It is too soon to send another consent request email. Please try again "
 "tomorrow."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:260
+#: src/nti/appserver/user_policies.py:262
 msgid "Please Confirm Your Child's NextThought Account"
 msgstr ""
 
@@ -164,6 +156,14 @@ msgstr ""
 msgid "Upload Avatar"
 msgstr ""
 
+#: src/nti/appserver/forums/configure.zcml:20
+msgid "Can the user create new blog entries?"
+msgstr ""
+
+#: src/nti/appserver/forums/configure.zcml:20
+msgid "Create Blog Entry"
+msgstr ""
+
 #: src/nti/appserver/invitations/interfaces.py:150
 msgid "The invitation code is not valid."
 msgstr ""
@@ -185,7 +185,7 @@ msgid "If given, the minimum required value users must have."
 msgstr ""
 
 #: src/nti/appserver/link_providers/zcml.py:56
-msgid "A URL to redirect to on GET"
+msgid "A URI to redirect to on GET"
 msgstr ""
 
 #: src/nti/appserver/link_providers/zcml.py:61
@@ -304,6 +304,14 @@ msgstr ""
 msgid "The limit for this invitation code has been exceeded."
 msgstr ""
 
-#: src/nti/utils/schema.py:205
+#: src/nti/store/payments/stripe/stripe_key.py:34
+msgid "PrivateKey"
+msgstr ""
+
+#: src/nti/store/payments/stripe/stripe_key.py:35
+msgid "Alias"
+msgstr ""
+
+#: src/nti/utils/schema.py:224
 msgid "${field} is too short."
 msgstr "${field} is too short. Please use at least ${minLength} characters."
