@@ -116,9 +116,6 @@
 	<!-- Publishing workflow -->
 	<subscriber factory=".views.PublishLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
-	<adapter factory=".views._PersonalBlogACLProvider" />
-	<adapter factory=".views._PersonalBlogEntryACLProvider" />
-	<adapter factory=".views._PostACLProvider" />
 
 	<!-- Feeds -->
 	<!-- For purposes of rendering to a feed, posts behave just like notes -->

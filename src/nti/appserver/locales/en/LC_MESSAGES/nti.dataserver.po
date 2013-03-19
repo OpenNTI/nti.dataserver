@@ -33,7 +33,7 @@ msgid "Please provide your first and last names."
 msgstr ""
 
 #: src/nti/appserver/account_creation_views.py:170
-msgid "Username cannot be blank"
+msgid "Username cannot be blank."
 msgstr ""
 
 #: src/nti/appserver/account_creation_views.py:202
@@ -307,4 +307,3 @@ msgstr ""
 #: src/nti/utils/schema.py:205
 msgid "${field} is too short."
 msgstr "${field} is too short. Please use at least ${minLength} characters."
-

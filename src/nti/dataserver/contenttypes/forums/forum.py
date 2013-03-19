@@ -108,3 +108,7 @@ def NoBlogAdapter(user):
 	This is useful as an override when no personal blog is desired but one
 	would otherwise be inherited."""
 	return None
+
+@interface.implementer(frm_interfaces.IGeneralForum)
+class GeneralForum(Forum):
+	__external_can_create__ = False
