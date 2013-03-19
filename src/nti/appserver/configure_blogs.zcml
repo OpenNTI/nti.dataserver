@@ -8,7 +8,7 @@
 	<include package="zope.component" />
 	<include package=".capabilities" file="meta.zcml" />
 
-	<adapter factory=".forum_views.DefaultUserForumFactory"
+	<adapter factory="nti.dataserver.contenttypes.forums.forum.PersonalBlogAdapter"
 			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog" />
 
 

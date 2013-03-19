@@ -58,7 +58,7 @@
 
 		<!-- Explicitly cancel out the blog workspace that we might
 		have inherited. -->
-		<adapter factory=".forum_views.NoBlogFactory"
+		<adapter factory="nti.dataserver.contenttypes.forums.forum.NoBlogAdapter"
 				 for="nti.dataserver.interfaces.IUser" />
 
 		<!-- CSS for mathcounts -->

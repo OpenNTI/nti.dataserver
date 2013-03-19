@@ -56,41 +56,6 @@ from zope import schema
 from zope.event import notify
 import zope.intid.interfaces
 
-@interface.implementer(frm_interfaces.IPersonalBlog)
-@component.adapter(nti_interfaces.IUser)
-def DefaultUserForumFactory(user):
-	# The right key is critical. 'Blog' is the pretty external name (see dataserver_pyramid_traversal)
-
-	containers = getattr( user, 'containers', None ) # some types of users (test users usually) have no containers
-	if containers is None:
-		return None
-
-	# For convenience, we register the container with
-	# both its NTIID and its short name
-	forum = containers.getContainer( _UserBlogCollection.name )
-	if forum is None:
-		forum = PersonalBlog()
-		forum.__parent__ = user
-		forum.creator = user
-		forum.__name__ = _UserBlogCollection.name
-		forum.title = user.username
-		# TODO: Events?
-		containers.addContainer( _UserBlogCollection.name, forum, locate=False )
-		containers.addContainer( forum.NTIID, forum, locate=False )
-
-		jar = IConnection( user, None )
-		if jar:
-			jar.add( forum ) # ensure we store with the user
-		errors = schema.getValidationErrors( frm_interfaces.IPersonalBlog, forum )
-		if errors:
-			__traceback_info__ = errors
-			raise errors[0][1]
-	return forum
-
-@interface.implementer(frm_interfaces.IPersonalBlog)
-def NoBlogFactory(user):
-	"""Useful as an override when no personal blog is desired but one would otherwise be inherited."""
-	return None
 
 @interface.implementer(app_interfaces.IContainerCollection)
 @component.adapter(app_interfaces.IUserWorkspace)
