@@ -101,4 +101,6 @@ class TestPyramidViews(ConfiguringTestBase):
 		assert_that(qo.location, is_(ntiid))
 		assert_that(qo.batchSize, is_(78))
 		assert_that(qo.batchStart, is_(5))
+		assert_that(qo.sortOn, 'relevance')
+		assert_that(qo.sortOrder, 'descending')
 		assert_that(qo.searchOn, is_((u'content', u'note', u'post', u'messageinfo', u'highlight')))

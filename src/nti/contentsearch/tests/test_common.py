@@ -42,8 +42,8 @@ class TestCommon(ConfiguringTestBase):
 # 				print(type(k), getattr(i, '__name__', None))
 # 			print(name, getattr(i, '__name__', None))
 
-		assert_that(get_type_from_mimetype('application/vnd.nextthought.personalblogentrypost'), is_('post'))
-		assert_that(get_type_from_mimetype('application/vnd.nextthought.personalblogcomment'), is_('post'))
+		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogentrypost'), is_('post'))
+		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogcomment'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.post'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.content'), is_('content'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.redaction'), is_('redaction'))
