@@ -58,7 +58,8 @@ class GeneralTopic(Topic):
 	pass
 
 @interface.implementer(for_interfaces.IGeneralHeadlineTopic)
-class GeneralHeadlineTopic(GeneralTopic,HeadlineTopic):
+class GeneralHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
+						   GeneralTopic,HeadlineTopic):
 	headline = AcquisitionFieldProperty(for_interfaces.IGeneralHeadlineTopic['headline'])
 
 	creator = None
@@ -76,7 +77,22 @@ class GeneralHeadlineTopic(GeneralTopic,HeadlineTopic):
 								  nttype=for_interfaces.NTIID_TYPE_GENERAL_TOPIC,
 								  specific=self.__name__ )
 
-# These one is permissioned by publication.
+@interface.implementer(for_interfaces.ICommunityHeadlineTopic)
+class CommunityHeadlineTopic(GeneralHeadlineTopic):
+	# TODO: The permissioning isn't quite right on this. The sharing targets are the
+	# creators sharing targets but we really want just the community
+	@CachedProperty
+	def NTIID(self):
+		"""
+		NTIID is defined only after the creator and id/__name__ are set.
+		Our NTIID is derived from the __name__, using that as the specific part.
+		For this to work correctly, our __name__ must be NTIID safe. We provide a name
+		chooser to ensure that.
+		"""
+		return ntiids.make_ntiid( date=ntiids.DATE,
+								  provider=self.__parent__.creator.username,
+								  nttype=for_interfaces.NTIID_TYPE_COMMUNITY_TOPIC,
+								  specific=self.__name__ )
 
 @interface.implementer(for_interfaces.IPersonalBlogEntry)
 class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,

@@ -181,7 +181,7 @@ class LocatedExternalList(list):
 	by :func:`~nti.externalization.externalization.to_external_object`.
 
 	This class is not :class:`.IContentTypeAware`, and it indicates so explicitly by declaring a
-	`mime_type` value of None.
+	`mimeType` value of None.
 	"""
 
 	__name__ = ''

@@ -47,7 +47,8 @@
 			 provides="zope.traversing.interfaces.ITraversable" />
 	<adapter factory="._dataserver_pyramid_traversal.UserTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
-
+	<adapter factory="._dataserver_pyramid_traversal.CommunityTraversable"
+			 provides="zope.traversing.interfaces.ITraversable" />
 	<adapter factory="._dataserver_pyramid_traversal.ProviderTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
 

@@ -8,10 +8,6 @@
 	<include package="zope.component" />
 	<include package="nti.appserver.capabilities" file="meta.zcml" />
 
-	<adapter factory="nti.dataserver.contenttypes.forums.forum.PersonalBlogAdapter"
-			 provides="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlog" />
-
-
 	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityStorageFactory" />
 	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityProvider"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
@@ -72,14 +68,17 @@
 				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 	<!--
-		Decorate blog entries. This is configured for modeled content in configure.zcml.
+		Decorate blog entries and forum topics. This is configured for modeled content in configure.zcml.
 		This isn't quite right, as these aren't exactly editable, just deletable.
 		But the presence of the 'edit' link is a shortcut the app uses to handle
-		permissioning
+		permissioning.
 	-->
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry" />
+	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic" />
 
 	<!-- Traversal -->
 	<adapter factory=".views._PostFieldTraverser"
@@ -115,7 +114,11 @@
 
 	<!-- Publishing workflow -->
 	<subscriber factory=".views.PublishLinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry"/>
+	<subscriber factory=".views.PublishLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic"/>
 
 	<!-- Feeds -->
 	<!-- For purposes of rendering to a feed, posts behave just like notes -->

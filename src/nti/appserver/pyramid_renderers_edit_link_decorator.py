@@ -6,6 +6,7 @@ A decorator for the 'edit' link
 from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__('logging').getLogger(__name__)
+from ZODB import loglevels
 
 from zope import interface
 from zope import component
@@ -104,4 +105,4 @@ class EditLinkDecorator(object):
 				link = Link(to_external_ntiid_oid( context ) if not IShouldHaveTraversablePath.providedBy( context ) else context)
 				mapping['href'] = render_link( link )['href']
 			except (KeyError,ValueError,AssertionError,TypeError):
-				pass # Nope
+				logger.log( loglevels.TRACE, "Failed to get href link for %s", context, exc_info=True )

@@ -167,6 +167,8 @@ class Community(Entity,sharing.DynamicSharingTargetMixin):
 		"""
 		return cls.create_entity( dataserver=dataserver, **kwargs )
 
+	get_community = Entity.get_entity
+
 	NTIID_TYPE = ntiids.TYPE_NAMED_ENTITY_COMMUNITY
 	NTIID = property(named_entity_ntiid)
 

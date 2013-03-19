@@ -8,6 +8,13 @@
 	<include package="nti.contentfragments" />
 	<include package="nti.mimetype" />
 
+	<adapter factory=".forum.PersonalBlogAdapter"
+			 provides=".interfaces.IPersonalBlog" />
+
+	<adapter factory=".forum.GeneralForumCommunityAdapter"
+			 provides=".interfaces.ICommunityForum"
+			 zcml:condition="have devmode" />
+
 	<adapter provides="zope.location.interfaces.ISublocations"
 			 for=".interfaces.IHeadlineTopic"
 			 factory=".topic.HeadlineTopicSublocations" />
@@ -41,8 +48,16 @@
 	<ext:registerMimeFactories module=".topic" />
 
 	<!-- ACLs -->
-	<adapter factory=".acl._PersonalBlogACLProvider" />
-	<adapter factory=".acl._PersonalBlogEntryACLProvider" />
+	<adapter factory=".acl._TopicACLProvider"
+			 for=".interfaces.IPersonalBlogEntry"/>
+	<adapter factory=".acl._TopicACLProvider"
+			 for=".interfaces.IGeneralTopic"/>
+
+	<adapter factory=".acl._ForumACLProvider"
+			 for=".interfaces.IPersonalBlog"/>
+	<adapter factory=".acl._CommunityForumACLProvider"
+			 for=".interfaces.ICommunityForum"/>
+
 	<adapter factory=".acl._PostACLProvider" />
 
 

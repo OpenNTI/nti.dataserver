@@ -35,6 +35,9 @@ NTIID_TYPE_FORUM = 'Forum'
 #: The subtype of NTIID used to represent a :class:`IPersonalBlog`
 NTIID_TYPE_PERSONAL_BLOG = NTIID_TYPE_FORUM + ':PersonalBlog'
 
+#: The subtype of NTIID used to represent a :class:`.IGeneralForum`
+NTIID_TYPE_GENERAL_FORUM = NTIID_TYPE_FORUM + ':General'
+
 #: The type of NTIID used for a :class:`ITopic`
 NTIID_TYPE_TOPIC = 'Topic'
 
@@ -43,6 +46,9 @@ NTIID_TYPE_PERSONAL_BLOG_ENTRY = NTIID_TYPE_TOPIC + ':PersonalBlogEntry'
 
 # The subtype of NTIID used to represent a :class:`.IGeneralTopic`
 NTIID_TYPE_GENERAL_TOPIC = NTIID_TYPE_TOPIC + ':General'
+
+# The subtype of NTIID used for community general topics
+NTIID_TYPE_COMMUNITY_TOPIC = NTIID_TYPE_TOPIC + ":GeneralCommunity"
 
 #: The type of NTIID used to represent an individual :class:`IPost`
 NTIID_TYPE_POST = 'Post'
@@ -188,10 +194,17 @@ class IGeneralHeadlinePost(IGeneralPost,IHeadlinePost):
 
 class IGeneralForum(IForum, nti_interfaces.ICreated):
 	"""
-	A more specific type of forum.
+	A general purpose forum that is not a blog.
 	"""
-	contains(b'IIGeneralTopic')
+	contains(b'.IGeneralTopic')
 	__setitem__.__doc__ = None
+
+class ICommunityForum(IGeneralForum):
+	"""
+	A forum belonging to a particular community.
+	"""
+	containers(nti_interfaces.ICommunity)
+	__parent__.required = False
 
 class IGeneralTopic(ITopic):
 	containers(IGeneralForum)
@@ -200,12 +213,17 @@ class IGeneralTopic(ITopic):
 
 class IGeneralHeadlineTopic(IGeneralTopic,IHeadlineTopic,
 							nti_interfaces.ICreated,
-							nti_interfaces.IReadableShared):
+							nti_interfaces.IReadableShared,
+							nti_interfaces.IShouldHaveTraversablePath):
 	containers(IGeneralForum)
 	__parent__.required = False
 	headline = schema.Object(IGeneralHeadlinePost, title="The main, first post of this topic.")
 
-class IGeneralComment(IGeneralPost):
+class ICommunityHeadlineTopic(IGeneralHeadlineTopic):
+	containers(ICommunityForum)
+	__parent__.required = False
+
+class IGeneralForumComment(IGeneralPost, nti_interfaces.IShouldHaveTraversablePath):
 	"""Secondary comments in a general topic."""
-	containers(b'.IGeneralTopic')
+	containers(IGeneralTopic)
 	__parent__.required = False

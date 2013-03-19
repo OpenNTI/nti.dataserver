@@ -51,7 +51,7 @@ class PersonalBlog(Forum):
 	__external_can_create__ = False
 
 	creator = None
-	__name__ = __blog_name__ = u'Blog'
+	__name__ = __blog_name__ = __default_name__ = u'Blog'
 
 	@CachedProperty
 	def NTIID(self):
@@ -112,3 +112,44 @@ def NoBlogAdapter(user):
 @interface.implementer(frm_interfaces.IGeneralForum)
 class GeneralForum(Forum):
 	__external_can_create__ = False
+	creator = None
+	__name__ = __default_name__ = 'Forum'
+
+	@CachedProperty
+	def NTIID(self):
+		"NTIID is defined only after the creator is set"
+		return ntiids.make_ntiid( date=ntiids.DATE,
+								  provider=self.creator.username,
+								  nttype=frm_interfaces.NTIID_TYPE_GENERAL_FORUM,
+								  specific=self.__name__ )
+
+@interface.implementer(frm_interfaces.ICommunityForum)
+class CommunityForum(GeneralForum):
+	__external_can_create__ = False
+
+@interface.implementer(frm_interfaces.ICommunityForum)
+@component.adapter(nti_interfaces.ICommunity)
+def GeneralForumCommunityAdapter(community):
+	"""
+	For the moment, we will say that all communities have a single forum, in the same
+	way that all users have a blog. Members of the community can create new
+	topics in the forum.
+	"""
+	# TODO: Note the similarity to personalBlogAdapter
+	annotations = an_interfaces.IAnnotations( community )
+	forum = annotations.get( CommunityForum.__default_name__ )
+	if forum is None:
+		forum = CommunityForum()
+		annotations[CommunityForum.__default_name__] = forum
+		forum.__parent__ = community
+		forum.creator = community
+		forum.title = forum.__name__ # ???
+
+		jar = IConnection( community, None )
+		if jar:
+			jar.add( forum )
+		errors = schema.getValidationErrors( frm_interfaces.ICommunityForum, forum )
+		if errors:
+			__traceback_info__ = errors
+			raise errors[0][1]
+	return forum

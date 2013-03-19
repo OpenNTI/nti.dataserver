@@ -268,8 +268,14 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 		return resource
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+from nti.dataserver.contenttypes.forums.forum import PersonalBlog
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
+from nti.dataserver.contenttypes.forums.forum import CommunityForum
+
 def _BlogResource( context, request ):
 	return IPersonalBlog( context, None ) # Does the user have access to a default forum/blog? If no, 403.
+def _ForumResource( context, request ):
+	return ICommunityForum( context, None )
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
@@ -278,7 +284,7 @@ class UserTraversable(_PseudoTraversableMixin):
 	_pseudo_classes_ = { 'Library': lib_interfaces.IContentPackageLibrary,
 						 'Pages': _PagesResource,
 						 'EnrolledClassSections': _AbstractUserPseudoContainerResource,
-						 'Blog': _BlogResource }
+						 PersonalBlog.__default_name__: _BlogResource }
 	_pseudo_classes_.update( _PseudoTraversableMixin._pseudo_classes_ )
 
 	_DENY_ALL = True
@@ -351,7 +357,21 @@ class ProviderTraversable(UserTraversable):
 	def __init__( self, *args, **kwargs ):
 		super(ProviderTraversable,self).__init__( *args, **kwargs )
 
+@interface.implementer(trv_interfaces.ITraversable)
+@component.adapter(nti_interfaces.ICommunity, pyramid.interfaces.IRequest)
+class CommunityTraversable(_PseudoTraversableMixin):
 
+	_pseudo_classes_ = { CommunityForum.__default_name__: _ForumResource }
+
+	_DENY_ALL = True
+
+	def __init__( self, context, request=None ):
+		self.context = context
+		self.request = request
+
+
+	def traverse( self, key, remaining_path ):
+		return self._pseudo_traverse( key, remaining_path )
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(lib_interfaces.IContentPackageLibrary, pyramid.interfaces.IRequest)

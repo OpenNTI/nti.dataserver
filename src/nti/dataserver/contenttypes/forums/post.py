@@ -34,6 +34,7 @@ class Post(
 		   sharing.AbstractReadableSharedWithMixin,
 		   Implicit):
 
+	mimeType = None
 
 	body = BodyFieldProperty(for_interfaces.IPost['body'])
 
@@ -53,14 +54,6 @@ class HeadlinePost(Post):
 class GeneralPost(Post):
 	pass
 
-@interface.implementer(for_interfaces.IGeneralHeadlinePost)
-class GeneralHeadlinePost(GeneralPost,HeadlinePost):
-	pass
-
-@interface.implementer(for_interfaces.IGeneralComment)
-class GeneralComment(GeneralPost):
-	pass
-
 # These last are never permissioned separately, only
 # inherited. The inheritance is expressed through the ACLs, but
 # in is convenient for the actual values to be accessible down here too.
@@ -68,6 +61,15 @@ class GeneralComment(GeneralPost):
 # class we inherit from. cf topic.PersonalBlogEntry
 # TODO: Still not sure this is really correct
 from . import _AcquiredSharingTargetsProperty
+
+@interface.implementer(for_interfaces.IGeneralHeadlinePost)
+class GeneralHeadlinePost(GeneralPost,HeadlinePost):
+	sharingTargets = _AcquiredSharingTargetsProperty()
+
+@interface.implementer(for_interfaces.IGeneralForumComment)
+class GeneralForumComment(GeneralPost):
+	sharingTargets = _AcquiredSharingTargetsProperty()
+
 
 @interface.implementer(for_interfaces.IPersonalBlogEntryPost)
 class PersonalBlogEntryPost(HeadlinePost):

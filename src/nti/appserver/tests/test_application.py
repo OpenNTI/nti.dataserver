@@ -170,6 +170,9 @@ class _AppTestBaseMixin(object):
 	default_user_extra_interfaces = ()
 	extra_environ_default_user = b'sjohnson@nextthought.COM'
 	default_origin = b'http://localhost'
+
+	default_community = None
+
 	def _make_extra_environ(self, user=None, update_request=False, **kwargs):
 		"""
 		The default username is a case-modified version of the default user in :meth:`_create_user`,
@@ -205,6 +208,13 @@ class _AppTestBaseMixin(object):
 
 		user = users.User.create_user( self.ds, username=username, password=password, **kwargs)
 		interface.alsoProvides( user, ifaces )
+
+		if self.default_community:
+			comm = users.Community.get_community( self.default_community, self.ds )
+			if not comm:
+				comm = users.Community.create_community( self.ds, username=self.default_community )
+			user.join_community( comm )
+
 		return user
 
 	def resolve_user( self, testapp=None, username=None ):
