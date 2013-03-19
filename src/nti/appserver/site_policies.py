@@ -512,12 +512,20 @@ class GenericSitePolicyEventListener(object):
 class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	"""
 	Implements the starting policy for the sites with kids.
+
+	.. note:: This site policy has a dependency between username and realname
+		values. To disable this dependency during preflight checking,
+		use exactly the placeholder objects defined in this policy.
 	"""
 
 	IF_ROOT = nti_interfaces.ICoppaUser
 	IF_WITH_AGREEMENT = nti_interfaces.ICoppaUserWithAgreement
 	IF_WOUT_AGREEMENT = nti_interfaces.ICoppaUserWithoutAgreement
 	IF_WITH_AGREEMENT_UPGRADED = nti_interfaces.ICoppaUserWithAgreementUpgraded
+
+	PLACEHOLDER_USERNAME = 'A_Username_We_Allow_That_Doesnt_Conflict'
+	PLACEHOLDER_REALNAME = 'com.nextthought.account_creation_user WithALastName'
+
 
 	def upgrade_user( self, user ):
 		if not self.IF_WOUT_AGREEMENT.providedBy( user ):
@@ -587,10 +595,14 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		# parse it now. This raises BlankHumanName if missing. This was checked by super
 		human_name = nameparser.HumanName( names.realname )
 
-		human_name_parts = human_name.first_list + human_name.middle_list + human_name.last_list
-		if any( (x.lower() in user.username.lower() for x in human_name_parts) ):
-			raise UsernameCannotContainRealname("Username %s cannot include any part of the real name %s" % # TODO: I18N
-												(user.username, names.realname), 'Username', user.username, value=user.username, field='Username' )
+		# Disable username/realname dependency checking if we are using placeholder data
+		if user.username is not self.PLACEHOLDER_USERNAME:
+			human_name_parts = human_name.first_list + human_name.middle_list + human_name.last_list
+			if any( (x.lower() in user.username.lower() for x in human_name_parts) ):
+				raise UsernameCannotContainRealname(
+					_("Username ${username} cannot include any part of the real name ${realname}.",
+					  mapping={'username': user.username, 'realname': names.realname}),
+					'Username', user.username, value=user.username, field='Username' )
 
 		if '@' in user.username:
 			raise UsernameCannotContainAt( user.username, user.ALLOWED_USERNAME_CHARS ).new_instance_restricting_chars( '@' )

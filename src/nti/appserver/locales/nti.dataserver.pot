@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-19 10:48-0500\n"
+"POT-Creation-Date: 2013-03-19 11:37-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,15 +27,11 @@ msgid "You cannot store that type of object here."
 msgstr ""
 
 #: src/nti/appserver/account_creation_views.py:130
-#: src/nti/appserver/account_creation_views.py:179
+#: src/nti/appserver/account_creation_views.py:181
 msgid "Please provide your first and last names."
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:170
-msgid "Username cannot be blank"
-msgstr ""
-
-#: src/nti/appserver/account_creation_views.py:202
+#: src/nti/appserver/account_creation_views.py:204
 msgid "That username is not available. Please choose another."
 msgstr ""
 
@@ -99,6 +95,10 @@ msgstr ""
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
+#: src/nti/appserver/site_policies.py:603
+msgid "Username ${username} cannot include any part of the real name ${realname}."
+msgstr ""
+
 #: src/nti/appserver/user_policies.py:178
 msgid "NextThought Account Confirmation"
 msgstr ""
@@ -114,51 +114,51 @@ msgid "Please Confirm Your Child's NextThought Account"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:15
-msgid "Can the user chat?"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:15
 msgid "Chat"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:20
-msgid "Can the user access UGD sharing features?"
+#: src/nti/appserver/capabilities/capabilities.zcml:15
+msgid "Can the user chat?"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:20
 msgid "Sharing"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:25
-msgid "Can the user create new FriendsLists? (Enforced by the vocabulary)"
+#: src/nti/appserver/capabilities/capabilities.zcml:20
+msgid "Can the user access UGD sharing features?"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:25
 msgid "Create FriendsLists"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:30
-msgid "Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)"
+#: src/nti/appserver/capabilities/capabilities.zcml:25
+msgid "Can the user create new FriendsLists? (Enforced by the vocabulary)"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:30
 msgid "Create DynamicFriendsLists"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:35
-msgid "Can the user upload custom avatar pictures?"
+#: src/nti/appserver/capabilities/capabilities.zcml:30
+msgid "Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:35
 msgid "Upload Avatar"
 msgstr ""
 
-#: src/nti/appserver/forums/configure.zcml:20
-msgid "Can the user create new blog entries?"
+#: src/nti/appserver/capabilities/capabilities.zcml:35
+msgid "Can the user upload custom avatar pictures?"
 msgstr ""
 
 #: src/nti/appserver/forums/configure.zcml:20
 msgid "Create Blog Entry"
+msgstr ""
+
+#: src/nti/appserver/forums/configure.zcml:20
+msgid "Can the user create new blog entries?"
 msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:150
