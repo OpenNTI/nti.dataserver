@@ -9,11 +9,19 @@
 	<include package="nti.appserver.link_providers" file="meta.zcml" />
 
 	<utility
-		component=".sites.COLUMBIA"
+		component=".sites.BASEADULT"
 		provides="zope.component.interfaces.IComponents"
-		name="columbia.nextthought.com" />
-	<!--
-	<registerIn registry=".sites.COLUMBIA">
+		name="genericadultbase" />
+
+	<registerIn registry=".sites.BASEADULT">
+		<link:userLink
+			named='.logon.REL_INITIAL_WELCOME_PAGE'
+			minGeneration='20130313'
+			url='/NextThoughtWebApp/content/welcome/columbia/columbia.html'
+			mimeType='text/html'/>
+		<link:userLink
+			named='.logon.REL_PERMANENT_WELCOME_PAGE'
+			url='/NextThoughtWebApp/content/welcome/columbia/columbia.html'
+			mimeType='text/html'/>
 	</registerIn>
-	-->
 </configure>

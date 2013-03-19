@@ -130,7 +130,7 @@ setup(
 		# includes transparent png support, and is much cleaned up, otherwise api compatible with pillow 1/PIL 1
 		'Pillow >= 2.0.0',
 		'RestrictedPython >= 3.6.0',
-		'ZConfig >= 3.0.3', #3.0.3 reqd for pypy/pythor3 support. requires zodb3 3.11.0a3+
+		'ZConfig >= 3.0.3', #3.0.3 reqd for pypy/python3 support. requires zodb3 3.11.0a3+
 		 # NOTE: ZODB has a new release, 4.0.0a4 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
 		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.5, and ZEO >= 4.0.0
@@ -212,7 +212,7 @@ setup(
 		'pyramid_zodbconn >= 0.4',
 		'pyramid-openid >= 0.3.4',
 		# Monitoring stats and instrumenting code
-		'python-statsd >= 1.5.7', # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
+		'python-statsd >= 1.5.8', # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
 		 # Consider also https://github.com/phensley/gstatsd
 		'pystatsd >= 0.1.6',
@@ -235,7 +235,7 @@ setup(
 		'setproctitle >= 1.1.7', # used by gunicorn
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.1.0',
-		'six >= 1.2.0',
+		'six >= 1.3.0',
 		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
 		'stripe >= 1.7.10', # stripe payments
 		#'slimit',
@@ -268,7 +268,7 @@ setup(
 		'zope.app.broken >= 3.6.0', # Improved broken objects
 		'zope.app.component >= 3.9.3', # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.app.interface >= 3.6.0', # bwc only, DO NOT IMPORT. pulled in by contentratings
-		'zope.annotation >= 4.1.0',
+		'zope.annotation >= 4.2.0',
 		'zope.authentication >= 4.1.0',
 		'zope.broken >= 3.6.0', # This is actually deprecated, use the ZODB import
 		'zope.browser >= 2.0.2',

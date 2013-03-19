@@ -29,19 +29,23 @@ from zope.component import globalSiteManager as BASE
 MATHCOUNTS = BaseComponents(BASE, name='mathcounts.nextthought.com', bases=(BASE,))
 TESTMATHCOUNTS = BaseComponents(BASE, name='testmathcounts.nextthought.com', bases=(MATHCOUNTS,))
 
-ALPHA = BaseComponents(BASE,name='alpha.nextthought.com', bases=(BASE,))
-DEMO = BaseComponents(BASE,name='demo.nextthought.com', bases=(BASE,))
+# This one serves as a common base for all the other non-COPPA (non-mathcounts) site
+# It is not a site of its own
+BASEADULT = BaseComponents(BASE, name="genericadultbase", bases=(BASE,))
 
-RWANDA = BaseComponents(BASE,name='rwanda.nextthought.com', bases=(BASE,))
-LAW = BaseComponents(BASE, name='law.nextthought.com', bases=(BASE,))
-LITWORLD = BaseComponents(BASE, name='litworld.nextthought.com', bases=(BASE,))
-COLLEGIATE = BaseComponents(BASE, name='collegiate.nextthought.com', bases=(BASE,))
-GLORIA_MUNDI = BaseComponents(BASE, name='gloria-mundi.nextthought.com', bases=(BASE,))
+ALPHA = BaseComponents(BASEADULT,name='alpha.nextthought.com', bases=(BASEADULT,))
+DEMO = BaseComponents(BASEADULT,name='demo.nextthought.com', bases=(BASEADULT,))
+
+RWANDA = BaseComponents(BASEADULT,name='rwanda.nextthought.com', bases=(BASEADULT,))
+LAW = BaseComponents(BASEADULT, name='law.nextthought.com', bases=(BASEADULT,))
+LITWORLD = BaseComponents(BASEADULT, name='litworld.nextthought.com', bases=(BASEADULT,))
+COLLEGIATE = BaseComponents(BASEADULT, name='collegiate.nextthought.com', bases=(BASEADULT,))
+GLORIA_MUNDI = BaseComponents(BASEADULT, name='gloria-mundi.nextthought.com', bases=(BASEADULT,))
 
 
-PRMIA = BaseComponents(BASE, name='prmia.nextthought.com', bases=(BASE,))
-FINTECH = BaseComponents(BASE, name='fintech.nextthought.com', bases=(BASE,))
-COLUMBIA = BaseComponents(BASE, name='columbia.nextthought.com', bases=(BASE,))
+PRMIA = BaseComponents(BASEADULT, name='prmia.nextthought.com', bases=(BASEADULT,))
+FINTECH = BaseComponents(BASEADULT, name='fintech.nextthought.com', bases=(BASEADULT,))
+COLUMBIA = BaseComponents(BASEADULT, name='columbia.nextthought.com', bases=(BASEADULT,))
 
 def _reinit():
 	"""

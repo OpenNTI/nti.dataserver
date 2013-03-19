@@ -317,6 +317,7 @@
 	<!-- User-type policies -->
 	<include package="." file="configure_user_policies.zcml" />
 
+	<include package="." file="configure_site_policy_adult_base.zcml" />
 	<include package="." file="configure_site_policy_alpha.zcml" />
 	<include package="." file="configure_site_policy_collegiate.zcml" />
 	<include package="." file="configure_site_policy_columbia.zcml" />
