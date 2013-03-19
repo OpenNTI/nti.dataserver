@@ -63,7 +63,7 @@ def get_type_from_mimetype(mt):
 			result = content_
 		elif result == transcript_:
 			result = messageinfo_
-		elif result.startswith('personalblog'):
+		elif result.startswith('forums.personalblog'):
 			result = post_
 		result = result if result in indexable_type_names else None
 	else:
