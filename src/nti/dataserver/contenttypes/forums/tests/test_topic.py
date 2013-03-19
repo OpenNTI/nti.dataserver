@@ -36,9 +36,9 @@ from nti.tests import aq_inContextOf
 from zope.container.interfaces import InvalidItemType, InvalidContainerType, INameChooser
 from nti.tests import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
-from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry
-from ..topic import Topic, HeadlineTopic, PersonalBlogEntry
-from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost
+from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry, IGeneralHeadlineTopic
+from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralTopic, GeneralHeadlineTopic
+from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost, GeneralHeadlinePost, GeneralPost, GeneralComment
 
 from ExtensionClass import Base
 
@@ -51,12 +51,20 @@ def test_topic_interfaces():
 
 	assert_that( post, validly_provides( ITopic ) )
 
-def test_story_topic_interfaces():
+def test_headline_topic_interfaces():
 	topic = HeadlineTopic()
 	assert_that( topic, verifiably_provides( IHeadlineTopic ) )
 
 	topic.headline = HeadlinePost()
 	assert_that( topic, validly_provides( IHeadlineTopic ) )
+	assert_that( topic.headline, aq_inContextOf( topic ) )
+
+def test_general_headline_topic_interfaces():
+	topic = GeneralHeadlineTopic()
+	assert_that( topic, verifiably_provides( IGeneralHeadlineTopic ) )
+
+	topic.headline = GeneralHeadlinePost()
+	assert_that( topic, validly_provides( IGeneralHeadlineTopic ) )
 	assert_that( topic.headline, aq_inContextOf( topic ) )
 
 
@@ -137,6 +145,7 @@ def test_blog_topic_externalizes():
 
 	post = PersonalBlogEntry()
 	post.title = 'foo'
+	post.creator = 'me'
 
 	assert_that( post,
 				 externalizes( all_of(

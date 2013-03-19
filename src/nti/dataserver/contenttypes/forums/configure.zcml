@@ -12,6 +12,7 @@
 			 for=".interfaces.IHeadlineTopic"
 			 factory=".topic.HeadlineTopicSublocations" />
 	<adapter factory=".topic.PersonalBlogEntryNameChooser" />
+	<adapter factory=".topic.GeneralForumEntryNameChooser" />
 
 	<!-- NTIID resolvers -->
 	<utility factory=".ntiids._BlogResolver" name="Forum:PersonalBlog" />
@@ -38,6 +39,11 @@
 	<ext:registerMimeFactories module=".forum" />
 	<ext:registerMimeFactories module=".post" />
 	<ext:registerMimeFactories module=".topic" />
+
+	<!-- ACLs -->
+	<adapter factory=".acl._PersonalBlogACLProvider" />
+	<adapter factory=".acl._PersonalBlogEntryACLProvider" />
+	<adapter factory=".acl._PostACLProvider" />
 
 
 </configure>

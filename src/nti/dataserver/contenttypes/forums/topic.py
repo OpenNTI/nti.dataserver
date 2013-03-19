@@ -53,6 +53,28 @@ class Topic(_AbstractUnsharedTopic,
 class HeadlineTopic(Topic):
 	headline = AcquisitionFieldProperty(for_interfaces.IHeadlineTopic['headline'])
 
+@interface.implementer(for_interfaces.IGeneralTopic)
+class GeneralTopic(Topic):
+	pass
+
+@interface.implementer(for_interfaces.IGeneralHeadlineTopic)
+class GeneralHeadlineTopic(GeneralTopic,HeadlineTopic):
+	headline = AcquisitionFieldProperty(for_interfaces.IGeneralHeadlineTopic['headline'])
+
+	creator = None
+
+	@CachedProperty
+	def NTIID(self):
+		"""
+		NTIID is defined only after the creator and id/__name__ are set.
+		Our NTIID is derived from the __name__, using that as the specific part.
+		For this to work correctly, our __name__ must be NTIID safe. We provide a name
+		chooser to ensure that.
+		"""
+		return ntiids.make_ntiid( date=ntiids.DATE,
+								  provider=self.creator.username,
+								  nttype=for_interfaces.NTIID_TYPE_GENERAL_TOPIC,
+								  specific=self.__name__ )
 
 # These one is permissioned by publication.
 
@@ -76,10 +98,10 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 								  specific=self.__name__ )
 
 
-
+@component.adapter(for_interfaces.IHeadlineTopic)
 class HeadlineTopicSublocations(ContainerSublocations):
 	"""
-	Story topics contain their children and also their story.
+	Headline topics contain their children and also their story.
 	"""
 
 	def sublocations( self ):
@@ -89,13 +111,14 @@ class HeadlineTopicSublocations(ContainerSublocations):
 		if story is not None:
 			yield story
 
-@component.adapter(for_interfaces.IPersonalBlog)
+
 @interface.implementer(INameChooser)
-class PersonalBlogEntryNameChooser(object):
+class AbstractForumEntryNameChooser(object):
 	"""
-	Handles NTIID-safe name choosing for an entry in a blog.
+	Handles NTIID-safe name choosing for an topic in a forum.
 	"""
 
+	leaf_iface = None #: class attribute
 	def __init__( self, context ):
 		self.context = context
 
@@ -104,13 +127,32 @@ class PersonalBlogEntryNameChooser(object):
 		try:
 			name = ntiids.make_specific_safe( name )
 		except ntiids.InvalidNTIIDError as e:
-			e.field = for_interfaces.IPersonalBlog['title']
+			e.field = self.leaf_iface['title']
 			raise
 
 		# Now on to the next adapter (Note: this ignores class-based adapters)
 		# First, get the "required" interface list (from the adapter's standpoint),
 		# removing the think we just adapted out
-		remaining = interface.providedBy( self.context ) - for_interfaces.IPersonalBlog
+		remaining = interface.providedBy( self.context ) - self.leaf_iface
 		# now perform a lookup. The first arg has to be a tuple for whatever reason
 		factory = component.getSiteManager().adapters.lookup( (remaining,), INameChooser )
 		return factory( self.context ).chooseName( name, obj )
+
+
+@component.adapter(for_interfaces.IPersonalBlog)
+@interface.implementer(INameChooser)
+class PersonalBlogEntryNameChooser(AbstractForumEntryNameChooser):
+	"""
+	Handles NTIID-safe name choosing for an entry in a blog.
+	"""
+
+	leaf_iface = for_interfaces.IPersonalBlog
+
+@component.adapter(for_interfaces.IGeneralForum)
+@interface.implementer(INameChooser)
+class GeneralForumEntryNameChooser(AbstractForumEntryNameChooser):
+	"""
+	Handles NTIID-safe name choosing for an general forum entries.
+	"""
+
+	leaf_iface = for_interfaces.IGeneralForum

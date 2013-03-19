@@ -41,6 +41,9 @@ NTIID_TYPE_TOPIC = 'Topic'
 # The subtype of NTIID used to represent a :class:`IPersonalBlogEntry`
 NTIID_TYPE_PERSONAL_BLOG_ENTRY = NTIID_TYPE_TOPIC + ':PersonalBlogEntry'
 
+# The subtype of NTIID used to represent a :class:`.IGeneralTopic`
+NTIID_TYPE_GENERAL_TOPIC = NTIID_TYPE_TOPIC + ':General'
+
 #: The type of NTIID used to represent an individual :class:`IPost`
 NTIID_TYPE_POST = 'Post'
 
@@ -173,3 +176,36 @@ class IPersonalBlogEntry(IHeadlineTopic,
 	__parent__.required = False
 
 	headline = schema.Object(IPersonalBlogEntryPost, title="The main, first post of this topic.")
+
+class IGeneralPost(IPost):
+	containers(b'.IGeneralTopic')
+	__parent__.required = False
+
+class IGeneralHeadlinePost(IGeneralPost,IHeadlinePost):
+	"""The headline in a general-purpose forum."""
+	containers(b'.IGeneralHeadlineTopic')
+	__parent__.required = False
+
+class IGeneralForum(IForum, nti_interfaces.ICreated):
+	"""
+	A more specific type of forum.
+	"""
+	contains(b'IIGeneralTopic')
+	__setitem__.__doc__ = None
+
+class IGeneralTopic(ITopic):
+	containers(IGeneralForum)
+	__parent__.required = False
+	contains(b".IGeneralPost")
+
+class IGeneralHeadlineTopic(IGeneralTopic,IHeadlineTopic,
+							nti_interfaces.ICreated,
+							nti_interfaces.IReadableShared):
+	containers(IGeneralForum)
+	__parent__.required = False
+	headline = schema.Object(IGeneralHeadlinePost, title="The main, first post of this topic.")
+
+class IGeneralComment(IGeneralPost):
+	"""Secondary comments in a general topic."""
+	containers(b'.IGeneralTopic')
+	__parent__.required = False

@@ -49,7 +49,19 @@ class Post(
 class HeadlinePost(Post):
 	pass
 
-# These last two are never permissioned separately, only
+@interface.implementer(for_interfaces.IGeneralPost)
+class GeneralPost(Post):
+	pass
+
+@interface.implementer(for_interfaces.IGeneralHeadlinePost)
+class GeneralHeadlinePost(GeneralPost,HeadlinePost):
+	pass
+
+@interface.implementer(for_interfaces.IGeneralComment)
+class GeneralComment(GeneralPost):
+	pass
+
+# These last are never permissioned separately, only
 # inherited. The inheritance is expressed through the ACLs, but
 # in is convenient for the actual values to be accessible down here too.
 # We have to do something special to override the default value set in the
