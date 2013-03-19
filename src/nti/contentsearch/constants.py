@@ -105,7 +105,7 @@ canvastextshape_ = 'canvastextshape'
 invalid_type_ = '++++invalidtype++++'
 
 ugd_indexable_type_names = (note_, post_, highlight_, redaction_, messageinfo_)
-indexable_type_names = frozenset((content_,) + ugd_indexable_type_names)
+indexable_type_names = (content_,) + ugd_indexable_type_names
 indexable_types_order = dict({ p:x for x, p in enumerate(indexable_type_names) })
 
 ascending_ = u'ascending'

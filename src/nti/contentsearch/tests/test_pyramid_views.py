@@ -23,7 +23,7 @@ class TestPyramidViews(ConfiguringTestBase):
 
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
 		matchdict = {'term':'menos', 'ntiid':ntiid}
-		params = {'accept':'application/vnd.nextthought.personalblogentrypost,application/vnd.nextthought.note',
+		params = {'accept':'application/vnd.nextthought.forums.personalblogentrypost,application/vnd.nextthought.note',
 				  'batchSize':'10', 'batchStart':'0'}
 
 		qo = create_queryobject('harribel@bleach.com', params, matchdict)
@@ -43,7 +43,7 @@ class TestPyramidViews(ConfiguringTestBase):
 
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
 		matchdict = {'term':'arrancar', 'ntiid':ntiid}
-		params = {'exclude':'application/vnd.nextthought.personalblogentrypost,application/vnd.nextthought.note',
+		params = {'exclude':'application/vnd.nextthought.forums.personalblogentrypost,application/vnd.nextthought.note',
 				  'batchSize':'100', 'batchStart':'3'}
 
 		qo = create_queryobject('ulquiorra@bleach.com', params, matchdict)
@@ -84,3 +84,21 @@ class TestPyramidViews(ConfiguringTestBase):
 			self.fail()
 		except:
 			pass
+
+	def test_query_pac(self):
+		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
+		matchdict = {'term':'arrancar', 'ntiid':ntiid}
+		params = {'exclude':'application/vnd.nextthought.redaction',
+				  'accept':	'application/vnd.nextthought.bookcontent,application/vnd.nextthought.highlight,' + \
+				  			'application/vnd.nextthought.note,application/vnd.nextthought.forums.personalblogentrypost,' + \
+				  			'application/vnd.nextthought.forums.personalblogcomment,application/vnd.nextthought.messageinfo',
+				  'sortOn': 'relevance',
+				  'sortOrder' : 'descending',
+				  'batchSize':'78', 'batchStart':'5'}
+		qo = create_queryobject('ulquiorra@bleach.com', params, matchdict)
+		assert_that(qo.username, is_('ulquiorra@bleach.com'))
+		assert_that(qo.term, is_('arrancar'))
+		assert_that(qo.location, is_(ntiid))
+		assert_that(qo.batchSize, is_(78))
+		assert_that(qo.batchStart, is_(5))
+		assert_that(qo.searchOn, is_((u'content', u'note', u'post', u'messageinfo', u'highlight')))

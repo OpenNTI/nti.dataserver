@@ -19,6 +19,7 @@ from zope import interface
 from zope.location import locate
 
 from . import constants
+from .common import sort_search_types
 from .interfaces import IIndexManager
 from ._search_query import QueryObject
 from ._views_utils import get_collection
@@ -87,6 +88,8 @@ def clean_search_query(query, language='en'):
 
 #### from IPython.core.debugger import Tracer; Tracer()() #####
 
+indexable_type_names = frozenset(constants.indexable_type_names)
+
 def create_queryobject(username, params, matchdict, registry=component):
 	# parse params:
 	args = dict(params)
@@ -113,7 +116,8 @@ def create_queryobject(username, params, matchdict, registry=component):
 		if '*/*' not in aset:
 			aset = {get_type_from_mimetype(e) for e in aset}
 			aset.discard(None)
-			args['searchOn'] = aset or (constants.invalid_type_,)
+			aset = aset if aset else (constants.invalid_type_,)
+			args['searchOn'] = sort_search_types(aset)
 	elif exclude:
 		eset = set(exclude.split(','))
 		if '*/*' in eset:
@@ -121,7 +125,7 @@ def create_queryobject(username, params, matchdict, registry=component):
 		else:
 			eset = {get_type_from_mimetype(e) for e in eset}
 			eset.discard(None)
-			args['searchOn'] = constants.indexable_type_names - eset
+			args['searchOn'] = sort_search_types(indexable_type_names - eset)
 
 	batchSize = args.get('batchSize', None)
 	batchStart = args.get('batchStart', None)
