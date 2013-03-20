@@ -29,7 +29,6 @@ from nti.appserver.ugd_edit_views import UGDDeleteView
 from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 
 from nti.appserver.ugd_feed_views import AbstractFeedView
-from nti.appserver._adapters import GenericModeledContentExternalFieldTraverser
 from nti.appserver._util import AbstractTwoStateViewLinkDecorator
 from nti.appserver._view_utils import get_remote_user
 
@@ -482,11 +481,6 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 			return
 		super(PublishLinkDecorator,self).decorateExternalMapping( context, mapping )
 
-
-@component.adapter(frm_interfaces.IPost)
-class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
-	"Disallow updates to the sharedWith field of blog posts/comments"
-	_allowed_fields = tuple( set(GenericModeledContentExternalFieldTraverser._allowed_fields) - set( ('sharedWith',)) )
 
 def _publication_modified( blog_entry ):
 	"Fire off a modified event when the publication status changes. The event notes the sharing has changed."
