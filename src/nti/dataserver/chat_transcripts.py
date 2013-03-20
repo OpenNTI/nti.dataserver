@@ -95,6 +95,7 @@ from nti.dataserver import datastructures
 from nti.dataserver import links
 
 from nti.utils.property import read_alias
+from nti.utils.schema import Object
 
 import nti.externalization.datastructures
 from nti.externalization.datastructures import LocatedExternalDict
@@ -110,8 +111,15 @@ from zope import intid
 from zope.cachedescriptors.property import CachedProperty, Lazy
 
 
-class _IMeetingTranscriptStorage(interface.Interface):
-	pass
+class _IMeetingTranscriptStorage(nti_interfaces.ICreated): # ICreated so they get an ACL
+
+	meeting = Object(chat_interfaces.IMeeting, title="The meeting we hold messages to; may go null")
+
+	def add_message( msg ):
+		"""Store the message with this transcript."""
+
+	def itervalues():
+		"""Iterate all the messages in this transcript"""
 
 @interface.implementer(_IMeetingTranscriptStorage)
 class _AbstractMeetingTranscriptStorage(Persistent,datastructures.ZContainedMixin,datastructures.CreatedModDateTrackingObject):
@@ -372,8 +380,7 @@ def list_transcripts_for_user( username ):
 @component.adapter(_IMeetingTranscriptStorage)
 def TranscriptSummaryAdapter(meeting_storage):
 	"""
-	Registered as a ZCA adapter factory to get a :class:`nti_interfaces.ITranscriptSummary` (which is incidentally
-	an :class:`ext_interfaces.IInternalObjectIO`).
+	Registered as a ZCA adapter factory to get a :class:`nti_interfaces.ITranscriptSummary`.
 
 	Deals gracefully with bad meeting storage objects that are missing components
 	such as a room due to GC.
@@ -462,9 +469,10 @@ from nti.externalization.datastructures import InterfaceObjectIO
 class TranscriptSummaryInternalObjectIO(InterfaceObjectIO):
 	_ext_iface_upper_bound = nti_interfaces.ITranscriptSummary
 
-# For purposes of filtering during UGD queries, make the objects that store
-# messages appear to be transcript summaries, since that is what they will
-# externalize as. TODO: This design is wonky
+# For purposes of filtering during UGD queries, make the objects that
+# store messages (and which are in the users containers) appear to be
+# transcript summaries, since that is what they will externalize as.
+# TODO: This design is wonky
 _AbstractMeetingTranscriptStorage.mimeType = TranscriptSummary.mimeType
 
 @interface.implementer(nti_interfaces.ITranscript)

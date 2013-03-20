@@ -25,13 +25,16 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization import oids
 from nti.externalization.externalization import to_external_object
 from zope import component
+from zope import interface
 from zc import intid as zc_intid
 import persistent
 import cPickle as pickle
 
 
 import unittest
-from nti.tests import validly_provides as verifiably_provides
+
+from nti.tests import verifiably_provides
+from nti.tests import validly_provides
 
 from .mock_dataserver import SharedConfiguringTestBase, WithMockDS,  mock_db_trans
 from nti.chatserver.meeting import _Meeting as Meeting
@@ -64,6 +67,7 @@ class TestChatTranscript(SharedConfiguringTestBase):
 				user = users.User.create_user( username="sjohnson@nextthought.com" )
 				storage = chat_transcripts._UserTranscriptStorageAdapter( user )
 
+				@interface.implementer(chat_interfaces.IMeeting)
 				class Meet(persistent.Persistent):
 					containerId = 'the_container'
 					ID = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID-1'
@@ -89,10 +93,12 @@ class TestChatTranscript(SharedConfiguringTestBase):
 				msg_storage = storage.add_message( Meet(), msg )
 
 				assert_that( msg_storage, is_( not_none() ) )
+				assert_that( msg_storage, verifiably_provides( chat_transcripts._IMeetingTranscriptStorage ) )
 				assert_that( nti_interfaces.ITranscriptSummary( msg_storage ), is_( not_none() ) )
-				assert_that( nti_interfaces.ITranscriptSummary( msg_storage ), verifiably_provides( nti_interfaces.ITranscriptSummary ) )
+				assert_that( nti_interfaces.ITranscriptSummary( msg_storage ), validly_provides( nti_interfaces.ITranscriptSummary ) )
+				assert_that( nti_interfaces.IACLProvider( msg_storage ), validly_provides( nti_interfaces.IACLProvider ) )
 
-				assert_that( nti_interfaces.ITranscript( msg_storage ), verifiably_provides( nti_interfaces.ITranscript ) )
+				assert_that( nti_interfaces.ITranscript( msg_storage ), validly_provides( nti_interfaces.ITranscript ) )
 				assert_that( ext_interfaces.IExternalObject( msg_storage ), is_( not_none() ) )
 
 				ext_obj = to_external_object( msg_storage )
@@ -102,7 +108,7 @@ class TestChatTranscript(SharedConfiguringTestBase):
 				assert_that( ext_obj, has_entry( 'Links', contains( has_entry( 'rel', 'transcript' ) ) ) )
 
 				transcript = storage.transcript_for_meeting( Meet.ID )
-				assert_that( transcript, verifiably_provides( nti_interfaces.ITranscript ) )
+				assert_that( transcript, validly_provides( nti_interfaces.ITranscript ) )
 
 				ext_obj = to_external_object( transcript )
 				assert_that( ext_obj, has_entry( 'Class', 'Transcript' ) )
