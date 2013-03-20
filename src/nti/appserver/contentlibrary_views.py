@@ -409,6 +409,10 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 	if request.accept:
 		accept_type = request.accept.best_match( mts )
 
+	# Certain browsers have a hard time dealing with the Vary:Accept header,
+	# and this is one place that it really matters, so provide an ETag that
+	# is variant-specific (last resort is to ask them not to cache at all)
+	request.response.md5_etag( str(href) + str(accept_type) )
 	if accept_type in (link_mt, link_mt_json):
 		link = links.Link( href, rel="content" )
 		# We cannot render a raw link using the code in pyramid_renderers, but

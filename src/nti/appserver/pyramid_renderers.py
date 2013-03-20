@@ -196,13 +196,15 @@ def default_cache_controller( data, system ):
 		if response.last_modified <= request.if_modified_since:
 			not_mod = pyramid.httpexceptions.HTTPNotModified()
 			not_mod.last_modified = response.last_modified
-			not_mod.cache_control = b'must-revalidate'
+			not_mod.cache_control.must_revalidate = True
 			not_mod.vary = vary_on
 			raise not_mod
 
 	response.vary = vary_on
-	# We also need these to be revalidated
-	response.cache_control = b'must-revalidate'
+	# We also need these to be revalidated; allow the original response
+	# to override
+	if not response.cache_control.no_cache and not response.cache_control.no_store:
+		response.cache_control.must_revalidate = True
 
 	# TODO: ETag support. We would like to have this for If-Match as well,
 	# for better deletion and editing of shared resources. For that to work,
@@ -221,8 +223,8 @@ def uncacheable_cache_controller( data, system ):
 	request = system['request']
 	response = request.response
 
-	response.cache_control = b'no-store'
-	response.last_modified = None
+	response.cache_control.no_cache = True
+	#response.last_modified = None # Why would we do this?
 
 class REST(object):
 
