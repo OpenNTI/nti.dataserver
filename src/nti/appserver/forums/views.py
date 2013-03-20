@@ -62,7 +62,7 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.singleton import SingletonDecorator
 
 from pyramid.view import view_config
-from pyramid.view import view_defaults
+from pyramid.view import view_defaults # NOTE: Only usable on classes
 
 from zope.container.interfaces import INameChooser
 from zope.container.interfaces import ILocation
@@ -300,8 +300,8 @@ class ForumContentsGetView(UGDQueryView):
 		self.request = request
 		super(ForumContentsGetView,self).__init__( request, the_user=self, the_ntiid=self.request.context.__name__ )
 
-		# The user is really the 'owner' of the data
-		self.user = find_interface(  self.request.context, nti_interfaces.IUser )
+		# The user/community is really the 'owner' of the data
+		self.user = find_interface(  self.request.context, nti_interfaces.IEntity )
 
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)
@@ -497,16 +497,25 @@ def _publication_modified( blog_entry ):
 
 	lifecycleevent.modified( blog_entry, *attributes )
 
+
+
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
-			  context=frm_interfaces.IPersonalBlogEntry,
 			  permission=nauth.ACT_UPDATE,
 			  request_method='POST',
-			  name='publish')
+			  context=frm_interfaces.ICommunityHeadlineTopic,
+			  name=PublishLinkDecorator.false_view)
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_UPDATE,
+			  request_method='POST',
+			  context=frm_interfaces.IPersonalBlogEntry,
+			  name=PublishLinkDecorator.false_view)
 def _PublishView(request):
 	blog_entry = request.context
 	interface.alsoProvides( blog_entry, nti_interfaces.IDefaultPublished )
 	_publication_modified( blog_entry )
+
 	# TODO: Hooked directly up to temp_post_added_to_indexer
 	temp_post_added_to_indexer( blog_entry.headline, None )
 	# TODO: Right now we are dispatching this by hand. Use
@@ -518,10 +527,16 @@ def _PublishView(request):
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
+			  context=frm_interfaces.ICommunityHeadlineTopic,
+			  permission=nauth.ACT_UPDATE,
+			  request_method='POST',
+			  name=PublishLinkDecorator.true_view)
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
 			  context=frm_interfaces.IPersonalBlogEntry,
 			  permission=nauth.ACT_UPDATE,
 			  request_method='POST',
-			  name='unpublish')
+			  name=PublishLinkDecorator.true_view)
 def _UnpublishView(request):
 	blog_entry = request.context
 	interface.noLongerProvides( blog_entry, nti_interfaces.IDefaultPublished )

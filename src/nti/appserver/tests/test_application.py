@@ -218,6 +218,15 @@ class _AppTestBaseMixin(object):
 
 		return user
 
+	def _fetch_user_url( self, path, testapp=None, username=None, params=None ):
+		if testapp is None:
+			testapp = self.testapp
+		if username is None:
+			username = self.extra_environ_default_user
+
+		return testapp.get( '/dataserver2/users/' + username + path, params=params )
+
+
 	def resolve_user( self, testapp=None, username=None ):
 		if testapp is None:
 			testapp = self.testapp
@@ -230,6 +239,12 @@ class _AppTestBaseMixin(object):
 		if testapp is None:
 			testapp = self.testapp
 		return testapp.get( '/dataserver2' )
+
+	def fetch_user_activity( self, testapp=None, username=None ):
+		return self._fetch_user_url( '/Activity', testapp=testapp, username=username )
+
+	def fetch_user_root_rugd( self, testapp=None, username=None, params=None ):
+		return self._fetch_user_url( '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData', testapp=testapp, username=username, params=params )
 
 
 from zope.component import eventtesting
