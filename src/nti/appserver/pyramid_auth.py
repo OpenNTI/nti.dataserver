@@ -30,6 +30,7 @@ try:
 	# repoze.who 2.1 switches to its own implementations of
 	# certain HTTP header methods; these are more strict than
 	# paste as used in 2.0. Restore that.
+	# See https://github.com/repoze/repoze.who/pull/8
 	import repoze.who._compat
 	import paste.httpheaders
 	import repoze.who.classifiers
