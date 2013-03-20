@@ -411,8 +411,13 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 
 	# Certain browsers have a hard time dealing with the Vary:Accept header,
 	# and this is one place that it really matters, so provide an ETag that
-	# is variant-specific (last resort is to ask them not to cache at all)
+	# is variant-specific...
 	request.response.md5_etag( str(href) + str(accept_type) )
+	# ...this seems not to have any effect whatsoever in chrome26. we are also
+	# already sending no-cache to this browser (pyramid_renderers.py). the only thing left is no-store,
+	# which is entirely ridiculous
+	request.response.cache_control.no_store = True
+	request.response.cache_control.no_cache = True
 	if accept_type in (link_mt, link_mt_json):
 		link = links.Link( href, rel="content" )
 		# We cannot render a raw link using the code in pyramid_renderers, but
