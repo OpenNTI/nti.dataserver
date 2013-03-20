@@ -903,13 +903,13 @@ class TestApplication(SharedApplicationTestBase):
 
 		res = testapp.get( href, extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
-		assert_that( res.last_modified, is_( none() ) )
+		assert_that( res.cache_control, has_property( 'no_cache', '*' ) )
 		assert_that( res.json_body,	has_entries( 'Last Modified', last_mod, 'href', href ) )
 
 		# And likewise for the collection
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/FriendsLists', extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
-		assert_that( res.last_modified, is_( none() ) )
+		assert_that( res.cache_control, has_property( 'no_cache', '*' ) )
 		assert_that( res.json_body['Items'], has_entry( 'boom@nextthought.com',
 														has_entries( 'Last Modified', last_mod, 'href', href ) ) )
 
