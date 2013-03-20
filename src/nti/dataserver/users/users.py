@@ -158,7 +158,8 @@ class Principal(Entity,sharing.SharingSourceMixin):
 	NTIID_TYPE = None
 	NTIID = property(named_entity_ntiid)
 
-@interface.implementer(nti_interfaces.ICommunity)
+@interface.implementer(nti_interfaces.ICommunity,
+					   loc_interfaces.ISublocations)
 class Community(Entity,sharing.DynamicSharingTargetMixin):
 
 	@classmethod
@@ -187,6 +188,15 @@ class Community(Entity,sharing.DynamicSharingTargetMixin):
 
 	def addFriend( self, friend ):
 		return True # For compatibility with a FriendsList
+
+	def sublocations(self):
+		# See User; this may not be right (but we are less annotated so
+		# it is probably less of a problem). Forums break if they are only
+		# annotations and we don't return them.
+		annotations = zope.annotation.interfaces.IAnnotations(self, {})
+		for val in annotations.values():
+			if getattr( val, '__parent__', None ) is self:
+				yield val
 
 @interface.implementer(nti_interfaces.IEntityContainer)
 @component.adapter(nti_interfaces.ICommunity)
