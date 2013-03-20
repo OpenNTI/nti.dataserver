@@ -71,7 +71,7 @@ else:
 	HAVE_ZCONT = False
 
 TESTS_REQUIRE = [
-'WebTest >= 2.0.2', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
+'WebTest >= 2.0.3', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
 'blessings >= 1.5', # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
 'coverage >= 3.6', # Test coverage
 'fakeredis >= 0.3.1',
@@ -223,8 +223,8 @@ setup(
 		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6', # LRU caching. Dep of Pyramid
-		'repoze.sendmail == 3.2', # 4.0b1 is out and tested to be a drop-in replacement when final
-		'repoze.who == 2.0', # 2.1b1 is out and tested to be a drop-in replacement when final
+		'repoze.sendmail >= 4.0b1', # trunk has some good binary changes
+		'repoze.who >= 2.1b1', #
 		'repoze.zodbconn >= 0.14',
 		 # Requests: http for humans. Requests 1.1.x is depended on by httpie 0.4.
 		 # We use just the generic part of the API and work back to 0.14.
@@ -252,7 +252,7 @@ setup(
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt >= 1.1',
 		#'z3c.coverage >= 1.3.0', # TODO: Do we need this?
-		'z3c.password >= 0.11.1', # password policies
+		'z3c.password >= 1.0.0a1', # password policies
 		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
 		'z3c.ptcompat >= 1.0.1', # Make zope.pagetemplate also use the Chameleon-based ZPT
 		'z3c.table >= 1.0.0', # Flexible table rendering
@@ -319,13 +319,14 @@ setup(
 		'zope.password >= 4.0.2', # encrypted password management
 		'zope.pluggableauth >= 1.3' if HAVE_ZCONT else '', # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		'zope.publisher >= 4.0.0a4',
-		'zope.principalregistry >= 3.7.1', # Global principal registry component for Zope3
+		'zope.principalregistry >= 4.0.0a2', # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.3', # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.sequencesort >= 4.0.1', # advanced locale aware sorting
 		'zope.schema >= 4.3.2',
 		'zope.security[zcml,untrustedpython] >= 4.0.0b1', # >= 4.0.0b1 gets PyPy support!
-		'zope.session >= 3.9.5', # 4.0.0a1 is out, should be fine
+		'zope.securitypolicy >= 4.0.0a1',
+		'zope.session >= 4.0.0a1', # 4.0.0a1 is out, should be fine
 		'zope.site >= 3.9.2' if HAVE_ZCONT else '', # local, persistent ZCA sites. 4.0.0a1 is out and should be fine; zope.container dep
 		'zope.size >= 4.0.1',
 		# parser and renderers for the classic Zope "structured text" markup dialect (STX).
