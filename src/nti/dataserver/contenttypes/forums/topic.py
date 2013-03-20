@@ -78,7 +78,8 @@ class GeneralHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 								  specific=self.__name__ )
 
 @interface.implementer(for_interfaces.ICommunityHeadlineTopic)
-class CommunityHeadlineTopic(GeneralHeadlineTopic):
+class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
+							 GeneralHeadlineTopic):
 	mimeType = None
 	# TODO: The permissioning isn't quite right on this. The sharing targets are the
 	# creators sharing targets but we really want just the community

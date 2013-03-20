@@ -83,9 +83,9 @@ def _plain(mt):
 class _AbstractTestApplicationForums(SharedApplicationTestBase):
 
 	features = SharedApplicationTestBase.features + ('forums',)
-	default_username = 'sjohnson@nextthought.com'
+	default_username = 'original_user@foo' # Not an admin user by default 'sjohnson@nextthought.com'
 	default_entityname = default_username
-	forum_ntiid = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog'
+	forum_ntiid = 'tag:nextthought.com,2011-10:' + default_username + '-Forum:PersonalBlog-Blog'
 	forum_url_relative_to_user = 'Blog'
 	forum_content_type = None
 	forum_headline_class_type = 'Post'
@@ -95,7 +95,7 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 	forum_title = default_username
 	forum_type = None
 	forum_topic_content_type = None
-	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-'
+	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:' + default_username + '-Topic:PersonalBlogEntry-'
 	forum_topic_comment_content_type = None
 
 	def setUp(self):
@@ -371,6 +371,92 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 		res = testapp.get( headline_url )
 		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
 
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_creator_can_publish_topic_simple_visible_to_other_user_in_community(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user( username=self.default_username )
+			user2 = self._create_user( username='user2@foo' )
+
+			# make them share a community
+			community = users.Community.get_community( 'TheCommunity', self.ds ) or users.Community.create_community( username='TheCommunity' )
+			user.join_community( community )
+			user2.join_community( community )
+
+			user2.follow( user )
+
+			user2_username = user2.username
+			user_username = user.username
+
+
+		testapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
+		self.testapp = testapp # default is this user
+		testapp2 = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
+
+		# First user creates the topic
+		data = self._create_post_data_for_POST()
+		topic_data = data.copy()
+
+		# Create the blog
+		res = self._POST_topic_entry( topic_data )
+		topic_url = res.location
+		#topic_ntiid = res.json_body['NTIID']
+		topic_entry_id = res.json_body['ID']
+		self.require_link_href_with_rel( res.json_body, 'contents' )
+		self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
+
+		publish_url = self.require_link_href_with_rel( res.json_body, 'publish' )
+
+
+		# Before its published, the second user can see nothing
+		res = testapp2.get( self.forum_pretty_contents_url )
+		assert_that( res.json_body['Items'], has_length( 0 ) )
+		content_last_mod = res.json_body['Last Modified']
+		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
+
+		# However, he can detect that there is a post
+		# XXX FIXME: This is wrong; TopicCount should be of the visible, not the total, contents
+		res = testapp2.get( self.forum_pretty_url )
+		assert_that( res.json_body, has_entry( 'TopicCount', 1 ) )
+
+		# When it is published...
+		testapp.post( publish_url )
+
+		# Second user is able to see everything about it...
+		def assert_shared_with_community( data ):
+			assert_that( data,  has_entry( 'sharedWith', contains( 'TheCommunity' ) ) )
+
+		# ...Its entry in the table-of-contents...
+		res = testapp2.get( self.forum_pretty_url )
+		assert_that( res.json_body, has_entry( 'TopicCount', 1 ) )
+
+		# ...Its full entry...
+		res = testapp2.get( self.forum_pretty_contents_url )
+		__traceback_info__ = self.forum_pretty_contents_url
+		assert_that( res.json_body['Items'][0], has_entry( 'title', topic_data['title'] ) )
+		assert_that( res.json_body['Items'][0], has_entry( 'headline', has_entry( 'body', topic_data['body'] ) ) )
+		assert_shared_with_community( res.json_body['Items'][0] )
+		# ...Which has an updated last modified...
+		assert_that( res.json_body['Last Modified'], greater_than( content_last_mod ) )
+		content_last_mod = res.json_body['Last Modified']
+		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
+
+		# ...It can be fetched by pretty URL...
+		res = testapp2.get( self.forum_topic_href( topic_entry_id ) )
+		assert_that( res, has_property( 'content_type', self.forum_topic_content_type ) )
+		assert_that( res.json_body, has_entry( 'title', topic_data['title'] ) )
+		assert_that( res.json_body, has_entry( 'ID', topic_entry_id ) )
+		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', topic_data['body'] ) ) )
+		assert_shared_with_community( res.json_body )
+
+		#XXX contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
+		#XXX self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
+		#XXX self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
+
+		# ...It can be fetched directly...
+		testapp2.get( topic_url )
+
+
 	def _create_post_data_for_POST(self):
 		data = { 'Class': self.forum_headline_class_type,
 				 'MimeType': self.forum_headline_content_type,
@@ -447,7 +533,7 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 	forum_content_type = 'application/vnd.nextthought.forums.personalblog+json'
 	forum_headline_class_type = 'Post'
 	forum_topic_content_type = PersonalBlogEntry.mimeType + '+json'
-	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-'
+	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:' + extra_environ_default_user + '-Topic:PersonalBlogEntry-'
 	forum_type = PersonalBlog
 	forum_topic_comment_content_type = 'application/vnd.nextthought.forums.personalblogcomment+json'
 
@@ -518,7 +604,7 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 		entry_ntiid = res.json_body['NTIID']
 
 		# The new topic is accessible at its OID URL, its pretty URL, and by NTIID
-		for url in entry_url, UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + entry_id ), UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
+		for url in entry_url, self.forum_topic_href( entry_id ), UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
 			testapp.get( url )
 
 
@@ -526,12 +612,12 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 		testapp.get( contents_href, status=200 )
 
 		# It shows up in the blog contents
-		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog/contents' )
+		res = testapp.get( self.forum_pretty_contents_url )
 		blog_items = res.json_body['Items']
 		assert_that( blog_items, contains( has_entry( 'title', data['title'] ) ) )
 		# With its links all intact
 		blog_item = blog_items[0]
-		assert_that( blog_item, has_entry( 'href', UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + blog_item['ID'] ) ))
+		assert_that( blog_item, has_entry( 'href', self.forum_topic_href(  blog_item['ID'] ) ))
 		self.require_link_href_with_rel( blog_item, 'contents' )
 		self.require_link_href_with_rel( blog_item, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( blog_item, 'flag' ) # entries can be flagged
@@ -539,7 +625,7 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 
 
 		# It also shows up in the blog's data feed (partially rendered in HTML)
-		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog/feed.atom' )
+		res = testapp.get( self.forum_pretty_url + '/feed.atom' )
 		assert_that( res.content_type, is_( 'application/atom+xml'))
 		res._use_unicode = False
 		pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
@@ -548,24 +634,22 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 
 
 		# And in the user activity view
-		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Activity' )
+		res = self.fetch_user_activity()
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 		assert_that( res.json_body['Items'], has_length( 1 ) ) # make sure no dups
 
 		# And in the user root recursive data stream
-		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData' )
+		res = self.fetch_user_root_rugd()
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 
 		# and, if favorited, filtered to the favorites
 		testapp.post( fav_href )
-		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
-						   params={'filter': 'Favorite'})
+		res = self.fetch_user_root_rugd( params={'filter': 'Favorite'})
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 		self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
 
 		# And in his links
-		res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )
-		self.require_link_href_with_rel( res.json_body['Items'][0], 'Blog' )
+		self.require_link_href_with_rel( self.resolve_user(), 'Blog' )
 
 	_do_test_user_can_POST_new_forum_entry = _do_test_user_can_POST_new_blog_entry
 
@@ -576,12 +660,9 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 
 		testapp = self.testapp
 
-		data = { 'Class': 'Post',
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
 		# Create the blog
-		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
+		data = self._create_post_data_for_POST()
+		res = self._POST_topic_entry( data )
 		entry_url = res.location
 		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
 		entry_ntiid = res.json_body['NTIID']
@@ -1078,6 +1159,7 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 
 	features = SharedApplicationTestBase.features + ('forums',)
+	extra_environ_default_user = _AbstractTestApplicationForums.default_username
 	default_community = 'TheCommunity'
 	default_entityname = default_community
 	forum_url_relative_to_user = 'Forum'
@@ -1121,7 +1203,7 @@ class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 		entry_ntiid = res.json_body['NTIID']
 
 		# The new topic is accessible at its OID URL, its pretty URL, and by NTIID (not yet)
-		for url in entry_url, UQ( '/dataserver2/users/TheCommunity/Forum/' + entry_id ):  #, UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
+		for url in entry_url, self.forum_topic_href( entry_id ):  #, UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
 			testapp.get( url )
 
 
@@ -1129,12 +1211,12 @@ class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 		testapp.get( contents_href, status=200 )
 
 		# It shows up in the blog contents
-		res = testapp.get( '/dataserver2/users/TheCommunity/Forum/contents' )
+		res = testapp.get( self.forum_pretty_contents_url )
 		blog_items = res.json_body['Items']
 		assert_that( blog_items, contains( has_entry( 'title', data['title'] ) ) )
 		# With its links all intact
 		blog_item = blog_items[0]
-		assert_that( blog_item, has_entry( 'href', UQ( '/dataserver2/users/TheCommunity/Forum/' + blog_item['ID'] ) ))
+		assert_that( blog_item, has_entry( 'href', self.forum_topic_href( blog_item['ID'] ) ))
 		self.require_link_href_with_rel( blog_item, 'contents' )
 		#self.require_link_href_with_rel( blog_item, 'like' ) # entries can be liked
 		#self.require_link_href_with_rel( blog_item, 'flag' ) # entries can be flagged
@@ -1142,7 +1224,7 @@ class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 
 
 		# It also shows up in the blog's data feed (partially rendered in HTML)
-		res = testapp.get( '/dataserver2/users/TheCommunity/Forum/feed.atom' )
+		res = testapp.get( self.forum_pretty_url + '/feed.atom' )
 		assert_that( res.content_type, is_( 'application/atom+xml'))
 		res._use_unicode = False
 		pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.

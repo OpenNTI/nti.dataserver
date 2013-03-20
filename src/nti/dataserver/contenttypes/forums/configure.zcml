@@ -52,7 +52,7 @@
 	<adapter factory=".acl._TopicACLProvider"
 			 for=".interfaces.IPersonalBlogEntry"/>
 	<adapter factory=".acl._TopicACLProvider"
-			 for=".interfaces.IGeneralTopic"/>
+			 for=".interfaces.ICommunityHeadlineTopic"/>
 
 	<adapter factory=".acl._ForumACLProvider"
 			 for=".interfaces.IPersonalBlog"/>
