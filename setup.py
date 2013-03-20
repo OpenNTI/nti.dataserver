@@ -234,7 +234,7 @@ setup(
 		#'scss >= 0.8.72', # we no longer use
 		'setproctitle >= 1.1.7', # used by gunicorn
 		'setuptools >= 0.6c11',
-		'simplejson >= 3.1.0',
+		'simplejson >= 3.1.2',
 		'six >= 1.3.0',
 		'sympy == 0.7.2', # sympy-docs-html-0.7.1 is currently greater
 		'stripe >= 1.7.10', # stripe payments
@@ -365,7 +365,7 @@ setup(
 			'logilab_astng >= 0.24.1',
 			'nose-pudb >= 0.1.2', # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 			'pip >= 1.3.1',
-			'pip-tools >= 0.2.1', # command pip-review, pip-dump
+			'pip-tools >= 0.3.1', # command pip-review, pip-dump
 			'pudb >= 2013.1', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 0.27.0' if not IS_PYPY else '',
 			'pyramid_debugtoolbar >= 1.0.4',

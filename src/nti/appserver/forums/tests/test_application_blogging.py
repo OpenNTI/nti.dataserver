@@ -75,6 +75,10 @@ frm_ext = frm_ext
 
 POST_MIME_TYPE = 'application/vnd.nextthought.forums.post'
 
+def _plain(mt):
+	return mt[:-5] if mt.endswith( '+json' ) else mt
+
+
 class _AbstractTestApplicationForums(SharedApplicationTestBase):
 
 	features = SharedApplicationTestBase.features + ('forums',)
@@ -89,6 +93,7 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 	forum_link_rel = None
 	forum_title = default_username
 	forum_topic_content_type = None
+	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-'
 
 	def setUp(self):
 		super(_AbstractTestApplicationForums,self).setUp()
@@ -98,6 +103,11 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 		self.default_username_url = UQ('/dataserver2/users/' + self.default_username )
 		self.default_username_pages_url = self.default_username_url + '/Pages'
 
+	def forum_topic_ntiid( self, entryid ):
+		return self.forum_topic_ntiid_base + entryid
+
+	def forum_topic_href( self, entryid ):
+		return self.forum_pretty_url + '/' + UQ( entryid )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_entity_has_default_forum( self ):
@@ -127,13 +137,9 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_cannot_POST_new_forum_entry_to_pages( self ):
-		"""POSTing an IPost to the default user URLs does nothing"""
-
 		testapp = self.testapp
 
-		data = { 'Class': self.forum_headline_class_type,
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
+		data = self._create_post_data_for_POST()
 
 		# No containerId
 		testapp.post_json( self.default_username_url, data, status=422 )
@@ -158,7 +164,7 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 
 		topic_res = self.testapp.get( res.json_body['href'] ) # as well as its internal href
 		assert_that( topic_res.json_body, has_entry( 'title', data['title'] ) )
-		assert_that( topic_res.json_body, has_entry( 'MimeType', self.forum_topic_content_type ) )
+		assert_that( topic_res.json_body, has_entry( 'MimeType', _plain(self.forum_topic_content_type) ) )
 		topic_href = res.json_body['href']
 
 		flag_href = self.require_link_href_with_rel( res.json_body, 'flag' )
@@ -168,6 +174,88 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 		self.require_link_href_with_rel( res2.json_body, 'flag.metoo' )
 		self.forbid_link_with_rel( res2.json_body, 'flag' )
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_forum_entry_header_only( self ):
+		data = self._create_post_data_for_POST()
+
+		# With neither, but a content-type header
+		del data['MimeType']
+		del data['Class']
+
+		self._do_test_user_can_POST_new_forum_entry( data, content_type=POST_MIME_TYPE )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_forum_entry_class_only( self ):
+		data = self._create_post_data_for_POST()
+		del data['MimeType']
+
+		self._do_test_user_can_POST_new_forum_entry( data )
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_forum_entry_mime_type_only( self ):
+		data = self._create_post_data_for_POST()
+		del data['Class']
+
+		self._do_test_user_can_POST_new_forum_entry( data )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_forum_entry_uncensored_by_default( self ):
+		data = self._create_post_data_for_POST()
+		data['title'] = test_application_censoring.bad_word
+		data['body'] = [test_application_censoring.bad_val]
+
+		self._do_test_user_can_POST_new_forum_entry( data )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_PUT_to_edit_existing_forum_topic_headline( self ):
+
+		testapp = self.testapp
+
+		data = self._create_post_data_for_POST()
+		res = self._POST_topic_entry( data )
+
+		topic_url = res.location
+		assert_that( topic_url, contains_string( self.forum_pretty_url ) )
+		# I can PUT directly to the headline's edit URL
+		headline_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
+		# Which is not 'pretty'
+		assert_that( headline_url, contains_string( 'Objects' ) )
+
+		data['body'] = ['An updated body']
+		testapp.put_json( headline_url, data )
+
+		# And check it by getting the whole container
+		res = testapp.get( topic_url )
+		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
+
+		# Changing the title changes the title of the container, but NOT the url or ID of anything
+		data['title'] = 'A New Title'
+		testapp.put_json( headline_url, data )
+		res = testapp.get( topic_url )
+		assert_that( res.json_body, has_entry( 'headline', has_entry( 'title', data['title'] ) ) )
+		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
+
+		# Pretty URL did not change
+		testapp.get( topic_url )
+
+		# I can also PUT to the pretty path to the headline
+		data['body'] = ['An even newer body']
+
+		testapp.put_json( topic_url + 'headline', data )
+		res = testapp.get( topic_url )
+		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
+
+		# And I can use the 'fields' URL to edit just parts of it, including title and body
+		for field in 'body', 'title':
+			data[field] = 'Edited with fields'
+			if field == 'body': data[field] = [data[field]]
+
+			testapp.put_json( headline_url + '/++fields++' + field, data[field] )
+			res = testapp.get( topic_url )
+			assert_that( res.json_body, has_entry( 'headline', has_entry( field, data[field] ) ) )
+
+
 	def _create_post_data_for_POST(self):
 		data = { 'Class': self.forum_headline_class_type,
 				 'MimeType': self.forum_headline_content_type,
@@ -175,7 +263,7 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 				 'body': ['My first thought'] }
 		return data
 
-	def _POST_topic_entry( self, data, content_type=None, status_only=None, expected_data=None ):
+	def _POST_topic_entry( self, data, content_type=None, status_only=None ):
 		testapp = self.testapp
 
 		kwargs = {'status': 201}
@@ -195,14 +283,48 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 
 		return res
 
+	def _do_simple_tests_for_POST_of_topic_entry( self, data, content_type=None, status_only=None, expected_data=None ):
+		res = self._POST_topic_entry( data, content_type=content_type, status_only=status_only )
+		if status_only:
+			return res
+
+		# Returns the representation of the new topic created
+		data = expected_data or data
+		assert_that( res, has_property( 'content_type', self.forum_topic_content_type ) )
+		assert_that( res.json_body, has_entry( 'ID', ntiids.make_specific_safe( data['title'] ) ) )
+		entry_id = res.json_body['ID']
+		assert_that( res.json_body, has_entries( 'title', data['title'],
+												 'NTIID', self.forum_topic_ntiid( entry_id ),
+												 'ContainerId', self.forum_ntiid,
+												 'href', self.forum_topic_href( entry_id ) ) )
+
+		assert_that( res.json_body['headline'], has_entries( 'title', data['title'],
+															 'body',  data['body'] ) )
+
+		#contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
+		#self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
+		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
+		self.require_link_href_with_rel( res.json_body, 'edit' ) # entries can be 'edited' (actually they cannot, shortcut for ui)
+		#fav_href = self.require_link_href_with_rel( res.json_body, 'favorite' ) # entries can be favorited
+
+		# The headline cannot be any of those things
+		headline_json = res.json_body['headline']
+		self.forbid_link_with_rel( headline_json, 'like' )
+		self.forbid_link_with_rel( headline_json, 'flag' )
+		self.forbid_link_with_rel( headline_json, 'favorite' )
+
+		return res
+
+	_do_test_user_can_POST_new_forum_entry = _do_simple_tests_for_POST_of_topic_entry
+
 class TestApplicationBlogging(_AbstractTestApplicationForums):
 
 	extra_environ_default_user = _AbstractTestApplicationForums.default_username
 	forum_link_rel = 'Blog'
 	forum_content_type = 'application/vnd.nextthought.forums.personalblog+json'
 	forum_headline_class_type = 'Post'
-	forum_topic_content_type = PersonalBlogEntry.mimeType
-
+	forum_topic_content_type = PersonalBlogEntry.mimeType + '+json'
+	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-'
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog_in_service_doc( self ):
@@ -226,68 +348,6 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 		# Default blog is empty, not in my links
 		user = self.resolve_user()
 		self.forbid_link_with_rel( user, self.forum_link_rel )
-
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_blog_entry_class( self ):
-		"""POSTing an IPost to the blog URL automatically creates a new topic"""
-
-		# With a Class value:
-		data = { 'Class': self.forum_headline_class_type,
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
-		self._do_test_user_can_POST_new_blog_entry( data )
-
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_blog_entry_mime_type_only( self ):
-
-
-		data = { 'Class': 'Post',
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
-		# With only a MimeType value:
-		del data['Class']
-		data['MimeType'] = POST_MIME_TYPE
-		self._do_test_user_can_POST_new_blog_entry( data )
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_blog_entry_both( self ):
-
-		# With a Class value:
-		data = { 'Class': 'Post',
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
-		# With both
-		data['Class'] = 'Post'
-		data['MimeType'] = POST_MIME_TYPE
-		self._do_test_user_can_POST_new_blog_entry( data )
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_blog_entry_header( self ):
-
-		# With a Class value:
-		data = { 'Class': 'Post',
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
-
-		# With neither, but a content-type header
-		del data['Class']
-
-		self._do_test_user_can_POST_new_blog_entry( data, content_type=Post.mimeType )
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_blog_entry_uncensored_by_default( self ):
-		data = { 'Class': 'Post',
-				 'title': test_application_censoring.bad_word,
-				 'body': [test_application_censoring.bad_val] }
-
-		data['MimeType'] = Post.mimeType
-		self._do_test_user_can_POST_new_blog_entry( data )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_blog_entry_censoring_for_coppa_user( self ):
@@ -314,36 +374,20 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 
 
 	def _do_test_user_can_POST_new_blog_entry( self, data, content_type=None, status_only=None, expected_data=None ):
-		testapp = self.testapp
 
-		res = self._POST_topic_entry( data, content_type=content_type, status_only=status_only, expected_data=expected_data )
+		res = self._do_simple_tests_for_POST_of_topic_entry( data, content_type=content_type, status_only=status_only, expected_data=expected_data )
 		if status_only:
 			return res
 
-		# Returns the representation of the new topic created
+		testapp = self.testapp
 		data = expected_data or data
-		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblogentry+json' ) )
-		assert_that( res.json_body, has_entry( 'ID', ntiids.make_specific_safe( data['title'] ) ) )
 		entry_id = res.json_body['ID']
-		assert_that( res.json_body, has_entries( 'title', data['title'],
-												 'NTIID', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-' + entry_id,
-												 'ContainerId', 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog',
-												 'href', UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/' + entry_id ) ))
-
-		assert_that( res.json_body['headline'], has_entries( 'title', data['title'],
-															 'body',  data['body'] ) )
 
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
 		self.require_link_href_with_rel( res.json_body, 'edit' ) # entries can be 'edited' (actually they cannot, shortcut for ui)
 		fav_href = self.require_link_href_with_rel( res.json_body, 'favorite' ) # entries can be favorited
-
-		# The headline cannot be any of those things
-		headline_json = res.json_body['headline']
-		self.forbid_link_with_rel( headline_json, 'like' )
-		self.forbid_link_with_rel( headline_json, 'flag' )
-		self.forbid_link_with_rel( headline_json, 'favorite' )
 
 		entry_url = res.location
 		entry_ntiid = res.json_body['NTIID']
@@ -398,6 +442,8 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 		res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )
 		self.require_link_href_with_rel( res.json_body['Items'][0], 'Blog' )
 
+	_do_test_user_can_POST_new_forum_entry = _do_test_user_can_POST_new_blog_entry
+
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_blog_entry_resulting_in_blog_being_sublocation( self ):
 		"""Creating a Blog causes it to be a sublocation of the user"""
@@ -424,56 +470,6 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 			_recur( user )
 
 			assert_that( all_subs, has_item( is_( PersonalBlog ) ) )
-
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_PUT_to_edit_existing_blog_entry( self ):
-		"""PUTting an IPost to the 'headline' of a blog entry edits the story"""
-
-		testapp = self.testapp
-
-		data = { 'Class': 'Post',
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
-		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
-		entry_url = res.location
-		# I can PUT directly to the object URL
-		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
-
-		data['body'] = ['An updated body']
-
-		testapp.put_json( story_url, data )
-
-		# And check it by getting the whole container
-		res = testapp.get( entry_url )
-		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
-
-		# Changing the title changes the title of the container, but NOT the url or ID of anything
-		data['title'] = 'A New Title'
-		testapp.put_json( story_url, data )
-		res = testapp.get( entry_url )
-		assert_that( res.json_body, has_entry( 'headline', has_entry( 'title', data['title'] ) ) )
-		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
-
-		# Pretty URL did not change
-		testapp.get( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My_New_Blog' ) )
-
-		# I can also PUT to the pretty path to the object
-		data['body'] = ['An even newer body']
-
-		testapp.put_json( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/My_New_Blog/headline' ), data )
-		res = testapp.get( entry_url )
-		assert_that( res.json_body, has_entry( 'headline', has_entry( 'body', data['body'] ) ) )
-
-		# And I can use the 'fields' URL to edit just parts of it, including title and body
-		for field in 'body', 'title':
-			data[field] = 'Edited with fields'
-			if field == 'body': data[field] = [data[field]]
-
-			testapp.put_json( story_url + '/++fields++' + field, data[field] )
-			res = testapp.get( entry_url )
-			assert_that( res.json_body, has_entry( 'headline', has_entry( field, data[field] ) ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_cannot_change_sharing_on_blog_entry( self ):
@@ -1084,9 +1080,11 @@ class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 	default_entityname = default_community
 	forum_url_relative_to_user = 'Forum'
 	forum_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Forum:GeneralCommunity-Forum'
+	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-'
+
 	forum_content_type = 'application/vnd.nextthought.forums.communityforum+json'
 	forum_headline_class_type = 'Post'
-	forum_topic_content_type = CommunityHeadlineTopic.mimeType
+	forum_topic_content_type = CommunityHeadlineTopic.mimeType + '+json'
 	forum_link_rel = 'Forum'
 	forum_title = forum_link_rel
 
@@ -1104,50 +1102,16 @@ class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 
 
 	def _do_test_user_can_POST_new_forum_entry( self, data, content_type=None, status_only=None, expected_data=None ):
-		testapp = self.testapp
-
-		kwargs = {'status': 201}
-		meth = testapp.post_json
-		post_data = data
-		if content_type:
-			kwargs['headers'] = {b'Content-Type': str(content_type)}
-			# testapp.post_json forces the content-type header
-			meth = testapp.post
-			post_data = json.dumps( data )
-		if status_only:
-			kwargs['status'] = status_only
-
-		res = meth(  '/dataserver2/users/TheCommunity/Forum',
-					 post_data,
-					 **kwargs )
-
+		res = self._do_simple_tests_for_POST_of_topic_entry( data, content_type=content_type, status_only=status_only, expected_data=expected_data )
 		if status_only:
 			return res
+		testapp = self.testapp
 
 		# Returns the representation of the new topic created
 		data = expected_data or data
-		assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.communityheadlinetopic+json' ) )
-		assert_that( res.json_body, has_entry( 'ID', ntiids.make_specific_safe( data['title'] ) ) )
-		entry_id = res.json_body['ID']
-		assert_that( res.json_body, has_entries( 'title', data['title'],
-												 'NTIID', 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-' + entry_id,
-												 'ContainerId', self.forum_ntiid,
-												 'href', UQ( '/dataserver2/users/TheCommunity/Forum/' + entry_id ) ))
-
-		assert_that( res.json_body['headline'], has_entries( 'title', data['title'],
-															 'body',  data['body'] ) )
-
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
-		#self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
-		#self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
-		self.require_link_href_with_rel( res.json_body, 'edit' ) # entries can be 'edited' (actually they cannot, shortcut for ui)
-		#fav_href = self.require_link_href_with_rel( res.json_body, 'favorite' ) # entries can be favorited
-
-		# The headline cannot be any of those things
+		entry_id = res.json_body['ID']
 		headline_json = res.json_body['headline']
-		self.forbid_link_with_rel( headline_json, 'like' )
-		self.forbid_link_with_rel( headline_json, 'flag' )
-		self.forbid_link_with_rel( headline_json, 'favorite' )
 
 		entry_url = res.location
 		entry_ntiid = res.json_body['NTIID']
