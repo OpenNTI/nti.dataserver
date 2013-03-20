@@ -44,6 +44,7 @@ class TestCommon(ConfiguringTestBase):
 
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogentrypost'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogcomment'), is_('post'))
+		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.post'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.post'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.content'), is_('content'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.redaction'), is_('redaction'))
