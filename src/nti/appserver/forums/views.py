@@ -55,6 +55,7 @@ from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
 from nti.dataserver.contenttypes.forums.post import Post
 from nti.dataserver.contenttypes.forums.post import GeneralHeadlinePost
+from nti.dataserver.contenttypes.forums.post import GeneralForumComment
 
 
 from nti.externalization import interfaces as ext_interfaces
@@ -197,7 +198,7 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 			  permission=nauth.ACT_CREATE,
 			  context=frm_interfaces.IPersonalBlog,
 			  request_method='POST' )
-class PersonalBlogEntryPostView(_AbstractForumPostView):
+class PersonalBlogPostView(_AbstractForumPostView):
 	""" Given an incoming IPost, creates a new topic in the blog """
 
 	_constraint = frm_interfaces.IPersonalBlogEntryPost.providedBy
@@ -216,18 +217,9 @@ class CommunityForumPostView(_AbstractForumPostView):
 	_override_content_type = GeneralHeadlinePost.mimeType
 	_factory = CommunityHeadlineTopic
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_CREATE,
-			  # NOTE that everywhere we use IHeadlineTopic with different verbs, we must stay at that level.
-			  # we cannot mix this with IPersonalBlogEntry
-			  context=frm_interfaces.IHeadlineTopic,
-			  request_method='POST' )
-class TopicPostView(_AbstractIPostPOSTView):
 
-	_constraint = frm_interfaces.IPersonalBlogComment.providedBy
+class _AbstractTopicPostView(_AbstractIPostPOSTView):
 
-	_override_content_type = PersonalBlogComment.mimeType
 	_allowed_content_types = ('Post', Post.mimeType, 'Posts')
 
 	def _do_call( self ):
@@ -236,7 +228,7 @@ class TopicPostView(_AbstractIPostPOSTView):
 		topic = self.request.context
 
 		# The actual name of these isn't tremendously important
-		name = topic.generateId( prefix='post' )
+		name = topic.generateId( prefix='comment' )
 
 		lifecycleevent.created( incoming_post )
 
@@ -251,11 +243,32 @@ class TopicPostView(_AbstractIPostPOSTView):
 
 		return incoming_post
 
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_CREATE,
+			  context=frm_interfaces.ICommunityHeadlineTopic,
+			  request_method='POST' )
+class CommunityHeadlineTopicPostView(_AbstractTopicPostView):
+
+	_constraint = frm_interfaces.IGeneralForumComment.providedBy
+	_override_content_type = GeneralForumComment.mimeType
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_CREATE,
+			  context=frm_interfaces.IPersonalBlogEntry,
+			  request_method='POST' )
+class PersonalBlogEntryPostView(_AbstractTopicPostView):
+
+	_constraint = frm_interfaces.IPersonalBlogComment.providedBy
+	_override_content_type = PersonalBlogComment.mimeType
+
 
 @view_config( context=frm_interfaces.IHeadlineTopic )
 @view_config( context=frm_interfaces.IForum )
 @view_config( context=frm_interfaces.ICommunityForum )
 @view_config( context=frm_interfaces.IPersonalBlog ) # need to re-list this one
+@view_config( context=frm_interfaces.IPersonalBlogEntry ) # need to re-list this one
 @view_config( context=frm_interfaces.IPersonalBlogComment ) # need to re-list this one
 @view_config( context=frm_interfaces.IPersonalBlogEntryPost ) # need to re-list this one
 @view_config( context=frm_interfaces.ICommunityHeadlineTopic ) # need to re-list
@@ -344,13 +357,13 @@ class PostPutView(UGDPutView):
 	# Exists entirely for registration sake
 
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_DELETE,
-			  context=frm_interfaces.IHeadlineTopic,
-			  request_method='DELETE' )
+@view_config( context=frm_interfaces.IPersonalBlogEntry )
+@view_defaults( route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_DELETE,
+				request_method='DELETE' )
 class HeadlineTopicDeleteView(UGDDeleteView):
-	""" Deleting an existing forum """
+	""" Deleting an existing topic """
 
 	## Deleting winds up in users.users.py:user_willRemoveInteIdForContainedObject,
 	## thus posting the usual activitystream DELETE notifications

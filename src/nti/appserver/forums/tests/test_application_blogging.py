@@ -33,6 +33,7 @@ from hamcrest import greater_than
 from hamcrest import has_key
 
 from nti.tests import is_empty
+from nti.tests import time_monotonically_increases
 import fudge
 
 from nti.appserver.tests.test_application import TestApp as _TestApp
@@ -95,6 +96,7 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 	forum_type = None
 	forum_topic_content_type = None
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-'
+	forum_topic_comment_content_type = None
 
 	def setUp(self):
 		super(_AbstractTestApplicationForums,self).setUp()
@@ -277,6 +279,31 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 			res = testapp.get( topic_url )
 			assert_that( res.json_body, has_entry( 'headline', has_entry( field, data[field] ) ) )
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@time_monotonically_increases
+	def test_user_can_POST_new_comment( self ):
+		#"""POSTing an IPost to the URL of an existing IStoryTopic adds a comment"""
+
+		testapp = self.testapp
+
+		# Create the topic
+		res = self._POST_topic_entry()
+		entry_url = res.location
+		entry_ntiid = res.json_body['NTIID']
+
+
+		# (Same user) comments on blog by POSTing a new post
+		data = self._create_comment_data_for_POST()
+
+		res = testapp.post_json( entry_url, data, status=201 )
+
+		assert_that( res.status_int, is_( 201 ) )
+		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
+		assert_that( res.json_body, has_entry( 'body', data['body'] ) )
+		assert_that( res.json_body, has_entry( 'ContainerId', entry_ntiid) )
+		assert_that( res, has_property( 'content_type', self.forum_topic_comment_content_type ) )
+		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
+
 
 	def _create_post_data_for_POST(self):
 		data = { 'Class': self.forum_headline_class_type,
@@ -285,8 +312,16 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 				 'body': ['My first thought'] }
 		return data
 
-	def _POST_topic_entry( self, data, content_type=None, status_only=None ):
+	def _create_comment_data_for_POST(self):
+		data = { 'Class': 'Post',
+				 'title': 'A comment',
+				 'body': ['This is a comment body'] }
+		return data
+
+	def _POST_topic_entry( self, data=None, content_type=None, status_only=None ):
 		testapp = self.testapp
+		if data is None:
+			data = self._create_post_data_for_POST()
 
 		kwargs = {'status': 201}
 		meth = testapp.post_json
@@ -348,6 +383,7 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 	forum_topic_content_type = PersonalBlogEntry.mimeType + '+json'
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-'
 	forum_type = PersonalBlog
+	forum_topic_comment_content_type = 'application/vnd.nextthought.forums.personalblogcomment+json'
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog_in_service_doc( self ):
@@ -548,17 +584,9 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 2 ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	@fudge.patch('time.time')
-	def test_user_can_POST_new_comment_PUT_to_edit_flag_and_DELETE( self, fake_time ):
+	@time_monotonically_increases
+	def test_user_can_POST_new_comment_PUT_to_edit_flag_and_DELETE( self ):
 		"""POSTing an IPost to the URL of an existing IStoryTopic adds a comment"""
-		# make time monotonically increasing
-		i = [0]
-		def incr():
-			i[0] += 1
-			return i[0]
-		fake_time.is_callable()
-		fake_time._callable.call_replacement = incr
-		fake_time()
 
 		testapp = self.testapp
 
@@ -635,17 +663,8 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 
 
 	@WithSharedApplicationMockDS
-	@fudge.patch('time.time')
-	def test_user_sharing_community_can_GET_and_POST_new_comments(self, fake_time):
-		# make time monotonically increasing
-		i = [0]
-		def incr():
-			i[0] += 1
-			return i[0]
-		fake_time.is_callable()
-		fake_time._callable.call_replacement = incr
-		fake_time()
-
+	@time_monotonically_increases
+	def test_user_sharing_community_can_GET_and_POST_new_comments(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( username='original_user@foo' )
 			user2 = self._create_user( username='user2@foo' )
@@ -1086,6 +1105,7 @@ class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 	forum_title = forum_link_rel
 	forum_type = CommunityForum
 
+	forum_topic_comment_content_type = 'application/vnd.nextthought.forums.generalforumcomment+json'
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_forum_entry_class( self ):

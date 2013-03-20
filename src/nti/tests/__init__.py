@@ -17,10 +17,33 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import subprocess
 import sys
+import functools
 
 
 from hamcrest.core.base_matcher import BaseMatcher
 import hamcrest
+import fudge
+
+def time_monotonically_increases(func):
+	"""
+	Decorate a unittest method with this function to cause the value of :func:`time.time` to
+	monotonically increase by one each time it is called. This ensures things like
+	last modified dates always increase.
+	"""
+	@fudge.patch('time.time')
+	@functools.wraps(func)
+	def wrapper( self, fake_time, *args, **kwargs ):
+		# make time monotonically increasing
+		i = [0]
+		def incr():
+			i[0] += 1
+			return i[0]
+		fake_time.is_callable()
+		fake_time._callable.call_replacement = incr
+		fake_time()
+		func( self, *args, **kwargs )
+	return wrapper
+
 
 # Increase verbosity of deprecations
 from nti import deprecated
