@@ -191,7 +191,7 @@ def default_cache_controller( data, system ):
 		vary_on.append( b'Host' )
 
 	end_to_end_reload = False # http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4
-	if request.pragma != 'no-cache' and not request.cache_control.no_cache:
+	if request.pragma == 'no-cache' or request.cache_control.no_cache: # None if not set, '*' if set without names
 		end_to_end_reload = True
 	# Handle Not Modified
 	if not end_to_end_reload and response.status_int == 200 and response.last_modified is not None and request.if_modified_since:
@@ -210,6 +210,7 @@ def default_cache_controller( data, system ):
 	# to override, trumped by the original request
 	if end_to_end_reload:
 		response.cache_control.no_cache = True
+		response.pragma = 'no-cache'
 	elif not response.cache_control.no_cache and not response.cache_control.no_store:
 		response.cache_control.must_revalidate = True
 
