@@ -38,8 +38,7 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 	family = BTrees.family64
 
 	def __init__(self):
-		self.time_map = self.family.IO.BTree()
-		self.purchases = self.family.OO.OOTreeSet()
+		self.purchases = self.family.IO.BTree()
 
 	@property
 	def user(self):
@@ -47,21 +46,14 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 
 	def register_purchase(self, purchase):
 		start_time = purchase.StartTime
-		self.time_map[_time_to_64bit_int(start_time)] = purchase
-		self.purchases.add(purchase)
+		self.purchases[_time_to_64bit_int(start_time)] = purchase
 		locate(purchase, self, repr(purchase))
 		lifecycleevent.added(purchase)
 
 	add_purchase = register_purchase
 
 	def remove_purchase(self, purchase):
-		self.time_map.pop(_time_to_64bit_int(purchase.StartTime), None)
-		try:
-			self.purchases.remove(purchase)
-		except KeyError:
-			pass
-		else:
-			# Let this throw if needs to: abort the transaction
+		if self.purchases.pop(_time_to_64bit_int(purchase.StartTime), None):
 			lifecycleevent.removed(purchase)
 
 	def get_purchase(self, pid):
@@ -73,14 +65,14 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 		return p.State if p else None
 
 	def get_pending_purchases(self):
-		for p in self.time_map.values():
+		for p in self.purchases.values():
 			if p.is_pending() or p.is_unknown():
 				yield p
 
 	def get_pending_purchase_for(self, items, on_behalf_of=None):
 		items = to_frozenset(items)
 		on_behalf_of = to_frozenset(on_behalf_of)
-		for p in self.time_map.values():
+		for p in self.purchases.values():
 			if (p.is_pending() or p.is_unknown()) and \
 				p.Items.intersection(items) and \
 				(not on_behalf_of or p.actors().intersection(on_behalf_of)):
@@ -90,18 +82,18 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 	def get_purchase_history(self, start_time=None, end_time=None):
 		start_time = _time_to_64bit_int(start_time or 0)
 		end_time = _time_to_64bit_int(end_time or sys.maxint)
-		for t, p in self.time_map.iteritems():
+		for t, p in self.purchases.iteritems():
 			if t > end_time:
 				break
 			elif t >= start_time and t <= end_time:
 				yield p
 
 	def values(self):
-		for p in self.time_map.values():
+		for p in self.purchases.values():
 			yield p
 
 	def __iter__(self):
-		return iter(self.time_map.values())
+		return iter(self.purchases.values())
 
 	def __len__(self):
 		return len(self.purchases)

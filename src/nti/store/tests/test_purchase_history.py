@@ -119,18 +119,13 @@ class TestPurchaseHistoryAdapter(ConfiguringTestBase):
 				hist.add_purchase(pa)
 
 				# check internal pointers
-				hist.time_map._check()
 				hist.purchases._check()
 				# check value consistency
-				BTrees.check.check(hist.time_map)
 				BTrees.check.check(hist.purchases)
-
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			hist = _get_hist()
-			hist.time_map._check()
 			hist.purchases._check()
-			BTrees.check.check(hist.time_map)
 			BTrees.check.check(hist.purchases)
 			# BTrees.check.display( hist.purchases )
 
