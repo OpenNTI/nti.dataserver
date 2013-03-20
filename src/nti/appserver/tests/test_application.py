@@ -894,6 +894,7 @@ class TestApplication(SharedApplicationTestBase):
 
 		# the object itself is uncachable as far as HTTP goes
 		assert_that( res.cache_control, has_property( 'no_cache', '*' ) )
+		assert_that( res, has_property( 'last_modified', none() ) )
 		# But the last modified value is preserved in the body, and did update
 		# when we PUT
 		assert_that( res.json_body, has_entry( 'Last Modified', greater_than( now ) ) )

@@ -222,17 +222,36 @@ def default_cache_controller( data, system ):
 	# false promises
 	# response.md5_etag( body, True )
 
-@interface.implementer(app_interfaces.IResponseCacheController)
-@component.adapter(app_interfaces.IUncacheableInResponse)
-def uncacheable_factory( data ):
-	return uncacheable_cache_controller
 
+@interface.provider( app_interfaces.IResponseCacheController )
 def uncacheable_cache_controller( data, system ):
 	request = system['request']
 	response = request.response
 
 	response.cache_control.no_cache = True
-	#response.last_modified = None # Why would we do this?
+	return response
+
+@interface.implementer(app_interfaces.IResponseCacheController)
+@component.adapter(app_interfaces.IUncacheableInResponse)
+def uncacheable_factory( data ):
+	return uncacheable_cache_controller
+
+@interface.provider( app_interfaces.IResponseCacheController )
+def uncacheable_no_LastModified_cache_controller( data, system ):
+	"""
+	Use this when the response shouldn't be cached, and we have
+	no valid Last-Modified data to provide the browser (any that
+	we think we have so far is invalid for some reason and will be
+	discarded).
+	"""
+
+	response = uncacheable_cache_controller( data, system )
+	response.last_modified = None # Why would we do this?
+
+@interface.implementer(app_interfaces.IResponseCacheController)
+@component.adapter(app_interfaces.IUncacheableUnModifiedInResponse)
+def uncacheable_unmodified_factory( data ):
+	return uncacheable_no_LastModified_cache_controller
 
 class REST(object):
 

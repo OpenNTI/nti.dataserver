@@ -279,6 +279,13 @@ class IUncacheableInResponse(interface.Interface):
 	Marker interface for things that should not be cached.
 	"""
 
+class IUncacheableUnModifiedInResponse(IUncacheableInResponse):
+	"""
+	Marker interface for things that not only should not be cached but should provide
+	no Last-Modified date at all.
+	"""
+
+
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder # BWC
 
 ###
