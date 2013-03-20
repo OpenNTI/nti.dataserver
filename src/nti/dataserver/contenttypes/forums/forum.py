@@ -45,21 +45,27 @@ class Forum(Implicit,
 	sharingTargets = ()
 	TopicCount = property(nti_containers.CheckingLastModifiedBTreeContainer.__len__)
 
-@interface.implementer(frm_interfaces.IPersonalBlog)
-class PersonalBlog(Forum):
-
-	__external_can_create__ = False
-
+class _SingleInstanceNTIIDMixin(object):
 	creator = None
-	__name__ = __blog_name__ = __default_name__ = u'Blog'
+	__name__ = None
+	ntiid_type = None
 
 	@CachedProperty
 	def NTIID(self):
 		"NTIID is defined only after the creator is set"
 		return ntiids.make_ntiid( date=ntiids.DATE,
 								  provider=self.creator.username,
-								  nttype=frm_interfaces.NTIID_TYPE_PERSONAL_BLOG,
-								  specific=self.__name__ ) # By definition, there is only one blog per user...
+								  nttype=self.ntiid_type,
+								  specific=self.__name__ )
+
+@interface.implementer(frm_interfaces.IPersonalBlog)
+class PersonalBlog(Forum,_SingleInstanceNTIIDMixin):
+
+	__external_can_create__ = False
+
+	creator = None
+	__name__ = __blog_name__ = __default_name__ = u'Blog'
+	ntiid_type = frm_interfaces.NTIID_TYPE_PERSONAL_BLOG
 
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
@@ -110,22 +116,17 @@ def NoBlogAdapter(user):
 	return None
 
 @interface.implementer(frm_interfaces.IGeneralForum)
-class GeneralForum(Forum):
+class GeneralForum(Forum,_SingleInstanceNTIIDMixin):
 	__external_can_create__ = False
 	creator = None
 	__name__ = __default_name__ = 'Forum'
-
-	@CachedProperty
-	def NTIID(self):
-		"NTIID is defined only after the creator is set"
-		return ntiids.make_ntiid( date=ntiids.DATE,
-								  provider=self.creator.username,
-								  nttype=frm_interfaces.NTIID_TYPE_GENERAL_FORUM,
-								  specific=self.__name__ )
+	ntiid_type = frm_interfaces.NTIID_TYPE_GENERAL_FORUM
 
 @interface.implementer(frm_interfaces.ICommunityForum)
 class CommunityForum(GeneralForum):
 	__external_can_create__ = False
+	ntiid_type = frm_interfaces.NTIID_TYPE_COMMUNITY_FORUM
+
 
 @interface.implementer(frm_interfaces.ICommunityForum)
 @component.adapter(nti_interfaces.ICommunity)

@@ -23,6 +23,7 @@
 
 	<!-- NTIID resolvers -->
 	<utility factory=".ntiids._BlogResolver" name="Forum:PersonalBlog" />
+	<utility factory=".ntiids._CommunityForumResolver" name="Forum:GeneralCommunity" />
 	<utility factory=".ntiids._BlogEntryResolver" name="Topic:PersonalBlogEntry" />
 
 

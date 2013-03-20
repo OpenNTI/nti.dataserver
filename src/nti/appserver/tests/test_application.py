@@ -225,6 +225,12 @@ class _AppTestBaseMixin(object):
 
 		return testapp.get( '/dataserver2/ResolveUser/' + username ).json_body['Items'][0]
 
+	def fetch_service_doc( self, testapp=None ):
+		if testapp is None:
+			testapp = self.testapp
+		return testapp.get( '/dataserver2' )
+
+
 from zope.component import eventtesting
 class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 	features = ()

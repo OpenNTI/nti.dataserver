@@ -15,24 +15,50 @@ from zope import interface
 
 from . import interfaces as frm_interfaces
 from nti.ntiids import interfaces as nid_interfaces
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.ntiids import ntiids
 from nti.dataserver.ntiids import AbstractUserBasedResolver
 
 
-@interface.implementer( nid_interfaces.INTIIDResolver )
+@interface.implementer(nid_interfaces.INTIIDResolver)
 class _BlogResolver(AbstractUserBasedResolver):
-	"Resolves the one blog that belongs to a user, if one does exist."
+	"""
+	Resolves the one blog that belongs to a user, if one does exist.
+
+	Register with the name :const:`.NTIID_TYPE_PERSONAL_BLOG`.
+	"""
+
+	required_iface = nti_interfaces.IUser
 
 	def _resolve( self, ntiid, user ):
 		return frm_interfaces.IPersonalBlog( user, None )
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _BlogEntryResolver(AbstractUserBasedResolver):
-	"""Resolves a single blog entry within a user."""
+	"""
+	Resolves a single blog entry within a user.
+
+	Register with the name :const:`.NTIID_TYPE_PERSONAL_BLOG_ENTRY`.
+	"""
+
+	required_iface = nti_interfaces.IUser
 
 	def _resolve( self, ntiid, user ):
 		blog_name = ntiids.get_specific( ntiid )
 		blog = frm_interfaces.IPersonalBlog( user, {} )
 		# because of this, __name__ of the entry must be NTIID safe
 		return blog.get( blog_name )
+
+@interface.implementer(nid_interfaces.INTIIDResolver)
+class _CommunityForumResolver(AbstractUserBasedResolver):
+	"""
+	Resolves the one forum that belongs to a community, if one does exist.
+
+	Register with the name :const:`.NTIID_TYPE_COMMUNITY_FORUM`
+	"""
+
+	required_iface = nti_interfaces.ICommunity
+
+	def _resolve( self, ntiid, community ):
+		return frm_interfaces.ICommunityForum( community, None )

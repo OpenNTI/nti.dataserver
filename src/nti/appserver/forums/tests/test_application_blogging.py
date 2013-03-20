@@ -67,20 +67,65 @@ from pyquery import PyQuery
 
 POST_MIME_TYPE = 'application/vnd.nextthought.forums.post'
 
-class TestApplicationBlogging(SharedApplicationTestBase):
+class _AbstractTestApplicationForums(SharedApplicationTestBase):
 
 	features = SharedApplicationTestBase.features + ('forums',)
-	default_origin = b'http://alpha.nextthought.com' # only enabled in this site policy
+	default_username = 'sjohnson@nextthought.com'
+	default_entityname = default_username
+	forum_ntiid = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog'
+	forum_url_relative_to_user = 'Blog'
+	forum_content_type = 'application/vnd.nextthought.forums.personalblog+json'
+	forum_pretty_url = None
+	forum_link_rel = None
+	forum_title = default_username
+
+	def setUp(self):
+		super(_AbstractTestApplicationForums,self).setUp()
+		self.forum_pretty_url = UQ('/dataserver2/users/' + self.default_entityname + '/' + self.forum_url_relative_to_user)
+		self.forum_ntiid_url = UQ('/dataserver2/NTIIDs/' + self.forum_ntiid)
+		self.forum_pretty_contents_url = self.forum_pretty_url + '/contents'
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_entity_has_default_forum( self ):
+		testapp = self.testapp
+
+		# The forum can be found at a pretty url, and by NTIID
+		pretty_url = self.forum_pretty_url
+		ntiid_url = self.forum_ntiid_url
+		for url in pretty_url, ntiid_url:
+			res = testapp.get( url )
+			blog_res = res
+			assert_that( res, has_property( 'content_type', self.forum_content_type ) )
+			assert_that( res.json_body, has_entry( 'title', self.forum_title ) )
+			assert_that( res.json_body, has_entry( 'NTIID', self.forum_ntiid ) )
+
+			# We have a contents URL
+			contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
+			# Make sure we're getting back pretty URLs...
+			assert_that( contents_href, is_( self.forum_pretty_contents_url ) )
+			# which is empty...
+			testapp.get( contents_href, status=200 )
+
+			# The forum cannot be liked, favorited, flagged
+			self.forbid_link_with_rel( blog_res.json_body, 'like' )
+			self.forbid_link_with_rel( blog_res.json_body, 'flag' )
+			self.forbid_link_with_rel( blog_res.json_body, 'favorite' )
+
+class TestApplicationBlogging(_AbstractTestApplicationForums):
+
+	extra_environ_default_user = _AbstractTestApplicationForums.default_username
+	forum_link_rel = 'Blog'
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog_in_service_doc( self ):
-		testapp = self.testapp
-		res = testapp.get( '/dataserver2/' )
-		service_doc = res.json_body
-		[collections] = [x['Items'] for x in service_doc['Items'] if x['Title'] == 'sjohnson@nextthought.com']
-		assert_that( collections, has_item( has_entry( 'Title', 'Blog' ) ) )
-		[blog_entry] = [x for x in collections if x['Title'] == 'Blog']
-		assert_that( blog_entry, has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Blog' ) )
+
+		service_doc = self.fetch_service_doc( ).json_body
+
+		[collections] = [x['Items'] for x in service_doc['Items'] if x['Title'] == self.default_username]
+		assert_that( collections, has_item( has_entry( 'Title', self.forum_link_rel ) ) )
+		[blog_entry] = [x for x in collections if x['Title'] == self.forum_link_rel]
+		assert_that( blog_entry, has_entry( 'href', self.forum_pretty_url ) )
 		assert_that( blog_entry, has_entry( 'accepts', has_length( 2 ) ) )
 
 		# Make sure we cannot post these things to the Pages collection
@@ -90,33 +135,11 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_has_default_blog( self ):
-		testapp = self.testapp
+	def test_users_default_blog_not_in_links( self ):
+		# Default blog is empty, not in my links
+		user = self.resolve_user()
+		self.forbid_link_with_rel( user, self.forum_link_rel )
 
-		# The blog can be found at a pretty url, and by NTIID
-		pretty_url = '/dataserver2/users/sjohnson@nextthought.com/Blog'
-		ntiid_url = '/dataserver2/NTIIDs/tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog'
-		for url in pretty_url, ntiid_url:
-			res = testapp.get( url )
-			blog_res = res
-			assert_that( res, has_property( 'content_type', 'application/vnd.nextthought.forums.personalblog+json' ) )
-			assert_that( res.json_body, has_entry( 'title', 'sjohnson@nextthought.com' ) )
-
-			# We have a contents URL
-			contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
-			# Make sure we're getting back pretty URLs...
-			assert_that( contents_href, is_( UQ( '/dataserver2/users/sjohnson@nextthought.com/Blog/contents' ) ))
-			# which is empty...
-			testapp.get( contents_href, status=200 )
-
-			# ...And thus not in my links
-			res = testapp.get( '/dataserver2/ResolveUser/sjohnson@nextthought.com' )
-			assert_that( res.json_body['Items'][0]['Links'], does_not( has_item( has_entry( 'rel', 'Blog' ) ) ) )
-
-			# The blog cannot be liked, favorited, flagged
-			self.forbid_link_with_rel( blog_res.json_body, 'like' )
-			self.forbid_link_with_rel( blog_res.json_body, 'flag' )
-			self.forbid_link_with_rel( blog_res.json_body, 'favorite' )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_cannot_POST_new_blog_entry_to_pages( self ):
@@ -1028,15 +1051,17 @@ class TestApplicationBlogging(SharedApplicationTestBase):
 		_check_canvas( res, res.json_body['body'][1], acc_to_other=True )
 
 
-class TestApplicationCommunityForums(SharedApplicationTestBase):
+class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 
 	features = SharedApplicationTestBase.features + ('forums',)
 	default_community = 'TheCommunity'
+	default_entityname = default_community
+	forum_url_relative_to_user = 'Forum'
+	forum_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Forum:GeneralCommunity-Forum'
+	forum_content_type = 'application/vnd.nextthought.forums.communityforum+json'
+	forum_link_rel = 'Forum'
+	forum_title = forum_link_rel
 
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_GET_empty_forum(self):
-		"The user can GET the forum for the community"
-		self.testapp.get( '/dataserver2/users/TheCommunity/Forum' )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_forum_entry_class( self ):
@@ -1078,7 +1103,7 @@ class TestApplicationCommunityForums(SharedApplicationTestBase):
 		entry_id = res.json_body['ID']
 		assert_that( res.json_body, has_entries( 'title', data['title'],
 												 'NTIID', 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-' + entry_id,
-												 'ContainerId', 'tag:nextthought.com,2011-10:TheCommunity-Forum:General-Forum',
+												 'ContainerId', self.forum_ntiid,
 												 'href', UQ( '/dataserver2/users/TheCommunity/Forum/' + entry_id ) ))
 
 		assert_that( res.json_body['headline'], has_entries( 'title', data['title'],
