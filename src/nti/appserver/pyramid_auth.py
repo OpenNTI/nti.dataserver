@@ -25,10 +25,25 @@ from nti.dataserver import interfaces as nti_interfaces
 from repoze.who.middleware import PluggableAuthenticationMiddleware
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
-from pyramid_who.classifiers import forbidden_challenger
-from repoze.who.classifiers import default_request_classifier
-from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
+try:
+	# repoze.who 2.1 switches to its own implementations of
+	# certain HTTP header methods; these are more strict than
+	# paste as used in 2.0. Restore that.
+	import repoze.who._compat
+	import paste.httpheaders
+	import repoze.who.classifiers
+	for mod in repoze.who._compat, repoze.who.classifiers:
+		mod.REQUEST_METHOD = paste.httpheaders.REQUEST_METHOD
+		mod.CONTENT_TYPE = paste.httpheaders.CONTENT_TYPE
+		mod.USER_AGENT = paste.httpheaders.USER_AGENT
+except ImportError:
+	# must still be on 2.0
+	pass
+
+from pyramid_who.whov2 import WhoV2AuthenticationPolicy
+from repoze.who.classifiers import default_request_classifier
+from pyramid_who.classifiers import forbidden_challenger
 
 from nti.dataserver.users import User
 from nti.dataserver import authentication as nti_authentication
@@ -255,14 +270,8 @@ def _nti_request_classifier( environ ):
 	requests in which the browser is being used by an application and we don't
 	want to generate a native authentication dialog.
 	"""
-	try:
-		result = default_request_classifier( environ )
-	except KeyError: # pragma: no cover
-		# repoze.who 2.1 requires certain keys that 2.0 did not.
-		# Not all our test cases provide all these keys. Production should never hit this
-		if not environ.get( 'paste.testing' ):
-			raise
-		result = 'browser'
+
+	result = default_request_classifier( environ )
 
 	if result == 'browser':
 		# OK, but is it an programmatic browser request where we'd like to

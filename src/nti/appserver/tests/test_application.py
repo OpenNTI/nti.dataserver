@@ -666,7 +666,7 @@ class TestApplication(SharedApplicationTestBase):
 
 		testapp = TestApp( self.app )
 		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/FriendsLists', extra_environ=self._make_extra_environ() )
-		assert_that( res.cache_control, has_property( 'no_store', True ) )
+		assert_that( res.cache_control, has_property( 'no_cache', '*' ) )
 
 	@WithSharedApplicationMockDS
 	def test_post_device(self):
@@ -892,7 +892,7 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
 
 		# the object itself is uncachable as far as HTTP goes
-		assert_that( res.last_modified, is_( none() ) )
+		assert_that( res.cache_control, has_property( 'no_cache', '*' ) )
 		# But the last modified value is preserved in the body, and did update
 		# when we PUT
 		assert_that( res.json_body, has_entry( 'Last Modified', greater_than( now ) ) )
