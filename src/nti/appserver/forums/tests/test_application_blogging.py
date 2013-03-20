@@ -56,9 +56,9 @@ from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.tests import mock_dataserver
 
-from nti.dataserver.contenttypes.forums.forum import PersonalBlog
+from nti.dataserver.contenttypes.forums.forum import PersonalBlog, CommunityForum
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry, CommunityHeadlineTopic
-from nti.dataserver.contenttypes.forums.post import Post
+
 
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
@@ -92,6 +92,7 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 	forum_pretty_url = None
 	forum_link_rel = None
 	forum_title = default_username
+	forum_type = None
 	forum_topic_content_type = None
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-'
 
@@ -206,6 +207,27 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 		data['body'] = [test_application_censoring.bad_val]
 
 		self._do_test_user_can_POST_new_forum_entry( data )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_forum_entry_resulting_in_blog_being_sublocation( self ):
+		# Creating a Blog causes it to be a sublocation of the entity
+		# This way deleting/moving the user correctly causes the blog to be deleted/moved
+
+		self._POST_topic_entry( self._create_post_data_for_POST() )
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			entity = users.Entity.get_entity( self.default_entityname )
+
+			all_subs = set()
+			def _recur( i ):
+				all_subs.add( i )
+				subs = ISublocations( i, None )
+				if subs:
+					for x in subs.sublocations():
+						_recur( x )
+			_recur( entity )
+
+			assert_that( all_subs, has_item( is_( self.forum_type ) ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_PUT_to_edit_existing_forum_topic_headline( self ):
@@ -325,6 +347,7 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 	forum_headline_class_type = 'Post'
 	forum_topic_content_type = PersonalBlogEntry.mimeType + '+json'
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Topic:PersonalBlogEntry-'
+	forum_type = PersonalBlog
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog_in_service_doc( self ):
@@ -444,32 +467,6 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 
 	_do_test_user_can_POST_new_forum_entry = _do_test_user_can_POST_new_blog_entry
 
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_blog_entry_resulting_in_blog_being_sublocation( self ):
-		"""Creating a Blog causes it to be a sublocation of the user"""
-		# This way deleting/moving the user correctly causes the blog to be deleted/moved
-
-		testapp = self.testapp
-
-		data = { 'Class': 'Post',
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
-		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data, status=201 )
-
-		with mock_dataserver.mock_db_trans( self.ds ):
-			user = users.User.get_user( 'sjohnson@nextthought.com' )
-
-			all_subs = set()
-			def _recur( i ):
-				all_subs.add( i )
-				subs = ISublocations( i, None )
-				if subs:
-					for x in subs.sublocations():
-						_recur( x )
-			_recur( user )
-
-			assert_that( all_subs, has_item( is_( PersonalBlog ) ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_cannot_change_sharing_on_blog_entry( self ):
@@ -1087,6 +1084,7 @@ class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 	forum_topic_content_type = CommunityHeadlineTopic.mimeType + '+json'
 	forum_link_rel = 'Forum'
 	forum_title = forum_link_rel
+	forum_type = CommunityForum
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
