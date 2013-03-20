@@ -187,9 +187,14 @@ def default_cache_controller( data, system ):
 	# Depending on site policies, they may also vary based on the origin
 	if b'origin' in request.headers:
 		vary_on.append( b'Origin' )
+	if request.host:
+		vary_on.append( b'Host' )
 
+	end_to_end_reload = False # http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4
+	if request.pragma != 'no-cache' and not request.cache_control.no_cache:
+		end_to_end_reload = True
 	# Handle Not Modified
-	if response.status_int == 200 and response.last_modified is not None and request.if_modified_since:
+	if not end_to_end_reload and response.status_int == 200 and response.last_modified is not None and request.if_modified_since:
 		# Since we know a modification date, respect If-Modified-Since. The spec
 		# says to only do this on a 200 response
 		# This is a pretty poor time to do it, after we've done all this work
@@ -202,8 +207,10 @@ def default_cache_controller( data, system ):
 
 	response.vary = vary_on
 	# We also need these to be revalidated; allow the original response
-	# to override
-	if not response.cache_control.no_cache and not response.cache_control.no_store:
+	# to override, trumped by the original request
+	if end_to_end_reload:
+		response.cache_control.no_cache = True
+	elif not response.cache_control.no_cache and not response.cache_control.no_store:
 		response.cache_control.must_revalidate = True
 
 	# TODO: ETag support. We would like to have this for If-Match as well,
