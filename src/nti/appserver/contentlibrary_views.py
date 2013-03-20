@@ -415,7 +415,7 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None):
 		# we need to return one to get the right mime type header. So we
 		# fake it by rendering here
 		def _t_e_o():
-			return {"Class": "Link", "MimeType": link_mt, "href": href, "rel": "content"}
+			return {"Class": "Link", "MimeType": link_mt, "href": href, "rel": "content", 'Last Modified': lastModified or None}
 		link.toExternalObject = _t_e_o
 		interface.alsoProvides( link, loc_interfaces.ILocationInfo )
 		link.__parent__ = request.context

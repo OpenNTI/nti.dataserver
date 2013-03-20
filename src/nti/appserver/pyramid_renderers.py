@@ -179,6 +179,14 @@ def render_enclosure( data, system ):
 def default_cache_controller( data, system ):
 	request = system['request']
 	response = request.response
+	vary_on = []
+	# our responses vary based on the Accept parameter, since
+	# that informs representation
+	if request.accept:
+		vary_on.append( b'Accept' )
+	# Depending on site policies, they may also vary based on the origin
+	if b'origin' in request.headers:
+		vary_on.append( b'Origin' )
 
 	# Handle Not Modified
 	if response.status_int == 200 and response.last_modified is not None and request.if_modified_since:
@@ -189,12 +197,10 @@ def default_cache_controller( data, system ):
 			not_mod = pyramid.httpexceptions.HTTPNotModified()
 			not_mod.last_modified = response.last_modified
 			not_mod.cache_control = b'must-revalidate'
-			not_mod.vary = b'Accept'
+			not_mod.vary = vary_on
 			raise not_mod
 
-	# our responses vary based on the Accept parameter, since
-	# that informs representation
-	response.vary = b'Accept'
+	response.vary = vary_on
 	# We also need these to be revalidated
 	response.cache_control = b'must-revalidate'
 
