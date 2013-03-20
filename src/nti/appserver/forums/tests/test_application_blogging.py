@@ -57,13 +57,21 @@ from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
-from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
+from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry, CommunityHeadlineTopic
 from nti.dataserver.contenttypes.forums.post import Post
 
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
 from urllib import quote as UQ
 from pyquery import PyQuery
+
+
+# TODO: FIXME: This solves an order-of-imports issue, where
+# mimeType fields are only added to the classes when externalization is
+# loaded (usually with ZCML, so in practice this is not a problem,
+# but statically and in isolated unit-tests, it could be)
+from nti.dataserver.contenttypes.forums import externalization as frm_ext
+frm_ext = frm_ext
 
 POST_MIME_TYPE = 'application/vnd.nextthought.forums.post'
 
@@ -74,16 +82,21 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 	default_entityname = default_username
 	forum_ntiid = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-Forum:PersonalBlog-Blog'
 	forum_url_relative_to_user = 'Blog'
-	forum_content_type = 'application/vnd.nextthought.forums.personalblog+json'
+	forum_content_type = None
+	forum_headline_class_type = 'Post'
+	forum_headline_content_type = POST_MIME_TYPE
 	forum_pretty_url = None
 	forum_link_rel = None
 	forum_title = default_username
+	forum_topic_content_type = None
 
 	def setUp(self):
 		super(_AbstractTestApplicationForums,self).setUp()
 		self.forum_pretty_url = UQ('/dataserver2/users/' + self.default_entityname + '/' + self.forum_url_relative_to_user)
 		self.forum_ntiid_url = UQ('/dataserver2/NTIIDs/' + self.forum_ntiid)
 		self.forum_pretty_contents_url = self.forum_pretty_url + '/contents'
+		self.default_username_url = UQ('/dataserver2/users/' + self.default_username )
+		self.default_username_pages_url = self.default_username_url + '/Pages'
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
@@ -112,10 +125,84 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 			self.forbid_link_with_rel( blog_res.json_body, 'flag' )
 			self.forbid_link_with_rel( blog_res.json_body, 'favorite' )
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_cannot_POST_new_forum_entry_to_pages( self ):
+		"""POSTing an IPost to the default user URLs does nothing"""
+
+		testapp = self.testapp
+
+		data = { 'Class': self.forum_headline_class_type,
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+
+		# No containerId
+		testapp.post_json( self.default_username_url, data, status=422 )
+		testapp.post_json( self.default_username_pages_url, data, status=422 )
+
+		data['ContainerId'] = 'tag:foo:bar'
+		testapp.post_json( self.default_username_url, data, status=422 )
+		res = testapp.post_json( self.default_username_pages_url, data, status=422 )
+
+		assert_that( res.json_body, has_entry( 'code', 'InvalidContainerType' ) )
+		assert_that( res.json_body, has_entry( 'field', 'ContainerId' ) )
+		assert_that( res.json_body, has_entry( 'message', is_not( is_empty() ) ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_forum_entry_and_flagging_returns_same_href( self ):
+		data = self._create_post_data_for_POST()
+
+		res = self._POST_topic_entry( data, status_only=201 )
+
+		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
+		self.testapp.get( res.location ) # ensure it can be fetched from here
+
+		topic_res = self.testapp.get( res.json_body['href'] ) # as well as its internal href
+		assert_that( topic_res.json_body, has_entry( 'title', data['title'] ) )
+		assert_that( topic_res.json_body, has_entry( 'MimeType', self.forum_topic_content_type ) )
+		topic_href = res.json_body['href']
+
+		flag_href = self.require_link_href_with_rel( res.json_body, 'flag' )
+		res2 = self.testapp.post( flag_href )
+
+		assert_that( res2.json_body['href'], is_( topic_href ) )
+		self.require_link_href_with_rel( res2.json_body, 'flag.metoo' )
+		self.forbid_link_with_rel( res2.json_body, 'flag' )
+
+	def _create_post_data_for_POST(self):
+		data = { 'Class': self.forum_headline_class_type,
+				 'MimeType': self.forum_headline_content_type,
+				 'title': 'My New Blog',
+				 'body': ['My first thought'] }
+		return data
+
+	def _POST_topic_entry( self, data, content_type=None, status_only=None, expected_data=None ):
+		testapp = self.testapp
+
+		kwargs = {'status': 201}
+		meth = testapp.post_json
+		post_data = data
+		if content_type:
+			kwargs['headers'] = {b'Content-Type': str(content_type)}
+			# testapp.post_json forces the content-type header
+			meth = testapp.post
+			post_data = json.dumps( data )
+		if status_only:
+			kwargs['status'] = status_only
+
+		res = meth(  self.forum_pretty_url,
+					 post_data,
+					 **kwargs )
+
+		return res
+
 class TestApplicationBlogging(_AbstractTestApplicationForums):
 
 	extra_environ_default_user = _AbstractTestApplicationForums.default_username
 	forum_link_rel = 'Blog'
+	forum_content_type = 'application/vnd.nextthought.forums.personalblog+json'
+	forum_headline_class_type = 'Post'
+	forum_topic_content_type = PersonalBlogEntry.mimeType
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog_in_service_doc( self ):
@@ -142,63 +229,16 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_cannot_POST_new_blog_entry_to_pages( self ):
-		"""POSTing an IPost to the default user URL does nothing"""
-
-		testapp = self.testapp
-
-		data = { 'Class': 'Post',
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
-		# No containerId
-		testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com', data, status=422 )
-		testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Pages', data, status=422 )
-
-		data['ContainerId'] = 'tag:foo:bar'
-		testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com', data, status=422 )
-		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Pages', data, status=422 )
-
-		assert_that( res.json_body, has_entry( 'code', 'InvalidContainerType' ) )
-		assert_that( res.json_body, has_entry( 'field', 'ContainerId' ) )
-		assert_that( res.json_body, has_entry( 'message', is_not( is_empty() ) ) )
-
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_blog_entry_class( self ):
 		"""POSTing an IPost to the blog URL automatically creates a new topic"""
 
 		# With a Class value:
-		data = { 'Class': 'Post',
+		data = { 'Class': self.forum_headline_class_type,
 				 'title': 'My New Blog',
 				 'body': ['My first thought'] }
 
 		self._do_test_user_can_POST_new_blog_entry( data )
 
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_blog_flag_returns_same_href( self ):
-		"""POSTing an IPost to the blog URL automatically creates a new topic"""
-
-		# With a Class value:
-		data = { 'Class': 'Post',
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
-		res = self._do_test_user_can_POST_new_blog_entry( data, status_only=201 )
-
-		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
-		self.testapp.get( res.location )
-		blog_res = self.testapp.get( res.json_body['href'] )
-		assert_that( blog_res.json_body, has_entry( 'title', 'My New Blog' ) )
-		assert_that( blog_res.json_body, has_entry( 'MimeType', PersonalBlogEntry.mimeType ) )
-		blog_href = res.json_body['href']
-
-		flag_href = self.require_link_href_with_rel( res.json_body, 'flag' )
-		res2 = self.testapp.post( flag_href )
-
-		assert_that( res2.json_body['href'], is_( blog_href ) )
-		self.require_link_href_with_rel( res2.json_body, 'flag.metoo' )
-		self.forbid_link_with_rel( res2.json_body, 'flag' )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_blog_entry_mime_type_only( self ):
@@ -276,21 +316,7 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 	def _do_test_user_can_POST_new_blog_entry( self, data, content_type=None, status_only=None, expected_data=None ):
 		testapp = self.testapp
 
-		kwargs = {'status': 201}
-		meth = testapp.post_json
-		post_data = data
-		if content_type:
-			kwargs['headers'] = {b'Content-Type': str(content_type)}
-			# testapp.post_json forces the content-type header
-			meth = testapp.post
-			post_data = json.dumps( data )
-		if status_only:
-			kwargs['status'] = status_only
-
-		res = meth(  '/dataserver2/users/sjohnson@nextthought.com/Blog',
-					 post_data,
-					 **kwargs )
-
+		res = self._POST_topic_entry( data, content_type=content_type, status_only=status_only, expected_data=expected_data )
 		if status_only:
 			return res
 
@@ -1059,6 +1085,8 @@ class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 	forum_url_relative_to_user = 'Forum'
 	forum_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Forum:GeneralCommunity-Forum'
 	forum_content_type = 'application/vnd.nextthought.forums.communityforum+json'
+	forum_headline_class_type = 'Post'
+	forum_topic_content_type = CommunityHeadlineTopic.mimeType
 	forum_link_rel = 'Forum'
 	forum_title = forum_link_rel
 
@@ -1068,7 +1096,7 @@ class TestApplicationCommunityForums(_AbstractTestApplicationForums):
 		"""POSTing an IPost to the forum URL automatically creates a new topic"""
 
 		# With a Class value:
-		data = { 'Class': 'Post',
+		data = { 'Class': self.forum_headline_class_type,
 				 'title': 'My New Blog',
 				 'body': ['My first thought'] }
 

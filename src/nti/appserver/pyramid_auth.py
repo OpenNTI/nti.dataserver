@@ -26,22 +26,6 @@ from repoze.who.middleware import PluggableAuthenticationMiddleware
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 
-try:
-	# repoze.who 2.1 switches to its own implementations of
-	# certain HTTP header methods; these are more strict than
-	# paste as used in 2.0. Restore that.
-	# See https://github.com/repoze/repoze.who/pull/8
-	import repoze.who._compat
-	import paste.httpheaders
-	import repoze.who.classifiers
-	for mod in repoze.who._compat, repoze.who.classifiers:
-		mod.REQUEST_METHOD = paste.httpheaders.REQUEST_METHOD
-		mod.CONTENT_TYPE = paste.httpheaders.CONTENT_TYPE
-		mod.USER_AGENT = paste.httpheaders.USER_AGENT
-except ImportError:
-	# must still be on 2.0
-	pass
-
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 from repoze.who.classifiers import default_request_classifier
 from pyramid_who.classifiers import forbidden_challenger
