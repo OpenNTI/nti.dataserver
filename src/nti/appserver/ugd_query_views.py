@@ -733,16 +733,23 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 							break
 					result_list = batch
 					result['FilteredTotalItemCount'] = len(result_list) # NOTE: This is a minimum
-				result_list = Batch( result_list, batch_start, batch_size )
-				# Insert links to the next and previous batch
-				next_batch, prev_batch = result_list.next, result_list.previous
-				for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
-					if batch is not None and batch != result_list:
-						batch_params = self.request.params.copy()
-						batch_params['batchStart'] = batch.start
-						link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
-						link_next = Link( link_next_href, rel=rel )
-						result.setdefault( 'Links', [] ).append( link_next )
+
+				# If we security filtered here, we may no longer have enough items to fulfil
+				# the request
+				if batch_start >= len(result_list):
+					result_list = []
+					needs_security = False
+				else:
+					result_list = Batch( result_list, batch_start, batch_size )
+					# Insert links to the next and previous batch
+					next_batch, prev_batch = result_list.next, result_list.previous
+					for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
+						if batch is not None and batch != result_list:
+							batch_params = self.request.params.copy()
+							batch_params['batchStart'] = batch.start
+							link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
+							link_next = Link( link_next_href, rel=rel )
+							result.setdefault( 'Links', [] ).append( link_next )
 
 			result['Items'] = result_list
 
