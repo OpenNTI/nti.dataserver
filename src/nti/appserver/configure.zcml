@@ -55,6 +55,8 @@
 	<include package="." file="configure_workspaces.zcml" />
 
 	<adapter factory=".pyramid_renderers.uncacheable_factory" />
+	<adapter factory=".pyramid_renderers.uncacheable_unmodified_factory" />
+
 
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
@@ -121,7 +123,7 @@
 		TODO: That's a really blunt tool. Do better.
 	-->
 	<class class="nti.dataserver.chat_transcripts.TranscriptSummary">
-		<implements interface=".interfaces.IUncacheableInResponse" />
+		<implements interface=".interfaces.IUncacheableUnModifiedInResponse" />
 	</class>
 
 	<!-- ******** -->
@@ -272,10 +274,10 @@
 		 presence, both individually and as a group.
 	-->
 	<class class="nti.dataserver.users.FriendsList">
-		<implements interface=".interfaces.IUncacheableInResponse" />
+		<implements interface=".interfaces.IUncacheableUnModifiedInResponse" />
 	</class>
 	<class class=".workspaces.FriendsListContainerCollection">
-		<implements interface=".interfaces.IUncacheableInResponse" />
+		<implements interface=".interfaces.IUncacheableUnModifiedInResponse" />
 	</class>
 
 	<!-- Forking events -->
