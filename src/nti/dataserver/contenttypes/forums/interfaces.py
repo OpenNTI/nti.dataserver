@@ -222,9 +222,17 @@ class IGeneralHeadlineTopic(IGeneralTopic,IHeadlineTopic,
 	__parent__.required = False
 	headline = schema.Object(IGeneralHeadlinePost, title="The main, first post of this topic.")
 
+
+class ICommunityHeadlinePost(IGeneralHeadlinePost):
+	"""The headline of a community topic"""
+	containers(b'.ICommunityHeadlineTopic')
+	__parent__.required = False
+
 class ICommunityHeadlineTopic(IGeneralHeadlineTopic):
 	containers(ICommunityForum)
 	__parent__.required = False
+	headline = schema.Object(ICommunityHeadlinePost, title="The main, first post of this topic.")
+
 
 class IGeneralForumComment(IGeneralPost, nti_interfaces.IShouldHaveTraversablePath):
 	"""Secondary comments in a general topic."""

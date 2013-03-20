@@ -330,6 +330,47 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 		assert_that( eventtesting.getEvents( lifecycleevent.IObjectRemovedEvent ), has_length( 1 ) )
 		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 2 ) )
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_creator_cannot_change_sharing_on_topic_or_any_child( self ):
+		#""" Sharing is fixed and cannot be changed for a blog entry, its story, or a comment"""
+
+		testapp = self.testapp
+		res = self._POST_topic_entry()
+
+		topic_url = res.location
+		headline_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
+
+		eventtesting.clearEvents()
+
+		# Field updates
+		# Cannot change the entry
+		testapp.put_json( topic_url + '/++fields++sharedWith',
+						  ['Everyone'],
+						  # Because of the way traversal is right now, this results in a 404,
+						  # when really we want a 403
+						  status=404)
+
+		# Cannot change the story
+		testapp.put_json( headline_url + '/++fields++sharedWith',
+						  ['Everyone'],
+						  status=404) # same as above
+
+
+		# Nor when putting the whole thing
+		# The entry itself simply cannot be modified (predicate mismatch right now)
+		testapp.put_json( topic_url,
+						  {'sharedWith': ['Everyone']},
+						  status=404 )
+
+		# The story accepts it but ignores it
+		res = testapp.put_json( headline_url,
+								{'sharedWith': ['Everyone']},
+								status=200 )
+		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
+
+		res = testapp.get( headline_url )
+		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
+
 	def _create_post_data_for_POST(self):
 		data = { 'Class': self.forum_headline_class_type,
 				 'MimeType': self.forum_headline_content_type,
@@ -527,52 +568,6 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 		self.require_link_href_with_rel( res.json_body['Items'][0], 'Blog' )
 
 	_do_test_user_can_POST_new_forum_entry = _do_test_user_can_POST_new_blog_entry
-
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_cannot_change_sharing_on_blog_entry( self ):
-		""" Sharing is fixed and cannot be changed for a blog entry, its story, or a comment"""
-
-		testapp = self.testapp
-
-		data = { 'Class': 'Post',
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
-		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
-		entry_url = res.location
-		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
-
-		eventtesting.clearEvents()
-
-		# Field updates
-		# Cannot change the entry
-		testapp.put_json( entry_url + '/++fields++sharedWith',
-						  ['Everyone'],
-						  # Because of the way traversal is right now, this results in a 404,
-						  # when really we want a 403
-						  status=404)
-
-		# Cannot change the story
-		testapp.put_json( story_url + '/++fields++sharedWith',
-						  ['Everyone'],
-						  status=404) # same as above
-
-
-		# Nor when putting the whole thing
-		# The entry itself simply cannot be modified (predicate mismatch right now)
-		testapp.put_json( entry_url,
-						  {'sharedWith': ['Everyone']},
-						  status=404 )
-
-		# The story accepts it but ignores it
-		res = testapp.put_json( story_url,
-								{'sharedWith': ['Everyone']},
-								status=200 )
-		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
-
-		res = testapp.get( story_url )
-		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@time_monotonically_increases
