@@ -53,7 +53,7 @@ from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
 from nti.dataserver.contenttypes.forums.post import Post
-from nti.dataserver.contenttypes.forums.post import GeneralHeadlinePost
+from nti.dataserver.contenttypes.forums.post import CommunityHeadlinePost
 from nti.dataserver.contenttypes.forums.post import GeneralForumComment
 
 
@@ -212,8 +212,8 @@ class PersonalBlogPostView(_AbstractForumPostView):
 class CommunityForumPostView(_AbstractForumPostView):
 	""" Given an incoming IPost, creates a new topic in the community forum """
 
-	_constraint = frm_interfaces.IGeneralHeadlinePost.providedBy
-	_override_content_type = GeneralHeadlinePost.mimeType
+	_constraint = frm_interfaces.ICommunityHeadlinePost.providedBy
+	_override_content_type = CommunityHeadlinePost.mimeType
 	_factory = CommunityHeadlineTopic
 
 
@@ -271,6 +271,8 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 @view_config( context=frm_interfaces.IPersonalBlogComment ) # need to re-list this one
 @view_config( context=frm_interfaces.IPersonalBlogEntryPost ) # need to re-list this one
 @view_config( context=frm_interfaces.ICommunityHeadlineTopic ) # need to re-list
+@view_config( context=frm_interfaces.ICommunityHeadlinePost ) # need to re-list
+@view_config( context=frm_interfaces.IGeneralForumComment ) # need to re-list
 @view_config( context=frm_interfaces.IPost )
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
@@ -347,6 +349,7 @@ class ForumCheckoutAdapter(object):
 @view_config( context=frm_interfaces.IPersonalBlogEntryPost )
 @view_config( context=frm_interfaces.IPersonalBlogComment )
 @view_config( context=frm_interfaces.IGeneralForumComment )
+@view_config( context=frm_interfaces.ICommunityHeadlinePost )
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_UPDATE,

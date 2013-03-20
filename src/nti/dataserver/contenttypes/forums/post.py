@@ -70,6 +70,9 @@ class GeneralHeadlinePost(GeneralPost,HeadlinePost):
 class GeneralForumComment(GeneralPost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
 
+@interface.implementer(for_interfaces.ICommunityHeadlinePost)
+class CommunityHeadlinePost(GeneralHeadlinePost):
+	pass
 
 @interface.implementer(for_interfaces.IPersonalBlogEntryPost)
 class PersonalBlogEntryPost(HeadlinePost):
