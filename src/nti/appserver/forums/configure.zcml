@@ -111,6 +111,9 @@
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
 		<implements interface="nti.dataserver.interfaces.IFavoritable" />
 	</class>
+	<class class="nti.dataserver.contenttypes.forums.topic.CommunityHeadlineTopic">
+		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+	</class>
 
 	<!-- Publishing workflow -->
 	<subscriber factory=".views.PublishLinkDecorator"

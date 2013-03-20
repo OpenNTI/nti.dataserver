@@ -86,6 +86,10 @@ def _create_request( self, request_factory, request_args ):
 		self.request.environ['paste.testing'] = True
 		self.request.environ['paste.testing_variables'] = {}
 
+		if 'REQUEST_METHOD' not in self.request.environ:
+			# req'd by repoze.who 2.1
+			self.request.environ['REQUEST_METHOD'] = 'UNKNOWN'
+
 class _TestBaseMixin(object):
 	set_up_packages = (nti.appserver,)
 	set_up_mailer = True

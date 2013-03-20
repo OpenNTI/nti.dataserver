@@ -79,6 +79,7 @@ class GeneralHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 
 @interface.implementer(for_interfaces.ICommunityHeadlineTopic)
 class CommunityHeadlineTopic(GeneralHeadlineTopic):
+	mimeType = None
 	# TODO: The permissioning isn't quite right on this. The sharing targets are the
 	# creators sharing targets but we really want just the community
 	@CachedProperty
@@ -99,6 +100,7 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 						HeadlineTopic):
 	creator = None
 	headline = AcquisitionFieldProperty(for_interfaces.IPersonalBlogEntry['headline'])
+	mimeType = None
 
 	@CachedProperty
 	def NTIID(self):
