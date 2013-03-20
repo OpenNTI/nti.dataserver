@@ -355,7 +355,7 @@ class PostPutView(UGDPutView):
 	""" Editing an existing forum post """
 	# Exists entirely for registration sake
 
-
+@view_config( context=frm_interfaces.ICommunityHeadlineTopic )
 @view_config( context=frm_interfaces.IPersonalBlogEntry )
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
@@ -364,7 +364,7 @@ class PostPutView(UGDPutView):
 class HeadlineTopicDeleteView(UGDDeleteView):
 	""" Deleting an existing topic """
 
-	## Deleting winds up in users.users.py:user_willRemoveInteIdForContainedObject,
+	## Deleting an IPersonalBlogEntry winds up in users.users.py:user_willRemoveIntIdForContainedObject,
 	## thus posting the usual activitystream DELETE notifications
 
 	def _do_delete_object( self, theObject ):

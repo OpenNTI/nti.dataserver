@@ -304,6 +304,31 @@ class _AbstractTestApplicationForums(SharedApplicationTestBase):
 		assert_that( res, has_property( 'content_type', self.forum_topic_comment_content_type ) )
 		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_creator_can_DELETE_existing_empty_forum_topic( self ):
+		testapp = self.testapp
+
+		res = self._POST_topic_entry()
+		topic_url = res.location
+		headline_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
+
+		eventtesting.clearEvents()
+
+		res = testapp.delete( topic_url )
+		assert_that( res.status_int, is_( 204 ) )
+
+		res = testapp.get( self.forum_pretty_url )
+		assert_that( res.json_body, has_entry( 'TopicCount', 0 ) )
+		testapp.get( topic_url, status=404 )
+		testapp.get( headline_url, status=404 )
+
+		# When the topic was deleted from the forum, it fired a single ObjectRemovedEvent.
+		# This was dispatched to sublocations and refired, resulting
+		# in intids being removed for the topic and the headline.
+		# (TODO: This isn't symmetrical with ObjectAddedEvent; we get one for topic and headline,
+		# right?)
+		assert_that( eventtesting.getEvents( lifecycleevent.IObjectRemovedEvent ), has_length( 1 ) )
+		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 2 ) )
 
 	def _create_post_data_for_POST(self):
 		data = { 'Class': self.forum_headline_class_type,
@@ -548,40 +573,6 @@ class TestApplicationBlogging(_AbstractTestApplicationForums):
 
 		res = testapp.get( story_url )
 		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_DELETE_existing_blog_entry( self ):
-		"""A StoryTopic can be deleted from its object URL"""
-
-		testapp = self.testapp
-
-		data = { 'Class': 'Post',
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
-
-		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog', data )
-		entry_url = res.location
-		story_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
-
-		eventtesting.clearEvents()
-
-		res = testapp.delete( entry_url )
-		assert_that( res.status_int, is_( 204 ) )
-
-
-		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Blog' )
-		assert_that( res.json_body, has_entry( 'TopicCount', 0 ) )
-		testapp.get( entry_url, status=404 )
-		testapp.get( story_url, status=404 )
-
-		# When the container was deleted, it fired an ObjectRemovedEvent.
-		# This was dispatched to sublocations and refired, resulting
-		# in intids being removed for all children
-		del_events = eventtesting.getEvents( lifecycleevent.IObjectRemovedEvent )
-		assert_that( del_events, has_length( 1 ) )
-
-
-		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 2 ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@time_monotonically_increases
