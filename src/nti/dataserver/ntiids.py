@@ -145,11 +145,15 @@ class AbstractUserBasedResolver(object):
 
 	namespace = 'users'
 
+	#: Set this to an interface derived from :class:`.IEntity` to enforce
+	#: a particular type of globally named entity.
+	required_iface = nti_interfaces.IEntity
+
 	def resolve( self, ntiid ):
 		provider_name = get_provider( ntiid )
 		user = _resolve_user( provider_name, self.namespace )
 
-		if user:
+		if user and self.required_iface.providedBy( user ):
 			return self._resolve( ntiid, user )
 
 	@abstractmethod

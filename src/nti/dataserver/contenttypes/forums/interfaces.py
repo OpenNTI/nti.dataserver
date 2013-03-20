@@ -38,6 +38,9 @@ NTIID_TYPE_PERSONAL_BLOG = NTIID_TYPE_FORUM + ':PersonalBlog'
 #: The subtype of NTIID used to represent a :class:`.IGeneralForum`
 NTIID_TYPE_GENERAL_FORUM = NTIID_TYPE_FORUM + ':General'
 
+#: The subtype of NTIID used to represent a :class:`.ICommunityForum`
+NTIID_TYPE_COMMUNITY_FORUM = NTIID_TYPE_GENERAL_FORUM + 'Community'
+
 #: The type of NTIID used for a :class:`ITopic`
 NTIID_TYPE_TOPIC = 'Topic'
 
@@ -48,7 +51,7 @@ NTIID_TYPE_PERSONAL_BLOG_ENTRY = NTIID_TYPE_TOPIC + ':PersonalBlogEntry'
 NTIID_TYPE_GENERAL_TOPIC = NTIID_TYPE_TOPIC + ':General'
 
 # The subtype of NTIID used for community general topics
-NTIID_TYPE_COMMUNITY_TOPIC = NTIID_TYPE_TOPIC + ":GeneralCommunity"
+NTIID_TYPE_COMMUNITY_TOPIC = NTIID_TYPE_GENERAL_TOPIC + "Community"
 
 #: The type of NTIID used to represent an individual :class:`IPost`
 NTIID_TYPE_POST = 'Post'
@@ -199,7 +202,7 @@ class IGeneralForum(IForum, nti_interfaces.ICreated):
 	contains(b'.IGeneralTopic')
 	__setitem__.__doc__ = None
 
-class ICommunityForum(IGeneralForum):
+class ICommunityForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
 	"""
 	A forum belonging to a particular community.
 	"""
