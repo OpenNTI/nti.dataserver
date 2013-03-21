@@ -33,7 +33,8 @@ from .common import get_sort_order
 from . import _discriminators as discriminators
 from .constants import (last_modified_, content_, title_, ntiid_)
 from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-					 	SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE)
+					 	SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE,
+					 	BOOK_CONTENT_MIME_TYPE)
 
 def get_hit_id(obj):
 	if nti_interfaces.IModeledContent.providedBy(obj):
@@ -168,8 +169,6 @@ class _PostSearchHit(_SearchHit):
 @interface.implementer(search_interfaces.IWhooshBookSearchHit)
 class _WhooshBookSearchHit(_BaseSearchHit):
 
-	mime_type = "application/vnd.nextthought.bookcontent"
-
 	def __init__(self, hit):
 		super(_WhooshBookSearchHit, self).__init__(hit, self.get_oid(hit))
 
@@ -178,9 +177,9 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 		self[TYPE] = CONTENT
 		self[NTIID] = hit[ntiid_]
 		self[SNIPPET] = hit[content_]
-		self[MIME_TYPE] = self.mime_type
 		self[CONTAINER_ID] = hit[ntiid_]
 		self[title_.capitalize()] = hit[title_]
+		self[MIME_TYPE] = BOOK_CONTENT_MIME_TYPE
 		self[LAST_MODIFIED] = hit[last_modified_]
 
 	@classmethod
