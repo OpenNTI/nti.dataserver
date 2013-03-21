@@ -345,6 +345,49 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( res, has_property( 'content_type', self.forum_topic_comment_content_type ) )
 		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
 
+
+		res = testapp.get( entry_url )
+		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@time_monotonically_increases
+	def test_creator_can_DELETE_comment( self ):
+		testapp = self.testapp
+
+		# Create the topic
+		res = self._POST_topic_entry()
+		entry_url = res.location
+		entry_contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
+		#entry_ntiid = res.json_body['NTIID']
+
+		data = self._create_comment_data_for_POST()
+		res = testapp.post_json( entry_url, data, status=201 )
+		assert_that( res.status_int, is_( 201 ) )
+		edit_url = self.require_link_href_with_rel( res.json_body, 'edit' )
+		entry_creation_time = res.json_body['Last Modified']
+
+		eventtesting.clearEvents()
+
+		res = testapp.delete( edit_url )
+		assert_that( res.status_int, is_( 204 ) )
+
+		# When it is replaced with placeholders
+		res = testapp.get( entry_url )
+		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
+		# and nothing was actually deleted yet
+		del_events = eventtesting.getEvents( lifecycleevent.IObjectRemovedEvent )
+		assert_that( del_events, has_length( 0 ) )
+		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 0 ) )
+
+		# But modification events did fire...
+		mod_events = eventtesting.getEvents( lifecycleevent.IObjectModifiedEvent )
+		assert_that( mod_events, has_length( 1 ) )
+		# ...resulting in an updated time for the contents view
+		res = testapp.get( entry_contents_url )
+		assert_that( res.json_body['Last Modified'], is_( greater_than( entry_creation_time ) ) )
+
+
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_creator_can_DELETE_existing_empty_forum_topic( self ):
 		testapp = self.testapp
