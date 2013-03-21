@@ -256,11 +256,11 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 		contents_mod_time = res.json_body['Last Modified']
 
-		# Can be flagged...
-		res = testapp.post( flag_href )
+		# MVD Can be flagged...
+		#res = testapp.post( flag_href )
 		# ...returning the same href we started with
-		assert_that( res.json_body['href'], is_( post_href ) )
-		self.require_link_href_with_rel( res.json_body, 'flag.metoo' )
+		#assert_that( res.json_body['href'], is_( post_href ) )
+		#self.require_link_href_with_rel( res.json_body, 'flag.metoo' )
 
 		# MVD until we delete it
 		#eventtesting.clearEvents()

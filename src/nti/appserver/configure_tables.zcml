@@ -62,11 +62,11 @@
 	<adapter factory="._table_utils.NoteContentProvider"
 			 provides="zope.contentprovider.interfaces.IContentProvider"/>
 	<adapter factory="._table_utils.MessageInfoContentProvider"
-			 provides="zope.contentprovider.interfaces.IContentProvider"/> />
+			 provides="zope.contentprovider.interfaces.IContentProvider"/>
 	<adapter factory="._table_utils.HeadlineTopicContentProvider"
-			 provides="zope.contentprovider.interfaces.IContentProvider"/>/>
-	<adapter factory="._table_utils.PersonalBlogCommentContentProvider"
-			 provides="zope.contentprovider.interfaces.IContentProvider"/> />
+			 provides="zope.contentprovider.interfaces.IContentProvider"/>
+	<adapter factory="._table_utils.TopicCommentContentProvider"
+			 provides="zope.contentprovider.interfaces.IContentProvider"/>
 
 	<!-- Coppa admin -->
 	<adapter factory="._table_utils.CreatedColumn"
