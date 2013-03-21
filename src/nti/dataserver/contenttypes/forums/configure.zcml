@@ -25,6 +25,7 @@
 	<utility factory=".ntiids._BlogResolver" name="Forum:PersonalBlog" />
 	<utility factory=".ntiids._CommunityForumResolver" name="Forum:GeneralCommunity" />
 	<utility factory=".ntiids._BlogEntryResolver" name="Topic:PersonalBlogEntry" />
+	<utility factory=".ntiids._CommunityTopicResolver" name="Topic:GeneralCommunity" />
 
 
 	<!-- Externalization -->

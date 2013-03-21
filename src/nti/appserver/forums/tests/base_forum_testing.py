@@ -682,6 +682,64 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( res.json_body['href'], is_( comment_res.json_body['href'] ) )
 		self.require_link_href_with_rel( res.json_body, 'flag.metoo' )
 
+	@WithSharedApplicationMockDS
+	def test_post_canvas_image_in_headline_post_produces_fetchable_link( self ):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+
+		canvas_data = {u'Class': 'Canvas',
+					   'ContainerId': 'tag:foo:bar',
+					   u'MimeType': u'application/vnd.nextthought.canvas',
+					   'shapeList': [{u'Class': 'CanvasUrlShape',
+									  u'MimeType': u'application/vnd.nextthought.canvasurlshape',
+									  u'url': u'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
+
+		data = self._create_post_data_for_POST()
+		data['body'].append( canvas_data )
+
+		# Create the blog
+		res = self._POST_topic_entry( data )
+		topic_ntiid = res.json_body['NTIID']
+		pub_url = self.require_link_href_with_rel( res.json_body, 'publish' )
+
+		def _check_canvas( res, canvas, acc_to_other=False ):
+			assert_that( canvas, has_entry( 'shapeList', has_length( 1 ) ) )
+			assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'Class', 'CanvasUrlShape' ) ) ) )
+			assert_that( canvas, has_entry( 'shapeList', contains( has_entry( 'url', contains_string( '/dataserver2/' ) ) ) ) )
+
+
+			res = testapp.get( canvas['shapeList'][0]['url'] )
+			# The content type is preserved
+			assert_that( res, has_property( 'content_type', 'image/gif' ) )
+			# The modified date is the same as the canvas containing it
+			assert_that( res, has_property( 'last_modified', not_none() ) )
+		#	assert_that( res, has_property( 'last_modified', canvas_res.last_modified ) )
+			# It either can or cannot be accessed by another user
+			testapp2.get( canvas['shapeList'][0]['url'], status=(200 if acc_to_other else 403) )
+
+		_check_canvas( res, res.json_body['headline']['body'][1] )
+
+		# If we "edit" the headline, then nothing breaks
+		headline_edit_link = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
+
+		res = testapp.put_json( headline_edit_link, res.json_body['headline'] )
+		_check_canvas( res, res.json_body['body'][1] )
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			__traceback_info__ = topic_ntiid
+			topic = ntiids.find_object_with_ntiid( topic_ntiid )
+			assert_that( topic, is_( not_none() ) )
+			canvas = topic.headline.body[1]
+			url_shape = canvas.shapeList[0]
+			# And it externalizes as a real link because it owns the file data
+			assert_that( url_shape.toExternalObject()['url'], ends_with( '@@view' ) )
+
+		# When published, it is visible to the other user
+		testapp.post( pub_url )
+		_check_canvas( res, res.json_body['body'][1], acc_to_other=True )
+
 	def _create_post_data_for_POST(self):
 		data = { 'Class': self.forum_headline_class_type,
 				 'MimeType': self.forum_headline_content_type,
