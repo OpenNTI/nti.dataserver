@@ -25,6 +25,11 @@
 		id='nti.platform.blogging.createblogentry'
 		title="Create Blog Entry"
 		description='Can the user create new blog entries?' />
+	<cap:capability
+		id='nti.platform.forums.communityforums'
+		title="Participate in community forums"
+		description='Can the user participate in community forums?' />
+
 
 	<!-- Entry in service doc -->
 	<subscriber factory=".views._UserBlogCollectionFactory"
@@ -80,15 +85,19 @@
 			 provides="nti.appserver.interfaces.IUserCheckout" />
 
 	<!-- Externalization -->
-	<subscriber factory=".views.ForumObjectContentsLinkProvider"
+	<subscriber factory=".decorators.BlogLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+	<subscriber factory=".decorators.CommunityForumLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.IBoard"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
-	<subscriber factory=".views.ForumObjectContentsLinkProvider"
+	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.IForum"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
-	<subscriber factory=".views.ForumObjectContentsLinkProvider"
+	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 	<!--
@@ -160,10 +169,10 @@
 
 
 	<!-- Publishing workflow -->
-	<subscriber factory=".views.PublishLinkDecorator"
+	<subscriber factory=".decorators.PublishLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry"/>
-	<subscriber factory=".views.PublishLinkDecorator"
+	<subscriber factory=".decorators.PublishLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic"/>
 
