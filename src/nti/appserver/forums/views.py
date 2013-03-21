@@ -375,14 +375,14 @@ class HeadlineTopicDeleteView(UGDDeleteView):
 		del aq_base(theObject.__parent__)[theObject.__name__]
 		return theObject
 
-
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_DELETE,
-			  context=frm_interfaces.IPersonalBlogComment,
-			  request_method='DELETE' )
+@view_config(context=frm_interfaces.IGeneralForumComment)
+@view_config(context=frm_interfaces.IPersonalBlogComment)
+@view_defaults( route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_DELETE,
+				request_method='DELETE' )
 class PostDeleteView(UGDDeleteView):
-	""" Deleting an existing blog comment.
+	""" Deleting an existing forum comment.
 
 	This is somewhat unusual as we leave an object behind to mark
 	the object as deleted (in fact, we leave the original object
