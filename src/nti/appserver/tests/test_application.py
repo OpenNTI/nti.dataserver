@@ -136,7 +136,7 @@ class _UnicodeTestApp(_TestApp):
 
 	def _make_( name ):
 		def f( self, path, *args, **kwargs ):
-			__traceback_info__ = path
+			__traceback_info__ = path, args, kwargs
 			return getattr( super(_UnicodeTestApp,self), name )( str(path), *args, **kwargs )
 
 		f.__name__ = name

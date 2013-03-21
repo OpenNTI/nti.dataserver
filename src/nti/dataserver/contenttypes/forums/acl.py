@@ -68,8 +68,13 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 	control. We also want the owner of the topic they are in to get
 	some control too: Typically DELETE and moderation ability, but NOT edit
 	ability (though the application cannot currently distinguish this state
-	and presents them as uneditable).
-	""" # The deletion of posts in GeneralTopics might be different from in Blog topics
+	and presents them as uneditable). This happens when the post is contained
+	within a personal blog; when the post is a public comment within a general forum,
+	however, it does not happen.
+
+	In other words, blog owners can delete comments in their own blog, but
+	forum topic creators cannot delete comments in the public forum.
+	"""
 
 	_DENY_ALL = True
 
