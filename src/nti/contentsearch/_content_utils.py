@@ -23,7 +23,7 @@ from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import CanvasTextShape
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as forum_interfaces
 
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -200,7 +200,7 @@ class _CanvasTextShapeContentResolver(_BasicContentResolver):
 	def get_content(self):
 		return self.obj.text
 
-@component.adapter(for_interfaces.IPost)
+@component.adapter(forum_interfaces.IPost)
 @interface.implementer(search_interfaces.IPostContentResolver)
 class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 
@@ -218,10 +218,9 @@ class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 	def get_id(self):
 		result = None
 		obj = self.obj
-		if for_interfaces.IHeadlinePost.providedBy(obj):
+		if forum_interfaces.IHeadlinePost.providedBy(obj):
 			obj = getattr(self.obj, '__parent__', None)
-		if 	for_interfaces.IHeadlineTopic.providedBy(obj) or \
-			for_interfaces.IPersonalBlogComment.providedBy(obj):
+		if forum_interfaces.ITopic.providedBy(obj) or forum_interfaces.IPost.providedBy(obj):
 			result = getattr(obj, 'id', None)
 		return result or u''
 

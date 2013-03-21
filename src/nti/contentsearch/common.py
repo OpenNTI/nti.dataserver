@@ -14,13 +14,33 @@ import collections
 from time import mktime
 from datetime import datetime
 
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
+from zope import component
+
+from nti.chatserver import interfaces as chat_interfaces
+
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as forum_interfaces
+
+from nti.externalization import interfaces as ext_intefaces
 
 from . import interfaces as search_interfaces
 
-from .constants import (CLASS, MIME_TYPE)
-from .constants import (content_, post_, indexable_types_order, indexable_type_names,
-						transcript_, messageinfo_, nti_mimetype_prefix, book_content_)
+from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE, HEADLINE_TOPIC_MIME_TYPE)
+from .constants import (content_, post_, note_, highlight_, redaction_, indexable_types_order, indexable_type_names,
+						transcript_, messageinfo_, nti_mimetype_prefix)
+
+interface_to_indexable_types = collections.OrderedDict(\
+	{
+		search_interfaces.IBookContent:content_,
+		nti_interfaces.INote:note_,
+		nti_interfaces.IHighlight:highlight_,
+		nti_interfaces.IRedaction:redaction_,
+		chat_interfaces.IMessageInfo:messageinfo_,
+		forum_interfaces.IPost:post_,
+		forum_interfaces.IHeadlineTopic:post_,
+	})
+
+mime_type_map = None
 
 def epoch_time(dt):
 	if dt:
@@ -41,10 +61,14 @@ def normalize_type_name(x, encode=True):
 	return unicode(result) if encode else result
 
 def get_type_name(obj):
-	if search_interfaces.IBookContent.providedBy(obj):
-		result = content_
-	elif not isinstance(obj, dict):
-		result = post_ if frm_interfaces.IPost.providedBy(obj) else obj.__class__.__name__
+
+	for iface, type_ in interface_to_indexable_types.items():
+		if iface.providedBy(obj):
+			return type_
+
+	# legacy and test purpose
+	if not isinstance(obj, dict):
+		result = obj.__class__.__name__
 	elif CLASS in obj:
 		result = obj[CLASS]
 	elif MIME_TYPE in obj:
@@ -57,18 +81,35 @@ def get_type_name(obj):
 
 def get_type_from_mimetype(mt):
 	mt = mt.lower() if mt else u''
-	if mt.startswith(nti_mimetype_prefix):
+	mmap = get_mime_type_map()
+	result = mmap.get(mt, None)
+	if result is None and mt.startswith(nti_mimetype_prefix):
 		result = mt[len(nti_mimetype_prefix):]
-		if result == book_content_:
-			result = content_
-		elif result == transcript_:
+		if result == transcript_:
 			result = messageinfo_
-		elif result.startswith('forums.personalblog') or result == 'forums.post':
-			result = post_
-		result = result if result in indexable_type_names else None
-	else:
-		result = None
+	result = result if result in indexable_type_names else None
 	return normalize_type_name(result) if result else None
+
+def get_mime_type_map():
+	global mime_type_map
+	if not mime_type_map:
+		mime_type_map = {}
+		utils = component.getUtilitiesFor(ext_intefaces.IMimeObjectFactory)
+		for mime_type, utility in utils:
+			ifaces = utility.getInterfaces()
+			for iface in ifaces:
+				for indexable, type_name in interface_to_indexable_types.items():
+					if iface.extends(indexable, strict=False):
+						mime_type_map[mime_type] = type_name
+						break
+				if mime_type in mime_type_map:
+					break
+		if mime_type_map:
+			mime_type_map[POST_MIME_TYPE] = post_
+			mime_type_map[BOOK_CONTENT_MIME_TYPE] = content_
+			mime_type_map[HEADLINE_TOPIC_MIME_TYPE] = post_
+
+	return mime_type_map
 
 class QueryExpr(object):
 	def __init__(self, expr):

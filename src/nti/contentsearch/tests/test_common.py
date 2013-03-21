@@ -7,18 +7,15 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-# from zope import component
 from datetime import datetime
-
 from ..common import epoch_time
 from ..common import get_datetime
+from ..common import get_mime_type_map
 from ..common import get_type_from_mimetype
-
-# from nti.externalization.interfaces import IMimeObjectFactory
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, less_than_or_equal_to, none)
+from hamcrest import (assert_that, is_, less_than_or_equal_to, none, has_entry)
 
 class TestCommon(ConfiguringTestBase):
 
@@ -33,15 +30,19 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(get_datetime(f), is_(get_datetime(s)))
 		assert_that(datetime.now(), less_than_or_equal_to(get_datetime()))
 
+	def test_get_mime_type_map(self):
+		mmap = get_mime_type_map()
+		assert_that(mmap, has_entry('application/vnd.nextthought.redaction', 'redaction'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.forums.post', 'post'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.highlight', 'highlight'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.note', 'note'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.messageinfo', 'messageinfo'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.bookcontent', 'content'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.forums.headlinetopic', 'post'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogentrypost', 'post'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogcomment', 'post'))
+
 	def test_get_type_from_mimetype(self):
-
-# 		f = component.getUtilitiesFor(IMimeObjectFactory)
-# 		for name, utility in f:
-# 			i = utility.getInterfaces()
-# 			for k in i._implied.keys():
-# 				print(type(k), getattr(i, '__name__', None))
-# 			print(name, getattr(i, '__name__', None))
-
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogentrypost'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogcomment'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.post'), is_('post'))
