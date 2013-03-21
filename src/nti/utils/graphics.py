@@ -7,7 +7,10 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import re
 import math
+
+rgb_pattern = re.compile(u'rgb\((?P<r>(\d+)(\.\d+)?),(?P<g>(\d+)(\.\d+)?),(?P<b>(\d+)(\.\d+)?)\)', re.UNICODE)
 
 class AffineMatrix(object):
 
@@ -119,7 +122,13 @@ def check_width(width):
 		width = 1 if math.isinf(width) or math.isnan(width) else width
 	return width
 
-def check_fill(fill, default="rgb(0,0,0)"):
+def check_rgb_color(fill, default="rgb(0,0,0)"):
+	if fill:
+		fill_mod = re.sub('\s', '', fill).lower()
+		m = rgb_pattern.search(fill_mod)
+		if m is not None:
+			d = m.groupdict()
+			fill = "rgb(%s,%s,%s)" % int(float(d['r'])), int(float(d['g'])), int(float(d['b']))
 	return fill or default
 
 def plot_bezier_curve(draw, xvals, yvals, fill=None, width=None, m=None):
@@ -134,7 +143,7 @@ def plot_bezier_curve(draw, xvals, yvals, fill=None, width=None, m=None):
 	:width width curve width
 	"""
 	length = min(len(xvals), len(yvals))
-	fill = check_fill(fill)
+	fill = check_rgb_color(fill)
 	width = check_width(width)
 	for i in xrange(length):
 		x = xvals[i]
