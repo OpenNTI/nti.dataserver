@@ -39,10 +39,7 @@
 	<subscriber handler=".views.notify_online_author_of_comment" />
 	<subscriber handler=".views.temp_post_added_to_indexer" />
 	<subscriber handler=".views.temp_post_modified_to_indexer" />
-	<subscriber handler=".views.temp_store_favorite_object"
-				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry contentratings.interfaces.IObjectRatedEvent"/>
-	<subscriber handler=".views.temp_store_favorite_object"
-				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment contentratings.interfaces.IObjectRatedEvent"/>
+
 
 	<!-- Activity stream updating -->
 	<subscriber handler=".activity.store_created_object_in_global_activity"
@@ -139,11 +136,28 @@
 		<implements interface="nti.dataserver.interfaces.IFavoritable" />
 	</class>
 	<class class="nti.dataserver.contenttypes.forums.topic.CommunityHeadlineTopic">
+		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+		<implements interface="nti.dataserver.interfaces.IFavoritable" />
 	</class>
 	<class class="nti.dataserver.contenttypes.forums.post.GeneralForumComment">
+		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+		<implements interface="nti.dataserver.interfaces.IFavoritable" />
 	</class>
+
+	<!-- Storing favorite objects -->
+	<subscriber handler=".views.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry contentratings.interfaces.IObjectRatedEvent"/>
+	<subscriber handler=".views.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment contentratings.interfaces.IObjectRatedEvent"/>
+	<!-- Storing favorite objects -->
+	<subscriber handler=".views.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic contentratings.interfaces.IObjectRatedEvent"/>
+	<subscriber handler=".views.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForumComment contentratings.interfaces.IObjectRatedEvent"/>
+
+
 
 	<!-- Publishing workflow -->
 	<subscriber factory=".views.PublishLinkDecorator"

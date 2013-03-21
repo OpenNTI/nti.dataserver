@@ -104,18 +104,18 @@ class UserCommunityFixture(object):
 			user_following_2.follow( user2 )
 			user2_following_2.follow( user2 )
 
-			user2_username = user2.username
-			user_username = user.username
-			user3_username = user3.username
-			user2_follower_username = user_following_2.username
-			user2_follower2_username = user2_following_2.username
+			self.user2_username = user2.username
+			self.user_username = user.username
+			self.user3_username = user3.username
+			self.user2_follower_username = user_following_2.username
+			self.user2_follower2_username = user2_following_2.username
 
 
-		self.testapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
-		self.testapp2 = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
-		self.testapp3 = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user3_username) )
-		self.user2_followerapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_follower_username) )
-		self.user2_follower2app = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_follower2_username) )
+		self.testapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username=self.user_username) )
+		self.testapp2 = _TestApp( self.app, extra_environ=self._make_extra_environ(username=self.user2_username) )
+		self.testapp3 = _TestApp( self.app, extra_environ=self._make_extra_environ(username=self.user3_username) )
+		self.user2_followerapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username=self.user2_follower_username) )
+		self.user2_follower2app = _TestApp( self.app, extra_environ=self._make_extra_environ(username=self.user2_follower2_username) )
 
 	def __getattr__( self, name ):
 		return getattr( self.test, name )
@@ -567,13 +567,55 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( comment_res.json_body, has_entry( 'sharedWith', [fixture.community_name] ) )
 		self.require_link_href_with_rel( comment_res.json_body, 'edit' )
 		self.require_link_href_with_rel( comment_res.json_body, 'flag' )
-		# XXX favorite, like
+		self.require_link_href_with_rel( comment_res.json_body, 'favorite' )
+		self.require_link_href_with_rel( comment_res.json_body, 'like' )
 
 		# This affected the count and contents as well
 		self._check_comment_in_topic_contents( testapp, topic_url, comment_data, fixture )
 
 		for app in testapp, testapp2:
 			self._check_comment_in_topic_feed( app, topic_url, comment_data )
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_community_user_can_favorite_topic(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, data = self._POST_and_publish_topic_entry()
+		topic_ntiid = publish_res.json_body['NTIID']
+		topic_cnt_id = publish_res.json_body['ContainerId']
+		fav_href = self.require_link_href_with_rel( publish_res.json_body, 'favorite' )
+
+		testapp2.post( fav_href )
+		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username, params={'filter': 'Favorite'})
+		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+		unfav_href = self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
+		with mock_dataserver.mock_db_trans( self.ds ):
+			# Check where it is stored
+			user2 = users.User.get_user( fixture.user2_username )
+			shared_cont = user2.getSharedContainer( topic_cnt_id )
+			assert_that( shared_cont, has_length( 1 ) )
+
+		# Can be cycled
+		testapp2.post( unfav_href )
+		self.fetch_user_root_rugd( testapp2, fixture.user2_username, params={'filter': 'Favorite'}, status=404)
+
+		testapp2.post( fav_href )
+		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username, params={'filter': 'Favorite'})
+		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+
+		# If the creator deletes it, it is well and truly gone
+		testapp.delete( publish_res.location )
+		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username, params={'filter': 'Favorite'})
+		assert_that( res.json_body['Items'], is_empty() )
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user2 = users.User.get_user( fixture.user2_username )
+			shared_cont = user2.getSharedContainer( topic_cnt_id )
+			assert_that( list(shared_cont), is_empty() )
+
 
 	def _check_comment_in_topic_contents( self, testapp, topic_url, comment_data, fixture ):
 		res = testapp.get( topic_url )
