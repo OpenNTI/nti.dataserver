@@ -253,9 +253,9 @@ setup(
 		'z3c.bcrypt >= 1.1',
 		#'z3c.coverage >= 1.3.0', # TODO: Do we need this?
 		'z3c.password >= 1.0.0a1', # password policies
-		'z3c.pt >= 2.2.3', # Better ZPT support than plastex, add-in to Chameleon
-		'z3c.ptcompat >= 1.0.1', # Make zope.pagetemplate also use the Chameleon-based ZPT
-		'z3c.table >= 1.0.0', # Flexible table rendering
+		'z3c.pt >= 3.0.0a1', # Better ZPT support than plastex, add-in to Chameleon
+		'z3c.ptcompat >= 2.0.0a1', # Make zope.pagetemplate also use the Chameleon-based ZPT
+		'z3c.table >= 2.0.0a1', # Flexible table rendering
 		'zc.blist >= 1.0b2', # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
 		'zc.dict >= 1.3b1', # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
@@ -318,6 +318,7 @@ setup(
 		'zope.pagetemplate >= 4.0.4',
 		'zope.password >= 4.0.2', # encrypted password management
 		'zope.pluggableauth >= 1.3' if HAVE_ZCONT else '', # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
+		'zope.ptresource >= 4.0.0a1',
 		'zope.publisher >= 4.0.0a4',
 		'zope.principalregistry >= 4.0.0a2', # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
@@ -327,7 +328,7 @@ setup(
 		'zope.security[zcml,untrustedpython] >= 4.0.0b1', # >= 4.0.0b1 gets PyPy support!
 		'zope.securitypolicy >= 4.0.0a1',
 		'zope.session >= 4.0.0a1', # 4.0.0a1 is out, should be fine
-		'zope.site >= 3.9.2' if HAVE_ZCONT else '', # local, persistent ZCA sites. 4.0.0a1 is out and should be fine; zope.container dep
+		'zope.site >= 4.0.0a1' if HAVE_ZCONT else '', # local, persistent ZCA sites. zope.container dep
 		'zope.size >= 4.0.1',
 		# parser and renderers for the classic Zope "structured text" markup dialect (STX).
 		# STX is a plain text markup in which document structure is signalled primarily by identation.
