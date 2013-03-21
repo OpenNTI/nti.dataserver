@@ -153,18 +153,15 @@ class _UnicodeTestApp(_TestApp):
 
 _TestApp = _UnicodeTestApp
 
-def TestApp(app=_TestApp, **kwargs):
+def TestApp(app, **kwargs):
 	"""Sets up the pipeline just like in real life.
 
 	:return: A WebTest testapp.
 	"""
 
-	# Nose may call this with zero args
-	if app is _TestApp:
-		return None
-
 	return _TestApp( CORSInjector( CORSOptionHandler( ErrorMiddleware( ZODBGCMiddleware( app ), debug=True ) ) ),
 					 **kwargs )
+TestApp.__test__ = False # make nose not call this
 
 class _AppTestBaseMixin(object):
 

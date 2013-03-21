@@ -9,9 +9,17 @@
 	<include package="nti.appserver.capabilities" file="meta.zcml" />
 
 	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityStorageFactory" />
+	<!--
+		We are collecting both comments and community forum posts in activity.
+		The app isn't ready for comments yet, though, so we only return
+		them in test mode.
+	-->
 	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityProvider"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
-			 zcml:condition="have testmode"/> <!-- The app isn't ready for this yet. Still collect them though. -->
+			 zcml:condition="have testmode_all_activity"/>
+	<adapter factory=".activity.NoCommentActivityProvider"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+			 zcml:condition="not-have testmode_all_activity"/>
 
 	<cap:capability
 		id='nti.platform.blogging.createblogentry'
@@ -37,8 +45,27 @@
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment contentratings.interfaces.IObjectRatedEvent"/>
 
 	<!-- Activity stream updating -->
-	<subscriber handler=".views.store_created_comment_in_global_activity" />
-	<subscriber handler=".views.unstore_created_comment_from_global_activity" />
+	<subscriber handler=".activity.store_created_object_in_global_activity"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment zope.intid.interfaces.IIntIdAddedEvent"/>
+	<subscriber handler=".activity.unstore_created_object_from_global_activity"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment zope.intid.interfaces.IIntIdRemovedEvent" />
+	<!--
+	Normal Blog entries are in /Activity automatically by dint of being stored as a user container.
+	We have to do something special to make other forum posts show up there.
+	-->
+	<subscriber handler=".activity.store_created_object_in_global_activity"
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic zope.intid.interfaces.IIntIdAddedEvent"/>
+	<subscriber handler=".activity.unstore_created_object_from_global_activity"
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic zope.intid.interfaces.IIntIdRemovedEvent" />
+
+	<!--
+	Anything that becomes a deleted placeholder should no longer be
+	in /Activity.
+	-->
+	<subscriber handler=".activity.unstore_created_object_from_global_activity"
+				for="nti.appserver.interfaces.IDeletedObjectPlaceholder zope.lifecycleevent.interfaces.IObjectModifiedEvent" />
+
+
 	<subscriber handler=".views.notify_dynamic_memberships_of_blog_entry_publication_change" />
 
 
