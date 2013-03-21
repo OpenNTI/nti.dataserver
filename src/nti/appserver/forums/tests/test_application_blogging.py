@@ -152,7 +152,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
 		self.require_link_href_with_rel( res.json_body, 'edit' ) # entries can be 'edited' (actually they cannot, shortcut for ui)
-		fav_href = self.require_link_href_with_rel( res.json_body, 'favorite' ) # entries can be favorited
+		self.require_link_href_with_rel( res.json_body, 'favorite' ) # entries can be favorited
 
 		entry_url = res.location
 		entry_ntiid = res.json_body['NTIID']
@@ -196,11 +196,11 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		res = self.fetch_user_root_rugd()
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 
-		# and, if favorited, filtered to the favorites
-		testapp.post( fav_href )
-		res = self.fetch_user_root_rugd( params={'filter': 'Favorite'})
-		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
-		self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
+		# MVD and, if favorited, filtered to the favorites
+		#testapp.post( fav_href )
+		#res = self.fetch_user_root_rugd( params={'filter': 'Favorite'})
+		#assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+		#self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
 
 		# And in his links
 		self.require_link_href_with_rel( self.resolve_user(), 'Blog' )
@@ -553,32 +553,26 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		# and, if favorited, filtered to the favorites
 		for uname, app in ((user_username, testapp), (user2_username, testapp2)):
 			app.post( fav_href )
-			res = app.get( '/dataserver2/users/' + uname + '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
-							   params={'filter': 'Favorite'})
+			res = self.fetch_user_root_rugd( app, uname, params={'filter': 'Favorite'} )
 			assert_that( res.json_body['Items'], contains( has_entry( 'title', 'My New Blog' ) ) )
 			unfav_href = self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
 
 		for uname, app, status in ((user_username, testapp, 200), (user2_username, testapp2, 404)):
 			app.post( unfav_href )
-			res = app.get( '/dataserver2/users/' + uname + '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
-							   params={'filter': 'Favorite'},
-							   status=status)
+			res = self.fetch_user_root_rugd( app, uname, params={'filter': 'Favorite'}, status=status )
 			if status == 200:
 				assert_that( res.json_body['Items'], is_empty() )
 
 		# Likewise, favoriting comments works
 		for uname, app in ((user_username, testapp), (user2_username, testapp2)):
 			app.post( comment2_fav_href )
-			res = app.get( '/dataserver2/users/' + uname + '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
-							   params={'filter': 'Favorite'})
+			res = self.fetch_user_root_rugd( app, uname, params={'filter': 'Favorite'} )
 			assert_that( res.json_body['Items'], contains( has_entry( 'title', comment2_title ) ) )
 			unfav_href = self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
 
 		for uname, app, status in ((user_username, testapp, 200), (user2_username, testapp2, 404)):
 			app.post( unfav_href )
-			res = app.get( '/dataserver2/users/' + uname + '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
-							   params={'filter': 'Favorite'},
-							   status=status)
+			res = self.fetch_user_root_rugd( app, uname, params={'filter': 'Favorite'}, status=status )
 			if status == 200:
 				assert_that( res.json_body['Items'], is_empty() )
 
