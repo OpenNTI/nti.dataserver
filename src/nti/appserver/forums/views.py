@@ -511,15 +511,16 @@ def _publication_modified( blog_entry ):
 			  name=PublishLinkDecorator.false_view)
 def _PublishView(request):
 	topic = request.context
-	interface.alsoProvides( topic, nti_interfaces.IDefaultPublished )
-	_publication_modified( topic )
+	if not nti_interfaces.IDefaultPublished.providedBy( topic ):
+		interface.alsoProvides( topic, nti_interfaces.IDefaultPublished )
+		_publication_modified( topic )
 
-	# TODO: Hooked directly up to temp_post_added_to_indexer
-	temp_post_added_to_indexer( topic.headline, None )
-	# TODO: Right now we are dispatching this by hand. Use
-	# events and/or dispatchToSublocations
-	for comment in topic.values(): # TODO: values() doesn't seem to aq wrap?
-		_send_sharing_change_to_sharing_targets( comment.__of__( topic ), topic )
+		# TODO: Hooked directly up to temp_post_added_to_indexer
+		temp_post_added_to_indexer( topic.headline, None )
+		# TODO: Right now we are dispatching this by hand. Use
+		# events and/or dispatchToSublocations
+		for comment in topic.values(): # TODO: values() doesn't seem to aq wrap?
+			_send_sharing_change_to_sharing_targets( comment.__of__( topic ), topic )
 	request.response.location = request.resource_path( topic )
 	return uncached_in_response( topic )
 
@@ -538,14 +539,15 @@ def _PublishView(request):
 			  name=PublishLinkDecorator.true_view)
 def _UnpublishView(request):
 	topic = request.context
-	interface.noLongerProvides( topic, nti_interfaces.IDefaultPublished )
-	_publication_modified( topic )
-	# TODO: While we have temp_dispatch_to_indexer in place, when we unpublish
-	# do we need to unindex the comments too?
-	# TODO: Right now we are dispatching this by hand. Use
-	# events and/or dispatchToSublocations
-	for comment in topic.values():
-		_send_sharing_change_to_sharing_targets( comment.__of__( topic ), topic )
+	if nti_interfaces.IDefaultPublished.providedBy( topic ):
+		interface.noLongerProvides( topic, nti_interfaces.IDefaultPublished )
+		_publication_modified( topic )
+		# TODO: While we have temp_dispatch_to_indexer in place, when we unpublish
+		# do we need to unindex the comments too?
+		# TODO: Right now we are dispatching this by hand. Use
+		# events and/or dispatchToSublocations
+		for comment in topic.values():
+			_send_sharing_change_to_sharing_targets( comment.__of__( topic ), topic )
 
 	request.response.location = request.resource_path( topic )
 	return uncached_in_response( topic )

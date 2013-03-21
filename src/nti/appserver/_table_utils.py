@@ -179,8 +179,8 @@ class HeadlineTopicContentProvider(AbstractNoteContentProvider):
 		return self.context.headline.title
 
 @interface.implementer(cp_interfaces.IContentProvider)
-@component.adapter(frm_interfaces.IPersonalBlogComment, interface.Interface, NoteLikeBodyColumn)
-class PersonalBlogCommentContentProvider(AbstractNoteContentProvider):
+@component.adapter(frm_interfaces.IPost, interface.Interface, NoteLikeBodyColumn)
+class TopicCommentContentProvider(AbstractNoteContentProvider):
 	pass
 
 

@@ -566,7 +566,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( comment_res, has_property( 'content_type', self.forum_topic_comment_content_type ) )
 		assert_that( comment_res.json_body, has_entry( 'sharedWith', [fixture.community_name] ) )
 		self.require_link_href_with_rel( comment_res.json_body, 'edit' )
-		# XXX flag, favorite, like
+		self.require_link_href_with_rel( comment_res.json_body, 'flag' )
+		# XXX favorite, like
 
 		# This affected the count and contents as well
 		self._check_comment_in_topic_contents( testapp, topic_url, comment_data, fixture )
@@ -621,6 +622,23 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		for app in testapp, testapp2:
 			self._check_comment_in_topic_feed( app, topic_url, comment_data )
 
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_community_user_comment_can_be_flagged(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, _ = self._POST_and_publish_topic_entry()
+		topic_url = publish_res.location
+
+		# non-creator can comment
+		comment_data = self._create_comment_data_for_POST()
+		comment_res = testapp2.post_json( topic_url, comment_data, status=201 )
+
+		res = testapp.post( self.require_link_href_with_rel( comment_res.json_body, 'flag' ) )
+		assert_that( res.json_body['href'], is_( comment_res.json_body['href'] ) )
+		self.require_link_href_with_rel( res.json_body, 'flag.metoo' )
 
 	def _create_post_data_for_POST(self):
 		data = { 'Class': self.forum_headline_class_type,

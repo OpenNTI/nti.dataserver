@@ -141,6 +141,9 @@
 	<class class="nti.dataserver.contenttypes.forums.topic.CommunityHeadlineTopic">
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
 	</class>
+	<class class="nti.dataserver.contenttypes.forums.post.GeneralForumComment">
+		<implements interface="nti.dataserver.interfaces.IFlaggable" />
+	</class>
 
 	<!-- Publishing workflow -->
 	<subscriber factory=".views.PublishLinkDecorator"
