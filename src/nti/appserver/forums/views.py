@@ -29,15 +29,12 @@ from nti.appserver.ugd_edit_views import UGDDeleteView
 from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 
 from nti.appserver.ugd_feed_views import AbstractFeedView
-from nti.appserver._util import AbstractTwoStateViewLinkDecorator
-from nti.appserver._view_utils import get_remote_user
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.dataserver import users
-from nti.dataserver import links
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -57,15 +54,12 @@ from nti.dataserver.contenttypes.forums.post import CommunityHeadlinePost
 from nti.dataserver.contenttypes.forums.post import GeneralForumComment
 
 
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.singleton import SingletonDecorator
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults # NOTE: Only usable on classes
 
 from zope.container.interfaces import INameChooser
-from zope.container.interfaces import ILocation
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -74,6 +68,10 @@ from zope.event import notify
 import zope.intid.interfaces
 
 from pyramid.threadlocal import get_current_request
+
+from . import VIEW_PUBLISH
+from . import VIEW_UNPUBLISH
+from . import VIEW_CONTENTS
 
 @interface.implementer(app_interfaces.IContainerCollection)
 @component.adapter(app_interfaces.IUserWorkspace)
@@ -281,14 +279,13 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 
-_VIEW_CONTENTS = 'contents'
 
 @view_config( context=frm_interfaces.IForum )
 @view_config( context=frm_interfaces.IHeadlineTopic )
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_READ,
-				name=_VIEW_CONTENTS,
+				name=VIEW_CONTENTS,
 				request_method='GET')
 class ForumContentsGetView(UGDQueryView):
 	""" The /contents view for the forum objects we are using.
@@ -415,73 +412,8 @@ def match_title_of_post_to_blog( post, event ):
 		post.__parent__.title = post.title
 	return
 
-# Notice we do not declare what we adapt--we adapt too many things
-# that share no common ancestor. (We could be declared on IContainer,
-# but its not clear what if any IContainers we externalize besides
-# the forum objects)
-
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-class ForumObjectContentsLinkProvider(object):
-	"""
-	Decorate forum object externalizations with a link pointing to their
-	children (the contents).
-	"""
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalMapping( self, context, mapping ):
-		# We only do this for parented objects. Otherwise, we won't
-		# be able to render the links. A non-parented object is usually
-		# a weakref to an object that has been left around
-		# in somebody's stream.
-		# All forum objects should have fully traversable paths by themself,
-		# without considering acquired info (NTIIDs from the User would mess
-		# up rendering)
-		context = aq_base( context )
-		if not context.__parent__:
-			return
-
-		# TODO: This can be generalized by using the component
-		# registry in the same way Pyramid itself does. With a lookup like
-		#   adapters.lookupAll( (IViewClassifier, request.request_iface, context_iface), IView )
-		# you get back a list of (name, view) pairs that are applicable.
-		# ISecuredViews (which include IMultiViews) have a __permitted__ that checks ACLs;
-		# if it doesn't pass then that one is obviously filtered out. IMultiViews have a
-		# match and __permitted__ method, __permitted__ using match(). The main
-		# trouble is filtering out the general views (i.e., those that don't specify an interface)
-		# that we don't want to return for everything
-
-		# /path/to/forum/topic/contents --> note that contents is not an @@ view,
-		# simply named. This is prettier, but if we need to we can easily @@ it
-		link = links.Link( context, rel=_VIEW_CONTENTS, elements=(_VIEW_CONTENTS,) )
-		interface.alsoProvides( link, ILocation )
-		link.__name__ = ''
-		link.__parent__ = context
-
-		_links = mapping.setdefault( StandardExternalFields.LINKS, [] )
-		_links.append( link )
 
 ### Publishing workflow
-
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
-	"""
-	Adds the appropriate publish or unpublish link
-	"""
-	false_view = 'publish'
-	true_view = 'unpublish'
-
-	def predicate( self, context, current_username ):
-		if nti_interfaces.IDefaultPublished.providedBy( context ):
-			return True
-
-	def decorateExternalMapping( self, context, mapping ):
-		# Only for the owner
-		current_user = get_remote_user( get_current_request() )
-		if not current_user or current_user != context.creator:
-			return
-		super(PublishLinkDecorator,self).decorateExternalMapping( context, mapping )
-
 
 def _publication_modified( blog_entry ):
 	"Fire off a modified event when the publication status changes. The event notes the sharing has changed."
@@ -502,13 +434,13 @@ def _publication_modified( blog_entry ):
 			  permission=nauth.ACT_UPDATE,
 			  request_method='POST',
 			  context=frm_interfaces.ICommunityHeadlineTopic,
-			  name=PublishLinkDecorator.false_view)
+			  name=VIEW_PUBLISH)
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_UPDATE,
 			  request_method='POST',
 			  context=frm_interfaces.IPersonalBlogEntry,
-			  name=PublishLinkDecorator.false_view)
+			  name=VIEW_PUBLISH)
 def _PublishView(request):
 	topic = request.context
 	if not nti_interfaces.IDefaultPublished.providedBy( topic ):
@@ -530,13 +462,13 @@ def _PublishView(request):
 			  context=frm_interfaces.ICommunityHeadlineTopic,
 			  permission=nauth.ACT_UPDATE,
 			  request_method='POST',
-			  name=PublishLinkDecorator.true_view)
+			  name=VIEW_UNPUBLISH)
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=frm_interfaces.IPersonalBlogEntry,
 			  permission=nauth.ACT_UPDATE,
 			  request_method='POST',
-			  name=PublishLinkDecorator.true_view)
+			  name=VIEW_UNPUBLISH)
 def _UnpublishView(request):
 	topic = request.context
 	if nti_interfaces.IDefaultPublished.providedBy( topic ):

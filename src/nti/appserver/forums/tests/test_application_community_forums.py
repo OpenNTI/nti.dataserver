@@ -68,6 +68,13 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 	forum_topic_comment_content_type = 'application/vnd.nextthought.forums.generalforumcomment+json'
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_default_forum_in_links( self ):
+		# Default forum is present in the community links
+		user = self.resolve_user(username=self.default_community)
+		href = self.require_link_href_with_rel( user, self.forum_link_rel )
+		assert_that( href, is_( self.forum_pretty_url ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_forum_entry_class( self ):
 		"""POSTing an IPost to the forum URL automatically creates a new topic"""
 

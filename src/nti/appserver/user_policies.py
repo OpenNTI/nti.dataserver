@@ -133,6 +133,7 @@ class MathCountsCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
 			result.discard(u'nti.platform.p2p.dynamicfriendslists')
 
 		result.discard('nti.platform.blogging.createblogentry')
+		result.discard('nti.platform.forums.communityforums' )
 		return result
 
 #: This relationship is exposed on Users and in the handshake/ping

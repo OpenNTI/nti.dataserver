@@ -8,7 +8,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
-from zope.annotation.interfaces import IAnnotations
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.dataserver import interfaces as nti_interfaces
@@ -25,8 +24,6 @@ from pyramid.threadlocal import get_current_request
 from .account_creation_views import REL_ACCOUNT_PROFILE_SCHEMA
 _PROFILE_VIEW = '@@' + REL_ACCOUNT_PROFILE_SCHEMA
 from ._util import link_belongs_to_user
-
-from .pyramid_authorization import is_readable
 
 from .user_activity_views import REL_USER_ACTIVITY
 
@@ -48,19 +45,7 @@ class ProfileLinkDecorator(object):
 
 			the_links.append( link )
 		# TODO: This is action at a distance. Refactor these to be cleaner.
-		# Primary reason they are here: speed.
-		# Notice we DO NOT adapt; it must already exist, meaning that the
-		# owner has at one time added content to it. It may not have published
-		# content, though, and it may no longer have any entries
-		# (hence 'not None' rather than __nonzero__)
-		blog = context.containers.getContainer( 'Blog' ) # see forum_views
-		if blog is not None and is_readable( blog, request ):
-			link = Link( context,
-						 rel='Blog',
-						 elements=('Blog',) )
-			link_belongs_to_user( link, context )
-			the_links.append( link )
-
+		# Primary reason this are here: speed.
 		link = Link( context,
 					 rel=REL_USER_ACTIVITY,
 					 elements=(REL_USER_ACTIVITY,))
