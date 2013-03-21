@@ -113,3 +113,41 @@ class AffineMatrix(object):
 	transformPoint = transform_point
 
 NTMatrix = AffineMatrix
+
+def check_width(width):
+	if width is not None:
+		width = 1 if math.isinf(width) or math.isnan(width) else width
+	return width
+
+def check_fill(fill, default="rgb(0,0,0)"):
+	return fill or default
+
+def plot_bezier_curve(draw, xvals, yvals, fill=None, width=None, m=None):
+	"""
+	plot the curve specified x,y coordinates
+	
+	:param draw: Pillow Image.Draw object
+	:param xvals: X-coordinates
+	:param yvals: Y-coordinates
+	:param m: Affine matrix
+	:param fill: The color to use for the curve
+	:width width curve width
+	"""
+	length = min(len(xvals), len(yvals))
+	fill = check_fill(fill)
+	width = check_width(width)
+	for i in xrange(length):
+		x = xvals[i]
+		y = yvals[i]
+		if m is not None:
+			tx, ty = m.transform_point(x, y)
+		else:
+			tx, ty = x, y
+
+		if not width:
+			draw.point((tx, ty), fill=fill)
+		else:
+			# use ceil to make sure the line is properly drawn
+			draw.line((tx, ty, math.ceil(tx), math.ceil(ty)), fill=fill, width=width)
+
+plot_curve = plot_bezier_curve
