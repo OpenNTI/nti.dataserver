@@ -400,11 +400,9 @@ class PostDeleteView(UGDDeleteView):
 		deleting.title = None
 		deleting.body = None
 		deleting.tags = ()
-		# Do remove from the activity stream (todo: make this an event)
-		unstore_created_comment_from_global_activity( deleting, None )
 		# Because we are not actually removing it, no IObjectRemoved events fire
 		# but we do want to sent a modified event to be sure that timestamps, etc,
-		# get updated.
+		# get updated. This also triggers removing from the users activity
 		notify( lifecycleevent.ObjectModifiedEvent( deleting ) )
 		return theObject
 
@@ -621,25 +619,6 @@ def notify_dynamic_memberships_of_blog_entry_publication_change( blog_entry, eve
 			# Ok, the sharing has changed. Send the changes around
 			_send_sharing_change_to_sharing_targets( blog_entry, blog_entry )
 			break
-
-### Users have a 'global activity store' that keeps things that we're not
-# handling as part of their contained objects. This matches the shared object storage
-# in that we don't try to take ownership of it. Users will still see these objects in their
-# activity stream even when the blog is not published, but no one else will
-@component.adapter(frm_interfaces.IPersonalBlogComment, zope.intid.interfaces.IIntIdAddedEvent)
-def store_created_comment_in_global_activity( comment, event ):
-	storage = app_interfaces.IUserActivityStorage( comment.creator, None )
-	# Put these in default storage
-	if storage is not None:
-		storage.addContainedObjectToContainer( comment, '' )
-
-@component.adapter(frm_interfaces.IPersonalBlogComment, zope.intid.interfaces.IIntIdRemovedEvent)
-def unstore_created_comment_from_global_activity( comment, event ):
-	storage = app_interfaces.IUserActivityStorage( comment.creator, None )
-	# Put these in default storage
-	if storage is not None:
-		storage.deleteEqualContainedObjectFromContainer( comment, '' )
-
 
 def _temp_dispatch_to_indexer( change ):
 	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
