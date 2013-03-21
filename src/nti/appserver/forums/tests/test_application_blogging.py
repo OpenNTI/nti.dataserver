@@ -77,6 +77,7 @@ frm_ext = frm_ext
 POST_MIME_TYPE = 'application/vnd.nextthought.forums.post'
 
 from .base_forum_testing import AbstractTestApplicationForumsBase
+from .base_forum_testing import UserCommunityFixture
 
 class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 	__test__ = True
@@ -707,3 +708,35 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		# When published, it is visible to the other user
 		testapp.post( pub_url )
 		_check_canvas( res, res.json_body['body'][1], acc_to_other=True )
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_creator_can_DELETE_community_user_comment_in_published_topic(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, _ = self._POST_and_publish_topic_entry()
+		topic_url = publish_res.location
+
+		# non-creator comment
+		comment_data = self._create_comment_data_for_POST()
+		comment_res = testapp2.post_json( topic_url, comment_data, status=201 )
+		edit_href = self.require_link_href_with_rel( comment_res.json_body, 'edit' )
+
+		eventtesting.clearEvents()
+
+		res = testapp.delete( edit_href )
+		assert_that( res.status_int, is_( 204 ) )
+
+		# When it is replaced with placeholders
+		res = testapp2.get( topic_url )
+		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
+		# and nothing was actually deleted yet
+		del_events = eventtesting.getEvents( lifecycleevent.IObjectRemovedEvent )
+		assert_that( del_events, has_length( 0 ) )
+		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 0 ) )
+
+		# But modification events did fire...
+		mod_events = eventtesting.getEvents( lifecycleevent.IObjectModifiedEvent )
+		assert_that( mod_events, has_length( 1 ) )

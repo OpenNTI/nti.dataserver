@@ -16,54 +16,22 @@ logger = __import__('logging').getLogger(__name__)
 
 
 from hamcrest import assert_that
-from hamcrest import has_property
 from hamcrest import is_
 from hamcrest import is_not as does_not
 is_not = does_not
-from hamcrest import not_none
-from hamcrest import has_item
 from hamcrest import contains
-from hamcrest import contains_inanyorder
-from hamcrest import contains_string
-from hamcrest import has_length
 from hamcrest import has_entry
-from hamcrest import has_entries
-from hamcrest import ends_with
-from hamcrest import greater_than
-from hamcrest import has_key
 
-from nti.tests import is_empty
+
 from nti.tests import time_monotonically_increases
-import fudge
 
-from nti.appserver.tests.test_application import TestApp as _TestApp
-from nti.appserver.tests import test_application_censoring
-
-import datetime
-import webob.datetime_utils
-
-from zope import lifecycleevent
-from zope import interface
-from zope.component import eventtesting
-from zope.intid.interfaces import IIntIdRemovedEvent
-from zope.location.interfaces import ISublocations
-
-import simplejson as json
-
-from nti.ntiids import ntiids
-from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
-from nti.chatserver import interfaces as chat_interfaces
-from nti.dataserver.tests import mock_dataserver
-
-from nti.dataserver.contenttypes.forums.forum import PersonalBlog, CommunityForum
-from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry, CommunityHeadlineTopic
+from nti.dataserver.contenttypes.forums.forum import  CommunityForum
+from nti.dataserver.contenttypes.forums.topic import  CommunityHeadlineTopic
 
 
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from urllib import quote as UQ
+
 from pyquery import PyQuery
 
 
@@ -76,6 +44,7 @@ frm_ext = frm_ext
 
 
 from .base_forum_testing import AbstractTestApplicationForumsBase
+from .base_forum_testing import UserCommunityFixture
 
 
 class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
@@ -170,3 +139,22 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		#				   params={'filter': 'Favorite'})
 		#assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 		#self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
+
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_creator_cannot_DELETE_community_user_comment_in_published_topic(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, _ = self._POST_and_publish_topic_entry()
+		topic_url = publish_res.location
+
+		# non-creator comment
+		comment_data = self._create_comment_data_for_POST()
+		comment_res = testapp2.post_json( topic_url, comment_data, status=201 )
+		edit_href = self.require_link_href_with_rel( comment_res.json_body, 'edit' )
+
+		# cannot be deleted by created
+		res = testapp.delete( edit_href, status=403 ) # forbidden by ACL

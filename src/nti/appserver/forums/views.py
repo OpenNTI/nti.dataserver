@@ -510,17 +510,18 @@ def _publication_modified( blog_entry ):
 			  context=frm_interfaces.IPersonalBlogEntry,
 			  name=PublishLinkDecorator.false_view)
 def _PublishView(request):
-	blog_entry = request.context
-	interface.alsoProvides( blog_entry, nti_interfaces.IDefaultPublished )
-	_publication_modified( blog_entry )
+	topic = request.context
+	interface.alsoProvides( topic, nti_interfaces.IDefaultPublished )
+	_publication_modified( topic )
 
 	# TODO: Hooked directly up to temp_post_added_to_indexer
-	temp_post_added_to_indexer( blog_entry.headline, None )
+	temp_post_added_to_indexer( topic.headline, None )
 	# TODO: Right now we are dispatching this by hand. Use
 	# events and/or dispatchToSublocations
-	for comment in blog_entry.values(): # TODO: values() doesn't seem to aq wrap?
-		_send_sharing_change_to_sharing_targets( comment.__of__( blog_entry ), blog_entry )
-	return uncached_in_response( blog_entry )
+	for comment in topic.values(): # TODO: values() doesn't seem to aq wrap?
+		_send_sharing_change_to_sharing_targets( comment.__of__( topic ), topic )
+	request.response.location = request.resource_path( topic )
+	return uncached_in_response( topic )
 
 
 @view_config( route_name='objects.generic.traversal',
@@ -536,16 +537,18 @@ def _PublishView(request):
 			  request_method='POST',
 			  name=PublishLinkDecorator.true_view)
 def _UnpublishView(request):
-	blog_entry = request.context
-	interface.noLongerProvides( blog_entry, nti_interfaces.IDefaultPublished )
-	_publication_modified( blog_entry )
+	topic = request.context
+	interface.noLongerProvides( topic, nti_interfaces.IDefaultPublished )
+	_publication_modified( topic )
 	# TODO: While we have temp_dispatch_to_indexer in place, when we unpublish
 	# do we need to unindex the comments too?
 	# TODO: Right now we are dispatching this by hand. Use
 	# events and/or dispatchToSublocations
-	for comment in blog_entry.values():
-		_send_sharing_change_to_sharing_targets( comment.__of__( blog_entry ), blog_entry )
-	return uncached_in_response( blog_entry )
+	for comment in topic.values():
+		_send_sharing_change_to_sharing_targets( comment.__of__( topic ), topic )
+
+	request.response.location = request.resource_path( topic )
+	return uncached_in_response( topic )
 
 ### Events
 ## TODO: Under heavy construction

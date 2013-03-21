@@ -79,9 +79,10 @@ POST_MIME_TYPE = 'application/vnd.nextthought.forums.post'
 def _plain(mt):
 	return mt[:-5] if mt.endswith( '+json' ) else mt
 
-class _UserCommunityFixture(object):
+class UserCommunityFixture(object):
 
-	def __init__( self, test ):
+	def __init__( self, test, community_name='TheCommunity' ):
+		self.community_name = community_name
 		self.ds = test.ds
 		self.test = test
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -92,7 +93,7 @@ class _UserCommunityFixture(object):
 			user2_following_2 = self._create_user( username='user2_following_2@foo' )
 
 			# make them share a community
-			community = users.Community.get_community( 'TheCommunity', self.ds ) or users.Community.create_community( username='TheCommunity' )
+			community = users.Community.get_community( community_name, self.ds ) or users.Community.create_community( username=community_name )
 			user.join_community( community )
 			user2.join_community( community )
 			user3.join_community( community )
@@ -458,7 +459,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
 	def test_creator_can_publish_topic_simple_visible_to_other_user_in_community(self):
-		fixture = _UserCommunityFixture( self )
+		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
 		testapp2 = fixture.testapp2
 
@@ -528,18 +529,98 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
 	def test_published_topic_is_in_activity(self):
-		fixture = _UserCommunityFixture( self )
+		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
 		testapp2 = fixture.testapp2
 
-		_, data = self._POST_and_publish_topic_entry()
+		publish_res, data = self._POST_and_publish_topic_entry()
 
 		# ...It can be seen in the activity stream for the author by the author and the people it
 		# is shared with ...
 		for app in testapp, testapp2:
 			res = self.fetch_user_activity( app, self.default_username )
-			__traceback_info__ = res.json_body
 			assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+
+		# Until it is unpublished,
+		testapp.post( self.require_link_href_with_rel( publish_res.json_body, 'unpublish' ) )
+		# When it is still in my activity
+		res = self.fetch_user_activity( testapp, self.default_username )
+		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+		# but not the other users view of my activity
+		res = self.fetch_user_activity( testapp2, self.default_username )
+		assert_that( res.json_body['Items'], does_not( contains( has_entry( 'title', data['title'] ) ) ) )
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_community_user_can_comment_in_published_topic(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, _ = self._POST_and_publish_topic_entry()
+		topic_url = publish_res.location
+
+		# non-creator can comment
+		comment_data = self._create_comment_data_for_POST()
+		comment_res = testapp2.post_json( topic_url, comment_data, status=201 )
+		assert_that( comment_res, has_property( 'content_type', self.forum_topic_comment_content_type ) )
+		assert_that( comment_res.json_body, has_entry( 'sharedWith', [fixture.community_name] ) )
+		self.require_link_href_with_rel( comment_res.json_body, 'edit' )
+		# XXX flag, favorite, like
+
+		# This affected the count and contents as well
+		self._check_comment_in_topic_contents( testapp, topic_url, comment_data, fixture )
+
+		for app in testapp, testapp2:
+			self._check_comment_in_topic_feed( app, topic_url, comment_data )
+
+	def _check_comment_in_topic_contents( self, testapp, topic_url, comment_data, fixture ):
+		res = testapp.get( topic_url )
+		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
+		res = testapp.get( self.require_link_href_with_rel( res.json_body, 'contents' ) )
+		comment_data.pop('Class',None) # don't compare, it changes
+		comment_data['sharedWith'] = [fixture.community_name]
+		assert_that( res.json_body['Items'][0], has_entries( comment_data ) )
+
+	def _check_comment_in_topic_feed( self, testapp, topic_url, comment_data ):
+		res = testapp.get( topic_url + '/feed.atom' )
+		assert_that( res.content_type, is_( 'application/atom+xml'))
+		res._use_unicode = False
+		pq = PyQuery( res.body,
+					  parser='html', # html to ignore namespaces. Sigh.
+					  namespaces={u'atom': u'http://www.w3.org/2005/Atom'} )
+
+		titles = sorted( [x.text for x in pq( b'entry title' )] )
+		sums = sorted( [x.text for x in pq( b'entry summary')] )
+		assert_that( titles, contains( comment_data['title'] ) )
+		assert_that( sums, contains( '<div><br />' + comment_data['body'][0] ) )
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_community_user_can_edit_comment_in_published_topic(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, _ = self._POST_and_publish_topic_entry()
+		topic_url = publish_res.location
+
+		# non-creator can comment, both at the direct URL
+		comment_data = self._create_comment_data_for_POST()
+		comment_res = testapp2.post_json( topic_url, comment_data, status=201 )
+		edit_href = self.require_link_href_with_rel( comment_res.json_body, 'edit' )
+
+		comment_data['title'] = 'Changed my title'
+		comment_data['body'] = ["Different comment body"]
+		comment_res = testapp2.put_json( edit_href, comment_data )
+		del comment_data['Class'] # don't compare, it changes
+		comment_data['sharedWith'] = [fixture.community_name]
+		assert_that( comment_res.json_body, has_entries( comment_data ) )
+
+		self._check_comment_in_topic_contents( testapp, topic_url, comment_data, fixture )
+		for app in testapp, testapp2:
+			self._check_comment_in_topic_feed( app, topic_url, comment_data )
+
 
 	def _create_post_data_for_POST(self):
 		data = { 'Class': self.forum_headline_class_type,
@@ -549,6 +630,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		return data
 
 	def _create_comment_data_for_POST(self):
+		""" Always returns a plain Post so we can be sure that the correct Mime transformation happens. """
 		data = { 'Class': 'Post',
 				 'title': 'A comment',
 				 'body': ['This is a comment body'] }
