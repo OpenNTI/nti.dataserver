@@ -163,6 +163,28 @@ class AbstractUserBasedResolver(object):
 
 _AbstractUserBasedResolver = AbstractUserBasedResolver # BWC
 
+class AbstractAdaptingUserBasedResolver(AbstractUserBasedResolver):
+	"""
+	Adapts the found user to some interface and returns that or the default value.
+	"""
+
+	default_value = None
+	adapt_to = None
+
+	def _resolve( self, ntiid, user ):
+		return component.queryAdapter( user, self.adapt_to, default=self.default_value )
+
+class AbstractMappingAdaptingUserBasedResolver(AbstractAdaptingUserBasedResolver):
+	"""
+	Looks up the specific part of the ntiid in a mapping-like object (IContainer)
+	adapted from the user.
+	"""
+
+	def _resolve( self, ntiid, user ):
+		mapping = super(AbstractMappingAdaptingUserBasedResolver,self)._resolve( ntiid, user )
+		if mapping is not None:
+			return mapping.get( get_specific( ntiid ) )
+
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _ClassResolver(_AbstractUserBasedResolver):
 

@@ -18,11 +18,12 @@ from nti.ntiids import interfaces as nid_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.ntiids import ntiids
-from nti.dataserver.ntiids import AbstractUserBasedResolver
+from nti.dataserver.ntiids import AbstractAdaptingUserBasedResolver
+from nti.dataserver.ntiids import AbstractMappingAdaptingUserBasedResolver
 
 
 @interface.implementer(nid_interfaces.INTIIDResolver)
-class _BlogResolver(AbstractUserBasedResolver):
+class _BlogResolver(AbstractAdaptingUserBasedResolver):
 	"""
 	Resolves the one blog that belongs to a user, if one does exist.
 
@@ -30,12 +31,10 @@ class _BlogResolver(AbstractUserBasedResolver):
 	"""
 
 	required_iface = nti_interfaces.IUser
-
-	def _resolve( self, ntiid, user ):
-		return frm_interfaces.IPersonalBlog( user, None )
+	adapt_to = frm_interfaces.IPersonalBlog
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
-class _BlogEntryResolver(AbstractUserBasedResolver):
+class _BlogEntryResolver(AbstractMappingAdaptingUserBasedResolver):
 	"""
 	Resolves a single blog entry within a user.
 
@@ -43,15 +42,11 @@ class _BlogEntryResolver(AbstractUserBasedResolver):
 	"""
 
 	required_iface = nti_interfaces.IUser
-
-	def _resolve( self, ntiid, user ):
-		blog_name = ntiids.get_specific( ntiid )
-		blog = frm_interfaces.IPersonalBlog( user, {} )
-		# because of this, __name__ of the entry must be NTIID safe
-		return blog.get( blog_name )
+	adapt_to = frm_interfaces.IPersonalBlog
+	# because of this, __name__ of the entry must be NTIID safe
 
 @interface.implementer(nid_interfaces.INTIIDResolver)
-class _CommunityForumResolver(AbstractUserBasedResolver):
+class _CommunityForumResolver(AbstractAdaptingUserBasedResolver):
 	"""
 	Resolves the one forum that belongs to a community, if one does exist.
 
@@ -59,6 +54,16 @@ class _CommunityForumResolver(AbstractUserBasedResolver):
 	"""
 
 	required_iface = nti_interfaces.ICommunity
+	adapt_to = frm_interfaces.ICommunityForum
 
-	def _resolve( self, ntiid, community ):
-		return frm_interfaces.ICommunityForum( community, None )
+
+@interface.implementer(nid_interfaces.INTIIDResolver)
+class _CommunityTopicResolver(AbstractMappingAdaptingUserBasedResolver):
+	"""
+	Resolves a topic in the one forum that belongs to a community, if one does exist.
+
+	Register with the name :const:`.NTIID_TYPE_COMMUNITY_TOPIC`
+	"""
+
+	required_iface = nti_interfaces.ICommunity
+	adapt_to = frm_interfaces.ICommunityForum
