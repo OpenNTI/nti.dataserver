@@ -7,7 +7,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from PIL import Image, ImageDraw
+from PIL import Image
 
 from .. import render
 from ... import canvas
@@ -45,6 +45,5 @@ class TestRender(ConfiguringTestBase):
 		update_from_external_object(polygon, data)
 
 		image = Image.new("RGBA", (600, 600), (0, 0, 0))
-		draw = ImageDraw.Draw(image)
-		render.draw_rectangle(draw, polygon)
-		# image.show()
+		render.draw_rectangle(image, polygon)
+		image.show()
