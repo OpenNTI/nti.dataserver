@@ -107,11 +107,19 @@ class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadReque
 	_constraint = frm_interfaces.IPost.providedBy
 
 	_override_content_type = None
+	#: Set to a non-empty sequence to require one of a particular type. The `_override_content_type`
+	#: is only applied if the incoming type is in the sequence; you must have a valid
+	#: `_constraint` in that case to protect against other incoming types.
+	#: Set to None to always use the _override_content_type (forcing parsing the incoming data
+	#: as that type no matter what)
 	_allowed_content_types = ()
 
 	def _transformContentType( self, contenttype ):
-		if self._override_content_type and contenttype in self._allowed_content_types:
-			contenttype = self._override_content_type
+		if self._override_content_type:
+			if self._allowed_content_types is None:
+				contenttype = self._override_content_type
+			elif contenttype in self._allowed_content_types:
+				contenttype = self._override_content_type
 		return contenttype
 
 	def _read_incoming_post( self ):
@@ -217,9 +225,13 @@ class PersonalBlogPostView(_AbstractForumPostView):
 			  request_method='POST' )
 class CommunityBoardPostView(_AbstractForumPostView):
 	""" Given an incoming IPost, creates a new forum in the community board """
-	# Still read the incoming IPost, but we discard it since our "topic" (aka forum)
+	# Still read the incoming IPost-like thing, but we discard it since our "topic" (aka forum)
 	# does not have a headline
 	_factory = CommunityForum
+	#: We always override the incoming content type and parse simply as an IPost.
+	#: All we care about is topic and description.
+	_allowed_content_types = None
+	_override_content_type = Post.mimeType
 
 	def _get_topic_creator( self ):
 		return self.request.context.creator # the community
