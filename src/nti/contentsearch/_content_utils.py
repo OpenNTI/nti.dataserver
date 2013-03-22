@@ -242,7 +242,8 @@ class _HeadlineTopicContentResolver(_BlogContentResolverMixin):
 						search_interfaces.INoteContentResolver,
 						search_interfaces.IRedactionContentResolver,
 						search_interfaces.IMessageInfoContentResolver,
-						search_interfaces.IPostContentResolver,)
+						search_interfaces.IPostContentResolver,
+						search_interfaces.IHeadlineTopicContentResolver)
 class _DictContentResolver(object):
 
 	__slots__ = ('obj',)
