@@ -323,7 +323,7 @@ class TestAppRepozeUserAdapter(ApplicationTestBase):
 			hits = rim.search('Kenpachi')
 			assert_that(hits, has_length(1))
 
-			hits = rim.search('Unohana')
+			hits = rim.search('Unohana'.upper())
 			assert_that(hits, has_length(1))
 
 			hits = rim.search('yachiru')
@@ -335,3 +335,6 @@ class TestAppRepozeUserAdapter(ApplicationTestBase):
 			hit = items[0]
 			assert_that(hit, has_entry(ID, 'Unohana'))
 			assert_that(hit, has_entry(FIELD, tags_))
+
+			hits = rim.search('yachiru'.upper())
+			assert_that(hits, has_length(1))
