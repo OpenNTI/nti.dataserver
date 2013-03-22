@@ -9,6 +9,9 @@ __docformat__ = "restructuredtext en"
 
 import re
 import math
+
+from PIL import ImageDraw
+
 from nti.utils import graphics
 # from nti.utils import math as nti_math
 
@@ -34,16 +37,17 @@ def _get_line_width(shape, width, scale):
 		line_width = 1
 	return line_witdh
 
-def draw_rectangle(draw, polygon):
+def draw_rectangle(image, polygon):
 	"""
 	render a Cavas.CanvasPolygonShape with 4 sides
 	
 	adapted from NextThought/view/whiteboard/shapes/Polygon.js
 	"""
 	assert polygon.sides == 4
-
 	transform = polygon.transform.toArray()
-	width, _ = draw.im.size
+
+	draw = ImageDraw.Draw(image)
+	width, _ = image.size
 	m = graphics.AffineMatrix(*transform)
 	m.scale_all(width)
 	scale = m.get_scale(True)
@@ -58,10 +62,25 @@ def draw_rectangle(draw, polygon):
 	tx, ty = m.transform_point(x + w, y + h)
 	box = (_ic(tpx), _ic(tpy), _ic(tx), _ic(ty))
 
-	draw.rectangle(box, fill=stroke_color)  # The outer rectangle6
+	draw.rectangle(box, fill=stroke_color)  # The outer rectangle
 	draw.rectangle(# The inner rectangle
 		(box[0] + line_width, box[1] + line_width, box[2] - line_width, box[3] - line_width),
 		fill=fill_color)
+
+# 	segments = []
+# 	segments.extend(m.transform_point(x, y))
+# 	segments.extend(m.transform_point(x, y + h))
+# 	segments.extend(m.transform_point(x + w, y + h))
+# 	segments.extend(m.transform_point(x + w, y))
+# 	segments.extend(m.transform_point(x, y))
+#
+# 	draw.polygon(segments, fill=fill_color)
+# 	draw.line(segments, width=line_width, fill=stroke_color)
+#
+# 	graphics.plot_bezier_curve(draw, [x, x, x], [y, y, y], fill=stroke_color, width=line_width, m=m)
+# 	graphics.plot_bezier_curve(draw, [x + w, x + w, x + w], [y, y, y], fill=stroke_color, width=line_width, m=m)
+# 	graphics.plot_bezier_curve(draw, [x + w, x + w, x + w], [y + h, y + h, y + h], fill=stroke_color, width=line_width, m=m)
+# 	graphics.plot_bezier_curve(draw, [x, x, x], [y + h, y + h, y + h], fill=stroke_color, width=line_width, m=m)
 
 # 	tpx, tpy = m.transform_point(x, y)
 # 	tx, ty = m.transform_point(x + w, y)
