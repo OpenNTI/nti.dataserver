@@ -238,11 +238,20 @@ class _AppTestBaseMixin(object):
 		return testapp.get( '/dataserver2' )
 
 	def fetch_user_activity( self, testapp=None, username=None ):
+		"Using the given or default app, fetch the activity for the given or default user"
 		return self._fetch_user_url( '/Activity', testapp=testapp, username=username )
 
 	def fetch_user_root_rugd( self, testapp=None, username=None, **kwargs ):
+		"Using the given or default app, fetch the RecursiveUserGeneratedData for the given or default user"
 		return self._fetch_user_url( '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData', testapp=testapp, username=username, **kwargs )
 
+
+	def fetch_by_ntiid( self, ntiid, testapp=None ):
+		"Using the given or default app, fetch the object with the given ntiid"
+		if testapp is None:
+			testapp = self.testapp
+
+		return testapp.get( '/dataserver2/NTIIDs/' + ntiid )
 
 from zope.component import eventtesting
 class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):

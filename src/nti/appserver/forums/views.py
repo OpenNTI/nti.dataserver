@@ -280,6 +280,7 @@ class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 
 
+@view_config( context=frm_interfaces.IBoard )
 @view_config( context=frm_interfaces.IForum )
 @view_config( context=frm_interfaces.IHeadlineTopic )
 @view_defaults( route_name='objects.generic.traversal',
@@ -302,6 +303,16 @@ class ForumContentsGetView(UGDQueryView):
 
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)
+
+@view_config( context=frm_interfaces.ICommunityBoard )
+class CommunityBoardContentsGetView(ForumContentsGetView):
+
+	def __init__( self, request ):
+		# Make sure that if it's going to have a default, it does
+		frm_interfaces.ICommunityForum( request.context.creator, None )
+		super(CommunityBoardContentsGetView,self).__init__( request )
+
+
 
 @view_config( context=frm_interfaces.IHeadlineTopic,
 			  name='feed.atom' )

@@ -46,15 +46,33 @@ class _BlogEntryResolver(AbstractMappingAdaptingUserBasedResolver):
 	# because of this, __name__ of the entry must be NTIID safe
 
 @interface.implementer(nid_interfaces.INTIIDResolver)
-class _CommunityForumResolver(AbstractAdaptingUserBasedResolver):
+class _CommunityBoardResolver(AbstractAdaptingUserBasedResolver):
 	"""
-	Resolves the one forum that belongs to a community, if one does exist.
+	Resolves the default board that belongs to a community, if one does exist.
+
+	Register with the name :const:`.NTIID_TYPE_COMMUNITY_BOARD`
+	"""
+
+	required_iface = nti_interfaces.ICommunity
+	adapt_to = frm_interfaces.ICommunityBoard
+
+
+@interface.implementer(nid_interfaces.INTIIDResolver)
+class _CommunityForumResolver(AbstractMappingAdaptingUserBasedResolver):
+	"""
+	Resolves a forum that belongs to a community.
 
 	Register with the name :const:`.NTIID_TYPE_COMMUNITY_FORUM`
 	"""
 
 	required_iface = nti_interfaces.ICommunity
-	adapt_to = frm_interfaces.ICommunityForum
+	adapt_to = frm_interfaces.ICommunityBoard # adapt to a board, look inside for a named forum
+
+	def _resolve( self, ntiid, community ):
+		forum = super(_CommunityForumResolver,self)._resolve( ntiid, community )
+		if forum is None and ntiids.get_specific(ntiid) == 'Forum': # Hmm, is it the default?
+			forum = frm_interfaces.ICommunityForum( community, None )
+		return forum
 
 
 @interface.implementer(nid_interfaces.INTIIDResolver)
