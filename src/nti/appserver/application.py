@@ -458,12 +458,21 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._provider_redirect_classes',
 							 renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
 							 permission=nauth.ACT_READ, request_method='GET' )
+
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
 							 renderer='rest', context='nti.appserver.interfaces.IContainerResource',
 							 permission=nauth.ACT_CREATE, request_method='POST' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							 renderer='rest', context='nti.appserver.interfaces.IContainerResource',
 							 permission=nauth.ACT_READ, request_method='GET' )
+
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._method_not_allowed',
+							 renderer='rest', context='nti.appserver.interfaces.IObjectsContainerResource',
+							 permission=nauth.ACT_READ, request_method='GET' )
+	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
+							 renderer='rest', context='nti.appserver.interfaces.IObjectsContainerResource',
+							 permission=nauth.ACT_CREATE, request_method='POST' )
+
 
 	# Modifying UGD beneath the Pages structure
 

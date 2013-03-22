@@ -128,6 +128,7 @@ class _PageContainerResource(_ContainerResource):
 		raise loc_interfaces.LocationError( key )
 
 from nti.utils._compat import aq_base, IAcquirer
+@interface.implementer(interfaces.IObjectsContainerResource)
 class _ObjectsContainerResource(_ContainerResource):
 
 	def __init__( self, context, request=None, name=None, parent=None ):

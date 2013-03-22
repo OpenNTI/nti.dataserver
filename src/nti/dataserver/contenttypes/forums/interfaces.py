@@ -29,6 +29,12 @@ from zope.schema import Int
 #: The type of NTIID used for a :class:`IBoard` object
 NTIID_TYPE_BOARD = 'Board'
 
+#: The subtype of NTIID used to represent a :class:`.IGeneralBoard`
+NTIID_TYPE_GENERAL_BOARD = NTIID_TYPE_BOARD + ':General'
+
+#: The subtype of NTIID used to represent a :class:`.ICommunityBoard`
+NTIID_TYPE_COMMUNITY_BOARD = NTIID_TYPE_GENERAL_BOARD + 'Community'
+
 #: The type of NTIID used for a :class:`IForum` object
 NTIID_TYPE_FORUM = 'Forum'
 

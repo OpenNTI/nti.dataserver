@@ -23,6 +23,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from ZODB.interfaces import IConnection
 
 from ._compat import Base
+from . import _CreatedNamedNTIIDMixin
 
 from nti.dataserver import containers
 from nti.dataserver import sharing
@@ -38,6 +39,7 @@ class Board(Base,
 
 	__external_can_create__ = False
 	__name__ = __default_name__ = 'DiscussionBoard'
+	mimeType = None # for static analysis; real value filled in by externalization
 
 	title = AdaptingFieldProperty(for_interfaces.IBoard['title'])
 	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
@@ -53,8 +55,9 @@ class GeneralBoard(Board):
 
 
 @interface.implementer(for_interfaces.ICommunityBoard)
-class CommunityBoard(GeneralBoard):
+class CommunityBoard(GeneralBoard,_CreatedNamedNTIIDMixin):
 	__external_can_create__ = False
+	ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_BOARD
 
 
 

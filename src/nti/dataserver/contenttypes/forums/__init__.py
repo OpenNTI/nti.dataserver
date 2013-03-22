@@ -42,3 +42,26 @@ except ImportError:
 			return ()
 		def __set__( self, instance, value ):
 			return
+
+from nti.ntiids.ntiids import make_ntiid as _make_ntiid
+from nti.ntiids.ntiids import DATE as _NTIID_DATE
+from nti.utils.property import CachedProperty as _CachedProperty
+
+
+class _CreatedNamedNTIIDMixin(object):
+	"""
+	Mix this in to get NTIIDs based on the creator and name.
+	You must define the ``ntiid_type``.
+	"""
+
+	creator = None
+	__name__ = None
+	ntiid_type = None
+
+	@_CachedProperty
+	def NTIID(self):
+		"NTIID is defined only after the creator is set"
+		return _make_ntiid( date=_NTIID_DATE,
+							provider=self.creator.username,
+							nttype=self.ntiid_type,
+							specific=self.__name__ )

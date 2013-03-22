@@ -21,7 +21,8 @@ from hamcrest import is_not as does_not
 is_not = does_not
 from hamcrest import contains
 from hamcrest import has_entry
-
+from hamcrest import has_property
+from hamcrest import has_length
 
 from nti.tests import time_monotonically_increases
 
@@ -50,6 +51,7 @@ frm_ext = frm_ext
 
 from .base_forum_testing import AbstractTestApplicationForumsBase
 from .base_forum_testing import UserCommunityFixture
+from .base_forum_testing import _plain
 
 
 class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
@@ -63,21 +65,55 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 	forum_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Forum:GeneralCommunity-Forum'
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-'
 
+	board_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Board:GeneralCommunity-DiscussionBoard'
+	board_content_type = CommunityBoard.mimeType + '+json'
+
 	forum_content_type = 'application/vnd.nextthought.forums.communityforum+json'
 	forum_headline_class_type = 'Post'
 	forum_topic_content_type = CommunityHeadlineTopic.mimeType + '+json'
-	forum_link_rel = _BOARD_NAME
+	board_link_rel = forum_link_rel = _BOARD_NAME
 	forum_title = _FORUM_NAME
 	forum_type = CommunityForum
 
 	forum_topic_comment_content_type = 'application/vnd.nextthought.forums.generalforumcomment+json'
 
+	def setUp( self ):
+		super(TestApplicationCommunityForums,self).setUp()
+		self.board_pretty_url = self.forum_pretty_url[:-(len(_FORUM_NAME) + 1)]
+
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_default_forum_in_links( self ):
+	def test_default_board_in_links( self ):
 		# Default board is present in the community links
 		user = self.resolve_user(username=self.default_community)
-		href = self.require_link_href_with_rel( user, self.forum_link_rel )
-		assert_that( href, is_( self.forum_pretty_url[:-(len(_FORUM_NAME) + 1)] ) )
+		href = self.require_link_href_with_rel( user, self.board_link_rel )
+		assert_that( href, is_( self.board_pretty_url ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_default_board_contents( self ):
+		# default board has a contents href which can be fetched,
+		# returning the default forum
+		community = self.resolve_user(username=self.default_community)
+		board_href = self.require_link_href_with_rel( community, self.board_link_rel )
+
+		board_res = self.testapp.get( board_href )
+		assert_that( board_res, has_property( 'content_type', self.board_content_type ) )
+		assert_that( board_res.json_body, has_entry( 'MimeType', _plain( self.board_content_type ) ) )
+		assert_that( board_res.json_body, has_entry( 'NTIID', self.board_ntiid ) )
+		assert_that( board_res.json_body, has_entry( 'href', self.board_pretty_url ) )
+		contents_href = self.require_link_href_with_rel( board_res.json_body, 'contents' )
+
+		contents_res = self.testapp.get( contents_href )
+		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( contents_res.json_body['Items'][0], has_entry( 'MimeType', _plain( self.forum_content_type ) ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_default_board_can_be_resolved_by_ntiid( self ):
+
+		board_res = self.fetch_by_ntiid( self.board_ntiid )
+		assert_that( board_res, has_property( 'content_type', self.board_content_type ) )
+		assert_that( board_res.json_body, has_entry( 'MimeType', _plain( self.board_content_type ) ) )
+		assert_that( board_res.json_body, has_entry( 'NTIID', self.board_ntiid ) )
+		self.require_link_href_with_rel( board_res.json_body, 'contents' )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_forum_entry_class( self ):
@@ -110,7 +146,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		for url in entry_url, self.forum_topic_href( entry_id ):  #, UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
 			testapp.get( url )
 
-
 		# and it has no contents
 		testapp.get( contents_href, status=200 )
 
@@ -122,10 +157,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		blog_item = blog_items[0]
 		assert_that( blog_item, has_entry( 'href', self.forum_topic_href( blog_item['ID'] ) ))
 		self.require_link_href_with_rel( blog_item, 'contents' )
-		#self.require_link_href_with_rel( blog_item, 'like' ) # entries can be liked
-		#self.require_link_href_with_rel( blog_item, 'flag' ) # entries can be flagged
-		#self.require_link_href_with_rel( blog_item, 'edit' ) # entries can be 'edited' (actually they cannot)
-
 
 		# It also shows up in the blog's data feed (partially rendered in HTML)
 		res = testapp.get( self.forum_pretty_url + '/feed.atom' )
@@ -134,23 +165,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
 		assert_that( pq( b'entry title' ).text(), is_( data['title'] ) )
 		assert_that( pq( b'entry summary' ).text(), is_( '<div><br />' + data['body'][0] ) )
-
-
-		# And in the user activity view
-		#res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Activity' )
-		#assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
-		#assert_that( res.json_body['Items'], has_length( 1 ) ) # make sure no dups
-
-		# And in the user root recursive data stream
-		#res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData' )
-		#assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
-
-		# and, if favorited, filtered to the favorites
-		#testapp.post( fav_href )
-		#res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData',
-		#				   params={'filter': 'Favorite'})
-		#assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
-		#self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
 
 
 	@WithSharedApplicationMockDS

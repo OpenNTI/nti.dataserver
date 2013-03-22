@@ -79,6 +79,7 @@ def install_main( context ):
 	root_folder['dataserver2'] = dataserver_folder
 	assert dataserver_folder.__parent__ is root_folder
 	assert dataserver_folder.__name__ == 'dataserver2'
+	assert root_folder['dataserver2'] is dataserver_folder
 
 	lsm = LocalSiteManager( root_sm )
 	assert lsm.__parent__ is root_sm

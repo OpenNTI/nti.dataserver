@@ -27,6 +27,7 @@
 	<adapter factory=".topic.GeneralForumEntryNameChooser" />
 
 	<!-- NTIID resolvers -->
+	<utility factory=".ntiids._CommunityBoardResolver" name="Board:GeneralCommunity" />
 	<utility factory=".ntiids._BlogResolver" name="Forum:PersonalBlog" />
 	<utility factory=".ntiids._CommunityForumResolver" name="Forum:GeneralCommunity" />
 	<utility factory=".ntiids._BlogEntryResolver" name="Topic:PersonalBlogEntry" />

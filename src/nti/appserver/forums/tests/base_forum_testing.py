@@ -804,11 +804,11 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( res.json_body['headline'], has_entries( 'title', data['title'],
 															 'body',  data['body'] ) )
 
-		#contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
-		#self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
+		self.require_link_href_with_rel( res.json_body, 'contents' )
+		self.require_link_href_with_rel( res.json_body, 'like' ) # entries can be liked
 		self.require_link_href_with_rel( res.json_body, 'flag' ) # entries can be flagged
 		self.require_link_href_with_rel( res.json_body, 'edit' ) # entries can be 'edited' (actually they cannot, shortcut for ui)
-		#fav_href = self.require_link_href_with_rel( res.json_body, 'favorite' ) # entries can be favorited
+		self.require_link_href_with_rel( res.json_body, 'favorite' ) # entries can be favorited
 
 		# The headline cannot be any of those things
 		headline_json = res.json_body['headline']

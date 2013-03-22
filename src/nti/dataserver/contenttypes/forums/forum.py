@@ -17,15 +17,13 @@ from zope import component
 from zope import schema
 
 from ._compat import Implicit
-
-from nti.ntiids import ntiids
+from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
 
 from nti.dataserver import containers as nti_containers
 from nti.dataserver import datastructures
 from nti.dataserver import sharing
 
 from nti.utils.schema import AdaptingFieldProperty
-from nti.utils.property import CachedProperty
 
 from . import interfaces as frm_interfaces
 from zope.annotation import interfaces as an_interfaces
@@ -45,18 +43,6 @@ class Forum(Implicit,
 	sharingTargets = ()
 	TopicCount = property(nti_containers.CheckingLastModifiedBTreeContainer.__len__)
 
-class _SingleInstanceNTIIDMixin(object):
-	creator = None
-	__name__ = None
-	ntiid_type = None
-
-	@CachedProperty
-	def NTIID(self):
-		"NTIID is defined only after the creator is set"
-		return ntiids.make_ntiid( date=ntiids.DATE,
-								  provider=self.creator.username,
-								  nttype=self.ntiid_type,
-								  specific=self.__name__ )
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
 class PersonalBlog(Forum,_SingleInstanceNTIIDMixin):

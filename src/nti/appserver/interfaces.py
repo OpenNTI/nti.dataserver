@@ -331,6 +331,10 @@ class INewContainerResource(interface.Interface):
 class IPagesResource(interface.Interface):
 	pass
 
+class IObjectsContainerResource(IContainerResource):
+	"""
+	A container for objects, named by NTIID.
+	"""
 
 class IUserCheckout(interface.Interface):
 	"""
