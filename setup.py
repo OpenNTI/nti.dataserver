@@ -184,7 +184,6 @@ setup(
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
 		'logilab-common >= 0.59.0',
 		'lxml >= 3.1.0',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
-		'matplotlib >= 1.2.0' if not IS_PYPY else '',
 		'nameparser >= 0.2.7',  # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
