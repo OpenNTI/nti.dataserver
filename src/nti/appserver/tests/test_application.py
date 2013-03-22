@@ -316,11 +316,11 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 	# then the standard user is created. If a sequence, then the standard user,
 	# followed by each named user
 	users_to_create = kwargs.pop( 'users', None )
-
+	default_authenticate = kwargs.pop( 'default_authenticate', None )
 	testapp = kwargs.pop( 'testapp', None )
 	if testapp:
 		def _make_app(self):
-			if users_to_create is True:
+			if users_to_create is True or (users_to_create and default_authenticate):
 				self.testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
 			else:
 				self.testapp = TestApp( self.app )

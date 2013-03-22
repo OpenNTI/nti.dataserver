@@ -14,6 +14,7 @@ import numbers
 import warnings
 import functools
 import collections
+import contextlib
 
 import persistent
 from zope import interface
@@ -188,6 +189,12 @@ class Community(Entity,sharing.DynamicSharingTargetMixin):
 
 	def addFriend( self, friend ):
 		return True # For compatibility with a FriendsList
+
+	def updates( self ): # For compatibility with User. TODO: Rethink this
+		@contextlib.contextmanager
+		def updater():
+			yield
+		return updater()
 
 	def sublocations(self):
 		# See User; this may not be right (but we are less annotated so
