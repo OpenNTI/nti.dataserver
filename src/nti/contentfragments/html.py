@@ -252,6 +252,7 @@ def sanitize_user_html(user_input, method='html'):
 	doc = _to_sanitized_doc(user_input)
 
 	for node in doc.iter():
+
 		# Turn top-level text nodes into paragraphs.
 		if node.tag == 'p' and node.tail:
 			tail = node.tail
@@ -259,6 +260,10 @@ def sanitize_user_html(user_input, method='html'):
 			p = lxml.etree.Element(node.tag, node.attrib)
 			p.text = tail
 			node.addnext(p)
+
+		# insert a line brake
+		elif node.tag == 'br' and len(node) == 0 and not node.text:
+			node.text = u'\n'
 
 		# Strip spans that are the empty (they used to contain style but no longer)
 		elif node.tag == 'span' and len(node) == 0 and not node.text:
