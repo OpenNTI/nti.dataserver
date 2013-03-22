@@ -111,17 +111,6 @@ def get_mime_type_map():
 
 	return mime_type_map
 
-class QueryExpr(object):
-	def __init__(self, expr):
-		assert expr is not None, 'must specify a query expression'
-		self.expr = unicode(expr)
-
-	def __str__(self):
-		return self.expr
-
-	def __repr__(self):
-		return 'QueryExpr(%s)' % self.expr
-
 _all_re = re.compile('([\?\*])')
 def is_all_query(query):
 	mo = _all_re.search(query)
