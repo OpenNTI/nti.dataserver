@@ -46,4 +46,5 @@ class TestRender(ConfiguringTestBase):
 
 		image = Image.new("RGBA", (600, 600), (0, 0, 0))
 		render.draw_rectangle(image, polygon)
-		image.show()
+
+		# Need to compare this to a saved, known-good bitmap
