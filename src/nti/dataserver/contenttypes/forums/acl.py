@@ -44,6 +44,22 @@ class _CommunityForumACLProvider(_ForumACLProvider):
 	def _get_sharing_target_names( self ):
 		return (self.context.creator,) # the ICommunity
 
+class _CommunityBoardACLProvider(AbstractCreatedAndSharedACLProvider):
+	"""
+	Gives admins the ability to create/delete entire forums. The creator,
+	aka the community, does not actually have any write access.
+	"""
+
+	_PERMS_FOR_CREATOR = AbstractCreatedAndSharedACLProvider._PERMS_FOR_SHARING_TARGETS
+	_DENY_ALL = True # don't inherit the acl from our parent, entity, which would give the creator full control
+	_REQUIRE_CREATOR = True
+
+	def _get_sharing_target_names(self):
+		return ()
+
+	def _extend_acl_after_creator_and_sharing( self, acl ):
+		self._extend_with_admin_privs( acl )
+
 class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
 	People that can see topics are allowed to create new objects (posts)

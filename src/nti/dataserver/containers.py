@@ -25,6 +25,7 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.container.interfaces import IContainerModifiedEvent
 from zope.container.interfaces import IContained
 from zope.container.interfaces import IBTreeContainer
+from zope.container.interfaces import INameChooser
 
 from ZODB.interfaces import IConnection
 
@@ -40,6 +41,7 @@ from zope.container.contained import NameChooser
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 from nti.zodb.minmax import NumericMaximum
 from nti.zodb.minmax import NumericPropertyDefaultingToZero
+from nti.ntiids import ntiids
 
 _MAX_UNIQUEID_ATTEMPTS = 1000
 
@@ -142,6 +144,40 @@ class IdGeneratorNameChooser(NameChooser):
 		# Make sure the name is valid.	We may have started with something bad.
 		self.checkName(name, obj )
 		return name
+
+
+@interface.implementer(INameChooser)
+class AbstractNTIIDSafeNameChooser(object):
+	"""
+	Handles NTIID-safe name choosing for objects in containers.
+	Typically these objects are :class:`.ITitledContent`
+
+	There must be some other name chooser that's next in line for the underlying
+	container's interface; after we make the name NTIID safe we will lookup and call that
+	chooser.
+	"""
+
+	leaf_iface = None #: class attribute
+	def __init__( self, context ):
+		self.context = context
+
+	def chooseName( self, name, obj ):
+		# NTIID flatten
+		try:
+			name = ntiids.make_specific_safe( name )
+		except ntiids.InvalidNTIIDError as e:
+			e.field = self.leaf_iface['title'] if 'title' in self.leaf_iface else self.leaf_iface['__name__']
+			raise
+
+		# Now on to the next adapter (Note: this ignores class-based adapters)
+		# First, get the "required" interface list (from the adapter's standpoint),
+		# removing the think we just adapted out
+		remaining = interface.providedBy( self.context ) - self.leaf_iface
+		# now perform a lookup. The first arg has to be a tuple for whatever reason
+		factory = component.getSiteManager().adapters.lookup( (remaining,), INameChooser )
+		return factory( self.context ).chooseName( name, obj )
+
+
 
 from zope.container.constraints import checkObject
 class _CheckObjectOnSetMixin(object):

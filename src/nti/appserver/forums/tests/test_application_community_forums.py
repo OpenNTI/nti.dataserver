@@ -36,7 +36,7 @@ _BOARD_NAME = CommunityBoard.__default_name__
 
 
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
-
+from nti.appserver.tests.test_application import _TestApp
 
 from pyquery import PyQuery
 
@@ -115,19 +115,31 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		assert_that( board_res.json_body, has_entry( 'NTIID', self.board_ntiid ) )
 		self.require_link_href_with_rel( board_res.json_body, 'contents' )
 
+
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_user_can_POST_new_forum_entry_class( self ):
-		"""POSTing an IPost to the forum URL automatically creates a new topic"""
+	def test_normal_user_cannot_post_to_board(self):
+		# attempting to do so gets you DENIED
+		self.testapp.post_json( self.board_pretty_url, self._create_post_data_for_POST(), status=403 )
 
-		# With a Class value:
-		data = { 'Class': self.forum_headline_class_type,
-				 'title': 'My New Blog',
-				 'body': ['My first thought'] }
 
-		self._do_test_user_can_POST_new_forum_entry( data )
+	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True)
+	def test_super_user_can_post_to_board(self):
+		# relying on @nextthought.com automatically being an admin
+		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
+		forum_res = adminapp.post_json( self.board_pretty_url, self._create_post_data_for_POST(), status=201 )
+
+		# Which creates a forum
+		assert_that( forum_res, has_property( 'content_type', self.forum_content_type ) )
+		assert_that( forum_res.json_body, has_entry( 'href', self.board_pretty_url + '/' + forum_res.json_body['ID'] ) )
+		assert_that( forum_res.json_body, has_entry( 'ContainerId', self.board_ntiid ) )
+		self.require_link_href_with_rel( forum_res.json_body, 'edit' )
+		assert_that( forum_res.json_body, has_entry( 'title', self._create_post_data_for_POST()['title'] ) )
+		assert_that( forum_res.json_body, has_entry( 'description', self._create_post_data_for_POST()['description'] ) )
+
 
 
 	def _do_test_user_can_POST_new_forum_entry( self, data, content_type=None, status_only=None, expected_data=None ):
+		# Override the method in super()
 		res = self._do_simple_tests_for_POST_of_topic_entry( data, content_type=content_type, status_only=status_only, expected_data=expected_data )
 		if status_only:
 			return res

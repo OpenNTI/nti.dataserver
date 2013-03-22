@@ -25,6 +25,7 @@
 			 factory=".topic.HeadlineTopicSublocations" />
 	<adapter factory=".topic.PersonalBlogEntryNameChooser" />
 	<adapter factory=".topic.GeneralForumEntryNameChooser" />
+	<adapter factory=".board.BoardNameChooser" />
 
 	<!-- NTIID resolvers -->
 	<utility factory=".ntiids._CommunityBoardResolver" name="Board:GeneralCommunity" />
@@ -65,6 +66,8 @@
 			 for=".interfaces.IPersonalBlog"/>
 	<adapter factory=".acl._CommunityForumACLProvider"
 			 for=".interfaces.ICommunityForum"/>
+	<adapter factory=".acl._CommunityBoardACLProvider"
+			 for=".interfaces.ICommunityBoard"/>
 
 	<adapter factory=".acl._PostACLProvider" />
 

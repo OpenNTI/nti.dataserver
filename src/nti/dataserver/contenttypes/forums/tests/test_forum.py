@@ -43,6 +43,7 @@ tearDownModule = nti.tests.module_teardown
 
 
 from ..interfaces import IForum, ITopic, IPersonalBlog, IPersonalBlogEntry, IGeneralForum, ICommunityForum
+from ..interfaces import ICommunityBoard
 from ..forum import Forum, PersonalBlog, GeneralForum, CommunityForum
 
 
@@ -77,7 +78,8 @@ def test_community_adapter():
 
 	forum = IGeneralForum(community)
 	assert_that( forum, validly_provides( ICommunityForum ) )
-	assert_that( forum, has_property( '__parent__', community ) )
+	assert_that( forum, has_property( '__parent__', validly_provides( ICommunityBoard ) ) )
+	assert_that( forum.__parent__, has_property( '__parent__', community ) )
 
 def test_forum_constraints():
 	@interface.implementer(ITopic)
