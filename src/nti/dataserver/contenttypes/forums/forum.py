@@ -10,7 +10,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
+from . import MessageFactory as _
 
 from zope import interface
 from zope import component
@@ -64,7 +64,7 @@ class PersonalBlog(Forum,_SingleInstanceNTIIDMixin):
 	__external_can_create__ = False
 
 	creator = None
-	__name__ = __blog_name__ = __default_name__ = u'Blog'
+	__name__ = __blog_name__ = __default_name__ = 'Blog'
 	ntiid_type = frm_interfaces.NTIID_TYPE_PERSONAL_BLOG
 
 
@@ -132,25 +132,31 @@ class CommunityForum(GeneralForum):
 @component.adapter(nti_interfaces.ICommunity)
 def GeneralForumCommunityAdapter(community):
 	"""
-	For the moment, we will say that all communities have a single forum, in the same
-	way that all users have a blog. Members of the community can create new
-	topics in the forum.
+	All communities that have a board (which by default is all communities)
+	have at least one default forum in that board. If the board exists,
+	but no forum exists, one is added.
 	"""
-	# TODO: Note the similarity to personalBlogAdapter
-	annotations = an_interfaces.IAnnotations( community )
-	forum = annotations.get( CommunityForum.__default_name__ )
-	if forum is None:
-		forum = CommunityForum()
-		annotations[CommunityForum.__default_name__] = forum
-		forum.__parent__ = community
-		forum.creator = community
-		forum.title = forum.__name__ # ???
+	board = frm_interfaces.ICommunityBoard(community, None)
+	if board is None:
+		return None # No board is allowed
 
-		jar = IConnection( community, None )
-		if jar:
-			jar.add( forum )
-		errors = schema.getValidationErrors( frm_interfaces.ICommunityForum, forum )
-		if errors:
-			__traceback_info__ = errors
-			raise errors[0][1]
+	if board: # contains some forums, yay!
+		if len(board) == 1:
+			# Whatever the single forum is
+			return list(board.values())[0]
+		forum = board.get( CommunityForum.__default_name__ )
+		if forum is not None:
+			return forum
+
+	# Board is empty, or at least doesn't have our desired forum,
+	# so create and store it
+	forum = CommunityForum()
+	forum.creator = community
+	board[forum.__default_name__] = forum
+	forum.title = _('Forum')
+
+	errors = schema.getValidationErrors( frm_interfaces.ICommunityForum, forum )
+	if errors:
+		__traceback_info__ = errors
+		raise errors[0][1]
 	return forum

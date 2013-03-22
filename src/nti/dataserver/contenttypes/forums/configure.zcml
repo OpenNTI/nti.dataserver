@@ -8,11 +8,16 @@
 	<include package="nti.contentfragments" />
 	<include package="nti.mimetype" />
 
+	<!-- Adapters for creating the default objects -->
 	<adapter factory=".forum.PersonalBlogAdapter"
 			 provides=".interfaces.IPersonalBlog" />
 
+	<!-- The community forums are hidden behind devmode -->
 	<adapter factory=".forum.GeneralForumCommunityAdapter"
 			 provides=".interfaces.ICommunityForum"
+			 zcml:condition="have devmode" />
+	<adapter factory=".board.GeneralBoardCommunityAdapter"
+			 provides=".interfaces.ICommunityBoard"
 			 zcml:condition="have devmode" />
 
 	<adapter provides="zope.location.interfaces.ISublocations"

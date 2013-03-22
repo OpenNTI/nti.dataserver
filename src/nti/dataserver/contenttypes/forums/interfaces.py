@@ -74,7 +74,7 @@ class IBoard(IContentContainer,IContained,nti_interfaces.ITitledDescribedContent
 class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescribedContent):
 	"""
 	A forum is contained by a board. A forum itself contains arbitrarily
-	many topics and is folderish. Forums are a level of permissioning, with only certain people
+	many topics and is folderish for those topics. Forums are a level of permissioning, with only certain people
 	being allowed to view the contents of the forum and add new topics.
 	"""
 	contains(b".ITopic")
@@ -195,18 +195,35 @@ class IGeneralHeadlinePost(IGeneralPost,IHeadlinePost):
 	containers(b'.IGeneralHeadlineTopic')
 	__parent__.required = False
 
+class IGeneralBoard(IBoard, nti_interfaces.ICreated):
+	"""
+	A general purpose board.
+	"""
+	contains(b'.IGeneralForum')
+	__setitem__.__doc__ = None
+
 class IGeneralForum(IForum, nti_interfaces.ICreated):
 	"""
 	A general purpose forum that is not a blog.
 	"""
 	contains(b'.IGeneralTopic')
 	__setitem__.__doc__ = None
+	containers(IGeneralBoard)
+	__parent__.required = False
+
+class ICommunityBoard(IGeneralBoard, nti_interfaces.IShouldHaveTraversablePath):
+	"""
+	A board belonging to a particular community.
+	"""
+	contains(b'.ICommunityForum')
+	__setitem__.__doc__ = None
+
 
 class ICommunityForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
 	"""
 	A forum belonging to a particular community.
 	"""
-	containers(nti_interfaces.ICommunity)
+	containers(nti_interfaces.ICommunity, ICommunityBoard)
 	__parent__.required = False
 
 class IGeneralTopic(ITopic):

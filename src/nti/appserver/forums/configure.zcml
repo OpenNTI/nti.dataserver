@@ -87,7 +87,7 @@
 	<!-- Externalization -->
 	<subscriber factory=".decorators.BlogLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
-	<subscriber factory=".decorators.CommunityForumLinkDecorator"
+	<subscriber factory=".decorators.CommunityBoardLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.IBoard"
@@ -122,7 +122,7 @@
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
-
+	<adapter factory=".traversal._CommunityBoardTraversable" />
 
 	<!-- Make certain classes Likeable/Flaggable/Favoritable. -->
 	<!--

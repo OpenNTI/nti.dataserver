@@ -13,7 +13,7 @@ from nti.utils._compat import aq_base
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.dataserver.interfaces import IUser, ICommunity, IUnscopedGlobalCommunity, IDefaultPublished
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 from zope.container.interfaces import ILocation
 
 from nti.appserver._util import AbstractTwoStateViewLinkDecorator
@@ -33,8 +33,8 @@ from pyramid.threadlocal import get_current_request
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 _BLOG_NAME = PersonalBlog.__default_name__
 
-from nti.dataserver.contenttypes.forums.forum import CommunityForum
-_FORUM_NAME = CommunityForum.__default_name__
+from nti.dataserver.contenttypes.forums.board import CommunityBoard
+_BOARD_NAME = CommunityBoard.__default_name__
 
 from . import VIEW_PUBLISH
 from . import VIEW_UNPUBLISH
@@ -63,7 +63,7 @@ class BlogLinkDecorator(object):
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(ICommunity)
-class CommunityForumLinkDecorator(object):
+class CommunityBoardLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
@@ -76,12 +76,12 @@ class CommunityForumLinkDecorator(object):
 		 # TODO: This may be slow, if the forum doesn't persistently
 		 # exist and we keep creating it and throwing it away (due to
 		 # not commiting on GET)
-		forum = ICommunityForum( context, None )
-		if forum is not None: # Not checking security. If the community is visible to you, the forum is too
+		board = ICommunityBoard( context, None )
+		if board is not None: # Not checking security. If the community is visible to you, the forum is too
 			the_links = mapping.setdefault( LINKS, [] )
 			link = Link( context,
-						 rel=_FORUM_NAME,
-						 elements=(_FORUM_NAME,) )
+						 rel=_BOARD_NAME,
+						 elements=(_BOARD_NAME,) )
 			link_belongs_to_user( link, context )
 			the_links.append( link )
 

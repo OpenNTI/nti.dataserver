@@ -42,7 +42,7 @@ class _CommunityForumACLProvider(_ForumACLProvider):
 	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,nauth.ACT_CREATE)
 
 	def _get_sharing_target_names( self ):
-		return self.context.__parent__, # Return the ICommunity itself
+		return (self.context.creator,) # the ICommunity
 
 class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""

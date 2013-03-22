@@ -269,13 +269,13 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityForum
-from nti.dataserver.contenttypes.forums.forum import CommunityForum
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+from nti.dataserver.contenttypes.forums.board import CommunityBoard
 
 def _BlogResource( context, request ):
 	return IPersonalBlog( context, None ) # Does the user have access to a default forum/blog? If no, 403.
-def _ForumResource( context, request ):
-	return ICommunityForum( context, None )
+def _CommunityBoardResource( context, request ):
+	return ICommunityBoard( context, None )
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
@@ -361,7 +361,7 @@ class ProviderTraversable(UserTraversable):
 @component.adapter(nti_interfaces.ICommunity, pyramid.interfaces.IRequest)
 class CommunityTraversable(_PseudoTraversableMixin):
 
-	_pseudo_classes_ = { CommunityForum.__default_name__: _ForumResource }
+	_pseudo_classes_ = { CommunityBoard.__default_name__: _CommunityBoardResource }
 
 	_DENY_ALL = True
 

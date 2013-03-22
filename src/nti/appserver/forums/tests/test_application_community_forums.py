@@ -25,8 +25,13 @@ from hamcrest import has_entry
 
 from nti.tests import time_monotonically_increases
 
-from nti.dataserver.contenttypes.forums.forum import  CommunityForum
+
 from nti.dataserver.contenttypes.forums.topic import  CommunityHeadlineTopic
+from nti.dataserver.contenttypes.forums.forum import CommunityForum
+_FORUM_NAME = CommunityForum.__default_name__
+from nti.dataserver.contenttypes.forums.board import CommunityBoard
+_BOARD_NAME = CommunityBoard.__default_name__
+
 
 
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
@@ -54,25 +59,25 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 	extra_environ_default_user = AbstractTestApplicationForumsBase.default_username
 	default_community = 'TheCommunity'
 	default_entityname = default_community
-	forum_url_relative_to_user = 'Forum'
+	forum_url_relative_to_user = _BOARD_NAME + '/' + _FORUM_NAME
 	forum_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Forum:GeneralCommunity-Forum'
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-'
 
 	forum_content_type = 'application/vnd.nextthought.forums.communityforum+json'
 	forum_headline_class_type = 'Post'
 	forum_topic_content_type = CommunityHeadlineTopic.mimeType + '+json'
-	forum_link_rel = 'Forum'
-	forum_title = forum_link_rel
+	forum_link_rel = _BOARD_NAME
+	forum_title = _FORUM_NAME
 	forum_type = CommunityForum
 
 	forum_topic_comment_content_type = 'application/vnd.nextthought.forums.generalforumcomment+json'
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_default_forum_in_links( self ):
-		# Default forum is present in the community links
+		# Default board is present in the community links
 		user = self.resolve_user(username=self.default_community)
 		href = self.require_link_href_with_rel( user, self.forum_link_rel )
-		assert_that( href, is_( self.forum_pretty_url ) )
+		assert_that( href, is_( self.forum_pretty_url[:-(len(_FORUM_NAME) + 1)] ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_forum_entry_class( self ):
