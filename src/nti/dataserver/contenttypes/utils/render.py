@@ -7,10 +7,29 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import re
+import math
 from nti.utils import graphics
 # from nti.utils import math as nti_math
 
-def square(draw, polygon,):
+def parse_number(n):
+	n = re.sub("[^\d\.]", '', n)
+	try:
+		return float(n) if n else None
+	except:
+		return None
+
+def _get_line_width(shape, width, scale):
+	factor = -1.0 if scale < 0 else 1.0
+	stroke_width = parse_number(shape.strokeWidth)
+	if stroke_width:
+		line_width = (stroke_width * width) / scale * factor
+		line_witdh = int (math.ceil(line_width))
+	else:
+		line_width = 1
+	return line_witdh
+
+def draw_rectangle(draw, polygon):
 	"""
 	render a Cavas.CanvasPolygonShape with 4 sides
 	
@@ -21,27 +40,26 @@ def square(draw, polygon,):
 	transform = polygon.transform.toArray()
 	width, _ = draw.im.size
 	m = graphics.AffineMatrix(*transform)
-	m.scaleAll(width)
-	# scale = m.getScale(True)
+	m.scale_all(width)
+	scale = m.get_scale(True)
+	line_width = _get_line_width(polygon, width, scale)
+	fill_color = graphics.check_rgb_color(polygon.fillColor)
 
-	x = -0.5
-	y = -0.5
-	w = 1
-	h = 1
+	x, y = -0.5, -0.5
+	w, h = 1, 1
 
-	tpx, tpy = m.transformPoint(x, y)
-	tx, ty = m.transformPoint(x + w, y)
-	draw.line((tpx, tpy, tx, ty))
-
-	tpx, tpy = tx, ty
-	tx, ty = m.transformPoint(x + w, y + h)
-	draw.line((tpx, tpy, tx, ty))
+	tpx, tpy = m.transform_point(x, y)
+	tx, ty = m.transform_point(x + w, y)
+	draw.line((tpx, tpy, tx, ty), width=line_width, fill=fill_color)
 
 	tpx, tpy = tx, ty
-	tx, ty = m.transformPoint(x, y + h)
-	draw.line((tpx, tpy, tx, ty))
+	tx, ty = m.transform_point(x + w, y + h)
+	draw.line((tpx, tpy, tx, ty), width=line_width, fill=fill_color)
 
 	tpx, tpy = tx, ty
-	tx, ty = m.transformPoint(x, y)
-	draw.line((tpx, tpy, tx, ty))
+	tx, ty = m.transform_point(x, y + h)
+	draw.line((tpx, tpy, tx, ty), width=line_width, fill=fill_color)
 
+	tpx, tpy = tx, ty
+	tx, ty = m.transform_point(x, y)
+	draw.line((tpx, tpy, tx, ty), width=line_width, fill=fill_color)
