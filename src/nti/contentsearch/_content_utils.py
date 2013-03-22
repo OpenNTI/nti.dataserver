@@ -201,9 +201,7 @@ class _CanvasTextShapeContentResolver(_BasicContentResolver):
 	def get_content(self):
 		return self.obj.text
 
-@component.adapter(forum_interfaces.IPost)
-@interface.implementer(search_interfaces.IPostContentResolver)
-class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
+class _BlogContentResolverMixin(_AbstractIndexDataResolver, _PartsContentResolver):
 
 	def get_title(self):
 		return self.obj.title
@@ -225,6 +223,19 @@ class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 		if forum_interfaces.ITopic.providedBy(obj) or forum_interfaces.IPost.providedBy(obj):
 			result = getattr(obj, 'id', None)
 		return result or u''
+
+@component.adapter(forum_interfaces.IPost)
+@interface.implementer(search_interfaces.IPostContentResolver)
+class _PostContentResolver(_BlogContentResolverMixin):
+	pass
+
+@component.adapter(forum_interfaces.IHeadlineTopic)
+@interface.implementer(search_interfaces.IHeadlineTopicContentResolver)
+class _HeadlineTopicContentResolver(_BlogContentResolverMixin):
+
+	def __init__(self, obj):
+		super(_HeadlineTopicContentResolver, self).__init__(obj.headline)
+		self.topic = obj
 
 @component.adapter(IDict)
 @interface.implementer(search_interfaces.IHighlightContentResolver,

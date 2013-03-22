@@ -455,9 +455,9 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 	def get_recipients():
 		"""return the message recipients"""
 
-class IPostContentResolver(_ContentMixinResolver,
-						   ICreatorResolver,
-						   IShareableContentResolver):
+class _BlogContentResolverMixin(_ContentMixinResolver,
+								ICreatorResolver,
+						  		IShareableContentResolver):
 
 	def get_id():
 		"""return the post id"""
@@ -467,6 +467,12 @@ class IPostContentResolver(_ContentMixinResolver,
 
 	def get_tags():
 		"""return the post/forum tags"""
+
+class IPostContentResolver(_BlogContentResolverMixin):
+	pass
+
+class IHeadlineTopicContentResolver(_BlogContentResolverMixin):
+	pass
 
 class IBookContentResolver(_ContentMixinResolver):
 	pass
