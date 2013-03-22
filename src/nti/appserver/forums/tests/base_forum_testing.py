@@ -744,6 +744,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		data = { 'Class': self.forum_headline_class_type,
 				 'MimeType': self.forum_headline_content_type,
 				 'title': 'My New Blog',
+				 'description': "This is a description of the thing I'm creating",
 				 'body': ['My first thought'] }
 		return data
 

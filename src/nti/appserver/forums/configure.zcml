@@ -112,6 +112,13 @@
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic" />
+	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityForum" />
+	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityBoard" />
+
 
 	<!-- Traversal -->
 	<adapter factory=".traversal._PostFieldTraverser"

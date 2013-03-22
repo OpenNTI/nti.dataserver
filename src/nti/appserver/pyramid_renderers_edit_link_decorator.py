@@ -60,6 +60,7 @@ class EditLinkDecorator(object):
 			except AttributeError:
 				pass
 
+
 		if is_writable( context ):
 			# TODO: This is weird, assuming knowledge about the URL structure here
 			# Should probably use request ILocationInfo to traverse back up to the ISite
@@ -100,7 +101,7 @@ class EditLinkDecorator(object):
 			# NOTE: This may be a minor perf degredaion? Think through the implications of this
 			# FIXME: temporary place to ensure that everything is always given
 			# a unique, top-level 'href'. The one-and-only client is currently depending upon this.
-			# FIXME: Not duplication of IShouldHaveTraversablePath checks; cf pyramid_renderers
+			# FIXME: Note duplication of IShouldHaveTraversablePath checks; cf pyramid_renderers
 			try:
 				link = Link(to_external_ntiid_oid( context ) if not IShouldHaveTraversablePath.providedBy( context ) else context)
 				mapping['href'] = render_link( link )['href']

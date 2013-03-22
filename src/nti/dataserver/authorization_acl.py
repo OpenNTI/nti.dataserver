@@ -418,6 +418,7 @@ class _CreatedACLProvider(object):
 
 	context = alias('_created')
 	_REQUIRE_CREATOR = False
+	_PERMS_FOR_CREATOR = (nti_interfaces.ALL_PERMISSIONS,)
 
 	def _creator_acl( self ):
 		"""
@@ -426,7 +427,7 @@ class _CreatedACLProvider(object):
 		:return: A fresh, mutable list containing at most one :class:`_ACE` for
 				the creator (if there is a creator).
 		"""
-		result = _ACL([ace_allowing( self._created.creator, nti_interfaces.ALL_PERMISSIONS, self )]
+		result = _ACL([ace_allowing( self._created.creator, x, self ) for x in self._PERMS_FOR_CREATOR]
 					if getattr(self._created, 'creator', None ) # They don't all comply with the interface
 					else [])
 		if self._REQUIRE_CREATOR and len(result) != 1:

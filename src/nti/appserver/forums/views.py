@@ -52,6 +52,7 @@ from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
 from nti.dataserver.contenttypes.forums.post import Post
 from nti.dataserver.contenttypes.forums.post import CommunityHeadlinePost
 from nti.dataserver.contenttypes.forums.post import GeneralForumComment
+from nti.dataserver.contenttypes.forums.forum import CommunityForum
 
 
 from nti.externalization.interfaces import StandardExternalFields
@@ -65,9 +66,6 @@ from zope import interface
 from zope import lifecycleevent
 
 from zope.event import notify
-import zope.intid.interfaces
-
-from pyramid.threadlocal import get_current_request
 
 from . import VIEW_PUBLISH
 from . import VIEW_UNPUBLISH
@@ -146,27 +144,35 @@ class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadReque
 		self.updateContentObject( containedObject, externalValue, set_id=False, notify=False )
 		# Which just verified the validity of the title.
 
-		return containedObject
+		return containedObject, externalValue
 
 class _AbstractForumPostView(_AbstractIPostPOSTView):
-	""" Given an incoming IPost, creates a new topic in the forum """
+	""" Given an incoming IPost, creates a new container in the context. """
 
 	_allowed_content_types = ('Post', Post.mimeType, 'Posts' )
 	_factory = None
 
+	def _get_topic_creator( self ):
+		return self.getRemoteUser()
+
 	def _do_call( self ):
 		forum = self.request.context
-		topic_post = self._read_incoming_post()
+		topic_post, external_value = self._read_incoming_post()
 
 		# Now the topic
 		topic = self._factory()
-		topic.creator = self.getRemoteUser()
-		topic_post.__parent__ = topic # must set __parent__ first for acquisition to work
+		topic.creator = self._get_topic_creator()
 
-		topic.headline = topic_post
+		added_headline = False
+		if interface.providedBy( topic ).get('headline'):
+			# not all containers have headlines; those that don't simply use
+			# the incoming post as a template
+			topic_post.__parent__ = topic # must set __parent__ first for acquisition to work
+			added_headline = True
+			topic.headline = topic_post
 		# Business rule: titles of the personal blog entry match the post
-		topic.title = topic.headline.title
-		topic.description = topic.title
+		topic.title = topic_post.title
+		topic.description = external_value.get( 'description', topic.title )
 
 		# For these, the name matters. We want it to be as pretty as we can get
 		# TODO: We probably need to register an IReservedNames that forbids
@@ -174,15 +180,17 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 		name = INameChooser( forum ).chooseName( topic.title, topic )
 
 		lifecycleevent.created( topic )
-		lifecycleevent.created( topic_post )
+		if added_headline:
+			lifecycleevent.created( topic_post )
 
 
-		forum[name] = topic # Now store the topic and fire added
+		forum[name] = topic # Now store the topic and fire lifecycleevent.added
 		topic.id = name # match these things. ID is local within container
 		topic.containerId = forum.NTIID
-		topic_post.containerId = topic.NTIID
 
-		lifecycleevent.added( topic_post )
+		if added_headline:
+			topic_post.containerId = topic.NTIID
+			lifecycleevent.added( topic_post )
 
 		# Respond with the pretty location of the object, within the blog
 		self.request.response.status_int = 201 # created
@@ -205,6 +213,20 @@ class PersonalBlogPostView(_AbstractForumPostView):
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  permission=nauth.ACT_CREATE,
+			  context=frm_interfaces.ICommunityBoard,
+			  request_method='POST' )
+class CommunityBoardPostView(_AbstractForumPostView):
+	""" Given an incoming IPost, creates a new forum in the community board """
+	# Still read the incoming IPost, but we discard it since our "topic" (aka forum)
+	# does not have a headline
+	_factory = CommunityForum
+
+	def _get_topic_creator( self ):
+		return self.request.context.creator # the community
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_CREATE,
 			  context=frm_interfaces.ICommunityForum,
 			  request_method='POST' )
 class CommunityForumPostView(_AbstractForumPostView):
@@ -220,7 +242,7 @@ class _AbstractTopicPostView(_AbstractIPostPOSTView):
 	_allowed_content_types = ('Post', Post.mimeType, 'Posts')
 
 	def _do_call( self ):
-		incoming_post = self._read_incoming_post()
+		incoming_post, _ = self._read_incoming_post()
 
 		topic = self.request.context
 
@@ -264,6 +286,7 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 @view_config( context=frm_interfaces.IHeadlineTopic )
 @view_config( context=frm_interfaces.IForum )
 @view_config( context=frm_interfaces.ICommunityForum )
+@view_config( context=frm_interfaces.ICommunityBoard )
 @view_config( context=frm_interfaces.IPersonalBlog ) # need to re-list this one
 @view_config( context=frm_interfaces.IPersonalBlogEntry ) # need to re-list this one
 @view_config( context=frm_interfaces.IPersonalBlogComment ) # need to re-list this one

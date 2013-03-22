@@ -130,37 +130,9 @@ class HeadlineTopicSublocations(ContainerSublocations):
 		if story is not None:
 			yield story
 
-
-@interface.implementer(INameChooser)
-class AbstractForumEntryNameChooser(object):
-	"""
-	Handles NTIID-safe name choosing for an topic in a forum.
-	"""
-
-	leaf_iface = None #: class attribute
-	def __init__( self, context ):
-		self.context = context
-
-	def chooseName( self, name, obj ):
-		# NTIID flatten
-		try:
-			name = ntiids.make_specific_safe( name )
-		except ntiids.InvalidNTIIDError as e:
-			e.field = self.leaf_iface['title']
-			raise
-
-		# Now on to the next adapter (Note: this ignores class-based adapters)
-		# First, get the "required" interface list (from the adapter's standpoint),
-		# removing the think we just adapted out
-		remaining = interface.providedBy( self.context ) - self.leaf_iface
-		# now perform a lookup. The first arg has to be a tuple for whatever reason
-		factory = component.getSiteManager().adapters.lookup( (remaining,), INameChooser )
-		return factory( self.context ).chooseName( name, obj )
-
-
 @component.adapter(for_interfaces.IPersonalBlog)
 @interface.implementer(INameChooser)
-class PersonalBlogEntryNameChooser(AbstractForumEntryNameChooser):
+class PersonalBlogEntryNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	"""
 	Handles NTIID-safe name choosing for an entry in a blog.
 	"""
@@ -169,7 +141,7 @@ class PersonalBlogEntryNameChooser(AbstractForumEntryNameChooser):
 
 @component.adapter(for_interfaces.IGeneralForum)
 @interface.implementer(INameChooser)
-class GeneralForumEntryNameChooser(AbstractForumEntryNameChooser):
+class GeneralForumEntryNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	"""
 	Handles NTIID-safe name choosing for an general forum entries.
 	"""

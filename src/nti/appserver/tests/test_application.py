@@ -334,7 +334,7 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 				base_user = self._create_user()
 				self.users = { base_user.username: base_user }
 				if users_to_create and users_to_create is not True:
-					for username in users:
+					for username in users_to_create:
 						self.users[username] = self._create_user( username )
 	else:
 		def _do_create(self):

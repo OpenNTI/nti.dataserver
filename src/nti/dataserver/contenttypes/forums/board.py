@@ -21,6 +21,7 @@ from zope.annotation import interfaces as an_interfaces
 from . import interfaces as for_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from ZODB.interfaces import IConnection
+from zope.container.interfaces import INameChooser
 
 from ._compat import Base
 from . import _CreatedNamedNTIIDMixin
@@ -88,3 +89,14 @@ def GeneralBoardCommunityAdapter(community):
 			__traceback_info__ = errors
 			raise errors[0][1]
 	return board
+
+
+
+@component.adapter(for_interfaces.IBoard)
+@interface.implementer(INameChooser)
+class BoardNameChooser(containers.AbstractNTIIDSafeNameChooser):
+	"""
+	Handles NTIID-safe name choosing for a forum in a board
+	"""
+
+	leaf_iface = for_interfaces.IBoard
