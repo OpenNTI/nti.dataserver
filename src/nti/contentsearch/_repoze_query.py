@@ -175,7 +175,7 @@ class _DefaultPostRepozeQueryParser(_DefaultRepozeQueryParser):
 
 	def _get_repoze_query(self, fieldname, term, **kwargs):
 		if fieldname == tags_:
-			result = Any(fieldname, [term])
+			result = Any(fieldname, [term.lower()])
 		else:
 			result = super(_DefaultPostRepozeQueryParser, self)._get_repoze_query(fieldname, term, **kwargs)
 		return result

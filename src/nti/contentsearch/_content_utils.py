@@ -175,6 +175,7 @@ class _NoteContentResolver(_ThreadableContentResolver, _PartsContentResolver):
 @component.adapter(chat_interfaces.IMessageInfo)
 @interface.implementer(search_interfaces.IMessageInfoContentResolver)
 class _MessageInfoContentResolver(_ThreadableContentResolver, _PartsContentResolver):
+
 	def get_content(self):
 		return self._resolve(self.obj.Body)
 
@@ -208,7 +209,8 @@ class _PostContentResolver(_AbstractIndexDataResolver, _PartsContentResolver):
 		return self.obj.title
 
 	def get_content(self):
-		return self._resolve(self.obj.body)
+		result = self._resolve(self.obj.body)
+		return result
 
 	def get_tags(self):
 		result = self.obj.tags
