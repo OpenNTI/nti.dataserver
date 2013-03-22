@@ -128,7 +128,7 @@ def check_rgb_color(fill, default="rgb(0,0,0)"):
 		m = rgb_pattern.search(fill_mod)
 		if m is not None:
 			d = m.groupdict()
-			fill = "rgb(%s,%s,%s)" % int(float(d['r'])), int(float(d['g'])), int(float(d['b']))
+			fill = "rgb(%s,%s,%s)" % (int(float(d['r'])), int(float(d['g'])), int(float(d['b'])))
 	return fill or default
 
 def plot_bezier_curve(draw, xvals, yvals, fill=None, width=None, m=None):
