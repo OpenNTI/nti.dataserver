@@ -123,7 +123,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 
 
 	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True)
-	def test_super_user_can_post_to_board(self):
+	def test_super_user_can_post_to_board_to_create_forum(self):
 		# relying on @nextthought.com automatically being an admin
 		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
 		forum_data = self._create_post_data_for_POST()
@@ -134,12 +134,37 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 
 		# Which creates a forum
 		assert_that( forum_res, has_property( 'content_type', self.forum_content_type ) )
-		assert_that( forum_res.json_body, has_entry( 'href', self.board_pretty_url + '/' + forum_res.json_body['ID'] ) )
+		forum_url = self.board_pretty_url + '/' + forum_res.json_body['ID']
+		assert_that( forum_res.json_body, has_entry( 'href', forum_url ) )
+		assert_that( forum_res, has_property( 'location', 'http://localhost' + forum_url + '/' ) )
 		assert_that( forum_res.json_body, has_entry( 'ContainerId', self.board_ntiid ) )
 		self.require_link_href_with_rel( forum_res.json_body, 'edit' )
 		assert_that( forum_res.json_body, has_entry( 'title', forum_data['title'] ) )
 		assert_that( forum_res.json_body, has_entry( 'description', forum_data['description'] ) )
 
+	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
+	def test_super_user_can_edit_forum_description(self):
+		# relying on @nextthought.com automatically being an admin
+		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
+		forum_data = self._create_post_data_for_POST()
+		forum_res = adminapp.post_json( self.board_pretty_url, forum_data, status=201 )
+
+		adminapp.put_json( forum_res.location, {'description': 'The updated description'} )
+
+		forum_res = self.testapp.get( forum_res.location )
+		assert_that( forum_res.json_body, has_entry( 'description', "The updated description" ) )
+
+	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
+	def test_super_user_can_edit_forum_description_using_field(self):
+		# relying on @nextthought.com automatically being an admin
+		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
+		forum_data = self._create_post_data_for_POST()
+		forum_res = adminapp.post_json( self.board_pretty_url, forum_data, status=201 )
+
+		adminapp.put_json( forum_res.location + '++fields++description', 'The updated description' )
+
+		forum_res = self.testapp.get( forum_res.location )
+		assert_that( forum_res.json_body, has_entry( 'description', "The updated description" ) )
 
 
 	def _do_test_user_can_POST_new_forum_entry( self, data, content_type=None, status_only=None, expected_data=None ):

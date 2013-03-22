@@ -393,13 +393,14 @@ class ForumCheckoutAdapter(object):
 @view_config( context=frm_interfaces.IPersonalBlogComment )
 @view_config( context=frm_interfaces.IGeneralForumComment )
 @view_config( context=frm_interfaces.ICommunityHeadlinePost )
+@view_config( context=frm_interfaces.ICommunityForum )
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_UPDATE,
 				request_method='PUT' )
-class PostPutView(UGDPutView):
-	""" Editing an existing forum post """
-	# Exists entirely for registration sake
+class ForumObjectPutView(UGDPutView):
+	""" Editing an existing forum post, etc """
+	# Exists entirely for registration sake.
 
 @view_config( context=frm_interfaces.ICommunityHeadlineTopic )
 @view_config( context=frm_interfaces.IPersonalBlogEntry )
@@ -424,7 +425,7 @@ class HeadlineTopicDeleteView(UGDDeleteView):
 				renderer='rest',
 				permission=nauth.ACT_DELETE,
 				request_method='DELETE' )
-class PostDeleteView(UGDDeleteView):
+class CommentDeleteView(UGDDeleteView):
 	""" Deleting an existing forum comment.
 
 	This is somewhat unusual as we leave an object behind to mark
