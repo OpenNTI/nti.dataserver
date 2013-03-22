@@ -12,8 +12,12 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope.container.traversal import ContainerTraversable
+from zope.traversing.interfaces import TraversalError
 
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
+from nti.dataserver.contenttypes.forums.forum import CommunityForum
+_FORUM_NAME = CommunityForum.__default_name__
 
 from nti.appserver._adapters import GenericModeledContentExternalFieldTraverser
 
@@ -21,3 +25,19 @@ from nti.appserver._adapters import GenericModeledContentExternalFieldTraverser
 class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
 	"Disallow updates to the sharedWith field of blog posts/comments"
 	_allowed_fields = tuple( set(GenericModeledContentExternalFieldTraverser._allowed_fields) - set( ('sharedWith',)) )
+
+
+@component.adapter(frm_interfaces.ICommunityBoard)
+class _CommunityBoardTraversable(ContainerTraversable):
+	"""
+	Allows traversing to the default forum, creating it on demand.
+	"""
+
+	def traverse(self, name, furtherPath):
+		if name not in self._container and name == _FORUM_NAME:
+			try:
+				return frm_interfaces.ICommunityForum( self._container.creator ) # Ask the ICommunity
+			except TypeError:
+				raise TraversalError( self._container, name )
+
+		return super(_CommunityBoardTraversable,self).traverse(name, furtherPath)
