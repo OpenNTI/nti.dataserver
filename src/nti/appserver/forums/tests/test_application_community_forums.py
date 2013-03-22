@@ -126,15 +126,19 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 	def test_super_user_can_post_to_board(self):
 		# relying on @nextthought.com automatically being an admin
 		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
-		forum_res = adminapp.post_json( self.board_pretty_url, self._create_post_data_for_POST(), status=201 )
+		forum_data = self._create_post_data_for_POST()
+		# Incoming mimetype is actually unimportant at this point
+		del forum_data['Class']
+		del forum_data['MimeType']
+		forum_res = adminapp.post_json( self.board_pretty_url, forum_data, status=201 )
 
 		# Which creates a forum
 		assert_that( forum_res, has_property( 'content_type', self.forum_content_type ) )
 		assert_that( forum_res.json_body, has_entry( 'href', self.board_pretty_url + '/' + forum_res.json_body['ID'] ) )
 		assert_that( forum_res.json_body, has_entry( 'ContainerId', self.board_ntiid ) )
 		self.require_link_href_with_rel( forum_res.json_body, 'edit' )
-		assert_that( forum_res.json_body, has_entry( 'title', self._create_post_data_for_POST()['title'] ) )
-		assert_that( forum_res.json_body, has_entry( 'description', self._create_post_data_for_POST()['description'] ) )
+		assert_that( forum_res.json_body, has_entry( 'title', forum_data['title'] ) )
+		assert_that( forum_res.json_body, has_entry( 'description', forum_data['description'] ) )
 
 
 
