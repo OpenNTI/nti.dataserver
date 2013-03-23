@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: jason.madden@nextthought.com\n"
-"POT-Creation-Date: 2013-03-19 11:37-0500\n"
+"POT-Creation-Date: 2013-03-23 09:41-0500\n"
 "PO-Revision-Date: 2012-09-24 22:18-0500\n"
 "Last-Translator: Jason Madden <jason.madden@nextthought.com>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -18,9 +18,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: src/nti/appserver/_adapters.py:391 src/nti/appserver/_adapters.py:392
-#: src/nti/appserver/_adapters.py:393
-msgid "This object has been deleted."
+#: src/nti/appserver/_adapters.py:391
+msgid "This item has been deleted."
+msgstr ""
+
+#: src/nti/appserver/_adapters.py:393 src/nti/appserver/flagging_views.py:180
+msgid "This item has been deleted by the moderator."
 msgstr ""
 
 #: src/nti/appserver/_external_object_io.py:158
@@ -28,11 +31,11 @@ msgid "You cannot store that type of object here."
 msgstr ""
 
 #: src/nti/appserver/account_creation_views.py:130
-#: src/nti/appserver/account_creation_views.py:181
+#: src/nti/appserver/account_creation_views.py:179
 msgid "Please provide your first and last names."
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:204
+#: src/nti/appserver/account_creation_views.py:202
 msgid "That username is not available. Please choose another."
 msgstr ""
 
@@ -54,10 +57,6 @@ msgstr ""
 
 #: src/nti/appserver/coppa_admin_views.py:119
 msgid "Contact Email"
-msgstr ""
-
-#: src/nti/appserver/flagging_views.py:185
-msgid "This item has been deleted by the moderator."
 msgstr ""
 
 #: src/nti/appserver/site_policies.py:388
@@ -100,17 +99,17 @@ msgstr ""
 msgid "Username ${username} cannot include any part of the real name ${realname}."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:178
+#: src/nti/appserver/user_policies.py:179
 msgid "NextThought Account Confirmation"
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:227
+#: src/nti/appserver/user_policies.py:228
 msgid ""
 "It is too soon to send another consent request email. Please try again "
 "tomorrow."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:262
+#: src/nti/appserver/user_policies.py:263
 msgid "Please Confirm Your Child's NextThought Account"
 msgstr ""
 
@@ -156,12 +155,20 @@ msgstr ""
 msgid "Can the user upload custom avatar pictures?"
 msgstr ""
 
-#: src/nti/appserver/forums/configure.zcml:20
+#: src/nti/appserver/forums/configure.zcml:24
 msgid "Create Blog Entry"
 msgstr ""
 
-#: src/nti/appserver/forums/configure.zcml:20
+#: src/nti/appserver/forums/configure.zcml:24
 msgid "Can the user create new blog entries?"
+msgstr ""
+
+#: src/nti/appserver/forums/configure.zcml:28
+msgid "Participate in community forums"
+msgstr ""
+
+#: src/nti/appserver/forums/configure.zcml:28
+msgid "Can the user participate in community forums?"
 msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:150
@@ -248,6 +255,14 @@ msgstr ""
 msgid "Impersonate another user"
 msgstr ""
 
+#: src/nti/dataserver/contenttypes/forums/board.py:82
+msgid "Discussion Board"
+msgstr ""
+
+#: src/nti/dataserver/contenttypes/forums/forum.py:142
+msgid "Forum"
+msgstr ""
+
 #: src/nti/dataserver/users/interfaces.py:57
 msgid "The username cannot be blank."
 msgstr ""
@@ -316,6 +331,6 @@ msgstr ""
 msgid "${field} is too short."
 msgstr "${field} is too short. Please use at least ${minLength} characters."
 
-#~ msgid "Username cannot be blank"
+#~ msgid "This object has been deleted."
 #~ msgstr ""
 

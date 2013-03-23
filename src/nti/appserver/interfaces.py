@@ -286,6 +286,13 @@ class IUncacheableUnModifiedInResponse(IUncacheableInResponse):
 	"""
 
 
+class IModeratorDealtWithFlag(interface.Interface):
+	"""
+	Marker interface denoting that an object that is IFlaggable
+	(and cannot lose that interface) has been dealt with by the moderator
+	and shouldn't be subject to further flagging or mutation.
+	"""
+
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder # BWC
 
 ###

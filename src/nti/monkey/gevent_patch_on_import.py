@@ -245,6 +245,12 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 			print( "Greenlet switching from", event, "to", origin, file=sys.stderr )
 		greenlet.settrace( greenlet_trace )
 
+	# We monkey patched threads out of the way, so there's
+	# no need for the GIL checking for thread switches. Turn it
+	# way down to reduce its overhead (default 100
+		_CHECK_INTERVAL = 10000
+		if sys.getcheckinterval() < _CHECK_INTERVAL:
+			sys.setcheckinterval( _CHECK_INTERVAL )
 
 	del threading
 	del _threading_local
