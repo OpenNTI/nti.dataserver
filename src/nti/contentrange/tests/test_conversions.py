@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
-                                                                                         
-"""                                                                                       
+# -*- coding: utf-8 -*-
+
+"""
 $Id$
 """
 
@@ -92,7 +92,7 @@ class ConversionTests(unittest.TestCase):
 		cpbroken = cr[3]
 		cpbroken.start.elementId="wegrhstrytjh"
 		bkbroken = _convertrange.contentToDomRange(cpbroken,self.ranges[3].get_root())
-		
+
 		assert_that( str(bkbroken), is_( 'None' ) )
 
 	def anchorability_tests(self):
@@ -107,7 +107,7 @@ class ConversionTests(unittest.TestCase):
 				<span id="ext-gen1223423"></span>
 			</div>
 		</body>""")
-		for x,y in map(None,range(6),[True, False, False, True, False, False]):
+		for x,y in zip(range(6),[True, False, False, True, False, False]):
 			assert_that ( _convertrange.is_anchorable(doc.downpath([0,x])), is_( y ) )
 		assert_that ( _convertrange.is_anchorable(doc.root), is_( False ) )
 		assert_that ( _convertrange.is_anchorable( None ), is_( False ) )
@@ -148,7 +148,7 @@ class ConversionTests(unittest.TestCase):
 
 	def integration_tests(self):
 		# Known potential failure to watch out for
-		# Checking the common ancestor node resolves this inconsistency: 
+		# Checking the common ancestor node resolves this inconsistency:
 		# quoting just one "This is some text" leaves the ancestor at the
 		# paragraph level, while quoting two forces the converter to
 		# traverse up to the common div
@@ -192,8 +192,8 @@ class ConversionTests(unittest.TestCase):
 		<div id="123">
 			<p id="intruder">Ugh. </p>
 			<p id="45">
-				This is some somewhat but probably not particularly long text for 
-				readers with short attention spans. Here are some extra words. 
+				This is some somewhat but probably not particularly long text for
+				readers with short attention spans. Here are some extra words.
 			</p>
 			<img src="whackamole.jpg"></img>
 			<p id="67">
