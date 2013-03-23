@@ -79,13 +79,20 @@ class _Range(object):
 		self.text = text
 		self.start = start
 
+	def __repr__( self ):
+		return "{0}.{1}({2},{3},'{4}')".format( self.__class__.__module__, self.__class__.__name__,
+												self.start, self.end, self.text.encode('unicode_escape') if self.text else '')
+
 	def __eq__(self, other):
-		result = self is other
-		if not result and isinstance(other, _Range):
-			result = self.start == other.start and self.end == other.end
-		elif not result and isinstance(other, (list, tuple)):  # for testing
-			result = len(other) >= 2 and self.start == other[0] and self.end == other[1]
-		return result
+		try:
+			return self is other or (self.start == other.start and self.end == other.end)
+		except AttributeError:
+			if isinstance(other, (list, tuple)):  # for testing (XXX: dubious)
+				return len(other) >= 2 and self.start == other[0] and self.end == other[1]
+			return NotImplemented
+
+	def __hash__(self):
+		return hash( (self.start,self.end) )
 
 class ISearchFragment(ext_interfaces.IExternalObject):
 	text = schema.TextLine(title="fragment text", required=True)

@@ -46,6 +46,9 @@ class Post(
 	def __eq__( self, other ):
 		return other == (self.id, self.containerId, self.title, self.body, self.creator)
 
+	def __hash__( self ):
+		return hash( (self.id, self.containerId, self.title, tuple(self.body or ()), self.creator) )
+
 @interface.implementer(for_interfaces.IHeadlinePost)
 class HeadlinePost(Post):
 	pass

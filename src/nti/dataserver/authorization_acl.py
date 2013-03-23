@@ -138,6 +138,9 @@ class _ACE(object):
 		except AttributeError:
 			return NotImplemented
 
+	def __hash__(self):
+		return hash( (self.action,self.actor.id,self.permission) )
+
 	def __iter__(self):
 		return iter( (self.action, self.actor, self.permission) )
 
@@ -659,13 +662,13 @@ class _EnclosedContentACLProvider(_CreatedACLProvider):
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter(content_interfaces.IContentUnit)
 class _TestingLibraryTOCEntryACLProvider(object):
- 	"""
- 	Allows all authenticated users access to library entries.
+	"""
+	Allows all authenticated users access to library entries.
 	This class is for testing only, never for use in a production scenario.
- 	"""
+	"""
 
 	def __init__( self, context ):
- 		self.context = context
+		self.context = context
 
 	@property
 	def __parent__( self ):
@@ -673,7 +676,7 @@ class _TestingLibraryTOCEntryACLProvider(object):
 
 	@_LazyOnClass
 	def __acl__(self):
- 		return ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _TestingLibraryTOCEntryACLProvider ), )
+		return ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _TestingLibraryTOCEntryACLProvider ), )
 
 
 

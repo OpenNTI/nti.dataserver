@@ -386,6 +386,9 @@ class _CaseInsensitiveKey(object):
 		except AttributeError: # pragma: no cover
 			return NotImplemented
 
+	def __hash__(self):
+		return hash(self._lower_key)
+
 	def __lt__(self, other):
 		try:
 			return self._lower_key < other._lower_key

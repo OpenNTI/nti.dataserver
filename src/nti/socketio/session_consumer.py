@@ -200,7 +200,7 @@ def _exception_to_event( the_error ):
 	if getattr(the_error, 'i18n_message', None):
 		msg = translate( the_error.i18n_message )
 	else:
-		msg = the_error.message or msg
+		msg = (the_error.args[0] if the_error.args else '') or msg
 		msg = translate(msg)
 
 	return {'message': msg,
