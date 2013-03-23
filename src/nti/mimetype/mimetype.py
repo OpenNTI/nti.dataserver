@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import weakref
+import warnings
 
 #pylint-off: disable=E0611,F0401
 from zope import interface, component
@@ -76,7 +77,8 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 
 		If you are going to implement other interfaces, the metaclass
 		definition *must* be the first statement in the class, above
-		the :func:`interface.implements` statement.
+		the :func:`zope.interface.implements` statement. (But using
+		 :func:`zope.interface.implementer` avoids this problem altogether.)
 
 	"""
 	# A metaclass might be overkill for this??
@@ -92,6 +94,14 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 		return {x.mimeType for x in _mm_types if getattr(x, '__external_can_create__', False)}
 
 	def __new__(mcs, name, bases, cls_dict):
+		if '__eq__' in cls_dict and '__hash__' not in cls_dict:
+			# This is a deprecated scenario; but the built-in DeprecationWarning includes
+			# no useful information (it points to the metaclass)
+			# (Because we are almost always used in a class that is being decorated by zope.interface
+			# or zope.component, we issue a warning for stacklevel two and three to get the expected behaviour)
+			warnings.warn( "Overriding __eq__ blocks inheritance of __hash__ in 3.x", DeprecationWarning, stacklevel=2 )
+			warnings.warn( "Overriding __eq__ blocks inheritance of __hash__ in 3.x", DeprecationWarning, stacklevel=3 )
+
 		new_type = type.__new__( mcs, name, bases, cls_dict )
 		# elide internal classes. (In the future, we may want
 		# finer control with a class dictionary attribute.)

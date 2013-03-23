@@ -74,6 +74,9 @@ class Canvas(ThreadableMixin, UserContentRoot):
 		except AttributeError:  # pragma: no cover
 			return NotImplemented
 
+	def __hash__(self):
+		return hash( tuple(self.shapeList) )
+
 	def __len__(self):
 		"""
 		The size of a canvas is how many shapes it contains.
@@ -204,6 +207,9 @@ class CanvasAffineTransform(object):
 			return all([getattr(self, x) == getattr(other, x) for x in self.__slots__])
 		except AttributeError:  # pragma: no cover
 			return NotImplemented
+
+	def __hash__(self):
+		return hash( tuple([getattr(self,x) for x in self.__slots__]) )
 
 @interface.implementer(IExternalObject, nti_interfaces.IZContained)
 class _CanvasShape(ExternalizableInstanceDict):
@@ -389,6 +395,9 @@ class _CanvasShape(ExternalizableInstanceDict):
 		except AttributeError:
 			return NotImplemented
 
+	def __hash__(self):
+		return hash(self.transform)
+
 class _CanvasCircleShape(_CanvasShape):
 	pass
 
@@ -410,6 +419,9 @@ class _CanvasPolygonShape(_CanvasShape):
 			return super(_CanvasPolygonShape, self).__eq__(other) and self.sides == other.sides
 		except AttributeError:
 			return NotImplemented
+
+	def __hash__(self):
+		return super(_CanvasPolygonShape,self).__hash__() + self.sides
 
 class _CanvasTextShape(_CanvasShape):
 
@@ -512,6 +524,9 @@ class _CanvasPathShape(_CanvasShape):
 			  and self.points == other.points
 		except AttributeError:
 			return NotImplemented
+
+	def __hash__( self ):
+		return super(_CanvasPathShape,self).__hash__()
 
 # ## Ok, so earlier we screwed up. We had CanvasShape by default
 # be persistent. We need the class with that name to continue to be persistent,

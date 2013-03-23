@@ -31,7 +31,7 @@ def _parse_ticket( s, t, ip ):
 		# deals with this, paste does not
 		return _pyramid_parse( s, t, ip, 'sha512' )
 	except _pyramid_BadTicket as e:
-		raise paste.auth.auth_tkt.BadTicket( e.message, e.expected )
+		raise paste.auth.auth_tkt.BadTicket( e.args[0], e.expected )
 
 def patch():
 	def _patch( mod ):

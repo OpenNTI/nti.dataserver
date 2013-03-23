@@ -72,10 +72,10 @@ def echo_image_url(request):
 		image_response.raise_for_status()
 	except requests.exceptions.HTTPError as e:
 		request.response.status_code = e.response.status_code
-		request.response.body = e.message
+		request.response.body = e.args[0]
 		return request.response
 	except requests.exceptions.RequestException as e:
-		return hexc.HTTPBadRequest( e.message )
+		return hexc.HTTPBadRequest( *e.args )
 
 	if not image_response.headers.get('content-type', '').lower().startswith('image/'):
 		return hexc.HTTPNotFound()

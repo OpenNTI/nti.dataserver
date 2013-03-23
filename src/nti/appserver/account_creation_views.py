@@ -104,7 +104,7 @@ def _create_user( request, externalValue, preflight_only=False, require_password
 	except KeyError:
 		exc_info = sys.exc_info()
 		_raise_error( request, hexc.HTTPUnprocessableEntity,
-					  {'field': exc_info[1].message,
+					  {'field': exc_info[1].args[0],
 					   'message': 'Missing data',
 					   'code': 'RequiredMissing'},
 					  exc_info[2] )

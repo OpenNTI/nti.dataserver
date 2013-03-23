@@ -128,7 +128,7 @@ class _ChatHandler(object):
 			self.chatserver = args[2]
 		else:
 			assert len(args) == 2
-			warnings.warn( "Use an adapter", DeprecationWarning, stacklevel=2 )
+			#warnings.warn( "Use an adapter", DeprecationWarning, stacklevel=2 )
 			self.chatserver = args[0]
 			self.session = args[1]
 			self.session_user = users.User.get_user( self.session.owner )

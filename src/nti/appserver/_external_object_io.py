@@ -201,8 +201,8 @@ def _validation_error_to_dict( request, validation_error ):
 	if not field_name and isinstance( validation_error, pwd_interfaces.InvalidPassword ):
 		field_name = 'password'
 
-	if not field_name and isinstance( validation_error, zope.schema.interfaces.RequiredMissing ):
-		field_name = validation_error.message
+	if not field_name and isinstance( validation_error, zope.schema.interfaces.RequiredMissing ) and validation_error.args:
+		field_name = validation_error.args[0]
 
 	if not value:
 		value = getattr( validation_error, 'value', value )
@@ -212,7 +212,8 @@ def _validation_error_to_dict( request, validation_error ):
 	if getattr(validation_error, 'i18n_message', None):
 		msg = translate( validation_error.i18n_message, context=request )
 	else:
-		msg = (validation_error.message if not isinstance(validation_error.message,list) else '') or msg
+		if validation_error.args:
+			msg = (validation_error.args[0] if not isinstance(validation_error.args[0],list) else '') or msg
 		try:
 			msg = translate(msg, context=request)
 		except (UnicodeError,KeyError):

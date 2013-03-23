@@ -118,6 +118,9 @@ class FilesystemBucket(object):
 	def __eq__(self, other):
 		return self.name == other.name
 
+	def __hash__(self):
+		return hash(self.name)
+
 @interface.implementer(IFilesystemKey,IZContained)
 class FilesystemKey(object):
 	#__slots__ = ('name', 'bucket') # Doesn't play well with CachedProperty

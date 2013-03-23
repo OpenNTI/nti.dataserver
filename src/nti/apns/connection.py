@@ -101,7 +101,7 @@ def to_packet_bytes(payload, deviceId):
 	# Create a packet in the 'enhanced' format
 	command = 1
 	identifier = id(payload) % 4294967295 # fit into 4 bytes
-	expiry = time.time() + DEFAULT_LIFETIME
+	expiry = int(time.time()) + DEFAULT_LIFETIME
 
 
 	payloadBytes = to_payload_dictionary_string( payload )
