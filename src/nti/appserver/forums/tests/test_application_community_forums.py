@@ -24,6 +24,10 @@ from hamcrest import has_entry
 from hamcrest import has_property
 from hamcrest import has_length
 
+from zope.component import eventtesting
+from zope.lifecycleevent import IObjectRemovedEvent
+from zope.intid.interfaces import IIntIdRemovedEvent
+
 from nti.tests import time_monotonically_increases
 
 
@@ -32,7 +36,6 @@ from nti.dataserver.contenttypes.forums.forum import CommunityForum
 _FORUM_NAME = CommunityForum.__default_name__
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
 _BOARD_NAME = CommunityBoard.__default_name__
-
 
 
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
@@ -165,6 +168,54 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 
 		forum_res = self.testapp.get( forum_res.location )
 		assert_that( forum_res.json_body, has_entry( 'description', "The updated description" ) )
+
+	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
+	def test_super_user_can_delete_forum(self):
+		# relying on @nextthought.com automatically being an admin
+		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
+		forum_data = self._create_post_data_for_POST()
+		forum_res = adminapp.post_json( self.board_pretty_url, forum_data, status=201 )
+
+		# Normal user cannot
+		self.testapp.delete( forum_res.location, status=403 )
+
+		# admin can
+		eventtesting.clearEvents()
+		adminapp.delete( forum_res.location, status=204 )
+
+		rem_events = eventtesting.getEvents(IObjectRemovedEvent)
+		assert_that( rem_events, has_length( 1 ) )
+		self.testapp.get( forum_res.location, status=404 )
+
+
+	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
+	def test_super_user_can_delete_forum_with_topic_and_comments(self):
+		# relying on @nextthought.com automatically being an admin
+		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
+		forum_data = self._create_post_data_for_POST()
+		forum_res = adminapp.post_json( self.board_pretty_url, forum_data, status=201 )
+
+		# now community user publishes
+		publish_res, _ = self._POST_and_publish_topic_entry( forum_url=forum_res.location )
+
+		# and for grins, community user comments on own topic
+		comment_res = self.testapp.post_json( publish_res.json_body['href'], self._create_comment_data_for_POST() )
+
+		# now the admin can delete the forum, destroying the forum,
+		# the topic, the headline post, and the comment
+		eventtesting.clearEvents()
+		adminapp.delete( forum_res.location, status=204 )
+		# There's only one ObjectRemovedEvent, but it is dispatched
+		# to all the sublocations
+		rem_events = eventtesting.getEvents(IObjectRemovedEvent)
+		assert_that( rem_events, has_length( 1 ) )
+
+		# So all four of the objects got their intid removed
+		int_rem_events = eventtesting.getEvents(IIntIdRemovedEvent)
+		assert_that( int_rem_events, has_length( 4 ) )
+
+		for res in forum_res, publish_res, comment_res:
+			self.testapp.get( res.location, status=404 )
 
 
 	def _do_test_user_can_POST_new_forum_entry( self, data, content_type=None, status_only=None, expected_data=None ):

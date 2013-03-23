@@ -755,7 +755,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 				 'body': ['This is a comment body'] }
 		return data
 
-	def _POST_topic_entry( self, data=None, content_type=None, status_only=None ):
+	def _POST_topic_entry( self, data=None, content_type=None, status_only=None, forum_url=None ):
 		testapp = self.testapp
 		if data is None:
 			data = self._create_post_data_for_POST()
@@ -771,17 +771,17 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		if status_only:
 			kwargs['status'] = status_only
 
-		res = meth(  self.forum_pretty_url,
+		res = meth(  forum_url or self.forum_pretty_url,
 					 post_data,
 					 **kwargs )
 
 		return res
 
-	def _POST_and_publish_topic_entry( self, data=None ):
+	def _POST_and_publish_topic_entry( self, data=None, forum_url=None ):
 		""" Returns (publish Response, topic data) """
 		if data is None:
 			data = self._create_post_data_for_POST()
-		res = self._POST_topic_entry( data=data )
+		res = self._POST_topic_entry( data=data, forum_url=forum_url )
 
 		publish_url = self.require_link_href_with_rel( res.json_body, 'publish' )
 		res = self.testapp.post( publish_url )
