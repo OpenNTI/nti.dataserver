@@ -347,7 +347,7 @@ class WebsocketTransport(BaseTransport):
 
 	class WebSocketReader(AbstractWebSocketOperator):
 		message = None
-		HEARTBEAT_LIFETIME = SessionService.SESSION_HEARTBEAT_TIMEOUT / 2
+		HEARTBEAT_LIFETIME = SessionService.SESSION_HEARTBEAT_TIMEOUT // 2
 
 		# Cache of some stuff from the session
 		last_heartbeat_time = 0

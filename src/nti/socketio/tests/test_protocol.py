@@ -93,7 +93,7 @@ class TestSocketIOProtocolFormatter1(AbstractTestBase):
 		with self.assertRaises( ValueError ) as cm:
 			self.protocol.decode( '' )
 
-		assert_that( cm.exception.message, is_( 'Must provide data' ) )
+		assert_that( cm.exception.args[0], is_( 'Must provide data' ) )
 
 		with self.assertRaises( ValueError ) as cm:
 			self.protocol.decode(  u'5:1+::{"args": []}' )

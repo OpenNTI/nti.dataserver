@@ -90,6 +90,7 @@ class TestReindexUserContent(ConfiguringTestBase):
 		assert_that(hits, has_length(1))
 
 		catsdocs = list(rpz_utils.get_catalog_and_docids(user))
+		__traceback_info__ = catsdocs
 		assert_that(catsdocs, has_length(1))
 		assert_that(catsdocs[0][1], has_length(len(zanpakuto_commands)))
 
