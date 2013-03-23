@@ -66,9 +66,9 @@ IS_PYPY = py_impl() == 'PyPy'
 try:
 	import zope.container
 except ImportError:
-	HAVE_ZCONT = True
-else:
 	HAVE_ZCONT = False
+else:
+	HAVE_ZCONT = True
 
 TESTS_REQUIRE = [
 'WebTest >= 2.0.3',  # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
