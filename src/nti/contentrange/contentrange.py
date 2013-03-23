@@ -30,7 +30,8 @@ class ContentRangeDescription(SchemaConfigured):
 		return type(self) is type(other) and type(other) is ContentRangeDescription
 	def __ne__( self, other ):
 		return not self.__eq__( other )
-
+	def __hash__( self ):
+		return hash(ContentRangeDescription)
 
 	__repr__ = make_repr()
 
@@ -58,6 +59,9 @@ class DomContentRangeDescription(ContentRangeDescription):
 			return not res
 		return NotImplemented
 
+	def __hash__( self ):
+		return hash( tuple(self.start, self.end, self.ancestor) )
+
 class ContentPointer(SchemaConfigured):
 	__external_can_create__ = True
 	mime_type = 'application/vnd.nextthought.contentrange.contentpointer'
@@ -83,6 +87,9 @@ class DomContentPointer(ContentPointer):
 
 	__repr__ = make_repr()
 
+	def __hash__( self ):
+		return hash(tuple(self.role))
+
 
 @interface.implementer(interfaces.IElementDomContentPointer)
 class ElementDomContentPointer(DomContentPointer):
@@ -100,6 +107,9 @@ class ElementDomContentPointer(DomContentPointer):
 									 and self.role  == other.role)
 		except AttributeError:
 			return NotImplemented
+
+	def __hash__( self ):
+		return hash(tuple(self.elemendId, self.elementTagName, self.role))
 
 
 @interface.implementer(interfaces.ITextContext)
@@ -121,6 +131,9 @@ class TextContext(SchemaConfigured):
 
 	__repr__ = make_repr()
 
+	def __hash__( self ):
+		return hash(tuple(self.contextText, self.contextOffset))
+
 
 @interface.implementer(interfaces.ITextDomContentPointer)
 class TextDomContentPointer(DomContentPointer):
@@ -141,3 +154,6 @@ class TextDomContentPointer(DomContentPointer):
 					and self.edgeOffset == other.edgeOffset )
 		except AttributeError:
 			return NotImplemented
+
+	def __hash__( self ):
+		return hash(tuple(tuple(self.contexts), self.ancestor, self.edgeOffset))
