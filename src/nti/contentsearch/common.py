@@ -29,16 +29,18 @@ from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE
 from .constants import (content_, post_, note_, highlight_, redaction_, indexable_types_order, indexable_type_names,
 						transcript_, messageinfo_, nti_mimetype_prefix)
 
-interface_to_indexable_types = collections.OrderedDict(\
-	{
-		search_interfaces.IBookContent:content_,
-		nti_interfaces.INote:note_,
-		nti_interfaces.IHighlight:highlight_,
-		nti_interfaces.IRedaction:redaction_,
-		chat_interfaces.IMessageInfo:messageinfo_,
-		forum_interfaces.IPost:post_,
-		forum_interfaces.IHeadlineTopic:post_,
-	})
+# This used to be an ordered dict, which must be initialized manually, not with a dict or
+# keyword arguments (If order matters, no regular dict can ever be a part of the process because its iteration order is COMPLETELY UNDEFINED)
+# However, it was never used as a dict, simply for iterating. So a tuple of two-tuples is more efficient.
+interface_to_indexable_types = (
+	(search_interfaces.IBookContent, content_),
+	(nti_interfaces.INote, note_),
+	(nti_interfaces.IHighlight,  highlight_),
+	(nti_interfaces.IRedaction,  redaction_),
+	(chat_interfaces.IMessageInfo, messageinfo_),
+	(forum_interfaces.IPost, post_),
+	(forum_interfaces.IHeadlineTopic, post_) )
+
 
 mime_type_map = None
 
@@ -62,7 +64,7 @@ def normalize_type_name(x, encode=True):
 
 def get_type_name(obj):
 
-	for iface, type_ in interface_to_indexable_types.items():
+	for iface, type_ in interface_to_indexable_types:
 		if iface.providedBy(obj):
 			return type_
 
@@ -98,7 +100,7 @@ def get_mime_type_map():
 		for mime_type, utility in utils:
 			ifaces = utility.getInterfaces()
 			for iface in ifaces:
-				for indexable, type_name in interface_to_indexable_types.items():
+				for indexable, type_name in interface_to_indexable_types:
 					if iface.extends(indexable, strict=False):
 						mime_type_map[mime_type] = type_name
 						break

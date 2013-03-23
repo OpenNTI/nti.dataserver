@@ -135,4 +135,3 @@ class TestReindexUserContent(ConfiguringTestBase):
 		rim = search_interfaces.IRepozeEntityIndexManager(user)
 		hits = rim.search("shoot")
 		assert_that(hits, has_length(2))
-

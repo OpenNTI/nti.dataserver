@@ -44,7 +44,8 @@ def remove_entity_indices(entity, content_types=(), include_dfls=False):
 def get_catalog_and_docids(entity):
 	try:
 		rim = search_interfaces.IRepozeEntityIndexManager(entity, {})
-		for catalog in rim.values():
+		for catalog_name in sorted(rim.keys()): # dependable iteration order
+			catalog = rim[catalog_name]
 			catfield = list(catalog.values())[0] if catalog else None
 			if hasattr(catfield, "_indexed"):
 				yield catalog, list(catfield._indexed())

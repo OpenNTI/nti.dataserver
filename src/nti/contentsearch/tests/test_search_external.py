@@ -20,7 +20,7 @@ from .._search_query import QueryObject
 from .. import interfaces as search_interfaces
 from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, SCORE,
 						 HIT_META_DATA, TYPE_COUNT)
-									
+
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
@@ -31,12 +31,12 @@ from . import domain as domain_words
 from hamcrest import (assert_that, has_entry, has_key, has_length, greater_than_or_equal_to, is_)
 
 class TestSearchExternal(ConfiguringTestBase):
-			
+
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
 		usr = User.create_user( ds, username=username, password=password)
 		return usr
-	
+
 	def _create_notes(self, username, containerId, commands=zanpakuto_commands):
 		notes = []
 		for cmd in commands:
@@ -46,20 +46,20 @@ class TestSearchExternal(ConfiguringTestBase):
 			note.containerId = containerId
 			notes.append(note)
 		return notes
-			
+
 	@WithMockDSTrans
 	def test_externalize_search_results(self):
 		qo = QueryObject.create("wind")
-		containerId = make_ntiid(nttype='bleach', specific='manga')	
+		containerId = make_ntiid(nttype='bleach', specific='manga')
 		searchResults = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
-		
+
 		usr = self._create_user()
 		notes = self._create_notes(usr.username, containerId)
 		for note in notes:
 			mock_dataserver.current_transaction.add(note)
-			note = usr.addContainedObject( note )	
+			note = usr.addContainedObject( note )
 		searchResults.add(notes)
-		
+
 		eo = toExternalObject(searchResults)
 		assert_that(eo, has_entry(QUERY, u'wind'))
 		assert_that(eo, has_entry(HIT_COUNT, len(zanpakuto_commands)))
@@ -72,7 +72,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(md, has_key(TYPE_COUNT))
 		tc = md[TYPE_COUNT]
 		assert_that(tc, has_entry('Note', len(notes)))
-		
+
 	@WithMockDSTrans
 	def test_externalize_suggest_results(self):
 		qo = QueryObject.create("bravo")
@@ -86,25 +86,25 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo, has_key(ITEMS))
 		assert_that(eo[ITEMS], has_length(len(domain_words)))
 		assert_that(eo[SUGGESTIONS], has_length(len(domain_words)))
-		
+
 	@WithMockDSTrans
 	def test_externalize_search_suggest_results(self):
 		qo = QueryObject.create("theotokos")
 		searchResults = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
-		
+
 		suggestions = domain_words[:3]
 		searchResults.add_suggestions(suggestions)
-		
+
 		usr = self._create_user()
 		commands = zanpakuto_commands[:5]
-		containerId = make_ntiid(nttype='bleach', specific='manga')	
-		
+		containerId = make_ntiid(nttype='bleach', specific='manga')
+
 		notes = self._create_notes(usr.username, containerId, commands)
 		for note in notes:
 			mock_dataserver.current_transaction.add(note)
-			note = usr.addContainedObject( note )	
+			note = usr.addContainedObject( note )
 		searchResults.add(notes)
-		
+
 		eo = toExternalObject(searchResults)
 		assert_that(eo, has_entry(QUERY, u'theotokos'))
 		assert_that(eo, has_entry(HIT_COUNT, len(commands)))
@@ -113,21 +113,21 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo, has_key(ITEMS))
 		assert_that(eo[ITEMS], has_length(len(commands)))
 		assert_that(eo[SUGGESTIONS], has_length(len(suggestions)))
-		
+
 	@WithMockDSTrans
 	def test_search_results_sort_relevance(self):
-		
+
 		qo = QueryObject.create("sode no shirayuki", sortOn='relevance')
-		containerId = make_ntiid(nttype='bleach', specific='manga')	
+		containerId = make_ntiid(nttype='bleach', specific='manga')
 		searchResults = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
-		
+
 		usr = self._create_user()
 		notes = self._create_notes(usr.username, containerId)
 		for score, note in enumerate(notes):
 			mock_dataserver.current_transaction.add(note)
-			note = usr.addContainedObject( note )	
+			note = usr.addContainedObject( note )
 			searchResults.add((note, score+1))
-		
+
 		eo = toExternalObject(searchResults)
 		assert_that(eo, has_entry(HIT_COUNT, len(zanpakuto_commands)))
 		assert_that(eo, has_key(LAST_MODIFIED))

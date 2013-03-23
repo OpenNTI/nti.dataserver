@@ -33,7 +33,7 @@ class TestPyramidViews(ConfiguringTestBase):
 		assert_that(qo.location, is_(ntiid))
 		assert_that(qo.batchSize, is_(10))
 		assert_that(qo.batchStart, is_(0))
-		assert_that(qo.searchOn, is_((u'note', u'post')))
+		assert_that(sorted(qo.searchOn), is_(sorted((u'note', u'post'))))
 
 		params = {'accept':'application/vnd.nextthought.foo'}
 		qo = create_queryobject('harribel@bleach.com', params, matchdict)
@@ -53,7 +53,7 @@ class TestPyramidViews(ConfiguringTestBase):
 		assert_that(qo.location, is_(ntiid))
 		assert_that(qo.batchSize, is_(100))
 		assert_that(qo.batchStart, is_(3))
-		assert_that(qo.searchOn, is_((u'content', u'highlight', u'messageinfo', u'redaction')))
+		assert_that(sorted(qo.searchOn), is_(sorted((u'content', u'highlight', u'messageinfo', u'redaction'))))
 
 		params = {'exclude':'*/*'}
 		qo = create_queryobject('ulquiorra@bleach.com', params, matchdict)
@@ -103,4 +103,4 @@ class TestPyramidViews(ConfiguringTestBase):
 		assert_that(qo.batchStart, is_(5))
 		assert_that(qo.sortOn, 'relevance')
 		assert_that(qo.sortOrder, 'descending')
-		assert_that(qo.searchOn, is_((u'content', u'note', u'post', u'messageinfo', u'highlight')))
+		assert_that(sorted(qo.searchOn), is_(sorted((u'content', u'note', u'post', u'messageinfo', u'highlight'))))
