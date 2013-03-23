@@ -137,9 +137,8 @@ def render_externalizable(data, system):
 	# We take the most recent one we can find
 	if response.last_modified is None:
 		try:
-			if 'Last Modified' in body:
-				lastMod = max( body['Last Modified'], lastMod )
-		except TypeError:
+			lastMod = max( body['Last Modified'] or 0, lastMod ) # must not send None to max()
+		except (TypeError, KeyError):
 			pass
 
 		if lastMod > 0:

@@ -42,7 +42,7 @@ class IndexManager(object):
 
 	def __new__(cls, *args, **kwargs):
 		if not cls.indexmanager:
-			cls.indexmanager = super(IndexManager, cls).__new__(cls, *args, **kwargs)
+			cls.indexmanager = super(IndexManager, cls).__new__(cls)
 		return cls.indexmanager
 
 	def __init__(self, bookidx_manager_factory, useridx_manager_adapter):
@@ -114,7 +114,7 @@ class IndexManager(object):
 	def add_book(self, indexname, ntiid=None, *args, **kwargs):
 		result = False
 		indexid = indexname if not ntiid else ntiid
-		if not self.books.has_key(indexid):
+		if indexid not in self.books:
 			bmi = self.bookidx_manager_factory(indexname=indexname, ntiid=ntiid, **kwargs)
 			if bmi is not None:
 				result = True

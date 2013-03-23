@@ -66,14 +66,12 @@ class SimpleReplacementCensoredContentStrategy(object):
 class BasicScanner(object):
 
 	def sort_ranges(self, ranges):
-		def _cmp(x, y):
-			r = cmp(x[0], y[0])
-			return r if r != 0 else cmp(x[1], y[1])
-		return sorted(ranges, cmp=_cmp)
+		return sorted(ranges)
 
-	def test_range(self, v, yielded):
+	def test_range(self, new_range, yielded):
 		for t in yielded:
-			if v[0] >= t[0] and v[1] <= t[1]:
+			if new_range[0] >= t[0] and new_range[1] <= t[1]:
+				# new_range is entirely included in something we already yielded
 				return False
 		return True
 

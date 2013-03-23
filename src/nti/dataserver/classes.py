@@ -295,6 +295,9 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		except AttributeError:
 			return NotImplemented
 
+	def __hash__(self):
+		return hash(self.ID)
+
 	def enroll(self, student):
 		self._enrolled[student] = student
 
@@ -360,11 +363,11 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		return updated
 
 
+@interface.implementer(nti_interfaces.IInstructorInfo)
 class InstructorInfo( Persistent,
 					  ExternalizableInstanceDict ):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	interface.implements(nti_interfaces.IInstructorInfo)
 
 	def __init__( self ):
 		super(InstructorInfo,self).__init__()
@@ -375,3 +378,6 @@ class InstructorInfo( Persistent,
 			return self.Instructors == other.Instructors
 		except AttributeError:
 			return NotImplemented
+
+	def __hash__(self):
+		return hash( tuple(self.Instructors) )

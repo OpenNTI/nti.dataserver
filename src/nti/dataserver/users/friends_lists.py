@@ -257,6 +257,9 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 				result = NotImplemented
 		return result
 
+	def __hash__( self ):
+		return super(FriendsList,self).__hash__()
+
 @interface.implementer(nti_interfaces.IUsernameIterable)
 @component.adapter(nti_interfaces.IFriendsList)
 class _FriendsListUsernameIterable(object):
