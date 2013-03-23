@@ -46,8 +46,17 @@ def get_catalog_and_docids(entity):
 		rim = search_interfaces.IRepozeEntityIndexManager(entity, {})
 		for catalog_name in sorted(rim.keys()): # dependable iteration order
 			catalog = rim[catalog_name]
-			catfield = list(catalog.values())[0] if catalog else None
-			if hasattr(catfield, "_indexed"):
-				yield catalog, list(catfield._indexed())
+			catalog_field_possessing_docids = None
+			if catalog:
+				# We cannot choose a random one of these from iterating across values()
+				# the result would be undefined. Instead we try to find one we think
+				# should be there
+				for catalog_field_name in 'content', 'containerId', 'creator', 'ntiid':
+					catalog_field_possessing_docids = catalog.get( catalog_field_name )
+					if catalog_field_possessing_docids:
+						break
+
+			if hasattr(catalog_field_possessing_docids, "_indexed"):
+				yield catalog, list(catalog_field_possessing_docids._indexed())
 	except POSKeyError:
 		pass
