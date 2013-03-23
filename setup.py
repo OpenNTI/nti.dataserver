@@ -379,7 +379,7 @@ setup(
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.9.1',
 			'virtualenvwrapper >= 3.7',
-			'zc.buildout >= 2.0.1',
+			'zc.buildout >= 2.1.0',
 			'z3c.dependencychecker >= 1.10',  # unused/used imports
 			'zodbbrowser >= 0.10.4',
 			'zodbupdate >= 0.5',
