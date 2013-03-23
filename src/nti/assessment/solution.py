@@ -13,6 +13,7 @@ from nti.externalization.externalization import make_repr
 from nti.assessment import parts
 from nti.assessment import interfaces
 from nti.assessment._util import TrivialValuedMixin as _TrivialValuedMixin
+from nti.assessment._util import superhash
 
 @interface.implementer(interfaces.IQSolution)
 class QSolution(Persistent):
@@ -63,6 +64,9 @@ def _eq_(self, other):
 def _ne_(self, other):
 	return not (self == other) is True
 
+def __hash__(self):
+	return hash(self.weight) + superhash(self.value)
+
 @interface.implementer(interfaces.IQNumericMathSolution)
 class QNumericMathSolution(_TrivialValuedMixin,QMathSolution):
 	"""
@@ -76,6 +80,7 @@ class QNumericMathSolution(_TrivialValuedMixin,QMathSolution):
 
 	__eq__ = _eq_
 	__ne__ = _ne_
+	__hash__ = __hash__
 
 @interface.implementer(interfaces.IQFreeResponseSolution)
 class QFreeResponseSolution(_TrivialValuedMixin,QSolution):
@@ -87,7 +92,7 @@ class QFreeResponseSolution(_TrivialValuedMixin,QSolution):
 
 	__eq__ = _eq_
 	__ne__ = _ne_
-
+	__hash__ = __hash__
 
 @interface.implementer(interfaces.IQSymbolicMathSolution)
 class QSymbolicMathSolution(QMathSolution):
@@ -108,6 +113,7 @@ class QLatexSymbolicMathSolution(_TrivialValuedMixin,QSymbolicMathSolution):
 
 	__eq__ = _eq_
 	__ne__ = _ne_
+	__hash__ = __hash__
 
 @interface.implementer(interfaces.IQMatchingSolution)
 class QMatchingSolution(_TrivialValuedMixin,QSolution):
@@ -116,6 +122,7 @@ class QMatchingSolution(_TrivialValuedMixin,QSolution):
 
 	__eq__ = _eq_
 	__ne__ = _ne_
+	__hash__ = __hash__
 
 @interface.implementer(interfaces.IQMultipleChoiceSolution)
 class QMultipleChoiceSolution(_TrivialValuedMixin,QSolution):
@@ -124,6 +131,7 @@ class QMultipleChoiceSolution(_TrivialValuedMixin,QSolution):
 
 	__eq__ = _eq_
 	__ne__ = _ne_
+	__hash__ = __hash__
 
 @interface.implementer(interfaces.IQMultipleChoiceMultipleAnswerSolution)
 class QMultipleChoiceMultipleAnswerSolution(_TrivialValuedMixin,QSolution):
@@ -136,3 +144,4 @@ class QMultipleChoiceMultipleAnswerSolution(_TrivialValuedMixin,QSolution):
 
 	__eq__ = _eq_
 	__ne__ = _ne_
+	__hash__ = __hash__

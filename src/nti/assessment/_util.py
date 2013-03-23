@@ -9,6 +9,7 @@ _marker = object()
 
 class TrivialValuedMixin(object):
 	value = None
+
 	def __init__( self, *args, **kwargs ):
 		# The contents of ``self.value`` come from either the first arg (if positional args are given) or the kwarg named
 		# such.
@@ -20,7 +21,11 @@ class TrivialValuedMixin(object):
 		else:
 			value = None
 
-		super(TrivialValuedMixin,self).__init__(*args, **kwargs)
+		# Avoid the appearance of trying to pass args to object.__init__ to avoid a Py3K warning
+		init = super(TrivialValuedMixin,self).__init__
+		if getattr( init, '__objclass__', None) is not object: # object's init is a method-wrapper
+			init( *args, **kwargs )
+
 		if value is not None:
 			self.value = value
 

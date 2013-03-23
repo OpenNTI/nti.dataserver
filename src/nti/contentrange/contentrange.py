@@ -60,7 +60,7 @@ class DomContentRangeDescription(ContentRangeDescription):
 		return NotImplemented
 
 	def __hash__( self ):
-		return hash( tuple(self.start, self.end, self.ancestor) )
+		return hash( (self.start, self.end, self.ancestor) )
 
 class ContentPointer(SchemaConfigured):
 	__external_can_create__ = True
@@ -88,7 +88,7 @@ class DomContentPointer(ContentPointer):
 	__repr__ = make_repr()
 
 	def __hash__( self ):
-		return hash(tuple(self.role))
+		return hash((self.role,))
 
 
 @interface.implementer(interfaces.IElementDomContentPointer)
@@ -109,7 +109,7 @@ class ElementDomContentPointer(DomContentPointer):
 			return NotImplemented
 
 	def __hash__( self ):
-		return hash(tuple(self.elemendId, self.elementTagName, self.role))
+		return hash((self.elemendId, self.elementTagName, self.role))
 
 
 @interface.implementer(interfaces.ITextContext)
@@ -132,7 +132,7 @@ class TextContext(SchemaConfigured):
 	__repr__ = make_repr()
 
 	def __hash__( self ):
-		return hash(tuple(self.contextText, self.contextOffset))
+		return hash((self.contextText, self.contextOffset))
 
 
 @interface.implementer(interfaces.ITextDomContentPointer)
@@ -156,4 +156,4 @@ class TextDomContentPointer(DomContentPointer):
 			return NotImplemented
 
 	def __hash__( self ):
-		return hash(tuple(tuple(self.contexts), self.ancestor, self.edgeOffset))
+		return hash((tuple(self.contexts), self.ancestor, self.edgeOffset))
