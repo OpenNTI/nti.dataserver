@@ -34,7 +34,7 @@ class QAssessedPart(SchemaConfigured,persistent.Persistent):
 	def __eq__( self, other ):
 		try:
 			return self is other or (self.submittedResponse == other.submittedResponse
-								 and self.assessedValue == other.assessedValue)
+									 and self.assessedValue == other.assessedValue)
 		except AttributeError:
 			return NotImplemented
 
@@ -42,6 +42,9 @@ class QAssessedPart(SchemaConfigured,persistent.Persistent):
 		return not self == other
 
 	__repr__ = make_repr()
+
+	def __hash__( self ):
+		return hash((self.submittedResponse, self.assessedValue))
 
 @interface.implementer(interfaces.IQAssessedQuestion, nti_interfaces.IContained, nti_interfaces.IZContained, nti_interfaces.ICreated)
 class QAssessedQuestion(SchemaConfigured,persistent.Persistent):
@@ -65,6 +68,9 @@ class QAssessedQuestion(SchemaConfigured,persistent.Persistent):
 		return not self == other
 
 	__repr__ = make_repr()
+
+	def __hash__(self):
+		return hash( (self.questionId, self.parts) )
 
 
 @interface.implementer(interfaces.IQAssessedQuestionSet, nti_interfaces.IContained, nti_interfaces.IZContained, nti_interfaces.ICreated)
@@ -90,6 +96,9 @@ class QAssessedQuestionSet(SchemaConfigured,persistent.Persistent):
 		return not self == other
 
 	__repr__ = make_repr()
+
+	def __hash__(self):
+		return hash( (self.questionSetId, self.questions) )
 
 
 def assess_question_submission( submission, questions=None ):

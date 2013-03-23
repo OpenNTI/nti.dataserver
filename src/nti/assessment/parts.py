@@ -57,7 +57,8 @@ class QPart(SchemaConfigured,Persistent):
 
 	def __eq__( self, other ):
 		try:
-			return self is other or (self.content == other.content
+			return self is other or (self._eq_instance(other)
+									 and self.content == other.content
 									 and self.hints == other.hints
 									 and self.solutions == other.solutions
 									 and self.explanation == other.explanation
@@ -65,6 +66,9 @@ class QPart(SchemaConfigured,Persistent):
 									 and self.grader_name == other.grader_name)
 		except AttributeError: #pragma: no cover
 			return NotImplemented
+
+	def _eq_instance( self, other ):
+		return True
 
 	def __ne__( self, other ):
 		return not (self == other is True)
@@ -80,36 +84,23 @@ class QPart(SchemaConfigured,Persistent):
 @interface.implementer(interfaces.IQMathPart)
 class QMathPart(QPart):
 
-	def __eq__( self, other ):
-		try:
-			return self is other or (isinstance(other,QMathPart)
-									 and super(QMathPart,self).__eq__( other ) is True)
-		except AttributeError: # pragma: no cover
-			return NotImplemented
+	def _eq_instance( self, other ):
+		return isinstance( other, QMathPart )
 
 @interface.implementer(interfaces.IQSymbolicMathPart)
 class QSymbolicMathPart(QMathPart):
 
 	grader_interface = interfaces.IQSymbolicMathGrader
 
-
-	def __eq__( self, other ):
-		try:
-			return self is other or (isinstance(other,QSymbolicMathPart)
-									 and super(QSymbolicMathPart,self).__eq__( other ) is True)
-		except AttributeError: # pragma: no cover
-			return NotImplemented
+	def _eq_instance( self, other ):
+		return isinstance( other, QSymbolicMathPart )
 
 
 @interface.implementer(interfaces.IQNumericMathPart)
 class QNumericMathPart(QMathPart):
 
-	def __eq__( self, other ):
-		try:
-			return self is other or (isinstance(other,QNumericMathPart)
-									 and super(QNumericMathPart,self).__eq__( other ) is True)
-		except AttributeError: # pragma: no cover
-			return NotImplemented
+	def _eq_instance( self, other ):
+		return isinstance( other, QNumericMathPart )
 
 @interface.implementer(interfaces.IQMultipleChoicePart)
 class QMultipleChoicePart(QPart):
@@ -124,6 +115,10 @@ class QMultipleChoicePart(QPart):
 									 and self.choices == other.choices )
 		except AttributeError: # pragma: no cover
 			return NotImplemented
+
+	def __hash__( self ):
+		xhash = super(QMultipleChoicePart,self).__hash__()
+		return xhash + superhash(self.choices)
 
 @interface.implementer(interfaces.IQMultipleChoiceMultipleAnswerPart)
 class QMultipleChoiceMultipleAnswerPart(QMultipleChoicePart):
@@ -147,14 +142,14 @@ class QMatchingPart(QPart):
 		except AttributeError: #pragma: no cover
 			return NotImplemented
 
+	def __hash__( self ):
+		xhash = super(QMatchingPart,self).__hash__()
+		return xhash + superhash(self.labels) + superhash(self.values)
+
 @interface.implementer(interfaces.IQFreeResponsePart)
 class QFreeResponsePart(QPart):
 
 	grader_name = 'LowerQuoteNormalizedStringEqualityGrader'
 
-	def __eq__( self, other ):
-		try:
-			return self is other or (isinstance(other,QFreeResponsePart)
-									 and super(QFreeResponsePart,self).__eq__( other ) is True)
-		except AttributeError: # pragma: no cover
-			return NotImplemented
+	def _eq_instance(self, other):
+		return isinstance(other,QFreeResponsePart)
