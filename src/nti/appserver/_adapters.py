@@ -51,7 +51,7 @@ class BrokenExternalObject(object):
 	TODO: Consider removing this. Is the logging worth it? Alternately, should the NonExternalizableObject
 	adapter be at the low level externization package or up here?
 	"""
-	
+
 	def __init__( self, broken ):
 		self.broken = broken
 
@@ -388,21 +388,23 @@ class _DeletedObjectPlaceholderDecorator(object):
 	Cleans up some other data too that we don't want out.
 	"""
 
-	title_message = _("This object has been deleted.")
-	description_message = _("This object has been deleted.")
-	body_message = _("This object has been deleted.")
+	_message = _("This item has been deleted.")
+
+	_moderator_message = _("This item has been deleted by the moderator.")
 
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject( self, original, external ):
 		request = get_current_request()
+		deleted_by_moderator = app_interfaces.IModeratorDealtWithFlag.providedBy( original )
+		message = translate( self._moderator_message if deleted_by_moderator else self._message, context=request )
 
 		if 'title' in external:
-			external['title'] = translate( self.title_message, context=request )
+			external['title'] = message
 		if 'description' in external:
-			external['description'] = translate( self.description_message, context=request )
+			external['description'] = message
 		if 'body' in external:
-			external['body'] = [translate( self.body_message, context=request )]
+			external['body'] = [message]
 
 		if 'tags' in external:
 			external['tags'] = ()
@@ -410,6 +412,9 @@ class _DeletedObjectPlaceholderDecorator(object):
 		if StandardExternalFields.LINKS in external:
 			external[StandardExternalFields.LINKS] = [] # because other things may try to append still
 
-		# TODO: What's the best thing here? Change class and mimetype?
+		# Note that we are still externalizing with the original class and mimetype values;
+		# to do otherwise would almost certainly break client assumptions about the type of data the APIs return.
+		# But we do expose secondary information about this state:
 		external['Deleted'] = True
-
+		if deleted_by_moderator:
+			external['DeletedByModerator'] = True
