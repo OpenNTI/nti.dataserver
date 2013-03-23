@@ -75,7 +75,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 	def _index_notes(self, usr=None, do_assert=True):
 		docids = []
 		notes, usr = self._add_notes(usr=usr)
-		rim = search_interfaces.IRepozeEntityIndexManager(usr, None)
+		rim = search_interfaces.IRepozeEntityIndexManager(usr)
 		for note in notes:
 			docid = rim.index_content(note)
 			if do_assert:

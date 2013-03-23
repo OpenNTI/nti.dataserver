@@ -88,4 +88,4 @@ class _SearchEntityIndexManager(zcontained.Contained, PersistentMapping):
 		raise NotImplementedError()
 
 	def __repr__(self):
-		return '%s(%s)' % (self.__class__.__name__, self.username)
+		return '%s(%s, %s)' % (self.__class__.__name__, self.username, self.keys())
