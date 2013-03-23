@@ -598,8 +598,8 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		res = testapp.get( entry_contents_url )
 		assert_that( res.json_body['Items'], has_length( 2 ) )
 		assert_that( res.json_body['Items'], contains_inanyorder(
-												has_entries( 'Deleted', True,  'title', 'This object has been deleted.' ),
-												has_entries( 'Deleted', True,  'title', 'This object has been deleted.' ) ) )
+												has_entries( 'Deleted', True,  'title', 'This item has been deleted.' ),
+												has_entries( 'Deleted', True,  'title', 'This item has been deleted.' ) ) )
 
 		# and in the metadata
 		res = testapp.get( entry_url )

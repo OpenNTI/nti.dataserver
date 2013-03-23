@@ -21,7 +21,7 @@ class treewalker(object):
 	through DOM trees
 	"""
 	def onestep(self,node):
-		""" 
+		"""
 		Goes to next or previous node in the order that nodes come in the XML
 		representation of the tree
 		"""
@@ -109,9 +109,9 @@ def domToContentRange(domrange):
 
 	""" Converts a DOM range to a content range """
 	def convert(node,offset, directionals):
-		if node.nodeType == node.TEXT_NODE: 
+		if node.nodeType == node.TEXT_NODE:
 			return point_convert(node, offset, directionals)
-		else:	
+		else:
 			return element_convert(node)
 
 	def element_convert(element):
@@ -143,7 +143,7 @@ def domToContentRange(domrange):
 		# Cycle through successive nodes to get our additional contexts
 		while cur_node is not None and total_chars < 15 and len(return_ptr.contexts) <= 5:
 			if cur_node is None: break
-		 	if cur_node.nodeType != cur_node.TEXT_NODE:
+			if cur_node.nodeType != cur_node.TEXT_NODE:
 				new_ctx_string = ''
 			else:
 				new_ctx_string = directionals.first_word(cur_node)
