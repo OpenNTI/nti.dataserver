@@ -39,6 +39,7 @@ class _CommunityForumACLProvider(_ForumACLProvider):
 	new topics within it.
 	"""
 
+	_PERMS_FOR_CREATOR = AbstractCreatedAndSharedACLProvider._PERMS_FOR_SHARING_TARGETS
 	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,nauth.ACT_CREATE)
 
 	def _get_sharing_target_names( self ):

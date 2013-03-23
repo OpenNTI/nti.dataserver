@@ -419,6 +419,21 @@ class HeadlineTopicDeleteView(UGDDeleteView):
 		del aq_base(theObject.__parent__)[theObject.__name__]
 		return theObject
 
+@view_config( context=frm_interfaces.ICommunityForum )
+@view_defaults( route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_DELETE,
+				request_method='DELETE' )
+class ForumDeleteView(UGDDeleteView):
+	""" Deleting an existing forum """
+
+	def _do_delete_object( self, theObject ):
+		# Standard delete from enclosing container. This
+		# dispatches to all the sublocations and thus removes
+		# the comments, etc, and into the activity streams
+		del aq_base(theObject.__parent__)[theObject.__name__]
+		return theObject
+
 @view_config(context=frm_interfaces.IGeneralForumComment)
 @view_config(context=frm_interfaces.IPersonalBlogComment)
 @view_defaults( route_name='objects.generic.traversal',
