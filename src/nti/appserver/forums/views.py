@@ -373,21 +373,6 @@ class ForumContentsFeedView(AbstractFeedView):
 		data_object = ipost_or_itopic.headline if frm_interfaces.IHeadlineTopic.providedBy( ipost_or_itopic ) else ipost_or_itopic
 		return data_object, ipost_or_itopic.creator, title, ipost_or_itopic.tags
 
-
-@interface.implementer(app_interfaces.IUserCheckout)
-class ForumCheckoutAdapter(object):
-
-	def __init__( self, context, request ):
-		self.context = context
-		self.request = request
-
-	def checkObjectOutFromUserForUpdate( self, *args ):
-		"""
-		Users do not contain these post objects, they live outside that hierarchy
-		(This might need to change.) As a consequence, there is no checking out that happens.
-		"""
-		return self.context
-
 @view_config( context=frm_interfaces.IHeadlinePost )
 @view_config( context=frm_interfaces.IPersonalBlogEntryPost )
 @view_config( context=frm_interfaces.IPersonalBlogComment )

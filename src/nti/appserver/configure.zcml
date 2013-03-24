@@ -195,7 +195,6 @@
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
-	<adapter factory="._view_utils.DispatchingExternalFieldResourceCheckout" />
 
 	<adapter factory="._adapters.GenericModeledContentExternalFieldTraverser"
 			 for="nti.dataserver.interfaces.IModeledContent"

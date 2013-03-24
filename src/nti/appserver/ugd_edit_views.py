@@ -76,68 +76,68 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		datatype = self.findContentType( externalValue )
 
 		containedObject = self.createAndCheckContentObject( owner, datatype, externalValue, creator )
-		with owner.updates():
-			containedObject.creator = creator
 
-			# The process of updating may need to index and create KeyReferences
-			# so we need to have a jar. We don't have a parent to inherit from just yet
-			# (If we try to set the wrong one, it messes with some events and some
-			# KeyError detection in the containers)
-			#containedObject.__parent__ = owner
-			owner_jar = getattr( owner, '_p_jar', None )
-			if owner_jar and getattr( containedObject, '_p_jar', self) is None:
-			 	owner_jar.add( containedObject )
+		containedObject.creator = creator
 
-			# Update the object, but don't fire any modified events. We don't know
-			# if we'll keep this object yet, and we haven't fired a created event
-			self.updateContentObject( containedObject, externalValue, set_id=True, notify=False )
+		# The process of updating may need to index and create KeyReferences
+		# so we need to have a jar. We don't have a parent to inherit from just yet
+		# (If we try to set the wrong one, it messes with some events and some
+		# KeyError detection in the containers)
+		#containedObject.__parent__ = owner
+		owner_jar = getattr( owner, '_p_jar', None )
+		if owner_jar and getattr( containedObject, '_p_jar', self) is None:
+			owner_jar.add( containedObject )
+
+		# Update the object, but don't fire any modified events. We don't know
+		# if we'll keep this object yet, and we haven't fired a created event
+		self.updateContentObject( containedObject, externalValue, set_id=True, notify=False )
+		try:
+			transformedObject = self.request.registry.queryAdapter( containedObject,
+																	app_interfaces.INewObjectTransformer,
+																	default=_id )( containedObject )
+		except (TypeError,ValueError,AssertionError,KeyError) as e:
+			transaction.doom()
+			logger.warn( "Failed to transform incoming object", exc_info=True)
+			raise hexc.HTTPUnprocessableEntity( e.message )
+		# If we transformed, copy the container and creator
+		if transformedObject is not containedObject:
+			transformedObject.creator = creator
+			if getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ) \
+			  and not getattr( transformedObject, StandardInternalFields.CONTAINER_ID, None ):
+			  transformedObject.containerId = containedObject.containerId
+			  # TODO: JAM: I really don't like doing this. Straighten out the
+			  # location of IContained so that things like assessment can implement it
+			  if not nti_interfaces.IContained.providedBy( transformedObject ):
+				  interface.alsoProvides( transformedObject, nti_interfaces.IContained )
+			containedObject = transformedObject
+		# TODO: The WSGI code would attempt to infer a containerID from the
+		# path. Should we?
+		if not getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ):
+			transaction.doom()
+			logger.debug( "Failing to POST: input of unsupported/missing ContainerId" )
+			raise HTTPUnprocessableEntity( "Unsupported/missing ContainerId" )
+
+		if hasattr( containedObject, 'updateLastMod' ):
+			containedObject.updateLastMod()
+		# OK, now that we've got an object, start firing events
+		lifecycleevent.created( containedObject )
+		try:
+			owner.addContainedObject( containedObject ) # Should fire lifecycleevent.added
+		except KeyError:
+			# for ease of testing, re-posting with an exported data file,
+			# try to auto-gen an ID.
+			logger.debug( "Sent ID of existing object, ignoring", exc_info=True )
 			try:
-				transformedObject = self.request.registry.queryAdapter( containedObject,
-																		app_interfaces.INewObjectTransformer,
-																		default=_id )( containedObject )
-			except (TypeError,ValueError,AssertionError,KeyError) as e:
+				containedObject.id = None
+			except AttributeError:
+				# It's valid to not be able to assign to the ID attribute; it must
+				# be given at creation time and never after (think immutable usernames
+				# which must not overlap and cannot be auto-generated). In that case,
+				# there's nothing else we can do but inform the client
 				transaction.doom()
-				logger.warn( "Failed to transform incoming object", exc_info=True)
-				raise hexc.HTTPUnprocessableEntity( e.message )
-			# If we transformed, copy the container and creator
-			if transformedObject is not containedObject:
-				transformedObject.creator = creator
-				if getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ) \
-				  and not getattr( transformedObject, StandardInternalFields.CONTAINER_ID, None ):
-				  transformedObject.containerId = containedObject.containerId
-				  # TODO: JAM: I really don't like doing this. Straighten out the
-				  # location of IContained so that things like assessment can implement it
-				  if not nti_interfaces.IContained.providedBy( transformedObject ):
-					  interface.alsoProvides( transformedObject, nti_interfaces.IContained )
-				containedObject = transformedObject
-			# TODO: The WSGI code would attempt to infer a containerID from the
-			# path. Should we?
-			if not getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ):
-				transaction.doom()
-				logger.debug( "Failing to POST: input of unsupported/missing ContainerId" )
-				raise HTTPUnprocessableEntity( "Unsupported/missing ContainerId" )
-
-			if hasattr( containedObject, 'updateLastMod' ):
-				containedObject.updateLastMod()
-			# OK, now that we've got an object, start firing events
-			lifecycleevent.created( containedObject )
-			try:
-				owner.addContainedObject( containedObject ) # Should fire lifecycleevent.added
-			except KeyError:
-				# for ease of testing, re-posting with an exported data file,
-				# try to auto-gen an ID.
-				logger.debug( "Sent ID of existing object, ignoring", exc_info=True )
-				try:
-					containedObject.id = None
-				except AttributeError:
-					# It's valid to not be able to assign to the ID attribute; it must
-					# be given at creation time and never after (think immutable usernames
-					# which must not overlap and cannot be auto-generated). In that case,
-					# there's nothing else we can do but inform the client
-					transaction.doom()
-					raise hexc.HTTPConflict("Cannot use an ID already in use")
-				else:
-					owner.addContainedObject( containedObject )
+				raise hexc.HTTPConflict("Cannot use an ID already in use")
+			else:
+				owner.addContainedObject( containedObject )
 
 		self.request.response.status_int = 201
 
@@ -170,29 +170,18 @@ class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixi
 		self._check_object_exists( theObject )
 
 		user = theObject.creator
-		with user.updates():
-			theObject = self.checkObjectOutFromUserForUpdate( user, theObject.containerId, theObject.id )
-			# FIXME: See notes in _UGDPutView
 
-			if theObject is None:
-				# See comment above about BWC
-				enclosed = traversal.find_interface( getattr( self.request.context, 'resource', self.request.context ), IEnclosedContent )
-				if enclosed:
-					# should be self.request.context.resource.__parent__
-					self.request.context = enclosed
-					return EnclosureDeleteView( self.request )()
+		self._check_object_exists( theObject )
 
-			self._check_object_exists( theObject )
+		lastModified = 0
+		objectId = theObject.id
+		if self._do_delete_object( theObject )  is None: # Should fire lifecycleevent.removed
+			raise hexc.HTTPNotFound()
 
-			lastModified = 0
-			objectId = theObject.id
-			if self._do_delete_object( theObject )  is None: # Should fire lifecycleevent.removed
-				raise hexc.HTTPNotFound()
+		lastModified = theObject.creator.lastModified
 
-			lastModified = theObject.creator.lastModified
-
-			# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
-			logger.info("User '%s' deleted object '%s'/'%s' from container '%s'", user, objectId, getattr(theObject,'__class__', type(theObject)).__name__, theObject.containerId)
+		# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
+		logger.info("User '%s' deleted object '%s'/'%s' from container '%s'", user, objectId, getattr(theObject,'__class__', type(theObject)).__name__, theObject.containerId)
 
 		result = hexc.HTTPNoContent()
 		result.last_modified = lastModified
@@ -230,24 +219,10 @@ class UGDPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin
 		objId = theObject.id
 
 		externalValue = self.readInput( )
-		with creator.updates():
-			# Check the object out from the user now so that
-			# it goes through the right update processes (in particular,
-			# that it will cache the right sharing values)
-			# TODO: This is sort of weird. Have User.willUpdate and User.didUpdate
-			# to be explicit?
-			theObject = self.checkObjectOutFromUserForUpdate( creator, containerId, objId )
-			# FIXME: This is terrible. We are dispatching again if we cannot resolve the object.
-			# We would have arrived here through the 'Objects' path and found
-			# (the child of) an 'enclosure' object, not an object actually contained by the user
-			if theObject is None and traversal.find_interface( object_to_update, IEnclosedContent ):
-				# should be self.request.context.resource.__parent__
-				self.request.context = traversal.find_interface( object_to_update, IEnclosedContent )
-				return EnclosurePutView( self.request )()
 
-			self._check_object_exists( theObject, creator, containerId, objId )
+		self._check_object_exists( theObject, creator, containerId, objId )
 
-			self.updateContentObject( theObject, externalValue ) # Should fire lifecycleevent.modified
+		self.updateContentObject( theObject, externalValue ) # Should fire lifecycleevent.modified
 
 		# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
 		logger.info("User '%s' updated object '%s'/'%s' for container '%s'", creator, theObject.id, getattr(theObject,'__class__',type(theObject)).__name__, containerId)
