@@ -19,7 +19,6 @@ import contextlib
 import persistent
 from zope import interface
 from zope import component
-from ZODB import loglevels
 from ZODB.interfaces import IConnection
 from zope.deprecation import deprecated
 from zope.component.factory import Factory
@@ -27,7 +26,7 @@ from zope.location import interfaces as loc_interfaces
 from zope.keyreference.interfaces import IKeyReference
 
 import zope.intid
-from nti.intid.interfaces import IntIdMissingError
+
 
 from z3c.password import interfaces as pwd_interfaces
 
@@ -460,9 +459,8 @@ class User(Principal):
 
 
 	def __install_container_hooks(self):
-		self.containers.afterAddContainedObject = self._postCreateNotification
 		self.containers.afterGetContainedObject = self._trackObjectUpdates
-		# Deleting is handled with events.
+		# Deleting and creating is handled with events.
 		# TODO: Make the rest use events as well
 
 	def __setstate__( self, state ):
@@ -496,99 +494,99 @@ class User(Principal):
 		self.lastLoginTime = time.time()
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		with self._NoChangeBroadcast( self ):
-			super(User,self).updateFromExternalObject( parsed, *args, **kwargs )
-			updated = None
-			lastLoginTime = parsed.pop( 'lastLoginTime', None )
-			if isinstance( lastLoginTime, numbers.Number ) and self.lastLoginTime < lastLoginTime:
-				self.lastLoginTime = lastLoginTime
-				self.notificationCount = 0 # reset to zero. Note that we don't del the property to keep the same persistent object object
-				updated = True
+		#with self._NoChangeBroadcast( self ):
+		super(User,self).updateFromExternalObject( parsed, *args, **kwargs )
+		updated = None
+		lastLoginTime = parsed.pop( 'lastLoginTime', None )
+		if isinstance( lastLoginTime, numbers.Number ) and self.lastLoginTime < lastLoginTime:
+			self.lastLoginTime = lastLoginTime
+			self.notificationCount = 0 # reset to zero. Note that we don't del the property to keep the same persistent object object
+			updated = True
 
-			notificationCount = parsed.pop( 'NotificationCount', None )
-			if isinstance( notificationCount, numbers.Number ):
-				self.notificationCount = notificationCount
-				updated = True
+		notificationCount = parsed.pop( 'NotificationCount', None )
+		if isinstance( notificationCount, numbers.Number ):
+			self.notificationCount = notificationCount
+			updated = True
 
-			if 'password' in parsed:
-				old_pw = None
-				if self.has_password():
-					# To change an existing password, you must send the old
-					# password (The default, empty string, is never a valid password and lets
-					# us produce better error messages then having no default)
-					old_pw = parsed.pop( 'old_password', '' )
-					# And it must match
-					if not self.password.checkPassword( old_pw ):
-						raise user_interfaces.OldPasswordDoesNotMatchCurrentPassword()
-				password = parsed.pop( 'password' )
-				# TODO: Names/sites for these? That are distinct from the containment structure?
-				component.getUtility( pwd_interfaces.IPasswordUtility ).verify( password, old_pw )
-				self.password = password # NOTE: This re-verifies
-				updated = True
+		if 'password' in parsed:
+			old_pw = None
+			if self.has_password():
+				# To change an existing password, you must send the old
+				# password (The default, empty string, is never a valid password and lets
+				# us produce better error messages then having no default)
+				old_pw = parsed.pop( 'old_password', '' )
+				# And it must match
+				if not self.password.checkPassword( old_pw ):
+					raise user_interfaces.OldPasswordDoesNotMatchCurrentPassword()
+			password = parsed.pop( 'password' )
+			# TODO: Names/sites for these? That are distinct from the containment structure?
+			component.getUtility( pwd_interfaces.IPasswordUtility ).verify( password, old_pw )
+			self.password = password # NOTE: This re-verifies
+			updated = True
 
-			# Muting/Unmuting conversations. Notice that we only allow
-			# a single thing to be changed at once. Also notice that we never provide
-			# the full list of currently muted objects as external data. These
-			# both support the idea that the use-case for this feature is a single button
-			# in the UI at the conversation level, and that 'unmuting' a conversation is
-			# only available /immediately/ after muting it, as an 'Undo' action (like in
-			# gmail). Our muted conversations still show up in search results, as in gmail.
-			if 'mute_conversation' in parsed:
-				self.mute_conversation( parsed.pop( 'mute_conversation' ) )
-				updated = True
-			elif 'unmute_conversation' in parsed:
-				self.unmute_conversation( parsed.pop( 'unmute_conversation' ) )
-				updated = True
+		# Muting/Unmuting conversations. Notice that we only allow
+		# a single thing to be changed at once. Also notice that we never provide
+		# the full list of currently muted objects as external data. These
+		# both support the idea that the use-case for this feature is a single button
+		# in the UI at the conversation level, and that 'unmuting' a conversation is
+		# only available /immediately/ after muting it, as an 'Undo' action (like in
+		# gmail). Our muted conversations still show up in search results, as in gmail.
+		if 'mute_conversation' in parsed:
+			self.mute_conversation( parsed.pop( 'mute_conversation' ) )
+			updated = True
+		elif 'unmute_conversation' in parsed:
+			self.unmute_conversation( parsed.pop( 'unmute_conversation' ) )
+			updated = True
 
-			# These two arrays cancel each other out. In order to just have to
-			# deal with sending one array or the other, the presence of an entry
-			# in one array will remove it from the other. This happens
 
-			# See notes on how ignoring and accepting values may arrive
-			def handle_ext( resetAll, reset, add, remove, value ):
-				if isinstance( value, collections.Sequence ):
-					updated = True
-					# replacement list
-					resetAll()
-					for x in value:
-						reset( x )
-						add( x )
-				elif isinstance( value, collections.Mapping ):
-					updated = True
-					# adds and removes
-					# Could be present but None, so be explicit about default
-					for x in (value.get( 'add' ) or ()):
-						reset( x )
-						add( x )
-					for x in (value.get( 'remove') or () ):
-						remove( x )
-				elif value is not None:
-					updated = True
-					# One to add
+		# See notes on how ignoring and accepting values may arrive.
+		# NOTE2: In the past, we avoided broadcasting CIRCLED notices during this
+		# process; is that necessary?
+		def handle_ext( resetAll, reset, add, remove, value ):
+			if isinstance( value, collections.Sequence ):
+				updated = True # TODO: Py3 nonlocal keyword.
+				# replacement list
+				resetAll()
+				for x in value:
 					reset( x )
-					add( value )
+					add( x )
+			elif isinstance( value, collections.Mapping ):
+				updated = True
+				# adds and removes
+				# Could be present but None, so be explicit about default
+				for x in (value.get( 'add' ) or ()):
+					reset( x )
+					add( x )
+				for x in (value.get( 'remove') or () ):
+					remove( x )
+			elif value is not None:
+				updated = True
+				# One to add
+				reset( x )
+				add( value )
 
 
-			# These two arrays cancel each other out. In order to just have to
-			# deal with sending one array or the other, the presence of an entry
-			# in one array will remove it from the other. This happens
-			# automatically for ignores, but because the implicit calls
-			# to accept shared data ignore those in the ignore list (in our implementation)
-			# we must manually make this happen for that list.
-			ignoring = parsed.pop( 'ignoring', None )
-			handle_ext( self.reset_ignored_shared_data,
-						self.reset_shared_data_from,
-						self.ignore_shared_data_from,
-						self.stop_ignoring_shared_data_from,
-						ignoring )
+		# These two arrays cancel each other out. In order to just have to
+		# deal with sending one array or the other, the presence of an entry
+		# in one array will remove it from the other. This happens
+		# automatically for ignores, but because the implicit calls
+		# to accept shared data ignore those in the ignore list (in our implementation)
+		# we must manually make this happen for that list.
+		ignoring = parsed.pop( 'ignoring', None )
+		handle_ext( self.reset_ignored_shared_data,
+					self.reset_shared_data_from,
+					self.ignore_shared_data_from,
+					self.stop_ignoring_shared_data_from,
+					ignoring )
 
-			accepting = parsed.pop( 'accepting', None )
-			handle_ext( self.reset_accepted_shared_data,
-						self.reset_shared_data_from,
-						self.accept_shared_data_from,
-						self.stop_accepting_shared_data_from,
-					accepting )
-			return updated
+		accepting = parsed.pop( 'accepting', None )
+		handle_ext( self.reset_accepted_shared_data,
+					self.reset_shared_data_from,
+					self.accept_shared_data_from,
+					self.stop_accepting_shared_data_from,
+				accepting )
+		return updated
+
 
 	### Sharing
 
@@ -630,7 +628,10 @@ class User(Principal):
 			change.creator = source
 			change.containerId = '' # Not anchored, show at root and below
 			change.useSummaryExternalObject = True # Don't send the whole user
-			self._broadcast_change_to( change, target=self )
+			# Bypass the whole mess of broadcasting and going through the DS and change listeners,
+			# and just notice the incoming change.
+			# TODO: Clean this up, go back to event based.
+			self._noticeChange( change )
 			return change # which is both True and useful
 
 	def is_accepting_shared_data_from( self, source ):
@@ -676,24 +677,9 @@ class User(Principal):
 		result = self.containers.addContainedObject( contained )
 		return result
 
-	def _postCreateNotification( self, obj ):
-		intids = component.queryUtility( zope.intid.IIntIds )
-		__traceback_info__ = obj, intids
-		try:
-			assert intids is None or intids.getId( obj ) is not None, "Should have int id for obj"
-		except KeyError:
-			key_ref = IKeyReference( obj ) # No intid. Why? Can we not adapt to IKeyRef?
-			# Hmm. We could adapt to key ref, but for some reason the events didn't
-			# fire right to get an ID. Correct that now
-			iid = intids.register( obj )
-			logger.warn( "Forced registering an intid %s for obj %s of type %s with ref %s",
-						 iid, obj, type(obj), key_ref )
-			assert intids.getId( obj ) == iid, "intids must match"
 
-		self._postNotification( Change.CREATED, obj )
-
-	def _postDeleteNotification( self, obj ):
-		self._postNotification( Change.DELETED, obj )
+	def _remove_obj_from_update_set( self, obj ):
+		#self._postNotification( Change.DELETED, obj )
 		# A delete notification trumps any other modifications that
 		# might be pending (otherwise we can wind up with weird scenarios
 		# for modification notifications /after/ a delete)
@@ -946,137 +932,6 @@ class User(Principal):
 		"""
 		return self._Updater( self )
 
-	@classmethod
-	def _broadcast_change_to( cls, theChange, target=None, broadcast=None ):
-		"""
-		Broadcast the change object to the given username.
-		Happens asynchronously. Exists as an class attribute method so that it
-		can be temporarily overridden by an instance. See the :class:`_NoChangeBroadcast` class.
-		"""
-		kwargs = {'target': target}
-		if broadcast is not None:
-			kwargs['broadcast'] = broadcast
-		ds = _get_shared_dataserver(default=BROADCAST_DEFAULT_DS)
-		if ds: # Primarily for evolutions
-			ds.enqueue_change( theChange, **kwargs )
-		return True
-
-	class _NoChangeBroadcast(object):
-		""" A context manager that disables change broadcasts. """
-		def __init__( self, ent ):
-			self.ent = ent
-
-		def __enter__( self, *args ):
-			self.ent._broadcast_change_to = lambda *args, **kwargs: False
-
-		def __exit__( self, *args ):
-			del self.ent._broadcast_change_to
-
-	def _postNotification( self, changeType, objAndOrigSharingTuple ):
-		logger.log( loglevels.TRACE, "%s asked to post %s to %r", self, changeType, objAndOrigSharingTuple )
-		# FIXME: Clean this up, make this not so implicit,
-		# make it go through a central place, make it asnyc, etc.
-
-		# We may be called with a tuple, in the case of modifications,
-		# or just the object, in the case of creates/deletes.
-		obj = None
-		origSharing = None
-		if not isinstance( objAndOrigSharingTuple, tuple ):
-			obj = objAndOrigSharingTuple
-			# If we can't get sharing, then there's no point in trying
-			# to do anything--the object could never go anywhere
-			try:
-				origSharing = obj.sharingTargets
-			except AttributeError:
-				#logger.debug( "Failed to get sharing targets on obj of type %s; no one to target change to", type(obj) )
-				return
-		else:
-			# If we were a tuple, then we definitely have sharing
-			obj = objAndOrigSharingTuple[0]
-			origSharing = objAndOrigSharingTuple[1]
-
-		# Step one is to announce all data changes globally as a broadcast.
-		if changeType != Change.CIRCLED:
-			try:
-				change = Change( changeType, obj )
-			except IntIdMissingError:
-				# No? In this case, we were trying to get a weak ref to the object,
-				# but it has since been deleted and so further modifications are
-				# pointless.
-				# NOTE: This will go away
-				logger.exception( "Not sending any changes for deleted object %r", obj )
-				return
-			change.creator = self
-			self._broadcast_change_to( change, broadcast=True, target=self )
-
-		newSharing = obj.sharingTargets
-		seenTargets = set()
-		def sendChangeToUser( user, theChange ):
-			""" Sends at most one change per type to a user, taking
-			into account aliases. """
-
-			target_key = (user, theChange.type)
-			if target_key in seenTargets or user is None or user is self:
-				return
-			seenTargets.add( target_key )
-			# Fire the change off to the user using different threads.
-			logger.log( loglevels.TRACE, "Sending %s change to %s", theChange, user )
-			self._broadcast_change_to( theChange, target=user )
-
-			for nested_username in nti_interfaces.IUsernameIterable(user, ()):
-				# Make this work for DynamicFriendsLists.
-				# TODO: this falls down as soon as nesting is involved, because
-				# we won't be able to resolve by names
-				# NOTE: Because of _get_dynamic_sharing_targets_for_read, there might actually
-				# be duplicate change objects that get eliminated at read time.
-				# But this ensures that the stream gets an object, bumps the notification
-				# count, and sends a real-time notice to connected sockets.
-				# TODO: Can we make it be just the later? Or remove _get_dynamic_sharing_targets_for_read?
-				sendChangeToUser( self.get_user( nested_username ), theChange )
-
-		modifiedChange = Change( Change.MODIFIED, obj )
-		modifiedChange.creator = self
-
-		if origSharing != newSharing and changeType not in (Change.CREATED,Change.DELETED):
-			# OK, the sharing changed and its not a new or dead
-			# object. People that it used to be shared with will get a
-			# DELETE notice (if it is no longer indirectly shared with them at all; if it is, just
-			# a MODIFIED notice). People that it is now shared with will
-			# get a SHARED notice--these people should not later get
-			# a MODIFIED notice for this action.
-			deleteChange = Change( Change.DELETED, obj )
-			deleteChange.creator = self
-			createChange = Change( Change.SHARED, obj )
-			createChange.creator = self
-			for shunnedPerson in origSharing - newSharing:
-				if obj.isSharedWith( shunnedPerson ):
-					# Shared with him indirectly, not directly. We need to be sure
-					# this stuff gets cleared from his caches, thus the delete notice.
-					# but we don't want this to leave us because to the outside world it
-					# is still shared. (Notice we also do NOT send a modified event to this user:
-					# we dont want to put this data back into his caches.)
-					deleteChange.send_change_notice = False
-				else:
-					deleteChange.send_change_notice = True # TODO: mutating this isn't really right, it is a shared persisted object
-				sendChangeToUser( shunnedPerson, deleteChange )
-			for lovedPerson in newSharing - origSharing:
-				sendChangeToUser( lovedPerson, createChange )
-				newSharing.remove( lovedPerson ) # Don't send MODIFIED, send SHARED
-
-		# Deleted events won't change the sharing, so there's
-		# no need to look for a union of old and new to send
-		# the delete to.
-
-		# Now broadcast the change to anyone that's left.
-		if changeType == Change.MODIFIED:
-			change = modifiedChange
-		else:
-			change = Change( changeType, obj )
-			change.creator = self
-
-		for lovedPerson in newSharing:
-			sendChangeToUser( lovedPerson, change )
-
 	def _acceptIncomingChange( self, change, direct=True ):
 		accepted = super(User,self)._acceptIncomingChange( change, direct=direct )
 		if accepted:
@@ -1138,6 +993,10 @@ class User(Principal):
 
 		return result
 
+
+from nti.dataserver.activitystream import _postNotification
+User._postNotification = _postNotification
+
 # We have a few subclasses of User that store some specific
 # information and directly implement some interfaces.
 # Right now, we're not exposing this information directly to clients,
@@ -1170,11 +1029,13 @@ class FacebookUser(User):
 
 @component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdRemovedEvent)
 def user_willRemoveIntIdForContainedObject( contained, event ):
-	# Make the containing owner broadcast the DELETED event /now/,
-	# while we can still get an ID, to keep catalogs and whatnot
-	# up-to-date.
-	if hasattr( contained.creator, '_postDeleteNotification' ):
-		contained.creator._postDeleteNotification( contained )
+	# ensure we don't send any duplicate notifications
+	try:
+		method = contained.creator._remove_obj_from_update_set
+	except AttributeError:
+		pass
+	else:
+		method( contained )
 
 from nti.apns import interfaces as apns_interfaces
 @component.adapter(apns_interfaces.IDeviceFeedbackEvent)

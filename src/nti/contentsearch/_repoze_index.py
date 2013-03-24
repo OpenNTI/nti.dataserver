@@ -73,8 +73,8 @@ class _RepozeCatalogCreator(object):
 
 	def _set4(self, catalog, iface):
 		for name, func in component.getUtilitiesFor(iface):
-			func( catalog, name, iface)		
-	
+			func( catalog, name, iface)
+
 class _RepozeNoteCatalogCreator(_RepozeCatalogCreator):
 	_iface = search_interfaces.INoteRepozeCatalogFieldCreator
 
@@ -89,7 +89,7 @@ class _RepozeMessageInfoCatalogCreator(_RepozeCatalogCreator):
 
 class _RepozePostCatalogCreator(_RepozeCatalogCreator):
 	_iface = search_interfaces.IPostRepozeCatalogFieldCreator
-	
+
 # repoze index field creators
 
 def _get_discriminator(name):
@@ -100,15 +100,15 @@ def _get_discriminator(name):
 
 def _content_ngrams_field_creator(catalog, name, iface):
 	catalog[name] = CatalogTextIndexNG3(name, get_content_and_ngrams)
-	
+
 def _zopytext_field_creator(catalog, name, iface):
 	discriminator = _get_discriminator(name)
 	catalog[name] = CatalogTextIndexNG3(name, discriminator)
-	
+
 def _text_field_creator(catalog, name, iface):
 	discriminator = _get_discriminator(name)
 	catalog[name] = CatalogTextIndex(discriminator)
-	
+
 def _named_field_creator(catalog, name, iface ):
 	discriminator = _get_discriminator(name)
 	catalog[name] = CatalogFieldIndex( discriminator )
@@ -119,7 +119,7 @@ def _keyword_field_creator(catalog, name, iface ):
 
 def _post_title_field_creator(catalog, name, iface ):
 	catalog[name] = CatalogTextIndexNG3(name, get_post_title)
-	
+
 def _post_tags_field_creator(catalog, name, iface ):
 	discriminator = get_post_tags
 	catalog[name] = CatalogKeywordIndex( discriminator )
