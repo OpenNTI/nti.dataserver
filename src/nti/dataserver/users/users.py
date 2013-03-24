@@ -27,13 +27,13 @@ from zope.location import interfaces as loc_interfaces
 from zope.keyreference.interfaces import IKeyReference
 
 import zope.intid
+from nti.intid.interfaces import IntIdMissingError
 
 from z3c.password import interfaces as pwd_interfaces
 
 from nti.ntiids import ntiids
 from nti.zodb import minmax
 
-import nti.externalization.internalization
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
 from nti.externalization.persistence import  getPersistentState, setPersistentStateChanged
 
@@ -997,7 +997,15 @@ class User(Principal):
 
 		# Step one is to announce all data changes globally as a broadcast.
 		if changeType != Change.CIRCLED:
-			change = Change( changeType, obj )
+			try:
+				change = Change( changeType, obj )
+			except IntIdMissingError:
+				# No? In this case, we were trying to get a weak ref to the object,
+				# but it has since been deleted and so further modifications are
+				# pointless.
+				# NOTE: This will go away
+				logger.exception( "Not sending any changes for deleted object %r", obj )
+				return
 			change.creator = self
 			self._broadcast_change_to( change, broadcast=True, target=self )
 
