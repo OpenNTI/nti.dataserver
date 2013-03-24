@@ -105,9 +105,10 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 			existing_canvas = find_object_with_ntiid( ext_val['NTIID'] )
 			if getattr( existing_canvas, '__parent__', None ) is not note:
 				continue
-			# Ok, so we found one of my children. Update it in place
+			# Ok, so we found one of my children. Update it in place. Don't notify for it,
+			# so that it doesn't falsely get in a stream or whatever
 			__traceback_info__ = i, item, ext_val, existing_canvas, note
-			update_from_external_object( existing_canvas, ext_val, context=context )
+			update_from_external_object( existing_canvas, ext_val, context=context, notify=False )
 			existing_canvas.updateLastMod()
 			body[i] = existing_canvas
 		return body

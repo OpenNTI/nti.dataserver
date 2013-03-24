@@ -279,9 +279,11 @@ def update_parent_modified_time( modified_object, event ):
 	If an object is modified and it is contained inside a container
 	that wants to track modifications, we want to update its parent too.
 	"""
+	try:
+		modified_object.__parent__.updateLastModIfGreater( modified_object.lastModified )
+	except AttributeError:
+		pass
 
-	if interfaces.IZContained.providedBy( modified_object ) and interfaces.ILastModified.providedBy( modified_object.__parent__ ):
-		modified_object.__parent__.updateLastMod()
 
 @component.adapter( interfaces.ILastModified, IObjectModifiedEvent )
 def update_object_modified_time( modified_object, event ):

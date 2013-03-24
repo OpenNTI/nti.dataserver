@@ -92,6 +92,7 @@ class UserContentRootInternalObjectIOMixin(object):
 	_excluded_out_ivars_ = { 'flattenedSharingTargetNames', 'flattenedSharingTargets', 'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
 
 	context = alias('_ext_self')
+	_orig_sharingTargets = None # a cache for holding the targets before we update them
 
 	def _ext_replacement(self):
 		# TODO: The intid utility doesn't find objects if they are proxied. It unwraps
@@ -149,14 +150,21 @@ class UserContentRootInternalObjectIOMixin(object):
 		parsed = ext_parsed
 		# The pattern for subclasses is to pop the things that need special, non-dict handling,
 		# and then to call super. When super returns, handle the special case
-		sharedWith = parsed.pop( 'sharedWith', () )
+		sharedWith = parsed.pop( 'sharedWith', self )
 
 		self.context.updateLastMod()
 		super(UserContentRootInternalObjectIOMixin,self).updateFromExternalObject( parsed, *args, **kwargs )
 
-		if nti_interfaces.IWritableShared.providedBy( self.context ):
+		if nti_interfaces.IWritableShared.providedBy( self.context ) and sharedWith is not self:
+			self._orig_sharingTargets = set(self.context.sharingTargets)
 			self._update_sharing_targets( sharedWith )
 
+	def _ext_adjust_modified_event( self, event ):
+		if self._orig_sharingTargets is not None:
+			# Yes, we attempted to change the sharing settings.
+			interface.alsoProvides( event, nti_interfaces.IObjectSharingModifiedEvent )
+			event.oldSharingTargets = self._orig_sharingTargets
+		return event
 
 @interface.implementer(IInternalObjectIO)
 class UserContentRootInternalObjectIO(UserContentRootInternalObjectIOMixin,InterfaceObjectIO):

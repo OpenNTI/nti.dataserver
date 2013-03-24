@@ -25,7 +25,6 @@ from .users import User, FacebookUser, OpenIdUser
 
 from .users import user_devicefeedback
 from .users import onChange
-from .users import user_willRemoveIntIdForContainedObject
 from .users import _get_shared_dataserver
 
 from nti.dataserver.activitystream_change import Change

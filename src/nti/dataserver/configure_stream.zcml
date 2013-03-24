@@ -9,5 +9,6 @@
 
 	<subscriber handler=".activitystream.stream_willRemoveIntIdForContainedObject" />
 	<subscriber handler=".activitystream.stream_didAddIntIdForContainedObject" />
+	<subscriber handler=".activitystream.stream_didModifyObject" />
 
 </configure>
