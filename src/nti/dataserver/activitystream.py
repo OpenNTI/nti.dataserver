@@ -12,6 +12,7 @@ from ZODB import loglevels
 from zope import component
 
 from nti.dataserver import interfaces as nti_interfaces
+from zope.lifecycleevent import IObjectModifiedEvent
 import zope.intid.interfaces
 
 from nti.intid.interfaces import IntIdMissingError
@@ -105,50 +106,43 @@ def stream_didAddIntIdForContainedObject( contained, event ):
 	for target in creation_targets:
 		_enqueue_change_to_target( target, event, accum )
 
-def _postNotification( self, changeType, objAndOrigSharingTuple ):
-	logger.log( loglevels.TRACE, "%s asked to post %s to %r", self, changeType, objAndOrigSharingTuple )
-	# FIXME: Clean this up, make this not so implicit,
-	# make it go through a central place, make it asnyc, etc.
+@component.adapter(nti_interfaces.IContained, IObjectModifiedEvent)
+def stream_didModifyObject( contained, event ):
+	current_sharing_targets = _stream_preflight( contained )
+	if current_sharing_targets is None:
+		return
 
-	# We may be called with a tuple, in the case of modifications,
-	# or just the object, in the case of creates/deletes.
-	obj = None
-	origSharing = None
-	if not isinstance( objAndOrigSharingTuple, tuple ):
-		obj = objAndOrigSharingTuple
-		# If we can't get sharing, then there's no point in trying
-		# to do anything--the object could never go anywhere
-		try:
-			origSharing = obj.sharingTargets
-		except AttributeError:
-			#logger.debug( "Failed to get sharing targets on obj of type %s; no one to target change to", type(obj) )
-			return
+	if nti_interfaces.IObjectSharingModifiedEvent.providedBy( event ):
+		_stream_enqeue_modification( contained.creator, Change.MODIFIED, contained, current_sharing_targets, event.oldSharingTargets)
 	else:
-		# If we were a tuple, then we definitely have sharing
-		obj = objAndOrigSharingTuple[0]
-		origSharing = objAndOrigSharingTuple[1]
+		_stream_enqeue_modification( contained.creator, Change.MODIFIED, contained, current_sharing_targets )
+
+def _stream_enqeue_modification( self, changeType, obj, current_sharing_targets, origSharing=None ):
+	assert changeType == Change.MODIFIED
+
+	current_sharing_targets = set(current_sharing_targets)
+	if origSharing is None:
+		origSharing = set(current_sharing_targets)
 
 	# Step one is to announce all data changes globally as a broadcast.
-	if changeType != Change.CIRCLED:
-		try:
-			change = Change( changeType, obj )
-		except IntIdMissingError:
-			# No? In this case, we were trying to get a weak ref to the object,
-			# but it has since been deleted and so further modifications are
-			# pointless.
-			# NOTE: This will go away
-			logger.exception( "Not sending any changes for deleted object %r", obj )
-			return
-		change.creator = self
-		enqueue_change( change, broadcast=True, target=self )
+	try:
+		change = Change( changeType, obj )
+	except IntIdMissingError:
+		# No? In this case, we were trying to get a weak ref to the object,
+		# but it has since been deleted and so further modifications are
+		# pointless.
+		# NOTE: This will go away
+		logger.exception( "Not sending any changes for deleted object %r", obj )
+		return
+	change.creator = self
+	enqueue_change( change, broadcast=True, target=self )
 
-	newSharing = obj.sharingTargets
+	newSharing = set(current_sharing_targets)
 	seenTargets = set()
 
-	modifiedChange = Change( Change.MODIFIED, obj )
-	modifiedChange.creator = self
+	modifiedChange = change
 
-	if origSharing != newSharing and changeType not in (Change.CREATED,Change.DELETED):
+	if origSharing != newSharing:
 		# OK, the sharing changed and its not a new or dead
 		# object. People that it used to be shared with will get a
 		# DELETE notice (if it is no longer indirectly shared with them at all; if it is, just
@@ -179,11 +173,5 @@ def _postNotification( self, changeType, objAndOrigSharingTuple ):
 	# the delete to.
 
 	# Now broadcast the change to anyone that's left.
-	if changeType == Change.MODIFIED:
-		change = modifiedChange
-	else:
-		change = Change( changeType, obj )
-		change.creator = self
-
 	for lovedPerson in newSharing:
 		_enqueue_change_to_target( lovedPerson, change, seenTargets )

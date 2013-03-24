@@ -36,9 +36,11 @@ from nti.dataserver.users import User, FriendsList, Device, Community, _FriendsL
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.activitystream_change import Change
+
 from nti.tests import provides
 from nti.tests import verifiably_provides
 from nti.tests import is_false
+from nti.tests import time_monotonically_increases
 
 from nti.externalization.persistence import getPersistentState
 from nti.externalization.externalization import to_external_object
@@ -346,7 +348,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 			with user1.updates():
 				note = user1.getContainedObject( 'c1', note.id )
-				note.updateSharingTargets( (user2,) ) # Now, only directly shared
+				note.updateSharingTargets( (user2,), notify=True ) # Now, only directly shared
 
 			# Nothing changed for the recipient
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
@@ -384,13 +386,14 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 			with user1.updates():
 				note = user1.getContainedObject( 'c1', note.id )
-				note.updateSharingTargets( (user2,) ) # Now, only directly shared
+				note.updateSharingTargets( (user2,), notify=True ) # Now, only directly shared
 
 			# Nothing changed for the recipient
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
 			assert_that( user2, is_in( note.sharingTargets ) )
 			assert_that( user2.notificationCount, has_property( 'value', 1 ) )
 			stream = user2.getContainedStream( 'c1' )
+			__traceback_info__ = stream
 			assert_that( stream, has_length( 1 ) )
 			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_MODIFIED ) )
 
@@ -429,7 +432,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 			with user1.updates():
 				note = user1.getContainedObject( 'c1', note.id )
-				note.updateSharingTargets( (friends_list,) ) # Now, only indirectly shared
+				note.updateSharingTargets( (friends_list,), notify=True ) # Now, only indirectly shared
 
 			# Nothing changed for the recipient
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
@@ -477,7 +480,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 			with user1.updates():
 				note = user1.getContainedObject( 'c1', note.id )
-				note.updateSharingTargets( (community,) ) # Now, only indirectly shared
+				note.updateSharingTargets( (community,), notify=True ) # Now, only indirectly shared
 
 			# Nothing changed for the recipient, they just got a modified event
 			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
@@ -568,7 +571,8 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 
-	@mock_dataserver.WithMockDS
+	@mock_dataserver.WithMockDS(with_changes=True)
+	@time_monotonically_increases
 	def test_share_note_with_updates(self):
 		with mock_dataserver.mock_db_trans():
 			user1 = User.create_user( mock_dataserver.current_mock_ds, username='foo@bar' )
@@ -586,18 +590,18 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			user1 = User.get_user( 'foo@bar', dataserver=mock_dataserver.current_mock_ds )
 			nots = []
 			user1._postNotification = lambda *args: nots.extend( args )
+			mock_dataserver.current_mock_ds.add_change_listener( lambda ds, change, broadcast=None, **kwargs: nots.append( (change.type, change.object) ) if not broadcast else None )
 			lm = None
 			with user1.updates():
 				c_note = user1.getContainedObject( note.containerId, note.id )
-				assert_that( c_note, is_( same_instance( user1._v_updateSet[0][0] ) ) )
-				c_note.addSharingTarget( User.get_user( 'fab@bar', dataserver=mock_dataserver.current_mock_ds ) )
+				c_note.updateSharingTargets( c_note.sharingTargets | set( [User.get_user( 'fab@bar', dataserver=mock_dataserver.current_mock_ds )] ), notify=True )
 				assert_that( list(c_note.flattenedSharingTargetNames), is_( ['fab@bar'] ) )
 				assert_that( getPersistentState( c_note ), is_( persistent.CHANGED ) )
 				lm = c_note.lastModified
 			del user1._postNotification
 			assert_that( user1.containers['c1'].lastModified, is_( greater_than_or_equal_to( lm ) ) )
 			assert_that( user1.containers['c1'].lastModified, is_( greater_than_or_equal_to( user1.containers['c1'][note.id].lastModified ) ) )
-			assert_that( nots, is_( ['Modified', (c_note, set())] ) )
+			assert_that( nots, is_( [('Shared', c_note)] ) )
 
 	@mock_dataserver.WithMockDS(with_changes=True)
 	def test_delete_shared_note_notifications(self):
@@ -623,7 +627,6 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			lm = None
 			with user1.updates():
 				c_note = user1.getContainedObject( note.containerId, note.id )
-				assert_that( c_note, is_( same_instance( user1._v_updateSet[0][0] ) ) )
 				user1.deleteContainedObject( c_note.containerId, c_note.id )
 				assert_that( getPersistentState( c_note ), is_( persistent.CHANGED ) )
 

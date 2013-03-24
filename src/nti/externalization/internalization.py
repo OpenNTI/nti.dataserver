@@ -11,13 +11,15 @@ import inspect
 import six
 import numbers
 
-import persistent
-from persistent.interfaces import IPersistent
 from zope import component
 from zope import interface
+
+from persistent.interfaces import IPersistent
 from zope.schema import interfaces as sch_interfaces
 from zope.dottedname.resolve import resolve
-from zope import lifecycleevent
+
+from zope.lifecycleevent import ObjectModifiedEvent, Attributes
+import zope.event
 
 from . import interfaces
 
@@ -289,13 +291,24 @@ def update_from_external_object( containedObject, externalObject,
 			descriptions = {} # map from interface class to list of keys
 			provides = interface.providedBy( containedObject )
 			for k in external_keys:
-				iface_providing = None
-				attr = provides.get( k )
-				if attr:
-					iface_providing = attr.interface
-				descriptions.setdefault( iface_providing, [] ).append( k )
-			attributes = [lifecycleevent.Attributes(k, *v) for k, v in descriptions.items()]
-			lifecycleevent.modified( containedObject, *attributes )
+				iface_providing_attr = None
+				iface_attr = provides.get( k )
+				if iface_attr:
+					iface_providing_attr = iface_attr.interface
+				descriptions.setdefault( iface_providing_attr, [] ).append( k )
+			attributes = [Attributes(iface, *keys) for iface, keys in descriptions.items()]
+			event = ObjectModifiedEvent( containedObject, *attributes )
+			# Let the updater have its shot at modifying the event, too, adding
+			# interfaces or attributes. (Note: this was added to be able to provide
+			# sharedWith information on the event, since that makes for a better stream.
+			# If that use case expands, revisit this interface
+			try:
+				meth = updater._ext_adjust_modified_event
+			except AttributeError:
+				pass
+			else:
+				event = meth( event )
+			zope.event.notify( event )
 
 	return containedObject
 

@@ -14,7 +14,8 @@ __docformat__ = "restructuredtext en"
 from zope import component
 from zope import interface
 # from zope import schema
-
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 from zope.mimetype.interfaces import IContentTypeAware
 from zope.annotation.interfaces import IAnnotatable
 from zope.container.interfaces import IContainer as IZContainer
@@ -899,6 +900,24 @@ class IWritableShared(IReadableShared):
 		to reflect these changes.
 		"""
 
+class IObjectSharingModifiedEvent(IObjectModifiedEvent):
+	"""
+	An event broadcast when we know that the sharing settings of
+	an object have been changed.
+	"""
+	oldSharingTargets = UniqueIterable(
+		title="A set of entities this object is directly shared with, before the change (non-recursive, non-flattened)",
+		value_type=Object(IEntity, title="An entity shared with"),
+		required=False,
+		default=(),
+		readonly=True)
+
+@interface.implementer(IObjectSharingModifiedEvent)
+class ObjectSharingModifiedEvent(ObjectModifiedEvent):
+
+	def __init__( self, object, *descriptions, **kwargs ):
+		super(ObjectSharingModifiedEvent,self).__init__( object, *descriptions )
+		self.oldSharingTargets = kwargs.pop( 'oldSharingTargets', () )
 
 IShareable = IWritableShared  # bwc alias
 

@@ -20,10 +20,9 @@ import persistent
 from zope import interface
 from zope import component
 from ZODB.interfaces import IConnection
-from zope.deprecation import deprecated
+from zope.deprecation import deprecated, deprecate
 from zope.component.factory import Factory
 from zope.location import interfaces as loc_interfaces
-from zope.keyreference.interfaces import IKeyReference
 
 import zope.intid
 
@@ -34,7 +33,7 @@ from nti.ntiids import ntiids
 from nti.zodb import minmax
 
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
-from nti.externalization.persistence import  getPersistentState, setPersistentStateChanged
+
 
 from nti.dataserver import dicts
 from nti.dataserver import sharing
@@ -190,10 +189,7 @@ class Community(Entity,sharing.DynamicSharingTargetMixin):
 		return True # For compatibility with a FriendsList
 
 	def updates( self ): # For compatibility with User. TODO: Rethink this
-		@contextlib.contextmanager
-		def updater():
-			yield
-		return updater()
+		return _NOOPCM
 
 	def sublocations(self):
 		# See User; this may not be right (but we are less annotated so
@@ -338,8 +334,8 @@ class User(Principal):
 	retreived from getObject() will be monitored for changes during this period
 	and notifications posted at the end. Mutations to non-persistent data structurs
 	may not be caught by this and so such objects should be explicitly marked
-	as changed using setPersistentStateChanged() or this object's didUpdateObject()
-	method. """
+	as changed using setPersistentStateChanged().
+	"""
 
 	_ds_namespace = 'users'
 	mime_type = 'application/vnd.nextthought.user'
@@ -402,12 +398,6 @@ class User(Principal):
 
 	__external_resolvers__ = { 'ignoring': _resolve_entities, 'accepting': _resolve_entities }
 
-	# For begin/end update pairs we track a depth and we also
-	# record all objects we hand out during this time, posting
-	# notifications only on the last endUpdates
-	_v_updateDepth = 0
-	_v_updateSet = None
-
 	# The last login time is an number of seconds (as with time.time).
 	# When it gets reset, the number of outstanding notifications also
 	# resets. It is writable, number is not...
@@ -455,13 +445,6 @@ class User(Principal):
 																	  self.devices.container_name: self.devices })
 		self.containers.__parent__ = self
 		self.containers.__name__ = '' # TODO: This is almost certainly wrong. We hack around it
-		self.__install_container_hooks()
-
-
-	def __install_container_hooks(self):
-		self.containers.afterGetContainedObject = self._trackObjectUpdates
-		# Deleting and creating is handled with events.
-		# TODO: Make the rest use events as well
 
 	def __setstate__( self, state ):
 		# Old objects might have a 'stream' of none? For no particular
@@ -470,8 +453,6 @@ class User(Principal):
 			del state['stream']
 
 		super(User,self).__setstate__( state )
-		# re-install our hooks that are transient
-		self.__install_container_hooks()
 
 	@property
 	def creator(self):
@@ -678,15 +659,6 @@ class User(Principal):
 		return result
 
 
-	def _remove_obj_from_update_set( self, obj ):
-		#self._postNotification( Change.DELETED, obj )
-		# A delete notification trumps any other modifications that
-		# might be pending (otherwise we can wind up with weird scenarios
-		# for modification notifications /after/ a delete)
-		if self._v_updateSet is not None:
-			self._v_updateSet = [x for x in self._v_updateSet
-								 if ( isinstance(x,tuple) and x[0] != obj ) or (not isinstance(x,tuple) and x != obj)]
-
 	def deleteContainedObject( self, containerId, containedId ):
 		if self._p_jar and self.containers._p_jar:
 			self._p_jar.readCurrent( self.containers )
@@ -839,98 +811,20 @@ class User(Principal):
 				for v in self.containers.containers.itervalues()
 				if nti_interfaces.INamedContainer.providedBy( v ) )
 
+	@deprecate("No replacement; not needed")
 	def beginUpdates(self):
-		# Because the container hooks are volatile, the container object
-		# could have been 'ghosted' and lost these hooks before we
-		# got here. Thus, we must take care to re-activate it, or
-		# else our hooks and change tracking won't fire.
-		self.__install_container_hooks()
-		self._v_updateDepth += 1 # TODO: These should be thread local?
-		if self._v_updateDepth == 1:
-			# it would be nice to use a set, but
-			# we're not guaranteed to have hashable objects
-			self._v_updateSet = list()
+		"This is all handled with events now and is deprecated"
 		return self
 
-	def _trackObjectUpdates( self, obj ):
-		if self._v_updateSet is not None:
-			if not isinstance( obj, persistent.Persistent ):
-				if isinstance( obj, collections.Sequence ):
-					for x in obj: self._trackObjectUpdates( x )
-				elif isinstance( obj, collections.Mapping ):
-					for x in obj.itervalues(): self._trackObjectUpdates( x )
-			# The updateSet consists of either the object, or, if it as a
-			# shared object, (object, sharedSet). This allows us to be
-			# smart about how we distribute notifications.
-			self._v_updateSet.append( (obj,obj.sharingTargets)
-									  if nti_interfaces.IReadableShared.providedBy( obj )
-									  else obj )
-
-	def didUpdateObject( self, *objs ):
-		if self._v_updateDepth >= 0:
-			for obj in objs:
-				setPersistentStateChanged( obj )
-				self._trackObjectUpdates( obj )
-
+	@deprecate("No replacement; not needed")
 	def endUpdates(self):
-		""" Commits any outstanding transaction and posts notifications
-		referring to the updated objects. """
-		if self._v_updateDepth <= 0:
-			raise Exception( 'Update depth inconsistent' )
-
-		self._v_updateDepth -= 1
-		if self._v_updateDepth <= 0:
-			self._v_updateDepth = 0
-			end_time = time.time() # Make all the modification times consistent
-			for possiblyUpdated in self._v_updateSet:
-				updated = possiblyUpdated[0] if isinstance(possiblyUpdated,tuple) else possiblyUpdated
-				# TODO: If one of the components of the object changed,
-				# but the object itself didn't, then this won't catch it.
-				# The object could implement getPersistentState() itself to fix it?
-				# Or the updater could explicitly call updateLastMod() to force
-				# a change on the object itself.
-				updated = updated if getPersistentState(updated) == persistent.CHANGED else None
-				if updated:
-					# updating last mod should be handled by ObjectModifiedEvents now
-					#if hasattr( updated, 'updateLastMod' ):
-					#	updated.updateLastMod( end_time )
-					self._postNotification( Change.MODIFIED, possiblyUpdated )
-					self.containers[updated.containerId].updateLastMod( end_time )
-			del self._v_updateSet
-			del self._v_updateDepth
-		else:
-			__traceback_info__ = self._v_updateDepth, self._v_updateSet
-			raise Exception( "Nesting not allowed" )
-			#logger.debug( "Still batching updates at depth %s" % (self._v_updateDepth) )
-
-	class _Updater(object):
-		def __init__( self, user ):
-			self.user = user
-
-		def __enter__( self ):
-			self.user.beginUpdates()
-
-		def __exit__( self, t, value, traceback ):
-			if t is None:
-				# Only do this if we're not in the process of throwing
-				# an exception, as it might raise again
-				self.user.endUpdates()
-			else:
-				# However, we must be sure that the update depth
-				# regains consistency
-				# FIXME: This is jacked up.
-				for attr in '_v_updateSet', '_v_updateDepth':
-					try:
-						delattr( self.user, attr )
-					except AttributeError:
-						pass
+		"All handled with events now."
 
 	def updates( self ):
 		"""
-		Returns a context manager that wraps its body in calls
-		to begin/endUpdates.
+		This is officially deprecated now.
 		"""
-		return self._Updater( self )
+		return _NOOPCM
 
 	def _acceptIncomingChange( self, change, direct=True ):
 		accepted = super(User,self)._acceptIncomingChange( change, direct=direct )
@@ -994,9 +888,6 @@ class User(Principal):
 		return result
 
 
-from nti.dataserver.activitystream import _postNotification
-User._postNotification = _postNotification
-
 # We have a few subclasses of User that store some specific
 # information and directly implement some interfaces.
 # Right now, we're not exposing this information directly to clients,
@@ -1027,15 +918,13 @@ class FacebookUser(User):
 		if id_url:
 			self.facebook_url = id_url
 
-@component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdRemovedEvent)
-def user_willRemoveIntIdForContainedObject( contained, event ):
-	# ensure we don't send any duplicate notifications
-	try:
-		method = contained.creator._remove_obj_from_update_set
-	except AttributeError:
+class _NoOpCm(object):
+	def __enter__( self ):
 		pass
-	else:
-		method( contained )
+
+	def __exit__( self, t, v, tb ):
+		pass
+_NOOPCM = _NoOpCm()
 
 from nti.apns import interfaces as apns_interfaces
 @component.adapter(apns_interfaces.IDeviceFeedbackEvent)
