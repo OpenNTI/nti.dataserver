@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import sys
 import requests
+from cStringIO import StringIO
 
 from zope import component
 from zope import interface
@@ -59,8 +60,11 @@ class _AlchemyTextLanguageDectector(object):
 		result = None
 		content = content or u''
 		size_kb = sys.getsizeof(content) / 1024.0
-		if not content or size_kb > self.limit_kb:
+		if not content:
 			return result
+		elif size_kb > self.limit_kb:
+			s = StringIO(content)
+			content = s.read(self.limit_kb)
 
 		apikey = component.getUtility(cp_interfaces.IAlchemyAPIKey, name=keyname)
 		headers = {u'content-type': u'application/x-www-form-urlencoded'}
