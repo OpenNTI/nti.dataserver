@@ -1,26 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-                                                                                         
-"""                                                                                       
-$Id$                                                                                      
+
+"""
+$Id$
 """
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals, absolute_import
+
 import unittest
-import xml.dom
-import xml.dom.minidom
+
 from nti.contentrange import _domrange
-from nti.contentrange import _convertrange
+
 from nti.contentrange.tests import test_helpers
-from nti.contentrange import contentrange
-import json, re
+
+import re
 import sys
-import os
+
 import pkg_resources
 
-import hamcrest
-from hamcrest import assert_that, is_, none
-from hamcrest.core.base_matcher import BaseMatcher
+from hamcrest import assert_that
 
 class BigDocTests(unittest.TestCase):
 
@@ -71,5 +69,4 @@ class BigDocTests(unittest.TestCase):
 					['TextDomContentPointer', None, 'nil.', None]]
 		ct, br = test_helpers.round_trip_check(r)
 		# Main context in ct[4] will be blank, secondaries will be the distinguishing factor
-		print (ct[4].end.contexts)	
-		assert_that (True in ["class" in c.contextText for c in ct[4].end.contexts], True )
+		assert_that(True in ["class" in c.contextText for c in ct[4].end.contexts], True )

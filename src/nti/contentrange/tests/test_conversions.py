@@ -175,11 +175,13 @@ class ConversionTests(unittest.TestCase):
 		test_helpers.round_trip_check(r)
 
 	def shifting_document_tests(self):
+		### NOTE: Leading, trailing, and inter-whitespace is very important
+		### in the documents.
 		original_doc = test_helpers.Document("""
 		<div id="123">
 			<p id="45">
-				This is some somewhat but not particularly long text for readers
-				 with short attention spans.
+				This is some somewhat but not particularly long text for  readers
+				with short attention spans.
 			</p>
 			<p id="67">
 				This is some more text containing many uninteresting words.
@@ -193,11 +195,11 @@ class ConversionTests(unittest.TestCase):
 			<p id="intruder">Ugh. </p>
 			<p id="45">
 				This is some somewhat but probably not particularly long text for
-				readers with short attention spans. Here are some extra words.
+				 readers with short attention spans. Here are some extra words.
 			</p>
 			<img src="whackamole.jpg"></img>
 			<p id="67">
-				This is some more text containing many, many uninteresting words.
+				 This is some more text containing many, many uninteresting words.
 			</p>
 		</div>
 		""")
