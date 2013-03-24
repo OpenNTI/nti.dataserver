@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from datetime import datetime
 from ..common import epoch_time
 from ..common import get_datetime
+from ..common import is_all_query
 from ..common import get_mime_type_map
 from ..common import get_type_from_mimetype
 
@@ -18,6 +19,14 @@ from . import ConfiguringTestBase
 from hamcrest import (assert_that, is_, less_than_or_equal_to, none, has_entry)
 
 class TestCommon(ConfiguringTestBase):
+
+	def test_all_query(self):
+		assert_that(is_all_query('?'), is_(True))
+		assert_that(is_all_query('*'), is_(True))
+		assert_that(is_all_query('?x'), is_(True))
+		assert_that(is_all_query('*x'), is_(True))
+		assert_that(is_all_query('x*'), is_(False))
+		assert_that(is_all_query('xxx'), is_(False))
 
 	def test_epoch_time(self):
 		d = datetime.fromordinal(730920)

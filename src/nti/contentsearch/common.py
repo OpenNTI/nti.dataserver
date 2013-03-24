@@ -35,12 +35,11 @@ from .constants import (content_, post_, note_, highlight_, redaction_, indexabl
 interface_to_indexable_types = (
 	(search_interfaces.IBookContent, content_),
 	(nti_interfaces.INote, note_),
-	(nti_interfaces.IHighlight,  highlight_),
-	(nti_interfaces.IRedaction,  redaction_),
+	(nti_interfaces.IHighlight, highlight_),
+	(nti_interfaces.IRedaction, redaction_),
 	(chat_interfaces.IMessageInfo, messageinfo_),
 	(forum_interfaces.IPost, post_),
-	(forum_interfaces.IHeadlineTopic, post_) )
-
+	(forum_interfaces.IHeadlineTopic, post_))
 
 mime_type_map = None
 
@@ -113,10 +112,9 @@ def get_mime_type_map():
 
 	return mime_type_map
 
-_all_re = re.compile('([\?\*])')
 def is_all_query(query):
-	mo = _all_re.search(query)
-	return mo and mo.start(1) == 0
+	mo = re.search('([\?\*])', query)
+	return mo is not None and mo.start(1) == 0
 
 def to_list(data):
 	if isinstance(data, six.string_types):

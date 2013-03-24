@@ -51,10 +51,9 @@ class IndexManager(object):
 		self.useridx_manager_adapter = useridx_manager_adapter
 
 	def __str__(self):
-		return self.__repr__()
-
-	def __repr__(self):
 		return 'IndexManager(books=%s, %s)' % (len(self.books), self.useridx_manager_adapter)
+
+	__repr__ = __str__
 
 	def get_entity(self, username):
 		result = Entity.get_entity(username)
