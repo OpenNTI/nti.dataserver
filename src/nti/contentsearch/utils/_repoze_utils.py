@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from ZODB.POSException import POSKeyError
 
+from .. import constants
 from . import find_user_dfls
 from .. import get_indexable_types
 from .. import interfaces as search_interfaces
@@ -44,15 +45,15 @@ def remove_entity_indices(entity, content_types=(), include_dfls=False):
 def get_catalog_and_docids(entity):
 	try:
 		rim = search_interfaces.IRepozeEntityIndexManager(entity, {})
-		for catalog_name in sorted(rim.keys()): # dependable iteration order
+		for catalog_name in sorted(rim.keys()):  # dependable iteration order
 			catalog = rim[catalog_name]
 			catalog_field_possessing_docids = None
 			if catalog:
 				# We cannot choose a random one of these from iterating across values()
 				# the result would be undefined. Instead we try to find one we think
 				# should be there
-				for catalog_field_name in 'content', 'containerId', 'creator', 'ntiid':
-					catalog_field_possessing_docids = catalog.get( catalog_field_name )
+				for catalog_field_name in constants.text_fields:
+					catalog_field_possessing_docids = catalog.get(catalog_field_name)
 					if catalog_field_possessing_docids:
 						break
 
