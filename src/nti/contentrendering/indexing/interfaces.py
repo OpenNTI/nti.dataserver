@@ -7,10 +7,10 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-from nti.contentrendering import interfaces as cr_interfaces
+from .. import interfaces as cr_interfaces
 
 class IWhooshBookIndexer(cr_interfaces.IBookIndexer):
-	
+
 	def process_topic(node, writer, language):
 		"""
 		Index the specified book topic
@@ -19,7 +19,7 @@ class IWhooshBookIndexer(cr_interfaces.IBookIndexer):
 		:param writer: Whoosh indexwriter
 		:param language: Node text language
 		"""
-		
+
 	def process_book(book, writer, language):
 		"""
 		Index the specified book 
