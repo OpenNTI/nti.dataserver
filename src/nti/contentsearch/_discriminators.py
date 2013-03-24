@@ -101,7 +101,7 @@ def get_redaction_explanation_and_ngrams(obj, default=None, language='en'):
 	return result or default
 
 def get_post_title(obj, default=None, language='en'):
-	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IBlogContentResolver)
 	result = get_content(adapted.get_title(), language)
 	return result.lower() if result else default
 
@@ -112,7 +112,7 @@ def get_post_title_and_ngrams(obj, default=None, language='en'):
 	return result.lower() if result else default
 
 def get_post_tags(obj, default=()):
-	adapted = component.getAdapter(obj, search_interfaces.IPostContentResolver)
+	adapted = component.getAdapter(obj, search_interfaces.IBlogContentResolver)
 	result = adapted.get_tags() or default
 	return result
 
