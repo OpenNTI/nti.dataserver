@@ -35,10 +35,8 @@ class TestAlchemyLangDetector(ConfiguringTestBase):
 	def test_alchemy_language(self):
 		a = _AlchemyLanguage(ISO_639_1='en', ISO_639_2='a', ISO_639_3='a', name='enlgish')
 		assert_that(a.code, is_('en'))
-		assert_that(hash(a), is_(12928077669116588L))
 		b = _AlchemyLanguage(ISO_639_1='en', ISO_639_2='a', ISO_639_3='a', name='enlgish')
 		assert_that(a, is_(b))
+		assert_that(hash(a), is_(hash(b) ) )
 		assert_that(str(a), is_('en'))
 		assert_that(repr(a), is_('(enlgish,en,a,a)'))
-
-
