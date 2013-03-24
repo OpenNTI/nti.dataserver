@@ -205,6 +205,11 @@ class ConversionTests(unittest.TestCase):
 				"somewhat but probably not particularly long text for readers"
 			 	" with short attention spans. Here are some extra words. This"
 				" is some more text"]
+
+		test_helpers.round_trip_check( r[0], new_doc1, sln1[0] )
+		test_helpers.round_trip_check( r[1], new_doc1, sln1[1] )
+
+
 		new_doc2 = test_helpers.Document("""
 		<div id="123">
 			<p id="intruder">Ugh. </p>
@@ -223,5 +228,5 @@ class ConversionTests(unittest.TestCase):
 				"somewhat but probably not particularly long text for readers"
 				" with short attention spans. Here are some extra words in a"
 				" span. This is some more text"]
-		test_helpers.round_trip_check(r,new_doc1,sln1)
+
 		test_helpers.round_trip_check(r,new_doc2,sln2)
