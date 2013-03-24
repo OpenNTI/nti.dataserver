@@ -27,7 +27,7 @@ from ._whoosh_query import CosineScorerModel as CSM
 
 class _BoundingProxy(ProxyBase):
 
-	_max_searchers = 256 # Max number of searchers. Set in a config?
+	_max_searchers = 256  # Max number of searchers. Set in a config?
 	_semaphore = BoundedSemaphore(_max_searchers)
 
 	def __init__(self, obj):
@@ -46,13 +46,13 @@ class _BoundingProxy(ProxyBase):
 			self._semaphore.release()
 		return result
 
-@interface.implementer( search_interfaces.IWooshBookIndexManager )
+@interface.implementer(search_interfaces.IWooshBookIndexManager)
 class WhooshBookIndexManager(object):
 
 	def __init__(self, indexname, ntiid=None, storage=None, indexdir=None):
 		self.ntiid = ntiid if ntiid else indexname
 		self.storage = storage if storage else DirectoryStorage(indexdir)
-		self._book = (Book(), self.storage.get_index(indexname) )
+		self._book = (Book(), self.storage.get_index(indexname))
 
 	@property
 	def book(self):
@@ -76,10 +76,10 @@ class WhooshBookIndexManager(object):
 	def get_indexname(self):
 		return self.bookidx.indexname
 
-	def __str__( self ):
+	def __str__(self):
 		return self.indexname
 
-	def __repr__( self ):
+	def __repr__(self):
 		return '%s(indexname=%s)' % (self.__class__.__name__, self.indexname)
 
 	@metric
@@ -105,7 +105,7 @@ class WhooshBookIndexManager(object):
 		self.bookidx.close()
 
 def wbm_factory(*args, **kwargs):
-	def f(indexname, *fargs, **fkwargs):
+	def func(indexname, *fargs, **fkwargs):
 		ntiid = fkwargs.get('ntiid', None)
 		indexdir = fkwargs.get('indexdir', None)
 		if indexdir and index.exists_in(indexdir, indexname=indexname):
@@ -113,4 +113,4 @@ def wbm_factory(*args, **kwargs):
 			return WhooshBookIndexManager(indexname=indexname, ntiid=ntiid, storage=storage)
 		else:
 			return None
-	return f
+	return func

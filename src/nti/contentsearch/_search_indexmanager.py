@@ -9,7 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
 from zope import interface
 from zope.container import contained as zcontained
 from zope.interface.common.mapping import IMapping
@@ -43,7 +42,7 @@ class _SearchEntityIndexManager(zcontained.Contained, PersistentMapping):
 		return discriminators.get_uid(obj)
 
 	def get_object(self, uid):
-		result = discriminators.query_object(uid,)
+		result = discriminators.query_object(uid)
 		if result is None:
 			logger.debug('Could not find object with id %r' % uid)
 
@@ -59,7 +58,7 @@ class _SearchEntityIndexManager(zcontained.Contained, PersistentMapping):
 
 		if not result:
 			index_owner = self.username.lower()
-			adapted = component.getAdapter(obj, search_interfaces.IShareableContentResolver)
+			adapted = search_interfaces.IShareableContentResolver(obj)
 			creator = adapted.get_creator().lower()
 			sharedWith = {x.lower() for x in adapted.get_sharedWith() or ()}
 			result = index_owner == creator or index_owner in sharedWith
@@ -87,5 +86,7 @@ class _SearchEntityIndexManager(zcontained.Contained, PersistentMapping):
 	def remove_index(self, type_name):
 		raise NotImplementedError()
 
-	def __repr__(self):
+	def __str__(self):
 		return '%s(%s, %s)' % (self.__class__.__name__, self.username, self.keys())
+
+	__repr__ = __str__

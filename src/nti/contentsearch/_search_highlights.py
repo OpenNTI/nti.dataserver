@@ -79,9 +79,11 @@ class _Range(object):
 		self.text = text
 		self.start = start
 
-	def __repr__( self ):
-		return "{0}.{1}({2},{3},'{4}')".format( self.__class__.__module__, self.__class__.__name__,
-												self.start, self.end, self.text.encode('unicode_escape') if self.text else '')
+	def __str__(self):
+		return "{0}.{1}({2},{3},'{4}')".format(self.__class__.__module__, self.__class__.__name__,
+											   self.start, self.end, self.text.encode('unicode_escape') if self.text else '')
+
+	__repr__ = __str__
 
 	def __eq__(self, other):
 		try:
@@ -92,7 +94,7 @@ class _Range(object):
 			return NotImplemented
 
 	def __hash__(self):
-		return hash( (self.start,self.end) )
+		return hash((self.start, self.end))
 
 class ISearchFragment(ext_interfaces.IExternalObject):
 	text = schema.TextLine(title="fragment text", required=True)
@@ -110,8 +112,10 @@ class _SearchFragment(object):
 	def __len__(self):
 		return len(self.matches)
 
-	def __repr__(self):
+	def __str__(self):
 		return "<%s %r %r>" % (self.__class__.__name__, self.text, self.matches)
+
+	__repr__ = __str__
 
 	def toExternalObject(self):
 		ranges = [(m.start, m.end) for m in self.matches]
