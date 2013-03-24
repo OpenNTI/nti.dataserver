@@ -1,0 +1,13 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:ext="http://nextthought.com/ntp/ext"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="nti.dataserver">
+	<include package="zope.component" />
+
+	<adapter factory=".activitystream_change._ChangeExternalObject" />
+
+	<subscriber handler=".activitystream.stream_willRemoveIntIdForContainedObject" />
+	<subscriber handler=".activitystream.stream_didAddIntIdForContainedObject" />
+
+</configure>

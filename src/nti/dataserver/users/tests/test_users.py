@@ -599,7 +599,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			assert_that( user1.containers['c1'].lastModified, is_( greater_than_or_equal_to( user1.containers['c1'][note.id].lastModified ) ) )
 			assert_that( nots, is_( ['Modified', (c_note, set())] ) )
 
-	@mock_dataserver.WithMockDS
+	@mock_dataserver.WithMockDS(with_changes=True)
 	def test_delete_shared_note_notifications(self):
 		with mock_dataserver.mock_db_trans():
 			user1 = User.create_user( mock_dataserver.current_mock_ds, username='foo@bar' )
@@ -619,6 +619,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			user1 = User.get_user( 'foo@bar', dataserver=mock_dataserver.current_mock_ds )
 			nots = []
 			user1._postNotification = lambda *args: nots.append( args )
+			mock_dataserver.current_mock_ds.add_change_listener( lambda ds, change, broadcast=None, **kwargs: nots.append( (change.type, change.object) ) if not broadcast else None )
 			lm = None
 			with user1.updates():
 				c_note = user1.getContainedObject( note.containerId, note.id )
@@ -629,7 +630,7 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			del user1._postNotification
 
 			# No modified notices, just the Deleted notice.
-			assert_that( nots, is_( [('Deleted', c_note)] ) )
+			assert_that( nots,  is_( [('Deleted', c_note)] ) )
 
 	@WithMockDSTrans
 	def test_getSharedContainer_defaults( self ):
