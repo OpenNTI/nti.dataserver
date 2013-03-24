@@ -71,19 +71,6 @@
 	<subscriber handler=".views.notify_dynamic_memberships_of_blog_entry_publication_change" />
 
 
-	<!-- UGD editing compatibility -->
-	<adapter factory=".views.ForumCheckoutAdapter"
-			 for="nti.dataserver.contenttypes.forums.interfaces.IForum pyramid.interfaces.IRequest"
-			 provides="nti.appserver.interfaces.IUserCheckout" />
-
-	<adapter factory=".views.ForumCheckoutAdapter"
-			 for="nti.dataserver.contenttypes.forums.interfaces.ITopic pyramid.interfaces.IRequest"
-			 provides="nti.appserver.interfaces.IUserCheckout" />
-
-	<adapter factory=".views.ForumCheckoutAdapter"
-			 for="nti.dataserver.contenttypes.forums.interfaces.IPost pyramid.interfaces.IRequest"
-			 provides="nti.appserver.interfaces.IUserCheckout" />
-
 	<!-- Externalization -->
 	<subscriber factory=".decorators.BlogLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />

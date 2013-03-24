@@ -811,15 +811,8 @@ class User(Principal):
 				for v in self.containers.containers.itervalues()
 				if nti_interfaces.INamedContainer.providedBy( v ) )
 
-	@deprecate("No replacement; not needed")
-	def beginUpdates(self):
-		"This is all handled with events now and is deprecated"
-		return self
 
-	@deprecate("No replacement; not needed")
-	def endUpdates(self):
-		"All handled with events now."
-
+	#@deprecate("No replacement; not needed") # noisy if enabled; logic in flagging_views still needs its existence until rewritten
 	def updates( self ):
 		"""
 		This is officially deprecated now.

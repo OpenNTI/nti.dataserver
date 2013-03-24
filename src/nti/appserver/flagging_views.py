@@ -171,7 +171,7 @@ def moderation_admin_post( request ):
 			# we have no way to recapture the complete set of recipients that got the
 			# message due to shadowing, etc
 			try:
-				updater = item.creator.updates()
+				updater = item.creator.updates() # FIXME: Updates is going away
 			except AttributeError:
 				# Hmm kay. So not something directly contained in a User.
 				# (probably a chat message). Reset its message body (which is

@@ -263,37 +263,3 @@ class ModeledContentEditRequestUtilsMixin(object):
 		"""
 		if o is None or app_interfaces.IDeletedObjectPlaceholder.providedBy( o ):
 			raise hexc.HTTPNotFound( "No object %s/%s/%s" % (cr, cid,oid))
-
-
-	def checkObjectOutFromUserForUpdate( self, user, containerId, objId ):
-		"""
-		Having identified an object, make sure the user is aware that we are going
-		to change it. Should be called in a ``with user.updates()`` block.
-		"""
-		# TODO: We might need to do some ID massaging here, if the ID is an OID in the old, non-intid
-		# appended form
-		return _default_check_object_out_from_user_for_update( self.request.context, self.request,
-															   user, containerId, objId )
-
-def _default_check_object_out_from_user_for_update( context, request, user, containerId, objId ):
-	checkout = component.queryMultiAdapter( (context, request),
-											app_interfaces.IUserCheckout )
-	if checkout:
-		return checkout.checkObjectOutFromUserForUpdate( user, containerId, objId )
-
-	return user.getContainedObject( containerId, objId )
-
-@interface.implementer(app_interfaces.IUserCheckout)
-@component.adapter(app_interfaces.IExternalFieldResource, IRequest)
-class DispatchingExternalFieldResourceCheckout(object):
-	"""
-	If we are wrapping a resource, we want to try to check it out directly.
-	"""
-
-	def __init__( self, context, request ):
-		self.context = context
-		self.request = request
-
-	def checkObjectOutFromUserForUpdate( self, user, containerId, objId ):
-		return _default_check_object_out_from_user_for_update( self.context.context, self.request,
-															   user, containerId, objId )
