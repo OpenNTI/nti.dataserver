@@ -26,30 +26,30 @@ def is_valid_creditcard_number(s):
 			"^3[0,6,8]\d{12}$",
 			"^6011\d{12}$",
 	        ]
-	
+
 	if not any(re.match(r, s) for r in regexps):
 		return False
 
 	# check sum
-	ld = [ int(x)*2 for n,x in enumerate(s[::-1]) if n%2 != 0 ]
-	la = reduce(lambda x,y: x+y, map(lambda x:list(str(x)), ld))
-	lb = [x for n,x in enumerate( s[::-1] ) if n%2 == 0 ]
-	chksum = reduce(lambda x,y:int(x)+int(y), la+lb) % 10
+	ld = [ int(x) * 2 for n, x in enumerate(s[::-1]) if n % 2 != 0 ]
+	la = reduce(lambda x, y: x + y, map(lambda x:list(str(x)), ld))
+	lb = [x for n, x in enumerate(s[::-1]) if n % 2 == 0 ]
+	chksum = reduce(lambda x, y:int(x) + int(y), la + lb) % 10
 	return chksum == 0
 
-digits_re = re.compile('^([0-9][0-9])')
-
 def validate_credit_card(number, exp_month, exp_year, cvc=None):
+	digits_re = re.compile('^([0-9][0-9])')
+
 	if not is_valid_creditcard_number(number):
 		raise schema.ValidationError('Invalid credit card number')
-	
+
 	if not digits_re.match(exp_month):
 		raise schema.ValidationError('Invalid expiration month')
-	
+
 	if not digits_re.match(exp_year):
 		raise schema.ValidationError('Invalid expiration year')
-	
+
 	if cvc and not all([c.isdigit() for c in str(cvc)]):
 		raise schema.ValidationError('Invalid CVC number')
-		
+
 	return True
