@@ -8,11 +8,11 @@ $Id$
 from __future__ import print_function, unicode_literals
 import xml.dom
 import xml.dom.minidom
-import hamcrest
-import sys
+
+
 from hamcrest import assert_that, is_, none
 from hamcrest.core.base_matcher import BaseMatcher
-from nti.contentrange import _domrange, _convertrange
+from nti.contentrange import _convertrange
 
 def range_comparison_check(r1,r2,how,desired):
 	assert_that( r1.compareBoundaryPoints(how,r2), is_(desired) )
@@ -27,21 +27,30 @@ def range_conversion_check(r,solution):
 		assert_that( cr, is_( context_check(*solution) ) )
 	return cr
 
-def round_trip_check(r,newdoc=None,solution=None):
+def round_trip_check(range_or_ranges,newdoc=None,solution=None):
 	NO_CHECK = 0
-	if hasattr(r,'__iter__'):
+	if hasattr(range_or_ranges,'__iter__'): # DEPRETACED
+		ranges = range_or_ranges
 		if hasattr(solution,'__iter__'):
-			return zip(*[round_trip_check(x,newdoc,sln) for x,sln in zip(r,solution)])
-		return zip(*[round_trip_check(x,newdoc) for x in r])
-	cr = _convertrange.domToContentRange(r)
+			return zip(*[round_trip_check(range,newdoc,sln) for range,sln in zip(ranges,solution)])
+		return zip(*[round_trip_check(x,newdoc) for x in ranges])
+
+	a_range = range_or_ranges
+	cr = _convertrange.domToContentRange(a_range)
+
 	if newdoc is None:
-		bk = _convertrange.contentToDomRange(cr,r.get_root())
-		if solution is None: assert_that ( str(bk), is_( str(r) ) )
+		bk = _convertrange.contentToDomRange(cr,a_range.get_root())
+		__traceback_info__ = bk, a_range, cr
+		if solution is None:
+			assert_that( str(bk), is_( str(a_range) ) )
 	else:
-		if hasattr(newdoc,'nodeType') == False: newdoc = newdoc.root
+		if not hasattr(newdoc,'nodeType'):
+			newdoc = newdoc.root
 		bk = _convertrange.contentToDomRange(cr,newdoc)
 	if solution is not None and solution != NO_CHECK:
-		assert_that ( str(bk), is_( solution ) )
+		__traceback_info__ = a_range, bk
+		assert_that( str(bk), is_( solution ) )
+
 	return cr, bk
 
 class Document(object):
@@ -109,5 +118,3 @@ class ContextChecker(BaseMatcher):
 		description.append_text('\n\n' + self.result + '\n')
 def context_check(st=None, so=None, ft=None, fo=None, anc_id=None, anc_tag=None):
 	return ContextChecker(st, so, ft, fo, anc_id, anc_tag)
-
-

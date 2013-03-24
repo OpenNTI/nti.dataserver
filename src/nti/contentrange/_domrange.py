@@ -4,9 +4,7 @@
 """
 $Id$
 """
-
-import xml.dom
-import sys
+from __future__ import print_function, unicode_literals, absolute_import
 
 class position(object):
 	node = None
@@ -77,8 +75,10 @@ class Range(object):
 	def __init__(self, sn=None, so=None, fn=None, fo=None):
 		self.start = position(parent=self)
 		self.end = position(parent=self)
-		if sn is not None and so is not None: self.set_start(sn,so)
-		if fn is not None and fo is not None: self.set_end(fn,fo)
+		if sn is not None and so is not None:
+			self.set_start(sn,so)
+		if fn is not None and fo is not None:
+			self.set_end(fn,fo)
 
 	def update(self):
 		if self.start.node is not None and self.end.node is not None:
@@ -128,8 +128,9 @@ class Range(object):
 	def stringify(self):
 		if self.collapsed:
 			return ""
-		if self.ancestor is None: raise Exception("No common ancestor found")
-		cur_node,cur_offset = self.start.node, self.start.offset
+		if self.ancestor is None:
+			raise Exception("No common ancestor found")
+		cur_node, cur_offset = self.start.node, self.start.offset
 		result = []
 		while True:
 			if cur_node.nodeType == cur_node.TEXT_NODE:
@@ -154,24 +155,25 @@ class Range(object):
 	__str__ = stringify
 
 def is_ancestor(ancestor,descendant):
+	if ancestor is None or descendant is None:
+		return False
 	if ancestor == descendant:
 		return True
-	if ancestor == None or descendant == None:
-		return False
 	return is_ancestor(ancestor,descendant.parentNode)
 
 def find_common_ancestor(a,b):
 	ancestor = a
-	while ancestor is not None and is_ancestor(ancestor,b) == False:
+	while ancestor is not None and not is_ancestor(ancestor,b):
 		ancestor = ancestor.parentNode
 	return ancestor
 
 def childIndex(node):
 	children = node.parentNode.childNodes
-	for i,c in enumerate(children):
+	for i, c in enumerate(children):
 		if c == node:
 			return i
 
 def get_root(node):
-	if node.parentNode is None or node.parentNode.nodeType == node.DOCUMENT_NODE: return node
+	if node.parentNode is None or node.parentNode.nodeType == node.DOCUMENT_NODE:
+		 return node
 	return get_root(node.parentNode)

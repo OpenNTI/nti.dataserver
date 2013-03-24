@@ -5,21 +5,36 @@
 $Id$
 """
 
-from __future__ import print_function, unicode_literals
-import xml.dom
-import xml.dom.minidom
-import sys
-import contentrange
-import _domrange
+from __future__ import print_function, unicode_literals, absolute_import
+
+from . import contentrange
+from . import _domrange
+
 import re
 import math
-import time
+from abc import ABCMeta
+from abc import abstractmethod
 
 class treewalker(object):
 	"""
 	Collection of methods for navigating back and forth in a linear fashion
 	through DOM trees
 	"""
+
+	__metaclass__ = ABCMeta
+
+	front_element = None
+	first_word_regexp = None
+
+	@abstractmethod
+	def near_sibling(self, node):
+		raise NotImplementedError()
+
+	@abstractmethod
+	def end(self, sequence):
+		raise NotImplementedError()
+
+
 	def onestep(self,node):
 		"""
 		Goes to next or previous node in the order that nodes come in the XML
@@ -28,31 +43,37 @@ class treewalker(object):
 		cur_node = node
 		while cur_node is not None and self.near_sibling(cur_node) is None:
 			cur_node = cur_node.parentNode
-		if cur_node is None: return None
+		if cur_node is None:
+			 return None
 		cur_node = self.near_sibling(cur_node)
 		while len(cur_node.childNodes) > 0:
 			cur_node = self.near_child(cur_node)
 		return cur_node
-		if self.near_sibling(node) is not None:
-			output = self.near_sibling(node)
-			while len(output.childNodes) > 0:
-				output = self.near_child(output)
-			return output
-		if node.parentNode is None:
-			return None
-		return self.onestep(node.parentNode)
+		#if self.near_sibling(node) is not None:
+		#	output = self.near_sibling(node)
+		#	while len(output.childNodes) > 0:
+		#		output = self.near_child(output)
+		#	return output
+		#if node.parentNode is None:
+		#	return None
+		#return self.onestep(node.parentNode)
+
 	def first_word(self,node):
 		if node is None or node.nodeType != node.TEXT_NODE:
-			 return '', node, offset
+			 raise NotImplementedError() # following return would raise, no 'offset' defined: #return '', node, offset
 		return re.search(self.first_word_regexp,node.data).group(0)
-	def near_child(self,node): return node.childNodes[self.front_element]
-	def remove(self,x): return x.pop(self.front_element)
-	def insert(self,x,e): x.insert(self.end(x),e)
+
+	def near_child(self,node):
+		return node.childNodes[self.front_element]
+	def remove(self,x):
+		return x.pop(self.front_element)
+	def insert(self,x,e):
+		x.insert(self.end(x),e)
 
 class backward(treewalker):
 	role = "start"
 	front_element = -1
-	first_word_regexp = '\S*\s?$'
+	first_word_regexp = r'\S*\s?$'
 	def beginning(self,a_list): return len(a_list)
 	def end(self,a_list): return 0
 	def near_sibling(self,node): return node.previousSibling
@@ -61,14 +82,14 @@ class backward(treewalker):
 class forward(treewalker):
 	role = "end"
 	front_element = 0
-	first_word_regexp = '^\s?\S*'
+	first_word_regexp = r'^\s?\S*'
 	def beginning(self,a_list): return 0
 	def end(self,a_list): return len(a_list)
 	def near_sibling(self,node): return node.nextSibling
 	def find_space(self,string,offset): return string.find(' ',offset + 1)
 	def context_offset(self,node,lastspace,ctx): return lastspace
 
-def is_anchorable (node):
+def is_anchorable(node):
 	if node is None:
 		return False
 	if node.nodeType == node.TEXT_NODE:
@@ -85,14 +106,17 @@ def is_anchorable (node):
 			return False
 		illegal_starts = ('MathJax','ext-gen') # ext-gen controversial at the moment
 		for x in illegal_starts:
-			if node.getAttribute('id').startswith(x): return False
+			if node.getAttribute('id').startswith(x):
+				return False
 		return True
 	return False
 
 def list_all_children (node):
-	if len(node.childNodes) == 0: return [node]
+	if len(node.childNodes) == 0:
+		 return [node]
 	total = []
-	for c in node.childNodes: total.extend(list_all_children(c))
+	for c in node.childNodes:
+		total.extend(list_all_children(c))
 	return total
 
 def get_anchorable_ancestor(a,b=None):
@@ -100,9 +124,10 @@ def get_anchorable_ancestor(a,b=None):
 		output = _domrange.find_common_ancestor(a,b)
 	else:
 		output = a
-	while is_anchorable(output) == False or output.nodeType == output.TEXT_NODE:
+	while not is_anchorable(output) or output.nodeType == output.TEXT_NODE:
 		output = output.parentNode
-		if output is None: return None
+		if output is None:
+			return None
 	return output
 
 def domToContentRange(domrange):
@@ -129,12 +154,12 @@ def domToContentRange(domrange):
 		right = node.data[offset:]
 		lastspace = left[:-1].rfind(' ') + 1
 		nextspace = right[1:].find(' ') + 1
-		if nextspace == 0: nextspace = len(node.data)
+		if nextspace == 0:
+			nextspace = len(node.data)
 		left = left[lastspace:]
 		right = right[:nextspace]
 		return_ctx.contextText = left+right
-		return_ctx.contextOffset = \
-				 directionals.context_offset(node,lastspace,return_ctx)
+		return_ctx.contextOffset = directionals.context_offset(node,lastspace,return_ctx)
 		# Append additional contexts until 15 characters or 5 secondary contexts
 		return_ptr = contentrange.TextDomContentPointer()
 		return_ptr.contexts = [return_ctx]
@@ -162,8 +187,8 @@ def domToContentRange(domrange):
 	start_ptr = convert(domrange.start.node,domrange.start.offset,backward())
 	end_ptr = convert(domrange.end.node,domrange.end.offset,forward())
 	output = contentrange.DomContentRangeDescription()
-	output.start = start_ptr;
-	output.end = end_ptr;
+	output.start = start_ptr
+	output.end = end_ptr
 	ancestor_to_convert = get_anchorable_ancestor(domrange.ancestor)
 	output.ancestor = element_convert(ancestor_to_convert)
 	return output
@@ -174,9 +199,10 @@ def contentToDomRange(contentrange,document):
 				ancestor.getAttribute('id') == ptr.elementId and \
 				ancestor.tagName == ptr.elementTagName:
 			return ancestor
-		else:
-			for c in ancestor.childNodes:
-				if seek_dom_element(c,ptr) is not None: return c
+
+		for c in ancestor.childNodes:
+			if seek_dom_element(c,ptr) is not None:
+				return c
 		return None
 
 	def point_convert(point, start_limit=None):
@@ -250,9 +276,11 @@ def contentToDomRange(contentrange,document):
 
 	output = _domrange.Range()
 	point = point_convert(contentrange.start)
-	if point is None or point.node is None: return None
+	if point is None or point.node is None:
+		 return None
 	output.start.set(point.node,point.offset)
 	point = point_convert(contentrange.end,point)
-	if point is None: return None
+	if point is None:
+		 return None
 	output.end.set(point.node,point.offset)
 	return output
