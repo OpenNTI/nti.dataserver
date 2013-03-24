@@ -39,8 +39,10 @@ class _AlchemyLanguage(SchemaConfigured):
 		return "(%s,%s,%s,%s)" % (self.name, self.ISO_639_1, self.ISO_639_2, self.ISO_639_3)
 
 	def __eq__(self, other):
-		return self is other or (isinstance(other, _AlchemyLanguage)
- 								 and self.code == other.code)
+		try:
+			return self is other or self.code == other.code
+		except AttributeError:
+			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
@@ -72,7 +74,7 @@ class _AlchemyTextLanguageDectector(object):
 										  ISO_639_2=data.get('iso-639-2', None),
 										  ISO_639_3=data.get('iso-639-3', None),
 										  name=data.get('language', None))
-		except:
+		except Exception:
 			result = None
 			logger.exception('Error while detecting language using Alchemy')
 
