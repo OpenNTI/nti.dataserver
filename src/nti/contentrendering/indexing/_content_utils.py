@@ -9,10 +9,11 @@ __docformat__ = "restructuredtext en"
 
 import time
 
-from nltk import clean_html
+from zope import component
 
 from nti.contentprocessing import split_content
 
+from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentfragments.html import _sanitize_user_html_to_text
 
 def sanitize_content(text, tokens=False, table=None):
@@ -25,10 +26,10 @@ def sanitize_content(text, tokens=False, table=None):
 	"""
 	# user ds sanitizer
 	text = _sanitize_user_html_to_text(text)
-	
+
 	# remove any html (i.e. meta, link) that is not removed
-	text = clean_html(text)
-	
+	text = component.getAdapter(text, frg_interfaces.IPlainTextContentFragment, name='text')
+
 	# tokenize words
 	text = text.translate(table) if table else text
 	tokenized_words = split_content(text)
@@ -48,9 +49,9 @@ def parse_last_modified(t):
 				ms = t[idx:]
 				t = t[0:idx]
 
-			t = time.strptime(t,"%Y-%m-%d %H:%M:%S")
+			t = time.strptime(t, "%Y-%m-%d %H:%M:%S")
 			t = long(time.mktime(t))
 			result = str(t) + ms
 	except:
-		pass	
+		pass
 	return float(result)
