@@ -17,13 +17,8 @@ from zope.container.interfaces import IContained
 
 from nti.utils._compat import aq_base
 
-# The reason for the __str__ override bypassing KeyError
-# is to get usable exceptions printed from unit tests
-# See https://github.com/nose-devs/nose/issues/511
-class IntIdMissingError(KeyError):
-	def __str__(self): return Exception.__str__( self )
-class ObjectMissingError(KeyError):
-	def __str__(self): return Exception.__str__( self )
+from .interfaces import IntIdMissingError
+from .interfaces import ObjectMissingError
 
 # Make pylint not complain about "badly implemented container"
 #pylint: disable=R0924
