@@ -90,6 +90,8 @@ last_modified_fields = (ext_interfaces.StandardInternalFields.LAST_MODIFIED,
 						 LAST_MODIFIED,
 						 last_modified_)
 
+text_fields = (content_, ngrams_, creator_, title_, redactionExplanation_, redactionExplanation_)
+
 nti_mimetype_prefix = MIME_BASE + '.'
 
 note_ = u'note'
