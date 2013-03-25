@@ -368,7 +368,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
 
 		# The comment can be searched for
-		search_res = self.search_user_rugd( 'comment' )
+		search_res = self.search_user_rugd( self.forum_comment_unique )
 		assert_that( search_res.json_body, has_entry( 'Hit Count', 1 ) )
 		assert_that( search_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( search_res.json_body['Items'][0], has_entry( 'ID', comment_res.json_body['ID'] ) )
@@ -376,7 +376,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@time_monotonically_increases
-	def test_creator_can_DELETE_comment( self ):
+	def test_creator_can_DELETE_comment_yielding_placeholders( self ):
 		testapp = self.testapp
 
 		# Create the topic
@@ -411,6 +411,9 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		res = testapp.get( entry_contents_url )
 		assert_that( res.json_body['Last Modified'], is_( greater_than( entry_creation_time ) ) )
 
+		# and the comment can no longer be found by search
+		search_res = self.search_user_rugd( self.forum_comment_unique )
+		assert_that( search_res.json_body, has_entry( 'Hit Count', 0 ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_creator_can_DELETE_existing_empty_forum_topic( self ):
