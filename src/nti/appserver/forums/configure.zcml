@@ -68,9 +68,6 @@
 				for="nti.appserver.interfaces.IDeletedObjectPlaceholder zope.lifecycleevent.interfaces.IObjectModifiedEvent" />
 
 
-	<subscriber handler=".views.notify_dynamic_memberships_of_blog_entry_publication_change" />
-
-
 	<!-- Externalization -->
 	<subscriber factory=".decorators.BlogLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />

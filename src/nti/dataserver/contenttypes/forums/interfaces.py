@@ -96,7 +96,8 @@ class ITopic(IContentContainer,
 			 IContained,
 			 IAcquirer,
 			 nti_interfaces.ITitledDescribedContent,
-			 nti_interfaces.IUserTaggedContent):
+			 nti_interfaces.IUserTaggedContent,
+			 nti_interfaces.INeverStoredInSharedStream):
 	"""
 	A topic is contained by a forum. It is distinctly named within the containing
 	forum (often this name will be auto-generated). A topic contains potentially many posts
@@ -115,11 +116,12 @@ class ITopic(IContentContainer,
 					 readonly=True )
 
 
-
-class IPost(IContained, IAcquirer, nti_interfaces.IModeledContent,
+class IPost(IContained, IAcquirer,
+			nti_interfaces.IModeledContent,
 			nti_interfaces.IReadableShared,
 			nti_interfaces.ITitledContent,
-			nti_interfaces.IUserTaggedContent):
+			nti_interfaces.IUserTaggedContent,
+			nti_interfaces.INeverStoredInSharedStream):
 	"""
 	A post within a topic.
 

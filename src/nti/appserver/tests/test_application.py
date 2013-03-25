@@ -245,6 +245,13 @@ class _AppTestBaseMixin(object):
 		"Using the given or default app, fetch the RecursiveUserGeneratedData for the given or default user"
 		return self._fetch_user_url( '/Pages(' + ntiids.ROOT + ')/RecursiveUserGeneratedData', testapp=testapp, username=username, **kwargs )
 
+	def fetch_user_root_rstream( self, testapp=None, username=None, **kwargs ):
+		"Using the given or default app, fetch the RecursiveStream for the given or default user"
+		return self._fetch_user_url( '/Pages(' + ntiids.ROOT + ')/RecursiveStream', testapp=testapp, username=username, **kwargs )
+
+	def search_user_rugd( self, term, testapp=None, username=None, **kwargs ):
+		"""Search the user for the given term and return the results"""
+		return self._fetch_user_url( '/Search/RecursiveUserGeneratedData/' + term, testapp=testapp, username=username, **kwargs )
 
 	def fetch_by_ntiid( self, ntiid, testapp=None ):
 		"Using the given or default app, fetch the object with the given ntiid"

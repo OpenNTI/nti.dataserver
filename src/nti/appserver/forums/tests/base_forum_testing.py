@@ -140,6 +140,9 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:' + default_username + '-Topic:PersonalBlogEntry-'
 	forum_topic_comment_content_type = None
 
+	forum_comment_unique = 'UNIQUETOCOMMENT'
+	forum_headline_unique = 'UNIQUETOHEADLINE'
+
 	def setUp(self):
 		super(AbstractTestApplicationForumsBase,self).setUp()
 		self.forum_pretty_url = UQ('/dataserver2/users/' + self.default_entityname + '/' + self.forum_url_relative_to_user)
@@ -253,6 +256,18 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		self._do_test_user_can_POST_new_forum_entry( data )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_forum_entry_and_search_for_it( self ):
+		data = self._create_post_data_for_POST()
+
+		res = self._do_test_user_can_POST_new_forum_entry( data )
+
+		search_res = self.search_user_rugd( self.forum_headline_unique )
+		assert_that( search_res.json_body, has_entry( 'Hit Count', 1 ) )
+		assert_that( search_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( search_res.json_body['Items'][0], has_entry( 'ID', res.json_body['ID'] ) )
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_forum_entry_resulting_in_blog_being_sublocation( self ):
 		# Creating a Blog causes it to be a sublocation of the entity
 		# This way deleting/moving the user correctly causes the blog to be deleted/moved
@@ -323,7 +338,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@time_monotonically_increases
-	def test_user_can_POST_new_comment( self ):
+	def test_creator_can_POST_new_comment( self ):
 		#"""POSTing an IPost to the URL of an existing IStoryTopic adds a comment"""
 
 		testapp = self.testapp
@@ -338,6 +353,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		data = self._create_comment_data_for_POST()
 
 		res = testapp.post_json( entry_url, data, status=201 )
+		comment_res = res
 
 		assert_that( res.status_int, is_( 201 ) )
 		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
@@ -347,8 +363,15 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
 
 
+		# Side effects: The containers PostCount is incremented
 		res = testapp.get( entry_url )
 		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
+
+		# The comment can be searched for
+		search_res = self.search_user_rugd( 'comment' )
+		assert_that( search_res.json_body, has_entry( 'Hit Count', 1 ) )
+		assert_that( search_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( search_res.json_body['Items'][0], has_entry( 'ID', comment_res.json_body['ID'] ) )
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
@@ -683,6 +706,55 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		self.require_link_href_with_rel( res.json_body, 'flag.metoo' )
 
 	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_community_user_can_search_for_published_topic(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, _ = self._POST_and_publish_topic_entry()
+		topic_url = publish_res.location
+
+		search_res = self.search_user_rugd( self.forum_headline_unique, testapp=testapp2, username=fixture.user2_username )
+		assert_that( search_res.json_body, has_entry( 'Hit Count', 1 ) )
+		assert_that( search_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( search_res.json_body['Items'][0], has_entry( 'ID', publish_res.json_body['ID'] ) )
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_community_user_can_search_for_publish_unpublished_comments(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+		testapp3 = fixture.testapp3
+
+		publish_res, _ = self._POST_and_publish_topic_entry()
+		topic_url = publish_res.location
+
+		# non-creator can comment
+		comment_data = self._create_comment_data_for_POST()
+		comment_res = testapp2.post_json( topic_url, comment_data, status=201 )
+
+		# Third user can search for the comment
+		search_res = self.search_user_rugd( self.forum_comment_unique, testapp=testapp3, username=fixture.user3_username )
+		assert_that( search_res.json_body, has_entry( 'Hit Count', 1 ) )
+		assert_that( search_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( search_res.json_body['Items'][0], has_entry( 'ID', comment_res.json_body['ID'] ) )
+
+		# But when unpublished, third user cannot find it anymore
+		# though its creator still can
+		self.testapp.post( self.require_link_href_with_rel( publish_res.json_body, 'unpublish' ) )
+
+		search_res = self.search_user_rugd( self.forum_comment_unique, testapp=testapp3, username=fixture.user3_username )
+		assert_that( search_res.json_body, has_entry( 'Hit Count', 0 ) )
+
+		search_res = self.search_user_rugd( self.forum_comment_unique, testapp=testapp2, username=fixture.user2_username )
+		assert_that( search_res.json_body, has_entry( 'Hit Count', 1 ) )
+		assert_that( search_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( search_res.json_body['Items'][0], has_entry( 'ID', comment_res.json_body['ID'] ) )
+
+
+	@WithSharedApplicationMockDS
 	def test_post_canvas_image_in_headline_post_produces_fetchable_link( self ):
 		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
@@ -741,18 +813,21 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		_check_canvas( res, res.json_body['body'][1], acc_to_other=True )
 
 	def _create_post_data_for_POST(self):
+		unique = self.forum_headline_unique
 		data = { 'Class': self.forum_headline_class_type,
 				 'MimeType': self.forum_headline_content_type,
 				 'title': 'My New Blog',
 				 'description': "This is a description of the thing I'm creating",
-				 'body': ['My first thought'] }
+				 'body': ['My first thought. ' + unique] }
+
 		return data
 
 	def _create_comment_data_for_POST(self):
 		""" Always returns a plain Post so we can be sure that the correct Mime transformation happens. """
+		unique = self.forum_comment_unique
 		data = { 'Class': 'Post',
 				 'title': 'A comment',
-				 'body': ['This is a comment body'] }
+				 'body': ['This is a comment body ' + unique ] }
 		return data
 
 	def _POST_topic_entry( self, data=None, content_type=None, status_only=None, forum_url=None ):

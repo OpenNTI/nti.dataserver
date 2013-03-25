@@ -10,6 +10,7 @@ from operator import setitem
 
 from zope import interface
 from zope import component
+from ZODB.POSException import POSError
 
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
@@ -62,7 +63,7 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 	# has these things
 	id = None
 	containerId = None
-
+	type = None
 	def __init__( self, changeType, obj ):
 		super(Change,self).__init__()
 		self.type = changeType
@@ -110,15 +111,19 @@ class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
 		"""
 		Returns true if the object is supposed to be copied into local shared data.
 		"""
-		# TODO: This is some legacy weirdness. Redo with interfaces/adapters
 		if self.object_is_shareable is not None:
 			return self.object_is_shareable
 
-		return not hasattr( self.object, 'username' ) # This is the real wierdness. Meant to do with CIRCLED?
+		result = not nti_interfaces.INeverStoredInSharedStream.providedBy( self.object )
+		# We assume this won't change for the lifetime of the object
+		self.object_is_shareable = result
+		return result
 
 	def __repr__(self):
-		return "%s('%s',%s)" % (self.__class__.__name__, self.type, self.object.__class__.__name__)
-
+		try:
+			return "%s('%s',%s)" % (self.__class__.__name__, self.type, self.object.__class__.__name__)
+		except (POSError,AttributeError):
+			return object.__repr__( self )
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(nti_interfaces.IStreamChangeEvent)

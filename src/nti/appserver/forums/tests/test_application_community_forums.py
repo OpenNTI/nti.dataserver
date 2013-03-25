@@ -220,11 +220,11 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 
 	def _do_test_user_can_POST_new_forum_entry( self, data, content_type=None, status_only=None, expected_data=None ):
 		# Override the method in super()
-		res = self._do_simple_tests_for_POST_of_topic_entry( data, content_type=content_type, status_only=status_only, expected_data=expected_data )
+		post_res = self._do_simple_tests_for_POST_of_topic_entry( data, content_type=content_type, status_only=status_only, expected_data=expected_data )
 		if status_only:
-			return res
+			return post_res
 		testapp = self.testapp
-
+		res = post_res
 		# Returns the representation of the new topic created
 		data = expected_data or data
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
@@ -257,7 +257,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
 		assert_that( pq( b'entry title' ).text(), is_( data['title'] ) )
 		assert_that( pq( b'entry summary' ).text(), is_( '<div><br />' + data['body'][0] ) )
-
+		return post_res
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
