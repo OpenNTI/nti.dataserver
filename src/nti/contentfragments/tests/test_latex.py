@@ -59,7 +59,7 @@ class TestLatexTransforms(SharedConfiguringTestBase):
 
 	def test_comment( self ):
 		_tex_assert( 'If 20% of the grapes',
-					 'If 20\\%\\ of the grapes' )
+					 'If 20\\% of the grapes' )
 
 	def test_trailing_question(self):
 		_tex_assert( 'What is the positive difference between the value of 2 \u00d7 (3 + 4) and the value of 2 \u00d7 3 + 4?',

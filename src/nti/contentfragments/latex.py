@@ -63,7 +63,7 @@ _TEX_OPERATOR_MAP = { ord(_k): _v for _k,_v in _TEX_OPERATORS }
 	# 	u'\u00a2'.encode('utf8'): r'$\prime$', # 0xc2c2
 
 _escapes = [(u'$', u'\\$'),
-			(u'%', u'\\%\\'),
+			(u'%', u'\\%'),
 			(u'\xa2', u'$\\prime$'), # \uf0
 			(u'\xad', u''),
 			(u'\xb5', u'$\\mu$'),
