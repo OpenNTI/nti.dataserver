@@ -115,7 +115,16 @@ class TrigramTrainer(object):
 	def clean_pbig(self, lang='en'):
 		return clean_pbig(self.data, lang)
 
-	def process_file(self, source, minfreq=2, calc_prob=True, tokenize=False, lang=u''):
+	# process source / training files
+
+	def create_trigram_pairs(self, minfreq=2):
+		self.eliminate_frequences(minfreq)
+		self.calc_prob()
+		pairs = zip(self.trigrams.values(), self.trigrams.keys())
+		pairs.sort(reverse=True)
+		return pairs
+
+	def process_file(self, source, tokenize=False, lang=u''):
 		try:
 			if source.endswith(".gz"):
 				fo = gzip.open(source)
@@ -133,39 +142,28 @@ class TrigramTrainer(object):
 		except IOError:
 			pass
 
-		pairs = ()
-		if calc_prob:
-			self.eliminate_frequences(minfreq)
-			self.calc_prob()
-			pairs = zip(self.trigrams.values(), self.trigrams.keys())
-			pairs.sort(reverse=True)
-		return pairs
-
 	@classmethod
 	def process_files(cls, dpath, minfreq=2, trainer=None, calc_prob=True, tokenize=False, lang=u''):
 		"""Train content found in files in a particular directory"""
 
-		pairs = ()
 		trainer = TrigramTrainer() if trainer is None else trainer
-
-		files = os.listdir(dpath)
-		for x, fn in enumerate(files):
+		for fn in os.listdir(dpath):
 			fn = os.path.join(dpath, fn)
-			if os.path.isdir(fn):
-				continue
+			if not os.path.isdir(fn):
+				trainer.process_file(fn, tokenize=tokenize, lang=lang)
 
-			process = calc_prob and x == len(files) - 1
-			pairs = trainer.process_file(fn, calc_prob=process, tokenize=tokenize, lang=lang)
-
+		pairs = ()
+		if calc_prob:
+			pairs = trainer.create_trigram_pairs(minfreq)
 		return trainer, pairs
 
 if __name__ == "__main__":
 	trainer = TrigramTrainer()
 	if len(sys.argv) > 1:
-		documents = sys.argv[1:]
-		for x, path in enumerate(documents):
-			calc_prob = x == len(documents) - 1
-			pairs = trainer.process_file(path, calc_prob=calc_prob)
+		for path in sys.argv[1:]:
+			trainer.process_file(path)
+
+		pairs = trainer.create_trigram_pairs(2)
 		for p in pairs:
 			print (p[1], p[0])
 	else:
