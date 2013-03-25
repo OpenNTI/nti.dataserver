@@ -28,7 +28,7 @@ from nti.dataserver import authorization as nauth
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.oids import to_external_ntiid_oid
-
+from nti.externalization.internalization import update_from_external_object
 
 FLAG_VIEW = 'flag'
 FLAG_AGAIN_VIEW = 'flag.metoo'
@@ -54,7 +54,7 @@ class FlagLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 		# Flagged and handled once. Cannot be flagged again. This
 		# is only used on IMessageInfo objects which are otherwise
 		# immutable. TODO: This probably needs handled differently.
-		if IModeratorDealtWithFlag.providedBy( context ):
+		if IModeratorDealtWithFlag.providedBy( context ): # pragma: no cover
 			return
 
 		super(FlagLinkDecorator,self).decorateExternalMapping( context, mapping )
@@ -63,7 +63,7 @@ def _do_flag( f, request ):
 	try:
 		f( request.context, authenticated_userid( request ) )
 		return _util.uncached_in_response( request.context )
-	except KeyError:
+	except KeyError: # pragma: no cover
 		logger.warn( "Attempting to un/flag something not found. Was it deleted and the link is stale? %s", request.context, exc_info=True )
 		raise hexc.HTTPNotFound()
 
@@ -164,45 +164,42 @@ def moderation_admin_post( request ):
 		# Also if we do this, do we want to remove its 'public' visibility? Or for the sake of
 		# threads do we need to leave it?
 		for item in the_table.selectedItems:
+			flagging.unflag_object( item, authenticated_userid( request ) )
+			interface.alsoProvides( item, IModeratorDealtWithFlag) # TODO: Apply the IDeletedObjectPlaceholder ?
+
 			# TODO: This is not very generic due to the way that
 			# chat transcripts are currently being stored. Furthermore,
 			# it's quite probable that doing something with the chat message
 			# is not properly updating indexes for this same reason; in particular,
 			# we have no way to recapture the complete set of recipients that got the
 			# message due to shadowing, etc
+
+			# Run the default 'DELETE' action for the complete path to this object
+			# by invoking it as a request. It this way, we get to dispatch based on the
+			# type of object automatically, so long as it has a DELETE action
+			subrequest = Request.blank( '/dataserver2/Objects/' + to_external_ntiid_oid( item ) )
+			subrequest.method = 'DELETE'
+			# Impersonate the creator of the object to get the right permissions.
+			# in this way, ACT_MODERATE automatically implies ACT_DELETE.
+			# TODO: We could also use the nti.dataserver.authentication policy?
+			creator = item.creator.username if hasattr(item.creator, 'username') else item.creator
+			subrequest.environ['REMOTE_USER'] = creator
+			subrequest.environ['repoze.who.identity'] = {'repoze.who.userid': creator}
 			try:
-				updater = item.creator.updates() # FIXME: Updates is going away
-			except AttributeError:
-				# Hmm kay. So not something directly contained in a User.
-				# (probably a chat message). Reset its message body (which is
-				# meant to be immutable from external sources), and so this
-				# doesn't quite work
-				item.updateFromExternalObject( {'body': [_("This item has been deleted by the moderator.")] } )
-				flagging.unflag_object( item, authenticated_userid( request ) )
-				interface.alsoProvides( item, IModeratorDealtWithFlag) # TODO: Apply the IDeletedObjectPlaceholder ?
-			else:
-				# Run the default 'DELETE' action for the complete path to this object
-				# by invoking it as a request. It this way, we get to dispatch based on the
-				# type of object automatically, so long as it has a DELETE action
-				subrequest = Request.blank( '/dataserver2/Objects/' + to_external_ntiid_oid( item ) )
-				subrequest.method = 'DELETE'
-				# Impersonate the creator of the object to get the right permissions.
-				# in this way, ACT_MODERATE automatically implies ACT_DELETE.
-				# TODO: We could also use the nti.dataserver.authentication policy?
-				subrequest.environ['REMOTE_USER'] = item.creator.username
-				subrequest.environ['repoze.who.identity'] = {'repoze.who.userid': item.creator.username}
+				response = request.invoke_subrequest( subrequest ) # Don't use tweens, run in same site, same transaction
+			except (hexc.HTTPForbidden,hexc.HTTPMethodNotAllowed): # What else to catch?
+				del_item = None
 				try:
-					# Just in case we don't actually delete this item, take it out of the queue
-					flagging.unflag_object( item, authenticated_userid( request ) )
-					interface.alsoProvides( item, IModeratorDealtWithFlag )
-					response = request.invoke_subrequest( subrequest ) # Don't use tweens, run in same site, same transaction
-				except hexc.HTTPForbidden: # What else to catch?
-					# Hmm. Not allowed to do that. Can we delete it manually?
-					logger.exception( "Failed to delete moderated item; trying again" )
-					with updater:
-						del_item = item.creator.deleteContainedObject( item.containerId, item.id )
-					if del_item is None:
-						logger.warn( "Failed to delete moderated item %s", item )
+					del_item = item.creator.deleteContainedObject( item.containerId, item.id )
+				except AttributeError:
+					pass
+
+				if del_item is None:
+					# OK, even its user cannot delete it. At least we can try to update its 'body' property.
+					# This is probably a chat message
+					update_from_external_object( item, {'body': [_("This item has been deleted by the moderator.")] } )
+					logger.warn( "Failed to delete moderated item %s", item )
+
 
 	# Else, no action.
 	# Redisplay the page with a get request to avoid the "re-send this POST?" problem
