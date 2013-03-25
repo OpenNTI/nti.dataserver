@@ -387,7 +387,10 @@ def _pre_fork( arbiter, worker ):
 	notify( _GunicornWillFork( arbiter, worker ) )
 
 def _post_fork( arbiter, worker ):
-	# Patch up the thread pool and DNS if needed.
+	# Patch up the thread pool and DNS if needed due to a bug in the fork watcher
+	# that should have done this already; see
+	# https://github.com/SiteSupport/gevent/issues/154
+
 	# This has to happen before anything that might cause
 	# a greenlet switch, such as making a network connection (over TCP, not unix sockets)
 	# If it fails to happen, the symptom is a process hang with a stacktrace showing
