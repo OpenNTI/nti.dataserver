@@ -48,7 +48,8 @@ class TestTrigramTrainer(ConfiguringTestBase):
 
 	def test_process_files(self):
 		dpath = os.path.join(os.path.dirname(__file__), "train")
-		t, _ = TrigramTrainer.process_files(dpath)
-		assert_that(t.characters, is_(132628))
-		assert_that(t.total_trigrams, is_(131026))
-		assert_that(t.trigrams, has_length(2800))
+		t, pairs = TrigramTrainer.process_files(dpath)
+		assert_that(t.characters, is_(63416))
+		assert_that(t.total_trigrams, is_(61328))
+		assert_that(t.trigrams, has_length(2905))
+		assert_that(pairs, has_length(2905))
