@@ -19,9 +19,18 @@ import string
 import collections
 import unicodedata
 
+from zope import interface
+from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
+
+from nti.utils.schema import SchemaConfigured
+
 from .blocks import unicode_block
+from .trigram_trainer import calc_prob
+from .trigram_trainer import TrainerData
+from .. import interfaces as ld_interfaces
+from .trigram_trainer import create_trigram_nsc
 from ... import space_pattern, non_alpha_pattern
-from . import (UNKNOWN, CYRILLIC, ARABIC, DEVANAGARI, SINGLETONS, EXTENDED_LATIN, PT, ALL_LATIN)
+from . import (UNKNOWN, CYRILLIC, ARABIC, DEVANAGARI, SINGLETONS, EXTENDED_LATIN, PT, ALL_LATIN, NAME_MAP)
 
 MIN_LENGTH = 20
 
@@ -33,7 +42,7 @@ def _load_models(models_dir):
 			continue
 
 		if model_file[-3:] == ".gz":
-			lang = string.upper(model_file[0]) + model_file[1:-3]
+			lang = string.lower(model_file[0:-3])
 			with gzip.open(model_path) as src:
 				model = {}
 				for line in src:
@@ -82,7 +91,8 @@ def find_runs(text):
 
 	return relevant_runs
 
-def _identify(sample, scripts):
+def _identify(sample, scripts, models):
+
 	if len(sample) < 3:
 		return UNKNOWN
 
@@ -101,13 +111,13 @@ def _identify(sample, scripts):
 		return "zh"
 
 	if "Cyrillic" in scripts:
-		return check(sample, CYRILLIC)
+		return _check(sample, models, CYRILLIC)
 
 	if "Arabic" in scripts or "Arabic Presentation Forms-A" in scripts or "Arabic Presentation Forms-B" in scripts:
-		return check(sample, ARABIC)
+		return _check(sample, models, ARABIC)
 
 	if "Devanagari" in scripts:
-		return check(sample, DEVANAGARI)
+		return _check(sample, models, DEVANAGARI)
 
 	# Try languages with unique scripts
 	for block_name, lang_name in SINGLETONS:
@@ -118,21 +128,76 @@ def _identify(sample, scripts):
 		return "vi"
 
 	if "Latin-1 Supplement" in scripts or "Latin Extended-A" in scripts or "IPA Extensions" in scripts:
-		latinLang = check(sample, EXTENDED_LATIN)
+		latinLang = _check(sample, models, EXTENDED_LATIN)
 		if latinLang == "pt":
-			return check(sample, PT)
+			return _check(sample, models, PT)
 		else:
 			return latinLang
 
 	if "Basic Latin" in scripts:
-		return check(sample, ALL_LATIN)
+		return _check(sample, models, ALL_LATIN)
 
 	return UNKNOWN
 
+def _check(text, models, langs):
+	td = TrainerData()
 
-def check(sample, models):
-	if len(sample) < MIN_LENGTH:
-		return UNKNOWN
+	create_trigram_nsc(text, td)  # create trigrams of submitted text
+	calc_prob(td)  # calculate probabilities
+
+	result = collections.defaultdict(float)  # storage for the matches with the models
+	for lang in langs:
+		result[lang] = 0
+
+	# for all keys in trigrams
+	for x in td.trigrams.keys():
+		# for 0 to number language models
+		for lang in langs:
+			model = models.get(lang, None)
+			if model and x in model:
+				# if the model contains the key, get the deviation
+				value = model[x] - td.trigrams[x]
+				if value < 0:
+					value = value * -1
+				result[lang] += value
+			else:
+				# otherwise set the resulting value to 1 = max. deviation
+				result[lang] += 1
+
+	result_lang = UNKNOWN
+	value = float(1.0)
+
+	for lang in langs:
+		result[lang] = float(result[lang]) / float(td.total_trigrams)
+		if value > result[lang]:
+			value = float(result[lang])
+			result_lang = lang
+
+	return result_lang
+
+
+@interface.implementer(ld_interfaces.ILanguage)
+class _Language(SchemaConfigured):
+
+	code = FP(ld_interfaces.ILanguage['code'])
+	name = FP(ld_interfaces.ILanguage['name'])
+
+	def __str__(self):
+		return self.code
+
+	def __repr__(self):
+		return "(%s,%s)" % (self.code, self.name)
+
+	def __eq__(self, other):
+		try:
+			return self is other or self.code == other.code
+		except AttributeError:
+			return NotImplemented
+
+	def __hash__(self):
+		xhash = 47
+		xhash ^= hash(self.code)
+		return xhash
 
 class _LangDetector(object):
 
@@ -141,7 +206,11 @@ class _LangDetector(object):
 		self.models = _load_models(models_dir)
 
 	def __call__(self, text):
-		return self._identify(text)
+		lang = self._identify(text)
+		if lang and lang != UNKNOWN:
+			result = _Language(code=lang, name=NAME_MAP.get(lang))
+			return result
+		return None
 
 	def _identify(self, content):
 		if not content:
@@ -152,4 +221,4 @@ class _LangDetector(object):
 
 		content = normalize(content)
 
-		return _identify(content, find_runs(content))
+		return _identify(content, find_runs(content), self.models)
