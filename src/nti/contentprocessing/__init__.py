@@ -30,17 +30,17 @@ default_punk_char_pattern_plus = re.compile(default_punk_char_expression_plus, r
 
 space_pattern = re.compile('\s+', re.UNICODE)
 
-def _makeNonAlphaRe():
-	nonAlpha = [u'[^']
+def _makenon_alpha_re():
+	non_alpha = [u'[^']
 	for i in range(sys.maxunicode):
 		c = unichr(i)
-		if c.isalpha(): nonAlpha.append(c)
-		nonAlpha.append(u']')
-	nonAlpha = u"".join(nonAlpha)
-	return re.compile(nonAlpha)
+		if c.isalpha(): non_alpha.append(c)
+		non_alpha.append(u']')
+	non_alpha = u"".join(non_alpha)
+	return re.compile(non_alpha, re.UNICODE)
 
-non_alpha_pattern = _makeNonAlphaRe()
-del _makeNonAlphaRe
+non_alpha_pattern = _makenon_alpha_re()
+del _makenon_alpha_re
 
 # export common functions
 from ._content_utils import normalize
