@@ -19,7 +19,7 @@ def setUpPackage():
 	# The forum tests go from 55s to 15s
 	# This is a nose1 feature and will have to be moved for nose2
 	_old_pw_manager = Principal.password_manager_name
-	#Principal.password_manager_name = 'Plain Text'
+	Principal.password_manager_name = 'Plain Text'
 
 def tearDownPackage():
 	if _old_pw_manager:
