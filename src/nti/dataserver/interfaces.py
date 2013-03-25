@@ -313,6 +313,28 @@ class IContainerIterable(interface.Interface):
 		:return: An iteration across the containers held in this object.
 		"""
 
+
+# ## Changes related to content objects/users
+SC_CREATED = "Created"
+SC_MODIFIED = "Modified"
+SC_DELETED = "Deleted"
+SC_SHARED = "Shared"
+SC_CIRCLED = "Circled"
+
+class IStreamChangeEvent(interface.interfaces.IObjectEvent):
+	"""
+	A change that goes in the activity stream for a user.
+	If the object was :class:`IContained`, then this object will be as well.
+	"""
+
+	type = interface.Attribute("One of the constants declared by this class.")
+
+class INeverStoredInSharedStream(interface.Interface):
+	"""
+	A marker interface used when distributing changes to show that this
+	object should not be stored in shared streams.
+	"""
+
 # ## Groups/Roles/ACLs
 
 # some aliases
@@ -441,7 +463,7 @@ class IShouldHaveTraversablePath(interface.Interface):
 	exclusively.
 	"""
 
-class IEntity(IZContained, IAnnotatable, IShouldHaveTraversablePath):
+class IEntity(IZContained, IAnnotatable, IShouldHaveTraversablePath, INeverStoredInSharedStream):
 	username = DecodingValidTextLine(
 		title=u'The username',
 		constraint=valid_entity_username
@@ -1120,20 +1142,6 @@ class INote(IHighlight, IThreadable, ITitledContent):
 
 	body = CompoundModeledContentBody()
 
-# ## Changes related to content objects/users
-SC_CREATED = "Created"
-SC_MODIFIED = "Modified"
-SC_DELETED = "Deleted"
-SC_SHARED = "Shared"
-SC_CIRCLED = "Circled"
-
-class IStreamChangeEvent(interface.interfaces.IObjectEvent):
-	"""
-	A change that goes in the activity stream for a user.
-	If the object was :class:`IContained`, then this object will be as well.
-	"""
-
-	type = interface.Attribute("One of the constants declared by this class.")
 
 class IDeletedObjectPlaceholder(interface.Interface):
 	"""

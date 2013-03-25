@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import datetime
+from abc import ABCMeta, abstractmethod
 
 from ZODB.interfaces import IConnection
 
@@ -30,11 +31,12 @@ from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 
 from nti.appserver.ugd_feed_views import AbstractFeedView
 
-from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.dataserver import users
+from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -61,10 +63,10 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults # NOTE: Only usable on classes
 
 from zope.container.interfaces import INameChooser
+from zope.container.contained import dispatchToSublocations
 from zope import component
 from zope import interface
 from zope import lifecycleevent
-
 from zope.event import notify
 
 from . import VIEW_PUBLISH
@@ -462,74 +464,80 @@ def match_title_of_post_to_blog( post, event ):
 
 ### Publishing workflow
 
-def _publication_modified( blog_entry ):
-	"Fire off a modified event when the publication status changes. The event notes the sharing has changed."
-	provides = interface.providedBy( blog_entry )
-	attributes = []
-	for attr_name in 'sharedWith', 'sharingTargets':
-		attr = provides.get( attr_name )
-		if attr:
-			iface_providing = attr.interface
-			attributes.append( lifecycleevent.Attributes( iface_providing, attr_name ) )
 
-	lifecycleevent.modified( blog_entry, *attributes )
+class _AbstractPublishingView(object):
+	__metaclass__ = ABCMeta
 
+	_iface = nti_interfaces.IDefaultPublished
 
+	def __init__( self, request ):
+		self.request = request
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_UPDATE,
-			  request_method='POST',
-			  context=frm_interfaces.ICommunityHeadlineTopic,
-			  name=VIEW_PUBLISH)
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_UPDATE,
-			  request_method='POST',
-			  context=frm_interfaces.IPersonalBlogEntry,
-			  name=VIEW_PUBLISH)
-def _PublishView(request):
-	topic = request.context
-	if not nti_interfaces.IDefaultPublished.providedBy( topic ):
-		interface.alsoProvides( topic, nti_interfaces.IDefaultPublished )
-		_publication_modified( topic )
+	@abstractmethod
+	def _do_provide(self, topic):
+		raise NotImplementedError() # pragma: no cover
+	@abstractmethod
+	def _test_provides(self, topic):
+		raise NotImplementedError() # pragma: no cover
 
-		# TODO: Hooked directly up to temp_post_added_to_indexer
-		temp_post_added_to_indexer( topic.headline, None )
-		# TODO: Right now we are dispatching this by hand. Use
-		# events and/or dispatchToSublocations
-		for comment in topic.values(): # TODO: values() doesn't seem to aq wrap?
-			_send_sharing_change_to_sharing_targets( comment.__of__( topic ), topic )
-	request.response.location = request.resource_path( topic )
-	return uncached_in_response( topic )
+	def _did_modify_topic( self, blog_entry, oldSharingTargets ):
+		"Fire off a modified event when the publication status changes. The event notes the sharing has changed."
+		provides = interface.providedBy( blog_entry )
+		attributes = []
+		for attr_name in 'sharedWith', 'sharingTargets':
+			attr = provides.get( attr_name )
+			if attr:
+				iface_providing = attr.interface
+				attributes.append( lifecycleevent.Attributes( iface_providing, attr_name ) )
 
+		event = ObjectSharingModifiedEvent( blog_entry, *attributes, oldSharingTargets=oldSharingTargets )
+		notify( event )
+		return event
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=frm_interfaces.ICommunityHeadlineTopic,
-			  permission=nauth.ACT_UPDATE,
-			  request_method='POST',
-			  name=VIEW_UNPUBLISH)
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=frm_interfaces.IPersonalBlogEntry,
-			  permission=nauth.ACT_UPDATE,
-			  request_method='POST',
-			  name=VIEW_UNPUBLISH)
-def _UnpublishView(request):
-	topic = request.context
-	if nti_interfaces.IDefaultPublished.providedBy( topic ):
-		interface.noLongerProvides( topic, nti_interfaces.IDefaultPublished )
-		_publication_modified( topic )
-		# TODO: While we have temp_dispatch_to_indexer in place, when we unpublish
-		# do we need to unindex the comments too?
-		# TODO: Right now we are dispatching this by hand. Use
-		# events and/or dispatchToSublocations
-		for comment in topic.values():
-			_send_sharing_change_to_sharing_targets( comment.__of__( topic ), topic )
+	def __call__(self):
+		request = self.request
+		topic = request.context
+		if self._test_provides( topic ):
+			oldSharingTargets = set(topic.sharingTargets)
 
-	request.response.location = request.resource_path( topic )
-	return uncached_in_response( topic )
+			self._do_provide( topic )
+
+			# Ordinarily, we don't need to dispatch to sublocations a change
+			# in the parent (hence why it is not a registered listener).
+			# But here we know that the sharing is propagated automatically
+			# down, so we do.
+			event = self._did_modify_topic( topic, oldSharingTargets )
+			dispatchToSublocations( topic, event )
+
+		request.response.location = request.resource_path( topic )
+		return uncached_in_response( topic )
+
+@view_config( context=frm_interfaces.ICommunityHeadlineTopic )
+@view_config( context=frm_interfaces.IPersonalBlogEntry )
+@view_defaults( route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_UPDATE,
+				request_method='POST',
+				name=VIEW_PUBLISH )
+class _PublishView(_AbstractPublishingView):
+	def _do_provide( self, topic ):
+		interface.alsoProvides( topic, self._iface )
+	def _test_provides( self, topic ):
+		return not nti_interfaces.IDefaultPublished.providedBy( topic )
+
+@view_config( context=frm_interfaces.ICommunityHeadlineTopic )
+@view_config( context=frm_interfaces.IPersonalBlogEntry )
+@view_defaults( route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_UPDATE,
+				request_method='POST',
+				name=VIEW_UNPUBLISH )
+class _UnpublishView(_AbstractPublishingView):
+	def _do_provide( self, topic ):
+		interface.noLongerProvides( topic, self._iface )
+	def _test_provides( self, topic ):
+		return nti_interfaces.IDefaultPublished.providedBy( topic )
+
 
 ### Events
 ## TODO: Under heavy construction
@@ -544,27 +552,6 @@ def _stream_event_for_comment( comment, change_type=nti_interfaces.SC_CREATED ):
 
 	return change
 
-def _send_stream_event_to_targets( change, targets ):
-	targets = [x for x in targets if nti_interfaces.IDynamicSharingTarget.providedBy( x )]
-	for target in targets:
-		# TODO: Private API
-		# Notice we are not doing what User._postNotification does and expanding the
-		# username iterables (DFLs). This makes a nice compromise in the amount of data
-		# spammed all over, since this isn't realtime
-		target._noticeChange( change, force=True )
-
-def _send_sharing_change_to_sharing_targets(changed_object, published_object):
-	if not nti_interfaces.IDefaultPublished.providedBy( published_object ):
-		change_type = nti_interfaces.SC_DELETED
-		targets = changed_object.sharingTargetsWhenPublished
-	else:
-		change_type = nti_interfaces.SC_SHARED
-		targets = changed_object.sharingTargets
-
-	change = activitystream_change.Change( change_type, changed_object )
-	change.creator = changed_object.creator
-	change.object_is_shareable = False
-	_send_stream_event_to_targets( change, targets )
 
 @component.adapter( frm_interfaces.IPersonalBlogComment, lifecycleevent.IObjectAddedEvent )
 def notify_online_author_of_comment( comment, event ):
@@ -587,22 +574,15 @@ def notify_online_author_of_comment( comment, event ):
 	# in the shared data
 	assert not comment.isSharedDirectlyWith( blog_author )
 
+
 	if blog_author != comment.creator:
 		blog_author._noticeChange( change, force=True )
 
+	# (Except for being in the stream, the effect of the notification can be done with component.handle( blog_author, change ) )
+
 	# Also do the same for of the dynamic types it is shared with,
 	# thus sharing the same change object
-	_send_stream_event_to_targets( change, comment.sharingTargets )
-
-
-@component.adapter(frm_interfaces.IPersonalBlogEntry, lifecycleevent.IObjectModifiedEvent)
-def notify_dynamic_memberships_of_blog_entry_publication_change( blog_entry, event ):
-	for modification_description in event.descriptions:
-		properties = getattr( modification_description, 'attributes', getattr( modification_description, 'keys', () ) )
-		if 'sharedWith' in properties or 'sharingTargets' in properties:
-			# Ok, the sharing has changed. Send the changes around
-			_send_sharing_change_to_sharing_targets( blog_entry, blog_entry )
-			break
+	#_send_stream_event_to_targets( change, comment.sharingTargets )
 
 def _temp_dispatch_to_indexer( change ):
 	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
@@ -611,7 +591,7 @@ def _temp_dispatch_to_indexer( change ):
 	if indexmanager and dataserver:
 
 		comment = change.object
-		change = _stream_event_for_comment( comment )
+		#change = _stream_event_for_comment( comment )
 
 		# Now index the comment for the creator and all the sharing targets. This is just
 		# like what the User object itself does (except we don't need to expand DFL/communities)
@@ -629,12 +609,12 @@ def temp_post_added_to_indexer( comment, event ):
 def temp_post_modified_to_indexer( comment, event ):
 	change = _stream_event_for_comment( comment, nti_interfaces.SC_MODIFIED )
 	_temp_dispatch_to_indexer(change)
+
 ###
 ## NOTE: You cannot send a stream change on an object deleted event.
 ## See HeadlineTopicDeleteView and the place it points to. This is already
 ## handled.
 
-import contentratings.interfaces
 from nti.dataserver.liking import FAVR_CAT_NAME
 
 def temp_store_favorite_object( modified_object, event ):

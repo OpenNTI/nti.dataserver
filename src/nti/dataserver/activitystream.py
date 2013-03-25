@@ -140,7 +140,6 @@ def _stream_enqeue_modification( self, changeType, obj, current_sharing_targets,
 	newSharing = set(current_sharing_targets)
 	seenTargets = set()
 
-	modifiedChange = change
 
 	if origSharing != newSharing:
 		# OK, the sharing changed and its not a new or dead

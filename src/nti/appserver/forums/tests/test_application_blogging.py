@@ -30,6 +30,7 @@ from hamcrest import has_entry
 from hamcrest import has_entries
 from hamcrest import ends_with
 from hamcrest import greater_than
+from hamcrest import greater_than_or_equal_to
 from hamcrest import has_key
 
 from nti.tests import is_empty
@@ -140,12 +141,13 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 
 	def _do_test_user_can_POST_new_blog_entry( self, data, content_type=None, status_only=None, expected_data=None ):
 
-		res = self._do_simple_tests_for_POST_of_topic_entry( data, content_type=content_type, status_only=status_only, expected_data=expected_data )
+		post_res = self._do_simple_tests_for_POST_of_topic_entry( data, content_type=content_type, status_only=status_only, expected_data=expected_data )
 		if status_only:
-			return res
+			return post_res
 
 		testapp = self.testapp
 		data = expected_data or data
+		res = post_res
 		entry_id = res.json_body['ID']
 
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
@@ -204,6 +206,8 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 
 		# And in his links
 		self.require_link_href_with_rel( self.resolve_user(), 'Blog' )
+
+		return post_res
 
 	_do_test_user_can_POST_new_forum_entry = _do_test_user_can_POST_new_blog_entry
 
@@ -283,9 +287,10 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		#assert_that( res.json_body['Last Modified'], is_( greater_than( contents_mod_time ) ) )
 
 
-	@WithSharedApplicationMockDS
+	@WithSharedApplicationMockDS(with_changes=True)
 	@time_monotonically_increases
 	def test_user_sharing_community_can_GET_and_POST_new_comments(self):
+		self.ds.add_change_listener( users.onChange )
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( username='original_user@foo' )
 			user2 = self._create_user( username='user2@foo' )
@@ -384,12 +389,12 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		#assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
 
 		# ...And in the main stream of the follower.
-		res = testapp2.get( '/dataserver2/users/' + user2_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream' )
-		assert_that( res.json_body['Items'], has_length( 1 ) )
+		res = self.fetch_user_root_rstream( testapp=testapp2, username=user2_username )
+		assert_that( res.json_body['Items'], has_length( 2 ) ) # The blog entry itself, and the headline
 		assert_that( res.json_body['Items'][0]['Item'], has_entry( 'title', data['title'] ) )
 
 		# (Though not the non-follower)
-		testapp3.get(  '/dataserver2/users/' + user3_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=404 )
+		self.fetch_user_root_rstream( testapp=testapp3, username=user3_username, status=404 )
 
 		# it currently has no contents
 		testapp2.get( contents_href, status=200 )
@@ -419,7 +424,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		# These created notifications to the author...
 		# ... both on the socket...
 		events = eventtesting.getEvents( chat_interfaces.IUserNotificationEvent )
-		assert_that( events, has_length( 3 ) ) # Note that this is three, due to the initial read-conflict-error from the stream cache
+		assert_that( events, has_length( greater_than_or_equal_to( 2 ) ) ) # possibly more due to read-conflict retries
 		for evt in events:
 			assert_that( evt.targets, is_( (user_username,) ) )
 			#assert_that( evt.args[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
@@ -617,7 +622,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 
 		# As well as the RecursiveStream
 		for uname, app, status, length in ((user_username, testapp, 404, 0),
-										   (user2_username, testapp2, 200, 1), # He still has the blog notification
+										   (user2_username, testapp2, 200, 2), # He still has the blog notifications
 										   (user3_username, testapp3, 404, 0)):
 			__traceback_info__ = uname
 			res = app.get( '/dataserver2/users/' + uname  + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=status )
