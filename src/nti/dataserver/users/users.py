@@ -14,7 +14,9 @@ import numbers
 import warnings
 import functools
 import collections
-import contextlib
+import os
+import sys
+
 
 import persistent
 from zope import interface
@@ -119,6 +121,7 @@ class Principal(Entity,sharing.SharingSourceMixin):
 
 	# TODO: Continue migrating this towards zope.security.principal, the zope principalfolder
 	# concept.
+	password_manager_name = 'bcrypt'
 	def __init__(self,
 				 username=None,
 				 password=None,
@@ -148,7 +151,7 @@ class Principal(Entity,sharing.SharingSourceMixin):
 		if np and np.strip().upper() in user_interfaces._VERBOTEN_PASSWORDS:
 			raise user_interfaces.InsecurePasswordIsForbidden(np)
 
-		self.__dict__['password'] = _Password(np)
+		self.__dict__['password'] = _Password(np, self.password_manager_name)
 		# otherwise, no change
 	def _del_password(self):
 		del self.__dict__['password']
@@ -156,6 +159,11 @@ class Principal(Entity,sharing.SharingSourceMixin):
 
 	NTIID_TYPE = None
 	NTIID = property(named_entity_ntiid)
+
+if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
+	# For use by nti_run_integration_tests, nti_run_general_purpose_tests
+	print( "users.py: WARN: Configuring with plain text passwords", file=sys.stderr )
+	Principal.password_manager_name = 'Plain Text'
 
 @interface.implementer(nti_interfaces.ICommunity,
 					   loc_interfaces.ISublocations)
