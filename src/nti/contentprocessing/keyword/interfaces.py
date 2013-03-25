@@ -28,7 +28,9 @@ class ITermExtractKeyWord(IContentKeyWord):
 	terms = schema.List(value_type=nti_schema.ValidTextLine(title="Term"), title="terms associated with token", required=False)
 
 class ITermExtractFilter(interface.Interface):
-	"""Defines a key word extractor filter"""
+	"""
+	Defines a key word extractor filter
+	"""
 
 	def __call__(word, occur, strength):
 		"""

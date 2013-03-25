@@ -15,9 +15,10 @@ from . import interfaces as stemmer_interfaces
 
 @interface.implementer(stemmer_interfaces.IStemmer)
 class ZopyYXStemmer(object):
+
     def __init__(self, language='english'):
         self._stemmer = stemmer.Stemmer(language)
-        
+
     def stem(self, token):
         token = unicode(token)
         result = self._stemmer.stem((token,))
