@@ -70,7 +70,7 @@ class QAssessedQuestion(SchemaConfigured,persistent.Persistent):
 	__repr__ = make_repr()
 
 	def __hash__(self):
-		return hash( (self.questionId, self.parts) )
+		return hash( (self.questionId, tuple(self.parts)) )
 
 
 @interface.implementer(interfaces.IQAssessedQuestionSet, nti_interfaces.IContained, nti_interfaces.IZContained, nti_interfaces.ICreated)
@@ -98,7 +98,7 @@ class QAssessedQuestionSet(SchemaConfigured,persistent.Persistent):
 	__repr__ = make_repr()
 
 	def __hash__(self):
-		return hash( (self.questionSetId, self.questions) )
+		return hash( (self.questionSetId, tuple(self.questions)) )
 
 
 def assess_question_submission( submission, questions=None ):

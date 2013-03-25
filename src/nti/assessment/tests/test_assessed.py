@@ -103,10 +103,12 @@ class TestAssessedQuestionSet(TestCase):
 		assert_that( result, has_property( 'questions',
 										   contains(
 											   has_property( 'parts', contains( assessed.QAssessedPart( submittedResponse='correct', assessedValue=1.0 ) ) ) ) ) )
-
+		# consistent hashing
+		assert_that( hash(result), is_(hash(result)))
 
 		ext_obj = toExternalObject( result )
 		assert_that( ext_obj, has_entry( 'questions', has_length( 1 ) ) )
+
 
 	def test_assess_not_same_instance_question_but_id_matches( self ):
 		part = parts.QFreeResponsePart(solutions=(solutions.QFreeResponseSolution(value='correct'),))
