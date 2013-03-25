@@ -16,6 +16,7 @@ from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_, is_not, has_length, close_to, has_entry)
 
+@unittest.SkipTest
 class TestConceptTagger(ConfiguringTestBase):
 
 	@classmethod
@@ -25,7 +26,6 @@ class TestConceptTagger(ConfiguringTestBase):
 		with open(name, "r") as f:
 			cls.sample_content = f.read()
 
-	@unittest.SkipTest
 	def test_alchemy_ct(self):
 		concepts = _AlchemyAPIKConceptTaggger()(self.sample_content, "NTI-TEST")
 		assert_that(concepts, has_length(8))
