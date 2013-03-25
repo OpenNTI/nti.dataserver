@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Lidtrainer processes
@@ -12,6 +13,7 @@ __docformat__ = "restructuredtext en"
 
 import os
 import re
+import sys
 import gzip
 
 from zope import component
@@ -59,7 +61,7 @@ def eliminate_frequences(minfreq, data):
 			data.total_trigrams -= value
 	return data
 
-def clean_text_sc(text, lang='en'):
+def clean_text_sc(text, lang=u''):
 	"""Eliminates punctuation symbols from the submitted text."""
 	pattern = component.getUtility(cp_intefraces.IPunctuationCharPattern, name=lang)
 	result = re.sub(pattern, ' ', text)
@@ -69,7 +71,7 @@ def create_trigram_nsc(text, data):
 	text = clean_text_sc(text)
 	return create_trigrams(text, data)
 
-def clean_pbig(data, lang='en'):
+def clean_pbig(data, lang=u''):
 	"""Eliminate tri-grams that contain punctuation marks."""
 	pattern = component.getUtility(cp_intefraces.IPunctuationCharPattern, name=lang)
 	for t in data.trigrams.keys():
@@ -113,34 +115,59 @@ class TrigramTrainer(object):
 	def clean_pbig(self, lang='en'):
 		return clean_pbig(self.data, lang)
 
-	@classmethod
-	def process_files(cls, dpath, minfreq=2, trainer=None, calc_prob=True, tokenize=False, lang="en"):
-		"""Train content found in files in a particular directory"""
-		trainer = TrigramTrainer() if trainer is None else trainer
-		for fn in os.listdir(dpath):
-			fn = os.path.join(dpath, fn)
-			if os.path.isdir(fn): continue
+	def process_file(self, source, minfreq=2, calc_prob=True, tokenize=False, lang=u''):
+		try:
+			if source.endswith(".gz"):
+				fo = gzip.open(source)
+			else:
+				fo = open(source, "r")
 			try:
-				if fn.endswith(".gz"):
-					fo = gzip.open(fn)
+				text = fo.read()
+				if tokenize:
+					text = cu.get_content(text, lang)
 				else:
-					fo = open(fn, "r")
-				try:
-					text = fo.read()
-					if tokenize:
-						text = cu.get_content(text, lang)
-					else:
-						text = trainer.clean_text_sc(text, lang)
-					trainer.create_trigrams(text)
-				finally:
-					fo.close()
-			except IOError:
-				pass
+					text = self.clean_text_sc(text, lang)
+				self.create_trigrams(text)
+			finally:
+				fo.close()
+		except IOError:
+			pass
 
 		pairs = ()
-		trainer.eliminate_frequences(minfreq)
 		if calc_prob:
-			trainer.calc_prob()
-			pairs = zip(trainer.trigrams.values(), trainer.trigrams.keys())
+			self.eliminate_frequences(minfreq)
+			self.calc_prob()
+			pairs = zip(self.trigrams.values(), self.trigrams.keys())
 			pairs.sort(reverse=True)
+		return pairs
+
+	@classmethod
+	def process_files(cls, dpath, minfreq=2, trainer=None, calc_prob=True, tokenize=False, lang=u''):
+		"""Train content found in files in a particular directory"""
+
+		pairs = ()
+		trainer = TrigramTrainer() if trainer is None else trainer
+
+		files = os.listdir(dpath)
+		for x, fn in enumerate(files):
+			fn = os.path.join(dpath, fn)
+			if os.path.isdir(fn):
+				continue
+
+			process = calc_prob and x == len(files) - 1
+			pairs = trainer.process_file(fn, calc_prob=process, tokenize=tokenize, lang=lang)
+
 		return trainer, pairs
+
+if __name__ == "__main__":
+	trainer = TrigramTrainer()
+	if len(sys.argv) > 1:
+		documents = sys.argv[1:]
+		for x, path in enumerate(documents):
+			calc_prob = x == len(documents) - 1
+			pairs = trainer.process_file(path, calc_prob=calc_prob)
+		for p in pairs:
+			print (p[1], p[0])
+	else:
+		print("Usage:")
+		print("python trigram_trainer.py [document1] ...")

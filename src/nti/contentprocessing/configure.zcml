@@ -23,8 +23,11 @@
 	<utility factory="._content_utils._default_word_tokenizer_pattern" name="en" />
 	<utility factory="._content_utils._default_word_tokenizer_expression" name="en" />
 	
+	<utility factory="._content_utils._default_punctuation_char_pattern" />
 	<utility factory="._content_utils._default_punctuation_char_pattern" name="en" />
 	<utility factory="._content_utils._default_punctuation_char_pattern_plus" name="en" />
+	
+	<utility factory="._content_utils._default_punctuation_char_expression" />
 	<utility factory="._content_utils._default_punctuation_char_expression" name="en" />
 	<utility factory="._content_utils._default_punctuation_char_expression_plus" name="en" />
 	

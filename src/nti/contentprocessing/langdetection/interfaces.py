@@ -16,6 +16,7 @@ class ILanguage(interface.Interface):
 	represent a language
 	"""
 	code = nti_schema.ValidTextLine(title="language iso-639-1 code", required=True)
+	name = nti_schema.ValidTextLine(title="language name", required=False)
 
 class IAlchemyLanguage(ILanguage):
 	"""
