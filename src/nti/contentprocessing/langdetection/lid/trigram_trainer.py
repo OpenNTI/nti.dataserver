@@ -11,6 +11,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import os
 import re
 import sys
@@ -129,7 +131,7 @@ class TrigramTrainer(object):
 			if source.endswith(".gz"):
 				fo = gzip.open(source)
 			else:
-				fo = open(source, "r")
+				fo = open(source, "rt")
 			try:
 				text = fo.read()
 				if tokenize:
@@ -140,7 +142,7 @@ class TrigramTrainer(object):
 			finally:
 				fo.close()
 		except IOError:
-			pass
+			logger.exception('Error processing %s', source)
 
 	@classmethod
 	def process_files(cls, dpath, minfreq=2, trainer=None, calc_prob=True, tokenize=False, lang=u''):
@@ -148,9 +150,10 @@ class TrigramTrainer(object):
 
 		trainer = TrigramTrainer() if trainer is None else trainer
 		for fn in os.listdir(dpath):
-			fn = os.path.join(dpath, fn)
-			if not os.path.isdir(fn):
-				trainer.process_file(fn, tokenize=tokenize, lang=lang)
+			source = os.path.join(dpath, fn)
+			if not os.path.isdir(source) and not fn.startswith('.'):
+				__traceback_info__ = source
+				trainer.process_file(source, tokenize=tokenize, lang=lang)
 
 		pairs = ()
 		if calc_prob:
