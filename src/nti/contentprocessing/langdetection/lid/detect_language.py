@@ -199,6 +199,7 @@ class _Language(SchemaConfigured):
 		xhash ^= hash(self.code)
 		return xhash
 
+@interface.implementer(ld_interfaces.ILanguageDetector)
 class _LangDetector(object):
 
 	def __init__(self):
