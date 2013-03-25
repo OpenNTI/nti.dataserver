@@ -9,6 +9,24 @@ from pyramid.testing import tearDown as ptearDown
 #from pyramid.testing import DummyRequest
 from nti.tests import ByteHeadersDummyRequest as _ByteHeadersDummyRequest
 
+_old_pw_manager = None
+def setUpPackage():
+	from nti.dataserver.users import Principal
+	global _old_pw_manager
+	# By switching from the very secure and very expensive
+	# bcrypt default, we speed application-level tests
+	# up (due to faster principal creation and faster password authentication)
+	# The forum tests go from 55s to 15s
+	# This is a nose1 feature and will have to be moved for nose2
+	_old_pw_manager = Principal.password_manager_name
+	#Principal.password_manager_name = 'Plain Text'
+
+def tearDownPackage():
+	if _old_pw_manager:
+		from nti.dataserver.users import Principal
+		Principal.password_manager_name = _old_pw_manager
+
+
 class DummyRequest(_ByteHeadersDummyRequest):
 	possible_site_names = ()
 	def _on_set_header( self, key, val ):
