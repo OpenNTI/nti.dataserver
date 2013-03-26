@@ -38,8 +38,7 @@ interface_to_indexable_types = (
 	(nti_interfaces.IHighlight, highlight_),
 	(nti_interfaces.IRedaction, redaction_),
 	(chat_interfaces.IMessageInfo, messageinfo_),
-	(forum_interfaces.IPost, post_),
-	(forum_interfaces.IHeadlineTopic, post_))
+	(forum_interfaces.IPost, post_))
 
 mime_type_map = None
 
