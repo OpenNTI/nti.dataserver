@@ -259,10 +259,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		res = self._do_test_user_can_POST_new_forum_entry( data )
 
 		search_res = self.search_user_rugd( self.forum_headline_unique )
-		# XXX: Right now, we're getting back a hit for the headline, which we expect,
-		# and a hit for the topic itself, which is weird
-		assert_that( search_res.json_body, has_entry( 'Hit Count', 2 ) )
-		assert_that( search_res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( search_res.json_body, has_entry( 'Hit Count', 1 ) )
+		assert_that( search_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( search_res.json_body['Items'][0], has_entry( 'ID', res.json_body['ID'] ) )
 
 

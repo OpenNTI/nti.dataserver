@@ -320,20 +320,20 @@ class TestAppRepozeUserAdapter(SharedApplicationTestBase):
 			user = User.get_user( username )
 			rim = search_interfaces.IRepozeEntityIndexManager(user)
 			hits = rim.search('Kenpachi')
-			assert_that(hits, has_length(2))
+			assert_that(hits, has_length(1))
 
 			hits = rim.search('Unohana'.upper())
-			assert_that(hits, has_length(2))
+			assert_that(hits, has_length(1))
 
 			hits = rim.search('yachiru')
-			assert_that(hits, has_length(2))
+			assert_that(hits, has_length(1))
 			hits = toExternalObject(hits)
 			assert_that(hits, has_key(ITEMS))
 			items = hits[ITEMS]
-			assert_that(items, has_length(2))
+			assert_that(items, has_length(1))
 			hit = items[0]
 			assert_that(hit, has_entry(ID, 'Unohana'))
 			assert_that(hit, has_entry(FIELD, tags_))
 
 			hits = rim.search('yachiru'.upper())
-			assert_that(hits, has_length(2))
+			assert_that(hits, has_length(1))
