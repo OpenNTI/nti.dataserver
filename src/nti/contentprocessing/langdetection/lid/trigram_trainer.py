@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Lidtrainer processes
+Lid trainer
 
 author = "Damir Cavar <damir@cavar.me>"
 http://www.cavar.me/damir/LID/resources/lidtrainer.py.html
@@ -40,7 +40,9 @@ class TrainerData(object):
 		return self
 
 def create_trigrams(text, data):
-	"""Creates trigrams from characters."""
+	"""
+	Creates trigrams from characters
+	"""
 	text = re.sub(r'[\n\r\s]+', r" ", text.lower())
 	data.characters = data.characters + len(text)
 	for i in range(len(text) - 2):
@@ -50,22 +52,28 @@ def create_trigrams(text, data):
 		data.trigrams[trigram] += 1
 
 def calc_prob(data):
-	"""Calculate the probabilities for each trigram."""
+	"""
+	Calculate the probabilities for each trigram
+	"""
 	for x in data.trigrams.keys():
 		data.trigrams[x] = float(data.trigrams[x]) / float(data.total_trigrams)
 	return data
 
 def eliminate_frequences(minfreq, data):
-	"""Eliminates all trigrams with a frequency <= minfreq"""
+	"""
+	Eliminates all trigrams with a frequency <= minfreq
+	"""
 	for x in data.trigrams.keys():
 		if data.trigrams[x] <= minfreq:
 			value = data.trigrams.pop(x, 0)
 			data.total_trigrams -= value
 	return data
 
-def clean_text_sc(text, lang=u''):
-	"""Eliminates punctuation symbols from the submitted text."""
-	pattern = component.getUtility(cp_intefraces.IPunctuationCharPattern, name=lang)
+def clean_text_sc(text, name=u''):
+	"""
+	Eliminates punctuation symbols from the submitted text
+	"""
+	pattern = component.getUtility(cp_intefraces.IPunctuationCharPattern, name=name)
 	result = re.sub(pattern, ' ', text)
 	return result
 
@@ -73,9 +81,11 @@ def create_trigram_nsc(text, data):
 	text = clean_text_sc(text)
 	return create_trigrams(text, data)
 
-def clean_pbig(data, lang=u''):
-	"""Eliminate tri-grams that contain punctuation marks."""
-	pattern = component.getUtility(cp_intefraces.IPunctuationCharPattern, name=lang)
+def clean_pbig(data, name=u''):
+	"""
+	Eliminate tri-grams that contain punctuation marks
+	"""
+	pattern = component.getUtility(cp_intefraces.IPunctuationCharPattern, name=name)
 	for t in data.trigrams.keys():
 		if pattern.search(t):
 			value = data.trigrams.pop(t, 0)
@@ -111,22 +121,22 @@ class TrigramTrainer(object):
 	def create_trigram_nsc(self, text):
 		return create_trigram_nsc(text, self.data)
 
-	def clean_text_sc(self, text, lang='en'):
-		return clean_text_sc(text, lang)
+	def clean_text_sc(self, text, name=u''):
+		return clean_text_sc(text, name)
 
-	def clean_pbig(self, lang='en'):
-		return clean_pbig(self.data, lang)
+	def clean_pbig(self, name=u''):
+		return clean_pbig(self.data, name)
 
 	# process source / training files
 
 	def create_trigram_pairs(self, minfreq=2):
 		self.eliminate_frequences(minfreq)
 		self.calc_prob()
-		pairs = zip(self.trigrams.values(), self.trigrams.keys())
-		pairs.sort(reverse=True)
+		pairs = zip(self.trigrams.keys(), self.trigrams.values())
+		pairs.sort(reverse=True, key=lambda x:x[1])
 		return pairs
 
-	def process_file(self, source, tokenize=False, lang=u''):
+	def process_file(self, source, tokenize=False, name=u''):
 		try:
 			if source.endswith(".gz"):
 				fo = gzip.open(source)
@@ -135,9 +145,9 @@ class TrigramTrainer(object):
 			try:
 				text = fo.read()
 				if tokenize:
-					text = cu.get_content(text, lang)
+					text = cu.get_content(text, name)
 				else:
-					text = self.clean_text_sc(text, lang)
+					text = self.clean_text_sc(text, name)
 				self.create_trigrams(text)
 			finally:
 				fo.close()
@@ -145,15 +155,16 @@ class TrigramTrainer(object):
 			logger.exception('Error processing %s', source)
 
 	@classmethod
-	def process_files(cls, dpath, minfreq=2, trainer=None, calc_prob=True, tokenize=False, lang=u''):
-		"""Train content found in files in a particular directory"""
-
+	def process_files(cls, dpath, minfreq=2, trainer=None, calc_prob=True, tokenize=False, name=u''):
+		"""
+		Train content found in files in a particular directory
+		"""
 		trainer = TrigramTrainer() if trainer is None else trainer
 		for fn in os.listdir(dpath):
 			source = os.path.join(dpath, fn)
 			if not os.path.isdir(source) and not fn.startswith('.'):
 				__traceback_info__ = source
-				trainer.process_file(source, tokenize=tokenize, lang=lang)
+				trainer.process_file(source, tokenize=tokenize, name=name)
 
 		pairs = ()
 		if calc_prob:
@@ -168,7 +179,7 @@ if __name__ == "__main__":
 
 		pairs = trainer.create_trigram_pairs(2)
 		for p in pairs:
-			print (p[1], p[0])
+			print(p[0], p[1])
 	else:
 		print("Usage:")
 		print("python trigram_trainer.py [document1] ...")
