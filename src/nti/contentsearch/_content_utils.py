@@ -229,21 +229,12 @@ class _BlogContentResolverMixin(_AbstractIndexDataResolver, _PartsContentResolve
 class _PostContentResolver(_BlogContentResolverMixin):
 	pass
 
-@component.adapter(forum_interfaces.IHeadlineTopic)
-@interface.implementer(search_interfaces.IHeadlineTopicContentResolver)
-class _HeadlineTopicContentResolver(_BlogContentResolverMixin):
-
-	def __init__(self, obj):
-		super(_HeadlineTopicContentResolver, self).__init__(obj.headline)
-		self.topic = obj
-
 @component.adapter(IDict)
 @interface.implementer(search_interfaces.IHighlightContentResolver,
 						search_interfaces.INoteContentResolver,
 						search_interfaces.IRedactionContentResolver,
 						search_interfaces.IMessageInfoContentResolver,
-						search_interfaces.IPostContentResolver,
-						search_interfaces.IHeadlineTopicContentResolver)
+						search_interfaces.IPostContentResolver)
 class _DictContentResolver(object):
 
 	__slots__ = ('obj',)
