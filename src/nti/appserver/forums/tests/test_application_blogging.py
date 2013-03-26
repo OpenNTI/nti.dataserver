@@ -47,22 +47,19 @@ from zope import lifecycleevent
 from zope import interface
 from zope.component import eventtesting
 from zope.intid.interfaces import IIntIdRemovedEvent
-from zope.location.interfaces import ISublocations
 
-import simplejson as json
 
 from nti.ntiids import ntiids
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.tests import mock_dataserver
 
-from nti.dataserver.contenttypes.forums.forum import PersonalBlog, CommunityForum
-from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry, CommunityHeadlineTopic
+from nti.dataserver.contenttypes.forums.forum import PersonalBlog
+from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
 
+from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
 
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
 from urllib import quote as UQ
 from pyquery import PyQuery
@@ -287,10 +284,9 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		#assert_that( res.json_body['Last Modified'], is_( greater_than( contents_mod_time ) ) )
 
 
-	@WithSharedApplicationMockDS(with_changes=True)
+	@WithSharedApplicationMockDS(testapp=True)
 	@time_monotonically_increases
 	def test_user_sharing_community_can_GET_and_POST_new_comments(self):
-		self.ds.add_change_listener( users.onChange )
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( username='original_user@foo' )
 			user2 = self._create_user( username='user2@foo' )
