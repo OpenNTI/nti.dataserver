@@ -25,13 +25,12 @@ from nti.externalization import interfaces as ext_intefaces
 
 from . import interfaces as search_interfaces
 
-from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE, HEADLINE_TOPIC_MIME_TYPE)
+from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE)
 from .constants import (content_, post_, note_, highlight_, redaction_, indexable_types_order, indexable_type_names,
 						transcript_, messageinfo_, nti_mimetype_prefix)
 
-# This used to be an ordered dict, which must be initialized manually, not with a dict or
-# keyword arguments (If order matters, no regular dict can ever be a part of the process because its iteration order is COMPLETELY UNDEFINED)
-# However, it was never used as a dict, simply for iterating. So a tuple of two-tuples is more efficient.
+# Make sure we keep this order, especially since we need to test first for INote before IHighlight
+# in get_mime_type_map
 interface_to_indexable_types = (
 	(search_interfaces.IBookContent, content_),
 	(nti_interfaces.INote, note_),
@@ -107,7 +106,6 @@ def get_mime_type_map():
 		if mime_type_map:
 			mime_type_map[POST_MIME_TYPE] = post_
 			mime_type_map[BOOK_CONTENT_MIME_TYPE] = content_
-			mime_type_map[HEADLINE_TOPIC_MIME_TYPE] = post_
 
 	return mime_type_map
 

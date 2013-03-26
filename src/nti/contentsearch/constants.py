@@ -108,7 +108,6 @@ invalid_type_ = u'++++invalidtype++++'
 
 POST_MIME_TYPE = u'application/vnd.nextthought.forums.post'
 BOOK_CONTENT_MIME_TYPE = u'application/vnd.nextthought.bookcontent'
-HEADLINE_TOPIC_MIME_TYPE = u'application/vnd.nextthought.forums.headlinetopic'
 
 ugd_indexable_type_names = (note_, post_, highlight_, redaction_, messageinfo_)
 indexable_type_names = (content_,) + ugd_indexable_type_names

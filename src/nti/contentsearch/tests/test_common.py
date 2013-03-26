@@ -47,14 +47,12 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(mmap, has_entry('application/vnd.nextthought.note', 'note'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.messageinfo', 'messageinfo'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.bookcontent', 'content'))
-		assert_that(mmap, has_entry('application/vnd.nextthought.forums.headlinetopic', 'post'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogentrypost', 'post'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogcomment', 'post'))
 
 	def test_get_type_from_mimetype(self):
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogentrypost'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogcomment'), is_('post'))
-		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.headlinetopic'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.post'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.post'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.content'), is_('content'))
