@@ -32,8 +32,6 @@ from .trigram_trainer import create_trigram_nsc
 from ... import space_pattern, non_alpha_pattern
 from . import (UNKNOWN, CYRILLIC, ARABIC, DEVANAGARI, SINGLETONS, EXTENDED_LATIN, PT, ALL_LATIN, NAME_MAP)
 
-MIN_LENGTH = 20
-
 def _load_models(models_dir):
 	models = {}
 	for model_file in os.listdir(models_dir):
