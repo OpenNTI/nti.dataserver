@@ -50,16 +50,17 @@ def _root_url_of_unit( unit ):
 
 #: This file, if present, will be read to gain a dictionary
 #: of presentation properties to be attached to the external
-#: representation of a content package. We take no interest in the
-#: keys and values found here, simply requiring the keys to be strings; however, we do
-#: list some known keys and their corresponding values (when a dot is used, it means
-#: the key nested inside the containing dictionary):
+#: representation of a content package (in the ``PresentationProperties`` key).
+#: We take little interest in the keys and values found here,
+#: simply requiring the keys to be strings; however, we do
+#: list some well-known keys and their corresponding values
+#: (when a dot is used, it means the key nested inside the containing dictionary):
 #:
 #: ``numbering``
 #:		 A dictionary that controls the presentation of "chapter numbers" and "section numbers"
 #: ``numbering.suppressed``
 #:		A boolean; if `True`, then the user interface should not attempt to
-#:		add and display automatic numbering information (default is False, and the II should display
+#:		add and display automatic numbering information (default is False, and the UI should display
 #:		automatic numbering).
 #: ``numbering.type``
 #:		A one character string as in HTML (1, a, A, i, I) giving the type of marker to use
