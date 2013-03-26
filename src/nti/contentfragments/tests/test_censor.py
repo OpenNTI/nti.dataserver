@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from zope import component
 from zope import interface
@@ -30,7 +26,6 @@ from hamcrest import assert_that
 # nose module-level setup
 setUpModule = lambda: nti.tests.module_setup(set_up_packages=(nti.contentfragments, nti.contentprocessing))
 tearDownModule = nti.tests.module_teardown
-
 
 def test_defaults():
 	scanner = component.getUtility(frag_interfaces.ICensoredContentScanner)
@@ -116,16 +111,6 @@ def test_pipeline_scanner():
 	bad_val = 'ohggre pbafgvghgvba pbzchgngvba'.encode('rot13')
 	assert_that(strat.censor_ranges(bad_val, scanner.scan(bad_val)),
 				 is_('butter constitution computation'))
-
-def test_regexp_match_scanner():
-	profanity_file = resource_filename(__name__, '../profanity_regexp_list.txt')
-	with open(profanity_file, 'rU') as f:
-		profanity_list = {x.encode('rot13').strip() for x in f.readlines()}
-	strat = frag_censor.RegExpMatchScanner(words=profanity_list)
-
-	bad_val = 'Guvf vf shpxvat fghcvq, lbh ZbgureShpxre onfgneq'.encode('rot13')
-	ranges = strat.sort_ranges(strat.scan(bad_val))
-	assert_that(ranges, is_([(8, 12), (28, 38), (34, 38), (41, 48)]))
 
 def test_html_and_default_policy():
 	policy = frag_censor.DefaultCensoredContentPolicy()

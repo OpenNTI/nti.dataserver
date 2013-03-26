@@ -4,7 +4,8 @@
 Interfaces for working with content fragments.
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+
 logger = __import__('logging').getLogger(__name__)
 
 import zope.contenttype
@@ -34,7 +35,6 @@ def _setup():
 	mime_map_file = resource_filename('nti.contentfragments', 'mime.types')
 	zope.contenttype.add_files([mime_map_file])
 _setup()
-
 
 class IContentFragment(interface.Interface):
 	"""
@@ -184,7 +184,6 @@ class SanitizedHTMLContentFragment(HTMLContentFragment):
 
 # TODO: What about the rules for the other types?
 SanitizedHTMLContentFragment._add_rules = ((ISanitizedHTMLContentFragment, SanitizedHTMLContentFragment),) + HTMLContentFragment._add_rules
-
 
 class IPlainTextContentFragment(IUnicodeContentFragment, mime_types.IContentTypeTextPlain):
 	"""

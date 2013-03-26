@@ -6,15 +6,15 @@ In particular, sanitazation.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 from zope import interface
 from zope import component
 
 import html5lib
 from html5lib import treewalkers, serializer, treebuilders
-# from html5lib.filters._base import Filter as FilterBase
 from html5lib.filters import sanitizer
+
 import lxml.etree
 
 from . import interfaces as frg_interfaces
@@ -35,6 +35,7 @@ class _SliceDict(dict):
 
 # TODO: Consider also http://packages.python.org/PottyMouth/
 from html5lib.sanitizer import HTMLSanitizerMixin
+
 # There is a bug in 0.95: the sanitizer converts attribute dicts
 # to lists when they should stay dicts. We fix that globally.
 _orig_sanitize = HTMLSanitizerMixin.sanitize_token
@@ -54,6 +55,7 @@ def _sanitize_token(self, token):
 HTMLSanitizerMixin.sanitize_token = _sanitize_token
 
 from html5lib.constants import tokenTypes
+
 # But we define our own sanitizer mixin subclass and filter to be able to
 # customize the allowed tags and protocols
 class _SanitizerFilter(sanitizer.Filter):
