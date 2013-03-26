@@ -71,17 +71,19 @@ else:
 	HAVE_ZCONT = True
 
 TESTS_REQUIRE = [
-'WebTest >= 2.0.3',  # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
-'blessings >= 1.5',  # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
-'coverage >= 3.6',  # Test coverage
-'fakeredis >= 0.3.1',
-'fudge',
-'nose >= 1.2.1',
-'nose-timer >= 0.1.2',
-'nose-progressive >= 1.4',
-'pyhamcrest >= 1.7.1',
-'tempstorage >= 2.12.2',  # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
-'zope.testing >= 4.1.2',
+	'WebTest >= 2.0.3',  # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
+	'blessings >= 1.5',  # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
+	'coverage >= 3.6',  # Test coverage
+	'fakeredis >= 0.3.1',
+	'fudge',
+	'ipdb >= 0.7',  # easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
+	'nose >= 1.2.1',
+	'nose-timer >= 0.1.2',
+	'nose-progressive >= 1.4.1',
+	'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
+	'pyhamcrest >= 1.7.1',
+	'tempstorage >= 2.12.2',  # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
+	'zope.testing >= 4.1.2',
 ]
 
 setup(
@@ -362,9 +364,7 @@ setup(
 			'epydoc >= 3.0.1',  # auto-api docs
 			'httpie >= 0.4.1',  # 0.4.0 explicitly requires requests > 1.0.4, 0.3.1 explicitly requires requests < 1.0
 			'ipython >= 0.13.1',  # the extra notebook is web based, pulls in tornado
-			'ipdb >= 0.7',  # easier access to the ipython debugger
 			'logilab_astng >= 0.24.1',
-			'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 			'pip >= 1.3.1',
 			'pip-tools >= 0.3.1',  # command pip-review, pip-dump
 			'pudb >= 2013.1',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
