@@ -584,32 +584,6 @@ def notify_online_author_of_comment( comment, event ):
 	# thus sharing the same change object
 	#_send_stream_event_to_targets( change, comment.sharingTargets )
 
-def _temp_dispatch_to_indexer( change ):
-	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
-	dataserver = component.queryUtility( nti_interfaces.IDataserver )
-
-	if indexmanager and dataserver:
-
-		comment = change.object
-		#change = _stream_event_for_comment( comment )
-
-		# Now index the comment for the creator and all the sharing targets. This is just
-		# like what the User object itself does (except we don't need to expand DFL/communities)
-
-		indexmanager.onChange( dataserver, change, comment.creator, broadcast=True ) # The creator gets it as a broadcast
-		for target in comment.sharingTargets:
-			indexmanager.onChange( dataserver, change, target )
-
-@component.adapter( frm_interfaces.IPost, lifecycleevent.IObjectAddedEvent )
-def temp_post_added_to_indexer( comment, event ):
-	change = _stream_event_for_comment( comment )
-	_temp_dispatch_to_indexer(change)
-
-@component.adapter( frm_interfaces.IPost, lifecycleevent.IObjectModifiedEvent )
-def temp_post_modified_to_indexer( comment, event ):
-	change = _stream_event_for_comment( comment, nti_interfaces.SC_MODIFIED )
-	_temp_dispatch_to_indexer(change)
-
 ###
 ## NOTE: You cannot send a stream change on an object deleted event.
 ## See HeadlineTopicDeleteView and the place it points to. This is already

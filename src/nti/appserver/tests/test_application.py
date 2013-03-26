@@ -18,9 +18,10 @@ from hamcrest import same_instance
 does_not = is_not
 from nti.tests import is_empty
 
-from nti.appserver.application import createApplication
+from nti.appserver.application import createApplication, _configure_async_changes
 from nti.contentlibrary.filesystem import StaticFilesystemLibrary as Library
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentsearch import interfaces as search_interfaces
 from nti.externalization.externalization import to_json_representation
 import nti.contentsearch
 import nti.contentsearch.interfaces
@@ -318,19 +319,39 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 		super(SharedApplicationTestBase,cls).tearDownClass()
 
 def WithSharedApplicationMockDS( *args, **kwargs ):
+	"""
+	Decorator for a test function using the shared application.
+	Unknown keyword arguments are passed to :func:`.WithMockDS`.
 
-	# Either True, or a sequence of strings naming users. If True,
-	# then the standard user is created. If a sequence, then the standard user,
-	# followed by each named user
+	:keyword users: Either `True`, or a sequence of strings naming users. If True,
+		 then the standard user is created. If a sequence, then the standard user,
+		 followed by each named user is created.
+	:keyword bool default_authenticate: Only used if ``users`` was a sequence
+		(and so we have created at least two users). If set to `True` (NOT the default),
+		then ``self.testapp`` will be authenticated by the standard user.
+	:keyword bool testapp: If True (NOT the default) then ``self.testapp`` will
+		be created.
+	:keyword bool handle_changes: If `True` (NOT the default), the application will
+		have the usual change managers set up (users.onChange, etc).
+
+	"""
+
 	users_to_create = kwargs.pop( 'users', None )
 	default_authenticate = kwargs.pop( 'default_authenticate', None )
 	testapp = kwargs.pop( 'testapp', None )
+	handle_changes = kwargs.pop( 'handle_changes', False )
+
 	if testapp:
 		def _make_app(self):
 			if users_to_create is True or (users_to_create and default_authenticate):
 				self.testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
 			else:
 				self.testapp = TestApp( self.app )
+
+			if handle_changes:
+				ds = self.ds
+				ix = component.queryUtility( search_interfaces.IIndexManager )
+				_configure_async_changes( ds, ix )
 	else:
 		def _make_app( self ):
 			pass
@@ -346,6 +367,9 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 	else:
 		def _do_create(self):
 			pass
+
+	if handle_changes:
+		kwargs['with_changes'] = True # make sure the DS gets it
 
 	if len(args) == 1 and not kwargs:
 		# being used as a decorator
@@ -371,6 +395,10 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 			func(self)
 		return f
 	return factory
+
+def WithSharedApplicationMockDSHandleChanges( *args, **kwargs ):
+	kwargs['handle_changes'] = True
+	return WithSharedApplicationMockDS( *args, **kwargs )
 
 def WithSharedApplicationMockDSWithChanges(func):
 	@functools.wraps(func)

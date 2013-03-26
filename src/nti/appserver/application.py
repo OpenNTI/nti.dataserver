@@ -569,17 +569,20 @@ def createApplication( http_port,
 	# TODO: Make these be utilities so they can be registered
 	# in config and the expensive parts turned off in config dynamically.
 	if create_ds:
-		logger.info( 'Adding synchronous change listeners.' )
-		server.add_change_listener( nti.dataserver.users.onChange )
-		if indexmanager:
-			server.add_change_listener( indexmanager.onChange )
-
-		logger.info( 'Finished adding listeners' )
+		_configure_async_changes( server, indexmanager )
 
 
 	main = _Main( pyramid_config, http_port=http_port )
 
 	return (main,main) # bwc
+
+def _configure_async_changes( ds, indexmanager ):
+	logger.info( 'Adding synchronous change listeners.' )
+	ds.add_change_listener( nti.dataserver.users.onChange )
+	if indexmanager:
+		ds.add_change_listener( indexmanager.onChange )
+
+	logger.info( 'Finished adding listeners' )
 
 def _configure_legacy_direct_user_routes_and_views( pyramid_config ):
 	"""
