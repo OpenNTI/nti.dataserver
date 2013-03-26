@@ -57,7 +57,7 @@ def _root_url_of_unit( unit ):
 #:
 #: ``numbering``
 #:		 A dictionary that controls the presentation of "chapter numbers" and "section numbers"
-#: ``numbering.suppress``
+#: ``numbering.suppressed``
 #:		A boolean; if `True`, then the user interface should not attempt to
 #:		add and display automatic numbering information (default is False, and the II should display
 #:		automatic numbering).
