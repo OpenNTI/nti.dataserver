@@ -2,8 +2,8 @@
 """
 Generic implementations of IContentUnit functions
 """
-from __future__ import print_function, unicode_literals
-import datetime
+from __future__ import print_function, unicode_literals, absolute_import
+
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
@@ -11,6 +11,8 @@ from zope.cachedescriptors.property import Lazy
 
 from cStringIO import StringIO
 import gzip
+import datetime
+import sys
 
 from nti.utils.property import alias
 import repoze.lru
@@ -200,12 +202,18 @@ class BotoS3ContentUnit(ContentUnit):
 		:return: Either a Key containing some information about an existing sibling (and which is True)
 			or None for an absent sibling (False).
 		"""
-		return self.key.bucket.get_key( self.make_sibling_key( sibling_name ).name )
-
+		sib_key = self.make_sibling_key( sibling_name ).name
+		bucket = self.key.bucket
+		try:
+			return bucket.get_key( sib_key )
+		except AttributeError: # seen when we are not connected
+			exc_info = sys.exc_info()
+			raise boto.exception.AWSConnectionError("No connection"), None, exc_info[2]
 
 @interface.implementer(IS3ContentPackage)
 class BotoS3ContentPackage(ContentPackage,BotoS3ContentUnit):
-	pass
+
+	TRANSIENT_EXCEPTIONS = (boto.exception.AWSConnectionError,)
 
 def _package_factory( key ):
 	toc_key = key.bucket.get_key( (key.name + '/' + eclipse.TOC_FILENAME).replace( '//', '/') )

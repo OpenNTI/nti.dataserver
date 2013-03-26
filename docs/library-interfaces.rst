@@ -35,3 +35,8 @@ Boto S3 Representation
 ======================
 
 .. automodule:: nti.contentlibrary.boto_s3
+
+Externalization
+===============
+
+.. automodule:: nti.contentlibrary.externalization

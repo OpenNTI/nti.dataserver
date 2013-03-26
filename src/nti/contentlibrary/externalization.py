@@ -2,9 +2,13 @@
 """
 Support for externalizing portions of the library.
 """
-import urllib
+
 from urlparse import urljoin
+import anyjson as json
+import collections
 import os
+import six
+import urllib
 
 from zope import interface
 from zope import component
@@ -44,6 +48,31 @@ def _root_url_of_unit( unit ):
 		href = '/' + unit.get_parent_key().split( '/' )[-1]
 	return href + ('' if href.endswith( '/' ) else '/')  # trailing slash is important for urljoin
 
+#: This file, if present, will be read to gain a dictionary
+#: of presentation properties to be attached to the external
+#: representation of a content package. We take no interest in the
+#: keys and values found here, simply requiring the keys to be strings; however, we do
+#: list some known keys and their corresponding values (when a dot is used, it means
+#: the key nested inside the containing dictionary):
+#:
+#: ``numbering``
+#:		 A dictionary that controls the presentation of "chapter numbers" and "section numbers"
+#: ``numbering.suppress``
+#:		A boolean; if `True`, then the user interface should not attempt to
+#:		add and display automatic numbering information (default is False, and the II should display
+#:		automatic numbering).
+#: ``numbering.type``
+#:		A one character string as in HTML (1, a, A, i, I) giving the type of marker to use
+#:		for automatic numbering (for decimal numbers, lowercase alphabetic, uppercase alphabetic,
+#:		and lower and upper Roman, respectively); the default is 1
+#: ``numbering.start``
+#:		An integer giving the starting number; defaults to 1.
+#: ``numbering.separator``
+#:		A string giving the value to put between levels in the tree when autonumbering
+#:		a complete path. Defaults to '.'
+#:
+DEFAULT_PRESENTATION_PROPERTIES_FILE = 'nti_default_presentation_properties.json'
+
 @interface.implementer(IExternalObject)
 class _ContentPackageExternal(object):
 
@@ -77,6 +106,35 @@ class _ContentPackageExternal(object):
 			result['archive'] = interfaces.IContentUnitHrefMapper( self.package.archive_unit ).href
 			result['Archive Last Modified'] = self.package.archive_unit.lastModified
 
+
+		# Attach presentation properties. This is here for several reasons:
+		# - This information is not normative, not used by the server,
+		#    and thus not part of the IContentPackage interface;
+		# - We are moving toward having IContentPackages be dynamic and constructed
+		#   from sub-parts of other IContentPackages; if this were a static part of the IContentPackage,
+		#   extracted from eclipse-toc.xml, such information would get lost when nodes are used
+		#   outside their original context;
+		# - We can imagine supplying different presentation information to different clients;
+		#   this is easy to do by registering decorators for (IContentPackage,IRequest)
+
+		presentation_properties_cache_name = '_v_presentation_properties'
+		presentation_properties = getattr( self.package, presentation_properties_cache_name, None )
+		if presentation_properties is None:
+			presentation_properties = {}
+			try:
+				ext_data = self.package.read_contents_of_sibling_entry( DEFAULT_PRESENTATION_PROPERTIES_FILE )
+			except self.package.TRANSIENT_EXCEPTIONS:
+				ext_data = None
+				presentation_properties = None # So we retry next time
+			if ext_data:
+				presentation_properties = json.loads( ext_data )
+				assert isinstance(presentation_properties, collections.Mapping)
+				for k in presentation_properties:
+					assert isinstance(k,six.string_types)
+
+			setattr( self.package, presentation_properties_cache_name, presentation_properties )
+
+		result['PresentationProperties'] = presentation_properties
 		return result
 
 
