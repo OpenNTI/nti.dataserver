@@ -260,3 +260,5 @@ class FilesystemContentPackage(ContentPackage,FilesystemContentUnit):
 	"""
 	Adds the `filename` property to the ContentPackage.
 	"""
+
+	TRANSIENT_EXCEPTIONS = (IOError,)

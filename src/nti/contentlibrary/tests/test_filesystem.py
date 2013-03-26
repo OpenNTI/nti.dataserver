@@ -62,5 +62,10 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 		ext_package = nti.externalization.externalization.toExternalObject( package )
 		assert_that( ext_package, has_entry( 'DCCreator', ('Jason',) ) )
 		assert_that( ext_package, has_entry( 'Creator', 'Jason') )
+		assert_that( ext_package, has_entry( 'PresentationProperties',
+											 is_( { 'numbering': {'suppressed': False,
+																  'type': 'I',
+																  'start': 5,
+																  'separator': '.' } } ) ) )
 
 		json.loads( json.dumps( ext_package ) ) # Round trips through JSON

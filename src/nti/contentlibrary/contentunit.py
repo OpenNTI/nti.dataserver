@@ -72,6 +72,10 @@ class ContentPackage(ContentUnit):
 	contributors = ()
 	publisher = ''
 
+	#: A tuple of things thrown by the implementation's
+	#: IO methods that represent transient states that may
+	#: clear up by themself
+	TRANSIENT_EXCEPTIONS = ()
 
 
 # TODO: We need to do caching of does_sibling_entry_exist and read_contents.

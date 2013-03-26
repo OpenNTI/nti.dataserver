@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 """
 Objects for working with Eclipse index representations of content packages.
+
+$Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
+
+# This module is badly named now
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -14,15 +18,21 @@ from zope.dublincore import xmlmetadata
 ###
 ## Constants for file names we know and care about
 ##
+#: The main XML file found inside the content package, giving the
+#: layout of the topics and sections.
 TOC_FILENAME = 'eclipse-toc.xml'
+#: A possibly-missing ZIP file containing the downloadable content.
 ARCHIVE_FILENAME = 'archive.zip'
+#: An optional XML file containing Dublin Core metadata to be associated
+#: with the content package
 DCMETA_FILENAME = 'dc_metadata.xml'
-# A glossary file applicable to the entire content.
-# TODO: In the future, if we need to, we can add a node property
-# for sub-glossaries specific to just portions of the content
+#: A glossary file applicable to the entire content.
+#: .. todo:: In the future, if we need to, we can add a node property
+#: for sub-glossaries specific to just portions of the content
 MAIN_CSV_CONTENT_GLOSSARY_FILENAME = 'nti_content_glossary.csv'
-# Assessment items for this entire content
+#: Assessment items for this entire content
 ASSESSMENT_INDEX_FILENAME = 'assessment_index.json'
+
 
 _toc_item_attrs = ('NTIRelativeScrollHeight', 'href', 'icon', 'label', 'ntiid',)
 
