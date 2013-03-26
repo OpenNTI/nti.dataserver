@@ -200,7 +200,10 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 
 		if added_headline:
 			topic_post.containerId = topic.NTIID
-			lifecycleevent.added( topic_post )
+			# The headline should be a sub-location of the topic, so when
+			# the added event was fired for the topic, it was dispatchToSublocations sent
+			# along. This also ensures the headline gets its intid. So we don't need to
+			# manually send an added event.
 
 		# Respond with the pretty location of the object, within the blog
 		self.request.response.status_int = 201 # created
