@@ -14,6 +14,8 @@ from . import interfaces as cpct_interfaces
 @interface.implementer(cpct_interfaces.IConceptSource)
 class ConceptSource(object):
 
+	__slots__ = ('uri', 'source')
+
 	def __init__(self, source, uri=None):
 		self.uri = uri
 		self.source = source
