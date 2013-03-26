@@ -6,26 +6,27 @@ or :mod:`zope.schema` declarations.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
 
 # For good validation and events
 from nti.utils.schema import Object, ValidText as Text, ValidTextLine as TextLine
 
-from nti.contentfragments import interfaces
+from . import interfaces
 
-def _massage_kwargs( self, kwargs ):
+def _massage_kwargs(self, kwargs):
 
-	assert self._iface.isOrExtends( interfaces.IUnicodeContentFragment )
-	assert self._iface.implementedBy( self._impl )
+	assert self._iface.isOrExtends(interfaces.IUnicodeContentFragment)
+	assert self._iface.implementedBy(self._impl)
 
 	# We're imported too early for ZCA to be configured and we can't automatically
 	# adapt.
-	if 'default' in kwargs and not self._iface.providedBy( kwargs['default'] ):
-		kwargs['default'] = self._impl( kwargs['default'] )
-	if 'default' not in kwargs and 'defaultFactory' not in kwargs and not kwargs.get('min_length'): # 0/None
+	if 'default' in kwargs and not self._iface.providedBy(kwargs['default']):
+		kwargs['default'] = self._impl(kwargs['default'])
+	if 'default' not in kwargs and 'defaultFactory' not in kwargs and not kwargs.get('min_length'):  # 0/None
 		kwargs['defaultFactory'] = self._impl
 	return kwargs
-class TextUnicodeContentFragment(Object,Text):
+
+class TextUnicodeContentFragment(Object, Text):
 	"""
 	A :class:`zope.schema.Text` type that also requires the object implement
 	an interface descending from :class:`~.IUnicodeContentFragment`.
@@ -37,18 +38,18 @@ class TextUnicodeContentFragment(Object,Text):
 	_iface = interfaces.IUnicodeContentFragment
 	_impl = interfaces.UnicodeContentFragment
 
-	def __init__( self, *args, **kwargs ):
-		super(TextUnicodeContentFragment,self).__init__( self._iface, *args, **_massage_kwargs(self, kwargs) )
+	def __init__(self, *args, **kwargs):
+		super(TextUnicodeContentFragment, self).__init__(self._iface, *args, **_massage_kwargs(self, kwargs))
 
 
-	def fromUnicode( self, string ):
+	def fromUnicode(self, string):
 		"""
 		We implement :class:`.IFromUnicode` by adapting the given object
 		to our text schema.
 		"""
-		return super(TextUnicodeContentFragment,self).fromUnicode( self.schema( string ) )
+		return super(TextUnicodeContentFragment, self).fromUnicode(self.schema(string))
 
-class TextLineUnicodeContentFragment(Object,TextLine):
+class TextLineUnicodeContentFragment(Object, TextLine):
 	"""
 	A :class:`zope.schema.TextLine` type that also requires the object implement
 	an interface descending from :class:`~.IUnicodeContentFragment`.
@@ -63,15 +64,15 @@ class TextLineUnicodeContentFragment(Object,TextLine):
 	_iface = interfaces.IContentFragment
 	_impl = interfaces.UnicodeContentFragment
 
-	def __init__( self, *args, **kwargs ):
-		super(TextLineUnicodeContentFragment,self).__init__( self._iface, *args, **_massage_kwargs(self, kwargs) )
+	def __init__(self, *args, **kwargs):
+		super(TextLineUnicodeContentFragment, self).__init__(self._iface, *args, **_massage_kwargs(self, kwargs))
 
-	def fromUnicode( self, string ):
+	def fromUnicode(self, string):
 		"""
 		We implement :class:`.IFromUnicode` by adapting the given object
 		to our text schema.
 		"""
-		return super(TextLineUnicodeContentFragment,self).fromUnicode( self.schema( string ) )
+		return super(TextLineUnicodeContentFragment, self).fromUnicode(self.schema(string))
 
 
 class LatexFragmentTextLine(TextLineUnicodeContentFragment):

@@ -102,36 +102,6 @@ class TrivialMatchScanner(BasicScanner):
 				idx = content_fragment.find(x, idx + len(x))
 
 @interface.implementer(interfaces.ICensoredContentScanner)
-class RegExpMatchScanner(BasicScanner):
-
-	special_chars_map = {c:u'\\' for c in r"?(){}[].^*+-~"}
-
-	def __init__(self, patterns=(), words=()):
-		all_patterns = set()
-		for w in words or ():
-			all_patterns.add(self.create_regexp(w))
-		all_patterns.update(patterns or ())
-		self.patterns = tuple(all_patterns)
-
-	def do_scan(self, content_fragment, yielded):
-		for p in self.patterns:
-			for m in p.finditer(content_fragment):
-				match_range = m.span()
-				if self.test_range(match_range, yielded):
-					yield match_range
-
-	@classmethod
-	def create_regexp(cls, word, flags=re.I):
-		r = []
-		for i, c in enumerate(word):
-			r.append(cls.special_chars_map.get(c, u'') + c)
-			if not c.isspace() and not c in punkt_re_char() and i < len(word) - 1:
-				r.append("(%s)*" % punkt_re_char())
-		e = ''.join(r)
-		p = re.compile(e, flags)
-		return p
-
-@interface.implementer(interfaces.ICensoredContentScanner)
 class WordMatchScanner(BasicScanner):
 
 	def __init__(self, white_words=(), prohibited_words=()):
@@ -211,13 +181,6 @@ def _word_plus_trivial_profanity_scanner():
 	with open(profanity_list_path, 'rU') as src:
 		profanity_list = {x.encode('rot13').strip().lower() for x in src.readlines()}
 	return PipeLineMatchScanner([_word_profanity_scanner(), TrivialMatchScanner(profanity_list)])
-
-@interface.implementer(interfaces.ICensoredContentScanner)
-def _word_plus_regexp_profanity_scanner():
-	profanity_list_path = resource_filename(__name__, 'profanity_regexp_list.txt')
-	with open(profanity_list_path, 'rU') as src:
-		profanity_list = {x.encode('rot13').strip().lower() for x in src.readlines()}
-	return PipeLineMatchScanner([_word_profanity_scanner(), RegExpMatchScanner(words=profanity_list)])
 
 @interface.implementer(interfaces.ICensoredContentPolicy)
 class DefaultCensoredContentPolicy(object):
