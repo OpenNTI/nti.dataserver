@@ -7,7 +7,6 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from webtest import TestApp
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
@@ -27,10 +26,8 @@ from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIP
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import zanpakuto_commands
-from . import ApplicationTestBase
 from . import ConfiguringTestBase
-from . import WithSharedApplicationMockDS
+from . import zanpakuto_commands
 
 from hamcrest import (is_not, has_key, has_item, has_entry, has_length, assert_that)
 
@@ -295,46 +292,48 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		hits = rim.search("light a candle")
 		assert_that(hits, has_length(1))
 
-class TestAppRepozeUserAdapter(ApplicationTestBase):
 
-	features = ApplicationTestBase.features + ('forums',)
 
-	def _create_user(self, username=b'sjohnson@nextthought.com', password='temp001', **kwargs):
-		return User.create_user(self.ds, username=username, password=password, **kwargs)
+from nti.appserver.tests.test_application import SharedApplicationTestBase
+from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
 
-	@WithSharedApplicationMockDS
+
+class TestAppRepozeUserAdapter(SharedApplicationTestBase):
+
+	features = SharedApplicationTestBase.features + ('forums',)
+
+	extra_environ_default_user = b'ichigo@bleach.com'
+
+	@WithSharedApplicationMockDS(testapp=True,users=True)
 	def test_post_dict(self):
-
-		username = 'ichigo@bleach.com'
-		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user(username=username)
 
 		data = { 'Class': 'Post',
 				 'title': 'Unohana',
 				 'body': ["Begging her not to die Kenpachi screams out in rage as his opponent fades away"],
 				 'tags': ['yachiru', 'haori'] }
 
-		testapp = TestApp(self.app)
-		testapp.post_json('/dataserver2/users/%s/Blog' % username, data, status=201,
-							extra_environ=self._make_extra_environ(username))
+		username = self.extra_environ_default_user
+		testapp = self.testapp
+		testapp.post_json('/dataserver2/users/%s/Blog' % username, data, status=201 )
 
 		with mock_dataserver.mock_db_trans(self.ds):
-			rim = search_interfaces.IRepozeEntityIndexManager(user, None)
+			user = User.get_user( username )
+			rim = search_interfaces.IRepozeEntityIndexManager(user)
 			hits = rim.search('Kenpachi')
-			assert_that(hits, has_length(1))
+			assert_that(hits, has_length(2))
 
 			hits = rim.search('Unohana'.upper())
-			assert_that(hits, has_length(1))
+			assert_that(hits, has_length(2))
 
 			hits = rim.search('yachiru')
-			assert_that(hits, has_length(1))
+			assert_that(hits, has_length(2))
 			hits = toExternalObject(hits)
 			assert_that(hits, has_key(ITEMS))
 			items = hits[ITEMS]
-			assert_that(items, has_length(1))
+			assert_that(items, has_length(2))
 			hit = items[0]
 			assert_that(hit, has_entry(ID, 'Unohana'))
 			assert_that(hit, has_entry(FIELD, tags_))
 
 			hits = rim.search('yachiru'.upper())
-			assert_that(hits, has_length(1))
+			assert_that(hits, has_length(2))

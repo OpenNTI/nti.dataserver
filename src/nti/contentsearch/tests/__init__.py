@@ -40,4 +40,3 @@ class ConfiguringTestBase(DSConfiguringTestBase):
 
 class ApplicationTestBase(SharedApplicationTestBase):
 	pass
-
