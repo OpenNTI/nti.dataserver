@@ -15,8 +15,14 @@ from hamcrest import (assert_that, has_length, is_)
 
 class TestDetectLanguage(ConfiguringTestBase):
 
-	def test_models(self):
+	def test_detect_en(self):
 		t = _LangDetector()
-		assert_that(t.models, has_length(1))
-		result = t('accessing protected members and many methods')
+		assert_that(t.models, has_length(2))
+		result = t(u'accessing protected members and many methods')
 		assert_that(result.code, is_('en'))
+
+	def test_detect_de(self):
+		t = _LangDetector()
+		assert_that(t.models, has_length(2))
+		result = t(u'Die Jungfrau mußte sich nicht halten, sie lehnte sich nur leicht gegen den abbröckelnden Marmor des Geländers')
+		assert_that(result.code, is_('de'))
