@@ -44,8 +44,6 @@ def _check_event(target, change_type, data_type, data):
 def _process_event(indexmanager, target, change_type, data_type, data):
 	if 	_check_event(target, change_type, data_type, data):
 
-		logger.log( loglevels.TRACE, 'Index event ("%s", "%s", "%s") received', target, change_type, data_type)
-
 		func_name = _event_types.get( change_type )
 		func = getattr( indexmanager, func_name, None ) if func_name else None
 		return func( target, data=data, type_name=data_type ) or True if func else False
@@ -82,8 +80,12 @@ def handle_index_event(indexmanager, target, change, broadcast=None):
 			entity = Entity.get_entity(target) if isinstance(target, six.string_types) else target # FIXME: Tightly coupled
 			should_process = change_object.isSharedDirectlyWith( entity )
 
+	result = False
 	if should_process:
 		data_type = get_type_name(change.object)
-		return _process_event(indexmanager, target, change.type, data_type, change_object)
+		result = _process_event(indexmanager, target, change.type, data_type, change_object)
+		logger.log( loglevels.TRACE,
+					'Index event target="%s", change=%s, data_type=%s, broadcast=%s handled=%s',
+					target, change, data_type, broadcast, result )
 
-	return False
+	return result
