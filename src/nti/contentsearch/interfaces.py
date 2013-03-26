@@ -471,9 +471,6 @@ class IBlogContentResolver(_ContentMixinResolver,
 class IPostContentResolver(IBlogContentResolver):
 	pass
 
-class IHeadlineTopicContentResolver(IBlogContentResolver):
-	pass
-
 class IBookContentResolver(_ContentMixinResolver):
 	pass
 
