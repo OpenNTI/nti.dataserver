@@ -293,10 +293,8 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		assert_that(hits, has_length(1))
 
 
-
 from nti.appserver.tests.test_application import SharedApplicationTestBase
 from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
-
 
 class TestAppRepozeUserAdapter(SharedApplicationTestBase):
 
@@ -304,7 +302,7 @@ class TestAppRepozeUserAdapter(SharedApplicationTestBase):
 
 	extra_environ_default_user = b'ichigo@bleach.com'
 
-	@WithSharedApplicationMockDS(testapp=True,users=True)
+	@WithSharedApplicationMockDS(testapp=True, users=True)
 	def test_post_dict(self):
 
 		data = { 'Class': 'Post',
@@ -314,10 +312,10 @@ class TestAppRepozeUserAdapter(SharedApplicationTestBase):
 
 		username = self.extra_environ_default_user
 		testapp = self.testapp
-		testapp.post_json('/dataserver2/users/%s/Blog' % username, data, status=201 )
+		testapp.post_json('/dataserver2/users/%s/Blog' % username, data, status=201)
 
 		with mock_dataserver.mock_db_trans(self.ds):
-			user = User.get_user( username )
+			user = User.get_user(username)
 			rim = search_interfaces.IRepozeEntityIndexManager(user)
 			hits = rim.search('Kenpachi')
 			assert_that(hits, has_length(1))
