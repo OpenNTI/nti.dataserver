@@ -10,16 +10,26 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-# language constants
+import re
 
 UNKNOWN = 'UNKNOWN'
 
-BASIC_LATIN = tuple("en ceb ha so tlh id haw la sw eu nr nso zu xh ss st tn ts".split())
-EXTENDED_LATIN = tuple("cs af pl hr ro sk sl tr hu az et sq ca es fr de nl it da is nb sv fi lv pt ve lt tl cy".split())
-ALL_LATIN = BASIC_LATIN + EXTENDED_LATIN
-CYRILLIC = tuple("ru uk kk uz mn sr mk bg ky".split())
-ARABIC = tuple("ar fa ps ur".split())
-DEVANAGARI = tuple("hi ne".split())
+BASIC_LATIN = {
+    "en", "ceb", "ha", "so", "tlh", "id", "haw", "la", "sw", "eu",
+    "nr", "nso", "zu", "xh", "ss", "st", "tn", "ts"
+}
+EXTENDED_LATIN = {
+    "cs", "af", "pl", "hr", "ro", "sk", "sl", "tr", "hu", "az",
+    "et", "sq", "ca", "es", "fr", "de", "nl", "it", "da", "is", "nb", "sv",
+    "fi", "lv", "pt", "ve", "lt", "tl", "cy", "vi"
+}
+ALL_LATIN = BASIC_LATIN.union(EXTENDED_LATIN)
+CYRILLIC = {"ru", "uk", "kk", "uz", "mn", "sr", "mk", "bg", "ky"}
+ARABIC = {"ar", "fa", "ps", "ur"}
+DEVANAGARI = {"hi", "ne"}
+PT = {"pt_BR", "pt_PT"}
+
+WORD_RE = re.compile(r"(?:[^\W\d_]|['’])+", re.U)
 
 # NOTE mn appears twice, once for mongolian script and once for CYRILLIC
 
@@ -44,8 +54,6 @@ SINGLETONS = tuple([
     ('Mongolian', 'mn-Mong'),
     ('Khmer', 'km'),
 ])
-
-PT = tuple("pt_BR pt_PT".split())
 
 NAME_MAP = {
     "ab" : "Abkhazian",

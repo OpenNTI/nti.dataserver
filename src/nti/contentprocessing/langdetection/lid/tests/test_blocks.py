@@ -20,16 +20,16 @@ class TestBlocks(ConfiguringTestBase):
 			self.assert_block('Basic Latin', c)
 
 		for c in xrange(0x80, 0x99):
-			self.assert_block('Latin-1 Supplement', c)
+			self.assert_block('Extended Latin', c)
 
 		for c in xrange(0x100, 0x17F):
-			self.assert_block('Latin Extended-A', c)
+			self.assert_block('Extended Latin', c)
 
 		for c in xrange(0x180, 0x24F):
 			self.assert_block('Latin Extended-B', c)
 
 		for c in xrange(0x250, 0x2B0):
-			self.assert_block('IPA Extensions', c)
+			self.assert_block('Extended Latin', c)
 
 		self.assert_block('Thai', 0xE00)
 		self.assert_block('Thai', 0xE7F)

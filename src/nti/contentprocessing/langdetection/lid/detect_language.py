@@ -24,13 +24,14 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
 
-from .blocks import unicode_block
 from .trigram_trainer import calc_prob
 from .trigram_trainer import TrainerData
+from .blocks import BLOCKS, BLOCK_RSHIFT
 from .. import interfaces as ld_interfaces
 from .trigram_trainer import create_trigram_nsc
 from ... import space_pattern, non_alpha_pattern
-from . import (UNKNOWN, CYRILLIC, ARABIC, DEVANAGARI, SINGLETONS, EXTENDED_LATIN, PT, ALL_LATIN, NAME_MAP)
+from . import (UNKNOWN, CYRILLIC, ARABIC, DEVANAGARI, SINGLETONS, EXTENDED_LATIN, PT,
+			   ALL_LATIN, NAME_MAP, WORD_RE)
 
 def _load_models(models_dir):
 	models = {}
@@ -68,15 +69,15 @@ def find_runs(text):
 
 	total_count = 0
 
-	for c in text:
-		if c.isalpha():
-			block = unicode_block(c)
+	words = WORD_RE.findall(text.replace("’", "'"))
+	for word in words:
+		for char in word:
+			block = BLOCKS[ord(char) >> BLOCK_RSHIFT]
 			run_types[block] += 1
 			total_count += 1
 
 	# return run types that used for 40% or more of the string
 	# always return basic latin if found more than 15%
-	# and extended additional latin if over 10% (for Vietnamese)
 	relevant_runs = []
 	for key, value in run_types.items():
 		pct = (value * 100) / total_count
@@ -84,15 +85,10 @@ def find_runs(text):
 			relevant_runs.append(key)
 		elif key == "Basic Latin" and pct >= 15:
 			relevant_runs.append(key)
-		elif key == "Latin Extended Additional" and pct >= 10:
-			relevant_runs.append(key)
 
 	return relevant_runs
 
 def _identify(sample, scripts, models):
-
-	if len(sample) < 3:
-		return UNKNOWN
 
 	if 	"Hangul Syllables" in scripts or "Hangul Jamo" in scripts or \
 		"Hangul Compatibility Jamo" in scripts or "Hangul" in scripts:
@@ -122,15 +118,12 @@ def _identify(sample, scripts, models):
 		if block_name in scripts:
 			return lang_name
 
-	if "Latin Extended Additional" in scripts:
-		return "vi"
-
-	if "Latin-1 Supplement" in scripts or "Latin Extended-A" in scripts or "IPA Extensions" in scripts:
-		latinLang = _check(sample, models, EXTENDED_LATIN)
-		if latinLang == "pt":
+	if	"Extended Latin" in scripts:
+		latin_lang = _check(sample, models, EXTENDED_LATIN)
+		if latin_lang == "pt":
 			return _check(sample, models, PT)
 		else:
-			return latinLang
+			return latin_lang
 
 	if "Basic Latin" in scripts:
 		return _check(sample, models, ALL_LATIN)
