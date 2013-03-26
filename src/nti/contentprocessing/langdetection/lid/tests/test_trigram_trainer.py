@@ -54,10 +54,3 @@ class TestTrigramTrainer(ConfiguringTestBase):
 		assert_that(t.trigrams, has_length(2905))
 		assert_that(pairs, has_length(2905))
 
-	def test_ge(self):
-		dpath = "/Users/csanchez/Downloads/ge"
-		_, pairs = TrigramTrainer.process_files(dpath)
-		with open("/Users/csanchez/Downloads/ge.txt", "wt") as f:
-			for p in pairs:
-				f.write("%s %s" % (p[0], p[1]))
-				f.write("\n")
