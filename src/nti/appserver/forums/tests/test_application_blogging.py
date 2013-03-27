@@ -287,37 +287,18 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 	@WithSharedApplicationMockDS(testapp=True)
 	@time_monotonically_increases
 	def test_user_sharing_community_can_GET_and_POST_new_comments(self):
-		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user( username='original_user@foo' )
-			user2 = self._create_user( username='user2@foo' )
-			user3 = self._create_user( username='user3@foo' )
-			user_following_2 = self._create_user( username='user_following_2@foo' )
-			user2_following_2 = self._create_user( username='user2_following_2@foo' )
+		fixture = UserCommunityFixture( self )
 
-			# make them share a community
-			community = users.Community.create_community( username='TheCommunity' )
-			user.join_community( community )
-			user2.join_community( community )
-			user3.join_community( community )
-			user_following_2.join_community( community )
-			user2_following_2.join_community( community )
-
-			user2.follow( user )
-			user_following_2.follow( user2 )
-			user2_following_2.follow( user2 )
-
-			user2_username = user2.username
-			user_username = user.username
-			user3_username = user3.username
-			user2_follower_username = user_following_2.username
-			user2_follower2_username = user2_following_2.username
-
-
-		testapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user_username) )
-		testapp2 = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_username) )
-		testapp3 = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user3_username) )
-		user2_followerapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_follower_username) )
-		user2_follower2app = _TestApp( self.app, extra_environ=self._make_extra_environ(username=user2_follower2_username) )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+		testapp3 = fixture.testapp3
+		user2_followerapp = fixture.user2_followerapp
+		user2_follower2app = fixture.user2_follower2app
+		user_username = fixture.user_username
+		user2_username = fixture.user2_username
+		user3_username = fixture.user3_username
+		user2_follower_username = fixture.user2_follower_username
+		user2_follower2_username = fixture.user2_follower2_username
 
 		# First user creates the blog entry
 		data = { 'Class': 'Post',
@@ -426,18 +407,18 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 			#assert_that( evt.args[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
 
 		# ... and in his UGD stream ...
-		res = testapp.get( '/dataserver2/users/' + user_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream' )
+		res = self.fetch_user_root_rstream( username=user_username )
 		_has_both_comments( res, items=[change['Item'] for change in res.json_body['Items']] )
 
 		# ... and in the UGD stream of a user following the commentor
-		res = user2_followerapp.get( '/dataserver2/users/' + user2_follower_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream' )
+		res = self.fetch_user_root_rstream( testapp=user2_followerapp, username=user2_follower_username )
 		_has_both_comments( res, items=[change['Item'] for change in res.json_body['Items']] )
 
 		# (who can mute the conversation, never to see it again)
 		user2_followerapp.put_json( '/dataserver2/users/' + user2_follower_username,
 									 {'mute_conversation': entry_ntiid } )
 		# thus removing them from his stream
-		res = user2_followerapp.get( '/dataserver2/users/' + user2_follower_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=404 )
+		self.fetch_user_root_rstream( testapp=user2_followerapp, username=user2_follower_username, status=404 )
 
 		# Both of these the other user can update
 		data['title'] = 'Changed my title'
@@ -501,23 +482,23 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 		testapp2.get( entry_url, status=403 )
 		# ... and in his stream
-		res = testapp2.get( '/dataserver2/users/' + user2_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=404 )
+		self.fetch_user_root_rstream( testapp=testapp2, username=user2_username, status=404 )
 
 		# ... and the comments vanish from the stream of the other user following the commentor (the one not muted)
-		res = user2_follower2app.get( '/dataserver2/users/' + user2_follower2_username + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=404 )
+		self.fetch_user_root_rstream( testapp=user2_follower2app, username=user2_follower2_username, status=404 )
 
 		# ... but the commenting user can still see his comments in his activity
-		res = testapp2.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
+		res = self.fetch_user_activity( testapp2, user2_username )
 		_has_both_comments( res )
 		# ... as can the original user, since he can still delete them
-		res = testapp.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
+		res = self.fetch_user_activity( testapp, user2_username )
 		_has_both_comments( res )
 		# ... but the other community member cannot
-		res = testapp3.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
+		res = self.fetch_user_activity( testapp3, user2_username )
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 		# ... and the actual blog entry is not in the activity of the creating user anymore,
 		# as far as the commenting user is concerned
-		res = testapp2.get( UQ( '/dataserver2/users/' + user_username + '/Activity' ) )
+		res = self.fetch_user_activity( testapp2, user_username )
 		assert_that( res.json_body, has_entry( 'Items', is_empty() ) )
 		# All of the mod times were updated
 		assert_that( res.json_body['Last Modified'], is_( greater_than( user_activity_mod_time_body ) ) )

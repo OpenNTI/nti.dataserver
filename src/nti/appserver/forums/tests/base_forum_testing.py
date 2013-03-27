@@ -353,14 +353,19 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		comment_res = res
 
 		assert_that( res.status_int, is_( 201 ) )
-		assert_that( res.json_body, has_entry( 'title', data['title'] ) )
-		assert_that( res.json_body, has_entry( 'body', data['body'] ) )
-		assert_that( res.json_body, has_entry( 'ContainerId', entry_ntiid) )
-		assert_that( res, has_property( 'content_type', self.forum_topic_comment_content_type ) )
 		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
 
+		def _check_comment_res( cres ):
+			assert_that( cres.json_body, has_entries( 'title', data['title'],
+													 'body', data['body'],
+													 'ContainerId', entry_ntiid) )
+			assert_that( cres.json_body, has_key( 'NTIID' ) )
+			assert_that( cres, has_property( 'content_type', self.forum_topic_comment_content_type ) )
 
-		# Side effects: The containers PostCount is incremented
+		_check_comment_res( comment_res )
+
+
+		# Side effects: The container's PostCount is incremented
 		res = testapp.get( entry_url )
 		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
 
@@ -369,6 +374,13 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( search_res.json_body, has_entry( 'Hit Count', 1 ) )
 		assert_that( search_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( search_res.json_body['Items'][0], has_entry( 'ID', comment_res.json_body['ID'] ) )
+
+		# The comment can be fetched directly
+		_check_comment_res( testapp.get( comment_res.location ) )
+		# and by ntiid
+		_check_comment_res( self.fetch_by_ntiid( comment_res.json_body['NTIID'] ) )
+
+
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
