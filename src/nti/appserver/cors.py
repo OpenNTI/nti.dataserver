@@ -74,6 +74,8 @@ class CORSInjector(object):
 			start_response = self._CORSInjectingStartResponse( environ, start_response )
 
 		result = None
+		# XXX Note that WebError 0.10.3 apparently dropped support for paste.expected_exceptions,
+		# presumably accidentally since it is still documented
 		environ.setdefault( b'paste.expected_exceptions', [] ).extend( EXPECTED_EXCEPTIONS )
 		try:
 			result = self._app( environ, start_response )

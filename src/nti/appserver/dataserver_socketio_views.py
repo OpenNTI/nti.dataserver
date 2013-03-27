@@ -247,7 +247,11 @@ def _connect_view( request ):
 		raise hexc.HTTPNotFound( "Unknown transport type %s" % transport )
 
 	request_method = environ.get("REQUEST_METHOD")
-	jobs_or_response = transport.connect(session, request_method)
+	try:
+		jobs_or_response = transport.connect(session, request_method)
+	except IOError:
+		logger.debug( "Client disconnected during connection", exc_info=True )
+		raise hexc.HTTPClientError()
 
 	if pyramid.interfaces.IResponse.providedBy( jobs_or_response ):
 		return jobs_or_response
