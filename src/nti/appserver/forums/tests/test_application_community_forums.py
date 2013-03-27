@@ -39,7 +39,8 @@ from nti.dataserver.contenttypes.forums.board import CommunityBoard
 _BOARD_NAME = CommunityBoard.__default_name__
 
 
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from nti.appserver.tests.test_application import SharedApplicationTestBase
+from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
 from nti.appserver.tests.test_application import _TestApp
 
 from pyquery import PyQuery

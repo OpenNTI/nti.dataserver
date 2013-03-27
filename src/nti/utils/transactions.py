@@ -16,6 +16,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from ZODB.loglevels import TRACE
 
 import transaction
 try:
@@ -332,5 +333,6 @@ class TransactionLoop(object):
 						raise
 					if self.sleep:
 						_sleep( self.sleep )
+					logger.log( TRACE, "Retrying transaction on exception %d", number, exc_info=True )
 				finally:
 					del exc_info # avoid leak

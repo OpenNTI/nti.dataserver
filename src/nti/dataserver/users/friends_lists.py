@@ -131,6 +131,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		if friend in self:
 			jar = self._p_jar
 			if jar and self._friends_wref_set._p_jar:
+				self._friends_wref_set._p_activate()
 				jar.readCurrent( self._friends_wref_set )
 
 			friends = list(self)
