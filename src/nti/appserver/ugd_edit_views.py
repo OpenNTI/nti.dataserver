@@ -9,17 +9,14 @@ logger = __import__( 'logging' ).getLogger( __name__ )
 from zope import interface
 
 from zope import lifecycleevent
-from zope.schema import interfaces as sch_interfaces
-
+from zope.container.interfaces import InvalidContainerType
 
 from nti.appserver import httpexceptions as hexc
-from nti.appserver.httpexceptions import HTTPUnprocessableEntity
 
 from pyramid import traversal
 import transaction
 
 
-from nti.dataserver.interfaces import IEnclosedContent
 from nti.dataserver import interfaces as nti_interfaces
 
 
@@ -27,17 +24,18 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 from nti.externalization.interfaces import StandardInternalFields
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.appserver import interfaces as app_interfaces
 from nti.assessment import interfaces as asm_interfaces
 
-from nti.appserver import _external_object_io as obj_io
+
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 from nti.appserver._view_utils import ModeledContentEditRequestUtilsMixin
 from nti.appserver._view_utils import AbstractAuthenticatedView
 
-from nti.appserver.enclosure_views import EnclosureDeleteView
-from nti.appserver.enclosure_views import EnclosurePutView
+
+
 
 def _id(x): return x
 
@@ -115,7 +113,9 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		if not getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ):
 			transaction.doom()
 			logger.debug( "Failing to POST: input of unsupported/missing ContainerId" )
-			raise HTTPUnprocessableEntity( "Unsupported/missing ContainerId" )
+			e = InvalidContainerType( "Unsupported/missing ContainerId", StandardExternalFields.CONTAINER_ID, None )
+			e.field = nti_interfaces.IContained['containerId']
+			raise e
 
 		if hasattr( containedObject, 'updateLastMod' ):
 			containedObject.updateLastMod()

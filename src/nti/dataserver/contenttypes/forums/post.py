@@ -21,6 +21,8 @@ from nti.dataserver import sharing
 
 from ..note import BodyFieldProperty
 from nti.utils.schema import AdaptingFieldProperty
+from nti.utils.property import alias
+from zope.cachedescriptors.property import readproperty
 from zope.schema.fieldproperty import FieldProperty
 
 from . import interfaces as for_interfaces
@@ -43,8 +45,22 @@ class Post(
 
 	sharingTargets = ()
 
+	# Unlike the superclass, we define the nti_interfaces.IContained properties
+	# as aliases for the zope.container.IContained values
+	id = alias('__name__')
+	# BWC: Some few objects will have this is their __dict__, but that's OK, it should
+	# match what we get anyway (and if it doesn't, its wrong)
+
+	def _get_containerId(self):
+		if self.__parent__ is not None:
+			return self.__parent__.NTIID
+
+	def _set_containerId(self, cid ):
+		pass # ignored
+	containerId = property(_get_containerId, _set_containerId)
+
 	def __eq__( self, other ):
-		return other == (self.id, self.containerId, self.title, self.body, self.creator)
+		return other == (self.id, self.__parent__, self.title, self.body, self.creator)
 
 	def __hash__( self ):
 		return hash( (self.id, self.containerId, self.title, tuple(self.body or ()), self.creator) )

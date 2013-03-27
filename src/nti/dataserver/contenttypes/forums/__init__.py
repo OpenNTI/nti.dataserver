@@ -73,7 +73,7 @@ class _CreatedNamedNTIIDMixin(object):
 	def ntiid_creator_username(self):
 		return self.creator.username
 
-	@_CachedProperty
+	@_CachedProperty('__name__') # But __parent__ and creator are not necessarily safe
 	def NTIID(self):
 		"NTIID is defined only after the creator is set"
 		return _make_ntiid( date=_NTIID_DATE,

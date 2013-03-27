@@ -36,12 +36,13 @@ from nti.tests import aq_inContextOf
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
 tearDownModule = nti.tests.module_teardown
 
+from zope import interface
 from nti.tests import verifiably_provides, validly_provides
 from nti.tests import is_empty
 from zope.container.interfaces import InvalidContainerType
 from zope.mimetype.interfaces import IContentTypeAware
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
-from ..interfaces import IPost, IPersonalBlogComment
+from ..interfaces import IPost, IPersonalBlogComment, ITopic
 from ..post import Post, PersonalBlogComment, PersonalBlogEntryPost
 
 from ExtensionClass import Base
@@ -105,8 +106,14 @@ def test_post_constraints():
 
 def test_post_externalizes():
 
+	@interface.implementer(ITopic)
+	class Parent(Base):
+		NTIID = 'foo_bar_baz'
+
+	parent = Parent()
 	post = Post()
 	post.title = 'foo'
+	post.__parent__ = parent
 
 	assert_that( post,
 				 externalizes( all_of(
@@ -114,6 +121,7 @@ def test_post_externalizes():
 								  'Class', 'Post',
 								  'MimeType', 'application/vnd.nextthought.forums.post',
 								  'body', none(),
+								  'ContainerId', parent.NTIID,
 								  'sharedWith', is_empty() ),
 					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
 
@@ -121,6 +129,7 @@ def test_post_externalizes():
 
 	factory = internalization.find_factory_for( ext_post )
 	new_post = factory()
+	new_post.__parent__ = parent
 	internalization.update_from_external_object( new_post, ext_post )
 
 	assert_that( new_post, is_( post ) )
