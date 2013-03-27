@@ -32,9 +32,6 @@ from .constants import (ngrams_, channel_, content_, keywords_, references_, use
 
 # define search fields
 
-_shared_with = sharedWith_.lower()
-_container_id = containerId_.lower()
-
 search_stored_fields = (intid_,)
 
 def create_domain(domain_name='ntisearch', aws_access_key_id=None, aws_secret_access_key=None, **kwargs):
@@ -51,6 +48,9 @@ def create_domain(domain_name='ntisearch', aws_access_key_id=None, aws_secret_ac
 	return result
 
 def create_search_domain(connection, domain_name='ntisearch', language='en'):
+
+	_shared_with = sharedWith_.lower()
+	_container_id = containerId_.lower()
 
 	domain = connection.create_domain(domain_name)
 
@@ -124,6 +124,7 @@ def get_uid(obj):
 
 @interface.implementer(search_interfaces.ICloudSearchObject)
 class _AbstractCSObject(dict):
+
 	def __init__(self, src):
 		self._set_items(src)
 
@@ -145,6 +146,7 @@ class _CSHighlight(_AbstractCSObject):
 
 @component.adapter(nti_interfaces.IRedaction)
 class _CSRedaction(_AbstractCSObject):
+
 	def _set_items(self, src):
 		super(_CSRedaction, self)._set_items(src)
 		self[replacement_content_] = discriminators.get_replacement_content_and_ngrams(src)
@@ -156,6 +158,7 @@ class _CSMessageInfo(_AbstractCSObject):
 
 @component.adapter(for_interfaces.IPost)
 class _CSPost(_AbstractCSObject):
+
 	def _set_items(self, src):
 		super(_CSPost, self)._set_items(src)
 		self[tags_] = get_post_tags(src)

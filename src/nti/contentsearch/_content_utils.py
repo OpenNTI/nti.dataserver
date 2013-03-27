@@ -72,8 +72,6 @@ def _process_words(words):
 @interface.implementer(search_interfaces.IContentResolver)
 class _BasicContentResolver(object):
 
-	__slots__ = ('obj',)
-
 	def __init__(self, obj):
 		self.obj = obj
 
@@ -119,7 +117,7 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 		result = set()
 		items = to_list(getattr(self.obj, references_, ()))
 		for obj in items or ():
-			adapted = component.queryAdapter(obj, search_interfaces.INTIIDResolver)
+			adapted = search_interfaces.INTIIDResolver(obj, None)
 			if adapted:
 				ntiid = adapted.get_ntiid()
 				if ntiid: result.add(unicode(ntiid))
@@ -160,15 +158,16 @@ class _PartsContentResolver(object):
 		result = []
 		items = to_list(data)
 		for item in items or ():
-			adapted = component.queryAdapter(item, search_interfaces.IContentResolver)
+			adapted = search_interfaces.IContentResolver(item, None)
 			if adapted:
 				result.append(adapted.get_content())
-		result = ' '.join([x for x in result if x is not None])
+		result = u' '.join([x for x in result if x is not None])
 		return result
 
 @component.adapter(nti_interfaces.INote)
 @interface.implementer(search_interfaces.INoteContentResolver)
 class _NoteContentResolver(_ThreadableContentResolver, _PartsContentResolver):
+
 	def get_content(self):
 		return self._resolve(self.obj.body)
 
@@ -193,11 +192,13 @@ class _MessageInfoContentResolver(_ThreadableContentResolver, _PartsContentResol
 
 @component.adapter(Canvas)
 class _CanvasShapeContentResolver(_BasicContentResolver, _PartsContentResolver):
+
 	def get_content(self):
 		return self._resolve(self.obj.shapeList)
 
 @component.adapter(CanvasTextShape)
 class _CanvasTextShapeContentResolver(_BasicContentResolver):
+
 	def get_content(self):
 		return self.obj.text
 
