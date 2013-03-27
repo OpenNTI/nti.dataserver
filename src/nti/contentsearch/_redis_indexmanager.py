@@ -21,7 +21,7 @@ class _RedisIndexManager(IndexManager):
 
 	def __new__(cls, *args, **kwargs):
 		if not cls.indexmanager:
-			cls.indexmanager = super(_RedisIndexManager, cls).__new__(cls, *args, **kwargs)
+			cls.indexmanager = super(_RedisIndexManager, cls).__new__(cls)
 		return cls.indexmanager
 
 	@property
