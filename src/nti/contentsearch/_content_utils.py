@@ -50,8 +50,6 @@ def get_content(text=None, language='en'):
 @component.adapter(basestring)
 class _StringContentResolver(object):
 
-	__slots__ = ('content',)
-
 	def __init__(self, content):
 		self.content = content
 
@@ -78,7 +76,8 @@ class _BasicContentResolver(object):
 class _AbstractIndexDataResolver(_BasicContentResolver):
 
 	def get_ntiid(self):
-		return to_external_ntiid_oid(self.obj)
+		result = to_external_ntiid_oid(self.obj)
+		return result
 
 	def get_creator(self):
 		result = self.obj.creator
@@ -91,8 +90,11 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 		return unicode(result) if result else None
 
 	def get_sharedWith(self):
-		data = getattr(self.obj, flattenedSharingTargetNames_, ())
-		return _process_words(data)
+		data = ()
+		if nti_interfaces.IReadableShared.providedBy(self.obj):
+			data = self.obj.flattenedSharingTargetNames
+		result = _process_words(data)
+		return result
 
 	def get_flattenedSharingTargets(self):
 		if nti_interfaces.IReadableShared.providedBy(self.obj):
@@ -140,7 +142,7 @@ class _HighLightContentResolver(_ThreadableContentResolver):
 class _RedactionContentResolver(_HighLightContentResolver):
 
 	def get_content(self):
-		result = unicode(self.obj.selectedText)
+		result = self.obj.selectedText
 		return result
 
 	def get_replacement_content(self):
