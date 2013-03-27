@@ -73,7 +73,7 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 			oid = oid + b':' + db_name.encode( 'hex' )
 
 		intutility = component.queryUtility( zc_intid.IIntIds )
-		if intutility:
+		if intutility is not None:
 			intid = intutility.queryId( self )
 			if not intid and add_to_intids:
 				intid = intutility.register( self )
