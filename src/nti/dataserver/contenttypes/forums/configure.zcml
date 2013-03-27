@@ -14,11 +14,9 @@
 
 	<!-- The community forums are hidden behind devmode -->
 	<adapter factory=".forum.GeneralForumCommunityAdapter"
-			 provides=".interfaces.ICommunityForum"
-			 zcml:condition="have devmode" />
+			 provides=".interfaces.ICommunityForum" />
 	<adapter factory=".board.GeneralBoardCommunityAdapter"
-			 provides=".interfaces.ICommunityBoard"
-			 zcml:condition="have devmode" />
+			 provides=".interfaces.ICommunityBoard" />
 
 	<adapter provides="zope.location.interfaces.ISublocations"
 			 for=".interfaces.IHeadlineTopic"

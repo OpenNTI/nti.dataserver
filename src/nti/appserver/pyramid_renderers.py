@@ -47,7 +47,7 @@ def find_content_type( request, data=None ):
 	full_type = b''
 	if data is not None:
 		content_type_aware = data if IContentTypeAware.providedBy( data ) \
-							 else request.registry.queryAdapter( data, IContentTypeAware )
+							 else component.queryAdapter( data, IContentTypeAware )
 		if content_type_aware:
 			full_type = content_type_aware.mimeType
 		else:
@@ -94,7 +94,7 @@ def render_externalizable(data, system):
 	response = request.response
 	__traceback_info__ = data, request, response, system
 
-	body = toExternalObject( data, name='', registry=request.registry,
+	body = toExternalObject( data, name='',
 							 # Catch *nested* errors during externalization. We got this far,
 							 # at least send back some data for the main object. The exception will be logged.
 							 # AttributeError is usually a migration problem,
