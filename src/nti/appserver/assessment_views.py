@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 import pyramid.httpexceptions as hexc
 from pyramid.view import view_config
 
+
 from nti.dataserver.mimetype import  nti_mimetype_with_class
 from nti.dataserver import authorization as nauth
 from nti.ntiids import ntiids
@@ -67,15 +68,16 @@ def pageinfo_from_question_view( request ):
 	if content_unit:
 		page_ntiid = content_unit.ntiid
 
-	# Using request.route_path to produce a path, not a URL, can fail when accessed over HTTPS,
-	# because at some point the Location header gets turned into a full URL, and in pyramid 1.3.4,
-	# this fails to take into consideration the request scheme, always return HTTP instead of HTTPS.
-	# Thus we request the complete URL here (JAM: Note, this was wrong. This was a misconfiguration of
-	# gunicorn/haproxy and a failure to get the secure headers.)
-	# TODO: Now that we are on pyramid 1.4, consider doing this as a sub-request and skipping the redirect
-	route_url = request.route_url( 'objects.generic.traversal', traverse=('NTIIDs', page_ntiid) )
+	# Rather than redirecting to the canonical URL for the page, request it
+	# directly. This saves a round trip, and is more compatible with broken clients that
+	# don't follow redirects
+	subrequest = request.blank( '/dataserver2/Objects/' + page_ntiid )
+	subrequest.method = 'GET'
+	subrequest.environ['REMOTE_USER'] = request.environ['REMOTE_USER']
+	subrequest.environ['repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
+	subrequest.accept = accept_type
+	return request.invoke_subrequest( subrequest )
 
-	return hexc.HTTPSeeOther( location=route_url )
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
