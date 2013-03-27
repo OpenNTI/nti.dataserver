@@ -7,7 +7,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__('logging').getLogger(__name__)
-from ZODB import loglevels
+from ZODB.loglevels import TRACE
 
 from zope import component
 
@@ -22,6 +22,7 @@ from .activitystream_change import Change
 def enqueue_change( change, **kwargs ):
 	ds = component.queryUtility( nti_interfaces.IDataserver )
 	if ds:
+		logger.log( TRACE, "Sending %s change to %s", change, kwargs )
 		ds.enqueue_change( change, **kwargs )
 
 def _enqueue_change_to_target( target, change, accum=None ):
@@ -50,7 +51,6 @@ def _enqueue_change_to_target( target, change, accum=None ):
 	accum.add( target_key )
 
 	# Fire the change off to the user using different threads.
-	logger.log( loglevels.TRACE, "Sending %s change to %s", change, target )
 	enqueue_change( change, target=target )
 
 	for nested_entity in nti_interfaces.IEnumerableEntityContainer(target, ()):

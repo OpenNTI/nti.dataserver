@@ -52,16 +52,31 @@ class _CreatedNamedNTIIDMixin(object):
 	"""
 	Mix this in to get NTIIDs based on the creator and name.
 	You must define the ``ntiid_type``.
+
+	.. py:attribute:: ntiid_type
+		The string constant for the type of the NTIID.
+
+	.. py:attribute:: ntiid_include_parent_name
+		If True (not the default) the ``__name__`` of our ``__parent__``
+		object is included in the specific part, preceding our name
+		and separated by a dot. Use this if our name is only unique within
+		our parent. (We choose a dot because it is not used by :func:`.make_specific_safe`.)
+
 	"""
 
 	creator = None
 	__name__ = None
 	ntiid_type = None
+	ntiid_include_parent_name = False
+
+	@property
+	def ntiid_creator_username(self):
+		return self.creator.username
 
 	@_CachedProperty
 	def NTIID(self):
 		"NTIID is defined only after the creator is set"
 		return _make_ntiid( date=_NTIID_DATE,
-							provider=self.creator.username,
+							provider=self.ntiid_creator_username,
 							nttype=self.ntiid_type,
-							specific=self.__name__ )
+							specific=self.__name__ if not self.ntiid_include_parent_name else self.__parent__.__name__ + '.' + self.__name__)

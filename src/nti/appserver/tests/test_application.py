@@ -397,10 +397,19 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 	return factory
 
 def WithSharedApplicationMockDSHandleChanges( *args, **kwargs ):
+	call_factory = False
+	if len(args) == 1 and not kwargs:
+		# Being used as a plain decorator. But we add kwargs that make
+		# it look like we're being used as a factory
+		call_factory = True
+
 	kwargs['handle_changes'] = True
 	if 'testapp' not in kwargs:
 		kwargs['testapp'] = True
-	return WithSharedApplicationMockDS( *args, **kwargs )
+	result = WithSharedApplicationMockDS( *args, **kwargs )
+	if call_factory:
+		result = result(args[0])
+	return result
 
 def WithSharedApplicationMockDSWithChanges(func):
 	@functools.wraps(func)

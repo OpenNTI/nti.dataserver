@@ -20,7 +20,7 @@ from zope.component.interfaces import IComponents
 from zope import interface
 from zope import schema
 from zope.event import notify
-from ZODB import loglevels
+from ZODB.loglevels import TRACE
 
 from pyramid.threadlocal import get_current_request
 
@@ -355,11 +355,11 @@ def _dispatch_to_policy( user, event, func_name ):
 	"""
 	utility, site_name = find_site_policy( )
 	if utility:
-		logger.log( loglevels.TRACE, "Site %s wants to handle user creation event %s for %s with %s", site_name, func_name, user, utility )
+		logger.log( TRACE, "Site %s wants to handle user creation event %s for %s with %s", site_name, func_name, user, utility )
 		getattr( utility, func_name )( user, event )
 		return True
 
-	logger.debug( "No site in %s wanted to handle user event %s for %s", site_name, func_name, user )
+	logger.log( TRACE, "No site in %s wanted to handle user event %s for %s", site_name, func_name, user )
 
 
 @component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)

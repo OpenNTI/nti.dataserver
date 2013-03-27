@@ -16,6 +16,7 @@ from zope import interface
 from zope import component
 
 from ._compat import Implicit
+from . import _CreatedNamedNTIIDMixin
 
 from nti.ntiids import ntiids
 from nti.dataserver import containers
@@ -59,62 +60,38 @@ class GeneralTopic(Topic):
 
 @interface.implementer(for_interfaces.IGeneralHeadlineTopic)
 class GeneralHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
-						   GeneralTopic,HeadlineTopic):
+						   GeneralTopic,
+						   HeadlineTopic,
+						   _CreatedNamedNTIIDMixin):
 	headline = AcquisitionFieldProperty(for_interfaces.IGeneralHeadlineTopic['headline'])
 
 	creator = None
 
-	@CachedProperty
-	def NTIID(self):
-		"""
-		NTIID is defined only after the creator and id/__name__ are set.
-		Our NTIID is derived from the __name__, using that as the specific part.
-		For this to work correctly, our __name__ must be NTIID safe. We provide a name
-		chooser to ensure that.
-		"""
-		return ntiids.make_ntiid( date=ntiids.DATE,
-								  provider=self.creator.username,
-								  nttype=for_interfaces.NTIID_TYPE_GENERAL_TOPIC,
-								  specific=self.__name__ )
+	ntiid_type = for_interfaces.NTIID_TYPE_GENERAL_TOPIC
+	ntiid_include_parent_name = True
 
 @interface.implementer(for_interfaces.ICommunityHeadlineTopic)
 class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 							 GeneralHeadlineTopic):
 	mimeType = None
+
+	ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_TOPIC
 	# TODO: The permissioning isn't quite right on this. The sharing targets are the
 	# creators sharing targets but we really want just the community
-	@CachedProperty
-	def NTIID(self):
-		"""
-		NTIID is defined only after the creator and id/__name__ are set.
-		Our NTIID is derived from the __name__, using that as the specific part.
-		For this to work correctly, our __name__ must be NTIID safe. We provide a name
-		chooser to ensure that.
-		"""
-		return ntiids.make_ntiid( date=ntiids.DATE,
-								  provider=self.__parent__.creator.username,
-								  nttype=for_interfaces.NTIID_TYPE_COMMUNITY_TOPIC,
-								  specific=self.__name__ )
+
+	@property
+	def ntiid_creator_username(self):
+		return self.__parent__.creator.username
 
 @interface.implementer(for_interfaces.IPersonalBlogEntry)
 class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
-						HeadlineTopic):
+						HeadlineTopic,
+						_CreatedNamedNTIIDMixin):
 	creator = None
 	headline = AcquisitionFieldProperty(for_interfaces.IPersonalBlogEntry['headline'])
 	mimeType = None
 
-	@CachedProperty
-	def NTIID(self):
-		"""
-		NTIID is defined only after the creator and id/__name__ are set.
-		Our NTIID is derived from the __name__, using that as the specific part.
-		For this to work correctly, our __name__ must be NTIID safe. We provide a name
-		chooser to ensure that.
-		"""
-		return ntiids.make_ntiid( date=ntiids.DATE,
-								  provider=self.creator.username,
-								  nttype=for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY,
-								  specific=self.__name__ )
+	ntiid_type = for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY,
 
 
 @component.adapter(for_interfaces.IHeadlineTopic)
