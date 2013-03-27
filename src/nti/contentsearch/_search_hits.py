@@ -47,6 +47,7 @@ def get_hit_id(obj):
 
 @interface.implementer(search_interfaces.ISearchHit)
 class _BaseSearchHit(dict):
+
 	def __init__(self, original, oid=None, score=1.0):
 		self.oid = oid
 		self._query = None
@@ -119,6 +120,7 @@ class _HighlightSearchHit(_SearchHit):
 @component.adapter(nti_interfaces.IRedaction)
 @interface.implementer(search_interfaces.IRedactionSearchHit)
 class _RedactionSearchHit(_SearchHit):
+
 	adapter_interface = search_interfaces.IRedactionContentResolver
 
 	def set_hit_info(self, original, score):

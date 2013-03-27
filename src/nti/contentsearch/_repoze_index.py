@@ -58,13 +58,14 @@ def get_recipients(obj, default=None):
 	return _flatten_list(result, default)
 
 def create_catalog(type_name):
-	creator = component.queryUtility(search_interfaces.IRepozeCatalogCreator,  name=type_name)
+	creator = component.queryUtility(search_interfaces.IRepozeCatalogCreator, name=type_name)
 	return creator.create() if creator else None
 
 # catalog creators
 
 @interface.implementer(search_interfaces.IRepozeCatalogCreator)
 class _RepozeCatalogCreator(object):
+
 	def create(self):
 		catalog = Catalog(family=BTrees.family64)
 		self._set4(catalog, search_interfaces.IRepozeCatalogFieldCreator)
@@ -73,7 +74,7 @@ class _RepozeCatalogCreator(object):
 
 	def _set4(self, catalog, iface):
 		for name, func in component.getUtilitiesFor(iface):
-			func( catalog, name, iface)
+			func(catalog, name, iface)
 
 class _RepozeNoteCatalogCreator(_RepozeCatalogCreator):
 	_iface = search_interfaces.INoteRepozeCatalogFieldCreator
@@ -109,17 +110,17 @@ def _text_field_creator(catalog, name, iface):
 	discriminator = _get_discriminator(name)
 	catalog[name] = CatalogTextIndex(discriminator)
 
-def _named_field_creator(catalog, name, iface ):
+def _named_field_creator(catalog, name, iface):
 	discriminator = _get_discriminator(name)
-	catalog[name] = CatalogFieldIndex( discriminator )
+	catalog[name] = CatalogFieldIndex(discriminator)
 
-def _keyword_field_creator(catalog, name, iface ):
+def _keyword_field_creator(catalog, name, iface):
 	discriminator = _get_discriminator(name)
-	catalog[name] = CatalogKeywordIndex( discriminator )
+	catalog[name] = CatalogKeywordIndex(discriminator)
 
-def _post_title_field_creator(catalog, name, iface ):
+def _post_title_field_creator(catalog, name, iface):
 	catalog[name] = CatalogTextIndexNG3(name, get_post_title)
 
-def _post_tags_field_creator(catalog, name, iface ):
+def _post_tags_field_creator(catalog, name, iface):
 	discriminator = get_post_tags
-	catalog[name] = CatalogKeywordIndex( discriminator )
+	catalog[name] = CatalogKeywordIndex(discriminator)
