@@ -23,6 +23,7 @@ from hamcrest import contains
 from hamcrest import has_entry
 from hamcrest import has_property
 from hamcrest import has_length
+from hamcrest import has_key
 
 from zope.component import eventtesting
 from zope.lifecycleevent import IObjectRemovedEvent
@@ -42,7 +43,7 @@ from nti.appserver.tests.test_application import SharedApplicationTestBase, With
 from nti.appserver.tests.test_application import _TestApp
 
 from pyquery import PyQuery
-
+from urllib import quote as UQ
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -232,13 +233,12 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		data = expected_data or data
 		contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 		entry_id = res.json_body['ID']
-		headline_json = res.json_body['headline']
-
+		assert_that( res.json_body, has_key( 'headline' ) )
 		entry_url = res.location
 		entry_ntiid = res.json_body['NTIID']
 
-		# The new topic is accessible at its OID URL, its pretty URL, and by NTIID (not yet)
-		for url in entry_url, self.forum_topic_href( entry_id ):  #, UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
+		# The new topic is accessible at its OID URL, its pretty URL, and by NTIID
+		for url in entry_url, self.forum_topic_href( entry_id ), UQ( '/dataserver2/NTIIDs/' + entry_ntiid ):
 			testapp.get( url )
 
 		# and it has no contents
@@ -277,5 +277,5 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		comment_res = testapp2.post_json( topic_url, comment_data, status=201 )
 		edit_href = self.require_link_href_with_rel( comment_res.json_body, 'edit' )
 
-		# cannot be deleted by created
-		res = testapp.delete( edit_href, status=403 ) # forbidden by ACL
+		# cannot be deleted by creator
+		testapp.delete( edit_href, status=403 ) # forbidden by ACL
