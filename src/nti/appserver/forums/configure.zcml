@@ -41,7 +41,9 @@
 	<subscriber handler=".views.match_title_of_post_to_blog" />
 
 	<!-- Change broadcasting -->
-	<subscriber handler=".views.notify_online_author_of_comment" />
+	<subscriber handler=".activity.notify_online_author_of_blog_comment" />
+	<subscriber handler=".activity.notify_online_author_of_topic_comment" />
+
 
 	<!-- Activity stream updating -->
 	<subscriber handler=".activity.store_created_object_in_global_activity"

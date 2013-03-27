@@ -292,9 +292,11 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		comment_data = self._create_comment_data_for_POST()
 		testapp2.post_json( topic_url, comment_data, status=201 )
 
-		# the creator gets nothing: no topic in his stream (because he created it)
-		# and no comment in his stream because...?
-		self.fetch_user_root_rstream( testapp, fixture.user_username, status=404 )
+		# the creator gets the comment, but not the topic in his stream (because he created it)
+		res = self.fetch_user_root_rstream( testapp, fixture.user_username )
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )
+		assert_that( res.json_body['Items'][0], has_entry( 'ChangeType', 'Created' ) )
+
 
 		# the commentor gets the topic created by the other user (as Modified)
 		res = self.fetch_user_root_rstream( testapp2, fixture.user2_username )#, status=404 )
