@@ -18,6 +18,7 @@ from zope import schema
 
 from ._compat import Implicit
 from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
+from . import _containerIds_from_parent
 
 from nti.dataserver import containers as nti_containers
 from nti.dataserver import datastructures
@@ -43,6 +44,7 @@ class Forum(Implicit,
 	sharingTargets = ()
 	TopicCount = property(nti_containers.CheckingLastModifiedBTreeContainer.__len__)
 
+	id, containerId = _containerIds_from_parent()
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
 class PersonalBlog(Forum,_SingleInstanceNTIIDMixin):
