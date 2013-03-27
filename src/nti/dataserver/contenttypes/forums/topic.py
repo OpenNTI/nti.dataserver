@@ -17,6 +17,7 @@ from zope import component
 
 from ._compat import Implicit
 from . import _CreatedNamedNTIIDMixin
+from . import _containerIds_from_parent
 
 from nti.ntiids import ntiids
 from nti.dataserver import containers
@@ -43,6 +44,7 @@ class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 	tags = FieldProperty(for_interfaces.IPost['tags'])
 	PostCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
 
+	id, containerId = _containerIds_from_parent()
 
 @interface.implementer(for_interfaces.ITopic, an_interfaces.IAttributeAnnotatable)
 class Topic(_AbstractUnsharedTopic,

@@ -46,6 +46,7 @@ except ImportError:
 from nti.ntiids.ntiids import make_ntiid as _make_ntiid
 from nti.ntiids.ntiids import DATE as _NTIID_DATE
 from nti.utils.property import CachedProperty as _CachedProperty
+from nti.utils.property import alias as _alias
 
 
 class _CreatedNamedNTIIDMixin(object):
@@ -80,3 +81,23 @@ class _CreatedNamedNTIIDMixin(object):
 							provider=self.ntiid_creator_username,
 							nttype=self.ntiid_type,
 							specific=self.__name__ if not self.ntiid_include_parent_name else self.__parent__.__name__ + '.' + self.__name__)
+
+
+def _containerIds_from_parent():
+	"Returns a tuple of properties to assign to id and containerId"
+
+	# BWC: Some few objects will have this is their __dict__, but that's OK, it should
+	# match what we get anyway (and if it doesn't, its wrong)
+
+	# TODO: Cache this?
+	def _get_containerId(self):
+		if self.__parent__ is not None:
+			return self.__parent__.NTIID
+
+	def _set_containerId(self, cid ):
+		pass # ignored
+
+	# Unlike the superclass, we define the nti_interfaces.IContained properties
+	# as aliases for the zope.container.IContained values
+
+	return _alias('__name__'),  property(_get_containerId, _set_containerId)

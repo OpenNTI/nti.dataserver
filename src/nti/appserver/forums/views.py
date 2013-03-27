@@ -183,8 +183,8 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 
 		lifecycleevent.created( topic )
 		forum[name] = topic # Now store the topic and fire lifecycleevent.added
-		topic.id = name # match these things. ID is local within container
-		topic.containerId = forum.NTIID
+		assert topic.id == name
+		assert topic.containerId == forum.NTIID
 
 		if interface.providedBy( topic ).get('headline'):
 			# not all containers have headlines; those that don't simply use
