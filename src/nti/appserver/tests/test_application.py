@@ -254,12 +254,12 @@ class _AppTestBaseMixin(object):
 		"""Search the user for the given term and return the results"""
 		return self._fetch_user_url( '/Search/RecursiveUserGeneratedData/' + term, testapp=testapp, username=username, **kwargs )
 
-	def fetch_by_ntiid( self, ntiid, testapp=None ):
+	def fetch_by_ntiid( self, ntiid, testapp=None, **kwargs ):
 		"Using the given or default app, fetch the object with the given ntiid"
 		if testapp is None:
 			testapp = self.testapp
 
-		return testapp.get( '/dataserver2/NTIIDs/' + ntiid )
+		return testapp.get( '/dataserver2/NTIIDs/' + ntiid, **kwargs )
 
 from zope.component import eventtesting
 class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
