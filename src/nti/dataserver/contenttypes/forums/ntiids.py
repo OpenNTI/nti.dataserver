@@ -18,6 +18,8 @@ from nti.ntiids import interfaces as nid_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.ntiids import ntiids
+from nti.ntiids.ntiids import get_specific
+from nti.dataserver.ntiids import AbstractUserBasedResolver
 from nti.dataserver.ntiids import AbstractAdaptingUserBasedResolver
 from nti.dataserver.ntiids import AbstractMappingAdaptingUserBasedResolver
 
@@ -76,7 +78,7 @@ class _CommunityForumResolver(AbstractMappingAdaptingUserBasedResolver):
 
 
 @interface.implementer(nid_interfaces.INTIIDResolver)
-class _CommunityTopicResolver(AbstractMappingAdaptingUserBasedResolver):
+class _CommunityTopicResolver(AbstractUserBasedResolver):
 	"""
 	Resolves a topic in the one forum that belongs to a community, if one does exist.
 
@@ -85,3 +87,10 @@ class _CommunityTopicResolver(AbstractMappingAdaptingUserBasedResolver):
 
 	required_iface = nti_interfaces.ICommunity
 	adapt_to = frm_interfaces.ICommunityForum
+
+	def _resolve( self, ntiid, community ):
+		board = frm_interfaces.ICommunityBoard( community, None )
+		if board is None:
+			return None
+		forum_name, topic_name = get_specific( ntiid ).split( '.', 1 )
+		return board.get( forum_name, {} ).get( topic_name )

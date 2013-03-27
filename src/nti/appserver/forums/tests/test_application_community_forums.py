@@ -29,8 +29,6 @@ from zope.component import eventtesting
 from zope.lifecycleevent import IObjectRemovedEvent
 from zope.intid.interfaces import IIntIdRemovedEvent
 
-from nti.tests import time_monotonically_increases
-
 
 from nti.dataserver.contenttypes.forums.topic import  CommunityHeadlineTopic
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
@@ -68,7 +66,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 	default_entityname = default_community
 	forum_url_relative_to_user = _BOARD_NAME + '/' + _FORUM_NAME
 	forum_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Forum:GeneralCommunity-Forum'
-	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-'
+	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-Forum.'
 
 	board_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Board:GeneralCommunity-DiscussionBoard'
 	board_content_type = CommunityBoard.mimeType + '+json'
@@ -261,10 +259,10 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
 		assert_that( pq( b'entry title' ).text(), is_( data['title'] ) )
 		assert_that( pq( b'entry summary' ).text(), is_( '<div><br />' + data['body'][0] ) )
+
 		return post_res
 
 	@WithSharedApplicationMockDS
-	@time_monotonically_increases
 	def test_creator_cannot_DELETE_community_user_comment_in_published_topic(self):
 		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
@@ -280,3 +278,23 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 
 		# cannot be deleted by creator
 		testapp.delete( edit_href, status=403 ) # forbidden by ACL
+
+	@WithSharedApplicationMockDS
+	def test_community_topics_and_comments_NOT_in_RUGD_or_RSTREAM(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, _ = self._POST_and_publish_topic_entry()
+		topic_url = publish_res.location
+
+		# non-creator adds comment
+		comment_data = self._create_comment_data_for_POST()
+		testapp2.post_json( topic_url, comment_data, status=201 )
+
+		# None of this is in either user's stream or RUGD
+		self.fetch_user_root_rstream( testapp, fixture.user_username, status=404 )
+		res = self.fetch_user_root_rstream( testapp2, fixture.user2_username )#, status=404 )
+
+		self.fetch_user_root_rugd( testapp, fixture.user_username, status=404 )
+		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username )#, status=404 )
