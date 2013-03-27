@@ -96,19 +96,15 @@ class TestApplicationAssessment(SharedApplicationTestBase):
 			self._create_user()
 		testapp = TestApp( self.app )
 
-		# If we fetch the URL of a question, but specif that we accept PageInfo,
-		# that's what we get back (after a redirect)
+		# If we fetch the URL of a question, but specify that we accept PageInfo,
+		# that's what we get back
 		page_info_mt = nti_mimetype_with_class( 'pageinfo' )
 		page_info_mt_json = page_info_mt + '+json'
 
 		res = testapp.get( '/dataserver2/NTIIDs/' + self.question_ntiid,
 						   headers={'Accept': str(page_info_mt_json)},
 						   extra_environ=self._make_extra_environ() )
-		assert_that( res.status_int, is_( 303 ) ) # redirect to the containing page
 
-		res = testapp.get( res.location,
-						   headers={'Accept': str(page_info_mt_json)},
-						   extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'Class', 'PageInfo' ) )
 
