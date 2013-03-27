@@ -11,7 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 
-from zope import component
 from ZODB import loglevels
 
 from nti.dataserver.users import Entity
@@ -30,24 +29,22 @@ _event_types = { nti_interfaces.SC_CREATED: 'index_user_content',
 _only_delete_by_owner = True
 
 def get_creator(obj):
-	adapted = component.getAdapter(obj, search_interfaces.ICreatorResolver)
+	adapted = search_interfaces.ICreatorResolver(obj)
 	return adapted.get_creator()
 
 def _check_event(target, change_type, data_type, data):
 	result = change_type in _event_types and normalize_type_name(data_type) in get_indexable_types()
 	if result and _only_delete_by_owner and change_type == nti_interfaces.SC_DELETED:
-		username = target if isinstance( target, six.string_types ) else target.username
+		username = target if isinstance(target, six.string_types) else target.username
 		creator = get_creator(data)
 		result = username == creator
 	return result
 
 def _process_event(indexmanager, target, change_type, data_type, data):
 	if 	_check_event(target, change_type, data_type, data):
-
-		func_name = _event_types.get( change_type )
-		func = getattr( indexmanager, func_name, None ) if func_name else None
-		return func( target, data=data, type_name=data_type ) or True if func else False
-
+		func_name = _event_types.get(change_type)
+		func = getattr(indexmanager, func_name, None) if func_name else None
+		return func(target, data=data, type_name=data_type) or True if func else False
 	return False
 
 def handle_index_event(indexmanager, target, change, broadcast=None):
@@ -75,17 +72,16 @@ def handle_index_event(indexmanager, target, change, broadcast=None):
 
 	should_process = True
 	change_object = change.object
-	if not broadcast: # only check if we're not a global broadcast
+	if not broadcast:  # only check if we're not a global broadcast
 		if change.type in (nti_interfaces.SC_CREATED, nti_interfaces.SC_SHARED, nti_interfaces.SC_MODIFIED):
-			entity = Entity.get_entity(target) if isinstance(target, six.string_types) else target # FIXME: Tightly coupled
-			should_process = change_object.isSharedDirectlyWith( entity )
+			entity = Entity.get_entity(target) if isinstance(target, six.string_types) else target  # FIXME: Tightly coupled
+			should_process = change_object.isSharedDirectlyWith(entity)
 
 	result = False
 	if should_process:
 		data_type = get_type_name(change.object)
 		result = _process_event(indexmanager, target, change.type, data_type, change_object)
-		logger.log( loglevels.TRACE,
-					'Index event target="%s", change=%s, data_type=%s, broadcast=%s handled=%s',
-					target, change, data_type, broadcast, result )
+		logger.log(loglevels.TRACE, 'Index event target="%s", change=%s, data_type=%s, broadcast=%s handled=%s',
+				   target, change, data_type, broadcast, result)
 
 	return result

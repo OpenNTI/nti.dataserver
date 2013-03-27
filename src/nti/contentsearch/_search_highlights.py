@@ -18,6 +18,9 @@ from whoosh import analysis
 from whoosh import highlight
 
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.datastructures import LocatedExternalDict
+
+from nti.utils import schema as nti_schema
 
 from nti.contentprocessing import split_content
 from nti.contentprocessing import interfaces as cp_interfaces
@@ -97,7 +100,7 @@ class _Range(object):
 		return hash((self.start, self.end))
 
 class ISearchFragment(ext_interfaces.IExternalObject):
-	text = schema.TextLine(title="fragment text", required=True)
+	text = nti_schema.ValidTextLine(title="fragment text", required=True)
 	matches = schema.Iterable("Iterable with pair tuples where a match occurs", required=True)
 
 @interface.implementer(ISearchFragment)
@@ -119,8 +122,9 @@ class _SearchFragment(object):
 
 	def toExternalObject(self):
 		ranges = [(m.start, m.end) for m in self.matches]
-		result = {'text': self.text or u'',
-				  'matches': ranges}
+		result = LocatedExternalDict()
+		result['text'] = self.text or u''
+		result['matches'] = ranges
 		return result
 
 	@classmethod
