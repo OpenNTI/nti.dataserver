@@ -280,7 +280,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		testapp.delete( edit_href, status=403 ) # forbidden by ACL
 
 	@WithSharedApplicationMockDS
-	def test_community_topics_and_comments_NOT_in_RUGD_or_RSTREAM(self):
+	def test_community_topics_and_comments_in_RUGD_and_RSTREAM(self):
 		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
 		testapp2 = fixture.testapp2
@@ -292,9 +292,20 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		comment_data = self._create_comment_data_for_POST()
 		testapp2.post_json( topic_url, comment_data, status=201 )
 
-		# None of this is in either user's stream or RUGD
+		# the creator gets nothing: no topic in his stream (because he created it)
+		# and no comment in his stream because...?
 		self.fetch_user_root_rstream( testapp, fixture.user_username, status=404 )
-		res = self.fetch_user_root_rstream( testapp2, fixture.user2_username )#, status=404 )
 
-		self.fetch_user_root_rugd( testapp, fixture.user_username, status=404 )
-		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username )#, status=404 )
+		# the commentor gets the topic created by the other user (as Modified)
+		res = self.fetch_user_root_rstream( testapp2, fixture.user2_username )#, status=404 )
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )
+		assert_that( res.json_body['Items'][0], has_entry( 'ChangeType', 'Modified' ) )
+
+		# The creator gets the topic he created in his UGD,
+		# but not the comment (???)
+		res = self.fetch_user_root_rugd( testapp, fixture.user_username )
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )
+
+		# The commentor also gets just the topic in his UGD
+		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username )
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )

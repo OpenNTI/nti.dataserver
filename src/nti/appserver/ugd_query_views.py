@@ -785,7 +785,6 @@ class _RecursiveUGDView(_UGDView):
 		# NOTE: This is only in the stream. Normally we cannot store contained
 		# objects with an empty container key, so this takes internal magic
 		containers.add( '' ) # root
-
 		exc_info = None
 		items = []
 		for container in containers:

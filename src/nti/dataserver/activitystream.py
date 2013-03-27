@@ -150,8 +150,8 @@ def _stream_enqeue_modification( self, changeType, obj, current_sharing_targets,
 		# a MODIFIED notice for this action.
 		deleteChange = Change( Change.DELETED, obj )
 		deleteChange.creator = self
-		createChange = Change( Change.SHARED, obj )
-		createChange.creator = self
+		sharedChange = Change( Change.SHARED, obj )
+		sharedChange.creator = self
 		for shunnedPerson in origSharing - newSharing:
 			if obj.isSharedWith( shunnedPerson ):
 				# Shared with him indirectly, not directly. We need to be sure
@@ -164,7 +164,7 @@ def _stream_enqeue_modification( self, changeType, obj, current_sharing_targets,
 				deleteChange.send_change_notice = True # TODO: mutating this isn't really right, it is a shared persisted object
 			_enqueue_change_to_target( shunnedPerson, deleteChange, seenTargets )
 		for lovedPerson in newSharing - origSharing:
-			_enqueue_change_to_target( lovedPerson, createChange, seenTargets )
+			_enqueue_change_to_target( lovedPerson, sharedChange, seenTargets )
 			newSharing.remove( lovedPerson ) # Don't send MODIFIED, send SHARED
 
 	# Deleted events won't change the sharing, so there's

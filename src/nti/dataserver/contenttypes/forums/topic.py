@@ -91,7 +91,7 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 	headline = AcquisitionFieldProperty(for_interfaces.IPersonalBlogEntry['headline'])
 	mimeType = None
 
-	ntiid_type = for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY,
+	ntiid_type = for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY
 
 
 @component.adapter(for_interfaces.IHeadlineTopic)

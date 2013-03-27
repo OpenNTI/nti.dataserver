@@ -21,6 +21,7 @@ from .httpexceptions import HTTPNotFound
 
 from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 from nti.ntiids import ntiids
 
 from nti.dataserver import authorization as nauth
@@ -69,6 +70,7 @@ class UserActivityGetView(RecursiveUGDQueryView):
 
 	FILTER_NAMES = RecursiveUGDQueryView.FILTER_NAMES.copy()
 	FILTER_NAMES['TopLevel'] = _always_toplevel_filter
+	FILTER_NAMES['_NotDeleted'] = lambda x: not IDeletedObjectPlaceholder.providedBy( x )
 
 	def __init__( self, request ):
 		self.request = request
@@ -77,6 +79,7 @@ class UserActivityGetView(RecursiveUGDQueryView):
 	def _get_filter_names( self ):
 		filters = set(super(UserActivityGetView,self)._get_filter_names())
 		filters.add( 'MeOnly' )
+		filters.add( '_NotDeleted' )
 		return filters
 
 
