@@ -135,7 +135,8 @@ class IPost(IContained, IAcquirer,
 	body = nti_interfaces.CompoundModeledContentBody()
 
 
-class IHeadlinePost(IPost):
+class IHeadlinePost(IPost,
+					nti_interfaces.IMutedInStream):
 	"""
 	The headline post for a headline topic.
 	"""

@@ -335,6 +335,12 @@ class INeverStoredInSharedStream(interface.Interface):
 	object should not be stored in shared streams.
 	"""
 
+class IMutedInStream(interface.Interface):
+	"""
+	A marker interface used when distributed changes to keep this
+	object out of the local stream cache.
+	"""
+
 # ## Groups/Roles/ACLs
 
 # some aliases

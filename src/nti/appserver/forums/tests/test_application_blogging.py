@@ -367,7 +367,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 
 		# ...And in the main stream of the follower.
 		res = self.fetch_user_root_rstream( testapp=testapp2, username=user2_username )
-		assert_that( res.json_body['Items'], has_length( 2 ) ) # The blog entry itself, and the headline
+		assert_that( res.json_body['Items'], has_length( 1 ) ) # The blog entry itself
 		assert_that( res.json_body['Items'][0]['Item'], has_entry( 'title', data['title'] ) )
 
 		# (Though not the non-follower)
@@ -594,12 +594,12 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 
 		# They did get removed from the activity stream, however, for all three users
 		for app in testapp, testapp2, testapp3:
-			res = app.get( UQ( '/dataserver2/users/' + user2_username + '/Activity' ) )
+			res = self.fetch_user_activity( app, user2_username )
 			assert_that( res.json_body['Items'], has_length( 0 ) )
 
 		# As well as the RecursiveStream
 		for uname, app, status, length in ((user_username, testapp, 404, 0),
-										   (user2_username, testapp2, 200, 2), # He still has the blog notifications
+										   (user2_username, testapp2, 200, 1), # He still has the blog notifications
 										   (user3_username, testapp3, 404, 0)):
 			__traceback_info__ = uname
 			res = app.get( '/dataserver2/users/' + uname  + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=status )

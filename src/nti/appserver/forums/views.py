@@ -451,7 +451,7 @@ class CommentDeleteView(UGDDeleteView):
 		deleting.tags = ()
 		# Because we are not actually removing it, no IObjectRemoved events fire
 		# but we do want to sent a modified event to be sure that timestamps, etc,
-		# get updated. This also triggers removing from the users activity
+		# get updated. This also triggers removing from the user's Activity
 		notify( lifecycleevent.ObjectModifiedEvent( deleting ) )
 		return theObject
 
