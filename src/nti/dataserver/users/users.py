@@ -668,8 +668,11 @@ class User(Principal):
 
 
 	def deleteContainedObject( self, containerId, containedId ):
-		if self._p_jar and self.containers._p_jar:
-			self._p_jar.readCurrent( self.containers )
+		try:
+			self.containers._p_activate()
+			self.containers._p_jar.readCurrent( self.containers )
+		except AttributeError:
+			pass
 		return self.containers.deleteContainedObject( containerId, containedId )
 
 	# TODO: Could/Should we use proxy objects to automate
@@ -960,7 +963,10 @@ def onChange( datasvr, msg, target=None, broadcast=None, **kwargs ):
 	if target and not broadcast:
 		#logger.debug( 'Incoming change to %s', target )
 		entity = target
-		if getattr( entity, '_p_jar', None):
-			getattr( entity, '_p_jar' ).readCurrent( entity )
+		try:
+			entity._p_activate()
+			entity._p_jar.readCurrent( entity )
+		except AttributeError:
+			pass
 
 		entity._noticeChange( msg )

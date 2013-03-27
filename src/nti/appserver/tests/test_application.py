@@ -398,6 +398,8 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 
 def WithSharedApplicationMockDSHandleChanges( *args, **kwargs ):
 	kwargs['handle_changes'] = True
+	if 'testapp' not in kwargs:
+		kwargs['testapp'] = True
 	return WithSharedApplicationMockDS( *args, **kwargs )
 
 def WithSharedApplicationMockDSWithChanges(func):
