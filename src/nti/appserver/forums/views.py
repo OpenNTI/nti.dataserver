@@ -32,7 +32,6 @@ from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 from nti.appserver.ugd_feed_views import AbstractFeedView
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.contentsearch import interfaces as search_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
@@ -545,52 +544,7 @@ class _UnpublishView(_AbstractPublishingView):
 ### Events
 ## TODO: Under heavy construction
 ###
-from nti.dataserver import activitystream_change
 
-def _stream_event_for_comment( comment, change_type=nti_interfaces.SC_CREATED ):
-	# Now, construct the (artificial) change notification.
-	change = activitystream_change.Change(change_type, comment)
-	change.creator = comment.creator
-	change.object_is_shareable = False
-
-	return change
-
-
-@component.adapter( frm_interfaces.IPersonalBlogComment, lifecycleevent.IObjectAddedEvent )
-def notify_online_author_of_comment( comment, event ):
-	"""
-	When a comment is added to a blog post, notify the blog's
-	author.
-	"""
-
-	# First, find the author of the blog entry. It will be the parent, the only
-	# user in the lineage
-	blog_author = find_interface( comment, nti_interfaces.IUser )
-
-	# Now, construct the (artificial) change notification.
-	change = _stream_event_for_comment( comment )
-
-	# Store it in the author persistently. Notice that this is a private
-	# API, subject to change.
-	# This also has the effect of sending a socket notification, if needed.
-	# Because it is not shared directly with the author, it doesn't go
-	# in the shared data
-	assert not comment.isSharedDirectlyWith( blog_author )
-
-
-	if blog_author != comment.creator:
-		blog_author._noticeChange( change, force=True )
-
-	# (Except for being in the stream, the effect of the notification can be done with component.handle( blog_author, change ) )
-
-	# Also do the same for of the dynamic types it is shared with,
-	# thus sharing the same change object
-	#_send_stream_event_to_targets( change, comment.sharingTargets )
-
-###
-## NOTE: You cannot send a stream change on an object deleted event.
-## See HeadlineTopicDeleteView and the place it points to. This is already
-## handled.
 
 from nti.dataserver.liking import FAVR_CAT_NAME
 
