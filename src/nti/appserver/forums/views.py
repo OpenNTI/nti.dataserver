@@ -172,13 +172,6 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 		topic = self._factory()
 		topic.creator = self._get_topic_creator()
 
-		added_headline = False
-		if interface.providedBy( topic ).get('headline'):
-			# not all containers have headlines; those that don't simply use
-			# the incoming post as a template
-			topic_post.__parent__ = topic # must set __parent__ first for acquisition to work
-			added_headline = True
-			topic.headline = topic_post
 		# Business rule: titles of the personal blog entry match the post
 		topic.title = topic_post.title
 		topic.description = external_value.get( 'description', topic.title )
@@ -189,20 +182,27 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 		name = INameChooser( forum ).chooseName( topic.title, topic )
 
 		lifecycleevent.created( topic )
-		if added_headline:
-			lifecycleevent.created( topic_post )
-
-
 		forum[name] = topic # Now store the topic and fire lifecycleevent.added
 		topic.id = name # match these things. ID is local within container
 		topic.containerId = forum.NTIID
 
-		if added_headline:
-			topic_post.containerId = topic.NTIID
-			# The headline should be a sub-location of the topic, so when
-			# the added event was fired for the topic, it was dispatchToSublocations sent
-			# along. This also ensures the headline gets its intid. So we don't need to
-			# manually send an added event.
+		if interface.providedBy( topic ).get('headline'):
+			# not all containers have headlines; those that don't simply use
+			# the incoming post as a template
+			topic_post.__parent__ = topic # must set __parent__ first for acquisition to work
+
+			topic_post.creator = topic.creator
+
+			# In order to meet the validity requirements, we must work from the root down,
+			# only assigning the sublocation once the parent location is fully valid
+			# (otherwise we get schema validation errors)...
+			topic.headline = topic_post
+
+			# ...this means, however, that the initial ObjectAddedEvent did not get fired
+			# for the headline post (since it just now became a sublocation) so we must do
+			# it manually
+			lifecycleevent.created( topic_post )
+			lifecycleevent.added( topic_post )
 
 		# Respond with the pretty location of the object, within the blog
 		self.request.response.status_int = 201 # created
@@ -266,9 +266,8 @@ class _AbstractTopicPostView(_AbstractIPostPOSTView):
 		name = topic.generateId( prefix='comment' )
 
 		lifecycleevent.created( incoming_post )
-
-		incoming_post.id = name # match these things before we fire events
-		incoming_post.containerId = topic.NTIID
+		# incoming_post.id and containerId are set automatically when it is added
+		# to the container (but note that the created event did not have them)
 
 		topic[name] = incoming_post # Now store the topic and fire added
 

@@ -81,6 +81,7 @@ class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 
 	@property
 	def ntiid_creator_username(self):
+		" The community, not the user "
 		return self.__parent__.creator.username
 
 @interface.implementer(for_interfaces.IPersonalBlogEntry)

@@ -76,6 +76,10 @@ def test_blog_entry():
 
 	headline = PersonalBlogEntryPost()
 	headline.__parent__ = topic
+	class Username(object):
+		username = 'foo'
+	headline.creator = Username()
+	topic.creator = Username()
 	topic.headline = headline
 	assert_that( topic, validly_provides( IPersonalBlogEntry ) )
 	assert_that( topic, validly_provides( IHeadlineTopic ) )

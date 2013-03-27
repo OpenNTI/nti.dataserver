@@ -194,8 +194,12 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		testapp.post_json( self.default_username_url, data, status=422 )
 		res = testapp.post_json( self.default_username_pages_url, data, status=422 )
 
+		# depending on how we implement ContainerId, we get different errors
+		#assert_that( res.json_body, has_entry( 'code', 'InvalidContainerType' ) )
+		#assert_that( res.json_body, has_entry( 'field', 'ContainerId' ) )
+
 		assert_that( res.json_body, has_entry( 'code', 'InvalidContainerType' ) )
-		assert_that( res.json_body, has_entry( 'field', 'ContainerId' ) )
+		assert_that( res.json_body, has_entry( 'field', 'containerId' ) )
 		assert_that( res.json_body, has_entry( 'message', is_not( is_empty() ) ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
@@ -357,8 +361,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 		def _check_comment_res( cres ):
 			assert_that( cres.json_body, has_entries( 'title', data['title'],
-													 'body', data['body'],
-													 'ContainerId', entry_ntiid) )
+													  'body', data['body'],
+													  'ContainerId', entry_ntiid) )
 			assert_that( cres.json_body, has_key( 'NTIID' ) )
 			assert_that( cres, has_property( 'content_type', self.forum_topic_comment_content_type ) )
 
@@ -721,11 +725,10 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 	@time_monotonically_increases
 	def test_community_user_can_search_for_published_topic(self):
 		fixture = UserCommunityFixture( self )
-		self.testapp = testapp = fixture.testapp
+		self.testapp = fixture.testapp
 		testapp2 = fixture.testapp2
 
 		publish_res, _ = self._POST_and_publish_topic_entry()
-		topic_url = publish_res.location
 
 		search_res = self.search_user_rugd( self.forum_headline_unique, testapp=testapp2, username=fixture.user2_username )
 		assert_that( search_res.json_body, has_entry( 'Hit Count', 1 ) )
