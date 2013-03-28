@@ -22,7 +22,7 @@ import transaction
 try:
 	from gevent.queue import Full as QFull
 	from gevent import sleep as _sleep
-except ImportError:
+except ImportError: # pragma: no cover # pypy
 	from Queue import Full as QFull
 	from time import sleep as _sleep
 
