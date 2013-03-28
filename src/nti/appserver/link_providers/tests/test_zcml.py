@@ -23,6 +23,7 @@ does_not = is_not
 from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import is_in
+from nose.tools import assert_raises
 
 import nti.tests
 from nti.tests import is_empty
@@ -30,6 +31,7 @@ from nti.tests import is_empty
 from zope import component
 from zope import interface
 from zope.component.hooks import site
+from zope.configuration.exceptions import ConfigurationError
 
 from nti.dataserver.site import _TrivialSite
 from nti.appserver.sites import MATHCOUNTS
@@ -97,3 +99,22 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 			provider.delete_link( provider.__name__ )
 
 			assert_that( provider.get_links( ), is_empty() )
+
+	def test_raises(self):
+		from ..zcml import registerUserLink
+
+		context = object()
+		with assert_raises(ConfigurationError):
+			registerUserLink( context, name="name", named="named" )
+		with assert_raises(ConfigurationError):
+			registerUserLink( context, name='' )
+
+		with assert_raises(ConfigurationError):
+			registerUserLink( context, name='link', for_=None )
+
+		with assert_raises(ConfigurationError):
+			registerUserLink( context, name='link', field='abc', url='def' )
+		with assert_raises(ConfigurationError):
+			registerUserLink( context, name='link', field='abc', minGeneration='def' )
+		with assert_raises(ConfigurationError):
+			registerUserLink( context, name='link', field='abc', view_named='def' )

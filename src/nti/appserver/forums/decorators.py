@@ -128,7 +128,7 @@ class ForumObjectContentsLinkProvider(object):
 		# without considering acquired info (NTIIDs from the User would mess
 		# up rendering)
 		context = aq_base( context )
-		if not context.__parent__:
+		if not context.__parent__: # pragma: no cover
 			return
 
 		# TODO: This can be generalized by using the component

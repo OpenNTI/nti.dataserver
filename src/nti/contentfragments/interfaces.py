@@ -15,7 +15,7 @@ from zope import component
 from zope.interface.common import sequence
 try:
 	from zope.mimetype import types as mime_types
-except ImportError:
+except ImportError: # pragma: no cover
 	# They moved this in zope.mimetype 2.0 (python 3 compat?)
 	from zope.mimetype import mtypes as mime_types
 
@@ -72,7 +72,7 @@ class UnicodeContentFragment(unicode):
 	__slots__ = _ZCA_KEYS  # actually meaningless, but we simulate this with __getattr__ and __setattr__
 
 
-	def __getattr(self, name):
+	def __getattr__(self, name):
 		raise AttributeError(name)
 
 	def __setattr__(self, name, value):

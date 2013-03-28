@@ -37,7 +37,7 @@ class _CommunityBoardTraversable(ContainerTraversable):
 		if name not in self._container and name == _FORUM_NAME:
 			try:
 				return frm_interfaces.ICommunityForum( self._container.creator ) # Ask the ICommunity
-			except TypeError:
-				raise TraversalError( self._container, name )
+			except TypeError: # pragma: no cover
+				raise TraversalError( self._container, name ) # No adapter
 
 		return super(_CommunityBoardTraversable,self).traverse(name, furtherPath)

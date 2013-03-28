@@ -343,6 +343,7 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 	default_authenticate = kwargs.pop( 'default_authenticate', None )
 	testapp = kwargs.pop( 'testapp', None )
 	handle_changes = kwargs.pop( 'handle_changes', False )
+	user_hook = kwargs.pop( 'user_hook', None )
 
 	if testapp:
 		def _make_app(self):
@@ -364,6 +365,8 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 			with mock_dataserver.mock_db_trans( self.ds ):
 				base_user = self._create_user()
 				self.users = { base_user.username: base_user }
+				if user_hook:
+					user_hook( base_user )
 				if users_to_create and users_to_create is not True:
 					for username in users_to_create:
 						self.users[username] = self._create_user( username )
