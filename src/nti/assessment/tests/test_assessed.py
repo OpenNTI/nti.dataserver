@@ -17,13 +17,20 @@ from nose.tools import assert_raises
 from zope import interface
 from zope import component
 from zope.schema import interfaces as sch_interfaces
+import zope.annotation
+from zope.annotation.interfaces import IAttributeAnnotatable
+from zope.dublincore.annotatableadapter import ZDCAnnotatableAdapter
 
 import nti.assessment
 from nti.externalization.externalization import toExternalObject
 from nti.externalization import internalization
 from nti.externalization.internalization import update_from_external_object
 
+import datetime
+import time
+
 from nti.assessment import interfaces
+from nti.dataserver import interfaces as nti_interfaces
 from nti.assessment import parts
 from nti.assessment import response
 from nti.assessment import submission
@@ -36,8 +43,30 @@ from nti.assessment.question import QQuestion, QQuestionSet
 
 
 # nose module-level setup
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.assessment,) )
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.assessment,zope.annotation) )
 tearDownModule = nti.tests.module_teardown
+
+def _check_old_dublin_core( qaq ):
+	"we can read old dublin core metadata"
+
+	del qaq.__dict__['lastModified']
+	del qaq.__dict__['createdTime']
+
+	assert_that( qaq.lastModified, is_( 0 ) )
+	assert_that( qaq.createdTime, is_( 0 ) )
+
+
+	interface.alsoProvides( qaq, IAttributeAnnotatable )
+
+	zdc = ZDCAnnotatableAdapter( qaq )
+
+	now = datetime.datetime.now()
+
+	zdc.created = now
+	zdc.modified = now
+
+	assert_that( qaq.lastModified, is_( time.mktime( now.timetuple() ) ) )
+	assert_that( qaq.createdTime, is_( time.mktime( now.timetuple() ) ) )
 
 
 class TestAssessedPart(TestCase):
@@ -62,6 +91,7 @@ class TestAssessedQuestion(TestCase):
 
 	def test_externalizes(self):
 		assert_that( assessed.QAssessedQuestion(), verifiably_provides( interfaces.IQAssessedQuestion ) )
+		assert_that( assessed.QAssessedQuestion(), verifiably_provides( nti_interfaces.ILastModified ) )
 		assert_that( assessed.QAssessedQuestion(), externalizes( has_entry( 'Class', 'AssessedQuestion' ) ) )
 		assert_that( internalization.find_factory_for( toExternalObject( assessed.QAssessedQuestion() ) ),
 					 is_( none() ) )
@@ -78,10 +108,13 @@ class TestAssessedQuestion(TestCase):
 		assert_that( result, has_property( 'questionId', 1 ) )
 		assert_that( result, has_property( 'parts', contains( assessed.QAssessedPart( submittedResponse='correct', assessedValue=1.0 ) ) ) )
 
+		_check_old_dublin_core( result )
+
 class TestAssessedQuestionSet(TestCase):
 
 	def test_externalizes(self):
 		assert_that( assessed.QAssessedQuestionSet(), verifiably_provides( interfaces.IQAssessedQuestionSet ) )
+		assert_that( assessed.QAssessedQuestionSet(), verifiably_provides( nti_interfaces.ILastModified ) )
 		assert_that( assessed.QAssessedQuestionSet(), externalizes( has_entry( 'Class', 'AssessedQuestionSet' ) ) )
 		assert_that( internalization.find_factory_for( toExternalObject( assessed.QAssessedQuestionSet() ) ),
 					 is_( none() ) )
@@ -109,6 +142,7 @@ class TestAssessedQuestionSet(TestCase):
 		ext_obj = toExternalObject( result )
 		assert_that( ext_obj, has_entry( 'questions', has_length( 1 ) ) )
 
+		_check_old_dublin_core( result )
 
 	def test_assess_not_same_instance_question_but_id_matches( self ):
 		part = parts.QFreeResponsePart(solutions=(solutions.QFreeResponseSolution(value='correct'),))

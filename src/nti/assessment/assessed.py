@@ -19,7 +19,11 @@ import persistent.list
 from nti.utils.schema import PermissiveSchemaConfigured as SchemaConfigured
 from nti.externalization.externalization import make_repr
 # EWW...but we need to be IContained in order to be stored
-# in container data structures
+# in container data structures.
+# We also want to be ILastModified
+# so that we can cheaply store and access lastmodified times
+# without going through the expense of ZopeDublinCore (since we expect no other
+# annotations and no mutability)
 from nti.dataserver import interfaces as nti_interfaces
 
 from . import interfaces
@@ -46,7 +50,34 @@ class QAssessedPart(SchemaConfigured,persistent.Persistent):
 	def __hash__( self ):
 		return hash((self.submittedResponse, self.assessedValue))
 
-@interface.implementer(interfaces.IQAssessedQuestion, nti_interfaces.IContained, nti_interfaces.IZContained, nti_interfaces.ICreated)
+from zope.datetime import parseDatetimetz
+import time
+def _dctimes_property_fallback(attrname, dcname):
+	# For BWC, if we happen to have annotations that happens to include
+	# zope dublincore data, we will use it
+	# TODO: Add a migration to remove these
+	def get(self):
+		self._p_activate() # make sure there's a __dict__
+		if attrname in self.__dict__:
+			return self.__dict__[attrname]
+
+		if '__annotations__' in self.__dict__:
+			try:
+				dcdata = self.__annotations__['zope.app.dublincore.ZopeDublinCore']
+				date_modified = dcdata[dcname] # tuple of a string
+				datetime = parseDatetimetz( date_modified[0] )
+				return time.mktime( datetime.timetuple() )
+			except KeyError:
+				pass
+
+		return 0
+
+	def _set(self,value):
+		self.__dict__[attrname] = value
+
+	return property(get, _set)
+
+@interface.implementer(interfaces.IQAssessedQuestion, nti_interfaces.IContained, nti_interfaces.IZContained, nti_interfaces.ICreated, nti_interfaces.ILastModified)
 class QAssessedQuestion(SchemaConfigured,persistent.Persistent):
 	questionId = None
 	parts = ()
@@ -56,6 +87,16 @@ class QAssessedQuestion(SchemaConfigured,persistent.Persistent):
 	__name__ = None
 	__parent__ = None
 	__external_can_create__ = False
+
+	createdTime = _dctimes_property_fallback('createdTime', 'Date.Modified')
+	lastModified = _dctimes_property_fallback('lastModified', 'Date.Created')
+	def updateLastMod(self, t=None ):
+		self.lastModified = ( t if t is not None and t > self.lastModified else time.time() )
+		return self.lastModified
+
+	def __init__( self, *args, **kwargs ):
+		super(QAssessedQuestion,self).__init__( *args, **kwargs )
+		self.lastModified = self.createdTime = time.time()
 
 	def __eq__( self, other ):
 		try:
@@ -73,7 +114,7 @@ class QAssessedQuestion(SchemaConfigured,persistent.Persistent):
 		return hash( (self.questionId, tuple(self.parts)) )
 
 
-@interface.implementer(interfaces.IQAssessedQuestionSet, nti_interfaces.IContained, nti_interfaces.IZContained, nti_interfaces.ICreated)
+@interface.implementer(interfaces.IQAssessedQuestionSet, nti_interfaces.IContained, nti_interfaces.IZContained, nti_interfaces.ICreated, nti_interfaces.ILastModified)
 class QAssessedQuestionSet(SchemaConfigured,persistent.Persistent):
 	questionSetId = None
 	questions = ()
@@ -83,6 +124,16 @@ class QAssessedQuestionSet(SchemaConfigured,persistent.Persistent):
 	__name__ = None
 	__parent__ = None
 	__external_can_create__ = False
+
+	createdTime = _dctimes_property_fallback('createdTime', 'Date.Modified')
+	lastModified = _dctimes_property_fallback('lastModified', 'Date.Created')
+	def updateLastMod(self, t=None ):
+		self.lastModified = ( t if t is not None and t > self.lastModified else time.time() )
+		return self.lastModified
+
+	def __init__( self, *args, **kwargs ):
+		super(QAssessedQuestionSet,self).__init__( *args, **kwargs )
+		self.lastModified = self.createdTime = time.time()
 
 
 	def __eq__( self, other ):
