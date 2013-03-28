@@ -270,6 +270,7 @@ setup(
 		'zope.app.broken >= 3.6.0',  # Improved broken objects
 		'zope.app.component >= 3.9.3',  # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.app.interface >= 3.6.0',  # bwc only, DO NOT IMPORT. pulled in by contentratings
+		'zope.applicationcontrol >= 4.0.0a1', # Info about the app. currently unused
 		'zope.annotation >= 4.2.0',
 		'zope.authentication >= 4.1.0',
 		'zope.broken >= 3.6.0',  # This is actually deprecated, use the ZODB import
@@ -277,7 +278,7 @@ setup(
 		'zope.browserpage >= 4.1.0a1',
 		'zope.browsermenu >= 4.1.0a1',  # Browser menu implementation for Zope.
 		'zope.browserresource >= 4.0.0',
-		'zope.catalog >= 3.8.2' if HAVE_ZCONT else '',  # zope.container dependency
+		'zope.catalog >= 4.0.0a1' if HAVE_ZCONT else '',  # zope.container dependency
 		'zope.cachedescriptors >= 4.0.0',
 		'zope.component[persistentregistry] >= 4.1.0',
 		# Schema vocabularies based on querying ZCA; useful
@@ -313,15 +314,17 @@ setup(
 		'zope.interface >= 4.0.5',
 		'zope.intid >= 4.0.0a1' if HAVE_ZCONT else '',
 		'zope.keyreference >= 4.0.0a2',
-		'zope.lifecycleevent >= 4.0.2',
+		'zope.lifecycleevent >= 4.0.2', # Object Added/Removed/etc events
+		'zope.login >= 2.0.0a1', # Providers of Zope3 authentication.ILoginPassword for Zope3 publisher interfaces; pulled in by ???
 		'zope.location >= 4.0.2',
 		'zope.mimetype == 1.3.1',  # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
 		'zope.pagetemplate >= 4.0.4',
 		'zope.password >= 4.0.2',  # encrypted password management
-		'zope.pluggableauth >= 1.3' if HAVE_ZCONT else '',  # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
+		'zope.pluggableauth >= 2.0.0a1' if HAVE_ZCONT else '',  # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		'zope.ptresource >= 4.0.0a1',
 		'zope.publisher >= 4.0.0a4',
+		'zope.principalannotation >= 4.0.0a1', # Annotating principals in Zope3's global reg; pulled in by ???
 		'zope.principalregistry >= 4.0.0a2',  # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.3',  # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
