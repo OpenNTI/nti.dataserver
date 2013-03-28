@@ -76,12 +76,12 @@ def send_mail( fromaddr=None, toaddrs=None, message=None, pyramid_mail_message=N
 	"""
 	Sends a message transactionally. The first three arguments are exactly the
 	arguments that a :class:`repoze.sendmail.interfaces.IMailDelivery` takes; the
-	fourth is a convenience argument for converting from pyramid_mailer. If
-	the fromaddr is not given, it will default to the one configured for pyramid. If
+	fourth is a convenience argument for converting from :mod:`pyramid_mailer`. If
+	the ``fromaddr`` is not given, it will default to the one configured for pyramid. If
 	the destination address and message are not given, they will default to the ones
-	provided in the pyramid_mail_message (which is required).
+	provided in the ``pyramid_mail_message`` (which is required).
 	"""
-
+	assert pyramid_mail_message is not None
 	pyramidmailer = component.queryUtility( IMailer )
 
 	if fromaddr is None:
