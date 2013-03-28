@@ -16,7 +16,6 @@ import pyramid.httpexceptions
 from zope import interface
 from zope import component
 
-
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.externalization.externalization import to_external_representation, toExternalObject,  EXT_FORMAT_PLIST, catch_replace_action
@@ -34,6 +33,9 @@ from nti.dataserver.links_external import render_link
 
 import nti.appserver.interfaces as app_interfaces
 import nti.dataserver.interfaces as nti_interfaces
+
+from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
+
 
 from perfmetrics import metric
 
@@ -188,6 +190,9 @@ def default_cache_controller( data, system ):
 		vary_on.append( b'Origin' )
 	if request.host:
 		vary_on.append( b'Host' )
+	# If we were identified by a cookie, then we vary based on the identity as well
+	if isinstance( request.environ.get( 'repoze.who.identity', {} ).get( 'authenticator', None ), AuthTktCookiePlugin ):
+		vary_on.append( b'Cookie' )
 
 	end_to_end_reload = False # http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4
 	if request.pragma == 'no-cache' or request.cache_control.no_cache: # None if not set, '*' if set without names
