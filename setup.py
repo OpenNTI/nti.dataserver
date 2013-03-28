@@ -83,6 +83,7 @@ TESTS_REQUIRE = [
 	'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 	'pyhamcrest >= 1.7.1',
 	'tempstorage >= 2.12.2',  # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
+	# 'z3c.coverage >= 2.0.0', # For HTML coverage reports that are prettier than plain 'coverage' TODO: Do we need this?
 	'zope.testing >= 4.1.2',
 ]
 
@@ -245,7 +246,7 @@ setup(
 		'transaction >= 1.4.1',
 		# See http://pypi.python.org/pypi/user-agents/ for a high-level
 		# library to do web user agent detection
-		'WebError >= 0.10.3',  # Error-handling middleware, extracted from Paste
+		'WebError >= 0.10.3',  # Error-handling middleware, extracted from Paste (yet turns out to still be dependent on paste. sigh)
 		'webob >= 1.2.3',
 		'whoosh >= 2.4.1',
 		'z3c.baseregistry >= 2.0.0',  # ZCML configurable local component registries
@@ -253,7 +254,6 @@ setup(
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt >= 1.1',
-		# 'z3c.coverage >= 1.3.0', # TODO: Do we need this?
 		'z3c.password >= 1.0.0a1',  # password policies
 		'z3c.pt >= 3.0.0a1',  # Better ZPT support than plastex, add-in to Chameleon
 		'z3c.ptcompat >= 2.0.0a1',  # Make zope.pagetemplate also use the Chameleon-based ZPT
@@ -315,7 +315,7 @@ setup(
 		'zope.intid >= 4.0.0a1' if HAVE_ZCONT else '',
 		'zope.keyreference >= 4.0.0a2',
 		'zope.lifecycleevent >= 4.0.2', # Object Added/Removed/etc events
-		'zope.login >= 2.0.0a1', # Providers of Zope3 authentication.ILoginPassword for Zope3 publisher interfaces; pulled in by ???
+		'zope.login >= 2.0.0a1', # Providers of Zope3 authentication.ILoginPassword for Zope3 publisher interfaces; pulled in by zope.file[test] and indirectly zope.app.component[test]
 		'zope.location >= 4.0.2',
 		'zope.mimetype == 1.3.1',  # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
@@ -324,7 +324,7 @@ setup(
 		'zope.pluggableauth >= 2.0.0a1' if HAVE_ZCONT else '',  # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		'zope.ptresource >= 4.0.0a1',
 		'zope.publisher >= 4.0.0a4',
-		'zope.principalannotation >= 4.0.0a1', # Annotating principals in Zope3's global reg; pulled in by ???
+		'zope.principalannotation >= 4.0.0a1', # Annotating principals in Zope3's global reg; pulled in indirectly by zope.app.component[test]
 		'zope.principalregistry >= 4.0.0a2',  # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.3',  # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
@@ -383,7 +383,7 @@ setup(
 			'virtualenv >= 1.9.1',
 			'virtualenvwrapper >= 3.7',
 			'zc.buildout >= 2.1.0',
-			'z3c.dependencychecker >= 1.10',  # unused/used imports
+			'z3c.dependencychecker >= 1.10',  # unused/used imports; see also tl.eggdeps
 			'zodbbrowser >= 0.10.4',
 			'zodbupdate >= 0.5',
 			# Monitoring stats and instrumenting code
