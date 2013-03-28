@@ -639,7 +639,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		# The request keys match what z3c.table does
 		sort_on = self.request.params.get( 'sortOn', self._DEFAULT_SORT_ON )
 		sort_order = self.request.params.get( 'sortOrder', self.SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
-		sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS['lastModified'] )
+		sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS[self._DEFAULT_SORT_ON] )
 
 		# TODO: Which is faster and more efficient? The built-in filter function which allocates
 		# a new list but iterates fast, or iterating in python and removing from the existing list?
