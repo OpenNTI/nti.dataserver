@@ -523,10 +523,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		content_last_mod = res.json_body['Last Modified']
 		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
 
-		# However, he can detect that there is a post
-		# XXX FIXME: This is wrong; TopicCount should be of the visible, not the total, contents
 		res = testapp2.get( self.forum_pretty_url )
-		assert_that( res.json_body, has_entry( 'TopicCount', 1 ) )
+		assert_that( res.json_body, has_entry( 'TopicCount', 0 ) )
 
 		# When it is published...
 		testapp.post( publish_url )
