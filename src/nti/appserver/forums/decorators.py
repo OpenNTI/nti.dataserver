@@ -13,7 +13,7 @@ from nti.utils._compat import aq_base
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.dataserver.interfaces import IUser, ICommunity, IUnscopedGlobalCommunity, IDefaultPublished
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum
 from zope.container.interfaces import ILocation
 
 from nti.appserver._util import AbstractTwoStateViewLinkDecorator
@@ -150,3 +150,31 @@ class ForumObjectContentsLinkProvider(object):
 
 		_links = mapping.setdefault( LINKS, [] )
 		_links.append( link )
+
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(IForum)
+class SecurityAwareForumTopicCountDecorator(object):
+	"""
+	Adjust the reported ``TopicCount`` to reflect publication status/security.
+
+	.. note:: This is not scalable, as instead of using the cached
+		BTree length it requires loading all of the btree nodes
+		and the data in order to security check each one. Something
+		will have to be done about this. We rationalize its existence
+		now by assuming our other scalability problems are worse and we'll
+		have to fix them all eventually; this won't be an issue in the short term.
+	"""
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalObject( self, context, mapping ):
+		if not mapping['TopicCount']:
+			# Nothing to do if its already empty
+			return
+
+		request = get_current_request()
+		i = 0
+		for x in context.values():
+			if is_readable(x,request):
+				i += 1
+		mapping['TopicCount'] = i

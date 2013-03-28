@@ -88,7 +88,7 @@ class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescri
 	containers(IBoard)# Adds __parent__ as required
 
 	__parent__.required = False
-	TopicCount = Int( title="The number of topics contained as children of this forum",
+	TopicCount = Int( title="The number of topics contained as children of this forum", # Note this says nothing about visibility!
 					  readonly=True )
 
 

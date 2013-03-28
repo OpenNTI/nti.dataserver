@@ -321,9 +321,8 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		content_last_mod = res.json_body['Last Modified']
 		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( content_last_mod, webob.datetime_utils.UTC ) ) )
 
-		# XXX FIXME: This is wrong; TopicCount should be of the visible, not the total, contents
 		res = testapp2.get( '/dataserver2/users/original_user@foo/Blog' )
-		assert_that( res.json_body, has_entry( 'TopicCount', 1 ) )
+		assert_that( res.json_body, has_entry( 'TopicCount', 0 ) )
 
 		# When it is published...
 		testapp.post( pub_url )
