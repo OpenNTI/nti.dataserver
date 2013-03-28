@@ -182,6 +182,9 @@ class _AppTestBaseMixin(object):
 
 		if user is self.extra_environ_default_user and 'username' in kwargs:
 			user = str(kwargs.pop( 'username' ) )
+
+		# Simulate what some browsers or command line clients do by encoding the '@'
+		user = user.replace( '@', "%40" )
 		result = {
 			b'HTTP_AUTHORIZATION': b'Basic ' + (user + ':temp001').encode('base64'),
 			b'HTTP_ORIGIN': self.default_origin, # To trigger CORS
@@ -460,6 +463,15 @@ class ApplicationTestBase(_AppTestBaseMixin, ConfiguringTestBase):
 
 
 class TestApplication(SharedApplicationTestBase):
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_unauthenticated_userid(self):
+		from pyramid.interfaces import IAuthenticationPolicy
+		auth_policy = component.getUtility(IAuthenticationPolicy)
+		assert_that( auth_policy.unauthenticated_userid(self.request), is_( none() ) )
+		self._make_extra_environ( update_request=True )
+		with mock_dataserver.mock_db_trans(self.ds):
+			assert_that( auth_policy.unauthenticated_userid(self.request), is_( self.extra_environ_default_user.lower() ) )
 
 	def test_locale_negotionion( self ):
 		from zope.i18n.interfaces import IUserPreferredLanguages

@@ -5,16 +5,15 @@ $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 
+logger = __import__('logging').getLogger(__name__ )
 
 import binascii
-import logging
-logger = logging.getLogger(__name__ )
 
 from zope import interface
 from zope import component
 
 # Like Pyramid 1.4+, cause Paste's AuthTkt cookies to use the more secure
-# SHA512 algorithm instead of the weaker MD5
+# SHA512 algorithm instead of the weaker MD5 (actually, repoze.who, now)
 import nti.monkey.paste_auth_tkt_sha512_patch_on_import
 nti.monkey.paste_auth_tkt_sha512_patch_on_import.patch()
 
@@ -22,201 +21,114 @@ from pyramid.interfaces import IAuthenticationPolicy
 from repoze.who.interfaces import IAuthenticator, IIdentifier, IChallenger, IChallengeDecider, IRequestClassifier
 from nti.dataserver import interfaces as nti_interfaces
 
-from repoze.who.middleware import PluggableAuthenticationMiddleware
+from repoze.who.api import APIFactory
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
+from repoze.who.classifiers import default_request_classifier
 
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
-from repoze.who.classifiers import default_request_classifier
 from pyramid_who.classifiers import forbidden_challenger
+from pyramid.request import Request
 
 from nti.dataserver.users import User
 from nti.dataserver import authentication as nti_authentication
 from nti.dataserver import authorization as nti_authorization
 
-# TODO: This decoding stuff is happening too simalarly in the different
-# places. Decide what's really needed and remove what isn't and consolidate
-# the rest.
-
-def _get_basicauth_credentials( request ):
+def _decode_username_request( request ):
 	"""
-	Check the request for credentials.
+	Decodes %40 in a Basic Auth username into an @. Modifies
+	the request.
 
-	:return: Tuple (user,pass) if present and valid in the
-		request. Does not modify the request.
+	Our usernames are in domain syntax. This sometimes confuses
+	browsers who expect to use an @ to separate user and password,
+	so clients often workaround this by percent-encoding the username.
+	Reverse that step here. This should be an outer layer before
+	authkit gets to do anything.
+
+	:return: Tuple (user,pass).
 	"""
-	username = None
-	password = None
+
+	authmeth, auth = request.authorization or ('','')
+	if authmeth.lower() != b'basic':
+		return (None,None)
+
 	try:
-		authorization = request.authorization
-		authmeth, auth = authorization
-		if 'basic' == authmeth.lower():
-			auth = auth.strip().decode('base64')
-			username, password = auth.split(':',1)
-	except (TypeError,ValueError, binascii.Error): username, password = None, None
+		username, password = auth.strip().decode('base64').split(':',1)
+	except (ValueError,binascii.Error): # pragma: no cover
+		return (None,None)
+	else:
+		canonical_username = username.lower().replace( '%40', '@' ).strip() if username else None
+		if canonical_username != username:
+			username = canonical_username
+			auth = (username + ':' + password).encode( 'base64' ).strip()
+			request.authorization = (authmeth, auth)
+			request.remote_user = username
 
-	return (username, password)
+		return (username, password)
 
-def _get_basicauth_credentials_environ( environ ):
-	"""
-	Check the environment for credentials.
-
-	:return: Tuple (user,pass) if present and valid in the
-		request. Does not modify the request.
-	"""
-	username = None
-	password = None
-	try:
-		authorization = environ['HTTP_AUTHORIZATION']
-		authmeth, auth = authorization
-		if 'basic' == authmeth.lower():
-			auth = auth.strip().decode('base64')
-			username, password = auth.split(':',1)
-	except (TypeError,ValueError, binascii.Error): username, password = None, None
-
-	return (username, password)
-
-def _get_username( username ):
-	if username:
-		if '%40' in username:
-			username = username.replace( '%40', '@' )
-		username = username.lower() # Canonicalize the username
-	return username
-
-def _decode_username( request ):
-	"""
-	Decodes %40 in a Basic Auth username into an @. Modifies
-	the request.
-
-	Our usernames are in domain syntax. This sometimes confuses
-	browsers who expect to use an @ to separate user and password,
-	so clients often workaround this by percent-encoding the username.
-	Reverse that step here. This should be an outer layer before
-	authkit gets to do anything.
-
-	:return: Tuple (user,pass).
-	"""
-	username, password = _get_basicauth_credentials( request )
-	if _get_username( username ) != username:
-		username = _get_username( username )
-		auth = (username + ':' + password).encode( 'base64' ).strip()
-		request.authorization = 'Basic ' + auth
-		request.remote_user = username
-	return (username, password)
-
-def _decode_username_environ( environ ):
-	"""
-	Decodes %40 in a Basic Auth username into an @. Modifies
-	the request.
-
-	Our usernames are in domain syntax. This sometimes confuses
-	browsers who expect to use an @ to separate user and password,
-	so clients often workaround this by percent-encoding the username.
-	Reverse that step here. This should be an outer layer before
-	authkit gets to do anything.
-
-	:return: Tuple (user,pass).
-	"""
-	username, password = _get_basicauth_credentials_environ( environ )
-	if _get_username( username ) != username:
-		username = _get_username( username )
-		auth = (username + ':' + password).encode( 'base64' ).strip()
-		environ['HTTP_AUTHORIZATION'] = 'Basic ' + auth
-		environ['REMOTE_USER'] = username
-	return (username, password)
-
-def _decode_username_identity( identity ):
-	"""
-	Decodes %40 in a Basic Auth username into an @. Modifies
-	the request.
-
-	Our usernames are in domain syntax. This sometimes confuses
-	browsers who expect to use an @ to separate user and password,
-	so clients often workaround this by percent-encoding the username.
-	Reverse that step here. This should be an outer layer before
-	authkit gets to do anything.
-
-	:return: Tuple (user,pass).
-	"""
-	username, password = identity['login'], identity['password']
-	if _get_username( username ) != username:
-		username = _get_username( username )
-		identity['login'] = username
-	return (username, password)
 
 class _NTIUsers(object):
 
-	def user_exists( self, username ):
-		if not username or not username.strip(): # username is not None and not empty
-			return False
+	@classmethod
+	def user_exists( cls, username ):
+		if not username: #pragma: no cover # username is not None (not empty taken care of during decoding)
+			return None
 		user = User.get_user( username )
-		return user is not None
+		return user is not None and user
 
-	def user_password( self, username ):
+	@classmethod
+	def user_password( cls, username ):
 		userObj = User.get_user( username )
 		return userObj.password if userObj else None
 
-	def user_has_password( self, username, password ):
-		if not self.user_exists( username ):
+	@classmethod
+	def user_has_password( cls, username, password ):
+		user = cls.user_exists( username )
+		if not user or not password:
 			return False
-		user_password = self.user_password( username )
+		user_password = user.password
 		return user_password.checkPassword( password ) if user_password else False
 
 	def _query_groups( self, username, components ):
 		":return: The groups of an authenticated user."
-		if not self.user_exists( username ):
+		if not self.user_exists( username ): # pragma: no cover
 			return None
 		return nti_authentication.effective_principals( username, registry=components, authenticated=True )
 
-	def __call__( self, userid, request ):
-		result = None
-		# Note: returning None from this causes WhoV2AuthenticationPolicy
-		# to return None from authenticated_userid()
-
-		# Because we are both part of a middleware and the pyramid
-		# auth policy, we can get called both already authenticated
-		# and not-authenticated.
+	def __call__( self, identity, request ):
+		"""
+		Callback method for :mod:`pyramid_who`. We are guaranteed to
+		only be called when an :class:`.IAuthenticator` has matched;
+		we get the last say, as returning None from this callback
+		causes :meth:`.authenticated_userid` to also return None.
+		"""
 		# NOTE: we are caching the group results as part of the userid dictionary,
 		# which means they cannot change during a request.
 		CACHE_KEY = 'nti.dataserver.groups'
-		if CACHE_KEY in userid:
-			return userid[CACHE_KEY]
+		if CACHE_KEY in identity:
+			return identity[CACHE_KEY]
 
 		username = None
-		password = None
-		require_password = False
-		if 'repoze.who.userid' in userid: # already identified by AuthTktCookie
-			username = userid['repoze.who.userid']
-		elif 'login' in userid and 'password' in userid:
-			require_password = True
-			username, password = _decode_username_identity( userid )
+		if 'repoze.who.userid' in identity: # already identified by AuthTktCookie or _NTIUsersAuthenticatorPlugin
+			username = identity['repoze.who.userid']
 
 		result = None
-		if self.user_exists( username ) and (not require_password or self.user_has_password( username, password ) ):
+		if self.user_exists( username ): # This should already have been checked, actually
 			result = self._query_groups( username, request.registry )
 
-		userid[CACHE_KEY] = result
+		identity[CACHE_KEY] = result
 		return result
 
-def _make_user_auth():
-	""" :return: Function to be used with authkit authentication. Function must be run in transaction. """
 
-	# In the past, we passed _NTIUSers a
-	# function that automatically created new user accounts, and this was enabled
-	# by default. That's dangerous and is now disabled.
-	return _NTIUsers( )
-
-@interface.implementer( IAuthenticator )
-class NTIUsersAuthenticatorPlugin(object):
-
+@interface.implementer(IAuthenticator)
+class _NTIUsersAuthenticatorPlugin(object):
 
 	def authenticate( self, environ, identity ):
-		if 'login' not in identity or 'password' not in identity:
+		try:
+			if _NTIUsers.user_has_password( identity['login'], identity['password'] ):
+				return identity['login']
+		except KeyError: # pragma: no cover
 			return None
-		_decode_username_environ( environ )
-		_decode_username_identity( identity )
-		if _make_user_auth().user_has_password( identity['login'], identity['password'] ):
-			return identity['login']
 
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
@@ -249,6 +161,7 @@ class _NonChallengingBasicAuthPlugin(BasicAuthPlugin):
 	def forget(self, *args ):
 		return ()
 
+@interface.provider(IRequestClassifier)
 def _nti_request_classifier( environ ):
 	"""
 	Extends the default classification scheme to try to detect
@@ -277,25 +190,24 @@ def _nti_request_classifier( environ ):
 				result = CLASS_BROWSER_APP
 	return result
 
-interface.directlyProvides(_nti_request_classifier, IRequestClassifier)
-
+@interface.provider(IChallengeDecider)
 def _nti_challenge_decider( environ, status, headers ):
 	"""
-	We want to offer an auth challenge if Pyramid thinks we need one (403)
-	and if we have no credentials at all. (If we have credentials, then
-	the correct response is a 403)
+	We want to offer an auth challenge (e.g., a 401 response) if
+	Pyramid thinks we need one (by default, a 403 response) and if we
+	have no credentials at all. (If we have credentials, then the
+	correct response is a 403, not a challenge.)
 	"""
-	return forbidden_challenger( environ, status, headers ) and 'repoze.who.identity' not in environ
+	return 'repoze.who.identity' not in environ and forbidden_challenger( environ, status, headers )
 
-interface.directlyProvides( _nti_challenge_decider, IChallengeDecider )
 
-def _create_middleware( secure_cookies=False,
-						cookie_secret='secret',
-						cookie_timeout=ONE_WEEK ):
-	user_auth = NTIUsersAuthenticatorPlugin()
+def _create_who_apifactory( secure_cookies=False,
+							cookie_secret='secret',
+							cookie_timeout=ONE_WEEK ):
 
-	# Note that the cookie name and header names needs to be bytes, not unicode. Otherwise we wind up with
-	# unicode objects in the headers, which are supposed to be ascii. Things like the Cookie
+	# Note that the cookie name and header names needs to be bytes,
+	# not unicode. Otherwise we wind up with unicode objects in the
+	# headers, which are supposed to be ascii. Things like the Cookie
 	# module (used by webtest) then fail
 	basicauth = BasicAuthPlugin(b'NTI')
 	basicauth_interactive = _NonChallengingBasicAuthPlugin(b'NTI')
@@ -306,17 +218,14 @@ def _create_middleware( secure_cookies=False,
 								   timeout=cookie_timeout,
 								   reissue_time=600,
 								   # For extra safety, we can refuse to return authenticated ids
-								   # if they don't exist. If we are called too early ,outside the site,
+								   # if they don't exist. If we are called too early, outside the site,
 								   # this can raise an exception, but the only place that matters, logging,
 								   # already deals with it (gunicorn.py). Because it's an exception,
 								   # it prevents any of the caching from kicking in
 								   userid_checker=User.get_user)
-	# For testing, we let basic-auth set cookies. We don't want to do this
-	# generally.
-	#basicauth.include_ip = False
-	#basicauth.remember = auth_tkt.remember
 
-	# Identity (username) can come from the cookie,
+
+	# Claimed identity (username) can come from the cookie,
 	# or HTTP Basic auth
 	identifiers = [('auth_tkt', auth_tkt),
 				   ('basicauth-interactive', basicauth_interactive),
@@ -324,23 +233,22 @@ def _create_middleware( secure_cookies=False,
 	# Confirmation/authentication can come from the cookie (encryption)
 	# Or possibly HTTP Basic auth
 	authenticators = [('auth_tkt', auth_tkt),
-					  ('htpasswd', user_auth)]
+					  ('htpasswd', _NTIUsersAuthenticatorPlugin())]
 	challengers = [ # Order matters when multiple classifications match
 				   ('basicauth-interactive', basicauth_interactive),
 				   ('basicauth', basicauth), ]
 	mdproviders = []
 
-	middleware = PluggableAuthenticationMiddleware(
-					None, # No WSGI app to wrap
-					identifiers,
-					authenticators,
-					challengers,
-					mdproviders,
-					_nti_request_classifier,
-					_nti_challenge_decider,
-					log_stream=logging.getLogger( 'repoze.who' ),
-					log_level=logging.DEBUG )
-	return middleware
+	api_factory = APIFactory(identifiers,
+							 authenticators,
+							 challengers,
+							 mdproviders,
+							 _nti_request_classifier,
+							 _nti_challenge_decider,
+							 b'REMOTE_USER', # environment remote user key
+							 None ) # No logger, leads to infinite loops
+
+	return api_factory
 
 def create_authentication_policy( secure_cookies=False, cookie_secret='secret', cookie_timeout=ONE_WEEK ):
 	"""
@@ -353,26 +261,21 @@ def create_authentication_policy( secure_cookies=False, cookie_secret='secret', 
 	:return: A tuple of the authentication policy, and a forbidden view that must be installed
 		to make it effective.
 	"""
-	middleware = _create_middleware(secure_cookies=secure_cookies, cookie_secret=cookie_secret, cookie_timeout=cookie_timeout )
-	result = NTIAuthenticationPolicy(cookie_timeout=cookie_timeout)
-	result.api_factory = middleware.api_factory
+	api_factory = _create_who_apifactory(secure_cookies=secure_cookies, cookie_secret=cookie_secret, cookie_timeout=cookie_timeout )
+	result = NTIAuthenticationPolicy(cookie_timeout=cookie_timeout,api_factory=api_factory)
 	# And make it capable of impersonation
 	result = nti_authentication.DelegatingImpersonatedAuthenticationPolicy( result )
-	return result, NTIForbiddenView(middleware.api_factory)
+	return result, NTIForbiddenView(api_factory)
 
-@interface.implementer( IAuthenticationPolicy )
+@interface.implementer(IAuthenticationPolicy)
 class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 
-	def __init__( self, cookie_timeout=ONE_WEEK ):
+	def __init__( self, cookie_timeout=ONE_WEEK, api_factory=None ):
 		# configfile is ignored, second argument is identifier_id, which must match one of the
 		# things we setup in _create_middleware. It's used in remember()
-		super(NTIAuthenticationPolicy,self).__init__( '', 'auth_tkt', callback=_make_user_auth() )
-		self.api_factory = None
+		super(NTIAuthenticationPolicy,self).__init__( '', 'auth_tkt', callback=_NTIUsers() )
+		self._api_factory = api_factory
 		self._cookie_timeout = cookie_timeout
-
-	def unauthenticated_userid( self, request ):
-		_decode_username( request )
-		return super(NTIAuthenticationPolicy,self).unauthenticated_userid( request )
 
 	def remember(self, request, principal, **kw):
 		# The superclass hardcodes the dictionary that is used
@@ -389,7 +292,15 @@ class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 		return api.remember(identity)
 
 	def _getAPI( self, request ):
-		return self.api_factory( request.environ )
+		environ = request.environ
+		if 'repoze.who.identity' not in environ: # First time
+
+			try:
+				_decode_username_request( request )
+			except AttributeError: # DummyRequest
+				_decode_username_request( Request( environ ) )
+
+		return self._api_factory( environ )
 
 from . import httpexceptions as hexc
 class NTIForbiddenView(object):
