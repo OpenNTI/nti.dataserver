@@ -870,10 +870,10 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
 
 	@WithSharedApplicationMockDS
-	@fudge.patch( "zope.dublincore.timeannotators.datetime" )
+	@fudge.patch( "nti.assessment.assessed.time" )
 	def test_sort_assessments(self, fudge_dt):
-		now = fudge_dt.provides( 'now' )
-		now.returns( datetime.fromtimestamp( 1 ) )
+		now = fudge_dt.provides( 'time' )
+		now.returns(  1 )
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
 
@@ -883,7 +883,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 			user.addContainedObject( top_n )
 			top_n_id = top_n.id
 
-			now.returns( datetime.fromtimestamp( 2 ) )
+			now.returns( 2 )
 
 			reply_n = QAssessedQuestion()
 			reply_n.containerId = u'tag:nti:foo'
