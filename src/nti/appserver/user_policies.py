@@ -280,6 +280,7 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 	# So we set it up manually here. (If we let Message do its default thing, we
 	# wind up with three alternative parts, making it hard to access the attachment)
 	# (See http://stackoverflow.com/questions/3902455/smtp-multipart-alternative-vs-multipart-mixed)
+	# (NOTE: This may be fixed in 0.11; test and confirm)
 	email_msg = message.to_message()
 	payload = email_msg.get_payload()
 	alternatives = MIMEMultipart( _subtype='alternative', _subparts=payload[0:2] )

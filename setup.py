@@ -208,7 +208,7 @@ setup(
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
 		'pyramid >= 1.4' ,
-		'pyramid_mailer >= 0.10',  # Which uses repoze.sendmail
+		'pyramid_mailer >= 0.11',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
 		'pyramid_zodbconn >= 0.4',
@@ -225,7 +225,7 @@ setup(
 		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6',  # LRU caching. Dep of Pyramid
-		'repoze.sendmail >= 4.0b1',  # trunk has some good binary changes
+		'repoze.sendmail >= 4.0b2',  # trunk has some good binary changes
 		'repoze.who >= 2.1',  #
 		'repoze.zodbconn >= 0.14',
 		 # Requests: http for humans. Requests 1.1.x is depended on by httpie 0.4.
@@ -262,7 +262,7 @@ setup(
 		'zc.dict >= 1.3b1',  # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
 		'zc.lockfile >= 1.1.0',
-		'zc.queue >= 1.3',
+		'zc.queue >= 2.0.0a1',
 		'zc.zlibstorage >= 0.1.1',  # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
 		# 'zetalibrary',
@@ -305,13 +305,13 @@ setup(
 		'zope.filerepresentation >= 4.0.2',
 		'zope.file >= 0.6.2' if HAVE_ZCONT else '',  # zope.container dep
 		'zope.formlib >= 4.3.0a1',  # Req'd by zope.mimetype among others,
-		'zope.generations >= 3.7.1',
+		'zope.generations >= 4.0.0a1',
 		'zope.hookable >= 4.0.1',  # explicitly list this to ensure we get the fast C version. Used by ZCA.
 		'zope.i18n >= 4.0.0a4',
 		'zope.i18nmessageid >= 4.0.2',
 		'zope.index >= 4.0.1',
 		'zope.interface >= 4.0.5',
-		'zope.intid >= 3.7.2' if HAVE_ZCONT else '',
+		'zope.intid >= 4.0.0a1' if HAVE_ZCONT else '',
 		'zope.keyreference >= 4.0.0a2',
 		'zope.lifecycleevent >= 4.0.2',
 		'zope.location >= 4.0.2',
