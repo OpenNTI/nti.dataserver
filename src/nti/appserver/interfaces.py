@@ -279,7 +279,13 @@ class IUncacheableInResponse(interface.Interface):
 	Marker interface for things that should not be cached.
 	"""
 
-class IUncacheableUnModifiedInResponse(IUncacheableInResponse):
+class IUnModifiedInResponse(interface.Interface):
+	"""
+	Marker interface for things that should not provide
+	a Last-Modified date, but may provide etags.
+	"""
+
+class IUncacheableUnModifiedInResponse(IUncacheableInResponse,IUnModifiedInResponse):
 	"""
 	Marker interface for things that not only should not be cached but should provide
 	no Last-Modified date at all.

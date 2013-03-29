@@ -133,10 +133,6 @@ class HomogeneousTypedContainerCollection(_ContainerWrapper):
 	def container(self):
 		return self._container
 
-@interface.implementer(app_interfaces.IUncacheableInResponse)
-class UncacheableHomogeneousTypedContainerCollection(HomogeneousTypedContainerCollection):
-	pass
-
 @component.adapter(nti_interfaces.IFriendsListContainer)
 class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 	"""

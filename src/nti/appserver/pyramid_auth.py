@@ -34,6 +34,8 @@ from nti.dataserver.users import User
 from nti.dataserver import authentication as nti_authentication
 from nti.dataserver import authorization as nti_authorization
 
+from .pyramid_renderers import default_vary_on
+
 def _decode_username_request( request ):
 	"""
 	Decodes %40 in a Basic Auth username into an @. Modifies
@@ -129,6 +131,22 @@ class _NTIUsersAuthenticatorPlugin(object):
 				return identity['login']
 		except KeyError: # pragma: no cover
 			return None
+
+@interface.implementer(IAuthenticator,IIdentifier)
+class _FixedUserAuthenticatorPlugin(object): # pragma: no cover # For use with redbot testing
+
+	username = 'pacifique.mahoro@nextthought.com'
+	def authenticate(self, environ, identity ):
+		return self.username
+
+	def identify(self, environ):
+		return {'login': self.username}
+
+	def remember( self, *args ):
+		return ()
+
+	def forget(self, *args):
+		return ()
 
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
@@ -239,6 +257,10 @@ def _create_who_apifactory( secure_cookies=False,
 				   ('basicauth', basicauth), ]
 	mdproviders = []
 
+	if False: # pragma: no cover # for redbot testing
+		identifiers.insert( 0, ('fixed', _FixedUserAuthenticatorPlugin()) )
+		authenticators.insert( 0, ('fixed', _FixedUserAuthenticatorPlugin()) )
+
 	api_factory = APIFactory(identifiers,
 							 authenticators,
 							 challengers,
@@ -320,7 +342,7 @@ class NTIForbiddenView(object):
 		# TODO: This is very similar to some code in the PluggableAuthenticationMiddleware.
 		# Should we just use that? It changes the order in which things are done, though
 		# which might cause transaction problems?
-
+		result = request.exception
 		api = self.api_factory( request.environ )
 		if api.challenge_decider(request.environ, request.exception.status, request.exception.headers):
 			challenge_app = api.challenge(request.exception.status, request.exception.headers)
@@ -328,9 +350,10 @@ class NTIForbiddenView(object):
 				# Although these generically can return "apps" that are supposed to be WSGI callables,
 				# in reality they only return instances of paste.httpexceptions.HTTPClientError.
 				# Which happens to map one-to-one to the pyramid exception framework
-				return hexc.__dict__[type(challenge_app).__name__](headers=challenge_app.headers)
+				result = hexc.__dict__[type(challenge_app).__name__](headers=challenge_app.headers)
 
-		return request.exception
+		result.vary = default_vary_on( request ) # TODO: Do this with a response factory or something similar
+		return result
 
 # Temporarily make everyone an OU admin
 @interface.implementer( nti_interfaces.IGroupMember )
