@@ -153,12 +153,12 @@ class _NonChallengingBasicAuthPlugin(BasicAuthPlugin):
 	classifications = {IChallenger: [CLASS_BROWSER_APP],
 					   IIdentifier: [CLASS_BROWSER_APP]}
 
-	def challenge( self, *args ):
-		exc = super(_NonChallengingBasicAuthPlugin,self).challenge( *args )
-		del exc.headers[:] # clear out the WWW-Authenticate header
+	def challenge(self, environ, status, app_headers, forget_headers):
+		exc = super(_NonChallengingBasicAuthPlugin,self).challenge( environ, status, app_headers, forget_headers )
+		del exc.headers['WWW-Authenticate'] # clear out the WWW-Authenticate header
 		return exc
 
-	def forget(self, *args ):
+	def forget(self, environ, identity):
 		return ()
 
 @interface.provider(IRequestClassifier)
@@ -174,7 +174,7 @@ def _nti_request_classifier( environ ):
 	if result == 'browser':
 		# OK, but is it an programmatic browser request where we'd like to
 		# change up the auth rules?
-		if environ.get( 'HTTP_X_REQUESTED_WITH' ) == 'XMLHttpRequest':
+		if environ.get( 'HTTP_X_REQUESTED_WITH', '' ).lower() == b'xmlhttprequest':
 			# An easy Yes!
 			result = CLASS_BROWSER_APP
 		else:
@@ -185,8 +185,8 @@ def _nti_request_classifier( environ ):
 			# sent by user agents like, say, NetNewsWire, then it was probably
 			# set programatically
 			if ('HTTP_REFERER' in environ
-				 and 'Mozilla' in environ.get( 'HTTP_USER_AGENT' )
-				 and environ.get('HTTP_ACCEPT') != '*/*'):
+				 and 'Mozilla' in environ.get( 'HTTP_USER_AGENT', '' )
+				 and environ.get('HTTP_ACCEPT', '') != '*/*'):
 				result = CLASS_BROWSER_APP
 	return result
 
