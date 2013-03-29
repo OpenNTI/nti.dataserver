@@ -442,7 +442,7 @@ class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 		request = system['request']
 		remote_user = get_remote_user( request )
 		if remote_user and remote_user != context.__data_owner__:
-			self.max_age = _LongerCachedUGDExternalCollectionCacheController
+			self.max_age = _LongerCachedUGDExternalCollectionCacheController.max_age
 		return _UGDExternalCollectionCacheController.__call__( self, context, system )
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)
