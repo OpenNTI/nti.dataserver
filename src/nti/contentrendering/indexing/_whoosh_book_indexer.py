@@ -73,7 +73,7 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 	Indexing topic children nodes that either have an id or data_ntiid attribute
 	"""
 
-	def process_topic(self, book, node, writer, language='en'):
+	def process_topic(self, idxspec, node, writer, language='en'):
 		title = unicode(node.title)
 		ntiid = unicode(node.ntiid)
 		content_file = node.location
@@ -151,7 +151,7 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 		c = m.groups()[0] if m else u''
 		return c or text
 
-	def process_topic(self, book, node, writer, language='en'):
+	def process_topic(self, idxspec, node, writer, language='en'):
 		title = unicode(node.title)
 		ntiid = unicode(node.ntiid)
 		content_file = node.location
