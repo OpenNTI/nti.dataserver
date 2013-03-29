@@ -21,6 +21,7 @@ from zope import component
 from zc import intid as zc_intid
 
 from nti.appserver import _util
+from nti.appserver import interfaces as app_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import flagging
@@ -121,11 +122,15 @@ def _UnFlagView(request):
 
 from z3c.table import table
 from ._pyramid_zope_integrations import PyramidZopeRequestProxy
-
+from .ugd_query_views import lists_and_dicts_to_ext_collection
 def _moderation_table( request ):
 	intids = component.getUtility(zc_intid.IIntIds)
 	content = component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged()
-	content = [x for x in content if intids.queryId(x) is not None] # exclude deleted items that are somehow still in the catalog
+
+	content_dict = lists_and_dicts_to_ext_collection( (content,), predicate=intids.queryId, ignore_broken=True )
+	app_interfaces.IPreRenderResponseCacheController(content_dict)(content_dict,{'request': request})
+	content = content_dict['Items']
+
 	the_table = ModerationAdminTable( content,
 									  PyramidZopeRequestProxy( request ) )
 

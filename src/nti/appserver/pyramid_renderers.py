@@ -34,7 +34,9 @@ from nti.dataserver.links_external import render_link
 import nti.appserver.interfaces as app_interfaces
 import nti.dataserver.interfaces as nti_interfaces
 from .interfaces import IPreRenderResponseCacheController, IResponseRenderer, IResponseCacheController
+from zope.file import interfaces as zf_interfaces
 
+from nti.appserver import traversal
 from ._view_utils import get_remote_user
 
 from perfmetrics import metric
@@ -260,15 +262,23 @@ def default_cache_controller( data, system ):
 			not_mod.cache_control = response.cache_control
 			_prep_cache( not_mod )
 			if response.etag:
-				not_mod.etag = response.etag # TODO: Right?
+				not_mod.etag = response.etag
 			raise not_mod
 
 	response.vary = vary_on
 	# We also need these to be revalidated; allow the original response
 	# to override, trumped by the original request
 	if end_to_end_reload:
-		response.cache_control.no_cache = True
-		response.pragma = 'no-cache'
+		# No, that's not right. That gets us into an endless cycle with the client
+		# and us bouncing 'no-cache' back and forth
+		#response.cache_control.no_cache = True
+		#response.pragma = 'no-cache'
+		# so lets try something more subtle
+		response.cache_control.max_age = 0
+		response.cache_control.proxy_revalitade = True
+		response.cache_control.must_revalitade = True
+		response.expiration = 0
+
 	elif not response.cache_control.no_cache and not response.cache_control.no_store:
 		_prep_cache( response )
 
@@ -327,8 +337,9 @@ class _AbstractReliableLastModifiedCacheController(object):
 	for pre-rendering etag support.
 	"""
 
-	def __init__( self, context ):
+	def __init__( self, context, request=None ):
 		self.context = context
+		self.request = request
 
 	max_age = 300
 
@@ -336,14 +347,40 @@ class _AbstractReliableLastModifiedCacheController(object):
 	def _context_specific(self):
 		return ()
 
+	@property
+	def _context_lastModified(self):
+		return self.context.lastModified
+
 	def __call__( self, context, system ):
 		request = system['request']
+		self.request = request
 		response = request.response
-		response.last_modified = context.lastModified
-		response.etag = _md5_etag( bytes(context.lastModified), _get_remote_username( request ), *self._context_specific )
+		last_modified = self._context_lastModified
+		response.last_modified = last_modified
+		response.etag = _md5_etag( bytes(last_modified), _get_remote_username( request ), *self._context_specific )
 		response.cache_control.max_age = self.max_age # arbitrary
 		# Let this raise the not-modified if it will
 		return default_cache_controller( context, system )
+
+@component.adapter(zf_interfaces.IFile)
+class _ZopeFileCacheController(_AbstractReliableLastModifiedCacheController):
+	# All of our current uses of zope file objects replace them with
+	# new objects, they don't overwrite. so we can use the _p_oid and _p_serial
+
+	max_age = 3600 # an hour
+
+	@property
+	def _context_lastModified(self):
+		try:
+			return self.context.lastModified
+		except AttributeError:
+			last_mod_parent = traversal.find_interface( self.request.context, nti_interfaces.ILastModified )
+			if last_mod_parent is not None:
+				return last_mod_parent.lastModified
+
+	@property
+	def _context_specific(self):
+		return self.context._p_oid, self.context._p_serial
 
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)

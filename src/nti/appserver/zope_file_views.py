@@ -26,7 +26,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils import dataurl
 
-from nti.appserver import traversal
+from . import interfaces as app_interfaces
 from nti.appserver import httpexceptions as hexc
 from ._pyramid_zope_integrations import PyramidZopeRequestProxy
 from nti.appserver._view_utils import UploadRequestUtilsMixin
@@ -54,16 +54,14 @@ def file_view(request):
 	# The correct mimetype will be set because the IFile is IContentTypeAware
 	# and zope.mimetype provides an adapter from that to IContentInfo, which Display
 	# uses to set the mimetype
-	# But there is probably not a last_modified value. See if we can find one
-	# in the containment (in the case of an image in a whiteboard, currently the only case,
-	# this will be the Canvas object, which is perfect)
-	if not request.response.last_modified:
-		last_mod_parent = traversal.find_interface( request.context, nti_interfaces.ILastModified )
-		if last_mod_parent:
-			request.response.last_modified = last_mod_parent.lastModified
+
 	# Our one use-case for this currently (whiteboard images) could benefit significantly
 	# from something like putting the blobs up in S3/cloudfront and serving from there,
 	# or at least not serving from the dataserver directly.
+
+	# Best we can do is try to get good cache headers
+	app_interfaces.IPreRenderResponseCacheController(request.context)(request.context, {'request': request} )
+
 	return request.response
 
 @view_config( route_name='objects.generic.traversal',

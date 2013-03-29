@@ -61,6 +61,7 @@
 	<adapter factory=".pyramid_renderers._UGDExternalCollectionCacheController" />
 	<adapter factory=".pyramid_renderers._LongerCachedUGDExternalCollectionCacheController" />
 	<adapter factory=".pyramid_renderers._UserActivityViewCacheController" />
+	<adapter factory=".pyramid_renderers._ZopeFileCacheController" />
 
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
