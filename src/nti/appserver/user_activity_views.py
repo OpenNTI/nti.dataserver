@@ -68,6 +68,8 @@ class UserActivityGetView(RecursiveUGDQueryView):
 
 	"""
 
+	result_iface = app_interfaces.IUserActivityExternalCollection
+
 	FILTER_NAMES = RecursiveUGDQueryView.FILTER_NAMES.copy()
 	FILTER_NAMES['TopLevel'] = _always_toplevel_filter
 	FILTER_NAMES['_NotDeleted'] = lambda x: not IDeletedObjectPlaceholder.providedBy( x )

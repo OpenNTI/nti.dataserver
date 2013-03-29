@@ -317,6 +317,18 @@ class IUGDExternalCollection(interface.Interface):
 	that has the last modified date of the greatest item in that data.
 	"""
 
+	__data_owner__ = interface.Attribute( "The primary user whose data we are looking at, usually in the request path" )
+
+class ILongerCachedUGDExternalCollection(IUGDExternalCollection):
+	"""
+	Data that we expect to allow to be cached for slightly longer than otherwise.
+	"""
+
+class IUserActivityExternalCollection(IUGDExternalCollection):
+	"""
+	UGD representing user activity in aggregate.
+	"""
+
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder # BWC
 
 ###
