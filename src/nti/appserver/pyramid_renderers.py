@@ -314,7 +314,7 @@ def _md5_etag( *args ):
 	digest = md5()
 	for arg in args:
 		if arg:
-			digest.update( str(arg) )
+			digest.update( arg.encode('utf-8') if isinstance(arg,unicode) else str(arg) )
 	return digest.digest().encode( 'base64' ).replace( '\n', '' ).strip( '=' )
 
 
