@@ -1,5 +1,6 @@
 <!-- -*- mode: nxml -*- -->
 <configure xmlns="http://namespaces.zope.org/zope"
+		   xmlns:zcml="http://namespaces.zope.org/zcml"
 		   i18n_domain="zope">
 	<include package="zope.component" />
 	<include package="zope.traversing" /> <!-- For rendering -->
@@ -21,7 +22,8 @@
 	<utility component=".relatedlinksetter.TOCRelatedAdder"
 			 name="TOCRelatedAdder" />
 	<utility component=".relatedlinksetter.LinkRelatedAdder"
-			 name="LinkRelatedAdder" />
+			 name="LinkRelatedAdder"
+			 zcml:condition="not-have render:no-href-related-links"/>
 	<utility component=".relatedlinksetter.ExistingTOCRelatedAdder"
 			 name="ExistingTOCRelatedAdder" />
 
