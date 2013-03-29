@@ -4,8 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import time
 import shutil
@@ -16,7 +16,7 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from .._whoosh_index import create_book_schema
+from .._whoosh_schemas import create_book_schema
 from .._whoosh_indexstorage import create_directory_index
 from .._whoosh_bookindexmanager import WhooshBookIndexManager
 
@@ -32,7 +32,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
-		super(TestWhooshBookIndexManager,cls).setUpClass()
+		super(TestWhooshBookIndexManager, cls).setUpClass()
 		cls.now = time.time()
 		cls.idx_dir = tempfile.mkdtemp(dir="/tmp")
 		create_directory_index('bleach', create_book_schema(), cls.idx_dir)
@@ -41,11 +41,11 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		idx = cls.bim.bookidx
 		writer = idx.writer()
 		for k, x in enumerate(zanpakuto_commands):
-			writer.add_document(ntiid = unicode(make_ntiid(provider=str(k), nttype='bleach', specific='manga')),
-								title = unicode(x),
-								content = unicode(x),
-								quick = unicode(x),
-								related= u'',
+			writer.add_document(ntiid=unicode(make_ntiid(provider=str(k), nttype='bleach', specific='manga')),
+								title=unicode(x),
+								content=unicode(x),
+								quick=unicode(x),
+								related=u'',
 								last_modified=datetime.fromtimestamp(cls.now))
 		writer.commit()
 
@@ -53,7 +53,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 	def tearDownClass(cls):
 		cls.bim.close()
 		shutil.rmtree(cls.idx_dir, True)
-		super(TestWhooshBookIndexManager,cls).tearDownClass()
+		super(TestWhooshBookIndexManager, cls).tearDownClass()
 
 	def test_search(self):
 		hits = toExternalObject(self.bim.search("shield"))
@@ -68,7 +68,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 		assert_that(item, has_entry(CLASS, HIT))
 		assert_that(item, has_entry(NTIID, is_not(None)))
 		assert_that(item, has_entry(SCORE, is_not(None)))
-		assert_that(item, has_entry(CONTAINER_ID,  is_not(None)))
+		assert_that(item, has_entry(CONTAINER_ID, is_not(None)))
 		assert_that(item, has_entry(SNIPPET, 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 
 	def test_longword_search(self):
@@ -106,7 +106,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 
 		items = hits[ITEMS]
 		assert_that(items, has_length(4))
-		assert_that( items, contains_inanyorder( 'rage', 'rankle', 'rain', 'raise' ) )
+		assert_that(items, contains_inanyorder('rage', 'rankle', 'rain', 'raise'))
 
 
 	def test_suggest_and_search(self):

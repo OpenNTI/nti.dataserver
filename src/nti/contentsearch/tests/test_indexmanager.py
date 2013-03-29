@@ -24,7 +24,7 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.externalization.externalization import toExternalObject
 
 from .._search_query import QueryObject
-from .._whoosh_index import create_book_schema
+from .._whoosh_schemas import create_book_schema
 from .._whoosh_indexstorage import create_directory_index
 from ..indexmanager import create_index_manager_with_repoze
 from ..indexmanager import create_index_manager_with_whoosh

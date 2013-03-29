@@ -7,7 +7,7 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	
-	<utility factory="._whoosh_index._DefaultBookSchemaCreator" />
-	<utility factory="._whoosh_index._DefaultBookSchemaCreator" name="en" />
+	<utility factory="._whoosh_schemas._DefaultBookSchemaCreator" />
+	<utility factory="._whoosh_schemas._DefaultBookSchemaCreator" name="en" />
 	
 </configure>

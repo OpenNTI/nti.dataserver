@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Whoosh user search adapter.
+Whoosh content index classes.
 
 $Id$
 """
@@ -14,37 +14,27 @@ from datetime import datetime
 from operator import methodcaller
 
 from zope import interface
-from zope import component
-
-from whoosh import fields
-from whoosh import analysis
 
 from nti.contentprocessing import rank_words
-from nti.contentprocessing import default_ngram_maxsize
-from nti.contentprocessing import default_ngram_minsize
-from nti.contentprocessing import interfaces as cp_interfaces
-from nti.contentprocessing import default_word_tokenizer_pattern
 
-from .common import epoch_time
+from . import common
 from ._search_query import QueryObject
 from ._whoosh_query import parse_query
-from .common import normalize_type_name
+from . import _whoosh_schemas as wschs
+from . import _search_results as srlts
 from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
 from ._datastructures import CaseInsensitiveDict
-from ._search_results import empty_search_results
-from ._search_results import empty_suggest_results
-from ._search_results import empty_suggest_and_search_results
 
 from .constants import (channel_, content_, keywords_, references_,
-					 	recipients_, sharedWith_, ntiid_, last_modified_,
+					 	sharedWith_, ntiid_, last_modified_,
 					 	creator_, containerId_, replacementContent_, tags_,
 						redactionExplanation_, intid_, title_, quick_)
-_default_word_max_dist = 15
 
 class _SearchableContent(object):
 
 	__indexable__ = False
+	default_word_max_dist = 15
 
 	@property
 	def schema(self):
@@ -66,7 +56,7 @@ class _SearchableContent(object):
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		if ' ' in qo.term or qo.is_prefix_search or qo.is_phrase_search:
-			results = empty_suggest_and_search_results(qo)
+			results = srlts.empty_suggest_and_search_results(qo)
 			results += self.search(searcher, qo)
 		else:
 			result = self.suggest(searcher, qo)
@@ -78,10 +68,10 @@ class _SearchableContent(object):
 				results = self._execute_search(searcher,
 											 	parsed_query,
 											 	qo,
-											 	creator_method=empty_suggest_and_search_results)
+											 	creator_method=srlts.empty_suggest_and_search_results)
 				results.add_suggestions(suggestions)
 			else:
-				results = empty_suggest_and_search_results(qo)
+				results = srlts.empty_suggest_and_search_results(qo)
 				results += self.search(searcher, qo)
 
 		return results
@@ -89,14 +79,14 @@ class _SearchableContent(object):
 	def suggest(self, searcher, word, *args, **kwargs):
 		qo = QueryObject.create(word, **kwargs)
 		prefix = qo.prefix or len(qo.term)
-		maxdist = qo.maxdist or _default_word_max_dist
-		results = empty_suggest_results(qo)
+		maxdist = qo.maxdist or self.default_word_max_dist
+		results = srlts.empty_suggest_results(qo)
 		records = searcher.suggest(content_, qo.term, maxdist=maxdist, prefix=prefix)
 		results.add(records)
 		return results
 
 	def _execute_search(self, searcher, parsed_query, queryobject, docids=None, creator_method=None):
-		creator_method = creator_method or empty_search_results
+		creator_method = creator_method or srlts.empty_search_results
 		results = creator_method(queryobject)
 
 		# execute search
@@ -114,62 +104,6 @@ class _SearchableContent(object):
 	def get_objects_from_whoosh_hits(self, search_hits, docids):
 		raise NotImplementedError()
 
-# content analyzer
-
-def _ngram_minmax(lang='en'):
-	ngc_util = component.queryUtility(cp_interfaces.INgramComputer, name=lang)
-	minsize = ngc_util.minsize if ngc_util else default_ngram_minsize
-	maxsize = ngc_util.maxsize if ngc_util else default_ngram_maxsize
-	return (minsize, maxsize)
-
-def create_ngram_field(lang='en'):
-	minsize, maxsize = _ngram_minmax()
-	expression = component.queryUtility(cp_interfaces.IWordTokenizerExpression, name=lang) or default_word_tokenizer_pattern
-	tokenizer = analysis.RegexTokenizer(expression=expression)
-	return fields.NGRAMWORDS(minsize=minsize, maxsize=maxsize, stored=False, tokenizer=tokenizer, at='start')
-
-def create_content_analyzer(lang='en'):
-	sw_util = component.queryUtility(search_interfaces.IStopWords, name=lang)
-	expression = component.queryUtility(cp_interfaces.IWordTokenizerExpression, name=lang) or default_word_tokenizer_pattern
-	stopwords = sw_util.stopwords() if sw_util else ()
-	analyzer = 	analysis.StandardAnalyzer(expression=expression, stoplist=stopwords)
-	return analyzer
-
-def create_content_field(stored=True):
-	return fields.TEXT(stored=stored, spelling=True, phrase=True, analyzer=create_content_analyzer())
-
-# book content
-
-@interface.implementer(search_interfaces.IWhooshBookSchemaCreator)
-class _DefaultBookSchemaCreator(object):
-
-	def create(self):
-		"""
-		Book index schema
-	
-		docid: Unique id
-		ntiid: Internal nextthought ID for the chapter/section
-		title: chapter/section title
-		last_modified: chapter/section last modification since the epoch
-		keywords: chapter/section key words
-		content: chapter/section text
-		quick: chapter/section text ngrams
-		related: ntiids of related sections
-		ref: chapter reference
-		"""
-		schema = fields.Schema(docid=fields.ID(stored=True, unique=False),
-								ntiid=fields.ID(stored=True, unique=False),
-								title=fields.TEXT(stored=True, spelling=True),
-					  			last_modified=fields.DATETIME(stored=True),
-					  			keywords=fields.KEYWORD(stored=True),
-					 			quick=create_ngram_field(),
-					 			related=fields.KEYWORD(stored=True),
-					 			content=create_content_field(stored=True))
-		return schema
-
-def create_book_schema(name='en'):
-	to_call = component.queryUtility(search_interfaces.IWhooshBookSchemaCreator, name=name) or _DefaultBookSchemaCreator()
-	return to_call.create()
 
 @interface.implementer(search_interfaces.IWhooshBookContent)
 class _BookContent(dict):
@@ -188,7 +122,7 @@ class Book(_SearchableContent):
 
 	@property
 	def _schema(self):
-		return create_book_schema()
+		return wschs.create_book_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
@@ -199,7 +133,7 @@ class Book(_SearchableContent):
 					docids.add(docnum)
 
 				score = hit.score or 1.0
-				last_modified = epoch_time(hit[last_modified_])
+				last_modified = common.epoch_time(hit[last_modified_])
 				data = _BookContent(intid=docnum,
 									score=score,
 									ntiid=hit[ntiid_],
@@ -245,14 +179,6 @@ def get_object_from_ds(uid):
 		logger.debug('Could not find object with id %r' % uid)
 	return result
 
-def _create_user_indexable_content_schema():
-
-	schema = fields.Schema(intid=fields.ID(stored=True, unique=True),
-							containerId=fields.ID(stored=False),
-							creator=fields.ID(stored=False),
-				  			last_modified=fields.DATETIME(stored=False),
-				 			ntiid=fields.ID(stored=False))
-	return schema
 
 class UserIndexableContent(_SearchableContent):
 
@@ -319,46 +245,28 @@ class UserIndexableContent(_SearchableContent):
 			writer.cancel()
 			raise e
 
-def _create_shareable_schema():
-	schema = _create_user_indexable_content_schema()
-	schema.add(sharedWith_, fields.TEXT(stored=False))
-	return schema
-
 class ShareableIndexableContent(UserIndexableContent):
 
-	_schema = _create_shareable_schema()
+	_schema = wschs._create_shareable_schema()
 
 	def get_index_data(self, data):
 		result = super(ShareableIndexableContent, self).get_index_data(data)
 		result[sharedWith_] = get_sharedWith(data)
 		return result
 
-def _create_threadable_schema():
-	schema = _create_shareable_schema()
-	schema.add(keywords_, fields.KEYWORD(stored=False))
-	return schema
-
 class ThreadableIndexableContent(ShareableIndexableContent):
 
-	_schema = _create_threadable_schema()
+	_schema = wschs._create_threadable_schema()
 
 	def get_index_data(self, data):
 		result = super(ThreadableIndexableContent, self).get_index_data(data)
 		result[keywords_] = get_keywords(data)
 		return result
 
-# highlight
-
-def create_highlight_schema():
-	schema = _create_threadable_schema()
-	schema.add(content_, create_content_field(stored=False))
-	schema.add(quick_, create_ngram_field())
-	return schema
-
 class Highlight(ThreadableIndexableContent):
 
 	__indexable__ = True
-	_schema = create_highlight_schema()
+	_schema = wschs.create_highlight_schema()
 
 	def get_index_data(self, data):
 		result = super(Highlight, self).get_index_data(data)
@@ -367,17 +275,9 @@ class Highlight(ThreadableIndexableContent):
 		result[content_] = content
 		return result
 
-# redaction
-
-def create_redaction_schema():
-	schema = create_highlight_schema()
-	schema.add(replacementContent_, create_content_field(stored=False))
-	schema.add(redactionExplanation_, create_content_field(stored=False))
-	return schema
-
 class Redaction(Highlight):
 
-	_schema = create_redaction_schema()
+	_schema = wschs.create_redaction_schema()
 
 	def get_index_data(self, data):
 		result = super(Redaction, self).get_index_data(data)
@@ -385,33 +285,18 @@ class Redaction(Highlight):
 		result[redactionExplanation_] = discriminators.get_redaction_explanation(data)
 		return result
 
-# note
-
-def create_note_schema():
-	schema = create_highlight_schema()
-	schema.add(references_, fields.KEYWORD(stored=False))
-	return schema
-
 class Note(Highlight):
 
-	_schema = create_note_schema()
+	_schema = wschs.create_note_schema()
 
 	def get_index_data(self, data):
 		result = super(Note, self).get_index_data(data)
 		result[references_] = get_references(data)
 		return result
 
-# messageinfo
-
-def create_messageinfo_schema():
-	schema = create_note_schema()
-	schema.add(channel_, fields.KEYWORD(stored=False))
-	schema.add(recipients_, fields.TEXT(stored=False))
-	return schema
-
 class MessageInfo(Note):
 
-	_schema = create_messageinfo_schema()
+	_schema = wschs.create_messageinfo_schema()
 
 	def get_index_data(self, data):
 		result = super(MessageInfo, self).get_index_data(data)
@@ -419,20 +304,10 @@ class MessageInfo(Note):
 		result[channel_] = discriminators.get_channel(data)
 		return result
 
-# post
-
-def create_post_schema():
-	schema = _create_shareable_schema()
-	schema.add(content_, create_content_field(stored=False))
-	schema.add(quick_, create_ngram_field())
-	schema.add(title_, fields.TEXT(stored=False))
-	schema.add(tags_, fields.KEYWORD(stored=False))
-	return schema
-
 class Post(ShareableIndexableContent):
 
 	__indexable__ = True
-	_schema = create_post_schema()
+	_schema = wschs.create_post_schema()
 
 	def get_index_data(self, data):
 		result = super(Post, self).get_index_data(data)
@@ -448,13 +323,13 @@ class Post(ShareableIndexableContent):
 _indexables = CaseInsensitiveDict()
 for k, v in globals().items():
 	if inspect.isclass(v) and getattr(v, '__indexable__', False):
-		name = normalize_type_name(k)
+		name = common.normalize_type_name(k)
 		_indexables[name] = v
 
 def get_indexables():
 	return _indexables.keys()
 
 def get_indexable_object(type_name=None):
-	name = normalize_type_name(type_name)
+	name = common.normalize_type_name(type_name)
 	clazz = _indexables.get(name, None)
 	return clazz() if clazz else None
