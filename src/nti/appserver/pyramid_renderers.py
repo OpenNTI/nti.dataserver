@@ -216,7 +216,7 @@ def default_cache_controller( data, system ):
 		# Moreover, if no freshness is provided, then it is assumed to be fresh
 		# "if the cache has seen the representation recently, and it was modified relatively long ago."
 		# We set some age guideline here to avoid that trap:
-		if not rsp.cache_control.max_age:
+		if rsp.cache_control.max_age is None:
 			rsp.cache_control.max_age = 30 # XXX This value is small but arbitrary
 		# (Setting it to 0 is equivalent to setting no-cache)
 
@@ -433,10 +433,10 @@ class _LongerCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCa
 class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 	"""
 	If the owner asks for his own activity, we allow for less caching.
-	If you ask for somebody else's, it may be slightly more stale.
+	If you ask for somebody elses, it may be slightly more stale.
 	"""
 
-	max_age = 30
+	max_age = 0
 
 	def __call__( self, context, system ):
 		request = system['request']
