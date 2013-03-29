@@ -110,6 +110,10 @@
 			 provides=".interfaces.IPostContentResolver"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
 			 
+	<adapter factory="._content_utils._HeadlineTopicContentResolver"
+			 provides=".interfaces.IHeadlineTopicContentResolver"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlineTopic" />
+			 
 	<adapter factory="._content_utils._BookContentResolver"
 			 provides=".interfaces.IBookContentResolver"
 			 for=".interfaces.IBookContent" />
