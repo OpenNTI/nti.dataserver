@@ -355,12 +355,23 @@ class IWhooshBookContent(IBookContent, IReadMapping):
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
 class IBookSchemaCreator(interface.Interface):
+
 	def create():
 		"""
 		return a schema to create a book index
 		"""
 
 class IWhooshBookSchemaCreator(IBookSchemaCreator):
+	pass
+
+class IVideoTranscriptSchemaCreator(interface.Interface):
+
+	def create():
+		"""
+		return a schema to create a video transcript index
+		"""
+
+class IWhooshVideoTranscriptSchemaCreator(IVideoTranscriptSchemaCreator):
 	pass
 
 class IWhooshQueryParser(ISearchQueryParser):

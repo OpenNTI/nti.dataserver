@@ -10,4 +10,7 @@
 	<utility factory="._whoosh_schemas._DefaultBookSchemaCreator" />
 	<utility factory="._whoosh_schemas._DefaultBookSchemaCreator" name="en" />
 	
+	<utility factory="._whoosh_schemas._DefaultVideoTranscriptSchemaCreator" />
+	<utility factory="._whoosh_schemas._DefaultVideoTranscriptSchemaCreator" name="en" />
+	
 </configure>
