@@ -1,0 +1,735 @@
+1
+00:00:07,450 --> 00:00:11,629
+the idea here is really to uh...
+understand what are those common
+
+2
+00:00:11,630 --> 00:00:13,589
+fundamental drivers
+
+3
+00:00:13,589 --> 00:00:14,599
+that we see
+
+4
+00:00:14,599 --> 00:00:18,069
+in our financial crises and banking
+crises
+
+5
+00:00:18,069 --> 00:00:22,259
+how can we diagnose them before castro
+
+6
+00:00:22,260 --> 00:00:24,320
+so that&#39;s our
+
+7
+00:00:24,320 --> 00:00:28,149
+that&#39;s our that surge and then again
+after each of these major
+
+8
+00:00:28,149 --> 00:00:30,309
+uh... later topics will have some up
+
+9
+00:00:30,309 --> 00:00:32,580
+will have some some exercises
+
+10
+00:00:32,580 --> 00:00:34,580
+to review the learning
+
+11
+00:00:34,580 --> 00:00:39,070
+democrats traverse uh... we&#39;re seeing
+very very common drivers across all the
+
+12
+00:00:39,070 --> 00:00:39,780
+major
+
+13
+00:00:39,780 --> 00:00:42,160
+enough about crises uh...
+
+14
+00:00:42,160 --> 00:00:43,830
+and um...
+
+15
+00:00:43,830 --> 00:00:44,719
+there are
+
+16
+00:00:44,719 --> 00:00:46,580
+ways of predicting
+
+17
+00:00:46,580 --> 00:00:50,570
+uh... diagnosing them that are very
+useful to find
+
+18
+00:00:50,570 --> 00:00:54,860
+uh... and we&#39;ll talk about uh... the
+difference between black swan events
+
+19
+00:00:54,860 --> 00:00:56,769
+and out what time
+
+20
+00:00:56,770 --> 00:01:01,670
+uh... did use on that whose uh...
+geologist calls a dragon case that&#39;s an
+
+21
+00:01:01,670 --> 00:01:06,290
+interesting discussion about exogenous
+uh... versus indulge in this risks
+
+22
+00:01:06,290 --> 00:01:10,720
+uh... outlines as early-warning signals
+uh... are are very very important that
+
+23
+00:01:10,720 --> 00:01:11,829
+universal
+
+24
+00:01:11,829 --> 00:01:14,149
+signal that something
+
+25
+00:01:14,150 --> 00:01:15,370
+either uh...
+
+26
+00:01:15,370 --> 00:01:18,350
+units various data or all something
+really important has happened the
+
+27
+00:01:18,350 --> 00:01:20,220
+distribution has shifted
+
+28
+00:01:20,220 --> 00:01:22,130
+and will show you how to umkc
+
+29
+00:01:22,130 --> 00:01:24,780
+interpret some of those signals
+
+30
+00:01:24,780 --> 00:01:28,530
+so let&#39;s dive into systemic risk drivers
+
+31
+00:01:28,530 --> 00:01:30,060
+banking crises
+
+32
+00:01:30,060 --> 00:01:32,650
+followed very similar to jack trips
+
+33
+00:01:32,650 --> 00:01:37,730
+uh... they are are generally driven by
+first surges in international capital
+
+34
+00:01:37,730 --> 00:01:40,350
+flow
+
+35
+00:01:40,350 --> 00:01:41,859
+uh... and uh...
+
+36
+00:01:41,859 --> 00:01:43,630
+an increase in asset prices
+
+37
+00:01:43,630 --> 00:01:45,610
+fueled by uh... liquidity
+
+38
+00:01:45,610 --> 00:01:47,530
+or credits
+
+39
+00:01:47,530 --> 00:01:53,190
+and this is a study from montana road
+often dot com reinhart&#39;s com
+
+40
+00:01:53,190 --> 00:01:56,719
+banking crisis in equal opportunity
+manus
+
+41
+00:01:56,719 --> 00:01:58,360
+and um...
+
+42
+00:01:58,360 --> 00:02:02,789
+it shows that sort of the proportion of
+economies going through a banking crisis
+
+43
+00:02:02,790 --> 00:02:04,750
+and you can see that time
+
+44
+00:02:04,750 --> 00:02:09,788
+you know uh... quite often we can get to
+uh... you anywhere from
+
+45
+00:02:09,788 --> 00:02:12,879
+fifteen uh... percent or more
+
+46
+00:02:12,879 --> 00:02:16,559
+of the world economy and the weighted
+basis is in some kind of a banking
+
+47
+00:02:16,559 --> 00:02:19,639
+crisis a banking crisis or actually
+fairly
+
+48
+00:02:19,639 --> 00:02:23,540
+fairly common there was a big stretch
+after the war when we didn&#39;t have any
+
+49
+00:02:23,540 --> 00:02:27,060
+right whiskey of a spur of the illusion
+that uh... maybe on you know
+
+50
+00:02:27,060 --> 00:02:29,269
+banking crisis had been solved
+
+51
+00:02:29,269 --> 00:02:33,159
+uh... but obviously they&#39;ve come back
+out with a vengeance uh... so you can
+
+52
+00:02:33,159 --> 00:02:35,290
+see these these pics pikes here
+
+53
+00:02:35,290 --> 00:02:38,469
+uh... that&#39;s over close to forty percent
+of the world economy
+
+54
+00:02:38,469 --> 00:02:40,929
+uh... being in a banking crisis
+
+55
+00:02:40,929 --> 00:02:46,229
+we seeing someone drivers in emerging
+markets and uh... developed markets com
+
+56
+00:02:46,229 --> 00:02:48,850
+uh... and uh... financial centers are
+
+57
+00:02:48,850 --> 00:02:51,379
+uh... especially vulnerable
+
+58
+00:02:51,379 --> 00:02:52,929
+another interesting correlation
+
+59
+00:02:52,930 --> 00:02:56,400
+is that financial liberalization capital
+mobility
+
+60
+00:02:56,400 --> 00:02:58,969
+tend to have a destabilizing effect
+
+61
+00:02:58,969 --> 00:03:03,059
+so uh... this is a chart here at that
+time
+
+62
+00:03:03,059 --> 00:03:04,419
+roll-off quotes
+
+63
+00:03:04,419 --> 00:03:08,510
+which essentially shows uh... where
+they&#39;re plotting their ranking financial
+
+64
+00:03:08,510 --> 00:03:12,849
+liberalization on the on the on on the
+reds um... the red chart
+
+65
+00:03:12,849 --> 00:03:16,768
+and uh... and a m actually banking
+crises okay uh... some of countries in
+
+66
+00:03:16,769 --> 00:03:18,139
+banking crisis
+
+67
+00:03:18,139 --> 00:03:21,389
+and you can see that there&#39;s a
+relationship when there is a enough when
+
+68
+00:03:21,389 --> 00:03:23,079
+liberalization is going up
+
+69
+00:03:23,079 --> 00:03:25,150
+uh... banking crises tend to uh...
+
+70
+00:03:25,150 --> 00:03:29,379
+tend to uh... ten to spike thereafter
+
+71
+00:03:29,379 --> 00:03:33,999
+and i&#39;m quite often this is the case of
+sort of uh... process of deregulation
+
+72
+00:03:33,999 --> 00:03:39,809
+uh... while uh... uh... as well of
+having more lax supervision
+
+73
+00:03:39,809 --> 00:03:41,439
+so this is again
+
+74
+00:03:41,439 --> 00:03:45,040
+one of the one of the themes that we
+clearly song and the movement more
+
+75
+00:03:45,040 --> 00:03:46,179
+recent um...
+
+76
+00:03:46,179 --> 00:03:49,889
+maurice in crisis
+
+77
+00:03:49,889 --> 00:03:54,309
+terms of foreign capital inflows it&#39;s
+interesting to look at that say the u_s_
+
+78
+00:03:54,309 --> 00:03:55,929
+internet bubble here
+
+79
+00:03:55,929 --> 00:03:59,619
+foreign capital into equities had peaked
+with internet bubble
+
+80
+00:03:59,619 --> 00:04:04,359
+foreign foreign uh... kaplan two
+fixed-income markets peaked with the
+
+81
+00:04:04,359 --> 00:04:06,089
+credit a bubble
+
+82
+00:04:06,089 --> 00:04:07,409
+uh... and so that
+
+83
+00:04:07,409 --> 00:04:12,388
+that uh... that surgeon international
+apple was certainly a functioned
+
+84
+00:04:12,389 --> 00:04:13,839
+of the sub-prime
+
+85
+00:04:13,839 --> 00:04:17,539
+crisis in the united states
+
+86
+00:04:17,539 --> 00:04:18,988
+we&#39;re having our own
+
+87
+00:04:18,988 --> 00:04:24,460
+obvious that problem around the world
+increased levels of debt to g_d_p_
+
+88
+00:04:24,460 --> 00:04:26,388
+uh... the united states some
+
+89
+00:04:26,389 --> 00:04:31,280
+exceeded three hundred percent total
+debt to g_d_p_ and two thousand three
+
+90
+00:04:31,280 --> 00:04:32,309
+and it&#39;s been going up
+
+91
+00:04:32,310 --> 00:04:33,780
+uh... pretty much
+
+92
+00:04:33,780 --> 00:04:37,239
+uh... in the entire developed world and
+so that&#39;s uh...
+
+93
+00:04:37,240 --> 00:04:40,750
+unprecedented level of debt that we need
+to
+
+94
+00:04:40,750 --> 00:04:43,009
+understand how to resolve
+
+95
+00:04:43,009 --> 00:04:44,339
+and there are three ways to
+
+96
+00:04:44,339 --> 00:04:46,089
+really resolved that crisis
+
+97
+00:04:46,089 --> 00:04:50,639
+uh... the first is through economic
+growth
+
+98
+00:04:50,639 --> 00:04:51,879
+and uh...
+
+99
+00:04:51,879 --> 00:04:56,219
+you know hopefully they&#39;ll be strong
+economic growth but um...
+
+100
+00:04:56,219 --> 00:05:01,680
+they rob you know but uh... historical
+studies really show that some
+
+101
+00:05:01,680 --> 00:05:03,849
+uh... strong economic growth falling
+
+102
+00:05:03,849 --> 00:05:07,089
+uh... these kinds of prices tend to be
+quite rare
+
+103
+00:05:07,089 --> 00:05:09,229
+big mckinsey study
+
+104
+00:05:09,229 --> 00:05:13,628
+i think from analyzing something like
+pop thirty eight crises they found that
+
+105
+00:05:13,629 --> 00:05:15,529
+in only three cases
+
+106
+00:05:15,529 --> 00:05:18,569
+uh... have uh... you know economies
+bounce back
+
+107
+00:05:18,569 --> 00:05:21,120
+very strongly after a banking crisis
+
+108
+00:05:21,120 --> 00:05:24,820
+and in each case case those quite unique
+and ah... the nigerian puget that was
+
+109
+00:05:24,820 --> 00:05:25,699
+due to
+
+110
+00:05:25,699 --> 00:05:26,729
+uh...
+
+111
+00:05:26,729 --> 00:05:28,369
+thus covering a lot of or else
+
+112
+00:05:28,369 --> 00:05:29,280
+oil wealth
+
+113
+00:05:29,280 --> 00:05:32,818
+and the united states so that the
+postwar effect uh... was essentially
+
+114
+00:05:32,819 --> 00:05:36,530
+about uh... well u_s_ you know as the
+war dividend or the peace dividend
+
+115
+00:05:36,530 --> 00:05:38,770
+u_s_ was the only industrialized economy
+
+116
+00:05:38,770 --> 00:05:40,969
+left with manufacturing capabilities
+
+117
+00:05:40,970 --> 00:05:44,560
+sold uh... much more common posse is
+going to be
+
+118
+00:05:44,560 --> 00:05:45,729
+uh... area
+
+119
+00:05:45,729 --> 00:05:47,810
+a decade or so of up
+
+120
+00:05:47,810 --> 00:05:50,410
+uh... sub par economic
+
+121
+00:05:50,410 --> 00:05:52,300
+and credit growth
+
+122
+00:05:52,300 --> 00:05:55,249
+uh... and of course will be a long
+stretch for the united states which
+
+123
+00:05:55,249 --> 00:05:58,449
+uh... really since uh... the internet
+bubble popped
+
+124
+00:05:58,449 --> 00:06:00,960
+in two thousand
+
+125
+00:06:00,960 --> 00:06:02,830
+you know really hasn&#39;t shown
+
+126
+00:06:02,830 --> 00:06:05,400
+signs of sustainable strong
+
+127
+00:06:05,400 --> 00:06:07,539
+growth right so if we look at
+
+128
+00:06:07,539 --> 00:06:09,139
+though did that
+
+129
+00:06:09,139 --> 00:06:10,130
+blue
+
+130
+00:06:10,130 --> 00:06:15,610
+bars or g_d_p_ has reported but somber
+bread bars are just it by the mortgage
+
+131
+00:06:15,610 --> 00:06:17,190
+equity withdrawals
+
+132
+00:06:17,190 --> 00:06:19,029
+essentially what people took out
+
+133
+00:06:19,029 --> 00:06:23,259
+using using there are a bit their
+housing as as banks
+
+134
+00:06:23,259 --> 00:06:25,559
+and uh... which really wanted to fueling
+
+135
+00:06:25,559 --> 00:06:30,169
+uh... discretionary spending if you took
+out mortgage equity withdrawals you&#39;ll
+
+136
+00:06:30,169 --> 00:06:33,229
+see that ah... essentially from the dot
+com bust
+
+137
+00:06:33,229 --> 00:06:37,960
+uh... to uh... the housing uh... crisis
+that has been no economic growth so
+
+138
+00:06:37,960 --> 00:06:40,330
+essentially the united states is flat
+line
+
+139
+00:06:40,330 --> 00:06:44,758
+in terms of economic growth for a deck
+for well over a decade already
+
+140
+00:06:44,759 --> 00:06:47,469
+and sensor twelve years of arm
+
+141
+00:06:47,469 --> 00:06:49,650
+you know very very low
+
+142
+00:06:49,650 --> 00:06:51,429
+uh... growth
+
+143
+00:06:51,430 --> 00:06:55,000
+uh... so um... you know some of us
+having phone sex with someone who said
+
+144
+00:06:55,000 --> 00:06:56,809
+that uh... i think we&#39;re
+
+145
+00:06:56,809 --> 00:07:00,309
+uh... we&#39;re going to face something
+someone is the as a as japan
+
+146
+00:07:00,309 --> 00:07:04,090
+you know uh... decades of uh... slow
+kind of growth while
+
+147
+00:07:04,090 --> 00:07:06,250
+in the way the u_s_ has already been
+considered
+
+148
+00:07:06,250 --> 00:07:08,860
+uh... a decade of that
+
+149
+00:07:08,860 --> 00:07:10,479
+that the second
+
+150
+00:07:10,479 --> 00:07:12,159
+mort severe
+
+151
+00:07:12,160 --> 00:07:14,419
+uh... papas inflation
+
+152
+00:07:14,419 --> 00:07:16,280
+which is
+
+153
+00:07:16,280 --> 00:07:17,779
+uh... quite common
+
+154
+00:07:17,779 --> 00:07:18,999
+uh... as well
+
+155
+00:07:18,999 --> 00:07:20,680
+and uh... the most extreme
+
+156
+00:07:20,680 --> 00:07:25,730
+uh... would be a currency the valuation
+followed by a credit default so those
+
+157
+00:07:25,730 --> 00:07:26,719
+are sort of
+
+158
+00:07:26,719 --> 00:07:28,069
+three archetypal
+
+159
+00:07:28,069 --> 00:07:31,840
+palce uh... that we need to be able to
+look at in terms of
+
+160
+00:07:31,840 --> 00:07:35,029
+creating test scenarios that we
+
+161
+00:07:35,029 --> 00:07:38,379
+uh... we&#39;re going to look at the stress
+testing
+
+162
+00:07:38,379 --> 00:07:40,090
+quote from conroe graphing
+
+163
+00:07:40,090 --> 00:07:41,900
+by guaranteeing everything
+
+164
+00:07:41,900 --> 00:07:44,979
+uh... the governments have transformed
+the financial crisis into debt
+
+165
+00:07:44,979 --> 00:07:50,159
+crisis who guarantees the government&#39;s
+that&#39;s seven two thousand nine
+
+166
+00:07:50,160 --> 00:07:52,129
+uh... and obviously we&#39;re now dealing
+
+167
+00:07:52,129 --> 00:07:53,130
+with the sovereign crisis
+

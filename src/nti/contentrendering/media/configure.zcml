@@ -1,0 +1,13 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+
+	<utility factory="._video_transcript_parsers._SRTVideoTranscriptParser" name="srt" />
+	<utility factory="._video_transcript_parsers._SBVVideoTranscriptParser" name="sbv" />
+	
+</configure>
