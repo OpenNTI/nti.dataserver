@@ -15,6 +15,8 @@ from zope import component
 from zope import interface
 from zope import intid
 from zope.intid import interfaces as intid_interfaces
+from zope.event import notify
+
 from zope.cachedescriptors.property import CachedProperty
 
 import BTrees
@@ -83,7 +85,9 @@ class IntIdGlobalFlagStorage(persistent.Persistent):
 		self.flagged = family.II.TreeSet()
 
 	def flag(self, context):
-		self.flagged.add(self._intids.getId(context))
+		if not self.is_flagged(context):
+			self.flagged.add(self._intids.getId(context))
+			notify(nti_interfaces.ObjectFlaggedEvent(context))
 
 	def is_flagged(self, context):
 		try:
@@ -92,7 +96,8 @@ class IntIdGlobalFlagStorage(persistent.Persistent):
 			return False
 
 	def unflag(self, context):
-		sets.discard(self.flagged, self._intids.queryId(context))
+		if sets.discard_p(self.flagged, self._intids.queryId(context)):
+			notify(nti_interfaces.ObjectUnflaggedEvent(context))
 
 	def iterflagged(self):
 		intids = self._intids

@@ -1140,6 +1140,25 @@ class IGlobalFlagStorage(interface.Interface):
 		this storage.
 		"""
 
+class IObjectFlaggingEvent(interface.interfaces.IObjectEvent):
+	"The kind of event when objects are flagged."
+	# Note that this is not an ObjectModifiedEvent. This is perhaps debatable, but is
+	# consistent with contentratings.interfaces.IObjectRatedEvent
+
+class IObjectFlaggedEvent(IObjectFlaggingEvent):
+	"Sent when an object is initially flagged."
+
+class IObjectUnflaggedEvent(IObjectFlaggingEvent):
+	"Sent when an object is unflagged."
+
+@interface.implementer(IObjectFlaggedEvent)
+class ObjectFlaggedEvent(interface.interfaces.ObjectEvent):
+	pass
+
+@interface.implementer(IObjectUnflaggedEvent)
+class ObjectUnflaggedEvent(interface.interfaces.ObjectEvent):
+	pass
+
 
 class INote(IHighlight, IThreadable, ITitledContent):
 	"""
