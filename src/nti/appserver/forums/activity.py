@@ -53,7 +53,8 @@ class NoCommentActivityProvider(object):
 	def getActivity( self ):
 		activity = app_interfaces.IUserActivityStorage( self.user, None )
 		if activity is not None:
-			return [x for x in activity.getContainer( '', () ) if not frm_interfaces.IPersonalBlogComment.providedBy(x)]
+			return [x for x in activity.getContainer( '', () )
+					if not frm_interfaces.IPersonalBlogComment.providedBy(x) and not frm_interfaces.IGeneralForumComment.providedBy(x)]
 
 
 
