@@ -55,7 +55,7 @@
 	<include package="." file="configure_workspaces.zcml" />
 
 	<adapter factory=".pyramid_renderers.uncacheable_factory" />
-	<adapter factory=".pyramid_renderers.uncacheable_unmodified_factory" />
+	<adapter factory=".pyramid_renderers.unmodified_factory" />
 
 
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
@@ -118,12 +118,12 @@
 		Because of the message flagging, which does not update modification
 		times, and the fact that Transcripts are non-persistent
 		objects which derive their own mod times from message mod
-		times, caching these is unreliable, so disable it.
+		times, we have to fall back to etag-based caching
 		See Trello #876 https://trello.com/c/wXdPC0Xx
 		TODO: That's a really blunt tool. Do better.
 	-->
 	<class class="nti.dataserver.chat_transcripts.TranscriptSummary">
-		<implements interface=".interfaces.IUncacheableUnModifiedInResponse" />
+		<implements interface=".interfaces.IUnModifiedInResponse" />
 	</class>
 
 	<!-- ******** -->
@@ -269,14 +269,14 @@
 				for="geventwebsocket.interfaces.IWSWillUpgradeEvent" />
 
 	<!--
-		 FriendsLists are uncachable due to the nested user changing
+		 FriendsLists have no modification date due to the nested user changing
 		 presence, both individually and as a group.
 	-->
 	<class class="nti.dataserver.users.FriendsList">
-		<implements interface=".interfaces.IUncacheableUnModifiedInResponse" />
+		<implements interface=".interfaces.IUnModifiedInResponse" />
 	</class>
 	<class class=".workspaces.FriendsListContainerCollection">
-		<implements interface=".interfaces.IUncacheableUnModifiedInResponse" />
+		<implements interface=".interfaces.IUnModifiedInResponse" />
 	</class>
 
 	<!-- Forking events -->

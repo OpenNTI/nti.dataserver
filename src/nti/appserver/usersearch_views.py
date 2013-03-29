@@ -135,9 +135,9 @@ def _format_result( result, remote_user, dataserver ):
 				  for user in result]
 
 	# We have no good modification data for this list, due to changing Presence
-	# values of users, so it should not be cached, unfortunately
+	# values of users, so caching is limited to etag matches
 	result = LocatedExternalDict( {'Last Modified': 0, 'Items': result} )
-	interface.alsoProvides( result, app_interfaces.IUncacheableInResponse )
+	interface.alsoProvides( result, app_interfaces.IUnModifiedInResponse )
 	interface.alsoProvides( result, zmime_interfaces.IContentTypeAware )
 	result.mimeType = nti_mimetype.nti_mimetype_with_class( None )
 	result.__parent__ = dataserver.root

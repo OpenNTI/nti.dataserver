@@ -34,8 +34,7 @@ from nti.dataserver.links_external import render_link
 import nti.appserver.interfaces as app_interfaces
 import nti.dataserver.interfaces as nti_interfaces
 
-from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
-
+from ._view_utils import get_remote_user
 
 from perfmetrics import metric
 
@@ -177,36 +176,81 @@ def render_enclosure( data, system ):
 	response.last_modified = data.lastModified
 	return data.data
 
+def default_vary_on( request ):
+	vary_on = []
+	# It is important to be consistent with these responses;
+	# they should not change if the header is absent from the request
+	# since it is an implicit parameter in our decision making
+
+	# our responses vary based on the Accept parameter, since
+	# that informs representation
+	vary_on.append( b'Accept' )
+	vary_on.append( b'Accept-Encoding' ) # we expect to be gzipped
+	vary_on.append( b'Origin' )
+
+	#vary_on.append( b'Host' ) # Host is always included
+	return vary_on
+
 def default_cache_controller( data, system ):
 	request = system['request']
 	response = request.response
-	vary_on = []
-	# our responses vary based on the Accept parameter, since
-	# that informs representation
-	if request.accept:
-		vary_on.append( b'Accept' )
-	# Depending on site policies, they may also vary based on the origin
-	if b'origin' in request.headers:
-		vary_on.append( b'Origin' )
-	if request.host:
-		vary_on.append( b'Host' )
-	# If we were identified by a cookie, then we vary based on the identity as well
-	if isinstance( request.environ.get( 'repoze.who.identity', {} ).get( 'authenticator', None ), AuthTktCookiePlugin ):
-		vary_on.append( b'Cookie' )
+	vary_on = default_vary_on( request )
+
+	def _prep_cache(rsp):
+		rsp.vary = vary_on
+		rsp.cache_control.must_revalidate = True
+		# If we have applied an Last Modified date, but we do not give any indication of
+		# freshness, then some heuristics come into play that can screw us over.
+		# Such a response "allows a cache to assign its own freshness lifetime" and if something
+		# is defined as fresh, 'must-revalidate' is meaningless.
+		# Moreover, if no freshness is provided, then it is assumed to be fresh
+		# "if the cache has seen the representation recently, and it was modified relatively long ago."
+		# We set some age guideline here to avoid that trap:
+		rsp.cache_control.max_age = 30 # XXX This value is small but arbitrary
+		# (Setting it to 0 is equivalent to setting no-cache)
+
+		if get_remote_user( request ) is not None:
+			rsp.cache_control.private = True
 
 	end_to_end_reload = False # http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4
 	if request.pragma == 'no-cache' or request.cache_control.no_cache: # None if not set, '*' if set without names
 		end_to_end_reload = True
-	# Handle Not Modified
-	if not end_to_end_reload and response.status_int == 200 and response.last_modified is not None and request.if_modified_since:
-		# Since we know a modification date, respect If-Modified-Since. The spec
-		# says to only do this on a 200 response
-		# This is a pretty poor time to do it, after we've done all this work
-		if response.last_modified <= request.if_modified_since:
+
+	# We provide non-semantic ETag support based on the current rendering.
+	# This lets us work with user-specific things like edit links and user
+	# online status, but it is not the most efficient way to do things.
+	# It does let is support 'If-Non-Match', but it does not let us support
+	# If-Match, unfortunately.
+
+	if not response.etag:
+		body = system.get('nti.rendered')
+		if body is not None:
+			response.md5_etag( body, set_content_md5=True )
+	if response.etag and request.accept_encoding and 'gzip' in request.accept_encoding:
+		# The etag is supposed to vary between encodings
+		response.etag += b'gz'
+
+	if not end_to_end_reload and response.status_int == 200: # We will do caching
+		# ETags trump if-modified-since; if they give us both, and the etag doesn't matche,
+		# we MUST NOT generate a 304
+		do_not_mod = False
+		if response.etag and request.if_none_match:
+			if response.etag in request.if_none_match:
+				do_not_mod = True
+		else:
+			# Handle Not Modified
+			if response.last_modified is not None and request.if_modified_since and response.last_modified <= request.if_modified_since:
+				# Since we know a modification date, respect If-Modified-Since. The spec
+				# says to only do this on a 200 response
+				# This is a pretty poor time to do it, after we've done all this work
+				do_not_mod = True
+
+		if do_not_mod:
 			not_mod = pyramid.httpexceptions.HTTPNotModified()
 			not_mod.last_modified = response.last_modified
-			not_mod.cache_control.must_revalidate = True
-			not_mod.vary = vary_on
+			_prep_cache( not_mod )
+			if response.etag:
+				not_mod.etag = response.etag # TODO: Right?
 			raise not_mod
 
 	response.vary = vary_on
@@ -216,15 +260,9 @@ def default_cache_controller( data, system ):
 		response.cache_control.no_cache = True
 		response.pragma = 'no-cache'
 	elif not response.cache_control.no_cache and not response.cache_control.no_store:
-		response.cache_control.must_revalidate = True
+		_prep_cache( response )
 
-	# TODO: ETag support. We would like to have this for If-Match as well,
-	# for better deletion and editing of shared resources. For that to work,
-	# we need to have this be more semantically meaningful, and happen sooner.
-	# It should also be representation independent (?)
-	# Until we have something here, don't bother computing and sending, it implies
-	# false promises
-	# response.md5_etag( body, True )
+	return response
 
 
 @interface.provider( app_interfaces.IResponseCacheController )
@@ -241,21 +279,26 @@ def uncacheable_factory( data ):
 	return uncacheable_cache_controller
 
 @interface.provider( app_interfaces.IResponseCacheController )
-def uncacheable_no_LastModified_cache_controller( data, system ):
+def unmodified_cache_controller( data, system ):
 	"""
-	Use this when the response shouldn't be cached, and we have
+	Use this when the response shouldn't be cached based on last modified dates, and we have
 	no valid Last-Modified data to provide the browser (any that
 	we think we have so far is invalid for some reason and will be
 	discarded).
-	"""
 
-	response = uncacheable_cache_controller( data, system )
-	response.last_modified = None # Why would we do this?
+	This still allows for etag based caching.
+	"""
+	request = system['request']
+	response = request.response
+	response.last_modified = None #
+	request.if_modified_since = None
+	response = default_cache_controller( data, system )
+	response.last_modified = None # in case it changed
 
 @interface.implementer(app_interfaces.IResponseCacheController)
-@component.adapter(app_interfaces.IUncacheableUnModifiedInResponse)
-def uncacheable_unmodified_factory( data ):
-	return uncacheable_no_LastModified_cache_controller
+@component.adapter(app_interfaces.IUnModifiedInResponse)
+def unmodified_factory( data ):
+	return unmodified_cache_controller
 
 class REST(object):
 
@@ -282,6 +325,7 @@ class REST(object):
 		cacher = request.registry.queryAdapter( data,
 												app_interfaces.IResponseCacheController,
 												default=default_cache_controller )
+		system['nti.rendered'] = body
 		cacher(data, system)
 
 		return body
