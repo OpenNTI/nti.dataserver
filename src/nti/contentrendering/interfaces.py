@@ -3,7 +3,7 @@
 from __future__ import unicode_literals, print_function
 
 # disable "super on old-style class for Components, it is new-style"
-#pylint: disable=E1002
+# pylint: disable=E1002
 
 from zope import schema
 from zope import interface
@@ -16,9 +16,9 @@ class IEclipseMiniDomTOC(interface.Interface):
 	filename = schema.TextLine(
 		title="The location on disk of the eclipse-toc.xml file.")
 
-	dom = interface.Attribute( "The minidom representing the parsed contents of the file." )
+	dom = interface.Attribute("The minidom representing the parsed contents of the file.")
 
-	def save( ):
+	def save():
 		"""
 		Causes the in-memory contents of the `dom` to be written to disk.
 		"""
@@ -28,31 +28,31 @@ class IEclipseMiniDomTopic(interface.Interface):
 	Represents a `topic` element from the table-of-contents.
 	"""
 
-	ordinal = schema.Int( title="The number (starting at 1) representing which nth child of the parent I am." )
+	ordinal = schema.Int(title="The number (starting at 1) representing which nth child of the parent I am.")
 
-	childTopics = schema.Iterable( title="All the child topics of this topic." )
+	childTopics = schema.Iterable(title="All the child topics of this topic.")
 
-	dom = interface.Attribute( 'The :class:`pyquery.pyquery.PyQuery` object representing the HTML contents. Will be None if not parsable' )
+	dom = interface.Attribute('The :class:`pyquery.pyquery.PyQuery` object representing the HTML contents. Will be None if not parsable')
 
-	ntiid = schema.TextLine( title='The NTIID of this content' )
+	ntiid = schema.TextLine(title='The NTIID of this content')
 
-	def write_dom( force=False ):
+	def write_dom(force=False):
 		"Causes the in-memory `dom` to be written to disk at the file it was read from."
 
 class IRenderedBook(interface.Interface):
 
-	document = interface.Attribute( "The plasTeX Document object used to create the rendering." )
+	document = interface.Attribute("The plasTeX Document object used to create the rendering.")
 
 	contentLocation = schema.TextLine(
 		title=u"The location of the directory on disk containing the content")
 
-	toc = schema.Object( IEclipseMiniDomTOC,
+	toc = schema.Object(IEclipseMiniDomTOC,
 						 title="The shared in-memory TOC for this book.")
 
 	jobname = schema.TextLine(
 		title="The name of the rendering job that produced this book, or the empty string.",
 		default='')
-	
+
 	tocFile = schema.TextLine(
 		title=u"The location of the eclipse toc file")
 
@@ -85,7 +85,7 @@ class IDocumentTransformer(interface.Interface):
 	*should* perform an idempotent transformation.
 	"""
 
-	def transform( document ):
+	def transform(document):
 		"""
 		Perform the document transformation.
 		"""
@@ -96,7 +96,7 @@ class IRenderedBookTransformer(interface.Interface):
 	to achieve some specified end. This *should* be idempotent.
 	"""
 
-	def transform( book ):
+	def transform(book):
 		"""
 		Perform the book transformation.
 
@@ -110,7 +110,7 @@ class IRenderedBookValidator(interface.Interface):
 	does not define what happens if that is not true.
 	"""
 
-	def check( book ):
+	def check(book):
 		"""
 		Check the book's adherence to the rule of this interface.
 
@@ -138,9 +138,9 @@ class IStaticYouTubeEmbedVideoAdder(IStaticVideoAdder):
 	Uses static information to add embedded YouTube video references to the book content.
 	"""
 
-class IBookIndexer(interface.Interface):
+class IContentIndexer(interface.Interface):
 	"""
-	Creates an index for a given book
+	Creates an index using the contents in a given book
 	"""
 
 	def index(book, indexdir=None):
@@ -151,9 +151,20 @@ class IBookIndexer(interface.Interface):
 		:param indexdir: Output directory
 		"""
 
+class IBookIndexer(IContentIndexer):
+	"""
+	Creates an index of the content inside a given book
+	"""
+	pass
+
+class IVideoTranscriptIndexer(IContentIndexer):
+	"""
+	Creates an index for the video transcripts associated with a given book
+	"""
+
 ####
-## Transforming content from one format to another
-###
+# # Transforming content from one format to another
+# ##
 
 from nti.contentfragments.interfaces import IContentFragment
 from nti.contentfragments.interfaces import IUnicodeContentFragment
@@ -167,15 +178,16 @@ from nti.contentfragments.interfaces import HTMLContentFragment
 from nti.contentfragments.interfaces import PlainTextContentFragment
 
 from zope.deprecation import deprecated
-deprecated( ['IContentFragment', 'IUnicodeContentFragment', 'ILatexContentFragment',
+deprecated(['IContentFragment', 'IUnicodeContentFragment', 'ILatexContentFragment',
 			 'IHTMLContentFragment', 'IPlainTextContentFragment',
 			 'UnicodeContentFragment', 'LatexContentFragment', 'HTMLContentFragment',
 			 'PlainTextContentFragment'],
-			 "Moved to nti.contentfragments" )
+			 "Moved to nti.contentfragments")
 
 
 from zope.interface import registry
 from zope.component import getGlobalSiteManager
+
 class JobComponents(registry.Components):
 	"""
 	A component registry (IComponentLookup) that automatically attempts to
@@ -185,10 +197,10 @@ class JobComponents(registry.Components):
 
 	"""
 
-	def __init__( self, jobname=None, **kwargs ):
+	def __init__(self, jobname=None, **kwargs):
 		self._jobname = jobname
 		assert self._jobname
-		super( JobComponents, self ).__init__( **kwargs )
+		super(JobComponents, self).__init__(**kwargs)
 		if not self.__bases__:
 			self.__bases__ = (getGlobalSiteManager(),)
 
@@ -196,24 +208,24 @@ class JobComponents(registry.Components):
 	def queryUtility(self, provided, name='', default=None):
 		result = default
 		if name == '':
-			result = super(JobComponents,self).queryUtility(provided, self._jobname, default=default )
+			result = super(JobComponents, self).queryUtility(provided, self._jobname, default=default)
 			if result is not default:
 				return result
 
-		return super(JobComponents,self).queryUtility(provided,name=name,default=default)
+		return super(JobComponents, self).queryUtility(provided, name=name, default=default)
 
 	def queryAdapter(self, obj, interface, name='', default=None):
 		result = default
 		if name == '':
-			result = super(JobComponents,self).queryAdapter(obj, interface, name=self._jobname, default=default)
+			result = super(JobComponents, self).queryAdapter(obj, interface, name=self._jobname, default=default)
 			if result is not default:
 				return result
-		return super(JobComponents,self).queryAdapter(obj, interface, name=name, default=default)
+		return super(JobComponents, self).queryAdapter(obj, interface, name=name, default=default)
 
-	def queryMultiAdapter(self, objects, interface, name='', default=None ):
+	def queryMultiAdapter(self, objects, interface, name='', default=None):
 		result = default
 		if name == '':
-			result = super(JobComponents,self).queryMultiAdapter(objects, interface, name=self._jobname, default=default)
+			result = super(JobComponents, self).queryMultiAdapter(objects, interface, name=self._jobname, default=default)
 			if result is not default:
 				return result
-		return super(JobComponents,self).queryMultiAdapter(objects, interface, name=name, default=default)
+		return super(JobComponents, self).queryMultiAdapter(objects, interface, name=name, default=default)

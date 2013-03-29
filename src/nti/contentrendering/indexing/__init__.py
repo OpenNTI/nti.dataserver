@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-TermExtract key word extractor.
+book indexing module.
 
 $Id$
 """

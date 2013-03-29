@@ -9,20 +9,11 @@ __docformat__ = "restructuredtext en"
 
 from .. import interfaces as cr_interfaces
 
-class IWhooshBookIndexer(cr_interfaces.IBookIndexer):
-
-	def process_topic(node, writer, language):
-		"""
-		Index the specified book topic
-		
-		:param node: The :class:`IEclipseMiniDomTopic`.
-		:param writer: Whoosh indexwriter
-		:param language: Node text language
-		"""
+class IWhooshContentIndexer(cr_interfaces.IContentIndexer):
 
 	def process_book(book, writer, language):
 		"""
-		Index the specified book 
+		Index the contents from the specified book 
 		
 		:param book: The :class:`IRenderedBook`.
 		:param writer: Whoosh indexwriter
@@ -37,3 +28,16 @@ class IWhooshBookIndexer(cr_interfaces.IBookIndexer):
 		:param indexdir: Output directory
 		:param indexname: Index name
 		"""
+
+class IWhooshBookIndexer(IWhooshContentIndexer, cr_interfaces.IBookIndexer):
+
+	def process_topic(node, writer, language):
+		"""
+		Index the specified book topic
+		
+		:param node: The :class:`IEclipseMiniDomTopic`.
+		:param writer: Whoosh indexwriter
+		:param language: Node text language
+		"""
+class IWhooshVideoTranscriptIndexer(IWhooshContentIndexer, cr_interfaces.IVideoTranscriptIndexer):
+	pass
