@@ -136,3 +136,50 @@ def create_post_schema():
 	schema.add(title_, fields.TEXT(stored=False))
 	schema.add(tags_, fields.KEYWORD(stored=False))
 	return schema
+
+class VIDEO_TIMESTAMP(fields.DATETIME):
+
+	@classmethod
+	def datetime_to_text(cls, dt):
+		result = "%02d:%02d:%02d.%03d" % (dt.hour, dt.minute, dt.second, dt.microsecond)
+		return result
+
+	def _parse_datestring(self, qstring):
+		# this method parses a very time stamp # hh:mm::ss.uuu
+		from whoosh.support.times import adatetime, fix, is_void
+
+		qstring = qstring.replace(" ", "").replace(",", ".")
+		year = month = day = 1
+		hour = minute = second = microsecond = None
+		if len(qstring) >= 2:
+			hour = int(qstring[0:2])
+		if len(qstring) >= 5:
+			minute = int(qstring[3:5])
+		if len(qstring) >= 8:
+			second = int(qstring[6:8])
+		if len(qstring) == 13:
+			microsecond = int(qstring[9:13])
+
+		at = fix(adatetime(year, month, day, hour, minute, second, microsecond))
+		if is_void(at):
+			raise Exception("%r is not a parseable video timestamp" % qstring)
+		return at
+
+def create_video_transcript_schema():
+	"""
+	Video transcript schema
+
+	containerId: NTIID of the video location
+	videoId: Video NTIID or custom identifier
+	content: transcript text
+	quick: transcript text ngrams
+	start_timestamp: Start video timestamp
+	end_timestamp: End video timestamp
+	"""
+	sch = fields.Schema(containerId=fields.ID(stored=True, unique=False),
+						videoId=fields.ID(stored=True, unique=False),
+					 	content=create_content_field(stored=True),
+					 	quick=create_ngram_field(),
+					 	start_timestamp=VIDEO_TIMESTAMP(stored=True),
+					 	end_timestamp=VIDEO_TIMESTAMP(stored=True))
+	return sch
