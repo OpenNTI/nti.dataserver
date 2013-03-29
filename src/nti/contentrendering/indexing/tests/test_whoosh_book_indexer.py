@@ -72,7 +72,7 @@ class TestWhooshIndexer(ConfiguringTestBase):
 		idx = indexer.create_index(self.idxdir, indexname)
 		writer = idx.writer(optimize=False, merge=False)
 		node = _EclipseTOCMiniDomTopic(None, path, path, None, nodename)
-		indexer.process_topic(node, writer)
+		indexer.process_topic(None, node, writer)
 		writer.commit(optimize=False, merge=False)
 		return idx
 

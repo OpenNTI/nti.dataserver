@@ -31,13 +31,35 @@ class _BasicWhooshIndexer(object):
 		ix = index.create_in(indexdir, schema=self.get_schema(), indexname=indexname)
 		return ix
 
-	def process_book(self, book, writer, language='en'):
+	def process_topic(self, book, node, writer, language='en'):
 		raise NotImplementedError()
 
-	def index(self, book, indexdir=None, indexname=None, optimize=True):
+	def process_book(self, book, writer, language='en'):
+		toc = book.toc
+		def _loop(topic):
+			count = self.process_topic(book, topic, writer, language)
+			for t in topic.childTopics:
+				count += _loop(t)
+			return count
+		docs = _loop(toc.root_topic)
+		return docs
+
+	def get_index_name(self, book, indexname=None):
 		indexname = indexname or book.jobname
-		contentPath = os.path.expanduser(book.contentLocation)
-		indexdir = indexdir or os.path.join(contentPath, "indexdir")
+		return indexname
+
+	def get_content_path(self, book):
+		result = os.path.expanduser(book.contentLocation)
+		return result
+
+	def get_index_dir(self, book, indexdir=None):
+		content_path = self.get_content_path(book)
+		indexdir = indexdir or os.path.join(content_path, "indexdir")
+		return indexdir
+
+	def index(self, book, indexdir=None, indexname=None, optimize=True):
+		indexname = self.get_index_name(book, indexname)
+		indexdir = self.get_index_dir(book, indexdir)
 		self.remove_index_files(indexdir, indexname)
 
 		logger.info('Indexing %s(%s)' % (indexname, indexdir))

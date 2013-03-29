@@ -21,10 +21,10 @@ from ._common_indexer import _BasicWhooshIndexer
 class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 	def get_schema(self, name='en'):
-		creator = component.getUtility(search_interfaces.IWhooshBookSchemaCreator, name=name)
+		creator = component.getUtility(search_interfaces.IWhooshVideoTranscriptSchemaCreator, name=name)
 		return creator.create()
 
-	def process_book(self, book, writer, language='en'):
-		pass
+	def process_topic(self, book, node, writer, language='en'):
+		raise NotImplementedError()
 
 _DefaultWhooshVideoTranscriptIndexer = _WhooshVideoTranscriptIndexer
