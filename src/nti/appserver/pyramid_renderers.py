@@ -442,6 +442,26 @@ class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 			self.max_age = _LongerCachedUGDExternalCollectionCacheController
 		return _UGDExternalCollectionCacheController.__call__( self, context, system )
 
+@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@component.adapter(app_interfaces.IContentUnitInfo)
+class _ContentUnitInfoCacheController(object):
+	# rendering this doesn't take long, and we need the rendering
+	# process to decorate us with any sharing preferences that may change
+	# and update our modification stamp.
+	# We exist solely to change the cache age, which speeds up navigation in the app
+
+	max_age = 300 # XXX arbitrary; we can probably go even longer?
+
+	def __init__( self, context ):
+		pass
+
+	def __call__( self, context, system ):
+		request = system['request']
+		response = request.response
+		if not response.cache_control.max_age:
+			response.cache_control.max_age = self.max_age
+		return request.response
+
 class REST(object):
 
 	def __init__( self, info ):
