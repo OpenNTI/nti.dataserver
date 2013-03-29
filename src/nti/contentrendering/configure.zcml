@@ -44,5 +44,6 @@
 	<include package=".resources" />
 	<include package=".plastexpackages" />
 	<include package=".indexing" />
-
+	<include package=".media" />
+	
 </configure>
