@@ -418,7 +418,7 @@ class _UGDExternalCollectionCacheController(_AbstractReliableLastModifiedCacheCo
 	UGD collections coming from this specific place have reliable last-modified dates.
 	"""
 
-	max_age = 30 # XXX arbitrary
+	max_age = 0 # XXX arbitrary
 
 	@property
 	def _context_specific(self):
@@ -435,6 +435,9 @@ class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 	If the owner asks for his own activity, we allow for less caching.
 	If you ask for somebody else's, it may be slightly more stale.
 	"""
+
+	max_age = 30
+
 	def __call__( self, context, system ):
 		request = system['request']
 		remote_user = get_remote_user( request )
