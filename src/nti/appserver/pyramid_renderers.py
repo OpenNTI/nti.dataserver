@@ -33,8 +33,7 @@ from nti.dataserver.links_external import render_link
 
 import nti.appserver.interfaces as app_interfaces
 import nti.dataserver.interfaces as nti_interfaces
-
-from ._view_utils import get_remote_user
+from .interfaces import IPreRenderResponseCacheController, IResponseRenderer, IResponseCacheController
 
 from perfmetrics import metric
 
@@ -176,6 +175,13 @@ def render_enclosure( data, system ):
 	response.last_modified = data.lastModified
 	return data.data
 
+def _get_remote_username(request):
+	# We use the direct access to the
+	# repoze information rather than the abstractions because it's slightly faster
+
+	environ = request.environ
+	return environ.get( 'repoze.who.identity', {} ).get( 'repoze.who.userid' )
+
 def default_vary_on( request ):
 	vary_on = []
 	# It is important to be consistent with these responses;
@@ -206,10 +212,11 @@ def default_cache_controller( data, system ):
 		# Moreover, if no freshness is provided, then it is assumed to be fresh
 		# "if the cache has seen the representation recently, and it was modified relatively long ago."
 		# We set some age guideline here to avoid that trap:
-		rsp.cache_control.max_age = 30 # XXX This value is small but arbitrary
+		if not rsp.cache_control.max_age:
+			rsp.cache_control.max_age = 30 # XXX This value is small but arbitrary
 		# (Setting it to 0 is equivalent to setting no-cache)
 
-		if get_remote_user( request ) is not None:
+		if _get_remote_username(request) is not None:
 			rsp.cache_control.private = True
 
 	end_to_end_reload = False # http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4
@@ -226,9 +233,9 @@ def default_cache_controller( data, system ):
 		body = system.get('nti.rendered')
 		if body is not None:
 			response.md5_etag( body, set_content_md5=True )
-	if response.etag and request.accept_encoding and 'gzip' in request.accept_encoding:
+	if response.etag and request.accept_encoding and 'gzip' in request.accept_encoding and not response.etag.endswith(b'./gz'):
 		# The etag is supposed to vary between encodings
-		response.etag += b'gz'
+		response.etag += b'./gz'
 
 	if not end_to_end_reload and response.status_int == 200: # We will do caching
 		# ETags trump if-modified-since; if they give us both, and the etag doesn't matche,
@@ -248,6 +255,7 @@ def default_cache_controller( data, system ):
 		if do_not_mod:
 			not_mod = pyramid.httpexceptions.HTTPNotModified()
 			not_mod.last_modified = response.last_modified
+			not_mod.cache_control = response.cache_control
 			_prep_cache( not_mod )
 			if response.etag:
 				not_mod.etag = response.etag # TODO: Right?
@@ -300,6 +308,83 @@ def unmodified_cache_controller( data, system ):
 def unmodified_factory( data ):
 	return unmodified_cache_controller
 
+from hashlib import md5
+
+def _md5_etag( *args ):
+	digest = md5()
+	for arg in args:
+		if arg:
+			digest.update( str(arg) )
+	return digest.digest().encode( 'base64' ).replace( '\n', '' ).strip( '=' )
+
+
+@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+class _AbstractReliableLastModifiedCacheController(object):
+	"""
+	Things that have reliable last modified dates go here
+	for pre-rendering etag support.
+	"""
+
+	def __init__( self, context ):
+		self.context = context
+
+	max_age = 300
+
+	@property
+	def _context_specific(self):
+		return ()
+
+	def __call__( self, context, system ):
+		request = system['request']
+		response = request.response
+		response.last_modified = context.lastModified
+		response.etag = _md5_etag( bytes(context.lastModified), _get_remote_username( request ), *self._context_specific )
+		response.cache_control.max_age = self.max_age # arbitrary
+		# Let this raise the not-modified if it will
+		return default_cache_controller( context, system )
+
+
+@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@component.adapter(nti_interfaces.IEntity)
+class _EntityCacheController(_AbstractReliableLastModifiedCacheController):
+	"""
+	Entities have reliable last modified dates (with the exception of
+	the presence mixin, which we do not consider). We use this to
+	produce an ETag without rendering. We also adjust the cache
+	expiration.
+	"""
+
+	@property
+	def _context_specific(self):
+		return (self.context.username,)
+
+@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@component.adapter(nti_interfaces.IModeledContent)
+class _ModeledContentCacheController(_AbstractReliableLastModifiedCacheController):
+	"""
+	Individual bits of modeled content have reliable last modified dates
+	"""
+
+	@property
+	def _context_specific(self):
+		try:
+			return self.context.creator.username, self.context.__name__
+		except AttributeError:
+			return self.context.__name__,
+
+@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@component.adapter(app_interfaces.IUGDExternalCollection)
+class _UGDExternalCollectionCacheController(_AbstractReliableLastModifiedCacheController):
+	"""
+	UGD collections coming from this specific place have reliable last-modified dates.
+	"""
+
+	max_age = 120 # XXX arbitrary
+
+	@property
+	def _context_specific(self):
+		return self.context.__name__,
+
 class REST(object):
 
 	def __init__( self, info ):
@@ -318,14 +403,16 @@ class REST(object):
 			# This cannot happen
 			raise Exception( "Can only get here with a body" )
 
-		renderer = request.registry.queryAdapter( data,
-												  app_interfaces.IResponseRenderer,
-												  default=render_externalizable )
+		try:
+			IPreRenderResponseCacheController(data)( data, system ) # optional
+		except TypeError:
+			pass
+
+		renderer = IResponseRenderer( data, render_externalizable )
 		body = renderer( data, system )
-		cacher = request.registry.queryAdapter( data,
-												app_interfaces.IResponseCacheController,
-												default=default_cache_controller )
 		system['nti.rendered'] = body
-		cacher(data, system)
+
+		IResponseCacheController( data, default_cache_controller )( data, system )
+
 
 		return body

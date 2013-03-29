@@ -124,6 +124,11 @@ def _ResolveUserView(request):
 		if _make_visibility_test( remote_user )(entity):
 			result = (entity,)
 
+	if result:
+		# If we matched one user, see if we can get away without rendering it
+		# TODO: This isn't particularly clean
+		app_interfaces.IPreRenderResponseCacheController(result[0])(result[0], {'request': request} )
+
 	return _format_result( result, remote_user, dataserver )
 
 def _format_result( result, remote_user, dataserver ):
