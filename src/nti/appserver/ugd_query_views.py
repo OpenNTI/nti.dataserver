@@ -60,7 +60,7 @@ from perfmetrics import metricmethod
 
 def _TRUE(x): return True
 
-def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE ):
+def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_iface=IUGDExternalCollection ):
 	""" Given items that may be dictionaries or lists, combines them
 	and externalizes them for return to the user as a dictionary. If the individual items
 	are ModDateTracking (have a lastModified value) then the returned
@@ -119,7 +119,7 @@ def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE ):
 	result = LocatedExternalDict( { 'Last Modified': lastMod, 'Items': result } )
 	result.lastModified = lastMod
 	result.mimeType = nti_mimetype_with_class( None )
-	interface.alsoProvides( result, IUGDExternalCollection )
+	interface.alsoProvides( result, result_iface )
 	return result
 
 _REF_ATTRIBUTE = 'referenced_by'
@@ -357,6 +357,9 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 	The base view for user generated data.
 	"""
 
+	#: The returned list of items will implement this interface.
+	result_iface = IUGDExternalCollection
+
 	FILTER_NAMES = FILTER_NAMES
 	SORT_DIRECTION_DEFAULT = SORT_DIRECTION_DEFAULT
 	SORT_KEYS = SORT_KEYS
@@ -419,10 +422,11 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			else:
 				pred = _TRUE
 
-		result = lists_and_dicts_to_ext_collection( the_objects, predicate=pred )
+		result = lists_and_dicts_to_ext_collection( the_objects, predicate=pred, result_iface=self.result_iface )
 		self._sort_filter_batch_result( result )
 		result.__parent__ = self.request.context
 		result.__name__ = ntiid
+		result.__data_owner__ = user
 		if self.request.method == 'HEAD':
 			result['Items'] = () # avoid externalization
 		return result

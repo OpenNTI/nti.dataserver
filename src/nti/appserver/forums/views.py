@@ -32,6 +32,7 @@ from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 from nti.appserver.ugd_feed_views import AbstractFeedView
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.appserver import interfaces as app_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
@@ -332,12 +333,16 @@ class ForumContentsGetView(UGDQueryView):
 	The contents fully support the same sorting and paging parameters as
 	the UGD views. """
 
+
 	def __init__( self, request ):
 		self.request = request
 		super(ForumContentsGetView,self).__init__( request, the_user=self, the_ntiid=self.request.context.__name__ )
 
 		# The user/community is really the 'owner' of the data
 		self.user = find_interface(  self.request.context, nti_interfaces.IEntity )
+
+		if frm_interfaces.IBoard.providedBy( self.request.context ):
+			self.result_iface = app_interfaces.ILongerCachedUGDExternalCollection
 
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)

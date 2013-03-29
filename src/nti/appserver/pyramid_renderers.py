@@ -35,6 +35,8 @@ import nti.appserver.interfaces as app_interfaces
 import nti.dataserver.interfaces as nti_interfaces
 from .interfaces import IPreRenderResponseCacheController, IResponseRenderer, IResponseCacheController
 
+from ._view_utils import get_remote_user
+
 from perfmetrics import metric
 
 def find_content_type( request, data=None ):
@@ -379,11 +381,29 @@ class _UGDExternalCollectionCacheController(_AbstractReliableLastModifiedCacheCo
 	UGD collections coming from this specific place have reliable last-modified dates.
 	"""
 
-	max_age = 120 # XXX arbitrary
+	max_age = 30 # XXX arbitrary
 
 	@property
 	def _context_specific(self):
 		return self.context.__name__,
+
+@component.adapter(app_interfaces.ILongerCachedUGDExternalCollection)
+class _LongerCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCacheController):
+
+	max_age = 120 # XXX arbitrary
+
+@component.adapter(app_interfaces.IUserActivityExternalCollection)
+class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
+	"""
+	If the owner asks for his own activity, we allow for less caching.
+	If you ask for somebody else's, it may be slightly more stale.
+	"""
+	def __call__( self, context, system ):
+		request = system['request']
+		remote_user = get_remote_user( request )
+		if remote_user and remote_user != context.__data_owner__:
+			self.max_age = _LongerCachedUGDExternalCollectionCacheController
+		return _UGDExternalCollectionCacheController.__call__( self, context, system )
 
 class REST(object):
 
