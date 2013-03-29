@@ -104,6 +104,45 @@ def test_post_constraints():
 		container = CheckingLastModifiedBTreeContainer()
 		container['k'] = PersonalBlogComment()
 
+def test_post_derived_containerId():
+
+	@interface.implementer(ITopic)
+	class Parent(Base):
+		pass
+
+	parent = Parent()
+	parent.NTIID = 'foo_bar_baz'
+	post = Post()
+	post.title = 'foo'
+	post.__parent__ = parent
+
+	assert_that( post.containerId, is_( parent.NTIID ) )
+	del parent.NTIID
+	with assert_raises(AttributeError):
+		post.containerId
+
+	post.__dict__['containerId'] = 1 # Legacy
+	assert_that( post.containerId, is_( 1 ) )
+
+	from .. import _CreatedNamedNTIIDMixin
+	class Parent2(_CreatedNamedNTIIDMixin):
+		username = None
+		@property
+		def _ntiid_creator_username(self):
+			return self.username
+		_ntiid_type = 'baz'
+
+	post.__parent__ = Parent2()
+	assert_that( post.containerId, is_( None ) )
+	post.__parent__.username = 'foo'
+	assert_that( post.containerId, is_( 'tag:nextthought.com,2011-10:foo-baz' ) )
+	post.__parent__.username = 'foo2'
+	assert_that( post.containerId, is_( 'tag:nextthought.com,2011-10:foo2-baz' ) )
+
+	post.__parent__.__name__ = 'local'
+	assert_that( post.containerId, is_( 'tag:nextthought.com,2011-10:foo2-baz-local' ) )
+
+
 def test_post_externalizes():
 
 	@interface.implementer(ITopic)

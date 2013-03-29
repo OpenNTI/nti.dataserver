@@ -53,7 +53,7 @@ class PersonalBlog(Forum,_SingleInstanceNTIIDMixin):
 
 	creator = None
 	__name__ = __blog_name__ = __default_name__ = 'Blog'
-	ntiid_type = frm_interfaces.NTIID_TYPE_PERSONAL_BLOG
+	_ntiid_type = frm_interfaces.NTIID_TYPE_PERSONAL_BLOG
 
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
@@ -108,12 +108,12 @@ class GeneralForum(Forum,_SingleInstanceNTIIDMixin):
 	__external_can_create__ = False
 	creator = None
 	__name__ = __default_name__ = 'Forum'
-	ntiid_type = frm_interfaces.NTIID_TYPE_GENERAL_FORUM
+	_ntiid_type = frm_interfaces.NTIID_TYPE_GENERAL_FORUM
 
 @interface.implementer(frm_interfaces.ICommunityForum)
 class CommunityForum(GeneralForum):
 	__external_can_create__ = False
-	ntiid_type = frm_interfaces.NTIID_TYPE_COMMUNITY_FORUM
+	_ntiid_type = frm_interfaces.NTIID_TYPE_COMMUNITY_FORUM
 
 
 @interface.implementer(frm_interfaces.ICommunityForum)

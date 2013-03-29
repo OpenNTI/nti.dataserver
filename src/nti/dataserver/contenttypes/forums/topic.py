@@ -69,22 +69,25 @@ class GeneralHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 
 	creator = None
 
-	ntiid_type = for_interfaces.NTIID_TYPE_GENERAL_TOPIC
-	ntiid_include_parent_name = True
+	_ntiid_type = for_interfaces.NTIID_TYPE_GENERAL_TOPIC
+	_ntiid_include_parent_name = True
 
 @interface.implementer(for_interfaces.ICommunityHeadlineTopic)
 class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 							 GeneralHeadlineTopic):
 	mimeType = None
 
-	ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_TOPIC
+	_ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_TOPIC
 	# TODO: The permissioning isn't quite right on this. The sharing targets are the
 	# creators sharing targets but we really want just the community
 
 	@property
-	def ntiid_creator_username(self):
+	def _ntiid_creator_username(self):
 		" The community, not the user "
-		return self.__parent__.creator.username
+		try:
+			return self.__parent__.creator.username
+		except AttributeError:
+			return None
 
 @interface.implementer(for_interfaces.IPersonalBlogEntry)
 class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
@@ -94,7 +97,7 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 	headline = AcquisitionFieldProperty(for_interfaces.IPersonalBlogEntry['headline'])
 	mimeType = None
 
-	ntiid_type = for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY
+	_ntiid_type = for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY
 
 
 @component.adapter(for_interfaces.IHeadlineTopic)

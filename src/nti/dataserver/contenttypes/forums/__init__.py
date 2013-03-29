@@ -48,16 +48,15 @@ from nti.ntiids.ntiids import DATE as _NTIID_DATE
 from nti.utils.property import CachedProperty as _CachedProperty
 from nti.utils.property import alias as _alias
 
-
 class _CreatedNamedNTIIDMixin(object):
 	"""
 	Mix this in to get NTIIDs based on the creator and name.
 	You must define the ``ntiid_type``.
 
-	.. py:attribute:: ntiid_type
+	.. py:attribute:: _ntiid_type
 		The string constant for the type of the NTIID.
 
-	.. py:attribute:: ntiid_include_parent_name
+	.. py:attribute:: _ntiid_include_parent_name
 		If True (not the default) the ``__name__`` of our ``__parent__``
 		object is included in the specific part, preceding our name
 		and separated by a dot. Use this if our name is only unique within
@@ -67,20 +66,36 @@ class _CreatedNamedNTIIDMixin(object):
 
 	creator = None
 	__name__ = None
-	ntiid_type = None
-	ntiid_include_parent_name = False
+
+	_ntiid_include_parent_name = False
+	_ntiid_type = None
 
 	@property
-	def ntiid_creator_username(self):
-		return self.creator.username
+	def _ntiid_creator_username(self):
+		return self.creator.username if self.creator else None
 
-	@_CachedProperty('__name__') # But __parent__ and creator are not necessarily safe
+	@property
+	def _ntiid_specific_part(self):
+		if not self._ntiid_include_parent_name:
+			return self.__name__
+		try:
+			return self.__parent__.__name__ + '.' + self.__name__
+		except AttributeError: # Not ready yet
+			return None
+
+	@_CachedProperty('_ntiid_creator_username','_ntiid_specific_part')
 	def NTIID(self):
-		"NTIID is defined only after the creator is set"
-		return _make_ntiid( date=_NTIID_DATE,
-							provider=self.ntiid_creator_username,
-							nttype=self.ntiid_type,
-							specific=self.__name__ if not self.ntiid_include_parent_name else self.__parent__.__name__ + '.' + self.__name__)
+		"""
+		NTIID is defined only after the _ntiid_creator_username is
+		set; until then it is none. We cache based on this value and
+		our specific part (which includes our __name__)
+		"""
+		creator_name = self._ntiid_creator_username
+		if creator_name:
+			return _make_ntiid( date=_NTIID_DATE,
+								provider=creator_name,
+								nttype=self._ntiid_type,
+								specific=self._ntiid_specific_part )
 
 
 def _containerIds_from_parent():
@@ -92,7 +107,15 @@ def _containerIds_from_parent():
 	# TODO: Cache this?
 	def _get_containerId(self):
 		if self.__parent__ is not None:
-			return self.__parent__.NTIID
+			try:
+				return self.__parent__.NTIID
+			except AttributeError:
+				# Legacy support: the parent is somehow dorked up. If we have one in
+				# our __dict__ still, use it. Otherwise, let the error
+				# propagate.
+				if 'containerId' in self.__dict__:
+					return self.__dict__['containerId']
+				raise
 
 	def _set_containerId(self, cid ):
 		pass # ignored
