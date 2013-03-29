@@ -48,7 +48,7 @@ class TestWhooshIndexer(ConfiguringTestBase):
 		book = NoConcurrentPhantomRenderedBook(document, path)
 
 		indexer = _IdentifiableNodeWhooshIndexer()
-		idx = indexer.index(book, self.idxdir, _optimize=False)
+		idx = indexer.index(book, self.idxdir, optimize=False)
 
 		q = Term("keywords", u"mathcounts")
 		with idx.searcher() as s:
