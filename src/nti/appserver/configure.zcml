@@ -116,17 +116,6 @@
 		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
 		<!-- NOTE: That gets zope.dublincore involved in updating modification times -->
 	</class>
-	<!--
-		Because of the message flagging, which does not update modification
-		times, and the fact that Transcripts are non-persistent
-		objects which derive their own mod times from message mod
-		times, we have to fall back to etag-based caching
-		See Trello #876 https://trello.com/c/wXdPC0Xx
-		TODO: That's a really blunt tool. Do better.
-	-->
-	<class class="nti.dataserver.chat_transcripts.TranscriptSummary">
-		<implements interface=".interfaces.IUnModifiedInResponse" />
-	</class>
 
 	<!-- ******** -->
 
