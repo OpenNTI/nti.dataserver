@@ -77,6 +77,7 @@ def _UserSearchView(request):
 		# look at things local to the user
 		result = _search_scope_to_remote_user( remote_user, partialMatch )
 
+	request.response.cache_control.max_age = 120
 
 	return _format_result( result, remote_user, dataserver )
 
@@ -125,9 +126,14 @@ def _ResolveUserView(request):
 			result = (entity,)
 
 	if result:
-		# If we matched one user, see if we can get away without rendering it
+		# If we matched one user entity, see if we can get away without rendering it
 		# TODO: This isn't particularly clean
 		app_interfaces.IPreRenderResponseCacheController(result[0])(result[0], {'request': request} )
+	else:
+		# Let resolutions that failed be cacheable for a long time.
+		# It's extremely unlikely that someone is going to snag this missing
+		# username in the next little bit
+		request.response.cache_control.max_age = 600 # ten minutes
 
 	return _format_result( result, remote_user, dataserver )
 
