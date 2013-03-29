@@ -7,8 +7,6 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
 import re
 import six
 from cStringIO import StringIO
@@ -25,28 +23,38 @@ class _YoutubeVideoTranscriptParser(object):
 	trx_times_exp = r'(%s)(,|\s+-->\s+)(%s)' % (timestamp_exp, timestamp_exp)
 	trx_times_pattern = re.compile(trx_times_exp, re.U)
 
-	def fix_timestamp(self, ts):
+	@classmethod
+	def fix_timestamp(cls, ts):
 		ts = ts.replace(',', '.')
 		splits = ts.split(':')
 		if splits and len(splits[0]) == 1:
 			ts = '0' + ts
 		return ts
 
-	def is_valid_timestamp_range(self, s):
-		result = self.trx_times_pattern.search(s)
+	@classmethod
+	def is_valid_timestamp_range(cls, s):
+		result = cls.trx_times_pattern.search(s)
 		return result
 
-	def get_timestamp_range(self, s):
-		m = self.trx_times_pattern.search(s)
+	@classmethod
+	def get_timestamp_range(cls, s):
+		m = cls.trx_times_pattern.search(s)
 		if m is not None:
 			g = m.groups()
-			start_time = self.fix_timestamp(g[0])
-			end_time = self.fix_timestamp(g[2])
+			start_time = cls.fix_timestamp(g[0])
+			end_time = cls.fix_timestamp(g[2])
 			return (start_time, end_time)
 		else:
 			return None
 
-	def _create_transcript_entry(self, text, trange, eid=None):
+	@classmethod
+	def _fix_source(cls, source):
+		if isinstance(source, six.string_types):
+			source = StringIO(source)
+		return source
+
+	@classmethod
+	def _create_transcript_entry(cls, text, trange, eid=None):
 		transcript = '\n'.join(text)
 		e = VideoTranscriptEntry(id=eid,
 								 transcript=transcript,
@@ -58,8 +66,7 @@ class _YoutubeVideoTranscriptParser(object):
 class _SRTVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 
 	def parse(self, source):
-		if isinstance(source, six.string_types):
-			source = StringIO(source)
+		source = self._fix_source(source)
 
 		eid = trange = text = None
 		result = VideoTranscript()
@@ -69,7 +76,7 @@ class _SRTVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 				if range and text:
 					e = self._create_transcript_entry(text, trange, eid)
 					result.entries.append(e)
-				trange = text = None
+				eid = trange = text = None
 			elif not trange and line.isdigit() :
 				eid = line
 			elif not trange and self.is_valid_timestamp_range(line):
@@ -88,8 +95,7 @@ class _SRTVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 class _SBVVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 
 	def parse(self, source):
-		if isinstance(source, six.string_types):
-			source = StringIO(source)
+		source = self._fix_source(source)
 
 		trange = text = None
 		result = VideoTranscript()
