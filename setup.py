@@ -32,7 +32,8 @@ entry_points = {
 		"nti_gslopinionexport = nti.contentrendering.gslopinionexport:main",
 		"nti_jsonpbuilder = nti.contentrendering.jsonpbuilder:main",
 		"nti_default_root_sharing_setter = nti.contentrendering.default_root_sharing_setter:main",
-		"nti_index_book_content = nti.contentrendering.indexer:main",
+		"nti_index_book_content = nti.contentrendering.book_content_indexer:main",
+		"nti_index_book_video_transcripts = nti.contentrendering.video_transcript_indexer:main",
 		'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
 		'nti_testing_mark_emails_bounced = nti.appserver.bounced_email_workflow:mark_emails_bounced',
 		"pserve = nti.appserver.nti_pserve:main",  # This script overrides the one from pyramid
@@ -270,7 +271,7 @@ setup(
 		'zope.app.broken >= 3.6.0',  # Improved broken objects
 		'zope.app.component >= 3.9.3',  # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.app.interface >= 3.6.0',  # bwc only, DO NOT IMPORT. pulled in by contentratings
-		'zope.applicationcontrol >= 4.0.0a1', # Info about the app. currently unused
+		'zope.applicationcontrol >= 4.0.0a1',  # Info about the app. currently unused
 		'zope.annotation >= 4.2.0',
 		'zope.authentication >= 4.1.0',
 		'zope.broken >= 3.6.0',  # This is actually deprecated, use the ZODB import
@@ -314,8 +315,8 @@ setup(
 		'zope.interface >= 4.0.5',
 		'zope.intid >= 4.0.0a1' if HAVE_ZCONT else '',
 		'zope.keyreference >= 4.0.0a2',
-		'zope.lifecycleevent >= 4.0.2', # Object Added/Removed/etc events
-		'zope.login >= 2.0.0a1', # Providers of Zope3 authentication.ILoginPassword for Zope3 publisher interfaces; pulled in by zope.file[test] and indirectly zope.app.component[test]
+		'zope.lifecycleevent >= 4.0.2',  # Object Added/Removed/etc events
+		'zope.login >= 2.0.0a1',  # Providers of Zope3 authentication.ILoginPassword for Zope3 publisher interfaces; pulled in by zope.file[test] and indirectly zope.app.component[test]
 		'zope.location >= 4.0.2',
 		'zope.mimetype == 1.3.1',  # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
@@ -324,7 +325,7 @@ setup(
 		'zope.pluggableauth >= 2.0.0a1' if HAVE_ZCONT else '',  # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		'zope.ptresource >= 4.0.0a1',
 		'zope.publisher >= 4.0.0a4',
-		'zope.principalannotation >= 4.0.0a1', # Annotating principals in Zope3's global reg; pulled in indirectly by zope.app.component[test]
+		'zope.principalannotation >= 4.0.0a1',  # Annotating principals in Zope3's global reg; pulled in indirectly by zope.app.component[test]
 		'zope.principalregistry >= 4.0.0a2',  # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.3',  # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)

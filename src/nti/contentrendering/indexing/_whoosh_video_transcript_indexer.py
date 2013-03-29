@@ -96,8 +96,8 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 			raise
 
 	def get_index_name(self, book, indexname=None):
-		indexname = super(self).get_index_name(book, indexname)
-		indexname = "vidtrspt_%s" % indexname
+		indexname = super(_WhooshVideoTranscriptIndexer, self).get_index_name(book, indexname)
+		indexname = "vtrans_%s" % indexname
 		return indexname
 
 	def process_topic(self, idxspec, topic, writer, language='en'):

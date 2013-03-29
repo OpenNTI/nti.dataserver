@@ -1,6 +1,14 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Book content indexer.
 
-from __future__ import print_function, unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import argparse
@@ -8,12 +16,9 @@ import argparse
 from zope import interface
 from zope import component
 
-from nti.contentrendering import interfaces as cr_interfaces
+from . import interfaces as cr_interfaces
 
-import logging
-logger = logging.getLogger(__name__)
-
-interface.moduleProvides(cr_interfaces.IRenderedBookTransformer )
+interface.moduleProvides(cr_interfaces.IRenderedBookTransformer)
 
 def transform(book, indexdir=None, name=''):
 	indexer = component.queryUtility(cr_interfaces.IBookIndexer, name=name)
@@ -35,10 +40,10 @@ def main():
 		xmlconfig.file("configure.zcml", contentrendering, context=context)
 	register()
 
-	arg_parser = argparse.ArgumentParser( description="Content indexer" )
-	arg_parser.add_argument( 'contentpath', help="Content book location" )
-	arg_parser.add_argument( "-f", "--file_indexing", dest='file_indexing', help="Use file indexing", action='store_true')
-	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser = argparse.ArgumentParser(description="Content indexer")
+	arg_parser.add_argument('contentpath', help="Content book location")
+	arg_parser.add_argument("-f", "--file_indexing", dest='file_indexing', help="Use file indexing", action='store_true')
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	args = arg_parser.parse_args()
 
 	verbose = args.verbose
@@ -48,7 +53,7 @@ def main():
 	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
 
 	if verbose:
-		logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
+		logger.basicConfig(level=logger.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
 
 	document = EmptyMockDocument()
 	document.userdata['jobname'] = indexname
