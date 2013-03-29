@@ -183,3 +183,10 @@ def create_video_transcript_schema():
 					 	start_timestamp=VIDEO_TIMESTAMP(stored=True),
 					 	end_timestamp=VIDEO_TIMESTAMP(stored=True))
 	return sch
+
+@interface.implementer(search_interfaces.IWhooshVideoTranscriptSchemaCreator)
+class _DefaultVideoTranscriptSchemaCreator(object):
+
+	def create(self):
+		schema = create_video_transcript_schema()
+		return schema
