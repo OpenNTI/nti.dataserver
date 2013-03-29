@@ -56,7 +56,9 @@
 
 	<adapter factory=".pyramid_renderers.uncacheable_factory" />
 	<adapter factory=".pyramid_renderers.unmodified_factory" />
-
+	<adapter factory=".pyramid_renderers._EntityCacheController" />
+	<adapter factory=".pyramid_renderers._ModeledContentCacheController" />
+	<adapter factory=".pyramid_renderers._UGDExternalCollectionCacheController" />
 
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
@@ -278,6 +280,7 @@
 	<class class=".workspaces.FriendsListContainerCollection">
 		<implements interface=".interfaces.IUnModifiedInResponse" />
 	</class>
+
 
 	<!-- Forking events -->
 	<!--

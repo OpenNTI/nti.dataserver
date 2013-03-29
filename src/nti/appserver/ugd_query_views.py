@@ -29,6 +29,7 @@ from nti.appserver import _util
 from nti.appserver import _view_utils
 from nti.appserver._view_utils import get_remote_user
 from nti.appserver.pyramid_authorization import is_readable
+from nti.appserver.interfaces import IUGDExternalCollection
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -118,6 +119,7 @@ def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE ):
 	result = LocatedExternalDict( { 'Last Modified': lastMod, 'Items': result } )
 	result.lastModified = lastMod
 	result.mimeType = nti_mimetype_with_class( None )
+	interface.alsoProvides( result, IUGDExternalCollection )
 	return result
 
 _REF_ATTRIBUTE = 'referenced_by'

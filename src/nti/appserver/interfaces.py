@@ -274,6 +274,18 @@ class IResponseCacheController(pyramid_interfaces.IRenderer):
 	:class:`pyramid.httpexceptions.HTTPNotModified`.
 	"""
 
+	def __call__( data, system ):
+		"""
+		Optionally returns a new response or raises an HTTP exception.
+		"""
+
+class IPreRenderResponseCacheController(pyramid_interfaces.IRenderer):
+	"""
+	Called as a PRE-render step with the express intent of altering
+	the caching characteristics. If rendering should not proceed,
+	then the `__call__` method MUST raise an HTTP exception.
+	"""
+
 class IUncacheableInResponse(interface.Interface):
 	"""
 	Marker interface for things that should not be cached.
@@ -297,6 +309,12 @@ class IModeratorDealtWithFlag(interface.Interface):
 	Marker interface denoting that an object that is IFlaggable
 	(and cannot lose that interface) has been dealt with by the moderator
 	and shouldn't be subject to further flagging or mutation.
+	"""
+
+class IUGDExternalCollection(interface.Interface):
+	"""
+	Marker primarily for identifying that this is a collection of data
+	that has the last modified date of the greatest item in that data.
 	"""
 
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder # BWC
