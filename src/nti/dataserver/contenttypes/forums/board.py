@@ -58,7 +58,7 @@ class GeneralBoard(Board):
 @interface.implementer(for_interfaces.ICommunityBoard)
 class CommunityBoard(GeneralBoard,_CreatedNamedNTIIDMixin):
 	__external_can_create__ = False
-	ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_BOARD
+	_ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_BOARD
 
 
 
