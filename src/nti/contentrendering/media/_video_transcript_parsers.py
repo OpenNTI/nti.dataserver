@@ -77,6 +77,11 @@ class _SRTVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 			else:
 				text = [] if text is None else text
 				text.append(line)
+
+		if range and text:
+			e = self._create_transcript_entry(text, trange, eid)
+			result.entries.append(e)
+
 		return result
 
 @interface.implementer(media_interfaces.ISBVVideoTranscriptParser)
@@ -101,4 +106,9 @@ class _SBVVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 			else:
 				text = [] if text is None else text
 				text.append(line)
+
+		if range and text:
+			e = self._create_transcript_entry(text, trange, eid)
+			result.entries.append(e)
+
 		return result

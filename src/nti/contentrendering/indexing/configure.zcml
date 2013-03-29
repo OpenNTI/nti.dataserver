@@ -13,9 +13,11 @@
 		<implements interface=".interfaces.IWhooshIndexSpec" />
 	</class>
 	
-	<utility factory="._whoosh_book_indexer._DefaultWhooshIndexer" />
+	<utility factory="._whoosh_book_indexer._DefaultWhooshBookIndexer" />
 	<utility factory="._whoosh_book_indexer._BookFileWhooshIndexer" name="whoosh.file" />
 	<utility factory="._whoosh_book_indexer._IdentifiableNodeWhooshIndexer" name="whoosh.idnode" />
+	
+	<utility factory="._whoosh_video_transcript_indexer._DefaultWhooshVideoTranscriptIndexer" />
 	
 	<utility factory="._termextract._DefaultKeyWordFilter" name="indexer" />
 	
