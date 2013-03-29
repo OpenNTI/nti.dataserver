@@ -11,8 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import glob
+from collections import namedtuple
 
 from whoosh import index
+
+_WhooshIndexSpec = namedtuple('_WhooshIndexSpec', ['book', 'indexname', 'indexdir'])
 
 class _BasicWhooshIndexer(object):
 
@@ -31,16 +34,16 @@ class _BasicWhooshIndexer(object):
 		ix = index.create_in(indexdir, schema=self.get_schema(), indexname=indexname)
 		return ix
 
-	def process_topic(self, book, node, writer, language='en'):
+	def process_topic(self, idxspec, node, writer, language='en'):
 		raise NotImplementedError()
 
-	def process_book(self, book, writer, language='en'):
-		toc = book.toc
+	def process_book(self, idxspec, writer, language='en'):
+		toc = idxspec.book.toc
 		def _loop(topic):
-			count = self.process_topic(book, topic, writer, language)
+			count = self.process_topic(idxspec, topic, writer, language)
 			for t in topic.childTopics:
 				count += _loop(t)
-			return count
+			return count or 0
 		docs = _loop(toc.root_topic)
 		return docs
 
@@ -61,12 +64,13 @@ class _BasicWhooshIndexer(object):
 		indexname = self.get_index_name(book, indexname)
 		indexdir = self.get_index_dir(book, indexdir)
 		self.remove_index_files(indexdir, indexname)
+		idxspec = _WhooshIndexSpec(book, indexname, indexdir)
 
 		logger.info('Indexing %s(%s)' % (indexname, indexdir))
 
 		idx = self.create_index(indexdir, indexname)
 		writer = idx.writer(optimize=False, merge=False)
-		docs = self.process_book(book, writer)
+		docs = self.process_book(idxspec, writer)
 
 		logger.info("%s total document(s) produced" % docs)
 

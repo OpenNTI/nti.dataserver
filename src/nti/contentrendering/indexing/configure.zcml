@@ -9,6 +9,10 @@
 	
 	<include package="nti.contentsearch" file="configure_whoosh_book.zcml" />
 	
+	<class class="._common_indexer._WhooshIndexSpec">
+		<implements interface=".interfaces.IWhooshIndexSpec" />
+	</class>
+	
 	<utility factory="._whoosh_book_indexer._DefaultWhooshIndexer" />
 	<utility factory="._whoosh_book_indexer._BookFileWhooshIndexer" name="whoosh.file" />
 	<utility factory="._whoosh_book_indexer._IdentifiableNodeWhooshIndexer" name="whoosh.idnode" />
