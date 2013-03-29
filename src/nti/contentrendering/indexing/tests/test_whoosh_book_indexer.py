@@ -15,29 +15,29 @@ import tempfile
 
 from whoosh.query import (Or, Term)
 
-from nti.contentrendering.RenderedBook import _EclipseTOCMiniDomTopic
-from nti.contentrendering.indexing._whoosh_book_indexer import _DefaultWhooshIndexer
-from nti.contentrendering.indexing._whoosh_book_indexer import _BookFileWhooshIndexer
-from nti.contentrendering.indexing._whoosh_book_indexer import _IdentifiableNodeWhooshIndexer
-from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
+from ...RenderedBook import _EclipseTOCMiniDomTopic
+from .._whoosh_book_indexer import _BookFileWhooshIndexer
+from .._whoosh_book_indexer import _DefaultWhooshBookIndexer
+from .._whoosh_book_indexer import _IdentifiableNodeWhooshIndexer
+from ...utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 
-from nti.contentrendering.tests import ConfiguringTestBase
+from . import ConfiguringTestBase
 
 from hamcrest import assert_that, has_length
 
-class TestWhooshIndexer(ConfiguringTestBase):
+class TestWhooshBookIndexer(ConfiguringTestBase):
 
 	features = ()  # to load the tagger
 
 	@classmethod
 	def setUpClass(cls):
-		super(TestWhooshIndexer, cls).setUpClass()
+		super(TestWhooshBookIndexer, cls).setUpClass()
 		cls.idxdir = tempfile.mkdtemp(dir="/tmp")
 
 	@classmethod
 	def tearDownClass(cls):
 		shutil.rmtree(cls.idxdir, True)
-		super(TestWhooshIndexer, cls).tearDownClass()
+		super(TestWhooshBookIndexer, cls).tearDownClass()
 
 	def test_identifiable_node_indexer(self):
 		indexname = 'biology'
@@ -48,7 +48,7 @@ class TestWhooshIndexer(ConfiguringTestBase):
 		book = NoConcurrentPhantomRenderedBook(document, path)
 
 		indexer = _IdentifiableNodeWhooshIndexer()
-		idx = indexer.index(book, self.idxdir, optimize=False)
+		idx, _ = indexer.index(book, self.idxdir, optimize=False)
 
 		q = Term("keywords", u"mathcounts")
 		with idx.searcher() as s:
@@ -68,7 +68,7 @@ class TestWhooshIndexer(ConfiguringTestBase):
 		idx.close()
 
 	def _index_file(self, path, indexname, nodename, indexer=None):
-		indexer = indexer or _DefaultWhooshIndexer()
+		indexer = indexer or _DefaultWhooshBookIndexer()
 		idx = indexer.create_index(self.idxdir, indexname)
 		writer = idx.writer(optimize=False, merge=False)
 		node = _EclipseTOCMiniDomTopic(None, path, path, None, nodename)

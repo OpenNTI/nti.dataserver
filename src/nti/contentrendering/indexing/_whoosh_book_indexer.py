@@ -177,4 +177,4 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 
 		return result
 
-_DefaultWhooshIndexer = _BookFileWhooshIndexer
+_DefaultWhooshBookIndexer = _BookFileWhooshIndexer

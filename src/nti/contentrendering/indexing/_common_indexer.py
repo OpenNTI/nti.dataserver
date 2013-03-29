@@ -81,4 +81,4 @@ class _BasicWhooshIndexer(object):
 			logger.info("Optimizing index")
 			idx.optimize()
 
-		return idx
+		return idx, docs
