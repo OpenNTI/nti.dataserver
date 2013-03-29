@@ -68,25 +68,12 @@ class _WhooshBookIndexer(_BasicWhooshIndexer):
 		last_modified = datetime.fromtimestamp(float(last_modified))
 		return last_modified
 
-	def process_topic(self, node, writer):
-		raise NotImplementedError()
-
-	def process_book(self, book, writer, language='en'):
-		toc = book.toc
-		def _loop(topic):
-			count = self.process_topic(topic, writer, language)
-			for t in topic.childTopics:
-				count += _loop(t)
-			return count
-		docs = _loop(toc.root_topic)
-		return docs
-
 class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 	"""
 	Indexing topic children nodes that either have an id or data_ntiid attribute
 	"""
 
-	def process_topic(self, node, writer, language='en'):
+	def process_topic(self, book, node, writer, language='en'):
 		title = unicode(node.title)
 		ntiid = unicode(node.ntiid)
 		content_file = node.location
@@ -164,7 +151,7 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 		c = m.groups()[0] if m else u''
 		return c or text
 
-	def process_topic(self, node, writer, language='en'):
+	def process_topic(self, book, node, writer, language='en'):
 		title = unicode(node.title)
 		ntiid = unicode(node.ntiid)
 		content_file = node.location
