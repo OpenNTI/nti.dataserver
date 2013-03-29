@@ -19,6 +19,7 @@ import functools
 from zope import interface
 from zope import component
 from zope.proxy import ProxyBase
+from ZODB.POSException import POSKeyError
 
 from pyramid.view import view_config
 from pyramid import security as psec
@@ -60,7 +61,7 @@ from perfmetrics import metricmethod
 
 def _TRUE(x): return True
 
-def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_iface=IUGDExternalCollection ):
+def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_iface=IUGDExternalCollection, ignore_broken=False ):
 	""" Given items that may be dictionaries or lists, combines them
 	and externalizes them for return to the user as a dictionary. If the individual items
 	are ModDateTracking (have a lastModified value) then the returned
@@ -101,7 +102,12 @@ def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_
 			if x is None or isinstance( x, numbers.Number ):
 				continue
 
-			oid = to_external_oid( x, str( id(x) ) )
+			try:
+				oid = to_external_oid( x, str( id(x) ) )
+			except POSKeyError:
+				if ignore_broken:
+					continue
+				raise
 			if oid in oids:
 				# avoid dups. This check is slightly less expensive than
 				# some predicates (is_readable) so do it first
