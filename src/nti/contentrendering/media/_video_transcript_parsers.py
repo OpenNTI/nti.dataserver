@@ -67,28 +67,26 @@ class _SRTVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 
 	def parse(self, source):
 		source = self._fix_source(source)
-
 		eid = trange = text = None
 		result = VideoTranscript()
-		for line in source:
-			line = unicode(line.rstrip()) if line else u''
-			if not line:
+		while True:
+			line = source.readline()
+			if not line or not line.strip():
 				if range and text:
 					e = self._create_transcript_entry(text, trange, eid)
 					result.entries.append(e)
 				eid = trange = text = None
-			elif not trange and line.isdigit() :
-				eid = line
-			elif not trange and self.is_valid_timestamp_range(line):
-				trange = self.get_timestamp_range(line)
+				if not line:
+					break
 			else:
-				text = [] if text is None else text
-				text.append(line)
-
-		if range and text:
-			e = self._create_transcript_entry(text, trange, eid)
-			result.entries.append(e)
-
+				line = unicode(line.rstrip())
+				if not trange and line.isdigit() :
+					eid = line
+				elif not trange and self.is_valid_timestamp_range(line):
+					trange = self.get_timestamp_range(line)
+				else:
+					text = [] if text is None else text
+					text.append(line)
 		return result
 
 @interface.implementer(media_interfaces.ISBVVideoTranscriptParser)
@@ -96,25 +94,23 @@ class _SBVVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 
 	def parse(self, source):
 		source = self._fix_source(source)
-
 		trange = text = None
 		result = VideoTranscript()
-		for line in source:
-			line = unicode(line.rstrip()) if line else u''
-			if not line:
+		while True:
+			line = source.readline()
+			if not line or not line.strip():
 				if range and text:
 					eid = unicode(len(result) + 1)
 					e = self._create_transcript_entry(text, trange, eid)
 					result.entries.append(e)
 				trange = text = None
-			elif self.is_valid_timestamp_range(line):
-				trange = self.get_timestamp_range(line)
+				if not line:
+					break
 			else:
-				text = [] if text is None else text
-				text.append(line)
-
-		if range and text:
-			e = self._create_transcript_entry(text, trange, eid)
-			result.entries.append(e)
-
+				line = unicode(line.rstrip())
+				if not trange and self.is_valid_timestamp_range(line):
+					trange = self.get_timestamp_range(line)
+				else:
+					text = [] if text is None else text
+					text.append(line)
 		return result
