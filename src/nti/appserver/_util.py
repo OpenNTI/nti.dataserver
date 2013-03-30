@@ -68,7 +68,11 @@ class AbstractTwoStateViewLinkDecorator(object):
 	predicate = None
 
 
-	def decorateExternalMapping( self, context, mapping ):
+	def decorateExternalMapping( self, context, mapping, extra_elements=() ):
+		"""
+		:param extra_elements: Elements that are unconditionally added to
+			the generated link.
+		"""
 		current_username = authenticated_userid( get_current_request() )
 		if not current_username:
 			return
@@ -83,6 +87,7 @@ class AbstractTwoStateViewLinkDecorator(object):
 		predicate_passed = self.predicate( context, current_username )
 		# We're assuming that because you can see it, you can (un)like it.
 		# this matches the views
+
 		rel = self.true_view if predicate_passed else self.false_view
 		if rel is None: # Disabled in this case
 			return
@@ -94,7 +99,7 @@ class AbstractTwoStateViewLinkDecorator(object):
 			logger.warn( "Failed to get ntiid; not adding link %s for %s", rel, context )
 			return
 
-		link = links.Link( target_ntiid, rel=rel, elements=('@@' + rel,) )
+		link = links.Link( target_ntiid, rel=rel, elements=('@@' + rel,) + extra_elements)
 		interface.alsoProvides( link, ILocation )
 		link.__name__ = ''
 		link.__parent__ = context

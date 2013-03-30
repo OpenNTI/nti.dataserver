@@ -17,6 +17,7 @@ from hamcrest import has_key
 from hamcrest import contains
 from hamcrest import has_items
 from hamcrest import contains_string
+from hamcrest import has_property
 import fudge
 
 from pyramid.testing import DummySecurityPolicy
@@ -541,7 +542,9 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 								contains(
 									has_entry( 'ReferencedByCount', 1 ),
 									has_entry( 'ReferencedByCount', 0 ) ) ) )
-
+		# We generate a cache-friendly reply link
+		top_replies_href = self.require_link_href_with_rel( res.json_body['Items'][0], 'replies' )
+		assert_that( top_replies_href, contains_string( "/@@replies/" ) )
 
 		res = testapp.get( path, params={'sortOn': 'lastModified', 'sortOrder': 'descending'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
@@ -558,12 +561,12 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 											   contains(
 												   has_entries( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=1&batchStart=1&sortOn=lastModified&sortOrder=ascending',
 																'rel', 'batch-next') ) ) )
+
 		# Capture the URL that's returned to us, and make sure it matches what we're told to come back to
 		# so that next and prev are symmetrical
 		# (Modulo some slightly different URL encoding)
 		prev_href = res.json_body['href']
 		prev_href = prev_href.replace( "@", "%40" ).replace( ':', '%3A' )
-
 
 		res = testapp.get( path, params={'batchSize': '1', 'batchStart': '1', 'sortOn': 'lastModified', 'sortOrder': 'ascending'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
@@ -580,8 +583,10 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
 
 		# Top-level filtering is only useful if we can get replies on demand.
-		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/' + top_n_ext_id  + '/@@replies'
+		path = top_replies_href
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
+		# Accessing it this way was cache friendly
+		assert_that( res.cache_control, has_property( 'max_age', 3600 ) )
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', reply_n_id ) ) ) )
 
