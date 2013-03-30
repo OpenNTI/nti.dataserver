@@ -352,7 +352,14 @@ class ForumContentsGetView(UGDQueryView):
 		# where you're coming from. It's even possible for it to get in the state
 		# that the order of your page views shows two different sets of contents
 		# for the same forum.
-		if False and self.request.subpath: # Sigh.
+		# XXX I think part of this may be because some parent containers (Forum) do not
+		# get modification times updated on them when grandchildren change. In the
+		# immediate term, we do this just with the topics, where we know one level
+		# works.
+		# XXX It seems that the "parent" objects can be cached at the application level, meaning
+		# that the application never sees the updated contents URLs, making it impossible
+		# to HTTP cache them.
+		if False and frm_interfaces.IHeadlineTopic.providedBy( request.context ) and self.request.subpath:
 			self.result_iface = app_interfaces.IETagCachedUGDExternalCollection
 
 	def getObjectsForId( self, *args ):
