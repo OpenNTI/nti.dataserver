@@ -19,6 +19,7 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
+from nti.dataserver import mimetype
 from nti.dataserver.links import Link
 
 from ._search_hits import get_search_hit
@@ -183,9 +184,9 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			return self.results.hits
 
 	def toExternalObject(self):
-		eo = super(_SearchResultsExternalizer, self).toExternalObject()
-		eo[ITEMS] = items = []
-		eo[PHRASE_SEARCH] = self.query.is_phrase_search
+		result = super(_SearchResultsExternalizer, self).toExternalObject()
+		result[ITEMS] = items = []
+		result[PHRASE_SEARCH] = self.query.is_phrase_search
 
 		# process hits
 		count = 0
@@ -215,11 +216,15 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			if count >= limit:
 				break
 
-		eo[HIT_COUNT] = len(items)
-		eo[LAST_MODIFIED] = last_modified
-		eo[HIT_META_DATA] = toExternalObject(self.results.get_hit_meta_data())
+		result[HIT_COUNT] = len(items)
+		result[LAST_MODIFIED] = last_modified
+		result[HIT_META_DATA] = toExternalObject(self.results.get_hit_meta_data())
 
-		return eo
+		# set for IUGDExternalCollection
+		result.lastModified = last_modified
+		result.mimeType = mimetype.nti_mimetype_from_object(self.results)
+
+		return result
 
 @component.adapter(search_interfaces.ISuggestResults)
 class _SuggestResultsExternalizer(_BaseSearchResultsExternalizer):
@@ -229,21 +234,20 @@ class _SuggestResultsExternalizer(_BaseSearchResultsExternalizer):
 		return self.results.suggestions
 
 	def toExternalObject(self):
-		eo = super(_SuggestResultsExternalizer, self).toExternalObject()
-		items = [item for item in self.suggestions if item is not None]
-		eo[ITEMS] = items
-		eo[SUGGESTIONS] = items
-		eo[HIT_COUNT] = len(items)
-		eo[LAST_MODIFIED] = 0
-		return eo
+		result = super(_SuggestResultsExternalizer, self).toExternalObject()
+		result[ITEMS] = items = [item for item in self.suggestions if item is not None]
+		result[SUGGESTIONS] = items
+		result[HIT_COUNT] = len(items)
+		result[LAST_MODIFIED] = 0
+		return result
 
 @component.adapter(search_interfaces.ISuggestAndSearchResults)
 class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestResultsExternalizer):
 
 	def toExternalObject(self):
-		eo = _SearchResultsExternalizer.toExternalObject(self)
-		eo[SUGGESTIONS] = self.suggestions
-		return eo
+		result = _SearchResultsExternalizer.toExternalObject(self)
+		result[SUGGESTIONS] = self.suggestions
+		return result
 
 @component.adapter(search_interfaces.ISearchResults)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
