@@ -346,8 +346,13 @@ class ForumContentsGetView(UGDQueryView):
 
 		# If we were invoked with a subpath, then it must be the tokenized
 		# version so we can allow for good caching, as we will change the token
-		# when the data changes
-		if self.request.subpath:
+		# when the data changes.
+		# XXX Except the browser application sometimes does and sometimes does
+		# not make a fresh request for the /contents. It seems to be based on
+		# where you're coming from. It's even possible for it to get in the state
+		# that the order of your page views shows two different sets of contents
+		# for the same forum.
+		if False and self.request.subpath: # Sigh.
 			self.result_iface = app_interfaces.IETagCachedUGDExternalCollection
 
 	def getObjectsForId( self, *args ):
