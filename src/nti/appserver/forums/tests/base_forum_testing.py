@@ -666,8 +666,9 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		res = testapp.get( topic_url )
 		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
 		res = testapp.get( self.require_link_href_with_rel( res.json_body, 'contents' ) )
-		# Should be well cached
-		assert_that( res.cache_control, has_property( 'max_age', 3600 ) )
+		# Should be well cached... see comments in views about why this is disabled
+		#assert_that( res.cache_control, has_property( 'max_age', 3600 ) )
+		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
 		comment_data.pop('Class',None) # don't compare, it changes
 		comment_data['sharedWith'] = [fixture.community_name]
 		assert_that( res.json_body['Items'][0], has_entries( comment_data ) )
