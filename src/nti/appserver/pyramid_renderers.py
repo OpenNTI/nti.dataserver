@@ -38,6 +38,7 @@ from zope.file import interfaces as zf_interfaces
 
 from nti.appserver import traversal
 from ._view_utils import get_remote_user
+from pyramid.threadlocal import get_current_request
 
 from perfmetrics import metric
 
@@ -179,9 +180,13 @@ def render_enclosure( data, system ):
 	response.last_modified = data.lastModified
 	return data.data
 
-def _get_remote_username(request):
+def _get_remote_username(request=None):
 	# We use the direct access to the
 	# repoze information rather than the abstractions because it's slightly faster
+	if request is None:
+		request = get_current_request()
+	if request is None:
+		return ''
 
 	environ = request.environ
 	return environ.get( 'repoze.who.identity', {} ).get( 'repoze.who.userid' )
