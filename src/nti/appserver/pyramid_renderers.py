@@ -429,6 +429,18 @@ class _LongerCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCa
 
 	max_age = 120 # XXX arbitrary
 
+@component.adapter(app_interfaces.IRepliesUGDExternalCollection)
+class _TokenizedRepliesUGDExternalCollectionCacheController(_UGDExternalCollectionCacheController):
+	# We are guaranteed to get great caching because every time the data changes
+	# we change the link we generate. We don't need to take our own
+	# modification date into account.
+
+	max_age = 3600
+
+	@property
+	def _context_lastModified(self):
+		return 0
+
 @component.adapter(app_interfaces.IUserActivityExternalCollection)
 class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 	"""

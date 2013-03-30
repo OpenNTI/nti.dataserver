@@ -329,6 +329,11 @@ class IUserActivityExternalCollection(IUGDExternalCollection):
 	UGD representing user activity in aggregate.
 	"""
 
+class IRepliesUGDExternalCollection(IUGDExternalCollection):
+	"""
+	UGD representing the replies to the request context.
+	"""
+
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder # BWC
 
 ###

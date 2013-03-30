@@ -137,7 +137,6 @@ class RefProxy(ProxyBase):
 	def __init__( self, obj ):
 		super(RefProxy,self).__init__( obj )
 		self._v_referenced_by = None
-		self._v_recursive_like_count = None
 
 	referenced_by = alias( '_v_referenced_by' )
 
@@ -233,6 +232,11 @@ def _reference_list_recursive_like_count( proxy ):
 	return sum( (liking_like_count( x ) for x in _reference_list_objects( proxy ) ),
 				liking_like_count( proxy ))
 
+def _reference_list_recursive_max_last_modified( proxy ):
+	try:
+		return max( _reference_list_objects( proxy ), key=to_standard_external_last_modified_time )
+	except ValueError: #Empty list
+		return 0
 
 def _combine_predicate( new, old ):
 	if not old:
@@ -312,8 +316,9 @@ SORT_KEYS = {
 	'createdTime' : functools.partial( to_standard_external_created_time, default=0),
 	'LikeCount': liking_like_count,
 	'ReferencedByCount': ( _build_reference_lists, _reference_list_length ),
-	'RecursiveLikeCount': (_build_reference_lists, _reference_list_recursive_like_count)
+	'RecursiveLikeCount': (_build_reference_lists, _reference_list_recursive_like_count),
 	}
+SORT_KEYS['CreatedTime'] = SORT_KEYS['createdTime'] # Despite documentation, some clients send this value
 SORT_DIRECTION_DEFAULT = {
 	'LikeCount': 'descending',
 	'ReferencedByCount': 'descending',
@@ -864,7 +869,7 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 		"""
 		Excludes change objects that refer to a missing object or creator due to weak refs.
 		"""
-
+		# NOTE: The app is currently manually excluding comments but not sending an exclude param for them
 		# Do this before the filters and what not on the top level so that the item count
 		# makes sense
 		#_entity_cache = {}
@@ -950,6 +955,7 @@ class _UGDAndRecursiveStreamView(_UGDView):
 #: to get all the visible replies to a Note
 REL_REPLIES = 'replies'
 
+from .pyramid_renderers import _md5_etag
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.INote)
@@ -971,22 +977,28 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	predicate = staticmethod(lambda context, current_user: True)
 
 	def decorateExternalMapping( self, context, mapping ):
-		super(RepliesLinkDecorator,self).decorateExternalMapping( context, mapping )
 		# Also add the reply count, if we have that information available
-		request = get_current_request()
-		if request:
-			proxies = getattr( request, '_build_reference_lists_proxies', None )
-			if proxies:
-				proxy = proxies.get( context, context )
-				reply_count = _reference_list_length( proxy )
-				if reply_count >= 0:
-					mapping['ReferencedByCount'] = reply_count
 
-				mapping['RecursiveLikeCount'] = _reference_list_recursive_like_count( proxy )
+		extra_elements = ()
+		proxies = getattr( get_current_request(), '_build_reference_lists_proxies', None )
+		if proxies:
+			proxy = proxies.get( context, context )
+			reply_count = _reference_list_length( proxy )
+			if reply_count >= 0:
+				mapping['ReferencedByCount'] = reply_count
+
+			mapping['RecursiveLikeCount'] = _reference_list_recursive_like_count( proxy )
+			# Use the reply count and the maximum modification date
+			# of the child as a "ETag" value to allow caching of the @@replies indefinitely
+			max_last_modified = _reference_list_recursive_max_last_modified( proxy )
+			etag = _md5_etag( reply_count, max_last_modified ).replace( '/', '_' )
+			extra_elements = (etag,)
+
+		super(RepliesLinkDecorator,self).decorateExternalMapping( context, mapping, extra_elements=extra_elements )
 
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
-
+from .interfaces import IRepliesUGDExternalCollection
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=nti_interfaces.INote,
@@ -997,6 +1009,10 @@ def replies_view(request):
 	"""
 	Given a threaded object, return all the objects in the same container
 	that reference it.
+
+	The ``subpath`` (part of the path after the view name) is ignored and can
+	thus be used as a unique token for caching. (If it is present we do allow
+	caching; see :class:`ReferenceListBasedDecorator` for its computation.)
 	"""
 
 	# First collect the objects
@@ -1005,13 +1021,13 @@ def replies_view(request):
 	objs = _UGDView.do_getObjects( the_user, request.context.containerId, the_user,
 								   allow_empty=True )
 
-	result = lists_and_dicts_to_ext_collection( objs )
+	result = lists_and_dicts_to_ext_collection( objs,
+												result_iface=(IRepliesUGDExternalCollection if request.subpath else IUGDExternalCollection),
+												ignore_broken=True )
 
 	def test(x):
 		return request.context in getattr( x, 'references', () ) or request.context == getattr( x, 'inReplyTo', None )
-	result_list = filter( test,
-						  result['Items'] )
-	result['Items'] = result_list
+	result['Items'] = filter( test, result['Items'] )
 
 	# Not all the params make sense, but batching does
 	return _UGDView( request, the_user, request.context.containerId )._sort_filter_batch_result( result )
