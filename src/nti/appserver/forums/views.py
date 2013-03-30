@@ -344,6 +344,12 @@ class ForumContentsGetView(UGDQueryView):
 		if frm_interfaces.IBoard.providedBy( self.request.context ):
 			self.result_iface = app_interfaces.ILongerCachedUGDExternalCollection
 
+		# If we were invoked with a subpath, then it must be the tokenized
+		# version so we can allow for good caching, as we will change the token
+		# when the data changes
+		if self.request.subpath:
+			self.result_iface = app_interfaces.IETagCachedUGDExternalCollection
+
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)
 

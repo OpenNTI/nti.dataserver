@@ -63,7 +63,7 @@
 	<adapter factory=".pyramid_renderers._UserActivityViewCacheController" />
 	<adapter factory=".pyramid_renderers._ZopeFileCacheController" />
 	<adapter factory=".pyramid_renderers._ContentUnitInfoCacheController" />
-	<adapter factory=".pyramid_renderers._TokenizedRepliesUGDExternalCollectionCacheController" />
+	<adapter factory=".pyramid_renderers._ETagCachedUGDExternalCollectionCacheController" />
 
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />

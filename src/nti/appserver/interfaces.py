@@ -329,9 +329,11 @@ class IUserActivityExternalCollection(IUGDExternalCollection):
 	UGD representing user activity in aggregate.
 	"""
 
-class IRepliesUGDExternalCollection(IUGDExternalCollection):
+class IETagCachedUGDExternalCollection(ILongerCachedUGDExternalCollection):
 	"""
-	UGD representing the replies to the request context.
+	Use this when the URL used to retrieve the collection
+	includes an "ETag" like token that changes when the data changes.
+	This must be a "strong validator", guaranteed to change.
 	"""
 
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder # BWC
