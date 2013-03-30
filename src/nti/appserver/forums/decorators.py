@@ -109,6 +109,7 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 # that share no common ancestor. (We could be declared on IContainer,
 # but its not clear what if any IContainers we externalize besides
 # the forum objects)
+from nti.appserver.pyramid_renderers import md5_etag
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 class ForumObjectContentsLinkProvider(object):
@@ -143,7 +144,11 @@ class ForumObjectContentsLinkProvider(object):
 
 		# /path/to/forum/topic/contents --> note that contents is not an @@ view,
 		# simply named. This is prettier, but if we need to we can easily @@ it
-		link = Link( context, rel=VIEW_CONTENTS, elements=(VIEW_CONTENTS,) )
+		# We also include a "ETag" in the URL to facilitate caching, different everytime
+		# our children change.
+		# This works because everytime one of the context's children is modified,
+		# our timestamp is also modified.
+		link = Link( context, rel=VIEW_CONTENTS, elements=(VIEW_CONTENTS, md5_etag(context.lastModified)) )
 		interface.alsoProvides( link, ILocation )
 		link.__name__ = ''
 		link.__parent__ = context

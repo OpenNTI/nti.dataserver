@@ -25,6 +25,7 @@ from hamcrest import has_item
 from hamcrest import contains
 from hamcrest import contains_inanyorder
 from hamcrest import contains_string
+from hamcrest import starts_with
 from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import has_entries
@@ -171,7 +172,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 			# We have a contents URL
 			contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
 			# Make sure we're getting back pretty URLs...
-			assert_that( contents_href, is_( self.forum_pretty_contents_url ) )
+			assert_that( contents_href, starts_with( self.forum_pretty_contents_url ) )
 			# which is empty...
 			testapp.get( contents_href, status=200 )
 
@@ -423,6 +424,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		# ...resulting in an updated time for the contents view
 		res = testapp.get( entry_contents_url )
 		assert_that( res.json_body['Last Modified'], is_( greater_than( entry_creation_time ) ) )
+		# ... and a changed href
+		assert_that( self.require_link_href_with_rel( testapp.get(entry_url).json_body, 'contents' ), is_not( entry_contents_url ) )
 
 		# and the comment can no longer be found by search
 		search_res = self.search_user_rugd( self.forum_comment_unique )
@@ -596,6 +599,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 		publish_res, _ = self._POST_and_publish_topic_entry()
 		topic_url = publish_res.location
+		content_href = self.require_link_href_with_rel( publish_res.json_body, 'contents' )
 
 		# non-creator can comment
 		comment_data = self._create_comment_data_for_POST()
@@ -612,6 +616,10 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 		for app in testapp, testapp2:
 			self._check_comment_in_topic_feed( app, topic_url, comment_data )
+
+		# And the contents link
+		new_content_href = self.require_link_href_with_rel( self.testapp.get( topic_url ).json_body, 'contents' )
+		assert_that( new_content_href, is_not( content_href ) )
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
@@ -658,6 +666,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		res = testapp.get( topic_url )
 		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
 		res = testapp.get( self.require_link_href_with_rel( res.json_body, 'contents' ) )
+		# Should be well cached
+		assert_that( res.cache_control, has_property( 'max_age', 3600 ) )
 		comment_data.pop('Class',None) # don't compare, it changes
 		comment_data['sharedWith'] = [fixture.community_name]
 		assert_that( res.json_body['Items'][0], has_entries( comment_data ) )
@@ -684,11 +694,16 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 		publish_res, _ = self._POST_and_publish_topic_entry()
 		topic_url = publish_res.location
+		contents_href = self.require_link_href_with_rel( testapp.get( topic_url ).json_body, 'contents' )
 
-		# non-creator can comment, both at the direct URL
+		# non-creator can comment
 		comment_data = self._create_comment_data_for_POST()
 		comment_res = testapp2.post_json( topic_url, comment_data, status=201 )
 		edit_href = self.require_link_href_with_rel( comment_res.json_body, 'edit' )
+		# which changes the contents href
+		new_contents_href = self.require_link_href_with_rel( testapp.get( topic_url ).json_body, 'contents' )
+		assert_that( new_contents_href, is_not( contents_href ) )
+		contents_href = new_contents_href
 
 		comment_data['title'] = 'Changed my title'
 		comment_data['body'] = ["Different comment body"]
@@ -700,6 +715,11 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		self._check_comment_in_topic_contents( testapp, topic_url, comment_data, fixture )
 		for app in testapp, testapp2:
 			self._check_comment_in_topic_feed( app, topic_url, comment_data )
+
+		# and editing changed the contents link
+		new_contents_href = self.require_link_href_with_rel( testapp.get( topic_url ).json_body, 'contents' )
+		assert_that( new_contents_href, is_not( contents_href ) )
+
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases

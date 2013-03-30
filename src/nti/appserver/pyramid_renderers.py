@@ -322,13 +322,13 @@ def unmodified_factory( data ):
 
 from hashlib import md5
 
-def _md5_etag( *args ):
+def md5_etag( *args ):
 	digest = md5()
 	for arg in args:
 		if arg:
 			digest.update( arg.encode('utf-8') if isinstance(arg,unicode) else str(arg) )
 	return digest.digest().encode( 'base64' ).replace( '\n', '' ).strip( '=' )
-
+_md5_etag = md5_etag
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)
 class _AbstractReliableLastModifiedCacheController(object):
@@ -429,8 +429,8 @@ class _LongerCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCa
 
 	max_age = 120 # XXX arbitrary
 
-@component.adapter(app_interfaces.IRepliesUGDExternalCollection)
-class _TokenizedRepliesUGDExternalCollectionCacheController(_UGDExternalCollectionCacheController):
+@component.adapter(app_interfaces.IETagCachedUGDExternalCollection)
+class _ETagCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCacheController):
 	# We are guaranteed to get great caching because every time the data changes
 	# we change the link we generate. We don't need to take our own
 	# modification date into account.

@@ -998,7 +998,7 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
-from .interfaces import IRepliesUGDExternalCollection
+from .interfaces import IETagCachedUGDExternalCollection
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=nti_interfaces.INote,
@@ -1022,7 +1022,7 @@ def replies_view(request):
 								   allow_empty=True )
 
 	result = lists_and_dicts_to_ext_collection( objs,
-												result_iface=(IRepliesUGDExternalCollection if request.subpath else IUGDExternalCollection),
+												result_iface=(IETagCachedUGDExternalCollection if request.subpath else IUGDExternalCollection),
 												ignore_broken=True )
 
 	def test(x):
