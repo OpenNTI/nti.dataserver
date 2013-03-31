@@ -58,7 +58,7 @@ class _AbstractIntidResolvingFacade(object):
 			self.__parent__ = parent
 		if name:
 			self.__name__ = name
-		if intids:
+		if intids is not None:
 			self._intids = intids
 
 	def __reduce__( self ):
@@ -73,7 +73,7 @@ class IntidResolvingIterable(_AbstractIntidResolvingFacade, Iterable, Container,
 
 	def __iter__( self, allow_missing=None ):
 		allow_missing = allow_missing or self._allow_missing
-		intids = self._intids or component.getUtility( zc_intid.IIntIds )
+		intids = self._intids if self._intids is not None else component.getUtility( zc_intid.IIntIds )
 		for iid in self.context:
 			__traceback_info__ = iid, self.__parent__, self.__name__
 			try:
@@ -170,7 +170,7 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 			self.family = family
 		else:
 			intids = component.queryUtility( zc_intid.IIntIds )
-			if intids:
+			if intids is not None:
 				self.family = intids.family
 
 		# Map from string container ids to self.family.II.TreeSet

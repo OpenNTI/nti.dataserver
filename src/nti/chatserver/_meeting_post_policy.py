@@ -258,7 +258,7 @@ class _ModeratedMeetingState(Persistent):
 			self.family = family
 		else:
 			intids = component.queryUtility( zc_intid.IIntIds )
-			if intids:
+			if intids is not None:
 				self.family = intids.family
 
 		self._moderation_queue = self.family.OI.BTree()
