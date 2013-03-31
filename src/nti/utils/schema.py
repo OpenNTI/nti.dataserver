@@ -606,8 +606,10 @@ class ValidSet(_ValueTypeAddingDocMixin,FieldValidationMixin,schema.Set):
 
 class UniqueIterable(ValidSet):
 	"""
-	An arbitrary iterable, not necessarily an actual :class:`set` object and
-	not necessarily iterable, but one whose contents are unique.
+	An arbitrary iterable, not necessarily an actual :class:`set` object,
+	but one whose contents are unique. Use this when you can
+	return a :class:`set`, :class:`frozenset` or empty tuple. These should be
+	sequences that suport the ``in`` operator.
 	"""
 	_type = None # Override to not force a set
 
