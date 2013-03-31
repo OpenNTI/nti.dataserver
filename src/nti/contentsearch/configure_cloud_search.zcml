@@ -9,26 +9,26 @@
 
 	<adapter factory="._cloudsearch_adapter._CloudSearchEntityIndexManagerFactory"
 			 for="nti.dataserver.interfaces.IEntity"
-			 provides=".interfaces.ICloudSearchEntityIndexManager" />
+			 provides="._cloudsearch_interfaces.ICloudSearchEntityIndexManager" />
 			 			 
 	<adapter factory="._cloudsearch_index._CSHighlight"
-			 provides=".interfaces.ICloudSearchObject"
+			 provides="._cloudsearch_interfaces.ICloudSearchObject"
 			 for="nti.dataserver.interfaces.IHighlight" />
 		
 	<adapter factory="._cloudsearch_index._CSNote"
-			 provides=".interfaces.ICloudSearchObject"
+			 provides="._cloudsearch_interfaces.ICloudSearchObject"
 			 for="nti.dataserver.interfaces.INote" />
 			 	 
 	<adapter factory="._cloudsearch_index._CSRedaction"
-			 provides=".interfaces.ICloudSearchObject"
+			 provides="._cloudsearch_interfaces.ICloudSearchObject"
 			 for="nti.dataserver.interfaces.IRedaction" />
 			 
 	<adapter factory="._cloudsearch_index._CSMessageInfo"
-			 provides=".interfaces.ICloudSearchObject"
+			 provides="._cloudsearch_interfaces.ICloudSearchObject"
 			 for="nti.chatserver.interfaces.IMessageInfo" />
 			 
 	<adapter factory="._cloudsearch_index._CSPost"
-			 provides=".interfaces.ICloudSearchObject"
+			 provides="._cloudsearch_interfaces.ICloudSearchObject"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
 
 	<utility factory="._cloudsearch_store._create_cloudsearch_store"  />

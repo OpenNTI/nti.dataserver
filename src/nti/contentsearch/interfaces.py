@@ -10,12 +10,7 @@ from zope import schema
 from zope import interface
 from zope import component
 from zope.deprecation import deprecated
-from zope.index import interfaces as zidx_interfaces
 from zope.interface.common.mapping import IReadMapping, IMapping, IFullMapping
-
-from repoze.catalog import interfaces as rcat_interfaces
-
-from dolmen.builtins import IDict
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -187,9 +182,6 @@ class IRepozeEntityIndexManager(IEntityIndexManager):
 class IWhooshEntityIndexManager(IEntityIndexManager):
 	pass
 
-class ICloudSearchEntityIndexManager(IEntityIndexManager):
-	pass
-
 # index manager
 
 class IIndexManager(interface.Interface):
@@ -341,10 +333,10 @@ class IWhooshIndexStorage(interface.Interface):
 		return a dictionary with the arguments to be passed to an index writer commit method
 		"""
 
-# book content
+# content
 
 class IBookContent(interface.Interface):
-	docnum = schema.Int(title="Document nti_schema.Number", required=True)
+	docnum = schema.Int(title="Document number", required=True)
 	ntiid = nti_schema.ValidTextLine(title="NTIID", required=True)
 	title = nti_schema.ValidText(title="Content title", required=True)
 	content = nti_schema.ValidText(title="Text content", required=True)
@@ -354,22 +346,32 @@ class IWhooshBookContent(IBookContent, IReadMapping):
 	intid = schema.Int(title="Alias for docnum", required=True)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
-class IBookSchemaCreator(interface.Interface):
+class IVideoTranscriptContent(interface.Interface):
+	docnum = schema.Int(title="Document number", required=False)
+	containerId = nti_schema.ValidTextLine(title="NTIID of video container", required=True)
+	videoId = nti_schema.ValidTextLine(title="Either the video NTIID or Id", required=True)
+	content = nti_schema.ValidText(title="Text content", required=True)
+	start_timestamp = nti_schema.ValidTextLine(title="Start timestamp", required=True)
+	end_timestamp = nti_schema.ValidTextLine(title="End timestamp", required=True)
+
+class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IReadMapping):
+	score = nti_schema.Number(title="Search score", required=False, default=1.0)
+
+class IContentSchemaCreator(interface.Interface):
 
 	def create():
 		"""
-		return a schema to create a book index
+	 	create a content index schema
 		"""
+
+class IBookSchemaCreator(IContentSchemaCreator):
+	pass
 
 class IWhooshBookSchemaCreator(IBookSchemaCreator):
 	pass
 
-class IVideoTranscriptSchemaCreator(interface.Interface):
-
-	def create():
-		"""
-		return a schema to create a video transcript index
-		"""
+class IVideoTranscriptSchemaCreator(IContentSchemaCreator):
+	pass
 
 class IWhooshVideoTranscriptSchemaCreator(IVideoTranscriptSchemaCreator):
 	pass
@@ -505,28 +507,6 @@ class IStopWords(interface.Interface):
 	def available_languages():
 		"available languages"
 
-# zopyx storage
-
-class ITextIndexNG3(zidx_interfaces.IInjection, zidx_interfaces.IIndexSearch, zidx_interfaces.IStatistics):
-
-	def suggest(term, threshold, prefix):
-		"""
-		return a list of similar words based on the levenshtein distance
-		"""
-
-	def getLexicon():
-		"""
-		return the zopyx.txng3.core.interfaces.ILexicon for this text index
-		"""
-
-	def setLexicon(lexicon):
-		"""
-		set the zopyx.txng3.core.interfaces.ILexicon for this text index
-		"""
-
-class ICatalogTextIndexNG3(rcat_interfaces.ICatalogIndex, zidx_interfaces.IIndexSort, ITextIndexNG3):
-	pass
-
 # Catalog creators marker interfaces
 
 class IRepozeQueryParser(ISearchQueryParser):
@@ -554,95 +534,6 @@ class IPostRepozeCatalogFieldCreator(interface.Interface):
 	pass
 
 class IRepozeSearchQueryValidator(ISearchQueryValidator):
-	pass
-
-# redis
-
-class IRedisStoreService(interface.Interface):
-	queue_name = nti_schema.ValidTextLine(title="Queue name", required=True)
-	sleep_wait_time = nti_schema.Number(title="Message interval", required=True)
-	expiration_time = nti_schema.Number(title="Message redis expiration time", required=True)
-
-	def add(docid, username):
-		"""
-		register an add index operation with redis
-
-		:param docid document id
-		:param username target user
-		"""
-
-	def update(docid, username):
-		"""
-		register a update index operation with redis
-
-		:param docid document id
-		:param username target user
-		"""
-
-	def delete(docid, username):
-		"""
-		register a delete index operation with redis
-
-		:param docid document id
-		:param username target user
-		"""
-
-	def process_messages(msgs):
-		"""
-		process the messages read from redis
-		"""
-
-# cloud search
-
-class ICloudSearchObject(IDict):
-	pass
-
-class ICloudSearchStore(interface.Interface):
-
-	def get_domain(domain_name=None):
-		"""
-		Return the domain with the specified name
-		"""
-
-	def get_document_service(domain_name=None):
-		"""
-		Return a document service for the specified domain
-		"""
-
-	def get_search_service(domain_name=None):
-		"""
-		Return the searchh service for the specified domain
-		"""
-
-	def get_aws_domains():
-		"""
-		Return all aws search domains
-		"""
-
-	def search(*args, **kwargs):
-		"""
-		Perform a CloudSearch search
-		"""
-
-	def add(docid, username, service=None, commit=True):
-		"""
-		Index the specified document in CloudSearch
-		"""
-
-	def delete(docid, username, ommit=True):
-		"""
-		Delete the specified document from CloudSearch
-		"""
-
-	def handle_cs_errors(errors):
-		"""
-		Handle the specififed CloudSearch error meessages
-		"""
-
-class ICloudSearchStoreService(IRedisStoreService):
-	store = schema.Object(ICloudSearchStore, title='CloudSearch store')
-
-class ICloudSearchQueryParser(ISearchQueryParser):
 	pass
 
 # search results

@@ -23,6 +23,7 @@ from nti.chatserver import interfaces as chat_interfaces
 from .common import get_type_name
 from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
+from . import _cloudsearch_interfaces as cloudsearch_interfaces
 
 from .constants import (CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, container_id_fields)
 from .constants import (ngrams_, channel_, content_, keywords_, references_, username_,
@@ -122,7 +123,7 @@ def get_uid(obj):
 	uid = discriminators.get_uid(obj)
 	return unicode(uid)
 
-@interface.implementer(search_interfaces.ICloudSearchObject)
+@interface.implementer(cloudsearch_interfaces.ICloudSearchObject)
 class _AbstractCSObject(dict):
 
 	def __init__(self, src):
@@ -165,6 +166,6 @@ class _CSPost(_AbstractCSObject):
 		self[title_] = discriminators.get_post_title(src)
 
 def to_cloud_object(obj, username):
-	data = search_interfaces.ICloudSearchObject(obj)
+	data = cloudsearch_interfaces.ICloudSearchObject(obj)
 	data[username_] = username
 	return data

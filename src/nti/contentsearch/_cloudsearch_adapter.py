@@ -19,24 +19,24 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from ._search_query import QueryObject
 from ._cloudsearch_query import parse_query
-from . import interfaces as search_interfaces
 from ._search_results import empty_search_results
 from ._search_results import empty_suggest_results
 from ._cloudsearch_index import search_stored_fields
 from ._search_indexmanager import _SearchEntityIndexManager
 from ._search_results import empty_suggest_and_search_results
+from . import _cloudsearch_interfaces as cloudsearch_interfaces
 
 from .constants import (username_, content_, intid_, type_)
 
 @component.adapter(nti_interfaces.IEntity)
-@interface.implementer(search_interfaces.ICloudSearchEntityIndexManager)
+@interface.implementer(cloudsearch_interfaces.ICloudSearchEntityIndexManager)
 class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 
 	_v_store = None
 
 	def _get_cs_store(self):
 		if self._v_store is None:
-			self._v_store = component.getUtility(search_interfaces.ICloudSearchStore)
+			self._v_store = component.getUtility(cloudsearch_interfaces.ICloudSearchStore)
 		return self._v_store
 
 	def _get_search_hit(self, obj):

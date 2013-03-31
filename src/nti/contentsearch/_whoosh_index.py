@@ -26,10 +26,10 @@ from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
 from ._datastructures import CaseInsensitiveDict
 
-from .constants import (channel_, content_, keywords_, references_,
-					 	sharedWith_, ntiid_, last_modified_,
-					 	creator_, containerId_, replacementContent_, tags_,
-						redactionExplanation_, intid_, title_, quick_)
+from .constants import (channel_, content_, keywords_, references_, sharedWith_,
+						ntiid_, last_modified_, videoId_, creator_, containerId_,
+						replacementContent_, redactionExplanation_, tags_, intid_,
+					 	title_, quick_, end_timestamp_, start_timestamp_, docnum_, score_)
 
 class _SearchableContent(object):
 
@@ -113,7 +113,7 @@ class _BookContent(dict):
 	last_modified = property(methodcaller('get', last_modified_))
 	# whoosh specific
 	intid = property(methodcaller('get', intid_))
-	score = property(methodcaller('get', 'score', 1.0))
+	score = property(methodcaller('get', score_, 1.0))
 	# alias
 	docnum = property(methodcaller('get', intid_))
 	containerId = property(methodcaller('get', ntiid_))
@@ -122,6 +122,7 @@ class Book(_SearchableContent):
 
 	@property
 	def _schema(self):
+		# TODO: this should be dynamic
 		return wschs.create_book_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
@@ -141,6 +142,39 @@ class Book(_SearchableContent):
 						 			content=hit[content_],
 						 			last_modified=last_modified)
 				result.append((data, score))
+		return result
+
+@interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
+class _VideoTranscriptContent(dict):
+	docnum = property(methodcaller('get', docnum_))
+	videoId = property(methodcaller('get', videoId_))
+	content = property(methodcaller('get', content_))
+	score = property(methodcaller('get', score_, 1.0))
+	containerId = property(methodcaller('get', containerId_))
+	end_timestamp = property(methodcaller('get', end_timestamp_))
+	start_timestamp = property(methodcaller('get', start_timestamp_))
+
+class VideoTranscript(_SearchableContent):
+
+	@property
+	def _schema(self):
+		# TODO: this should be dynamic
+		return wschs.create_video_transcript_schema()
+
+	def get_objects_from_whoosh_hits(self, search_hits):
+		result = []
+		for hit in search_hits:
+			docnum = hit.docnum
+			score = hit.score or 1.0
+			data = _VideoTranscriptContent(
+								score=score,
+								docnum=docnum,
+								content=hit[content_],
+								videoId=hit[videoId_],
+					 			containerId=hit[containerId_],
+					 			end_timestamp=hit[end_timestamp_],
+					 			start_timestamp=hit[start_timestamp_])
+			result.append((data, score))
 		return result
 
 # ugd content getter

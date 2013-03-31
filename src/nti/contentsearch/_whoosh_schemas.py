@@ -85,7 +85,6 @@ def create_book_schema(name='en'):
 	to_call = component.queryUtility(search_interfaces.IWhooshBookSchemaCreator, name=name) or _DefaultBookSchemaCreator()
 	return to_call.create()
 
-
 # UGD types
 
 def _create_user_indexable_content_schema():
