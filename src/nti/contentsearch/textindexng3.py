@@ -23,8 +23,8 @@ from zopyx.txng3.core.config import DEFAULT_ADDITIONAL_CHARS
 
 from repoze.catalog.indexes.common import CatalogIndex
 
-from . import interfaces as search_interfaces
-		
+from . import zopyxtxng3_interfaces as zopyx_search_interfaces
+
 class _Proxy(object):
 	def __init__(self, fields, data):
 		if  isinstance(data, six.string_types):
@@ -34,12 +34,13 @@ class _Proxy(object):
 		for field in fields or ():
 			self.__dict__[field] = data
 
-@interface.implementer(search_interfaces.ITextIndexNG3)
+@interface.implementer(zopyx_search_interfaces.ITextIndexNG3)
 class TextIndexNG3(object):
-	
+
 	meta_type = 'TextIndexNG3'
-	
-	manage_options = (	{'label' : 'Index', 'action': 'manage_workspace'},
+
+	manage_options = (
+						{'label' : 'Index', 'action': 'manage_workspace'},
 						{'label' : 'Vocabulary', 'action' : 'vocabularyform'},
 						{'label' : 'Test', 'action' : 'queryform'},
 						{'label' : 'Converters', 'action' : 'converters'},
@@ -47,15 +48,17 @@ class TextIndexNG3(object):
 						{'label' : 'Adapters', 'action' : 'adapters'},
 	                 )
 
-	query_options = ('query', 'encoding', 'parser', 'language', 'field',
-					'autoexpand', 'similarity_ratio',
-					'ranking', 'ranking_maxhits', 'thesaurus',
-					'search_all_fields')
-	
+	query_options = (
+						'query', 'encoding', 'parser', 'language', 'field',
+						'autoexpand', 'similarity_ratio',
+						'ranking', 'ranking_maxhits', 'thesaurus',
+						'search_all_fields'
+					)
+
 	def __init__(self, iden, use_proxy=False, *args, **kwargs):
 		self.id = iden
 		self.use_proxy = use_proxy
-		self.index = Index(	fields=kwargs.get('fields', [iden]),
+		self.index = Index(fields=kwargs.get('fields', [iden]),
 							lexicon=kwargs.get('lexicon', DEFAULT_LEXICON),
 							storage=kwargs.get('storage', 'txng.storages.term_frequencies'),
 							splitter=kwargs.get('splitter', 'txng.splitters.default'),
@@ -77,7 +80,7 @@ class TextIndexNG3(object):
 
 	def clear(self):
 		self.index.clear()
-		
+
 	def index_doc(self, docid, text):
 		if self.use_proxy:
 			if not text or isinstance(text, six.string_types):
@@ -88,7 +91,7 @@ class TextIndexNG3(object):
 		self.unindex_object(docid)
 
 	reindex_doc = index_doc
-	
+
 	def documentCount(self):
 		result = []
 		for field in self.fields:
@@ -96,14 +99,14 @@ class TextIndexNG3(object):
 			result.append(len(s.getDocIds()))
 		return max(result)
 	document_count = documentCount
-	
+
 	def wordCount(self):
 		return self.index_size()
 	word_count = wordCount
-	
-	def apply(self, query, *args, **kwargs):		
-		results = LFBucket() # makes it compatible w/ repoze.catalog
-		query = unicode(query or '')	
+
+	def apply(self, query, *args, **kwargs):
+		results = LFBucket()  # makes it compatible w/ repoze.catalog
+		query = unicode(query or '')
 		rs = self.index.search(query, **kwargs)
 		if rs:
 			ranked_results = rs.ranked_results
@@ -112,24 +115,24 @@ class TextIndexNG3(object):
 					results[docid] = rank
 			else:
 				for docid in rs.docids:
-					results[docid] = 1.0			
+					results[docid] = 1.0
 		return results
-		
-	def suggest(self, term, threshold=0.75, prefix=-1): 
+
+	def suggest(self, term, threshold=0.75, prefix= -1):
 		lexicon = self.index.getLexicon()
-		return lexicon.getSimiliarWords(term=term, threshold=threshold, common_length=prefix) 
-	
+		return lexicon.getSimiliarWords(term=term, threshold=threshold, common_length=prefix)
+
 	def index_object(self, docid, obj, *args, **kwargs):
 		result = self.index.index_object(obj, docid)
 		return int(result)
-	
+
 	def unindex_object(self, docid):
 		self.index.unindex_object(docid)
 		return 1
-	
+
 	def index_size(self):
 		return len(self.index.getLexicon())
-	
+
 	def get_docids(self):
 		result = None
 		for i, field in enumerate(self.fields):
@@ -143,26 +146,26 @@ class TextIndexNG3(object):
 			else:
 				result.update(docs)
 		return result or ()
-	
+
 	def getLexicon(self):
 		return self.index.getLexicon()
-	
+
 	def setLexicon(self, lexicon):
 		assert lexicon is not None and ILexicon.providedBy(lexicon)
 		self.index._lexicon = lexicon
-	
+
 	@property
 	def title(self):
 		return self.id
-	
+
 	@property
 	def fields(self):
 		return self.index.fields
-	
+
 	def get_index_source_names(self):
 		return self.fields
 
-@interface.implementer(search_interfaces.ICatalogTextIndexNG3)
+@interface.implementer(zopyx_search_interfaces.ICatalogTextIndexNG3)
 class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	""" 
 	Full-text index.
@@ -172,48 +175,48 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	- Eq
 	- NotEq
 	"""
-	
+
 	family = BTrees.family64
-	
+
 	def __init__(self, field, discriminator=None, *args, **kwargs):
-		
+
 		if not isinstance(field, six.string_types):
 			raise ValueError('index/catalog field must be a string')
-		
+
 		discriminator = discriminator or field
 		if not callable(discriminator) and not isinstance(discriminator, six.string_types):
 			raise ValueError('discriminator value must be callable or a string')
-		
+
 		use_proxy = True
 		if 'use_proxy' in kwargs:
 			use_proxy = bool(kwargs.pop('use_proxy'))
-			
+
 		self.discriminator = discriminator
 		self._not_indexed = self.family.IF.Set()
 		TextIndexNG3.__init__(self, field, use_proxy, *args, **kwargs)
 
 	# ---------------
-	
+
 	@property
 	def field(self):
 		return self.fields[0]
-	
-	def suggest(self, term, threshold=0.75, prefix=-1): 
+
+	def suggest(self, term, threshold=0.75, prefix= -1):
 		words = TextIndexNG3.suggest(self, term, threshold, prefix)
 		return sorted(words, key=lambda x: x[1], reverse=True)
-	
+
 	# ---------------
-	
+
 	def sort(self, result, reverse=False, limit=None, sort_type=None):
 		if not result:
 			return result
-	
+
 		if not hasattr(result, 'items'):
 			raise TypeError(
 					"Unable to sort by relevance because the search "
 					"result does not contain weights. To produce a weighted "
 					"result, include a text search in the query.")
-	
+
 		items = [(weight, docid) for (docid, weight) in result.items()]
 		items.sort(reverse=not reverse)
 		result = [docid for (weight, docid) in items]
@@ -226,5 +229,5 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 
 	def applyContains(self, value, *args, **kwargs):
 		return self.apply(value, *args, **kwargs)
-	
+
 	applyEq = applyContains

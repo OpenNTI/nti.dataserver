@@ -7,10 +7,9 @@ from zope import interface
 from zope import component
 
 from .common import normalize_type_name
-from . import interfaces as search_interfaces
-from .constants import ugd_indexable_type_names
-from .constants import (username_, content_, type_, ngrams_, tags_, title_, redaction_explanation_, replacement_content_,
-						invalid_type_)
+from . import _cloudsearch_interfaces as cloudsearch_interfaces
+from .constants import (username_, content_, type_, ngrams_, tags_, title_, invalid_type_,
+						redaction_explanation_, replacement_content_, ugd_indexable_type_names)
 
 def adapt_search_on_types(searchOn=None):
 	if searchOn:
@@ -20,7 +19,7 @@ def adapt_search_on_types(searchOn=None):
 		result = ()
 	return result
 
-@interface.implementer(search_interfaces.ICloudSearchQueryParser)
+@interface.implementer(cloudsearch_interfaces.ICloudSearchQueryParser)
 class _DefaultCloudSearchQueryParser(object):
 
 	def _get_search_fields(self, qo):
@@ -57,6 +56,6 @@ class _DefaultCloudSearchQueryParser(object):
 		return result
 
 def parse_query(qo, username=None):
-	parser = component.getUtility(search_interfaces.ICloudSearchQueryParser)
+	parser = component.getUtility(cloudsearch_interfaces.ICloudSearchQueryParser)
 	result = parser.parse(qo, username)
 	return result

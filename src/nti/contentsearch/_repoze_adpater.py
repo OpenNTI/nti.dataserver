@@ -20,21 +20,20 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.contentprocessing import rank_words
 
 from .constants import content_
-from .common import get_type_name
-from .common import sort_search_types
 from ._search_query import QueryObject
 from ._repoze_query import parse_query
 from ._repoze_index import create_catalog
 from . import interfaces as search_interfaces
-from .common import normalize_type_name as _ntm
 from .constants import ugd_indexable_type_names
 from ._search_results import empty_search_results
 from ._search_results import empty_suggest_results
 from ._search_indexmanager import _SearchEntityIndexManager
 from ._search_results import empty_suggest_and_search_results
+from . import zopyxtxng3_interfaces as zopyx_search_interfaces
+from .common import (get_type_name, sort_search_types, normalize_type_name)
 
 @component.adapter(nti_interfaces.IEntity)
-@interface.implementer( search_interfaces.IRepozeEntityIndexManager)
+@interface.implementer(search_interfaces.IRepozeEntityIndexManager)
 class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 
 	def add_catalog(self, catalog, type_name):
@@ -62,12 +61,12 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 	def get_docids(self):
 		result = set()
 		for catalog in self.get_catalogs():
-			fld = list(catalog.values())[0] # get first field as pivot
-			result.update(fld.docids()) # use CatalogField.docids()
+			fld = list(catalog.values())[0]  # get first field as pivot
+			result.update(fld.docids())  # use CatalogField.docids()
 		return result
 
 	def get_create_catalog(self, data, type_name=None, create=True):
-		type_name = _ntm(type_name or get_type_name(data))
+		type_name = normalize_type_name(type_name or get_type_name(data))
 		catalog = self.get_catalog(type_name)
 		if not catalog and create:
 			catalog = create_catalog(type_name)
@@ -77,10 +76,10 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 
 	def _valid_type(self, type_name, catnames):
 		return type_name in catnames and type_name in ugd_indexable_type_names
-	
+
 	def _adapt_search_on_types(self, searchOn=()):
-		catnames = self.get_catalog_names()
-		result = [_ntm(x) for x in searchOn if self._valid_type(x, catnames)] if searchOn else catnames
+		cns = self.get_catalog_names()
+		result = [normalize_type_name(x) for x in searchOn if self._valid_type(x, cns)] if searchOn else cns
 		result = sort_search_types(result)
 		return result
 
@@ -130,7 +129,7 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 		for type_name in searchOn:
 			catalog = self.get_catalog(type_name)
 			textfield = catalog.get(content_, None)
-			if search_interfaces.ICatalogTextIndexNG3.providedBy(textfield):
+			if zopyx_search_interfaces.ICatalogTextIndexNG3.providedBy(textfield):
 				words_t = textfield.suggest(term=qo.term, threshold=threshold, prefix=prefix)
 				results.add(map(lambda t: t[0], words_t))
 

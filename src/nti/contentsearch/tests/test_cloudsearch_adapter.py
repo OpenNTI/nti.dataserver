@@ -24,7 +24,7 @@ from .. import _cloudsearch_store
 from .. import _cloudsearch_index
 from .. import _cloudsearch_query
 from .. import _cloudsearch_adapter
-from .. import interfaces as search_interfaces
+from .. import _cloudsearch_interfaces as cloudsearch_interfaces
 from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -53,31 +53,31 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 
 		component.provideAdapter(_cloudsearch_adapter._CloudSearchEntityIndexManagerFactory,
 								 adapts=[nti_interfaces.IEntity],
-								 provides=search_interfaces.ICloudSearchEntityIndexManager)
+								 provides=cloudsearch_interfaces.ICloudSearchEntityIndexManager)
 
 		component.provideAdapter(_cloudsearch_index._CSNote,
 								 adapts=[nti_interfaces.INote],
-								 provides=search_interfaces.ICloudSearchObject)
+								 provides=cloudsearch_interfaces.ICloudSearchObject)
 
 	def _register_zcml_cs(self):
 		self.aws_op_delay = 5
 		self._register_zcml()
 
 		parser = _cloudsearch_query._DefaultCloudSearchQueryParser()
-		component.provideUtility(parser, provides=search_interfaces.ICloudSearchQueryParser)
+		component.provideUtility(parser, provides=cloudsearch_interfaces.ICloudSearchQueryParser)
 
 		self.store = _cloudsearch_store._create_cloudsearch_store()
-		component.provideUtility(self.store, provides=search_interfaces.ICloudSearchStore)
+		component.provideUtility(self.store, provides=cloudsearch_interfaces.ICloudSearchStore)
 
 	def _register_zcml_mock(self):
 		self.aws_op_delay = 0.4
 		self._register_zcml()
 
 		parser = MockCloundSearchQueryParser()
-		component.provideUtility(parser, provides=search_interfaces.ICloudSearchQueryParser)
+		component.provideUtility(parser, provides=cloudsearch_interfaces.ICloudSearchQueryParser)
 
 		self.store = MockCloudSearch()
-		component.provideUtility(self.store, provides=search_interfaces.ICloudSearchStore)
+		component.provideUtility(self.store, provides=cloudsearch_interfaces.ICloudSearchStore)
 
 	def setUp(self):
 		super(TestCloudSearchAdapter, self).setUp()
@@ -105,7 +105,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 	def index_notes(self, usr, do_assert=True):
 		result = []
 		notes = self.add_notes(usr=usr)
-		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
+		cim = cloudsearch_interfaces.ICloudSearchEntityIndexManager(usr)
 		for note in notes:
 			resp = cim.index_content(note)
 			if do_assert:
@@ -125,7 +125,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_query_notes(self):
 		usr, _, _ = self.add_user_index_notes()
-		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
+		cim = cloudsearch_interfaces.ICloudSearchEntityIndexManager(usr)
 
 		results = cim.search("shield")
 		hits = toExternalObject (results)
@@ -150,7 +150,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_update_note(self):
 		usr, notes, _ = self.add_user_index_notes()
-		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
+		cim = cloudsearch_interfaces.ICloudSearchEntityIndexManager(usr)
 
 		note = notes[5]
 		note.body = [u'Blow It Away']
@@ -168,7 +168,7 @@ class TestCloudSearchAdapter(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_delete_note(self):
 		usr, notes, _ = self.add_user_index_notes()
-		cim = search_interfaces.ICloudSearchEntityIndexManager(usr)
+		cim = cloudsearch_interfaces.ICloudSearchEntityIndexManager(usr)
 		note = notes[5]
 		cim.delete_content(note)
 		time.sleep(self.aws_op_delay)
