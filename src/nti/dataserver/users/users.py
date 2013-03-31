@@ -25,7 +25,7 @@ from ZODB.interfaces import IConnection
 from zope.deprecation import deprecated, deprecate
 from zope.component.factory import Factory
 from zope.location import interfaces as loc_interfaces
-
+from zope.cachedescriptors.property import cachedIn
 import zope.intid
 
 
@@ -158,7 +158,7 @@ class Principal(Entity,sharing.SharingSourceMixin):
 	password = property(_get_password,_set_password,_del_password)
 
 	NTIID_TYPE = None
-	NTIID = property(named_entity_ntiid)
+	NTIID = cachedIn('_v_ntiid')(named_entity_ntiid)
 
 if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 	# For use by nti_run_integration_tests, nti_run_general_purpose_tests
@@ -178,7 +178,7 @@ class Community(Entity,sharing.DynamicSharingTargetMixin):
 	get_community = Entity.get_entity
 
 	NTIID_TYPE = ntiids.TYPE_NAMED_ENTITY_COMMUNITY
-	NTIID = property(named_entity_ntiid)
+	NTIID = cachedIn('_v_ntiid')(named_entity_ntiid)
 
 	# We override these methods for space efficiency.
 	# TODO: Should we track membership here? If so, membership
@@ -477,7 +477,6 @@ class User(Principal):
 		return "Users"
 
 	NTIID_TYPE = ntiids.TYPE_NAMED_ENTITY_USER
-	NTIID = property(named_entity_ntiid)
 
 	def update_last_login_time(self):
 		self.lastLoginTime = time.time()

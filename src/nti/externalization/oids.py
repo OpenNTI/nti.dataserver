@@ -41,13 +41,13 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 	except AttributeError:
 		pass
 
-	self = removeAllProxies( self )
 	try:
 		# See comments in to_external_ntiid_oid
 		return getattr( self, '_v_to_external_oid' )
 	except AttributeError:
 		pass
 
+	self = removeAllProxies( self ) # because if it was proxied, we should still read the right thing above; this saves time
 	try:
 		oid = self._p_oid
 	except AttributeError:
