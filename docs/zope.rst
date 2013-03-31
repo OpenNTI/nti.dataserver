@@ -199,7 +199,7 @@ Fields
 ------
 
 .. automodule:: zope.schema._bootstrapfields
-.. automodule:: zope.schema._fields
+.. automodule:: zope.schema._field
 .. automodule:: zope.schema.fieldproperty
 
 Vocabulary

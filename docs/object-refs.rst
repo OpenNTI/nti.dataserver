@@ -3,4 +3,4 @@
 ========================================
 
 
-.. automodule:: nti.dataserver.intid_subscribers
+.. automodule:: nti.intid.subscribers

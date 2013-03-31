@@ -33,7 +33,6 @@ Friends Lists and Sharing
 
 .. automodule:: nti.dataserver.datastructures
 
-.. automodule:: nti.dataserver.library
 .. automodule:: nti.dataserver.sessions
 .. automodule:: nti.dataserver.activitystream
 .. automodule:: nti.dataserver.activitystream_change
