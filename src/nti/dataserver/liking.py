@@ -26,6 +26,7 @@ from contentratings.storage import UserRatingStorage
 from nti.dataserver import interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.oids import to_external_oid
 
 #: Category name for liking; use this as the name of the adapter
 LIKE_CAT_NAME = 'likes'
@@ -100,7 +101,7 @@ def _unrate_object( context, username, cat_name ):
 		# NOTE: The default implementation of a category does not
 		# fire an event on unrating, so we do.
 		# Must include the rating so that the listeners can know who did it
-		notify( contentratings.events.ObjectRatedEvent(context, old_rating, cat_name ) )
+		notify( contentratings.events.ObjectRatedEvent(context, old_rating, cat_name) )
 		return rating
 
 def _rates_object( context, username, cat_name, safe=False ):
@@ -108,13 +109,31 @@ def _rates_object( context, username, cat_name, safe=False ):
 	if rating and rating.userRating( username ) is not None:
 		return rating
 
+def _rate_count_cache_key( context, cat_name ):
+	try:
+		return (to_external_oid(context) + '/@@' + cat_name + '/count' ).encode('utf-8')
+	except TypeError: # to_external_oid throws if context not saved
+		return None
+
 def _rate_count( context, cat_name ):
 	"""
 	Return the number of times this object has been rated the particular way.
 	Accepts any object, not just those that can be rated.
 	"""
+	key = _rate_count_cache_key( context, cat_name ) # TODO: A decorator for this
+	if key:
+		cache = component.queryUtility(interfaces.IMemcacheClient)
+		if cache:
+			cached = cache.get( key )
+			if cached is not None:
+				return cached
+
 	ratings = _lookup_like_rating_for_read( context, cat_name, safe=True )
-	return ratings.numberOfRatings if ratings else 0
+	result = ratings.numberOfRatings if ratings else 0
+
+	if key and cache:
+		cache.set( key, result )
+	return result
 
 def like_object( context, username ):
 	"""
@@ -141,6 +160,12 @@ def unlike_object( context, username ):
 	"""
 	return _unrate_object( context, username, LIKE_CAT_NAME )
 
+def _likes_object_cache_key( context, username ):
+	# We can only do this for saved objects (mostly a test problem)
+	try:
+		return (to_external_oid(context) + '/@@' + LIKE_CAT_NAME + '/' + username).encode('utf-8')
+	except TypeError: # to_external_oid fails of the object not saved
+		return None
 
 def likes_object( context, username ):
 	"""
@@ -151,7 +176,18 @@ def likes_object( context, username ):
 		empty.
 	:return: An object with a boolean value; if the user likes the object, the value is True-y.
 	"""
-	return _rates_object( context, username, LIKE_CAT_NAME )
+	key = _likes_object_cache_key( context, username )
+	if key:
+		cache = component.queryUtility(interfaces.IMemcacheClient)
+		if cache:
+			cached = cache.get( key )
+			if cached is not None:
+				return cached
+
+	result = _rates_object( context, username, LIKE_CAT_NAME )
+	if key and cache:
+		cache.set( key, result or False ) # distinguish None from False
+	return result
 
 def like_count( context ):
 	"""
@@ -223,7 +259,7 @@ from zope.app.container.contained import Contained
 from persistent import Persistent
 import BTrees
 from BTrees.Length import Length
-from contentratings.rating import Rating
+from contentratings.rating import NPRating
 
 
 @interface.implementer(contentratings.interfaces.IUserRating,contentratings.interfaces.IRatingStorage)
@@ -257,25 +293,25 @@ class _BinaryUserRatings(Contained, Persistent):
 			self._ratings.add( username )
 			self._length.change(1)
 
-		return Rating( 1, username )
+		return NPRating( 1, username )
 
 	def userRating(self, username=None):
 		"""Retreive the rating for the specified user, which must be provided."""
 		if not username: raise ValueError( "Must give username" ) #pragma: no cover
 		if username in self._ratings:
-			return Rating( 1, username )
+			return NPRating( 1, username )
 
 	def remove_rating(self, username):
 		"""Remove the rating for a given user"""
 		self._ratings.remove(username)
 		self._length.change(-1)
-		return Rating( 0, username )
+		return NPRating( 0, username )
 
 	def all_user_ratings(self, include_anon=False):
 		"""
 		:param bool include_anon: Ignored.
 		"""
-		return (Rating( 1, username) for username in self.all_raters)
+		return (NPRating( 1, username) for username in self.all_raters)
 
 	@property
 	def all_raters(self):
@@ -301,8 +337,8 @@ class _BinaryUserRatings(Contained, Persistent):
 		# But it is a validated part of the interface, so we can't raise
 		return None
 
-@component.adapter( interfaces.ILastModified, contentratings.interfaces.IObjectRatedEvent )
-def update_last_mod_on_rated( modified_object, event ):
+
+def update_last_mod( modified_object, event ):
 	"""
 	When an object is rated (or unrated), its last modified time, and
 	that of its parent, should be updated.
@@ -319,3 +355,18 @@ def update_last_mod_on_rated( modified_object, event ):
 	except AttributeError:
 		# not contained or not contained in a ILastModified container
 		pass
+
+@component.adapter( interfaces.ILastModified, contentratings.interfaces.IObjectRatedEvent )
+def update_last_mod_on_rated( modified_object, event ):
+
+	update_last_mod( modified_object, event )
+	# Clear the caches for it
+	cache = component.queryUtility(interfaces.IMemcacheClient)
+	if cache:
+		try:
+			cache.delete( _rate_count_cache_key( modified_object, event.category ) )
+
+			if event.category == LIKE_CAT_NAME:
+				cache.delete( _likes_object_cache_key( modified_object, event.rating.userid ) )
+		except cache.MemcachedKeyNoneError: # not saved yet
+			pass
