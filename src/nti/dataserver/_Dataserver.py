@@ -94,6 +94,9 @@ class MinimalDataserver(object):
 
 		self._open_dbs()
 
+		self.memcache = self._setup_cache()
+		self.other_closeables.append( (self.memcache, self.memcache.disconnect_all) )
+
 		for deprecated in ('_setup_storage', '_setup_launch_zeo', '_setup_storages'):
 			meth = getattr( self, deprecated, None )
 			if meth is not None: # pragma: no cover
@@ -156,6 +159,37 @@ class MinimalDataserver(object):
 		# TODO: Probably shouldn't be doing this
 		component.getGlobalSiteManager().registerUtility( client, interfaces.IRedisClient )
 		return client
+
+	def _setup_cache( self ):
+		"""
+		Creates and returns a memcache instance to use. If we are
+		using RelStorage, we piggy back of its settings so we don't have to configure
+		twice.
+		""" # otherwise, our fallback now is to the local cache.
+		cache = None
+		try:
+			cache = self.db.storage.base._cache.clients_global_first[0]
+			if type(cache).__name__ != 'Client': # no cache servers configured (the local client could still be there)
+				cache = None
+		except AttributeError:
+			pass
+
+		if cache is None:
+			# Import the python implementation
+			import memcache
+			# use the default local server; if one is not available
+			# then nothing happens (the instance is constructed but does nothing)
+			# TODO: Mock this in tests
+			cache = memcache.Client(['127.0.0.1:11211'])
+
+		interface.alsoProvides( cache, interfaces.IMemcacheClient )
+		import pickle
+		cache.pickleProtocol = pickle.HIGHEST_PROTOCOL
+		component.getGlobalSiteManager().registerUtility( cache, interfaces.IMemcacheClient )
+		# There is no need to explicitly close this UDP-based service. (?)
+		# It is also not necessary to re-open it on a fork.
+		return cache
+
 
 	@property
 	def dataserver_folder(self):

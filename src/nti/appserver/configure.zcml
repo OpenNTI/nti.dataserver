@@ -177,6 +177,7 @@
 	<subscriber handler=".account_creation_views.request_profile_update_on_user_upgrade" />
 	<subscriber handler=".account_creation_views.accept_invitations_on_user_creation" />
 	<subscriber handler=".account_creation_views.link_removed_on_user" />
+	<subscriber handler=".ugd_query_views._invalidate_parent_reply_caches" />
 	<!-- Logon -->
 	<include package="." file="configure_logon.zcml" />
 
