@@ -120,10 +120,9 @@ class _BookContent(dict):
 
 class Book(_SearchableContent):
 
-	@property
-	def _schema(self):
-		# TODO: this should be dynamic
-		return wschs.create_book_schema()
+	def __init__(self, schema=None):
+		schema = schema or wschs.create_book_schema()
+		self._schema = schema
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
@@ -156,10 +155,9 @@ class _VideoTranscriptContent(dict):
 
 class VideoTranscript(_SearchableContent):
 
-	@property
-	def _schema(self):
-		# TODO: this should be dynamic
-		return wschs.create_video_transcript_schema()
+	def __init__(self, schema=None):
+		schema = schema or wschs.create_video_transcript_schema()
+		self._schema = schema
 
 	def get_objects_from_whoosh_hits(self, search_hits):
 		result = []
