@@ -187,7 +187,7 @@ setup(
 		'html5lib == 0.95',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
 		'logilab-common >= 0.59.0',
-		'lxml >= 3.1.0',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
+		'lxml >= 3.1.1',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.7',  # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
@@ -230,11 +230,12 @@ setup(
 		'repoze.sendmail >= 4.0b2',  # trunk has some good binary changes
 		'repoze.who >= 2.1',  #
 		'repoze.zodbconn >= 0.14',
-		 # Requests: http for humans. Requests 1.1.x is depended on by httpie 0.4.
+		 # Requests: http for humans. Requests >= 1.0.x is depended on by httpie 0.4.
 		 # We use just the generic part of the API and work back to 0.14.
 		 # stripe also depends on just the minimal part of the api (their setup.py doesn't
 		 # give a version) (?). grequests 0.1.0 is not compatible with this.
-		'requests >= 1.1.0',
+		 # If something used hooks, a change from 1.1 to 1.2 might break it; no initial issues seen
+		'requests >= 1.2.0',
 		# 'scss >= 0.8.72', # we no longer use
 		'setproctitle >= 1.1.7',  # used by gunicorn
 		'setuptools >= 0.6c11',
@@ -378,7 +379,7 @@ setup(
 			'repoze.sphinx.autointerface >= 0.7.1',
 			'rope >= 0.9.4',  # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2',  # IDE helper for rope
-			'sphinx >= 1.1.3',  # Narrative docs
+			'sphinx >= 1.2b1',  # Narrative docs
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.9.1',
