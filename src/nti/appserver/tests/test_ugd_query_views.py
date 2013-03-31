@@ -586,7 +586,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 		path = top_replies_href
 		res = testapp.get( path, extra_environ=self._make_extra_environ() )
 		# Accessing it this way was cache friendly
-		assert_that( res.cache_control, has_property( 'max_age', 3600 ) )
+		assert_that( res.cache_control, has_property( 'max_age', 0 ) ) # temp disabled
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items', contains( has_entry( 'ID', reply_n_id ) ) ) )
 

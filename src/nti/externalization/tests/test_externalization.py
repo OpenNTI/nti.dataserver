@@ -73,6 +73,7 @@ class TestFunctions(ConfiguringTestBase):
 		db = T()
 		db.database_name = 'foo'
 		t.db = lambda: db
+		del t._v_to_external_oid
 		assert_that( toExternalOID( t ), is_( '0x01:666f6f' ) )
 
 		assert_that( fromExternalOID( '0x01:666f6f' )[0], is_( '\x00\x00\x00\x00\x00\00\x00\x01' ) )

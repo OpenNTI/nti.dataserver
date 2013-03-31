@@ -93,6 +93,26 @@ class IRedisClient(interface.Interface):
 	"""
 	pass
 
+class IMemcacheClient(interface.Interface):
+	"""
+	A very poor abstraction of a :class:`memcache.Client` client.
+	In general, this should only be used in the lowest low level code and
+	abstractions should be built on top of this.
+
+	When creating keys to use in the client, try to use traversal-friendly
+	keys, the same sorts of keys that can be found in the ZODB: unicode names
+	separated by the ``/`` character.
+
+	The values you set must be picklable.
+	"""
+
+	def get(key):
+		"Return the unpickled value, or None"
+
+	def set(key,value):
+		"Pickle the value and store it, returning True on success."
+
+
 class InappropriateSiteError(LookupError):
 	pass
 class SiteNotInstalledError(AssertionError):

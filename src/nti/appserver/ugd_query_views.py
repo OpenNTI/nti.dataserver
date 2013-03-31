@@ -19,6 +19,7 @@ import functools
 from zope import interface
 from zope import component
 from zope.proxy import ProxyBase
+from zope.intid.interfaces import IIntIdAddedEvent
 from ZODB.POSException import POSKeyError
 
 from pyramid.view import view_config
@@ -385,6 +386,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 	#: in data shared with the cross user (because it may not be visible to the
 	#: remote user)
 	_force_shared_objects = False
+	_force_apply_security = False
 
 	#: The user object whose data we are requesting. This is not
 	#: necessarily the same as the authenticated remote user;
@@ -713,7 +715,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		# Apply cross-user security if needed
 		# Do this after all the filtering because it's the most expensive
 		# filter of all
-		needs_security = False
+		needs_security = self._force_apply_security
 		if self.remoteUser != self.user:
 			needs_security = True
 
@@ -996,6 +998,20 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 
 		super(RepliesLinkDecorator,self).decorateExternalMapping( context, mapping, extra_elements=extra_elements )
 
+@component.adapter(nti_interfaces.INote, IIntIdAddedEvent)
+def _invalidate_parent_reply_caches( note, event ):
+	""" Invalidate any existing @@replies caches.
+	This is only necessary on adding objects, as we cache OIDs of the children.
+	If they get deleted, the OID won't resolve. If they get modified, we
+	get the modified object.
+	"""
+	cache = component.getUtility(nti_interfaces.IMemcacheClient)
+	for parent in (note.inReplyTo,) + tuple(note.references):
+		if parent is None:
+			continue
+		key = (to_external_oid(parent) + '/@@' + REL_REPLIES).encode('utf-8')
+		logger.debug( "Invalidating %s", key )
+		cache.delete( key )
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
 from .interfaces import IETagCachedUGDExternalCollection
@@ -1016,18 +1032,44 @@ def replies_view(request):
 	"""
 
 	# First collect the objects
-
 	the_user = users.User.get_user( psec.authenticated_userid( request ) )
-	objs = _UGDView.do_getObjects( the_user, request.context.containerId, the_user,
-								   allow_empty=True )
+	root_note = request.context
+
+	result_iface = IUGDExternalCollection
+	# We cache the complete list of replies because this is easy to invalidate
+	# we rely on _sort_filter_batch_result for security
+	key = (to_external_oid( root_note ) + '/@@' + REL_REPLIES).encode('utf-8')
+	cache = component.getUtility(nti_interfaces.IMemcacheClient)
+	if request.subpath:
+		#result_iface = IETagCachedUGDExternalCollection
+		# temporarily disabled, see forums/views
+		pass
+
+	reply_oids = cache.get( key )
+	if reply_oids is not None:
+		logger.debug('Cache hit for %s', key)
+		oid_resolver = component.getUtility(nti_interfaces.IOIDResolver)
+		replies = [oid_resolver.get_object_by_oid(x, ignore_creator=True) for x in reply_oids]
+		objs = (replies,)
+		do_filter = False
+	else:
+		objs = _UGDView.do_getObjects( the_user, request.context.containerId, the_user,
+									   allow_empty=True )
+		do_filter = True
 
 	result = lists_and_dicts_to_ext_collection( objs,
-												result_iface=(IETagCachedUGDExternalCollection if request.subpath else IUGDExternalCollection),
+												result_iface=result_iface,
 												ignore_broken=True )
 
-	def test(x):
-		return request.context in getattr( x, 'references', () ) or request.context == getattr( x, 'inReplyTo', None )
-	result['Items'] = filter( test, result['Items'] )
+	if do_filter:
+		def test(x):
+			return request.context in getattr( x, 'references', () ) or request.context == getattr( x, 'inReplyTo', None )
+		result['Items'] = filter( test, result['Items'] )
+
+		external_oids = [to_external_oid(x) for x in result['Items']]
+		cache.set( key, external_oids )
 
 	# Not all the params make sense, but batching does
-	return _UGDView( request, the_user, request.context.containerId )._sort_filter_batch_result( result )
+	view = _UGDView( request, the_user, root_note.containerId )
+	view._force_apply_security = True
+	return view._sort_filter_batch_result( result )

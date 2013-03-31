@@ -41,47 +41,63 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 	except AttributeError:
 		pass
 
+	self = removeAllProxies( self )
+	try:
+		# See comments in to_external_ntiid_oid
+		return getattr( self, '_v_to_external_oid' )
+	except AttributeError:
+		pass
+
 	try:
 		oid = self._p_oid
 	except AttributeError:
 		return default
 
 	jar = None
-	if not oid and add_to_connection:
-		try:
-			jar = IConnection(self)
-			jar.add( self )
-			oid = self._p_oid
-		except Exception as e:
-			pass
+	if not oid:
+		if add_to_connection:
+			try:
+				jar = IConnection(self)
+				jar.add( self )
+				oid = self._p_oid
+			except Exception as e:
+				pass
+		else:
+			return default
 
-	if oid:
-		# The object ID is defined to be 8 charecters long. It gets
-		# padded with null chars to get to that length; we strip
-		# those out. Finally, it probably has chars that
-		# aren't legal in UTF or ASCII, so we go to hex and prepend
-		# a flag, '0x'
-		oid = oid.lstrip(b'\x00')
-		oid = b'0x' + oid.encode('hex')
-		try:
-			jar = jar or self._p_jar
-		except AttributeError:
-			pass
 
-		if jar:
-			db_name = jar.db().database_name
-			oid = oid + b':' + db_name.encode( 'hex' )
+	# The object ID is defined to be 8 charecters long. It gets
+	# padded with null chars to get to that length; we strip
+	# those out. Finally, it probably has chars that
+	# aren't legal in UTF or ASCII, so we go to hex and prepend
+	# a flag, '0x'
+	oid = oid.lstrip(b'\x00')
+	oid = b'0x' + oid.encode('hex')
+	try:
+		jar = jar or self._p_jar
+	except AttributeError:
+		pass
 
-		intutility = component.queryUtility( zc_intid.IIntIds )
-		if intutility is not None:
-			intid = intutility.queryId( self )
-			if not intid and add_to_intids:
-				intid = intutility.register( self )
-			if intid is not None:
-				if not jar:
-					oid = oid + b':' # Ensure intid is always the third part
-				oid = oid + b':' + integer_strings.to_external_string( intid )
-	return oid or default
+	if jar:
+		db_name = jar.db().database_name
+		oid = oid + b':' + db_name.encode( 'hex' )
+
+	intutility = component.queryUtility( zc_intid.IIntIds )
+	if intutility is not None:
+		intid = intutility.queryId( self )
+		if not intid and add_to_intids:
+			intid = intutility.register( self )
+		if intid is not None:
+			if not jar:
+				oid = oid + b':' # Ensure intid is always the third part
+			oid = oid + b':' + integer_strings.to_external_string( intid )
+
+	try:
+		setattr( self, '_v_to_external_oid', oid )
+	except AttributeError:
+		pass
+
+	return oid
 
 to_external_oid = toExternalOID
 
