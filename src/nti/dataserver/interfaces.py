@@ -317,7 +317,7 @@ class IAnchoredRepresentation(IContained):
 	container.
 	"""
 	applicableRange = Object(rng_interfaces.IContentRangeDescription,
-							 defaultFactory=ContentRangeDescription,
+							 default=ContentRangeDescription(),
 							 title="The range of content to which this representation applies or is anchored.",
 							 description="The default is an empty, unplaced anchor.")
 
@@ -896,14 +896,14 @@ class IReadableShared(interface.Interface):
 
 	# TODO: How to deprecate this property?
 # 	@deprecate("These names are not properly global")
-	flattenedSharingTargetNames = Set(
+	flattenedSharingTargetNames = UniqueIterable(
 		title="The usernames of all the users (including communities, etc) this obj is shared with.",
 		description=" This is a convenience property for reporting the usernames of all "
 			" entities this object is shared with, directly or indirectly. Note that the usernames reported "
 			" here are not necessarily globally unique and may not be resolvable as such.",
 		value_type=DecodingValidTextLine(title="The username"),
 		required=False,
-		defaultFactory=set,
+		default=frozenset(),
 		readonly=True)
 
 
@@ -977,11 +977,11 @@ class IShareableModeledContent(IShareable, IModeledContent):
 	# This is the name of the property we accept externally and update from. If
 	# its not defined in an interface, we can't associate an ObjectModifiedEvent
 	# with the correct interface. See nti.externalization.internalization.update_from_external_object
-	sharedWith = Set(
+	sharedWith = UniqueIterable(
 		title="An alias for `flattenedSharingTargetNames`, taking externalization of local usernames into account",
 		value_type=DecodingValidTextLine(title="The username or NTIID"),
 		required=False,
-		defaultFactory=set)
+		default=frozenset())
 
 class IFriendsList(IModeledContent, IEntity):
 	"""
