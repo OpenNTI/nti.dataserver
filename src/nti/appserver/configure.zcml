@@ -62,10 +62,14 @@
 	<adapter factory=".pyramid_renderers._LongerCachedUGDExternalCollectionCacheController" />
 	<adapter factory=".pyramid_renderers._UserActivityViewCacheController" />
 	<adapter factory=".pyramid_renderers._ZopeFileCacheController" />
+	<adapter factory=".pyramid_renderers._ContentPackageLibraryCacheController" />
 	<adapter factory=".pyramid_renderers._ContentUnitInfoCacheController" />
 	<adapter factory=".pyramid_renderers._ETagCachedUGDExternalCollectionCacheController" />
+
 	<adapter factory=".pyramid_renderers.UseTheRequestContextCacheController"
 			 for=".interfaces.IUseTheRequestContextUGDExternalCollection" />
+	<adapter factory=".pyramid_renderers.UseTheRequestContextCacheController"
+			 for=".interfaces.ILibraryCollection" />
 
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />

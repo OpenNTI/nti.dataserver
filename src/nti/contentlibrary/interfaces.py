@@ -48,6 +48,9 @@ class IContentPackageLibrary(interface.Interface):
 
 	contentPackages = schema.Iterable( title=u'Sequence of all known :class:`IContentPackage`')
 
+	lastModified = schema.Float( title="Best estimate of the last time this library and its contents was modified",
+								 readonly=True )
+
 # TODO: I'm not happy with the way paths are handled. How can the 'relative'
 # stuff be done better? This is mostly an issue with the IContentPackage and its 'root'
 # attribute. That's mostly confined to externalization.py now.

@@ -57,6 +57,14 @@ class IContainerCollection(ICollection):
 						title=u"The backing container",
 						readonly=True )
 
+class ILibraryCollection(ICollection):
+	"""
+	An :class:`ICollection` wrapping a :class:`.IContentPackageLibrary`.
+	"""
+
+	library = Object( lib_interfaces.IContentPackageLibrary,
+					  title="The library",
+					  readonly=True )
 
 class IWorkspace(ILocation):
 	"""

@@ -218,7 +218,7 @@ class LibraryWorkspace(object):
 		adapt.__parent__ = self
 		return (adapt,)
 
-@interface.implementer(app_interfaces.ICollection)
+@interface.implementer(app_interfaces.ILibraryCollection)
 @component.adapter(content_interfaces.IContentPackageLibrary)
 class LibraryCollection(object):
 
@@ -239,7 +239,7 @@ class LibraryCollection(object):
 		return ()
 
 @interface.implementer(ext_interfaces.IExternalObject)
-@component.adapter(LibraryCollection)
+@component.adapter(app_interfaces.ILibraryCollection)
 class LibraryCollectionDetailExternalizer(object):
 	"""
 	Externalizes a Library wrapped as a collection.

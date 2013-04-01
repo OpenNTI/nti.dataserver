@@ -50,6 +50,18 @@ class AbstractLibrary(object):
 
 	titles = contentPackages # b/c
 
+	@property
+	def lastModified(self):
+		"""
+		This object is deemed to be last modified at least
+		as recently as any of its content packages.
+		Note: This fails if removal is supported by the subclass (last modified could go
+		backwards). If you support removal, you should override this
+		method.
+		"""
+		mods = [x.index_last_modified for x in self.contentPackages if x.index_last_modified is not None]
+		return max(mods) if mods else -1
+
 	def __getitem__( self, key ):
 		"""
 		:return: The LibraryEntry having a name or ntiid that matches `key`.

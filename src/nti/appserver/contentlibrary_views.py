@@ -478,3 +478,8 @@ def _RootLibraryTOCRedirectView(request):
 class MainLibraryGetView(GenericGetView):
 	"Invoked to return the contents of the 'Main' library."
 	# TODO: This is weirdly coupled to .workspaces.[LibraryWorkspace,LibraryCollection]
+
+	def __call__(self):
+		# TODO: Should generic get view do this step?
+		app_interfaces.IPreRenderResponseCacheController(self.request.context)( self.request.context, {'request': self.request } )
+		return super(MainLibraryGetView,self).__call__()
