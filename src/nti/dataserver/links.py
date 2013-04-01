@@ -26,17 +26,20 @@ class Link(object):
 	mime_type = 'application/vnd.nextthought.link'
 	elements = ()
 	target_mime_type = None
+	method = None
 
-	def __init__( self, target, rel='alternate', elements=(), target_mime_type=None ):
+	def __init__( self, target, rel='alternate', elements=(), target_mime_type=None, method=None ):
 		"""
 		:param target: The destination object for this link. Required to be
 			non-``None``. The exact value of what is accepted depends on
 			the externalization process (see :mod:`nti.dataserver.links_external`),
 			but is typically a persistent object, a URL, or an NTIID.
-		:param elements: Additional path components that should be added
+		:keyword elements: Additional path components that should be added
 			after the target when a URL is generated
-		:param target_mime_type: If known and given, the mime type that
+		:keyword target_mime_type: If known and given, the mime type that
 			can be expected to be found after following the link.
+		:keyword str method: If given, the particular HTTP method that is supported
+			at this URL.
 		"""
 		__traceback_info__ = target, rel, elements, target_mime_type
 		# If the target is None, it won't externalize correctly,
@@ -50,6 +53,8 @@ class Link(object):
 			self.elements = elements
 		if target_mime_type:
 			self.target_mime_type = target_mime_type
+		if method:
+			self.method = method
 
 	# Make them non-picklable
 	def __reduce__( self, *args, **kwargs ):

@@ -114,9 +114,15 @@ def render_link( link, nearest_site=None ):
 					 StandardExternalFields.HREF: href,
 					 'rel': rel } )
 	if content_type:
-		result['type'] = content_type
+		# If a method was provided, do not try to infer from the target object,
+		# must be explicit
+		if (link.method and link.target_mime_type) or not link.method:
+			result['type'] = content_type
 	if ntiids.is_valid_ntiid_string( ntiid ):
 		result['ntiid'] = ntiid
+	if link.method:
+		result['method'] = link.method
+
 	if not traversal.is_valid_resource_path( href ) and not ntiids.is_valid_ntiid_string( href ): # pragma: no cover
 		# This shouldn't be possible anymore.
 		__traceback_info__ = href, link, target, nearest_site
@@ -126,6 +132,7 @@ def render_link( link, nearest_site=None ):
 		# The marker that identifies the link should be replaced by just the href
 		# Because of the decorator, it's easiest to just do this here
 		result = result['href']
+
 
 	return result
 

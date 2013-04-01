@@ -233,6 +233,11 @@ class ILink(interface.Interface):
 		constraint=mime_interfaces.mimeTypeConstraint,
 		required=False)
 
+	method = DecodingValidTextLine(
+		title='HTTP Method',
+		description="The HTTP method most suited for this link relation",
+		required=False)
+
 class ILinkExternalHrefOnly(ILink):
 	"""
 	A marker interface intended to be used when a link
