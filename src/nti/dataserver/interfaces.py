@@ -112,6 +112,8 @@ class IMemcacheClient(interface.Interface):
 	def set(key,value):
 		"Pickle the value and store it, returning True on success."
 
+	def delete(key):
+		"Remove the key from the cache."
 
 class InappropriateSiteError(LookupError):
 	pass

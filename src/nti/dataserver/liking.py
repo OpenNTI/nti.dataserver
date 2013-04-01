@@ -13,6 +13,8 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+import functools
+
 from zope import interface
 from zope import component
 from zope.event import notify
@@ -104,10 +106,36 @@ def _unrate_object( context, username, cat_name ):
 		notify( contentratings.events.ObjectRatedEvent(context, old_rating, cat_name) )
 		return rating
 
-def _rates_object( context, username, cat_name, safe=False ):
+def _rates_object( context, username, cat_name, safe=False, default=False ):
+	result = default
 	rating = _lookup_like_rating_for_read( context, cat_name=cat_name, safe=safe )
-	if rating and rating.userRating( username ) is not None:
-		return rating
+	if rating is not None:
+		user_rating = rating.userRating( username )
+		result = user_rating if user_rating is not None else False
+	return result
+
+
+def _cached(key_func):
+	def factory(func):
+		@functools.wraps(func)
+		def _caching( *args, **kwargs ):
+			key = key_func(*args, **kwargs)
+			if key:
+				cache = component.queryUtility(interfaces.IMemcacheClient)
+				if cache:
+					cached = cache.get( key )
+					if cached is not None:
+						return cached
+
+			result = func(*args, **kwargs)
+
+			if key and cache:
+				__traceback_info__ = key, result, cache
+				cache.set( key, result )
+
+			return result
+		return _caching
+	return factory
 
 def _rate_count_cache_key( context, cat_name ):
 	try:
@@ -115,24 +143,16 @@ def _rate_count_cache_key( context, cat_name ):
 	except TypeError: # to_external_oid throws if context not saved
 		return None
 
+@_cached(_rate_count_cache_key)
 def _rate_count( context, cat_name ):
 	"""
 	Return the number of times this object has been rated the particular way.
 	Accepts any object, not just those that can be rated.
 	"""
-	key = _rate_count_cache_key( context, cat_name ) # TODO: A decorator for this
-	if key:
-		cache = component.queryUtility(interfaces.IMemcacheClient)
-		if cache:
-			cached = cache.get( key )
-			if cached is not None:
-				return cached
 
 	ratings = _lookup_like_rating_for_read( context, cat_name, safe=True )
 	result = ratings.numberOfRatings if ratings else 0
 
-	if key and cache:
-		cache.set( key, result )
 	return result
 
 def like_object( context, username ):
@@ -167,6 +187,7 @@ def _likes_object_cache_key( context, username ):
 	except TypeError: # to_external_oid fails of the object not saved
 		return None
 
+@_cached(_likes_object_cache_key)
 def likes_object( context, username ):
 	"""
 	Determine if the `username` likes the `context`.
@@ -176,17 +197,8 @@ def likes_object( context, username ):
 		empty.
 	:return: An object with a boolean value; if the user likes the object, the value is True-y.
 	"""
-	key = _likes_object_cache_key( context, username )
-	if key:
-		cache = component.queryUtility(interfaces.IMemcacheClient)
-		if cache:
-			cached = cache.get( key )
-			if cached is not None:
-				return cached
 
 	result = _rates_object( context, username, LIKE_CAT_NAME )
-	if key and cache:
-		cache.set( key, result or False ) # distinguish None from False
 	return result
 
 def like_count( context ):
@@ -224,7 +236,14 @@ def unfavorite_object( context, username ):
 	"""
 	return _unrate_object( context, username, FAVR_CAT_NAME )
 
+def _favorites_object_cache_key( context, username, safe=False ):
+	# We can only do this for saved objects (mostly a test problem)
+	try:
+		return (to_external_oid(context) + '/@@' + FAVR_CAT_NAME + '/' + username).encode('utf-8')
+	except TypeError: # to_external_oid fails of the object not saved
+		return None
 
+@_cached(_favorites_object_cache_key)
 def favorites_object( context, username, safe=False ):
 	"""
 	Determine if the ``username`` has favorited the ``context``.
@@ -235,7 +254,7 @@ def favorites_object( context, username, safe=False ):
 	:keyword bool safe: If ``False`` (the default) then this method can raise an
 		exception if it won't ever be possible to rate the given object (because
 		annotations and adapters are not set up). If ``True``, then this method
-		quetly returns None in that case.
+		quetly returns ``False`` in that case.
 
 	:return: An object with a boolean value; if the user likes the object, the value is True-y.
 	"""
@@ -297,7 +316,8 @@ class _BinaryUserRatings(Contained, Persistent):
 
 	def userRating(self, username=None):
 		"""Retreive the rating for the specified user, which must be provided."""
-		if not username: raise ValueError( "Must give username" ) #pragma: no cover
+		if not username:  #pragma: no cover
+			raise ValueError( "Must give username" )
 		if username in self._ratings:
 			return NPRating( 1, username )
 
@@ -368,5 +388,7 @@ def update_last_mod_on_rated( modified_object, event ):
 
 			if event.category == LIKE_CAT_NAME:
 				cache.delete( _likes_object_cache_key( modified_object, event.rating.userid ) )
+			elif event.category == FAVR_CAT_NAME:
+				cache.delete( _favorites_object_cache_key( modified_object, event.rating.userid ) )
 		except cache.MemcachedKeyNoneError: # not saved yet
 			pass
