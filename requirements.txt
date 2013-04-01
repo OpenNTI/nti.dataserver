@@ -1,6 +1,6 @@
 file:../lib/pywikipedia/#egg=pywikipedia
 # See https://github.com/SiteSupport/gevent/blob/master/changelog.rst
--e git+https://github.com/SiteSupport/gevent.git@1.0rc2#egg=gevent
+-e git+https://github.com/surfly/gevent.git@1.0rc2#egg=gevent
 # gevent mysql-compat driver. Base client:
 # Note: Released as 2.4 so currently in setup.py
 #-e git+https://github.com/esnme/ultramysql.git#egg=umysql-dev
