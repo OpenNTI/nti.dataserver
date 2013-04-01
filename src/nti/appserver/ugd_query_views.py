@@ -906,20 +906,6 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 
 		super(RepliesLinkDecorator,self).decorateExternalMapping( context, mapping, extra_elements=extra_elements )
 
-@component.adapter(nti_interfaces.INote, IIntIdAddedEvent)
-def _invalidate_parent_reply_caches( note, event ):
-	""" Invalidate any existing @@replies caches.
-	This is only necessary on adding objects, as we cache OIDs of the children.
-	If they get deleted, the OID won't resolve. If they get modified, we
-	get the modified object.
-	"""
-	cache = component.getUtility(nti_interfaces.IMemcacheClient)
-	for parent in (note.inReplyTo,) + tuple(note.references):
-		if parent is None:
-			continue
-		key = (to_external_oid(parent) + '/@@' + REL_REPLIES).encode('utf-8')
-		logger.debug( "Invalidating %s", key )
-		cache.delete( key )
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
 from .interfaces import IETagCachedUGDExternalCollection
@@ -944,9 +930,6 @@ def replies_view(request):
 	root_note = request.context
 
 	result_iface = IUGDExternalCollection
-	# We cache the complete list of replies because this is easy to invalidate
-	# we rely on _sort_filter_batch_result for security
-	key = (to_external_oid( root_note ) + '/@@' + REL_REPLIES).encode('utf-8')
 	if request.subpath:
 		#result_iface = IETagCachedUGDExternalCollection
 		# temporarily disabled, see forums/views
