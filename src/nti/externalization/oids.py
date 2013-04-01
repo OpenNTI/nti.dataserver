@@ -94,7 +94,7 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 
 	try:
 		setattr( self, '_v_to_external_oid', oid )
-	except AttributeError:
+	except (AttributeError,TypeError):
 		pass
 
 	return oid
@@ -188,6 +188,6 @@ def to_external_ntiid_oid( contained, default_oid=None, add_to_connection=False,
 								nttype=ntiids.TYPE_OID )
 	try:
 		setattr( contained, '_v_to_external_ntiid_oid', ext_oid )
-	except AttributeError:
+	except (AttributeError,TypeError): # TypeError is a BrokenModified
 		pass
 	return ext_oid
