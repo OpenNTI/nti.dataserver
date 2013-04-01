@@ -105,6 +105,12 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityBoard" />
 
+	<!--
+		 For caching purposes, we can treat topics like modeled content; they have
+		 a guaranteed-good last modified time
+	-->
+	<adapter factory="nti.appserver.pyramid_renderers._ModeledContentCacheController"
+			 for="nti.dataserver.contenttypes.forums.interfaces.ITopic" />
 
 	<!-- Traversal -->
 	<adapter factory=".traversal._PostFieldTraverser"

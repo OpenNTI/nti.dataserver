@@ -373,6 +373,20 @@ class ForumContentsGetView(UGDQueryView):
 		if False and frm_interfaces.IHeadlineTopic.providedBy( request.context ) and self.request.subpath:
 			self.result_iface = app_interfaces.IETagCachedUGDExternalCollection
 
+	def __call__( self ):
+		try:
+			# See if we are something that maintains reliable modification dates
+			# including our children.
+			# (only ITopic is registered for this). If so, then we want to use
+			# this fact when we create the ultimate return ETag.
+			# We also want to bail now with 304 Not Modified if we can
+			app_interfaces.IPreRenderResponseCacheController( self.request.context )( self.request.context, {'request': self.request} )
+			self.result_iface = app_interfaces.IUseTheRequestContextUGDExternalCollection
+		except TypeError:
+			pass
+
+		return super(ForumContentsGetView,self).__call__()
+
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)
 

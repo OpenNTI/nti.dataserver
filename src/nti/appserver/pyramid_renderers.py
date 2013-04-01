@@ -336,6 +336,23 @@ def md5_etag( *args ):
 _md5_etag = md5_etag
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+def UseTheRequestContextCacheController(context):
+	"""
+	Instead of using the return value from the view, use the context of the request.
+	This is useful when the view results are directly derived from the context,
+	and the context has more useful information than the result does. It allows
+	you to register an adapter for the context, and use that *before* calculating the
+	view. If you do have to calculate the view, you are assured that the ETag values
+	that the view results create are the same as the ones you checked against.
+	"""
+	# TODO: We could probably detect that response.etag has been set, and
+	# not do this again. The common case is that the object we are going to return
+	# here would already have been called on the context before the view executed;
+	# we are called after the view. Nothing should have changed on the context object in the
+	# meantime.
+	return app_interfaces.IPreRenderResponseCacheController( get_current_request().context )
+
+@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
 class _AbstractReliableLastModifiedCacheController(object):
 	"""
 	Things that have reliable last modified dates go here
@@ -408,6 +425,8 @@ class _ModeledContentCacheController(_AbstractReliableLastModifiedCacheControlle
 	"""
 	Individual bits of modeled content have reliable last modified dates
 	"""
+
+	max_age = 0 # XXX arbitrary
 
 	@property
 	def _context_specific(self):
