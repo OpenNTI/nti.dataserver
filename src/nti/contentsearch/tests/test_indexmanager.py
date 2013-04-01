@@ -28,7 +28,7 @@ from .._whoosh_schemas import create_book_schema
 from .._whoosh_indexstorage import create_directory_index
 from ..indexmanager import create_index_manager_with_repoze
 from ..indexmanager import create_index_manager_with_whoosh
-from .._whoosh_bookindexmanager import WhooshBookIndexManager
+from .._whoosh_book_searcher import WhooshBookContentSearcher
 
 from ..constants import (ITEMS, HIT_COUNT)
 
@@ -52,12 +52,12 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 	@classmethod
 	def _add_book_data(cls):
 		cls.now = time.time()
+		indexname = 'bleach'
 		cls.book_idx_dir = tempfile.mkdtemp(dir="/tmp")
-		create_directory_index('bleach', create_book_schema(), cls.book_idx_dir)
-		cls.bim = WhooshBookIndexManager('bleach', 'bleach', indexdir=cls.book_idx_dir)
+		_, storage = create_directory_index(indexname, create_book_schema(), cls.book_idx_dir)
+		cls.bim = WhooshBookContentSearcher(indexname, storage)
 
-		idx = cls.bim.bookidx
-		writer = idx.writer()
+		writer = cls.bim.get_index(indexname).writer()
 		for k, x in enumerate(phrases):
 			writer.add_document(ntiid=unicode(make_ntiid(provider=str(k), nttype='bleach', specific='manga')),
 								title=unicode(x),
@@ -69,6 +69,7 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 
 	@classmethod
 	def tearDownClass(cls):
+		cls.bim.close()
 		shutil.rmtree(cls.book_idx_dir, True)
 		super(_BaseIndexManagerTest, cls).tearDownClass()
 

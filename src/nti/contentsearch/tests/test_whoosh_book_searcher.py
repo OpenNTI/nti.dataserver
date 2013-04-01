@@ -18,7 +18,7 @@ from nti.externalization.externalization import toExternalObject
 
 from .._whoosh_schemas import create_book_schema
 from .._whoosh_indexstorage import create_directory_index
-from .._whoosh_bookindexmanager import WhooshBookIndexManager
+from .._whoosh_book_searcher import WhooshBookContentSearcher
 
 from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS,
 									 	 SNIPPET, NTIID, SUGGESTIONS, SCORE)
@@ -28,18 +28,18 @@ from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, is_, contains_inanyorder)
 
-class TestWhooshBookIndexManager(ConfiguringTestBase):
+class TestWhooshBookContentSearcher(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
-		super(TestWhooshBookIndexManager, cls).setUpClass()
+		super(TestWhooshBookContentSearcher, cls).setUpClass()
 		cls.now = time.time()
+		indexname = 'bleach'
 		cls.idx_dir = tempfile.mkdtemp(dir="/tmp")
-		create_directory_index('bleach', create_book_schema(), cls.idx_dir)
-		cls.bim = WhooshBookIndexManager('bleach', indexdir=cls.idx_dir)
+		_ , cls.storage = create_directory_index(indexname, create_book_schema(), cls.idx_dir)
+		cls.bim = WhooshBookContentSearcher(indexname, storage=cls.storage)
 
-		idx = cls.bim.bookidx
-		writer = idx.writer()
+		writer = cls.bim.get_index(indexname).writer()
 		for k, x in enumerate(zanpakuto_commands):
 			writer.add_document(ntiid=unicode(make_ntiid(provider=str(k), nttype='bleach', specific='manga')),
 								title=unicode(x),
@@ -53,7 +53,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 	def tearDownClass(cls):
 		cls.bim.close()
 		shutil.rmtree(cls.idx_dir, True)
-		super(TestWhooshBookIndexManager, cls).tearDownClass()
+		super(TestWhooshBookContentSearcher, cls).tearDownClass()
 
 	def test_search(self):
 		hits = toExternalObject(self.bim.search("shield"))
@@ -112,7 +112,7 @@ class TestWhooshBookIndexManager(ConfiguringTestBase):
 	def test_suggest_and_search(self):
 		hits = toExternalObject(self.bim.suggest_and_search("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, u'rage'))
+		assert_that(hits, has_entry(QUERY, u'ra'))
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits[ITEMS], has_length(1))
 		assert_that(hits[SUGGESTIONS], has_length(4))

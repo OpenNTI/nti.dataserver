@@ -72,7 +72,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_index_note(self):
 		note = Note()
-		schema = note.get_schema()
+		schema = note.schema
 		idx = RamStorage().create_index(schema)
 		note.index_content(idx.writer(), self._create_ds_note())
 		with idx.searcher() as s:
@@ -98,7 +98,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_index_highlight(self):
 		hi = Highlight()
-		schema = hi.get_schema()
+		schema = hi.schema
 		idx = RamStorage().create_index(schema)
 		hi.index_content(idx.writer(), self._create_ds_highlight())
 		with idx.searcher() as s:
@@ -123,7 +123,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_index_redaction(self):
 		rd = Redaction()
-		schema = rd.get_schema()
+		schema = rd.schema
 		idx = RamStorage().create_index(schema)
 		rd.index_content(idx.writer(), self._create_ds_redaction())
 		with idx.searcher() as s:
@@ -136,7 +136,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 	def test_whoosh_book(self):
 		bk = Book()
 		now = time.time()
-		schema = bk.get_schema()
+		schema = bk.schema
 		idx = RamStorage().create_index(schema)
 		writer = idx.writer()
 		for x in zanpakuto_commands:

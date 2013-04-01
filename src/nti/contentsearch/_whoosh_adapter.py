@@ -25,18 +25,13 @@ from .common import get_type_name
 from ._datastructures import LFUMap
 from .common import sort_search_types
 from ._search_query import QueryObject
+from . import _search_results as srlts
 from . import interfaces as search_interfaces
 from .constants import ugd_indexable_type_names
 from .common import normalize_type_name as _ntm
 from ._whoosh_index import get_indexable_object
-from ._search_results import empty_search_results
-from ._search_results import merge_search_results
-from ._search_results import empty_suggest_results
-from ._search_results import merge_suggest_results
 from ._whoosh_indexstorage import get_index_writer
 from ._search_indexmanager import _SearchEntityIndexManager
-from ._search_results import empty_suggest_and_search_results
-from ._search_results import merge_suggest_and_search_results
 
 def get_indexname(username, type_name, use_md5=True):
 	type_name = _ntm(type_name)
@@ -122,14 +117,14 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 	def _do_search(self, query, is_ngram_search=False, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(query.searchOn)
-		results = empty_search_results(query)
+		results = srlts.empty_search_results(query)
 		for type_name in searchOn:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = self.get_indexable_object(type_name)
 				with index.searcher() as searcher:
 					rs = indexable.search(searcher, query)
-					results = merge_search_results(results, rs)
+					results = srlts.merge_search_results(results, rs)
 		return results
 
 	def search(self, query, *args, **kwargs):
@@ -139,27 +134,27 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(query.searchOn)
-		results = empty_suggest_and_search_results(query)
+		results = srlts.empty_suggest_and_search_results(query)
 		for type_name in searchOn:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = self.get_indexable_object(type_name)
 				with index.searcher() as searcher:
 					rs = indexable.suggest_and_search(searcher, query)
-					results = merge_suggest_and_search_results(results, rs)
+					results = srlts.merge_suggest_and_search_results(results, rs)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(query.searchOn)
-		results = empty_suggest_results(query)
+		results = srlts.empty_suggest_results(query)
 		for type_name in searchOn:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = self.get_indexable_object(type_name)
 				with index.searcher() as searcher:
 					rs = indexable.suggest(searcher, query)
-					results = merge_suggest_results(results, rs)
+					results = srlts.merge_suggest_results(results, rs)
 		return results
 
 	# -------------------
@@ -252,7 +247,7 @@ class _WhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 		index = self.whoosh_indices.get(indexname, None)
 		if not index:
 			indexable = self.get_indexable_object(type_name)
-			schema = indexable.get_schema() if indexable else None
+			schema = indexable.schema if indexable else None
 			if schema:
 				index = self.storage.get_or_create_index(indexname=indexname,
 														 schema=schema,

@@ -32,16 +32,12 @@ from .constants import (channel_, content_, keywords_, references_, sharedWith_,
 					 	title_, quick_, end_timestamp_, start_timestamp_, docnum_, score_)
 
 class _SearchableContent(object):
-
-	__indexable__ = False
+	_schema = None
 	default_word_max_dist = 15
 
 	@property
 	def schema(self):
-		return self.get_schema()
-
-	def get_schema(self):
-		return getattr(self, '_schema', None)
+		return self._schema
 
 	def _parse_query(self, query, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
@@ -65,10 +61,9 @@ class _SearchableContent(object):
 				suggestions = rank_words(qo.term, suggestions)
 				qo, parsed_query = self._parse_query(suggestions[0], **kwargs)
 
-				results = self._execute_search(searcher,
-											 	parsed_query,
-											 	qo,
-											 	creator_method=srlts.empty_suggest_and_search_results)
+				results = self._execute_search(searcher, parsed_query, qo,
+											   creator_method=srlts.empty_suggest_and_search_results)
+
 				results.add_suggestions(suggestions)
 			else:
 				results = srlts.empty_suggest_and_search_results(qo)
@@ -210,7 +205,6 @@ def get_object_from_ds(uid):
 	if result is None:
 		logger.debug('Could not find object with id %r' % uid)
 	return result
-
 
 class UserIndexableContent(_SearchableContent):
 
@@ -357,9 +351,6 @@ for k, v in globals().items():
 	if inspect.isclass(v) and getattr(v, '__indexable__', False):
 		name = common.normalize_type_name(k)
 		_indexables[name] = v
-
-def get_indexables():
-	return _indexables.keys()
 
 def get_indexable_object(type_name=None):
 	name = common.normalize_type_name(type_name)
