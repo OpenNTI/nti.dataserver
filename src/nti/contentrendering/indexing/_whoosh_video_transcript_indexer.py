@@ -8,6 +8,8 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import os
+import time
+from datetime import datetime
 
 from zope import component
 from zope import interface
@@ -83,12 +85,14 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 			content = entry.transcript
 			table = get_content_translation_table(language)
 			content = unicode(content_utils.sanitize_content(content, table=table))
+			last_modified = datetime.fromtimestamp(time.time())
 			writer.add_document(containerId=containerId,
 								videoId=video_id,
 								content=content,
 								quick=content,
 								start_timestamp=unicode(entry.start_timestamp),
-								end_timestamp=unicode(entry.end_timestamp))
+								end_timestamp=unicode(entry.end_timestamp),
+								last_modified=last_modified)
 		except Exception:
 			writer.cancel()
 			raise
