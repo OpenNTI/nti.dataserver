@@ -573,6 +573,10 @@ class IPostSearchHit(ISearchHit):
 class IWhooshBookSearchHit(ISearchHit):
 	pass
 
+class IWhooshVideoTranscriptSearchHit(ISearchHit):
+	pass
+
+
 class ISearchHitComparator(interface.Interface):
 
 	def compare(a, b):

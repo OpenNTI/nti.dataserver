@@ -25,14 +25,14 @@ from nti.externalization import interfaces as ext_intefaces
 
 from . import interfaces as search_interfaces
 
-from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE)
+from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE, VIDEO_TRANSCRIPT_MIME_TYPE)
 from .constants import (content_, post_, note_, highlight_, redaction_, indexable_types_order, indexable_type_names,
-						transcript_, messageinfo_, nti_mimetype_prefix)
+						transcript_, messageinfo_, nti_mimetype_prefix, videotranscript_)
 
 # Make sure we keep this order, especially since we need to test first for INote before IHighlight
-# in get_mime_type_map
 interface_to_indexable_types = (
 	(search_interfaces.IBookContent, content_),
+	(search_interfaces.IVideoTranscriptContent, videotranscript_),
 	(nti_interfaces.INote, note_),
 	(nti_interfaces.IHighlight, highlight_),
 	(nti_interfaces.IRedaction, redaction_),
@@ -48,6 +48,19 @@ def epoch_time(dt):
 		return seconds
 	else:
 		return 0
+
+def videotimestamp_to_text(dt):
+	if isinstance(dt, six.string_types):
+		dt = float(dt)
+	if isinstance(dt, (float, long)):
+		dt = get_datetime(dt)
+
+	if isinstance(dt, datetime):
+		milli = dt.microsecond / 1000.0
+		result = u"%02d:%02d:%02d.%03d" % (dt.hour, dt.minute, dt.second, milli)
+		return result
+	else:
+		return u''
 
 def get_datetime(x=None):
 	f = time.time()
@@ -106,6 +119,7 @@ def get_mime_type_map():
 		if mime_type_map:
 			mime_type_map[POST_MIME_TYPE] = post_
 			mime_type_map[BOOK_CONTENT_MIME_TYPE] = content_
+			mime_type_map[VIDEO_TRANSCRIPT_MIME_TYPE] = videotranscript_
 
 	return mime_type_map
 
