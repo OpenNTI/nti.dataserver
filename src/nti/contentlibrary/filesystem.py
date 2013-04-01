@@ -11,7 +11,7 @@ from os.path import join as path_join
 import datetime
 
 from zope import interface
-from zope.cachedescriptors.property import Lazy
+from zope.cachedescriptors.property import Lazy, readproperty
 from zope.location.interfaces import IContained as IZContained
 
 import repoze.lru
@@ -93,6 +93,14 @@ class DynamicFilesystemLibrary(library.AbstractLibrary):
 				if os.path.isdir( os.path.join( self._root, p ) )]
 	possible_content_packages = property(_query_possible_content_packages)
 
+	@readproperty
+	def _root_mtime(self):
+		return os.stat( self.root )[os.path.stat.ST_MTIME]
+
+	@property
+	def lastModified(self):
+		return max(self._root_mtime, super(DynamicFilesystemLibrary,self).lastModified)
+
 class EnumerateOnceFilesystemLibrary(DynamicFilesystemLibrary):
 	"""
 	A library that will examine the to find possible content packages
@@ -103,6 +111,9 @@ class EnumerateOnceFilesystemLibrary(DynamicFilesystemLibrary):
 	@CachedProperty
 	def possible_content_packages(self):
 		return tuple( self._query_possible_content_packages() )
+
+	_root_mtime = Lazy(DynamicFilesystemLibrary._root_mtime.func)
+
 
 @interface.implementer(IFilesystemBucket,IZContained)
 class FilesystemBucket(object):

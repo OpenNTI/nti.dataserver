@@ -43,6 +43,9 @@ def file_view(request):
 	``Content-Disposition`` headers to attempt to force a download.
 	Some ACL in the parent hierarchy must make this readable.
 	"""
+	# Best we can do is try to get good cache headers. Check this before
+	# opening a blob
+	app_interfaces.IPreRenderResponseCacheController(request.context)(request.context, {'request': request} )
 
 	# For the typical IFile implementation backed by a ZODB blob,
 	# this opens the blob in 'committed' mode and reads the data from a local file.
@@ -59,8 +62,6 @@ def file_view(request):
 	# from something like putting the blobs up in S3/cloudfront and serving from there,
 	# or at least not serving from the dataserver directly.
 
-	# Best we can do is try to get good cache headers
-	app_interfaces.IPreRenderResponseCacheController(request.context)(request.context, {'request': request} )
 
 	return request.response
 

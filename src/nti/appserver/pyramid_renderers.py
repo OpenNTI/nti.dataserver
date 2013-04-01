@@ -33,6 +33,7 @@ from nti.dataserver.links_external import render_link
 
 import nti.appserver.interfaces as app_interfaces
 import nti.dataserver.interfaces as nti_interfaces
+from nti.contentlibrary import interfaces as lib_interfaces
 from .interfaces import IPreRenderResponseCacheController, IResponseRenderer, IResponseCacheController
 from zope.file import interfaces as zf_interfaces
 
@@ -480,6 +481,15 @@ class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 		if remote_user and remote_user != context.__data_owner__:
 			self.max_age = _LongerCachedUGDExternalCollectionCacheController.max_age
 		return _UGDExternalCollectionCacheController.__call__( self, context, system )
+
+@component.adapter(lib_interfaces.IContentPackageLibrary)
+class _ContentPackageLibraryCacheController(_AbstractReliableLastModifiedCacheController):
+
+	max_age = 120
+
+	@property
+	def _context_specific(self):
+		return sorted( [x.ntiid for x in self.context.contentPackages] )
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)
 @component.adapter(app_interfaces.IContentUnitInfo)
