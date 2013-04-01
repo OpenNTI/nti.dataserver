@@ -350,15 +350,38 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		entry_url = res.location
 		entry_ntiid = res.json_body['NTIID']
 
-
 		# (Same user) comments on blog by POSTing a new post
 		data = self._create_comment_data_for_POST()
 
 		res = testapp.post_json( entry_url, data, status=201 )
-		comment_res = res
 
-		assert_that( res.status_int, is_( 201 ) )
-		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
+		self._check_posted_comment( testapp, data, entry_url, entry_ntiid, res )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@time_monotonically_increases
+	def test_creator_can_POST_new_comment_to_contents(self):
+		# By posting to /contents, we can get better client-side cache behaviour
+		testapp = self.testapp
+
+		# Create the topic
+		res = self._POST_topic_entry()
+		entry_url = res.location
+		entry_ntiid = res.json_body['NTIID']
+
+		# (Same user) comments on blog by POSTing a new post
+		data = self._create_comment_data_for_POST()
+
+		contents_url = self.require_link_href_with_rel( res.json_body, 'contents' )
+
+		res = testapp.post_json( contents_url, data, status=201 )
+
+		self._check_posted_comment( testapp, data, entry_url, entry_ntiid, res )
+
+
+	def _check_posted_comment( self, testapp, data, entry_url, entry_ntiid, comment_res ):
+
+		assert_that( comment_res.status_int, is_( 201 ) )
+		assert_that( comment_res.location, is_( 'http://localhost' + comment_res.json_body['href'] + '/' ) )
 
 		def _check_comment_res( cres ):
 			assert_that( cres.json_body, has_entries( 'title', data['title'],

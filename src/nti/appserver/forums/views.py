@@ -278,21 +278,32 @@ class _AbstractTopicPostView(_AbstractIPostPOSTView):
 
 		return incoming_post
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_CREATE,
-			  context=frm_interfaces.ICommunityHeadlineTopic,
-			  request_method='POST' )
+# We allow POSTing comments to the topic object, and also
+# to the /contents sub-URL (ignoring anything subpath after it)
+# This lets a HTTP client do a better job of caching, by
+# auto-invalidating after its own comment creation
+# (Of course this has the side-problem of not invalidating
+# a cache of the topic object itself...)
+
+@view_config( name=VIEW_CONTENTS )
+@view_config( name='' )
+@view_defaults( route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_CREATE,
+				context=frm_interfaces.ICommunityHeadlineTopic,
+				request_method='POST' )
 class CommunityHeadlineTopicPostView(_AbstractTopicPostView):
 
 	_constraint = frm_interfaces.IGeneralForumComment.providedBy
 	_override_content_type = GeneralForumComment.mimeType
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_CREATE,
-			  context=frm_interfaces.IPersonalBlogEntry,
-			  request_method='POST' )
+@view_config( name=VIEW_CONTENTS )
+@view_config( name='' )
+@view_defaults( route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_CREATE,
+				context=frm_interfaces.IPersonalBlogEntry,
+				request_method='POST' )
 class PersonalBlogEntryPostView(_AbstractTopicPostView):
 
 	_constraint = frm_interfaces.IPersonalBlogComment.providedBy
@@ -321,7 +332,8 @@ class ForumGetView(GenericGetView):
 
 @view_config( context=frm_interfaces.IBoard )
 @view_config( context=frm_interfaces.IForum )
-@view_config( context=frm_interfaces.IHeadlineTopic )
+@view_config( context=frm_interfaces.ICommunityHeadlineTopic )
+@view_config( context=frm_interfaces.IPersonalBlogEntry )
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_READ,
