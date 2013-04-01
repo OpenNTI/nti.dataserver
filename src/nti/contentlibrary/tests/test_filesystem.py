@@ -9,6 +9,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import has_property
+from hamcrest import greater_than
 from hamcrest import has_entry
 from nti.tests import verifiably_provides, SharedConfiguringTestBase
 
@@ -69,3 +70,10 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 																  'separator': '.' } } ) ) )
 
 		json.loads( json.dumps( ext_package ) ) # Round trips through JSON
+
+	def test_library(self):
+		library = filesystem.DynamicFilesystemLibrary( os.path.dirname(__file__) )
+		assert_that( library, has_property( 'lastModified', greater_than( 0 ) ) )
+
+		library = filesystem.EnumerateOnceFilesystemLibrary( os.path.dirname(__file__) )
+		assert_that( library, has_property( 'lastModified', greater_than( 0 ) ) )
