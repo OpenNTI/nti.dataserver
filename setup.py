@@ -397,7 +397,7 @@ setup(
 			# locally (you may need to use a different version of node)
 			# Managing translations
 			'Babel >= 0.9.6',
-			'lingua >= 1.4',
+			'lingua >= 1.5',
 			]
 	},
 	message_extractors={ 'src': [
