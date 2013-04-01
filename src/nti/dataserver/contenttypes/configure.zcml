@@ -7,6 +7,14 @@
 
 	<include package="zope.component" />
 
+	<!-- Events for keeping replies and referents updated. -->
+	<!-- Hidden in dev mode at the moment so that I don't have to deal
+	with a partial state during migration. -->
+	<subscriber handler=".threadable.threadable_added"
+				zcml:condition="have devmode"/>
+	<subscriber handler=".threadable.threadable_removed"
+				zcml:condition="have devmode"/>
+
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />

@@ -843,10 +843,32 @@ class ISimpleEnclosureContainer(interface.Interface):
 class IThreadable(interface.Interface):
 	"""
 	Something which can be used in an email-like threaded fashion.
+
+	.. note:: All the objects should be IThreadable, but it is not possible
+		to put that in a constraint without having infinite recursion
+		problems.
 	"""
 
-	inReplyTo = interface.Attribute("""	The object to which this object is directly a reply.""")
-	references = interface.Attribute("""A sequence of objects this object transiently references.""")
+	inReplyTo = Object( interface.Interface,
+						title="""The object to which this object is directly a reply.""",
+						required=False)
+	references = ListOrTuple( title="""A sequence of objects this object transiently references, in order up to the root""",
+							  value_type=Object(interface.Interface, title="A reference"),
+							  default=())
+
+	replies = UniqueIterable( title="All the direct replies of this object",
+							  description="This property will be automatically maintained.",
+							  value_type=Object(interface.Interface, title="A reply") )
+	replies.setTaggedValue( '_ext_excluded_out', True ) # Internal use only
+	referents = UniqueIterable( title="All the direct and indirect replies to this object",
+								description="This property will be automatically maintained.",
+								value_type=Object(interface.Interface, title="A in/direct reply") )
+	referents.setTaggedValue( '_ext_excluded_out', True ) # Internal use only
+
+#IThreadable['inReplyTo'].schema = IThreadable
+#IThreadable['references'].value_type.schema = IThreadable
+#IThreadable['replies'].value_type.schema = IThreadable
+#IThreadable['referents'].value_type.schema = IThreadable
 
 class IWeakThreadable(IThreadable):
 	"""

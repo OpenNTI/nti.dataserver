@@ -345,7 +345,8 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 	def _ext_all_possible_keys(self):
 		cache = _InterfaceCache.cache_for( self, self._ext_self )
 		if cache.ext_all_possible_keys is None:
-			cache.ext_all_possible_keys = [n for n in self._iface.names(all=True) if not interface.interfaces.IMethod.providedBy(self._iface[n])]
+			cache.ext_all_possible_keys = [n for n in self._iface.names(all=True)
+										   if not interface.interfaces.IMethod.providedBy(self._iface[n]) and not self._iface[n].queryTaggedValue('_ext_excluded_out', False)]
 		return cache.ext_all_possible_keys
 
 	def _ext_getattr( self, ext_self, k ):

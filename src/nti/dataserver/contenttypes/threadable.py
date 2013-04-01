@@ -8,13 +8,20 @@ Defines the base behaviours for things that are threadable.
 from __future__ import print_function, unicode_literals, absolute_import
 
 from zope import interface
-import collections
+from zope import component
+from zope.intid.interfaces import IIntIds
+from zope.intid.interfaces import IIntIdAddedEvent
+from zope.intid.interfaces import IIntIdRemovedEvent
 
+import collections
 from persistent.list import PersistentList
 
+from nti.utils import sets
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.intid.containers import IntidResolvingIterable
 
 @interface.implementer(nti_interfaces.IInspectableWeakThreadable)
 class ThreadableMixin(object):
@@ -33,6 +40,20 @@ class ThreadableMixin(object):
 	_inReplyTo = None
 	# Our chain of references back to the root
 	_references = ()
+
+	# Our direct replies. Unlike _references, which is only changed
+	# directly when this object changes, this can be mutated by many other
+	# things. Therefore, we must maintain it as an object with good conflict
+	# resolution. We use intid TreeSets both for this and for _referents.
+	# Note that we actively maintain these values as objects are created
+	# and deleted, so we are not concerned about intid reuse. We also
+	# assume (as is the default in the mixin) that inReplyTo can only be
+	# set at initial creation time, so we only watch for creations/deletions,
+	# not modifications.
+	_replies = ()
+
+	# Our direct or indirect replies
+	_referents = ()
 
 	def __init__(self):
 		super(ThreadableMixin,self).__init__()
@@ -85,6 +106,67 @@ class ThreadableMixin(object):
 			del self._references[:]
 		except TypeError:
 			pass # The class tuple
+
+	@property
+	def replies(self):
+		return IntidResolvingIterable( self._replies, allow_missing=True, parent=self, name='replies' ) if self._replies is not ThreadableMixin._replies else ()
+
+	@property
+	def referents(self):
+		return IntidResolvingIterable( self._referents, allow_missing=True, parent=self, name='referents' ) if self._referents is not ThreadableMixin._referents else ()
+
+@component.adapter( nti_interfaces.IThreadable, IIntIdAddedEvent )
+def threadable_added( threadable, event ):
+	"Update the replies and referents. NOTE: This assumes that IThreadable is actually a ThreadableMixin."
+	# Note that we don't trust the 'references' value of the client.
+	# we build the reference chain ourself based on inReplyTo.
+	inReplyTo = threadable.inReplyTo
+	if not nti_interfaces.IThreadable.providedBy( inReplyTo ): # None in the real world, test case stuff otherwise
+		return # nothing to do
+
+	intids = component.getUtility( IIntIds )
+	intid = intids.getId( threadable )
+
+	# Only the direct parent gets added as a reply
+	if inReplyTo._replies is ThreadableMixin._replies:
+		inReplyTo._replies = intids.family.II.TreeSet()
+	inReplyTo._replies.add( intid )
+
+	# Now walk up the tree and record the indirect reference (including in the direct
+	# parent)
+	while nti_interfaces.IThreadable.providedBy( inReplyTo ):
+		if inReplyTo._referents is ThreadableMixin._referents:
+			inReplyTo._referents = intids.family.II.TreeSet()
+		inReplyTo._referents.add( intid )
+
+		inReplyTo = inReplyTo.inReplyTo
+
+@component.adapter( nti_interfaces.IThreadable, IIntIdRemovedEvent )
+def threadable_removed(threadable, event):
+	"Update the replies and referents. NOTE: This assumes that IThreadable is actually a ThreadableMixin."
+	# Note that we don't trust the 'references' value of the client.
+	# we build the reference chain ourself based on inReplyTo.
+	inReplyTo = threadable.inReplyTo
+	if not nti_interfaces.IThreadable.providedBy( inReplyTo ):
+		return # nothing to do
+
+	intids = component.getUtility( IIntIds )
+	intid = intids.getId( threadable )
+
+	# Only the direct parent gets added as a reply
+	try:
+		sets.discard( inReplyTo._replies, intid )
+	except AttributeError:
+		pass
+
+	# Now walk up the tree and record the indirect reference (including in the direct
+	# parent)
+	while nti_interfaces.IThreadable.providedBy( inReplyTo ):
+		try:
+			sets.discard( inReplyTo._referents, intid )
+		except AttributeError:
+			pass
+		inReplyTo = inReplyTo.inReplyTo
 
 class ThreadableExternalizableMixin(object):
 	"""
@@ -150,7 +232,7 @@ class ThreadableExternalizableMixin(object):
 	def _ext_can_update_threads( self ):
 		"""
 		By default, once this object has been created and the thread-related values
-		have been set, they can not be changed by sending external data.
+		have been set, they cannot be changed by sending external data.
 
 		(This depends on the context object being
 		:class:`persistent.Persistent`, or otherwise defining the
