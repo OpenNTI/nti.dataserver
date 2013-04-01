@@ -13,6 +13,7 @@ from ..common import get_datetime
 from ..common import is_all_query
 from ..common import get_mime_type_map
 from ..common import get_type_from_mimetype
+from ..common import videotimestamp_to_text
 
 from . import ConfiguringTestBase
 
@@ -33,6 +34,12 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(epoch_time(d), is_(1015826400.0))
 		assert_that(epoch_time(None), is_(0))
 
+	def test_videotimestamp_to_text(self):
+		f = 1321391468.413528
+		assert_that(videotimestamp_to_text(f), is_('15:11:08.413'))
+		assert_that(videotimestamp_to_text(str(f)), is_('15:11:08.410'))
+		assert_that(videotimestamp_to_text(None), is_(u''))
+
 	def test_get_datetime(self):
 		f = 1321391468.411328
 		s = '1321391468.411328'
@@ -47,6 +54,7 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(mmap, has_entry('application/vnd.nextthought.note', 'note'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.messageinfo', 'messageinfo'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.bookcontent', 'content'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.videotranscript', 'videotranscript'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogentrypost', 'post'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogcomment', 'post'))
 
@@ -61,6 +69,7 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.note'), is_('note'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.transcript'), is_('messageinfo'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.messageinfo'), is_('messageinfo'))
+		assert_that(get_type_from_mimetype('application/vnd.nextthought.videotranscript'), is_('videotranscript'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.xyz'), is_(none()))
 		assert_that(get_type_from_mimetype('foo'), is_(none()))
 		assert_that(get_type_from_mimetype(None), is_(none()))

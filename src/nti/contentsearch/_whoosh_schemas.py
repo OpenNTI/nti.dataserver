@@ -138,11 +138,6 @@ def create_post_schema():
 
 class VIDEO_TIMESTAMP(fields.DATETIME):
 
-	@classmethod
-	def datetime_to_text(cls, dt):
-		result = "%02d:%02d:%02d.%03d" % (dt.hour, dt.minute, dt.second, dt.microsecond)
-		return result
-
 	def _parse_datestring(self, qstring):
 		# this method parses a very time stamp # hh:mm::ss.uuu
 		from whoosh.support.times import adatetime, fix, is_void
@@ -180,7 +175,8 @@ def create_video_transcript_schema():
 					 	content=create_content_field(stored=True),
 					 	quick=create_ngram_field(),
 					 	start_timestamp=VIDEO_TIMESTAMP(stored=True),
-					 	end_timestamp=VIDEO_TIMESTAMP(stored=True))
+					 	end_timestamp=VIDEO_TIMESTAMP(stored=True),
+					 	last_modified=fields.DATETIME(stored=True))
 	return sch
 
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptSchemaCreator)

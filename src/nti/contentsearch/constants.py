@@ -26,21 +26,25 @@ FIELD 			 = u'Field'
 ITEMS			 = u'Items'
 CONTENT			 = u'Content'
 SNIPPET 		 = u'Snippet'
+VIDEO_ID		 = 'VideoID'
 FRAGMENTS		 = u'Fragments'
 FRAGMENT_COUNT	 = u'Fragment Count'
 TOTAL_FRAGMENTS	 = u'Total Fragments'
+VIDEO_TRANSCRIPT = u'VideoTranscript'
 CREATOR 		 = unicode(ext_interfaces.StandardExternalFields.CREATOR)
 AUTO_TAGS		 = u'AutoTags'
 MIME_TYPE		 = unicode(ext_interfaces.StandardExternalFields.MIMETYPE)
 HIT_COUNT 		 = u'Hit Count'
 TARGET_OID		 = u'TargetOID'
+TYPE_COUNT		 = u'Type Count'
 MESSAGE_INFO	 = u'MessageInfo'
 SUGGESTIONS		 = u'Suggestions'
+END_TIMESTAMP	 = u'EndTimeStamp'
 PHRASE_SEARCH 	 = u'PhraseSearch'
 COLLECTION_ID	 = u'CollectionId'
-TYPE_COUNT		 = u'Type Count'
 HIT_META_DATA	 = u'Hit MetaData'
-TOTAL_HIT_COUNT = u'Total Hit Count'
+START_TIMESTAMP	 = u'StartTimeStamp'
+TOTAL_HIT_COUNT	 = u'Total Hit Count'
 CONTAINER_ID	 = unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 LAST_MODIFIED	 = unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
 
@@ -108,13 +112,15 @@ messageinfo = u'messageinfo'
 messageinfo_ = u'messageinfo'
 book_content_ = u'bookcontent'
 canvastextshape_ = 'canvastextshape'
+videotranscript_ = u'videotranscript'
 invalid_type_ = u'++++invalidtype++++'
 
 POST_MIME_TYPE = u'application/vnd.nextthought.forums.post'
 BOOK_CONTENT_MIME_TYPE = u'application/vnd.nextthought.bookcontent'
+VIDEO_TRANSCRIPT_MIME_TYPE = u'application/vnd.nextthought.videotranscript'
 
 ugd_indexable_type_names = (note_, post_, highlight_, redaction_, messageinfo_)
-indexable_type_names = (content_,) + ugd_indexable_type_names
+indexable_type_names = (content_, videotranscript_) + ugd_indexable_type_names
 indexable_types_order = dict({ p:x for x, p in enumerate(indexable_type_names) })
 
 ascending_ = u'ascending'
