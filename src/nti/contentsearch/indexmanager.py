@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from ._indexmanager import IndexManager
 from . import interfaces  as search_interfaces
-from ._whoosh_bookindexmanager import wbm_factory
+from ._whoosh_book_searcher import wbm_factory
 from ._redis_indexmanager import _RedisIndexManager
 from . import _cloudsearch_interfaces as cloudsearch_interfaces
 
