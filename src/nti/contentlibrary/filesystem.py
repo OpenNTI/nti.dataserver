@@ -95,7 +95,7 @@ class DynamicFilesystemLibrary(library.AbstractLibrary):
 
 	@readproperty
 	def _root_mtime(self):
-		return os.stat( self.root )[os.path.stat.ST_MTIME]
+		return os.stat( self._root )[os.path.stat.ST_MTIME]
 
 	@property
 	def lastModified(self):
