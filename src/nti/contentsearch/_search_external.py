@@ -19,7 +19,6 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
-from nti.dataserver import mimetype
 from nti.dataserver.links import Link
 
 from ._search_hits import get_search_hit
@@ -127,11 +126,11 @@ class _IndexHitMetaDataExternalizer(object):
 		self.data = data
 
 	def toExternalObject(self):
-		eo = LocatedExternalDict()
-		eo[LAST_MODIFIED] = self.data.last_modified
-		eo[TOTAL_HIT_COUNT] = self.data.total_hit_count
-		eo[TYPE_COUNT] = {k.capitalize():v for k, v in self.data.type_count.items()}
-		return eo
+		result = LocatedExternalDict()
+		result[LAST_MODIFIED] = self.data.last_modified
+		result[TOTAL_HIT_COUNT] = self.data.total_hit_count
+		result[TYPE_COUNT] = {k.capitalize():v for k, v in self.data.type_count.items()}
+		return result
 
 # search results
 
@@ -222,7 +221,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
 		# set for IUGDExternalCollection
 		result.lastModified = last_modified
-		result.mimeType = mimetype.nti_mimetype_from_object(self.results)
+		result.mimeType = self.results.mimeType
 
 		return result
 
@@ -271,4 +270,3 @@ class _SearchResultsLinkDecorator(object):
 					link_next_href = request.current_route_path(_query=sorted(batch_params.items()))
 					link_next = Link(link_next_href, rel=rel)
 					external.setdefault('Links', []).append(link_next)
-
