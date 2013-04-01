@@ -148,13 +148,18 @@ class ForumObjectContentsLinkProvider(object):
 		# our children change.
 		# This works because everytime one of the context's children is modified,
 		# our timestamp is also modified. We include the user asking just to be safe
-		link = Link( context, rel=VIEW_CONTENTS, elements=(VIEW_CONTENTS, md5_etag(context.lastModified, _get_remote_username())) )
-		interface.alsoProvides( link, ILocation )
-		link.__name__ = ''
-		link.__parent__ = context
-
+		# We also advertise that you can POST new items to this url, which is good for caching
+		elements=(VIEW_CONTENTS, md5_etag(context.lastModified, _get_remote_username()).replace('/','_'))
 		_links = mapping.setdefault( LINKS, [] )
-		_links.append( link )
+		for rel in VIEW_CONTENTS, 'add':
+			link = Link( context, rel=rel, elements=elements )
+			interface.alsoProvides( link, ILocation )
+			link.__name__ = ''
+			link.__parent__ = context
+			_links.append( link )
+
+		# The last link is the add link; we want to be specific about its method
+		link.method = 'POST'
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 @component.adapter(IForum)

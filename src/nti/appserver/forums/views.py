@@ -211,11 +211,29 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 
 		return topic
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_CREATE,
-			  context=frm_interfaces.IPersonalBlog,
-			  request_method='POST' )
+_view_defaults = dict(  route_name='objects.generic.traversal',
+						renderer='rest' )
+_c_view_defaults = _view_defaults.copy()
+_c_view_defaults.update( permission=nauth.ACT_CREATE,
+						 request_method='POST' )
+_r_view_defaults = _view_defaults.copy()
+_r_view_defaults.update( permission=nauth.ACT_READ,
+						 request_method='GET' )
+_d_view_defaults = _view_defaults.copy()
+_d_view_defaults.update( permission=nauth.ACT_DELETE,
+						 request_method='DELETE' )
+
+# We allow POSTing comments/topics/forums to the actual objects, and also
+# to the /contents sub-URL (ignoring anything subpath after it)
+# This lets a HTTP client do a better job of caching, by
+# auto-invalidating after its own comment creation
+# (Of course this has the side-problem of not invalidating
+# a cache of the topic object itself...)
+
+@view_config( name='' )
+@view_config( name=VIEW_CONTENTS )
+@view_defaults( context=frm_interfaces.IPersonalBlog,
+				**_c_view_defaults)
 class PersonalBlogPostView(_AbstractForumPostView):
 	""" Given an incoming IPost, creates a new topic in the blog """
 
@@ -223,11 +241,10 @@ class PersonalBlogPostView(_AbstractForumPostView):
 	_override_content_type = PersonalBlogEntryPost.mimeType
 	_factory = PersonalBlogEntry
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_CREATE,
-			  context=frm_interfaces.ICommunityBoard,
-			  request_method='POST' )
+@view_config( name='' )
+@view_config( name=VIEW_CONTENTS )
+@view_defaults( context=frm_interfaces.ICommunityBoard,
+				**_c_view_defaults)
 class CommunityBoardPostView(_AbstractForumPostView):
 	""" Given an incoming IPost, creates a new forum in the community board """
 	# Still read the incoming IPost-like thing, but we discard it since our "topic" (aka forum)
@@ -241,11 +258,10 @@ class CommunityBoardPostView(_AbstractForumPostView):
 	def _get_topic_creator( self ):
 		return self.request.context.creator # the community
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_CREATE,
-			  context=frm_interfaces.ICommunityForum,
-			  request_method='POST' )
+@view_config( name='' )
+@view_config( name=VIEW_CONTENTS )
+@view_defaults( context=frm_interfaces.ICommunityForum,
+				**_c_view_defaults )
 class CommunityForumPostView(_AbstractForumPostView):
 	""" Given an incoming IPost, creates a new topic in the community forum """
 
@@ -278,32 +294,19 @@ class _AbstractTopicPostView(_AbstractIPostPOSTView):
 
 		return incoming_post
 
-# We allow POSTing comments to the topic object, and also
-# to the /contents sub-URL (ignoring anything subpath after it)
-# This lets a HTTP client do a better job of caching, by
-# auto-invalidating after its own comment creation
-# (Of course this has the side-problem of not invalidating
-# a cache of the topic object itself...)
-
-@view_config( name=VIEW_CONTENTS )
 @view_config( name='' )
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_CREATE,
-				context=frm_interfaces.ICommunityHeadlineTopic,
-				request_method='POST' )
+@view_config( name=VIEW_CONTENTS )
+@view_defaults( context=frm_interfaces.ICommunityHeadlineTopic,
+				**_c_view_defaults )
 class CommunityHeadlineTopicPostView(_AbstractTopicPostView):
 
 	_constraint = frm_interfaces.IGeneralForumComment.providedBy
 	_override_content_type = GeneralForumComment.mimeType
 
-@view_config( name=VIEW_CONTENTS )
 @view_config( name='' )
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_CREATE,
-				context=frm_interfaces.IPersonalBlogEntry,
-				request_method='POST' )
+@view_config( name=VIEW_CONTENTS )
+@view_defaults( context=frm_interfaces.IPersonalBlogEntry,
+				**_c_view_defaults )
 class PersonalBlogEntryPostView(_AbstractTopicPostView):
 
 	_constraint = frm_interfaces.IPersonalBlogComment.providedBy
@@ -322,23 +325,19 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 @view_config( context=frm_interfaces.ICommunityHeadlinePost ) # need to re-list
 @view_config( context=frm_interfaces.IGeneralForumComment ) # need to re-list
 @view_config( context=frm_interfaces.IPost )
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_READ,
-				request_method='GET' )
+@view_defaults( **_r_view_defaults )
 class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 
 
 @view_config( context=frm_interfaces.IBoard )
 @view_config( context=frm_interfaces.IForum )
+@view_config( context=frm_interfaces.ICommunityForum )
 @view_config( context=frm_interfaces.ICommunityHeadlineTopic )
+@view_config( context=frm_interfaces.IPersonalBlog )
 @view_config( context=frm_interfaces.IPersonalBlogEntry )
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_READ,
-				name=VIEW_CONTENTS,
-				request_method='GET')
+@view_defaults( name=VIEW_CONTENTS,
+				**_r_view_defaults )
 class ForumContentsGetView(UGDQueryView):
 	""" The /contents view for the forum objects we are using.
 
@@ -395,10 +394,8 @@ class CommunityBoardContentsGetView(ForumContentsGetView):
 			  name='feed.atom' )
 @view_config( context=frm_interfaces.IForum,
 			  name='feed.rss' )
-@view_defaults( route_name='objects.generic.traversal',
-				permission=nauth.ACT_READ,
-				request_method='GET',
-				http_cache=datetime.timedelta(hours=1))
+@view_defaults( http_cache=datetime.timedelta(hours=1),
+				**_r_view_defaults )
 class ForumContentsFeedView(AbstractFeedView):
 	_data_callable_factory = ForumContentsGetView
 
@@ -417,20 +414,16 @@ class ForumContentsFeedView(AbstractFeedView):
 @view_config( context=frm_interfaces.IGeneralForumComment )
 @view_config( context=frm_interfaces.ICommunityHeadlinePost )
 @view_config( context=frm_interfaces.ICommunityForum )
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_UPDATE,
-				request_method='PUT' )
+@view_defaults( permission=nauth.ACT_UPDATE,
+				request_method='PUT',
+				**_view_defaults)
 class ForumObjectPutView(UGDPutView):
 	""" Editing an existing forum post, etc """
 	# Exists entirely for registration sake.
 
 @view_config( context=frm_interfaces.ICommunityHeadlineTopic )
 @view_config( context=frm_interfaces.IPersonalBlogEntry )
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_DELETE,
-				request_method='DELETE' )
+@view_defaults(**_d_view_defaults)
 class HeadlineTopicDeleteView(UGDDeleteView):
 	""" Deleting an existing topic """
 
@@ -443,10 +436,7 @@ class HeadlineTopicDeleteView(UGDDeleteView):
 		return theObject
 
 @view_config( context=frm_interfaces.ICommunityForum )
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_DELETE,
-				request_method='DELETE' )
+@view_defaults(**_d_view_defaults)
 class ForumDeleteView(UGDDeleteView):
 	""" Deleting an existing forum """
 
@@ -459,10 +449,7 @@ class ForumDeleteView(UGDDeleteView):
 
 @view_config(context=frm_interfaces.IGeneralForumComment)
 @view_config(context=frm_interfaces.IPersonalBlogComment)
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_DELETE,
-				request_method='DELETE' )
+@view_defaults(**_d_view_defaults)
 class CommentDeleteView(UGDDeleteView):
 	""" Deleting an existing forum comment.
 
@@ -594,3 +581,8 @@ def temp_store_favorite_object( modified_object, event ):
 		user._addSharedObject( modified_object )
 	else:
 		user._removeSharedObject( modified_object )
+
+del _view_defaults
+del _c_view_defaults
+del _r_view_defaults
+del _d_view_defaults
