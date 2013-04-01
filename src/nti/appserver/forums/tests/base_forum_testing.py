@@ -349,13 +349,14 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		res = self._POST_topic_entry()
 		entry_url = res.location
 		entry_ntiid = res.json_body['NTIID']
+		entry_mod_time = res.json_body['Last Modified']
 
 		# (Same user) comments on blog by POSTing a new post
 		data = self._create_comment_data_for_POST()
 
 		res = testapp.post_json( entry_url, data, status=201 )
 
-		self._check_posted_comment( testapp, data, entry_url, entry_ntiid, res )
+		self._check_posted_comment( testapp, data, entry_url, entry_ntiid, entry_mod_time, res )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@time_monotonically_increases
@@ -367,6 +368,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		res = self._POST_topic_entry()
 		entry_url = res.location
 		entry_ntiid = res.json_body['NTIID']
+		entry_mod_time = res.json_body['Last Modified']
 
 		# (Same user) comments on blog by POSTing a new post
 		data = self._create_comment_data_for_POST()
@@ -375,10 +377,10 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 		res = testapp.post_json( contents_url, data, status=201 )
 
-		self._check_posted_comment( testapp, data, entry_url, entry_ntiid, res )
+		self._check_posted_comment( testapp, data, entry_url, entry_ntiid, entry_mod_time, res )
 
 
-	def _check_posted_comment( self, testapp, data, entry_url, entry_ntiid, comment_res ):
+	def _check_posted_comment( self, testapp, data, entry_url, entry_ntiid, entry_mod_time, comment_res ):
 
 		assert_that( comment_res.status_int, is_( 201 ) )
 		assert_that( comment_res.location, is_( 'http://localhost' + comment_res.json_body['href'] + '/' ) )
@@ -396,6 +398,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		# Side effects: The container's PostCount is incremented
 		res = testapp.get( entry_url )
 		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )
+		# And so is its mod time
+		assert_that( res.json_body, has_entry( 'Last Modified', greater_than( entry_mod_time ) ) )
 
 		# The comment can be searched for
 		search_res = self.search_user_rugd( self.forum_comment_unique )
@@ -729,10 +733,16 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( new_contents_href, is_not( contents_href ) )
 		contents_href = new_contents_href
 
+		# (Stash the topic last mod time after adding the comment)
+		topic_last_mod = testapp.get( topic_url ).json_body['Last Modified']
+
+		# Now edit the comment
 		comment_data['title'] = 'Changed my title'
 		comment_data['body'] = ["Different comment body"]
-		comment_res = testapp2.put_json( edit_href, comment_data )
 		del comment_data['Class'] # don't compare, it changes
+
+		comment_res = testapp2.put_json( edit_href, comment_data )
+
 		comment_data['sharedWith'] = [fixture.community_name]
 		assert_that( comment_res.json_body, has_entries( comment_data ) )
 
@@ -744,6 +754,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		new_contents_href = self.require_link_href_with_rel( testapp.get( topic_url ).json_body, 'contents' )
 		assert_that( new_contents_href, is_not( contents_href ) )
 
+		# And the last mod time of the topic
+		assert_that( testapp.get( topic_url ).json_body, has_entry( 'Last Modified', greater_than( topic_last_mod ) ) )
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases

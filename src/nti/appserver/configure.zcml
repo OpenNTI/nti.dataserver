@@ -64,6 +64,8 @@
 	<adapter factory=".pyramid_renderers._ZopeFileCacheController" />
 	<adapter factory=".pyramid_renderers._ContentUnitInfoCacheController" />
 	<adapter factory=".pyramid_renderers._ETagCachedUGDExternalCollectionCacheController" />
+	<adapter factory=".pyramid_renderers.UseTheRequestContextCacheController"
+			 for=".interfaces.IUseTheRequestContextUGDExternalCollection" />
 
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />

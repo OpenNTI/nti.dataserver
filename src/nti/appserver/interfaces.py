@@ -336,6 +336,16 @@ class IETagCachedUGDExternalCollection(ILongerCachedUGDExternalCollection):
 	This must be a "strong validator", guaranteed to change.
 	"""
 
+class IUseTheRequestContextUGDExternalCollection(IUGDExternalCollection):
+	"""
+	Instead of using the return value from the view, use the context of the request.
+	This is useful when the view results are directly derived from the context,
+	and the context has more useful information than the result does. It allows
+	you to register an adapter for the context, and use that *before* calculating the
+	view. If you do have to calculate the view, you are assured that the ETag values
+	that the view results create are the same as the ones you checked against.
+	"""
+
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder # BWC
 
 ###
