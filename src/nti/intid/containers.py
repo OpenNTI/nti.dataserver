@@ -90,6 +90,7 @@ class IntidResolvingIterable(_AbstractIntidResolvingFacade, Iterable, Container,
 				logger.log( loglevels.TRACE, "Failed to resolve key '%s' in %r of %r", iid, self.__name__, self.__parent__ )
 
 	def __len__( self ):
+		"""This is only guaranteed to be accurate with `allow_missing` is ``False``."""
 		return len(self.context)
 
 	def __contains__( self, obj ):

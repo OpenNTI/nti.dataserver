@@ -126,6 +126,13 @@ def threadable_added( threadable, event ):
 
 	intids = component.getUtility( IIntIds )
 	intid = intids.getId( threadable )
+	_threadable_added( threadable, intids, intid )
+
+def _threadable_added( threadable, intids, intid ):
+	# This function is for migration support
+	inReplyTo = threadable.inReplyTo
+	if not nti_interfaces.IThreadable.providedBy( inReplyTo ):
+		return # nothing to do
 
 	# Only the direct parent gets added as a reply
 	if inReplyTo._replies is ThreadableMixin._replies:

@@ -129,102 +129,17 @@ def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_
 	interface.alsoProvides( result, result_iface )
 	return result
 
-_REF_ATTRIBUTE = 'referenced_by'
-
-class RefProxy(ProxyBase):
-	# Unless we have slots, we set properties of the underlying object, which is bad,
-	# it has cross-thread implications and defeats the point of a proxy in the first place
-	__slots__ = ('_v_referenced_by', '__weakref__')
-	def __init__( self, obj ):
-		super(RefProxy,self).__init__( obj )
-		self._v_referenced_by = None
-
-	referenced_by = alias( '_v_referenced_by' )
-
-def _build_reference_lists( request, result_list ):
-	if hasattr( request, '_build_reference_lists_proxies' ):
-		return
-
-	proxies = {}
-	setattr( request, '_build_reference_lists_proxies', proxies )
-	fake_proxies = {} # so we only log once
-	def _referenced_by( reference_to, reference_from=None ):
-		try:
-			orig = reference_to
-			reference_to = proxies.get( reference_to, None )
-			if reference_to is None:
-				reference_to = orig
-				reference_to = fake_proxies[reference_to]
-		except KeyError:
-			# So this means that we found something in the reference chain that was not
-			# in the collection itself. Assuming we're looking at shared data in addition to owned data,
-			# and knowing that ThreadableMixin is implemented with weakrefs, this means one of a few things:
-			# First, there's cross-container referencing going on. The containerIDs won't match. That's not
-			# supposed to be allowed. We haven't actually seen that yet.
-			# Second, the note has been deleted but the weak ref hasn't cleaned up yet.
-			# Third, the item was shared with this user at one point and no longer is.
-
-			# In the later two cases, we will report on ID that the client won't be able to find and put into the thread,
-			# so it will appear to be 'deleted'
-			level = loglevels.TRACE
-			#if hasattr( reference_to, 'inReplyTo' ) and not getattr( reference_to, 'inReplyTo' ):
-			#	level = logging.WARN # If it was a root object, this is bad. The entire thread could be hidden
-			if logger.isEnabledFor( level ):
-				logger.log( level, "Failed to get proxy for %s/%s/%s. Illegal reference chain from %s/%s?",
-							reference_to, getattr( reference_to, 'containerId', None ), id(reference_to),
-							reference_from, getattr( reference_from, 'containerId', None ))
-			proxy = fake_proxies[reference_to] = RefProxy( reference_to )
-			result = proxy.referenced_by = []
-			return result # return a temp list that's not persistent
-		result = reference_to.referenced_by
-		if result is None:
-			result = reference_to.referenced_by = []
-
-		return result
-
-	for i, item in enumerate(result_list):
-		# Ensure every item gets the list if it could have replies
-		if hasattr( item, 'inReplyTo' ):
-			proxy = RefProxy( item )
-			result_list[i] = proxy
-			proxies[item] = proxy
-
-	for item in result_list:
-		inReplyTo = None
-		try:
-			inReplyTo = item.getInReplyTo(allow_cached=False)
-		except (AttributeError,TypeError):
-			inReplyTo = getattr( item, 'inReplyTo', None )
-		__traceback_info__ = item, inReplyTo, getattr( item, 'containerId', None )
-
-		if inReplyTo is not None:
-			# Also, we must maintain the proxy map ourself because the items we get
-			# back from here are 'real' vs the things we just put in the result list
-			_referenced_by( inReplyTo, item ).append( item )
-
-		refs = ()
-		try:
-			refs = item.getReferences(allow_cached=False)
-		except (AttributeError,TypeError):
-			refs = getattr( item, 'references', () )
-
-		for ref in refs:
-			if ref is not None and ref is not inReplyTo:
-				_referenced_by( ref, item ).append( item )
 
 def _reference_list_length( x ):
-	refs = getattr( x, _REF_ATTRIBUTE, _reference_list_length )
-	if refs is not _reference_list_length:
-		if refs is None:
-			return 0
-		return len(refs)
-	return -1 # distinguish no refs vs no data
+	try:
+		return len(x.referents)
+	except AttributeError:
+		return -1 # distinguish no refs vs no data
 
 def _reference_list_objects( x ):
-	refs = getattr( x, _REF_ATTRIBUTE, _reference_list_objects )
-	if refs is not _reference_list_objects and refs is not None:
-		return refs
-	else:
+	try:
+		return x.referents
+	except AttributeError:
 		return ()
 
 def _reference_list_recursive_like_count( proxy ):
@@ -258,8 +173,9 @@ def _meonly_predicate_factory( request ):
 	loading and filtering the objects is relatively fast---the
 	difference amounts to less than 15%; this depends, however, on the
 	effectiveness of the storage cache and the amount of objects being
-	filtered out. Doing it manually lets us get accurate values for
-	ReferencedByCount and RecursiveLikeCount.
+	filtered out. (The reason for introducing it was to
+	build accurate values for ReferencedByCount and RecursiveLikeCount; this
+	is no longer necessary, so this might be able to go away.)
 
 	The meaning of "me" defaults to the user who created the data (request.context.user
 	or request.context, if it is a IUser).
@@ -316,8 +232,8 @@ SORT_KEYS = {
 	'lastModified': functools.partial( to_standard_external_last_modified_time, default=0 ),
 	'createdTime' : functools.partial( to_standard_external_created_time, default=0),
 	'LikeCount': liking_like_count,
-	'ReferencedByCount': ( _build_reference_lists, _reference_list_length ),
-	'RecursiveLikeCount': (_build_reference_lists, _reference_list_recursive_like_count),
+	'ReferencedByCount':  _reference_list_length,
+	'RecursiveLikeCount':  _reference_list_recursive_like_count,
 	}
 SORT_KEYS['CreatedTime'] = SORT_KEYS['createdTime'] # Despite documentation, some clients send this value
 SORT_DIRECTION_DEFAULT = {
@@ -673,11 +589,6 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 				predicate = self._make_exclude_predicate()
 
 		filter_names = self._get_filter_names()
-		# Be nice and make sure the reference-based counts get included if we are going to be throwing
-		# away all child data
-		# Must do this before filtering (see also comments in _meonly_predicate_factory)
-		if 'TopLevel' in filter_names:
-			_build_reference_lists( self.request, result_list )
 
 		for filter_name in filter_names:
 			if filter_name not in self.FILTER_NAMES:
@@ -785,8 +696,8 @@ class _RecursiveUGDView(_UGDView):
 	are examined (the hierarchy is effectively ignored).
 	"""
 
-	_iter_ntiids_stream_only=False
-	_iter_ntiids_include_stream=True
+	_iter_ntiids_stream_only = False
+	_iter_ntiids_include_stream = True
 
 	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
@@ -982,19 +893,16 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 		# Also add the reply count, if we have that information available
 
 		extra_elements = ()
-		proxies = getattr( get_current_request(), '_build_reference_lists_proxies', None )
-		if proxies:
-			proxy = proxies.get( context, context )
-			reply_count = _reference_list_length( proxy )
-			if reply_count >= 0:
-				mapping['ReferencedByCount'] = reply_count
+		reply_count = _reference_list_length( context )
+		if reply_count >= 0:
+			mapping['ReferencedByCount'] = reply_count
 
-			mapping['RecursiveLikeCount'] = _reference_list_recursive_like_count( proxy )
-			# Use the reply count and the maximum modification date
-			# of the child as a "ETag" value to allow caching of the @@replies indefinitely
-			max_last_modified = _reference_list_recursive_max_last_modified( proxy )
-			etag = _md5_etag( reply_count, max_last_modified ).replace( '/', '_' )
-			extra_elements = (etag,)
+		mapping['RecursiveLikeCount'] = _reference_list_recursive_like_count( context )
+		# Use the reply count and the maximum modification date
+		# of the child as a "ETag" value to allow caching of the @@replies indefinitely
+		max_last_modified = _reference_list_recursive_max_last_modified( context )
+		etag = _md5_etag( reply_count, max_last_modified ).replace( '/', '_' )
+		extra_elements = (etag,)
 
 		super(RepliesLinkDecorator,self).decorateExternalMapping( context, mapping, extra_elements=extra_elements )
 
@@ -1039,35 +947,17 @@ def replies_view(request):
 	# We cache the complete list of replies because this is easy to invalidate
 	# we rely on _sort_filter_batch_result for security
 	key = (to_external_oid( root_note ) + '/@@' + REL_REPLIES).encode('utf-8')
-	cache = component.getUtility(nti_interfaces.IMemcacheClient)
 	if request.subpath:
 		#result_iface = IETagCachedUGDExternalCollection
 		# temporarily disabled, see forums/views
 		pass
 
-	reply_oids = cache.get( key )
-	if reply_oids is not None:
-		logger.debug('Cache hit for %s', key)
-		oid_resolver = component.getUtility(nti_interfaces.IOIDResolver)
-		replies = [oid_resolver.get_object_by_oid(x, ignore_creator=True) for x in reply_oids]
-		objs = (replies,)
-		do_filter = False
-	else:
-		objs = _UGDView.do_getObjects( the_user, request.context.containerId, the_user,
-									   allow_empty=True )
-		do_filter = True
+
+	objs = (list(root_note.referents),)
 
 	result = lists_and_dicts_to_ext_collection( objs,
 												result_iface=result_iface,
 												ignore_broken=True )
-
-	if do_filter:
-		def test(x):
-			return request.context in getattr( x, 'references', () ) or request.context == getattr( x, 'inReplyTo', None )
-		result['Items'] = filter( test, result['Items'] )
-
-		external_oids = [to_external_oid(x) for x in result['Items']]
-		cache.set( key, external_oids )
 
 	# Not all the params make sense, but batching does
 	view = _UGDView( request, the_user, root_note.containerId )
