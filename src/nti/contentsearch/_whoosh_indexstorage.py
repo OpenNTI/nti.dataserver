@@ -215,7 +215,7 @@ def create_directory_index(indexname, schema, indexdir=None, close_index=True):
 def _create_default_whoosh_storage():
 	if os.getenv('DATASERVER_DIR', None):
 		return UserDirectoryStorage()
-	return None
+	return UserRedisIndexStorage()
 
 class RedisWhooshStorage(WhooshStorage):
 	"""
@@ -299,18 +299,9 @@ class RedisWhooshStorage(WhooshStorage):
 
 class UserRedisIndexStorage(IndexStorage):
 
-	writer_ctor_args = {}
-	writer_commit_args = {'merge':False, 'optimize':False}
-
 	def __init__(self):
 		super(UserRedisIndexStorage, self).__init__()
 		self.stores = {}
-
-	def ctor_args(self, *args, **kwargs):
-		return self.writer_ctor_args
-
-	def commit_args(self, *args, **kwargs):
-		return self.writer_commit_args
 
 	def create_index(self, schema, indexname=_DEF_INDEX_NAME, username=None, **kwargs):
 		return self.storage(username=username).create_index(schema, indexname)

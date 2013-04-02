@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from hashlib import md5
 
 try:
@@ -225,11 +227,11 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 
 def _on_index_removed(key, value):
 	_safe_index_close(value)
+	logger.debug('index %s has been closed' % key)
 
 class _WhooshEntityIndexManager(_BaseWhooshEntityIndexManager):
 
-	use_md5 = True
-	whoosh_indices = LFUMap(maxsize=500, on_removal_callback=_on_index_removed)
+	whoosh_indices = LFUMap(maxsize=50, on_removal_callback=_on_index_removed)
 
 	@property
 	def storage(self):
