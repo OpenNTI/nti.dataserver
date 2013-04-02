@@ -642,12 +642,15 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			# TODO: This is experimental. By doing this, we have fewer total objects
 			# and smaller lists in memory at once. But the consequence is that our
 			# permission check gets done on every object, which may be the bottleneck
-			if needs_security:
-				def test(x):
-					return is_readable(x[1] )
-				sortable_iterables = [itertools.ifilter( test, x ) for x in sortable_iterables]
-				needs_security = False
-			sorted_sublists = [heapq.nsmallest( number_items_needed, x ) for x in sortable_iterables]
+			# NOTE: At least in alpha, this is the bottleneck. we're better off pulling the filtered
+			# list in to memory
+			#if needs_security:
+			#	def test(x):
+			#		return is_readable(x[1] )
+			#	sortable_iterables = [itertools.ifilter( test, x ) for x in sortable_iterables]
+			#	needs_security = False
+			#sorted_sublists = [heapq.nsmallest( number_items_needed, x ) for x in sortable_iterables]
+			sorted_sublists = [sorted(x) for x in sortable_iterables]
 		else:
 			sorted_sublists = [sorted(x) for x in sortable_iterables]
 
