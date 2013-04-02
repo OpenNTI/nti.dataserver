@@ -52,7 +52,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 import anyjson as json
-
+from urllib import quote as UQ
 from persistent import Persistent
 from zope import interface
 from zope import component
@@ -228,13 +228,17 @@ class _AppTestBaseMixin(object):
 		return testapp.get( '/dataserver2/users/' + username + path, **kwargs )
 
 
-	def resolve_user( self, testapp=None, username=None ):
+	def resolve_user_response( self, testapp=None, username=None, **kwargs ):
 		if testapp is None:
 			testapp = self.testapp
 		if username is None:
 			username = self.extra_environ_default_user
 
-		return testapp.get( '/dataserver2/ResolveUser/' + username ).json_body['Items'][0]
+		return testapp.get( UQ('/dataserver2/ResolveUser/' + username), **kwargs )
+
+
+	def resolve_user( self, *args, **kwargs ):
+		return self.resolve_user_response( *args, **kwargs ).json_body['Items'][0]
 
 	def fetch_service_doc( self, testapp=None ):
 		if testapp is None:
