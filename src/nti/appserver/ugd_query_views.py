@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import sys
-import numbers
+from numbers import Number
 import functools
 import itertools
 import heapq
@@ -56,6 +56,7 @@ from nti.dataserver.links import Link
 from z3c.batching.batch import Batch
 
 #from perfmetrics import metricmethod
+
 
 def _TRUE(x): return True
 
@@ -109,7 +110,7 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate=_TRUE, result_
 	oids = set()
 
 	def _base_predicate(x):
-		if x is None or isinstance(x, numbers.Number):
+		if x is None or isinstance(x, Number):
 			return False
 		try:
 			oid = to_external_oid( x, str( id(x) ) )
@@ -134,6 +135,7 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate=_TRUE, result_
 		_predicate = _base_predicate
 	else:
 		_predicate = lambda x: _base_predicate(x) and predicate(x)
+
 
 	iterables, result.lastModified = _lists_and_dicts_to_iterables( lists_and_dicts )
 	iterables = _iterables_to_filtered_iterables( iterables, _predicate )
