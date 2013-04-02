@@ -542,6 +542,7 @@ def _specified_username_logon( request, allow_no_username=True, require_matching
 			# TODO: some real auditing scheme
 			logger.info( "[AUDIT] User %s has impersonated %s at %s", remote_user, desired_username, request )
 		response = _create_success_response( request, desired_username )
+		response.cache_control.no_cache = True
 	return response
 
 @view_config(route_name=REL_LOGIN_NTI_PASSWORD, request_method='GET', renderer='rest')

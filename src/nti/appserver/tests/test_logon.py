@@ -9,6 +9,7 @@ from hamcrest import  has_entry, has_length, has_key,  has_item
 from hamcrest import same_instance, greater_than_or_equal_to, greater_than
 from hamcrest import contains_string
 from hamcrest import contains
+from hamcrest import none
 
 from hamcrest.library import has_property
 from nti.tests import provides
@@ -85,7 +86,8 @@ class TestApplicationLogon(SharedApplicationTestBase):
 						   extra_environ=self._make_extra_environ() )
 		assert_that( testapp.cookies, has_key( 'nti.auth_tkt' ) )
 		assert_that( testapp.cookies, has_entry( 'username', other_user_username ) )
-
+		assert_that( res.cache_control, has_property( 'max_age', none() ) )
+		assert_that( res.cache_control, has_property( 'no_cache', '*' ) )
 		# Test that the username cookie comes back correctly 'raw' as well
 		cookie_headers = res.headers.dict_of_lists()['set-cookie']
 		assert_that( cookie_headers, has_item( 'username=nobody@nowhere; Path=/' ) )
