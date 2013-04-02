@@ -21,15 +21,15 @@ from whoosh.qparser import (GtLtPlugin, PrefixPlugin, PhrasePlugin)
 from . import interfaces as search_interfaces
 from .constants import (content_, quick_, title_, tags_, redactionExplanation_, replacementContent_)
 
-default_search_plugins =  (GtLtPlugin, DateParserPlugin, PrefixPlugin, PhrasePlugin)
+default_search_plugins = (GtLtPlugin, DateParserPlugin, PrefixPlugin, PhrasePlugin)
 
 class CosineScorer(scoring.WeightLengthScorer):
-	
+
 	def __init__(self, searcher, fieldname, text, qtf=1.0, qmf=1.0):
 		# IDF and average field length are global statistics, so get them from
 		# the top-level searcher
 		parent = searcher.get_parent()  # returns self if no parent
-		self.idf = parent.idf(fieldname, text)		
+		self.idf = parent.idf(fieldname, text)
 		self.qtf = qtf
 		self.qmf = qmf
 		self.setup(searcher, fieldname, text)
@@ -57,23 +57,23 @@ def create_query_parser(fieldname, schema=None, plugins=default_search_plugins):
 		qparser.add_plugin(pg())
 	return qparser
 
-@interface.implementer( search_interfaces.IWhooshQueryParser )
+@interface.implementer(search_interfaces.IWhooshQueryParser)
 class _DefaultWhooshQueryParser(object):
-	
+
 	def _get_search_fields(self, qo):
 		if qo.is_phrase_search or qo.is_prefix_search:
 			result = (content_,)
 		else:
 			result = (quick_, content_)
 		return result
-	
+
 	def _get_whoosh_query(self, fieldname, term, schema):
 		try:
 			parser = create_query_parser(fieldname, schema=schema)
 			return parser.parse(term)
 		except:
 			return Term(fieldname, term)
-	
+
 	def parse(self, qo, schema):
 		parsed_query = None
 		query_term = qo.term
@@ -84,12 +84,14 @@ class _DefaultWhooshQueryParser(object):
 		return parsed_query
 
 _DefaultBookWhooshQueryParser = _DefaultWhooshQueryParser
+_DefaultVideoTranscriptWhooshQueryParser = _DefaultWhooshQueryParser
+
 _DefaultNoteWhooshQueryParser = _DefaultWhooshQueryParser
 _DefaultHighlightWhooshQueryParser = _DefaultWhooshQueryParser
 _DefaultMessageinfoWhooshQueryParser = _DefaultWhooshQueryParser
 
 class _DefaultRedactionWhooshQueryParser(_DefaultWhooshQueryParser):
-	
+
 	def _get_search_fields(self, qo):
 		if qo.is_phrase_search or qo.is_prefix_search:
 			result = (content_, redactionExplanation_, replacementContent_)
@@ -98,7 +100,7 @@ class _DefaultRedactionWhooshQueryParser(_DefaultWhooshQueryParser):
 		return result
 
 class _DefaultPostWhooshQueryParser(_DefaultWhooshQueryParser):
-	
+
 	def _get_search_fields(self, qo):
 		if qo.is_phrase_search or qo.is_prefix_search:
 			result = (content_,)
@@ -107,6 +109,6 @@ class _DefaultPostWhooshQueryParser(_DefaultWhooshQueryParser):
 		return result
 
 def parse_query(qo, schema, type_name):
-	parser = component.getUtility(search_interfaces.IWhooshQueryParser, name=type_name)	
+	parser = component.getUtility(search_interfaces.IWhooshQueryParser, name=type_name)
 	main_query = parser.parse(qo, schema)
 	return main_query

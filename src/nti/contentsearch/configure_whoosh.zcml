@@ -7,9 +7,8 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	
-	<include file="configure_whoosh_book.zcml" />
+	<include file="configure_whoosh_content.zcml" />
 	
-	<utility factory="._whoosh_query._DefaultBookWhooshQueryParser" name="book" />
 	<utility factory="._whoosh_query._DefaultNoteWhooshQueryParser" name="note" />
 	<utility factory="._whoosh_query._DefaultPostWhooshQueryParser" name="post" />
 	<utility factory="._whoosh_query._DefaultHighlightWhooshQueryParser" name="highlight" />
