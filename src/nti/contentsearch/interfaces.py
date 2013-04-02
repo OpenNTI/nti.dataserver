@@ -493,6 +493,9 @@ class IHeadlineTopicContentResolver(IBlogContentResolver):
 class IBookContentResolver(_ContentMixinResolver):
 	pass
 
+class IVideoTranscriptContentResolver(_ContentMixinResolver):
+	pass
+
 class IModeledContentResolver(IPostContentResolver,
 							  IMessageInfoContentResolver,
 							  IRedactionContentResolver,
@@ -575,7 +578,6 @@ class IWhooshBookSearchHit(ISearchHit):
 
 class IWhooshVideoTranscriptSearchHit(ISearchHit):
 	pass
-
 
 class ISearchHitComparator(interface.Interface):
 

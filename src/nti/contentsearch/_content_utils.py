@@ -391,6 +391,22 @@ class _BookContentResolver(_BasicContentResolver):
 	def get_last_modified(self):
 		return self.obj.last_modified
 
+@component.adapter(search_interfaces.IVideoTranscriptContent)
+@interface.implementer(search_interfaces.IVideoTranscriptContentResolver)
+class _VideoTranscriptContentResolver(_BasicContentResolver):
+
+	def get_content(self):
+		return self.obj.content
+
+	def get_containerId(self):
+		return self.obj.containerId
+
+	def get_ntiid(self):
+		return self.obj.videoId or self.get_containerId()
+
+	def get_last_modified(self):
+		return self.obj.last_modified
+
 @interface.implementer(search_interfaces.IStopWords)
 class _DefaultStopWords(object):
 
