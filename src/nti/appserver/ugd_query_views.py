@@ -10,21 +10,20 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 import logging
 logger = logging.getLogger(__name__)
-from ZODB import loglevels
 
 import sys
 import numbers
 import functools
+import itertools
+import heapq
 
 from zope import interface
 from zope import component
-from zope.proxy import ProxyBase
-from zope.intid.interfaces import IIntIdAddedEvent
 from ZODB.POSException import POSKeyError
 
 from pyramid.view import view_config
 from pyramid import security as psec
-from pyramid.threadlocal import get_current_request
+
 
 from nti.appserver import httpexceptions as hexc
 from nti.appserver import _util
@@ -54,27 +53,15 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.mimetype import nti_mimetype_from_object, nti_mimetype_with_class
 from nti.dataserver.links import Link
 
-from nti.utils.property import alias
-
 from z3c.batching.batch import Batch
 
 from perfmetrics import metricmethod
 
 def _TRUE(x): return True
 
-def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_iface=IUGDExternalCollection, ignore_broken=False ):
-	""" Given items that may be dictionaries or lists, combines them
-	and externalizes them for return to the user as a dictionary. If the individual items
-	are ModDateTracking (have a lastModified value) then the returned
-	dict will have the maximum value as 'Last Modified'
-
-	:param callable predicate: Objects will only make it into the final 'Items' list
-		if this function returns true for all of them. Defaults to a True filter.
-	"""
+def _lists_and_dicts_to_iterables( lists_and_dicts ):
 	result = []
-	# To avoid returning duplicates, we keep track of object
-	# ids and only add one copy.
-	oids = set()
+
 	lists_and_dicts = [item for item in lists_and_dicts if item is not None]
 	lastMod = 0
 	for list_or_dict in lists_and_dicts:
@@ -94,39 +81,83 @@ def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_
 			# then it must be a 'list'
 			to_iter = list_or_dict
 
-		# None would come in because of weak refs, numbers
-		# would come in because of Last Modified.
-		# In the case of shared data, the object might
-		# update but our container wouldn't
-		# know it, so check for internal update times too
-		for x in to_iter:
-			if x is None or isinstance( x, numbers.Number ):
-				continue
+		result.append( to_iter )
+	return result, lastMod
 
-			try:
-				oid = to_external_oid( x, str( id(x) ) )
-			except POSKeyError:
-				if ignore_broken:
-					continue
-				raise
-			if oid in oids:
-				# avoid dups. This check is slightly less expensive than
-				# some predicates (is_readable) so do it first
-				continue
-			if not predicate(x):
-				continue
+def _iterables_to_filtered_iterables( iterables, predicate ):
+	if predicate is _TRUE:
+		return iterables
+	return [itertools.ifilter( predicate, x ) for x in iterables]
 
-			try:
-				lastMod = max( lastMod, x.lastModified )
-			except AttributeError: pass
+def _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate=_TRUE, result_iface=IUGDExternalCollection, ignore_broken=False ):
+	""" Given items that may be dictionaries or lists, combines them
+	and externalizes them for return to the user as a dictionary. If the individual items
+	are ModDateTracking (have a lastModified value) then the returned
+	dict will have the maximum value as 'Last Modified'
 
-			oids.add( oid )
-			result.append( x )
+	:param callable predicate: Objects will only make it into the final 'Items' list
+		if this function returns true for all of them. Defaults to a True filter.
+	"""
+	result = LocatedExternalDict()
 
-	result = LocatedExternalDict( { 'Last Modified': lastMod, 'Items': result } )
-	result.lastModified = lastMod
+	# To avoid returning duplicates, we keep track of object
+	# ids and only add one copy.
+	# We also reject None and numbers
+	oids = set()
+
+	def _base_predicate(x):
+
+		if x is None or isinstance(x, numbers.Number):
+			return False
+		try:
+			oid = to_external_oid( x, str( id(x) ) )
+		except POSKeyError:
+			if ignore_broken:
+				return False
+			raise
+		if oid in oids:
+			# avoid dups. This check is slightly less expensive than
+			# some predicates (is_readable) so do it first
+			return False
+		oids.add( oid )
+		try:
+			result.lastModified = max(result.lastModified, x.lastModified)
+		except AttributeError:
+			pass
+		return True
+
+	if predicate is _TRUE or not predicate:
+		_predicate = _base_predicate
+	else:
+		_predicate = lambda x: _base_predicate(x) and predicate(x)
+
+	iterables, result.lastModified = _lists_and_dicts_to_iterables( lists_and_dicts )
+	iterables = _iterables_to_filtered_iterables( iterables, _predicate )
+
+	result['Iterables'] = iterables
+	result['Last Modified'] = result.lastModified
 	result.mimeType = nti_mimetype_with_class( None )
 	interface.alsoProvides( result, result_iface )
+	return result
+
+def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_iface=IUGDExternalCollection, ignore_broken=False ):
+	""" Given items that may be dictionaries or lists, combines them
+	and externalizes them for return to the user as a dictionary. If the individual items
+	are ModDateTracking (have a lastModified value) then the returned
+	dict will have the maximum value as 'Last Modified'
+
+	:param callable predicate: Objects will only make it into the final 'Items' list
+		if this function returns true for all of them. Defaults to a True filter.
+	"""
+	result = _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate, result_iface, ignore_broken )
+	items = []
+
+	for to_iter in result['Iterables']:
+		items.extend( to_iter )
+
+	result['Items'] = items
+	del result['Iterables']
+	result['Last Modified'] = result.lastModified
 	return result
 
 
@@ -158,38 +189,6 @@ def _combine_predicate( new, old ):
 	if not old:
 		return new
 	return lambda obj: new(obj) and old(obj)
-
-def _meonly_predicate_factory( request ):
-	"""
-	Creates a filter that will return things that only belong to (were created by)
-	the current user.
-
-	Note that this is a manual filtering and requires loading all the
-	data into memory; it can be implemented more efficiently (avoiding
-	loading all the data) by adjusting
-	:meth:`_UGDView.getObjectsForId` to simply *not* load the shared
-	data when the filter is ``MeOnly``. However, profiling (Jan 2013)
-	shows that most of the overhead is actually in externalization and
-	loading and filtering the objects is relatively fast---the
-	difference amounts to less than 15%; this depends, however, on the
-	effectiveness of the storage cache and the amount of objects being
-	filtered out. (The reason for introducing it was to
-	build accurate values for ReferencedByCount and RecursiveLikeCount; this
-	is no longer necessary, so this might be able to go away.)
-
-	The meaning of "me" defaults to the user who created the data (request.context.user
-	or request.context, if it is a IUser).
-
-	"""
-	raise ValueError("Temporarily disabled by name; using get_shared again")
-	me = request.context.user if not nti_interfaces.IUser.providedBy( request.context ) else request.context # TODO: Can probably use lineage for this.
-	me_uname = me.username
-	def _filter(o):
-		try:
-			return getattr( o.creator, 'username', o.creator ) == me_uname
-		except AttributeError:
-			return False
-	return _filter
 
 def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
 	me = get_remote_user(request) # the 'I' means the current user, not the one whose date we look at (not  request.context.user)
@@ -249,7 +248,6 @@ FILTER_NAMES = {
 	'IFollowAndMe': (_ifollowandme_predicate_factory,),
 	'Favorite': (_favorite_predicate_factory,),
 	'Bookmarks': (_bookmark_predicate_factory,),
-	'MeOnly': (_meonly_predicate_factory,),
 	}
 
 class _MimeFilter(object):
@@ -305,6 +303,8 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 	_force_shared_objects = False
 	_force_apply_security = False
 
+	ignore_broken = True
+
 	#: The user object whose data we are requesting. This is not
 	#: necessarily the same as the authenticated remote user;
 	#: additional restrictions apply in that case
@@ -324,36 +324,15 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			if self.user != self.remoteUser:
 				raise hexc.HTTPForbidden()
 
-
-	_done_accept_include = False
-
 	def __call__( self ):
 		self.check_cross_user()
+		# pre-flight the batch
+		self._get_batch_size_start()
 
 		user, ntiid = self.user, self.ntiid
 		the_objects = self.getObjectsForId( user, ntiid )
-		# Apply cross-user security if needed
-		# XXX Sorting is much cheaper right now, so we do this very last. All unit tests pass this way
-		#if user != self.getRemoteUser():
-		#	result = lists_and_dicts_to_ext_collection( the_objects, predicate=is_readable )
-		#else:
-		# In general, we need to keep all the threadable objects before we are going
-		# to apply a filter in order to build the reference lists. However, if we *are* applying
-		# a TopLevel filter in addition to include/exclude, then anything that would
-		# be excluded by type can be thrown away (because replies are always within a type family)
-		# Whether or not this is an obvious win depends on the mix of data and how much we get to throw away...
-		pred = _TRUE
-		if 'TopLevel' in self._get_filter_names():
-			pred = self._make_accept_predicate()
-			if pred is None:
-				pred = self._make_exclude_predicate()
-			if pred is not None:
-				self._done_accept_include = True
-			else:
-				pred = _TRUE
 
-		result = lists_and_dicts_to_ext_collection( the_objects, predicate=pred, result_iface=self.result_iface )
-		self._sort_filter_batch_result( result )
+		result = self._sort_filter_batch_objects( the_objects )
 		result.__parent__ = self.request.context
 		result.__name__ = ntiid
 		result.__data_owner__ = user
@@ -388,6 +367,28 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 				# TODO: Should there be an access check here?
 				entities.append( ent )
 		return entities
+
+	def _get_batch_size_start( self ):
+		"""
+		Return a two-tuple, (batch_size, batch_start). If the values are
+		invalid, raises an HTTP exception. If either is missing, returns
+		the defaults for both.
+		"""
+
+		batch_size = self.request.params.get( 'batchSize', self._DEFAULT_BATCH_SIZE )
+		batch_start = self.request.params.get( 'batchStart', self._DEFAULT_BATCH_START )
+		if batch_size is not None and batch_start is not None:
+			try:
+				batch_size = int(batch_size)
+				batch_start = int(batch_start)
+			except ValueError:
+				raise hexc.HTTPBadRequest()
+			if batch_size <= 0 or batch_start < 0:
+				raise hexc.HTTPBadRequest()
+
+			return batch_size, batch_start
+
+		return self._DEFAULT_BATCH_SIZE, self._DEFAULT_BATCH_START
 
 	@classmethod
 	def do_getObjects( cls, owner, containerId, remote_user,
@@ -454,14 +455,62 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			mime_filter = self._MIME_FILTER_FACTORY( exclude_types )
 			return lambda o: not mime_filter(o)
 
+	def _make_complete_predicate( self ):
+		"A predicate for all the filtering, excluding security"
+
+		predicate = None # We build an uber predicate that handles all filtering in one pass through the list
+		predicate = self._make_accept_predicate( )
+		if predicate is None:
+			# accept takes priority over exclude
+			predicate = self._make_exclude_predicate()
+
+		filter_names = self._get_filter_names()
+
+		for filter_name in filter_names:
+			if filter_name not in self.FILTER_NAMES:
+				continue
+			if filter_name == 'MeOnly':
+				continue
+			the_filter = self.FILTER_NAMES[filter_name]
+			if isinstance( the_filter, tuple ):
+				the_filter = the_filter[0]( self.request )
+
+			predicate = _combine_predicate( the_filter, predicate )
+
+		shared_with_values = self._get_shared_with()
+		if shared_with_values:
+			def filter_shared_with( x ):
+				x_sharedWith = getattr( x, 'sharedWith', ())
+				for shared_with_value in shared_with_values:
+					if shared_with_value in x_sharedWith:
+						return True
+			predicate = _combine_predicate( filter_shared_with, predicate )
+
+		return predicate
+
+	def _make_sort_key_function(self):
+		"Returns a key function for sorting based on current params"
+		# The request keys match what z3c.table does
+		sort_on = self.request.params.get( 'sortOn', self._DEFAULT_SORT_ON )
+		sort_order = self.request.params.get( 'sortOrder', self.SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
+		_sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS[self._DEFAULT_SORT_ON] )
+		# heapq needs to have the smallest item first. It doesn't work with reverse sorting.
+		# so in that case we invert the key function
+		if sort_order == 'descending':
+			def sort_key_function(x):
+				return -(_sort_key_function(x))
+		else:
+			sort_key_function = _sort_key_function
+		return sort_key_function
+
+
 	@metricmethod
-	def _sort_filter_batch_result( self, result ):
+	def _sort_filter_batch_objects( self, objects ):
 		"""
-		Sort, filter, and batch (page) the result dictionary by
-		modifying it in place, potentially adding new keys (this
-		implementation adds several keys; see below). This method
-		sorts by ``lastModified`` by default, but everything else
-		comes from the following query parameters:
+		Sort, filter, and batch (page) the objects collections,
+		returning a result dictionary. This method sorts by
+		``lastModified`` by default, but everything else comes from
+		the following query parameters:
 
 		sortOn
 			The field to sort on. Options are ``lastModified``,
@@ -563,132 +612,94 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			on the values in ``TotalItemCount`` or ``FilteredTotalItemCount``.
 
 		"""
+		needs_security = self._force_apply_security or self.remoteUser != self.user
+		total_item_count = sum( (len(x) for x in objects if x is not None) )
 
-		# Before we filter and batch, we sort. Some filter operations need the sorted
-		# data.
-		### XXX Which ones? Unit tests don't break if we don't sort first, so for efficiency
-		# we're not
+		predicate = self._make_complete_predicate()
+		sort_key_function = self._make_sort_key_function()
+		batch_size, batch_start = self._get_batch_size_start()
 
-		result_list = result['Items']
-		result['TotalItemCount'] = result['FilteredTotalItemCount'] = len(result_list)
+		number_items_needed = total_item_count
+		if batch_size is not None and batch_start is not None:
+			number_items_needed = min(batch_size + batch_start + 2, total_item_count)
 
-		# The request keys match what z3c.table does
-		sort_on = self.request.params.get( 'sortOn', self._DEFAULT_SORT_ON )
-		sort_order = self.request.params.get( 'sortOrder', self.SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
-		sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS[self._DEFAULT_SORT_ON] )
+		# First, take the cheap, non-secure filter to all the subobjects
+		result = _lists_and_dicts_to_ext_iterables( objects, predicate=predicate, result_iface=self.result_iface, ignore_broken=self.ignore_broken )
+		iterables = result['Iterables']
+		del result['Iterables']
 
-		# TODO: Which is faster and more efficient? The built-in filter function which allocates
-		# a new list but iterates fast, or iterating in python and removing from the existing list?
-		# Since the list is really an array, removing from it is actually slow
+		result['TotalItemCount'] = total_item_count
 
-		predicate = None # We build an uber predicate that handles all filtering in one pass through the list
-		if not self._done_accept_include:
-			self._done_accept_include = True
-			predicate = self._make_accept_predicate( )
-			if predicate is None:
-				# accept takes priority over exclude
-				predicate = self._make_exclude_predicate()
+		# Now, sort each subset.
+		# Sorting all the small subsets is faster than sorting one huge list and potentially
+		# easier to cache. This assumes we are going to want to page
+		# These are reified.
+		heap_key = lambda x: (sort_key_function(x), x)
+		sortable_iterables = [itertools.imap(heap_key, x) for x in iterables]
+		if number_items_needed < total_item_count and number_items_needed < 500: # Works best for "small values"
+			# If we can get away with just partially sorting the iterables,
+			# because we're paging, do it
+			# TODO: This is experimental. By doing this, we have fewer total objects
+			# and smaller lists in memory at once. But the consequence is that our
+			# permission check gets done on every object, which may be the bottleneck
+			if needs_security:
+				def test(x):
+					return is_readable(x[1] )
+				sortable_iterables = [itertools.ifilter( test, x ) for x in sortable_iterables]
+				needs_security = False
+			sorted_sublists = [heapq.nsmallest( number_items_needed, x ) for x in sortable_iterables]
+		else:
+			sorted_sublists = [sorted(x) for x in sortable_iterables]
 
-		filter_names = self._get_filter_names()
+		result['Last Modified'] = result.lastModified
 
-		for filter_name in filter_names:
-			if filter_name not in self.FILTER_NAMES:
-				continue
-			if filter_name == 'MeOnly':
-				continue
-			the_filter = self.FILTER_NAMES[filter_name]
-			if isinstance( the_filter, tuple ):
-				the_filter = the_filter[0]( self.request )
+		result['FilteredTotalItemCount'] = sum( (len(x) for x in sorted_sublists) ) # this may be an approximation
 
-			predicate = _combine_predicate( the_filter, predicate )
-
-		shared_with_values = self._get_shared_with()
-		if shared_with_values:
-			def filter_shared_with( x ):
-				x_sharedWith = getattr( x, 'sharedWith', ())
-				for shared_with_value in shared_with_values:
-					if shared_with_value in x_sharedWith:
-						return True
-			predicate = _combine_predicate( filter_shared_with, predicate )
-
-		if predicate:
-			result_list = filter(predicate, result_list)
-			result['FilteredTotalItemCount'] = len(result_list)
-			result['Items'] = result_list
-
-		# Finally, sort the smallest set.
-		if isinstance( sort_key_function, tuple ):
-			prep_function = sort_key_function[0]
-			sort_key_function = sort_key_function[1]
-			prep_function( self.request, result_list )
-
-		# Stable sort, which may be important
-		result_list.sort( key=sort_key_function,
-						  reverse=(sort_order == 'descending') )
 
 		# Apply cross-user security if needed
 		# Do this after all the filtering because it's the most expensive
 		# filter of all
-		needs_security = self._force_apply_security
-		if self.remoteUser != self.user:
-			needs_security = True
+		if needs_security:
+			def test(x):
+				return is_readable(x[1] )
+			sorted_sublists = [itertools.ifilter( test, x ) for x in sorted_sublists]
 
 
-		batch_size = self.request.params.get( 'batchSize', self._DEFAULT_BATCH_SIZE )
-		batch_start = self.request.params.get( 'batchStart', self._DEFAULT_BATCH_START )
+		# Now merge the lists altogether
+		merged = heapq.merge( *sorted_sublists )
+
+		batch_size, batch_start = self._get_batch_size_start()
+
 		if batch_size is not None and batch_start is not None:
-			try:
-				batch_size = int(batch_size)
-				batch_start = int(batch_start)
-			except ValueError:
-				raise hexc.HTTPBadRequest()
-			if batch_size <= 0 or batch_start < 0:
-				raise hexc.HTTPBadRequest()
+			# Ok, reify up to batch_size + batch_start + 2 items from merged
+			result_list = []
+			count = 0
+			for _, x in merged:
+				result_list.append( x )
+				count += 1
+				if count > number_items_needed:
+					break
 
 			if batch_start >= len(result_list):
 				# Batch raises IndexError
 				result_list = []
-				needs_security = False
 			else:
-				if needs_security:
-					needs_security = False
-					batch = []
-					# If we can, always put at least a few more than needed
-					# into the result list. This ensures that any client
-					# who is counting items and comparing it to FilteredItemCount
-					# knows if there is more out there. Try to add more than one
-					# to account for varying interpretations of batch_start and other
-					# off-by-one problems
-					for i in result_list:
-						if is_readable(i):
-							batch.append( i )
-						if len(batch) > batch_size + batch_start + 2:
-							break
-					result_list = batch
-					result['FilteredTotalItemCount'] = len(result_list) # NOTE: This is a minimum
-
-				# If we security filtered here, we may no longer have enough items to fulfil
-				# the request
-				if batch_start >= len(result_list):
-					result_list = []
-					needs_security = False
-				else:
-					result_list = Batch( result_list, batch_start, batch_size )
-					# Insert links to the next and previous batch
-					next_batch, prev_batch = result_list.next, result_list.previous
-					for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
-						if batch is not None and batch != result_list:
-							batch_params = self.request.params.copy()
-							batch_params['batchStart'] = batch.start
-							link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
-							link_next = Link( link_next_href, rel=rel )
-							result.setdefault( 'Links', [] ).append( link_next )
+				result_list = Batch( result_list, batch_start, batch_size )
+				# Insert links to the next and previous batch
+				next_batch, prev_batch = result_list.next, result_list.previous
+				for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
+					if batch is not None and batch != result_list:
+						batch_params = self.request.params.copy()
+						batch_params['batchStart'] = batch.start
+						link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
+						link_next = Link( link_next_href, rel=rel )
+						result.setdefault( 'Links', [] ).append( link_next )
 
 			result['Items'] = result_list
+		else:
+			# Not batching.
+			result['Items'] = [x[1] for x in merged]
 
-		if needs_security:
-			result['Items'] = filter( is_readable, result['Items'] )
-			result['FilteredTotalItemCount'] = len(result_list)
 		return result
 
 class _RecursiveUGDView(_UGDView):
@@ -702,8 +713,7 @@ class _RecursiveUGDView(_UGDView):
 	_iter_ntiids_stream_only = False
 	_iter_ntiids_include_stream = True
 
-	@metricmethod
-	def getObjectsForId( self, user, ntiid ):
+	def _get_containerids_for_id( self, user, ntiid ):
 		containers = ()
 		if ntiid == ntiids.ROOT:
 			containers = set(user.iterntiids(include_stream=self._iter_ntiids_include_stream,stream_only=self._iter_ntiids_stream_only))
@@ -718,6 +728,12 @@ class _RecursiveUGDView(_UGDView):
 		# NOTE: This is only in the stream. Normally we cannot store contained
 		# objects with an empty container key, so this takes internal magic
 		containers.add( '' ) # root
+
+		return containers
+
+	@metricmethod
+	def getObjectsForId( self, user, ntiid ):
+		containers = self._get_containerids_for_id( user, ntiid )
 		exc_info = None
 		items = []
 		for container in containers:
@@ -726,11 +742,15 @@ class _RecursiveUGDView(_UGDView):
 			except hexc.HTTPNotFound:
 				exc_info = sys.exc_info()
 
+		items = [x for x in items if x is not None] # TODO: Who gives us back a None? Seen on the Root with MeOnly filter
+		self._check_for_not_found( items, exc_info )
+		return items
+
+	def _check_for_not_found( self, items, exc_info ):
 		# We are not found iff the root container DNE (empty is OK)
 		# and the children are empty/DNE. In other words, if
 		# accessing UGD for this container would throw,
 		# so does accessing recursive.
-		items = [x for x in items if x is not None] # TODO: Who gives us back a None? Seen on the Root with MeOnly filter
 		empty = len(items) == 0
 		if not empty:
 			# We have items. We are only truly empty, though,
@@ -748,7 +768,7 @@ class _RecursiveUGDView(_UGDView):
 			# Throw the previous not found exception.
 			raise exc_info[0], exc_info[1], exc_info[2]
 
-		return items
+
 
 class _ChangeMimeFilter(_MimeFilter):
 
@@ -941,11 +961,10 @@ def replies_view(request):
 
 	objs = (list(root_note.referents),)
 
-	result = lists_and_dicts_to_ext_collection( objs,
-												result_iface=result_iface,
-												ignore_broken=True )
 
 	# Not all the params make sense, but batching does
 	view = _UGDView( request, the_user, root_note.containerId )
 	view._force_apply_security = True
-	return view._sort_filter_batch_result( result )
+	view.result_iface = result_iface
+	view.ignore_broken = True
+	return view._sort_filter_batch_objects( objs )

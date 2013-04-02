@@ -141,7 +141,7 @@ def _caching_permission_check(cache_name, permission, obj, request):
 	# so our cache must be aware of this
 	principals, authn_policy, reg = _get_effective_principals( request )
 
-	cached_val = the_cache.get( (obj, principals), _marker )
+	cached_val = the_cache.get( (id(obj), principals), _marker )
 	if cached_val is not _marker:
 		return cached_val
 
@@ -165,7 +165,7 @@ def _caching_permission_check(cache_name, permission, obj, request):
 		except (KeyError,AttributeError,TypeError):
 			pass
 
-	the_cache[(obj,principals)] = check_value
+	the_cache[(id(obj),principals)] = check_value
 
 	return check_value
 
