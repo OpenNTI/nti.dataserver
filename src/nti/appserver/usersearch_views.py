@@ -129,6 +129,12 @@ def _ResolveUserView(request):
 		# If we matched one user entity, see if we can get away without rendering it
 		# TODO: This isn't particularly clean
 		app_interfaces.IPreRenderResponseCacheController(result[0])(result[0], {'request': request} )
+		# special case the remote user being the same user; we don't want to cache
+		# ourself based simply on modification date as that doesn't take into account
+		# dynamic links; we do need to render
+		if result[0] == remote_user:
+			request.response.cache_control.max_age = 0
+			request.response.etag = None
 	else:
 		# Let resolutions that failed be cacheable for a long time.
 		# It's extremely unlikely that someone is going to snag this missing
