@@ -170,8 +170,7 @@ class DirectoryStorage(IndexStorage):
 		if not os.path.exists(path):
 			os.makedirs(path)
 			return True
-		else:
-			return False
+		return False
 
 	def get_folder(self, **kwargs):
 		return self.folder
@@ -183,7 +182,8 @@ class UserDirectoryStorage(DirectoryStorage):
 		self.stores = {}
 		self.max_level = max_level
 
-	def storage(self, username=None):
+	def storage(self, **kwargs):
+		username = kwargs.get('username', None)
 		if not username:
 			return super(UserDirectoryStorage, self).storage()
 		else:
@@ -193,7 +193,8 @@ class UserDirectoryStorage(DirectoryStorage):
 				self.stores[key] = WhooshFileStorage(path)
 			return self.stores[key]
 
-	def get_folder(self, username=None):
+	def get_folder(self, **kwargs):
+		username = kwargs.get('username', None)
 		if username:
 			path = self.oid_to_path(username, self.max_level)
 			path = os.path.join(self.folder, path)
@@ -311,27 +312,27 @@ class UserRedisIndexStorage(IndexStorage):
 	def commit_args(self, *args, **kwargs):
 		return self.writer_commit_args
 
-	def create_index(self, schema, indexname=_DEF_INDEX_NAME, username=u'', **kwargs):
+	def create_index(self, schema, indexname=_DEF_INDEX_NAME, username=None, **kwargs):
 		return self.storage(username=username).create_index(schema, indexname)
 
-	def index_exists(self, indexname=_DEF_INDEX_NAME, username=u'', **kwargs):
+	def index_exists(self, indexname=_DEF_INDEX_NAME, username=None, **kwargs):
 		gen = TOC._latest_generation(self.storage(username=username), indexname)
 		return gen >= 0
 
-	def get_or_create_index(self, indexname=_DEF_INDEX_NAME, schema=None, recreate=False, username=u'', **kwargs):
-
+	def get_or_create_index(self, indexname=_DEF_INDEX_NAME, schema=None, recreate=False, username=None, **kwargs):
 		if not self.index_exists(indexname, username=username):
 			recreate = True
 
 		if recreate:
-			return self.create_index(schema=schema, indexname=indexname, **kwargs)
+			result = self.create_index(schema=schema, indexname=indexname, username=username)
 		else:
-			return self.open_index(indexname=indexname, **kwargs)
+			result = self.open_index(indexname=indexname, username=username)
+		return result
 
-	def open_index(self, indexname, schema=None, username=u'', **kwargs):
+	def open_index(self, indexname, schema=None, username=None, **kwargs):
 		return self.storage(username=username).open_index(indexname=indexname)
 
-	def storage(self, username=u'', **kwargs):
+	def storage(self, username=None, **kwargs):
 		username = username or 'unknown@nti.com'
 		store = self.stores.get(username, None)
 		if store is None:
