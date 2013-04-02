@@ -74,6 +74,8 @@ class UserActivityGetView(RecursiveUGDQueryView):
 	FILTER_NAMES['TopLevel'] = _always_toplevel_filter
 	FILTER_NAMES['_NotDeleted'] = lambda x: not IDeletedObjectPlaceholder.providedBy( x )
 
+	get_shared = None # Because we are always MeOnly
+
 	def __init__( self, request ):
 		self.request = request
 		super(UserActivityGetView,self).__init__( request, the_user=request.context, the_ntiid=ntiids.ROOT )
@@ -84,14 +86,16 @@ class UserActivityGetView(RecursiveUGDQueryView):
 		filters.add( '_NotDeleted' )
 		return filters
 
+	def _check_for_not_found( self, items, exc_info ):
+		"Override to never throw."
+		return
 
 	def getObjectsForId( self, user, ntiid ):
 		# Collect the UGD recursively
-		try:
-			result = list( super(UserActivityGetView,self).getObjectsForId(user, ntiid) )
-		except HTTPNotFound:
-			# There is always activity, it just may be empty
-			result = []
+		result = list( super(UserActivityGetView,self).getObjectsForId(user, ntiid) )
+		result = [x for x in result if x is not ()]
+		# At this point, we know we have a list of dicts-like objects (btrees and other containers)
+
 		# Add the blog (possibly missing)
 		# NOTE: This is no longer necessary as the blog is being treated as a container
 		# found in user.containers with an NTIID
