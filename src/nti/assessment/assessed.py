@@ -66,7 +66,10 @@ def _dctimes_property_fallback(attrname, dcname):
 				dcdata = self.__annotations__['zope.app.dublincore.ZopeDublinCore']
 				date_modified = dcdata[dcname] # tuple of a string
 				datetime = parseDatetimetz( date_modified[0] )
-				return time.mktime( datetime.timetuple() )
+				result = time.mktime( datetime.timetuple() )
+				self.__dict__[attrname] = result # migrate
+				self._p_changed = True
+				return result
 			except KeyError:
 				pass
 

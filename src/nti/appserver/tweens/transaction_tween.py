@@ -42,8 +42,8 @@ def _is_side_effect_free( request ):
 	Is the request side-effect free? If the answer is yes, we should be able to quietly abort
 	the transaction and avoid taking out any locks in the DBs.
 	"""
-	if request.method == 'GET':
-		# GET requests must NEVER have side effects.
+	if request.method == 'GET' or request.method == 'HEAD':
+		# GET/HEAD requests must NEVER have side effects.
 		if 'socket.io' in request.url:
 			# (Unfortunately, socket.io polling does)
 			# However, the static resources don't

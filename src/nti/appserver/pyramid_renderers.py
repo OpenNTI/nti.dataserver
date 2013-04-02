@@ -223,8 +223,8 @@ def default_cache_controller( data, system ):
 		# "if the cache has seen the representation recently, and it was modified relatively long ago."
 		# We set some age guideline here to avoid that trap:
 		if rsp.cache_control.max_age is None:
-			rsp.cache_control.max_age = 30 # XXX This value is small but arbitrary
-		# (Setting it to 0 is equivalent to setting no-cache)
+			rsp.cache_control.max_age = 0 # You must opt-in for some non-zero lifetime
+			# (Setting it to 0 is equivalent to setting no-cache)
 
 		if _get_remote_username(request) is not None:
 			rsp.cache_control.private = True
@@ -236,7 +236,7 @@ def default_cache_controller( data, system ):
 	# We provide non-semantic ETag support based on the current rendering.
 	# This lets us work with user-specific things like edit links and user
 	# online status, but it is not the most efficient way to do things.
-	# It does let is support 'If-Non-Match', but it does not let us support
+	# It does let is support 'If-None-Match', but it does not let us support
 	# If-Match, unfortunately.
 
 	if not response.etag:

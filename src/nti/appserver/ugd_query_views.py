@@ -55,7 +55,7 @@ from nti.dataserver.links import Link
 
 from z3c.batching.batch import Batch
 
-from perfmetrics import metricmethod
+#from perfmetrics import metricmethod
 
 def _TRUE(x): return True
 
@@ -90,10 +90,13 @@ def _iterables_to_filtered_iterables( iterables, predicate ):
 	return [itertools.ifilter( predicate, x ) for x in iterables]
 
 def _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate=_TRUE, result_iface=IUGDExternalCollection, ignore_broken=False ):
-	""" Given items that may be dictionaries or lists, combines them
-	and externalizes them for return to the user as a dictionary. If the individual items
-	are ModDateTracking (have a lastModified value) then the returned
-	dict will have the maximum value as 'Last Modified'
+	"""
+	Given items that may be dictionaries or lists, combines them
+	and externalizes them for return to the user as a dictionary.
+
+	If the individual items are ModDateTracking (have a
+	lastModified value) then the returned dict will have the maximum
+	value as 'Last Modified'.
 
 	:param callable predicate: Objects will only make it into the final 'Items' list
 		if this function returns true for all of them. Defaults to a True filter.
@@ -106,7 +109,6 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate=_TRUE, result_
 	oids = set()
 
 	def _base_predicate(x):
-
 		if x is None or isinstance(x, numbers.Number):
 			return False
 		try:
@@ -120,6 +122,8 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate=_TRUE, result_
 			# some predicates (is_readable) so do it first
 			return False
 		oids.add( oid )
+		# TODO: This may not be right, if we're going to filter
+		# this object out with a subsequent predicate?
 		try:
 			result.lastModified = max(result.lastModified, x.lastModified)
 		except AttributeError:
@@ -417,7 +421,6 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 		return (mystuffDict, sharedstuffList, ()) # Last value is placeholder for get_public, currently not used
 
-	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
 		"""
 		Returns a sequence of values that can be passed to
@@ -469,8 +472,6 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		for filter_name in filter_names:
 			if filter_name not in self.FILTER_NAMES:
 				continue
-			if filter_name == 'MeOnly':
-				continue
 			the_filter = self.FILTER_NAMES[filter_name]
 			if isinstance( the_filter, tuple ):
 				the_filter = the_filter[0]( self.request )
@@ -504,7 +505,6 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		return sort_key_function
 
 
-	@metricmethod
 	def _sort_filter_batch_objects( self, objects ):
 		"""
 		Sort, filter, and batch (page) the objects collections,
@@ -650,9 +650,11 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			#	sortable_iterables = [itertools.ifilter( test, x ) for x in sortable_iterables]
 			#	needs_security = False
 			#sorted_sublists = [heapq.nsmallest( number_items_needed, x ) for x in sortable_iterables]
-			sorted_sublists = [sorted(x) for x in sortable_iterables]
+			sorted_sublists = [sorted(x, key=lambda x: x[0]) for x in sortable_iterables]
 		else:
-			sorted_sublists = [sorted(x) for x in sortable_iterables]
+			# Note that we are already computing the key once, no need to include the other
+			# object in the comparison
+			sorted_sublists = [sorted(x, key=lambda x: x[0]) for x in sortable_iterables]
 
 		result['Last Modified'] = result.lastModified
 
@@ -701,7 +703,9 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			result['Items'] = result_list
 		else:
 			# Not batching.
-			result['Items'] = [x[1] for x in merged]
+			result_list = [x[1] for x in merged]
+			result['Items'] = result_list
+
 
 		return result
 
@@ -734,7 +738,6 @@ class _RecursiveUGDView(_UGDView):
 
 		return containers
 
-	@metricmethod
 	def getObjectsForId( self, user, ntiid ):
 		containers = self._get_containerids_for_id( user, ntiid )
 		exc_info = None
