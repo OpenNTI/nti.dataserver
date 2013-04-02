@@ -23,7 +23,7 @@ _TEX_OPERATORS = [('\u00d7', '\\times'),
 				  ('\u2212', '-'),
 				  ('\u2260', '\\neq'),
 				  ('\u00f7', '\\div'),
-				  ('\u2026', '\\ldots'),
+				  ('\u2026', '\\ldots '),
 				  ('\u221a', '\\surd'),  # radicand
 				  ('\u2192', '\\rightarrow'),
 				  ('\uf0d0', '\\angle'),
@@ -105,8 +105,8 @@ _escapes = [(u'$', u'\\$'),
 			(u'\uf044', u'$\\triangle$'),
 			(u'\uf06c', u' '),
 			(u'\uf0d0', u'$\\angle$'),
-			(u'. . .', u'\\ldots'),
-			(u'\u2026', u'\\ldots'),
+			(u'. . .', u'\\ldots '),
+			(u'\u2026', u'\\ldots '),
 			(u'\u00A7', u'\\S')]
 
 def _escape_tex(text):
