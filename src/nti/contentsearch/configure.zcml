@@ -118,10 +118,14 @@
 			 provides=".interfaces.IHeadlineTopicContentResolver"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlineTopic" />
 			 
+	<adapter factory="._content_utils._VideoTranscriptContentResolver"
+			 provides=".interfaces.IVideoTranscriptContentResolver"
+			 for=".interfaces.IVideoTranscriptContent" />
+
 	<adapter factory="._content_utils._BookContentResolver"
 			 provides=".interfaces.IBookContentResolver"
 			 for=".interfaces.IBookContent" />
-
+			 
 	<!-- Search highlights -->
 
 	<utility factory="._search_highlights._create_default_analyzer" name="en" />
