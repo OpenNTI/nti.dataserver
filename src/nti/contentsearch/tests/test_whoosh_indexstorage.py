@@ -11,7 +11,6 @@ import uuid
 import random
 import shutil
 import tempfile
-import threading
 
 from zope import component
 
@@ -19,9 +18,14 @@ from whoosh import fields
 from whoosh import query
 from whoosh.compat import text_type
 
+from nti.dataserver import interfaces as nti_interfaces
+
 from ..interfaces import IWhooshIndexStorage
 from .._whoosh_indexstorage import DirectoryStorage
 from .._whoosh_indexstorage import UserDirectoryStorage
+from .._whoosh_indexstorage import UserRedisIndexStorage
+
+from nti.dataserver.tests import mock_redis
 
 from . import domain
 from . import ConfiguringTestBase
@@ -46,7 +50,6 @@ class _IndexStorageTest(object):
 		return self.storage.get_or_create_index(indexname=indexname, schema=sample_schema)
 
 	def _add_2_index(self, indexname, entries=None):
-
 		index = self._create_index(indexname=indexname)
 		writer = index.writer()
 
@@ -118,3 +121,29 @@ class TestUserNameDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
 		cls.idx_storage = UserDirectoryStorage(cls.indexdir)
 		super(TestUserNameDirectoryStorage, cls).setUpClass()
 
+	def _create_index(self, indexname):
+		return self.storage.get_or_create_index(indexname=indexname, schema=sample_schema, username='user@nti.com')
+
+	def test_open_index(self):
+		self._add_2_index("sample2")
+		self.idx_storage.open_index(indexname="sample2", username='user@nti.com')
+
+class TestUserRedisIndexStorage(ConfiguringTestBase, _IndexStorageTest):
+
+	@classmethod
+	def setUpClass(cls):
+		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
+		cls.idx_storage = UserRedisIndexStorage()
+		super(TestUserRedisIndexStorage, cls).setUpClass()
+
+	def setUp(self):
+		super(TestUserRedisIndexStorage, self).setUp()
+		self.redis = mock_redis.InMemoryMockRedis()
+		component.provideUtility(self.redis, provides=nti_interfaces.IRedisClient)
+
+	def _create_index(self, indexname):
+		return self.storage.get_or_create_index(indexname=indexname, schema=sample_schema, username='user@nti.com')
+
+	def test_open_index(self):
+		self._add_2_index("sample2")
+		self.idx_storage.open_index(indexname="sample2", username='user@nti.com')
