@@ -181,6 +181,7 @@ def _meonly_predicate_factory( request ):
 	or request.context, if it is a IUser).
 
 	"""
+	raise ValueError("Temporarily disabled by name; using get_shared again")
 	me = request.context.user if not nti_interfaces.IUser.providedBy( request.context ) else request.context # TODO: Can probably use lineage for this.
 	me_uname = me.username
 	def _filter(o):
@@ -426,7 +427,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 		remote_user = self.remoteUser
 		get_shared = None
-		if self._force_shared_objects or user == remote_user:
+		if self._force_shared_objects or (user == remote_user and 'MeOnly' not in self._get_filter_names()):
 			# Only consider the shared stuff when the actual user is asking
 			# TODO: Handle this better with ACLs
 			get_shared = self.get_shared
@@ -592,6 +593,8 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 		for filter_name in filter_names:
 			if filter_name not in self.FILTER_NAMES:
+				continue
+			if filter_name == 'MeOnly':
 				continue
 			the_filter = self.FILTER_NAMES[filter_name]
 			if isinstance( the_filter, tuple ):
