@@ -13,4 +13,7 @@
 	<utility factory="._whoosh_schemas._DefaultVideoTranscriptSchemaCreator" />
 	<utility factory="._whoosh_schemas._DefaultVideoTranscriptSchemaCreator" name="en" />
 	
+	<utility factory="._whoosh_query._DefaultBookWhooshQueryParser" name="book" />
+	<utility factory="._whoosh_query._DefaultVideoTranscriptWhooshQueryParser" name="videotranscript" />
+	
 </configure>

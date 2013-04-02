@@ -13,45 +13,6 @@ from dolmen.builtins import IDict
 
 from . import interfaces as search_interfaces
 
-from nti.utils import schema as nti_schema
-
-class IRedisStoreService(interface.Interface):
-
-	queue_name = nti_schema.ValidTextLine(title="Queue name", required=True)
-	sleep_wait_time = nti_schema.Number(title="Message interval", required=True)
-	expiration_time = nti_schema.Number(title="Message redis expiration time", required=True)
-
-	def add(docid, username):
-		"""
-		register an add index operation with redis
-
-		:param docid document id
-		:param username target user
-		"""
-
-	def update(docid, username):
-		"""
-		register a update index operation with redis
-
-		:param docid document id
-		:param username target user
-		"""
-
-	def delete(docid, username):
-		"""
-		register a delete index operation with redis
-
-		:param docid document id
-		:param username target user
-		"""
-
-	def process_messages(msgs):
-		"""
-		process the messages read from redis
-		"""
-
-# cloud search
-
 class ICloudSearchObject(IDict):
 	pass
 
@@ -97,7 +58,7 @@ class ICloudSearchStore(interface.Interface):
 		Handle the specififed CloudSearch error meessages
 		"""
 
-class ICloudSearchStoreService(IRedisStoreService):
+class ICloudSearchStoreService(search_interfaces.IRedisStoreService):
 	store = schema.Object(ICloudSearchStore, title='CloudSearch store')
 
 class ICloudSearchQueryParser(search_interfaces.ISearchQueryParser):

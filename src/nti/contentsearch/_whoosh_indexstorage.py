@@ -11,14 +11,22 @@ import os
 import time
 import random
 import binascii
+from cStringIO import StringIO
 
+from zope import component
 from zope import interface
 
 from whoosh import index
 from whoosh.store import LockError
+from whoosh.filedb.fileindex import TOC
 from whoosh.index import _DEF_INDEX_NAME
-
+from whoosh.filedb.filestore import open_index
+from whoosh.filedb.structfile import StructFile
+from whoosh.filedb.filestore import create_index
+from whoosh.filedb.filestore import Storage as WhooshStorage
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
+
+from nti.dataserver import interfaces as nti_interfaces
 
 from . import interfaces as search_interfaces
 
@@ -175,8 +183,7 @@ class UserDirectoryStorage(DirectoryStorage):
 		self.stores = {}
 		self.max_level = max_level
 
-	def storage(self, **kwargs):
-		username = kwargs.get('username', None)
+	def storage(self, username=None):
 		if not username:
 			return super(UserDirectoryStorage, self).storage()
 		else:
@@ -186,8 +193,7 @@ class UserDirectoryStorage(DirectoryStorage):
 				self.stores[key] = WhooshFileStorage(path)
 			return self.stores[key]
 
-	def get_folder(self, **kwargs):
-		username = kwargs.get('username', None)
+	def get_folder(self, username=None):
 		if username:
 			path = self.oid_to_path(username, self.max_level)
 			path = os.path.join(self.folder, path)
@@ -196,7 +202,6 @@ class UserDirectoryStorage(DirectoryStorage):
 
 	def oid_to_path(self, oid, max_bytes=3):
 		return oid_to_path(oid, max_bytes)
-
 
 def create_directory_index(indexname, schema, indexdir=None, close_index=True):
 	storage = DirectoryStorage(indexdir)
@@ -210,3 +215,126 @@ def _create_default_whoosh_storage():
 	if os.getenv('DATASERVER_DIR', None):
 		return UserDirectoryStorage()
 	return None
+
+class RedisWhooshStorage(WhooshStorage):
+	"""
+	Storage object that keeps the index in redis.
+	"""
+	supports_mmap = False
+
+	NTI_WHOOSH_STORE = 'nti/whoosh/store/%s'
+	NTI_WHOOSH_LOCKS = 'nti/whoosh/locks/%s'
+
+	def __init__(self, namespace='index'):
+		self.folder = namespace
+
+	@property
+	def redis(self):
+		return component.getUtility(nti_interfaces.IRedisClient)
+
+	def __file(self, name):
+		return self.redis.hget(self.NTI_WHOOSH_STORE % self.folder, name)
+
+	def create_index(self, schema, indexname=_DEF_INDEX_NAME):
+		return create_index(self, schema, indexname)
+
+	def file_modified(self, name):
+		return -1
+
+	def open_index(self, indexname=_DEF_INDEX_NAME, schema=None):
+		return open_index(self, schema, indexname)
+
+	def list(self):
+		return self.redis.hkeys(self.NTI_WHOOSH_STORE % self.folder)
+
+	def clean(self):
+		self.redis.delete(self.NTI_WHOOSH_STORE % self.folder)
+
+	def total_size(self):
+		return sum(self.file_length(f) for f in self.list())
+
+	def file_exists(self, name):
+		return self.redis.hexists(self.NTI_WHOOSH_STORE % self.folder, name)
+
+	def file_length(self, name):
+		if not self.file_exists(name):
+			raise NameError
+		return len(self.__file(name))
+
+	def delete_file(self, name):
+		if not self.file_exists(name):
+			raise NameError
+		self.redis.hdel(self.NTI_WHOOSH_STORE % self.folder, name)
+
+	def rename_file(self, name, newname, safe=False):
+		if not self.file_exists(name):
+			raise NameError("File %r does not exist" % name)
+		if safe and self.file_exists(newname):
+			raise NameError("File %r exists" % newname)
+
+		content = self.__file(name)
+		pl = self.redis.pipeline()
+		pl.hdel(self.NTI_WHOOSH_STORE % self.folder, name)
+		pl.hset(self.NTI_WHOOSH_STORE % self.folder, newname, content)
+		pl.execute()
+
+	def create_file(self, name, **kwargs):
+		def onclose_fn(sfile):
+			self.redis.hset(self.NTI_WHOOSH_STORE % self.folder, name, sfile.file.getvalue())
+		f = StructFile(StringIO(), name=name, onclose=onclose_fn)
+		return f
+
+	def open_file(self, name, *args, **kwargs):
+		if not self.file_exists(name):
+			raise NameError("No such file %r" % name)
+		def onclose_fn(sfile):
+			self.redis.hset(self.NTI_WHOOSH_STORE % self.folder, name, sfile.file.getvalue())
+		return StructFile(StringIO(self.__file(name)), name=name, onclose=onclose_fn, *args, **kwargs)
+
+	def lock(self, name):
+		name = self.NTI_WHOOSH_LOCKS % name
+		return self.redis.lock(name=name, timeout=60, sleep=1)
+
+
+class UserRedisIndexStorage(IndexStorage):
+
+	writer_ctor_args = {}
+	writer_commit_args = {'merge':False, 'optimize':False}
+
+	def __init__(self):
+		super(UserRedisIndexStorage, self).__init__()
+		self.stores = {}
+
+	def ctor_args(self, *args, **kwargs):
+		return self.writer_ctor_args
+
+	def commit_args(self, *args, **kwargs):
+		return self.writer_commit_args
+
+	def create_index(self, schema, indexname=_DEF_INDEX_NAME, username=u'', **kwargs):
+		return self.storage(username=username).create_index(schema, indexname)
+
+	def index_exists(self, indexname=_DEF_INDEX_NAME, username=u'', **kwargs):
+		gen = TOC._latest_generation(self.storage(username=username), indexname)
+		return gen >= 0
+
+	def get_or_create_index(self, indexname=_DEF_INDEX_NAME, schema=None, recreate=False, username=u'', **kwargs):
+
+		if not self.index_exists(indexname, username=username):
+			recreate = True
+
+		if recreate:
+			return self.create_index(schema=schema, indexname=indexname, **kwargs)
+		else:
+			return self.open_index(indexname=indexname, **kwargs)
+
+	def open_index(self, indexname, schema=None, username=u'', **kwargs):
+		return self.storage(username=username).open_index(indexname=indexname)
+
+	def storage(self, username=u'', **kwargs):
+		username = username or 'unknown@nti.com'
+		store = self.stores.get(username, None)
+		if store is None:
+			store = RedisWhooshStorage(username)
+			self.stores[username] = store
+		return store
