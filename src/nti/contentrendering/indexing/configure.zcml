@@ -7,7 +7,7 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	
-	<include package="nti.contentsearch" file="configure_whoosh_book.zcml" />
+	<include package="nti.contentsearch" file="configure_whoosh_content.zcml" />
 	
 	<class class="._common_indexer._WhooshIndexSpec">
 		<implements interface=".interfaces.IWhooshIndexSpec" />
