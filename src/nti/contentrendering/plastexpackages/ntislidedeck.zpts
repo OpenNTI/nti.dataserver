@@ -5,7 +5,7 @@ name: ntislidedeck
 
 # This 
 name: ntislidevideo
-<div class="externalvideo" tal:attributes="id self/id">
+<div class="externalvideo" tal:attributes="id self/id; style self/style/inline">
 <object type="application/vnd.nextthought.slidevideo" itemprop="nti-slide-video">
 <param name="slidedeckid" tal:condition="exists:self/slidedeck/idref/label/id" tal:attributes="value self/slidedeck/idref/label/id">
 <param name="ntiid" tal:attributes="value self/id">
