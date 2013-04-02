@@ -263,17 +263,20 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		# At one time, we were double-nesting this link, hence the path check
 		assert_that( prof, is_( '/dataserver2/users/sjohnson%40nextthought.com/@@' + REL_ACCOUNT_PROFILE  ) )
 
-	@WithSharedApplicationMockDS
-	def test_search_empty_term_user(self):
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_search_empty_200(self):
 		"Searching with an empty term returns empty results"
-		with mock_dataserver.mock_db_trans( self.ds ):
-			_ = self._create_user()
-
-		testapp = TestApp( self.app )
 		# The results are not defined across the search types,
 		# we just test that it doesn't raise a 404
-		for search_path in ('UserSearch',):
-			for ds_path in ('dataserver2',):
-				path = '/' + ds_path +'/' + search_path + '/'
-				res = testapp.get( path, extra_environ=self._make_extra_environ())
-				assert_that( res.status_int, is_( 200 ) )
+		self.testapp.get( '/dataserver2/UserSearch/', status=200 )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_resolve_empty_404(self):
+		# Resolving an empty string raises a 404
+		self.resolve_user_response(username='', status=404)
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_self_resolve(self):
+		# Resolving ourself uses a different caching strategy
+		res = self.resolve_user_response()
+		assert_that( res.cache_control, has_property( 'max_age', 0 ) )

@@ -18,7 +18,6 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from ZODB.utils import u64
 
-from pyramid import security as sec
 from pyramid.view import view_config
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -33,6 +32,8 @@ from nti.externalization.datastructures import LocatedExternalDict
 
 from . import interfaces as app_interfaces
 from . import site_policies
+from . import httpexceptions as hexc
+from ._view_utils import get_remote_user
 
 def _is_valid_search( search_term, remote_user ):
 	"""Should the search be executed?
@@ -57,10 +58,14 @@ def _UserSearchView(request):
 	"""
 
 	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+	remote_user = get_remote_user( request, dataserver )
+	assert remote_user is not None
 
-	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=dataserver )
-	partialMatch = request.matchdict['term']
-	partialMatch = unicode(partialMatch or '').lower()
+	partialMatch = request.matchdict['term'] or ''
+	if isinstance( partialMatch, bytes ):
+		partialMatch = partialMatch.decode('utf-8')
+
+	partialMatch = partialMatch.lower()
 	# We tend to use this API as a user-resolution service, so
 	# optimize for that case--avoid waking all other users up
 	result = ()
@@ -95,22 +100,22 @@ def _ResolveUserView(request):
 	"""
 
 	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+	remote_user = get_remote_user( request, dataserver )
+	assert remote_user is not None
 
-	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=dataserver )
 	exact_match = request.matchdict['term']
-	exact_match = unicode(exact_match or '').lower()
-	entity = None
+	if not exact_match:
+		raise hexc.HTTPNotFound()
 
-	if not remote_user or not exact_match:
-		pass
-	elif users.Entity.get_entity( exact_match ):
-		# NOTE3: We have not stopped allowing this to work for user resolution.
-		# This will probably break many assumptions in the UI about what and when usernames
-		# can be resolved
-		entity = users.Entity.get_entity( exact_match )
-		# NOTE2: Going through this API lets some private objects be found
-		# (DynamicFriendsLists, specifically). We should probably lock that down
-	else:
+	if isinstance( exact_match, bytes ):
+		exact_match = exact_match.decode( 'utf-8' )
+
+	exact_match = exact_match.lower()
+	entity = users.Entity.get_entity( exact_match )
+	# NOTE2: Going through this API lets some private objects be found if an NTIID is passed
+	# (DynamicFriendsLists, specifically). We should probably lock that down
+
+	if entity is None:
 		# To avoid ambiguity, we limit this to just friends lists.
 		scoped = _search_scope_to_remote_user( remote_user, exact_match, op=operator.eq, fl_only=True )
 		if not scoped:
