@@ -55,8 +55,21 @@ class ntislidevideoname(Command):
 class ntislidevideo(Environment):
 	"""This environment encapsulates ntiincludevideo objects so that we can tag them with a label and reference them elsewhere.
 """
+	args = '[ options:dict ]'
 	counter = "ntislidevideo"
 	blockType=True
+
+	def invoke(self, tex):
+		_t = super(ntislidevideo, self).invoke(tex)
+		if 'options' not in self.attributes or not self.attributes['options']:
+			self.attributes['options'] = {}
+		if 'presentationonly' not in self.attributes['options']:
+			self.attributes['options']['presentationonly'] = False
+		elif not self.attributes['options']['presentationonly']:
+			pass
+		else:
+			self.style['display'] = 'none'
+		return _t
 
 	def digest(self, tex):
 		super(ntislidevideo, self).digest(tex)
@@ -97,6 +110,8 @@ class ntislide(_LocalContentMixin, Environment, plastexids.NTIIDMixin):
 			self.attributes['options'] = {}
 		if 'presentationonly' not in self.attributes['options']:
 			self.attributes['options']['presentationonly'] = False
+		elif not self.attributes['options']['presentationonly']:
+			pass
 		else:
 			self.style['display'] = 'none'
 		return _t
