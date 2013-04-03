@@ -25,7 +25,7 @@ from nti.ntiids import ntiids
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
-from .purchase_attempt import to_frozenset
+from . import to_frozenset
 from . import interfaces as store_interfaces
 
 def _time_to_64bit_int(value):

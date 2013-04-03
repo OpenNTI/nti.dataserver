@@ -7,8 +7,6 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import re
-import six
 import time
 import functools
 from datetime import datetime
@@ -25,30 +23,8 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.utils.schema import SchemaConfigured
 
+from . import to_frozenset
 from . import interfaces as store_interfaces
-
-def _from_unicode(value):
-	result = value.split(',')
-	result = re.findall("[^\s]+", value) if len(result) <= 1 else result
-	return result
-
-def _to_collection(items=None, factory=list):
-	result = None
-	if not items:
-		result = factory()
-	elif isinstance(items, factory):
-		result = items
-	elif isinstance(items, six.string_types):
-		result = factory(_from_unicode(unicode(items)))
-	else:
-		result = factory(items)
-	return result
-
-def to_list(items=None):
-	return _to_collection(items, list)
-
-def to_frozenset(items=None):
-	return _to_collection(items, frozenset)
 
 @functools.total_ordering
 @interface.implementer(store_interfaces.IPurchaseAttempt)
@@ -73,11 +49,13 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 		return "%s(%s,%s,%s)" % (self.__class__, self.Processor, d, self.Items)
 
 	def __eq__(self, other):
-		return self is other or (isinstance(other, PurchaseAttempt)
-								 and self.Items == other.Items
-								 and self.StartTime == other.StartTime
-								 and self.Processor == other.Processor
-								 and self.OnBehalfOf == other.OnBehalfOf)
+		try:
+			return self is other or (self.Items == other.Items
+									 and self.StartTime == other.StartTime
+									 and self.Processor == other.Processor
+									 and self.OnBehalfOf == other.OnBehalfOf)
+		except AttributeError:
+			return NotImplemented
 
 	def __lt__(self, other):
 		try:
@@ -146,15 +124,17 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, persistent.Pers
 		return result
 
 def create_base_purchase_attempt(purchase):
-	return BasePurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
-								State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
-								OnBehalfOf=purchase.OnBehalfOf, ErrorCode=purchase.ErrorCode,
-								ErrorMessage=purchase.ErrorMessage, Synced=purchase.Synced)
+	result = BasePurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
+								 State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
+								 OnBehalfOf=purchase.OnBehalfOf, ErrorCode=purchase.ErrorCode,
+								 ErrorMessage=purchase.ErrorMessage, Synced=purchase.Synced)
+	return result
 
 def create_purchase_attempt(items, processor, on_behalf_of=None, state=None, description=None, start_time=None):
 	items = to_frozenset(items)
 	on_behalf_of = to_frozenset(on_behalf_of)
 	start_time = start_time if start_time else time.time()
 	state = state or store_interfaces.PA_STATE_UNKNOWN
-	return PurchaseAttempt(Items=items, Processor=processor, Description=description,
-							State=state, StartTime=float(start_time), OnBehalfOf=on_behalf_of)
+	result = PurchaseAttempt(Items=items, Processor=processor, Description=description,
+							 State=state, StartTime=float(start_time), OnBehalfOf=on_behalf_of)
+	return result
