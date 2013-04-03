@@ -613,6 +613,10 @@ class TestApplication(SharedApplicationTestBase):
 
 			user2 = self._create_user( username='foo@bar' )
 			user2._addSharedObject( contained )
+			from nti.dataserver.activitystream_change import Change
+			change = Change( Change.SHARED, contained )
+			change.creator = user
+			user2._addToStream( change )
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/foo@bar/Pages(' + container_id + ')/UserGeneratedData'

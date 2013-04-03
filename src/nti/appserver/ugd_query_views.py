@@ -677,7 +677,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 					pass
 				try:
 					return x.xxx_isReadableByAnyIdOfUser( remote_user, my_ids, family )
-				except (AttributeError,TypeError):
+				except (AttributeError,TypeError) as e:
 					try:
 						return x.isSharedWith( remote_user ) # TODO: Might need to OR this with is_readable?
 					except AttributeError as e:
@@ -886,6 +886,22 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 	_DEFAULT_BATCH_SIZE = 100
 	_DEFAULT_BATCH_START = 0
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
+
+	def getObjectsForId( self, user, ntiid ):
+		containers = self._get_containerids_for_id( user, ntiid )
+		self.context_cache.make_accumulator()
+		batch_size, batch_start = self._get_batch_size_start()
+		items_needed = self._DEFAULT_BATCH_SIZE
+		if batch_size is not None and batch_start is not None:
+			items_needed = batch_start + batch_size + 2
+		for container in containers:
+			self.get_owned( user, container, context_cache=self.context_cache, maxCount=items_needed )
+
+		items = [self.context_cache.to_result(), (), ()] # owned, shared, public, for compatibility
+
+		if not items[0] and not self._my_objects_may_be_empty:
+			raise hexc.HTTPNotFound()
+		return items
 
 	def _sort_filter_batch_result( self, result ):
 		"""
