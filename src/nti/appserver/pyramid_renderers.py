@@ -248,8 +248,9 @@ def default_cache_controller( data, system ):
 		response.etag += b'./gz'
 
 	if not end_to_end_reload and response.status_int == 200: # We will do caching
-		# ETags trump if-modified-since; if they give us both, and the etag doesn't matche,
+		# ETags trump if-modified-since; if they give us both, and the etag doesn't match,
 		# we MUST NOT generate a 304
+		# FIXME: Actually, we really need to take them both into account if they are given
 		do_not_mod = False
 		if response.etag and request.if_none_match:
 			if response.etag in request.if_none_match:

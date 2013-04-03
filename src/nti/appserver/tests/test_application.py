@@ -1890,7 +1890,7 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 						   headers={"Accept": accept_type},
 						   extra_environ=self._make_extra_environ() )
 		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( 1000, webob.datetime_utils.UTC ) ) )
-
+		orig_etag = res.etag
 
 		data = json.dumps( {"sharedWith": ["a@b"] } )
 		now = datetime.datetime.now(webob.datetime_utils.UTC)
@@ -1915,7 +1915,12 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 						   extra_environ=self._make_extra_environ() )
 		assert_that( res.last_modified, is_( last_mod ) )
 
-
+		# We can make a conditional request, and it doesn't match
+		res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
+						   headers={'Accept': accept_type, 'If-None-Match': orig_etag},
+						   extra_environ=self._make_extra_environ(),
+						   status=200)
+		assert_that( res.etag, is_not( orig_etag ) )
 
 
 class TestApplicationLibraryNoSlash(TestApplicationLibrary):
