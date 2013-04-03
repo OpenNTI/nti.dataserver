@@ -38,7 +38,7 @@ import persistent
 import UserList
 from datetime import datetime
 import simplejson as json
-
+import time
 from nti.assessment.assessed import QAssessedQuestion
 from nti.dataserver import users
 from nti.ntiids import ntiids
@@ -50,13 +50,13 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
 import nti.dataserver.contenttypes
 from nti.dataserver.activitystream_change import Change
-
+from nti.tests import time_monotonically_increases
 from zope import interface
 from zope import component
 from zope.intid.interfaces import IIntIds
 import nti.dataserver.interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
-
+import webob.datetime_utils
 from zope.keyreference.interfaces import IKeyReference
 from zope import lifecycleevent
 
@@ -952,6 +952,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
 
 	@WithSharedApplicationMockDSWithChanges
+	@time_monotonically_increases
 	def test_replies_from_non_dfl_member(self):
 		"""
 		If an object is shared with both a DFL and a non-member, then
@@ -982,8 +983,10 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 			owner_note_containerId = owner_note.containerId
 
 			reply_note = _note_from( other_user )
+			reply_note.updateLastMod()
 			reply_note.inReplyTo = owner_note
 			reply_note_ext_json = to_external_representation( reply_note )
+
 
 			parent_dfl_NTIID = parent_dfl.NTIID
 
@@ -993,6 +996,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 		# The correct response:
 		assert_that( res.status_int, is_( 201 ) )
 		assert_that( res.json_body, has_entry( 'sharedWith', has_items( owner_user_username, parent_dfl_NTIID ) ) )
+		reply_note_last_modified = res.json_body['Last Modified']
 
 		# And it is in the right streams
 		with mock_dataserver.mock_db_trans( self.ds ):
@@ -1009,6 +1013,8 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 
 		assert_that( res.body, contains_string( reply_note_ntiid ) )
 		assert_that( res.json_body['Items'], has_length( 1 ) )
+		assert_that( res.json_body['Last Modified'], is_( reply_note_last_modified ) )
+		assert_that( res.last_modified, is_( datetime.fromtimestamp( reply_note_last_modified, webob.datetime_utils.UTC ) ) )
 
 		# I can filter out things shared to the group
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + owner_note_containerId + ')/UserGeneratedData'
