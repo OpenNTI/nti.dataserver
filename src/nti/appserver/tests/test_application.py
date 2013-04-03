@@ -1872,7 +1872,7 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 		assert_that( res.json_body, has_entry( 'href', '/prealgebra/sect_0002.html' ) )
 
 
-	def test_directly_set_page_shared_settings(self):
+	def test_directly_set_page_shared_settings_using_field(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user()
 			# First, we must put an object so we have a container
@@ -1886,7 +1886,7 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 		accept_type = 'application/json'
 		testapp = TestApp( self.app )
 		# To start with, there is no modification info
-		res = testapp.get( str('/dataserver2/NTIIDs/' + self.child_ntiid),
+		res = testapp.get( str('/dataserver2/Objects/' + self.child_ntiid),
 						   headers={"Accept": accept_type},
 						   extra_environ=self._make_extra_environ() )
 		assert_that( res.last_modified, is_( datetime.datetime.fromtimestamp( 1000, webob.datetime_utils.UTC ) ) )
@@ -1896,13 +1896,14 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 		now = datetime.datetime.now(webob.datetime_utils.UTC)
 		now = now.replace( microsecond=0 )
 
-		res = testapp.put( str('/dataserver2/NTIIDs/' + self.child_ntiid + '/++fields++sharingPreference'),
+		res = testapp.put( str('/dataserver2/Objects/' + self.child_ntiid + '/++fields++sharingPreference'),
 						   data,
 						   headers={"Accept": accept_type},
 						   extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 
 		assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
+		assert_that( res.content_location, is_( '/dataserver2/Objects/' + self.child_ntiid ) )
 		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', ['a@b'] ) ) )
 		assert_that( res.json_body, has_entry( 'href', '/dataserver2/Objects/' + self.child_ntiid ) )
@@ -1921,6 +1922,7 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 						   extra_environ=self._make_extra_environ(),
 						   status=200)
 		assert_that( res.etag, is_not( orig_etag ) )
+
 
 
 class TestApplicationLibraryNoSlash(TestApplicationLibrary):

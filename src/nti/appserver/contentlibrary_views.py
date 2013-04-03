@@ -340,6 +340,7 @@ class _ContentUnitPreferencesPutView(AbstractAuthenticatedView,ModeledContentUpl
 		self.request.context = content_units[-1]
 		return _LibraryTOCRedirectView( self.request )
 
+
 @view_config( name='' )
 @view_config( name='pageinfo+json' )
 @view_config( name='link+json' )
@@ -454,6 +455,10 @@ class _LibraryTOCRedirectClassView(object):
 			return link
 
 		if accept_type in (json_mt,page_info_mt,page_info_mt_json):
+			# Send back our canonical location, just in case we got here via
+			# something like the _ContentUnitPreferencesPutView. This assists the cache to know
+			# what to invalidate. (Mostly in tests we find we cannot rely on traversal, so HACK it in manually)
+			request.response.content_location = '/dataserver2/Objects/' + request.context.ntiid
 			return _create_page_info(request, href, ntiid or request.context.ntiid, last_modified=lastModified, jsonp_href=jsonp_href)
 
 		# ...send a 302. Return rather than raise so that webtest works better
