@@ -32,12 +32,15 @@ PAYMENT_PROCESSORS = ('stripe', 'fps')
 PAYMENT_PROCESSORS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PAYMENT_PROCESSORS])
 
 class IPurchasable(interface.Interface):
-	NTIID = nti_schema.ValidTextLine(title='Purchasable NTTID', required=True)
-	Description = nti_schema.ValidTextLine(title='Description', required=False)
+	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
+	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=True)
+	Description = nti_schema.ValidTextLine(title='Purchasable item description', required=True)
 	Amount = schema.Int(title="Cost amount", required=True)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
+	BulkPurchase = schema.Bool(title="Bulk purchase flag", required=True, default=False)
 	URL = nti_schema.HTTPURL(title='Image URL', required=False)
+	Provider = nti_schema.ValidTextLine(title='Purchasable item provider', required=True)
 	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Purchasable content items")
 
 class IPurchasableStore(interface.Interface):
@@ -70,12 +73,22 @@ class IPaymentProcessor(interface.Interface):
 
 	name = nti_schema.ValidTextLine(title='Processor name', required=True)
 
-	def process_purchase(username, purchase_id, amount, currency, description):
+	def validate_coupon(coupon):
+		"""
+		validate the specified coupon
+		"""
+
+	def apply_coupon(amount, coupon):
+		"""
+		apply the specified coupon to the specified amout
+		"""
+
+	def process_purchase(purchase_id, username, amount, currency, description):
 		"""
 		Process a purchase attempt
 
+		:purchase_id purchase identifier
 		:username User making the purchase
-		:purchase purchase identifier
 		:amount: purchase amount
 		:current: currency ISO code
 		:description: purchase description

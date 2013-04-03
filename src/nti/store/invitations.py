@@ -11,6 +11,7 @@ import zc.intid as zc_intid
 
 from zope import component
 
+from nti.appserver.invitations import interfaces as invite_interfaces
 from nti.appserver.invitations.invitation import JoinEntitiesInvitation
 
 from nti.externalization import integer_strings
@@ -27,19 +28,19 @@ class InvitationCapacityExceeded(Exception):
 	"""
 
 	i18n_message = _("The limit for this invitation code has been exceeded.")
-	
+
 class _StoreEntityInvitation(JoinEntitiesInvitation):
-	
-	def __init__( self, purchase_id, username, code, entities=(), capacity=None ):
+
+	def __init__(self, purchase_id, username, code, capacity=None, entities=()):
 		super(_StoreEntityInvitation, self).__init__(code, entities or ())
 		self.creator = username
 		self.capacity = capacity
 		self.purchase_id = purchase_id
-		self._tokens = minmax.NumericMinimum( capacity ) if capacity and capacity > 0 else None
+		self._tokens = minmax.NumericMinimum(capacity) if capacity and capacity > 0 else None
 
 	def token(self):
 		return self._tokens.value
-	
+
 	def consume(self):
 		if self._tokens is not None:
 			if self._tokens.value > 0:
@@ -48,23 +49,34 @@ class _StoreEntityInvitation(JoinEntitiesInvitation):
 				return False
 		return True
 
-	def accept( self, user ):
+	def accept(self, user):
 		if self.consume():
-			super(_StoreEntityInvitation,self).accept( user )
+			super(_StoreEntityInvitation, self).accept(user)
 			purchase = get_purchase_attempt(self.purchase_id, self.creator)
 			_add_users_content_roles(user, purchase.Items)
 		else:
 			raise InvitationCapacityExceeded()
-		
+
 def get_invitation_code(purchase_id, username):
 	purchase = get_purchase_attempt(purchase_id, username)
 	if purchase is not None:
-		iid = component.getUtility( zc_intid.IIntIds ).getId( purchase )
-		result = integer_strings.to_external_string( iid )
+		iid = component.getUtility(zc_intid.IIntIds).getId(purchase)
+		result = integer_strings.to_external_string(iid)
 	else:
 		result = None
 	return result
 
-def create_store_invitation(purchase_id, username, entities=(), capacity=None):
+def create_store_invitation(purchase_id, username, capacity=None, entities=()):
 	invitation_code = get_invitation_code(purchase_id, username)
 	return _StoreEntityInvitation(purchase_id, username, invitation_code, entities, capacity)
+
+def register_invitation(purchase_id, username, capacity=None, entities=()):
+	utility = component.getUtility(invite_interfaces.IInvitations)
+	invitation = create_store_invitation(purchase_id, username, capacity, entities)
+	utility.registerInvitation(invitation)
+	return invitation
+
+def remove_invitation(purchase_id, username):
+	utility = component.getUtility(invite_interfaces.IInvitations)
+	invitation_code = get_invitation_code(purchase_id, username)
+	utility.removeInvitation(invitation_code)
