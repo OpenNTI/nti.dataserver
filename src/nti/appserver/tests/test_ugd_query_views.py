@@ -383,12 +383,14 @@ def test_lists_and_dicts_to_collection():
 	col2.lastModified = 32
 	yield _check_items, (col1,col2), [], 32
 
+	# We require the modification to come from the collection,
+	# not individual objects
 	class O(object):
 		lastModified = 42
 		def __repr__(self): return "<class O>"
 	o = O()
 	col1.append( o )
-	yield _check_items, (col1,col2), [o], 42
+	yield _check_items, (col1,col2), [o], 32
 
 from .test_application import SharedApplicationTestBase
 from nti.contentrange import contentrange
