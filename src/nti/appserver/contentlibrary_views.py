@@ -439,8 +439,6 @@ class _LibraryTOCRedirectClassView(object):
 		if request.accept:
 			accept_type = request.accept.best_match( mts )
 
-		request.response.md5_etag( str(href) + str(accept_type) )
-
 		if accept_type in (link_mt, link_mt_json):
 			link = links.Link( href, rel="content" )
 			# We cannot render a raw link using the code in pyramid_renderers, but
