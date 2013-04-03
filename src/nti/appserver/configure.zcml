@@ -57,6 +57,7 @@
 	<adapter factory=".pyramid_renderers.uncacheable_factory" />
 	<adapter factory=".pyramid_renderers.unmodified_factory" />
 	<adapter factory=".pyramid_renderers._EntityCacheController" />
+	<adapter factory=".pyramid_renderers._UserCacheController" />
 	<adapter factory=".pyramid_renderers._ModeledContentCacheController" />
 	<adapter factory=".pyramid_renderers._UGDExternalCollectionCacheController" />
 	<adapter factory=".pyramid_renderers._LongerCachedUGDExternalCollectionCacheController" />
@@ -266,6 +267,10 @@
 	<subscriber factory="._socket_event_listeners._UserPresenceExternalDecorator"
 				for="nti.dataserver.interfaces.IUser"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+	<adapter factory="._socket_event_listeners._UserPresenceExternalDecorator"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="nti.externalization.interfaces.IExternalObjectDecorator"
+			 name="presence"/>
 
 	<subscriber factory=".dataserver_socketio_views._WSWillUpgradeVeto"
 				provides="geventwebsocket.interfaces.IWSWillUpgradeVeto"
