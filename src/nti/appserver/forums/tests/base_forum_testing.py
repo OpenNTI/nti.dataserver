@@ -431,7 +431,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( res.status_int, is_( 201 ) )
 		edit_url = self.require_link_href_with_rel( res.json_body, 'edit' )
 		entry_creation_time = res.json_body['Last Modified']
-
+		orig_etag = testapp.get( self.require_link_href_with_rel( testapp.get(entry_url).json_body, 'contents' ) ).etag
+		testapp.get( entry_contents_url, headers={b'If-None-Match': orig_etag}, status=304 )
 		eventtesting.clearEvents()
 
 		res = testapp.delete( edit_url )
@@ -453,6 +454,9 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( res.json_body['Last Modified'], is_( greater_than( entry_creation_time ) ) )
 		# ... and a changed href
 		assert_that( self.require_link_href_with_rel( testapp.get(entry_url).json_body, 'contents' ), is_not( entry_contents_url ) )
+		# ... and a changed etag
+		assert_that( res.etag, is_not( orig_etag ) )
+		testapp.get( entry_contents_url, headers={b'If-None-Match': orig_etag}, status=200 )
 
 		# and the comment can no longer be found by search
 		search_res = self.search_user_rugd( self.forum_comment_unique )
