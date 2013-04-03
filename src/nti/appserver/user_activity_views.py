@@ -66,6 +66,9 @@ class UserActivityGetView(RecursiveUGDQueryView):
 	* The definition for a ``TopLevel`` object is changed to mean one that has never been a
 	  child in a thread (instead of just one who is not currently a child in a thread) (where possible).
 
+	* Assessed questions are always excluded (unless you specifically include them; their
+	  ACL only allows their owner/creator to see them anyway).
+
 	"""
 
 	result_iface = app_interfaces.IUserActivityExternalCollection
@@ -85,6 +88,12 @@ class UserActivityGetView(RecursiveUGDQueryView):
 		filters.add( 'MeOnly' )
 		filters.add( '_NotDeleted' )
 		return filters
+
+	def _get_exclude_types( self ):
+		excludes = set( super(UserActivityGetView,self)._get_exclude_types() )
+		excludes.add( 'application/vnd.nextthought.assessment.assessedquestion' )
+		excludes.add( 'application/vnd.nextthought.assessment.assessedquestionset' )
+		return excludes
 
 	def _check_for_not_found( self, items, exc_info ):
 		"Override to never throw."

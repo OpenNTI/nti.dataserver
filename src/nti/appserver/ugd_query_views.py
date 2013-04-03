@@ -19,7 +19,7 @@ import heapq
 
 from zope import interface
 from zope import component
-from ZODB.POSException import POSKeyError
+from zope.intid.interfaces import IIntIds
 
 from pyramid.view import view_config
 from pyramid import security as psec
@@ -36,7 +36,6 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.oids import to_external_oid
 
 from nti.externalization.externalization import to_standard_external_last_modified_time
 from nti.externalization.externalization import to_standard_external_created_time
@@ -105,19 +104,23 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate=_TRUE, result_
 	result = LocatedExternalDict()
 
 	# To avoid returning duplicates, we keep track of object
-	# ids and only add one copy.
+	# ids and only add one copy. We used to use the external_oid, but that's
+	# needlessly complicated: anything with an oid is guaranteed to be in memory
+	# just once (from a particular transaction) and thus has a unique id
 	# We also reject None and numbers
 	oids = set()
 
 	def _base_predicate(x):
 		if x is None or isinstance(x, Number):
 			return False
-		try:
-			oid = to_external_oid( x, str( id(x) ) )
-		except POSKeyError:
-			if ignore_broken:
-				return False
-			raise
+		#try:
+			#oid = to_external_oid( x, str( id(x) ) )
+			#oid = getattr( x, '_p_oid', id(x) )
+		#except POSKeyError:
+		#	if ignore_broken:
+		#		return False
+		#	raise
+		oid = id(x)
 		if oid in oids:
 			# avoid dups. This check is slightly less expensive than
 			# some predicates (is_readable) so do it first
@@ -125,10 +128,13 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate=_TRUE, result_
 		oids.add( oid )
 		# TODO: This may not be right, if we're going to filter
 		# this object out with a subsequent predicate?
-		try:
-			result.lastModified = max(result.lastModified, x.lastModified)
-		except AttributeError:
-			pass
+		# It also results in loading the state for all these objects,
+		# even if we are going to filter them out, which is not good either
+		# (If the predicates are carefully arranged that might not be needed)
+		#try:
+		#	result.lastModified = max(result.lastModified, x.lastModified)
+		#except AttributeError:
+		#	pass
 		return True
 
 	if predicate is _TRUE or not predicate:
@@ -289,10 +295,38 @@ class _MimeFilter(object):
 			return False
 
 		if self._mimetype_from_object(o) in self.accept_types:
-			self._accept_classes += (o.__class__,)
+			self._accept_classes += (o_type,)
 			return True
-		self._exclude_classes += (o.__class__,)
+		self._exclude_classes += (o_type,)
 		return False
+
+###
+# XXX Hack in some faster-than-full-ACL support to determine
+# readability during views
+
+def _created_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
+	return user == self.creator
+
+from nti.assessment.assessed import QAssessedQuestionSet
+QAssessedQuestionSet.xxx_isReadableByAnyIdOfUser = _created_xxx_isReadableByAnyIdOfUser
+from nti.dataserver.chat_transcripts import _AbstractMeetingTranscriptStorage
+_AbstractMeetingTranscriptStorage.xxx_isReadableByAnyIdOfUser = _created_xxx_isReadableByAnyIdOfUser
+from nti.dataserver.traversal import find_interface
+def _personalblogcomment_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
+	# XXX Duplicates much of the ACL logic
+	if user == self.creator:
+		return True
+	if self.isSharedWith( user ):
+		return True
+	if find_interface( self, nti_interfaces.IUser, strict=False ) == user:
+		return True
+from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
+PersonalBlogComment.xxx_isReadableByAnyIdOfUser = _personalblogcomment_xxx_isReadableByAnyIdOfUser
+
+def _communityforum_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
+	return self.creator in user.dynamic_memberships
+from nti.dataserver.contenttypes.forums.forum import CommunityForum
+CommunityForum.xxx_isReadableByAnyIdOfUser = _communityforum_xxx_isReadableByAnyIdOfUser
 
 class _UGDView(_view_utils.AbstractAuthenticatedView):
 	"""
@@ -624,6 +658,33 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 		"""
 		needs_security = self._force_apply_security or self.remoteUser != self.user
+
+		# Our security check is optimized for sharing objects, not taking the full
+		# ACL into account.
+		if not needs_security:
+			def security_check(x):
+				return True
+			tuple_security_check = security_check
+		else:
+			remote_user = self.remoteUser
+			my_ids = self.remoteUser.xxx_intids_of_memberships_and_self
+			family = component.getUtility( IIntIds ).family
+			def security_check(x):
+				try:
+					if remote_user == x.creator:
+						return True
+				except AttributeError:
+					pass
+				try:
+					return x.xxx_isReadableByAnyIdOfUser( remote_user, my_ids, family )
+				except (AttributeError,TypeError):
+					try:
+						return x.isSharedWith( remote_user ) # TODO: Might need to OR this with is_readable?
+					except AttributeError as e:
+						return is_readable(x)
+			def tuple_security_check(x):
+				return security_check(x[1])
+
 		total_item_count = sum( (len(x) for x in objects if x is not None) )
 
 		predicate = self._make_complete_predicate()
@@ -643,7 +704,11 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 		# Now, sort each subset.
 		# Sorting all the small subsets is faster than sorting one huge list and potentially
-		# easier to cache. This assumes we are going to want to page
+		# easier to cache---if there are relatively many items, compared to the number of sublists;
+		# otherwise it is faster to combine once and then sort. (TODO: Prove this algorithmically)
+		if total_item_count < len(iterables) * 4 or total_item_count < 5000: # XXX Magic number
+			iterables = [itertools.chain(*iterables)]
+		#  This assumes we are going to want to page
 		# These are reified.
 		heap_key = lambda x: (sort_key_function(x), x)
 		sortable_iterables = [itertools.imap(heap_key, x) for x in iterables]
@@ -655,13 +720,14 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			# permission check gets done on every object, which may be the bottleneck
 			# NOTE: At least in alpha, this is the bottleneck. we're better off pulling the filtered
 			# list in to memory
-			#if needs_security:
-			#	def test(x):
-			#		return is_readable(x[1] )
-			#	sortable_iterables = [itertools.ifilter( test, x ) for x in sortable_iterables]
-			#	needs_security = False
-			#sorted_sublists = [heapq.nsmallest( number_items_needed, x ) for x in sortable_iterables]
-			sorted_sublists = [sorted(x, key=lambda x: x[0]) for x in sortable_iterables]
+			_USE_SMALLEST = False
+			if _USE_SMALLEST:
+				if needs_security:
+					sortable_iterables = [itertools.ifilter( tuple_security_check, x ) for x in sortable_iterables]
+					needs_security = False
+				sorted_sublists = [heapq.nsmallest( number_items_needed, x ) for x in sortable_iterables]
+			else:
+				sorted_sublists = [sorted(x, key=lambda x: x[0]) for x in sortable_iterables]
 		else:
 			# Note that we are already computing the key once, no need to include the other
 			# object in the comparison
@@ -676,13 +742,16 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		# Do this after all the filtering because it's the most expensive
 		# filter of all
 		if needs_security:
-			def test(x):
-				return is_readable(x[1] )
-			sorted_sublists = [itertools.ifilter( test, x ) for x in sorted_sublists]
+			sorted_sublists = [itertools.ifilter( tuple_security_check, x ) for x in sorted_sublists]
 
 
-		# Now merge the lists altogether
-		merged = heapq.merge( *sorted_sublists )
+		# Now merge the lists altogether if we didn't already
+		if len(sorted_sublists) > 1:
+			merged = heapq.merge( *sorted_sublists )
+		elif sorted_sublists:
+			merged = sorted_sublists[0]
+		else:
+			merged = ()
 
 		batch_size, batch_start = self._get_batch_size_start()
 
