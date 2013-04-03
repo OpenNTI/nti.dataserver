@@ -1053,6 +1053,7 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
 from .interfaces import IETagCachedUGDExternalCollection
+from nti.dataserver.datastructures import LastModifiedCopyingUserList
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=nti_interfaces.INote,
@@ -1080,7 +1081,13 @@ def replies_view(request):
 		pass
 
 
-	objs = (list(root_note.referents),)
+	referents = LastModifiedCopyingUserList()
+	referents.updateLastMod( root_note.lastModified )
+	for child in root_note.referents:
+		referents.append( child )
+		referents.updateLastModIfGreater( child.lastModified )
+
+	objs = (referents,)
 
 
 	# Not all the params make sense, but batching does
