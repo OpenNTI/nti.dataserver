@@ -1903,7 +1903,7 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 		assert_that( res.status_int, is_( 200 ) )
 
 		assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
-		assert_that( res.content_location, is_( '/dataserver2/Objects/' + self.child_ntiid ) )
+		assert_that( res.content_location, is_( UQ('/dataserver2/Objects/' + self.child_ntiid ) ))
 		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', ['a@b'] ) ) )
 		assert_that( res.json_body, has_entry( 'href', '/dataserver2/Objects/' + self.child_ntiid ) )
