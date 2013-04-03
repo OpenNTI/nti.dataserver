@@ -16,6 +16,7 @@ from numbers import Number
 import functools
 import itertools
 import heapq
+import time
 
 from zope import interface
 from zope import component
@@ -871,7 +872,22 @@ class _UGDStreamView(_UGDView):
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
 
 class _RecursiveUGDStreamView(_RecursiveUGDView):
+	"""
+	Accepts all the regular sorting and paging parameters (though note, you
+	probably do not want to sort by anything other than the default, lastModified descending).
 
+	Also accepts:
+
+	batchBefore
+		If given, this is the timestamp (floating point number in fractional
+		unix seconds, as returned in ``Last Modified``) of the *youngest*
+		change to consider returning. Thus, the most efficient way to page through
+		this object is to *not* use ``batchStart``, but instead to set ``batchBefore``
+		to the timestamp of the *oldest* change in the previous batch (always leaving
+		``batchBefore`` at zero). Effectively, this defaults to the current time.
+		(Note: the next/previous link relations do not currently take this into account.)
+
+	"""
 	_support_cross_user = False
 	_my_objects_may_be_empty = False
 	# It is an optimization to only look in the stream containers.
@@ -882,7 +898,7 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 	get_owned = users.User.getContainedStream
 	get_shared = None
 
-
+	# Default to paging us
 	_DEFAULT_BATCH_SIZE = 100
 	_DEFAULT_BATCH_START = 0
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
@@ -894,8 +910,11 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 		items_needed = self._DEFAULT_BATCH_SIZE
 		if batch_size is not None and batch_start is not None:
 			items_needed = batch_start + batch_size + 2
+
+		before = float(self.request.params.get( 'batchBefore', time.time() ))
+
 		for container in containers:
-			self.get_owned( user, container, context_cache=self.context_cache, maxCount=items_needed )
+			self.get_owned( user, container, context_cache=self.context_cache, maxCount=items_needed, before=before )
 
 		items = [self.context_cache.to_result(), (), ()] # owned, shared, public, for compatibility
 

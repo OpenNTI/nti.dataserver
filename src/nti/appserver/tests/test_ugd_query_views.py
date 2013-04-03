@@ -170,6 +170,7 @@ class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
 		with self.assertRaises( hexc.HTTPNotFound ):
 			view.getObjectsForId( user, ntiids.ROOT )
 
+
 		transaction.abort()
 
 	@WithMockDS(with_changes=True)
