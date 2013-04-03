@@ -279,7 +279,7 @@ setup(
 		'zope.browser >= 2.0.2',
 		'zope.browserpage >= 4.1.0a1',
 		'zope.browsermenu >= 4.1.0a1',  # Browser menu implementation for Zope.
-		'zope.browserresource >= 4.0.0',
+		'zope.browserresource >= 4.0.1',
 		'zope.catalog >= 4.0.0a1' if HAVE_ZCONT else '',  # zope.container dependency
 		'zope.cachedescriptors >= 4.0.0',
 		'zope.component[persistentregistry] >= 4.1.0',
