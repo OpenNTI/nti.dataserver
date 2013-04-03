@@ -263,20 +263,29 @@ class _MimeFilter(object):
 		self._accept_classes = ()
 		self._exclude_classes = ()
 
+	def _object( self, o ):
+		return o
+
 	def _mimetype_from_object( self, o ):
 		return nti_mimetype_from_object( o )
 
 	def __call__( self, o ):
-		# We are assuming that everything within a given class tree
-		# will wind up sharing the same accept/exclude status
+		o = self._object(o)
+		if o is None:
+			return False
+
+		# Be careful to cache exact leaf classes only.
+		# The alternative, matching trees (subclasses) is useful,
+		# but sometimes confusing.
 		# TODO: If we make a further assumption that each mimetype
 		# maps one-to-one to a leaf class (which is currently the case, Mar13),
 		# then we could query the ZCA factories to find matching mimetypes
 		# at creation time and save the cache building...if the types are creatable
 		# externally
-		if isinstance( o, self._accept_classes ):
+		o_type = o.__class__ # for proxies, use __class__, not type
+		if o_type in self._accept_classes:
 			return True
-		elif isinstance( o, self._exclude_classes ):
+		if o_type in self._exclude_classes:
 			return False
 
 		if self._mimetype_from_object(o) in self.accept_types:
@@ -780,8 +789,8 @@ class _RecursiveUGDView(_UGDView):
 
 class _ChangeMimeFilter(_MimeFilter):
 
-	def _mimetype_from_object( self, o ):
-		return nti_mimetype_from_object( o.object ) if o.object else None
+	def _object( self, o ):
+		return o.object
 
 class _UGDStreamView(_UGDView):
 
