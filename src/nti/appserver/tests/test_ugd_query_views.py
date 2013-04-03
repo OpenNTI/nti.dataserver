@@ -1077,3 +1077,42 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 		# Reuse the same path, just with the different user
 		testapp.get( str( path ), extra_environ=self._make_extra_environ(user=user4_username ),
 					 status=403 )
+
+from nti.tests import is_true, is_false
+from nti.appserver.ugd_query_views import _MimeFilter, _ChangeMimeFilter
+
+def _do_test_mime_filter_exclude_subclass_order(filter_factory, wrap=False):
+	# Given a mime type mapped to a superclass,
+	# subclasses are not excluded improperly
+	mime_filter = filter_factory( (contenttypes.Highlight.mimeType,) )
+	not_mime_filter = lambda o: not mime_filter(o)
+
+	highlight = contenttypes.Highlight()
+	note = contenttypes.Note()
+
+	assert isinstance( note, contenttypes.Highlight )
+
+	if wrap:
+		class Wrapper(object):
+			def __init__( self, o ):
+				self.object = o
+		highlight = Wrapper(highlight)
+		note = Wrapper(note)
+
+	# If we see the subclass first, everything is fine
+	assert_that( not_mime_filter( note ), is_true() )
+	assert_that( not_mime_filter( highlight ), is_false() )
+
+	mime_filter._accept_classes = ()
+	mime_filter._exclude_classes = ()
+
+	# and if we see the superclass first, everything is fine
+	assert_that( not_mime_filter( highlight ), is_false() )
+	assert_that( not_mime_filter( note ), is_true() )
+
+
+def test_mime_filter_exclude_subclass_order():
+	_do_test_mime_filter_exclude_subclass_order( _MimeFilter )
+
+def test_mime_filter_stream_exclude_subclass_order():
+	_do_test_mime_filter_exclude_subclass_order( _ChangeMimeFilter, True )
