@@ -170,7 +170,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				result = coupon.redeem_by is None or time.time() <= coupon.redeem_by
 		return result
 
-	def apply_coupon(self, amount, coupon=None, api_key=None):
+	def apply_coupon(self, amount, coupon, api_key=None):
 		coupon = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		if coupon:
 			if coupon.percent_off is not None:

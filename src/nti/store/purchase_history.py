@@ -33,7 +33,7 @@ def _time_to_64bit_int(value):
 
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(store_interfaces.IPurchaseHistory)
-class _PurchaseHistory(zcontained.Contained, Persistent):
+class PurchaseHistory(zcontained.Contained, Persistent):
 
 	family = BTrees.family64
 
@@ -56,7 +56,8 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 		if self.purchases.pop(_time_to_64bit_int(purchase.StartTime), None):
 			lifecycleevent.removed(purchase)
 
-	def get_purchase(self, pid):
+	@classmethod
+	def get_purchase(cls, pid):
 		result = ntiids.find_object_with_ntiid(pid)
 		return result
 
@@ -98,13 +99,14 @@ class _PurchaseHistory(zcontained.Contained, Persistent):
 	def __len__(self):
 		return len(self.purchases)
 
-_PurchaseHistoryFactory = an_factory(_PurchaseHistory)
+_PurchaseHistoryFactory = an_factory(PurchaseHistory)
 
-def get_purchase_attempt(purchase_id, user):
-	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-	hist = store_interfaces.IPurchaseHistory(user)
-	result = hist.get_purchase(purchase_id)
-	result = None if result is None or result.creator != user else result
+def get_purchase_attempt(purchase_id, user=None):
+	if user is not None:
+		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	result = PurchaseHistory.get_purchase(purchase_id)
+	if result is not None and user is not None:  # validate
+		result = None if result.creator != user else result
 	return result
 
 def get_pending_purchases(user):

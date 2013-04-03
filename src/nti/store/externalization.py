@@ -19,3 +19,8 @@ from . import interfaces
 @component.adapter(interfaces.IPurchaseAttempt)
 class PurchaseAttemptExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = interfaces.IPurchaseAttempt
+
+@interface.implementer(IInternalObjectIO)
+@component.adapter(interfaces.IPurchasable)
+class PurchasableExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = interfaces.IPurchasable

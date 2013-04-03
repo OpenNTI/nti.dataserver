@@ -15,6 +15,7 @@ from zope import component
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from . import invitations
 from . import _content_roles
 from . import interfaces as store_interfaces
 from .purchase_history import get_purchase_attempt
@@ -39,8 +40,17 @@ def _purchase_attempt_successful(event):
 		purchase.State = store_interfaces.PA_STATE_SUCCESS
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
+
+		# register invitation
+		if purchase.OnBehalfOf:
+			capacity = len(purchase.OnBehalfOf)
+			invitations.register_invitation(event.purchase_id, event.username, capacity, purchase.OnBehalfOf)
+
+		# allow content roles
 		for uname in _get_content_role_users(purchase):
+			# TODO: get real content items
 			_content_roles._add_users_content_roles(uname, purchase.Items)
+
 		logger.info('%s completed successfully' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
@@ -51,8 +61,16 @@ def _purchase_attempt_refunded(event):
 		purchase.State = store_interfaces.PA_STATE_REFUNDED
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
+
+		# remove invitation
+		if purchase.OnBehalfOf:
+			invitations.remove_invitation(event.purchase_id, event.username)
+
+		# remove content roles
 		for uname in _get_content_role_users(purchase):
+			# TODO: get real content items
 			_content_roles._remove_users_content_roles(uname, purchase.Items)
+
 		logger.info('%s has been refunded' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 

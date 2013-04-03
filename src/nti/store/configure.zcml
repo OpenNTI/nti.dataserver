@@ -20,6 +20,7 @@
 	<subscriber handler="._subscribers._purchase_attempt_synced" />
 	<subscriber handler="._subscribers._purchase_attempt_disputed" />
 	
+	<adapter factory=".externalization.PurchasableExternal" />
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	
 </configure>

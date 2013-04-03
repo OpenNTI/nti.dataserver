@@ -31,6 +31,8 @@ class BasePurchasable(CreatedModDateTrackingObject, SchemaConfigured):
 	Currency = FP(store_interfaces.IPurchasable['Currency'])
 	Discountable = FP(store_interfaces.IPurchasable['Discountable'])
 	URL = FP(store_interfaces.IPurchasable['URL'])
+	Provider = FP(store_interfaces.IPurchasable['Provider'])
+	BulkPurchase = FP(store_interfaces.IPurchasable['BulkPurchase'])
 	Items = FP(store_interfaces.IPurchasable['Items'])
 
 	def __str__(self):
@@ -58,8 +60,10 @@ class Purchasable(BasePurchasable, zcontained.Contained, persistent.Persistent):
 	def id(self):
 		return to_external_ntiid_oid(self)
 
-def create_purchasable(ntiid, items, amount, currency=None, discountable=False, description=None, url=None):
+def create_purchasable(ntiid, items, provider, title, description, amount, currency=None, url=None,
+					   discountable=False, bulk_purchase=True):
 	items = to_frozenset(items)
-	result = Purchasable(NTIID=ntiid, Items=items, Amount=amount, Currency=currency,
-						 Description=description, Discountable=discountable, URL=url)
+	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Items=items,
+						 Description=description, Amount=amount, Currency=currency,
+						 Discountable=discountable, BulkPurchase=bulk_purchase, URL=url)
 	return result

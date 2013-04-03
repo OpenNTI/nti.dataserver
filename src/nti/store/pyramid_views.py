@@ -23,19 +23,19 @@ from . import purchase_history
 from . import interfaces as store_interfaces
 
 class GetPendingPurchasesView(object):
-	
+
 	def __init__(self, request):
 		self.request = request
 
-	def __call__( self ):
+	def __call__(self):
 		request = self.request
 		username = request.matchdict.get('user', None)
-		username = username or authenticated_userid( request )
+		username = username or authenticated_userid(request)
 		purchases = purchase_history.get_pending_purchases(username)
 		return purchases
 
 class GetPurchaseHistoryView(object):
-	
+
 	def __init__(self, request):
 		self.request = request
 
@@ -44,25 +44,25 @@ class GetPurchaseHistoryView(object):
 		if isinstance(t, six.string_types):
 			result = time.mktime(dateutil.parser(t).timetuple())
 		return result if isinstance(t, numbers.Number) else None
-	
-	def __call__( self ):
+
+	def __call__(self):
 		request = self.request
 		username = request.matchdict.get('user', None)
-		username = username or authenticated_userid( request )
-		start_time = self._covert(request.matchdict.get('start_time', None))
-		end_time = self._covert(request.matchdict.get('end_time', None))
+		username = username or authenticated_userid(request)
+		start_time = self._covert(request.matchdict.get('startTime', None))
+		end_time = self._covert(request.matchdict.get('endTime', None))
 		purchases = purchase_history.get_purchase_history(username, start_time, end_time)
 		return purchases
-	
+
 class GetPurchaseAttemptView(object):
 
 	def __init__(self, request):
 		self.request = request
 
-	def __call__( self ):
+	def __call__(self):
 		request = self.request
-		purchase_id = request.matchdict.get('purchase_id', None) or request.matchdict.get('OID', None)
-		username = request.matchdict.get('user', None) or authenticated_userid( request )
+		purchase_id = request.matchdict.get('purchaseId', None) or request.matchdict.get('OID', None)
+		username = request.matchdict.get('user', None) or authenticated_userid(request)
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
 			raise hexc.HTTPNotFound()
