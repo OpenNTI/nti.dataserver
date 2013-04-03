@@ -11,35 +11,33 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import persistent
 
 from zope import interface
 from zope import component
 
+import zc.intid as zc_intid
 from zope.container import contained
 
-from zope.annotation import interfaces as an_interfaces
 from zope.location import interfaces as loc_interfaces
-from . import interfaces as invite_interfaces
-
-import zc.intid as zc_intid
-
-import persistent
+from zope.annotation import interfaces as an_interfaces
 
 from nti.dataserver import containers
 from nti.externalization import integer_strings
 
+from . import interfaces as invite_interfaces
 
 @interface.implementer(invite_interfaces.IInvitations,
 					   an_interfaces.IAttributeAnnotatable,
 					   loc_interfaces.ISublocations)
-class PersistentInvitations(persistent.Persistent,contained.Contained):
+class PersistentInvitations(persistent.Persistent, contained.Contained):
 	"""
 	Basic implementation of invitation storage.
 	"""
 
 	def __init__(self):
 		self._invitations = containers.CheckingLastModifiedBTreeContainer()
-		contained.contained( self._invitations, self, '_invitations' )
+		contained.contained(self._invitations, self, '_invitations')
 
 	def sublocations(self):
 		yield self._invitations
@@ -51,20 +49,28 @@ class PersistentInvitations(persistent.Persistent,contained.Contained):
 		# Technically, IAnnotations doesn't have to be iterable of values,
 		# but it always is (see zope.annotation.attribute)
 		for val in annotations.values():
-			if getattr( val, '__parent__', None ) is self: #pragma: no cover
+			if getattr(val, '__parent__', None) is self:  # pragma: no cover
 				yield val
 
 	def registerInvitation(self, invitation):
 		if not invitation.code:
-			iid = component.getUtility( zc_intid.IIntIds ).register( invitation )
-			invitation.code = integer_strings.to_external_string( iid )
+			iid = component.getUtility(zc_intid.IIntIds).register(invitation)
+			invitation.code = integer_strings.to_external_string(iid)
 
 		# The container implementation raises KeyError if the key is already used
 		self._invitations[invitation.code] = invitation
 
-	def getInvitationByCode( self, code ):
+	def removeInvitation(self, invitation):
+		if invite_interfaces.IInvitation.providedBy(invitation):
+			if not invitation.code:
+				raise KeyError('Invitation must already have a code.')
+			invitation = invitation.code
+
+		del self._invitations[invitation]
+
+	def getInvitationByCode(self, code):
 		code = code.strip() if code else code
-		return self._invitations.get( code )
+		return self._invitations.get(code)
 
 class ZcmlInvitations(PersistentInvitations):
 	"""
@@ -77,18 +83,18 @@ class ZcmlInvitations(PersistentInvitations):
 		if not invitation.code:
 			raise KeyError('Invitation must already have a code.')
 
-		super(ZcmlInvitations,self).registerInvitation( invitation )
+		super(ZcmlInvitations, self).registerInvitation(invitation)
 
 
-def accept_invitations( user, invitation_codes ):
+def accept_invitations(user, invitation_codes):
 	"""
 	Convenience method, typically used during an event listener for an event like
 	:class:`nti.dataserver.users.interfaces.IWillCreateNewEntityEvent`. Makes the user
 	accept all the invitations in the code list, raising errors if this cannot be done.
 	"""
-	utility = component.getUtility( invite_interfaces.IInvitations )
+	utility = component.getUtility(invite_interfaces.IInvitations)
 	for code in invitation_codes:
-		invitation = utility.getInvitationByCode( code )
+		invitation = utility.getInvitationByCode(code)
 		if not invitation:
-			raise invite_interfaces.InvitationCodeError( code )
-		invitation.accept( user )
+			raise invite_interfaces.InvitationCodeError(code)
+		invitation.accept(user)

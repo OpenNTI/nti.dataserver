@@ -56,9 +56,9 @@ class IInvitation(cnt_interfaces.IContained,
 	"""
 
 	# TODO: What descriptive properties, if any?
-	code = interface.Attribute( "A unique code that identifies this invitation within its IInvitations container." )
+	code = interface.Attribute("A unique code that identifies this invitation within its IInvitations container.")
 
-	def accept( user ):
+	def accept(user):
 		"""
 		Perform whatever action is required for the ``user`` to accept the invitation, including
 		validating that the user is actually allowed to accept the invitation. Typically
@@ -90,7 +90,13 @@ class IInvitations(cnt_interfaces.IContained,
 		assigning the invitation code and taking ownership of the invitation.
 		"""
 
-	def getInvitationByCode( code ):
+	def removeInvitation(invitation):
+		"""
+		Remove the given invitation with this object.
+		"""
+
+
+	def getInvitationByCode(code):
 		"""
 		Returns an invitation having the given code, or None if there is no
 		such invitation.
@@ -117,7 +123,7 @@ class IInvitationEvent(IObjectEvent):
 	An event specifically about an invitation.
 	"""
 	object = schema.Object(IInvitation,
-						   title="The invitation." )
+						   title="The invitation.")
 
 
 class IInvitationAcceptedEvent(IInvitationEvent):
@@ -125,14 +131,14 @@ class IInvitationAcceptedEvent(IInvitationEvent):
 	An invitation has been accepted.
 	"""
 	user = schema.Object(nti_interfaces.IUser,
-						 title="The user that accepted the invitation." )
+						 title="The user that accepted the invitation.")
 
 
 @interface.implementer(IInvitationAcceptedEvent)
 class InvitationAcceptedEvent(ObjectEvent):
 
-	def __init__( self, obj, user ):
-		super(InvitationAcceptedEvent,self).__init__( obj )
+	def __init__(self, obj, user):
+		super(InvitationAcceptedEvent, self).__init__(obj)
 		self.user = user
 
 
@@ -142,8 +148,8 @@ class InvitationValidationError(ValidationError):
 	an invitation.
 	"""
 
-	def __init__( self, code ):
-		super(InvitationValidationError,self).__init__( code )
+	def __init__(self, code):
+		super(InvitationValidationError, self).__init__(code)
 		self.value = code
 
 class InvitationCodeError(InvitationValidationError):
