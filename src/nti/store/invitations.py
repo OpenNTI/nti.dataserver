@@ -68,11 +68,11 @@ def get_invitation_code(purchase_id, username):
 
 def create_store_invitation(purchase_id, username, capacity=None, entities=()):
 	invitation_code = get_invitation_code(purchase_id, username)
-	return _StoreEntityInvitation(purchase_id, username, invitation_code, entities, capacity)
+	return _StoreEntityInvitation(purchase_id, username, invitation_code, capacity=capacity, entities=entities)
 
 def register_invitation(purchase_id, username, capacity=None, entities=()):
 	utility = component.getUtility(invite_interfaces.IInvitations)
-	invitation = create_store_invitation(purchase_id, username, capacity, entities)
+	invitation = create_store_invitation(purchase_id, username, capacity=capacity, entities=entities)
 	utility.registerInvitation(invitation)
 	return invitation
 

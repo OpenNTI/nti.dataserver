@@ -7,6 +7,10 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	
+	utility factory=".generations.install._StoreSchemaManager"
+			 name="nti.dataserver-store"
+			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
+			 
 	<include package=".payments" file="configure.zcml" />
 		
 	<adapter factory=".purchase_history._PurchaseHistoryFactory"
