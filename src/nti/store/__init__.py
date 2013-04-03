@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Store Module
+Store module
 
 $Id$
 """
@@ -10,6 +10,10 @@ __docformat__ = "restructuredtext en"
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
+import re
+import six
+
+from .utils import *
 from . import purchase_attempt
 from . import purchase_history
 from . import interfaces as store_interfaces

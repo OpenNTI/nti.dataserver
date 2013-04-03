@@ -31,6 +31,26 @@ PA_STATE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.Simp
 PAYMENT_PROCESSORS = ('stripe', 'fps')
 PAYMENT_PROCESSORS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PAYMENT_PROCESSORS])
 
+class IPurchasable(interface.Interface):
+	NTIID = nti_schema.ValidTextLine(title='Purchasable NTTID', required=True)
+	Description = nti_schema.ValidTextLine(title='Description', required=False)
+	Amount = schema.Int(title="Cost amount", required=True)
+	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
+	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
+	URL = nti_schema.HTTPURL(title='Image URL', required=False)
+	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Purchasable content items")
+
+class IPurchasableStore(interface.Interface):
+
+	def add(purchase):
+		pass
+
+	def remove(purchase):
+		pass
+
+	def get(ntiid):
+		pass
+
 class IUserAddress(interface.Interface):
 	Street = nti_schema.ValidText(title='Street address', required=False)
 	City = nti_schema.ValidTextLine(title='The city name', required=False)
