@@ -34,6 +34,7 @@ from nti.dataserver.links_external import render_link
 import nti.appserver.interfaces as app_interfaces
 import nti.dataserver.interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.externalization import interfaces as ext_interfaces
 from .interfaces import IPreRenderResponseCacheController, IResponseRenderer, IResponseCacheController
 from zope.file import interfaces as zf_interfaces
 
@@ -411,8 +412,7 @@ class _ZopeFileCacheController(_AbstractReliableLastModifiedCacheController):
 @component.adapter(nti_interfaces.IEntity)
 class _EntityCacheController(_AbstractReliableLastModifiedCacheController):
 	"""
-	Entities have reliable last modified dates (with the exception of
-	the presence mixin, which we do not consider). We use this to
+	Entities have reliable last modified dates. We use this to
 	produce an ETag without rendering. We also adjust the cache
 	expiration.
 	"""
@@ -420,6 +420,24 @@ class _EntityCacheController(_AbstractReliableLastModifiedCacheController):
 	@property
 	def _context_specific(self):
 		return (self.context.username,)
+
+@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@component.adapter(nti_interfaces.IUser)
+class _UserCacheController(_EntityCacheController):
+	"""
+	Adds the presence info to etag calculation.
+	"""
+
+	@property
+	def _context_specific(self):
+		result = _EntityCacheController._context_specific.fget(self)
+		ext = {}
+		dec = component.getAdapter(self.context,
+								   ext_interfaces.IExternalObjectDecorator,
+								   name='presence' )
+		dec.decorateExternalObject(self.context, ext )
+		result += (ext.get('Presence', 'Offline'),)
+		return result
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)
 @component.adapter(nti_interfaces.IModeledContent)
