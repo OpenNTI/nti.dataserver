@@ -1,10 +1,11 @@
-#!/usr/bin/env python
-"""zope.generations installer for nti.dataserver
+# -*- coding: utf-8 -*-
+"""
+zope.generations installer for nti.store
+
 $Id$
 """
-from __future__ import print_function, unicode_literals
-
-__docformat__ = 'restructuredtext'
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 generation = 0
 
@@ -18,7 +19,6 @@ class _StoreSchemaManager(SchemaManager):
 		super(_StoreSchemaManager, self).__init__(generation=generation,
 												  minimum_generation=generation,
 												  package_name='nti.store.generations')
-
 
 
 import zope.intid
