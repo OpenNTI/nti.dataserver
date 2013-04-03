@@ -705,7 +705,6 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 		# But unmuting it brings all the objects back
 		user.unmute_conversation( to_external_ntiid_oid( c ) )
 		assert_that( list(user.getSharedContainer( 'foo' )), has_length( 3 ) )
-		assert_that( user.getContainedStream( 'foo' ), has_length( 3 ) )
 
 		user.mute_conversation( to_external_ntiid_oid( c ) )
 		# and they can all go away
@@ -717,7 +716,6 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 
 		user.unmute_conversation( to_external_ntiid_oid( c ) )
 		assert_that( user.getSharedContainer( 'foo' ), has_length( 2 ) )
-		assert_that( user.getContainedStream( 'foo' ), has_length( 2 ) )
 
 
 	@WithMockDSTrans
@@ -747,34 +745,6 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 		# This way we're sure it's the one we have above
 		assert_that( user.getContainedStream('foo')[0].creator, is_( 42 ) )
 
-	@WithMockDSTrans
-	def test_getContainedStream_Note_shared_community_nocache(self):
-		"We should be able to get the contained stream if there are things shared with a community not in the cache"
-		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
-		user2 = User.create_user( self.ds, username='jason@nextthought.com', password='temp001' )
-		comm = Community( 'AoPS' )
-		self.ds.root['users'][comm.username] = comm
-
-		user.record_dynamic_membership( comm ); user2.record_dynamic_membership( comm )
-		user.follow( comm )
-
-		note = Note()
-		note.containerId = 'foo'
-		note.addSharingTarget( comm )
-		user2.addContainedObject( note )
-		# What really gets shared in the returned value,
-		# which may be (is) wrapped in a ContainedProxy
-		note = user2.getContainedObject( 'foo', note.id )
-
-		change = Change( Change.SHARED, note )
-		change.creator = 42
-		comm._noticeChange( change )
-		comm.streamCache.clearContainer( 'foo' )
-
-		assert_that( user.getContainedStream('foo'), is_not( contains( change ) ) )
-		# This one is synthesized
-		assert_that( user.getContainedStream('foo')[0].creator, is_( user2 ) )
-		assert_that( user.getContainedStream('foo')[0].object, is_( note ) )
 
 	@WithMockDSTrans
 	def test_getContainedStream_more_items_in_comm_cache_than_cap_returns_newest(self):

@@ -49,8 +49,11 @@ from nti.dataserver.datastructures import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
 import nti.dataserver.contenttypes
+from nti.dataserver.activitystream_change import Change
 
 from zope import interface
+from zope import component
+from zope.intid.interfaces import IIntIds
 import nti.dataserver.interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -66,6 +69,11 @@ class ContainedExternal(ZContainedMixin):
 		return to_external_ntiid_oid(self, default_oid=str(id(self)))
 
 import transaction
+
+class ObjectWithInt(object):
+
+	def register(self):
+		component.getUtility(IIntIds).register(self)
 
 class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
 
@@ -120,9 +128,10 @@ class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
 			id = None
 			lastModified = 1
 			creator = 'chris.utz@nextthought.com'
-			object = None
+			object = ObjectWithInt()
 			__parent__ = None
 			__name__ = None
+		C.object.register()
 		user._addToStream( C() )
 		view.getObjectsForId( user, 'foobar' )
 
@@ -138,7 +147,7 @@ class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
 		# Any child of the root throws if (1) the root DNE
 		# and (2) the children are empty
 		class C(persistent.Persistent):
-			object = None
+			object = ObjectWithInt()
 			interface.implements(nti_interfaces.IContained, nti_interfaces.IZContained)
 			containerId = ntiids.make_ntiid( provider='ou', specific='test', nttype='test' )
 			id = None
@@ -146,6 +155,7 @@ class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
 			__name__ = None
 			lastModified = 1
 			creator = 'chris.utz@nextthought.com'
+		C.object.register()
 		c1 = C()
 		user.addContainedObject( c1 )
 		c = C()
@@ -313,7 +323,10 @@ class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
 
 		# But if there are changes at the low level, we get them
 		# if we ask at the high level.
-		user._addToStream( C() )
+		c = C()
+		c.object = ObjectWithInt()
+		c.object.register()
+		user._addToStream( c )
 		view.getObjectsForId( user, ntiids.ROOT )
 
 		# See which items are there
