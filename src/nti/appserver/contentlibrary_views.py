@@ -459,7 +459,7 @@ class _LibraryTOCRedirectClassView(object):
 			# Send back our canonical location, just in case we got here via
 			# something like the _ContentUnitPreferencesPutView. This assists the cache to know
 			# what to invalidate. (Mostly in tests we find we cannot rely on traversal, so HACK it in manually)
-			request.response.content_location = UQ('/dataserver2/Objects/' + request.context.ntiid.encode( 'utf-8' ) )
+			request.response.content_location = UQ( ('/dataserver2/Objects/' + request.context.ntiid).encode( 'utf-8' ) )
 			return _create_page_info(request, href, ntiid or request.context.ntiid, last_modified=lastModified, jsonp_href=jsonp_href)
 
 		# ...send a 302. Return rather than raise so that webtest works better
