@@ -132,7 +132,7 @@ And the second within the ``server`` level (this replaces the existing
 ``location /`` block:
 
 ::
-
+	proxy_http_version 1.1;
     root   /Library/WebServer/Documents;
     location / {
         # checks for static file, if not found proxy to app
@@ -192,7 +192,7 @@ should look something like this:
 		ssl_certificate_key /opt/nti/ssl_certs/server.key;
 
 		root   /Library/WebServer/Documents;
-
+		proxy_http_version 1.1;
 		location / {
 			# checks for static file, if not found proxy to app
 			try_files $uri @proxy_to_app;
@@ -256,6 +256,9 @@ the Dataserver directly if possible, otherwise to assume it is static
 content and direct to nginx. It also listens or port 843 (the flash
 socket policy port) and directs that to the dataserver as well (in
 plain TCP mode).
+
+Note that with haproxy in front, you probably want to disable nginx
+proxying to the dataserver and let haproxy do all the direction.
 
 ::
 
@@ -326,6 +329,14 @@ plain TCP mode).
 	acl is_blocked_name path_dir .nti_acl indexdir
 	block if is_blocked_name
 
+	# The webapp uses the ?h= param to bust CDN caches that don't
+	# properly vary by origin. But if we have nginx in front of the
+	# dataserver as a proxy, nginx sees the query param and passes it
+	# through, which is very slow. In that case, disable try_files
+	# and trust the ACLs here to direct things appropriately.
+	acl is_host_cors url_sub ?h=
+
+	use_backend www_backend if is_host_cors
 	use_backend socket_backend if is_websocket
 	use_backend socket_backend if is_dyn
 	use_backend youtube_backend if is_youtube
