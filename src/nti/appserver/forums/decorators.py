@@ -130,6 +130,7 @@ class ForumObjectContentsLinkProvider(object):
 		# up rendering)
 		context = aq_base( context )
 		if not context.__parent__: # pragma: no cover
+			logger.warn( "No parent; failing to add %s link to %s", VIEW_CONTENTS, context )
 			return
 
 		# TODO: This can be generalized by using the component

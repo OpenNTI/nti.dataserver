@@ -623,6 +623,30 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
+	def test_published_topic_is_in_activity_until_DELETEd(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, data = self._POST_and_publish_topic_entry()
+
+		# ...It can be seen in the activity stream for the author by the author and the people it
+		# is shared with ...
+		for app in testapp, testapp2:
+			res = self.fetch_user_activity( app, self.default_username )
+			assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+
+		# Until it is deleted
+		testapp.delete( publish_res.location )
+		# When it is no longer anywhere
+		for app in testapp, testapp2:
+			res = self.fetch_user_activity( app, self.default_username )
+			assert_that( res.json_body['Items'], does_not( contains( has_entry( 'title', data['title'] ) ) ) )
+			# In fact the activity is empty
+			assert_that( res.json_body['Items'], is_empty() )
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
 	def test_community_user_can_comment_in_published_topic(self):
 		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
