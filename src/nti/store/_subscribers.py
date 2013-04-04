@@ -17,6 +17,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from . import invitations
 from . import _content_roles
+from . import purchasable_store
 from . import interfaces as store_interfaces
 from .purchase_history import get_purchase_attempt
 
@@ -48,8 +49,8 @@ def _purchase_attempt_successful(event):
 
 		# allow content roles
 		for uname in _get_content_role_users(purchase):
-			# TODO: get real content items
-			_content_roles._add_users_content_roles(uname, purchase.Items)
+			lib_items = purchasable_store.get_content_items(purchase.Items)
+			_content_roles._add_users_content_roles(uname, lib_items)
 
 		logger.info('%s completed successfully' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
@@ -68,8 +69,8 @@ def _purchase_attempt_refunded(event):
 
 		# remove content roles
 		for uname in _get_content_role_users(purchase):
-			# TODO: get real content items
-			_content_roles._remove_users_content_roles(uname, purchase.Items)
+			lib_items = purchasable_store.get_content_items(purchase.Items)
+			_content_roles._remove_users_content_roles(uname, lib_items)
 
 		logger.info('%s has been refunded' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
