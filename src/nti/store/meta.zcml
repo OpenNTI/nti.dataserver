@@ -1,0 +1,14 @@
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:meta="http://namespaces.zope.org/meta">
+
+  <meta:directives namespace="http://nextthought.com/ntp/stripe">
+
+	<meta:directive
+		name="registerPurchasable"
+		schema=".zcml.IRegisterPurchasableDirective"
+		handler=".zcml.registerPurchasable"
+		/>
+  </meta:directives>
+
+</configure>
