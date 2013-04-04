@@ -15,8 +15,6 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 from nti.utils.schema import SchemaConfigured
 
 from . import to_frozenset
@@ -58,7 +56,7 @@ class Purchasable(BasePurchasable, zcontained.Contained, persistent.Persistent):
 
 	@property
 	def id(self):
-		return to_external_ntiid_oid(self)
+		return self.NTIID
 
 def create_purchasable(ntiid, items, provider, title, description, amount, currency=None, url=None,
 					   discountable=False, bulk_purchase=True):
