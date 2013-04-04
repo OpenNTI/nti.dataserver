@@ -80,16 +80,18 @@ Tasks
 	images
 	blogs_forums
 
-Chat
-====
+Realtime Communications (SocketIO)
+==================================
 
 .. toctree::
 	:maxdepth: 2
 
-
-	chat-apis
-	chatserver
+	chat-basics
+	chat-protocol
 	chat-transcripts
+	chat-data-protocol
+	chatserver
+
 
 Assessment (Quizzes)
 ====================
