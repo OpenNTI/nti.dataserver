@@ -13,15 +13,13 @@ from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
-from nti.dataserver.datastructures import CreatedModDateTrackingObject
-
 from nti.utils.schema import SchemaConfigured
 
 from . import to_frozenset
 from . import interfaces as store_interfaces
 
 @interface.implementer(store_interfaces.IPurchasable)
-class BasePurchasable(CreatedModDateTrackingObject, SchemaConfigured):
+class BasePurchasable(SchemaConfigured):
 
 	NTIID = FP(store_interfaces.IPurchasable['NTIID'])
 	Description = FP(store_interfaces.IPurchasable['Description'])
