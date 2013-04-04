@@ -11,6 +11,7 @@ from zope import component
 
 from nti.dataserver.users import User
 
+from .. import purchase_attempt
 from ..import purchasable_store as store
 from ..purchasable import create_purchasable
 from .. import interfaces as store_interfaces
@@ -48,3 +49,16 @@ class TestPurchasableStore(ConfiguringTestBase):
 		assert_that(m, has_key('iid_1'))
 		assert_that(m, has_entry('iid_2', p))
 
+	@WithMockDSTrans
+	def test_purchased(self):
+		p = create_purchasable("iid_3", "item", "provider", "title", "desc", 100)
+		component.getGlobalSiteManager().registerUtility(p, store_interfaces.IPurchasable, "iid_2")
+
+		user = self._create_user()
+		hist = store_interfaces.IPurchaseHistory(user, None)
+		pa = purchase_attempt.create_purchase_attempt(items=("iid_3",), processor="stripe",
+													  state=store_interfaces.PA_STATE_SUCCESS)
+		hist.add_purchase(pa)
+
+		m = store.get_available_items(store, 'nt@nti.com')
+		assert_that(m, is_not(has_key('iid_3')))
