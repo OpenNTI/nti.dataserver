@@ -18,6 +18,7 @@ from zope import component
 import BTrees
 from BTrees.Length import Length
 import persistent
+from nti.zodb.containers import time_to_64bit_int, bit64_int_to_time, ZERO_64BIT_INT
 
 from zope.cachedescriptors.property import CachedProperty
 from zope.cachedescriptors.property import Lazy
@@ -30,6 +31,7 @@ from nti.utils import sets
 
 from collections import Iterable, Container, Sized, Mapping
 from UserDict import DictMixin
+import time
 
 # Make pylint not complain about "badly implemented container", "Abstract class not referenced"
 #pylint: disable=R0924,R0921
@@ -54,9 +56,9 @@ class _AbstractIntidResolvingFacade(object):
 		"""
 		self.context = context
 		self._allow_missing = allow_missing
-		if parent:
+		if parent is not None:
 			self.__parent__ = parent
-		if name:
+		if name is not None:
 			self.__name__ = name
 		if intids is not None:
 			self._intids = intids
@@ -108,11 +110,11 @@ class IntidResolvingMappingFacade(_AbstractIntidResolvingFacade,DictMixin,Mappin
 	appropriate for use with the intid utility. (Usually they will be ``IISet`` objects.)
 	"""
 
-	def __wrap( self, key, val ):
+	def _wrap( self, key, val ):
 		return IntidResolvingIterable( val, allow_missing=self._allow_missing, parent=self, name=key, intids=self._intids )
 
 	def __getitem__( self, key ):
-		return  self.__wrap( key, self.context[key] )
+		return  self._wrap( key, self.context[key] )
 
 	def keys(self):
 		return self.context.keys()
@@ -124,7 +126,7 @@ class IntidResolvingMappingFacade(_AbstractIntidResolvingFacade,DictMixin,Mappin
 		return iter(self.context)
 
 	def iteritems( self ):
-		return ((k, self.__wrap( k, v )) for k, v in self.context.iteritems())
+		return ((k, self._wrap( k, v )) for k, v in self.context.iteritems())
 
 	def values(self):
 		return (v for _, v in self.iteritems())
@@ -146,6 +148,11 @@ class _LengthIntidResolvingMappingFacade(IntidResolvingMappingFacade):
 	def __init__( self, *args, **kwargs ):
 		self._len = kwargs.pop( '_len' )
 		super(_LengthIntidResolvingMappingFacade,self).__init__( *args, **kwargs )
+
+	def _wrap( self, key, val ):
+		wrapped = super(_LengthIntidResolvingMappingFacade,self)._wrap( key, val )
+		wrapped.lastModified = self.__parent__._get_container_mod_time( key )
+		return wrapped
 
 	def __len__(self):
 		return self._len()
@@ -192,6 +199,19 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 		self._p_changed = True
 		return l
 
+	@Lazy
+	def _IntidContainedStorage__moddates(self):
+		"OF map from containerId to (int) date of last modification, since we cannot store them on the TreeSet itself"
+		result = self.family.OI.BTree()
+		self._p_changed = True
+		return result
+
+	def _get_container_mod_time( self, containerId ):
+		self._p_activate()
+		if '_IntidContainedStorage__moddates' not in self.__dict__:
+			return 0
+		return bit64_int_to_time( self.__moddates.get( containerId, ZERO_64BIT_INT ) )
+
 	def __len__(self):
 		return self.__len()
 
@@ -232,12 +252,15 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 			self._containers[containerId] = container_set
 			_len.change(1)
 		container_set.add( self._get_intid_for_object( contained ) )
+		self.__moddates[containerId] = time_to_64bit_int( time.time() )
 		return contained
 
 	def deleteContainedObjectIdFromContainer( self, intid, containerId ):
 		container_set = self._containers.get( containerId )
 		if container_set is not None:
-			return sets.discard_p( container_set, intid )
+			result = sets.discard_p( container_set, intid )
+			self.__moddates[containerId] = time_to_64bit_int( time.time() )
+			return result
 
 	def deleteEqualContainedObjectFromContainer( self, contained, containerId='' ):
 		"Defaults to the unnamed container"
@@ -260,6 +283,7 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 		try:
 			_len = self.__len
 			result = self._containers.pop( containerId )
+			self.__moddates.pop( containerId )
 			_len.change( -1 )
 			return result
 		except KeyError:

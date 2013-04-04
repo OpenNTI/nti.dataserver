@@ -249,22 +249,22 @@ def default_cache_controller( data, system ):
 		response.etag += b'./gz'
 
 	if not end_to_end_reload and response.status_int == 200: # We will do caching
-		# ETags trump if-modified-since; if they give us both, and the etag doesn't match,
-		# we MUST NOT generate a 304
-		# FIXME: Actually, we really need to take them both into account if they are given
-		do_not_mod = False
+		# If they give us both an etag and a last-modified, and the etag doesn't match,
+		# we MUST NOT generate a 304. Last-Modified is considered a weak validater,
+		# and we could in theory still generate a 304 if etag matched and last-mod didn't.
+		# However, we're going for strong semantics.
+		votes = []
 		if response.etag and request.if_none_match:
-			if response.etag in request.if_none_match:
-				do_not_mod = True
-		else:
-			# Handle Not Modified
-			if response.last_modified is not None and request.if_modified_since and response.last_modified <= request.if_modified_since:
-				# Since we know a modification date, respect If-Modified-Since. The spec
-				# says to only do this on a 200 response
-				# This is a pretty poor time to do it, after we've done all this work
-				do_not_mod = True
+			votes.append( response.etag in request.if_none_match )
 
-		if do_not_mod:
+		# Not Modified must also be true, if given
+		if response.last_modified is not None and request.if_modified_since:
+			votes.append( response.last_modified <= request.if_modified_since )
+			# Since we know a modification date, respect If-Modified-Since. The spec
+			# says to only do this on a 200 response
+			# This is a pretty poor time to do it, after we've done all this work
+
+		if votes and all(votes):
 			not_mod = pyramid.httpexceptions.HTTPNotModified()
 			not_mod.last_modified = response.last_modified
 			not_mod.cache_control = response.cache_control
@@ -466,7 +466,7 @@ class _UGDExternalCollectionCacheController(_AbstractReliableLastModifiedCacheCo
 
 	@property
 	def _context_specific(self):
-		return self.context.__name__,
+		return self.context.__name__, len(self.context)
 
 @component.adapter(app_interfaces.ILongerCachedUGDExternalCollection)
 class _LongerCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCacheController):
