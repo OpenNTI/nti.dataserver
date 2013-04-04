@@ -39,7 +39,7 @@ class BasePurchasable(SchemaConfigured):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (store_interfaces.IPurchasable.implementedBy(other)
+			return self is other or (store_interfaces.IPurchasable.providedBy(other)
 									 and self.NTIID == other.NTIID)
 		except AttributeError:
 			return NotImplemented
@@ -56,7 +56,7 @@ class Purchasable(BasePurchasable, zcontained.Contained, persistent.Persistent):
 	def id(self):
 		return self.NTIID
 
-def create_purchasable(ntiid, items, provider, title, description, amount, currency=None, url=None,
+def create_purchasable(ntiid, items, provider, title, description, amount, currency='USD', url=None,
 					   discountable=False, bulk_purchase=True):
 	items = to_frozenset(items)
 	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Items=items,
