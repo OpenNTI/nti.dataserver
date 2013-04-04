@@ -1,0 +1,58 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:pcs="http://nextthought.com/ntp/purchasable"
+			i18n_domain='nti.dataserver'>
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+
+	<include package="nti.store" file="meta.zcml" />
+
+	<pcs:registerPurchasable
+		ntiid="iid_0"
+		title="Algebra for kids"
+		description="Algebra for kids"
+		provider="AOPS"
+		amount="100"
+		currency="USD"
+		discountable="False"
+		bulk_purchase="False"
+		items="prealgebra intro-algebra" />
+		
+	<pcs:registerPurchasable
+		ntiid="iid_1"
+		title="Law Cases"
+		description="Law Cases I"
+		provider="OU"
+		amount="120"
+		currency="USD"
+		discountable="False"
+		bulk_purchase="False"
+		items="cohen arizona" />
+		
+	<pcs:registerPurchasable
+		ntiid="iid_2"
+		title="Data Structures"
+		description="Data Structures in C"
+		provider="CMU"
+		amount="90"
+		currency="USD"
+		discountable="False"
+		bulk_purchase="True"
+		items="data-structures" />
+		
+	<pcs:registerPurchasable
+		ntiid="iid_3"
+		title="Risk Course"
+		description="Intro to Risk"
+		provider="PRMIA"
+		amount="90"
+		currency="USD"
+		discountable="True"
+		bulk_purchase="False"
+		items="var-risk volatility" />
+
+</configure>

@@ -13,6 +13,10 @@ from zope.location.interfaces import IContained
 
 from nti.utils import schema as nti_schema
 
+# : A :class:`zope.schema.interfaces.IVocabularyTokenized` vocabulary
+# : will be available as a registered vocabulary under this name
+PURCHASABLE_VOCAB_NAME = 'nti.store.purchasable.vocabulary'
+
 PA_STATE_FAILED = u'Failed'
 PA_STATE_SUCCESS = u'Success'
 PA_STATE_FAILURE = u'Failure'
