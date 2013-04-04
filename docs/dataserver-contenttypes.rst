@@ -147,7 +147,7 @@ These objects describe users and things related to users.
 	   time_t lastLoginTime; //time_t format, you must set
 	   out integer NotificationCount; //reset automatically when lastLoginTime is changed
 
-	   string Presence; // "Online" or "Offline"
+	   string Presence; // [DEPRECATED] "Online" or "Offline"
 
 	   in string password; //Not echoed
 

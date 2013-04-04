@@ -1,6 +1,183 @@
 ===============
- Chat Protocal
+ Chat Protocol
 ===============
+
+This document outlines the objects and events used for
+person-to-person and multi-person chat communication.
+
+At a high level, once a dataserver session has been initiated, a user
+can become available for chat by initiating a :ref:`"presence session"
+<presence>`. (Until this is done, no other events should be delivered
+from client to server.) A user can create or be invited into one or
+more `Rooms`_, exchanging `Messages`_ within those rooms. Over time a
+user can update his presence (change his status) and even become
+unavailable for chat without terminating the dataserver session.
+
+.. _presence:
+
+Presence
+========
+
+RFC 6121 ("XMPP: IM And Presence"), from which this section is
+inspired, `defines presence`_ as:
+
+   The concept of presence refers to an entity's availability for
+   communication over a network.  At the most basic level, presence is a
+   boolean "on/off" variable that signals whether an entity is available
+   or unavailable for communication (the terms "online" and "offline"
+   are also used).
+
+The definition and use of presence in this protocol follows that of
+the RFC, simplified. For example, we do not (yet) support presence
+subscriptions that must be approved and can be blocked (presence
+information is automatically distributed to an ill-defined set of
+interested parties). We also do not (yet) distinguish between the
+active "resources" (sessions) of a user---a user has a single
+presence, no matter how many active sessions he has open. Lastly, we
+do not allow for directed presence (wherein a user can directly send a
+specific presence such as "away" to a particular contact, while all
+others continue to see him as available) or presence probing.
+
+Presence information is sent from the client to the server, who then
+broadcasts that presence information as needed to other clients.
+Presence information is defined as this (non-Object) structure:
+
+.. code-block:: c
+
+	struct PresenceInfo {
+		readonly string Class = "PresenceInfo";
+		readonly string MimeType = XXX;
+		enum {
+			available,
+			unavailable
+		} type;
+
+		optional enum {
+			away,
+			chat,
+			dnd,
+			xa
+		} show;
+
+		optional string status; // size limited: 140 characters
+	}
+
+
+The ``show`` and ``status`` members are as defined in `section 4.7.2
+<http://tools.ietf.org/html/rfc6121#section-4.7.2>`_ of the RFC and
+are not interpreted by the server (except that the ``status`` member may
+be subject to censoring and truncation.
+
+.. _defines presence: http://tools.ietf.org/html/rfc6121#section-4
+
+Initial Presence
+----------------
+
+Establishing a dataserver session and a presence session are separate.
+When a client first establishes a dataserver session, he is still
+considered to be unavailable for purposes of this chat protocol. In
+this unavailable state:
+
+* The client MUST NOT attempt to send any chat protocol events to the
+  server (other than ``chat_setPresence``).
+* The client MUST discard chat protocol events it receives from the
+  server (other than ``chat_setPresenceOfUsersTo``, and then only
+  when one of the listed participants is the current user).
+* The server SHOULD NOT send any chat protocol events to the client
+  other than a single ``chat_setPresenceOfUsersTo`` event in response
+  to an event from the client. In particular, the server SHOULD NOT
+  allow creating chat rooms containing a session for the user.
+  However, due to race conditions, propagation time and implemenattion
+  lag, the server MAY generate such events.
+
+To become available for chat purposes, the client MUST send an initial
+presence event using ``chat_setPresence`` with the ``type`` key set to
+the string "available." When this is received at the server, the
+server will:
+
+#. Store this presence information for that session.
+
+   .. note::
+	  As we do not distinguish between sessions, this presence
+	  information will actually become the presence information
+	  for all of a user's sessions.
+#. Broadcast this presence information (via the
+   ``chat_setPresenceOfUsersTo`` event) to the user's contacts.
+#. Broadcast this presence information to the user himself.
+
+   In this way, the user can now know that he is in the "available"
+   state and is free to use the chat protocol. It also informs any
+   other sessions for this user of the change in status.
+#. Collect the known presence information for the user's contacts and
+   send it to the user in one or more ``chat_setPresenceOfUsersTo``
+   events.
+
+   This MAY  be the same event that the user's own presence
+   was reported in. This MAY or MAY NOT explicitly include the presence
+   information for unavailable contacts; as the default is
+   unavailable, if it is absent, the client continues to assume that
+   they are unavailable.
+
+   .. note::
+	  Handling these initial updates should be exactly the same as
+	  handling subsequent updates during the lifetime of the session.
+
+Typically a client will set the user's initial presence to available
+immediately following logon and creation of the dataserver session.
+
+.. note::
+   If the client does unconditionally set the presence to available
+   following logon, then any previous ``show`` and ``status`` values
+   set by a still-connected session will be lost. Because multiple
+   sessions are allowed only for the use case of a single user moving
+   between multiple devices (e.g., home and schoom comupter), and
+   being active on only one device at a time, this is acceptable.
+
+   However, should a persistent preference to *not* become available
+   at login time be implemented, then a client that connects and
+   chooses not to set initial presence will need a way to probe for
+   what any existing session status is in order to synchronize its
+   state. This requires exposing more details about separate sessions.
+
+Updating Presence
+-----------------
+
+At any time after initially setting his presence, a user can set a new
+presence using the ``chat_setPresence`` event. The server will follow
+the same steps as above (with the exception of the final step,
+collecting all the contact states and sending them to the user).
+
+In an update, if either ``show`` or ``status`` is not set, it is
+intpreted as its respective default value. The ``type`` member must
+always be set to one of its allowed options. The server MUST reject
+messages to do not conform with an error.
+
+.. note::
+   Again in the case of multiple sessions, a client MUST be prepared
+   to receive presence updates for his own user, initiated by a
+   session that was not his own.
+
+Disconnecting
+-------------
+
+If the client sends a ``chat_setPresence`` event where the ``type`` is
+"unavailable," the user is now effectively "offline" or invisible for
+purposes of the chat protocol, but can continue to use the dataserver
+session. The client MAY become active again at any time (as in
+`Initial Presence`_).
+
+The client MAY include values for ``show`` and ``status`` when it
+becomes unavailable. The server MUST broadcast these values (if any)
+to the users contacts. However, the server is NOT required to store
+these values persistently for reporting to contacts in the future,
+regardless of whether the user's session is still connected.
+
+Before terminating the user's session, the client SHOULD set his
+presence to unavailable. When the session disconnects, the server MUST
+detect whether the user's presence was available at the time of
+disconnection (meaning that the client failed to disconnect). If so,
+the server MUST broadcast an unavailable presence to the user's contacts.
+
 
 Rooms
 =====
@@ -226,10 +403,10 @@ Events
 Client to Server
 ----------------
 
-For those events documented as returning something, you must request acknowledgment
-of the event. The return value will be delivered in the ack to the message ID
-assigned to the event. (In javascript, you need merely supply a callback function
-to `emit` to make this happen; the callback will receive the return value.)
+``chat_setPresence(presence)``
+  Set the presence of the user, as described in `Presence`_. The
+  client MUST send one of these events (and await its response) before
+  using other chat events. There is no defined return value.
 
 ``chat_enterRoom( room_info ) -> RoomInfo``
   emit to enter a room and begin getting messages for it.
@@ -314,6 +491,11 @@ Moderation
 Server to client
 ----------------
 
+``chat_presenceOfUsersChangedTo( presence_dict )``
+  Sent when one of your contacts (or one of our own sessions) changed
+  presence information. The argument is a dictionary mapping usernames
+  to presence objects.
+
 ``chat_enteredRoom( room_info )`` and ``chat_exitedRoom( room_info )``
   Sent when you have been added/removed from a room, directly or
   indirectly.
@@ -333,8 +515,8 @@ Server to client
   being true, but no moderators listed, and then again with Moderated
   as true and with moderators listed).
 
-``chat_presenceForUserChangedTo( username, presence )``
-  Sent when a user in your "buddy list" goes offline/online. The
+``chat_presenceOfUserChangedTo( username, presence )``
+  **[DEPRECATED]** Sent when a user in your "buddy list" goes offline/online. The
   currently defined values for ``presence`` are the strings "Online"
   and "Offline."
 
