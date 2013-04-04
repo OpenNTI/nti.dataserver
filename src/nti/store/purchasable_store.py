@@ -13,8 +13,11 @@ from zope import component
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
+from . import purchasable
 from .utils import to_collection
 from . import interfaces as store_interfaces
+
+create_purchasable = purchasable.create_purchasable
 
 def get_purchasables():
 	utils = component.getUtilitiesFor(store_interfaces.IPurchasable)
@@ -33,7 +36,8 @@ def get_available_items(store, user):
 	history = store_interfaces.IPurchaseHistory(user)
 	purchased = set()
 	for p in history:
-		purchased.update(p.Items)
+		if not (p.has_succeeded() or p.is_pending()):
+			purchased.update(p.Items)
 
 	available = all_ids - purchased
 	result = {k:purchasables.get(k) for k in available}
