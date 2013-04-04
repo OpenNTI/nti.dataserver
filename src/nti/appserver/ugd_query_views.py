@@ -90,7 +90,11 @@ def _iterables_to_filtered_iterables( iterables, predicate ):
 		return iterables
 	return [itertools.ifilter( predicate, x ) for x in iterables]
 
-def _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate=_TRUE, result_iface=IUGDExternalCollection, ignore_broken=False ):
+def _lists_and_dicts_to_ext_iterables( lists_and_dicts,
+									   predicate=_TRUE,
+									   result_iface=IUGDExternalCollection,
+									   ignore_broken=False,
+									   pre_filtered=False):
 	"""
 	Given items that may be dictionaries or lists, combines them
 	and externalizes them for return to the user as a dictionary.
@@ -138,7 +142,9 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate=_TRUE, result_
 		#	pass
 		return True
 
-	if predicate is _TRUE or not predicate:
+	if pre_filtered:
+		_predicate = _TRUE
+	elif predicate is _TRUE or predicate is None:
 		_predicate = _base_predicate
 	else:
 		_predicate = lambda x: _base_predicate(x) and predicate(x)
@@ -352,6 +358,12 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 	#: remote user)
 	_force_shared_objects = False
 	_force_apply_security = False
+
+	#: Set this to false, either dynamically or at the class level,
+	#: if _sort_filter_batch_objects does not need to do any sort of further
+	#: filtering: not the value from _make_complete_predicate, nor
+	#: filtering of duplicates or numbers.
+	_needs_filtered = True
 
 	ignore_broken = True
 
@@ -688,6 +700,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 		total_item_count = sum( (len(x) for x in objects if x is not None) )
 
+		pre_filtered = not self._needs_filtered
 		predicate = self._make_complete_predicate()
 		sort_key_function = self._make_sort_key_function()
 		batch_size, batch_start = self._get_batch_size_start()
@@ -697,7 +710,11 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			number_items_needed = min(batch_size + batch_start + 2, total_item_count)
 
 		# First, take the cheap, non-secure filter to all the subobjects
-		result = _lists_and_dicts_to_ext_iterables( objects, predicate=predicate, result_iface=self.result_iface, ignore_broken=self.ignore_broken )
+		result = _lists_and_dicts_to_ext_iterables( objects,
+													predicate=predicate,
+													result_iface=self.result_iface,
+													ignore_broken=self.ignore_broken,
+													pre_filtered=pre_filtered)
 		iterables = result['Iterables']
 		del result['Iterables']
 
@@ -903,6 +920,8 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 	_DEFAULT_BATCH_START = 0
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
 
+	_needs_filtered = False # We do our own filtering as we page
+
 	def getObjectsForId( self, user, ntiid ):
 		containers = self._get_containerids_for_id( user, ntiid )
 		self.context_cache.make_accumulator()
@@ -911,34 +930,21 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 		if batch_size is not None and batch_start is not None:
 			items_needed = batch_start + batch_size + 2
 
-		before = float(self.request.params.get( 'batchBefore', time.time() ))
-
+		before = float(self.request.params.get( 'batchBefore', -1 ))
+		predicate = self._make_complete_predicate()
 		for container in containers:
-			self.get_owned( user, container, context_cache=self.context_cache, maxCount=items_needed, before=before )
+			self.get_owned( user, container,
+							context_cache=self.context_cache,
+							maxCount=items_needed,
+							before=before,
+							predicate=predicate)
 
 		items = [self.context_cache.to_result(), (), ()] # owned, shared, public, for compatibility
 
-		if not items[0] and not self._my_objects_may_be_empty:
+		if not items[0] and not self._my_objects_may_be_empty \
+		  and not (self._get_exclude_types() or self._get_accept_types()): # for bwc, if we filtered everything out, it's not a 404
 			raise hexc.HTTPNotFound()
 		return items
-
-	def _sort_filter_batch_result( self, result ):
-		"""
-		Excludes change objects that refer to a missing object or creator due to weak refs.
-		"""
-		# NOTE: The app is currently manually excluding comments but not sending an exclude param for them
-		# Do this before the filters and what not on the top level so that the item count
-		# makes sense
-		#_entity_cache = {}
-		#def _entity_exists( uname ):
-		#	if uname not in _entity_cache:
-		#		_entity_cache[uname] = users.Entity.get_entity( username=uname ) is not None
-		#	return _entity_cache[uname]
-		# If for some reason weak refs aren't clearing when we expect them to, we can
-		# include the above in this clause.
-
-		result['Items'] = [x for x in result['Items'] if x and x.object is not None and x.creator]
-		super(_RecursiveUGDStreamView,self)._sort_filter_batch_result( result )
 
 
 

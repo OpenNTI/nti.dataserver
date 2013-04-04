@@ -660,9 +660,11 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 		c = PersistentContainedThreadable()
 		c.containerId = 'foo'
 		c.id = 'a'
+		c.creator = 'foo'
 		self.ds.root._p_jar.add( c )
 		component.getUtility( zc.intid.IIntIds ).register( c )
 		change = Change( Change.CREATED, c )
+		change.creator = 'foo'
 		user._acceptIncomingChange( change )
 		assert_that( user.getSharedContainer( 'foo' ), has_length( 1 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 1 ) )
