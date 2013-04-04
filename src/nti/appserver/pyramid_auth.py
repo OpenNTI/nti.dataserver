@@ -54,19 +54,21 @@ def _decode_username_request( request ):
 	if authmeth.lower() != b'basic':
 		return (None,None)
 
+	# Remember here we're working with byte headers
 	try:
-		username, password = auth.strip().decode('base64').split(':',1)
+		username, password = auth.strip().decode('base64').split(b':',1)
 	except (ValueError,binascii.Error): # pragma: no cover
 		return (None,None)
-	else:
-		canonical_username = username.lower().replace( '%40', '@' ).strip() if username else None
-		if canonical_username != username:
-			username = canonical_username
-			auth = (username + ':' + password).encode( 'base64' ).strip()
-			request.authorization = (authmeth, auth)
-			request.remote_user = username
 
-		return (username, password)
+	# we only get here with two strings, although either could be empty
+	canonical_username = username.lower().replace( b'%40', b'@' ).strip() if username else username
+	if canonical_username != username:
+		username = canonical_username
+		auth = (username + b':' + password).encode( 'base64' ).strip()
+		request.authorization = (authmeth, auth)
+		request.remote_user = username
+
+	return (username, password)
 
 
 class _NTIUsers(object):
