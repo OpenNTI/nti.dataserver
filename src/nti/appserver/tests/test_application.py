@@ -16,7 +16,7 @@ from hamcrest import contains, contains_inanyorder
 from hamcrest import has_value
 from hamcrest import same_instance
 does_not = is_not
-from nti.tests import is_empty
+from nti.tests import is_empty, time_monotonically_increases
 
 from nti.appserver.application import createApplication, _configure_async_changes
 from nti.contentlibrary.filesystem import StaticFilesystemLibrary as Library
@@ -248,6 +248,10 @@ class _AppTestBaseMixin(object):
 	def fetch_user_activity( self, testapp=None, username=None ):
 		"Using the given or default app, fetch the activity for the given or default user"
 		return self._fetch_user_url( '/Activity', testapp=testapp, username=username )
+
+	def fetch_user_ugd( self, containerId, testapp=None, username=None, **kwargs ):
+		"Using the given or default app, fetch the UserGeneratedData for the given or default user"
+		return self._fetch_user_url( '/Pages(' + containerId + ')/UserGeneratedData', testapp=testapp, username=username, **kwargs )
 
 	def fetch_user_root_rugd( self, testapp=None, username=None, **kwargs ):
 		"Using the given or default app, fetch the RecursiveUserGeneratedData for the given or default user"
@@ -652,25 +656,29 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.body, contains_string( str(contained) ) )
 
 
-	@WithSharedApplicationMockDSWithChanges
+	@WithSharedApplicationMockDSHandleChanges(users=('foo@bar',), testapp=True,default_authenticate=True)
+	@time_monotonically_increases
 	def test_post_pages_collection(self):
 		self.ds.add_change_listener( users.onChange )
 
-		with mock_dataserver.mock_db_trans(self.ds):
-			_ = self._create_user()
-			_user2 = self._create_user( username='foo@bar' )
+		testapp = self.testapp
+		testapp.username = 'sjohnson@nextthought.com'
+		otherapp = TestApp(self.app, extra_environ=self._make_extra_environ(username='foo@bar'))
+		otherapp.username = 'foo@bar'
 
-		testapp = TestApp( self.app )
 		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_HTML, specific='1234' )
-		data = json.serialize( { 'Class': 'Highlight',
-								 'MimeType': 'application/vnd.nextthought.highlight',
-								 'ContainerId': containerId,
-								 'sharedWith': ['foo@bar'],
-								 'selectedText': 'This is the selected text',
-								 'applicableRange': {'Class': 'ContentRangeDescription'}} )
+		data = { 'Class': 'Highlight',
+				 'MimeType': 'application/vnd.nextthought.highlight',
+				 'ContainerId': containerId,
+				 'sharedWith': ['foo@bar'],
+				 'selectedText': 'This is the selected text',
+				 'applicableRange': {'Class': 'ContentRangeDescription'}}
+
+		def _lm( datetime ):
+			return time.mktime( datetime.timetuple() )
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
-		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
+		res = testapp.post_json( path, data )
 		assert_that( res.status_int, is_( 201 ) )
 		assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
 		href = res.json_body['href']
@@ -678,10 +686,18 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.highlight+json' ) ) )
 
 		# The object can be found in the UGD sub-collection
-		for username in ('sjohnson@nextthought.com', 'foo@bar'):
-			path = '/dataserver2/users/'+username+'/Pages/' + containerId + '/UserGeneratedData'
-			res = testapp.get( path, extra_environ=self._make_extra_environ(user=username))
-			assert_that( res.body, contains_string( '"Class": "ContentRangeDescription"' ) )
+		# of the creator
+		owner_res = self.fetch_user_ugd( containerId, testapp=testapp, username=testapp.username )
+		assert_that( owner_res.json_body['Items'][0], has_entry( 'selectedText', data['selectedText'] ) )
+
+		# and in the UGD sub-collection of the sharing target
+		other_res = self.fetch_user_ugd( containerId, testapp=otherapp, username=otherapp.username )
+		assert_that( other_res.json_body['Items'][0], has_entry( 'selectedText', data['selectedText'] ) )
+		# Which has the same timestamp, but not etag
+		# its actually slightly behind  due to the order of update events (constant is very fragile)
+		assert_that( _lm(other_res.last_modified), is_( _lm(owner_res.last_modified) - 3 ) )
+		assert_that( other_res.etag, is_not( owner_res.etag ) )
+
 
 		# And the feed for the other user (not ourself)
 		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream/feed.atom'
@@ -689,6 +705,17 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.content_type, is_( 'application/atom+xml'))
 		assert_that( res.body, contains_string( "This is the selected text" ) )
 
+		# If i edit the object, the mod time and etag changes for both views
+		res = testapp.put_json( href, {'selectedText': 'New'} )
+		assert_that( res.json_body, has_entry( 'selectedText', 'New' ) )
+
+		new_owner_res = self.fetch_user_ugd( containerId, testapp=testapp, username=testapp.username )
+		assert_that( new_owner_res.etag, is_not( owner_res.etag ) )
+		assert_that( _lm(new_owner_res.last_modified), is_not( _lm(owner_res.last_modified ) ) )
+
+		new_other_res = self.fetch_user_ugd( containerId, testapp=otherapp, username=otherapp.username )
+		assert_that( new_other_res.etag, is_not( other_res.etag ) )
+		assert_that( _lm(new_other_res.last_modified), is_(greater_than( _lm(other_res.last_modified ) ) ))
 
 		# The pages collection should have complete URLs
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages'
