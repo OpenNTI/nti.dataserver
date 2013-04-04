@@ -247,7 +247,7 @@ def _with_acl( prefs ):
 	user = traversal.find_interface( prefs, nti_interfaces.IUser )
 	if user is None: # pragma: no cover
 		return prefs
-
+	# TODO: Replace this with a real ACL provider
 	return nti_interfaces.ACLLocationProxy(
 					prefs,
 					prefs.__parent__,
@@ -332,6 +332,8 @@ class _ContentUnitPreferencesPutView(AbstractAuthenticatedView,ModeledContentUpl
 
 		ntiid = self.request.context.__parent__.__name__ or ntiids.ROOT
 		if ntiid == ntiids.ROOT:
+			# NOTE: This means that we are passing the wrong type of
+			# context object
 			self.request.view_name = ntiids.ROOT
 			return _RootLibraryTOCRedirectView( self.request )
 
@@ -459,7 +461,7 @@ class _LibraryTOCRedirectClassView(object):
 			# Send back our canonical location, just in case we got here via
 			# something like the _ContentUnitPreferencesPutView. This assists the cache to know
 			# what to invalidate. (Mostly in tests we find we cannot rely on traversal, so HACK it in manually)
-			request.response.content_location = UQ( ('/dataserver2/Objects/' + request.context.ntiid).encode( 'utf-8' ) )
+			request.response.content_location = UQ( ('/dataserver2/Objects/' + (ntiid or request.context.ntiid)).encode( 'utf-8' ) )
 			return _create_page_info(request, href, ntiid or request.context.ntiid, last_modified=lastModified, jsonp_href=jsonp_href)
 
 		# ...send a 302. Return rather than raise so that webtest works better
@@ -474,6 +476,8 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None): # BWC
 			  permission=nauth.ACT_READ,
 			  request_method='GET' )
 def _RootLibraryTOCRedirectView(request):
+	# NOTE: This means that sometimes the LibraryTOCRedirectView is not called
+	# with the context it expects (it can get a _ContentUnitPreferences)
 	return _LibraryTOCRedirectView( request, default_href='', ntiid=request.view_name)
 
 @view_config( name='Main',
