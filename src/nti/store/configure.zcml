@@ -6,9 +6,9 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-
+			 		
 	<include package=".payments" file="configure.zcml" />
-		
+	
 	<adapter factory=".purchase_history._PurchaseHistoryFactory"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IPurchaseHistory" />
@@ -23,4 +23,8 @@
 	<adapter factory=".externalization.PurchasableExternal" />
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	
+	<utility component=".purchasable_store.PurchasableTokenVocabulary"
+			 provides="zope.schema.interfaces.IVocabularyFactory"
+			 name="nti.store.purchasable.vocabulary" />
+		
 </configure>

@@ -36,6 +36,6 @@ def registerPurchasable(_context, ntiid, items, provider, title, description, am
 	Register a purchasable
 	"""
 	ps = create_purchasable(ntiid=ntiid, provider=provider, title=title, description=description,
-							amount=amount, currency=currency, url=url, discountable=discountable,
-							bulk_purchase=bulk_purchase)
+							items=items, amount=int(amount), currency=currency, url=url,
+							discountable=discountable, bulk_purchase=bulk_purchase)
 	utility(_context, provides=store_interfaces.IPurchasable, component=ps, name=ntiid)
