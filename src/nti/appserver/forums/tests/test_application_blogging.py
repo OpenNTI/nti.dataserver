@@ -399,7 +399,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 
 		# These created notifications to the author...
 		# ... both on the socket...
-		events = eventtesting.getEvents( chat_interfaces.IUserNotificationEvent )
+		events = eventtesting.getEvents( nti_interfaces.IUserNotificationEvent )
 		assert_that( events, has_length( greater_than_or_equal_to( 2 ) ) ) # possibly more due to read-conflict retries
 		for evt in events:
 			assert_that( evt.targets, is_( (user_username,) ) )

@@ -3,14 +3,16 @@
 
 from __future__ import print_function, unicode_literals, absolute_import
 
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__('logging').getLogger( __name__ )
+from ZODB import loglevels
 
 import warnings
 import time
 import simplejson as json
 import cPickle as pickle
 import zlib
+import numbers
+import contextlib
 try:
 	import gevent
 except ImportError:
@@ -25,10 +27,23 @@ from zope.cachedescriptors.property import Lazy
 from nti.utils import transactions
 import transaction
 
+from nti.externalization.externalization import toExternalObject, DevmodeNonExternalizableObjectReplacer
+
 from nti.dataserver import interfaces as nti_interfaces
-from nti.socketio.interfaces import  SocketSessionDisconnectedEvent
+from nti.socketio.interfaces import SocketSessionDisconnectedEvent
+from nti.socketio.interfaces import ISocketIOSocket
 from nti.socketio.persistent_session import AbstractSession as Session
 from nti.dataserver.interfaces import SiteNotInstalledError
+
+class _AlwaysIn(object):
+	"""Everything is `in` this class."""
+	def __init__(self): pass
+	def __contains__(self,obj): return True
+
+@contextlib.contextmanager
+def _NOP_CM():
+	yield
+
 
 @interface.implementer( nti_interfaces.ISessionService )
 class SessionService(object):
@@ -279,6 +294,31 @@ class SessionService(object):
 
 		return result
 
+
+	def get_session_by_owner( self, session_owner_name, session_ids=_AlwaysIn() ):
+		"""
+		Find and return a valid session for the given username.
+
+		:return: Session for the given owner.
+		:param session_owner_name: The session.owner to match.
+		:param session_ids: If not None, the session returned is one of the sessions
+			in this object.	May be a single session ID or something that supports 'in.'
+			The default is to return an arbitrary session.
+		"""
+		if session_ids is None:
+			session_ids = _AlwaysIn()
+		elif not isinstance(session_ids,_AlwaysIn) and isinstance(session_ids, (basestring,numbers.Number)):
+			# They gave us a bare string
+			session_ids = (session_ids,)
+		# Since this is arbitrary by name, we choose to return
+		# the most recently created session that matches.
+		candidates = list( self.get_sessions_by_owner( session_owner_name ) )
+		candidates.sort( key=lambda x: x.creation_time, reverse=True )
+		for s in candidates:
+			if s.session_id in session_ids:
+				return s
+		return None
+
 	def delete_sessions( self, session_owner ):
 		"""
 		Delete all sessions for the given owner (active and alive included)
@@ -294,6 +334,48 @@ class SessionService(object):
 		self._session_db.unregister_session( sess )
 		if sess:
 			sess.kill()
+
+	### High-level messaging routines
+
+	def send_event_to_user( self, username, name, *args ):
+		"""
+		Directs the event named ``name`` to all connected sessions for the ``username``.
+		The sequence of ``args`` is externalized and sent with the event.
+		"""
+		if not username:
+			return
+
+		all_sessions = self.get_sessions_by_owner( username )
+		if not all_sessions: # pragma: no cover
+			logger.log( loglevels.TRACE, "No sessions for %s to send event %s to", username, name )
+			return
+
+		# When sending an event to a user, we need to write the object
+		# in the form particular to that user, since the information we transmit
+		# (in particular links like the presence/absence of the Edit link or the @@like and @@favorite links)
+		# depends on who is asking.
+		# "Who is asking" depends on the current IAuthenticationPolicy. We have a policy that lets
+		# us maintain a stack of users. If we cannot find it, then we will write the wrong data out
+		auth_policy = component.queryUtility( nti_interfaces.IAuthenticationPolicy )
+		imp_policy = nti_interfaces.IImpersonatedAuthenticationPolicy( auth_policy, None )
+		if imp_policy is not None:
+			imp_user = imp_policy.impersonating_userid( username )
+		else:
+			imp_user = _NOP_CM
+
+
+		with imp_user():
+			# Trap externalization errors /now/ rather than later during
+			# the process
+			args = [toExternalObject( arg,
+									  default_non_externalizable_replacer=DevmodeNonExternalizableObjectReplacer )
+					  for arg in args]
+
+		for s in all_sessions:
+			logger.log( loglevels.TRACE, "Dispatching %s to %s", name, s )
+			ISocketIOSocket(s).send_event( name, *args )
+
+	### Low-level messaging routines (that can probably be refactored/extracted for clarity)
 
 	@Lazy
 	def _redis(self):
@@ -312,13 +394,7 @@ class SessionService(object):
 
 		if sess:
 			queue_name = 'sessions/' + session_id + '/' + q_name
-			# TODO: Probably need to add timeouts here
-			if meth == Session.enqueue_message_from_client and msg is not None:
-				# Since we don't call it anymore, we need to handle the timeout
-				# ourself...except, we can avoid a DB store if we let
-				# the normal heartbeat do this
-				#sess.clear_disconnect_timeout()
-				pass
+			# TODO: Probably need to add timeouts here? Is the normal heartbeat enough?
 			if msg is None:
 				msg = ''
 			else:
@@ -331,6 +407,9 @@ class SessionService(object):
 							 args=(queue_name, msg,) )
 
 	def _publish_msg( self, name, session_id, msg_str ):
+		if msg_str is None: # Disconnecting/kill(). These' don't need to go to the cluster, handled locally
+			return
+
 		assert isinstance( name, str ) # Not Unicode, only byte constants
 
 		assert isinstance( session_id, basestring ) # Must be a string of some type now
@@ -355,12 +434,12 @@ class SessionService(object):
 							 args=( self.channel_name, pickle.dumps( [session_id, name, msg_str], pickle.HIGHEST_PROTOCOL ),) )
 
 	def queue_message_from_client(self, session_id, msg):
-		self._put_msg( Session.enqueue_message_from_client, 'server_queue', session_id, msg )
+		self._put_msg( 'enqueue_message_from_client', 'server_queue', session_id, msg )
 		self._publish_msg( b'queue_message_from_client', session_id, json.dumps( msg ) )
 
 
 	def queue_message_to_client(self, session_id, msg):
-		self._put_msg( Session.enqueue_message_to_client, 'client_queue', session_id, msg )
+		self._put_msg( 'enqueue_message_to_client', 'client_queue', session_id, msg )
 		self._publish_msg( b'queue_message_to_client', session_id, msg )
 
 
@@ -430,3 +509,22 @@ class SessionService(object):
 		result = float( val or '0' )
 
 		return result
+
+
+
+
+# TODO: Find a better spot for this
+@component.adapter(nti_interfaces.IUserNotificationEvent)
+def _send_notification( user_notification_event ):
+	"""
+	Event handler that sends notifications to connected users.
+	"""
+	sessions = getattr( component.queryUtility( nti_interfaces.IDataserver ), 'session_manager', None )
+	if sessions:
+		for target in user_notification_event.targets:
+			try:
+				sessions.send_event_to_user( target, user_notification_event.name, *user_notification_event.args )
+			except AttributeError: # pragma: no cover
+				raise
+			except Exception: # pragma: no cover
+				logger.exception( "Failed to send %s to %s", user_notification_event, target )

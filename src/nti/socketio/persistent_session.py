@@ -16,7 +16,7 @@ import time
 from zope import interface
 from zope.annotation import IAttributeAnnotatable
 from zope.event import notify
-import zc.queue
+from zope.cachedescriptors.property import cachedIn
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 from nti.zodb import minmax
@@ -31,12 +31,11 @@ import ZODB.POSException
 @interface.implementer(sio_interfaces.ISocketSession,IAttributeAnnotatable)
 class AbstractSession(PersistentPropertyHolder):
 	"""
-	Abstract base for persistent session implementations. Because this class
-	may be used in a distributed environment, it does not provide
-	implementations of :meth:`queue_message_to_client` and :meth:`queue_message_from_client`; your subclass
-	will need to decide how to process those locally or remotely. Instead, it provides
-	persistent storage queues for these two types of messages, which can be accessed
-	using :meth:`enqueue_message_from_client` and :meth:`enqueue_message_to_client`.
+	Abstract base for persistent session implementations. Because this
+	class may be used in a distributed environment, it does not
+	provide implementations of :meth:`queue_message_to_client` and
+	:meth:`queue_message_from_client`; your subclass will need to
+	decide how to process those locally or remotely.
 	"""
 
 	connection_confirmed = False
@@ -54,8 +53,6 @@ class AbstractSession(PersistentPropertyHolder):
 
 	def __init__(self, owner=None):
 		self.creation_time = time.time()
-		self.client_queue = zc.queue.CompositeQueue() # queue for messages to client
-		self.server_queue = zc.queue.CompositeQueue() # queue for messages to server
 
 		self._hits = minmax.MergingCounter( 0 )
 		self.__dict__['owner'] = owner.decode( 'utf-8' ) if isinstance( owner, str ) else owner
@@ -67,7 +64,7 @@ class AbstractSession(PersistentPropertyHolder):
 		# So only a few things can change in ways that might
 		# conflict.
 		# We can ignore:
-		# - client_queue, server_queue, _hits, _last_heartbeat_time: handle themselves
+		# - _hits, _last_heartbeat_time: handle themselves
 		# - creation_time, owner, session_id: immutable
 		state = dict(newState)
 
@@ -114,17 +111,23 @@ class AbstractSession(PersistentPropertyHolder):
 	owner = dict_read_alias('owner')
 	id = alias('session_id')
 
-	@property
+	@cachedIn('_v_socket')
 	def socket(self):
 		return nti.socketio.protocol.SocketIOSocket( self )
+
+	def __conform__( self, iface ):
+		# Shortcut for using ISocketIOSocket(session) to return a socket;
+		# currently identical to session.socket, but useful in the future
+		# for flexibility
+		if sio_interfaces.ISocketIOSocket == iface:
+			return self.socket
+		return None
 
 	def __str__(self):
 		try:
 			result = ['[session_id=%r' % self.session_id]
 			result.append(self.state)
 			result.append( 'owner=%s' % self.owner )
-			result.append( 'client_queue[%s]' % len(self.client_queue))
-			result.append( 'server_queue[%s]' % len(self.server_queue))
 			result.append( 'hits=%s' % self._hits.value)
 			result.append( 'confirmed=%s' % self.connection_confirmed )
 			result.append( 'id=%s]'% id(self) )
@@ -177,36 +180,30 @@ class AbstractSession(PersistentPropertyHolder):
 
 	def kill(self, send_event=True):
 		"""
-		Mark this session as disconnected if not already.
+		Mark this session as disconnected if not already. Many listeners
+		expect to get a None message when the session disconnects;
+		if the subclass has provided implementations of :meth:`queue_message_from_client`
+		and :meth:`queue_message_to_client`, then None will be passed to those methods.
 
 		:param bool send_event: If ``True`` (the default) when this method
 			actually marks the session as disconnected, and the session had a valid
 			owner, an :class:`SocketSessionDisconnectedEvent` will be sent.
 		"""
-		if self.connected:
-			# Mark us as disconnecting, and then send notifications
-			# (otherwise, it's too easy to recurse infinitely here)
-			self.state = sio_interfaces.SESSION_STATE_DISCONNECTING
+		if not self.connected:
+			return
 
-			if self.owner and send_event:
-				notify(SocketSessionDisconnectedEvent(self))
+		# Mark us as disconnecting, and then send notifications
+		# (otherwise, it's too easy to recurse infinitely here)
+		self.state = sio_interfaces.SESSION_STATE_DISCONNECTING
 
-			self.enqueue_server_msg( None )
-			self.enqueue_client_msg( None )
+		if self.owner and send_event:
+			notify(SocketSessionDisconnectedEvent(self))
 
-
-	def enqueue_message_from_client(self, msg):
-		if msg is not None:
-			# When we get a message from the client, reset our
-			# heartbeat timer. (Don't do this for our termination message)
-			self.clear_disconnect_timeout()
-		self.server_queue.put( msg )
-
-	def enqueue_message_to_client(self, msg):
-		self.client_queue.put( msg )
-
-	enqueue_client_msg = enqueue_message_to_client
-	enqueue_server_msg = enqueue_message_from_client
+		for m in self.queue_message_to_client, self.queue_message_from_client:
+			try:
+				m(None)
+			except NotImplementedError:
+				pass
 
 	def queue_message_from_client(self, msg):
 		raise NotImplementedError() # pragma: no cover

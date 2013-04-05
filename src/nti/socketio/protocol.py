@@ -14,6 +14,8 @@ from . import interfaces
 from zope import interface
 from zope import component
 
+from zope.cachedescriptors.property import Lazy
+
 @interface.implementer(interfaces.ISocketIOSocket)
 class SocketIOSocket(object):
 	"""
@@ -29,7 +31,11 @@ class SocketIOSocket(object):
 		self.channel = channel
 		self.version = version
 
-	@property
+	def __reduce__(self):
+		"Cannot be pickled"
+		raise TypeError()
+
+	@Lazy
 	def protocol(self):
 		return component.getUtility( interfaces.ISocketIOProtocolFormatter, name=self.version )
 
