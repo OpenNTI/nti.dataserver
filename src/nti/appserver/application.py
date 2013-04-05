@@ -378,11 +378,6 @@ def createApplication( http_port,
 							 renderer='rest',
 							 permission=nauth.ACT_SEARCH)
 
-	pyramid_config.add_route( name='search.users', pattern='/dataserver2/UserSearch/{term:.*}',
-							  traverse='/dataserver2')
-	pyramid_config.add_route( name='search.resolve_user', pattern='/dataserver2/ResolveUser/{term:.*}',
-							  traverse='/dataserver2')
-	pyramid_config.scan( 'nti.appserver.usersearch_views' )
 
 	logger.debug( 'Finished creating search' )
 
@@ -454,9 +449,6 @@ def createApplication( http_port,
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
 							 renderer='rest', context=nti_interfaces.IUser,
 							 permission=nauth.ACT_CREATE, request_method='POST' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._method_not_allowed',
-							 renderer='rest', context=nti_interfaces.IUser,
-							 permission=nauth.ACT_READ, request_method='GET' )
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
 							 renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
 							 permission=nauth.ACT_CREATE, request_method='POST' )

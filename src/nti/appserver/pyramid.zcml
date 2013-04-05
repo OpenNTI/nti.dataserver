@@ -23,7 +23,17 @@
 					  route_name="stacktraces" />
 	</configure>
 
-	<!-- Traversal -->
+	<!-- User search/resolution -->
+	<pyramid:route name='search.users'
+				   pattern='/dataserver2/UserSearch/{term:.*}'
+				   traverse='/dataserver2' />
+	<pyramid:route name='search.resolve_user'
+				   pattern='/dataserver2/ResolveUser/{term:.*}'
+				   traverse='/dataserver2' />
+
+
+
+	<!-- Normal Traversal -->
 	<pyramid:route name='objects.generic.traversal'
 				   pattern='/dataserver2/*traverse'
 				   factory='._dataserver_pyramid_traversal.dataserver2_root_resource_factory'>
@@ -40,7 +50,7 @@
 		re-establish it later on anyway.)
 	</pyramid:view>
 
-
+	<pyramid:scan package='nti.appserver.usersearch_views' />
 	<pyramid:scan package='.contentlibrary_views' />
 	<pyramid:scan package='.liking_views' />
 	<pyramid:scan package='.flagging_views' />

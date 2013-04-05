@@ -86,6 +86,23 @@ def _UserSearchView(request):
 
 	return _format_result( result, remote_user, dataserver )
 
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_READ,
+			  request_method='GET',
+			  context=nti_interfaces.IUser,
+			  custom_predicates=( (lambda context,request: get_remote_user(request) == context), ) )
+def _ResolveMyself(request):
+	"""
+	Custom version of user resolution that only matches for ourself.
+	"""
+	# Our custom predicate protects us
+	request.response.cache_control.max_age = 0
+	request.response.etag = None
+	# We don't want the simple summary, we want the personal summary, so we have
+	# to do that ourself
+	return toExternalObject( request.context, name='personal-summary' )
+
 @view_config( route_name='search.resolve_user',
 			  renderer='rest',
 			  permission=nauth.ACT_SEARCH,
