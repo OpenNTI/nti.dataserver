@@ -212,7 +212,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 			val = self.factory( value )
 			inst.__dict__[self.__name__] = val
 			inst._p_changed = True
-			if inst._p_jar:
+			if getattr(inst, '_p_jar', None) is not None:
 				inst._p_jar.add( val )
 		else:
 			val.set( value )

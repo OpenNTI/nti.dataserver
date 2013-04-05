@@ -233,17 +233,14 @@ class LastModifiedBTreeContainer(PersistentPropertyHolder,BTreeContainer):
 		self.createdTime = time.time()
 		super(LastModifiedBTreeContainer,self).__init__()
 
-	def _set_lastModified(self, lm):
-		self.lastModified = lm
-
 	def updateLastMod(self, t=None ):
-		self._set_lastModified( t if t is not None and t > self.lastModified else time.time() )
+		self.lastModified = ( t if t is not None and t > self.lastModified else time.time() )
 		return self.lastModified
 
 	def updateLastModIfGreater( self, t ):
 		"Only if the given time is (not None and) greater than this object's is this object's time changed."
 		if t is not None and t > self.lastModified:
-			self._set_lastModified( t )
+			self.lastModified = t
 		return self.lastModified
 
 

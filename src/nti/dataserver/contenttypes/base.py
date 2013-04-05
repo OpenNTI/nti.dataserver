@@ -4,11 +4,8 @@ Base functionality.
 """
 from __future__ import print_function, unicode_literals
 
-import persistent
 import collections
 
-
-from nti.externalization.externalization import stripSyntheticKeysFromExternalDictionary
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
@@ -21,8 +18,9 @@ from nti.ntiids import ntiids
 
 from nti.utils.property import alias
 
+from nti.zodb.persistentproperty import PersistentPropertyHolder
+
 from zope import interface
-from zope import component
 from zope.deprecation import deprecate
 
 def _get_entity( username, dataserver=None ):
@@ -30,7 +28,7 @@ def _get_entity( username, dataserver=None ):
 
 
 @interface.implementer(nti_interfaces.IModeledContent)
-class UserContentRoot(sharing.ShareableMixin, datastructures.ZContainedMixin, datastructures.CreatedModDateTrackingObject, persistent.Persistent):
+class UserContentRoot(sharing.ShareableMixin, datastructures.ZContainedMixin, datastructures.CreatedModDateTrackingObject, PersistentPropertyHolder):
 	"""
 	Base implementation of behaviours expected for contenttypes. Should be the primary
 	superclass for subclasses.

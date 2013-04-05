@@ -11,9 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import persistent
-import persistent.list # Req'd, despite pylint
-
 from zope.mimetype.interfaces import IContentTypeAware
 from zope import interface
 from zope.container.interfaces import INameChooser
@@ -27,7 +24,7 @@ from nti.utils.property import alias
 @interface.implementer( interfaces.IEnclosedContent,
 						IContentTypeAware,
 						interfaces.IZContained )
-class SimplePersistentEnclosure(datastructures.CreatedModDateTrackingObject, persistent.Persistent):
+class SimplePersistentEnclosure(datastructures.PersistentCreatedModDateTrackingObject):
 	"""
 	A trivial implementation of a persistent enclosure.
 	Real production usage needs much more thought and should
