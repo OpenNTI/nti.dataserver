@@ -53,6 +53,7 @@ from . import traversal
 from .pyramid_authorization import is_readable
 from .pyramid_authorization import is_writable
 from .pyramid_authorization import has_permission
+from ._util import link_belongs_to_user
 
 from pyramid.threadlocal import get_current_request
 
@@ -519,7 +520,10 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
 	@property
 	def links(self):
-		return _create_search_links( self )
+		search_links = _create_search_links( self )
+		resolve_me_link = links.Link( self.user, rel="ResolveSelf", method='GET' )
+		link_belongs_to_user( resolve_me_link, self.user )
+		return search_links + (resolve_me_link,)
 
 	@property
 	def collections(self):

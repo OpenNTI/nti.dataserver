@@ -695,7 +695,7 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( other_res.json_body['Items'][0], has_entry( 'selectedText', data['selectedText'] ) )
 		# Which has the same timestamp, but not etag
 		# its actually slightly behind  due to the order of update events (constant is very fragile)
-		assert_that( _lm(other_res.last_modified), is_( _lm(owner_res.last_modified) - 3 ) )
+		assert_that( _lm(other_res.last_modified), is_( greater_than_or_equal_to( _lm(owner_res.last_modified) - 5 ) ) )
 		assert_that( other_res.etag, is_not( owner_res.etag ) )
 
 
@@ -1356,14 +1356,17 @@ class TestApplication(SharedApplicationTestBase):
 			assert_that( res.json_body, has_entry( 'NotificationCount', 5 ) )
 
 
-	@WithSharedApplicationMockDS
-	def test_get_user_not_allowed(self):
-		with mock_dataserver.mock_db_trans( self.ds ):
-			self._create_user()
-
-		testapp = TestApp( self.app )
+	@WithSharedApplicationMockDS(users=('foo@bar',),testapp=True,default_authenticate=True)
+	def test_get_user(self):
+		testapp = self.testapp
+		othertestapp = TestApp( self.app, extra_environ=self._make_extra_environ(username='foo@bar') )
+		# I can get myself
 		path = '/dataserver2/users/sjohnson@nextthought.com'
-		testapp.get( path, status=405, extra_environ=self._make_extra_environ())
+		res = testapp.get( path )
+		assert_that( res.json_body, has_key( 'Username' ) )
+		# Another user cannot
+		othertestapp.get( path, status=404 )
+
 
 	@WithSharedApplicationMockDS
 	def test_class_provider_hrefs(self):
