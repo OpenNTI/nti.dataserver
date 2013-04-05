@@ -248,18 +248,17 @@ class _ChatserverTestBase(SharedConfiguringTestBase):
 				to_json_representation_externalized( event )
 			self.events.append( event )
 
-
+	@interface.implementer(sio_interfaces.ISocketSession,an_interfaces.IAttributeAnnotatable)
 	class MockSession(object):
-		interface.implements(sio_interfaces.ISocketSession,an_interfaces.IAttributeAnnotatable)
 		def __init__( self, owner, strict_events=False ):
 			self.socket = TestChatserver.PH(strict_events=strict_events)
 			self.owner = owner
 			self.creation_time = time.time()
 			self.session_id = None
-		@property
-		@deprecate( "Prefer the `socket` property" )
-		def protocol_handler(self):
-			return self.socket
+		def __conform__(self, iface):
+			if iface == sio_interfaces.ISocketIOSocket:
+				return self.socket
+			return None
 
 	Session = MockSession
 	class Sessions(object):
@@ -295,6 +294,16 @@ class _ChatserverTestBase(SharedConfiguringTestBase):
 
 		def get_sessions_by_owner( self, owner ):
 			return [x for x in self.sessions.values() if x.owner == owner]
+
+		def get_session_by_owner( self, *args, **kwargs ):
+			# XXX Sort of a hack
+			from nti.dataserver.sessions import SessionService
+			return SessionService.get_session_by_owner.im_func( self, *args, **kwargs )
+
+		def send_event_to_user( self, *args, **kwargs ):
+			# XXX Sort of a hack
+			from nti.dataserver.sessions import SessionService
+			return SessionService.send_event_to_user.im_func( self, *args, **kwargs )
 
 		def clear_all_session_events(self):
 			for session in self:

@@ -27,14 +27,14 @@ from nti.appserver._stream_event_listeners import user_change_new_note_emailer, 
 class MockChatserver(object):
 	interface.implements(chat_interfaces.IChatserver)
 
-	pchange = ()
-	def send_event_to_user( self, *args ):
-		self.pchange = args
 
 class MockSessionManager(object):
 
 	def get_sessions_by_owner(self,username):
 		return ()
+	pchange = ()
+	def send_event_to_user( self, *args ):
+		self.pchange = args
 
 class MockSession(object):
 	owner = None
@@ -52,8 +52,7 @@ class TestEvents(ConfiguringTestBase):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_broadcast(self):
-		cs = MockChatserver()
-		component.provideUtility( cs )
+		cs = MockSessionManager()
 
 		user = users.User.create_user( self.ds, username='sjohnson@nextthought.com' )
 		user2 = users.User.create_user( self.ds, username='sjohnson2@nextthought.com' )
@@ -66,7 +65,7 @@ class TestEvents(ConfiguringTestBase):
 		session_disconnected_broadcaster( session, None )
 		assert_that( cs.pchange, is_( () ) )
 
-		self.ds.session_manager = MockSessionManager()
+		self.ds.session_manager = cs
 		session_disconnected_broadcaster( session, None )
 		assert_that( cs.pchange, is_( (user2.username, 'chat_presenceOfUserChangedTo', user.username, 'Offline') ))
 
@@ -76,8 +75,6 @@ class TestEvents(ConfiguringTestBase):
 		change = MockChange()
 		user_change_broadcaster( user, change )
 		assert_that( cs.pchange, is_( (user.username, 'data_noticeIncomingChange', change) ) )
-
-		assert_that( component.getGlobalSiteManager().unregisterUtility( cs ), is_( True ) )
 
 	@mock_dataserver.WithMockDSTrans
 	def test_email(self):

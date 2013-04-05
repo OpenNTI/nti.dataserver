@@ -13,7 +13,6 @@ import uuid
 
 from zope.deprecation import deprecated
 
-from nti.externalization.externalization import toExternalObject, DevmodeNonExternalizableObjectReplacer
 from nti.externalization import internalization
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
@@ -30,11 +29,6 @@ from zope import component
 from zc import intid as zc_intid
 from . import interfaces
 from .meeting import _Meeting
-
-class _AlwaysIn(object):
-	"""Everything is `in` this class."""
-	def __init__(self): pass
-	def __contains__(self,obj): return True
 
 
 ####
@@ -99,10 +93,6 @@ class TestingMappingMeetingStorage(object):
 		if interfaces.IMeeting.providedBy( obj ):
 			return obj
 
-@contextlib.contextmanager
-def _NOP_CM():
-	yield
-
 
 @interface.implementer( interfaces.IChatserver )
 class Chatserver(object):
@@ -138,64 +128,13 @@ class Chatserver(object):
 
 	### Sessions
 
-	def get_session_for( self, session_owner_name, session_ids=_AlwaysIn() ):
-		"""
-		:return: Session for the given owner.
-		:param session_owner_name: The session.owner to match.
-		:param session_ids: If not None, the session's ID must also match.
-			May be a single session ID or something that supports 'in.'
-		"""
-		if session_ids is None:
-			session_ids = _AlwaysIn()
-		elif not isinstance(session_ids,_AlwaysIn) and isinstance(session_ids, (basestring,numbers.Number)):
-			# They gave us a bare string
-			session_ids = (session_ids,)
-		# Since this is arbitrary by name, we choose to return
-		# the most recently created session that matches.
-		candidates = list( self.sessions.get_sessions_by_owner( session_owner_name ) )
-		candidates.sort( key=lambda x: x.creation_time, reverse=True )
-		for s in candidates:
-			if s.session_id in session_ids:
-				return s
-		return None
+	def get_session_for( self, *args, **kwargs ):
+		return self.sessions.get_session_by_owner( *args, **kwargs )
 
 	### Low-level IO
 
-	def send_event_to_user( self, username, name, *args ):
-		"""
-		Directs the event named ``name`` to all sessions for the ``username``.
-		The sequence of ``args`` is externalized and sent with the event.
-		"""
-		if username:
-			all_sessions = self.sessions.get_sessions_by_owner( username )
-			if not all_sessions: # pragma: no cover
-				logger.log( loglevels.TRACE, "No sessions for %s to send event %s to", username, name )
-				return
-
-			# When sending an event to a user, we need to write the object
-			# in the form particular to that user, since the information we transmit
-			# (in particular links like the presence/absence of the Edit link or the @@like and @@favorite links)
-			# depends on who is asking.
-			# "Who is asking" depends on the current IAuthenticationPolicy. We have a policy that lets
-			# us maintain a stack of users. If we cannot find it, then we will write the wrong data out
-			auth_policy = component.queryUtility( nti_interfaces.IAuthenticationPolicy )
-			imp_policy = nti_interfaces.IImpersonatedAuthenticationPolicy( auth_policy, None )
-			if imp_policy is not None:
-				imp_user = imp_policy.impersonating_userid( username )
-			else:
-				imp_user = _NOP_CM
-
-
-			with imp_user():
-				# Trap externalization errors /now/ rather than later during
-				# the process
-				args = [toExternalObject( arg,
-										  default_non_externalizable_replacer=DevmodeNonExternalizableObjectReplacer )
-						  for arg in args]
-
-			for s in all_sessions:
-				logger.log( loglevels.TRACE, "Dispatching %s to %s", name, s )
-				s.socket.send_event( name, *args )
+	def send_event_to_user( self, *args ):
+		self.sessions.send_event_to_user( *args )
 
 	### Rooms
 
@@ -443,20 +382,3 @@ class Chatserver(object):
 				if not room.Active:
 					del self.rooms[room_id]
 		return result
-
-
-
-@component.adapter(interfaces.IUserNotificationEvent)
-def _send_notification( user_notification_event ):
-	"""
-	Event handler that sends notifications to connected users.
-	"""
-	chatserver = component.queryUtility( interfaces.IChatserver )
-	if chatserver:
-		for target in user_notification_event.targets:
-			try:
-				chatserver.send_event_to_user( target, user_notification_event.name, *user_notification_event.args )
-			except AttributeError: # pragma: no cover
-				raise
-			except Exception: # pragma: no cover
-				logger.exception( "Failed to send %s to %s", user_notification_event, target )

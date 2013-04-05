@@ -296,34 +296,9 @@ class IUserTranscriptStorage(Interface):
 
 	def add_message( meeting, msg ): pass
 
+# BWC exports
 
-class IUserNotificationEvent(Interface):
-	"""
-	An event that is emitted with the intent of resulting in
-	a notification to one or more end users.
-
-	The chatserver will not produce these events, but it will listen
-	for them and attempt to deliver them to the connected target users.
-	"""
-
-	targets = schema.Iterable( title="Iterable of usernames to attempt delivery to." )
-	name = schema.TextLine(	title="The name of the event to deliver" )
-	args = schema.Iterable( title="Iterable of objects to externalize and send as arguments." )
-
-
-@interface.implementer( IUserNotificationEvent )
-class UserNotificationEvent(object):
-	"Base class for user notification events"
-
-	def __init__( self, name, targets, *args ):
-		self.name = name
-		self.targets = targets
-		self.args = args
-
-	def __repr__( self ):
-		return "<%s.%s %s %s %s>" % (type(self).__module__, type(self).__name__, self.name, self.targets, self.args)
-
-class PresenceChangedUserNotificationEvent(UserNotificationEvent):
+class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent):
 	"""
 	Pre-defined type of user notification for a presence change event.
 	"""
@@ -341,14 +316,3 @@ class PresenceChangedUserNotificationEvent(UserNotificationEvent):
 																   targets,
 																   sender,
 																   new_presence )
-
-class DataChangedUserNotificationEvent(UserNotificationEvent):
-	"""
-	Pre-defined type of user notification for a change in data.
-	"""
-
-	def __init__( self, targets, change ):
-		"""
-		:param change: An object representing the change.
-		"""
-		super(DataChangedUserNotificationEvent,self).__init__( "data_noticeIncomingChange", targets, change )

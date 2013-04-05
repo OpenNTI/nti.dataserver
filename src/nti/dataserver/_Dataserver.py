@@ -163,7 +163,7 @@ class MinimalDataserver(object):
 	def _setup_cache( self ):
 		"""
 		Creates and returns a memcache instance to use. If we are
-		using RelStorage, we piggy back of its settings so we don't have to configure
+		using RelStorage, we piggy back off its settings so we don't have to configure
 		twice.
 		""" # otherwise, our fallback now is to the local cache.
 		cache = None
