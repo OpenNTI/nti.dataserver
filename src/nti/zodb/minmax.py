@@ -156,6 +156,10 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 			self.holder = holder
 
 		def increment(self, amount=1):
+			# Use the original NumericPropertyDefaultingToZero descriptor
+			# to set the value, calling the factory and storing it.
+			# If the __name__ does not match the actual property name,
+			# then we're screwed.
 			setattr( self.holder, self.__name__, amount )
 			return getattr( self.holder, self.__name__ )
 
@@ -168,20 +172,31 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 	as_number = False
 	def __init__( self, name, factory, as_number=False ):
 		"""
-		Creates a new property.
+		Creates a new property in a new-style class that does not use ``__slots__``
+		(persistent classes shouldn't use ``__slots__`` anyway).
 
 		:param name: The name of the property; this will be the key in the instance
-			dictionary.
+			dictionary. This *must* match the name of the property
+			(e.g., ``a = NumericPropertyDefaultingToZero( 'a',...)``); if it doesn't,
+			the behaviour is undefined.
 		"""
 		self.__name__ = name
 		self.factory = factory
 		if as_number:
 			self.as_number = True
 
+	def __activate( self, inst ):
+		"we must activate objects before accessing their dict otherwise it may not be loaded"
+		try:
+			inst._p_activate()
+		except AttributeError:
+			pass
+
 	def __get__( self, inst, klass ):
 		if inst is None:
 			return klass
 
+		self.__activate( inst )
 		if self.__name__ in inst.__dict__:
 			value = inst.__dict__[self.__name__]
 			return value.value if self.as_number else value
@@ -189,6 +204,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 		return 0 if self.as_number else  self.IncrementingZeroValue( self.__name__, inst )
 
 	def __set__( self, inst, value ):
+		self.__activate( inst )
 		val = inst.__dict__.get( self.__name__, None )
 		if val is None:
 			if value == 0:
@@ -202,6 +218,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 			val.set( value )
 
 	def __delete__( self, inst ):
+		self.__activate( inst )
 		if self.__name__ in inst.__dict__:
 			del inst.__dict__[self.__name__]
 			inst._p_changed = True
