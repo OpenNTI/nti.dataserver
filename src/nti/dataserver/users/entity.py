@@ -26,7 +26,6 @@ from zc import intid as zc_intid
 
 from repoze.lru import lru_cache
 
-import persistent
 import ZODB.POSException
 from ZODB.interfaces import IConnection
 
@@ -52,7 +51,7 @@ def _lower(s): return s.lower() if s else s
 
 @functools.total_ordering
 @interface.implementer( nti_interfaces.IEntity, nti_interfaces.ILastModified, an_interfaces.IAttributeAnnotatable)
-class Entity(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
+class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 	"""
 	The root for things that represent human-like objects.
 	"""
