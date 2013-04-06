@@ -37,6 +37,8 @@ entry_points = {
 		'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
 		'nti_testing_mark_emails_bounced = nti.appserver.bounced_email_workflow:mark_emails_bounced',
 		"pserve = nti.appserver.nti_pserve:main",  # This script overrides the one from pyramid
+		"runzeo = nti.monkey.nti_runzeo:main", # This script overrides the one from ZEO
+		"zodbconvert = nti.monkey.nti_zodbconvert:main", # This script overrides the one from relstorage
 	],
 	"paste.app_factory": [
 		"main = nti.appserver.standalone:configure_app",

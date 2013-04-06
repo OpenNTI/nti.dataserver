@@ -56,4 +56,4 @@ def test_timestamp_to_tid_patch():
 
 	storage._prepare_tid()
 
-	assert_that( storage._tid, is_( str ) ) # bytes, not unicode
+	assert_that( storage._tid, is_( bytes ) ) # bytes, not unicode
