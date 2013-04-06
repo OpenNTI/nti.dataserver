@@ -150,23 +150,22 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 	@interface.implementer(interfaces.INumericCounter)
 	class IncrementingZeroValue(_ConstantZeroValue):
 
-		def __init__( self, name, holder ):
+		def __init__( self, name, holder, prop ):
 			_ConstantZeroValue.__init__( self )
 			self.__name__ = name
 			self.holder = holder
+			self.prop = prop
 
 		def increment(self, amount=1):
 			# Use the original NumericPropertyDefaultingToZero descriptor
 			# to set the value, calling the factory and storing it.
-			# If the __name__ does not match the actual property name,
-			# then we're screwed.
-			setattr( self.holder, self.__name__, amount )
-			return getattr( self.holder, self.__name__ )
+			self.prop.__set__( self.holder, amount )
+			return self.prop.__get__( self.holder, type(self.holder) )
 
 		def set( self, value ):
 			if value == 0:
 				return
-			setattr( self.holder, self.__name__, value )
+			self.prop.__set__( self.holder, value )
 
 
 	as_number = False
@@ -176,9 +175,9 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 		(persistent classes shouldn't use ``__slots__`` anyway).
 
 		:param name: The name of the property; this will be the key in the instance
-			dictionary. This *must* match the name of the property
-			(e.g., ``a = NumericPropertyDefaultingToZero( 'a',...)``); if it doesn't,
-			the behaviour is undefined.
+			dictionary. This should match the name of the property
+			(e.g., ``a = NumericPropertyDefaultingToZero( 'a',...)``) but is not required
+			to.
 		"""
 		self.__name__ = name
 		self.factory = factory
@@ -201,7 +200,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 			value = inst.__dict__[self.__name__]
 			return value.value if self.as_number else value
 
-		return 0 if self.as_number else  self.IncrementingZeroValue( self.__name__, inst )
+		return 0 if self.as_number else  self.IncrementingZeroValue( self.__name__, inst, self )
 
 	def __set__( self, inst, value ):
 		self.__activate( inst )
