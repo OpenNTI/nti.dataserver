@@ -108,7 +108,7 @@ def named_entity_ntiid(entity):
 							  specific=ntiids.escape_provider(entity.username.lower()))
 
 
-class Principal(Entity,sharing.SharingSourceMixin):
+class Principal(sharing.SharingSourceMixin,Entity): # order matters
 	""" A Principal represents a set of credentials that has access to the system.
 
 	.. py:attribute:: username
@@ -167,7 +167,8 @@ if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 
 @interface.implementer(nti_interfaces.ICommunity,
 					   loc_interfaces.ISublocations)
-class Community(Entity,sharing.DynamicSharingTargetMixin):
+class Community(sharing.DynamicSharingTargetMixin,Entity):
+	# order of inheritance matters
 
 	@classmethod
 	def create_community( cls, dataserver=None, **kwargs ):
@@ -249,8 +250,7 @@ deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
 
 @functools.total_ordering
 @interface.implementer( nti_interfaces.IDevice, nti_interfaces.IZContained )
-class Device(persistent.Persistent,
-			 datastructures.CreatedModDateTrackingObject,
+class Device(datastructures.PersistentCreatedModDateTrackingObject,
 			 ExternalizableDictionaryMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	__external_can_create__ = True
