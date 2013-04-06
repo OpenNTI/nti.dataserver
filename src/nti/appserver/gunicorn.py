@@ -16,7 +16,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 import logging
 logger = logging.getLogger(__name__)
-
+import os
 
 from pyramid.security import unauthenticated_userid
 from pyramid.threadlocal import get_current_request
@@ -364,6 +364,8 @@ class _GunicornDidForkWillExec(object):
 	def __init__( self, arbiter ):
 		self.arbiter = arbiter
 
+_fork_count = 1
+
 @component.adapter(_IGunicornWillFork)
 def _process_will_fork_listener( event ):
 	from nti.dataserver import interfaces as nti_interfaces
@@ -384,6 +386,13 @@ def _process_did_fork_will_exec( event ):
 	cleanup.cleanUp()
 
 def _pre_fork( arbiter, worker ):
+	# We may or may not have the ZCA configuration, depending on prefork.
+	# So things that MUST always happen, regardless, need to be here, not
+	# in a listener
+	global _fork_count
+	_fork_count += 1
+	os.environ['DATASERVER_ZEO_CLIENT_NAME'] = 'gunicorn_' + str(_fork_count)
+
 	notify( _GunicornWillFork( arbiter, worker ) )
 
 def _post_fork( arbiter, worker ):
@@ -427,7 +436,6 @@ class _PasterServerApplication(PasterServerApplication):
 			if ds_dir:
 				pidfile = os.path.join( ds_dir, 'var', 'gunicorn.pid' )
 				self.cfg.set( 'pidfile',  pidfile )
-
 		assert len( self.cfg.bind ) == 1
 		self._setup_flash_port( self.cfg, gcfg )
 
