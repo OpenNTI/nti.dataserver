@@ -12,7 +12,6 @@ from zope import interface
 
 class IContentTranslationTable(interface.Interface):
 	"""marker interface for content translationt table"""
-	pass
 
 class IContentTokenizer(interface.Interface):
 
@@ -37,27 +36,21 @@ class IWordSimilarity(interface.Interface):
 
 class IWordTokenizerExpression(interface.Interface):
 	"""marker interface for word tokenizer regular expression"""
-	pass
 
 class IWordTokenizerPattern(interface.Interface):
 	"""marker interface for word tokenizer regular expression pattern"""
-	pass
 
 class IPunctuationCharExpression(interface.Interface):
 	"""marker interface for punctuation regular expression"""
-	pass
 
 class IPunctuationCharExpressionPlus(interface.Interface):
 	"""marker interface for punctuation + space regular expression"""
-	pass
 
 class IPunctuationCharPattern(interface.Interface):
 	"""marker interface for punctuation regular expression pattern"""
-	pass
 
 class IPunctuationCharPatternPlus(interface.Interface):
 	"""marker interface for punctuation + space regular expression pattern"""
-	pass
 
 class IAlchemyAPIKey(interface.Interface):
 	alias = interface.Attribute("Key name or alias")

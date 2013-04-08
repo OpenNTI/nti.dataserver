@@ -11,7 +11,13 @@ import io
 import mimetypes
 import os
 import shutil
-from hamcrest import assert_that, has_entry, has_item, has_property, has_length, greater_than_or_equal_to, is_, is_not, none
+from hamcrest import assert_that
+from hamcrest import has_entry
+from hamcrest import has_item
+from hamcrest import has_property
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import none
 import simplejson as json
 
 def test_module_provides():

@@ -2,7 +2,9 @@
 from __future__ import print_function, unicode_literals
 
 from plasTeX import Command
-from plasTeX.Packages.graphics import includegraphics,DeclareGraphicsExtensions,graphicspath
+from plasTeX.Packages.graphics import includegraphics
+from plasTeX.Packages.graphics import DeclareGraphicsExtensions
+from plasTeX.Packages.graphics import graphicspath
 
 # SAJ: Adds a stub version of the \DeclareGraphicsRule command
 

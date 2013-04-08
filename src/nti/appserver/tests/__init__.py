@@ -1,4 +1,3 @@
-import unittest
 import nti.appserver
 from hamcrest import assert_that
 from hamcrest import is_

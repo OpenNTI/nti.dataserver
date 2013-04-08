@@ -6,7 +6,6 @@ from hamcrest import (assert_that, is_, none,
 					  has_entry, has_length, has_item,
 					  greater_than_or_equal_to, is_not,
 					  all_of, is_in)
-from hamcrest import contains
 from hamcrest import has_property
 from hamcrest import has_value
 from hamcrest import has_entries
@@ -37,7 +36,6 @@ from zope import component
 from zope.schema import interfaces as sch_interfaces
 from zc import intid as zc_intid
 from persistent import Persistent
-import urllib
 import transaction
 
 import nti.tests

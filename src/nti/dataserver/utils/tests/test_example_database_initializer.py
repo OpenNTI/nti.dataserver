@@ -2,4 +2,3 @@
 
 from ..example_database_initializer import ExampleDatabaseInitializer
 
-import hamcrest

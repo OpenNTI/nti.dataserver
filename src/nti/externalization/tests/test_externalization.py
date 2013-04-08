@@ -4,7 +4,6 @@ from hamcrest import (assert_that, is_, has_entry, has_items,
 
 from hamcrest.library import has_property as has_attr
 import unittest
-import numbers
 import UserDict
 
 

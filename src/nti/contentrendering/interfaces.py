@@ -155,7 +155,6 @@ class IBookIndexer(IContentIndexer):
 	"""
 	Creates an index of the content inside a given book
 	"""
-	pass
 
 class IVideoTranscriptIndexer(IContentIndexer):
 	"""

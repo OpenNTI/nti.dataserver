@@ -5,7 +5,10 @@ from nti.contentrendering import interfaces
 from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
 
 import os
-from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_, none
+from hamcrest import assert_that
+from hamcrest import has_length
+from hamcrest import is_
+from hamcrest import none
 
 def test_module_provides():
 	assert_that( tociconsetter, provides(interfaces.IRenderedBookTransformer ) )

@@ -3,7 +3,6 @@
 from hamcrest import (assert_that, is_, has_length, only_contains, has_property, has_item, has_entry,
 					  not_none)
 
-import contextlib
 import gevent
 import transaction
 

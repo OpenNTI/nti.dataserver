@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # $Id$
-import os
-import urllib
-import sys
 
 from pyquery import PyQuery
 from . import RenderedBook

@@ -434,7 +434,6 @@ class Classifier(object):
 		want to ensure that their databases are in a consistent state at
 		this point.  Introduced to fix bug #797890.
 		"""
-		pass
 
 	# return list of (prob, word, record) triples, sorted by increasing
 	# prob.  "word" is a token from wordstream; "prob" is its spamprob (a

@@ -11,7 +11,6 @@ import time
 import functools
 from datetime import datetime
 
-import persistent
 from zope import interface
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
@@ -22,6 +21,7 @@ from nti.dataserver.datastructures import ModDateTrackingObject
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.utils.schema import SchemaConfigured
+from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from . import to_frozenset
 from . import interfaces as store_interfaces
@@ -108,7 +108,7 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 		return self.Synced
 
 @interface.implementer(an_interfaces.IAttributeAnnotatable)
-class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, persistent.Persistent):
+class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPropertyHolder):
 
 	@property
 	def id(self):

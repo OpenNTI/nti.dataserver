@@ -111,7 +111,6 @@ class Ipre(IAtomicBlock, qti_interfaces.IConcrete):
 	Although pre inherits from atomicBlock it must not contain, either directly or indirectly,
 	any of the following objects: img, object, big, small, sub, sup.
 	"""
-	pass
 	
 class Iq(IsimpleInline, attr_interfaces.IqAttrGroup, qti_interfaces.IConcrete):
 	pass

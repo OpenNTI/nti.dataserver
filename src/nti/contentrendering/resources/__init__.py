@@ -11,20 +11,10 @@ from __future__ import print_function, unicode_literals
 import logging
 logger = logging.getLogger(__name__)
 
-import os, time, tempfile, shutil, codecs
-import copy as cp
 
-from hashlib import sha1
 
 from zope.deprecation import deprecated
-from UserDict import DictMixin
 
-try:
-	import cPickle as mPickle
-except ImportError:
-	import pickle as mPickle
-
-from StringIO import StringIO
 from plasTeX.Filenames import Filenames
 from plasTeX.Imagers import WorkingFile
 
@@ -124,7 +114,8 @@ class Resource(object):
 		return '%s' % self.path
 
 
-from .contentunitrepresentations import ContentUnitRepresentations, ResourceRepresentations
+from .contentunitrepresentations import ContentUnitRepresentations
+from .contentunitrepresentations import ResourceRepresentations
 
 ResourceSet = ResourceRepresentations
 deprecated( 'ResourceSet', 'Prefer the name ResourceRepresentations')

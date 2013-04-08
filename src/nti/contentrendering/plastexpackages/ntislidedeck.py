@@ -4,7 +4,10 @@ from __future__ import print_function, unicode_literals
 from nti.contentrendering import plastexids
 from nti.contentrendering.plastexpackages.graphicx import includegraphics
 from nti.contentrendering.plastexpackages.ntiassessment import _LocalContentMixin
-from plasTeX.Base import Command, Crossref, Environment, List
+from plasTeX.Base import Command
+from plasTeX.Base import Crossref
+from plasTeX.Base import Environment
+from plasTeX.Base import List
 
 NTIID_TYPE = 'NSD'
 

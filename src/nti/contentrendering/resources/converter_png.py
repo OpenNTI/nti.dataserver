@@ -205,7 +205,6 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		# If anything fails, just let the imager handle it...
 		except Exception, msg:
 			logger.warning('%s in image "%s".	 Reverting to LaTeX to generate the image.' % (msg, name))
-			pass
 		return self.newImage(node.source)
 
 def _invert(ifile, ofile):

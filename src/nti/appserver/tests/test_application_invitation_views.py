@@ -8,7 +8,6 @@ from hamcrest import is_
 from hamcrest import assert_that
 from hamcrest import has_entry
 from hamcrest import has_item
-from hamcrest import has_key
 from hamcrest import contains_string
 from hamcrest import has_entries
 

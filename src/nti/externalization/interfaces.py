@@ -2,7 +2,8 @@
 
 from __future__ import unicode_literals
 
-from zope import interface, schema
+from zope import interface
+from zope import schema
 from zope.deprecation import deprecated
 
 

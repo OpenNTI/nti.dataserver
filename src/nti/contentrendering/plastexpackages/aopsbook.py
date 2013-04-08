@@ -9,7 +9,8 @@ from nti.contentrendering import plastexids
 from nti.contentrendering.resources import interfaces as res_interfaces
 
 from amsopn import DeclareMathOperator
-from picins import picskip,parpic
+from picins import picskip
+from picins import parpic
 
 from plasTeX import Base, Command
 from plasTeX.Base.LaTeX import Index
@@ -27,7 +28,6 @@ from plasTeX.Packages.fancybox import *
 from plasTeX.Packages.graphicx import *
 from plasTeX.Packages.amsmath import *
 
-import pdb
 
 # Disable pylint warning about "too many methods" on the Command subclasses,
 # and "deprecated string" module
