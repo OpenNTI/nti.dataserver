@@ -20,6 +20,8 @@ from zope.container import contained as zcontained
 
 from persistent import Persistent
 
+from nti.externalization.datastructures import LocatedExternalList
+
 from nti.ntiids import ntiids
 
 from nti.dataserver.users import User
@@ -112,13 +114,13 @@ def get_purchase_attempt(purchase_id, user=None):
 def get_pending_purchases(user):
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	hist = store_interfaces.IPurchaseHistory(user)
-	result = list(hist.get_pending_purchases())
+	result = LocatedExternalList(hist.get_pending_purchases())
 	return result
 
 def get_purchase_history(user, start_time=None, end_time=None):
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	hist = store_interfaces.IPurchaseHistory(user)
-	result = list(hist.get_purchase_history(start_time, end_time))
+	result = LocatedExternalList(hist.get_purchase_history(start_time, end_time))
 	return result
 
 def get_pending_purchase_for(user, items, on_behalf_of=None):

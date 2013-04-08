@@ -18,6 +18,8 @@ from zope.componentvocabulary.vocabulary import UtilityVocabulary
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.externalization.datastructures import LocatedExternalDict
+
 from . import purchasable
 from .utils import to_collection
 from . import interfaces as store_interfaces
@@ -50,7 +52,7 @@ def get_available_items(user):
 			purchased.update(p.Items)
 
 	available = all_ids - purchased
-	result = {k:util.getTermByToken(k).value for k in available}
+	result = LocatedExternalDict({k:util.getTermByToken(k).value for k in available})
 	return result
 
 def get_content_items(purchased_items):
