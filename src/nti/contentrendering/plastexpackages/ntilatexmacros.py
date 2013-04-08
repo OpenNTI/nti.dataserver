@@ -83,6 +83,38 @@ class ntiincludevideo(_OneText):
 			self.attributes['thumbnail'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/1.jpg'
 		return result
 
+class ntilocalvideoname(Command):
+        unicode = ''
+
+class ntilocalvideo( Base.Environment ):
+	args = '[ options:dict ]'
+	counter = "ntilocalvideo"
+	blockType=True
+
+	def invoke(self, tex):
+		_t = super(ntilocalvideo, self).invoke(tex)
+		if 'options' not in self.attributes or not self.attributes['options']:
+			self.attributes['options'] = {}
+		return _t
+
+	def digest(self, tex):
+		super(ntilocalvideo, self).digest(tex)
+		video = self.getElementsByTagName( 'ntiincludelocalvideo' )[0]
+		self.src = {}
+		self.src['mp4'] = video.attributes['src'] + u'.mp4'
+		self.src['webm'] = video.attributes['src'] + u'.webm'
+		self.title = video.attributes['title']
+		self.poster = video.attributes['poster']
+		if 'width' in video.attributes['options']:
+			self.width = video.attributes['options']['width']
+		if 'height' in video.attributes['options']:
+			self.height = video.attributes['options']['height']
+		self.id = video.id
+
+	class ntiincludelocalvideo( Base.Command ):
+		args = '[ options:dict ] src title poster'
+
+
 class ntiincludeannotationgraphics(includegraphics):
 	pass
 
@@ -253,5 +285,6 @@ class ntipreviouspage(Base.Command):
 	pass
 
 def ProcessOptions( options, document ):
+        document.context.newcounter( 'ntilocalvideo' )
         document.context.newcounter( 'ntivideoroll' )
         document.context.newcounter( 'ntiimagecollection' )
