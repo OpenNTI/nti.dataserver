@@ -9,7 +9,6 @@ logger = __import__('logging').getLogger(__name__)
 from ZODB import loglevels
 
 from zope import interface
-from zope import component
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
 from nti.externalization import interfaces as ext_interfaces

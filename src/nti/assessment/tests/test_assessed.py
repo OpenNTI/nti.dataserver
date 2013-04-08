@@ -18,7 +18,6 @@ from nose.tools import assert_raises
 
 from zope import interface
 from zope import component
-from zope.schema import interfaces as sch_interfaces
 import zope.annotation
 from zope.annotation.interfaces import IAttributeAnnotatable
 from zope.dublincore.annotatableadapter import ZDCAnnotatableAdapter

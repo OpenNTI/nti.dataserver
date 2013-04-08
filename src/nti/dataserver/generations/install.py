@@ -36,7 +36,6 @@ import zc.intid
 from zope.catalog.interfaces import ICatalog
 from zope.catalog.catalog import Catalog
 from zope.index.topic.index import TopicIndex
-from zope.index.topic.filter import PythonFilteredSet
 
 
 import z3c.password.interfaces

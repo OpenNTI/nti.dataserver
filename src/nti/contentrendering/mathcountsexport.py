@@ -5,7 +5,6 @@ $Revision$
 """
 from __future__ import unicode_literals, print_function
 
-from zope import interface
 import nti.contentrendering
 from nti.contentrendering import interfaces
 from nti.contentfragments import interfaces as frg_interfaces

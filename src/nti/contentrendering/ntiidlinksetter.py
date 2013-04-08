@@ -8,8 +8,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 from zope import interface
-from zope import component
-from zope.deprecation import deprecate
 from . import interfaces
 
 interface.moduleProvides( interfaces.IRenderedBookTransformer )

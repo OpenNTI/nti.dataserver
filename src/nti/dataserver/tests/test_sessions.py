@@ -9,7 +9,6 @@ from hamcrest import contains
 from nose.tools import assert_raises
 
 from zope import component
-from zope import interface
 import transaction
 import sys
 
@@ -22,7 +21,6 @@ from nti.dataserver import users
 
 import mock_dataserver
 from mock_dataserver import WithMockDSTrans
-from zope.deprecation import __show__
 
 from nti.dataserver.tests import mock_redis
 

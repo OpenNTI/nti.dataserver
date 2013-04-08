@@ -12,10 +12,8 @@ logger = __import__('logging').getLogger( __name__ )
 import ZODB
 
 from zope import interface
-from zope import component
 from zope import schema
 from zope.schema import interfaces as sch_interfaces
-from zope.location import ILocation
 
 from nti.utils.schema import find_most_derived_interface
 

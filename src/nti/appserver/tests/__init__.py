@@ -37,7 +37,6 @@ import pyramid.interfaces
 
 
 import zope.component as component
-from zope import interface
 
 from nti.dataserver.tests import mock_dataserver
 import nti.tests

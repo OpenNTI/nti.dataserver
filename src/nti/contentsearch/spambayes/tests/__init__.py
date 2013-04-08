@@ -1,5 +1,3 @@
-from zope import component
-from zope.configuration import xmlconfig
 
 import nti.dataserver as dataserver
 import nti.contentsearch as contentsearch

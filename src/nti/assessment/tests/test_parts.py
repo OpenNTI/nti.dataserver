@@ -13,7 +13,6 @@ from nti.externalization.tests import externalizes
 from nose.tools import assert_raises
 
 from zope import interface
-from zope import component
 
 import nti.assessment
 

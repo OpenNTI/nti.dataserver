@@ -3,9 +3,7 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from zope.deprecation import deprecated
 from zope import component
-from zope import interface
 from .. import interfaces
 
 
