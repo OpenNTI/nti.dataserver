@@ -4,7 +4,6 @@
 
 
 from hamcrest import assert_that,  is_, contains, has_entry, has_item
-from hamcrest import contains_string
 from nti.dataserver.tests import has_attr
 
 from zope import component

@@ -91,7 +91,6 @@ class IRedisClient(interface.Interface):
 	keys, the same sorts of keys that can be found in the ZODB: unicode names
 	separated by the ``/`` character.
 	"""
-	pass
 
 class IMemcacheClient(interface.Interface):
 	"""

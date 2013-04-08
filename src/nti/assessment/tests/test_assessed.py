@@ -9,7 +9,9 @@ from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_length
 from unittest import TestCase
-from nti.tests import ConfiguringTestBase, is_true, is_false
+from nti.tests import ConfiguringTestBase
+from nti.tests import is_true
+from nti.tests import is_false
 from nti.tests import validly_provides, verifiably_provides
 from nti.externalization.tests import externalizes
 from nose.tools import assert_raises

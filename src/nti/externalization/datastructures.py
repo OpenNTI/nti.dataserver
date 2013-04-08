@@ -19,7 +19,12 @@ from zope.location import ILocation
 
 from nti.utils.schema import find_most_derived_interface
 
-from .interfaces import IExternalObject, IInternalObjectIO, ILocatedExternalMapping, ILocatedExternalSequence, StandardInternalFields, StandardExternalFields
+from .interfaces import IExternalObject
+from .interfaces import IInternalObjectIO
+from .interfaces import ILocatedExternalMapping
+from .interfaces import ILocatedExternalSequence
+from .interfaces import StandardInternalFields
+from .interfaces import StandardExternalFields
 from .externalization import to_standard_external_dictionary, toExternalObject
 from .externalization import to_minimal_standard_external_dictionary
 from .internalization import validate_named_field_value
@@ -35,7 +40,8 @@ def _isMagicKey( key ):
 isSyntheticKey = _isMagicKey
 
 # BWC export
-from .interfaces import LocatedExternalDict, LocatedExternalList
+from .interfaces import LocatedExternalDict
+from .interfaces import LocatedExternalList
 
 class ExternalizableDictionaryMixin(object):
 	""" Implements a toExternalDictionary method as a base for subclasses. """

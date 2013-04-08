@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
-from plasTeX import Base, Command, Environment
+from plasTeX import Base
+from plasTeX import Command
+from plasTeX import Environment
 
 # SAJ: Extremely limited support for the enumitem package.
 

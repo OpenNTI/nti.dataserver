@@ -179,7 +179,6 @@ class NTIIDMixin(object):
 	`_ntiid_allow_missing_title` property to True.
 
 	"""
-	pass
 NTIIDMixin.ntiid = property(_section_ntiid)
 NTIIDMixin.filenameoverride = property(_section_ntiid_filename,_set_section_ntiid_filename)
 NTIIDMixin._ntiid_get_local_part = property(_ntiid_get_local_part_title)
@@ -234,7 +233,6 @@ class StableIDMixin(object):
 	Attempts to generate more stable IDs for elements. Can be used when elements
 	have source text or may have a label child.
 	"""
-	pass
 StableIDMixin.id = property(_catching(_par_id_get, 'id'),plasTeX.Macro.id.fset) # TODO: Different counters for this than _par_used_ids?
 
 def patch_all():

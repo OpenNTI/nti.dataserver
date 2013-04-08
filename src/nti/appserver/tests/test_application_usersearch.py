@@ -6,7 +6,6 @@ from __future__ import print_function
 
 from hamcrest import assert_that
 from hamcrest import has_entry
-from hamcrest import has_entries
 from hamcrest import is_
 from hamcrest import has_item
 from hamcrest import all_of

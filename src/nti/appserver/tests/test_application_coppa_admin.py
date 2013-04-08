@@ -6,14 +6,11 @@ from __future__ import print_function
 
 from hamcrest import (assert_that, is_, none, has_entry, has_length, has_item, contains_string,  has_entries)
 from hamcrest.library import has_property
-from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not as does_not
 from hamcrest import contains
 
 from nti.tests import validly_provides as verifiably_provides
 
-import time
-import unittest
 import anyjson as json
 from zope import interface
 from zope import component

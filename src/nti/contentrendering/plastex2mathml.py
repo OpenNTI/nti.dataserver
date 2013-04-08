@@ -1,8 +1,10 @@
 from xml.dom import minidom
 from StringIO import StringIO
-import os, time, tempfile, shutil, re, string, pickle, codecs
-import subprocess
-from plasTeX.Imagers import WorkingFile, Image
+import os
+import tempfile
+import codecs
+from plasTeX.Imagers import WorkingFile
+from plasTeX.Imagers import Image
 import plasTeX
 import xml.sax
 from xml.sax.xmlreader import InputSource

@@ -7,8 +7,6 @@ import logging
 logger = logging.getLogger( __name__ )
 from ZODB import loglevels
 
-import numbers
-import contextlib
 import uuid
 
 from zope.deprecation import deprecated

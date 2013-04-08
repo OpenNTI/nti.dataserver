@@ -6,7 +6,12 @@ from zope.deprecation import deprecated
 import zope.deprecation
 
 
-from nti.chatserver.interfaces import CHANNELS, CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_CONTENT, CHANNEL_POLL, CHANNEL_META
+from nti.chatserver.interfaces import CHANNELS
+from nti.chatserver.interfaces import CHANNEL_DEFAULT
+from nti.chatserver.interfaces import CHANNEL_WHISPER
+from nti.chatserver.interfaces import CHANNEL_CONTENT
+from nti.chatserver.interfaces import CHANNEL_POLL
+from nti.chatserver.interfaces import CHANNEL_META
 
 # Many of these class names need to stick around to avoid broken objects
 # in old datbases
@@ -24,7 +29,8 @@ _ModeratedChatRoom = _ModeratedMeeting
 deprecated('_ModeratedChatRoom', 'Prefer _ModeratedMeeting' )
 
 from nti.chatserver._handler import ChatHandlerFactory
-from nti.chatserver.chatserver import PersistentMappingMeetingStorage, Chatserver
+from nti.chatserver.chatserver import PersistentMappingMeetingStorage
+from nti.chatserver.chatserver import Chatserver
 
 deprecated( 'ChatHandlerFactory', 'Prefer nti.chatserver' )
 deprecated( '_ChatHandler', 'Prefer nti.chatserver' )

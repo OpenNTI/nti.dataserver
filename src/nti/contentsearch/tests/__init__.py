@@ -3,7 +3,8 @@ from zope.configuration import xmlconfig
 
 import nti.dataserver as dataserver
 import nti.contentsearch as contentsearch
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from nti.appserver.tests.test_application import SharedApplicationTestBase
+from nti.appserver.tests.test_application import WithSharedApplicationMockDS
 
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase as DSConfiguringTestBase
 

@@ -7,10 +7,6 @@ from __future__ import print_function, absolute_import, unicode_literals
 from hamcrest import (assert_that, is_, none, starts_with,
 					  has_entry, has_length, has_item, has_key,
 					  contains_string, ends_with, all_of, has_entries)
-from hamcrest import greater_than
-from hamcrest import not_none
-from hamcrest.library import has_property
-from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not as does_not
 
 from nti.tests import validly_provides as verifiably_provides

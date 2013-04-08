@@ -1,4 +1,3 @@
-import unittest
 
 from zope import component
 

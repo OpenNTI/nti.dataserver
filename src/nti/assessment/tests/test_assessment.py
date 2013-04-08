@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
-import unittest
 from hamcrest import assert_that, is_
 import nti.tests
 

@@ -1,5 +1,8 @@
-from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib.term import URIRef, Literal, BNode
+from rdflib.graph import Graph
+from rdflib.graph import ConjunctiveGraph
+from rdflib.term import URIRef
+from rdflib.term import Literal
+from rdflib.term import BNode
 from rdflib.namespace import Namespace, RDF, RDFS
 
 

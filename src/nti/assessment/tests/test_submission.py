@@ -8,7 +8,8 @@ from hamcrest import assert_that, has_entry, is_, has_property, contains, same_i
 from hamcrest import has_key
 from hamcrest import not_none
 from unittest import TestCase
-from nti.tests import is_true, is_false
+from nti.tests import is_true
+from nti.tests import is_false
 from nti.tests import verifiably_provides
 from nti.externalization.tests import externalizes
 from nose.tools import assert_raises

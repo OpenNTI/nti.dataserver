@@ -211,7 +211,6 @@ except ImportError:
 	# Acquisition not installed
 	class AcquireObjectsOnReadMixin(object):
 		"No-op because Acquisition is not installed."
-		pass
 
 @interface.implementer(interfaces.ILastModified,annotation.IAttributeAnnotatable)
 class LastModifiedBTreeContainer(PersistentPropertyHolder,BTreeContainer):

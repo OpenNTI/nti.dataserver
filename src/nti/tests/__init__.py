@@ -285,7 +285,6 @@ class AbstractTestBase(zope.testing.cleanup.CleanUp, unittest.TestCase):
 	.. note:: Do not use this when you use :func:`module_setup` and :func:`module_teardown`,
 		as the inherited :meth:`setUp` will undo the effects of the module setup.
 	"""
-	pass
 
 class AbstractSharedTestBase(unittest.TestCase):
 	"""

@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
-from plasTeX import Command, Environment, DimenCommand
+from plasTeX import Command
+from plasTeX import Environment
+from plasTeX import DimenCommand
 from plasTeX.Logging import getLogger
 
 

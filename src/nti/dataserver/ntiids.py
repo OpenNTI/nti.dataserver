@@ -79,7 +79,6 @@ from nti.ntiids import interfaces as nid_interfaces
 
 from zope import component
 from zope import interface
-import warnings
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _OIDResolver(object):

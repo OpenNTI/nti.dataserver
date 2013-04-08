@@ -7,7 +7,6 @@ from hamcrest import (assert_that, is_,
 					  has_item, has_items)
 from hamcrest import is_not
 does_not = is_not
-import unittest
 from zope import (interface, component)
 
 try:
