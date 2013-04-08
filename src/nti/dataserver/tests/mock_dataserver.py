@@ -107,8 +107,6 @@ from zope.site import LocalSiteManager, SiteManagerContainer
 from zope.component.hooks import site
 from zope.component.hooks import setHooks
 from zope.component.hooks import resetHooks
-from zope.component.hooks import getSite
-from zope.component.hooks import setSite
 import transaction
 
 import tempfile

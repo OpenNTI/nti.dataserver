@@ -2,7 +2,6 @@
 from __future__ import print_function, unicode_literals
 
 
-from zope import interface
 
 from nti.contentrendering import plastexids
 from nti.contentrendering.resources import interfaces as res_interfaces

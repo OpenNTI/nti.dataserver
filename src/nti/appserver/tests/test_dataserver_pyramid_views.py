@@ -95,7 +95,6 @@ class _ContainedObject(object):
 		self.lastModified = 1 if t is None else t
 
 from zope.component import eventtesting
-from zope import component
 from zope.lifecycleevent import IObjectModifiedEvent, IObjectRemovedEvent, IObjectAddedEvent
 from nti.appserver._dataserver_pyramid_traversal import _NTIIDsContainerResource
 class TestUGDModifyViews(SharedConfiguringTestBase):

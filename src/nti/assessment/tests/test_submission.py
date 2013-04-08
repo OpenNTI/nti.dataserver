@@ -14,7 +14,6 @@ from nti.tests import verifiably_provides
 from nti.externalization.tests import externalizes
 from nose.tools import assert_raises
 
-from zope import interface
 from zope import component
 from zope.schema import interfaces as sch_interfaces
 from zope.dottedname import resolve as dottedname

@@ -44,7 +44,6 @@ class TestSection(mock_dataserver.SharedConfiguringTestBase):
 # Example of subscribing to an event from one of these guys
 from zope.component import provideHandler
 from zope.component import adapter
-from zope.interface.interfaces import IObjectEvent
 _section_filtered_events = []
 @adapter(nti_interfaces.IEnrolledContainer,IContainerModifiedEvent)
 def _handle_section_event( *event ):
