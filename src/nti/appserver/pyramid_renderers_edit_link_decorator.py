@@ -17,7 +17,6 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.appserver.pyramid_authorization import is_writable
 
-import persistent.interfaces
 
 from zope.location.interfaces import ILocation
 
