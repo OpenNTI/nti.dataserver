@@ -20,6 +20,8 @@ from . import _content_roles
 from . import purchasable_store
 from . import interfaces as store_interfaces
 from .purchase_history import get_purchase_attempt
+from .purchase_history import remove_purchased_items
+from .purchase_history import register_purchased_items
 
 def _get_content_role_users(purchase):
 	on_behalf_of = purchase.OnBehalfOf
@@ -41,6 +43,7 @@ def _purchase_attempt_successful(event):
 		purchase.State = store_interfaces.PA_STATE_SUCCESS
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
+		register_purchased_items(event.username, purchase.Items)
 
 		# register invitation
 		if purchase.OnBehalfOf:
@@ -62,6 +65,7 @@ def _purchase_attempt_refunded(event):
 		purchase.State = store_interfaces.PA_STATE_REFUNDED
 		purchase.EndTime = time.time()
 		purchase.updateLastMod()
+		remove_purchased_items(event.username, purchase.Items)
 
 		# remove invitation
 		if purchase.OnBehalfOf:
