@@ -9,7 +9,9 @@ __docformat__ = "restructuredtext en"
 
 import sys
 import struct
+
 import BTrees
+from BTrees.OOBTree import OOTreeSet
 
 from zope import component
 from zope import interface
@@ -40,11 +42,28 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 	family = BTrees.family64
 
 	def __init__(self):
+		self.items_purchased = OOTreeSet()
 		self.purchases = self.family.IO.BTree()
 
 	@property
 	def user(self):
 		return self.__parent__
+
+	def register_purchased_items(self, items):
+		items = to_frozenset(items)
+		self.items_purchased.update(items)
+
+	def remove_purchased_items(self, items):
+		count = 0
+		items = to_frozenset(items)
+		for item in items:
+			if item in self.items_purchased:
+				count += 1
+				self.items_purchased.remove(item)
+		return count
+
+	def is_item_purchased(self, item):
+		return item in self.items_purchased
 
 	def register_purchase(self, purchase):
 		start_time = purchase.StartTime
@@ -103,28 +122,47 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 
 _PurchaseHistoryFactory = an_factory(PurchaseHistory)
 
-def get_purchase_attempt(purchase_id, user=None):
+def _get_user(user):
 	if user is not None:
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	return user
+
+def register_purchased_items(user, items):
+	user = _get_user(user)
+	hist = store_interfaces.IPurchaseHistory(user)
+	hist.register_purchased_items(items)
+
+def remove_purchased_items(user, items):
+	user = _get_user(user)
+	hist = store_interfaces.IPurchaseHistory(user)
+	return hist.remove_purchased_items(items)
+
+def is_item_purchased(user, item):
+	user = _get_user(user)
+	hist = store_interfaces.IPurchaseHistory(user)
+	return hist.is_item_purchased(item)
+
+def get_purchase_attempt(purchase_id, user=None):
+	user = _get_user(user)
 	result = PurchaseHistory.get_purchase(purchase_id)
 	if result is not None and user is not None:  # validate
 		result = None if result.creator != user else result
 	return result
 
 def get_pending_purchases(user):
-	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
 	result = LocatedExternalList(hist.get_pending_purchases())
 	return result
 
 def get_purchase_history(user, start_time=None, end_time=None):
-	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
 	result = LocatedExternalList(hist.get_purchase_history(start_time, end_time))
 	return result
 
 def get_pending_purchase_for(user, items, on_behalf_of=None):
-	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
 	result = hist.get_pending_purchase_for(items, on_behalf_of)
 	return result

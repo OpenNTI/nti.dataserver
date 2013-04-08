@@ -18,6 +18,7 @@ from zope.componentvocabulary.vocabulary import UtilityVocabulary
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.externalization.datastructures import LocatedExternalList
 from nti.externalization.datastructures import LocatedExternalDict
 
 from . import purchasable
@@ -35,6 +36,16 @@ class PurchasableUtilityVocabulary(UtilityVocabulary):
 
 class PurchasableNameVocabulary(PurchasableUtilityVocabulary):
 	nameOnly = True
+
+def get_all_purchasables():
+	"""
+	Return all purchasable items
+	"""
+	result = LocatedExternalList()
+	util = PurchasableUtilityVocabulary(None)
+	for p in util:
+		result.append(p.value)
+	return result
 
 def get_available_items(user):
 	"""

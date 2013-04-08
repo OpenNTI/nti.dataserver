@@ -20,6 +20,7 @@ from zope import component
 from pyramid.security import authenticated_userid
 
 from . import purchase_history
+from . import purchasable_store
 from . import interfaces as store_interfaces
 
 class GetPendingPurchasesView(object):
@@ -39,7 +40,7 @@ class GetPurchaseHistoryView(object):
 	def __init__(self, request):
 		self.request = request
 
-	def _covert(self, t):
+	def _convert(self, t):
 		result = t
 		if isinstance(t, six.string_types):
 			result = time.mktime(dateutil.parser(t).timetuple())
@@ -49,8 +50,8 @@ class GetPurchaseHistoryView(object):
 		request = self.request
 		username = request.matchdict.get('user', None)
 		username = username or authenticated_userid(request)
-		start_time = self._covert(request.matchdict.get('startTime', None))
-		end_time = self._covert(request.matchdict.get('endTime', None))
+		start_time = self._convert(request.matchdict.get('startTime', None))
+		end_time = self._convert(request.matchdict.get('endTime', None))
 		purchases = purchase_history.get_purchase_history(username, start_time, end_time)
 		return purchases
 
@@ -75,3 +76,12 @@ class GetPurchaseAttemptView(object):
 					manager.sync_purchase(purchase_id=purchase_id, username=username)
 				gevent.spawn(process_sync)
 		return purchase
+
+class GetPurchasablesView(object):
+
+	def __init__(self, request):
+		self.request = request
+
+	def __call__(self):
+		result = purchasable_store.get_all_purchasables()
+		return result

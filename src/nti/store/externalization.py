@@ -10,17 +10,34 @@ __docformat__ = "restructuredtext en"
 from zope import interface
 from zope import component
 
-from nti.externalization.interfaces import IInternalObjectIO
+from pyramid.security import authenticated_userid
+from pyramid.threadlocal import get_current_request
+
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.datastructures import InterfaceObjectIO
 
-from . import interfaces
+from . import purchase_history
+from . import interfaces as store_interfaces
 
-@interface.implementer(IInternalObjectIO)
-@component.adapter(interfaces.IPurchaseAttempt)
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPurchaseAttempt)
 class PurchaseAttemptExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = interfaces.IPurchaseAttempt
+	_ext_iface_upper_bound = store_interfaces.IPurchaseAttempt
 
-@interface.implementer(IInternalObjectIO)
-@component.adapter(interfaces.IPurchasable)
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPurchasable)
 class PurchasableExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = interfaces.IPurchasable
+	_ext_iface_upper_bound = store_interfaces.IPurchasable
+
+@component.adapter(store_interfaces.IPurchasable)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class PurchasableDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalObject(self, original, external):
+		username = authenticated_userid(get_current_request())
+		if username:
+			purchased = purchase_history.is_item_purchased(username, original.NTIID)
+			external['Purchased'] = purchased

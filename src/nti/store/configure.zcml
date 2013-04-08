@@ -23,6 +23,10 @@
 	<adapter factory=".externalization.PurchasableExternal" />
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	
+	<subscriber factory=".externalization.PurchasableDecorator"
+				for=".interfaces.IPurchasable"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
 	<utility component=".purchasable_store.PurchasableTokenVocabulary"
 			 provides="zope.schema.interfaces.IVocabularyFactory"
 			 name="nti.store.purchasable.vocabulary" />
