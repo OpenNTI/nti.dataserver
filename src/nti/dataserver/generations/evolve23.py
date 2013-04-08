@@ -10,7 +10,6 @@ __docformat__ = 'restructuredtext'
 
 generation = 23
 
-from nti.dataserver.generations import install
 from nti.dataserver.users import interfaces as user_interfaces
 
 def evolve( context ):

@@ -5,7 +5,6 @@ __docformat__ = "restructuredtext en"
 
 import logging
 logger = logging.getLogger( __name__ )
-from ZODB import loglevels
 
 import uuid
 
