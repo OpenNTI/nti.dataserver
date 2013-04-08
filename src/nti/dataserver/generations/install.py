@@ -50,7 +50,6 @@ from nti.dataserver import flagging
 from nti.dataserver import shards as ds_shards
 from nti.dataserver import password_utility
 
-from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.users import index as user_index
 
 def install_chat( context ):
