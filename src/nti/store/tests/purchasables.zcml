@@ -53,6 +53,7 @@
 		currency="USD"
 		discountable="True"
 		bulk_purchase="False"
+		url="http://prmia.org/"
 		items="var-risk volatility" />
 
 </configure>
