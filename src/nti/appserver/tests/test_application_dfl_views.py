@@ -15,7 +15,6 @@ from hamcrest import has_entries
 from hamcrest import is_not as does_not
 from hamcrest import ends_with
 
-import anyjson as json
 from .test_application import TestApp
 
 import urllib

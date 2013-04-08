@@ -1,6 +1,5 @@
 
 from . import ConfiguringTestBase
-from nti.contentrendering import RenderedBook
 from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 from nti.contentrendering import jsonpbuilder
 from nti.tests import provides

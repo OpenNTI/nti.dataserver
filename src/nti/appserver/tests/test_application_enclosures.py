@@ -22,8 +22,6 @@ from nti.dataserver.tests import mock_dataserver
 import anyjson as json
 
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
-from .test_application import PersistentContainedExternal
-from .test_application import ContainedExternal
 
 from urllib import quote as UQ
 

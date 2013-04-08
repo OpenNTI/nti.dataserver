@@ -4,7 +4,6 @@ from unittest import TestCase
 from nti.contentrendering.relatedlinksetter import performTransforms
 from nti.contentrendering.contentchecks import performChecks
 from nti.contentrendering.utils import EmptyMockDocument
-from nti.contentrendering.utils import NoPhantomRenderedBook
 from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 
 from nti.contentrendering.contentchecks import mathjaxerror

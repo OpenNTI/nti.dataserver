@@ -26,7 +26,6 @@ from nti.dataserver import  users, providers
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject, to_external_object
-from nti.externalization import oids as ext_oids
 from nti.dataserver.tests import mock_dataserver
 
 from zope import interface

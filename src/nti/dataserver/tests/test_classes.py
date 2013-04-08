@@ -11,7 +11,6 @@ from zope.component import eventtesting
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
 from nti.externalization.oids import to_external_ntiid_oid
-from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.classes import SectionInfo, ClassInfo
 from zope.lifecycleevent import IObjectAddedEvent, IObjectRemovedEvent, IObjectModifiedEvent
