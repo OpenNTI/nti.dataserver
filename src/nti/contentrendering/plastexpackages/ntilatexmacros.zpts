@@ -20,6 +20,17 @@ name: ntivideoroll
 <span tal:replace="self"></span>
 </object>
 
+name: ntilocalvideo
+<div class="externalvideo" tal:attributes="id self/id; data-ntiid self/id; style self/style/inline">
+<video controls preload="meta" tal:attributes="poster self/poster; width self/width; height self/height">
+<source type="video/mp4" tal:attributes="src self/src/mp4" />
+<source type="video/webm" tal:attributes="src self/src/webm" />
+<span tal:replace="self"></span>
+</video>
+</div>
+
+name: ntiincludelocalvideo
+
 name: ntiimagecollection
 <object type="application/vnd.nextthought.image-collection" tal:attributes="data-ntiid self/ntiid; data self/ntiid">
 <param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
