@@ -45,7 +45,6 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
 from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
-from nti.dataserver import datastructures
 from nti.dataserver import links
 from nti.dataserver import interfaces as nti_interfaces
 

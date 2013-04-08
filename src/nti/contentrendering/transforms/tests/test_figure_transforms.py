@@ -4,10 +4,7 @@ from .. import performTransforms
 from nti.contentrendering.transforms.trans_figures_aops import transform as figureTransform
 
 from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_
-import anyjson as json
 
-import plasTeX
-from plasTeX.TeX import TeX
 
 
 from nti.contentrendering.tests import buildDomFromString as _buildDomFromString

@@ -1,4 +1,4 @@
-
+from __future__ import print_function, unicode_literals, absolute_import
 
 import ZODB
 
@@ -11,7 +11,7 @@ except ImportError:
 from tempstorage.TemporaryStorage import TemporaryStorage
 
 import nti.dataserver as dataserver
-import nti.dataserver._Dataserver
+from nti.dataserver._Dataserver import Dataserver
 from nti.dataserver.config import _make_connect_databases
 
 from zope import component
@@ -27,7 +27,7 @@ class MockConfig(object):
 	zeo_conf = None
 	zeo_client_conf = None
 
-class ChangePassingMockDataserver(dataserver._Dataserver.Dataserver ):
+class ChangePassingMockDataserver(Dataserver ):
 
 	_mock_database = None
 

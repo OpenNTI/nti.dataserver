@@ -4,13 +4,12 @@
 
 
 from hamcrest import assert_that,  is_, contains, has_entry, has_item
-from nti.dataserver.tests import has_attr
+from hamcrest import has_property as has_attr
 
 from zope import component
 from zope import interface
 
 import nti.dataserver.users as users
-import nti.dataserver.interfaces as nti_interfaces
 import nti.chatserver.interfaces as chat_interfaces
 import nti.socketio.interfaces as sio_interfaces
 from nti.chatserver import _handler as chat_handler, messageinfo
@@ -19,7 +18,6 @@ from nti.socketio.session_consumer import SessionConsumer, UnauthenticatedSessio
 
 
 import nti.socketio as socketio
-import nti.socketio.protocol
 from nti.dataserver.tests import mock_dataserver
 
 class MockSocketIO(object):

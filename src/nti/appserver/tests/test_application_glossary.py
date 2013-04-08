@@ -15,15 +15,11 @@ import os.path
 
 import urllib
 
-from nti.ntiids import ntiids
 
 from nti.dataserver.tests import mock_dataserver
 
-import anyjson as json
 
 from .test_application import ApplicationTestBase
-from .test_application import PersistentContainedExternal
-from .test_application import ContainedExternal
 
 
 from nti.dictserver.tests import test_dictionary
