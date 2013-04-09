@@ -21,6 +21,7 @@ from hamcrest import is_not
 from hamcrest import none
 from hamcrest import has_item
 from hamcrest import has_entries
+from hamcrest import has_property
 
 import nti.tests
 from nti.tests import verifiably_provides
@@ -49,6 +50,12 @@ def test_implements():
 	with assert_raises(TooLong):
 		info.status = 'foo' * 140 # too big
 
+def test_construct():
+	info = presenceinfo.PresenceInfo( type='unavailable', show='away', username='me' )
+	assert_that( info, has_property('type', 'unavailable' ) )
+	assert_that( info, has_property('show', 'away') )
+	assert_that( info, has_property('username', 'me') )
+
 from nti.externalization.tests import externalizes
 def test_externalizes():
 	info = presenceinfo.PresenceInfo()
@@ -62,6 +69,7 @@ def test_externalizes():
 				 has_item( IPresenceInfo ) )
 
 
-	internalization.update_from_external_object( info, {'status': 'My status'} )
+	internalization.update_from_external_object( info, {'status': 'My status', 'Last Modified': 1234} )
 	assert_that( info.status, is_( 'My status' ) )
+	assert_that( info.lastModified, is_( 1234 ) )
 	assert_that( info, validly_provides( IPresenceInfo ) )

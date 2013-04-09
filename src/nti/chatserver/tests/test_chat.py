@@ -21,6 +21,7 @@ from hamcrest import same_instance, has_length, none, contains, same_instance
 from hamcrest import has_entries, only_contains, has_item, has_property
 from nti.tests import validly_provides as verifiably_provides, provides
 from nti.tests import is_empty
+from nti.tests import is_true
 from nose.tools import assert_raises
 
 from zope import interface, component
@@ -59,6 +60,7 @@ from nti.chatserver import messageinfo
 from nti.chatserver import _handler
 from nti.chatserver import chatserver as _chatserver
 from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.presenceinfo import PresenceInfo
 from nti.socketio import interfaces as sio_interfaces
 from zope.annotation import interfaces as an_interfaces
 
@@ -1043,6 +1045,32 @@ class TestChatserver(_ChatserverTestBase):
 		# Nested works, though
 		chatserver.send_event_to_user( 'sjohnson', 'event', [link] )
 		assert_that( sessions[1].socket.events, has_length( 1 ) )
+
+
+	@WithMockDSTrans
+	def test_handler_setPresence(self):
+		d = {'Occupants': ['sjohnson', 'other'],
+			 'ContainerId': 'tag:nextthought.com,2011-10:x-y-z' }
+		sessions = self.Sessions()
+		sessions[1] = self.Session( 'sjohnson' )
+		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage() )
+		handler1 = chat.ChatHandler( chatserver, sessions[1] )
+
+		presence = PresenceInfo( type='available', show='dnd' )
+		res = handler1.setPresence( presence )
+		assert_that( res, is_true() )
+		assert_that( sessions[1].socket.events, has_length( 2 ) )
+
+		echo_me = sessions[1].socket.events[0]
+		my_contacts = sessions[1].socket.events[1]
+
+		assert_that( echo_me, has_entry( 'name', 'chat_setPresenceOfUsersTo' ) )
+		assert_that( echo_me['args'], has_item( has_entry( 'sjohnson', has_entries( 'show', 'dnd', 'type', 'available', 'username','sjohnson' ) ) ) )
+
+		# I have no contact subscriptions
+		assert_that( my_contacts, has_entry( 'name', 'chat_setPresenceOfUsersTo' ) )
+		assert_that( my_contacts['args'], has_length( 1 ) )
+		assert_that( my_contacts['args'][0], is_( {} ) )
 
 
 from pyramid.testing import setUp as psetUp

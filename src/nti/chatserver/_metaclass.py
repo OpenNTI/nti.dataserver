@@ -17,7 +17,7 @@ def _send_event( chatserver, names, evt_name, *args ):
 	"""
 	Utility method to send an event to a username or usernames.
 	"""
-	if isinstance(names, six.string_types) or not isinstance( names, collections.Iterable ):
+	if isinstance(names, six.string_types) or not isinstance(names, collections.Iterable):
 		names = (names,)
 	for sname in names:
 		chatserver.send_event_to_user( sname, evt_name, *args )

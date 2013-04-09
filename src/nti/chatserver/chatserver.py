@@ -26,6 +26,7 @@ from zope import component
 from zc import intid as zc_intid
 from . import interfaces
 from .meeting import _Meeting
+from .presenceinfo import PresenceInfo
 
 
 ####
@@ -127,6 +128,12 @@ class Chatserver(object):
 
 	def get_session_for( self, *args, **kwargs ):
 		return self.sessions.get_session_by_owner( *args, **kwargs )
+
+	def getPresenceOfUsers( self, usernames ): ### XXX STUB
+		return [PresenceInfo(type='unavailable', username=username) for username in usernames]
+
+	def setPresence( self, presence ): ### XXX STUB
+		pass
 
 	### Low-level IO
 
