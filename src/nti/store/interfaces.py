@@ -103,7 +103,7 @@ class IPurchaseAttempt(IContained):
 
 	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Items being purchased")
 	Description = nti_schema.ValidTextLine(title='A purchase description', required=False)
-	OnBehalfOf = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='username'), title='List of users', required=False, min_length=0)
+	Quantity = schema.Int(title='Purchase quantity', required=False, default=1)
 
 	StartTime = nti_schema.Number(title='Start time', required=True)
 	EndTime = nti_schema.Number(title='Completion time', required=False)
