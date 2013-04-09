@@ -40,9 +40,10 @@ class IRegisterInternalizationMimeFactoriesDirective(interface.Interface):
 def registerMimeFactories( _context, module ):
 	"""
 	Poke through the classes defined in `module`. If a class
-	defines the `mime_type` attribute and can be created externally,
-	(because it defines `__external_can_create__` to be true), registers
-	a factory utility under the `mime_type` name.
+	defines the ``mimeType`` attribute and can be created externally,
+	(because it defines ``__external_can_create__`` to be true), registers
+	a factory utility under the ``mimeType`` name. (For backwards compatibility,
+	``mime_type`` is accepted if there is no ``mimeType``.)
 
 	See :func:`nti.externalization.internalization.find_factory_for`.
 
@@ -54,7 +55,7 @@ def registerMimeFactories( _context, module ):
 	for k, v in module.__dict__.items():
 		__traceback_info__ = k, v
 		try:
-			mime_type = getattr( v, 'mime_type', None )
+			mime_type = getattr( v, 'mimeType', getattr( v, 'mime_type', None) )
 			ext_create = getattr( v, '__external_can_create__', False )
 			v_mod_name = getattr( v, '__module__', None )
 		except ZODB.POSException.POSError:

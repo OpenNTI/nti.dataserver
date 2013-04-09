@@ -22,6 +22,11 @@ from nti.socketio import interfaces as sio_interfaces
 from nti.utils.schema import UniqueIterable
 from nti.utils.schema import Variant
 from nti.utils.schema import DecodingValidTextLine
+TextLine = DecodingValidTextLine
+from nti.utils.schema import ValidChoice as Choice
+from nti.utils.schema import Object
+
+from nti.contentfragments.schema import PlainTextLine
 
 class IChatserver(Interface):
 	pass
@@ -131,17 +136,17 @@ class IMeetingPolicy(interface.Interface):
 class IMessageInfo(nti_interfaces.IShareableModeledContent, nti_interfaces.IZContained):
 	# We have to be IShareableModeledContent if we want the same ACL provider to work for us
 	# as works for Notes
-	channel = schema.Choice(
+	channel = Choice(
 		title="The channel the message was sent to.",
 		values=CHANNELS )
 
-	Status = schema.Choice(
+	Status = Choice(
 		title="The status of the message. Set by the server.",
 		values=STATUSES )
 
 	Creator = DecodingValidTextLine( title="Message creator", description="User that send this message" )
 
-	body = Variant( (schema.Dict( key_type=schema.TextLine() ), #, value_type=schema.TextLine() ),
+	body = Variant( (schema.Dict( key_type=TextLine() ), #, value_type=schema.TextLine() ),
 					 nti_interfaces.CompoundModeledContentBody()),
 					 description="The body is either a dictionary of string keys and values, or a Note body")
 
@@ -149,7 +154,7 @@ class IMessageInfo(nti_interfaces.IShareableModeledContent, nti_interfaces.IZCon
 		title="The names of all the recipients of the message.",
 		description="""The actual recipients of the message, whether or not they are
 			named in the message itself. Includes people who just get the transcript.""",
-		value_type=schema.TextLine() )
+		value_type=TextLine() )
 
 
 class IMessageInfoEvent(z_interfaces.IObjectEvent):
@@ -172,7 +177,7 @@ class IMessageInfoPostedToRoomEvent(IMessageInfoEvent):
 			named in the message itself. Includes people who just get the transcript.""",
 		value_type=schema.TextLine() )
 
-	room = schema.Object(IMeeting,
+	room = Object(IMeeting,
 		title="The room that the message was posted to" )
 
 
@@ -296,7 +301,25 @@ class IUserTranscriptStorage(Interface):
 
 	def add_message( meeting, msg ): pass
 
-# BWC exports
+# Presence
+
+class IPresenceInfo(Interface):
+	"""
+	A description of the chat presence for a particular user.
+	"""
+	username = PlainTextLine( title="The global username to which this presence applies." )
+
+	type = Choice( title="What kind of presence this describes",
+				   values=('available', 'unavailable'),
+				   default='available',
+				   required=True)
+	show = Choice( title="A hint of how the UI should present the user",
+				   values=('away', 'chat', 'dnd', 'xa'),
+				   default='chat',
+				   required=False )
+	status = PlainTextLine( title="Optional plain text status information",
+							required=False,
+							max_length=140 )
 
 class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent):
 	"""
