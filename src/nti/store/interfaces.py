@@ -37,8 +37,8 @@ PAYMENT_PROCESSORS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocab
 
 class IPurchasable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
-	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=True)
-	Description = nti_schema.ValidTextLine(title='Purchasable item description', required=True)
+	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=False)
+	Description = nti_schema.ValidTextLine(title='Purchasable item description', required=False)
 	Amount = schema.Int(title="Cost amount", required=True)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)

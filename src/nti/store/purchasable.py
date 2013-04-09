@@ -8,6 +8,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import persistent
+
 from zope import interface
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
@@ -56,9 +57,9 @@ class Purchasable(BasePurchasable, zcontained.Contained, persistent.Persistent):
 	def id(self):
 		return self.NTIID
 
-def create_purchasable(ntiid, items, provider, title, description, amount, currency='USD', url=None,
+def create_purchasable(ntiid, provider, amount, currency='USD', items=(), title=None, description=None, url=None,
 					   discountable=False, bulk_purchase=True):
-	items = to_frozenset(items)
+	items = to_frozenset(items) if items else frozenset((ntiid,))
 	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Items=items,
 						 Description=description, Amount=amount, Currency=currency,
 						 Discountable=discountable, BulkPurchase=bulk_purchase, URL=url)

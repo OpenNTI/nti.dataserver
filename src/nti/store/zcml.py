@@ -20,15 +20,15 @@ class IRegisterPurchasableDirective(interface.Interface):
 	The arguments needed for registering a purchasable item
 	"""
 	ntiid = fields.TextLine(title="Purchasable item NTIID", required=True)
-	title = fields.TextLine(title="Purchasable item title", required=True)
-	description = fields.TextLine(title="Purchasable item description", required=True)
+	title = fields.TextLine(title="Purchasable item title", required=False)
+	description = fields.TextLine(title="Purchasable item description", required=False)
 	amount = schema.Int(title="Cost amount in cents", required=True)
 	currency = fields.TextLine(title="Currency amount", required=False, default='USD')
 	discountable = fields.Bool(title="Discountable flag", required=False, default=False)
 	bulk_purchase = fields.Bool(title="Bulk purchase flag", required=False, default=True)
 	url = schema.URI(title='Image URL', required=False)
 	provider = fields.TextLine(title='Purchasable item provider', required=True)
-	items = fields.Tokens(value_type=schema.TextLine(title='The item identifier'), title="Purchasable content items")
+	items = fields.Tokens(value_type=schema.TextLine(title='The item identifier'), title="Purchasable content items", required=False)
 
 def registerPurchasable(_context, ntiid, items, provider, title, description, amount, currency=None,
 						url=None, discountable=False, bulk_purchase=True):
