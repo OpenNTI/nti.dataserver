@@ -22,6 +22,7 @@ from pyramid.security import authenticated_userid
 from . import purchase_history
 from . import purchasable_store
 from . import interfaces as store_interfaces
+from .payments import pyramid_views as payment_pyramid
 
 class GetPendingPurchasesView(object):
 
@@ -30,8 +31,7 @@ class GetPendingPurchasesView(object):
 
 	def __call__(self):
 		request = self.request
-		username = request.matchdict.get('user', None)
-		username = username or authenticated_userid(request)
+		username = authenticated_userid(request)
 		purchases = purchase_history.get_pending_purchases(username)
 		return purchases
 
@@ -48,10 +48,9 @@ class GetPurchaseHistoryView(object):
 
 	def __call__(self):
 		request = self.request
-		username = request.matchdict.get('user', None)
-		username = username or authenticated_userid(request)
-		start_time = self._convert(request.matchdict.get('startTime', None))
-		end_time = self._convert(request.matchdict.get('endTime', None))
+		username = authenticated_userid(request)
+		start_time = self._convert(request.params.get('startTime', None))
+		end_time = self._convert(request.params.get('endTime', None))
 		purchases = purchase_history.get_purchase_history(username, start_time, end_time)
 		return purchases
 
@@ -62,8 +61,10 @@ class GetPurchaseAttemptView(object):
 
 	def __call__(self):
 		request = self.request
-		purchase_id = request.matchdict.get('purchaseId', None) or request.matchdict.get('OID', None)
-		username = request.matchdict.get('user', None) or authenticated_userid(request)
+		username = authenticated_userid(request)
+		purchase_id = request.params.get('purchaseId', None) or request.params.get('OID', None)
+		if not purchase_id:
+			raise hexc.HTTPBadRequest()
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
 			raise hexc.HTTPNotFound()
@@ -85,3 +86,8 @@ class GetPurchasablesView(object):
 	def __call__(self):
 		result = purchasable_store.get_all_purchasables()
 		return result
+
+# alias
+
+StripePaymentView = payment_pyramid.StripePaymentView
+GetStripeConnectKeyView = payment_pyramid.GetStripeConnectKeyView
