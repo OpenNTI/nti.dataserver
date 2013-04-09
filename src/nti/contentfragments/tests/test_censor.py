@@ -20,8 +20,7 @@ from nti.contentfragments import schema as frag_schema
 from nti.contentfragments import interfaces as frag_interfaces
 
 import nti.tests
-from hamcrest import is_
-from hamcrest import assert_that
+from hamcrest import (assert_that, is_, is_not)
 
 # nose module-level setup
 setUpModule = lambda: nti.tests.module_setup(set_up_packages=(nti.contentfragments, nti.contentprocessing))
@@ -50,6 +49,13 @@ def test_mike_words():
 	bad_val = 'nffbpvngrq cerff'.encode('rot13')
 	assert_that(strat.censor_ranges(bad_val, scanner.scan(bad_val)),
 				is_('associated press'))
+
+def test_greg_words():
+	scanner = component.getUtility(frag_interfaces.ICensoredContentScanner)
+	strat = component.getUtility(frag_interfaces.ICensoredContentStrategy)
+	bad_val = 'fuvgont'.encode('rot13')
+	assert_that(strat.censor_ranges(bad_val, scanner.scan(bad_val)),
+				is_not(bad_val))
 
 def test_kaley_words():
 	scanner = component.getUtility(frag_interfaces.ICensoredContentScanner)
