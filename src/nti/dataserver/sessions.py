@@ -32,6 +32,7 @@ from nti.externalization.externalization import toExternalObject, DevmodeNonExte
 from nti.dataserver import interfaces as nti_interfaces
 from nti.socketio.interfaces import SocketSessionDisconnectedEvent
 from nti.socketio.interfaces import ISocketIOSocket
+from nti.socketio.interfaces import ISocketSession
 from nti.socketio.persistent_session import AbstractSession as Session
 from nti.dataserver.interfaces import SiteNotInstalledError
 
@@ -341,11 +342,24 @@ class SessionService(object):
 		"""
 		Directs the event named ``name`` to all connected sessions for the ``username``.
 		The sequence of ``args`` is externalized and sent with the event.
+
+		:param username: Usually a string naming a user with sessions. May also be a session itself,
+			which limits the event to being sent to just that session.
 		"""
 		if not username:
 			return
 
-		all_sessions = self.get_sessions_by_owner( username )
+		all_sessions = None
+		if ISocketSession.providedBy( username ):
+			# We could just use this session, but we want to be sure its valid
+			session_id = username.session_id
+			username = username.owner
+			session = self.get_session_by_owner( username, session_ids=(session_id,) )
+			if session is not None:
+				all_sessions = (session,)
+		else:
+			all_sessions = self.get_sessions_by_owner( username )
+
 		if not all_sessions: # pragma: no cover
 			logger.log( loglevels.TRACE, "No sessions for %s to send event %s to", username, name )
 			return

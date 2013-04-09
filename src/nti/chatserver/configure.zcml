@@ -34,6 +34,8 @@
 			 provides="._handler.IChatHandlerSessionState"
 			 for="nti.socketio.interfaces.ISocketSession" />
 
+	<adapter factory=".contacts.DefaultComputedContacts" />
+
 	<!-- ACL/ACE permissions -->
 	<include file="meta.zcml" package="zope.security" />
 

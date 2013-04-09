@@ -9,6 +9,7 @@ logger = logging.getLogger( __name__ )
 
 import os
 import warnings
+import time
 
 from nti.externalization.interfaces import StandardExternalFields as XFields
 from nti.chatserver import interfaces as chat_interfaces
@@ -107,8 +108,9 @@ class _ChatHandler(object):
 
 	__metaclass__ = _ChatObjectMeta
 	__emits__ = ('recvMessageForAttention', 'presenceOfUserChangedTo',
-				 'data_noticeIncomingChange', 'failedToEnterRoom' )
-	_session_consumer_args_search_ = ('nti.chatserver.meeting','nti.chatserver.messageinfo')
+				 'data_noticeIncomingChange', 'failedToEnterRoom',
+				 'setPresenceOfUsersTo')
+	_session_consumer_args_search_ = ('nti.chatserver.meeting','nti.chatserver.messageinfo', 'nti.chatserver.presenceinfo')
 
 
 	event_prefix = 'chat' #: the namespace of events we handle
@@ -263,6 +265,42 @@ class _ChatHandler(object):
 			for user in usernames:
 				result &= room.shadow_user( user )
 		return result
+
+	def setPresence( self, presenceinfo ):
+		if not chat_interfaces.IPresenceInfo.providedBy( presenceinfo ):
+			return False
+
+		# canonicalize the presence username
+		presenceinfo.username = self.session.owner
+		# canonicalize the timestamps
+		presenceinfo.lastModified = time.time()
+
+		chatserver = self._chatserver
+
+		# 1. Store the presence
+		chatserver.setPresence( presenceinfo )
+
+		# 2. Broadcast the presence to contacts
+		contacts = chat_interfaces.IContacts(self.session_user)
+		updates_to = contacts.contactNamesSubscribedToMyPresenceUpdates
+		args = {self.session_user.username: presenceinfo}
+		self.emit_setPresenceOfUsersTo(updates_to, args)
+
+		# 3. Also broadcast to all my sessions
+		self.emit_setPresenceOfUsersTo( self.session_user.username, args )
+
+		# 4. Collect and broadcast my subscriptions to me.
+		# NOTE: Ideally, we would do this only on "initial presence." But in the
+		# event of multiple sessions for my user, "initial presence" is hard to determine
+		# (e.g., we may have been 'online' at home, and when we sign in at school we go 'online' there;
+		# but the overall presence didn't change. If we don't send these events now,
+		# the sign-in-at-school won't know about any state. We do limit the flood rate
+		# by sending just to this specific session.)
+		if presenceinfo.isAvailable():
+			presences = chatserver.getPresenceOfUsers( contacts.contactNamesISubscribeToPresenceUpdates )
+			args = {info.username: info for info in presences}
+			self.emit_setPresenceOfUsersTo( self.session, args )
+		return True
 
 @interface.implementer(chat_interfaces.IChatEventHandler)
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement,sio_interfaces.ISocketSession,chat_interfaces.IChatserver)

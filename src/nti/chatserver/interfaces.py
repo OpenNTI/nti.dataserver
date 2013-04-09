@@ -303,11 +303,13 @@ class IUserTranscriptStorage(Interface):
 
 # Presence
 
-class IPresenceInfo(Interface):
+class IPresenceInfo(nti_interfaces.ILastModified):
 	"""
 	A description of the chat presence for a particular user.
 	"""
-	username = PlainTextLine( title="The global username to which this presence applies." )
+	username = TextLine( title="The global username to which this presence applies.",
+						 description="If set when reading from external, may be ignored and replaced with canonical value.",
+						 required=False )
 
 	type = Choice( title="What kind of presence this describes",
 				   values=('available', 'unavailable'),
@@ -320,6 +322,29 @@ class IPresenceInfo(Interface):
 	status = PlainTextLine( title="Optional plain text status information",
 							required=False,
 							max_length=140 )
+
+	def isAvailable():
+		"""Does the presence represent a user who is available for chat/chat APIs?"""
+
+class IContacts(Interface):
+	"""
+	Something that can report on the "friends" or "buddy list" or "contact list"
+	of a particular entity. This may or may not be persistent and editable
+	by the entity (it may be derived from other information). This is intended
+	to be used by adapting the entity to this interface.
+	"""
+
+	__parent__ = Object( nti_interfaces.IUser, title="The owner of this contact list" )
+
+	contactNamesSubscribedToMyPresenceUpdates = UniqueIterable( title="The usernames of buddies that should get updates when the owner's presence changes",
+																description="Probably computed as a property",
+																value_type=TextLine(title="A username" ) )
+
+	contactNamesISubscribeToPresenceUpdates =  UniqueIterable( title="The usernames of buddies that the owner wants presence updates for",
+															   description="Probably computed as a property",
+															   value_type=TextLine(title="A username" ) )
+
+
 
 class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent):
 	"""

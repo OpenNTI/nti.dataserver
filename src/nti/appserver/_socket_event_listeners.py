@@ -42,8 +42,7 @@ def _notify_friends_of_presence( session, presence, event=None ):
 		logger.error( "Unable to get owner of session %s; not sending presence notification", session )
 		return
 
-	# TODO: Better algorithm. Who should this really go to?
-	has_me_in_buddy_list = {e.username for e in user.entities_followed} | set(user.accepting_shared_data_from)
+	has_me_in_buddy_list = chat_interfaces.IContacts(user).contactNamesSubscribedToMyPresenceUpdates
 	logger.debug( "Notifying %s of presence change of %s/%s to %s for %s", has_me_in_buddy_list, session.owner, session, presence, event )
 	notify( chat_interfaces.PresenceChangedUserNotificationEvent( has_me_in_buddy_list, session.owner, presence ) )
 
