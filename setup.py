@@ -80,9 +80,9 @@ TESTS_REQUIRE = [
 	'fakeredis >= 0.3.1',
 	'fudge',
 	'ipdb >= 0.7',  # easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
-	'nose >= 1.2.1',
+	'nose >= 1.3.0',
 	'nose-timer >= 0.1.2',
-	'nose-progressive >= 1.4.1',
+	#'nose-progressive >= 1.4.1', # seems incompatible with nose 1.3.0?
 	'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 	'pyhamcrest >= 1.7.1',
 	'tempstorage >= 2.12.2',  # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes

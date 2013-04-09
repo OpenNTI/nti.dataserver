@@ -1,11 +1,21 @@
-from . import ConfiguringTestBase
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+
+from nti.contentrendering.tests import ConfiguringTestBase
 from .. import performTransforms
 
 from nti.contentrendering.transforms.trans_figures_aops import transform as figureTransform
 
 from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_
-
-
 
 from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
 from nti.contentrendering.tests import simpleLatexDocumentText
@@ -82,20 +92,25 @@ def test_revprobLeftPicTransform():
 	\reviewprobs
 
 	\revprob
-	Square tiles 9~inches on a side exactly cover the floor of a rectangular room.  The border tiles are white and all other tiles are blue.  The room measures 18~feet by 15~feet.  How many tiles are white?
-	\MOEMS % Set 14 2E
+	Square tiles 9~inches on a side exactly cover the floor
+	of a rectangular room. The border tiles are white and all other
+	tiles are blue. The room measures 18~feet by 15~feet. How many
+	tiles are white? \MOEMS % Set 14 2E
 
 
 	\leftpic{geometry_136.pdf}
 	\revprob
-	If adjacent sides meet at right angles in the figure at the right, what is the number of centimeters in the perimeter of the figure? \MathCounts
+	If adjacent sides meet at
+	right angles in the figure at the right, what is the number of
+	centimeters in the perimeter of the figure?
+	\MathCounts
 	"""
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 	figureTransform( dom )
 	#We expect the leftpic to have been moved down a level and belong to the last review problem as opposed to the first one.
 
-	revProbWithPic = dom.getElementsByTagName( 'revprob')[1];
+	revProbWithPic = dom.getElementsByTagName( 'revprob')[1]
 	assert_that( revProbWithPic.firstChild.nodeName, is_( 'leftpic' ))
 
 def test_revProbParPicTransformNoMove():
@@ -104,12 +119,17 @@ def test_revProbParPicTransformNoMove():
 
 	\revprob
 	\parpic[l]{geometry_136.pdf}
-	Square tiles 9~inches on a side exactly cover the floor of a rectangular room.  The border tiles are white and all other tiles are blue.  The room measures 18~feet by 15~feet.  How many tiles are white?
+	Square tiles 9~inches on a side exactly cover the floor of a
+	rectangular room. The border tiles are white and all other tiles
+	are blue. The room measures 18~feet by 15~feet. How many tiles are
+	white?
 	\MOEMS % Set 14 2E
 
-
 	\revprob
-	If adjacent sides meet at right angles in the figure at the right, what is the number of centimeters in the perimeter of the figure? \MathCounts
+	If adjacent sides meet at right angles in the figure at
+	the right, what is the number of centimeters in the perimeter of
+	the figure?
+	\MathCounts
 	"""
 
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
@@ -177,7 +197,7 @@ def test_solutionParPicTransform():
 
 \section{Some section}
 
-\begin{problem}{}%\leftpic{chap2diag.108}}                                                                             
+\begin{problem}{}%\leftpic{chap2diag.108}}
 In the figure below, $AOB$ is a straight line.  What is the measure of $\angle AOB$?
 
 \centpic{geometry_29.pdf}\end{problem}
