@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-01 07:57-0500\n"
+"POT-Creation-Date: 2013-04-09 09:10-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -168,11 +168,11 @@ msgstr ""
 msgid "Participate in community forums"
 msgstr ""
 
-#: src/nti/appserver/invitations/interfaces.py:150
+#: src/nti/appserver/invitations/interfaces.py:156
 msgid "The invitation code is not valid."
 msgstr ""
 
-#: src/nti/appserver/invitations/interfaces.py:154
+#: src/nti/appserver/invitations/interfaces.py:160
 msgid "The invitation code has expired."
 msgstr ""
 
@@ -214,6 +214,14 @@ msgstr ""
 msgid ""
 "The message is too big. It can contain a maximum of ${parts} characters or "
 "shapes"
+msgstr ""
+
+#: src/nti/chatserver/configure.zcml:40
+msgid "Moderate a chatroom"
+msgstr ""
+
+#: src/nti/chatserver/configure.zcml:43 src/nti/chatserver/configure.zcml:46
+msgid "Enter an existing chatroom"
 msgstr ""
 
 #: src/nti/dataserver/configure.zcml:74
@@ -312,7 +320,7 @@ msgstr ""
 msgid "The value you have used is not valid."
 msgstr ""
 
-#: src/nti/store/invitations.py:29
+#: src/nti/store/invitations.py:30
 msgid "The limit for this invitation code has been exceeded."
 msgstr ""
 
@@ -322,6 +330,34 @@ msgstr ""
 
 #: src/nti/store/payments/stripe/stripe_key.py:35
 msgid "Alias"
+msgstr ""
+
+#: src/nti/store/tests/purchasables.zcml:14
+msgid "Algebra for kids"
+msgstr ""
+
+#: src/nti/store/tests/purchasables.zcml:25
+msgid "Law Cases I"
+msgstr ""
+
+#: src/nti/store/tests/purchasables.zcml:25
+msgid "Law Cases"
+msgstr ""
+
+#: src/nti/store/tests/purchasables.zcml:36
+msgid "Data Structures in C"
+msgstr ""
+
+#: src/nti/store/tests/purchasables.zcml:36
+msgid "Data Structures"
+msgstr ""
+
+#: src/nti/store/tests/purchasables.zcml:47
+msgid "Intro to Risk"
+msgstr ""
+
+#: src/nti/store/tests/purchasables.zcml:47
+msgid "Risk Course"
 msgstr ""
 
 #: src/nti/utils/schema.py:224

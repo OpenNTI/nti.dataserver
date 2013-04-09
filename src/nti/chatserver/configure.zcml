@@ -1,16 +1,19 @@
 <!-- -*- mode: nxml -*- -->
-<configure
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:ext="http://nextthought.com/ntp/ext" >
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:ext="http://nextthought.com/ntp/ext"
+			i18n_domain="nti.dataserver">
 	<include package="zope.component" />
 	<include package="zope.annotation" />
+	<include package="nti.zodb" />
 
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
+
 	<ext:registerMimeFactories module=".messageinfo" />
 	<adapter factory=".messageinfo.MessageInfoInternalObjectIO" />
 
-	<include package="nti.zodb" />
+	<ext:registerMimeFactories module=".presenceinfo" />
+	<adapter factory=".presenceinfo.PresenceInfoInternalObjectIO" />
 
 	<adapter factory="._meeting_post_policy.MeetingPostPolicy"
 			 for=".interfaces.IMeeting"

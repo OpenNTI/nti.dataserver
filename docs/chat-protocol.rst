@@ -46,7 +46,8 @@ Presence information is defined as this (non-Object) structure:
 
 	struct PresenceInfo {
 		readonly string Class = "PresenceInfo";
-		readonly string MimeType = XXX;
+		readonly string MimeType = "application/vnd.nextthought.presenceinfo";
+		string username;
 		enum {
 			available,
 			unavailable
