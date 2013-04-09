@@ -36,7 +36,7 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 	Description = FP(store_interfaces.IPurchaseAttempt['Description'])
 	StartTime = FP(store_interfaces.IPurchaseAttempt['StartTime'])
 	EndTime = FP(store_interfaces.IPurchaseAttempt['EndTime'])
-	OnBehalfOf = FP(store_interfaces.IPurchaseAttempt['OnBehalfOf'])
+	Quantity = FP(store_interfaces.IPurchaseAttempt['Quantity'])
 	ErrorCode = FP(store_interfaces.IPurchaseAttempt['ErrorCode'])
 	ErrorMessage = FP(store_interfaces.IPurchaseAttempt['ErrorMessage'])
 	Synced = FP(store_interfaces.IPurchaseAttempt['Synced'])
@@ -53,7 +53,7 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 			return self is other or (self.Items == other.Items
 									 and self.StartTime == other.StartTime
 									 and self.Processor == other.Processor
-									 and self.OnBehalfOf == other.OnBehalfOf)
+									 and self.Quantity == other.Quantity)
 		except AttributeError:
 			return NotImplemented
 
@@ -74,7 +74,7 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 		xhash ^= hash(self.Processor)
 		xhash ^= hash(self.StartTime)
 		xhash ^= hash(self.Items)
-		xhash ^= hash(self.OnBehalfOf)
+		xhash ^= hash(self.Quantity)
 		return xhash
 
 	def has_failed(self):
@@ -119,22 +119,17 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPrope
 		result = getattr(self.__parent__, 'user', None)
 		return result
 
-	def actors(self):
-		result = self.OnBehalfOf.union(set([self.creator.username]))
-		return result
-
 def create_base_purchase_attempt(purchase):
 	result = BasePurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
 								 State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
-								 OnBehalfOf=purchase.OnBehalfOf, ErrorCode=purchase.ErrorCode,
+								 Quantity=purchase.Quantity, ErrorCode=purchase.ErrorCode,
 								 ErrorMessage=purchase.ErrorMessage, Synced=purchase.Synced)
 	return result
 
-def create_purchase_attempt(items, processor, on_behalf_of=None, state=None, description=None, start_time=None):
+def create_purchase_attempt(items, processor, quantity=None, state=None, description=None, start_time=None):
 	items = to_frozenset(items)
-	on_behalf_of = to_frozenset(on_behalf_of)
 	start_time = start_time if start_time else time.time()
 	state = state or store_interfaces.PA_STATE_UNKNOWN
 	result = PurchaseAttempt(Items=items, Processor=processor, Description=description,
-							 State=state, StartTime=float(start_time), OnBehalfOf=on_behalf_of)
+							 State=state, StartTime=float(start_time), Quantity=quantity)
 	return result

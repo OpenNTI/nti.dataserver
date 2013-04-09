@@ -57,8 +57,7 @@ class _StoreEntityInvitation(JoinEntitiesInvitation):
 		else:
 			raise InvitationCapacityExceeded()
 
-def get_invitation_code(purchase_id, username):
-	purchase = get_purchase_attempt(purchase_id, username)
+def get_invitation_code_from_purchase(purchase):
 	if purchase is not None:
 		iid = component.getUtility(zc_intid.IIntIds).getId(purchase)
 		result = integer_strings.to_external_string(iid)
@@ -66,11 +65,15 @@ def get_invitation_code(purchase_id, username):
 		result = None
 	return result
 
-def create_store_invitation(purchase_id, username, capacity=None, entities=()):
+def get_invitation_code(purchase_id, username=None):
+	purchase = get_purchase_attempt(purchase_id, username)
+	return get_invitation_code_from_purchase(purchase)
+
+def create_store_invitation(purchase_id, username, capacity, entities=()):
 	invitation_code = get_invitation_code(purchase_id, username)
 	return _StoreEntityInvitation(purchase_id, username, invitation_code, capacity=capacity, entities=entities)
 
-def register_invitation(purchase_id, username, capacity=None, entities=()):
+def register_invitation(purchase_id, username, capacity, entities=()):
 	utility = component.getUtility(invite_interfaces.IInvitations)
 	invitation = create_store_invitation(purchase_id, username, capacity=capacity, entities=entities)
 	utility.registerInvitation(invitation)

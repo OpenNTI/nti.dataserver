@@ -25,7 +25,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, is_not, has_entry)
+from hamcrest import (assert_that, is_, is_not, has_entry, none)
 
 class TestStoreExternal(ConfiguringTestBase):
 
@@ -47,7 +47,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
 		pa = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor,
-													  description='my charge', on_behalf_of='foo')
+													  description='my charge', quantity=2)
 		hist.add_purchase(pa)
 
 		ext = to_external_object(pa)
@@ -61,7 +61,8 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('EndTime', is_(None)))
 		assert_that(ext, has_entry('ErrorMessage', is_(None)))
 		assert_that(ext, has_entry('Description', is_('my charge')))
-		assert_that(ext, has_entry('OnBehalfOf', is_(['foo'])))
+		assert_that(ext, has_entry('Quantity', is_(2)))
+		assert_that(ext, has_entry('InvitationCode', is_not(none())))
 
 	def test_purchasable(self):
 		util = store.PurchasableUtilityVocabulary(None)

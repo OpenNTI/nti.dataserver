@@ -23,10 +23,6 @@ from .purchase_history import get_purchase_attempt
 from .purchase_history import remove_purchased_items
 from .purchase_history import register_purchased_items
 
-def _get_content_role_users(purchase):
-	on_behalf_of = purchase.OnBehalfOf
-	return on_behalf_of if on_behalf_of else (purchase.creator.username,)
-
 @component.adapter(store_interfaces.IPurchaseAttemptStarted)
 def _purchase_attempt_started(event):
 	def func():
@@ -46,14 +42,13 @@ def _purchase_attempt_successful(event):
 		register_purchased_items(event.username, purchase.Items)
 
 		# register invitation
-		if purchase.OnBehalfOf:
-			capacity = len(purchase.OnBehalfOf)
-			invitations.register_invitation(event.purchase_id, event.username, capacity, purchase.OnBehalfOf)
-
-		# allow content roles
-		for uname in _get_content_role_users(purchase):
+		if purchase.Quantity:
+			capacity = purchase.Quantity
+			invitations.register_invitation(event.purchase_id, event.username, capacity)
+		else:
+			# allow content roles
 			lib_items = purchasable_store.get_content_items(purchase.Items)
-			_content_roles._add_users_content_roles(uname, lib_items)
+			_content_roles._add_users_content_roles(event.username, lib_items)
 
 		logger.info('%s completed successfully' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
@@ -67,14 +62,9 @@ def _purchase_attempt_refunded(event):
 		purchase.updateLastMod()
 		remove_purchased_items(event.username, purchase.Items)
 
-		# remove invitation
-		if purchase.OnBehalfOf:
-			invitations.remove_invitation(event.purchase_id, event.username)
-
-		# remove content roles
-		for uname in _get_content_role_users(purchase):
-			lib_items = purchasable_store.get_content_items(purchase.Items)
-			_content_roles._remove_users_content_roles(uname, lib_items)
+		# TODO: reset code if it's an inviation
+		lib_items = purchasable_store.get_content_items(purchase.Items)
+		_content_roles._remove_users_content_roles(event.username, lib_items)
 
 		logger.info('%s has been refunded' % (purchase))
 	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
