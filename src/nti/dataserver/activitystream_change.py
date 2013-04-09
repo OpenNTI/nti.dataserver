@@ -29,7 +29,7 @@ def _weak_ref_to( obj ):
 		return obj # For the sake of old tests, we allow things that cannot be weakly ref'd.
 
 @interface.implementer(nti_interfaces.IStreamChangeEvent,nti_interfaces.IZContained)
-class Change(persistent.Persistent,datastructures.CreatedModDateTrackingObject):
+class Change(datastructures.PersistentCreatedModDateTrackingObject):
 	"""
 	A change notification. For convenience, it acts like a
 	Contained object if the underlying object was Contained.
