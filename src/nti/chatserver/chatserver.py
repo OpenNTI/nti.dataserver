@@ -8,7 +8,14 @@ logger = logging.getLogger( __name__ )
 
 import uuid
 
+try:
+	import cPickle as pickle
+except ImportError:
+	import pickle
+
 from zope.deprecation import deprecated
+
+from zope.cachedescriptors.property import Lazy
 
 from nti.externalization import internalization
 from nti.externalization.interfaces import StandardExternalFields as XFields
@@ -26,7 +33,6 @@ from zope import component
 from zc import intid as zc_intid
 from . import interfaces
 from .meeting import _Meeting
-from .presenceinfo import PresenceInfo
 
 
 ####
@@ -91,6 +97,7 @@ class TestingMappingMeetingStorage(object):
 		if interfaces.IMeeting.providedBy( obj ):
 			return obj
 
+_PRESENCE_TTL = 14 * 24 * 60 * 60 # two weeks in seconds
 
 @interface.implementer( interfaces.IChatserver )
 class Chatserver(object):
@@ -124,16 +131,38 @@ class Chatserver(object):
 	def __reduce__(self):
 		raise TypeError()
 
+
 	### Sessions
 
 	def get_session_for( self, *args, **kwargs ):
 		return self.sessions.get_session_by_owner( *args, **kwargs )
 
-	def getPresenceOfUsers( self, usernames ): ### XXX STUB
-		return [PresenceInfo(type='unavailable', username=username) for username in usernames]
+	@Lazy
+	def _redis(self):
+		redis = component.getUtility( nti_interfaces.IRedisClient )
+		logger.info( "Using redis for presence storage" )
+		return redis
 
-	def setPresence( self, presence ): ### XXX STUB
-		pass
+	# We store presence data in redis. We do not wrap a transaction around it, nor do we
+	# compress it. We do want it to expire at some point in the (distant) future in case
+	# of deleting users, etc. We store it as a pickle for speed. TODO: We may want to cache
+	# the objects locally?
+
+	def getPresenceOfUsers( self, usernames ):
+		# This implementation does not return a presence for users that are
+		# unavailable because they have never set a presence, or their last
+		# time seen was too long ago
+		keys = ['users/' + username + '/presence' for username in usernames]
+		presence_pickles = self._redis.mget( keys )
+		presences = [pickle.loads(p) for p in presence_pickles if p is not None]
+		return presences
+
+	def setPresence( self, presence ):
+		presence_ext = pickle.dumps( presence, pickle.HIGHEST_PROTOCOL )
+		return self._redis.setex( 'users/' + presence.username + '/presence', _PRESENCE_TTL, presence_ext )
+
+	def removePresenceOfUser( self, username ):
+		return self._redis.delete( 'users/' + presence.username + '/presence' )
 
 	### Low-level IO
 

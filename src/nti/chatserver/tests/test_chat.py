@@ -62,6 +62,7 @@ from nti.chatserver import chatserver as _chatserver
 from nti.chatserver import interfaces as chat_interfaces
 from nti.chatserver.presenceinfo import PresenceInfo
 from nti.socketio import interfaces as sio_interfaces
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 from zope.annotation import interfaces as an_interfaces
 
 class chat(object):
@@ -1071,6 +1072,23 @@ class TestChatserver(_ChatserverTestBase):
 		assert_that( my_contacts, has_entry( 'name', 'chat_setPresenceOfUsersTo' ) )
 		assert_that( my_contacts['args'], has_length( 1 ) )
 		assert_that( my_contacts['args'][0], is_( {} ) )
+
+		# But I can add some
+		sessions[2] = self.Session( 'otheruser' )
+		handler2 = chat.ChatHandler( chatserver, sessions[2] )
+		sessions[1].the_user.follow( sessions[2].the_user )
+		handler2.setPresence( PresenceInfo( type='available', status=IPlainTextContentFragment('Hi') ) )
+		sessions.clear_all_session_events()
+
+		presence = PresenceInfo( type='available', show='xa' )
+		handler1.setPresence( presence )
+
+		my_contacts = sessions[1].socket.events[1]
+
+		assert_that( my_contacts, has_entry( 'name', 'chat_setPresenceOfUsersTo' ) )
+		assert_that( my_contacts['args'], has_length( 1 ) )
+		assert_that( my_contacts['args'][0], has_entry( 'otheruser', has_entries( 'type', 'available', 'status', 'Hi'  ) ) )
+
 
 
 from pyramid.testing import setUp as psetUp

@@ -57,6 +57,20 @@ def session_disconnected_broadcaster( session, event ):
 	online = _is_user_online( dataserver, session.owner, session )
 	if not online:
 		_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_OFFLINE, event )
+		# If they didn't set a valid presence, then we need to do that too.
+		# TODO: This will move when this legacy stuff goes away too
+		cs = dataserver.chatserver
+		if cs:
+			presences = cs.getPresenceOfUsers( [session.owner] )
+			# This will return an empty array if the user is "default" unavailable
+			# (Which we expect to be the initial case in the near future). Don't
+			# change that. If they left an available presence, go back
+			# to a default presence.
+			# TODO: Somebody needs to broadcast the new presence event (presenceOfUsersChanged).
+			# Not doing it now to prevent warnings in the app console until they can
+			# handle the event
+			if presences and presences[0].isAvailable():
+				cs.removePresenceOfUser( session.owner )
 	else:
 		logger.debug( "A session (%s) died, but %s are still online", session, len(online) )
 

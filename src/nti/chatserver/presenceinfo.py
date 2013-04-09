@@ -38,8 +38,6 @@ class PresenceInfo(SchemaConfigured): # NOT persistent
 		self.lastModified = time.time()
 		super(PresenceInfo,self).__init__( *args, **kwargs )
 
-
-
 	def isAvailable(self):
 		return self.type == 'available'
 
