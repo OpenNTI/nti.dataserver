@@ -17,6 +17,8 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.datastructures import InterfaceObjectIO
 
+from nti.contentlibrary import interfaces as lib_interfaces
+
 from . import purchase_history
 from . import interfaces as store_interfaces
 
@@ -41,3 +43,10 @@ class PurchasableDecorator(object):
 		if username:
 			purchased = purchase_history.is_item_purchased(username, original.NTIID)
 			external['Purchased'] = purchased
+
+		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
+		unit = library.get(original.NTIID) if library else None
+		if not original.Title:
+			external['Title'] = unit.title if unit else u''
+		if not original.Description:
+			external['Description'] = unit.title if unit else u''
