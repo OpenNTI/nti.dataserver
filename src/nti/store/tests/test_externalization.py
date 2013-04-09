@@ -7,6 +7,12 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import os
+
+from zope import component
+
+from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
+
 from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
@@ -26,6 +32,10 @@ class TestStoreExternal(ConfiguringTestBase):
 	set_up_packages = ConfiguringTestBase.set_up_packages + (('purchasables.zcml', 'nti.store.tests'),)
 
 	processor = 'stripe'
+
+	def setUp(self):
+		library = FileLibrary(os.path.join(os.path.dirname(__file__), 'library'))
+		component.provideUtility(library)
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		usr = User.create_user(self.ds, username=username, password=password)
@@ -68,3 +78,11 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Title', u'Risk Course'))
 		assert_that(ext, has_entry('URL', u'http://prmia.org/'))
 		assert_that(ext, has_entry('Description', u'Intro to Risk'))
+
+	def test_fill_in_lib(self):
+		pe = store.create_purchasable(ntiid='tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology',
+									  provider='MLC',
+									  amount=100)
+		ext = to_external_object(pe)
+		assert_that(ext, has_entry('Title', u'COSMETOLOGY'))
+		assert_that(ext, has_entry('Description', u'COSMETOLOGY'))
