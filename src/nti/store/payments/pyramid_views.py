@@ -35,6 +35,13 @@ class BasePaymentView(object):
 		except:
 			return False
 
+	def _valid_int(self, value):
+		try:
+			value = float(value)
+			return value > 0
+		except:
+			return False
+
 	def __call__(self):
 		request = self.request
 		username = authenticated_userid(request)
@@ -54,11 +61,15 @@ class BasePaymentView(object):
 		coupon = request.params.get('coupon', None)
 		currency = request.params.get('currency', 'USD')
 		description = request.params.get('description', None)
-		on_behalf_of = request.params.get('on_behalf_of', None)
+
+		quantity = request.params.get('quantity', None)
+		if quantity and not self._valid_int(quantity):
+			raise hexc.HTTPBadRequest()
+
 		description = description or "%s's payment for '%r'" % (username, items)
 
 		purchase = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor,
-															description=description, on_behalf_of=on_behalf_of)
+															description=description, quantity=quantity)
 		purchase_id = purchase_history.register_purchase_attempt(username, purchase)
 
 		def process_pay():
