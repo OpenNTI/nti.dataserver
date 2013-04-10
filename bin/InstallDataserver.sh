@@ -44,9 +44,9 @@ fi
 cd $PROJECT_PARENT/NextThoughtPlatform/nti.dataserver
 
 # NOTE: On AWS, you will need to yum install libxml2-devel and libxslt-devel,
-# and probably add /usr/includ/libxml2/ to CFLAGS
+# and probably add /usr/include/libxml2/ to CFLAGS
 
-pip install -r requirements.txt
+
 
 export INSTALL_EXTRAS="True"
 
@@ -77,7 +77,7 @@ if [ "$INSTALL_EXTRAS" ]; then
 	done
 
 	# install extra packages
-	extrap_pkgs=(pyyaml numpy matplotlib scipy py rtf2xml sympy)
+	extrap_pkgs=(pyyaml py rtf2xml sympy)
 	for p in "${extrap_pkgs[@]}"
 	do
 		echo "Installing $p"
@@ -88,6 +88,7 @@ if [ "$INSTALL_EXTRAS" ]; then
 	rm -rf $TMPWK_DIR
 fi
 
+pip install -r requirements.txt
 python setup.py dev
 
 echo "Done."

@@ -1,3 +1,6 @@
+numpy >= 1.7.1
+scipy >= 0.12.0
+matplotlib >= 1.2.1
 file:../lib/pywikipedia/#egg=pywikipedia
 # See https://github.com/SiteSupport/gevent/blob/master/changelog.rst
 -e git+https://github.com/surfly/gevent.git@1.0rc2#egg=gevent
