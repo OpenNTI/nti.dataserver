@@ -151,36 +151,36 @@ def test_topic_constraints():
 		container['k'] = topic
 
 
-def test_story_topic_externalizes():
+def test_headline_topic_externalizes():
 
-	post = HeadlineTopic()
-	post.title = 'foo'
+	topic = HeadlineTopic()
+	topic.title = 'foo'
 
-	assert_that( post,
+	assert_that( topic,
 				 externalizes( all_of(
 					 has_entries( 'title', 'foo',
 								  'Class', 'HeadlineTopic',
 								  'MimeType', 'application/vnd.nextthought.forums.headlinetopic',
 								  'PostCount', 0,
-								  'NewestPost', none(),
+								  'NewestDescendant', none(),
 								  'sharedWith', is_empty() ),
 					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
 
 	# With a comment
-	post['k'] = Post()
-	post['k'].lastModified = 42
+	topic['k'] = Post()
+	topic['k'].lastModified = 42
 	# (Both cached in the ref)
-	assert_that( post, has_property( '_newestPostWref', not_none() ) )
-	assert_that( post,
+	assert_that( topic, has_property( '_newestPostWref', not_none() ) )
+	assert_that( topic,
 				 externalizes( has_entries( 'PostCount', 1,
-											'NewestPost', has_entries('Class','Post',
+											'NewestDescendant', has_entries('Class','Post',
 																	  'Last Modified', 42 ) ) ) )
 	# and on-demand
-	del post._newestPostWref
-	assert_that( post, has_property( '_newestPostWref', none() ) )
-	assert_that( post,
+	del topic._newestPostWref
+	assert_that( topic, has_property( '_newestPostWref', none() ) )
+	assert_that( topic,
 				 externalizes( has_entries( 'PostCount', 1,
-											'NewestPost', has_entries('Class','Post',
+											'NewestDescendant', has_entries('Class','Post',
 																	  'Last Modified', 42 ) ) ) )
 
 
@@ -207,4 +207,4 @@ def test_blog_topic_externalizes():
 				 externalizes( has_entries(
 								'headline', has_entry( 'Class', 'PersonalBlogEntryPost' ),
 					 			'PostCount', 1,
-								'NewestPost', has_entry('Last Modified', 42) ) ) )
+								'NewestDescendant', has_entry('Last Modified', 42) ) ) )

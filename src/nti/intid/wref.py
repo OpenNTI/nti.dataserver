@@ -55,7 +55,11 @@ class _AbstractWeakRef(object):
 
 	def _cached(self, allow_cached):
 		if allow_cached and self._v_entity_cache is not None:
-			return self._v_entity_cache if self._v_entity_cache else None
+			# Notice that we must explicitly check for _v_entity_cache being
+			# not False, because we use False to represent a failed lookup. (But
+			# we cannot use just a simple bool comparison because that fails for
+			# something like an empty container)
+			return self._v_entity_cache if self._v_entity_cache is not False else None
 
 		try:
 			result = component.getUtility( zc_intid.IIntIds ).getObject( self._entity_id )

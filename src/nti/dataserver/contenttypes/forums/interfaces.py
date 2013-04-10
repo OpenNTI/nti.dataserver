@@ -22,7 +22,7 @@ from zope.container.interfaces import IContentContainer, IContained
 from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 
 from nti.utils import schema
-from nti.utils.schema import Object, Number
+from nti.utils.schema import Object, Number, Variant
 from zope.schema import Int
 
 ### NTIID values
@@ -86,33 +86,6 @@ class IPost(IContained, IAcquirer,
 	body = nti_interfaces.CompoundModeledContentBody()
 
 
-class IBoard(IContentContainer,IContained,nti_interfaces.ITitledDescribedContent): # implementations may be IAcquirer
-	"""
-	A board is the outermost object. It contains potentially many forums (though
-	usually this number is relatively small). Each forum is distinctly named
-	within this board.
-	"""
-	contains(b".IForum") # copies docs for __setitem__, which we don't want
-	__setitem__.__doc__ = None
-
-	ForumCount = Int( title="The number of forums contained as children of this board",
-					  readonly=True )
-
-class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescribedContent):
-	"""
-	A forum is contained by a board. A forum itself contains arbitrarily
-	many topics and is folderish for those topics. Forums are a level of permissioning, with only certain people
-	being allowed to view the contents of the forum and add new topics.
-	"""
-	contains(b".ITopic")
-	__setitem__.__doc__ = None
-	containers(IBoard)# Adds __parent__ as required
-
-	__parent__.required = False
-	TopicCount = Int( title="The number of topics contained as children of this forum", # Note this says nothing about visibility!
-					  readonly=True )
-
-
 class ITopic(IContentContainer,
 			 IContained,
 			 IAcquirer,
@@ -130,20 +103,56 @@ class ITopic(IContentContainer,
 	"""
 	contains(IPost)
 	__setitem__.__doc__ = None
-	containers(IForum)# Adds __parent__ as required
+	containers(b'.IForum')# Adds __parent__ as required
 	__parent__.required = False
 
 	PostCount = Int( title="The number of comments contained as children of this topic",
 					 readonly=True )
 
 
-	NewestPostCreatedTime = Number(title=u"The timestamp at which the most recent post was added to this topic",
-								   description="Primarily a shortcut for sorting; most of the time you want ``NewestPost``",
+	NewestDescendantCreatedTime = Number(title=u"The timestamp at which the most recent post was added to this topic",
+								   description="Primarily a shortcut for sorting; most of the time you want ``NewestDescendant``",
 								   default=0.0)
-	NewestPost = Object(IPost,
-						title="The newest post added to this object, if there is one",
-						description="May be a IDeletedObjectPlaceholder",
-						required=False)
+	NewestDescendant = Object(IPost,
+							  title="The newest post added to this object, if there is one",
+							  description="May be a IDeletedObjectPlaceholder",
+							  required=False)
+
+class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescribedContent):
+	"""
+	A forum is contained by a board. A forum itself contains arbitrarily
+	many topics and is folderish for those topics. Forums are a level of permissioning, with only certain people
+	being allowed to view the contents of the forum and add new topics.
+	"""
+	contains(ITopic)
+	__setitem__.__doc__ = None
+	containers(b".IBoard")# Adds __parent__ as required
+
+	__parent__.required = False
+	TopicCount = Int( title="The number of topics contained as children of this forum", # Note this says nothing about visibility!
+					  readonly=True )
+
+	NewestDescendantCreatedTime = Number(title=u"The timestamp at which the most recent object was added to this forum",
+										 description="Primarily a shortcut for sorting; most of the time you want ``NewestDescendant``",
+										 default=0.0)
+	NewestDescendant = Variant( (Object(IPost), Object(ITopic)),
+								title="The newest object added to this forum, if there is one",
+								description="May be a IDeletedObjectPlaceholder",
+								required=False)
+
+class IBoard(IContentContainer,IContained,nti_interfaces.ITitledDescribedContent): # implementations may be IAcquirer
+	"""
+	A board is the outermost object. It contains potentially many forums (though
+	usually this number is relatively small). Each forum is distinctly named
+	within this board.
+	"""
+	contains(IForum) # copies docs for __setitem__, which we don't want
+	__setitem__.__doc__ = None
+
+	ForumCount = Int( title="The number of forums contained as children of this board",
+					  readonly=True )
+
+
 
 class IHeadlinePost(IPost,
 					nti_interfaces.IMutedInStream):

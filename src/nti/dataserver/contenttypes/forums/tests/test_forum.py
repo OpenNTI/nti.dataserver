@@ -38,13 +38,39 @@ from zope.container.interfaces import InvalidItemType, InvalidContainerType
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from nti.dataserver.users import Community
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments', 'zope.annotation') )
-tearDownModule = nti.tests.module_teardown
 
-
-from ..interfaces import IForum, ITopic, IPersonalBlog, IPersonalBlogEntry, IGeneralForum, ICommunityForum
+from ..interfaces import IForum, ITopic, IPersonalBlog, IPersonalBlogEntry, IGeneralForum, ICommunityForum, IPost
 from ..interfaces import ICommunityBoard
 from ..forum import Forum, PersonalBlog, GeneralForum, CommunityForum
+from ..topic import PersonalBlogEntry
+
+from nti.wref.interfaces import IWeakRef
+
+def setUpModule():
+	nti.tests.module_setup( set_up_packages=(('subscribers.zcml', 'nti.intid'), 'nti.dataserver.contenttypes.forums', 'nti.contentfragments', 'zope.annotation',) )
+
+	# Set up weak refs
+	from nti.intid import utility as intid_utility
+	import zope.intid
+	import zc.intid
+	import BTrees
+	from zope import component
+	from zope.keyreference.interfaces import IKeyReference
+	intids = intid_utility.IntIds('_ds_intid', family=BTrees.family64 )
+	intids.__name__ = '++etc++intids'
+	component.provideUtility( intids, provides=zope.intid.IIntIds )
+	# Make sure to register it as both types of utility, one is a subclass of the other
+	component.provideUtility( intids, provides=zc.intid.IIntIds )
+
+	@interface.implementer(IKeyReference)
+	@component.adapter(IPost)
+	class CommentKeyRef(object):
+		def __init__( self, context ):
+			pass
+
+	component.provideAdapter(CommentKeyRef)
+	component.provideAdapter(CommentKeyRef, adapts=(IPersonalBlogEntry,) )
+tearDownModule = nti.tests.module_teardown
 
 
 def test_forum_interfaces():
@@ -82,9 +108,11 @@ def test_community_adapter():
 	assert_that( forum.__parent__, has_property( '__parent__', community ) )
 
 def test_forum_constraints():
-	@interface.implementer(ITopic)
+	@interface.implementer(ITopic,IWeakRef)
 	class X(Implicit):
 		__parent__ = __name__ = None
+		def __call__(self):
+			return self
 
 	forum = Forum()
 	forum['k'] = X()
@@ -101,14 +129,10 @@ def test_forum_constraints():
 
 def test_blog_externalizes():
 
-	post = PersonalBlog()
-	post.title = 'foo'
+	blog = PersonalBlog()
+	blog.title = 'foo'
 
-	@interface.implementer(IPersonalBlogEntry)
-	class X(Implicit):
-		__parent__ = __name__ = None
-
-	assert_that( post,
+	assert_that( blog,
 				 externalizes( all_of(
 					 has_entries( 'title', 'foo',
 								  'Class', 'PersonalBlog',
@@ -117,6 +141,10 @@ def test_blog_externalizes():
 								  'sharedWith', is_empty() ),
 					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
 
-	post['k'] = X()
-	assert_that( post,
-				 externalizes( has_entry( 'TopicCount', 1 ) ) )
+	blog['k'] = PersonalBlogEntry()
+	blog['k'].lastModified = 42
+	blog['k'].createdTime = 24
+	assert_that( blog,
+				 externalizes( has_entries( 'TopicCount', 1,
+											'NewestDescendantCreatedTime', 24,
+											'NewestDescendant', has_entry('Class', 'PersonalBlogEntry') ) ) )
