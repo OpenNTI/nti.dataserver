@@ -13,7 +13,7 @@
 	<utility factory=".invitations.utility.ZcmlInvitations"
 			 provides=".invitations.interfaces.IInvitations" />
 	-->
-	<utility factory=".invitation_views._TrivialDefaultInvitations"
+	<utility factory=".invitation_views._TrivialAndStoreInvitations"
 			 provides=".invitations.interfaces.IInvitations" />
 
 	<!--

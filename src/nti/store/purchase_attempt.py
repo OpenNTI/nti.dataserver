@@ -21,6 +21,8 @@ from nti.dataserver.datastructures import ModDateTrackingObject
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.utils.schema import SchemaConfigured
+
+from nti.zodb import minmax
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from . import to_frozenset
@@ -110,6 +112,10 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 @interface.implementer(an_interfaces.IAttributeAnnotatable)
 class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPropertyHolder):
 
+	def __init__(self, *args, **kwargs):
+		super(PurchaseAttempt, self).__init__(*args, **kwargs)
+		self._tokens = minmax.NumericMinimum(self.Quantity) if self.Quantity else None
+
 	@property
 	def id(self):
 		return unicode(to_external_ntiid_oid(self))
@@ -118,6 +124,14 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPrope
 	def creator(self):
 		result = getattr(self.__parent__, 'user', None)
 		return result
+
+	def consume_token(self):
+		if self._tokens is not None:
+			if self._tokens.value > 0:
+				self._tokens -= 1
+			else:
+				return False
+		return True
 
 def create_base_purchase_attempt(purchase):
 	result = BasePurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,

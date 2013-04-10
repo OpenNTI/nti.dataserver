@@ -8,7 +8,6 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from nti.dataserver.users import User
-from nti.dataserver.users import Community
 
 from .. import invitations
 from .. import purchase_attempt
@@ -32,35 +31,16 @@ class TestInvitations(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_invitation(self):
 		user = self._create_user()
-		c = Community.create_community(self.ds, username='Bankai')
 
 		hist = store_interfaces.IPurchaseHistory(user, None)
-		pa = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor)
-		hist.add_purchase(pa)
+		purchase = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor, quantity=1)
+		hist.add_purchase(purchase)
 
-		invitation = invitations.create_store_invitation(pa.id, user.username, 1, (c,))
+		invitation = invitations.create_store_invitation(purchase)
 		assert_that(invitation, is_(not_none()))
 		assert_that(invitation.capacity, is_(1))
+		assert_that(invitation.creator, is_(user))
 		assert_that(invitation.code, is_(not_none()))
-		assert_that(invitation.creator, is_(user.username))
-
-		assert_that(invitation.consume(), is_(True))
-		assert_that(invitation.consume(), is_(False))
-
-		user2 = self._create_user(username='nt2@nti.com')
-		with assert_raises(invitations.InvitationCapacityExceeded):
-			invitation.accept(user2)
-
-	@WithMockDSTrans
-	def test_create_invitation_no_entities(self):
-		user = self._create_user()
-
-		hist = store_interfaces.IPurchaseHistory(user, None)
-		pa = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor)
-		hist.add_purchase(pa)
-
-		invitation = invitations.create_store_invitation(pa.id, user.username, capacity=1)
-		assert_that(invitation, is_(not_none()))
 
 		user2 = self._create_user(username='nt2@nti.com')
 		invitation.accept(user2)
@@ -68,4 +48,3 @@ class TestInvitations(ConfiguringTestBase):
 		user3 = self._create_user(username='nt3@nti.com')
 		with assert_raises(invitations.InvitationCapacityExceeded):
 			invitation.accept(user3)
-

@@ -36,7 +36,7 @@ class PurchaseAttemptDecorator(object):
 
 	def decorateExternalObject(self, original, external):
 		if original.Quantity:
-			code = invitations.get_invitation_code_from_purchase(original)
+			code = invitations.get_invitation_code(original)
 			external['InvitationCode'] = code
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
