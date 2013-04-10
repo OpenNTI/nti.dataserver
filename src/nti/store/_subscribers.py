@@ -15,7 +15,6 @@ from zope import component
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from . import invitations
 from . import _content_roles
 from . import purchasable_store
 from . import interfaces as store_interfaces
@@ -41,11 +40,8 @@ def _purchase_attempt_successful(event):
 		purchase.updateLastMod()
 		register_purchased_items(event.username, purchase.Items)
 
-		# register invitation
-		if purchase.Quantity:
-			capacity = purchase.Quantity
-			invitations.register_invitation(event.purchase_id, event.username, capacity)
-		else:
+		# if not register invitation
+		if not purchase.Quantity:
 			# allow content roles
 			lib_items = purchasable_store.get_content_items(purchase.Items)
 			_content_roles._add_users_content_roles(event.username, lib_items)
