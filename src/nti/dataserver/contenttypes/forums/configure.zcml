@@ -21,6 +21,8 @@
 	<adapter provides="zope.location.interfaces.ISublocations"
 			 for=".interfaces.IHeadlineTopic"
 			 factory=".topic.HeadlineTopicSublocations" />
+	<subscriber handler=".topic.post_added_to_topic" />
+
 	<adapter factory=".topic.PersonalBlogEntryNameChooser" />
 	<adapter factory=".topic.GeneralForumEntryNameChooser" />
 	<adapter factory=".board.BoardNameChooser" />

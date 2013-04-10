@@ -13,7 +13,7 @@ __docformat__ = "restructuredtext en"
 # all the __setitem__ and __parent__ in the interfaces.
 #pylint: disable=E0602
 
-from zope import interface
+
 from ._compat import IAcquirer
 from nti.dataserver import interfaces as nti_interfaces
 #from nti.contentfragments import interfaces as frg_interfaces
@@ -22,6 +22,7 @@ from zope.container.interfaces import IContentContainer, IContained
 from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 
 from nti.utils import schema
+from nti.utils.schema import Object, Number
 from zope.schema import Int
 
 ### NTIID values
@@ -65,6 +66,26 @@ NTIID_TYPE_POST = 'Post'
 #: The type of NTIID used to represent a comment within a blog post, an :class:`IPersonalBlogComment`
 NTIID_TYPE_BLOG_COMMENT = NTIID_TYPE_POST + ':PersonalBlogComment'
 
+
+class IPost(IContained, IAcquirer,
+			nti_interfaces.IModeledContent,
+			nti_interfaces.IReadableShared,
+			nti_interfaces.ITitledContent,
+			nti_interfaces.IUserTaggedContent,
+			nti_interfaces.INeverStoredInSharedStream):
+	"""
+	A post within a topic.
+
+	They inherit their permissions from the containing topic (with the exception
+	of the editing permissions for the owner).
+	"""
+
+	containers(b'.ITopic') # Adds __parent__ as required
+	__parent__.required = False
+
+	body = nti_interfaces.CompoundModeledContentBody()
+
+
 class IBoard(IContentContainer,IContained,nti_interfaces.ITitledDescribedContent): # implementations may be IAcquirer
 	"""
 	A board is the outermost object. It contains potentially many forums (though
@@ -107,7 +128,7 @@ class ITopic(IContentContainer,
 	view the topic or delete it. Deleting it removes all its contained posts.
 
 	"""
-	contains(b".IPost")
+	contains(IPost)
 	__setitem__.__doc__ = None
 	containers(IForum)# Adds __parent__ as required
 	__parent__.required = False
@@ -116,24 +137,13 @@ class ITopic(IContentContainer,
 					 readonly=True )
 
 
-class IPost(IContained, IAcquirer,
-			nti_interfaces.IModeledContent,
-			nti_interfaces.IReadableShared,
-			nti_interfaces.ITitledContent,
-			nti_interfaces.IUserTaggedContent,
-			nti_interfaces.INeverStoredInSharedStream):
-	"""
-	A post within a topic.
-
-	They inherit their permissions from the containing topic (with the exception
-	of the editing permissions for the owner).
-	"""
-
-	containers(ITopic) # Adds __parent__ as required
-	__parent__.required = False
-
-	body = nti_interfaces.CompoundModeledContentBody()
-
+	NewestPostCreatedTime = Number(title=u"The timestamp at which the most recent post was added to this topic",
+								   description="Primarily a shortcut for sorting; most of the time you want ``NewestPost``",
+								   default=0.0)
+	NewestPost = Object(IPost,
+						title="The newest post added to this object, if there is one",
+						description="May be a IDeletedObjectPlaceholder",
+						required=False)
 
 class IHeadlinePost(IPost,
 					nti_interfaces.IMutedInStream):
