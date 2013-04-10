@@ -68,7 +68,13 @@
 
 	<!-- WeakRefs to entity objects -->
 	<adapter factory=".wref.WeakRef" />
-
+	<!-- Due to a mistake in inheritance
+	(IFriendsList extends IModeledContent,IEntity in that order)
+	to be sure we get the right behaviour where it is involved
+	we must specifically register for it.
+	-->
+	<adapter factory=".wref.WeakRef"
+			 for="nti.dataserver.interfaces.IFriendsList" />
 	<!-- Avatar URLs -->
 	<!-- Default -->
 	<adapter factory=".avatar_urls.AvatarURLFactory"

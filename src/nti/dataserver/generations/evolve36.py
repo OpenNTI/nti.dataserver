@@ -31,10 +31,44 @@ class MockDataserver(object):
 
 
 
+def _check_bad( self, name, set_of_wref ):
+	bad = []
+	for x in set_of_wref:
+		if not hasattr(x, 'username'):
+			bad.append( x() )
+	if bad:
+		logger.debug( "Bad %s weak references from user %s to %s", name, self, bad )
+	return bad
+
+def _rebuild_dynamic_member_ships(self):
+	# Low-level rebuild of dynamic memberships because the set may have been corrupted
+	self._p_activate()
+	if '_dynamic_memberships' in self.__dict__:
+		if not _check_bad( self, 'dynamic membership', self._dynamic_memberships ):
+			return
+
+		all_memberships = list(self.dynamic_memberships)
+		del self._dynamic_memberships
+		for i in all_memberships:
+			self._dynamic_memberships.add( nti_interfaces.IWeakRef( i ) )
+
+def _rebuild_entities_followed(self):
+	# Low-level rebuild of following because the set may have been corrupted
+	self._p_activate()
+	if '_entities_followed' in self.__dict__:
+		if not _check_bad( self, 'entities followed', self._entities_followed ):
+			return
+		all_memberships = list(self.entities_followed)
+		del self._entities_followed
+		for i in all_memberships:
+			self._entities_followed.add( nti_interfaces.IWeakRef( i ) )
+
 def migrate(userish, dataserver):
 
 	dropped = set()
 	retained = set()
+	_rebuild_dynamic_member_ships(userish)
+	_rebuild_entities_followed(userish)
 	for relationship_name, exit_func in (('entities_followed', userish.stop_following),
 										 ('dynamic_memberships', userish.record_no_longer_dynamic_member)):
 		try:
@@ -54,7 +88,7 @@ def migrate(userish, dataserver):
 			logger.debug( "Error accessing all relationship %s for %s", relationship_name, userish )
 
 	if dropped:
-		logger.debug( "User %s had these bad relationships: %s and these good ones: %s", userish, dropped, retained )
+		logger.debug( "User %s had these broken relationships: %s and these good ones: %s", userish, dropped, retained )
 
 
 def evolve( context ):

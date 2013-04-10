@@ -101,8 +101,8 @@ class TestIntidWref(SharedConfiguringTestBase):
 
 		bt = BTrees.OOBTree.OOBTree()
 
-		ref = wref.WeakRef( user )
-		ref2 = wref.WeakRef( user2 )
+		ref = wref.ArbitraryOrderableWeakRef( user )
+		ref2 = wref.ArbitraryOrderableWeakRef( user2 )
 
 		bt[ref] = 1
 		bt[ref2] = 2
