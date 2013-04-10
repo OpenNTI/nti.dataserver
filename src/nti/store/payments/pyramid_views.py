@@ -95,17 +95,17 @@ class BaseValidateCouponView(object):
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 		coupon = request.params.get('coupon', request.params.get('code', None))
 		amount = request.params.get('amount')
-		if amount and not _valid_amount(amount):
+		if amount is not None and not _valid_amount(amount):
 			raise hexc.HTTPBadRequest()
 
 		# stripe defines an 80 sec timeout for http requests
 		# at this moment we are to wait for coupon validation
-		# TODO: do coupon validation on a greenlet
 		validated_coupon = manager.validate_coupon(coupon)
 		if validated_coupon:
-			amount = manager.apply_coupon(amount, validated_coupon)
 			result = LocatedExternalDict()
-			result['Amount'] = amount
+			if amount:
+				amount = manager.apply_coupon(amount, validated_coupon)
+				result['Amount'] = amount
 			result['Coupon'] = coupon
 			return result
 		else:
@@ -113,6 +113,8 @@ class BaseValidateCouponView(object):
 
 class ValidateStripeCouponView(BaseValidateCouponView):
 	processor = 'stripe'
+
+# alias
 
 GetStripeConnectKeyView = stripe_pyramid.GetStripeConnectKeyView
 

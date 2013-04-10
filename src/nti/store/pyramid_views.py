@@ -91,3 +91,4 @@ class GetPurchasablesView(object):
 
 StripePaymentView = payment_pyramid.StripePaymentView
 GetStripeConnectKeyView = payment_pyramid.GetStripeConnectKeyView
+ValidateStripeCouponView = payment_pyramid.ValidateStripeCouponView
