@@ -75,18 +75,12 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		assert_that(pa, is_(not_none()))
 		assert_that(pa, is_(pending))
 
-		pending = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor, on_behalf_of=('u1,u2'),
+		pending = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor, quantity=2,
 															state=store_interfaces.PA_STATE_STARTED)
 		hist.add_purchase(pending)
 
-		pa = purchase_history.get_pending_purchase_for(user, items, ('u1',))
+		pa = purchase_history.get_pending_purchase_for(user, items)
 		assert_that(pa, is_(not_none()))
-		pa = purchase_history.get_pending_purchase_for(user, items, ('nt@nti.com',))
-		assert_that(pa, is_(not_none()))
-		pa = purchase_history.get_pending_purchase_for(user, items, ('u2',))
-		assert_that(pa, is_(not_none()))
-		pa = purchase_history.get_pending_purchase_for(user, items, ('u3',))
-		assert_that(pa, is_(none()))
 
 	@WithMockDSTrans
 	def test_missing_purchase(self):

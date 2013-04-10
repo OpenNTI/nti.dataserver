@@ -42,7 +42,7 @@ class TestInvitations(ConfiguringTestBase):
 
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 
-		invitation = manager.register_invitation(pa.id, user.username, (c,), 1)
+		invitation = manager.register_invitation(pa.id, user.username, 1, (c,))
 		assert_that(invitation, is_not(none()))
 		assert_that(invitation.capacity, is_(1))
 		intid = integer_strings.from_external_string(invitation.code)

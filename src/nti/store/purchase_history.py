@@ -91,13 +91,10 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 			if p.is_pending() or p.is_unknown():
 				yield p
 
-	def get_pending_purchase_for(self, items, on_behalf_of=None):
+	def get_pending_purchase_for(self, items):
 		items = to_frozenset(items)
-		on_behalf_of = to_frozenset(on_behalf_of)
 		for p in self.purchases.values():
-			if (p.is_pending() or p.is_unknown()) and \
-				p.Items.intersection(items) and \
-				(not on_behalf_of or p.actors().intersection(on_behalf_of)):
+			if (p.is_pending() or p.is_unknown()) and p.Items.intersection(items):
 				return p
 		return None
 
@@ -161,10 +158,10 @@ def get_purchase_history(user, start_time=None, end_time=None):
 	result = LocatedExternalList(hist.get_purchase_history(start_time, end_time))
 	return result
 
-def get_pending_purchase_for(user, items, on_behalf_of=None):
+def get_pending_purchase_for(user, items):
 	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
-	result = hist.get_pending_purchase_for(items, on_behalf_of)
+	result = hist.get_pending_purchase_for(items)
 	return result
 
 def register_purchase_attempt(username, purchase):
