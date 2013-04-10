@@ -23,7 +23,6 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from . import fps_io
 from . import interfaces as fps_interfaces
-from .._processor import _BasePaymentProcessor
 
 from ... import payment_charge
 from ... import purchase_history
@@ -57,9 +56,15 @@ def _create_payment_charge(trax):
 	return result
 
 @interface.implementer(fps_interfaces.IFPSPaymentProcessor)
-class _FPSPaymentProcessor(_BasePaymentProcessor, fps_io.FPSIO):
+class _FPSPaymentProcessor(fps_io.FPSIO):
 
 	name = 'fps'
+
+	def validate_coupon(self, coupon):
+		return True
+
+	def apply_coupon(self, amount, coupon=None):
+		return amount
 
 	def _process_fps_transaction(self, purchase_id, username, trax):
 		result = True
