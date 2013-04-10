@@ -16,6 +16,11 @@ from zope import interface
 from zope import component
 from zope import schema
 
+try:
+	import cPickle as pickle
+except ImportError:
+	import pickle
+
 from ._compat import Implicit
 from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
 from . import _containerIds_from_parent
@@ -26,6 +31,7 @@ from nti.dataserver import sharing
 from nti.dataserver.traversal import find_interface
 
 from nti.utils.schema import AdaptingFieldProperty
+from nti.utils import transactions
 
 from . import interfaces as frm_interfaces
 from zope.annotation import interfaces as an_interfaces
@@ -33,6 +39,8 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.wref import interfaces as wref_interfaces
 from zope.intid.interfaces import IIntIdAddedEvent
 from ZODB.interfaces import IConnection
+
+_NEWEST_TTL = 7 * 24 * 60 * 60 # a week in seconds
 
 @interface.implementer(frm_interfaces.IForum, an_interfaces.IAttributeAnnotatable)
 class Forum(Implicit,
@@ -63,9 +71,21 @@ class Forum(Implicit,
 	# topic might be too much). Instead, we serialize it out to
 	# memcache or redis and only store it there. (If we are very careful with __setattr__, we
 	# could probably do this with a property.)
-	_newestDescendantWref = None
+	def _descendent_key(self):
+		return 'forums/' + self.containerId + '/' + self.id + '/newestDescendant'
+
 	def _get_NewestDescendant(self):
-		if self._newestDescendantWref is None and self.TopicCount:
+		redis = component.getUtility( nti_interfaces.IRedisClient )
+		wref_data = redis.get( self._descendent_key() )
+		newestDescendantWref = None
+		newest_object = None
+		if wref_data:
+			newestDescendantWref = pickle.loads( wref_data )
+			newest_object = newestDescendantWref()
+			if newest_object is not None:
+				return newest_object
+
+		if newestDescendantWref is None and self.TopicCount:
 			# Lazily finding one
 			newest_created = -1.0
 			newest_object = None
@@ -77,12 +97,25 @@ class Forum(Implicit,
 					newest_object = topic.NewestDescendant
 					newest_created = topic.NewestDescendantCreatedTime
 			if newest_object is not None:
-				self.NewestDescendant = newest_object
+				self._set_NewestDescendant( newest_object, False )
+				return newest_object
 
-		return self._newestDescendantWref() if self._newestDescendantWref is not None else None
-	def _set_NewestDescendant(self,descendant):
-		self._newestDescendantWref = wref_interfaces.IWeakRef(descendant)
-	NewestDescendant = property(_get_NewestDescendant, _set_NewestDescendant)
+	def _set_NewestDescendant(self,descendant,transactional=True):
+		newestDescendantWref = wref_interfaces.IWeakRef(descendant)
+		redis = component.getUtility( nti_interfaces.IRedisClient )
+		args = (redis, pickle.dumps( newestDescendantWref, pickle.HIGHEST_PROTOCOL ),)
+
+		if transactional:
+			transactions.do( target=self,
+							 call=self._publish_descendant_to_redis,
+							 args=args )
+		else:
+			self._publish_descendant_to_redis( *args )
+
+	def _publish_descendant_to_redis( self, redis, data ):
+		redis.setex( self._descendent_key(), _NEWEST_TTL, data )
+
+	NewestDescendant = property(_get_NewestDescendant)
 
 
 @component.adapter(frm_interfaces.IPost,IIntIdAddedEvent)
@@ -97,7 +130,7 @@ def _post_added_to_topic( post, event ):
 
 	forum = find_interface( post, frm_interfaces.IForum, strict=False )
 	if forum is not None:
-		forum.NewestDescendant = post
+		forum._set_NewestDescendant( post )
 
 
 @component.adapter(frm_interfaces.ITopic,IIntIdAddedEvent)
@@ -114,7 +147,7 @@ def _topic_added_to_forum(topic, event):
 	# removed while it is still the newest in the forum, and
 	# if that is the case, it's no big loss
 	if frm_interfaces.IForum.providedBy( topic.__parent__ ):
-		topic.__parent__.NewestDescendant = topic
+		topic.__parent__._set_NewestDescendant( topic )
 
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
