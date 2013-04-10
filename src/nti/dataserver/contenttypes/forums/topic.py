@@ -54,6 +54,18 @@ class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 		return 0.0
 
 	_newestPostWref = None
+	# TODO: We probably need something to resolve conflicts here;
+	# We always want the reference to the newest object to be what
+	# is stored.
+	# In order to do that we will probably want to make the ref into
+	# its own persistent object (which should then be inside a
+	# PersistentPropertyHolder).
+	# Either that or we take _newestPostWref out of the object state entirely, as
+	# we did with the Forum object...
+	# If we arranged for our INameChooser to always choose names in increasing order,
+	# we could simply use the object at the maxKey of the underlying BTree.
+	# (But that conflicts with the goal of spreading the writes around to different buckets
+	# ---and thus hopefully reducing overall conflicts---through choosing widely varying keys.)
 	def _get_NewestPost(self):
 		if self._newestPostWref is None and self.PostCount:
 			# Lazily finding one
