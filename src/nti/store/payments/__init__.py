@@ -20,9 +20,3 @@ class _BasePaymentProcessor(object):
 
     def apply_coupon(self, amount, coupon=None):
         return amount
-
-    def register_invitation(self, purchase_id, username, capacity=None, entities=()):
-        utility = component.getUtility(invite_interfaces.IInvitations)
-        invitation = invitations.create_store_invitation(purchase_id, username, capacity, entities)
-        utility.registerInvitation(invitation)
-        return invitation

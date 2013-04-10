@@ -11,7 +11,6 @@ import zc.intid as zc_intid
 
 from zope import component
 
-from nti.appserver.invitations import interfaces as invite_interfaces
 from nti.appserver.invitations.invitation import JoinEntitiesInvitation
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -50,21 +49,14 @@ def get_invitation_code(purchase):
 	if purchase is not None:
 		iid = component.getUtility(zc_intid.IIntIds).getId(purchase)
 		result = integer_strings.to_external_string(iid)
-	else:
-		result = None
-	return result
+		return result
+	return None
 
 def create_store_invitation(purchase, code=None):
 	invitation_code = code if code else get_invitation_code(purchase)
 	result = _StoreEntityInvitation(invitation_code, purchase)
 	result.creator = purchase.creator
 	return result
-
-def register_invitation(purchase_id, username=None):
-	utility = component.getUtility(invite_interfaces.IInvitations)
-	invitation = create_store_invitation(purchase_id, username)
-	utility.registerInvitation(invitation)
-	return invitation
 
 def _consume_purchase_token(purchase_id, username=None):
 	result = []
