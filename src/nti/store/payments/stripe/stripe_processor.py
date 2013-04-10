@@ -26,6 +26,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from . import stripe_io
 from ... import payment_charge
 from ... import purchase_history
+from .. import _BasePaymentProcessor
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
 
@@ -91,7 +92,7 @@ def _create_payment_charge(charge):
 	return result
 
 @interface.implementer(stripe_interfaces.IStripePaymentProcessor)
-class _StripePaymentProcessor(stripe_io.StripeIO):
+class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 	name = 'stripe'
 	events = ("charge.succeeded", "charge.refunded", "charge.failed", "charge.dispute.created", "charge.dispute.updated")
