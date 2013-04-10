@@ -64,23 +64,37 @@ class Forum(Implicit,
 			return item.createdTime
 		return 0.0
 
-	# XXX COMING SOON:
 	# Unlike with ITopic, we don't want to store this object on the forum
 	# itself: that's potentially a tremendous amount of churn (churn
 	# from all the topics in the whole forum) (even the churn on a single
 	# topic might be too much). Instead, we serialize it out to
-	# memcache or redis and only store it there. (If we are very careful with __setattr__, we
+	# redis and only store it there. (If we are very careful with __setattr__, we
 	# could probably do this with a property.)
 	def _descendent_key(self):
-		return 'forums/' + self.containerId + '/' + self.id + '/newestDescendant'
+		try:
+			return 'forums/' + self.containerId + '/' + self.id + '/newestDescendant'
+		except TypeError:
+			# This should only happen in tests
+			logger.warn( "No stable key for newestDescendant of %s", self )
+			return 'broken/' + unicode(id(self)) + '/newestDescendant'
 
+	# If we can keep an weakref in memory, then it in turn
+	# holds a cache of the ref'd object; together, that can save
+	# some database loads if self doesn't go invalid
+	_v_newestDescendantWref_data = None
+	_v_newestDescendantWref = None
 	def _get_NewestDescendant(self):
 		redis = component.getUtility( nti_interfaces.IRedisClient )
 		wref_data = redis.get( self._descendent_key() )
 		newestDescendantWref = None
 		newest_object = None
 		if wref_data:
-			newestDescendantWref = pickle.loads( wref_data )
+			if wref_data == self._v_newestDescendantWref_data:
+				newestDescendantWref = self._v_newestDescendantWref or pickle.loads( wref_data )
+			else:
+				newestDescendantWref = pickle.loads( wref_data )
+			self._v_newestDescendantWref_data = wref_data
+			self._v_newestDescendantWref = newestDescendantWref
 			newest_object = newestDescendantWref()
 			if newest_object is not None:
 				return newest_object
@@ -113,6 +127,8 @@ class Forum(Implicit,
 			self._publish_descendant_to_redis( *args )
 
 	def _publish_descendant_to_redis( self, redis, data ):
+		self._v_newestDescendantWref_data = data
+		self._v_newestDescendantWref = None
 		redis.setex( self._descendent_key(), _NEWEST_TTL, data )
 
 	NewestDescendant = property(_get_NewestDescendant)
