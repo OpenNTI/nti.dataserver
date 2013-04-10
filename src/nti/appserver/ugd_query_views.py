@@ -859,6 +859,20 @@ class _RecursiveUGDView(_UGDView):
 	_iter_ntiids_stream_only = False
 	_iter_ntiids_include_stream = True
 
+	def _get_filter_names( self ):
+		"""
+		Special case some things to account for some interesting patterns the app has.
+
+		#. There is a tab where it sends an accept for transcript summaries. These are only
+		   ever found for the current user, so we can be sure to add 'MeOnly' to the filters
+		   in that case.
+		"""
+		filters = super(_RecursiveUGDView,self)._get_filter_names()
+		if self._get_accept_types() == ['application/vnd.nextthought.transcriptsummary']: # equals, not contains
+			filters = set(filters)
+			filters.add( 'MeOnly' )
+		return filters
+
 	def _get_containerids_for_id( self, user, ntiid ):
 		containers = ()
 		if ntiid == ntiids.ROOT:
