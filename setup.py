@@ -198,7 +198,8 @@ setup(
 		# Warning: distutils distribution has been initialized, it may be too late to add a subpackage command
 		# followed by compilation failures: fatal error 'Python.h' file not found. So you must
 		# install numpy manually with pip: pip install numpy
-		'numpy >= 1.7.0' if not IS_PYPY else '',
+		# or have it in requirements.txt (which we do)
+		'numpy' if not IS_PYPY else '',
 		'paste >= 1.7.5.1',
 		'perfmetrics >= 1.0',  # easy statsd metrics.
 		'plone.scale >= 1.3.1',  # image scaling/storage based on PIL
@@ -332,6 +333,7 @@ setup(
 		'zope.principalregistry >= 4.0.0a2',  # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.3',  # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
+		'zope.server >= 3.9.0', # DO NOT USED. Included as transitive for latest.
 		'zope.sequencesort >= 4.0.1',  # advanced locale aware sorting
 		'zope.schema >= 4.3.2',
 		'zope.security[zcml,untrustedpython] >= 4.0.0b1',  # >= 4.0.0b1 gets PyPy support!
