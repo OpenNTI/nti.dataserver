@@ -70,6 +70,11 @@ def setUpModule():
 
 	component.provideAdapter(CommentKeyRef)
 	component.provideAdapter(CommentKeyRef, adapts=(IPersonalBlogEntry,) )
+
+	from nti.dataserver.tests import mock_redis
+	client = mock_redis.InMemoryMockRedis()
+	component.provideUtility( client )
+
 tearDownModule = nti.tests.module_teardown
 
 
