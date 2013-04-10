@@ -407,7 +407,7 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 	"""
 
 	SORT_KEYS = ForumsContainerContentsGetView.SORT_KEYS.copy()
-	SORT_KEYS['NewestPostCreatedTime'] = operator.attrgetter('NewestPostCreatedTime')
+	SORT_KEYS['NewestDescendantCreatedTime'] = operator.attrgetter('NewestDescendantCreatedTime')
 
 
 @view_config( context=frm_interfaces.IHeadlineTopic,

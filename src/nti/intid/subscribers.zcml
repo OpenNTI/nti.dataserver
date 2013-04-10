@@ -2,6 +2,8 @@
 <configure xmlns="http://namespaces.zope.org/zope"
 		   i18n_domain="nti.dataserver">
 
+	<include package="zope.component" />
+
 	<subscriber handler=".subscribers.removeIntIdSubscriber" />
 	<subscriber handler=".subscribers.addIntIdSubscriber" />
 	<subscriber handler=".subscribers.intIdEventNotify" />

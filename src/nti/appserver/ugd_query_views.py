@@ -551,8 +551,14 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		"Returns a key function for sorting based on current params"
 		# The request keys match what z3c.table does
 		sort_on = self.request.params.get( 'sortOn', self._DEFAULT_SORT_ON )
-		sort_order = self.request.params.get( 'sortOrder', self.SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
 		_sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS[self._DEFAULT_SORT_ON] )
+		# If they send a sortOn we don't understand, also do not respect their order parameter,
+		# to make the mistake more obvious; sort exactly as if they had sent neither
+		if _sort_key_function is self.SORT_KEYS[self._DEFAULT_SORT_ON] and sort_on != self._DEFAULT_SORT_ON:
+			sort_on = self._DEFAULT_SORT_ON
+
+		sort_order = self.request.params.get( 'sortOrder', self.SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
+
 		# heapq needs to have the smallest item first. It doesn't work with reverse sorting.
 		# so in that case we invert the key function
 		if sort_order == 'descending':

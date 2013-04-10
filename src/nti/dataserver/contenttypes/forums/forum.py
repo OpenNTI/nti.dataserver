@@ -23,12 +23,15 @@ from . import _containerIds_from_parent
 from nti.dataserver import containers as nti_containers
 from nti.dataserver import datastructures
 from nti.dataserver import sharing
+from nti.dataserver.traversal import find_interface
 
 from nti.utils.schema import AdaptingFieldProperty
 
 from . import interfaces as frm_interfaces
 from zope.annotation import interfaces as an_interfaces
 from nti.dataserver import interfaces as nti_interfaces
+from nti.wref import interfaces as wref_interfaces
+from zope.intid.interfaces import IIntIdAddedEvent
 from ZODB.interfaces import IConnection
 
 @interface.implementer(frm_interfaces.IForum, an_interfaces.IAttributeAnnotatable)
@@ -45,6 +48,74 @@ class Forum(Implicit,
 	TopicCount = property(nti_containers.CheckingLastModifiedBTreeContainer.__len__)
 
 	id, containerId = _containerIds_from_parent()
+
+	@property
+	def NewestDescendantCreatedTime(self):
+		item = self.NewestDescendant
+		if item is not None:
+			return item.createdTime
+		return 0.0
+
+	# XXX COMING SOON:
+	# Unlike with ITopic, we don't want to store this object on the forum
+	# itself: that's potentially a tremendous amount of churn (churn
+	# from all the topics in the whole forum) (even the churn on a single
+	# topic might be too much). Instead, we serialize it out to
+	# memcache or redis and only store it there. (If we are very careful with __setattr__, we
+	# could probably do this with a property.)
+	_newestDescendantWref = None
+	def _get_NewestDescendant(self):
+		if self._newestDescendantWref is None and self.TopicCount:
+			# Lazily finding one
+			newest_created = -1.0
+			newest_object = None
+			for topic in self.values():
+				if topic.createdTime > newest_created:
+					newest_object = topic
+					newest_created = topic.createdTime
+				if topic.NewestDescendantCreatedTime > newest_created:
+					newest_object = topic.NewestDescendant
+					newest_created = topic.NewestDescendantCreatedTime
+			if newest_object is not None:
+				self.NewestDescendant = newest_object
+
+		return self._newestDescendantWref() if self._newestDescendantWref is not None else None
+	def _set_NewestDescendant(self,descendant):
+		self._newestDescendantWref = wref_interfaces.IWeakRef(descendant)
+	NewestDescendant = property(_get_NewestDescendant, _set_NewestDescendant)
+
+
+@component.adapter(frm_interfaces.IPost,IIntIdAddedEvent)
+def _post_added_to_topic( post, event ):
+	"""
+	Watch for a post to be added to a topic and keep track of the
+	creation time of the latest post within the entire forum.
+
+	The ContainerModifiedEvent does not give us the object (post)
+	and it also can't tell us if the post was added or removed.
+	"""
+
+	forum = find_interface( post, frm_interfaces.IForum, strict=False )
+	if forum is not None:
+		forum.NewestDescendant = post
+
+
+@component.adapter(frm_interfaces.ITopic,IIntIdAddedEvent)
+def _topic_added_to_forum(topic, event):
+	"""
+	Watch for a topic to be added to a forum and keep track of the
+	creation time of the latest topic within the entire forum.
+
+	The ContainerModifiedEvent does not give us the object (post)
+	and it also can't tell us if the post was added or removed.
+	"""
+	# Note that we don't have a IIntIdRemoved listener
+	# for this. It's extremely unlikely that a topic will be
+	# removed while it is still the newest in the forum, and
+	# if that is the case, it's no big loss
+	if frm_interfaces.IForum.providedBy( topic.__parent__ ):
+		topic.__parent__.NewestDescendant = topic
+
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
 class PersonalBlog(Forum,_SingleInstanceNTIIDMixin):

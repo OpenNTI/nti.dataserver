@@ -382,15 +382,15 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		comment_res2 = testapp.post_json( entry_url, data, status=201 )
 		comment_ts2 = comment_res2.json_body['CreatedTime']
 
-		contents_res = testapp.get( self.forum_pretty_contents_url, params={'sortOn': 'NewestPostCreatedTime', 'sortOrder': 'descending'} )
+		contents_res = testapp.get( self.forum_pretty_contents_url, params={'sortOn': 'NewestDescendantCreatedTime', 'sortOrder': 'descending'} )
 		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 2 ) ) )
-		assert_that( contents_res.json_body['Items'], contains( has_entry( 'NewestPostCreatedTime', comment_ts2 ),
-																has_entry( 'NewestPostCreatedTime', comment_ts1 ) ) )
+		assert_that( contents_res.json_body['Items'], contains( has_entry( 'NewestDescendantCreatedTime', comment_ts2 ),
+																has_entry( 'NewestDescendantCreatedTime', comment_ts1 ) ) )
 
-		contents_res = testapp.get( self.forum_pretty_contents_url, params={'sortOn': 'NewestPostCreatedTime', 'sortOrder': 'ascending'} )
+		contents_res = testapp.get( self.forum_pretty_contents_url, params={'sortOn': 'NewestDescendantCreatedTime', 'sortOrder': 'ascending'} )
 		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 2 ) ) )
-		assert_that( contents_res.json_body['Items'], contains( has_entry( 'NewestPostCreatedTime', comment_ts1 ),
-																has_entry( 'NewestPostCreatedTime', comment_ts2 ) ) )
+		assert_that( contents_res.json_body['Items'], contains( has_entry( 'NewestDescendantCreatedTime', comment_ts1 ),
+																has_entry( 'NewestDescendantCreatedTime', comment_ts2 ) ) )
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)

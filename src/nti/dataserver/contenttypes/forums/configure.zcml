@@ -11,8 +11,6 @@
 	<!-- Adapters for creating the default objects -->
 	<adapter factory=".forum.PersonalBlogAdapter"
 			 provides=".interfaces.IPersonalBlog" />
-
-	<!-- The community forums are hidden behind devmode -->
 	<adapter factory=".forum.GeneralForumCommunityAdapter"
 			 provides=".interfaces.ICommunityForum" />
 	<adapter factory=".board.GeneralBoardCommunityAdapter"
@@ -21,11 +19,21 @@
 	<adapter provides="zope.location.interfaces.ISublocations"
 			 for=".interfaces.IHeadlineTopic"
 			 factory=".topic.HeadlineTopicSublocations" />
-	<subscriber handler=".topic.post_added_to_topic" />
 
 	<adapter factory=".topic.PersonalBlogEntryNameChooser" />
 	<adapter factory=".topic.GeneralForumEntryNameChooser" />
 	<adapter factory=".board.BoardNameChooser" />
+
+	<!-- WeakRefs -->
+	<!-- (IPost is covered as IModeledContent) -->
+	<adapter factory="nti.intid.wref.ArbitraryOrderableWeakRef"
+			 provides="nti.wref.interfaces.IWeakRef"
+			 for=".interfaces.IForum" />
+	<adapter factory="nti.intid.wref.ArbitraryOrderableWeakRef"
+			 provides="nti.wref.interfaces.IWeakRef"
+			 for=".interfaces.ITopic" />
+
+
 
 	<!-- NTIID resolvers -->
 	<utility factory=".ntiids._CommunityBoardResolver" name="Board:GeneralCommunity" />
@@ -34,6 +42,10 @@
 	<utility factory=".ntiids._BlogEntryResolver" name="Topic:PersonalBlogEntry" />
 	<utility factory=".ntiids._CommunityTopicResolver" name="Topic:GeneralCommunity" />
 
+	<!-- Events -->
+	<subscriber handler=".topic._post_added_to_topic" />
+	<subscriber handler=".forum._post_added_to_topic" />
+	<subscriber handler=".forum._topic_added_to_forum" />
 
 	<!-- Externalization -->
 	<adapter factory=".externalization._ForumInternalObjectIO"

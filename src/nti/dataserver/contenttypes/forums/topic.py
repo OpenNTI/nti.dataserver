@@ -30,7 +30,7 @@ from nti.utils.schema import AcquisitionFieldProperty
 from . import interfaces as for_interfaces
 from nti.wref import interfaces as wref_interfaces
 from zope.annotation import interfaces as an_interfaces
-from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from zope.intid.interfaces import IIntIdAddedEvent
 from zope.container.interfaces import INameChooser
 
 from zope.container.contained import ContainerSublocations
@@ -47,8 +47,8 @@ class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 	id, containerId = _containerIds_from_parent()
 
 	@property
-	def NewestPostCreatedTime(self):
-		post = self.NewestPost
+	def NewestDescendantCreatedTime(self):
+		post = self.NewestDescendant
 		if post is not None:
 			return post.createdTime
 		return 0.0
@@ -57,27 +57,27 @@ class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 	def _get_NewestPost(self):
 		if self._newestPostWref is None and self.PostCount:
 			# Lazily finding one
-			newest_created = 0.0
+			newest_created = -1
 			newest_post = None
 			for post in self.values():
 				if post.createdTime > newest_created:
 					newest_post = post
+					newest_created = post.createdTime
 			if newest_post is not None:
-				self.NewestPost = newest_post
+				self.NewestDescendant = newest_post
 
 		return self._newestPostWref() if self._newestPostWref is not None else None
-	def _set_NemestPost(self,post):
+	def _set_NewestPost(self,post):
 		self._newestPostWref = wref_interfaces.IWeakRef(post)
-	NewestPost = property(_get_NewestPost, _set_NemestPost)
-
+	NewestDescendant = property(_get_NewestPost, _set_NewestPost)
 
 @interface.implementer(for_interfaces.ITopic, an_interfaces.IAttributeAnnotatable)
 class Topic(_AbstractUnsharedTopic,
 			sharing.AbstractReadableSharedWithMixin):
 	pass
 
-@component.adapter(for_interfaces.IPost,IObjectAddedEvent)
-def post_added_to_topic( post, event ):
+@component.adapter(for_interfaces.IPost,IIntIdAddedEvent)
+def _post_added_to_topic( post, event ):
 	"""
 	Watch for a post to be added to a topic and keep track of the
 	creation time of the latest post.
@@ -87,7 +87,7 @@ def post_added_to_topic( post, event ):
 	"""
 
 	if for_interfaces.ITopic.providedBy(post.__parent__):
-		post.__parent__.NewestPost = post
+		post.__parent__.NewestDescendant = post
 
 @interface.implementer(for_interfaces.IHeadlineTopic)
 class HeadlineTopic(Topic):
