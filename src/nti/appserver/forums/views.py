@@ -285,8 +285,7 @@ class _AbstractTopicPostView(_AbstractIPostPOSTView):
 		lifecycleevent.created( incoming_post )
 		# incoming_post.id and containerId are set automatically when it is added
 		# to the container (but note that the created event did not have them)
-
-		topic[name] = incoming_post # Now store the topic and fire added
+		topic[name] = incoming_post # Now store the topic and fire IObjectAddedEvent (subtype of IObjectModifiedEvent)
 
 		# Respond with the pretty location of the object
 		self.request.response.status_int = 201 # created

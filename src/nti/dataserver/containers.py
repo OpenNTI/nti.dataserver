@@ -273,8 +273,15 @@ def update_container_modified_time( container, event ):
 def update_parent_modified_time( modified_object, event ):
 	"""
 	If an object is modified and it is contained inside a container
-	that wants to track modifications, we want to update its parent too.
+	that wants to track modifications, we want to update its parent too...
+	but only if the object itself is not already a container and we are
+	responding to a IContainerModifiedEvent (that leads to things bubbling
+	up surprisingly far).
 	"""
+	# IContainerModifiedEvent extends IObjectModifiedEvent
+	if IContainerModifiedEvent.providedBy( event ):
+		return
+
 	try:
 		modified_object.__parent__.updateLastModIfGreater( modified_object.lastModified )
 	except AttributeError:

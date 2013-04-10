@@ -351,12 +351,15 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		entry_ntiid = res.json_body['NTIID']
 		entry_mod_time = res.json_body['Last Modified']
 
+		forum_res = testapp.get( self.forum_pretty_url )
+
 		# (Same user) comments on blog by POSTing a new post
 		data = self._create_comment_data_for_POST()
 
 		res = testapp.post_json( entry_url, data, status=201 )
 
-		self._check_posted_comment( testapp, data, entry_url, entry_ntiid, entry_mod_time, res )
+		self._check_posted_comment( testapp, data, entry_url, entry_ntiid, entry_mod_time, res, forum_res )
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@time_monotonically_increases
@@ -380,7 +383,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		self._check_posted_comment( testapp, data, entry_url, entry_ntiid, entry_mod_time, res )
 
 
-	def _check_posted_comment( self, testapp, data, entry_url, entry_ntiid, entry_mod_time, comment_res ):
+	def _check_posted_comment( self, testapp, data, entry_url, entry_ntiid, entry_mod_time, comment_res, forum_res=None ):
 
 		assert_that( comment_res.status_int, is_( 201 ) )
 		assert_that( comment_res.location, is_( 'http://localhost' + comment_res.json_body['href'] + '/' ) )
@@ -412,7 +415,11 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		# and by ntiid
 		_check_comment_res( self.fetch_by_ntiid( comment_res.json_body['NTIID'] ) )
 
-
+		# None of this changed the modification time of the forum itself
+		if forum_res is not None:
+			forum_res_after_comment = testapp.get( self.forum_pretty_url )
+			assert_that( forum_res_after_comment.last_modified, is_( forum_res.last_modified ) )
+			assert_that( forum_res_after_comment.json_body['Last Modified'], is_( forum_res.json_body['Last Modified'] ) )
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
