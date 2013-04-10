@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import datetime
+import operator
 from abc import ABCMeta, abstractmethod
 
 from ZODB.interfaces import IConnection
@@ -330,14 +331,11 @@ class ForumGetView(GenericGetView):
 
 
 @view_config( context=frm_interfaces.IBoard )
-@view_config( context=frm_interfaces.IForum )
-@view_config( context=frm_interfaces.ICommunityForum )
 @view_config( context=frm_interfaces.ICommunityHeadlineTopic )
-@view_config( context=frm_interfaces.IPersonalBlog )
 @view_config( context=frm_interfaces.IPersonalBlogEntry )
 @view_defaults( name=VIEW_CONTENTS,
 				**_r_view_defaults )
-class ForumContentsGetView(UGDQueryView):
+class ForumsContainerContentsGetView(UGDQueryView):
 	""" The /contents view for the forum objects we are using.
 
 	The contents fully support the same sorting and paging parameters as
@@ -346,7 +344,7 @@ class ForumContentsGetView(UGDQueryView):
 
 	def __init__( self, request ):
 		self.request = request
-		super(ForumContentsGetView,self).__init__( request, the_user=self, the_ntiid=self.request.context.__name__ )
+		super(ForumsContainerContentsGetView,self).__init__( request, the_user=self, the_ntiid=self.request.context.__name__ )
 
 		# The user/community is really the 'owner' of the data
 		self.user = find_interface(  self.request.context, nti_interfaces.IEntity )
@@ -384,19 +382,32 @@ class ForumContentsGetView(UGDQueryView):
 		except TypeError:
 			pass
 
-		return super(ForumContentsGetView,self).__call__()
+		return super(ForumsContainerContentsGetView,self).__call__()
 
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)
 
+
 @view_config( context=frm_interfaces.ICommunityBoard )
-class CommunityBoardContentsGetView(ForumContentsGetView):
+class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
 
 	def __init__( self, request ):
 		# Make sure that if it's going to have a default, it does
 		frm_interfaces.ICommunityForum( request.context.creator, None )
 		super(CommunityBoardContentsGetView,self).__init__( request )
 
+@view_config( context=frm_interfaces.IForum )
+@view_config( context=frm_interfaces.ICommunityForum )
+@view_config( context=frm_interfaces.IPersonalBlog )
+@view_defaults( name=VIEW_CONTENTS,
+				**_r_view_defaults )
+class ForumContentsGetView(ForumsContainerContentsGetView):
+	"""
+	Adds support for sorting by ``NewestPostCreatedTime`` of the individual topics.
+	"""
+
+	SORT_KEYS = ForumsContainerContentsGetView.SORT_KEYS.copy()
+	SORT_KEYS['NewestPostCreatedTime'] = operator.attrgetter('NewestPostCreatedTime')
 
 
 @view_config( context=frm_interfaces.IHeadlineTopic,
