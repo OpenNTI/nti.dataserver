@@ -360,6 +360,38 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 		self._check_posted_comment( testapp, data, entry_url, entry_ntiid, entry_mod_time, res, forum_res )
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@time_monotonically_increases
+	def test_contents_of_forum_can_be_sorted_by_comment_creation_date( self ):
+		testapp = self.testapp
+
+		# Create one topic
+		res = self._POST_topic_entry()
+		entry_url = res.location
+		# comment on it
+		data = self._create_comment_data_for_POST()
+		comment_res1 = testapp.post_json( entry_url, data, status=201 )
+		comment_ts1 = comment_res1.json_body['CreatedTime']
+
+		# Create another topic
+		res = self._POST_topic_entry()
+		assert_that( res.location, is_not( entry_url ) )
+		entry_url = res.location
+		# comment on it
+		data = self._create_comment_data_for_POST()
+		comment_res2 = testapp.post_json( entry_url, data, status=201 )
+		comment_ts2 = comment_res2.json_body['CreatedTime']
+
+		contents_res = testapp.get( self.forum_pretty_contents_url, params={'sortOn': 'NewestPostCreatedTime', 'sortOrder': 'descending'} )
+		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( contents_res.json_body['Items'], contains( has_entry( 'NewestPostCreatedTime', comment_ts2 ),
+																has_entry( 'NewestPostCreatedTime', comment_ts1 ) ) )
+
+		contents_res = testapp.get( self.forum_pretty_contents_url, params={'sortOn': 'NewestPostCreatedTime', 'sortOrder': 'ascending'} )
+		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+		assert_that( contents_res.json_body['Items'], contains( has_entry( 'NewestPostCreatedTime', comment_ts1 ),
+																has_entry( 'NewestPostCreatedTime', comment_ts2 ) ) )
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@time_monotonically_increases
