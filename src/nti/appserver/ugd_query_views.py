@@ -16,7 +16,6 @@ from numbers import Number
 import functools
 import itertools
 import heapq
-import time
 
 from zope import interface
 from zope import component
@@ -40,6 +39,7 @@ from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.externalization.externalization import to_standard_external_last_modified_time
 from nti.externalization.externalization import to_standard_external_created_time
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.ntiids import ntiids
 
@@ -644,12 +644,21 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		batchSize
 			Integer giving the page size. Must be greater than zero.
 			Paging only happens when this is supplied together with
-			``batchStart``
+			``batchStart`` (or ``batchAround`` for those views that support it).
 
 		batchStart
 			Integer giving the index of the first object to return,
 			starting with zero. Paging only happens when this is
 			supplied together with ``batchSize``.
+
+		batchAround
+			String parameter giving the ``OID`` of an object to build a batch (page)
+			around. When you give this parameter, ``batchStart`` is ignored and
+			the found object is centered at one-half the ``batchSize`` in the returned
+			page (assuming there are enough following objects). If the object is not
+			found (after all the filters are applied) then an empty batch is returned.
+			(Even if you supply this value, you should still supply a value for ``batchStart``
+			such as 1).
 
 		:param dict result: The result dictionary that will be returned to the client.
 			Contains the ``Items`` list of all items found. You may add keys to the dictionary.
@@ -764,6 +773,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 
 		# Now merge the lists altogether if we didn't already
+		# `merged` will be an iterable of the sorted tuples: (key, value)
 		if len(sorted_sublists) > 1:
 			merged = heapq.merge( *sorted_sublists )
 		elif sorted_sublists:
@@ -772,6 +782,24 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			merged = ()
 
 		batch_size, batch_start = self._get_batch_size_start()
+		if self.request.params.get( 'batchAround', '' ) and batch_size is not None:
+			batchAround = self.request.params.get( 'batchAround' )
+			# Ok, they have requested that we compute a beginning index for them.
+			# We do this by materializing the list in memory and walking through
+			# to find the index of the requested object.
+			batch_start = None
+			result_list = []
+			for i, key_value in enumerate(merged):
+				# Only keep testing until we find what we need
+				if batch_start is None:
+					if to_external_ntiid_oid( key_value[1] ) == batchAround:
+						batch_start = max( 1, i - (batch_size // 2) - 1 )
+				result_list.append( key_value )
+			merged = result_list
+			if batch_start is None:
+				# Well, we got here without finding the matching value.
+				# So return an empty page.
+				batch_start = len(result_list)
 
 		if batch_size is not None and batch_start is not None:
 			# Ok, reify up to batch_size + batch_start + 2 items from merged
@@ -789,10 +817,17 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			else:
 				result_list = Batch( result_list, batch_start, batch_size )
 				# Insert links to the next and previous batch
+				# NOTE: If our batch_start is not a multiple of the batch_size,
+				# we may not get a previous (if there are fewer than batch_size previous elements?)
+				# Also in that case, our next may be set up to reach the end of the data, overlapping this
+				# one if need be.
 				next_batch, prev_batch = result_list.next, result_list.previous
 				for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
 					if batch is not None and batch != result_list:
 						batch_params = self.request.params.copy()
+						# Pop some things that don't work
+						batch_params.pop( 'batchAround', '' )
+						# TODO: batchBefore
 						batch_params['batchStart'] = batch.start
 						link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
 						link_next = Link( link_next_href, rel=rel )

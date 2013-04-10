@@ -1100,6 +1100,43 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 		testapp.get( str( path ), extra_environ=self._make_extra_environ(user=user4_username ),
 					 status=403 )
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_batch_around(self):
+		ntiids = []
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user(self.extra_environ_default_user)
+
+			for i in range(20):
+				top_n = contenttypes.Note()
+				top_n.applicableRange = contentrange.ContentRangeDescription()
+				top_n.containerId = u'tag:nti:foo'
+				top_n.body = ("Top" + str(i),)
+				user.addContainedObject( top_n )
+				top_n.lastModified = i
+				ntiids.append( top_n.id )
+			top_n_containerid = top_n.containerId
+
+		# Now, ask for a batch around the tenth item. Match the sort-order (lastMod, descending)
+		ntiids.reverse()
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchAround': ntiids[10], 'batchSize': 10, 'batchStart': 1} )
+		assert_that( ugd_res.json_body['Items'], has_length( 10 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		# Because we are in the middle of a batchSize page, we only get a next, one
+		# that consumes all the data (and overlaps this one)
+		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+		assert_that( batch_next, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=10' ) )
+		# We get no prev
+		self.forbid_link_with_rel( ugd_res.json_body, 'batch-prev' )
+
+		expected_ntiids = ntiids[4:14]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+		# If we ask for something that doesn't match, we get nothing
+		no_res = self.fetch_user_ugd( top_n_containerid, params={'batchAround': 'foobar', 'batchSize': 10, 'batchStart': 1} )
+		assert_that( no_res.json_body['Items'], has_length( 0 ) )
+		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
+
 from nti.tests import is_true, is_false
 from nti.appserver.ugd_query_views import _MimeFilter, _ChangeMimeFilter
 
