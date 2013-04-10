@@ -15,6 +15,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import warnings
+import functools
 
 from zope import component
 from zope import interface
@@ -26,24 +28,23 @@ from nti.externalization import integer_strings
 from nti.ntiids import ntiids
 
 
-@interface.implementer(wref_interfaces.IWeakRefToMissing,
-					   wref_interfaces.ICachingWeakRef)
-class WeakRef(object):
+class _AbstractWeakRef(object):
 	"""
 	A weak reference to a content object (generally, anything
 	with an intid). Call this object to return either the
 	object, or if the object has gone away, ``None``.
 
-	Note that this is not a persistent object. It is not mutable (and it's also
-	very tiny), and it has value semantics, so there's very little need to be persistent.
-	This means it's suitable for use in OOSet objects and OOBTree objects as keys.
-
+	Subclasses need to support three properties: ``_entity_id``,
+	``_entity_oid``, and ``_v_entity_cache``. The first is the intid.
+	Because intids can be reused, we also include a backup, the
+	object's OID (if it has one) in the second. This isn't foolproof,
+	but should to pretty good. The third is used for caching.
+	Subclasses will need to decide how to implement ``__getstate__``
+	and ``__setstate__``. If subclasses need a __dict__, they will have
+	to declare that in ``__slots__.``
 	"""
 
-	# Because intids can be reused, we also include a backup,
-	# the object's OID (if it has one). This isn't foolproof, but should to
-	# pretty good
-	__slots__ = ('_entity_id', '_entity_oid', '_v_entity_cache')
+	__slots__ = ()
 
 	def __init__( self, content_object ):
 		self._entity_id = component.getUtility( zc_intid.IIntIds ).getId( content_object )
@@ -51,13 +52,6 @@ class WeakRef(object):
 		# no idea, the resolved object, or False
 		self._v_entity_cache = content_object
 		self._entity_oid = getattr( content_object, '_p_oid', None )
-
-	def __getstate__( self ):
-		return self._entity_id, self._entity_oid
-
-	def __setstate__( self, state ):
-		self._entity_id, self._entity_oid = state
-		self._v_entity_cache = None
 
 	def _cached(self, allow_cached):
 		if allow_cached and self._v_entity_cache is not None:
@@ -108,3 +102,59 @@ class WeakRef(object):
 		eid = integer_strings.to_external_string( eid )
 		# base64 might be nice, but that doesn't play well with ntiids
 		return ntiids.make_ntiid( nttype=ntiids.TYPE_MISSING, specific=eid )
+
+
+@interface.implementer(wref_interfaces.IWeakRefToMissing,
+					   wref_interfaces.ICachingWeakRef)
+class WeakRef(_AbstractWeakRef):
+	"""
+	A weak reference to a content object (generally, anything
+	with an intid). Call this object to return either the
+	object, or if the object has gone away, ``None``.
+
+	Note that this is not a persistent object. It is not mutable (and
+	it's also very tiny), and it has value semantics, so there's very
+	little need to be persistent. This means it's suitable for use in
+	OOSet objects and OOBTree objects as keys (if subclassed to provide
+	total ordering!)
+	"""
+
+	__slots__ = ('_entity_id', '_entity_oid', '_v_entity_cache')
+
+	def __getstate__( self ):
+		return self._entity_id, self._entity_oid
+
+	def __setstate__( self, state ):
+		self._entity_id, self._entity_oid = state
+		self._v_entity_cache = None
+
+	# We are not orderable. Hopefully there is no data like this in the real
+	# world, but we did have tests relying on it. Try to catch it here,
+	# doing what python would have done itself.
+	def __lt__(self, other):
+		warnings.warn("Default WeakRef (to %s) is not totally orderable" % type(self()), stacklevel=2)
+		return id(self) < id(other)
+
+	def __gt__(self, other):
+		warnings.warn("Default WeakRef (to %s) is not totally orderable" % type(self()), stacklevel=2)
+		return id(self) > id(other)
+
+@functools.total_ordering
+class ArbitraryOrderableWeakRef(WeakRef):
+	"""
+	A subclass of :class:`WeakRef` that is orderable in a completely arbitrary
+	way (based simply on intids).
+	"""
+
+	def __lt__(self,other):
+		try:
+			return (self._entity_id, self._entity_oid) < (other._entity_id, other._entity_oid)
+		except AttributeError:
+			return NotImplemented
+
+
+	def __gt__(self,other):
+		try:
+			return (self._entity_id, self._entity_oid) > (other._entity_id, other._entity_oid)
+		except AttributeError:
+			return NotImplemented

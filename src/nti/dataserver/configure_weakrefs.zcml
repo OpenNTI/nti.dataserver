@@ -2,7 +2,7 @@
 <configure xmlns="http://namespaces.zope.org/zope"
 		   i18n_domain="zope">
 
-	<adapter factory="nti.intid.wref.WeakRef"
+	<adapter factory="nti.intid.wref.ArbitraryOrderableWeakRef"
 			 provides="nti.wref.interfaces.IWeakRef"
 			 for=".interfaces.IModeledContent" />
 
