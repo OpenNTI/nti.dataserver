@@ -19,7 +19,6 @@ from ._compat import Implicit
 from . import _CreatedNamedNTIIDMixin
 from . import _containerIds_from_parent
 
-from nti.ntiids import ntiids
 from nti.dataserver import containers
 from nti.dataserver import datastructures
 from nti.dataserver import sharing
@@ -27,10 +26,11 @@ from nti.dataserver import sharing
 from zope.schema.fieldproperty import FieldProperty
 from nti.utils.schema import AdaptingFieldProperty
 from nti.utils.schema import AcquisitionFieldProperty
-from nti.utils.property import CachedProperty
 
 from . import interfaces as for_interfaces
+from nti.wref import interfaces as wref_interfaces
 from zope.annotation import interfaces as an_interfaces
+from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.container.interfaces import INameChooser
 
 from zope.container.contained import ContainerSublocations
@@ -46,11 +46,48 @@ class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 
 	id, containerId = _containerIds_from_parent()
 
+	@property
+	def NewestPostCreatedTime(self):
+		post = self.NewestPost
+		if post is not None:
+			return post.createdTime
+		return 0.0
+
+	_newestPostWref = None
+	def _get_NewestPost(self):
+		if self._newestPostWref is None and self.PostCount:
+			# Lazily finding one
+			newest_created = 0.0
+			newest_post = None
+			for post in self.values():
+				if post.createdTime > newest_created:
+					newest_post = post
+			if newest_post is not None:
+				self.NewestPost = newest_post
+
+		return self._newestPostWref() if self._newestPostWref is not None else None
+	def _set_NemestPost(self,post):
+		self._newestPostWref = wref_interfaces.IWeakRef(post)
+	NewestPost = property(_get_NewestPost, _set_NemestPost)
+
+
 @interface.implementer(for_interfaces.ITopic, an_interfaces.IAttributeAnnotatable)
 class Topic(_AbstractUnsharedTopic,
 			sharing.AbstractReadableSharedWithMixin):
 	pass
 
+@component.adapter(for_interfaces.IPost,IObjectAddedEvent)
+def post_added_to_topic( post, event ):
+	"""
+	Watch for a post to be added to a topic and keep track of the
+	creation time of the latest post.
+
+	The ContainerModifiedEvent does not give us the object (post)
+	and it also can't tell us if the post was added or removed.
+	"""
+
+	if for_interfaces.ITopic.providedBy(post.__parent__):
+		post.__parent__.NewestPost = post
 
 @interface.implementer(for_interfaces.IHeadlineTopic)
 class HeadlineTopic(Topic):

@@ -3,7 +3,7 @@
 		   i18n_domain="zope">
 
 	<adapter factory="nti.intid.wref.WeakRef"
-			 provides=".interfaces.IWeakRef"
+			 provides="nti.wref.interfaces.IWeakRef"
 			 for=".interfaces.IModeledContent" />
 
 </configure>

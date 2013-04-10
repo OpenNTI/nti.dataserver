@@ -23,6 +23,9 @@ from hamcrest import all_of
 from hamcrest import is_not
 from hamcrest import has_entries
 from hamcrest import starts_with
+from hamcrest import not_none
+from hamcrest import none
+from hamcrest import has_property
 from nose.tools import assert_raises
 import nti.tests
 
@@ -36,13 +39,36 @@ from nti.tests import aq_inContextOf
 from zope.container.interfaces import InvalidItemType, InvalidContainerType, INameChooser
 from nti.tests import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
-from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry, IGeneralHeadlineTopic
+from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry, IGeneralHeadlineTopic, IPost
 from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralHeadlineTopic
 from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost, GeneralHeadlinePost
 
 from ExtensionClass import Base
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments', 'nti.dataserver') )
+def setUpModule():
+	nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments', 'nti.dataserver') )
+	# Set up weak refs
+	from nti.intid import utility as intid_utility
+	import zope.intid
+	import zc.intid
+	import BTrees
+	from zope import component, interface
+	from zope.keyreference.interfaces import IKeyReference
+	intids = intid_utility.IntIds('_ds_intid', family=BTrees.family64 )
+	intids.__name__ = '++etc++intids'
+	component.provideUtility( intids, provides=zope.intid.IIntIds )
+	# Make sure to register it as both types of utility, one is a subclass of the other
+	component.provideUtility( intids, provides=zc.intid.IIntIds )
+
+	@interface.implementer(IKeyReference)
+	@component.adapter(IPost)
+	class CommentKeyRef(object):
+		def __init__( self, context ):
+			pass
+
+	component.provideAdapter(CommentKeyRef)
+	component.provideAdapter(CommentKeyRef, adapts=(IPersonalBlogEntry,) )
+
 tearDownModule = nti.tests.module_teardown
 
 def test_topic_interfaces():
@@ -136,12 +162,26 @@ def test_story_topic_externalizes():
 								  'Class', 'HeadlineTopic',
 								  'MimeType', 'application/vnd.nextthought.forums.headlinetopic',
 								  'PostCount', 0,
+								  'NewestPost', none(),
 								  'sharedWith', is_empty() ),
 					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
 
+	# With a comment
 	post['k'] = Post()
+	post['k'].lastModified = 42
+	# (Both cached in the ref)
+	assert_that( post, has_property( '_newestPostWref', not_none() ) )
 	assert_that( post,
-				 externalizes( has_entry( 'PostCount', 1 ) ) )
+				 externalizes( has_entries( 'PostCount', 1,
+											'NewestPost', has_entries('Class','Post',
+																	  'Last Modified', 42 ) ) ) )
+	# and on-demand
+	del post._newestPostWref
+	assert_that( post, has_property( '_newestPostWref', none() ) )
+	assert_that( post,
+				 externalizes( has_entries( 'PostCount', 1,
+											'NewestPost', has_entries('Class','Post',
+																	  'Last Modified', 42 ) ) ) )
 
 
 
@@ -162,7 +202,9 @@ def test_blog_topic_externalizes():
 
 	post.headline = PersonalBlogEntryPost()
 	post['k'] = PersonalBlogComment()
+	post['k'].lastModified = 42
 	assert_that( post,
 				 externalizes( has_entries(
 								'headline', has_entry( 'Class', 'PersonalBlogEntryPost' ),
-					 			'PostCount', 1 ) ) )
+					 			'PostCount', 1,
+								'NewestPost', has_entry('Last Modified', 42) ) ) )
