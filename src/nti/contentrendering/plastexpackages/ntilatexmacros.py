@@ -213,6 +213,9 @@ class textsurd(Base.Command):
 class textperp(Base.Command):
 	unicode = u'\u22A5'
 
+class textinfty(Base.Command):
+	unicode = u'\u221E'
+
 class textprime(Base.Command):
 	unicode = u'\u2032'
 
