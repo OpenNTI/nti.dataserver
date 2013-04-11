@@ -13,7 +13,7 @@ from nti.utils._compat import aq_base
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.dataserver.interfaces import IUser, ICommunity, IUnscopedGlobalCommunity, IDefaultPublished
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum, ITopic
 from zope.container.interfaces import ILocation
 
 from nti.appserver._util import AbstractTwoStateViewLinkDecorator
@@ -174,6 +174,17 @@ class SecurityAwareForumTopicCountDecorator(object):
 		will have to be done about this. We rationalize its existence
 		now by assuming our other scalability problems are worse and we'll
 		have to fix them all eventually; this won't be an issue in the short term.
+
+	Also adjusts the ``NewestDescendant`` field for the same reason, setting it to
+	``None`` if it shouldn't be visible. This is something of a worse hack
+	as there is not a fallback object to put in its place (that would require searching
+	all topic posts, which I'm not willing to do); since we are already
+	walking through topics, we simply through the newest topic there. However,
+	sorting is still based on the newest descendant, whatever it may be. In
+	real world practice, this is unlikely to be either noticed (if there is *any*
+	posting activity at all as there will almost always be a newer comment)
+	or a problem. (To minimize this, we use the ``lastModified`` time of the topic,
+	not its created time to determine what to fill in.)
 	"""
 
 	__metaclass__ = SingletonDecorator
@@ -185,7 +196,26 @@ class SecurityAwareForumTopicCountDecorator(object):
 
 		request = get_current_request()
 		i = 0
+		newest_topic = None
+		newest_topic_time = -1.0
+		# We search if it's anything provided by the newest
+		# descendant that's not visible; the case of a private
+		# newest comment only occurs when a person has commented
+		# within their own unpublished topic and is not worth
+		# worrying about.
+		# (TODO: Do we need to aq wrap this?)
+		_newest_descendant = context.NewestDescendant
+		need_replacement_descendant = _newest_descendant is not None and not is_readable(_newest_descendant,request)
 		for x in context.values():
 			if is_readable(x,request):
 				i += 1
+				if need_replacement_descendant and x.lastModified > newest_topic_time:
+					newest_topic = x
+					newest_topic_time = x.lastModified
 		mapping['TopicCount'] = i
+
+		if need_replacement_descendant:
+			mapping['NewestDescendant'] = None
+			if newest_topic is not None:
+				mapping['NewestDescendant'] = newest_topic
+				mapping['NewestDescendantCreatedTime'] = newest_topic.createdTime
