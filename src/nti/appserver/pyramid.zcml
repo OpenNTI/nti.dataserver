@@ -64,7 +64,8 @@
 	<pyramid:scan package='.invitation_views' />
 	<pyramid:scan package='.dfl_views' />
 	<pyramid:scan package='.user_export_views' />
-
+	<pyramid:scan package='.store_views' />
+	
 	<pyramid:scan package=".link_providers.views" />
-
+	
 </configure>
