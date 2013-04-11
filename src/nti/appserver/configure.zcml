@@ -343,9 +343,10 @@
 	<include package="." file="configure_site_policy_testmathcounts.zcml" />
 
 	<include package="." file="configure_invitations.zcml" />
-
+	<include package="." file="configure_store.zcml" />
+	
 	<include package=".forums" />
-
+	
 
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"
