@@ -403,6 +403,12 @@ class TestLibraryEntryAclProvider(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
 		assert_that( acl_prov, permits( "OtherUser", auth.ACT_CREATE ) )
 
+		# The same applies if it is at the 'default' location
+		os.rename( self.acl_path + '.1', self.acl_path + '.default' )
+		acl_prov = nti_interfaces.IACLProvider( context )
+		assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
+		assert_that( acl_prov, permits( "OtherUser", auth.ACT_CREATE ) )
+
 
 
 from zope.security.permission import Permission

@@ -15,6 +15,7 @@ from zope import interface
 from zope import component
 
 from zope.cachedescriptors.property import Lazy
+from zope.interface.interfaces import ComponentLookupError
 
 import pyramid.security
 
@@ -695,6 +696,9 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 		self.context = context
 
 	_acl_sibling_entry_name = '.nti_acl'
+	#: If defined by a subclass, this will be checked
+	#: when `_acl_sibling_entry_name` does not exist.
+	_acl_sibling_fallback_name = None
 	_default_allow = True
 	_add_default_deny_to_acl_from_file = False
 
@@ -703,6 +707,8 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 	@Lazy
 	def __acl__(self):
 		acl_string = self.context.read_contents_of_sibling_entry( self._acl_sibling_entry_name )
+		if acl_string is None and self._acl_sibling_fallback_name is not None:
+			acl_string = self.context.read_contents_of_sibling_entry( self._acl_sibling_fallback_name )
 		if acl_string is not None:
 			try:
 				__acl__ = self._acl_from_string(self.context, acl_string )
@@ -714,7 +720,7 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 					raise ValueError( "ACL file had no valid contents." )
 				if self._add_default_deny_to_acl_from_file:
 					__acl__.append( _ace_denying_all( 'Default Deny After File ACL' ) )
-			except (ValueError,AssertionError,TypeError):
+			except (ValueError,AssertionError,TypeError,ComponentLookupError):
 				logger.exception( "Failed to read acl from %s/%s; denying all access.", self.context, self._acl_sibling_entry_name )
 				__acl__ = _ACL( (_ace_denying_all( 'Default Deny Due to Parsing Error' ),) )
 		elif self._default_allow:
@@ -759,9 +765,20 @@ class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEn
 @component.adapter(content_interfaces.IDelimitedHierarchyContentUnit)
 class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntryACLProvider):
 	"""
-	For content units, we look for an acl file matching their ordinal path from
-	the containing content package (e.g., first section of first chapter uses .nti_acl.1.1).
-	If one does not exist, we have no opinion on the ACL and inherit it from our parent.
+	For content units, we look for an acl file matching their ordinal
+	path from the containing content package (e.g., first section of
+	first chapter uses ``.nti_acl.1.1``). If such a file does not exist,
+	we have no opinion on the ACL and inherit it from our parent. If
+	such a file does exist but is empty, it is treated as if it denied
+	all access; this is considered a mistake.
+
+	As a special case, for those items that are directly beneath a
+	content package (e.g. chapters), if there is no specific file, we
+	will use a file named ``.nti_acl.default``. This permits easily
+	granting access to the whole content package (through
+	``.nti_acl``), letting it show up in libraries, etc, generally
+	denying access to children (through ``.nti_acl.default``), but
+	providing access to certain subunits (through the ordinal files).
 	"""
 
 	_default_allow = False
@@ -778,6 +795,9 @@ class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntry
 		ordinals.reverse()
 		path = '.'.join( [str(i) for i in ordinals] )
 		self._acl_sibling_entry_name = _AbstractDelimitedHierarchyEntryACLProvider._acl_sibling_entry_name + '.' + path
+
+		if len(ordinals) == 1: # a "chapter"; we don't do this at every level for efficiency
+			self._acl_sibling_fallback_name = _AbstractDelimitedHierarchyEntryACLProvider._acl_sibling_entry_name + '.default'
 
 @component.adapter(nti_interfaces.IFriendsList)
 class _FriendsListACLProvider(_CreatedACLProvider):
