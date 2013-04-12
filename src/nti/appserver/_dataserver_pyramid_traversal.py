@@ -38,7 +38,7 @@ def root_resource_factory( request ):
 
 	:return: An :class:`IRootFolder"
 	"""
-	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
+	dataserver = component.getUtility( nti_interfaces.IDataserver )
 	root = dataserver.root_folder
 	return root
 
@@ -51,7 +51,7 @@ def dataserver2_root_resource_factory( request ):
 	:return: An :class:`IDataserverFolder`
 	"""
 
-	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
+	dataserver = component.getUtility( nti_interfaces.IDataserver )
 	return dataserver.dataserver_folder
 
 def users_root_resource_factory( request ):
@@ -60,7 +60,7 @@ def users_root_resource_factory( request ):
 	portion of the URL.
 	"""
 
-	dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
+	dataserver = component.getUtility( nti_interfaces.IDataserver )
 	return dataserver.users_folder
 
 
@@ -135,7 +135,7 @@ class _ObjectsContainerResource(_ContainerResource):
 		super(_ObjectsContainerResource,self).__init__( context, request, name=name or 'Objects' )
 
 	def traverse( self, key, remaining_path ):
-		ds = self.request.registry.getUtility(nti_interfaces.IDataserver)
+		ds = component.getUtility(nti_interfaces.IDataserver)
 		result = self._getitem_with_ds( ds, key )
 		if result is None: # pragma: no cover
 			raise loc_interfaces.LocationError( key )
@@ -188,7 +188,7 @@ class _PseudoTraversableMixin(object):
 			if interface.interfaces.IInterface.providedBy( value ):
 				# TODO: In some cases, we'll need to proxy this to add the name?
 				# And/Or ACL?s
-				resource = self.request.registry.getUtility( value )
+				resource = component.getUtility( value )
 			else:
 				resource = self._pseudo_classes_[key]( self.context, self.request )
 
@@ -201,9 +201,13 @@ class _PseudoTraversableMixin(object):
 @component.adapter(nti_interfaces.IDataserverFolder, pyramid.interfaces.IRequest)
 class Dataserver2RootTraversable(_PseudoTraversableMixin):
 	"""
-	A traversable for the root folder in the dataserver, providing access to a few
-	of the specialized sub-folders, but not all of them, and providing access to the other special
-	implied resources (Objects and NTIIDs).
+	A traversable for the root folder in the dataserver, providing
+	access to a few of the specialized sub-folders, but not all of
+	them, and providing access to the other special implied resources
+	(Objects and NTIIDs).
+
+	If none of those things work, we look for an :class:`.IPathAdapter` to
+	the request and context having the given name.
 	"""
 
 	# TODO: The implied resources could (should) actually be persistent. That way
@@ -218,7 +222,11 @@ class Dataserver2RootTraversable(_PseudoTraversableMixin):
 	def traverse( self, key, remaining_path ):
 		if key in self.allowed_keys:
 			return self.context[key] # Better be there. Otherwise, KeyError, which fails traversal
-		return self._pseudo_traverse( key, remaining_path )
+
+		try:
+			return self._pseudo_traverse( key, remaining_path )
+		except KeyError:
+			return adapter_request( self.context, self.request ).traverse( key, remaining_path )
 
 
 
@@ -318,7 +326,7 @@ class UserTraversable(_PseudoTraversableMixin):
 		elif cont is not None:
 			raise loc_interfaces.LocationError( key ) # It exists, but you cannot access it at this URL
 		else:
-			if self.request.registry.adapters.lookup( (IViewClassifier, self.request.request_iface, interface.providedBy( self.context )),
+			if component.getSiteManager().adapters.lookup( (IViewClassifier, self.request.request_iface, interface.providedBy( self.context )),
 													  IView,
 													  name=key ):
 				# We have a specific view for this location. Therefore, do not try to pretend it
