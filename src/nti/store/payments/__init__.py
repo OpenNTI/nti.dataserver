@@ -20,3 +20,17 @@ class _BasePaymentProcessor(object):
 
     def apply_coupon(self, amount, coupon=None):
         return amount
+
+def is_valid_amount(amount):
+    try:
+        amount = float(amount)
+        return amount > 0
+    except:
+        return False
+
+def is_valid_pve_int(value):
+    try:
+        value = float(value)
+        return value > 0
+    except:
+        return False
