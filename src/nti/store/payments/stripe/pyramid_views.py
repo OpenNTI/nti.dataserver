@@ -22,7 +22,7 @@ from ... import purchase_attempt
 from ... import purchase_history
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
-from ..pyramid_views import is_valid_amount, is_valid_pve_int
+from .. import is_valid_amount, is_valid_pve_int
 
 class GetStripeConnectKeyView(object):
 	processor = 'stripe'
@@ -44,7 +44,7 @@ class ValidateStripeCouponView(GetStripeConnectKeyView):
 		stripe_key = super(ValidateStripeCouponView, self).__call__()
 
 		request = self.request
-		coupon = request.params.get('coupon', request.params.get('code', None))
+		code = request.params.get('coupon', request.params.get('code', None))
 		amount = request.params.get('amount')
 		if amount is not None and not is_valid_amount(amount):
 			raise hexc.HTTPBadRequest(detail='invalid amount')
@@ -53,17 +53,17 @@ class ValidateStripeCouponView(GetStripeConnectKeyView):
 
 		# stripe defines an 80 sec timeout for http requests
 		# at this moment we are to wait for coupon validation
-		coupon = manager.get_coupon(coupon, api_key=stripe_key.PrivateKey)
+		coupon = manager.get_coupon(code, api_key=stripe_key.PrivateKey)
 		validated_coupon = manager.validate_coupon(coupon, api_key=stripe_key.PrivateKey) if coupon is not None else False
 		if validated_coupon:
 			result = LocatedExternalDict()
 			if amount:
 				amount = manager.apply_coupon(float(amount), coupon)
 				result['Amount'] = amount
-			result['Coupon'] = coupon
+			result['Coupon'] = code
 			return result
-		else:
-			raise hexc.HTTPNotFound(detail="Invalid coupon")
+
+		raise hexc.HTTPNotFound(detail="Invalid coupon")
 
 class StripePaymentView(GetStripeConnectKeyView):
 
@@ -91,7 +91,7 @@ class StripePaymentView(GetStripeConnectKeyView):
 
 		quantity = request.params.get('quantity', None)
 		if quantity and not is_valid_pve_int(quantity):
-			raise hexc.HTTPBadRequest()
+			raise hexc.HTTPBadRequest(detail="Invalid quantity")
 
 		description = description or "%s's payment for '%r'" % (username, items)
 
