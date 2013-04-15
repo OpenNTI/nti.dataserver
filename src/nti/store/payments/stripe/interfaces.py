@@ -92,3 +92,7 @@ class IStripeConnectKey(interface.Interface):
 	StripeUserID = nti_schema.ValidTextLine(title="String user id", required=False)
 	RefreshToken = nti_schema.ValidTextLine(title="Refresh token", required=False)
 	PublicKey = nti_schema.ValidTextLine(title="The private key", required=False)
+
+class IStripeCoupon(interface.Interface):
+	"""marker interface for a stripe coupon"""
+

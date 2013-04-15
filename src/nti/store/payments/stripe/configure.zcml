@@ -10,6 +10,10 @@
 
 	<include package="." file="meta.zcml" />
 	
+	<class class="stripe.Coupon">
+		<implements interface=".interfaces.IStripeCoupon" />
+	</class>
+	
 	<subscriber handler=".stripe_processor.stripe_customer_created" />
 	<subscriber handler=".stripe_processor.stripe_customer_deleted" />
 	<subscriber handler=".stripe_processor.register_stripe_token" />
@@ -27,6 +31,7 @@
 			 provides=".interfaces.IStripePaymentProcessor"
 			 name="stripe" />
 
+	<adapter factory=".externalization.StripeCouponExternalizer" />
 	<adapter factory=".externalization.StripeConnectKeyExternal" />
 	
 	<stripe:registerStripeKey

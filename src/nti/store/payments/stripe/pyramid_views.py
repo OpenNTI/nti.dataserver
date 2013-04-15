@@ -59,8 +59,8 @@ class ValidateStripeCouponView(GetStripeConnectKeyView):
 			result = LocatedExternalDict()
 			if amount:
 				amount = manager.apply_coupon(float(amount), coupon)
-				result['Amount'] = amount
-			result['Coupon'] = code
+				result['NewAmount'] = amount
+			result['Coupon'] = coupon
 			return result
 
 		raise hexc.HTTPNotFound(detail="Invalid coupon")
