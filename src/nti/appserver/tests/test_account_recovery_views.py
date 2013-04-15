@@ -215,24 +215,62 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 			created( profile ) # Fire events on the profile to get it in the index
 			added( profile )
 			profile.email = 'jason.madden@nextthought.com'
-			profile.contact_email = 'jason.madden@nextthought.com'
+			profile.contact_email = 'other.user@nextthought.com'
 			modified( profile )
 			modified( user )
 
 
 		app = TestApp( self.app )
 
+		# Find it via an actual email match
 		path = b'/dataserver2/logon.forgot.passcode'
 		data = {'email': 'jason.madden@nextthought.com',
 				'username': username,
 				'success': 'http://localhost/place'}
+		__traceback_info__ = data
 		app.post( path, data, status=204 )
 
-		mailer = component.getUtility( ITestMailDelivery )
-		assert_that( mailer.queue, has_length( 1 ) )
-		msg = mailer.queue[0]
+		def _check_mail():
+			mailer = component.getUtility( ITestMailDelivery )
+			assert_that( mailer.queue, has_length( 1 ) )
+			msg = mailer.queue[0]
 
-		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) ) )
+			assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) ) )
+			del mailer.queue[:]
+
+		_check_mail()
+
+		# Find it via a contact email match
+		data = {'email': 'other.user@nextthought.com',
+				'username': username,
+				'success': 'http://localhost/place'}
+		__traceback_info__ = data
+		app.post( path, data, status=204 )
+		_check_mail()
+
+		# If we pass in an inconsistent case for the email, we still find it
+		data = {'email': 'JASON.madden@nextthought.com',
+				'username': username,
+				'success': 'http://localhost/place'}
+		__traceback_info__ = data
+		app.post( path, data, status=204 )
+		_check_mail()
+
+		# Likewise for the contact email
+		data = {'email': 'other.USER@nextthought.com',
+				'username': username,
+				'success': 'http://localhost/place'}
+		__traceback_info__ = data
+		app.post( path, data, status=204 )
+		_check_mail()
+
+		# And for the username too
+		data = {'email': 'JASON.madden@nextthought.com',
+				'username': username.upper(),
+				'success': 'http://localhost/place'}
+		__traceback_info__ = data
+		app.post( path, data, status=204 )
+		_check_mail()
 
 
 	@WithSharedApplicationMockDS

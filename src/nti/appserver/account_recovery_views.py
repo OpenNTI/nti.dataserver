@@ -140,6 +140,7 @@ def forgot_passcode_view(request):
 	username = username.strip()
 	if not username:
 		return hexc.HTTPBadRequest(detail="Must provide username")
+	username = username.lower() # normalize
 
 	success_redirect_value = request.params.get( 'success' )
 	if not success_redirect_value:
@@ -204,7 +205,7 @@ def find_users_with_email( email, dataserver, username=None, match_info=False ):
 
 	:param basestring username: If given, we will only examine
 		a user with this name (and will return a sequence of length 0 or 1); if found,
-		only an IUser will be in the sequence.
+		only an :class:`.IUser` will be in the sequence.
 
 	:param bool match_info: If given and True, then the result will be a sequence of
 		`tuple` objects, first the user and then the name of the field that matched.
