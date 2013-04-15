@@ -105,5 +105,5 @@ class StripePaymentView(GetStripeConnectKeyView):
 									 currency=currency, coupon=coupon, api_key=stripe_key.PrivateKey)
 		gevent.spawn(process_pay)
 
-		purchase = purchase_history.get_purchase_attempt(purchase_id)
+		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		return purchase
