@@ -13,12 +13,9 @@ from zope import component
 
 from nti.appserver.invitations.invitation import JoinEntitiesInvitation
 
-from nti.dataserver import interfaces as nti_interfaces
-
 from nti.externalization import integer_strings
 
 from . import MessageFactory as _
-from .purchase_history import get_purchase_attempt
 from ._content_roles import _add_users_content_roles
 
 class InvitationCapacityExceeded(Exception):
@@ -57,11 +54,3 @@ def create_store_invitation(purchase, code=None):
 	result = _StoreEntityInvitation(invitation_code, purchase)
 	result.creator = purchase.creator
 	return result
-
-def _consume_purchase_token(purchase_id, username=None):
-	result = []
-	def func():
-		purchase = get_purchase_attempt(purchase_id, username)
-		result.append(purchase.consume_token())
-	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	return result[0]
