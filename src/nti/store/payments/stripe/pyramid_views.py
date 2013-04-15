@@ -16,6 +16,7 @@ from zope import component
 from pyramid import httpexceptions as hexc
 from pyramid.security import authenticated_userid
 
+# from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
 from ... import purchase_attempt
@@ -104,4 +105,6 @@ class StripePaymentView(GetStripeConnectKeyView):
 			manager.process_purchase(purchase_id=purchase_id, username=username, token=token, amount=amount,
 									 currency=currency, coupon=coupon, api_key=stripe_key.PrivateKey)
 		gevent.spawn(process_pay)
+
+		purchase = purchase_history.get_purchase_attempt(purchase_id)
 		return purchase
