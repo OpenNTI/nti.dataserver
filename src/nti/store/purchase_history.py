@@ -166,13 +166,12 @@ def get_pending_purchase_for(user, items):
 	return result
 
 def register_purchase_attempt(username, items, processor, quantity=None, state=None, description=None, start_time=None):
-	result = []
 	def func():
 		user = _get_user(username)
 		hist = store_interfaces.IPurchaseHistory(user)
 		purchase = create_purchase_attempt(items=items, processor=processor, quantity=quantity,
 										   state=state, description=description, start_time=start_time)
 		hist.register_purchase(purchase)
-		result.append(purchase.id)
-	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	return result[0]
+		return purchase.id
+	result = component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
+	return result
