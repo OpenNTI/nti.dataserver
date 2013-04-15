@@ -19,7 +19,6 @@ from pyramid.security import authenticated_userid
 # from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
-from ... import purchase_attempt
 from ... import purchase_history
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
@@ -96,9 +95,8 @@ class StripePaymentView(GetStripeConnectKeyView):
 
 		description = description or "%s's payment for '%r'" % (username, items)
 
-		purchase = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor,
-															description=description, quantity=quantity)
-		purchase_id = purchase_history.register_purchase_attempt(username, purchase)
+		purchase_id = purchase_history.register_purchase_attempt(username, items=items, processor=self.processor,
+																 description=description, quantity=quantity)
 
 		def process_pay():
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)

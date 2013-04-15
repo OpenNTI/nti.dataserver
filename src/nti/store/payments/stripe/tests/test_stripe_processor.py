@@ -16,7 +16,6 @@ from zope.annotation import IAnnotations
 
 from nti.dataserver.users import User
 
-from .... import purchase_attempt
 from .... import purchase_history
 from .. import interfaces as stripe_interfaces
 from .... import interfaces as store_interfaces
@@ -83,8 +82,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			items = ('xyz book',)
-			pa = purchase_attempt.create_purchase_attempt(items=items, processor=self.manager.name, description="my charge")
-			purchase_id = purchase_history.register_purchase_attempt(username, pa)
+			purchase_id = purchase_history.register_purchase_attempt(username, items=items, processor=self.manager.name, description="my charge")
 			assert_that(purchase_id, is_not(None))
 
 		tid = self.manager.create_card_token(number="5105105105105100",
@@ -193,8 +191,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			items = ('xyz book',)
-			pa = purchase_attempt.create_purchase_attempt(items=items, processor=self.manager.name, description="my charge")
-			purchase_id = purchase_history.register_purchase_attempt(username, pa)
+			purchase_id = purchase_history.register_purchase_attempt(username, items=items, processor=self.manager.name, description="my charge")
 
 		# missing token
 		with mock_dataserver.mock_db_trans(ds):
