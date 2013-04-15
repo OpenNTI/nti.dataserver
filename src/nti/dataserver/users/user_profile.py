@@ -122,6 +122,9 @@ class UserProfile(FriendlyNamed):
 	username = property( lambda self: self.context.username )
 
 def make_password_recovery_email_hash( email ):
+	if not email:
+		raise ValueError("Must provide email")
+	email = email.lower() # ensure casing is consistent
 	return unicode( hashlib.sha1( email ).hexdigest() )
 
 @component.adapter(nti_interfaces.IUser)
