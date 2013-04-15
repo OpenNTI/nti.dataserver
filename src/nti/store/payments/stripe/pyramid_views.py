@@ -61,6 +61,7 @@ class ValidateStripeCouponView(GetStripeConnectKeyView):
 				amount = manager.apply_coupon(float(amount), coupon)
 				result['NewAmount'] = amount
 			result['Coupon'] = coupon
+			result['Provider'] = stripe_key.Alias
 			return result
 
 		raise hexc.HTTPNotFound(detail="Invalid coupon")
