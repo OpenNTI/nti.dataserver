@@ -15,7 +15,8 @@ class StripeException(Exception):
 
 class StripeIO(object):
 
-	def _do_stripe_operation(self,func, *args, **kwargs):
+	@classmethod
+	def _do_stripe_operation(cls, func, *args, **kwargs):
 		try:
 			result = func(*args, **kwargs)
 			return result
@@ -54,7 +55,8 @@ class StripeIO(object):
 			return True
 		return False
 
-	def create_stripe_token(self, customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
+	@classmethod
+	def create_stripe_token(cls, customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
 		if not customer_id:
 			cvc = str(cvc) if cvc else None
 			cc = {	'number': number, 'exp_month':exp_month,
@@ -70,12 +72,13 @@ class StripeIO(object):
 		else:
 			data = {'customer': customer_id}
 
-		token = self._do_stripe_operation(stripe.Token.create, api_key=api_key, **data)
+		token = cls._do_stripe_operation(stripe.Token.create, api_key=api_key, **data)
 		return token
 
-	def get_stripe_token(self, token, api_key=None):
+	@classmethod
+	def get_stripe_token(cls, token, api_key=None):
 		try:
-			token = self._do_stripe_operation(stripe.Token.retrieve,token, api_key=api_key)
+			token = cls._do_stripe_operation(stripe.Token.retrieve, token, api_key=api_key)
 			return token
 		except stripe.InvalidRequestError:
 			return None
