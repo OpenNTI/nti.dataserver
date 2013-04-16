@@ -8,7 +8,6 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import sys
-import struct
 
 import BTrees
 from BTrees.OOBTree import OOTreeSet
@@ -29,12 +28,11 @@ from nti.ntiids import ntiids
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.zodb.containers import time_to_64bit_int
+
 from . import to_frozenset
 from . import interfaces as store_interfaces
 from .purchase_attempt import create_purchase_attempt
-
-def _time_to_64bit_int(value):
-	return struct.unpack(b'!Q', struct.pack(b'!d', value))[0]
 
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(store_interfaces.IPurchaseHistory)
@@ -68,14 +66,14 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 
 	def register_purchase(self, purchase):
 		start_time = purchase.StartTime
-		self.purchases[_time_to_64bit_int(start_time)] = purchase
+		self.purchases[time_to_64bit_int(start_time)] = purchase
 		locate(purchase, self, repr(purchase))
 		lifecycleevent.added(purchase)
 
 	add_purchase = register_purchase
 
 	def remove_purchase(self, purchase):
-		if self.purchases.pop(_time_to_64bit_int(purchase.StartTime), None):
+		if self.purchases.pop(time_to_64bit_int(purchase.StartTime), None):
 			lifecycleevent.removed(purchase)
 
 	@classmethod
@@ -100,8 +98,8 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 		return None
 
 	def get_purchase_history(self, start_time=None, end_time=None):
-		start_time = _time_to_64bit_int(start_time or 0)
-		end_time = _time_to_64bit_int(end_time or sys.maxint)
+		start_time = time_to_64bit_int(start_time or 0)
+		end_time = time_to_64bit_int(end_time or sys.maxint)
 		for t, p in self.purchases.iteritems():
 			if t > end_time:
 				break
