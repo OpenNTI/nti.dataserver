@@ -7,7 +7,9 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import re
 import time
+import base64
 import functools
 from datetime import datetime
 
@@ -20,6 +22,8 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 from nti.dataserver.datastructures import ModDateTrackingObject
 
 from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.ntiids.ntiids import make_ntiid
 
 from nti.utils.schema import SchemaConfigured
 
@@ -141,10 +145,18 @@ def create_base_purchase_attempt(purchase):
 								 ErrorMessage=purchase.ErrorMessage, Synced=purchase.Synced)
 	return result
 
-def create_purchase_attempt(items, processor, quantity=None, state=None, description=None, start_time=None):
+def create_purchase_ntiid(items, processor, start_time=None):
 	items = to_frozenset(items)
 	start_time = start_time if start_time else time.time()
+	specific = base64.b64encode(str(hash(items)))
+	specific = re.sub("[=,\n]", '', specific)
+	result = make_ntiid(start_time, specific=specific, provider=processor, nttype='purchase')
+	return result
+
+def create_purchase_attempt(items, processor, quantity=None, state=None, description=None, start_time=None):
+	items = to_frozenset(items)
 	state = state or store_interfaces.PA_STATE_UNKNOWN
+	start_time = start_time if start_time else time.time()
 	result = PurchaseAttempt(Items=items, Processor=processor, Description=description,
 							 State=state, StartTime=float(start_time), Quantity=quantity)
 	return result
