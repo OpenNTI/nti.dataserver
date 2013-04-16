@@ -12,6 +12,7 @@ import persistent
 from zope import interface
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
+from zope.mimetype import interfaces as zmime_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
@@ -50,7 +51,7 @@ class BasePurchasable(SchemaConfigured):
 		xhash ^= hash(self.NTIID)
 		return xhash
 
-@interface.implementer(an_interfaces.IAttributeAnnotatable)
+@interface.implementer(an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class Purchasable(BasePurchasable, zcontained.Contained, persistent.Persistent):
 
 	@property

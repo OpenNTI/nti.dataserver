@@ -14,6 +14,7 @@ from datetime import datetime
 from zope import interface
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
+from zope.mimetype import interfaces as zmime_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.dataserver.datastructures import ModDateTrackingObject
@@ -109,7 +110,7 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 	def is_synced(self):
 		return self.Synced
 
-@interface.implementer(an_interfaces.IAttributeAnnotatable)
+@interface.implementer(an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPropertyHolder):
 
 	def __init__(self, *args, **kwargs):
