@@ -38,12 +38,13 @@ PAYMENT_PROCESSORS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocab
 class IPurchasable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
 	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=False)
+	Author = nti_schema.ValidTextLine(title='Purchasable item author', required=False)
 	Description = nti_schema.ValidTextLine(title='Purchasable item description', required=False)
 	Amount = schema.Int(title="Cost amount", required=True)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
 	BulkPurchase = schema.Bool(title="Bulk purchase flag", required=True, default=False)
-	URL = nti_schema.HTTPURL(title='Image URL', required=False)
+	Icon = nti_schema.HTTPURL(title='Icon URL', required=False)
 	Provider = nti_schema.ValidTextLine(title='Purchasable item provider', required=True)
 	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Purchasable content items")
 

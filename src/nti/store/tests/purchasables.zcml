@@ -16,6 +16,7 @@
 		title="Algebra for kids"
 		description="Algebra for kids"
 		provider="AOPS"
+		author="AoPS"
 		amount="100"
 		currency="USD"
 		discountable="False"
@@ -27,6 +28,7 @@
 		title="Law Cases"
 		description="Law Cases I"
 		provider="OU"
+		author="OU"
 		amount="120"
 		currency="USD"
 		discountable="False"
@@ -38,6 +40,7 @@
 		title="Data Structures"
 		description="Data Structures in C"
 		provider="CMU"
+		author="Lee Wise"
 		amount="90"
 		currency="USD"
 		discountable="False"
@@ -49,11 +52,12 @@
 		title="Risk Course"
 		description="Intro to Risk"
 		provider="PRMIA"
+		author="Alan Laubsch"
 		amount="90"
 		currency="USD"
 		discountable="True"
 		bulk_purchase="False"
-		url="http://prmia.org/"
+		icon="http://prmia.org/"
 		items="var-risk volatility" />
 
 </configure>

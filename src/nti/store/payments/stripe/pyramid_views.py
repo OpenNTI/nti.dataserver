@@ -20,6 +20,7 @@ from pyramid.security import authenticated_userid
 from nti.externalization.datastructures import LocatedExternalDict
 
 from ... import purchase_history
+from ... import purchasable_store
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
 from .. import is_valid_amount, is_valid_pve_int
@@ -44,24 +45,40 @@ class ValidateStripeCouponView(GetStripeConnectKeyView):
 		stripe_key = super(ValidateStripeCouponView, self).__call__()
 
 		request = self.request
-		code = request.params.get('coupon', request.params.get('code', None))
-		amount = request.params.get('amount')
-		if amount is not None and not is_valid_amount(amount):
-			raise hexc.HTTPBadRequest(detail='invalid amount')
-
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
+
+		# get amount
+		purchasableID = request.params.get('purchasableID', None)
+		purchasable = purchasable_store.get_purchasable(purchasableID) if purchasableID else None
+		if purchasableID and not purchasable:
+			raise hexc.HTTPBadRequest(detail='invalid purchasable')
+		elif purchasable is not None:
+			amount = purchasable.Amount
+		else:
+			amount = request.params.get('amount', None)
+			if amount is not None and not is_valid_amount(amount):
+				raise hexc.HTTPBadRequest(detail='invalid amount')
+
+		# check quantity
+		quantity = request.params.get('quantity', 1)
+		if not is_valid_pve_int(quantity):
+			raise hexc.HTTPBadRequest(detail='invalid quantity')
+
+		# discount is based on full amount
+		amount = amount * int(quantity) if amount else None
 
 		# stripe defines an 80 sec timeout for http requests
 		# at this moment we are to wait for coupon validation
+		code = request.params.get('coupon', request.params.get('code', None))
 		coupon = manager.get_coupon(code, api_key=stripe_key.PrivateKey)
 		validated_coupon = manager.validate_coupon(coupon, api_key=stripe_key.PrivateKey) if coupon is not None else False
 		if validated_coupon:
 			result = LocatedExternalDict()
-			if amount:
-				amount = manager.apply_coupon(float(amount), coupon)
-				result['NewAmount'] = amount
 			result['Coupon'] = coupon
 			result['Provider'] = stripe_key.Alias
+			if amount:
+				new_amount = manager.apply_coupon(float(amount), coupon)
+				result['NewAmount'] = new_amount
 			return result
 
 		raise hexc.HTTPNotFound(detail="Invalid coupon")

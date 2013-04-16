@@ -24,11 +24,12 @@ from . import interfaces as store_interfaces
 class BasePurchasable(SchemaConfigured):
 
 	NTIID = FP(store_interfaces.IPurchasable['NTIID'])
+	Author = FP(store_interfaces.IPurchasable['Author'])
 	Description = FP(store_interfaces.IPurchasable['Description'])
 	Amount = FP(store_interfaces.IPurchasable['Amount'])
 	Currency = FP(store_interfaces.IPurchasable['Currency'])
 	Discountable = FP(store_interfaces.IPurchasable['Discountable'])
-	URL = FP(store_interfaces.IPurchasable['URL'])
+	Icon = FP(store_interfaces.IPurchasable['Icon'])
 	Provider = FP(store_interfaces.IPurchasable['Provider'])
 	BulkPurchase = FP(store_interfaces.IPurchasable['BulkPurchase'])
 	Items = FP(store_interfaces.IPurchasable['Items'])
@@ -58,10 +59,10 @@ class Purchasable(BasePurchasable, zcontained.Contained, persistent.Persistent):
 	def id(self):
 		return self.NTIID
 
-def create_purchasable(ntiid, provider, amount, currency='USD', items=(), title=None, description=None, url=None,
-					   discountable=False, bulk_purchase=True):
+def create_purchasable(ntiid, provider, amount, currency='USD', items=(), title=None, author=None,
+					   description=None, icon=None, discountable=False, bulk_purchase=True):
 	items = to_frozenset(items) if items else frozenset((ntiid,))
-	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Items=items,
+	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Author=author, Items=items,
 						 Description=description, Amount=amount, Currency=currency,
-						 Discountable=discountable, BulkPurchase=bulk_purchase, URL=url)
+						 Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
 	return result

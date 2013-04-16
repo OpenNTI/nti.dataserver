@@ -37,6 +37,14 @@ class PurchasableUtilityVocabulary(UtilityVocabulary):
 class PurchasableNameVocabulary(PurchasableUtilityVocabulary):
 	nameOnly = True
 
+def get_purchasable(pid):
+	"""
+	Return purchasable with the specified id
+	"""
+	util = PurchasableUtilityVocabulary(None)
+	result = util.getTermByToken(pid) if pid else None
+	return result.value if result is not None else None
+
 def get_all_purchasables():
 	"""
 	Return all purchasable items
