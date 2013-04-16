@@ -20,10 +20,10 @@ from pyramid.security import authenticated_userid
 from nti.externalization.datastructures import LocatedExternalDict
 
 from ... import purchase_history
-from ... import purchasable_store
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
 from .. import is_valid_amount, is_valid_pve_int
+from ...utils import pyramid_views as util_pyramid_views
 
 class GetStripeConnectKeyView(object):
 	processor = 'stripe'
@@ -31,41 +31,25 @@ class GetStripeConnectKeyView(object):
 	def __init__(self, request):
 		self.request = request
 
-	def __call__(self):
+	def get_stripe_connect_key(self):
 		params = self.request.params
 		keyname = params.get('provider', params.get('alias', u''))
 		result = component.queryUtility(stripe_interfaces.IStripeConnectKey, keyname)
+		return result
+
+	def __call__(self):
+		result = self.get_stripe_connect_key()
 		if result is None:
 			raise hexc.HTTPNotFound(detail='Provider not found')
 		return result
 
-class ValidateStripeCouponView(GetStripeConnectKeyView):
+class PricePurchasableWithStripeCouponView(GetStripeConnectKeyView, util_pyramid_views.PricePurchasableView):
 
 	def __call__(self):
-		stripe_key = super(ValidateStripeCouponView, self).__call__()
-
 		request = self.request
+		_, _, amount = self.price_purchasable()
+		stripe_key = self.get_stripe_connect_key()
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
-
-		# get amount
-		purchasableID = request.params.get('purchasableID', None)
-		purchasable = purchasable_store.get_purchasable(purchasableID) if purchasableID else None
-		if purchasableID and not purchasable:
-			raise hexc.HTTPBadRequest(detail='invalid purchasable')
-		elif purchasable is not None:
-			amount = purchasable.Amount
-		else:
-			amount = request.params.get('amount', None)
-			if amount is not None and not is_valid_amount(amount):
-				raise hexc.HTTPBadRequest(detail='invalid amount')
-
-		# check quantity
-		quantity = request.params.get('quantity', 1)
-		if not is_valid_pve_int(quantity):
-			raise hexc.HTTPBadRequest(detail='invalid quantity')
-
-		# discount is based on full amount
-		amount = amount * int(quantity) if amount else None
 
 		# stripe defines an 80 sec timeout for http requests
 		# at this moment we are to wait for coupon validation

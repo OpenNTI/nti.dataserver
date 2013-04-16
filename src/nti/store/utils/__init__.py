@@ -32,3 +32,18 @@ def to_list(items=None):
 
 def to_frozenset(items=None):
 	return to_collection(items, frozenset)
+
+def is_valid_amount(amount):
+	try:
+		amount = float(amount)
+		return amount > 0
+	except:
+		return False
+
+def is_valid_pve_int(value):
+	try:
+		value = float(value)
+		return value > 0
+	except:
+		return False
+
