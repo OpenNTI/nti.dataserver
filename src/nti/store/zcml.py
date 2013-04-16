@@ -27,7 +27,7 @@ class IRegisterPurchasableDirective(interface.Interface):
 	currency = fields.TextLine(title="Currency amount", required=False, default='USD')
 	discountable = fields.Bool(title="Discountable flag", required=False, default=False)
 	bulk_purchase = fields.Bool(title="Bulk purchase flag", required=False, default=True)
-	icon = schema.URI(title='Icon URL', required=False)
+	icon = fields.TextLine(title='Icon URL', required=False)
 	provider = fields.TextLine(title='Purchasable item provider', required=True)
 	items = fields.Tokens(value_type=schema.TextLine(title='The item identifier'), title="Purchasable content items", required=False)
 
