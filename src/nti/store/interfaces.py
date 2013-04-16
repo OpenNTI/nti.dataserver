@@ -44,7 +44,7 @@ class IPurchasable(interface.Interface):
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
 	BulkPurchase = schema.Bool(title="Bulk purchase flag", required=True, default=False)
-	Icon = nti_schema.HTTPURL(title='Icon URL', required=False)
+	Icon = nti_schema.ValidTextLine(title='Icon URL', required=False)
 	Provider = nti_schema.ValidTextLine(title='Purchasable item provider', required=True)
 	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Purchasable content items")
 
