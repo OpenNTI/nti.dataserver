@@ -51,11 +51,13 @@ class PurchasableDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, original, external):
+		# check if item has been purchased
 		username = authenticated_userid(get_current_request())
 		if username:
 			purchased = purchase_history.is_item_purchased(username, original.NTIID)
 			external['Purchased'] = purchased
 
+		# fill details from library
 		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 		unit = library.get(original.NTIID) if library else None
 		if not original.Title:

@@ -77,12 +77,12 @@ class GetPurchaseAttemptView(object):
 	def __call__(self):
 		request = self.request
 		username = authenticated_userid(request)
-		purchase_id = request.params.get('purchaseId', request.params.get('OID', None))
+		purchase_id = request.params.get('purchaseID', request.params.get('OID', None))
 		if not purchase_id:
-			raise hexc.HTTPBadRequest()
+			raise hexc.HTTPBadRequest(detail="Failed to provide a purchase attempt ID")
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
-			raise hexc.HTTPNotFound()
+			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
 		elif purchase.is_pending():
 			start_time = purchase.StartTime
 			# more than 90 secs try to sync

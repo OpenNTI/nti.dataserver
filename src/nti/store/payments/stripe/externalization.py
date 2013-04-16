@@ -12,25 +12,26 @@ import six
 from zope import interface
 from zope import component
 
+from nti.externalization.singleton import SingletonDecorator
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.datastructures import LocatedExternalDict
-
 from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.datastructures import InterfaceObjectIO
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.datastructures import LocatedExternalDict
 
 from . import interfaces as stripe_interfaces
+from ... import interfaces as store_interfaces
+
+def _makenone(s):
+	if isinstance(s, six.string_types) and s == 'None':
+		s = None
+	return s
 
 @interface.implementer(IInternalObjectIO)
 @component.adapter(stripe_interfaces.IStripeConnectKey)
 class StripeConnectKeyExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = stripe_interfaces.IStripeConnectKey
 	_excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | { 'PrivateKey', 'RefreshToken' }
-
-
-def _makenone(s):
-	if isinstance(s, six.string_types) and s == 'None':
-		s = None
-	return s
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(stripe_interfaces.IStripeCoupon)
@@ -60,3 +61,15 @@ class StripeCouponExternalizer(object):
 		if self.coupon.max_redemptions:
 			result['MaxRedemptions'] = self.coupon.max_redemptions
 		return result
+
+@component.adapter(store_interfaces.IPurchasable)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class PurchasableDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalObject(self, original, external):
+		keyname = original.Provider
+		result = component.queryUtility(stripe_interfaces.IStripeConnectKey, keyname)
+		if result:
+			external['StripeConnectKey'] = toExternalObject(result)

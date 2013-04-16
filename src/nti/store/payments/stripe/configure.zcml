@@ -34,6 +34,10 @@
 	<adapter factory=".externalization.StripeCouponExternalizer" />
 	<adapter factory=".externalization.StripeConnectKeyExternal" />
 	
+	<subscriber factory=".externalization.PurchasableDecorator"
+				for="...interfaces.IPurchasable"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+	
 	<stripe:registerStripeKey
 		alias="NTI-TEST"
 		private_key="sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp" />

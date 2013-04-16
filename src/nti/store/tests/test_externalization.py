@@ -77,7 +77,8 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Discountable', True))
 		assert_that(ext, has_entry('Provider', u'PRMIA'))
 		assert_that(ext, has_entry('Title', u'Risk Course'))
-		assert_that(ext, has_entry('URL', u'http://prmia.org/'))
+		assert_that(ext, has_entry('Author', u'Alan Laubsch'))
+		assert_that(ext, has_entry('Icon', u'http://prmia.org/'))
 		assert_that(ext, has_entry('Description', u'Intro to Risk'))
 
 	def test_fill_in_lib(self):
