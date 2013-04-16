@@ -16,7 +16,6 @@ from zope import component
 from pyramid import httpexceptions as hexc
 from pyramid.security import authenticated_userid
 
-# from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
 from ... import purchase_history
@@ -51,21 +50,28 @@ class PricePurchasableWithStripeCouponView(GetStripeConnectKeyView, util_pyramid
 		stripe_key = self.get_stripe_connect_key()
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 
-		# stripe defines an 80 sec timeout for http requests
-		# at this moment we are to wait for coupon validation
+		result = None
 		code = request.params.get('coupon', request.params.get('code', None))
-		coupon = manager.get_coupon(code, api_key=stripe_key.PrivateKey)
-		validated_coupon = manager.validate_coupon(coupon, api_key=stripe_key.PrivateKey) if coupon is not None else False
-		if validated_coupon:
-			result = LocatedExternalDict()
-			result['Coupon'] = coupon
-			result['Provider'] = stripe_key.Alias
-			if amount:
-				new_amount = manager.apply_coupon(float(amount), coupon)
-				result['NewAmount'] = new_amount
-			return result
+		if code is not None:
+			# stripe defines an 80 sec timeout for http requests
+			# at this moment we are to wait for coupon validation
+			coupon = manager.get_coupon(code, api_key=stripe_key.PrivateKey)
+			validated_coupon = manager.validate_coupon(coupon, api_key=stripe_key.PrivateKey) if coupon is not None else False
+			if validated_coupon:
+				result = LocatedExternalDict()
+				result['Coupon'] = coupon
+				result['Provider'] = stripe_key.Alias
+			else:
+				raise hexc.HTTPNotFound(detail="Invalid coupon")
 
-		raise hexc.HTTPNotFound(detail="Invalid coupon")
+		if amount is not None:
+			result = result if result is not None else LocatedExternalDict()
+			new_amount = manager.apply_coupon(float(amount), coupon)
+			result['NewAmount'] = new_amount
+		else:
+			raise hexc.HTTPBadRequest()
+		return result
+
 
 class StripePaymentView(GetStripeConnectKeyView):
 

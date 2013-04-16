@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 from pyramid import httpexceptions as hexc
 
+from nti.externalization.datastructures import LocatedExternalDict
+
 from . import is_valid_amount
 from . import is_valid_pve_int
 from .. import purchasable_store
@@ -22,7 +24,7 @@ class PricePurchasableView(object):
 		request = self.request
 
 		params = request.params
-		purchasableID = params.get('purchasableID', '+++invalid+++' if required else None)
+		purchasableID = params.get('purchasableID', '+++etc+++invalid+++' if required else None)
 		purchasable = purchasable_store.get_purchasable(purchasableID) if purchasableID else None
 		if purchasableID and not purchasable:
 			raise hexc.HTTPBadRequest(detail='invalid purchasable')
@@ -30,8 +32,9 @@ class PricePurchasableView(object):
 			amount = purchasable.Amount
 		else:
 			amount = params.get('amount', None)
-			if amount is not None and not is_valid_amount(amount):
-				raise hexc.HTTPBadRequest(detail='invalid amount')
+
+		if amount is not None and not is_valid_amount(amount):
+			raise hexc.HTTPBadRequest(detail='invalid amount')
 
 		# check quantity
 		quantity = params.get('quantity', 1)
@@ -39,7 +42,7 @@ class PricePurchasableView(object):
 			raise hexc.HTTPBadRequest(detail='invalid quantity')
 
 		# calculate new amount
-		new_amount = amount * int(quantity) if amount else None
+		new_amount = float(amount) * int(quantity) if amount else None
 
 		return (purchasable, quantity, new_amount)
 
@@ -47,4 +50,4 @@ class PricePurchasableView(object):
 		_, _, new_amount = self.price_purchasable(required=True)
 		if new_amount is None:
 			raise hexc.HTTPBadRequest(detail='invalid amount')
-		return {'NewAmount':new_amount}
+		return LocatedExternalDict({'NewAmount':new_amount})
