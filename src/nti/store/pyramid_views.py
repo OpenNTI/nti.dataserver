@@ -19,12 +19,25 @@ from zope import component
 
 from pyramid.security import authenticated_userid
 
+from nti.externalization.datastructures import LocatedExternalDict
+
 from . import purchase_history
 from . import purchasable_store
 from . import interfaces as store_interfaces
 from .payments import pyramid_views as payment_pyramid
 
-class GetPendingPurchasesView(object):
+class _PurchaseAttemptView(object):
+
+	def __init__(self, request):
+		self.request = request
+
+	def _last_modified(self, purchases):
+		result = 0
+		for pa in purchases or ():
+			result = max(result, getattr(pa, "lastModified", 0))
+		return result
+
+class GetPendingPurchasesView(_PurchaseAttemptView):
 
 	def __init__(self, request):
 		self.request = request
@@ -33,9 +46,10 @@ class GetPendingPurchasesView(object):
 		request = self.request
 		username = authenticated_userid(request)
 		purchases = purchase_history.get_pending_purchases(username)
-		return purchases
+		result = LocatedExternalDict({'Items': purchases, 'Last Modified':self._last_modified(purchases)})
+		return result
 
-class GetPurchaseHistoryView(object):
+class GetPurchaseHistoryView(_PurchaseAttemptView):
 
 	def __init__(self, request):
 		self.request = request
@@ -52,7 +66,8 @@ class GetPurchaseHistoryView(object):
 		start_time = self._convert(request.params.get('startTime', None))
 		end_time = self._convert(request.params.get('endTime', None))
 		purchases = purchase_history.get_purchase_history(username, start_time, end_time)
-		return purchases
+		result = LocatedExternalDict({'Items': purchases, 'Last Modified':self._last_modified(purchases)})
+		return result
 
 class GetPurchaseAttemptView(object):
 
@@ -62,7 +77,7 @@ class GetPurchaseAttemptView(object):
 	def __call__(self):
 		request = self.request
 		username = authenticated_userid(request)
-		purchase_id = request.params.get('purchaseId', None) or request.params.get('OID', None)
+		purchase_id = request.params.get('purchaseId', request.params.get('OID', None))
 		if not purchase_id:
 			raise hexc.HTTPBadRequest()
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
@@ -84,7 +99,8 @@ class GetPurchasablesView(object):
 		self.request = request
 
 	def __call__(self):
-		result = purchasable_store.get_all_purchasables()
+		purchasables = purchasable_store.get_all_purchasables()
+		result = LocatedExternalDict({'Items': purchasables, 'Last Modified':0})
 		return result
 
 # alias

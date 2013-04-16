@@ -11,13 +11,14 @@ import functools
 from datetime import datetime
 
 from zope import interface
+from zope.mimetype import interfaces as zmime_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
 
 from . import interfaces as store_interfaces
 
-@interface.implementer(store_interfaces.IUserAddress)
+@interface.implementer(store_interfaces.IUserAddress, zmime_interfaces.IContentTypeAware)
 class UserAddress(SchemaConfigured):
 
 	Street = FP(store_interfaces.IUserAddress['Street'])
@@ -59,7 +60,7 @@ class UserAddress(SchemaConfigured):
 		return result
 
 @functools.total_ordering
-@interface.implementer(store_interfaces.IPaymentCharge)
+@interface.implementer(store_interfaces.IPaymentCharge, zmime_interfaces.IContentTypeAware)
 class PaymentCharge(SchemaConfigured):
 
 	Amount = FP(store_interfaces.IPaymentCharge['Amount'])
