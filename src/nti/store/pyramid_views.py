@@ -24,6 +24,7 @@ from nti.externalization.datastructures import LocatedExternalDict
 from . import purchase_history
 from . import purchasable_store
 from . import interfaces as store_interfaces
+from .utils import pyramid_views as util_pyramid
 from .payments import pyramid_views as payment_pyramid
 
 class _PurchaseAttemptView(object):
@@ -106,5 +107,6 @@ class GetPurchasablesView(object):
 # alias
 
 StripePaymentView = payment_pyramid.StripePaymentView
+PricePurchasableView = util_pyramid.PricePurchasableView
 GetStripeConnectKeyView = payment_pyramid.GetStripeConnectKeyView
-ValidateStripeCouponView = payment_pyramid.ValidateStripeCouponView
+PricePurchasableWithStripeCouponView = payment_pyramid.PricePurchasableWithStripeCouponView
