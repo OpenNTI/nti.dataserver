@@ -7,8 +7,6 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import sys
-
 import BTrees
 from BTrees.OOBTree import OOTreeSet
 
@@ -100,13 +98,13 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 	def get_purchase_history(self, start_time=None, end_time=None):
 		start_time = time_to_64bit_int(start_time) if start_time is not None else None
 		end_time = time_to_64bit_int(end_time) if end_time is not None else None
-		return self.purchases.iteritems(start_time, end_time) # iter inclusively between the two times; None is ignored
+		return self.purchases.iteritems(start_time, end_time)  # iter inclusively between the two times; None is ignored
 
 	def values(self):
-		return self.purchases.values() # BTree values() is lazy
+		return self.purchases.values()  # BTree values() is lazy
 
 	def __iter__(self):
-		return iter(self.purchases.values()) # BTree values() is lazy
+		return iter(self.purchases.values())  # BTree values() is lazy
 
 	def __len__(self):
 		# JAM: FIXME: We should be caching a Length object,
@@ -181,6 +179,6 @@ def register_purchase_attempt(username, items, processor, quantity=None, state=N
 	# However, if we attempt to use the two lines of code below WITHOUT spawning
 	# a new greenlet (i.e., from the current greenlet), we take charge of, and destroy, the
 	# currently running transaction, resulting in ValueError: Foreign Transaction.
-	#result = component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	#return result
+	# result = component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
+	# return result
 	return func()
