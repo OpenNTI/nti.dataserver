@@ -25,6 +25,7 @@ import nti.dictserver.storage
 import nti.dataserver._Dataserver
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.contentlibrary import interfaces as lib_interfaces
 
 import nti.contentsearch
 import nti.contentsearch.indexmanager
@@ -82,7 +83,7 @@ SOCKET_IO_PATH = 'socket.io'
 class _Main(object):
 
 	def __init__(self, pyramid_config, serveFiles=(), http_port=8080):
-		self.serveFiles = [ ('/dictionary', None) ]
+		self.serveFiles = []
 		self.http_port = http_port
 		self.pyramid_config = pyramid_config
 		self.pyramid_app = None
@@ -127,7 +128,7 @@ def _create_xml_conf_machine( settings ):
 	return xml_conf_machine
 
 def createApplication( http_port,
-					   library,
+					   library=None,
 					   process_args=False,
 					   create_ds=True,
 					   pyramid_config=None,
@@ -138,22 +139,41 @@ def createApplication( http_port,
 	"""
 	server = None
 	# Configure subscribers, etc.
-	try:
-		setHooks() # required for z3c.baseregistry
-		xml_conf_machine = _create_xml_conf_machine( settings )
-		if 'pre_site_zcml' in settings:
-			# One before we load the main config so it has a chance to exclude files
-			logger.debug( "Loading pre-site settings from %s", settings['pre_site_zcml'] )
-			xml_conf_machine = xmlconfig.file( settings['pre_site_zcml'],  package=nti.appserver, context=xml_conf_machine )
-		xml_conf_machine = xmlconfig.file( 'configure.zcml', package=nti.appserver, context=xml_conf_machine )
-		if 'site_zcml' in settings:
-			logger.debug( "Loading site settings from %s", settings['site_zcml'] )
-			xml_conf_machine = xmlconfig.file( settings['site_zcml'],  package=nti.appserver, context=xml_conf_machine )
-			# Preserve the conf machine so that when we load other files later any
-			# exclude settings get processed
-	except Exception:
-		logger.exception( "Failed to load config. Settings: %s", settings )
-		raise
+	__traceback_info__ = settings
+
+	setHooks() # required for z3c.baseregistry
+	xml_conf_machine = _create_xml_conf_machine( settings )
+	if 'pre_site_zcml' in settings:
+		# One before we load the main config so it has a chance to exclude files
+		logger.debug( "Loading pre-site settings from %s", settings['pre_site_zcml'] )
+		xml_conf_machine = xmlconfig.file( settings['pre_site_zcml'],  package=nti.appserver, context=xml_conf_machine, execute=False )
+	xml_conf_machine = xmlconfig.file( 'configure.zcml', package=nti.appserver, context=xml_conf_machine, execute=False )
+	if 'site_zcml' in settings:
+		logger.debug( "Loading site settings from %s", settings['site_zcml'] )
+		xml_conf_machine = xmlconfig.file( settings['site_zcml'],  package=nti.appserver, context=xml_conf_machine, execute=False )
+		# Preserve the conf machine so that when we load other files later any
+		# exclude settings get processed
+
+	# Load a library, if needed. We take the first of:
+	# settings['library_zcml']
+	# $DATASERVER_DIR/etc/library.zcml
+	# settings[__file__]/library.zcml
+	# (This last is for existing environments and tests, as it lets us put a
+	# file beside development.ini). In most environments, this can be handled
+	# with site.zcml
+	library_zcml = None
+	if 'library_zcml' in settings:
+		library_zcml = settings['library_zcml']
+	elif os.path.isdir( os.getenv( 'DATASERVER_DIR', '' ) ) and os.path.isfile( os.path.join( os.getenv( 'DATASERVER_DIR' ), 'etc', 'library.zcml' ) ):
+		library_zcml = os.path.join( os.getenv( 'DATASERVER_DIR' ), 'etc', 'library.zcml' )
+	elif '__file__' in settings and os.path.isfile( os.path.join( os.path.dirname( settings['__file__'] ), 'library.zcml' ) ):
+		library_zcml = os.path.join( os.path.dirname( settings['__file__'] ), 'library.zcml' )
+
+	if library_zcml and library is None: # If tests pass in a library, use that instead
+		logger.debug( "Loading library settings from %s", library_zcml )
+		xml_conf_machine = xmlconfig.file( library_zcml,  package=nti.appserver, context=xml_conf_machine, execute=False )
+
+	xml_conf_machine.execute_actions()
 
 	# Notify of startup. (Note that configuring the packages loads zope.component:configure.zcml
 	# which in turn hooks up zope.component.event to zope.event for event dispatching)
@@ -341,7 +361,10 @@ def createApplication( http_port,
 		pyramid_config.registry.registerUtility( server, nti_interfaces.IDataserver )
 		if server.chatserver:
 			pyramid_config.registry.registerUtility( server.chatserver )
-	pyramid_config.registry.registerUtility( library )
+	if library is not None:
+		component.getSiteManager().registerUtility( library, provided=lib_interfaces.IContentPackageLibrary )
+	else:
+		library = component.getUtility( lib_interfaces.IContentPackageLibrary )
 
 	## Search
 	# All the search views should accept an empty term (i.e., nothing after the trailing slash)

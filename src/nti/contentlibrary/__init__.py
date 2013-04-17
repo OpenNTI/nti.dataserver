@@ -7,3 +7,5 @@ independent (but possibly related and/or linked) units of content.
 $Id$
 """
 from __future__ import print_function, unicode_literals
+import zope.i18nmessageid
+MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
