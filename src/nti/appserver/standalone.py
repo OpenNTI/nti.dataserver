@@ -92,6 +92,9 @@ def configure_app( global_config,
 	if IFilesystemContentPackageLibrary.providedBy( library ):
 		main.setServeFiles( [ ('/' + os.path.basename( package.dirname ), package.dirname)
 							  for package in library.contentPackages] )
+	else:
+		# FIXME: It's weird that this call is required
+		main.setServeFiles( )
 
 	return application
 
