@@ -23,6 +23,8 @@ from nti.dataserver.datastructures import ModDateTrackingObject
 
 from nti.externalization.oids import to_external_ntiid_oid
 
+from nti.mimetype import mimetype
+
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.utils.schema import SchemaConfigured
@@ -116,6 +118,8 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 
 @interface.implementer(an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPropertyHolder):
+
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	def __init__(self, *args, **kwargs):
 		super(PurchaseAttempt, self).__init__(*args, **kwargs)

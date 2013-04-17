@@ -15,6 +15,8 @@ from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
+from nti.mimetype import mimetype
+
 from nti.utils.schema import SchemaConfigured
 
 from . import to_frozenset
@@ -54,6 +56,8 @@ class BasePurchasable(SchemaConfigured):
 
 @interface.implementer(an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class Purchasable(BasePurchasable, zcontained.Contained, persistent.Persistent):
+
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	@property
 	def id(self):

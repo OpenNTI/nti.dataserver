@@ -166,19 +166,9 @@ def get_pending_purchase_for(user, items):
 	return result
 
 def register_purchase_attempt(username, items, processor, quantity=None, state=None, description=None, start_time=None):
-	def func():
-		user = _get_user(username)
-		hist = store_interfaces.IPurchaseHistory(user)
-		purchase = create_purchase_attempt(items=items, processor=processor, quantity=quantity,
-										   state=state, description=description, start_time=start_time)
-		hist.register_purchase(purchase)
-		return purchase.id
-	# JAM: The contract for this function is to synchronously return its
-	# result. Therefore, spawning a greenlet is not particularly helpful (if we assume that
-	# IO has been directed through gevent).
-	# However, if we attempt to use the two lines of code below WITHOUT spawning
-	# a new greenlet (i.e., from the current greenlet), we take charge of, and destroy, the
-	# currently running transaction, resulting in ValueError: Foreign Transaction.
-	# result = component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	# return result
-	return func()
+	user = _get_user(username)
+	hist = store_interfaces.IPurchaseHistory(user)
+	purchase = create_purchase_attempt(items=items, processor=processor, quantity=quantity,
+									   state=state, description=description, start_time=start_time)
+	hist.register_purchase(purchase)
+	return purchase.id

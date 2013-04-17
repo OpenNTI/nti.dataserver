@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import gevent
+import transaction
 
 from zope import component
 
@@ -80,7 +81,7 @@ class StripePaymentView(GetStripeConnectKeyView):
 
 		request = self.request
 		username = authenticated_userid(request)
-		items = request.params.get('items', request.params.get('nttid', None))
+		items = request.params.get('items', request.params.get('purchasableID', None))
 
 		# check for any pending purchase for the items being bought
 		purchase = purchase_history.get_pending_purchase_for(username, items)
@@ -105,12 +106,14 @@ class StripePaymentView(GetStripeConnectKeyView):
 
 		purchase_id = purchase_history.register_purchase_attempt(username, items=items, processor=self.processor,
 																 description=description, quantity=quantity)
+		logger.info("Purchase %s created" % purchase_id)
 
+		# process payment after commit
 		def process_pay():
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 			manager.process_purchase(purchase_id=purchase_id, username=username, token=token, amount=amount,
 									 currency=currency, coupon=coupon, api_key=stripe_key.PrivateKey)
-		gevent.spawn(process_pay)
+		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_pay))
 
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
-		return purchase
+		return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
