@@ -18,6 +18,8 @@ from zope import component
 from pyramid import httpexceptions as hexc
 from pyramid.security import authenticated_userid
 
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.store import purchase_history
@@ -60,9 +62,9 @@ class CreateStripeTokenView(_PostStripeView):
 		values = self.readInput()
 		stripe_key = self.get_stripe_connect_key(values)
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
-		
+
 		params = {'api_key':stripe_key.PrivateKey}
-		
+
 		customer_id = values.get('customerID', values.get('customer_id', None))
 		if not customer_id:
 			required = (('cvc', 'cvc', ''),
@@ -77,14 +79,14 @@ class CreateStripeTokenView(_PostStripeView):
 				params[k] = str(value)
 		else:
 			params['customer_id'] = customer_id
-	
-		# optional 
-		optional = (('address_line1', 'address_line1','address'),
-					('address_line2', 'address_line2', ''), 
-					('address_city', 'address_city','city'), 
-					('address_state', 'address_state','state'), 
-					('address_zip', 'address_zip','zip'),
-					('address_country', 'address_country','country'))
+
+		# optional
+		optional = (('address_line1', 'address_line1', 'address'),
+					('address_line2', 'address_line2', ''),
+					('address_city', 'address_city', 'city'),
+					('address_state', 'address_state', 'state'),
+					('address_zip', 'address_zip', 'zip'),
+					('address_country', 'address_country', 'country'))
 		for k, p, a in optional:
 			value = values.get(p, values.get(a, None))
 			if value:
@@ -97,27 +99,28 @@ class PricePurchasableWithStripeCouponView(_PostStripeView, util_pyramid_views.P
 
 	def __call__(self):
 		values = self.price_purchasable()
-		amount = values.get('NewAmount', None)
+		new_amount = values.get('NewAmount', None)
 		stripe_key = self.get_stripe_connect_key(values)
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 
-		result = None
-		code = values.get('coupon')
+		coupon = None
+		result = LocatedExternalDict()
+		code = values.get('coupon', None)
 		if code is not None and stripe_key:
 			# stripe defines an 80 sec timeout for http requests
 			# at this moment we are to wait for coupon validation
 			coupon = manager.get_coupon(code, api_key=stripe_key.PrivateKey)
 			validated_coupon = manager.validate_coupon(coupon, api_key=stripe_key.PrivateKey) if coupon is not None else False
 			if validated_coupon:
-				result = LocatedExternalDict()
 				result['Coupon'] = coupon
 				result['Provider'] = stripe_key.Alias
 			else:
 				raise hexc.HTTPNotFound(detail="Invalid coupon")
 
-		if amount is not None:
-			result = result if result is not None else LocatedExternalDict()
-			new_amount = manager.apply_coupon(float(amount), coupon)
+		if new_amount is not None:
+			new_amount = float(new_amount)
+			if coupon is not None:
+				new_amount = manager.apply_coupon(new_amount, coupon)
 			result['NewAmount'] = new_amount
 		else:
 			raise hexc.HTTPBadRequest()
@@ -168,13 +171,17 @@ class StripePaymentView(_PostStripeView):
 																 description=description, quantity=quantity)
 		logger.info("Purchase %s created" % purchase_id)
 
-		# process payment after commit
-		def process_pay():
+		# after commit
+		def process_purchase():
 			logger.info("Processing purchase %s" % purchase_id)
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 			manager.process_purchase(purchase_id=purchase_id, username=username, token=token, amount=amount,
 									 currency=currency, coupon=coupon, api_key=stripe_key.PrivateKey)
-		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_pay))
+
+		def process_pay():
+			component.getUtility(nti_interfaces.IDataserverTransactionRunner)(process_purchase)
+
+		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_purchase))
 
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
