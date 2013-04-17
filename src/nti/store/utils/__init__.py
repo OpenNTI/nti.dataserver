@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 import re
 import six
 
+from nti.mimetype.mimetype import nti_mimetype_with_class
+
 def from_delimited(value, delim=' '):
 	result = value.split(delim)
 	result = re.findall("[^\s]+", value) if len(result) <= 1 else result
@@ -47,3 +49,13 @@ def is_valid_pve_int(value):
 	except:
 		return False
 
+class MetaStoreObject(type):
+
+	def __new__(cls, name, bases, dct):
+		t = type.__new__(cls, name, bases, dct)
+		t.mimeType = nti_mimetype_with_class(name)
+		# legacy, deprecated
+		t.mime_type = t.mimeType
+		# IContentTypeAware
+		t.parameters = dict()
+		return t
