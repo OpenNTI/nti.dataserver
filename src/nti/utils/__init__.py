@@ -99,7 +99,7 @@ def make_cache_dir(cache_name, env_var=None):
 
 	if not os.path.isdir( result ):
 		raise ValueError( "Unable to find cache location for " + cache_name + " using " + result )
-	return result
+	return os.path.abspath( os.path.expanduser( result ) )
 
 def setupChameleonCache(config=False):
 	"""
@@ -120,6 +120,7 @@ def setupChameleonCache(config=False):
 		cache_dir = os.environ['CHAMELEON_CACHE']
 
 	if config:
+		logger.debug( "Configuring chamelean to cache at %s", cache_dir )
 		conf_mod = dottedname.resolve('chameleon.config')
 		if conf_mod.CACHE_DIRECTORY != cache_dir: # previously imported before we set the environment
 			conf_mod.CACHE_DIRECTORY = cache_dir
