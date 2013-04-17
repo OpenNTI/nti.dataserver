@@ -63,6 +63,8 @@ class TestExternalization(TestCase):
 
 		if archive_unit:
 			unit.archive_unit.__parent__ = unit
+			if not archive_unit.key.__parent__:
+				unit.archive_unit.key.__parent__ = filesystem.FilesystemBucket( name='prealgebra', parent=unit )
 
 		result = IExternalObject( unit ).toExternalObject()
 		assert_that( result,

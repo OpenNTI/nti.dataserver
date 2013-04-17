@@ -605,14 +605,16 @@ class _FilesystemStaticFileConfigurator(object):
 		# Note that this is not dynamic (the library isn't either)
 		# but in production we expect to have static files served by
 		# nginx/apache; nor does it work with multiple trees of libraries
-		# spread across sites
+		# spread across sites (using the ContentUnitHrefMapper gets us closer)
 
 		# Note: We are not configuring caching for these files, nor gzip. In production
 		# usage, we MUST be behind a webserver that will deal with static
 		# files correctly (nginx, apache) by applying ETags to allow caching and Content-Encoding
 		# for speed.
 		for package in self.context.contentPackages:
-			prefix = '/' + os.path.basename( package.dirname )
+			# The href for the package will come out to be index.html;
+			# we want to serve everything contained in that same directory
+			prefix = os.path.dirname( lib_interfaces.IContentUnitHrefMapper( package ).href ) # Posix assumption
 			path = package.dirname
 			pyramid_config.add_static_view( prefix, path )
 
