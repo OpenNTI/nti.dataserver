@@ -40,12 +40,7 @@ def _path_join( root_url, path='' ):
 	return urljoin( root_url, path )
 
 def _root_url_of_unit( unit ):
-	mapper = interfaces.IContentUnitHrefMapper( unit.get_parent_key(), None )
-	if mapper:
-		href = mapper.href
-	else:
-		# TODO: this should go away now
-		href = '/' + unit.get_parent_key().split( '/' )[-1]
+	href = interfaces.IContentUnitHrefMapper( unit.get_parent_key() ).href
 	return href + ('' if href.endswith( '/' ) else '/')  # trailing slash is important for urljoin
 
 #: This file, if present, will be read to gain a dictionary
@@ -153,15 +148,7 @@ class _FilesystemContentUnitHrefMapper(object):
 	href = None
 
  	def __init__( self, unit ):
-		root_package = traversal.find_interface( unit, interfaces.IContentPackage )
-		__traceback_info__ = unit, root_package
-		root_url = _root_url_of_unit( root_package )
-		__traceback_info__ = unit, root_package, root_url
-		href = _path_join( root_url, unit.href )
-		href = href.replace( '//', '/' )
-		if not href.startswith( '/' ):
-			href = '/' + href
-		self.href = href
+		self.href = interfaces.IContentUnitHrefMapper( unit.key ).href
 
 @component.adapter(interfaces.IFilesystemKey)
 @interface.implementer(interfaces.IContentUnitHrefMapper)
@@ -170,7 +157,7 @@ class _FilesystemKeyHrefMapper(object):
 
  	def __init__( self, key ):
 		root_package = traversal.find_interface( key, interfaces.IContentPackage )
-		root_url = '/' + os.path.basename( os.path.dirname( root_package.filename ) ) + '/'
+		root_url = '/' + os.path.basename( root_package.dirname ) + '/'
 		__traceback_info__ = key, root_package, root_url
 		href = _path_join( root_url, key.key )
 		href = href.replace( '//', '/' )
@@ -178,20 +165,6 @@ class _FilesystemKeyHrefMapper(object):
 			href = '/' + href
 		self.href = href
 
-@component.adapter(basestring,interfaces.IFilesystemContentUnit)
-@interface.implementer(interfaces.IContentUnitHrefMapper)
-class _FilesystemStringContentUnitHrefMapper(object):
-	href = None
-
- 	def __init__( self, key, unit ):
-		root_package = traversal.find_interface( unit, interfaces.IContentPackage )
-		root_url = _root_url_of_unit( root_package )
-		__traceback_info__ = unit, root_package, root_url
-		href = _path_join( root_url, key )
-		href = href.replace( '//', '/' )
-		if not href.startswith( '/' ):
-			href = '/' + href
-		self.href = href
 
 @interface.implementer(IExternalObject)
 @component.adapter(interfaces.IS3ContentPackage)
@@ -265,7 +238,8 @@ def map_all_buckets_to( cdn_name, _global=True ):
 	# manually clear any previous registration
 	site_man.unregisterAdapter( required=(interfaces.IS3Key,),
 								provided=interfaces.IAbsoluteContentUnitHrefMapper )
-
+	# Note that we only need to register for the key, as the IS3ContentUnit mapper
+	# simply maps the unit's key
 	site_man.registerAdapter( CDNS3KeyHrefMapperFactory( cdn_name ),
 							  required=(interfaces.IS3Key,),
 							  provided=interfaces.IAbsoluteContentUnitHrefMapper )
