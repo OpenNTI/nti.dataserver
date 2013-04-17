@@ -110,6 +110,7 @@ class StripePaymentView(GetStripeConnectKeyView):
 
 		# process payment after commit
 		def process_pay():
+			logger.info("Processing purchase %s" % purchase_id)
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 			manager.process_purchase(purchase_id=purchase_id, username=username, token=token, amount=amount,
 									 currency=currency, coupon=coupon, api_key=stripe_key.PrivateKey)
