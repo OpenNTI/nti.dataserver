@@ -98,23 +98,27 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 		return None
 
 	def get_purchase_history(self, start_time=None, end_time=None):
-		start_time = time_to_64bit_int(start_time or 0)
-		end_time = time_to_64bit_int(end_time or sys.maxint)
-		for t, p in self.purchases.iteritems():
-			if t > end_time:
-				break
-			elif t >= start_time and t <= end_time:
-				yield p
+		start_time = time_to_64bit_int(start_time) if start_time is not None else None
+		end_time = time_to_64bit_int(end_time) if end_time is not None else None
+		return self.purchases.iteritems(start_time, end_time) # iter inclusively between the two times; None is ignored
 
 	def values(self):
-		for p in self.purchases.values():
-			yield p
+		return self.purchases.values() # BTree values() is lazy
 
 	def __iter__(self):
-		return iter(self.purchases.values())
+		return iter(self.purchases.values()) # BTree values() is lazy
 
 	def __len__(self):
+		# JAM: FIXME: We should be caching a Length object,
+		# as this is otherwise an expensive thing to do. If we
+		# do not define __nonzero__/__bool__, then this gets
+		# invoked a lot. OTOH, if length is not a particularly useful
+		# concept for us, we should not define this method
 		return len(self.purchases)
+
+	def __nonzero__(self):
+		return True
+	__bool__ = __nonzero__
 
 _PurchaseHistoryFactory = an_factory(PurchaseHistory)
 
@@ -171,5 +175,12 @@ def register_purchase_attempt(username, items, processor, quantity=None, state=N
 										   state=state, description=description, start_time=start_time)
 		hist.register_purchase(purchase)
 		return purchase.id
-	result = component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-	return result
+	# JAM: The contract for this function is to synchronously return its
+	# result. Therefore, spawning a greenlet is not particularly helpful (if we assume that
+	# IO has been directed through gevent).
+	# However, if we attempt to use the two lines of code below WITHOUT spawning
+	# a new greenlet (i.e., from the current greenlet), we take charge of, and destroy, the
+	# currently running transaction, resulting in ValueError: Foreign Transaction.
+	#result = component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
+	#return result
+	return func()
