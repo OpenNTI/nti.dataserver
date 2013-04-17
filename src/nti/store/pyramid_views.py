@@ -108,5 +108,6 @@ class GetPurchasablesView(object):
 
 StripePaymentView = payment_pyramid.StripePaymentView
 PricePurchasableView = util_pyramid.PricePurchasableView
+CreateStripeTokenView = payment_pyramid.CreateStripeTokenView
 GetStripeConnectKeyView = payment_pyramid.GetStripeConnectKeyView
 PricePurchasableWithStripeCouponView = payment_pyramid.PricePurchasableWithStripeCouponView
