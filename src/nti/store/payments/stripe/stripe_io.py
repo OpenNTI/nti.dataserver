@@ -56,7 +56,7 @@ class StripeIO(object):
 		return False
 
 	@classmethod
-	def create_stripe_token(cls, customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
+	def create_token(cls, customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
 		if not customer_id:
 			cvc = str(cvc) if cvc else None
 			cc = {	'number': number, 'exp_month':exp_month,
@@ -74,6 +74,7 @@ class StripeIO(object):
 
 		token = cls._do_stripe_operation(stripe.Token.create, api_key=api_key, **data)
 		return token
+	create_stripe_token = create_token
 
 	@classmethod
 	def get_stripe_token(cls, token, api_key=None):
@@ -82,6 +83,7 @@ class StripeIO(object):
 			return token
 		except stripe.InvalidRequestError:
 			return None
+	get_token = get_stripe_token
 
 	def create_stripe_charge(self, amount, currency='USD', customer_id=None, card=None, description=None, api_key=None):
 		assert customer_id or card
@@ -93,6 +95,7 @@ class StripeIO(object):
 
 		charge = self._do_stripe_operation(stripe.Charge.create, api_key=api_key, **data)
 		return charge
+	create_charge = create_stripe_charge
 
 	def get_stripe_charge(self, charge_id, api_key=None):
 		try:
@@ -100,6 +103,7 @@ class StripeIO(object):
 			return charge
 		except stripe.InvalidRequestError:
 			return None
+	get_charge = get_stripe_charge
 
 	def _get_stripe_charges(self, count=10, offset=0, customer=None, api_key=None):
 		charges = self._do_stripe_operation(stripe.Charge.all, count=count, offset=offset,
@@ -129,6 +133,7 @@ class StripeIO(object):
 				# stop if an old event is not withing the range
 				if start_time > charges[-1].created:
 					_loop = False
+	get_charges = get_stripe_charges
 
 	def get_coupon(self, coupon_code, api_key=None):
 		try:

@@ -64,6 +64,17 @@ class IStripeCustomer(interface.Interface):
 
 class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 
+	def create_token(customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
+		"""
+		Create a stripe token
+		
+		:customer_id Stripe customer id
+		:number Credit card number
+		:exp_month Expiration month
+		:exp_year Expiration year
+		:cvc CVC number
+		"""
+
 	def validate_coupon(coupon):
 		"""
 		validate the specfied coupon

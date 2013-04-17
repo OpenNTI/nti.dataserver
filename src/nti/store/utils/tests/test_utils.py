@@ -8,6 +8,7 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from .. import from_delimited
+from .. import CaseInsensitiveDict
 
 from . import ConfiguringTestBase
 
@@ -26,3 +27,11 @@ class TestUtils(ConfiguringTestBase):
 		items = from_delimited(a)
 		assert_that(items, has_length(1))
 		assert_that(items[0], is_(a))
+
+	def test_case_insensitive_dict(self):
+		d = CaseInsensitiveDict(ONE=1, two=2)
+		assert_that(d, has_length(2))
+		assert_that(d['OnE'], is_(1))
+		assert_that(d['one'], is_(1))
+		assert_that(d['TWO'], is_(2))
+
