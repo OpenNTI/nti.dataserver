@@ -1776,7 +1776,7 @@ def _create_class(ds, usernames_to_enroll=()):
 
 	assert_that( provider, has_property( '__parent__', ds.root['providers'] ) )
 	return klass
-
+from pyramid import traversal
 class TestApplicationLibraryBase(ApplicationTestBase):
 	_check_content_link = True
 	_stream_type = 'Stream'
@@ -1784,15 +1784,37 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 
 	def _setup_library(self, content_root='/prealgebra/', lastModified=None):
 		test_self = self
+		@interface.implementer( lib_interfaces.IContentUnit )
 		class NID(object):
-			interface.implements( lib_interfaces.IContentUnit )
 			ntiid = test_self.child_ntiid
 			href = 'sect_0002.html'
 			__parent__ = None
 			__name__ = 'The name'
+			lastModified = 1
+			def __init__( self ):
+				self.siblings = dict()
+
 			def with_parent( self, p ):
 				self.__parent__ = p
 				return self
+
+			def does_sibling_entry_exist( self, sib_name ):
+				return self.siblings.get( sib_name )
+
+			def __conform__( self, iface ):
+				if iface == lib_interfaces.IContentUnitHrefMapper:
+					return NIDMapper( self )
+
+		@interface.implementer(lib_interfaces.IContentUnitHrefMapper)
+		class NIDMapper(object):
+			def __init__( self, context ):
+				root_package = traversal.find_interface( context, lib_interfaces.IContentPackage )
+				href = root_package.root + '/' + context.href
+				href = href.replace( '//', '/' )
+				if not href.startswith( '/' ):
+					href = '/' + href
+
+				self.href = href
 
 		class LibEnt(object):
 			interface.implements( lib_interfaces.IContentPackage )
@@ -1823,13 +1845,12 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 	def test_library_accept_json(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
-		testapp = TestApp( self.app )
+		testapp = TestApp( self.app, extra_environ=self._make_extra_environ() )
 
 		for accept_type in ('application/json','application/vnd.nextthought.pageinfo','application/vnd.nextthought.pageinfo+json'):
 
 			res = testapp.get( '/dataserver2/NTIIDs/' + self.child_ntiid,
-							   headers={"Accept": accept_type},
-							   extra_environ=self._make_extra_environ() )
+							   headers={"Accept": accept_type} )
 			assert_that( res.status_int, is_( 200 ) )
 
 			assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
