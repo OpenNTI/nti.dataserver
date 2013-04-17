@@ -287,16 +287,9 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 		__show__.off()
 		#self.ds = mock_dataserver.MockDataserver()
 		super(SharedApplicationTestBase,cls).setUpClass()
-		cls.app, cls.main = createApplication( 8080, cls._setup_library(), create_ds=False, force_create_indexmanager=True,
-											   pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE, testmode=True, zcml_features=cls.features )
+		cls.app = createApplication( 8080, cls._setup_library(), create_ds=False, force_create_indexmanager=True,
+									 pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE, testmode=True, zcml_features=cls.features )
 
-		root = '/Library/WebServer/Documents/'
-		# We'll volunteer to serve all the files in the root directory
-		# This SHOULD include 'prealgebra' and 'mathcounts'
-		serveFiles = [ ('/' + s, os.path.join( root, s) )
-					   for s in os.listdir( root )
-					   if os.path.isdir( os.path.join( root, s ) )]
-		cls.main.setServeFiles( serveFiles )
 		component.provideHandler( eventtesting.events.append, (None,) )
 
 	def setUp(self):
@@ -447,15 +440,8 @@ class ApplicationTestBase(_AppTestBaseMixin, ConfiguringTestBase):
 		test_func = getattr( self, self._testMethodName )
 		ds_factory = getattr( test_func, 'mock_ds_factory', mock_dataserver.MockDataserver )
 
-		self.app, self.main = createApplication( 8080, self._setup_library(), create_ds=ds_factory, pyramid_config=self.config, devmode=self.APP_IN_DEVMODE, testmode=True )
+		self.app = createApplication( 8080, self._setup_library(), create_ds=ds_factory, pyramid_config=self.config, devmode=self.APP_IN_DEVMODE, testmode=True )
 		self.ds = component.getUtility( nti_interfaces.IDataserver )
-		root = '/Library/WebServer/Documents/'
-		# We'll volunteer to serve all the files in the root directory
-		# This SHOULD include 'prealgebra' and 'mathcounts'
-		serveFiles = [ ('/' + s, os.path.join( root, s) )
-					   for s in os.listdir( root )
-					   if os.path.isdir( os.path.join( root, s ) )]
-		self.main.setServeFiles( serveFiles )
 
 		# If we try to externalize things outside of an active request, but
 		# the get_current_request method returns the mock request we just set up,
