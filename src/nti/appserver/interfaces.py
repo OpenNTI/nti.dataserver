@@ -66,6 +66,17 @@ class ILibraryCollection(ICollection):
 					  title="The library",
 					  readonly=True )
 
+class ILibraryStaticFileConfigurator(interface.Interface):
+	"""
+	Registered as an adapter to a :class:`.IContentPackageLibrary` to
+	configure pyramid to serve the static files.
+	"""
+
+	def add_static_views( pyramid_config ):
+		"""
+		Add the static views to the given configurator.
+		"""
+
 class IWorkspace(ILocation):
 	"""
 	A workspace (in the Atom sense) is a collection of collections.

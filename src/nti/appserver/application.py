@@ -80,33 +80,6 @@ IZLocation.__bases__ = (ILocation,)
 
 SOCKET_IO_PATH = 'socket.io'
 
-class _Main(object):
-
-	def __init__(self, pyramid_config, serveFiles=(), http_port=8080):
-		self.serveFiles = []
-		self.http_port = http_port
-		self.pyramid_config = pyramid_config
-		self.pyramid_app = None
-
-	def addServeFiles( self, serveFile ):
-		self.serveFiles.append( serveFile )
-
-	def setServeFiles( self, serveFiles=() ):
-		self.serveFiles.extend( list(serveFiles) )
-
-		for prefix, path  in serveFiles:
-			# Note: We are not configuring caching for these files, nor gzip. In production
-			# usage, we MUST be behind a webserver that will deal with static
-			# files correctly (nginx, apache) by applying ETags to allow caching and Content-Encoding
-			# for speed.
-			self.pyramid_config.add_static_view( prefix, path )
-		self.pyramid_config.add_static_view( SOCKET_IO_PATH + '/static/', 'nti.socketio:static/' )
-		self.serveFiles.append( ( '/' + SOCKET_IO_PATH + '/static/', None ) )
-		self.pyramid_app = self.pyramid_config.make_wsgi_app()
-
-	def __call__(self, environ, start_request):
-		return self.pyramid_app( environ, start_request )
-
 def _create_xml_conf_machine( settings ):
 	xml_conf_machine = xmlconfig.ConfigurationMachine()
 	xmlconfig.registerCommonDirectives( xml_conf_machine )
@@ -135,7 +108,7 @@ def createApplication( http_port,
 					   force_create_indexmanager=False, # For testing
 					   **settings ):
 	"""
-	:return: A tuple (wsgi app, _Main)
+	:return: A WSGI callable.
 	"""
 	server = None
 	# Configure subscribers, etc.
@@ -335,6 +308,8 @@ def createApplication( http_port,
 	pyramid_config.add_route( name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE )
 	pyramid_config.add_route( name=dataserver_socketio_views.RT_CONNECT, pattern=dataserver_socketio_views.URL_CONNECT )
 	pyramid_config.scan( dataserver_socketio_views )
+	pyramid_config.add_static_view( SOCKET_IO_PATH + '/static/', 'nti.socketio:static/' )
+
 
 	if 'main_dictionary_path' in settings:
 		try:
@@ -366,6 +341,10 @@ def createApplication( http_port,
 		component.getSiteManager().registerUtility( library, provided=lib_interfaces.IContentPackageLibrary )
 	else:
 		library = component.getUtility( lib_interfaces.IContentPackageLibrary )
+
+	static_mapper = component.queryAdapter( library, app_interfaces.ILibraryStaticFileConfigurator )
+	if static_mapper:
+		static_mapper.add_static_views( pyramid_config )
 
 	## Search
 	# All the search views should accept an empty term (i.e., nothing after the trailing slash)
@@ -405,9 +384,6 @@ def createApplication( http_port,
 
 	logger.debug( 'Finished creating search' )
 
-
-	if False:
-		_configure_legacy_direct_user_routes_and_views( pyramid_config )
 
 
 	# Service
@@ -589,9 +565,7 @@ def createApplication( http_port,
 		_configure_async_changes( server, indexmanager )
 
 
-	main = _Main( pyramid_config, http_port=http_port )
-
-	return (main,main) # bwc
+	return pyramid_config.make_wsgi_app()
 
 def _configure_async_changes( ds, indexmanager ):
 	logger.info( 'Adding synchronous change listeners.' )
@@ -600,56 +574,6 @@ def _configure_async_changes( ds, indexmanager ):
 		ds.add_change_listener( indexmanager.onChange )
 
 	logger.info( 'Finished adding listeners' )
-
-def _configure_legacy_direct_user_routes_and_views( pyramid_config ):
-	"""
-	These views are legacy, non-odata views and generally should not be used.
-	"""
-	# User-generated data
-	pyramid_config.add_route( name='user.pages.traversal', pattern='/dataserver2/users/{user}/Pages/{group}/UserGeneratedData{_:/?}',
-							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
-							  traverse='/{user}/Pages/{group}'
-							  )
-	pyramid_config.add_view( route_name='user.pages.traversal', view='nti.appserver.ugd_query_views._UGDView',
-							 name='', renderer='rest',
-							 permission=nauth.ACT_READ, request_method='GET' )
-
-	# Recursive UGD
-	pyramid_config.add_route( name='user.pages.recursivetraversal', pattern='/dataserver2/users/{user}/Pages/{group}/RecursiveUserGeneratedData{_:/?}',
-							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
-							  traverse='/{user}/Pages/{group}'
-							  )
-	pyramid_config.add_view( route_name='user.pages.recursivetraversal', view='nti.appserver.ugd_query_views._RecursiveUGDView',
-							 name='', renderer='rest',
-							 permission=nauth.ACT_READ, request_method='GET' )
-
-	# Stream
-	pyramid_config.add_route( name='user.pages.stream', pattern='/dataserver2/users/{user}/Pages/{group}/Stream{_:/?}',
-							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
-							  traverse='/{user}/Pages/{group}'
-							  )
-	pyramid_config.add_view( route_name='user.pages.stream', view='nti.appserver.ugd_query_views._UGDStreamView',
-							 name='', renderer='rest',
-							 permission=nauth.ACT_READ, request_method='GET' )
-
-	# Recursive Stream
-	pyramid_config.add_route( name='user.pages.recursivestream', pattern='/dataserver2/users/{user}/Pages/{group}/RecursiveStream{_:/?}',
-							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
-							  traverse='/{user}/Pages/{group}'
-							  )
-	pyramid_config.add_view( route_name='user.pages.recursivestream', view='nti.appserver.ugd_query_views._RecursiveUGDStreamView',
-							 name='', renderer='rest',
-							 permission=nauth.ACT_READ, request_method='GET' )
-
-	# UGD and recursive stream
-	pyramid_config.add_route( name='user.pages.ugdandrecursivestream', pattern='/dataserver2/users/{user}/Pages/{group}/UserGeneratedDataAndRecursiveStream{_:/?}',
-							  factory='nti.appserver._dataserver_pyramid_traversal.users_root_resource_factory',
-							  traverse='/{user}/Pages/{group}'
-							  )
-	pyramid_config.add_view( route_name='user.pages.ugdandrecursivestream', view='nti.appserver.ugd_query_views._RecursiveUGDStreamView',
-							 name='', renderer='rest',
-							 permission=nauth.ACT_READ, request_method='GET' )
-
 
 @component.adapter(IDatabaseOpenedWithRoot)
 def _configure_pyramid_zodbconn( database_event, registry=None ):
@@ -668,6 +592,29 @@ def _configure_pyramid_zodbconn( database_event, registry=None ):
 
 	registry.zodb_database = database_event.database # 0.2
 	registry._zodb_databases = { '': database_event.database } # 0.3, 0.4
+
+@component.adapter(lib_interfaces.IFilesystemContentPackageLibrary)
+@interface.implementer(app_interfaces.ILibraryStaticFileConfigurator)
+class _FilesystemStaticFileConfigurator(object):
+
+	def __init__( self, context ):
+		self.context = context
+
+	def add_static_views( self, pyramid_config ):
+		# We'll volunteer to serve all the files in the root directory
+		# Note that this is not dynamic (the library isn't either)
+		# but in production we expect to have static files served by
+		# nginx/apache; nor does it work with multiple trees of libraries
+		# spread across sites
+
+		# Note: We are not configuring caching for these files, nor gzip. In production
+		# usage, we MUST be behind a webserver that will deal with static
+		# files correctly (nginx, apache) by applying ETags to allow caching and Content-Encoding
+		# for speed.
+		for package in self.context.contentPackages:
+			prefix = '/' + os.path.basename( package.dirname )
+			path = package.dirname
+			pyramid_config.add_static_view( prefix, path )
 
 
 

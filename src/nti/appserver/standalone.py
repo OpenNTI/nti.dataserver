@@ -16,9 +16,6 @@ import platform
 
 import codecs
 
-
-from nti.contentlibrary.interfaces import IFilesystemContentPackageLibrary
-from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
 
@@ -76,25 +73,12 @@ def configure_app( global_config,
 			with codecs.open(zcml_path, 'w', encoding='utf-8') as f:
 				f.write( _ZCML_LIBRARY_TEMPLATE % lib_str )
 
-	application,main = createApplication( int(settings.get('http_port','8081')),
-										  library=None,
-										  process_args=True,
-										  create_ds=nti_create_ds,
-										  sync_changes=asbool(sync_changes),
-										  **settings)
-
-	# We'll volunteer to serve all the files in the root directory
-	# Note that this is not dynamic (the library isn't either)
-	# but in production we expect to have static files served by
-	# nginx/apache; nor does it work with multiple trees of libraries
-	# spread across sites
-	library = component.getUtility( IContentPackageLibrary )
-	if IFilesystemContentPackageLibrary.providedBy( library ):
-		main.setServeFiles( [ ('/' + os.path.basename( package.dirname ), package.dirname)
-							  for package in library.contentPackages] )
-	else:
-		# FIXME: It's weird that this call is required
-		main.setServeFiles( )
+	application = createApplication( int(settings.get('http_port','8081')),
+									 library=None,
+									 process_args=True,
+									 create_ds=nti_create_ds,
+									 sync_changes=asbool(sync_changes),
+									 **settings)
 
 	return application
 
