@@ -25,7 +25,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, is_not, has_entry, none)
+from hamcrest import (assert_that, is_, is_not, has_key, has_entry, none)
 
 class TestStoreExternal(ConfiguringTestBase):
 
@@ -51,6 +51,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		hist.add_purchase(pa)
 
 		ext = to_external_object(pa)
+		assert_that(ext, has_key('MimeType'))
 		assert_that(ext, has_entry('Class', u'PurchaseAttempt'))
 		assert_that(ext, has_entry('Items', ['xyz']))
 		assert_that(ext, has_entry('State', 'Unknown'))
@@ -69,6 +70,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		ps = util.getTermByToken('iid_3').value
 		ext = to_external_object(ps)
 
+		assert_that(ext, has_key('MimeType'))
 		assert_that(ext, has_entry('NTIID', u'iid_3'))
 		assert_that(ext, has_entry('Class', u'Purchasable'))
 		assert_that(ext, has_entry('Amount', 90))

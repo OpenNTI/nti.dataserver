@@ -10,28 +10,28 @@ __docformat__ = "restructuredtext en"
 import re
 import six
 
-def from_delimited(value, delim=','):
+def from_delimited(value, delim=' '):
 	result = value.split(delim)
 	result = re.findall("[^\s]+", value) if len(result) <= 1 else result
 	return result
 
-def to_collection(items=None, factory=list):
+def to_collection(items=None, factory=list, delim=' '):
 	result = None
 	if not items:
 		result = factory()
 	elif isinstance(items, factory):
 		result = items
 	elif isinstance(items, six.string_types):
-		result = factory(from_delimited(unicode(items)))
+		result = factory(from_delimited(unicode(items), delim))
 	else:
 		result = factory(items)
 	return result
 
-def to_list(items=None):
+def to_list(items=None, delim=' '):
 	return to_collection(items, list)
 
-def to_frozenset(items=None):
-	return to_collection(items, frozenset)
+def to_frozenset(items=None, delim=' '):
+	return to_collection(items, frozenset, delim)
 
 def is_valid_amount(amount):
 	try:
