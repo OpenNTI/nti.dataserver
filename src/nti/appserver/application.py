@@ -170,6 +170,7 @@ def createApplication( http_port,
 		library_zcml = os.path.join( os.path.dirname( settings['__file__'] ), 'library.zcml' )
 
 	if library_zcml and library is None: # If tests pass in a library, use that instead
+		library_zcml = os.path.normpath( os.path.expanduser( library_zcml ) )
 		logger.debug( "Loading library settings from %s", library_zcml )
 		xml_conf_machine = xmlconfig.file( library_zcml,  package=nti.appserver, context=xml_conf_machine, execute=False )
 
