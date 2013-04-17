@@ -14,7 +14,7 @@ from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
-from nti.mimetype import mimetype
+from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.utils.schema import SchemaConfigured
 
@@ -23,7 +23,7 @@ from . import interfaces as store_interfaces
 @interface.implementer(store_interfaces.IUserAddress, zmime_interfaces.IContentTypeAware)
 class UserAddress(SchemaConfigured):
 
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	mimeType = nti_mimetype_with_class("UserAddress")
 
 	Street = FP(store_interfaces.IUserAddress['Street'])
 	City = FP(store_interfaces.IUserAddress['City'])
@@ -67,7 +67,7 @@ class UserAddress(SchemaConfigured):
 @interface.implementer(store_interfaces.IPaymentCharge, zmime_interfaces.IContentTypeAware)
 class PaymentCharge(SchemaConfigured):
 
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	mimeType = nti_mimetype_with_class("PaymentCharge")
 
 	Amount = FP(store_interfaces.IPaymentCharge['Amount'])
 	Currency = FP(store_interfaces.IPaymentCharge['Currency'])
