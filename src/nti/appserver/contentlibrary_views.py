@@ -381,94 +381,84 @@ class _LibraryTOCRedirectClassView(object):
 	href is possible, but the rest of the data can be returned.
 	"""
 
-	def __init__(self, request, default_href=None, ntiid=None):
+	def __init__(self, request):
 		self.request = request
-		self.default_href = default_href
-		self.ntiid = ntiid
+
+	def _lastModified(self, request):
+		lastModified = request.context.lastModified
+		if lastModified <= 0:
+			# Hmm, ok, can we find one higher up?
+			root_package = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
+			if root_package:
+				lastModified = root_package.lastModified
+		return lastModified
+
+	link_mt = nti_mimetype_with_class( 'link' )
+	link_mt_json = link_mt + '+json'
+	link_mts = (link_mt, link_mt_json)
+	json_mt = 'application/json'
+	page_info_mt = nti_mimetype_with_class( 'pageinfo' )
+	page_info_mt_json = page_info_mt + '+json'
+	page_mts = (json_mt,page_info_mt,page_info_mt_json)
+
+	mts = ('text/html',link_mt,link_mt_json,json_mt,page_info_mt,page_info_mt_json)
+
+	def _as_link(self, href, lastModified, request):
+		link = links.Link( href, rel="content" )
+		# We cannot render a raw link using the code in pyramid_renderers, but
+		# we need to return one to get the right mime type header. So we
+		# fake it by rendering here
+		def _t_e_o():
+			return {"Class": "Link", "MimeType": self.link_mt, "href": href, "rel": "content", 'Last Modified': lastModified or None}
+		link.toExternalObject = _t_e_o
+		interface.alsoProvides( link, loc_interfaces.ILocationInfo )
+		link.__parent__ = request.context
+		link.__name__ = href
+		link.getNearestSite = lambda: request.registry.getUtility( nti_interfaces.IDataserver ).root
+
+		return link
 
 	def __call__(self):
 		request = self.request
-		default_href = self.default_href
-		ntiid = self.ntiid
+		href = request.context.href
 
-		href = getattr(request.context, 'href', default_href)
 		jsonp_href = None
 		lastModified = 0
 		# Right now, the ILibraryTOCEntries always have relative hrefs,
 		# which may or may not include a leading /.
+		assert not href.startswith( '/' ) or '://' not in href # Is it a relative path?
 		# FIXME: We're assuming these map into the URL space
 		# based in their root name. Is that valid? Do we need another mapping layer?
-		root_package = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
-		if not href.startswith( '/' ) and '://' not in href: # Is it a relative path?
-			mapper = component.queryAdapter( request.context, lib_interfaces.IContentUnitHrefMapper )
-			if mapper:
-				href = mapper.href or href
-			elif root_package: # missing in the Root ntiid case
-				# TODO: JAM: I think this only arises in elderly test code now?
-				warnings.warn( "Assuming mapping of content unit href into URL space." )
-				__traceback_info__ = root_package, href
-				href = root_package.root + '/' + href
-				href = href.replace( '//', '/' )
-				if not href.startswith( '/' ):
-					href = '/' + href
 
-		if getattr( request.context, 'href', None ) and hasattr( request.context, 'does_sibling_entry_exist' ):
-			# TODO: This falls down on the filesystem, the keys are currently meaningless strings
-			# TODO: Many tests are not providing anywhere near a valid implementation of a content unit,
-			# hence the check for does_sibling_entry_exist
-			mapper = None
-			jsonp_key = request.context.does_sibling_entry_exist( request.context.href + '.jsonp' )
+		href = lib_interfaces.IContentUnitHrefMapper( request.context ).href or href
 
-			if jsonp_key:
-				mapper = component.queryAdapter( jsonp_key, lib_interfaces.IContentUnitHrefMapper )
-				if not mapper:
-					# For the sake of the filesystem, check for the key within the context
-					mapper = component.queryMultiAdapter( (jsonp_key, request.context), lib_interfaces.IContentUnitHrefMapper )
-			if mapper:
-				jsonp_href = mapper.href
+		jsonp_key = request.context.does_sibling_entry_exist( request.context.href + '.jsonp' )
+		if jsonp_key is not None and jsonp_key:
+			jsonp_href = lib_interfaces.IContentUnitHrefMapper( jsonp_key ).href
 
-		if root_package: # missing in the root ntiid case
-			lastModified = getattr( root_package, 'lastModified', 0 )  # only IFilesystemContentPackage guaranteed to have
+		lastModified = self._lastModified( request )
 
 		# If the client asks for a specific type of data,
 		# a link, then give it to them. Otherwise...
-		link_mt = nti_mimetype_with_class( 'link' )
-		link_mt_json = link_mt + '+json'
-		json_mt = 'application/json'
-		page_info_mt = nti_mimetype_with_class( 'pageinfo' )
-		page_info_mt_json = page_info_mt + '+json'
-
-		mts = ('text/html',link_mt,link_mt_json,json_mt,page_info_mt,page_info_mt_json)
 		accept_type = 'text/html'
 		if request.accept:
-			accept_type = request.accept.best_match( mts )
+			accept_type = request.accept.best_match( self.mts )
 
-		if accept_type in (link_mt, link_mt_json):
-			link = links.Link( href, rel="content" )
-			# We cannot render a raw link using the code in pyramid_renderers, but
-			# we need to return one to get the right mime type header. So we
-			# fake it by rendering here
-			def _t_e_o():
-				return {"Class": "Link", "MimeType": link_mt, "href": href, "rel": "content", 'Last Modified': lastModified or None}
-			link.toExternalObject = _t_e_o
-			interface.alsoProvides( link, loc_interfaces.ILocationInfo )
-			link.__parent__ = request.context
-			link.__name__ = href
-			link.getNearestSite = lambda: request.registry.getUtility( nti_interfaces.IDataserver ).root
-			return link
+		if accept_type in self.link_mts:
+			return self._as_link( href, lastModified, request )
 
-		if accept_type in (json_mt,page_info_mt,page_info_mt_json):
+		if accept_type in self.page_mts:
 			# Send back our canonical location, just in case we got here via
 			# something like the _ContentUnitPreferencesPutView. This assists the cache to know
 			# what to invalidate. (Mostly in tests we find we cannot rely on traversal, so HACK it in manually)
-			request.response.content_location = UQ( ('/dataserver2/Objects/' + (ntiid or request.context.ntiid)).encode( 'utf-8' ) )
-			return _create_page_info(request, href, ntiid or request.context.ntiid, last_modified=lastModified, jsonp_href=jsonp_href)
+			request.response.content_location = UQ( ('/dataserver2/Objects/' + request.context.ntiid).encode( 'utf-8' ) )
+			return _create_page_info(request, href, request.context.ntiid, last_modified=lastModified, jsonp_href=jsonp_href)
 
 		# ...send a 302. Return rather than raise so that webtest works better
 		return hexc.HTTPSeeOther( location=href )
 
-def _LibraryTOCRedirectView(request, default_href=None, ntiid=None): # BWC
-	return _LibraryTOCRedirectClassView( request, default_href=default_href, ntiid=ntiid )()
+def _LibraryTOCRedirectView(request):
+	return _LibraryTOCRedirectClassView( request )()
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -476,9 +466,19 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None): # BWC
 			  permission=nauth.ACT_READ,
 			  request_method='GET' )
 def _RootLibraryTOCRedirectView(request):
-	# NOTE: This means that sometimes the LibraryTOCRedirectView is not called
-	# with the context it expects (it can get a _ContentUnitPreferences and NTIIDsContainerResource)
-	return _LibraryTOCRedirectView( request, default_href='', ntiid=request.view_name)
+	"""
+	For the root NTIID, we only support returning PageInfo (never a link to content,
+	and never the content itself, because those things do not exist.) Thus we bypass
+	the complex Accept logic of :class:`._LibraryTOCRedirectClassView`.
+	"""
+	# It turns out to be not worth it to try to share the logic
+	# because our request.context is not specified (in practice, it may be a
+	# _ContentUnitPreferences or _NTIIDsContainerResource)
+
+	ntiid = request.view_name
+	request.response.content_location = UQ( ('/dataserver2/Objects/' + ntiid).encode( 'utf-8' ) )
+	return _create_page_info(request, None, ntiid )
+
 
 @view_config( name='Main',
 			  context=lib_interfaces.IContentPackageLibrary,

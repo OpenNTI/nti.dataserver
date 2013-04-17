@@ -27,6 +27,7 @@ from nti.ntiids import ntiids
 
 from zope import interface
 from zope.traversing.api import traverse
+from pyramid import traversal
 
 from nti.appserver.contentlibrary_views import _ContentUnitPreferencesPutView, _ContentUnitPreferencesDecorator
 
@@ -36,6 +37,26 @@ class ContentUnit(object):
 	ntiid = None
 	__parent__ = None
 	lastModified = 0
+
+	def does_sibling_entry_exist( self, sib_name ):
+		return None
+
+	def __conform__( self, iface ):
+		if iface == lib_interfaces.IContentUnitHrefMapper:
+			return NIDMapper( self )
+
+@interface.implementer(lib_interfaces.IContentUnitHrefMapper)
+class NIDMapper(object):
+	def __init__( self, context ):
+		href = context.href
+		root_package = traversal.find_interface( context, lib_interfaces.IContentPackage )
+		if root_package:
+			href = root_package.root + '/' + context.href
+		href = href.replace( '//', '/' )
+		if not href.startswith( '/' ):
+			href = '/' + href
+
+		self.href = href
 
 class ContentUnitInfo(object):
 	contentUnit = None
