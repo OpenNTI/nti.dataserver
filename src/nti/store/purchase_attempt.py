@@ -23,8 +23,6 @@ from nti.dataserver.datastructures import ModDateTrackingObject
 
 from nti.externalization.oids import to_external_ntiid_oid
 
-from nti.mimetype.mimetype import nti_mimetype_with_class
-
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.utils.schema import SchemaConfigured
@@ -33,6 +31,7 @@ from nti.zodb import minmax
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from . import to_frozenset
+from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
 
 @functools.total_ordering
@@ -119,7 +118,7 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 @interface.implementer(an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPropertyHolder):
 
-	mimeType = nti_mimetype_with_class("Purchasable")
+	__metaclass__ = MetaStoreObject
 
 	def __init__(self, *args, **kwargs):
 		super(PurchaseAttempt, self).__init__(*args, **kwargs)

@@ -24,6 +24,7 @@ class TestZcml(ConfiguringTestBase):
 		sk = component.getUtility(stripe_interfaces.IStripeConnectKey, cap_name)
 		assert_that(sk, is_not(none()))
 		extobj = toExternalObject(sk)
+		assert_that(extobj, has_key('MimeType'))
 		assert_that(extobj, is_not(has_key('PrivateKey')))
 		assert_that(extobj, is_not(has_key('RefreshToken')))
 		assert_that(extobj, has_entry('LiveMode', False))

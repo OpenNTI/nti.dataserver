@@ -11,6 +11,7 @@ import os
 
 from zope import component
 
+from nti.contentlibrary.interfaces import IFilesystemContentPackageLibrary
 from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
 
 from nti.dataserver.users import User
@@ -35,7 +36,7 @@ class TestStoreExternal(ConfiguringTestBase):
 
 	def setUp(self):
 		library = FileLibrary(os.path.join(os.path.dirname(__file__), 'library'))
-		component.provideUtility(library)
+		component.provideUtility(library, IFilesystemContentPackageLibrary)
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		usr = User.create_user(self.ds, username=username, password=password)

@@ -12,18 +12,17 @@ from zope import interface
 
 from zope.mimetype import interfaces as zmime_interfaces
 
-from nti.mimetype.mimetype import nti_mimetype_with_class
-
 from nti.utils.property import alias as _
 
 from . import interfaces
+from ...utils import MetaStoreObject
 
 @interface.implementer(interfaces.IStripeConnectKey, zmime_interfaces.IContentTypeAware)
 class StripeConnectKey(object):
 
-	mimeType = nti_mimetype_with_class("StripeConnectKey")
-	
-	def __init__( self, alias, private_key, live_mode=None, stripe_user_id=None, refresh_token=None, public_key=None):
+	__metaclass__ = MetaStoreObject
+
+	def __init__(self, alias, private_key, live_mode=None, stripe_user_id=None, refresh_token=None, public_key=None):
 		self.Alias = alias
 		self.LiveMode = live_mode
 		self.PublicKey = public_key
