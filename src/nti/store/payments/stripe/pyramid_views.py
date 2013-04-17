@@ -21,8 +21,8 @@ from nti.externalization.datastructures import LocatedExternalDict
 from nti.store import purchase_history
 from . import interfaces as stripe_interfaces
 from nti.store import interfaces as store_interfaces
-from nti.store.payments import is_valid_amount, is_valid_pve_int
 from nti.store.utils import pyramid_views as util_pyramid_views
+from nti.store.payments import is_valid_amount, is_valid_pve_int
 
 class GetStripeConnectKeyView(object):
 	processor = 'stripe'
