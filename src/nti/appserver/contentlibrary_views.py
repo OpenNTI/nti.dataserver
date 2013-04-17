@@ -391,7 +391,7 @@ class _LibraryTOCRedirectClassView(object):
 		default_href = self.default_href
 		ntiid = self.ntiid
 
-		href = getattr(request.context, 'href', default_href )
+		href = getattr(request.context, 'href', default_href)
 		jsonp_href = None
 		lastModified = 0
 		# Right now, the ILibraryTOCEntries always have relative hrefs,
@@ -477,7 +477,7 @@ def _LibraryTOCRedirectView(request, default_href=None, ntiid=None): # BWC
 			  request_method='GET' )
 def _RootLibraryTOCRedirectView(request):
 	# NOTE: This means that sometimes the LibraryTOCRedirectView is not called
-	# with the context it expects (it can get a _ContentUnitPreferences)
+	# with the context it expects (it can get a _ContentUnitPreferences and NTIIDsContainerResource)
 	return _LibraryTOCRedirectView( request, default_href='', ntiid=request.view_name)
 
 @view_config( name='Main',

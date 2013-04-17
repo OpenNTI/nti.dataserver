@@ -31,9 +31,48 @@ import gzip
 import boto.exception
 
 from nti.tests import SharedConfiguringTestBase
+from nti.tests import validly_provides
 
 class TestBotoS3(SharedConfiguringTestBase):
 	set_up_packages = ('nti.externalization', 'nti.contentlibrary')
+
+	def test_unit_provides(self):
+		@interface.implementer(interfaces.IS3Bucket)
+		class Bucket(object):
+			name = __name__ = 'bucket'
+			def get_key( self, k ):
+				return object()
+
+		@interface.implementer(interfaces.IS3Key)
+		class Key(object):
+			bucket = None
+			name = None
+			last_modified = None
+
+			def __init__( self, bucket=None, name=None ):
+				if bucket: self.bucket = bucket
+				if name:
+					self.name = self.__name__ = name
+
+			def open(self):
+				self.last_modified = 1234.5
+
+
+		key = Key( name='foo/bar')
+		key.bucket = Bucket()
+		unit = BotoS3ContentUnit( key=key )
+
+		unit.title = 'foo'
+		unit.ntiid = 'baz'
+		unit.icon = 'icon'
+		unit.description = 'comment'
+		unit.href = 'index.html'
+
+
+		assert_that( unit, validly_provides( interfaces.IS3ContentUnit ) )
+
+
+
 
 	def test_does_exist_cached(self):
 		class Bucket(object):
@@ -43,10 +82,15 @@ class TestBotoS3(SharedConfiguringTestBase):
 		class Key(object):
 			bucket = None
 			name = None
+			last_modified = None
 
 			def __init__( self, bucket=None, name=None ):
 				if bucket: self.bucket = bucket
 				if name: self.name = name
+
+			def open(self):
+				self.last_modified = 1234.5
+
 
 		key = Key()
 		key.name = 'foo/bar'
@@ -80,7 +124,6 @@ class TestBotoS3(SharedConfiguringTestBase):
 		key.name = 'foo/bar'
 		key.bucket = Bucket()
 		unit = BotoS3ContentUnit( key=key )
-
 		assert_that( unit.lastModified, is_( -1 ) )
 
 
