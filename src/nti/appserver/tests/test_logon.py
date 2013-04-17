@@ -52,6 +52,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.externalization.externalization import EXT_FORMAT_JSON, to_external_representation, to_external_object
 from nti.dataserver import users
 from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
+from nti.contentlibrary import interfaces as lib_interfaces
 
 class DummyView(object):
 	response = "Response"
@@ -130,7 +131,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 
 		# Provide a library
 		library = FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
-		component.provideUtility( library )
+		component.provideUtility( library, lib_interfaces.IContentPackageLibrary )
 
 	def test_unathenticated_ping(self):
 		"An unauthenticated ping returns one link, to the handshake."

@@ -24,6 +24,7 @@ from .contentunit import ContentUnit
 from .contentunit import ContentPackage
 from .interfaces import IFilesystemContentUnit
 from .interfaces import IFilesystemContentPackage
+from .interfaces import IFilesystemContentPackageLibrary
 from .interfaces import IFilesystemKey
 from .interfaces import IFilesystemBucket
 
@@ -54,6 +55,7 @@ def _package_factory( directory ):
 	bucket.__parent__ = package
 	return package
 
+@interface.implementer(IFilesystemContentPackageLibrary)
 class StaticFilesystemLibrary(library.AbstractStaticLibrary):
 
 	package_factory = staticmethod(_package_factory)
@@ -75,6 +77,7 @@ class StaticFilesystemLibrary(library.AbstractStaticLibrary):
 # our two supported platforms. I (JAM) think the only trick might be
 # getting it to work with gevent?
 
+@interface.implementer(IFilesystemContentPackageLibrary)
 class DynamicFilesystemLibrary(library.AbstractLibrary):
 	"""
 	Implements a library by looking at the contents of a root
@@ -197,6 +200,12 @@ class FilesystemContentUnit(ContentUnit):
 	def _get_filename(self):
 		return self.key.absolute_path if self.key else None
 	filename = property(_get_filename, _set_key )
+
+	@property
+	def dirname(self):
+		filename = self.filename
+		if filename:
+			return os.path.dirname( filename )
 
 	@Lazy
 	def lastModified( self ):

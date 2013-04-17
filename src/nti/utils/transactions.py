@@ -303,7 +303,8 @@ class TransactionLoop(object):
 				result = self.run_handler( *args, **kwargs )
 
 				# We should still have the same transaction. If we don't,
-				# then we get a ValueError from tx.commit.
+				# then we get a ValueError from tx.commit; however, we let this
+				# pass if we would be aborting anyway.
 				#assert transaction.get() is tx, "Started new transaction out from under us!"
 
 				if self.should_abort_due_to_no_side_effects( *args, **kwargs ):
@@ -317,17 +318,18 @@ class TransactionLoop(object):
 				if tx.isDoomed() or self.should_veto_commit( result, *args, **kwargs ):
 					raise self.AbortException( result, "doomed or vetoed" )
 
+				# note: commit our tx variable, NOT what is current; if they aren't the same, this raises ValueError
 				_do_commit( tx, note, self.long_commit_duration )
 
 				return result
 			except self.AbortException as e:
-				duration = _timing( transaction.abort, 'transaction.abort' )  # note: not our tx variable, whatever is current
+				duration = _timing( transaction.abort, 'transaction.abort' )  # note: NOT our tx variable, whatever is current
 				logger.debug( "Aborted %s transaction for %s in %ss", e.reason, note, duration )
 				return e.response
 			except Exception:
 				exc_info = sys.exc_info()
 				try:
-					_timing( transaction.abort, 'transaction.abort' ) # note: not our tx variable, whatever is current
+					_timing( transaction.abort, 'transaction.abort' ) # note: NOT our tx variable, whatever is current
 					retryable = transaction.manager._retryable(*exc_info[:-1])
 					if number <= 0 or not retryable:
 						raise

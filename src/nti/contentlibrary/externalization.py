@@ -252,12 +252,16 @@ class CDNS3KeyHrefMapperFactory(object):
 	def __call__( self, key ):
 		return CDNS3KeyHrefMapper( key, self.cdn_name )
 
-def map_all_buckets_to( cdn_name ):
+def map_all_buckets_to( cdn_name, _global=True ):
 	"""
 	WARNING: This API has global effects. Use
 	with extreme caution.
 	"""
-	site_man = component.getGlobalSiteManager()
+	if _global:
+		site_man = component.getGlobalSiteManager()
+	else:
+		site_man = component.getSiteManager()
+
 	# manually clear any previous registration
 	site_man.unregisterAdapter( required=(interfaces.IS3Key,),
 								provided=interfaces.IAbsoluteContentUnitHrefMapper )

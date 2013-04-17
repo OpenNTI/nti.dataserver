@@ -257,6 +257,11 @@ class IFilesystemContentPackage(IDelimitedHierarchyContentPackage,IFilesystemEnt
 	`filename` attribute.
 	"""
 
+class IFilesystemContentPackageLibrary(IContentPackageLibrary):
+	"""
+	A content package library based on reading the contents of the filesystem.
+	"""
+
 class IContentUnitHrefMapper(interface.Interface):
 	"""
 	Register these as adapters to produce the best HREF value for a given content

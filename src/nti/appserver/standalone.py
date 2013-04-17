@@ -14,11 +14,11 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import platform
 
-import boto
+import codecs
 
-import nti.contentlibrary.boto_s3
-from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary
-from nti.contentlibrary.externalization import map_all_buckets_to
+
+from nti.contentlibrary.interfaces import IFilesystemContentPackageLibrary
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.dataserver import interfaces as nti_interfaces
 from zope import component
 
@@ -28,50 +28,70 @@ from paste.deploy.converters import asbool
 
 SOCKET_IO_PATH = 'socket.io'
 
+_marker = object()
+
+_ZCML_LIBRARY_TEMPLATE = """
+<configure xmlns="http://namespaces.zope.org/zope"
+		   xmlns:zcml="http://namespaces.zope.org/zcml"
+		   xmlns:lib="http://nextthought.com/ntp/contentlibrary"
+		   i18n_domain='nti.dataserver'>
+
+	<include package="zope.component" />
+	<include package="nti.contentlibrary" file="meta.zcml" />
+
+	%s
+
+</configure>
+"""
+
 def configure_app( global_config,
-				   deploy_root='/Library/WebServer/Documents/',
+				   deploy_root=_marker,
 				   nti_create_ds=True,
 				   sync_changes=True,
 				   **settings ):
 	":return: A WSGI callable."
 
-	# Quick hack to switch on or off the library: if the root is a path
-	# then we use a filesystem view. If it's not, then we assume it must be a bucket.
-	# TODO: This needs to change because it breaks the glossary/dictionary, which
-	# is assumed to be in the deploy_root?
-	if '/' in deploy_root:
-		library = EnumerateOnceFilesystemLibrary( deploy_root )
-		# We'll volunteer to serve all the files in the root directory
-		# Note that this is not dynamic (the library isn't either)
-		# but in production we expect to have static files served by
-		# nginx/apache
-		serveFiles = [ ('/' + s, os.path.join( deploy_root, s) )
-					   for s in os.listdir( deploy_root )
-					   if os.path.isdir( os.path.join( deploy_root, s ) )]
-	else:
-		serveFiles = ()
-		conn = boto.connect_s3()
-		# CAUTION: See warning in this class
-		conn.bucket_class = nti.contentlibrary.boto_s3.NameEqualityBucket
-		boto_bucket = conn.get_bucket( deploy_root )
-		library = nti.contentlibrary.boto_s3.BotoS3BucketContentLibrary( boto_bucket )
+	if '__file__' in global_config and '__file__' not in settings:
+		settings['__file__'] = global_config['__file__']
 
+	if deploy_root is not _marker:
+		# Temporary code. Remove after May 2013
+		logger.warn( "deploy_root and s3_cdn_cname are deprecated. Please move to a ZCML file. " )
+
+		zcml_path = settings.get( 'library_zcml' ) or os.path.join( os.getenv( 'DATASERVER_DIR' ), 'etc', 'library.zcml' )
+		if not os.path.exists( zcml_path ):
+			logger.warn( "Copying existing deploy root to zcml file %s", zcml_path )
+
+			# Quick hack to switch on or off the library: if the root is a path
+			# then we use a filesystem view. If it's not, then we assume it must be a bucket.
+			# TODO: This needs to change because it breaks the glossary/dictionary, which
+			# is assumed to be in the deploy_root?
+			if '/' in deploy_root:
+				lib_str = '<lib:filesystemLibrary directory="%s" />' % deploy_root
+			elif 's3_cdn_cname' in settings and settings['s3_cdn_cname']:
+				lib_str = '<lib:s3Library bucket="%s" cdn_name="%s" />' % (deploy_root, settings['s3_cdn_cname'])
+			else:
+				lib_str = '<lib:s3Library bucket="%s" />' % deploy_root
+
+			with codecs.open(zcml_path, 'w', encoding='utf-8') as f:
+				f.write( _ZCML_LIBRARY_TEMPLATE % lib_str )
 
 	application,main = createApplication( int(settings.get('http_port','8081')),
-										  library,
+										  library=None,
 										  process_args=True,
 										  create_ds=nti_create_ds,
 										  sync_changes=asbool(sync_changes),
 										  **settings)
 
-	main.setServeFiles( serveFiles )
-
-	# If we are serving content from a bucket, we might have a CDN on top of it
-	# in the case that we are also serving the application. Rewrite bucket
-	# rules with that in mind, replacing the HTTP Host: and Origin: aware stuff
-	# we would do if we were serving the application and content both from a cdn.
-	if 's3_cdn_cname' in settings and settings['s3_cdn_cname']:
-		map_all_buckets_to( settings['s3_cdn_cname'] )
+	# We'll volunteer to serve all the files in the root directory
+	# Note that this is not dynamic (the library isn't either)
+	# but in production we expect to have static files served by
+	# nginx/apache; nor does it work with multiple trees of libraries
+	# spread across sites
+	library = component.getUtility( IContentPackageLibrary )
+	if IFilesystemContentPackageLibrary.providedBy( library ):
+		main.setServeFiles( [ ('/' + os.path.basename( package.dirname ), package.dirname)
+							  for package in library.contentPackages] )
 
 	return application
 
