@@ -36,7 +36,7 @@ def _makenone(s, default=None):
 	return s
 
 def _create_payment_charge(charge):
-	amount = charge.amount
+	amount = charge.amount / 100.0
 	currency = charge.currency.upper()
 	created = float(charge.created or time.time())
 	card = getattr(charge, 'card', None)
@@ -149,7 +149,6 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		Executes the process purchase.
 		This function may be called in a greenlet (which cannot be run within a transaction runner)
 		"""
-
 		transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 
 		def start_purchase():
@@ -311,9 +310,12 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 				if purchase:
 					if etype in ("charge.succeeded") and not purchase.has_succeeded():
-						amount = data['amount'] / 100.0
-						currency = data['currency'].upper()
-						notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, amount, currency))
+						pc = None
+						api_key = self.get_api_key(purchase)
+						if api_key:
+							charges = self.get_charges(purchase_id=purchase_id, start_time=purchase.StartTime, api_key=api_key)
+							pc = _create_payment_charge(charges[0]) if charges else None
+						notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, pc))
 					elif etype in ("charge.refunded") and not purchase.is_refunded():
 						notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
 					elif etype in ("charge.failed") and not purchase.has_failed():
