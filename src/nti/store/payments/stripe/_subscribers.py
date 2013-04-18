@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import transaction
-
 from zope import component
 from zope.annotation import IAnnotations
 
@@ -24,7 +22,6 @@ def stripe_customer_created(event):
 	user = User.get_user(event.username)
 	su = stripe_interfaces.IStripeCustomer(user)
 	su.customer_id = event.customer_id
-	transaction.get().savepoint()
 
 @component.adapter(stripe_interfaces.IStripeCustomerDeleted)
 def stripe_customer_deleted(event):
@@ -32,14 +29,12 @@ def stripe_customer_deleted(event):
 	su = stripe_interfaces.IStripeCustomer(user)
 	su.customer_id = None
 	IAnnotations(user).pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
-	transaction.get().savepoint()
 
 @component.adapter(stripe_interfaces.IRegisterStripeToken)
 def register_stripe_token(event):
 	purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
 	sp = stripe_interfaces.IStripePurchase(purchase)
 	sp.TokenID = event.token
-	transaction.get().savepoint()
 
 @component.adapter(stripe_interfaces.IRegisterStripeCharge)
 def register_stripe_charge(event):
@@ -49,4 +44,3 @@ def register_stripe_charge(event):
 	user = User.get_user(event.username)
 	su = stripe_interfaces.IStripeCustomer(user)
 	su.Charges.add(event.charge_id)
-	transaction.get().savepoint()
