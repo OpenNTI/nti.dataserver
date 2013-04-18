@@ -73,6 +73,8 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 	def remove_purchase(self, purchase):
 		if self.purchases.pop(time_to_64bit_int(purchase.StartTime), None):
 			lifecycleevent.removed(purchase)
+			return True
+		return False
 
 	@classmethod
 	def get_purchase(cls, pid):
@@ -146,6 +148,11 @@ def get_purchase_attempt(purchase_id, user=None):
 	if result is not None and user is not None:  # validate
 		result = None if result.creator != user else result
 	return result
+
+def remove_purchase_attempt(purchase, user):
+	user = _get_user(user)
+	hist = store_interfaces.IPurchaseHistory(user)
+	return hist.remove_purchase(purchase)
 
 def get_pending_purchases(user):
 	user = _get_user(user)
