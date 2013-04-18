@@ -10,8 +10,8 @@
 
 	<include package="." file="meta.zcml" />
 	
-	<subscriber handler=".fps_processor.register_fps_token" />
-	<subscriber handler=".fps_processor.register_fps_transaction" />
+	<subscriber handler="._subscribers.register_fps_token" />
+	<subscriber handler="._subscribers.register_fps_transaction" />
 
 	<adapter factory=".fps_adapters._FPSPurchaseFactory"
 			 for="...interfaces.IPurchaseAttempt"
