@@ -21,7 +21,7 @@ from hamcrest import none
 from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_property
-
+from hamcrest import has_entry
 import nti.tests
 from nti.tests import  verifiably_provides
 import fudge
@@ -33,6 +33,7 @@ from zope.component.hooks import site
 
 from nti.dataserver.site import _TrivialSite
 from nti.appserver.sites import MATHCOUNTS
+from nti.externalization.externalization import to_external_object
 
 from ..interfaces import IContentPackageLibrary
 from ..interfaces import IFilesystemContentPackageLibrary
@@ -62,7 +63,8 @@ HEAD_ZCML_STRING = """
 
 ZCML_STRING = HEAD_ZCML_STRING + """
 			<lib:filesystemLibrary
-				directory="tests/TestFilesystem"
+				directory="tests/"
+				prefix="SomePrefix"
 				/>
 		</registerIn>
 		</configure>
@@ -80,9 +82,10 @@ BOTO_ZCML_STRING = HEAD_ZCML_STRING + """
 class TestZcml(nti.tests.ConfiguringTestBase):
 
 
-	def test_site_registrations(self):
+	def test_filesystem_site_registrations(self):
 		"Can we add new registrations in a sub-site?"
 
+		self.configure_packages( ('nti.contentlibrary', 'nti.externalization') )
 		self.configure_string( ZCML_STRING )
 		assert_that( MATHCOUNTS.__bases__, is_( (component.globalSiteManager,) ) )
 
@@ -92,6 +95,12 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 			lib = component.getUtility( IContentPackageLibrary )
 			assert_that( lib, verifiably_provides( IFilesystemContentPackageLibrary ) )
 			assert_that( lib, is_( EnumerateOnceFilesystemLibrary ) )
+			# Did the right prefix come in?
+			assert_that( lib, has_property( 'url_prefix', '/SomePrefix/' ) )
+			pack_ext = to_external_object( lib[0] )
+			assert_that( pack_ext, has_entry( 'href', '/SomePrefix/TestFilesystem/index.html' ) )
+			assert_that( pack_ext, has_entry( 'root', '/SomePrefix/TestFilesystem/' ) )
+
 
 
 	@fudge.patch('boto.connect_s3')

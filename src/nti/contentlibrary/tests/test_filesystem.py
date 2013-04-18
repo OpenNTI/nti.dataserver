@@ -17,6 +17,7 @@ from nti.contentlibrary import interfaces, filesystem
 import nti.contentlibrary
 import nti.externalization
 import nti.externalization.externalization
+from nti.externalization.externalization import to_external_object
 
 import anyjson as json
 import os.path
@@ -60,7 +61,7 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 		assert_that( package.creators, is_( ('Jason',) ) )
 
 
-		ext_package = nti.externalization.externalization.toExternalObject( package )
+		ext_package = to_external_object( package )
 		assert_that( ext_package, has_entry( 'DCCreator', ('Jason',) ) )
 		assert_that( ext_package, has_entry( 'Creator', 'Jason') )
 		assert_that( ext_package, has_entry( 'PresentationProperties',
@@ -77,3 +78,12 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 
 		library = filesystem.EnumerateOnceFilesystemLibrary( os.path.dirname(__file__) )
 		assert_that( library, has_property( 'lastModified', greater_than( 0 ) ) )
+
+		pack_ext = to_external_object( library[0] )
+		assert_that( pack_ext, has_entry( 'href', '/TestFilesystem/index.html' ) )
+
+		library.url_prefix = '/SomePrefix/'
+
+		pack_ext = to_external_object( library[0] )
+		assert_that( pack_ext, has_entry( 'href', '/SomePrefix/TestFilesystem/index.html' ) )
+		assert_that( pack_ext, has_entry( 'root', '/SomePrefix/TestFilesystem/' ) )

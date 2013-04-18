@@ -5,6 +5,7 @@ Classes useful for working with libraries.
 from __future__ import print_function, unicode_literals
 
 #pylint: disable=E1102
+import numbers
 
 from zope import interface
 from zope.cachedescriptors.property import Lazy
@@ -16,21 +17,27 @@ from nti.utils.property import alias
 @interface.implementer(interfaces.IContentPackageLibrary)
 class AbstractLibrary(object):
 	"""
-	Base class for a Library. Subclasses must define the `paths` to inspect.
-
-	.. py:attribute:: possible_content_packages
-
-		A sequence of objects to introspect for :class:`interfaces.IContentPackage` objects.
+	Base class for a Library.
 	"""
 
+	#: A callable object that is passed each item from :attr:`possible_content_packages`
+	#: and returns either a package factory, or `None`.
 	package_factory = None
+
+	#: A sequence of objects to introspect for :class:`.IContentPackage` objects;
+	#: typically strings. These are passed to :attr:`package_factory`
 	possible_content_packages = ()
+
+	#: Placeholder for prefixes that should be applied when generating
+	#: URLs for items in this library.
+	url_prefix = ''
 
 	__name__ = 'Library'
 	__parent__ = None
 
-	def __init__(self):
-		pass
+	def __init__(self, prefix=''):
+		if prefix:
+			self.url_prefix = prefix
 
 	@property
 	def contentPackages(self):
@@ -66,6 +73,9 @@ class AbstractLibrary(object):
 		"""
 		:return: The LibraryEntry having a name or ntiid that matches `key`.
 		"""
+		if isinstance(key,numbers.Integral):
+			return self.contentPackages[key]
+
 		for title in self.titles:
 			if key in (title.title, title.ntiid):
 				return title
