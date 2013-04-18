@@ -66,6 +66,10 @@ class PricePurchasableView(object):
 	def __call__(self):
 		result = self.price_purchasable(required=True)
 		amount = result.get('Amount')
+		quantity = result.get('Quantity')
 		currency = result.get('Currency')
 		new_amount = result.get('PurchasePrice')
-		return LocatedExternalDict({'PurchasePrice':new_amount, 'Amount':amount, 'Currency':currency})
+		return LocatedExternalDict({'PurchasePrice':new_amount,
+									'Amount':amount,
+									'Currency':currency,
+									'Quantity':quantity})
