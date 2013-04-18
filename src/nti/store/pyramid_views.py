@@ -92,7 +92,9 @@ class GetPurchaseAttemptView(object):
 					manager = component.getUtility(store_interfaces.IPaymentProcessor, name=purchase.Processor)
 					manager.sync_purchase(purchase_id=purchase_id, username=username)
 				gevent.spawn(process_sync)
-		return purchase
+
+		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
+		return result
 
 class GetPurchasablesView(object):
 
