@@ -99,31 +99,31 @@ class PricePurchasableWithStripeCouponView(_PostStripeView, util_pyramid_views.P
 
 	def __call__(self):
 		values = self.price_purchasable()
-		new_amount = values.get('NewAmount', None)
+		new_amount = values['NewAmount']
 		stripe_key = self.get_stripe_connect_key(values)
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 
 		coupon = None
 		result = LocatedExternalDict()
+		result['Amount'] = values['Amount']
+		result['NonDiscountedAmount'] = new_amount
 		code = values.get('coupon', None)
 		if code is not None and stripe_key:
 			# stripe defines an 80 sec timeout for http requests
 			# at this moment we are to wait for coupon validation
 			coupon = manager.get_coupon(code, api_key=stripe_key.PrivateKey)
-			validated_coupon = manager.validate_coupon(coupon, api_key=stripe_key.PrivateKey) if coupon is not None else False
-			if validated_coupon:
-				result['Coupon'] = coupon
-				result['Provider'] = stripe_key.Alias
-			else:
-				raise hexc.HTTPNotFound(detail="Invalid coupon")
-
-		if new_amount is not None:
-			new_amount = float(new_amount)
 			if coupon is not None:
-				new_amount = manager.apply_coupon(new_amount, coupon)
-			result['NewAmount'] = new_amount
-		else:
-			raise hexc.HTTPBadRequest()
+				validated_coupon = manager.validate_coupon(coupon, api_key=stripe_key.PrivateKey)
+				if validated_coupon:
+					result['Provider'] = stripe_key.Alias
+				else:
+					raise hexc.HTTPClientError(detail="Invalid coupon")
+			result['Coupon'] = coupon
+
+		new_amount = float(new_amount)
+		if coupon is not None:
+			new_amount = manager.apply_coupon(new_amount, coupon)
+			result['DiscountedAmount'] = new_amount
 		return result
 
 class StripePaymentView(_PostStripeView):
