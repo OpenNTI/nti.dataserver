@@ -106,7 +106,8 @@ class TestStripeProcessor(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_process_payment(self):
 		ds = self.ds
-		username, purchase_id, _, _ = self.create_purchase()
+		with mock_dataserver.mock_db_trans(ds):
+			username, purchase_id, _, _ = self.create_purchase()
 
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
@@ -135,7 +136,8 @@ class TestStripeProcessor(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_sync_pending_purchase(self):
 		ds = self.ds
-		username, purchase_id, tid, cid = self.create_purchase()
+		with mock_dataserver.mock_db_trans(ds):
+			username, purchase_id, tid, cid = self.create_purchase()
 
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)

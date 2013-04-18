@@ -14,10 +14,10 @@
 		<implements interface=".interfaces.IStripeCoupon" />
 	</class>
 	
-	<subscriber handler=".stripe_processor.stripe_customer_created" />
-	<subscriber handler=".stripe_processor.stripe_customer_deleted" />
-	<subscriber handler=".stripe_processor.register_stripe_token" />
-	<subscriber handler=".stripe_processor.register_stripe_charge" />
+	<subscriber handler="._subscribers.stripe_customer_created" />
+	<subscriber handler="._subscribers.stripe_customer_deleted" />
+	<subscriber handler="._subscribers.register_stripe_token" />
+	<subscriber handler="._subscribers.register_stripe_charge" />
 
 	<adapter factory=".stripe_adapters._StripeCustomerFactory"
 			 for="nti.dataserver.interfaces.IUser"

@@ -14,12 +14,10 @@ import gevent
 from datetime import date
 from dateutil import parser as date_parser
 
-from zope import component
 from zope import interface
 from zope.event import notify
 
 from nti.dataserver.users import User
-from nti.dataserver import interfaces as nti_interfaces
 
 from . import fps_io
 from .. import _BasePaymentProcessor
@@ -28,23 +26,6 @@ from . import interfaces as fps_interfaces
 from ... import payment_charge
 from ... import purchase_history
 from ... import interfaces as store_interfaces
-
-@component.adapter(fps_interfaces.IRegisterFPSToken)
-def register_fps_token(event):
-	def func():
-		purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
-		fpsp = fps_interfaces.IFPSPurchase(purchase)
-		fpsp.token_id = event.token_id
-		fpsp.caller_reference = event.caller_reference
-	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-
-@component.adapter(fps_interfaces.IRegisterFPSTransaction)
-def register_fps_transaction(event):
-	def func():
-		purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
-		fpsp = fps_interfaces.IFPSPurchase(purchase)
-		fpsp.transaction_id = event.transaction_id
-	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
 def _create_payment_charge(trax):
 	ta = trax.TransactionAmount

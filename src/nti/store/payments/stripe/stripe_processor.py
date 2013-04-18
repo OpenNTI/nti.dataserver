@@ -14,10 +14,8 @@ import time
 import simplejson as json
 from datetime import date
 
-from zope import component
 from zope import interface
 from zope.event import notify
-from zope.annotation import IAnnotations
 
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
@@ -29,42 +27,6 @@ from ... import purchase_history
 from .. import _BasePaymentProcessor
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
-
-@component.adapter(stripe_interfaces.IStripeCustomerCreated)
-def stripe_customer_created(event):
-	def func():
-		user = User.get_user(event.username)
-		su = stripe_interfaces.IStripeCustomer(user)
-		su.customer_id = event.customer_id
-	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-
-@component.adapter(stripe_interfaces.IStripeCustomerDeleted)
-def stripe_customer_deleted(event):
-	def func():
-		user = User.get_user(event.username)
-		su = stripe_interfaces.IStripeCustomer(user)
-		su.customer_id = None
-		IAnnotations(user).pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
-	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-
-@component.adapter(stripe_interfaces.IRegisterStripeToken)
-def register_stripe_token(event):
-	def func():
-		purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
-		sp = stripe_interfaces.IStripePurchase(purchase)
-		sp.TokenID = event.token
-	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
-
-@component.adapter(stripe_interfaces.IRegisterStripeCharge)
-def register_stripe_charge(event):
-	def func():
-		purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
-		sp = stripe_interfaces.IStripePurchase(purchase)
-		sp.ChargeID = event.charge_id
-		user = User.get_user(event.username)
-		su = stripe_interfaces.IStripeCustomer(user)
-		su.Charges.add(event.charge_id)
-	component.getUtility(nti_interfaces.IDataserverTransactionRunner)(func)
 
 def _makenone(s, default=None):
 	if isinstance(s, six.string_types) and s == 'None':
