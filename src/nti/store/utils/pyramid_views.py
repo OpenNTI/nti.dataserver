@@ -32,6 +32,7 @@ class PricePurchasableView(object):
 
 	def price_purchasable(self, required=False):
 		values = self.readInput()
+		currency = values.get('currency', 'USD')
 		purchasableID = values.get('purchasableID', self.invalid_id if required else None)
 		purchasable = purchasable_store.get_purchasable(purchasableID) if purchasableID else None
 
@@ -39,6 +40,7 @@ class PricePurchasableView(object):
 			raise hexc.HTTPBadRequest(detail='invalid purchasable')
 		elif purchasable is not None:
 			amount = purchasable.Amount
+			currency = purchasable.Currency
 		else:
 			amount = values.get('amount', None)
 
@@ -55,13 +57,15 @@ class PricePurchasableView(object):
 
 		result = CaseInsensitiveDict(**values)
 		result['Amount'] = float(amount)
-		result['NewAmount'] = new_amount
+		result['Currency'] = currency
 		result['Quantity'] = int(quantity)
 		result['Purchasable'] = purchasable
+		result['PurchasePrice'] = new_amount
 		return result
 
 	def __call__(self):
 		result = self.price_purchasable(required=True)
 		amount = result.get('Amount')
-		new_amount = result.get('NewAmount')
-		return LocatedExternalDict({'NewAmount':new_amount, 'Amount':amount})
+		currency = result.get('Currency')
+		new_amount = result.get('PurchasePrice')
+		return LocatedExternalDict({'PurchasePrice':new_amount, 'Amount':amount, 'Currency':currency})

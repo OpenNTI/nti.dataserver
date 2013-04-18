@@ -40,7 +40,7 @@ class IPurchasable(interface.Interface):
 	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=False)
 	Author = nti_schema.ValidTextLine(title='Purchasable item author', required=False)
 	Description = nti_schema.ValidTextLine(title='Purchasable item description', required=False)
-	Amount = schema.Int(title="Cost amount", required=True)
+	Amount = schema.Float(title="Cost amount", required=True)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
 	BulkPurchase = schema.Bool(title="Bulk purchase flag", required=True, default=False)

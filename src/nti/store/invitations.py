@@ -22,7 +22,6 @@ class InvitationCapacityExceeded(Exception):
 	"""
 	Raised when a user is attempting to accept an invitation whose capacity has been exceeded.
 	"""
-
 	i18n_message = _("The limit for this invitation code has been exceeded.")
 
 class _StoreEntityInvitation(JoinEntitiesInvitation):
