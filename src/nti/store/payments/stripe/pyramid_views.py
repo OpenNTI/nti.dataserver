@@ -137,7 +137,7 @@ class StripePaymentView(_PostStripeView):
 		stripe_key = self.get_stripe_connect_key(values)
 
 		# get items to purchase
-		items = values.get('purchasableID', values.get('PurchasableID', None))
+		items = values.get('purchasableID', None)
 		if not items:
 			items = values.get('items', values.get('Items', None))
 		if not items:
@@ -147,21 +147,21 @@ class StripePaymentView(_PostStripeView):
 		purchase = purchase_history.get_pending_purchase_for(username, items)
 		if purchase is not None:
 			logger.warn("There is already a pending purchase for item(s) %s" % items)
-			return purchase
+			return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 
-		token = values.get('token', values.get('Token', None))
+		token = values.get('token', None)
 		if not token:
 			raise hexc.HTTPBadRequest(detail="No token provided")
 
-		amount = values.get('amount', values.get('Amount', None))
+		amount = values.get('amount', None)
 		if not is_valid_amount(amount):
 			raise hexc.HTTPBadRequest(detail="Invalid amount")
 
-		coupon = values.get('coupon', values.get('Coupon', None))
-		currency = values.get('currency', values.get('Currency', 'USD'))
-		description = values.get('description', values.get('Description', None))
+		coupon = values.get('coupon', None)
+		currency = values.get('currency', 'USD')
+		description = values.get('description', None)
 
-		quantity = values.get('quantity', values.get('Quantity', None))
+		quantity = values.get('quantity', None)
 		if quantity is not None and not is_valid_pve_int(quantity):
 			raise hexc.HTTPBadRequest(detail="Invalid quantity")
 
@@ -176,7 +176,7 @@ class StripePaymentView(_PostStripeView):
 			logger.info("Processing purchase %s" % purchase_id)
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 			manager.process_purchase(purchase_id=purchase_id, username=username, token=token, amount=amount,
-									 currency=currency, coupon=coupon, api_key=stripe_key.PrivateKey)
+			 						 currency=currency, coupon=coupon, api_key=stripe_key.PrivateKey)
 
 		def process_pay():
 			component.getUtility(nti_interfaces.IDataserverTransactionRunner)(process_purchase)
