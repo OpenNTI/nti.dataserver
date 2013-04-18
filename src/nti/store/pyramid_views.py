@@ -19,6 +19,8 @@ from zope import component
 
 from pyramid.security import authenticated_userid
 
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization.datastructures import LocatedExternalDict
 
 from . import purchase_history
@@ -88,9 +90,14 @@ class GetPurchaseAttemptView(object):
 			start_time = purchase.StartTime
 			# more than 90 secs try to sync
 			if time.time() - start_time >= 90 and not purchase.is_synced():
-				def process_sync():
+
+				def sync_purchase():
 					manager = component.getUtility(store_interfaces.IPaymentProcessor, name=purchase.Processor)
 					manager.sync_purchase(purchase_id=purchase_id, username=username)
+
+				def process_sync():
+					component.getUtility(nti_interfaces.IDataserverTransactionRunner)(sync_purchase)
+
 				gevent.spawn(process_sync)
 
 		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
