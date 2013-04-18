@@ -42,7 +42,7 @@ class PricePurchasableView(object):
 		else:
 			amount = values.get('amount', None)
 
-		if amount is not None and not is_valid_amount(amount):
+		if amount is None or not is_valid_amount(amount):
 			raise hexc.HTTPBadRequest(detail='invalid amount')
 
 		# check quantity
@@ -51,15 +51,17 @@ class PricePurchasableView(object):
 			raise hexc.HTTPBadRequest(detail='invalid quantity')
 
 		# calculate new amount
-		new_amount = float(amount) * int(quantity) if amount else None
+		new_amount = float(amount) * int(quantity)
 
 		result = CaseInsensitiveDict(**values)
+		result['Amount'] = float(amount)
 		result['NewAmount'] = new_amount
+		result['Quantity'] = int(quantity)
 		result['Purchasable'] = purchasable
 		return result
 
 	def __call__(self):
 		result = self.price_purchasable(required=True)
-		if 'NewAmount' not in result:
-			raise hexc.HTTPBadRequest(detail='invalid amount')
-		return LocatedExternalDict(NewAmount=result.get('NewAmount'))
+		amount = result.get('Amount')
+		new_amount = result.get('NewAmount')
+		return LocatedExternalDict({'NewAmount':new_amount, 'Amount':amount})
