@@ -180,23 +180,16 @@ def createApplication( http_port,
 
 	logger.debug( 'Finished starting dataserver' )
 
-	# TODO: Consider whether to use the global site manager as the registry,
-	# or allow pyramid to hook zca. The latter should install a site manager
-	# which is /beneath/ the global site manager, allowing for some degree
-	# of separation still (I think). The pyramid.testing setup does
-	# install a site manager, but fails to put it beneath the global site manager,
-	# leading to some breakage in ZCA apis...this can be fixed by setting the site manager
-	# to have a __bases__ that includes the global site manager.
-	# Hooking won't work because we install our local sites (see site_policies) beneath
-	# the global registry and switch into them, but the pyramid configuration still needs
-	# to be available
 	if pyramid_config is None:
-
+		# We must use the global site manager as the registry, we cannot
+		# let pyramid hook zca. This is because we install our local sites
+		# (see site_policies) beneath the global registry and switch into
+		# them, but the pyramid configuration still needs to be available.
 		pyramid_config = pyramid.config.Configurator( registry=component.getGlobalSiteManager(),
 													  debug_logger=logging.getLogger( 'pyramid' ),
 													  package=nti.appserver,
 													  settings=settings)
-		# Note that because we're using the global registre, the Configurator doesn't
+		# Note that because we're using the global registry, the Configurator doesn't
 		# set it up. So all the arguments it would pass we must pass.
 		# If we fail to do this, things like 'pyramid.includes' don't get processed
 		pyramid_config.setup_registry(debug_logger=logging.getLogger( 'pyramid' ),
@@ -205,14 +198,17 @@ def createApplication( http_port,
 
 		# Note that the pyramid.registry.global_registry remains
 		# the default registry, but it doesn't have the correct configuration.
-		# Give it the right base. Otherwise, outside of a request, e.g., when sending
-		# chat events, the configuration is wrong
+		# Make it the GSM. Otherwise, outside of a request, e.g., when sending
+		# chat events, the configuration is wrong.
 		assert get_current_registry() is pyramid.registry.global_registry
-		pyramid.registry.global_registry.__bases__ = (component.getGlobalSiteManager(),)
+		pyramid.registry.global_registry = component.getGlobalSiteManager()
+		pyramid.threadlocal.global_registry = component.getGlobalSiteManager()
+		assert get_current_registry() is component.getGlobalSiteManager()
 
 	else:
 		# This branch exists only for tests
 		pyramid_config.set_root_factory( 'nti.appserver._dataserver_pyramid_traversal.root_resource_factory' )
+
 
 	# Our addons
 	# include statsd client support around things we want to time.
