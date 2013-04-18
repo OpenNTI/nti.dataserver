@@ -805,7 +805,7 @@ class TestMathcountsSitePolicyEventListener(MathcountsSitePolicyEventListener):
 _SITE_LANDING_PAGES = {
 	'mathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1',
 	'testmathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-testmathcounts2013.warm_up_1',
-	'prmia.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-Volume_III.A.2_converted.toc260827905',
+	'prmia.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.advanced_stress_testing_for_financial_institutions',
 	'fintech.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-FinTech_PRMIA_RiskCourseSample.framework_for_diagnosing_systemic_risk'
 	}
 
