@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
+import transaction
 
 from zope import component
 
@@ -25,6 +26,7 @@ def _purchase_attempt_started(event):
 	purchase = get_purchase_attempt(event.purchase_id, event.username)
 	purchase.updateLastMod()
 	purchase.State = store_interfaces.PA_STATE_STARTED
+	transaction.get().savepoint()
 	logger.info('%s started %s' % (event.username, purchase))
 
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
@@ -41,6 +43,7 @@ def _purchase_attempt_successful(event):
 		lib_items = purchasable_store.get_content_items(purchase.Items)
 		_content_roles._add_users_content_roles(event.username, lib_items)
 
+	transaction.get().savepoint()
 	logger.info('%s completed successfully' % (purchase))
 
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
@@ -55,6 +58,7 @@ def _purchase_attempt_refunded(event):
 	lib_items = purchasable_store.get_content_items(purchase.Items)
 	_content_roles._remove_users_content_roles(event.username, lib_items)
 
+	transaction.get().savepoint()
 	logger.info('%s has been refunded' % (purchase))
 
 @component.adapter(store_interfaces.IPurchaseAttemptDisputed)
@@ -74,10 +78,13 @@ def _purchase_attempt_failed(event):
 		purchase.ErrorCode = event.error_code
 	if event.error_message:
 		purchase.ErrorMessage = event.error_message
+
+	transaction.get().savepoint()
 	logger.info('%s failed. %s' % (purchase, event.error_message))
 
 @component.adapter(store_interfaces.IPurchaseAttemptSynced)
 def _purchase_attempt_synced(event):
 	purchase = get_purchase_attempt(event.purchase_id, event.username)
 	purchase.Synced = True
+	transaction.get().savepoint()
 	logger.info('%s has been synched' % (purchase))
