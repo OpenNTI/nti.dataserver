@@ -54,7 +54,7 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 
 	def __repr__(self):
 		d = datetime.fromtimestamp(self.StartTime)
-		return "%s(%s,%s,%s)" % (self.__class__, self.Processor, d, self.Items)
+		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__, self.Processor, d, self.Items, self.State)
 
 	def __eq__(self, other):
 		try:
@@ -140,6 +140,9 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPrope
 			else:
 				return False
 		return True
+
+	def __str__(self):
+		return self.id
 
 def create_base_purchase_attempt(purchase):
 	result = BasePurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
