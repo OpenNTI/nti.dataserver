@@ -132,7 +132,7 @@ class _TrivialAndStoreInvitations(_TrivialDefaultInvitations):
 			try:
 				purchase = self._getObjectByCode(code)
 				if store_interfaces.IPurchaseAttempt(purchase):
-					invite = invitations.create_store_invitation(purchase, code)
+					invite = invitations.create_store_purchase_invitation(purchase, code)
 			except (KeyError, ValueError, AttributeError):
 				return None
 		return invite

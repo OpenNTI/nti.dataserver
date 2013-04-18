@@ -1,13 +1,12 @@
 <!-- -*- mode: nxml -*- -->
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
-			xmlns:zcml="http://namespaces.zope.org/zcml"
-			xmlns:pcs="http://nextthought.com/ntp/purchasable">
+			xmlns:zcml="http://namespaces.zope.org/zcml">
 
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-			 		
+		
 	<include package=".payments" file="configure.zcml" />
 	
 	<adapter factory=".purchase_history._PurchaseHistoryFactory"
@@ -20,7 +19,8 @@
 	<subscriber handler="._subscribers._purchase_attempt_refunded" />
 	<subscriber handler="._subscribers._purchase_attempt_synced" />
 	<subscriber handler="._subscribers._purchase_attempt_disputed" />
-	
+	<subscriber handler="._subscribers._purchase_invitation_accepted" />
+		
 	<adapter factory=".externalization.PurchasableExternal" />
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	
@@ -36,18 +36,6 @@
 			 provides="zope.schema.interfaces.IVocabularyFactory"
 			 name="nti.store.purchasable.vocabulary" />
 	
-	<include package="." file="meta.zcml" />
-	
-	<pcs:registerPurchasable
-		ntiid="tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center"
-		title="NextThought Help Center"
-		description="NextThought Help Cencer"
-		provider="NTI-TEST"
-		author="NEXTTHOUGHT"
-		amount="100"
-		currency="USD"
-		discountable="False"
-		bulk_purchase="True"
-		items="prealgebra" />
+	<include package="." file="purchasable.zcml" />
 		
 </configure>
