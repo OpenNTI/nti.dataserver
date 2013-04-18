@@ -161,7 +161,7 @@ setup(
 		'anyjson >= 0.3.3',
 		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
 		# See also blist for a tree-structured list
-		'boto >= 2.8.0',  # amazon
+		'boto >= 2.9.0',  # amazon
 		'brownie >= 0.5.1',  # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
@@ -378,7 +378,7 @@ setup(
 			'pip-tools >= 0.3.1',  # command pip-review, pip-dump
 			'pudb >= 2013.1',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 0.27.0' if not IS_PYPY else '',
-			'pyramid_debugtoolbar >= 1.0.4',
+			'pyramid_debugtoolbar >= 1.0.6',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
 			'repoze.sphinx.autointerface >= 0.7.1',
 			'rope >= 0.9.4',  # refactoring library. c.f. ropemacs
@@ -389,7 +389,7 @@ setup(
 			'virtualenv >= 1.9.1',
 			'virtualenvwrapper >= 3.7.1',
 			'zc.buildout >= 2.1.0',
-			'z3c.dependencychecker >= 1.10',  # unused/used imports; see also tl.eggdeps
+			'z3c.dependencychecker >= 1.11',  # unused/used imports; see also tl.eggdeps
 			'zodbbrowser >= 0.10.4',
 			'zodbupdate >= 0.5',
 			# Monitoring stats and instrumenting code
