@@ -82,7 +82,10 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			items = ('xyz book',)
-			purchase_id = purchase_history.register_purchase_attempt(username, items=items, processor=self.manager.name, description="my charge")
+			purchase_id = purchase_history.register_purchase_attempt(username,
+																	 items=items,
+																	 processor=self.manager.name,
+																	 description="my charge")
 			assert_that(purchase_id, is_not(None))
 
 		tid = self.manager.create_card_token(number="5105105105105100",
@@ -149,7 +152,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			pa.State = store_interfaces.PA_STATE_STARTED
 
 		with mock_dataserver.mock_db_trans(ds):
-			charge = self.manager.sync_purchase(purchase_id, username=username)
+			charge = self.manager.sync_purchase(purchase_id, username=username, api_key=stripe.api_key)
 			assert_that(charge, is_not(None))
 
 		with mock_dataserver.mock_db_trans(ds):
@@ -181,7 +184,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			sp.charge_id = None
 
 		with mock_dataserver.mock_db_trans(ds):
-			charge = self.manager.sync_purchase(purchase_id, username=username)
+			charge = self.manager.sync_purchase(purchase_id, username=username, api_key=stripe.api_key)
 			assert_that(charge, is_not(None))
 
 	@WithMockDSTrans
@@ -193,7 +196,10 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			items = ('xyz book',)
-			purchase_id = purchase_history.register_purchase_attempt(username, items=items, processor=self.manager.name, description="my charge")
+			purchase_id = purchase_history.register_purchase_attempt(username,
+																	 items=items,
+																	 processor=self.manager.name,
+																	 description="my charge")
 
 		# missing token
 		with mock_dataserver.mock_db_trans(ds):

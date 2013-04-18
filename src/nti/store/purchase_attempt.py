@@ -31,6 +31,7 @@ from nti.zodb import minmax
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from . import to_frozenset
+from . import purchasable_store
 from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
 
@@ -143,6 +144,21 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPrope
 
 	def __str__(self):
 		return self.id
+
+def get_purchasables(purchase):
+	result = list()
+	for item in purchase.Items:
+		p = purchasable_store.get_purchasable(item)
+		if p is not None:
+			result.append(p)
+	return result
+
+def get_providers(purchase):
+	result = set()
+	purchasables = get_purchasables(purchase)
+	for p in purchasables:
+		result.add(p.Provider)
+	return list(result)
 
 def create_base_purchase_attempt(purchase):
 	result = BasePurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
