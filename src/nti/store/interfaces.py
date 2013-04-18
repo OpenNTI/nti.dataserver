@@ -262,9 +262,5 @@ class IPurchaseHistory(interface.Interface):
 	def get_purchase_history(start_time=None, end_time=None):
 		pass
 
-
-class Isuck(interface.Interface):
-	pass
-
 class IStorePurchaseInvitation(interface.Interface):
 	pass
