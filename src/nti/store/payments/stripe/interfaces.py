@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import interface
 
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.utils import schema as nti_schema
 from nti.utils.property import alias as _alias
 
@@ -17,14 +19,14 @@ from .. import interfaces as pay_interfaces
 from ... import interfaces as store_interfaces
 
 class IStripeCustomerCreated(interface.Interface):
-	username = interface.Attribute("The entity that was created")
-	customer_id = interface.Attribute("The stripe customer identifier")
+	user = schema.Object(nti_interfaces.IUser, title="The user")
+	customer_id = nti_schema.ValidTextLine(title="The stripe customer identifier")
 
 @interface.implementer(IStripeCustomerCreated)
 class StripeCustomerCreated(object):
 
-	def __init__( self, username, customer_id):
-		self.username = username
+	def __init__(self, user, customer_id):
+		self.user = user
 		self.customer_id = customer_id
 
 class IStripeCustomerDeleted(IStripeCustomerCreated):
@@ -35,25 +37,25 @@ class StripeCustomerDeleted(StripeCustomerCreated):
 	pass
 
 class IRegisterStripeToken(pay_interfaces.IRegisterPurchaseData):
-	token = interface.Attribute("The token identifier")
+	token = nti_schema.ValidTextLine(title="The token identifier")
 
 @interface.implementer(IRegisterStripeToken)
 class RegisterStripeToken(pay_interfaces.RegisterPurchaseData):
 
-	def __init__( self, purchase_id, username, token_id):
-		super(RegisterStripeToken, self).__init__(purchase_id, username)
+	def __init__(self, purchase, token_id):
+		super(RegisterStripeToken, self).__init__(purchase)
 		self.token_id = token_id
 
 	token = _alias('token_id')
 
 class IRegisterStripeCharge(pay_interfaces.IRegisterPurchaseData):
-	charge_id = interface.Attribute("The charge identifier")
+	charge_id = nti_schema.ValidTextLine(title="The charge identifier")
 
 @interface.implementer(IRegisterStripeCharge)
 class RegisterStripeCharge(pay_interfaces.RegisterPurchaseData):
 
-	def __init__( self, purchase_id, username, charge_id):
-		super(RegisterStripeCharge, self).__init__(purchase_id, username)
+	def __init__(self, purchase, charge_id):
+		super(RegisterStripeCharge, self).__init__(purchase)
 		self.charge_id = charge_id
 
 # stripe objects
