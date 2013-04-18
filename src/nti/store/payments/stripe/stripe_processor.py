@@ -213,6 +213,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
 			transactionRunner(fail_purchase)
 
+	# ---------------------------
+
 	def get_charges(self, purchase_id=None, username=None, customer=None, start_time=None, end_time=None, api_key=None):
 		result = []
 		for c in self.get_stripe_charges(start_time=start_time, end_time=end_time, api_key=api_key):

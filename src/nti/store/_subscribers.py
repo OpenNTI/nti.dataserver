@@ -13,6 +13,8 @@ import time
 
 from zope import component
 
+from nti.appserver.invitations import interfaces as invite_interfaces
+
 from . import _content_roles
 from . import purchasable_store
 from . import interfaces as store_interfaces
@@ -82,3 +84,7 @@ def _purchase_attempt_synced(event):
 	purchase = get_purchase_attempt(event.purchase_id, event.username)
 	purchase.Synced = True
 	logger.info('%s has been synched' % (purchase))
+
+@component.adapter(store_interfaces.IStorePurchaseInvitation, invite_interfaces.IInvitationAcceptedEvent)
+def _purchase_invitation_accepted(invitation, event):
+	pass

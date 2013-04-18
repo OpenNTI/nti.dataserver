@@ -10,13 +10,18 @@ __docformat__ = "restructuredtext en"
 import zc.intid as zc_intid
 
 from zope import component
+from zope import interface
 
+from nti.appserver.invitations import interfaces as invite_interfaces
 from nti.appserver.invitations.invitation import JoinEntitiesInvitation
 
 from nti.externalization import integer_strings
 
 from . import MessageFactory as _
+from . import interfaces as store_interfaces
 from ._content_roles import _add_users_content_roles
+
+interface.alsoProvides(store_interfaces.IStorePurchaseInvitation, invite_interfaces.IInvitation)
 
 class InvitationCapacityExceeded(Exception):
 	"""
@@ -24,10 +29,11 @@ class InvitationCapacityExceeded(Exception):
 	"""
 	i18n_message = _("The limit for this invitation code has been exceeded.")
 
-class _StoreEntityInvitation(JoinEntitiesInvitation):
+@interface.implementer(store_interfaces.IStorePurchaseInvitation)
+class _StorePurchaseInvitation(JoinEntitiesInvitation):
 
 	def __init__(self, code, purchase):
-		super(_StoreEntityInvitation, self).__init__(code, ())
+		super(_StorePurchaseInvitation, self).__init__(code, ())
 		self.purchase = purchase
 
 	@property
@@ -36,7 +42,7 @@ class _StoreEntityInvitation(JoinEntitiesInvitation):
 
 	def accept(self, user):
 		if self.purchase.consume_token():
-			super(_StoreEntityInvitation, self).accept(user)
+			super(_StorePurchaseInvitation, self).accept(user)
 			_add_users_content_roles(user, self.purchase.Items)
 		else:
 			raise InvitationCapacityExceeded()
@@ -48,8 +54,8 @@ def get_invitation_code(purchase):
 		return result
 	return None
 
-def create_store_invitation(purchase, code=None):
+def create_store_purchase_invitation(purchase, code=None):
 	invitation_code = code if code else get_invitation_code(purchase)
-	result = _StoreEntityInvitation(invitation_code, purchase)
+	result = _StorePurchaseInvitation(invitation_code, purchase)
 	result.creator = purchase.creator
 	return result

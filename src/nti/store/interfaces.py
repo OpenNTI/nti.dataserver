@@ -56,7 +56,7 @@ class IUserAddress(interface.Interface):
 	Country = nti_schema.ValidTextLine(title='The country', required=False, default='USA')
 
 class IPaymentCharge(interface.Interface):
-	Amount = schema.Int(title="Change amount", required=True)
+	Amount = schema.Float(title="Change amount", required=True)
 	Created = schema.Float(title="Created timestamp", required=True)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	CardLast4 = schema.Int(title='CreditCard last 4 digists', required=False)
@@ -261,3 +261,10 @@ class IPurchaseHistory(interface.Interface):
 
 	def get_purchase_history(start_time=None, end_time=None):
 		pass
+
+
+class Isuck(interface.Interface):
+	pass
+
+class IStorePurchaseInvitation(interface.Interface):
+	pass
