@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import interface
 from zope.location.interfaces import IContained
+from zope.interface.interfaces import ObjectEvent, IObjectEvent
 
 from nti.utils import schema as nti_schema
 
@@ -164,9 +165,8 @@ class IPurchaseAttempt(IContained):
 		return if the purchase has been synchronized with the payment processor
 		"""
 
-class IPurchaseAttemptEvent(interface.Interface):
-	purchase_id = interface.Attribute("Purchase attempt id")
-	username = interface.Attribute("The purchase's entity")
+class IPurchaseAttemptEvent(IObjectEvent):
+	object = schema.Object(IPurchaseAttempt, title="The purchase")
 
 class IPurchaseAttemptSynced(IPurchaseAttemptEvent):
 	pass
@@ -197,10 +197,11 @@ class IPurchaseAttemptFailed(IPurchaseAttemptStateEvent):
 	error_message = interface.Attribute('Failure message')
 
 @interface.implementer(IPurchaseAttemptEvent)
-class PurchaseAttemptEvent(object):
-	def __init__(self, purchase_id, username):
-		self.username = username
-		self.purchase_id = purchase_id
+class PurchaseAttemptEvent(ObjectEvent):
+
+	@property
+	def purchase(self):
+		return self.object
 
 @interface.implementer(IPurchaseAttemptSynced)
 class PurchaseAttemptSynced(PurchaseAttemptEvent):
@@ -217,8 +218,8 @@ class PurchaseAttemptStarted(PurchaseAttemptEvent):
 @interface.implementer(IPurchaseAttemptSuccessful)
 class PurchaseAttemptSuccessful(PurchaseAttemptEvent):
 	state = PA_STATE_SUCCESS
-	def __init__(self, purchase_id, username, charge=None):
-		super(PurchaseAttemptSuccessful, self).__init__(purchase_id, username)
+	def __init__(self, purchase, charge=None):
+		super(PurchaseAttemptSuccessful, self).__init__(purchase)
 		self.charge = charge
 
 @interface.implementer(IPurchaseAttemptRefunded)
@@ -239,11 +240,10 @@ class PurchaseAttemptFailed(PurchaseAttemptEvent):
 	error_code = None
 	state = PA_STATE_FAILED
 
-	def __init__(self, purchase_id, username, error_message=None, error_code=None):
-		super(PurchaseAttemptFailed, self).__init__(purchase_id, username)
+	def __init__(self, purchase, error_message=None, error_code=None):
+		super(PurchaseAttemptFailed, self).__init__(purchase)
 		self.error_message = error_message
-		if error_code:
-			self.error_code = error_code
+		if error_code: self.error_code = error_code
 
 class IPurchaseHistory(interface.Interface):
 

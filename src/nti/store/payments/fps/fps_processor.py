@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
-import gevent
 from datetime import date
 from dateutil import parser as date_parser
 
@@ -42,45 +41,48 @@ class _FPSPaymentProcessor(_BasePaymentProcessor, fps_io.FPSIO):
 
 	name = 'fps'
 
-	def _process_fps_transaction(self, purchase_id, username, trax):
+	def _process_fps_transaction(self, purchase, trax):
 		result = True
 		status = trax.TransactionStatus
 		error_message = trax.StatusMessage
 		if status in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE):
-			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, error_message))
+			notify(store_interfaces.PurchaseAttemptFailed(purchase, error_message))
 		elif status == store_interfaces.PA_STATE_RESERVED:
-			notify(store_interfaces.PurchaseAttemptReserved(purchase_id, username))
+			notify(store_interfaces.PurchaseAttemptReserved(purchase))
 		elif status == store_interfaces.PA_STATE_SUCCESS:
 			pc = _create_payment_charge(trax)
-			notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, pc))
+			notify(store_interfaces.PurchaseAttemptSuccessful(purchase, pc))
 		else:
 			result = False
 		return result
 
 	def process_purchase(self, purchase_id, username, token_id, caller_reference, amount, currency='USD'):
-
-		notify(store_interfaces.PurchaseAttemptStarted(purchase_id, username))
-		notify(fps_interfaces.RegisterFPSToken(purchase_id, username, token_id, caller_reference))
-
-		try:
-			pay_result = self.pay(token=token_id, amount=amount, currency=currency, reference=caller_reference)
-			notify(fps_interfaces.RegisterFPSTransaction(purchase_id, username, pay_result.TransactionId))
-
-			if not self._process_fps_status(pay_result.TransactionStatus, purchase_id, username):
-				transaction_id = pay_result.TransactionId
-				def process_pay():
-					now = time.time()
-					while (time.time() - now < 90):
-						t = self.get_transaction(transaction_id)
-						if t and self._process_fps_status(purchase_id, username, t):
-							break
-						gevent.sleep(5)
-				gevent.spawn(process_pay)
-
-			return pay_result.TransactionId
-		except Exception as e:
-			message = str(e)
-			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
+		pass
+#
+# 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+#
+# 		notify(store_interfaces.PurchaseAttemptStarted(purchase))
+# 		notify(fps_interfaces.RegisterFPSToken(purchase, token_id, caller_reference))
+#
+# 		try:
+# 			pay_result = self.pay(token=token_id, amount=amount, currency=currency, reference=caller_reference)
+# 			notify(fps_interfaces.RegisterFPSTransaction(purchase, pay_result.TransactionId))
+#
+# 			if not self._process_fps_status(pay_result.TransactionStatus, purchase_id, username):
+# 				transaction_id = pay_result.TransactionId
+# 				def process_pay():
+# 					now = time.time()
+# 					while (time.time() - now < 90):
+# 						t = self.get_transaction(transaction_id)
+# 						if t and self._process_fps_status(purchase, t):
+# 							break
+# 						gevent.sleep(5)
+# 				gevent.spawn(process_pay)
+#
+# 			return pay_result.TransactionId
+# 		except Exception as e:
+# 			message = str(e)
+# 			notify(store_interfaces.PurchaseAttemptFailed(purchase, message))
 
 	def _get_transactions(self, start_date, token=None, caller_reference=None, status=None):
 		result = []
@@ -117,17 +119,17 @@ class _FPSPaymentProcessor(_BasePaymentProcessor, fps_io.FPSIO):
 		if trax:
 			status = trax.TransactionStatus,
 			if	status in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE) and not purchase.has_failed():
-				notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, trax.StatusMessage))
+				notify(store_interfaces.PurchaseAttemptFailed(purchase, trax.StatusMessage))
 			elif status == store_interfaces.PA_STATE_SUCCESS and not purchase.has_succeeded():
 				pc = _create_payment_charge(trax)
-				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, pc))
+				notify(store_interfaces.PurchaseAttemptSuccessful(purchase, pc))
 			elif status == store_interfaces.PA_STATE_CANCELED and not purchase.has_failed():
-				notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, trax.StatusMessage))
+				notify(store_interfaces.PurchaseAttemptFailed(purchase, trax.StatusMessage))
 			elif status == store_interfaces.PA_STATE_REFUNDED and not purchase.is_refunded():
-				notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
+				notify(store_interfaces.PurchaseAttemptRefunded(purchase))
 			elif status == store_interfaces.PA_STATE_DISPUTED and not purchase.is_disputed():
-				notify(store_interfaces.PurchaseAttemptDisputed(purchase_id, username))
+				notify(store_interfaces.PurchaseAttemptDisputed(purchase))
 
-			notify(store_interfaces.PurchaseAttemptSynced(purchase_id, username))
+			notify(store_interfaces.PurchaseAttemptSynced(purchase))
 
 		return trax

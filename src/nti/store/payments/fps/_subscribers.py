@@ -13,17 +13,15 @@ from zope import component
 
 from . import interfaces as fps_interfaces
 
-from ... import purchase_history
-
 @component.adapter(fps_interfaces.IRegisterFPSToken)
 def register_fps_token(event):
-	purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
+	purchase = event.purchase
 	fpsp = fps_interfaces.IFPSPurchase(purchase)
 	fpsp.token_id = event.token_id
 	fpsp.caller_reference = event.caller_reference
 
 @component.adapter(fps_interfaces.IRegisterFPSTransaction)
 def register_fps_transaction(event):
-	purchase = purchase_history.get_purchase_attempt(event.purchase_id, event.username)
+	purchase = event.purchase
 	fpsp = fps_interfaces.IFPSPurchase(purchase)
 	fpsp.transaction_id = event.transaction_id

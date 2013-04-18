@@ -69,7 +69,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		description = getattr(profile, 'description', None)
 
 		customer = self.create_stripe_customer(email, description, api_key)
-		notify(stripe_interfaces.StripeCustomerCreated(user.username, customer.id))
+		notify(stripe_interfaces.StripeCustomerCreated(user, customer.id))
 
 		return customer
 
@@ -89,7 +89,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		adapted = stripe_interfaces.IStripeCustomer(user)
 		if adapted.customer_id:
 			result = self.delete_stripe_customer(customer_id=adapted.customer_id, api_key=api_key)
-			notify(stripe_interfaces.StripeCustomerDeleted(user.username, adapted.customer_id))
+			notify(stripe_interfaces.StripeCustomerDeleted(user, adapted.customer_id))
 		return result
 
 	def update_customer(self, user, customer=None, api_key=None):
@@ -154,14 +154,14 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		def start_purchase():
 			purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 			if not purchase.is_pending():
-				notify(store_interfaces.PurchaseAttemptStarted(purchase_id, username))
+				notify(store_interfaces.PurchaseAttemptStarted(purchase))
 
 		def register_stripe_user():
 			purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 			if not purchase.has_completed():
 				logger.error('Getting/Creating Stripe Customer for %s', username)
 				customer_id = self.get_or_create_customer(username, api_key=api_key)
-				notify(stripe_interfaces.RegisterStripeToken(purchase_id, username, token))
+				notify(stripe_interfaces.RegisterStripeToken(purchase, token))
 				return customer_id
 			return None
 
@@ -197,10 +197,10 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 					if not purchase.is_pending():
 						return
 
-					notify(stripe_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
+					notify(stripe_interfaces.RegisterStripeCharge(purchase, charge.id))
 					if charge.paid:
 						pc = _create_payment_charge(charge)
-						notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, pc))
+						notify(store_interfaces.PurchaseAttemptSuccessful(purchase, pc))
 				transactionRunner(register_charge_notify)
 
 			# return charge id
@@ -210,7 +210,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			# fail purchase
 			message = str(e)
 			def fail_purchase():
-				notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
+				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+				notify(store_interfaces.PurchaseAttemptFailed(purchase, message))
 			transactionRunner(fail_purchase)
 
 	# ---------------------------
@@ -261,7 +262,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			charges = self.get_charges(purchase_id=purchase_id, start_time=start_time, api_key=api_key)
 			if charges:
 				charge = charges[0]
-				notify(stripe_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))
+				notify(stripe_interfaces.RegisterStripeCharge(purchase, charge.id))
 			elif sp.TokenID:
 				token = self.get_stripe_token(sp.TokenID, api_key=api_key)
 				if token is None:
@@ -271,13 +272,13 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 					logger.warn('Token %s for purchase %r/%s could not found in Stripe', sp.TokenID, purchase_id, username)
 					if not purchase.has_completed():
 						do_synch = True
-						notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
+						notify(store_interfaces.PurchaseAttemptFailed(purchase, message))
 				elif token.used:
 					message = "Token %s has been used and no charge was found" % sp.TokenID
 					logger.warn(message)
 					if not purchase.has_completed():
 						do_synch = True
-						notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
+						notify(store_interfaces.PurchaseAttemptFailed(purchase, message))
 				elif not purchase.is_pending():  # no charge and unused token
 					logger.warn('No charge and unused token. Incorrect status for purchase %r/%s', purchase_id, username)
 
@@ -285,19 +286,19 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			do_synch = True
 			if charge.paid and not purchase.has_succeeded():
 				pc = _create_payment_charge(charge)
-				notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, pc))
+				notify(store_interfaces.PurchaseAttemptSuccessful(purchase, pc))
 			elif charge.failure_message and not purchase.has_failed():
-				notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, charge.failure_message))
+				notify(store_interfaces.PurchaseAttemptFailed(purchase, charge.failure_message))
 			elif charge.refunded and not purchase.is_refunded():
-				notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
+				notify(store_interfaces.PurchaseAttemptRefunded(purchase))
 
 		elif time.time() - purchase.StartTime >= 180 and not purchase.has_completed():
 			do_synch = True
 			message = message or "Failed purchase after expiration time"
-			notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username, message))
+			notify(store_interfaces.PurchaseAttemptFailed(purchase, message))
 
 		if do_synch:
-			notify(store_interfaces.PurchaseAttemptSynced(purchase_id, username))
+			notify(store_interfaces.PurchaseAttemptSynced(purchase))
 		return charge
 
 	def process_event(self, body):
@@ -317,13 +318,13 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 						if api_key:
 							charges = self.get_charges(purchase_id=purchase_id, start_time=purchase.StartTime, api_key=api_key)
 							pc = _create_payment_charge(charges[0]) if charges else None
-						notify(store_interfaces.PurchaseAttemptSuccessful(purchase_id, username, pc))
+						notify(store_interfaces.PurchaseAttemptSuccessful(purchase, pc))
 					elif etype in ("charge.refunded") and not purchase.is_refunded():
-						notify(store_interfaces.PurchaseAttemptRefunded(purchase_id, username))
+						notify(store_interfaces.PurchaseAttemptRefunded(purchase))
 					elif etype in ("charge.failed") and not purchase.has_failed():
-						notify(store_interfaces.PurchaseAttemptFailed(purchase_id, username))
+						notify(store_interfaces.PurchaseAttemptFailed(purchase))
 					elif etype in ("charge.dispute.created", "charge.dispute.updated") and not purchase.is_disputed():
-						notify(store_interfaces.PurchaseAttemptDisputed(purchase_id, username))
+						notify(store_interfaces.PurchaseAttemptDisputed(purchase))
 			else:
 				logger.debug('Unhandled event type (%s)' % etype)
 			return True
