@@ -36,7 +36,7 @@ class TestInvitations(ConfiguringTestBase):
 		purchase = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor, quantity=1)
 		hist.add_purchase(purchase)
 
-		invitation = invitations.create_store_invitation(purchase)
+		invitation = invitations.create_store_purchase_invitation(purchase)
 		assert_that(invitation, is_(not_none()))
 		assert_that(invitation.capacity, is_(1))
 		assert_that(invitation.creator, is_(user))
