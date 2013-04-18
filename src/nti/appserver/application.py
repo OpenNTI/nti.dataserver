@@ -327,12 +327,10 @@ def createApplication( http_port,
 	# the existing Zope stuff
 	pyramid_config.add_renderer( name='.pt', factory='nti.appserver.z3c_zpt.renderer_factory' )
 
-	indexmanager = None
+
 	if create_ds or force_create_indexmanager:
 		# This may be excluded by a previous setting in site.zcml, and replaced with something else
 		xml_conf_machine = xmlconfig.file( 'configure_indexmanager.zcml',  package=nti.appserver, context=xml_conf_machine )
-
-	indexmanager = component.queryUtility( nti.contentsearch.interfaces.IIndexManager )
 
 	if server:
 		pyramid_config.registry.registerUtility( server, nti_interfaces.IDataserver )
@@ -341,13 +339,17 @@ def createApplication( http_port,
 	if library is not None:
 		component.getSiteManager().registerUtility( library, provided=lib_interfaces.IContentPackageLibrary )
 	else:
-		library = component.getUtility( lib_interfaces.IContentPackageLibrary )
+		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
 
-	# FIXME: This needs to move to the IRegistrationEvent listener, but
-	# we need access to the pyramid config...
-	static_mapper = component.queryAdapter( library, app_interfaces.ILibraryStaticFileConfigurator )
-	if static_mapper:
-		static_mapper.add_static_views( pyramid_config )
+	if library is not None:
+		# FIXME: This needs to move to the IRegistrationEvent listener, but
+		# we need access to the pyramid config...
+		# FIXME: This falls over in the presence of multiple libraries and/or
+		# libraries configured only for specific sites. However, in those cases
+		# we are probably in production and so not serving our own files anyway
+		static_mapper = component.queryAdapter( library, app_interfaces.ILibraryStaticFileConfigurator )
+		if static_mapper:
+			static_mapper.add_static_views( pyramid_config )
 
 	## Search
 	# All the search views should accept an empty term (i.e., nothing after the trailing slash)
@@ -423,7 +425,7 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.glossary_views' )
 	pyramid_config.scan( 'nti.appserver.forums.views' )
 	pyramid_config.scan( 'nti.appserver.user_activity_views' )
-	pyramid_config.scan('nti.appserver.store_views')
+	pyramid_config.scan( 'nti.appserver.store_views' )
 
 	# Modifying UGD
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
@@ -554,14 +556,15 @@ def createApplication( http_port,
 	# TODO: Make these be utilities so they can be registered
 	# in config and the expensive parts turned off in config dynamically.
 	if create_ds:
-		_configure_async_changes( server, indexmanager )
+		_configure_async_changes( server )
 
 
 	return pyramid_config.make_wsgi_app()
 
-def _configure_async_changes( ds, indexmanager ):
+def _configure_async_changes( ds, indexmanager=None ):
 	logger.info( 'Adding synchronous change listeners.' )
 	ds.add_change_listener( nti.dataserver.users.onChange )
+	indexmanager = indexmanager or component.queryUtility( nti.contentsearch.interfaces.IIndexManager )
 	if indexmanager:
 		ds.add_change_listener( indexmanager.onChange )
 

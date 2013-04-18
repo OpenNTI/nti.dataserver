@@ -42,12 +42,33 @@ class IFilesystemLibrary(interface.Interface):
 		required=True
 		)
 
-def registerFilesystemLibrary( _context, directory=None ):
+	prefix = schema.ValidTextLine(
+		title=_("The URL prefix for the content items"),
+		description="""If you do not give this, then the content items are assumed to be directly
+			accessible from the root of the URL space. This is most commonly needed
+			when setting up multiple libraries for different sub-sites; in that case each
+			such library must use a different prefix.
+
+			If Pyramid will be serving the content files (NOT for production usage), then the prefix
+			is arbitrary. If Apache/nginx will be serving the content files, then the prefix
+			must match what they will be serving the content files at; often this will be the name
+			of the directory.
+			""",
+		required=False,
+		default="")
+
+
+def registerFilesystemLibrary( _context, directory=None, prefix="" ):
 	if not directory or not os.path.isdir( directory ):
 		raise ConfigurationError( "Must give the path of a readable directory" )
 
+	# Normalize prefix if needed
+	if prefix and not prefix.startswith( '/' ):
+		prefix = '/' + prefix
+	if prefix and not prefix.endswith( '/' ):
+		prefix = prefix + '/'
 
-	factory = functools.partial( EnumerateOnceFilesystemLibrary, directory )
+	factory = functools.partial( EnumerateOnceFilesystemLibrary, directory, prefix=prefix )
 	utility( _context, factory=factory, provides=IContentPackageLibrary )
 
 class IS3Library(interface.Interface):

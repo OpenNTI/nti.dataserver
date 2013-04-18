@@ -160,6 +160,12 @@ class _FilesystemKeyHrefMapper(object):
 		root_url = '/' + os.path.basename( root_package.dirname ) + '/'
 		__traceback_info__ = key, root_package, root_url
 		href = _path_join( root_url, key.key )
+
+		library = traversal.find_interface( key, interfaces.IContentPackageLibrary )
+		prefix = getattr( library, 'url_prefix', '' )
+		# We require that prefix be a valid segment, ending in a '/', or empty
+		href = prefix + href
+
 		href = href.replace( '//', '/' )
 		if not href.startswith( '/' ):
 			href = '/' + href

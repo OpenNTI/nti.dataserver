@@ -86,8 +86,8 @@ class DynamicFilesystemLibrary(library.AbstractLibrary):
 
 	package_factory = staticmethod(_package_factory)
 
-	def __init__( self, root ):
-		super(DynamicFilesystemLibrary,self).__init__()
+	def __init__( self, root, **kwargs ):
+		super(DynamicFilesystemLibrary,self).__init__(**kwargs)
 		self._root = root
 
 	def _query_possible_content_packages(self):
