@@ -18,8 +18,6 @@ from zope import component
 from pyramid import httpexceptions as hexc
 from pyramid.security import authenticated_userid
 
-from nti.dataserver import interfaces as nti_interfaces
-
 from nti.externalization.datastructures import LocatedExternalDict
 
 from . import interfaces as stripe_interfaces
@@ -153,9 +151,10 @@ class StripePaymentView(_PostStripeView):
 		return result
 
 	def _get_provider(self, purchasables, values):
-		if len(purchasables) == 1:
+		provider = None
+		if purchasables:
 			provider = list(purchasables.values())[0].Provider
-		else:
+		if provider is None:
 			provider = values.get('provider', u'')
 		return provider
 
@@ -172,6 +171,7 @@ class StripePaymentView(_PostStripeView):
 			logger.warn("There is already a pending purchase for item(s) %s" % items)
 			return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 
+		# gather data
 		provider = self._get_provider(items, values)
 		stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
 		if not stripe_key:
@@ -195,21 +195,19 @@ class StripePaymentView(_PostStripeView):
 
 		description = description or "%s's payment for '%r'" % (username, items)
 
+		# create purchase
 		purchase_id = purchase_history.register_purchase_attempt(username, items=items, processor=self.processor,
 																 description=description, quantity=quantity)
 		logger.info("Purchase %s created" % purchase_id)
 
 		# after commit
+		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 		def process_purchase():
 			logger.info("Processing purchase %s" % purchase_id)
-			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 			manager.process_purchase(purchase_id=purchase_id, username=username, token=token, amount=amount,
 			 						 currency=currency, coupon=coupon, api_key=stripe_key.PrivateKey)
+		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_purchase))
 
-		def process_pay():
-			component.getUtility(nti_interfaces.IDataserverTransactionRunner)(process_purchase)
-
-		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_pay))
-
+		# return
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})

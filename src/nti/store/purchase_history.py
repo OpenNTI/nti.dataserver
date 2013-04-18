@@ -72,6 +72,7 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 
 	def remove_purchase(self, purchase):
 		if self.purchases.pop(time_to_64bit_int(purchase.StartTime), None):
+			self.remove_purchased_items(purchase.Items)
 			lifecycleevent.removed(purchase)
 			return True
 		return False

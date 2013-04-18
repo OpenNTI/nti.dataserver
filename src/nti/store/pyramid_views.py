@@ -113,7 +113,7 @@ class GetPurchasablesView(object):
 		result = LocatedExternalDict({'Items': purchasables, 'Last Modified':0})
 		return result
 
-# alias
+# aliases
 
 StripePaymentView = payment_pyramid.StripePaymentView
 PricePurchasableView = util_pyramid.PricePurchasableView

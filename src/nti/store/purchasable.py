@@ -66,6 +66,6 @@ def create_purchasable(ntiid, provider, amount, currency='USD', items=(), title=
 					   description=None, icon=None, discountable=False, bulk_purchase=True):
 	items = to_frozenset(items) if items else frozenset((ntiid,))
 	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Author=author, Items=items,
-						 Description=description, Amount=amount, Currency=currency,
+						 Description=description, Amount=float(amount), Currency=currency,
 						 Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
 	return result

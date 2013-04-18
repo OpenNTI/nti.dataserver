@@ -19,7 +19,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, has_key, has_length, is_not, none, is_, is_in)
+from hamcrest import (assert_that, has_key, has_length, is_not, none, is_, is_in, greater_than_or_equal_to)
 
 class TestPurchasableStore(ConfiguringTestBase):
 
@@ -34,7 +34,7 @@ class TestPurchasableStore(ConfiguringTestBase):
 		assert_that(voc, is_not(none()))
 
 		util = store.PurchasableUtilityVocabulary(None)
-		assert_that(util, has_length(4))
+		assert_that(util, has_length(greater_than_or_equal_to(4)))
 
 		assert_that(util.getTermByToken('iid_0'), is_not(none()))
 

@@ -42,7 +42,10 @@ def get_purchasable(pid):
 	Return purchasable with the specified id
 	"""
 	util = PurchasableUtilityVocabulary(None)
-	result = util.getTermByToken(pid) if pid else None
+	try:
+		result = util.getTermByToken(pid) if pid else None
+	except:
+		result = None
 	return result.value if result is not None else None
 
 def get_all_purchasables():
