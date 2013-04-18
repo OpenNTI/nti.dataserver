@@ -191,18 +191,20 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				notify(store_interfaces.PurchaseAttemptStarted(purchase_id, username))
 
 			# validate coupon
-			coupon = self._get_coupon(coupon, api_key=api_key)
+			coupon = self._get_coupon(coupon, api_key=api_key) if coupon else None
 			if coupon is not None and not self.validate_coupon(coupon, api_key=api_key):
 				raise ValueError("Invalid coupon")
 			amount = self.apply_coupon(amount, coupon, api_key=api_key)
 			cents_amount = int(amount * 100.0)  # cents
 
 			# register stripe user and token
+			logger.error('Getting/Creating Stripe Customer for %s', username)
 			customer_id = self.get_or_create_customer(username, api_key=api_key)
 			notify(stripe_interfaces.RegisterStripeToken(purchase_id, username, token))
 
 			# charge card, user description for tracking purposes
 			descid = "%s:%s:%s" % (purchase_id, username, customer_id)
+			logger.error('Creating stripe charge for %s', descid)
 			charge = self.create_charge(cents_amount, currency, card=token, description=descid, api_key=api_key)
 
 			notify(stripe_interfaces.RegisterStripeCharge(purchase_id, username, charge.id))

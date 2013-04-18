@@ -181,7 +181,7 @@ class StripePaymentView(_PostStripeView):
 		def process_pay():
 			component.getUtility(nti_interfaces.IDataserverTransactionRunner)(process_purchase)
 
-		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_purchase))
+		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_pay))
 
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
