@@ -116,7 +116,7 @@ class PricePurchasableWithStripeCouponView(_PostStripeView, util_pyramid_views.P
 		result = LocatedExternalDict()
 		result['Amount'] = values['Amount']
 		result['Currency'] = values.get('Currency')
-		result['NonDiscountedPrice'] = purchase_price
+		result['Quantity'] = result.get('Quantity')
 		code = values.get('coupon', None)
 		if code is not None and stripe_key:
 			# stripe defines an 80 sec timeout for http requests
@@ -132,6 +132,7 @@ class PricePurchasableWithStripeCouponView(_PostStripeView, util_pyramid_views.P
 
 		purchase_price = float(purchase_price)
 		if coupon is not None:
+			result['NonDiscountedPrice'] = purchase_price
 			purchase_price = manager.apply_coupon(purchase_price, coupon)
 		result['PurchasePrice'] = purchase_price
 		return result
