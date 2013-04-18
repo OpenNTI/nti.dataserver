@@ -103,23 +103,6 @@ class GetPurchaseAttemptView(object):
 		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 		return result
 
-class DeletePurchaseAttemptView(object):
-
-	def __init__(self, request):
-		self.request = request
-
-	def __call__(self):
-		request = self.request
-		username = authenticated_userid(request)
-		purchase_id = request.params.get('purchaseID')
-		if not purchase_id:
-			raise hexc.HTTPBadRequest(detail="Failed to provide a purchase attempt ID")
-		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
-		if purchase is None:
-			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
-		else:
-			purchase_history.remove_purchase_attempt(purchase, username)
-
 class GetPurchasablesView(object):
 
 	def __init__(self, request):
