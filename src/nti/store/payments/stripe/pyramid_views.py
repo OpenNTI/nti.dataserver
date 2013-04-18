@@ -110,12 +110,13 @@ class PricePurchasableWithStripeCouponView(_PostStripeView, util_pyramid_views.P
 			stripe_key = self.get_stripe_connect_key(values)
 
 		coupon = None
-		new_amount = values['NewAmount']
+		purchase_price = values['PurchasePrice']
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 
 		result = LocatedExternalDict()
 		result['Amount'] = values['Amount']
-		result['NonDiscountedAmount'] = new_amount
+		result['Currency'] = values.get('Currency')
+		result['NonDiscountedPrice'] = purchase_price
 		code = values.get('coupon', None)
 		if code is not None and stripe_key:
 			# stripe defines an 80 sec timeout for http requests
@@ -129,10 +130,10 @@ class PricePurchasableWithStripeCouponView(_PostStripeView, util_pyramid_views.P
 					raise hexc.HTTPClientError(detail="Invalid coupon")
 			result['Coupon'] = coupon
 
-		new_amount = float(new_amount)
+		purchase_price = float(purchase_price)
 		if coupon is not None:
-			new_amount = manager.apply_coupon(new_amount, coupon)
-			result['DiscountedAmount'] = new_amount
+			purchase_price = manager.apply_coupon(purchase_price, coupon)
+		result['PurchasePrice'] = purchase_price
 		return result
 
 class StripePaymentView(_PostStripeView):

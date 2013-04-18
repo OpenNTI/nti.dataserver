@@ -23,7 +23,7 @@ class IRegisterPurchasableDirective(interface.Interface):
 	title = fields.TextLine(title="Purchasable item title", required=False)
 	author = fields.TextLine(title="Purchasable item author", required=False)
 	description = fields.TextLine(title="Purchasable item description", required=False)
-	amount = schema.Int(title="Cost amount in cents", required=True)
+	amount = schema.Float(title="Cost amount", required=True)
 	currency = fields.TextLine(title="Currency amount", required=False, default='USD')
 	discountable = fields.Bool(title="Discountable flag", required=False, default=False)
 	bulk_purchase = fields.Bool(title="Bulk purchase flag", required=False, default=True)
@@ -37,7 +37,7 @@ def registerPurchasable(_context, ntiid, items, provider, title, description, am
 	Register a purchasable
 	"""
 	ps = create_purchasable(ntiid=ntiid, provider=provider, title=title, author=author,
-							description=description, items=items, amount=amount,
+							description=description, items=items, amount=float(amount),
 							currency=currency, icon=icon, discountable=discountable,
 							bulk_purchase=bulk_purchase)
 	utility(_context, provides=store_interfaces.IPurchasable, component=ps, name=ntiid)
