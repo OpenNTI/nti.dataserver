@@ -26,7 +26,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from . import ConfiguringTestBase
 
 from zope.component import eventtesting
-from hamcrest import (assert_that, is_, is_not, has_length, has_key)
+from hamcrest import (assert_that, is_, is_not, has_length, has_key, none)
 
 class TestStripeProcessor(ConfiguringTestBase):
 
@@ -135,6 +135,32 @@ class TestStripeProcessor(ConfiguringTestBase):
 		with mock_dataserver.mock_db_trans(ds):
 			user = User.get_user(username)
 			assert_that(IAnnotations(user), is_not(has_key(akey)))
+
+	@WithMockDSTrans
+	def test_fail_payment(self):
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
+			user = self._create_random_user()
+			username = user.username
+
+		with mock_dataserver.mock_db_trans(ds):
+			items = ('xyz book',)
+			purchase_id = purchase_history.register_purchase_attempt(username,
+																	 items=items,
+																	 processor=self.manager.name,
+																	 description="my charge")
+
+		cid = self.manager.process_purchase(username=username, token="++invalidtoken++",
+									 		purchase_id=purchase_id, amount=100.0, currency='USD')
+
+		assert_that(cid, is_(none()))
+
+		assert_that(eventtesting.getEvents(stripe_interfaces.IStripeCustomerCreated), has_length(1))
+
+		assert_that(eventtesting.getEvents(store_interfaces.IPurchaseAttemptStarted), has_length(1))
+
+		assert_that(eventtesting.getEvents(store_interfaces.IPurchaseAttemptFailed), has_length(1))
+
 
 	@WithMockDSTrans
 	def test_sync_pending_purchase(self):

@@ -74,7 +74,7 @@ def _purchase_attempt_failed(event):
 	if event.error_code:
 		purchase.ErrorCode = event.error_code
 	if event.error_message:
-		purchase.ErrorMessage = event.error_message
+		purchase.ErrorMessage = unicode(event.error_message)
 
 	logger.info('%s failed. %s' % (purchase, event.error_message))
 
