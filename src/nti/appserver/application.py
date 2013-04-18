@@ -133,7 +133,8 @@ def createApplication( http_port,
 	# settings[__file__]/library.zcml
 	# (This last is for existing environments and tests, as it lets us put a
 	# file beside development.ini). In most environments, this can be handled
-	# with site.zcml
+	# with site.zcml; NOTE: this could not be in pre_site_zcml, as we depend
+	# on our configuration listeners being in place
 	library_zcml = None
 	if 'library_zcml' in settings:
 		library_zcml = settings['library_zcml']
@@ -342,6 +343,8 @@ def createApplication( http_port,
 	else:
 		library = component.getUtility( lib_interfaces.IContentPackageLibrary )
 
+	# FIXME: This needs to move to the IRegistrationEvent listener, but
+	# we need access to the pyramid config...
 	static_mapper = component.queryAdapter( library, app_interfaces.ILibraryStaticFileConfigurator )
 	if static_mapper:
 		static_mapper.add_static_views( pyramid_config )
@@ -353,17 +356,6 @@ def createApplication( http_port,
 	# are to generate a 404--unfriendly and weird--or to treat it as a wildcard matching
 	# everything--makes sense, but not scalable.)
 
-	question_map = _question_map.QuestionMap()
-	pyramid_config.registry.registerUtility( question_map, app_interfaces.IFileQuestionMap )
-
-	# Now file the events letting listeners (e.g., index and question adders)
-	# know that we have content. Randomize the order of this across worker
-	# processes so that we don't collide too badly on downloading indexes if need be
-	titles = list(library.titles)
-	random.seed( )
-	random.shuffle( titles )
-	for title in titles:
-		lifecycleevent.created( title )
 
 	pyramid_config.add_route( name='search.user', pattern='/dataserver2/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}',
 							  traverse="/dataserver2/users/{user}")
@@ -592,6 +584,31 @@ def _configure_pyramid_zodbconn( database_event, registry=None ):
 
 	registry.zodb_database = database_event.database # 0.2
 	registry._zodb_databases = { '': database_event.database } # 0.3, 0.4
+
+from zope.component.interfaces import IRegistrationEvent
+@component.adapter(lib_interfaces.IContentPackageLibrary, IRegistrationEvent)
+def _content_package_library_registered( library, event ):
+	# When a library is registered in a ZCA site, we need to provide
+	# for the things that go along with that registry,
+	# notably the assessment question map
+	registry = event.object.registry
+	if registry.queryUtility( app_interfaces.IFileQuestionMap ) is None:
+		question_map = _question_map.QuestionMap()
+		registry.registerUtility( question_map, app_interfaces.IFileQuestionMap )
+
+	# Now fire the events letting listeners (e.g., index and question adders)
+	# know that we have content. Randomize the order of this across worker
+	# processes so that we don't collide too badly on downloading indexes if need be
+	# (only matters if we are not preloading)
+	# TODO: If we are registering a library in a local site, via
+	# z3c.baseregistry, does the IRegistrationEvent still occur
+	# in the context of that site? I *think* so, need to prove it
+	titles = list(library.titles)
+	random.seed( )
+	random.shuffle( titles )
+	for title in titles:
+		lifecycleevent.created( title )
+
 
 @component.adapter(lib_interfaces.IFilesystemContentPackageLibrary)
 @interface.implementer(app_interfaces.ILibraryStaticFileConfigurator)

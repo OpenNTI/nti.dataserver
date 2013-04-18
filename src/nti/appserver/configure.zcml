@@ -298,6 +298,7 @@
 		<subscriber handler=".gunicorn._process_did_fork_will_exec" />
 	</configure>
 	<subscriber handler=".application._configure_pyramid_zodbconn" />
+	<subscriber handler=".application._content_package_library_registered" />
 	<adapter factory=".application._FilesystemStaticFileConfigurator" />
 
 	<include package="nti.contentrange" />
