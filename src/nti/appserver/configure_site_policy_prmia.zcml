@@ -28,5 +28,8 @@
 			private_key="sk_live_XbDRHzOx4eiORSkF8iRMH1xj"
 			refresh_token="rt_1S9LF8At2PRpLhOeMbPLS9AEvsFYUSyCPIX6ioCDA9h6EKcF" />
 		
+			<!-- CSS for PRMIA -->
+		<utility factory=".site_policy_views.SiteCSSMarker" />
+		
 	</registerIn>
 </configure>
