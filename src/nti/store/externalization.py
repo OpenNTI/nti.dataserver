@@ -64,3 +64,25 @@ class PurchasableDecorator(object):
 			external['Title'] = unit.title if unit else u''
 		if not original.Description:
 			external['Description'] = unit.title if unit else u''
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPricedPurchasable)
+class PricedPurchasableExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPricedPurchasable
+	_excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | {'PurchaseFee'}
+
+@component.adapter(store_interfaces.IPricedPurchasable)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class PricedPurchasableDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalObject(self, original, external):
+		non_dist_price = external.get('NonDiscountedPrice', None)
+		if 'NonDiscountedPrice' in external and non_dist_price is None:
+			del external['NonDiscountedPrice']
+		external['Provider'] = original.Provider
+		external['Amount'] = original.Amount
+		external['Currency'] = original.Currency
+
+

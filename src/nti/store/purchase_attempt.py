@@ -162,11 +162,11 @@ def get_providers(purchase):
 		result.add(p.Provider)
 	return list(result)
 
-def create_base_purchase_attempt(purchase):
-	result = BasePurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
-								 State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
-								 Quantity=purchase.Quantity, ErrorCode=purchase.ErrorCode,
-								 ErrorMessage=purchase.ErrorMessage, Synced=purchase.Synced)
+def copy_purchase_attempt(purchase):
+	result = PurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
+							 State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
+							 Quantity=purchase.Quantity, ErrorCode=purchase.ErrorCode,
+							 ErrorMessage=purchase.ErrorMessage, Synced=purchase.Synced)
 	return result
 
 def create_purchase_attempt(items, processor, quantity=None, state=None, description=None, start_time=None):

@@ -13,13 +13,12 @@
 	<pcs:registerPurchasable
 		ntiid="tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center"
 		title="NextThought Help Center"
-		description="NextThought Help Cencer"
+		description="NextThought Help Center"
 		provider="NTI-TEST"
 		author="NEXTTHOUGHT"
 		amount="100"
 		currency="USD"
 		discountable="False"
-		bulk_purchase="True"
-		items="prealgebra" />
+		bulk_purchase="True" />
 		
 </configure>
