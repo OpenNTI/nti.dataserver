@@ -12,15 +12,14 @@ import simplejson
 from pyramid import httpexceptions as hexc
 
 from nti.externalization.datastructures import LocatedExternalDict
+from nti.externalization.externalization import to_external_object
 
-from . import is_valid_amount
 from . import is_valid_pve_int
 from .. import purchasable_store
 from . import CaseInsensitiveDict
+from .. import priced_purchasable
 
 class PricePurchasableView(object):
-
-	invalid_id = '+++etc+++invalid+++'
 
 	def __init__(self, request):
 		self.request = request
@@ -30,46 +29,35 @@ class PricePurchasableView(object):
 		values = simplejson.loads(unicode(request.body, request.charset))
 		return CaseInsensitiveDict(**values)
 
-	def price_purchasable(self, required=False):
-		values = self.readInput()
-		currency = values.get('currency', 'USD')
-		purchasableID = values.get('purchasableID', self.invalid_id if required else None)
-		purchasable = purchasable_store.get_purchasable(purchasableID) if purchasableID else None
-
-		if purchasableID and not purchasable:
-			raise hexc.HTTPBadRequest(detail='invalid purchasable')
-		elif purchasable is not None:
-			amount = purchasable.Amount
-			currency = purchasable.Currency
-		else:
-			amount = values.get('amount', None)
-
-		if amount is None or not is_valid_amount(amount):
-			raise hexc.HTTPBadRequest(detail='invalid amount')
+	def price_purchasable(self, values=None):
+		values = values or self.readInput()
+		purchasable_id = values.get('purchasableID', None)
+		purchasable = purchasable_store.get_purchasable(purchasable_id)
+		if not purchasable:
+			raise hexc.HTTPBadRequest(detail='invalid purchasable (%s)' % purchasable_id)
 
 		# check quantity
 		quantity = values.get('quantity', 1)
 		if not is_valid_pve_int(quantity):
 			raise hexc.HTTPBadRequest(detail='invalid quantity')
+		quantity = int(quantity)
 
 		# calculate new amount
-		new_amount = float(amount) * int(quantity)
+		amount = purchasable.Amount
+		new_amount = amount * quantity
 
-		result = CaseInsensitiveDict(**values)
-		result['Amount'] = float(amount)
-		result['Currency'] = currency
-		result['Quantity'] = int(quantity)
-		result['Purchasable'] = purchasable
-		result['PurchasePrice'] = new_amount
-		return result
+		fee_amount = 0
+		fee = purchasable.Fee
+		if fee is not None:
+			pct = fee / 100.0 if fee >= 1 else fee
+			fee_amount = new_amount * pct
+
+		result = priced_purchasable.create_priced_purchasable(purchasable_id, new_amount, fee_amount)
+		return result, quantity
 
 	def __call__(self):
-		result = self.price_purchasable(required=True)
-		amount = result.get('Amount')
-		quantity = result.get('Quantity')
-		currency = result.get('Currency')
-		new_amount = result.get('PurchasePrice')
-		return LocatedExternalDict({'PurchasePrice':new_amount,
-									'Amount':amount,
-									'Currency':currency,
-									'Quantity':quantity})
+		priced, quantity = self._price_purchasable()
+		ext = to_external_object(priced)
+		result = LocatedExternalDict(**ext)
+		result['Quantity'] = [quantity]
+		return result

@@ -86,4 +86,7 @@ def _purchase_attempt_synced(event):
 
 @component.adapter(store_interfaces.IStorePurchaseInvitation, invite_interfaces.IInvitationAcceptedEvent)
 def _purchase_invitation_accepted(invitation, event):
-	pass
+	purchase = getattr(invitation, 'purchase', None)
+	if purchase is not None:
+		lib_items = purchasable_store.get_content_items(purchase.Items)
+		_content_roles._add_users_content_roles(event.user, lib_items)

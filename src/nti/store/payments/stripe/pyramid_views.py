@@ -19,6 +19,7 @@ from pyramid import httpexceptions as hexc
 from pyramid.security import authenticated_userid
 
 from nti.externalization.datastructures import LocatedExternalDict
+from nti.externalization.externalization import to_external_object
 
 from . import interfaces as stripe_interfaces
 
@@ -99,40 +100,37 @@ class CreateStripeTokenView(_PostStripeView):
 class PricePurchasableWithStripeCouponView(_PostStripeView, util_pyramid_views.PricePurchasableView):
 
 	def __call__(self):
-		values = self.price_purchasable()
-		purchasable = values.get('Purchasable')
-		if purchasable is not None:
-			provider = purchasable.Provider
-			stripe_key = component.getUtility(stripe_interfaces.IStripeConnectKey, provider)
-		else:
-			stripe_key = self.get_stripe_connect_key(values)
+		values = self.readInput()
+		priced, quantity = self.price_purchasable(values)
+		provider = priced.Provider or u''
+		stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
 
 		coupon = None
-		purchase_price = values['PurchasePrice']
+		purchase_price = priced.PurchasePrice
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 
 		result = LocatedExternalDict()
-		result['Amount'] = values['Amount']
-		result['Currency'] = values.get('Currency')
-		result['Quantity'] = values.get('Quantity')
-		code = values.get('coupon', None)
+		result['Quantity'] = quantity
+
+		# use coupon
+		code = values.get('coupon', values.get('couponCode'))
 		if code is not None and stripe_key:
 			# stripe defines an 80 sec timeout for http requests
 			# at this moment we are to wait for coupon validation
 			coupon = manager.get_coupon(code, api_key=stripe_key.PrivateKey)
 			if coupon is not None:
 				validated_coupon = manager.validate_coupon(coupon, api_key=stripe_key.PrivateKey)
-				if validated_coupon:
-					result['Provider'] = stripe_key.Alias
-				else:
+				if not validated_coupon:
 					raise hexc.HTTPClientError(detail="Invalid coupon")
 			result['Coupon'] = coupon
 
-		purchase_price = float(purchase_price)
 		if coupon is not None:
-			result['NonDiscountedPrice'] = purchase_price
+			priced.NonDiscountedPrice = purchase_price
 			purchase_price = manager.apply_coupon(purchase_price, coupon)
-		result['PurchasePrice'] = purchase_price
+		priced.PurchasePrice = purchase_price
+
+		ext = to_external_object(priced)
+		result.update(ext)
 		return result
 
 class StripePaymentView(_PostStripeView):
@@ -196,8 +194,8 @@ class StripePaymentView(_PostStripeView):
 		description = description or "%s's payment for '%r'" % (username, items)
 
 		# create purchase
-		purchase_id = purchase_history.register_purchase_attempt(username, items=items, processor=self.processor,
-																 description=description, quantity=quantity)
+		purchase_id = purchase_history.create_and_register_purchase_attempt(username, items=items, processor=self.processor,
+																 			description=description, quantity=quantity)
 		logger.info("Purchase %s created" % purchase_id)
 
 		# after commit

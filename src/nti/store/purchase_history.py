@@ -173,10 +173,14 @@ def get_pending_purchase_for(user, items):
 	result = hist.get_pending_purchase_for(items)
 	return result
 
-def register_purchase_attempt(username, items, processor, quantity=None, state=None, description=None, start_time=None):
-	user = _get_user(username)
+def register_purchase_attempt(purchase, user):
+	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
-	purchase = create_purchase_attempt(items=items, processor=processor, quantity=quantity,
-									   state=state, description=description, start_time=start_time)
 	hist.register_purchase(purchase)
 	return purchase.id
+
+def create_and_register_purchase_attempt(username, items, processor, quantity=None, state=None, description=None, start_time=None):
+	user = _get_user(username)
+	purchase = create_purchase_attempt(items=items, processor=processor, quantity=quantity,
+									   state=state, description=description, start_time=start_time)
+	return register_purchase_attempt(purchase, user)

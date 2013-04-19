@@ -35,22 +35,32 @@ def _makenone(s, default=None):
 		s = default
 	return s
 
-def _create_payment_charge(charge):
-	amount = charge.amount / 100.0
-	currency = charge.currency.upper()
-	created = float(charge.created or time.time())
+def _create_user_address(charge):
 	card = getattr(charge, 'card', None)
-	last4 = name = address = None
 	if card is not None:
-		name = card.name
-		last4 = int(card.last4) if card.last4 else None
 		address = payment_charge.UserAddress.create(_makenone(card.address_line1),
  													_makenone(card.address_line2),
  													_makenone(card.address_city),
  													_makenone(card.address_state),
  													_makenone(card.address_zip),
  													_makenone(card.address_country))
+		return address
+	else:
+		return None
 
+def _get_card_info(charge):
+	card = getattr(charge, 'card', None)
+	name = getattr(card, 'name', None)
+	last4 = getattr(card, 'last4', None)
+	last4 = int(last4) if last4 is not None else None
+	return (last4, name)
+
+def _create_payment_charge(charge):
+	amount = charge.amount / 100.0
+	currency = charge.currency.upper()
+	last4, name = _get_card_info(charge)
+	address = _create_user_address(charge)
+	created = float(charge.created or time.time())
 	result = payment_charge.PaymentCharge(Amount=amount, Currency=currency, Created=created,
 										  CardLast4=last4, Address=address, Name=name)
 	return result
@@ -141,7 +151,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				pcnt = coupon.percent_off / 100.0 if coupon.percent_off > 1 else coupon.percent_off
 				amount = amount * (1 - pcnt)
 			elif coupon.amount_off is not None:
-				amount -= coupon.amount_off
+				amount_off = coupon.amount_off / 100.0
+				amount -= amount_off
 		return max(0, amount)
 
 	def process_purchase(self, purchase_id, username, token, amount, currency, coupon=None, api_key=None):

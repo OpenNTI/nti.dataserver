@@ -45,9 +45,16 @@ class IPurchasable(interface.Interface):
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
 	BulkPurchase = schema.Bool(title="Bulk purchase flag", required=True, default=False)
+	Fee = schema.Float(title="Percentage fee", required=False)
 	Icon = nti_schema.ValidTextLine(title='Icon URL', required=False)
 	Provider = nti_schema.ValidTextLine(title='Purchasable item provider', required=True)
 	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Purchasable content items")
+
+class IPricedPurchasable(interface.Interface):
+	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
+	PurchaseFee = schema.Float(title="Fee Amount", required=False)
+	PurchasePrice = schema.Float(title="Cost amount", required=True)
+	NonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
 
 class IUserAddress(interface.Interface):
 	Street = nti_schema.ValidText(title='Street address', required=False)

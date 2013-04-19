@@ -82,10 +82,10 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			items = ('xyz book',)
-			purchase_id = purchase_history.register_purchase_attempt(username,
-																	 items=items,
-																	 processor=self.manager.name,
-																	 description="my charge")
+			purchase_id = purchase_history.create_and_register_purchase_attempt(username,
+																	 			items=items,
+																	 			processor=self.manager.name,
+																	 			description="my charge")
 			assert_that(purchase_id, is_not(None))
 
 		tid = self.manager.create_card_token(number="5105105105105100",
@@ -145,10 +145,10 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			items = ('xyz book',)
-			purchase_id = purchase_history.register_purchase_attempt(username,
-																	 items=items,
-																	 processor=self.manager.name,
-																	 description="my charge")
+			purchase_id = purchase_history.create_and_register_purchase_attempt(username,
+																	 			items=items,
+																	 			processor=self.manager.name,
+																	 			description="my charge")
 
 		cid = self.manager.process_purchase(username=username, token="++invalidtoken++",
 									 		purchase_id=purchase_id, amount=100.0, currency='USD')
@@ -222,10 +222,10 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			items = ('xyz book',)
-			purchase_id = purchase_history.register_purchase_attempt(username,
-																	 items=items,
-																	 processor=self.manager.name,
-																	 description="my charge")
+			purchase_id = purchase_history.create_and_register_purchase_attempt(username,
+																				items=items,
+																	 			processor=self.manager.name,
+																				description="my charge")
 
 		# missing token
 		with mock_dataserver.mock_db_trans(ds):
@@ -302,6 +302,6 @@ class TestStripeProcessor(ConfiguringTestBase):
 		assert_that(amt, is_(800))
 
 		c = Coupon()
-		c.amount_off = 200
+		c.amount_off = 2000
 		amt = self.manager.apply_coupon(amount, c)
-		assert_that(amt, is_(800))
+		assert_that(amt, is_(980))

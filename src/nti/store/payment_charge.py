@@ -83,11 +83,14 @@ class PaymentCharge(SchemaConfigured):
 		return "%s(%s,%s,%s)" % (self.__class__, d, self.Currency, self.Amount)
 
 	def __eq__(self, other):
-		return self is other or (isinstance(other, PaymentCharge)
-								 and self.Amount == other.Amount
-								 and self.Created == other.Created
-								 and self.Currency == other.Currency
-								 and self.Name == other.Name)
+		try:
+			return self is other or (self.Name == other.Name
+									 and self.Amount == other.Amount
+									 and self.Created == other.Created
+									 and self.Currency == other.Currency
+									 )
+		except AttributeError:
+			return NotImplemented
 
 	def __lt__(self, other):
 		try:
