@@ -7,6 +7,7 @@ $Id: purchasable.py 18394 2013-04-18 19:27:11Z carlos.sanchez $
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import six
 import persistent
 
 from zope import interface
@@ -87,3 +88,27 @@ def create_priced_purchasable(ntiid, purchase_price, purchase_fee=None, non_disc
 	result = PricedPurchasable(NTIID=ntiid, PurchasePrice=float(purchase_price), PurchaseFee=purchase_fee,
 							   NonDiscountedPrice=non_discouted_price)
 	return result
+
+	
+@interface.implementer(store_interfaces.IPurchasablePricer)
+class DefaultPurchasablePricer(object):
+	
+	def price(self, purchasable, quantity=1):
+		
+		purchasable = get_purchasable(purchasable) if isinstance(purchasable, six.string_types) else purchasable
+		if not purchasable:
+			raise Exception('invalid purchasable')
+
+		quantity = quantity or 1
+
+		amount = purchasable.Amount
+		new_amount = amount * quantity
+
+		fee_amount = 0
+		fee = purchasable.Fee
+		if fee is not None:
+			pct = fee / 100.0 if fee >= 1 else fee
+			fee_amount = new_amount * pct
+
+		result = create_priced_purchasable(purchasable.NTIID, new_amount, fee_amount)
+		return result

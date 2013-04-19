@@ -106,6 +106,30 @@ class IStripeConnectKey(interface.Interface):
 	RefreshToken = nti_schema.ValidTextLine(title="Refresh token", required=False)
 	PublicKey = nti_schema.ValidTextLine(title="The private key", required=False)
 
+class IStripePurchaseError(store_interfaces.IPurchaseError):
+	HttpStatus = schema.Int(title='HTTP Status', required=False)
+	Param = nti_schema.ValidTextLine(title="Optional parameter", required=False)
+
+
+# stripe interfaces
+
 class IStripeCoupon(interface.Interface):
 	"""marker interface for a stripe coupon"""
 
+class IStripeError(interface.Interface):
+	"""marker interface for a stripe errors"""
+
+class IStripeAPIError(IStripeError):
+	"""marker interface for a stripe api error"""
+
+class IStripeAPIConnectionError(IStripeError):
+	"""marker interface for a stripe api connection error"""
+
+class IStripeCardError(IStripeError):
+	"""marker interface for a stripe card errors"""
+
+class IStripeInvalidRequestError(IStripeError):
+	"""marker interface for a stripe invalid request errors"""
+
+class IStripeAuthenticationError(IStripeError):
+	"""marker interface for a stripe authentication errors"""

@@ -8,11 +8,7 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<include package="." file="meta.zcml" />
-	
-	<class class="stripe.Coupon">
-		<implements interface=".interfaces.IStripeCoupon" />
-	</class>
+	<include package="." file="stripe.zcml" />
 	
 	<subscriber handler="._subscribers.stripe_customer_created" />
 	<subscriber handler="._subscribers.stripe_customer_deleted" />
@@ -37,12 +33,5 @@
 	<subscriber factory=".externalization.PurchasableDecorator"
 				for="...interfaces.IPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-	
-	<stripe:registerStripeKey
-		alias="NTI-TEST"
-		live_mode="False"
-		stripe_user_id="NEXTTHOUGHT"
-		public_key="pk_test_LIpQyLD7p5FmspOs6pPW9gWG"
-		private_key="sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp" />
 		
 </configure>
