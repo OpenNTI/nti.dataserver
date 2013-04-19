@@ -29,7 +29,7 @@ class PurchaseError(SchemaConfigured):
 		return self.Message
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.Type, self.Code, self.Message)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.Type, self.Message, self.Code)
 
 	def __eq__(self, other):
 		try:

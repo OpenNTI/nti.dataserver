@@ -20,11 +20,12 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils.property import alias
 
+from . import StripePurchaseError
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
 
 @component.adapter(nti_interfaces.IUser)
-@interface.implementer( stripe_interfaces.IStripeCustomer)
+@interface.implementer(stripe_interfaces.IStripeCustomer)
 class _StripeCustomer(zcontained.Contained, Persistent):
 
 	family = BTrees.family64
@@ -61,3 +62,64 @@ class _StripePurchase(zcontained.Contained, Persistent):
 	charge_id = alias('ChargeID')
 
 _StripePurchaseFactory = an_factory(_StripePurchase)
+
+@component.adapter(basestring)
+@interface.implementer(stripe_interfaces.IStripePurchaseError)
+def _string_purchase_error(message):
+	result = StripePurchaseError(Type=u"Error")
+	result.Message = unicode(message or u'')
+	return result
+
+@component.adapter(stripe_interfaces.IStripeException)
+@interface.implementer(stripe_interfaces.IStripePurchaseError)
+def stripe_exception_adpater(error):
+	result = StripePurchaseError(Type=u"Exception")
+	message = unicode(' '.join(getattr(error, 'args', ())))
+	result.Message = message or 'Unspecified Stripe Exception'
+	return result
+
+@component.adapter(stripe_interfaces.IStripeError)
+@interface.implementer(stripe_interfaces.IStripePurchaseError)
+def stripe_error_adpater(error):
+	result = StripePurchaseError(Type=u"Error")
+	result.HttpStatus = getattr(error, 'http_status', None)
+	message = error.message or ' '.join(getattr(error, 'args', ()))
+	result.Message = unicode(message or 'Unspecified Stripe Error')
+	return result
+
+@component.adapter(stripe_interfaces.IStripeAPIError)
+@interface.implementer(stripe_interfaces.IStripePurchaseError)
+def stripe_api_error_adpater(error):
+	result = stripe_error_adpater(error)
+	result.Type = u"APIError"
+	return result
+
+@component.adapter(stripe_interfaces.IStripeAPIConnectionError)
+@interface.implementer(stripe_interfaces.IStripePurchaseError)
+def stripe_api_connection_error_adpater(error):
+	result = stripe_error_adpater(error)
+	result.Type = "APIConnectionError"
+	return result
+
+@component.adapter(stripe_interfaces.IStripeCardError)
+@interface.implementer(stripe_interfaces.IStripePurchaseError)
+def stripe_card_error_adpater(error):
+	result = stripe_error_adpater(error)
+	result.Type = u"CardError"
+	result.Code = unicode(getattr(error, 'code', u''))
+	result.Param = unicode(getattr(error, 'param', u''))
+	return result
+
+@component.adapter(stripe_interfaces.IStripeCardError)
+@interface.implementer(stripe_interfaces.IStripeInvalidRequestError)
+def stripe_invalid_request_error_adpater(error):
+	result = stripe_error_adpater(error)
+	result.Type = u"InvalidRequestError"
+	return result
+
+@component.adapter(stripe_interfaces.IStripeAuthenticationError)
+@interface.implementer(stripe_interfaces.IStripePurchaseError)
+def stripe_auth_error_adpater(error):
+	result = stripe_error_adpater(error)
+	result.Type = u"AuthenticationError"
+	return result

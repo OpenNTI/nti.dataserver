@@ -69,14 +69,11 @@ def _purchase_attempt_disputed(event):
 def _purchase_attempt_failed(event):
 	purchase = event.object
 	purchase.updateLastMod()
+	purchase.Error = event.error
 	purchase.EndTime = time.time()
 	purchase.State = store_interfaces.PA_STATE_FAILED
-	if event.error_code:
-		purchase.ErrorCode = event.error_code
-	if event.error_message:
-		purchase.ErrorMessage = unicode(event.error_message)
 
-	logger.info('%s failed. %s' % (purchase, event.error_message))
+	logger.info('%s failed. %s' % (purchase, purchase.Error))
 
 @component.adapter(store_interfaces.IPurchaseAttemptSynced)
 def _purchase_attempt_synced(event):

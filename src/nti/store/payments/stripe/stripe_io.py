@@ -10,8 +10,7 @@ __docformat__ = "restructuredtext en"
 import sys
 import stripe
 
-class StripeException(Exception):
-	pass
+from . import StripeException
 
 class StripeIO(object):
 
@@ -20,10 +19,7 @@ class StripeIO(object):
 		try:
 			result = func(*args, **kwargs)
 			return result
-		except stripe.CardError as e:
-			body = e.json_body
-			raise StripeException('%s(%s)' % (body['error'], body['message']))
-		except stripe.InvalidRequestError as e:
+		except stripe.StripeError as e:
 			raise e
 		except Exception as e:
 			raise StripeException(*e.args)
@@ -118,7 +114,6 @@ class StripeIO(object):
 		_loop = True
 		while _loop:
 			charges = self._get_stripe_charges(count=count, offset=offset, customer=customer, api_key=api_key)
-
 			if not charges.data:
 				_loop = False
 			else:
@@ -128,11 +123,11 @@ class StripeIO(object):
 						yield c
 
 				offset += len(charges)
-
 				# since the list of events is ordered desc
 				# stop if an old event is not withing the range
 				if start_time > charges[-1].created:
 					_loop = False
+
 	get_charges = get_stripe_charges
 
 	def get_coupon(self, coupon_code, api_key=None):

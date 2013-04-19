@@ -23,6 +23,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
 from . import stripe_io
+from . import StripeException
 from ... import payment_charge
 from ... import purchase_history
 from ... import purchase_attempt
@@ -63,6 +64,12 @@ def _create_payment_charge(charge):
 	created = float(charge.created or time.time())
 	result = payment_charge.PaymentCharge(Amount=amount, Currency=currency, Created=created,
 										  CardLast4=last4, Address=address, Name=name)
+	return result
+
+def _adapt_to_error(e):
+	result = stripe_interfaces.IStripePurchaseError(e, None)
+	if result is None and isinstance(e, Exception):
+		result = stripe_interfaces.IStripePurchaseError(StripeException(e.args), None)
 	return result
 
 @interface.implementer(stripe_interfaces.IStripePaymentProcessor)
@@ -218,11 +225,11 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			return charge.id if charge is not None else None
 		except Exception as e:
 			logger.exception("Cannot complete process purchase for '%s'" % purchase_id)
+			error = _adapt_to_error(e)
 			# fail purchase
-			message = str(e)
 			def fail_purchase():
 				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
-				notify(store_interfaces.PurchaseAttemptFailed(purchase, message))
+				notify(store_interfaces.PurchaseAttemptFailed(purchase, error))
 			transactionRunner(fail_purchase)
 
 	# ---------------------------
@@ -283,13 +290,13 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 					logger.warn('Token %s for purchase %r/%s could not found in Stripe', sp.TokenID, purchase_id, username)
 					if not purchase.has_completed():
 						do_synch = True
-						notify(store_interfaces.PurchaseAttemptFailed(purchase, message))
+						notify(store_interfaces.PurchaseAttemptFailed(purchase, _adapt_to_error(message)))
 				elif token.used:
 					message = "Token %s has been used and no charge was found" % sp.TokenID
 					logger.warn(message)
 					if not purchase.has_completed():
 						do_synch = True
-						notify(store_interfaces.PurchaseAttemptFailed(purchase, message))
+						notify(store_interfaces.PurchaseAttemptFailed(purchase, _adapt_to_error(message)))
 				elif not purchase.is_pending():  # no charge and unused token
 					logger.warn('No charge and unused token. Incorrect status for purchase %r/%s', purchase_id, username)
 
@@ -299,14 +306,14 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				pc = _create_payment_charge(charge)
 				notify(store_interfaces.PurchaseAttemptSuccessful(purchase, pc))
 			elif charge.failure_message and not purchase.has_failed():
-				notify(store_interfaces.PurchaseAttemptFailed(purchase, charge.failure_message))
+				notify(store_interfaces.PurchaseAttemptFailed(purchase, _adapt_to_error(charge.failure_message)))
 			elif charge.refunded and not purchase.is_refunded():
 				notify(store_interfaces.PurchaseAttemptRefunded(purchase))
 
 		elif time.time() - purchase.StartTime >= 180 and not purchase.has_completed():
 			do_synch = True
 			message = message or "Failed purchase after expiration time"
-			notify(store_interfaces.PurchaseAttemptFailed(purchase, message))
+			notify(store_interfaces.PurchaseAttemptFailed(purchase, _adapt_to_error(message)))
 
 		if do_synch:
 			notify(store_interfaces.PurchaseAttemptSynced(purchase))

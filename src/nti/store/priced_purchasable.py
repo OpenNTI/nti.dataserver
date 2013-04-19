@@ -95,11 +95,8 @@ class DefaultPurchasablePricer(object):
 	
 	def price(self, purchasable, quantity=1):
 		
-		purchasable = get_purchasable(purchasable) if isinstance(purchasable, six.string_types) else purchasable
-		if not purchasable:
-			raise Exception('invalid purchasable')
-
 		quantity = quantity or 1
+		purchasable = get_purchasable(purchasable) if isinstance(purchasable, six.string_types) else purchasable
 
 		amount = purchasable.Amount
 		new_amount = amount * quantity

@@ -71,6 +71,10 @@ class IPaymentCharge(interface.Interface):
 	Name = nti_schema.ValidTextLine(title='The customer/charge name', required=False)
 	Address = schema.Object(IUserAddress, title='User address', required=False)
 
+class IPurchaseError(interface.Interface):
+	Type = nti_schema.ValidTextLine(title='Error type', required=True)
+	Code = nti_schema.ValidTextLine(title='Error code', required=False)
+	Message = nti_schema.ValidText(title='Error message', required=True)
 
 class IPurchasablePricer(interface.Interface):
 
@@ -125,8 +129,7 @@ class IPurchaseAttempt(IContained):
 	StartTime = nti_schema.Number(title='Start time', required=True)
 	EndTime = nti_schema.Number(title='Completion time', required=False)
 
-	ErrorCode = schema.Int(title='Failure code', required=False)
-	ErrorMessage = nti_schema.ValidTextLine(title='Failure message', required=False)
+	Error = schema.Object(IPurchaseError, title='Error object', required=False)
 
 	Synced = schema.Bool(title='if the item has been synchronized with the processors data', required=True, default=False)
 
@@ -208,8 +211,7 @@ class IPurchaseAttemptReserved(IPurchaseAttemptStateEvent):
 	pass
 
 class IPurchaseAttemptFailed(IPurchaseAttemptStateEvent):
-	error_code = interface.Attribute('Failure code')
-	error_message = interface.Attribute('Failure message')
+	error = interface.Attribute('Failure error')
 
 @interface.implementer(IPurchaseAttemptEvent)
 class PurchaseAttemptEvent(ObjectEvent):
@@ -252,13 +254,12 @@ class PurchaseAttemptReserved(PurchaseAttemptEvent):
 @interface.implementer(IPurchaseAttemptFailed)
 class PurchaseAttemptFailed(PurchaseAttemptEvent):
 
-	error_code = None
+	error = None
 	state = PA_STATE_FAILED
 
-	def __init__(self, purchase, error_message=None, error_code=None):
+	def __init__(self, purchase, error=None):
 		super(PurchaseAttemptFailed, self).__init__(purchase)
-		self.error_message = error_message
-		if error_code: self.error_code = error_code
+		self.error = error
 
 class IPurchaseHistory(interface.Interface):
 
@@ -276,11 +277,6 @@ class IPurchaseHistory(interface.Interface):
 
 	def get_purchase_history(start_time=None, end_time=None):
 		pass
-
-class IPurchaseError(interface.Interface):
-	Type = nti_schema.ValidTextLine(title='Error type', required=False)
-	Code = nti_schema.ValidTextLine(title='Error code', required=False)
-	Message = nti_schema.ValidText(title='Error message', required=True)
 
 class IStorePurchaseInvitation(interface.Interface):
 	pass

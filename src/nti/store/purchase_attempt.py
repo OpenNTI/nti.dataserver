@@ -42,8 +42,7 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 	StartTime = FP(store_interfaces.IPurchaseAttempt['StartTime'])
 	EndTime = FP(store_interfaces.IPurchaseAttempt['EndTime'])
 	Quantity = FP(store_interfaces.IPurchaseAttempt['Quantity'])
-	ErrorCode = FP(store_interfaces.IPurchaseAttempt['ErrorCode'])
-	ErrorMessage = FP(store_interfaces.IPurchaseAttempt['ErrorMessage'])
+	Error = FP(store_interfaces.IPurchaseAttempt['Error'])
 	Synced = FP(store_interfaces.IPurchaseAttempt['Synced'])
 
 	def __str__(self):
@@ -165,8 +164,7 @@ def get_providers(purchase):
 def copy_purchase_attempt(purchase):
 	result = PurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
 							 State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
-							 Quantity=purchase.Quantity, ErrorCode=purchase.ErrorCode,
-							 ErrorMessage=purchase.ErrorMessage, Synced=purchase.Synced)
+							 Quantity=purchase.Quantity, Error=purchase.Error, Synced=purchase.Synced)
 	return result
 
 def create_purchase_attempt(items, processor, quantity=None, state=None, description=None, start_time=None):

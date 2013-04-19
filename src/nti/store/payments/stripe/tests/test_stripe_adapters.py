@@ -7,8 +7,11 @@ __docformat__ = "restructuredtext en"
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+import stripe
+
 from nti.dataserver.users import User
 
+from .. import StripeException
 from .... import purchase_attempt
 from .. import interfaces as stripe_interfaces
 
@@ -17,7 +20,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, is_not)
+from hamcrest import (assert_that, is_, is_not, none)
 
 class TestStripeAdapters(ConfiguringTestBase):
 
@@ -49,3 +52,24 @@ class TestStripeAdapters(ConfiguringTestBase):
 		assert_that(adapted.purchase, is_(pa))
 		assert_that(adapted.charge_id, is_('charge_id'))
 		assert_that(adapted.token_id, is_('token_id'))
+
+	def test_stripe_error_adapters(self):
+		e = stripe.CardError('my error', 'my param', 'my code')
+		adapted = stripe_interfaces.IStripePurchaseError(e, None)
+		assert_that(adapted, is_not(none()))
+		assert_that(adapted.Type, is_('CardError'))
+		assert_that(adapted.Message, is_('my error'))
+		assert_that(adapted.Param, is_('my param'))
+		assert_that(adapted.Code, is_('my code'))
+
+		e = StripeException('my exception')
+		adapted = stripe_interfaces.IStripePurchaseError(e, None)
+		assert_that(adapted, is_not(none()))
+		assert_that(adapted.Type, is_('Exception'))
+		assert_that(adapted.Message, is_('my exception'))
+
+		e = u'my error message'
+		adapted = stripe_interfaces.IStripePurchaseError(e, None)
+		assert_that(adapted, is_not(none()))
+		assert_that(adapted.Type, is_('Error'))
+		assert_that(adapted.Message, is_('my error message'))

@@ -12,6 +12,8 @@ import stripe
 
 from nti.externalization.externalization import toExternalObject
 
+from .. import StripePurchaseError
+
 from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_not, none, has_entry)
@@ -37,4 +39,14 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('ID', code))
 		assert_that(ext, has_entry('Duration', 'once'))
 		assert_that(ext, has_entry('PercentOff', 25))
+
+	def test_external_purchase_errorn(self):
+		spe = StripePurchaseError(Type=u"Error", Message=u"My message", Code=u"My code", Param=u"My param")
+		ext = toExternalObject(spe)
+		assert_that(ext, is_not(none()))
+		assert_that(ext, has_entry('Type', 'Error'))
+		assert_that(ext, has_entry('Message', 'My message'))
+		assert_that(ext, has_entry('Code', "My code"))
+		assert_that(ext, has_entry('Param', "My param"))
+
 
