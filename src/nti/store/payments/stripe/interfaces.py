@@ -94,6 +94,19 @@ class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 		:token Credit Card token
 		"""
 
+class IStripeCoupon(interface.Interface):
+	"""marker interface for a stripe coupon"""
+
+class IStripePricedPurchasable(store_interfaces.IPricedPurchasable):
+	Coupon = schema.Object(IStripeCoupon, title='the coupon', required=False)
+
+class IStripePurchasablePricer(store_interfaces.IPurchasablePricer):
+
+	def price(purchasable, quantity, coupon):
+		"""
+		price the specfied purchasable
+		"""
+
 class IStripePurchase(interface.Interface):
 	ChargeID = nti_schema.ValidTextLine(title='Charge id', required=False)
 	TokenID = nti_schema.ValidTextLine(title='Token id', required=False)
@@ -113,8 +126,8 @@ class IStripePurchaseError(store_interfaces.IPurchaseError):
 
 # stripe interfaces
 
-class IStripeCoupon(interface.Interface):
-	"""marker interface for a stripe coupon"""
+class IStripeException(interface.Interface):
+	"""marker interface for a stripe exception"""
 
 class IStripeError(interface.Interface):
 	"""marker interface for a stripe errors"""

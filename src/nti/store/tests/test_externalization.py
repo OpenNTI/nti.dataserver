@@ -62,7 +62,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Processor', self.processor))
 		assert_that(ext, has_entry('StartTime', is_not(None)))
 		assert_that(ext, has_entry('EndTime', is_(None)))
-		assert_that(ext, has_entry('ErrorMessage', is_(None)))
+		assert_that(ext, has_entry('Error', is_(None)))
 		assert_that(ext, has_entry('Description', is_('my charge')))
 		assert_that(ext, has_entry('Quantity', is_(2)))
 		assert_that(ext, has_entry('InvitationCode', is_not(none())))

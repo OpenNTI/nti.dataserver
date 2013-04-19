@@ -23,15 +23,34 @@
 			 for="...interfaces.IPurchaseAttempt"
 			 provides=".interfaces.IStripePurchase" />
 
+	<utility factory=".utils.StripePurchasablePricer" name="stripe" />
+	
 	<utility factory=".stripe_processor._StripePaymentProcessor"
 			 provides=".interfaces.IStripePaymentProcessor"
 			 name="stripe" />
 
 	<adapter factory=".externalization.StripeCouponExternalizer" />
 	<adapter factory=".externalization.StripeConnectKeyExternal" />
+	<adapter factory=".externalization.StripePurchaseErrorExternal" />
+	<adapter factory=".externalization.StripePricedPurchasableExternal" />
 	
 	<subscriber factory=".externalization.PurchasableDecorator"
 				for="...interfaces.IPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 		
+	<subscriber factory=".externalization.StripePricedPurchasableDecorator"
+				for=".interfaces.IStripePricedPurchasable"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
+	<adapter factory=".stripe_adapters._string_purchase_error"
+			 provides=".interfaces.IStripePurchaseError"
+			 for="basestring" />
+			 
+	<include package="." file="meta.zcml" />
+	<stripe:registerStripeKey
+		alias="NTI-TEST"
+		live_mode="False"
+		stripe_user_id="NEXTTHOUGHT"
+		public_key="pk_test_LIpQyLD7p5FmspOs6pPW9gWG"
+		private_key="sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp" />
 </configure>

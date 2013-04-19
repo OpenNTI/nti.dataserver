@@ -14,10 +14,10 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from nti.utils.property import alias as _
 
-from . import interfaces
 from ...utils import MetaStoreObject
+from . import interfaces as stripe_interfaces
 
-@interface.implementer(interfaces.IStripeConnectKey, zmime_interfaces.IContentTypeAware)
+@interface.implementer(stripe_interfaces.IStripeConnectKey, zmime_interfaces.IContentTypeAware)
 class StripeConnectKey(object):
 
 	__metaclass__ = MetaStoreObject
