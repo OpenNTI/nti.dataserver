@@ -23,28 +23,25 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
 from . import stripe_io
+from .utils import makenone
 from . import StripeException
 from ... import payment_charge
 from ... import purchase_history
 from ... import purchase_attempt
 from .. import _BasePaymentProcessor
+from . import create_stripe_priceable
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
-
-def _makenone(s, default=None):
-	if isinstance(s, six.string_types) and s == 'None':
-		s = default
-	return s
 
 def _create_user_address(charge):
 	card = getattr(charge, 'card', None)
 	if card is not None:
-		address = payment_charge.UserAddress.create(_makenone(card.address_line1),
- 													_makenone(card.address_line2),
- 													_makenone(card.address_city),
- 													_makenone(card.address_state),
- 													_makenone(card.address_zip),
- 													_makenone(card.address_country))
+		address = payment_charge.UserAddress.create(makenone(card.address_line1),
+ 													makenone(card.address_line2),
+ 													makenone(card.address_city),
+ 													makenone(card.address_state),
+ 													makenone(card.address_zip),
+ 													makenone(card.address_country))
 		return address
 	else:
 		return None
@@ -116,11 +113,12 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		description = getattr(profile, 'description', None)
 		adapted = stripe_interfaces.IStripeCustomer(user)
 		if adapted.customer_id:
-			return self.update_stripe_customer(customer=customer,
-												customer_id=adapted.customer_id,
-												email=email,
-												description=description,
-												api_key=api_key)
+			result = self.update_stripe_customer(customer=customer or adapted.customer_id,
+												 email=email,
+												 description=description,
+												 api_key=api_key)
+			return result
+
 		return False
 
 	def create_card_token(self, customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
@@ -135,12 +133,12 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 	# ---------------------------
 
-	def _get_coupon(self, coupon, api_key=None):
-		result = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
+	def get_coupon(self, coupon, api_key=None):
+		result = self.get_stripe_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		return result
-
+	
 	def validate_coupon(self, coupon, api_key=None):
-		coupon = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
+		coupon = self.get_stripe_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		result = (coupon is not None)
 		if result:
 			if coupon.duration == u'repeating':
@@ -151,8 +149,14 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				result = coupon.redeem_by is None or time.time() <= coupon.redeem_by
 		return result
 
+	def get_and_validate_coupon(self, coupon =None, api_key=None):
+		coupon = self.get_coupon(coupon, api_key=api_key) if coupon else None
+		if coupon is not None and not self.validate_coupon(coupon, api_key=api_key):
+			raise ValueError("Invalid coupon")
+		return coupon
+
 	def apply_coupon(self, amount, coupon, api_key=None):
-		coupon = self.get_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
+		coupon = self.get_stripe_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		if coupon:
 			if coupon.percent_off is not None:
 				pcnt = coupon.percent_off / 100.0 if coupon.percent_off > 1 else coupon.percent_off
@@ -161,6 +165,14 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				amount_off = coupon.amount_off / 100.0
 				amount -= amount_off
 		return max(0, amount)
+
+	def price_purchase(self, purchase_id, username, coupon=None, api_key=None):
+		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+		coupon = self.get_and_validate_coupon(coupon, api_key=api_key)
+		items = [create_stripe_priceable(ntiid=item, quantity=purchase.Quantity, coupon=coupon) for item in purchase.Items]
+		pricer = component.getUtility(store_interfaces.IPurchasablePricer, name="stripe")
+		result = pricer.evaluate(items)
+		return result
 
 	def process_purchase(self, purchase_id, username, token, amount, currency, coupon=None, api_key=None):
 		"""
@@ -187,18 +199,17 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			# start the purchase
 			transactionRunner(start_purchase)
 
+			# create a stripe customer
+			customer_id = transactionRunner(register_stripe_user)
+
 			# validate coupon
 			if coupon is not None:
-				coupon = self._get_coupon(coupon, api_key=api_key)
-				if coupon is not None and not self.validate_coupon(coupon, api_key=api_key):
-					raise ValueError("Invalid coupon")
+				coupon = self.get_and_validate_coupon(coupon, api_key=api_key)
 				amount = self.apply_coupon(amount, coupon, api_key=api_key)
+				self.update_stripe_customer(customer_id, coupon=coupon.id, api_key=api_key)
 
 			# get price amount in cents
 			cents_amount = int(amount * 100.0)
-
-			# create a stripe customer
-			customer_id = transactionRunner(register_stripe_user)
 
 			# contact stripe
 			charge = None

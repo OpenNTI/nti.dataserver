@@ -20,6 +20,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils.property import alias
 
+from .utils import makenone
 from . import StripePurchaseError
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
@@ -83,7 +84,7 @@ def stripe_exception_adpater(error):
 def stripe_error_adpater(error):
 	result = StripePurchaseError(Type=u"Error")
 	result.HttpStatus = getattr(error, 'http_status', None)
-	message = error.message or ' '.join(getattr(error, 'args', ()))
+	message = makenone(error.message) or ' '.join(getattr(error, 'args', ()))
 	result.Message = unicode(message or 'Unspecified Stripe Error')
 	return result
 
@@ -106,8 +107,8 @@ def stripe_api_connection_error_adpater(error):
 def stripe_card_error_adpater(error):
 	result = stripe_error_adpater(error)
 	result.Type = u"CardError"
-	result.Code = unicode(getattr(error, 'code', u''))
-	result.Param = unicode(getattr(error, 'param', u''))
+	result.Code = makenone(getattr(error, 'code', None))
+	result.Param = makenone(getattr(error, 'param', None))
 	return result
 
 @component.adapter(stripe_interfaces.IStripeCardError)

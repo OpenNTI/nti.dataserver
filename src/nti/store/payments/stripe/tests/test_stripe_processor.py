@@ -30,6 +30,8 @@ from hamcrest import (assert_that, is_, is_not, has_length, has_key, none)
 
 class TestStripeProcessor(ConfiguringTestBase):
 
+	book_id = 'tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center'
+
 	@classmethod
 	def setUpClass(cls):
 		super(TestStripeProcessor, cls).setUpClass()
@@ -81,7 +83,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			username = user.username
 
 		with mock_dataserver.mock_db_trans(ds):
-			items = ('xyz book',)
+			items = (self.book_id,)
 			purchase_id = purchase_history.create_and_register_purchase_attempt(username,
 																	 			items=items,
 																	 			processor=self.manager.name,
@@ -144,7 +146,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			username = user.username
 
 		with mock_dataserver.mock_db_trans(ds):
-			items = ('xyz book',)
+			items = (self.book_id,)
 			purchase_id = purchase_history.create_and_register_purchase_attempt(username,
 																	 			items=items,
 																	 			processor=self.manager.name,
@@ -221,7 +223,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			username = user.username
 
 		with mock_dataserver.mock_db_trans(ds):
-			items = ('xyz book',)
+			items = (self.book_id,)
 			purchase_id = purchase_history.create_and_register_purchase_attempt(username,
 																				items=items,
 																	 			processor=self.manager.name,

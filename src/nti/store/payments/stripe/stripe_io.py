@@ -7,10 +7,13 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import six
 import sys
 import stripe
 
 from . import StripeException
+
+_marker = object()
 
 class StripeIO(object):
 
@@ -42,11 +45,12 @@ class StripeIO(object):
 			return True
 		return False
 
-	def update_stripe_customer(self, customer_id=None, email=None, description=None, customer=None, api_key=None):
-		customer = customer or self.get_stripe_customer(customer_id, api_key)
+	def update_stripe_customer(self, customer, email=_marker, description=_marker, coupon=_marker, api_key=None):
+		customer = self.get_stripe_customer(customer, api_key) if isinstance(customer, six.string_types) else customer
 		if customer:
-			customer.email = email
-			customer.description = description
+			customer.email = email if email is not _marker else customer.email
+			customer.coupon = coupon if coupon is not _marker else customer.coupon
+			customer.description = description if description is not _marker else customer.description
 			self._do_stripe_operation(customer.save)
 			return True
 		return False
@@ -130,7 +134,7 @@ class StripeIO(object):
 
 	get_charges = get_stripe_charges
 
-	def get_coupon(self, coupon_code, api_key=None):
+	def get_stripe_coupon(self, coupon_code, api_key=None):
 		try:
 			coupon = self._do_stripe_operation(stripe.Coupon.retrieve, coupon_code, api_key=api_key)
 			return coupon

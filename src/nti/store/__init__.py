@@ -21,3 +21,8 @@ from . import interfaces as store_interfaces
 from .purchase_history import get_purchase_attempt
 from .purchase_attempt import create_purchase_attempt
 
+class StoreException(Exception):
+    pass
+
+class InvalidPurchasable(StoreException):
+    pass

@@ -44,7 +44,7 @@ class TestStripeIO(unittest.TestCase):
 		customer = sio.get_stripe_customer(customer.id)
 		assert_that(customer, is_not(None))
 		
-		r = sio.update_stripe_customer(customer.id, 'xyz@nt.com',customer=customer)
+		r = sio.update_stripe_customer(customer, 'xyz@nt.com')
 		assert_that(r, is_(True))
 		assert_that(customer.email, is_('xyz@nt.com'))
 		
@@ -98,7 +98,7 @@ class TestStripeIO(unittest.TestCase):
 		c = stripe.Coupon.create(percent_off=25,duration='once', id=code)
 		try:
 			sio = stripe_io.StripeIO()
-			coupon = sio.get_coupon(code)
+			coupon = sio.get_stripe_coupon(code)
 			assert_that(coupon, is_not(None))
 		finally:
 			c.delete()
@@ -106,5 +106,5 @@ class TestStripeIO(unittest.TestCase):
 	def test_invalid_coupon(self):
 		code =  'notknown'
 		sio = stripe_io.StripeIO()
-		coupon = sio.get_coupon(code)
+		coupon = sio.get_stripe_coupon(code)
 		assert_that(coupon, is_(None))

@@ -19,15 +19,16 @@ from pyramid import httpexceptions as hexc
 from pyramid.security import authenticated_userid
 
 from nti.externalization.datastructures import LocatedExternalDict
-from nti.externalization.externalization import to_external_object
 
+from . import InvalidStripeCoupon
+from . import create_stripe_priceable
 from . import interfaces as stripe_interfaces
 
 from nti.store import purchase_history
-from  nti.store import purchasable_store
+from nti.store import InvalidPurchasable
+from nti.store import purchasable_store
 from nti.store.utils import CaseInsensitiveDict
 from nti.store import interfaces as store_interfaces
-from nti.store.utils import pyramid_views as util_pyramid_views
 from nti.store.payments import is_valid_amount, is_valid_pve_int
 
 class _BaseStripeView(object):
@@ -96,40 +97,35 @@ class CreateStripeTokenView(_PostStripeView):
 		token = manager.create_token(**params)
 		return LocatedExternalDict(Token=token.id)
 
-class PricePurchasableWithStripeCouponView(_PostStripeView, util_pyramid_views.PricePurchasableView):
+class PricePurchasableWithStripeCouponView(_PostStripeView):
+
+	def price(self, purchasable_id, quantity=None, coupon=None):
+		pricer = component.getUtility(store_interfaces.IPurchasablePricer, name="stripe")
+		priceable = create_stripe_priceable(ntiid=purchasable_id, quantity=quantity, coupon=coupon)
+		result = pricer.price(priceable)
+		return result
+
+	def price_purchasable(self, values=None):
+		values = values or self.readInput()
+		purchasable_id = values.get('purchasableID', u'')
+		coupon = values.get('coupon', values.get('couponCode'))
+
+		# check quantity
+		quantity = values.get('quantity', 1)
+		if not is_valid_pve_int(quantity):
+			raise hexc.HTTPBadRequest(detail='invalid quantity')
+		quantity = int(quantity)
+
+		try:
+			result = self.price(purchasable_id, quantity, coupon)
+			return result
+		except InvalidStripeCoupon:
+			raise hexc.HTTPBadRequest(detail='invalid stripe coupon (%s)' % coupon)
+		except InvalidPurchasable:
+			raise hexc.HTTPBadRequest(detail='invalid purchasable (%s)' % purchasable_id)
 
 	def __call__(self):
-		values = self.readInput()
-		priced, quantity = self.price_purchasable(values)
-		provider = priced.Provider or u''
-		stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
-
-		coupon = None
-		purchase_price = priced.PurchasePrice
-		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
-
-		result = LocatedExternalDict()
-		result['Quantity'] = quantity
-
-		# use coupon
-		code = values.get('coupon', values.get('couponCode'))
-		if code is not None and stripe_key:
-			# stripe defines an 80 sec timeout for http requests
-			# at this moment we are to wait for coupon validation
-			coupon = manager.get_coupon(code, api_key=stripe_key.PrivateKey)
-			if coupon is not None:
-				validated_coupon = manager.validate_coupon(coupon, api_key=stripe_key.PrivateKey)
-				if not validated_coupon:
-					raise hexc.HTTPClientError(detail="Invalid coupon")
-			result['Coupon'] = coupon
-
-		if coupon is not None:
-			priced.NonDiscountedPrice = purchase_price
-			purchase_price = manager.apply_coupon(purchase_price, coupon)
-		priced.PurchasePrice = purchase_price
-
-		ext = to_external_object(priced)
-		result.update(ext)
+		result = self.price_purchasable()
 		return result
 
 class StripePaymentView(_PostStripeView):

@@ -50,11 +50,20 @@ class IPurchasable(interface.Interface):
 	Provider = nti_schema.ValidTextLine(title='Purchasable item provider', required=True)
 	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Purchasable content items")
 
-class IPricedPurchasable(interface.Interface):
+class IPriceable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
+	Quantity = schema.Int(title="Quantity", required=False, default=1)
+
+class IPricedPurchasable(IPriceable):
 	PurchaseFee = schema.Float(title="Fee Amount", required=False)
 	PurchasePrice = schema.Float(title="Cost amount", required=True)
 	NonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
+
+class IPricingResults(interface.Interface):
+	PricedList = schema.List(schema.Object(IPricedPurchasable), title='The priced purchasables', required=True)
+	TotalPurchaseFee = schema.Float(title="Fee Amount", required=False)
+	TotalPurchasePrice = schema.Float(title="Cost amount", required=True)
+	TotalNonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
 
 class IUserAddress(interface.Interface):
 	Street = nti_schema.ValidText(title='Street address', required=False)
@@ -78,9 +87,14 @@ class IPurchaseError(interface.Interface):
 
 class IPurchasablePricer(interface.Interface):
 
-	def price(purchasable, quantity):
+	def price(priceable):
 		"""
-		price the specfied purchasable
+		price the specfied priceable
+		"""
+		
+	def evaluate(priceables):
+		"""
+		price the specfied priceables
 		"""
 
 class IPaymentProcessor(interface.Interface):
