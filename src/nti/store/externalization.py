@@ -16,6 +16,8 @@ from pyramid.threadlocal import get_current_request
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.datastructures import InterfaceObjectIO
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -66,6 +68,11 @@ class PurchasableDecorator(object):
 			external['Description'] = unit.title if unit else u''
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPriceable)
+class PriceableExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPriceable
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
 @component.adapter(store_interfaces.IPricedPurchasable)
 class PricedPurchasableExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = store_interfaces.IPricedPurchasable
@@ -85,4 +92,24 @@ class PricedPurchasableDecorator(object):
 		external['Amount'] = original.Amount
 		external['Currency'] = original.Currency
 
+@component.adapter(store_interfaces.IPricingResults)
+@interface.implementer(ext_interfaces.IExternalObject)
+class PricingResultsExternalizer(object):
 
+	def __init__(self, results):
+		self.results = results
+
+	def toExternalObject(self):
+		external = LocatedExternalDict()
+		external.lastModified = 0
+		external.mimeType = self.results.mimeType
+
+		items = external['Items'] = []
+		for priced in self.results.PricedList:
+			ext = toExternalObject(priced)
+			items.append(ext)
+
+		external['TotalPurchasePrice'] = self.results.TotalPurchasePrice
+		if self.results.TotalNonDiscountedPrice:
+			external['TotalNonDiscountedPrice'] = self.results.TotalNonDiscountedPrice
+		return external

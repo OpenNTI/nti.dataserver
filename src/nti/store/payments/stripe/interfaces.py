@@ -97,15 +97,11 @@ class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 class IStripeCoupon(interface.Interface):
 	"""marker interface for a stripe coupon"""
 
+class IStripePriceable(store_interfaces.IPriceable):
+	Coupon = schema.Object(interface.Interface, title='the coupon', required=False)
+
 class IStripePricedPurchasable(store_interfaces.IPricedPurchasable):
 	Coupon = schema.Object(IStripeCoupon, title='the coupon', required=False)
-
-class IStripePurchasablePricer(store_interfaces.IPurchasablePricer):
-
-	def price(purchasable, quantity, coupon):
-		"""
-		price the specfied purchasable
-		"""
 
 class IStripePurchase(interface.Interface):
 	ChargeID = nti_schema.ValidTextLine(title='Charge id', required=False)
@@ -122,7 +118,6 @@ class IStripeConnectKey(interface.Interface):
 class IStripePurchaseError(store_interfaces.IPurchaseError):
 	HttpStatus = schema.Int(title='HTTP Status', required=False)
 	Param = nti_schema.ValidTextLine(title="Optional parameter", required=False)
-
 
 # stripe interfaces
 

@@ -13,16 +13,26 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from ...purchase_error import PurchaseError
 from . import interfaces as stripe_interfaces
-from ...priced_purchasable import PricedPurchasable
+from ...pricing import Priceable, PricedPurchasable
+
+# make sure str and unicode are interfaced marked
+from dolmen.builtins import IString, IUnicode
 
 @interface.implementer(stripe_interfaces.IStripeException)
 class StripeException(Exception):
+    pass
+
+class InvalidStripeCoupon(StripeException):
     pass
 
 @interface.implementer(stripe_interfaces.IStripePurchaseError)
 class StripePurchaseError(PurchaseError):
     HttpStatus = FP(stripe_interfaces.IStripePurchaseError['HttpStatus'])
     Param = FP(stripe_interfaces.IStripePurchaseError['Param'])
+
+@interface.implementer(stripe_interfaces.IStripePriceable)
+class StripePriceable(Priceable):
+    Coupon = FP(stripe_interfaces.IStripePriceable['Coupon'])
 
 @interface.implementer(stripe_interfaces.IStripePricedPurchasable)
 class StripePricedPurchasable(PricedPurchasable):
@@ -31,8 +41,15 @@ class StripePricedPurchasable(PricedPurchasable):
 
     @classmethod
     def copy(cls, priced):
-        result = StripePricedPurchasable(NTIID=priced.NTIID, PurchaseFee=priced.PurchaseFee,
+        result = StripePricedPurchasable(NTIID=priced.NTIID,
+                                         Quantity=priced.Quantity,
+                                         PurchaseFee=priced.PurchaseFee,
                                          PurchasePrice=priced.PurchasePrice,
                                          NonDiscountedPrice=priced.NonDiscountedPrice)
         result.Coupon = getattr(priced, 'Coupon', None)
         return result
+
+def create_stripe_priceable(ntiid, quantity=None, coupon=None):
+    quantity = 1 if quantity is None else int(quantity)
+    result = StripePriceable(NTIID=unicode(ntiid), Quantity=quantity, Coupon=coupon)
+    return result

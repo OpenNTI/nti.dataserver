@@ -11,6 +11,7 @@ import six
 import time
 import gevent
 import numbers
+import simplejson
 import dateutil.parser
 
 from pyramid import httpexceptions as hexc
@@ -23,11 +24,13 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import LocatedExternalDict
 
+from . import pricing
 from . import purchase_history
 from . import purchasable_store
+from . import InvalidPurchasable
 from . import interfaces as store_interfaces
-from .utils import pyramid_views as util_pyramid
 from .payments import pyramid_views as payment_pyramid
+from .utils import is_valid_pve_int, CaseInsensitiveDict
 
 class _PurchaseAttemptView(object):
 
@@ -113,10 +116,45 @@ class GetPurchasablesView(object):
 		result = LocatedExternalDict({'Items': purchasables, 'Last Modified':0})
 		return result
 
+class PricePurchasableView(object):
+
+	def __init__(self, request):
+		self.request = request
+
+	def readInput(self):
+		request = self.request
+		values = simplejson.loads(unicode(request.body, request.charset))
+		return CaseInsensitiveDict(**values)
+
+	def price(self, purchasable_id, quantity):
+		pricer = component.getUtility(store_interfaces.IPurchasablePricer)
+		priceable = pricing.create_priceable(purchasable_id, quantity)
+		result = pricer.price(priceable)
+		return result
+
+	def price_purchasable(self, values=None):
+		values = values or self.readInput()
+		purchasable_id = values.get('purchasableID', u'')
+
+		# check quantity
+		quantity = values.get('quantity', 1)
+		if not is_valid_pve_int(quantity):
+			raise hexc.HTTPBadRequest(detail='invalid quantity')
+		quantity = int(quantity)
+
+		try:
+			result = self.price(purchasable_id, quantity)
+			return result
+		except InvalidPurchasable:
+			raise hexc.HTTPBadRequest(detail='invalid purchasable (%s)' % purchasable_id)
+
+	def __call__(self):
+		result = self.price_purchasable()
+		return result
+
 # aliases
 
 StripePaymentView = payment_pyramid.StripePaymentView
-PricePurchasableView = util_pyramid.PricePurchasableView
 CreateStripeTokenView = payment_pyramid.CreateStripeTokenView
 GetStripeConnectKeyView = payment_pyramid.GetStripeConnectKeyView
 PricePurchasableWithStripeCouponView = payment_pyramid.PricePurchasableWithStripeCouponView

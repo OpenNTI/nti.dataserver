@@ -18,8 +18,8 @@ from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
 
+from ..import pricing
 from .. import purchase_attempt
-from ..import priced_purchasable
 from ..import purchasable_store as store
 from .. import interfaces as store_interfaces
 
@@ -85,8 +85,16 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Icon', u'http://prmia.org/'))
 		assert_that(ext, has_entry('Description', u'Intro to Risk'))
 
+	def test_priceable(self):
+		pp = pricing.create_priceable(u'iid_3', 1)
+		ext = to_external_object(pp)
+		assert_that(ext, has_key('MimeType'))
+		assert_that(ext, has_entry('NTIID', u'iid_3'))
+		assert_that(ext, has_entry('Quantity', 1))
+		assert_that(ext, has_entry('Class', u'Priceable'))
+
 	def test_priced_purchasable(self):
-		pp = priced_purchasable.create_priced_purchasable(u'iid_3', 100, 2)
+		pp = pricing.create_priced_purchasable(ntiid=u'iid_3', purchase_price=100, purchase_fee=2)
 		ext = to_external_object(pp)
 		assert_that(ext, has_key('MimeType'))
 		assert_that(ext, is_not(has_key('PurchaseFee')))
@@ -95,11 +103,14 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('PurchasePrice', 100))
 		assert_that(ext, has_entry('Class', u'PricedPurchasable'))
 
-		pp = priced_purchasable.create_priced_purchasable(u'iid_3', 200, 30, 20)
+		pp = pricing.create_priced_purchasable(ntiid=u'iid_3', purchase_price=200,
+											   purchase_fee=30, non_discounted_price=220,
+											   quantity=10)
 		ext = to_external_object(pp)
 		assert_that(ext, is_not(has_key('PurchaseFee')))
-		assert_that(ext, has_entry('NonDiscountedPrice', 20))
+		assert_that(ext, has_entry('NonDiscountedPrice', 220))
 		assert_that(ext, has_entry('PurchasePrice', 200))
+		assert_that(ext, has_entry('Quantity', 10))
 
 	def test_fill_in_lib(self):
 		pe = store.create_purchasable(ntiid='tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology',
