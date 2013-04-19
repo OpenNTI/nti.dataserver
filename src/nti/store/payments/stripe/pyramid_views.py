@@ -175,7 +175,7 @@ class StripePaymentView(_PostStripeView):
 		quantity = values.get('quantity', None)
 		if quantity is not None and not is_valid_pve_int(quantity):
 			raise hexc.HTTPBadRequest(detail="Invalid quantity")
-		quantity = int(quantity)
+		quantity = int(quantity) if quantity else None
 
 		description = description or "%s's payment for '%r'" % (username, purchasable_id)
 
