@@ -41,6 +41,8 @@
 			 provides="zope.schema.interfaces.IVocabularyFactory"
 			 name="nti.store.purchasable.vocabulary" />
 	
+	<utility factory=".priced_purchasable.DefaultPurchasablePricer" />
+	
 	<include package="." file="purchasable.zcml" />
 		
 </configure>

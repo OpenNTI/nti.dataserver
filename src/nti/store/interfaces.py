@@ -71,6 +71,14 @@ class IPaymentCharge(interface.Interface):
 	Name = nti_schema.ValidTextLine(title='The customer/charge name', required=False)
 	Address = schema.Object(IUserAddress, title='User address', required=False)
 
+
+class IPurchasablePricer(interface.Interface):
+
+	def price(purchasable, quantity):
+		"""
+		price the specfied purchasable
+		"""
+
 class IPaymentProcessor(interface.Interface):
 
 	name = nti_schema.ValidTextLine(title='Processor name', required=True)
@@ -268,6 +276,11 @@ class IPurchaseHistory(interface.Interface):
 
 	def get_purchase_history(start_time=None, end_time=None):
 		pass
+
+class IPurchaseError(interface.Interface):
+	Type = nti_schema.ValidTextLine(title='Error type', required=False)
+	Code = nti_schema.ValidTextLine(title='Error code', required=False)
+	Message = nti_schema.ValidText(title='Error message', required=True)
 
 class IStorePurchaseInvitation(interface.Interface):
 	pass
