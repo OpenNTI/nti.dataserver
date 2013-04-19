@@ -81,7 +81,7 @@ def create_user(args=None):
 						 xmlconfig_packages=conf_packages,
 						 verbose=args.verbose,
 						 function=lambda: _create_user(_type_map[args.type], username, password, args.name, args.communities, args ) )
-	
+
 def _create_user( factory, username, password, realname, communities=(), options=None ):
 	__traceback_info__ = locals().items()
 
@@ -96,7 +96,7 @@ def _create_user( factory, username, password, realname, communities=(), options
 		# The easiest way to make this happen is to do what the test cases
 		# do, and mock out a pyramid setup with a current request.
 		# (TODO: pyramid has some support for running things as scripts, we should
-		# probably look into that)
+		# probably look into that; it should fix the hack for mutating the request?)
 		from pyramid.testing import setUp as psetUp
 		#from pyramid.testing import tearDown as ptearDown
 		from pyramid.testing import DummyRequest
@@ -107,6 +107,8 @@ def _create_user( factory, username, password, realname, communities=(), options
 						hook_zca=False)
 		config.setup_registry()
 		request.headers['origin'] = 'http://' + options.site if not options.site.startswith( 'http' ) else options.site
+		# zope_site_tween tweaks some things on the request that we need to as well
+		request.possible_site_names = ( options.site if not options.site.startswith( 'http' ) else options.site[7:], )
 
 	user = factory.im_self.get_entity( username )
 	if user:
