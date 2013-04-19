@@ -23,8 +23,6 @@ from hamcrest import (assert_that, has_key, has_length, is_not, none, is_, is_in
 
 class TestPurchasableStore(ConfiguringTestBase):
 
-	set_up_packages = ConfiguringTestBase.set_up_packages + (('purchasables.zcml', 'nti.store.tests'),)
-
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		usr = User.create_user(self.ds, username=username, password=password)
 		return usr
