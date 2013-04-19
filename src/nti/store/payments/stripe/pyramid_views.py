@@ -25,7 +25,6 @@ from . import interfaces as stripe_interfaces
 
 from nti.store import purchase_history
 from  nti.store import purchasable_store
-from nti.store.utils import from_delimited
 from nti.store.utils import CaseInsensitiveDict
 from nti.store import interfaces as store_interfaces
 from nti.store.utils import pyramid_views as util_pyramid_views
@@ -135,42 +134,27 @@ class PricePurchasableWithStripeCouponView(_PostStripeView, util_pyramid_views.P
 
 class StripePaymentView(_PostStripeView):
 
-	def _get_purchasables(self, values):
-		items = values.get('purchasableID', values.get('items', None))
-		if not items:
-			raise hexc.HTTPBadRequest(detail="No item(s) to purchase")
-
-		result = {}
-		for item in from_delimited(items):
-			ps = purchasable_store.get_purchasable(item)
-			if ps is None:
-				raise hexc.HTTPBadRequest(detail="Invalid purchasable item")
-			result[item] = ps
-		return result
-
-	def _get_provider(self, purchasables, values):
-		provider = None
-		if purchasables:
-			provider = list(purchasables.values())[0].Provider
-		if provider is None:
-			provider = values.get('provider', u'')
-		return provider
-
 	def __call__(self):
 		request = self.request
 		username = authenticated_userid(request)
 
 		values = self.readInput()
-		items = self._get_purchasables(values)
+		purchasable_id = values.get('purchasableID')
+		if not purchasable_id:
+			raise hexc.HTTPBadRequest(detail="No item to purchase specified")
+
+		purchasable = purchasable_store.get_purchasable(purchasable_id)
+		if purchasable is None:
+			raise hexc.HTTPBadRequest(detail="Invalid purchasable item")
 
 		# check for any pending purchase for the items being bought
-		purchase = purchase_history.get_pending_purchase_for(username, items)
+		purchase = purchase_history.get_pending_purchase_for(username, purchasable_id)
 		if purchase is not None:
-			logger.warn("There is already a pending purchase for item(s) %s" % items)
+			logger.warn("There is already a pending purchase for item %s" % purchasable_id)
 			return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 
 		# gather data
-		provider = self._get_provider(items, values)
+		provider = purchasable.Provider
 		stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
 		if not stripe_key:
 			raise hexc.HTTPBadRequest(detail="Invalid provider")
@@ -182,6 +166,7 @@ class StripePaymentView(_PostStripeView):
 		amount = values.get('amount', None)
 		if not is_valid_amount(amount):
 			raise hexc.HTTPBadRequest(detail="Invalid amount")
+		amount = float(amount)
 
 		coupon = values.get('coupon', None)
 		currency = values.get('currency', 'USD')
@@ -190,11 +175,12 @@ class StripePaymentView(_PostStripeView):
 		quantity = values.get('quantity', None)
 		if quantity is not None and not is_valid_pve_int(quantity):
 			raise hexc.HTTPBadRequest(detail="Invalid quantity")
+		quantity = int(quantity)
 
-		description = description or "%s's payment for '%r'" % (username, items)
+		description = description or "%s's payment for '%r'" % (username, purchasable_id)
 
 		# create purchase
-		purchase_id = purchase_history.create_and_register_purchase_attempt(username, items=items, processor=self.processor,
+		purchase_id = purchase_history.create_and_register_purchase_attempt(username, items=purchasable_id, processor=self.processor,
 																 			description=description, quantity=quantity)
 		logger.info("Purchase %s created" % purchase_id)
 
