@@ -54,6 +54,7 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
             priced.NonDiscountedPrice = purchase_price
             purchase_price = manager.apply_coupon(purchase_price, s_coupon)
             priced.PurchasePrice = purchase_price
+            priced.PurchaseFee = self.calc_fee(purchase_price, priceable.Fee)
 
         return priced
 
@@ -64,12 +65,12 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
         total_amount = 0
         total_non_discount = 0
         result = PrincingResults()
-        for priceable in priceables.items():
+        for priceable in priceables:
             priced = self.price(priceable)
-            result.PricedList.add(priced)
+            result.PricedList.append(priced)
             total_fee += priced.PurchaseFee
             total_amount += priced.PurchasePrice
-            total_non_discount += priced.NonDiscountedPrice
+            total_non_discount += priced.NonDiscountedPrice or priced.PurchasePrice
 
         # set totals
         result.TotalPurchaseFee = total_fee

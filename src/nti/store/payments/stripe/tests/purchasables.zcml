@@ -1,0 +1,38 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:pcs="http://nextthought.com/ntp/purchasable"
+			i18n_domain='nti.dataserver'>
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+
+	<include package="nti.store" file="meta.zcml" />
+
+	<pcs:registerPurchasable
+		ntiid="xyz book"
+		title="XYZ Book"
+		description="ABC of XYZ"
+		provider="NTI-TEST"
+		author="NEXTTHOUGHT"
+		amount="100"
+		fee="20"
+		currency="USD"
+		discountable="False"
+		bulk_purchase="True" />
+		
+	<pcs:registerPurchasable
+		ntiid="bleach"
+		title="Bleach"
+		description="Bleach Manga"
+		provider="NTI-TEST"
+		author="Tite Kubo"
+		amount="200"
+		fee="10"
+		currency="USD"
+		discountable="False"
+		bulk_purchase="True" />
+
+</configure>

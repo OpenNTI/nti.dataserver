@@ -14,4 +14,4 @@ import nti.dataserver as dataserver
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase as DSSharedConfiguringTestBase
 
 class ConfiguringTestBase(DSSharedConfiguringTestBase):
-	set_up_packages = (dataserver, store, ('configure_invitations.zcml', appserver))
+	set_up_packages = (dataserver, store, ('configure_invitations.zcml', appserver)) + (('purchasables.zcml', 'nti.store.tests'),)

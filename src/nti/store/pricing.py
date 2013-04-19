@@ -47,6 +47,11 @@ class Priceable(SchemaConfigured):
 		result = getattr(self.purchasable, 'Amount', None)
 		return result
 
+	@property
+	def Fee(self):
+		result = getattr(self.purchasable, 'Fee', None)
+		return result
+
 	def __str__(self):
 		return self.NTIID
 
@@ -78,11 +83,6 @@ class PricedPurchasable(Priceable):
 	PurchaseFee = FP(store_interfaces.IPricedPurchasable['PurchaseFee'])
 	PurchasePrice = FP(store_interfaces.IPricedPurchasable['PurchasePrice'])
 	NonDiscountedPrice = FP(store_interfaces.IPricedPurchasable['NonDiscountedPrice'])
-
-	@property
-	def Fee(self):
-		result = getattr(self.purchasable, 'Fee', None)
-		return result
 
 	def __repr__(self):
 		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.NTIID, self.Currency, self.PurchasePrice)
@@ -125,6 +125,13 @@ class PrincingResults(SchemaConfigured):
 @interface.implementer(store_interfaces.IPurchasablePricer)
 class DefaultPurchasablePricer(object):
 
+	def calc_fee(self, amount, fee):
+		fee_amount = 0
+		if fee is not None:
+			pct = fee / 100.0 if fee >= 1 else fee
+			fee_amount = amount * pct
+		return fee_amount
+
 	def price(self, priceable):
 		quantity = priceable.Quantity or 1
 		purchasable = priceable.purchasable
@@ -134,12 +141,7 @@ class DefaultPurchasablePricer(object):
 		amount = purchasable.Amount
 		new_amount = amount * quantity
 
-		fee_amount = 0
-		fee = purchasable.Fee
-		if fee is not None:
-			pct = fee / 100.0 if fee >= 1 else fee
-			fee_amount = new_amount * pct
-
+		fee_amount = self.calc_fee(new_amount, purchasable.Fee)
 		result = create_priced_purchasable(ntiid=purchasable.NTIID,
 										   purchase_price=new_amount,
 										   purchase_fee=fee_amount,
@@ -153,9 +155,9 @@ class DefaultPurchasablePricer(object):
 		total_fee = 0
 		total_amount = 0
 		result = PrincingResults()
-		for priceable in priceables.items():
+		for priceable in priceables:
 			priced = self.price(priceable)
-			result.PricedList.add(priced)
+			result.PricedList.append(priced)
 			total_fee += priced.PurchaseFee
 			total_amount += priced.PurchasePrice
 
