@@ -14,10 +14,9 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 from nti.utils.schema import SchemaConfigured
 
 from . import InvalidPurchasable
-from .utils import to_collection
-from .utils import MetaStoreObject
+from .purchasable import get_purchasable
 from . import interfaces as store_interfaces
-from .purchasable_store import get_purchasable
+from .utils import MetaStoreObject, to_collection
 
 @interface.implementer(store_interfaces.IPriceable, zmime_interfaces.IContentTypeAware)
 class Priceable(SchemaConfigured):

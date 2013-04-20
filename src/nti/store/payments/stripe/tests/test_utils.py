@@ -49,7 +49,7 @@ class TestUtils(ConfiguringTestBase):
 	def test_evaluate(self):
 		pricer = component.getUtility(store_interfaces.IPurchasablePricer, name="stripe")
 		p0 = create_stripe_priceable(u"bleach", 5, self.coupon.id)
-		p1 = create_stripe_priceable(u"xyz book", 1)
+		p1 = create_stripe_priceable(u"xyz-book", 1)
 		result = pricer.evaluate((p0, p1))
 		assert_that(result, is_not(none()))
 		assert_that(result.PricedList, has_length(2))

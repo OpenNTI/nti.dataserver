@@ -15,8 +15,8 @@ from zope import component
 
 from nti.appserver.invitations import interfaces as invite_interfaces
 
+from . import purchasable
 from . import _content_roles
-from . import purchasable_store
 from . import interfaces as store_interfaces
 from .purchase_history import remove_purchased_items
 from .purchase_history import register_purchased_items
@@ -39,7 +39,7 @@ def _purchase_attempt_successful(event):
 	# if not register invitation
 	if not purchase.Quantity:
 		# allow content roles
-		lib_items = purchasable_store.get_content_items(purchase.Items)
+		lib_items = purchasable.get_content_items(purchase.Items)
 		_content_roles._add_users_content_roles(purchase.creator, lib_items)
 
 	logger.info('%s completed successfully' % purchase)
@@ -53,7 +53,7 @@ def _purchase_attempt_refunded(event):
 	remove_purchased_items(event.username, purchase.Items)
 
 	# TODO: we need to handle when there is an invitation
-	lib_items = purchasable_store.get_content_items(purchase.Items)
+	lib_items = purchasable.get_content_items(purchase.Items)
 	_content_roles._remove_users_content_roles(event.username, lib_items)
 
 	logger.info('%s has been refunded' % purchase)
@@ -85,5 +85,5 @@ def _purchase_attempt_synced(event):
 def _purchase_invitation_accepted(invitation, event):
 	purchase = getattr(invitation, 'purchase', None)
 	if purchase is not None:
-		lib_items = purchasable_store.get_content_items(purchase.Items)
+		lib_items = purchasable.get_content_items(purchase.Items)
 		_content_roles._add_users_content_roles(event.user, lib_items)

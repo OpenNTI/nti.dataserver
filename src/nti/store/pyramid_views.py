@@ -25,8 +25,8 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.datastructures import LocatedExternalDict
 
 from . import pricing
+from . import purchasable
 from . import purchase_history
-from . import purchasable_store
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
 from .payments import pyramid_views as payment_pyramid
@@ -112,7 +112,7 @@ class GetPurchasablesView(object):
 		self.request = request
 
 	def __call__(self):
-		purchasables = purchasable_store.get_all_purchasables()
+		purchasables = purchasable.get_all_purchasables()
 		result = LocatedExternalDict({'Items': purchasables, 'Last Modified':0})
 		return result
 

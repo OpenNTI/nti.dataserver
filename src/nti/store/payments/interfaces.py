@@ -10,7 +10,15 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import interface
 
+from nti.utils import schema as nti_schema
+
 from .. import interfaces as store_interfaces
+
+class IPayment(interface.Interface):
+	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Items being purchased")
+	Description = nti_schema.ValidTextLine(title='A payment description', required=False)
+	ExpectedAmount = schema.Float(title='Expected amount', required=False)
+	ExpectedCurrency = nti_schema.ValidTextLine(title='A payment description', required=False, default='USD')
 
 class IRegisterPurchaseData(interface.Interface):
 	object = schema.Object(store_interfaces.IPurchaseAttempt, title="The purchase", required=True)
@@ -23,4 +31,3 @@ class RegisterPurchaseData(object):
 	@property
 	def purchase(self):
 		return self.object
-

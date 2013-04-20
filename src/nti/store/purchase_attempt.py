@@ -26,8 +26,8 @@ from nti.utils.schema import SchemaConfigured
 from nti.zodb import minmax
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
+from . import purchasable
 from . import to_frozenset
-from . import purchasable_store
 from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
 
@@ -146,7 +146,7 @@ def get_purchasables(purchase):
 	"""
 	result = list()
 	for item in purchase.Items:
-		p = purchasable_store.get_purchasable(item)
+		p = purchasable.get_purchasable(item)
 		if p is not None:
 			result.append(p)
 	return result
