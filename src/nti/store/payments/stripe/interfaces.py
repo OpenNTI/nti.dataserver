@@ -106,9 +106,6 @@ class IStripePriceable(store_interfaces.IPriceable):
 class IStripePricedPurchasable(store_interfaces.IPricedPurchasable):
 	Coupon = schema.Object(IStripeCoupon, title='the coupon', required=False)
 
-class IStripePurchasablePricer(store_interfaces.IPurchasablePricer):
-	pass
-
 class IStripePurchase(interface.Interface):
 	ChargeID = nti_schema.ValidTextLine(title='Charge id', required=False)
 	TokenID = nti_schema.ValidTextLine(title='Token id', required=False)
