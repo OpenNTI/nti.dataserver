@@ -155,11 +155,9 @@ def get_providers(purchase):
 	"""
 	return all providers for the associated purchase
 	"""
-	result = set()
 	purchasables = get_purchasables(purchase)
-	for p in purchasables:
-		result.add(p.Provider)
-	return list(result)
+	result = purchasable.get_providers(purchasables)
+	return result
 
 def copy_purchase_attempt(purchase):
 	result = PurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
