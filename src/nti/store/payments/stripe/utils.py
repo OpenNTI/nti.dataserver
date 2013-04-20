@@ -27,35 +27,36 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 
     processor = "stripe"
 
-    def price(self, priceable):
-        priced = super(StripePurchasablePricer, self).price(priceable)
-        priced = StripePricedPurchasable.copy(priced)
-
-        provider = priced.Provider or u''
-        stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
-
-        purchase_price = priced.PurchasePrice
+    def get_coupon(self, coupon=None, api_key=None):
         manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
-
-        coupon = getattr(priceable, 'Coupon', None)
-        if coupon is not None and stripe_key:
+        if coupon is not None and api_key:
             # stripe defines an 80 sec timeout for http requests
             # at this moment we are to wait for coupon validation
             if isinstance(coupon, six.string_types):
-                s_coupon = manager.get_coupon(coupon, api_key=stripe_key.PrivateKey)
-            else:
-                s_coupon = coupon
-            if s_coupon is not None:
-                validated_coupon = manager.validate_coupon(s_coupon, api_key=stripe_key.PrivateKey)
+                coupon = manager.get_coupon(coupon, api_key=api_key)
+            if coupon is not None:
+                validated_coupon = manager.validate_coupon(coupon, api_key=api_key)
                 if not validated_coupon:
                     raise InvalidStripeCoupon()
-            priced.Coupon = s_coupon
+        return coupon
 
-            priced.NonDiscountedPrice = purchase_price
-            purchase_price = manager.apply_coupon(purchase_price, s_coupon)
-            priced.PurchasePrice = purchase_price
-            priced.PurchaseFee = self.calc_fee(purchase_price, priceable.Fee)
+    def price(self, priceable):
+        priced = super(StripePurchasablePricer, self).price(priceable)
+        priced = StripePricedPurchasable.copy(priced)
+        coupon = getattr(priceable, 'Coupon', None)
 
+        manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
+        stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, priced.Provider)
+
+        purchase_price = priced.PurchasePrice
+
+        if coupon is not None and stripe_key:
+            priced.Coupon = self.get_coupon(coupon, stripe_key.PrivateKey)
+            if priced.Coupon is not None:
+                priced.NonDiscountedPrice = purchase_price
+                purchase_price = manager.apply_coupon(purchase_price, priced.Coupon)
+                priced.PurchasePrice = purchase_price
+                priced.PurchaseFee = self.calc_fee(purchase_price, priceable.Fee)
         return priced
 
     def evaluate(self, priceables):

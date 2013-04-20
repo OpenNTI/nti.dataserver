@@ -10,11 +10,13 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import interface
 
+from dolmen import builtins
+
 from nti.utils import schema as nti_schema
 
 from .. import interfaces as store_interfaces
 
-class IPayment(interface.Interface):
+class IPayment(builtins.IIterable):
 	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Items being purchased")
 	Description = nti_schema.ValidTextLine(title='A payment description', required=False)
 	ExpectedAmount = schema.Float(title='Expected amount', required=False)

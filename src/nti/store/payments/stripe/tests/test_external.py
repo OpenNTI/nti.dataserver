@@ -58,7 +58,4 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Items', [u'bleach']))
 		assert_that(ext, has_entry('Description', 'bleach manga'))
 		assert_that(ext, has_entry('Coupon', "aizen-coupon"))
-		assert_that(ext, has_entry('ExpectedAmount', 200))
-		assert_that(ext, has_entry('ExpectedCurrency', "JPY"))
-
 

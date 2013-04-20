@@ -8,11 +8,13 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import interface
+from zope.cachedescriptors.property import Lazy
 from zope.mimetype import interfaces as zmime_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
 
+from ..purchasable import get_purchasable
 from . import interfaces as pay_interfaces
 from ..utils import MetaStoreObject, to_frozenset
 
@@ -25,6 +27,21 @@ class Payment(SchemaConfigured):
 	Description = FP(pay_interfaces.IPayment['Description'])
 	ExpectedAmount = FP(pay_interfaces.IPayment['ExpectedAmount'])
 	ExpectedCurrency = FP(pay_interfaces.IPayment['ExpectedCurrency'])
+
+	@Lazy
+	def purchasables(self):
+		result = []
+		for item in self.Items:
+			p = get_purchasable(item)
+			if p is not None:
+				result.append(p)
+		return result
+
+	def __getitem__(self, index):
+		return self.purchasables[index]
+
+	def __iter__(self):
+		return iter(self.purchasables)
 
 	def __str__(self):
 		return "%s,%s" % (self.Items, self.Description)
