@@ -16,7 +16,7 @@ from ...utils import to_collection
 from . import StripePricedPurchasable
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
-from ...pricing import PrincingResults, DefaultPurchasablePricer
+from ...pricing import create_pricing_results, DefaultPurchasablePricer
 
 def makenone(s, default=None):
     if isinstance(s, six.string_types):
@@ -65,7 +65,7 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
         total_fee = 0
         total_amount = 0
         total_non_discount = 0
-        result = PrincingResults()
+        result = create_pricing_results(non_discounted_price=0.0)
         for priceable in priceables:
             priced = self.price(priceable)
             result.PricedList.append(priced)

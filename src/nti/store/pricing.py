@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Defines purchase attempt object.
+Defines priceable object.
 
 $Id: purchasable.py 18394 2013-04-18 19:27:11Z carlos.sanchez $
 """
@@ -98,13 +98,12 @@ class PricedPurchasable(Priceable):
 		xhash ^= hash(self.NTIID)
 		return xhash
 
-def create_priced_purchasable(ntiid, purchase_price, purchase_fee=None, non_discounted_price=None,
-							  quantity=1):
+def create_priced_purchasable(ntiid, purchase_price, purchase_fee=None, non_discounted_price=None, quantity=1):
 	quantity = 1 if quantity is None else int(quantity)
 	purchase_fee = float(purchase_fee) if purchase_fee is not None else None
-	non_discouted_price = float(non_discounted_price) if non_discounted_price is not None else None
+	non_discounted_price = float(non_discounted_price) if non_discounted_price is not None else None
 	result = PricedPurchasable(NTIID=unicode(ntiid), PurchasePrice=float(purchase_price), PurchaseFee=purchase_fee,
-							   NonDiscountedPrice=non_discouted_price, Quantity=quantity)
+							   NonDiscountedPrice=non_discounted_price, Quantity=quantity)
 	return result
 
 
@@ -113,13 +112,18 @@ class PrincingResults(SchemaConfigured):
 
 	__metaclass__ = MetaStoreObject
 
-	TotalPurchaseFee = FP(store_interfaces.IPricedPurchasable['PurchaseFee'])
-	TotalPurchasePrice = FP(store_interfaces.IPricedPurchasable['PurchasePrice'])
-	TotalNonDiscountedPrice = FP(store_interfaces.IPricedPurchasable['NonDiscountedPrice'])
+	PricedList = FP(store_interfaces.IPricingResults['PricedList'])
+	TotalPurchaseFee = FP(store_interfaces.IPricingResults['TotalPurchaseFee'])
+	TotalPurchasePrice = FP(store_interfaces.IPricingResults['TotalPurchasePrice'])
+	TotalNonDiscountedPrice = FP(store_interfaces.IPricingResults['TotalNonDiscountedPrice'])
 
-	def __init__(self, *args, **kwargs):
-		super(PrincingResults, self).__init__(*args, **kwargs)
-		self.PricedList = list()
+def create_pricing_results(priced_list=None, purchase_price=0.0, purchase_fee=0.0, non_discounted_price=None):
+	priced_list = list() if priced_list is None else priced_list
+	purchase_fee = float(purchase_fee) if purchase_fee is not None else None
+	non_discounted_price = float(non_discounted_price) if non_discounted_price is not None else None
+	result = PrincingResults(PricedList=priced_list, TotalPurchasePrice=purchase_price, TotalPurchaseFee=purchase_fee,
+							 TotalNonDiscountedPrice=non_discounted_price)
+	return result
 
 @interface.implementer(store_interfaces.IPurchasablePricer)
 class DefaultPurchasablePricer(object):
@@ -149,7 +153,7 @@ class DefaultPurchasablePricer(object):
 
 	def evaluate(self, priceables):
 		priceables = to_collection(priceables)
-		result = PrincingResults(TotalPurchasePrice=0.0, TotalPurchaseFee=0.0)
+		result = create_pricing_results()
 		for priceable in priceables:
 			priced = self.price(priceable)
 			result.PricedList.append(priced)

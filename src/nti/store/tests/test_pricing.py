@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import component
 
-from ..import pricing
+from .. import pricing
 from .. import interfaces as store_interfaces
 
 from . import ConfiguringTestBase
