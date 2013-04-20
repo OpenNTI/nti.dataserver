@@ -39,4 +39,5 @@ def PurchaseAttemptDecoratorFactory(*args):
 @component.adapter(pay_interfaces.IPayment)
 class PaymentExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = pay_interfaces.IPayment
+	_excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | {'ExpectedAmount', 'ExpectedCurrency'}
 
