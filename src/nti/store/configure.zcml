@@ -39,7 +39,7 @@
 				for=".interfaces.IPricedPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 				
-	<utility component=".purchasable_store.PurchasableTokenVocabulary"
+	<utility component=".purchasable.PurchasableTokenVocabulary"
 			 provides="zope.schema.interfaces.IVocabularyFactory"
 			 name="nti.store.purchasable.vocabulary" />
 	

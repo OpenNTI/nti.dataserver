@@ -12,7 +12,7 @@
 	<include package="nti.store" file="meta.zcml" />
 
 	<pcs:registerPurchasable
-		ntiid="xyz book"
+		ntiid="xyz-book"
 		title="XYZ Book"
 		description="ABC of XYZ"
 		provider="NTI-TEST"

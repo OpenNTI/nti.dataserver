@@ -13,6 +13,7 @@ from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
 
+from .. import payment
 from ... import purchase_attempt
 from ... import interfaces as store_interfaces
 
@@ -31,7 +32,7 @@ class TestPaymentsExternal(ConfiguringTestBase):
 		return usr
 	
 	@WithMockDSTrans
-	def test_stripe_payment(self):		
+	def test_stripe_purchase_attempt(self):		
 		user = self._create_user()		
 		hist = store_interfaces.IPurchaseHistory(user, None)
 		
@@ -45,7 +46,7 @@ class TestPaymentsExternal(ConfiguringTestBase):
 		assert_that(ext,  has_entry('OID', is_not(None)))
 		
 	@WithMockDSTrans
-	def test_fps_payment(self):		
+	def test_fps_purchase_attempt(self):		
 		user = self._create_user()		
 		hist = store_interfaces.IPurchaseHistory(user, None)
 		
@@ -58,4 +59,12 @@ class TestPaymentsExternal(ConfiguringTestBase):
 		assert_that(ext,  has_entry('TransactionID', is_(None)))
 		assert_that(ext,  has_entry('CallerReference', is_(None)))
 		assert_that(ext,  has_entry('OID', is_not(None)))
+
+	def test_payment(self):
+		pay = payment.create_payment('xyz-book', 'my payment', 100, 'AUD')
+		ext = to_external_object(pay)
+		assert_that(ext, has_entry('Items', is_(['xyz-book'])))
+		assert_that(ext, has_entry('Description', is_('my payment')))
+		assert_that(ext, has_entry('ExpectedAmount', is_(100)))
+		assert_that(ext, has_entry('ExpectedCurrency', is_('AUD')))
 

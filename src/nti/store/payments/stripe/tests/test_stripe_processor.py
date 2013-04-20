@@ -30,7 +30,7 @@ from hamcrest import (assert_that, is_, is_not, has_length, has_key, none)
 
 class TestStripeProcessor(ConfiguringTestBase):
 
-	book_id = 'xyz book'
+	book_id = 'xyz-book'
 
 	@classmethod
 	def setUpClass(cls):

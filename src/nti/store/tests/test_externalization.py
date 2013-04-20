@@ -19,8 +19,8 @@ from nti.dataserver.users import User
 from nti.externalization.externalization import to_external_object
 
 from ..import pricing
+from ..import purchasable
 from .. import purchase_attempt
-from ..import purchasable_store as store
 from .. import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -68,7 +68,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('InvitationCode', is_not(none())))
 
 	def test_purchasable(self):
-		util = store.PurchasableUtilityVocabulary(None)
+		util = purchasable.PurchasableUtilityVocabulary(None)
 		ps = util.getTermByToken('iid_3').value
 		ext = to_external_object(ps)
 
@@ -113,9 +113,9 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Quantity', 10))
 
 	def test_fill_in_lib(self):
-		pe = store.create_purchasable(ntiid='tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology',
-									  provider='MLC',
-									  amount=100)
+		pe = purchasable.create_purchasable(ntiid='tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology',
+									  		provider='MLC',
+									  		amount=100)
 		ext = to_external_object(pe)
 		assert_that(ext, has_entry('Title', u'COSMETOLOGY'))
 		assert_that(ext, has_entry('Description', u'COSMETOLOGY'))

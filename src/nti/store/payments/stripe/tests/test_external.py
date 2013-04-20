@@ -12,6 +12,7 @@ import stripe
 
 from nti.externalization.externalization import toExternalObject
 
+from .. import stripe_payment
 from .. import StripePurchaseError
 
 from . import ConfiguringTestBase
@@ -39,8 +40,9 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('ID', code))
 		assert_that(ext, has_entry('Duration', 'once'))
 		assert_that(ext, has_entry('PercentOff', 25))
+		c.delete()
 
-	def test_external_purchase_errorn(self):
+	def test_external_purchase_error(self):
 		spe = StripePurchaseError(Type=u"Error", Message=u"My message", Code=u"My code", Param=u"My param")
 		ext = toExternalObject(spe)
 		assert_that(ext, is_not(none()))
@@ -48,5 +50,15 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Message', 'My message'))
 		assert_that(ext, has_entry('Code', "My code"))
 		assert_that(ext, has_entry('Param', "My param"))
+
+	def test_external_stripe_payment(self):
+		spy = stripe_payment.create_stripe_payment("bleach", "bleach manga", 'aizen-coupon', 200, 'JPY')
+		ext = toExternalObject(spy)
+		assert_that(ext, is_not(none()))
+		assert_that(ext, has_entry('Items', [u'bleach']))
+		assert_that(ext, has_entry('Description', 'bleach manga'))
+		assert_that(ext, has_entry('Coupon', "aizen-coupon"))
+		assert_that(ext, has_entry('ExpectedAmount', 200))
+		assert_that(ext, has_entry('ExpectedCurrency', "JPY"))
 
 

@@ -11,8 +11,8 @@ from zope.schema import vocabulary
 
 from nti.dataserver.users import User
 
+from ..import purchasable
 from .. import purchase_attempt
-from ..import purchasable_store as store
 from .. import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -21,7 +21,7 @@ from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, has_key, has_length, is_not, none, is_, is_in, greater_than_or_equal_to)
 
-class TestPurchasableStore(ConfiguringTestBase):
+class TestPurchasable(ConfiguringTestBase):
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		usr = User.create_user(self.ds, username=username, password=password)
@@ -31,7 +31,7 @@ class TestPurchasableStore(ConfiguringTestBase):
 		voc = vocabulary.getVocabularyRegistry().get(None, store_interfaces.PURCHASABLE_VOCAB_NAME)
 		assert_that(voc, is_not(none()))
 
-		util = store.PurchasableUtilityVocabulary(None)
+		util = purchasable.PurchasableUtilityVocabulary(None)
 		assert_that(util, has_length(greater_than_or_equal_to(4)))
 
 		assert_that(util.getTermByToken('iid_0'), is_not(none()))
@@ -51,7 +51,7 @@ class TestPurchasableStore(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_available(self):
 		self._create_user()
-		m = store.get_available_items('nt@nti.com')
+		m = purchasable.get_available_items('nt@nti.com')
 		assert_that(m, has_key('iid_1'))
 		assert_that(m, has_key('iid_2'))
 
@@ -63,11 +63,11 @@ class TestPurchasableStore(ConfiguringTestBase):
 													  state=store_interfaces.PA_STATE_SUCCESS)
 		hist.add_purchase(pa)
 
-		m = store.get_available_items('nt@nti.com')
+		m = purchasable.get_available_items('nt@nti.com')
 		assert_that(m, is_not(has_key('iid_3')))
 
 	def test_get_content_items(self):
-		items = store.get_content_items("iid_3")
+		items = purchasable.get_content_items("iid_3")
 		assert_that(items, has_length(2))
 		assert_that('var-risk', is_in(items))
 		assert_that('volatility', is_in(items))

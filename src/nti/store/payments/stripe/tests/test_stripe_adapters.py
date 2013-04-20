@@ -44,7 +44,7 @@ class TestStripeAdapters(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_stripe_purchase_adapter(self):
-		items = ('xyz',)
+		items = ('xyz-book',)
 		pa = purchase_attempt.create_purchase_attempt(items=items, processor='stripe')
 		adapted = stripe_interfaces.IStripePurchase(pa)
 		adapted.charge_id = 'charge_id'

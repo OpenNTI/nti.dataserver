@@ -24,9 +24,9 @@ from . import InvalidStripeCoupon
 from . import create_stripe_priceable
 from . import interfaces as stripe_interfaces
 
+from nti.store import purchasable
 from nti.store import purchase_history
 from nti.store import InvalidPurchasable
-from nti.store import purchasable_store
 from nti.store.utils import CaseInsensitiveDict
 from nti.store import interfaces as store_interfaces
 from nti.store.payments import is_valid_amount, is_valid_pve_int
@@ -139,7 +139,7 @@ class StripePaymentView(_PostStripeView):
 		if not purchasable_id:
 			raise hexc.HTTPBadRequest(detail="No item to purchase specified")
 
-		purchasable = purchasable_store.get_purchasable(purchasable_id)
+		purchasable = purchasable.get_purchasable(purchasable_id)
 		if purchasable is None:
 			raise hexc.HTTPBadRequest(detail="Invalid purchasable item")
 

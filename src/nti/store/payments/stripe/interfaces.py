@@ -18,6 +18,9 @@ from nti.utils.property import alias as _alias
 from .. import interfaces as pay_interfaces
 from ... import interfaces as store_interfaces
 
+class IStripePayment(pay_interfaces.IPayment):
+	Coupon = nti_schema.ValidTextLine(title="The stripe coupon", required=False)
+
 class IStripeCustomerCreated(interface.Interface):
 	user = schema.Object(nti_interfaces.IUser, title="The user")
 	customer_id = nti_schema.ValidTextLine(title="The stripe customer identifier")
