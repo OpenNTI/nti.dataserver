@@ -6,8 +6,6 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-
-	<adapter factory=".externalization.PaymentExternal" />
 	
 	<include package=".stripe" file="configure.zcml" />
 	<include package=".fps" file="configure.zcml" />

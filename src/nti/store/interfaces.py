@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
+from zope.interface.common import sequence
 from zope.location.interfaces import IContained
 from zope.interface.interfaces import ObjectEvent, IObjectEvent
 
@@ -54,14 +55,20 @@ class IPriceable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
 	Quantity = schema.Int(title="Quantity", required=False, default=1)
 
-class IPricedPurchasable(IPriceable):
+class IPurchaseItem(IPriceable):
+	"""marker interface for a purchase order item"""
+
+class IPurchaseOrder(sequence.IMinimalSequence):
+	Items = schema.List(value_type=schema.Object(IPriceable), title='The items', required=True, min_length=1)
+	Quantity = schema.Int(title='Purchase bulk quantity', required=False)
+
+class IPricedItem(IPriceable):
 	PurchaseFee = schema.Float(title="Fee Amount", required=False)
 	PurchasePrice = schema.Float(title="Cost amount", required=True)
 	NonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
 
-class IPricingResults(interface.Interface):
-	PricedList = schema.List(value_type=schema.Object(IPricedPurchasable), title='The priced purchasables',
-							 required=True, min_length=0)
+class IPricedItems(interface.Interface):
+	PricedList = schema.List(value_type=schema.Object(IPricedItem), title='The priced items', required=True, min_length=0)
 	TotalPurchaseFee = schema.Float(title="Fee Amount", required=False)
 	TotalPurchasePrice = schema.Float(title="Cost amount", required=True)
 	TotalNonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
@@ -92,7 +99,7 @@ class IPurchasablePricer(interface.Interface):
 		"""
 		price the specfied priceable
 		"""
-		
+
 	def evaluate(priceables):
 		"""
 		price the specfied priceables

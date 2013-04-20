@@ -194,7 +194,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
-			sp = stripe_interfaces.IStripePurchase(pa)
+			sp = stripe_interfaces.IStripePurchaseAttempt(pa)
 			assert_that(sp.token_id, is_(tid))
 			assert_that(sp.charge_id, is_(cid))
 
@@ -216,7 +216,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
-			sp = stripe_interfaces.IStripePurchase(pa)
+			sp = stripe_interfaces.IStripePurchaseAttempt(pa)
 			sp.charge_id = 'invalid'
 
 		with mock_dataserver.mock_db_trans(ds):
@@ -230,7 +230,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
-			sp = stripe_interfaces.IStripePurchase(pa)
+			sp = stripe_interfaces.IStripePurchaseAttempt(pa)
 			sp.charge_id = None
 
 		with mock_dataserver.mock_db_trans(ds):
@@ -269,7 +269,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 		# unused token
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
-			sp = stripe_interfaces.IStripePurchase(pa)
+			sp = stripe_interfaces.IStripePurchaseAttempt(pa)
 			sp.TokenID = tid
 
 		with mock_dataserver.mock_db_trans(ds):

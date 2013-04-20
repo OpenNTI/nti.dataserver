@@ -30,13 +30,13 @@ def stripe_customer_deleted(event):
 @component.adapter(stripe_interfaces.IRegisterStripeToken)
 def register_stripe_token(event):
 	purchase = event.purchase
-	sp = stripe_interfaces.IStripePurchase(purchase)
+	sp = stripe_interfaces.IStripePurchaseAttempt(purchase)
 	sp.TokenID = event.token
 
 @component.adapter(stripe_interfaces.IRegisterStripeCharge)
 def register_stripe_charge(event):
 	purchase = event.purchase
-	sp = stripe_interfaces.IStripePurchase(purchase)
+	sp = stripe_interfaces.IStripePurchaseAttempt(purchase)
 	sp.ChargeID = event.charge_id
 	user = purchase.creator
 	su = stripe_interfaces.IStripeCustomer(user)

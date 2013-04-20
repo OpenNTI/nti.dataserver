@@ -73,14 +73,14 @@ class PriceableExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = store_interfaces.IPriceable
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
-@component.adapter(store_interfaces.IPricedPurchasable)
-class PricedPurchasableExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = store_interfaces.IPricedPurchasable
+@component.adapter(store_interfaces.IPricedItem)
+class PricedItemExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPricedItem
 	_excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | {'PurchaseFee'}
 
-@component.adapter(store_interfaces.IPricedPurchasable)
+@component.adapter(store_interfaces.IPricedItem)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class PricedPurchasableDecorator(object):
+class PricedItemDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
@@ -92,9 +92,9 @@ class PricedPurchasableDecorator(object):
 		external['Amount'] = original.Amount
 		external['Currency'] = original.Currency
 
-@component.adapter(store_interfaces.IPricingResults)
+@component.adapter(store_interfaces.IPricedItems)
 @interface.implementer(ext_interfaces.IExternalObject)
-class PricingResultsExternalizer(object):
+class PricedItemsExternalizer(object):
 
 	def __init__(self, results):
 		self.results = results

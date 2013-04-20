@@ -9,18 +9,13 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
-from zope.interface.common import sequence
 
 from nti.utils import schema as nti_schema
 
 from .. import interfaces as store_interfaces
 
-class IPayment(sequence.IMinimalSequence):
-	Items = schema.List(value_type=schema.Object(store_interfaces.IPriceable, title='The item identifier'),
-						title="Items being purchased")
-	Description = nti_schema.ValidTextLine(title='A payment description', required=False)
-	ExpectedAmount = schema.Float(title='Expected amount', required=False)
-	ExpectedCurrency = nti_schema.ValidTextLine(title='A payment description', required=False, default='USD')
+class ICouponPriceable(store_interfaces.IPriceable):
+	Coupon = nti_schema.ValidTextLine(title="The coupon", required=False)
 
 class IRegisterPurchaseData(interface.Interface):
 	object = schema.Object(store_interfaces.IPurchaseAttempt, title="The purchase", required=True)

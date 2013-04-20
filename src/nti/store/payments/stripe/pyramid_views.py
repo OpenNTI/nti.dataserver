@@ -21,12 +21,12 @@ from pyramid.security import authenticated_userid
 from nti.externalization.datastructures import LocatedExternalDict
 
 from . import InvalidStripeCoupon
-from . import create_stripe_priceable
 from . import interfaces as stripe_interfaces
+from .stripe_purchase import create_stripe_priceable
 
-from nti.store import purchasable
 from nti.store import purchase_history
 from nti.store import InvalidPurchasable
+from nti.store import purchasable as source
 from nti.store.utils import CaseInsensitiveDict
 from nti.store import interfaces as store_interfaces
 from nti.store.payments import is_valid_amount, is_valid_pve_int
@@ -139,7 +139,7 @@ class StripePaymentView(_PostStripeView):
 		if not purchasable_id:
 			raise hexc.HTTPBadRequest(detail="No item to purchase specified")
 
-		purchasable = purchasable.get_purchasable(purchasable_id)
+		purchasable = source.get_purchasable(purchasable_id)
 		if purchasable is None:
 			raise hexc.HTTPBadRequest(detail="Invalid purchasable item")
 

@@ -21,8 +21,8 @@ from nti.externalization.datastructures import LocatedExternalDict
 
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
-from ...externalization import PricedPurchasableExternal
-from ...externalization import PricedPurchasableDecorator
+from ...externalization import PricedItemExternal
+from ...externalization import PricedItemDecorator
 
 def _makenone(s):
 	if isinstance(s, six.string_types) and s == 'None':
@@ -81,11 +81,11 @@ class PurchasableDecorator(object):
 class StripePurchaseErrorExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = stripe_interfaces.IStripePurchaseError
 
-@component.adapter(stripe_interfaces.IStripePricedPurchasable)
-class StripePricedPurchasableExternal(PricedPurchasableExternal):
-	_ext_iface_upper_bound = stripe_interfaces.IStripePricedPurchasable
+@component.adapter(stripe_interfaces.IStripePricedItem)
+class StripePricedItemExternal(PricedItemExternal):
+	_ext_iface_upper_bound = stripe_interfaces.IStripePricedItem
 
-@component.adapter(stripe_interfaces.IStripePricedPurchasable)
+@component.adapter(stripe_interfaces.IStripePricedItem)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class StripePricedPurchasableDecorator(PricedPurchasableDecorator):
+class StripePricedItemDecorator(PricedItemDecorator):
 	pass
