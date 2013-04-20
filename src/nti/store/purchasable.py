@@ -152,3 +152,9 @@ def get_content_items(purchased_items):
 		except:
 			pass
 	return result
+
+def get_providers(purchasables):
+	result = set()
+	for p in purchasables or ():
+		result.add(p.Provider)
+	return list(result)

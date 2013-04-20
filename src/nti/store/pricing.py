@@ -149,18 +149,10 @@ class DefaultPurchasablePricer(object):
 
 	def evaluate(self, priceables):
 		priceables = to_collection(priceables)
-
-		# price
-		total_fee = 0
-		total_amount = 0
-		result = PrincingResults()
+		result = PrincingResults(TotalPurchasePrice=0.0, TotalPurchaseFee=0.0)
 		for priceable in priceables:
 			priced = self.price(priceable)
 			result.PricedList.append(priced)
-			total_fee += priced.PurchaseFee
-			total_amount += priced.PurchasePrice
-
-		# set totals
-		result.TotalPurchaseFee = total_fee
-		result.TotalPurchasePrice = total_amount
+			result.TotalPurchaseFee += priced.PurchaseFee
+			result.TotalPurchasePrice += priced.PurchasePrice
 		return result
