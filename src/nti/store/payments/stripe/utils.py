@@ -2,7 +2,7 @@
 """
 Stripe utilities.
 
-$Id: stripe_processor.py 18438 2013-04-19 04:17:47Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -12,10 +12,10 @@ import six
 from zope import component
 
 from . import InvalidStripeCoupon
-from . import StripePricedPurchasable
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
-from ...pricing import create_pricing_results, DefaultPurchasablePricer
+from .stripe_purchase import StripePricedPurchasable
+from ...pricing import create_priced_items, DefaultPurchasablePricer
 
 def makenone(s, default=None):
 	if isinstance(s, six.string_types):
@@ -62,7 +62,7 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 		total_fee = 0
 		total_amount = 0
 		total_non_discount = 0
-		result = create_pricing_results(non_discounted_price=0.0)
+		result = create_priced_items(non_discounted_price=0.0)
 		for priceable in priceables:
 			priced = self.price(priceable)
 			result.PricedList.append(priced)

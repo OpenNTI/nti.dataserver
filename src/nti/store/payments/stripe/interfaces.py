@@ -18,8 +18,33 @@ from nti.utils.property import alias as _alias
 from .. import interfaces as pay_interfaces
 from ... import interfaces as store_interfaces
 
-class IStripePayment(pay_interfaces.IPayment):
-	Coupon = nti_schema.ValidTextLine(title="The stripe coupon", required=False)
+# stripe marker interfaces
+
+class IStripeCoupon(interface.Interface):
+	"""marker interface for a stripe coupon"""
+
+class IStripeException(interface.Interface):
+	"""marker interface for a stripe exception"""
+
+class IStripeError(interface.Interface):
+	"""marker interface for a stripe errors"""
+
+class IStripeAPIError(IStripeError):
+	"""marker interface for a stripe api error"""
+
+class IStripeAPIConnectionError(IStripeError):
+	"""marker interface for a stripe api connection error"""
+
+class IStripeCardError(IStripeError):
+	"""marker interface for a stripe card errors"""
+
+class IStripeInvalidRequestError(IStripeError):
+	"""marker interface for a stripe invalid request errors"""
+
+class IStripeAuthenticationError(IStripeError):
+	"""marker interface for a stripe authentication errors"""
+
+# event interfaces
 
 class IStripeCustomerCreated(interface.Interface):
 	user = schema.Object(nti_interfaces.IUser, title="The user")
@@ -61,7 +86,23 @@ class RegisterStripeCharge(pay_interfaces.RegisterPurchaseData):
 		super(RegisterStripeCharge, self).__init__(purchase)
 		self.charge_id = charge_id
 
-# stripe objects
+# object interfaces
+
+class IStripeConnectKey(interface.Interface):
+	Alias = nti_schema.ValidTextLine(title='Key name or alias', required=True)
+	PrivateKey = nti_schema.ValidTextLine(title="The private key", required=True)
+	LiveMode = schema.Bool(title="Live mode flag", required=False)
+	StripeUserID = nti_schema.ValidTextLine(title="String user id", required=False)
+	RefreshToken = nti_schema.ValidTextLine(title="Refresh token", required=False)
+	PublicKey = nti_schema.ValidTextLine(title="The private key", required=False)
+
+class IStripePurchaseError(store_interfaces.IPurchaseError):
+	HttpStatus = schema.Int(title='HTTP Status', required=False)
+	Param = nti_schema.ValidTextLine(title="Optional parameter", required=False)
+
+class IStripePurchaseAttempt(interface.Interface):
+	ChargeID = nti_schema.ValidTextLine(title='Charge id', required=False)
+	TokenID = nti_schema.ValidTextLine(title='Token id', required=False)
 
 class IStripeCustomer(interface.Interface):
 	CustomerID = nti_schema.ValidTextLine(title='customer id')
@@ -97,50 +138,16 @@ class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 		:token Credit Card token
 		"""
 
-class IStripeCoupon(interface.Interface):
-	"""marker interface for a stripe coupon"""
-
 class IStripePriceable(store_interfaces.IPriceable):
+	Coupon = nti_schema.ValidTextLine(title='the coupon', required=False)
+
+class IStripePurchaseItem(IStripePriceable, store_interfaces.IPurchaseItem):
+	pass
+
+class IStripePurchaseOrder(store_interfaces.IPurchaseOrder):
+	Coupon = nti_schema.ValidTextLine(title='the coupon', required=False)
+
+class IStripePricedItem(store_interfaces.IPricedItem):
 	Coupon = schema.Object(interface.Interface, title='the coupon', required=False)
 
-class IStripePricedPurchasable(store_interfaces.IPricedPurchasable):
-	Coupon = schema.Object(IStripeCoupon, title='the coupon', required=False)
 
-class IStripePurchase(interface.Interface):
-	ChargeID = nti_schema.ValidTextLine(title='Charge id', required=False)
-	TokenID = nti_schema.ValidTextLine(title='Token id', required=False)
-
-class IStripeConnectKey(interface.Interface):
-	Alias = nti_schema.ValidTextLine(title='Key name or alias', required=True)
-	PrivateKey = nti_schema.ValidTextLine(title="The private key", required=True)
-	LiveMode = schema.Bool(title="Live mode flag", required=False)
-	StripeUserID = nti_schema.ValidTextLine(title="String user id", required=False)
-	RefreshToken = nti_schema.ValidTextLine(title="Refresh token", required=False)
-	PublicKey = nti_schema.ValidTextLine(title="The private key", required=False)
-
-class IStripePurchaseError(store_interfaces.IPurchaseError):
-	HttpStatus = schema.Int(title='HTTP Status', required=False)
-	Param = nti_schema.ValidTextLine(title="Optional parameter", required=False)
-
-# stripe interfaces
-
-class IStripeException(interface.Interface):
-	"""marker interface for a stripe exception"""
-
-class IStripeError(interface.Interface):
-	"""marker interface for a stripe errors"""
-
-class IStripeAPIError(IStripeError):
-	"""marker interface for a stripe api error"""
-
-class IStripeAPIConnectionError(IStripeError):
-	"""marker interface for a stripe api connection error"""
-
-class IStripeCardError(IStripeError):
-	"""marker interface for a stripe card errors"""
-
-class IStripeInvalidRequestError(IStripeError):
-	"""marker interface for a stripe invalid request errors"""
-
-class IStripeAuthenticationError(IStripeError):
-	"""marker interface for a stripe authentication errors"""

@@ -49,8 +49,8 @@ class _StripeCustomer(zcontained.Contained, Persistent):
 _StripeCustomerFactory = an_factory(_StripeCustomer)
 
 @component.adapter(store_interfaces.IPurchaseAttempt)
-@interface.implementer(stripe_interfaces.IStripePurchase)
-class _StripePurchase(zcontained.Contained, Persistent):
+@interface.implementer(stripe_interfaces.IStripePurchaseAttempt)
+class _StripePurchaseAttempt(zcontained.Contained, Persistent):
 
 	TokenID = None
 	ChargeID = None
@@ -62,7 +62,7 @@ class _StripePurchase(zcontained.Contained, Persistent):
 	token_id = alias('TokenID')
 	charge_id = alias('ChargeID')
 
-_StripePurchaseFactory = an_factory(_StripePurchase)
+_StripePurchaseAttemptFactory = an_factory(_StripePurchaseAttempt)
 
 @component.adapter(basestring)
 @interface.implementer(stripe_interfaces.IStripePurchaseError)

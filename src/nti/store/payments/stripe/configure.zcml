@@ -19,9 +19,9 @@
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IStripeCustomer" />
 
-	<adapter factory=".stripe_adapters._StripePurchaseFactory"
+	<adapter factory=".stripe_adapters._StripePurchaseAttemptFactory"
 			 for="...interfaces.IPurchaseAttempt"
-			 provides=".interfaces.IStripePurchase" />
+			 provides=".interfaces.IStripePurchaseAttempt" />
 
 	<utility factory=".utils.StripePurchasablePricer" name="stripe" />
 	
@@ -32,14 +32,14 @@
 	<adapter factory=".externalization.StripeCouponExternalizer" />
 	<adapter factory=".externalization.StripeConnectKeyExternal" />
 	<adapter factory=".externalization.StripePurchaseErrorExternal" />
-	<adapter factory=".externalization.StripePricedPurchasableExternal" />
+	<adapter factory=".externalization.StripePricedItemExternal" />
 	
 	<subscriber factory=".externalization.PurchasableDecorator"
 				for="...interfaces.IPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 		
-	<subscriber factory=".externalization.StripePricedPurchasableDecorator"
-				for=".interfaces.IStripePricedPurchasable"
+	<subscriber factory=".externalization.StripePricedItemDecorator"
+				for=".interfaces.IStripePricedItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 				
 	<adapter factory=".stripe_adapters._string_purchase_error"

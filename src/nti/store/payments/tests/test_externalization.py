@@ -13,8 +13,6 @@ from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
 
-from .. import payment
-from ... import pricing
 from ... import purchase_attempt
 from ... import interfaces as store_interfaces
 
@@ -23,7 +21,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, is_not, has_key, has_entry, has_length)
+from hamcrest import (assert_that, is_, is_not, has_entry)
 
 class TestPaymentsExternal(ConfiguringTestBase):
 
@@ -60,16 +58,4 @@ class TestPaymentsExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('TransactionID', is_(None)))
 		assert_that(ext, has_entry('CallerReference', is_(None)))
 		assert_that(ext, has_entry('OID', is_not(None)))
-
-	def test_payment(self):
-		p = pricing.create_priceable('xyz-book', 1)
-		pay = payment.create_payment(p, 'my payment', 100, 'AUD')
-		assert_that(pay.ExpectedAmount, is_(100))
-		assert_that(pay.ExpectedCurrency, is_('AUD'))
-
-		ext = to_external_object(pay)
-		assert_that(ext, is_not(has_key('ExpectedAmount')))
-		assert_that(ext, is_not(has_key('ExpectedCurrency')))
-		assert_that(ext, has_entry('Items', has_length(1)))
-		assert_that(ext, has_entry('Description', is_('my payment')))
 

@@ -12,13 +12,12 @@ import stripe
 
 from nti.externalization.externalization import toExternalObject
 
-from .. import stripe_payment
 from .. import StripePurchaseError
-from .. import create_stripe_priceable
+from ..stripe_purchase import create_stripe_priceable, StripePricedPurchasable
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_not, none, has_entry, has_length)
+from hamcrest import (assert_that, is_not, none, has_key, has_entry)
 
 class TestExternal(ConfiguringTestBase):
 
@@ -33,7 +32,7 @@ class TestExternal(ConfiguringTestBase):
 		super(TestExternal, cls).tearDownClass()
 		stripe.api_key = cls.api_key
 
-	def test_external_stripe_coupon(self):
+	def test_stripe_coupon(self):
 		code = str(uuid.uuid4())
 		c = stripe.Coupon.create(percent_off=25, duration='once', id=code)
 		ext = toExternalObject(c)
@@ -43,7 +42,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('PercentOff', 25))
 		c.delete()
 
-	def test_external_purchase_error(self):
+	def test_purchase_error(self):
 		spe = StripePurchaseError(Type=u"Error", Message=u"My message", Code=u"My code", Param=u"My param")
 		ext = toExternalObject(spe)
 		assert_that(ext, is_not(none()))
@@ -52,7 +51,7 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Code', "My code"))
 		assert_that(ext, has_entry('Param', "My param"))
 
-	def test_external_stripe_priceable(self):
+	def test_stripe_priceable(self):
 		p = create_stripe_priceable("bleach", 10, 'mycoupon')
 		ext = toExternalObject(p)
 		assert_that(ext, is_not(none()))
@@ -60,12 +59,16 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Quantity', 10))
 		assert_that(ext, has_entry('Coupon', "mycoupon"))
 
-	def test_external_stripe_payment(self):
-		p = create_stripe_priceable("bleach", 1)
-		spy = stripe_payment.create_stripe_payment(p, "bleach manga", 'aizen-coupon', 200, 'JPY')
-		ext = toExternalObject(spy)
+	def test_stripe_priced_purchasable(self):
+		p = StripePricedPurchasable(NTIID="bleach", Quantity=10, Coupon='mycoupon',
+									PurchaseFee=5.0, PurchasePrice=100.0, NonDiscountedPrice=105.0)
+		ext = toExternalObject(p)
 		assert_that(ext, is_not(none()))
-		assert_that(ext, has_entry('Items', has_length(1)))
-		assert_that(ext, has_entry('Description', 'bleach manga'))
-		assert_that(ext, has_entry('Coupon', "aizen-coupon"))
+		assert_that(ext, has_entry('NTIID', 'bleach'))
+		assert_that(ext, has_entry('Quantity', 10))
+		assert_that(ext, has_entry('Coupon', "mycoupon"))
+		assert_that(ext, is_not(has_key('PurchaseFee')))
+		assert_that(ext, has_entry('PurchasePrice', 100))
+		assert_that(ext, has_entry('NonDiscountedPrice', 105))
+		print(ext)
 

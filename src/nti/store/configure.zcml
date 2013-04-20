@@ -24,8 +24,8 @@
 	<adapter factory=".externalization.PriceableExternal" />
 	<adapter factory=".externalization.PurchasableExternal" />
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
-	<adapter factory=".externalization.PricedPurchasableExternal" />
-	<adapter factory=".externalization.PricingResultsExternalizer" />
+	<adapter factory=".externalization.PricedItemExternal" />
+	<adapter factory=".externalization.PricedItemsExternalizer" />
 	
 	<subscriber factory=".externalization.PurchasableDecorator"
 				for=".interfaces.IPurchasable"
@@ -35,8 +35,8 @@
 				for=".interfaces.IPurchaseAttempt"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 				
-	<subscriber factory=".externalization.PricedPurchasableDecorator"
-				for=".interfaces.IPricedPurchasable"
+	<subscriber factory=".externalization.PricedItemDecorator"
+				for=".interfaces.IPricedItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 				
 	<utility component=".purchasable.PurchasableTokenVocabulary"

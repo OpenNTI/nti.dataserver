@@ -46,7 +46,7 @@ class TestStripeAdapters(ConfiguringTestBase):
 	def test_stripe_purchase_adapter(self):
 		items = ('xyz-book',)
 		pa = purchase_attempt.create_purchase_attempt(items=items, processor='stripe')
-		adapted = stripe_interfaces.IStripePurchase(pa)
+		adapted = stripe_interfaces.IStripePurchaseAttempt(pa)
 		adapted.charge_id = 'charge_id'
 		adapted.token_id = 'token_id'
 		assert_that(adapted.purchase, is_(pa))

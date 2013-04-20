@@ -29,9 +29,9 @@ from ... import payment_charge
 from ... import purchase_history
 from ... import purchase_attempt
 from .. import _BasePaymentProcessor
-from . import create_stripe_priceable
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
+from .stripe_purchase import create_stripe_priceable
 
 def _create_user_address(charge):
 	card = getattr(charge, 'card', None)
@@ -278,7 +278,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		charge = None
 		message = None
 		do_synch = False
-		sp = stripe_interfaces.IStripePurchase(purchase)
+		sp = stripe_interfaces.IStripePurchaseAttempt(purchase)
 		if sp.ChargeID:
 			charge = self.get_stripe_charge(sp.ChargeID, api_key=api_key)
 			if charge is None:

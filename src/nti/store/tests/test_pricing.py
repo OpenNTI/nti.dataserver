@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import component
 
-from .. import pricing
+from .. import priceable
 from .. import interfaces as store_interfaces
 
 from . import ConfiguringTestBase
@@ -20,7 +20,7 @@ class TestPurchasableStore(ConfiguringTestBase):
 
 	def test_price(self):
 		pricer = component.getUtility(store_interfaces.IPurchasablePricer)
-		p = pricing.create_priceable(u"iid_0", 10)
+		p = priceable.create_priceable(u"iid_0", 10)
 		priced = pricer.price(p)
 		assert_that(priced, is_not(none()))
 		assert_that(priced.NTIID, is_(u'iid_0'))
@@ -30,8 +30,8 @@ class TestPurchasableStore(ConfiguringTestBase):
 
 	def test_evaluate(self):
 		pricer = component.getUtility(store_interfaces.IPurchasablePricer)
-		p0 = pricing.create_priceable(u"iid_0", 5)
-		p1 = pricing.create_priceable(u"iid_1", 7)
+		p0 = priceable.create_priceable(u"iid_0", 5)
+		p1 = priceable.create_priceable(u"iid_1", 7)
 		result = pricer.evaluate((p0, p1))
 		assert_that(result, is_not(none()))
 		assert_that(result.PricedList, has_length(2))
