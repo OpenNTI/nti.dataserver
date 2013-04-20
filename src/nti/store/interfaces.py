@@ -60,7 +60,8 @@ class IPricedPurchasable(IPriceable):
 	NonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
 
 class IPricingResults(interface.Interface):
-	PricedList = schema.List(schema.Object(IPricedPurchasable), title='The priced purchasables', required=True)
+	PricedList = schema.List(value_type=schema.Object(IPricedPurchasable), title='The priced purchasables',
+							 required=True, min_length=0)
 	TotalPurchaseFee = schema.Float(title="Fee Amount", required=False)
 	TotalPurchasePrice = schema.Float(title="Cost amount", required=True)
 	TotalNonDiscountedPrice = schema.Float(title="Non discounted price", required=False)

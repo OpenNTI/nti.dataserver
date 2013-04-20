@@ -7,16 +7,16 @@ $Id: purchasable.py 18394 2013-04-18 19:27:11Z carlos.sanchez $
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import collections
+
 from zope import interface
-from zope.cachedescriptors.property import Lazy
 from zope.mimetype import interfaces as zmime_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
 
-from ..purchasable import get_purchasable
+from ..utils import MetaStoreObject
 from . import interfaces as pay_interfaces
-from ..utils import MetaStoreObject, to_frozenset
 
 @interface.implementer(pay_interfaces.IPayment, zmime_interfaces.IContentTypeAware)
 class Payment(SchemaConfigured):
@@ -28,26 +28,17 @@ class Payment(SchemaConfigured):
 	ExpectedAmount = FP(pay_interfaces.IPayment['ExpectedAmount'])
 	ExpectedCurrency = FP(pay_interfaces.IPayment['ExpectedCurrency'])
 
-	@Lazy
-	def purchasables(self):
-		result = []
-		for item in self.Items:
-			p = get_purchasable(item)
-			if p is not None:
-				result.append(p)
-		return result
-
 	def __getitem__(self, index):
-		return self.purchasables[index]
+		return self.Items[index]
 
 	def __iter__(self):
-		return iter(self.purchasables)
+		return iter(self.Items)
 
 	def __str__(self):
-		return "%s,%s" % (self.Items, self.Description)
+		return self.Description
 
 	def __repr__(self):
-		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__, self.Items, self.Description,
+		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__, self.Description, self.Items,
 									self.ExpectedAmount, self.ExpectedCurrency)
 
 	def __eq__(self, other):
@@ -62,8 +53,7 @@ class Payment(SchemaConfigured):
 		return xhash
 
 def create_payment(items, description, amount=None, currency='USD'):
-	items = to_frozenset(items)
-	currency = currency or 'USD'
+	items = [items] if not isinstance(items, collections.Sequence) else items
 	amount = float(amount) if amount is not None else None
 	result = Payment(Items=items, Description=description, ExpectedAmount=amount, ExpectedCurrency=currency)
 	return result
