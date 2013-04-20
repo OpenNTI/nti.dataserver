@@ -24,7 +24,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import LocatedExternalDict
 
-from . import pricing
+from . import priceable
 from . import purchasable
 from . import purchase_history
 from . import InvalidPurchasable
@@ -128,8 +128,8 @@ class PricePurchasableView(object):
 
 	def price(self, purchasable_id, quantity):
 		pricer = component.getUtility(store_interfaces.IPurchasablePricer)
-		priceable = pricing.create_priceable(purchasable_id, quantity)
-		result = pricer.price(priceable)
+		source = priceable.create_priceable(purchasable_id, quantity)
+		result = pricer.price(source)
 		return result
 
 	def price_purchasable(self, values=None):
