@@ -23,9 +23,9 @@ from . import interfaces as store_interfaces
 class PurchaseItem(Priceable):
 	__metaclass__ = MetaStoreObject
 
-def create_purchase_item(ntiid, quantity=1):
+def create_purchase_item(ntiid, quantity=1, cls=PurchaseItem):
 	quantity = 1 if quantity is None else int(quantity)
-	result = PurchaseItem(NTIID=unicode(ntiid), Quantity=quantity)
+	result = cls(NTIID=unicode(ntiid), Quantity=quantity)
 	return result
 
 @interface.implementer(store_interfaces.IPurchaseOrder, an_interfaces.IAttributeAnnotatable)
@@ -62,11 +62,11 @@ def replace_quantity(po_or_items, quantity):
 	for item in getattr(po_or_items, 'Items', po_or_items):
 		item.Quantity = quantity
 
-def create_purchase_order(items=None, quantity=None):
+def create_purchase_order(items=None, quantity=None, cls=PurchaseOrder):
 	items = list() if items is None else items
 	items = [items] if not isinstance(items, collections.Sequence) else items
 	if quantity is not None:
 		quantity = int(quantity)
 		replace_quantity(items, quantity)
-	result = PurchaseOrder(Items=items, Quantity=quantity)
+	result = cls(Items=items, Quantity=quantity)
 	return result
