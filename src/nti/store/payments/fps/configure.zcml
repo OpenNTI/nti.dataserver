@@ -15,6 +15,6 @@
 
 	<adapter factory=".fps_adapters._FPSPurchaseFactory"
 			 for="...interfaces.IPurchaseAttempt"
-			 provides=".interfaces.IFPSPurchase" />
+			 provides=".interfaces.IFPSPurchaseAttempt" />
 
 </configure>

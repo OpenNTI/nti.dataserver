@@ -24,7 +24,7 @@ class TestFPSAdapters(ConfiguringTestBase):
 	def test_stripe_purchase_adapter(self):
 		items = ('xyz',)
 		pa = purchase_attempt.create_purchase_attempt(items=items, processor='fps')
-		adapted = fps_interfaces.IFPSPurchase(pa)
+		adapted = fps_interfaces.IFPSPurchaseAttempt(pa)
 		adapted.TokenID = 'token_id'
 		adapted.TransactionID = 'trxid'
 		adapted.CallerReference = 'caller'
