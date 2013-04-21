@@ -136,7 +136,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 	def get_coupon(self, coupon, api_key=None):
 		result = self.get_stripe_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		return result
-	
+
 	def validate_coupon(self, coupon, api_key=None):
 		coupon = self.get_stripe_coupon(coupon, api_key=api_key) if isinstance(coupon, six.string_types) else coupon
 		result = (coupon is not None)
@@ -149,7 +149,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				result = coupon.redeem_by is None or time.time() <= coupon.redeem_by
 		return result
 
-	def get_and_validate_coupon(self, coupon =None, api_key=None):
+	def get_and_validate_coupon(self, coupon=None, api_key=None):
 		coupon = self.get_coupon(coupon, api_key=api_key) if coupon else None
 		if coupon is not None and not self.validate_coupon(coupon, api_key=api_key):
 			raise ValueError("Invalid coupon")
@@ -237,10 +237,11 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		except Exception as e:
 			logger.exception("Cannot complete process purchase for '%s'" % purchase_id)
 			error = _adapt_to_error(e)
-			# fail purchase
+			# fail purchase in a trx
 			def fail_purchase():
 				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
-				notify(store_interfaces.PurchaseAttemptFailed(purchase, error))
+				if purchase is not None:
+					notify(store_interfaces.PurchaseAttemptFailed(purchase, error))
 			transactionRunner(fail_purchase)
 
 	# ---------------------------

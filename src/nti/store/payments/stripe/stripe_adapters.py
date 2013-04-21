@@ -75,7 +75,8 @@ def _string_purchase_error(message):
 @interface.implementer(stripe_interfaces.IStripePurchaseError)
 def stripe_exception_adpater(error):
 	result = StripePurchaseError(Type=u"Exception")
-	message = unicode(' '.join(getattr(error, 'args', ())))
+	args = getattr(error, 'args', ())
+	message = unicode(' '.join(map(str, args)))
 	result.Message = message or 'Unspecified Stripe Exception'
 	return result
 
@@ -84,7 +85,8 @@ def stripe_exception_adpater(error):
 def stripe_error_adpater(error):
 	result = StripePurchaseError(Type=u"Error")
 	result.HttpStatus = getattr(error, 'http_status', None)
-	message = makenone(error.message) or ' '.join(getattr(error, 'args', ()))
+	args = getattr(error, 'args', ())
+	message = makenone(error.message) or ' '.join(map(str, args))
 	result.Message = unicode(message or 'Unspecified Stripe Error')
 	return result
 
