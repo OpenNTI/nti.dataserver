@@ -22,7 +22,7 @@ class PurchaseAttemptDecorator(object):
 			external['TokenID'] = ps.token_id
 			external['ChargeID'] = ps.charge_id
 		elif original.Processor == 'fps':
-			ps = fps_interfaces.IFPSPurchase(original)
+			ps = fps_interfaces.IFPSPurchaseAttempt(original)
 			external['TokenID'] = ps.TokenID
 			external['TransactionID'] = ps.TransactionID
 			external['CallerReference'] = ps.CallerReference
