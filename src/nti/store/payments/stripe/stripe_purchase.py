@@ -85,3 +85,13 @@ class StripePurchaseOrder(purchase_order.PurchaseOrder):
 		xhash = super(StripePurchaseOrder, self).__hash__()
 		xhash ^= hash(self.Coupon)
 		return xhash
+
+def replace_coupon(po_or_items, coupon=None):
+	for item in getattr(po_or_items, 'Items', po_or_items):
+		item.Coupon = coupon
+
+def create_stripe_purchase_order(items=None, quantity=None, coupon=None):
+	result = purchase_order.create_purchase_order(items, quantity, StripePurchaseOrder)
+	if coupon is not None:
+		replace_coupon(items, None)
+	return result
