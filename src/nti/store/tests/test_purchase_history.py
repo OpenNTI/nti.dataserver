@@ -14,6 +14,7 @@ import BTrees.check
 from nti.dataserver.users import User
 from nti.externalization.oids import to_external_ntiid_oid
 
+from nti.store import purchase_order
 from nti.store import purchase_attempt
 from nti.store import purchase_history
 from nti.store import interfaces as store_interfaces
@@ -33,19 +34,26 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		usr = User.create_user(self.ds, username=username, password=password)
 		return usr
 
+	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None, state=store_interfaces.PA_STATE_UNKNOWN):
+		po = purchase_order.create_purchase_item(item, 1)
+		purchase_order.create_purchase_order(po, quantity=quantity)
+		# pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor)
+		pa = purchase_attempt.create_purchase_attempt(item, quantity=quantity, processor=self.processor, state=state)
+		return pa
+
 	@WithMockDSTrans
 	def test_purchase_hist(self):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
 		assert_that(hist, is_(not_none()))
 
-		pa_1 = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor)
+		pa_1 = self._create_purchase_attempt()
 		hist.add_purchase(pa_1)
 		assert_that(hist, has_length(1))
 
 		assert_that(pa_1.id, is_(not_none()))
 
-		pa_2 = purchase_attempt.create_purchase_attempt(items='zky', processor=self.processor)
+		pa_2 = self._create_purchase_attempt('zky')
 		hist.add_purchase(pa_2)
 		assert_that(hist, has_length(2))
 
@@ -66,21 +74,13 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
-		items = 'xyz'
-		pending = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor,
-															state=store_interfaces.PA_STATE_STARTED)
+		item = u'xyz-book'
+		pending = self._create_purchase_attempt(item, state=store_interfaces.PA_STATE_STARTED)
 		hist.add_purchase(pending)
 
-		pa = purchase_history.get_pending_purchase_for(user, items)
+		pa = purchase_history.get_pending_purchase_for(user, item)
 		assert_that(pa, is_(not_none()))
 		assert_that(pa, is_(pending))
-
-		pending = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor, quantity=2,
-															state=store_interfaces.PA_STATE_STARTED)
-		hist.add_purchase(pending)
-
-		pa = purchase_history.get_pending_purchase_for(user, items)
-		assert_that(pa, is_(not_none()))
 
 	@WithMockDSTrans
 	def test_missing_purchase(self):
@@ -103,13 +103,12 @@ class TestPurchaseHistory(ConfiguringTestBase):
 			return hist
 
 		for i in range(0, 100):
-
-			items = (unicode(i),)
+			item = unicode(i)
 			if i == 50:
 				t50 = time.time()
 			with mock_dataserver.mock_db_trans(self.ds):
 				hist = _get_hist()
-				pa = purchase_attempt.create_purchase_attempt(items=items, processor=self.processor)
+				pa = self._create_purchase_attempt(item)
 				hist.add_purchase(pa)
 
 				# check internal pointers

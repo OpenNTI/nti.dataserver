@@ -4,15 +4,17 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import stripe
 
 from nti.dataserver.users import User
 
 from .. import StripeException
+from .... import purchase_order
 from .... import purchase_attempt
+from .... import store_interfaces
 from .. import interfaces as stripe_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -24,9 +26,11 @@ from hamcrest import (assert_that, is_, is_not, none)
 
 class TestStripeAdapters(ConfiguringTestBase):
 
+	processor = 'stripe'
+
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
-		usr = User.create_user( ds, username=username, password=password)
+		usr = User.create_user(ds, username=username, password=password)
 		return usr
 
 	@WithMockDSTrans
@@ -35,17 +39,28 @@ class TestStripeAdapters(ConfiguringTestBase):
 		adapted = stripe_interfaces.IStripeCustomer(user)
 		assert_that(adapted, is_not(None))
 		assert_that(adapted.customer_id, is_(None))
-		
+
 		adapted.Charges.add('ch_id')
 		assert_that('ch_id' in adapted, is_(True))
-		
+
 		adapted.customer_id = 'xyz'
 		assert_that(adapted.customer_id, is_('xyz'))
 
+	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None,
+								 state=store_interfaces.PA_STATE_UNKNOWN,
+								 description=None):
+		po = purchase_order.create_purchase_item(item, 1)
+		purchase_order.create_purchase_order(po, quantity=quantity)
+		# pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor)
+		pa = purchase_attempt.create_purchase_attempt(item, quantity=quantity,
+													  processor=self.processor,
+													  description=description,
+													  state=state)
+		return pa
+
 	@WithMockDSTrans
 	def test_stripe_purchase_adapter(self):
-		items = ('xyz-book',)
-		pa = purchase_attempt.create_purchase_attempt(items=items, processor='stripe')
+		pa = self._create_purchase_attempt()
 		adapted = stripe_interfaces.IStripePurchaseAttempt(pa)
 		adapted.charge_id = 'charge_id'
 		adapted.token_id = 'token_id'

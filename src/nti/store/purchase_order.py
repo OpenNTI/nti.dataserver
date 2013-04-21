@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import collections
+
 from zope import interface
 from zope.annotation import interfaces as an_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
@@ -56,8 +58,15 @@ class PurchaseOrder(SchemaConfigured):
 		xhash ^= hash(self.Quantity)
 		return xhash
 
+def replace_quantity(po_or_items, quantity):
+	for item in getattr(po_or_items, 'Items', po_or_items):
+		item.Quantity = quantity
+
 def create_purchase_order(items=None, quantity=None):
 	items = list() if items is None else items
-	quantity = int(quantity) if quantity is not None else None
-	result = PurchaseOrder(Items=items, quantity=quantity)
+	items = [items] if not isinstance(items, collections.Sequence) else items
+	if quantity is not None:
+		quantity = int(quantity)
+		replace_quantity(items, quantity)
+	result = PurchaseOrder(Items=items, Quantity=quantity)
 	return result
