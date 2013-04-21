@@ -20,7 +20,7 @@ from . import interfaces as fps_interfaces
 from ... import interfaces as store_interfaces
 
 @component.adapter(store_interfaces.IPurchaseAttempt)
-@interface.implementer(fps_interfaces.IFPSPurchase)
+@interface.implementer(fps_interfaces.IFPSPurchaseAttempt)
 class _FPSPurchase(zcontained.Contained, Persistent):
 	
 	TokenID = None

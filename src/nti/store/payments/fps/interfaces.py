@@ -13,7 +13,7 @@ from zope import interface
 from .. import interfaces as pay_interfaces
 from ... import interfaces as store_interfaces
 
-class IFPSPurchase(interface.Interface):
+class IFPSPurchaseAttempt(interface.Interface):
 	TokenID = schema.TextLine(title='Token id', required=False)
 	TransactionID = schema.TextLine(title='Transaction id', required=False)
 	CallerReference = schema.TextLine(title='NTIID reference id', required=False)

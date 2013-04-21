@@ -101,7 +101,7 @@ class _FPSPaymentProcessor(_BasePaymentProcessor, fps_io.FPSIO):
 			return None
 
 		trax = None
-		fp = fps_interfaces.IFPSPurchase(purchase)
+		fp = fps_interfaces.IFPSPurchaseAttempt(purchase)
 		if fp.TransactionID:
 			trax = self.get_transaction(fp.TransactionID)
 			if trax is None:
