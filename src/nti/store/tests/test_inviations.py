@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from nti.dataserver.users import User
 
 from .. import invitations
+from .. import purchase_order
 from .. import purchase_attempt
 from .. import interfaces as store_interfaces
 
@@ -28,12 +29,19 @@ class TestInvitations(ConfiguringTestBase):
 		usr = User.create_user(self.ds, username=username, password=password)
 		return usr
 
+	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None, state=store_interfaces.PA_STATE_UNKNOWN):
+		po = purchase_order.create_purchase_item(item, 1)
+		purchase_order.create_purchase_order(po, quantity=quantity)
+		# pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor)
+		pa = purchase_attempt.create_purchase_attempt(item, quantity=quantity, processor=self.processor, state=state)
+		return pa
+
 	@WithMockDSTrans
 	def test_create_invitation(self):
 		user = self._create_user()
 
 		hist = store_interfaces.IPurchaseHistory(user, None)
-		purchase = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor, quantity=1)
+		purchase = self._create_purchase_attempt(quantity=1)
 		hist.add_purchase(purchase)
 
 		invitation = invitations.create_store_purchase_invitation(purchase)

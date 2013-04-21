@@ -21,6 +21,7 @@ from nti.externalization.externalization import to_external_object
 from ..import pricing
 from ..import priceable
 from ..import purchasable
+from .. import purchase_order
 from .. import purchase_attempt
 from .. import interfaces as store_interfaces
 
@@ -44,19 +45,30 @@ class TestStoreExternal(ConfiguringTestBase):
 		usr = User.create_user(self.ds, username=username, password=password)
 		return usr
 
+	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None, 
+								 state=store_interfaces.PA_STATE_UNKNOWN,
+								 description=None):
+		po = purchase_order.create_purchase_item(item, 1)
+		purchase_order.create_purchase_order(po, quantity=quantity)
+		# pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor)
+		pa = purchase_attempt.create_purchase_attempt(item, quantity=quantity,
+													  processor=self.processor,
+													  description=description,
+													  state=state)
+		return pa
+
 	@WithMockDSTrans
 	def test_purchase_hist(self):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
-		pa = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor,
-													  description='my charge', quantity=2)
+		pa = self._create_purchase_attempt(description='my charge', quantity=2)
 		hist.add_purchase(pa)
 
 		ext = to_external_object(pa)
 		assert_that(ext, has_key('MimeType'))
 		assert_that(ext, has_entry('Class', u'PurchaseAttempt'))
-		assert_that(ext, has_entry('Items', ['xyz']))
+		assert_that(ext, has_entry('Items', ['xyz-book']))
 		assert_that(ext, has_entry('State', 'Unknown'))
 		assert_that(ext, has_entry('OID', is_not(None)))
 		assert_that(ext, has_entry('Last Modified', is_not(None)))

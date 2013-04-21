@@ -11,7 +11,8 @@ from zope.schema import vocabulary
 
 from nti.dataserver.users import User
 
-from ..import purchasable
+from .. import purchasable
+from .. import purchase_order
 from .. import purchase_attempt
 from .. import interfaces as store_interfaces
 
@@ -22,6 +23,8 @@ from . import ConfiguringTestBase
 from hamcrest import (assert_that, has_key, has_length, is_not, none, is_, is_in, greater_than_or_equal_to)
 
 class TestPurchasable(ConfiguringTestBase):
+
+	processor = 'stripe'
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		usr = User.create_user(self.ds, username=username, password=password)
@@ -55,12 +58,18 @@ class TestPurchasable(ConfiguringTestBase):
 		assert_that(m, has_key('iid_1'))
 		assert_that(m, has_key('iid_2'))
 
+	def _create_purchase_attempt(self, item=u'iid_3', quantity=None, state=store_interfaces.PA_STATE_UNKNOWN):
+		po = purchase_order.create_purchase_item(item, 1)
+		purchase_order.create_purchase_order(po, quantity=quantity)
+		# pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor)
+		pa = purchase_attempt.create_purchase_attempt(item, quantity=quantity, processor=self.processor, state=state)
+		return pa
+
 	@WithMockDSTrans
 	def test_purchased(self):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
-		pa = purchase_attempt.create_purchase_attempt(items=("iid_3",), processor="stripe",
-													  state=store_interfaces.PA_STATE_SUCCESS)
+		pa = self._create_purchase_attempt(u'iid_3', state=store_interfaces.PA_STATE_SUCCESS)
 		hist.add_purchase(pa)
 
 		m = purchasable.get_available_items('nt@nti.com')
