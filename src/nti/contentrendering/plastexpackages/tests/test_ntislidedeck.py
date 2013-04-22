@@ -93,6 +93,7 @@ def test_ntislide():
 \begin{ntislide}
 \label{slide1}
 \ntislidetitle{Test Slide}
+\ntislidenumber{101}
 \ntislideimage[width=640px]{test}
 \ntislidevideoref[start=0:00,end=1:25]{video1}
 \begin{ntislidetext}
@@ -110,12 +111,15 @@ Title Slide
 
 	# Check that the ntislidevideo object has the expected children
 	elem = dom.getElementsByTagName('ntislide')[0]
-	assert_that( elem.childNodes, has_length( 10 ) )
+	assert_that( elem.childNodes, has_length( 12 ) )
 	assert_that( elem.childNodes[0], instance_of( label ) )
 	assert_that( elem.childNodes[2], instance_of( ntislide.ntislidetitle ) )
-	assert_that( elem.childNodes[4], instance_of( ntislide.ntislideimage ) )
-	assert_that( elem.childNodes[6], instance_of( ntislide.ntislidevideoref ) )
-	assert_that( elem.childNodes[8], instance_of( ntislide.ntislidetext ) )
+	assert_that( elem.childNodes[4], instance_of( ntislide.ntislidenumber ) )
+	assert_that( elem.childNodes[6], instance_of( ntislide.ntislideimage ) )
+	assert_that( elem.childNodes[8], instance_of( ntislide.ntislidevideoref ) )
+	assert_that( elem.childNodes[10], instance_of( ntislide.ntislidetext ) )
+	slide_title = elem.childNodes[2]
+	slide_number = elem.childNodes[4]
 
 	# Check that the ntislidevido object has the expected attributes
 	assert_that( elem, has_property( 'id' ) )
@@ -125,7 +129,7 @@ Title Slide
 	assert_that( elem, has_property( 'slidevideo' ) )
 
 	# Check that the attributes have the expected values
-	assert_that( elem.title, equal_to( elem.childNodes[2].attributes['title'] ) )
-	assert_that( elem.slidenumber, equal_to( elem.ownerDocument.context.counters[elem.counter].value ) )
-	assert_that( elem.slideimage, equal_to( elem.childNodes[4] ) )
-	assert_that( elem.slidevideo, equal_to( elem.childNodes[6] ) )
+	assert_that( elem.title, equal_to( slide_title.attributes['title'] ) )
+	assert_that( elem.slidenumber, equal_to( slide_number.attributes['number'] ) )
+	assert_that( elem.slideimage, equal_to( elem.childNodes[6] ) )
+	assert_that( elem.slidevideo, equal_to( elem.childNodes[8] ) )
