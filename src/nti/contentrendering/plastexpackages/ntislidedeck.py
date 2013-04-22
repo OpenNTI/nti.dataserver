@@ -121,7 +121,8 @@ class ntislide(_LocalContentMixin, Environment, plastexids.NTIIDMixin):
 
 	def digest(self, tex):
 		super(ntislide, self).digest(tex)
-		self.slidenumber = self.ownerDocument.context.counters[self.counter].value
+		if not hasattr(self, 'slidenumber'):
+			self.slidenumber = self.ownerDocument.context.counters[self.counter].value
 
 	class ntislidetitle(Command):
 		args = 'title'
@@ -129,6 +130,13 @@ class ntislide(_LocalContentMixin, Environment, plastexids.NTIIDMixin):
 		def digest(self, tex):
 			super(ntislide.ntislidetitle, self).digest(tex)
 			self.parentNode.title = self.attributes['title']
+
+	class ntislidenumber(Command):
+		args = 'number:int'
+
+		def digest(self, tex):
+			super(ntislide.ntislidenumber, self).digest(tex)
+			self.parentNode.slidenumber = self.attributes['number']
 
 	class ntislideimage(includegraphics):
 
