@@ -85,7 +85,7 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 
 			provider = providers.pop()
 			stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
-			coupon = self.get_coupon(coupon, stripe_key.PrivateKey)
+			coupon = self.get_coupon(coupon, stripe_key.PrivateKey) if stripe_key else None
 			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 			if coupon is not None:
 				result.NonDiscountedPrice = result.TotalPurchasePrice
