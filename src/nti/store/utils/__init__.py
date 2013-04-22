@@ -39,6 +39,13 @@ def to_list(items=None, delim=' '):
 def to_frozenset(items=None, delim=' '):
 	return to_collection(items, frozenset, delim)
 
+def is_valid_timestamp(ts):
+	try:
+		ts = float(ts)
+		return ts >= 0
+	except:
+		return False
+
 def is_valid_amount(amount):
 	try:
 		amount = float(amount)

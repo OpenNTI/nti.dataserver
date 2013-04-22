@@ -26,8 +26,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import integer_strings
 from nti.externalization import interfaces as ext_interfaces
 
-from nti.store import interfaces as store_interfaces
-
 from . import httpexceptions as hexc
 from ._util import link_belongs_to_user
 from . import _external_object_io as obj_io
@@ -118,21 +116,6 @@ class _TrivialDefaultInvitations(ZcmlInvitations):
 				if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(dfl):
 					invite = _DefaultJoinEntityInvitation(code, dfl)
 					invite.creator = dfl.creator
-			except (KeyError, ValueError, AttributeError):
-				return None
-		return invite
-
-class _TrivialAndStoreInvitations(_TrivialDefaultInvitations):
-
-	def getInvitationByCode(self, code):
-		__traceback_info__ = code,
-		invite = super(_TrivialAndStoreInvitations, self).getInvitationByCode(code)
-		if invite is None:
-			from nti.store import invitations
-			try:
-				purchase = self._getObjectByCode(code)
-				if store_interfaces.IPurchaseAttempt(purchase):
-					invite = invitations.create_store_purchase_invitation(purchase, code)
 			except (KeyError, ValueError, AttributeError):
 				return None
 		return invite
