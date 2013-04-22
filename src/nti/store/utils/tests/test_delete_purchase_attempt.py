@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from nti.dataserver.users import User
 
+from nti.store import purchase_order
 from nti.store import purchase_attempt
 from nti.store import purchase_history
 from nti.store import interfaces as store_interfaces
@@ -31,12 +32,24 @@ class TestDeletePurchaseAttempt(ConfiguringTestBase):
 		usr = User.create_user(ds, username=username, password=password)
 		return usr
 
+	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None,
+								 state=store_interfaces.PA_STATE_UNKNOWN,
+								 description='my purchase'):
+		po = purchase_order.create_purchase_item(item, 1)
+		purchase_order.create_purchase_order(po, quantity=quantity)
+		# pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor)
+		pa = purchase_attempt.create_purchase_attempt(item, quantity=quantity,
+													  processor=self.processor,
+													  description=description,
+													  state=state)
+		return pa
+
 	@WithMockDSTrans
 	def test_delete(self):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
-		pa_1 = purchase_attempt.create_purchase_attempt(items='xyz', processor=self.processor)
+		pa_1 = self._create_purchase_attempt()
 		hist.add_purchase(pa_1)
 		assert_that(hist, has_length(1))
 

@@ -13,6 +13,7 @@ from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
 
+from ... import purchase_order
 from ... import purchase_attempt
 from ... import interfaces as store_interfaces
 
@@ -30,13 +31,24 @@ class TestPaymentsExternal(ConfiguringTestBase):
 		usr = User.create_user(ds, username=username, password=password)
 		return usr
 
+
+	def _create_purchase_attempt(self, item=u'xyz-book', processor=None,
+								 state=store_interfaces.PA_STATE_UNKNOWN,
+								 description=None):
+		po = purchase_order.create_purchase_item(item, 1)
+		purchase_order.create_purchase_order(po)
+		# pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor)
+		pa = purchase_attempt.create_purchase_attempt(item, processor=processor,
+													  description=description,
+													  state=state)
+		return pa
 	@WithMockDSTrans
 	def test_stripe_purchase_attempt(self):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
 		processor = 'stripe'
-		pa = purchase_attempt.create_purchase_attempt(items='xyz', processor=processor)
+		pa = self._create_purchase_attempt(processor=processor)
 		hist.add_purchase(pa)
 
 		ext = to_external_object(pa)
@@ -50,7 +62,7 @@ class TestPaymentsExternal(ConfiguringTestBase):
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
 		processor = 'fps'
-		pa = purchase_attempt.create_purchase_attempt(items='xyz', processor=processor)
+		pa = self._create_purchase_attempt(processor=processor)
 		hist.add_purchase(pa)
 
 		ext = to_external_object(pa)
