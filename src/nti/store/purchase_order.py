@@ -64,9 +64,9 @@ def replace_quantity(po_or_items, quantity):
 
 def create_purchase_order(items=None, quantity=None, cls=PurchaseOrder):
 	items = list() if items is None else items
-	items = [items] if not isinstance(items, collections.Sequence) else items
+	items = (items,) if not isinstance(items, collections.Sequence) else items
 	if quantity is not None:
 		quantity = int(quantity)
 		replace_quantity(items, quantity)
-	result = cls(Items=items, Quantity=quantity)
+	result = cls(Items=list(items), Quantity=quantity)
 	return result

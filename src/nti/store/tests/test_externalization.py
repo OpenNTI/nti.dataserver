@@ -29,7 +29,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, is_not, has_key, has_entry, none)
+from hamcrest import (assert_that, is_, is_not, has_key, has_entry, has_length, none)
 
 class TestStoreExternal(ConfiguringTestBase):
 
@@ -45,7 +45,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		usr = User.create_user(self.ds, username=username, password=password)
 		return usr
 
-	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None, 
+	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None,
 								 state=store_interfaces.PA_STATE_UNKNOWN,
 								 description='my purchase'):
 		po = purchase_order.create_purchase_item(item, 1)
@@ -79,6 +79,20 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Description', is_('my charge')))
 		assert_that(ext, has_entry('Quantity', is_(2)))
 		assert_that(ext, has_entry('InvitationCode', is_not(none())))
+
+	@WithMockDSTrans
+	def test_purchase_order(self):
+		pi_1 = purchase_order.create_purchase_item("ichigo", 1)
+		pi_2 = purchase_order.create_purchase_item("aizen", 2)
+		po = purchase_order.create_purchase_order((pi_1, pi_2))
+		ext = to_external_object(po)
+		assert_that(ext, has_entry('Items', has_length(2)))
+		assert_that(ext, has_entry('Quantity', is_(none())))
+		items = ext['Items']
+		assert_that(items[0], has_entry('NTIID', 'ichigo'))
+		assert_that(items[0], has_entry('Quantity', 1))
+		assert_that(items[1], has_entry('NTIID', 'aizen'))
+		assert_that(items[1], has_entry('Quantity', 2))
 
 	def test_purchasable(self):
 		util = purchasable.PurchasableUtilityVocabulary(None)

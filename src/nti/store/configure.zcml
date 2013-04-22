@@ -22,9 +22,11 @@
 	<subscriber handler="._subscribers._purchase_invitation_accepted" />
 		
 	<adapter factory=".externalization.PriceableExternal" />
-	<adapter factory=".externalization.PurchasableExternal" />
-	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	<adapter factory=".externalization.PricedItemExternal" />
+	<adapter factory=".externalization.PurchasableExternal" />
+	<adapter factory=".externalization.PurchaseItemExternal" />
+	<adapter factory=".externalization.PurchaseOrderExternal" />
+	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	<adapter factory=".externalization.PricedItemsExternalizer" />
 	
 	<subscriber factory=".externalization.PurchasableDecorator"

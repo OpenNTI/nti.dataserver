@@ -26,6 +26,16 @@ from . import purchase_history
 from . import interfaces as store_interfaces
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPurchaseItem)
+class PurchaseItemExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPurchaseItem
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPurchaseOrder)
+class PurchaseOrderExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPurchaseOrder
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
 @component.adapter(store_interfaces.IPurchaseAttempt)
 class PurchaseAttemptExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = store_interfaces.IPurchaseAttempt
