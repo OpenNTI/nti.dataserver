@@ -20,16 +20,16 @@ from pyramid.security import authenticated_userid
 
 from nti.externalization.datastructures import LocatedExternalDict
 
+from . import stripe_purchase
 from . import InvalidStripeCoupon
 from . import interfaces as stripe_interfaces
-from .stripe_purchase import create_stripe_priceable
 
 from nti.store import purchase_history
 from nti.store import InvalidPurchasable
 from nti.store import purchasable as source
-from nti.store.utils import CaseInsensitiveDict
 from nti.store import interfaces as store_interfaces
 from nti.store.payments import is_valid_amount, is_valid_pve_int
+from nti.store.utils import CaseInsensitiveDict, raise_field_error
 
 class _BaseStripeView(object):
 	processor = 'stripe'
@@ -101,7 +101,7 @@ class PricePurchasableWithStripeCouponView(_PostStripeView):
 
 	def price(self, purchasable_id, quantity=None, coupon=None):
 		pricer = component.getUtility(store_interfaces.IPurchasablePricer, name="stripe")
-		priceable = create_stripe_priceable(ntiid=purchasable_id, quantity=quantity, coupon=coupon)
+		priceable = stripe_purchase.create_stripe_priceable(ntiid=purchasable_id, quantity=quantity, coupon=coupon)
 		result = pricer.price(priceable)
 		return result
 
@@ -113,16 +113,16 @@ class PricePurchasableWithStripeCouponView(_PostStripeView):
 		# check quantity
 		quantity = values.get('quantity', 1)
 		if not is_valid_pve_int(quantity):
-			raise hexc.HTTPBadRequest(detail='invalid quantity')
+			raise_field_error(self.request, "quantity", "invalid quantity")
 		quantity = int(quantity)
 
 		try:
 			result = self.price(purchasable_id, quantity, coupon)
 			return result
 		except InvalidStripeCoupon:
-			raise hexc.HTTPBadRequest(detail='invalid stripe coupon (%s)' % coupon)
+			raise_field_error(self.request, "coupon", "invalid stripe coupon")
 		except InvalidPurchasable:
-			raise hexc.HTTPBadRequest(detail='invalid purchasable (%s)' % purchasable_id)
+			raise_field_error(self.request, "purchasableID", "invalid purchasable")
 
 	def __call__(self):
 		result = self.price_purchasable()
@@ -130,42 +130,32 @@ class PricePurchasableWithStripeCouponView(_PostStripeView):
 
 class StripePaymentView(_PostStripeView):
 
-	def __call__(self):
-		request = self.request
-		username = authenticated_userid(request)
-
-		values = self.readInput()
+	def readInput(self, username):
+		values = super(StripePaymentView, self).readInput()
 		purchasable_id = values.get('purchasableID')
 		if not purchasable_id:
-			raise hexc.HTTPBadRequest(detail="No item to purchase specified")
+			raise_field_error(self.request, 'purchasableID', "No item to purchase specified")
 
+		stripe_key = None
 		purchasable = source.get_purchasable(purchasable_id)
 		if purchasable is None:
-			raise hexc.HTTPBadRequest(detail="Invalid purchasable item")
-
-		# check for any pending purchase for the items being bought
-		purchase = purchase_history.get_pending_purchase_for(username, purchasable_id)
-		if purchase is not None:
-			logger.warn("There is already a pending purchase for item %s" % purchasable_id)
-			return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
-
-		# gather data
-		provider = purchasable.Provider
-		stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
-		if not stripe_key:
-			raise hexc.HTTPBadRequest(detail="Invalid provider")
+			raise_field_error(self.request, 'purchasableID', "Invalid purchasable item")
+		else:
+			provider = purchasable.Provider
+			stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
+			if not stripe_key:
+				raise_field_error(self.request, 'purchasableID', "Invalid purchasable provider")
 
 		token = values.get('token', None)
 		if not token:
-			raise hexc.HTTPBadRequest(detail="No token provided")
+			raise_field_error(self.request, 'token', "No token provided")
 
-		amount = values.get('amount', None)
-		if not is_valid_amount(amount):
-			raise hexc.HTTPBadRequest(detail="Invalid amount")
-		amount = float(amount)
+		expected_amount = values.get('amount', values.get('expectedAmount', None))
+		if not is_valid_amount(expected_amount):
+			raise hexc.HTTPBadRequest(detail="Invalid expected amount")
+		expected_amount = float(expected_amount)
 
 		coupon = values.get('coupon', None)
-		currency = values.get('currency', 'USD')
 		description = values.get('description', None)
 
 		quantity = values.get('quantity', None)
@@ -175,17 +165,32 @@ class StripePaymentView(_PostStripeView):
 
 		description = description or "%s's payment for '%r'" % (username, purchasable_id)
 
-		# create purchase
-		purchase_id = purchase_history.create_and_register_purchase_attempt(username, items=purchasable_id, processor=self.processor,
-																 			description=description, quantity=quantity)
-		logger.info("Purchase %s created" % purchase_id)
+		item = stripe_purchase.create_stripe_purchase_item(purchasable_id)
+		po = stripe_purchase.create_stripe_purchase_order(item, quantity=quantity, coupon=coupon)
+
+		pa = purchase_history.create_purchase_attempt(po, processor=self.processor)
+		return pa, stripe_key
+
+	def __call__(self):
+		request = self.request
+		username = authenticated_userid(request)
+		purchase_attempt, stripe_key = self.readInput(username)
+
+		# check for any pending purchase for the items being bought
+		purchase = purchase_history.get_pending_purchase_for(username, purchase_attempt.Items)
+		if purchase is not None:
+			logger.warn("There is already a pending purchase for item(s) %s" % list(purchase_attempt.Items))
+			return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
+
+		# register purchase
+		purchase_id = purchase_history.register_purchase_attempt(purchase_attempt, username)
+		logger.info("Purchase attempt (%s) created" % purchase_id)
 
 		# after commit
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 		def process_purchase():
 			logger.info("Processing purchase %s" % purchase_id)
-			manager.process_purchase(purchase_id=purchase_id, username=username, token=token, amount=amount,
-			 						 currency=currency, coupon=coupon, api_key=stripe_key.PrivateKey)
+			manager.process_purchase(purchase_id=purchase_id, username=username, api_key=stripe_key.PrivateKey)
 		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_purchase))
 
 		# return

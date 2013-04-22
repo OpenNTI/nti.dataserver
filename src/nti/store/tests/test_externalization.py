@@ -48,11 +48,9 @@ class TestStoreExternal(ConfiguringTestBase):
 	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None,
 								 state=store_interfaces.PA_STATE_UNKNOWN,
 								 description='my purchase'):
-		po = purchase_order.create_purchase_item(item, 1)
-		purchase_order.create_purchase_order(po, quantity=quantity)
-		# pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor)
-		pa = purchase_attempt.create_purchase_attempt(item, quantity=quantity,
-													  processor=self.processor,
+		pi = purchase_order.create_purchase_item(item, 1)
+		po = purchase_order.create_purchase_order(pi, quantity=quantity)
+		pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor,
 													  description=description,
 													  state=state)
 		return pa
@@ -68,7 +66,6 @@ class TestStoreExternal(ConfiguringTestBase):
 		ext = to_external_object(pa)
 		assert_that(ext, has_key('MimeType'))
 		assert_that(ext, has_entry('Class', u'PurchaseAttempt'))
-		assert_that(ext, has_entry('Items', ['xyz-book']))
 		assert_that(ext, has_entry('State', 'Unknown'))
 		assert_that(ext, has_entry('OID', is_not(None)))
 		assert_that(ext, has_entry('Last Modified', is_not(None)))
@@ -77,8 +74,17 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('EndTime', is_(None)))
 		assert_that(ext, has_entry('Error', is_(None)))
 		assert_that(ext, has_entry('Description', is_('my charge')))
-		assert_that(ext, has_entry('Quantity', is_(2)))
 		assert_that(ext, has_entry('InvitationCode', is_not(none())))
+
+		# check order
+		assert_that(ext, has_key('Order'))
+		order = ext['Order']
+		assert_that(order, has_entry('Quantity', is_(2)))
+		assert_that(order, has_entry('Items', has_length(1)))
+		items = order['Items']
+		assert_that(items[0], has_entry('NTIID', 'xyz-book'))
+		assert_that(items[0], has_entry('Quantity', 2))
+
 
 	@WithMockDSTrans
 	def test_purchase_order(self):

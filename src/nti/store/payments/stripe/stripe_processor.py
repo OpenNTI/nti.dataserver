@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+import math
 import time
 import simplejson as json
 from datetime import date
@@ -25,13 +26,12 @@ from nti.dataserver.users import interfaces as user_interfaces
 from . import stripe_io
 from .utils import makenone
 from . import StripeException
-from ... import payment_charge
-from ... import purchase_history
-from ... import purchase_attempt
 from .. import _BasePaymentProcessor
+from nti.store import payment_charge
+from nti.store import purchase_history
+from nti.store import purchase_attempt
 from . import interfaces as stripe_interfaces
-from ... import interfaces as store_interfaces
-from .stripe_purchase import create_stripe_priceable
+from nti.store import interfaces as store_interfaces
 
 def _create_user_address(charge):
 	card = getattr(charge, 'card', None)
@@ -166,15 +166,17 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				amount -= amount_off
 		return max(0, amount)
 
-	def price_purchase(self, purchase_id, username, coupon=None, api_key=None):
-		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
-		coupon = self.get_and_validate_coupon(coupon, api_key=api_key)
-		items = [create_stripe_priceable(ntiid=item, quantity=purchase.Quantity, coupon=coupon) for item in purchase.Items]
+	def _do_pricing(self, purchase_attempt):
 		pricer = component.getUtility(store_interfaces.IPurchasablePricer, name="stripe")
-		result = pricer.evaluate(items)
+		result = pricer.evaluate(purchase_attempt.Order)
 		return result
 
-	def process_purchase(self, purchase_id, username, token, amount, currency, coupon=None, api_key=None):
+	def price_purchase(self, purchase_id, username):
+		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+		result = self._do_pricing(purchase)
+		return result
+
+	def process_purchase(self, purchase_id, username, token, expected_amount=None, api_key=None):
 		"""
 		Executes the process purchase.
 		This function may be called in a greenlet (which cannot be run within a transaction runner)
@@ -185,6 +187,10 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 			if not purchase.is_pending():
 				notify(store_interfaces.PurchaseAttemptStarted(purchase))
+
+			# price purchase
+			totals = self._do_pricing(purchase)
+			return totals
 
 		def register_stripe_user():
 			purchase = purchase_history.get_purchase_attempt(purchase_id, username)
@@ -197,16 +203,14 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 		try:
 			# start the purchase
-			transactionRunner(start_purchase)
+			totals = transactionRunner(start_purchase)
+			currency = totals.Currency
+			amount = totals.TotalPurchasePrice
+			if expected_amount is not None and not math.fabs(expected_amount - amount) <= 0.05:
+				raise Exception("Purchase order amount did not matched the expected amount")
 
 			# create a stripe customer
 			customer_id = transactionRunner(register_stripe_user)
-
-			# validate coupon
-			if coupon is not None:
-				coupon = self.get_and_validate_coupon(coupon, api_key=api_key)
-				amount = self.apply_coupon(amount, coupon, api_key=api_key)
-				self.update_stripe_customer(customer_id, coupon=coupon.id, api_key=api_key)
 
 			# get price amount in cents
 			cents_amount = int(amount * 100.0)

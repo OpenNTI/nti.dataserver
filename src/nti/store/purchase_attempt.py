@@ -8,6 +8,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import time
+import BTrees
 import functools
 from datetime import datetime
 
@@ -26,8 +27,7 @@ from nti.utils.schema import SchemaConfigured
 from nti.zodb import minmax
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
-from . import purchasable
-from . import to_frozenset
+from . import purchase_order
 from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
 
@@ -35,15 +35,22 @@ from . import interfaces as store_interfaces
 @interface.implementer(store_interfaces.IPurchaseAttempt)
 class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 
-	Items = FP(store_interfaces.IPurchaseAttempt['Items'])
+	Order = FP(store_interfaces.IPurchaseAttempt['Order'])
 	Processor = FP(store_interfaces.IPurchaseAttempt['Processor'])
 	State = FP(store_interfaces.IPurchaseAttempt['State'])
 	Description = FP(store_interfaces.IPurchaseAttempt['Description'])
 	StartTime = FP(store_interfaces.IPurchaseAttempt['StartTime'])
 	EndTime = FP(store_interfaces.IPurchaseAttempt['EndTime'])
-	Quantity = FP(store_interfaces.IPurchaseAttempt['Quantity'])
 	Error = FP(store_interfaces.IPurchaseAttempt['Error'])
 	Synced = FP(store_interfaces.IPurchaseAttempt['Synced'])
+
+	@property
+	def Items(self):
+		return self.Order.NTIIDs
+
+	@property
+	def Quantity(self):
+		return self.Order.Quantity
 
 	def __str__(self):
 		return "%s,%s" % (self.Items, self.State)
@@ -54,10 +61,9 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self.Items == other.Items
+			return self is other or (self.Order == other.Order
 									 and self.StartTime == other.StartTime
-									 and self.Processor == other.Processor
-									 and self.Quantity == other.Quantity)
+									 and self.Processor == other.Processor)
 		except AttributeError:
 			return NotImplemented
 
@@ -75,10 +81,9 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 
 	def __hash__(self):
 		xhash = 47
+		xhash ^= hash(self.Order)
 		xhash ^= hash(self.Processor)
 		xhash ^= hash(self.StartTime)
-		xhash ^= hash(self.Items)
-		xhash ^= hash(self.Quantity)
 		return xhash
 
 	def has_failed(self):
@@ -116,9 +121,14 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPrope
 
 	__metaclass__ = MetaStoreObject
 
+	_tokens = None
+	_consumers = None
+
 	def __init__(self, *args, **kwargs):
 		super(PurchaseAttempt, self).__init__(*args, **kwargs)
-		self._tokens = minmax.NumericMinimum(self.Quantity) if self.Quantity else None
+		if self.Quantity:
+			self._consumers = BTrees.OOBTree.OOTreeSet()
+			self._tokens = minmax.NumericMinimum(self.Quantity)
 
 	@property
 	def id(self):
@@ -141,34 +151,23 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPrope
 		return self.id
 
 def get_purchasables(purchase):
-	"""
-	return all purchasables for the associated purchase
-	"""
-	result = list()
-	for item in purchase.Items:
-		p = purchasable.get_purchasable(item)
-		if p is not None:
-			result.append(p)
-	return result
+	return purchase_order.get_purchasables(purchase.Order)
 
 def get_providers(purchase):
-	"""
-	return all providers for the associated purchase
-	"""
-	purchasables = get_purchasables(purchase)
-	result = purchasable.get_providers(purchasables)
-	return result
+	return purchase_order.get_providers(purchase.Order)
+
+def get_currencies(purchase):
+	return purchase_order.get_currencies(purchase.Order)
 
 def copy_purchase_attempt(purchase):
-	result = PurchaseAttempt(Items=purchase.Items, Processor=purchase.Processor, Description=purchase.Description,
+	result = PurchaseAttempt(Order=purchase.Order, Processor=purchase.Processor, Description=purchase.Description,
 							 State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
-							 Quantity=purchase.Quantity, Error=purchase.Error, Synced=purchase.Synced)
+							 Error=purchase.Error, Synced=purchase.Synced)
 	return result
 
-def create_purchase_attempt(items, processor, quantity=None, state=None, description=None, start_time=None):
-	items = to_frozenset(items)
+def create_purchase_attempt(order, processor, state=None, description=None, start_time=None):
 	state = state or store_interfaces.PA_STATE_UNKNOWN
 	start_time = start_time if start_time else time.time()
-	result = PurchaseAttempt(Items=items, Processor=processor, Description=description,
-							 State=state, StartTime=float(start_time), Quantity=quantity)
+	result = PurchaseAttempt(Order=order, Processor=processor, Description=description,
+							 State=state, StartTime=float(start_time))
 	return result

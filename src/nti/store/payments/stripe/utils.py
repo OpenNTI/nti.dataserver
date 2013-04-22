@@ -15,7 +15,9 @@ from . import InvalidStripeCoupon
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
 from .stripe_purchase import StripePricedPurchasable
-from ...pricing import create_priced_items, DefaultPurchasablePricer
+
+from nti.store import PricingException
+from nti.store.pricing import create_priced_items, DefaultPurchasablePricer
 
 def makenone(s, default=None):
 	if isinstance(s, six.string_types):
@@ -59,19 +61,36 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 		return priced
 
 	def evaluate(self, priceables):
-		total_fee = 0
-		total_amount = 0
-		total_non_discount = 0
+		providers = set()
+		currencies = set()
 		result = create_priced_items(non_discounted_price=0.0)
 		for priceable in priceables:
+			currencies.add(priceable.Currency)
+			providers.add(priceable.Provider)
 			priced = self.price(priceable)
 			result.PricedList.append(priced)
-			total_fee += priced.PurchaseFee
-			total_amount += priced.PurchasePrice
-			total_non_discount += priced.NonDiscountedPrice or priced.PurchasePrice
+			result.TotalPurchaseFee += priced.PurchaseFee
+			result.TotalPurchasePrice += priced.PurchasePrice
+			result.TotalNonDiscountedPrice += priced.NonDiscountedPrice or priced.PurchasePrice
 
-		# set totals
-		result.TotalPurchaseFee = total_fee
-		result.TotalPurchasePrice = total_amount
-		result.TotalNonDiscountedPrice = total_non_discount
+		if len(currencies) != 1:
+			raise PricingException("Multi-Currency pricing is not supported")
+		result.Currency = currencies.pop()
+
+		# apply coupon at the 'order' level
+		coupon = getattr(priceables, 'Coupon', None)
+		if coupon is not None:
+			if len(providers) != 1:
+				raise PricingException("Multi-Provider coupon purchase is not supported")
+
+			provider = providers.pop()
+			stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
+			coupon = self.get_coupon(coupon, stripe_key.PrivateKey)
+			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
+			if coupon is not None:
+				result.NonDiscountedPrice = result.TotalPurchasePrice
+				purchase_price = manager.apply_coupon(result.TotalPurchasePrice, coupon)
+				result.TotalPurchasePrice = purchase_price
+				result.TotalPurchaseFee = self.calc_fee(purchase_price, priceable.Fee)
+
 		return result

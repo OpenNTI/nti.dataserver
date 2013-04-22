@@ -131,7 +131,7 @@ class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 		apply the specfied coupon to the specfied amount
 		"""
 
-	def process_purchase(purchase_id, username, token, amount, currency, coupon):
+	def process_purchase(purchase_id, username, token, expected_amount=None):
 		"""
 		Process a purchase attempt
 
