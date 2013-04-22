@@ -67,6 +67,13 @@ def get_invitation_code(purchase):
 		return result
 	return None
 
+def get_purchase_by_code(code):
+	if code is not None:
+		iid = integer_strings.from_external_string(code)
+		result = component.getUtility(zc_intid.IIntIds).queryObject(iid)
+		return result
+	return None
+
 def create_store_purchase_invitation(purchase, code=None):
 	invitation_code = code if code else get_invitation_code(purchase)
 	result = _StorePurchaseInvitation(invitation_code, purchase)

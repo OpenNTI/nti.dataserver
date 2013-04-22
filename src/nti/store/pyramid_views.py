@@ -134,24 +134,23 @@ class RedeemPurchaseCodeView(_PostView):
 	def __call__(self):
 		request = self.request
 		values = self.readInput()
-		purchase_id = values.get('purchaseID')
-		if not purchase_id:
-			raise_field_error(request, "purchaseID", "Failed to provide a purchase attempt ID")
+		purchasable_id = values.get('purchasableID')
+		if not purchasable_id:
+			raise_field_error(request, "purchasableID", "Failed to provide a purchasable ID")
 
 		invitation_code = values.get('invitationCode', values.get('invitation_code'))
 		if not invitation_code:
-			raise_field_error(request, "purchaseID", "Failed to provide a invitation code")
+			raise_field_error(request, "invitation_code", "Failed to provide a invitation code")
 
-		username = authenticated_userid(request)
-		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+		purchase = invitations.get_purchase_by_code(invitation_code)
 		if purchase is None:
 			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
 
-		code = invitations.get_invitation_code(purchase)
-		if code != invitation_code:
-			raise_field_error(request, "invitation_code", "The invitation code is not valid")
+		if purchasable_id not in purchase.Items:
+			raise_field_error(request, "invitation_code", "The invitation code is not for this purchasable")
 
-		invite = invitations.create_store_purchase_invitation(purchase, code)
+		username = authenticated_userid(request)
+		invite = invitations.create_store_purchase_invitation(purchase, invitation_code)
 		invite.accept(username)
 
 		return hexc.HTTPNoContent()
