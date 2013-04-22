@@ -139,6 +139,18 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPrope
 		result = getattr(self.__parent__, 'user', None)
 		return result
 
+	# invitations
+
+	def register(self, user):
+		if self._consumers is not None:
+			user = getattr(user, "username", user)
+			if not user in self._consumers and user:
+				self._consumers.add(user)
+				return True
+			else:
+				return False
+		return True
+
 	def consume_token(self):
 		if self._tokens is not None:
 			if self._tokens.value > 0:

@@ -15,6 +15,9 @@ from zope import interface
 from nti.appserver.invitations import interfaces as invite_interfaces
 from nti.appserver.invitations.invitation import JoinEntitiesInvitation
 
+from nti.dataserver.users import User
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization import integer_strings
 
 from . import MessageFactory as _
@@ -29,6 +32,12 @@ class InvitationCapacityExceeded(Exception):
 	"""
 	i18n_message = _("The limit for this invitation code has been exceeded.")
 
+class InvitationAlreadyAccepted(Exception):
+	"""
+	Raised when a user is attempting to accept an invitation more than once
+	"""
+	i18n_message = _("Invitation already accepted")
+
 @interface.implementer(store_interfaces.IStorePurchaseInvitation)
 class _StorePurchaseInvitation(JoinEntitiesInvitation):
 
@@ -41,11 +50,15 @@ class _StorePurchaseInvitation(JoinEntitiesInvitation):
 		return self.purchase.Quantity
 
 	def accept(self, user):
-		if self.purchase.consume_token():
-			super(_StorePurchaseInvitation, self).accept(user)
-			_add_users_content_roles(user, self.purchase.Items)
+		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+		if self.purchase.register(user):
+			if self.purchase.consume_token():
+				super(_StorePurchaseInvitation, self).accept(user)
+				_add_users_content_roles(user, self.purchase.Items)
+			else:
+				raise InvitationCapacityExceeded()
 		else:
-			raise InvitationCapacityExceeded()
+			raise InvitationAlreadyAccepted()
 
 def get_invitation_code(purchase):
 	if purchase is not None:

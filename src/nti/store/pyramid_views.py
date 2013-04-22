@@ -26,6 +26,7 @@ from nti.externalization.datastructures import LocatedExternalDict
 
 from . import priceable
 from . import purchasable
+from . import invitations
 from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
@@ -85,7 +86,8 @@ class GetPurchaseAttemptView(object):
 		username = authenticated_userid(request)
 		purchase_id = request.params.get('purchaseID')
 		if not purchase_id:
-			raise hexc.HTTPBadRequest(detail="Failed to provide a purchase attempt ID")
+			raise_field_error(request, "purchaseID", "Failed to provide a purchase attempt ID")
+
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
 			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
@@ -106,6 +108,7 @@ class GetPurchaseAttemptView(object):
 		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 		return result
 
+
 class GetPurchasablesView(object):
 
 	def __init__(self, request):
@@ -116,7 +119,7 @@ class GetPurchasablesView(object):
 		result = LocatedExternalDict({'Items': purchasables, 'Last Modified':0})
 		return result
 
-class PricePurchasableView(object):
+class _PostView(object):
 
 	def __init__(self, request):
 		self.request = request
@@ -125,6 +128,35 @@ class PricePurchasableView(object):
 		request = self.request
 		values = simplejson.loads(unicode(request.body, request.charset))
 		return CaseInsensitiveDict(**values)
+
+class RedeemPurchaseCodeView(_PostView):
+
+	def __call__(self):
+		request = self.request
+		values = self.readInput()
+		purchase_id = values.get('purchaseID')
+		if not purchase_id:
+			raise_field_error(request, "purchaseID", "Failed to provide a purchase attempt ID")
+
+		invitation_code = values.get('invitationCode', values.get('invitation_code'))
+		if not invitation_code:
+			raise_field_error(request, "purchaseID", "Failed to provide a invitation code")
+
+		username = authenticated_userid(request)
+		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+		if purchase is None:
+			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
+
+		code = invitations.get_invitation_code(purchase)
+		if code != invitation_code:
+			raise_field_error(request, "invitation_code", "The invitation code is not valid")
+
+		invite = invitations.create_store_purchase_invitation(purchase, code)
+		invite.accept(username)
+
+		return hexc.HTTPNoContent()
+
+class PricePurchasableView(_PostView):
 
 	def price(self, purchasable_id, quantity):
 		pricer = component.getUtility(store_interfaces.IPurchasablePricer)
