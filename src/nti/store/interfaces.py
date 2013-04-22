@@ -66,12 +66,14 @@ class IPricedItem(IPriceable):
 	PurchaseFee = schema.Float(title="Fee Amount", required=False)
 	PurchasePrice = schema.Float(title="Cost amount", required=True)
 	NonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
+	Currency = nti_schema.ValidTextLine(title='Currency ISO code', required=True, default='USD')
 
 class IPricedItems(interface.Interface):
 	PricedList = schema.List(value_type=schema.Object(IPricedItem), title='The priced items', required=True, min_length=0)
 	TotalPurchaseFee = schema.Float(title="Fee Amount", required=False)
 	TotalPurchasePrice = schema.Float(title="Cost amount", required=True)
 	TotalNonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
+	Currency = nti_schema.ValidTextLine(title='Currency ISO code', required=True, default='USD')
 
 class IUserAddress(interface.Interface):
 	Street = nti_schema.ValidText(title='Street address', required=False)
@@ -119,15 +121,13 @@ class IPaymentProcessor(interface.Interface):
 		apply the specified coupon to the specified amout
 		"""
 
-	def process_purchase(purchase_id, username, amount, currency, description):
+	def process_purchase(purchase_id, username, expected_amount=None):
 		"""
 		Process a purchase attempt
 
 		:purchase_id purchase identifier
 		:username User making the purchase
-		:amount: purchase amount
-		:current: currency ISO code
-		:description: purchase description
+		:expected_amount: expected amount
 		"""
 
 	def sync_purchase(purchase_id, username):
@@ -144,15 +144,13 @@ class IPurchaseAttempt(IContained):
 
 	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='Purchase state', required=True)
 
-	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Items being purchased")
+	Order = schema.Object(IPurchaseOrder, title="Items being purchased", required=True)
 	Description = nti_schema.ValidTextLine(title='A purchase description', required=False)
-	Quantity = schema.Int(title='Purchase quantity', required=False, default=1)
 
 	StartTime = nti_schema.Number(title='Start time', required=True)
 	EndTime = nti_schema.Number(title='Completion time', required=False)
 
 	Error = schema.Object(IPurchaseError, title='Error object', required=False)
-
 	Synced = schema.Bool(title='if the item has been synchronized with the processors data', required=True, default=False)
 
 	def has_completed():

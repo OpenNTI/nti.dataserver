@@ -10,11 +10,13 @@ __docformat__ = "restructuredtext en"
 import collections
 
 from zope import interface
+from zope.cachedescriptors.property import Lazy
 from zope.annotation import interfaces as an_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
 
+from . import purchasable
 from . priceable import Priceable
 from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
@@ -36,8 +38,15 @@ class PurchaseOrder(SchemaConfigured):
 	Items = FP(store_interfaces.IPurchaseOrder['Items'])
 	Quantity = FP(store_interfaces.IPurchaseOrder['Quantity'])  # override items quantity
 
+	@Lazy
+	def NTIIDs(self):
+		result = set()
+		for item in self.Items:
+			result.add(item.NTIID)
+		return frozenset(result)
+
 	def __repr__(self):
-		return "%s(%s)" % (self.__class__.__name__, self.Items, self.Quantity)
+		return "%s(%s,%s)" % (self.__class__.__name__, self.Items, self.Quantity)
 
 	def __getitem__(self, index):
 		return self.Items[index]
@@ -57,6 +66,35 @@ class PurchaseOrder(SchemaConfigured):
 		xhash ^= hash(self.Item)
 		xhash ^= hash(self.Quantity)
 		return xhash
+
+def get_purchasables(order):
+	"""
+	return all purchasables for the associated order
+	"""
+	result = list()
+	for item in order.NTIIDs:
+		p = purchasable.get_purchasable(item)
+		if p is not None:
+			result.append(p)
+	return result
+
+def get_providers(order):
+	"""
+	return all providers for the associated purchase
+	"""
+	purchasables = get_purchasables(order)
+	result = purchasable.get_providers(purchasables)
+	return result
+
+def get_currencies(order):
+	"""
+	return all currencies for the associated purchase
+	"""
+	result = set()
+	purchasables = get_purchasables(order)
+	for p in purchasables:
+		result.add(p.Currency)
+	return list(result)
 
 def replace_quantity(po_or_items, quantity):
 	for item in getattr(po_or_items, 'Items', po_or_items):

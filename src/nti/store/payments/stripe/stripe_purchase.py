@@ -70,6 +70,10 @@ class StripePricedPurchasable(StripePricedItem):
 class StripePurchaseItem(StripePriceable, purchase_order.PurchaseItem):
 	pass
 
+def create_stripe_purchase_item(ntiid, quantity=1, coupon=None):
+	result = StripePurchaseItem(NTIID=ntiid, Quantity=quantity, Coupon=coupon)
+	return result
+
 @interface.implementer(stripe_interfaces.IStripePurchaseOrder)
 class StripePurchaseOrder(purchase_order.PurchaseOrder):
 
@@ -90,7 +94,7 @@ def replace_coupon(po_or_items, coupon=None):
 	for item in getattr(po_or_items, 'Items', po_or_items):
 		item.Coupon = coupon
 
-def create_stripe_purchase_order(items=None, quantity=None, coupon=None):
+def create_stripe_purchase_order(items, quantity=None, coupon=None):
 	result = purchase_order.create_purchase_order(items, quantity, StripePurchaseOrder)
 	if coupon is not None:
 		replace_coupon(items, None)

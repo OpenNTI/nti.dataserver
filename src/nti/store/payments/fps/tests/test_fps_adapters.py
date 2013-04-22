@@ -24,10 +24,9 @@ class TestFPSAdapters(ConfiguringTestBase):
 	processor = 'fps'
 
 	def _create_purchase_attempt(self, item=u'xyz-book', description=None):
-		po = purchase_order.create_purchase_item(item, 1)
-		purchase_order.create_purchase_order(po)
-		# pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor)
-		pa = purchase_attempt.create_purchase_attempt(item, processor=self.processor,
+		pi = purchase_order.create_purchase_item(item, 1)
+		po = purchase_order.create_purchase_order(pi)
+		pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor,
 													  description=description)
 		return pa
 

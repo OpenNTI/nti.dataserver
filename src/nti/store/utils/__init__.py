@@ -12,6 +12,8 @@ import six
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
+from .pyramid import raise_field_error
+
 # item/array functions
 
 def from_delimited(value, delim=' '):
@@ -87,3 +89,4 @@ class CaseInsensitiveDict(dict):
 
 	def __delitem__(self, key):
 		return super(CaseInsensitiveDict, self).__delitem__(key.lower())
+

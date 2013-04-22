@@ -16,9 +16,11 @@ from zope.annotation import IAnnotations
 
 from nti.dataserver.users import User
 
-from .... import purchase_history
-from .. import interfaces as stripe_interfaces
-from .... import interfaces as store_interfaces
+from nti.store.payments.stripe import stripe_purchase
+from nti.store.payments.stripe import interfaces as stripe_interfaces
+
+from nti.store import purchase_history
+from nti.store import interfaces as store_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -77,7 +79,18 @@ class TestStripeProcessor(ConfiguringTestBase):
 		c = self.manager.create_charge(100, card=t, description="my charge")
 		assert_that(c, is_not(none()))
 
-	def create_purchase(self, items=(), amount=100):
+	def _create_purchase_attempt(self, item, processor, quantity=None, description=None):
+		pi = stripe_purchase.create_stripe_purchase_item(item, 1)
+		po = stripe_purchase.create_stripe_purchase_order(pi, quantity=quantity)
+		pa = purchase_history.create_purchase_attempt(po, processor=processor, description=description)
+		return pa
+
+	def _create_and_register_purchase_attempt(self, username, item, quantity=None, processor=None, description="my charge"):
+		pa = self._create_purchase_attempt(item, quantity=quantity, processor=processor, description=description)
+		purchase_id = purchase_history.register_purchase_attempt(pa, username)
+		return purchase_id
+
+	def create_purchase(self, item=None, amount=100):
 
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
@@ -85,11 +98,8 @@ class TestStripeProcessor(ConfiguringTestBase):
 			username = user.username
 
 		with mock_dataserver.mock_db_trans(ds):
-			items = items or (self.book_id,)
-			purchase_id = purchase_history.create_and_register_purchase_attempt(username,
-																	 			items=items,
-																	 			processor=self.manager.name,
-																	 			description="my charge")
+			item = item or self.book_id
+			purchase_id = self._create_and_register_purchase_attempt(username, item=item, processor=self.manager.name)
 			assert_that(purchase_id, is_not(none()))
 
 		tid = self.manager.create_card_token(number="5105105105105100",
@@ -103,7 +113,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 										 	 country="USA")
 
 		cid = self.manager.process_purchase(username=username, token=tid,
-											purchase_id=purchase_id, amount=amount, currency='USD')
+											purchase_id=purchase_id, expected_amount=amount)
 
 		assert_that(tid, is_not(none()))
 		assert_that(cid, is_not(none()))
@@ -115,14 +125,11 @@ class TestStripeProcessor(ConfiguringTestBase):
 		ds = self.ds
 
 		with mock_dataserver.mock_db_trans(ds):
-			items = self.book_id,
+			item = self.book_id
 			user = self._create_random_user()
 			username = user.username
-			purchase_id = purchase_history.create_and_register_purchase_attempt(username,
-																	 			items=items,
-																	 			quantity=2,
-																	 			processor=self.manager.name,
-																	 			description="my charge")
+			purchase_id = self._create_and_register_purchase_attempt(username, item=item, quantity=2, processor=self.manager.name)
+
 		result = self.manager.price_purchase(username=username, purchase_id=purchase_id)
 		assert_that(result, is_not(none()))
 		assert_that(result.TotalPurchaseFee, is_(40))
@@ -168,14 +175,11 @@ class TestStripeProcessor(ConfiguringTestBase):
 			username = user.username
 
 		with mock_dataserver.mock_db_trans(ds):
-			items = (self.book_id,)
-			purchase_id = purchase_history.create_and_register_purchase_attempt(username,
-																	 			items=items,
-																	 			processor=self.manager.name,
-																	 			description="my charge")
+			item = self.book_id
+			purchase_id = self._create_and_register_purchase_attempt(username, item=item, processor=self.manager.name)
 
 		cid = self.manager.process_purchase(username=username, token="++invalidtoken++",
-									 		purchase_id=purchase_id, amount=100.0, currency='USD')
+									 		purchase_id=purchase_id, expected_amount=100.0)
 
 		assert_that(cid, is_(none()))
 
@@ -245,11 +249,8 @@ class TestStripeProcessor(ConfiguringTestBase):
 			username = user.username
 
 		with mock_dataserver.mock_db_trans(ds):
-			items = (self.book_id,)
-			purchase_id = purchase_history.create_and_register_purchase_attempt(username,
-																				items=items,
-																	 			processor=self.manager.name,
-																				description="my charge")
+			item = self.book_id
+			purchase_id = self._create_and_register_purchase_attempt(username, item=item, processor=self.manager.name)
 
 		# missing token
 		with mock_dataserver.mock_db_trans(ds):

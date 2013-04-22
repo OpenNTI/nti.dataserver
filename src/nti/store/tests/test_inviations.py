@@ -30,10 +30,9 @@ class TestInvitations(ConfiguringTestBase):
 		return usr
 
 	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None, state=store_interfaces.PA_STATE_UNKNOWN):
-		po = purchase_order.create_purchase_item(item, 1)
-		purchase_order.create_purchase_order(po, quantity=quantity)
-		# pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor)
-		pa = purchase_attempt.create_purchase_attempt(item, quantity=quantity, processor=self.processor, state=state)
+		pi = purchase_order.create_purchase_item(item, 1)
+		po = purchase_order.create_purchase_order(pi, quantity=quantity)
+		pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor, state=state)
 		return pa
 
 	@WithMockDSTrans

@@ -30,7 +30,7 @@ from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
 from .payments import pyramid_views as payment_pyramid
-from .utils import is_valid_pve_int, CaseInsensitiveDict
+from .utils import is_valid_pve_int, CaseInsensitiveDict, raise_field_error
 
 class _PurchaseAttemptView(object):
 
@@ -139,14 +139,14 @@ class PricePurchasableView(object):
 		# check quantity
 		quantity = values.get('quantity', 1)
 		if not is_valid_pve_int(quantity):
-			raise hexc.HTTPBadRequest(detail='invalid quantity')
+			raise_field_error(self.request, 'quantity', 'invalid quantity')
 		quantity = int(quantity)
 
 		try:
 			result = self.price(purchasable_id, quantity)
 			return result
 		except InvalidPurchasable:
-			raise hexc.HTTPBadRequest(detail='invalid purchasable (%s)' % purchasable_id)
+			raise_field_error(self.request, 'purchasableID', 'purchasable not found')
 
 	def __call__(self):
 		result = self.price_purchasable()

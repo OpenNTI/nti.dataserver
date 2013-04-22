@@ -29,8 +29,8 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.zodb.containers import time_to_64bit_int
 
 from . import to_frozenset
+from . import purchase_attempt
 from . import interfaces as store_interfaces
-from .purchase_attempt import create_purchase_attempt
 
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(store_interfaces.IPurchaseHistory)
@@ -179,8 +179,4 @@ def register_purchase_attempt(purchase, user):
 	hist.register_purchase(purchase)
 	return purchase.id
 
-def create_and_register_purchase_attempt(username, items, processor, quantity=None, state=None, description=None, start_time=None):
-	user = _get_user(username)
-	purchase = create_purchase_attempt(items=items, processor=processor, quantity=quantity,
-									   state=state, description=description, start_time=start_time)
-	return register_purchase_attempt(purchase, user)
+create_purchase_attempt = purchase_attempt.create_purchase_attempt
