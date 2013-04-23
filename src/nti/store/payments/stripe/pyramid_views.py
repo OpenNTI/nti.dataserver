@@ -169,12 +169,12 @@ class StripePaymentView(_PostStripeView):
 		po = stripe_purchase.create_stripe_purchase_order(item, quantity=quantity, coupon=coupon)
 
 		pa = purchase_history.create_purchase_attempt(po, processor=self.processor)
-		return pa, stripe_key
+		return pa, token, stripe_key, expected_amount
 
 	def __call__(self):
 		request = self.request
 		username = authenticated_userid(request)
-		purchase_attempt, stripe_key = self.readInput(username)
+		purchase_attempt, token, stripe_key, expected_amount = self.readInput(username)
 
 		# check for any pending purchase for the items being bought
 		purchase = purchase_history.get_pending_purchase_for(username, purchase_attempt.Items)
@@ -190,7 +190,8 @@ class StripePaymentView(_PostStripeView):
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 		def process_purchase():
 			logger.info("Processing purchase %s" % purchase_id)
-			manager.process_purchase(purchase_id=purchase_id, username=username, api_key=stripe_key.PrivateKey)
+			manager.process_purchase(purchase_id=purchase_id, username=username, token=token,
+									 expected_amount=expected_amount, api_key=stripe_key.PrivateKey)
 		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_purchase))
 
 		# return
