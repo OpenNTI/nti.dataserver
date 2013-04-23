@@ -70,6 +70,7 @@ class GetPurchaseHistoryView(_PurchaseAttemptView):
 	def __call__(self):
 		request = self.request
 		username = authenticated_userid(request)
+		# purchasable_id = request.params.get('purchasableID', None)
 		start_time = self._convert(request.params.get('startTime', None))
 		end_time = self._convert(request.params.get('endTime', None))
 		purchases = purchase_history.get_purchase_history(username, start_time, end_time)
