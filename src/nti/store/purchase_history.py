@@ -41,6 +41,7 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 	def __init__(self):
 		self.items_activated = OOTreeSet()
 		self.purchases = self.family.IO.BTree()
+		self.time_records = self.family.II.LLBTree()
 
 	@property
 	def user(self):
