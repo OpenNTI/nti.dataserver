@@ -33,8 +33,9 @@ def _delete_history(username, purchase_id, verbose=False):
 	if hasattr(su, "purchases"):
 		for p in su.purchases.values():
 			lifecycleevent.removed(p)
-	elif hasattr(su, "clear"):
-		su.clear()
+	elif hasattr(su, "values"):
+		for p in su.values():
+			lifecycleevent.removed(p)
 
 	IAnnotations(user).pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
 

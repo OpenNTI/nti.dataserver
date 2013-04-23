@@ -167,8 +167,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			assert_that(IAnnotations(user), is_not(has_key(akey)))
 
 	@WithMockDSTrans
-	def test_fail_payment(self):
-
+	def test_fail_payment_invalid_token(self):
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
 			user = self._create_random_user()
@@ -184,11 +183,33 @@ class TestStripeProcessor(ConfiguringTestBase):
 		assert_that(cid, is_(none()))
 
 		assert_that(eventtesting.getEvents(stripe_interfaces.IStripeCustomerCreated), has_length(1))
-
 		assert_that(eventtesting.getEvents(store_interfaces.IPurchaseAttemptStarted), has_length(1))
-
 		assert_that(eventtesting.getEvents(store_interfaces.IPurchaseAttemptFailed), has_length(1))
 
+		with mock_dataserver.mock_db_trans(ds):
+			pa = purchase_history.get_purchase_attempt(purchase_id, username)
+			assert_that(pa.State, is_(store_interfaces.PA_STATE_FAILED))
+
+	@WithMockDSTrans
+	def test_fail_payment_invalid_expected_amount(self):
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
+			user = self._create_random_user()
+			username = user.username
+
+		with mock_dataserver.mock_db_trans(ds):
+			item = self.book_id
+			purchase_id = self._create_and_register_purchase_attempt(username, item=item, processor=self.manager.name)
+
+		cid = self.manager.process_purchase(username=username, token="++valid++",
+									 		purchase_id=purchase_id, expected_amount=20000.0)
+
+		assert_that(cid, is_(none()))
+		assert_that(eventtesting.getEvents(store_interfaces.IPurchaseAttemptFailed), has_length(1))
+
+		with mock_dataserver.mock_db_trans(ds):
+			pa = purchase_history.get_purchase_attempt(purchase_id, username)
+			assert_that(pa.State, is_(store_interfaces.PA_STATE_FAILED))
 
 	@WithMockDSTrans
 	def test_sync_pending_purchase(self):

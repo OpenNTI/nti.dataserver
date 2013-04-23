@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 import time
 
-import BTrees.check
-
 from nti.dataserver.users import User
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -109,17 +107,11 @@ class TestPurchaseHistory(ConfiguringTestBase):
 				hist = _get_hist()
 				pa = self._create_purchase_attempt(item)
 				hist.add_purchase(pa)
-
-				# check internal pointers
-				hist.purchases._check()
-				# check value consistency
-				BTrees.check.check(hist.purchases)
+				hist._v_check()
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			hist = _get_hist()
-			hist.purchases._check()
-			BTrees.check.check(hist.purchases)
-			# BTrees.check.display( hist.purchases )
+			hist._v_check()
 
 			assert_that(hist, has_length(100))
 

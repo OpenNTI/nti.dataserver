@@ -8,8 +8,9 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import BTrees
-from BTrees.OOBTree import OOTreeSet
+from BTrees.Length import Length
 
+import zope.intid
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -32,6 +33,84 @@ from . import to_frozenset
 from . import purchase_attempt
 from . import interfaces as store_interfaces
 
+class _PurchaseIndex(Persistent):
+
+	family = BTrees.family64
+
+	def __init__(self):
+		self.__len = Length()
+		self.purchases = self.family.II.LLTreeSet()
+		self.item_index = self.family.OO.OOBTree()
+		self.time_index = self.family.II.LLBTree()
+
+	def add(self, purchase):
+		iid = component.getUtility(zope.intid.IIntIds).getId(purchase)
+		# main index
+		self.purchases.add(iid)
+		self.__len.change(1)
+		# time index
+		start_time = time_to_64bit_int(purchase.StartTime)
+		self.time_index[start_time] = iid
+		# item index
+		for item in purchase.Items:
+			item_set = self.item_index.get(item)
+			if item_set is None:
+				item_set = self.item_index[item] = self.family.II.LLTreeSet()
+			item_set.add(iid)
+
+	def remove(self, purchase):
+		iid = component.getUtility(zope.intid.IIntIds).getId(purchase)
+		if iid in self.purchases:
+			self.__len.change(-1)
+			self.purchases.remove(iid)
+			self.time_index.pop(time_to_64bit_int(purchase.StartTime))
+			for item in purchase.Items:
+				item_set = self.item_index.get(item)
+				if item_set and item_set.has_key(iid):
+					item_set.remove(iid)
+			return True
+		return False
+
+	def get_history_by_item(self, purchasabe_id):
+		item_set = self.item_index.get(purchasabe_id)
+		for iid in item_set or ():
+			p = component.getUtility(zope.intid.IIntIds).queryObject(iid)
+			if store_interfaces.IPurchaseAttempt.providedBy(p):
+				yield p
+
+	def get_history_by_time(self, start_time=None, end_time=None):
+		start_time = time_to_64bit_int(start_time) if start_time is not None else None
+		end_time = time_to_64bit_int(end_time) if end_time is not None else None
+		for _, iid in self.time_index.iteritems(start_time, end_time):
+			p = component.getUtility(zope.intid.IIntIds).queryObject(iid)
+			if store_interfaces.IPurchaseAttempt.providedBy(p):
+				yield p
+
+	def values(self):
+		for iid in self.purchases:
+			p = component.getUtility(zope.intid.IIntIds).queryObject(iid)
+			if store_interfaces.IPurchaseAttempt.providedBy(p):
+				yield p
+
+	def __iter__(self):
+		return self.values()
+
+	def __len__(self):
+		return self.__len.value
+
+	def __nonzero__(self):
+		return True
+	__bool__ = __nonzero__
+
+	def _v_check(self):
+		import BTrees.check
+		self.purchases._check()
+		self.item_index._check()
+		self.time_index._check()
+		BTrees.check.check(self.purchases)
+		BTrees.check.check(self.item_index)
+		BTrees.check.check(self.time_index)
+
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(store_interfaces.IPurchaseHistory)
 class PurchaseHistory(zcontained.Contained, Persistent):
@@ -39,9 +118,8 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 	family = BTrees.family64
 
 	def __init__(self):
-		self.items_activated = OOTreeSet()
-		self.purchases = self.family.IO.BTree()
-		self.time_records = self.family.II.LLBTree()
+		self._index = _PurchaseIndex()
+		self._items_activated = self.family.OO.OOTreeSet()
 
 	@property
 	def user(self):
@@ -49,31 +127,29 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 
 	def activate_items(self, items):
 		items = to_frozenset(items)
-		self.items_activated.update(items)
+		self._items_activated.update(items)
 
 	def deactivate_items(self, items):
 		count = 0
 		items = to_frozenset(items)
 		for item in items:
-			if item in self.items_activated:
+			if item in self._items_activated:
 				count += 1
-				self.items_activated.remove(item)
+				self._items_activated.remove(item)
 		return count
 
 	def is_item_activated(self, item):
-		return item in self.items_activated
+		return item in self._items_activated
 
 	def register_purchase(self, purchase):
-		start_time = purchase.StartTime
-		self.purchases[time_to_64bit_int(start_time)] = purchase
 		locate(purchase, self, repr(purchase))
 		lifecycleevent.added(purchase)
+		self._index.add(purchase)
 
 	add_purchase = register_purchase
 
 	def remove_purchase(self, purchase):
-		if self.purchases.pop(time_to_64bit_int(purchase.StartTime), None):
-			self.deactivate_items(purchase.Items)
+		if self._index.remove(purchase):
 			lifecycleevent.removed(purchase)
 			return True
 		return False
@@ -88,39 +164,37 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 		return p.State if p else None
 
 	def get_pending_purchases(self):
-		for p in self.purchases.values():
+		for p in self.values():
 			if p.is_pending() or p.is_unknown():
 				yield p
 
 	def get_pending_purchase_for(self, items):
 		items = to_frozenset(items)
-		for p in self.purchases.values():
+		for p in self.values():
 			if (p.is_pending() or p.is_unknown()) and p.Items.intersection(items):
 				return p
 		return None
 
+	def get_purchase_by_item(self, item):
+		return self._index.get_history_by_item(item)
+
 	def get_purchase_history(self, start_time=None, end_time=None):
-		start_time = time_to_64bit_int(start_time) if start_time is not None else None
-		end_time = time_to_64bit_int(end_time) if end_time is not None else None
-		return self.purchases.iteritems(start_time, end_time)  # iter inclusively between the two times; None is ignored
+		return self._index.get_history_by_time(start_time, end_time)
 
 	def values(self):
-		return self.purchases.values()  # BTree values() is lazy
+		return self._index.values()
 
 	def __iter__(self):
-		return iter(self.purchases.values())  # BTree values() is lazy
+		return self._index.values()
 
 	def __len__(self):
-		# JAM: FIXME: We should be caching a Length object,
-		# as this is otherwise an expensive thing to do. If we
-		# do not define __nonzero__/__bool__, then this gets
-		# invoked a lot. OTOH, if length is not a particularly useful
-		# concept for us, we should not define this method
-		return len(self.purchases)
+		return len(self._index)
 
-	def __nonzero__(self):
-		return True
-	__bool__ = __nonzero__
+	def _v_check(self):
+		import BTrees.check
+		self._index._v_check()
+		self._items_activated._check()
+		BTrees.check.check(self._items_activated)
 
 _PurchaseHistoryFactory = an_factory(PurchaseHistory)
 
