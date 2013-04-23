@@ -162,6 +162,11 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPrope
 	def __str__(self):
 		return self.id
 
+@interface.implementer(store_interfaces.IRedeemedPurchaseAttempt)
+class RedeemedPurchaseAttempt(PurchaseAttempt):
+	RedemptionCode = FP(store_interfaces.IRedeemedPurchaseAttempt['RedemptionCode'])
+	RedemptionTime = FP(store_interfaces.IRedeemedPurchaseAttempt['RedemptionTime'])
+
 def get_purchasables(purchase):
 	return purchase_order.get_purchasables(purchase.Order)
 
@@ -171,15 +176,24 @@ def get_providers(purchase):
 def get_currencies(purchase):
 	return purchase_order.get_currencies(purchase.Order)
 
-def copy_purchase_attempt(purchase):
-	result = PurchaseAttempt(Order=purchase.Order, Processor=purchase.Processor, Description=purchase.Description,
-							 State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
-							 Error=purchase.Error, Synced=purchase.Synced)
-	return result
-
 def create_purchase_attempt(order, processor, state=None, description=None, start_time=None):
 	state = state or store_interfaces.PA_STATE_UNKNOWN
 	start_time = start_time if start_time else time.time()
 	result = PurchaseAttempt(Order=order, Processor=processor, Description=description,
 							 State=state, StartTime=float(start_time))
+	return result
+
+def create_redeemed_purchase_attempt(purchase, redemption_code, redemption_time=None):
+
+	redemption_time = redemption_time if redemption_time else time.time()
+
+	# copy with order quantity none and item quantity to 1
+	new_order = purchase.Order.copy()
+	new_order.Quantity = None
+	purchase_order.replace_quantity(new_order, 1)
+
+	result = RedeemedPurchaseAttempt(Order=new_order, Processor=purchase.Processor, Description=purchase.Description,
+							 		 State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
+									 Error=purchase.Error, Synced=purchase.Synced, RedemptionTime=float(redemption_time),
+									 RedemptionCode=unicode(redemption_code))
 	return result

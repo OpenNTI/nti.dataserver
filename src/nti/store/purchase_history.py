@@ -39,28 +39,28 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 	family = BTrees.family64
 
 	def __init__(self):
-		self.items_purchased = OOTreeSet()
+		self.items_activated = OOTreeSet()
 		self.purchases = self.family.IO.BTree()
 
 	@property
 	def user(self):
 		return self.__parent__
 
-	def register_purchased_items(self, items):
+	def activate_items(self, items):
 		items = to_frozenset(items)
-		self.items_purchased.update(items)
+		self.items_activated.update(items)
 
-	def remove_purchased_items(self, items):
+	def deactivate_items(self, items):
 		count = 0
 		items = to_frozenset(items)
 		for item in items:
-			if item in self.items_purchased:
+			if item in self.items_activated:
 				count += 1
-				self.items_purchased.remove(item)
+				self.items_activated.remove(item)
 		return count
 
-	def is_item_purchased(self, item):
-		return item in self.items_purchased
+	def is_item_activated(self, item):
+		return item in self.items_activated
 
 	def register_purchase(self, purchase):
 		start_time = purchase.StartTime
@@ -72,7 +72,7 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 
 	def remove_purchase(self, purchase):
 		if self.purchases.pop(time_to_64bit_int(purchase.StartTime), None):
-			self.remove_purchased_items(purchase.Items)
+			self.deactivate_items(purchase.Items)
 			lifecycleevent.removed(purchase)
 			return True
 		return False
@@ -128,20 +128,20 @@ def _get_user(user):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	return user
 
-def register_purchased_items(user, items):
+def activate_items(user, items):
 	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
-	hist.register_purchased_items(items)
+	hist.activate_items(items)
 
-def remove_purchased_items(user, items):
+def deactivate_items(user, items):
 	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
-	return hist.remove_purchased_items(items)
+	return hist.activate_items(items)
 
-def is_item_purchased(user, item):
+def is_item_activated(user, item):
 	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
-	return hist.is_item_purchased(item)
+	return hist.is_item_activated(item)
 
 def get_purchase_attempt(purchase_id, user=None):
 	user = _get_user(user)

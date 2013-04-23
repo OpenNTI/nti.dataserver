@@ -28,6 +28,7 @@
 	<adapter factory=".externalization.PurchaseOrderExternal" />
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	<adapter factory=".externalization.PricedItemsExternalizer" />
+	<adapter factory=".externalization.RedeemedPurchaseAttemptExternal" />
 	
 	<subscriber factory=".externalization.PurchasableDecorator"
 				for=".interfaces.IPurchasable"

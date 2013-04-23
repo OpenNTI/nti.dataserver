@@ -45,6 +45,10 @@ class PurchaseOrder(SchemaConfigured):
 			result.add(item.NTIID)
 		return frozenset(result)
 
+	def copy(self):
+		items = [item.copy() for item in self.Items]
+		return self.__class__(Items=items, Quantity=self.Quantity)
+
 	def __repr__(self):
 		return "%s(%s,%s)" % (self.__class__.__name__, self.Items, self.Quantity)
 
@@ -108,3 +112,4 @@ def create_purchase_order(items=None, quantity=None, cls=PurchaseOrder):
 		replace_quantity(items, quantity)
 	result = cls(Items=list(items), Quantity=quantity)
 	return result
+
