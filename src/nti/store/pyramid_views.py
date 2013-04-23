@@ -146,6 +146,9 @@ class RedeemPurchaseCodeView(_PostView):
 		if purchase is None or not store_interfaces.IPurchaseAttempt.provideBy(purchase):
 			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
 
+		if purchase.Quantity is None:
+			raise hexc.HTTPUnprocessableEntity(detail='Not redeemable purchase')
+
 		if purchasable_id not in purchase.Items:
 			raise_field_error(request, "invitation_code", "The invitation code is not for this purchasable")
 
