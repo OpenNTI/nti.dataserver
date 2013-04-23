@@ -181,6 +181,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		Executes the process purchase.
 		This function may be called in a greenlet (which cannot be run within a transaction runner)
 		"""
+		#### from IPython.core.debugger import Tracer; Tracer()()  ####
+
 		transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 
 		def start_purchase():
