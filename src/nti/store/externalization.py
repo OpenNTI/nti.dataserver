@@ -40,6 +40,11 @@ class PurchaseOrderExternal(InterfaceObjectIO):
 class PurchaseAttemptExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = store_interfaces.IPurchaseAttempt
 
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IRedeemedPurchaseAttempt)
+class RedeemedPurchaseAttemptExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IRedeemedPurchaseAttempt
+
 @component.adapter(store_interfaces.IPurchasable)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class PurchaseAttemptDecorator(object):
@@ -66,8 +71,8 @@ class PurchasableDecorator(object):
 		# check if item has been purchased
 		username = authenticated_userid(get_current_request())
 		if username:
-			purchased = purchase_history.is_item_purchased(username, original.NTIID)
-			external['Purchased'] = purchased
+			Activated = purchase_history.is_item_activated(username, original.NTIID)
+			external['Activated'] = Activated
 
 		# fill details from library
 		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)

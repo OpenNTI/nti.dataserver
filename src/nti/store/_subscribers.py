@@ -17,9 +17,9 @@ from nti.appserver.invitations import interfaces as invite_interfaces
 
 from . import purchasable
 from . import _content_roles
+from . import purchase_history
+from . import purchase_attempt
 from . import interfaces as store_interfaces
-from .purchase_history import remove_purchased_items
-from .purchase_history import register_purchased_items
 
 @component.adapter(store_interfaces.IPurchaseAttemptStarted)
 def _purchase_attempt_started(event):
@@ -34,11 +34,11 @@ def _purchase_attempt_successful(event):
 	purchase.updateLastMod()
 	purchase.EndTime = time.time()
 	purchase.State = store_interfaces.PA_STATE_SUCCESS
-	register_purchased_items(purchase.creator, purchase.Items)
 
 	# if not register invitation
 	if not purchase.Quantity:
 		# allow content roles
+		purchase_history.activate_items(purchase.creator, purchase.Items)
 		lib_items = purchasable.get_content_items(purchase.Items)
 		_content_roles._add_users_content_roles(purchase.creator, lib_items)
 
@@ -50,11 +50,11 @@ def _purchase_attempt_refunded(event):
 	purchase.updateLastMod()
 	purchase.EndTime = time.time()
 	purchase.State = store_interfaces.PA_STATE_REFUNDED
-	remove_purchased_items(event.username, purchase.Items)
-
-	# TODO: we need to handle when there is an invitation
-	lib_items = purchasable.get_content_items(purchase.Items)
-	_content_roles._remove_users_content_roles(event.username, lib_items)
+	if not purchase.Quantity:
+		purchase_history.deactivate_items(event.username, purchase.Items)
+		# TODO: we need to handle when there is an invitation
+		lib_items = purchasable.get_content_items(purchase.Items)
+		_content_roles._remove_users_content_roles(event.username, lib_items)
 
 	logger.info('%s has been refunded' % purchase)
 
@@ -85,5 +85,9 @@ def _purchase_attempt_synced(event):
 def _purchase_invitation_accepted(invitation, event):
 	purchase = getattr(invitation, 'purchase', None)
 	if purchase is not None:
+		# activate role
 		lib_items = purchasable.get_content_items(purchase.Items)
 		_content_roles._add_users_content_roles(event.user, lib_items)
+		# create and register a purchase attempt for accepting user
+		rpa = purchase_attempt.create_redeemed_purchase_attempt(purchase, invitation.code)
+		purchase_history.register_purchase_attempt(rpa, event.user)

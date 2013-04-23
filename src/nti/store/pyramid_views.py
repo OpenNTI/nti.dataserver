@@ -143,7 +143,7 @@ class RedeemPurchaseCodeView(_PostView):
 			raise_field_error(request, "invitation_code", "Failed to provide a invitation code")
 
 		purchase = invitations.get_purchase_by_code(invitation_code)
-		if purchase is None:
+		if purchase is None or not store_interfaces.IPurchaseAttempt.provideBy(purchase):
 			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
 
 		if purchasable_id not in purchase.Items:

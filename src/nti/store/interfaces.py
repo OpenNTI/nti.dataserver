@@ -55,12 +55,18 @@ class IPriceable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
 	Quantity = schema.Int(title="Quantity", required=False, default=1)
 
+	def copy():
+		"""makes a new copy of this priceable"""
+
 class IPurchaseItem(IPriceable):
 	"""marker interface for a purchase order item"""
 
 class IPurchaseOrder(sequence.IMinimalSequence):
 	Items = schema.List(value_type=schema.Object(IPriceable), title='The items', required=True, min_length=1)
 	Quantity = schema.Int(title='Purchase bulk quantity', required=False)
+
+	def copy():
+		"""makes a new copy of this purchase order"""
 
 class IPricedItem(IPriceable):
 	PurchaseFee = schema.Float(title="Fee Amount", required=False)
@@ -202,6 +208,10 @@ class IPurchaseAttempt(IContained):
 		"""
 		return if the purchase has been synchronized with the payment processor
 		"""
+
+class IRedeemedPurchaseAttempt(IPurchaseAttempt):
+	RedemptionTime = nti_schema.Number(title='Redemption time', required=True)
+	RedemptionCode = nti_schema.ValidTextLine(title='Redemption Code', required=True)
 
 class IPurchaseAttemptEvent(IObjectEvent):
 	object = schema.Object(IPurchaseAttempt, title="The purchase")

@@ -20,6 +20,10 @@ class StripePriceable(priceable.Priceable):
 
 	Coupon = FP(stripe_interfaces.IStripePriceable['Coupon'])
 
+	def copy(self):
+		result = super(StripePriceable, self).copy()
+		result.Coupon = self.Coupon
+
 	def __eq__(self, other):
 		try:
 			return super(StripePriceable, self).__eq__(other) and self.Coupon == other.Coupon
@@ -78,6 +82,10 @@ def create_stripe_purchase_item(ntiid, quantity=1, coupon=None):
 class StripePurchaseOrder(purchase_order.PurchaseOrder):
 
 	Coupon = FP(stripe_interfaces.IStripePurchaseOrder['Coupon'])  # overide items coupon
+
+	def copy(self):
+		result = super(StripePurchaseOrder, self).copy()
+		result.Coupon = self.Coupon
 
 	def __eq__(self, other):
 		try:
