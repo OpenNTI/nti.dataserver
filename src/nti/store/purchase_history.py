@@ -71,6 +71,10 @@ class _PurchaseIndex(Persistent):
 			return True
 		return False
 
+	def has_history_by_item(self, purchasabe_id):
+		item_set = self.item_index.get(purchasabe_id) or ()
+		return len(item_set) > 0
+
 	def get_history_by_item(self, purchasabe_id):
 		item_set = self.item_index.get(purchasabe_id)
 		for iid in item_set or ():
@@ -240,6 +244,12 @@ def get_purchase_history(user, start_time=None, end_time=None):
 	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
 	result = LocatedExternalList(hist.get_purchase_history(start_time, end_time))
+	return result
+
+def has_history_by_item(user, purchasable_id):
+	user = _get_user(user)
+	hist = store_interfaces.IPurchaseHistory(user)
+	result = hist.has_history_by_item(purchasable_id)
 	return result
 
 def get_purchase_history_by_item(user, purchasable_id):
