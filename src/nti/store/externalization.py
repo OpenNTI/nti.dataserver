@@ -7,11 +7,15 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import urllib
+
 from zope import interface
 from zope import component
 
 from pyramid.security import authenticated_userid
 from pyramid.threadlocal import get_current_request
+
+from nti.dataserver.links import Link
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
@@ -67,12 +71,23 @@ class PurchasableDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
+	def set_links(self, username, original, external):
+		request = get_current_request()
+		if request is None: return
+
+		# insert history link
+		if purchase_history.has_history_by_item(username, original.NTIID):
+			link_hist_href = "/dataserver/store/get_purchase_history?purchasableID=" + urllib.quote(original.NTIID)
+			link_hist = Link(link_hist_href, rel="history")
+			external.setdefault('Links', []).append(link_hist)
+
 	def decorateExternalObject(self, original, external):
 		# check if item has been purchased
 		username = authenticated_userid(get_current_request())
 		if username:
-			Activated = purchase_history.is_item_activated(username, original.NTIID)
-			external['Activated'] = Activated
+			activated = purchase_history.is_item_activated(username, original.NTIID)
+			external['Activated'] = activated
+			self.set_links(username, original, external)
 
 		# fill details from library
 		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
