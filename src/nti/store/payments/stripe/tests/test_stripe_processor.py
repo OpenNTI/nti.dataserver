@@ -31,7 +31,7 @@ from . import ConfiguringTestBase
 from zope.component import eventtesting
 from hamcrest import (assert_that, is_, is_not, has_length, has_key, none)
 
-TEST_PAYMENT = False
+TEST_WITH_STRIPE = True
 
 class TestStripeProcessor(ConfiguringTestBase):
 
@@ -140,7 +140,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 		assert_that(result.TotalPurchasePrice, is_(200))
 		assert_that(result.TotalNonDiscountedPrice, is_(200))
 
-	@unittest.skipUnless(TEST_PAYMENT, '')
+	@unittest.skipUnless(TEST_WITH_STRIPE, '')
 	@WithMockDSTrans
 	def test_process_payment(self):
 		ds = self.ds
@@ -171,7 +171,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			user = User.get_user(username)
 			assert_that(IAnnotations(user), is_not(has_key(akey)))
 
-	@unittest.skipUnless(TEST_PAYMENT, '')
+	@unittest.skipUnless(TEST_WITH_STRIPE, '')
 	@WithMockDSTrans
 	def test_process_payment_coupon(self):
 
@@ -242,6 +242,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
 			assert_that(pa.State, is_(store_interfaces.PA_STATE_FAILED))
 
+	@unittest.skipUnless(TEST_WITH_STRIPE, '')
 	@WithMockDSTrans
 	def test_sync_pending_purchase(self):
 		ds = self.ds
@@ -265,6 +266,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
 			assert_that(pa.State, is_(store_interfaces.PA_STATE_SUCCESS))
 
+	@unittest.skipUnless(TEST_WITH_STRIPE, '')
 	@WithMockDSTrans
 	def test_sync_invalid_charge_id(self):
 		ds = self.ds
@@ -279,6 +281,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			charge = self.manager.sync_purchase(purchase_id, username=username)
 			assert_that(charge, is_(None))
 
+	@unittest.skipUnless(TEST_WITH_STRIPE, '')
 	@WithMockDSTrans
 	def test_sync_invalid_missing_charge_id(self):
 		ds = self.ds
@@ -293,6 +296,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			charge = self.manager.sync_purchase(purchase_id, username=username, api_key=stripe.api_key)
 			assert_that(charge, is_not(None))
 
+	@unittest.skipUnless(TEST_WITH_STRIPE, '')
 	@WithMockDSTrans
 	def test_sync_with_tokens(self):
 		ds = self.ds
