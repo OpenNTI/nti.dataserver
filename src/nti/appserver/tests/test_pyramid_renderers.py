@@ -28,22 +28,22 @@ class TestContentType(ConfiguringTestBase):
 		assert_that( find_content_type( self.request ),
 					 is_( 'application/vnd.nextthought+json' ) )
 
-	def test_generic_accept_overriden_by_query(self):
+	def test_generic_accept_not_overriden_by_query(self):
 		self.request = Request.blank( '/?format=plist' )
 		self.request.accept = '*/*'
 		assert_that( find_content_type( self.request ),
-					 is_( 'application/vnd.nextthought+plist' ) )
+					 is_( 'application/vnd.nextthought+json' ) )
 
-	def test_builtin_type( self ):
+	def test_xml_types_are_json( self ):
 		self.request.accept = 'application/xml'
 
 		assert_that( find_content_type( self.request, data={} ),
-					 is_( 'application/vnd.nextthought+plist' ) )
+					 is_( 'application/vnd.nextthought+json' ) )
 
-		self.request.accept = 'application/vnd.nextthought+plist'
+		self.request.accept = 'application/vnd.nextthought+json'
 
 		assert_that( find_content_type( self.request, data={} ),
-					 is_( 'application/vnd.nextthought+plist' ) )
+					 is_( 'application/vnd.nextthought+json' ) )
 
 
 	def test_nti_type( self ):
