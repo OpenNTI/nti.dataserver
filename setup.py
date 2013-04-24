@@ -214,21 +214,21 @@ setup(
 		# jquery-like traversing of python datastructures. lxml, cssselect
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
-		'pyramid >= 1.4' ,
+		'pyramid >= 1.4.1' ,
 		'pyramid_mailer >= 0.11',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
 		'pyramid_zodbconn >= 0.4',
 		'pyramid-openid >= 0.3.4',
 		# Monitoring stats and instrumenting code
-		'python-statsd >= 1.5.8',  # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
+		'python-statsd >= 1.6.0',  # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
 		 # Consider also https://github.com/phensley/gstatsd
 		'pystatsd >= 0.1.6',
 		'pytz >= 2013b',
 		'rdflib >= 3.4.0',
 		# Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
-		'redis >= 2.7.2',
+		'redis >= 2.7.3',
 		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6',  # LRU caching. Dep of Pyramid

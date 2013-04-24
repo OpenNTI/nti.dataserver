@@ -138,8 +138,17 @@ class MathCountsCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
 
 #: This relationship is exposed on Users and in the handshake/ping
 #: when the UI should display it as a link to information about
-#: our "Children's Privacy Policy."
-REL_CHILDRENS_PRIVACY = 'childrens-privacy'
+#: our "Children's Privacy Policy." It is a permanent link.
+#: NOTE: you may also get the :data:`REL_GENERAL_PRIVACY_PAGE` link
+#: depending on the site and type of user.
+REL_CHILDRENS_PRIVACY_PAGE = 'childrens-privacy'
+
+#: Link relationship indicating the general privacy policy page
+#: The client is expected to make this relationship
+#: available to the end user at all times for review. It is NOT a deletable
+#: link.
+REL_GENERAL_PRIVACY_PAGE = 'content.permanent_general_privacy_page'
+
 
 #: The relationship that is exposed when editing a user's profile's
 #: ``contact_email`` field will result in sending a COPPA consent
