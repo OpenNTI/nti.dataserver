@@ -403,12 +403,27 @@ class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
 				**_r_view_defaults )
 class ForumContentsGetView(ForumsContainerContentsGetView):
 	"""
-	Adds support for sorting by ``NewestPostCreatedTime`` of the individual topics.
+	Adds support for sorting by ``NewestDescendantCreatedTime`` of the individual topics,
+	and makes sure that the Last Modified time reflects that value.
 	"""
 
 	SORT_KEYS = ForumsContainerContentsGetView.SORT_KEYS.copy()
 	SORT_KEYS['NewestDescendantCreatedTime'] = operator.attrgetter('NewestDescendantCreatedTime')
 
+	def __call__( self ):
+		result = super(ForumContentsGetView,self).__call__()
+
+		if self.request.context:
+			# Sigh. Loading all the objects.
+			# TODO: We are doing this even for comments during the RSS/Atom feed process, which
+			# is weird.
+			# NOTE: Using the key= argument fails because it masks AttributeErrors and results in
+			# heterogenous comparisons
+			newest_time = max( (getattr(x, 'NewestDescendantCreatedTime', 0) for x in self.request.context.values()) )
+			newest_time = max( result.lastModified, newest_time )
+			result.lastModified = newest_time
+			result['Last Modified'] = newest_time
+		return result
 
 @view_config( context=frm_interfaces.IHeadlineTopic,
 			  name='feed.atom' )

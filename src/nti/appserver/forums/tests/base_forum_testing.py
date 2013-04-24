@@ -32,6 +32,7 @@ from hamcrest import has_entry
 from hamcrest import has_entries
 from hamcrest import ends_with
 from hamcrest import greater_than
+from hamcrest import greater_than_or_equal_to
 from hamcrest import has_key
 
 from nti.tests import is_empty
@@ -387,6 +388,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		comment_ts2 = comment_res2.json_body['CreatedTime']
 
 		contents_res = testapp.get( self.forum_pretty_contents_url, params={'sortOn': 'NewestDescendantCreatedTime', 'sortOrder': 'descending'} )
+		orig_content_lm = contents_res.last_modified
 		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 2 ) ) )
 		assert_that( contents_res.json_body['Items'], contains( has_entry( 'NewestDescendantCreatedTime', comment_ts2 ),
 																has_entry( 'NewestDescendantCreatedTime', comment_ts1 ) ) )
@@ -396,8 +398,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( contents_res.json_body['Items'], contains( has_entry( 'NewestDescendantCreatedTime', comment_ts1 ),
 																has_entry( 'NewestDescendantCreatedTime', comment_ts2 ) ) )
 
-		contents_res = testapp.get( self.forum_pretty_url )
-		assert_that( contents_res.json_body, has_entry( 'NewestDescendant', has_entry( 'CreatedTime', comment_ts2 ) ) )
+		forum_res = testapp.get( self.forum_pretty_url )
+		assert_that( forum_res.json_body, has_entry( 'NewestDescendant', has_entry( 'CreatedTime', comment_ts2 ) ) )
 
 		# Of course, neither of these is visible to user2 yet...
 		contents_res = testapp2.get( self.forum_pretty_contents_url )
@@ -405,21 +407,26 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		# ...and the new comment doesn't show up for this user, though
 		# the timestamp (and sort order, should that matter) do. This should
 		# be incredibly rare
-		contents_res = testapp2.get( self.forum_pretty_url )
-		assert_that( contents_res.json_body, has_entry( 'NewestDescendant', is_( none() ) ) )
-		assert_that( contents_res.json_body, has_entry( 'NewestDescendantCreatedTime', comment_ts2 ) )
+		forum_res = testapp2.get( self.forum_pretty_url )
+		assert_that( forum_res.json_body, has_entry( 'NewestDescendant', is_( none() ) ) )
+		assert_that( forum_res.json_body, has_entry( 'NewestDescendantCreatedTime', comment_ts2 ) )
+
+		# The timestamp has been updated as well
+		contents_res = testapp2.get( self.forum_pretty_contents_url )
+		assert_that( contents_res.json_body['Last Modified'], is_( comment_ts2 ) )
+		assert_that( contents_res.last_modified, is_( greater_than_or_equal_to( orig_content_lm ) ) )
 
 		# If we add a topic that is newer and unpublished...
 		self._POST_topic_entry()
 		# this bumps the comment out of place
-		contents_res = testapp2.get( self.forum_pretty_url )
-		assert_that( contents_res.json_body, has_entry( 'NewestDescendant', is_( none() ) ) )
+		forum_res = testapp2.get( self.forum_pretty_url )
+		assert_that( forum_res.json_body, has_entry( 'NewestDescendant', is_( none() ) ) )
 
 		# If I publish the first one...
 		testapp.post( self.require_link_href_with_rel( topic_res1.json_body, 'publish' ) )
 		# ...and ask for it as the other user, that's what I see
-		contents_res = testapp2.get( self.forum_pretty_url )
-		assert_that( contents_res.json_body, has_entry( 'NewestDescendant', has_entry( 'href', topic_res1.json_body['href'] ) ) )
+		forum_res = testapp2.get( self.forum_pretty_url )
+		assert_that( forum_res.json_body, has_entry( 'NewestDescendant', has_entry( 'href', topic_res1.json_body['href'] ) ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@time_monotonically_increases
