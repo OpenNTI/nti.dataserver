@@ -84,7 +84,7 @@ TESTS_REQUIRE = [
 	'ipdb >= 0.7',  # easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
 	'nose >= 1.3.0',
 	'nose-timer >= 0.1.2',
-	#'nose-progressive >= 1.4.1', # seems incompatible with nose 1.3.0?
+	'nose-progressive >= 1.4.3',
 	'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 	'pyhamcrest >= 1.7.1',
 	'tempstorage >= 2.12.2',  # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
@@ -171,7 +171,7 @@ setup(
 		'contentratings == 1.0',  # requires small patch to work without acquisition
 		'cryptacular >= 1.4.1',  # see z3c.crypt
 		'cssselect == 0.7.1',  # Used by pyquery (0.8 not compatible with pyquery 1.2.4, :first raises AttributeError)
-		'cython >= 0.18',
+		'cython >= 0.19',
 		# Adds support for detecting aborts to transactions which
 		# otherwise only detect failed commits
 		'dm.transaction.aborthook >= 1.0',
@@ -186,7 +186,7 @@ setup(
 		'futures >= 2.1.3',
 		# 'gevent == 1.0rc1', Coming from requirements.txt right now
 		'greenlet >= 0.4.0',
-		'gunicorn >= 0.17.2',
+		'gunicorn >= 0.17.3',
 		'hiredis >= 0.1.1',  # Redis C parser
 		'html5lib == 0.95',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
@@ -232,7 +232,7 @@ setup(
 		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6',  # LRU caching. Dep of Pyramid
-		'repoze.sendmail >= 4.0b2',  # trunk has some good binary changes
+		'repoze.sendmail >= 4.0',  # trunk has some good binary changes
 		'repoze.who >= 2.1',  #
 		'repoze.zodbconn >= 0.14',
 		 # Requests: http for humans. Requests >= 1.0.x is depended on by httpie 0.4.
