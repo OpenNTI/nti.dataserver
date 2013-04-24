@@ -11,7 +11,7 @@
 	<include package="." file="meta.zcml" />
 	
 	<pcs:registerPurchasable
-		ntiid="tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center"
+		ntiid="tag:nextthought.com,2011-10:NextThought-purchasable-HelpCenter"
 		title="NextThought Help Center"
 		description="NextThought Help Center"
 		provider="NTI-TEST"
@@ -19,6 +19,7 @@
 		amount="100"
 		currency="USD"
 		discountable="False"
-		bulk_purchase="True" />
+		bulk_purchase="True"
+		items="tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center" />
 		
 </configure>

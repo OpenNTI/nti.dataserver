@@ -48,6 +48,8 @@
 	
 	<utility factory=".pricing.DefaultPurchasablePricer" />
 	
+	<utility factory=".purchasable._PurchasableResolver" name="purchasable" />
+	
 	<include package="." file="purchasable.zcml" />
 		
 </configure>
