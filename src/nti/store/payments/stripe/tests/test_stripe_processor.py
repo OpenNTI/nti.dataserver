@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 import time
 import uuid
 import stripe
+import unittest
 
 from zope import component
 from zope.annotation import IAnnotations
@@ -29,6 +30,8 @@ from . import ConfiguringTestBase
 
 from zope.component import eventtesting
 from hamcrest import (assert_that, is_, is_not, has_length, has_key, none)
+
+TEST_PAYMENT = False
 
 class TestStripeProcessor(ConfiguringTestBase):
 
@@ -137,6 +140,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 		assert_that(result.TotalPurchasePrice, is_(200))
 		assert_that(result.TotalNonDiscountedPrice, is_(200))
 
+	@unittest.skipUnless(TEST_PAYMENT, '')
 	@WithMockDSTrans
 	def test_process_payment(self):
 		ds = self.ds
@@ -167,7 +171,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 			user = User.get_user(username)
 			assert_that(IAnnotations(user), is_not(has_key(akey)))
 
-
+	@unittest.skipUnless(TEST_PAYMENT, '')
 	@WithMockDSTrans
 	def test_process_payment_coupon(self):
 
