@@ -106,4 +106,5 @@ def create_stripe_purchase_order(items, quantity=None, coupon=None):
 	result = purchase_order.create_purchase_order(items, quantity, StripePurchaseOrder)
 	if coupon is not None:
 		replace_coupon(result, None)
+		result.Coupon = coupon
 	return result
