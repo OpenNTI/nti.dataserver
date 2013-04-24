@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope import component
 
 from nti.contentlibrary import interfaces as lib_interfaces
@@ -50,6 +52,7 @@ def _add_users_content_roles( user, items ):
 		specific = ntiids.get_specific(item).lower()
 		role_id = nauth.role_for_providers_content( provider, specific ) 
 		if role_id not in current_roles:
+			logger.info("Role %s added to %s", role_id, user)
 			roles_to_add.add(role_id)
 	
 	member.setGroups( list(current_roles.values()) + list(roles_to_add) )
@@ -84,7 +87,8 @@ def _remove_users_content_roles( user, items ):
 			roles_to_remove.add(role_id.id)
 
 	for r in roles_to_remove:
-		current_roles.pop(r, None)
+		if current_roles.pop(r, None):
+			logger.info("Role %s removed from %s", r, user)
 	
 	member.setGroups( list(current_roles.values()) )
 	return current_size - len(current_roles)
