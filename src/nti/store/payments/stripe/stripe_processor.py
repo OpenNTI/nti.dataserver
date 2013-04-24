@@ -209,9 +209,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			currency = totals.Currency
 			amount = totals.TotalPurchasePrice
 			if expected_amount is not None and not math.fabs(expected_amount - amount) <= 0.05:
-				s = "Purchase order amount %.2f did not matched the expected amount %.2f" % (amount, expected_amount)
-				logger.error(s)
-				raise Exception(s)
+				logger.error("Purchase order amount %.2f did not matched the expected amount %.2f" % (amount, expected_amount))
+				raise Exception("Purchase order amount did not matched the expected amount")
 
 			# create a stripe customer
 			customer_id = transactionRunner(register_stripe_user)
