@@ -77,7 +77,7 @@ class PurchasableDecorator(object):
 
 		# insert history link
 		if purchase_history.has_history_by_item(username, original.NTIID):
-			link_hist_href = "/dataserver/store/get_purchase_history?purchasableID=" + urllib.quote(original.NTIID)
+			link_hist_href = "/dataserver2/store/get_purchase_history?purchasableID=" + urllib.quote(original.NTIID)
 			link_hist = Link(link_hist_href, rel="history")
 			external.setdefault('Links', []).append(link_hist)
 
