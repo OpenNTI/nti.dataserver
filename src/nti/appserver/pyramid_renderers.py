@@ -18,11 +18,11 @@ from zope import component
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.externalization.externalization import to_external_representation, toExternalObject,  EXT_FORMAT_PLIST, catch_replace_action
+from nti.externalization.externalization import to_external_representation, toExternalObject,  catch_replace_action
 from nti.externalization.externalization import to_json_representation_externalized
 from nti.externalization.oids import to_external_ntiid_oid
-from nti.dataserver.mimetype import (MIME_BASE_PLIST, MIME_BASE_JSON,
-									 MIME_EXT_PLIST, MIME_EXT_JSON,
+from nti.dataserver.mimetype import (MIME_BASE_JSON,
+									 MIME_EXT_JSON,
 									 nti_mimetype_from_object,
 									 MIME_BASE)
 
@@ -67,30 +67,21 @@ def find_content_type( request, data=None ):
 			return full_type
 
 	app_json = MIME_BASE_JSON
-	app_plst = MIME_BASE_PLIST
 	app_c_json = str(full_type) + MIME_EXT_JSON if full_type else MIME_BASE_JSON
-	app_c_plst = str(full_type) + MIME_EXT_PLIST if full_type else MIME_BASE_PLIST
 
 	if request.accept:
 		# In preference order
-		offers = ( app_c_json, app_c_plst,
-				   app_json, app_plst,
-				   b'application/json', b'application/xml' )
+		offers = ( app_c_json,
+				   app_json,
+				   b'application/json' )
 		best_match = request.accept.best_match( offers )
 
 	if best_match:
 		# Give back the most specific version possible
 		if best_match.endswith( b'json' ):
 			best_match = app_c_json
-		else:
-			best_match = app_c_plst
 
-	# Legacy support: Base the return off of a query param. We
-	# allow this to override the Accept: header to non-default for legacy
-	# reasons (and also for command-line usage)
-	if request.GET.get( b'format' ) == b'plist':
-		best_match = app_c_plst
-	elif not best_match:
+	if not best_match:
 		best_match = app_c_json
 
 	return best_match or MIME_BASE_JSON
@@ -158,8 +149,6 @@ def render_externalizable(data, system):
 		# Only transform this if it was one of our objects
 		if response.content_type.endswith( b'json' ):
 			body = to_json_representation_externalized( body )
-		else:
-			body = to_external_representation( body, EXT_FORMAT_PLIST )
 
 	return body
 
