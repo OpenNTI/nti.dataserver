@@ -79,18 +79,19 @@ class TestStripeProcessor(ConfiguringTestBase):
 		c = self.manager.create_charge(100, card=t, description="my charge")
 		assert_that(c, is_not(none()))
 
-	def _create_purchase_attempt(self, item, processor, quantity=None, description=None):
+	def _create_purchase_attempt(self, item, processor, quantity=None, description=None, coupon=None):
 		pi = stripe_purchase.create_stripe_purchase_item(item, 1)
-		po = stripe_purchase.create_stripe_purchase_order(pi, quantity=quantity)
+		po = stripe_purchase.create_stripe_purchase_order(pi, quantity=quantity, coupon=coupon)
 		pa = purchase_history.create_purchase_attempt(po, processor=processor, description=description)
 		return pa
 
-	def _create_and_register_purchase_attempt(self, username, item, quantity=None, processor=None, description="my charge"):
-		pa = self._create_purchase_attempt(item, quantity=quantity, processor=processor, description=description)
+	def _create_and_register_purchase_attempt(self, username, item, quantity=None, processor=None, coupon=None,
+											  description="my charge"):
+		pa = self._create_purchase_attempt(item, quantity=quantity, processor=processor, coupon=coupon, description=description)
 		purchase_id = purchase_history.register_purchase_attempt(pa, username)
 		return purchase_id
 
-	def create_purchase(self, item=None, amount=100):
+	def create_purchase(self, item=None, amount=100, coupon=None):
 
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
@@ -99,7 +100,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		with mock_dataserver.mock_db_trans(ds):
 			item = item or self.book_id
-			purchase_id = self._create_and_register_purchase_attempt(username, item=item, processor=self.manager.name)
+			purchase_id = self._create_and_register_purchase_attempt(username, item=item, processor=self.manager.name, coupon=coupon)
 			assert_that(purchase_id, is_not(none()))
 
 		tid = self.manager.create_card_token(number="5105105105105100",
@@ -165,6 +166,32 @@ class TestStripeProcessor(ConfiguringTestBase):
 		with mock_dataserver.mock_db_trans(ds):
 			user = User.get_user(username)
 			assert_that(IAnnotations(user), is_not(has_key(akey)))
+
+
+	@WithMockDSTrans
+	def test_process_payment_coupon(self):
+
+		code = str(uuid.uuid4()).split('-')[0]
+		c = stripe.Coupon.create(percent_off=50, duration='once', id=code)
+
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
+			username, purchase_id, _, _ = self.create_purchase(amount=50, coupon=c.id)
+
+		with mock_dataserver.mock_db_trans(ds):
+			pa = purchase_history.get_purchase_attempt(purchase_id, username)
+			assert_that(pa.State, is_(store_interfaces.PA_STATE_SUCCESS))
+
+		assert_that(eventtesting.getEvents(stripe_interfaces.IStripeCustomerCreated), has_length(1))
+
+		assert_that(eventtesting.getEvents(store_interfaces.IPurchaseAttemptStarted), has_length(1))
+
+		assert_that(eventtesting.getEvents(stripe_interfaces.IRegisterStripeToken), has_length(1))
+		assert_that(eventtesting.getEvents(stripe_interfaces.IRegisterStripeCharge), has_length(1))
+
+		assert_that(eventtesting.getEvents(store_interfaces.IPurchaseAttemptSuccessful), has_length(1))
+
+		c.delete()
 
 	@WithMockDSTrans
 	def test_fail_payment_invalid_token(self):
