@@ -175,7 +175,7 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 				return p
 		return None
 
-	def get_purchase_by_item(self, item):
+	def get_purchase_history_by_item(self, item):
 		return self._index.get_history_by_item(item)
 
 	def get_purchase_history(self, start_time=None, end_time=None):
@@ -240,6 +240,12 @@ def get_purchase_history(user, start_time=None, end_time=None):
 	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
 	result = LocatedExternalList(hist.get_purchase_history(start_time, end_time))
+	return result
+
+def get_purchase_history_by_item(user, purchasable_id):
+	user = _get_user(user)
+	hist = store_interfaces.IPurchaseHistory(user)
+	result = LocatedExternalList(hist.get_purchase_history_by_item(purchasable_id))
 	return result
 
 def get_pending_purchase_for(user, items):

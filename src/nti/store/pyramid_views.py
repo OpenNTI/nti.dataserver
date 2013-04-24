@@ -31,7 +31,7 @@ from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
 from .payments import pyramid_views as payment_pyramid
-from .utils import is_valid_pve_int, CaseInsensitiveDict, raise_field_error
+from .utils import is_valid_pve_int, CaseInsensitiveDict, raise_field_error, is_valid_timestamp
 
 class _PurchaseAttemptView(object):
 
@@ -63,17 +63,22 @@ class GetPurchaseHistoryView(_PurchaseAttemptView):
 
 	def _convert(self, t):
 		result = t
-		if isinstance(t, six.string_types):
+		if is_valid_timestamp(t):
+			result = float(t)
+		elif isinstance(t, six.string_types):
 			result = time.mktime(dateutil.parser(t).timetuple())
 		return result if isinstance(t, numbers.Number) else None
 
 	def __call__(self):
 		request = self.request
 		username = authenticated_userid(request)
-		# purchasable_id = request.params.get('purchasableID', None)
-		start_time = self._convert(request.params.get('startTime', None))
-		end_time = self._convert(request.params.get('endTime', None))
-		purchases = purchase_history.get_purchase_history(username, start_time, end_time)
+		purchasable_id = request.params.get('purchasableID', None)
+		if not purchasable_id:
+			start_time = self._convert(request.params.get('startTime', None))
+			end_time = self._convert(request.params.get('endTime', None))
+			purchases = purchase_history.get_purchase_history(username, start_time, end_time)
+		else:
+			purchases = purchase_history.get_purchase_history_by_item(purchasable_id)
 		result = LocatedExternalDict({'Items': purchases, 'Last Modified':self._last_modified(purchases)})
 		return result
 

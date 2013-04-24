@@ -126,3 +126,10 @@ class TestPurchaseHistory(ConfiguringTestBase):
 
 			lst = list(hist.get_purchase_history(start_time=now, end_time=t50))
 			assert_that(lst, has_length(50))
+			
+			lst = list(hist.get_purchase_history(start_time=now, end_time=t50))
+			assert_that(lst, has_length(50))
+
+			lst = list(hist.get_purchase_history_by_item(u'10'))
+			assert_that(lst, has_length(1))
+			
