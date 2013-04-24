@@ -27,6 +27,8 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.datastructures import LocatedExternalList
 from nti.externalization.datastructures import LocatedExternalDict
 
+from nti.ntiids import interfaces as nid_interfaces
+
 from nti.utils.schema import SchemaConfigured
 
 from . import to_frozenset
@@ -158,3 +160,11 @@ def get_providers(purchasables):
 	for p in purchasables or ():
 		result.add(p.Provider)
 	return list(result)
+
+@interface.implementer(nid_interfaces.INTIIDResolver)
+class _PurchasableResolver(object):
+
+	def resolve(self, ntiid_string):
+		return get_purchasable(ntiid_string)
+
+
