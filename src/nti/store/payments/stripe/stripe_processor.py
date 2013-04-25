@@ -197,7 +197,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		def register_stripe_user():
 			purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 			if not purchase.has_completed():
-				logger.error('Getting/Creating Stripe Customer for %s', username)
+				logger.info('Getting/Creating Stripe Customer for %s', username)
 				customer_id = self.get_or_create_customer(username, api_key=api_key)
 				notify(stripe_interfaces.RegisterStripeToken(purchase, token))
 				return customer_id
