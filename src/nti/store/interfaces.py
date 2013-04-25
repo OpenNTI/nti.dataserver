@@ -75,8 +75,8 @@ class IPricedItem(IPriceable):
 	NonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
 	Currency = nti_schema.ValidTextLine(title='Currency ISO code', required=True, default='USD')
 
-class IPricedItems(interface.Interface):
-	PricedList = schema.List(value_type=schema.Object(IPricedItem), title='The priced items', required=True, min_length=0)
+class IPricingResults(interface.Interface):
+	Items = schema.List(value_type=schema.Object(IPricedItem), title='The priced items', required=True, min_length=0)
 	TotalPurchaseFee = schema.Float(title="Fee Amount", required=False)
 	TotalPurchasePrice = schema.Float(title="Cost amount", required=True)
 	TotalNonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
@@ -151,12 +151,13 @@ class IPurchaseAttempt(IContained):
 
 	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='Purchase state', required=True)
 
-	Order = schema.Object(IPurchaseOrder, title="Items being purchased", required=True)
+	Order = schema.Object(IPurchaseOrder, title="Purchase order", required=True)
 	Description = nti_schema.ValidTextLine(title='A purchase description', required=False)
 
 	StartTime = nti_schema.Number(title='Start time', required=True)
 	EndTime = nti_schema.Number(title='Completion time', required=False)
 
+	PricingResults = schema.Object(IPricingResults, title='Pricing results', required=False)
 	Error = schema.Object(IPurchaseError, title='Error object', required=False)
 	Synced = schema.Bool(title='if the item has been synchronized with the processors data', required=True, default=False)
 

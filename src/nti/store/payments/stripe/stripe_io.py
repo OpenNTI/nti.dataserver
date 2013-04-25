@@ -85,7 +85,8 @@ class StripeIO(object):
 			return None
 	get_token = get_stripe_token
 
-	def create_stripe_charge(self, amount, currency='USD', customer_id=None, card=None, description=None, api_key=None):
+	def create_stripe_charge(self, amount, currency='USD', customer_id=None, card=None, description=None,
+							 application_fee=None, api_key=None):
 		assert customer_id or card
 		data = {'amount':amount, 'currency':currency, 'description':description}
 		if card:
@@ -93,6 +94,8 @@ class StripeIO(object):
 		else:
 			data['customer'] = customer_id
 
+		if application_fee:
+			data['application_fee'] = application_fee
 		charge = self._do_stripe_operation(stripe.Charge.create, api_key=api_key, **data)
 		return charge
 	create_charge = create_stripe_charge

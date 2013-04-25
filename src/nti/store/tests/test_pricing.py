@@ -34,6 +34,6 @@ class TestPurchasableStore(ConfiguringTestBase):
 		p1 = priceable.create_priceable(u"iid_1", 7)
 		result = pricer.evaluate((p0, p1))
 		assert_that(result, is_not(none()))
-		assert_that(result.PricedList, has_length(2))
+		assert_that(result.Items, has_length(2))
 		assert_that(result.TotalPurchaseFee, is_(100))
 		assert_that(result.TotalPurchasePrice, is_(1340))

@@ -23,6 +23,7 @@ from nti.dataserver.datastructures import ModDateTrackingObject
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import createDirectFieldProperties
 
 from nti.zodb import minmax
 from nti.zodb.persistentproperty import PersistentPropertyHolder
@@ -35,14 +36,8 @@ from . import interfaces as store_interfaces
 @interface.implementer(store_interfaces.IPurchaseAttempt)
 class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 
-	Order = FP(store_interfaces.IPurchaseAttempt['Order'])
-	Processor = FP(store_interfaces.IPurchaseAttempt['Processor'])
-	State = FP(store_interfaces.IPurchaseAttempt['State'])
-	Description = FP(store_interfaces.IPurchaseAttempt['Description'])
-	StartTime = FP(store_interfaces.IPurchaseAttempt['StartTime'])
-	EndTime = FP(store_interfaces.IPurchaseAttempt['EndTime'])
-	Error = FP(store_interfaces.IPurchaseAttempt['Error'])
-	Synced = FP(store_interfaces.IPurchaseAttempt['Synced'])
+	# create all interface fields
+	createDirectFieldProperties(store_interfaces.IPurchaseAttempt)
 
 	@property
 	def Items(self):

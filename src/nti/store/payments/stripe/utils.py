@@ -17,7 +17,7 @@ from ... import interfaces as store_interfaces
 from .stripe_purchase import StripePricedPurchasable
 
 from nti.store import PricingException
-from nti.store.pricing import create_priced_items, DefaultPurchasablePricer
+from nti.store.pricing import create_pricing_results, DefaultPurchasablePricer
 
 def makenone(s, default=None):
 	if isinstance(s, six.string_types):
@@ -63,12 +63,12 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 	def evaluate(self, priceables):
 		providers = set()
 		currencies = set()
-		result = create_priced_items(non_discounted_price=0.0)
+		result = create_pricing_results(non_discounted_price=0.0)
 		for priceable in priceables:
 			currencies.add(priceable.Currency)
 			providers.add(priceable.Provider)
 			priced = self.price(priceable)
-			result.PricedList.append(priced)
+			result.Items.append(priced)
 			result.TotalPurchaseFee += priced.PurchaseFee
 			result.TotalPurchasePrice += priced.PurchasePrice
 			result.TotalNonDiscountedPrice += priced.NonDiscountedPrice or priced.PurchasePrice

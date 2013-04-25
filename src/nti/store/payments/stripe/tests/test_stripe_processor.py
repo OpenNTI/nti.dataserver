@@ -136,7 +136,7 @@ class TestStripeProcessor(ConfiguringTestBase):
 
 		result = self.manager.price_purchase(username=username, purchase_id=purchase_id)
 		assert_that(result, is_not(none()))
-		assert_that(result.TotalPurchaseFee, is_(40))
+		assert_that(result.TotalPurchaseFee, is_(0))
 		assert_that(result.TotalPurchasePrice, is_(200))
 		assert_that(result.TotalNonDiscountedPrice, is_(200))
 

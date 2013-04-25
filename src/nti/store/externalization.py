@@ -20,8 +20,6 @@ from nti.dataserver.links import Link
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.datastructures import InterfaceObjectIO
-from nti.externalization.externalization import toExternalObject
-from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -123,24 +121,8 @@ class PricedItemDecorator(object):
 		external['Amount'] = original.Amount
 		external['Currency'] = original.Currency
 
-@component.adapter(store_interfaces.IPricedItems)
-@interface.implementer(ext_interfaces.IExternalObject)
-class PricedItemsExternalizer(object):
-
-	def __init__(self, results):
-		self.results = results
-
-	def toExternalObject(self):
-		external = LocatedExternalDict()
-		external.lastModified = 0
-		external.mimeType = self.results.mimeType
-
-		items = external['Items'] = []
-		for priced in self.results.PricedList:
-			ext = toExternalObject(priced)
-			items.append(ext)
-
-		external['TotalPurchasePrice'] = self.results.TotalPurchasePrice
-		if self.results.TotalNonDiscountedPrice:
-			external['TotalNonDiscountedPrice'] = self.results.TotalNonDiscountedPrice
-		return external
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPricingResults)
+class PricingResultsExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPricingResults
+	_excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | {'TotalPurchaseFee'}
