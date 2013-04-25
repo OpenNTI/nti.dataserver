@@ -796,7 +796,7 @@ class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntry
 		path = '.'.join( [str(i) for i in ordinals] )
 		self._acl_sibling_entry_name = _AbstractDelimitedHierarchyEntryACLProvider._acl_sibling_entry_name + '.' + path
 
-		if len(ordinals) == 1: # a "chapter"; we don't do this at every level for efficiency
+		if len(ordinals) == 1: # a "chapter"; we don't do this at every level for efficiency3 (TODO: For best caching, we need to read this off the ContentPackage)
 			self._acl_sibling_fallback_name = _AbstractDelimitedHierarchyEntryACLProvider._acl_sibling_entry_name + '.default'
 
 @component.adapter(nti_interfaces.IFriendsList)

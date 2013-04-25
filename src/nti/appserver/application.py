@@ -127,6 +127,13 @@ def createApplication( http_port,
 		# Preserve the conf machine so that when we load other files later any
 		# exclude settings get processed
 
+	if create_ds or force_create_indexmanager:
+		# This may be excluded by a previous setting in site.zcml, and replaced with something else
+		# If we are going to do it, it is important to do it as part of the same configuration transaction
+		# as everything else, otherwise the proper listeners won't get called or won't
+		# do the right thing (see e.g., _indexmanager_event_listeners)
+		xml_conf_machine = xmlconfig.file( 'configure_indexmanager.zcml',  package=nti.appserver, context=xml_conf_machine, execute=False )
+
 	# Load a library, if needed. We take the first of:
 	# settings['library_zcml']
 	# $DATASERVER_DIR/etc/library.zcml
@@ -323,10 +330,6 @@ def createApplication( http_port,
 	# the existing Zope stuff
 	pyramid_config.add_renderer( name='.pt', factory='nti.appserver.z3c_zpt.renderer_factory' )
 
-
-	if create_ds or force_create_indexmanager:
-		# This may be excluded by a previous setting in site.zcml, and replaced with something else
-		xml_conf_machine = xmlconfig.file( 'configure_indexmanager.zcml',  package=nti.appserver, context=xml_conf_machine )
 
 	if server:
 		pyramid_config.registry.registerUtility( server, nti_interfaces.IDataserver )
