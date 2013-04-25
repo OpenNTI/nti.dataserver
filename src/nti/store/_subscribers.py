@@ -83,11 +83,17 @@ def _purchase_attempt_synced(event):
 
 @component.adapter(store_interfaces.IStorePurchaseInvitation, invite_interfaces.IInvitationAcceptedEvent)
 def _purchase_invitation_accepted(invitation, event):
-	purchase = getattr(invitation, 'purchase', None)
-	if purchase is not None:
-		# activate role
-		lib_items = purchasable.get_content_items(purchase.Items)
-		_content_roles._add_users_content_roles(event.user, lib_items)
+	if store_interfaces.IStorePurchaseInvitation.providedBy(invitation):
+
+		original = invitation.purchase
+
 		# create and register a purchase attempt for accepting user
-		rpa = purchase_attempt.create_redeemed_purchase_attempt(purchase, invitation.code)
-		purchase_history.register_purchase_attempt(rpa, event.user)
+		rpa = purchase_attempt.create_redeemed_purchase_attempt(original, invitation.code)
+		new_pid = purchase_history.register_purchase_attempt(rpa, event.user)
+
+		# link purchase. This validates there are enough tokens and use has not accepted already
+		invitation.register(event.user, new_pid)
+
+		# activate role(s)
+		lib_items = purchasable.get_content_items(original.Items)
+		_content_roles._add_users_content_roles(event.user, lib_items)

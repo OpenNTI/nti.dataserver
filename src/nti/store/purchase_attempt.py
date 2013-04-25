@@ -141,7 +141,7 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPrope
 
 	# invitations
 
-	def register(self, user):
+	def register(self, user, linked_purchase_id=None):
 		if self._consumers is not None:
 			user = getattr(user, "username", user)
 			if not user in self._consumers and user:

@@ -22,7 +22,6 @@ from nti.externalization import integer_strings
 
 from . import MessageFactory as _
 from . import interfaces as store_interfaces
-from ._content_roles import _add_users_content_roles
 
 interface.alsoProvides(store_interfaces.IStorePurchaseInvitation, invite_interfaces.IInvitation)
 
@@ -49,16 +48,16 @@ class _StorePurchaseInvitation(JoinEntitiesInvitation):
 	def capacity(self):
 		return self.purchase.Quantity
 
+	def register(self, user, linked_purchase_id=None):
+		if not self.purchase.register(user, linked_purchase_id):
+			raise InvitationAlreadyAccepted()
+
+		if not self.purchase.consume_token():
+			raise InvitationCapacityExceeded()
+
 	def accept(self, user):
 		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-		if self.purchase.register(user):
-			if self.purchase.consume_token():
-				super(_StorePurchaseInvitation, self).accept(user)
-				_add_users_content_roles(user, self.purchase.Items)
-			else:
-				raise InvitationCapacityExceeded()
-		else:
-			raise InvitationAlreadyAccepted()
+		super(_StorePurchaseInvitation, self).accept(user)
 
 def get_invitation_code(purchase):
 	if purchase is not None:
