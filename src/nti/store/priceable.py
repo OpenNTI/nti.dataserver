@@ -25,7 +25,8 @@ class Priceable(SchemaConfigured):
 	Quantity = FP(store_interfaces.IPriceable['Quantity'])
 
 	def copy(self):
-		return self.__class__(NTIID=self.NTIID, Quantity=self.Quantity)
+		result = self.__class__(NTIID=self.NTIID, Quantity=self.Quantity)
+		return result
 
 	@property
 	def purchasable(self):
