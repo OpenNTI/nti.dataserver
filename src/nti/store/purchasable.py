@@ -16,7 +16,6 @@ from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
 from zope.schema import interfaces as sch_interfaces
-from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from zope.componentvocabulary.vocabulary import UtilityNames
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
@@ -30,12 +29,14 @@ from nti.externalization.datastructures import LocatedExternalDict
 from nti.ntiids import interfaces as nid_interfaces
 
 from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import AdaptingFieldProperty
+from nti.utils.schema import createDirectFieldProperties
 
 from . import to_frozenset
 from . import interfaces as store_interfaces
 from .utils import MetaStoreObject, to_collection
 
-@interface.provider(sch_interfaces.IVocabularyFactory)
+@interface.provider(sch_interfaces.IVocabularyFactory) # Provider or implementer?
 class PurchasableTokenVocabulary(object, UtilityNames):
 
 	def __init__(self, context=None):
@@ -49,18 +50,12 @@ class PurchasableNameVocabulary(PurchasableUtilityVocabulary):
 
 @interface.implementer(store_interfaces.IPurchasable)
 class BasePurchasable(SchemaConfigured):
-
-	NTIID = FP(store_interfaces.IPurchasable['NTIID'])
-	Author = FP(store_interfaces.IPurchasable['Author'])
-	Description = FP(store_interfaces.IPurchasable['Description'])
-	Amount = FP(store_interfaces.IPurchasable['Amount'])
-	Currency = FP(store_interfaces.IPurchasable['Currency'])
-	Discountable = FP(store_interfaces.IPurchasable['Discountable'])
-	Icon = FP(store_interfaces.IPurchasable['Icon'])
-	Provider = FP(store_interfaces.IPurchasable['Provider'])
-	BulkPurchase = FP(store_interfaces.IPurchasable['BulkPurchase'])
-	Items = FP(store_interfaces.IPurchasable['Items'])
-	Fee = FP(store_interfaces.IPurchasable['Fee'])
+	# Prefer this over manually duplicating every individual field: DRY
+	# (also prefer the plain FieldProperties this creates over FieldPropertyStoredThroughField,
+	# as the later creates hard-to-migrate property names)
+	createDirectFieldProperties(store_interfaces.IPurchasable)
+	# Override Description to adapt to a content fragment
+	Description = AdaptingFieldProperty( store_interfaces.IPurchasable['Description'] )
 
 	def __str__(self):
 		return self.NTIID
@@ -82,6 +77,10 @@ class BasePurchasable(SchemaConfigured):
 
 @interface.implementer(an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class Purchasable(BasePurchasable, zcontained.Contained, persistent.Persistent):
+	# TODO: JAM: Why is this Persistent with the default pickle scheme (copy)? These live in ZCA; should
+	# they not be pickled by name and looked up from ZCA on read (see z3c.baseregistry)? Or is it necessary to
+	# snapshot them at a point in time (at which time they are no longer 'live'?) In either
+	# case, it's worth a note explaining
 
 	__metaclass__ = MetaStoreObject
 
@@ -166,5 +165,3 @@ class _PurchasableResolver(object):
 
 	def resolve(self, ntiid_string):
 		return get_purchasable(ntiid_string)
-
-

@@ -27,6 +27,7 @@ from zope.event import notify
 from zope.schema import interfaces as sch_interfaces
 
 from zope.schema.fieldproperty import FieldProperty
+from zope.schema.fieldproperty import FieldPropertyStoredThroughField
 from zope.schema.fieldproperty import createFieldProperties # public API
 try:
 	from Acquisition.interfaces import IAcquirer
@@ -672,6 +673,25 @@ class AdaptingFieldProperty(FieldProperty):
 			super(AdaptingFieldProperty,self).__set__( inst, value )
 		except sch_interfaces.SchemaNotProvided:
 			super(AdaptingFieldProperty,self).__set__( inst, self.schema( value ) )
+
+class AdaptingFieldPropertyStoredThroughField(FieldPropertyStoredThroughField):
+	"""
+	Primarily for legacy support and testing, adds adaptation to an interface
+	when setting a field. This is most useful when the values are simple literals
+	like strings.
+	"""
+
+	def __init__( self, field, name=None ):
+		if not sch_interfaces.IObject.providedBy( field ):
+			raise sch_interfaces.WrongType()
+		self.schema = field.schema
+		super(AdaptingFieldPropertyStoredThroughField,self).__init__( field, name=name )
+
+	def __set__( self, inst, value ):
+		try:
+			super(AdaptingFieldPropertyStoredThroughField,self).__set__( inst, value )
+		except sch_interfaces.SchemaNotProvided:
+			super(AdaptingFieldPropertyStoredThroughField,self).__set__( inst, self.schema( value ) )
 
 def find_most_derived_interface( ext_self, iface_upper_bound, possibilities=None ):
 	"""

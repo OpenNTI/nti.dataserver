@@ -7,9 +7,10 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-			 		
+
 	<include package="." file="meta.zcml" />
-	
+	<include package="nti.contentfragments" />
+
 	<pcs:registerPurchasable
 		ntiid="tag:nextthought.com,2011-10:NextThought-purchasable-HelpCenter"
 		title="NextThought Help Center"
@@ -21,11 +22,11 @@
 		discountable="False"
 		bulk_purchase="True"
 		items="tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center" />
-		
+
 	<pcs:registerPurchasable
 		ntiid="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse"
 		title="NextThought Help Center"
-		description="PGI+TmV4dFRob3VnaHQgSGVscCBDZW50ZXI8L2I+"
+		description="NextThought Help Center"
 		provider="NTI-TEST"
 		author="NEXTTHOUGHT"
 		amount="100"
@@ -33,5 +34,5 @@
 		discountable="False"
 		bulk_purchase="True"
 		items="tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.advanced_stress_testing_for_financial_institutions" />
-	
+
 </configure>

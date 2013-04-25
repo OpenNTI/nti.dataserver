@@ -68,11 +68,11 @@
 	<adapter factory=".html.sanitize_user_html"
 			 for="dolmen.builtins.IString"
 			 provides=".interfaces.IUnicodeContentFragment" />
-			 
+
 	<adapter factory=".html.sanitize_user_html"
 			 for="dolmen.builtins.IUnicode"
 			 provides=".interfaces.IUnicodeContentFragment" />
-			 
+
 	<!-- This is something of a lie. It might sanitize to plain text -->
 	<adapter factory=".html.sanitize_user_html"
 			 for=".interfaces.IHTMLContentFragment"
@@ -99,7 +99,7 @@
 			 for="dolmen.builtins.IString"
 			 name="text"
 			 provides=".interfaces.IPlainTextContentFragment" />
-			 
+
 	<adapter factory=".html._sanitize_user_html_to_text"
 			 for="dolmen.builtins.IUnicode"
 			 name="text"
@@ -112,7 +112,7 @@
 	<adapter factory=".html._html_to_sanitized_text"
 			 for=".interfaces.IHTMLContentFragment"
 			 provides=".interfaces.IPlainTextContentFragment" />
-			 
+
 	<adapter factory=".html._sanitized_html_to_sanitized_text"
 			 for=".interfaces.ISanitizedHTMLContentFragment"
 			 provides=".interfaces.IPlainTextContentFragment" />
@@ -122,7 +122,7 @@
 			 name="text"
 			 for=".interfaces.IHTMLContentFragment"
 			 provides=".interfaces.IPlainTextContentFragment" />
-			 
+
 	<adapter factory=".html._sanitized_html_to_sanitized_text"
 			 name="text"
 			 for=".interfaces.ISanitizedHTMLContentFragment"
