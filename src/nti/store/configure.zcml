@@ -51,11 +51,8 @@
 	<utility factory=".purchasable._PurchasableResolver" name="purchasable" />
 
 	<!--
-		 JAM: Why is this here? All items for sale in general will be
-		 configured on a site basis. I'm assuming this is for testing
-		 purposes and adding the appropriate mask.
+		*** TEST MODE ***
 	-->
-	<include file="purchasable.zcml"
-			 zcml:condition="have devmode"/>
+	<include file="purchasable.zcml" zcml:condition="have devmode"/>
 
 </configure>

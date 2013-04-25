@@ -78,7 +78,7 @@ class GetPurchaseHistoryView(_PurchaseAttemptView):
 			end_time = self._convert(request.params.get('endTime', None))
 			purchases = purchase_history.get_purchase_history(username, start_time, end_time)
 		else:
-			purchases = purchase_history.get_purchase_history_by_item(purchasable_id)
+			purchases = purchase_history.get_purchase_history_by_item(username, purchasable_id)
 		result = LocatedExternalDict({'Items': purchases, 'Last Modified':self._last_modified(purchases)})
 		return result
 
@@ -149,7 +149,7 @@ class RedeemPurchaseCodeView(_PostView):
 			raise_field_error(request, "invitation_code", "Failed to provide a invitation code")
 
 		purchase = invitations.get_purchase_by_code(invitation_code)
-		if purchase is None or not store_interfaces.IPurchaseAttempt.provideBy(purchase):
+		if purchase is None or not store_interfaces.IPurchaseAttempt.providedBy(purchase):
 			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
 
 		if purchase.Quantity is None:
