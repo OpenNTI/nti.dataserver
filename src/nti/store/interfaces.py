@@ -157,7 +157,7 @@ class IPurchaseAttempt(IContained):
 	StartTime = nti_schema.Number(title='Start time', required=True)
 	EndTime = nti_schema.Number(title='Completion time', required=False)
 
-	PricingResults = schema.Object(IPricingResults, title='Pricing results', required=False)
+	Pricing = schema.Object(IPricingResults, title='Pricing results', required=False)
 	Error = schema.Object(IPurchaseError, title='Error object', required=False)
 	Synced = schema.Bool(title='if the item has been synchronized with the processors data', required=True, default=False)
 

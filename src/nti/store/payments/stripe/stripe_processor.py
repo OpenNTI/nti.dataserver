@@ -194,8 +194,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				notify(store_interfaces.PurchaseAttemptStarted(purchase))
 
 			# price purchase
-			totals = self._do_pricing(purchase)
-			return totals
+			pricing = self._do_pricing(purchase)
+			return pricing
 
 		def register_stripe_user():
 			purchase = purchase_history.get_purchase_attempt(purchase_id, username)
@@ -208,10 +208,10 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 		try:
 			# start the purchase
-			totals = transactionRunner(start_purchase)
-			currency = totals.Currency
-			amount = totals.TotalPurchasePrice
-			application_fee = totals.TotalPurchaseFee if totals.TotalPurchaseFee else None
+			pricing = transactionRunner(start_purchase)
+			currency = pricing.Currency
+			amount = pricing.TotalPurchasePrice
+			application_fee = pricing.TotalPurchaseFee if pricing.TotalPurchaseFee else None
 			if expected_amount is not None and not math.fabs(expected_amount - amount) <= 0.05:
 				logger.error("Purchase order amount %.2f did not matched the expected amount %.2f" % (amount, expected_amount))
 				raise Exception("Purchase order amount did not matched the expected amount")
@@ -241,7 +241,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 					notify(stripe_interfaces.RegisterStripeCharge(purchase, charge.id))
 					if charge.paid:
-						purchase.PricingResults = totals
+						purchase.Pricing = pricing
 						pc = _create_payment_charge(charge)
 						notify(store_interfaces.PurchaseAttemptSuccessful(purchase, pc))
 				transactionRunner(register_charge_notify)

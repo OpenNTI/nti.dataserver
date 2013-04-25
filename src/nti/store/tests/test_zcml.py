@@ -11,32 +11,22 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 
-from hamcrest import assert_that
-from hamcrest import is_
-from hamcrest import none
-from hamcrest import is_not
-does_not = is_not
-from hamcrest import has_property
-from hamcrest import has_entry
-import nti.tests
-from nti.tests import  verifiably_provides
-import fudge
-
-from zope import interface
 from zope import component
 from zope.component.hooks import site
 
-
-from nti.dataserver.site import _TrivialSite
 from nti.appserver.sites import MATHCOUNTS
-from nti.externalization.externalization import to_external_object
+from nti.dataserver.site import _TrivialSite
 
 from ..interfaces import IPurchasable
 
+import nti.tests
+from nti.tests import  verifiably_provides
+
+from hamcrest import (assert_that, is_, none, has_property)
 
 HEAD_ZCML_STRING = """
 		<configure xmlns="http://namespaces.zope.org/zope"
@@ -80,20 +70,18 @@ ZCML_STRING = HEAD_ZCML_STRING + """
 </configure>
 """
 
-
 class TestZcml(nti.tests.ConfiguringTestBase):
-
 
 	def test_site_registration_and_complex_description(self):
 
-		self.configure_packages( ('nti.contentfragments',) )
-		self.configure_string( ZCML_STRING )
-		assert_that( MATHCOUNTS.__bases__, is_( (component.globalSiteManager,) ) )
+		self.configure_packages(('nti.contentfragments',))
+		self.configure_string(ZCML_STRING)
+		assert_that(MATHCOUNTS.__bases__, is_((component.globalSiteManager,)))
 
-		assert_that( component.queryUtility( IPurchasable, name="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse" ), is_( none() ) )
+		assert_that(component.queryUtility(IPurchasable, name="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse"), is_(none()))
 
-		with site( _TrivialSite( MATHCOUNTS ) ):
-			pur = component.getUtility( IPurchasable, name="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse" )
-			assert_that( pur, verifiably_provides( IPurchasable ) )
-			assert_that( pur, has_property( 'Description',
-											"also here is some text\n\t\t& some more text\n\t\t\n\t\t<p>html paragraph</p>\n\t\t<div class='foo'>html div</div>" ) )
+		with site(_TrivialSite(MATHCOUNTS)):
+			pur = component.getUtility(IPurchasable, name="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse")
+			assert_that(pur, verifiably_provides(IPurchasable))
+			assert_that(pur, has_property('Description',
+											"also here is some text\n\t\t& some more text\n\t\t\n\t\t<p>html paragraph</p>\n\t\t<div class='foo'>html div</div>"))
