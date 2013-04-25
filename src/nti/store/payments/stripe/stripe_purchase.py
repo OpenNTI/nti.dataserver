@@ -23,6 +23,7 @@ class StripePriceable(priceable.Priceable):
 	def copy(self):
 		result = super(StripePriceable, self).copy()
 		result.Coupon = self.Coupon
+		return result
 
 	def __eq__(self, other):
 		try:
@@ -86,6 +87,7 @@ class StripePurchaseOrder(purchase_order.PurchaseOrder):
 	def copy(self):
 		result = super(StripePurchaseOrder, self).copy()
 		result.Coupon = self.Coupon
+		return result
 
 	def __eq__(self, other):
 		try:
