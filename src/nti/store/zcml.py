@@ -54,4 +54,4 @@ def registerPurchasable(_context, ntiid, provider, title, description, amount, c
 							currency=currency, icon=icon, fee=fee,
 							discountable=discountable, bulk_purchase=bulk_purchase)
 	utility(_context, provides=store_interfaces.IPurchasable, component=ps, name=ntiid)
-	logger.debug("Purchasable '%s' has been registered", description)
+	logger.debug("Purchasable '%s' has been registered", ntiid)
