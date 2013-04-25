@@ -59,6 +59,7 @@ class PurchaseAttemptDecorator(object):
 		if original.Quantity:
 			code = invitations.get_invitation_code(original)
 			external['InvitationCode'] = code
+			external['RemainingTokens'] = original.tokens
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
 @component.adapter(store_interfaces.IPurchasable)
