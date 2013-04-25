@@ -185,6 +185,9 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 	def get_purchase_history(self, start_time=None, end_time=None):
 		return self._index.get_history_by_time(start_time, end_time)
 
+	def has_history_by_item(self, purchasabe_id):
+		return self._index.has_history_by_item(purchasabe_id)
+
 	def values(self):
 		return self._index.values()
 
