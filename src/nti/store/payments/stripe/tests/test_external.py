@@ -70,5 +70,3 @@ class TestExternal(ConfiguringTestBase):
 		assert_that(ext, is_not(has_key('PurchaseFee')))
 		assert_that(ext, has_entry('PurchasePrice', 100))
 		assert_that(ext, has_entry('NonDiscountedPrice', 105))
-		print(ext)
-

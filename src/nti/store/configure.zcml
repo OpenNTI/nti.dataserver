@@ -6,13 +6,13 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-		
+
 	<include package=".payments" file="configure.zcml" />
-	
+
 	<adapter factory=".purchase_history._PurchaseHistoryFactory"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IPurchaseHistory" />
-	
+
 	<subscriber handler="._subscribers._purchase_attempt_started" />
 	<subscriber handler="._subscribers._purchase_attempt_successful" />
 	<subscriber handler="._subscribers._purchase_attempt_failed" />
@@ -20,7 +20,7 @@
 	<subscriber handler="._subscribers._purchase_attempt_synced" />
 	<subscriber handler="._subscribers._purchase_attempt_disputed" />
 	<subscriber handler="._subscribers._purchase_invitation_accepted" />
-		
+
 	<adapter factory=".externalization.PriceableExternal" />
 	<adapter factory=".externalization.PricedItemExternal" />
 	<adapter factory=".externalization.PurchasableExternal" />
@@ -29,27 +29,33 @@
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	<adapter factory=".externalization.PricedItemsExternalizer" />
 	<adapter factory=".externalization.RedeemedPurchaseAttemptExternal" />
-	
+
 	<subscriber factory=".externalization.PurchasableDecorator"
 				for=".interfaces.IPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-				
+
 	<subscriber factory=".externalization.PurchaseAttemptDecorator"
 				for=".interfaces.IPurchaseAttempt"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-				
+
 	<subscriber factory=".externalization.PricedItemDecorator"
 				for=".interfaces.IPricedItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-				
+
 	<utility component=".purchasable.PurchasableTokenVocabulary"
 			 provides="zope.schema.interfaces.IVocabularyFactory"
 			 name="nti.store.purchasable.vocabulary" />
-	
+
 	<utility factory=".pricing.DefaultPurchasablePricer" />
-	
+
 	<utility factory=".purchasable._PurchasableResolver" name="purchasable" />
-	
-	<include package="." file="purchasable.zcml" />
-		
+
+	<!--
+		 JAM: Why is this here? All items for sale in general will be
+		 configured on a site basis. I'm assuming this is for testing
+		 purposes and adding the appropriate mask.
+	-->
+	<include file="purchasable.zcml"
+			 zcml:condition="have devmode"/>
+
 </configure>

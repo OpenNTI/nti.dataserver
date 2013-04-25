@@ -14,6 +14,7 @@ from zope.location.interfaces import IContained
 from zope.interface.interfaces import ObjectEvent, IObjectEvent
 
 from nti.utils import schema as nti_schema
+from nti.contentfragments.schema import HTMLContentFragment
 
 # : A :class:`zope.schema.interfaces.IVocabularyTokenized` vocabulary
 # : will be available as a registered vocabulary under this name
@@ -41,7 +42,7 @@ class IPurchasable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
 	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=False)
 	Author = nti_schema.ValidTextLine(title='Purchasable item author', required=False)
-	Description = nti_schema.ValidTextLine(title='Purchasable item description', required=False)
+	Description = HTMLContentFragment(title='Purchasable item description', required=False, default='') # TODO: Right interface?
 	Amount = schema.Float(title="Cost amount", required=True)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
