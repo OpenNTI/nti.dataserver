@@ -47,7 +47,7 @@ class PurchaseOrder(SchemaConfigured):
 
 	def copy(self):
 		items = [item.copy() for item in self.Items]
-		return self.__class__(Items=items, Quantity=self.Quantity)
+		return self.__class__(Items=tuple(items), Quantity=self.Quantity)
 
 	def __repr__(self):
 		return "%s(%s,%s)" % (self.__class__.__name__, self.Items, self.Quantity)
@@ -67,7 +67,7 @@ class PurchaseOrder(SchemaConfigured):
 
 	def __hash__(self):
 		xhash = 47
-		xhash ^= hash(self.Item)
+		xhash ^= hash(self.Items)
 		xhash ^= hash(self.Quantity)
 		return xhash
 
@@ -105,11 +105,11 @@ def replace_quantity(po_or_items, quantity):
 		item.Quantity = quantity
 
 def create_purchase_order(items=None, quantity=None, cls=PurchaseOrder):
-	items = list() if items is None else items
+	items = () if items is None else items
 	items = (items,) if not isinstance(items, collections.Sequence) else items
 	if quantity is not None:
 		quantity = int(quantity)
 		replace_quantity(items, quantity)
-	result = cls(Items=list(items), Quantity=quantity)
+	result = cls(Items=tuple(items), Quantity=quantity)
 	return result
 

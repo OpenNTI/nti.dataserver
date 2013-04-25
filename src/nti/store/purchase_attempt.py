@@ -196,3 +196,4 @@ def create_redeemed_purchase_attempt(purchase, redemption_code, redemption_time=
 									 Error=purchase.Error, Synced=purchase.Synced, RedemptionTime=float(redemption_time),
 									 RedemptionCode=unicode(redemption_code))
 	return result
+

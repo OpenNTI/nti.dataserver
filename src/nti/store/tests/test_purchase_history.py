@@ -34,8 +34,11 @@ class TestPurchaseHistory(ConfiguringTestBase):
 
 	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None, state=store_interfaces.PA_STATE_UNKNOWN):
 		pi = purchase_order.create_purchase_item(item, 1)
+		assert_that(hash(pi), is_(not_none()))
 		po = purchase_order.create_purchase_order(pi, quantity=quantity)
+		assert_that(hash(po), is_(not_none()))
 		pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor, state=state)
+		assert_that(hash(pa), is_(not_none()))
 		return pa
 
 	@WithMockDSTrans
@@ -126,10 +129,10 @@ class TestPurchaseHistory(ConfiguringTestBase):
 
 			lst = list(hist.get_purchase_history(start_time=now, end_time=t50))
 			assert_that(lst, has_length(50))
-			
+
 			lst = list(hist.get_purchase_history(start_time=now, end_time=t50))
 			assert_that(lst, has_length(50))
 
 			lst = list(hist.get_purchase_history_by_item(u'10'))
 			assert_that(lst, has_length(1))
-			
+
