@@ -551,7 +551,7 @@ def createApplication( http_port,
 	# store
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							renderer='rest', context='nti.store.interfaces.IPurchasable',
-							permission=nauth.ACT_CREATE, request_method='GET')
+							permission=nauth.ACT_READ, request_method='GET')
 
 
 	# register change listeners
