@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 import six
 
 from zope import interface
+from zope.cachedescriptors.property import Lazy
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
@@ -19,6 +20,8 @@ from zope.componentvocabulary.vocabulary import UtilityNames
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
 from nti.dataserver.users import User
+from nti.dataserver import authorization
+from nti.dataserver import authorization_acl as a_acl
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import LocatedExternalList
@@ -46,7 +49,10 @@ class PurchasableUtilityVocabulary(UtilityVocabulary):
 class PurchasableNameVocabulary(PurchasableUtilityVocabulary):
 	nameOnly = True
 
-@interface.implementer(store_interfaces.IPurchasable, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+@interface.implementer(store_interfaces.IPurchasable,
+					   nti_interfaces.IACLProvider,
+					   an_interfaces.IAttributeAnnotatable,
+					   zmime_interfaces.IContentTypeAware)
 class Purchasable(SchemaConfigured):
 
 	__metaclass__ = MetaStoreObject
@@ -79,6 +85,10 @@ class Purchasable(SchemaConfigured):
 		xhash = 47
 		xhash ^= hash(self.NTIID)
 		return xhash
+	
+	@Lazy
+	def __acl__( self ):
+		return (a_acl.ace_allowing(nti_interfaces.EVERYONE_USER_NAME, authorization.ACT_READ, self),)
 
 def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=None, title=None,
 					   author=None, description=None, icon=None, discountable=False, bulk_purchase=True):
