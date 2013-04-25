@@ -18,7 +18,7 @@ from zope import component
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.externalization.externalization import to_external_representation, toExternalObject,  catch_replace_action
+from nti.externalization.externalization import toExternalObject,  catch_replace_action
 from nti.externalization.externalization import to_json_representation_externalized
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver.mimetype import (MIME_BASE_JSON,
@@ -43,6 +43,14 @@ from ._view_utils import get_remote_user
 from pyramid.threadlocal import get_current_request
 
 from perfmetrics import metric
+
+# To allow swizzling out the replacement during devmode and testing,
+# we define our catch_component_action as a utility
+class ICatchComponentAction(interface.Interface):
+	"see :func:`.catch_replace_action`"
+@interface.provider(ICatchComponentAction)
+def _throw_action(*args):
+	raise
 
 def find_content_type( request, data=None ):
 	"""
@@ -99,7 +107,7 @@ def render_externalizable(data, system):
 							 # LookupError is usually a programming problem.
 							 # AssertionError is one or both
 							 catch_components=(AttributeError,LookupError,AssertionError),
-							 catch_component_action=catch_replace_action)
+							 catch_component_action=component.queryUtility(ICatchComponentAction,default=catch_replace_action))
 	# There's some possibility that externalizing an object alters its
 	# modification date (usually decorators do this), so check it after externalizing
 	lastMod = getattr( data, 'lastModified', 0 )
