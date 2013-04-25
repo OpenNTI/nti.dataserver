@@ -22,4 +22,16 @@
 		bulk_purchase="True"
 		items="tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center" />
 		
+	<pcs:registerPurchasable
+		ntiid="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse"
+		title="NextThought Help Center"
+		description="NextThought Help Center"
+		provider="NTI-TEST"
+		author="NEXTTHOUGHT"
+		amount="100"
+		currency="USD"
+		discountable="False"
+		bulk_purchase="True"
+		items="tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.advanced_stress_testing_for_financial_institutions" />
+	
 </configure>
