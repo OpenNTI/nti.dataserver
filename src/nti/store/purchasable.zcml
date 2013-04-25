@@ -25,11 +25,11 @@
 
 	<pcs:registerPurchasable
 		ntiid="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse"
-		title="NextThought Help Center"
-		description="NextThought Help Center"
+		title="PRMIA RiskCourse"
+		description="PRMIA RiskCourse"
 		provider="NTI-TEST"
 		author="NEXTTHOUGHT"
-		amount="100"
+		amount="200"
 		currency="USD"
 		discountable="False"
 		bulk_purchase="True"
