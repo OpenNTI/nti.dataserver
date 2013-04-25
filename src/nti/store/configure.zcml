@@ -51,7 +51,7 @@
 	<utility factory=".purchasable._PurchasableResolver" name="purchasable" />
 
 	<!--
-		*** TEST MODE ***
+		The purchasables in included here are only for test purposes
 	-->
 	<include file="purchasable.zcml" zcml:condition="have devmode"/>
 
