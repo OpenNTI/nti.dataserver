@@ -697,6 +697,20 @@ class IACLProvider(interface.Interface):
 
 	__acl__ = interface.Attribute("An :class:`IACL`")
 
+class IACLProviderCacheable(interface.Interface):
+	"""
+	A marker interface (usually added through configuration) that states
+	that the results of adapting an object to an :class:`IACLProvider` can
+	be cached on the object itself, making it its own provider.
+
+	Do not do this for persistent objects or objects who's ACL provider
+	may differ in various sites due to configuration, or which makes decisions
+	to produce a partial ACL based on the current user (or anything else that
+	could be considered "current" such as a current request). In summary, it is
+	generally only safe to do when the ACL information comes from external sources
+	such as files or strings.
+	"""
+
 class IDefaultPublished(interface.Interface):
 	"""
 	A marker interface mixed in to an instance to specify

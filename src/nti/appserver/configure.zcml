@@ -112,6 +112,13 @@
 			 name="fields" />
 
 	<!--
+		 Cache ACLs for things from boto directly (previously, we were
+		 caching the string value)
+	-->
+	<class class="nti.contentlibrary.boto_s3.BotoS3ContentUnit">
+		<implements interface="nti.dataserver.interfaces.IACLProviderCacheable" />
+	</class>
+	<!--
 		 ********
 		 Flagging
 		 ********

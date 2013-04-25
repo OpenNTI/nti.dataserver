@@ -215,12 +215,23 @@ def ACLProvider( obj, default=None ):
 	an :class:`.IACLProvider` it will be and that will be returned.
 	If no ACL provider can be found, returns None (or whatever
 	the value of the `default` parameter is).
+
+	.. note::
+		If the object provides :class:`.IACLProviderCacheable` (typically this will be set up
+		in configuration) then the ACL derived from adapting to a provider is cached
+		directly on the object. This is a side-effect.
+
 	"""
 	try:
-		return obj.__acl__ is not None and obj
+		if obj.__acl__ is not None:
+			return obj
 	except AttributeError:
 		try:
-			return nti_interfaces.IACLProvider( obj )
+			result = nti_interfaces.IACLProvider( obj )
+			if nti_interfaces.IACLProviderCacheable.providedBy( obj ):
+				obj.__acl__ = result.__acl__
+				result = obj
+			return result
 		except TypeError:
 			return default
 
