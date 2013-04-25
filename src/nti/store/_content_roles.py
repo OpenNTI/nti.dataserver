@@ -50,10 +50,10 @@ def _add_users_content_roles( user, items ):
 		
 		provider = ntiids.get_provider(item).lower()
 		specific = ntiids.get_specific(item).lower()
-		role_id = nauth.role_for_providers_content( provider, specific ) 
-		if role_id not in current_roles:
-			logger.info("Role %s added to %s", role_id, user)
-			roles_to_add.add(role_id)
+		role = nauth.role_for_providers_content(provider, specific)
+		if role.id not in current_roles:
+			logger.info("Role %s added to %s", role.id, user)
+			roles_to_add.add(role)
 	
 	member.setGroups( list(current_roles.values()) + list(roles_to_add) )
 	return len(roles_to_add)
@@ -83,8 +83,8 @@ def _remove_users_content_roles( user, items ):
 		if item:
 			provider = ntiids.get_provider(item).lower()
 			specific = ntiids.get_specific(item).lower()
-			role_id = nauth.role_for_providers_content( provider, specific ) 
-			roles_to_remove.add(role_id.id)
+			role = nauth.role_for_providers_content(provider, specific)
+			roles_to_remove.add(role.id)
 
 	for r in roles_to_remove:
 		if current_roles.pop(r, None):
