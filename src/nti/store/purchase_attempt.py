@@ -151,6 +151,10 @@ class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPrope
 				return False
 		return True
 
+	@property
+	def tokens(self):
+		return self._tokens.value if self._tokens is not None else None
+
 	def consume_token(self):
 		if self._tokens is not None:
 			if self._tokens.value > 0:
