@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope import schema
 from zope import interface
 from zope.configuration import fields
@@ -42,3 +44,4 @@ def registerPurchasable(_context, ntiid, provider, title, description, amount, c
 							currency=currency, icon=icon, fee=fee,
 							discountable=discountable, bulk_purchase=bulk_purchase)
 	utility(_context, provides=store_interfaces.IPurchasable, component=ps, name=ntiid)
+	logger.debug("Purchasable '%s' has been registered", ntiid)
