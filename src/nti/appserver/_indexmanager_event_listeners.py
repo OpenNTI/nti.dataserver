@@ -115,4 +115,19 @@ def add_s3_index( title, event ):
 		cache_lock.close()
 
 
+	# Touch some other properties to get them cached.
+	# Pay this cost at startup rather than at runtime (TODO: Why is this cost so high?)
+	getattr( title, 'lastModified', 0 )
+	if title.installable:
+		getattr( title.archive_unit, 'lastModified', 0 )
+	# Likewise for some files. (TODO: These could be cached on-disk too)
+	try:
+		# See contentlibrary/externalization.
+		# TODO: Standardize and generalize this
+		title.read_contents_of_sibling_entry( 'nti_default_presentation_properties.json' )
+		# See authorization_acl
+		title.read_contents_of_sibling_entry( '.nti_acl' )
+	except self.package.TRANSIENT_EXCEPTIONS:
+		pass
+
 	_add_book( indexmanager, index_name, title_index_cache_dir, title.ntiid )

@@ -153,7 +153,7 @@ def add_assessment_items_from_new_content( content_package, event ):
 	if question_map is None: #pragma: no cover
 		return
 
-	logger.info( "Adding assessment items from new content %s %s", content_package, event )
+	logger.debug( "Adding assessment items from new content %s %s", content_package, event )
 
 	asm_index_text = content_package.read_contents_of_sibling_entry( 'assessment_index.json' )
 	_populate_question_map_from_text( question_map, asm_index_text, content_package )

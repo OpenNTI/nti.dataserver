@@ -84,7 +84,7 @@ TESTS_REQUIRE = [
 	'ipdb >= 0.7',  # easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
 	'nose >= 1.3.0',
 	'nose-timer >= 0.1.2',
-	'nose-progressive >= 1.4.3',
+	'nose-progressive >= 1.5',
 	'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 	'pyhamcrest >= 1.7.1',
 	'tempstorage >= 2.12.2',  # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
@@ -186,7 +186,7 @@ setup(
 		'futures >= 2.1.3',
 		# 'gevent == 1.0rc1', Coming from requirements.txt right now
 		'greenlet >= 0.4.0',
-		'gunicorn >= 0.17.3',
+		'gunicorn >= 0.17.4',
 		'hiredis >= 0.1.1',  # Redis C parser
 		'html5lib == 0.95',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
