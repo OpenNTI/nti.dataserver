@@ -85,9 +85,9 @@ class Purchasable(SchemaConfigured):
 		xhash = 47
 		xhash ^= hash(self.NTIID)
 		return xhash
-	
+
 	@Lazy
-	def __acl__( self ):
+	def __acl__(self):
 		return (a_acl.ace_allowing(nti_interfaces.EVERYONE_USER_NAME, authorization.ACT_READ, self),)
 
 def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=None, title=None,

@@ -42,7 +42,7 @@ class IPurchasable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
 	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=False)
 	Author = nti_schema.ValidTextLine(title='Purchasable item author', required=False)
-	Description = HTMLContentFragment(title='Purchasable item description', required=False, default='') # TODO: Right interface?
+	Description = HTMLContentFragment(title='Purchasable item description', required=False, default='')  # TODO: Right interface?
 	Amount = schema.Float(title="Cost amount", required=True)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
@@ -63,7 +63,7 @@ class IPurchaseItem(IPriceable):
 	"""marker interface for a purchase order item"""
 
 class IPurchaseOrder(sequence.IMinimalSequence):
-	Items = schema.List(value_type=schema.Object(IPriceable), title='The items', required=True, min_length=1)
+	Items = schema.Tuple(value_type=schema.Object(IPriceable), title='The items', required=True, min_length=1)
 	Quantity = schema.Int(title='Purchase bulk quantity', required=False)
 
 	def copy():
