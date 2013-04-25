@@ -8,10 +8,8 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import six
-import persistent
 
 from zope import interface
-from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
@@ -36,7 +34,7 @@ from . import to_frozenset
 from . import interfaces as store_interfaces
 from .utils import MetaStoreObject, to_collection
 
-@interface.provider(sch_interfaces.IVocabularyFactory) # Provider or implementer?
+@interface.provider(sch_interfaces.IVocabularyFactory)  # Provider or implementer?
 class PurchasableTokenVocabulary(object, UtilityNames):
 
 	def __init__(self, context=None):
@@ -48,14 +46,21 @@ class PurchasableUtilityVocabulary(UtilityVocabulary):
 class PurchasableNameVocabulary(PurchasableUtilityVocabulary):
 	nameOnly = True
 
-@interface.implementer(store_interfaces.IPurchasable)
-class BasePurchasable(SchemaConfigured):
-	# Prefer this over manually duplicating every individual field: DRY
-	# (also prefer the plain FieldProperties this creates over FieldPropertyStoredThroughField,
-	# as the later creates hard-to-migrate property names)
+@interface.implementer(store_interfaces.IPurchasable, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+class Purchasable(SchemaConfigured):
+
+	__metaclass__ = MetaStoreObject
+
+	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPurchasable)
+
 	# Override Description to adapt to a content fragment
-	Description = AdaptingFieldProperty( store_interfaces.IPurchasable['Description'] )
+	Description = AdaptingFieldProperty(store_interfaces.IPurchasable['Description'])
+
+	@property
+	def id(self):
+		return self.NTIID
+
 
 	def __str__(self):
 		return self.NTIID
@@ -74,19 +79,6 @@ class BasePurchasable(SchemaConfigured):
 		xhash = 47
 		xhash ^= hash(self.NTIID)
 		return xhash
-
-@interface.implementer(an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class Purchasable(BasePurchasable, zcontained.Contained, persistent.Persistent):
-	# TODO: JAM: Why is this Persistent with the default pickle scheme (copy)? These live in ZCA; should
-	# they not be pickled by name and looked up from ZCA on read (see z3c.baseregistry)? Or is it necessary to
-	# snapshot them at a point in time (at which time they are no longer 'live'?) In either
-	# case, it's worth a note explaining
-
-	__metaclass__ = MetaStoreObject
-
-	@property
-	def id(self):
-		return self.NTIID
 
 def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=None, title=None,
 					   author=None, description=None, icon=None, discountable=False, bulk_purchase=True):
