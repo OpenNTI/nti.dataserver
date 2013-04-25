@@ -68,7 +68,7 @@ class TestStripeIO(unittest.TestCase):
 		assert_that(t, is_not(None))
 		assert_that(t.used, is_(False))
 
-		c = sio.create_stripe_charge(100, card=t.id, description="my charge")
+		c = sio.create_stripe_charge(amount=100, card=t.id, description="my charge")
 		assert_that(c, is_not(None))
 		
 		sio.get_stripe_charge(c.id)

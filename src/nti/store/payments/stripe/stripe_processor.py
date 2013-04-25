@@ -125,8 +125,11 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		token = self.create_stripe_token(customer_id, number, exp_month, exp_year, cvc, api_key, **kwargs)
 		return token.id
 
-	def create_charge(self, amount, currency='USD', customer_id=None, card=None, description=None, api_key=None):
-		charge = self.create_stripe_charge(amount, currency, customer_id, card, description, api_key)
+	def create_charge(self, amount, currency='USD', customer_id=None, card=None, description=None,
+					  application_fee=None, api_key=None):
+		charge = self.create_stripe_charge(amount=amount, currency=currency, customer_id=customer_id,
+										   card=card, description=description, application_fee=application_fee,
+										   api_key=api_key)
 		if charge.failure_message:
 			raise stripe_io.StripeException(charge.failure_message)
 		return charge
@@ -208,6 +211,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			totals = transactionRunner(start_purchase)
 			currency = totals.Currency
 			amount = totals.TotalPurchasePrice
+			application_fee = totals.TotalPurchaseFee if totals.TotalPurchaseFee else None
 			if expected_amount is not None and not math.fabs(expected_amount - amount) <= 0.05:
 				logger.error("Purchase order amount %.2f did not matched the expected amount %.2f" % (amount, expected_amount))
 				raise Exception("Purchase order amount did not matched the expected amount")
@@ -217,6 +221,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 			# get price amount in cents
 			cents_amount = int(amount * 100.0)
+			application_fee = int(application_fee * 100.0) if application_fee else None
 
 			# contact stripe
 			charge = None
@@ -224,7 +229,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				# charge card, user description for tracking purposes
 				descid = "%s:%s:%s" % (purchase_id, username, customer_id)
 				logger.info('Creating stripe charge for %s', descid)
-				charge = self.create_charge(cents_amount, currency, card=token, description=descid, api_key=api_key)
+				charge = self.create_charge(cents_amount, currency=currency, card=token, description=descid,
+											application_fee=application_fee, api_key=api_key)
 
 			if charge is not None:
 				# register charge
@@ -235,6 +241,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 					notify(stripe_interfaces.RegisterStripeCharge(purchase, charge.id))
 					if charge.paid:
+						purchase.PricingResults = totals
 						pc = _create_payment_charge(charge)
 						notify(store_interfaces.PurchaseAttemptSuccessful(purchase, pc))
 				transactionRunner(register_charge_notify)

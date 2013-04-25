@@ -9,9 +9,9 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
-from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import createDirectFieldProperties
 
 from . import PricingException
 from . import InvalidPurchasable
@@ -24,10 +24,8 @@ class PricedItem(Priceable):
 
 	__metaclass__ = MetaStoreObject
 
-	Currency = FP(store_interfaces.IPricedItem['Currency'])
-	PurchaseFee = FP(store_interfaces.IPricedItem['PurchaseFee'])
-	PurchasePrice = FP(store_interfaces.IPricedItem['PurchasePrice'])
-	NonDiscountedPrice = FP(store_interfaces.IPricedItem['NonDiscountedPrice'])
+	# create all interface fields
+	createDirectFieldProperties(store_interfaces.IPricedItem)
 
 	def __repr__(self):
 		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.NTIID, self.Currency, self.PurchasePrice)
@@ -52,23 +50,20 @@ def create_priced_item(ntiid, purchase_price, purchase_fee=None, non_discounted_
 						NonDiscountedPrice=non_discounted_price, Quantity=quantity, Currency=currency)
 	return result
 
-@interface.implementer(store_interfaces.IPricedItems, zmime_interfaces.IContentTypeAware)
-class PricedItems(SchemaConfigured):
+@interface.implementer(store_interfaces.IPricingResults, zmime_interfaces.IContentTypeAware)
+class PricingResults(SchemaConfigured):
 
 	__metaclass__ = MetaStoreObject
 
-	Currency = FP(store_interfaces.IPricedItem['Currency'])
-	PricedList = FP(store_interfaces.IPricedItems['PricedList'])
-	TotalPurchaseFee = FP(store_interfaces.IPricedItems['TotalPurchaseFee'])
-	TotalPurchasePrice = FP(store_interfaces.IPricedItems['TotalPurchasePrice'])
-	TotalNonDiscountedPrice = FP(store_interfaces.IPricedItems['TotalNonDiscountedPrice'])
+	# create all interface fields
+	createDirectFieldProperties(store_interfaces.IPricingResults)
 
-def create_priced_items(priced_list=None, purchase_price=0.0, purchase_fee=0.0, non_discounted_price=None, currency='USD'):
-	priced_list = list() if priced_list is None else priced_list
+def create_pricing_results(items=None, purchase_price=0.0, purchase_fee=0.0, non_discounted_price=None, currency='USD'):
+	items = list() if items is None else items
 	purchase_fee = float(purchase_fee) if purchase_fee is not None else None
 	non_discounted_price = float(non_discounted_price) if non_discounted_price is not None else None
-	result = PricedItems(PricedList=priced_list, TotalPurchasePrice=purchase_price, TotalPurchaseFee=purchase_fee,
-						 TotalNonDiscountedPrice=non_discounted_price, Currency=currency)
+	result = PricingResults(Items=items, TotalPurchasePrice=purchase_price, TotalPurchaseFee=purchase_fee,
+						 	TotalNonDiscountedPrice=non_discounted_price, Currency=currency)
 	return result
 
 @interface.implementer(store_interfaces.IPurchasablePricer)
@@ -100,10 +95,10 @@ class DefaultPurchasablePricer(object):
 
 	def evaluate(self, priceables):
 		currencies = set()
-		result = create_priced_items()
+		result = create_pricing_results()
 		for priceable in priceables:
 			priced = self.price(priceable)
-			result.PricedList.append(priced)
+			result.Items.append(priced)
 			currencies.add(priceable.Currency)
 			result.TotalPurchaseFee += priced.PurchaseFee
 			result.TotalPurchasePrice += priced.PurchasePrice

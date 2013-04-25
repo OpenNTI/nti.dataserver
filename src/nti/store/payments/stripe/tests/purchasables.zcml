@@ -18,7 +18,6 @@
 		provider="NTI-TEST"
 		author="NEXTTHOUGHT"
 		amount="100"
-		fee="20"
 		currency="USD"
 		discountable="False"
 		bulk_purchase="True" />
@@ -29,6 +28,17 @@
 		description="Bleach Manga"
 		provider="NTI-TEST"
 		author="Tite Kubo"
+		amount="200"
+		currency="USD"
+		discountable="False"
+		bulk_purchase="True" />
+		
+	<pcs:registerPurchasable
+		ntiid="gotye"
+		title="Gotye"
+		description="Gotye hits"
+		provider="NTI-TEST"
+		author="Gotye"
 		amount="200"
 		fee="10"
 		currency="USD"
