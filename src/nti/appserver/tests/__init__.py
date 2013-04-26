@@ -277,5 +277,9 @@ class TestMailDelivery(_DummyMailer):
 		#from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
 
 		self.queue.append( message )
-		message.subject = message.get( 'Subject' ) # compat with pyramid_mailer messages
-		message.body = message.get_payload()[0].get_payload()
+		# compat with pyramid_mailer messages
+		message.subject = message.get( 'Subject' )
+		payload = message.get_payload()
+		message.body = payload[0].get_payload()
+		if len(payload) > 1:
+			message.html = payload[1].get_payload()

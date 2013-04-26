@@ -40,11 +40,65 @@
 	</head>
 	<body>
 		<div metal:use-macro="options/master/macros/header">
-		<div id="green-bar"></div>
-		<div id="logo-bar">
-			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
-			alt="NextThought Logo" />
+			<div id="green-bar"></div>
+			<div id="logo-bar">
+				<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+					 alt="NextThought Logo" />
+			</div>
 		</div>
+
+		<div>PRMIA CUSTOMER RECEIPT Date ${options/today}</div>
+		<div>Transaction ID: ${options/transaction_id}</div>
+
+		<div>
+			Billed to: <br />
+			${options/billed_to} <br />
+<pre>
+${context/charge/Address}
+</pre>
+		</div>
+
+		<table>
+			<tr>
+				<th>Quantity</th><th>Label</th><th>Price</th>
+			</tr>
+			<tr tal:repeat="item context/purchase/Order/Items">
+				<td tal:content="item/Quantity">1</td>
+				<td tal:content="item/purchasable/Title">Title</td>
+				<td>$${item/purchasable/Amount} each</td>
+			</tr>
+		</table>
+
+		<div>
+			Subtotal: $ ${context/purchase/Pricing/TotalNonDiscountedPrice}
+		</div>
+		<div tal:repeat="item context/purchase/Pricing/Items">
+			<tal:block tal:condition="python:item.Coupon and item.NonDiscountedPrice and item.PurchasePrice != item.NonDiscountedPrice">
+				Discount($item/Coupon): -$${item/NonDiscountedPrice - item/PurchasePrice}
+			</tal:block>
+		</div>
+
+		<div>
+			ORDER TOTAL: $ ${context/charge/Amount} ${context/charge/Currency}
+		</div>
+
+		<div>
+			Payment Received: $ ${context/charge/Amount} <br/>
+			${options/today} (**** **** **** ${context/charge/CardLast4}) <br />
+			all sales are final
+		</div>
+
+
+		<div>
+		Thank you for your order, ${options/informal_username}!
+		Your Items are available at
+		<a href="${request/application_url}" tal:content="request/application_url">http://nextthought.com</a>
+		</div>
+
+		<div>
+		Please keep a copy of this receipt for your records.
+		If you have any questions, feel free to contact
+		<a href="mailto:accounting@prmia.org">accounting@prmia.org</a>
 		</div>
 
 	</body>

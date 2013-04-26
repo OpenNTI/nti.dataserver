@@ -42,25 +42,27 @@ def create_simple_html_text_email(base_template, subject='', request=None, recip
 	if request is None:
 		request = get_current_request()
 
-	context_name = 'context'
-	if text_template_extension != '.txt':
-		context_name = 'nti_context'
-		if 'context' in template_args:
-			template_args[context_name] = template_args['context']
-			del template_args['context']
-
 	master = get_renderer('templates/master_email.pt').implementation()
-	def make_args():
+	def make_args(extension):
+		# Mako gets bitchy if 'context' comes in as an argument, but
+		# that's what Chameleon wants. To simplify things, we handle that
+		# for our callers. They just want to use 'context'
+		the_context_name = 'nti_context' if extension == text_template_extension and text_template_extension != '.txt' else 'context'
 		result = {}
 		result['master'] = master
 		if request:
-			result[context_name] = request.context
+			result[the_context_name] = request.context
 		if template_args:
 			result.update( template_args )
+
+		if the_context_name == 'nti_context' and 'context' in template_args:
+			result[the_context_name] = template_args['context']
+			del result['context']
 		return result
 
+
 	html_body, text_body = [render( 'nti.appserver:templates/' + base_template + extension,
-									make_args(),
+									make_args(extension),
 									request=request )
 							for extension in ('.pt', text_template_extension)]
 
@@ -80,14 +82,18 @@ def queue_simple_html_text_email(*args, **kwargs):
 		are ".txt" for Chameleon templates (this is the default and preferred version) and ".mak" for
 		Mako templates. Note that if you use Mako, the usual ``context`` argument is renamed to ``nti_context``,
 		as ``context`` is a reserved word in Mako.
+
+	:return: The :class:`pyramid_mailer.message.Message` we sent.
 	"""
 
-	send_pyramid_mailer_mail( create_simple_html_text_email( *args, **kwargs ) )
+	return send_pyramid_mailer_mail( create_simple_html_text_email( *args, **kwargs ) )
 
 def send_pyramid_mailer_mail( message ):
 	"""
 	Given a :class:`pyramid_mailer.message.Message`, transactionally deliver
 	it to the queue.
+
+	:return: The :class:`pyramid_mailer.message.Message` we sent.
 	"""
 	# The pyramid_mailer.Message class is slightly nicer than the
 	# email package messages, if much less powerful. However, it makes the
@@ -97,6 +103,7 @@ def send_pyramid_mailer_mail( message ):
 	# for immediate, and those objects do the real work and also have a consistent
 	# interfaces. It's easy to change the pyramid_mail message into a email message
 	send_mail( pyramid_mail_message=message )
+	return message
 
 def send_mail( fromaddr=None, toaddrs=None, message=None, pyramid_mail_message=None ):
 	"""
