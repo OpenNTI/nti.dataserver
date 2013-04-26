@@ -21,10 +21,10 @@ from pyramid_mailer.interfaces import IMailer
 from pyramid_mailer.message import Message
 from repoze.sendmail import interfaces as mail_interfaces
 
-def queue_simple_html_text_email(base_template, subject='', request=None, recipients=(), template_args=None, text_template_extension='.txt'):
+def create_simple_html_text_email(base_template, subject='', request=None, recipients=(), template_args=None, text_template_extension='.txt'):
 	"""
-	Transactionally queues an email for sending. The email has both a
-	plain text and an HTML version.
+	Create a :class:`pyramid_mailer.message.Message` by rendering
+	the pair of templates to create a text and html part.
 
 	:keyword text_template_extension: The filename extension for the plain text template. Valid values
 		are ".txt" for Chameleon templates (this is the default and preferred version) and ".mak" for
@@ -65,7 +65,21 @@ def queue_simple_html_text_email(base_template, subject='', request=None, recipi
 					   recipients=recipients,
 					   body=text_body,
 					   html=html_body )
-	send_pyramid_mailer_mail( message )
+	return message
+
+
+def queue_simple_html_text_email(*args, **kwargs):
+	"""
+	Transactionally queues an email for sending. The email has both a
+	plain text and an HTML version.
+
+	:keyword text_template_extension: The filename extension for the plain text template. Valid values
+		are ".txt" for Chameleon templates (this is the default and preferred version) and ".mak" for
+		Mako templates. Note that if you use Mako, the usual ``context`` argument is renamed to ``nti_context``,
+		as ``context`` is a reserved word in Mako.
+	"""
+
+	send_pyramid_mailer_mail( create_simple_html_text_email( *args, **kwargs ) )
 
 def send_pyramid_mailer_mail( message ):
 	"""

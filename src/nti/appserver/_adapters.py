@@ -239,9 +239,10 @@ class _EnglishFirstAndLastNameDecorator(object):
 	then assume that they provided a first and last name and return that
 	in the profile data.
 
-	.. note:: This is an incredibly Western and even US centric
-	way of looking at things. The restriction to those that prefer English
-	as their language is an attempt to limit the damage.
+	.. note::
+		This is an incredibly Western and even US centric way of
+		looking at things. The restriction to those that prefer
+		English as their language is an attempt to limit the damage.
 	"""
 
 	__metaclass__ = SingletonDecorator

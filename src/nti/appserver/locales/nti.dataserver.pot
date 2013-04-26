@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-09 09:10-0500\n"
+"POT-Creation-Date: 2013-04-26 12:35-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: src/nti/appserver/_adapters.py:391
+#: src/nti/appserver/_adapters.py:392
 msgid "This item has been deleted."
 msgstr ""
 
-#: src/nti/appserver/_adapters.py:393 src/nti/appserver/flagging_views.py:205
+#: src/nti/appserver/_adapters.py:394 src/nti/appserver/flagging_views.py:205
 msgid "This item has been deleted by the moderator."
 msgstr ""
 
@@ -38,15 +38,15 @@ msgstr ""
 msgid "That username is not available. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:105
+#: src/nti/appserver/account_recovery_views.py:107
 msgid "NextThought Username Reminder"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:189
+#: src/nti/appserver/account_recovery_views.py:193
 msgid "NextThought Password Reset"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:288
+#: src/nti/appserver/account_recovery_views.py:292
 msgid "Your reset link is not valid. Please request a new one."
 msgstr ""
 
@@ -98,74 +98,78 @@ msgstr ""
 msgid "Username ${username} cannot include any part of the real name ${realname}."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:179
+#: src/nti/appserver/store_views.py:80
+msgid "Purchase Confirmation"
+msgstr ""
+
+#: src/nti/appserver/user_policies.py:188
 msgid "NextThought Account Confirmation"
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:228
+#: src/nti/appserver/user_policies.py:237
 msgid ""
 "It is too soon to send another consent request email. Please try again "
 "tomorrow."
 msgstr ""
 
-#: src/nti/appserver/user_policies.py:263
+#: src/nti/appserver/user_policies.py:272
 msgid "Please Confirm Your Child's NextThought Account"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:15
-msgid "Can the user chat?"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:15
 msgid "Chat"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:20
-msgid "Can the user access UGD sharing features?"
+#: src/nti/appserver/capabilities/capabilities.zcml:15
+msgid "Can the user chat?"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:20
 msgid "Sharing"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:25
-msgid "Can the user create new FriendsLists? (Enforced by the vocabulary)"
+#: src/nti/appserver/capabilities/capabilities.zcml:20
+msgid "Can the user access UGD sharing features?"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:25
 msgid "Create FriendsLists"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:30
-msgid "Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)"
+#: src/nti/appserver/capabilities/capabilities.zcml:25
+msgid "Can the user create new FriendsLists? (Enforced by the vocabulary)"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:30
 msgid "Create DynamicFriendsLists"
 msgstr ""
 
-#: src/nti/appserver/capabilities/capabilities.zcml:35
-msgid "Can the user upload custom avatar pictures?"
+#: src/nti/appserver/capabilities/capabilities.zcml:30
+msgid "Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the vocab)"
 msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:35
 msgid "Upload Avatar"
 msgstr ""
 
-#: src/nti/appserver/forums/configure.zcml:24
-msgid "Can the user create new blog entries?"
+#: src/nti/appserver/capabilities/capabilities.zcml:35
+msgid "Can the user upload custom avatar pictures?"
 msgstr ""
 
 #: src/nti/appserver/forums/configure.zcml:24
 msgid "Create Blog Entry"
 msgstr ""
 
-#: src/nti/appserver/forums/configure.zcml:28
-msgid "Can the user participate in community forums?"
+#: src/nti/appserver/forums/configure.zcml:24
+msgid "Can the user create new blog entries?"
 msgstr ""
 
 #: src/nti/appserver/forums/configure.zcml:28
 msgid "Participate in community forums"
+msgstr ""
+
+#: src/nti/appserver/forums/configure.zcml:28
+msgid "Can the user participate in community forums?"
 msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:156
@@ -204,7 +208,7 @@ msgstr ""
 msgid "The mime type expected to be returned by the link"
 msgstr ""
 
-#: src/nti/chatserver/_handler.py:56
+#: src/nti/chatserver/_handler.py:57
 msgid ""
 "You are trying to send too many chat messages too quickly. Please wait and "
 "try again."
@@ -216,12 +220,28 @@ msgid ""
 "shapes"
 msgstr ""
 
-#: src/nti/chatserver/configure.zcml:40
+#: src/nti/chatserver/configure.zcml:42
 msgid "Moderate a chatroom"
 msgstr ""
 
-#: src/nti/chatserver/configure.zcml:43 src/nti/chatserver/configure.zcml:46
+#: src/nti/chatserver/configure.zcml:45 src/nti/chatserver/configure.zcml:48
 msgid "Enter an existing chatroom"
+msgstr ""
+
+#: src/nti/contentlibrary/zcml.py:41
+msgid "Path to a directory containing content as subdirectories."
+msgstr ""
+
+#: src/nti/contentlibrary/zcml.py:46
+msgid "The URL prefix for the content items"
+msgstr ""
+
+#: src/nti/contentlibrary/zcml.py:80
+msgid "The name of the S3 bucket that contains content"
+msgstr ""
+
+#: src/nti/contentlibrary/zcml.py:86
+msgid "The name of a CDN distribution placed on top of the S3 bucket."
 msgstr ""
 
 #: src/nti/dataserver/configure.zcml:74
@@ -264,7 +284,7 @@ msgstr ""
 msgid "Discussion Board"
 msgstr ""
 
-#: src/nti/dataserver/contenttypes/forums/forum.py:144
+#: src/nti/dataserver/contenttypes/forums/forum.py:264
 msgid "Forum"
 msgstr ""
 
@@ -320,47 +340,23 @@ msgstr ""
 msgid "The value you have used is not valid."
 msgstr ""
 
-#: src/nti/store/invitations.py:30
+#: src/nti/store/invitations.py:32
 msgid "The limit for this invitation code has been exceeded."
 msgstr ""
 
-#: src/nti/store/payments/stripe/stripe_key.py:34
+#: src/nti/store/invitations.py:38
+msgid "Invitation already accepted"
+msgstr ""
+
+#: src/nti/store/payments/stripe/stripe_key.py:33
 msgid "PrivateKey"
 msgstr ""
 
-#: src/nti/store/payments/stripe/stripe_key.py:35
+#: src/nti/store/payments/stripe/stripe_key.py:34
 msgid "Alias"
 msgstr ""
 
-#: src/nti/store/tests/purchasables.zcml:14
-msgid "Algebra for kids"
-msgstr ""
-
-#: src/nti/store/tests/purchasables.zcml:25
-msgid "Law Cases I"
-msgstr ""
-
-#: src/nti/store/tests/purchasables.zcml:25
-msgid "Law Cases"
-msgstr ""
-
-#: src/nti/store/tests/purchasables.zcml:36
-msgid "Data Structures in C"
-msgstr ""
-
-#: src/nti/store/tests/purchasables.zcml:36
-msgid "Data Structures"
-msgstr ""
-
-#: src/nti/store/tests/purchasables.zcml:47
-msgid "Intro to Risk"
-msgstr ""
-
-#: src/nti/store/tests/purchasables.zcml:47
-msgid "Risk Course"
-msgstr ""
-
-#: src/nti/utils/schema.py:224
+#: src/nti/utils/schema.py:225
 msgid "${field} is too short."
 msgstr ""
 
