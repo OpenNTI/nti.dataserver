@@ -36,7 +36,9 @@ from . import interfaces as store_interfaces
 @interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class PurchaseAttempt(ModDateTrackingObject, SchemaConfigured, zcontained.Contained, PersistentPropertyHolder):
 
+	__external_class_name__ = "PurchaseAttempt"
 	__metaclass__ = MetaStoreObject
+
 
 	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPurchaseAttempt)
