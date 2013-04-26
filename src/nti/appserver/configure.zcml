@@ -375,4 +375,8 @@
 			 component=".pyramid_renderers._throw_action"
 			 provides=".pyramid_renderers.ICatchComponentAction" />
 
+	<utility zcml:condition="have testmode"
+			 component="._email_utils.queue_simple_html_text_email"
+			 provides=".store_views._IMailer" />
+
 </configure>

@@ -1,21 +1,25 @@
 PRMIA CUSTOMER RECEIPT
 Date ${today}
 
-Transaction ID: eem_prm_12546334826_892
+Transaction ID: ${transaction_id}
 
 
 Billed to:
 ${billed_to}
 ${nti_context.charge.Address}
 
+%for item in nti_context.purchase.Order.Items:
+${item.Quantity}x ${item.purchasable.Title} - $${item.purchasable.Amount} each
 
-1x The Professional Risk Managers' Handbook (2 year license) - $19.50 each
+%endfor
 
-1x Advanced Stress Testing for Financial Institutions (1 year license) - $50.00 each
-
-
-Subtotal: $69.50
-Discounts(FIVEDAYSALE): -$5.00
+Subtotal: $ ${nti_context.purchase.Pricing.TotalNonDiscountedPrice}
+## XXX: JAM: Not sure how to figure out the discounts. I'm just deriving them...
+%for item in nti_context.purchase.Pricing.Items:
+%if item.Coupon and item.NonDiscountedPrice and item.PurchasePrice != item.NonDiscountedPrice:
+Discount($item.Coupon): -$${item.NonDiscountedPrice - item.PurchasePrice}
+%endif
+%endfor
 
 ORDER TOTAL: $ ${nti_context.charge.Amount} ${nti_context.charge.Currency}
 
