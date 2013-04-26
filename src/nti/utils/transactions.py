@@ -338,3 +338,16 @@ class TransactionLoop(object):
 					logger.log( TRACE, "Retrying transaction on exception %d", number, exc_info=True )
 				finally:
 					del exc_info # avoid leak
+			except SystemExit:
+				t, v, tb = sys.exc_info()
+				# If we are exiting, or otherwise probably going to exit, do try
+				# to abort the transaction. The state of the system is somewhat undefined
+				# at this point, though, so don't try to time or log it, just print to stderr on exception.
+				# Be sure to reraise the original SystemExit
+				try:
+					transaction.abort() # note: NOT our tx variable, whatever is current
+				except:
+					from zope.exceptions.exceptionformatter import print_exception
+					print_exception( *sys.exc_info() )
+
+				raise t, v, tb
