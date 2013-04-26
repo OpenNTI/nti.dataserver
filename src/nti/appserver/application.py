@@ -216,10 +216,14 @@ def createApplication( http_port,
 		# This branch exists only for tests
 		pyramid_config.set_root_factory( 'nti.appserver._dataserver_pyramid_traversal.root_resource_factory' )
 
-	# Configure Mako
+	# Configure Mako for plain text templates (Only! Use ZPT for XML/HTML)
 	pyramid_config.registry.settings['mako.directories'] = 'nti.appserver:templates'
 	pyramid_config.registry.settings['mako.module_directory'] = template_cache_dir
 	pyramid_config.registry.settings['mako.strict_undefined'] = True
+	# Disable all default filtering. Pyramid by default wants to apply HTML escaping,
+	# which we clearly do not want as these are plain text templates (only!)
+	# (NOTE: If you change this, you must manually remove any cached compiled templates)
+	pyramid_config.registry.settings['mako.default_filters'] = None
 
 	# Our addons
 	# include statsd client support around things we want to time.

@@ -110,6 +110,40 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 		msg = mailer.queue[0]
 		assert_that( msg, has_property( 'body', contains_string( user_username ) ) )
 
+	@WithSharedApplicationMockDS
+	def test_recover_multiple_user_found( self ):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user( )
+			user_username = user.username
+			profile = user_interfaces.IUserProfile( user )
+			created( profile ) # fire events for the profile object to get it indexed
+			added( profile )
+			profile.email = 'jason.madden@nextthought.com'
+			modified( profile )
+			modified( user )
+
+			user2 = self._create_user( username='other.user@foo.bar' )
+			user2_username = user2.username
+			profile = user_interfaces.IUserProfile( user2 )
+			created( profile ) # fire events for the profile object to get it indexed
+			added( profile )
+			profile.email = 'jason.madden@nextthought.com'
+			modified( profile )
+			modified( user2 )
+
+
+		app = TestApp( self.app )
+
+		path = b'/dataserver2/logon.forgot.username'
+		data = {'email': 'jason.madden@nextthought.com'}
+		app.post( path, data, status=204 )
+
+		mailer = component.getUtility( ITestMailDelivery )
+		assert_that( mailer.queue, has_length( 1 ) )
+		msg = mailer.queue[0]
+
+		assert_that( msg, has_property( 'body', contains_string( user_username ) ) )
+		assert_that( msg, has_property( 'body', contains_string( user2_username ) ) )
 
 class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 
@@ -234,7 +268,6 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 			mailer = component.getUtility( ITestMailDelivery )
 			assert_that( mailer.queue, has_length( 1 ) )
 			msg = mailer.queue[0]
-
 			assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) ) )
 			del mailer.queue[:]
 
