@@ -83,7 +83,8 @@ def _purchase_attempt_synced(event):
 
 @component.adapter(store_interfaces.IStorePurchaseInvitation, invite_interfaces.IInvitationAcceptedEvent)
 def _purchase_invitation_accepted(invitation, event):
-	if store_interfaces.IStorePurchaseInvitation.providedBy(invitation):
+	if 	store_interfaces.IStorePurchaseInvitation.providedBy(invitation) and \
+		store_interfaces.IInvitationPurchaseAttempt.providedBy(invitation.purchase):
 
 		original = invitation.purchase
 

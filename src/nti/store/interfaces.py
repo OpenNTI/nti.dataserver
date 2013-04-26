@@ -211,6 +211,9 @@ class IPurchaseAttempt(IContained):
 		return if the purchase has been synchronized with the payment processor
 		"""
 
+class IInvitationPurchaseAttempt(IPurchaseAttempt):
+	pass
+
 class IRedeemedPurchaseAttempt(IPurchaseAttempt):
 	RedemptionTime = nti_schema.Number(title='Redemption time', required=True)
 	RedemptionCode = nti_schema.ValidTextLine(title='Redemption Code', required=True)

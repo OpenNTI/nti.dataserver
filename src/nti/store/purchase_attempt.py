@@ -33,8 +33,10 @@ from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
 
 @functools.total_ordering
-@interface.implementer(store_interfaces.IPurchaseAttempt)
-class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
+@interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+class PurchaseAttempt(ModDateTrackingObject, SchemaConfigured, zcontained.Contained, PersistentPropertyHolder):
+
+	__metaclass__ = MetaStoreObject
 
 	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPurchaseAttempt)
@@ -46,6 +48,15 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 	@property
 	def Quantity(self):
 		return self.Order.Quantity
+
+	@property
+	def id(self):
+		return unicode(to_external_ntiid_oid(self))
+
+	@property
+	def creator(self):
+		result = getattr(self.__parent__, 'user', None)
+		return result
 
 	def __str__(self):
 		return "%s,%s" % (self.Items, self.State)
@@ -111,52 +122,30 @@ class BasePurchaseAttempt(ModDateTrackingObject, SchemaConfigured):
 	def is_synced(self):
 		return self.Synced
 
-@interface.implementer(an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class PurchaseAttempt(BasePurchaseAttempt, zcontained.Contained, PersistentPropertyHolder):
-
-	__metaclass__ = MetaStoreObject
-
-	_tokens = None
-	_consumers = None
+@interface.implementer(store_interfaces.IInvitationPurchaseAttempt)
+class InvitationPurchaseAttempt(PurchaseAttempt):
 
 	def __init__(self, *args, **kwargs):
 		super(PurchaseAttempt, self).__init__(*args, **kwargs)
-		if self.Quantity:
-			self._consumers = BTrees.OOBTree.OOTreeSet()
-			self._tokens = minmax.NumericMinimum(self.Quantity)
-
-	@property
-	def id(self):
-		return unicode(to_external_ntiid_oid(self))
-
-	@property
-	def creator(self):
-		result = getattr(self.__parent__, 'user', None)
-		return result
-
-	# invitations
+		self._consumers = BTrees.OOBTree.OOBTree()
+		self._tokens = minmax.NumericMinimum(self.Quantity)
 
 	def register(self, user, linked_purchase_id=None):
-		if self._consumers is not None:
-			user = getattr(user, "username", user)
-			if not user in self._consumers and user:
-				self._consumers.add(user)
-				return True
-			else:
-				return False
-		return True
+		user = getattr(user, "username", user)
+		if user and not user in self._consumers:
+			self._consumers[user] = linked_purchase_id
+			return True
+		return False
 
 	@property
 	def tokens(self):
-		return self._tokens.value if self._tokens is not None else None
+		return self._tokens.value
 
 	def consume_token(self):
-		if self._tokens is not None:
-			if self._tokens.value > 0:
-				self._tokens -= 1
-			else:
-				return False
-		return True
+		if self._tokens.value > 0:
+			self._tokens -= 1
+			return True
+		return False
 
 	def __str__(self):
 		return self.id
@@ -178,8 +167,9 @@ def get_currencies(purchase):
 def create_purchase_attempt(order, processor, state=None, description=None, start_time=None):
 	state = state or store_interfaces.PA_STATE_UNKNOWN
 	start_time = start_time if start_time else time.time()
-	result = PurchaseAttempt(Order=order, Processor=processor, Description=description,
-							 State=state, StartTime=float(start_time))
+	cls = PurchaseAttempt if not order.Quantity else InvitationPurchaseAttempt
+	result = cls(Order=order, Processor=processor, Description=description,
+				 State=state, StartTime=float(start_time))
 	return result
 
 def create_redeemed_purchase_attempt(purchase, redemption_code, redemption_time=None):

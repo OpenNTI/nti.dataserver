@@ -23,6 +23,8 @@ from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from nti.mimetype.mimetype import nti_mimetype_with_class
+
 from . import invitations
 from . import purchase_history
 from . import interfaces as store_interfaces
@@ -43,18 +45,26 @@ class PurchaseAttemptExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = store_interfaces.IPurchaseAttempt
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IInvitationPurchaseAttempt)
+class InvitationPurchaseAttemptExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IInvitationPurchaseAttempt
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
 @component.adapter(store_interfaces.IRedeemedPurchaseAttempt)
 class RedeemedPurchaseAttemptExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = store_interfaces.IRedeemedPurchaseAttempt
 
-@component.adapter(store_interfaces.IPurchasable)
+@component.adapter(store_interfaces.IPurchaseAttempt)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class PurchaseAttemptDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, original, external):
-		if original.Quantity:
+		cls_name = 'PurchaseAttempt'
+		external[ext_interfaces.StandardExternalFields.CLASS] = cls_name
+		external[ext_interfaces.StandardExternalFields.MIMETYPE] = nti_mimetype_with_class(cls_name)
+		if store_interfaces.IInvitationPurchaseAttempt.providedBy(original):
 			code = invitations.get_invitation_code(original)
 			external['InvitationCode'] = code
 			external['RemainingInvitations'] = original.tokens
