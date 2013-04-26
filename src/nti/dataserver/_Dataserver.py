@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals, absolute_import
-logger = __import__( 'logging' ).getLogger( __name__ )
+
+import logging
+logger = logging.getLogger( __name__ )
 
 # Patch for relstorage.
 import nti.monkey.relstorage_umysqldb_patch_on_import
@@ -232,16 +234,16 @@ class MinimalDataserver(object):
 		return self.dataserver_folder['users']
 
 	def close(self):
-		def _c( name, obj, close_func=None ):
+		def _c( name, obj, close_func=None, level=logging.WARN ):
 			try:
 				if close_func is None:
 					close_func = getattr( obj, 'close', None )
 				if close_func is not None:
 					close_func()
-				else:
-					logger.warning( "Don't know how to close %s = %s", name, obj )
+				elif obj is not None:
+					logger.log( level, "Don't know how to close %s = %s", name, obj )
 			except (Exception,AttributeError):
-				logger.warning( 'Failed to close %s = %s', name, obj, exc_info=True )
+				logger.log( level, 'Failed to close %s = %s', name, obj, exc_info=True )
 
 		# other_closeables were added after our setup completed, so they
 		# could depend on us. Thus they need to be closed first.
@@ -257,10 +259,13 @@ class MinimalDataserver(object):
 		# all outstanding connections open (though useless)
 		_c( 'self.db', self.db )
 		# Close any multi databases. Recall, though, that the root database
-		# is itself one of the multi-databases, so don't try to re-close it
+		# is itself one of the multi-databases, so don't try to re-close it.
+		# Depending on the status of any open transactions, there may be some connections
+		# cached; these may or may not be able to be closed (RelStorage, in particular, causes
+		# connections to raise an AttributeError; since this is expected, we don't log it)
 		for db_name, db in self.db.databases.items():
 			if db is not self.db:
-				_c( db_name, db )
+				_c( db_name, db, level=logging.DEBUG )
 
 		_c( 'redis', self.redis, self.redis.connection_pool.disconnect )
 
