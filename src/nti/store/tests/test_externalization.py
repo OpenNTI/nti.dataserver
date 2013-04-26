@@ -100,6 +100,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(items[1], has_entry('NTIID', 'aizen'))
 		assert_that(items[1], has_entry('Quantity', 2))
 
+	@WithMockDSTrans
 	def test_purchasable(self):
 		util = purchasable.PurchasableUtilityVocabulary(None)
 		ps = util.getTermByToken('iid_3').value
