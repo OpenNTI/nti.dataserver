@@ -11,7 +11,9 @@
 	
 	<include package="z3c.baseregistry" file="meta.zcml" />
 	
-	<include package="nti.store.payments.stripe" file="meta.zcml" />
+	<include package="nti.store" file="meta.zcml" />
+    <include package="nti.store.payments.stripe" file="meta.zcml" />
+	
 	
 	<utility
 		component=".sites.PRMIA"
