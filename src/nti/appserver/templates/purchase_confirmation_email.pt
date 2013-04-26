@@ -65,7 +65,7 @@ ${context/charge/Address}
 			<tr tal:repeat="item context/purchase/Order/Items">
 				<td tal:content="item/Quantity">1</td>
 				<td tal:content="item/purchasable/Title">Title</td>
-				<td>$${item/purchasable/Amount} each</td>
+				<td>${python:request.locale.numbers.getFormatter('currency').format(item.purchasable.Amount)} each</td>
 			</tr>
 		</table>
 
