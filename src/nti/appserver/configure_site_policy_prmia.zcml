@@ -2,6 +2,7 @@
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:pcs="http://nextthought.com/ntp/purchasable"
 			xmlns:stripe="http://nextthought.com/ntp/stripe">
 
 	<include package="zope.component" file="meta.zcml" />
