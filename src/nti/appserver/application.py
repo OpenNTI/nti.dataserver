@@ -548,11 +548,6 @@ def createApplication( http_port,
 							 renderer='rest',context='nti.dataserver.interfaces.IFriendsList',
 							 permission=nauth.ACT_READ, request_method='GET' )
 
-	# store
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							renderer='rest', context='nti.store.interfaces.IPurchasable',
-							permission=nauth.ACT_READ, request_method='GET')
-
 
 	# register change listeners
 	# Now, fork off the change listeners
