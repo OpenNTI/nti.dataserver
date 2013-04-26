@@ -67,7 +67,6 @@ class Purchasable(SchemaConfigured):
 	def id(self):
 		return self.NTIID
 
-
 	def __str__(self):
 		return self.NTIID
 
@@ -85,6 +84,9 @@ class Purchasable(SchemaConfigured):
 		xhash = 47
 		xhash ^= hash(self.NTIID)
 		return xhash
+
+	def __reduce__(self):
+		raise TypeError()
 
 	@Lazy
 	def __acl__(self):
