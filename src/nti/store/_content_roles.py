@@ -19,11 +19,26 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.ntiids import ntiids
 
-def _get_collection(library, ntiid):
+def _get_collection_root(library, ntiid):
 	result = None
 	if library and ntiid:
 		paths = library.pathToNTIID(ntiid)
-		result = paths[0].ntiid.lower() if paths else None
+		result = paths[0] if paths else None
+	return result
+
+def _get_descendants(unit):
+	yield unit
+	last = unit
+	for node in _get_descendants(unit):
+		for child in node.children:
+			yield child
+			last = child
+		if last == node:
+			return
+
+def _get_collection(library, ntiid):
+	croot = _get_collection_root(library, ntiid)
+	result = croot.ntiid.lower() if croot else None
 	return result
 
 def _add_users_content_roles( user, items ):
