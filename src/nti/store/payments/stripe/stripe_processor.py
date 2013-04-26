@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 import six
 import math
 import time
+import functools
 import simplejson as json
 from datetime import date
 
@@ -77,7 +78,7 @@ def _encode_description(purchase_id, username, customer_id):
 def _decode_description(s):
 	try:
 		result = json.loads(s)
-	except (TypeError,ValueError):
+	except (TypeError, ValueError):
 		result = {}
 	return result
 
@@ -191,14 +192,15 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 		result = self._do_pricing(purchase)
 		return result
 
-	def process_purchase(self, purchase_id, username, token, expected_amount=None, api_key=None):
+	def process_purchase(self, purchase_id, username, token, expected_amount=None, api_key=None, site_names=()):
 		"""
 		Executes the process purchase.
 		This function may be called in a greenlet (which cannot be run within a transaction runner)
 		"""
-		#### from IPython.core.debugger import Tracer; Tracer()()  ####
+		#### from IPython.core.debugger import Tracer; Tracer()() ####
 
 		transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+		transactionRunner = functools.partial(transactionRunner, site_names=site_names)
 
 		def start_purchase():
 			purchase = purchase_history.get_purchase_attempt(purchase_id, username)
@@ -225,7 +227,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			amount = pricing.TotalPurchasePrice
 			application_fee = pricing.TotalPurchaseFee if pricing.TotalPurchaseFee else None
 			if expected_amount is not None and not math.fabs(expected_amount - amount) <= 0.05:
-				logger.error("Purchase order amount %.2f did not match the expected amount %.2f", amount, expected_amount )
+				logger.error("Purchase order amount %.2f did not match the expected amount %.2f", amount, expected_amount)
 				raise Exception("Purchase order amount did not match the expected amount")
 
 			# create a stripe customer
