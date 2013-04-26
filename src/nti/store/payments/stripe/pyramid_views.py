@@ -173,6 +173,12 @@ class StripePaymentView(_PostStripeView):
 
 	def __call__(self):
 		request = self.request
+
+		# capture the site names so the purchasables
+		# can be read by sub-transactions
+		from nti.appserver import site_policies
+		site_names = site_policies.get_possible_site_names(request, include_default=True)
+
 		username = authenticated_userid(request)
 		purchase_attempt, token, stripe_key, expected_amount = self.readInput(username)
 
@@ -191,7 +197,8 @@ class StripePaymentView(_PostStripeView):
 		def process_purchase():
 			logger.info("Processing purchase %s" % purchase_id)
 			manager.process_purchase(purchase_id=purchase_id, username=username, token=token,
-									 expected_amount=expected_amount, api_key=stripe_key.PrivateKey)
+									 expected_amount=expected_amount, api_key=stripe_key.PrivateKey,
+									 site_names=site_names)
 		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_purchase))
 
 		# return
