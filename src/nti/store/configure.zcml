@@ -29,7 +29,8 @@
 	<adapter factory=".externalization.PricingResultsExternal" />
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	<adapter factory=".externalization.RedeemedPurchaseAttemptExternal" />
-
+	<adapter factory=".externalization.InvitationPurchaseAttemptExternal" />
+	
 	<subscriber factory=".externalization.PurchasableDecorator"
 				for=".interfaces.IPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>

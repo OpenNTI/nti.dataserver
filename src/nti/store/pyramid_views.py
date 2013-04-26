@@ -159,8 +159,13 @@ class RedeemPurchaseCodeView(_PostView):
 			raise_field_error(request, "invitation_code", "The invitation code is not for this purchasable")
 
 		username = authenticated_userid(request)
-		invite = invitations.create_store_purchase_invitation(purchase, invitation_code)
-		invite.accept(username)
+		try:
+			invite = invitations.create_store_purchase_invitation(purchase, invitation_code)
+			invite.accept(username)
+		except invitations.InvitationAlreadyAccepted:
+			raise_field_error(request, "invitation_code", "The invitation code has already been accepted")
+		except invitations.InvitationCapacityExceeded:
+			raise_field_error(request, "invitation_code", "There are no remaining invitations for this code")
 
 		return hexc.HTTPNoContent()
 
