@@ -162,7 +162,7 @@ def createApplication( http_port,
 	notify( ProcessStarting() )
 
 	logger.debug( 'Began starting dataserver' )
-	setupChameleonCache(config=True)
+	template_cache_dir = setupChameleonCache(config=True) # must do this early
 
 	server = None
 
@@ -216,6 +216,10 @@ def createApplication( http_port,
 		# This branch exists only for tests
 		pyramid_config.set_root_factory( 'nti.appserver._dataserver_pyramid_traversal.root_resource_factory' )
 
+	# Configure Mako
+	pyramid_config.registry.settings['mako.directories'] = 'nti.appserver:templates'
+	pyramid_config.registry.settings['mako.module_directory'] = template_cache_dir
+	pyramid_config.registry.settings['mako.strict_undefined'] = True
 
 	# Our addons
 	# include statsd client support around things we want to time.

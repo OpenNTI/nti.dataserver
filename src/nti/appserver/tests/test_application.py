@@ -16,6 +16,7 @@ from hamcrest import contains, contains_inanyorder
 from hamcrest import has_value
 from hamcrest import same_instance
 does_not = is_not
+from nose.tools import assert_raises
 from nti.tests import is_empty, time_monotonically_increases
 
 from nti.appserver.application import createApplication, _configure_async_changes
@@ -459,6 +460,23 @@ class ApplicationTestBase(_AppTestBaseMixin, ConfiguringTestBase):
 
 
 class TestApplication(SharedApplicationTestBase):
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_mako_renderer(self):
+		from pyramid.renderers import render
+		from pyramid.mako_templating import MakoRenderingException
+		value = {'world': 'you'}
+		val = render( 'nti.appserver.tests:templates/basic_mako_template.mak',
+				value,
+				request=self.request )
+		assert_that( val, is_( 'Hello, you!\n' ) )
+
+		# strict undefined should be true
+		with assert_raises(MakoRenderingException):
+			render( 'nti.appserver.tests:templates/basic_mako_template.mak',
+					dict(),
+					request=self.request )
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_unauthenticated_userid(self):

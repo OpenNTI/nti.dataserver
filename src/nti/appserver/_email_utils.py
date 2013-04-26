@@ -21,10 +21,14 @@ from pyramid_mailer.interfaces import IMailer
 from pyramid_mailer.message import Message
 from repoze.sendmail import interfaces as mail_interfaces
 
-def queue_simple_html_text_email(base_template, subject='', request=None, recipients=(), template_args=None):
+def queue_simple_html_text_email(base_template, subject='', request=None, recipients=(), template_args=None, text_template_extension='.txt'):
 	"""
 	Transactionally queues an email for sending. The email has both a
-	plain text and an HTML version
+	plain text and an HTML version.
+
+	:keyword text_template_extension: The filename extension for the plain text template. Valid values
+		are ".txt" for Chameleon templates (this is the default and preferred version) and ".mak" for
+		Mako templates.
 	"""
 	if not recipients:
 		logger.debug( "Refusing to attempt to send email with no recipients" )
@@ -47,10 +51,10 @@ def queue_simple_html_text_email(base_template, subject='', request=None, recipi
 			result.update( template_args )
 		return result
 
-	html_body, text_body = [render( 'templates/' + base_template + extension,
+	html_body, text_body = [render( 'nti.appserver:templates/' + base_template + extension,
 									make_args(),
 									request=request )
-							for extension in ('.pt', '.txt')]
+							for extension in ('.pt', text_template_extension)]
 
 	message = Message( subject=subject,
 					   recipients=recipients,
