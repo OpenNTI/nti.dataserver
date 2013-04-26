@@ -69,6 +69,18 @@ def _adapt_to_error(e):
 		result = stripe_interfaces.IStripePurchaseError(StripeException(e.args), None)
 	return result
 
+def _encode_description(purchase_id, username, customer_id):
+	data = {'PurchaseID': purchase_id, 'Username':username, 'CustomerID': customer_id}
+	result = json.dumps(data)
+	return result
+
+def _decode_description(s):
+	try:
+		result = json.loads(s)
+	except:
+		result = {}
+	return result
+
 @interface.implementer(stripe_interfaces.IStripePaymentProcessor)
 class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
@@ -227,7 +239,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			charge = None
 			if customer_id is not None:
 				# charge card, user description for tracking purposes
-				descid = "%s:%s:%s" % (purchase_id, username, customer_id)
+				descid = _encode_description(purchase_id, username, customer_id)
 				logger.info('Creating stripe charge for %s', descid)
 				charge = self.create_charge(cents_amount, currency=currency, card=token, description=descid,
 											application_fee=application_fee, api_key=api_key)
@@ -351,9 +363,9 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			etype = event.get('type', None)
 			data = event.get('data', {})
 			if etype in self.events:
-				tracks = data.get('description', u'').split(":")
-				purchase_id = tracks[0] if len(tracks) >= 2 else u''
-				username = tracks[1] if len(tracks) >= 2 else u''
+				data = _decode_description(data.get('description', u''))
+				purchase_id = data.get('PurchaseID', u'')
+				username = data.get('Username', u'')
 				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 				if purchase:
 					if etype in ("charge.succeeded") and not purchase.has_succeeded():

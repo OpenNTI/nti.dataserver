@@ -227,7 +227,7 @@ def is_item_activated(user, item):
 
 def get_purchase_attempt(purchase_id, user=None):
 	user = _get_user(user)
-	result = PurchaseHistory.get_purchase(purchase_id)
+	result = PurchaseHistory.get_purchase(purchase_id) if purchase_id else None
 	if result is not None and user is not None:  # validate
 		result = None if result.creator != user else result
 	return result
