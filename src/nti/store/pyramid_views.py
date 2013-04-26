@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import six
 import time
 import gevent
@@ -17,9 +19,12 @@ import dateutil.parser
 from pyramid import httpexceptions as hexc
 
 from zope import component
+from zope import lifecycleevent
+from zope.annotation import IAnnotations
 
 from pyramid.security import authenticated_userid
 
+from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import LocatedExternalDict
@@ -196,6 +201,45 @@ class PricePurchasableView(_PostView):
 	def __call__(self):
 		result = self.price_purchasable()
 		return result
+
+class DeletePurchaseAttemptView(_PostView):
+
+	def __call__(self):
+		values = self.readInput()
+		username = authenticated_userid(self.request)
+		purchase_id = values.get('purchaseID')
+		if not purchase_id:
+			raise_field_error(self.request, "purchaseID", "Must specify a valid purchase attempt id")
+
+		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+		if not purchase:
+			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
+
+		purchase_history.remove_purchase_attempt(purchase, username)
+		logger.info("Purchase attempt '%s' has been deleted")
+
+		return hexc.HTTPNoContent()
+
+class DeletePurchaseHistoryView(_PostView):
+
+	def __call__(self):
+		username = authenticated_userid(self.request)
+		user = users.User.get_user(username)
+		su = store_interfaces.IPurchaseHistory(user)
+
+		# bwc
+		if hasattr(su, "purchases"):
+			for p in su.purchases.values():
+				lifecycleevent.removed(p)
+		elif hasattr(su, "values"):
+			for p in su.values():
+				lifecycleevent.removed(p)
+
+		IAnnotations(user).pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
+
+		logger.info("Purchase history has been removed")
+
+		return hexc.HTTPNoContent()
 
 # aliases
 
