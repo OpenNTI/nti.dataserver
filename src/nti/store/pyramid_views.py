@@ -28,7 +28,6 @@ from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import LocatedExternalDict
-from nti.externalization.datastructures import LocatedExternalList
 
 from . import priceable
 from . import purchasable
@@ -255,8 +254,11 @@ class GetContentRolesView(object):
 		if not user:
 			raise hexc.HTTPNotFound(detail='User not found')
 
-		result = _content_roles._get_users_content_roles(user)
-		return LocatedExternalList(result)
+		roles = _content_roles._get_users_content_roles(user)
+		result = LocatedExternalDict()
+		result['Username'] = result
+		result['Items'] = roles
+		return result
 
 # aliases
 
