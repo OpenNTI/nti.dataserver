@@ -256,7 +256,7 @@ class GetContentRolesView(object):
 
 		roles = _content_roles._get_users_content_roles(user)
 		result = LocatedExternalDict()
-		result['Username'] = result
+		result['Username'] = username
 		result['Items'] = roles
 		return result
 
