@@ -45,6 +45,9 @@ def create_simple_html_text_email(base_template, subject='', request=None, recip
 	context_name = 'context'
 	if text_template_extension != '.txt':
 		context_name = 'nti_context'
+		if 'context' in template_args:
+			template_args[context_name] = template_args['context']
+			del template_args['context']
 
 	master = get_renderer('templates/master_email.pt').implementation()
 	def make_args():

@@ -5,9 +5,8 @@ Transaction ID: eem_prm_12546334826_892
 
 
 Billed to:
-Jonathan Jacobson
-501 West Chestnut
-Noble, OK 73068
+${billed_to}
+${nti_context.charge.Address}
 
 
 1x The Professional Risk Managers' Handbook (2 year license) - $19.50 each
@@ -18,11 +17,11 @@ Noble, OK 73068
 Subtotal: $69.50
 Discounts(FIVEDAYSALE): -$5.00
 
-ORDER TOTAL: $64.50 USD
+ORDER TOTAL: $ ${nti_context.charge.Amount} ${nti_context.charge.Currency}
 
 
-Payment Received: $64.50
-${today} (**** **** **** 6966)
+Payment Received: $ ${nti_context.charge.Amount}
+${today} (**** **** **** ${nti_context.charge.CardLast4})
 all sales are final
 
 
