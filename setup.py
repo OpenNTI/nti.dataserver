@@ -129,8 +129,9 @@ setup(
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
-		'Chameleon >= 2.11',
+		'Chameleon >= 2.11', # (preferred) template rendering. pulled in by pyramid, but ensure latest version
 		'ExtensionClass >= 4.0' if not IS_PYPY else '',
+		'Mako >= 0.8.0', # fallback plain-text template render. pulled in by pyramid, but ensure latest version
 		# 'friendly' fork of PIL, developed by Zope/Plone.
 		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		# is the version that Pillow forked from in 2010 as version 1.0. So
