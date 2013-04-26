@@ -23,8 +23,6 @@ from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
-from nti.mimetype.mimetype import nti_mimetype_with_class
-
 from . import invitations
 from . import purchase_history
 from . import interfaces as store_interfaces
@@ -61,11 +59,6 @@ class PurchaseAttemptDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, original, external):
-		# hard code one class for all PurchaseAttempt based classes
-		# External clients don't care about internal implementations
-		cls_name = 'PurchaseAttempt'
-		external[ext_interfaces.StandardExternalFields.CLASS] = cls_name
-		external[ext_interfaces.StandardExternalFields.MIMETYPE] = nti_mimetype_with_class(cls_name)
 		if store_interfaces.IInvitationPurchaseAttempt.providedBy(original):
 			code = invitations.get_invitation_code(original)
 			external['InvitationCode'] = code
