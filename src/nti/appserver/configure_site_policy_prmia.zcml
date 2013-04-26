@@ -19,7 +19,8 @@
 
 	<registerIn registry=".sites.PRMIA">
 		<utility factory=".site_policies.PrmiaSitePolicyEventListener" />
-		
+
+		<!-- PROD KEYS -->
 		<stripe:registerStripeKey
 			alias="PRMIA"
 			live_mode="True"
@@ -28,6 +29,59 @@
 			private_key="sk_live_XbDRHzOx4eiORSkF8iRMH1xj"
 			refresh_token="rt_1S9LF8At2PRpLhOeMbPLS9AEvsFYUSyCPIX6ioCDA9h6EKcF" />
 		
+		<!-- TEST KEYS -->
+		<stripe:registerStripeKey
+			alias="NTI-TEST"
+			live_mode="False"
+			stripe_user_id="NEXTTHOUGHT"
+			public_key="pk_test_LIpQyLD7p5FmspOs6pPW9gWG"
+			private_key="sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp" />
+
+		<include package="nti.contentfragments" />
+		<pcs:registerPurchasable
+			ntiid="tag:nextthought.com,2011-10:PRMIA-purchasable-AdvancedStressTestingforFinancialInstitutions"
+			title="Advanced Stress Testing for Financial Institutions"
+			provider="NTI-TEST"
+			author="PRMIA"
+			amount="495"
+			currency="USD"
+			discountable="True"
+			bulk_purchase="True"
+			icon="https://content.nextthought.com/images/purchasable/advanced_stress_testing_for_financial_institutions.png"
+			items="tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.advanced_stress_testing_for_financial_institutions" >
+		<![CDATA[
+<h3>Course Description</h3>
+Financial institutions are increasingly focused on improving stress testing practices. The global financial crisis has exposed the inadequacy of pre-canned stress tests and demonstrated the importance of dynamic stress tests that focus on portfolio vulnerabilities. In addition to conducting macro-economic scenario analysis, major regulators are asking banks to generate Reverse Stress Tests to identify important fault lines. Furthermore, leading firms are investing in early warning capabilities to help navigate difficult market conditions. Hosted on NextThought's innovative platform, this PRMIA University course combines multimedia lectures with social learning exercises and helps students to connect in the cloud, further enhancing their learning experience.
+
+<h3>About the Instructor</h3>
+Alan Laubsch has nearly 20 years of risk management experience and has advised major global banks, asset managers, and sovereign institutions on enterprise risk systems implementations.
+
+One of the co-founders of the RiskMetrics Group, Mr. Laubsch was previously head of the RiskMetrics Labs division in Asia, where he focused on developing next generation risk management practices, including methodologies for early warning, stress testing, systemic risk, and a framework for integrated risk management.
+
+Previously, Mr. Laubsch was a vice president at JPMorgan's Risk Advisory Group, where he helped financial institutions implement enterprise risk management in Latin America, Middle East and Asia. Mr. Laubsch joined JPMorgan in New York in 1993 after receiving a B.S. in Industrial Engineering from Stanford University. As a researcher in the Corporate Risk Management Group, Mr. Laubsch worked on hedge fund risk analysis, default risk modeling, economic capital allocation and market and credit risk integration.
+
+Mr. Laubsch authored "Risk Management: A Practical Guide" and research at RiskMetrics. Mr. Laubsch has also published articles in the Asia Wall Street Journal and other financial media.
+
+<h3>Key Learning Objectives</h3>
+<ul>
+<li>A methodology for Adaptive Stress Testing</li>
+<li>Reverse Stress Testing techniques and case studies</li>
+<li>Early Warnings: detecting signals amidst a flood of noise</li>
+<li>Scenario library design and management</li>
+<li>Stress visualizations, including Network Graphs and Heat Maps</li>
+<li>A framework for Integral Risk Management</li>
+<li>Developing a pervasive risk culture</li>
+<li>Polarity management to enhance risk governance and practice
+</ul>
+
+<h3>Availability</h3>
+NextThought guarantees availability to the purchased materials for one (1) year.
+
+<h3>System Requirements</h3>
+This course is accessible on Windows and Mac operating systems when using one of the following supported browsers: current versions of Chrome or Firefox, Internet Explorer 9 or above, or Safari 5 or above. Mobile devices are not supported at this time. A broadband Internet connection is recommended with download speeds of at least 1 Mbps. For the best experience we recommend using a computer with 1GB of RAM or more and a 1.5+ GHz processor.
+        ]]> </pcs:registerPurchasable>
+
+	
 			<!-- CSS for PRMIA -->
 		<utility factory=".site_policy_views.SiteCSSMarker" />
 		
