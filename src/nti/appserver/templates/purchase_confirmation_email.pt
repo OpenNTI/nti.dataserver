@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:metal="http://xml.zope.org/namespaces/metal"
+	  xmlns:tal="http://xml.zope.org/namespaces/tal">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Purchase Confirmation</title>
+		<style metal:use-macro="options/master/macros/style">
+			#green-bar {
+			background-color: #89be3c;
+			width: 100%;
+			height: 5px;
+			margin-left: -30px;
+			padding-right: 40px;
+			}
+			#logo-bar {
+			margin-top: 20px;
+			margin-bottom: 30px;
+			}
+			body {
+			margin-left: 30px;
+			margin-right: 0px;
+			font-family: Arial, sans-serif;
+			font-size: 14pt;
+			color: #757474;
+			}
+			a {
+			text-decoration: none;
+			color: #3fb3f6;
+			}
+			.tterm, strong {
+			font-weight: bold;
+			color: #494949;
+			}
+			h1, h2, h3, h4, h5, h6 {
+			font-weight: bold;
+			}
+		</style>
+	</head>
+	<body>
+		<div metal:use-macro="options/master/macros/header">
+		<div id="green-bar"></div>
+		<div id="logo-bar">
+			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+			alt="NextThought Logo" />
+		</div>
+		</div>
+PRMIA CUSTOMER RECEIPT
+Date ${today}
+
+Transaction ID: eem_prm_12546334826_892
+
+
+Billed to:
+Jonathan Jacobson
+501 West Chestnut
+Noble, OK 73068
+
+
+1x The Professional Risk Managers' Handbook (2 year license) - $19.50 each
+
+1x Advanced Stress Testing for Financial Institutions (1 year license) - $50.00 each
+
+
+Subtotal: $69.50
+Discounts(FIVEDAYSALE): -$5.00
+
+ORDER TOTAL: $64.50 USD
+
+
+Payment Received: $64.50
+${today} (**** **** **** 6966)
+all sales are final
+
+
+Thank you for your order, ${informal_username}! Your Items are available at ${request.application_url}
+
+
+Please keep a copy of this receipt for your records.
+If you have any questions, feel free to contact accounting@prmia.org
+
+
+	</body>
+</html>
