@@ -168,7 +168,7 @@ class _DefaultPostRepozeQueryParser(_DefaultRepozeQueryParser):
 
 	def _get_search_fields(self, qo):
 		if qo.is_phrase_search or qo.is_prefix_search or not _can_use_ngram_field(qo):
-			result = (content_,)
+			result = (content_, title_)
 		else:
 			result = (ngrams_, title_, tags_)
 		return result
