@@ -28,10 +28,12 @@ from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import LocatedExternalDict
+from nti.externalization.datastructures import LocatedExternalList
 
 from . import priceable
 from . import purchasable
 from . import invitations
+from . import _content_roles
 from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
@@ -240,6 +242,21 @@ class DeletePurchaseHistoryView(_PostView):
 		logger.info("Purchase history has been removed")
 
 		return hexc.HTTPNoContent()
+
+class GetContentRolesView(object):
+
+	def __init__(self, request):
+		self.request = request
+
+	def __call__(self):
+		request = self.request
+		username = request.params.get('username') or  authenticated_userid(request)
+		user = users. User.get_user(username)
+		if not user:
+			raise hexc.HTTPNotFound(detail='User not found')
+
+		result = _content_roles._get_users_content_roles(user)
+		return LocatedExternalList(result)
 
 # aliases
 
