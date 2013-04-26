@@ -28,7 +28,8 @@ def queue_simple_html_text_email(base_template, subject='', request=None, recipi
 
 	:keyword text_template_extension: The filename extension for the plain text template. Valid values
 		are ".txt" for Chameleon templates (this is the default and preferred version) and ".mak" for
-		Mako templates.
+		Mako templates. Note that if you use Mako, the usual ``context`` argument is renamed to ``nti_context``,
+		as ``context`` is a reserved word in Mako.
 	"""
 	if not recipients:
 		logger.debug( "Refusing to attempt to send email with no recipients" )
@@ -41,12 +42,16 @@ def queue_simple_html_text_email(base_template, subject='', request=None, recipi
 	if request is None:
 		request = get_current_request()
 
+	context_name = 'context'
+	if text_template_extension != '.txt':
+		context_name = 'nti_context'
+
 	master = get_renderer('templates/master_email.pt').implementation()
 	def make_args():
 		result = {}
 		result['master'] = master
 		if request:
-			result['context'] = request.context
+			result[context_name] = request.context
 		if template_args:
 			result.update( template_args )
 		return result

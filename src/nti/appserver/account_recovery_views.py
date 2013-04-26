@@ -98,14 +98,17 @@ def forgot_username_view(request):
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 	# only works with a text part)
 	base_template = 'username_recovery_email'
+	text_ext = ".mak"
 	if not matching_users:
 		base_template = 'failed_' + base_template
+		text_ext = ".txt"
 	else:
 		matching_users = filter( nti_interfaces.IUser.providedBy, matching_users ) # ensure only real users, not profiles or other matches
 	queue_simple_html_text_email( base_template, subject=_("NextThought Username Reminder"),
 								  recipients=[email_assoc_with_account],
 								  template_args={'users': matching_users},
-								  request=request )
+								  request=request,
+								  text_template_extension=text_ext)
 
 	return hexc.HTTPNoContent()
 

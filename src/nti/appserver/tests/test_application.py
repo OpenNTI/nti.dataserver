@@ -465,11 +465,11 @@ class TestApplication(SharedApplicationTestBase):
 	def test_mako_renderer(self):
 		from pyramid.renderers import render
 		from pyramid.mako_templating import MakoRenderingException
-		value = {'world': 'you'}
+		value = {'world': 'you&me'} # a value to prove that HTML escapes are not done
 		val = render( 'nti.appserver.tests:templates/basic_mako_template.mak',
 				value,
 				request=self.request )
-		assert_that( val, is_( 'Hello, you!\n' ) )
+		assert_that( val, is_( 'Hello, you&me!\n' ) )
 
 		# strict undefined should be true
 		with assert_raises(MakoRenderingException):
