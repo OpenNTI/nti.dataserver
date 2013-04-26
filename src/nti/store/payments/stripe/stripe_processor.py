@@ -236,13 +236,18 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			application_fee = int(application_fee * 100.0) if application_fee else None
 
 			# contact stripe
-			charge = None
-			if customer_id is not None:
-				# charge card, user description for tracking purposes
-				descid = _encode_description(purchase_id, username, customer_id)
-				logger.info('Creating stripe charge for %s', descid)
-				charge = self.create_charge(cents_amount, currency=currency, card=token, description=descid,
-											application_fee=application_fee, api_key=api_key)
+			def do_stripe_purchase():
+				charge = None
+				purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+				if purchase.is_pending() and customer_id is not None:
+					# charge card, user description for tracking purposes
+					descid = _encode_description(purchase_id, username, customer_id)
+					logger.info('Creating stripe charge for %s', purchase_id)
+					charge = self.create_charge(cents_amount, currency=currency, card=token, description=descid,
+												application_fee=application_fee, api_key=api_key)
+				return charge
+
+			charge = transactionRunner(do_stripe_purchase)
 
 			if charge is not None:
 				# register charge
