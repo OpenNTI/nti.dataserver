@@ -247,7 +247,7 @@ setup(
 		'simplejson >= 3.1.3',
 		'six >= 1.3.0',
 		'sympy == 0.7.2',  # sympy-docs-html-0.7.1 is currently greater
-		'stripe >= 1.7.10',  # stripe payments
+		'stripe >= 1.9.0',  # stripe payments
 		# 'slimit',
 		'supervisor >= 3.0b1',
 		'transaction >= 1.4.1',

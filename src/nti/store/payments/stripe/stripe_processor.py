@@ -77,7 +77,7 @@ def _encode_description(purchase_id, username, customer_id):
 def _decode_description(s):
 	try:
 		result = json.loads(s)
-	except:
+	except (TypeError,ValueError):
 		result = {}
 	return result
 
@@ -288,7 +288,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 	def sync_purchase(self, purchase_id, username, api_key=None):
 		"""
-		Attempts to synchronize a purchase attempt with the information collected in 
+		Attempts to synchronize a purchase attempt with the information collected in
 		stripe.com and/or local db.
 		"""
 		user = User.get_user(username)
