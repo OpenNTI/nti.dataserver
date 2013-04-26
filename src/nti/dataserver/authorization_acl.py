@@ -717,12 +717,14 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 
 	@Lazy
 	def __acl__(self):
+		provenance = self._acl_sibling_entry_name
 		acl_string = self.context.read_contents_of_sibling_entry( self._acl_sibling_entry_name )
 		if acl_string is None and self._acl_sibling_fallback_name is not None:
+			provenance = self._acl_sibling_fallback_name
 			acl_string = self.context.read_contents_of_sibling_entry( self._acl_sibling_fallback_name )
 		if acl_string is not None:
 			try:
-				__acl__ = self._acl_from_string(self.context, acl_string )
+				__acl__ = self._acl_from_string(self.context, acl_string, provenance )
 				# Empty files (those that do exist but feature no valid ACL lines)
 				# are considered a mistake, an overlooked accident. In the interest of trying
 				# to be secure by default and not allow oversights through, call them out.
@@ -738,12 +740,33 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 			__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _AbstractDelimitedHierarchyEntryACLProvider ), ) )
 		else:
 			__acl__ = () # Inherit from parent
+
 		return __acl__
 
-	def _acl_from_string(self, context, acl_string):
-		return _acl_from_ace_lines( acl_string.splitlines(), context )
+	def _acl_from_string(self, context, acl_string, provenance=None):
+		return _acl_from_ace_lines( acl_string.splitlines(), provenance or context )
 
 
+def _supplement_acl_with_content_role(self, context, acl):
+	"""
+	Add read-access to a pseudo-group
+	based on the (lowercased) NTIID of the closest containing content package.
+
+	It is important to do this both for the root and sublevels of the tree that allow
+	ACLs to be specified in files, because we may be putting a default Deny entry
+	there. (The default deny at the sub files is needed to be sure
+	that we can properly mix granting and denying access and forces acl files
+	to be very specific.)
+	"""
+
+	package = traversal.find_interface( context, content_interfaces.IContentPackage, strict=False )
+	if package is not None and package.ntiid:
+		parts = ntiids.get_parts( package.ntiid )
+		if parts and parts.provider and parts.specific:
+			acl = acl + ace_allowing( authorization.role_for_providers_content( parts.provider, parts.specific ),
+									  authorization.ACT_READ,
+									  self )
+	return acl
 
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter( content_interfaces.IDelimitedHierarchyContentPackage )
@@ -761,16 +784,9 @@ class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEn
 
 	_add_default_deny_to_acl_from_file = True
 
-	def _acl_from_string( self, context, acl_string ):
-		acl = super(_DelimitedHierarchyContentPackageACLProvider,self)._acl_from_string( context, acl_string )
-		package = traversal.find_interface( context, content_interfaces.IContentPackage, strict=False )
-		if package is not None and package.ntiid:
-			parts = ntiids.get_parts( package.ntiid )
-			if parts and parts.provider and parts.specific:
-				acl = acl + ace_allowing( authorization.role_for_providers_content( parts.provider, parts.specific ),
-										  authorization.ACT_READ,
-										  _DelimitedHierarchyContentPackageACLProvider )
-		return acl
+	def _acl_from_string( self, context, acl_string, provenance=None ):
+		acl = super(_DelimitedHierarchyContentPackageACLProvider,self)._acl_from_string( context, acl_string, provenance=provenance )
+		return _supplement_acl_with_content_role( self, context, acl )
 
 @interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(content_interfaces.IDelimitedHierarchyContentUnit)
@@ -790,6 +806,10 @@ class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntry
 	``.nti_acl``), letting it show up in libraries, etc, generally
 	denying access to children (through ``.nti_acl.default``), but
 	providing access to certain subunits (through the ordinal files).
+	In this case, we will also place a default global denial as the
+	last entry in the ACL, forcing permissioning to be at this level
+	(e.g., the parent ACL from the content package is thus effectively
+	NOT inherited.)
 	"""
 
 	_default_allow = False
@@ -807,8 +827,14 @@ class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntry
 		path = '.'.join( [str(i) for i in ordinals] )
 		self._acl_sibling_entry_name = _AbstractDelimitedHierarchyEntryACLProvider._acl_sibling_entry_name + '.' + path
 
-		if len(ordinals) == 1: # a "chapter"; we don't do this at every level for efficiency3 (TODO: For best caching, we need to read this off the ContentPackage)
+		if len(ordinals) == 1: # a "chapter"; we don't do this at every level for efficiency (TODO: For best caching, we need to read this off the ContentPackage)
 			self._acl_sibling_fallback_name = _AbstractDelimitedHierarchyEntryACLProvider._acl_sibling_entry_name + '.default'
+			self._add_default_deny_to_acl_from_file = True
+
+	def _acl_from_string( self, context, acl_string, provenance=None ):
+		acl = super(_DelimitedHierarchyContentUnitACLProvider,self)._acl_from_string( context, acl_string, provenance=provenance )
+		return _supplement_acl_with_content_role( self, context, acl ) if self._acl_sibling_fallback_name else acl
+
 
 @component.adapter(nti_interfaces.IFriendsList)
 class _FriendsListACLProvider(_CreatedACLProvider):

@@ -245,9 +245,13 @@ class LibraryCollectionDetailExternalizer(object):
 	"""
 	Externalizes a Library wrapped as a collection.
 
-	.. note:: This is where ACLs on individual ContentPackages are applied to the elements of the IContentPackageLibrary.
-		We say that if either the content package itself is readable, or any one of its top-level children
-		are readable, then we write the object out to the user. This allows sampling of chapters.
+	.. note::
+		This is where ACLs on individual ContentPackages are applied
+		to the elements of the IContentPackageLibrary. We say that if
+		either the content package itself is readable, or any one of
+		its top-level children are readable, then we write the object
+		out to the user. This allows sampling of chapters, without making
+		the entire content package visible.
 	"""
 
 	# TODO: This doesn't do a good job of externalizing it,
