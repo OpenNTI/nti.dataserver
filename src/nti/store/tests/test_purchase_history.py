@@ -42,7 +42,7 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		return pa
 
 	@WithMockDSTrans
-	def test_purchase_hist(self):
+	def test_purchase_simple_history(self):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
 		assert_that(hist, is_(not_none()))
@@ -69,6 +69,33 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		hist.remove_purchase(pa_2)
 		assert_that(hist, has_length(1))
 
+
+	@WithMockDSTrans
+	def test_purchase_has_history_by_item(self):
+		user = self._create_user()
+		hist = store_interfaces.IPurchaseHistory(user)
+
+		pa_1 = self._create_purchase_attempt(quantity=5)
+		hist.add_purchase(pa_1)
+		assert_that(hist, has_length(1))
+
+		v = hist.has_history_by_item('xyz-book')
+		assert_that(v, is_(True))
+
+		hist.remove_purchase(pa_1)
+		v = hist.has_history_by_item('xyz-book')
+		assert_that(v, is_(False))
+
+		pa_1 = self._create_purchase_attempt()
+		hist.add_purchase(pa_1)
+		v = hist.has_history_by_item('xyz-book')
+		assert_that(v, is_(True))
+
+		pa_1 = self._create_purchase_attempt(quantity=10)
+		hist.add_purchase(pa_1)
+		v = hist.has_history_by_item('xyz-book')
+		assert_that(v, is_(True))
+
 	@WithMockDSTrans
 	def test_pending_purchase(self):
 		user = self._create_user()
@@ -90,7 +117,7 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		assert_that(pa, is_(none()))
 
 	@mock_dataserver.WithMockDS
-	def test_purchase_history(self):
+	def test_purchase_history_check(self):
 		now = time.time()
 		t50 = 0
 		with mock_dataserver.mock_db_trans(self.ds):
