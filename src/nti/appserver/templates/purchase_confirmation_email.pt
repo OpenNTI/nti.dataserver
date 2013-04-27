@@ -6,9 +6,9 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>Purchase Confirmation</title>
-		<style metal:use-macro="options/master/macros/style">
+		<style>
 			#green-bar {
-			background-color: #89be3c;
+			background-color: #095b79;
 			width: 100%;
 			height: 5px;
 			margin-left: -30px;
@@ -20,85 +20,125 @@
 			}
 			body {
 			margin-left: 30px;
-			margin-right: 0px;
-			font-family: Arial, sans-serif;
+			margin-right: 40px;
+			font-family: Helvetica, Arial, sans-serif;
 			font-size: 14pt;
 			color: #757474;
+			background-color: white;
 			}
 			a {
 			text-decoration: none;
-			color: #3fb3f6;
+			color: #67a8cd;
 			}
 			.tterm, strong {
 			font-weight: bold;
 			color: #494949;
+			font-size: 11pt;
 			}
 			h1, h2, h3, h4, h5, h6 {
-			font-weight: bold;
+			font-weight: 100;
+			}
+			h1 {
+			font-size: 18pt;
+			color: #494949;
+			}
+			#payment_details td {
+			padding-top: 4px;
+			padding-bottom: 4px;
 			}
 		</style>
 	</head>
 	<body tal:define="fca nocall:options/format_currency_attribute; fc nocall:options/format_currency">
-		<div metal:use-macro="options/master/macros/header">
+		<div>
 			<div id="green-bar"></div>
 			<div id="logo-bar">
-				<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
-					 alt="NextThought Logo" />
+				<table width="100%">
+					<tr>
+						<td>
+							<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_primia_logo1.png" width="144" height="58"
+								 alt="PRMIA Logo" />
+						</td>
+						<td style="text-align: right; font-size: 11px; color: #b8b8b8">
+							${options/today} <br />
+							Transaction ID: ${options/transaction_id} <br />
+							<a href="mailto:accounting@prmia.org">accounting@prmia.org</a>
+						</td>
+					</tr>
+				</table>
 			</div>
 		</div>
 
-		<div>PRMIA CUSTOMER RECEIPT Date ${options/today}</div>
-		<div>Transaction ID: ${options/transaction_id}</div>
-
-		<div>
-			Billed to: <br />
-			${options/billed_to} <br />
-<pre>
-${context/charge/Address}
-</pre>
-		</div>
-
-		<table>
-			<tr>
-				<th>Quantity</th><th>Label</th><th>Price</th>
+		<h1 style="margin-bottom: 4px; margin-top: 50px;">Customer Receipt</h1>
+		<table style="width: 100%;  border-top-style: solid; border-top-width: 1px;">
+			<tr style="font-weight: normal; font-size: 11pt; color: #b8b8b8; text-align: left">
+				<th>Billed To:</th><th>Date Purchased:</th><th>Transaction ID:</th>
 			</tr>
-			<tr tal:repeat="item context/purchase/Order/Items">
-				<td tal:content="item/Quantity">1</td>
-				<td tal:content="item/purchasable/Title">Title</td>
-				<td>${python:fca(item.purchasable, 'Amount')} each</td>
+			<tr style="font-weight: bold; font-size: 11pt; color: #494949">
+				<td tal:content="options/billed_to">Jonathan Jacobson</td>
+				<td tal:content="options/today">2013-04-27</td>
+				<td tal:content="options/transaction_id">TkJdcAE9696</td>
+			</tr>
+			<tr>
+				<!--! JAM: FIXME: This is incredibly USA centric and not localized -->
+				<td style="font-weight: 100; font-size: 11pt; color: #494949" colspan="3" tal:define="addr context/charge/Address">
+					${addr/Street} <br />
+					${addr/City}, ${addr/State} ${addr/Zip} <br />
+					${addr/Country}
+				</td>
 			</tr>
 		</table>
 
-		<div>
-			Subtotal: ${python:fca(context.purchase.Pricing, 'TotalNonDiscountedPrice')}
-		</div>
-		<div tal:repeat="item context/purchase/Pricing/Items">
-			<tal:block tal:condition="python:item.Coupon and item.NonDiscountedPrice and item.PurchasePrice != item.NonDiscountedPrice">
-				Discount($item/Coupon): -${python:fc(item.NonDiscountedPrice - item.PurchasePrice, context.purchase.Pricing.Currency)}
+		<h1 style="margin-bottom: 4px; margin-top: 50px;">Payment Details</h1>
+		<table id="payment_details" style="width: 100%; border-top-style: solid; border-top-width: 1px; border-collapse: collapse ">
+			<tr style="border-top-style: solid; border-top-width: 1px;" tal:repeat="item context/purchase/Order/Items">
+				<td style="text-align:left; font-size: 11pt; color: #757474; font-weight:100" tal:content="item/purchasable/Title">The Professional Risk Managers' Handbook</td>
+				<td style="text-align:right; color: #757474" tal:content="python:fca(item.purchasable, 'Amount')">US$19.50</td>
+			</tr>
+			<tr style="border-top-style: solid; border-top-width: 1px;">
+				<td style="text-align:left; font-size: 11pt; color: #757474; font-weight:100">SUBTOTAL</td>
+				<td style="text-align:right; color: #757474" tal:content="python:fca(context.purchase.Pricing, 'TotalNonDiscountedPrice')">US$69.50</td>
+			</tr>
+
+			<tal:block tal:repeat="item context/purchase/Pricing/Items">
+			<tr  style="border-top-style: solid; border-top-width: 1px;" tal:condition="python:item.Coupon and item.NonDiscountedPrice and item.PurchasePrice != item.NonDiscountedPrice">
+				<td style="text-align:left; font-size: 11pt; color: #757474; font-weight: 100">PROMO / DISCOUNTS: <span style="color: #b8b8b8" tal:content="item/Coupon">FIVEDAYSALE</span></td>
+				<td style="text-align:right; color: #757474">-${python:fc(item.NonDiscountedPrice - item.PurchasePrice, context.purchase.Pricing.Currency)}</td>
+			</tr>
 			</tal:block>
-		</div>
-
-		<div>
-			ORDER TOTAL: ${python:fca(context.charge, 'Amount')}
-		</div>
-
-		<div>
-			Payment Received: ${python:fca(context.charge, 'Amount')} <br/>
-			${options/today} (**** **** **** ${context/charge/CardLast4}) <br />
-			all sales are final
-		</div>
 
 
-		<div>
+			<tr  style="border-top-style: solid; border-top-width: 1px;">
+				<td colspan="2" style="font-weight: bold; color: #494949; text-align: right">
+					ORDER TOTAL: ${python:fca(context.charge, 'Amount')}
+				</td>
+			</tr>
+
+			<tr style="border-top-style: solid; border-top-width: 1px; border-bottom-style: solid; border-bottom-width: 1px">
+				<td style="text-align:left; font-size: 11pt; color: #757474">
+					PAYMENT RECEIVED: ${options/today}  (**** **** **** ${context/charge/CardLast4})
+					<span style="color: #b8b8b8">All Sales Are Final</span>
+				</td>
+				<td  style="text-align:right; color: #757474" tal:content="python:fca(context.charge, 'Amount')">US$64.50</td>
+			</tr>
+		</table>
+
+
+		<div style="margin-top: 50px">
 		Thank you for your order, ${options/informal_username}!
-		Your Items are available at
+		Your items are available at
 		<a href="${request/application_url}" tal:content="request/application_url">http://nextthought.com</a>
 		</div>
 
-		<div>
-		Please keep a copy of this receipt for your records.
-		If you have any questions, feel free to contact
-		<a href="mailto:accounting@prmia.org">accounting@prmia.org</a>
+		<div style="margin-top: 20px; color: #b8b8b8; font-size: 11pt">
+			<center>
+			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+				 alt="NextThought Logo" />
+			<br />
+			<span>
+			Please keep a copy of this receipt for your records. <br />
+			If you have any questions, feel free to contact</span>
+			<a href="mailto:accounting@prmia.org">accounting@prmia.org</a>
+			</center>
 		</div>
 
 	</body>
