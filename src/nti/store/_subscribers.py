@@ -41,7 +41,6 @@ def _purchase_attempt_successful(event):
 		purchase_history.activate_items(purchase.creator, purchase.Items)
 		lib_items = purchasable.get_content_items(purchase.Items)
 		_content_roles._add_users_content_roles(purchase.creator, lib_items)
-
 	logger.info('%r completed successfully', purchase)
 
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
@@ -55,7 +54,6 @@ def _purchase_attempt_refunded(event):
 		# TODO: we need to handle when there is an invitation
 		lib_items = purchasable.get_content_items(purchase.Items)
 		_content_roles._remove_users_content_roles(event.username, lib_items)
-
 	logger.info('%r has been refunded', purchase)
 
 @component.adapter(store_interfaces.IPurchaseAttemptDisputed)
@@ -72,7 +70,6 @@ def _purchase_attempt_failed(event):
 	purchase.Error = event.error
 	purchase.EndTime = time.time()
 	purchase.State = store_interfaces.PA_STATE_FAILED
-
 	logger.info('%r failed. %s', purchase, purchase.Error)
 
 @component.adapter(store_interfaces.IPurchaseAttemptSynced)

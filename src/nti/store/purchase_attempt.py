@@ -65,7 +65,7 @@ class PurchaseAttempt(ModDateTrackingObject, SchemaConfigured, zcontained.Contai
 
 	def __repr__(self):
 		d = datetime.fromtimestamp(self.StartTime)
-		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__, self.Processor, d, self.Items, self.State)
+		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__, self.Items, self.State, self.Processor, d)
 
 	def __eq__(self, other):
 		try:
