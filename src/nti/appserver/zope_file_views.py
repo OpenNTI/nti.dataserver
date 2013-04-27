@@ -28,7 +28,7 @@ from nti.utils import dataurl
 
 from . import interfaces as app_interfaces
 from nti.appserver import httpexceptions as hexc
-from ._pyramid_zope_integrations import PyramidZopeRequestProxy
+from zope.publisher.interfaces.browser import IBrowserRequest
 from nti.appserver._view_utils import UploadRequestUtilsMixin
 
 
@@ -51,7 +51,7 @@ def file_view(request):
 	# this opens the blob in 'committed' mode and reads the data from a local file.
 	# It is thus transaction and site independent making it safe to pass up through
 	# any tweens that do transaction and site management
-	view = download.Display( request.context, PyramidZopeRequestProxy(request) )
+	view = download.Display( request.context, IBrowserRequest(request) )
 	app_iter = view()
 	request.response.app_iter = app_iter
 	# The correct mimetype will be set because the IFile is IContentTypeAware

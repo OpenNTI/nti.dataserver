@@ -18,7 +18,6 @@ from nti.appserver import site_policies
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
-from nti.chatserver import interfaces as chat_interfaces
 from nti.contentfragments import interfaces as frg_interfaces
 
 from zope.event import notify
@@ -26,7 +25,7 @@ from zope import component
 from zope import interface
 
 from z3c.table import table
-from ._pyramid_zope_integrations import PyramidZopeRequestProxy
+from zope.publisher.interfaces.browser import IBrowserRequest
 
 from ZODB import loglevels
 
@@ -94,7 +93,7 @@ def user_change_new_note_emailer( user, change ):
 		base_template = 'note_created_email'
 
 		the_table = NewNoteBodyTable( [change_object],
-									  PyramidZopeRequestProxy( request ) if request else None )
+									  IBrowserRequest( request ) if request else None )
 
 		the_table.update()
 

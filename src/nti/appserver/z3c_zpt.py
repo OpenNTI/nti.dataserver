@@ -22,7 +22,7 @@ from pyramid.decorator import reify
 from pyramid import renderers
 from pyramid.renderers import get_renderer
 
-from ._pyramid_zope_integrations import PyramidZopeRequestProxy
+from zope.publisher.interfaces.browser import IBrowserRequest
 
 def renderer_factory(info):
 	"""
@@ -74,7 +74,7 @@ class ZPTTemplateRenderer(object):
 			# See plasTeX/Renderers/__init__.py for comments about how 'self' is a problem
 
 
-		request = PyramidZopeRequestProxy( system['request'] )
+		request = IBrowserRequest( system['request'] )
 		system['request'] = request
 
 		view = system['view']

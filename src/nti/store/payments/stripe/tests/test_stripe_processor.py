@@ -215,10 +215,9 @@ class TestStripeProcessor(ConfiguringTestBase):
 			item = self.book_id
 			purchase_id = _create_and_register_purchase_attempt(username, item=item, processor=self.manager.name)
 
-		cid = self.manager.process_purchase(username=username, token="++invalidtoken++",
-									 		purchase_id=purchase_id, expected_amount=100.0)
-
-		assert_that(cid, is_(none()))
+		with self.assertRaises(Exception):
+			self.manager.process_purchase(username=username, token="++invalidtoken++",
+										  purchase_id=purchase_id, expected_amount=100.0)
 
 		assert_that(eventtesting.getEvents(stripe_interfaces.IStripeCustomerCreated), has_length(1))
 		assert_that(eventtesting.getEvents(store_interfaces.IPurchaseAttemptStarted), has_length(1))
@@ -239,10 +238,10 @@ class TestStripeProcessor(ConfiguringTestBase):
 			item = self.book_id
 			purchase_id = _create_and_register_purchase_attempt(username, item=item, processor=self.manager.name)
 
-		cid = self.manager.process_purchase(username=username, token="++valid++",
-									 		purchase_id=purchase_id, expected_amount=20000.0)
+		with self.assertRaises(Exception):
+			self.manager.process_purchase(username=username, token="++valid++",
+										  purchase_id=purchase_id, expected_amount=20000.0)
 
-		assert_that(cid, is_(none()))
 		assert_that(eventtesting.getEvents(store_interfaces.IPurchaseAttemptFailed), has_length(1))
 
 		with mock_dataserver.mock_db_trans(ds):

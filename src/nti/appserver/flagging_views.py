@@ -121,7 +121,7 @@ def _UnFlagView(request):
 
 
 from z3c.table import table
-from ._pyramid_zope_integrations import PyramidZopeRequestProxy
+from zope.publisher.interfaces.browser import IBrowserRequest
 from .ugd_query_views import lists_and_dicts_to_ext_collection
 def _moderation_table( request ):
 	intids = component.getUtility(zc_intid.IIntIds)
@@ -132,7 +132,7 @@ def _moderation_table( request ):
 	content = content_dict['Items']
 
 	the_table = ModerationAdminTable( content,
-									  PyramidZopeRequestProxy( request ) )
+									  IBrowserRequest( request ) )
 
 	the_table.update()
 	return the_table

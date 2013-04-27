@@ -28,6 +28,7 @@ import zope.publisher.browser
 import operator
 
 @interface.implementer(zope.publisher.interfaces.browser.IBrowserRequest)
+@component.adapter(pyramid.interfaces.IRequest)
 class PyramidZopeRequestProxy(SpecificationDecoratorBase):
 	"""
 	Makes a Pyramid IRequest object look like a Zope request
@@ -77,6 +78,7 @@ class PyramidZopeRequestProxy(SpecificationDecoratorBase):
 	def _set__annotations__(self, val):
 		getProxiedObject(self).__dict__['__annotations__'] = val
 	__annotations__ = property(_get__annotations__, _set__annotations__)
+
 
 # What the hell. Since we now can make a pyramid request look like a Zope request,
 # we might as well be able to make a Pyramid request directly handle language negotiation in
