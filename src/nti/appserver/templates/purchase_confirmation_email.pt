@@ -38,7 +38,7 @@
 			}
 		</style>
 	</head>
-	<body tal:define="fca python:options['format_currency_attribute']; fc python:options['format_currency']">
+	<body tal:define="fca nocall:options/format_currency_attribute; fc nocall:options/format_currency">
 		<div metal:use-macro="options/master/macros/header">
 			<div id="green-bar"></div>
 			<div id="logo-bar">
