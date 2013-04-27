@@ -9,9 +9,8 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 
-from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
-
 from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import createDirectFieldProperties
 
 from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
@@ -21,9 +20,8 @@ class PurchaseError(SchemaConfigured):
 
 	__metaclass__ = MetaStoreObject
 
-	Type = FP(store_interfaces.IPurchaseError['Type'])
-	Code = FP(store_interfaces.IPurchaseError['Code'])
-	Message = FP(store_interfaces.IPurchaseError['Message'])
+	# create all interface fields
+	createDirectFieldProperties(store_interfaces.IPurchaseError)
 
 	def __str__(self):
 		return self.Message

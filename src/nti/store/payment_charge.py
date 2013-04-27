@@ -12,9 +12,9 @@ from datetime import datetime
 
 from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
-from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import createDirectFieldProperties
 
 from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
@@ -24,11 +24,8 @@ class UserAddress(SchemaConfigured):
 
 	__metaclass__ = MetaStoreObject
 
-	Street = FP(store_interfaces.IUserAddress['Street'])
-	City = FP(store_interfaces.IUserAddress['City'])
-	State = FP(store_interfaces.IUserAddress['State'])
-	Zip = FP(store_interfaces.IUserAddress['Zip'])
-	Country = FP(store_interfaces.IUserAddress['Country'])
+	# create all interface fields
+	createDirectFieldProperties(store_interfaces.IUserAddress)
 
 	def __str__(self):
 		return "%s\n%s,%s %s\n%s" % (self.Street, self.City, self.State, self.Zip, self.Country)
@@ -68,12 +65,8 @@ class PaymentCharge(SchemaConfigured):
 
 	__metaclass__ = MetaStoreObject
 
-	Amount = FP(store_interfaces.IPaymentCharge['Amount'])
-	Currency = FP(store_interfaces.IPaymentCharge['Currency'])
-	Created = FP(store_interfaces.IPaymentCharge['Created'])
-	CardLast4 = FP(store_interfaces.IPaymentCharge['CardLast4'])
-	Address = FP(store_interfaces.IPaymentCharge['Address'])
-	Name = FP(store_interfaces.IPaymentCharge['Name'])
+	# create all interface fields
+	createDirectFieldProperties(store_interfaces.IUserAddress)
 
 	def __str__(self):
 		return "%s:%s" % (self.Currency, self.Amount)
