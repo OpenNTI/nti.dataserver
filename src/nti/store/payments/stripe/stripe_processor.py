@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import sys
 import six
 import math
 import time
@@ -27,7 +28,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from . import stripe_io
 from .utils import makenone
 from . import StripeException
-from .. import _BasePaymentProcessor
+from nti.store.payments import _BasePaymentProcessor
 from nti.store import payment_charge
 from nti.store import purchase_history
 from nti.store import purchase_attempt
@@ -268,7 +269,8 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 			# return charge id
 			return charge.id if charge is not None else None
 		except Exception as e:
-			logger.exception("Cannot complete process purchase for '%s'" % purchase_id)
+			logger.exception("Cannot complete process purchase for '%s'", purchase_id)
+			t, v, tb = sys.exc_info()
 			error = _adapt_to_error(e)
 			# fail purchase in a trx
 			def fail_purchase():
@@ -276,8 +278,7 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 				if purchase is not None:
 					notify(store_interfaces.PurchaseAttemptFailed(purchase, error))
 			transactionRunner(fail_purchase)
-
-	# ---------------------------
+			raise t, v, tb
 
 	def get_charges(self, purchase_id=None, username=None, customer=None, start_time=None, end_time=None, api_key=None):
 		result = []

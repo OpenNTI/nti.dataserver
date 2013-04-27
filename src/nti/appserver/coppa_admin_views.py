@@ -28,7 +28,7 @@ from z3c.table import batch
 
 from nti.dataserver import authorization as nauth
 
-from ._pyramid_zope_integrations import PyramidZopeRequestProxy
+from zope.publisher.interfaces.browser import IBrowserRequest
 
 _USER_FILTER_PARAM = 'usersearch'
 
@@ -53,7 +53,7 @@ def _coppa_table( request ):
 		logger.warn( "No site policy (%s/%s) or policy (%s) does not specify users to find",
 					 site_policy, _pol_name, site_policy )
 	the_table = CoppaAdminTable( content,
-								 PyramidZopeRequestProxy( request ) )
+								 IBrowserRequest( request ) )
 	the_table.__parent__ = request.context
 	the_table.__name__ = 'coppa_admin.html'
 	the_table.startBatchingAt = 50
@@ -171,7 +171,7 @@ def account_profile_view( request ):
 	fields = fields.omit( *[k for k,v in profile_schema.namesAndDescriptions(all=True) if v.queryTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI) ] )
 
 	widgets = zope.formlib.form.setUpWidgets( fields, 'form', context,
-											  PyramidZopeRequestProxy( request ),
+											  IBrowserRequest( request ),
 											  # Without this, it needs request.form
 											  ignore_request=True )
 

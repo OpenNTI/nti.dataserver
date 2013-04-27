@@ -38,7 +38,7 @@
 			}
 		</style>
 	</head>
-	<body>
+	<body tal:define="fca python:options['format_currency_attribute']; fc python:options['format_currency']">
 		<div metal:use-macro="options/master/macros/header">
 			<div id="green-bar"></div>
 			<div id="logo-bar">
@@ -65,25 +65,25 @@ ${context/charge/Address}
 			<tr tal:repeat="item context/purchase/Order/Items">
 				<td tal:content="item/Quantity">1</td>
 				<td tal:content="item/purchasable/Title">Title</td>
-				<td>${python:request.locale.numbers.getFormatter('currency').format(item.purchasable.Amount)} each</td>
+				<td>${python:fca(item.purchasable, 'Amount')} each</td>
 			</tr>
 		</table>
 
 		<div>
-			Subtotal: $ ${context/purchase/Pricing/TotalNonDiscountedPrice}
+			Subtotal: ${python:fca(context.purchase.Pricing, 'TotalNonDiscountedPrice')}
 		</div>
 		<div tal:repeat="item context/purchase/Pricing/Items">
 			<tal:block tal:condition="python:item.Coupon and item.NonDiscountedPrice and item.PurchasePrice != item.NonDiscountedPrice">
-				Discount($item/Coupon): -$${item/NonDiscountedPrice - item/PurchasePrice}
+				Discount($item/Coupon): -${python:fc(item.NonDiscountedPrice - item.PurchasePrice, context.purchase.Pricing.Currency)}
 			</tal:block>
 		</div>
 
 		<div>
-			ORDER TOTAL: $ ${context/charge/Amount} ${context/charge/Currency}
+			ORDER TOTAL: ${python:fca(context.charge, 'Amount')}
 		</div>
 
 		<div>
-			Payment Received: $ ${context/charge/Amount} <br/>
+			Payment Received: ${python:fca(context.charge, 'Amount')} <br/>
 			${options/today} (**** **** **** ${context/charge/CardLast4}) <br />
 			all sales are final
 		</div>

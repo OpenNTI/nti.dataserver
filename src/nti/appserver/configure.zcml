@@ -24,11 +24,11 @@
 	<!-- Languages -->
 	<!-- Pyramid requests, via Zope -->
 	<adapter factory="._pyramid_zope_integrations.PyramidBrowserPreferredLanguages" />
-
 	<!-- Zope Requests. This is also cacheable. -->
 	<adapter factory="zope.publisher.browser.ModifiableBrowserLanguages"
 			 provides="zope.i18n.interfaces.IModifiableUserPreferredLanguages"/>
-
+	<!-- Requests themselves -->
+	<adapter factory="._pyramid_zope_integrations.PyramidZopeRequestProxy" />
 
 	<!-- Entities -->
 	<adapter factory="._adapters.UserPreferredLanguages" />
@@ -312,6 +312,7 @@
 	<include package="nti.contentsearch" />
 	<include package="nti.socketio" />
 	<include package="nti.assessment" />
+	<include package="nti.contentfragments" />
 
 	<!-- UI Rendering -->
 	<include package="." file="configure_tables.zcml" />
@@ -378,5 +379,6 @@
 	<utility zcml:condition="have testmode"
 			 component="._email_utils.queue_simple_html_text_email"
 			 provides=".store_views._IMailer" />
+
 
 </configure>

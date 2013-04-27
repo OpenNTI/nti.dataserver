@@ -9,22 +9,22 @@ ${billed_to}
 ${nti_context.charge.Address}
 
 %for item in nti_context.purchase.Order.Items:
-${item.Quantity}x ${item.purchasable.Title} - $${item.purchasable.Amount} each
+${item.Quantity}x ${item.purchasable.Title} - ${format_currency_attribute(item.purchasable, 'Amount')} each
 
 %endfor
 
-Subtotal: $ ${nti_context.purchase.Pricing.TotalNonDiscountedPrice}
+Subtotal: ${format_currency_attribute(nti_context.purchase.Pricing, 'TotalNonDiscountedPrice')}
 ## XXX: JAM: Not sure how to figure out the discounts. I'm just deriving them...
 %for item in nti_context.purchase.Pricing.Items:
 %if item.Coupon and item.NonDiscountedPrice and item.PurchasePrice != item.NonDiscountedPrice:
-Discount($item.Coupon): -$${item.NonDiscountedPrice - item.PurchasePrice}
+Discount($item.Coupon): -${format_currency(item.NonDiscountedPrice - item.PurchasePrice, nti_context.purchase.Pricing.Currency)}
 %endif
 %endfor
 
-ORDER TOTAL: $ ${nti_context.charge.Amount} ${nti_context.charge.Currency}
+ORDER TOTAL: ${format_currency_attribute(nti_context.charge, 'Amount')}
 
 
-Payment Received: $ ${nti_context.charge.Amount}
+Payment Received: ${format_currency_attribute(nti_context.charge, 'Amount')}
 ${today} (**** **** **** ${nti_context.charge.CardLast4})
 all sales are final
 
