@@ -28,11 +28,11 @@ from nti.dataserver.users import interfaces as user_interfaces
 from . import stripe_io
 from .utils import makenone
 from . import StripeException
-from nti.store.payments import _BasePaymentProcessor
 from nti.store import payment_charge
 from nti.store import purchase_history
 from nti.store import purchase_attempt
 from . import interfaces as stripe_interfaces
+from nti.store.payments import _BasePaymentProcessor
 from nti.store import interfaces as store_interfaces
 
 def _create_user_address(charge):

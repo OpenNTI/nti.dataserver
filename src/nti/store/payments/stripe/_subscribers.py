@@ -41,3 +41,4 @@ def register_stripe_charge(event):
 	user = purchase.creator
 	su = stripe_interfaces.IStripeCustomer(user)
 	su.Charges.add(event.charge_id)
+	logger.debug("Purchase %s was associated with stripe charge %s", purchase.id, event.charge_id)

@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope import interface
 from zope.configuration import fields
 from zope.component.zcml import utility
@@ -32,3 +34,4 @@ def registerStripeKey( _context, alias, private_key, live_mode=None, stripe_user
 	sk = StripeConnectKey(alias, private_key, live_mode=live_mode, stripe_user_id=stripe_user_id, 
 						  refresh_token=refresh_token, public_key=public_key)
 	utility(_context, provides=stripe_interfaces.IStripeConnectKey, component=sk, name=alias)
+	logger.debug("Stripe key %s has been registered", alias)
