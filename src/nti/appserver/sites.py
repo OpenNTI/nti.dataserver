@@ -22,12 +22,12 @@ from z3c.baseregistry.baseregistry import BaseComponents
 
 # TODO: Eventually we want these to use the main Dataserver site as their base,
 # which requires getting persistence into the mix. These objects pickle
-# as a name and they look it up in the component registry
+# as a name and they look it up in the component registry of their __parent__ (first arg)
 from zope.component import globalSiteManager as BASE
 
 
 MATHCOUNTS = BaseComponents(BASE, name='mathcounts.nextthought.com', bases=(BASE,))
-TESTMATHCOUNTS = BaseComponents(BASE, name='testmathcounts.nextthought.com', bases=(MATHCOUNTS,))
+TESTMATHCOUNTS = BaseComponents(MATHCOUNTS, name='testmathcounts.nextthought.com', bases=(MATHCOUNTS,))
 
 # This one serves as a common base for all the other non-COPPA (non-mathcounts) site
 # It is not a site of its own
@@ -61,9 +61,20 @@ def _reinit():
 	``__init__`` our site objects. This works because the order of cleanups is maintained
 	and so we re-init after ZCA's base registry has re-inited.
 	"""
+	# The order in which we do this matters to some extent. The things that
+	# directly have BASE as their __bases__ need to be reset FIRST, followed
+	# by things that internally descend from those objects, otherwise we wind up
+	# with the wrong resolution order still. Ideally we'd do a topographical
+	# sort, but with only two levels that's overkill
+	top_level = (BASEADULT, MATHCOUNTS)
+	for v in top_level:
+		v.__init__( v.__parent__, name=v.__name__, bases=v.__bases__ )
+
 	for v in sys.modules[__name__].__dict__.values():
 		if isinstance( v, BaseComponents ):
-			v.__init__( BASE, name=v.__name__, bases=v.__bases__ )
+			if v in top_level:
+				continue
+			v.__init__( v.__parent__, name=v.__name__, bases=v.__bases__ )
 
 from zope.testing.cleanup import addCleanUp
 addCleanUp( _reinit )

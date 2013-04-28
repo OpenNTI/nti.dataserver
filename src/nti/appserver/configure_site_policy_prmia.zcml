@@ -8,13 +8,13 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	
+
 	<include package="z3c.baseregistry" file="meta.zcml" />
-	
+
 	<include package="nti.store" file="meta.zcml" />
     <include package="nti.store.payments.stripe" file="meta.zcml" />
-	
-	
+
+
 	<utility
 		component=".sites.PRMIA"
 		provides="zope.component.interfaces.IComponents"
@@ -31,7 +31,7 @@
 			public_key="pk_live_9LYQyWxjuyxUfrd1g2YfOWCh"
 			private_key="sk_live_XbDRHzOx4eiORSkF8iRMH1xj"
 			refresh_token="rt_1S9LF8At2PRpLhOeMbPLS9AEvsFYUSyCPIX6ioCDA9h6EKcF" />
-		
+
 		<!-- TEST KEYS -->
 		<stripe:registerStripeKey
 			alias="NTI-TEST"
@@ -84,9 +84,9 @@ NextThought guarantees availability to the purchased materials for one (1) year.
 This course is accessible on Windows and Mac operating systems when using one of the following supported browsers: current versions of Chrome or Firefox, Internet Explorer 9 or above, or Safari 5 or above. Mobile devices are not supported at this time. A broadband Internet connection is recommended with download speeds of at least 1 Mbps. For the best experience we recommend using a computer with 1GB of RAM or more and a 1.5+ GHz processor.
         ]]> </pcs:registerPurchasable>
 
-	
+
 			<!-- CSS for PRMIA -->
 		<utility factory=".site_policy_views.SiteCSSMarker" />
-		
+
 	</registerIn>
 </configure>
