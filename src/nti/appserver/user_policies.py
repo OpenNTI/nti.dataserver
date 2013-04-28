@@ -276,7 +276,7 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 					   html=html_body,
 					   attachments=[attachment] )
 	# It's a bit tricky to do alternative body parts plus attachments. It requires
-	# a nested MIME structure, which Message won't do by default:
+	# a nested MIME structure, which, prior to 0.11, Message won't do by default:
 	# multipart/mixed
 	#  |\
 	#  | - multipart/alternative
@@ -286,17 +286,10 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 	#  |\
 	#    - application/pdf; content-disposition: attachment
 	#
-	# So we set it up manually here. (If we let Message do its default thing, we
-	# wind up with three alternative parts, making it hard to access the attachment)
 	# (See http://stackoverflow.com/questions/3902455/smtp-multipart-alternative-vs-multipart-mixed)
-	# (NOTE: This may be fixed in 0.11; test and confirm)
-	email_msg = message.to_message()
-	payload = email_msg.get_payload()
-	alternatives = MIMEMultipart( _subtype='alternative', _subparts=payload[0:2] )
-	payload[0:2] = [alternatives]
-	email_msg.set_type( 'multipart/mixed' )
+	# In the past, we had to do this manually, as of 0.11 it is handled for us.
 
-	_email_utils.send_mail( message=email_msg, pyramid_mail_message=message )
+	_email_utils.send_pyramid_mailer_mail( message )
 
 	# We can log that we sent the message to the contact person for operational purposes,
 	# but legally we cannot preserve it in the database
