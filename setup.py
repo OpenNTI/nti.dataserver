@@ -191,7 +191,7 @@ setup(
 		'hiredis >= 0.1.1',  # Redis C parser
 		'html5lib == 0.95',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
-		'logilab-common >= 0.59.0',
+		'logilab-common >= 0.59.1',
 		'lxml >= 3.1.2',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.7',  # Human name parsing
 		'nltk >= 2.0.4',
@@ -356,7 +356,7 @@ setup(
 		'zope.vocabularyregistry >= 1.0.0',
 		# textindexng3
 		'zopyx.txng3.core >= 3.6.1.1' if not IS_PYPY else '',  # extensions don't build
-		'zopyx.txng3.ext >= 3.3.3' if not IS_PYPY else '',
+		'zopyx.txng3.ext >= 3.3.4' if not IS_PYPY else '',
         # Data analysis
         # pandas,
         # scikit-learn,
@@ -376,11 +376,11 @@ setup(
 			'epydoc >= 3.0.1',  # auto-api docs
 			'httpie >= 0.5.0',  # 0.4.0 explicitly requires requests > 1.0.4, 0.3.1 explicitly requires requests < 1.0
 			'ipython >= 0.13.2',  # the extra notebook is web based, pulls in tornado
-			'logilab_astng >= 0.24.1',
+			'logilab_astng >= 0.24.3',
 			'pip >= 1.3.1',
 			'pip-tools >= 0.3.1',  # command pip-review, pip-dump
 			'pudb >= 2013.1',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
-			'pylint >= 0.27.0' if not IS_PYPY else '',
+			'pylint >= 0.28.0' if not IS_PYPY else '',
 			'pyramid_debugtoolbar >= 1.0.6',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
 			'repoze.sphinx.autointerface >= 0.7.1',
@@ -390,7 +390,7 @@ setup(
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.9.1',
-			'virtualenvwrapper >= 3.7.1',
+			'virtualenvwrapper >= 4.0',
 			'zc.buildout >= 2.1.0',
 			'z3c.dependencychecker >= 1.11',  # unused/used imports; see also tl.eggdeps
 			'zodbbrowser >= 0.10.4',
