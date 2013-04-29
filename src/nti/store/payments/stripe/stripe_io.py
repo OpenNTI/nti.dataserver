@@ -27,8 +27,9 @@ class StripeIO(object):
 		except Exception as e:
 			raise StripeException(*e.args)
 
-	def create_stripe_customer(self, email, description=None, api_key=None):
-		customer = self._do_stripe_operation(stripe.Customer.create, api_key=api_key, email=email, description=description)
+	def create_stripe_customer(self, email, description=None, coupon=None, api_key=None):
+		customer = self._do_stripe_operation(stripe.Customer.create, api_key=api_key, email=email,
+											 coupon=coupon, description=description)
 		return customer
 
 	def get_stripe_customer(self, customer_id, api_key=None):
