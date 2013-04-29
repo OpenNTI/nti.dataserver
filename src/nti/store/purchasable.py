@@ -108,7 +108,7 @@ def get_purchasable(pid):
 	util = PurchasableUtilityVocabulary(None)
 	try:
 		result = util.getTermByToken(pid) if pid else None
-	except:
+	except (LookupError, KeyError):
 		result = None
 	return result.value if result is not None else None
 
@@ -154,7 +154,7 @@ def get_content_items(purchased_items):
 		try:
 			p = util.getTermByToken(item).value
 			result.update(p.Items)
-		except:
+		except (LookupError, KeyError):
 			pass
 	return result
 
