@@ -218,7 +218,7 @@ def activate_items(user, items):
 def deactivate_items(user, items):
 	user = _get_user(user)
 	hist = store_interfaces.IPurchaseHistory(user)
-	return hist.activate_items(items)
+	return hist.deactivate_items(items)
 
 def is_item_activated(user, item):
 	user = _get_user(user)

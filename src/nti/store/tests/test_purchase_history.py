@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 import time
 
+from zope.event import notify
+
 from nti.dataserver.users import User
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -115,6 +117,33 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		purchase_id = u'tag:nextthought.com,2011-10:system-OID-0x06cdce28af3dc253:0000000073:XVq3tFG7T82'
 		pa = purchase_history.get_purchase_attempt(purchase_id, user)
 		assert_that(pa, is_(none()))
+
+	@WithMockDSTrans
+	def test_refund(self):
+		user = self._create_user()
+		book = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology'
+		purchase = self._create_purchase_attempt(book, state=store_interfaces.PA_STATE_SUCCESS)
+		purchase_history.register_purchase_attempt(purchase, user)
+		notify(store_interfaces.PurchaseAttemptRefunded(purchase))
+		assert_that(purchase.State, is_(store_interfaces.PA_STATE_REFUNDED))
+
+	@WithMockDSTrans
+	def test_refund_invitation_attempt(self):
+		user_1 = self._create_user()
+		user_2 = self._create_user(username='nt2@nti.com',)
+		book = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology'
+
+		pa_1 = self._create_purchase_attempt(book, quantity=5, state=store_interfaces.PA_STATE_SUCCESS)
+		purchase_history.register_purchase_attempt(pa_1, user_1)
+
+		pa_2 = self._create_purchase_attempt(book, state=store_interfaces.PA_STATE_SUCCESS)
+		purchase_history.register_purchase_attempt(pa_2, user_2)
+
+		pa_1.register(user_2, pa_2.id)
+
+		notify(store_interfaces.PurchaseAttemptRefunded(pa_1))
+		assert_that(pa_1.State, is_(store_interfaces.PA_STATE_REFUNDED))
+		assert_that(pa_2.State, is_(store_interfaces.PA_STATE_REFUNDED))
 
 	@mock_dataserver.WithMockDS
 	def test_purchase_history_check(self):

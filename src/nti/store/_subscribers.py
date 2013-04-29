@@ -47,11 +47,11 @@ def _purchase_attempt_successful(event):
 		_content_roles._add_users_content_roles(purchase.creator, lib_items)
 	logger.info('%r completed successfully', purchase)
 
-def _return_items(purchase, username):
+def _return_items(purchase, user):
 	if purchase is not None:
-		purchase_history.deactivate_items(username, purchase.Items)
+		purchase_history.deactivate_items(user, purchase.Items)
 		lib_items = purchasable.get_content_items(purchase.Items)
-		_content_roles._remove_users_content_roles(username, lib_items)
+		_content_roles._remove_users_content_roles(user, lib_items)
 	
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
 def _purchase_attempt_refunded(event):
@@ -62,14 +62,14 @@ def _purchase_attempt_refunded(event):
 	if store_interfaces.IInvitationPurchaseAttempt.providedBy(purchase):
 		# set all tokens to zero
 		purchase.reset()
-		# return all items from linked purchases (redemptions)
+		# return all items from linked purchases (redemptions) and refund them
 		for username, pid in purchase.consumerMap().items():
 			p = purchase_history.get_purchase_attempt(pid)
 			_return_items(p, username)
 			_update_state(p, store_interfaces.PA_STATE_REFUNDED)
 
 	elif not purchase.Quantity:
-		_return_items(purchase, event.username)
+		_return_items(purchase, purchase.creator)
 	
 	# return consumed token
 	if store_interfaces.IRedeemedPurchaseAttempt.providedBy(purchase):
