@@ -26,19 +26,19 @@ def _update_state(purchase, state):
 	if purchase is not None:
 		purchase.updateLastMod()
 		purchase.State = state
-	
+
 @component.adapter(store_interfaces.IPurchaseAttemptStarted)
 def _purchase_attempt_started(event):
 	purchase = event.object
-	_update_state(purchase,  store_interfaces.PA_STATE_STARTED)
+	_update_state(purchase, store_interfaces.PA_STATE_STARTED)
 	logger.info('%r started' % purchase)
 
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful(event):
 	purchase = event.object
 	purchase.EndTime = time.time()
-	_update_state(purchase,  store_interfaces.PA_STATE_SUCCESS)
-	
+	_update_state(purchase, store_interfaces.PA_STATE_SUCCESS)
+
 	# if not register invitation
 	if not purchase.Quantity:
 		# allow content roles
@@ -52,13 +52,13 @@ def _return_items(purchase, user):
 		purchase_history.deactivate_items(user, purchase.Items)
 		lib_items = purchasable.get_content_items(purchase.Items)
 		_content_roles._remove_users_content_roles(user, lib_items)
-	
+
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
 def _purchase_attempt_refunded(event):
 	purchase = event.object
 	purchase.EndTime = time.time()
-	_update_state(purchase,  store_interfaces.PA_STATE_REFUNDED)
-	
+	_update_state(purchase, store_interfaces.PA_STATE_REFUNDED)
+
 	if store_interfaces.IInvitationPurchaseAttempt.providedBy(purchase):
 		# set all tokens to zero
 		purchase.reset()
@@ -70,7 +70,7 @@ def _purchase_attempt_refunded(event):
 
 	elif not purchase.Quantity:
 		_return_items(purchase, purchase.creator)
-	
+
 	# return consumed token
 	if store_interfaces.IRedeemedPurchaseAttempt.providedBy(purchase):
 		code = purchase.RedemptionCode
