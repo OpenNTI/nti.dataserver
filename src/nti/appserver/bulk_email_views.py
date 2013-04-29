@@ -144,7 +144,7 @@ class _ProcessNames(object):
 		self.source_name = base + '/SourceSet'
 		self.dest_name = base + '/ResultSet'
 
-		self.names = list(self.__dict__.keys())
+		self.names = list(self.__dict__.values())
 
 class _ProcessMetaData(object):
 
@@ -169,7 +169,7 @@ class _ProcessMetaData(object):
 						   {'startTime': self.startTime,
 							'endTime': self.endTime,
 							'status': self.status} )
-		self._redis.expire( _TTL )
+		self._redis.expire( self.__name__, _TTL )
 
 class _PreflightError(Exception):
 	pass
@@ -272,7 +272,7 @@ class _Process(object):
 			# success and we need to take him off the source list
 			try:
 				result = self.sesconn.send_raw_email( msg_string, sender, recipient_data['email'] )
-			except SESAddressBlacklistedError as e:
+			except SESAddressBlacklistedError as e: #pragma: no cover
 				logger.warn("Blacklisted address: %s", e )
 				result = {'SendEmailResult': 'BlacklistedAddress'}
 			# Result will be something like:
@@ -298,7 +298,7 @@ class _Process(object):
 			result = True
 			try:
 				result = self.process_one_recipient()
-			except SESMaxSendingRateExceededError as e:
+			except SESMaxSendingRateExceededError as e: #pragma: no cover
 				logger.warn( "Max sending rate exceeded; pausing: %s", e )
 				sleep( 10 ) # arbitrary sleep time
 			except SESDailyQuotaExceededError as e:

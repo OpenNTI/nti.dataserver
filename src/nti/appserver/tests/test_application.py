@@ -312,6 +312,7 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 		self.users = {}
 		self.testapp = None
 
+
 	def tearDown(self):
 		self.users = {}
 		self.testapp = None
@@ -386,6 +387,7 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 		@mock_dataserver.WithMockDS
 		def f(self):
 			self.config.registry._zodb_databases = { '': self.ds.db } # 0.3
+			self.ds.redis.flushall()
 			_do_create( self )
 			_make_app( self )
 			func(self)
@@ -397,6 +399,7 @@ def WithSharedApplicationMockDS( *args, **kwargs ):
 		@mock_dataserver.WithMockDS(**kwargs)
 		def f(self):
 			self.config.registry._zodb_databases = { '': self.ds.db } # 0.3
+			self.ds.redis.flushall()
 			_do_create( self )
 			_make_app( self )
 			func(self)
