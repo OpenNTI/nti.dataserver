@@ -105,9 +105,10 @@ class StripeIO(object):
 		return charge
 	create_charge = create_stripe_charge
 
-	def get_stripe_charge(self, charge_id, api_key=None):
+	@classmethod
+	def get_stripe_charge(cls, charge_id, api_key=None):
 		try:
-			charge = self._do_stripe_operation(stripe.Charge.retrieve, charge_id, api_key=api_key)
+			charge = cls._do_stripe_operation(stripe.Charge.retrieve, charge_id, api_key=api_key)
 			return charge
 		except stripe.InvalidRequestError:
 			return None
@@ -142,9 +143,10 @@ class StripeIO(object):
 
 	get_charges = get_stripe_charges
 
-	def get_stripe_coupon(self, coupon_code, api_key=None):
+	@classmethod
+	def get_stripe_coupon(cls, coupon_code, api_key=None):
 		try:
-			coupon = self._do_stripe_operation(stripe.Coupon.retrieve, coupon_code, api_key=api_key)
+			coupon = cls._do_stripe_operation(stripe.Coupon.retrieve, coupon_code, api_key=api_key)
 			return coupon
 		except stripe.InvalidRequestError:
 			return None
