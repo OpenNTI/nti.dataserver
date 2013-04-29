@@ -46,6 +46,12 @@ class ITokenBucket(interface.Interface):
 			If True, then the value of `tokens` will have been reduced.
 		"""
 
+	def wait_for_token():
+		"""
+		Consume a single whole token from the bucket, blocking until one is available
+		if need be. This is not meant to be used from multiple threads.
+		"""
+
 class INumericValue(minmax_interfaces.IAbstractValue):
 	"""
 	A persistent numeric value with conflict resolution.
