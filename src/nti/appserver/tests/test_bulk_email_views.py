@@ -19,7 +19,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not as does_not
 from hamcrest import has_key
-from hamcrest import has_entry
+from hamcrest import contains_string
 from hamcrest import has_property
 
 from nose.tools import assert_raises
@@ -27,6 +27,7 @@ from nose.tools import assert_raises
 import nti.tests
 
 from nti.appserver import bulk_email_views
+import time
 
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 import fudge
@@ -149,3 +150,30 @@ class TestBulkEmailProcess(SharedApplicationTestBase):
 
 		fresh_metadata = bulk_email_views._ProcessMetaData( process.redis, process.names.metadata_name )
 		assert_that( fresh_metadata, has_property( 'status', str(exc) ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@fudge.patch('boto.ses.connect_to_region')
+	def test_application_get(self, fake_connect):
+		fake_connect.is_callable().returns_fake().expects( 'send_raw_email' ).returns( 'return' )
+		# Initial condition
+		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
+		assert_that( res.body, contains_string( 'Start' ) )
+
+
+		# With some recipients
+		email = 'jason.madden@nextthought.com'
+		process = bulk_email_views._Process('failed_username_recovery_email')
+		process.add_recipients( {'email': email} )
+		process.metadata.startTime = time.time()
+		process.metadata.save()
+		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
+
+
+		assert_that( res.body, contains_string( 'Remaining' ) )
+		# Submit the form asking it to resume; follow the resulting GET redirect
+		res = res.form.submit( name='subFormTable.buttons.resume' ).follow()
+		assert_that( res.body, contains_string( 'Remaining' ) )
+		# Let the spawned greenlet do its thing
+		bulk_email_views._BulkEmailView._greenlets[0].join()
+		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
+		assert_that( res.body, contains_string( 'End Time' ) )
