@@ -36,11 +36,9 @@ entry_points = {
 		"nti_index_book_video_transcripts = nti.contentrendering.video_transcript_indexer:main",
 		'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
 		'nti_testing_mark_emails_bounced = nti.appserver.bounced_email_workflow:mark_emails_bounced',
-		'nti_delete_purchase_attempt = nti.store.utils.nti_delete_purchase_attempt:main',
-		"nti_delete_purchase_history = nti.store.utils.nti_delete_purchase_history:main",
 		"pserve = nti.appserver.nti_pserve:main",  # This script overrides the one from pyramid
-		"runzeo = nti.monkey.nti_runzeo:main", # This script overrides the one from ZEO
-		"zodbconvert = nti.monkey.nti_zodbconvert:main", # This script overrides the one from relstorage
+		"runzeo = nti.monkey.nti_runzeo:main",  # This script overrides the one from ZEO
+		"zodbconvert = nti.monkey.nti_zodbconvert:main",  # This script overrides the one from relstorage
 	],
 	"paste.app_factory": [
 		"main = nti.appserver.standalone:configure_app",
@@ -129,9 +127,9 @@ setup(
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
-		'Chameleon >= 2.11', # (preferred) template rendering. pulled in by pyramid, but ensure latest version
+		'Chameleon >= 2.11',  # (preferred) template rendering. pulled in by pyramid, but ensure latest version
 		'ExtensionClass >= 4.0' if not IS_PYPY else '',
-		'Mako >= 0.8.0', # fallback plain-text template render. pulled in by pyramid, but ensure latest version
+		'Mako >= 0.8.0',  # fallback plain-text template render. pulled in by pyramid, but ensure latest version
 		# 'friendly' fork of PIL, developed by Zope/Plone.
 		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		# is the version that Pillow forked from in 2010 as version 1.0. So
@@ -336,7 +334,7 @@ setup(
 		'zope.principalregistry >= 4.0.0a2',  # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.3',  # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
-		'zope.server >= 3.9.0', # DO NOT USED. Included as transitive for latest.
+		'zope.server >= 3.9.0',  # DO NOT USED. Included as transitive for latest.
 		'zope.sequencesort >= 4.0.1',  # advanced locale aware sorting
 		'zope.schema >= 4.3.2',
 		'zope.security[zcml,untrustedpython] >= 4.0.0b1',  # >= 4.0.0b1 gets PyPy support!
