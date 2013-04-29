@@ -37,3 +37,12 @@ try:
 except ImportError: # pypy?
 	def aq_base( o ):
 		return o
+
+try:
+	from gevent import Greenlet
+	from gevent import sleep
+	from gevent.queue import Queue
+except ImportError:
+	from Queue import Queue
+	from greenlet import greenlet as Greenlet
+	from time import sleep

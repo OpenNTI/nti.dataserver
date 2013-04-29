@@ -16,7 +16,7 @@ from . import interfaces
 from . import minmax
 
 from time import time
-
+from nti.utils._compat import sleep
 
 @interface.implementer(interfaces.ITokenBucket)
 class PersistentTokenBucket(object):
@@ -35,7 +35,8 @@ class PersistentTokenBucket(object):
 		:param capacity: The max number of tokens in the bucket (also
 			the initial number of tokens in the bucket.
 		:keyword fill_rate: The rate in fractional tokens per second that
-			the bucket will fill.
+			the bucket will fill. The default is to add one
+			token per second.
 		"""
 		self.capacity = float(capacity)
 		self.fill_rate = float(fill_rate)
@@ -47,16 +48,30 @@ class PersistentTokenBucket(object):
 		self._timestamp = minmax.NumericMaximum( time() )
 
 	def consume(self, tokens=1):
-		"""Consume tokens from the bucket. Returns True if there were
+		"""Consume one or more tokens from the bucket. Returns True if there were
 		sufficient tokens otherwise False."""
 		if tokens <= self.tokens:
 			self._tokens -= tokens
-		else:
-			return False
+			return True
+
+		return False
+
+	def wait_for_token(self):
+		"""
+		Consume a single token from the bucket, blocking until one is available
+		if need be.
+		"""
+
+		while not self.consume():
+			needed_token_count = 1.0 - self._tokens.value
+			# How long will it take to get that token?
+			how_long = needed_token_count * self.fill_rate
+			sleep( how_long )
 		return True
 
 	@property
 	def tokens(self):
+		"""The fractional number of tokens currently in the bucket."""
 		now = time()
 		if self._tokens.value < self.capacity:
 			delta = self.fill_rate * (now - self._timestamp)
