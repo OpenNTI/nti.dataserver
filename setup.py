@@ -192,7 +192,7 @@ setup(
 		'html5lib == 0.95',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
 		'logilab-common >= 0.59.1',
-		'lxml >= 3.1.2',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
+		'lxml >= 3.2.0',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.7',  # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
@@ -229,7 +229,7 @@ setup(
 		'pytz >= 2013b',
 		'rdflib >= 3.4.0',
 		# Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
-		'redis >= 2.7.3',
+		'redis >= 2.7.4',
 		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6',  # LRU caching. Dep of Pyramid
