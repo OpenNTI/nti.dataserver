@@ -79,6 +79,7 @@ Tasks
 	ugd_query
 	images
 	blogs_forums
+	bulk_email
 
 Realtime Communications (SocketIO)
 ==================================
