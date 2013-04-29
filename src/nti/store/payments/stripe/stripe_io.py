@@ -27,32 +27,36 @@ class StripeIO(object):
 		except Exception as e:
 			raise StripeException(*e.args)
 
-	def create_stripe_customer(self, email, description=None, coupon=None, api_key=None):
-		customer = self._do_stripe_operation(stripe.Customer.create, api_key=api_key, email=email,
-											 coupon=coupon, description=description)
+	@classmethod
+	def create_stripe_customer(cls, email, description=None, coupon=None, api_key=None):
+		customer = cls._do_stripe_operation(stripe.Customer.create, api_key=api_key, email=email,
+											coupon=coupon, description=description)
 		return customer
 
-	def get_stripe_customer(self, customer_id, api_key=None):
+	@classmethod
+	def get_stripe_customer(cls, customer_id, api_key=None):
 		try:
-			customer = self._do_stripe_operation(stripe.Customer.retrieve, customer_id, api_key)
+			customer = cls._do_stripe_operation(stripe.Customer.retrieve, customer_id, api_key)
 			return customer
 		except stripe.InvalidRequestError:
 			return None
 
-	def delete_stripe_customer(self, customer_id=None, customer=None, api_key=None):
-		customer = customer or self.get_stripe_customer(customer_id, api_key)
+	@classmethod
+	def delete_stripe_customer(cls, customer_id=None, customer=None, api_key=None):
+		customer = customer or cls.get_stripe_customer(customer_id, api_key)
 		if customer:
-			self._do_stripe_operation(customer.delete)
+			cls._do_stripe_operation(customer.delete)
 			return True
 		return False
 
-	def update_stripe_customer(self, customer, email=_marker, description=_marker, coupon=_marker, api_key=None):
-		customer = self.get_stripe_customer(customer, api_key) if isinstance(customer, six.string_types) else customer
+	@classmethod
+	def update_stripe_customer(cls, customer, email=_marker, description=_marker, coupon=_marker, api_key=None):
+		customer = cls.get_stripe_customer(customer, api_key) if isinstance(customer, six.string_types) else customer
 		if customer:
 			customer.email = email if email is not _marker else customer.email
 			customer.coupon = coupon if coupon is not _marker else customer.coupon
 			customer.description = description if description is not _marker else customer.description
-			self._do_stripe_operation(customer.save)
+			cls._do_stripe_operation(customer.save)
 			return True
 		return False
 
