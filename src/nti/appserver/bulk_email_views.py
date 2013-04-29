@@ -107,7 +107,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
+from datetime import datetime
+import isodate
 import anyjson as json
+import gevent
 
 import boto.ses
 from boto.ses.exceptions import SESDailyQuotaExceededError
@@ -119,12 +122,16 @@ from zope import component
 from zope.cachedescriptors.property import Lazy
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import authorization as nauth
 
 from nti.utils._compat import sleep
 from nti.zodb.tokenbucket import PersistentTokenBucket
 
 from ._email_utils import create_simple_html_text_email
+from . import httpexceptions as hexc
 
+from pyramid.view import view_config
+from pyramid.view import view_defaults
 
 #: The redis lifetime of the objects used during the sending
 #: process. Should be long enough for the process to complete,
@@ -161,8 +168,6 @@ class _ProcessMetaData(object):
 			self.startTime = float(hval['startTime'])
 			self.endTime = float(hval['endTime'])
 			self.status = hval['status']
-		else:
-			self.startTime = time.time()
 
 	def save(self):
 		self._redis.hmset( self.__name__,
@@ -176,7 +181,7 @@ class _PreflightError(Exception):
 
 class _Process(object):
 
-	subject = None
+	subject = "<No Subject>"
 
 	#: The amount of time for which we will hold the lock during
 	#: processing of one email to send.
@@ -195,6 +200,13 @@ class _Process(object):
 		self.throttle = PersistentTokenBucket( 3 )
 
 		self.lock = self.redis.lock( self.names.lock_name, self.lock_timeout )
+
+	@property
+	def delivered_count(self):
+		return self.redis.scard( self.names.dest_name )
+	@property
+	def remaining_count(self):
+		return self.redis.scard( self.names.source_name )
 
 	def preflight_process(self):
 		"""
@@ -306,7 +318,7 @@ class _Process(object):
 				self.metadata.status = unicode(e)
 				self.metadata.save()
 				return
-			except SESError as e:
+			except (SESError,Exception) as e:
 				logger.exception( "Failed to send email for unknown reason" )
 				self.metadata.status = unicode(e)
 				self.metadata.save()
@@ -322,3 +334,77 @@ class _Process(object):
 		self.metadata.save()
 
 		logger.info( "Completed sending %s to %s recipients", self.template_name, num_sent )
+
+class _Status(object):
+	"""
+	For viewing status information, as passed
+	to the renderer.
+	"""
+
+	def __init__( self, process ):
+		self.process = process
+
+	def __getattr__( self, name ):
+		try:
+			return getattr( self.process, name )
+		except AttributeError:
+			return getattr( self.process.metadata, name )
+
+	def _time(self, name):
+		startTime = getattr( self.metadata, name )
+		if startTime:
+			return isodate.datetime_isoformat( datetime.fromtimestamp(startTime) )
+
+	def startTimeISO(self):
+		return self._time('startTime')
+	def endTimeISO(self):
+		return self._time('endTime')
+
+	def processRunning(self):
+		# We use the existence of the lock 'file' as a proxy
+		# to determine if the process loop is running somewhere
+		return self.redis.exists( self.names.lock_name )
+
+@view_defaults( route_name='objects.generic.traversal',
+				name='bulk_email_admin',
+				permission=nauth.ACT_MODERATE,
+			  )
+class _BulkEmailView(object):
+
+	_greenlets = []
+
+	def __init__( self, request ):
+		self.request = request
+
+	@view_config(request_method='GET',
+				 renderer='templates/bulk_email_admin.pt')
+	def get(self):
+		status = _Status( _Process(self.request.subpath[0]) )
+		self.request.context = status
+		# Use a dict to override the context argument that pyramid
+		# directly inserts
+		return {'context': status}
+
+	@view_config(request_method='POST',
+				 renderer='templates/bulk_email_admin.pt')
+	def post(self):
+		# TODO: Will need to use specific _Process subclasses for
+		# the various types of jobs.
+		# REMEMBER to set the subject
+		process = _Process(self.request.subpath[0])
+		if 'subFormTable.buttons.resume' in self.request.POST:
+			process.metadata.status = 'Resumed'
+			process.metadata.save()
+			greenlet = gevent.spawn( run=process.process_loop )
+			# ICK. Must save this somewhere so it doesn't get
+			# GC'd. Where?
+			_BulkEmailView._greenlets.append( greenlet )
+		elif 'subFormTable.buttons.start' in self.request.POST:
+			# need to collect and then spawn the process
+			pass
+		elif 'subFormTable.buttons.reset' in self.request.POST:
+			process.reset_process()
+
+		# Redisplay the page with a get request to avoid the "re-send this POST?" problem
+		get_path = self.request.path  + (('?' + self.request.query_string) if self.request.query_string else '')
+		return hexc.HTTPFound(location=get_path)

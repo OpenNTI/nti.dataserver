@@ -65,7 +65,7 @@
 	<pyramid:scan package='.dfl_views' />
 	<pyramid:scan package='.user_export_views' />
 	<pyramid:scan package='.store_views' />
-	
+
 	<pyramid:scan package=".link_providers.views" />
-	
+	<pyramid:scan package=".bulk_email_views" />
 </configure>
