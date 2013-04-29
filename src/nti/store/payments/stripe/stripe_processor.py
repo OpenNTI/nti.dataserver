@@ -220,7 +220,8 @@ class StripePaymentProcessor(_BasePaymentProcessor, stripe_customer._StripeCusto
 						pc = _create_payment_charge(charge)
 						notify(store_interfaces.PurchaseAttemptSuccessful(purchase, pc))
 
-						# update coupon
+						# update coupon. In case there is an error updating the coupon (e.g. max redemptions reached)
+						# the we will still the transaction go. Log error and this must be check manually
 						coupon = purchase.Order.Coupon
 						if coupon is not None:
 							try:
