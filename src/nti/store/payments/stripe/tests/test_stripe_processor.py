@@ -69,7 +69,6 @@ def create_purchase(self, item=None, amount=100, coupon=None, manager=None):
 		username = user.username
 
 	with mock_dataserver.mock_db_trans(ds):
-
 		purchase_id = _create_and_register_purchase_attempt(username, item=item, processor=manager.name, coupon=coupon)
 		assert_that(purchase_id, is_not(none()))
 

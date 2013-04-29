@@ -25,7 +25,7 @@
 
 	<utility factory=".utils.StripePurchasablePricer" name="stripe" />
 	
-	<utility factory=".stripe_processor._StripePaymentProcessor"
+	<utility factory=".stripe_processor.StripePaymentProcessor"
 			 provides=".interfaces.IStripePaymentProcessor"
 			 name="stripe" />
 

@@ -83,57 +83,69 @@ def _decode_description(s):
 		result = {}
 	return result
 
+def _get_user(user):
+	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	return user
+
 @interface.implementer(stripe_interfaces.IStripePaymentProcessor)
-class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
+class StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 	name = 'stripe'
 	events = ("charge.succeeded", "charge.refunded", "charge.failed", "charge.dispute.created", "charge.dispute.updated")
 
-	def create_customer(self, user, api_key=None):
-		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	@classmethod
+	def create_customer(cls, user, coupon=None, api_key=None):
+		user = _get_user(user)
 
 		profile = user_interfaces.IUserProfile(user)
 		email = getattr(profile, 'email', None)
 		description = getattr(profile, 'description', None)
 
-		customer = self.create_stripe_customer(email, description, api_key)
+		customer = cls.create_stripe_customer(email=email, description=description, coupon=coupon, api_key=api_key)
 		notify(stripe_interfaces.StripeCustomerCreated(user, customer.id))
 
 		return customer
 
-	def get_or_create_customer(self, user, api_key=None):
-		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-		adapted = stripe_interfaces.IStripeCustomer(user)
-		if adapted.customer_id is None:
-			customer = self.create_customer(user, api_key)
-			result = customer.id
-		else:
-			result = adapted.customer_id
-		return result
-
-	def delete_customer(self, user, api_key=None):
+	@classmethod
+	def delete_customer(cls, user, api_key=None):
 		result = False
-		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+		user = _get_user(user)
 		adapted = stripe_interfaces.IStripeCustomer(user)
 		if adapted.customer_id:
-			result = self.delete_stripe_customer(customer_id=adapted.customer_id, api_key=api_key)
+			result = cls.delete_stripe_customer(customer_id=adapted.customer_id, api_key=api_key)
 			notify(stripe_interfaces.StripeCustomerDeleted(user, adapted.customer_id))
 		return result
 
-	def update_customer(self, user, customer=None, api_key=None):
-		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	@classmethod
+	def update_customer(cls, user, customer=None, coupon=None, api_key=None):
+		user = _get_user(user)
 		profile = user_interfaces.IUserProfile(user)
 		email = getattr(profile, 'email', None)
 		description = getattr(profile, 'description', None)
 		adapted = stripe_interfaces.IStripeCustomer(user)
 		if adapted.customer_id:
-			result = self.update_stripe_customer(customer=customer or adapted.customer_id,
-												 email=email,
-												 description=description,
-												 api_key=api_key)
+			result = cls.update_stripe_customer(customer=customer or adapted.customer_id,
+												email=email,
+												coupon=coupon,
+												description=description,
+												api_key=api_key)
 			return result
 
 		return False
+
+	def get_or_create_customer(self, user, api_key=None):
+		user = _get_user(user)
+		adapted = stripe_interfaces.IStripeCustomer(user)
+		if adapted.customer_id is None:
+			customer = self.create_customer(user, api_key=api_key)
+			result = customer.id
+		else:
+			result = adapted.customer_id
+			# get or create the customer so it can be updated later
+			customer = self.get_stripe_customer(result, api_key=api_key) or self.create_customer(user, api_key=api_key)
+			# reset the id in case the customer was recreated
+			result = adapted.customer_id = customer.id
+		return result
 
 	def create_card_token(self, customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
 		token = self.create_stripe_token(customer_id, number, exp_month, exp_year, cvc, api_key, **kwargs)
@@ -261,9 +273,19 @@ class _StripePaymentProcessor(_BasePaymentProcessor, stripe_io.StripeIO):
 
 					notify(stripe_interfaces.RegisterStripeCharge(purchase, charge.id))
 					if charge.paid:
+						# notify success
 						purchase.Pricing = pricing
 						pc = _create_payment_charge(charge)
 						notify(store_interfaces.PurchaseAttemptSuccessful(purchase, pc))
+
+						# update coupon
+						coupon = purchase.Order.Coupon
+						if coupon is not None:
+							try:
+								self.update_customer(username, coupon=coupon, api_key=api_key)
+							except Exception:
+								logger.exception("Exception while updating the user coupon. The charge is still valid")
+
 				transactionRunner(register_charge_notify)
 
 			# return charge id
