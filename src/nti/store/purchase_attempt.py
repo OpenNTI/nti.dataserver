@@ -132,6 +132,12 @@ class InvitationPurchaseAttempt(PurchaseAttempt):
 		self._consumers = BTrees.OOBTree.OOBTree()
 		self._tokens = minmax.NumericMinimum(self.Quantity)
 
+	def reset(self):
+		self._tokens.value = 0
+
+	def consumerMap(self):
+		return dict(self._consumers)
+
 	def register(self, user, linked_purchase_id=None):
 		user = getattr(user, "username", user)
 		if user and not user in self._consumers:
@@ -142,6 +148,12 @@ class InvitationPurchaseAttempt(PurchaseAttempt):
 	@property
 	def tokens(self):
 		return self._tokens.value
+
+	def restore_token(self):
+		if self._tokens.value < self.Quantity:
+			self._tokens += 1
+			return True
+		return False
 
 	def consume_token(self):
 		if self._tokens.value > 0:

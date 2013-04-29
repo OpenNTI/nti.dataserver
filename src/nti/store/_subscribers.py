@@ -15,26 +15,30 @@ from zope import component
 
 from nti.appserver.invitations import interfaces as invite_interfaces
 
+from . import invitations
 from . import purchasable
 from . import _content_roles
 from . import purchase_history
 from . import purchase_attempt
 from . import interfaces as store_interfaces
 
+def _update_state(purchase, state):
+	if purchase is not None:
+		purchase.updateLastMod()
+		purchase.State = state
+	
 @component.adapter(store_interfaces.IPurchaseAttemptStarted)
 def _purchase_attempt_started(event):
 	purchase = event.object
-	purchase.updateLastMod()
-	purchase.State = store_interfaces.PA_STATE_STARTED
+	_update_state(purchase,  store_interfaces.PA_STATE_STARTED)
 	logger.info('%r started' % purchase)
 
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful(event):
 	purchase = event.object
-	purchase.updateLastMod()
 	purchase.EndTime = time.time()
-	purchase.State = store_interfaces.PA_STATE_SUCCESS
-
+	_update_state(purchase,  store_interfaces.PA_STATE_SUCCESS)
+	
 	# if not register invitation
 	if not purchase.Quantity:
 		# allow content roles
@@ -43,39 +47,58 @@ def _purchase_attempt_successful(event):
 		_content_roles._add_users_content_roles(purchase.creator, lib_items)
 	logger.info('%r completed successfully', purchase)
 
+def _return_items(purchase, username):
+	if purchase is not None:
+		purchase_history.deactivate_items(username, purchase.Items)
+		lib_items = purchasable.get_content_items(purchase.Items)
+		_content_roles._remove_users_content_roles(username, lib_items)
+	
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
 def _purchase_attempt_refunded(event):
 	purchase = event.object
-	purchase.updateLastMod()
 	purchase.EndTime = time.time()
-	purchase.State = store_interfaces.PA_STATE_REFUNDED
-	if not purchase.Quantity:
-		purchase_history.deactivate_items(event.username, purchase.Items)
-		# TODO: we need to handle when there is an invitation
-		lib_items = purchasable.get_content_items(purchase.Items)
-		_content_roles._remove_users_content_roles(event.username, lib_items)
+	_update_state(purchase,  store_interfaces.PA_STATE_REFUNDED)
+	
+	if store_interfaces.IInvitationPurchaseAttempt.providedBy(purchase):
+		# set all tokens to zero
+		purchase.reset()
+		# return all items from linked purchases (redemptions)
+		for username, pid in purchase.consumerMap().items():
+			p = purchase_history.get_purchase_attempt(pid)
+			_return_items(p, username)
+			_update_state(p, store_interfaces.PA_STATE_REFUNDED)
+
+	elif not purchase.Quantity:
+		_return_items(purchase, event.username)
+	
+	# return consumed token
+	if store_interfaces.IRedeemedPurchaseAttempt.providedBy(purchase):
+		code = purchase.RedemptionCode
+		p = invitations.get_purchase_by_code(code)
+		if store_interfaces.IInvitationPurchaseAttempt.providedBy(p):
+			p.restore_token()
+
 	logger.info('%r has been refunded', purchase)
 
 @component.adapter(store_interfaces.IPurchaseAttemptDisputed)
 def _purchase_attempt_disputed(event):
 	purchase = event.object
-	purchase.updateLastMod()
-	purchase.State = store_interfaces.PA_STATE_DISPUTED
+	_update_state(purchase, store_interfaces.PA_STATE_DISPUTED)
 	logger.info('%r has been disputed', purchase)
 
 @component.adapter(store_interfaces.IPurchaseAttemptFailed)
 def _purchase_attempt_failed(event):
 	purchase = event.object
-	purchase.updateLastMod()
 	purchase.Error = event.error
 	purchase.EndTime = time.time()
-	purchase.State = store_interfaces.PA_STATE_FAILED
+	_update_state(purchase, store_interfaces.PA_STATE_FAILED)
 	logger.info('%r failed. %s', purchase, purchase.Error)
 
 @component.adapter(store_interfaces.IPurchaseAttemptSynced)
 def _purchase_attempt_synced(event):
 	purchase = event.object
 	purchase.Synced = True
+	purchase.updateLastMod()
 	logger.info('%r has been synched' % purchase)
 
 @component.adapter(store_interfaces.IStorePurchaseInvitation, invite_interfaces.IInvitationAcceptedEvent)
