@@ -26,7 +26,7 @@ def _purchase_attempt_started(event):
 	purchase = event.object
 	purchase.updateLastMod()
 	purchase.State = store_interfaces.PA_STATE_STARTED
-	logger.info('%s started' % purchase)
+	logger.info('%r started' % purchase)
 
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful(event):
@@ -76,7 +76,7 @@ def _purchase_attempt_failed(event):
 def _purchase_attempt_synced(event):
 	purchase = event.object
 	purchase.Synced = True
-	logger.info('%s has been synched' % purchase)
+	logger.info('%r has been synched' % purchase)
 
 @component.adapter(store_interfaces.IStorePurchaseInvitation, invite_interfaces.IInvitationAcceptedEvent)
 def _purchase_invitation_accepted(invitation, event):
