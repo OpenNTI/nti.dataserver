@@ -55,3 +55,15 @@ class TestInvitations(ConfiguringTestBase):
 		user3 = self._create_user(username='nt3@nti.com')
 		with assert_raises(invitations.InvitationCapacityExceeded):
 			invitation.accept(user3)
+
+	@WithMockDSTrans
+	def test_restore_token(self):
+		user = self._create_user()
+		hist = store_interfaces.IPurchaseHistory(user, None)
+		purchase = self._create_purchase_attempt(quantity=5)
+		hist.add_purchase(purchase)
+
+		purchase.consume_token()
+		assert_that(purchase.tokens, is_(4))
+		purchase.restore_token()
+		assert_that(purchase.tokens, is_(5))
