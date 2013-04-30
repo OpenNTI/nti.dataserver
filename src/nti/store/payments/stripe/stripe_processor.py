@@ -135,7 +135,7 @@ class StripePaymentProcessor(_BasePaymentProcessor, stripe_customer._StripeCusto
 			elif coupon.amount_off is not None:
 				amount_off = coupon.amount_off / 100.0
 				amount -= amount_off
-		return max(0, amount)
+		return float(max(0, amount))
 
 	def _do_pricing(self, purchase_attempt):
 		pricer = component.getUtility(store_interfaces.IPurchasablePricer, name="stripe")
