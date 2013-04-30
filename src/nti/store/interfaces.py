@@ -235,6 +235,7 @@ class IPurchaseAttemptStarted(IPurchaseAttemptStateEvent):
 
 class IPurchaseAttemptSuccessful(IPurchaseAttemptStateEvent):
 	charge = interface.Attribute('Purchase charge')
+	request = interface.Attribute('Purchase charge')
 
 class IPurchaseAttemptRefunded(IPurchaseAttemptStateEvent):
 	pass
@@ -270,9 +271,10 @@ class PurchaseAttemptStarted(PurchaseAttemptEvent):
 @interface.implementer(IPurchaseAttemptSuccessful)
 class PurchaseAttemptSuccessful(PurchaseAttemptEvent):
 	state = PA_STATE_SUCCESS
-	def __init__(self, purchase, charge=None):
+	def __init__(self, purchase, charge=None, request=None):
 		super(PurchaseAttemptSuccessful, self).__init__(purchase)
 		self.charge = charge
+		self.request = request
 
 @interface.implementer(IPurchaseAttemptRefunded)
 class PurchaseAttemptRefunded(PurchaseAttemptEvent):
