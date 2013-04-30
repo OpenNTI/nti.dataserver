@@ -59,7 +59,7 @@
 		discountable="True"
 		bulk_purchase="False"
 		icon="http://prmia.org/"
-		license="1 Year Licence"
+		license="1 Year License"
 		items="var-risk volatility" />
 
 </configure>
