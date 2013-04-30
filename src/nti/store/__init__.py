@@ -10,13 +10,17 @@ __docformat__ = "restructuredtext en"
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
+from zope import interface
+
 from .utils import *
+from . import interfaces as store_interfaces
 
-class StoreException(Exception):
+@interface.implementer(store_interfaces.INTIStoreException)
+class NTIStoreException(Exception):
     pass
 
-class InvalidPurchasable(StoreException):
+class InvalidPurchasable(NTIStoreException):
     pass
 
-class PricingException(StoreException):
+class PricingException(NTIStoreException):
     pass

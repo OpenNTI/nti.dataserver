@@ -31,6 +31,10 @@
 	<adapter factory=".externalization.RedeemedPurchaseAttemptExternal" />
 	<adapter factory=".externalization.InvitationPurchaseAttemptExternal" />
 	
+	<adapter factory=".purchase_error.nti_store_exception_adpater"
+			 provides=".interfaces.IPurchaseError"
+			 for=".interfaces.INTIStoreException" />
+			 
 	<subscriber factory=".externalization.PurchasableDecorator"
 				for=".interfaces.IPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>

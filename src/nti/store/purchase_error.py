@@ -7,6 +7,7 @@ $Id: purchase_attempt.py 18438 2013-04-19 04:17:47Z carlos.sanchez $
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+from zope import component
 from zope import interface
 
 from nti.utils.schema import SchemaConfigured
@@ -46,4 +47,13 @@ class PurchaseError(SchemaConfigured):
 
 def create_purchase_error(message, type_=None, code=None):
 	result = PurchaseError(Message=message, Type=type_, Code=code)
+	return result
+
+@component.adapter(store_interfaces.INTIStoreException)
+@interface.implementer(store_interfaces.IPurchaseError)
+def nti_store_exception_adpater(error):
+	result = PurchaseError(Type=u"NTIException")
+	args = getattr(error, 'args', ())
+	message = unicode(' '.join(map(str, args)))
+	result.Message = message or 'Unspecified Exception'
 	return result

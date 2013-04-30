@@ -102,6 +102,9 @@ class IPurchaseError(interface.Interface):
 	Code = nti_schema.ValidTextLine(title='Error code', required=False)
 	Message = nti_schema.ValidText(title='Error message', required=True)
 
+class INTIStoreException(interface.Interface):
+	""" marker interface for store exceptions """
+
 class IPurchasablePricer(interface.Interface):
 
 	def price(priceable):
