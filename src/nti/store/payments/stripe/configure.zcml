@@ -23,7 +23,7 @@
 			 for="...interfaces.IPurchaseAttempt"
 			 provides=".interfaces.IStripePurchaseAttempt" />
 
-	<utility factory=".utils.StripePurchasablePricer" name="stripe" />
+	<utility factory=".stripe_pricing.StripePurchasablePricer" name="stripe" />
 	
 	<utility factory=".stripe_processor.StripePaymentProcessor"
 			 provides=".interfaces.IStripePaymentProcessor"

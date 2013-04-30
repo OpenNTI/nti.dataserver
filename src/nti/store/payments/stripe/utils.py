@@ -7,90 +7,82 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+
 import six
+import time
+import simplejson as json
 
-from zope import component
-
-from . import InvalidStripeCoupon
+from . import StripeException
+from nti.store import payment_charge
 from . import interfaces as stripe_interfaces
-from ... import interfaces as store_interfaces
-from .stripe_purchase import StripePricedPurchasable
-
-from nti.store import PricingException
-from nti.store.pricing import create_pricing_results, DefaultPurchasablePricer
 
 def makenone(s, default=None):
 	if isinstance(s, six.string_types):
 		s = default if s == 'None' else unicode(s)
 	return s
 
-class StripePurchasablePricer(DefaultPurchasablePricer):
+def encode_charge_description(purchase_id, username, customer_id):
+	"""
+	proceduce a json object for a stripe charge description
+	"""
+	data = {'PurchaseID': purchase_id, 'Username':username, 'CustomerID': customer_id}
+	result = json.dumps(data)
+	return result
 
-	processor = "stripe"
+def decode_charge_description(s):
+	"""
+	decode a stripe charge description
+	"""
+	try:
+		result = json.loads(s)
+	except (TypeError, ValueError):
+		result = {}
+	return result
 
-	def get_coupon(self, coupon=None, api_key=None):
-		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
-		if coupon is not None and api_key:
-			# stripe defines an 80 sec timeout for http requests
-			# at this moment we are to wait for coupon validation
-			if isinstance(coupon, six.string_types):
-				coupon = manager.get_coupon(coupon, api_key=api_key)
-			if coupon is not None:
-				validated_coupon = manager.validate_coupon(coupon, api_key=api_key)
-				if not validated_coupon:
-					raise InvalidStripeCoupon()
-		return coupon
+def create_user_address(charge):
+	"""
+	creates a payment_charge.UserAddress from a stripe charge
+	"""
+	card = getattr(charge, 'card', None)
+	if card is not None:
+		address = payment_charge.UserAddress.create(makenone(card.address_line1),
+ 													makenone(card.address_line2),
+ 													makenone(card.address_city),
+ 													makenone(card.address_state),
+ 													makenone(card.address_zip),
+ 													makenone(card.address_country))
+		return address
 
-	def price(self, priceable):
-		priced = super(StripePurchasablePricer, self).price(priceable)
-		priced = StripePricedPurchasable.copy(priced)
-		coupon = getattr(priceable, 'Coupon', None)
+	return None
 
-		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
-		stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, priced.Provider)
+def get_card_info(charge):
+	"""
+	return card info from a stripe charge
+	"""
+	card = getattr(charge, 'card', None)
+	name = getattr(card, 'name', None)
+	last4 = getattr(card, 'last4', None)
+	last4 = int(last4) if last4 is not None else None
+	return (last4, name)
 
-		purchase_price = priced.PurchasePrice
+def create_payment_charge(charge):
+	"""
+	creates a payment_charge.PaymentCharge from a stripe charge
+	"""
+	amount = charge.amount / 100.0
+	currency = charge.currency.upper()
+	last4, name = get_card_info(charge)
+	address = create_user_address(charge)
+	created = float(charge.created or time.time())
+	result = payment_charge.PaymentCharge(Amount=amount, Currency=currency, Created=created,
+										  CardLast4=last4, Address=address, Name=name)
+	return result
 
-		if coupon is not None and stripe_key:
-			priced.Coupon = self.get_coupon(coupon, stripe_key.PrivateKey)
-			if priced.Coupon is not None:
-				priced.NonDiscountedPrice = purchase_price
-				purchase_price = manager.apply_coupon(purchase_price, priced.Coupon)
-				priced.PurchasePrice = purchase_price
-				priced.PurchaseFee = self.calc_fee(purchase_price, priceable.Fee)
-		return priced
-
-	def evaluate(self, priceables):
-		providers = set()
-		currencies = set()
-		result = create_pricing_results(non_discounted_price=0.0)
-		for priceable in priceables:
-			currencies.add(priceable.Currency)
-			providers.add(priceable.Provider)
-			priced = self.price(priceable)
-			result.Items.append(priced)
-			result.TotalPurchaseFee += priced.PurchaseFee
-			result.TotalPurchasePrice += priced.PurchasePrice
-			result.TotalNonDiscountedPrice += priced.NonDiscountedPrice or priced.PurchasePrice
-
-		if len(currencies) != 1:
-			raise PricingException("Multi-Currency pricing is not supported")
-		result.Currency = currencies.pop()
-
-		# apply coupon at the 'order' level
-		coupon = getattr(priceables, 'Coupon', None)
-		if coupon is not None:
-			if len(providers) != 1:
-				raise PricingException("Multi-Provider coupon purchase is not supported")
-
-			provider = providers.pop()
-			stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
-			coupon = self.get_coupon(coupon, stripe_key.PrivateKey) if stripe_key else None
-			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
-			if coupon is not None:
-				result.NonDiscountedPrice = result.TotalPurchasePrice
-				purchase_price = manager.apply_coupon(result.TotalPurchasePrice, coupon)
-				result.TotalPurchasePrice = purchase_price
-				result.TotalPurchaseFee = self.calc_fee(purchase_price, priceable.Fee)
-
-		return result
+def adapt_to_error(e):
+	"""
+	adapts an exception to a IStripePurchaseError
+	"""
+	result = stripe_interfaces.IStripePurchaseError(e, None)
+	if result is None and isinstance(e, Exception):
+		result = stripe_interfaces.IStripePurchaseError(StripeException(e.args), None)
+	return result
