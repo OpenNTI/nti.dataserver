@@ -21,6 +21,19 @@ from pyramid_mailer.interfaces import IMailer
 from pyramid_mailer.message import Message
 from repoze.sendmail import interfaces as mail_interfaces
 
+def do_html_text_templates_exist(base_template, text_template_extension='.txt'):
+	"""
+	A preflight method for checking if templates exist. Returns a True value
+	if they do.
+	"""
+	try:
+		get_renderer( 'nti.appserver:templates/' + base_template + '.pt' )
+		get_renderer( 'nti.appserver:templates/' + base_template + text_template_extension )
+	except ValueError:
+		# Pyramid raises this if the template doesn't exist
+		return False
+	return True
+
 def create_simple_html_text_email(base_template, subject='', request=None, recipients=(), template_args=None, text_template_extension='.txt'):
 	"""
 	Create a :class:`pyramid_mailer.message.Message` by rendering
@@ -42,7 +55,7 @@ def create_simple_html_text_email(base_template, subject='', request=None, recip
 	if request is None:
 		request = get_current_request()
 
-	master = get_renderer('templates/master_email.pt').implementation()
+	master = get_renderer('nti.appserver:templates/master_email.pt').implementation()
 	def make_args(extension):
 		# Mako gets bitchy if 'context' comes in as an argument, but
 		# that's what Chameleon wants. To simplify things, we handle that

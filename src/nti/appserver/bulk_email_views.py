@@ -128,6 +128,7 @@ from nti.utils._compat import sleep
 from nti.zodb.tokenbucket import PersistentTokenBucket
 
 from ._email_utils import create_simple_html_text_email
+from ._email_utils import do_html_text_templates_exist
 from . import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -376,9 +377,15 @@ class _BulkEmailView(object):
 	def __init__( self, request ):
 		self.request = request
 
+	def _preflight(self):
+		if not self.request.subpath or not do_html_text_templates_exist(self.request.subpath[0]):
+			raise hexc.HTTPNotFound()
+
 	@view_config(request_method='GET',
 				 renderer='templates/bulk_email_admin.pt')
 	def get(self):
+		self._preflight()
+
 		status = _Status( _Process(self.request.subpath[0]) )
 		self.request.context = status
 		# Use a dict to override the context argument that pyramid
@@ -388,6 +395,8 @@ class _BulkEmailView(object):
 	@view_config(request_method='POST',
 				 renderer='templates/bulk_email_admin.pt')
 	def post(self):
+		self._preflight()
+
 		# TODO: Will need to use specific _Process subclasses for
 		# the various types of jobs.
 		# REMEMBER to set the subject
