@@ -243,6 +243,7 @@ class StripePaymentProcessor(_BasePaymentProcessor, stripe_customer._StripeCusto
 				if purchase is not None:
 					notify(store_interfaces.PurchaseAttemptFailed(purchase, error))
 			transactionRunner(fail_purchase)
+			# TODO: Should we raise an exception
 			raise t, v, tb
 
 	def get_charges(self, purchase_id=None, username=None, customer=None, start_time=None, end_time=None, api_key=None):
