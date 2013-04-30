@@ -73,12 +73,13 @@ class ZPTTemplateRenderer(object):
 			system['here'] = value
 			# See plasTeX/Renderers/__init__.py for comments about how 'self' is a problem
 
-
-		request = IBrowserRequest( system['request'] )
-		system['request'] = request
+		request = None
+		if 'request' in system and system['request'] is not None:
+			request = IBrowserRequest( system['request'] )
+			system['request'] = request
 
 		view = system['view']
-		if view is None:
+		if view is None and request is not None:
 			view = request
 			system['view'] = request
 

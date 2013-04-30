@@ -106,7 +106,7 @@
 			  name="subFormTable" id="subFormTable">
 
 
-			<table>
+			<table style="width: 50%">
 				<tr tal:condition="not:context/startTime">
 					<td>
 						Collect the email addresses for this bulk
@@ -117,6 +117,20 @@
 						<input id="subFormTable-buttons-start"
 							   name="subFormTable.buttons.start"
 							   class="submit-widget button-field" value="Start"
+							   type="submit" />
+					</td>
+				</tr>
+				<tr tal:condition="not:context/startTime">
+					<td>
+						Collect the email addresses for this bulk
+						mailing operation, but DO NOT begin sending
+						emails to them. You can resume or reset the
+						process after this.
+					</td>
+					<td>
+						<input id="subFormTable-buttons-initialize"
+							   name="subFormTable.buttons.initialize"
+							   class="submit-widget button-field" value="Initialize"
 							   type="submit" />
 					</td>
 				</tr>
