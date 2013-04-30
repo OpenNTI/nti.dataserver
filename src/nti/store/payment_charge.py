@@ -51,12 +51,11 @@ class UserAddress(SchemaConfigured):
 
 	@classmethod
 	def create(cls, address_line1, address_line2=None, city=None, state=None, zip_=None, country=None):
-		result = None
+		city = city or u''
 		zip_ = zip_ or store_interfaces.IUserAddress['Zip'].default
 		country = country or store_interfaces.IUserAddress['Country'].default
-		if address_line1 and city:
-			street = "%s\n%s" % (address_line1, address_line2 or u'')
-			result = UserAddress(Street=street.strip(), City=city, State=state, Zip=zip_, Country=country)
+		street = "%s\n%s" % (address_line1, address_line2 or u'')
+		result = UserAddress(Street=street.strip(), City=city, State=state, Zip=zip_, Country=country)
 		return result
 
 @functools.total_ordering
