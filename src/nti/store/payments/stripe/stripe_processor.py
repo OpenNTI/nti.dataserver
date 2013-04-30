@@ -29,6 +29,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from . import utils
 from . import stripe_io
 from . import stripe_customer
+from . import StripeException
 from nti.store import purchase_history
 from nti.store import purchase_attempt
 from . import interfaces as stripe_interfaces
@@ -119,6 +120,9 @@ class StripePaymentProcessor(_BasePaymentProcessor, stripe_customer._StripeCusto
 
 		def start_purchase():
 			purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+			if purchase is None:
+				raise StripeException("Could not find purchase attempt with id %s" % purchase_id)
+
 			if not purchase.is_pending():
 				notify(store_interfaces.PurchaseAttemptStarted(purchase))
 
@@ -136,14 +140,14 @@ class StripePaymentProcessor(_BasePaymentProcessor, stripe_customer._StripeCusto
 			return None
 
 		try:
-			# start the purchase
+			# start the purchase and price trx
 			pricing = transactionRunner(start_purchase)
 			currency = pricing.Currency
 			amount = pricing.TotalPurchasePrice
 			application_fee = pricing.TotalPurchaseFee if pricing.TotalPurchaseFee else None
 			if expected_amount is not None and not math.fabs(expected_amount - amount) <= 0.05:
 				logger.error("Purchase order amount %.2f did not match the expected amount %.2f", amount, expected_amount)
-				raise Exception("Purchase order amount did not match the expected amount")
+				raise StripeException("Purchase order amount did not match the expected amount")
 
 			# create a stripe customer
 			customer_id = transactionRunner(register_stripe_user)
