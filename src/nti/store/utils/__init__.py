@@ -49,7 +49,7 @@ def is_valid_timestamp(ts):
 def is_valid_amount(amount):
 	try:
 		amount = float(amount)
-		return amount > 0
+		return amount >= 0
 	except:
 		return False
 

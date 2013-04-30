@@ -151,9 +151,9 @@ class StripePaymentView(_PostStripeView):
 			raise_field_error(self.request, 'token', "No token provided")
 
 		expected_amount = values.get('amount', values.get('expectedAmount', None))
-		if not is_valid_amount(expected_amount):
-			raise hexc.HTTPBadRequest(detail="Invalid expected amount")
-		expected_amount = float(expected_amount)
+		if expected_amount is not None and not is_valid_amount(expected_amount):
+			raise_field_error(self.request, 'expectedAmount', "Invalid expected amount")
+		expected_amount = float(expected_amount) if expected_amount is not None else None
 
 		coupon = values.get('coupon', None)
 		description = values.get('description', None)
