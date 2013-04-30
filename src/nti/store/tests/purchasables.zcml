@@ -21,7 +21,6 @@
 		currency="USD"
 		discountable="False"
 		bulk_purchase="False"
-		emails="nt@nt.com support@aops.com"
 		items="prealgebra intro-algebra" />
 		
 	<pcs:registerPurchasable
@@ -60,7 +59,6 @@
 		discountable="True"
 		bulk_purchase="False"
 		icon="http://prmia.org/"
-		emails="nt@nt.com support@prmia.com"
 		items="var-risk volatility" />
 
 </configure>
