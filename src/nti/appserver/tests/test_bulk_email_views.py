@@ -35,6 +35,15 @@ from fudge.inspector import arg
 
 class TestBulkEmailProcess(SharedApplicationTestBase):
 
+	def setUp(self):
+		super(TestBulkEmailProcess,self).setUp()
+		bulk_email_views._BulkEmailView._FACTORIES['failed_username_recovery_email'] = bulk_email_views._Process
+		bulk_email_views._BulkEmailView._greenlets = []
+
+	def tearDown(self):
+		del bulk_email_views._BulkEmailView._FACTORIES['failed_username_recovery_email']
+		super(TestBulkEmailProcess,self).tearDown()
+
 	@WithSharedApplicationMockDS
 	def test_preflight(self):
 		process = bulk_email_views._Process('template_name')
@@ -187,3 +196,33 @@ class TestBulkEmailProcess(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_application_get_no_path(self):
 		self.testapp.get( '/dataserver2/@@bulk_email_admin/', status=404 )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@fudge.patch('boto.ses.connect_to_region')
+	def test_application_policy_change(self, fake_connect):
+		fake_connect.is_callable().returns_fake().expects( 'send_raw_email' ).returns( 'return' )
+
+		# Initial condition
+		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/policy_change_email' )
+		assert_that( res.body, contains_string( 'Start' ) )
+
+		# Give us an email
+		from nti.dataserver.tests import mock_dataserver
+		with mock_dataserver.mock_db_trans(self.ds):
+			from nti.dataserver import users
+			from nti.dataserver.users import interfaces as user_interfaces
+			from zope.lifecycleevent import modified
+			user = users.User.get_user( self.extra_environ_default_user )
+			user_interfaces.IUserProfile( user ).email = 'jason.madden@nextthought.com'
+			modified( user )
+
+
+		# Now, make it start and run itself, finding applicable recipients,
+		# etc
+		res = res.form.submit( name='subFormTable.buttons.start' ).follow()
+		assert_that( res.body, contains_string( 'Remaining' ) )
+
+		# Let the spawned greenlet do its thing
+		bulk_email_views._BulkEmailView._greenlets[0].join()
+		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/policy_change_email' )
+		assert_that( res.body, contains_string( 'End Time' ) )
