@@ -50,6 +50,7 @@ class IPurchasable(interface.Interface):
 	Fee = schema.Float(title="Percentage fee", required=False)
 	Icon = nti_schema.ValidTextLine(title='Icon URL', required=False)
 	Provider = nti_schema.ValidTextLine(title='Purchasable item provider', required=True)
+	Emails = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The email'), title="Purchasable associated emails")
 	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Purchasable content items")
 
 class IPriceable(interface.Interface):

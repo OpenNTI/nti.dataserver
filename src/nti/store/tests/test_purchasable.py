@@ -50,6 +50,7 @@ class TestPurchasable(ConfiguringTestBase):
 		assert_that(ps.Discountable, is_(True))
 		assert_that(ps.BulkPurchase, is_(False))
 		assert_that(ps.Items, has_length(2))
+		assert_that(ps.Emails, has_length(2))
 
 	@WithMockDSTrans
 	def test_available(self):
