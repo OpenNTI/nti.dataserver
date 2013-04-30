@@ -177,3 +177,13 @@ class TestBulkEmailProcess(SharedApplicationTestBase):
 		bulk_email_views._BulkEmailView._greenlets[0].join()
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
 		assert_that( res.body, contains_string( 'End Time' ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_application_get_template_dne(self):
+		# Initial condition
+		self.testapp.get( '/dataserver2/@@bulk_email_admin/no_such_template', status=404 )
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_application_get_no_path(self):
+		self.testapp.get( '/dataserver2/@@bulk_email_admin/', status=404 )
