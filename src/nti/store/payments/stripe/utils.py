@@ -12,9 +12,10 @@ import six
 import time
 import simplejson as json
 
-from . import StripeException
 from nti.store import payment_charge
+from nti.store import NTIStoreException
 from . import interfaces as stripe_interfaces
+from nti.store import interfaces as store_interfaces
 
 def makenone(s, default=None):
 	if isinstance(s, six.string_types):
@@ -81,7 +82,7 @@ def adapt_to_error(e):
 	"""
 	adapts an exception to a IStripePurchaseError
 	"""
-	result = stripe_interfaces.IStripePurchaseError(e, None)
+	result = store_interfaces.IPurchaseError(e, None) or stripe_interfaces.IStripePurchaseError(e, None)
 	if result is None and isinstance(e, Exception):
-		result = stripe_interfaces.IStripePurchaseError(StripeException(e.args), None)
+		result = store_interfaces.IPurchaseError(NTIStoreException(e.args), None)
 	return result
