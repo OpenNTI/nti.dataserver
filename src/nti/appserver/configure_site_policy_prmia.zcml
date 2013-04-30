@@ -23,7 +23,7 @@
 	<registerIn registry=".sites.PRMIA">
 		<utility factory=".site_policies.PrmiaSitePolicyEventListener" />
 
-		<!-- PROD KEYS -->
+		<!-- PRMIA PROD KEYS -->
 		<stripe:registerStripeKey
 			alias="PRMIA"
 			live_mode="True"
@@ -31,8 +31,16 @@
 			public_key="pk_live_9LYQyWxjuyxUfrd1g2YfOWCh"
 			private_key="sk_live_XbDRHzOx4eiORSkF8iRMH1xj"
 			refresh_token="rt_1S9LF8At2PRpLhOeMbPLS9AEvsFYUSyCPIX6ioCDA9h6EKcF" />
+		
+		<!-- PRIMA TEST KEYS -->
+		<stripe:registerStripeKey
+        	alias="PRMIA-TEST"
+        	live_mode="False"
+        	stripe_user_id="NEXTTHOUGHT"
+        	public_key="pk_test_DDEhzCxZQrS5YeM1Y4Ym2Sby"
+        	private_key="sk_test_7uRS5fhGw3R1D2n6pSq2cuSJ" />
 
-		<!-- TEST KEYS -->
+		<!-- NTI TEST KEYS -->
 		<stripe:registerStripeKey
 			alias="NTI-TEST"
 			live_mode="False"
@@ -44,9 +52,10 @@
 		<pcs:registerPurchasable
 			ntiid="tag:nextthought.com,2011-10:PRMIA-purchasable-AdvancedStressTestingforFinancialInstitutions"
 			title="Advanced Stress Testing for Financial Institutions"
-			provider="NTI-TEST"
+			provider="PRMIA-TEST"
 			author="PRMIA"
 			amount="495"
+			fee="20"
 			currency="USD"
 			discountable="True"
 			bulk_purchase="True"
