@@ -93,12 +93,13 @@ class Purchasable(SchemaConfigured):
 		return (a_acl.ace_allowing(nti_interfaces.EVERYONE_USER_NAME, authorization.ACT_READ, self),)
 
 def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=None, title=None,
-					   author=None, description=None, icon=None, discountable=False, bulk_purchase=True):
+					   author=None, description=None, icon=None, emails=(), discountable=False, bulk_purchase=True):
 	fee = float(fee) if fee is not None else None
+	emails = to_frozenset(emails) if emails else frozenset()
 	items = to_frozenset(items) if items else frozenset((ntiid,))
 	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Author=author, Items=items,
 						 Description=description, Amount=float(amount), Currency=currency, Fee=fee,
-						 Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
+						 Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon, Emails=emails)
 	return result
 
 def get_purchasable(pid):

@@ -21,6 +21,7 @@
 		currency="USD"
 		discountable="False"
 		bulk_purchase="True"
+		emails="support@nextthought.com"
 		items="tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center" />
 
 	<pcs:registerPurchasable

@@ -25,8 +25,6 @@ from zope.annotation import IAnnotations
 
 from pyramid.security import authenticated_userid
 
-from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
-
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -128,20 +126,6 @@ class GetPurchaseAttemptView(object):
 		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 		return result
 
-# object get views
-
-class PurchasableGetView(GenericGetView):
-	pass
-
-class PurchaseAttemptGetView(GenericGetView):
-
-	def __call__(self):
-		purchase = super(PurchaseAttemptGetView, self).__call__()
-		if purchase.is_pending():
-			start_time = purchase.StartTime
-			if time.time() - start_time >= 90 and not purchase.is_synced():
-				_sync_purchase(purchase)
-		return purchase
 
 class GetPurchasablesView(object):
 

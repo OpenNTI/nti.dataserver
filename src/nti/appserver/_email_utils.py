@@ -34,7 +34,8 @@ def do_html_text_templates_exist(base_template, text_template_extension='.txt'):
 		return False
 	return True
 
-def create_simple_html_text_email(base_template, subject='', request=None, recipients=(), template_args=None, text_template_extension='.txt'):
+def create_simple_html_text_email(base_template, subject='', request=None, recipients=(),
+								  template_args=None, text_template_extension='.txt', cc=(), bcc=()):
 	"""
 	Create a :class:`pyramid_mailer.message.Message` by rendering
 	the pair of templates to create a text and html part.
@@ -82,7 +83,9 @@ def create_simple_html_text_email(base_template, subject='', request=None, recip
 	message = Message( subject=subject,
 					   recipients=recipients,
 					   body=text_body,
-					   html=html_body )
+					   html=html_body,
+					   cc=cc,
+					   bcc=bcc)
 	return message
 
 
