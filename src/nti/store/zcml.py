@@ -35,12 +35,11 @@ class IRegisterPurchasableDirective(interface.Interface):
 	icon = fields.TextLine(title='Icon URL', required=False)
 	fee = schema.Float(title="Percentage fee", required=False)
 	provider = fields.TextLine(title='Purchasable item provider', required=True)
-	emails = fields.Tokens(value_type=schema.TextLine(title='The email identifier'), title="Purchasable associated emails", required=False)
 	items = fields.Tokens(value_type=schema.TextLine(title='The item identifier'), title="Purchasable content items", required=False)
 
 
 def registerPurchasable(_context, ntiid, provider, title, description=None, amount=None, currency=None,
-						items=None, emails=None, fee=None, author=None, icon=None, discountable=False, bulk_purchase=True):
+						items=None, fee=None, author=None, icon=None, discountable=False, bulk_purchase=True):
 	"""
 	Register a purchasable
 	"""
@@ -51,7 +50,7 @@ def registerPurchasable(_context, ntiid, provider, title, description=None, amou
 	# the call may depend on other registrations like adapters being in effect
 	factory = functools.partial( create_purchasable, ntiid=ntiid, provider=provider, title=title, author=author,
 								 description=description, items=items, amount=amount,
-								 currency=currency, icon=icon, fee=fee, emails=emails,
+								 currency=currency, icon=icon, fee=fee,
 								 discountable=discountable, bulk_purchase=bulk_purchase )
 	utility(_context, provides=store_interfaces.IPurchasable, factory=factory, name=ntiid)
 	logger.debug("Purchasable '%s' has been registered", ntiid)
