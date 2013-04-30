@@ -990,11 +990,3 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 				fl.addFriend(user)
 				logger.info("User '%s' added to DFL '%s" % (user, self.DFL_NAME))
 				break
-
-from  nti.store import interfaces as store_interfaces
-@component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
-def prmia_purchase_attempt_successful(event):
-	from . import store_views
-	emails = ("alpha-support@nextthought.com",)
-	for email in emails:
-		store_views.safe_send_purchase_confirmation(event, email)
