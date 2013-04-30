@@ -10,6 +10,9 @@ ${nti_context.charge.Address}
 
 %for item in nti_context.purchase.Order.Items:
 ${item.Quantity}x ${item.purchasable.Title} - ${format_currency_attribute(item.purchasable, 'Amount')} each
+%if item.purchasable.License:
+	(${item.purchasable.License})
+%endif
 %if item.Quantity > 1:
 	Activation Key: ${transaction_id}
 %endif
