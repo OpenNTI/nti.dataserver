@@ -267,6 +267,25 @@ class DeletePurchaseHistoryView(_PostView):
 
 		return hexc.HTTPNoContent()
 
+class PermissionPurchasableView(_PostView):
+
+	def __call__(self):
+		values = self.readInput()
+		username = values.get('username', authenticated_userid(self.request))
+		user = users.User.get_user(username)
+		if not user:
+			raise hexc.HTTPNotFound(detail='User not found')
+		
+		purchasable_id = values.get('purchasableID', u'')
+		purchasable = purchasable.get_purchasable(purchasable_id)
+		if not purchasable:
+			raise hexc.HTTPNotFound(detail='Purchasable not found')
+
+		if _content_roles._add_users_content_roles(user, purchasable.Items):
+			logger.info("%s has been permissioned to %s" % (user, list(purchasable.Items)))
+		
+		return hexc.HTTPNoContent()
+
 class GetContentRolesView(object):
 
 	def __init__(self, request):
@@ -275,7 +294,7 @@ class GetContentRolesView(object):
 	def __call__(self):
 		request = self.request
 		username = request.params.get('username') or  authenticated_userid(request)
-		user = users. User.get_user(username)
+		user = users.User.get_user(username)
 		if not user:
 			raise hexc.HTTPNotFound(detail='User not found')
 
