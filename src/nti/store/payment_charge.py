@@ -66,7 +66,7 @@ class PaymentCharge(SchemaConfigured):
 	__metaclass__ = MetaStoreObject
 
 	# create all interface fields
-	createDirectFieldProperties(store_interfaces.IUserAddress)
+	createDirectFieldProperties(store_interfaces.IPaymentCharge)
 
 	def __str__(self):
 		return "%s:%s" % (self.Currency, self.Amount)
