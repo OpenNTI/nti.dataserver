@@ -36,7 +36,7 @@ class ProfileLinkDecorator(object):
 	def decorateExternalMapping( self, context, mapping ):
 		the_links = mapping.setdefault( LINKS, [] )
 		request = get_current_request()
-		if context.username == authenticated_userid( request ):
+		if request is not None and context.username == authenticated_userid(request):
 			# You get your own profile schema
 			link = Link( context,
 						 rel=REL_ACCOUNT_PROFILE_SCHEMA,
