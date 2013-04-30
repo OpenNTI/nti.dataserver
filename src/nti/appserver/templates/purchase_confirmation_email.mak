@@ -17,11 +17,9 @@ ${item.Quantity}x ${item.purchasable.Title} - ${format_currency_attribute(item.p
 
 Subtotal: ${format_currency_attribute(nti_context.purchase.Pricing, 'TotalNonDiscountedPrice')}
 ## XXX: JAM: Not sure how to figure out the discounts. I'm just deriving them...
-%for item in nti_context.purchase.Pricing.Items:
-%if item.Coupon and item.NonDiscountedPrice and item.PurchasePrice != item.NonDiscountedPrice:
-Discount($item.Coupon): -${format_currency(item.NonDiscountedPrice - item.PurchasePrice, nti_context.purchase.Pricing.Currency)}
+%if nti_context.purchase.Pricing.TotalNonDiscountedPrice and nti_context.purchase.Pricing.TotalPurchasePrice < nti_context.purchase.Pricing.TotalNonDiscountedPrice:
+Discount($nti_context.purchase.Order.Coupon): -${format_currency(nti_context.purchase.Pricing.TotalNonDiscountedPrice - nti_context.purchase.Pricing.TotalPurchasePrice, nti_context.purchase.Pricing.Currency)}
 %endif
-%endfor
 
 ORDER TOTAL: ${format_currency_attribute(nti_context.charge, 'Amount')}
 
