@@ -235,7 +235,7 @@ class IPurchaseAttemptStarted(IPurchaseAttemptStateEvent):
 
 class IPurchaseAttemptSuccessful(IPurchaseAttemptStateEvent):
 	charge = interface.Attribute('Purchase charge')
-	request = interface.Attribute('Purchase charge')
+	request = interface.Attribute('Purchase pyramid request')
 
 class IPurchaseAttemptRefunded(IPurchaseAttemptStateEvent):
 	pass
