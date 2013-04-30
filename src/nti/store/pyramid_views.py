@@ -277,13 +277,11 @@ class PermissionPurchasableView(_PostView):
 			raise hexc.HTTPNotFound(detail='User not found')
 		
 		purchasable_id = values.get('purchasableID', u'')
-		purchasable = purchasable.get_purchasable(purchasable_id)
-		if not purchasable:
+		psble = purchasable.get_purchasable(purchasable_id)
+		if not psble:
 			raise hexc.HTTPNotFound(detail='Purchasable not found')
 
-		if _content_roles._add_users_content_roles(user, purchasable.Items):
-			logger.info("%s has been permissioned to %s" % (user, list(purchasable.Items)))
-		
+		_content_roles._add_users_content_roles(user, psble.Items)
 		return hexc.HTTPNoContent()
 
 class GetContentRolesView(object):
