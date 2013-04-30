@@ -66,6 +66,7 @@
 			currency="USD"
 			discountable="True"
 			bulk_purchase="True"
+			license="1 Year Licence"
 			icon="https://d2ixlfeu83tci.cloudfront.net/images/purchasable/advanced_stress_testing_for_financial_institutions.png"
 			items="tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.advanced_stress_testing_for_financial_institutions" >
 		<![CDATA[
