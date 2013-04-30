@@ -19,6 +19,7 @@ import dateutil.parser
 from pyramid import httpexceptions as hexc
 
 from zope import component
+from zope.event import notify
 from zope import lifecycleevent
 from zope.annotation import IAnnotations
 
@@ -120,7 +121,6 @@ class GetPurchaseAttemptView(object):
 		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 		return result
 
-
 class GetPurchasablesView(object):
 
 	def __init__(self, request):
@@ -203,22 +203,39 @@ class PricePurchasableView(_PostView):
 		result = self.price_purchasable()
 		return result
 
-class DeletePurchaseAttemptView(_PostView):
+# admin - views (restricted access)
+
+class _GetPurchaseAttemptView(_PostView):
 
 	def __call__(self):
 		values = self.readInput()
-		username = authenticated_userid(self.request)
 		purchase_id = values.get('purchaseID')
 		if not purchase_id:
 			raise_field_error(self.request, "purchaseID", "Must specify a valid purchase attempt id")
 
-		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
+		purchase = purchase_history.get_purchase_attempt(purchase_id)
 		if not purchase:
 			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
 
-		purchase_history.remove_purchase_attempt(purchase, username)
-		logger.info("Purchase attempt '%s' has been deleted")
+		return purchase
 
+class RefundPurchaseAttemptView(_GetPurchaseAttemptView):
+
+	def __call__(self):
+		purchase = super(RefundPurchaseAttemptView, self).__call__()
+		if not purchase.has_succeeded():
+			raise_field_error(self.request, "purchaseID", "Must specify a successfully completed purchase attempt")
+
+		notify(store_interfaces.PurchaseAttemptRefunded(purchase))
+		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
+		return result
+
+class DeletePurchaseAttemptView(_GetPurchaseAttemptView):
+
+	def __call__(self):
+		purchase = super(DeletePurchaseAttemptView, self).__call__()
+		purchase_history.remove_purchase_attempt(purchase, purchase.creator)
+		logger.info("Purchase attempt '%s' has been deleted")
 		return hexc.HTTPNoContent()
 
 class DeletePurchaseHistoryView(_PostView):

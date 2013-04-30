@@ -232,8 +232,8 @@ def get_purchase_attempt(purchase_id, user=None):
 		result = None if result.creator != user else result
 	return result
 
-def remove_purchase_attempt(purchase, user):
-	user = _get_user(user)
+def remove_purchase_attempt(purchase, user=None):
+	user = _get_user(user) or purchase.creator
 	hist = store_interfaces.IPurchaseHistory(user)
 	return hist.remove_purchase(purchase)
 
