@@ -159,11 +159,17 @@ def get_content_items(purchased_items):
 			pass
 	return result
 
+def get_emails(purchasables):
+	result = set()
+	for p in purchasables or ():
+		result.update(p.Emails)
+	return sorted(result)
+
 def get_providers(purchasables):
 	result = set()
 	for p in purchasables or ():
 		result.add(p.Provider)
-	return list(result)
+	return sorted(result)
 
 @interface.implementer(nid_interfaces.INTIIDResolver)
 class _PurchasableResolver(object):
