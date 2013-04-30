@@ -127,10 +127,10 @@
 				<td style="text-align:right; color: #757474" tal:content="python:fca(context.purchase.Pricing, 'TotalNonDiscountedPrice')">US$69.50</td>
 			</tr>
 
-			<tal:block tal:repeat="item context/purchase/Pricing/Items">
-			<tr  style="border-top-style: solid; border-top-width: 1px;" tal:condition="python:item.Coupon and item.NonDiscountedPrice and item.PurchasePrice != item.NonDiscountedPrice">
-				<td style="text-align:left; font-size: 10pt; color: #757474; font-weight: 100">PROMO / DISCOUNTS: <span style="color: #b8b8b8" tal:content="item/Coupon">FIVEDAYSALE</span></td>
-				<td style="text-align:right; color: #757474">-${python:fc(item.NonDiscountedPrice - item.PurchasePrice, context.purchase.Pricing.Currency)}</td>
+			<tal:block tal:define="pricing context/purchase/Pricing">
+			<tr style="border-top-style: solid; border-top-width: 1px;" tal:condition="python:pricing.TotalNonDiscountedPrice and pricing.TotalPurchasePrice < pricing.TotalNonDiscountedPrice">
+				<td style="text-align:left; font-size: 10pt; color: #757474; font-weight: 100">PROMO / DISCOUNTS: <span style="color: #b8b8b8" tal:content="context/purchase/Order/Coupon">FIVEDAYSALE</span></td>
+				<td style="text-align:right; color: #757474">-${python:fc(pricing.TotalNonDiscountedPrice - pricing.TotalPurchasePrice, pricing.Currency)}</td>
 			</tr>
 			</tal:block>
 
