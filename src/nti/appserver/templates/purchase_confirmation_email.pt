@@ -46,6 +46,16 @@
 			padding-top: 4px;
 			padding-bottom: 4px;
 			}
+			a.takeme {
+				display: inline-table;
+				display: inline-block;
+				color: #fff;
+				background: #7dc1e1;
+				font-size: 10pt;
+				margin: 1em 0;
+				padding: 0.5em 0.7em;
+				border-radius: 3px;
+			}
 		</style>
 	</head>
 	<body tal:define="fca nocall:options/format_currency_attribute; fc nocall:options/format_currency">
@@ -55,7 +65,7 @@
 				<table width="100%">
 					<tr>
 						<td>
-							<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_primia_logo1.png" width="144" height="58"
+							<img src="http://d2ixlfeu83tci.cloudfront.net/images/purchase_email_prmia_logo2.png" width="140" height="50"
 								 alt="PRMIA Logo" />
 						</td>
 						<td style="text-align: right; font-size: 11px; color: #b8b8b8">
@@ -125,13 +135,13 @@
 
 		<div style="margin-top: 50px">
 		Thank you for your order, ${options/informal_username}!
-		Your items are available at
-		<a href="${request/application_url}" tal:content="request/application_url">http://nextthought.com</a>
+		Your items are available at NextThought. <br />
+		<a class="takeme" href="${request/application_url}">Take Me There</a>
 		</div>
 
 		<div style="margin-top: 20px; color: #b8b8b8; font-size: 11pt">
 			<center>
-			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+			<img src="http://d2ixlfeu83tci.cloudfront.net/images/purchase_email_logo1.png" width="104" height="24"
 				 alt="NextThought Logo" />
 			<br />
 			<span>
