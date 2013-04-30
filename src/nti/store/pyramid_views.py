@@ -25,6 +25,8 @@ from zope.annotation import IAnnotations
 
 from pyramid.security import authenticated_userid
 
+from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
+
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -89,6 +91,20 @@ class GetPurchaseHistoryView(_PurchaseAttemptView):
 		result = LocatedExternalDict({'Items': purchases, 'Last Modified':self._last_modified(purchases)})
 		return result
 
+
+def _sync_purchase(purchase):
+	purchase_id = purchase.id
+	username = purchase.creator.username
+
+	def sync_purchase():
+		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=purchase.Processor)
+		manager.sync_purchase(purchase_id=purchase_id, username=username)
+
+	def process_sync():
+		component.getUtility(nti_interfaces.IDataserverTransactionRunner)(sync_purchase)
+
+	gevent.spawn(process_sync)
+
 class GetPurchaseAttemptView(object):
 
 	def __init__(self, request):
@@ -106,20 +122,26 @@ class GetPurchaseAttemptView(object):
 			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
 		elif purchase.is_pending():
 			start_time = purchase.StartTime
-			# more than 90 secs try to sync
 			if time.time() - start_time >= 90 and not purchase.is_synced():
-
-				def sync_purchase():
-					manager = component.getUtility(store_interfaces.IPaymentProcessor, name=purchase.Processor)
-					manager.sync_purchase(purchase_id=purchase_id, username=username)
-
-				def process_sync():
-					component.getUtility(nti_interfaces.IDataserverTransactionRunner)(sync_purchase)
-
-				gevent.spawn(process_sync)
+				_sync_purchase(purchase)
 
 		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 		return result
+
+# object get views
+
+class PurchasableGetView(GenericGetView):
+	pass
+
+class PurchaseAttemptGetView(GenericGetView):
+
+	def __call__(self):
+		purchase = super(PurchaseAttemptGetView, self).__call__()
+		if purchase.is_pending():
+			start_time = purchase.StartTime
+			if time.time() - start_time >= 90 and not purchase.is_synced():
+				_sync_purchase(purchase)
+		return purchase
 
 class GetPurchasablesView(object):
 
@@ -130,6 +152,8 @@ class GetPurchasablesView(object):
 		purchasables = purchasable.get_all_purchasables()
 		result = LocatedExternalDict({'Items': purchasables, 'Last Modified':0})
 		return result
+
+# post - views
 
 class _PostView(object):
 
