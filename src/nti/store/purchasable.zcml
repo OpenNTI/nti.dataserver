@@ -21,6 +21,7 @@
 		currency="USD"
 		discountable="False"
 		bulk_purchase="True"
+		license="1 Year Licence"
 		items="tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center" />
 
 	<pcs:registerPurchasable
@@ -33,6 +34,7 @@
 		currency="USD"
 		discountable="False"
 		bulk_purchase="True"
+		license="1 Year Licence"
 		items="tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.advanced_stress_testing_for_financial_institutions" />
 
 </configure>
