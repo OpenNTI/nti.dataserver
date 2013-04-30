@@ -63,7 +63,7 @@ def get_possible_site_names(request=None, include_default=False):
 	"""
 
 	request = request or get_current_request()
-	if not request: # pragma: no cover
+	if not request:  # pragma: no cover
 		return () if not include_default else ('',)
 	__traceback_info__ = request
 
@@ -77,12 +77,12 @@ def get_possible_site_names(request=None, include_default=False):
 	return site_names
 
 def _find_site_components(request, include_default=False, site_names=None):
-	site_names = site_names or get_possible_site_names( request=request, include_default=include_default )
+	site_names = site_names or get_possible_site_names(request=request, include_default=include_default)
 	for site_name in site_names:
 		if not site_name:
 			components = component
 		else:
-			components = component.queryUtility( IComponents, name=site_name )
+			components = component.queryUtility(IComponents, name=site_name)
 
 		if components is not None:
 			return components
@@ -90,11 +90,11 @@ def _find_site_components(request, include_default=False, site_names=None):
 
 _marker = object()
 
-def queryUtilityInSite( iface, request=None, site_names=None, default=None, name='', return_site_name=False ):
+def queryUtilityInSite(iface, request=None, site_names=None, default=None, name='', return_site_name=False):
 	result = _marker
-	components = _find_site_components( request, include_default=True, site_names=site_names )
+	components = _find_site_components(request, include_default=True, site_names=site_names)
 	if components is not None:
-		result = components.queryUtility( iface, default=_marker, name=name )
+		result = components.queryUtility(iface, default=_marker, name=name)
 
 	result = result if result is not _marker else default
 
@@ -107,7 +107,7 @@ def queryUtilityInSite( iface, request=None, site_names=None, default=None, name
 
 	return result, site_name
 
-def queryAdapterInSite( obj, target, request=None, site_names=None, default=None  ):
+def queryAdapterInSite(obj, target, request=None, site_names=None, default=None):
 	"""
 	Queries for named adapters following the site names, all the way up until the default
 	site name.
@@ -119,14 +119,14 @@ def queryAdapterInSite( obj, target, request=None, site_names=None, default=None
 	"""
 
 	# This is now beginning to use z3c.baseregistry, but more needs to be done.
-	components = _find_site_components( request, include_default=True, site_names=site_names )
+	components = _find_site_components(request, include_default=True, site_names=site_names)
 	if components is not None:
-		result = components.queryAdapter( obj, target, default=_marker )
+		result = components.queryAdapter(obj, target, default=_marker)
 		if result is not _marker:
 			return result
 	return default
 
-def queryMultiAdapterInSite( objects, target, request=None, site_names=None, default=None  ):
+def queryMultiAdapterInSite(objects, target, request=None, site_names=None, default=None):
 	"""
 	Queries for named adapters following the site names, all the way up until the default
 	site name.
@@ -137,9 +137,9 @@ def queryMultiAdapterInSite( objects, target, request=None, site_names=None, def
 		Overrides the `request` parameter.
 
 	"""
-	components = _find_site_components( request, include_default=True, site_names=site_names )
+	components = _find_site_components(request, include_default=True, site_names=site_names)
 	if components is not None:
-		result = components.queryMultiAdapter( objects, target, default=_marker )
+		result = components.queryMultiAdapter(objects, target, default=_marker)
 		if result is not _marker:
 			return result
 	return default
@@ -158,7 +158,7 @@ class RequestAwareS3KeyHrefMapper(object):
 	"""
 	href = None
 
- 	def __init__( self, key ):
+ 	def __init__(self, key):
 		# TODO: The following may not be the case?
 		# We have to force HTTP here, because using https (or protocol relative)
 		# falls down for the browser: the certs on the CNAME we redirect to, *.s3.aws.amazon.com
@@ -193,26 +193,26 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 
 	"""
 
-	def placeNewUser( self, user, users_directory, shards ):
+	def placeNewUser(self, user, users_directory, shards):
 		placed = False
 		for site_name in get_possible_site_names():
 			# TODO: Convert to z3c.baseregistry components? Nothing is actually implementing
 			# this at the moment.
-			placer = component.queryUtility( nti_interfaces.INewUserPlacer, name=site_name )
+			placer = component.queryUtility(nti_interfaces.INewUserPlacer, name=site_name)
 			if placer:
 				placed = True
-				placer.placeNewUser( user, users_directory, shards )
+				placer.placeNewUser(user, users_directory, shards)
 			elif site_name in shards:
-				placed = self.place_user_in_shard_named( user, users_directory, site_name )
+				placed = self.place_user_in_shard_named(user, users_directory, site_name)
 
 			if placed:
 				break
 
 		if not placed:
-			component.getUtility( nti_interfaces.INewUserPlacer, name='default' ).placeNewUser( user, users_directory, shards )
+			component.getUtility(nti_interfaces.INewUserPlacer, name='default').placeNewUser(user, users_directory, shards)
 
 ####
-## Handling events within particular sites
+# # Handling events within particular sites
 #
 # TODO: It's not clear what the best way is to handle this. We have a
 # few options. (NOTE: This was written before the existence of z3c.baseregistry;
@@ -262,36 +262,36 @@ class ISitePolicyUserEventListener(interface.Interface):
 	they should apply to.
 	"""
 
-	def map_validation_exception( incoming_data, exception ):
+	def map_validation_exception(incoming_data, exception):
 		"""
 		Gives a site policy a chance to change an exception being returned
 		during validation.
 		"""
 
-	def user_will_update_new( user, event ):
+	def user_will_update_new(user, event):
 		"""
 		Handler for the IWillUpdateNewEntityEvent, called
 		before creation is complete or the user is updated.
 		"""
 
-	def user_created( user, event ):
+	def user_created(user, event):
 		"""
 		Called when a user is created.
 		"""
 
-	def user_created_with_request( user, event ):
+	def user_created_with_request(user, event):
 		"""
 		Called when a user is created in the scope of an interactive
 		request (after user_created).
 		"""
 
-	def user_will_create( user, event ):
+	def user_will_create(user, event):
 		"""
 		Called just before a user is created. Do most validation here.
 		"""
 
 	# TODO : I'm not entirely sure this belongs here. Might want to rethink this a lot
-	def upgrade_user( user ):
+	def upgrade_user(user):
 		"""
 		Transition a user from a limited form to the next lest limited forrm.
 		Specifically intended to deal with providing coppa consent.
@@ -314,14 +314,14 @@ class SiteBasedExternalObjectDecorator(object):
 	"""
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalObject( self, orig_obj, ext_obj ):
+	def decorateExternalObject(self, orig_obj, ext_obj):
 		request = get_current_request()
 		if not request:
 			return
 
-		adapter = component.queryMultiAdapter( (orig_obj, request), ext_interfaces.IExternalObjectDecorator )
+		adapter = component.queryMultiAdapter((orig_obj, request), ext_interfaces.IExternalObjectDecorator)
 		if adapter:
-			adapter.decorateExternalObject( orig_obj, ext_obj )
+			adapter.decorateExternalObject(orig_obj, ext_obj)
 
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
@@ -331,71 +331,71 @@ class LogonLinksCreationStripper(object):
 	"""
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalObject( self, orig_obj, result ):
+	def decorateExternalObject(self, orig_obj, result):
 		result['Links'] = [link for link in result['Links'] if link['rel'] not in ('account.create', 'account.preflight.create')]
 
 
-def find_site_policy( request=None ): # deprecated
+def find_site_policy(request=None):  # deprecated
 	"""
 	Find a site policy that's currently active, including the default.
 
 	:return: A two-tuple of (policy, site_name). If no policy was found
 		then the first value is None and the second value is all applicable site_names found.
 	"""
-	components = _find_site_components( request=request, include_default=True )
+	components = _find_site_components(request=request, include_default=True)
 	if components is not None:
-		utility = components.queryUtility( ISitePolicyUserEventListener )
+		utility = components.queryUtility(ISitePolicyUserEventListener)
 		if utility:
 			return utility, components.__name__ if components.__name__ != component.__name__ else ''
-	return None, get_possible_site_names( request=request, include_default=True )
+	return None, get_possible_site_names(request=request, include_default=True)
 
-def _dispatch_to_policy( user, event, func_name ):
+def _dispatch_to_policy(user, event, func_name):
 	"""
 	Returns a true value if the event was handled by some policy.
 	"""
-	utility, site_name = find_site_policy( )
+	utility, site_name = find_site_policy()
 	if utility:
-		logger.log( TRACE, "Site %s wants to handle user creation event %s for %s with %s", site_name, func_name, user, utility )
-		getattr( utility, func_name )( user, event )
+		logger.log(TRACE, "Site %s wants to handle user creation event %s for %s with %s", site_name, func_name, user, utility)
+		getattr(utility, func_name)(user, event)
 		return True
 
-	logger.log( TRACE, "No site in %s wanted to handle user event %s for %s", site_name, func_name, user )
+	logger.log(TRACE, "No site in %s wanted to handle user event %s for %s", site_name, func_name, user)
 
 
-@component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
-def dispatch_user_created_to_site_policy( user, event ):
-	_dispatch_to_policy( user, event, 'user_created' )
+@component.adapter(nti_interfaces.IUser, IObjectCreatedEvent)
+def dispatch_user_created_to_site_policy(user, event):
+	_dispatch_to_policy(user, event, 'user_created')
 
 @component.adapter(nti_interfaces.IUser, user_interfaces.IWillUpdateNewEntityEvent)
-def dispatch_user_will_update_to_site_policy( user, event ):
-	_dispatch_to_policy( user, event, 'user_will_update_new' )
+def dispatch_user_will_update_to_site_policy(user, event):
+	_dispatch_to_policy(user, event, 'user_will_update_new')
 
 @component.adapter(nti_interfaces.IUser, user_interfaces.IWillCreateNewEntityEvent)
-def dispatch_user_will_create_to_site_policy( user, event ):
-	_dispatch_to_policy( user, event, 'user_will_create' )
+def dispatch_user_will_create_to_site_policy(user, event):
+	_dispatch_to_policy(user, event, 'user_will_create')
 
 @component.adapter(nti_interfaces.IUser, app_interfaces.IUserCreatedWithRequestEvent)
-def dispatch_user_created_with_request_to_site_policy( user, event ):
-	_dispatch_to_policy( user, event, 'user_created_with_request' )
+def dispatch_user_created_with_request_to_site_policy(user, event):
+	_dispatch_to_policy(user, event, 'user_created_with_request')
 
-def _censor_usernames( entity, event=None ):
+def _censor_usernames(entity, event=None):
 	"""
 	Censore the username field of the entity. Can be used as an event listener as well.
 	"""
 	policy = censor.DefaultCensoredContentPolicy()
 
-	if policy.censor( entity.username, entity ) != entity.username:
-		raise FieldContainsCensoredSequence( _("Username contains a censored sequence"), 'Username', entity.username )
+	if policy.censor(entity.username, entity) != entity.username:
+		raise FieldContainsCensoredSequence(_("Username contains a censored sequence"), 'Username', entity.username)
 
-	names = user_interfaces.IFriendlyNamed( entity, None )
-	if names and names.alias: # TODO: What about realname?
-		if policy.censor( names.alias, entity ) != names.alias:
-			raise FieldContainsCensoredSequence( _("Alias contains a censored sequence"), 'alias', names.alias )
+	names = user_interfaces.IFriendlyNamed(entity, None)
+	if names and names.alias:  # TODO: What about realname?
+		if policy.censor(names.alias, entity) != names.alias:
+			raise FieldContainsCensoredSequence(_("Alias contains a censored sequence"), 'alias', names.alias)
 
-def _is_x_or_more_years_ago( birthdate, years_ago=13 ):
+def _is_x_or_more_years_ago(birthdate, years_ago=13):
 
 	today = datetime.date.today()
-	x_years_ago = datetime.date.today().replace( year=today.year - years_ago )
+	x_years_ago = datetime.date.today().replace(year=today.year - years_ago)
 
 	return birthdate < x_years_ago
 
@@ -423,12 +423,12 @@ class GenericSitePolicyEventListener(object):
 	Implements a generic policy for all sites.
 	"""
 
-	def user_created_with_request( self, user, event ):
-		self._send_email_on_new_account( user, event )
+	def user_created_with_request(self, user, event):
+		self._send_email_on_new_account(user, event)
 
 	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created'
 
-	def _send_email_on_new_account( self, user, event ):
+	def _send_email_on_new_account(self, user, event):
 		"""
 		For new accounts where we have an email (and of course the request), we send a welcome message.
 
@@ -438,55 +438,55 @@ class GenericSitePolicyEventListener(object):
 		Uses the self/class attribute ``NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME`` to generate the email text.
 		"""
 
-		if not event.request: #pragma: no cover
+		if not event.request:  # pragma: no cover
 			return
 
-		profile = user_interfaces.IUserProfile( user )
-		email = getattr( profile, 'email' )
+		profile = user_interfaces.IUserProfile(user)
+		email = getattr(profile, 'email')
 		if not email:
 			return
 
 		# Need to send both HTML and plain text if we send HTML, because
 		# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 		# only works with a text part)
-		queue_simple_html_text_email( self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
+		queue_simple_html_text_email(self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
 									  subject=_("Welcome to NextThought"),
 									  recipients=[email],
 									  template_args={'user': user, 'profile': profile, 'context': user },
-									  request=event.request )
+									  request=event.request)
 
-	def map_validation_exception( self, incoming_data, exception ):
+	def map_validation_exception(self, incoming_data, exception):
 		return exception
 
-	def upgrade_user( self, user ):
+	def upgrade_user(self, user):
 		pass
 
-	def user_will_update_new( self, user, event ):
+	def user_will_update_new(self, user, event):
 		pass
 
-	def user_created( self, user, event ):
+	def user_created(self, user, event):
 		pass
 
-	def user_will_create( self, user, event ):
+	def user_will_create(self, user, event):
 		"""
 		This policy verifies naming restraints.
 
 		"""
-		_censor_usernames( user )
-		if user.username.endswith( '@nextthought.com' ) or nti_interfaces.username_is_reserved( user.username ):
-			raise UsernameCannotContainNextthoughtCom( _("That username is not valid. Please choose another."), 'Username', user.username, value=user.username )
+		_censor_usernames(user)
+		if user.username.endswith('@nextthought.com') or nti_interfaces.username_is_reserved(user.username):
+			raise UsernameCannotContainNextthoughtCom(_("That username is not valid. Please choose another."), 'Username', user.username, value=user.username)
 
 		# Icky. For some random reason we require everyone to provide their real name,
 		# and we force the display name to be derived from it.
-		names = user_interfaces.IFriendlyNamed( user )
+		names = user_interfaces.IFriendlyNamed(user)
 		# nameparser 0.2.5 no longer raises BlankHumanNameError, so we do
 		if names.realname is None or not names.realname.strip():
 			raise nameparser.parser.BlankHumanNameError()
-		human_name = nameparser.HumanName( names.realname )
+		human_name = nameparser.HumanName(names.realname)
 		if not human_name.first:
-			raise MissingFirstName( _("Please provide your first name."), 'realname', names.realname )
+			raise MissingFirstName(_("Please provide your first name."), 'realname', names.realname)
 		if not human_name.last:
-			raise MissingLastName( _("Please provide your last name."), 'realname', names.realname )
+			raise MissingLastName(_("Please provide your last name."), 'realname', names.realname)
 		human_name.capitalize()
 		names.realname = unicode(human_name)
 		names.alias = human_name.first + ' ' + human_name.last
@@ -495,17 +495,17 @@ class GenericSitePolicyEventListener(object):
 		# realname and alias exactly the same. As of this same date, we are also never returning
 		# the realname value to any site, nor are we searching on it.
 
-		profile = user_interfaces.IUserProfile( user )
-		birthdate = getattr( profile, 'birthdate', None )
+		profile = user_interfaces.IUserProfile(user)
+		birthdate = getattr(profile, 'birthdate', None)
 		if birthdate:
 			if birthdate >= datetime.date.today():
-				raise BirthdateInFuture( _("Birthdate must be in the past."), 'birthdate', birthdate.isoformat(), value=birthdate )
+				raise BirthdateInFuture(_("Birthdate must be in the past."), 'birthdate', birthdate.isoformat(), value=birthdate)
 
-			if not _is_x_or_more_years_ago( birthdate, 4 ):
-				raise BirthdateTooRecent( _("Birthdate must be at least four years ago."), 'birthdate', birthdate.isoformat(), value=birthdate )
+			if not _is_x_or_more_years_ago(birthdate, 4):
+				raise BirthdateTooRecent(_("Birthdate must be at least four years ago."), 'birthdate', birthdate.isoformat(), value=birthdate)
 
-			if _is_x_or_more_years_ago( birthdate, 150 ):
-				raise BirthdateTooAncient( _("Birthdate must be less than 150 years ago."), 'birthdate', birthdate.isoformat(), value=birthdate )
+			if _is_x_or_more_years_ago(birthdate, 150):
+				raise BirthdateTooAncient(_("Birthdate must be less than 150 years ago."), 'birthdate', birthdate.isoformat(), value=birthdate)
 
 
 @interface.implementer(ISitePolicyUserEventListener)
@@ -527,65 +527,65 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	PLACEHOLDER_REALNAME = 'com.nextthought.account_creation_user WithALastName'
 
 
-	def upgrade_user( self, user ):
-		if not self.IF_WOUT_AGREEMENT.providedBy( user ):
-			logger.debug( "No need to upgrade user %s that doesn't provide %s", user, self.IF_WOUT_AGREEMENT )
+	def upgrade_user(self, user):
+		if not self.IF_WOUT_AGREEMENT.providedBy(user):
+			logger.debug("No need to upgrade user %s that doesn't provide %s", user, self.IF_WOUT_AGREEMENT)
 			return
 
 		# Copy the profile info. First, adapt to the old profile:
-		orig_profile = user_interfaces.IUserProfile( user )
+		orig_profile = user_interfaces.IUserProfile(user)
 		# Then adjust the interfaces
-		interface.noLongerProvides( user, self.IF_WOUT_AGREEMENT )
-		interface.alsoProvides( user, self.IF_WITH_AGREEMENT_UPGRADED )
+		interface.noLongerProvides(user, self.IF_WOUT_AGREEMENT)
+		interface.alsoProvides(user, self.IF_WITH_AGREEMENT_UPGRADED)
 		# Now get the new profile
-		new_profile = user_interfaces.IUserProfile( user )
+		new_profile = user_interfaces.IUserProfile(user)
 		# If they changed, adjust them, copying in any missing data
 		if orig_profile is not new_profile:
-			most_derived_profile_iface = find_most_derived_interface( new_profile, user_interfaces.IUserProfile )
+			most_derived_profile_iface = find_most_derived_interface(new_profile, user_interfaces.IUserProfile)
 			for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
-				if interface.interfaces.IMethod.providedBy( field ):
+				if interface.interfaces.IMethod.providedBy(field):
 					continue
 
-				if getattr( orig_profile, name, None ): # Only copy things that have values. Let defaults be used otherwise
-					setattr( new_profile, name, getattr( orig_profile, name ) )
+				if getattr(orig_profile, name, None):  # Only copy things that have values. Let defaults be used otherwise
+					setattr(new_profile, name, getattr(orig_profile, name))
 
 		# user.transitionTime = time.time()
 
-		notify( app_interfaces.UserUpgradedEvent( user,
+		notify(app_interfaces.UserUpgradedEvent(user,
 												  restricted_interface=self.IF_WOUT_AGREEMENT, restricted_profile=orig_profile,
 												  upgraded_interface=self.IF_WITH_AGREEMENT, upgraded_profile=new_profile,
-												  request=get_current_request() ) )
+												  request=get_current_request()))
 		# TODO: If the new profile required some values the old one didn't, then what?
 		# Prime example: email, not required for kids, yes required for adults.
 
-	def user_will_update_new( self, user, event ):
+	def user_will_update_new(self, user, event):
 		"""
 		This policy applies the :class:`nti.dataserver.interfaces.ICoppaUserWithoutAgreement` or
 		the :class:`nti.dataserver.interfaces.ICoppaUserWithAgreement` interface
 		to the object, which drives the available data to store.
 		"""
 
-		interface.alsoProvides( user, self.IF_ROOT )
+		interface.alsoProvides(user, self.IF_ROOT)
 		iface_to_provide = self.IF_WOUT_AGREEMENT
 
-		if event.ext_value.get( 'birthdate' ) and _is_thirteen_or_more_years_ago( zope.interface.common.idatetime.IDate( event.ext_value['birthdate'] ) ):
+		if event.ext_value.get('birthdate') and _is_thirteen_or_more_years_ago(zope.interface.common.idatetime.IDate(event.ext_value['birthdate'])):
 			iface_to_provide = self.IF_WITH_AGREEMENT
 		elif 'contact_email' in event.ext_value and 'email' not in event.ext_value:
 			event.ext_value['email'] = event.ext_value['contact_email']
 
-		interface.alsoProvides( user, iface_to_provide )
+		interface.alsoProvides(user, iface_to_provide)
 
-	def user_created( self, user, event ):
+	def user_created(self, user, event):
 		"""
 		Makes the user immutably named.
 		"""
-		super(GenericKidSitePolicyEventListener,self).user_created( user, event )
+		super(GenericKidSitePolicyEventListener, self).user_created(user, event)
 
-		interface.alsoProvides( user, user_interfaces.IImmutableFriendlyNamed )
+		interface.alsoProvides(user, user_interfaces.IImmutableFriendlyNamed)
 
-	def user_will_create( self, user, event ):
-		super(GenericKidSitePolicyEventListener,self).user_will_create( user, event )
-		names = user_interfaces.IFriendlyNamed( user )
+	def user_will_create(self, user, event):
+		super(GenericKidSitePolicyEventListener, self).user_will_create(user, event)
+		names = user_interfaces.IFriendlyNamed(user)
 		# Force the alias to be the same as the username
 		names.alias = user.username
 		# Match the format of, e.g, WrongTypeError: message, field/type, value
@@ -593,33 +593,33 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 
 		# We require a realname, at least the first name, it must already be given.
 		# parse it now. This raises BlankHumanName if missing. This was checked by super
-		human_name = nameparser.HumanName( names.realname )
+		human_name = nameparser.HumanName(names.realname)
 
 		# Disable username/realname dependency checking if we are using placeholder data
 		if user.username is not self.PLACEHOLDER_USERNAME:
 			human_name_parts = human_name.first_list + human_name.middle_list + human_name.last_list
-			if any( (x.lower() in user.username.lower() for x in human_name_parts) ):
+			if any((x.lower() in user.username.lower() for x in human_name_parts)):
 				raise UsernameCannotContainRealname(
 					_("Username ${username} cannot include any part of the real name ${realname}.",
 					  mapping={'username': user.username, 'realname': names.realname}),
-					'Username', user.username, value=user.username, field='Username' )
+					'Username', user.username, value=user.username, field='Username')
 
 		if '@' in user.username:
-			raise UsernameCannotContainAt( user.username, user.ALLOWED_USERNAME_CHARS ).new_instance_restricting_chars( '@' )
+			raise UsernameCannotContainAt(user.username, user.ALLOWED_USERNAME_CHARS).new_instance_restricting_chars('@')
 
 		# This much is handled in the will_update_event
-		#profile = user_interfaces.IUserProfile( user )
-		#if profile.birthdate and _is_thirteen_or_more_years_ago( profile.birthdate ):
+		# profile = user_interfaces.IUserProfile( user )
+		# if profile.birthdate and _is_thirteen_or_more_years_ago( profile.birthdate ):
 			# If we can show the kid is actually at least 13, then
 			# we don't need to get an agreement
 
-		if nti_interfaces.ICoppaUserWithoutAgreement.providedBy( user ):
+		if nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user):
 			# We can only store the first name for little kids
 			names.realname = human_name.first
 
-	def map_validation_exception( self, incoming_data, exception ):
+	def map_validation_exception(self, incoming_data, exception):
 		if type(exception) == user_interfaces.UsernameContainsIllegalChar:
-			return exception.new_instance_restricting_chars( '@' )
+			return exception.new_instance_restricting_chars('@')
 		return exception
 
 
@@ -629,33 +629,33 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 	Implements a generic policy for adult sites.
 	"""
 
-	def user_created( self, user, event ):
-		super(GenericAdultSitePolicyEventListener,self).user_created( user, event )
-		interface.alsoProvides( user, user_interfaces.IImmutableFriendlyNamed )
+	def user_created(self, user, event):
+		super(GenericAdultSitePolicyEventListener, self).user_created(user, event)
+		interface.alsoProvides(user, user_interfaces.IImmutableFriendlyNamed)
 
-	def user_will_update_new( self, user, event ):
+	def user_will_update_new(self, user, event):
 		"""
 		Also enforces the email requirement constraint for newly created objects.
 		"""
-		super(GenericAdultSitePolicyEventListener,self).user_will_update_new( user, event )
+		super(GenericAdultSitePolicyEventListener, self).user_will_update_new(user, event)
 		ext_value = event.ext_value
-		if 'email' not in ext_value and '@' in ext_value.get( 'Username', '' ):
+		if 'email' not in ext_value and '@' in ext_value.get('Username', ''):
 			ext_value['email'] = ext_value['Username']
 
-	def user_will_create( self, user, event ):
+	def user_will_create(self, user, event):
 		"""
 		This policy verifies naming restraints.
 
 		"""
-		super(GenericAdultSitePolicyEventListener,self).user_will_create( user, event )
+		super(GenericAdultSitePolicyEventListener, self).user_will_create(user, event)
 
-		profile = user_interfaces.IUserProfile( user )
+		profile = user_interfaces.IUserProfile(user)
 		if '@' in user.username:
 			email = getattr(profile, 'email', None)
 			if not email:
 				profile.email = user.username
 			elif user.username != email:
-				raise AtInUsernameImpliesMatchingEmail( "If you want to use an email address for the username, it must match the email address you enter", 'Username', user.username )
+				raise AtInUsernameImpliesMatchingEmail("If you want to use an email address for the username, it must match the email address you enter", 'Username', user.username)
 
 class IMathcountsUser(nti_interfaces.ICoppaUser):
 	pass
@@ -677,25 +677,25 @@ class IMathcountsCoppaUserWithoutAgreementUserProfile(user_interfaces.IRestricte
 	participates_in_mathcounts = schema.Bool(
 		title="Do you currently participate in MATHCOUNTS?",
 		required=False,
-		default=False )
+		default=False)
 
 	password_recovery_email_hash = ValidTextLine(
 		title="A secure hash of an email address used during password recovery",
 		description="Typically auto-generated by setting the `email` field.",
-		required=True )
+		required=True)
 
-	password_recovery_email_hash.setTaggedValue( user_interfaces.TAG_HIDDEN_IN_UI, True )
-	password_recovery_email_hash.setTaggedValue( user_interfaces.TAG_UI_TYPE, user_interfaces.UI_TYPE_HASHED_EMAIL )
+	password_recovery_email_hash.setTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI, True)
+	password_recovery_email_hash.setTaggedValue(user_interfaces.TAG_UI_TYPE, user_interfaces.UI_TYPE_HASHED_EMAIL)
 
 	email = ValidTextLine(
 		title='Email',
 		description=u'Email is not stored at this level, but the field is specified here as a convenient way'
 			' to be able to set the password_recovery_email_hash',
-		required=False, # But we require it in the UI to get the recovery
+		required=False,  # But we require it in the UI to get the recovery
 		constraint=user_interfaces.checkEmailAddress)
 
-	email.setTaggedValue( user_interfaces.TAG_UI_TYPE, user_interfaces.UI_TYPE_HASHED_EMAIL )
-	email.setTaggedValue( user_interfaces.TAG_REQUIRED_IN_UI, True )
+	email.setTaggedValue(user_interfaces.TAG_UI_TYPE, user_interfaces.UI_TYPE_HASHED_EMAIL)
+	email.setTaggedValue(user_interfaces.TAG_REQUIRED_IN_UI, True)
 
 	# No affiliation
 	# No role
@@ -705,20 +705,20 @@ class IMathcountsCoppaUserWithAgreementUserProfile(user_interfaces.IEmailRequire
 	participates_in_mathcounts = schema.Bool(
 		title="Do you currently participate in MATHCOUNTS?",
 		required=False,
-		default=False )
+		default=False)
 
 	affiliation = ValidTextLine(
 		title='Affiliation',
 		description="Your affiliation, such as school name",
-		required=False) # redefined because we tag it
-	affiliation.setTaggedValue( user_interfaces.TAG_UI_TYPE, 'nti.appserver.site_policies.school' )
-	affiliation.setTaggedValue( user_interfaces.TAG_READONLY_IN_UI, True ) # post-creation
+		required=False)  # redefined because we tag it
+	affiliation.setTaggedValue(user_interfaces.TAG_UI_TYPE, 'nti.appserver.site_policies.school')
+	affiliation.setTaggedValue(user_interfaces.TAG_READONLY_IN_UI, True)  # post-creation
 
-	role = schema.Choice( title="Your role in the organization",
+	role = schema.Choice(title="Your role in the organization",
 						  values=("Student", "Teacher", "Coach", "Parent", "Volunteer", "Other"),
 						  default="Other",
-						  required=False) # redefined because we tag it
-	role.setTaggedValue( user_interfaces.TAG_READONLY_IN_UI, True ) # post-creation
+						  required=False)  # redefined because we tag it
+	role.setTaggedValue(user_interfaces.TAG_READONLY_IN_UI, True)  # post-creation
 
 	# When we upgrade accounts, we need to keep the contact email
 	contact_email = ValidTextLine(
@@ -726,8 +726,8 @@ class IMathcountsCoppaUserWithAgreementUserProfile(user_interfaces.IEmailRequire
 		description=u"An email address to use to contact someone responsible for this accounts' user",
 		required=False,
 		constraint=user_interfaces.checkEmailAddress)
-	contact_email.setTaggedValue( user_interfaces.TAG_HIDDEN_IN_UI, True )
-	contact_email.setTaggedValue( user_interfaces.TAG_UI_TYPE, user_interfaces.UI_TYPE_EMAIL )
+	contact_email.setTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI, True)
+	contact_email.setTaggedValue(user_interfaces.TAG_UI_TYPE, user_interfaces.UI_TYPE_EMAIL)
 
 
 
@@ -741,28 +741,28 @@ class MathcountsCoppaUserWithoutAgreementUserProfile(user_profile.RestrictedUser
 class MathcountsCoppaUserWithAgreementUserProfile(user_profile.EmailRequiredUserProfile):
 	pass
 
-user_profile.add_profile_fields( IMathcountsCoppaUserWithoutAgreementUserProfile, MathcountsCoppaUserWithoutAgreementUserProfile )
-del MathcountsCoppaUserWithoutAgreementUserProfile.email # But restore the behaviour from the super
-user_profile.add_profile_fields( IMathcountsCoppaUserWithAgreementUserProfile, MathcountsCoppaUserWithAgreementUserProfile )
+user_profile.add_profile_fields(IMathcountsCoppaUserWithoutAgreementUserProfile, MathcountsCoppaUserWithoutAgreementUserProfile)
+del MathcountsCoppaUserWithoutAgreementUserProfile.email  # But restore the behaviour from the super
+user_profile.add_profile_fields(IMathcountsCoppaUserWithAgreementUserProfile, MathcountsCoppaUserWithAgreementUserProfile)
 
-MathcountsCoppaUserWithoutAgreementUserProfileFactory = zope.annotation.factory( MathcountsCoppaUserWithoutAgreementUserProfile )
-MathcountsCoppaUserWithAgreementUserProfileFactory = zope.annotation.factory( MathcountsCoppaUserWithAgreementUserProfile )
+MathcountsCoppaUserWithoutAgreementUserProfileFactory = zope.annotation.factory(MathcountsCoppaUserWithoutAgreementUserProfile)
+MathcountsCoppaUserWithAgreementUserProfileFactory = zope.annotation.factory(MathcountsCoppaUserWithAgreementUserProfile)
 
-def _join_community_user_created( self, user, event ):
+def _join_community_user_created(self, user, event):
 	"""
 	Helper method that places newly created users in the community defined by the fields
 	of this object (creating it if it doesn't exist).
 	"""
 	if self.COM_USERNAME and self.COM_ALIAS and self.COM_REALNAME:
-		community = users.Entity.get_entity( self.COM_USERNAME )
+		community = users.Entity.get_entity(self.COM_USERNAME)
 		if community is None:
-			community = users.Community.create_community( username=self.COM_USERNAME )
-			com_names = user_interfaces.IFriendlyNamed( community )
+			community = users.Community.create_community(username=self.COM_USERNAME)
+			com_names = user_interfaces.IFriendlyNamed(community)
 			com_names.alias = self.COM_ALIAS
 			com_names.realname = self.COM_REALNAME
 
-		user.record_dynamic_membership( community )
-		user.follow( community )
+		user.record_dynamic_membership(community)
+		user.follow(community)
 
 @interface.implementer(ISitePolicyUserEventListener)
 class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
@@ -781,14 +781,14 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 	COM_ALIAS = 'MATHCOUNTS'
 	COM_REALNAME = 'MATHCOUNTS'
 
-	def user_created( self, user, event ):
+	def user_created(self, user, event):
 		"""
 		This policy places newly created users in the ``MathCounts`` community
 		(creating it if it doesn't exist).
 
 		"""
-		super(MathcountsSitePolicyEventListener,self).user_created( user, event )
-		_join_community_user_created( self, user, event )
+		super(MathcountsSitePolicyEventListener, self).user_created(user, event)
+		_join_community_user_created(self, user, event)
 
 
 @interface.implementer(ISitePolicyUserEventListener)
@@ -810,7 +810,7 @@ _SITE_LANDING_PAGES = {
 	}
 
 @component.adapter(nti_interfaces.IUser, app_interfaces.IUserLogonEvent)
-def send_site_default_landing_page_cookie( user, event ):
+def send_site_default_landing_page_cookie(user, event):
 	"""
 	This is a hardcoded logon listener to send a cookie to
 	tell the app to direct to a specific page at logon time.
@@ -819,10 +819,10 @@ def send_site_default_landing_page_cookie( user, event ):
 	so we hack it in with a dictionary.
 	"""
 
-	for site_name in get_possible_site_names( request=event.request ):
+	for site_name in get_possible_site_names(request=event.request):
 		if site_name in _SITE_LANDING_PAGES:
-			event.request.response.set_cookie( b'nti.landing_page',
-											   value=urllib.quote( _SITE_LANDING_PAGES[site_name] ) )
+			event.request.response.set_cookie(b'nti.landing_page',
+											   value=urllib.quote(_SITE_LANDING_PAGES[site_name]))
 			break
 
 
@@ -833,12 +833,12 @@ class NoAvatarUploadCapabilityFilter(object):
 	Removes the ability to upload avatars.
 	"""
 
-	def __init__( self, context=None ):
+	def __init__(self, context=None):
 		pass
 
-	def filterCapabilities( self, capabilities ):
+	def filterCapabilities(self, capabilities):
 		result = set(capabilities)
-		result.discard( 'nti.platform.customization.avatar_upload' )
+		result.discard('nti.platform.customization.avatar_upload')
 		return result
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
@@ -848,9 +848,9 @@ class NoDFLCapabilityFilter(NoAvatarUploadCapabilityFilter):
 	Removes the ability to create DFLs.
 	"""
 
-	def filterCapabilities( self, capabilities ):
-		result = super(NoDFLCapabilityFilter,self).filterCapabilities( capabilities )
-		result.discard( 'nti.platform.p2p.dynamicfriendslists' )
+	def filterCapabilities(self, capabilities):
+		result = super(NoDFLCapabilityFilter, self).filterCapabilities(capabilities)
+		result.discard('nti.platform.p2p.dynamicfriendslists')
 		return result
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
@@ -860,9 +860,9 @@ class NoChatAvatarDFLCapabilityFilter(NoDFLCapabilityFilter):
 	Removes chat.
 	"""
 
-	def filterCapabilities( self, capabilities ):
-		result = super(NoChatAvatarDFLCapabilityFilter,self).filterCapabilities( capabilities )
-		result.discard( 'nti.platform.p2p.chat' )
+	def filterCapabilities(self, capabilities):
+		result = super(NoChatAvatarDFLCapabilityFilter, self).filterCapabilities(capabilities)
+		result.discard('nti.platform.p2p.chat')
 		return result
 
 
@@ -876,14 +876,14 @@ class _AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener
 	COM_ALIAS = None
 	COM_REALNAME = None
 
-	def user_created( self, user, event ):
+	def user_created(self, user, event):
 		"""
 		This policy places newly created users in the community defined by the fields
 		of this object (creating it if it doesn't exist).
 
 		"""
-		super(_AdultCommunitySitePolicyEventListener,self).user_created( user, event )
-		_join_community_user_created( self, user, event )
+		super(_AdultCommunitySitePolicyEventListener, self).user_created(user, event)
+		_join_community_user_created(self, user, event)
 
 
 @interface.implementer(ISitePolicyUserEventListener)
@@ -946,26 +946,23 @@ class GloriaMundiSitePolicyEventListener(_AdultCommunitySitePolicyEventListener)
 	COM_ALIAS = 'Gloria-Mundi'
 	COM_REALNAME = 'Gloria-Mundi'
 
-	def user_created( self, user, event ):
+	def user_created(self, user, event):
 		super(GloriaMundiSitePolicyEventListener, self).user_created(user, event)
 		# These people cannot be bothered to type in their own invitation
 		# code, so do it for them. Do it this way so that all the right events
 		# fire.
-		owner = users.User.get_user( 'barrynschachter@gmail.com' )
+		owner = users.User.get_user('barrynschachter@gmail.com')
 		import numbers
 		for obj in owner.friendsLists.values():
-			if isinstance( obj, numbers.Number ):
-				logger.warn( "Collection %s in user %s has old numeric data in values", owner.friendsLists, owner )
+			if isinstance(obj, numbers.Number):
+				logger.warn("Collection %s in user %s has old numeric data in values", owner.friendsLists, owner)
 				continue
-			if obj.username == 'Basel-OTC-Margin' or user_interfaces.IFriendlyNamed( obj ).alias == 'Basel-OTC-Margin' or user_interfaces.IFriendlyNamed( obj ).realname == 'Basel-OTC-Margin':
+			if obj.username == 'Basel-OTC-Margin' or user_interfaces.IFriendlyNamed(obj).alias == 'Basel-OTC-Margin' or user_interfaces.IFriendlyNamed(obj).realname == 'Basel-OTC-Margin':
 				from nti.appserver.invitations import interfaces as invite_interfaces
 				from nti.appserver.invitations.utility import accept_invitations
 				invitations = component.getUtility(invite_interfaces.IInvitations)
-				code = invitations._getDefaultInvitationCode( obj ) # Yup, private method.
-				accept_invitations( user, [code] )
-
-
-
+				code = invitations._getDefaultInvitationCode(obj)  # Yup, private method.
+				accept_invitations(user, [code])
 
 @interface.implementer(ISitePolicyUserEventListener)
 class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
@@ -980,16 +977,24 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	DFL_NAME = u'prm candidate group'
 	DFL_OWNER = u'fintechken'
 
-	def user_created( self, user, event ):
+	def user_created(self, user, event):
 		super(FintechSitePolicyEventListener, self).user_created(user, event)
-		nti_interfaces.IWeakRef( user )
-		owner = users.User.get_user( self.DFL_OWNER )
+		nti_interfaces.IWeakRef(user)
+		owner = users.User.get_user(self.DFL_OWNER)
 		friendsLists = getattr(owner, 'friendsLists', {})
 		for fl in friendsLists.values():
 			if not nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(fl):
 				continue
-			names = user_interfaces.IFriendlyNamed( fl )
-			if self.DFL_NAME in (fl.username.lower(), (names.realname or '').lower(), (names.alias or '').lower() ):
-				fl.addFriend( user )
+			names = user_interfaces.IFriendlyNamed(fl)
+			if self.DFL_NAME in (fl.username.lower(), (names.realname or '').lower(), (names.alias or '').lower()):
+				fl.addFriend(user)
 				logger.info("User '%s' added to DFL '%s" % (user, self.DFL_NAME))
 				break
+
+from  nti.store import interfaces as store_interfaces
+@component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
+def prmia_purchase_attempt_successful(event):
+	from . import store_views
+	emails = ("alpha-support@nextthought.com",)
+	for email in emails:
+		store_views.safe_send_purchase_confirmation(event, email)
