@@ -59,13 +59,16 @@ def _create_and_register_purchase_attempt(username, item, quantity=None, process
 	purchase_id = purchase_history.register_purchase_attempt(pa, username)
 	return purchase_id
 
-def create_purchase(self, item=None, amount=100, coupon=None, manager=None, quantity=None):
+def create_purchase(self, item=None, amount=100, coupon=None, manager=None, quantity=None, username=None):
 	ds = self.ds
 	manager = manager or self.manager
 	item = item or self.book_id
 
 	with mock_dataserver.mock_db_trans(ds):
-		user = _create_random_user()
+		if username is None:
+			user = _create_random_user()
+		else:
+			user = _create_user(username=username, email=username)
 		username = user.username
 
 	with mock_dataserver.mock_db_trans(ds):
