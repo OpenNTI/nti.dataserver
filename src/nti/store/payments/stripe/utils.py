@@ -52,8 +52,7 @@ def create_user_address(charge):
  													makenone(card.address_zip),
  													makenone(card.address_country))
 		return address
-
-	return None
+	return payment_charge.UserAddress()
 
 def get_card_info(charge):
 	"""
