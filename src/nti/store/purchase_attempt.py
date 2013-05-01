@@ -39,7 +39,6 @@ class PurchaseAttempt(ModDateTrackingObject, SchemaConfigured, zcontained.Contai
 	__external_class_name__ = "PurchaseAttempt"
 	__metaclass__ = MetaStoreObject
 
-
 	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPurchaseAttempt)
 
