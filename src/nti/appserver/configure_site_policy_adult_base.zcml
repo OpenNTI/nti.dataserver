@@ -23,15 +23,5 @@
 			named='.logon.REL_PERMANENT_WELCOME_PAGE'
 			url='/NextThoughtWebApp/content/welcome/welcome.html'
 			mimeType='text/html'/>
-		<link:userLink
-			named='.logon.REL_INITIAL_TOS_PAGE'
-			minGeneration='20130424'
-			url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
-			mimeType='text/html'/>
-		<link:userLink
-			named='.logon.REL_PERMANENT_TOS_PAGE'
-			url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
-			mimeType='text/html'/>
-
 	</registerIn>
 </configure>
