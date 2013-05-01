@@ -379,7 +379,7 @@ def _prepare_oid_link( request, username, rel, params=() ):
 			# Strip down to just the root domain. This assumes
 			# we get a valid domain, at least 'example.com'
 			idurl_domain = '.'.join( idurl_domain.split('.')[-2:] )
-			title = _( 'Sign in with your ${domain} account',
+			title = _( 'Sign in with ${domain}',
 					   mapping={'domain': idurl_domain} )
 			title = translate( title, context=request ) # TODO: Make this automatic
 
