@@ -42,7 +42,7 @@
 		<div metal:use-macro="options/master/macros/header">
 		<div id="green-bar"></div>
 		<div id="logo-bar">
-			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+			<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
 			alt="NextThought Logo" />
 		</div>
 		</div>
@@ -145,7 +145,7 @@
 		</p>
 		<div>
 			<center>
-			<img src="http://d2ixlfeu83tci.cloudfront.net/images/purchase_email_logo1.png" width="104" height="24"
+			<img src="https://d2ixlfeu83tci.cloudfront.net/images/purchase_email_logo1.png" width="104" height="24"
 				 alt="NextThought Logo" />
 			</center>
 		</div>
