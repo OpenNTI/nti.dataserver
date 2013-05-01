@@ -80,7 +80,7 @@
 		<div metal:define-macro="header">
 		<div id="green-bar" style="background-color: #89be3c; width: 100%; height: 5px; margin-left: -30px; padding-right: 40px;"></div>
 		<div id="logo-bar">
-			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+			<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
 			alt="NextThought Logo" />
 		</div>
 		</div>
