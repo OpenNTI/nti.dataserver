@@ -156,7 +156,7 @@ def _links_for_authenticated_users( request ):
 		logout_href = request.route_path( REL_LOGIN_LOGOUT )
 		links.append( Link( logout_href, rel=REL_LOGIN_LOGOUT ) )
 
-		for provider in request.registry.subscribers( (remote_user,request), app_interfaces.IAuthenticatedUserLinkProvider ):
+		for provider in component.subscribers( (remote_user,request), app_interfaces.IAuthenticatedUserLinkProvider ):
 			links.extend( provider.get_links() )
 
 	return links
@@ -294,14 +294,14 @@ def handshake(request):
 	# TODO: Check for existence in the database before generating these.
 	# We also need to be validating whether we can do a openid login, etc.
 	user = users.User.get_user( username=desired_username,
-								dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
+								dataserver=component.getUtility(nti_interfaces.IDataserver) )
 
 	if user is None:
 		# Use an IMissingUser so we find the right link providers
 		user = NoSuchUser(desired_username)
 
 	links = {}
-	for provider in request.registry.subscribers( (user,request), app_interfaces.ILogonLinkProvider ):
+	for provider in component.subscribers( (user,request), app_interfaces.ILogonLinkProvider ):
 		if provider.rel in links:
 			continue
 		link = provider()
@@ -387,7 +387,7 @@ class _WhitelistedDomainGoogleLoginLinkProvider(object):
 
 	# TODO: We are never checking that the user we get actually comes
 	# from one of these domains. Should we? Does it matter?
-	domains = ['nextthought.com', 'gmail.com']
+	domains = ('nextthought.com', 'gmail.com')
 	def __call__( self ):
 		if getattr( self.user, 'identity_url', None ) is not None:
 			# They have a specific ID already, they don't need this
@@ -407,7 +407,6 @@ class _MissingUserWhitelistedDomainGoogleLoginLinkProvider(_WhitelistedDomainGoo
 	when an account needs to be created.
 	"""
 
-
 class _MissingUserAopsLoginLinkProvider(_MissingUserWhitelistedDomainGoogleLoginLinkProvider):
 	"""
 	Offer OpenID for accounts coming from aops.com. Once they successfully
@@ -416,12 +415,11 @@ class _MissingUserAopsLoginLinkProvider(_MissingUserWhitelistedDomainGoogleLogin
 
 	# TODO: Should we use openid.aops.com? That way its consistent all the way
 	# around
-	domains = ['aops.com']
+	domains = ('aops.com',)
 	rel = REL_LOGIN_OPENID
 
 	def params_for( self, user ):
 		aops_username = self.user.username.split( '@' )[0]
-		oidcsum = _checksum( aops_username )
 		# Larry says:
 		# > http://<username>.openid.artofproblemsolving.com
 		# > http://openid.artofproblemsolving.com/<username>
@@ -429,6 +427,41 @@ class _MissingUserAopsLoginLinkProvider(_MissingUserWhitelistedDomainGoogleLogin
 		# > http://openid.aops.com/<username>
 		# But 3 definitely doesn't work. 1 and 4 do. We use 4
 		return {'openid': 'http://openid.aops.com/%s' % aops_username }
+
+
+	def getUsername( self, idurl, extra_info=None ):
+		# reverse the process by tacking @aops.com back on
+		username = idurl.split( '/' )[-1]
+		username = username + '@' + self.domains[0]
+		return username
+
+
+class _MissingUserMallowstreetLoginLinkProvider(_MissingUserWhitelistedDomainGoogleLoginLinkProvider):
+	"""
+	Offer OpenID for accounts coming from mallowstreet.com (which themselves are probably already
+	in the form of email addresses, so our incoming username may be 'first.last@example.com@mallowstreet.com').
+	Following successful account creation they will just be normal OpenID users.
+	"""
+
+	domains = ('mallowstreet.com',)
+	rel = REL_LOGIN_OPENID
+
+	#: When we go to production, this will change to
+	#: secure....
+	_BASE_URL = 'https://demo.mallowstreet.com/Mallowstreet/OpenID/User.aspx/%s'
+
+	def params_for( self, user ):
+		# strip the trailing '@mallowstreet.com', preserving any previous
+		# portion that looked like an email
+		mallow_username = '@'.join(user.username.split('@')[0:-1])
+		return {'openid': self._BASE_URL % mallow_username }
+
+
+	def getUsername( self, idurl, extra_info=None ):
+		# reverse the process by tacking @mallowstreet.com back on
+		username = idurl.split( '/' )[-1]
+		username = username + '@' + self.domains[0]
+		return username
 
 @interface.implementer( app_interfaces.ILogonLinkProvider )
 @component.adapter( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
@@ -789,7 +822,7 @@ def _deal_with_external_account( request, username, fname, lname, email, idurl, 
 	:return: The user object
 	"""
 
-	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+	dataserver = component.getUtility(nti_interfaces.IDataserver)
 	user = users.User.get_user( username=username, dataserver=dataserver )
 	url_attr = iface.names()[0]
 	if user:
@@ -902,21 +935,18 @@ def _openidcallback( context, request, success_dict ):
 	email = ax_dict.get('email', ('',))[0]
 	content_roles = ax_dict.get( 'content_roles', () )
 
-	### XXX: FIXME: HACK: Extracting a desired username back from the
-	# identity URL.
-	# This is hardcoded for AoPS
-	# TODO: In general, could we take the hostname from the idurl, assume the username
-	# is the last component, and create <username>@h<hostname>?
-	if not fname and not lname and not email and idurl and idurl.startswith( 'http://openid.aops.com/' ):
-		# Derive the username as the last part of the URL
-		# http://openid.aops.com/<username>
-		username = idurl.split( '/' )[-1]
-		username = username + '@' + _MissingUserAopsLoginLinkProvider.domains[0]
-	else:
+	idurl_domain = urlparse.urlparse( idurl ).netloc
+	username_provider = component.queryMultiAdapter( (None,request), app_interfaces.ILogonUsernameFromIdentityURLProvider, name=idurl_domain )
+	if username_provider:
+		username = username_provider.getUsername( idurl, success_dict )
+	elif email:
 		username = email
+	else:
+		return _create_failure_response(request, error='Unable to derive username')
+
 
 	if _checksum(username) != oidcsum:
-		   logger.warn( "Checksum mismatch. Logged in multiple times? %s %s", oidcsum, success_dict)
+		   logger.warn( "Checksum mismatch. Logged in multiple times? %s %s username=%s prov=%s", oidcsum, success_dict, username, username_provider)
 		   return _create_failure_response(request, error='Username/Email checksum mismatch')
 
 	try:
@@ -930,7 +960,7 @@ def _openidcallback( context, request, success_dict ):
 		return _create_failure_response( request, error=str(e) )
 
 
-	return _create_success_response( request, userid=email )
+	return _create_success_response( request, userid=the_user.username )
 
 
 @component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)

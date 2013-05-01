@@ -651,11 +651,20 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 
 		profile = user_interfaces.IUserProfile(user)
 		if '@' in user.username:
-			email = getattr(profile, 'email', None)
-			if not email:
-				profile.email = user.username
-			elif user.username != email:
-				raise AtInUsernameImpliesMatchingEmail("If you want to use an email address for the username, it must match the email address you enter", 'Username', user.username)
+			try:
+				user_interfaces.checkEmailAddress(user.username)
+			except user_interfaces.EmailAddressInvalid:
+				# If the username is not a valid email address,
+				# nothing further is required.
+				pass
+			else:
+				# If it is a valid email address, it must match the
+				# email
+				email = getattr(profile, 'email', None)
+				if not email:
+					profile.email = user.username
+				elif user.username != email:
+					raise AtInUsernameImpliesMatchingEmail("If you want to use an email address for the username, it must match the email address you enter", 'Username', user.username)
 
 class IMathcountsUser(nti_interfaces.ICoppaUser):
 	pass

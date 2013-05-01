@@ -179,6 +179,24 @@ class ILogonOptionLinkProvider(interface.Interface):
 
 ILogonLinkProvider = ILogonOptionLinkProvider # BWC
 
+class ILogonUsernameFromIdentityURLProvider(interface.Interface):
+	"""
+	Called to determine the username to use once an identity url has been
+	confirmed.
+
+	Normally these will be registered as adapters named for the URL's domain,
+	adapting * and the request (so that they can be implemented by the
+	same object that implements :class:`ILogonOptionLinkProvider`.
+	"""
+
+	def getUsername( identity_url, extra_info=None ):
+		"""
+		Return the desired username corresponding to the identity URL.
+
+		:param extra_info: If given, a dictionary of the OpenID attributes
+			associated with the identity url.
+		"""
+
 class IAuthenticatedUserLinkProvider(interface.Interface):
 	"""
 	Called during the logon process to get additional links that should be presented
