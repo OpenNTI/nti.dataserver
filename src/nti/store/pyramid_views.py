@@ -284,6 +284,7 @@ class PermissionPurchasableView(_PostView):
 		_content_roles._add_users_content_roles(user, psble.Items)
 		lib_items = {_content_roles._check_item_in_library(x) for x in psble.Items}
 		lib_items.discard(None)
+		logger.info("Activating %s for user %s" % (lib_items, user))
 		purchase_history.activate_items(user, lib_items)
 
 		return hexc.HTTPNoContent()
