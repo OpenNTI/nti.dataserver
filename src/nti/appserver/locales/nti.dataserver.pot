@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-26 12:35-0500\n"
+"POT-Creation-Date: 2013-05-01 13:40-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -58,6 +58,10 @@ msgstr ""
 msgid "Contact Email"
 msgstr ""
 
+#: src/nti/appserver/logon.py:382
+msgid "Sign in with your ${domain} account"
+msgstr ""
+
 #: src/nti/appserver/site_policies.py:388
 msgid "Username contains a censored sequence"
 msgstr ""
@@ -98,7 +102,7 @@ msgstr ""
 msgid "Username ${username} cannot include any part of the real name ${realname}."
 msgstr ""
 
-#: src/nti/appserver/store_views.py:80
+#: src/nti/appserver/store_views.py:92
 msgid "Purchase Confirmation"
 msgstr ""
 
@@ -154,6 +158,22 @@ msgstr ""
 
 #: src/nti/appserver/capabilities/capabilities.zcml:35
 msgid "Can the user upload custom avatar pictures?"
+msgstr ""
+
+#: src/nti/appserver/contentproviders/zcml.py:32
+msgid "The name of the template."
+msgstr ""
+
+#: src/nti/appserver/contentproviders/zcml.py:37
+msgid "The name of the content provider."
+msgstr ""
+
+#: src/nti/appserver/contentproviders/zcml.py:42
+msgid "Specifications to be adapted"
+msgstr ""
+
+#: src/nti/appserver/contentproviders/zcml.py:43
+msgid "This should be a list of interfaces or classes"
 msgstr ""
 
 #: src/nti/appserver/forums/configure.zcml:24

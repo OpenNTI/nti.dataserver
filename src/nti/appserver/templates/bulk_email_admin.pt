@@ -167,6 +167,7 @@
 					</td>
 				</tr>
 				</tal:block>
+			</table>
 		</form>
 	</body>
 </html>
