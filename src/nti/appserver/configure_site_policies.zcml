@@ -1,9 +1,12 @@
 <!-- -*- mode: nxml -*- -->
 <configure
 	xmlns="http://namespaces.zope.org/zope"
+	xmlns:link="http://nextthought.com/ntp/link_providers"
 	xmlns:zcml="http://namespaces.zope.org/zcml">
 	<include package="z3c.baseregistry" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="nti.appserver.link_providers" file="meta.zcml" />
+
 
 	<!-- Dispatch functions to direct events to active site policies. -->
 	<subscriber handler=".site_policies.dispatch_user_created_to_site_policy" />
@@ -51,5 +54,13 @@
 	<utility factory=".site_policies.GenericSitePolicyEventListener"
 			 name=''
 			 zcml:condition="not-have devmode" />
-
+	<link:userLink
+		named='.logon.REL_INITIAL_TOS_PAGE'
+		minGeneration='20130501'
+		url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
+		mimeType='text/html'/>
+	<link:userLink
+		named='.logon.REL_PERMANENT_TOS_PAGE'
+		url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
+		mimeType='text/html'/>
 </configure>
