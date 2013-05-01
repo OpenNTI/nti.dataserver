@@ -82,6 +82,11 @@ class TestApplicationLogon(SharedApplicationTestBase):
 		testapp.get( '/dataserver2/logon.nti.impersonate', extra_environ=self._make_extra_environ(  ),
 					 status=400 )
 
+		# User that does not exist
+		testapp.get( '/dataserver2/logon.nti.impersonate', params={'username': other_user_username + 'dne' },
+					 extra_environ=self._make_extra_environ(),
+					 status=404)
+
 		# Good request
 		res = testapp.get( '/dataserver2/logon.nti.impersonate', params={'username': other_user_username},
 						   extra_environ=self._make_extra_environ() )
