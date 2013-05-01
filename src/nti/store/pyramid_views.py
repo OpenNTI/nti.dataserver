@@ -281,10 +281,10 @@ class PermissionPurchasableView(_PostView):
 		if not psble:
 			raise hexc.HTTPNotFound(detail='Purchasable not found')
 
-		if _content_roles._add_users_content_roles(user, psble.Items):
-			lib_items = {_content_roles._check_item_in_library(x) for x in psble.Items}
-			lib_items.discard(None)
-			purchase_history.activate_items(user, lib_items)
+		_content_roles._add_users_content_roles(user, psble.Items)
+		lib_items = {_content_roles._check_item_in_library(x) for x in psble.Items}
+		lib_items.discard(None)
+		purchase_history.activate_items(user, lib_items)
 
 		return hexc.HTTPNoContent()
 
