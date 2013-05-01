@@ -27,8 +27,9 @@ class Link(object):
 	elements = ()
 	target_mime_type = None
 	method = None
+	title = None
 
-	def __init__( self, target, rel='alternate', elements=(), target_mime_type=None, method=None ):
+	def __init__( self, target, rel='alternate', elements=(), target_mime_type=None, method=None, title=None ):
 		"""
 		:param target: The destination object for this link. Required to be
 			non-``None``. The exact value of what is accepted depends on
@@ -40,6 +41,8 @@ class Link(object):
 			can be expected to be found after following the link.
 		:keyword str method: If given, the particular HTTP method that is supported
 			at this URL.
+		:keyword str title: If given, a human-readable description for the link
+			(usually localized).
 		"""
 		__traceback_info__ = target, rel, elements, target_mime_type
 		# If the target is None, it won't externalize correctly,
@@ -55,6 +58,8 @@ class Link(object):
 			self.target_mime_type = target_mime_type
 		if method:
 			self.method = method
+		if title:
+			self.title = title
 
 	# Make them non-picklable
 	def __reduce__( self, *args, **kwargs ):

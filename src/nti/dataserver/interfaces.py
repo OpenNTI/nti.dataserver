@@ -39,6 +39,7 @@ from nti.utils.schema import TupleFromObject
 from nti.utils.schema import ListOrTupleFromObject
 from nti.utils.schema import ListOrTuple
 from nti.utils.schema import DecodingValidTextLine
+from nti.utils.schema import ValidTextLine
 from nti.utils.schema import ValidText
 from nti.utils.schema import ValidSet as Set
 from zope.schema import Iterable
@@ -235,6 +236,10 @@ class ILink(interface.Interface):
 	method = DecodingValidTextLine(
 		title='HTTP Method',
 		description="The HTTP method most suited for this link relation",
+		required=False)
+
+	title = ValidTextLine(
+		title="Human readable title",
 		required=False)
 
 class ILinkExternalHrefOnly(ILink):

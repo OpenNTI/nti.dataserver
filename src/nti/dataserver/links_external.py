@@ -122,6 +122,8 @@ def render_link( link, nearest_site=None ):
 		result['ntiid'] = ntiid
 	if link.method:
 		result['method'] = link.method
+	if link.title:
+		result['title'] = link.title
 
 	if not traversal.is_valid_resource_path( href ) and not ntiids.is_valid_ntiid_string( href ): # pragma: no cover
 		# This shouldn't be possible anymore.
