@@ -74,9 +74,13 @@ class TestApplicationLogon(SharedApplicationTestBase):
 
 		username = 'Thomas_Stockdale@example.com@mallowstreet.com'
 		res = testapp.post( '/dataserver2/logon.handshake', params={'username': username} )
-		oid_link = self.require_link_href_with_rel( res.json_body, 'logon.openid' )
+		self.require_link_href_with_rel( res.json_body, 'logon.openid' )
+		oid_link = self.link_with_rel( res.json_body, 'logon.openid' )
+		assert_that( oid_link, has_entry( 'title', 'Sign in with your mallowstreet.com account' ) )
 
-		testapp.get( oid_link, status=302 )
+		#TODO: This would actually try to contact the remote server to do
+		# discovery. Need to mock that
+		#testapp.get( oid_link, status=302 )
 
 		# Now test the callback
 		csum = _checksum(username)

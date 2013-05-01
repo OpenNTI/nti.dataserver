@@ -30,6 +30,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 import logging
 logger = logging.getLogger(__name__)
 # Clean up the logging of openid, which writes to stderr by default. Patching
@@ -41,6 +43,7 @@ from zope import interface
 from zope import component
 from zope import lifecycleevent
 from zope.event import notify
+from zope.i18n import translate
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
@@ -364,9 +367,26 @@ def _prepare_oid_link( request, username, rel, params=() ):
 	query = dict(params)
 	query['oidcsum'] = _checksum(username) if 'oidcsum' not in query else query['oidcsum']
 	query['username'] = username
+
+	title = None
+	if 'openid' in query:
+		# We have to derive the title, we can't supply it from
+		# the link provider because the link provider changes
+		# when IMissingUser becomes a real user, and it's just one
+		# for all open ids
+		idurl_domain = urlparse.urlparse(query['openid']).netloc
+		if idurl_domain:
+			# Strip down to just the root domain. This assumes
+			# we get a valid domain, at least 'example.com'
+			idurl_domain = '.'.join( idurl_domain.split('.')[-2:] )
+			title = _( 'Sign in with your ${domain} account',
+					   mapping={'domain': idurl_domain} )
+			title = translate( title, context=request ) # TODO: Make this automatic
+
 	try:
 		return Link( request.route_path( rel, _query=query ),
-					 rel=rel )
+					 rel=rel,
+					 title=title)
 	except KeyError:
 		# This is really a programmer/configuration error,
 		# but we let it pass for tests
