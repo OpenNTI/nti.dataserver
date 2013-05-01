@@ -43,21 +43,21 @@ def is_valid_timestamp(ts):
 	try:
 		ts = float(ts)
 		return ts >= 0
-	except:
+	except (TypeError, ValueError):
 		return False
 
 def is_valid_amount(amount):
 	try:
 		amount = float(amount)
 		return amount >= 0
-	except:
+	except (TypeError, ValueError):
 		return False
 
 def is_valid_pve_int(value):
 	try:
 		value = float(value)
 		return value > 0
-	except:
+	except (TypeError, ValueError):
 		return False
 
 # meta classes
