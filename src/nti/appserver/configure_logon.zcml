@@ -58,6 +58,10 @@
 
 		<subscriber factory=".logon._MissingUserAopsLoginLinkProvider"
 					provides=".interfaces.ILogonLinkProvider" />
+		<adapter factory=".logon._MissingUserAopsLoginLinkProvider"
+				 for="* pyramid.interfaces.IRequest"
+				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
+				 name="openid.aops.com" />
 	</configure>
 
 </configure>

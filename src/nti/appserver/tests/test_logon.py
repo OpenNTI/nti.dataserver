@@ -27,7 +27,7 @@ from zope.component import eventtesting
 import os
 
 from nti.appserver import logon
-from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login, ROUTE_OPENID_RESPONSE, _update_users_content_roles)
+from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login, ROUTE_OPENID_RESPONSE, _update_users_content_roles, _checksum, _openidcallback)
 from nti.appserver.link_providers import flag_link_provider as user_link_provider
 
 from nti.appserver.tests import NewRequestSharedConfiguringTestBase
@@ -43,7 +43,7 @@ import pyramid.request
 from nti.dataserver import authorization as nauth
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans#, WithMockDS
 
-#from nti.tests import provides
+from nti.tests import verifiably_provides
 
 import nti.dataserver.interfaces as nti_interfaces
 import nti.appserver.interfaces as app_interfaces
@@ -54,6 +54,10 @@ from nti.dataserver import users
 from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from zope.component.hooks import setSite, clearSite
+from nti.dataserver.site import get_site_for_site_names
+
+
 class DummyView(object):
 	response = "Response"
 	def __init__( self, request ):
@@ -63,6 +67,41 @@ class DummyView(object):
 		return self.response
 
 class TestApplicationLogon(SharedApplicationTestBase):
+
+	@WithSharedApplicationMockDS
+	def test_mallowstreet_account_creation(self):
+		testapp = TestApp(self.app, extra_environ={b'HTTP_ORIGIN': b'http://prmia.nextthought.com'} )
+
+		username = 'Thomas_Stockdale@example.com@mallowstreet.com'
+		res = testapp.post( '/dataserver2/logon.handshake', params={'username': username} )
+		oid_link = self.require_link_href_with_rel( res.json_body, 'logon.openid' )
+
+		testapp.get( oid_link, status=302 )
+
+		# Now test the callback
+		csum = _checksum(username)
+		with mock_dataserver.mock_db_trans( self.ds ):
+			setSite( get_site_for_site_names( ('prmia.nextthought.com',) ) )
+			try:
+				self.request.params['oidcsum'] = csum
+				success_dict = { 'identity_url': 'https://demo.mallowstreet.com/Thomas_Stockdale@example.com',
+								 'ax': { 'firstname': ['Tom'],
+										 'lastname': ['Stockdale'],
+										 'email': ['tom@nextthought.com']}}
+				try:
+					_openidcallback( None, self.request, success_dict )
+					raise ValueError("Expected attribute error dealing with logon cookies")
+				except AttributeError:
+					pass
+
+			finally:
+				clearSite()
+
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			# Which created the user, yay!
+			assert_that( users.User.get_user( username ), verifiably_provides( nti_interfaces.IOpenIdUser ) )
+
 
 	@WithSharedApplicationMockDS
 	def test_impersonate(self):
