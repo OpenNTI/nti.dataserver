@@ -811,7 +811,14 @@ def _openid_response(context, request):
 	openid_mode = request.params.get( 'openid.mode', None )
 	if openid_mode != 'id_res':
 		# Failure.
-		response = _create_failure_response( request )
+		error = None
+		if openid_mode == 'error':
+			error = request.params.get( 'openid.error', None )
+		if not error:
+			if openid_mode == 'cancel': # Hmm. Take a guess
+				# TODO: Localize
+				error = "The request was canceled by the remote server."
+		response = _create_failure_response( request, error=error )
 	else:
 		# If we call directly, we miss the ax settings
 		#response = pyramid_openid.view.verify_openid( context, request )
