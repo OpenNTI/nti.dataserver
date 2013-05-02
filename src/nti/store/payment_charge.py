@@ -33,12 +33,14 @@ class UserAddress(SchemaConfigured):
 	__repr__ = __str__
 
 	def __eq__(self, other):
-		return self is other or (isinstance(other, UserAddress)
- 								 and self.Zip == other.Zip
- 								 and self.City == other.City
- 								 and self.State == other.State
- 								 and self.Street == other.Street
- 								 and self.Country == other.Country)
+		try:
+			return self is other or (self.Zip == other.Zip
+									 and self.City == other.City
+									 and self.State == other.State
+									 and self.Street == other.Street
+									 and self.Country == other.Country)
+		except AttributeError:
+			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
@@ -79,8 +81,7 @@ class PaymentCharge(SchemaConfigured):
 			return self is other or (self.Name == other.Name
 									 and self.Amount == other.Amount
 									 and self.Created == other.Created
-									 and self.Currency == other.Currency
-									 )
+									 and self.Currency == other.Currency)
 		except AttributeError:
 			return NotImplemented
 

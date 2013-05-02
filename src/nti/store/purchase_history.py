@@ -130,10 +130,16 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 		return self.__parent__
 
 	def activate_items(self, items):
+		"""
+		register/activates the purchasables (NTIIDs)
+		"""
 		items = to_frozenset(items)
 		self._items_activated.update(items)
 
 	def deactivate_items(self, items):
+		"""
+		unregister the purchasables (NTIIDs)
+		"""
 		count = 0
 		items = to_frozenset(items)
 		for item in items:

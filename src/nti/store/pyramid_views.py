@@ -89,7 +89,6 @@ class GetPurchaseHistoryView(_PurchaseAttemptView):
 		result = LocatedExternalDict({'Items': purchases, 'Last Modified':self._last_modified(purchases)})
 		return result
 
-
 def _sync_purchase(purchase):
 	purchase_id = purchase.id
 	username = purchase.creator.username
