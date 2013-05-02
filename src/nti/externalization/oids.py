@@ -35,7 +35,10 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 	:param add_to_intids: If we can obtain an OID for this object, but it does
 		not have an intid, and an intid utility is available, then if this is
 		``True`` (not the default) we will register it with the utility.
+
+	:return: A :class:`bytes` string.
 	"""
+
 	try:
 		return self.toExternalOID() or default
 	except AttributeError:
@@ -71,6 +74,7 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 	# those out. Finally, it probably has chars that
 	# aren't legal in UTF or ASCII, so we go to hex and prepend
 	# a flag, '0x'
+	# TODO: Why are we keeping this as a bytes string, not unicode?
 	oid = oid.lstrip(b'\x00')
 	oid = b'0x' + oid.encode('hex')
 	try:
@@ -120,6 +124,15 @@ def fromExternalOID( ext_oid ):
 	# in _p_oid, so we have to be careful with our literals here
 	# to avoid Unicode[en|de]codeError
 	__traceback_info__ = ext_oid
+	# Sometimes raw _p_oid values do contain a b':', so simply splitting
+	# on that is not reliable, so try to detect raw _p_oid directly
+	if isinstance( ext_oid, bytes ) and len(ext_oid) == 8 and not ext_oid.startswith( b'0x' ) and ext_oid.count(b':') != 2:
+		# The last conditions might be overkill, but toExternalOID is actually
+		# returning bytes, and it could conceivably be exactly 8 chars long;
+		# however, a raw oid could also start with the two chars 0x and contain two colons
+		# so the format is a bit ambiguous...
+		return ParsedOID( ext_oid, '', None )
+
 	parts = ext_oid.split( b':' ) if b':' in ext_oid else (ext_oid,)
 	oid_string = parts[0]
 	name_s = parts[1] if len(parts) > 1 else b""

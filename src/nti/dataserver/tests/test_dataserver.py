@@ -106,7 +106,7 @@ class TestDataserver( mock_dataserver.SharedConfiguringTestBase ):
 		"""
 		obj = persistent.Persistent()
 		mock_dataserver.current_transaction.add( obj )
-
+		__traceback_info__ = obj._p_oid
 		assert_that( mock_dataserver.current_mock_ds.get_by_oid( obj._p_oid ), is_( obj ) )
 		assert_that( mock_dataserver.current_mock_ds.get_by_oid( '00000' ), is_( none() ) )
 
