@@ -1,6 +1,8 @@
 
 from hamcrest import (assert_that, is_, has_entry, has_items,
 					  has_key,   is_not )
+from hamcrest import same_instance
+from hamcrest import contains
 
 from hamcrest.library import has_property as has_attr
 import unittest
@@ -75,8 +77,13 @@ class TestFunctions(ConfiguringTestBase):
 		del t._v_to_external_oid
 		assert_that( toExternalOID( t ), is_( '0x01:666f6f' ) )
 
-		assert_that( fromExternalOID( '0x01:666f6f' )[0], is_( '\x00\x00\x00\x00\x00\00\x00\x01' ) )
+		assert_that( fromExternalOID( '0x01:666f6f' )[0], is_( b'\x00\x00\x00\x00\x00\x00\x00\x01' ) )
+		assert_that( fromExternalOID( '0x01:666f6f' )[0], is_( bytes ) )
 		assert_that( fromExternalOID( '0x01:666f6f' )[1], is_( 'foo' ) )
+
+		# Given a plain OID, we return just the plain OID
+		oid = b'\x00\x00\x00\x00\x00\x00\x00\x01'
+		assert_that( fromExternalOID( oid ), contains( same_instance( oid ),'',None) )
 
 
 	def test_to_external_representation_none_handling( self ):
