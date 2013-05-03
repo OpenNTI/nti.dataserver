@@ -12,9 +12,9 @@ import collections
 from zope import interface
 from zope.cachedescriptors.property import Lazy
 from zope.annotation import interfaces as an_interfaces
-from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import createDirectFieldProperties
 
 from . import purchasable
 from . priceable import Priceable
@@ -35,8 +35,8 @@ class PurchaseOrder(SchemaConfigured):
 
 	__metaclass__ = MetaStoreObject
 
-	Items = FP(store_interfaces.IPurchaseOrder['Items'])
-	Quantity = FP(store_interfaces.IPurchaseOrder['Quantity'])  # override items quantity
+	# create all interface fields
+	createDirectFieldProperties(store_interfaces.IPurchaseOrder)
 
 	@Lazy
 	def NTIIDs(self):
