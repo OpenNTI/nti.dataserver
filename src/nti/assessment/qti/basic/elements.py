@@ -183,7 +183,8 @@ def qti_creator(cls):
 			setattr(cls, k, FieldProperty(v, k))
 			
 		elif sch_interfaces.IList.providedBy(v):
-			_make_sequence(cls, k)
+			if is_finite_sequence:
+				_make_sequence(cls, k)
 			
 			setattr(cls, "get_%s_list" % k.lower(), _getter(k))
 			setattr(cls, k, property(_collection_getter(k, list_factory)))
