@@ -42,24 +42,51 @@ def _size(key, png):
 	return (key, width_in_pt, height_in_pt)
 
 def _scale(input, output, scale, defaultScale):
+	"""Scales the input file to the desired size and then sanitizes the result with pngcrush."""
+
 	# Use IM to scale. Must be top-level to pickle
 	# Scale is the fraction of defaultScale that we wise to scale the image to.  For example, if scale is 2 and
 	# defaultScale is 1, then the image would be scaled to 1/2 the original size.
-	#return os.system( 'convert %s -resize %f%% PNG32:%s' % (input, 100*(scale/defaultScale) , output) )
-	command = [ 'convert', input, '-resize', '%f%%' % (100 * ( defaultScale / scale ) ), 'PNG32:%s' % output ]
+	command = [ 'convert', input, '-resize', '%f%%' % (100 * ( defaultScale / scale ) ), '%s' % output ]
 	__traceback_info__ = command
 	retval1 = subprocess.call( command )
 
-	# Use pngcrush to clean the resized PNG.
-	prefix = hex(int(time.time()*1000))
-	tmpfile = tempfile.mkstemp(suffix='.png', prefix=prefix)[1]
-	command = [ 'pngcrush', '-q', output, tmpfile ]
-	__traceback_info__ = command
-	retval2 = subprocess.call( command )
-	if os.path.exists(tmpfile):
-		shutil.move( tmpfile, output )
+	# Check that the out put file is not 0 bytes, if it is try, try again because something odd happened.
+	while os.stat(output).st_size == 0:
+		logger.warning('%s is empty!!!! Input was %s with size %s. Output scale was %s. Attempting to convert again.' % (output, input, os.stat(input).st_size, unicode(100 * ( defaultScale / scale ))))
+		retval1 = subprocess.call( command )
+
+	# SAJ: Only run PNG crush on non-zero length PNG files
+	retval2 = 0
+	if os.stat(output).st_size != 0:
+		if '.png' in output:
+			# Use pngcrush to clean the resized PNG.
+			retval2 = _sanitize_png( output )
+	else:
+		logger.warning('Produced zero length file: %s' % output)
 
 	return retval1 if (retval1 < retval2) else retval2
+
+def _sanitize_png( image_file ):
+	"""Uses the external pngcrush program to sanitize PNGs."""
+
+	prefix = hex(int(time.time()*1000))
+	tmp_file = tempfile.mkstemp(suffix='.png', prefix=prefix)[1]
+	command = [ 'pngcrush', '-q', image_file, tmp_file ]
+	__traceback_info__ = command
+
+	retval = subprocess.call( command )
+
+	if os.path.exists(tmp_file) and os.stat(tmp_file).st_size != 0:
+		shutil.move( tmp_file, image_file )
+	elif os.path.exists(tmp_file) and os.stat(tmp_file).st_size == 0:
+		# SAJ: The second statement in this elif clause is not required, but it does make the
+		# inteded logic clear.
+		logger.warning('A zero-length file was created during sanitization. Passing on the unsanitized file.')
+		os.remove(tmp_file)
+
+	return retval
+
 
 class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 	"""
