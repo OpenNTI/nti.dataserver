@@ -125,7 +125,6 @@ class GetPurchaseAttemptView(object):
 		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 		return result
 
-
 class GetPurchasablesView(object):
 
 	def __init__(self, request):
@@ -212,7 +211,7 @@ class PricePurchasableView(_PostView):
 
 # admin - views (restricted access)
 
-class _GetPurchaseAttemptView(_PostView):
+class _BasePostPurchaseAttemptView(_PostView):
 
 	def __call__(self):
 		values = self.readInput()
@@ -226,7 +225,7 @@ class _GetPurchaseAttemptView(_PostView):
 
 		return purchase
 
-class RefundPurchaseAttemptView(_GetPurchaseAttemptView):
+class RefundPurchaseAttemptView(_BasePostPurchaseAttemptView):
 
 	def __call__(self):
 		purchase = super(RefundPurchaseAttemptView, self).__call__()
@@ -237,7 +236,7 @@ class RefundPurchaseAttemptView(_GetPurchaseAttemptView):
 		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 		return result
 
-class DeletePurchaseAttemptView(_GetPurchaseAttemptView):
+class DeletePurchaseAttemptView(_BasePostPurchaseAttemptView):
 
 	def __call__(self):
 		purchase = super(DeletePurchaseAttemptView, self).__call__()

@@ -65,7 +65,7 @@ class IPurchaseItem(IPriceable):
 
 class IPurchaseOrder(sequence.IMinimalSequence):
 	Items = schema.Tuple(value_type=schema.Object(IPriceable), title='The items', required=True, min_length=1)
-	Quantity = schema.Int(title='Purchase bulk quantity', required=False)
+	Quantity = schema.Int(title='Purchase bulk quantity (overwrites-item quantity)', required=False)
 
 	def copy():
 		"""makes a new copy of this purchase order"""
