@@ -12,5 +12,9 @@
 
 	<registerIn registry=".sites.LITWORLD">
 		<utility factory=".site_policies.LitWorldSitePolicyEventListener" />
+	
+		<!-- CSS for LitWorld -->
+		<utility factory=".site_policy_views.SiteCSSMarker" />
+		
 	</registerIn>
 </configure>
