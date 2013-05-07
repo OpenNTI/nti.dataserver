@@ -15,6 +15,7 @@ import os
 import tempfile
 import re
 import shutil
+import stat
 import glob
 import time
 
@@ -64,6 +65,9 @@ def _scale(input, output, scale, defaultScale):
 			retval2 = _sanitize_png( output )
 	else:
 		logger.warning('Produced zero length file: %s' % output)
+
+	# Make sure that the out put files are readable by all
+	os.chmod(output, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
 
 	return retval1 if (retval1 < retval2) else retval2
 
