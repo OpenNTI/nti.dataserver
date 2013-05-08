@@ -117,7 +117,7 @@ setup(
 		# 'nose >= 1.2.1',
 		# But it's also listed in extras/test, and it's very hard to upgrade
 		# when that changes
-		# 'distribute >= 0.6.36', # Can't seem to include that anywhere
+		# 'distribute >= 0.6.38', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
@@ -128,7 +128,7 @@ setup(
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
 		'Chameleon >= 2.11',  # (preferred) template rendering. pulled in by pyramid, but ensure latest version
-		'ExtensionClass >= 4.1a1' if not IS_PYPY else '',
+		'ExtensionClass >= 4.1a1',
 		'Mako >= 0.8.0',  # fallback plain-text template render. pulled in by pyramid, but ensure latest version
 		# 'friendly' fork of PIL, developed by Zope/Plone.
 		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
@@ -153,9 +153,9 @@ setup(
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
 		# 'MySQL-python', # mysql adapter--NOT needed, loaded from umysqldb
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
-		# It's currently being installed from requirements.txt because it has no release on pypi.
 		# It depends on umysql, which has been released as 2.5 on pypi. NOTE: This does not support unix socket connections
 		'umysql == 2.5',
+		#'umysqldb >= 1.0', # 1.0 release on pypi is broken, missing README.rst
 		'RelStorage >= 1.5.1',
 		'python-memcached >= 1.51',  # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
@@ -272,7 +272,7 @@ setup(
 		'zc.zlibstorage >= 0.1.1',  # compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
 		# 'zetalibrary',
-		'zodburi >= 1.1',  # used by pyramid_zodbconn
+		'zodburi >= 2.0b1',  # used by pyramid_zodbconn
 		'zope.app.broken >= 3.6.0',  # Improved broken objects
 		'zope.app.component >= 3.9.3',  # bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.app.interface >= 3.6.0',  # bwc only, DO NOT IMPORT. pulled in by contentratings
