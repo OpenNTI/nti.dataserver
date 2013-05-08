@@ -72,7 +72,7 @@ class TestApplicationLogon(SharedApplicationTestBase):
 	def test_mallowstreet_account_creation(self):
 		testapp = TestApp(self.app, extra_environ={b'HTTP_ORIGIN': b'http://prmia.nextthought.com'} )
 
-		username = 'Thomas_Stockdale@example.com@mallowstreet.com'
+		username = 'thomas.stockdale@example.com@mallowstreet.com'
 		res = testapp.post( '/dataserver2/logon.handshake', params={'username': username} )
 		self.require_link_href_with_rel( res.json_body, 'logon.openid' )
 		oid_link = self.link_with_rel( res.json_body, 'logon.openid' )
@@ -88,7 +88,7 @@ class TestApplicationLogon(SharedApplicationTestBase):
 			setSite( get_site_for_site_names( ('prmia.nextthought.com',) ) )
 			try:
 				self.request.params['oidcsum'] = csum
-				success_dict = { 'identity_url': 'https://demo.mallowstreet.com/Thomas_Stockdale@example.com',
+				success_dict = { 'identity_url': 'https://demo.mallowstreet.com/thomas.stockdale@example.com',
 								 'ax': { 'firstname': ['Tom'],
 										 'lastname': ['Stockdale'],
 										 'email': ['tom@nextthought.com']}}

@@ -749,7 +749,7 @@ class _AttrInfo(ax.AttrInfo):
 
 ax.AttrInfo = _AttrInfo
 
-def _openid_login(context, request, openid='https://www.google.com/accounts/o8/id', params=None):
+def _openid_login(context, request, openid=None, params=None):
 	"""
 	Wrapper around :func:`pyramid_openid.view.verify_openid` that takes care of some error handling
 	and settings.
@@ -759,7 +759,8 @@ def _openid_login(context, request, openid='https://www.google.com/accounts/o8/i
 	if 'oidcsum' not in params:
 		logger.warn( "oidcsum not present in %s at %s", params, request )
 		return _create_failure_response( request, error="Invalid params; missing oidcsum" )
-
+	if openid is None:
+		openid = params.get( 'openid.identity', params.get( 'openid' ) ) or 'https://www.google.com/accounts/o8/id'
 
 	openid_field = _OPENID_FIELD_NAME
 	# pyramid_openid routes back to whatever URL we initially came from;
@@ -817,7 +818,7 @@ def _openid_response(context, request):
 		if not error:
 			if openid_mode == 'cancel': # Hmm. Take a guess
 				# TODO: Localize
-				error = "The request was canceled by the remote server."
+				error = _("The request was canceled by the remote server.")
 		response = _create_failure_response( request, error=error )
 	else:
 		# If we call directly, we miss the ax settings
