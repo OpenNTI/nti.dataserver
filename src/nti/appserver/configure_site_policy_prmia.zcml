@@ -20,6 +20,22 @@
 		provides="zope.component.interfaces.IComponents"
 		name="prmia.nextthought.com" />
 
+	<configure zcml:condition="have devmode">
+		<!-- Federated from mallowstreet -->
+		<!--
+			 NOTE: This is configured globally because
+			 currently demo.mallowstreet.com is locked down to only
+			 supporting a realm of http://localhost; if you set /etc/hosts
+			 to make 127.0.0.1 be prmia.nextthought.com, it won't work!
+			 This should eventually go away.
+		-->
+		<subscriber factory=".logon._MissingUserMallowstreetLoginLinkProvider"
+					provides=".interfaces.ILogonLinkProvider" />
+		<adapter factory=".logon._MissingUserMallowstreetLoginLinkProvider"
+				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
+				 for="* pyramid.interfaces.IRequest"
+				 name="demo.mallowstreet.com" />
+	</configure>
 	<registerIn registry=".sites.PRMIA">
 		<utility factory=".site_policies.PrmiaSitePolicyEventListener" />
 
