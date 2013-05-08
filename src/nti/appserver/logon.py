@@ -717,9 +717,10 @@ def _openid_configure( request ):
 
 	settings = { 'openid.param_field_name': _OPENID_FIELD_NAME,
 				 'openid.success_callback': 'nti.appserver.logon:_openidcallback',
-				# Google uses a weird mix of namespaces. It only supports these values, plus
-				# country (http://code.google.com/apis/accounts/docs/OpenID.html#endpoint)
-				 'openid.ax_required': 'email=http://schema.openid.net/contact/email firstname=http://axschema.org/namePerson/first lastname=http://axschema.org/namePerson/last',
+				 # Previously, google used a weird mix of namespaces, requiring openid.net
+				 # for email. Now it seems to accept axschema for everything. See:
+				 # https://developers.google.com/accounts/docs/OpenID#endpoint
+				 'openid.ax_required': 'email=http://axschema.org/contact/email firstname=http://axschema.org/namePerson/first lastname=http://axschema.org/namePerson/last',
 				 'openid.ax_optional': 'content_roles=' + AX_TYPE_CONTENT_ROLES,
 				 # See _openidcallback: Sreg isn't used anywhere right now, so it's disabled
 				 # Note that there is an sreg value for 'nickname' that could serve as
@@ -765,12 +766,33 @@ def _openid_login(context, request, openid=None, params=None):
 	openid_field = _OPENID_FIELD_NAME
 	# pyramid_openid routes back to whatever URL we initially came from;
 	# we always want it to be from our response wrapper
+	nenviron = request.environ.copy()
+	nenviron.pop( 'PATH_INFO', '' )
+	nenviron.pop( 'RAW_URI', '' )
+	nenviron.pop( 'webob._parsed_post_vars', '' )
+	nenviron.pop( 'webob._parsed_query_vars', '' )
+	post = {openid_field: openid}
+	if request.POST:
+		# Some providers ask the browser to do a form submission
+		# via POST instead of having all params in the query string,
+		# so we must support both
+		post = request.POST.copy()
+		post[openid_field] = openid
+
+	if request.params.get('openid.mode') == 'id_res':
+		# If the openid is provided, it takes precedence over openid.mode,
+		# potentially leading to an infinite loop
+		del post[openid_field]
+
 	nrequest = pyramid.request.Request.blank( request.route_url( ROUTE_OPENID_RESPONSE, _query=params ),
+											  environ=nenviron,
 											  # In theory, if we're constructing the URL correctly, this is enough
 											  # to carry through HTTPS info
 											  base_url=request.host_url,
-											  POST={openid_field: openid } )
+											  headers=request.headers,
+											  POST=post )
 	nrequest.registry = request.registry
+	nrequest.possible_site_names = getattr( request, 'possible_site_names', () )
 	nrequest = _PyramidOpenidRequestProxy( nrequest )
 	assert request.registry is not nrequest.registry
 	assert request.registry.settings is not nrequest.registry.settings
