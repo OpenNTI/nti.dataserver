@@ -566,6 +566,39 @@ class UserEvent(interface.interfaces.ObjectEvent):
 
 	user = alias('object')
 
+class IEntityFollowingEvent(interface.interfaces.IObjectEvent):
+	"""
+	Fired when an entity begins following another entity.
+	The ``object`` is the entity that is now following the other entity.
+	"""
+
+	object = Object(IEntity, title="The entity now following the other entity")
+	now_following = Object(IEntity, title="The entity that is now being followed by the object.")
+
+class IFollowerAddedEvent(interface.interfaces.IObjectEvent):
+	"""
+	Fired when an entity is followed by another entity.
+
+	The ``object`` is the entity that is now being followed.
+	"""
+
+	object = Object(IEntity, title="The entity now being followed.")
+	followed_by = Object(IEntity, title="The entity that is now following the object.")
+
+@interface.implementer(IEntityFollowingEvent)
+class EntityFollowingEvent(interface.interfaces.ObjectEvent):
+
+	def __init__( self, entity, now_following ):
+		super(EntityFollowingEvent,self).__init__( entity )
+		self.now_following = now_following
+
+@interface.implementer(IFollowerAddedEvent)
+class FollowerAddedEvent(interface.interfaces.ObjectEvent):
+
+	def __init__( self, entity, followed_by ):
+		super(FollowerAddedEvent,self).__init__( entity )
+		self.followed_by = followed_by
+
 class IMissingUser(IMissingEntity):
 	"""
 	A proxy object for a missing user.
