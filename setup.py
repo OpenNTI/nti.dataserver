@@ -128,7 +128,7 @@ setup(
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
 		'Chameleon >= 2.11',  # (preferred) template rendering. pulled in by pyramid, but ensure latest version
-		'ExtensionClass >= 4.0' if not IS_PYPY else '',
+		'ExtensionClass >= 4.1a1' if not IS_PYPY else '',
 		'Mako >= 0.8.0',  # fallback plain-text template render. pulled in by pyramid, but ensure latest version
 		# 'friendly' fork of PIL, developed by Zope/Plone.
 		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
@@ -157,7 +157,7 @@ setup(
 		# It depends on umysql, which has been released as 2.5 on pypi. NOTE: This does not support unix socket connections
 		'umysql == 2.5',
 		'RelStorage >= 1.5.1',
-		'python-memcached >= 1.48',  # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
+		'python-memcached >= 1.51',  # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
 		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
@@ -243,10 +243,10 @@ setup(
 		# 'scss >= 0.8.72', # we no longer use
 		'setproctitle >= 1.1.7',  # used by gunicorn
 		'setuptools >= 0.6c11',
-		'simplejson >= 3.2.0',
+		'simplejson >= 3.3.0',
 		'six >= 1.3.0',
 		'sympy == 0.7.2',  # sympy-docs-html-0.7.1 is currently greater
-		'stripe >= 1.9.0',  # stripe payments
+		'stripe >= 1.9.1',  # stripe payments
 		# 'slimit',
 		'supervisor >= 3.0b1',
 		'transaction >= 1.4.1',
@@ -368,7 +368,7 @@ setup(
 			# OK with websockets and greenlets.
 			# Depends on the system graphviz installation; an alternative is repoze.profile which has
 			# fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
-		 	'linesman >= 0.3.0',  # less that 0.3.0 conflicts with pillow (wanted PIL)
+		 	'linesman >= 0.3.1',  # less that 0.3.0 conflicts with pillow (wanted PIL)
 			# 'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			'dblatex >= 0.3.4',  # content rendering, convert docbook to tex
 			'epydoc >= 3.0.1',  # auto-api docs
