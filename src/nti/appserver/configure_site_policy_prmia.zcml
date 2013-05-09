@@ -51,7 +51,8 @@
 				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
 				 for="* pyramid.interfaces.IRequest"
 				 name="secure.mallowstreet.com" />
-
+		<subscriber factory=".logon._ExistingOpenIdUserLoginLinkProvider"
+					provides=".interfaces.ILogonLinkProvider" />
 		<subscriber handler=".store_views.prmia_purchase_attempt_successful" />
 
 		<!-- PRMIA PROD KEYS -->
