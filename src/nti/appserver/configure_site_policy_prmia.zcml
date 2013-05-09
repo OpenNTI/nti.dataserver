@@ -40,19 +40,17 @@
 		<utility factory=".site_policies.PrmiaSitePolicyEventListener" />
 
 		<!-- Logon -->
-		<configure zcml:condition="have devmode">
-			<!-- Federated from mallowstreet -->
-			<subscriber factory=".logon._MissingUserMallowstreetLoginLinkProvider"
-						provides=".interfaces.ILogonLinkProvider" />
-			<adapter factory=".logon._MissingUserMallowstreetLoginLinkProvider"
-					 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
-					 for="* pyramid.interfaces.IRequest"
-					 name="demo.mallowstreet.com" />
-			<adapter factory=".logon._MissingUserMallowstreetLoginLinkProvider"
-					 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
-					 for="* pyramid.interfaces.IRequest"
-					 name="secure.mallowstreet.com" />
-		</configure>
+		<!-- Federated from mallowstreet -->
+		<subscriber factory=".logon._MissingUserMallowstreetLoginLinkProvider"
+					provides=".interfaces.ILogonLinkProvider" />
+		<adapter factory=".logon._MissingUserMallowstreetLoginLinkProvider"
+				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
+				 for="* pyramid.interfaces.IRequest"
+				 name="demo.mallowstreet.com" /> <!-- Temporary -->
+		<adapter factory=".logon._MissingUserMallowstreetLoginLinkProvider"
+				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
+				 for="* pyramid.interfaces.IRequest"
+				 name="secure.mallowstreet.com" />
 
 		<subscriber handler=".store_views.prmia_purchase_attempt_successful" />
 
