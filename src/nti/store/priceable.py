@@ -8,9 +8,9 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
+from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
-from nti.utils.schema import createDirectFieldProperties
 
 from .utils import MetaStoreObject
 from .purchasable import get_purchasable
@@ -21,8 +21,8 @@ class Priceable(SchemaConfigured):
 
 	__metaclass__ = MetaStoreObject
 
-	# create all interface fields
-	createDirectFieldProperties(store_interfaces.IPriceable)
+	NTIID = FP(store_interfaces.IPriceable['NTIID'])
+	Quantity = FP(store_interfaces.IPriceable['Quantity'])
 
 	def copy(self):
 		result = self.__class__(NTIID=self.NTIID, Quantity=self.Quantity)
