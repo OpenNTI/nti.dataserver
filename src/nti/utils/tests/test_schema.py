@@ -24,9 +24,13 @@ from hamcrest import has_key
 from nose.tools import assert_raises
 from hamcrest import none
 from hamcrest import is_not
+from hamcrest import not_none
+from hamcrest import has_entry
+from hamcrest import has_item
 does_not = is_not
 
 from nti.tests import verifiably_provides, validated_by, not_validated_by
+from nti.tests import module_setup, module_teardown
 
 from nti.utils.schema import HTTPURL, Variant, ObjectLen, Object
 from nti.utils.schema import IVariant
@@ -203,6 +207,27 @@ def test_create_direct_field_properties():
 	# __dict__, __doct__, __module__, __weakref__, and b
 	assert_that( B.__dict__, has_length( 5 ) )
 
+@with_setup( setup=lambda: module_setup( ('nti.utils',) ), teardown=module_teardown )
+def test_country_vocabulary():
+	from zope.schema import Choice
+	class IA(interface.Interface):
+		choice = Choice(title="Choice",
+						vocabulary="Countries")
+
+	o = object()
+
+	choice = IA['choice'].bind( o )
+	assert_that( choice.vocabulary, is_( not_none() ) )
+	term = choice.vocabulary.getTermByToken( 'us' )
+	assert_that( term, has_property( 'value', "United States" ) )
+	ext = term.toExternalObject()
+	assert_that( ext, has_entry( 'flag', u'/++resource++country-flags/us.gif' ) )
+	assert_that( ext, has_entry( 'title', 'United States'  ) )
+
+	from nti.utils.jsonschema import JsonSchemafier
+
+	schema = JsonSchemafier( IA ).make_schema()
+	assert_that( schema, has_entry( 'choice', has_entry( 'choices', has_item( ext ) ) ) )
 
 try:
 	from nti.tests import aq_inContextOf

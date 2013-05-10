@@ -745,3 +745,38 @@ def createDirectFieldProperties(__schema, omit=()):
 	for k, v in locals().items():
 		if k not in __before:
 			__frame.f_locals[k] = v
+
+from zope.schema.vocabulary import SimpleTerm as _SimpleTerm
+from zope.schema.vocabulary import SimpleVocabulary as _SimpleVocabulary
+from plone.i18n.locales.interfaces import ICountryAvailability as _ICountryAvailability
+
+class CountryTerm(_SimpleTerm):
+	"""
+	A titled, tokenized term representing a country. The
+	token is the ISO3166 country code. The ``flag`` value is a
+	browserresource path to an icon representing the country.
+	"""
+
+	def __init__( self, *args, **kwargs ):
+		self.flag = kwargs.pop( 'flag', None )
+		super(CountryTerm,self).__init__( *args, **kwargs )
+
+	@classmethod
+	def fromItem( cls, item ):
+		token, cdata = item
+		value = cdata['name']
+		title = value
+		flag = cdata['flag']
+
+		return cls( value, token, title, flag=flag )
+
+
+	def toExternalObject( self ):
+		return { 'token': self.token,
+				 'title': self.title,
+				 'value': self.value,
+				 'flag': self.flag }
+
+def CountryVocabularyFactory( context ):
+	countries = component.getUtility( _ICountryAvailability )
+	return _SimpleVocabulary( [CountryTerm.fromItem( item ) for item in countries.getCountries().items()] )

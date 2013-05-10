@@ -18,6 +18,7 @@ TAG_READONLY_IN_UI = 'nti.dataserver.users.field_readonly' # Overrides the value
 
 from zope import interface
 from zope.schema import interfaces as sch_interfaces
+from zope.schema import vocabulary as sch_vocabulary
 
 from .schema import find_most_derived_interface
 
@@ -116,11 +117,35 @@ class JsonSchemafier(object):
 			item_schema['type'] = ui_type
 			item_schema['base_type'] = ui_base_type
 
-			if sch_interfaces.IChoice.providedBy( v ) and sch_interfaces.IVocabulary.providedBy( v.vocabulary ):
-				item_schema['choices'] = [x.token for x in v.vocabulary]
-				# common case, these will all be the same type
-				if not item_schema.get( 'base_type' ) and all( (isinstance(x,basestring) for x in item_schema['choices']) ):
-					item_schema['base_type'] = 'string'
+			if sch_interfaces.IChoice.providedBy( v ):
+				# Vocabulary could be a name or the vocabulary itself
+				item_schema['choices'] = ()
+				vocabulary = None
+				if sch_interfaces.IVocabulary.providedBy( v.vocabulary ):
+					vocabulary = v.vocabulary
+				elif isinstance(v.vocabularyName, basestring):
+					vocabulary = sch_vocabulary.getVocabularyRegistry().get( None, v.vocabularyName )
+
+				if vocabulary is not None:
+					choices = []
+					tokens = []
+					for term in vocabulary:
+						# For BWC, we do different things depending on whether
+						# there is a title or not
+						if getattr(term, 'title', None):
+							try:
+								choice = term.toExternalObject() # like nti.externalization, but without the dependency
+							except AttributeError:
+								choice = {'token': term.token, 'value': term.value, 'title': term.title}
+
+							choices.append( choice )
+						else:
+							choices.append( term.token ) # bare; ideally this would go away
+						tokens.append( term.token )
+					item_schema['choices'] = choices
+					# common case, these will all be the same type
+					if not item_schema.get( 'base_type' ) and all( (isinstance(x,basestring) for x in tokens) ):
+						item_schema['base_type'] = 'string'
 
 
 			ext_schema[k] = item_schema
