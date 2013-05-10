@@ -465,6 +465,12 @@ class ApplicationTestBase(_AppTestBaseMixin, ConfiguringTestBase):
 class TestApplication(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_plone_18n_resources(self):
+		# We should be able to use the zope resource namespace traversal
+		res = self.testapp.get( '/dataserver2/++resource++country-flags/td.gif' )
+		assert_that( res, has_property( 'content_type', 'image/gif' ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_mako_renderer(self):
 		from pyramid.renderers import render
 		from pyramid.mako_templating import MakoRenderingException
