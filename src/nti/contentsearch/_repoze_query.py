@@ -17,9 +17,11 @@ from BTrees.LFBTree import LFBucket
 from zope import component
 from zope import interface
 try:
+	from zopyx.txng3.core.parsers.english import QueryParserError
 	from zopyx.txng3.core.parsers.english import EnglishQueryParser
 except ImportError:  # pypy?
 	EnglishQueryParser = None
+	QueryParserError = Exception
 
 from repoze.catalog.query import Any as IndexAny
 from repoze.catalog.query import Contains as IndexContains
@@ -51,7 +53,7 @@ class _DefaultSearchQueryValiator(object):
 				query.term = text
 			EnglishQueryParser.parse(text)
 			return True
-		except Exception, e:
+		except QueryParserError, e:
 			logger.warn("Error while parsing query '%s'. '%s'" % (text, e))
 			return False
 
