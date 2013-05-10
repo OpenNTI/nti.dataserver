@@ -65,6 +65,10 @@ class PyramidZopeRequestProxy(SpecificationDecoratorBase):
 			val = self.environ.get( key, default )
 		return val
 
+	def getHeader(self, name, default=None):
+		return self.headers.get( name, default )
+
+
 	@property
 	def locale(self):
 		return locales.getLocale( *get_locale_name( self ).split( '-' ) )

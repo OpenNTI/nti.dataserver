@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Views for :mod:`zope.file` objects.
+Views for :mod:`zope.file` objects, and likewise :class:`zope.browserresource.interfaces.IFileResource`
 
 $Id$
 """
@@ -31,6 +31,7 @@ from nti.appserver import httpexceptions as hexc
 from zope.publisher.interfaces.browser import IBrowserRequest
 from nti.appserver._view_utils import UploadRequestUtilsMixin
 
+from pyramid.security import NO_PERMISSION_REQUIRED
 
 @view_config( route_name='objects.generic.traversal',
 			  context=zope.file.interfaces.IFile,
@@ -63,6 +64,25 @@ def file_view(request):
 	# or at least not serving from the dataserver directly.
 
 
+	return request.response
+
+
+@view_config( route_name='objects.generic.traversal',
+			  context=zope.browserresource.interfaces.IFileResource,
+			  permission=NO_PERMISSION_REQUIRED,
+			  request_method='GET')
+def file_resource_get_view(request):
+	data = request.context.GET()
+	request.response.body = data
+	return request.response
+
+
+@view_config( route_name='objects.generic.traversal',
+			  context=zope.browserresource.interfaces.IFileResource,
+			  permission=NO_PERMISSION_REQUIRED,
+			  request_method='HEAD')
+def file_resource_HEAD_view(request):
+	request.context.HEAD()
 	return request.response
 
 @view_config( route_name='objects.generic.traversal',
