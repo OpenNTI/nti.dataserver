@@ -29,6 +29,7 @@ from nti.utils import dataurl
 from . import interfaces as app_interfaces
 from nti.appserver import httpexceptions as hexc
 from zope.publisher.interfaces.browser import IBrowserRequest
+from zope.browserresource.interfaces import IFileResource
 from nti.appserver._view_utils import UploadRequestUtilsMixin
 
 from pyramid.security import NO_PERMISSION_REQUIRED
@@ -68,7 +69,7 @@ def file_view(request):
 
 
 @view_config( route_name='objects.generic.traversal',
-			  context=zope.browserresource.interfaces.IFileResource,
+			  context=IFileResource,
 			  permission=NO_PERMISSION_REQUIRED,
 			  request_method='GET')
 def file_resource_get_view(request):
@@ -78,7 +79,7 @@ def file_resource_get_view(request):
 
 
 @view_config( route_name='objects.generic.traversal',
-			  context=zope.browserresource.interfaces.IFileResource,
+			  context=IFileResource,
 			  permission=NO_PERMISSION_REQUIRED,
 			  request_method='HEAD')
 def file_resource_HEAD_view(request):
