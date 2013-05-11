@@ -203,5 +203,7 @@ del _init
 FriendlyNamedFactory = zope.annotation.factory( FriendlyNamed )
 RestrictedUserProfileFactory = zope.annotation.factory( RestrictedUserProfile )
 RestrictedUserProfileWithContactEmailFactory = zope.annotation.factory( RestrictedUserProfileWithContactEmail )
-CompleteUserProfileFactory = zope.annotation.factory( CompleteUserProfile )
-EmailRequiredUserProfileFactory = zope.annotation.factory( EmailRequiredUserProfile )
+COMPLETE_USER_PROFILE_KEY = 'nti.dataserver.users.user_profile.CompleteUserProfile'
+CompleteUserProfileFactory = zope.annotation.factory( CompleteUserProfile, key=COMPLETE_USER_PROFILE_KEY )
+EMAIL_REQUIRED_USER_PROFILE_KEY = 'nti.dataserver.users.user_profile.EmailRequiredUserProfile'
+EmailRequiredUserProfileFactory = zope.annotation.factory( EmailRequiredUserProfile, key=EMAIL_REQUIRED_USER_PROFILE_KEY )

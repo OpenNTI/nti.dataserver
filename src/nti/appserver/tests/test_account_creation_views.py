@@ -1259,12 +1259,44 @@ class TestApplicationProfile(SharedApplicationTestBase):
 
 		app = TestApp( self.app )
 
+		# In the generic policy
 		path = b'/dataserver2/users/sjohnson@nextthought.com/@@account.profile'
-
 		res = app.get( path, extra_environ=self._make_extra_environ() )
 
 		assert_that( res, has_property( 'status_int', 200 ) )
 		assert_that( res.json_body, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
+		assert_that( res.json_body['ProfileSchema'], does_not( has_key( 'birthCountry' ) ) )
+
+		# Same user in the columbia policy has more fields
+		environ = self._make_extra_environ()
+		environ[b'HTTP_ORIGIN'] = b'http://columbia.nextthought.com'
+		res = app.get( path, extra_environ=environ )
+
+		assert_that( res, has_property( 'status_int', 200 ) )
+		assert_that( res.json_body, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
+		assert_that( res.json_body['ProfileSchema'], has_key( 'birthCountry' ) )
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_migrate_columbia_profile(self):
+
+		# In the normal environment, set our email address
+		self.testapp.put_json( '/dataserver2/users/sjohnson@nextthought.com/++fields++email',
+							   'jason.madden@nextthought.com' )
+
+		me = self.resolve_user()
+		assert_that( me, has_entry( 'email', 'jason.madden@nextthought.com' ) )
+
+		# Now we can access it in the columbia page, where we also get some
+		# new empty fields
+		extra_environ = {b'HTTP_ORIGIN': b'http://columbia.nextthought.com'}
+		self.testapp.put_json( '/dataserver2/users/sjohnson@nextthought.com/',
+							   {'birthCountry': 'us'},
+							   extra_environ=extra_environ)
+
+		me = self.resolve_user(extra_environ=extra_environ)
+		assert_that( me, has_entry( 'email', 'jason.madden@nextthought.com' ) )
+		assert_that( me, has_entry( 'birthCountry', 'us' ) )
 
 
 def main(email=None, uname=None, cname=None):

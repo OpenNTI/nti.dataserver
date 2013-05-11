@@ -6,6 +6,9 @@ itself may actually be a single domain, the HTTP `Origin <http://tools.ietf.org/
 checked before the site. These policies are by nature tied to the existence
 of a request.
 
+TODO: This should be refactored into a package (at least). When doing so, be very careful
+to preserve the names of existing persistent classes as well as the annotation factory keys.
+
 $Id$
 """
 
@@ -34,7 +37,10 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 
 from nti.contentfragments import censor
+from nti.contentfragments.schema import PlainText
+
 from nti.utils.schema import InvalidValue
+from nti.utils.schema import ValidChoice as Choice
 from nti.utils.schema import find_most_derived_interface
 
 from nti.dataserver import shards as nti_shards
@@ -999,3 +1005,83 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 				fl.addFriend(user)
 				logger.info("User '%s' added to DFL '%s" % (user, self.DFL_NAME))
 				break
+
+###
+# Columbia site profiles.
+# These are somewhat special in that the users may already have an existing adult profile,
+# from a non-columbia site, and when asked for their new profile, we want to be able to provide
+# one with all the right data. In some ways, this is similar to upgrading a COPPA account.
+# NOTE: This is a one-time copy; if the user logs in to another site, they will see
+# their non-columbia profile data, which can be updated separately, which is weird.
+# (TODO: Is their anything weird with the user indexes that can happen with this?)
+###
+
+class IColumbiaBusinessUserProfile(user_interfaces.IEmailRequiredUserProfile):
+	"""
+	The definition of a complete profile for a columbia business school
+	user. This includes the standard fields, plus some random information
+	about a company the user might be associated with, as well as expanded
+	personal information.
+	"""
+
+	company = ValidTextLine(
+		title=_('Company Name'),
+		description=_("The name of the company you are affiliated with."),
+		required=False )
+	companyCountry = Choice(
+		title=_("Company Country"),
+		description=_("The country the company you are affiliated with is located in."),
+		vocabulary="Countries",
+		required=False )
+	companyDescription = PlainText(
+		title=_("Company Description"),
+		description=_("One to three paragraph description of your company."),
+		required=False,
+		min_length=1,
+		max_length=2000 ) # Somewhat arbitrary estimate of three paragraphs
+	companyRole = PlainText(
+		title=_("Company Role and Responsibilities"),
+		description=_("One to three paragraph description of your role and responsibilities in the company."),
+		required=False,
+		min_length=1,
+		max_length=2000 ) # Somewhat arbitrary estimate of three paragraphs
+	birthCountry = Choice(
+		title=_("Birth Country"),
+		description=_("The country you were born in."),
+		vocabulary="Countries",
+		required=False )
+
+
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer(IColumbiaBusinessUserProfile)
+class ColumbiaBusinessUserProfile(user_profile.EmailRequiredUserProfile):
+	pass
+
+user_profile.add_profile_fields(IColumbiaBusinessUserProfile, ColumbiaBusinessUserProfile)
+
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer(IColumbiaBusinessUserProfile)
+def ColumbiaBusinessUserProfileFactory(context):
+	# The special logic to look for a profile under a *different* annotation key,
+	# and if found, copy it to the new data.
+	# (Depending on whether we are in dev mode or not, we could have two different keys)
+	columbia_profile_key = 'nti.appserver.site_policies.ColumbiaBusinessUserProfile'
+	annotations = zope.annotation.interfaces.IAnnotations(context)
+	try:
+		return annotations[columbia_profile_key]
+		#Yes, it already existed!
+	except KeyError:
+		# Nuts. Start with a fresh columbia profile
+		columbia_profile = zope.annotation.factory(ColumbiaBusinessUserProfile, key=columbia_profile_key)(context)
+		# Do we need to migrate anything?
+		for old_key in user_profile.EMAIL_REQUIRED_USER_PROFILE_KEY, user_profile.COMPLETE_USER_PROFILE_KEY:
+			old_prof = annotations.get( old_key )
+			if old_prof is not None:
+				old_prof._p_activate() # because we access the dict directly
+				old_data = old_prof.__dict__
+				for k, v in old_data.items():
+					if not k.startswith( '_p' ) and not k.startswith( '_v' ) and not k in ('__parent__', '__name__'):
+						columbia_profile.__dict__[k] = v
+				columbia_profile._p_changed = True
+				break
+		return columbia_profile
