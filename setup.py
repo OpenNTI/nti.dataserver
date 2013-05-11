@@ -170,7 +170,7 @@ setup(
 		'contentratings == 1.0',  # requires small patch to work without acquisition
 		'cryptacular >= 1.4.1',  # see z3c.crypt
 		'cssselect == 0.7.1',  # Used by pyquery (0.8 not compatible with pyquery 1.2.4, :first raises AttributeError)
-		'cython >= 0.19',
+		'cython >= 0.19.1',
 		# Adds support for detecting aborts to transactions which
 		# otherwise only detect failed commits
 		'dm.transaction.aborthook >= 1.0',

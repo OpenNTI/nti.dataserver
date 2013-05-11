@@ -78,13 +78,16 @@ def simpleLatexDocumentText(preludes=(), bodies=()):
 
 class RenderContext(object):
 
-	def __init__( self, latex_tex, dom=None, output_encoding=None, input_encoding=None ):
+	def __init__( self, latex_tex, dom=None, output_encoding=None, input_encoding=None, files=(), packages_on_texinputs=False ):
 		self.latex_tex = latex_tex
 		self.dom = dom
 		self._cwd = None
 		self._templates = None
 		self.output_encoding = output_encoding
 		self.input_encoding = input_encoding
+		self.files = files
+		self._texinputs = None
+		self._packages_on_texinputs = packages_on_texinputs
 
 	@property
 	def docdir(self):
@@ -94,10 +97,21 @@ class RenderContext(object):
 		self._cwd = os.getcwd()
 		self._templates = os.environ.get( 'XHTMLTEMPLATES', '' )
 
+		if self._packages_on_texinputs:
+			packages_path = resource_filename( 'nti.contentrendering', 'plastexpackages' )
+		else:
+			packages_path = ''
+
+
+		# Set up TEXINPUTS to include the current directory for the renderer,
+		# plus our packages directory
+		self._texinputs = os.environ.get('TEXINPUTS', '')
+		texinputs = (os.getcwd(), packages_path, self._texinputs)
+		os.environ['TEXINPUTS'] = os.path.pathsep.join(texinputs)
 
 		xhtmltemplates = (os.path.join( os.getcwd(), 'Templates' ),
-						  #packages_path,
-						  # If we fail to instal our templates, and then we try to use our
+						  packages_path,
+						  # If we fail to install our templates, and then we try to use our
 						  # resource renderer, we find that we get failures due to it
 						  # not having setup some things required by the plasTeX default
 						  # templates, such as renderer/vectorImager
@@ -105,9 +119,16 @@ class RenderContext(object):
 						  os.environ.get('XHTMLTEMPLATES', ''))
 		os.environ['XHTMLTEMPLATES'] = os.path.pathsep.join( xhtmltemplates)
 
+
 		if self.dom is None:
 			self.dom = buildDomFromString( self.latex_tex, True, output_encoding=self.output_encoding, input_encoding=self.input_encoding )
+
+		for f in self.files:
+			fname = os.path.basename(f)
+			shutil.copyfile( f, os.path.join( self.docdir, fname ) )
+
 		os.chdir( self.docdir )
+
 		import nti.contentrendering.plastexids
 		nti.contentrendering.plastexids.patch_all()
 		nti_render.setupChameleonCache(config=True)
@@ -115,5 +136,7 @@ class RenderContext(object):
 
 	def __exit__( self, exc_type, exc_value, traceback ):
 		os.environ['XHTMLTEMPLATES'] = self._templates
+		os.environ['TEXINPUTS'] = self._texinputs
+
 		os.chdir( self._cwd )
 		shutil.rmtree( self.docdir )

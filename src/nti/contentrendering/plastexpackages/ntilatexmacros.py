@@ -1,5 +1,12 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# All of these have too many public methods
 #pylint: disable=R0904
+# "Method __delitem__ is abstract in Node and not overridden"
+#pylint: disable=W0223
+
+from __future__ import print_function, unicode_literals, absolute_import
 
 import hashlib
 
@@ -9,7 +16,10 @@ from plasTeX.Base import Crossref
 from plasTeX.Base import TextCommand
 
 from nti.contentrendering import plastexids
+from nti.contentrendering.plastexpackages._util import LocalContentMixin
 from nti.contentrendering.plastexpackages.graphicx import includegraphics
+
+from nti.contentfragments import interfaces as cfg_interfaces
 
 # Monkey patching time
 # SAJ: The following are set to render properly nested HTML.
@@ -84,7 +94,7 @@ class ntiincludevideo(_OneText):
 		return result
 
 class ntilocalvideoname(Command):
-        unicode = ''
+		unicode = ''
 
 class ntilocalvideo( Base.Environment ):
 	args = '[ options:dict ]'
@@ -259,7 +269,7 @@ class nobreak(Base.Command):
 class vfrac(Base.Command):
 	args = 'nom denom'
 
-# Misc
+# Videos
 class ntivideorollname(Base.Command):
 	pass
 
@@ -272,6 +282,7 @@ class ntivideoroll(Base.Environment,plastexids.NTIIDMixin):
 	_ntiid_title_attr_name = 'ref'
 	_ntiid_type = 'NTIVR'
 
+# Image collections
 class ntiimagecollectionname(Base.Command):
 	pass
 
@@ -287,7 +298,63 @@ class ntiimagecollection(Base.Environment,plastexids.NTIIDMixin):
 class ntipreviouspage(Base.Command):
 	pass
 
+# Cards
+class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
+	"Implementation of the Card environment"
+	args = '[options:dict]'
+	# A Float subclass to get \caption handling
+	class caption(Base.Floats.Caption):
+		counter = 'figure'
+
+	# Only classes with counters can be labeled, and \label sets the
+	# id property, which in turn is used as part of the NTIID (when no NTIID is set explicitly)
+	counter = 'nticard'
+	blockType = True
+	_ntiid_cache_map_name = '_nticard_ntiid_map'
+	_ntiid_allow_missing_title = False
+	_ntiid_suffix = 'nticard.'
+	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
+	_ntiid_type = 'NTICard'
+
+	creator = None
+	href = None
+	type = 'summary'
+	image = None
+
+	def digest(self, tokens):
+		res = super(nticard,self).digest(tokens)
+		if self.macroMode == self.MODE_BEGIN:
+			if not getattr(self, 'title', ''):
+				raise ValueError("Must specify a title using \\caption")
+
+			options = self.attributes.get( 'options', {} )
+			__traceback_info__ = options, self.attributes
+			if 'href' not in options or not options['href']:
+				raise ValueError( "Must provide href argument" )
+			self.href = options['href']
+			if 'creator' in options:
+				self.creator = options['creator']
+
+			images = self.getElementsByTagName( 'includegraphics' )
+			if images:
+				# Must leave the image in the dom so it can be found by the resourceDB
+				#images[0].parentNode.removeChild( images[0] )
+				self.image = images[0]
+		return res
+
+
+	@property
+	def description(self):
+		texts = []
+		for child in self.allChildNodes:
+			# Try to extract the text children, ignoring the caption and label, etc
+			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
+				texts.append( unicode( child ) )
+
+		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
+
 def ProcessOptions( options, document ):
-        document.context.newcounter( 'ntilocalvideo' )
-        document.context.newcounter( 'ntivideoroll' )
-        document.context.newcounter( 'ntiimagecollection' )
+	document.context.newcounter( 'ntilocalvideo' )
+	document.context.newcounter( 'ntivideoroll' )
+	document.context.newcounter( 'ntiimagecollection' )
+	document.context.newcounter( 'nticard' )

@@ -32,6 +32,7 @@ Content
 	content-anchoring
 	content-resolving
 	content-glossaries
+	content-cards
 
 
 Deployment and Setup

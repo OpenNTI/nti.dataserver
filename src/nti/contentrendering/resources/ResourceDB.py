@@ -59,7 +59,7 @@ class ResourceDB(object):
 		if not os.path.isdir(self._dbpath):
 			os.makedirs(self._dbpath)
 
-		logger.info('Using %s as resource db', self._dbpath)
+		logger.info('Using %s as resource db', os.path.abspath(self._dbpath))
 
 		self._indexPath = os.path.join(self._dbpath, 'resources.index')
 
