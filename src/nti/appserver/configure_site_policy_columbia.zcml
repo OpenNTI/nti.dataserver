@@ -12,8 +12,10 @@
 		component=".sites.COLUMBIA"
 		provides="zope.component.interfaces.IComponents"
 		name="columbia.nextthought.com" />
-	<!--
+
 	<registerIn registry=".sites.COLUMBIA">
+		<!-- Special profile -->
+		<adapter factory=".site_policies.ColumbiaBusinessUserProfileFactory" />
 	</registerIn>
-	-->
+
 </configure>

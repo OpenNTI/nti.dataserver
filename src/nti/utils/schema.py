@@ -777,6 +777,14 @@ class CountryTerm(_SimpleTerm):
 				 'value': self.value,
 				 'flag': self.flag }
 
+class _CountryVocabulary(_SimpleVocabulary):
+	"""
+	__contains__ is based on the token, not the value.
+	"""
+
+	def __contains__( self, token ):
+		return token in self.by_token
+
 def CountryVocabularyFactory( context ):
 	countries = component.getUtility( _ICountryAvailability )
-	return _SimpleVocabulary( [CountryTerm.fromItem( item ) for item in countries.getCountries().items()] )
+	return _CountryVocabulary( [CountryTerm.fromItem( item ) for item in countries.getCountries().items()] )
