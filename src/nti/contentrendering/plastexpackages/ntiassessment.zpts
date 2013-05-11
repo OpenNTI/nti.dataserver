@@ -1,4 +1,4 @@
-# -*- mode: html -*_
+# -*- mode: html -*-
 # Rough rendering of parts. The true rendering is
 # reserved for the client
 # All parts have the 'naquestionpart' class
@@ -52,7 +52,7 @@ name: naqmlabels naqmlabel naqmvalues naqmvalue
 name: naquestion
 <object type="application/vnd.nextthought.naquestion" data-ntiid="the-ntiid" data="the-ntiid" data-canindividual="false" tal:attributes="data-ntiid self/ntiid; data self/ntiid; data-canindividual self/attributes/individual | default">
 <param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
-<param name="canindividual" value="false"      tal:attributes="value self/attributes/individual | default" />
+<param name="canindividual" value="false" tal:attributes="value self/attributes/individual | default" />
 <div class="naquestion">
 	 <span tal:replace="self"></span>
 </div>

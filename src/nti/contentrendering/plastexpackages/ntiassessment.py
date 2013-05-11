@@ -49,6 +49,8 @@ $Id$
 #pylint: disable=E1102
 # access to protected members -> _asm_local_content defined in this module
 #pylint: disable=W0212
+# "Method __delitem__ is abstract in Node and not overridden"
+#pylint: disable=W0223
 
 from __future__ import print_function, unicode_literals
 
@@ -73,53 +75,13 @@ from nti.contentrendering.plastexpackages.ntilatexmacros import ntiincludevideo
 
 from plasTeX import Base
 from plasTeX.Base import Crossref
-from plasTeX.Renderers import render_children
 
-def _asm_local_textcontent(self):
-	"""
-	Collects the text content for nodes that are direct
-	children of `self`, *not* recursively. Returns a `unicode` object,
-	*not* a :class:`plasTeX.DOM.Text` object.
-	"""
-	output = []
-	for item in self.childNodes:
-		if item.nodeType == self.TEXT_NODE:
-			output.append(unicode(item))
-		elif getattr(item, 'unicode', None) is not None:
-			output.append(item.unicode)
-	return cfg_interfaces.ILatexContentFragment( ''.join( output ).strip() )
+from ._util import LocalContentMixin as _BaseLocalContentMixin
 
-def _asm_rendered_textcontent(self):
-	"""
-	Collects the rendered values of the children of self. Can only be used
-	while in the rendering process. Returns a `unicode` object.
-	"""
-	childNodes = []
-	for item in self.childNodes:
-		# Skipping the parts and solutions that come from this module except naqvideo.
-		# SAJ: This is a temporary hack until naqvideo works properly as a _LocalContentMixin.
-		if type(item).__module__ == __name__ and not isinstance(item, naqvideo):
-			continue
-		childNodes.append( item )
-
-	output = render_children( self.renderer, childNodes )
-	return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
-
-class _LocalContentMixin(object):
-	"""
-	Something that can collect local content. Defines one property,
-	`_asm_local_content` to be the value of the local content. If this object
-	has never been through the rendering pipline, this will be a LaTeX fragment
-	(probably with missing information and mostly useful for debuging).
-	If this object has been rendered, then it will be an HTML content fragment
-	according to the templates.
-
-	Mixin order matters, this needs to be first.
-	"""
-
-	_asm_local_content = readproperty(_asm_local_textcontent)
-	def _after_render( self, rendered ):
-		self._asm_local_content = _asm_rendered_textcontent( self )
+class _LocalContentMixin(_BaseLocalContentMixin):
+	# SAJ: HACK. Something about naqvideo and _LocalContentMixin? ALl the parts
+	# and solutions from this module are excluded from rendering
+	_asm_ignorable_renderables = ()
 
 # Handle custom counter names
 class naquestionsetname(Base.Command):
@@ -167,7 +129,7 @@ class naqsolutions(Base.List):
 				nodesToMove.append(node)
 
 		return res
-
+_LocalContentMixin._asm_ignorable_renderables += (naqsolutions,)
 
 class naqsolution(Base.List.item):
 
@@ -204,10 +166,10 @@ class naqsolution(Base.List.item):
 		units = self.units_to_text_list()
 		if units:
 			return ','.join( units )
-
+_LocalContentMixin._asm_ignorable_renderables += (naqsolution,)
 class naqsolexplanation(_LocalContentMixin, Base.Environment):
 	pass
-
+_LocalContentMixin._asm_ignorable_renderables += (naqsolexplanation,)
 class _AbstractNAQPart(_LocalContentMixin,Base.Environment):
 
 	# Defines the type of part this maps too
@@ -298,7 +260,7 @@ class _AbstractNAQPart(_LocalContentMixin,Base.Environment):
 								  self.getElementsByTagName( 'naqmvalue' ) ):
 			unicode(x)
 
-
+_LocalContentMixin._asm_ignorable_renderables += (_AbstractNAQPart,)
 class naqnumericmathpart(_AbstractNAQPart):
 	"""
 	Solutions are treated as numbers for the purposes of grading.
@@ -577,6 +539,8 @@ class naqhint(_LocalContentMixin,Base.List.item):
 
 	def _after_render( self, rendered ):
 		self._asm_local_content = rendered
+
+_LocalContentMixin._asm_ignorable_renderables += (naqchoices, naqmlabels, naqmvalues, naqvalue, naqchoice, naqmlabel, naqmvalue, naqhints, naqhint)
 
 class naqvideo(ntiincludevideo):
 	blockType = True
