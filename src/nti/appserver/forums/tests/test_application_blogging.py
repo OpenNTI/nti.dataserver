@@ -640,3 +640,39 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		# But modification events did fire...
 		mod_events = eventtesting.getEvents( lifecycleevent.IObjectModifiedEvent )
 		assert_that( mod_events, has_length( 1 ) )
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_user_can_edit_sharing(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		# Create the blog
+		data = self._create_post_data_for_POST()
+		create_res = self._POST_topic_entry( data )
+
+		# Change sharing directly
+		testapp.put_json( create_res.location, {'sharedWith': [fixture.user2_username] } )
+		res = testapp.get( create_res.location )
+		assert_that( res.json_body, has_entry( 'sharedWith', [fixture.user2_username] ) )
+
+		# and through the field
+		testapp.put_json( create_res.location + '/++fields++sharedWith', [fixture.user3_username] )
+		res = testapp.get( create_res.location )
+		assert_that( res.json_body, has_entry( 'sharedWith', [fixture.user3_username] ) )
+
+
+		# Publishing it changes all that
+		publish_url = self.require_link_href_with_rel( create_res.json_body, 'publish' )
+		testapp.post( publish_url )
+
+		res = testapp.get( create_res.location )
+		assert_that( res.json_body, has_entry( 'sharedWith', [fixture.community_name] ) )
+
+		# Unpublishing takes us back to the default state
+		unpublish_url = self.require_link_href_with_rel( res.json_body, 'unpublish' )
+		testapp.post( unpublish_url )
+
+		res = testapp.get( create_res.location )
+		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )

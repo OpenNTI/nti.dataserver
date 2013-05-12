@@ -15,3 +15,8 @@ Implementations
 .. automodule:: nti.dataserver.contenttypes.forums.forum
 .. automodule:: nti.dataserver.contenttypes.forums.topic
 .. automodule:: nti.dataserver.contenttypes.forums.post
+
+Permissioning
+=============
+
+.. automodule:: nti.dataserver.contenttypes.forums.acl

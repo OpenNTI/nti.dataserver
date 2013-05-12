@@ -316,3 +316,28 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		# The commentor also gets just the topic in his UGD
 		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username )
 		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_creator_cannot_change_sharing_on_community_topic( self ):
+		#""" Sharing is fixed and cannot be changed for a blog entry, its story, or a comment"""
+
+		testapp = self.testapp
+		res = self._POST_topic_entry()
+
+		topic_url = res.location
+		headline_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
+
+		eventtesting.clearEvents()
+
+		# Field updates
+		# Cannot change the entry
+		testapp.put_json( topic_url + '/++fields++sharedWith',
+						  ['Everyone'],
+						  # Because of the way traversal is right now, this results in a 404,
+						  # when really we want a 403
+						  status=404)
+		# Nor when putting the whole thing
+		# The entry itself simply cannot be modified (predicate mismatch right now)
+		testapp.put_json( topic_url,
+						  {'sharedWith': ['Everyone']},
+						  status=404 )

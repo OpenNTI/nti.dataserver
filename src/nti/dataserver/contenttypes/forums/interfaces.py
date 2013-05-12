@@ -95,10 +95,11 @@ class ITopic(IContentContainer,
 	"""
 	A topic is contained by a forum. It is distinctly named within the containing
 	forum (often this name will be auto-generated). A topic contains potentially many posts
-	and is folderish.
+	(typically *comments*) and is *folderish*.
 
 	Topics are a level of permissioning, with only certain people being allowed to
-	view the topic or delete it. Deleting it removes all its contained posts.
+	view the topic or delete it. Deleting it removes all its contained posts. Typically,
+	topics will be *published* to automatically grant "public" access.
 
 	"""
 	contains(IPost)
@@ -202,9 +203,57 @@ class IPersonalBlogComment(IPost, nti_interfaces.IShouldHaveTraversablePath):
 class IPersonalBlogEntry(IHeadlineTopic,
 						 nti_interfaces.ICreated,
 						 nti_interfaces.IReadableShared,
+						 nti_interfaces.IPublishable,
 						 nti_interfaces.IShouldHaveTraversablePath):
 	"""
-	A special kind of story topic that is only contained by blogs.
+	A special kind of headline topic that is only contained by blogs.
+
+	Unlike other topics (in particular, unlike
+	:class:`ICommunityHeadlineTopic`) personal blog entries expose the
+	full gamut of sharing options, in addition to being publishable. An entry can thus
+	be in one of three states:
+
+	1. Default, aka "private"
+
+		* Visible to only the creator
+		* Distinguished by presence of the ``@@publish`` link
+		  and an *empty* ``sharedWith`` array.
+
+	2. Published, aka "public"
+
+		* Visible to the communities of the creator
+		* Visibility is dynamic, changes as the creator's communities change
+		  (the external ``sharedWith`` array reflects the current communities)
+		* Distinguished by the presence of the ``@@unpublish`` link
+
+	3. Custom, aka "explicit"
+
+		* Visible to the entities listed in the ``sharedWith`` array
+		* Static, in that the ``sharedWith`` array reflects exactly the
+		  values input and does not update as the creator's communities change
+		* Distinguished by the presence of the ``@@publish`` link
+		  and a *non-empty* ``sharedWith`` array.
+
+	States [1] and [2] are shared with other topics. State [3] is new
+	to personal blog entries. A transition from state [1] to state [2]
+	is through POSTing to the ``@@publish`` link, and [2] to [1] is the
+	reverse.
+
+	A transition from state [1] to state [3] is by editing the
+	``sharedWith`` array in the usual manner.
+
+	A transition from state [2] to state [3] is **forbidden**; attempting
+	to edit the ``sharedWith`` array of an object in state [2] is
+	ignored. The object must be moved to state [1] first. This is to
+	allow the casual editing of objects in state [2], where the client
+	echos back all fields of the object (thus sending in a
+	``sharedWith`` array).
+
+	An attempt to transition from state [3] to state [2] via
+	``@@publish`` *should* result in a UI warning (as it potentially
+	loses data, the contents of the ``sharedWith`` custom array) but
+	*is* allowed by the server.
+
 	"""
 	contains(b".IPersonalBlogComment")
 	__setitem__.__doc__ = None
@@ -273,7 +322,8 @@ class ICommunityHeadlinePost(IGeneralHeadlinePost):
 	containers(b'.ICommunityHeadlineTopic')
 	__parent__.required = False
 
-class ICommunityHeadlineTopic(IGeneralHeadlineTopic):
+class ICommunityHeadlineTopic(IGeneralHeadlineTopic,
+							  nti_interfaces.IPublishable):
 	containers(ICommunityForum)
 	__parent__.required = False
 	headline = schema.Object(ICommunityHeadlinePost, title="The main, first post of this topic.")

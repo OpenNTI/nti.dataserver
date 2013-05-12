@@ -757,6 +757,14 @@ class IDefaultPublished(interface.Interface):
 	(whatever that means).
 	"""
 
+class IPublishable(interface.Interface):
+
+	def publish():
+		"Cause this object to provide :class:`IDefaultPublished`"
+
+	def unpublish():
+		"Cause this object to no longer provide :class:`IDefaultPublished`"
+
 # ## Content
 
 class IContent(ILastModified, ICreated):
