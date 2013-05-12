@@ -21,6 +21,7 @@ from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import all_of
 from hamcrest import is_not
+does_not = is_not
 from hamcrest import has_entries
 from hamcrest import starts_with
 from hamcrest import not_none
@@ -30,8 +31,9 @@ from nose.tools import assert_raises
 import nti.tests
 
 import nti.tests
+import fudge
 
-from nti.tests import is_empty
+from nti.tests import is_empty, is_true
 
 from nti.externalization.tests import externalizes
 
@@ -42,6 +44,9 @@ from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry, IGeneralHeadlineTopic, IPost
 from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralHeadlineTopic
 from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost, GeneralHeadlinePost
+
+from zope import interface
+from nti.dataserver.interfaces import IUser, IWritableShared
 
 from ExtensionClass import Base
 
@@ -127,6 +132,36 @@ def test_blog_entry():
 
 	assert_that( topic.headline, aq_inContextOf( parent ) )
 	assert_that( topic, aq_inContextOf( parent ) )
+
+@fudge.patch('nti.dataserver.sharing._dynamic_memberships_that_participate_in_security', 'nti.dataserver.sharing._getId')
+def test_blog_entry_sharing(fake_mems, fake_getId):
+	fake_mems.is_callable().returns( (1,2,3) )
+	fake_getId.is_callable().returns( 1 )
+
+	@interface.implementer(IUser )
+	class Creator(object):
+		pass
+
+	# Default state
+	topic = PersonalBlogEntry()
+	topic.creator = Creator()
+	assert_that( topic, verifiably_provides( IWritableShared ) )
+	assert_that( topic, has_property( 'sharingTargets', is_empty() ) )
+
+	# Published
+	topic.publish()
+	assert_that( topic, does_not( verifiably_provides( IWritableShared ) ) )
+	assert_that( topic, has_property( 'sharingTargets', is_( (1,2,3) ) ) )
+
+	# Updating sharing targets is ignored
+	topic.updateSharingTargets( (4,5,6) )
+	topic.clearSharingTargets()
+	assert_that( topic, has_property( 'sharingTargets', is_( (1,2,3) ) ) )
+
+	topic.unpublish()
+	# Now we can, though
+	topic.updateSharingTargets( (42,) )
+	assert_that( topic._may_have_sharing_targets(), is_true() )
 
 def test_blog_entry_name_chooser():
 	topic = PersonalBlogEntry()

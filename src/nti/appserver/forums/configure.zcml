@@ -130,6 +130,15 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
+	<adapter factory="nti.appserver._adapters.SharedWithExternalFieldTraverser"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+	<adapter factory="nti.appserver._adapters.SharedWithExternalFieldTraverser"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
 	<adapter factory=".traversal._CommunityBoardTraversable" />
 
 	<!-- Make certain classes Likeable/Flaggable/Favoritable. -->

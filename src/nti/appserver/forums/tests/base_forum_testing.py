@@ -563,7 +563,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		assert_that( eventtesting.getEvents( IIntIdRemovedEvent ), has_length( 2 ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_creator_cannot_change_sharing_on_topic_or_any_child( self ):
+	def test_creator_cannot_change_sharing_on__any_child( self ):
 		#""" Sharing is fixed and cannot be changed for a blog entry, its story, or a comment"""
 
 		testapp = self.testapp
@@ -575,12 +575,12 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		eventtesting.clearEvents()
 
 		# Field updates
-		# Cannot change the entry
-		testapp.put_json( topic_url + '/++fields++sharedWith',
-						  ['Everyone'],
-						  # Because of the way traversal is right now, this results in a 404,
-						  # when really we want a 403
-						  status=404)
+		# Cannot change the entry, if it is a community entry. If it is a blog entry, we can
+		#testapp.put_json( topic_url + '/++fields++sharedWith',
+		#				  ['Everyone'],
+		#				  # Because of the way traversal is right now, this results in a 404,
+		#				  # when really we want a 403
+		#				  status=404)
 
 		# Cannot change the story
 		testapp.put_json( headline_url + '/++fields++sharedWith',
@@ -590,9 +590,9 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 		# Nor when putting the whole thing
 		# The entry itself simply cannot be modified (predicate mismatch right now)
-		testapp.put_json( topic_url,
-						  {'sharedWith': ['Everyone']},
-						  status=404 )
+		#testapp.put_json( topic_url,
+		#				  {'sharedWith': ['Everyone']},
+		#				  status=404 )
 
 		# The story accepts it but ignores it
 		res = testapp.put_json( headline_url,

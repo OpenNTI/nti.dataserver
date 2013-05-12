@@ -3,6 +3,17 @@
 """
 Relating to ACL implementations for objects defined in this package.
 
+See the particular classes for details, but in general a post is
+intended to be *published*, making it provide the
+:class:`.IDefaultPublished` interface. Through
+:class:`.AbstractDefaultPublishableSharedWithMixin` the sharing
+targets of the class are automatically determined. A particular
+exception to this is :class:`.IPersonalBlogEntry`, which can have
+individual sharing targets added; see that class for more details.
+
+In all cases, comments contained within a topic inherit the ACL of the
+topic.
+
 $Id$
 """
 

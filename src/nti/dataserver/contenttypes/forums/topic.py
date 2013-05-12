@@ -22,6 +22,9 @@ from . import _containerIds_from_parent
 from nti.dataserver import containers
 from nti.dataserver import datastructures
 from nti.dataserver import sharing
+from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
+
+from zope.cachedescriptors.property import Lazy
 
 from zope.schema.fieldproperty import FieldProperty
 from nti.utils.schema import AdaptingFieldProperty
@@ -105,6 +108,12 @@ def _post_added_to_topic( post, event ):
 class HeadlineTopic(Topic):
 	headline = AcquisitionFieldProperty(for_interfaces.IHeadlineTopic['headline'])
 
+	def publish(self):
+		interface.alsoProvides( self, IDefaultPublished )
+
+	def unpublish(self):
+		interface.noLongerProvides( self, IDefaultPublished )
+
 @interface.implementer(for_interfaces.IGeneralTopic)
 class GeneralTopic(Topic):
 	pass
@@ -148,6 +157,63 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 
 	_ntiid_type = for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY
 
+	def __init__( self, *args, **kwargs ):
+		super(PersonalBlogEntry,self).__init__( *args, **kwargs )
+		interface.alsoProvides( self, IWritableShared )
+
+	def __setstate__( self, state ):
+		# TODO: A migration
+		super(PersonalBlogEntry,self).__setstate__( state )
+		if not IDefaultPublished.providedBy( self ) and not IWritableShared.providedBy( self ):
+			interface.alsoProvides( self, IWritableShared )
+
+	# We use this object to implement sharing storage when we are not published
+	@Lazy
+	def _sharing_storage(self):
+		result = sharing.ShareableMixin()
+		self._p_changed = True
+		return result
+
+	def publish(self):
+		super(PersonalBlogEntry,self).publish()
+		# We we publish, we wipe out any sharing data we used to have
+		if '_sharing_storage' in self.__dict__:
+			self._sharing_storage.clearSharingTargets()
+		# By also matching the state of IWritableShared, our
+		# external updater automatically does the right thing and
+		# doesn't even call us
+		if IWritableShared.providedBy( self ):
+			interface.noLongerProvides( self, IWritableShared )
+
+	def unpublish(self):
+		super(PersonalBlogEntry,self).unpublish()
+		interface.alsoProvides( self, IWritableShared )
+
+	def _forward_not_published(name):
+		def f( self, *args, **kwargs ):
+			if IDefaultPublished.providedBy( self ):
+				return # ignored
+			getattr( self._sharing_storage, name )( *args, **kwargs )
+		return f
+
+	updateSharingTargets = _forward_not_published( 'updateSharingTargets' )
+	clearSharingTargets = _forward_not_published( 'clearSharingTargets' )
+	addSharingTarget = _forward_not_published( 'addSharingTarget' )
+
+	del _forward_not_published
+
+	def _may_have_sharing_targets( self ):
+		if not IDefaultPublished.providedBy( self ):
+			self._p_activate()
+			return '_sharing_storage' in self.__dict__ and self._sharing_storage._may_have_sharing_targets()
+		return super(PersonalBlogEntry,self)._may_have_sharing_targets()
+
+	@property
+	def _non_published_sharing_targets(self):
+		self._p_activate()
+		if '_sharing_storage' in self.__dict__:
+			return self._sharing_storage.sharingTargets
+		return ()
 
 @component.adapter(for_interfaces.IHeadlineTopic)
 class HeadlineTopicSublocations(ContainerSublocations):

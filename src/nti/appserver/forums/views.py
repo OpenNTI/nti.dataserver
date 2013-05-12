@@ -448,6 +448,7 @@ class ForumContentsFeedView(AbstractFeedView):
 		return data_object, ipost_or_itopic.creator, title, ipost_or_itopic.tags
 
 @view_config( context=frm_interfaces.IHeadlinePost )
+@view_config( context=frm_interfaces.IPersonalBlogEntry )
 @view_config( context=frm_interfaces.IPersonalBlogEntryPost )
 @view_config( context=frm_interfaces.IPersonalBlogComment )
 @view_config( context=frm_interfaces.IGeneralForumComment )
@@ -568,6 +569,7 @@ class _AbstractPublishingView(object):
 			# in the parent (hence why it is not a registered listener).
 			# But here we know that the sharing is propagated automatically
 			# down, so we do.
+			# TODO: Should the object itself do this? Probably...
 			event = self._did_modify_topic( topic, oldSharingTargets )
 			dispatchToSublocations( topic, event )
 
@@ -583,7 +585,7 @@ class _AbstractPublishingView(object):
 				name=VIEW_PUBLISH )
 class _PublishView(_AbstractPublishingView):
 	def _do_provide( self, topic ):
-		interface.alsoProvides( topic, self._iface )
+		topic.publish()
 	def _test_provides( self, topic ):
 		return not nti_interfaces.IDefaultPublished.providedBy( topic )
 
@@ -596,7 +598,7 @@ class _PublishView(_AbstractPublishingView):
 				name=VIEW_UNPUBLISH )
 class _UnpublishView(_AbstractPublishingView):
 	def _do_provide( self, topic ):
-		interface.noLongerProvides( topic, self._iface )
+		topic.unpublish()
 	def _test_provides( self, topic ):
 		return nti_interfaces.IDefaultPublished.providedBy( topic )
 
