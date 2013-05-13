@@ -193,7 +193,7 @@ def create_nti_card_schema():
 	ntiid: card NTIID
 	type: card type
 	title: card title
-	description: card description
+	content: card description
 	quick: card text ngrams
 	creator: card creator
 	href: card target hyperlink.
@@ -205,7 +205,8 @@ def create_nti_card_schema():
 					 	content=create_content_field(stored=True),
 					 	quick=create_ngram_field(),
 					 	creator=fields.ID(stored=True),
-					 	href=fields.ID(stored=True))
+					 	href=fields.ID(stored=True),
+					 	last_modified=fields.DATETIME(stored=True))
 	return sch
 
 @interface.implementer(search_interfaces.IWhooshNTICardSchemaCreator)
