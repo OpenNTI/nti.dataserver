@@ -414,6 +414,12 @@ class IVideoTranscriptSchemaCreator(IContentSchemaCreator):
 class IWhooshVideoTranscriptSchemaCreator(IVideoTranscriptSchemaCreator):
 	pass
 
+class INTICardSchemaCreator(IContentSchemaCreator):
+	pass
+
+class IWhooshNTICardSchemaCreator(INTICardSchemaCreator):
+	pass
+
 class IWhooshQueryParser(ISearchQueryParser):
 
 	def parse(qo, schema=None):
