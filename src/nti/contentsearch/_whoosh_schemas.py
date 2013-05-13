@@ -198,10 +198,11 @@ def create_nti_card_schema():
 	creator: card creator
 	href: card target hyperlink.
 	"""
-	sch = fields.Schema(ntiid=fields.ID(stored=True, unique=True),
+	sch = fields.Schema(containerId=fields.ID(stored=True, unique=False),
+						ntiid=fields.ID(stored=True, unique=True),
 						type=fields.ID(stored=True),
 						title=create_content_field(stored=True),
-					 	description=create_content_field(stored=True),
+					 	content=create_content_field(stored=True),
 					 	quick=create_ngram_field(),
 					 	creator=fields.ID(stored=True),
 					 	href=fields.ID(stored=True))

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Book video transcript indexer.
+NTI card indexer.
 
 $Id$
 """
@@ -21,9 +21,9 @@ from . import interfaces as cr_interfaces
 interface.moduleProvides(cr_interfaces.IRenderedBookTransformer)
 
 def transform(book, indexdir=None, name=''):
-	indexer = component.queryUtility(cr_interfaces.IVideoTranscriptIndexer, name=name)
+	indexer = component.queryUtility(cr_interfaces.INTICardIndexer, name=name)
 	if indexer is None:
-		indexer = component.getUtility(cr_interfaces.IVideoTranscriptIndexer)
+		indexer = component.getUtility(cr_interfaces.INTICardIndexer)
 	indexer.index(book, indexdir)
 
 def main():
@@ -40,7 +40,7 @@ def main():
 		xmlconfig.file("configure.zcml", contentrendering, context=context)
 	register()
 
-	arg_parser = argparse.ArgumentParser(description="Video Transcript indexer")
+	arg_parser = argparse.ArgumentParser(description="NTI card indexer")
 	arg_parser.add_argument('contentpath', help="Content book location")
 	arg_parser.add_argument('-i' '--indexer', help="Indexer name", dest='indexer')
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')

@@ -61,11 +61,12 @@ def get_node_content(node):
 	"""
 	result = (get_text(node), get_tail(node))
 	result = ' '.join(result)
-	return result.strip()
+	return unicode(result.strip())
 
 def get_attribute(node, name):
 	"""
 	return the value for the specified attribute name from the specified node
 	"""
 	attributes = node.attrib if node is not None else {}
-	return attributes.get(name, None)
+	result = attributes.get(name, None)
+	return unicode(result) if result else None

@@ -47,5 +47,10 @@ class IWhooshBookIndexer(IWhooshContentIndexer, cr_interfaces.IBookIndexer):
 		:param writer: Whoosh indexwriter
 		:param language: Node text language
 		"""
+
 class IWhooshVideoTranscriptIndexer(IWhooshContentIndexer, cr_interfaces.IVideoTranscriptIndexer):
+	pass
+
+
+class IWhooshNTICardIndexer(IWhooshContentIndexer, cr_interfaces.INTICardIndexer):
 	pass
