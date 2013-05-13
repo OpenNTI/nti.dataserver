@@ -395,6 +395,17 @@ class IVideoTranscriptContent(interface.Interface):
 class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IReadMapping):
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
+class INTICardContent(interface.Interface):
+	docnum = schema.Int(title="Document number", required=False)
+	href = nti_schema.ValidTextLine(title="card href", required=False)
+	ntiid = nti_schema.ValidTextLine(title="card NTIID", required=True)
+	title = nti_schema.ValidTextLine(title="Card title", required=True)
+	creator = nti_schema.ValidTextLine(title="Card creator", required=True)
+	description = nti_schema.ValidTextLine(title="Card description", required=True)
+
+class IWhooshNTICardContent(INTICardContent, IReadMapping):
+	score = nti_schema.Number(title="Search score", required=False, default=1.0)
+
 class IContentSchemaCreator(interface.Interface):
 
 	def create():
