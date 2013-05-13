@@ -22,12 +22,15 @@ SCORE			 = u'Score'
 NTIID 			 = unicode(ext_interfaces.StandardExternalFields.NTIID)
 CLASS 			 = unicode(ext_interfaces.StandardExternalFields.CLASS)
 QUERY 			 = u'Query'
+TITLE			 = u'Title'
 FIELD 			 = u'Field'
 ITEMS			 = u'Items'
 CONTENT			 = u'Content'
 SNIPPET 		 = u'Snippet'
-VIDEO_ID		 = 'VideoID'
+VIDEO_ID		 = u'VideoID'
+NTI_CARD		 = u'NTICard'
 FRAGMENTS		 = u'Fragments'
+DESCRIPTION		 = u'Description'
 FRAGMENT_COUNT	 = u'Fragment Count'
 TOTAL_FRAGMENTS	 = u'Total Fragments'
 VIDEO_TRANSCRIPT = u'VideoTranscript'
@@ -94,9 +97,9 @@ oid_fields = (OID, p_oid_, oid_, id_)
 keyword_fields = (keywords_, tags_, AUTO_TAGS)
 container_id_fields = (CONTAINER_ID, 'ContainerID', containerId_, 'container')
 last_modified_fields = (ext_interfaces.StandardInternalFields.LAST_MODIFIED,
-						 ext_interfaces.StandardInternalFields.LAST_MODIFIEDU,
-						 LAST_MODIFIED,
-						 last_modified_)
+						ext_interfaces.StandardInternalFields.LAST_MODIFIEDU,
+						LAST_MODIFIED,
+						last_modified_)
 
 text_fields = (content_, ngrams_, creator_, title_, redactionExplanation_, redactionExplanation_)
 
@@ -105,6 +108,7 @@ nti_mimetype_prefix = MIME_BASE + '.'
 note_ = u'note'
 post_ = u'post'
 canvas_ = u'canvas'
+nticard_ = u'nticard'
 highlight_ = u'highlight'
 redaction_ = u'redaction'
 transcript_ = 'transcript'
@@ -120,7 +124,7 @@ BOOK_CONTENT_MIME_TYPE = u'application/vnd.nextthought.bookcontent'
 VIDEO_TRANSCRIPT_MIME_TYPE = u'application/vnd.nextthought.videotranscript'
 
 ugd_indexable_type_names = (note_, post_, highlight_, redaction_, messageinfo_)
-indexable_type_names = (content_, videotranscript_) + ugd_indexable_type_names
+indexable_type_names = (content_, videotranscript_, nticard_) + ugd_indexable_type_names
 indexable_types_order = dict({ p:x for x, p in enumerate(indexable_type_names) })
 
 ascending_ = u'ascending'

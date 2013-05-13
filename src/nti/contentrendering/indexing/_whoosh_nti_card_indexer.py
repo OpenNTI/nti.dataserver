@@ -7,6 +7,9 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import time
+from datetime import datetime
+
 from zope import component
 from zope import interface
 
@@ -55,6 +58,7 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 			creator = self._sanitize(table, info.get('creator'))
 			title = content_utils.sanitize_content(info.get('title'), table=table)
 			content = content_utils.sanitize_content(info.get('content'), table=table)
+			last_modified = datetime.fromtimestamp(time.time())
 			writer.add_document(containerId=containerId,
 								href=href,
 								type=type_,
@@ -62,7 +66,8 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 								title=title,
 								creator=creator,
 								content=content,
-								quick=unicode("%s %s" % (title, content)))
+								quick=unicode("%s %s" % (title, content)),
+								last_modified=last_modified)
 		except Exception:
 			writer.cancel()
 			raise
