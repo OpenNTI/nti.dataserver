@@ -54,6 +54,7 @@ LAST_MODIFIED	 = unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
 id_				 = unicode(ext_interfaces.StandardInternalFields.ID)
 oid_			 = u'oid'
 body_ 			 = u'body'
+href_ 			 = u'href'
 text_			 = u'text'
 type_			 = u'type'
 tags_			 = u'tags'

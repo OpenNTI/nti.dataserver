@@ -22,6 +22,7 @@ from perfmetrics import metric
 from whoosh import index
 
 from ._whoosh_index import Book
+from ._whoosh_index import NTICard
 from ._search_query import QueryObject
 from . import _search_results as srlts
 from ._whoosh_index import VideoTranscript
@@ -88,7 +89,7 @@ class _Searchable(object):
 @interface.implementer(search_interfaces.IWooshBookContentSearcher)
 class WhooshBookContentSearcher(object):
 
-	index_factories = (('%s', Book), ('vtrans_%s', VideoTranscript))
+	index_factories = (('%s', Book), ('vtrans_%s', VideoTranscript), ('nticard_%s', NTICard))
 
 	def __init__(self, baseindexname, storage, ntiid=None):
 		self._searchables = {}
