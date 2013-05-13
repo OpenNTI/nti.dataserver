@@ -139,7 +139,7 @@ def create_post_schema():
 class VIDEO_TIMESTAMP(fields.DATETIME):
 
 	def _parse_datestring(self, qstring):
-		# this method parses a very time stamp # hh:mm::ss.uuu
+		# this method parses a time stamp # hh:mm::ss.uuu
 		from whoosh.support.times import adatetime, fix, is_void
 
 		qstring = qstring.replace(" ", "").replace(",", ".")
