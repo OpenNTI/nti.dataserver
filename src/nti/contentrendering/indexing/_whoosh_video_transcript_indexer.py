@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Whoosh video transcript indexers.
+Whoosh video transcript indexer.
 
 $Id$
 """

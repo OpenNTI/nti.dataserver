@@ -161,6 +161,11 @@ class IVideoTranscriptIndexer(IContentIndexer):
 	Creates an index for the video transcripts associated with a given book
 	"""
 
+class INTICardIndexer(IContentIndexer):
+	"""
+	Creates an index for the nti cards associated with a given book
+	"""
+
 ####
 # # Transforming content from one format to another
 # ##

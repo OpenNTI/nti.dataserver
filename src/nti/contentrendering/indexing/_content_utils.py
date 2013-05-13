@@ -24,6 +24,10 @@ def sanitize_content(text, tokens=False, table=None):
 	:param tokens: boolean to return a list of tokens
 	:param table: translation table
 	"""
+
+	if not text:
+		return text
+
 	# user ds sanitizer
 	text = _sanitize_user_html_to_text(text)
 
