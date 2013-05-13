@@ -9,5 +9,6 @@
 
 	<utility factory="._video_transcript_parsers._SRTVideoTranscriptParser" name="srt" />
 	<utility factory="._video_transcript_parsers._SBVVideoTranscriptParser" name="sbv" />
+	<utility factory="._video_transcript_parsers._WebVttTranscriptParser" name="vtt" />
 	
 </configure>
