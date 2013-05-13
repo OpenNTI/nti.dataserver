@@ -185,3 +185,31 @@ class _DefaultVideoTranscriptSchemaCreator(object):
 	def create(self):
 		schema = create_video_transcript_schema()
 		return schema
+
+def create_nti_card_schema():
+	"""
+	Card schema
+
+	ntiid: card NTIID
+	type: card type
+	title: card title
+	description: card description
+	quick: card text ngrams
+	creator: card creator
+	href: card target hyperlink.
+	"""
+	sch = fields.Schema(ntiid=fields.ID(stored=True, unique=True),
+						type=fields.ID(stored=True),
+						title=create_content_field(stored=True),
+					 	description=create_content_field(stored=True),
+					 	quick=create_ngram_field(),
+					 	creator=fields.ID(stored=True),
+					 	href=fields.ID(stored=True))
+	return sch
+
+@interface.implementer(search_interfaces.IWhooshNTICardSchemaCreator)
+class _DefaultNTICardSchemaCreator(object):
+
+	def create(self):
+		schema = create_nti_card_schema()
+		return schema
