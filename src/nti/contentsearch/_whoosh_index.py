@@ -29,7 +29,8 @@ from ._datastructures import CaseInsensitiveDict
 from .constants import (channel_, content_, keywords_, references_, sharedWith_,
 						ntiid_, last_modified_, videoId_, creator_, containerId_,
 						replacementContent_, redactionExplanation_, tags_, intid_,
-					 	title_, quick_, end_timestamp_, start_timestamp_, docnum_, score_)
+					 	title_, quick_, end_timestamp_, start_timestamp_, docnum_,
+					 	href_, score_)
 
 class _SearchableContent(object):
 	_schema = None
@@ -167,6 +168,43 @@ class VideoTranscript(_SearchableContent):
 					 			containerId=hit[containerId_],
 					 			end_timestamp=hit[end_timestamp_],
 					 			start_timestamp=hit[start_timestamp_])
+			result.append((data, score))
+		return result
+
+@interface.implementer(search_interfaces.IWhooshNTICardContent)
+class _NTICardContent(dict):
+	docnum = property(methodcaller('get', docnum_))
+	score = property(methodcaller('get', score_, 1.0))
+	# stored
+	href = property(methodcaller('get', href_))
+	ntiid = property(methodcaller('get', ntiid_))
+	title = property(methodcaller('get', title_))
+	content = property(methodcaller('get', content_))
+	creator = property(methodcaller('get', creator_))
+	containerId = property(methodcaller('get', containerId_))
+	# alias
+	description = property(methodcaller('get', content))
+
+class NTICard(_SearchableContent):
+
+	def __init__(self, schema=None):
+		schema = schema or wschs.create_nti_card_schema()
+		self._schema = schema
+
+	def get_objects_from_whoosh_hits(self, search_hits):
+		result = []
+		for hit in search_hits:
+			docnum = hit.docnum
+			score = hit.score or 1.0
+			data = _NTICardContent(
+							score=score,
+							docnum=docnum,
+							href=hit[href_],
+							ntiid=hit[ntiid_],
+							title=hit[title_],
+							content=hit[content_],
+							creator=hit[creator_],
+					 		containerId=hit[containerId_])
 			result.append((data, score))
 		return result
 
