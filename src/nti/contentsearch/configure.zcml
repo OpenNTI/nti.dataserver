@@ -48,7 +48,11 @@
 	<adapter factory="._search_hits._WhooshVideoTranscriptSearchHit"
 			 for=".interfaces.IWhooshVideoTranscriptContent"
 			 provides=".interfaces.IWhooshVideoTranscriptSearchHit" />
-			 
+	
+	<adapter factory="._search_hits._WhooshNTICardSearchHit"
+			 for=".interfaces.IWhooshNTICardContent"
+			 provides=".interfaces.IWhooshNTICardSearchHit" />
+			 		 
 	<adapter factory="._search_external._SearchHitExternalizer" />
 
 	<utility factory="._search_hits._ScoreSearchHitComparator" name="score" />

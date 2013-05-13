@@ -35,7 +35,7 @@ from . import _discriminators as discriminators
 from .constants import (last_modified_, content_, title_, ntiid_, containerId_, videoId_, start_timestamp_, end_timestamp_)
 from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, SNIPPET, HIT, ID, CONTENT, SCORE, OID,
 						POST, MIME_TYPE, VIDEO_ID, BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT, VIDEO_TRANSCRIPT_MIME_TYPE,
-					 	START_TIMESTAMP, END_TIMESTAMP)
+					 	START_TIMESTAMP, END_TIMESTAMP, NTI_CARD, NTI_CARD_MIME_TYPE, TITLE)
 
 def get_hit_id(obj):
 	if nti_interfaces.IModeledContent.providedBy(obj):
@@ -211,6 +211,27 @@ class _WhooshVideoTranscriptSearchHit(_BaseSearchHit):
 	def get_oid(cls, hit):
 		tpl = (hit[containerId_], u'-', hit[videoId_])
 		return unicode(''.join(tpl))
+
+@component.adapter(search_interfaces.IWhooshNTICardContent)
+@interface.implementer(search_interfaces.IWhooshNTICardSearchHit)
+class _WhooshNTICardSearchHit(_BaseSearchHit):
+
+	def __init__(self, hit):
+		super(_WhooshNTICardSearchHit, self).__init__(hit, self.get_oid(hit))
+
+	def set_hit_info(self, hit, score):
+		super(_WhooshBookSearchHit, self).set_hit_info(hit, score)
+		self[TYPE] = NTI_CARD
+		self[NTIID] = hit[ntiid_]
+		self[TITLE] = hit[title_]
+		self[SNIPPET] = hit[content_]
+		self[MIME_TYPE] = NTI_CARD_MIME_TYPE
+		self[CONTAINER_ID] = hit[containerId_]
+		self[LAST_MODIFIED] = hit[last_modified_]
+
+	@classmethod
+	def get_oid(cls, hit):
+		return unicode(hit[ntiid_])
 
 def get_search_hit(obj, score=1.0, query=None):
 	hit = search_interfaces.ISearchHit(obj, None) or _SearchHit(obj)
