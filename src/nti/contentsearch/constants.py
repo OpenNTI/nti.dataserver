@@ -121,6 +121,7 @@ videotranscript_ = u'videotranscript'
 invalid_type_ = u'++++invalidtype++++'
 
 POST_MIME_TYPE = u'application/vnd.nextthought.forums.post'
+NTI_CARD_MIME_TYPE = u'application/vnd.nextthought.nticard'
 BOOK_CONTENT_MIME_TYPE = u'application/vnd.nextthought.bookcontent'
 VIDEO_TRANSCRIPT_MIME_TYPE = u'application/vnd.nextthought.videotranscript'
 
