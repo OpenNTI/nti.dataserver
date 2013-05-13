@@ -190,7 +190,7 @@ setup(
 		'html5lib == 0.95',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
 		'logilab-common >= 0.59.1',
-		'lxml >= 3.2.0',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
+		'lxml >= 3.2.1',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.7',  # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
@@ -373,7 +373,7 @@ setup(
 			# 'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			'dblatex >= 0.3.4',  # content rendering, convert docbook to tex
 			'epydoc >= 3.0.1',  # auto-api docs
-			'httpie >= 0.5.0',  # 0.4.0 explicitly requires requests > 1.0.4, 0.3.1 explicitly requires requests < 1.0
+			'httpie >= 0.5.1',  # 0.4.0 explicitly requires requests > 1.0.4, 0.3.1 explicitly requires requests < 1.0
 			'ipython >= 0.13.2',  # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
 			'pip >= 1.3.1',
