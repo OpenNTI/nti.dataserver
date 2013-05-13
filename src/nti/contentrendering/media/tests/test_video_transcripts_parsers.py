@@ -17,7 +17,7 @@ from .. import interfaces as media_interfaces
 
 from . import ConfiguringTestBase
 
-from hamcrest import assert_that, has_length, is_not, none
+from hamcrest import (assert_that, has_length, is_not, none, is_)
 
 class TestVideoTranscriptParser(ConfiguringTestBase):
 
@@ -30,6 +30,9 @@ class TestVideoTranscriptParser(ConfiguringTestBase):
 		assert_that(str(transcript), is_not(none()))
 		assert_that(repr(transcript), is_not(none()))
 		assert_that(transcript, has_length(167))
+		for e in transcript:
+			assert_that(e, is_not(none()))
+			assert_that(e.transcript, is_not(none()))
 
 	def test_sbv_parser(self):
 		path = os.path.join(os.path.dirname(__file__), 'nextthought_captions_002_000.sbv')
@@ -40,3 +43,16 @@ class TestVideoTranscriptParser(ConfiguringTestBase):
 		assert_that(transcript, has_length(78))
 		for e in transcript:
 			assert_that(e, is_not(none()))
+			assert_that(e.transcript, is_not(none()))
+
+	def test_webvtt_parser(self):
+		path = os.path.join(os.path.dirname(__file__), 'sample_web.vtt')
+		parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name="vtt")
+		with open(path, "rt") as source:
+			transcript = parser.parse(source)
+		assert_that(transcript, is_not(none()))
+		assert_that(transcript, has_length(6))
+		for e in transcript:
+			assert_that(e, is_not(none()))
+			assert_that(e.transcript, is_not(none()))
+		assert_that(e.transcript, is_('Peter Griffin'))

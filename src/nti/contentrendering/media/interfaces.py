@@ -46,3 +46,6 @@ class ISRTVideoTranscriptParser(IVideoTranscriptParser):
 
 class ISBVVideoTranscriptParser(IVideoTranscriptParser):
 	pass
+
+class IWebVttTranscriptParser(IVideoTranscriptParser):
+	pass

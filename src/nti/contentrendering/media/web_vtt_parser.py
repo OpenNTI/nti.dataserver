@@ -16,6 +16,10 @@ from cStringIO import StringIO
 
 class Cue(object):
 
+	has_errors = False
+	end_timestamp = None
+	start_timestamp = None
+
 	def __init__(self, id_=u"", text=u"", tree=None, start_time=0, end_time=0, size=0, pause_on_exit=False,
 				 direction=u"horizontal", snap_to_lines=True, line_position=u"auto", text_position=0, alignment=u"middle"):
 
@@ -31,6 +35,12 @@ class Cue(object):
 		self.snap_to_lines = snap_to_lines
 		self.line_position = line_position
 		self.text_position = text_position
+
+	def __str__(self):
+		return self.text
+
+	def __repr__(self):
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.start_timestamp, self.end_timestamp, self.text)
 
 # ----------------------------------
 
@@ -127,7 +137,15 @@ class _WebVTTCueTimingsAndSettingsParser():
 			self.err("You cannot have more than 59 seconds.")
 			return None
 
-		return int(val1, 10) * 60 * 60 + int(val2, 10) * 60 + int(val3, 10) + int(val4, 10) / 1000
+		val1 = int(val1, 10)
+		val2 = int(val2, 10)
+		val3 = int(val3, 10)
+		val4 = int(val4, 10)
+
+		# hh:mm::ss.uuu
+		tstamp = '%02d:%02d:%02d.%03d' % (val1, val2, val3, val4)
+		result = val1 * 60 * 60 + val2 * 60 + val3 + val4 / 1000
+		return (result, tstamp)
 
 	def parse_settings(self, data, cue):
 		"""
@@ -208,9 +226,11 @@ class _WebVTTCueTimingsAndSettingsParser():
 
 	def parse(self, cue, previous_cue_start):
 		self.skip(self.SPACE)
-		cue.start_time = self.timestamp()
-		if cue.start_time is None:
+		trecord = self.timestamp()
+		if trecord is None:
 			return None
+		cue.start_time = trecord[0]
+		cue.start_timestamp = trecord[1]
 
 		if cue.start_time < previous_cue_start:
 			self.err("Start timestamp is not greater than or equal to start timestamp of previous cue.")
@@ -240,9 +260,11 @@ class _WebVTTCueTimingsAndSettingsParser():
 			self.err("'-->' not separated from timestamp by whitespace.")
 
 		self.skip(self.SPACE)
-		cue.end_time = self.timestamp()
-		if cue.end_time is None:
+		trecord = self.timestamp()
+		if trecord is None:
 			return None
+		cue.end_time = trecord[0]
+		cue.end_timestamp = trecord[1]
 
 		if cue.end_time <= cue.start_time:
 			self.err("End timestamp is not greater than start timestamp.")
@@ -470,8 +492,6 @@ class _WebVTTCueTextParser(object):
 
 class WebVTTParser(object):
 
-	NEWLINE = r'[\r\n|\r|\n]'
-
 	def parse(self, source):
 
 		cues = []
@@ -484,7 +504,7 @@ class WebVTTParser(object):
 
 		already_collected = False
 		source = StringIO(source) if isinstance(source, six.string_types) else source
-		lines = [x.lstrip() for x in re.split(self.NEWLINE, source.read())]
+		lines = [re.sub('\r', '', x.lstrip()) for x in re.split('\n', source.read())]
 
 		# SIGNATURE
 		if 	len(lines[linepos]) < 6 or lines[linepos].index("WEBVTT") != 0 or \
@@ -503,6 +523,8 @@ class WebVTTParser(object):
 
 		# CUE LOOP
 		while linepos < len(lines):
+
+			cnt = len(errors)
 
 			# skip empty lines
 			while linepos < len(lines) and not already_collected and lines[linepos] == "":
@@ -559,6 +581,7 @@ class WebVTTParser(object):
 			cue_text_parser = _WebVTTCueTextParser(cue.text, err)
 			cue.tree = cue_text_parser.parse(cue.start_time, cue.end_time)
 			cues.append(cue)
+			cue.has_errors = len(errors) > cnt
 
 		# SORT Cues
 		def cue_sort(a, b):
@@ -575,24 +598,3 @@ class WebVTTParser(object):
 
 		result = {'cues':cues, 'errors':errors, 'time':time.time() - start_time}
 		return result
-
-if __name__ == '__main__':
-	s = """WEBVTT
-
-00:11.000 --> 00:13.000 vertical:rl
-<v Roger Bingham>We are in New York City
-
-00:13.000 --> 00:16.000
-<v Roger Bingham>We're actually at the Lucern Hotel, just down the street
-
-00:16.000 --> 00:18.000
-<v Roger Bingham>from the American Museum of Natural History
-
-00:18.000 --> 00:20.000
-<v Roger Bingham>And with me is Neil deGrasse Tyson
-
-00:20.000 --> 00:22.000
-<v Roger Bingham>Astrophysicist, Director of the Hayden Planetarium
-"""
-	parser = WebVTTParser()
-	parser.parse(s)
