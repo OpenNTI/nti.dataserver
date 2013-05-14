@@ -30,7 +30,7 @@ from .constants import (channel_, content_, keywords_, references_, sharedWith_,
 						ntiid_, last_modified_, videoId_, creator_, containerId_,
 						replacementContent_, redactionExplanation_, tags_, intid_,
 					 	title_, quick_, end_timestamp_, start_timestamp_, docnum_,
-					 	target_ntiid_, score_)
+					 	href_, target_ntiid_, score_)
 
 class _SearchableContent(object):
 	_schema = None
@@ -176,6 +176,7 @@ class _NTICardContent(dict):
 	docnum = property(methodcaller('get', docnum_))
 	score = property(methodcaller('get', score_, 1.0))
 	# stored
+	href = property(methodcaller('get', href_))
 	ntiid = property(methodcaller('get', ntiid_))
 	title = property(methodcaller('get', title_))
 	content = property(methodcaller('get', content_))
@@ -199,6 +200,7 @@ class NTICard(_SearchableContent):
 			data = _NTICardContent(
 							score=score,
 							docnum=docnum,
+							href=hit[href_],
 							ntiid=hit[ntiid_],
 							title=hit[title_],
 							content=hit[content_],

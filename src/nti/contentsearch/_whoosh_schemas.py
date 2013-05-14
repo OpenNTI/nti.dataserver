@@ -205,6 +205,7 @@ def create_nti_card_schema():
 					 	content=create_content_field(stored=True),
 					 	quick=create_ngram_field(),
 					 	creator=fields.ID(stored=True),
+					 	href=fields.ID(stored=True),
 					 	target_ntiid=fields.ID(stored=True),
 					 	last_modified=fields.DATETIME(stored=True))
 	return sch
