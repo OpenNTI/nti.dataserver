@@ -249,6 +249,7 @@ class _CallableComparator(object):
 	def __call__(self, a, b):
 		return self.compare(a, b)
 
+
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _ScoreSearchHitComparator(_CallableComparator):
 
@@ -263,6 +264,16 @@ class _ScoreSearchHitComparator(_CallableComparator):
 		b_score = cls.get_score(b)
 		result = cmp(b_score, a_score)
 		return result
+
+	@classmethod
+	def get_type_name(cls, item):
+		if search_interfaces.ISearchHit.providedBy(item):
+			result = item.get(CLASS, u'')
+		elif search_interfaces.IBaseHit.providedBy(item):
+			result = get_type_name(item.obj)
+		else:
+			result = u''
+		return result or u''
 
 	@classmethod
 	def compare(cls, a, b):
@@ -293,6 +304,25 @@ class _LastModifiedSearchHitComparator(_CallableComparator):
 	def compare(cls, a, b):
 		return cls.compare_lm(a, b)
 
+@interface.implementer(search_interfaces.ISearchHitComparator)
+class _TypeSearchHitComparator(_ScoreSearchHitComparator, _LastModifiedSearchHitComparator):
+
+	@classmethod
+	def compare_type(cls, a, b):
+		a_order = get_sort_order(cls.get_type_name(a))
+		b_order = get_sort_order(cls.get_type_name(b))
+		result = cmp(a_order, b_order)
+		return result
+
+	@classmethod
+	def compare(cls, a, b):
+		result = cls.compare_type(a, b)
+		if result == 0:
+			result = cls.compare_lm(a, b)
+		if result == 0:
+			result = cls.compare_score(a, b)
+		return result
+
 @repoze.lru.lru_cache(300)
 def path_intersection(x, y):
 	result = []
@@ -305,7 +335,7 @@ def path_intersection(x, y):
 	return tuple(result)
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
-class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
+class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 
 	@classmethod
 	def score_path(cls, reference, p):
@@ -340,16 +370,6 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 		return result
 
 	@classmethod
-	def get_type_name(cls, item):
-		if search_interfaces.ISearchHit.providedBy(item):
-			result = item.get(CLASS, u'')
-		elif search_interfaces.IBaseHit.providedBy(item):
-			result = get_type_name(item.obj)
-		else:
-			result = u''
-		return result or u''
-
-	@classmethod
 	def get_containerId(cls, item):
 		if search_interfaces.ISearchHit.providedBy(item):
 			result = item.get(NTIID, None)
@@ -371,9 +391,8 @@ class _RelevanceSearchHitComparator(_ScoreSearchHitComparator):
 		result = cmp(b_score_path, a_score_path)
 
 		# compare types.
-		a_type = get_sort_order(cls.get_type_name(a))
-		b_type = get_sort_order(cls.get_type_name(b))
-		result = cmp(a_type, b_type) if result == 0 else result
+		if result == 0:
+			result = cls.compare_type(a, b)
 
 		# compare scores. Score comparation at the moment only make sense within the same types
 		# when we go to a unified index this we no longer need to compare the types
