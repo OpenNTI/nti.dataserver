@@ -51,19 +51,20 @@ class _MockRenderedBook(object):
 class TestNTICard(unittest.TestCase):
 
 	def _do_test_render( self, label, ntiid, filename='index.html', input_encoding=None, caption=r'\caption{Unknown}', caption_html=None,
-						 options='[href=/foo/bar,creator=biz baz]',
+						 href='[/foo/bar]',
+						 options='[creator=biz baz]',
 						 image=r'\includegraphics[width=100px]{test.png}',
 						 content='',
 						 do_images=True):
 
 		example = br"""
-		\begin{nticard}%(options)s
+		\begin{nticard}%(href)s%(options)s
 		%(label)s
 		%(caption)s
 		%(image)s
 		%(content)s
 		\end{nticard}
-		""" % {'label': label, 'caption': caption, 'options': options, 'image': image, 'content': content }
+		""" % {'label': label, 'caption': caption, 'href': href, 'options': options, 'image': image, 'content': content }
 		__traceback_info__ = example
 		with RenderContext(_simpleLatexDocument( (example,) ), output_encoding='utf-8', input_encoding=input_encoding,
 						   files=(os.path.join( os.path.dirname(__file__ ), 'test.png' ),),
@@ -102,6 +103,18 @@ class TestNTICard(unittest.TestCase):
 
 	def test_render_counter(self):
 		self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1' )
+
+	def test_computed_target_ntiid(self):
+		index = self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1' )
+		assert_that( index, contains_string( 'data-target_ntiid="tag:nextthought.com,2011-10:NTI-UUID-1df481b1ec67d4d8bec721f521d4937d"' ) )
+
+	def test_actual_target_ntiid(self):
+		from nti.ntiids.ntiids import make_ntiid
+		target_ntiid = make_ntiid( provider='OU', nttype='HTML', specific='abc' )
+		index = self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1',
+									  href='[%s]' % target_ntiid )
+		assert_that( index, contains_string( 'data-target_ntiid="%s"' % target_ntiid ) )
+		assert_that( index, contains_string( 'data-creator="biz baz"') )
 
 	def test_render_caption_as_title(self):
 		self._do_test_render( r'\label{testcard}', 'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.testcard',

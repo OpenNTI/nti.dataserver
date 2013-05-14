@@ -35,7 +35,8 @@ ROOT = "tag:nextthought.com,2011-10:Root"
 #: sense). Instead, it points to an object by identity.
 TYPE_OID = 'OID'
 
-#: Currenly unused
+#: Meant to specify some sort of unique but otherwise
+#: meaningless local portion. (Not necessarily an actual GUID).
 TYPE_UUID = 'UUID'
 
 #: The intid type is not currently used. Instead,

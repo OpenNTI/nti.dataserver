@@ -95,8 +95,10 @@ name: nticard
 		data-type="summary"
 		data-title="The Short Title"
 		data-creator=""
+		data-target_ntiid="tag:target-ntiid"
 		data-href="/path/to/resource.pdf"
 		tal:attributes="data-ntiid self/ntiid;
+						data-target_ntiid self/target_ntiid | nothing;
 						data-type self/type | default;
 						data-title self/title;
 						data-creator self/creator | nothing;
@@ -107,7 +109,7 @@ name: nticard
 	<param name="title" value="The Short Title" tal:attributes="value self/title" />
 	<param name="creator" value="Joe Smith"      tal:attributes="value self/creator | nothing" />
 	<param name="href"    value="/path/to/resource.pdf" tal:attributes="value self/href" />
-
+	<param name="target_ntiid" value="tag:target-ntiid" tal:attributes="value self/target_ntiid" />
 	<span class="description" tal:content="self/description" tal:condition="self/description">
 			The description of the target.
 	</span>

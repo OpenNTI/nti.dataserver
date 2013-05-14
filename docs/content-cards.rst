@@ -60,6 +60,12 @@ has the following form:
 		optional string image;
 		optional int image_width;
 		optional int image_height;
+
+		// An NTIID for the actul target. If the target is hosted
+		// content, this will be the same as the href. If the target
+		// is external content, this may be derived. In either case,
+		// it can be used as a containerId.
+		optional string target_ntiid;
 	}
 
 The HTML for a card in authored content will have the following form
@@ -71,12 +77,14 @@ keep the browser from doing things with it):
 	<object type="application/vnd.nextthought.nticard"
 			class="nticard"
 			data-ntiid="tag:card-ntiid"
+			data-target_ntiid="tag:target-ntiid"
 			data-type="summary"
 			data-title="The Short Title"
 			data-creator="Joe Smith"
 			data-href="/path/to/resource.pdf">
 		<!-- The data parameters are repeated -->
 		<param name="ntiid" value="tag:card-ntiid" />
+		<param name="target_ntiid" value="tag:target-ntiid" />
 		<param name="type" value="summary" />
 		<param name="title" value="The Short Title" />
 		<param name="creator" value="Joe Smith" />
@@ -97,7 +105,7 @@ produce the above HTML, one would write:
 
 .. code-block:: latex
 
-	\begin{nticard}[href=/path/to/resource.pdf,creator=Joe Smith]
+	\begin{nticard}[/path/to/resource.pdf][creator=Joe Smith]
 		\label{testcard} % If the label is given, it is the part of NTIID
 		\caption{The Short Title} % The caption becomes the title
 		\includegraphics[width=120px,height=140]{/path/to/image.png}
