@@ -1,92 +1,74 @@
-import os, cPickle
-import xml.sax
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Dictionary generation
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+import os
 import sys
 import gzip
+import cPickle
+import xml.sax
 from xml.sax.handler import ContentHandler
+
 # The pywikipedia dist has both a wiktionary package and a wiktionary module
 # one seems to be a duplicate of the other, not sure which is canonical
 # When installed with distutils, only the wiktionary module gets compiled and packaged
 # which means this is a class, not a sub-module. It's weird.
 from pywikipedia.wiktionary import WiktionaryPage
 
-def main(args):
-	action = args.pop(0)
+# def createDictionary(wikidumpname, destname):
+# 	#Keep an index of word to location in the file
+# 	index={}
+# 	dictionary=gzip.open(destname, 'wb')
 
-	location = args.pop(0)
+# 	parser=xml.sax.make_parser()
+# 	parser.setContentHandler(WiktionaryDumpHandler(index, dictionary))
+# 	dump=open(wikidumpname)
+# 	parser.parse(dump)
+# 	dump.close()
+# 	dictionary.close()
+# 	path, ext=os.path.splitext(destname)
+# 	indexLocation=path+'.index'
+# 	indexFile=gzip.open(indexLocation, 'wb')
+# 	cPickle.dump(index, indexFile)
+# 	indexFile.close()
 
-	wiki = Wiktionary(location)
+# import time
 
-	if action == 'generate':
-		wiki.generateDictionary(args.pop(0))
+# def lookup(dicname, term):
+# 	start = time.time()
+# 	indexFile=gzip.open(dicname+'.index','rb')
+# 	index=cPickle.load(indexFile)
+# 	indexFile.close()
 
-	if action == 'lookup':
-		res = wiki.lookupWord(args.pop(0))
-		if not res:
-			print 'Not found'
-		else:
-			print res.entries['en'].getMeanings()
+# 	end=time.time()
+# 	print('Took %s seconds to load the index' % (end-start))
 
-## def createDictionary(wikidumpname, destname):
+# 	start=time.time()
+# 	if term not in index:
+# 		return None
 
+# 	print('Checking at location %s'%index[term])
 
-## 	#Keep an index of word to location in the file
-## 	index={}
+# 	dictionary=gzip.open(dicname+'.bin', 'rb')
+# 	dictionary.seek(index[term])
 
-## 	dictionary=gzip.open(destname, 'wb')
+# 	res= cPickle.load(dictionary)
+# 	dictionary.close()
+# 	end=time.time()
 
-## 	parser=xml.sax.make_parser()
-## 	parser.setContentHandler(WiktionaryDumpHandler(index, dictionary))
-## 	dump=open(wikidumpname)
-## 	parser.parse(dump)
-## 	dump.close()
-
-## 	dictionary.close()
-
-## 	path, ext=os.path.splitext(destname)
-
-## 	indexLocation=path+'.index'
-
-## 	indexFile=gzip.open(indexLocation, 'wb')
-
-## 	cPickle.dump(index, indexFile)
-
-## 	indexFile.close()
-
-## import time
-
-
-
-## def lookup(dicname, term):
-## 	start = time.time()
-## 	indexFile=gzip.open(dicname+'.index','rb')
-## 	index=cPickle.load(indexFile)
-## 	indexFile.close()
-
-## 	end=time.time()
-
-## 	print 'Took %s seconds to load the index' % (end-start)
-
-## 	start=time.time()
-## 	if term not in index:
-## 		return None
-
-## 	print 'Checking at location %s'%index[term]
-
-## 	dictionary=gzip.open(dicname+'.bin', 'rb')
-## 	dictionary.seek(index[term])
-
-## 	res= cPickle.load(dictionary)
-## 	dictionary.close()
-## 	end=time.time()
-
-## 	print 'Took %s seconds to lookup the entry' % (end-start)
-## 	return res
-
+# 	print('Took %s seconds to lookup the entry' % (end-start))
+# 	return res
 
 class Wiktionary(object):
 
-	indexName = 'dictionary.index.gz'
 	dictName = 'dictionary.bin.gz'
+	indexName = 'dictionary.index.gz'
 
 	index = {}
 	dictFile = None
@@ -95,7 +77,6 @@ class Wiktionary(object):
 		self.location = location
 		self.__loadDict()
 
-
 	def __loadDict(self):
 
 		indexPath = os.path.join(self.location, self.indexName)
@@ -103,7 +84,7 @@ class Wiktionary(object):
 		if not os.path.exists(indexPath):
 			return
 
-		indexFile = gzip.open(os.path.join(self.location, self.indexName),'rb')
+		indexFile = gzip.open(os.path.join(self.location, self.indexName), 'rb')
 		self.index = cPickle.load(indexFile)
 		indexFile.close()
 
@@ -114,8 +95,6 @@ class Wiktionary(object):
 		else:
 			self.indexFile = {}
 			self.dictFile = None
-
-
 
 	def generateDictionary(self, wiktionaryDump):
 		if not os.path.isdir(self.location):
@@ -130,15 +109,10 @@ class Wiktionary(object):
 		dump.close()
 
 		dict_file.close()
-
-		indexFile = gzip.open(os.path.join(self.location,self.indexName), 'wb')
-
+		indexFile = gzip.open(os.path.join(self.location, self.indexName), 'wb')
 		cPickle.dump(self.index, indexFile)
-
 		indexFile.close()
-
 		self.__loadDict()
-
 
 	def lookupWord(self, term):
 		if term not in self.index:
@@ -152,11 +126,10 @@ class Wiktionary(object):
 
 		return res
 
-
 class WiktionaryDumpHandler(ContentHandler):
 
 	def __init__(self, index, dictionary):
-		ContentHandler.__init__( self ) # Not a new-style class :(
+		ContentHandler.__init__(self)  # Not a new-style class :(
 		self.index = index
 		self.dictionary = dictionary
 
@@ -177,7 +150,7 @@ class WiktionaryDumpHandler(ContentHandler):
 		if localname == self.pageLabel:
 			self.insidePage = True
 			self.page = self.page + 1
-			print 'Found page %d' % self.page
+			print('Found page %d' % self.page)
 		elif localname == self.nameLabel:
 			self.insideName = True
 			self.name = ''
@@ -190,19 +163,20 @@ class WiktionaryDumpHandler(ContentHandler):
 			self.insidePage = False
 		elif localname == self.nameLabel:
 			self.insideName = False
-			#In the event that its not a word (based on the title) set that we are out of the page so we don't collect wikimarkup
-			if self.name.find(':')>-1:
+			# In the event that its not a word (based on the title) set that we are out of the
+			# page so we don't collect wikimarkup
+			if self.name.find(':') > -1:
 				self.name = ''
 				self.insidePage = False
 		elif self.insidePage and localname == self.markupLabel:
 			self.insideMarkup = False
 			self.persistEntry(self.name, self.markup)
 
-	def persistEntry(self,title, text):
+	def persistEntry(self, title, text):
 		if text.lower().find('==english==') < 0:
 			return
 		loc = self.dictionary.tell()
-		#cPickle.dump(text, self.dictionary)
+		# cPickle.dump(text, self.dictionary)
 		page = WiktionaryPage('en', title)
 		page.parseWikiPage(text)
 		cPickle.dump(page, self.dictionary)
@@ -210,17 +184,24 @@ class WiktionaryDumpHandler(ContentHandler):
 
 	def characters(self, data):
 		if self.insidePage and self.insideName:
-			self.name = self.name+data
+			self.name = self.name + data
 		elif self.insidePage and self.insideMarkup:
-			self.markup = self.markup+data
+			self.markup = self.markup + data
 
+def main(args):
+	action = args.pop(0)
+	location = args.pop(0)
+	wiki = Wiktionary(location)
 
+	if action == 'generate':
+		wiki.generateDictionary(args.pop(0))
 
+	if action == 'lookup':
+		res = wiki.lookupWord(args.pop(0))
+		if not res:
+			print ('Not found')
+		else:
+			print (res.entries['en'].getMeanings())
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
-
-
-
-
-
