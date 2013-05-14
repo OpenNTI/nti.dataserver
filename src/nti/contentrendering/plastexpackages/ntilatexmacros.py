@@ -304,7 +304,11 @@ class nticardname(Base.Command):
 
 class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	"Implementation of the Card environment"
-	args = '[href:str] [options:dict]'
+	args = '[href:str] <options:dict>'
+	# Note the options dict is in <>, and uses the default comma separator, which means
+	# values cannot have commas (that's why href, which may be an NTIID is its own argument).
+	# See also ntiassessment.naqsolution.
+
 	# A Float subclass to get \caption handling
 	class caption(Base.Floats.Caption):
 		counter = 'figure'
