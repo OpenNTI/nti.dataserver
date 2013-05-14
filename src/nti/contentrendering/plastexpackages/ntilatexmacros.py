@@ -299,6 +299,9 @@ class ntipreviouspage(Base.Command):
 	pass
 
 # Cards
+class nticardname(Base.Command):
+	pass
+
 class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	"Implementation of the Card environment"
 	args = '[options:dict]'
