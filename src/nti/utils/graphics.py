@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Math utilities
+Graphics utilities
 
 $Id$
 """
