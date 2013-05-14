@@ -551,40 +551,18 @@ class _AbstractPublishingView(object):
 
 	@abstractmethod
 	def _do_provide(self, topic):
+		"""This method is responsible for firing any ObjectSharingModifiedEvents needed."""
+		# Which is done by the topic object's publish/unpublish method
 		raise NotImplementedError() # pragma: no cover
 	@abstractmethod
 	def _test_provides(self, topic):
 		raise NotImplementedError() # pragma: no cover
 
-	def _did_modify_topic( self, blog_entry, oldSharingTargets ):
-		"Fire off a modified event when the publication status changes. The event notes the sharing has changed."
-		provides = interface.providedBy( blog_entry )
-		attributes = []
-		for attr_name in 'sharedWith', 'sharingTargets':
-			attr = provides.get( attr_name )
-			if attr:
-				iface_providing = attr.interface
-				attributes.append( lifecycleevent.Attributes( iface_providing, attr_name ) )
-
-		event = ObjectSharingModifiedEvent( blog_entry, *attributes, oldSharingTargets=oldSharingTargets )
-		notify( event )
-		return event
-
 	def __call__(self):
 		request = self.request
 		topic = request.context
 		if self._test_provides( topic ):
-			oldSharingTargets = set(topic.sharingTargets)
-
 			self._do_provide( topic )
-
-			# Ordinarily, we don't need to dispatch to sublocations a change
-			# in the parent (hence why it is not a registered listener).
-			# But here we know that the sharing is propagated automatically
-			# down, so we do.
-			# TODO: Should the object itself do this? Probably...
-			event = self._did_modify_topic( topic, oldSharingTargets )
-			dispatchToSublocations( topic, event )
 
 		request.response.location = request.resource_path( topic )
 		return uncached_in_response( topic )
