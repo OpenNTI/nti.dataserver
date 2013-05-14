@@ -548,6 +548,11 @@ class IBookContentResolver(_ContentMixinResolver):
 class IVideoTranscriptContentResolver(_ContentMixinResolver):
 	pass
 
+class INTICardContentResolver(_ContentMixinResolver, ICreatorResolver):
+
+	def get_title():
+		"""return the card title"""
+
 class IModeledContentResolver(IPostContentResolver,
 							  IMessageInfoContentResolver,
 							  IRedactionContentResolver,

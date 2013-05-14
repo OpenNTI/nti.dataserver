@@ -126,6 +126,10 @@
 			 provides=".interfaces.IVideoTranscriptContentResolver"
 			 for=".interfaces.IVideoTranscriptContent" />
 
+	<adapter factory="._content_utils._NTICardContentResolver"
+			 provides=".interfaces.INTICardContentResolver"
+			 for=".interfaces.INTICardContent" />
+			 
 	<adapter factory="._content_utils._BookContentResolver"
 			 provides=".interfaces.IBookContentResolver"
 			 for=".interfaces.IBookContent" />

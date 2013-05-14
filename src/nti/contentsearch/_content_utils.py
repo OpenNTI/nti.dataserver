@@ -407,6 +407,30 @@ class _VideoTranscriptContentResolver(_BasicContentResolver):
 	def get_last_modified(self):
 		return self.obj.last_modified
 
+@component.adapter(search_interfaces.INTICardContent)
+@interface.implementer(search_interfaces.INTICardContentResolver)
+class _NTICardContentResolver(_BasicContentResolver):
+
+	def get_content(self):
+		return self.obj.content
+	get_description = get_content
+
+	def get_containerId(self):
+		return self.obj.containerId
+
+	def get_title(self):
+		return self.obj.title
+
+	def get_ntiid(self):
+		return self.obj.ntiid
+
+	def get_creator(self):
+		return self.obj.creator
+
+	def get_last_modified(self):
+		return self.obj.last_modified
+
+
 @interface.implementer(search_interfaces.IStopWords)
 class _DefaultStopWords(object):
 
