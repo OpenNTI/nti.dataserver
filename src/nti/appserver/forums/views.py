@@ -396,6 +396,19 @@ class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
 		frm_interfaces.ICommunityForum( request.context.creator, None )
 		super(CommunityBoardContentsGetView,self).__init__( request )
 
+	def _update_last_modified_after_sort(self, objects, result ):
+		# We need to somehow take the modification date of the children
+		# into account since we aren't tracking that directly (it doesn't
+		# propagate upward). TODO: This should be cached somewhere
+		board = objects[0]
+		forumLastMod = max( (x.lastModified for x in board.itervalues()) )
+		lastMod = max(result.lastModified, forumLastMod)
+		result.lastModified = lastMod
+		super(CommunityBoardContentsGetView,self)._update_last_modified_after_sort( objects, result )
+
+
+
+
 @view_config( context=frm_interfaces.IForum )
 @view_config( context=frm_interfaces.ICommunityForum )
 @view_config( context=frm_interfaces.IPersonalBlog )

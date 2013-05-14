@@ -253,7 +253,7 @@ def account_create_view(request):
 	assert new_user.__name__
 
 	request.response.location = request.resource_url( new_user )
-
+	logger.debug( "Notifying of creation of new user %s", new_user )
 	notify( app_interfaces.UserCreatedWithRequestEvent( new_user, request ) )
 	logon_user_with_request( new_user, request, request.response )
 

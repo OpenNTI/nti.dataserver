@@ -31,8 +31,13 @@ try:
 
 	html_theme = 'readability'
 	html_theme_path = [relative_path]
+	html_theme_options = {
+		'readabilitystyle': 'athelas'
+	}
+	pygments_style = 'sphinxtheme.readability_theme_support.ReadabilityStyle'
 except ImportError:
 	html_theme = 'agogo'
+	pygments_style = 'sphinx'
 
 # JAM: repoz.sphinx.autointerface 0.7.1 does not handle cross-refs correctly.
 # A pull request is submitted (https://github.com/repoze/repoze.sphinx.autointerface/pull/3) with a
@@ -131,7 +136,7 @@ add_module_names = True
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+#pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []

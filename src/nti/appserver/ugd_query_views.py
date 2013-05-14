@@ -766,7 +766,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			# object in the comparison
 			sorted_sublists = [sorted(x, key=lambda x: x[0]) for x in sortable_iterables]
 
-		result['Last Modified'] = result.lastModified
+		self._update_last_modified_after_sort( objects, result )
 
 		result['FilteredTotalItemCount'] = sum( (len(x) for x in sorted_sublists) ) # this may be an approximation
 
@@ -847,6 +847,9 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 
 		return result
+
+	def _update_last_modified_after_sort(self, objects, result ):
+		result['Last Modified'] = result.lastModified
 
 class _RecursiveUGDView(_UGDView):
 	"""

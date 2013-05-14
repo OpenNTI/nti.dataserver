@@ -25,6 +25,8 @@ from hamcrest import has_property
 from hamcrest import has_length
 from hamcrest import has_key
 
+from nti.tests import time_monotonically_increases
+
 from zope.component import eventtesting
 from zope.lifecycleevent import IObjectRemovedEvent
 from zope.intid.interfaces import IIntIdRemovedEvent
@@ -341,3 +343,51 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		testapp.put_json( topic_url,
 						  {'sharedWith': ['Everyone']},
 						  status=404 )
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_contents_of_forum_last_modified_changes_when_new_topic_added_published(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = fixture.testapp
+
+		self._POST_and_publish_topic_entry()
+		forum_res = self.testapp.get( self.forum_pretty_url )
+		forum_contents_href = self.require_link_href_with_rel( forum_res.json_body, 'contents' )
+
+		forum_contents_res = self.testapp.get( forum_contents_href )
+		assert_that( forum_contents_res.json_body, has_entry( 'TotalItemCount', 1 ) )
+
+		self._POST_and_publish_topic_entry() # create a second one
+
+		forum_contents_res2 = self.testapp.get( forum_contents_href,
+												headers={b'If-None-Match': forum_contents_res.etag,
+														 b'If-Modified-Since': forum_contents_res.headers['Last-Modified']},
+												status=200)
+
+		assert_that( forum_contents_res2.json_body, has_entry( 'TotalItemCount', 2 ) )
+
+
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_contents_of_board_last_modified_changes_when_new_topic_added_to_forum(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = fixture.testapp
+
+		board_pretty_url = '/dataserver2/users/' + self.default_entityname + '/' + _BOARD_NAME
+
+		self._POST_and_publish_topic_entry()
+		board_res = self.testapp.get( board_pretty_url )
+		board_contents_href = self.require_link_href_with_rel( board_res.json_body, 'contents' )
+
+		board_contents_res = self.testapp.get( board_contents_href )
+		assert_that( board_contents_res.json_body, has_entry( 'TotalItemCount', 1 ) )
+
+		self._POST_and_publish_topic_entry() # create a second one
+
+		board_contents_res2 = self.testapp.get( board_contents_href,
+												headers={b'If-None-Match': board_contents_res.etag,
+														 b'If-Modified-Since': board_contents_res.headers['Last-Modified']},
+												status=200)
+
+		assert_that( board_contents_res2.json_body, has_entry( 'TotalItemCount', 1 ) )
