@@ -168,7 +168,7 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 				raw_content = f.read()
 
 			raw_content = self._get_page_content(raw_content)
-			tokenized_words = content_utils.sanitize_content(raw_content, tokens=True, table=table)
+			tokenized_words = content_utils.sanitize_content(raw_content, table=table, tokens=True)
 			if tokenized_words:
 				result = 1
 				content = ' '.join(tokenized_words)

@@ -16,7 +16,7 @@ from nti.contentprocessing import split_content
 from nti.contentfragments import interfaces as frg_interfaces
 from nti.contentfragments.html import _sanitize_user_html_to_text
 
-def sanitize_content(text, tokens=False, table=None):
+def sanitize_content(text, table=None, tokens=False):
 	"""
 	clean any html from the specified text and then tokenize it
 	
@@ -34,7 +34,7 @@ def sanitize_content(text, tokens=False, table=None):
 	# remove any html (i.e. meta, link) that is not removed
 	text = component.getAdapter(text, frg_interfaces.IPlainTextContentFragment, name='text')
 
-	# tokenize words
+	# translate and tokenize words
 	text = text.translate(table) if table else text
 	tokenized_words = split_content(text)
 	result = tokenized_words if tokens else ' '.join(tokenized_words)
