@@ -76,7 +76,7 @@ from nti.contentrendering.plastexpackages.ntilatexmacros import ntiincludevideo
 from plasTeX import Base
 from plasTeX.Base import Crossref
 
-from ._util import LocalContentMixin as _BaseLocalContentMixin
+from nti.contentrendering.plastexpackages._util import LocalContentMixin as _BaseLocalContentMixin
 
 class _LocalContentMixin(_BaseLocalContentMixin):
 	# SAJ: HACK. Something about naqvideo and _LocalContentMixin? ALl the parts
