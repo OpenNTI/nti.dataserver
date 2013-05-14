@@ -23,8 +23,11 @@ from nti.dataserver import containers
 from nti.dataserver import datastructures
 from nti.dataserver import sharing
 from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
+from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 
 from zope.cachedescriptors.property import Lazy
+from zope import lifecycleevent
+from zope.event import notify
 
 from zope.schema.fieldproperty import FieldProperty
 from nti.utils.schema import AdaptingFieldProperty
@@ -35,6 +38,7 @@ from nti.wref import interfaces as wref_interfaces
 from zope.annotation import interfaces as an_interfaces
 from zope.intid.interfaces import IIntIdAddedEvent
 from zope.container.interfaces import INameChooser
+from zope.container.contained import dispatchToSublocations
 
 from zope.container.contained import ContainerSublocations
 class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
@@ -108,11 +112,49 @@ def _post_added_to_topic( post, event ):
 class HeadlineTopic(Topic):
 	headline = AcquisitionFieldProperty(for_interfaces.IHeadlineTopic['headline'])
 
+	def __did_modify_publication_status( self, oldSharingTargets ):
+		"Fire off a modified event when the publication status changes. The event notes the sharing has changed."
+
+		newSharingTargets = set(self.sharingTargets)
+		if newSharingTargets == oldSharingTargets:
+			# No actual modification happened
+			return
+
+		provides = interface.providedBy( self )
+		attributes = []
+		for attr_name in 'sharedWith', 'sharingTargets':
+			attr = provides.get( attr_name )
+			if attr:
+				iface_providing = attr.interface
+				attributes.append( lifecycleevent.Attributes( iface_providing, attr_name ) )
+
+		event = ObjectSharingModifiedEvent( self, *attributes, oldSharingTargets=oldSharingTargets )
+		notify( event )
+
+		# Ordinarily, we don't need to dispatch to sublocations a change
+		# in the parent (hence why it is not a registered listener).
+		# But here we know that the sharing is propagated automatically
+		# down, so we do.
+		dispatchToSublocations( self, event )
+
 	def publish(self):
+		"""Causes an ObjectSharingModifiedEvent to be fired if sharing changes."""
+		if IDefaultPublished.providedBy( self ):
+			return
+
+		oldSharingTargets = set(self.sharingTargets)
 		interface.alsoProvides( self, IDefaultPublished )
 
+		self.__did_modify_publication_status( oldSharingTargets )
+
 	def unpublish(self):
+		"""Causes an ObjectSharingModifiedEvent to be fired if sharing changes."""
+		if not IDefaultPublished.providedBy( self ):
+			return
+
+		oldSharingTargets = set(self.sharingTargets)
 		interface.noLongerProvides( self, IDefaultPublished )
+		self.__did_modify_publication_status( oldSharingTargets )
 
 @interface.implementer(for_interfaces.IGeneralTopic)
 class GeneralTopic(Topic):
@@ -175,19 +217,28 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 		return result
 
 	def publish(self):
-		super(PersonalBlogEntry,self).publish()
-		# We we publish, we wipe out any sharing data we used to have
-		if '_sharing_storage' in self.__dict__:
-			self._sharing_storage.clearSharingTargets()
 		# By also matching the state of IWritableShared, our
 		# external updater automatically does the right thing and
 		# doesn't even call us
 		if IWritableShared.providedBy( self ):
 			interface.noLongerProvides( self, IWritableShared )
 
+		super(PersonalBlogEntry,self).publish()
+		# NOTE: The order of this is weird. We need to capture
+		# and broadcast the ObjectSharingModifiedEvent with the current
+		# sharing targets /before/ we clear out anything set specifically
+		# on us. This has the side-effect of causing the event listeners
+		# to see an IWritableShared object, so we remove that first
+
+		# When we publish, we wipe out any sharing data we used to have
+		if '_sharing_storage' in self.__dict__:
+			self._sharing_storage.clearSharingTargets()
+
+
 	def unpublish(self):
-		super(PersonalBlogEntry,self).unpublish()
+		# See notes in publish() for why we do this first
 		interface.alsoProvides( self, IWritableShared )
+		super(PersonalBlogEntry,self).unpublish()
 
 	def _forward_not_published(name):
 		def f( self, *args, **kwargs ):
