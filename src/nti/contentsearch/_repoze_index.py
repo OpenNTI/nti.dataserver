@@ -22,7 +22,6 @@ from .textindexng3 import CatalogTextIndexNG3
 from . import _discriminators as discriminators
 
 # repoze discriminator functions. Some of them are simply aliases for legacy purposes
-
 get_ntiid = discriminators.get_ntiid
 get_channel = discriminators.get_channel
 get_creator = discriminators.get_creator
@@ -37,8 +36,9 @@ get_object_content = discriminators.get_object_content
 get_post_title = discriminators.get_post_title_and_ngrams
 get_content_and_ngrams = discriminators.get_content_and_ngrams
 get_replacementContent = discriminators.get_replacement_content_and_ngrams
-get_replacement_content = get_replacementContent
 get_redactionExplanation = discriminators.get_redaction_explanation_and_ngrams
+# alias for bwc
+get_replacement_content = get_replacementContent
 get_redaction_explanation = get_redactionExplanation
 
 def _flatten_list(result, default=None):
