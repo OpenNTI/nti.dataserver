@@ -30,7 +30,7 @@ from .constants import (channel_, content_, keywords_, references_, sharedWith_,
 						ntiid_, last_modified_, videoId_, creator_, containerId_,
 						replacementContent_, redactionExplanation_, tags_, intid_,
 					 	title_, quick_, end_timestamp_, start_timestamp_, docnum_,
-					 	href_, score_)
+					 	target_ntiid_, score_)
 
 class _SearchableContent(object):
 	_schema = None
@@ -176,14 +176,14 @@ class _NTICardContent(dict):
 	docnum = property(methodcaller('get', docnum_))
 	score = property(methodcaller('get', score_, 1.0))
 	# stored
-	href = property(methodcaller('get', href_))
 	ntiid = property(methodcaller('get', ntiid_))
 	title = property(methodcaller('get', title_))
 	content = property(methodcaller('get', content_))
 	creator = property(methodcaller('get', creator_))
 	containerId = property(methodcaller('get', containerId_))
+	target_ntiid = property(methodcaller('get', target_ntiid_))
 	# alias
-	description = property(methodcaller('get', content))
+	description = property(methodcaller('get', content_))
 
 class NTICard(_SearchableContent):
 
@@ -199,12 +199,12 @@ class NTICard(_SearchableContent):
 			data = _NTICardContent(
 							score=score,
 							docnum=docnum,
-							href=hit[href_],
 							ntiid=hit[ntiid_],
 							title=hit[title_],
 							content=hit[content_],
 							creator=hit[creator_],
-					 		containerId=hit[containerId_])
+					 		containerId=hit[containerId_],
+					 		target_ntiid=hit[target_ntiid_])
 			result.append((data, score))
 		return result
 
@@ -334,9 +334,9 @@ class Highlight(ThreadableIndexableContent):
 
 	def get_index_data(self, data):
 		result = super(Highlight, self).get_index_data(data)
-		content = discriminators.get_object_content(data)
-		result[quick_] = content
-		result[content_] = content
+		obj_content = discriminators.get_object_content(data)
+		result[quick_] = obj_content
+		result[content_] = obj_content
 		return result
 
 class Redaction(Highlight):
@@ -377,9 +377,9 @@ class Post(ShareableIndexableContent):
 		result = super(Post, self).get_index_data(data)
 		result[tags_] = get_post_tags(data)
 		result[title_] = discriminators.get_post_title(data)
-		content = discriminators.get_object_content(data)
-		result[quick_] = content
-		result[content_] = content
+		obj_content = discriminators.get_object_content(data)
+		result[quick_] = obj_content
+		result[content_] = obj_content
 		return result
 
 # register indexable objects
