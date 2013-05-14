@@ -51,7 +51,8 @@ class _DefaultSearchQueryValiator(object):
 			if text.startswith('"') and not text.endswith('"'):
 				text += '"'
 				query.term = text
-			EnglishQueryParser.parse(text)
+			if EnglishQueryParser is not None:
+				EnglishQueryParser.parse(text)
 			return True
 		except QueryParserError, e:
 			logger.warn("Error while parsing query '%s'. '%s'" % (text, e))
