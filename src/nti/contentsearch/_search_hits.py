@@ -90,9 +90,9 @@ class _SearchHit(_BaseSearchHit):
 	def set_hit_info(self, original, score):
 		super(_SearchHit, self).set_hit_info(original, score)
 		adapted = component.queryAdapter(original, self.adapter_interface)
+		self[SNIPPET] = self.get_snippet(adapted)
 		self[NTIID] = self.get_field(adapted, 'get_ntiid')
 		self[CREATOR] = self.get_field(adapted, 'get_creator')
-		self[SNIPPET] = self.get_snippet(adapted)
 		self[CONTAINER_ID] = self.get_field(adapted, 'get_containerId')
 		self[LAST_MODIFIED] = self.get_field(adapted, 'get_last_modified', 0)
 		return adapted
@@ -197,9 +197,9 @@ class _WhooshVideoTranscriptSearchHit(_BaseSearchHit):
 		super(_WhooshVideoTranscriptSearchHit, self).__init__(hit, self.get_oid(hit))
 
 	def set_hit_info(self, hit, score):
-		super(_WhooshBookSearchHit, self).set_hit_info(hit, score)
-		self[SNIPPET] = hit[content_]
+		super(_WhooshVideoTranscriptSearchHit, self).set_hit_info(hit, score)
 		self[TYPE] = VIDEO_TRANSCRIPT
+		self[SNIPPET] = hit[content_]
 		self[VIDEO_ID] = hit[videoId_]
 		self[CONTAINER_ID] = hit[containerId_]
 		self[LAST_MODIFIED] = hit[last_modified_]
@@ -220,7 +220,7 @@ class _WhooshNTICardSearchHit(_BaseSearchHit):
 		super(_WhooshNTICardSearchHit, self).__init__(hit, self.get_oid(hit))
 
 	def set_hit_info(self, hit, score):
-		super(_WhooshBookSearchHit, self).set_hit_info(hit, score)
+		super(_WhooshNTICardSearchHit, self).set_hit_info(hit, score)
 		self[TYPE] = NTI_CARD
 		self[NTIID] = hit[ntiid_]
 		self[TITLE] = hit[title_]
