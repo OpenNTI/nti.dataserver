@@ -421,6 +421,12 @@ class _NTICardContentResolver(_BasicContentResolver):
 	def get_title(self):
 		return self.obj.title
 
+	def get_href(self):
+		return self.obj.href
+
+	def get_target_ntiid(self):
+		return self.obj.target_ntiid
+
 	def get_ntiid(self):
 		return self.obj.ntiid
 

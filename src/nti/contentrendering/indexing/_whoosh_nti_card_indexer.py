@@ -35,9 +35,9 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 			content = node_utils.get_node_content(node)
 			result = {'ntiid': node_utils.get_attribute(node, 'data-ntiid')}
 			result['type'] = node_utils.get_attribute(node, 'data-type')
+			result['href'] = node_utils.get_attribute(node, 'data-href')
 			result['title'] = node_utils.get_attribute(node, 'data-title')
 			result['creator'] = node_utils.get_attribute(node, 'data-creator')
-			result['target_ntiid'] = node_utils.get_attribute(node, 'data-href')
 			for obj in node.iterchildren():
 				if obj.tag == 'span' and node_utils.get_attribute(obj, 'class') == 'description':
 					content = node_utils.get_node_content(obj)
@@ -57,6 +57,7 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 	def index_card_entry(self, writer, containerId, info, language=u'en'):
 		try:
 			table = get_content_translation_table(language)
+			href = info.get('href')
 			ntiid = info.get('ntiid')
 			target_ntiid = info.get('target_ntiid')
 			type_ = self._sanitize(table, info.get('type'))
@@ -66,6 +67,7 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 			last_modified = datetime.fromtimestamp(time.time())
 			writer.add_document(containerId=containerId,
 								type=type_,
+								href=href,
 								ntiid=ntiid,
 								title=title,
 								creator=creator,
