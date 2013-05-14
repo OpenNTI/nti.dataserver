@@ -52,7 +52,7 @@ class TestNTICard(unittest.TestCase):
 
 	def _do_test_render( self, label, ntiid, filename='index.html', input_encoding=None, caption=r'\caption{Unknown}', caption_html=None,
 						 href='[/foo/bar]',
-						 options='[creator=biz baz]',
+						 options='<creator=biz baz>',
 						 image=r'\includegraphics[width=100px]{test.png}',
 						 content='',
 						 do_images=True):
