@@ -24,15 +24,15 @@ class _DefaultKeyWordFilter(object):
 		result = result and len(word) > 1
 		return result
 
-def extract_key_words(tokenized_words, max_words=10):
+def extract_key_words(tokenized_words, max_words=10, filtername='indexer'):
 	"""
 	extract key words for the specified list of tokens
 	
 	:param tokenized_words: List of tokens (words)
 	:param max_words: Max number of words to return
 	"""
-	records = term_extract_key_words(tokenized_words, "indexer")
 	keywords = []
+	records = term_extract_key_words(tokenized_words, filtername)
 	for r in records[:max_words]:
 		word = r.token
 		terms = getattr(r, 'terms', ())
