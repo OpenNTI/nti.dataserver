@@ -25,14 +25,16 @@ from nti.externalization import interfaces as ext_intefaces
 
 from . import interfaces as search_interfaces
 
-from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE, VIDEO_TRANSCRIPT_MIME_TYPE)
+from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE, VIDEO_TRANSCRIPT_MIME_TYPE,
+						NTI_CARD_MIME_TYPE)
 from .constants import (content_, post_, note_, highlight_, redaction_, indexable_types_order, indexable_type_names,
-						transcript_, messageinfo_, nti_mimetype_prefix, videotranscript_)
+						transcript_, messageinfo_, nti_mimetype_prefix, videotranscript_, nticard_)
 
 # Make sure we keep this order, especially since we need to test first for INote before IHighlight
 interface_to_indexable_types = (
 	(search_interfaces.IBookContent, content_),
 	(search_interfaces.IVideoTranscriptContent, videotranscript_),
+	(search_interfaces.INTICardContent, nticard_),
 	(nti_interfaces.INote, note_),
 	(nti_interfaces.IHighlight, highlight_),
 	(nti_interfaces.IRedaction, redaction_),
@@ -46,8 +48,7 @@ def epoch_time(dt):
 		seconds = mktime(dt.timetuple())
 		seconds += (dt.microsecond / 1000000.0)
 		return seconds
-	else:
-		return 0
+	return 0
 
 def videotimestamp_to_text(dt):
 	if isinstance(dt, six.string_types):
@@ -118,6 +119,7 @@ def get_mime_type_map():
 					break
 		if mime_type_map:
 			mime_type_map[POST_MIME_TYPE] = post_
+			mime_type_map[NTI_CARD_MIME_TYPE] = nticard_
 			mime_type_map[BOOK_CONTENT_MIME_TYPE] = content_
 			mime_type_map[VIDEO_TRANSCRIPT_MIME_TYPE] = videotranscript_
 
