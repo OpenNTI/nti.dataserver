@@ -397,10 +397,10 @@ class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IReadMapping):
 
 class INTICardContent(interface.Interface):
 	docnum = schema.Int(title="Document number", required=False)
-	href = nti_schema.ValidTextLine(title="card href", required=False)
 	ntiid = nti_schema.ValidTextLine(title="card NTIID", required=True)
 	title = nti_schema.ValidTextLine(title="Card title", required=True)
 	creator = nti_schema.ValidTextLine(title="Card creator", required=True)
+	target_ntiid = nti_schema.ValidTextLine(title="card href", required=False)
 	description = nti_schema.ValidTextLine(title="Card description", required=True)
 
 class IWhooshNTICardContent(INTICardContent, IReadMapping):

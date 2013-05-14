@@ -37,10 +37,15 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 			result['type'] = node_utils.get_attribute(node, 'data-type')
 			result['title'] = node_utils.get_attribute(node, 'data-title')
 			result['creator'] = node_utils.get_attribute(node, 'data-creator')
-			result['href'] = node_utils.get_attribute(node, 'data-href')
+			result['target_ntiid'] = node_utils.get_attribute(node, 'data-href')
 			for obj in node.iterchildren():
 				if obj.tag == 'span' and node_utils.get_attribute(obj, 'class') == 'description':
 					content = node_utils.get_node_content(obj)
+				elif obj.tag == 'param':
+					name = node_utils.get_attribute(obj, 'name')
+					value = node_utils.get_attribute(obj, 'value')
+					if name and not result.get(name, None) and value:
+						result[name] = value
 			result['content'] = unicode(content) if content else None
 			return result
 		return None
@@ -52,20 +57,20 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 	def index_card_entry(self, writer, containerId, info, language=u'en'):
 		try:
 			table = get_content_translation_table(language)
-			href = self._sanitize(table, info.get('href'))
+			ntiid = info.get('ntiid')
+			target_ntiid = info.get('target_ntiid')
 			type_ = self._sanitize(table, info.get('type'))
-			ntiid = self._sanitize(table, info.get('ntiid'))
 			creator = self._sanitize(table, info.get('creator'))
 			title = content_utils.sanitize_content(info.get('title'), table=table)
 			content = content_utils.sanitize_content(info.get('content'), table=table)
 			last_modified = datetime.fromtimestamp(time.time())
 			writer.add_document(containerId=containerId,
-								href=href,
 								type=type_,
 								ntiid=ntiid,
 								title=title,
 								creator=creator,
 								content=content,
+								target_ntiid=target_ntiid,
 								quick=unicode("%s %s" % (title, content)),
 								last_modified=last_modified)
 		except Exception:

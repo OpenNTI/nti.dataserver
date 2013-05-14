@@ -196,7 +196,7 @@ def create_nti_card_schema():
 	content: card description
 	quick: card text ngrams
 	creator: card creator
-	href: card target hyperlink.
+	target_ntiid: card target hyperlink.
 	"""
 	sch = fields.Schema(containerId=fields.ID(stored=True, unique=False),
 						ntiid=fields.ID(stored=True, unique=True),
@@ -205,7 +205,7 @@ def create_nti_card_schema():
 					 	content=create_content_field(stored=True),
 					 	quick=create_ngram_field(),
 					 	creator=fields.ID(stored=True),
-					 	href=fields.ID(stored=True),
+					 	target_ntiid=fields.ID(stored=True),
 					 	last_modified=fields.DATETIME(stored=True))
 	return sch
 
