@@ -304,7 +304,7 @@ class nticardname(Base.Command):
 
 class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	"Implementation of the Card environment"
-	args = '[options:dict]'
+	args = '[href:str] [options:dict]'
 	# A Float subclass to get \caption handling
 	class caption(Base.Floats.Caption):
 		counter = 'figure'
@@ -323,6 +323,12 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	href = None
 	type = 'summary'
 	image = None
+	#: Derived from the href property. If the href itself specifies
+	#: a complete NTIID, then it will have that value. Otherwise,
+	#: one will be computed from the href; if the href is a absolute
+	#: URL, then the computed NTIID will be the same whereever the URL
+	#: is linked to, allowing this NTIID to be used as a ``containerId``
+	target_ntiid = None
 
 	def digest(self, tokens):
 		res = super(nticard,self).digest(tokens)
@@ -330,11 +336,11 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 			if not getattr(self, 'title', ''):
 				raise ValueError("Must specify a title using \\caption")
 
-			options = self.attributes.get( 'options', {} )
+			options = self.attributes.get( 'options', {} ) or {}
 			__traceback_info__ = options, self.attributes
-			if 'href' not in options or not options['href']:
+			if 'href' not in self.attributes or not self.attributes['href']:
 				raise ValueError( "Must provide href argument" )
-			self.href = options['href']
+			self.href = self.attributes['href']
 			if 'creator' in options:
 				self.creator = options['creator']
 
@@ -343,6 +349,19 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 				# Must leave the image in the dom so it can be found by the resourceDB
 				#images[0].parentNode.removeChild( images[0] )
 				self.image = images[0]
+
+			from nti.ntiids.ntiids import is_valid_ntiid_string
+
+			if is_valid_ntiid_string( self.href ):
+				self.target_ntiid = self.href
+			else:
+				from nti.ntiids.ntiids import make_ntiid, TYPE_UUID
+				from hashlib import md5
+				# TODO: Hmm, what to use as the provider? Look for a hostname in the
+				# URL?
+				self.target_ntiid = make_ntiid( provider='NTI',
+												nttype=TYPE_UUID,
+												specific=md5(self.href).hexdigest() )
 		return res
 
 
