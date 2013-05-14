@@ -105,12 +105,24 @@ produce the above HTML, one would write:
 
 .. code-block:: latex
 
-	\begin{nticard}[/path/to/resource.pdf][creator=Joe Smith]
+	\begin{nticard}[/path/to/resource.pdf]<creator=Joe Smith>
 		\label{testcard} % If the label is given, it is the part of NTIID
 		\caption{The Short Title} % The caption becomes the title
 		\includegraphics[width=120px,height=140]{/path/to/image.png}
 
 		The description of the target.
+	\end{nticard}
+
+If the href you are linking to is an HTML page that implements Twitter
+card support (coming soon) or the Facebook OpenGraph protocol, you can
+use the ``auto=true`` optional argument. If the metadata is present in
+the page, you can leave out the creator, image, and description: they
+will all automatically be pulled from the page. This requires an
+active Internet connection, and a non-authenticated page. For example:
+
+.. code-block:: latex
+
+	\begin{nticard}[http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green?currentPage=all]<auto=true>
 	\end{nticard}
 
 This is implemented with the following class:

@@ -21,6 +21,8 @@ from nti.contentrendering.plastexpackages.graphicx import includegraphics
 
 from nti.contentfragments import interfaces as cfg_interfaces
 
+from zope.cachedescriptors.property import readproperty
+
 # Monkey patching time
 # SAJ: The following are set to render properly nested HTML.
 Base.figure.forcePars = False
@@ -303,7 +305,21 @@ class nticardname(Base.Command):
 	pass
 
 class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
-	"Implementation of the Card environment"
+	"""
+	Implementation of the Card environment. There should be an ``includegraphics`` specifying
+	a thumbnail as a child of this node. The text contents of this node will form
+	the card description.
+
+	Possible options include:
+
+	creator
+		The creator of the content
+
+	auto
+		If present and "true", then we will attempt to spider the ``href``
+		to extract Twitter card or `Facebook OpenGraph <http://opengraphprotocol.org>`_ data from it; this allows
+		you to skip specifying an image and description.
+	"""
 	args = '[href:str] <options:dict>'
 	# Note the options dict is in <>, and uses the default comma separator, which means
 	# values cannot have commas (that's why href, which may be an NTIID is its own argument).
@@ -334,17 +350,88 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	#: is linked to, allowing this NTIID to be used as a ``containerId``
 	target_ntiid = None
 
+	def _href_to_pyquery(self):
+
+		# Some hack stuff to try to handle local files and remote files
+		# Only deals with HTML right now; PDF can be done too, eventually
+
+		import pyquery
+		dom = None
+		if self.href.startswith( 'http' ):
+			# Must use requests, not the url= argument, as
+			# the default Python User-Agent is blocked (note: pyquery 1.2.4 starts using requests internally by default)
+			# The custom user-agent string is to trick Google into sending UTF-8.
+
+			import requests
+			response = requests.get( self.href, headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.1+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2"} )
+			if 'html' in response.headers.get( 'content-type', '' ):
+				dom = pyquery.PyQuery( response.text )
+		elif '.html' in self.href:
+			dom = pyquery.PyQuery( filename=self.href )
+
+		return dom
+
+	def _auto_populate(self):
+		dom = self._href_to_pyquery()
+		if dom is None:
+			return
+
+		# Extract metadata. Need to handle OpenGraph
+		# as well as twitter.
+		# Here is a poor version of OpenGraph handling
+		for meta in dom.find('meta'):
+			name = meta.get('property') or meta.get( 'name' )
+			val = meta.get('content')
+			if not name or not val:
+				continue
+			if name == 'og:title':
+				self.title = val
+			elif name == 'og:url':
+				self.href = val
+			elif name == 'og:image':
+				# Download and save the image?
+				# Right now we are downloading it for size purposes (which may not be
+				# needed) but we could choose to cache it locally
+				import requests
+				from plone.namedfile import NamedImage
+				import urlparse
+
+				response = requests.get( val )
+				filename = urlparse.urlparse( val ).path.split('/')[-1]
+				named_image = NamedImage( data=response.content, filename=filename )
+				width, height = named_image.getImageSize()
+				# Just enough to go with our template
+				class Image(object):
+					def __init__( self, image ):
+						self.image = image
+				class Dimen(object):
+					def __init__(self,px):
+						self.px = px
+				self.image = Image(named_image)
+				self.image.image.url = val
+				self.image.image.height = Dimen(height)
+				self.image.image.width = Dimen(width)
+
+			elif name in ('og:description', 'description'):
+				self.description = cfg_interfaces.IPlainTextContentFragment( val )
+
+
 	def digest(self, tokens):
 		res = super(nticard,self).digest(tokens)
 		if self.macroMode == self.MODE_BEGIN:
-			if not getattr(self, 'title', ''):
-				raise ValueError("Must specify a title using \\caption")
-
 			options = self.attributes.get( 'options', {} ) or {}
 			__traceback_info__ = options, self.attributes
 			if 'href' not in self.attributes or not self.attributes['href']:
 				raise ValueError( "Must provide href argument" )
 			self.href = self.attributes['href']
+
+			if 'auto' in options and options['auto'].lower() == 'true':
+				self._auto_populate()
+
+			if not getattr(self, 'title', ''):
+				raise ValueError("Must specify a title using \\caption")
+
+
 			if 'creator' in options:
 				self.creator = options['creator']
 
@@ -369,7 +456,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 		return res
 
 
-	@property
+	@readproperty
 	def description(self):
 		texts = []
 		for child in self.allChildNodes:
