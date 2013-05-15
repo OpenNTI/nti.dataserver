@@ -30,7 +30,6 @@ from . import interfaces as search_interfaces
 
 from .common import get_type_name
 from .common import get_sort_order
-from .common import videotimestamp_to_text
 from . import _discriminators as discriminators
 from .constants import (last_modified_, content_, title_, ntiid_, containerId_, videoId_, start_timestamp_, end_timestamp_,
 						href_, target_ntiid_)
@@ -201,12 +200,13 @@ class _WhooshVideoTranscriptSearchHit(_BaseSearchHit):
 		super(_WhooshVideoTranscriptSearchHit, self).set_hit_info(hit, score)
 		self[TYPE] = VIDEO_TRANSCRIPT
 		self[SNIPPET] = hit[content_]
+		self[NTIID] = hit[videoId_]
 		self[VIDEO_ID] = hit[videoId_]
 		self[CONTAINER_ID] = hit[containerId_]
 		self[LAST_MODIFIED] = hit[last_modified_]
+		self[END_TIMESTAMP] = hit[end_timestamp_]
 		self[MIME_TYPE] = VIDEO_TRANSCRIPT_MIME_TYPE
-		self[END_TIMESTAMP] = videotimestamp_to_text(hit[end_timestamp_])
-		self[START_TIMESTAMP] = videotimestamp_to_text(hit[start_timestamp_])
+		self[START_TIMESTAMP] = hit[start_timestamp_]
 
 	@classmethod
 	def get_oid(cls, hit):

@@ -13,7 +13,7 @@ from ..common import get_datetime
 from ..common import is_all_query
 from ..common import get_mime_type_map
 from ..common import get_type_from_mimetype
-from ..common import videotimestamp_to_text
+from ..common import date_to_videotimestamp
 
 from . import ConfiguringTestBase
 
@@ -36,9 +36,9 @@ class TestCommon(ConfiguringTestBase):
 
 	def test_videotimestamp_to_text(self):
 		f = 1321391468.413528
-		assert_that(videotimestamp_to_text(f), is_('15:11:08.413'))
-		assert_that(videotimestamp_to_text(str(f)), is_('15:11:08.410'))
-		assert_that(videotimestamp_to_text(None), is_(u''))
+		assert_that(date_to_videotimestamp(f), is_('15:11:08.413'))
+		assert_that(date_to_videotimestamp(str(f)), is_('15:11:08.410'))
+		assert_that(date_to_videotimestamp(None), is_(u''))
 
 	def test_get_datetime(self):
 		f = 1321391468.411328

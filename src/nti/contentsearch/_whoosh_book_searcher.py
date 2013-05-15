@@ -107,7 +107,8 @@ class WhooshBookContentSearcher(object):
 
 	def get_index(self, indexname):
 		s = self._searchables.get(indexname)
-		return s.index if s is not None else None
+		result = s.index if s is not None else None
+		return result
 
 	def __str__(self):
 		return str(self.indices)

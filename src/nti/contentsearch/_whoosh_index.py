@@ -146,6 +146,7 @@ class _VideoTranscriptContent(dict):
 	content = property(methodcaller('get', content_))
 	score = property(methodcaller('get', score_, 1.0))
 	containerId = property(methodcaller('get', containerId_))
+	last_modified = property(methodcaller('get', last_modified_))
 	end_timestamp = property(methodcaller('get', end_timestamp_))
 	start_timestamp = property(methodcaller('get', start_timestamp_))
 
@@ -155,7 +156,7 @@ class VideoTranscript(_SearchableContent):
 		schema = schema or wschs.create_video_transcript_schema()
 		self._schema = schema
 
-	def get_objects_from_whoosh_hits(self, search_hits):
+	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
 		for hit in search_hits:
 			docnum = hit.docnum
@@ -166,8 +167,9 @@ class VideoTranscript(_SearchableContent):
 								content=hit[content_],
 								videoId=hit[videoId_],
 					 			containerId=hit[containerId_],
-					 			end_timestamp=hit[end_timestamp_],
-					 			start_timestamp=hit[start_timestamp_])
+								last_modified=common.epoch_time(hit[last_modified_]),
+					 			end_timestamp=common.date_to_videotimestamp(hit[end_timestamp_]),
+					 			start_timestamp=common.date_to_videotimestamp(hit[start_timestamp_]))
 			result.append((data, score))
 		return result
 
@@ -183,6 +185,7 @@ class _NTICardContent(dict):
 	creator = property(methodcaller('get', creator_))
 	containerId = property(methodcaller('get', containerId_))
 	target_ntiid = property(methodcaller('get', target_ntiid_))
+	last_modified = property(methodcaller('get', last_modified_))
 	# alias
 	description = property(methodcaller('get', content_))
 
@@ -192,11 +195,12 @@ class NTICard(_SearchableContent):
 		schema = schema or wschs.create_nti_card_schema()
 		self._schema = schema
 
-	def get_objects_from_whoosh_hits(self, search_hits):
+	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
 		for hit in search_hits:
 			docnum = hit.docnum
 			score = hit.score or 1.0
+			last_modified = common.epoch_time(hit[last_modified_])
 			data = _NTICardContent(
 							score=score,
 							docnum=docnum,
@@ -205,6 +209,7 @@ class NTICard(_SearchableContent):
 							title=hit[title_],
 							content=hit[content_],
 							creator=hit[creator_],
+							last_modified=last_modified,
 					 		containerId=hit[containerId_],
 					 		target_ntiid=hit[target_ntiid_])
 			result.append((data, score))

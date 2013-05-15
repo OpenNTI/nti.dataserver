@@ -17,16 +17,22 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.externalization.externalization import toExternalObject
 
 from .._whoosh_schemas import create_book_schema
+from .._whoosh_schemas import create_nti_card_schema
+from .._whoosh_schemas import videotimestamp_to_datetime
+from .._whoosh_schemas import create_video_transcript_schema
 from .._whoosh_indexstorage import create_directory_index
 from .._whoosh_book_searcher import WhooshBookContentSearcher
 
-from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS,
-									 	 SNIPPET, NTIID, SUGGESTIONS, SCORE)
+from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID,
+						 SUGGESTIONS, SCORE, START_TIMESTAMP, END_TIMESTAMP, VIDEO_ID)
 
 from . import zanpakuto_commands
 from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, is_, contains_inanyorder)
+
+episodes = ((u'e365', u'Secret of the Substitute Badge'),
+			(u'e007', u'Greetings from a Stuffed Toy'))
 
 class TestWhooshBookContentSearcher(ConfiguringTestBase):
 
@@ -34,18 +40,40 @@ class TestWhooshBookContentSearcher(ConfiguringTestBase):
 	def setUpClass(cls):
 		super(TestWhooshBookContentSearcher, cls).setUpClass()
 		cls.now = time.time()
-		indexname = 'bleach'
+		baseindexname = 'bleach'
 		cls.idx_dir = tempfile.mkdtemp(dir="/tmp")
-		_ , cls.storage = create_directory_index(indexname, create_book_schema(), cls.idx_dir)
-		cls.bim = WhooshBookContentSearcher(indexname, storage=cls.storage)
 
-		writer = cls.bim.get_index(indexname).writer()
+		# create file schemas
+		factories = (('%s', create_book_schema), ('vtrans_%s', create_video_transcript_schema),
+					 ('nticard_%s', create_nti_card_schema))
+
+		for postfix, func in factories:
+			indexname = postfix % baseindexname
+			_ , cls.storage = create_directory_index(indexname, func(), cls.idx_dir)
+
+		# create content manager
+		cls.bim = WhooshBookContentSearcher(baseindexname, storage=cls.storage)
+
+		# add book entries
+		writer = cls.bim.get_index(baseindexname).writer()
 		for k, x in enumerate(zanpakuto_commands):
 			writer.add_document(ntiid=unicode(make_ntiid(provider=str(k), nttype='bleach', specific='manga')),
 								title=unicode(x),
 								content=unicode(x),
 								quick=unicode(x),
 								related=u'',
+								last_modified=datetime.fromtimestamp(cls.now))
+		writer.commit()
+
+		# add video entries
+		writer = cls.bim.get_index('vtrans_%s' % baseindexname).writer()
+		for e, x in episodes:
+			writer.add_document(containerId=unicode(make_ntiid(provider='tite_kubo', nttype='bleach', specific='manga')),
+								videoId=unicode(make_ntiid(provider='bleachget', nttype='bleach', specific=e)),
+								content=x,
+								quick=x,
+								start_timestamp=videotimestamp_to_datetime(u'00:00:01,630'),
+								end_timestamp=videotimestamp_to_datetime('00:00:22,780'),
 								last_modified=datetime.fromtimestamp(cls.now))
 		writer.commit()
 
@@ -70,6 +98,22 @@ class TestWhooshBookContentSearcher(ConfiguringTestBase):
 		assert_that(item, has_entry(SCORE, is_not(None)))
 		assert_that(item, has_entry(CONTAINER_ID, is_not(None)))
 		assert_that(item, has_entry(SNIPPET, 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
+
+	def test_search_video(self):
+		hits = toExternalObject(self.bim.search("secret"))
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(QUERY, 'secret'))
+		assert_that(hits, has_key(ITEMS))
+		items = hits[ITEMS]
+		assert_that(items, has_length(1))
+		assert_that(items[0], has_entry(CLASS, HIT))
+		assert_that(items[0], has_entry(NTIID, is_not(None)))
+		assert_that(items[0], has_entry(SCORE, is_not(None)))
+		assert_that(items[0], has_entry(VIDEO_ID, is_not(None)))
+		assert_that(items[0], has_entry(CONTAINER_ID, is_not(None)))
+		assert_that(items[0], has_entry(SNIPPET, 'Secret of the Substitute Badge'))
+		assert_that(items[0], has_entry(START_TIMESTAMP, '00:00:01.630'))
+		assert_that(items[0], has_entry(END_TIMESTAMP, '00:00:22.780'))
 
 	def test_longword_search(self):
 		hits = toExternalObject(self.bim.search("multiplication"))

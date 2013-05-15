@@ -136,28 +136,35 @@ def create_post_schema():
 	schema.add(tags_, fields.KEYWORD(stored=False))
 	return schema
 
+
+def videotimestamp_to_datetime(qstring):
+	# this method parses a time stamp # hh:mm::ss.uuu
+	from whoosh.support.times import adatetime, fix, is_void
+
+	qstring = qstring.replace(" ", "").replace(",", ".")
+	year = month = day = 1
+	hour = minute = second = microsecond = None
+	if len(qstring) >= 2:
+		hour = int(qstring[0:2])
+	if len(qstring) >= 5:
+		minute = int(qstring[3:5])
+	if len(qstring) >= 8:
+		second = int(qstring[6:8])
+	if len(qstring) == 12:
+		microsecond = int(qstring[9:12]) * 1000
+	if len(qstring) == 13:
+		microsecond = int(qstring[9:13])
+
+	at = fix(adatetime(year, month, day, hour, minute, second, microsecond))
+	if is_void(at):
+		raise ValueError("%r is not a parseable video timestamp" % qstring)
+	return at
+
 class VIDEO_TIMESTAMP(fields.DATETIME):
 
 	def _parse_datestring(self, qstring):
-		# this method parses a time stamp # hh:mm::ss.uuu
-		from whoosh.support.times import adatetime, fix, is_void
-
-		qstring = qstring.replace(" ", "").replace(",", ".")
-		year = month = day = 1
-		hour = minute = second = microsecond = None
-		if len(qstring) >= 2:
-			hour = int(qstring[0:2])
-		if len(qstring) >= 5:
-			minute = int(qstring[3:5])
-		if len(qstring) >= 8:
-			second = int(qstring[6:8])
-		if len(qstring) == 13:
-			microsecond = int(qstring[9:13])
-
-		at = fix(adatetime(year, month, day, hour, minute, second, microsecond))
-		if is_void(at):
-			raise Exception("%r is not a parseable video timestamp" % qstring)
-		return at
+		result = videotimestamp_to_datetime(qstring)
+		return result
 
 def create_video_transcript_schema():
 	"""
