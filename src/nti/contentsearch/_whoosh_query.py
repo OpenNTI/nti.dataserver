@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Whoosh user search adapter.
+Whoosh query utilities
 
 $Id$
 """
@@ -84,6 +84,7 @@ class _DefaultWhooshQueryParser(object):
 		return parsed_query
 
 _DefaultBookWhooshQueryParser = _DefaultWhooshQueryParser
+_DefaultNTICardWhooshQueryParser = _DefaultWhooshQueryParser
 _DefaultVideoTranscriptWhooshQueryParser = _DefaultWhooshQueryParser
 
 _DefaultNoteWhooshQueryParser = _DefaultWhooshQueryParser
@@ -109,6 +110,8 @@ class _DefaultPostWhooshQueryParser(_DefaultWhooshQueryParser):
 		return result
 
 def parse_query(qo, schema, type_name):
-	parser = component.getUtility(search_interfaces.IWhooshQueryParser, name=type_name)
+	parser = component.queryUtility(search_interfaces.IWhooshQueryParser, name=type_name)
+	if parser is None:
+		parser = component.getUtility(search_interfaces.IWhooshQueryParser)
 	main_query = parser.parse(qo, schema)
 	return main_query
