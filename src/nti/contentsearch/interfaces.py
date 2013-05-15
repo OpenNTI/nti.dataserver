@@ -87,11 +87,10 @@ class ISearcher(interface.Interface):
 		:param query: Search query
 		"""
 
-class IBookContentSearcher(ISearcher):
-	ntiid = interface.Attribute("book ntiid")
+class IContentSearcher(ISearcher):
 	indices = interface.Attribute("index names")
 
-class IWooshBookContentSearcher(IBookContentSearcher):
+class IWhooshContentSearcher(IContentSearcher):
 
 	def get_index(indexname):
 		"""

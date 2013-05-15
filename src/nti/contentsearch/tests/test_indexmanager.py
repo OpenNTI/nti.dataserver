@@ -28,8 +28,7 @@ from .._whoosh_schemas import create_book_schema
 from .._whoosh_indexstorage import create_directory_index
 from ..indexmanager import create_index_manager_with_repoze
 from ..indexmanager import create_index_manager_with_whoosh
-from .._whoosh_book_searcher import WhooshBookContentSearcher
-
+from .._whoosh_content_searcher import WhooshContentSearcher
 from ..constants import (ITEMS, HIT_COUNT)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -55,7 +54,7 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 		indexname = 'bleach'
 		cls.book_idx_dir = tempfile.mkdtemp(dir="/tmp")
 		_, storage = create_directory_index(indexname, create_book_schema(), cls.book_idx_dir)
-		cls.bim = WhooshBookContentSearcher(indexname, storage)
+		cls.bim = WhooshContentSearcher(indexname, storage)
 
 		writer = cls.bim.get_index(indexname).writer()
 		for k, x in enumerate(phrases):

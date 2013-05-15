@@ -86,8 +86,8 @@ class _Searchable(object):
 	def close(self):
 		self.index.close()
 
-@interface.implementer(search_interfaces.IWooshBookContentSearcher)
-class WhooshBookContentSearcher(object):
+@interface.implementer(search_interfaces.IWhooshContentSearcher)
+class WhooshContentSearcher(object):
 
 	index_factories = (('%s', Book), ('vtrans_%s', VideoTranscript), ('nticard_%s', NTICard))
 
@@ -154,7 +154,7 @@ def wbm_factory(*args, **kwargs):
 		indexdir = fkwargs.get('indexdir', None)
 		if os.path.exists(indexdir):
 			storage = DirectoryStorage(indexdir)
-			searcher = WhooshBookContentSearcher(indexname, storage, ntiid)
+			searcher = WhooshContentSearcher(indexname, storage, ntiid)
 			return searcher if len(searcher) > 0 else None
 		else:
 			return None
