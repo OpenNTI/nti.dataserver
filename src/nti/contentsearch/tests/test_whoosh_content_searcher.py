@@ -24,17 +24,21 @@ from .._whoosh_schemas import create_video_transcript_schema
 from .._whoosh_content_searcher import WhooshContentSearcher
 
 from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID,
-						 SUGGESTIONS, SCORE, START_TIMESTAMP, END_TIMESTAMP, VIDEO_ID)
+						 SUGGESTIONS, SCORE, START_TIMESTAMP, END_TIMESTAMP, VIDEO_ID, TITLE,
+						 HREF, TARGET_NTIID)
 
 from . import zanpakuto_commands
 from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, is_, contains_inanyorder)
 
-episodes = ((u'e365', u'Secret of the Substitute Badge'),
-			(u'e007', u'Greetings from a Stuffed Toy'))
-
 class TestWhooshContentSearcher(ConfiguringTestBase):
+
+	episodes = ((u'e365', u'Secret of the Substitute Badge'),
+				(u'e007', u'Greetings from a Stuffed Toy'))
+
+	nticards = ((u'c001', u'Xcution attacks Ginjo'),
+				(u'c002', u'Fullbring, The Detested Power'))
 
 	@classmethod
 	def setUpClass(cls):
@@ -67,13 +71,28 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 
 		# add video entries
 		writer = cls.bim.get_index('vtrans_%s' % baseindexname).writer()
-		for e, x in episodes:
+		for e, x in cls.episodes:
 			writer.add_document(containerId=unicode(make_ntiid(provider='tite_kubo', nttype='bleach', specific='manga')),
 								videoId=unicode(make_ntiid(provider='bleachget', nttype='bleach', specific=e)),
 								content=x,
 								quick=x,
 								start_timestamp=videotimestamp_to_datetime(u'00:00:01,630'),
 								end_timestamp=videotimestamp_to_datetime('00:00:22,780'),
+								last_modified=datetime.fromtimestamp(cls.now))
+		writer.commit()
+
+		# add nticard entries
+		writer = cls.bim.get_index('nticard_%s' % baseindexname).writer()
+		for e, x in cls.nticards:
+			writer.add_document(containerId=unicode(make_ntiid(provider='tite_kubo', nttype='bleach', specific='manga')),
+								ntiid=unicode(make_ntiid(provider='bleachget', nttype='bleach', specific=e)),
+								type=u'summary',
+								content=x,
+								quick=x,
+								title=e,
+								creator=u'tite kubo',
+								href=u'http://www.bleachget.com',
+								target_ntiid=unicode(make_ntiid(provider='tite_kubo', nttype='bleach', specific='episodes')),
 								last_modified=datetime.fromtimestamp(cls.now))
 		writer.commit()
 
@@ -114,6 +133,22 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 		assert_that(items[0], has_entry(SNIPPET, 'Secret of the Substitute Badge'))
 		assert_that(items[0], has_entry(START_TIMESTAMP, '00:00:01.630'))
 		assert_that(items[0], has_entry(END_TIMESTAMP, '00:00:22.780'))
+
+	def test_search_nticard(self):
+		hits = toExternalObject(self.bim.search("Xcution"))
+		assert_that(hits, has_entry(HIT_COUNT, 1))
+		assert_that(hits, has_entry(QUERY, 'Xcution'))
+		assert_that(hits, has_key(ITEMS))
+		items = hits[ITEMS]
+		assert_that(items, has_length(1))
+		assert_that(items[0], has_entry(CLASS, HIT))
+		assert_that(items[0], has_entry(NTIID, is_not(None)))
+		assert_that(items[0], has_entry(SCORE, is_not(None)))
+		assert_that(items[0], has_entry(CONTAINER_ID, is_not(None)))
+		assert_that(items[0], has_entry(SNIPPET, 'Xcution attacks Ginjo'))
+		assert_that(items[0], has_entry(TITLE, is_not(None)))
+		assert_that(items[0], has_entry(HREF, 'http://www.bleachget.com'))
+		assert_that(items[0], has_entry(TARGET_NTIID, is_not(None)))
 
 	def test_longword_search(self):
 		hits = toExternalObject(self.bim.search("multiplication"))
