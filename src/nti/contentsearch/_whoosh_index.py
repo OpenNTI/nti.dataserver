@@ -17,6 +17,9 @@ from zope import interface
 
 from nti.contentprocessing import rank_words
 
+from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import createDirectFieldProperties
+
 from . import common
 from ._search_query import QueryObject
 from ._whoosh_query import parse_query
@@ -174,20 +177,14 @@ class VideoTranscript(_SearchableContent):
 		return result
 
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
-class _NTICardContent(dict):
-	docnum = property(methodcaller('get', docnum_))
-	score = property(methodcaller('get', score_, 1.0))
-	# stored
-	href = property(methodcaller('get', href_))
-	ntiid = property(methodcaller('get', ntiid_))
-	title = property(methodcaller('get', title_))
-	content = property(methodcaller('get', content_))
-	creator = property(methodcaller('get', creator_))
-	containerId = property(methodcaller('get', containerId_))
-	target_ntiid = property(methodcaller('get', target_ntiid_))
-	last_modified = property(methodcaller('get', last_modified_))
-	# alias
-	description = property(methodcaller('get', content_))
+class _NTICardContent(SchemaConfigured):
+
+	# create all interface fields
+	createDirectFieldProperties(search_interfaces.IWhooshNTICardContent)
+
+	@property
+	def content(self):
+		return self.description
 
 class NTICard(_SearchableContent):
 
@@ -207,8 +204,8 @@ class NTICard(_SearchableContent):
 							href=hit[href_],
 							ntiid=hit[ntiid_],
 							title=hit[title_],
-							content=hit[content_],
 							creator=hit[creator_],
+							description=hit[content_],
 							last_modified=last_modified,
 					 		containerId=hit[containerId_],
 					 		target_ntiid=hit[target_ntiid_])
