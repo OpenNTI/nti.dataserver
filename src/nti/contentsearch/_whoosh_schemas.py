@@ -20,6 +20,7 @@ from nti.contentprocessing import default_word_tokenizer_pattern
 
 from . import interfaces as search_interfaces
 
+from .common import videotimestamp_to_datetime
 from .constants import (channel_, content_, keywords_, references_,
 					 	recipients_, sharedWith_, replacementContent_, tags_,
 						redactionExplanation_, title_, quick_)
@@ -135,30 +136,6 @@ def create_post_schema():
 	schema.add(title_, fields.TEXT(stored=False))
 	schema.add(tags_, fields.KEYWORD(stored=False))
 	return schema
-
-
-def videotimestamp_to_datetime(qstring):
-	# this method parses a time stamp # hh:mm::ss.uuu
-	from whoosh.support.times import adatetime, fix, is_void
-
-	qstring = qstring.replace(" ", "").replace(",", ".")
-	year = month = day = 1
-	hour = minute = second = microsecond = None
-	if len(qstring) >= 2:
-		hour = int(qstring[0:2])
-	if len(qstring) >= 5:
-		minute = int(qstring[3:5])
-	if len(qstring) >= 8:
-		second = int(qstring[6:8])
-	if len(qstring) == 12:
-		microsecond = int(qstring[9:12]) * 1000
-	if len(qstring) == 13:
-		microsecond = int(qstring[9:13])
-
-	at = fix(adatetime(year, month, day, hour, minute, second, microsecond))
-	if is_void(at):
-		raise ValueError("%r is not a parseable video timestamp" % qstring)
-	return at
 
 class VIDEO_TIMESTAMP(fields.DATETIME):
 
