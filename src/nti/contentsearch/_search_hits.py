@@ -31,7 +31,7 @@ from . import interfaces as search_interfaces
 from .common import get_type_name
 from .common import get_sort_order
 from . import _discriminators as discriminators
-from .constants import (last_modified_, content_, title_, ntiid_, containerId_, videoId_, start_timestamp_, end_timestamp_)
+from .constants import (last_modified_, content_, title_, ntiid_)
 from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, SNIPPET, HIT, ID, CONTENT, SCORE, OID,
 						POST, MIME_TYPE, VIDEO_ID, BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT, VIDEO_TRANSCRIPT_MIME_TYPE,
 					 	START_TIMESTAMP, END_TIMESTAMP, NTI_CARD, NTI_CARD_MIME_TYPE, TITLE, HREF, TARGET_NTIID)
@@ -198,18 +198,18 @@ class _WhooshVideoTranscriptSearchHit(_BaseSearchHit):
 	def set_hit_info(self, hit, score):
 		super(_WhooshVideoTranscriptSearchHit, self).set_hit_info(hit, score)
 		self[TYPE] = VIDEO_TRANSCRIPT
-		self[SNIPPET] = hit[content_]
-		self[NTIID] = hit[videoId_]
-		self[VIDEO_ID] = hit[videoId_]
-		self[CONTAINER_ID] = hit[containerId_]
-		self[LAST_MODIFIED] = hit[last_modified_]
-		self[END_TIMESTAMP] = hit[end_timestamp_]
+		self[NTIID] = hit.videoId
+		self[SNIPPET] = hit.content
+		self[VIDEO_ID] = hit.videoId
+		self[CONTAINER_ID] = hit.containerId
+		self[LAST_MODIFIED] = hit.last_modified
+		self[END_TIMESTAMP] = hit.end_timestamp
+		self[START_TIMESTAMP] = hit.start_timestamp
 		self[MIME_TYPE] = VIDEO_TRANSCRIPT_MIME_TYPE
-		self[START_TIMESTAMP] = hit[start_timestamp_]
 
 	@classmethod
 	def get_oid(cls, hit):
-		tpl = (hit[containerId_], u'-', hit[videoId_])
+		tpl = (hit.containerId, u'-', hit.videoId)
 		return unicode(''.join(tpl))
 
 @component.adapter(search_interfaces.IWhooshNTICardContent)

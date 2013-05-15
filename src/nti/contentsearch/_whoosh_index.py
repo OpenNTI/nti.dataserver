@@ -32,7 +32,7 @@ from ._datastructures import CaseInsensitiveDict
 from .constants import (channel_, content_, keywords_, references_, sharedWith_,
 						ntiid_, last_modified_, videoId_, creator_, containerId_,
 						replacementContent_, redactionExplanation_, tags_, intid_,
-					 	title_, quick_, end_timestamp_, start_timestamp_, docnum_,
+					 	title_, quick_, end_timestamp_, start_timestamp_,
 					 	href_, target_ntiid_, score_)
 
 class _SearchableContent(object):
@@ -143,15 +143,14 @@ class Book(_SearchableContent):
 		return result
 
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
-class _VideoTranscriptContent(dict):
-	docnum = property(methodcaller('get', docnum_))
-	videoId = property(methodcaller('get', videoId_))
-	content = property(methodcaller('get', content_))
-	score = property(methodcaller('get', score_, 1.0))
-	containerId = property(methodcaller('get', containerId_))
-	last_modified = property(methodcaller('get', last_modified_))
-	end_timestamp = property(methodcaller('get', end_timestamp_))
-	start_timestamp = property(methodcaller('get', start_timestamp_))
+class _VideoTranscriptContent(SchemaConfigured):
+
+	# create all interface fields
+	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
+
+	@property
+	def ntiid(self):
+		return self.videoId
 
 class VideoTranscript(_SearchableContent):
 
@@ -165,14 +164,14 @@ class VideoTranscript(_SearchableContent):
 			docnum = hit.docnum
 			score = hit.score or 1.0
 			data = _VideoTranscriptContent(
-								score=score,
-								docnum=docnum,
-								content=hit[content_],
-								videoId=hit[videoId_],
-					 			containerId=hit[containerId_],
-								last_modified=common.epoch_time(hit[last_modified_]),
-					 			end_timestamp=common.date_to_videotimestamp(hit[end_timestamp_]),
-					 			start_timestamp=common.date_to_videotimestamp(hit[start_timestamp_]))
+							score=score,
+							docnum=docnum,
+							content=hit[content_],
+							videoId=hit[videoId_],
+				 			containerId=hit[containerId_],
+							last_modified=common.epoch_time(hit[last_modified_]),
+				 			end_timestamp=common.date_to_videotimestamp(hit[end_timestamp_]),
+				 			start_timestamp=common.date_to_videotimestamp(hit[start_timestamp_]))
 			result.append((data, score))
 		return result
 
