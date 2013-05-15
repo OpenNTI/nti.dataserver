@@ -15,6 +15,7 @@ from zope import interface
 
 from nti.contentprocessing import get_content_translation_table
 
+from nti.contentsearch import nticard_prefix
 from nti.contentsearch import interfaces as search_interfaces
 
 from . import _node_utils as node_utils
@@ -81,7 +82,7 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 
 	def get_index_name(self, book, indexname=None):
 		indexname = super(_WhooshNTICardIndexer, self).get_index_name(book, indexname)
-		indexname = "nticard_%s" % indexname
+		indexname = nticard_prefix + indexname
 		return indexname
 
 	def process_topic(self, idxspec, topic, writer, language='en'):

@@ -16,6 +16,7 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
+from .. import constants
 from .._whoosh_schemas import create_book_schema
 from .._whoosh_schemas import create_nti_card_schema
 from .._whoosh_schemas import videotimestamp_to_datetime
@@ -48,11 +49,12 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 		cls.idx_dir = tempfile.mkdtemp(dir="/tmp")
 
 		# create file schemas
-		factories = (('%s', create_book_schema), ('vtrans_%s', create_video_transcript_schema),
-					 ('nticard_%s', create_nti_card_schema))
+		factories = (('', create_book_schema),
+					 (constants.vtrans_prefix, create_video_transcript_schema),
+					 (constants.nticard_prefix, create_nti_card_schema))
 
 		for postfix, func in factories:
-			indexname = postfix % baseindexname
+			indexname = postfix + baseindexname
 			_ , cls.storage = create_directory_index(indexname, func(), cls.idx_dir)
 
 		# create content manager
