@@ -19,9 +19,9 @@ from nti.externalization.externalization import toExternalObject
 from .._whoosh_schemas import create_book_schema
 from .._whoosh_schemas import create_nti_card_schema
 from .._whoosh_schemas import videotimestamp_to_datetime
-from .._whoosh_schemas import create_video_transcript_schema
 from .._whoosh_indexstorage import create_directory_index
-from .._whoosh_book_searcher import WhooshBookContentSearcher
+from .._whoosh_schemas import create_video_transcript_schema
+from .._whoosh_content_searcher import WhooshContentSearcher
 
 from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID,
 						 SUGGESTIONS, SCORE, START_TIMESTAMP, END_TIMESTAMP, VIDEO_ID)
@@ -34,11 +34,11 @@ from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, is_, 
 episodes = ((u'e365', u'Secret of the Substitute Badge'),
 			(u'e007', u'Greetings from a Stuffed Toy'))
 
-class TestWhooshBookContentSearcher(ConfiguringTestBase):
+class TestWhooshContentSearcher(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
-		super(TestWhooshBookContentSearcher, cls).setUpClass()
+		super(TestWhooshContentSearcher, cls).setUpClass()
 		cls.now = time.time()
 		baseindexname = 'bleach'
 		cls.idx_dir = tempfile.mkdtemp(dir="/tmp")
@@ -52,7 +52,7 @@ class TestWhooshBookContentSearcher(ConfiguringTestBase):
 			_ , cls.storage = create_directory_index(indexname, func(), cls.idx_dir)
 
 		# create content manager
-		cls.bim = WhooshBookContentSearcher(baseindexname, storage=cls.storage)
+		cls.bim = WhooshContentSearcher(baseindexname, storage=cls.storage)
 
 		# add book entries
 		writer = cls.bim.get_index(baseindexname).writer()
@@ -81,7 +81,7 @@ class TestWhooshBookContentSearcher(ConfiguringTestBase):
 	def tearDownClass(cls):
 		cls.bim.close()
 		shutil.rmtree(cls.idx_dir, True)
-		super(TestWhooshBookContentSearcher, cls).tearDownClass()
+		super(TestWhooshContentSearcher, cls).tearDownClass()
 
 	def test_search(self):
 		hits = toExternalObject(self.bim.search("shield"))
