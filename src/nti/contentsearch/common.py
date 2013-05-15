@@ -65,6 +65,7 @@ def date_to_videotimestamp(dt):
 	return u''
 
 def videotimestamp_to_datetime(qstring):
+	# this method parses a timestamp of the form hh:mm::ss.uuu
 	qstring = qstring.replace(" ", "")
 	year = month = day = 1
 	hour = minute = second = microsecond = 0
