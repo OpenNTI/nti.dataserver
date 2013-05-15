@@ -396,16 +396,17 @@ class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IReadMapping):
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
 class INTICardContent(interface.Interface):
-	docnum = schema.Int(title="Document number", required=False)
 	href = nti_schema.ValidTextLine(title="card href", required=False)
 	ntiid = nti_schema.ValidTextLine(title="card NTIID", required=True)
 	title = nti_schema.ValidTextLine(title="Card title", required=True)
 	creator = nti_schema.ValidTextLine(title="Card creator", required=True)
 	last_modified = nti_schema.Number(title="Last modified date", required=True)
-	target_ntiid = nti_schema.ValidTextLine(title="card target ntiid", required=False)
 	description = nti_schema.ValidTextLine(title="Card description", required=True)
+	target_ntiid = nti_schema.ValidTextLine(title="card target ntiid", required=False)
+	containerId = nti_schema.ValidTextLine(title="card container ntiid", required=False)
 
-class IWhooshNTICardContent(INTICardContent, IReadMapping):
+class IWhooshNTICardContent(INTICardContent):
+	docnum = schema.Int(title="Document number", required=False)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
 class IContentSchemaCreator(interface.Interface):

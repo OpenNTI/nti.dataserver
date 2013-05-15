@@ -31,8 +31,7 @@ from . import interfaces as search_interfaces
 from .common import get_type_name
 from .common import get_sort_order
 from . import _discriminators as discriminators
-from .constants import (last_modified_, content_, title_, ntiid_, containerId_, videoId_, start_timestamp_, end_timestamp_,
-						href_, target_ntiid_)
+from .constants import (last_modified_, content_, title_, ntiid_, containerId_, videoId_, start_timestamp_, end_timestamp_)
 from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, SNIPPET, HIT, ID, CONTENT, SCORE, OID,
 						POST, MIME_TYPE, VIDEO_ID, BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT, VIDEO_TRANSCRIPT_MIME_TYPE,
 					 	START_TIMESTAMP, END_TIMESTAMP, NTI_CARD, NTI_CARD_MIME_TYPE, TITLE, HREF, TARGET_NTIID)
@@ -223,18 +222,18 @@ class _WhooshNTICardSearchHit(_BaseSearchHit):
 	def set_hit_info(self, hit, score):
 		super(_WhooshNTICardSearchHit, self).set_hit_info(hit, score)
 		self[TYPE] = NTI_CARD
-		self[HREF] = hit[href_]
-		self[NTIID] = hit[ntiid_]
-		self[TITLE] = hit[title_]
-		self[SNIPPET] = hit[content_]
+		self[HREF] = hit.href
+		self[NTIID] = hit.ntiid
+		self[TITLE] = hit.title
+		self[SNIPPET] = hit.content
 		self[MIME_TYPE] = NTI_CARD_MIME_TYPE
-		self[CONTAINER_ID] = hit[containerId_]
-		self[TARGET_NTIID] = hit[target_ntiid_]
-		self[LAST_MODIFIED] = hit[last_modified_]
+		self[CONTAINER_ID] = hit.containerId
+		self[TARGET_NTIID] = hit.target_ntiid
+		self[LAST_MODIFIED] = hit.last_modified
 
 	@classmethod
 	def get_oid(cls, hit):
-		return unicode(hit[ntiid_])
+		return hit.ntiid
 
 def get_search_hit(obj, score=1.0, query=None):
 	hit = search_interfaces.ISearchHit(obj, None) or _SearchHit(obj)
