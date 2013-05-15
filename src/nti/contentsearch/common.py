@@ -84,10 +84,10 @@ def videotimestamp_to_datetime(qstring):
 			 		  minute=minute, second=second, microsecond=microsecond)
 	return result
 
-def normalize_type_name(x, encode=True):
+def normalize_type_name(x):
 	x = x.lower() if x else u''
 	result = x[0:-1] if x.endswith('s') else x
-	return unicode(result) if encode else result
+	return unicode(result)
 
 def get_type_name(obj):
 
