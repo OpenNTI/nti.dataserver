@@ -58,10 +58,10 @@ try:
 except ImportError:
 	pass
 
-# legacy imports
 from .constants import indexable_type_names
 from .common import videotimestamp_to_datetime
 from .constants import ugd_indexable_type_names
+from .constants import vtrans_prefix, nticard_prefix
 
 def get_indexable_types():
 	return indexable_type_names

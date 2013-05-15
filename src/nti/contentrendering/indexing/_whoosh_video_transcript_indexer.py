@@ -16,6 +16,7 @@ from zope import interface
 
 from nti.contentprocessing import get_content_translation_table
 
+from nti.contentsearch import vtrans_prefix
 from nti.contentsearch import videotimestamp_to_datetime
 from nti.contentsearch import interfaces as search_interfaces
 
@@ -100,7 +101,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 	def get_index_name(self, book, indexname=None):
 		indexname = super(_WhooshVideoTranscriptIndexer, self).get_index_name(book, indexname)
-		indexname = "vtrans_%s" % indexname
+		indexname = vtrans_prefix + indexname
 		return indexname
 
 	def process_topic(self, idxspec, topic, writer, language='en'):
