@@ -16,7 +16,10 @@
 	<utility factory="._whoosh_schemas._DefaultNTICardSchemaCreator" />
 	<utility factory="._whoosh_schemas._DefaultNTICardSchemaCreator" name="en" />
 	
+	<utility factory="._whoosh_query._DefaultWhooshQueryParser" />
+	
 	<utility factory="._whoosh_query._DefaultBookWhooshQueryParser" name="book" />
+	<utility factory="._whoosh_query._DefaultNTICardWhooshQueryParser" name="nticard" />
 	<utility factory="._whoosh_query._DefaultVideoTranscriptWhooshQueryParser" name="videotranscript" />
 	
 </configure>
