@@ -60,6 +60,7 @@ except ImportError:
 
 # legacy imports
 from .constants import indexable_type_names
+from .common import videotimestamp_to_datetime
 from .constants import ugd_indexable_type_names
 
 def get_indexable_types():
