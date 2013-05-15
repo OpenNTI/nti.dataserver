@@ -391,6 +391,7 @@ class IVideoTranscriptContent(interface.Interface):
 	content = nti_schema.ValidText(title="Text content", required=True)
 	start_timestamp = nti_schema.ValidTextLine(title="Start timestamp", required=True)
 	end_timestamp = nti_schema.ValidTextLine(title="End timestamp", required=True)
+	last_modified = nti_schema.Number(title="Last modified date", required=True)
 
 class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IReadMapping):
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
@@ -401,6 +402,7 @@ class INTICardContent(interface.Interface):
 	ntiid = nti_schema.ValidTextLine(title="card NTIID", required=True)
 	title = nti_schema.ValidTextLine(title="Card title", required=True)
 	creator = nti_schema.ValidTextLine(title="Card creator", required=True)
+	last_modified = nti_schema.Number(title="Last modified date", required=True)
 	target_ntiid = nti_schema.ValidTextLine(title="card target ntiid", required=False)
 	description = nti_schema.ValidTextLine(title="Card description", required=True)
 

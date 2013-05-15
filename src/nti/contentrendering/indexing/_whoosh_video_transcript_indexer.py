@@ -24,6 +24,25 @@ from . import interfaces as cridxr_interfaces
 from ._common_indexer import _BasicWhooshIndexer
 from ..media import interfaces as media_interfaces
 
+def videotimestamp_to_datetime(qstring):
+	qstring = qstring.replace(" ", "").replace(",", ".")
+	year = month = day = 1
+	hour = minute = second = microsecond = 0
+	if len(qstring) >= 2:
+		hour = int(qstring[0:2])
+	if len(qstring) >= 5:
+		minute = int(qstring[3:5])
+	if len(qstring) >= 8:
+		second = int(qstring[6:8])
+	if len(qstring) == 12:
+		microsecond = int(qstring[9:12]) * 1000
+	if len(qstring) == 13:
+		microsecond = int(qstring[9:13])
+
+	date = datetime(year=year, month=month, day=day, hour=hour,
+					minute=minute, second=second, microsecond=microsecond)
+	return date
+
 @interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
 class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
@@ -84,15 +103,15 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		try:
 			content = entry.transcript
 			table = get_content_translation_table(language)
-			content = unicode(content_utils.sanitize_content(content, table=table))
 			last_modified = datetime.fromtimestamp(time.time())
+			content = unicode(content_utils.sanitize_content(content, table=table))
 			writer.add_document(containerId=containerId,
 								videoId=video_id,
 								content=content,
 								quick=content,
-								start_timestamp=unicode(entry.start_timestamp),
-								end_timestamp=unicode(entry.end_timestamp),
-								last_modified=last_modified)
+								last_modified=last_modified,
+								end_timestamp=videotimestamp_to_datetime(entry.end_timestamp),
+								start_timestamp=videotimestamp_to_datetime(entry.start_timestamp))
 		except Exception:
 			writer.cancel()
 			raise

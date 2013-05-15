@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 import re
 import six
+import math
 import time
 import collections
 from time import mktime
@@ -50,14 +51,14 @@ def epoch_time(dt):
 		return seconds
 	return 0
 
-def videotimestamp_to_text(dt):
+def date_to_videotimestamp(dt):
 	if isinstance(dt, six.string_types):
 		dt = float(dt)
 	if isinstance(dt, (float, long)):
 		dt = get_datetime(dt)
 
 	if isinstance(dt, datetime):
-		milli = dt.microsecond / 1000.0
+		milli = math.floor(dt.microsecond / 1000.0)
 		result = u"%02d:%02d:%02d.%03d" % (dt.hour, dt.minute, dt.second, milli)
 		return result
 	else:
