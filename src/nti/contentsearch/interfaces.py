@@ -384,7 +384,6 @@ class IWhooshBookContent(IBookContent, IReadMapping):
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
 class IVideoTranscriptContent(interface.Interface):
-	docnum = schema.Int(title="Document number", required=False)
 	containerId = nti_schema.ValidTextLine(title="NTIID of video container", required=True)
 	videoId = nti_schema.ValidTextLine(title="Either the video NTIID or Id", required=True)
 	content = nti_schema.ValidText(title="Text content", required=True)
@@ -392,7 +391,8 @@ class IVideoTranscriptContent(interface.Interface):
 	end_timestamp = nti_schema.ValidTextLine(title="End timestamp", required=True)
 	last_modified = nti_schema.Number(title="Last modified date", required=True)
 
-class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IReadMapping):
+class IWhooshVideoTranscriptContent(IVideoTranscriptContent):
+	docnum = schema.Int(title="Document number", required=False)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
 class INTICardContent(interface.Interface):
