@@ -23,6 +23,7 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
 
 from ..common import get_type_name
+from .._whoosh_index import _BookContent
 from .._search_hits import _NoteSearchHit
 from .._search_external import get_search_hit
 from .. import interfaces as search_interfaces
@@ -32,7 +33,6 @@ from .._search_hits import _WhooshBookSearchHit
 from .._search_hits import _MessageInfoSearchHit
 from .._search_hits import _RelevanceSearchHitComparator as RSHC
 
-from ..constants import (ntiid_, content_, title_, last_modified_, intid_)
 from ..constants import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET, ITEMS)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -172,12 +172,12 @@ class TestSearchHits(ConfiguringTestBase):
 
 	def test_search_hit_book(self):
 		containerId = make_ntiid(nttype='bleach', specific='manga')
-		hit = {}
-		hit[intid_] = 100
-		hit[title_] = 'Bleach'
-		hit[ntiid_] = containerId
-		hit[last_modified_] = time.time()
-		hit[content_] = u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'
+		hit = _BookContent()
+		hit.docnum = 100
+		hit.title = 'Bleach'
+		hit.ntiid = containerId
+		hit.last_modified = time.time()
+		hit.content = u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'
 		d = self._externalize(_WhooshBookSearchHit, hit, 'shield')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(TYPE, 'Content'))

@@ -11,7 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import inspect
 from datetime import datetime
-from operator import methodcaller
 
 from zope import interface
 
@@ -33,7 +32,7 @@ from .constants import (channel_, content_, keywords_, references_, sharedWith_,
 						ntiid_, last_modified_, videoId_, creator_, containerId_,
 						replacementContent_, redactionExplanation_, tags_, intid_,
 					 	title_, quick_, end_timestamp_, start_timestamp_,
-					 	href_, target_ntiid_, score_)
+					 	href_, target_ntiid_)
 
 class _SearchableContent(object):
 	_schema = None
@@ -105,17 +104,18 @@ class _SearchableContent(object):
 
 
 @interface.implementer(search_interfaces.IWhooshBookContent)
-class _BookContent(dict):
-	ntiid = property(methodcaller('get', ntiid_))
-	title = property(methodcaller('get', title_))
-	content = property(methodcaller('get', content_))
-	last_modified = property(methodcaller('get', last_modified_))
-	# whoosh specific
-	intid = property(methodcaller('get', intid_))
-	score = property(methodcaller('get', score_, 1.0))
-	# alias
-	docnum = property(methodcaller('get', intid_))
-	containerId = property(methodcaller('get', ntiid_))
+class _BookContent(SchemaConfigured):
+
+	# create all interface fields
+	createDirectFieldProperties(search_interfaces.IWhooshBookContent)
+
+	@property
+	def intid(self):
+		return self.docnum
+
+	@property
+	def containerId(self):
+		return self.ntiid
 
 class Book(_SearchableContent):
 
@@ -133,7 +133,7 @@ class Book(_SearchableContent):
 
 				score = hit.score or 1.0
 				last_modified = common.epoch_time(hit[last_modified_])
-				data = _BookContent(intid=docnum,
+				data = _BookContent(docnum=docnum,
 									score=score,
 									ntiid=hit[ntiid_],
 						 			title=hit[title_],

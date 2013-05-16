@@ -373,14 +373,13 @@ class IRedisStoreService(interface.Interface):
 # content
 
 class IBookContent(interface.Interface):
-	docnum = schema.Int(title="Document number", required=True)
 	ntiid = nti_schema.ValidTextLine(title="NTIID", required=True)
 	title = nti_schema.ValidText(title="Content title", required=True)
 	content = nti_schema.ValidText(title="Text content", required=True)
 	last_modified = nti_schema.Number(title="Last modified date", required=True)
 
 class IWhooshBookContent(IBookContent, IReadMapping):
-	intid = schema.Int(title="Alias for docnum", required=True)
+	docnum = schema.Int(title="Document number", required=True)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
 class IVideoTranscriptContent(interface.Interface):
