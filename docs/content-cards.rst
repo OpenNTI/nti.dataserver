@@ -105,7 +105,7 @@ produce the above HTML, one would write:
 
 .. code-block:: latex
 
-	\begin{nticard}[/path/to/resource.pdf]<creator=Joe Smith>
+	\begin{nticard}{/path/to/resource.pdf}<creator=Joe Smith>
 		\label{testcard} % If the label is given, it is the part of NTIID
 		\caption{The Short Title} % The caption becomes the title
 		\includegraphics[width=120px,height=140]{/path/to/image.png}
@@ -122,7 +122,7 @@ active Internet connection, and a non-authenticated page. For example:
 
 .. code-block:: latex
 
-	\begin{nticard}[http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green?currentPage=all]<auto=true>
+	\begin{nticard}{http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green?currentPage=all}<auto=true>
 	\end{nticard}
 
 This is implemented with the following class:

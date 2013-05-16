@@ -52,7 +52,7 @@ class _MockRenderedBook(object):
 class TestNTICard(unittest.TestCase):
 
 	def _do_test_render( self, label, ntiid, filename='index.html', input_encoding=None, caption=r'\caption{Unknown}', caption_html=None,
-						 href='[/foo/bar]',
+						 href='{/foo/bar}',
 						 options='<creator=biz baz>',
 						 image=r'\includegraphics[width=100px]{test.png}',
 						 content='',
@@ -113,7 +113,7 @@ class TestNTICard(unittest.TestCase):
 		from nti.ntiids.ntiids import make_ntiid
 		target_ntiid = make_ntiid( provider='OU', nttype='HTML', specific='abc' )
 		index = self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1',
-									  href='[%s]' % target_ntiid )
+									  href='{%s}' % target_ntiid )
 		assert_that( index, contains_string( 'data-target_ntiid="%s"' % target_ntiid ) )
 		assert_that( index, contains_string( 'data-creator="biz baz"') )
 
@@ -147,7 +147,7 @@ class TestNTICard(unittest.TestCase):
 				return open(jpeg_file, 'r').read()
 
 		fake_get.is_callable().returns( R1() ).next_call().returns( R2() )
-		url = '[http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green?currentPage=all]'
+		url = '{http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green?currentPage=all}'
 		index = self._do_test_render(
 			r'\label{testcard}',
 			'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.testcard',

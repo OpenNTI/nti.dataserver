@@ -307,8 +307,11 @@ class nticardname(Base.Command):
 class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	"""
 	Implementation of the Card environment. There should be an ``includegraphics`` specifying
-	a thumbnail as a child of this node. The text contents of this node will form
+	a thumbnail as a child of this node (unless ``auto`` is used). The text contents of this node will form
 	the card description.
+
+	.. note::
+		This environment is **NOT** intended for subclassing.
 
 	Possible options include:
 
@@ -320,7 +323,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 		to extract Twitter card or `Facebook OpenGraph <http://opengraphprotocol.org>`_ data from it; this allows
 		you to skip specifying an image and description.
 	"""
-	args = '[href:str] <options:dict>'
+	args = 'href:str <options:dict>'
 	# Note the options dict is in <>, and uses the default comma separator, which means
 	# values cannot have commas (that's why href, which may be an NTIID is its own argument).
 	# See also ntiassessment.naqsolution.

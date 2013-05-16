@@ -25,7 +25,8 @@ from nti.monkey import relstorage_zlibstorage_patch_on_import
 relstorage_umysqldb_patch_on_import.patch()
 relstorage_timestamp_repr_patch_on_import.patch()
 relstorage_zlibstorage_patch_on_import.patch()
-
+from nti.monkey import zodb_blob_byte_oid_decode_patch_on_import
+zodb_blob_byte_oid_decode_patch_on_import.patch()
 
 import sys
 from pkg_resources import load_entry_point, get_distribution

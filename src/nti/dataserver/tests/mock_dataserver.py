@@ -1,5 +1,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 
+from nti.monkey import zodb_blob_byte_oid_decode_patch_on_import
+zodb_blob_byte_oid_decode_patch_on_import.patch()
+
 import ZODB
 
 from ZODB.DemoStorage import DemoStorage
