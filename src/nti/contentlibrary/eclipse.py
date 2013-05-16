@@ -47,14 +47,18 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 	tocItem.key = toc_entry.make_sibling_key( tocItem.href )
 
 	children = []
-	ordinal = 1
-	for child in node.iterchildren(tag='topic'):
+	for ordinal, child in enumerate(node.iterchildren(tag='topic'), 1):
 		child = _tocItem( child, toc_entry, factory=child_factory, child_factory=child_factory )
 		child.__parent__ = tocItem
-		child.ordinal = ordinal; ordinal += 1
+		child.ordinal = ordinal
+		child._v_toc_node = child # for testing and secret stuff
 		children.append( child )
-
 	tocItem.children = children
+
+	embeddedContainerNTIIDs = []
+	for child in node.iterchildren(tag='object'):
+		embeddedContainerNTIIDs.append( child.get('ntiid') )
+	tocItem.embeddedContainerNTIIDs = embeddedContainerNTIIDs
 	return tocItem
 
 # Cache for content packages

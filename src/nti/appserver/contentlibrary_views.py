@@ -48,6 +48,40 @@ from nti.externalization.singleton import SingletonDecorator
 from .dataserver_pyramid_views import _GenericGetView as GenericGetView
 from urllib import quote as UQ
 
+PAGE_INFO_MT = nti_mimetype_with_class( 'pageinfo' )
+PAGE_INFO_MT_JSON = PAGE_INFO_MT + '+json'
+
+
+def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
+	"Helper function to resolve a NTIID to PageInfo."
+
+	# XXX Assuming one location in the hierarchy, plus assuming things
+	# about the filename For the sake of the application (trello #932
+	# https://trello.com/c/5cxwEgVH), if the question is nested in a
+	# sub-section of a content library, we want to return the PageInfo
+	# for the nearest containing *physical* file. In short, this means
+	# we look for an href that does not have a '#' in it.
+
+	content_unit = ntiids.find_object_with_ntiid( page_ntiid_or_content_unit ) if not lib_interfaces.IContentUnit.providedBy( page_ntiid_or_content_unit ) else page_ntiid_or_content_unit
+	while content_unit and '#' in getattr( content_unit, 'href', '' ):
+		content_unit = getattr( content_unit, '__parent__', None )
+
+	page_ntiid = ''
+	if content_unit:
+		page_ntiid = content_unit.ntiid
+	elif isinstance(page_ntiid_or_content_unit, basestring):
+		page_ntiid = page_ntiid_or_content_unit
+
+	# Rather than redirecting to the canonical URL for the page, request it
+	# directly. This saves a round trip, and is more compatible with broken clients that
+	# don't follow redirects
+	subrequest = request.blank( '/dataserver2/Objects/' + page_ntiid )
+	subrequest.method = 'GET'
+	subrequest.environ['REMOTE_USER'] = request.environ['REMOTE_USER']
+	subrequest.environ['repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
+	subrequest.accept = PAGE_INFO_MT_JSON
+	return request.invoke_subrequest( subrequest )
+
 def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	"""
 	:param float last_modified: If greater than 0, the best known date for the
@@ -397,8 +431,8 @@ class _LibraryTOCRedirectClassView(object):
 	link_mt_json = link_mt + '+json'
 	link_mts = (link_mt, link_mt_json)
 	json_mt = 'application/json'
-	page_info_mt = nti_mimetype_with_class( 'pageinfo' )
-	page_info_mt_json = page_info_mt + '+json'
+	page_info_mt = PAGE_INFO_MT
+	page_info_mt_json = PAGE_INFO_MT_JSON
 	page_mts = (json_mt,page_info_mt,page_info_mt_json)
 
 	mts = ('text/html',link_mt,link_mt_json,json_mt,page_info_mt,page_info_mt_json)

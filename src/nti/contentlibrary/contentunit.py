@@ -30,6 +30,7 @@ class ContentUnit(object):
 
 
 	children = ()
+	embeddedContainerNTIIDs = ()
 	__parent__ = None
 
 	def __init__( self, **kwargs ):

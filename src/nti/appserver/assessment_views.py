@@ -14,13 +14,10 @@ logger = __import__('logging').getLogger(__name__)
 import pyramid.httpexceptions as hexc
 from pyramid.view import view_config
 
-
-from nti.dataserver.mimetype import  nti_mimetype_with_class
 from nti.dataserver import authorization as nauth
-from nti.ntiids import ntiids
 
-page_info_mt = nti_mimetype_with_class( 'pageinfo' )
-page_info_mt_json = page_info_mt + '+json'
+from .contentlibrary_views import find_page_info_view_helper
+from .contentlibrary_views import PAGE_INFO_MT_JSON
 
 ####
 ## In pyramid 1.4, there is some minor wonkiness with the accept= request predicate.
@@ -33,7 +30,7 @@ _view_defaults = dict( route_name='objects.generic.traversal',
 					   context='nti.assessment.interfaces.IQuestion',
 					   permission=nauth.ACT_READ,
 					   request_method='GET' )
-@view_config(accept=page_info_mt_json.encode('ascii'), **_view_defaults)
+@view_config(accept=PAGE_INFO_MT_JSON.encode('ascii'), **_view_defaults)
 def pageinfo_from_question_view( request ):
 	assert request.accept
 
@@ -48,30 +45,8 @@ def pageinfo_from_question_view( request ):
 	__traceback_info__ =  request.context, request.context.__parent__
 	assert request.context.__parent__ and request.context.__parent__.__class__ is unicode, type(request.context.__parent__)
 
-	# XXX Assuming one location in the hierarchy, plus assuming things
-	# about the filename For the sake of the application (trello #932
-	# https://trello.com/c/5cxwEgVH), if the question is nested in a
-	# sub-section of a content library, we want to return the PageInfo
-	# for the nearest containing *physical* file. In short, this means
-	# we look for an href that does not have a '#' in it.
-
 	page_ntiid = request.context.__parent__
-
-	content_unit = ntiids.find_object_with_ntiid( page_ntiid )
-	while content_unit and '#' in getattr( content_unit, 'href', '' ):
-		content_unit = getattr( content_unit, '__parent__', None )
-	if content_unit:
-		page_ntiid = content_unit.ntiid
-
-	# Rather than redirecting to the canonical URL for the page, request it
-	# directly. This saves a round trip, and is more compatible with broken clients that
-	# don't follow redirects
-	subrequest = request.blank( '/dataserver2/Objects/' + page_ntiid )
-	subrequest.method = 'GET'
-	subrequest.environ['REMOTE_USER'] = request.environ['REMOTE_USER']
-	subrequest.environ['repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
-	subrequest.accept = page_info_mt_json
-	return request.invoke_subrequest( subrequest )
+	return find_page_info_view_helper( request, page_ntiid )
 
 
 @view_config(accept=b'application/vnd.nextthought.link+json', **_view_defaults)
