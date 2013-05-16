@@ -102,7 +102,8 @@ name: nticard
 						data-type self/type | default;
 						data-title self/title;
 						data-creator self/creator | nothing;
-						data-href self/href" >
+						data-href self/href;
+						type self/mimeType" >
 
 	<param name="ntiid" value="tag:card-ntiid" tal:attributes="value self/ntiid" />
 	<param name="type"    value="summary"        tal:attributes="value self/type | default" />
