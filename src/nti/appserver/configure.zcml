@@ -385,6 +385,11 @@
 
 	<adapter factory="._question_map._QuestionACLProvider" />
 
+	<!-- Content card resolution; temporary? -->
+	<utility factory=".content_card_views._ContentCardResolver" name="NTICard" />
+	<utility factory=".content_card_views._ContentCardResolver" name="nticard" />
+
+
 	<utility zcml:condition="have testmode"
 			 component=".pyramid_renderers._throw_action"
 			 provides=".pyramid_renderers.ICatchComponentAction" />

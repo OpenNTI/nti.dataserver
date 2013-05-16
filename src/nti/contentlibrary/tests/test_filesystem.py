@@ -9,7 +9,9 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import has_property
+from hamcrest import contains
 from hamcrest import greater_than
+from hamcrest import has_length
 from hamcrest import has_entry
 from nti.tests import verifiably_provides, SharedConfiguringTestBase
 
@@ -59,7 +61,9 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 	def test_from_filesystem(self):
 		package = filesystem._package_factory( os.path.join( os.path.dirname( __file__ ), 'TestFilesystem' ) )
 		assert_that( package.creators, is_( ('Jason',) ) )
-
+		assert_that( package.children[-1].children[-1],
+					 has_property( 'embeddedContainerNTIIDs',
+								   contains('tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1') ) )
 
 		ext_package = to_external_object( package )
 		assert_that( ext_package, has_entry( 'DCCreator', ('Jason',) ) )
@@ -78,6 +82,11 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 
 		library = filesystem.EnumerateOnceFilesystemLibrary( os.path.dirname(__file__) )
 		assert_that( library, has_property( 'lastModified', greater_than( 0 ) ) )
+
+		embed_paths = library.pathsToEmbeddedNTIID('tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1')
+		assert_that( embed_paths, has_length( 1 ) )
+		assert_that( embed_paths[0], has_length( 3 ) )
+		assert_that( embed_paths[0][-1], has_property( 'ntiid', 'tag:nextthought.com,2011-10:USSC-HTML-Cohen.28' ) )
 
 		pack_ext = to_external_object( library[0] )
 		assert_that( pack_ext, has_entry( 'href', '/TestFilesystem/index.html' ) )

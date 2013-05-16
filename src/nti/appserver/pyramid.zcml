@@ -68,4 +68,7 @@
 
 	<pyramid:scan package=".link_providers.views" />
 	<pyramid:scan package=".bulk_email_views" />
+
+	<pyramid:scan package=".content_card_views" />
+
 </configure>

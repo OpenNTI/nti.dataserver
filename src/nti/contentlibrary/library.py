@@ -123,6 +123,25 @@ class AbstractLibrary(object):
 			result.pop()
 		return result
 
+	def pathsToEmbeddedNTIID(self, ntiid):
+		"""
+		Returns a list of paths (sequences of TOCEntry objects); the last
+		element in each path is a :class:`.IContentUnit` that contains an
+		embedded reference to the given NTIID. That is, the returned list
+		describes all the locations that the NTIID is known to be referenced
+		for use as a subcontainer. The returned list of paths is in no
+		particular order.
+		"""
+		result = []
+		def rec(unit):
+			if ntiid in unit.embeddedContainerNTIIDs:
+				result.append( self.pathToNTIID( unit.ntiid ) )
+			for child in unit.children: # it is even possible to embed the thing twice within a hierarchy
+				rec(child)
+
+		for package in self.contentPackages:
+			rec(package)
+		return result
 
 class AbstractStaticLibrary(AbstractLibrary):
 

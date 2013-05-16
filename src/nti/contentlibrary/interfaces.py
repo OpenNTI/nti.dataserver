@@ -7,6 +7,7 @@ from zope.location.interfaces import IContained as IZContained
 from zope.dublincore import interfaces as dub_interfaces
 
 from nti.utils.schema import Number, ValidTextLine as TextLine
+from nti.utils.schema import IndexedIterable
 #pylint: disable=E0213,E0211
 
 class IContentPackageLibrary(interface.Interface):
@@ -29,6 +30,18 @@ class IContentPackageLibrary(interface.Interface):
 	def childrenOfNTIID( ntiid ):
 		""" Returns a flattened list of all the children entries of ntiid
 		in no particular order. If there are no children, returns ``[]``"""
+
+	def pathsToEmbeddedNTIID(ntiid):
+		"""
+		Returns a list of paths (sequences of :class:`IContentUnit` objects); the last
+		element in each path is a :class:`IContentUnit` that contains an
+		embedded reference to the given NTIID. That is, the returned list
+		describes all the locations that the NTIID is known to be referenced
+		for use as a subcontainer.
+
+		The returned list of paths is in no particular order. If no embedding locations
+		are known, returns an empty iterable.
+		"""
 
 	def __getitem__( key ):
 		"""
@@ -71,6 +84,10 @@ class IContentUnit(IZContained, dub_interfaces.IDCDescriptiveProperties):
 	title = TextLine( title="The human-readable section name of this item; alias for `__name__`" ) # also defined by IDCDescriptiveProperties
 	icon = TextLine( title="URI for an image for this item, or None" )
 	children = schema.Iterable( title="Any :class:`IContentUnit` objects this item has." )
+
+	embeddedContainerNTIIDs = IndexedIterable( title="An iterable of NTIIDs of sub-containers embedded via reference in this content",
+											   value_type=TextLine(title="The embedded NTIID"),
+											   unique=True)
 
 
 class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
