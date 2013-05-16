@@ -10,12 +10,9 @@ logger = __import__( 'logging' ).getLogger(__name__)
 import os,  codecs
 from copy import deepcopy as _clone
 
-from hashlib import sha1
 
-from zope.deprecation import deprecated
 from zope import interface
 from zope import component
-import zope.dottedname.resolve as dottedname
 
 try:
 	import cPickle as mPickle
@@ -80,7 +77,7 @@ class ResourceDB(object):
 			for rType in rep_prefs.resourceTypes:
 				# We don't want to regenerate an existing representation for
 				# this same source
-				representations = self._db.get( ResourceDB._filter_source(node.source) )
+				representations = self._db.get( self._normalize_source(node.source) )
 				if representations is None or not representations.has_representation_of_type( rType ):
 					rep_names_to_nodes[rType].add(node)
 
@@ -95,7 +92,7 @@ class ResourceDB(object):
 		new_representations = generator.process_batch( nodes )
 		for new_representation in new_representations:
 			keys = (resourceType,) + tuple(new_representation.qualifiers)
-			self.setResource(ResourceDB._filter_source(new_representation.source), keys, new_representation)
+			self.setResource(self._normalize_source(new_representation.source), keys, new_representation)
 
 	def _loadGenerator(self, resourceType):
 		return component.getAdapter( self._document,
@@ -161,7 +158,7 @@ class ResourceDB(object):
 
 		self.dirty = True
 
-		source = ResourceDB._filter_source(source)
+		source = self._normalize_source(source)
 		if not source in self._db:
 			self._db[source] = ContentUnitRepresentations(source)
 
@@ -211,7 +208,7 @@ class ResourceDB(object):
 			return self._db[source]
 
 	def hasResource(self, source, keys):
-		rsrcSet = self._getResourceSet(ResourceDB._filter_source(source))
+		rsrcSet = self._getResourceSet(self._normalize_source(source))
 
 		if not rsrcSet:
 			return None
@@ -219,7 +216,7 @@ class ResourceDB(object):
 		return rsrcSet.hasResource(keys)
 
 	def getResourceContent(self, source, keys):
-		path = self.getResourcePath(ResourceDB._filter_source(source), keys)
+		path = self.getResourcePath(self._normalize_source(source), keys)
 		if path:
 			with codecs.open(path, 'r', 'utf-8') as f:
 				return f.read()
@@ -227,7 +224,7 @@ class ResourceDB(object):
 
 	def getResource(self, source, keys):
 
-		source = ResourceDB._filter_source(source)
+		source = self._normalize_source(source)
 		rsrcSet = self._db.get(source)
 
 		if rsrcSet == None:
@@ -236,7 +233,7 @@ class ResourceDB(object):
 		return rsrcSet.resources[digester.digestKeys(keys)]
 
 	def getResourcePath(self, source, keys):
-		rsrcSet = self._getResourceSet(ResourceDB._filter_source(source))
+		rsrcSet = self._getResourceSet(self._normalize_source(source))
 
 		if not rsrcSet:
 			return None
@@ -250,17 +247,25 @@ class ResourceDB(object):
 				path = os.path.join(resourcePath, name)
 				return path
 
-	@staticmethod
-	def _filter_source(source):
-		"""Filters the node source for image nodes such that the 'lookup key' is the
+	@classmethod
+	def _normalize_source(cls, source):
+		"""
+		Normalizes the node source string for image nodes such that the 'lookup key' is the
 		target file instead of the entire source line. This allows the various different
 		image commands and command variations to share backing resources and prevents
-		resource duplication."""
+		resource duplication.
+		"""
 
-		if 'includegraphics' in source or \
-			    'ntiincludeannotationgraphics' in source or \
-			    'ntiincludenoannotationgraphics' in source or \
-			    'ntislideimage' in source:
+		# FIXME: JAM: The list of names is a code smell and is unlikely to be properly maintained.
+		# If we need to normalize the source representation we should do it when we have
+		# actual Node objects and can use interfaces, adapters, and/or subclassing for extensibility;
+		# (this may take some refactoring?)
+		# alternately, if we are at places that do not and cannot have Nodes, we should
+		# consider named utilities
+		if ('includegraphics' in source
+			or 'ntiincludeannotationgraphics' in source
+			or 'ntiincludenoannotationgraphics' in source
+			or 'ntislideimage' in source):
 			source = source.split('{')[1].split('{')[0][:-1]
 
 		return source
