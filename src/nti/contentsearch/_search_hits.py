@@ -31,7 +31,7 @@ from . import interfaces as search_interfaces
 from .common import get_type_name
 from .common import get_sort_order
 from . import _discriminators as discriminators
-from .constants import (last_modified_, content_, title_, ntiid_)
+from .constants import (title_)
 from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, SNIPPET, HIT, ID, CONTENT, SCORE, OID,
 						POST, MIME_TYPE, VIDEO_ID, BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT, VIDEO_TRANSCRIPT_MIME_TYPE,
 					 	START_TIMESTAMP, END_TIMESTAMP, NTI_CARD, NTI_CARD_MIME_TYPE, TITLE, HREF, TARGET_NTIID)
@@ -177,16 +177,16 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 	def set_hit_info(self, hit, score):
 		super(_WhooshBookSearchHit, self).set_hit_info(hit, score)
 		self[TYPE] = CONTENT
-		self[NTIID] = hit[ntiid_]
-		self[SNIPPET] = hit[content_]
-		self[CONTAINER_ID] = hit[ntiid_]
-		self[title_.capitalize()] = hit[title_]
+		self[NTIID] = hit.ntiid
+		self[SNIPPET] = hit.content
+		self[CONTAINER_ID] = hit.ntiid
+		self[title_.capitalize()] = hit.title
+		self[LAST_MODIFIED] = hit.last_modified
 		self[MIME_TYPE] = BOOK_CONTENT_MIME_TYPE
-		self[LAST_MODIFIED] = hit[last_modified_]
 
 	@classmethod
 	def get_oid(cls, hit):
-		return unicode(hit[ntiid_])
+		return unicode(hit.ntiid)
 
 @component.adapter(search_interfaces.IWhooshVideoTranscriptContent)
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptSearchHit)
