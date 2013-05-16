@@ -22,19 +22,26 @@ except UnicodeDecodeError:
 	#https://github.com/zopefoundation/ZODB/commit/e7d8ca7229998146f79e1f90302ae6486bc95a60
 	# changed `str(oid)` to oid.decode(), which, if the oid is already bytes, and it should
 	# be already bytes, tries to decode with the default encoding, which is often
-	# ascii
+	# ascii.
+	# See https://github.com/zopefoundation/ZODB/pull/9
 
 	import binascii # hexlify takes bytes and returns bytes on py2 and py3
-	from ZODB._compat import ascii_bytes
+	from ZODB._compat import ascii_bytes, INT_TYPES
 	import os.path  # os.path.sep is a bytes on py2 and py3
 	def oid_to_path(self, oid):
 		directories = []
 		# Create the bushy directory structure with the least significant byte
 		# first
 		for byte in ascii_bytes(oid):
-			directories.append(
-				'0x%s' % binascii.hexlify(byte))
+			if isinstance(byte,INT_TYPES): # Py3k iterates byte strings as ints
+				hex_segment_bytes = b'0x' + binascii.hexlify(bytes([byte]))
+				hex_segment_string = hex_segment_bytes.decode('ascii')
+			else:
+				hex_segment_string = '0x%s' % binascii.hexlify(byte)
+			directories.append(hex_segment_string)
+
 		return os.path.sep.join(directories)
+
 
 	BushyLayout.oid_to_path = oid_to_path
 
