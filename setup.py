@@ -138,17 +138,24 @@ setup(
 		'Pillow >= 2.0.0',
 		'RestrictedPython >= 3.6.0',
 		'ZConfig >= 3.0.3',  # 3.0.3 reqd for pypy/python3 support. requires zodb3 3.11.0a3+
-		 # NOTE: ZODB has a new release, 4.0.0a4 (Notice it's not ZODB3 anymore, so
+		 # NOTE: ZODB has a new release, 4.0.0b2 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
-		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.5, and ZEO >= 4.0.0
-		 # which were pulled out of ZODB for better pypy support.
+		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.5, and ZEO >= 4.0.0, and zdaemon
+		 # which were pulled out of ZODB for better pypy and py3 support; ZODB3 is now a meta
+		 # release, which is falling behind the real versions.
 		 # It may require a tweak to our monkey patch if has not been fixed;
 		 # see https://github.com/zopefoundation/ZEO/pull/1
+		 # (Said patch is merged, but not yet released)
 		 # ZODB3 now has a 3.11.0a3 including a 4.x version of each above component.
 		 # This has been in testing for many months and is stable. It is needed
 		 # (even though alpha at the moment) to work with other updated deps.
 		 # Depending on the final release, we may need to explicitly list each component.
-		'ZODB3 >= 3.11.0a3',
+		'ZODB3 >= 3.11.0a3', # Unfortunately, pulled in by zopyx.txng3.core, so do make sure we get the latest
+		'ZODB >= 4.0.0b2',
+		'BTrees >= 4.0.6',
+		'zdaemon >= 4.0.0',
+		'persistent >= 4.0.6',
+		'ZEO >= 4.0.0a1',
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
 		# 'MySQL-python', # mysql adapter--NOT needed, loaded from umysqldb
