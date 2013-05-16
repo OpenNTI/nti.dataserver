@@ -16,6 +16,7 @@ name: ntislidedeck
   <param name="type"    value="summary"        tal:attributes="value self/type | default" />
   <param name="title" value="The Short Title" tal:attributes="value self/title" />
   <param name="creator" value="Joe Smith"      tal:attributes="value self/creator | nothing" />
+  <param name="slidedeckid" value="my id" tal:attributes="value self/id" />
   <img tal:condition="self/image/style" tal:attributes="src self/image/image/url; style self/image/style/inline" />
   <img tal:condition="not:self/image/style" tal:attributes="src self/image/image/url; style string:width:${self/image/image/width/px};; height:${self/image/image/height/px}" />
   <span class="description" tal:content="self/description" tal:condition="self/description">
