@@ -75,6 +75,19 @@ class TestResourceDB(ConfiguringTestBase):
 		rdb = ResourceDB( self.ctx.dom )
 		assert_that( rdb.getResource( '$x^2$', ('mathjax_inline',)), is_( none() ) )
 
+	def test_filter_source( self ):
+		string_1 = '\\includegraphics[width=6px]{my/image/file}'
+		string_2 = '\\ntiincludeannotationgraphics[width=6px]{my/image/file}'
+		string_3 = '\\ntiincludenoannotationgraphics[width=6px]{my/image/file}'
+		string_4 = '\\ntislideimage[width=6px]{my/image/file}'
+		string_5 = '\\mysillycommand{my/image/file}'
+		result = 'my/image/file'
+		
+		assert_that( ResourceDB._filter_source( string_1 ), is_( result ) )
+		assert_that( ResourceDB._filter_source( string_2 ), is_( result ) )
+		assert_that( ResourceDB._filter_source( string_3 ), is_( result ) )
+		assert_that( ResourceDB._filter_source( string_4 ), is_( result ) )
+		assert_that( ResourceDB._filter_source( string_5 ), is_( string_5 ) )
 
 class TestResourceDBTabular(ConfiguringTestBase):
 
