@@ -82,12 +82,12 @@ class TestResourceDB(ConfiguringTestBase):
 		string_4 = '\\ntislideimage[width=6px]{my/image/file}'
 		string_5 = '\\mysillycommand{my/image/file}'
 		result = 'my/image/file'
-		
-		assert_that( ResourceDB._filter_source( string_1 ), is_( result ) )
-		assert_that( ResourceDB._filter_source( string_2 ), is_( result ) )
-		assert_that( ResourceDB._filter_source( string_3 ), is_( result ) )
-		assert_that( ResourceDB._filter_source( string_4 ), is_( result ) )
-		assert_that( ResourceDB._filter_source( string_5 ), is_( string_5 ) )
+
+		assert_that( ResourceDB._normalize_source( string_1 ), is_( result ) )
+		assert_that( ResourceDB._normalize_source( string_2 ), is_( result ) )
+		assert_that( ResourceDB._normalize_source( string_3 ), is_( result ) )
+		assert_that( ResourceDB._normalize_source( string_4 ), is_( result ) )
+		assert_that( ResourceDB._normalize_source( string_5 ), is_( string_5 ) )
 
 class TestResourceDBTabular(ConfiguringTestBase):
 
