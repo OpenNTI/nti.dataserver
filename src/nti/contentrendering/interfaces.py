@@ -138,6 +138,29 @@ class IStaticYouTubeEmbedVideoAdder(IStaticVideoAdder):
 	Uses static information to add embedded YouTube video references to the book content.
 	"""
 
+####
+# Embedded subcontainers
+####
+from zope.mimetype.interfaces import IContentTypeAware
+class IEmbeddedContainer(IContentTypeAware):
+	"""
+	Intended to be implemented (or adapted from) nodes in the plasTeX
+	DOM tree, this object represents a portion of content, embedded
+	in other content, that should function as its own user-generated
+	data container. Typically these will be rendered with ``<object>``
+	tags, and the attributes declared in this interface will be
+	echoed in the rendered version.
+
+	We inherit a ``mimeType`` attribute from our parent interface; this
+	should be the ``mimeType`` of the container being pointed to.
+	"""
+
+	ntiid = schema.TextLine(title="The NTIID of the embedded container itself.")
+
+####
+# Indexing
+####
+
 class IContentIndexer(interface.Interface):
 	"""
 	Creates an index using the contents in a given book
@@ -146,7 +169,7 @@ class IContentIndexer(interface.Interface):
 	def index(book, indexdir=None):
 		"""
 		The book to index
-		
+
 		:param book: The :class:`IRenderedBook`.
 		:param indexdir: Output directory
 		"""

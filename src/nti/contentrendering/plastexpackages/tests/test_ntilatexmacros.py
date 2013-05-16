@@ -51,7 +51,15 @@ class _MockRenderedBook(object):
 
 class TestNTICard(unittest.TestCase):
 
-	def _do_test_render( self, label, ntiid, filename='index.html', input_encoding=None, caption=r'\caption{Unknown}', caption_html=None,
+	toc = None
+
+	def setUp(self):
+		super(TestNTICard,self).setUp()
+		self.toc = None
+
+	def _do_test_render( self, label, ntiid, filename='index.html', input_encoding=None,
+						 prelude='',
+						 caption=r'\caption{Unknown}', caption_html=None,
 						 href='{/foo/bar}',
 						 options='<creator=biz baz>',
 						 image=r'\includegraphics[width=100px]{test.png}',
@@ -59,13 +67,14 @@ class TestNTICard(unittest.TestCase):
 						 do_images=True):
 
 		example = br"""
+		%(prelude)s
 		\begin{nticard}%(href)s%(options)s
 		%(label)s
 		%(caption)s
 		%(image)s
 		%(content)s
 		\end{nticard}
-		""" % {'label': label, 'caption': caption, 'href': href, 'options': options, 'image': image, 'content': content }
+		""" % {'prelude': prelude, 'label': label, 'caption': caption, 'href': href, 'options': options, 'image': image, 'content': content }
 		__traceback_info__ = example
 		with RenderContext(_simpleLatexDocument( (example,) ), output_encoding='utf-8', input_encoding=input_encoding,
 						   files=(os.path.join( os.path.dirname(__file__ ), 'test.png' ),),
@@ -81,7 +90,12 @@ class TestNTICard(unittest.TestCase):
 			render = ResourceRenderer.createResourceRenderer('XHTML', res_db)
 			render.importDirectory( os.path.join( os.path.dirname(__file__), '..' ) )
 			render.render( dom )
+
 			# TODO: Actual validation of the rendering
+			with io.open(os.path.join(ctx.docdir, 'eclipse-toc.xml'), 'rU', encoding='utf-8' ) as f:
+				toc = f.read()
+			self.toc = toc
+			#print(toc)
 
 
 			with io.open(os.path.join(ctx.docdir, filename), 'rU', encoding='utf-8' ) as f:
@@ -104,6 +118,28 @@ class TestNTICard(unittest.TestCase):
 
 	def test_render_counter(self):
 		self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1' )
+
+	def test_container_in_toc(self):
+		prelude = r'\section{A section}'
+		self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1', prelude=prelude,
+							  filename='tag_nextthought_com_2011-10_testing-HTML-temp_a_section.html')
+
+		assert_that( self.toc,
+					 contains_string( '''    <topic level="part" levelnum="1" label="A section" href="tag_nextthought_com_2011-10_testing-HTML-temp_a_section.html" ntiid="tag:nextthought.com,2011-10:testing-HTML-temp.a_section">
+<object ntiid="tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1" mimeType="application/vnd.nextthought.nticard">
+</object>''') )
+
+		prelude = r'''\section{A section}
+		Followed by some text
+
+		and more text.
+
+		\subsection{a subsection}'''
+		self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1', prelude=prelude,
+							  filename='tag_nextthought_com_2011-10_testing-HTML-temp_a_section.html')
+		assert_that( self.toc,
+					 contains_string( '''       <topic level="chapter" levelnum="2" label="a subsection" href="tag_nextthought_com_2011-10_testing-HTML-temp_a_section.html#a0000000002" ntiid="tag:nextthought.com,2011-10:testing-HTML-temp.a_subsection">
+<object ntiid="tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1" mimeType="application/vnd.nextthought.nticard">''') )
 
 	def test_computed_target_ntiid(self):
 		index = self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1' )

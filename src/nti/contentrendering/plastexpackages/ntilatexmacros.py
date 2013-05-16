@@ -10,12 +10,15 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 import hashlib
 
+from zope import interface
+
 from plasTeX import Base, Command, Environment
 
 from plasTeX.Base import Crossref
 from plasTeX.Base import TextCommand
 
 from nti.contentrendering import plastexids
+from nti.contentrendering import interfaces as crd_interfaces
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
 from nti.contentrendering.plastexpackages.graphicx import includegraphics
 
@@ -304,6 +307,7 @@ class ntipreviouspage(Base.Command):
 class nticardname(Base.Command):
 	pass
 
+@interface.implementer(crd_interfaces.IEmbeddedContainer)
 class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	"""
 	Implementation of the Card environment. There should be an ``includegraphics`` specifying
@@ -341,6 +345,9 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	_ntiid_suffix = 'nticard.'
 	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
 	_ntiid_type = 'NTICard'
+
+	#: From IEmbeddedContainer
+	mimeType = "application/vnd.nextthought.nticard"
 
 	creator = None
 	href = None
