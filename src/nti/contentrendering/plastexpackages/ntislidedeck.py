@@ -100,33 +100,67 @@ class ntislidedeck(LocalContentMixin, Float, plastexids.NTIIDMixin):
 class ntislidevideoname(Command):
         unicode = ''
 
-class ntislidevideo(Environment):
+class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	"""This environment encapsulates ntiincludevideo objects so that we can tag them with a label and reference them elsewhere.
 """
 	args = '[ options:dict ]'
+
+	# A Float subclass to get \caption handling
+	class caption(Floats.Caption):
+		counter = 'ntislidevideo'
+
 	counter = "ntislidevideo"
 	blockType=True
+	forcePars=False
+	_ntiid_cache_map_name = '_ntislidevideo_ntiid_map'
+        _ntiid_allow_missing_title = False
+        _ntiid_suffix = 'nsd.'
+        _ntiid_title_attr_name = 'ref'
+        _ntiid_type = 'NTISlideVideo'
 
-	def invoke(self, tex):
-		res = super(ntislidevideo, self).invoke(tex)
-		if 'options' not in self.attributes or not self.attributes['options']:
-			self.attributes['options'] = {}
-		if 'presentationonly' not in self.attributes['options']:
-			self.attributes['options']['presentationonly'] = False
-		elif not self.attributes['options']['presentationonly']:
-			pass
-		else:
-			self.style['display'] = 'none'
-		return res
+	creator = 'Unknown'
+	type = 'local'
+	title = 'No Title'
+	show_video = False
+
+	mimeType = 'application/vnd.nextthought.ntislidevideo'
+	itemprop = 'nti-slide-video-card'
 
 	def digest(self, tokens):
-		super(ntislidevideo, self).digest(tokens)
-		video = self.getElementsByTagName( 'ntiincludevideo' )[0]
-		self.type = video.attributes['service']
-		self.provider_id = video.attributes['video_id']
-		self.thumbnail = video.attributes['thumbnail']
-		self.video_url = video.attributes['video_url']
-		self.id = video.id
+		res = super(ntislidevideo, self).digest(tokens)
+		if self.macroMode == self.MODE_BEGIN:
+			if not getattr(self, 'title', ''):
+				raise ValueError("Must specify a title using \\caption")
+
+			options = self.attributes.get( 'options', {} ) or {}
+			__traceback_info__ = options, self.attributes
+			if 'creator' in options:
+				self.creator = options['creator']
+			if 'presentationonly' in options and options['presentationonly']:
+				self.style['display'] = 'none'
+				self.itemprop = 'nti-slide-video'
+			if 'show-video' in options:
+				self.show_video = options['show-video']
+
+			video = self.getElementsByTagName( 'ntiincludevideo' )[0]
+			self.type = video.attributes['service']
+			self.provider_id = video.attributes['video_id']
+			self.thumbnail = video.attributes['thumbnail']
+			self.video_url = video.attributes['video_url']
+			self.id = video.id
+
+		return res
+
+	@property
+	def description(self):
+		texts = []
+		for child in self.allChildNodes:
+			# Try to extract the text children, ignoring the caption and label, etc
+			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
+				texts.append( unicode( child ) )
+
+		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
+
 
 class ntislidename(Command):
         unicode = ''
