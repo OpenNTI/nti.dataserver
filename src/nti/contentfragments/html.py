@@ -13,6 +13,37 @@ from zope import component
 
 import html5lib
 from html5lib import treewalkers, serializer, treebuilders
+
+# serializer.xhtmlserializer.XHTMLSerializer is removed in html5lib 1.0.
+# It was simply defined as:
+#
+#class XHTMLSerializer(HTMLSerializer):
+#	quote_attr_values = True
+#	minimize_boolean_attributes = False
+#	use_trailing_solidus = True
+#	escape_lt_in_attrs = True
+#	omit_optional_tags = False
+#	escape_rcdata = True
+#
+# Note that this did not actually guarantee that the results were valid XHTML
+# (which is why it was removed). We define our own version
+# that works similarly but has a less confusing name, plus includes
+# our standard options
+
+class Serializer(serializer.HTMLSerializer):
+	quote_attr_values = True
+	minimize_boolean_attributes = False
+	use_trailing_solidus = True
+	escape_lt_in_attrs = True
+	omit_optional_tags = False
+	escape_rcdata = True
+
+	inject_meta_charset = False
+	strip_whitespace = True
+	space_before_trailing_solidus = True
+	sanitize = False
+
+
 from html5lib.filters import sanitizer
 
 import lxml.etree
@@ -196,15 +227,10 @@ def _html5lib_tostring(doc, sanitize=True):
 	if sanitize:
 		stream = _SanitizerFilter(stream)
 	# We want to produce parseable XML so that it's easy to deal with
-	# outside a browser
+	# outside a browser; this
 	# TODO: What about stripping excess whitespace? Seems like a good idea...
-	s = serializer.xhtmlserializer.XHTMLSerializer(inject_meta_charset=False,
-												   omit_optional_tags=False,
-												   quote_attr_values=True,
-												   strip_whitespace=False,
-												   use_trailing_solidus=True,
-												   space_before_trailing_solidus=True,
-												   sanitize=False)
+	s = Serializer(strip_whitespace=False)
+
 	output_generator = s.serialize(stream)  # By not passing the 'encoding' arg, we get a unicode string
 	string = u''.join(output_generator)
 	return string
