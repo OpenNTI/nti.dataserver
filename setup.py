@@ -233,7 +233,7 @@ setup(
 		 # Consider also https://github.com/phensley/gstatsd
 		'pystatsd >= 0.1.6',
 		'pytz >= 2013b',
-		'rdflib >= 3.4.0',
+		'rdflib >= 4.0.0',  # includes SPARQLWrapper
 		# Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
 		'redis >= 2.7.5',
 		# There is a nice complete mock for it at fakeredis, installed for tests
