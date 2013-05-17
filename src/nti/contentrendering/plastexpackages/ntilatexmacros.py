@@ -360,6 +360,8 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	#: is linked to, allowing this NTIID to be used as a ``containerId``
 	target_ntiid = None
 
+	_href_override = None
+
 	def _href_to_pyquery(self):
 
 		# Some hack stuff to try to handle local files and remote files
@@ -428,12 +430,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 		include.style['height'] = "120px"
 		self.appendChild( include )
 
-	def _auto_populate(self):
-		if '//' not in self.href and self.href.endswith('.pdf'):
-			self._pdf_populate(self.href)
-			return
-
-		dom = self._href_to_pyquery()
+	def _dom_populate( self, dom ):
 		if dom is None:
 			return
 
@@ -479,6 +476,37 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 			elif name in ('og:description', 'description'):
 				self.description = cfg_interfaces.IPlainTextContentFragment( val )
 
+	def _auto_populate(self):
+		import pyquery
+		if self._href_override:
+			if self._href_override.endswith( '.pdf' ):
+				self._pdf_populate(self.href)
+			elif self._href_override.endswith( '.html' ):
+				self._dom_populate( pyquery.PyQuery( filename=self._href_override ) )
+			return
+
+		import requests
+		response = requests.get( self.href, headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.1+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2"} )
+		if 'html' in response.headers.get( 'content-type', '' ):
+			dom = pyquery.PyQuery( response.text )
+			self._dom_populate( dom )
+		elif 'pdf' in response.headers.get( 'content-type', '' ):
+			import tempfile
+			import os
+			fd, pdf_path = tempfile.mkstemp( '.pdf', 'download' )
+			pdf_file = os.fdopen( fd, 'wb' )
+			# TODO: This is pulling the whole thing into memory, and it could be
+			# quite large. We could stream with response.raw.read?
+			# Even so, _pdf_populate pulls the whole thing into memory when it is read
+			# (I think---confirm this), so we might want to use GS to chop it to just
+			# one page first, if that preserves metadata.
+			# Or can we use GS to get the metadata?
+			# The pdfinfo command from poppler can get the metadata, that might be better
+			pdf_file.write( response.content )
+			pdf_file.close()
+			self._pdf_populate( pdf_path )
+
+
 	def invoke( self, tex ):
 		res = super(nticard,self).invoke( tex )
 		# Resolve local files to full paths with the same algorithm that
@@ -493,8 +521,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 										   [], # No extensions to search: must be complete filename or path
 										   query_extensions=False)
 			if the_file:
-				# FIXME: This actually screws up the href in the generated data
-				self.attributes['href'] = the_file
+				self._href_override = the_file
 		return res
 
 	def digest(self, tokens):

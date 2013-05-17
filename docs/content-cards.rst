@@ -125,6 +125,10 @@ active Internet connection, and a non-authenticated page. For example:
 	\begin{nticard}{http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green?currentPage=all}<auto=true>
 	\end{nticard}
 
+Likewise, a PDF can be used with ``auto`` to generate a thumbnail
+based on the first page and extract the creator, subject (for
+description) and title.
+
 This is implemented with the following class:
 
 .. autoclass:: nti.contentrendering.plastexpackages.ntilatexmacros.nticard
