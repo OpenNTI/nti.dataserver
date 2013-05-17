@@ -214,25 +214,27 @@ class TestNTICard(unittest.TestCase):
 		assert_that( index, contains_string( '<img src="resources') )
 
 	@fudge.patch('requests.get')
-	def test_auto_populate_remote_pdf(self, fake_get):
-		# This real URL has been download locally
-		pdf_file = os.path.join( os.path.dirname( __file__ ), 'test_page574_12.pdf' )
+	def test_auto_populate_remote_pdf(self, fake_get=None):
+		# By commenting out the patch line, we can test with a real file
+		if fake_get is not None:
+			# This real URL has been download locally
+			pdf_file = os.path.join( os.path.dirname( __file__ ), 'test_page574_12.pdf' )
 
-		class R1(object):
-			def __init__(self):
-				self.headers = {'content-type': 'application/pdf'}
-			@property
-			def content(self):
-				return open(pdf_file, 'rb').read()
+			class R1(object):
+				def __init__(self):
+					self.headers = {'content-type': 'application/pdf'}
+					self.raw = open(pdf_file, 'rb')
 
-		fake_get.is_callable().returns( R1() )
-
+			fake_get.is_callable().returns( R1() )
+			href = '{http://someserver.com/path/to/test_page574_12.pdf}' # remote href
+		else:
+			href = '{http://support.pokemon.com/FileManagement/Download/f6029520f8ea43f08790ec4975944bb3}'
 		index = self._do_test_render(
 			r'\label{testcard}',
 			'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.testcard',
 			caption='', caption_html='',
 			options='<auto=True>',
-			href='{http://someserver.com/path/to/test_page574_12.pdf}', # remote href
+			href=href,
 			image='' )
 
 		# Values from the PDF
