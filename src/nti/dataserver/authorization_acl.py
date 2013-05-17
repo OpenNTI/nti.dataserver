@@ -205,6 +205,7 @@ def ACL( obj, default=() ):
 	the value of the `default` parameter is).
 	"""
 	prov = ACLProvider( obj )
+	__traceback_info__ = obj, prov
 	return prov.__acl__ if prov is not None else default
 
 
@@ -525,6 +526,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		"""
 		result = self._creator_acl()
 		for name in self.__do_get_sharing_target_names():
+			__traceback_info__ = name
 			self._extend_for_sharing_target( name, result )
 		self._extend_acl_after_creator_and_sharing( result )
 		if self._DENY_ALL:
