@@ -404,8 +404,13 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 
 	def _pdf_populate(self, pdf_path):
 		import pyPdf
+		# pyPdf is a streaming parser. It only
+		# has to load the xref table from the end of the stream initially,
+		# and then objects are loaded on demand from the (seekable!)
+		# stream. Thus, even for very large PDFs, it uses
+		# minimal memory.
 		pdf = pyPdf.PdfFileReader( open( pdf_path, 'rb' ) )
-		info = pdf.getDocumentInfo()
+		info = pdf.getDocumentInfo() # TODO: Also check the xmpMetadata?
 		# This dict is weird: [] and get() return different things,
 		# with [] returning the strings we want
 		if '/Title' in info and info['/Title']:
@@ -492,14 +497,12 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 			import tempfile
 			import os
 			import shutil
+			# The PDF file might be large, so we stream
+			# it to download. Our PDF parser then only
+			# reads in what it needs to, so memory usage
+			# is minimal---but it must have a bidirectional seekable stream
 			fd, pdf_path = tempfile.mkstemp( '.pdf', 'download' )
 			pdf_file = os.fdopen( fd, 'wb' )
-			# TODO: _pdf_populate pulls the whole thing into memory (which could be quite large) when it is read
-			# (I think---confirm this), so we might want to use GS to chop it to just
-			# one page first, if that preserves metadata.
-			# Or can we use GS to get the metadata?
-			# The pdfinfo command from poppler (poppler-utils in debian/amazon)
-			# can get the metadata, that might be better
 			shutil.copyfileobj( response.raw, pdf_file )
 			pdf_file.close()
 			self._pdf_populate( pdf_path )
