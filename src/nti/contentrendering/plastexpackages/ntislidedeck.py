@@ -44,7 +44,7 @@ class ntislidedeck(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	"""The ntislidedeck environment stores the metadata for a 'PowerPoint' style presentation.  Each slide that is a part of a presentation uses a ntislidedeckref command to link it to the approriate presentation.
 """
 
-	args = '< options:dict >'
+	args = '[ options:dict ]'
 
 	# A Float subclass to get \caption handling
 	class caption(Floats.Caption):
