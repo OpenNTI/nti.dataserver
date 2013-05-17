@@ -52,7 +52,7 @@ from . import interfaces as frg_interfaces
 
 class _SliceDict(dict):
 	"""
-	There is a bug in html5lib 0.95: The _base.TreeWalker now returns
+	There is a bug in html5lib 0.95 (and 1.0b1): The _base.TreeWalker now returns
 	a dictionary from normalizeAttrs. Some parts of the code, notably sanitizer.py 171
 	haven't been updated from 0.90 and expect a list. They try to reverse it using a
 	slice, and the result is a type error. We can fix this.
@@ -67,7 +67,7 @@ class _SliceDict(dict):
 # TODO: Consider also http://packages.python.org/PottyMouth/
 from html5lib.sanitizer import HTMLSanitizerMixin
 
-# There is a bug in 0.95: the sanitizer converts attribute dicts
+# There is a bug in 0.95 and 1.0b1: the sanitizer converts attribute dicts
 # to lists when they should stay dicts. We fix that globally.
 _orig_sanitize = HTMLSanitizerMixin.sanitize_token
 def _sanitize_token(self, token):
