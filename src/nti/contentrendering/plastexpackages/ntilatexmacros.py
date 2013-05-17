@@ -388,7 +388,10 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 
 		# Extract metadata. Need to handle OpenGraph
 		# as well as twitter.
-		# Here is a poor version of OpenGraph handling
+		# Here is a poor version of OpenGraph handling;
+		# it is bade due to the hardcoded namespaces
+		# NOTE: This can be done with rdflib, as it has built-in
+		# RDFa handling (which OG is)
 		for meta in dom.find('meta'):
 			name = meta.get('property') or meta.get( 'name' )
 			val = meta.get('content')
