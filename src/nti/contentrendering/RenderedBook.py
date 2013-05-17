@@ -13,7 +13,7 @@ import urllib
 import html5lib
 from pyquery import PyQuery
 from xml.dom.minidom import parse
-from html5lib import treewalkers, serializer, treebuilders
+from html5lib import treewalkers, treebuilders
 
 from zope import interface
 from BTrees.OOBTree import OOBTree
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class RenderedBook(object):
 
 	TOC_FILE_NAME = 'eclipse-toc.xml'
-	
+
 	tocFile = None
 	document = None
 	contentLocation = None
@@ -241,7 +241,7 @@ class _EclipseTOCMiniDomTopic(object):
 	save_dom = True
 	modifiedDom = False
 	modifiedTopic = False
-	
+
 	_dom = None
 	_doc = None
 	_childTopics = None
@@ -441,13 +441,9 @@ class _EclipseTOCMiniDomTopic(object):
 				# Write the original, whole doc, which will reflect the PyQuery modifications (not self._dom)
 				# This way we get the doctype
 				stream = walker(self._doc)
-				s = serializer.xhtmlserializer.XHTMLSerializer(inject_meta_charset=False,
-															   omit_optional_tags=False,
-															   quote_attr_values=True,
-															   strip_whitespace=True,
-															   use_trailing_solidus=True,
-															   space_before_trailing_solidus=True,
-															   sanitize=False )
+				from nti.contentfragments.html import Serializer
+				s = Serializer()
+
 				for i in s.serialize(stream):
 					f.write( i )
 
