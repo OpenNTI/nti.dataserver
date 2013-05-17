@@ -11,7 +11,7 @@ file:../lib/pywikipedia/#egg=pywikipedia
 # Sadly, something is screwed about this repository and updating it in
 # place messes things up
 # -e git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
-git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
+#git+https://github.com/hongqn/umysqldb.git#egg=umysqldb-dev
 -e git+https://github.com/petehunt/PyMySQL.git#egg=PyMySQL-dev
 ## Sadly, issue 328 prevents us from using local paths for these things,
 ## if we include the egg name. If we're otherwise very careful,
