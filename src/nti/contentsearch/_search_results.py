@@ -72,6 +72,8 @@ class _IndexHit(zcontained.Contained):
 @interface.implementer(search_interfaces.IIndexHitMetaData)
 class _IndexHitMetaData(object):
 
+	unspecified_container = u'+++unspecified_container+++'
+
 	def __init__(self):
 		self._last_modified = 0
 		self._type_count = collections.defaultdict(int)
@@ -90,17 +92,20 @@ class _IndexHitMetaData(object):
 		return sum(self._type_count.values())
 
 	def track(self, ihit):
+		selected = ihit.obj
+
 		# container count
-		rsr = search_interfaces.IContainerIDResolver(ihit.obj)
-		containerId = rsr.get_containerId() or u'++unknown-container'
+		rsr = search_interfaces.IContainerIDResolver(selected, None)
+		containerId = rsr.get_containerId() if rsr else self.unspecified_container
 		self._container_count[containerId] = self._container_count[containerId] + 1
 
 		# last modified
-		rsr = search_interfaces.ILastModifiedResolver(ihit.obj)
-		self._last_modified = max(self._last_modified, rsr.get_last_modified() or 0)
+		rsr = search_interfaces.ILastModifiedResolver(selected, None)
+		last_modified = rsr.get_last_modified() if rsr else 0
+		self._last_modified = max(self._last_modified, last_modified or 0)
 
 		# type count
-		type_name = get_type_name(ihit.obj)
+		type_name = get_type_name(selected)
 		self._type_count[type_name] = self._type_count[type_name] + 1
 
 	def __iadd__(self, other):

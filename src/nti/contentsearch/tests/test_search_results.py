@@ -4,8 +4,8 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import os
 import json
@@ -37,7 +37,7 @@ class TestSearchResults(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
-		super(TestSearchResults,cls).setUpClass()
+		super(TestSearchResults, cls).setUpClass()
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
@@ -46,9 +46,8 @@ class TestSearchResults(ConfiguringTestBase):
 		qo = QueryObject.create("test")
 		sr = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
 		assert_that(sr, is_not(None))
-		assert_that( sr, verifiably_provides( search_interfaces.ISearchResults ) )
-		assert_that( sr, verifiably_provides( IContentTypeAware ) )
-
+		assert_that(sr, verifiably_provides(search_interfaces.ISearchResults))
+		assert_that(sr, verifiably_provides(IContentTypeAware))
 
 		notes = []
 		containerid = make_ntiid(nttype='bleach', specific='manga')
@@ -82,9 +81,8 @@ class TestSearchResults(ConfiguringTestBase):
 		qo = QueryObject.create("test")
 		sr = component.getUtility(search_interfaces.ISuggestResultsCreator)(qo)
 		assert_that(sr, is_not(None))
-		assert_that( sr, verifiably_provides( search_interfaces.ISuggestResults ) )
-		assert_that( sr, verifiably_provides( IContentTypeAware ) )
-
+		assert_that(sr, verifiably_provides(search_interfaces.ISuggestResults))
+		assert_that(sr, verifiably_provides(IContentTypeAware))
 
 		sr.add_suggestions(domain_words)
 
@@ -107,9 +105,8 @@ class TestSearchResults(ConfiguringTestBase):
 		qo = QueryObject.create("test")
 		sr = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
 		assert_that(sr, is_not(None))
-		assert_that( sr, verifiably_provides( search_interfaces.ISuggestAndSearchResults ) )
-		assert_that( sr, verifiably_provides( IContentTypeAware ) )
-
+		assert_that(sr, verifiably_provides(search_interfaces.ISuggestAndSearchResults))
+		assert_that(sr, verifiably_provides(IContentTypeAware))
 
 		sr.add_suggestions(domain_words)
 		assert_that(sr.suggestions, has_length(len(domain_words)))
@@ -135,16 +132,15 @@ class TestSearchResults(ConfiguringTestBase):
 	def test_empty_suggest_result(self):
 		d = empty_suggest_results(QueryObject.create("myQuery"))
 		assert_that(d, has_length(0))
-		assert_that(d.suggestions, has_length(0) )
+		assert_that(d.suggestions, has_length(0))
 
 	def test_empty_suggest_and_search_result(self):
 		d = empty_suggest_and_search_results(QueryObject.create("myQuery"))
 		assert_that(d, has_length(0))
 		assert_that(d.hits, is_([]))
-		assert_that(d.suggestions, has_length(0) )
+		assert_that(d.suggestions, has_length(0))
 
 	def test_merge_search_results(self):
-
 		a = empty_search_results(QueryObject.create("myQuery"))
 		a.prop1 = 'value0'
 
@@ -167,14 +163,13 @@ class TestSearchResults(ConfiguringTestBase):
 		a = merge_search_results(a, b)
 		assert_that(a, has_length(len(zanpakuto_commands)))
 		for x, tp in enumerate(b):
-			expected = a[offset+x]
+			expected = a[offset + x]
 			assert_that(tp, is_(expected))
 
 		assert_that(a.prop1, is_('value1'))
 		assert_that(a.prop2, is_('value2'))
 
 	def test_merge_suggest_results(self):
-
 		a = empty_suggest_results(QueryObject.create("myQuery"))
 		a.prop1 = 'value0'
 
@@ -183,7 +178,7 @@ class TestSearchResults(ConfiguringTestBase):
 		b.prop2 = 'value2'
 
 		a.add(['a'])
-		b.add(['b','c'])
+		b.add(['b', 'c'])
 		a = merge_suggest_results(a, b)
 		assert_that(a, has_length(3))
 
