@@ -501,7 +501,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 		if ('href' in self.attributes
 			and '//' not in self.attributes['href'] # not a HTTP[S] url
 			and not self.attributes['href'].startswith('tag:') ): # not an NTIID
-			from .graphics import _locate_image_file
+			from nti.contentrendering.plastexpackages.graphics import _locate_image_file
 
 			the_file = _locate_image_file( self, tex, self.attributes['href'],
 										   includegraphics.packageName,
