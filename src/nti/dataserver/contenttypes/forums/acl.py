@@ -84,9 +84,14 @@ class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,nauth.ACT_CREATE)
 
 	def _get_sharing_target_names( self ):
-		# The context takes care of the right sharing settings itself,
-		# based on the publication status
-		return self.context.sharingTargets
+		# The context is usually an IPublishable. In the simple case,
+		# we could directly return `self.context.sharingTargets`, saving a lookup step, because
+		# IPublishable will either have nothing there, or only ICommunity objects
+		# there. However, if the object actually has sharing,
+		# we MUST let it expand sharing targets to names that we then resolve
+		# (otherwise, some things like IDynamicSharingTarget are not valid
+		# IPrincipals to put in the ACL---only their members are)
+		return self.context.flattenedSharingTargetNames
 
 
 @component.adapter(frm_interfaces.IPost)
