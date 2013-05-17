@@ -66,6 +66,8 @@ class ntislidedeck(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	type = 'application/vnd.nextthought.ntislidedeck'
 	title = 'No Title'
 
+	mimeType = 'application/vnd.nextthought.ntislidedeck'
+
 	def digest(self, tokens):
 		res = super(ntislidedeck,self).digest(tokens)
 		if self.macroMode == self.MODE_BEGIN:
