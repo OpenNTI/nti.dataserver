@@ -362,27 +362,6 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 
 	_href_override = None
 
-	def _href_to_pyquery(self):
-
-		# Some hack stuff to try to handle local files and remote files
-		# Only deals with HTML right now; PDF can be done too, eventually
-
-		import pyquery
-		dom = None
-		if self.href.startswith( 'http' ):
-			# Must use requests, not the url= argument, as
-			# the default Python User-Agent is blocked (note: pyquery 1.2.4 starts using requests internally by default)
-			# The custom user-agent string is to trick Google into sending UTF-8.
-
-			import requests
-			response = requests.get( self.href, headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.1+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2"} )
-			if 'html' in response.headers.get( 'content-type', '' ):
-				dom = pyquery.PyQuery( response.text )
-		elif '.html' in self.href:
-			dom = pyquery.PyQuery( filename=self.href )
-
-		return dom
-
 	def _pdf_to_thumbnail(self, pdf_path, page=1, height=120, width=93):
 		import os
 		import tempfile
@@ -486,23 +465,28 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 			return
 
 		import requests
-		response = requests.get( self.href, headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.1+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2"} )
+		# Must use requests, not the url= argument, as
+		# the default Python User-Agent is blocked (note: pyquery 1.2.4 starts using requests internally by default)
+		# The custom user-agent string is to trick Google into sending UTF-8.
+		response = requests.get( self.href,
+								 headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.1+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2"},
+								 stream=True)
 		if 'html' in response.headers.get( 'content-type', '' ):
-			dom = pyquery.PyQuery( response.text )
+			dom = pyquery.PyQuery( url=self.href, opener=lambda url, **kwargs: response.text )
 			self._dom_populate( dom )
 		elif 'pdf' in response.headers.get( 'content-type', '' ):
 			import tempfile
 			import os
+			import shutil
 			fd, pdf_path = tempfile.mkstemp( '.pdf', 'download' )
 			pdf_file = os.fdopen( fd, 'wb' )
-			# TODO: This is pulling the whole thing into memory, and it could be
-			# quite large. We could stream with response.raw.read?
-			# Even so, _pdf_populate pulls the whole thing into memory when it is read
+			# TODO: _pdf_populate pulls the whole thing into memory (which could be quite large) when it is read
 			# (I think---confirm this), so we might want to use GS to chop it to just
 			# one page first, if that preserves metadata.
 			# Or can we use GS to get the metadata?
-			# The pdfinfo command from poppler can get the metadata, that might be better
-			pdf_file.write( response.content )
+			# The pdfinfo command from poppler (poppler-utils in debian/amazon)
+			# can get the metadata, that might be better
+			shutil.copyfileobj( response.raw, pdf_file )
 			pdf_file.close()
 			self._pdf_populate( pdf_path )
 
