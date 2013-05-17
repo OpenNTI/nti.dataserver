@@ -162,7 +162,7 @@ setup(
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
 		# It depends on umysql, which has been released as 2.5 on pypi. NOTE: This does not support unix socket connections
 		'umysql == 2.5',
-		#'umysqldb >= 1.0', # 1.0 release on pypi is broken, missing README.rst
+		'umysqldb >= 1.0.2',
 		'RelStorage >= 1.5.1',
 		'python-memcached >= 1.51',  # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
