@@ -31,7 +31,7 @@ from nti.tests import SharedConfiguringTestBase as _ConfiguringTestBase
 class ConfiguringTestBase(_ConfiguringTestBase):
 	set_up_packages = (nti.contentrendering,)
 
-def buildDomFromString(docString, mkdtemp=False, output_encoding=None, input_encoding=None):
+def buildDomFromString(docString, mkdtemp=False, output_encoding=None, input_encoding=None, chdir=False, working_dir=None):
 	document = plasTeX.TeXDocument()
 	if input_encoding:
 		strIO = io.StringIO( docString.decode( input_encoding ) )
@@ -40,10 +40,13 @@ def buildDomFromString(docString, mkdtemp=False, output_encoding=None, input_enc
 		strIO = StringIO.StringIO(docString)
 		strIO.name = 'temp'
 
-	tex = TeX(document, strIO)
 	document.userdata['jobname'] = 'temp'
-	document.userdata['working-dir'] = tempfile.gettempdir() if not mkdtemp else tempfile.mkdtemp()
-	document.config['files']['directory'] = document.userdata['working-dir']
+	work_dir = (working_dir or tempfile.gettempdir()) if not mkdtemp else tempfile.mkdtemp()
+	document.userdata['working-dir'] = work_dir
+	document.config['files']['directory'] = work_dir
+	strIO.name = os.path.join( work_dir, strIO.name )
+	if chdir:
+		os.chdir( work_dir )
 	document.config.add_section( "NTI" )
 	document.config.set( "NTI", 'provider', 'testing' )
 	# TODO: Much, but not all of this, is directly copied from nti_render
@@ -66,7 +69,7 @@ def buildDomFromString(docString, mkdtemp=False, output_encoding=None, input_enc
 	document.userdata['extra_scripts'] = document.config['NTI']['extra-scripts'].split()
 	document.userdata['extra_styles'] = document.config['NTI']['extra-styles'].split()
 
-
+	tex = TeX(document, strIO)
 	tex.parse()
 	return document
 
@@ -119,13 +122,20 @@ class RenderContext(object):
 						  os.environ.get('XHTMLTEMPLATES', ''))
 		os.environ['XHTMLTEMPLATES'] = os.path.pathsep.join( xhtmltemplates)
 
+		copied = False
+		def _file_copy(to):
+			for f in self.files:
+				fname = os.path.basename(f)
+				shutil.copyfile( f, os.path.join( to, fname ) )
 
 		if self.dom is None:
-			self.dom = buildDomFromString( self.latex_tex, True, output_encoding=self.output_encoding, input_encoding=self.input_encoding )
+			work_dir = tempfile.mkdtemp()
+			_file_copy(work_dir)
+			copied = True
+			self.dom = buildDomFromString( self.latex_tex, mkdtemp=False, output_encoding=self.output_encoding, input_encoding=self.input_encoding, chdir=True, working_dir=work_dir )
 
-		for f in self.files:
-			fname = os.path.basename(f)
-			shutil.copyfile( f, os.path.join( self.docdir, fname ) )
+		if not copied:
+			_file_copy( self.docdir )
 
 		os.chdir( self.docdir )
 

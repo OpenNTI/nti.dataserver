@@ -5,10 +5,10 @@ from plasTeX import Command
 from plasTeX.Packages.graphics import includegraphics
 from plasTeX.Packages.graphics import DeclareGraphicsExtensions
 from plasTeX.Packages.graphics import graphicspath
+from plasTeX.Packages.graphics import _locate_image_file # for export
 
 # SAJ: Adds a stub version of the \DeclareGraphicsRule command
 
 class DeclareGraphicsRule(Command):
 	packageName = 'graphics'
 	args = '{extension:str}{type:str}{readfile:str}{command:str}'
-

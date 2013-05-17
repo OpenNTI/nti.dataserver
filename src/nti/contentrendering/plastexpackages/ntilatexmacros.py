@@ -381,7 +381,58 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 
 		return dom
 
+	def _pdf_to_thumbnail(self, pdf_path, page=1, height=120, width=93):
+		import os
+		import tempfile
+
+		# A standard US page is 612x792 pts, height and width
+		# need to be the same multiple of that to preserve aspect ratio
+		# (TODO: Use pyPDF or gs itself to find the actual size of the first page?)
+		GHOSTSCRIPT = os.environ.get("GHOSTSCRIPT", "gs")
+
+		fd, output_file = tempfile.mkstemp( '.png', 'thumbnail' )
+		# DEVICE=jpeg is another option; using png works better with the image renderer
+		cmd = "%(GHOSTSCRIPT)s -dNOPAUSE -dSAFER -dBATCH -q " \
+		  "-dFirstPage=%(page)d -dLastPage=%(page)d " \
+		  "-dPDFFitPage -dTextAlphaBits=4 " \
+		  " -sDEVICE=pngalpha -dJPEGQ=80 " \
+		  " -dDEVICEWIDTH=%(width)d -dDEVICEHEIGHT=%(height)d " \
+		  "-sOutputFile=%(output_file)s " \
+		  " %(pdf_path)s " % locals() # TODO: make subprocess!
+		# When we go with subprocess, note that gs can also take "-" as
+		# the source path to read from stdin, if we already have it
+		# in memory
+		if os.system( cmd ):
+			raise Exception( "Failed to run %s" % cmd )
+		os.close(fd)
+		return output_file
+
+	def _pdf_populate(self, pdf_path):
+		import pyPdf
+		pdf = pyPdf.PdfFileReader( open( pdf_path, 'rb' ) )
+		info = pdf.getDocumentInfo()
+		# This dict is weird: [] and get() return different things,
+		# with [] returning the strings we want
+		if '/Title' in info and info['/Title']:
+			self.title = info['/Title']
+		if '/Author' in info and info['/Author']:
+			self.creator = info['/Author']
+		if '/Subject' in info and info['/Subject']:
+			self.description = info['/Subject']
+
+		thumb_file = self._pdf_to_thumbnail(pdf_path)
+		include = includegraphics()
+		include.attributes['file'] = thumb_file
+		include.argSource = r'{%s}' % thumb_file
+		include.style['width'] = "93px"
+		include.style['height'] = "120px"
+		self.appendChild( include )
+
 	def _auto_populate(self):
+		if '//' not in self.href and self.href.endswith('.pdf'):
+			self._pdf_populate(self.href)
+			return
+
 		dom = self._href_to_pyquery()
 		if dom is None:
 			return
@@ -428,6 +479,23 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 			elif name in ('og:description', 'description'):
 				self.description = cfg_interfaces.IPlainTextContentFragment( val )
 
+	def invoke( self, tex ):
+		res = super(nticard,self).invoke( tex )
+		# Resolve local files to full paths with the same algorithm that
+		# includegraphics uses
+		if ('href' in self.attributes
+			and '//' not in self.attributes['href'] # not a HTTP[S] url
+			and not self.attributes['href'].startswith('tag:') ): # not an NTIID
+			from .graphics import _locate_image_file
+
+			the_file = _locate_image_file( self, tex, self.attributes['href'],
+										   includegraphics.packageName,
+										   [], # No extensions to search: must be complete filename or path
+										   query_extensions=False)
+			if the_file:
+				# FIXME: This actually screws up the href in the generated data
+				self.attributes['href'] = the_file
+		return res
 
 	def digest(self, tokens):
 		res = super(nticard,self).digest(tokens)

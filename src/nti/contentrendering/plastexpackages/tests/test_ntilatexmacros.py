@@ -77,7 +77,8 @@ class TestNTICard(unittest.TestCase):
 		""" % {'prelude': prelude, 'label': label, 'caption': caption, 'href': href, 'options': options, 'image': image, 'content': content }
 		__traceback_info__ = example
 		with RenderContext(_simpleLatexDocument( (example,) ), output_encoding='utf-8', input_encoding=input_encoding,
-						   files=(os.path.join( os.path.dirname(__file__ ), 'test.png' ),),
+						   files=(os.path.join( os.path.dirname(__file__ ), 'test.png' ),
+								  os.path.join( os.path.dirname(__file__ ), 'test_page574_12.pdf' ),),
 						   packages_on_texinputs=True) as ctx:
 
 			dom  = ctx.dom
@@ -165,7 +166,7 @@ class TestNTICard(unittest.TestCase):
 		assert_that( value, contains_string( '<img ' ) )
 
 	@fudge.patch('requests.get')
-	def test_auto_populate(self, fake_get):
+	def test_auto_populate_remote_html(self, fake_get):
 		# This real URL has been download locally
 		html_file = os.path.join( os.path.dirname( __file__ ), '130107fa_fact_green.html' )
 		jpeg_file = os.path.join( os.path.dirname( __file__ ), '130107_r23011_g120_cropth.jpg' )
@@ -194,3 +195,22 @@ class TestNTICard(unittest.TestCase):
 
 		assert_that( index, contains_string( '<span class="description">Apollo Robbins takes things from people’s jackets, pants, purses, wrists, fingers, and necks, then returns them in amusing and mind-boggling ways.</span>' ) )
 		assert_that( index, contains_string( '<img src="http://www.newyorker.com/images/2013/01/07/g120/130107_r23011_g120_cropth.jpg" height="120" width="120"' ) )
+
+
+	def test_auto_populate_local_pdf(self):
+		index = self._do_test_render(
+			r'\label{testcard}',
+			'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.testcard',
+			caption='', caption_html='',
+			options='<auto=True>',
+			href='{test_page574_12.pdf}', # local, relative path
+			image='' )
+
+		# Values from the PDF
+		assert_that( index, contains_string( 'data-creator="Jason Madden"' ) )
+		assert_that( index, contains_string( '<span class="description">Subject</span>' ) )
+
+		# And we got a generated thumbnail
+		assert_that( index, contains_string( '<img src="resources') )
+
+		# FIXME: The HREF is wrong!

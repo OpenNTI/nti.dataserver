@@ -266,6 +266,9 @@ class ResourceDB(object):
 			or 'ntiincludeannotationgraphics' in source
 			or 'ntiincludenoannotationgraphics' in source
 			or 'ntislideimage' in source):
-			source = source.split('{')[1].split('{')[0][:-1]
+			try:
+				source = source.split('{')[1].split('{')[0][:-1]
+			except IndexError:
+				pass
 
 		return source
