@@ -362,12 +362,15 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 
 	_href_override = None
 
-	def _pdf_to_thumbnail(self, pdf_path, page=1, height=120, width=93):
+	def _pdf_to_thumbnail(self, pdf_path, page=1, height=792, width=612):
 		import os
 		import tempfile
 
 		# A standard US page is 612x792 pts, height and width
 		# need to be the same multiple of that to preserve aspect ratio
+		# such as height=120, width=93
+		# We generate a PNG of the complete thing at full size, and then
+		# scale it to the various resource sizes when rendering
 		# (TODO: Use pyPDF or gs itself to find the actual size of the first page?)
 		GHOSTSCRIPT = os.environ.get("GHOSTSCRIPT", "gs")
 
@@ -404,7 +407,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 		thumb_file = self._pdf_to_thumbnail(pdf_path)
 		include = includegraphics()
 		include.attributes['file'] = thumb_file
-		include.argSource = r'{%s}' % thumb_file
+		include.argSource = r'[width=93pt,height=120pt]{%s}' % thumb_file
 		include.style['width'] = "93px"
 		include.style['height'] = "120px"
 		self.appendChild( include )
