@@ -42,7 +42,7 @@ def registerQTIFactories(_context, module ):
 	for name, item  in  inspect.getmembers(module, _item_predicate):
 		__traceback_info__ = name, item
 
-		key = "qti/" + name[0].lower() + name[1:]
+		key = name.lower()
 		logger.log( loglevels.TRACE, "Registered QTI factory utility %s = %s (%s)", name, item, key)
 		component_zcml.utility( _context,
 								provides=qti_interfaces.IQTIObjectFactory,
