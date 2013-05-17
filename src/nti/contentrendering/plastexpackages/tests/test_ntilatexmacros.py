@@ -181,7 +181,7 @@ class TestNTICard(unittest.TestCase):
 		class R2(object):
 			@property
 			def content(self):
-				return open(jpeg_file, 'r').read()
+				return open(jpeg_file, 'rb').read()
 
 		fake_get.is_callable().returns( R1() ).next_call().returns( R2() )
 		url = '{http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green?currentPage=all}'
@@ -213,4 +213,34 @@ class TestNTICard(unittest.TestCase):
 		# And we got a generated thumbnail
 		assert_that( index, contains_string( '<img src="resources') )
 
-		# FIXME: The HREF is wrong!
+	@fudge.patch('requests.get')
+	def test_auto_populate_remote_pdf(self, fake_get):
+		# This real URL has been download locally
+		pdf_file = os.path.join( os.path.dirname( __file__ ), 'test_page574_12.pdf' )
+
+		class R1(object):
+			def __init__(self):
+				self.headers = {'content-type': 'application/pdf'}
+			@property
+			def content(self):
+				return open(pdf_file, 'rb').read()
+
+		fake_get.is_callable().returns( R1() )
+
+		index = self._do_test_render(
+			r'\label{testcard}',
+			'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.testcard',
+			caption='', caption_html='',
+			options='<auto=True>',
+			href='{http://someserver.com/path/to/test_page574_12.pdf}', # remote href
+			image='' )
+
+		# Values from the PDF
+		assert_that( index, contains_string( 'data-creator="Jason Madden"' ) )
+		assert_that( index, contains_string( '<span class="description">Subject</span>' ) )
+
+		# And we got a generated thumbnail
+		assert_that( index, contains_string( '<img src="resources') )
+
+		# and the href
+		assert_that( index, contains_string( 'data-href="http://someserver.com/path/to/test_' ) )
