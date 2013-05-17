@@ -75,12 +75,12 @@ def _sanitize_png( image_file ):
 	"""Uses the external pngcrush program to sanitize PNGs."""
 
 	prefix = hex(int(time.time()*1000))
-	tmp_file = tempfile.mkstemp(suffix='.png', prefix=prefix)[1]
+	tmp_fd, tmp_file = tempfile.mkstemp(suffix='.png', prefix=prefix)
 	command = [ 'pngcrush', '-q', image_file, tmp_file ]
 	__traceback_info__ = command
 
 	retval = subprocess.call( command )
-
+	os.close( tmp_fd )
 	if os.path.exists(tmp_file) and os.stat(tmp_file).st_size != 0:
 		shutil.move( tmp_file, image_file )
 	elif os.path.exists(tmp_file) and os.stat(tmp_file).st_size == 0:
@@ -116,7 +116,8 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		# Must have been called from the converter
 		assert self.scaleFactor is None, "Scaling not supported"
 
-		open('images.out', 'wb').write(output.read())
+		with open('images.out', 'wb') as f:
+			f.write(output.read())
 		# Now crop
 		# We complain about images being raised above the baseline, yet we have the margin set to 3?
 		#os.system( "pdfcrop --hires --margin 3 images.out images.out" )
@@ -191,8 +192,8 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 
 		This method attempts to find an existing image using the
 		`imageoverride' attribute.  If it finds it, the image is
-		copied to the images directory.  If no image is available, 
-		or there was a problem in getting the image, an image is 
+		copied to the images directory.  If no image is available,
+		or there was a problem in getting the image, an image is
 		generated.
 
 		Arguments:

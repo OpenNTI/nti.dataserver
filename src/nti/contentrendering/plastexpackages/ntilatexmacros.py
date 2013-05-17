@@ -362,9 +362,14 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 
 	_href_override = None
 
+	# NOTE: Eventually all this auto-population
+	# and thumbnailing stuff will move to more appropriate places;
+	# its here now for convenience during heavy development
+
 	def _pdf_to_thumbnail(self, pdf_path, page=1, height=792, width=612):
 		import os
 		import tempfile
+		import subprocess
 
 		# A standard US page is 612x792 pts, height and width
 		# need to be the same multiple of that to preserve aspect ratio
@@ -376,19 +381,25 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 
 		fd, output_file = tempfile.mkstemp( '.png', 'thumbnail' )
 		# DEVICE=jpeg is another option; using png works better with the image renderer
-		cmd = "%(GHOSTSCRIPT)s -dNOPAUSE -dSAFER -dBATCH -q " \
-		  "-dFirstPage=%(page)d -dLastPage=%(page)d " \
-		  "-dPDFFitPage -dTextAlphaBits=4 -dGraphicsAlphaBits=4 " \
-		  " -sDEVICE=pngalpha -dJPEGQ=80 " \
-		  " -dDEVICEWIDTH=%(width)d -dDEVICEHEIGHT=%(height)d " \
-		  "-sOutputFile=%(output_file)s " \
-		  " %(pdf_path)s " % locals() # TODO: make subprocess!
-		# When we go with subprocess, note that gs can also take "-" as
+		cmd = [GHOSTSCRIPT, '-dNOPAUSE', '-dSAFER',
+			   '-dBATCH', '-q',
+			   "-dFirstPage=%d" % page,
+			   "-dLastPage=%d"  % page,
+			   "-dPDFFitPage",
+			   "-dTextAlphaBits=4",
+			   "-dGraphicsAlphaBits=4",
+			   "-sDEVICE=pngalpha",
+			   "-dDEVICEWIDTH=%d" % width,
+			   "-dDEVICEHEIGHT=%d" % height,
+			   "-sOutputFile=%s" % output_file,
+			   pdf_path ]
+		# Note that gs can also take "-" as
 		# the source path to read from stdin, if we already have it
 		# in memory
-		if os.system( cmd ):
-			raise Exception( "Failed to run %s" % cmd )
-		os.close(fd)
+		try:
+			subprocess.check_output( cmd, stderr=subprocess.STDOUT )
+		finally:
+			os.close(fd)
 		return output_file
 
 	def _pdf_populate(self, pdf_path):
