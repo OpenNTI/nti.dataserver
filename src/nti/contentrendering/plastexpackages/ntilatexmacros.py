@@ -378,7 +378,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 		# DEVICE=jpeg is another option; using png works better with the image renderer
 		cmd = "%(GHOSTSCRIPT)s -dNOPAUSE -dSAFER -dBATCH -q " \
 		  "-dFirstPage=%(page)d -dLastPage=%(page)d " \
-		  "-dPDFFitPage -dTextAlphaBits=4 " \
+		  "-dPDFFitPage -dTextAlphaBits=4 -dGraphicsAlphaBits=4 " \
 		  " -sDEVICE=pngalpha -dJPEGQ=80 " \
 		  " -dDEVICEWIDTH=%(width)d -dDEVICEHEIGHT=%(height)d " \
 		  "-sOutputFile=%(output_file)s " \

@@ -194,7 +194,7 @@ setup(
 		'greenlet >= 0.4.0',
 		'gunicorn >= 0.17.4',
 		'hiredis >= 0.1.1',  # Redis C parser
-		'html5lib == 0.95', # 1.0b1 is out with 1.0 expected very soon; contentfragments.html may require major adjustment
+		'html5lib == 1.0b1',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
 		'logilab-common >= 0.59.1',
 		'lxml >= 3.2.1',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
