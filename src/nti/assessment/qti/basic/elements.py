@@ -210,4 +210,4 @@ def qti_creator(cls):
 
 @interface.implementer(an_interfaces.IAttributeAnnotatable)
 class QTIElement(zcontained.Contained, Persistent):
-	pass
+	content = None
