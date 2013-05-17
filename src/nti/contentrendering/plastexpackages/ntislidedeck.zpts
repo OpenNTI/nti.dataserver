@@ -21,16 +21,36 @@ name: ntislidedeck
 
 # This 
 name: ntislidevideo
-<div class="externalvideo" tal:attributes="id self/id; style self/style/inline">
-<object type="application/vnd.nextthought.slidevideo" itemprop="nti-slide-video">
-<param name="slidedeckid" tal:condition="exists:self/slidedeck/idref/label/id" tal:attributes="value self/slidedeck/idref/label/id">
-<param name="ntiid" tal:attributes="value self/id">
-<param name="type" tal:attributes="value self/type">
-<param name="id" tal:attributes="value self/provider_id">
-<param name="thumbnail" tal:attributes="value self/thumbnail">
-<iframe width="640" height="360" tal:attributes="src self/video_url" frameborder="0" allowfullscreen="true" ></iframe>
-</object>
+<div tal:condition="self/show_video" class="externalvideo" tal:attributes="id self/id; style self/style/inline">
+  <object type="MIME type" itemprop="nti-slide-video" tal:attributes="type self/mimeType">
+    <param name="slidedeckid" tal:attributes="value self/slidedeck/idref/label/id | string:default">
+    <param name="ntiid" tal:attributes="value self/id">
+    <param name="type" tal:attributes="value self/type">
+    <param name="id" tal:attributes="value self/provider_id">
+    <param name="thumbnail" tal:attributes="value self/thumbnail">
+    <iframe width="640" height="360" tal:attributes="src self/video_url" frameborder="0" allowfullscreen="true" ></iframe>
+  </object>
 </div>
+<object tal:condition="not:self/show_video"
+	tal:attributes="style self/style/inline;
+			itemprop self/itemprop;
+			type self/mimeType;
+			data-ntiid self/ntiid;
+			data-type self/type | default;
+			data-title self/title;
+			data-creator self/creator | nothing" >
+  <param name="ntiid" tal:attributes="value self/ntiid" />
+  <param name="type" tal:attributes="value self/type">
+  <param name="id" tal:attributes="value self/provider_id">
+  <param name="thumbnail" tal:attributes="value self/thumbnail">
+  <param name="title" tal:attributes="value self/title" />
+  <param name="creator" tal:attributes="value self/creator | nothing" />
+  <param name="slidedeckid" tal:attributes="value self/slidedeck/idref/label/id | string:default">
+  <img tal:attributes="src self/thumbnail" />
+  <span class="description" tal:content="self/description" tal:condition="self/description">
+    The description of the target.
+  </span>
+</object>
 
 # This encapsulates an individual slide for use in ether normal content 
 # mode or presentation mode.  In normal content mode the object tags
