@@ -194,7 +194,19 @@ setup(
 		'greenlet >= 0.4.0',
 		'gunicorn >= 0.17.4',
 		'hiredis >= 0.1.1',  # Redis C parser
-		'html5lib == 1.0b1',
+		# HTML5 parsing library
+		# JAM: 1.0b1 is out, but demonstrates some strange behaviour. When
+		# indexing a book, each XHTML file is converted to plain
+		# text using nti.contentfragments, which in turn uses html5lib
+		# to parse. In the Prealgebra book, when we get to the Inequalities
+		# section (~40 files in), the file is suddenly misparsed, with random <c> element tokens
+		# being created, having attributes of the text content: <c warren buffett 100-million-dollars>
+		# xmllint reports the file to be well-formed (though not actually valid XHTML),
+		# and it is always this file.
+		# it almost looks like something is messing up all the regexes it uses? Or
+		# maybe we are not closing something right? There doesn't seem to be any
+		# parallelism involved. This is under python 2.7.3
+		'html5lib == 0.95',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
 		'logilab-common >= 0.59.1',
 		'lxml >= 3.2.1',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
