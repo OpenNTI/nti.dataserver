@@ -367,40 +367,8 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	# its here now for convenience during heavy development
 
 	def _pdf_to_thumbnail(self, pdf_path, page=1, height=792, width=612):
-		import os
-		import tempfile
-		import subprocess
-
-		# A standard US page is 612x792 pts, height and width
-		# need to be the same multiple of that to preserve aspect ratio
-		# such as height=120, width=93
-		# We generate a PNG of the complete thing at full size, and then
-		# scale it to the various resource sizes when rendering
-		# (TODO: Use pyPDF or gs itself to find the actual size of the first page?)
-		GHOSTSCRIPT = os.environ.get("GHOSTSCRIPT", "gs")
-
-		fd, output_file = tempfile.mkstemp( '.png', 'thumbnail' )
-		# DEVICE=jpeg is another option; using png works better with the image renderer
-		cmd = [GHOSTSCRIPT, '-dNOPAUSE', '-dSAFER',
-			   '-dBATCH', '-q',
-			   "-dFirstPage=%d" % page,
-			   "-dLastPage=%d"  % page,
-			   "-dPDFFitPage",
-			   "-dTextAlphaBits=4",
-			   "-dGraphicsAlphaBits=4",
-			   "-sDEVICE=pngalpha",
-			   "-dDEVICEWIDTH=%d" % width,
-			   "-dDEVICEHEIGHT=%d" % height,
-			   "-sOutputFile=%s" % output_file,
-			   pdf_path ]
-		# Note that gs can also take "-" as
-		# the source path to read from stdin, if we already have it
-		# in memory
-		try:
-			subprocess.check_output( cmd, stderr=subprocess.STDOUT )
-		finally:
-			os.close(fd)
-		return output_file
+		from nti.contentrendering.contentthumbnails import _create_thumbnail_of_pdf
+		return _create_thumbnail_of_pdf( pdf_path, page=page, height=height, width=width )
 
 	def _pdf_populate(self, pdf_path):
 		import pyPdf
