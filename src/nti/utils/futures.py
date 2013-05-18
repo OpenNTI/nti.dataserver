@@ -17,9 +17,9 @@ import multiprocessing
 import concurrent.futures
 
 import platform
-is_pypy = platform.python_implementation() == 'PyPy'
+_is_pypy = platform.python_implementation() == 'PyPy'
 
-def ConcurrentExecutor(max_workers=None, _throw_exceptions=False):
+def ConcurrentExecutor(max_workers=None):
 	"""
 	An abstraction layer to let code easily switch between different
 	concurrency strategies. Import this instead of importing something
@@ -27,21 +27,22 @@ def ConcurrentExecutor(max_workers=None, _throw_exceptions=False):
 
 	It also serves as a compatibility shim to make us compatible with
 	gevent thread patching. For that reason, we avoid throwing any
-	exceptions and instead return them (note: this strategy may
-	change); throwing exceptions is not safe in the multiprocessing
-	case and can hang the pool, and has undefined results in the
-	thread case.
+	exceptions and instead return them, meaning that the caller should
+	be prepared to get Exception objects in the results. This also
+	means that for the multiprocessing case, the thrown exception
+	needs to be properly pickleable. (Throwing exceptions from the
+	called function is not safe in the multiprocessing case and can
+	hang the pool, and has undefined results in the thread case.)
+
+	.. note:: This strategy may change.
 	"""
-	if is_pypy:
+	if _is_pypy:
 		if max_workers is None:
 			max_workers = multiprocessing.cpu_count()
 		return concurrent.futures.ThreadPoolExecutor( max_workers )
 
 	# Notice that we did not import the direct class because it gets swizzled at
 	# runtime. For that same reason, we subclass dynamically at runtime.
-	if _throw_exceptions:
-		return concurrent.futures.ProcessPoolExecutor(max_workers=max_workers)
-
 	class _Executor(concurrent.futures.ProcessPoolExecutor):
 		# map() channels through submit() so this captures all activity
 		def submit( self, fn, *args, **kwargs ):
