@@ -8,7 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 import os
 import argparse
@@ -53,7 +54,7 @@ def main():
 	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
 
 	if verbose:
-		logger.basicConfig(level=logger.INFO, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
+		logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
 
 	document = EmptyMockDocument()
 	document.userdata['jobname'] = jobname

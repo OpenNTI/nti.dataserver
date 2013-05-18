@@ -26,6 +26,7 @@ import os
 import sys
 import urllib
 import subprocess
+import contextlib
 import anyjson as json
 
 import warnings
@@ -37,8 +38,40 @@ try:
 except subprocess.CalledProcessError:
 	warnings.warn( "Phantomjs not found on the PATH" )
 
+class _PhantomProducedUnexpectedOutputError(subprocess.CalledProcessError):
+
+	def __str__(self):
+		return "Command '%s' produced unexpected output '%s'" % (self.cmd, self.output)
+
+class _closing(contextlib.closing):
+	"A None-safe closing contextmanager"
+	def __exit__( self, *exc_info ):
+		if self.thing is not None:
+			self.thing.close()
+
 _none_key = object()
 def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no_output=False, expect_non_json_output=False ):
+	"""
+	Execute a phantom JS script against an HTML file; returns the result of that script
+	as either a JSON object or a byte string (if ``expect_non_json_output`` is set to True).
+
+	:param str htmlFile: The URL (``file://``) to the HTML file on which
+		to run the script. Also can be a regular path on Unix.
+	:param str scriptName: The regular absolute path to the JavaScript
+		file to run.
+	:keyword args: A sequence of arguments to pass to the script.
+	:keyword key: An arbitrary object. If one is provided, then the return
+		value of this function will be a tuple consisting of the key
+		and what otherwise would have been returned. This assists in
+		correlating parallel runs of this function.
+	:keyword expect_no_output: If set to ``True``, this function will
+		verify that script execution created no output on stdout, and return None.
+
+	:raises subprocess.CalledProcessError: If the process fails to return a 0 exit code,
+		or if ``expect_no_output`` is set to True and output is created on stdout.
+	:raises ValueError: If JSON decoding fails.
+	:raises TypeError: If JSON decoding fails.
+	"""
 	# As of phantomjs 1.4, the html argument must be a URL
 	if not htmlFile.startswith( 'file:' ):
 		htmlFile = urllib.basejoin( 'file://', urllib.pathname2url( os.path.abspath( htmlFile ) ) )
@@ -50,43 +83,40 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 	process.extend( args )
 	__traceback_info__ = process
 	logger.debug( "Executing %s", process )
-	# TODO: subprocess.check_output?
+
 	# On OS X, phantomjs produces some output to stderr that's annoying and usually useless,
-	# if truly run headless, about CoreGraphics stuff.
+	# if truly run headless, about CoreGraphics stuff. Since we often expect output on stdout,
+	# we cannot simply direct it there.
 	stderr = None
 	if sys.platform == 'darwin' and not os.getenv( 'NTI_KEEP_PHANTOMJS_STDERR' ):
 		stderr = open( '/dev/null', 'wb' )
 
-	try:
+	with _closing(stderr):
 		jsonStr = subprocess.check_output( process, stderr=stderr ).strip()
 		__traceback_info__ += (jsonStr,)
-	finally:
-		if stderr is not None:
-			stderr.close()
 
-	result = ''
+
 	if expect_no_output:
 		if jsonStr:
-			raise ValueError( "Process (%s) generated unexpected output (%s)" %(process, jsonStr) )
-	elif expect_non_json_output:
+			raise _PhantomProducedUnexpectedOutputError(0, process, jsonStr)
+		return None
+
+	result = None
+	if expect_non_json_output:
 		result = jsonStr
 	else:
+		if not jsonStr:
+			raise ValueError( "Expected JSON output, but no stdout generated." )
+
 		try:
-			try:
-				result = json.loads(jsonStr)
-			except ValueError:
-				if jsonStr:
-					logger.debug( "Got unparseable output. Trying again", exc_info=True )
-					# We got output. Perhaps there was plugin junk above? Try
-					# again with just the last line.
-					# This often happens if the console log methods are used; unfortunately,
-					# phantom seems to have no way to direct those to stderr
-					result = json.loads( jsonStr.splitlines()[-1] )
-				else:
-					raise
-		except:
-			logger.exception( "Failed to read json (%s) from %s", jsonStr, process )
-			raise
+			result = json.loads(jsonStr)
+		except ValueError:
+			logger.debug( "Got unparseable output. Trying again", exc_info=True )
+			# We got output. Perhaps there was plugin junk above? Try
+			# again with just the last line.
+			# This often happens if the console log methods are used; unfortunately,
+			# phantom seems to have no way to direct those to stderr
+			result = json.loads( jsonStr.splitlines()[-1] )
 
 	if key is _none_key:
 		return result

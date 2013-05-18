@@ -1,90 +1,82 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+from zope import component
 
 import os
-import shutil
-import tempfile
-import subprocess
-import multiprocessing
 
-# This process is all about external processes so threads
-# are fine to extract max concurrency
-from concurrent.futures import ThreadPoolExecutor # TODO: Convert to nti.contentrendering.ConcurrentExecutor. But beware of exceptions in the called function!
-
-import logging
-logger = logging.getLogger(__name__)
-
+from nti.contentrendering import ConcurrentExecutor
 from nti.contentrendering import javascript_path, run_phantom_on_page
+from nti.contentrendering import interfaces
 
-javascript = javascript_path( 'rasterize.js')
+_rasterize_script = javascript_path( 'rasterize.js')
 thumbnailsLocationName = 'thumbnails'
 
-import warnings
-warnings.warn( "Using convert from the PATH" )
+def _generateImage(page_location, page_ntiid, output_file_path):
+	"""
+	Given an absolute path pointing to an HTML file, produce a PNG
+	thumbnail image for the page in ``output_file_path``.
 
-def _generateImage(contentdir, page, output):
-	run_phantom_on_page( os.path.join(contentdir, page.location), javascript, (output,), expect_no_output=True )
-	# #print 'Fetching page info for %s' % htmlFile
-	# # FIXME: Need to use book.runPhantomOnPages. But it needs to be extended to
-	# # then do arbitrary things, or we need to run the pipeline twice, in order to deal
-	# # with convert
-	# process = "phantomjs %s file://%s %s 2>/dev/null" % (javascript,, output)
-	# #print process
-	# subprocess.Popen(process, shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
+	This function may raise :class:`subprocess.CalledProcessError`,
+	:class:`ValueError` or :class:`TypeError`.
 
-	#shrink it down to size
-	#process = "convert %s -resize %d%% PNG32:%s" % (output, 25, output)
-	process = ['convert', output, '-resize', '%d%%' % 25, 'PING32:%s' % output]
-	subprocess.check_call( process, bufsize=-1 )
+	:return: A two-tuple, the page's NTIID from ``page_ntiid`` and the path to the generated
+		thumbnail.
+	"""
+	# Rasterize the page to an image file as a side effect
+	# For BWC, the size is odd, at best:
+	# Generate a 180 x 251 image, at 25% scale
+	run_phantom_on_page( page_location, _rasterize_script,
+						 args=(output_file_path, "180", "251", "0.25"),
+						 expect_no_output=True )
 
-	return (page.ntiid, output)
+	return (page_ntiid, output_file_path)
 
-def copy(source, dest, debug=True):
-	if not os.path.exists(os.path.dirname(dest)):
-		os.makedirs(os.path.dirname(dest))
-	try:
-		shutil.copy2(source, dest)
-	except OSError:
-		shutil.copy(source, dest)
 
 def transform(book, context=None):
 	"""
 	Generate thumbnails for all pages and stuff them in the toc.
-	:param context: A Zope `IComporentLookup`. Currently unused.
 	"""
 
 	eclipseTOC = book.toc
 
-	def replaceExtension(fname, newext):
-		return '%s.%s' % (os.path.splitext(fname)[0], newext)
-	pageAndOutput = [(page, replaceExtension(page.filename, 'png')) for page in book.pages.values()]
+	# generate a place to put the thumbnails
+	thumbnails_dir = os.path.join(book.contentLocation, thumbnailsLocationName)
 
-	#generate a place to put the thumbnails
-	thumbnails = os.path.join(book.contentLocation, thumbnailsLocationName)
+	if not os.path.isdir(thumbnails_dir):
+		os.mkdir(thumbnails_dir)
 
-	if not os.path.isdir(thumbnails):
-		os.mkdir(thumbnails)
+	# Create the parallel sets of arguments
+	# for _generateImage
+	page_paths = []
+	page_ntiids = []
+	thumbnail_paths = []
 
-	cwd = os.getcwd()
+	for page in book.pages.values():
+		page_paths.append( os.path.join( book.contentLocation, page.location ) )
+		page_ntiids.append( page.ntiid )
+		thumbnail_name = '%s.png' % os.path.splitext(page.filename)[0]
+		thumbnail_paths.append( os.path.join( thumbnails_dir, thumbnail_name ) )
 
-	tempdir = tempfile.mkdtemp()
+	with ConcurrentExecutor() as executor:
+		# If _generateImage raises an exception, we will fail to
+		# unpack the tuple result (because the exception is returned)
+		# and this function will fail
 
-	os.chdir(tempdir)
+		for ntiid, thumbnail_file in executor.map( _generateImage,
+												   page_paths, page_ntiids, thumbnail_paths ):
 
-	with ThreadPoolExecutor(multiprocessing.cpu_count()) as executor:
-		for ntiid, output in executor.map( _generateImage,
-										   [cwd for x in pageAndOutput],
-										   [x[0] for x in pageAndOutput],
-										   [x[1] for x in pageAndOutput]):
-			thumbnail = os.path.join(thumbnails, output)
-
-			try:
-				copy(os.path.join(tempdir, output), os.path.join(cwd, thumbnail))
-				eclipseTOC.getPageNodeWithNTIID(ntiid).attributes['thumbnail'] = os.path.relpath(thumbnail, start=book.contentLocation)
-			except (IndexError,IOError):
-				logger.debug( "Failed to set thumbnail for %s to %s", ntiid, thumbnail, exc_info=True )
-
-	os.chdir(cwd)
-
-
+			eclipseTOC.getPageNodeWithNTIID(ntiid).attributes['thumbnail'] = os.path.relpath(thumbnail_file, start=book.contentLocation)
 	eclipseTOC.save()
-	shutil.rmtree(tempdir)
+
+component.moduleProvides(interfaces.IRenderedBookTransformer)
