@@ -25,6 +25,7 @@ def javascript_path( js_name ):
 import os
 import sys
 import urllib
+import urlparse
 import subprocess
 import contextlib
 import anyjson as json
@@ -55,7 +56,7 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 	Execute a phantom JS script against an HTML file; returns the result of that script
 	as either a JSON object or a byte string (if ``expect_non_json_output`` is set to True).
 
-	:param str htmlFile: The URL (``file://``) to the HTML file on which
+	:param str htmlFile: The URL (usually ``file://``) to the HTML file on which
 		to run the script. Also can be a regular path on Unix.
 	:param str scriptName: The regular absolute path to the JavaScript
 		file to run.
@@ -73,7 +74,9 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 	:raises TypeError: If JSON decoding fails.
 	"""
 	# As of phantomjs 1.4, the html argument must be a URL
-	if not htmlFile.startswith( 'file:' ):
+	if urlparse.urlparse( htmlFile ).scheme not in ('file', 'http', 'https'):
+		# assume they gave a path. The explicit use of schemes is to
+		# help with windows, where a path like "c:\foo\bar" gets a scheme of 'c'
 		htmlFile = urllib.basejoin( 'file://', urllib.pathname2url( os.path.abspath( htmlFile ) ) )
 
 	# TODO: Rewrite the scripts to use the built-in webserver and communicate
