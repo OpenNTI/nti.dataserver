@@ -7,7 +7,8 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
-logger = __import__('logging').getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 import inspect
 

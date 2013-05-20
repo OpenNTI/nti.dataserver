@@ -90,7 +90,7 @@ def _attribute_setter(name, sch_def):
 	def function(self, value):
 		if value is not None:
 			if isinstance(value, six.string_types):
-				value = sch_def.fromUnicode(value)
+				value = sch_def.fromUnicode(unicode(value))
 			else:
 				sch_def.validate(value)
 		self.__dict__[name] = value
@@ -103,6 +103,12 @@ def _get_attributes(self):
 		if v is not None:
 			result[k] = v
 	return result
+
+def _set_attribute(self, key, value):
+	if key in self._v_attributes:
+		setattr(self, key, value)
+		return True
+	return False
 
 def _make_getitem(attr):
 	def __getitem__(self, index):
@@ -206,6 +212,7 @@ def qti_creator(cls):
 		setattr(cls, k, property(_attribute_getter(k, v), _attribute_setter(k, v)))
 	
 	setattr(cls, "get_attributes", _get_attributes)
+	setattr(cls, "set_attribute", _set_attribute)
 	return cls
 
 @interface.implementer(an_interfaces.IAttributeAnnotatable)
