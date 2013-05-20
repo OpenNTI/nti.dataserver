@@ -117,4 +117,19 @@ class IContentMetadataExtractor(interface.Interface):
 	def __call__( args ):
 		"""
 		Called with an :class:`IContentMetadataExtractorArgs`.
+
+		:return: An :class:`IContentMetadata`
+		"""
+
+class IContentMetadataURLHandler(interface.Interface):
+	"""
+	Intended to be registered as named utilities having the name of
+	a URL scheme.
+	"""
+
+	def __call__( url ):
+		"""
+		Called with a string giving the URL.
+
+		:return: An :class:`IContentMetadata`.
 		"""

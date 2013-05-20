@@ -91,7 +91,7 @@ def _get_metadata_from_mime_type( location, mime_type, args_factory ):
 	result = None
 
 	if mime_type:
-		processor = component.queryUtility( interfaces.IContentMetadataExtractorArgs, name=mime_type )
+		processor = component.queryUtility( interfaces.IContentMetadataExtractor, name=mime_type )
 	if processor:
 		args = args_factory()
 		result = processor.extract_metadata( args )
@@ -102,9 +102,14 @@ def _get_metadata_from_mime_type( location, mime_type, args_factory ):
 
 	return result, args
 
-def _get_metadata_from_url( location ):
+def _get_metadata_from_url( urlscheme, location ):
 	# TODO: Need to redirect here based on url scheme
 
+	schemehandler = component.queryUtility( interfaces.IContentMetadataURLHandler, name=urlscheme )
+	if schemehandler is not None:
+		return schemehandler( location )
+
+def _http_scheme_handler( location ):
 	# Must use requests, not the url= argument, as
 	# the default Python User-Agent is blocked (note: pyquery 1.2.4 starts using requests internally by default)
 	# The custom user-agent string is to trick Google into sending UTF-8.
@@ -119,6 +124,7 @@ def _get_metadata_from_url( location ):
 	if result is not None:
 		result.sourcePath = args.download_path
 	return result
+interface.directlyProvides( _http_scheme_handler, interfaces.IContentMetadataURLHandler )
 
 
 def _get_metadata_from_path( location ):
@@ -150,15 +156,17 @@ def get_metadata_from_content_location( location ):
 		# look up a handler for the scheme and pass it over.
 		# this lets us delegate responsibility for schemes we
 		# can't access, like tag: schemes for NTIIDs
-		return _get_metadata_from_url( location )
+		return _get_metadata_from_url( urlscheme, location )
 
 	# Ok, assume a local path.
 	return _get_metadata_from_path( location )
 
-def _HTMLExtractor(object):
+@interface.implementer(interfaces.IContentMetadataExtractor)
+class _HTMLExtractor(object):
 
 	def __call__( self, args ):
 		dom = pyquery.PyQuery( url=args.__name__, opener=lambda url, **kwargs: args.text )
+		result = ContentMetadata()
 		# Extract metadata. Need to handle OpenGraph
 		# as well as twitter.
 		# Here is a poor version of OpenGraph handling;
@@ -171,9 +179,9 @@ def _HTMLExtractor(object):
 			if not name or not val:
 				continue
 			if name == 'og:title':
-				self.title = val
+				result.title = val
 			elif name == 'og:url':
-				self.href = val
+				result.href = val
 			elif name == 'og:image':
 				# Download and save the image?
 				# Right now we are downloading it for size purposes (which may not be
@@ -197,10 +205,12 @@ def _HTMLExtractor(object):
 				self.image.image.width = Dimen(width)
 
 			elif name in ('og:description', 'description'):
-				self.description = cfg_interfaces.IPlainTextContentFragment( val )
+				result.description = cfg_interfaces.IPlainTextContentFragment( val )
+
+		return result
 
 
-
+@interface.implementer(interfaces.IContentMetadataExtractor)
 class _PDFExtractor(object):
 
 	def __call__( self, args ):
@@ -209,13 +219,16 @@ class _PDFExtractor(object):
 		# and then objects are loaded on demand from the (seekable!)
 		# stream. Thus, even for very large PDFs, it uses
 		# minimal memory.
+		result = ContentMetadata()
 		pdf = pyPdf.PdfFileReader( args.bidirectionalstream )
 		info = pdf.getDocumentInfo() # TODO: Also check the xmpMetadata?
 		# This dict is weird: [] and get() return different things,
 		# with [] returning the strings we want
 		if '/Title' in info and info['/Title']:
-			self.title = info['/Title']
+			result.title = info['/Title']
 		if '/Author' in info and info['/Author']:
-			self.creator = info['/Author']
+			result.creator = info['/Author']
 		if '/Subject' in info and info['/Subject']:
-			self.description = info['/Subject']
+			result.description = info['/Subject']
+
+		return result
