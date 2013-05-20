@@ -13,6 +13,8 @@ import numbers
 import urlparse
 from collections import Iterable
 
+from persistent.list import PersistentList
+
 from zope import schema
 from zope import interface
 from zope.schema import interfaces as schema_interfaces
@@ -51,7 +53,7 @@ class URIAttribute(BaseQTIAttribute, nti_schema.ValidURI):
 	def _validate(self, value):
 		if not value or urlparse.urlparse(value).scheme in ('file', 'http', 'https'):
 			super(URIAttribute, self)._validate(value)
-		
+
 @interface.implementer(schema_interfaces.IFromUnicode)
 class BoolAttribute(BaseQTIAttribute, schema.Bool):
 	"""
@@ -77,6 +79,12 @@ class MimeTypeAttribute(TextLineAttribute):
 	"""
 	A :class: for mimetype attributes
 	"""
+
+class List(schema.List):
+	"""
+	A field representing a list
+	"""
+	_type = (list, PersistentList)
 
 @interface.implementer(schema_interfaces.IFromUnicode)
 class ListAttribute(BaseQTIAttribute, schema.List):

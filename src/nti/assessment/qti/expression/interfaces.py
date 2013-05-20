@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 
+from .. import schema as qti_schema
 from .. import interfaces as qti_interfaces
 from ..attributes import interfaces as attr_interfaces
 
@@ -83,28 +84,28 @@ class IstatsOperator(Iexpression, attr_interfaces.IstatsOperatorAttrGroup, qti_i
 	expression = schema.Object(Iexpression, title="The eval sub-expression", required=True)
 	
 class Imax(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
 	
 class Imin(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
 	
 class ImathOperator(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
 
 class Igcd(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
 
 class Ilcm(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
 
 class Irepeat(Iexpression, attr_interfaces.IrepeatAttrGroup, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=1, required=True)
 	
 class Imultiple(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=0, required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), title='The sub-expressions', min_length=0, required=True)
 
 class Iordered(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), title='The ordered sub-expressions', min_length=0, required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), title='The ordered sub-expressions', min_length=0, required=True)
 	
 class IcontainerSize(Iexpression, qti_interfaces.IConcrete):
 	expression = schema.Object(Iexpression, title="The eval sub-expression", required=True)
@@ -122,85 +123,85 @@ class Irandom(Iexpression, qti_interfaces.IConcrete):
 	expression = schema.Object(Iexpression, title="The eval sub-expression", required=True)
 
 class Imember(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=2, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=2, max_length=2, title="The ordered eval sub-expressions", required=True)
 
 class Idelete(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=2, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=2, max_length=2, title="The ordered eval sub-expressions", required=True)
 
 class Icontains(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=2, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=2, max_length=2, title="The ordered eval sub-expressions", required=True)
 
 class Isubstring(Iexpression, attr_interfaces.IsubstringAttrGroup,  qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=2, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=2, max_length=2, title="The ordered eval sub-expressions", required=True)
 
 class Inot(Iexpression, qti_interfaces.IConcrete):
 	expression = schema.Object(Iexpression, title="The sub-expression", required=True)
 
 class Iand(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, title="The eval sub-expressions", required=True)
 
 class Ior(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, title="The eval sub-expressions", required=True)
 
 class IanyN(Iexpression, attr_interfaces.IanyNAttrGroup, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, title="The eval sub-expressions", required=True)
 
 class Imatch(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=2, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=2, max_length=2, title="The ordered eval sub-expressions", required=True)
 
 class IstringMatch(Iexpression, attr_interfaces.IstringMatchAttrGroup, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1,  max_length=2, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
 
 class IpatternMatch(Iexpression, attr_interfaces.IpatternMatchAttrGroup, qti_interfaces.IConcrete):
 	expression = schema.Object(Iexpression, title="The eval sub-expression", required=True)
 
 class Iequal(Iexpression, attr_interfaces.IequalAttrGroup, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1,  max_length=2, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
 
 class IequalRounded(Iexpression, attr_interfaces.IequalRoundedAttrGroup, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1,  max_length=2, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
 
 class Iinside(Iexpression, attr_interfaces.IinsideAttrGroup, qti_interfaces.IConcrete):
 	expression = schema.Object(Iexpression, title="The eval sub-expressions", required=True)
 
 class Ilt(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
 
 class Igt(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
 
 class Ilte(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
 
 class Igte(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
 
 class IdurationLT(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
 
 class IdurationGTE(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The eval sub-expressions", required=True)
 
 class Isum(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, title="The eval sub-expressions", required=True)
 
 class Iproduct(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, title="The eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, title="The eval sub-expressions", required=True)
 
 class Isubtract(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The ordered eval sub-expressions", required=True)
 	
 class Idivide(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The ordered eval sub-expressions", required=True)
 
 class Ipower(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The ordered eval sub-expressions", required=True)
 
 class IintegerDivide(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The ordered eval sub-expressions", required=True)
 
 class IintegerModulus(Iexpression, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=1, max_length=2, title="The ordered eval sub-expressions", required=True)
 
 class Itruncate(Iexpression, qti_interfaces.IConcrete):
 	expression = schema.Object(Iexpression, title="The eval sub-expression", required=True)
@@ -212,4 +213,4 @@ class IintegerToFloat(Iexpression, qti_interfaces.IConcrete):
 	expression = schema.Object(Iexpression, title="The eval sub-expression", required=True)
 
 class IcustomOperator(Iexpression, attr_interfaces.IcustomOperatorAttrGroup, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(Iexpression), min_length=0, max_length=2, title="The ordered eval sub-expressions", required=True)
+	expression = qti_schema.List(schema.Object(Iexpression), min_length=0, max_length=2, title="The ordered eval sub-expressions", required=True)

@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 
+from .. import schema as qti_schema
 from .. import interfaces as qti_interfaces
 from ..content import interfaces as cnt_interfaces
 from ..outcome import interfaces as out_interfaces
@@ -21,8 +22,8 @@ class Iinclude(	cnt_interfaces.IblockStatic, cnt_interfaces.IflowStatic, cnt_int
 	pass
 
 class IresponseProcessingFragment(rsp_interfaces.IresponseRule, qti_interfaces.IConcrete):
-	responseRule = schema.List(schema.Object(rsp_interfaces.IresponseRule), min_length=0, title="Ordered list of response rules")
+	responseRule = qti_schema.List(schema.Object(rsp_interfaces.IresponseRule), min_length=0, title="Ordered list of response rules")
 
 class IoutcomeProcessingFragment(out_interfaces.IoutcomeRule, qti_interfaces.IConcrete):
-	outcomeRule = schema.List(schema.Object(out_interfaces.IoutcomeRule), min_length=0, title="Ordered list of outcome rules")
+	outcomeRule = qti_schema.List(schema.Object(out_interfaces.IoutcomeRule), min_length=0, title="Ordered list of outcome rules")
 

@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope.interface.common.sequence import IFiniteSequence
 
+from .. import schema as qti_schema
 from .. import interfaces as qti_interfaces
 from ..basic import interfaces as basic_interfaces
 from ..content import interfaces as cnt_interfaces
@@ -24,10 +25,10 @@ class ItemplateElement(basic_interfaces.IbodyElement, attr_interfaces.ItemplateE
 	pass
 
 class ItemplateBlock(cnt_interfaces.IblockStatic, cnt_interfaces.IflowStatic, ItemplateElement, IFiniteSequence, qti_interfaces.IConcrete):
-	blockStatic = schema.List(schema.Object(cnt_interfaces.IblockStatic), "The ordered list of blockStatic elements", min_length=0)
+	blockStatic = qti_schema.List(schema.Object(cnt_interfaces.IblockStatic), "The ordered list of blockStatic elements", min_length=0)
 
 class ItemplateInline(cnt_interfaces.IflowStatic, cnt_interfaces.IinlineStatic, ItemplateElement, IFiniteSequence, qti_interfaces.IConcrete):
-	inlineStatic = schema.List(schema.Object(cnt_interfaces.IinlineStatic), "The ordered list of inlineStatic elements", min_length=0)
+	inlineStatic = qti_schema.List(schema.Object(cnt_interfaces.IinlineStatic), "The ordered list of inlineStatic elements", min_length=0)
 
 class IintegerOrVariableRef(qti_interfaces.IConcrete):
 	pass
@@ -42,25 +43,25 @@ class ItemplateRule(qti_interfaces.IQTIElement):
 	pass
 	
 class ItemplateProcessing(qti_interfaces.IConcrete):
-	templateRule = schema.List(schema.Object(ItemplateRule), title="The ordered list of templateRule elements", min_length=1)
+	templateRule = qti_schema.List(schema.Object(ItemplateRule), title="The ordered list of templateRule elements", min_length=1)
 
 class ItemplateConstraint(ItemplateRule, IFiniteSequence, qti_interfaces.IConcrete):
-	expression = schema.List(schema.Object(exp_interfaces.Iexpression), title="The expressions", min_length=0)
+	expression = qti_schema.List(schema.Object(exp_interfaces.Iexpression), title="The expressions", min_length=0)
 
 class ItemplateIf(qti_interfaces.IConcrete):
 	expression = schema.Object(exp_interfaces.Iexpression, title="The expression", required=True)
-	templateRule = schema.List(schema.Object(ItemplateRule), title="The ordered list of templateRule elements", min_length=0)
+	templateRule = qti_schema.List(schema.Object(ItemplateRule), title="The ordered list of templateRule elements", min_length=0)
 	
 class ItemplateElseIf(qti_interfaces.IConcrete):
 	expression = schema.Object(exp_interfaces.Iexpression, title="The expression", required=True)
-	templateRule = schema.List(schema.Object(ItemplateRule), title="The ordered list of templateRule elements", min_length=0)
+	templateRule = qti_schema.List(schema.Object(ItemplateRule), title="The ordered list of templateRule elements", min_length=0)
 	
 class ItemplateElse(qti_interfaces.IConcrete):
-	templateRule = schema.List(schema.Object(ItemplateRule), title="The ordered list of templateRule elements", min_length=0)
+	templateRule = qti_schema.List(schema.Object(ItemplateRule), title="The ordered list of templateRule elements", min_length=0)
 	
 class ItemplateCondition(ItemplateRule, qti_interfaces.IConcrete):
 	templateIf = schema.Object(ItemplateIf, title='The templateIf', required=True)
-	templateElseIf =  schema.List(schema.Object(ItemplateElseIf), title='The order list of templateIf elements', min_length=0)
+	templateElseIf = qti_schema.List(schema.Object(ItemplateElseIf), title='The order list of templateIf elements', min_length=0)
 	templateElse =  schema.Object(ItemplateElse, title='The templateElse elements', required=False)
 	
 class IsetTemplateValue(ItemplateRule, attr_interfaces.IsetTemplateValueAttrGroup, qti_interfaces.IConcrete):
