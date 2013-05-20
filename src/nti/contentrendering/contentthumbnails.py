@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
+Functions related to creating thumbnails of content.
 
 $Id$
 """
@@ -42,7 +42,7 @@ def _create_thumbnail_of_html(page_location, page_ntiid, output_file_path, width
 	# For BWC, the size is odd, at best:
 	# Generate a 180 x 251 image, at 25% scale
 	run_phantom_on_page( page_location, _rasterize_script,
-						 args=(output_file_path, width, height, zoom_factor),
+						 args=(output_file_path, str(width), str(height), str(zoom_factor)),
 						 expect_no_output=True )
 
 	return (page_ntiid, output_file_path)

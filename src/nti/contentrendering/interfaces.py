@@ -147,7 +147,7 @@ class IEmbeddedContainer(IContentTypeAware):
 	Intended to be implemented (or adapted from) nodes in the plasTeX
 	DOM tree, this object represents a portion of content, embedded
 	in other content, that should function as its own user-generated
-	data container. Typically these will be rendered with ``<object>``
+	data container. Typically these will be rendered in HTML with ``<object>``
 	tags, and the attributes declared in this interface will be
 	echoed in the rendered version.
 
@@ -188,28 +188,6 @@ class INTICardIndexer(IContentIndexer):
 	"""
 	Creates an index for the nti cards associated with a given book
 	"""
-
-####
-# # Transforming content from one format to another
-# ##
-
-from nti.contentfragments.interfaces import IContentFragment
-from nti.contentfragments.interfaces import IUnicodeContentFragment
-from nti.contentfragments.interfaces import ILatexContentFragment
-from nti.contentfragments.interfaces import IHTMLContentFragment
-from nti.contentfragments.interfaces import IPlainTextContentFragment
-
-from nti.contentfragments.interfaces import UnicodeContentFragment
-from nti.contentfragments.interfaces import LatexContentFragment
-from nti.contentfragments.interfaces import HTMLContentFragment
-from nti.contentfragments.interfaces import PlainTextContentFragment
-
-from zope.deprecation import deprecated
-deprecated(['IContentFragment', 'IUnicodeContentFragment', 'ILatexContentFragment',
-			 'IHTMLContentFragment', 'IPlainTextContentFragment',
-			 'UnicodeContentFragment', 'LatexContentFragment', 'HTMLContentFragment',
-			 'PlainTextContentFragment'],
-			 "Moved to nti.contentfragments")
 
 
 from zope.interface import registry
