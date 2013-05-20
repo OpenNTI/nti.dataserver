@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 import re
 import six
 import numbers
+import urlparse
 from collections import Iterable
 
 from zope import schema
@@ -47,7 +48,10 @@ class URIAttribute(BaseQTIAttribute, nti_schema.ValidURI):
 	"""
 	A :class:`schema.URI` type that to mark XML attribute elements
 	"""
-
+	def _validate(self, value):
+		if not value or urlparse.urlparse(value).scheme in ('file', 'http', 'https'):
+			super(URIAttribute, self)._validate(value)
+		
 @interface.implementer(schema_interfaces.IFromUnicode)
 class BoolAttribute(BaseQTIAttribute, schema.Bool):
 	"""

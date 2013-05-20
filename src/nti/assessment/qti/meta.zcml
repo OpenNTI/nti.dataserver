@@ -1,14 +1,11 @@
-<configure 
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:meta="http://namespaces.zope.org/meta">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:meta="http://namespaces.zope.org/meta">
 
-	<meta:directives namespace="http://nextthought.com/ntp/ext">
-
+	<meta:directives namespace="http://nextthought.com/ntp/qti">
 		<meta:directive
 			name="registerQTIFactories"
 			schema=".zcml.IRegisterInternalizationQTIFactoriesDirective"
-			handler=".zcml.registerQTIFactories"
-		/>
- 	</meta:directives>
+			handler=".zcml.registerQTIFactories" />
+	</meta:directives>
  	
 </configure>
