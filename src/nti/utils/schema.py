@@ -45,7 +45,7 @@ class PermissiveSchemaConfigured(SchemaConfigured):
 	"""
 	A mixin subclass of :class:`SchemaConfigured` that allows
 	for extra keywords (those not defined in the schema) to silently be ignored.
-	This is an aid to evolution of code and con be helpful in testing.
+	This is an aid to evolution of code and can be helpful in testing.
 
 	To allow for one-by-one conversions and updates, this class defines an attribute
 	``SC_PERMISSIVE``, defaulting to True, that controls this behaviour.
