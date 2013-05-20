@@ -261,5 +261,5 @@ class IrubricBlock(attr_interfaces.IviewAttrGroup, qti_interfaces.IConcrete):
 class Istylesheet(attr_interfaces.IstylesheetAttrGroup, qti_interfaces.IConcrete):
 	pass
 	
-class IitemBody(basic_interfaces.IbodyElement, qti_interfaces.IConcrete):
+class IitemBody(basic_interfaces.IbodyElement, qti_interfaces.IConcrete, IFiniteSequence):
 	blocks = qti_schema.List(schema.Object(Iblock), title='The item body blocks', required=False)

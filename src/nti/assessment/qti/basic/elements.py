@@ -7,6 +7,9 @@ $Id$
 from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
+import logging
+logger = logging.getLogger(__name__)
+
 import six
 import warnings
 import collections
@@ -130,11 +133,17 @@ def _make_len(attr):
 		return len(getattr(self, attr))
 	return __len__
 
+def _make_append(attr):
+	def append(self, obj):
+		return getattr(self, attr).append(obj)
+	return append
+
 def _make_sequence(cls, attr):
 	cls.__len__ = _make_len(attr)
 	cls.__iter__ = _make_iter(attr)
 	cls.__getitem__ = _make_getitem(attr)
 	cls.__setitem__ = _make_setitem(attr)
+	cls.append = _make_append(attr)
 
 def _is_list(schm):
 	return sch_interfaces.IList.providedBy(schm)
@@ -156,6 +165,10 @@ def _set_element(self, elem):
 		m(elem)
 	elif _is_field(sch):
 		setattr(self, name, elem)
+	elif IFiniteSequence.providedBy(self):
+		self.append(elem)
+	else:
+		logger.debug("Don't know how to set %s in %s" % (name, self.__class__.__name__))
 
 def qti_creator(cls):
 	"""

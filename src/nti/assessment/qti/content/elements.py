@@ -105,12 +105,12 @@ class Kbd(QTIElement):
 
 @qti_creator
 @interface.implementer(cnt_interfaces.Ip)
-class Ip(QTIElement):
+class P(QTIElement):
 	pass
 
 @qti_creator
 @interface.implementer(cnt_interfaces.Ipre)
-class Ipre(QTIElement):
+class Pre(QTIElement):
 	pass
 	
 @qti_creator
