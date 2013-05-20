@@ -7,14 +7,15 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
+
+import functools
 
 from zope import schema
 from zope import interface
 from zope.configuration import fields
 from zope.component.zcml import utility
-
-import functools
 
 from .purchasable import create_purchasable
 from . import interfaces as store_interfaces
