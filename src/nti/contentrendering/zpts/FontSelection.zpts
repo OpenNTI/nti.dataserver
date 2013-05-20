@@ -36,8 +36,12 @@ name: footnotesize
 #
 #name: small
 #<small class="small" tal:content="self">small text</small>
+#name: small
+#<small class="small" tal:replace="self">small text</small>
+## SAJ: Shift to using a span tag as with the larger font sizes.
+# Need to re-examine this entire template and make it internally consistent.
 name: small
-<small class="small" tal:replace="self">small text</small>
+<span class="small" tal:content="self">small text</span>
 
 name: large
 <span class="large" tal:content="self">large text</span>
