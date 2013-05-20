@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope.interface.common.sequence import IFiniteSequence
 
+from .. import schema as qti_schema
 from .. import interfaces as qti_interfaces
 from ..basic import interfaces as basic_interfaces
 from ..attributes import interfaces as attr_interfaces
@@ -36,16 +37,16 @@ class IflowStatic(Iflow):
 	pass
 	
 class IsimpleInline(basic_interfaces.IbodyElement, IflowStatic, IinlineStatic, IFiniteSequence):
-	inline = schema.List(schema.Object(Iinline), 'inline objects contained', min_length=0)
+	inline = qti_schema.List(schema.Object(Iinline), 'inline objects contained', min_length=0)
 	
 class IsimpleBlock(IflowStatic, basic_interfaces.IbodyElement, IblockStatic, IFiniteSequence):
-	block = schema.List(schema.Object(Iblock), 'block objects contained', min_length=0)
+	block = qti_schema.List(schema.Object(Iblock), 'block objects contained', min_length=0)
 	
 class IatomicInline(IflowStatic, basic_interfaces.IbodyElement, IinlineStatic):
 	pass
 	
 class IAtomicBlock(basic_interfaces.IbodyElement, IflowStatic, IblockStatic, IFiniteSequence):
-	inline = schema.List(schema.Object(Iinline), 'The ordered inline objects contained', min_length=0)
+	inline = qti_schema.List(schema.Object(Iinline), 'The ordered inline objects contained', min_length=0)
 
 class ItextRun(IflowStatic, IinlineStatic, basic_interfaces.ITextOrVariable, qti_interfaces.IConcrete):
 	pass
@@ -77,7 +78,7 @@ class Idfn(IsimpleInline, qti_interfaces.IConcrete):
 	pass
 	
 class Idiv(IflowStatic, basic_interfaces.IbodyElement, IblockStatic, IFiniteSequence, qti_interfaces.IConcrete):
-	flow = schema.List(schema.Object(Iflow), 'flow objects contained', min_length=0)
+	flow = qti_schema.List(schema.Object(Iflow), 'flow objects contained', min_length=0)
 	
 class Iem(IsimpleInline, qti_interfaces.IConcrete):
 	pass
@@ -133,28 +134,28 @@ class IDLElement(basic_interfaces.IbodyElement):
 	pass
 
 class Idl(IblockStatic, basic_interfaces.IbodyElement, IflowStatic, IFiniteSequence, qti_interfaces.IConcrete):
-	dlElement = schema.List(schema.Object(IDLElement), 'The ordered dl elements contained', min_length=0)
+	dlElement = qti_schema.List(schema.Object(IDLElement), 'The ordered dl elements contained', min_length=0)
 	
 class Idt(IDLElement, IFiniteSequence, qti_interfaces.IConcrete):
-	inline = schema.List(schema.Object(Iinline), 'The ordered inline elements contained', min_length=0)
+	inline = qti_schema.List(schema.Object(Iinline), 'The ordered inline elements contained', min_length=0)
 
 class Idd(IDLElement, IFiniteSequence, qti_interfaces.IConcrete):
-	flow = schema.List(schema.Object(Iflow), 'The ordered flow elements contained', min_length=0)
+	flow = qti_schema.List(schema.Object(Iflow), 'The ordered flow elements contained', min_length=0)
 
 class Ili(basic_interfaces.IbodyElement, IFiniteSequence, qti_interfaces.IConcrete):
-	flow = schema.List(schema.Object(Iflow), 'The ordered flow elements contained', min_length=0)
+	flow = qti_schema.List(schema.Object(Iflow), 'The ordered flow elements contained', min_length=0)
 
 class Iol(IblockStatic, basic_interfaces.IbodyElement, IflowStatic, IFiniteSequence, qti_interfaces.IConcrete):
-	li = schema.List(schema.Object(Ili), 'The ordered li elements contained', min_length=0)
+	li = qti_schema.List(schema.Object(Ili), 'The ordered li elements contained', min_length=0)
 	
 class Iul(IblockStatic, basic_interfaces.IbodyElement, IflowStatic, IFiniteSequence, qti_interfaces.IConcrete):
-	li = schema.List(schema.Object(Ili), 'The ordered li elements contained', min_length=0)
+	li = qti_schema.List(schema.Object(Ili), 'The ordered li elements contained', min_length=0)
 		
 # object elements
 
 class Iobject(basic_interfaces.IbodyElement, IflowStatic, IinlineStatic, IFiniteSequence,
 			  attr_interfaces.IobjectAttrGroup, qti_interfaces.IConcrete):
-	objectFlow = schema.List(schema.Object(IobjectFlow), 'The ordered objectflow elements contained', min_length=0)
+	objectFlow = qti_schema.List(schema.Object(IobjectFlow), 'The ordered objectflow elements contained', min_length=0)
 
 class Iparam(IobjectFlow, attr_interfaces.IparamAttrGroup, qti_interfaces.IConcrete):
 	pass
@@ -188,16 +189,16 @@ class Itt(IsimpleInline, qti_interfaces.IConcrete):
 # table elements
 
 class Icaption(basic_interfaces.IbodyElement, IFiniteSequence, qti_interfaces.IConcrete):
-	inline = schema.List(schema.Object(Iinline), 'The ordered inline elements contained', min_length=0)
+	inline = qti_schema.List(schema.Object(Iinline), 'The ordered inline elements contained', min_length=0)
 
 class Icol(basic_interfaces.IbodyElement, attr_interfaces.IcolAttrGroup, qti_interfaces.IConcrete):
 	pass	
 	
 class Icolgroup(basic_interfaces.IbodyElement, attr_interfaces.IcolgroupAttrGroup, IFiniteSequence, qti_interfaces.IConcrete):
-	col = schema.List(schema.Object(Icol), 'The ordered col elements contained', min_length=0)
+	col = qti_schema.List(schema.Object(Icol), 'The ordered col elements contained', min_length=0)
 
 class ItableCell(basic_interfaces.IbodyElement, attr_interfaces.ItableCellAttrGroup, IFiniteSequence):
-	flow = schema.List(schema.Object(Iflow), 'The ordered flow elements contained', min_length=0)
+	flow = qti_schema.List(schema.Object(Iflow), 'The ordered flow elements contained', min_length=0)
 
 class Itd(ItableCell, qti_interfaces.IConcrete):
 	pass
@@ -206,25 +207,25 @@ class Ith(ItableCell, qti_interfaces.IConcrete):
 	pass
 	
 class Itr( basic_interfaces.IbodyElement, IFiniteSequence, qti_interfaces.IConcrete):
-	tableCell = schema.List(schema.Object(ItableCell), 'tableCell elements contained', min_length=0)
+	tableCell = qti_schema.List(schema.Object(ItableCell), 'tableCell elements contained', min_length=0)
 	
 class Ithead( basic_interfaces.IbodyElement, IFiniteSequence, qti_interfaces.IConcrete):
-	tr = schema.List(schema.Object(Itr), 'The ordered tr elements contained', min_length=1)
+	tr = qti_schema.List(schema.Object(Itr), 'The ordered tr elements contained', min_length=1)
 	
 class Itfoot( basic_interfaces.IbodyElement, IFiniteSequence, qti_interfaces.IConcrete):
-	tr = schema.List(schema.Object(Itr), 'The ordered tr elements contained', min_length=1)
+	tr = qti_schema.List(schema.Object(Itr), 'The ordered tr elements contained', min_length=1)
 	
 class Itbody( basic_interfaces.IbodyElement, IFiniteSequence, qti_interfaces.IConcrete):
-	tr = schema.List(schema.Object(Itr), 'The ordered tr elements contained', min_length=1)
+	tr = qti_schema.List(schema.Object(Itr), 'The ordered tr elements contained', min_length=1)
 	
 class Itable(IblockStatic, basic_interfaces.IbodyElement, IflowStatic, attr_interfaces.ItableAttrGroup,
 			 qti_interfaces.IConcrete):
 	caption = schema.Object(Icaption, title='the table caption')
-	col = schema.List(schema.Object(Icol), title='Table direct col (Must not contain any colgroup elements)', min_length=0, required=False)
-	colgroup = schema.List(schema.Object(Icolgroup), title='Table direct colgroups (Must not contain any col elements)', min_length=0, required=False)
+	col = qti_schema.List(schema.Object(Icol), title='Table direct col (Must not contain any colgroup elements)', min_length=0, required=False)
+	colgroup = qti_schema.List(schema.Object(Icolgroup), title='Table direct colgroups (Must not contain any col elements)', min_length=0, required=False)
 	thead = schema.Object(Ithead, title='table head', required=False)
 	tfoot = schema.Object(Itfoot, title='table head', required=False)
-	tbody = schema.List(schema.Object(Itbody), title='table body',  min_length=1, required=True)
+	tbody = qti_schema.List(schema.Object(Itbody), title='table body', min_length=1, required=True)
 
 # image Element
 
@@ -261,4 +262,4 @@ class Istylesheet(attr_interfaces.IstylesheetAttrGroup, qti_interfaces.IConcrete
 	pass
 	
 class IitemBody(basic_interfaces.IbodyElement, qti_interfaces.IConcrete):
-	blocks = schema.List(schema.Object(Iblock), title='The item body blocks', required=False)
+	blocks = qti_schema.List(schema.Object(Iblock), title='The item body blocks', required=False)

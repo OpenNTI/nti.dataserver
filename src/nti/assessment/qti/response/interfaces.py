@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope.interface.common.sequence import IFiniteSequence
 
+from .. import schema as qti_schema
 from .. import interfaces as qti_interfaces
 from ..outcome import interfaces as out_interfaces
 from ..expression import interfaces as exp_interfaces
@@ -21,22 +22,22 @@ class IresponseRule(qti_interfaces.IQTIElement):
 	pass
 	
 class IresponseProcessing(attr_interfaces.IresponseProcessingAttrGroup, IFiniteSequence, qti_interfaces.IConcrete):
-	responseRule = schema.List(schema.Object(IresponseRule), title="An ordered list of values", min_length=1)
+	responseRule = qti_schema.List(schema.Object(IresponseRule), title="An ordered list of values", min_length=0)
 
 class IresponseIf(qti_interfaces.IConcrete):
 	expression = schema.Object(exp_interfaces.Iexpression, title='The expression', required=True)
-	responseRule = schema.List(schema.Object(IresponseRule), title='The ordered response rules', required=False, min_length=0)
+	responseRule = qti_schema.List(schema.Object(IresponseRule), title='The ordered response rules', required=False, min_length=0)
 	
 class IresponseElseIf(qti_interfaces.IConcrete):
 	expression = schema.Object(exp_interfaces.Iexpression, title='The expression', required=True)
-	responseRule = schema.List(schema.Object(IresponseRule), title='The ordered response rules', required=False, min_length=0)
+	responseRule = qti_schema.List(schema.Object(IresponseRule), title='The ordered response rules', required=False, min_length=0)
 	
 class IresponseElse(qti_interfaces.IConcrete):
-	responseRule = schema.List(schema.Object(IresponseRule), title='The ordered response rules', required=False, min_length=0)
+	responseRule = qti_schema.List(schema.Object(IresponseRule), title='The ordered response rules', required=False, min_length=0)
 	
 class IresponseCondition(IresponseRule, qti_interfaces.IConcrete):
 	responseIf = schema.Object(IresponseIf, title='response if', required=True)
-	responseElseIf = schema.List(schema.Object(IresponseElseIf), title='response if list', required=False, min_length=0)
+	responseElseIf = qti_schema.List(schema.Object(IresponseElseIf), title='response if list', required=False, min_length=0)
 	responseElse = schema.Object(IresponseElse, title='response else', required=False)
 
 class IsetOutcomeValue(out_interfaces.IoutcomeRule, IresponseRule, attr_interfaces.IsetOutcomeValueAttrGroup, qti_interfaces.IConcrete):

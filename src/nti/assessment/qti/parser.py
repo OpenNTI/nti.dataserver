@@ -37,7 +37,7 @@ def parser(source):
 			for child in e:
 				child_qti = _process_element(child)
 				if child_qti is not None:
-					pass
+					qti_element.set_element(child_qti)
 		else:
 			logger.debug("Unrecognized element '%s'" % name)
 

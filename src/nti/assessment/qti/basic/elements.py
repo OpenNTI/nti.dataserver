@@ -28,7 +28,7 @@ from .. import interfaces as qti_interfaces
 from ..attributes import interfaces as attr_interfaces
 
 def get_schema_fields(iface):
-	
+
 	def _travel(iface, attributes):
 		names = iface.names()
 		fields = schema.getFields(iface) or {}
@@ -37,10 +37,10 @@ def get_schema_fields(iface):
 			if sch_def:
 				name = getattr(sch_def, '__name__', name)
 				attributes[name] = sch_def
-		
+
 		for base in iface.getBases() or ():
 			_travel(base, attributes)
-		
+
 	result = {}
 	_travel(iface, result)
 	return result
@@ -50,7 +50,7 @@ _marker = object()
 def _check_value(value, iface=None):
 	if iface is not None and value is not None:
 		assert iface.providedBy(value)
-			
+
 def _getter(name, default=None):
 	def function(self):
 		return getattr(self, name, default)
@@ -69,7 +69,7 @@ def _add_collection(name, sch_def=None):
 	def function(self, value):
 		if sch_def is not None:
 			sch_def.validate(value)
-			
+
 		collec = getattr(self, name)
 		if isinstance(collec, collections.Sequence):
 			collec.append(value)
@@ -112,22 +112,22 @@ def _set_attribute(self, key, value):
 
 def _make_getitem(attr):
 	def __getitem__(self, index):
-		return getattr(self,attr)[index]
+		return getattr(self, attr)[index]
 	return __getitem__
 
 def _make_setitem(attr):
 	def __setitem__(self, key, value):
-		getattr(self,attr)[key] = value
+		getattr(self, attr)[key] = value
 	return __setitem__
 
 def _make_iter(attr):
 	def __iter__(self):
-		return iter(getattr(self,attr))
+		return iter(getattr(self, attr))
 	return __iter__
 
 def _make_len(attr):
 	def __len__(self):
-		return len(getattr(self,attr))
+		return len(getattr(self, attr))
 	return __len__
 
 def _make_sequence(cls, attr):
@@ -135,6 +135,27 @@ def _make_sequence(cls, attr):
 	cls.__iter__ = _make_iter(attr)
 	cls.__getitem__ = _make_getitem(attr)
 	cls.__setitem__ = _make_setitem(attr)
+
+def _is_list(schm):
+	return sch_interfaces.IList.providedBy(schm)
+
+def _is_field(schm):
+	return 	sch_interfaces.IObject.providedBy(schm) or sch_interfaces.IText.providedBy(schm) or \
+			sch_interfaces.IChoice.providedBy(schm)
+
+def _get_def_name(elem):
+	name = elem.__class__.__name__
+	result = name[0].lower() + name[1:]
+	return result
+
+def _set_element(self, elem):
+	name = _get_def_name(elem)
+	sch = self._v_definitions.get(name)
+	if _is_list(sch):
+		m = getattr(self, "add_%s" % name.lower())
+		m(elem)
+	elif _is_field(sch):
+		setattr(self, name, elem)
 
 def qti_creator(cls):
 	"""
@@ -148,13 +169,13 @@ def qti_creator(cls):
 	"""
 	implemented = getattr(cls, '__implemented__', None)
 	implemented = implemented.flattened() if implemented else ()
-		
+
 	is_persitent = False
 	is_finite_sequence = False
-	
+
 	attributes = {}
 	definitions = {}
-	
+
 	for base in implemented:
 		if issubclass(base, IPersistent):
 			is_persitent = True
@@ -162,55 +183,57 @@ def qti_creator(cls):
 			is_finite_sequence = True
 		if issubclass(base, qti_interfaces.IQTIElement) or issubclass(base, attr_interfaces.IAttrGroup):
 			r = get_schema_fields(base)
-			for k,v in r.items():
+			for k, v in r.items():
 				if IQTIAttribute.providedBy(v):
 					attributes[k] = v
 				else:
 					definitions[k] = v
-	
-	
+
+
 	is_finite_sequence = is_finite_sequence and len(definitions) == 1
-	
-	# volatile attributes		
+
+	# volatile attributes
 	setattr(cls, '_v_definitions', definitions)
 	setattr(cls, '_v_attributes', attributes)
-	
+
 	# factories
 	list_factory = PersistentList if is_persitent else list
-	
+
 	# fields
 	for k, v in definitions.items():
-		
+
 		if hasattr(cls, k): continue
-		
+
 		if 	sch_interfaces.IObject.providedBy(v) or sch_interfaces.IText.providedBy(v) or  \
 			sch_interfaces.IChoice.providedBy(v):
-		
+
 			setattr(cls, k, FieldProperty(v, k))
-			
+
 		elif sch_interfaces.IList.providedBy(v):
 			if is_finite_sequence:
 				_make_sequence(cls, k)
-			
+
 			setattr(cls, "get_%s_list" % k.lower(), _getter(k))
 			setattr(cls, k, property(_collection_getter(k, list_factory)))
-			
+
 			if 	sch_interfaces.IObject.providedBy(v.value_type) or sch_interfaces.IText.providedBy(v.value_type) or \
 				sch_interfaces.IChoice.providedBy(v):
-				
+
 				setattr(cls, "add_%s" % k.lower(), _add_collection(k, v.value_type))
 			else:
 				warnings.warn("unhandled list type %s" % v.value_type)
 		else:
-			warnings.warn("unhandled field %s (%s)" % (k,v))
-			
+			warnings.warn("unhandled field %s (%s)" % (k, v))
+
+	setattr(cls, "set_element", _set_element)
+
 	# attributes
-	for k,v in attributes.items():
-		if hasattr(cls, k): 
+	for k, v in attributes.items():
+		if hasattr(cls, k):
 			warnings.warn("attribute %s already set" % k)
 			continue
 		setattr(cls, k, property(_attribute_getter(k, v), _attribute_setter(k, v)))
-	
+
 	setattr(cls, "get_attributes", _get_attributes)
 	setattr(cls, "set_attribute", _set_attribute)
 	return cls

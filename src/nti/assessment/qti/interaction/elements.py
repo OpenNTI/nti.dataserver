@@ -32,7 +32,7 @@ class GapText(QTIElement):
 @interface.implementer(int_interfaces.IgapImg)
 class GapImg(QTIElement):
 	pass
-	
+
 @qti_creator
 @interface.implementer(int_interfaces.Igap)
 class Gap(QTIElement):
