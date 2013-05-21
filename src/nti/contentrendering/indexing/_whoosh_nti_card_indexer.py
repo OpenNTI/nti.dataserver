@@ -37,7 +37,7 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 			result = {'ntiid': node_utils.get_attribute(node, 'data-ntiid')}
 			result['type'] = node_utils.get_attribute(node, 'data-type')
 			result['href'] = node_utils.get_attribute(node, 'data-href')
-			result['title'] = node_utils.get_attribute(node, 'data-title')
+			result['title'] = node_utils.get_attribute(node, 'data-title') or u''
 			result['creator'] = node_utils.get_attribute(node, 'data-creator')
 			for obj in node.iterchildren():
 				if obj.tag == 'span' and node_utils.get_attribute(obj, 'class') == 'description':
@@ -47,7 +47,7 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 					value = node_utils.get_attribute(obj, 'value')
 					if name and not result.get(name, None) and value:
 						result[name] = value
-			result['content'] = unicode(content) if content else None
+			result['content'] = unicode(content) if content else result['title']
 			return result
 		return None
 
