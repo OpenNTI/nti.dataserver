@@ -101,11 +101,18 @@ def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=No
 						 License=license_, Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
 	return result
 
+_vocabulary = None
+def _get_vocabulary():
+	global _vocabulary
+	if _vocabulary is None:
+		_vocabulary = PurchasableUtilityVocabulary(None)
+	return _vocabulary
+
 def get_purchasable(pid):
 	"""
 	Return purchasable with the specified id
 	"""
-	util = PurchasableUtilityVocabulary(None)
+	util = _get_vocabulary()
 	try:
 		result = util.getTermByToken(pid) if pid else None
 	except (LookupError, KeyError):
@@ -117,7 +124,7 @@ def get_all_purchasables():
 	Return all purchasable items
 	"""
 	result = LocatedExternalList()
-	util = PurchasableUtilityVocabulary(None)
+	util = _get_vocabulary()
 	for p in util:
 		result.append(p.value)
 	return result
@@ -126,7 +133,7 @@ def get_available_items(user):
 	"""
 	Return all item that can be purchased
 	"""
-	util = PurchasableUtilityVocabulary(None)
+	util = _get_vocabulary()
 	all_ids = set([p.value.NTIID for p in util])
 
 	# get purchase history
