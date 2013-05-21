@@ -228,12 +228,14 @@ def _prune_phrase_terms_fragments(termset, original_snippet, original_fragments,
 	snippet = '...'.join(snippets) if snippets else original_snippet
 	return snippet, fragments
 
-def _context_fragment(sf, termset, query, maxchars, surround, punkt_pattern):
-	if not sf.matches:
-		return sf
-
-	snippet = []
+def _context_fragments(sf, termset, query, maxchars, surround, punkt_pattern):
 	text = sf.text
+	if not sf.matches:
+		return [sf], text
+
+	count = 0
+	snippet = []
+	fragments = []
 	for m in sf.matches:
 		start = m.start
 		end = m.end
@@ -259,12 +261,16 @@ def _context_fragment(sf, termset, query, maxchars, surround, punkt_pattern):
 
 		s = text[start:end]
 		snippet.append(s)
-		if len(s) > maxchars:
+		# keep track of # chars
+		count += len(s)
+		# create fragment
+		sf = _SearchFragment.create_from_terms(s, termset, query.is_phrase_search, punkt_pattern)
+		fragments.append(sf)
+		if count > maxchars:
 			break
 
-	snippet = '\n'.join(snippet)
-	sf = _SearchFragment.create_from_terms(snippet, termset, query.is_phrase_search, punkt_pattern)
-	return sf
+	snippet = '...'.join(snippet)
+	return fragments, snippet
 
 def _no_hit_match(sf, maxchars=300, tokens=()):
 	text = sf.text
@@ -328,16 +334,17 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5, orde
 			search_fragments.append(sf)
 		snippet = formatter(text, fragments)
 	else:
-		total_fragments = 1
 		sf = _SearchFragment.create_from_terms(text, termset, query.is_phrase_search, punkt_pattern)
-		sf = _context_fragment(sf, termset, query, maxchars=maxchars, surround=surround,
-							   punkt_pattern=punkt_pattern)
-		if sf.matches:
-			del copy_tokens
-		else:
+		frags, snippet = _context_fragments(sf, termset, query, maxchars=maxchars, surround=surround, punkt_pattern=punkt_pattern)
+		if len(frags) == 1 and not frags[0].matches:
 			sf = _no_hit_match(sf, maxchars, copy_tokens)
-		snippet = sf.text
-		search_fragments = [sf]
+			snippet = sf.text
+			total_fragments = 1
+			search_fragments = [sf]
+		else:
+			del copy_tokens
+			search_fragments = frags
+			total_fragments = len(frags)
 
 	if query.is_phrase_search:
 		punkt_exp = component.getUtility(cp_interfaces.IPunctuationCharExpressionPlus, name=lang)
