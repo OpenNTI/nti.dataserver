@@ -101,11 +101,8 @@ def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=No
 						 License=license_, Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
 	return result
 
-_vocabulary = None
 def _get_vocabulary():
-	global _vocabulary
-	if _vocabulary is None:
-		_vocabulary = PurchasableUtilityVocabulary(None)
+	_vocabulary = PurchasableUtilityVocabulary(None)
 	return _vocabulary
 
 def get_purchasable(pid):
@@ -156,7 +153,7 @@ def get_content_items(purchased_items):
 		purchased_items = to_collection(purchased_items)
 
 	result = set()
-	util = PurchasableUtilityVocabulary(None)
+	util = _get_vocabulary()
 	for item in purchased_items:
 		try:
 			p = util.getTermByToken(item).value
