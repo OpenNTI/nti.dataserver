@@ -29,9 +29,9 @@ def parser(source):
 		factory = get_qti_object_factory(name)
 		if factory is not None:
 			qti_element = factory()
-			text = e.text
-			if text and text.strip():
-				qti_element.content = text
+			content = e.text.strip() if e.text else None
+			if content:
+				qti_element.content = content
 
 			# process attribtes
 			for k, v in e.attrib.items():
