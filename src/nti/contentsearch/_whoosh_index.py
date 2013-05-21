@@ -196,6 +196,7 @@ class NTICard(_SearchableContent):
 		for hit in search_hits:
 			docnum = hit.docnum
 			score = hit.score or 1.0
+			from IPython.core.debugger import Tracer; Tracer()()
 			last_modified = common.epoch_time(hit[last_modified_])
 			data = _NTICardContent(
 							score=score,
