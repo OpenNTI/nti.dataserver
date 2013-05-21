@@ -155,7 +155,7 @@ setup(
 		'BTrees >= 4.0.6',
 		'zdaemon >= 4.0.0',
 		'persistent >= 4.0.6',
-		'ZEO >= 4.0.0a1',
+		'ZEO >= 4.0.0b1',
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
 		# 'MySQL-python', # mysql adapter--NOT needed, loaded from umysqldb
@@ -169,7 +169,7 @@ setup(
 		'anyjson >= 0.3.3',
 		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
 		# See also blist for a tree-structured list
-		'boto >= 2.9.3',  # amazon
+		'boto >= 2.9.4',  # amazon
 		'brownie >= 0.5.1',  # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
@@ -263,7 +263,7 @@ setup(
 		 # stripe also depends on just the minimal part of the api (their setup.py doesn't
 		 # give a version) (?). grequests 0.1.0 is not compatible with this.
 		 # If something used hooks, a change from 1.1 to 1.2 might break it; no initial issues seen
-		'requests >= 1.2.0',
+		'requests >= 1.2.1',
 		# 'scss >= 0.8.72', # we no longer use
 		'setproctitle >= 1.1.7',  # used by gunicorn
 		'setuptools >= 0.6c11',
