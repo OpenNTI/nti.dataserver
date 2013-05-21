@@ -24,10 +24,8 @@
         </p>
         <choiceInteraction responseIdentifier="RESPONSE" shuffle="false" maxChoices="1">
             <prompt>What does it say?</prompt>
-            <simpleChoice identifier="ChoiceA">You must stay with your luggage at all
-                times.</simpleChoice>
-            <simpleChoice identifier="ChoiceB">Do not let someone else look after your
-                luggage.</simpleChoice>
+            <simpleChoice identifier="ChoiceA">You must stay with your luggage at all times.</simpleChoice>
+            <simpleChoice identifier="ChoiceB">Do not let someone else look after your luggage.</simpleChoice>
             <simpleChoice identifier="ChoiceC">Remember your luggage when you leave.</simpleChoice>
         </choiceInteraction>
     </itemBody>
