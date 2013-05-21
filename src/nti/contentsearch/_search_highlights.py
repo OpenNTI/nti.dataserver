@@ -14,6 +14,8 @@ from zope import schema
 from zope import component
 from zope import interface
 
+import repoze.lru
+
 from whoosh import analysis
 from whoosh import highlight
 
@@ -297,6 +299,14 @@ def top_fragments(fragments, scorer, count=5, order=highlight.FIRST, minscore=1)
 	best_fragments.sort(key=order)
 	return best_fragments, total_fragments
 
+# static formatter
+_null_formatter = highlight.NullFormatter()
+
+@repoze.lru.lru_cache(5)
+def _create_fragmenter(maxchars=300, surround=50):
+	result = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
+	return result
+
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5, order=highlight.FIRST, lang='en'):
 
 	punkt_pattern = component.getUtility(cp_interfaces.IPunctuationCharPatternPlus, name=lang)
@@ -310,8 +320,8 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5, orde
 	# TODO: could we have a context scorer?
 	scorer = highlight.BasicFragmentScorer()
 	analyzer = component.getUtility(search_interfaces.IWhooshAnalyzer, name=lang)
-	formatter = highlight.NullFormatter()  #  highlight.UppercaseFormatter()
-	fragmenter = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
+	formatter = _null_formatter  #  highlight.UppercaseFormatter()
+	fragmenter = _create_fragmenter(maxchars, surround)
 
 	# sadly we need to retokenize to find term matches
 	tokens = analyzer(text, chars=True, mode="query", removestops=False)
