@@ -225,11 +225,15 @@ class _WhooshNTICardSearchHit(_BaseSearchHit):
 		self[HREF] = hit.href
 		self[NTIID] = hit.ntiid
 		self[TITLE] = hit.title
+		self.title = hit.title
 		self[SNIPPET] = hit.content
 		self[MIME_TYPE] = NTI_CARD_MIME_TYPE
 		self[CONTAINER_ID] = hit.containerId
 		self[TARGET_NTIID] = hit.target_ntiid
 		self[LAST_MODIFIED] = hit.last_modified
+
+	def get_title(self):
+		return self.title or u''
 
 	@classmethod
 	def get_oid(cls, hit):

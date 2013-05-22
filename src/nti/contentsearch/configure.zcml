@@ -78,6 +78,10 @@
 				for=".interfaces.IRedactionSearchHit"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
+	<subscriber factory="._search_external._NTICardSearchHitHighlightDecorator"
+				for=".interfaces.IWhooshNTICardSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
 	<subscriber factory="._search_external._SearchResultsLinkDecorator"
 				for=".interfaces.ISearchResults"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
