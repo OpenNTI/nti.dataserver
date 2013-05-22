@@ -30,15 +30,20 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 		creator = component.getUtility(search_interfaces.IWhooshNTICardSchemaCreator, name=name)
 		return creator.create()
 
+	def _get_attribute(self, node, attr):
+		result = node_utils.get_attribute(node, attr)
+		return result or u''
+
 	def _get_nticard_info(self, topic, node):
 		type_ = node_utils.get_attribute(node, 'type')
 		if type_ == u'application/vnd.nextthought.nticard':
+			result = {}
 			content = node_utils.get_node_content(node)
-			result = {'ntiid': node_utils.get_attribute(node, 'data-ntiid')}
-			result['type'] = node_utils.get_attribute(node, 'data-type')
-			result['href'] = node_utils.get_attribute(node, 'data-href')
-			result['title'] = node_utils.get_attribute(node, 'data-title') or u''
-			result['creator'] = node_utils.get_attribute(node, 'data-creator')
+			result['type'] = self._get_attribute(node, 'data-type')
+			result['href'] = self._get_attribute(node, 'data-href')
+			result['title'] = self._get_attribute(node, 'data-title')
+			result['ntiid'] = self._get_attribute(node, 'data-ntiid')
+			result['creator'] = self._get_attribute(node, 'data-creator')
 			for obj in node.iterchildren():
 				if obj.tag == 'span' and node_utils.get_attribute(obj, 'class') == 'description':
 					content = node_utils.get_node_content(obj)
