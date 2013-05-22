@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 import os
 import time
 import urlparse
+import collections
 from datetime import datetime
 
 from zope import component
@@ -26,6 +27,8 @@ from . import _content_utils as content_utils
 from . import interfaces as cridxr_interfaces
 from ._common_indexer import _BasicWhooshIndexer
 from ..media import interfaces as media_interfaces
+
+_Video = collections.namedtuple('Video', 'parser_name, video_ntiid, video_path')
 
 @interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
 class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
@@ -67,12 +70,12 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 				vid_tupl = self._find_video_transcript(content_path, [vid], parser_names)
 				if vid_tupl:
 					parser_name, video_path = vid_tupl
-					return (parser_name, video_ntiid, video_path)
+					return _Video(parser_name, video_ntiid, video_path)
 		return None
 
 	def _get_slidevideo_info(self, topic, node):
 		type_ = node_utils.get_attribute(node, 'type')
-		if type_ == u'application/vnd.nextthought.slidevideo':
+		if type_ in (u'application/vnd.nextthought.slidevideo', u'application/vnd.nextthought.ntislidevideo'):
 			result = {}
 			for p in node.iterchildren():
 				if p.tag != 'param': continue
@@ -94,7 +97,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 			vid_tupl = self._find_video_transcript(content_path, bases, parser_names)
 			if vid_tupl:
 				parser_name, video_path = vid_tupl
-				return (parser_name, video_ntiid, video_path)
+				return _Video(parser_name, video_ntiid, video_path)
 
 		return None
 
@@ -121,22 +124,28 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		return indexname
 
 	def process_topic(self, idxspec, topic, writer, language='en'):
-		count = 0
-		videos = []
+		videos = set()
 		containerId = unicode(topic.ntiid)
 
 		for n in topic.dom(b'div').filter(b'.externalvideo'):
 			info = self._get_externalvideo_info(topic, n)
 			if info:
-				videos.append(info)
+				videos.add(info)
 
 		for n in topic.dom(b'object'):
 			info = self._get_slidevideo_info(topic, n)
 			if info:
-				videos.append(info)
+				videos.add(info)
 
-		for info in videos:
-			pname, video_ntiid, video_path = info
+		return (videos, containerId)
+
+	def _parse_and_index_videos(self, videos, containerId, writer, language='en'):
+		if isinstance(videos, _Video):
+			videos = [videos]
+
+		count = 0
+		for video in videos:
+			pname, video_ntiid, video_path = video
 			parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name=pname)
 			with open(video_path, "r") as source:
 				transcript = parser.parse(source)
@@ -145,6 +154,26 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 			for e in transcript:
 				self.index_transcript_entry(writer, containerId, video_ntiid, e, language)
 				count += 1
+		return count
+
+	def process_book(self, idxspec, writer, language='en'):
+		# capture all videos to parse
+		result = {}
+		toc = idxspec.book.toc
+		def _loop(topic):
+			videos, containerId = self.process_topic(idxspec, topic, writer, language)
+			for video in videos:
+				if video not in result:
+					result[video] = containerId
+			# parse children
+			for t in topic.childTopics:
+				_loop(t)
+		_loop(toc.root_topic)
+
+		# parse and index
+		count = 0
+		for video, containerId in result.items():
+			count += self._parse_and_index_videos(video, containerId, writer, language)
 		return count
 
 _DefaultWhooshVideoTranscriptIndexer = _WhooshVideoTranscriptIndexer
