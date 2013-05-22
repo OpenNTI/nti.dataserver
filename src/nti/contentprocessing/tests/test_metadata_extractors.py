@@ -40,6 +40,8 @@ def test_metadata_provides():
 	assert_that( metadata, validly_provides( interfaces.IContentMetadata ) )
 
 def test_rdflib_can_parse_file():
+	# Originally from NewYorker
+	#  http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green?currentPage=all
 	the_file = os.path.abspath( os.path.join( os.path.dirname(__file__),
 											  'og_metadata.html') )
 
@@ -60,6 +62,24 @@ def test_rdflib_can_parse_file():
 	result = metadata_extractors.get_metadata_from_content_location( the_file )
 	_check( result )
 
+def test_twitter_extraction_from_file():
+	# Originally from NYTimes:
+	# https://www.nytimes.com/2013/05/17/health/exercise-class-obedience-not-required.html
+	the_file = os.path.abspath( os.path.join( os.path.dirname(__file__),
+											  'twitter_metadata.html') )
+
+	graph = Graph()
+	graph.parse( the_file, format='rdfa' )
+
+	args = metadata_extractors._file_args( the_file )
+
+	def _check(result):
+		assert_that( result, has_property( 'title', 'Exercise Class, Obedience Not Required' ) )
+		assert_that( result, has_property( 'href', 'http://www.nytimes.com/2013/05/17/health/exercise-class-obedience-not-required.html' ) )
+		assert_that( result, has_property( 'image', 'http://graphics8.nytimes.com/images/2013/05/17/arts/17URBAN_SPAN/17URBAN_SPAN-thumbLarge-v2.jpg' ) )
+
+	result = metadata_extractors._HTMLExtractor()._extract_twitter(metadata_extractors.ContentMetadata(), args )
+	_check( result )
 
 
 def test_opengraph_extraction():
@@ -79,7 +99,7 @@ def test_opengraph_extraction():
 
 	class _args(object):
 		__name__ = None
-		stream = None
+		text = None
 
 	# No explicit prefix (relying on default in RDFa 1.1), an HTML5-style prefix,
 	# and the XML style prefix
@@ -88,7 +108,7 @@ def test_opengraph_extraction():
 		__traceback_info__ = html
 		args = _args()
 		args.__name__ = 'http://example.com'
-		args.stream = BytesIO(html.encode('utf-8'))
+		args.text = html
 
 		result = metadata_extractors._HTMLExtractor()._extract_opengraph(metadata_extractors.ContentMetadata(), args )
 
