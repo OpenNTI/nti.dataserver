@@ -81,12 +81,19 @@ class IContentMetadata(interface.Interface):
 									   description="Possibly one or more names or even an organization.",
 									   required=False,
 									   default='' )
-	mimeType = schema.ASCIILine(
+	mimeType = schema.TextLine(
 		title="The Mime Type of the content",
 		constraint=mimeTypeConstraint,
 		required=False )
 
-	sourceLocation = schema.TextLine( title="The location of the content",
+	contentLocation = schema.TextLine( title="The canonical URL of the content",
+									   description=("After metadata extraction, we may have obtained"
+													" a canonical URL for the content, different from"
+													" the source location. For permanent storage and use"
+													" this is the value to use, not the source location."),
+										required=False )
+
+	sourceLocation = schema.TextLine( title="The location of the source content",
 									  description=("The unprocessed, original location of the content"
 									  				" used to find the metadata. May be a local file"
 													" path or a URL."),
