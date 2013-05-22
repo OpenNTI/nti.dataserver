@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 import os
 import time
+import urlparse
 from datetime import datetime
 
 from zope import component
@@ -54,6 +55,22 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		return None
 
 	def _get_externalvideo_info(self, topic, node):
+		content_path = os.path.dirname(topic.location)
+		video_ntiid = node_utils.get_attribute(node, 'id')
+		parser_names = self._get_video_transcript_parser_names()
+		for obj in node.iterchildren():
+			if obj.tag != 'iframe': continue
+			src = node_utils.get_attribute(obj, 'src')
+			if src:
+				path = urlparse.urlparse(src).path
+				vid = os.path.splitext(os.path.basename(path))[0]
+				vid_tupl = self._find_video_transcript(content_path, [vid], parser_names)
+				if vid_tupl:
+					parser_name, video_path = vid_tupl
+					return (parser_name, video_ntiid, video_path)
+		return None
+
+	def _get_slidevideo_info(self, topic, node):
 		type_ = node_utils.get_attribute(node, 'type')
 		if type_ == u'application/vnd.nextthought.slidevideo':
 			result = {}
@@ -105,12 +122,20 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 	def process_topic(self, idxspec, topic, writer, language='en'):
 		count = 0
+		videos = []
 		containerId = unicode(topic.ntiid)
-		for n in topic.dom(b'object'):
-			info = self._get_externalvideo_info(topic, n)
-			if not info:
-				continue
 
+		for n in topic.dom(b'div').filter(b'.externalvideo'):
+			info = self._get_externalvideo_info(topic, n)
+			if info:
+				videos.append(info)
+
+		for n in topic.dom(b'object'):
+			info = self._get_slidevideo_info(topic, n)
+			if info:
+				videos.append(info)
+
+		for info in videos:
 			pname, video_ntiid, video_path = info
 			parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name=pname)
 			with open(video_path, "r") as source:
