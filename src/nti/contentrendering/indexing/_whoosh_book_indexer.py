@@ -41,7 +41,7 @@ class _WhooshBookIndexer(_BasicWhooshIndexer):
 	def add_document(self, writer, docid, ntiid, title, content,
 					 related=(), keywords=(), last_modified=None):
 
-		docid = unicode(docid) if docid else None
+		docid = unicode(docid) if docid else u''
 		try:
 			content = unicode(content)
 			writer.add_document(docid=docid,
@@ -74,8 +74,8 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 	"""
 
 	def process_topic(self, idxspec, node, writer, language='en'):
-		title = unicode(node.title)
-		ntiid = unicode(node.ntiid)
+		title = unicode(node.title) or u''
+		ntiid = unicode(node.ntiid) or u''
 		content_file = node.location
 
 		logger.info("Indexing Node (%s, %s, %s)", os.path.basename(content_file), title, ntiid)
@@ -152,8 +152,8 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 		return c or text
 
 	def process_topic(self, idxspec, node, writer, language='en'):
-		title = unicode(node.title)
-		ntiid = unicode(node.ntiid)
+		title = unicode(node.title) or u''
+		ntiid = unicode(node.ntiid) or u''
 		content_file = node.location
 
 		logger.info("Indexing File (%s, %s, %s)", os.path.basename(content_file), title, ntiid)

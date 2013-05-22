@@ -84,7 +84,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 				if name and value:
 					result[name] = value
 
-			video_ntiid = result.get('ntiid')
+			video_ntiid = result.get('ntiid')  or u''
 			content_path = os.path.dirname(topic.location)
 			parser_names = self._get_video_transcript_parser_names()
 
@@ -102,8 +102,11 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		return None
 
 	def index_transcript_entry(self, writer, containerId, video_id, entry, language=u'en'):
+		content = entry.transcript
+		if not content:
+			return
+
 		try:
-			content = entry.transcript
 			table = get_content_translation_table(language)
 			last_modified = datetime.fromtimestamp(time.time())
 			content = unicode(content_utils.sanitize_content(content, table=table))
@@ -125,7 +128,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 	def process_topic(self, idxspec, topic, writer, language='en'):
 		videos = set()
-		containerId = unicode(topic.ntiid)
+		containerId = unicode(topic.ntiid) or u''
 
 		for n in topic.dom(b'div').filter(b'.externalvideo'):
 			info = self._get_externalvideo_info(topic, n)
