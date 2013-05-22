@@ -72,6 +72,7 @@
 	<adapter factory=".pyramid_renderers._ContentPackageLibraryCacheController" />
 	<adapter factory=".pyramid_renderers._ContentUnitInfoCacheController" />
 	<adapter factory=".pyramid_renderers._ETagCachedUGDExternalCollectionCacheController" />
+	<adapter factory=".pyramid_renderers._TranscriptCacheController" />
 
 	<adapter factory=".pyramid_renderers.UseTheRequestContextCacheController"
 			 for=".interfaces.IUseTheRequestContextUGDExternalCollection" />

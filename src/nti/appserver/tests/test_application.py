@@ -740,11 +740,58 @@ class TestApplication(SharedApplicationTestBase):
 			item_id = item['ID']
 			links = item['Links']
 			assert_that( links, has_item( has_entry( 'href',
-														 urllib.quote( '/dataserver2/users/sjohnson@nextthought.com/Pages(%s)/RecursiveStream' % item_id ) ) ) )
+													 urllib.quote( '/dataserver2/users/sjohnson@nextthought.com/Pages(%s)/RecursiveStream' % item_id ) ) ) )
 
 		# I can now delete that item
 		testapp.delete( str(href), extra_environ=self._make_extra_environ())
 
+	@WithSharedApplicationMockDSHandleChanges(users=True,testapp=True)
+	@time_monotonically_increases
+	def test_transcript_caching_response(self):
+		# Fetching a transcript uses an
+		# etag that takes into account the flag status of all its
+		# messages
+		with mock_dataserver.mock_db_trans( self.ds ) as conn:
+			# First, give a transcript summary
+
+			user = users.User.get_user( self.extra_environ_default_user )
+			from nti.chatserver import interfaces as chat_interfaces
+			import zc.intid as zc_intid
+			storage = chat_interfaces.IUserTranscriptStorage(user)
+
+			from nti.chatserver.messageinfo import MessageInfo as Msg
+			from nti.chatserver.meeting import _Meeting as Meet
+			msg = Msg()
+			meet = Meet()
+
+			meet.containerId = u'tag:nti:foo'
+			meet.creator = user
+			meet.ID = 'the_meeting'
+			msg.containerId = meet.containerId
+			msg.ID = '42'
+			msg.creator = user
+			msg.__parent__ = meet
+
+			component.getUtility( zc_intid.IIntIds ).register( msg )
+			component.getUtility( zc_intid.IIntIds ).register( meet )
+			conn.add( meet )
+			storage.add_message( meet, msg )
+
+			ntiid = to_external_ntiid_oid( meet )
+			ntiid = ntiid.replace('OID', 'Transcript' )
+
+		res = self.fetch_by_ntiid( ntiid )
+		res2 = self.fetch_by_ntiid( ntiid )
+		assert_that( res.last_modified, is_( res2.last_modified ) )
+		assert_that( res.etag, is_( res2.etag ) )
+
+
+		self.testapp.post( self.require_link_href_with_rel( res.json_body['Messages'][0], 'flag' ) )
+
+		res2 = self.fetch_by_ntiid( ntiid )
+
+		assert_that( res.last_modified, is_( res2.last_modified ) )
+		assert_that( res.etag, is_not( res2.etag ) )
 
 	@WithSharedApplicationMockDS
 	def test_get_highlight_by_oid_has_links(self):
