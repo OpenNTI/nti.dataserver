@@ -17,7 +17,7 @@ import argparse
 from zope import interface
 from zope import component
 
-from . import interfaces as cr_interfaces
+from nti.contentrendering import interfaces as cr_interfaces
 
 interface.moduleProvides(cr_interfaces.IRenderedBookTransformer)
 
