@@ -20,7 +20,7 @@ from .._whoosh_nti_card_indexer import _DefaultWhooshNTICardIndexer
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, has_length, is_)
+from hamcrest import (assert_that, has_length, is_, is_not)
 
 class TestNTICardIndexer(ConfiguringTestBase):
 
@@ -56,6 +56,12 @@ class TestNTICardIndexer(ConfiguringTestBase):
 				r = s.search(q, limit=None)
 				assert_that(r, has_length(1))
 				for hit in r:
+					assert_that(hit['type'], is_not(u''))
+					assert_that(hit['href'], is_not(u''))
+					assert_that(hit['title'], is_not(u''))
+					assert_that(hit['content'], is_not(u''))
+					assert_that(hit['creator'], is_not(u''))
+					assert_that(hit['containerId'], is_not(u''))
 					assert_that(hit['href'], is_("http://www.aops.org"))
 					assert_that(hit['target_ntiid'], is_("tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.chapter:arithmetic"))
 		finally:

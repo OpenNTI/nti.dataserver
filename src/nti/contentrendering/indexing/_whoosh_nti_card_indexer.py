@@ -52,7 +52,7 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 					value = node_utils.get_attribute(obj, 'value')
 					if name and not result.get(name, None) and value:
 						result[name] = value
-			result['content'] = unicode(content) if content else result['title']
+			result['content'] = unicode(content) if content else u''
 			return result
 		return None
 
