@@ -60,7 +60,7 @@ class ImappingAttrGroup(IAttrGroup):
 class ImappingEntryAttrGroup(IAttrGroup):
 	mapKey = TextLineAttribute(title=u'The source value', required=True)
 	mappedValue = FloatAttribute(title='The mapped value', required=True)
-	caseSensitive = BoolAttribute(title='Used to control whether or not a mapEntry string is matched case sensitively', required=True)
+	caseSensitive = BoolAttribute(title='Used to control whether or not a mapEntry string is matched case sensitively', required=False)
 
 class IcorrectResponseAttrGroup(IAttrGroup):
 	interpretation = TextLineAttribute(title=u'A human readable interpretation of the correct value', required=False)
