@@ -20,17 +20,18 @@ from zope.mimetype import interfaces as mime_interfaces
 from . import interfaces
 
 from zope.cachedescriptors.property import Lazy
+from nti.utils.property import alias
 
+import os
 import pyPdf
 import pyquery
-import requests
-import string
-import urlparse
-import tempfile
-import os
-import shutil
 import rdflib
-import rdflib.parser
+import requests
+import shutil
+import six
+import string
+import tempfile
+import urlparse
 
 from nti.utils.schema import createDirectFieldProperties
 from nti.utils.schema import PermissiveSchemaConfigured
@@ -40,6 +41,9 @@ class ContentMetadata(PermissiveSchemaConfigured):
 	"Default implementation of :class:`.IContentMetadata`"
 
 	createDirectFieldProperties( interfaces.IContentMetadata, adapting=True )
+
+	# BWC
+	href = alias('contentLocation')
 
 class _abstract_args(object):
 
@@ -67,7 +71,7 @@ class _request_args(_abstract_args):
 		pdf_file = os.fdopen( fd, 'wb' )
 		shutil.copyfileobj( self.response.raw, pdf_file )
 		pdf_file.close()
-		return open(pdf_file, 'rb')
+		return open(pdf_path, 'rb')
 
 	@property
 	def text(self):
@@ -113,7 +117,7 @@ def _get_metadata_from_mime_type( location, mime_type, args_factory ):
 
 	if result is not None:
 		result.sourceLocation = location
-		result.mimeType = mime_type
+		result.mimeType = six.text_type(mime_type)
 
 	return result, args
 
@@ -210,6 +214,7 @@ class _HTMLExtractor(object):
 			triples = graph.triples_choices( (None, [getattr(x, ns_name) for x in nss], None) )
 			for _, _, val in triples:
 				setattr( result, attr_name, val.toPython() )
+				break
 
 		return result
 
@@ -236,7 +241,7 @@ class _HTMLExtractor(object):
 			if name and val and name in prop_names:
 				attr_name = prop_names[name]
 				if not getattr( result, attr_name, None ):
-					val = unicode(val)
+					val = six.text_type(val)
 					setattr( result, attr_name, val )
 
 		return result

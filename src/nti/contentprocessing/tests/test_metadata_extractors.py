@@ -23,12 +23,13 @@ from hamcrest import has_property
 
 import nti.tests
 from nti.tests import validly_provides
+import fudge
 
 from nti.contentprocessing import metadata_extractors, interfaces
 
 import os.path
 from rdflib import Graph
-from io import BytesIO
+
 
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.contentprocessing',) )
@@ -39,7 +40,7 @@ def test_metadata_provides():
 	metadata = metadata_extractors.ContentMetadata()
 	assert_that( metadata, validly_provides( interfaces.IContentMetadata ) )
 
-def test_rdflib_can_parse_file():
+def test_opengraph_extraction_from_file():
 	# Originally from NewYorker
 	#  http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green?currentPage=all
 	the_file = os.path.abspath( os.path.join( os.path.dirname(__file__),
@@ -115,3 +116,36 @@ def test_opengraph_extraction():
 		assert_that( result, has_property( 'title', 'The Rock' ) )
 		assert_that( result, has_property( 'href', 'http://www.imdb.com/title/tt0117500/' ) )
 		assert_that( result, has_property( 'image', 'http://ia.media-imdb.com/images/rock.jpg' ) )
+
+def test_opengraph_extraction_multiple_images():
+	template = """
+<meta property="og:image" content="http://example.com/rock.jpg" />
+<meta property="og:image:width" content="300" />
+<meta property="og:image:height" content="300" />
+<meta property="og:image" content="http://example.com/rock2.jpg" />
+<meta property="og:image" content="http://example.com/rock3.jpg" />
+<meta property="og:image:height" content="1000" />
+"""
+
+@fudge.patch('requests.get')
+def test_extraction_remote_pdf(fake_get=None):
+	# By commenting out the patch line, we can test with a real file
+	if fake_get is not None:
+		# This real URL has been download locally
+		pdf_file = os.path.join( os.path.dirname( __file__ ), 'test_page574_12.pdf' )
+
+		class R1(object):
+			def __init__(self):
+				self.headers = {'content-type': 'application/pdf'}
+				self.raw = open(pdf_file, 'rb')
+
+		fake_get.is_callable().returns( R1() )
+		href = 'http://someserver.com/path/to/test_page574_12.pdf' # remote href
+	else:
+		href = 'http://support.pokemon.com/FileManagement/Download/f6029520f8ea43f08790ec4975944bb3'
+
+	result = metadata_extractors.get_metadata_from_content_location( href )
+
+	# Values from the PDF
+	assert_that( result, has_property( 'creator', 'Jason Madden' ) )
+	assert_that( result, has_property( 'description', 'Subject' ) )
