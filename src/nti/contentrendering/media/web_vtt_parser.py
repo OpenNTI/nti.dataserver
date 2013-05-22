@@ -507,18 +507,28 @@ class WebVTTParser(object):
 		lines = [re.sub('\r', '', x.lstrip()) for x in re.split('\n', source.read())]
 
 		# SIGNATURE
-		if 	len(lines[linepos]) < 6 or lines[linepos].index("WEBVTT") != 0 or \
+		if 	len(lines[linepos]) < 6 or lines[linepos].find("WEBVTT") != 0 or \
 			(len(lines[linepos]) > 6 and lines[linepos][6] != " " and lines[linepos][6] != "\t"):
 			err("No valid signature. (File needs to start with \"WEBVTT\".)", linepos)
 
 		linepos += 1
 
 		# HEADER
+		meta = {}
 		while linepos < len(lines) and lines[linepos] != "":
-			err("No blank line after the signature.")
-			if lines[linepos].index("-->") != -1:
-				already_collected = True
-				break
+			line = lines[linepos].lower()
+			idx = -1
+			for p in  ('kind:', 'language:'):
+				idx = line.find(p)
+				if idx != -1:
+					meta[p[:-1]] = line[idx + len(p):].strip()
+					break
+
+			if idx == -1:
+				err("No blank line after the signature.")
+				if line.find("-->") != -1:
+					already_collected = True
+					break
 			linepos += 1
 
 		# CUE LOOP
@@ -596,5 +606,6 @@ class WebVTTParser(object):
 			return 0
 		cues = sorted(cues, cmp=cue_sort)
 
-		result = {'cues':cues, 'errors':errors, 'time':time.time() - start_time}
+		result = {'cues':cues, 'errors':errors, 'time':time.time() - start_time }
+		result.update(meta)
 		return result
