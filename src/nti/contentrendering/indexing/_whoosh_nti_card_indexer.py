@@ -91,13 +91,35 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 		return indexname
 
 	def process_topic(self, idxspec, topic, writer, language='en'):
-		count = 0
+		result = {}
 		containerId = unicode(topic.ntiid)
 		for n in topic.dom(b'object'):
 			info = self._get_nticard_info(topic, n)
 			if info:
-				self.index_card_entry(writer, containerId, info)
-				count += 1
+				ntiid = info.get('ntiid')
+				if ntiid:
+					result[ntiid] = (info, containerId)
+		return result
+
+	def _index_cards(self, cards, writer, language='en'):
+		count = 0
+		for _, data in cards.items():
+			info, containerId = data
+			self.index_card_entry(writer, containerId, info, language)
+			count += 1
 		return count
+
+	def process_book(self, idxspec, writer, language='en'):
+		cards = {}
+		toc = idxspec.book.toc
+		def _loop(topic):
+			m = self.process_topic(idxspec, topic, writer, language)
+			cards.update(m)
+			for t in topic.childTopics:
+				_loop(t)
+		_loop(toc.root_topic)
+
+		result = self._index_cards(cards, writer, language)
+		return result
 
 _DefaultWhooshNTICardIndexer = _WhooshNTICardIndexer
