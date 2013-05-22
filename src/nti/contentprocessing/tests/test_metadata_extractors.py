@@ -31,7 +31,7 @@ from rdflib import Graph
 from io import BytesIO
 
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.contentfragments',) )
+setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.contentprocessing',) )
 tearDownModule = nti.tests.module_teardown
 
 def test_metadata_provides():
@@ -48,11 +48,17 @@ def test_rdflib_can_parse_file():
 
 	args = metadata_extractors._file_args( the_file )
 
-	result = metadata_extractors._HTMLExtractor()._extract_opengraph(metadata_extractors.ContentMetadata(), args )
 
-	assert_that( result, has_property( 'title', 'Adam Green: The Spectacular Thefts of Apollo Robbins, Pickpocket' ) )
-	assert_that( result, has_property( 'href', 'http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green' ) )
-	assert_that( result, has_property( 'image', 'http://www.newyorker.com/images/2013/01/07/g120/130107_r23011_g120_cropth.jpg') )
+	def _check(result):
+		assert_that( result, has_property( 'title', 'Adam Green: The Spectacular Thefts of Apollo Robbins, Pickpocket' ) )
+		assert_that( result, has_property( 'href', 'http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green' ) )
+		assert_that( result, has_property( 'image', 'http://www.newyorker.com/images/2013/01/07/g120/130107_r23011_g120_cropth.jpg') )
+
+	result = metadata_extractors._HTMLExtractor()._extract_opengraph(metadata_extractors.ContentMetadata(), args )
+	_check( result )
+
+	result = metadata_extractors.get_metadata_from_content_location( the_file )
+	_check( result )
 
 
 

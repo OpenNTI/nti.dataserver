@@ -123,8 +123,8 @@ def _http_scheme_handler( location ):
 	response = requests.get( location,
 							 headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.1+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2"},
 							 stream=True)
-	# TODO: Probably need to chop of charsets, etc
-	mime_type = component.getUtility( response.headers.get( 'content-type' ) )
+	# Get the content type, splitting off encoding, etc
+	mime_type = response.headers.get('content-type').split( ';', 1 )[0]
 
 	result, args = _get_metadata_from_mime_type( location, mime_type, lambda: _request_args( location, response ) )
 
@@ -171,50 +171,11 @@ def get_metadata_from_content_location( location ):
 @interface.implementer(interfaces.IContentMetadataExtractor)
 class _HTMLExtractor(object):
 
-	def __call__( self, args ):
-		dom = pyquery.PyQuery( url=args.__name__, opener=lambda url, **kwargs: args.text )
+	def extract_metadata( self, args ):
 		result = ContentMetadata()
 		# Extract metadata. Need to handle OpenGraph
 		# as well as twitter.
-		# Here is a poor version of OpenGraph handling;
-		# it is bade due to the hardcoded namespaces
-		# NOTE: This can be done with rdflib, as it has built-in
-		# RDFa handling (which OG is)
-		for meta in dom.find('meta'):
-			name = meta.get('property') or meta.get( 'name' )
-			val = meta.get('content')
-			if not name or not val:
-				continue
-			if name == 'og:title':
-				result.title = val
-			elif name == 'og:url':
-				result.href = val
-			elif name == 'og:image':
-				# Download and save the image?
-				# Right now we are downloading it for size purposes (which may not be
-				# needed) but we could choose to cache it locally
-				from plone.namedfile import NamedImage
-
-				response = requests.get( val )
-				filename = urlparse.urlparse( val ).path.split('/')[-1]
-				named_image = NamedImage( data=response.content, filename=filename )
-				width, height = named_image.getImageSize()
-				# Just enough to go with our template
-				class Image(object):
-					def __init__( self, image ):
-						self.image = image
-				class Dimen(object):
-					def __init__(self,px):
-						self.px = px
-				self.image = Image(named_image)
-				self.image.image.url = val
-				self.image.image.height = Dimen(height)
-				self.image.image.width = Dimen(width)
-
-			elif name in ('og:description', 'description'):
-				result.description = cfg_interfaces.IPlainTextContentFragment( val )
-
-		return result
+		return self._extract_opengraph( result, args )
 
 	def _extract_opengraph(self, result, args):
 		# The opengraph metadata is preferred if we can get
@@ -249,7 +210,7 @@ class _HTMLExtractor(object):
 @interface.implementer(interfaces.IContentMetadataExtractor)
 class _PDFExtractor(object):
 
-	def __call__( self, args ):
+	def extract_metadata( self, args ):
 		# pyPdf is a streaming parser. It only
 		# has to load the xref table from the end of the stream initially,
 		# and then objects are loaded on demand from the (seekable!)

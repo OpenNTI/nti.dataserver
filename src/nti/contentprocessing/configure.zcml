@@ -7,40 +7,50 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-		
+
 	<include package="nti.contentfragments" file="configure.zcml" />
 	<include package="." file="meta.zcml" />
-	
+
+	<utility name="text/html"
+			 factory=".metadata_extractors._HTMLExtractor" />
+	<utility name="application/pdf"
+			 factory=".metadata_extractors._PDFExtractor" />
+	<utility name="http"
+			 component=".metadata_extractors._http_scheme_handler" />
+	<utility name="https"
+			 component=".metadata_extractors._http_scheme_handler" />
+
 	<utility factory="._content_utils._default_content_translation_table" />
 	<utility factory="._content_utils._default_content_translation_table" name="en" />
-	
+
 	<utility factory="._content_utils._ContentTokenizer" />
 	<utility factory="._content_utils._ContentTokenizer" name="en" />
-	
+
 	<utility factory="._content_utils._LevenshteinWordSimilarity" />
 	<utility factory="._content_utils._LevenshteinWordSimilarity" name="en" />
-			
+
 	<utility factory="._content_utils._default_word_tokenizer_pattern" name="en" />
 	<utility factory="._content_utils._default_word_tokenizer_expression" name="en" />
-	
+
 	<utility factory="._content_utils._default_punctuation_char_pattern" />
 	<utility factory="._content_utils._default_punctuation_char_pattern" name="en" />
 	<utility factory="._content_utils._default_punctuation_char_pattern_plus" name="en" />
-	
+
 	<utility factory="._content_utils._default_punctuation_char_expression" />
 	<utility factory="._content_utils._default_punctuation_char_expression" name="en" />
 	<utility factory="._content_utils._default_punctuation_char_expression_plus" name="en" />
-	
+
 	<utility factory="._ngrams_utils._DefaultNgramComputer" />
 	<utility factory="._ngrams_utils._DefaultNgramComputer" name="en" />
-	
+
 	<include package=".stemmers" file="configure.zcml" />
 	<include package=".taggers" file="configure.zcml" />
 	<include package=".concepttagging" file="configure.zcml" />
 	<include package=".keyword" file="configure.zcml" />
-	
+
 	<alchemy:registerAlchemyAPIKey
 		alias="NTI-TEST"
-		value="afe98c5b8fb8586e930d1b2128386d40c136e6d3" />
-		
+		value="afe98c5b8fb8586e930d1b2128386d40c136e6d3"
+		zcml:condition="have devmode"/>
+
 </configure>
