@@ -40,7 +40,8 @@ class TestNTICardIndexer(ConfiguringTestBase):
 
 		idx = indexer.create_index(self.idxdir, indexname)
 		writer = idx.writer(optimize=False, merge=False)
-		count = indexer.process_topic(None, node, writer)
+		cards = indexer.process_topic(None, node, writer)
+		count = indexer._index_cards(cards, writer)
 		writer.commit(optimize=False, merge=False)
 		return idx, count
 
