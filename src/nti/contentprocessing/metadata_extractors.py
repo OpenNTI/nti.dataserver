@@ -26,6 +26,11 @@ import pyquery
 import requests
 import string
 import urlparse
+import tempfile
+import os
+import shutil
+import rdflib
+import rdflib.parser
 
 from nti.utils.schema import createDirectFieldProperties
 from nti.utils.schema import PermissiveSchemaConfigured
@@ -34,7 +39,7 @@ from nti.utils.schema import PermissiveSchemaConfigured
 class ContentMetadata(PermissiveSchemaConfigured):
 	"Default implementation of :class:`.IContentMetadata`"
 
-	createDirectFieldProperties( interfaces.IContentMetadata )
+	createDirectFieldProperties( interfaces.IContentMetadata, adapting=True )
 
 
 class _request_args(object):
@@ -45,22 +50,24 @@ class _request_args(object):
 		self.download_path = None
 
 	def stream(self):
-		return response.raw
+		return self.response.raw
 
 	@Lazy
 	def bidirectionalstream(self):
 		fd, pdf_path = tempfile.mkstemp( '.metadata', 'download' )
 		self.download_path = pdf_path
 		pdf_file = os.fdopen( fd, 'wb' )
-		shutil.copyfileobj( response.raw, pdf_file )
+		shutil.copyfileobj( self.response.raw, pdf_file )
 		pdf_file.close()
 		return open(pdf_file, 'rb')
 
+	@property
 	def text(self):
-		return response.text
+		return self.response.text
 
+	@property
 	def bytes(self):
-		return response.content
+		return self.response.content
 
 class _file_args(object):
 
@@ -206,6 +213,35 @@ class _HTMLExtractor(object):
 
 			elif name in ('og:description', 'description'):
 				result.description = cfg_interfaces.IPlainTextContentFragment( val )
+
+		return result
+
+	def _extract_opengraph(self, result, args):
+		# The opengraph metadata is preferred if we can get
+		# it. It may have one of two different
+		# namespaces, depending on the data:
+		# http://opengraphprotocol.org/schema/
+		# http://ogp.me/ns#
+		graph = rdflib.Graph()
+		# The arguments to parse are quite sensitive.
+		# If we are not careful, it can wind up trying
+		# to re-open the URL and using
+		# the wrong data or content type. Thus,
+		# we do not provide the location argument,
+		# and we do force the media type.
+		graph.parse( source=args.stream, format='rdfa', publicID=args.__name__, media_type='text/html' )
+
+		for ns in 'http://ogp.me/ns#', 'http://opengraphprotocol.org/schema/':
+			ns = rdflib.Namespace(ns)
+
+			for ns_name, attr_name in (('title', 'title'), ('url', 'href'), ('image', 'image'), ('description', 'description')):
+				# Don't overwrite
+				if getattr( result, attr_name, None ):
+					continue
+
+				triples = graph.triples( (None, getattr(ns, ns_name), None) )
+				for _, _, val in triples:
+					setattr( result, attr_name, val.toPython() )
 
 		return result
 

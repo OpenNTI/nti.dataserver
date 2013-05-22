@@ -720,12 +720,15 @@ def before_object_assigned_event_dispatcher(event):
 
 	handle( event.object, event.context, event )
 
-def createDirectFieldProperties(__schema, omit=()):
+def createDirectFieldProperties(__schema, omit=(), adapting=False):
 	"""
 	Like :func:`zope.schema.fieldproperty.createFieldProperties`, except
 	only creates properties for fields directly contained within the
 	given schema; inherited fields from parent interfaces are assummed
 	to be implemented in a base class of the current class.
+
+	:keyword adapting: If set to ``True`` (not the default), fields
+		that implement :class:`.IObject` will use an :class:`AdaptingFieldProperty`.
 	"""
 
 	__my_names = set(__schema.names())
@@ -744,6 +747,8 @@ def createDirectFieldProperties(__schema, omit=()):
 	__frame = sys._getframe(1)
 	for k, v in locals().items():
 		if k not in __before:
+			if adapting and sch_interfaces.IObject.providedBy( __schema[k] ):
+				v = AdaptingFieldProperty( __schema[k] )
 			__frame.f_locals[k] = v
 
 from zope.schema.vocabulary import SimpleTerm as _SimpleTerm
