@@ -233,8 +233,7 @@ class _WhooshNTICardSearchHit(_BaseSearchHit):
 
 	@classmethod
 	def get_oid(cls, hit):
-		tpl = (hit.containerId, '-', hit.ntiid, '-', hit.target_ntiid)
-		return unicode(''.join(tpl))
+		return unicode(hit.ntiid)
 
 def get_search_hit(obj, score=1.0, query=None):
 	hit = search_interfaces.ISearchHit(obj, None) or _SearchHit(obj)
