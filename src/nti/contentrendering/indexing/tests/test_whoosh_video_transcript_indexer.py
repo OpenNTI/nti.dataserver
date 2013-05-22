@@ -40,7 +40,8 @@ class TestWhooshVideoTranscriptIndexer(ConfiguringTestBase):
 
 		idx = indexer.create_index(self.idxdir, indexname)
 		writer = idx.writer(optimize=False, merge=False)
-		count = indexer.process_topic(None, node, writer)
+		videos, containerId = indexer.process_topic(None, node, writer)
+		count = indexer._parse_and_index_videos(videos, containerId, writer)
 		writer.commit(optimize=False, merge=False)
 		return idx, count
 
