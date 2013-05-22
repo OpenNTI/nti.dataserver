@@ -64,7 +64,7 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 				jar.add( self )
 				oid = self._p_oid
 			except Exception as e:
-				pass
+				return default
 		else:
 			return default
 

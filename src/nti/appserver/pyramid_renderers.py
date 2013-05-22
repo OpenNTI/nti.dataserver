@@ -29,6 +29,7 @@ from nti.dataserver.mimetype import (MIME_BASE_JSON,
 
 from nti.dataserver import traversal as nti_traversal
 from nti.dataserver.links import Link
+from nti.dataserver import flagging
 from nti.dataserver.links_external import render_link
 
 import nti.appserver.interfaces as app_interfaces
@@ -234,7 +235,7 @@ def default_cache_controller( data, system ):
 	# We provide non-semantic ETag support based on the current rendering.
 	# This lets us work with user-specific things like edit links and user
 	# online status, but it is not the most efficient way to do things.
-	# It does let is support 'If-None-Match', but it does not let us support
+	# It does let us support 'If-None-Match', but it does not let us support
 	# If-Match, unfortunately.
 
 	if not response.etag:
@@ -359,6 +360,8 @@ class _AbstractReliableLastModifiedCacheController(object):
 	for pre-rendering etag support.
 	"""
 
+	remote_user = None
+
 	def __init__( self, context, request=None ):
 		self.context = context
 		self.request = request
@@ -376,10 +379,11 @@ class _AbstractReliableLastModifiedCacheController(object):
 	def __call__( self, context, system ):
 		request = system['request']
 		self.request = request
+		self.remote_user = _get_remote_username( request )
 		response = request.response
 		last_modified = self._context_lastModified
 		response.last_modified = last_modified
-		response.etag = _md5_etag( bytes(last_modified), _get_remote_username( request ), *self._context_specific )
+		response.etag = _md5_etag( bytes(last_modified), self.remote_user, *self._context_specific )
 		response.cache_control.max_age = self.max_age # arbitrary
 		# Let this raise the not-modified if it will
 		return default_cache_controller( context, system )
@@ -447,10 +451,35 @@ class _ModeledContentCacheController(_AbstractReliableLastModifiedCacheControlle
 
 	@property
 	def _context_specific(self):
+		# We take into account the creator of the object and its local ID.
+		# We also take into account the flagging status of the object,
+		# since flagging does not change the modification time.
+		flagged = False
+		if self.remote_user:
+			try:
+				flagged = flagging.flags_object( self.context, self.remote_user )
+			except LookupError: # Usually ComponentLookupError, in tests
+				flagged = None
+
 		try:
-			return self.context.creator.username, self.context.__name__
+			return self.context.creator.username, self.context.__name__, str(flagged)
 		except AttributeError:
-			return self.context.__name__,
+			return self.context.__name__, str(flagged)
+
+@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@component.adapter(nti_interfaces.ITranscript)
+class _TranscriptCacheController(_ModeledContentCacheController):
+	"""
+	Takes into account the individual flagging status of each message, since
+	last modified times are not updated by flagging.
+	"""
+
+	@property
+	def _context_specific(self):
+		flags = ()
+		if self.remote_user:
+			flags = tuple( [flagging.flags_object( m, self.remote_user ) for m in self.context.Messages] )
+		return super(_TranscriptCacheController,self)._context_specific + flags
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)
 @component.adapter(app_interfaces.IUGDExternalCollection)
