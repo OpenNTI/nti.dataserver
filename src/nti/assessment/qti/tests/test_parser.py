@@ -17,7 +17,7 @@ from hamcrest import (assert_that, is_, is_not, instance_of, has_length, none)
 
 class TestParser(ConfiguringTestBase):
 
-	def test_parse_choice(self):
+	def xtest_parse_choice(self):
 		path = os.path.join(os.path.dirname(__file__), 'choice.xml')
 		with open(path, "r") as f:
 			qti = parser.parser(f)
@@ -47,6 +47,41 @@ class TestParser(ConfiguringTestBase):
 		ib = qti.itemBody
 		assert_that(ib, has_length(3))
 		assert_that(ib.blocks, has_length(3))
+
+	def test_parse_match(self):
+		path = os.path.join(os.path.dirname(__file__), 'match.xml')
+		with open(path, "r") as f:
+			qti = parser.parser(f)
+
+		assert_that(qti, is_not(none()))
+		assert_that(qti, instance_of(AssessmentItem))
+		assert_that(qti.identifier, is_('match'))
+		assert_that(qti.adaptive, is_(False))
+		assert_that(qti.timeDependent, is_(True))
+		assert_that(qti.title, is_('Characters and Plays'))
+		assert_that(qti.responseDeclaration, has_length(1))
+		assert_that(qti.outcomeDeclaration, has_length(1))
+		assert_that(qti.itemBody, is_not(none()))
+
+		rd = qti.responseDeclaration[0]
+		assert_that(rd.identifier, is_("RESPONSE"))
+		assert_that(rd.cardinality, is_("multiple"))
+		assert_that(rd.baseType, is_('directedPair'))
+		assert_that(rd.correctResponse, is_not(none()))
+		assert_that(rd.correctResponse, has_length(4))
+		assert_that(rd.mapping, is_not(none()))
+		assert_that(rd.mapping.defaultValue, is_(0.0))
+		assert_that(rd.mapping, has_length(4))
+
+		od = qti.outcomeDeclaration[0]
+		assert_that(od.identifier, is_("SCORE"))
+		assert_that(od.cardinality, is_("single"))
+		assert_that(od.baseType, is_("float"))
+
+		ib = qti.itemBody
+		assert_that(ib, has_length(1))
+		assert_that(ib.blocks, has_length(1))
+
 
 
 

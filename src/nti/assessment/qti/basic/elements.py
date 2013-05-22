@@ -23,8 +23,6 @@ from zope.annotation import interfaces as an_interfaces
 from zope.interface.common.sequence import IFiniteSequence
 
 from persistent import Persistent
-from persistent.list import PersistentList
-from persistent.interfaces import IPersistent
 
 from ..schema import IQTIAttribute
 from .. import interfaces as qti_interfaces
@@ -183,15 +181,12 @@ def qti_creator(cls):
 	implemented = getattr(cls, '__implemented__', None)
 	implemented = implemented.flattened() if implemented else ()
 
-	is_persitent = False
 	is_finite_sequence = False
 
 	attributes = {}
 	definitions = {}
 
 	for base in implemented:
-		if issubclass(base, IPersistent):
-			is_persitent = True
 		if issubclass(base, IFiniteSequence):
 			is_finite_sequence = True
 		if issubclass(base, qti_interfaces.IQTIElement) or issubclass(base, attr_interfaces.IAttrGroup):
@@ -210,7 +205,7 @@ def qti_creator(cls):
 	setattr(cls, '_v_attributes', attributes)
 
 	# factories
-	list_factory = PersistentList if is_persitent else list
+	list_factory = list
 
 	# fields
 	for k, v in definitions.items():
