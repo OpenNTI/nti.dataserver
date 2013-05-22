@@ -114,7 +114,7 @@ class IContentMetadataExtractor(interface.Interface):
 	they handle.
 	"""
 
-	def __call__( args ):
+	def extract_metadata( args ):
 		"""
 		Called with an :class:`IContentMetadataExtractorArgs`.
 
