@@ -41,8 +41,16 @@ class ContentMetadata(PermissiveSchemaConfigured):
 
 	createDirectFieldProperties( interfaces.IContentMetadata, adapting=True )
 
+class _abstract_args(object):
 
-class _request_args(object):
+	__name__ = None
+	text = None
+
+	@Lazy
+	def pyquery_dom(self):
+		return pyquery.PyQuery( url=self.__name__, opener=lambda url, **kwargs: self.text )
+
+class _request_args(_abstract_args):
 
 	def __init__( self, url, response ):
 		self.response = response
@@ -69,7 +77,7 @@ class _request_args(object):
 	def bytes(self):
 		return self.response.content
 
-class _file_args(object):
+class _file_args(_abstract_args):
 
 	def __init__( self, path ):
 		self.path = path
@@ -190,19 +198,46 @@ class _HTMLExtractor(object):
 		# the wrong data or content type. Thus,
 		# we do not provide the location argument,
 		# and we do force the media type.
-		graph.parse( source=args.stream, format='rdfa', publicID=args.__name__, media_type='text/html' )
+		graph.parse( data=args.text, format='rdfa', publicID=args.__name__, media_type='text/html' )
 
-		for ns in 'http://ogp.me/ns#', 'http://opengraphprotocol.org/schema/':
-			ns = rdflib.Namespace(ns)
+		nss = (rdflib.Namespace('http://ogp.me/ns#'), rdflib.Namespace('http://opengraphprotocol.org/schema/'))
 
-			for ns_name, attr_name in (('title', 'title'), ('url', 'href'), ('image', 'image'), ('description', 'description')):
-				# Don't overwrite
-				if getattr( result, attr_name, None ):
-					continue
+		for ns_name, attr_name in (('title', 'title'), ('url', 'href'), ('image', 'image'), ('description', 'description')):
+			# Don't overwrite
+			if getattr( result, attr_name, None ):
+				continue
 
-				triples = graph.triples( (None, getattr(ns, ns_name), None) )
-				for _, _, val in triples:
-					setattr( result, attr_name, val.toPython() )
+			triples = graph.triples_choices( (None, [getattr(x, ns_name) for x in nss], None) )
+			for _, _, val in triples:
+				setattr( result, attr_name, val.toPython() )
+
+		return result
+
+
+	def _extract_twitter(self, result, args):
+		# Get the twitter card metadata. Stupid twitter cards
+		# are "similar to OpenGraph", except that they are not
+		# valid RDFa for no apparent reason, so they don't actually
+		# have a namespace, just a prefix. idiots. Fortunately,
+		# twitter will parse OG if present, which it usually seems to
+		# be. Thus the stupid twitter metadata is only a fallback.
+
+		# { meta: attr }
+		prop_names = { 'twitter:description': 'description',
+					   'twitter:image': 'image',
+					   'twitter:title': 'title',
+					   'twitter:url': 'href'}
+
+		dom = args.pyquery_dom
+		for meta in dom.find('meta'):
+			name = meta.get('name')
+			val = meta.get('content')
+
+			if name and val and name in prop_names:
+				attr_name = prop_names[name]
+				if not getattr( result, attr_name, None ):
+					val = unicode(val)
+					setattr( result, attr_name, val )
 
 		return result
 
