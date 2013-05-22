@@ -39,23 +39,6 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		result = [x for x, _ in utils]
 		return result
 
-	def _parse_externalvideo_node(self, node):
-		result = None
-		for obj in node.iterchildren():
-			if obj.tag != 'object': continue
-			type_ = node_utils.get_attribute(obj, 'type')
-			itemprop = node_utils.get_attribute(obj, 'itemprop')
-			if itemprop == 'nti-slide-video' and type_ == 'application/vnd.nextthought.slidevideo':
-				result = {}
-				for p in obj.iterchildren():
-					if p.tag != 'param': continue
-					name = node_utils.get_attribute(p, 'name')
-					value = node_utils.get_attribute(p, 'value')
-					if name and value:
-						result[name] = value
-				break
-		return result
-
 	def _find_video_transcript(self, base_location, bases, parser_names):
 		for location in ('.', '../Transcripts', './Transcripts'):
 			path = os.path.join(base_location, location)
@@ -81,18 +64,16 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 				if name and value:
 					result[name] = value
 
-			video_id = result.get('id')
-			video_type = result.get('type')
 			video_ntiid = result.get('ntiid')
-			parser_names = self._get_video_transcript_parser_names()
 			content_path = os.path.dirname(topic.location)
+			parser_names = self._get_video_transcript_parser_names()
 
 			# collect video-base names
 			bases = {video_ntiid}
-			if video_type == 'youtube':
-				bases.add(video_id)
+			if result.get('type') == 'youtube':
+				bases.add(result.get('id'))
 			bases.discard(None)
-			
+
 			vid_tupl = self._find_video_transcript(content_path, bases, parser_names)
 			if vid_tupl:
 				parser_name, video_path = vid_tupl
