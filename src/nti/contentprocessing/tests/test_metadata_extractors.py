@@ -20,7 +20,8 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import contains
-from hamcrest import has_property
+from hamcrest import contains_inanyorder
+from hamcrest import has_property, has_properties
 
 import nti.tests
 from nti.tests import validly_provides
@@ -96,6 +97,9 @@ def test_opengraph_extraction():
 	<meta property="og:url" content="http://www.imdb.com/title/tt0117500/" />
 	<meta property="og:image" content="http://ia.media-imdb.com/images/rock.jpg" />
 
+	<meta property="og:image:width" content="300" />
+	<meta property="og:image:height" content="400" />
+
 	</head>
 
 	</html>"""
@@ -118,18 +122,52 @@ def test_opengraph_extraction():
 
 		assert_that( result, has_property( 'title', 'The Rock' ) )
 		assert_that( result, has_property( 'href', 'http://www.imdb.com/title/tt0117500/' ) )
-		assert_that( result, has_property( 'images', contains( has_property( 'url', 'http://ia.media-imdb.com/images/rock.jpg' ) ) ) )
+		# For one image, we can preserve the width and height, if given
+		assert_that( result, has_property( 'images', contains( has_properties(
+			'url', 'http://ia.media-imdb.com/images/rock.jpg',
+			'width', 300,
+			'height', 400 ) ) ) )
 		assert_that( result, validly_provides( interfaces.IContentMetadata ) )
 
 def test_opengraph_extraction_multiple_images():
 	template = """
-<meta property="og:image" content="http://example.com/rock.jpg" />
-<meta property="og:image:width" content="300" />
-<meta property="og:image:height" content="300" />
-<meta property="og:image" content="http://example.com/rock2.jpg" />
-<meta property="og:image" content="http://example.com/rock3.jpg" />
-<meta property="og:image:height" content="1000" />
-"""
+	<html %s>
+	<head>
+	<title>The Rock (1996)</title>
+	<meta property="og:title" content="The Rock" />
+	<meta property="og:type" content="video.movie" />
+	<meta property="og:url" content="http://www.imdb.com/title/tt0117500/" />
+
+	<meta property="og:image" content="http://example.com/rock.jpg" />
+	<meta property="og:image:width" content="300" />
+	<meta property="og:image:height" content="300" />
+	<meta property="og:image" content="http://example.com/rock2.jpg" />
+	<meta property="og:image" content="http://example.com/rock3.jpg" />
+	<meta property="og:image:height" content="1000" />
+	<meta property="og:image:width" content="1000" />
+	"""
+
+	class _args(object):
+		__name__ = None
+		text = None
+
+	for prefix in '', 'prefix="og: http://ogp.me/ns#"', 'xmlns:og="http://opengraphprotocol.org/schema/"':
+		html = template % prefix
+		__traceback_info__ = html
+		args = _args()
+		args.__name__ = 'http://example.com'
+		args.text = html
+
+		result = metadata_extractors._HTMLExtractor()._extract_opengraph(metadata_extractors.ContentMetadata(), args )
+
+		assert_that( result, has_property( 'title', 'The Rock' ) )
+		assert_that( result, has_property( 'href', 'http://www.imdb.com/title/tt0117500/' ) )
+		# Sadly, order is not preserved
+		assert_that( result, has_property( 'images', contains_inanyorder( has_property( 'url', 'http://example.com/rock.jpg' ),
+																		  has_property( 'url', 'http://example.com/rock2.jpg' ),
+																		  has_property( 'url', 'http://example.com/rock3.jpg' ) ) ) )
+
+
 
 @fudge.patch('requests.get')
 def test_extraction_remote_pdf(fake_get=None):
