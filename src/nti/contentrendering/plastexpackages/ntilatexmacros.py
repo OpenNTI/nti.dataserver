@@ -362,118 +362,58 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 
 	_href_override = None
 
-	# NOTE: Eventually all this auto-population
-	# and thumbnailing stuff will move to more appropriate places;
-	# its here now for convenience during heavy development
 
 	def _pdf_to_thumbnail(self, pdf_path, page=1, height=792, width=612):
 		from nti.contentrendering.contentthumbnails import _create_thumbnail_of_pdf
 		return _create_thumbnail_of_pdf( pdf_path, page=page, height=height, width=width )
 
-	def _pdf_populate(self, pdf_path):
-		import pyPdf
-		# pyPdf is a streaming parser. It only
-		# has to load the xref table from the end of the stream initially,
-		# and then objects are loaded on demand from the (seekable!)
-		# stream. Thus, even for very large PDFs, it uses
-		# minimal memory.
-		pdf = pyPdf.PdfFileReader( open( pdf_path, 'rb' ) )
-		info = pdf.getDocumentInfo() # TODO: Also check the xmpMetadata?
-		# This dict is weird: [] and get() return different things,
-		# with [] returning the strings we want
-		if '/Title' in info and info['/Title']:
-			self.title = info['/Title']
-		if '/Author' in info and info['/Author']:
-			self.creator = info['/Author']
-		if '/Subject' in info and info['/Subject']:
-			self.description = info['/Subject']
 
-		thumb_file = self._pdf_to_thumbnail(pdf_path)
-		include = includegraphics()
-		include.attributes['file'] = thumb_file
-		include.argSource = r'[width=93pt,height=120pt]{%s}' % thumb_file
-		include.style['width'] = "93px"
-		include.style['height'] = "120px"
-		self.appendChild( include )
+	def _auto_populate(self):
+		from nti.contentprocessing.metadata_extractors import get_metadata_from_content_location
+		metadata = get_metadata_from_content_location( self._href_override or self.href )
+		if metadata is not None:
+			self.title = metadata.title or self.title
+			self.description = metadata.description or self.description
+			self.href = metadata.contentLocation or self.href
+			self.creator = metadata.creator or self.creator
 
-	def _dom_populate( self, dom ):
-		if dom is None:
-			return
+			# Just enough to go with our template
+			class Image(object):
+				def __init__( self, image ):
+					self.image = image
+			class Dimen(object):
+				def __init__(self,px):
+					self.px = px
 
-		# Extract metadata. Need to handle OpenGraph
-		# as well as twitter.
-		# Here is a poor version of OpenGraph handling;
-		# it is bade due to the hardcoded namespaces
-		# NOTE: This can be done with rdflib, as it has built-in
-		# RDFa handling (which OG is)
-		for meta in dom.find('meta'):
-			name = meta.get('property') or meta.get( 'name' )
-			val = meta.get('content')
-			if not name or not val:
-				continue
-			if name == 'og:title':
-				self.title = val
-			elif name == 'og:url':
-				self.href = val
-			elif name == 'og:image':
+			if metadata.mimeType == 'application/pdf':
+				# Generate and use the real thing
+				thumb_file = self._pdf_to_thumbnail( metadata.sourcePath )
+				include = includegraphics()
+				include.attributes['file'] = thumb_file
+				include.argSource = r'[width=93pt,height=120pt]{%s}' % thumb_file
+				include.style['width'] = "93px"
+				include.style['height'] = "120px"
+				self.appendChild( include )
+			elif metadata.images and (metadata.images[0].width and metadata.images[0].height):
+				# Yay, got the real size already
+				self.image = Image( metadata.images[0] )
+			elif metadata.images:
 				# Download and save the image?
 				# Right now we are downloading it for size purposes (which may not be
 				# needed) but we could choose to cache it locally
 				import requests
 				from plone.namedfile import NamedImage
 				import urlparse
-
+				val = metadata.images[0].url
 				response = requests.get( val )
 				filename = urlparse.urlparse( val ).path.split('/')[-1]
 				named_image = NamedImage( data=response.content, filename=filename )
 				width, height = named_image.getImageSize()
-				# Just enough to go with our template
-				class Image(object):
-					def __init__( self, image ):
-						self.image = image
-				class Dimen(object):
-					def __init__(self,px):
-						self.px = px
+
 				self.image = Image(named_image)
 				self.image.image.url = val
 				self.image.image.height = Dimen(height)
 				self.image.image.width = Dimen(width)
-
-			elif name in ('og:description', 'description'):
-				self.description = cfg_interfaces.IPlainTextContentFragment( val )
-
-	def _auto_populate(self):
-		import pyquery
-		if self._href_override:
-			if self._href_override.endswith( '.pdf' ):
-				self._pdf_populate(self.href)
-			elif self._href_override.endswith( '.html' ):
-				self._dom_populate( pyquery.PyQuery( filename=self._href_override ) )
-			return
-
-		import requests
-		# Must use requests, not the url= argument, as
-		# the default Python User-Agent is blocked (note: pyquery 1.2.4 starts using requests internally by default)
-		# The custom user-agent string is to trick Google into sending UTF-8.
-		response = requests.get( self.href,
-								 headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.1+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2"},
-								 stream=True)
-		if 'html' in response.headers.get( 'content-type', '' ):
-			dom = pyquery.PyQuery( url=self.href, opener=lambda url, **kwargs: response.text )
-			self._dom_populate( dom )
-		elif 'pdf' in response.headers.get( 'content-type', '' ):
-			import tempfile
-			import os
-			import shutil
-			# The PDF file might be large, so we stream
-			# it to download. Our PDF parser then only
-			# reads in what it needs to, so memory usage
-			# is minimal---but it must have a bidirectional seekable stream
-			fd, pdf_path = tempfile.mkstemp( '.pdf', 'download' )
-			pdf_file = os.fdopen( fd, 'wb' )
-			shutil.copyfileobj( response.raw, pdf_file )
-			pdf_file.close()
-			self._pdf_populate( pdf_path )
 
 
 	def invoke( self, tex ):
