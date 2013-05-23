@@ -36,6 +36,12 @@ import urlparse
 from nti.utils.schema import createDirectFieldProperties
 from nti.utils.schema import PermissiveSchemaConfigured
 
+@interface.implementer(interfaces.IImageMetadata)
+class ImageMetadata(PermissiveSchemaConfigured):
+	"Default implementation of :class:`.IImageMetadata`"
+
+	createDirectFieldProperties( interfaces.IImageMetadata )
+
 @interface.implementer(interfaces.IContentMetadata)
 class ContentMetadata(PermissiveSchemaConfigured):
 	"Default implementation of :class:`.IContentMetadata`"
@@ -213,8 +219,14 @@ class _HTMLExtractor(object):
 
 			triples = graph.triples_choices( (None, [getattr(x, ns_name) for x in nss], None) )
 			for _, _, val in triples:
-				setattr( result, attr_name, val.toPython() )
-				break
+				if ns_name == 'image':
+					if not result.images:
+						result.images = []
+					image = ImageMetadata( url=val.toPython() )
+					result.images.append( image )
+				else:
+					setattr( result, attr_name, val.toPython() )
+					break
 
 		return result
 
@@ -229,7 +241,6 @@ class _HTMLExtractor(object):
 
 		# { meta: attr }
 		prop_names = { 'twitter:description': 'description',
-					   'twitter:image': 'image',
 					   'twitter:title': 'title',
 					   'twitter:url': 'href'}
 
@@ -238,12 +249,16 @@ class _HTMLExtractor(object):
 			name = meta.get('name')
 			val = meta.get('content')
 
-			if name and val and name in prop_names:
-				attr_name = prop_names[name]
-				if not getattr( result, attr_name, None ):
-					val = six.text_type(val)
-					setattr( result, attr_name, val )
-
+			if name and val:
+				val = six.text_type(val)
+				if name in prop_names:
+					attr_name = prop_names[name]
+					if not getattr( result, attr_name, None ):
+						setattr( result, attr_name, val )
+				elif name == 'twitter:image':
+					if not result.images:
+						result.images = []
+					result.images.append( ImageMetadata( url=val ) )
 		return result
 
 
