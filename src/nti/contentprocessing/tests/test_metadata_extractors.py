@@ -19,6 +19,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
+from hamcrest import contains
 from hamcrest import has_property
 
 import nti.tests
@@ -55,7 +56,8 @@ def test_opengraph_extraction_from_file():
 	def _check(result):
 		assert_that( result, has_property( 'title', 'Adam Green: The Spectacular Thefts of Apollo Robbins, Pickpocket' ) )
 		assert_that( result, has_property( 'href', 'http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green' ) )
-		assert_that( result, has_property( 'image', 'http://www.newyorker.com/images/2013/01/07/g120/130107_r23011_g120_cropth.jpg') )
+		assert_that( result, has_property( 'images', contains( has_property( 'url', 'http://www.newyorker.com/images/2013/01/07/g120/130107_r23011_g120_cropth.jpg') ) ) )
+		assert_that( result, validly_provides( interfaces.IContentMetadata ) )
 
 	result = metadata_extractors._HTMLExtractor()._extract_opengraph(metadata_extractors.ContentMetadata(), args )
 	_check( result )
@@ -77,7 +79,8 @@ def test_twitter_extraction_from_file():
 	def _check(result):
 		assert_that( result, has_property( 'title', 'Exercise Class, Obedience Not Required' ) )
 		assert_that( result, has_property( 'href', 'http://www.nytimes.com/2013/05/17/health/exercise-class-obedience-not-required.html' ) )
-		assert_that( result, has_property( 'image', 'http://graphics8.nytimes.com/images/2013/05/17/arts/17URBAN_SPAN/17URBAN_SPAN-thumbLarge-v2.jpg' ) )
+		assert_that( result, has_property( 'images', contains( has_property( 'url', 'http://graphics8.nytimes.com/images/2013/05/17/arts/17URBAN_SPAN/17URBAN_SPAN-thumbLarge-v2.jpg' ) ) ) )
+		assert_that( result, validly_provides( interfaces.IContentMetadata ) )
 
 	result = metadata_extractors._HTMLExtractor()._extract_twitter(metadata_extractors.ContentMetadata(), args )
 	_check( result )
@@ -115,7 +118,8 @@ def test_opengraph_extraction():
 
 		assert_that( result, has_property( 'title', 'The Rock' ) )
 		assert_that( result, has_property( 'href', 'http://www.imdb.com/title/tt0117500/' ) )
-		assert_that( result, has_property( 'image', 'http://ia.media-imdb.com/images/rock.jpg' ) )
+		assert_that( result, has_property( 'images', contains( has_property( 'url', 'http://ia.media-imdb.com/images/rock.jpg' ) ) ) )
+		assert_that( result, validly_provides( interfaces.IContentMetadata ) )
 
 def test_opengraph_extraction_multiple_images():
 	template = """

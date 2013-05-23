@@ -10,6 +10,10 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import interface
 
+from nti.utils.schema import Number
+from nti.utils.schema import Object
+from nti.utils.schema import ListOrTuple
+
 class IContentTranslationTable(interface.Interface):
 	"""marker interface for content translationt table"""
 
@@ -64,6 +68,18 @@ class IAlchemyAPIKey(interface.Interface):
 from nti.contentfragments import schema as frg_schema
 from zope.mimetype.interfaces import mimeTypeConstraint
 
+class IImageMetadata(interface.Interface):
+	"""
+	Holds information about a particular image.
+	"""
+
+	url = schema.TextLine( title="The URL to resolve the image" )
+
+	width = Number( title="The width in pixels of the image",
+					required=False )
+	height = Number( title="The height in pixels of the image",
+					 required=False )
+
 class IContentMetadata(interface.Interface):
 	"""
 	Metadata extracted from existing content.
@@ -81,6 +97,11 @@ class IContentMetadata(interface.Interface):
 									   description="Possibly one or more names or even an organization.",
 									   required=False,
 									   default='' )
+
+	images = ListOrTuple( Object(IImageMetadata),
+						  title="Any images associated with this content, typically thumbnails",
+						  default=())
+
 	mimeType = schema.TextLine(
 		title="The Mime Type of the content",
 		constraint=mimeTypeConstraint,
