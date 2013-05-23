@@ -104,7 +104,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 	def index_transcript_entry(self, writer, containerId, video_id, entry, language=u'en'):
 		content = entry.transcript
 		if not content:
-			return
+			return False
 
 		try:
 			table = get_content_translation_table(language)
@@ -117,6 +117,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 								last_modified=last_modified,
 								end_timestamp=videotimestamp_to_datetime(entry.end_timestamp),
 								start_timestamp=videotimestamp_to_datetime(entry.start_timestamp))
+			return True
 		except Exception:
 			writer.cancel()
 			raise
@@ -155,8 +156,8 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 			video_ntiid = unicode(video_ntiid)
 			for e in transcript:
-				self.index_transcript_entry(writer, containerId, video_ntiid, e, language)
-				count += 1
+				if self.index_transcript_entry(writer, containerId, video_ntiid, e, language):
+					count += 1
 		return count
 
 	def process_book(self, idxspec, writer, language='en'):
