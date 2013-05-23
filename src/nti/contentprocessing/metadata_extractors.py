@@ -17,6 +17,7 @@ from zope import interface
 from zope import component
 
 from zope.mimetype import interfaces as mime_interfaces
+from zope.location import interfaces as loc_interfaces
 from . import interfaces
 
 from zope.cachedescriptors.property import Lazy
@@ -36,15 +37,21 @@ import urlparse
 from nti.utils.schema import createDirectFieldProperties
 from nti.utils.schema import PermissiveSchemaConfigured
 
-@interface.implementer(interfaces.IImageMetadata)
+@interface.implementer(interfaces.IImageMetadata, loc_interfaces.IContained)
 class ImageMetadata(PermissiveSchemaConfigured):
 	"Default implementation of :class:`.IImageMetadata`"
 
+	__name__ = None
+	__parent__ = None
+
 	createDirectFieldProperties( interfaces.IImageMetadata )
 
-@interface.implementer(interfaces.IContentMetadata)
+@interface.implementer(interfaces.IContentMetadata, loc_interfaces.IContained)
 class ContentMetadata(PermissiveSchemaConfigured):
 	"Default implementation of :class:`.IContentMetadata`"
+
+	__name__ = None
+	__parent__ = None
 
 	createDirectFieldProperties( interfaces.IContentMetadata, adapting=True )
 
@@ -222,6 +229,8 @@ class _HTMLExtractor(object):
 					if not result.images:
 						result.images = []
 					image = ImageMetadata( url=val.toPython() )
+					image.__parent__ = result
+					image.__name__ = image.url
 					# FIXME: If there are multiple image elements,
 					# their relative order is not retained. This means
 					# that if they provide height and width values,
@@ -267,7 +276,10 @@ class _HTMLExtractor(object):
 				elif name == 'twitter:image':
 					if not result.images:
 						result.images = []
-					result.images.append( ImageMetadata( url=val ) )
+					image = ImageMetadata( url=val )
+					image.__name__ = image.url
+					image.__parent__ = result
+					result.images.append( image )
 		return result
 
 

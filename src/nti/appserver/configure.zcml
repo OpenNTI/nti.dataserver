@@ -327,6 +327,7 @@
 	<include package="nti.socketio" />
 	<include package="nti.assessment" />
 	<include package="nti.contentfragments" />
+	<include package="nti.contentprocessing" />
 
 	<!-- UI Rendering -->
 	<include package="." file="configure_tables.zcml" />
@@ -389,6 +390,11 @@
 	<!-- Content card resolution; temporary? -->
 	<utility factory=".content_card_views._ContentCardResolver" name="NTICard" />
 	<utility factory=".content_card_views._ContentCardResolver" name="nticard" />
+
+	<!-- Resolving metadata, used in the implementation of links -->
+	<adapter factory=".metadata_resolvers.ContentMetadataFromContentUnit" />
+	<utility name="tag"
+			 factory=".metadata_resolvers.TagURLHandler" />
 
 
 	<utility zcml:condition="have testmode"
