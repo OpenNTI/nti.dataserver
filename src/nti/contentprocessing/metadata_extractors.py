@@ -199,8 +199,13 @@ class _HTMLExtractor(object):
 	def extract_metadata( self, args ):
 		result = ContentMetadata()
 		# Extract metadata. Need to handle OpenGraph
-		# as well as twitter.
-		return self._extract_opengraph( result, args )
+		# as well as twitter, with a final fallback to some
+		# page attributes
+		result = self._extract_opengraph( result, args )
+		result = self._extract_twitter( result, args )
+		result = self._extract_page( result, args )
+		return result
+
 
 	def _extract_opengraph(self, result, args):
 		# The opengraph metadata is preferred if we can get
@@ -280,6 +285,19 @@ class _HTMLExtractor(object):
 					image.__name__ = image.url
 					image.__parent__ = result
 					result.images.append( image )
+		return result
+
+	def _extract_page( self, result, args ):
+		if not result.description:
+			meta = args.pyquery_dom( b'meta[name=description]' )
+			text = meta.attr['content'] if meta else ''
+			if text:
+				result.description = text
+		if not result.title:
+			title = args.pyquery_dom( b'title' )
+			text = title.text()
+			if text:
+				result.title = text
 		return result
 
 
