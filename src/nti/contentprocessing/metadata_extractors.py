@@ -234,7 +234,7 @@ class _HTMLExtractor(object):
 
 		if len(result.images) == 1:
 			for k in 'height', 'width':
-				triples = graph.triples_chaices( (None, [getattr(x, 'image:' + k) for x in nss], None ) )
+				triples = graph.triples_choices( (None, [getattr(x, 'image:' + k) for x in nss], None ) )
 				for _, _, val in triples:
 					setattr( result.images[0], k, int(val.toPython()) )
 		return result
