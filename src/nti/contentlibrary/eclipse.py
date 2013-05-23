@@ -36,13 +36,21 @@ ASSESSMENT_INDEX_FILENAME = 'assessment_index.json'
 
 _toc_item_attrs = ('NTIRelativeScrollHeight', 'href', 'icon', 'label', 'ntiid',)
 
+def _node_get( node, name, default=None ):
+	# LXML defaults to returning ASCII attributes as byte strings
+	# https://mailman-mail5.webfaction.com/pipermail/lxml/2011-December/006239.html
+	val = node.get( name, default )
+	if isinstance(val, bytes):
+		val = unicode(val, 'utf-8')
+	return val
+
 def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 	tocItem = factory()
 	for i in _toc_item_attrs:
-		setattr( tocItem, i, node.get( i ) )
+		setattr( tocItem, i, _node_get( node, i ) )
 
-	if node.get( 'sharedWith', ''):
-		tocItem.sharedWith = node.get( 'sharedWith' ).split( ' ' )
+	if node.get( 'sharedWith', '' ):
+		tocItem.sharedWith = _node_get( node, 'sharedWith' ).split( ' ' )
 
 	tocItem.key = toc_entry.make_sibling_key( tocItem.href )
 
@@ -99,7 +107,10 @@ def EclipseContentPackage( toc_entry,
 		if content_package is not None and content_package.index_last_modified <= toc_last_modified:
 			return content_package
 
-		root = etree.fromstring( toc_entry.read_contents() )
+		try:
+			root = etree.parse( toc_entry.filename ).getroot()
+		except AttributeError:
+			root = etree.fromstring( toc_entry.read_contents() )
 	except (IOError,etree.Error):
 		logger.debug( "Failed to parse TOC at %s", toc_entry, exc_info=True )
 		return None
