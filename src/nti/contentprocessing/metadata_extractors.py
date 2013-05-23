@@ -211,7 +211,6 @@ class _HTMLExtractor(object):
 		graph.parse( data=args.text, format='rdfa', publicID=args.__name__, media_type='text/html' )
 
 		nss = (rdflib.Namespace('http://ogp.me/ns#'), rdflib.Namespace('http://opengraphprotocol.org/schema/'))
-
 		for ns_name, attr_name in (('title', 'title'), ('url', 'href'), ('image', 'image'), ('description', 'description')):
 			# Don't overwrite
 			if getattr( result, attr_name, None ):
@@ -223,11 +222,21 @@ class _HTMLExtractor(object):
 					if not result.images:
 						result.images = []
 					image = ImageMetadata( url=val.toPython() )
+					# FIXME: If there are multiple image elements,
+					# their relative order is not retained. This means
+					# that if they provide height and width values,
+					# we have no way to associate that with them.
+					# We can only do it if there is exactly one image.
 					result.images.append( image )
 				else:
 					setattr( result, attr_name, val.toPython() )
 					break
 
+		if len(result.images) == 1:
+			for k in 'height', 'width':
+				triples = graph.triples_chaices( (None, [getattr(x, 'image:' + k) for x in nss], None ) )
+				for _, _, val in triples:
+					setattr( result.images[0], k, int(val.toPython()) )
 		return result
 
 
