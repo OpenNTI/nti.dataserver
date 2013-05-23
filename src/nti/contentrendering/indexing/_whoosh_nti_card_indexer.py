@@ -61,15 +61,20 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 		return text
 
 	def index_card_entry(self, writer, containerId, info, language=u'en'):
+		table = get_content_translation_table(language)
+		ntiid = info.get('ntiid')
+		title = info.get('title')
+		if not ntiid or not title:
+			return False
+
 		try:
-			table = get_content_translation_table(language)
-			href = info.get('href')
-			ntiid = info.get('ntiid')
-			target_ntiid = info.get('target_ntiid')
-			type_ = self._sanitize(table, info.get('type'))
-			creator = self._sanitize(table, info.get('creator'))
-			title = content_utils.sanitize_content(info.get('title'), table=table)
-			content = content_utils.sanitize_content(info.get('content'), table=table)
+			href = info.get('href', u'')
+			content = info.get('content', u'')
+			target_ntiid = info.get('target_ntiid', u'')
+			type_ = self._sanitize(table, info.get('type', u''))
+			creator = self._sanitize(table, info.get('creator', u''))
+			title = content_utils.sanitize_content(title, table=table)
+			content = content_utils.sanitize_content(content, table=table)
 			last_modified = datetime.fromtimestamp(time.time())
 			writer.add_document(containerId=containerId,
 								type=type_,
@@ -81,6 +86,7 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 								target_ntiid=target_ntiid,
 								quick=unicode("%s %s" % (title, content)),
 								last_modified=last_modified)
+			return True
 		except Exception:
 			writer.cancel()
 			raise
@@ -105,8 +111,8 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 		count = 0
 		for _, data in cards.items():
 			info, containerId = data
-			self.index_card_entry(writer, containerId, info, language)
-			count += 1
+			if self.index_card_entry(writer, containerId, info, language):
+				count += 1
 		return count
 
 	def process_book(self, idxspec, writer, language='en'):
