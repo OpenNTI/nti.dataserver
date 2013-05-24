@@ -37,6 +37,7 @@
 			 for="nti.socketio.interfaces.ISocketSession" />
 
 	<adapter factory=".contacts.DefaultComputedContacts" />
+	<subscriber handler=".contacts.default_computed_contacts_change_when_follower_added" />
 
 	<!-- ACL/ACE permissions -->
 	<include file="meta.zcml" package="zope.security" />

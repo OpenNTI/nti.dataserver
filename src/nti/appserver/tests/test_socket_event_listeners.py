@@ -24,7 +24,7 @@ from zope import interface
 from zope import component
 
 from nti.appserver._socket_event_listeners import session_disconnected_broadcaster
-from nti.appserver._socket_event_listeners import send_presence_when_follower_added
+from nti.appserver._socket_event_listeners import send_presence_when_contact_added
 from nti.appserver._socket_event_listeners import  _notify_friends_of_presence
 
 from nti.appserver._stream_event_listeners import user_change_broadcaster
@@ -92,8 +92,8 @@ class TestEvents(ConfiguringTestBase):
 		cs.session_list = [session]
 		cs.presence_list = ( PresenceInfo( type='available' ), )
 		self.ds.chatserver = cs
-		evt = nti_interfaces.FollowerAddedEvent( user, user2 )
-		send_presence_when_follower_added( user, evt )
+		evt = chat_interfaces.ContactISubscribeToAddedToContactsEvent( user, user2 )
+		send_presence_when_contact_added( user, evt )
 		assert_that( cs.pchange, contains( user2.username,
 										   'chat_setPresenceOfUsersTo', # name
 										   user.username,

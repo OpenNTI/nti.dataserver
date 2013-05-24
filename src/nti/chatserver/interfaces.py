@@ -344,8 +344,41 @@ class IContacts(Interface):
 	contactNamesISubscribeToPresenceUpdates =  UniqueIterable( title="The usernames of buddies that the owner wants presence updates for",
 															   description="Probably computed as a property",
 															   value_type=TextLine(title="A username" ) )
+from zope.interface.interfaces import IObjectEvent
+from zope.interface.interfaces import ObjectEvent
+class IContactsModifiedEvent(IObjectEvent):
+	"""
+	Fired when the contacts for a user are modified.
+	Specific subinterfaces should be listened to.
+	"""
 
+	object = Object( nti_interfaces.IUser, title="The user who's contacts changed." )
+	contacts = Object( IContacts, title="The contacts of the user" )
 
+class IContactISubscribeToAddedToContactsEvent(IContactsModifiedEvent):
+	"""
+	Fired when a contact whose presence I (the object of this event) want updates
+	about is added to my contacts.
+	"""
+
+	contact = Object( nti_interfaces.IUser, title="The user that I now want updates about." )
+
+@interface.implementer(IContactsModifiedEvent)
+class ContactsModifiedEvent(ObjectEvent):
+
+	def __init__( self, user ):
+		super(ContactsModifiedEvent,self).__init__( user )
+
+	@property
+	def contacts(self):
+		return IContacts(self.object)
+
+@interface.implementer(IContactISubscribeToAddedToContactsEvent)
+class ContactISubscribeToAddedToContactsEvent(ContactsModifiedEvent):
+
+	def __init__( self, contact_owner, contact_added ):
+		super(ContactISubscribeToAddedToContactsEvent,self).__init__( contact_owner )
+		self.contact = contact_added
 
 class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent):
 	"""

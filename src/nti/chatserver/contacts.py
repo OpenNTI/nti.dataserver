@@ -13,8 +13,11 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
+from zope.event import notify
 
 from .interfaces import IContacts
+from .interfaces import ContactISubscribeToAddedToContactsEvent
+from nti.dataserver.interfaces import IFollowerAddedEvent
 from nti.dataserver.interfaces import IUser
 
 from nti.utils.property import alias
@@ -44,3 +47,12 @@ class DefaultComputedContacts(object):
 	@property
 	def contactNamesISubscribeToPresenceUpdates(self):
 		return self.contactNamesSubscribedToMyPresenceUpdates
+
+@component.adapter(IUser, IFollowerAddedEvent)
+def default_computed_contacts_change_when_follower_added( user_being_followed, event ):
+	"""
+	When a follower is added to a user, that follower's default contacts change.
+	"""
+	user_now_following = event.followed_by
+	if IUser.providedBy( user_now_following ) and IUser.providedBy( user_being_followed ):
+		notify( ContactISubscribeToAddedToContactsEvent( user_now_following, user_being_followed ) )
