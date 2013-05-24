@@ -248,4 +248,13 @@ def qti_creator(cls):
 
 @interface.implementer(an_interfaces.IAttributeAnnotatable)
 class QTIElement(zcontained.Contained, Persistent):
-	content = None
+	text = None
+	tail = None
+	
+	@property
+	def content(self):
+		result = self.text if self.text else u''
+		if self.tail:
+			result += self.tail
+		return result if result else None
+
