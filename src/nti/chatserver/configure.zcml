@@ -13,6 +13,8 @@
 	<adapter factory=".messageinfo.MessageInfoInternalObjectIO" />
 
 	<ext:registerMimeFactories module=".presenceinfo" />
+	<utility name='PresenceInfo'
+			 component='.presenceinfo.PresenceInfoFactory' />
 	<adapter factory=".presenceinfo.PresenceInfoInternalObjectIO" />
 
 	<adapter factory="._meeting_post_policy.MeetingPostPolicy"

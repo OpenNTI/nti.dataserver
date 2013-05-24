@@ -11,6 +11,7 @@ from __future__ import unicode_literals, absolute_import, print_function
 #pylint: disable=E0213,E0211
 
 from zope import interface
+from zope import component
 from zope.interface import interfaces as z_interfaces
 from zope.interface import Interface
 from zope import schema
@@ -348,11 +349,17 @@ class IContacts(Interface):
 
 class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent):
 	"""
-	Pre-defined type of user notification for a presence change event.
+	Pre-defined type of user notification for a presence change event of an
+	individual user.
+
+	This object takes care of constructing the :class:`IPresenceInfo` and the
+	proper argument dictionary.
 	"""
 
 	P_ONLINE  = "Online"
 	P_OFFLINE = "Offline"
+
+	__name__ = 'chat_setPresenceOfUsersTo'
 
 	def __init__( self, targets, sender, new_presence ):
 		"""
@@ -360,7 +367,16 @@ class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent)
 		:param string new_presence: One of the constants from this class designating
 			the new presence state of the user.
 		"""
-		super(PresenceChangedUserNotificationEvent,self).__init__( "chat_presenceOfUserChangedTo",
+		if new_presence == self.P_ONLINE:
+			ptype = 'available'
+		else:
+			ptype = 'unavailable'
+
+		info = component.createObject( 'PresenceInfo', type=ptype, username=sender )
+		# Could also use getFactoriesFor to work with IPresenceInfo instead of a name...
+		args = ( {sender: info}, ) # Iterable; we have one arg, the dict
+
+		super(PresenceChangedUserNotificationEvent,self).__init__( self.__name__,
 																   targets,
 																   sender,
-																   new_presence )
+																   args )
