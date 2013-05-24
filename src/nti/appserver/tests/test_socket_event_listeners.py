@@ -7,11 +7,15 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that, is_
 from hamcrest import has_length
 from hamcrest import none
+from hamcrest import contains
+from hamcrest import has_entry
+from hamcrest import has_property
 
 from nti.dataserver import users
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.presenceinfo import PresenceInfo
 
 from nti.appserver.tests import ConfiguringTestBase, ITestMailDelivery
 from nti.dataserver.tests import mock_dataserver
@@ -19,7 +23,9 @@ from nti.dataserver.tests import mock_dataserver
 from zope import interface
 from zope import component
 
-from nti.appserver._socket_event_listeners import session_disconnected_broadcaster, session_connected_broadcaster, _notify_friends_of_presence
+from nti.appserver._socket_event_listeners import session_disconnected_broadcaster
+from nti.appserver._socket_event_listeners import send_presence_when_follower_added
+from nti.appserver._socket_event_listeners import  _notify_friends_of_presence
 
 from nti.appserver._stream_event_listeners import user_change_broadcaster
 from nti.appserver._stream_event_listeners import user_change_new_note_emailer, TemporaryChangeEmailMarker, ITemporaryChangeEmailMarker
@@ -30,11 +36,16 @@ class MockChatserver(object):
 
 class MockSessionManager(object):
 
+	session_list = ()
 	def get_sessions_by_owner(self,username):
-		return ()
+		return self.session_list
 	pchange = ()
 	def send_event_to_user( self, *args ):
 		self.pchange = args
+
+	presence_list = ()
+	def getPresenceOfUsers( self, userlist ):
+		return self.presence_list
 
 class MockSession(object):
 	owner = None
@@ -67,14 +78,26 @@ class TestEvents(ConfiguringTestBase):
 
 		self.ds.session_manager = cs
 		session_disconnected_broadcaster( session, None )
-		assert_that( cs.pchange, is_( (user2.username, 'chat_presenceOfUserChangedTo', user.username, 'Offline') ))
+		assert_that( cs.pchange, contains( user2.username,
+										   'chat_setPresenceOfUsersTo', # name
+										   user.username,
+										   contains( has_entry( user.username, has_property( 'type', 'unavailable' ) ) )))
 
-		session_connected_broadcaster( session, None )
-		assert_that( cs.pchange, is_( (user2.username, 'chat_presenceOfUserChangedTo', user.username, 'Online') ))
+
 
 		change = MockChange()
 		user_change_broadcaster( user, change )
 		assert_that( cs.pchange, is_( (user.username, 'data_noticeIncomingChange', change) ) )
+
+		cs.session_list = [session]
+		cs.presence_list = ( PresenceInfo( type='available' ), )
+		self.ds.chatserver = cs
+		evt = nti_interfaces.FollowerAddedEvent( user, user2 )
+		send_presence_when_follower_added( user, evt )
+		assert_that( cs.pchange, contains( user2.username,
+										   'chat_setPresenceOfUsersTo', # name
+										   user.username,
+										   contains( has_entry( user.username, has_property( 'type', 'available' ) ) )))
 
 	@mock_dataserver.WithMockDSTrans
 	def test_email(self):

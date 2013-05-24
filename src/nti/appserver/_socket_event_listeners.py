@@ -11,11 +11,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.dataserver import interfaces as nti_interfaces, users
+from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.socketio import interfaces as sio_interfaces
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.singleton import SingletonDecorator
+
+#from nti.externalization.singleton import SingletonDecorator
+from nti.dataserver import users
 
 from zope.event import notify
 from zope import component
@@ -49,6 +51,8 @@ def _notify_friends_of_presence( session, presence, event=None ):
 
 @component.adapter( sio_interfaces.ISocketSession, sio_interfaces.ISocketSessionDisconnectedEvent )
 def session_disconnected_broadcaster( session, event ):
+	# TODO: Should this all move to a lower level? Or is the "application"
+	# level the right one for this?
 	dataserver = component.queryUtility( nti_interfaces.IDataserver )
 	if not (dataserver and dataserver.sessions):
 		logger.debug( "Unable to broadcast presence notification.")
@@ -56,45 +60,60 @@ def session_disconnected_broadcaster( session, event ):
 
 	online = _is_user_online( dataserver, session.owner, session )
 	if not online:
-		_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_OFFLINE, event )
-		# If they didn't set a valid presence, then we need to do that too.
-		# TODO: This will move when this legacy stuff goes away too
+		# Send notifications to contacts by default...
+		need_notify = True
 		cs = dataserver.chatserver
 		if cs:
+			# ... however, if the protocol has been followed properly,
+			# we may not need to. If it hasn't and they didn't set a valid presence,
+			# then we need to do that too.
 			presences = cs.getPresenceOfUsers( [session.owner] )
 			# This will return an empty array if the user is "default" unavailable
-			# (Which we expect to be the initial case in the near future). Don't
-			# change that. If they left an available presence, go back
+			# Don't change that. If they left an available presence, go back
 			# to a default presence.
-			# TODO: Somebody needs to broadcast the new presence event (presenceOfUsersChanged).
-			# Not doing it now to prevent warnings in the app console until they can
-			# handle the event
 			if presences and presences[0].isAvailable():
 				cs.removePresenceOfUser( session.owner )
+				# Broadcast the default unavailable presence because they clearly
+				# neglected to do so
+				need_notify = True
+			elif presences and not presences[0].isAvailable():
+				# Yay! He was a good boy and set a presence. This
+				# would already have been broadcast
+				need_notify = False
+			elif not presences:
+				# Hmm. No presence info at all. Weird.
+				# Make sure to notify anyway.
+				need_notify = True
+
+		if need_notify:
+			_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_OFFLINE, event )
 	else:
 		logger.debug( "A session (%s) died, but %s are still online", session, len(online) )
 
+@component.adapter(nti_interfaces.IUser, nti_interfaces.IFollowerAddedEvent)
+def send_presence_when_follower_added( user_being_followed, event ):
+	"""
+	When someone starts following us, we are now implicitly in their contacts,
+	so we need to send them our presence, if we can.
+	"""
+	user_now_following = event.followed_by
+	if user_being_followed is None or user_now_following is None: # pragma: no cover
+		return
 
-@component.adapter( sio_interfaces.ISocketSession, sio_interfaces.ISocketSessionConnectedEvent )
-def session_connected_broadcaster( session, event ):
-	_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_ONLINE, event )
+	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+	if not (dataserver and dataserver.sessions and dataserver.chatserver):
+		return
 
-## Add presence info to users during externalization
-## FIXME: This information is transient and so by doing this
-## we invalidate any 'Last Modified' information we're sending at a higher level,
-## (since that's based on the static info) and so this makes
-## certain things that might be cached unreliable in the web app.
-## We've added a workaround for FriendsLists specifically, but
-## it was probably a design mistake to mix the static and dynamic info, and
-## we need separate URLs to correct that.
+	if not _is_user_online( dataserver, user_now_following ):
+		return
 
-@component.adapter(nti_interfaces.IUser)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _UserPresenceExternalDecorator(object):
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalObject( self, user, result ):
-		# TODO: Presence information will depend on who's asking
-		ds = component.queryUtility( nti_interfaces.IDataserver )
-		if user and ds and ds.sessions:
-			result['Presence'] =  "Online" if _is_user_online( ds, user.username ) else "Offline"
+	sessions = _is_user_online( dataserver, user_being_followed )
+	if sessions:
+		cs = dataserver.chatserver
+		# Yes, we are online, but are we available?
+		session = next(iter(sessions))
+		presences = cs.getPresenceOfUsers( [session.owner] )
+		# This will return an empty array if the user is "default" unavailable
+		if presences and presences[0].isAvailable():
+			# TODO: Losing 'status' information here
+			_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_ONLINE, event )

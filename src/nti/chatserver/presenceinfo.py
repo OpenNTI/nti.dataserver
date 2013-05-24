@@ -15,6 +15,7 @@ import time
 
 from zope import interface
 from zope import component
+from zope.component.factory import Factory
 from . import interfaces as chat_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -40,6 +41,11 @@ class PresenceInfo(SchemaConfigured): # NOT persistent
 
 	def isAvailable(self):
 		return self.type == 'available'
+
+	def __repr__(self):
+		return "%s(**%s)" % (self.__class__.__name__, self.__dict__)
+
+PresenceInfoFactory = Factory(PresenceInfo)
 
 
 from nti.externalization.datastructures import InterfaceObjectIO

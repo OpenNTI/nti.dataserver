@@ -426,19 +426,12 @@ class _EntityCacheController(_AbstractReliableLastModifiedCacheController):
 @component.adapter(nti_interfaces.IUser)
 class _UserCacheController(_EntityCacheController):
 	"""
-	Adds the presence info to etag calculation.
+	No op.
 	"""
+	# In the past, when we added presence info directly
+	# to the external rep of a user, we needed to include
+	# that in the etag. We no longer do that.
 
-	@property
-	def _context_specific(self):
-		result = _EntityCacheController._context_specific.fget(self)
-		ext = {}
-		dec = component.getAdapter(self.context,
-								   ext_interfaces.IExternalObjectDecorator,
-								   name='presence' )
-		dec.decorateExternalObject(self.context, ext )
-		result += (ext.get('Presence', 'Offline'),)
-		return result
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)
 @component.adapter(nti_interfaces.IModeledContent)
