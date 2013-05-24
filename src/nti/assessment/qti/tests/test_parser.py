@@ -82,32 +82,6 @@ class TestParser(ConfiguringTestBase):
 		assert_that(ib, has_length(1))
 		assert_that(ib.blocks, has_length(1))
 
-# 				identifier="textEntry"
-# 				title="Richard III (Take 3)"
-# 				adaptive="false"
-# 				timeDependent="false">
-# 	<responseDeclaration identifier="RESPONSE" cardinality="single" baseType="string">
-#         <correctResponse>
-#             <value>York</value>
-#         </correctResponse>
-#         <mapping defaultValue="0">
-#             <mapEntry mapKey="York" mappedValue="1"/>
-#             <mapEntry mapKey="york" mappedValue="0.5"/>
-#         </mapping>
-# 	</responseDeclaration>
-#     <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float"/>
-#     <itemBody>
-#         <p>Identify the missing word in this famous quote from Shakespeare's Richard III.</p>
-#         <blockquote>
-#             <p>Now is the winter of our discontent<br/> Made glorious summer by this sun of
-#             	<textEntryInteraction responseIdentifier="RESPONSE" expectedLength="15"/>;<br/>
-# 			And all the clouds that lour'd upon our house<br/> In the deep bosom of the ocean buried.</p>
-#         </blockquote>
-#     </itemBody>
-#     <responseProcessing template="http://www.imsglobal.org/question/qti_v2p0/rptemplates/map_response"/>
-# </assessmentItem>
-
-
 	def test_parse_text_entry(self):
 		path = os.path.join(os.path.dirname(__file__), 'text_entry.xml')
 		with open(path, "r") as f:
