@@ -90,13 +90,14 @@ def session_disconnected_broadcaster( session, event ):
 	else:
 		logger.debug( "A session (%s) died, but %s are still online", session, len(online) )
 
-@component.adapter(nti_interfaces.IUser, nti_interfaces.IFollowerAddedEvent)
-def send_presence_when_follower_added( user_being_followed, event ):
+@component.adapter(nti_interfaces.IUser, chat_interfaces.IContactISubscribeToAddedToContactsEvent)
+def send_presence_when_contact_added( user_now_following, event ):
 	"""
-	When someone starts following us, we are now implicitly in their contacts,
-	so we need to send them our presence, if we can.
+	When I add a contact that I want to subscribe to, send
+	his presence info, if we can.
+
 	"""
-	user_now_following = event.followed_by
+	user_being_followed = event.contact
 	if user_being_followed is None or user_now_following is None: # pragma: no cover
 		return
 
