@@ -407,9 +407,8 @@ class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent)
 
 		info = component.createObject( 'PresenceInfo', type=ptype, username=sender )
 		# Could also use getFactoriesFor to work with IPresenceInfo instead of a name...
-		args = ( {sender: info}, ) # Iterable; we have one arg, the dict
+		args = {sender: info}
 
 		super(PresenceChangedUserNotificationEvent,self).__init__( self.__name__,
 																   targets,
-																   sender,
 																   args )
