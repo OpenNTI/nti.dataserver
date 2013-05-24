@@ -112,6 +112,14 @@ class _SearchHit(_BaseSearchHit):
 class _NoteSearchHit(_SearchHit):
 	adapter_interface = search_interfaces.INoteContentResolver
 
+	def set_hit_info(self, original, score):
+		adapted = super(_NoteSearchHit, self).set_hit_info(original, score)
+		self.title = self.get_field(adapted, "get_title")
+		return adapted
+
+	def get_title(self):
+		return self.title
+
 @component.adapter(nti_interfaces.IHighlight)
 @interface.implementer(search_interfaces.IHighlightSearchHit)
 class _HighlightSearchHit(_SearchHit):

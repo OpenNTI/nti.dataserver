@@ -74,6 +74,10 @@
 				for=".interfaces.IPostSearchHit"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
+	<subscriber factory="._search_external._NoteSearchHitHighlightDecorator"
+				for=".interfaces.INoteSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
 	<subscriber factory="._search_external._RedactionSearchHitHighlightDecorator"
 				for=".interfaces.IRedactionSearchHit"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>

@@ -82,6 +82,14 @@ class _MultipleFieldSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 			external[FIELD] = external[FIELD] = field
 			self.set_snippet(content_hi, external)
 
+@component.adapter(search_interfaces.INoteSearchHit)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class _NoteSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
+
+	def decorateExternalObject(self, hit, external):
+		sources = ((content_, external.get(SNIPPET)), (title_, hit.get_title()))
+		self.decorate_on_source_fields(hit, external, sources)
+
 @component.adapter(search_interfaces.IRedactionSearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _RedactionSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):

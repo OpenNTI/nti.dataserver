@@ -170,6 +170,9 @@ class _PartsContentResolver(object):
 @interface.implementer(search_interfaces.INoteContentResolver)
 class _NoteContentResolver(_ThreadableContentResolver, _PartsContentResolver):
 
+	def get_title(self):
+		return self.obj.title
+
 	def get_content(self):
 		return self._resolve(self.obj.body)
 
@@ -304,6 +307,10 @@ class _DictContentResolver(object):
 
 	# user content resolver
 
+	def get_title(self):
+		result = self.obj.get(title_, ())
+		return unicode(result) if result else None
+
 	def get_ntiid(self):
 		return self._get_attr(ntiid_fields)
 
@@ -368,10 +375,6 @@ class _DictContentResolver(object):
 		return _process_words(data)
 
 	# post content resolver
-
-	def get_title(self):
-		result = self.obj.get(title_, ())
-		return unicode(result) if result else None
 
 	def get_tags(self):
 		result = self.obj.get(tags_, ())

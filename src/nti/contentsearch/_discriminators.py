@@ -47,6 +47,17 @@ def get_creator(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.ICreatorResolver)
 	return adapted.get_creator() or default
 
+def get_title(obj, default=None, language='en'):
+	adapted = component.getAdapter(obj, search_interfaces.ITitleResolver)
+	result = get_content(adapted.get_title(), language)
+	return result.lower() if result else default
+
+def get_title_and_ngrams(obj, default=None, language='en'):
+	title = get_title(obj, default, language)
+	n_grams = compute_ngrams(title, language)
+	result = '%s %s' % (title, n_grams) if title else None
+	return result.lower() if result else default
+
 def get_last_modified(obj, default=None):
 	adapted = component.getAdapter(obj, search_interfaces.ILastModifiedResolver)
 	result = adapted.get_last_modified()
@@ -100,16 +111,8 @@ def get_redaction_explanation_and_ngrams(obj, default=None, language='en'):
 	result = '%s %s' % (result, ngrams) if result else None
 	return result or default
 
-def get_post_title(obj, default=None, language='en'):
-	adapted = component.getAdapter(obj, search_interfaces.IBlogContentResolver)
-	result = get_content(adapted.get_title(), language)
-	return result.lower() if result else default
-
-def get_post_title_and_ngrams(obj, default=None, language='en'):
-	title = get_post_title(obj, default, language)
-	n_grams = compute_ngrams(title, language)
-	result = '%s %s' % (title, n_grams) if title else None
-	return result.lower() if result else default
+get_post_title = get_title
+get_post_title_and_ngrams = get_title_and_ngrams
 
 def get_post_tags(obj, default=()):
 	adapted = component.getAdapter(obj, search_interfaces.IBlogContentResolver)
