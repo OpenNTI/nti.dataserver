@@ -162,7 +162,7 @@ class Chatserver(object):
 		return self._redis.setex( 'users/' + presence.username + '/presence', _PRESENCE_TTL, presence_ext )
 
 	def removePresenceOfUser( self, username ):
-		return self._redis.delete( 'users/' + presence.username + '/presence' )
+		return self._redis.delete( 'users/' + username + '/presence' )
 
 	### Low-level IO
 
