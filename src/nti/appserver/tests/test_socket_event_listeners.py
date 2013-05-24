@@ -80,8 +80,7 @@ class TestEvents(ConfiguringTestBase):
 		session_disconnected_broadcaster( session, None )
 		assert_that( cs.pchange, contains( user2.username,
 										   'chat_setPresenceOfUsersTo', # name
-										   user.username,
-										   contains( has_entry( user.username, has_property( 'type', 'unavailable' ) ) )))
+										   has_entry( user.username, has_property( 'type', 'unavailable' ) ) ))
 
 
 
@@ -96,8 +95,7 @@ class TestEvents(ConfiguringTestBase):
 		send_presence_when_contact_added( user, evt )
 		assert_that( cs.pchange, contains( user2.username,
 										   'chat_setPresenceOfUsersTo', # name
-										   user.username,
-										   contains( has_entry( user.username, has_property( 'type', 'available' ) ) )))
+										   has_entry( user.username, has_property( 'type', 'available' ) ) ))
 
 	@mock_dataserver.WithMockDSTrans
 	def test_email(self):
