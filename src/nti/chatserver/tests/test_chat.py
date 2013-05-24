@@ -1089,6 +1089,17 @@ class TestChatserver(_ChatserverTestBase):
 		assert_that( my_contacts['args'], has_length( 1 ) )
 		assert_that( my_contacts['args'][0], has_entry( 'otheruser', has_entries( 'type', 'available', 'status', 'Hi'  ) ) )
 
+		# If there is no presence info for the other user,
+		# we get no info about him, thus we are to assume he is in the default
+		# offline state
+		sessions.clear_all_session_events()
+		chatserver.removePresenceOfUser( 'otheruser' )
+		handler1.setPresence( presence )
+
+		my_contacts = sessions[1].socket.events[1]
+		assert_that( my_contacts, has_entry( 'name', 'chat_setPresenceOfUsersTo' ) )
+		assert_that( my_contacts['args'], has_length( 1 ) )
+		assert_that( my_contacts['args'][0], is_empty() )
 
 
 from pyramid.testing import setUp as psetUp

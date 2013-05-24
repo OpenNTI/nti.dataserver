@@ -296,6 +296,11 @@ class _ChatHandler(object):
 		# but the overall presence didn't change. If we don't send these events now,
 		# the sign-in-at-school won't know about any state. We do limit the flood rate
 		# by sending just to this specific session.)
+		# TODO: If the chatserver has no presence info for a user, we get nothing
+		# back, and thus provide no entry in our return value. The client SHOULD be treating
+		# that as unavailable, but it is possible to distinguish the two states of default-unavailable
+		# and explicit-unavailable. Is that a problem? Should we thus synthesize a fake
+		# entry? (What does XMPP do?)
 		if presenceinfo.isAvailable():
 			presences = chatserver.getPresenceOfUsers( contacts.contactNamesISubscribeToPresenceUpdates )
 			args = {info.username: info for info in presences}
