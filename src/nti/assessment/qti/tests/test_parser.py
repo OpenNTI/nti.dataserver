@@ -17,7 +17,7 @@ from hamcrest import (assert_that, is_, is_not, instance_of, has_length, none)
 
 class TestParser(ConfiguringTestBase):
 
-	def xtest_parse_choice(self):
+	def test_parse_choice(self):
 		path = os.path.join(os.path.dirname(__file__), 'choice.xml')
 		with open(path, "r") as f:
 			qti = parser.parser(f)
