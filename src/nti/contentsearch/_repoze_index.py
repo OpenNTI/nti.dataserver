@@ -29,6 +29,7 @@ get_keywords = discriminators.get_keywords
 get_post_tags = discriminators.get_post_tags
 get_ngrams = discriminators.get_object_ngrams
 get_content = discriminators.get_object_content
+get_title = discriminators.get_title_and_ngrams
 get_containerId = discriminators.get_containerId
 get_last_modified = discriminators.get_last_modified
 get_object_ngrams = discriminators.get_object_ngrams
@@ -118,8 +119,9 @@ def _keyword_field_creator(catalog, name, iface):
 	discriminator = _get_discriminator(name)
 	catalog[name] = CatalogKeywordIndex(discriminator)
 
-def _post_title_field_creator(catalog, name, iface):
-	catalog[name] = CatalogTextIndexNG3(name, get_post_title)
+def _title_field_creator(catalog, name, iface):
+	catalog[name] = CatalogTextIndexNG3(name, get_title)
+_post_title_field_creator = _title_field_creator
 
 def _post_tags_field_creator(catalog, name, iface):
 	discriminator = get_post_tags

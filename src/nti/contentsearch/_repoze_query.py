@@ -154,7 +154,15 @@ class _DefaultRepozeQueryParser(object):
 				queryobject = query if queryobject is None else queryobject | query
 		return queryobject
 
-_DefaultNoteRepozeQueryParser = _DefaultRepozeQueryParser
+class _DefaultNoteRepozeQueryParser(_DefaultRepozeQueryParser):
+
+	def _get_search_fields(self, qo):
+		if qo.is_phrase_search or qo.is_prefix_search or not _can_use_ngram_field(qo):
+			result = (content_, title_)
+		else:
+			result = (ngrams_, title_)
+		return result
+
 _DefaultHighlightRepozeQueryParser = _DefaultRepozeQueryParser
 _DefaultMessageinfoRepozeQueryParser = _DefaultRepozeQueryParser
 

@@ -465,6 +465,10 @@ class ICreatorResolver(interface.Interface):
 	def get_creator():
 		"""return the creator"""
 
+class ITitleResolver(interface.Interface):
+	def get_title():
+		"""return the post/forum title"""
+
 class IShareableContentResolver(interface.Interface):
 
 	def get_sharedWith():
@@ -509,7 +513,7 @@ class IRedactionContentResolver(IHighlightContentResolver):
 	def get_redaction_explanation():
 		"""return the redaction explanation content"""
 
-class INoteContentResolver(IHighlightContentResolver):
+class INoteContentResolver(IHighlightContentResolver, ITitleResolver):
 
 	def get_references():
 		"""return the nttids of the objects its refers"""
@@ -527,13 +531,11 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 
 class IBlogContentResolver(_ContentMixinResolver,
 							ICreatorResolver,
-						  	IShareableContentResolver):
+						  	IShareableContentResolver,
+						  	ITitleResolver):
 
 	def get_id():
 		"""return the post id"""
-
-	def get_title():
-		"""return the post/forum title"""
 
 	def get_tags():
 		"""return the post/forum tags"""
