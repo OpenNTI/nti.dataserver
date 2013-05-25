@@ -117,7 +117,7 @@ setup(
 		# 'nose >= 1.2.1',
 		# But it's also listed in extras/test, and it's very hard to upgrade
 		# when that changes
-		# 'distribute >= 0.6.41', # Can't seem to include that anywhere
+		# 'distribute >= 0.6.43', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
@@ -129,7 +129,7 @@ setup(
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
 		'Chameleon >= 2.11',  # (preferred) template rendering. pulled in by pyramid, but ensure latest version
 		'ExtensionClass >= 4.1a1',
-		'Mako >= 0.8.0',  # fallback plain-text template render. pulled in by pyramid, but ensure latest version
+		'Mako >= 0.8.1',  # fallback plain-text template render. pulled in by pyramid, but ensure latest version
 		# 'friendly' fork of PIL, developed by Zope/Plone.
 		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		# is the version that Pillow forked from in 2010 as version 1.0. So
