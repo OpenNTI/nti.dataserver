@@ -152,7 +152,7 @@ setup(
 		 # Depending on the final release, we may need to explicitly list each component.
 		'ZODB3 >= 3.11.0a3', # Unfortunately, pulled in by zopyx.txng3.core, so do make sure we get the latest
 		'ZODB >= 4.0.0b2',
-		'BTrees >= 4.0.7',
+		'BTrees >= 4.0.8',
 		'zdaemon >= 4.0.0',
 		'persistent >= 4.0.6',
 		'ZEO >= 4.0.0b1',
