@@ -79,7 +79,7 @@ class _MultipleFieldSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 				return
 
 		if content_hi:
-			external[FIELD] = external[FIELD] = field
+			external[FIELD] = field
 			self.set_snippet(content_hi, external)
 
 @component.adapter(search_interfaces.INoteSearchHit)
@@ -87,36 +87,36 @@ class _MultipleFieldSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 class _NoteSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
 
 	def decorateExternalObject(self, hit, external):
-		sources = ((content_, external.get(SNIPPET)), (title_, hit.get_title()))
-		self.decorate_on_source_fields(hit, external, sources)
+		t_sources = ((content_, external.get(SNIPPET)), (title_, hit.get_title()))
+		self.decorate_on_source_fields(hit, external, t_sources)
 
 @component.adapter(search_interfaces.IRedactionSearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _RedactionSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
 
 	def decorateExternalObject(self, hit, external):
-		sources = ((content_, external.get(SNIPPET, None)),
+		t_sources = ((content_, external.get(SNIPPET, None)),
 					(replacementContent_, hit.get_replacement_content()),
 					(redactionExplanation_, hit.get_redaction_explanation()))
-		self.decorate_on_source_fields(hit, external, sources)
+		self.decorate_on_source_fields(hit, external, t_sources)
 
 @component.adapter(search_interfaces.IPostSearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _PostSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
 
 	def decorateExternalObject(self, hit, external):
-		sources = ((content_, external.get(SNIPPET, None)),
+		t_sources = ((content_, external.get(SNIPPET, None)),
 					(title_, hit.get_title()),
 					(tags_, hit.get_tags()))
-		self.decorate_on_source_fields(hit, external, sources)
+		self.decorate_on_source_fields(hit, external, t_sources)
 
 @component.adapter(search_interfaces.IWhooshNTICardSearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _NTICardSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
 
 	def decorateExternalObject(self, hit, external):
-		sources = ((content_, external.get(SNIPPET)), (title_, hit.get_title()))
-		self.decorate_on_source_fields(hit, external, sources)
+		t_sources = ((content_, external.get(SNIPPET)), (title_, hit.get_title()))
+		self.decorate_on_source_fields(hit, external, t_sources)
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(search_interfaces.ISearchHit)
