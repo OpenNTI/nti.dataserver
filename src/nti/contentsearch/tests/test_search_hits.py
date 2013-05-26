@@ -232,7 +232,7 @@ class TestSearchHits(ConfiguringTestBase):
 		hits = rim.search(query)
 		assert_that(hits, has_length(6))
 		hits = toExternalObject(hits)
-		items = sorted(hits[ITEMS])
+		items = hits[ITEMS]
 		for n, hit in enumerate(items):
 			if n <= 2:
 				assert_that(hit[TYPE], is_('Note'))
