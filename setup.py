@@ -222,7 +222,7 @@ setup(
 		'numpy' if not IS_PYPY else '',
 		'paste >= 1.7.5.1',
 		'perfmetrics >= 1.0',  # easy statsd metrics.
-		'plone.i18n >= 2.0.7',  # provides ISO3166 country/codes and flag images
+		'plone.i18n >= 2.0.8',  # provides ISO3166 country/codes and flag images
 		'plone.scale >= 1.3.2',  # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0.2',  # much like zope.file, but some image-specific goodness.
 		'pyparsing >= 1.5.6, < 2.0.0',  # used by matplotlib, experimental in zopyx.txng.core
@@ -397,7 +397,7 @@ setup(
 			'ipython >= 0.13.2',  # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
 			'pip >= 1.3.1',
-			'pip-tools >= 0.3.1',  # command pip-review, pip-dump
+			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
 			'pudb >= 2013.1',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 0.28.0' if not IS_PYPY else '',
 			'pyramid_debugtoolbar >= 1.0.6',
