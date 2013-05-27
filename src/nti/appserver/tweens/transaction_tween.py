@@ -58,7 +58,12 @@ class _transaction_tween(TransactionLoop):
 	def prep_for_retry( self, number, request ):
 		# make_body_seekable will copy wsgi.input if necessary,
 		# otherwise it will rewind the copy to position zero
-		request.make_body_seekable()
+		try:
+			request.make_body_seekable()
+		except IOError as e:
+			# almost always " unexpected end of file "; at any
+			# rate, this is non-recoverable
+			raise self.AbortException( str(e), "IOError on reading body" )
 
 	def should_abort_due_to_no_side_effects( self, request ):
 		return _is_side_effect_free( request )
