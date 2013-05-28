@@ -27,7 +27,7 @@ def _update_rim(entity):
 	rim = search_interfaces.IRepozeEntityIndexManager(entity, None)
 	catalog = rim.get(note_, None)  if rim is not None else None
 	if catalog is None:
-		continue
+		return
 
 	if title_ not in catalog:
 		_repoze_index._title_field_creator(catalog, title_, search_interfaces.INoteRepozeCatalogFieldCreator)
