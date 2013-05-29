@@ -117,7 +117,7 @@ setup(
 		# 'nose >= 1.2.1',
 		# But it's also listed in extras/test, and it's very hard to upgrade
 		# when that changes
-		# 'distribute >= 0.6.44', # Can't seem to include that anywhere
+		# 'distribute >= 0.6.45', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
@@ -169,7 +169,7 @@ setup(
 		'anyjson >= 0.3.3',
 		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
 		# See also blist for a tree-structured list
-		'boto >= 2.9.4',  # amazon
+		'boto >= 2.9.5',  # amazon
 		'brownie >= 0.5.1',  # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
@@ -269,7 +269,7 @@ setup(
 		'sympy == 0.7.2',  # sympy-docs-html-0.7.1 is currently greater
 		'stripe >= 1.9.1',  # stripe payments
 		# 'slimit',
-		'supervisor >= 3.0b1',
+		'supervisor >= 3.0b2',
 		'transaction >= 1.4.1',
 		# See http://pypi.python.org/pypi/user-agents/ for a high-level
 		# library to do web user agent detection
@@ -412,7 +412,7 @@ setup(
 			'virtualenvwrapper >= 4.0',
 			'zc.buildout >= 2.1.0',
 			'z3c.dependencychecker >= 1.11',  # unused/used imports; see also tl.eggdeps
-			'zodbbrowser >= 0.10.4',
+			'zodbbrowser >= 0.11.0',
 			'zodbupdate >= 0.5',
 			# Monitoring stats and instrumenting code
 			# See above for python-statsd

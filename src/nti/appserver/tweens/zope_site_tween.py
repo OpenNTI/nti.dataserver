@@ -32,6 +32,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import transaction
 import pyramid_zodbconn
 from pyramid_zodbconn import get_connection
@@ -66,7 +67,9 @@ def _get_possible_site_names(request):
 			result.append( host.lower() )
 	if request.host:
 		# Host is a plain name/IP address, and potentially port
-		result.append( request.host.split(':')[0].lower() )
+		host = request.host.split(':')[0].lower()
+		if host not in result: # no dups
+			result.append( host )
 
 	for blacklisted in ('localhost', '0.0.0.0'):
 		if blacklisted in result:
@@ -153,7 +156,7 @@ class site_tween(object):
 			clearSite()
 
 	def _add_properties_to_request(self, request):
-
+		request.environ['nti.pid'] = os.getpid() # helpful in debug tracebacks
 		request.environ['nti.early_request_teardown'] = _early_request_teardown
 		request.environ['nti.possible_site_names'] = tuple(_get_possible_site_names( request ) )
 		# The "proper" way to add properties is with request.set_property, but
