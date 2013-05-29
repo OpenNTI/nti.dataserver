@@ -240,8 +240,34 @@ def _configure_redis( env ):
 	redis_conf_contents.append( 'port 0' ) # turn off tcp
 	redis_conf_contents.append( 'unixsocket ' + redis_file ) # activate unix sockets
 	redis_conf_contents.append( 'loglevel notice' )
+
+	# Snapshotting
+	redis_conf_contents.append( "################################ SNAPSHOTTING  #################################" )
 	redis_conf_contents.append( 'dbfilename redis.dump.rdb' )
 	redis_conf_contents.append( 'dir ' + env.data_dir() )
+
+	redis_conf_contents.append( """# JAM: Note that the defaults, which are:
+# Save the DB on disk:
+#
+#   save <seconds> <changes>
+#
+#   Will save the DB if both the given number of seconds and the given
+#   number of write operations against the DB occurred.
+#
+#   In the example below the behaviour will be to save:
+#   after 900 sec (15 min) if at least 1 key changed
+#   after 300 sec (5 min) if at least 10 keys changed
+#   after 60 sec if at least 10000 keys changed
+#
+#   Note: you can disable saving at all commenting all the "save" lines.
+#save 900 1
+#save 300 10
+#save 60 10000
+
+# JAM: Are probably insufficient for development purposes (few keys change,
+# and restarts are rapid and often kill the redis server). Therefore, our default development configuration
+# saves much *too* frequently for realworld use: every 30 seconds if anything has changed""" )
+	redis_conf_contents.append( 'save 30 1' )
 
 	env.write_conf_file( 'redis.conf', '\n'.join( redis_conf_contents ) )
 
