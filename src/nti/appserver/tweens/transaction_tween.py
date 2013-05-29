@@ -63,6 +63,8 @@ class _transaction_tween(TransactionLoop):
 		except IOError as e:
 			# almost always " unexpected end of file "; at any
 			# rate, this is non-recoverable
+			# TODO: Should we do anything with the request.response? Set an error
+			# code? It won't make it anywhere...
 			raise self.AbortException( str(e), "IOError on reading body" )
 
 	def should_abort_due_to_no_side_effects( self, request ):
