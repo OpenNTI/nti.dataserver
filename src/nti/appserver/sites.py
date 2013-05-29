@@ -35,6 +35,7 @@ BASEADULT = BaseComponents(BASE, name="genericadultbase", bases=(BASE,))
 
 ALPHA = BaseComponents(BASEADULT,name='alpha.nextthought.com', bases=(BASEADULT,))
 DEMO = BaseComponents(BASEADULT,name='demo.nextthought.com', bases=(BASEADULT,))
+FINTIMES = BaseComponents(BASEADULT,name='ft.nextthought.com', bases=(BASEADULT,))
 
 RWANDA = BaseComponents(BASEADULT,name='rwanda.nextthought.com', bases=(BASEADULT,))
 LAW = BaseComponents(BASEADULT, name='law.nextthought.com', bases=(BASEADULT,))
