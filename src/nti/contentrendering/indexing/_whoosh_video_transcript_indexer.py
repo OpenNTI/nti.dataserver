@@ -29,6 +29,8 @@ from ._common_indexer import _BasicWhooshIndexer
 from ..media import interfaces as media_interfaces
 
 _Video = collections.namedtuple('Video', 'parser_name, video_ntiid, video_path')
+_video_types = (u'application/vnd.nextthought.ntivideo', u'application/vnd.nextthought.slidevideo',
+				u'application/vnd.nextthought.ntislidevideo')
 
 @interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
 class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
@@ -51,7 +53,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 			for pn in parser_names:
 				ext = '.' + pn
 				for basename in bases:
-					fname = basename + ext
+					fname = os.path.splitext(basename)[0] + ext
 					video_path = os.path.join(path, fname)
 					if os.path.exists(video_path):
 						return pn, video_path
@@ -73,23 +75,25 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 					return _Video(parser_name, video_ntiid, video_path)
 		return None
 
-	def _get_slidevideo_info(self, topic, node):
+	def _get_ntivideo_info(self, topic, node):
 		type_ = node_utils.get_attribute(node, 'type')
-		if type_ in (u'application/vnd.nextthought.slidevideo', u'application/vnd.nextthought.ntislidevideo'):
+		if type_ in _video_types:
 			result = {}
+			video_ntiid = node_utils.get_attribute(node, 'data-ntiid')
 			for p in node.iterchildren():
-				if p.tag != 'param': continue
-				name = node_utils.get_attribute(p, 'name')
-				value = node_utils.get_attribute(p, 'value')
-				if name and value:
-					result[name] = value
+				if p.tag == 'param':
+					name = node_utils.get_attribute(p, 'name')
+					value = node_utils.get_attribute(p, 'value')
+					if name and value:
+						result[name] = value
 
-			video_ntiid = result.get('ntiid')  or u''
+			if not video_ntiid:
+				video_ntiid = result.get('data-ntiid', result.get('ntiid'))  or u''
 			content_path = os.path.dirname(topic.location)
 			parser_names = self._get_video_transcript_parser_names()
 
 			# collect video-base names
-			bases = {video_ntiid}
+			bases = {video_ntiid, result.get('subtitle', None)}
 			if result.get('type') == 'youtube':
 				bases.add(result.get('id'))
 			bases.discard(None)
@@ -137,7 +141,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 				videos.add(info)
 
 		for n in topic.dom(b'object'):
-			info = self._get_slidevideo_info(topic, n)
+			info = self._get_ntivideo_info(topic, n)
 			if info:
 				videos.add(info)
 

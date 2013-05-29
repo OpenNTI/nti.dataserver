@@ -57,3 +57,22 @@ class TestWhooshVideoTranscriptIndexer(ConfiguringTestBase):
 				assert_that(r, has_length(11))
 		finally:
 			idx.close()
+
+	def test_index_selenium(self):
+		indexname = 'selenium'
+		path = os.path.join(os.path.dirname(__file__), 'selenium_unified_video.html')
+		idx, count = self._index_file(path, indexname, 'videoindexer')
+		try:
+			assert_that(count, is_(10))
+			q = Term(u"content", u"columbia")
+			with idx.searcher() as s:
+				r = s.search(q, limit=None)
+				assert_that(r, has_length(1))
+				for h in r:
+					assert_that(h['containerId'], is_(u'tag:nextthought.com,2011-10:USSC-HTML-SeleniumTestContent.unified_video'))
+					assert_that(h['videoId'], is_(u'tag:nextthought.com,2011-10:USSC-NTIVideo-SeleniumTestContent.ntivideo.1'))
+					assert_that(h['content'], has_length(84))
+					assert_that(str(h['end_timestamp']), is_('0001-01-01 00:00:22.489000'))
+					assert_that(str(h['start_timestamp']), is_('0001-01-01 00:00:17.829000'))
+		finally:
+			idx.close()
