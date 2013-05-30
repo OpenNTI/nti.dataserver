@@ -32,10 +32,12 @@ def parser(source):
 
 			# set tail text
 			text = e.text.strip() if e.text else None
-			if text: qti_element.text = text
+			if text:
+				qti_element.text = text
 
 			tail = e.tail.strip() if e.tail else None
-			if tail: qti_element.tail = tail
+			if tail:
+				qti_element.tail = tail
 
 			# process attribtes
 			for k, v in e.attrib.items():
