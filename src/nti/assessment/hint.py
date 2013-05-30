@@ -3,11 +3,10 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
-
+from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope import component
 
 from nti.assessment import interfaces
 from ._util import TrivialValuedMixin
@@ -21,14 +20,14 @@ class QHint(Persistent):
 	"""
 
 @interface.implementer(interfaces.IQTextHint)
-class QTextHint(TrivialValuedMixin,QHint):
+class QTextHint(TrivialValuedMixin, QHint):
 	"""
 	A text hint.
 	"""
 
 
 @interface.implementer(interfaces.IQHTMLHint)
-class QHTMLHint(TrivialValuedMixin,QHint):
+class QHTMLHint(TrivialValuedMixin, QHint):
 	"""
 	A text hint.
 	"""
