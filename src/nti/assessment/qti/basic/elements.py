@@ -264,8 +264,13 @@ class QTIElement(zcontained.Contained, Persistent):
 	_text = None
 	_tail = None
 
-	@property
-	def _content(self):
+	def get_text(self):
+		return self._text
+
+	def get_tail(self):
+		return self._tail
+
+	def get_content(self):
 		result = self._text if self._text else u''
 		if self._tail:
 			result += self._tail
