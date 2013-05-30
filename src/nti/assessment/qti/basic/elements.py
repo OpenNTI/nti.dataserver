@@ -111,6 +111,17 @@ def _set_attribute(self, key, value):
 		return True
 	return False
 
+def _get_children(self):
+	if self._v_is_finite_sequence:
+		result = [c for c in self if c is not None]
+	else:
+		result = {}
+		for k in self._v_definitions.keys():
+			v = getattr(self, k, None)
+			if v is not None:
+				result[k] = v
+	return result
+
 def _make_getitem(attr):
 	def __getitem__(self, index):
 		return getattr(self, attr)[index]
@@ -197,12 +208,12 @@ def qti_creator(cls):
 				else:
 					definitions[k] = v
 
-
 	is_finite_sequence = is_finite_sequence and len(definitions) == 1
 
 	# volatile attributes
 	setattr(cls, '_v_definitions', definitions)
 	setattr(cls, '_v_attributes', attributes)
+	setattr(cls, "_v_is_finite_sequence", is_finite_sequence)
 
 	# factories
 	list_factory = list
@@ -244,17 +255,35 @@ def qti_creator(cls):
 
 	setattr(cls, "get_attributes", _get_attributes)
 	setattr(cls, "set_attribute", _set_attribute)
+	setattr(cls, "get_children", _get_children)
+
 	return cls
 
 @interface.implementer(an_interfaces.IAttributeAnnotatable)
 class QTIElement(zcontained.Contained, Persistent):
-	text = None
-	tail = None
-	
+
+	_text = None
+	_tail = None
+
 	@property
-	def content(self):
-		result = self.text if self.text else u''
-		if self.tail:
-			result += self.tail
+	def _content(self):
+		result = self._text if self._text else u''
+		if self._tail:
+			result += self._tail
 		return result if result else None
 
+	@property
+	def _name(self):
+		return _get_def_name(self)
+	
+	@property
+	def is_finite_sequence(self):
+		return self._v_is_finite_sequence
+
+	def is_field(self, name):
+		sch = self._v_definitions.get(name)
+		return sch and _is_field(sch)
+
+	def is_list(self, name):
+		sch = self._v_definitions.get(name)
+		return sch and _is_list(sch)
