@@ -1,11 +1,16 @@
-from __future__ import print_function, unicode_literals
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface
+from persistent import Persistent
 
 from nti.assessment import interfaces
 from nti.assessment._util import TrivialValuedMixin
-
-from persistent import Persistent
 
 @interface.implementer(interfaces.IQResponse)
 class QResponse(Persistent):
@@ -21,7 +26,7 @@ class QTextResponse(TrivialValuedMixin,QResponse):
 
 	def __init__( self, *args, **kwargs ):
 		super(QTextResponse,self).__init__( *args, **kwargs )
-		if self.value is not None and not isinstance( self.value, basestring ):
+		if self.value is not None and not isinstance(self.value, basestring):
 			self.value = unicode(str(self.value))
 
 @interface.implementer(interfaces.IQListResponse)

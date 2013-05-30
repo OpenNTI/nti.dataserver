@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 Grading algorithm support.
+
+$Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 import numbers
 
@@ -11,11 +14,9 @@ from zope import interface
 
 from nti.assessment import interfaces
 
-
 @staticmethod
 def _id(o):
 	return o
-
 
 def __lower(o):
 	# NOTE: This is using the default encoding if the string
@@ -30,10 +31,10 @@ def __normalize_quotes(string):
 	"""
 	We want curly quotes to compare the same as straight quotes.
 	"""
-	replacements = ( ('“', '"'), # left double
-					 ('”', '"'), # right double
-					 ("‘", "'"), # left single
-					 ("’", "'") ) # right single
+	replacements = (('“', '"'),  # left double
+					 ('”', '"'),  # right double
+					 ("‘", "'"),  # left single
+					 ("’", "'"))  # right single
 	for bad, good in replacements:
 		string = string.replace( bad, good )
 
