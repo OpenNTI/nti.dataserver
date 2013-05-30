@@ -6,8 +6,7 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
-import logging
-logger = logging.getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 from lxml import etree
 from io import BytesIO
@@ -33,11 +32,11 @@ def parser(source):
 			# set tail text
 			text = e.text.strip() if e.text else None
 			if text:
-				qti_element.text = text
+				qti_element._text = text
 
 			tail = e.tail.strip() if e.tail else None
 			if tail:
-				qti_element.tail = tail
+				qti_element._tail = tail
 
 			# process attribtes
 			for k, v in e.attrib.items():
