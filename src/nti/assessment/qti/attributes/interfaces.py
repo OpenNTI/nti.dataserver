@@ -25,7 +25,7 @@ class IbodyElementAttrGroup(IAttrGroup):
 	id = TextLineAttribute(title=u'The element id', required=False)
 	lang = TextLineAttribute(title=u'The language code (RFC3066)', required=False, max_length=2, default='en')
 	label = TextLineAttribute(title=u'The label', required=False, max_length=256)
-setattr(IbodyElementAttrGroup, 'class', TextLineAttribute(title=u'The class', required=False))
+IbodyElementAttrGroup._InterfaceClass__attrs['class'] = TextLineAttribute(title=u'The class', required=False)
 
 # items
 
@@ -522,4 +522,6 @@ class IinsideAttrGroup(IAttrGroup):
 
 class IcustomOperatorAttrGroup(IAttrGroup):
 	definition = URIAttribute(title='A URI that identifies the definition of the custom operator in the global namespace', required=False)
-setattr(IcustomOperatorAttrGroup, 'class', TextLineAttribute(title="The class attribute allows simple sub-classes to be name", required=False))
+IcustomOperatorAttrGroup._InterfaceClass__attrs['class'] = \
+			TextLineAttribute(title="The class attribute allows simple sub-classes to be name", required=False)
+

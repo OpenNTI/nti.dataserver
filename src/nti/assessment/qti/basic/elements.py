@@ -36,7 +36,7 @@ def get_schema_fields(iface):
 		for name in names or ():
 			sch_def = fields.get(name, None)
 			if sch_def:
-				name = getattr(sch_def, '__name__', name)
+				name = getattr(sch_def, '__name__', None) or name
 				attributes[name] = sch_def
 
 		for base in iface.getBases() or ():
