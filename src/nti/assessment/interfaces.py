@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-.. $Id$
+$Id$
 """
-from __future__ import unicode_literals, print_function
+from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface
 from zope import schema
@@ -14,10 +15,10 @@ NTIID_TYPE = 'NAQ'
 
 TypedIterable = dmschema.IndexedIterable
 
-from nti.contentfragments.schema import TextUnicodeContentFragment as _ContentFragment
-from nti.contentfragments.schema import TextLineUnicodeContentFragment as _ContentFragmentTextLine
 from nti.contentfragments.schema import LatexFragmentTextLine as _LatexTextLine
 from nti.contentfragments.schema import HTMLContentFragment as _HTMLContentFragment
+from nti.contentfragments.schema import TextUnicodeContentFragment as _ContentFragment
+from nti.contentfragments.schema import TextLineUnicodeContentFragment as _ContentFragmentTextLine
 
 class IQHint(interface.Interface):
 	"""
@@ -97,9 +98,6 @@ class IQPartGrader(interface.Interface):
 		"""
 		Implement the contract of :meth:`IQPart.grade`.
 		"""
-
-
-
 
 class IQSingleValuedSolution(IQSolution):
 	"""
