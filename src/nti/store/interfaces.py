@@ -13,6 +13,8 @@ from zope.interface.common import sequence
 from zope.location.interfaces import IContained
 from zope.interface.interfaces import ObjectEvent, IObjectEvent
 
+from dolmen.builtins import IIterable
+
 from nti.utils import schema as nti_schema
 from nti.contentfragments.schema import HTMLContentFragment
 
@@ -302,7 +304,7 @@ class PurchaseAttemptFailed(PurchaseAttemptEvent):
 		super(PurchaseAttemptFailed, self).__init__(purchase)
 		self.error = error
 
-class IPurchaseHistory(interface.Interface):
+class IPurchaseHistory(IIterable):
 
 	def add_purchase(purchase):
 		pass
@@ -319,5 +321,9 @@ class IPurchaseHistory(interface.Interface):
 	def get_purchase_history(start_time=None, end_time=None):
 		pass
 
+	def values():
+		"""
+		Return all purchase attempts
+		"""
 class IStorePurchaseInvitation(interface.Interface):
 	pass
