@@ -48,8 +48,10 @@ class _PostView(object):
 		values = simplejson.loads(unicode(request.body, request.charset))
 		return values
 
-@view_config(name="reset_initial_tos_page", **_admin_view_defaults)
-class ResetInitialTOSPage(_PostView):
+class _ResetGenerationLink(_PostView):
+
+	link_id = u''
+	link_name = u''
 
 	def __call__(self):
 		values = self.readInput()
@@ -60,10 +62,20 @@ class ResetInitialTOSPage(_PostView):
 
 		link_dict = IAnnotations(user).get(link_provider._GENERATION_LINK_KEY, None)
 		if link_dict is not None:
-			link_dict[logon.REL_INITIAL_TOS_PAGE] = ''
-			logger.info("Resetting initial TOS page for user %s" % user)
+			link_dict[self.link_id] = ''
+			logger.info("Resetting %s for user %s" % (self.link_name, user))
 
 		return hexc.HTTPNoContent()
+
+@view_config(name="reset_initial_tos_page", **_admin_view_defaults)
+class ResetInitialTOSPage(_ResetGenerationLink):
+	link_id = logon.REL_INITIAL_TOS_PAGE
+	link_name = u'initial terms-of-service page'
+
+@view_config(name="reset_welcome_page", **_admin_view_defaults)
+class ResetWelcomePage(_ResetGenerationLink):
+	link_id = logon.REL_INITIAL_WELCOME_PAGE
+	link_name = u'initial welcome page'
 
 del _view_defaults
 del _post_view_defaults
