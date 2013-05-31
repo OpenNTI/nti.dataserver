@@ -33,15 +33,18 @@ class _ContentPackageLibraryExternal(object):
 				 'title': "Library",
 				 'titles' : [toExternalObject(x) for x in self.library.titles] }
 
-def _path_join( root_url, path='' ):
-	if path is None:
-		return None
+def _path_maybe_quote(path):
 	if ' ' in path:
 		# Generally, we don't want to quote the path portion: it should already
 		# have been quoted with the TOC file was written. However, for
 		# hand-edited TOCs, it is convenient if we do quote it.
 		path = urllib.quote( path )
+	return path
 
+def _path_join( root_url, path='' ):
+	if path is None:
+		return None
+	path = _path_maybe_quote(path)
 	return urljoin( root_url, path )
 
 def _root_url_of_unit( unit ):
@@ -88,9 +91,8 @@ class _ContentPackageExternal(object):
 		root_url = _root_url_of_unit( self.package )
 		result._root_url = root_url
 
-		result['icon'] = _path_join( root_url, self.package.icon ) # TODO: For some reason these are relative paths
-		result['href'] = _path_join( root_url, self.package.href ) # ...
-
+		result['icon'] = interfaces.IContentUnitHrefMapper( self.package.icon ).href if self.package.icon else None
+		result['href'] = interfaces.IContentUnitHrefMapper( self.package.key ).href if self.package.key else None
 		result['root'] = root_url
 		result['title'] = self.package.title # Matches result['DCTitle']
 
@@ -147,27 +149,32 @@ class _FilesystemContentPackageExternal(_ContentPackageExternal):
 
 from pyramid import traversal
 
-@component.adapter(interfaces.IFilesystemContentUnit)
 @interface.implementer(interfaces.IContentUnitHrefMapper)
+@component.adapter(interfaces.IFilesystemContentUnit)
 class _FilesystemContentUnitHrefMapper(object):
 	href = None
 
 	def __init__(self, unit):
 		self.href = interfaces.IContentUnitHrefMapper( unit.key ).href
 
-@component.adapter(interfaces.IFilesystemKey)
+
 @interface.implementer(interfaces.IContentUnitHrefMapper)
+@component.adapter(interfaces.IFilesystemKey)
 class _FilesystemKeyHrefMapper(object):
 	href = None
 
 	def __init__(self, key):
 		root_package = traversal.find_interface( key, interfaces.IContentPackage )
+		# FIXME: We are doing this by hand because _root_url_of_unit winds
+		# up calling us, which is weird.
+		#root_url = _root_url_of_unit( root_package )
 		root_url = '/' + os.path.basename( root_package.dirname ) + '/'
 		__traceback_info__ = key, root_package, root_url
-		href = _path_join( root_url, key.key )
+		href = _path_join( root_url, key.name )
 
 		library = traversal.find_interface( key, interfaces.IContentPackageLibrary )
 		prefix = getattr( library, 'url_prefix', '' )
+		__traceback_info__ += (href, prefix)
 		# We require that prefix be a valid segment, ending in a '/', or empty
 		href = prefix + href
 
@@ -183,16 +190,17 @@ class _S3ContentPackageExternal(_ContentPackageExternal):
 	pass
 
 
-@component.adapter(interfaces.IS3ContentUnit)
 @interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
+@component.adapter(interfaces.IS3ContentUnit)
 class _S3ContentUnitHrefMapper(object):
 	href = None
 
 	def __init__(self, unit):
 		self.href = interfaces.IContentUnitHrefMapper( unit.key ).href
 
-@component.adapter(interfaces.IS3Key)
+
 @interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
+@component.adapter(interfaces.IS3Key)
 class _S3KeyHrefMapper(object):
 	"""
 	Produces HTTP URLs for keys in buckets.
@@ -203,7 +211,7 @@ class _S3KeyHrefMapper(object):
 		# We have to force HTTP here, because using https (or protocol relative)
 		# falls down for the browser: the certs on the CNAME we redirect to, *.s3.aws.amazon.com
 		# don't match for bucket.name host
-		self.href = 'http://' + key.bucket.name + '/' + key.key
+		self.href = 'http://' + key.bucket.name + '/' + _path_maybe_quote(key.key)
 
 @interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
 class CDNS3KeyHrefMapper(object):
@@ -221,7 +229,7 @@ class CDNS3KeyHrefMapper(object):
 		"""
 		:param string cdn_name: The FQDN where the request should be directed.
 		"""
-		self.href = '//' + cdn_cname + '/' + key.key
+		self.href = '//' + cdn_cname + '/' + _path_maybe_quote( key.key )
 
 class CDNS3KeyHrefMapperFactory(object):
 	"""

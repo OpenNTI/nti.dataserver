@@ -19,7 +19,8 @@ from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-from nti.contentprocessing.metadata_extractors import ContentMetadata, ImageMetadata
+from nti.contentprocessing.metadata_extractors import ContentMetadata
+from nti.contentprocessing.metadata_extractors import ImageMetadata
 
 @interface.implementer(cp_interfaces.IContentMetadataURLHandler)
 class TagURLHandler(object):
@@ -28,26 +29,34 @@ class TagURLHandler(object):
 	``tag:``. If something is found, adapts it to :class:`IContentMetadata`.
 	"""
 
-
 	def __call__(self, url):
 		obj = find_object_with_ntiid( url )
 		if obj is not None:
 			return cp_interfaces.IContentMetadata( obj, None )
 
+
 @interface.implementer(cp_interfaces.IContentMetadata)
 @component.adapter(lib_interfaces.IContentUnit)
 def ContentMetadataFromContentUnit( content_unit ):
-	# FIXME: The hrefs are probably wrong. We need to map
-	# them at this level?
+	# TODO: Is this the right level at which to externalize
+	# the hrefs?
 	result = ContentMetadata( title=content_unit.title,
 							  description=content_unit.description,
-							  contentLocation=content_unit.href,
+							  contentLocation=lib_interfaces.IContentUnitHrefMapper(content_unit).href,
 							  mimeType='text/html' )
 	result.__name__ = '@@metadata'
 	result.__parent__ = content_unit # for ACL
-	if content_unit.icon:
-		image = ImageMetadata( url=content_unit.icon )
+
+	def _attach_image( key ):
+		image = ImageMetadata( url=lib_interfaces.IContentUnitHrefMapper(key).href )
 		image.__parent__ = result
-		result.images = []
+		if not result.images:
+			result.images = []
 		result.images.append( image )
+
+	for name in ('icon', 'thumbnail'):
+		key = getattr( content_unit, name )
+		if key:
+			_attach_image( key )
+
 	return result
