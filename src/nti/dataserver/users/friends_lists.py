@@ -7,12 +7,16 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__( 'logging' ).getLogger( __name__ )
 
+import operator
+
 from zope import interface
 from zope import component
 from zope.component.factory import Factory
 from zc import intid as zc_intid
 
-from BTrees.OOBTree import OOTreeSet, difference as OOBTree_difference, intersection as OOBTree_intersection
+from BTrees.OOBTree import OOTreeSet
+from BTrees.OOBTree import difference as OOBTree_difference
+from BTrees.OOBTree import intersection as OOBTree_intersection
 
 from nti.ntiids import ntiids
 
@@ -168,7 +172,10 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 				except TypeError:
 					pass
 
-			if isinstance( newFriend, Entity ) and newFriend != self.creator:
+			# Add the Entity, if it is not our owner or ourself
+			# TODO: This is allowing nesting of FriendsLists, esp. DynamicFLs.
+			# Is that right? Does it work everywhere?
+			if isinstance( newFriend, Entity ) and newFriend != self.creator and newFriend is not self:
 				new_entities.append( newFriend )
 
 		result = 0
@@ -206,8 +213,14 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		result += len( OOBTree_difference( current_entities, incoming_entities ) )
 
 		if __debug__:
-			__traceback_info__ = list(sorted(incoming_entities)), list(sorted(self))
-			assert list(sorted(incoming_entities)) == list(sorted(self))
+			# Since we allow nesting of (D)FLs, we need a consistent
+			# comparison across all the types
+			key = operator.attrgetter('username')
+			in_sorted = list( sorted( incoming_entities, key=key ) )
+			me_sorted = list( sorted( self, key=key ) )
+
+			__traceback_info__ = in_sorted, me_sorted
+			assert in_sorted == me_sorted
 
 		return result
 
