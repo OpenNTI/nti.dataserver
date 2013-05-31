@@ -71,3 +71,54 @@
 	text-decoration: underline;
 	color: #1fd26f;
 }
+
+ul.nav {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	background: #fff;
+	overflow: hidden;
+}
+
+ul.nav li {
+	display: inline-block;
+	float: left;
+	margin: 0;
+	padding: 0;
+	border: 1px solid #dbdbdb;
+	border-left-width: 0;
+}
+
+ul.nav li:first-of-type {
+	border-left-width: 1px;
+}
+
+ul.nav li a,
+ul.nav li a:hover,
+ul.nav li a:visited,
+ul.nav li a:active,
+ul.nav li a:link {
+	display: inline-block;
+	font: normal normal 12px/30px 'Open Sans', sans-serif;
+	color: #494949 !important;
+	padding: 0 0.8em;
+	text-transform: uppercase;
+}
+
+ul.nav li a:hover {
+	color: #8eb737 !important;
+}
+
+ul.nav a:empty {
+	display: none;
+}
+
+ul.nav p {
+	display: inline;
+	padding: 0;
+	margin: 0;   
+}
+
+div.align-center ul.nav {
+	display: inline-block;
+}

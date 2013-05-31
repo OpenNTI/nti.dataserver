@@ -116,3 +116,8 @@ name: nticard
 	</span>
 	<img src="${self/image/image/url}" height="${self/image/image/height/px}" width="${self/image/image/width/px}" />
 </object>
+
+name: ntinavlist
+<ul class="nav">
+<li tal:repeat="item self" tal:content="item"></li>
+</ul>

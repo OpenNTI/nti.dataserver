@@ -74,6 +74,10 @@ class pageref(Crossref.pageref):
 		return None
 
 
+class ntinavlist(Base.List):
+	pass
+
+
 class ntiincludevideo(_OneText):
 	args = 'video_url'
 
