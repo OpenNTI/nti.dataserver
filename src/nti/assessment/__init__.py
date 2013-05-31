@@ -1,7 +1,10 @@
 #!/usr/bin/env python
-
-from __future__ import print_function, unicode_literals
-
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import unicode_literals, print_function, absolute_import
+__docformat__ = "restructuredtext en"
 
 from . import interfaces
 
@@ -14,21 +17,18 @@ def grade_one_response(questionResponse, possible_answers):
 		`questionResponse` with.
 	"""
 
-	answers = [interfaces.IQLatexSymbolicMathSolution( t ) for t in possible_answers]
+	answers = [interfaces.IQLatexSymbolicMathSolution(t) for t in possible_answers]
 
 	match = False
 	for answer in answers:
-		match = answer.grade( questionResponse )
+		match = answer.grade(questionResponse)
 		if match:
 			return match
 
 	return False
 
-def assess( quiz, responses ):
+def assess(quiz, responses):
 	result = {}
 	for questionId, questionResponse in responses.iteritems():
-		result[questionId] = grade_one_response( questionResponse, quiz[questionId].answers )
+		result[questionId] = grade_one_response(questionResponse, quiz[questionId].answers)
 	return result
-
-#from zope.deprecation import deprecated
-#deprecated( "assess", "Prefer ???")
