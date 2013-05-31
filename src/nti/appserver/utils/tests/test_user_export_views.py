@@ -11,7 +11,7 @@ from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from .test_application import TestApp
+from nti.appserver.tests.test_application import TestApp
 
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS

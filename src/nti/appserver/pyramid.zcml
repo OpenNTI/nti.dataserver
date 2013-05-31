@@ -63,7 +63,6 @@
 	<pyramid:scan package='.feedback_views' />
 	<pyramid:scan package='.invitation_views' />
 	<pyramid:scan package='.dfl_views' />
-	<pyramid:scan package='.user_export_views' />
 	<pyramid:scan package='.store_views' />
 
 	<pyramid:scan package=".link_providers.views" />
@@ -71,4 +70,6 @@
 
 	<pyramid:scan package=".content_card_views" />
 
+	<pyramid:scan package='.utils.user_export_views' />
+	<pyramid:scan package='.utils.store_admin_views' />
 </configure>
