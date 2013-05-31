@@ -1,15 +1,19 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Generic implementations of IContentUnit functions
+
+$Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
 from nti.utils.property import alias
 from nti.contentlibrary.interfaces import IContentUnit, IContentPackage
-
 
 @interface.implementer(IContentUnit)
 class ContentUnit(object):
@@ -33,21 +37,21 @@ class ContentUnit(object):
 	embeddedContainerNTIIDs = ()
 	__parent__ = None
 
-	def __init__( self, **kwargs ):
+	def __init__(self, **kwargs):
 		for k, v in kwargs.items():
 			__traceback_info__ = k, v
-			if hasattr( self, k ):
-				setattr( self, k, v )
-			else: # pragma: no cover
-				logger.warn( "Ignoring unknown key %s = %s", k, v )
+			if hasattr(self, k):
+				setattr(self, k, v)
+			else:  # pragma: no cover
+				logger.warn("Ignoring unknown key %s = %s", k, v)
 
-	__name__ = alias( 'title' )
-	label = alias( 'title' )
+	__name__ = alias('title')
+	label = alias('title')
 
 
-	def __repr__( self ):
+	def __repr__(self):
 		return "<%s.%s '%s' '%s'>" % (self.__class__.__module__, self.__class__.__name__,
-									  self.__name__, getattr( self, 'key', self.href) )
+									  self.__name__, getattr(self, 'key', self.href))
 
 
 @interface.implementer(IContentPackage)
@@ -73,9 +77,9 @@ class ContentPackage(ContentUnit):
 	contributors = ()
 	publisher = ''
 
-	#: A tuple of things thrown by the implementation's
-	#: IO methods that represent transient states that may
-	#: clear up by themself
+	# : A tuple of things thrown by the implementation's
+	# : IO methods that represent transient states that may
+	# : clear up by themself
 	TRANSIENT_EXCEPTIONS = ()
 
 
@@ -86,12 +90,12 @@ class ContentPackage(ContentUnit):
 # with all content units, caching questions for 10 minutes.
 # read_contents is not cached
 import repoze.lru
-_exist_cache = repoze.lru.ExpiringLRUCache( 100000, default_timeout=600 ) # this one is big because each entry is small
-_content_cache = repoze.lru.ExpiringLRUCache( 1000, default_timeout=600 ) # this one is smaller because each entry is bigger
+_exist_cache = repoze.lru.ExpiringLRUCache(100000, default_timeout=600)  # this one is big because each entry is small
+_content_cache = repoze.lru.ExpiringLRUCache(1000, default_timeout=600)  # this one is smaller because each entry is bigger
 
 def _clear_caches():
 	_exist_cache.clear()
 	_content_cache.clear()
 
 import zope.testing.cleanup
-zope.testing.cleanup.addCleanUp( _clear_caches )
+zope.testing.cleanup.addCleanUp(_clear_caches)

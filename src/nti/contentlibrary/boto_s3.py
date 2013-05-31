@@ -1,21 +1,26 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Generic implementations of IContentUnit functions
+
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+import sys
+import gzip
+import datetime
+from cStringIO import StringIO
 
 from zope import interface
 from zope.cachedescriptors.property import Lazy
 
-from cStringIO import StringIO
-import gzip
-import datetime
-import sys
+import repoze.lru
 
 from nti.utils.property import alias
-import repoze.lru
 
 from .interfaces import IS3ContentUnit
 from .interfaces import IS3ContentPackage

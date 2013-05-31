@@ -1,7 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Support for externalizing portions of the library.
+
+$Id$
 """
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from urlparse import urljoin
 import anyjson as json
@@ -147,7 +152,7 @@ from pyramid import traversal
 class _FilesystemContentUnitHrefMapper(object):
 	href = None
 
- 	def __init__( self, unit ):
+	def __init__(self, unit):
 		self.href = interfaces.IContentUnitHrefMapper( unit.key ).href
 
 @component.adapter(interfaces.IFilesystemKey)
@@ -155,7 +160,7 @@ class _FilesystemContentUnitHrefMapper(object):
 class _FilesystemKeyHrefMapper(object):
 	href = None
 
- 	def __init__( self, key ):
+	def __init__(self, key):
 		root_package = traversal.find_interface( key, interfaces.IContentPackage )
 		root_url = '/' + os.path.basename( root_package.dirname ) + '/'
 		__traceback_info__ = key, root_package, root_url
@@ -183,7 +188,7 @@ class _S3ContentPackageExternal(_ContentPackageExternal):
 class _S3ContentUnitHrefMapper(object):
 	href = None
 
- 	def __init__( self, unit ):
+	def __init__(self, unit):
 		self.href = interfaces.IContentUnitHrefMapper( unit.key ).href
 
 @component.adapter(interfaces.IS3Key)
@@ -194,7 +199,7 @@ class _S3KeyHrefMapper(object):
 	"""
 	href = None
 
- 	def __init__( self, key ):
+	def __init__(self, key):
 		# We have to force HTTP here, because using https (or protocol relative)
 		# falls down for the browser: the certs on the CNAME we redirect to, *.s3.aws.amazon.com
 		# don't match for bucket.name host
@@ -212,7 +217,7 @@ class CDNS3KeyHrefMapper(object):
 	"""
 	href = None
 
- 	def __init__( self, key, cdn_cname ):
+	def __init__(self, key, cdn_cname):
 		"""
 		:param string cdn_name: The FQDN where the request should be directed.
 		"""

@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Objects for working with Eclipse index representations of content packages.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 # This module is badly named now
 
