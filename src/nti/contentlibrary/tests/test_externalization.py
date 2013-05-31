@@ -20,9 +20,12 @@ from hamcrest import has_key
 from hamcrest import is_not
 from hamcrest import is_
 
-from nti.contentlibrary import filesystem, boto_s3
+from nti.contentlibrary import filesystem
+from nti.contentlibrary import boto_s3
+from nti.contentlibrary import interfaces
 
 import nti.tests
+from nti.tests import validly_provides
 import nti.contentlibrary
 import nti.externalization
 
@@ -42,9 +45,11 @@ class TestExternalization(TestCase):
 	def test_doesnt_dual_escape(self):
 		unit = filesystem.FilesystemContentPackage(
 			filename='prealgebra/index.html',
-			href = 'index.html',
-			root = 'prealgebra',
-			icon = 'icons/The%20Icon.png' )
+			href='index.html',
+			root='prealgebra' )
+
+		unit.icon = unit.make_sibling_key('icons/The%20Icon.png' )
+		assert_that( unit.icon, validly_provides( interfaces.IDelimitedHierarchyKey ) )
 
 		assert_that( IExternalObject(unit).toExternalObject(),
 					 has_entry( 'icon', '/prealgebra/icons/The%20Icon.png' ) )
@@ -53,13 +58,13 @@ class TestExternalization(TestCase):
 	def _do_test_escape_if_needed( self, factory, key, index='eclipse-toc.xml', archive_unit=None, prefix='', installable=True):
 		unit = factory(
 			key=key,
-			href = 'index.html',
-			root = 'prealgebra',
-			icon = 'icons/The Icon.png',
-			title = 'Prealgebra',
-			installable = archive_unit is not None,
-			archive_unit = archive_unit,
-			index = index )
+			href='index.html',
+			root='prealgebra',
+			title='Prealgebra',
+			installable=archive_unit is not None,
+			archive_unit=archive_unit,
+			index=index )
+		unit.icon = unit.make_sibling_key( 'icons/The Icon.png' )
 
 		if archive_unit:
 			unit.archive_unit.__parent__ = unit

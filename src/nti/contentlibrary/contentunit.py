@@ -25,8 +25,10 @@ class ContentUnit(object):
 
 	ordinal = 1
 	href = None
+	key = None
 	ntiid = None
 	icon = None
+	thumbnail = None
 
 	# DCDescriptiveProperties
 	title = None
@@ -76,6 +78,7 @@ class ContentPackage(ContentUnit):
 	subjects = ()
 	contributors = ()
 	publisher = ''
+	description = ''
 
 	# : A tuple of things thrown by the implementation's
 	# : IO methods that represent transient states that may

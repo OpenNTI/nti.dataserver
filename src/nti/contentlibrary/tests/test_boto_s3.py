@@ -64,7 +64,8 @@ class TestBotoS3(SharedConfiguringTestBase):
 
 		unit.title = 'foo'
 		unit.ntiid = 'baz'
-		unit.icon = 'icon'
+		unit.icon = Key(name='icons/chapters/c1.png')
+		unit.icon.bucket = key.bucket
 		unit.description = 'comment'
 		unit.href = 'index.html'
 

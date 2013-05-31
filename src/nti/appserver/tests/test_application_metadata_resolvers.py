@@ -8,8 +8,8 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import not_none
 from hamcrest import has_length
-
-
+from hamcrest import has_property
+from hamcrest import contains
 from hamcrest import is_not
 does_not = is_not
 
@@ -23,7 +23,6 @@ from nti.contentlibrary import interfaces as lib_interfaces
 from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing.metadata_extractors import get_metadata_from_content_location
 
-from nti.dataserver import authorization as nauth
 
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 from nti.appserver.traversal import find_interface
@@ -40,9 +39,17 @@ class TestApplicationMetadataResolvers(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_metadata_from_ntiid(self):
 		metadata = get_metadata_from_content_location( self.child_ntiid )
-
 		assert_that( metadata, validly_provides( cp_interfaces.IContentMetadata ) )
-		assert_that( metadata.images, has_length( 1 ) )
+		# The URLs are properly mapped
+		assert_that( metadata, has_property( 'contentLocation',
+											 '/WithAssessment/tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_history_and_career_opportuniities.html' ) )
+		# Both a manual icon and a thumbnail are found
+		assert_that( metadata.images, has_length( 2 ) )
+		assert_that( metadata.images, contains( has_property( 'url',
+															  '/WithAssessment/icons/chapters/C1.png' ),
+												has_property( 'url',
+															  '/WithAssessment/thumbnails/tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_history_and_career_opportuniities.png' ) ) )
+
 
 		# The lineage to do ACLs is intact
 		assert_that( find_interface( metadata, lib_interfaces.IContentPackage), is_( not_none() ) )

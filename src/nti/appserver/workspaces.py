@@ -274,7 +274,7 @@ class LibraryCollectionDetailExternalizer(object):
 		# TODO: Standardize the way ACLs are applied during external writing
 		# This is weird and bad: we're overwriting what Library itself does
 		library = self._collection.library
-		return { #'icon': library.icon,
+		return {
 				 'title': "Library",
 				 'titles' : [toExternalObject(x) for x in filter(test, library.titles)] }
 

@@ -35,7 +35,10 @@ MAIN_CSV_CONTENT_GLOSSARY_FILENAME = 'nti_content_glossary.csv'
 ASSESSMENT_INDEX_FILENAME = 'assessment_index.json'
 
 
-_toc_item_attrs = ('NTIRelativeScrollHeight', 'href', 'icon', 'label', 'ntiid',)
+_toc_item_attrs = ('NTIRelativeScrollHeight','label', 'ntiid', 'href')
+# Note that we preserve href as a string, and manually
+# set a 'key' property for BWC
+_toc_item_key_attrs = ('icon','thumbnail')
 
 def _node_get( node, name, default=None ):
 	# LXML defaults to returning ASCII attributes as byte strings
@@ -53,7 +56,16 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 	if node.get( 'sharedWith', '' ):
 		tocItem.sharedWith = _node_get( node, 'sharedWith' ).split( ' ' )
 
+	# Now the things that should be keys
 	tocItem.key = toc_entry.make_sibling_key( tocItem.href )
+	for i in _toc_item_key_attrs:
+		val = _node_get( node, i )
+		if val:
+			# We leave it to the toc_entry to decide if/how
+			# it needs to deal with multi-level keys, either
+			# by creating a hierarchy of keys (filesystem)
+			# or by simply string appending (boto)
+			setattr( tocItem, i, toc_entry.make_sibling_key( val ) )
 
 	children = []
 	for ordinal, child in enumerate(node.iterchildren(tag='topic'), 1):

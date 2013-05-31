@@ -133,10 +133,16 @@ class FilesystemBucket(object):
 		self.__parent__ = parent
 
 	def __eq__(self, other):
-		return self.name == other.name
+		try:
+			return self.name == other.name
+		except AttributeError:
+			return NotImplemented
 
 	def __hash__(self):
 		return hash(self.name)
+
+	def __repr__( self ):
+		return "%s('%s')" % (self.__class__.__name__, self.name.encode('unicode_escape'))
 
 @interface.implementer(IFilesystemKey, IZContained)
 class FilesystemKey(object):
@@ -158,7 +164,7 @@ class FilesystemKey(object):
 
 	@CachedProperty('bucket', 'name')
 	def absolute_path(self):
-		return os.path.join(self.bucket.name, self.name) if self.bucket and self.bucket.name else self.name
+		return os.path.join(self.bucket.name, self.name) if self.bucket and self.bucket.name and self.name is not None else self.name
 
 	def __eq__(self, other):
 		try:
@@ -243,9 +249,12 @@ class FilesystemContentUnit(ContentUnit):
 	def make_sibling_key(self, sibling_name):
 		__traceback_info__ = self.filename, sibling_name
 		key = FilesystemKey(bucket=self.key.bucket, name=sibling_name)
+		# TODO: If we get a multi-level sibling_name (relative/path/i.png),
+		# should we unpack that into a bucket hierarchy? The joining
+		# functions seem to work fine either way
+		# TODO: If we get a URL-encoded key, should we decode it?
 		assert key.absolute_path == os.path.join(os.path.dirname(self.filename), sibling_name)
 		return key
-		# return os.path.join( os.path.dirname( self.filename ), sibling_name )
 
 	@repoze.lru.lru_cache(None, cache=_content_cache)  # first arg is ignored. This caches with the key (self, sibling_name)
 	def _do_read_contents_of_sibling_entry(self, sibling_name):

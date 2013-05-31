@@ -14,6 +14,7 @@ from hamcrest import greater_than
 from hamcrest import has_length
 from hamcrest import has_entry
 from nti.tests import verifiably_provides, SharedConfiguringTestBase
+from nti.tests import validly_provides
 
 from nti.contentlibrary import interfaces, filesystem
 import nti.contentlibrary
@@ -41,7 +42,8 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 
 	def test_adapter_prefs(self):
 		# TODO: This test does not really belong here
-		self.configure_packages( set_up_packages=('nti.appserver',), features=('devmode',) )
+		self.configure_packages( set_up_packages=('nti.appserver',),
+								 features=('devmode',) )
 		import zope.dottedname.resolve as dottedname
 		IPrefs = dottedname.resolve( 'nti.appserver.interfaces.IContentUnitPreferences' )
 
@@ -59,7 +61,13 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 		assert_that( IPrefs( unit ), has_property( '__parent__', unit ) )
 
 	def test_from_filesystem(self):
-		package = filesystem._package_factory( os.path.join( os.path.dirname( __file__ ), 'TestFilesystem' ) )
+
+		package = filesystem._package_factory( os.path.join( os.path.dirname( __file__ ),
+															 'TestFilesystem' ) )
+		assert_that( package.key,
+					 validly_provides( interfaces.IDelimitedHierarchyKey ) )
+		assert_that( package,
+					 validly_provides( interfaces.IFilesystemContentPackage ) )
 		assert_that( package.creators, is_( ('Jason',) ) )
 		assert_that( package.children[-1].children[-1],
 					 has_property( 'embeddedContainerNTIIDs',

@@ -13,6 +13,8 @@ from zope.dublincore import interfaces as dub_interfaces
 
 from nti.utils.schema import Number, ValidTextLine as TextLine
 from nti.utils.schema import IndexedIterable
+from nti.utils.schema import Object
+
 # pylint: disable=E0213,E0211
 
 class IContentPackageLibrary(interface.Interface):
@@ -74,60 +76,16 @@ class IContentPackageLibrary(interface.Interface):
 # stuff be done better? This is mostly an issue with the IContentPackage and its 'root'
 # attribute. That's mostly confined to externalization.py now.
 
-class IContentUnit(IZContained, dub_interfaces.IDCDescriptiveProperties):
-	"""
-	One identified unit of content.
-
-	The ``__parent__`` of this object will be the containing content unit, which
-	will ultimately be the :class:`IContentPackage`; the containing unit of the package
-	will be the :class:`IContentPackageLibrary`.
-	"""
-	ordinal = schema.Int(title="The number (starting at 1) representing which nth child of the parent I am.")
-	href = TextLine(title="URI for the representation of this item.",
-					description="If this unit is within a package, then this is potentially a relative path")
-	ntiid = TextLine(title="The NTIID for this item")
-	title = TextLine(title="The human-readable section name of this item; alias for `__name__`")  # also defined by IDCDescriptiveProperties
-	icon = TextLine(title="URI for an image for this item, or None")
-	children = schema.Iterable(title="Any :class:`IContentUnit` objects this item has.")
-
-	embeddedContainerNTIIDs = IndexedIterable(title="An iterable of NTIIDs of sub-containers embedded via reference in this content",
-											  value_type=TextLine(title="The embedded NTIID"),
-											  unique=True)
-
-
-class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
-	"""
-	An identified collection of content treated as a unit.
-	The package starts with a root unit (this object).
-
-	Typically, this object's ``href`` attribute will end in ``index.html``. The
-	:class:`IContentUnit` objects that reside as children within this object
-	will usually have ``href`` and ``icon`` attributes that are relative to this
-	object's ``root`` (if they are not absolute URLs).
-
-	.. note:: The ``root`` attribute should be considered deprecated, as should
-	all resolving of content relative to it. It will probably be becoming
-	a :class:`IDelimitedHierarchyEntry` object when that stabilizes more.
-	In subintefaces that are :class:`IDelimitedHierarchyEntry`, the root
-	becomes an alias for :meth:`IDelimitedHierarchyEntry.get_parent_key`.
-	"""
-
-	root = interface.Attribute("Path portion of a uri for this object.")
-	index = TextLine(title="Path portion to an XML file representing this content package")
-	index_last_modified = Number(title="Time since the epoch the index for this package was last modified.",
-								 description="This is currently the best indication of when this package as a whole may have changed.",
-								 readonly=True)
-	installable = schema.Bool(title="Whether or not this content package can be installed locally (offline)")
-	archive = TextLine(title="If this content is installable, this is the relative path to a ZIP archive of the content")
-	renderVersion = schema.Int(title="Version of the rendering process that produced this package.",
-							   default=1, min=1)
+# The IDelimitedHierarchy objects are part of an attempt to deal with this.
+# All of the string properties that contain relative paths are
+# considered deprecated
 
 class IDelimitedHierarchyBucket(IZContained):
 	name = TextLine(title="The name of this bucket")
 
 class IDelimitedHierarchyKey(IZContained):
 
-	bucket = schema.Object(IDelimitedHierarchyBucket, title="The bucket to which this key is relative.")
+	bucket = Object(IDelimitedHierarchyBucket, title="The bucket to which this key is relative.")
 	name = TextLine(title="The relative name of this key. Also in `key` and `__name__`.")
 
 class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
@@ -146,7 +104,7 @@ class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
 	the ``__parent__`` attribute.
 	"""
 
-	key = schema.Object(IDelimitedHierarchyKey, title="The key designating this entry in the hierarchy.")
+	key = Object(IDelimitedHierarchyKey, title="The key designating this entry in the hierarchy.")
 
 	def get_parent_key():
 		"""
@@ -185,6 +143,77 @@ class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
 		if it does, a false value if it doesn't.
 		"""
 
+
+class IContentUnit(IZContained, dub_interfaces.IDCDescriptiveProperties):
+	"""
+	One identified unit of content.
+
+	The ``__parent__`` of this object will be the containing content unit, which
+	will ultimately be the :class:`IContentPackage`; the containing unit of the package
+	will be the :class:`IContentPackageLibrary`.
+	"""
+	ordinal = schema.Int(title="The number (starting at 1) representing which nth child of the parent I am.")
+	href = TextLine(title="DEPRECATED URI for the representation of this item.",
+					description="If this unit is within a package, then this is potentially a relative path")
+	key = Object(IDelimitedHierarchyKey,
+				 title="URI for the representation of this item")
+	ntiid = TextLine(title="The NTIID for this item")
+	title = TextLine(title="The human-readable section name of this item; alias for `__name__`")  # also defined by IDCDescriptiveProperties
+	icon = Object(IDelimitedHierarchyKey,
+				  title="URI for an image for this item, typically specially designed",
+				  required=False,
+				  default=None)
+	thumbnail = Object(IDelimitedHierarchyKey,
+					   title="URI for a thumbnail for this item, typically auto-generated",
+					   required=False,
+					   default=None)
+	children = schema.Iterable(title="Any :class:`IContentUnit` objects this item has.")
+
+	embeddedContainerNTIIDs = IndexedIterable(title="An iterable of NTIIDs of sub-containers embedded via reference in this content",
+											  value_type=TextLine(title="The embedded NTIID"),
+											  unique=True)
+
+class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
+	"""
+	An identified collection of content treated as a unit.
+	The package starts with a root unit (this object).
+
+	Typically, this object's ``href`` attribute will end in ``index.html``. The
+	:class:`IContentUnit` objects that reside as children within this object
+	will usually have ``href`` and ``icon`` attributes that are relative to this
+	object's ``root`` (if they are not absolute URLs).
+
+	.. note:: The ``root`` attribute should be considered deprecated, as should
+	all resolving of content relative to it. It will probably be becoming
+	a :class:`IDelimitedHierarchyEntry` object when that stabilizes more.
+	In subintefaces that are :class:`IDelimitedHierarchyEntry`, the root
+	becomes an alias for :meth:`IDelimitedHierarchyEntry.get_parent_key`.
+	"""
+
+	root = Object(IDelimitedHierarchyKey,
+				  title="Path portion of a uri for this object.")
+	index = Object(IDelimitedHierarchyKey,
+				   title="Path portion to an XML file representing this content package")
+	index_jsonp = Object(IDelimitedHierarchyKey,
+						 title="Optional location of a JSONP version of the index.",
+						 required=False,
+						 default=None)
+
+	index_last_modified = Number(title="Time since the epoch the index for this package was last modified.",
+								 description="This is currently the best indication of when this package as a whole may have changed.",
+								 readonly=True)
+	installable = schema.Bool(title="Whether or not this content package can be installed locally (offline)")
+	archive = TextLine(title="DEPRECATED. If this content is installable, this is the relative path to a ZIP archive of the content",
+					   default=None,
+					   required=False)
+	archive_unit = Object(IContentUnit,
+						  title="A child object representing the ZIP archive.",
+						  default=None,
+						  required=False)
+	renderVersion = schema.Int(title="Version of the rendering process that produced this package.",
+							   default=1, min=1)
+
+
 class IDelimitedHierarchyContentUnit(IContentUnit, IDelimitedHierarchyEntry):
 	"""
 	The unification of :class:`IContentUnit` and :class:`IDelimitedHierarchyEntry`, to make writing adapters
@@ -215,13 +244,13 @@ class IS3Key(IDelimitedHierarchyKey):
 		compatible with both :mod:`boto.s3.bucket` and :mod:`boto.file.bucket`.
 	"""
 
-	bucket = schema.Object(IS3Bucket, title="The bucket to which this key belongs")
+	bucket = Object(IS3Bucket, title="The bucket to which this key belongs")
 
 	name = TextLine(title="The name of this key; unique within the bucket; `__name__` and `key` are aliases")
 
 class IS3ContentUnit(dub_interfaces.IDCTimes, IDelimitedHierarchyContentUnit):
 
-	key = schema.Object(IS3Key, title="The key identifying the unit of content this belongs to.")
+	key = Object(IS3Key, title="The key identifying the unit of content this belongs to.")
 	# @deprecated: Prefer IDCTimes
 	lastModified = Number(title="Time since the epoch this unit was last modified.",
 					  	  readonly=True)
@@ -243,7 +272,7 @@ class IFilesystemKey(IDelimitedHierarchyKey):
 	A string, relative to its parent.
 	"""
 
-	bucket = schema.Object(IFilesystemBucket, title="The bucket to which this key belongs")
+	bucket = Object(IFilesystemBucket, title="The bucket to which this key belongs")
 
 	name = TextLine(title="The name of this key; unique within the bucket; `__name__` and `key` are aliases")
 
