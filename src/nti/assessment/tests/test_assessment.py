@@ -4,15 +4,27 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that, is_
 import nti.tests
 
+from nti.tests import validly_provides
+
 import nti.assessment
 
 from nti.assessment import grade_one_response, assess
+from nti.assessment.interfaces import IResponseToSymbolicMathConverter
 from nti.assessment._latexplastexconverter import _mathTexToDOMNodes as mathTexToDOMNodes
 from nti.assessment._latexplastexdomcompare import _mathIsEqual as mathIsEqual
+from nti.assessment._latexplastexconverter import factory
+
 import plasTeX
 
 class TestAssessment(nti.tests.SharedConfiguringTestBase):
 	set_up_packages = (nti.assessment,)
+
+	def test_latex_factory(self):
+		from nti.assessment.response import QTextResponse
+		rsp = QTextResponse('') # Empty
+		assert_that( factory( None, rsp ), validly_provides( IResponseToSymbolicMathConverter ) )
+		rsp = QTextResponse( '1' ) # Non-empty
+		assert_that( factory( None, rsp ), validly_provides( IResponseToSymbolicMathConverter ) )
 
 	def test_mathTexToDOM(self):
 		mathStrings = ['$1$','$1+2$','$\\frac{1}{2}$']

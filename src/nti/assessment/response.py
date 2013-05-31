@@ -9,6 +9,9 @@ __docformat__ = "restructuredtext en"
 from zope import interface
 from persistent import Persistent
 
+from six import text_type
+from six import string_types
+
 from nti.assessment import interfaces
 from nti.assessment._util import TrivialValuedMixin
 
@@ -26,8 +29,10 @@ class QTextResponse(TrivialValuedMixin,QResponse):
 
 	def __init__( self, *args, **kwargs ):
 		super(QTextResponse,self).__init__( *args, **kwargs )
-		if self.value is not None and not isinstance(self.value, basestring):
-			self.value = unicode(str(self.value))
+		if self.value is not None and not isinstance(self.value, string_types):
+			self.value = text_type(self.value)
+		if isinstance(self.value, bytes):
+			self.value = text_type(self.value, 'utf-8')
 
 @interface.implementer(interfaces.IQListResponse)
 class QListResponse(TrivialValuedMixin,QResponse):

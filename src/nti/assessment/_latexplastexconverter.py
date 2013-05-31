@@ -5,14 +5,13 @@ Convenient functions for creating simple math doms from latex expressions.
 
 $Id$
 """
-from __future__ import print_function, absolute_import
+from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
 import sys
 import tempfile
 from StringIO import StringIO
 
-from zope import component
 from zope import interface
 
 from nti.assessment import interfaces
@@ -37,8 +36,8 @@ def _buildDomFromString(docString):
 	return document
 
 def _simpleLatexDocument(maths):
-	doc = r"""\documentclass[12pt]{article} \usepackage{amsmath} \begin{document} """
-	mathString = '\n'.join([str(m) for m in maths])
+	doc = """\\documentclass[12pt]{article} \\usepackage{amsmath} \\begin{document} """
+	mathString = '\n'.join((unicode(m) for m in maths))
 	doc = doc + '\n' + mathString + '\n\\end{document}'
 	return doc
 
@@ -56,7 +55,7 @@ def _mathTexToDOMNodes(maths):
 		# catch it here
 		return ()
 
-	return dom.getElementsByTagName('math')
+	return dom.getElementsByTagName(b'math')
 
 def _response_text_to_latex(response):
 	# Experimentally, plasTeX sometimes has problems with $ display math
@@ -98,6 +97,7 @@ def convert(response):
 			setattr(response, cache_attr, cached_value)
 	return cached_value[1] if cached_value else None
 
+@interface.provider(interfaces.IResponseToSymbolicMathConverter)
 class EmptyResponseConverter(object):
 	"""
 	A converter for empty responses. Returns None, which should then grade out
@@ -108,9 +108,8 @@ class EmptyResponseConverter(object):
 	def convert(cls, response):
 		return None
 
-interface.directlyProvides(EmptyResponseConverter, interfaces.IResponseToSymbolicMathConverter)
 
 def factory(solution, response):
 	return sys.modules[__name__] if response.value else EmptyResponseConverter
 
-component.moduleProvides(interfaces.IResponseToSymbolicMathConverter)
+interface.moduleProvides(interfaces.IResponseToSymbolicMathConverter)
