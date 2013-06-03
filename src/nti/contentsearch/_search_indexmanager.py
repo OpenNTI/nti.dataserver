@@ -38,6 +38,9 @@ class _SearchEntityIndexManager(zcontained.Contained, PersistentMapping):
 	def get_username(self):
 		return self.username
 
+	def query_uid(self, obj):
+		return discriminators.query_uid(obj)
+
 	def get_uid(self, obj):
 		return discriminators.get_uid(obj)
 
