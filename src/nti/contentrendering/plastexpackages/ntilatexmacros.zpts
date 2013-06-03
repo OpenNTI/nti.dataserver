@@ -28,7 +28,7 @@ name: ntivideo
 
 name: ntivideosource
 <object type="application/vnd.nextthought.videosource" tal:attributes="data-priority self/priority; data-width self/width; data-height self/height">
-  <param name="service" tal:attributes="value self/type">
+  <param name="service" tal:attributes="value self/service">
   <param name="source" tal:condition="exists:self/src/other" tal:attributes="value self/src/other">
   <param name="source" tal:condition="exists:self/src/mp4" tal:attributes="value self/src/mp4" data-type="video/mp4">
   <param name="type" tal:condition="exists:self/src/mp4" value="video/mp4">
