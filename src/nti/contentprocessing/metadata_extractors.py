@@ -160,9 +160,7 @@ interface.directlyProvides( _http_scheme_handler, interfaces.IContentMetadataURL
 
 
 def _get_metadata_from_path( location ):
-	result = None
 	mime_type = component.getUtility( mime_interfaces.IMimeTypeGetter )(name=location)
-
 	result, _ = _get_metadata_from_mime_type( location, mime_type, lambda: _file_args(location) )
 
 	if result is not None:
