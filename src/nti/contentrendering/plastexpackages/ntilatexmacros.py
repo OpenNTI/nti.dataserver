@@ -16,6 +16,7 @@ from plasTeX import Base, Command, Environment
 
 from plasTeX.Base import Crossref
 from plasTeX.Base import TextCommand
+from plasTeX.Renderers import render_children
 
 from nti.contentrendering import plastexids
 from nti.contentrendering import interfaces as crd_interfaces
@@ -25,6 +26,8 @@ from nti.contentrendering.plastexpackages.graphicx import includegraphics
 from nti.contentfragments import interfaces as cfg_interfaces
 
 from zope.cachedescriptors.property import readproperty
+
+logger = __import__('logging').getLogger(__name__)
 
 # Monkey patching time
 # SAJ: The following are set to render properly nested HTML.
@@ -101,6 +104,95 @@ class ntiincludevideo(_OneText):
 			self.attributes['poster'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/0.jpg'
 			self.attributes['thumbnail'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/1.jpg'
 		return result
+
+class ntivideoname(Command):
+	unicode = ''
+
+class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
+	args = '[ options:dict ] subtitle:str closed_captions:str'
+	counter = 'ntivideo'
+	blockType = True
+	_ntiid_cache_map_name = '_ntivideo_ntiid_map'
+	_ntiid_allow_missing_title = False
+	_ntiid_suffix = 'ntivideo.'
+	_ntiid_title_attr_name = 'ref'
+	_ntiid_type = 'NTIVideo'
+
+	mimeType = "application/vnd.nextthought.ntivideo"
+
+	creator = None
+	title = 'No Title'
+	subtitle = None
+	closed_caption = None
+	num_sources = 0
+
+	# A Float subclass to get \caption handling
+	class caption(Base.Floats.Caption):
+		counter = 'figure'
+
+	class ntivideosource( Command ):
+		args = '[ options:dict ] service:str id:str'
+
+		poster = None
+		thumbnail = None
+		width = 640
+		height = 480
+		priority = 0
+
+		def digest(self, tokens):
+			"""Handle creating the necessary datastructures for each video type."""
+			super(ntivideo.ntivideosource, self).digest(tokens)
+
+			options = self.attributes['options'] or {}
+
+			self.priority = self.parentNode.num_sources
+			self.parentNode.num_sources += 1
+
+			self.src = {}
+			if self.attributes['service']:
+				if self.attributes['service'] == 'youtube':
+					self.service = 'youtube'
+					self.src['other'] = self.attributes['id']
+					self.width = 640
+					self.height = 360
+					self.poster = '//img.youtube.com/vi/' + self.attributes['id'] + '/0.jpg'
+					self.thumbnail = '//img.youtube.com/vi/' + self.attributes['id'] + '/1.jpg'
+				elif self.attributes['service'] == 'html5':
+					self.service = 'html5'
+					self.src['mp4'] = self.attributes['id'] + '.mp4'
+					self.src['webm'] = self.attributes['id'] + '.webm'
+				else:
+					logger.warning('Unknown video type: %s', self.attributes['type'])
+
+	def digest(self, tokens):
+		res = super(ntivideo, self).digest(tokens)
+		if self.macroMode == self.MODE_BEGIN:
+			options = self.attributes.get( 'options', {} ) or {}
+			__traceback_info__ = options, self.attributes
+
+			if not getattr(self, 'title', ''):
+				raise ValueError("Must specify a title using \\caption")
+
+			if 'creator' in options:
+				self.creator = options['creator']
+		return res
+
+	@readproperty
+	def description(self):
+		texts = []
+		for child in self.allChildNodes:
+			# Try to extract the text children, ignoring the caption and label, etc
+			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
+				texts.append( unicode( child ) )
+
+		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
+
+	@readproperty
+	def video_sources(self):
+		sources = self.getElementsByTagName( 'ntivideosource' )
+		output = render_children( self.renderer, sources )
+		return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
+
 
 class ntilocalvideoname(Command):
 		unicode = ''
@@ -489,6 +581,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 
 def ProcessOptions( options, document ):
 	document.context.newcounter( 'ntilocalvideo' )
+	document.context.newcounter( 'ntivideo' )
 	document.context.newcounter( 'ntivideoroll' )
 	document.context.newcounter( 'ntiimagecollection' )
 	document.context.newcounter( 'nticard' )
