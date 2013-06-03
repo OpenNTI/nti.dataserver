@@ -7,6 +7,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
@@ -51,8 +52,10 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 			containers.addContainer(name, forum, locate=False)
 			containers.addContainer(forum.NTIID, forum, locate=False)
 
-	def _create_note(self, msg, username, containerId=None):
+	def _create_note(self, msg, username, containerId=None, title=None):
 		note = Note()
+		if title:
+			note.title = IPlainTextContentFragment(title)
 		note.body = [unicode(msg)]
 		note.creator = username
 		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
@@ -292,6 +295,30 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		hits = rim.search("light a candle")
 		assert_that(hits, has_length(1))
 
+	@WithMockDSTrans
+	def test_title_indexing(self):
+		username = 'ichigo@bleach.com'
+		user = self._create_user(username=username)
+		note = self._create_note(u'The Asauchi breaks away to reveal Hollow Ichigo.', username, title=u'Zangetsu Gone')
+		note = user.addContainedObject(note)
+
+		rim = search_interfaces.IRepozeEntityIndexManager(user, None)
+		docid = rim.index_content(note)
+		assert_that(docid, is_not(None))
+
+		hits = rim.search('Asauchi')
+		assert_that(hits, has_length(1))
+
+		hits = rim.search('Zangetsu')
+		assert_that(hits, has_length(1))
+
+		rim.delete_content(note)
+
+		hits = rim.search('Asauchi')
+		assert_that(hits, has_length(0))
+
+		hits = rim.search('Zangetsu')
+		assert_that(hits, has_length(0))
 
 from nti.appserver.tests.test_application import SharedApplicationTestBase
 from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS

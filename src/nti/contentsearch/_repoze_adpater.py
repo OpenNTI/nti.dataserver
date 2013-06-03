@@ -175,9 +175,9 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 		return False
 
 	def delete_content(self, data, type_name=None):
-		docid = self.get_uid(data)
+		docid = self.query_uid(data)
 		catalog = self.get_create_catalog(data, type_name, create=False)
-		if catalog:
+		if catalog and docid is not None:
 			catalog.unindex_doc(docid)
 			return True
 		return False
