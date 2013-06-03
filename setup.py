@@ -164,7 +164,7 @@ setup(
 		'umysql == 2.5',
 		'umysqldb >= 1.0.2',
 		'RelStorage >= 1.5.1',
-		'python-memcached >= 1.51',  # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
+		'python-memcached >= 1.52',  # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
 		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
