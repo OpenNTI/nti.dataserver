@@ -21,6 +21,8 @@ try:
 except ImportError:
 	import pickle
 
+import datetime
+
 from ._compat import Implicit
 from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
 from . import _containerIds_from_parent
@@ -40,7 +42,7 @@ from nti.wref import interfaces as wref_interfaces
 from zope.intid.interfaces import IIntIdAddedEvent
 from ZODB.interfaces import IConnection
 
-_NEWEST_TTL = 7 * 24 * 60 * 60 # a week in seconds
+_NEWEST_TTL = datetime.timedelta( days=7 )
 
 @interface.implementer(frm_interfaces.IForum, an_interfaces.IAttributeAnnotatable)
 class Forum(Implicit,

@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger( __name__ )
 
 import uuid
-
+import datetime
 try:
 	import cPickle as pickle
 except ImportError:
@@ -97,7 +97,7 @@ class TestingMappingMeetingStorage(object):
 		if interfaces.IMeeting.providedBy( obj ):
 			return obj
 
-_PRESENCE_TTL = 14 * 24 * 60 * 60 # two weeks in seconds
+_PRESENCE_TTL = datetime.timedelta(days=14)
 
 @interface.implementer( interfaces.IChatserver )
 class Chatserver(object):
@@ -159,7 +159,12 @@ class Chatserver(object):
 
 	def setPresence( self, presence ):
 		presence_ext = pickle.dumps( presence, pickle.HIGHEST_PROTOCOL )
-		return self._redis.setex( 'users/' + presence.username + '/presence', _PRESENCE_TTL, presence_ext )
+		return self._redis.setex( 'users/' + presence.username + '/presence',
+								   # Recall that the timeout argument comes before
+								   # the value argument with StrictRedis, matching
+								   # the redis protocol
+								   _PRESENCE_TTL,
+								   presence_ext )
 
 	def removePresenceOfUser( self, username ):
 		return self._redis.delete( 'users/' + username + '/presence' )

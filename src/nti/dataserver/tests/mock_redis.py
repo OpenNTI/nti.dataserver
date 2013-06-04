@@ -79,3 +79,25 @@ if not hasattr( InMemoryMockRedis, 'lock' ):
 	def _lock(self, *args, **kwargs):
 		return threading.Lock()
 	InMemoryMockRedis.lock = _lock
+
+# Enforce the type of time arguments for some methods
+# that are commonly mixed up (these arguments are
+# ignored my fakeredis)
+from hamcrest import assert_that
+from hamcrest import instance_of
+from hamcrest import greater_than_or_equal_to
+from hamcrest import is_
+from hamcrest import any_of
+import numbers
+import datetime
+def _check_time( time ):
+	assert_that( time, any_of( instance_of( numbers.Rational ),
+							   instance_of( datetime.timedelta) ) )
+	if isinstance( time, numbers.Rational ):
+		assert_that( time, is_( greater_than_or_equal_to( 0 ) ) )
+
+_orig_setex = InMemoryMockRedis.setex
+def _setex( self, name, time, value ):
+	_check_time( time )
+	_orig_setex( self, name, time, value )
+InMemoryMockRedis.setex = _setex
