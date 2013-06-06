@@ -5,7 +5,7 @@ Creates an archive for a book assets.
 
 $Id$
 """
-from __future__ import print_function, absolute_import
+from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
 import os
@@ -29,7 +29,7 @@ logger = __import__('logging').getLogger(__name__)
 WGET_CMD = 'wget -q'
 
 def _execute_cmd(args):
-	cmd = ' '.join(args)
+	cmd = u' '.join(args)
 	retcode = subprocess.call(cmd, shell=True)
 	if retcode != 0:
 		raise Exception("Fail to execute '%s'" % cmd)
@@ -100,7 +100,7 @@ def _process_toc_file(url, out_dir, process_links, toc_file='eclipse-toc.xml'):
 	# By doing this with one expression we can optimize a hair and
 	# make sure not to fetch dups
 	accum = set()
-	e('toc,topic,page,video').map(lambda i,e: _process_node(e, url, out_dir, process_links, accum))
+	e(b'toc,topic,page,video').map(lambda i, e: _process_node(e, url, out_dir, process_links, accum))
 	return True
 
 def _process_node(node, url, out_dir, process_links, set_of_hrefs=None):
@@ -109,9 +109,9 @@ def _process_node(node, url, out_dir, process_links, set_of_hrefs=None):
 	result = True
 	attributes = node.attrib
 
-	attributes_to_inspect = ('icon','thumbnail')
+	attributes_to_inspect = (u'icon', u'thumbnail')
 	if process_links:
-		attributes_to_inspect += ('href','qualifier')
+		attributes_to_inspect += (u'href', u'qualifier')
 
 	# It hurts nothing to actually force_html for all types. If wget
 	# gets a different Content-Type it doesn't try to parse anything
@@ -216,7 +216,7 @@ def _get_file(url, out_dir, target, force_html=False):
 	try:
 		_execute_cmd(args)
 	except:
-		logger.exception( "Failed to fetch %s", url )
+		logger.exception("Failed to fetch %s", url)
 
 	target = os.path.split(target)[1]
 	return os.path.exists(os.path.join(out_dir, target))
