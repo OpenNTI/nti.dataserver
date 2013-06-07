@@ -16,7 +16,7 @@ import sys
 import glob
 import zipfile
 
-BLACK_LIST = (r'.*\.jsonp', r'indexdir', r'cache-manifest', r'archive\.zip')
+BLACK_LIST = (r'.*\.jsonp', r'indexdir', r'cache-manifest', r'archive\.zip', r'htaccess')
 BLACK_LIST_RE = tuple([re.compile(x) for x in BLACK_LIST])
 
 def is_black_listed(name):
@@ -32,6 +32,8 @@ def archive(source_path, out_dir=None):
 		os.makedirs(out_dir)
 
 	outfile = os.path.join(out_dir, 'archive.zip')
+	logger.info("Archiving '%s' to '%s'", source_path, outfile)
+
 	zf = zipfile.ZipFile(outfile, mode="w")
 	try:
 		source_path = os.path.expanduser(source_path)
@@ -40,15 +42,16 @@ def archive(source_path, out_dir=None):
 
 		def _process(path):
 			pattern = os.path.join(path, "*")
-			for name in glob.glob(pattern):
+			for pathname in glob.glob(pattern):
+				name = os.path.basename(pathname)
 				if is_black_listed(name):
 					continue
-				pathname = os.path.join(path, name)
 				if os.path.isdir(pathname):
 					_process(pathname)
 				else:
-					arcname = pathname[len(source_path)]
+					arcname = pathname[len(source_path):]
 					zf.write(pathname, arcname=arcname, compress_type=zipfile.ZIP_DEFLATED)
+		_process(source_path)
 	finally:
 		zf.close()
 
