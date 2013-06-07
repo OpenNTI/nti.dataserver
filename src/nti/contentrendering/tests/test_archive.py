@@ -11,10 +11,13 @@ import os
 import shutil
 import tempfile
 
+from zope import component
+
 from .. import archive
+from .. import interfaces
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, has_length, is_in)
+from hamcrest import (assert_that, has_length, is_in, is_not, none)
 
 class TestArchive(ConfiguringTestBase):
 
@@ -25,9 +28,13 @@ class TestArchive(ConfiguringTestBase):
 	def tearDown(self):
 		shutil.rmtree( self.temp_dir )
 
+	def test_utility(self):
+		u = component.queryUtility(interfaces.IRenderedBookArchiver)
+		assert_that(u, is_not(none))
+
 	def test_archive_biology(self):
 		source_path = os.path.join(os.path.dirname(__file__), 'intro-biology-rendered-book')
-		added = archive.archive(source_path, self.temp_dir)
+		added = archive._archive(source_path, self.temp_dir)
 		assert_that(added, has_length(39))
 		assert_that('eclipse-toc.xml', is_in(added))
 		assert_that('icons/chapters/C2.png', is_in(added))

@@ -34,14 +34,16 @@
 	<utility component=".sectionvideoadder.YouTubeRelatedVideoAdder"
 			 name="YouTubeRelatedVideoAdder" />
 
+	<utility component=".archive" provides=".interfaces.IRenderedBookArchiver" />
+			 
 	<!-- Content fragments and conversion, mime types -->
+	
 	<include package="nti.contentfragments" />
 
 	<!-- icon and image finders for testing book -->
-	<adapter factory=".tociconsetter.SimpleConventionIconFinder"
-			 name="testing" />
-	<adapter factory=".tociconsetter.SimpleConventionBackgroundImageFinder"
-			 name="testing" />
+	
+	<adapter factory=".tociconsetter.SimpleConventionIconFinder" name="testing" />
+	<adapter factory=".tociconsetter.SimpleConventionBackgroundImageFinder" name="testing" />
 
 	<include package=".transforms" />
 	<include package=".contentchecks" />

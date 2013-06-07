@@ -16,8 +16,14 @@ import sys
 import glob
 import zipfile
 
+from zope import interface
+
+from nti.contentrendering import interfaces as cr_interfaces
+
 BLACK_LIST = (r'.*\.jsonp', r'indexdir', r'cache-manifest', r'archive\.zip', r'htaccess')
 BLACK_LIST_RE = tuple([re.compile(x) for x in BLACK_LIST])
+
+interface.moduleProvides(cr_interfaces.IRenderedBookArchiver)
 
 def is_black_listed(name):
 	for pattern in BLACK_LIST_RE:
@@ -25,9 +31,9 @@ def is_black_listed(name):
 			return True
 	return False
 
-def archive(source_path, out_dir=None):
+def _archive(source_path, out_dir=None):
 	added = set()
-	out_dir = out_dir or '/tmp/mirror'
+	out_dir = out_dir or source_path
 	out_dir = os.path.expanduser(out_dir)
 	if not os.path.exists(out_dir):
 		os.makedirs(out_dir)
@@ -59,12 +65,16 @@ def archive(source_path, out_dir=None):
 
 	return added
 
+def archive(book):
+	location = os.path.expanduser(book.contentLocation)
+	return _archive(location)
+
 def main():
 	args = sys.argv[1:]
 	if args:
 		source_path = args.pop(0)
-		out_dir = args.pop(0) if args else "/tmp/mirror"
-		archive(source_path, out_dir)
+		out_dir = args.pop(0) if args else None
+		_archive(source_path, out_dir)
 	else:
 		print("Syntax PATH [output directory]")
 		print("python archive.py ~/books/prealgebra /tmp/prealgebra")

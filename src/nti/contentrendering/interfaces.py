@@ -117,6 +117,18 @@ class IRenderedBookValidator(interface.Interface):
         :return: Undefined.
 		"""
 
+class IRenderedBookArchiver(interface.Interface):
+	"""
+	Given a :class:`IRenderedBook`, it creates an offline archive.
+	"""
+
+	def archive(book):
+		"""
+		Perform the book archiving.
+
+		:param book: The :class:`IRenderedBook`.
+		"""
+
 class IStaticRelatedItemsAdder(IRenderedBookTransformer):
 	"""
 	Transforms the book's TOC by adding related items mined from
