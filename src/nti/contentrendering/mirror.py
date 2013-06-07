@@ -105,7 +105,9 @@ def _process_toc_file(url, out_dir, process_links, toc_file='eclipse-toc.xml'):
 
 def _process_node(node, url, out_dir, process_links, set_of_hrefs=None):
 	# note things we've fetched (minus fragments) and don't fetch again
-	if set_of_hrefs is None: set_of_hrefs = set()
+	if set_of_hrefs is None:
+		set_of_hrefs = set()
+
 	result = True
 	attributes = node.attrib
 
@@ -121,7 +123,7 @@ def _process_node(node, url, out_dir, process_links, set_of_hrefs=None):
 		value = attributes.get(name, None)
 		# strip the fragment, if any
 		try:
-			value = value[0:value.index('#')]
+			value = value[0:value.index('#')] if value else None
 		except (ValueError, AttributeError):
 			pass
 
