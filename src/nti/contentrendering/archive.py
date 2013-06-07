@@ -26,6 +26,7 @@ def is_black_listed(name):
 	return False
 
 def archive(source_path, out_dir=None):
+	added = set()
 	out_dir = out_dir or '/tmp/mirror'
 	out_dir = os.path.expanduser(out_dir)
 	if not os.path.exists(out_dir):
@@ -50,12 +51,13 @@ def archive(source_path, out_dir=None):
 					_process(pathname)
 				else:
 					arcname = pathname[len(source_path):]
+					added.add(arcname)
 					zf.write(pathname, arcname=arcname, compress_type=zipfile.ZIP_DEFLATED)
 		_process(source_path)
 	finally:
 		zf.close()
 
-	return outfile
+	return added
 
 def main():
 	args = sys.argv[1:]
