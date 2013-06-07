@@ -17,6 +17,7 @@ import glob
 import zipfile
 
 from zope import interface
+from zope import component
 
 from nti.contentrendering import interfaces as cr_interfaces
 
@@ -69,6 +70,13 @@ def archive(book):
 	location = os.path.expanduser(book.contentLocation)
 	return _archive(location)
 
+def create_archive(book, name=u''):
+	archiver = component.queryUtility(cr_interfaces.IRenderedBookArchiver, name=name)
+	if archiver is None:
+		archiver = component.getUtility(cr_interfaces.IVideoTranscriptIndexer)
+	result = archiver.archive(book)
+	return result
+	
 def main():
 	args = sys.argv[1:]
 	if args:

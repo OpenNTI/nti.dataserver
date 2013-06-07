@@ -30,7 +30,7 @@ class TestArchive(ConfiguringTestBase):
 
 	def test_utility(self):
 		u = component.queryUtility(interfaces.IRenderedBookArchiver)
-		assert_that(u, is_not(none))
+		assert_that(u, is_not(none()))
 
 	def test_archive_biology(self):
 		source_path = os.path.join(os.path.dirname(__file__), 'intro-biology-rendered-book')
