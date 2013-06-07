@@ -191,7 +191,7 @@ setup(
 		'feedgenerator == 1.6',
 		'futures >= 2.1.3',
 		# 'gevent == 1.0rc1', Coming from requirements.txt right now
-		'greenlet >= 0.4.0',
+		'greenlet >= 0.4.1',
 		'gunicorn >= 0.17.4',
 		'hiredis >= 0.1.1',  # Redis C parser
 		# HTML5 parsing library
