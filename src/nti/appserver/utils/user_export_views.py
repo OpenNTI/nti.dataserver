@@ -7,6 +7,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+from io import BytesIO
 from datetime import datetime
 from cStringIO import StringIO
 
@@ -20,8 +21,8 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.users import index as user_index
 from nti.dataserver import interfaces as nti_interfaces
 
-def _write_generator(generator):
-	sio = StringIO()
+def _write_generator(generator, use_bytes=False):
+	sio = StringIO() if not use_bytes else BytesIO
 	for line in generator():
 		sio.write(line)
 		sio.write("\n")
