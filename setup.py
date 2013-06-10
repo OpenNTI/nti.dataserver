@@ -398,7 +398,7 @@ setup(
 			'logilab_astng >= 0.24.3',
 			'pip >= 1.3.1',
 			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
-			'pudb >= 2013.3',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
+			'pudb >= 2013.2',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 0.28.0' if not IS_PYPY else '',
 			'pyramid_debugtoolbar >= 1.0.6',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
