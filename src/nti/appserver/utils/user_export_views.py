@@ -157,7 +157,7 @@ def _get_user_objects(user, mime_types=(), broken=False):
 					yield obj, obj
 
 @view_config(route_name='objects.generic.traversal',
-			 name='user_export_objects',
+			 name='export_user_objects',
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
 def user_export_objects(request):
