@@ -122,11 +122,13 @@ class IRenderedBookArchiver(interface.Interface):
 	Given a :class:`IRenderedBook`, it creates an offline archive.
 	"""
 
-	def archive(book):
+	def archive(book, out_dir=None, verbose=False):
 		"""
 		Perform the book archiving.
 
 		:param book: The :class:`IRenderedBook`.
+		:param out_dir: The output directory
+		:param verbose: Verbose mode
 		"""
 
 class IStaticRelatedItemsAdder(IRenderedBookTransformer):
