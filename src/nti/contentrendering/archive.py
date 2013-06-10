@@ -12,9 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 
 import re
 import os
-import sys
 import glob
 import zipfile
+import argparse
 
 from zope import interface
 from zope import component
@@ -32,7 +32,7 @@ def is_black_listed(name):
 			return True
 	return False
 
-def _archive(source_path, out_dir=None):
+def _archive(source_path, out_dir=None, verbose=False):
 	added = set()
 	out_dir = out_dir or source_path
 	out_dir = os.path.expanduser(out_dir)
@@ -59,6 +59,8 @@ def _archive(source_path, out_dir=None):
 				else:
 					arcname = pathname[len(source_path):]
 					added.add(arcname)
+					if verbose:
+						print("Adding %s" % arcname)
 					zf.write(pathname, arcname=arcname, compress_type=zipfile.ZIP_DEFLATED)
 		_process(source_path)
 	finally:
@@ -66,26 +68,48 @@ def _archive(source_path, out_dir=None):
 
 	return added
 
-def archive(book):
+def archive(book, out_dir=None, verbose=False):
 	location = os.path.expanduser(book.contentLocation)
-	return _archive(location)
+	return _archive(location, out_dir, verbose)
 
-def create_archive(book, name=u''):
+def create_archive(book, out_dir=None, verbose=False, name=u''):
 	archiver = component.queryUtility(cr_interfaces.IRenderedBookArchiver, name=name)
 	if archiver is None:
-		archiver = component.getUtility(cr_interfaces.IVideoTranscriptIndexer)
-	result = archiver.archive(book)
+		archiver = component.queryUtility(cr_interfaces.IRenderedBookArchiver)
+	result = archiver.archive(book, out_dir, verbose)
 	return result
 	
 def main():
-	args = sys.argv[1:]
-	if args:
-		source_path = args.pop(0)
-		out_dir = args.pop(0) if args else None
-		_archive(source_path, out_dir)
-	else:
-		print("Syntax PATH [output directory]")
-		print("python archive.py ~/books/prealgebra /tmp/prealgebra")
+	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
+
+	def register():
+		from zope.configuration import xmlconfig
+		from zope.configuration.config import ConfigurationMachine
+		from zope.configuration.xmlconfig import registerCommonDirectives
+		context = ConfigurationMachine()
+		registerCommonDirectives(context)
+
+		import nti.contentrendering as contentrendering
+		xmlconfig.file("configure.zcml", contentrendering, context=context)
+	register()
+
+	arg_parser = argparse.ArgumentParser(description="Archive book content")
+	arg_parser.add_argument('content_path', help="Book content path")
+	arg_parser.add_argument("-o", "--outdir", dest='out_dir', help="Output directory")
+	arg_parser.add_argument('-a', '--archiver', dest='archiver', help="The archiver name")
+	arg_parser.add_argument('-v', '--verbose', help="Verbose output", action='store_true', dest='verbose')
+	args = arg_parser.parse_args()
+
+	verbose = args.verbose
+	archiver = args.archiver or u''
+	content_path = os.path.expanduser(args.content_path)
+	jobname = os.path.basename(content_path)
+	out_dir = args.out_dir or content_path
+
+	document = EmptyMockDocument()
+	document.userdata['jobname'] = jobname
+	book = NoConcurrentPhantomRenderedBook(document, content_path)
+	create_archive(book, out_dir, verbose, archiver)
 
 if __name__ == '__main__':
 	main()
