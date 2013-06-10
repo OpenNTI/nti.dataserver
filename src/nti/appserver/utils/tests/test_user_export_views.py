@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 
+from nti.dataserver.contenttypes import Note
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.appserver.tests.test_application import TestApp
@@ -16,7 +17,7 @@ from nti.appserver.tests.test_application import TestApp
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length)
+from hamcrest import (assert_that, is_, has_length, has_entry, greater_than)
 
 class TestApplicationUserExporViews(SharedApplicationTestBase):
 
@@ -73,3 +74,21 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 			assert_that(split, has_length(6))
 			if idx > 0:
 				assert_that(split[-1], is_('True'))
+
+	@WithSharedApplicationMockDS
+	def test_user_export_objects(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user(external_value={u'email':u"nti@nt.com", u'opt_in_email_communication':True})
+			note = Note()
+			note.body = [u'bankai']
+			note.creator = user
+			note.containerId = u'mycontainer'
+			note = user.addContainedObject(note)
+
+		testapp = TestApp(self.app)
+		environ = self._make_extra_environ()
+		path = '/dataserver2/@@user_export_objects'
+		res = testapp.get(path, extra_environ=environ)
+		assert_that(res.status_int, is_(200))
+		assert_that(res.headers, has_entry('Content-Encoding', 'gzip'))
+		assert_that(res.headers, has_entry('Content-Length', greater_than(500)))

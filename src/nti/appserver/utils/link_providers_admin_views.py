@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Store admin views
+Link providers admin views
 
 $Id$
 """
@@ -9,8 +9,6 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
-import simplejson
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
@@ -20,6 +18,7 @@ from zope.annotation import IAnnotations
 from pyramid.security import authenticated_userid
 
 from nti.appserver import logon
+from nti.appserver.utils import _JsonBodyView
 from nti.appserver.link_providers import link_provider
 
 from nti.dataserver import users
@@ -38,17 +37,7 @@ _post_view_defaults['request_method'] = 'POST'
 _admin_view_defaults = _post_view_defaults.copy()
 _admin_view_defaults['permission'] = nauth.ACT_MODERATE
 
-class _PostView(object):
-
-	def __init__(self, request):
-		self.request = request
-
-	def readInput(self):
-		request = self.request
-		values = simplejson.loads(unicode(request.body, request.charset))
-		return values
-
-class _ResetGenerationLink(_PostView):
+class _ResetGenerationLink(_JsonBodyView):
 
 	link_id = u''
 	link_name = u''
