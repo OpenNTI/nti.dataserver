@@ -7,10 +7,14 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import gzip
+import simplejson
 from io import BytesIO
 from datetime import datetime
 from cStringIO import StringIO
+from collections import defaultdict
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
@@ -32,6 +36,8 @@ from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DM
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_json_representation_externalized
+
+from nti.appserver.utils import _JsonBodyView
 
 # user_info_extract
 
@@ -125,9 +131,21 @@ def user_opt_in_email_communication(request):
 
 _transcript_mime_type = u'application/vnd.nextthought.transcript'
 
+def _is_true(v):
+	return v and v.lower() in ('1', 'true', 'yes')
+
 def _get_mime_type(x):
 	mt = getattr(x, "mimeType", getattr(x, 'mime_type', None))
 	return mt
+
+def _parse_mime_types(value):
+	mime_types = set(value.split(','))
+	if '*/*' in mime_types:
+		mime_types = ()
+	elif mime_types:
+		mime_types = {e.strip().lower() for e in mime_types}
+		mime_types.discard(u'')
+	return mime_types
 
 def _get_user_objects(user, mime_types=(), broken=False):
 
@@ -161,34 +179,90 @@ def _get_user_objects(user, mime_types=(), broken=False):
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
 def user_export_objects(request):
-		values = request.params
-		username = values.get('username', authenticated_userid(request))
+	values = request.params
+	username = values.get('username', authenticated_userid(request))
+	user = users.User.get_user(username)
+	if not user:
+		raise hexc.HTTPNotFound(detail='User not found')
+
+	mime_types = values.get('mime_types', u'')
+	mime_types = _parse_mime_types(mime_types)
+
+	stream = BytesIO()
+	gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
+
+	response = request.response
+	response.content_encoding = b'gzip'
+	response.content_type = b'application/json; charset=UTF-8'
+	response.content_disposition = b'attachment; filename="objects.txt.gz"'
+	def _generator():
+		for obj, _ in _get_user_objects(user, mime_types):
+			external = to_json_representation_externalized(obj)
+			yield external
+
+	_write_generator(_generator, gzstream, seek0=False)
+	gzstream.close()
+	stream.seek(0)
+	response.body_file = stream
+	return response
+
+@view_config(route_name='objects.generic.traversal',
+			 name='delete_user_objects',
+			 request_method='POST',
+			 permission=nauth.ACT_MODERATE)
+class DeleteObjectObjects(_JsonBodyView):
+	
+	def __call__(self):
+		values = self.readInput()
+		username = values.get('username', authenticated_userid(self.request))
 		user = users.User.get_user(username)
 		if not user:
 			raise hexc.HTTPNotFound(detail='User not found')
 
-		mime_types = values.get('mime_types', u'')
-		mime_types = set(mime_types.split(','))
-		if '*/*' in mime_types:
-			mime_types = ()
-		elif mime_types:
-			mime_types = {e.strip().lower() for e in mime_types}
-			mime_types.discard(u'')
+		broken = _is_true(values.get('broken',))
+		mime_types = _parse_mime_types(values.get('mime_types', u''))
 
-		stream = BytesIO()
-		gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
+		broken_objects = set()
+		counter_map = defaultdict(int)
+		for _, obj in list(_get_user_objects(user, mime_types, broken)):
+			if ZODB.interfaces.IBroken.providedBy(obj):
+				oid = getattr(obj, 'oid', None)
+				pid = getattr(obj, '_p_oid', None)
+				if pid:
+					broken_objects.add(pid)
+				if oid:
+					broken_objects.add(oid)
+			else:
+				mime_type = _get_mime_type(obj)
+				with user.updates():
+					objId = obj.id
+					containerId = obj.containerId
+					obj = user.getContainedObject(containerId, objId)
+					if obj is not None and user.deleteContainedObject(containerId, objId):
+						counter_map[mime_type] = counter_map[mime_type] + 1
+						
+		
+		if broken_objects:
+			for container in list(user.containers.values()):
+				for _, obj in list(container.items()):
 
-		response = request.response
-		response.content_encoding = b'gzip'
-		response.content_type = b'text/html; charset=UTF-8'
-		response.content_disposition = b'attachment; filename="objects.txt.gz"'
-		def _generator():
-			for obj, _ in _get_user_objects(user, mime_types):
-				external = to_json_representation_externalized(obj)
-				yield external
+					broken = getattr(obj, 'oid', None) in broken_objects or \
+					  		 getattr(obj, '_p_oid', None) in broken_objects
 
-		_write_generator(_generator, gzstream, seek0=False)
-		gzstream.close()
-		stream.seek(0)
-		response.body_file = stream
+					if not broken:
+						strong = obj if not callable(obj) else obj()
+						broken = strong is not None and \
+								 getattr(strong, 'oid', None) in broken_objects and \
+								 getattr(strong, '_p_oid', None) in broken_objects
+						if broken:
+							obj = strong
+
+					if broken:
+						counter_map['broken'] = counter_map['broken'] + 1
+						user.containers._v_removeFromContainer(container, obj)
+
+
+		response = self.request.response
+		response.content_type = b'application/json; charset=UTF-8'
+		response.body = simplejson.dumps(counter_map)
 		return response

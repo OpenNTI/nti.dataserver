@@ -80,7 +80,7 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 				assert_that(split[-1], is_('True'))
 
 	@WithSharedApplicationMockDS
-	def test_user_export_objects(self):
+	def test_export_user_objects(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user(external_value={u'email':u"nti@nt.com", u'opt_in_email_communication':True})
 			note = Note()
@@ -91,7 +91,7 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 
 		testapp = TestApp(self.app)
 		environ = self._make_extra_environ()
-		path = '/dataserver2/@@user_export_objects'
+		path = '/dataserver2/@@export_user_objects'
 		res = testapp.get(path, extra_environ=environ)
 		assert_that(res.status_int, is_(200))
 		assert_that(res.headers, has_entry('Content-Encoding', 'gzip'))
@@ -101,3 +101,22 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 		stream = gzip.GzipFile(fileobj=stream, mode="rb")
 		d = simplejson.load(stream)
 		assert_that(d, has_entry(u'body', [u'bankai']))
+		
+	@WithSharedApplicationMockDS
+	def test_delete_user_objects(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user(external_value={u'email':u"nti@nt.com", u'opt_in_email_communication':True})
+			note = Note()
+			note.body = [u'bankai']
+			note.creator = user
+			note.containerId = u'mycontainer'
+			note = user.addContainedObject(note)
+
+		testapp = TestApp(self.app)
+		environ = self._make_extra_environ()
+		path = '/dataserver2/@@delete_user_objects'
+		res = testapp.post(path, extra_environ=environ)
+		assert_that(res.status_int, is_(200))
+		d = simplejson.loads(res.body)
+		assert_that(d, has_entry(u"application/vnd.nextthought.note", 1))
+
