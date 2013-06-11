@@ -181,7 +181,7 @@ def user_export_objects(request):
 		response = request.response
 		response.content_encoding = b'gzip'
 		response.content_type = b'text/html; charset=UTF-8'
-		response.content_disposition = b'attachment; filename="objects.txt"'
+		response.content_disposition = b'attachment; filename="objects.txt.gz"'
 		def _generator():
 			for obj, _ in _get_user_objects(user, mime_types):
 				external = to_json_representation_externalized(obj)
