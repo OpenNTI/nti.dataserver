@@ -21,7 +21,6 @@ entry_points = {
 		"nti_update_object = nti.dataserver.utils.nti_update_object:main",
 		"nti_export_entities = nti.dataserver.utils.nti_export_entities:main",
 		"nti_set_user_attribute = nti.dataserver.utils.nti_set_user_attribute:main",
-		"nti_delete_user_objects = nti.dataserver.utils.nti_delete_user_objects:main",
 		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
 		"nti_index_listener = nti.appserver.application:index_listener_main",
 		"nti_reindex_entity_content = nti.contentsearch.utils.nti_reindex_entity_content:main",
