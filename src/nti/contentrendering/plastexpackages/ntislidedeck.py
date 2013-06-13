@@ -4,6 +4,7 @@ from __future__ import print_function, unicode_literals
 from nti.contentrendering import plastexids
 from nti.contentrendering.plastexpackages.graphicx import includegraphics
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
+from nti.contentrendering.plastexpackages.ntilatexmacros import ntivideo
 from nti.contentfragments import interfaces as cfg_interfaces
 from plasTeX.Base import Command
 from plasTeX.Base import Crossref
@@ -11,6 +12,11 @@ from plasTeX.Base import Environment
 from plasTeX.Base import Float
 from plasTeX.Base import Floats
 from plasTeX.Base import List
+from plasTeX.Renderers import render_children
+
+from zope.cachedescriptors.property import readproperty
+
+logger = __import__('logging').getLogger(__name__)
 
 def _timeconvert( timestring ):
 	"""Convert a time in the form HH:MM:SS, with hours and minutes optional, to seconds."""
@@ -122,6 +128,7 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	type = 'local'
 	title = 'No Title'
 	show_video = False
+	thumbnail = None
 
 	mimeType = 'application/vnd.nextthought.ntislidevideo'
 	itemprop = 'nti-slide-video-card'
@@ -142,25 +149,42 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 			if 'show-video' in options:
 				self.show_video = options['show-video']
 
-			video = self.getElementsByTagName( 'ntiincludevideo' )[0]
-			self.type = video.attributes['service']
-			self.provider_id = video.attributes['video_id']
-			self.thumbnail = video.attributes['thumbnail']
-			self.video_url = video.attributes['video_url']
-			self.id = video.id
+			video_els = self.getElementsByTagName( 'ntiincludevideo' )
+			if video_els:
+				multimedia = ntivideo()
+				multimedia.title = self.title
+				multimedia.creator = self.creator
+				
+				multimedia_source = ntivideo.ntivideosource()
+				multimedia_source.service = video_els[0].attributes['service']
+				multimedia_source.src = {}
+				multimedia_source.src['other'] = video_els[0].attributes['video_id']
+				multimedia_source.thumbnail = video_els[0].attributes['thumbnail']
+
+				multimedia.append(multimedia_source)
+				multimedia.num_sources +=1
+				self.append(multimedia)
+
+			# Populate our thumbnail attribute. This is probably not the best way...
+			video_source_els = self.getElementsByTagName( 'ntivideosource' )
+			for video_source_el in video_source_els:
+				if video_source_el.thumbnail is not None:
+			       		self.thumbnail = video_source_el.thumbnail
 
 		return res
 
 	@property
 	def description(self):
-		texts = []
-		for child in self.allChildNodes:
-			# Try to extract the text children, ignoring the caption and label, etc
-			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
-				texts.append( unicode( child ) )
+		els = self.getElementsByTagName( 'ntivideo' )
+		if(els):
+			return els[0].description
+		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( '' ) )
 
-		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
-
+	@readproperty
+        def media_sources(self):
+                sources = self.getElementsByTagName( 'ntivideo' )
+                output = render_children( self.renderer, sources )
+                return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
 
 class ntislidename(Command):
         unicode = ''
