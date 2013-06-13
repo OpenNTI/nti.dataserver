@@ -23,8 +23,5 @@ class ISalesforceApplication(interface.Interface):
     ClientSecret = nti_schema.ValidTextLine(title='Client secret', required=True)
     SecurityToken = nti_schema.ValidTextLine(title='Security token', required=True)
 
-class ISalesforceUser(interface.interface):
-    pass
-
-class IChatter(ISalesforceUser):
+class IChatter(interface.interface):
     pass
