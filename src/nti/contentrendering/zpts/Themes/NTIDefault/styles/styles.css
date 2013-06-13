@@ -47,9 +47,6 @@
 	padding-bottom: 1em;
 	padding-left: 3em;
 	padding-right: 3em;
-	border-left-style: solid;
-	border-left-width: 0.3em;
-	border-left-color: rgba(100, 100, 100, 0.3);
 	background-color: rgba(235, 235, 235, 0.3);
 }
 
