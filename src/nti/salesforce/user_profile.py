@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Salesforce user
+Salesforce user profile
 
 $Id$
 """
