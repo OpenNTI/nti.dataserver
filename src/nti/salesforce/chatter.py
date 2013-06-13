@@ -57,6 +57,12 @@ class Chatter(object):
 		self.user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 
 	@property
+	def app(self):
+		# TODO: we should select the application based on a given context
+		utils = list(component.getUtilitiesFor(sf_interfaces.ISalesforceApplication))
+		return utils[0][1] if utils else None
+
+	@property
 	def profile(self):
 		return sf_interfaces.ISalesforceUserProfile(self.user)
 
