@@ -15,6 +15,7 @@ from zope import component
 from zope import interface
 from zope.annotation import factory as an_factory
 
+from nti.dataserver.users import user_profile
 from nti.dataserver import interfaces as nti_interfaces
 
 from . import interfaces as sf_interfaces
@@ -40,6 +41,28 @@ class Chatter(object):
 
 	access_token = property(lambda s: s._v_access_token, lambda s, x: setattr(s ,'_v_access_token',x))
 	instance_url = property(lambda s: s._v_instance_url, lambda s, x: setattr(s , '_v_instance_url', x))
+
+
+@component.adapter(sf_interfaces.ISalesforceUser)
+@interface.implementer(sf_interfaces.ISalesforceUserProfile)
+class SalesforceUserProfile(user_profile.EmailRequiredUserProfile):
+	
+	_sf_username = None
+	_sf_password = None
+	
+	@property
+	def context(self):
+		return self.__parent__
+	
+	def get_sf_username(self):
+		result = self.context.username if not self._sf_username else self._sf_username
+		return result
+	sf_username = property(get_sf_username, lambda s, x: setattr(s, '_sf_username', x))
+	
+	def get_sf_password(self):
+		result = self.context.password if not self._sf_password else self._sf_password
+		return result
+	sf_password = property(get_sf_password, lambda s, x: setattr(s, '_sf_password', x))
 
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(sf_interfaces.ISalesforceUser)
