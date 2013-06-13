@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Stripe purchase functionalilty.
+Stripe subscribers.
 
-$Id: stripe_processor.py 18358 2013-04-18 00:59:10Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
