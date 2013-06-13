@@ -11,4 +11,6 @@
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.ISalesforceUserProfile" />
 
+	<subscriber handler=".subscribers.question_assessed" />
+	
 </configure>
