@@ -13,10 +13,24 @@ Dependencies (macports):
 - libmemcached		# 2012-02-24, 1.0.4 (Optional)
 - mysql5-devel		# "", When you install, link mysql_config5 to mysql_config, try it with configure.compiler=llvm-gcc-4.2 if fail w/o (Optional)
 
+- gsed				# 2013-06-12
+- spidermonkey		# 2013-06-122 install as spidermonkey +fileobject
+- jslint			# 2013-06-12
+- libxml2			# 2013-06-12
+- pkgconfig			# 2013-06-12
+- npm				# 2013-06-12
+- redis				# 2013-06-12
+- SuiteSparse		# 2013-06-12
+- swig-python		# 2013-06-12
+- subversion		# 2013-06-12  (Optional)
+- git-core 			# 2013-06-12  (Optional) install as git-core +subversion
+
 Dependencies for content generation:
 - Full TeX distribution (including extras) - macports
 	- asymptote
-	- graphviz
+	- graphviz-devel
+	- libpng
+	- freetype
 	- pngcrush
 	- texlive
 	- texlive-latex
@@ -33,7 +47,7 @@ Dependencies for content generation:
 	- wget
 	- xpdf (optional)
 
-- phantomjs >= 1.5
+- phantomjs >= 1.9
   http://phantomjs.org, download and place the phantomjs command somewhere on your path, e.g., 
   ~/bin/
 

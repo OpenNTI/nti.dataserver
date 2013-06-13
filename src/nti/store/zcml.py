@@ -7,8 +7,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import logging
-logger = logging.getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 import functools
 

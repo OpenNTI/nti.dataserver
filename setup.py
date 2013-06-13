@@ -150,7 +150,7 @@ setup(
 		 # (even though alpha at the moment) to work with other updated deps.
 		 # Depending on the final release, we may need to explicitly list each component.
 		'ZODB3 >= 3.11.0a3', # Unfortunately, pulled in by zopyx.txng3.core, so do make sure we get the latest
-		'ZODB >= 4.0.0b2',
+		'ZODB >= 4.0.0b3',
 		'BTrees >= 4.0.8',
 		'zdaemon >= 4.0.0',
 		'persistent >= 4.0.6',
