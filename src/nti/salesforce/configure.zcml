@@ -7,10 +7,8 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<include package=".payments" file="configure.zcml" />
-
-	<adapter factory=".user._SalesforceUserFactory"
+	<adapter factory=".user._SalesforceUserProfileFactory"
 			 for="nti.dataserver.interfaces.IUser"
-			 provides=".interfaces.ISalesforceUser" />
+			 provides=".interfaces.ISalesforceUserProfile" />
 
 </configure>
