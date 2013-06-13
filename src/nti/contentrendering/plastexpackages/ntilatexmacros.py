@@ -109,7 +109,7 @@ class ntivideoname(Command):
 	unicode = ''
 
 class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
-	args = '[ options:dict ] subtitle:str closed_captions:str'
+	args = '[ options:dict ]'
 	counter = 'ntivideo'
 	blockType = True
 	_ntiid_cache_map_name = '_ntivideo_ntiid_map'
