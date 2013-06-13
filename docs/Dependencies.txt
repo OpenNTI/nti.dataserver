@@ -22,8 +22,9 @@ Dependencies (macports):
 - redis				# 2013-06-12
 - SuiteSparse		# 2013-06-12
 - swig-python		# 2013-06-12
-- subversion		# 2013-06-12  (Optional)
-- git-core 			# 2013-06-12  (Optional) install as git-core +subversion
+- mongodb			# 2012-06-13 (Optional)
+- subversion		# 2013-06-12 (Optional)
+- git-core 			# 2013-06-12 (Optional) install as git-core +subversion
 
 Dependencies for content generation:
 - Full TeX distribution (including extras) - macports
