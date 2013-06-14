@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import requests
+import collections
 
 from zope import component
 from zope import interface
@@ -24,6 +25,9 @@ from . import interfaces as sf_interfaces
 
 VERSION = u'v27.0'
 TOKEN_URL = u'https://na1.salesforce.com/services/oauth2/token'
+
+def is_invalid_session_id(data):
+	return isinstance(data, collections.Mapping) and data.get('errorCode') == 'INVALID_SESSION_ID'
 
 def response_token_by_username_password(client_id, client_secret, security_token, username, password):
 	"""
@@ -57,7 +61,6 @@ def get_chatter_user(instance_url, access_token, version=VERSION):
 	r = requests.get(url, headers=headers)
 	assert r.status_code == 200
 	data = r.json()
-	assert u'error' not in data, data.get(u'error_description', data.get(u'error'))
 	return data
 
 @interface.implementer(sf_interfaces.ISalesforceApplication)
@@ -76,6 +79,11 @@ def create_app(client_id, client_secret):
 	result = SalesforceApp(ClientID=client_id, ClientSecret=client_secret)
 	return result
 
+def _wrap(func, *args, **kwargs):
+	def f():
+		func(*args, **kwargs)
+	return f
+
 @interface.implementer(sf_interfaces.IChatter)
 class Chatter(object):
 
@@ -92,17 +100,24 @@ class Chatter(object):
 
 	@property
 	def userId(self):
-		userId = sf_interfaces.ISalesforceUser(self.user).userId
+		userId = sf_interfaces.ISalesforceUser(self.user).UserID
 		if not userId:
 			cuser = self.get_chatter_user()
-			userId = sf_interfaces.ISalesforceUser(self.user).userId = unicode(cuser['id'])
+			userId = sf_interfaces.ISalesforceUser(self.user).UserID = unicode(cuser['id'])
 		return userId
 	
 	def get_chatter_user(self):
 		token = self.response_token
-		result = get_chatter_user(token[u'instance_url'], token[u'access_token'])
+		func = _wrap(get_chatter_user, token[u'instance_url'], token[u'access_token'])
+		result = self._execute_valid_session(func)
 		return result
 
+	def _execute_valid_session(self, func):
+		result = func()
+		if is_invalid_session_id(result):
+			result = func() if self.new_response_token() else None
+		return result
+	
 	def new_response_token(self):
 		if self.refresh_token:
 			application = self.application
