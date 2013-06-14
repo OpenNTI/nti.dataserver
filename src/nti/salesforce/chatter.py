@@ -30,7 +30,16 @@ def get_auth_token(client_id, client_secret, security_token, username, password)
 			   u'username':username, u'password':'%s%s' % (password, security_token) }
 	r = requests.post(TOKEN_URL, data=payload)
 	data = r.json()
-	assert r.status_int == 200
+	assert r.status_code == 200
+	assert u'error' not in data, data.get(u'error_description', data.get(u'error'))
+	return data
+
+def get_chatter_user(instance_url, access_token, version=VERSION):
+	url = '%s/services/data/%s/chatter/users/me' % (instance_url, version)
+	headers = {u'Authorization': u'Bearer %s' % access_token}
+	r = requests.get(url, headers=headers)
+	assert r.status_code == 200
+	data = r.json()
 	assert u'error' not in data, data.get(u'error_description', data.get(u'error'))
 	return data
 
@@ -58,7 +67,7 @@ class Chatter(object):
 
 	@property
 	def app(self):
-		# TODO: we should select the application based on a given context
+		# We should select the application based on a given context, but for now pick the first
 		utils = list(component.getUtilitiesFor(sf_interfaces.ISalesforceApplication))
 		return utils[0][1] if utils else None
 
@@ -66,9 +75,23 @@ class Chatter(object):
 	def profile(self):
 		return sf_interfaces.ISalesforceUserProfile(self.user)
 
-	_v_access_token = None
-	_v_instance_url = None
+	@property
+	def userId(self):
+		userId = sf_interfaces.ISalesforceUser(self.user).userId
+		if not userId:
+			cuser = self.get_chatter_user()
+			userId = sf_interfaces.ISalesforceUser(self.user).userId = unicode(cuser['id'])
+		return userId
+	
+	def get_chatter_user(self):
+		token = self.get_auth_token()
+		result = get_chatter_user(token[u'instance_url'], token[u'access_token'])
+		return result
 
-	access_token = property(lambda s: s._v_access_token, lambda s, x: setattr(s ,'_v_access_token',x))
-	instance_url = property(lambda s: s._v_instance_url, lambda s, x: setattr(s , '_v_instance_url', x))
-
+	def get_auth_token(self):
+		app = self.app
+		profile = self.profile
+		data = get_auth_token(client_id=app.ClientID, client_secret=app.ClientSecret,
+							  security_token=app.SecurityToken, username=profile.sf_username,
+							  password=profile.sf_password)
+		return data

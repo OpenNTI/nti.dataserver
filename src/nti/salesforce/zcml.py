@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Directives to be used in ZCML: registering static keys.
+Directives to be used in ZCML.
 
 $Id$
 """
@@ -18,7 +18,7 @@ from zope.component.zcml import utility
 from . import chatter
 from . import interfaces as sf_interfaces
 
-class IRegisterSalesforceApplication(interface.Interface):
+class IRegisterApplication(interface.Interface):
 	"""
 	The arguments needed for registering a salesforce application
 	"""
@@ -26,7 +26,7 @@ class IRegisterSalesforceApplication(interface.Interface):
 	client_secret = fields.TextLine(title="Client Secret", required=True)
 	security_token = fields.TextLine(title="Security token", required=True)
 
-def registerSalesforceApp(_context, client_id, client_secret, security_token):
+def registerApplication(_context, client_id, client_secret, security_token):
 	"""
 	Register a salesforce app
 	"""
