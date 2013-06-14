@@ -18,10 +18,13 @@ class ISalesforceUserProfile(profile_interfaces.IEmailRequiredUserProfile):
     sf_username = nti_schema.ValidTextLine(title='Salesforce Username', required=False)
     sf_password = nti_schema.ValidTextLine(title='SalesForce User Password', required=False)
 
+class ISalesforceUser(interface.Interface):
+    userId = nti_schema.ValidTextLine(title='Salesforce userID', required=True)
+
 class ISalesforceApplication(interface.Interface):
     ClientID = nti_schema.ValidTextLine(title='Client id', required=True)
     ClientSecret = nti_schema.ValidTextLine(title='Client secret', required=True)
     SecurityToken = nti_schema.ValidTextLine(title='Security token', required=True)
 
-class IChatter(interface.interface):
+class IChatter(interface.Interface):
     pass
