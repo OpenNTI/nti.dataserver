@@ -25,9 +25,26 @@ from . import interfaces as sf_interfaces
 VERSION = u'v27.0'
 TOKEN_URL = u'https://na1.salesforce.com/services/oauth2/token'
 
-def get_auth_token(client_id, client_secret, security_token, username, password):
+def response_token_by_username_password(client_id, client_secret, security_token, username, password):
+	"""
+	return a response token using a Username-password flow.
+	this is not recommended for production app
+	"""
 	payload = {u'client_id':client_id, u'client_secret':client_secret, 'grant_type':'password',
 			   u'username':username, u'password':'%s%s' % (password, security_token) }
+	r = requests.post(TOKEN_URL, data=payload)
+	data = r.json()
+	assert r.status_code == 200
+	assert u'error' not in data, data.get(u'error_description', data.get(u'error'))
+	return data
+
+def refresh_token(client_id, refresh_token, client_secret=None):
+	"""
+	send a request for a new access token.
+	"""
+	payload = {u'client_id':client_id, 'grant_type':'password', u'username':refresh_token }
+	if client_secret:
+		payload['client_secret'] = client_secret
 	r = requests.post(TOKEN_URL, data=payload)
 	data = r.json()
 	assert r.status_code == 200
@@ -55,25 +72,23 @@ class SalesforceApp(SchemaConfigured):
 	def ConsumerSecret(self):
 		return self.ClientSecret
 	
-def create_app(client_id, client_secret, security_token):
-	result = SalesforceApp(ClientID=client_id, ClientSecret=client_secret, SecurityToken=security_token)
+def create_app(client_id, client_secret):
+	result = SalesforceApp(ClientID=client_id, ClientSecret=client_secret)
 	return result
 
 @interface.implementer(sf_interfaces.IChatter)
 class Chatter(object):
 
-	def __init__(self, user):
+	def __init__(self, user, response_token, refresh_token=None):
+		self.response_token = response_token
+		self.refresh_token = refresh_token or response_token.get('refresh_token')
 		self.user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 
 	@property
-	def app(self):
+	def application(self):
 		# We should select the application based on a given context, but for now pick the first
 		utils = list(component.getUtilitiesFor(sf_interfaces.ISalesforceApplication))
 		return utils[0][1] if utils else None
-
-	@property
-	def profile(self):
-		return sf_interfaces.ISalesforceUserProfile(self.user)
 
 	@property
 	def userId(self):
@@ -84,14 +99,13 @@ class Chatter(object):
 		return userId
 	
 	def get_chatter_user(self):
-		token = self.get_auth_token()
+		token = self.response_token
 		result = get_chatter_user(token[u'instance_url'], token[u'access_token'])
 		return result
 
-	def get_auth_token(self):
-		app = self.app
-		profile = self.profile
-		data = get_auth_token(client_id=app.ClientID, client_secret=app.ClientSecret,
-							  security_token=app.SecurityToken, username=profile.sf_username,
-							  password=profile.sf_password)
-		return data
+	def new_response_token(self):
+		if self.refresh_token:
+			application = self.application
+			self.response_token = refresh_token(client_id=application.ClientID, refresh_token=self.refresh_token)
+			return self.response_token
+		return None

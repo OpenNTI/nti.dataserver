@@ -13,7 +13,6 @@
 	<salesforce:registerApplication
 		client_id="3MVG9A2kN3Bn17hty7fwNl_jwrHijOZGB3aQiAbHyNx18NhZ5NxYKIFnPDK285ulzSj0KyubC7BIYsZmvfoZB"
 		client_secret="2673551008213647908"
-		security_token="C02lOnwdkZ1X4JrzfgrjZfrtw"
 		zcml:condition="have devmode"/>
 		
 </configure>
