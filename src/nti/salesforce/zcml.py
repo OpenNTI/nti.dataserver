@@ -24,12 +24,11 @@ class IRegisterApplication(interface.Interface):
 	"""
 	client_id = fields.TextLine(title="Client ID", required=True)
 	client_secret = fields.TextLine(title="Client Secret", required=True)
-	security_token = fields.TextLine(title="Security token", required=True)
 
-def registerApplication(_context, client_id, client_secret, security_token):
+def registerApplication(_context, client_id, client_secret):
 	"""
 	Register a salesforce app
 	"""
-	factory = functools.partial(chatter.create_app, client_id=client_id, client_secret=client_secret, security_token=security_token)
+	factory = functools.partial(chatter.create_app, client_id=client_id, client_secret=client_secret)
 	utility(_context, provides=sf_interfaces.ISalesforceApplication, factory=factory, name=client_id)
 	logger.debug("Salesforce application has been '%s' has been registered", client_id)

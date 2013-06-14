@@ -9,18 +9,30 @@ __docformat__ = "restructuredtext en"
 
 from nti.dataserver.users import User
 
-from nti.salesforce.chatter import Chatter
+from nti.salesforce import chatter
 
 from . import ConfiguringTestBase
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from hamcrest import (assert_that, is_not, none, has_key)
+from hamcrest import (assert_that, is_not, none)
+
+default_pwd = u'temp0001'
+default_user = u'carlos@nextthought.com'
+client_secret = u"2673551008213647908"
+security_token = u"NFA6sxNhSmrscWHMda9Hevj7v"
+client_id = u"3MVG9A2kN3Bn17hty7fwNl_jwrHijOZGB3aQiAbHyNx18NhZ5NxYKIFnPDK285ulzSj0KyubC7BIYsZmvfoZB"
 
 class TestChatter(ConfiguringTestBase):
 
-	def _create_user(self, username='carlos@nextthought.com', password='Saulo213'):
+	@classmethod
+	def get_response_token(cls, client_id=client_id, client_secret=client_secret, security_token=security_token,
+						   username=default_user, password=default_pwd):
+		result = chatter.response_token_by_username_password(client_id, client_secret, security_token, username, password)
+		return result
+		
+	def _create_user(self, username=default_user, password=default_pwd):
 		ds = mock_dataserver.current_mock_ds
 		usr = User.create_user(ds, username=username, password=password)
 		return usr
@@ -28,8 +40,6 @@ class TestChatter(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_get_auth_token(self):
 		user = self._create_user()
-		chatter = Chatter(user)
-		token = chatter.get_auth_token()
-		assert_that(token, is_not(none()))
-		assert_that(token, has_key(u'access_token'))
-		assert_that(token, has_key(u'instance_url'))
+		rtoken = self.get_response_token()
+		cht = chatter.Chatter(user, rtoken)
+		assert_that(cht.userId, is_not(none()))
