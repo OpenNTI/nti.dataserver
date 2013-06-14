@@ -28,7 +28,7 @@ name: ntislidevideo
     <param name="type" tal:attributes="value self/type">
     <param name="id" tal:attributes="value self/provider_id">
     <param name="thumbnail" tal:attributes="value self/thumbnail">
-    <span tal:replace="self/slidevideo/idref/label/media_sources"></span>
+    <span tal:replace="self/media_sources"></span>
   </object>
 </div>
 <object tal:condition="not:self/show_video"
@@ -45,6 +45,7 @@ name: ntislidevideo
   <param name="creator" tal:attributes="value self/creator | nothing" />
   <param name="slidedeckid" tal:attributes="value self/slidedeck/idref/label/id | string:default">
   <img tal:attributes="src self/thumbnail" />
+  <div class="hidden" style="display:none" tal:content="self/media_sources"></div>
   <span class="description" tal:content="self/description" tal:condition="self/description">
     The description of the target.
   </span>
