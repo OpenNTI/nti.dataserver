@@ -38,8 +38,15 @@ class TestChatter(ConfiguringTestBase):
 		return usr
 
 	@WithMockDSTrans
-	def test_get_auth_token(self):
+	def test_get_user_id(self):
 		user = self._create_user()
 		rtoken = self.get_response_token()
 		cht = chatter.Chatter(user, rtoken)
 		assert_that(cht.userId, is_not(none()))
+
+	@WithMockDSTrans
+	def test_post_text_feed(self):
+		user = self._create_user()
+		rtoken = self.get_response_token()
+		cht = chatter.Chatter(user, rtoken)
+		cht.post_text_news_feed_item('test message')
