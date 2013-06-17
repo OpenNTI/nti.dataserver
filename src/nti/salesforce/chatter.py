@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import requests
+import urlparse
 import collections
 
 from zope import component
@@ -74,9 +75,35 @@ def get_chatter_user(instance_url, access_token, version=VERSION):
 	data = check_response(r, 200)
 	return data
 
+def poll_news_feed(instance_url, access_token, service_url=None, version=VERSION):
+	if not service_url:
+		url = '%s/services/data/%s/chatter/feeds/news/me/feed-items' % (instance_url, version)
+	else:
+		url = urlparse.urljoin(instance_url, service_url)
+
+	headers = {u'Authorization': u'Bearer %s' % access_token}
+	r = requests.get(url, headers=headers)
+	data = check_response(r, 200)
+	return data
+
+def get_feed_item(instance_url, access_token, feedItemId='0D5i00000040kEUCAY', version=VERSION):
+	url = '%s/services/data/%s/chatter/feed-items/%s' % (instance_url, version, feedItemId)
+	headers = {u'Authorization': u'Bearer %s' % access_token}
+	r = requests.get(url, headers=headers)
+	data = check_response(r, 200)
+	return data
+
 def post_text_news_feed_item(instance_url, access_token, userId, text, version=VERSION):
 	payload = {u'text': unicode(text)}
 	url = '%s/services/data/%s/chatter/feeds/news/%s/feed-items' % (instance_url, version, userId)
+	headers = {u'Authorization': u'Bearer %s' % access_token}
+	r = requests.post(url, params=payload, headers=headers)
+	data = check_response(r, 201)
+	return data
+
+def add_text_feed_comment(instance_url, access_token, feedItemId, text, version=VERSION):
+	payload = {u'text': unicode(text)}
+	url = '%s/services/data/%s/chatter/feed-items/%s' % (instance_url, version, feedItemId)
 	headers = {u'Authorization': u'Bearer %s' % access_token}
 	r = requests.post(url, params=payload, headers=headers)
 	data = check_response(r, 201)
@@ -129,11 +156,32 @@ class Chatter(object):
 		result = self._execute_valid_session(get_chatter_user)
 		return result
 
+	def get_feed_item(self, feedItemId):
+		result = self._execute_valid_session(get_feed_item, feedItemId=feedItemId)
+		return result
+
+	def poll_news_feed(self, all_pages=False):
+		result = []
+		nextPageUrl = None
+		while True:
+			data = self._execute_valid_session(poll_news_feed, service_url=nextPageUrl)
+			items = data.get('items')
+			nextPageUrl = data.get('nextPageUrl')
+			if items:
+				result.append(data)
+			if not all_pages or not nextPageUrl:
+				break
+		return result
+	
 	def post_text_news_feed_item(self, text):
 		userId = self.userId
 		result = self._execute_valid_session(post_text_news_feed_item, userId=userId, text=text)
 		return result
 
+	def add_text_feed_comment(self, feedItemId, text):
+		result = self._execute_valid_session(add_text_feed_comment, feedItemId=feedItemId, text=text)
+		return result
+	
 	def new_response_token(self):
 		if self.refresh_token:
 			application = self.application

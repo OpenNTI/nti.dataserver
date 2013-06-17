@@ -45,8 +45,18 @@ class TestChatter(ConfiguringTestBase):
 		assert_that(cht.userId, is_not(none()))
 
 	@WithMockDSTrans
+	def test_poll_news_feed(self):
+		user = self._create_user()
+		rtoken = self.get_response_token()
+		cht = chatter.Chatter(user, rtoken)
+		d = cht.poll_news_feed()
+		assert_that(d, is_not(none()))
+		
+	@WithMockDSTrans
 	def test_post_text_feed(self):
 		user = self._create_user()
 		rtoken = self.get_response_token()
 		cht = chatter.Chatter(user, rtoken)
 		cht.post_text_news_feed_item('test message')
+		
+	
