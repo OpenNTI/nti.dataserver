@@ -34,7 +34,7 @@
 			 name="description"
 			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.dataserver.interfaces.ITitledDescribedContent"/>
 	<!-- And status -->
-	<adapter factory=".censor_policies.creator_and_location_censor_policy"
+	<adapter factory=".censor_policies.username_censor_policy"
 			 name="status"
 			 for="nti.contentfragments.interfaces.IUnicodeContentFragment nti.chatserver.interfaces.IPresenceInfo"/>
 
