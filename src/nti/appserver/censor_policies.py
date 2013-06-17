@@ -126,7 +126,7 @@ def creator_and_location_censor_policy( fragment, target, site_names=None ):
 
 	if location is None:
 		location = ObjectNotTiedToContent
-
+	
 	# In general the site_policies.queryMulitAdapterInSite is deprecated,
 	# but its currently here for chat messages. (See below). This can
 	# probably go away once tests are updated
@@ -134,7 +134,20 @@ def creator_and_location_censor_policy( fragment, target, site_names=None ):
 												  frg_interfaces.ICensoredContentPolicy,
 												  site_names=site_names	)
 
-
+@interface.implementer( frg_interfaces.ICensoredContentPolicy )
+def username_censor_policy( fragment, target, site_names=None ):
+	user = getattr( target, 'username', None )
+	if isinstance( user, six.string_types ):
+		user = users.Entity.get_entity( username=user, default=user )
+		
+	if not user: # Nothing to go off of, must assume the worst
+		return censor.DefaultCensoredContentPolicy()
+	
+	result =  site_policies.queryMultiAdapterInSite( (user, ObjectNotTiedToContent),
+												 	 frg_interfaces.ICensoredContentPolicy,
+												     site_names=site_names	)
+	return result
+	
 @interface.implementer(frg_interfaces.ICensoredContentPolicy)
 @component.adapter( nti_interfaces.ICoppaUser, interface.Interface )
 def coppa_user_censor_policy( user, content_unit ):
