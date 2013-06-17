@@ -4,40 +4,46 @@ from __future__ import print_function, absolute_import, unicode_literals
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import none
 from hamcrest import assert_that
 from hamcrest import has_entries
-from hamcrest import is_
 from hamcrest import has_property
-from hamcrest import none
 from hamcrest import only_contains
 
-import anyjson as json
 import os
-from .test_application import TestApp
+import anyjson as json
+from urllib import quote as UQ
+
 from zope import interface
 from zope import component
 
+import nti.appserver.censor_policies
+
+import nti.contentfragments.censor
+from nti.contentfragments.interfaces import IPlainTextContentFragment
+
+from nti.chatserver.messageinfo import MessageInfo
+from nti.chatserver.presenceinfo import PresenceInfo
+
+from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
+
+from nti.contentrange import contentrange
+
+import nti.dataserver
+from nti.dataserver import contenttypes
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
-from nti.dataserver import contenttypes
-from nti.contentrange import contentrange
+
+from nti.socketio import session_consumer
+from nti.socketio import interfaces as sio_interfaces
 
 from nti.dataserver.tests import mock_dataserver
 
+from .test_application import TestApp
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
-
-from urllib import quote as UQ
-
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
-from nti.dataserver import interfaces as nti_interfaces
-
-import nti.appserver.censor_policies
-import nti.contentfragments.censor
-
-from nti.socketio import interfaces as sio_interfaces
-from nti.chatserver.messageinfo import MessageInfo
-from nti.socketio import session_consumer
 
 #class TestApplicationAssessment(ApplicationTestBase):
 #	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
@@ -153,6 +159,24 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 			#nti.contentfragments.censor.censor_assign( [bad_val], args[0], 'body' )
 
 			assert_that( args[0], has_property( 'body', only_contains( censored_val ) ) )
+
+	@WithSharedApplicationMockDS
+	def test_presenceinfo_uses_sites_from_session(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user()
+
+			@interface.implementer(sio_interfaces.ISocketSession)
+			class Session(object):
+				owner = user.username
+				originating_site_names = ('mathcounts.nextthought.com', '')
+
+			presence = PresenceInfo()
+			presence.status = IPlainTextContentFragment(bad_val)
+
+			args = session_consumer._convert_message_args_to_objects(None, Session(), { 'args': [to_external_object(presence)] })
+
+			assert_that(args[0], is_(PresenceInfo))
+			assert_that(args[0], has_property('status', censored_val))
 
 class TestApplicationCensoringWithDefaultPolicyForAllUsers(_CensorTestMixin,SharedApplicationTestBase):
 
