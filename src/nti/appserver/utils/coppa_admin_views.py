@@ -30,13 +30,13 @@ _view_defaults = dict(route_name='objects.generic.traversal',
 					  permission=nauth.ACT_READ,
 					  request_method='GET')
 _view_admin_defaults = _view_defaults.copy()
-_view_admin_defaults['permission'] = nauth.ACT_MODERATE
+_view_admin_defaults['permission'] = nauth.ACT_COPPA_ADMIN
 
 _post_view_defaults = _view_defaults.copy()
 _post_view_defaults['request_method'] = 'POST'
 
 _admin_view_defaults = _post_view_defaults.copy()
-_admin_view_defaults['permission'] = nauth.ACT_MODERATE
+_admin_view_defaults['permission'] = nauth.ACT_COPPA_ADMIN
 
 @view_config(name="rollback_coppa_upgraded_users", **_admin_view_defaults)
 class RollbackCoppaUpgradedUsers(_JsonBodyView):
@@ -49,6 +49,8 @@ class RollbackCoppaUpgradedUsers(_JsonBodyView):
 		if is_true(all_coppa):
 			dataserver = component.getUtility( nti_interfaces.IDataserver)
 			usernames = nti_interfaces.IShardLayout(dataserver).users_folder.keys()
+		else:
+			usernames = usernames.split(',')
 
 		items = []
 		for username in usernames:
