@@ -18,12 +18,13 @@ from pyramid import httpexceptions as hexc
 from zope import component
 from zope import interface
 
-from nti.appserver.utils import is_true
-from nti.appserver.utils import _JsonBodyView
-
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.appserver.utils import is_true
+from nti.appserver.utils import _JsonBodyView
+from nti.appserver.link_providers import flag_link_provider
 
 _view_defaults = dict(route_name='objects.generic.traversal',
 					  renderer='rest',
@@ -58,12 +59,16 @@ class RollbackCoppaUpgradedUsers(_JsonBodyView):
 			if not user or not nti_interfaces.ICoppaUserWithAgreementUpgraded.providedBy(user):
 				continue
 
+			items.append(username)
+			
+			# reset interfaces
 			interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
 			interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
 			interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
-
-			items.append(username)
-
+			
+			# add link
+			flag_link_provider.add_link(user, 'coppa.upgraded.rollbacked')
+			
 		response = self.request.response
 		response.content_type = b'application/json; charset=UTF-8'
 		response.body = simplejson.dumps({'Count':len(items), 'Items':items})
