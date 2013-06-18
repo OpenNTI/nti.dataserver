@@ -9,3 +9,6 @@ __docformat__ = "restructuredtext en"
 
 class SalesforceException(Exception):
     pass
+
+class InvalidSessionException(SalesforceException):
+    pass
