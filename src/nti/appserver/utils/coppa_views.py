@@ -22,8 +22,8 @@ from nti.appserver.utils import is_true
 from nti.appserver.utils import _JsonBodyView
 
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization as nauth
+from nti.dataserver import interfaces as nti_interfaces
 
 _view_defaults = dict(route_name='objects.generic.traversal',
 					  renderer='rest',
@@ -38,18 +38,13 @@ _post_view_defaults['request_method'] = 'POST'
 _admin_view_defaults = _post_view_defaults.copy()
 _admin_view_defaults['permission'] = nauth.ACT_MODERATE
 
-# user_info_extract
-
-def _is_true(v):
-	return v and v.lower() in ('1', 'true', 'yes', 'y', 't')
-
 @view_config(name="rollback_coppa_upgraded_users", **_admin_view_defaults)
 class RollbackCoppaUpgradedUsers(_JsonBodyView):
 
 	def __call__(self):
 		values = self.readInput()
 		usernames = values.get('usernames', '')
-		all_coppa = values.get('usernames', 'F')
+		all_coppa = values.get('all', 'F')
 		
 		if is_true(all_coppa):
 			dataserver = component.getUtility( nti_interfaces.IDataserver)
