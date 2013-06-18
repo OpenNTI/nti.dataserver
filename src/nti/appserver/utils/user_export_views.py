@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 User export views.
@@ -38,12 +39,9 @@ from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DM
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_json_representation_externalized
 
-from nti.appserver.utils import _JsonBodyView, CaseInsensitiveDict
+from nti.appserver.utils import is_true, _JsonBodyView, CaseInsensitiveDict
 
 # user_info_extract
-
-def _is_true(v):
-	return v and v.lower() in ('1', 'true', 'yes', 'y', 't')
 
 def _write_generator(generator, stream=None, seek0=True):
 	stream = StringIO() if stream is None else stream
@@ -131,7 +129,7 @@ def _get_opt_in_comm(coppaOnly=False):
 			 permission=nauth.ACT_MODERATE)
 def user_opt_in_email_communication(request):
 	values = CaseInsensitiveDict(**request.params)
-	coppaOnly = _is_true(values.get('coppaOnly', 'F'))
+	coppaOnly = is_true(values.get('coppaOnly', 'F'))
 	def _generator():
 		for obj in _get_opt_in_comm(coppaOnly):
 			yield obj
@@ -167,7 +165,7 @@ def _get_profile_info(coppaOnly=False):
 			 permission=nauth.ACT_MODERATE)
 def user_profile_info(request):
 	values = CaseInsensitiveDict(**request.params)
-	coppaOnly = _is_true(values.get('coppaOnly', 'F'))
+	coppaOnly = is_true(values.get('coppaOnly', 'F'))
 	def _generator():
 		for obj in _get_opt_in_comm(coppaOnly):
 			yield obj
@@ -267,7 +265,7 @@ class DeleteObjectObjects(_JsonBodyView):
 		if not user:
 			raise hexc.HTTPNotFound(detail='User not found')
 
-		broken = _is_true(values.get('broken',))
+		broken = is_true(values.get('broken', 'F'))
 		mime_types = _parse_mime_types(values.get('mime_types', u''))
 
 		broken_objects = set()
