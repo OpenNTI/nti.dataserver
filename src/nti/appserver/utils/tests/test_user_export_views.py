@@ -80,6 +80,26 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 				assert_that(split[-1], is_('True'))
 
 	@WithSharedApplicationMockDS
+	def test_profile_info(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			u = self._create_user(external_value={u'email':u"nti@nt.com", u'opt_in_email_communication':True})
+			interface.alsoProvides(u, nti_interfaces.ICoppaUserWithAgreementUpgraded)
+
+			u = self._create_user(username='ichigo@nt.com',
+								  external_value={u'email':u'ichigo@nt.com', u'opt_in_email_communication':True})
+
+		testapp = TestApp(self.app)
+
+		path = '/dataserver2/@@user_profile_info'
+		environ = self._make_extra_environ()
+		environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
+
+		res = testapp.get(path, extra_environ=environ)
+		assert_that(res.status_int, is_(200))
+		app_iter = res.app_iter[0].split('\n')[:-1]
+		assert_that(app_iter, has_length(3))
+
+	@WithSharedApplicationMockDS
 	def test_export_user_objects(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user(external_value={u'email':u"nti@nt.com", u'opt_in_email_communication':True})
