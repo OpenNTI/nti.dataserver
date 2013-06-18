@@ -10,19 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import simplejson
-
-class _JsonBodyView(object):
-
-    def __init__(self, request):
-        self.request = request
-
-    def readInput(self):
-        request = self.request
-        if request.body:
-            values = simplejson.loads(unicode(request.body, request.charset))
-        else:
-            values = {}
-        return values
+import collections
 
 class CaseInsensitiveDict(dict):
 
@@ -45,3 +33,20 @@ class CaseInsensitiveDict(dict):
 
     def __delitem__(self, key):
         return super(CaseInsensitiveDict, self).__delitem__(key.lower())
+
+class _JsonBodyView(object):
+
+    def __init__(self, request):
+        self.request = request
+
+    def readInput(self):
+        request = self.request
+        if request.body:
+            values = simplejson.loads(unicode(request.body, request.charset))
+            values = CaseInsensitiveDict(**values) if isinstance(values, collections.Mapping) else values
+        else:
+            values = {}
+        return values
+
+def is_true(v):
+    return v and str(v).lower() in ('1', 'true', 'yes', 'y', 't')
