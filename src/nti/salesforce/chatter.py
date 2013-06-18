@@ -22,26 +22,31 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
+from . import SalesforceException
 from . import interfaces as sf_interfaces
 
 VERSION = u'v27.0'
 TOKEN_URL = u'https://na1.salesforce.com/services/oauth2/token'
 
+class InvalidSessionException(SalesforceException):
+	pass
+
+def is_invalid_session_id(data):
+	data = data[0] if isinstance(data, collections.Sequence) and data else data
+	return data and isinstance(data, collections.Mapping) and data.get('errorCode') == 'INVALID_SESSION_ID'
+
 def check_error(data):
-	data = data[0] if isinstance(data, collections.Sequence) else data
+	data = data[0] if isinstance(data, collections.Sequence) and data else data
 	if isinstance(data, collections.Mapping) and u'errorCode' in data:
-		raise Exception(data.get(u'errorCode'), data.get(u'message'))
+		raise SalesforceException(data.get(u'errorCode'), data.get(u'message'))
 
 def check_response(r, expected_status=None):
 	data = r.json()
-	check_error(data)
-	if expected_status:
-		assert r.status_code == expected_status, 'invalid response status code'
+	if not is_invalid_session_id(data):
+		check_error(data)
+		if expected_status and r.status_code != expected_status:
+			raise SalesforceException('invalid response status code')
 	return data
-
-def is_invalid_session_id(data):
-	data = data[0] if isinstance(data, collections.Sequence) else data
-	return isinstance(data, collections.Mapping) and data.get('errorCode') == 'INVALID_SESSION_ID'
 
 def response_token_by_username_password(client_id, client_secret, security_token, username, password):
 	"""
@@ -80,7 +85,6 @@ def poll_news_feed(instance_url, access_token, service_url=None, version=VERSION
 		url = '%s/services/data/%s/chatter/feeds/news/me/feed-items' % (instance_url, version)
 	else:
 		url = urlparse.urljoin(instance_url, service_url)
-
 	headers = {u'Authorization': u'Bearer %s' % access_token}
 	r = requests.get(url, headers=headers)
 	data = check_response(r, 200)
@@ -191,9 +195,11 @@ class Chatter(object):
 
 	def _execute_valid_session(self, func, **kwargs):
 		rt = self.response_token
-		result = func(instance_url=rt[u'instance_url'], access_token=rt[u'access_token'], **kwargs) if rt else None
-		if result and is_invalid_session_id(result):
-			rt = self.new_response_token()
+		for _ in xrange(2):
 			result = func(instance_url=rt[u'instance_url'], access_token=rt[u'access_token'], **kwargs) if rt else None
+			if is_invalid_session_id(result):
+				rt = self.new_response_token()
+		if is_invalid_session_id(result):
+			raise InvalidSessionException()
 		return result
 	
