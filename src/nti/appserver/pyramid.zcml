@@ -73,5 +73,6 @@
 	<!-- Util/Admin views -->
 	<pyramid:scan package='.utils.user_export_views' />
 	<pyramid:scan package='.utils.store_admin_views' />
+	<pyramid:scan package='.utils.coppa_admin_views' />
 	<pyramid:scan package='.utils.link_providers_admin_views' />
 </configure>
