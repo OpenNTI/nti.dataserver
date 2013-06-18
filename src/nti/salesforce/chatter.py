@@ -23,13 +23,11 @@ from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
 from . import SalesforceException
+from . import InvalidSessionException
 from . import interfaces as sf_interfaces
 
 VERSION = u'v27.0'
 TOKEN_URL = u'https://na1.salesforce.com/services/oauth2/token'
-
-class InvalidSessionException(SalesforceException):
-	pass
 
 def is_invalid_session_id(data):
 	data = data[0] if isinstance(data, collections.Sequence) and data else data
