@@ -86,10 +86,6 @@ def upgrade_preflight_coppa_user_view(request):
 		if k not in externalValue:
 			externalValue[k] = v
 
-	if '@' in externalValue['Username'] and externalValue['email'] == placeholder_data['email']:
-		externalValue['email'] = externalValue['Username']
-
-
 	# preflight_user = None #_create_user( request, externalValue, preflight_only=True )
 	ext_schema = None #_AccountCreationProfileSchemafier( preflight_user, readonly_override=False ).make_schema()
 
