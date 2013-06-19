@@ -29,7 +29,7 @@ def question_assessed(assessed_question, event):
 		text = []
 		for q_part in question.parts:
 			text.append(getattr(q_part, 'content', ''))
-		content = ''.join(text)
+		content = '\n'.join(text)
 
 	# TODO: get [access/refresh] token
 	username = authenticated_userid(get_current_request())
