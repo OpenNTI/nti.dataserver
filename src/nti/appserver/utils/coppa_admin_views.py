@@ -10,18 +10,35 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import sys
+import datetime
+import nameparser
+import dateutil.parser
+
 from pyramid.view import view_config
 
+from zope import schema
 from zope import component
 from zope import interface
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.appserver import site_policies
+from nti.appserver import MessageFactory as _
 from nti.appserver.utils import _JsonBodyView
+from nti.appserver import httpexceptions as hexc
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver.link_providers import flag_link_provider
+from nti.appserver._util import raise_json_error as _raise_error
+
+from nti.utils import schema as nti_schema
+from nti.utils.jsonschema import JsonSchemafier
+
+_is_x_or_more_years_ago = site_policies._is_x_or_more_years_ago
+PLACEHOLDER_REALNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME
 
 _view_defaults = dict(route_name='objects.generic.traversal',
 					  renderer='rest',
@@ -35,6 +52,31 @@ _post_view_defaults['request_method'] = 'POST'
 
 _post_update_view_defaults = _post_view_defaults.copy()
 _post_update_view_defaults['permission'] = nauth.ACT_UPDATE
+
+class _ICommon(interface.Interface):
+	birthdate = schema.Date(
+					title='birthdate',
+					description='Your date of birth.',
+					required=True)
+
+class IOver13Schema(_ICommon):
+	realname = schema.TextLine(
+					title='Full Name aka realname',
+					description="Enter full name, e.g. John Smith.",
+					required=False,
+					constraint=user_interfaces.checkRealname)
+	email = nti_schema.ValidTextLine(
+					title='Email',
+					description=u'An email address that can be used for communication',
+					required=True,
+					constraint=user_interfaces.checkEmailAddress)
+
+class IUnder13Schema(_ICommon):
+	contact_email = nti_schema.ValidTextLine(
+						title='Contact email',
+						description=u"An email address to use to contact someone responsible for this accounts' user",
+						required=True,
+						constraint=user_interfaces.checkEmailAddress)
 
 @view_config(name="rollback_coppa_users", **_post_view_defaults)
 class RollbackCoppaUsers(_JsonBodyView):
@@ -67,6 +109,78 @@ class RollbackCoppaUsers(_JsonBodyView):
 			
 		return {'Count':len(items), 'Items':items}
 
+def _check_email(email, request, field):
+	try:
+		user_interfaces.checkEmailAddress(email)
+	except user_interfaces.EmailAddressInvalid as e:
+		exc_info = sys.exc_info()
+		_raise_error(request,
+					  hexc.HTTPUnprocessableEntity,
+					  { 'message': _("Please provide a valid %s." % field.replace('_', ' ')),
+						'field': field,
+						'code': e.__class__.__name__ },
+					  exc_info[2])
+
+def _validate_user_data(data, request):
+	try:
+		birthdate = dateutil.parser.parse(data['birthdate'])
+		birthdate = datetime.date(birthdate.year, birthdate.month, birthdate.day)
+	except Exception, e:
+		exc_info = sys.exc_info()
+		_raise_error(request,
+					  hexc.HTTPUnprocessableEntity,
+					  { 'message': _("Please provide a valid birthdate."),
+						'field': 'birthdate',
+						'code': e.__class__.__name__ },
+					  exc_info[2])
+
+	if birthdate >= datetime.date.today():
+		_raise_error(request,
+					  hexc.HTTPUnprocessableEntity,
+					  { 'message': _("Birthdate must be in the past."),
+						'field': 'birthdate' },
+					  None)
+	elif not _is_x_or_more_years_ago(birthdate, 4):
+		_raise_error(request,
+					 hexc.HTTPUnprocessableEntity,
+					 { 'message': _("Birthdate must be at least four years ago."),
+					   'field': 'birthdate' },
+					 None)
+	elif _is_x_or_more_years_ago(birthdate, 150):
+		_raise_error(request,
+					 hexc.HTTPUnprocessableEntity,
+					 { 'message': _("Birthdate must be less than 150 years ago."),
+					   'field': 'birthdate' },
+					 None)
+
+	if _is_x_or_more_years_ago(birthdate, 13):
+		realname = data.get('realname')
+		if realname is None or realname.strip():
+			_raise_error(request,
+					 	 hexc.HTTPUnprocessableEntity,
+						 { 'message': _("Please provide your first and last names."),
+					   	   'field': 'realname' },
+					   	 None)
+		human_name = nameparser.HumanName(realname)
+		if not human_name.first:
+			_raise_error(request,
+					 	 hexc.HTTPUnprocessableEntity,
+						 { 'message': _("Please provide your first name."),
+					   	   'field': 'realname' },
+					   	 None)
+
+		if not human_name.last:
+			_raise_error(request,
+					 	 hexc.HTTPUnprocessableEntity,
+						 { 'message': _("Please provide your last name."),
+					   	   'field': 'realname' },
+					   	 None)
+
+		_check_email(data.get('email'), request, 'email')
+		return IOver13Schema
+	else:
+		_check_email(data['contact_email'], request, 'contact_email')
+		return IUnder13Schema
 
 @view_config(name="upgrade_preflight_coppa_user",
 			 context=nti_interfaces.IUser,
@@ -79,6 +193,7 @@ def upgrade_preflight_coppa_user_view(request):
 
 	placeholder_data = {'Username': request.context.username,
 						'birthdate': '1982-01-31',
+						'realname' : PLACEHOLDER_REALNAME,
 						'email': 'testing_account_upgrade@tests.nextthought.com',
 						'contact_email': 'testing_account_upgrade@tests.nextthought.com'}
 
@@ -86,17 +201,13 @@ def upgrade_preflight_coppa_user_view(request):
 		if k not in externalValue:
 			externalValue[k] = v
 
-	# preflight_user = None #_create_user( request, externalValue, preflight_only=True )
-	ext_schema = None #_AccountCreationProfileSchemafier( preflight_user, readonly_override=False ).make_schema()
+	iface = _validate_user_data(externalValue, request)
+	ext_schema = JsonSchemafier(iface).make_schema()
 
 	request.response.status_int = 200
-
-	# Make sure there are /no/ side effects of this
-
 	return {'Username': externalValue['Username'],
 			'ProfileSchema': ext_schema }
-	
-	
+
 del _view_defaults
 del _post_view_defaults
 del _view_admin_defaults
