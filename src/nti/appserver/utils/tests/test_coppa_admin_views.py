@@ -25,7 +25,7 @@ from hamcrest import (assert_that, is_, has_length, has_entry)
 class TestCoppaAdminViews(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
-	def xtest_rollback(self):
+	def test_rollback(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
 			u = self._create_user(username='aizen@nt.com', external_value={u'email':u"nti@nt.com", u'opt_in_email_communication':True})
