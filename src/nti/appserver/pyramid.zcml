@@ -54,7 +54,6 @@
 	<pyramid:scan package='.contentlibrary_views' />
 	<pyramid:scan package='.liking_views' />
 	<pyramid:scan package='.flagging_views' />
-	<pyramid:scan package='.coppa_admin_views' />
 	<pyramid:scan package='._hacks' />
 	<pyramid:scan package='.account_creation_views' />
 	<pyramid:scan package='.zope_file_views' />
@@ -73,6 +72,7 @@
 	<!-- Util/Admin views -->
 	<pyramid:scan package='.utils.user_export_views' />
 	<pyramid:scan package='.utils.store_admin_views' />
-	<pyramid:scan package='.utils.coppa_admin_views' />
+	<pyramid:scan package='.utils.coppa.coppa_admin_views' />
+	<pyramid:scan package='.utils.coppa.coppa_upgrade_views' />
 	<pyramid:scan package='.utils.link_providers_admin_views' />
 </configure>

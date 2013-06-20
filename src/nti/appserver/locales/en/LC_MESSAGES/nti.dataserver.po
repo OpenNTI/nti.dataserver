@@ -51,11 +51,11 @@ msgstr ""
 msgid "Your reset link is not valid. Please request a new one."
 msgstr ""
 
-#: src/nti/appserver/coppa_admin_views.py:110
+#: src/nti/appserver/utils/coppa/coppa_admin_views.py:110
 msgid "Name"
 msgstr ""
 
-#: src/nti/appserver/coppa_admin_views.py:119
+#: src/nti/appserver/utils/coppa/coppa_admin_views.py:119
 msgid "Contact Email"
 msgstr ""
 

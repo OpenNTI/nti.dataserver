@@ -1,21 +1,24 @@
 #!/usr/bin/env python
-from __future__ import print_function
+# -*- coding: utf-8 -*-
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+import anyjson as json
 
 from hamcrest import (assert_that, is_, none, has_entry, has_length, has_item, contains_string,  has_entries)
 from hamcrest.library import has_property
 from hamcrest import is_not as does_not
 from hamcrest import contains
 
-from nti.tests import validly_provides as verifiably_provides
-
-import anyjson as json
 from zope import interface
 from zope import component
 from zope.component import eventtesting
-from .test_application import TestApp
+
+from nti.appserver import user_policies
 
 from nti.dataserver import users
 from nti.dataserver.users import interfaces as user_interfaces
@@ -23,9 +26,11 @@ from nti.appserver import site_policies
 from nti.appserver import interfaces as app_interfaces
 from nti.dataserver.tests import mock_dataserver
 
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 from nti.appserver.tests import ITestMailDelivery
-from nti.appserver import user_policies
+from nti.appserver.tests.test_application import TestApp
+from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+
+from nti.tests import validly_provides as verifiably_provides
 
 class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 

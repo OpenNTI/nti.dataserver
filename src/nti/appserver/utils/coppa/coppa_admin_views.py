@@ -3,32 +3,35 @@
 """
 Views relating to coppa administration.
 
-
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
-logger = __import__('logging').getLogger(__name__)
-from . import MessageFactory as _
 
+logger = __import__('logging').getLogger(__name__)
+
+import zope.formlib.form
+from zope import interface
 from zope import component
+from zope.publisher.interfaces.browser import IBrowserRequest
+
 from zc.intid import IIntIds
+
+from z3c.table import table
+from z3c.table import column
+from z3c.table import batch
 
 import pyramid.httpexceptions  as hexc
 from pyramid.view import view_config
 
 from nti.appserver import _table_utils
 from nti.appserver import site_policies
+from nti.appserver import MessageFactory as _
 
+from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
-from z3c.table import table
-from z3c.table import column
-from z3c.table import batch
-
-from nti.dataserver import authorization as nauth
-
-from zope.publisher.interfaces.browser import IBrowserRequest
+from nti.utils.schema import find_most_derived_interface
 
 _USER_FILTER_PARAM = 'usersearch'
 
@@ -127,7 +130,7 @@ class ContactEmailColumn(column.Column):
 		return self.getItemValue( item )
 
 	def getItemKey(self, item):
-	 	return '%s-contactemail-%s' % (self.id, component.getUtility(IIntIds).getId(item))
+		return '%s-contactemail-%s' % (self.id, component.getUtility(IIntIds).getId(item))
 
 	def getItemValue(self, item):
 		return self._values.get( self.getItemKey(item ) ) or getattr( user_interfaces.IUserProfile(item), 'contact_email', None )
@@ -150,10 +153,6 @@ class ContactEmailColumn(column.Column):
 
 ### Administrative profile review and editing
 # TODO: This will eventually move somewhere else
-
-import zope.formlib.form
-from nti.utils.schema import find_most_derived_interface
-from zope import interface
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='templates/account_profile_view.pt',
