@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Coppa admin views
+Coppa upgrade views
 
 $Id$
 """
@@ -26,6 +26,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.appserver import user_policies
 from nti.appserver import site_policies
 from nti.appserver import MessageFactory as _
 from nti.appserver.utils import _JsonBodyView
@@ -155,7 +156,7 @@ def _validate_user_data(data, request):
 
 	if _is_x_or_more_years_ago(birthdate, 13):
 		realname = data.get('realname')
-		if realname is None or realname.strip():
+		if realname is None or not realname.strip():
 			_raise_error(request,
 					 	 hexc.HTTPUnprocessableEntity,
 						 { 'message': _("Please provide your first and last names."),
@@ -187,8 +188,6 @@ def _validate_user_data(data, request):
 			 **_post_update_view_defaults)
 def upgrade_preflight_coppa_user_view(request):
 	
-	### from IPython.core.debugger import Tracer; Tracer()()
-	
 	externalValue = obj_io.read_body_as_external_object(request)
 
 	placeholder_data = {'Username': request.context.username,
@@ -207,6 +206,29 @@ def upgrade_preflight_coppa_user_view(request):
 	request.response.status_int = 200
 	return {'Username': externalValue['Username'],
 			'ProfileSchema': ext_schema }
+
+@view_config(name="upgrade_coppa_user",
+			 context=nti_interfaces.IUser,
+			 **_post_update_view_defaults)
+def upgrade_coppa_user_view(request):
+	externalValue = obj_io.read_body_as_external_object(request)
+	iface = _validate_user_data(externalValue, request)
+	username = request.context.username
+	user = users.User.get_user(username)
+	if iface is IOver13Schema:
+		interface.noLongerProvides(user, nti_interfaces.ICoppaUser)
+		interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
+		profile = user_interfaces.IUserProfile(user)
+		setattr(profile, 'email', externalValue.get('email'))
+	else:
+		contact_email = externalValue.get('contact_email')
+		interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
+		profile = user_interfaces.IUserProfile(user)
+		user_policies.send_consent_request_on_coppa_account(user, profile, contact_email, request)
+
+	# remove link
+	flag_link_provider.delete_link(user, 'coppa.upgraded.rollbacked')
+	return hexc.HTTPNoContent()
 
 del _view_defaults
 del _post_view_defaults
