@@ -15,35 +15,33 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-from nti.appserver import MessageFactory as _
-import pkg_resources
 
 import time
+import pkg_resources
+import dolmen.builtins
 
 from zope import component
 from zope import interface
-from zope.schema import interfaces as sch_interfaces
-import dolmen.builtins
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.appserver import interfaces as app_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
-from pyramid import interfaces as pyramid_interfaces
-
 from zope.lifecycleevent import IObjectCreatedEvent
 from zope.lifecycleevent import IObjectModifiedEvent
 from zope.annotation.interfaces import IAnnotations
+from zope.schema import interfaces as sch_interfaces
 
-from . import httpexceptions as hexc
-from . import _email_utils
-from ._util import link_belongs_to_user
+from pyramid import interfaces as pyramid_interfaces
 
 from nti.dataserver.links import Link
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.appserver import _email_utils
+from nti.appserver import site_policies
+from nti.appserver import MessageFactory as _
+from nti.appserver import httpexceptions as hexc
+from nti.appserver._util import link_belongs_to_user
+from nti.appserver import interfaces as app_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.utils.property import annotation_alias
 from nti.utils.schema import IBeforeTextAssignedEvent
-
-from nti.appserver import site_policies
 
 @component.adapter(nti_interfaces.IModeledContent, IObjectCreatedEvent)
 def dispatch_content_created_to_user_policies( content, event ):
@@ -169,7 +167,6 @@ from pyramid_mailer.message import Message
 from pyramid_mailer.message import Attachment
 from email.mime.multipart import MIMEMultipart
 
-
 CONTACT_EMAIL_RECOVERY_ANNOTATION = __name__ + '.contact_email_recovery_hash'
 #: The time.time() value at which the last consent request
 #: email was sent. Used to implement rate limiting. We apply rate limiting
@@ -220,8 +217,6 @@ def send_consent_request_when_contact_email_changes( new_email, profile, event )
 	_send_consent_request( user, profile, new_email, event, rate_limit=True )
 	event.object = None # Got to prohibit actually storing this.
 
-
-
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement, app_interfaces.IUserCreatedWithRequestEvent)
 def send_consent_request_on_new_coppa_account( user, event ):
 	"""
@@ -237,14 +232,7 @@ class AttemptingToResendConsentEmailTooSoon(sch_interfaces.ValidationError):
 	i18n_message = _("It is too soon to send another consent request email. Please try again tomorrow.")
 	field = 'contact_email'
 
-def _send_consent_request( user, profile, email, event, rate_limit=False ):
-
-	if not email:
-		return
-
-	if not event.request: #pragma: no cover
-		return
-
+def send_consent_request_on_coppa_account( user, profile, email, request, rate_limit=False):
 	recovery_info = app_interfaces.IContactEmailRecovery( user )
 	if rate_limit:
 		time_last_sent = recovery_info.consent_email_last_sent or 0
@@ -258,10 +246,10 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 	master = get_renderer('templates/master_email.pt').implementation()
 	html_body = render( 'templates/coppa_consent_request_email.pt',
 						dict(user=user, profile=profile, context=user,master=master),
-						request=event.request )
+						request=request )
 	text_body = render( 'templates/coppa_consent_request_email.txt',
 						dict(user=user, profile=profile, context=user,master=master),
-						request=event.request )
+						request=request )
 
 	attachment_filename = 'coppa_consent_request_email_attachment.pdf'
 
@@ -299,6 +287,11 @@ def _send_consent_request( user, profile, email, event, rate_limit=False ):
 	# We do need to keep something machine readable, though, for purposes of bounces
 	recovery_info.contact_email_recovery_hash = user_profile.make_password_recovery_email_hash( email )
 	recovery_info.consent_email_last_sent = time.time()
+	
+def _send_consent_request( user, profile, email, event, rate_limit=False ):
+	if not email or not event.request: #pragma: no cover
+		return
+	send_consent_request_on_coppa_account(user, profile, email, event.request, rate_limit)
 
 def _clear_consent_email_rate_limit( user ):
 	annotations = IAnnotations(user)
