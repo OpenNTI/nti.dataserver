@@ -1,0 +1,46 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+			<include package="zope.component" />
+			<include package="z3c.table" />
+
+	<!-- Coppa admin -->
+	
+	<adapter factory="nti.appserver._table_utils.CreatedColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .coppa_admin_views.CoppaAdminTable"
+			 name="coppa-admin-created"/>
+
+	<adapter factory="nti.appserver._table_utils.IntIdCheckBoxColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .coppa_admin_views.CoppaAdminTable"
+			 name="coppa-admin-selected" />
+
+	<adapter factory="nti.appserver._table_utils.UsernameColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .coppa_admin_views.CoppaAdminTable"
+			 name="coppa-admin-username" />
+
+	<adapter factory=".coppa_admin_views.RealnameColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .coppa_admin_views.CoppaAdminTable"
+			 name="coppa-admin-realname" />
+			 
+	<adapter factory=".coppa_admin_views.ContactEmailColumn"
+			 provides="z3c.table.interfaces.IColumn"
+			 for="* * .coppa_admin_views.CoppaAdminTable"
+			 name="coppa-admin-contactemail" />
+
+
+	<adapter factory="z3c.table.header.SortingColumnHeader"
+			 provides="z3c.table.interfaces.IColumnHeader"
+			 for="* * * .coppa_admin_views.RealnameColumn" />
+			 
+	<!-- batch provider -->
+	<adapter name="coppa-admin-batch"
+			 factory=".coppa_admin_views._CoppaAdminBatchProvider"
+			 for="zope.interface.Interface
+			 zope.publisher.interfaces.browser.IBrowserRequest
+			 z3c.table.interfaces.ITable" />
+
+</configure>

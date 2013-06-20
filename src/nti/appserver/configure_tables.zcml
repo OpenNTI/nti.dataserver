@@ -68,46 +68,6 @@
 	<adapter factory="._table_utils.TopicCommentContentProvider"
 			 provides="zope.contentprovider.interfaces.IContentProvider"/>
 
-	<!-- Coppa admin -->
-	<adapter factory="._table_utils.CreatedColumn"
-			 provides="z3c.table.interfaces.IColumn"
-			 for="* * .coppa_admin_views.CoppaAdminTable"
-			 name="coppa-admin-created"/>
-
-	<adapter factory="._table_utils.IntIdCheckBoxColumn"
-			 provides="z3c.table.interfaces.IColumn"
-			 for="* * .coppa_admin_views.CoppaAdminTable"
-			 name="coppa-admin-selected" />
-
-	<adapter factory="._table_utils.UsernameColumn"
-			 provides="z3c.table.interfaces.IColumn"
-			 for="* * .coppa_admin_views.CoppaAdminTable"
-			 name="coppa-admin-username" />
-
-
-	<adapter factory=".coppa_admin_views.RealnameColumn"
-			 provides="z3c.table.interfaces.IColumn"
-			 for="* * .coppa_admin_views.CoppaAdminTable"
-			 name="coppa-admin-realname" />
-	<adapter factory=".coppa_admin_views.ContactEmailColumn"
-			 provides="z3c.table.interfaces.IColumn"
-			 for="* * .coppa_admin_views.CoppaAdminTable"
-			 name="coppa-admin-contactemail" />
-
-
-	<adapter factory="z3c.table.header.SortingColumnHeader"
-			 provides="z3c.table.interfaces.IColumnHeader"
-			 for="* * * .coppa_admin_views.RealnameColumn"
-			 />
-	<!-- batch provider -->
-	<adapter
-		name="coppa-admin-batch"
-		factory=".coppa_admin_views._CoppaAdminBatchProvider"
-		for="zope.interface.Interface
-			 zope.publisher.interfaces.browser.IBrowserRequest
-			 z3c.table.interfaces.ITable"
-		/>
-
 	<!-- New Note Email -->
 	<adapter factory="._table_utils.NoteLikeBodyColumn"
 			 for="* * ._stream_event_listeners.NewNoteBodyTable"
@@ -122,4 +82,6 @@
 			 for="* * ._stream_event_listeners.NewNoteBodyTable"
 			 name="new-note-creator" />
 
+	<include package=".utils.coppa" file="configure_tables.zcml" />
+		
 </configure>
