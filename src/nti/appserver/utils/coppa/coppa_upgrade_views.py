@@ -101,10 +101,15 @@ class RollbackCoppaUsers(_JsonBodyView):
 			items.append(username)
 			
 			# reset interfaces
-			interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
-			interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
-			interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
-			
+			if site_policies.IMathcountsUser.providedBy(user):
+				interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreement)
+				interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
+				interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
+			else:
+				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
+				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
+				interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
+
 			# add link
 			flag_link_provider.add_link(user, 'coppa.upgraded.rollbacked')
 			
@@ -216,12 +221,20 @@ def upgrade_coppa_user_view(request):
 	username = request.context.username
 	user = users.User.get_user(username)
 	if iface is IOver13Schema:
+		if site_policies.IMathcountsUser.providedBy(user):
+			interface.noLongerProvides(user, site_policies.IMathcountsUser)
+			interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
+		# remove always coppa
 		interface.noLongerProvides(user, nti_interfaces.ICoppaUser)
 		interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
+		# reset email
 		profile = user_interfaces.IUserProfile(user)
 		setattr(profile, 'email', externalValue.get('email'))
 	else:
 		contact_email = externalValue.get('contact_email')
+		if site_policies.IMathcountsUser.providedBy(user):
+			interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
+		# make sure coppa w/o agreement is set
 		interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 		profile = user_interfaces.IUserProfile(user)
 		user_policies.send_consent_request_on_coppa_account(user, profile, contact_email, request)
