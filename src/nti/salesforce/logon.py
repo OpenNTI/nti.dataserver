@@ -41,8 +41,9 @@ def refresh_token(client_id, refresh_token, client_secret=None):
 	"""
 	send a request for a new access token.
 	"""
-	payload = {u'client_id':client_id, 'grant_type':'password', u'username':refresh_token }
-	if client_secret: payload['client_secret'] = client_secret
+	payload = {u'client_id':client_id, 'grant_type':'refresh_token', u'refresh_token':refresh_token }
+	if client_secret: 
+		payload['client_secret'] = client_secret
 	r = requests.post(TOKEN_URL, data=payload)
 	data = r.json()
 	assert r.status_code == 200
@@ -56,15 +57,14 @@ def get_salesforce_app(request=None):
 		site_names = getattr(request, 'possible_site_names', ()) + site_names
 		
 	for name in site_names:
-		util = component.getUtility(sf_interfaces.ISalesforceApplication, name=name)
+		util = component.queryUtility(sf_interfaces.ISalesforceApplication, name=name)
 		if util is not None:
 			return util
 	return None
 	
-@view_config(route_name='logon.salesforce.oauth1', request_method='GET' )
+@view_config(route_name='logon.salesforce.oauth1', request_method='GET')
 def salesforce_oauth1(request):
 	params = request.params
-	code = params.get('code')
 	error = params.get('error')
 	error_description = params.get('error_description')
 	if error:
@@ -74,8 +74,25 @@ def salesforce_oauth1(request):
 		return response
 
 	app = get_salesforce_app()
+	code = params.get('code')
 	our_uri = urllib.quote(request.route_url('logon.salesforce.oauth2'))
 	redir_to = '%s?grant_type=authorization_code&code=%s&client_secret=%s&client_id=%s&redirect_uri=%s' % \
 				(TOKEN_URL, code, app.ClientSecret, app.ClientID, our_uri)
 
 	return hexc.HTTPSeeOther( location=redir_to )
+
+@view_config(route_name='logon.salesforce.oauth2', request_method='GET')
+def salesforce_oauth2(request):
+	params = request.params
+	error = params.get('error')
+	error_description = params.get('error_description')
+	if error:
+		response = hexc.HTTPBadRequest()
+		response.headers.extend( sec.forget(request) )
+		response.headers[b'Warning'] = error_description.encode('utf-8')
+		return response
+
+	response_token = dict(params)
+	logger.info(response_token)
+
+	return hexc.HTTPSeeOther( location="http://www.google.com" )
