@@ -15,7 +15,7 @@ from zope import interface
 from zope.configuration import fields
 from zope.component.zcml import utility
 
-from . import chatter
+from . import create_app
 from . import interfaces as sf_interfaces
 
 class IRegisterApplication(interface.Interface):
@@ -31,6 +31,6 @@ def registerApplication(_context, client_id, client_secret, app_id=None):
 	Register a salesforce app
 	"""
 	app_id  = app_id or u''
-	factory = functools.partial(chatter.create_app, client_id=client_id, client_secret=client_secret)
+	factory = functools.partial(create_app, client_id=client_id, client_secret=client_secret)
 	utility(_context, provides=sf_interfaces.ISalesforceApplication, factory=factory, name=app_id)
 	logger.debug("Salesforce application has been '%s' has been registered", client_id)

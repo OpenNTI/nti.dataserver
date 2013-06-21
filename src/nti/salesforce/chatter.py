@@ -13,23 +13,21 @@ import requests
 import urlparse
 import collections
 
-from zope import component
 from zope import interface
-
-from pyramid.threadlocal import get_current_request
 
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.utils.schema import SchemaConfigured
-from nti.utils.schema import createDirectFieldProperties
-
+from . import logon
 from . import SalesforceException
 from . import InvalidSessionException
 from . import interfaces as sf_interfaces
 
 VERSION = u'v27.0'
 TOKEN_URL = u'https://na1.salesforce.com/services/oauth2/token'
+
+refresh_token = logon.refresh_token
+response_token_by_username_password = logon.response_token_by_username_password
 
 def is_invalid_session_id(data):
 	data = data[0] if isinstance(data, collections.Sequence) and data else data
@@ -46,31 +44,6 @@ def check_response(r, expected_status=None):
 		check_error(data)
 		if expected_status and r.status_code != expected_status:
 			raise SalesforceException('invalid response status code')
-	return data
-
-def response_token_by_username_password(client_id, client_secret, security_token, username, password):
-	"""
-	return a response token using a Username-password flow.
-	this is not recommended for production app
-	"""
-	payload = {u'client_id':client_id, u'client_secret':client_secret, 'grant_type':'password',
-			   u'username':username, u'password':'%s%s' % (password, security_token) }
-	r = requests.post(TOKEN_URL, data=payload)
-	data = r.json()
-	assert r.status_code == 200
-	assert u'error' not in data, data.get(u'error_description', data.get(u'error'))
-	return data
-
-def refresh_token(client_id, refresh_token, client_secret=None):
-	"""
-	send a request for a new access token.
-	"""
-	payload = {u'client_id':client_id, 'grant_type':'password', u'username':refresh_token }
-	if client_secret: payload['client_secret'] = client_secret
-	r = requests.post(TOKEN_URL, data=payload)
-	data = r.json()
-	assert r.status_code == 200
-	assert u'error' not in data, data.get(u'error_description', data.get(u'error'))
 	return data
 
 def get_chatter_user(instance_url, access_token, version=VERSION):
@@ -113,22 +86,6 @@ def add_text_feed_comment(instance_url, access_token, feedItemId, text, version=
 	data = check_response(r, 201)
 	return data
 
-@interface.implementer(sf_interfaces.ISalesforceApplication)
-class SalesforceApp(SchemaConfigured):
-	
-	# create all interface fields
-	createDirectFieldProperties(sf_interfaces.ISalesforceApplication)
-	
-	def ConsumerKey(self):
-		return self.ClientID
-		
-	def ConsumerSecret(self):
-		return self.ClientSecret
-	
-def create_app(client_id, client_secret):
-	result = SalesforceApp(ClientID=client_id, ClientSecret=client_secret)
-	return result
-
 def _wrap(func, *args, **kwargs):
 	def f():
 		func(*args, **kwargs)
@@ -144,16 +101,7 @@ class Chatter(object):
 
 	@property
 	def application(self):
-		request = get_current_request()
-		site_names = ('',)
-		if request:  # pragma: no cover
-			site_names = request.possible_site_names + site_names
-		
-		for name in site_names:
-			util = component.getUtility(sf_interfaces.ISalesforceApplication, name=name)
-			if util is not None:
-				return util
-		return None
+		return logon.get_salesforce_app()
 
 	@property
 	def userId(self):
