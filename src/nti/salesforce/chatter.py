@@ -16,6 +16,8 @@ import collections
 from zope import component
 from zope import interface
 
+from pyramid.threadlocal import get_current_request
+
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -142,9 +144,16 @@ class Chatter(object):
 
 	@property
 	def application(self):
-		# We should select the application based on a given context, but for now pick the first
-		utils = list(component.getUtilitiesFor(sf_interfaces.ISalesforceApplication))
-		return utils[0][1] if utils else None
+		request = get_current_request()
+		site_names = ('',)
+		if request:  # pragma: no cover
+			site_names = request.possible_site_names + site_names
+		
+		for name in site_names:
+			util = component.getUtility(sf_interfaces.ISalesforceApplication, name=name)
+			if util is not None:
+				return util
+		return None
 
 	@property
 	def userId(self):
