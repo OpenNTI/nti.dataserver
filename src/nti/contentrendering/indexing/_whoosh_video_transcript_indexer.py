@@ -116,6 +116,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 			content = unicode(content_utils.sanitize_content(content, table=table))
 			writer.add_document(containerId=containerId,
 								videoId=video_id,
+								language=language,
 								content=content,
 								quick=content,
 								last_modified=last_modified,
