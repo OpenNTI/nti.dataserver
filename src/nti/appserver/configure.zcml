@@ -362,7 +362,8 @@
 
 	<include package="." file="configure_invitations.zcml" />
 	<include package="." file="configure_store.zcml" />
-
+	<include package="." file="configure_salesforce.zcml" />
+	
 	<include package=".forums" />
 
 
