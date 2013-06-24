@@ -56,13 +56,10 @@ EVT_POST_MESSOGE = 'chat_postMessage'
 EVT_RECV_MESSAGE = 'chat_recvMessage'
 
 
-
 class PersistentMappingMeetingStorage(Persistent):
 	"""
 	Deprecated stub having no functionality anymore.
 	"""
-
-
 deprecated( "PersistentMappingMeetingStorage", "This class is a stub for bwc only." )
 
 @interface.implementer(interfaces.IMeetingStorage)
@@ -152,9 +149,12 @@ class Chatserver(object):
 		# This implementation does not return a presence for users that are
 		# unavailable because they have never set a presence, or their last
 		# time seen was too long ago
-		keys = ['users/' + username + '/presence' for username in usernames]
-		presence_pickles = self._redis.mget( keys )
-		presences = [pickle.loads(p) for p in presence_pickles if p is not None]
+		keys = ['users/' + username + '/presence' for username in usernames] if usernames else None
+		if keys:
+			presence_pickles = self._redis.mget( keys )
+			presences = [pickle.loads(p) for p in presence_pickles if p is not None]
+		else:
+			presences = ()
 		return presences
 
 	def setPresence( self, presence ):
@@ -360,15 +360,15 @@ class Chatserver(object):
 
 	def add_occupant_to_existing_meeting( self, room_id, actor_name, occupant_name ):
 		room = self.get_meeting( room_id )
-		if not room \
-		  or not room.Active \
-		  or occupant_name in room.historical_occupant_names \
-		  or hasattr( self.meeting_container_storage.get( room.containerId ), 'meeting_became_empty' ):
-		  # exclude missing rooms, inactive rooms, rooms already left
-		  # by the occupant, and persistent rooms (that have their own
-		  # occupancy rules)
-		  logger.debug( "%s not re-entering inactive/gone/previously-exited/persistent room %s/%s", occupant_name, room, room_id )
-		  return None
+		if	not room \
+			or not room.Active \
+			or occupant_name in room.historical_occupant_names \
+		  	or hasattr( self.meeting_container_storage.get( room.containerId ), 'meeting_became_empty' ):
+			# exclude missing rooms, inactive rooms, rooms already left
+			# by the occupant, and persistent rooms (that have their own
+			# occupancy rules)
+			logger.debug( "%s not re-entering inactive/gone/previously-exited/persistent room %s/%s", occupant_name, room, room_id )
+			return None
 
 		# TODO: We could centralize this type of checking with a convenience utility somewhere.
 		authorization_policy = component.queryUtility( nti_interfaces.IAuthorizationPolicy )
