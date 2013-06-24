@@ -113,6 +113,8 @@ class RollbackCoppaUsers(_JsonBodyView):
 			# add link
 			flag_link_provider.add_link(user, 'coppa.upgraded.rollbacked')
 			
+			logger.info("User '%s' has been rollbacked")
+
 		return {'Count':len(items), 'Items':items}
 
 def _check_email(email, request, field):
