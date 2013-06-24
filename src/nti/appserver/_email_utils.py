@@ -13,12 +13,13 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from pyramid.threadlocal import get_current_request
 from pyramid.renderers import render
 from pyramid.renderers import get_renderer
+from pyramid.threadlocal import get_current_request
 
-from pyramid_mailer.interfaces import IMailer
 from pyramid_mailer.message import Message
+from pyramid_mailer.interfaces import IMailer
+
 from repoze.sendmail import interfaces as mail_interfaces
 
 def do_html_text_templates_exist(base_template, text_template_extension='.txt'):
@@ -142,6 +143,7 @@ def send_mail( fromaddr=None, toaddrs=None, message=None, pyramid_mail_message=N
 
 	delivery = component.queryUtility( mail_interfaces.IMailDelivery ) or getattr( pyramidmailer, 'queue_delivery', None )
 	if delivery:
+		__traceback_info__ = fromaddr, toaddrs
 		delivery.send( fromaddr, toaddrs, message )
 	elif pyramidmailer and pyramid_mail_message:
 		pyramidmailer.send_to_queue( pyramid_mail_message )
