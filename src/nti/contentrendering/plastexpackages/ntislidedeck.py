@@ -131,7 +131,7 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	thumbnail = None
 
 	mimeType = 'application/vnd.nextthought.ntislidevideo'
-	itemprop = 'nti-slide-video-card'
+	itemprop = 'presentation-card'
 
 	def digest(self, tokens):
 		res = super(ntislidevideo, self).digest(tokens)
@@ -144,10 +144,9 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 			if 'creator' in options:
 				self.creator = options['creator']
 			if 'presentationonly' in options and options['presentationonly']:
-				self.style['display'] = 'none'
-				self.itemprop = 'nti-slide-video'
-			if 'show-video' in options:
-				self.show_video = options['show-video']
+				self.itemprop = 'presentation-none'
+			if 'show-video' in options and options['show-video']:
+				self.itemprop = 'presentation-video'
 
 			video_els = self.getElementsByTagName( 'ntiincludevideo' )
 			if video_els:
