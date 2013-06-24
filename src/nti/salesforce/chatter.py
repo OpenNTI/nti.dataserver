@@ -13,12 +13,11 @@ import requests
 import urlparse
 import collections
 
+from pyramid.threadlocal import get_current_request
+
 from zope import interface
+from zope import component
 
-from nti.dataserver.users import User
-from nti.dataserver import interfaces as nti_interfaces
-
-from . import logon
 from . import SalesforceException
 from . import InvalidSessionException
 from . import interfaces as sf_interfaces
@@ -26,8 +25,18 @@ from . import interfaces as sf_interfaces
 VERSION = u'v27.0'
 TOKEN_URL = u'https://na1.salesforce.com/services/oauth2/token'
 
-refresh_token = logon.refresh_token
-response_token_by_username_password = logon.response_token_by_username_password
+def refresh_token(client_id, refresh_token, client_secret=None):
+	"""
+	send a request for a new access token.
+	"""
+	payload = {u'client_id':client_id, 'grant_type':'refresh_token', u'refresh_token':refresh_token }
+	if client_secret:
+		payload['client_secret'] = client_secret
+	r = requests.post(TOKEN_URL, data=payload)
+	data = r.json()
+	assert r.status_code == 200
+	assert u'error' not in data, data.get(u'error_description', data.get(u'error'))
+	return data
 
 def is_invalid_session_id(data):
 	data = data[0] if isinstance(data, collections.Sequence) and data else data
@@ -86,6 +95,18 @@ def add_text_feed_comment(instance_url, access_token, feedItemId, text, version=
 	data = check_response(r, 201)
 	return data
 
+def get_salesforce_app(request=None):
+	request = request or get_current_request()
+	site_names = ('',)
+	if request:  # pragma: no cover
+		site_names = getattr(request, 'possible_site_names', ()) + site_names
+
+	for name in site_names:
+		util = component.queryUtility(sf_interfaces.ISalesforceApplication, name=name)
+		if util is not None:
+			return util
+	return None
+
 def _wrap(func, *args, **kwargs):
 	def f():
 		func(*args, **kwargs)
@@ -94,22 +115,21 @@ def _wrap(func, *args, **kwargs):
 @interface.implementer(sf_interfaces.IChatter)
 class Chatter(object):
 
-	def __init__(self, user, response_token, refresh_token=None):
+	def __init__(self, response_token, userId=None, refresh_token=None):
+		self._userId = userId
 		self.response_token = response_token
 		self.refresh_token = refresh_token or response_token.get('refresh_token')
-		self.user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 
 	@property
 	def application(self):
-		return logon.get_salesforce_app()
+		return get_salesforce_app()
 
 	@property
 	def userId(self):
-		userId = sf_interfaces.ISalesforceUser(self.user).UserID
-		if not userId:
+		if not self._userId:
 			cuser = self.get_chatter_user()
-			userId = sf_interfaces.ISalesforceUser(self.user).UserID = unicode(cuser['id'])
-		return userId
+			self._userId = unicode(cuser['id'])
+		return self._userId
 	
 	def get_chatter_user(self):
 		result = self._execute_valid_session(get_chatter_user)
