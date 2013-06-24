@@ -7,13 +7,13 @@ name: ntislidedeck
 			data-ntiid self/ntiid;
 			data-type self/type | default;
 			data-title self/title;
-			data-creator self/creator | nothing" >
-  <param name="ntiid" tal:attributes="value self/ntiid" />
-  <param name="type" tal:attributes="value self/type | default" />
-  <param name="title" tal:attributes="value self/title" />
-  <param name="creator" tal:attributes="value self/creator | nothing" />
-  <param name="slidedeckid" tal:attributes="value self/id" />
-  <img tal:condition="exists:self/image/image" tal:attributes="src self/image/image/url" />
+			data-creator self/creator | nothing">
+  <param name="ntiid" tal:attributes="value self/ntiid"/>
+  <param name="type" tal:attributes="value self/type | default"/>
+  <param name="title" tal:attributes="value self/title"/>
+  <param name="creator" tal:attributes="value self/creator | nothing"/>
+  <param name="slidedeckid" tal:attributes="value self/id"/>
+  <img tal:condition="exists:self/image/image" tal:attributes="src self/image/image/url"/>
   <span class="description" tal:content="self/description" tal:condition="self/description">
     The description of the target.
   </span>
@@ -21,30 +21,15 @@ name: ntislidedeck
 
 # This 
 name: ntislidevideo
-<div tal:condition="self/show_video" class="externalvideo" tal:attributes="id self/id; style self/style/inline">
-  <object type="MIME type" itemprop="nti-slide-video" tal:attributes="type self/mimeType">
-    <param name="slidedeckid" tal:attributes="value self/slidedeck/idref/label/id | string:default">
-    <param name="ntiid" tal:attributes="value self/id">
-    <param name="type" tal:attributes="value self/type">
-    <param name="id" tal:attributes="value self/provider_id">
-    <param name="thumbnail" tal:attributes="value self/thumbnail">
-    <span tal:replace="self/media_sources"></span>
-  </object>
-</div>
-<object tal:condition="not:self/show_video"
-	tal:attributes="style self/style/inline;
-			itemprop self/itemprop;
+<object tal:attributes="itemprop self/itemprop;
 			type self/mimeType;
-			data-ntiid self/ntiid;
-			data-type self/type | default;
-			data-title self/title;
-			data-creator self/creator | nothing" >
-  <param name="ntiid" tal:attributes="value self/ntiid" />
-  <param name="thumbnail" tal:attributes="value self/thumbnail">
-  <param name="title" tal:attributes="value self/title" />
-  <param name="creator" tal:attributes="value self/creator | nothing" />
-  <param name="slidedeckid" tal:attributes="value self/slidedeck/idref/label/id | string:default">
-  <img tal:attributes="src self/thumbnail" />
+			data-ntiid self/ntiid">
+  <param name="ntiid" tal:attributes="value self/ntiid"/>
+  <param name="thumbnail" tal:attributes="value self/thumbnail"/>
+  <param name="title" tal:attributes="value self/title"/>
+  <param name="creator" tal:attributes="value self/creator | nothing"/>
+  <param name="slidedeckid" tal:attributes="value self/slidedeck/idref/label/id | string:default"/>
+  <img tal:attributes="src self/thumbnail"/>
   <div class="hidden" style="display:none" tal:content="self/media_sources"></div>
   <span class="description" tal:content="self/description" tal:condition="self/description">
     The description of the target.
@@ -57,20 +42,21 @@ name: ntislidevideo
 # slide.  In presentation mode the object tag is used to produce the
 # visual represenation of the content.
 name: ntislide
-<object type="application/vnd.nextthought.slide" tal:attributes="data-ntiid self/ntiid; style self/style/inline">
-<param name="slidedeckid" tal:condition="exists:self/slidedeck/idref/label/id" tal:attributes="value self/slidedeck/idref/label/id">
-<param name="slidetitle" tal:attributes="value self/title">
-<param name="slidenumber" tal:attributes="value self/slidenumber">
-<param name="slideimage" tal:attributes="value self/slideimage/image/full_size/url">
-<param name="slidevideostart" tal:condition="exists:self/slidevideo/starttime" tal:attributes="value self/slidevideo/starttime">
-<param name="slidevideoend" tal:condition="exists:self/slidevideo/endtime" tal:attributes="value self/slidevideo/endtime">
-<div class="hidden" style="display:none" tal:content="self/slidevideo/idref/label/media_sources"></div>
-<span tal:condition="not:self/slideimage/image/resizeable" itemprop="nti-data-markupenabled">
-<img tal:condition="not:self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/slideimage/id; alt self/slideimage/source; style string:width:${self/slideimage/image/width/px};; height:${self/slideimage/image/height/px}; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url; data-title self/title | nothing" />
-<img tal:condition="self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/slideimage/id; alt self/slideimage/source; style self/slideimage/style/inline; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url; data-title self/title | nothing" />
-</span>
-<span tal:condition="self/slideimage/image/resizeable" itemprop="nti-data-markupenabled nti-data-resizeable">
-<img tal:condition="not:self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/slideimage/id; alt self/slideimage/source; style string:width:${self/slideimage/image/width/px};; height:${self/slideimage/image/height/px}; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url; data-title self/title | nothing" />
-<img tal:condition="self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/id; alt self/slideimage/source; style self/slideimage/style/inline; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url; data-title self/title | nothing" />
-</span>
+<object type="application/vnd.nextthought.slide"
+	tal:attributes="data-ntiid self/ntiid">
+  <param name="slidedeckid" tal:condition="exists:self/slidedeck/idref/label/id" tal:attributes="value self/slidedeck/idref/label/id"/>
+  <param name="slidetitle" tal:attributes="value self/title" />
+  <param name="slidenumber" tal:attributes="value self/slidenumber" />
+  <param name="slideimage" tal:attributes="value self/slideimage/image/full_size/url" />
+  <param name="slidevideostart" tal:condition="exists:self/slidevideo/starttime" tal:attributes="value self/slidevideo/starttime"/>
+  <param name="slidevideoend" tal:condition="exists:self/slidevideo/endtime" tal:attributes="value self/slidevideo/endtime"/>
+  <div class="hidden" style="display:none" tal:content="self/slidevideo/idref/label/media_sources"></div>
+  <span tal:condition="not:self/slideimage/image/resizeable" itemprop="nti-data-markupenabled">
+    <img tal:condition="not:self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/slideimage/id; alt self/slideimage/source; style string:width:${self/slideimage/image/width/px};; height:${self/slideimage/image/height/px}; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url; data-title self/title | nothing" />
+    <img tal:condition="self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/slideimage/id; alt self/slideimage/source; style self/slideimage/style/inline; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url; data-title self/title | nothing" />
+  </span>
+  <span tal:condition="self/slideimage/image/resizeable" itemprop="nti-data-markupenabled nti-data-resizeable">
+    <img tal:condition="not:self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/slideimage/id; alt self/slideimage/source; style string:width:${self/slideimage/image/width/px};; height:${self/slideimage/image/height/px}; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url; data-title self/title | nothing" />
+    <img tal:condition="self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/id; alt self/slideimage/source; style self/slideimage/style/inline; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url; data-title self/title | nothing" />
+  </span>
 </object>
