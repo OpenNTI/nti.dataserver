@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from nti.dataserver.users import User
 
+from nti.salesforce import logon
 from nti.salesforce import chatter
 
 from . import ConfiguringTestBase
@@ -20,16 +21,16 @@ from hamcrest import (assert_that, is_not, none)
 
 default_pwd = u'temp0001'
 default_user = u'carlos@nextthought.com'
-client_secret = u"2673551008213647908"
+client_secret = u"6765239363004890667"
 security_token = u"NFA6sxNhSmrscWHMda9Hevj7v"
-client_id = u"3MVG9A2kN3Bn17hty7fwNl_jwrHijOZGB3aQiAbHyNx18NhZ5NxYKIFnPDK285ulzSj0KyubC7BIYsZmvfoZB"
+client_id = u"3MVG9A2kN3Bn17hty7fwNl_jwrNAUN5YvsW6AH30dEOHZqcMW1Rclm.s7Ujrvwuvf28YAQBNIIVG.yJ4Tn6cQ"
 
 class TestChatter(ConfiguringTestBase):
 
 	@classmethod
 	def get_response_token(cls, client_id=client_id, client_secret=client_secret, security_token=security_token,
 						   username=default_user, password=default_pwd):
-		result = chatter.response_token_by_username_password(client_id, client_secret, security_token, username, password)
+		result = logon.response_token_by_username_password(client_id, client_secret, security_token, username, password)
 		return result
 		
 	def _create_user(self, username=default_user, password=default_pwd):
@@ -39,24 +40,21 @@ class TestChatter(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_get_user_id(self):
-		user = self._create_user()
 		rtoken = self.get_response_token()
-		cht = chatter.Chatter(user, rtoken)
+		cht = chatter.Chatter(rtoken)
 		assert_that(cht.userId, is_not(none()))
 
 	@WithMockDSTrans
 	def test_poll_news_feed(self):
-		user = self._create_user()
 		rtoken = self.get_response_token()
-		cht = chatter.Chatter(user, rtoken)
+		cht = chatter.Chatter(rtoken)
 		d = cht.poll_news_feed()
 		assert_that(d, is_not(none()))
 		
 	@WithMockDSTrans
 	def test_post_text_feed(self):
-		user = self._create_user()
 		rtoken = self.get_response_token()
-		cht = chatter.Chatter(user, rtoken)
+		cht = chatter.Chatter(rtoken)
 		cht.post_text_news_feed_item('test message')
 		
 	

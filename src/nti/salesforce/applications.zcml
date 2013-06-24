@@ -11,8 +11,8 @@
 	<include package="." file="meta.zcml" />
 
 	<salesforce:registerApplication
-		client_id="3MVG9A2kN3Bn17hty7fwNl_jwrHijOZGB3aQiAbHyNx18NhZ5NxYKIFnPDK285ulzSj0KyubC7BIYsZmvfoZB"
-		client_secret="2673551008213647908"
+		client_id="3MVG9A2kN3Bn17hty7fwNl_jwrNAUN5YvsW6AH30dEOHZqcMW1Rclm.s7Ujrvwuvf28YAQBNIIVG.yJ4Tn6cQ"
+		client_secret="6765239363004890667"
 		zcml:condition="have devmode"/>
 		
 </configure>

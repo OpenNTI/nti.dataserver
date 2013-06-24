@@ -7,9 +7,9 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<adapter factory=".users._SalesforceUserFactory"
+	<adapter factory=".users._SalesforceTokenInfoFactory"
 			 for="nti.dataserver.interfaces.IUser"
-			 provides=".interfaces.ISalesforceUser" />
+			 provides=".interfaces.ISalesforceTokenInfo" />
 
 	<subscriber handler=".subscribers.question_assessed" />
 	
