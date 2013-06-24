@@ -40,37 +40,42 @@ def response_token_by_username_password(client_id, client_secret, security_token
 	assert u'error' not in data, data.get(u'error_description', data.get(u'error'))
 	return data
 	
-@view_config(route_name='logon.salesforce.oauth1', request_method='GET')
+def _check_error(request, params):
+	error = params.get('error')
+	error_description = params.get('error_description', error)
+	if error:
+		response = hexc.HTTPBadRequest()
+		response.headers.extend(sec.forget(request))
+		response.headers[b'Warning'] = error_description.encode('utf-8')
+		return response
+	return None
+
+@view_config(route_name='logon.salesforce.oauth', request_method='GET')
 def salesforce_oauth1(request):
 	params = request.params
-	error = params.get('error')
-	error_description = params.get('error_description')
-	if error:
-		response = hexc.HTTPBadRequest()
-		response.headers.extend( sec.forget(request) )
-		response.headers[b'Warning'] = error_description.encode('utf-8')
-		return response
+	error_response = _check_error(request, params)
+	if error_response:
+		return error_response
 
-	app = chatter.get_salesforce_app(request)
-	code = params.get('code')
-	our_uri = urllib.quote(request.route_url('logon.salesforce.oauth2'))
-	redir_to = '%s?grant_type=authorization_code&code=%s&client_secret=%s&client_id=%s&redirect_uri=%s' % \
-				(TOKEN_URL, code, app.ClientSecret, app.ClientID, our_uri)
+	if 'access_token' in params:
+		return salesforce_oauth2(request, params)
+	else:
+		app = chatter.get_salesforce_app(request)
+		code = params['code']
+		our_uri = urllib.quote(request.route_url('logon.salesforce.oauth'))
+		post_to = '%s?grant_type=authorization_code&code=%s&client_secret=%s&client_id=%s&redirect_uri=%s' % \
+					(TOKEN_URL, code, app.ClientSecret, app.ClientID, our_uri)
 
-	return hexc.HTTPSeeOther( location=redir_to )
+		r = requests.post(post_to)
+		return salesforce_oauth2(request, r.json())
 
-@view_config(route_name='logon.salesforce.oauth2', request_method='GET')
-def salesforce_oauth2(request):
-	params = request.params
-	error = params.get('error')
-	error_description = params.get('error_description')
-	if error:
-		response = hexc.HTTPBadRequest()
-		response.headers.extend( sec.forget(request) )
-		response.headers[b'Warning'] = error_description.encode('utf-8')
-		return response
+def salesforce_oauth2(request, params):
 
-	response_token = dict(params)
+	error_response = _check_error(request, params)
+	if error_response:
+		return error_response
+
+	response_token = params
 	access_token = response_token['access_token']
 	instance_url = response_token['instance_url']
 
@@ -85,25 +90,26 @@ def salesforce_oauth2(request):
 		if user_info.get('email'):
 			ext_value['email'] = user_info.get('email')
 		# create user
-		user = sf_users.SalesforceUser.create_user(username=username, external_value=ext_value)
+		identity_url = user_info.get('id')
+		user = sf_users.SalesforceUser.create_user(username=username, identity_url=identity_url, external_value=ext_value)
+		logger.debug("User '%s' has been created" % username)
 		
 	# record token
 	sf = sf_interfaces.ISalesforceTokenInfo(user)
-	sf.UserID = user_info.get('id')
 	sf.AccessToken = response_token['access_token']
 	sf.RefreshToken = response_token['refresh_token']
 	sf.InstanceURL = response_token['instance_url']
 	sf.Signature = response_token['signature']
 
-	# login user
+	# login process
+
 	from nti.appserver import interfaces as app_interfaces
+	response = hexc.HTTPNoContent()
+	request.response = response
 
 	notify(app_interfaces.UserLogonEvent(user, request))
 
-	response = getattr(request, 'response')
-	if response:
-		response.headers.extend(sec.remember(request, user.username.encode('utf-8')))
-		response.set_cookie(b'username', user.username.encode('utf-8'))  # the
+	response.headers.extend(sec.remember(request, user.username.encode('utf-8')))
+	response.set_cookie(b'username', user.username.encode('utf-8'))  # the
 
 	return response
-
