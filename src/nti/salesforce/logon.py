@@ -84,6 +84,8 @@ def salesforce_oauth2(request, params):
 	username = user_info['username']
 	user = User.get_user(username)
 	if user is None:
+		# hack change the request method so the transaction is not aborted
+		request.method = 'POST'
 		ext_value = {}
 		if user_info.get('firstName') and user_info.get('lastName'):
 			ext_value['realname'] = '%s %s' % (user_info['firstName'], user_info['lastName'])
