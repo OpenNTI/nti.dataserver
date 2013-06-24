@@ -293,9 +293,9 @@ def createApplication( http_port,
 	pyramid_config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
 	pyramid_config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook1' )
 	pyramid_config.add_route( name='logon.facebook.oauth2', pattern='/dataserver2/logon.facebook2' )
-	pyramid_config.add_route( name='logon.salesforce.oauth1', pattern='/dataserver2/logon.salesforce.oauth1' )
-	pyramid_config.add_route( name='logon.salesforce.oauth2', pattern='/dataserver2/logon.salesforce.oauth2' )
+	pyramid_config.add_route( name='logon.salesforce.oauth', pattern='/dataserver2/logon.salesforce.oauth' )
 	pyramid_config.scan( 'nti.appserver.logon' )
+	pyramid_config.scan( 'nti.salesforce.logon' )	
 	# Deprecated logout alias
 	pyramid_config.add_route( name='logout', pattern='/dataserver2/logout' )
 	pyramid_config.add_view( route_name='logout', view='nti.appserver.logon.logout' )
@@ -435,8 +435,6 @@ def createApplication( http_port,
 	pyramid_config.scan( 'nti.appserver.forums.views' )
 	pyramid_config.scan( 'nti.appserver.user_activity_views' )
 	pyramid_config.scan( 'nti.appserver.store_views' )	
-	
-	pyramid_config.scan( 'nti.salesforce.logon' )	
 	
 	# Modifying UGD
 	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
