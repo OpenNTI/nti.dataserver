@@ -33,5 +33,5 @@ def question_assessed(assessed_question, event):
 
 	# TODO: get [access/refresh] token
 	username = authenticated_userid(get_current_request())
-	chatter = Chatter(username)
-	chatter.post_text_news_feed_item(content)
+# 	chatter = Chatter(username)
+# 	chatter.post_text_news_feed_item(content)
