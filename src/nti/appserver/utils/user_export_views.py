@@ -151,12 +151,12 @@ def _get_profile_info(coppaOnly=False):
 	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
 
 	for user in _users.values():
-		if coppaOnly and not nti_interfaces.ICoppaUser.providedBy(user):
+		if not nti_interfaces.IUser.providedBy(user) or (coppaOnly and not nti_interfaces.ICoppaUser.providedBy(user)):
 			continue
 		
 		profile = user_interfaces.IUserProfile(user)
 		email = getattr(profile, 'email', None)
-		info = [user.username, email] + _get_user_info(user)
+		info = [user.username, email or u''] + _get_user_info(user)
 		yield ','.join(info).encode('utf-8')
 
 @view_config(route_name='objects.generic.traversal',
@@ -167,7 +167,7 @@ def user_profile_info(request):
 	values = CaseInsensitiveDict(**request.params)
 	coppaOnly = is_true(values.get('coppaOnly', 'F'))
 	def _generator():
-		for obj in _get_opt_in_comm(coppaOnly):
+		for obj in _get_profile_info(coppaOnly):
 			yield obj
 			
 	response = request.response
