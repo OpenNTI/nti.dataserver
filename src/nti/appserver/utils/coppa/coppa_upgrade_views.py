@@ -99,7 +99,7 @@ class RollbackCoppaUsers(_JsonBodyView):
 				continue
 
 			items.append(username)
-			
+
 			# reset interfaces
 			if site_policies.IMathcountsUser.providedBy(user):
 				interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreement)
@@ -240,8 +240,8 @@ def upgrade_coppa_user_view(request):
 		contact_email = externalValue.get('contact_email')
 		if site_policies.IMathcountsUser.providedBy(user):
 			interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
-		# make sure coppa w/o agreement is set
-		interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
+		else:
+			interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 		profile = user_interfaces.IUserProfile(user)
 		user_policies.send_consent_request_on_coppa_account(user, profile, contact_email, request)
 
