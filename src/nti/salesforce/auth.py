@@ -30,6 +30,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from . import chatter
 from . import interfaces as sf_interfaces
 
+ROUTE_NAME = u'oauth.salesforce'
 TOKEN_URL = u'https://na1.salesforce.com/services/oauth2/token'
 AUTHORIZE_URL = u'https://na1.salesforce.com/services/oauth2/authorize'
 
@@ -56,7 +57,7 @@ def _check_error(request, params):
 		return response
 	return None
 
-@view_config(route_name='oauth.salesforce', request_method='GET')
+@view_config(route_name=ROUTE_NAME, request_method='GET')
 def salesforce_oauth(request):
 	params = request.params
 	error_response = _check_error(request, params)
@@ -66,7 +67,7 @@ def salesforce_oauth(request):
 	if 'code' in params:
 		app = chatter.get_salesforce_app(request)
 		code = params['code']
-		our_uri = urllib.quote(request.route_url('salesforce.oauth'))
+		our_uri = urllib.quote(request.route_url(ROUTE_NAME))
 		post_to = '%s?grant_type=authorization_code&code=%s&client_secret=%s&client_id=%s&redirect_uri=%s' % \
 					(TOKEN_URL, code, app.ClientSecret, app.ClientID, our_uri)
 
@@ -113,7 +114,7 @@ def link_belongs_to_user(link, user):
 @component.adapter(nti_interfaces.IUser, pyramid_interfaces.IRequest)
 class SalesforceLinkProvider(object):
 
-	rel = 'salesforce.oauth'
+	rel = ROUTE_NAME
 	
 	def __init__( self, user, request):
 		self.user = user
@@ -122,7 +123,7 @@ class SalesforceLinkProvider(object):
 	def get_links( self ):
 		app = chatter.get_salesforce_app(self.request)
 		if app:
-			our_uri = urllib.quote(self.request.route_url('salesforce.oauth'))
+			our_uri = urllib.quote(self.request.route_url(ROUTE_NAME))
 			url = '%s?response_type=code&client_id=%s&redirect_uri=%s' % (AUTHORIZE_URL, app.ClientID, our_uri)
 			link = Link(target=url, rel=self.rel, method='GET', title='Salesforce OAuth')
 			return (link,)
