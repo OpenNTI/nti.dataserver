@@ -16,12 +16,9 @@ from pyramid import security as sec
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
-from zope.event import notify
-
 from nti.dataserver.users import User
 
 from . import chatter
-from . import users as sf_users
 from . import interfaces as sf_interfaces
 
 TOKEN_URL = u'https://na1.salesforce.com/services/oauth2/token'
@@ -51,15 +48,13 @@ def _check_error(request, params):
 	return None
 
 @view_config(route_name='logon.salesforce.oauth', request_method='GET')
-def salesforce_oauth1(request):
+def salesforce_oauth(request):
 	params = request.params
 	error_response = _check_error(request, params)
 	if error_response:
 		return error_response
 
-	if 'access_token' in params:
-		return salesforce_oauth2(request, params)
-	else:
+	if 'code' in params:
 		app = chatter.get_salesforce_app(request)
 		code = params['code']
 		our_uri = urllib.quote(request.route_url('logon.salesforce.oauth'))
@@ -67,13 +62,10 @@ def salesforce_oauth1(request):
 					(TOKEN_URL, code, app.ClientSecret, app.ClientID, our_uri)
 
 		r = requests.post(post_to)
-		return salesforce_oauth2(request, r.json())
-
-def salesforce_oauth2(request, params):
-
-	error_response = _check_error(request, params)
-	if error_response:
-		return error_response
+		params = r.json()
+		error_response = _check_error(request, params)
+		if error_response:
+			return error_response
 
 	response_token = params
 	access_token = response_token['access_token']
@@ -84,34 +76,14 @@ def salesforce_oauth2(request, params):
 	username = user_info['username']
 	user = User.get_user(username)
 	if user is None:
-		# hack change the request method so the transaction is not aborted
-		request.method = 'POST'
-		ext_value = {}
-		if user_info.get('firstName') and user_info.get('lastName'):
-			ext_value['realname'] = '%s %s' % (user_info['firstName'], user_info['lastName'])
-		if user_info.get('email'):
-			ext_value['email'] = user_info.get('email')
-		# create user
-		identity_url = user_info.get('id')
-		user = sf_users.SalesforceUser.create_user(username=username, identity_url=identity_url, external_value=ext_value)
-		logger.debug("User '%s' has been created" % username)
+		raise ValueError( "No user found for %s" % username )
 		
 	# record token
 	sf = sf_interfaces.ISalesforceTokenInfo(user)
+	sf.ID = response_token['id']
 	sf.AccessToken = response_token['access_token']
 	sf.RefreshToken = response_token['refresh_token']
 	sf.InstanceURL = response_token['instance_url']
 	sf.Signature = response_token['signature']
 
-	# login process
-
-	from nti.appserver import interfaces as app_interfaces
-	response = hexc.HTTPNoContent()
-	request.response = response
-
-	notify(app_interfaces.UserLogonEvent(user, request))
-
-	response.headers.extend(sec.remember(request, user.username.encode('utf-8')))
-	response.set_cookie(b'username', user.username.encode('utf-8'))  # the
-
-	return response
+	return hexc.HTTPNoContent()
