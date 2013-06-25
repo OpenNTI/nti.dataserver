@@ -12,7 +12,9 @@
 			 provides=".interfaces.ISalesforceTokenInfo" />
 
 	<subscriber handler=".subscribers.question_assessed" />
-	
+		
+	<subscriber factory=".auth.SalesforceLinkProvider"
+				provides="nti.appserver.interfaces.IAuthenticatedUserLinkProvider" />
+			
 	<include file="applications.zcml" zcml:condition="have devmode"/>
-	
 </configure>

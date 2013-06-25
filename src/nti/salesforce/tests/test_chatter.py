@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from nti.dataserver.users import User
 
-from nti.salesforce import logon
+from nti.salesforce import auth
 from nti.salesforce import chatter
 
 from . import ConfiguringTestBase
@@ -30,7 +30,7 @@ class TestChatter(ConfiguringTestBase):
 	@classmethod
 	def get_response_token(cls, client_id=client_id, client_secret=client_secret, security_token=security_token,
 						   username=default_user, password=default_pwd):
-		result = logon.response_token_by_username_password(client_id, client_secret, security_token, username, password)
+		result = auth.response_token_by_username_password(client_id, client_secret, security_token, username, password)
 		return result
 		
 	def _create_user(self, username=default_user, password=default_pwd):
