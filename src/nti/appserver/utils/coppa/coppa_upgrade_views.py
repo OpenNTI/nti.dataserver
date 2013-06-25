@@ -110,6 +110,10 @@ class RollbackCoppaUsers(_JsonBodyView):
 				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
 				interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 
+			# remove birthday
+			profile = user_interfaces.IUserProfile(user)
+			setattr(profile, 'birthdate', None)
+			
 			# add link
 			flag_link_provider.add_link(user, 'coppa.upgraded.rollbacked')
 			
