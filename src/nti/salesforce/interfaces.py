@@ -13,10 +13,14 @@ from nti.utils import schema as nti_schema
 
 class ISalesforceTokenInfo(interface.Interface):
     ID = nti_schema.ValidTextLine(title='Identity URL', required=False)
-    AccessToken = nti_schema.ValidTextLine(title='Session ID that you can use for making Chatter API', required=True)
+    UserID = nti_schema.ValidTextLine(title='User ID', required=True)
+    AccessToken = nti_schema.ValidTextLine(title='Session ID that you can use for making Chatter API', required=False)
     RefreshToken = nti_schema.ValidTextLine(title='Token that can be used in the future to obtain new access tokens', required=True)
     InstanceURL = nti_schema.ValidTextLine(title="URL indicating the instance of the user's organization", required=True)
-    Signature = nti_schema.ValidTextLine(title="Base64-encoded HMAC-SHA256", required=True)
+    Signature = nti_schema.ValidTextLine(title="Base64-encoded HMAC-SHA256", required=False)
+
+    def get_response_token():
+        pass
 
 class ISalesforceApplication(interface.Interface):
     ClientID = nti_schema.ValidTextLine(title='Client id', required=True)

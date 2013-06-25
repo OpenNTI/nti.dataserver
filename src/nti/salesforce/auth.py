@@ -64,6 +64,7 @@ def salesforce_oauth(request):
 	if error_response:
 		return error_response
 
+	redirect_to = params.get('state')
 	if 'code' in params:
 		app = chatter.get_salesforce_app(request)
 		code = params['code']
@@ -80,24 +81,34 @@ def salesforce_oauth(request):
 	response_token = params
 	access_token = response_token['access_token']
 	instance_url = response_token['instance_url']
+	if not access_token or instance_url:
+		response = hexc.HTTPBadRequest(detail="no access token found")
+		return response
 
 	# make sure we have a internal user
 	user_info = chatter.get_chatter_user(instance_url, access_token)
 	username = user_info['username']
+	userId = user_info('id')
 	user = User.get_user(username)
 	if user is None:
 		raise ValueError( "No user found for %s" % username )
 		
-	# record token
+	# to force a transaction commit
+	request.method = 'POST'
+
+	# save response token
 	sf = sf_interfaces.ISalesforceTokenInfo(user)
+	sf.UserID = userId
 	sf.ID = response_token['id']
 	sf.AccessToken = response_token['access_token']
 	sf.RefreshToken = response_token['refresh_token']
 	sf.InstanceURL = response_token['instance_url']
 	sf.Signature = response_token['signature']
 
-	return hexc.HTTPNoContent()
-
+	if redirect_to:
+		response = hexc.HTTPSeeOther(location=redirect_to)
+	else:
+		response = hexc.HTTPNoContent()
 
 def link_belongs_to_user(link, user):
 	link.__parent__ = user
@@ -122,7 +133,8 @@ class SalesforceLinkProvider(object):
 
 	def get_links( self ):
 		app = chatter.get_salesforce_app(self.request)
-		if app:
+		sf = sf_interfaces.ISalesforceTokenInfo(self.user, None)
+		if app and sf and not sf.RefreshToken:
 			our_uri = urllib.quote(self.request.route_url(ROUTE_NAME))
 			url = '%s?response_type=code&client_id=%s&redirect_uri=%s' % (AUTHORIZE_URL, app.ClientID, our_uri)
 			link = Link(target=url, rel=self.rel, method='GET', title='Salesforce OAuth')

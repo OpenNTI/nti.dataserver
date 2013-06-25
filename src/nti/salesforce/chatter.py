@@ -171,6 +171,9 @@ class Chatter(object):
 	def _execute_valid_session(self, func, **kwargs):
 		rt = self.response_token
 		for _ in xrange(2):
+			access_token = rt.get(u'access_token')
+			if not access_token:
+				rt = self.new_response_token()
 			result = func(instance_url=rt[u'instance_url'], access_token=rt[u'access_token'], **kwargs) if rt else None
 			if is_invalid_session_id(result):
 				rt = self.new_response_token()
