@@ -19,11 +19,14 @@ from nti.assessment import interfaces as as_interfaces
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from .chatter import Chatter
+from . import chatter
 
 @component.adapter(as_interfaces.IQAssessedQuestion, IObjectCreatedEvent)
 def question_assessed(assessed_question, event):
 	question = find_object_with_ntiid(assessed_question.questionId)
+	if not question:
+		return
+	
 	content = getattr(question, 'content', None)
 	if not content:
 		text = []
