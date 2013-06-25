@@ -17,9 +17,11 @@ from pyramid.threadlocal import get_current_request
 
 from nti.assessment import interfaces as as_interfaces
 
+from nti.dataserver import users
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from . import chatter
+from . import interfaces as sf_interfaces
 
 @component.adapter(as_interfaces.IQAssessedQuestion, IObjectCreatedEvent)
 def question_assessed(assessed_question, event):
@@ -27,6 +29,12 @@ def question_assessed(assessed_question, event):
 	if not question:
 		return
 	
+	username = authenticated_userid(get_current_request())
+	user = users.User.get_user(username)
+	token = sf_interfaces.ISalesforceTokenInfo(user, None)
+	if token is None or token.RefreshToken is None:
+		return
+
 	content = getattr(question, 'content', None)
 	if not content:
 		text = []
@@ -34,7 +42,6 @@ def question_assessed(assessed_question, event):
 			text.append(getattr(q_part, 'content', ''))
 		content = '\n'.join(text)
 
-	# TODO: get [access/refresh] token
-	username = authenticated_userid(get_current_request())
-# 	chatter = Chatter(username)
-# 	chatter.post_text_news_feed_item(content)
+	c = chatter.Chatter(token.get_response_token())
+	c.post_text_news_feed_item(content)
+
