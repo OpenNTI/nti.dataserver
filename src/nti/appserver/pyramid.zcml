@@ -70,7 +70,7 @@
 	<pyramid:scan package=".content_card_views" />
 
 	<configure zcml:condition="have devmode">
-		<pyramid:scan package='nti.salesforce.logon' />
+		<pyramid:scan package='nti.salesforce.auth' />
 	</configure>
 	
 	<!-- Util/Admin views -->
