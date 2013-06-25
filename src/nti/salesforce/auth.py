@@ -56,7 +56,7 @@ def _check_error(request, params):
 		return response
 	return None
 
-@view_config(route_name='salesforce.oauth', request_method='GET')
+@view_config(route_name='oauth.salesforce', request_method='GET')
 def salesforce_oauth(request):
 	params = request.params
 	error_response = _check_error(request, params)
