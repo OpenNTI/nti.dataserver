@@ -136,17 +136,18 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	def digest(self, tokens):
 		res = super(ntislidevideo, self).digest(tokens)
 		if self.macroMode == self.MODE_BEGIN:
-			if not getattr(self, 'title', ''):
-				raise ValueError("Must specify a title using \\caption")
-
 			options = self.attributes.get( 'options', {} ) or {}
 			__traceback_info__ = options, self.attributes
-			if 'creator' in options:
-				self.creator = options['creator']
 			if 'presentationonly' in options and options['presentationonly']:
 				self.itemprop = 'presentation-none'
 			if 'show-video' in options and options['show-video']:
 				self.itemprop = 'presentation-video'
+
+
+			video_els = self.getElementsByTagName( 'ntivideo' )
+			if video_els:
+				self.title = video_els[0].title
+				self.creator = video_els[0].creator
 
 			video_els = self.getElementsByTagName( 'ntiincludevideo' )
 			if video_els:
