@@ -105,7 +105,7 @@ def salesforce_oauth(request):
 	request.method = 'POST'
 
 	# save response token
-	chatter.update_user(user, response_token, userId)
+	chatter.update_user_token_info(user, response_token, userId)
 
 	if redirect_to and url_validator.match(redirect_to):
 		response = hexc.HTTPSeeOther(location=redirect_to)
