@@ -18,14 +18,16 @@ from pyramid.threadlocal import get_current_request
 from nti.assessment import interfaces as as_interfaces
 
 from nti.dataserver import users
+from nti.dataserver.users import interfaces as user_interfaces
+
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from . import chatter
+from .chatter import Chatter
 from . import interfaces as sf_interfaces
 
 @component.adapter(as_interfaces.IQAssessedQuestion, IObjectCreatedEvent)
-def question_assessed(assessed_question, event):
-	question = find_object_with_ntiid(assessed_question.questionId)
+def question_assessed(submission, event):
+	question = find_object_with_ntiid(submission.questionId)
 	if not question:
 		return
 	
@@ -35,13 +37,24 @@ def question_assessed(assessed_question, event):
 	if token is None or token.RefreshToken is None:
 		return
 
-	content = getattr(question, 'content', None)
-	if not content:
-		text = []
-		for q_part in question.parts:
-			text.append(getattr(q_part, 'content', ''))
-		content = '\n'.join(text)
-
-	c = chatter.Chatter(token.get_response_token(), userId=token.UserID)
+	q_content = getattr(question, 'content', None)
+	
+	text = []
+	count = 1
+	for sub_part, q_part in zip(submission.parts, question.parts):
+		content = getattr(q_part, 'content', u'')
+		value = sub_part.assessedValue
+		response = sub_part.submittedResponse
+		if not content and q_content and count == 1:
+			content = q_content
+		text.append("%s) Question: '%s'. Response: '%s', Grade: '%s'" % (count, content, response, value))
+		count += 1
+		
+	profile = user_interfaces.IUserProfile(user)
+	realname = getattr(profile, 'realname', None) or username
+	
+	content = '\n'.join(text)
+	content = '%s:\n %s' % (realname, content)
+	c = Chatter(token.get_response_token(), userId=token.UserID)
 	c.post_text_news_feed_item(content)
 
