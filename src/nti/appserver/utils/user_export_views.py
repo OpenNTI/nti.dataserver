@@ -95,7 +95,11 @@ def user_info_extract(request):
 # user_opt_in_email_communication
 			
 def _parse_time(t):
-	return datetime.fromtimestamp(t).isoformat() if t else u''
+	try:
+		return datetime.fromtimestamp(t).isoformat() if t else u''
+	except ValueError:
+		logger.debug("Cannot parse time '%s'" % t)
+		return str(t)
 
 def _get_user_info(user):
 	createdTime = _parse_time(getattr(user, 'createdTime', 0))
