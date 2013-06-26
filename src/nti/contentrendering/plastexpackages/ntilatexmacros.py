@@ -9,6 +9,7 @@
 from __future__ import print_function, unicode_literals, absolute_import
 
 import hashlib
+import os
 
 from zope import interface
 
@@ -22,6 +23,7 @@ from nti.contentrendering import plastexids
 from nti.contentrendering import interfaces as crd_interfaces
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
 from nti.contentrendering.plastexpackages.graphicx import includegraphics
+from nti.contentrendering.resources import interfaces as resource_interfaces
 
 from nti.contentfragments import interfaces as cfg_interfaces
 
@@ -80,6 +82,47 @@ class pageref(Crossref.pageref):
 class ntinavlist(Base.List):
 	pass
 
+###############################################################################
+# The following block of commands concern general resource handling
+###############################################################################
+
+@interface.implementer(resource_interfaces.IRepresentableContentUnit,
+		       resource_interfaces.IRepresentationPreferences)
+class DeclareMediaResource( Base.Command ):
+	"""This command is extremely experimental and should be avoided for now."""
+	args = 'src:str label:id'
+	resourceTypes = ( 'jsonp', )
+
+	def invoke( self, tex ):
+		result = super(DeclareMediaResource, self).invoke( tex )
+		self.attributes['src'] = os.path.join( self.ownerDocument.userdata.getPath('working-dir'), self.attributes['src'])
+		return result
+
+###############################################################################
+# The following block of commands concern media resource handling
+###############################################################################
+
+@interface.implementer(resource_interfaces.IRepresentableContentUnit,
+		       resource_interfaces.IRepresentationPreferences)
+class mediatranscript(Base.Command):
+	args = 'src:str type:str lang:str purpose:str'
+	resourceTypes = ( 'jsonp', )
+	blockType = True
+
+	transcript_mime_type = 'text/plain'
+
+	def invoke( self, tex ):
+		result = super(mediatranscript, self).invoke( tex )
+		self.attributes['src'] = os.path.join( self.ownerDocument.userdata.getPath('working-dir'), self.attributes['src'])
+		return result
+
+	def digest(self, tokens):
+		res = super(mediatranscript, self).digest(tokens)
+
+		if self.attributes['type'] == 'webvtt':
+			self.transcript_mime_type = 'text/vtt'
+
+		return res
 
 class ntiincludevideo(_OneText):
 	args = 'video_url'
