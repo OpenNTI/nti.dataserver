@@ -55,9 +55,17 @@ from nti.dataserver.links import Link
 
 from z3c.batching.batch import Batch
 
-#from perfmetrics import metricmethod
-
-
+class Operator(object):
+	union = 0
+	intersection = 1
+	
+	@classmethod
+	def fromUnicode(cls, x=None):
+		x = x or u"1"
+		if unicode(x).lower() not in (u"1", u"intersection"):
+			return Operator.union
+		return Operator.intersection
+	
 def _TRUE(x): return True
 
 def _lists_and_dicts_to_iterables( lists_and_dicts ):
@@ -204,10 +212,14 @@ def _reference_list_recursive_max_last_modified( proxy ):
 	except ValueError: #Empty list
 		return 0
 
-def _combine_predicate( new, old ):
+def _combine_predicate( new, old, operator=Operator.intersection ):
 	if not old:
 		return new
-	return lambda obj: new(obj) and old(obj)
+	if operator == Operator.union:
+		result = lambda obj: new(obj) or old(obj)
+	else:
+		result = lambda obj: new(obj) and old(obj)
+	return result
 
 def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
 	me = get_remote_user(request) # the 'I' means the current user, not the one whose date we look at (not  request.context.user)
@@ -408,6 +420,10 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			return param.split( ',' )
 		return []
 
+	def _get_filter_operator(self):
+		param = self.request.params.get( 'filterOperator',  None )
+		return Operator.fromUnicode(param)
+	
 	def _get_filter_names(self):
 		return self.__get_list_param( 'filter' )
 
@@ -516,11 +532,10 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			mime_filter = self._MIME_FILTER_FACTORY( exclude_types )
 			return lambda o: not mime_filter(o)
 
-	def _make_complete_predicate( self ):
+	def _make_complete_predicate( self, operator=Operator.intersection ):
 		"A predicate for all the filtering, excluding security"
 
-		predicate = None # We build an uber predicate that handles all filtering in one pass through the list
-		predicate = self._make_accept_predicate( )
+		predicate = self._make_accept_predicate( )  # We build an uber predicate that handles all filtering in one pass through the list
 		if predicate is None:
 			# accept takes priority over exclude
 			predicate = self._make_exclude_predicate()
@@ -534,7 +549,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			if isinstance( the_filter, tuple ):
 				the_filter = the_filter[0]( self.request )
 
-			predicate = _combine_predicate( the_filter, predicate )
+			predicate = _combine_predicate( the_filter, predicate, operator=operator )
 
 		shared_with_values = self._get_shared_with()
 		if shared_with_values:
@@ -665,6 +680,11 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			found (after all the filters are applied) then an empty batch is returned.
 			(Even if you supply this value, you should still supply a value for ``batchStart``
 			such as 1).
+			
+		filterOperator
+			A string parameter with to indiciate what operator (union, intersection) is to
+			be used when combining the filters. The values are ('0', 'union') for union operator or
+			('1','intersection') for intersection. The default is intersection
 
 		:param dict result: The result dictionary that will be returned to the client.
 			Contains the ``Items`` list of all items found. You may add keys to the dictionary.
@@ -705,10 +725,10 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 					pass
 				try:
 					return x.xxx_isReadableByAnyIdOfUser( remote_user, my_ids, family )
-				except (AttributeError,TypeError) as e:
+				except (AttributeError,TypeError):
 					try:
 						return x.isSharedWith( remote_user ) # TODO: Might need to OR this with is_readable?
-					except AttributeError as e:
+					except AttributeError:
 						return is_readable(x)
 			def tuple_security_check(x):
 				return security_check(x[1])
@@ -716,7 +736,8 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		total_item_count = sum( (len(x) for x in objects if x is not None) )
 
 		pre_filtered = not self._needs_filtered
-		predicate = self._make_complete_predicate()
+		filter_operator = self._get_filter_operator()
+		predicate = self._make_complete_predicate(filter_operator)
 		sort_key_function = self._make_sort_key_function()
 		batch_size, batch_start = self._get_batch_size_start()
 
@@ -1100,7 +1121,6 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	def decorateExternalMapping( self, context, mapping ):
 		# Also add the reply count, if we have that information available
 
-		extra_elements = ()
 		reply_count = _reference_list_length( context )
 		if reply_count >= 0:
 			mapping['ReferencedByCount'] = reply_count
