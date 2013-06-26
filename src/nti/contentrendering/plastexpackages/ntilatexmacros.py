@@ -175,6 +175,7 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 
 	class ntivideosource( Command ):
 		args = '[ options:dict ] service:str id:str'
+		blockType = True
 
 		poster = None
 		thumbnail = None
