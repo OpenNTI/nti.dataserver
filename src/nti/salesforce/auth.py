@@ -72,7 +72,7 @@ def salesforce_oauth(request):
 	if error_response:
 		return error_response
 
-	redirect_to = urllib.unquote(params.get('state'))
+	redirect_to = urllib.unquote(params.get('state', u''))
 	if 'code' in params:
 		app = chatter.get_salesforce_app(request)
 		code = params['code']
