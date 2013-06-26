@@ -14,5 +14,14 @@
 
 	<include package="nti.assessment" />
 
+	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">
+        	<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
+        	<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />
+	</class>
+
+	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.mediatranscript">
+        	<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
+        	<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />
+	</class>
 
 </configure>

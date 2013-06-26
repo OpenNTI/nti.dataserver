@@ -41,6 +41,15 @@ name: ntivideosource
   <param name="thumbnail" tal:condition="self/thumbnail" tal:attributes="value self/thumbnail">
 </object>
 
+name: mediatranscript
+<object type="application/vnd.nextthought.mediatranscript" tal:attributes="data-lang self/attributes/lang">
+  <param name="src" tal:attributes="value self/raw/url"/>
+  <param name="srcjsonp" tal:attributes="value self/wrapped/url"/>
+  <param name="type" tal:attributes="value self/transcript_mime_type"/>
+  <param name="lang" tal:attributes="value self/attributes/lang"/>
+  <param name="purpose" tal:attributes="value self/attributes/purpose"/>
+</object>
+
 name: ntivideoroll
 <object type="application/vnd.nextthought.videoroll" tal:attributes="data-ntiid self/ntiid; data self/ntiid">
 <param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
@@ -148,3 +157,6 @@ name: ntinavlist
 <ul class="nav">
 <li tal:repeat="item self" tal:content="item"></li>
 </ul>
+
+name: DeclareMediaResource
+
