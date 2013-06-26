@@ -23,6 +23,7 @@ name: ntislidedeck
 name: ntislidevideo
 <object tal:attributes="itemprop self/itemprop;
 			type self/mimeType;
+			style self/style/inline;
 			data-ntiid self/ntiid">
   <param name="ntiid" tal:attributes="value self/ntiid"/>
   <param name="thumbnail" tal:attributes="value self/thumbnail"/>
