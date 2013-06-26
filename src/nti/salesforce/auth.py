@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import re
 import urllib
 import requests
 
@@ -33,6 +34,13 @@ from . import interfaces as sf_interfaces
 ROUTE_NAME = u'oauth.salesforce'
 TOKEN_URL = u'https://na1.salesforce.com/services/oauth2/token'
 AUTHORIZE_URL = u'https://na1.salesforce.com/services/oauth2/authorize'
+
+url_validator = re.compile(r'^(?:http|ftp)s?://'  # http:// or https://
+						   r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+						   r'localhost|'  # localhost...
+						   r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+						   r'(?::\d+)?'  # optional port
+						   r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
 def response_token_by_username_password(client_id, client_secret, security_token, username, password):
 	"""
@@ -64,7 +72,7 @@ def salesforce_oauth(request):
 	if error_response:
 		return error_response
 
-	redirect_to = params.get('state')
+	redirect_to = urllib.unquote(params.get('state'))
 	if 'code' in params:
 		app = chatter.get_salesforce_app(request)
 		code = params['code']
@@ -105,7 +113,7 @@ def salesforce_oauth(request):
 	sf.InstanceURL = response_token['instance_url']
 	sf.Signature = response_token['signature']
 
-	if redirect_to:
+	if redirect_to and url_validator.match(redirect_to):
 		response = hexc.HTTPSeeOther(location=redirect_to)
 	else:
 		response = hexc.HTTPNoContent()
