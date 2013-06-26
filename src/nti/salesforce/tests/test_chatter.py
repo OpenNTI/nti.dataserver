@@ -7,10 +7,16 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import os
+
 from nti.dataserver.users import User
+
+from nti.externalization.externalization import toExternalObject
 
 from nti.salesforce import auth
 from nti.salesforce import chatter
+from nti.salesforce import subscribers
+from nti.salesforce import interfaces as sf_interfaces
 
 from . import ConfiguringTestBase
 
@@ -58,3 +64,52 @@ class TestChatter(ConfiguringTestBase):
 		cht.post_text_news_feed_item('test message')
 		
 	
+from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
+
+from nti.assessment import submission as asm_submission
+
+from nti.appserver.tests.test_application import SharedApplicationTestBase
+from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
+
+class DummyChatter(object):
+	text = None
+
+	def __init__(self, *args, **kwargs):
+		pass
+
+	@classmethod
+	def post_text_news_feed_item(cls, text):
+		cls.text = text
+	
+class TestAssessment(SharedApplicationTestBase):
+
+	child_ntiid =  b'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
+
+	question_ntiid = child_ntiid
+
+	@classmethod
+	def setUpClass(cls):
+		super(TestAssessment, cls).setUpClass()
+		subscribers.Chatter = DummyChatter
+
+	@classmethod
+	def _setup_library( cls, *args, **kwargs ):
+		return FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
+	
+	def _setUp(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = User.get_user('sjohnson@nextthought.com')
+			token = sf_interfaces.ISalesforceTokenInfo(user)
+			token.UserID = 'sjohnson@nextthought.com'
+			token.RefreshToken = 'foo'
+		DummyChatter.text = None
+
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_simple_post(self):
+		self._setUp()
+		sub = asm_submission.QuestionSubmission( questionId=self.child_ntiid, parts=('correct',) )
+		ext_obj = toExternalObject( sub )
+		ext_obj['ContainerId'] = 'tag:nextthought.com,2011-10:mathcounts-HTML-MN.2012.0'
+		ext_obj.pop( 'Class' )
+		self.testapp.post_json('/dataserver2/users/sjohnson@nextthought.com', ext_obj)
+		assert_that(DummyChatter.text, is_not(none()))
