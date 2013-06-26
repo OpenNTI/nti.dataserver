@@ -195,6 +195,14 @@ class Renderable(BaseRenderable):
 		return rendered_unicode
 
 	@property
+	def raw(self):
+		return self.getResource(['jsonp', 'raw'])
+
+	@property
+	def wrapped(self):
+		return self.getResource(['jsonp', 'wrapped'])
+
+	@property
 	def image(self):
 		def _determine_units( dimen ):
 			'''This function determines what units are being used for a dimension.'''

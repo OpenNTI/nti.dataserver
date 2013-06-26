@@ -29,5 +29,10 @@
 			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
 			 name="mathml" />
 
+	<adapter factory=".converter_jsonp.JSONPBatchConverter"
+			 for="plasTeX.DOM.Node"
+			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
+			 name="jsonp" />
+
 
 </configure>
