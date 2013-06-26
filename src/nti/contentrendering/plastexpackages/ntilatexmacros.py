@@ -237,6 +237,13 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 		return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
 
 
+	@readproperty
+	def transcripts(self):
+		sources = self.getElementsByTagName( 'mediatranscript' )
+		output = render_children( self.renderer, sources )
+		return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
+
+
 class ntilocalvideoname(Command):
 		unicode = ''
 
