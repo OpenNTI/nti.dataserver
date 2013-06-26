@@ -242,7 +242,7 @@ setup(
 		'python-statsd >= 1.6.0',  # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
 		 # Consider also https://github.com/phensley/gstatsd
-		'pystatsd == 0.1.6',
+		'pystatsd >= 0.1.6',
 		'pytz >= 2013b',
 		# RDF and embedded RDFa parsing.
 		'rdflib >= 4.0.1',
