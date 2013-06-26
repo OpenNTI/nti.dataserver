@@ -500,7 +500,12 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 						 has_entry( 'Items',
 									contains(
 										has_entry( 'RecursiveLikeCount', 1 ) ) ) )
-
+		
+		for _path in path, activity_path:
+			__traceback_info__ = _path
+			res = testapp.get( _path, params={'filter': 'TopLevel,IFollowAndMe', 'filterOperator':'union'}, extra_environ=self._make_extra_environ())
+			assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
+			
 		res = testapp.get( path, params={'sortOn': 'LikeCount'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
 		# Descending by default
