@@ -113,6 +113,7 @@ class RollbackCoppaUsers(_JsonBodyView):
 			# remove birthday
 			profile = user_interfaces.IUserProfile(user)
 			setattr(profile, 'birthdate', None)
+			setattr(profile, 'email', None)
 			
 			# add link
 			flag_link_provider.add_link(user, 'coppa.upgraded.rollbacked')
