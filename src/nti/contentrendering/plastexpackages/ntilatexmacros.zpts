@@ -24,6 +24,7 @@ name: ntivideo
     The description of the target.
   </span>
   <span tal:replace="self/video_sources"></span>
+  <span tal:replace="self/transcripts"></span>
 </object>
 
 name: ntivideosource
