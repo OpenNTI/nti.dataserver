@@ -19,7 +19,10 @@ class ISalesforceTokenInfo(interface.Interface):
     InstanceURL = nti_schema.ValidTextLine(title="URL indicating the instance of the user's organization", required=True)
     Signature = nti_schema.ValidTextLine(title="Base64-encoded HMAC-SHA256", required=False)
 
-    def get_response_token():
+    def can_chatter():
+        pass
+
+    def response_token():
         pass
 
 class ISalesforceApplication(interface.Interface):

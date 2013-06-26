@@ -28,13 +28,16 @@ from . import interfaces as sf_interfaces
 class SalesforceTokenInfo(SchemaConfigured, zcontained.Contained, Persistent):
 	createDirectFieldProperties(sf_interfaces.ISalesforceTokenInfo)
 
-	def get_response_token(self):
+	def can_chatter(self):
+		return self.RefreshToken is not None and self.UserID is not None and self.InstanceURL
+
+	def response_token(self):
 		result = {}
 		result['id'] = self.ID
+		result['signature'] = self.Signature
+		result['instance_url'] = self.InstanceURL
 		result['access_token'] = self.AccessToken
 		result['refresh_token'] = self.RefreshToken
-		result['instance_url'] = self.InstanceURL
-		result['signature'] = self.Signature
 		return result
 
 _SalesforceTokenInfoFactory = an_factory(SalesforceTokenInfo)

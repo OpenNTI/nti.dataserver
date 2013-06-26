@@ -25,6 +25,18 @@ from . import interfaces as sf_interfaces
 VERSION = u'v27.0'
 TOKEN_URL = u'https://na1.salesforce.com/services/oauth2/token'
 
+def update_user_token_info(user, response, userId=None):
+	sf = sf_interfaces.ISalesforceTokenInfo(user)
+	sf.ID = response.get('id') or sf.ID
+	sf.Signature = response.get('signature') or sf.Signature
+	sf.AccessToken = response.get('access_token') or sf.AccessToken
+	if userId:
+		sf.UserID = userId
+	if 'instance_url' in response:
+		sf.InstanceURL = response.get('instance_url')
+	if 'refresh_token' in response:
+		sf.RefreshToken = response.get('refresh_token')
+
 def refresh_token(client_id, refresh_token, client_secret=None):
 	"""
 	send a request for a new access token.
@@ -115,21 +127,20 @@ def _wrap(func, *args, **kwargs):
 @interface.implementer(sf_interfaces.IChatter)
 class Chatter(object):
 
-	def __init__(self, response_token, userId=None, refresh_token=None):
-		self._userId = userId
-		self.response_token = response_token
-		self.refresh_token = refresh_token or response_token.get('refresh_token')
+	def __init__(self, user):
+		self.user = user
 
 	@property
 	def application(self):
 		return get_salesforce_app()
 
 	@property
+	def response_token(self):
+		return sf_interfaces.ISalesforceTokenInfo(self.user).response_token()
+
+	@property
 	def userId(self):
-		if not self._userId:
-			cuser = self.get_chatter_user()
-			self._userId = unicode(cuser['id'])
-		return self._userId
+		return sf_interfaces.ISalesforceTokenInfo(self.user).UserID
 	
 	def get_chatter_user(self):
 		result = self._execute_valid_session(get_chatter_user)
@@ -153,8 +164,7 @@ class Chatter(object):
 		return result
 	
 	def post_text_news_feed_item(self, text):
-		userId = self.userId
-		result = self._execute_valid_session(post_text_news_feed_item, userId=userId, text=text)
+		result = self._execute_valid_session(post_text_news_feed_item, userId=self.userId, text=text)
 		return result
 
 	def add_text_feed_comment(self, feedItemId, text):
@@ -162,11 +172,9 @@ class Chatter(object):
 		return result
 	
 	def new_response_token(self):
-		if self.refresh_token:
-			application = self.application
-			self.response_token = refresh_token(client_id=application.ClientID, refresh_token=self.refresh_token)
-			return self.response_token
-		return None
+		response = refresh_token(client_id=self.application.ClientID, refresh_token=self.refresh_token)
+		update_user_token_info(self.user, response)
+		return response
 
 	def _execute_valid_session(self, func, **kwargs):
 		rt = self.response_token
