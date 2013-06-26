@@ -56,7 +56,6 @@ class JSONPBatchConverterDriver(object):
 	def convert_batch(self, content_units):	
 		# Here we need to convert the incoming blog to jsonp and write both versions to the resource folder.
 		resources = []
-		print(content_units)
 		for unit in content_units:
 			resources.extend(self._convert_unit(unit))
 		return resources
