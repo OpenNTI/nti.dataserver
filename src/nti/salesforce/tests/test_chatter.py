@@ -23,7 +23,7 @@ from . import ConfiguringTestBase
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from hamcrest import (assert_that, is_not, none)
+from hamcrest import (assert_that, is_not, none, has_entry)
 
 default_pwd = u'temp0001'
 default_user = u'carlos@nextthought.com'
@@ -45,25 +45,30 @@ class TestChatter(ConfiguringTestBase):
 		return usr
 
 	@WithMockDSTrans
-	def test_get_user_id(self):
-		rtoken = self.get_response_token()
-		cht = chatter.Chatter(rtoken)
-		assert_that(cht.userId, is_not(none()))
+	def test_chatter(self):
+		user = self._create_user()
+		response = self.get_response_token()
 
-	@WithMockDSTrans
-	def test_poll_news_feed(self):
-		rtoken = self.get_response_token()
-		cht = chatter.Chatter(rtoken)
+		# get user id
+		usr_info = chatter.get_chatter_user(response[u'instance_url'], response[u'access_token'])
+		assert_that(usr_info, has_entry('id', is_not(none())))
+
+		# update user
+		chatter.update_user_token_info(user, response, usr_info['id'])
+		sf = sf_interfaces.ISalesforceTokenInfo(user)
+		assert_that(sf.ID, is_not(none()))
+		assert_that(sf.Signature, is_not(none()))
+		assert_that(sf.InstanceURL, is_not(none()))
+		assert_that(sf.AccessToken, is_not(none()))
+
+		# test post text feed
+		cht = chatter.Chatter(user)
+		cht.post_text_news_feed_item('test message')
+
+		# test poll news feed
 		d = cht.poll_news_feed()
 		assert_that(d, is_not(none()))
-		
-	@WithMockDSTrans
-	def test_post_text_feed(self):
-		rtoken = self.get_response_token()
-		cht = chatter.Chatter(rtoken)
-		cht.post_text_news_feed_item('test message')
-		
-	
+
 from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
 
 from nti.assessment import submission as asm_submission
@@ -100,8 +105,8 @@ class TestAssessment(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.get_user('sjohnson@nextthought.com')
 			token = sf_interfaces.ISalesforceTokenInfo(user)
-			token.UserID = 'sjohnson@nextthought.com'
-			token.RefreshToken = 'foo'
+			token.UserID = u'sjohnson@nextthought.com'
+			token.RefreshToken = u'foo'
 		DummyChatter.text = None
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)

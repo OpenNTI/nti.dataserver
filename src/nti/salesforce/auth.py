@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Salesforce login routines
+Salesforce oauth
 
 $Id$
 """
@@ -105,13 +105,7 @@ def salesforce_oauth(request):
 	request.method = 'POST'
 
 	# save response token
-	sf = sf_interfaces.ISalesforceTokenInfo(user)
-	sf.UserID = userId
-	sf.ID = response_token['id']
-	sf.AccessToken = response_token['access_token']
-	sf.RefreshToken = response_token['refresh_token']
-	sf.InstanceURL = response_token['instance_url']
-	sf.Signature = response_token['signature']
+	chatter.update_user(user, response_token, userId)
 
 	if redirect_to and url_validator.match(redirect_to):
 		response = hexc.HTTPSeeOther(location=redirect_to)

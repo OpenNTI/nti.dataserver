@@ -34,7 +34,7 @@ def question_assessed(submission, event):
 	username = authenticated_userid(get_current_request())
 	user = users.User.get_user(username)
 	token = sf_interfaces.ISalesforceTokenInfo(user, None)
-	if token is None or token.RefreshToken is None:
+	if token is None or not token.can_chatter():
 		return
 
 	q_content = getattr(question, 'content', None)
@@ -55,6 +55,6 @@ def question_assessed(submission, event):
 	
 	content = '\n'.join(text)
 	content = '%s:\n %s' % (realname, content)
-	c = Chatter(token.get_response_token(), userId=token.UserID)
+	c = Chatter(user)
 	c.post_text_news_feed_item(content)
 
