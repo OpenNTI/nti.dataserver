@@ -148,7 +148,7 @@ def user_opt_in_email_communication(request):
 
 def _get_profile_info(coppaOnly=False):
 
-	header = ['username', 'email', 'createdTime', 'lastModified', 'lastLoginTime', 'is_copaWithAgg']
+	header = ['username', 'email', 'contact_email', 'createdTime', 'lastModified', 'lastLoginTime', 'is_copaWithAgg']
 	yield ','.join(header).encode('utf-8')
 
 	dataserver = component.getUtility( nti_interfaces.IDataserver)
@@ -160,7 +160,8 @@ def _get_profile_info(coppaOnly=False):
 		
 		profile = user_interfaces.IUserProfile(user)
 		email = getattr(profile, 'email', None)
-		info = [user.username, email or u''] + _get_user_info(user)
+		contact_email =  getattr(profile, 'contact_email', None)
+		info = [user.username, email or u'', contact_email or u''] + _get_user_info(user)
 		yield ','.join(info).encode('utf-8')
 
 @view_config(route_name='objects.generic.traversal',
