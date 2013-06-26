@@ -42,6 +42,6 @@ def question_assessed(assessed_question, event):
 			text.append(getattr(q_part, 'content', ''))
 		content = '\n'.join(text)
 
-	c = chatter.Chatter(token.get_response_token())
+	c = chatter.Chatter(token.get_response_token(), userId=token.UserID)
 	c.post_text_news_feed_item(content)
 
