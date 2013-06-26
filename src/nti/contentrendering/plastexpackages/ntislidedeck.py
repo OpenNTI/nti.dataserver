@@ -140,6 +140,7 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 			__traceback_info__ = options, self.attributes
 			if 'presentationonly' in options and options['presentationonly']:
 				self.itemprop = 'presentation-none'
+				self.style['display'] = 'none'
 			if 'show-video' in options and options['show-video']:
 				self.itemprop = 'presentation-video'
 
