@@ -233,7 +233,7 @@ setup(
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
 		'pyramid >= 1.4.2' ,
-		'pyramid_mailer >= 0.11',  # Which uses repoze.sendmail
+		'pyramid_mailer == 0.11',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
 		'pyramid_zodbconn >= 0.4',
@@ -251,7 +251,7 @@ setup(
 		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6',  # LRU caching. Dep of Pyramid
-		'repoze.sendmail >= 4.0',  # trunk has some good binary changes
+		'repoze.sendmail == 4.0',  # trunk has some good binary changes
 		'repoze.who >= 2.2',  #
 		'repoze.zodbconn >= 0.14',
 		 # Requests: http for humans. Requests >= 1.0.x is depended on by httpie 0.4.
