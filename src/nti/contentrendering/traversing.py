@@ -3,13 +3,16 @@
 """
 Adapters and utilities used for traversing objects used during the
 content rendering process.
-"""
-from __future__ import print_function, unicode_literals
 
-import zope.traversing.adapters
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+from zope.traversing import adapters
 from zope.location.interfaces import LocationError
 
-class PlastexTraverser(zope.traversing.adapters.DefaultTraversable):
+class PlastexTraverser(adapters.DefaultTraversable):
 	"""
 	Missing attributes simply return None. Many existing templates
 	rely on this (instead of specifying a default fallback) since
@@ -17,11 +20,10 @@ class PlastexTraverser(zope.traversing.adapters.DefaultTraversable):
 
 	This MUST be registered as an adapter for the DOM objects
 	used in rendering.
-
 	"""
-	def traverse( self, name, furtherPath ):
+	def traverse(self, name, furtherPath):
 		try:
-			return super(PlastexTraverser,self).traverse( name, furtherPath )
+			return super(PlastexTraverser, self).traverse(name, furtherPath)
 		except (LocationError,IndexError):
 			# IndexError can be raised because the plasTeX objects attempt
 			# to use strings as child numbers
