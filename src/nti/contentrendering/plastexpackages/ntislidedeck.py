@@ -1,22 +1,27 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from nti.contentrendering import plastexids
-from nti.contentrendering.plastexpackages.graphicx import includegraphics
+from nti.contentfragments import interfaces as cfg_interfaces
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
 from nti.contentrendering.plastexpackages.ntilatexmacros import ntivideo
-from nti.contentfragments import interfaces as cfg_interfaces
+from nti.contentrendering.plastexpackages.graphicx import includegraphics
+
+from plasTeX.Base import Float
+from plasTeX.Base import Floats
 from plasTeX.Base import Command
 from plasTeX.Base import Crossref
 from plasTeX.Base import Environment
-from plasTeX.Base import Float
-from plasTeX.Base import Floats
-from plasTeX.Base import List
 from plasTeX.Renderers import render_children
 
 from zope.cachedescriptors.property import readproperty
-
-logger = __import__('logging').getLogger(__name__)
 
 def _timeconvert( timestring ):
 	"""Convert a time in the form HH:MM:SS, with hours and minutes optional, to seconds."""
@@ -47,8 +52,10 @@ class ntislidedeckref(Crossref.ref):
 		self.parentNode.slidedeck = self
 
 class ntislidedeck(LocalContentMixin, Float, plastexids.NTIIDMixin):
-	"""The ntislidedeck environment stores the metadata for a 'PowerPoint' style presentation.  Each slide that is a part of a presentation uses a ntislidedeckref command to link it to the approriate presentation.
-"""
+	"""
+	The ntislidedeck environment stores the metadata for a 'PowerPoint' style presentation.  
+	Each slide that is a part of a presentation uses a ntislidedeckref command to link it to the approriate presentation.
+	"""
 
 	args = '[ options:dict ]'
 
@@ -62,9 +69,9 @@ class ntislidedeck(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	blockType = True
 	forcePars = False
 	_ntiid_cache_map_name = '_ntislide_ntiid_map'
-        _ntiid_allow_missing_title = False
-        _ntiid_suffix = 'nsd.'
-        _ntiid_title_attr_name = 'ref'
+	_ntiid_allow_missing_title = False
+	_ntiid_suffix = 'nsd.'
+	_ntiid_title_attr_name = 'ref'
 	_ntiid_type = 'NTISlideDeck'
 
 	creator = None
@@ -104,11 +111,12 @@ class ntislidedeck(LocalContentMixin, Float, plastexids.NTIIDMixin):
 
 
 class ntislidevideoname(Command):
-        unicode = ''
+	unicode = u''
 
 class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
-	"""This environment encapsulates ntiincludevideo objects so that we can tag them with a label and reference them elsewhere.
-"""
+	"""
+	This environment encapsulates ntiincludevideo objects so that we can tag them with a label and reference them elsewhere.
+	"""
 	args = '[ options:dict ]'
 
 	# A Float subclass to get \caption handling
@@ -119,10 +127,10 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	blockType=True
 	forcePars=False
 	_ntiid_cache_map_name = '_ntislidevideo_ntiid_map'
-        _ntiid_allow_missing_title = False
-        _ntiid_suffix = 'nsd.'
-        _ntiid_title_attr_name = 'ref'
-        _ntiid_type = 'NTISlideVideo'
+	_ntiid_allow_missing_title = False
+	_ntiid_suffix = 'nsd.'
+	_ntiid_title_attr_name = 'ref'
+	_ntiid_type = 'NTISlideVideo'
 
 	creator = 'Unknown'
 	type = 'local'
@@ -170,7 +178,7 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 			video_source_els = self.getElementsByTagName( 'ntivideosource' )
 			for video_source_el in video_source_els:
 				if video_source_el.thumbnail is not None:
-			       		self.thumbnail = video_source_el.thumbnail
+					self.thumbnail = video_source_el.thumbnail
 
 		return res
 
@@ -182,16 +190,17 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( '' ) )
 
 	@readproperty
-        def media_sources(self):
-                sources = self.getElementsByTagName( 'ntivideo' )
-                output = render_children( self.renderer, sources )
-                return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
+	def media_sources(self):
+		sources = self.getElementsByTagName('ntivideo')
+		output = render_children(self.renderer, sources)
+		return cfg_interfaces.HTMLContentFragment(''.join(output).strip())
 
 class ntislidename(Command):
-        unicode = ''
+	unicode = u''
 
 class ntislide(LocalContentMixin, Float, plastexids.NTIIDMixin):
-	"""The ntislide environment represents a single slide from a "PowerPoint" style presentation. 
+	"""
+	The ntislide environment represents a single slide from a "PowerPoint" style presentation. 
 
 	\begin{ntislide}
 	    \caption{title} or \ntislidetitle{title} [depreciated]
@@ -201,7 +210,7 @@ class ntislide(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	        Arbitrary text goes here
 	    \end{ntislidetext}
 	\end{ntislide}
-"""
+	"""
 	args = '[ options:dict ]'
 
 	# A Float subclass to get \caption handling
@@ -212,9 +221,9 @@ class ntislide(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	blockType = True
 	forcePars = False
 	_ntiid_cache_map_name = '_ntislide_ntiid_map'
-        _ntiid_allow_missing_title = True
-        _ntiid_suffix = 'nsd.'
-        _ntiid_title_attr_name = 'ref'
+	_ntiid_allow_missing_title = True
+	_ntiid_suffix = 'nsd.'
+	_ntiid_title_attr_name = 'ref'
 	_ntiid_type = 'NTISlide'
 
 	def invoke(self, tex):
@@ -239,10 +248,11 @@ class ntislide(LocalContentMixin, Float, plastexids.NTIIDMixin):
 			# Must leave the image in the dom so it can be found by the resourceDB
 			self.slideimage = images[0]
 
-
 	class ntislidetitle(Command):
-		"""This method has been depreciated in favor of \caption and will be removed in
-		the future."""
+		"""
+		This method has been deprecated in favor of \caption and will be removed in
+		the future.
+		"""
 
 		args = 'title'
 
@@ -258,8 +268,10 @@ class ntislide(LocalContentMixin, Float, plastexids.NTIIDMixin):
 			self.parentNode.slidenumber = self.attributes['number']
 
 	class ntislideimage(includegraphics):
-		"""This method has been depreciated in favor of \includegraphics and will
-		be removed in the future."""
+		"""
+		This method has been deprecated in favor of \includegraphics and will
+		be removed in the future.
+		"""
 
 		def digest(self, tokens):
 			super(ntislide.ntislideimage, self).digest(tokens)
@@ -278,7 +290,6 @@ class ntislide(LocalContentMixin, Float, plastexids.NTIIDMixin):
 		pass
 
 def ProcessOptions( options, document ):
-
-        document.context.newcounter( 'ntislidedeck' )
-        document.context.newcounter( 'ntislide' )
-        document.context.newcounter( 'ntislidevideo' )
+	document.context.newcounter('ntislidedeck')
+	document.context.newcounter('ntislide')
+	document.context.newcounter('ntislidevideo')
