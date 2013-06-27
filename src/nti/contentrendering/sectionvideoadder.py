@@ -1,38 +1,41 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import os
-
-import logging
-logger = logging.getLogger(__name__)
-
 import urlparse
 
-from . import interfaces
 from zope import interface
 from zope import component
 
+from . import interfaces as cr_interfaces
 
 def performTransforms(book, context=None):
 	"""
 	Runs all static video adders on the book.
+	
 	:return: A list of tuples (transformer,transformerresult)
 	"""
-
 	result = []
-	utils = list(component.getUtilitiesFor(interfaces.IStaticVideoAdder,context=context))
+	utils = list(component.getUtilitiesFor(cr_interfaces.IStaticVideoAdder, context=context))
 	for name, util in utils:
-		logger.info( "Running transform %s (%s)", name, util )
+		logger.info("Running transform %s (%s)", name, util)
 		result.append( (util, util.transform( book )) )
-
 	return result
-
 
 class AbstractVideoAdder(object):
 
 	@classmethod
-	def transform(cls,book):
+	def transform(cls, book):
 		return cls(book)()
 
-	def __init__( self, book ):
+	def __init__(self, book):
 		self.book = book
 
 	def __call__(self):
@@ -63,17 +66,16 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 		*Section* .page-contents .worksheet-title
 		Warm-Up 1 http://youtube/...
 
-
 	"""
-	interface.classProvides(interfaces.IStaticYouTubeEmbedVideoAdder)
+	interface.classProvides(cr_interfaces.IStaticYouTubeEmbedVideoAdder)
 
 	def __call__(self):
 		"""
 		:return: The number of videos added.
 		"""
-		youtube_file = os.path.join( self.book.contentLocation, '..', 'nti-youtube-embedded-section-videos.txt' )
+		youtube_file = os.path.join(self.book.contentLocation, '..', 'nti-youtube-embedded-section-videos.txt')
 		if not os.path.exists( youtube_file ):
-			logger.info( "No youtube items at %s", youtube_file )
+			logger.info("No youtube items at %s", youtube_file)
 			return 0
 
 		logger.info( "Adding videos at %s", youtube_file )
@@ -95,7 +97,7 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 					continue
 				parts = line.split()
 				if len( parts ) < 2:
-					logger.debug( "Ignoring invalid line %s in %s", line, youtube_file )
+					logger.debug("Ignoring invalid line %s in %s", line, youtube_file)
 					continue
 				if parts[0] == '*Section*':
 					# A CSS selector is the remainder of the line. Whitespace may sorta matter
@@ -109,10 +111,10 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 				url_part = 'http://' + url_part if not url_part.startswith('http://') else url_part
 				url_host = urlparse.urlparse( url_part ).netloc
 				if url_host not in ('youtube.com', 'www.youtube.com'):
-					logger.debug( "Ignoring unsupported URL host in %s in %s", line, youtube_file )
+					logger.debug("Ignoring unsupported URL host in %s in %s", line, youtube_file)
 					continue
 
-				if parts[0].startswith( 'tag:' ):
+				if parts[0].startswith('tag:'):
 					append_to = video_dbs.setdefault( parts[0], [] )
 				else:
 					append_to = video_db
@@ -133,7 +135,7 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 			if dom:
 				for k, v in video_dbs.items():
 					matches = ()
-					if k.startswith( 'tag:' ):
+					if k.startswith('tag:'):
 						if k == topic.ntiid:
 							matches = [x[1] for x in v]
 					else:
@@ -144,14 +146,14 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 
 					# If we have additions to make, we want to do so
 					# at the first paragraph, if possible, and then at the end
-					page_adder = dom( 'div.page-contents' ).append
+					page_adder = dom('div.page-contents').append
 					first_adder = dom('p:first').append if dom('p:first') else page_adder
 					adders = (first_adder,page_adder)
 					for vurl in matches:
 						adder = adders[min(result,1)]
 						result += 1
 						# Watch that this is consistent with ntilatexmacros.zpts
-						adder( '<div class="externalvideo"><iframe src="%s" width="640" height="360" frameborder="0" allowfullscreen /></div>' % vurl )
+						adder('<div class="externalvideo"><iframe src="%s" width="640" height="360" frameborder="0" allowfullscreen /></div>' % vurl)
 
 				if result:
 					topic.write_dom()
