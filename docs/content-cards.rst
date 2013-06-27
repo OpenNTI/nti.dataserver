@@ -61,7 +61,7 @@ has the following form:
 		optional int image_width;
 		optional int image_height;
 
-		// An NTIID for the actul target. If the target is hosted
+		// An NTIID for the actual target. If the target is hosted
 		// content, this will be the same as the href. If the target
 		// is external content, this may be derived. In either case,
 		// it can be used as a containerId.
