@@ -251,7 +251,7 @@ setup(
 		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6',  # LRU caching. Dep of Pyramid
-		'repoze.sendmail == 4.0',  # trunk has some good binary changes
+		'repoze.sendmail >= 4.1',  # trunk has some good binary changes
 		'repoze.who >= 2.2',  #
 		'repoze.zodbconn >= 0.14',
 		 # Requests: http for humans. Requests >= 1.0.x is depended on by httpie 0.4.
