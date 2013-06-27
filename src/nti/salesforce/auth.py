@@ -67,6 +67,7 @@ def _check_error(request, params):
 
 @view_config(route_name=ROUTE_NAME, request_method='GET')
 def salesforce_oauth(request):
+	### from IPython.core.debugger import Tracer; Tracer()() ###
 	params = request.params
 	error_response = _check_error(request, params)
 	if error_response:
@@ -89,14 +90,18 @@ def salesforce_oauth(request):
 	response_token = params
 	access_token = response_token['access_token']
 	instance_url = response_token['instance_url']
-	if not access_token or instance_url:
+	if not access_token:
 		response = hexc.HTTPBadRequest(detail="no access token found")
+		return response
+
+	if not instance_url:
+		response = hexc.HTTPBadRequest(detail="no instance url found")
 		return response
 
 	# make sure we have a internal user
 	user_info = chatter.get_chatter_user(instance_url, access_token)
 	username = user_info['username']
-	userId = user_info('id')
+	userId = user_info.get('id')
 	user = User.get_user(username)
 	if user is None:
 		raise ValueError( "No user found for %s" % username )
@@ -111,6 +116,7 @@ def salesforce_oauth(request):
 		response = hexc.HTTPSeeOther(location=redirect_to)
 	else:
 		response = hexc.HTTPNoContent()
+	return response
 
 def link_belongs_to_user(link, user):
 	link.__parent__ = user
