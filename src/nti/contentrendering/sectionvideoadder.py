@@ -78,7 +78,7 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 			logger.info("No youtube items at %s", youtube_file)
 			return 0
 
-		logger.info( "Adding videos at %s", youtube_file )
+		logger.info("Adding videos at %s", youtube_file)
 		# There can be many videos for a section.
 		# We maintain a map from CSS selector to [(matching text, video url)] and
 		# check each selector/matching text pair against each page
@@ -86,7 +86,7 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 		video_dbs = {}
 		# The default
 		video_db = []
-		video_dbs['div.chapter.title .ref'] = video_db
+		video_dbs[b'div.chapter.title .ref'] = video_db
 
 		with open(youtube_file) as f:
 			lines = f.readlines()
@@ -135,7 +135,7 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 			if dom:
 				for k, v in video_dbs.items():
 					matches = ()
-					if k.startswith('tag:'):
+					if k.startswith(b'tag:'):
 						if k == topic.ntiid:
 							matches = [x[1] for x in v]
 					else:
@@ -146,9 +146,9 @@ class YouTubeRelatedVideoAdder(AbstractVideoAdder):
 
 					# If we have additions to make, we want to do so
 					# at the first paragraph, if possible, and then at the end
-					page_adder = dom('div.page-contents').append
-					first_adder = dom('p:first').append if dom('p:first') else page_adder
-					adders = (first_adder,page_adder)
+					page_adder = dom(b'div.page-contents').append
+					first_adder = dom(b'p:first').append if dom(b'p:first') else page_adder
+					adders = (first_adder, page_adder)
 					for vurl in matches:
 						adder = adders[min(result,1)]
 						result += 1
