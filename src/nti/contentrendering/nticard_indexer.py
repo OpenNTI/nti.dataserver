@@ -19,9 +19,10 @@ from zope import component
 
 from nti.contentrendering import interfaces as cr_interfaces
 
-interface.moduleProvides(cr_interfaces.IRenderedBookTransformer)
+interface.moduleProvides(cr_interfaces.IRenderedBookIndexer)
 
-def transform(book, indexdir=None, name=''):
+def transform(book, name='', indexdir=None):
+	name = name or u''
 	indexer = component.queryUtility(cr_interfaces.INTICardIndexer, name=name)
 	if indexer is None:
 		indexer = component.getUtility(cr_interfaces.INTICardIndexer)

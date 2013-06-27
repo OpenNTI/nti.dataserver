@@ -36,6 +36,10 @@
 
 	<utility component=".archive" provides=".interfaces.IRenderedBookArchiver" />
 			 
+	<utility component=".nticard_indexer" provides=".interfaces.IRenderedBookIndexer" name="nticard"/>
+	<utility component=".book_content_indexer" provides=".interfaces.IRenderedBookIndexer" name="book"/>
+	<utility component=".video_transcript_indexer" provides=".interfaces.IRenderedBookIndexer" name="video"/>
+	
 	<!-- Content fragments and conversion, mime types -->
 	
 	<include package="nti.contentfragments" />

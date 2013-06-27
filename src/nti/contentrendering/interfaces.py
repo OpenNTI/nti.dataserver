@@ -175,6 +175,16 @@ class IEmbeddedContainer(IContentTypeAware):
 # Indexing
 ####
 
+class IRenderedBookIndexer(IRenderedBookTransformer):
+
+	def transform(book, name):
+		"""
+		Perform the book index operation.
+
+		:param book: The :class:`IRenderedBook`.
+		:param name: indexer name
+		"""
+		
 class IContentIndexer(interface.Interface):
 	"""
 	Creates an index using the contents in a given book
