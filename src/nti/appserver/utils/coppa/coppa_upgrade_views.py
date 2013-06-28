@@ -114,7 +114,7 @@ class RollbackCoppaUsers(_JsonBodyView):
 				nti_interfaces.ICoppaUserWithAgreementUpgraded.providedBy(user):
 				
 				profile = user_interfaces.IUserProfile(user)
-				role = setattr(profile, 'role', None)
+				role = getattr(profile, 'role', None)
 				items.append((username, role))
 				if testmode:
 					continue
