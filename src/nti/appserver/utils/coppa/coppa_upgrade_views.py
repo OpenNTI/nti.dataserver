@@ -233,18 +233,31 @@ def upgrade_preflight_coppa_user_view(request):
 			 context=nti_interfaces.IUser,
 			 **_post_update_view_defaults)
 def upgrade_coppa_user_view(request):
+
+	# validate input
 	externalValue = obj_io.read_body_as_external_object(request)
 	iface = _validate_user_data(externalValue, request)
+
+	# make sure user can be upgraded
 	username = request.context.username
 	user = users.User.get_user(username)
+	if not nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user):
+		return hexc.HTTPUnprocessableEntity(detail='User is not a coppa user')
+
 	if iface is IOver13Schema:
-		if site_policies.IMathcountsUser.providedBy(user):
-			interface.noLongerProvides(user, site_policies.IMathcountsUser)
-			interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
-		# remove always coppa
-		interface.noLongerProvides(user, nti_interfaces.ICoppaUser)
-		interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
-		# reset email
+		# upgrade using policy if possible
+		site_policy, _ = site_policies.find_site_policy(request)
+		if not site_policy:	
+			if site_policies.IMathcountsUser.providedBy(user):
+				interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
+				interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
+			else:
+				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
+				interface.alsoProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
+		else:
+			site_policy.upgrade_user(user)
+
+		# reset data
 		profile = user_interfaces.IUserProfile(user)
 		setattr(profile, 'email', externalValue.get('email'))
 		setattr(profile, 'affiliation', externalValue.get('affiliation'))

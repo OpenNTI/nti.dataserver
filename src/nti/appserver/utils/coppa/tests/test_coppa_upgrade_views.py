@@ -117,8 +117,8 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 	def test_upgrade_coppa_user_over_13(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = self._create_user()
-			interface.alsoProvides(u, nti_interfaces.ICoppaUser)
-			interface.alsoProvides(u, nti_interfaces.ICoppaUserWithoutAgreement)
+			interface.alsoProvides(u, site_policies.IMathcountsUser)
+			interface.alsoProvides(u, site_policies.IMathcountsCoppaUserWithoutAgreement)
 			flag_link_provider.add_link(u, 'coppa.upgraded.rollbacked')
 
 		testapp = TestApp(self.app)
@@ -137,8 +137,9 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = users.User.get_user('sjohnson@nextthought.com')
-			assert_that(nti_interfaces.ICoppaUser.providedBy(u), is_(False))
-			assert_that(nti_interfaces.ICoppaUserWithoutAgreement.providedBy(u), is_(False))
+			assert_that(site_policies.IMathcountsUser.providedBy(u), is_(True))
+			assert_that(site_policies.IMathcountsCoppaUserWithoutAgreement.providedBy(u), is_(False))
+			assert_that(site_policies.IMathcountsCoppaUserWithAgreementUpgraded.providedBy(u), is_(True))
 			profile = users_interfaces.IUserProfile(u)
 			assert_that(profile.email, is_('aizen@bleach.com'))
 			assert_that(flag_link_provider.has_link(u, 'coppa.upgraded.rollbacked'), is_(False))
@@ -148,7 +149,7 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = self._create_user()
 			interface.alsoProvides(u, site_policies.IMathcountsUser)
-			interface.alsoProvides(u, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
+			interface.alsoProvides(u, site_policies.IMathcountsCoppaUserWithoutAgreement)
 			flag_link_provider.add_link(u, 'coppa.upgraded.rollbacked')
 
 		testapp = TestApp(self.app)
