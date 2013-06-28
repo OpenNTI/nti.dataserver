@@ -213,6 +213,13 @@ class INTICardIndexer(IContentIndexer):
 	Creates an index for the nti cards associated with a given book
 	"""
 
+####
+# Extractors
+####
+
+class IRenderedBookExtractor(IRenderedBookTransformer):
+	pass
+		
 
 from zope.interface import registry
 from zope.component import getGlobalSiteManager
