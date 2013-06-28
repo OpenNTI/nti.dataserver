@@ -92,9 +92,12 @@ def transform(book, outpath=None):
 	result = process_book(book)
 	outpath = outpath or book.contentLocation
 	outpath = os.path.expanduser(outpath)
-	outfile = os.path.join(outpath, 'slidedeck_index.json')
-	with open(outfile, "wt") as fp:
-		simplejson.dump(result, fp, indent=4)
+	for deck in result:
+		ntiid = deck.get('ntiid')
+		if not ntiid: continue
+		outfile = os.path.join(outpath, '%s.json' % ntiid)
+		with open(outfile, "wt") as fp:
+			simplejson.dump(deck, fp, indent=2)
 
 def main():
 	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
