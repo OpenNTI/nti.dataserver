@@ -32,6 +32,7 @@ from nti.appserver.utils import is_true
 from nti.appserver import MessageFactory as _
 from nti.appserver.utils import _JsonBodyView
 from nti.appserver import httpexceptions as hexc
+from nti.appserver.utils import CaseInsensitiveDict
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver.link_providers import flag_link_provider
 from nti.appserver._util import raise_json_error as _raise_error
@@ -94,9 +95,9 @@ class IUnder13Schema(_ICommon):
 class RollbackCoppaUsers(_JsonBodyView):
 
 	def __call__(self):
-		values = self.readInput()
+		values = CaseInsensitiveDict(**self.readInput())
 		usernames = values.get('usernames', '')
-		
+		testmode = is_true(values.get('testmode', 'F'))
 		if usernames:
 			usernames = usernames.split(',')
 		else:
@@ -112,20 +113,26 @@ class RollbackCoppaUsers(_JsonBodyView):
 			if 	nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user) or \
 				nti_interfaces.ICoppaUserWithAgreementUpgraded.providedBy(user):
 				
-				items.append(username)
-	
+				profile = user_interfaces.IUserProfile(user)
+				role = setattr(profile, 'role', None)
+				items.append((username, role))
+				if testmode:
+					continue
+
 				# reset interfaces
+
+				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
+				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
+				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
+
 				if site_policies.IMathcountsUser.providedBy(user):
 					interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreement)
 					interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
 					interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
 				else:
-					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
-					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
 					interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 	
 				# remove birthday
-				profile = user_interfaces.IUserProfile(user)
 				setattr(profile, 'birthdate', None)
 	
 				# add link
