@@ -33,15 +33,18 @@ def find_objects(topic, mimeType):
 		if type_ == mimeType:
 			yield node
 
+def _store_param(p, data, exclude=()):
+	if p.tag == 'param':
+		name = get_attribute(p, 'name')
+		value = get_attribute(p, 'value')
+		if name and value and name not in exclude:
+			data[name.lower()] = value
+
 def process_ntislidedecks(topic, result):
 	for node in topic.dom(b'object').filter(b'.ntislidedeck'):
 		d = {u'class': u'ntislidedeck', u'MimeType':u'application/vnd.nextthought.ntislidedeck'}
 		for p in node.iterchildren():
-			if p.tag == 'param':
-				name = get_attribute(p, 'name')
-				value = get_attribute(p, 'value')
-				if name and value and name not in ('type'):
-					d[name.lower()] = value
+			_store_param(p, d, ('type',))
 
 		_id = d.get('slidedeckid', d.get('ntiid'))
 		if _id and _id not in result:
@@ -55,11 +58,7 @@ def process_elements(topic, result, mimeType):
 		if ntiid:
 			d[u'ntiid'] = ntiid
 		for p in node.iterchildren():
-			if p.tag == 'param':
-				name = get_attribute(p, 'name')
-				value = get_attribute(p, 'value')
-				if name and value:
-					d[name.lower()] = value
+			_store_param(p, d)
 
 		_id = d.get(u'slidedeckid', d.get(u'ntiid'))
 		if ntiid and ntiid not in result:

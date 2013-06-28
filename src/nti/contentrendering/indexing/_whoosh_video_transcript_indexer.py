@@ -63,16 +63,18 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		content_path = os.path.dirname(topic.location)
 		video_ntiid = node_utils.get_attribute(node, 'id')
 		parser_names = self._get_video_transcript_parser_names()
+		language = node_utils.get_attribute(node, 'language') or 'en'
 		for obj in node.iterchildren():
-			if obj.tag != 'iframe': continue
-			src = node_utils.get_attribute(obj, 'src')
-			if src:
-				path = urlparse.urlparse(src).path
-				vid = os.path.splitext(os.path.basename(path))[0]
-				vid_tupl = self._find_video_transcript(content_path, [vid], parser_names)
-				if vid_tupl:
-					parser_name, video_path = vid_tupl
-					return _Video(parser_name, video_ntiid, video_path)
+			if obj.tag == 'iframe':
+				src = node_utils.get_attribute(obj, 'src')
+				if src:
+					path = urlparse.urlparse(src).path
+					vid = os.path.splitext(os.path.basename(path))[0]
+					language = node_utils.get_attribute(obj, 'language') or language
+					vid_tupl = self._find_video_transcript(content_path, [vid], parser_names)
+					if vid_tupl:
+						parser_name, video_path = vid_tupl
+						return _Video(parser_name, video_ntiid, video_path, language)
 		return None
 
 	def _get_ntivideo_info(self, topic, node):
