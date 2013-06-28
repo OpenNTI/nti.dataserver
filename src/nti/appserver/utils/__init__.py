@@ -49,4 +49,4 @@ class _JsonBodyView(object):
         return values
 
 def is_true(v):
-    return v and str(v).lower() in ('1', 'true', 'yes', 'y', 't')
+    return v is not None and str(v).lower() in ('1', 'true', 'yes', 'y', 't')
