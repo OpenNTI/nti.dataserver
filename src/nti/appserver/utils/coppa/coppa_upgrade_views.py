@@ -109,26 +109,29 @@ class RollbackCoppaUsers(_JsonBodyView):
 			if user is None or not nti_interfaces.ICoppaUser.providedBy(user):
 				continue
 
-			items.append(username)
-
-			# reset interfaces
-			if site_policies.IMathcountsUser.providedBy(user):
-				interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreement)
-				interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
-				interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
-			else:
-				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
-				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
-				interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
-
-			# remove birthday
-			profile = user_interfaces.IUserProfile(user)
-			setattr(profile, 'birthdate', None)
-
-			# add link
-			flag_link_provider.add_link(user, 'coppa.upgraded.rollbacked')
-			
-			logger.info("User '%s' has been rollbacked" % username)
+			if 	nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user) or \
+				nti_interfaces.ICoppaUserWithAgreementUpgraded.providedBy(user):
+				
+				items.append(username)
+	
+				# reset interfaces
+				if site_policies.IMathcountsUser.providedBy(user):
+					interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreement)
+					interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
+					interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
+				else:
+					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
+					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
+					interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
+	
+				# remove birthday
+				profile = user_interfaces.IUserProfile(user)
+				setattr(profile, 'birthdate', None)
+	
+				# add link
+				flag_link_provider.add_link(user, 'coppa.upgraded.rollbacked')
+				
+				logger.info("User '%s' has been rollbacked" % username)
 
 		return {'Count':len(items), 'Items':items}
 
