@@ -96,7 +96,7 @@ def transform(book, outpath=None):
 	for deck in result:
 		ntiid = deck.get('ntiid')
 		if not ntiid: continue
-		ntiid = re.sub('[:,/,\*,\?,\<,\>,\|]', '_', ntiid.replace('\\', '_'))
+		ntiid = re.sub('[:,\.,/,\*,\?,\<,\>,\|]', '_', ntiid.replace('\\', '_'))
 		outfile = os.path.join(outpath, '%s.json' % ntiid)
 		with open(outfile, "wt") as fp:
 			simplejson.dump(deck, fp, indent=2)
