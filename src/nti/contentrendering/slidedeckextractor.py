@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import re
 import argparse
 import simplejson
 import collections
@@ -95,6 +96,7 @@ def transform(book, outpath=None):
 	for deck in result:
 		ntiid = deck.get('ntiid')
 		if not ntiid: continue
+		ntiid = re.sub('[:,/,\*,\?,\<,\>,\|]', '_', ntiid.replace('\\', '_'))
 		outfile = os.path.join(outpath, '%s.json' % ntiid)
 		with open(outfile, "wt") as fp:
 			simplejson.dump(deck, fp, indent=2)
