@@ -114,8 +114,9 @@ class RollbackCoppaUsers(_JsonBodyView):
 				nti_interfaces.ICoppaUserWithAgreementUpgraded.providedBy(user):
 				
 				profile = user_interfaces.IUserProfile(user)
-				role = getattr(profile, 'role', None)
-				items.append((username, role))
+				birthdate = getattr(profile, 'birthdate', None)
+				birthdate = birthdate.isoformat() if birthdate is not None else None
+				items.append((username, birthdate))
 				if testmode:
 					continue
 
