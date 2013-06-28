@@ -47,6 +47,17 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 			u = self._create_user(username='ichigo@nt.com',
 								  external_value={u'email':u'ichigo@nt.com', u'opt_in_email_communication':True})
 			interface.alsoProvides(u, nti_interfaces.ICoppaUser)
+			interface.alsoProvides(u, nti_interfaces.ICoppaUserWithAgreement)
+
+			u = self._create_user(username='kuchiki@nt.com',
+								  external_value={u'email':u'kuchiki@nt.com', u'opt_in_email_communication':True})
+			interface.alsoProvides(u, site_policies.IMathcountsUser)
+			interface.alsoProvides(u, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
+
+			u = self._create_user(username='kenpachi@nt.com',
+								  external_value={u'email':u'kenpachi@nt.com', u'opt_in_email_communication':True})
+			interface.alsoProvides(u, site_policies.IMathcountsUser)
+			interface.alsoProvides(u, site_policies.IMathcountsCoppaUserWithAgreement)
 
 		testapp = TestApp(self.app)
 
@@ -64,6 +75,15 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 			u = users.User.get_user('aizen@nt.com')
 			assert_that(flag_link_provider.has_link(u, 'coppa.upgraded.rollbacked'), is_(True))
 			
+			u = users.User.get_user('rukia@nt.com')
+			assert_that(flag_link_provider.has_link(u, 'coppa.upgraded.rollbacked'), is_(True))
+
+			u = users.User.get_user('ichigo@nt.com')
+			assert_that(flag_link_provider.has_link(u, 'coppa.upgraded.rollbacked'), is_(False))
+
+			u = users.User.get_user('kenpachi@nt.com')
+			assert_that(flag_link_provider.has_link(u, 'coppa.upgraded.rollbacked'), is_(False))
+
 	@WithSharedApplicationMockDS
 	def test_upgrade_preflight_coppa_user_under_13(self):
 		with mock_dataserver.mock_db_trans(self.ds):
