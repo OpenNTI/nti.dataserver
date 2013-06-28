@@ -245,17 +245,12 @@ def upgrade_coppa_user_view(request):
 		return hexc.HTTPUnprocessableEntity(detail='User is not a coppa user')
 
 	if iface is IOver13Schema:
-		# upgrade using policy if possible
-		site_policy, _ = site_policies.find_site_policy(request)
-		if not site_policy:	
-			if site_policies.IMathcountsUser.providedBy(user):
-				interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
-				interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
-			else:
-				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
-				interface.alsoProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
+		if site_policies.IMathcountsUser.providedBy(user):
+			interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
+			interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
 		else:
-			site_policy.upgrade_user(user)
+			interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
+			interface.alsoProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
 
 		# reset data
 		profile = user_interfaces.IUserProfile(user)
