@@ -116,7 +116,7 @@ setup(
 		# 'nose >= 1.2.1',
 		# But it's also listed in extras/test, and it's very hard to upgrade
 		# when that changes
-		# 'distribute >= 0.6.45', # Can't seem to include that anywhere
+		# 'distribute >= 0.6.46', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
