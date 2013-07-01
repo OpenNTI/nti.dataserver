@@ -353,12 +353,12 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 	data. Also, the best results seem to come from simply unembedding all the
 	fonts and setting compatibility to PDF 1.3.
 	"""
-
+	from IPython.core.debugger import Tracer; Tracer()() 
 	# The locations in the Contents array at which various things are
 	# found
-	IX_UNAME = 376
-	IX_FNAME = 395
-	IX_EMAIL = 411
+	IX_UNAME = 937
+	IX_FNAME = 970
+	IX_EMAIL = 1022
 
 	pdf_page, page_content, lock = _cached_pages.get( pdf_filename, (None, None, None) )
 	if pdf_page is None:
