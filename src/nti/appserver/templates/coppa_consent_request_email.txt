@@ -53,7 +53,7 @@ outlined below:
 
 	* Birthday
 	
-	We ask for children’s birthdays to determine which users need parental permission
+	We ask for children's birthdays to determine which users need parental permission
 	for access to the social features. We do not store this information.
 
 	* First Name, Last Name, and Username
@@ -66,7 +66,7 @@ outlined below:
 	
 	* Child's Email Address
 	
-	We hash (or alter) the email address that a child provides so that we can’t
+	We hash (or alter) the email address that a child provides so that we can't
 	view it. This altered email address is used only to recover a password. 
 	
 	* Parent's Email Address
@@ -81,7 +81,7 @@ Information We Collect for Access to Social Features
 ========================
 
 After we receive your consent and activate the social features, we will ask for and 
-store your child’s full name, school, and email address (in unaltered form). Also, 
+store your child's full name, school, and email address (in unaltered form). Also, 
 we will save your email address from the consent form in order to notify you of 
 changes to our privacy practices.
 
