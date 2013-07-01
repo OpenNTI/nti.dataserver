@@ -19,6 +19,7 @@ from pyramid.threadlocal import get_current_request
 
 from pyramid_mailer.message import Message
 from pyramid_mailer.interfaces import IMailer
+from pyramid_mailer.message import Attachment
 
 from repoze.sendmail import interfaces as mail_interfaces
 
@@ -82,8 +83,8 @@ def create_simple_html_text_email(base_template, subject='', request=None, recip
 
 	message = Message( subject=subject,
 					   recipients=recipients,
-					   body=text_body,
-					   html=html_body)
+					   body=Attachment(data=text_body, disposition='inline', content_type='text/plain', transfer_encoding='quoted-printable'),
+					   html=Attachment(data=html_body, disposition='inline', content_type='text/html', transfer_encoding='quoted-printable') )
 	return message
 
 

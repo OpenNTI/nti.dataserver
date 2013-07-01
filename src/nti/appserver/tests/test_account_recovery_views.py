@@ -23,6 +23,8 @@ from hamcrest import has_property
 from hamcrest import is_not as does_not
 from hamcrest import has_key
 
+from quopri import decodestring
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver import users
@@ -108,7 +110,8 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
-		assert_that( msg, has_property( 'body', contains_string( user_username ) ) )
+		assert_that( msg, has_property( 'body' ) )
+		assert_that( decodestring(msg.body), contains_string( user_username ) )
 
 	@WithSharedApplicationMockDS
 	def test_recover_multiple_user_found( self ):
@@ -142,8 +145,9 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
 
-		assert_that( msg, has_property( 'body', contains_string( user_username ) ) )
-		assert_that( msg, has_property( 'body', contains_string( user2_username ) ) )
+		assert_that( msg, has_property( 'body' ) )
+		assert_that( decodestring(msg.body), contains_string( user_username ) ) 
+		assert_that( decodestring(msg.body), contains_string( user2_username ) )
 
 class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 
@@ -197,7 +201,6 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 		res = app.post( path, data, status=422 )
 		assert_that( res.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
 
-
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) )
 
@@ -237,7 +240,8 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
 
-		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) ) )
+		assert_that( msg, has_property( 'body' ) )
+		assert_that( decodestring(msg.body), contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) )
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_found_multiple_matches( self ):
@@ -253,7 +257,6 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 			modified( profile )
 			modified( user )
 
-
 		app = TestApp( self.app )
 
 		# Find it via an actual email match
@@ -268,7 +271,8 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 			mailer = component.getUtility( ITestMailDelivery )
 			assert_that( mailer.queue, has_length( 1 ) )
 			msg = mailer.queue[0]
-			assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) ) )
+			assert_that( msg, has_property( 'body' ) )
+			assert_that( decodestring(msg.body), contains_string( 'http://localhost/place?username=' + urllib.quote(username) ) )
 			del mailer.queue[:]
 
 		_check_mail()
@@ -326,8 +330,8 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 1 ) )
 		msg = mailer.queue[0]
-
-		assert_that( msg, has_property( 'body', contains_string( 'http://localhost/place?host=foo&baz=bar&username=' + urllib.quote(username) ) ) )
+		assert_that( msg, has_property( 'body' ) )
+		assert_that( decodestring(msg.body), contains_string( 'http://localhost/place?host=foo&baz=bar&username=' + urllib.quote(username) ) )
 
 from zope.annotation.interfaces import IAnnotations
 from nti.appserver import account_recovery_views
