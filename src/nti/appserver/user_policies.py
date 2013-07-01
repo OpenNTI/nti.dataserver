@@ -403,8 +403,7 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 		page_content.operations[IX_EMAIL] = ( [pyPdf.generic.TextStringObject( _pdf_clean(parent_email) )], 'Tj') # Tj being the simple text operator
 		page_content.operations[IX_UNAME] = ( [pyPdf.generic.TextStringObject( _pdf_clean(username) )], 'Tj')
 		page_content.operations[IX_FNAME] = ( [pyPdf.generic.TextStringObject( child_firstname )], 'Tj')
-
-
+		
 		writer.addPage( pdf_page )
 		writer.write( stream )
 
