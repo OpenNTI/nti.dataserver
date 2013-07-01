@@ -63,8 +63,8 @@
 			Your child <span class="tterm"
 			tal:content="options/profile/realname">Justin</span> has
 			created a free NextThought account with the
-			username <span class="tterm"tal:content="options/user/username">mathdude217</span> 
-			and	needs your permission before he or she can use all of its
+			username <span class="tterm" tal:content="options/user/username">mathdude217</span> 
+			and needs your permission before he or she can use all of its
 			rich features. To permit your child to join the
 			NextThought community, please review the information in
 			this notice and then sign and return the attached consent
