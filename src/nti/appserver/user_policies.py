@@ -353,7 +353,7 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 	data. Also, the best results seem to come from simply unembedding all the
 	fonts and setting compatibility to PDF 1.3.
 	"""
-	from IPython.core.debugger import Tracer; Tracer()() 
+
 	# The locations in the Contents array at which various things are
 	# found
 	IX_UNAME = 937
