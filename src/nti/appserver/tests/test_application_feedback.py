@@ -11,6 +11,8 @@ from hamcrest import has_length
 from hamcrest.library import has_property
 from hamcrest import contains
 
+from quopri import decodestring
+
 from zope import interface
 from zope import component
 
@@ -52,7 +54,7 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 		assert_that( mailer, has_property( 'queue', has_length( 1 ) ) )
 		assert_that( mailer, has_property( 'queue', contains( has_property( 'subject', "Feedback from ossmkitty" ) ) ) )
 
-		assert_that( mailer.queue[0].as_string(), contains_string( "Hi there. I love it." ) )
+		assert_that( decodestring(mailer.queue[0].as_string()), contains_string( "Hi there. I love it." ) )
 
 	@WithSharedApplicationMockDS(testapp=True,users=True)
 	def test_post_bad_feedback(self):
