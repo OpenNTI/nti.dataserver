@@ -358,7 +358,7 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 	# found
 	IX_UNAME = 937
 	IX_FNAME = 970
-	IX_EMAIL = 1022
+	IX_EMAIL = 1021
 
 	pdf_page, page_content, lock = _cached_pages.get( pdf_filename, (None, None, None) )
 	if pdf_page is None:
