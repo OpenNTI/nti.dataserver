@@ -5,20 +5,22 @@ $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 
-import pyramid.httpexceptions as _hexc
 import sys
 
+import pyramid.httpexceptions as _hexc
+
 # Import some common things for the sake of static analysis
-HTTPBadRequest = _hexc.HTTPBadRequest
-HTTPConflict = _hexc.HTTPConflict
-HTTPForbidden = _hexc.HTTPForbidden
-HTTPUnsupportedMediaType = _hexc.HTTPUnsupportedMediaType
-HTTPException = _hexc.HTTPException
-HTTPNotFound = _hexc.HTTPNotFound
 HTTPFound = _hexc.HTTPFound
-HTTPNoContent = _hexc.HTTPNoContent
-HTTPMethodNotAllowed = _hexc.HTTPMethodNotAllowed
 HTTPSeeOther = _hexc.HTTPSeeOther
+HTTPConflict = _hexc.HTTPConflict
+HTTPNotFound = _hexc.HTTPNotFound
+HTTPNoContent = _hexc.HTTPNoContent
+HTTPException = _hexc.HTTPException
+HTTPForbidden = _hexc.HTTPForbidden
+HTTPBadRequest = _hexc.HTTPBadRequest
+HTTPNotModified = _hexc.HTTPNotModified
+HTTPMethodNotAllowed = _hexc.HTTPMethodNotAllowed
+HTTPUnsupportedMediaType = _hexc.HTTPUnsupportedMediaType
 
 # Dynamically import the rest
 def _copy_pyramid_exceptions():
@@ -27,8 +29,6 @@ def _copy_pyramid_exceptions():
 		if isinstance( v, type) and issubclass(v,Exception) and v.__module__ == _hexc.__name__:
 			frame.f_globals[k] = v
 _copy_pyramid_exceptions()
-
-
 
 _HTTPUnprocessableEntity = _hexc.HTTPUnprocessableEntity
 
@@ -60,6 +60,6 @@ class HTTPUnprocessableEntity(_HTTPUnprocessableEntity):
 
 _hexc.HTTPUnprocessableEntity = HTTPUnprocessableEntity
 
-del _copy_pyramid_exceptions
 del sys
 del _hexc
+del _copy_pyramid_exceptions
