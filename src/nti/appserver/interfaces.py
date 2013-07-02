@@ -213,6 +213,20 @@ class IAuthenticatedUserLinkProvider(interface.Interface):
 		are specified independently, based on the link relationship.
 		"""
 
+class IUnauthenticatedUserLinkProvider(interface.Interface):
+	"""
+	Called during the logon process to get additional links that should be presented
+	when user has NOT been authenticated. 
+
+	Normally these will be registered as subscribers adapting the user and the request.
+	"""
+
+	def get_links():
+		"""
+		Return an iterable of additional links to add. The semantics of each link
+		are specified independently, based on the link relationship.
+		"""
+		
 IUserEvent = nti_interfaces.IUserEvent
 
 class IUserLogonEvent(IUserEvent):
