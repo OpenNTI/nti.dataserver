@@ -89,19 +89,32 @@ def process_book(book):
 	return list(decks.values())
 
 def transform(book, outpath=None):
-	result = process_book(book)
+	result = []
+	decks = process_book(book)
 	outpath = outpath or book.contentLocation
 	outpath = os.path.expanduser(outpath)
-	for deck in result:
+	for deck in decks:
 		ntiid = deck.get('ntiid')
 		if not ntiid: continue
 		ntiid = re.sub('[:,\.,/,\*,\?,\<,\>,\|]', '_', ntiid.replace('\\', '_'))
 		outfile = os.path.join(outpath, '%s.json' % ntiid)
 		with open(outfile, "wt") as fp:
+			result.append(outfile)
 			simplejson.dump(deck, fp, indent=2)
+	return result
+
+def extract(contentpath, outpath=None, jobname=None):
+
+	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
+	jobname = jobname or os.path.basename(contentpath)
+
+	document = EmptyMockDocument()
+	document.userdata['jobname'] = jobname
+	book = NoConcurrentPhantomRenderedBook(document, contentpath)
+
+	return transform(book, outpath)
 
 def main():
-	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 
 	def register():
 		from zope.configuration import xmlconfig
@@ -120,14 +133,10 @@ def main():
 	args = arg_parser.parse_args()
 
 	contentpath = os.path.expanduser(args.contentpath)
-	indexname = os.path.basename(contentpath)
+	jobname = os.path.basename(contentpath)
 	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
 
-	document = EmptyMockDocument()
-	document.userdata['jobname'] = indexname
-	book = NoConcurrentPhantomRenderedBook(document, contentpath)
-
-	transform(book)
+	extract(contentpath, jobname=jobname)
 
 if __name__ == '__main__':
 	main()

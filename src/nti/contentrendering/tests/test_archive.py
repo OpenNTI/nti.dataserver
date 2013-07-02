@@ -15,6 +15,7 @@ from zope import component
 
 from .. import archive
 from .. import interfaces
+
 from . import ConfiguringTestBase
 
 from hamcrest import (assert_that, has_length, is_in, is_not, none)
@@ -26,7 +27,7 @@ class TestArchive(ConfiguringTestBase):
 		self.temp_dir = tempfile.mkdtemp()
 
 	def tearDown(self):
-		shutil.rmtree( self.temp_dir )
+		shutil.rmtree(self.temp_dir)
 
 	def test_utility(self):
 		u = component.queryUtility(interfaces.IRenderedBookArchiver)
