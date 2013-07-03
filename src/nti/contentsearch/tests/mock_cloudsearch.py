@@ -7,7 +7,7 @@ from zope import interface
 from whoosh import query
 from whoosh import fields
 from whoosh import analysis
-from whoosh import ramindex
+from whoosh.filedb.filestore import RamStorage
 
 from nti.contentprocessing import (default_ngram_maxsize, default_ngram_minsize)
 
@@ -32,7 +32,7 @@ def create_schema():
 							intid=fields.ID(stored=True, unique=True),
 							type=fields.ID(stored=False, unique=False),
 							creator=fields.ID(stored=False, unique=False),
-							last_modified=fields.NUMERIC(type=float, stored=False),
+							last_modified=fields.NUMERIC(numtype=float, stored=False),
 							ntiid=fields.ID(stored=False, unique=False),
 							container_id=fields.ID(stored=False, unique=False),
 							username=fields.ID(stored=False, unique=False),
@@ -132,7 +132,7 @@ class MockCloudSearch(_cloudsearch_store._CloudSearchStore):
 
 	def __init__(self):
 		self.schema = _cs_schema
-		self.index = ramindex.RamIndex(self.schema)
+		self.index = RamStorage().create_index(self.schema)
 
 	def reset_aws_connection(self, **kwargs):
 		pass

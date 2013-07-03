@@ -11,18 +11,18 @@ import os
 import time
 import random
 import binascii
+import tempfile
 from cStringIO import StringIO
 
 from zope import component
 from zope import interface
 
 from whoosh import index
-from whoosh.store import LockError
-from whoosh.filedb.fileindex import TOC
+from whoosh.index import TOC
+from whoosh.index import LockError
+from whoosh.util import random_name
 from whoosh.index import _DEF_INDEX_NAME
-from whoosh.filedb.filestore import open_index
 from whoosh.filedb.structfile import StructFile
-from whoosh.filedb.filestore import create_index
 from whoosh.filedb.filestore import Storage as WhooshStorage
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
@@ -48,7 +48,7 @@ merge_first_segments = 5
 
 def segment_merge(writer, segments):
 
-	from whoosh.filedb.filereading import SegmentReader
+	from whoosh.reading import SegmentReader
 	if len(segments) <= max_segments:
 		return segments
 
@@ -237,13 +237,13 @@ class RedisWhooshStorage(WhooshStorage):
 		return self.redis.hget(self.NTI_WHOOSH_STORE % self.folder, name)
 
 	def create_index(self, schema, indexname=_DEF_INDEX_NAME):
-		return create_index(self, schema, indexname)
+		return super(RedisWhooshStorage, self).create_index(schema=schema, indexname=indexname)
 
 	def file_modified(self, name):
 		return -1
 
 	def open_index(self, indexname=_DEF_INDEX_NAME, schema=None):
-		return open_index(self, schema, indexname)
+		return super(RedisWhooshStorage, self).open_index(indexname=indexname, schema=schema)
 
 	def list(self):
 		return self.redis.hkeys(self.NTI_WHOOSH_STORE % self.folder)
@@ -295,7 +295,13 @@ class RedisWhooshStorage(WhooshStorage):
 	def lock(self, name):
 		name = self.NTI_WHOOSH_LOCKS % name
 		return self.redis.lock(name=name, timeout=60, sleep=1)
-
+	
+	def temp_storage(self, name=None):
+		tdir = tempfile.gettempdir()
+		name = name or "%s.tmp" % random_name()
+		path = os.path.join(tdir, name)
+		tempstore = WhooshFileStorage(path)
+		return tempstore.create()
 
 class UserRedisIndexStorage(IndexStorage):
 

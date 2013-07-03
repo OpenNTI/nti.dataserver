@@ -191,7 +191,7 @@ setup(
 		'futures >= 2.1.4',
 		# 'gevent == 1.0rc1', Coming from requirements.txt right now
 		'greenlet >= 0.4.1',
-		'gunicorn >= 0.17.4',
+		'gunicorn >= 17.5',
 		'hiredis >= 0.1.1',  # Redis C parser
 		# HTML5 parsing library
 		# JAM: 1.0b1 is out, but demonstrates some strange behaviour. When
@@ -274,7 +274,7 @@ setup(
 		# library to do web user agent detection
 		'WebError >= 0.10.3',  # Error-handling middleware, extracted from Paste (yet turns out to still be dependent on paste. sigh)
 		'webob >= 1.2.3',
-		'whoosh == 2.4.1',
+		'whoosh >= 2.5.0',
 		'z3c.baseregistry >= 2.0.0',  # ZCML configurable local component registries
 		'z3c.batching >= 2.0.0',  # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
