@@ -116,7 +116,7 @@ setup(
 		# 'nose >= 1.2.1',
 		# But it's also listed in extras/test, and it's very hard to upgrade
 		# when that changes
-		# 'distribute >= 0.6.49', # Can't seem to include that anywhere
+		# 'distribute >= 0.7.3', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
@@ -409,7 +409,7 @@ setup(
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.9.1',
 			'virtualenvwrapper >= 4.0',
-			'zc.buildout >= 2.1.1',
+			'zc.buildout >= 2.2.0',
 			'z3c.dependencychecker >= 1.11',  # unused/used imports; see also tl.eggdeps
 			'zodbbrowser >= 0.11.0',
 			'zodbupdate >= 0.5',
