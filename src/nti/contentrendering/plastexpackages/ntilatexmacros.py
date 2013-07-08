@@ -162,6 +162,7 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 	_ntiid_type = 'NTIVideo'
 
 	mimeType = "application/vnd.nextthought.ntivideo"
+	itemprop = "presentation-video"
 
 	creator = None
 	title = 'No Title'
@@ -213,6 +214,9 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 		if self.macroMode == self.MODE_BEGIN:
 			options = self.attributes.get( 'options', {} ) or {}
 			__traceback_info__ = options, self.attributes
+
+			if 'show-card' in options:
+				self.itemprop = 'presentation-card'
 
 			if not getattr(self, 'title', ''):
 				raise ValueError("Must specify a title using \\caption")

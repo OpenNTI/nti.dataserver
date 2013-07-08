@@ -16,7 +16,7 @@ name: ntiincludevideo
 
 name: ntivideo
 <object class="ntivideo"
-	tal:attributes="type self/mimeType; data-ntiid self/ntiid">
+	tal:attributes="type self/mimeType; itemprop self/itemprop; data-ntiid self/ntiid">
   <param name="title" tal:condition="self/title" tal:attributes="value self/title">
   <param name="subtitle" tal:condition="self/subtitle" tal:attributes="value self/subtitle">
   <param name="close_captions" tal:condition="self/closed_captions" tal:attributes="value self/closed_captions">
