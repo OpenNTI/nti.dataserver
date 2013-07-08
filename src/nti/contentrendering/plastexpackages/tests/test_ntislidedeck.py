@@ -97,7 +97,9 @@ Test Presentation.
 	__traceback_info__ = elem.childNodes
 	assert_that( elem.childNodes[0], is_( label ) )
 	assert_that( elem.childNodes[2], is_( ntiincludevideo ) )
-	video = elem.childNodes[2]
+	assert_that( elem.childNodes[6], is_( ntivideo ) )
+	old_video = elem.childNodes[2]
+	new_video = elem.childNodes[6]
 
 	# Check that the ntislidevido object has the expected attributes
 	assert_that( elem, has_property( 'id' ) )
@@ -109,7 +111,8 @@ Test Presentation.
 	# Check that the attributes have the expected values
 	assert_that( elem.title, equal_to( 'No Title' ) )
 	assert_that( elem.creator, equal_to( 'Unknown' ) )
-	assert_that( elem.thumbnail, equal_to( video.attributes['thumbnail'] ) )
+	assert_that( elem.thumbnail, equal_to( old_video.attributes['thumbnail'] ) )
+	assert_that( new_video.itemprop, equal_to( 'presentation-none' ) )
 
 def test_ntislidevideo_unified():
 	example = br"""
@@ -154,6 +157,7 @@ Test Presentation.
 	assert_that( elem.title, equal_to( video.title ) )
 	assert_that( elem.creator, equal_to( video.creator ) )
 	assert_that( elem.thumbnail, equal_to( thumbnail ) )
+	assert_that( video.itemprop, equal_to( 'presentation-none' ) )
 
 def test_ntislide():
 	example = br"""

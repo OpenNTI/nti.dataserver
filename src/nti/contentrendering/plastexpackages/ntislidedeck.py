@@ -157,12 +157,14 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 			if video_els:
 				self.title = video_els[0].title
 				self.creator = video_els[0].creator
+				video_els[0].itemprop = 'presentation-none'
 
 			video_els = self.getElementsByTagName( 'ntiincludevideo' )
 			if video_els:
 				multimedia = ntivideo()
 				multimedia.title = self.title
 				multimedia.creator = self.creator
+				multimedia.itemprop = 'presentation-none'
 				
 				multimedia_source = ntivideo.ntivideosource()
 				multimedia_source.service = video_els[0].attributes['service']
