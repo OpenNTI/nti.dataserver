@@ -357,7 +357,7 @@ setup(
 		'zope.server >= 3.9.0',  # DO NOT USED. Included as transitive for latest.
 		'zope.sequencesort >= 4.0.1',  # advanced locale aware sorting
 		'zope.schema >= 4.3.2',
-		'zope.security[zcml,untrustedpython] >= 4.0.0b1',  # >= 4.0.0b1 gets PyPy support!
+		'zope.security[zcml,untrustedpython] >= 4.0.0',  # >= 4.0.0b1 gets PyPy support!
 		'zope.securitypolicy >= 4.0.0a1',
 		'zope.session >= 4.0.0a1',  # 4.0.0a1 is out, should be fine
 		'zope.site >= 4.0.0a1' if HAVE_ZCONT else '',  # local, persistent ZCA sites. zope.container dep
