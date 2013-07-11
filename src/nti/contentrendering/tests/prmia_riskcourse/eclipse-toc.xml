@@ -150,4 +150,10 @@
           <topic href="tag_nextthought_com_2011-10_PRMIA-HTML-PRMIA_RiskCourse_key_lessons_and_conclusion.html#a0000000237" label="Supplemental Slides" level="section" levelnum="3" ntiid="tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.supplemental_slides.20"/>
        </topic>
     </topic>
+    <reference href="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module4slidedeck.json" ntiid="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module4slidedeck" type="application/vnd.nextthought.ntislidedeck"/>
+    <reference href="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module6slidedeck.json" ntiid="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module6slidedeck" type="application/vnd.nextthought.ntislidedeck"/>
+    <reference href="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module3slidedeck.json" ntiid="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module3slidedeck" type="application/vnd.nextthought.ntislidedeck"/>
+    <reference href="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module5slidedeck.json" ntiid="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module5slidedeck" type="application/vnd.nextthought.ntislidedeck"/>
+    <reference href="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module2slidedeck.json" ntiid="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module2slidedeck" type="application/vnd.nextthought.ntislidedeck"/>
+    <reference href="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module1slidedeck.json" ntiid="tag_nextthought_com_2011-10_PRMIA-NTISlideDeck-PRMIA_RiskCourse_nsd_module1slidedeck" type="application/vnd.nextthought.ntislidedeck"/>
 </toc>
