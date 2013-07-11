@@ -12,7 +12,7 @@ name: ntislidedeck
   <param name="type" tal:attributes="value self/type | default"/>
   <param name="title" tal:attributes="value self/title"/>
   <param name="creator" tal:attributes="value self/creator | nothing"/>
-  <param name="slidedeckid" tal:attributes="value self/id"/>
+  <param name="slidedeckid" tal:attributes="value self/ntiid"/>
   <img tal:condition="exists:self/image/image" tal:attributes="src self/image/image/url"/>
   <span class="description" tal:content="self/description" tal:condition="self/description">
     The description of the target.
@@ -29,7 +29,7 @@ name: ntislidevideo
   <param name="thumbnail" tal:attributes="value self/thumbnail"/>
   <param name="title" tal:attributes="value self/title"/>
   <param name="creator" tal:attributes="value self/creator | nothing"/>
-  <param name="slidedeckid" tal:attributes="value self/slidedeck/idref/label/id | string:default"/>
+  <param name="slidedeckid" tal:attributes="value self/slidedeck/idref/label/ntiid | string:default"/>
   <img tal:attributes="src self/thumbnail"/>
   <div class="hidden" style="display:none" tal:content="self/media_sources"></div>
   <span class="description" tal:content="self/description" tal:condition="self/description">
@@ -46,12 +46,13 @@ name: ntislide
 <object type="application/vnd.nextthought.slide"
 	tal:attributes="style self/style/inline;
 			data-ntiid self/ntiid">
-  <param name="slidedeckid" tal:condition="exists:self/slidedeck/idref/label/id" tal:attributes="value self/slidedeck/idref/label/id"/>
+  <param name="slidedeckid" tal:condition="exists:self/slidedeck/idref/label/ntiid" tal:attributes="value self/slidedeck/idref/label/ntiid"/>
   <param name="slidetitle" tal:attributes="value self/title" />
   <param name="slidenumber" tal:attributes="value self/slidenumber" />
   <param name="slideimage" tal:attributes="value self/slideimage/image/full_size/url" />
   <param name="slidevideostart" tal:condition="exists:self/slidevideo/starttime" tal:attributes="value self/slidevideo/starttime"/>
   <param name="slidevideoend" tal:condition="exists:self/slidevideo/endtime" tal:attributes="value self/slidevideo/endtime"/>
+  <param name="slidevideoid" tal:condition="exists:self/slidevideo/idref/label/ntiid" tal:attributes="value self/slidevideo/idref/label/ntiid"/>
   <div class="hidden" style="display:none" tal:content="self/slidevideo/idref/label/media_sources"></div>
   <span tal:condition="not:self/slideimage/image/resizeable" itemprop="nti-data-markupenabled">
     <img tal:condition="not:self/slideimage/style" crossorigin="anonymous" tal:attributes="src self/slideimage/image/url; id self/slideimage/id; alt self/slideimage/source; style string:width:${self/slideimage/image/width/px};; height:${self/slideimage/image/height/px}; data-nti-image-size self/slideimage/image/current_size; data-nti-image-full self/slideimage/image/full_size/url; data-nti-image-half self/slideimage/image/half_size/url; data-nti-image-quarter self/slideimage/image/quarter_size/url; data-title self/title | nothing" />
