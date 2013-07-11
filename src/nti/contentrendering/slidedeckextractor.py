@@ -91,6 +91,7 @@ def process_book(book):
 def transform(book, outpath=None):
 	result = []
 	decks = process_book(book)
+	dom = book.toc.dom
 	outpath = outpath or book.contentLocation
 	outpath = os.path.expanduser(outpath)
 	for deck in decks:
@@ -101,6 +102,16 @@ def transform(book, outpath=None):
 		with open(outfile, "wt") as fp:
 			result.append(outfile)
 			simplejson.dump(deck, fp, indent=2)
+		node = dom.createTextNode(u'    ')
+		dom.childNodes[0].appendChild(node)
+		node = dom.createElement('reference')
+		node.setAttribute('type', deck.get('MimeType') )
+		node.setAttribute('ntiid', ntiid )
+		node.setAttribute('href', '%s.json' % ntiid )
+		dom.childNodes[0].appendChild(node)
+		node = dom.createTextNode(u'\n')
+		dom.childNodes[0].appendChild(node)
+	book.toc.save()
 	return result
 
 def extract(contentpath, outpath=None, jobname=None):
