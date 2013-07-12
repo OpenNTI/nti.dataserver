@@ -13,20 +13,19 @@ import collections
 
 from zope import interface
 from zope import component
-from zope.location import location
 from zope.location import interfaces as loc_interfaces
+
 import zope.traversing.interfaces
 
-
 from nti.dataserver import traversal
-from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.singleton import SingletonDecorator
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.mimetype import nti_mimetype_from_object
 
-from nti.ntiids import ntiids
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.interfaces import StandardExternalFields
 
-import nti.dataserver.interfaces as nti_interfaces
+from nti.ntiids import ntiids
 
 def _root_for_ntiid_link( link, nearest_site ):
 	# Place the NTIID reference under the most specific place possible: the owner,
@@ -171,6 +170,13 @@ class LinkExternalObjectDecorator(object):
 				if ILink_providedBy( x ):
 					obj[i] = render_link( x )
 		elif isinstance( obj, _MutableMapping ) and obj.get( LINKS, () ):
-			obj[LINKS] = [render_link(link) if ILink_providedBy(link) else link
-						  for link
-						  in obj[LINKS]]
+			links = []
+			for link in obj[LINKS]:
+				__traceback_info__ = link
+				try:
+					rendered_linked = render_link(link) if ILink_providedBy(link) else link
+					links.append(rendered_linked)
+				except (TypeError, loc_interfaces.LocationError):
+					logger.error("Error rendering link %s" % link)
+					raise # should we ignore?
+			obj[LINKS] = links
