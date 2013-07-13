@@ -249,6 +249,10 @@ def _bookmark_predicate_factory( request ):
 	is_bm_p = nti_interfaces.IBookmark.providedBy
 	return lambda o: is_fav_p( o ) or is_bm_p( o )
 
+def _only_me_predicate_factory( request ):
+	me = get_remote_user(request)
+	return lambda o: getattr( o.creator, 'username', o.creator ) == me.username
+
 def _toplevel_filter( x ):
 	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
 	try:
@@ -279,6 +283,7 @@ FILTER_NAMES = {
 	'IFollowAndMe': (_ifollowandme_predicate_factory,),
 	'Favorite': (_favorite_predicate_factory,),
 	'Bookmarks': (_bookmark_predicate_factory,),
+	'OnlyMe': (_only_me_predicate_factory,),
 	}
 
 class _MimeFilter(object):
