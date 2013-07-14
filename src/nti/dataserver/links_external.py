@@ -178,5 +178,5 @@ class LinkExternalObjectDecorator(object):
 					links.append(rendered_linked)
 				except (TypeError, loc_interfaces.LocationError):
 					logger.error("Error rendering link %s" % link)
-					raise # should we ignore?
+					
 			obj[LINKS] = links
