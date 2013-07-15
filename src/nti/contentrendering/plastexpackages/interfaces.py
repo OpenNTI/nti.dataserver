@@ -13,3 +13,9 @@ class IAssessmentExtractor(cdr_interfaces.IRenderedBookTransformer):
 	"""
 	Looks through the rendered book and extracts assessment information.
 	"""
+
+class ICourseExtractor(cdr_interfaces.IRenderedBookTransformer):
+	"""
+	Looks through the rendered book and extracts course information.
+	"""
+

@@ -14,6 +14,14 @@
 
 	<include package="nti.assessment" />
 
+	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
+			 factory=".nticourse._CourseExtractor"
+			 provides=".interfaces.ICourseExtractor" />
+
+	<utility factory=".nticourse._CourseExtractor"
+			 provides=".interfaces.ICourseExtractor"
+			 name="CourseExtractor" />
+
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">
         	<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
         	<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />
