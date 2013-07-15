@@ -10,6 +10,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from nti.contentrendering import plastexids
 from nti.contentfragments import interfaces as cfg_interfaces
+from nti.contentrendering import interfaces as crd_interfaces
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
 from nti.contentrendering.plastexpackages.ntilatexmacros import ntivideo
 from nti.contentrendering.plastexpackages.graphicx import includegraphics
@@ -21,6 +22,7 @@ from plasTeX.Base import Crossref
 from plasTeX.Base import Environment
 from plasTeX.Renderers import render_children
 
+from zope import interface
 from zope.cachedescriptors.property import readproperty
 
 def _timeconvert( timestring ):
@@ -51,6 +53,7 @@ class ntislidedeckref(Crossref.ref):
 		super(ntislidedeckref, self).digest(tex)
 		self.parentNode.slidedeck = self
 
+@interface.implementer(crd_interfaces.IEmbeddedContainer)
 class ntislidedeck(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	"""
 	The ntislidedeck environment stores the metadata for a 'PowerPoint' style presentation.  
