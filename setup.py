@@ -265,7 +265,7 @@ setup(
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.3.0',
 		'six >= 1.3.0',
-		'sympy == 0.7.2',  # sympy-docs-html-0.7.1 is currently greater
+		'sympy >= 0.7.3' if not IS_PYPY else '',
 		'stripe >= 1.9.2',  # stripe payments
 		# 'slimit',
 		'supervisor >= 3.0b2',
