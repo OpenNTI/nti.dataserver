@@ -46,7 +46,7 @@ class TestExternalization(TestCase):
 		unit = filesystem.FilesystemContentPackage(
 			filename='prealgebra/index.html',
 			href='index.html',
-			root='prealgebra' )
+			root='prealgebra')
 
 		unit.icon = unit.make_sibling_key('icons/The%20Icon.png' )
 		assert_that( unit.icon, validly_provides( interfaces.IDelimitedHierarchyKey ) )
@@ -63,7 +63,8 @@ class TestExternalization(TestCase):
 			title='Prealgebra',
 			installable=archive_unit is not None,
 			archive_unit=archive_unit,
-			index=index )
+			index=index,
+			isCourse=True )
 		unit.icon = unit.make_sibling_key( 'icons/The Icon.png' )
 
 		if archive_unit:
@@ -78,6 +79,8 @@ class TestExternalization(TestCase):
 		assert_that( result, has_key( 'index_jsonp' ) )
 		assert_that( result,
 					 has_entry( 'renderVersion', 1 ) )
+		assert_that( result,
+					 has_entry( 'isCourse', True ) )
 		assert_that( result, has_entry( 'Class', 'ContentPackage' ) )
 
 		# More coverage

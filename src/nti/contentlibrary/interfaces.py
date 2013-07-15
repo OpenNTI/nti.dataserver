@@ -212,6 +212,8 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 						  required=False)
 	renderVersion = schema.Int(title="Version of the rendering process that produced this package.",
 							   default=1, min=1)
+	
+	isCourse = schema.Bool(title="If this package is for a course.", default=False)
 
 
 class IDelimitedHierarchyContentUnit(IContentUnit, IDelimitedHierarchyEntry):

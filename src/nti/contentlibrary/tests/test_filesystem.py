@@ -81,6 +81,7 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 																  'type': 'I',
 																  'start': 5,
 																  'separator': '.' } } ) ) )
+		assert_that( ext_package, has_entry( 'isCourse', False ) )
 
 		json.loads( json.dumps( ext_package ) ) # Round trips through JSON
 

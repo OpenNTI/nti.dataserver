@@ -66,6 +66,7 @@ class ContentPackage(ContentUnit):
 
 	root = None
 	index = None
+	isCourse = False
 	index_last_modified = None
 	index_jsonp = None
 	installable = False
