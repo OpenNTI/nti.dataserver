@@ -11,27 +11,27 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import simplejson as json
 import collections
+import simplejson as json
 
-from pyramid.security import authenticated_userid, remember
 from pyramid.threadlocal import get_current_request
+from pyramid.security import authenticated_userid, remember
 
 from zope import interface
 from zope.event import notify
-from zope.proxy.decorator import SpecificationDecoratorBase
 from zope.location.interfaces import ILocation
+from zope.proxy.decorator import SpecificationDecoratorBase
 
-from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization import oids as ext_oids
 from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.interfaces import StandardExternalFields
+
+from nti.appserver import interfaces as app_interfaces
 
 from nti.dataserver import links
 from nti.dataserver import users
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.appserver import interfaces as app_interfaces
 from nti.dataserver.interfaces import ICreated
+from nti.dataserver import interfaces as nti_interfaces
 
 class AbstractTwoStateViewLinkDecorator(object):
 	"""
@@ -73,7 +73,8 @@ class AbstractTwoStateViewLinkDecorator(object):
 		:param extra_elements: Elements that are unconditionally added to
 			the generated link.
 		"""
-		current_username = authenticated_userid( get_current_request() )
+		request = get_current_request()
+		current_username = authenticated_userid( request ) if request else None
 		if not current_username:
 			return
 
