@@ -745,6 +745,7 @@ class _RelatedWorkExtractor(object):
 		if lesson_els or related_els:
 			self._process_lessons(dom, lesson_els)
 			self._process_related(dom, related_els)
+			dom.childNodes[0].setAttribute('xmlns:content', "http://www.nextthought.com/toc")
 			book.toc.save()
 
 	def _process_lessons(self, dom, els):
