@@ -11,6 +11,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 import hashlib
 import os
 
+from zope import component
 from zope import interface
 
 from plasTeX import Base, Command, Environment
@@ -21,9 +22,11 @@ from plasTeX.Renderers import render_children
 
 from nti.contentrendering import plastexids
 from nti.contentrendering import interfaces as crd_interfaces
+from nti.contentrendering.plastexpackages import interfaces
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
 from nti.contentrendering.plastexpackages.graphicx import includegraphics
 from nti.contentrendering.resources import interfaces as resource_interfaces
+from nti.ntiids import ntiids
 
 from nti.contentfragments import interfaces as cfg_interfaces
 
@@ -634,9 +637,163 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 
 		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
 
+###############################################################################
+# The following block of commands concern representing related readings
+###############################################################################
+
+class relatedworkname(Base.Command):
+	pass
+
+class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
+	args = '[ options:dict ]'
+
+	# Only classes with counters can be labeled, and \label sets the
+	# id property, which in turn is used as part of the NTIID (when no NTIID is set explicitly)
+	counter = 'relatedwork'
+	blockType = True
+	_ntiid_cache_map_name = '_relatedwork_ntiid_map'
+	_ntiid_allow_missing_title = False
+	_ntiid_suffix = 'relatedwork.'
+	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
+	_ntiid_type = 'RelatedWork'
+
+	#: From IEmbeddedContainer
+	mimeType = "application/vnd.nextthought.relatedwork"
+	targetMimeType = "application/vnd.nextthought.content"
+	icon = None
+	iconResource = None
+
+	class worktitle(Base.Command):
+		args = 'title:str'
+
+		def digest(self, tokens):
+			tok = super(relatedwork.worktitle,self).digest(tokens)
+			self.parentNode.title = self.attributes['title']
+			return tok
+
+	class workcreator(Base.Command):
+		args = 'creator:str'
+
+		def digest(self, tokens):
+			tok = super(relatedwork.workcreator,self).digest(tokens)
+			self.parentNode.creator = self.attributes['creator']
+			return tok
+
+	class worksource(Base.Command):
+		args = 'uri:str'
+
+		def digest(self, tokens):
+			tok = super(relatedwork.worksource,self).digest(tokens)
+			self.parentNode.uri = self.attributes['uri']
+			return tok
+
+	def digest(self, tokens):
+		tok = super(relatedwork,self).digest(tokens)
+
+		if ntiids.is_valid_ntiid_string( self.uri ):
+			self.targetMimeType = 'application/vnd.nextthought.content'
+			ntiid_specific = ntiids.get_specific( self.uri )
+			self.icon = '/'.join([u'..', ntiid_specific.split('.')[0], 'icon', 'chapters', 'generic_book.png'])
+		else:
+			self.targetMimeType = 'application/vnd.nextthought.externallink'
+
+		icons = self.getElementsByTagName('includegraphics')
+		if icons:
+			self.iconResource = icons[0]
+		return tok
+
+	@readproperty
+	def description(self):
+		texts = []
+		for child in self.allChildNodes:
+			# Try to extract the text children, ignoring the caption and label, etc
+			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
+				texts.append( unicode( child ) )
+
+		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
+
+class relatedworkref(Base.Crossref.ref):
+	args = '[ options:dict ] label:idref uri:str desc:str'
+
+	def digest(self, tokens):
+		tok = super(relatedworkref, self).digest(tokens)
+		self.uri = self.attributes['uri']
+		self.description = self.attributes['desc']
+		self.relatedwork = self.idref['label']
+		return tok
+
 def ProcessOptions( options, document ):
 	document.context.newcounter( 'ntilocalvideo' )
 	document.context.newcounter( 'ntivideo' )
 	document.context.newcounter( 'ntivideoroll' )
 	document.context.newcounter( 'ntiimagecollection' )
 	document.context.newcounter( 'nticard' )
+	document.context.newcounter( 'relatedwork' )
+
+@interface.implementer(interfaces.IRelatedWorkExtractor)
+@component.adapter(crd_interfaces.IRenderedBook)
+class _RelatedWorkExtractor(object):
+
+	def __init__( self, book=None ):
+		# Usable as either a utility factory or an adapter
+		pass
+
+	def transform( self, book ):
+		lesson_els = book.document.getElementsByTagName( 'courselesson' )
+		related_els = book.document.getElementsByTagName( 'relatedwork' )
+		dom = book.toc.dom
+		if lesson_els or related_els:
+			self._process_lessons(dom, lesson_els)
+			self._process_related(dom, related_els)
+			book.toc.save()
+
+	def _process_lessons(self, dom, els):
+		for el in els:
+			ref_els = el.getElementsByTagName('relatedworkref')
+			if ref_els:
+				lesson_el = None
+
+				# Determine which topic represents the lesson
+				topic_els = dom.getElementsByTagName('topic')
+				for topic_el in topic_els:
+					if topic_el.getAttribute('ntiid') == el.ntiid:
+						lesson_el = topic_el
+
+				for ref_el in ref_els:
+					if ref_el.relatedwork.icon is not None:
+						icon = ref_el.relatedwork.icon
+					elif ref_el.relatedwork.iconResource is not None:
+						icon = ref_el.relatedwork.iconResource.image.url
+					else:
+						icon = ''
+
+					toc_el = dom.createElement('content:related')
+					toc_el.setAttribute('label', ref_el.relatedwork.title)
+					toc_el.setAttribute('creator', ref_el.relatedwork.creator)
+					toc_el.setAttribute('href', ref_el.uri)
+					toc_el.setAttribute('type', ref_el.relatedwork.targetMimeType)
+					toc_el.setAttribute('icon', icon)
+					toc_el.setAttribute('desc', ref_el.description)
+					lesson_el.appendChild(toc_el)
+					lesson_el.appendChild(dom.createTextNode(u'\n'))
+
+	def _process_related(self, dom, els):
+		for el in els:
+			if el.icon is not None:
+				icon = el.icon
+			elif el.iconResource is not None:
+				from IPython.core.debugger import Tracer; Tracer()()
+				icon = el.iconResource.image.url
+			else:
+				icon = ''
+
+			toc_el = dom.createElement('content:related')
+			toc_el.setAttribute('label', el.title)
+			toc_el.setAttribute('creator', el.creator)
+			toc_el.setAttribute('href', el.uri)
+			toc_el.setAttribute('type', el.targetMimeType)
+			toc_el.setAttribute('icon', icon)
+			toc_el.setAttribute('desc', el.description)
+			dom.childNodes[0].appendChild(toc_el)
+			dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
+
