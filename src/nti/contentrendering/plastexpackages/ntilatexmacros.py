@@ -782,7 +782,6 @@ class _RelatedWorkExtractor(object):
 			if el.icon is not None:
 				icon = el.icon
 			elif el.iconResource is not None:
-				from IPython.core.debugger import Tracer; Tracer()()
 				icon = el.iconResource.image.url
 			else:
 				icon = ''
