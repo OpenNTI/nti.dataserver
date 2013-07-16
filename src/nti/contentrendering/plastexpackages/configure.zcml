@@ -22,6 +22,14 @@
 			 provides=".interfaces.ICourseExtractor"
 			 name="CourseExtractor" />
 
+	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
+			 factory=".ntilatexmacros._RelatedWorkExtractor"
+			 provides=".interfaces.IRelatedWorkExtractor" />
+
+	<utility factory=".ntilatexmacros._RelatedWorkExtractor"
+			 provides=".interfaces.IRelatedWorkExtractor"
+			 name="RelatedWorkExtractor" />
+
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">
         	<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
         	<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />

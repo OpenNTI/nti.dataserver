@@ -19,3 +19,8 @@ class ICourseExtractor(cdr_interfaces.IRenderedBookTransformer):
 	Looks through the rendered book and extracts course information.
 	"""
 
+class IRelatedWorkExtractor(cdr_interfaces.IRenderedBookTransformer):
+	"""
+	Looks through the rendered book and extracts related work information.
+	"""
+
