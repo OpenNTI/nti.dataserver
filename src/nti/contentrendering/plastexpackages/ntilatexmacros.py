@@ -693,7 +693,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 		if ntiids.is_valid_ntiid_string( self.uri ):
 			self.targetMimeType = 'application/vnd.nextthought.content'
 			ntiid_specific = ntiids.get_specific( self.uri )
-			self.icon = '/'.join([u'..', ntiid_specific.split('.')[0], 'icon', 'chapters', 'generic_book.png'])
+			self.icon = '/'.join([u'..', ntiid_specific.split('.')[0], 'icons', 'chapters', 'generic_book.png'])
 		else:
 			self.targetMimeType = 'application/vnd.nextthought.externallink'
 
