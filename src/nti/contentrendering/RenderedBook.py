@@ -549,6 +549,19 @@ class _EclipseTOCMiniDomTopic(object):
 			return urllib.unquote(self.topic.attributes.get(b'icon').value)
 		else: return None
 
+	def has_background( self ):
+		return (self.topic.attributes and self.topic.attributes.get(b'background'))
+
+	def set_background( self, background ):
+		self.topic.attributes[b'background'] = urllib.quote( background )
+		self.modifiedTopic = True
+		return self.modifiedTopic
+
+	def get_background( self ):
+		if self.has_icon():
+			return urllib.unquote(self.topic.attributes.get(b'background').value)
+		else: return None
+
 	def set_label( self, label ):
 		self.topic.attributes[b'label'] = label
 		self.modifiedTopic = True
