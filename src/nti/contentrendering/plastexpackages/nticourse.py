@@ -13,7 +13,7 @@ from xml.dom.minidom import Document as XMLDocument
 
 from nti.contentrendering import plastexids
 from nti.contentfragments import interfaces as cfg_interfaces
-from nti.contentrendering import interfaces as cdr_interfaces
+from nti.contentrendering import interfaces as crd_interfaces
 from nti.contentrendering.plastexpackages import interfaces
 
 from plasTeX.Base import Command
@@ -67,7 +67,7 @@ class courseunit(Environment, plastexids.NTIIDMixin):
     forcePars = False
     _ntiid_cache_map_name = '_courseunit_ntiid_map'
     _ntiid_allow_missing_title = False
-    _ntiid_suffix = 'course.'
+    _ntiid_suffix = 'course.unit.'
     _ntiid_title_attr_name = 'ref'
     _ntiid_type = 'NTICourseUnit'
 
@@ -113,7 +113,7 @@ def ProcessOptions( options, document ):
 	document.context.newcounter('courseunit')
 
 @interface.implementer(interfaces.ICourseExtractor)
-@component.adapter(cdr_interfaces.IRenderedBook)
+@component.adapter(crd_interfaces.IRenderedBook)
 class _CourseExtractor(object):
 
     def __init__( self, book=None ):
