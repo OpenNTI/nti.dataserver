@@ -717,6 +717,17 @@ class relatedworkref(Base.Crossref.ref):
 
 	def digest(self, tokens):
 		tok = super(relatedworkref, self).digest(tokens)
+
+		options = self.attributes.get( 'options', {} ) or {}
+		if 'category' in options:
+			self.category = options['category']
+		else:
+			self.category = 'required'
+
+		# SAJ: If the value is not one of the two we support force it to one.
+		if self.category != 'related' and self.category != 'additional':
+			self.category = 'required'
+
 		self.uri = self.attributes['uri']
 		self.description = self.attributes['desc']
 		self.relatedwork = self.idref['label']
@@ -775,6 +786,7 @@ class _RelatedWorkExtractor(object):
 					toc_el.setAttribute('type', ref_el.relatedwork.targetMimeType)
 					toc_el.setAttribute('icon', icon)
 					toc_el.setAttribute('desc', ref_el.description)
+					toc_el.setAttribute('section', ref_el.category)
 					lesson_el.appendChild(toc_el)
 					lesson_el.appendChild(dom.createTextNode(u'\n'))
 
