@@ -167,8 +167,13 @@ class _CourseExtractor(object):
         return toc_el
 
     def _process_lesson( self, doc_el ):
+        # SAJ: Lets find our parent course node
+        course = doc_el.parentNode
+        while (course.tagName != 'course'):
+            course = course.parentNode
+
         # SAJ: Add the course's timezone and translate to UTC
-        tz = doc_el.parentNode.parentNode.tz
+        tz = course.tz
         doc_el.date = tz_utc.normalize(tz.localize(doc_el.date).astimezone(tz_utc))
 
         toc_el = XMLDocument().createElement('lesson')
