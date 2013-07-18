@@ -1019,12 +1019,16 @@ class _NTIVideoExtractor(object):
 			val['height'] = source.height
 			val['width'] = source.width
 			val['service'] = source.service
-			val['src'] = []
+			val['source'] = []
+			val['type'] = []
 			if source.service == 'html5':
-				val['src'].append({'src': source.src['mp4'], 'type': 'video/mp4'})
-				val['src'].append({'src': source.src['webm'], 'type': 'video/webm'})
+				val['source'].append(source.src['mp4'])
+				val['type'].append('video/mp4')
+				val['source'].append(source.src['webm'])
+				val['type'].append('video/webm')
 			elif source.service == 'youtube':
-				val['src'].append({'src': source.src['other'], 'type': 'video/youtube'})
+				val['source'].append(source.src['other'])
+				val['type'].append('video/youtube')
 			entry['sources'].append(val)
 
 		for transcript in video.getElementsByTagName('mediatranscript'):
