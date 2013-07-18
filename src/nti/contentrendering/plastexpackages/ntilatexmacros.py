@@ -987,8 +987,8 @@ class _NTIVideoExtractor(object):
 
 		# Write the JSONP version
 		with open(os.path.join(outpath, filename+'p'), "wb") as fp:
-			fp.write('jsonpVideoIndex(')
-			simplejson.dump(video_index, fp)
+			fp.write('jsonpReceiveContent(')
+			simplejson.dump({'ntiid': dom.childNodes[0].getAttribute('ntiid'), 'Content-Type': 'application/json', 'Content-Encoding': 'json', 'content': video_index, 'version': '1'}, fp)
 			fp.write(');')
 
 		toc_el = dom.createElement('reference')
