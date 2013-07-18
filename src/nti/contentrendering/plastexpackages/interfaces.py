@@ -34,3 +34,8 @@ class INTIVideoExtractor(cdr_interfaces.IRenderedBookTransformer):
 	Looks through the rendered book and extracts NTIVideos.
 	"""
 
+class IHackExtractor(cdr_interfaces.IRenderedBookTransformer):
+	"""
+	Looks through the rendered book and injects hacks.
+	"""
+
