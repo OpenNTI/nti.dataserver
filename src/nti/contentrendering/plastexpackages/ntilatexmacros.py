@@ -964,7 +964,10 @@ class _NTIVideoExtractor(object):
 						poster = source_els[0].poster
 
 					toc_el = dom.createElement('object')
-					toc_el.setAttribute('label', video_el.idref['label'].title.textContent)
+					if hasattr(video_el.idref['label'].title, 'textContent'):
+						toc_el.setAttribute('label', video_el.idref['label'].title.textContent)
+					else:
+						toc_el.setAttribute('label', video_el.idref['label'].title)
 					toc_el.setAttribute('poster', poster)
 					toc_el.setAttribute('ntiid', video_el.idref['label'].ntiid)
 					toc_el.setAttribute('mimeType', video_el.idref['label'].mimeType)
@@ -999,7 +1002,10 @@ class _NTIVideoExtractor(object):
 		entry = {}
 		entry['ntiid'] = video.ntiid
 		entry['creator'] = video.creator
-		entry['title'] = video.title.textContent
+		if hasattr(video.title, 'textContent'):
+			entry['title'] = video.title.textContent
+		else:
+			entry['title'] = video.title
 		entry['description'] = video.description
 		entry['mimeType'] = video.mimeType
 		entry['closedCaptions'] = video.closed_caption
