@@ -10,6 +10,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 import hashlib
 import os
+import simplejson
 
 from zope import component
 from zope import interface
@@ -22,6 +23,7 @@ from plasTeX.Renderers import render_children
 
 from nti.contentrendering import plastexids
 from nti.contentrendering import interfaces as crd_interfaces
+from nti.contentrendering.jsonpbuilder import _JSONPWrapper
 from nti.contentrendering.plastexpackages import interfaces
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
 from nti.contentrendering.plastexpackages.graphicx import includegraphics
@@ -209,6 +211,8 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 					self.service = 'html5'
 					self.src['mp4'] = self.attributes['id'] + '.mp4'
 					self.src['webm'] = self.attributes['id'] + '.webm'
+					self.poster = self.attributes['id'] + '-poster.jpg'
+					self.thumbnail = self.attributes['id'] + '-thumb.jpg'
 				else:
 					logger.warning('Unknown video type: %s', self.attributes['type'])
 
@@ -251,6 +255,8 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 		output = render_children( self.renderer, sources )
 		return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
 
+class ntivideoref(Base.Crossref.ref):
+	pass
 
 class ntilocalvideoname(Command):
 		unicode = ''
@@ -912,4 +918,117 @@ class _DiscussionExtractor(object):
 					toc_el.setAttribute('icon', icon)
 					lesson_el.appendChild(toc_el)
 					lesson_el.appendChild(dom.createTextNode(u'\n'))
+
+@interface.implementer(interfaces.INTIVideoExtractor)
+@component.adapter(crd_interfaces.IRenderedBook)
+class _NTIVideoExtractor(object):
+
+	def __init__( self, book=None ):
+		# Usable as either a utility factory or an adapter
+		pass
+
+	def transform( self, book ):
+		lesson_els = book.document.getElementsByTagName( 'courselesson' )
+		video_els = book.document.getElementsByTagName( 'ntivideo' )
+		outpath = os.path.expanduser(book.contentLocation)
+		dom = book.toc.dom
+		if lesson_els or video_els:
+			self._process_lessons(dom, lesson_els)
+			self._process_videos(dom, video_els, outpath)
+			book.toc.save()
+
+	def _process_lessons(self, dom, els):
+		for el in els:
+			video_els = el.getElementsByTagName('ntivideoref')
+			if video_els:
+				lesson_el = None
+
+				# Determine which topic represents the lesson
+				topic_els = dom.getElementsByTagName('topic')
+				for topic_el in topic_els:
+					if topic_el.getAttribute('ntiid') == el.ntiid:
+						lesson_el = topic_el
+
+				for video_el in video_els:
+					lesson_el = None
+
+					# Determine which topic represents the lesson
+					topic_els = dom.getElementsByTagName('topic')
+					for topic_el in topic_els:
+						if topic_el.getAttribute('ntiid') == el.ntiid:
+							lesson_el = topic_el
+
+					poster = ''
+					source_els = video_el.idref['label'].getElementsByTagName('ntivideosource')
+					if source_els:
+						poster = source_els[0].poster
+
+					toc_el = dom.createElement('object')
+					toc_el.setAttribute('label', video_el.idref['label'].title.textContent)
+					toc_el.setAttribute('poster', poster)
+					toc_el.setAttribute('ntiid', video_el.idref['label'].ntiid)
+					toc_el.setAttribute('mimeType', video_el.idref['label'].mimeType)
+					lesson_el.appendChild(toc_el)
+					lesson_el.appendChild(dom.createTextNode(u'\n'))
+
+	def _process_videos(self, dom, els, outpath):
+		video_index = {}
+		filename = 'video_index.json'
+		for el in els:
+			video = self._process_video(el)
+			video_index[video['ntiid']] = video
+
+		# Write the normal version
+		with open(os.path.join(outpath, filename), "wb") as fp:
+			simplejson.dump(video_index, fp, indent=2)
+
+		# Write the JSONP version
+		with open(os.path.join(outpath, filename+'p'), "wb") as fp:
+			fp.write('jsonpVideoIndex(')
+			simplejson.dump(video_index, fp)
+			fp.write(');')
+
+		toc_el = dom.createElement('reference')
+		toc_el.setAttribute('href', filename)
+		toc_el.setAttribute('type', 'application/vnd.nextthought.videoindex')
+
+		dom.childNodes[0].appendChild(toc_el)
+		dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
+
+	def _process_video(self, video):
+		entry = {}
+		entry['ntiid'] = video.ntiid
+		entry['creator'] = video.creator
+		entry['title'] = video.title.textContent
+		entry['description'] = video.description
+		entry['mimeType'] = video.mimeType
+		entry['closedCaptions'] = video.closed_caption
+		entry['sources'] = []
+		entry['transcripts'] = []
+
+		for source in video.getElementsByTagName('ntivideosource'):
+			val = {}
+			val['poster'] = source.poster
+			val['thumbnail'] = source.thumbnail
+			val['height'] = source.height
+			val['width'] = source.width
+			val['service'] = source.service
+			val['src'] = []
+			if source.service == 'html5':
+				val['src'].append({'src': source.src['mp4'], 'type': 'video/mp4'})
+				val['src'].append({'src': source.src['webm'], 'type': 'video/webm'})
+			elif source.service == 'youtube':
+				val['src'].append({'src': source.src['other'], 'type': 'video/youtube'})
+			entry['sources'].append(val)
+
+		for transcript in video.getElementsByTagName('mediatranscript'):
+			val = {}
+			val['src'] = transcript.raw.url
+			val['srcjsonp'] = transcript.wrapped.url
+			val['type'] = transcript.transcript_mime_type
+			val['lang'] = transcript.attributes['lang']
+			val['purpose'] = transcript.attributes['purpose']
+			entry['sources'].append(val)
+
+		return entry
 

@@ -38,6 +38,14 @@
 			 provides=".interfaces.IDiscussionExtractor"
 			 name="DiscussionExtractor" />
 
+	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
+			 factory=".ntilatexmacros._NTIVideoExtractor"
+			 provides=".interfaces.INTIVideoExtractor" />
+
+	<utility factory=".ntilatexmacros._NTIVideoExtractor"
+			 provides=".interfaces.INTIVideoExtractor"
+			 name="NTIVideoExtractor" />
+
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">
         	<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
         	<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />

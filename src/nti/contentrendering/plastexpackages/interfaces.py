@@ -29,3 +29,8 @@ class IDiscussionExtractor(cdr_interfaces.IRenderedBookTransformer):
 	Looks through the rendered book and extracts discussions.
 	"""
 
+class INTIVideoExtractor(cdr_interfaces.IRenderedBookTransformer):
+	"""
+	Looks through the rendered book and extracts NTIVideos.
+	"""
+
