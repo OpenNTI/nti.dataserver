@@ -1054,7 +1054,7 @@ class _HackExtractor(object):
 		if book.jobname == 'CLC3403_LawAndJustice':
 			logger.warn('Applying SUPER hack!!!!!!!!!!!!!!!!!!!!!!!!!!!')
 			hack_el = book.toc.dom.createElement('object')
-			hack_el.setAttribute('label', 'You got 7 out of 9 questions correct.')
+			hack_el.setAttribute('label', 'Quiz 1')
 			hack_el.setAttribute('mimeType', 'application/vnd.nextthought.naquestionset')
 			hack_el.setAttribute('gotoNtiid', 'tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.sec:QUIZ_01.01')
 			hack_el.setAttribute('ntiid', 'tag:nextthought.com,2011-10:NTI-NAQ-CLC3403_LawAndJustice.naquestionset.questionset1')
