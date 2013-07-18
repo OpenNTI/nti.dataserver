@@ -21,8 +21,14 @@ from plasTeX.Base import Crossref
 from plasTeX.Base import Environment
 from plasTeX.Base import StartSection
 
+from pytz import all_timezones
+from pytz import timezone
+from pytz import utc as tz_utc
+
 from zope import component
 from zope import interface
+
+DEFAULT_TZ = 'US/Central'
 
 class coursename(Command):
     pass
@@ -52,6 +58,12 @@ class course(Environment, plastexids.NTIIDMixin):
                 raise ValueError("Must specify a title using \\caption")
 
             options = self.attributes.get( 'options', {} ) or {}
+            if 'tz' in options and options['tz'] in all_timezones:
+                self.tz = timezone( option['tz'] )
+            else:
+                logger.warn('No valid timezone specified')
+                self.tz = timezone( DEFAULT_TZ )
+            
             __traceback_info__ = options, self.attributes
 
         return tok
@@ -155,7 +167,11 @@ class _CourseExtractor(object):
         return toc_el
 
     def _process_lesson( self, doc_el ):
+        # SAJ: Add the course's timezone and translate to UTC
+        tz = doc_el.parentNode.parentNode.tz
+        doc_el.date = tz_utc.normalize(tz.localize(doc_el.date).astimezone(tz_utc))
+
         toc_el = XMLDocument().createElement('lesson')
-        toc_el.setAttribute('date', doc_el.date.isoformat() + u'Z')
+        toc_el.setAttribute('date', doc_el.date.isoformat())
         toc_el.setAttribute('topic-ntiid', doc_el.idref['label'].ntiid )
         return toc_el
