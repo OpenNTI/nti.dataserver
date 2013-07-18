@@ -76,6 +76,9 @@ def _handle_toc(toc, book, save_dom, context=None):
 			if os.path.exists( os.path.join(contentLocation, "images/backgrounds/default.png" ) ):
 				modified = index.set_background( "images/backgrounds/default.png" ) or modified
 
+			if os.path.exists( os.path.join(contentLocation, "images/backgrounds/default.jpg" ) ):
+				modified = index.set_background( "images/backgrounds/default.jpg" ) or modified
+
 		for node in index.childTopics:
 			node.save_dom = save_dom
 			_handle_topic( book, node, context=context )
