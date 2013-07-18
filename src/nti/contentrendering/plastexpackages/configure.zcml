@@ -46,6 +46,14 @@
 			 provides=".interfaces.INTIVideoExtractor"
 			 name="NTIVideoExtractor" />
 
+	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
+			 factory=".ntilatexmacros._HackExtractor"
+			 provides=".interfaces.IHackExtractor" />
+
+	<utility factory=".ntilatexmacros._HackExtractor"
+			 provides=".interfaces.IHackExtractor"
+			 name="HackExtractor" />
+
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">
         	<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
         	<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />
