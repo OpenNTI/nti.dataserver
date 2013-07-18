@@ -832,10 +832,10 @@ class _RelatedWorkExtractor(object):
 						lesson_el = topic_el
 
 				for ref_el in ref_els:
-					if ref_el.relatedwork.icon is not None:
-						icon = ref_el.relatedwork.icon
-					elif ref_el.relatedwork.iconResource is not None:
+					if ref_el.relatedwork.iconResource is not None:
 						icon = ref_el.relatedwork.iconResource.image.url
+					elif ref_el.relatedwork.icon is not None:
+						icon = ref_el.relatedwork.icon
 					else:
 						icon = ''
 
@@ -852,10 +852,10 @@ class _RelatedWorkExtractor(object):
 
 	def _process_related(self, dom, els):
 		for el in els:
-			if el.icon is not None:
-				icon = el.icon
-			elif el.iconResource is not None:
+			if el.iconResource is not None:
 				icon = el.iconResource.image.url
+			elif el.icon is not None:
+				icon = el.icon
 			else:
 				icon = ''
 
