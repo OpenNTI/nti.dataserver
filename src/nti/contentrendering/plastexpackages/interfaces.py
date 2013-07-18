@@ -24,3 +24,8 @@ class IRelatedWorkExtractor(cdr_interfaces.IRenderedBookTransformer):
 	Looks through the rendered book and extracts related work information.
 	"""
 
+class IDiscussionExtractor(cdr_interfaces.IRenderedBookTransformer):
+	"""
+	Looks through the rendered book and extracts discussions.
+	"""
+

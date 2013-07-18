@@ -30,6 +30,14 @@
 			 provides=".interfaces.IRelatedWorkExtractor"
 			 name="RelatedWorkExtractor" />
 
+	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
+			 factory=".ntilatexmacros._DiscussionExtractor"
+			 provides=".interfaces.IDiscussionExtractor" />
+
+	<utility factory=".ntilatexmacros._DiscussionExtractor"
+			 provides=".interfaces.IDiscussionExtractor"
+			 name="DiscussionExtractor" />
+
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">
         	<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
         	<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />

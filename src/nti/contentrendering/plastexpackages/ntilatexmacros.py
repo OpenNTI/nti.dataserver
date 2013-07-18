@@ -733,6 +733,59 @@ class relatedworkref(Base.Crossref.ref):
 		self.relatedwork = self.idref['label']
 		return tok
 
+###############################################################################
+# The following block of commands concern representing related readings
+###############################################################################
+
+class ntidiscussionname(Base.Command):
+	pass
+
+class ntidiscussion(Base.Environment):
+	args = '[ options:dict ] '
+
+	# Only classes with counters can be labeled, and \label sets the
+	# id property, which in turn is used as part of the NTIID (when no NTIID is set explicitly)
+	counter = 'ntidiscussion'
+	blockType = True
+
+	targetMimeType = "application/vnd.nextthought.discussion"
+	iconResource = None
+	title = ''
+	subtitle = ''
+	topic_ntiid = ''
+
+	class discussiontitle(Base.Command):
+		args = 'title:str'
+
+		def digest(self, tokens):
+			tok = super(ntidiscussion.discussiontitle,self).digest(tokens)
+			self.parentNode.title = self.attributes['title']
+			return tok
+
+	class discussionsubtitle(Base.Command):
+		args = 'subtitle:str'
+
+		def digest(self, tokens):
+			tok = super(ntidiscussion.discussionsubtitle,self).digest(tokens)
+			self.parentNode.subtitle = self.attributes['subtitle']
+			return tok
+
+	class topicntiid(Base.Command):
+		args = 'ntiid:str'
+
+		def digest(self, tokens):
+			tok = super(ntidiscussion.topicntiid,self).digest(tokens)
+			self.parentNode.topic_ntiid = self.attributes['ntiid']
+			return tok
+
+	def digest(self, tokens):
+		tok = super(ntidiscussion,self).digest(tokens)
+
+		icons = self.getElementsByTagName('includegraphics')
+		if icons:
+			self.iconResource = icons[0]
+		return tok
+
 def ProcessOptions( options, document ):
 	document.context.newcounter( 'ntilocalvideo' )
 	document.context.newcounter( 'ntivideo' )
@@ -740,6 +793,7 @@ def ProcessOptions( options, document ):
 	document.context.newcounter( 'ntiimagecollection' )
 	document.context.newcounter( 'nticard' )
 	document.context.newcounter( 'relatedwork' )
+	document.context.newcounter( 'ntidiscussion' )
 
 @interface.implementer(interfaces.IRelatedWorkExtractor)
 @component.adapter(crd_interfaces.IRenderedBook)
@@ -808,4 +862,54 @@ class _RelatedWorkExtractor(object):
 			toc_el.setAttribute('desc', el.description)
 			dom.childNodes[0].appendChild(toc_el)
 			dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
+
+@interface.implementer(interfaces.IDiscussionExtractor)
+@component.adapter(crd_interfaces.IRenderedBook)
+class _DiscussionExtractor(object):
+
+	def __init__( self, book=None ):
+		# Usable as either a utility factory or an adapter
+		pass
+
+	def transform( self, book ):
+		lesson_els = book.document.getElementsByTagName( 'courselesson' )
+		dom = book.toc.dom
+		if lesson_els:
+			self._process_lessons(dom, lesson_els)
+			book.toc.save()
+
+	def _process_lessons(self, dom, els):
+		for el in els:
+			discussion_els = el.getElementsByTagName('ntidiscussion')
+			if discussion_els:
+				lesson_el = None
+
+				# Determine which topic represents the lesson
+				topic_els = dom.getElementsByTagName('topic')
+				for topic_el in topic_els:
+					if topic_el.getAttribute('ntiid') == el.ntiid:
+						lesson_el = topic_el
+
+				for discussion_el in discussion_els:
+					lesson_el = None
+
+					# Determine which topic represents the lesson
+					topic_els = dom.getElementsByTagName('topic')
+					for topic_el in topic_els:
+						if topic_el.getAttribute('ntiid') == el.ntiid:
+							lesson_el = topic_el
+
+					if discussion_el.iconResource is not None:
+						icon = discussion_el.iconResource.image.url
+					else:
+						icon = ''
+
+					toc_el = dom.createElement('object')
+					toc_el.setAttribute('label', discussion_el.title)
+					toc_el.setAttribute('title', discussion_el.subtitle)
+					toc_el.setAttribute('ntiid', discussion_el.topic_ntiid)
+					toc_el.setAttribute('mimeType', discussion_el.targetMimeType)
+					toc_el.setAttribute('icon', icon)
+					lesson_el.appendChild(toc_el)
+					lesson_el.appendChild(dom.createTextNode(u'\n'))
 
