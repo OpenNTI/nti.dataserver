@@ -168,7 +168,7 @@ setup(
 		'anyjson >= 0.3.3',
 		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
 		# See also blist for a tree-structured list
-		'boto >= 2.9.7',  # amazon
+		'boto >= 2.9.8',  # amazon
 		'brownie >= 0.5.1',  # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
@@ -232,7 +232,7 @@ setup(
 		# jquery-like traversing of python datastructures. lxml, cssselect
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
-		'pyramid >= 1.4.2' ,
+		'pyramid >= 1.4.3' ,
 		'pyramid_mailer >= 0.13',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
