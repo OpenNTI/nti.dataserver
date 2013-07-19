@@ -8,11 +8,15 @@
 
 	<!-- Externalization -->
 
-	<adapter factory=".externalization.DomContentPointerExternal" />
 	<adapter factory=".externalization.TextContextExternal" />
+	<adapter factory=".externalization.DomContentPointerExternal" />
 	<adapter factory=".externalization.ContentRangeDescriptionExternal" />
 
+	<adapter factory=".externalization.TimeContentPointerExternal" />
+	<adapter factory=".externalization.TimeRangeDescriptionExternal" />
+	<adapter factory=".externalization.TranscriptContentPointerExternal" />
+	<adapter factory=".externalization.TranscriptRangeDescriptionExternal" />
+	
 	<include package="nti.externalization" file="meta.zcml" />
-	<ext:registerMimeFactories module=".contentrange" />
-
+	<ext:registerMimeFactories module=".timeline" />
 </configure>
