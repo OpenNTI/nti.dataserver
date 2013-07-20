@@ -77,7 +77,7 @@ TIMECONTENT_ROLE_VOCABULARY = schema.vocabulary.SimpleVocabulary(
 
 class ITimeContentPointer(interface.Interface):
 	role = schema.Choice(title="Intended use of this time content pointer.", vocabulary=TIMECONTENT_ROLE_VOCABULARY)
-	seconds = schema.Int(title="Number of seconds from the start of the timeline that this pointer points")
+	seconds = schema.Int(title="Number of seconds from the start of the timeline that this pointer points", min=0)
 
 ITimeContentPointer['role']._type = unicode
 
