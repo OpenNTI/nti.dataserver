@@ -7,21 +7,15 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from zope import interface
-from zope.schema import interfaces as sch_interfaces
-
-from nti.contentrange import interfaces, timeline
+from nti.contentrange import interfaces, timeline, contentrange
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
-
-from nti.externalization.tests import externalizes
 
 from nti.contentrange.tests import ConfiguringTestBase
 
 from nti.tests import verifiably_provides
 
-from hamcrest import assert_that, has_length, is_, less_than_or_equal_to
-from nose.tools import assert_raises
+from hamcrest import assert_that, is_
 
 class TestTimeLineRange(ConfiguringTestBase):
 
@@ -32,9 +26,22 @@ class TestTimeLineRange(ConfiguringTestBase):
 
 	def test_default_verifies_externalization(self):
 		self.verify(timeline.TimeContentPointer, interfaces.ITimeContentPointer, {'role':"start", 'seconds':1})
+
 		self.verify(timeline.TimeRangeDescription, interfaces.ITimeRangeDescription,
 		 		    {'seriesId':"myseries",
 		 			 'start':timeline.TimeContentPointer(role='start', seconds=1),
 			 		 'end':timeline.TimeContentPointer(role='end', seconds=2)})
+
+		self.verify(timeline.TranscriptContentPointer, interfaces.ITranscriptContentPointer,
+		 		    {'role':"start", 'seconds':1,
+		 			 'pointer':contentrange.DomContentPointer(elementId='foo', role='start', elementTagName='p'),
+			 		 'cueid':'myid'})
+
+		self.verify(timeline.TranscriptRangeDescription, interfaces.ITranscriptRangeDescription,
+		 		    {'seriesId':"myseries",
+					 'start':timeline.TranscriptContentPointer(role="start", seconds=1, cueid='myid',
+															   pointer=contentrange.DomContentPointer(elementId='foo', role='start', elementTagName='p')),
+		 			 'end':timeline.TranscriptContentPointer(role="end", seconds=1, cueid='myid',
+															 pointer=contentrange.DomContentPointer(elementId='foo', role='end', elementTagName='p'))})
 
 
