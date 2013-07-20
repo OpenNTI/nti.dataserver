@@ -63,7 +63,7 @@ class TranscriptContentPointer(TimeContentPointer):
 
 	def __eq__(self, other):
 		try:
-			return super(TimeRangeDescription, self).__eq__(other) and (self.pointer == other.pointer
+			return super(TranscriptContentPointer, self).__eq__(other) and (self.pointer == other.pointer
 									 									and self.cueid == other.cueid)
 		except AttributeError:
 			return NotImplemented
@@ -78,8 +78,8 @@ class TranscriptRangeDescription(TimeRangeDescription):
 
 	def __eq__(self, other):
 		try:
-			return super(TimeRangeDescription, self).__eq__(other) and (self.start == other.start
-									 									and self.end == other.end)
+			return super(TranscriptRangeDescription, self).__eq__(other) and (self.start == other.start
+									 										  and self.end == other.end)
 		except AttributeError:
 			return NotImplemented
 
