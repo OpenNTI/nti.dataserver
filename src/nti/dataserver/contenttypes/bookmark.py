@@ -1,8 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Definitions of bookmark objects.
+
+$Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface
 from zope import component
@@ -10,14 +14,14 @@ from zope import component
 from nti.dataserver import interfaces as nti_interfaces
 
 from .selectedrange import SelectedRange
+from .selectedrange import SelectedRangeInternalObjectIO
 
 @interface.implementer(nti_interfaces.IBookmark)
 class Bookmark(SelectedRange):
 	"""
 	Implementation of a bookmark.
 	"""
-
-from .selectedrange import SelectedRangeInternalObjectIO
+	pass
 
 @component.adapter(nti_interfaces.IBookmark)
 class BookmarkInternalObjectIO(SelectedRangeInternalObjectIO):
