@@ -408,7 +408,7 @@ setup(
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.9.1',
-			'virtualenvwrapper >= 4.0',
+			'virtualenvwrapper >= 4.1.1',
 			'zc.buildout >= 2.2.0',
 			'z3c.dependencychecker >= 1.11',  # unused/used imports; see also tl.eggdeps
 			'zodbbrowser >= 0.11.0',
