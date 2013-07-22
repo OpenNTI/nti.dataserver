@@ -58,6 +58,7 @@ class ZConfigURIResolver(object):
 def _path_zconfig_resolver():
 	from repoze.zodbconn import resolvers
 	resolvers.ZConfigURIResolver = ZConfigURIResolver
+	resolvers.RESOLVERS['zconfig'] = ZConfigURIResolver()
 	
 def patch():
 	logger.info( "Monkey-patching repoze.zodbconn zconfig uri resolver" )
