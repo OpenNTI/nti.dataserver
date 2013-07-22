@@ -523,5 +523,6 @@ class MainLibraryGetView(GenericGetView):
 
 	def __call__(self):
 		# TODO: Should generic get view do this step?
-		app_interfaces.IPreRenderResponseCacheController(self.request.context)( self.request.context, {'request': self.request } )
+		controller = app_interfaces.IPreRenderResponseCacheController(self.request.context)
+		controller( self.request.context, {'request': self.request } )
 		return super(MainLibraryGetView,self).__call__()
