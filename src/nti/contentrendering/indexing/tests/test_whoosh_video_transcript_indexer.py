@@ -45,6 +45,13 @@ class TestWhooshVideoTranscriptIndexer(ConfiguringTestBase):
 		writer.commit(optimize=False, merge=False)
 		return idx, count
 
+	def test_course_test_content(self):
+		indexname = 'coursetestcontent'
+		path = os.path.join(os.path.dirname(__file__), 'course_test_content.html')
+		idx, count = self._index_file(path, indexname, 'videoindexer')
+		assert_that(count, is_(57))
+		idx.close()
+
 	def test_index_prmia(self):
 		indexname = 'prmiavt'
 		path = os.path.join(os.path.dirname(__file__), 'framework_for_diagnosing_systemic_risk.html')

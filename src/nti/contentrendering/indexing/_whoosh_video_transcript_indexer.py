@@ -29,8 +29,11 @@ from ._common_indexer import _BasicWhooshIndexer
 from ..media import interfaces as media_interfaces
 
 _Video = collections.namedtuple('Video', 'parser_name, video_ntiid, video_path, language')
+
 _video_types = (u'application/vnd.nextthought.ntivideo', u'application/vnd.nextthought.slidevideo',
 				u'application/vnd.nextthought.ntislidevideo')
+
+_media_transcript_types = (u'application/vnd.nextthought.mediatranscript',)
 
 @interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
 class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
@@ -77,37 +80,76 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 						return _Video(parser_name, video_ntiid, video_path, language)
 		return None
 
-	def _get_ntivideo_info(self, topic, node):
+	def _capture_param(self, p, params):
+		name = node_utils.get_attribute(p, 'name')
+		value = node_utils.get_attribute(p, 'value')
+		if name and value:
+			params[name] = value
+
+	def _process_transcript(self, node):
+		params = {}
 		type_ = node_utils.get_attribute(node, 'type')
-		if type_ in _video_types:
-			result = {}
-			video_ntiid = node_utils.get_attribute(node, 'data-ntiid')
+		if type_ in _media_transcript_types:
+			data_lang = node_utils.get_attribute(node, 'data-lang') or 'en'
 			for p in node.iterchildren():
 				if p.tag == 'param':
-					name = node_utils.get_attribute(p, 'name')
-					value = node_utils.get_attribute(p, 'value')
-					if name and value:
-						result[name] = value
+					self._capture_param(p, params)
+		
+			if 'src' in params and 'lang' not in params:
+				params['lang'] = data_lang
+		
+		return params if 'src' in params else None
 
-			language = node_utils.get_attribute(node, 'data-lang') or 'en'
-			
-			if not video_ntiid:
-				video_ntiid = result.get('data-ntiid', result.get('ntiid'))  or u''
-			content_path = os.path.dirname(topic.location)
-			parser_names = self._get_video_transcript_parser_names()
+	def _process_ntivideo(self, topic, node):
+		type_ = node_utils.get_attribute(node, 'type')
+		if type_ not in _video_types:
+			return ()
+
+		params = {}
+		transcripts = []
+		video_ntiid = node_utils.get_attribute(node, 'data-ntiid')
+		for p in node.iterchildren():
+			if p.tag == 'param':
+				self._capture_param(p, params)
+			elif p.tag == 'object':
+				t = self._process_transcript(p)
+				if t: transcripts.append(t)
+				
+		# makre sure we have a ntiid for the video
+		if not video_ntiid:
+			video_ntiid = params.get('data-ntiid', params.get('ntiid'))  or u''
+
+		content_path = os.path.dirname(topic.location)
+		parser_names = self._get_video_transcript_parser_names()
+
+		result = ()
+		if not transcripts:
+			# process legacy spec
+			language = node_utils.get_attribute(node, 'data-lang') or \
+					   params.get('data-lang', params.get('lang')) or 'en'
 
 			# collect video-base names
-			bases = {video_ntiid, result.get('subtitle', None)}
-			if result.get('type') == 'youtube':
-				bases.add(result.get('id'))
+			bases = {video_ntiid, params.get('subtitle', None)}
+			if params.get('type') == 'youtube':
+				bases.add(params.get('id'))
 			bases.discard(None)
 
 			vid_tupl = self._find_video_transcript(content_path, bases, parser_names)
 			if vid_tupl:
 				parser_name, video_path = vid_tupl
-				return _Video(parser_name, video_ntiid, video_path, language)
+				result = (_Video(parser_name, video_ntiid, video_path, language),)
+		else:
+			result = []
+			for t in transcripts:
+				location = t['src']
+				ext = os.path.splitext(location)[1][1:] or ''
+				video_path = os.path.join(content_path, location)
+				if os.path.exists(video_path) and ext.lower() in parser_names:
+					language = t['lang']
+					vid = _Video(ext.lower(), video_ntiid, video_path, language)
+					result.append(vid)
 
-		return None
+		return result
 
 	def index_transcript_entry(self, writer, containerId, video_id, entry, language=u'en'):
 		content = entry.transcript
@@ -146,9 +188,9 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 				videos.add(info)
 
 		for n in topic.dom(b'object'):
-			info = self._get_ntivideo_info(topic, n)
-			if info:
-				videos.add(info)
+			nti_vids = self._process_ntivideo(topic, n)
+			if nti_vids:
+				videos.update(nti_vids)
 
 		return (videos, containerId)
 

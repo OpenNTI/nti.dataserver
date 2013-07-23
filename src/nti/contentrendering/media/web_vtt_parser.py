@@ -144,7 +144,7 @@ class _WebVTTCueTimingsAndSettingsParser():
 
 		# hh:mm::ss.uuu
 		tstamp = '%02d:%02d:%02d.%03d' % (val1, val2, val3, val4)
-		result = val1 * 60 * 60 + val2 * 60 + val3 + val4 / 1000
+		result = val1 * 60 * 60 + val2 * 60 + val3 + val4 / 1000.0
 		return (result, tstamp)
 
 	def parse_settings(self, data, cue):
@@ -550,7 +550,7 @@ class WebVTTParser(object):
 			if lines[linepos].find("-->") == -1:
 				cue.id = lines[linepos]
 				linepos += 1
-				if linepos >= len(lines[linepos]) or lines[linepos] == "":
+				if not lines[linepos] or not lines[linepos].strip():
 					err("Cue identifier cannot be standalone.")
 					continue
 
