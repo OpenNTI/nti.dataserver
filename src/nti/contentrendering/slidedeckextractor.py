@@ -106,7 +106,7 @@ def transform(book, outpath=None):
 		dom.childNodes[0].appendChild(node)
 		node = dom.createElement('reference')
 		node.setAttribute('type', deck.get('MimeType') )
-		node.setAttribute('ntiid', ntiid )
+		node.setAttribute('ntiid', deck.get('ntiid') )
 		node.setAttribute('href', '%s.json' % ntiid )
 		dom.childNodes[0].appendChild(node)
 		node = dom.createTextNode(u'\n')
