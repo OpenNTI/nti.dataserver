@@ -12,7 +12,7 @@ __docformat__ = "restructuredtext en"
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-from hamcrest import (assert_that, is_, has_entry, is_not, has_entry,
+from hamcrest import (assert_that, is_, has_entry,
 					  has_key,  is_not, has_item, has_property,
 					  same_instance, none, has_entries, only_contains)
 from hamcrest import has_length
@@ -44,14 +44,14 @@ from nti.contentfragments import interfaces as frg_interfaces
 import nti.contentfragments.censor
 from nti.dataserver import containers
 
+from nti.contentrange import timeline
 from nti.contentrange.contentrange import ContentRangeDescription, DomContentRangeDescription, ElementDomContentPointer
 
 from zope.component import eventtesting
 
 from zope.lifecycleevent import IObjectModifiedEvent
 
-
-import nti.externalization.internalization
+from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
 
 
@@ -615,6 +615,30 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		update_from_external_object( child, {'inReplyTo': n, 'body': ('body',) } )
 
 		assert_that( child.applicableRange, is_( n.applicableRange ) )
+
+	@WithMockDSTrans
+	def test_inherit_timeline_properties( self ):
+		n = Note()
+		range_ = timeline.TranscriptRangeDescription(seriesId=u"myseries",
+													 start=timeline.TranscriptContentPointer(role="start", seconds=1, cueid='myid',
+																							 pointer=ElementDomContentPointer(elementTagName='p', elementId='id', role="start")),
+													 end=timeline.TranscriptContentPointer(role="end", seconds=1, cueid='myid',
+																						   pointer=ElementDomContentPointer(elementTagName='p', elementId='id', role="end")))
+		n.applicableRange = range_
+
+		self.ds.root_connection.add( n )
+		component.getUtility( zc_intid.IIntIds ).register( n )
+
+		child = Note()
+		child.inReplyTo = n
+		update_from_external_object( child, {'inReplyTo': n, 'body': ( 'body', ) } )
+
+		assert_that( child.applicableRange, is_( n.applicableRange ) )
+		
+		child = Note()
+		external = toExternalObject(n)
+		update_from_external_object(child, external, require_updater=True)
+		assert_that(child.applicableRange, is_(n.applicableRange))
 
 	@WithMockDS
 	def test_inherit_anchor_properties_if_note_already_has_jar(self):
