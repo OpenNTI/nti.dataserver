@@ -415,8 +415,6 @@ class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent)
 																   targets,
 																   args )
 
-
-
 class IUserRoomEvent(IObjectEvent):
 	object = TextLine(title="The user/username")
 	room_id = TextLine(title="The room id.")
@@ -425,11 +423,14 @@ class IUserEnterRoomEvent(IUserRoomEvent):
 	"""
 	Fired when a user enters a room
 	"""
+	pass
 
 class IUserExitRoomEvent(IUserRoomEvent):
 	"""
 	Fired when a user exits a room
 	"""
+	pass
+
 class UserRoomEvent(ObjectEvent):
 
 	def __init__(self, user, room_id):
