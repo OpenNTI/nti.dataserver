@@ -417,7 +417,7 @@ class IUserExitRoomEvent(IObjectEvent):
 	"""
 	Fired when a user exit a room
 	"""
-	object = Object(nti_interfaces.IUser, title="The user  exiting a room.")
+	object = TextLine(title="The user exiting a room.")
 	room_id = TextLine(title="The room id.")
 
 @interface.implementer(IUserExitRoomEvent)
@@ -428,5 +428,5 @@ class UserExitRoomEvent(ObjectEvent):
 		self.room_id = room_id
 
 	@property
-	def user(self):
+	def username(self):
 		return self.object

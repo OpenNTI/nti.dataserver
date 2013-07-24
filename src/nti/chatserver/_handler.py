@@ -1,53 +1,52 @@
 #!/usr/bin/env python
-""" Chatserver functionality. """
-from __future__ import print_function, unicode_literals, absolute_import
+"""
+Chatserver functionality.
 
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 import os
-import warnings
 import time
+import warnings
 
-from nti.externalization.interfaces import StandardExternalFields as XFields
-from nti.chatserver import interfaces as chat_interfaces
-from nti.socketio import interfaces as sio_interfaces
-from nti.dataserver import interfaces as nti_interfaces
-from nti.zodb import interfaces as zodb_interfaces
-
-# FIXME: Break this dependency
-
-from nti.dataserver import users
-from nti.dataserver import authorization_acl as auth_acl
-
+from zope import schema
+from zope import interface
+from zope import component
+from zope.event import notify
+from zope.cachedescriptors.property import Lazy
+from zope.interface.common import mapping as imapping
 
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
-from zope import interface
-from zope.interface.common import mapping as imapping
-from zope import component
-from zope import schema
-from zope.cachedescriptors.property import Lazy
+# FIXME: Break this dependency
 
+from nti.dataserver import users
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import authorization_acl as auth_acl
+
+from nti.externalization.interfaces import StandardExternalFields as XFields
 
 from nti.utils.sets import discard as _discard
+
+from nti.socketio import interfaces as sio_interfaces
+
+from nti.zodb import interfaces as zodb_interfaces
 from nti.zodb.tokenbucket import PersistentTokenBucket
 
-
-from ._metaclass import _ChatObjectMeta
 from . import interfaces
 from . import MessageFactory as _
-
+from ._metaclass import _ChatObjectMeta
+from nti.chatserver import interfaces as chat_interfaces
 
 EVT_ENTERED_ROOM = 'chat_enteredRoom'
 EVT_EXITED_ROOM = 'chat_exitedRoom'
 EVT_POST_MESSOGE = 'chat_postMessage'
 EVT_RECV_MESSAGE = 'chat_recvMessage'
-
-
 
 class MessageRateExceeded(sio_interfaces.SocketEventHandlerClientError):
 	"""
@@ -207,6 +206,8 @@ class _ChatHandler(object):
 
 	def exitRoom( self, room_id ):
 		result = self._chatserver.exit_meeting( room_id, self.session.owner )
+		if result:
+			notify(chat_interfaces.UserExitRoomEvent(self.session.owner, room_id))
 		return result
 
 	def addOccupantToRoom( self, room_id, occupant_name ):
