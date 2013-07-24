@@ -412,3 +412,21 @@ class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent)
 		super(PresenceChangedUserNotificationEvent,self).__init__( self.__name__,
 																   targets,
 																   args )
+
+class IUserExitRoomEvent(IObjectEvent):
+	"""
+	Fired when a user exit a room
+	"""
+	object = Object(nti_interfaces.IUser, title="The user  exiting a room.")
+	room_id = TextLine(title="The room id.")
+
+@interface.implementer(IUserExitRoomEvent)
+class UserExitRoomEvent(ObjectEvent):
+
+	def __init__(self, user, room_id):
+		super(UserExitRoomEvent, self).__init__(user)
+		self.room_id = room_id
+
+	@property
+	def user(self):
+		return self.object
