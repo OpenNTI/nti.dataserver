@@ -5,29 +5,31 @@ Interfaces having to do with chat.
 
 $Id$
 """
-
 from __future__ import unicode_literals, absolute_import, print_function
 
-#pylint: disable=E0213,E0211
+# pylint: disable=E0213,E0211
 
+import six
+
+from zope import schema
 from zope import interface
 from zope import component
-from zope.interface import interfaces as z_interfaces
 from zope.interface import Interface
-from zope import schema
 from zope.security.permission import Permission
+from zope.interface import interfaces as z_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.socketio import interfaces as sio_interfaces
 
-from nti.utils.schema import UniqueIterable
-from nti.utils.schema import Variant
-from nti.utils.schema import DecodingValidTextLine
-TextLine = DecodingValidTextLine
-from nti.utils.schema import ValidChoice as Choice
 from nti.utils.schema import Object
+from nti.utils.schema import Variant
+from nti.utils.schema import UniqueIterable
+from nti.utils.schema import DecodingValidTextLine
+from nti.utils.schema import ValidChoice as Choice
 
 from nti.contentfragments.schema import PlainTextLine
+
+TextLine = DecodingValidTextLine # alias
 
 class IChatserver(Interface):
 	pass
@@ -413,20 +415,36 @@ class PresenceChangedUserNotificationEvent(nti_interfaces.UserNotificationEvent)
 																   targets,
 																   args )
 
-class IUserExitRoomEvent(IObjectEvent):
-	"""
-	Fired when a user exit a room
-	"""
-	object = TextLine(title="The user exiting a room.")
+
+
+class IUserRoomEvent(IObjectEvent):
+	object = TextLine(title="The user/username")
 	room_id = TextLine(title="The room id.")
 
-@interface.implementer(IUserExitRoomEvent)
-class UserExitRoomEvent(ObjectEvent):
+class IUserEnterRoomEvent(IUserRoomEvent):
+	"""
+	Fired when a user enters a room
+	"""
+
+class IUserExitRoomEvent(IUserRoomEvent):
+	"""
+	Fired when a user exits a room
+	"""
+class UserRoomEvent(ObjectEvent):
 
 	def __init__(self, user, room_id):
-		super(UserExitRoomEvent, self).__init__(user)
+		super(UserRoomEvent, self).__init__(user)
 		self.room_id = room_id
 
 	@property
 	def username(self):
-		return self.object
+		return self.object if isinstance(self.object, six.string_types) else self.object.username
+
+
+@interface.implementer(IUserEnterRoomEvent)
+class UserEnterRoomEvent(UserRoomEvent):
+	pass
+
+@interface.implementer(IUserExitRoomEvent)
+class UserExitRoomEvent(UserRoomEvent):
+	pass

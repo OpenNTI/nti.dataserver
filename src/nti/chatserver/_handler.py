@@ -202,6 +202,8 @@ class _ChatHandler(object):
 
 		if not room:
 			self.emit_failedToEnterRoom( self.session.owner, room_info )
+		else:
+			notify(chat_interfaces.UserEnterRoomEvent(self.session.owner, room.id))
 		return room
 
 	def exitRoom( self, room_id ):
