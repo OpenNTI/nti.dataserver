@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+Pyramid WSGI application
 
 $Id$
 """
-import logging
-logger = logging.getLogger( __name__ )
 
+import logging
+logger = logging.getLogger(__name__)
 
 import nti.dataserver as dataserver
-
 
 import sys
 if 'nti.monkey.gevent_patch_on_import' in sys.modules: # DON'T import this; it should already be imported if needed
@@ -18,9 +18,8 @@ if 'nti.monkey.gevent_patch_on_import' in sys.modules: # DON'T import this; it s
 import os
 import random
 
-#import nti.dictserver as dictserver
+# import nti.dictserver as dictserver
 import nti.dictserver.storage
-
 
 import nti.dataserver._Dataserver
 
@@ -36,12 +35,11 @@ from nti.dataserver.interfaces import IDataserver
 
 from zope import interface
 from zope import component
-from zope.component.hooks import setHooks
-from zope.configuration import xmlconfig
 from zope.event import notify
-from zope.processlifetime import ProcessStarting, DatabaseOpenedWithRoot, IDatabaseOpenedWithRoot
 from zope import lifecycleevent
-
+from zope.configuration import xmlconfig
+from zope.component.hooks import setHooks
+from zope.processlifetime import ProcessStarting, DatabaseOpenedWithRoot, IDatabaseOpenedWithRoot
 
 from nti.monkey import webob_cookie_escaping_patch_on_import
 webob_cookie_escaping_patch_on_import.patch()
@@ -49,23 +47,21 @@ webob_cookie_escaping_patch_on_import.patch()
 from nti.monkey import weberror_filereporter_patch_on_import
 weberror_filereporter_patch_on_import.patch()
 
-
 import pyramid.config
-import pyramid.authorization
 import pyramid.security
-#import pyramid.httpexceptions as hexc
 import pyramid.registry
+import pyramid.authorization
 from pyramid.threadlocal import get_current_registry
 
 from paste.deploy.converters import asbool
 
 import nti.appserver.workspaces
 from nti.appserver import pyramid_auth
+from nti.appserver import _question_map
+from nti.appserver import pyramid_authorization
+from nti.appserver import dataserver_socketio_views
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.traversal import ZopeResourceTreeTraverser
-from nti.appserver import pyramid_authorization
-from nti.appserver import _question_map
-from nti.appserver import dataserver_socketio_views
 
 from nti.utils import setupChameleonCache
 
@@ -76,7 +72,6 @@ from nti.utils import setupChameleonCache
 from pyramid.interfaces import ILocation
 from zope.location.interfaces import ILocation as IZLocation
 IZLocation.__bases__ = (ILocation,)
-
 
 SOCKET_IO_PATH = 'socket.io'
 
@@ -100,6 +95,300 @@ def _create_xml_conf_machine( settings ):
 
 	return xml_conf_machine
 
+def _logon_account_views(pyramid_config):
+
+	from nti.appserver.logon import ROUTE_OPENID_RESPONSE
+
+	pyramid_config.add_route(name='logon.ping', pattern='/dataserver2/logon.ping')
+	pyramid_config.add_route(name='logon.handshake', pattern='/dataserver2/logon.handshake')
+	pyramid_config.add_route(name='logon.nti.password', pattern='/dataserver2/logon.nti.password')
+	pyramid_config.add_route(name='logon.nti.impersonate', pattern='/dataserver2/logon.nti.impersonate',
+							 factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory')
+	pyramid_config.add_route(name='logon.google', pattern='/dataserver2/logon.google')
+
+	pyramid_config.add_route(name=ROUTE_OPENID_RESPONSE, pattern='/dataserver2/' + ROUTE_OPENID_RESPONSE)
+	pyramid_config.add_route(name='logon.openid', pattern='/dataserver2/logon.openid')
+	pyramid_config.add_route(name='logon.logout', pattern='/dataserver2/logon.logout')
+	pyramid_config.add_route(name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook1')
+	pyramid_config.add_route(name='logon.facebook.oauth2', pattern='/dataserver2/logon.facebook2')
+	pyramid_config.add_route(name='oauth.salesforce', pattern='/dataserver2/oauth.salesforce')
+	pyramid_config.scan('nti.appserver.logon')
+	pyramid_config.scan('nti.salesforce.auth')
+
+	# Deprecated logout alias
+	pyramid_config.add_route(name='logout', pattern='/dataserver2/logout')
+	pyramid_config.add_view(route_name='logout', view='nti.appserver.logon.logout')
+
+	# 	# Not actually used anywhere; the logon.* routes are
+	# 	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
+	# 	# Note that the openid value MUST be POST'd to this view; an unmodified view goes into
+	# 	# an infinite loop if the openid value is part of a GET param
+	# 	# This value works for any google apps account: https://www.google.com/accounts/o8/id
+	# 	pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
+	# 	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
+
+	# Site-specific CSS packages
+	pyramid_config.add_route(name="logon.logon_css", pattern="/login/resources/css/site.css")
+	pyramid_config.scan('nti.appserver.site_policy_views')
+
+	pyramid_config.add_route(name="logon.forgot.username", pattern="/dataserver2/logon.forgot.username")
+	pyramid_config.add_route(name="logon.forgot.passcode", pattern="/dataserver2/logon.forgot.passcode")
+	pyramid_config.add_route(name="logon.reset.passcode", pattern="/dataserver2/logon.reset.passcode")
+
+	pyramid_config.scan('nti.appserver.account_recovery_views')
+
+def _socketio_views(pyramid_config):
+	pyramid_config.add_route(name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE)
+	pyramid_config.add_route(name=dataserver_socketio_views.RT_CONNECT, pattern=dataserver_socketio_views.URL_CONNECT)
+	pyramid_config.scan(dataserver_socketio_views)
+	pyramid_config.add_static_view(SOCKET_IO_PATH + '/static/', 'nti.socketio:static/')
+
+def _dictionary_views(pyramid_config, settings):
+	if 'main_dictionary_path' not in settings:
+		return
+
+	try:
+		storage = nti.dictserver.storage.UncleanSQLiteJsonDictionaryTermStorage(settings['main_dictionary_path'])
+		dictionary = nti.dictserver.storage.JsonDictionaryTermDataStorage(storage)
+		pyramid_config.registry.registerUtility(dictionary)
+		logger.debug("Adding dictionary")
+	except Exception:
+		logger.exception("Failed to add dictionary server")
+
+def _search_views(pyramid_config):
+	# All the search views should accept an empty term (i.e., nothing after the trailing slash)
+	# by NOT generating a 404 response but producing a 200 response with the same body
+	# as if the term did not match anything. (This is what google does; the two alternatives
+	# are to generate a 404--unfriendly and weird--or to treat it as a wildcard matching
+	# everything--makes sense, but not scalable.)
+
+	pyramid_config.add_route(name='search.user', pattern='/dataserver2/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}',
+							 traverse="/dataserver2/users/{user}")
+	pyramid_config.add_view(route_name='search.user',
+							view='nti.contentsearch.pyramid_views.UserSearch',
+							renderer='rest',
+							permission=nauth.ACT_SEARCH)
+
+	# Unified search for content and user data. It should follow the same
+	# security policies for user data search
+	pyramid_config.add_route(name='search2.unified', pattern='/dataserver2/users/{user}/Search/UnifiedSearch/{ntiid}/{term:.*}',
+							  traverse="/dataserver2/users/{user}")
+	pyramid_config.add_view(route_name='search2.unified',
+							view='nti.contentsearch.pyramid_views.Search',
+							renderer='rest',
+							permission=nauth.ACT_SEARCH)
+
+def _service_odata_views(pyramid_config):
+	# service
+	pyramid_config.add_route(name='user.root.service', pattern='/dataserver2{_:/?}',
+							 factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory')
+	pyramid_config.add_view(route_name='user.root.service', view='nti.appserver.dataserver_pyramid_views._ServiceGetView',
+							name='', renderer='rest',
+							permission=nauth.ACT_READ, request_method='GET')
+
+	# UGD in OData style
+	# Note: Objects should be parenthesized like this too.
+	pyramid_config.add_route(name='user.pages.odata.traversal', pattern='/dataserver2/users/{user}/Pages({group:[^)/].*})/{type}{_:/?}',
+							 factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory',
+							 traverse='/users/{user}/Pages/{group}/{type}')
+
+	pyramid_config.add_view(route_name='user.pages.odata.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							name='', renderer='rest',
+							permission=nauth.ACT_READ, request_method='GET')
+
+	pyramid_config.add_route(name='user.pages.odata.traversal.feeds',
+							 pattern='/dataserver2/users/{user}/Pages({group:[^)/].*})/RecursiveStream/feed.{type}',
+							 factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory',
+							 traverse='/users/{user}/Pages/{group}/feed.{type}')
+
+def _renderer_settings(pyramid_config):
+	pyramid_config.add_renderer(name='rest', factory='nti.appserver.pyramid_renderers.REST')
+
+	# Override the stock Chameleon template renderer to use z3c.pt for better compatibility with the existing Zope stuff
+	pyramid_config.add_renderer(name='.pt', factory='nti.appserver.z3c_zpt.renderer_factory')
+
+def _library_settings(pyramid_config, server, library):
+	if server:
+		pyramid_config.registry.registerUtility(server, nti_interfaces.IDataserver)
+		if server.chatserver:
+			pyramid_config.registry.registerUtility(server.chatserver)
+
+	if library is not None:
+		component.getSiteManager().registerUtility(library, provided=lib_interfaces.IContentPackageLibrary)
+	else:
+		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
+
+	if library is not None:
+		# FIXME: This needs to move to the IRegistrationEvent listener, but
+		# we need access to the pyramid config...
+		# FIXME: This falls over in the presence of multiple libraries and/or
+		# libraries configured only for specific sites. However, in those cases
+		# we are probably in production and so not serving our own files anyway
+		static_mapper = component.queryAdapter(library, app_interfaces.ILibraryStaticFileConfigurator)
+		if static_mapper:
+			static_mapper.add_static_views(pyramid_config)
+
+	return library
+
+def _ugd_odata_views(pyramid_config):
+
+	_m = {'UserGeneratedData': '_UGDView',
+		  'RecursiveUserGeneratedData': '_RecursiveUGDView',
+		  'Stream': '_UGDStreamView',
+		  'RecursiveStream': '_RecursiveUGDStreamView',
+		  'UserGeneratedDataAndRecursiveStream': '_UGDAndRecursiveStreamView' }
+
+	_route_names = ('objects.generic.traversal', 'user.pages.odata.traversal')
+
+	for name, view in _m.items():
+		for route in _route_names:
+			pyramid_config.add_view(route_name=route, view='nti.appserver.ugd_query_views.' + view,
+									context='nti.appserver.interfaces.IPageContainerResource',
+									name=name, renderer='rest',
+									permission=nauth.ACT_READ, request_method='GET')
+
+def _modifying_ugd_views(pyramid_config):
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
+							renderer='rest',
+							permission=nauth.ACT_DELETE, request_method='DELETE')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal',
+							view='nti.appserver.dataserver_pyramid_views._method_not_allowed',
+							renderer='rest',
+							context='nti.chatserver.interfaces.IMessageInfo',
+							permission=nauth.ACT_DELETE, request_method='DELETE')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EmptyContainerGetView',
+							renderer='rest', context='nti.appserver.interfaces.INewContainerResource',
+							permission=nauth.ACT_READ, request_method='GET')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
+							renderer='rest', context=nti_interfaces.IUser,
+							permission=nauth.ACT_CREATE, request_method='POST')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
+							renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
+							permission=nauth.ACT_CREATE, request_method='POST')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._provider_redirect_classes',
+							renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
+							permission=nauth.ACT_READ, request_method='GET')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
+							renderer='rest', context='nti.appserver.interfaces.IContainerResource',
+							permission=nauth.ACT_CREATE, request_method='POST')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							renderer='rest', context='nti.appserver.interfaces.IContainerResource',
+							permission=nauth.ACT_READ, request_method='GET')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._method_not_allowed',
+							renderer='rest', context='nti.appserver.interfaces.IObjectsContainerResource',
+							permission=nauth.ACT_READ, request_method='GET')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
+							renderer='rest', context='nti.appserver.interfaces.IObjectsContainerResource',
+							permission=nauth.ACT_CREATE, request_method='POST')
+
+	# Modifying UGD beneath the Pages structure
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
+							renderer='rest', context='nti.appserver.interfaces.IPagesResource',
+							permission=nauth.ACT_CREATE, request_method='POST')
+
+	# XXX: FIXME: This is quite ugly. The GenericGetView relies on getting the (undocumented)
+	# 'resource' from the PagesResource and turning it into a ICollection, which is what
+	# we want to return (from the users workspace) for this URL. This relies on the default ICollection
+	# adapter for the user.
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							renderer='rest', context='nti.appserver.interfaces.IPagesResource',
+							permission=nauth.ACT_READ, request_method='GET')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
+							renderer='rest', context='zope.container.interfaces.IContained',
+							permission=nauth.ACT_DELETE, request_method='DELETE')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
+							renderer='rest', context='zope.container.interfaces.IContained',
+							permission=nauth.ACT_UPDATE, request_method='PUT')
+
+	# And the user itself can be put to
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
+							renderer='rest', context=nti_interfaces.IUser,
+							permission=nauth.ACT_UPDATE, request_method='PUT')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDFieldPutView',
+							renderer='rest', context='nti.appserver.interfaces.IExternalFieldResource',
+							permission=nauth.ACT_UPDATE, request_method='PUT')
+
+
+def _enclosure_views(pyramid_config):
+
+	# attached resources
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePostView',
+							renderer='rest', context='zope.container.interfaces.IContained',
+							permission=nauth.ACT_CREATE, request_method='POST')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePostView',
+							renderer='rest', context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
+							permission=nauth.ACT_CREATE, request_method='POST')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePutView',
+							renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
+							permission=nauth.ACT_UPDATE, request_method='PUT')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosureDeleteView',
+							renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
+							permission=nauth.ACT_UPDATE, request_method='DELETE')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
+							permission=nauth.ACT_READ, request_method='GET')
+
+	# Restore GET for the things we can POST enclosures to
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							renderer='rest', context='zope.container.interfaces.IContained',
+							permission=nauth.ACT_READ, request_method='GET')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							renderer='rest', context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
+							permission=nauth.ACT_READ, request_method='GET')
+	
+def _classinfo_views(pyramid_config):
+	# ClassInfo conflicts with enclosures for PUT/POST somehow
+	# TODO: This will all go away when we get to ++enclosures
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
+							renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
+							permission=nauth.ACT_UPDATE, request_method='PUT')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePostView',
+							renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
+							permission=nauth.ACT_CREATE, request_method='POST')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
+							permission=nauth.ACT_READ, request_method='GET')
+
+def _patching_restore_views(pyramid_config):
+	# Restore DELETE for IFriendsList.
+	# It is-a ISimpleEnclosureContainer, and that trumps before the request_method, sadly
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
+							renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
+							permission=nauth.ACT_DELETE, request_method='DELETE')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
+							renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
+							permission=nauth.ACT_UPDATE, request_method='PUT')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePostView',
+							renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
+							permission=nauth.ACT_CREATE, request_method='POST')
+
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+							renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
+							permission=nauth.ACT_READ, request_method='GET')
+
 def createApplication( http_port,
 					   library=None,
 					   process_args=False,
@@ -110,7 +399,7 @@ def createApplication( http_port,
 	"""
 	:return: A WSGI callable.
 	"""
-	server = None
+
 	# Configure subscribers, etc.
 	__traceback_info__ = settings
 
@@ -279,285 +568,37 @@ def createApplication( http_port,
 	pyramid_config.set_authorization_policy( pyramid_authorization.ACLAuthorizationPolicy() )
 	pyramid_config.set_authentication_policy( auth_policy )
 	pyramid_config.add_forbidden_view( forbidden_view )
-	###
-	## Logon
-	pyramid_config.add_route( name='logon.ping', pattern='/dataserver2/logon.ping' )
-	pyramid_config.add_route( name='logon.handshake', pattern='/dataserver2/logon.handshake' )
-	pyramid_config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.nti.password' )
-	pyramid_config.add_route( name='logon.nti.impersonate', pattern='/dataserver2/logon.nti.impersonate',
-							  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory' )
-	pyramid_config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
-	from nti.appserver.logon import ROUTE_OPENID_RESPONSE
-	pyramid_config.add_route( name=ROUTE_OPENID_RESPONSE, pattern='/dataserver2/' + ROUTE_OPENID_RESPONSE )
-	pyramid_config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
-	pyramid_config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
-	pyramid_config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook1' )
-	pyramid_config.add_route( name='logon.facebook.oauth2', pattern='/dataserver2/logon.facebook2' )
-	pyramid_config.add_route( name='oauth.salesforce', pattern='/dataserver2/oauth.salesforce' )
-	pyramid_config.scan( 'nti.appserver.logon' )
-	pyramid_config.scan( 'nti.salesforce.auth' )	
-	# Deprecated logout alias
-	pyramid_config.add_route( name='logout', pattern='/dataserver2/logout' )
-	pyramid_config.add_view( route_name='logout', view='nti.appserver.logon.logout' )
 
-#	# Not actually used anywhere; the logon.* routes are
-#	pyramid_config.add_route( name='verify_openid', pattern='/dataserver2/openid.html' )
-#	# Note that the openid value MUST be POST'd to this view; an unmodified view goes into
-#	# an infinite loop if the openid value is part of a GET param
-#	# This value works for any google apps account: https://www.google.com/accounts/o8/id
-#	pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
-#	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
+	_logon_account_views(pyramid_config)
+	_socketio_views(pyramid_config)
+	_dictionary_views(pyramid_config, settings)
 
-	###
-	# Site-specific CSS packages
-	##
-	pyramid_config.add_route( name="logon.logon_css", pattern="/login/resources/css/site.css" )
-	pyramid_config.scan( 'nti.appserver.site_policy_views' )
+	_renderer_settings(pyramid_config)
+	_library_settings(pyramid_config, server, library)
 
-	pyramid_config.add_route( name="logon.forgot.username", pattern="/dataserver2/logon.forgot.username" )
-	pyramid_config.add_route( name="logon.forgot.passcode", pattern="/dataserver2/logon.forgot.passcode" )
-	pyramid_config.add_route( name="logon.reset.passcode", pattern="/dataserver2/logon.reset.passcode" )
-	pyramid_config.scan( 'nti.appserver.account_recovery_views' )
-
-	pyramid_config.add_route( name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE )
-	pyramid_config.add_route( name=dataserver_socketio_views.RT_CONNECT, pattern=dataserver_socketio_views.URL_CONNECT )
-	pyramid_config.scan( dataserver_socketio_views )
-	pyramid_config.add_static_view( SOCKET_IO_PATH + '/static/', 'nti.socketio:static/' )
-
-
-	if 'main_dictionary_path' in settings:
-		try:
-			storage = nti.dictserver.storage.UncleanSQLiteJsonDictionaryTermStorage( settings['main_dictionary_path'] )
-			dictionary = nti.dictserver.storage.JsonDictionaryTermDataStorage( storage )
-			pyramid_config.registry.registerUtility( dictionary )
-			logger.debug( "Adding dictionary" )
-		except Exception:
-			logger.exception( "Failed to add dictionary server" )
-
-	pyramid_config.add_renderer( name='rest', factory='nti.appserver.pyramid_renderers.REST' )
-
-	# Override the stock Chameleon template renderer to use z3c.pt for better compatibility with
-	# the existing Zope stuff
-	pyramid_config.add_renderer( name='.pt', factory='nti.appserver.z3c_zpt.renderer_factory' )
-
-
-	if server:
-		pyramid_config.registry.registerUtility( server, nti_interfaces.IDataserver )
-		if server.chatserver:
-			pyramid_config.registry.registerUtility( server.chatserver )
-	if library is not None:
-		component.getSiteManager().registerUtility( library, provided=lib_interfaces.IContentPackageLibrary )
-	else:
-		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
-
-	if library is not None:
-		# FIXME: This needs to move to the IRegistrationEvent listener, but
-		# we need access to the pyramid config...
-		# FIXME: This falls over in the presence of multiple libraries and/or
-		# libraries configured only for specific sites. However, in those cases
-		# we are probably in production and so not serving our own files anyway
-		static_mapper = component.queryAdapter( library, app_interfaces.ILibraryStaticFileConfigurator )
-		if static_mapper:
-			static_mapper.add_static_views( pyramid_config )
-
-	## Search
-	# All the search views should accept an empty term (i.e., nothing after the trailing slash)
-	# by NOT generating a 404 response but producing a 200 response with the same body
-	# as if the term did not match anything. (This is what google does; the two alternatives
-	# are to generate a 404--unfriendly and weird--or to treat it as a wildcard matching
-	# everything--makes sense, but not scalable.)
-
-
-	pyramid_config.add_route( name='search.user', pattern='/dataserver2/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}',
-							  traverse="/dataserver2/users/{user}")
-	pyramid_config.add_view( route_name='search.user',
-							 view='nti.contentsearch.pyramid_views.UserSearch',
-							 renderer='rest',
-							 permission=nauth.ACT_SEARCH)
-
-	# Unified search for content and user data. It should follow the same
-	# security policies for user data search
-	pyramid_config.add_route( name='search2.unified', pattern='/dataserver2/users/{user}/Search/UnifiedSearch/{ntiid}/{term:.*}',
-							  traverse="/dataserver2/users/{user}")
-	pyramid_config.add_view( route_name='search2.unified',
-							 view='nti.contentsearch.pyramid_views.Search',
-							 renderer='rest',
-							 permission=nauth.ACT_SEARCH)
-
-
-	logger.debug( 'Finished creating search' )
-
-
-
-	# Service
-	pyramid_config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}',
-							  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory' )
-	pyramid_config.add_view( route_name='user.root.service', view='nti.appserver.dataserver_pyramid_views._ServiceGetView',
-							 name='', renderer='rest',
-							 permission=nauth.ACT_READ, request_method='GET'  )
-
-	# UGD in OData style
-	# Note: Objects should be parenthesized like this too.
-	pyramid_config.add_route( name='user.pages.odata.traversal', pattern='/dataserver2/users/{user}/Pages({group:[^)/].*})/{type}{_:/?}',
-							  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory',
-							  traverse='/users/{user}/Pages/{group}/{type}' )
-	pyramid_config.add_view( route_name='user.pages.odata.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 name='', renderer='rest',
-							 permission=nauth.ACT_READ, request_method='GET' )
-
-	pyramid_config.add_route( name='user.pages.odata.traversal.feeds',
-							  pattern='/dataserver2/users/{user}/Pages({group:[^)/].*})/RecursiveStream/feed.{type}',
-							  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory',
-							  traverse='/users/{user}/Pages/{group}/feed.{type}'
-							  )
-
+	_search_views(pyramid_config)
+	_service_odata_views(pyramid_config)
 
 	# Declarative configuration.
 	# NOTE: More things are moving into this.
 	pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' ) # must use full spec, we may not have created the pyramid_config object so its working package may be unknown
 
-	for name, view in { 'UserGeneratedData': '_UGDView',
-						'RecursiveUserGeneratedData': '_RecursiveUGDView',
-						'Stream': '_UGDStreamView',
-						'RecursiveStream': '_RecursiveUGDStreamView',
-						'UserGeneratedDataAndRecursiveStream': '_UGDAndRecursiveStreamView' }.items():
-		for route in ('objects.generic.traversal', 'user.pages.odata.traversal'):
-			pyramid_config.add_view(
-				route_name=route, view='nti.appserver.ugd_query_views.' + view,
-				context='nti.appserver.interfaces.IPageContainerResource',
-				name=name, renderer='rest',
-				permission=nauth.ACT_READ, request_method='GET' )
+	_ugd_odata_views(pyramid_config)
 
-
+	# scan packages
 	pyramid_config.scan( 'nti.appserver.ugd_query_views' )
 	pyramid_config.scan( 'nti.appserver.ugd_feed_views' )
 	pyramid_config.scan( 'nti.appserver.glossary_views' )
 	pyramid_config.scan( 'nti.appserver.forums.views' )
 	pyramid_config.scan( 'nti.appserver.user_activity_views' )
 	pyramid_config.scan( 'nti.appserver.store_views' )	
-	
-	# Modifying UGD
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
-							 renderer='rest',
-							 permission=nauth.ACT_DELETE, request_method='DELETE' )
-	pyramid_config.add_view( route_name='objects.generic.traversal',
-							 view='nti.appserver.dataserver_pyramid_views._method_not_allowed',
-							 renderer='rest',
-							 context='nti.chatserver.interfaces.IMessageInfo',
-							 permission=nauth.ACT_DELETE, request_method='DELETE' )
 
+	_modifying_ugd_views(pyramid_config)
 
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EmptyContainerGetView',
-							 renderer='rest', context='nti.appserver.interfaces.INewContainerResource',
-							 permission=nauth.ACT_READ, request_method='GET' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
-							 renderer='rest', context=nti_interfaces.IUser,
-							 permission=nauth.ACT_CREATE, request_method='POST' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
-							 renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
-							 permission=nauth.ACT_CREATE, request_method='POST' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._provider_redirect_classes',
-							 renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
-							 permission=nauth.ACT_READ, request_method='GET' )
+	_enclosure_views(pyramid_config)
+	_classinfo_views(pyramid_config)
 
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
-							 renderer='rest', context='nti.appserver.interfaces.IContainerResource',
-							 permission=nauth.ACT_CREATE, request_method='POST' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest', context='nti.appserver.interfaces.IContainerResource',
-							 permission=nauth.ACT_READ, request_method='GET' )
-
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._method_not_allowed',
-							 renderer='rest', context='nti.appserver.interfaces.IObjectsContainerResource',
-							 permission=nauth.ACT_READ, request_method='GET' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
-							 renderer='rest', context='nti.appserver.interfaces.IObjectsContainerResource',
-							 permission=nauth.ACT_CREATE, request_method='POST' )
-
-
-	# Modifying UGD beneath the Pages structure
-
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
-							 renderer='rest', context='nti.appserver.interfaces.IPagesResource',
-							 permission=nauth.ACT_CREATE, request_method='POST' )
-	# XXX: FIXME: This is quite ugly. The GenericGetView relies on getting the (undocumented)
-	# 'resource' from the PagesResource and turning it into a ICollection, which is what
-	# we want to return (from the users workspace) for this URL. This relies on the default ICollection
-	# adapter for the user.
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest', context='nti.appserver.interfaces.IPagesResource',
-							 permission=nauth.ACT_READ, request_method='GET' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
-							 renderer='rest', context='zope.container.interfaces.IContained',
-							 permission=nauth.ACT_DELETE, request_method='DELETE' )
-
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
-							 renderer='rest', context='zope.container.interfaces.IContained',
-							 permission=nauth.ACT_UPDATE, request_method='PUT' )
-	# And the user itself can be put to
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
-							 renderer='rest', context=nti_interfaces.IUser,
-							 permission=nauth.ACT_UPDATE, request_method='PUT' )
-
-
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDFieldPutView',
-							 renderer='rest', context='nti.appserver.interfaces.IExternalFieldResource',
-							 permission=nauth.ACT_UPDATE, request_method='PUT' )
-
-
-	# attached resources
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePostView',
-							 renderer='rest', context='zope.container.interfaces.IContained',
-							 permission=nauth.ACT_CREATE, request_method='POST' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePostView',
-							 renderer='rest', context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
-							 permission=nauth.ACT_CREATE, request_method='POST' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePutView',
-							 renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
-							 permission=nauth.ACT_UPDATE, request_method='PUT' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosureDeleteView',
-							 renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
-							 permission=nauth.ACT_UPDATE, request_method='DELETE' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
-							 permission=nauth.ACT_READ, request_method='GET' )
-
-	# Restore GET for the things we can POST enclosures to
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest',context='zope.container.interfaces.IContained',
-							 permission=nauth.ACT_READ, request_method='GET' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest',context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
-							 permission=nauth.ACT_READ, request_method='GET' )
-
-	# ClassInfo conflicts with enclosures for PUT/POST somehow
-	# TODO: This will all go away when we get to ++enclosures
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
-							 renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
-							 permission=nauth.ACT_UPDATE, request_method='PUT' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePostView',
-							 renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
-							 permission=nauth.ACT_CREATE, request_method='POST' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest',context='nti.dataserver.interfaces.IClassInfo',
-							 permission=nauth.ACT_READ, request_method='GET' )
-	# TODO: Delete might be broken here as well
-
-	# Restore DELETE for IFriendsList.
-	# It is-a ISimpleEnclosureContainer, and that trumps before the request_method, sadly
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
-							 renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
-							 permission=nauth.ACT_DELETE, request_method='DELETE' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
-							 renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
-							 permission=nauth.ACT_UPDATE, request_method='PUT' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePostView',
-							 renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
-							 permission=nauth.ACT_CREATE, request_method='POST' )
-	pyramid_config.add_view( route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							 renderer='rest',context='nti.dataserver.interfaces.IFriendsList',
-							 permission=nauth.ACT_READ, request_method='GET' )
-
+	_patching_restore_views(pyramid_config)
 
 	# register change listeners
 	# Now, fork off the change listeners
@@ -565,7 +606,6 @@ def createApplication( http_port,
 	# in config and the expensive parts turned off in config dynamically.
 	if create_ds:
 		_configure_async_changes( server )
-
 
 	return pyramid_config.make_wsgi_app()
 
@@ -645,8 +685,6 @@ class _FilesystemStaticFileConfigurator(object):
 			prefix = os.path.dirname( lib_interfaces.IContentUnitHrefMapper( package ).href ) # Posix assumption
 			path = package.dirname
 			pyramid_config.add_static_view( prefix, path )
-
-
 
 # These two functions exist for the sake of the installed executables
 # but they do nothing these days
