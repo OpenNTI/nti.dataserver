@@ -18,16 +18,10 @@ if 'nti.monkey.gevent_patch_on_import' in sys.modules: # DON'T import this; it s
 import os
 import random
 
-# import nti.dictserver as dictserver
 import nti.dictserver.storage
-
-import nti.dataserver._Dataserver
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
-
-import nti.contentsearch
-import nti.contentsearch.indexmanager
 
 import nti.dataserver.users
 from nti.dataserver import authorization as nauth
@@ -39,6 +33,7 @@ from zope.event import notify
 from zope import lifecycleevent
 from zope.configuration import xmlconfig
 from zope.component.hooks import setHooks
+from zope.component.interfaces import IRegistrationEvent
 from zope.processlifetime import ProcessStarting, DatabaseOpenedWithRoot, IDatabaseOpenedWithRoot
 
 from nti.monkey import webob_cookie_escaping_patch_on_import
@@ -48,14 +43,12 @@ from nti.monkey import weberror_filereporter_patch_on_import
 weberror_filereporter_patch_on_import.patch()
 
 import pyramid.config
-import pyramid.security
 import pyramid.registry
-import pyramid.authorization
 from pyramid.threadlocal import get_current_registry
 
 from paste.deploy.converters import asbool
 
-import nti.appserver.workspaces
+import nti.appserver
 from nti.appserver import pyramid_auth
 from nti.appserver import _question_map
 from nti.appserver import pyramid_authorization
@@ -111,9 +104,8 @@ def _logon_account_views(pyramid_config):
 	pyramid_config.add_route(name='logon.logout', pattern='/dataserver2/logon.logout')
 	pyramid_config.add_route(name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook1')
 	pyramid_config.add_route(name='logon.facebook.oauth2', pattern='/dataserver2/logon.facebook2')
-	pyramid_config.add_route(name='oauth.salesforce', pattern='/dataserver2/oauth.salesforce')
+
 	pyramid_config.scan('nti.appserver.logon')
-	pyramid_config.scan('nti.salesforce.auth')
 
 	# Deprecated logout alias
 	pyramid_config.add_route(name='logout', pattern='/dataserver2/logout')
@@ -389,6 +381,10 @@ def _patching_restore_views(pyramid_config):
 							renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
 							permission=nauth.ACT_READ, request_method='GET')
 
+def _salesforce_views(pyramid_config):
+	pyramid_config.add_route(name='oauth.salesforce', pattern='/dataserver2/oauth.salesforce')
+	pyramid_config.scan('nti.salesforce.auth')
+
 def createApplication( http_port,
 					   library=None,
 					   process_args=False,
@@ -600,6 +596,8 @@ def createApplication( http_port,
 
 	_patching_restore_views(pyramid_config)
 
+	_salesforce_views(pyramid_config)
+
 	# register change listeners
 	# Now, fork off the change listeners
 	# TODO: Make these be utilities so they can be registered
@@ -610,6 +608,9 @@ def createApplication( http_port,
 	return pyramid_config.make_wsgi_app()
 
 def _configure_async_changes( ds, indexmanager=None ):
+
+	import nti.contentsearch
+
 	logger.info( 'Adding synchronous change listeners.' )
 	ds.add_change_listener( nti.dataserver.users.onChange )
 	indexmanager = indexmanager or component.queryUtility( nti.contentsearch.interfaces.IIndexManager )
@@ -636,7 +637,6 @@ def _configure_pyramid_zodbconn( database_event, registry=None ):
 	registry.zodb_database = database_event.database # 0.2
 	registry._zodb_databases = { '': database_event.database } # 0.3, 0.4
 
-from zope.component.interfaces import IRegistrationEvent
 @component.adapter(lib_interfaces.IContentPackageLibrary, IRegistrationEvent)
 def _content_package_library_registered( library, event ):
 	# When a library is registered in a ZCA site, we need to provide
@@ -659,7 +659,6 @@ def _content_package_library_registered( library, event ):
 	random.shuffle( titles )
 	for title in titles:
 		lifecycleevent.created( title )
-
 
 @component.adapter(lib_interfaces.IFilesystemContentPackageLibrary)
 @interface.implementer(app_interfaces.ILibraryStaticFileConfigurator)
