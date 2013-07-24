@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-""" Chatserver functionality. """
-from __future__ import print_function, unicode_literals
+"""
+Chatserver functionality.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 import uuid
 import datetime
@@ -13,9 +16,15 @@ try:
 except ImportError:
 	import pickle
 
+from zope import interface
+from zope import component
 from zope.deprecation import deprecated
-
 from zope.cachedescriptors.property import Lazy
+
+from zc import intid as zc_intid
+
+from persistent import Persistent
+from persistent.mapping import PersistentMapping
 
 from nti.externalization import internalization
 from nti.externalization.interfaces import StandardExternalFields as XFields
@@ -25,15 +34,8 @@ from nti.ntiids import ntiids
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.authentication import effective_principals
 
-from persistent import Persistent
-from persistent.mapping import PersistentMapping
-
-from zope import interface
-from zope import component
-from zc import intid as zc_intid
 from . import interfaces
 from .meeting import _Meeting
-
 
 ####
 # A note on the object model:
