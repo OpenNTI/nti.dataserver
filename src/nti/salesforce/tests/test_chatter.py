@@ -107,6 +107,7 @@ class TestAssessment(SharedApplicationTestBase):
 			token = sf_interfaces.ISalesforceTokenInfo(user)
 			token.UserID = u'sjohnson@nextthought.com'
 			token.RefreshToken = u'foo'
+			token.InstanceURL = u'http://foo.org'
 		DummyChatter.text = None
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
