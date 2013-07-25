@@ -71,17 +71,22 @@
 	<!-- ACLs -->
 	<adapter factory=".acl._TopicACLProvider"
 			 for=".interfaces.IPersonalBlogEntry"/>
+			 
 	<adapter factory=".acl._TopicACLProvider"
 			 for=".interfaces.ICommunityHeadlineTopic"/>
 
 	<adapter factory=".acl._ForumACLProvider"
 			 for=".interfaces.IPersonalBlog"/>
+			 
 	<adapter factory=".acl._CommunityForumACLProvider"
 			 for=".interfaces.ICommunityForum"/>
+			 
 	<adapter factory=".acl._CommunityBoardACLProvider"
 			 for=".interfaces.ICommunityBoard"/>
 
 	<adapter factory=".acl._PostACLProvider" />
 
-
+	<adapter factory=".acl._ClassForumACLProvider"
+			 for=".interfaces.IClassForum"/>
+			 
 </configure>

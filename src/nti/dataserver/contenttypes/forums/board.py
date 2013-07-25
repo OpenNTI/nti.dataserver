@@ -61,7 +61,6 @@ class CommunityBoard(GeneralBoard,_CreatedNamedNTIIDMixin):
 	_ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_BOARD
 
 
-
 @interface.implementer(for_interfaces.ICommunityBoard)
 @component.adapter(nti_interfaces.ICommunity)
 def GeneralBoardCommunityAdapter(community):
@@ -98,5 +97,11 @@ class BoardNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	"""
 	Handles NTIID-safe name choosing for a forum in a board
 	"""
-
 	leaf_iface = for_interfaces.IBoard
+
+
+@interface.implementer(for_interfaces.IClassBoard)
+class ClassBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
+	__external_can_create__ = True
+	_ntiid_type = for_interfaces.NTIID_TYPE_CLASS_BOARD
+	

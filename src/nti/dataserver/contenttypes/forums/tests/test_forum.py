@@ -40,8 +40,8 @@ from nti.dataserver.users import Community
 
 
 from ..interfaces import IForum, ITopic, IPersonalBlog, IPersonalBlogEntry, IGeneralForum, ICommunityForum, IPost
-from ..interfaces import ICommunityBoard
-from ..forum import Forum, PersonalBlog, GeneralForum, CommunityForum
+from ..interfaces import ICommunityBoard, IClassForum
+from ..forum import Forum, PersonalBlog, GeneralForum, CommunityForum, ClassForum
 from ..topic import PersonalBlogEntry
 
 from nti.wref.interfaces import IWeakRef
@@ -153,3 +153,9 @@ def test_blog_externalizes():
 				 externalizes( has_entries( 'TopicCount', 1,
 											'NewestDescendantCreatedTime', 24,
 											'NewestDescendant', has_entry('Class', 'PersonalBlogEntry') ) ) )
+
+def test_class_forum_interfaces():
+	post = ClassForum()
+	assert_that(post, verifiably_provides(IClassForum))
+	assert_that(post, validly_provides(IClassForum))
+

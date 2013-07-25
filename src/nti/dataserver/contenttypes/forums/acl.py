@@ -127,10 +127,10 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 class _ClassForumACLProvider(_ForumACLProvider):
 	"""
-	Only the creator can create new topics within it.
+	Only the creator and shared users can create new topics within it.
 	"""
 
-	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ)
+	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ, nauth.ACT_CREATE)
 
 	def _get_sharing_target_names(self):
 		return self.context.flattenedSharingTargetNames

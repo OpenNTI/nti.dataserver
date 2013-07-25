@@ -96,3 +96,7 @@ class PersonalBlogComment(Post):
 #								  provider=self._creator_username,
 #								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
 #								  specific=ntiids.escape_provider(self.username.lower()))
+
+@interface.implementer(for_interfaces.IClassHeadlinePost)
+class ClassHeadlinePost(GeneralHeadlinePost):
+	pass
