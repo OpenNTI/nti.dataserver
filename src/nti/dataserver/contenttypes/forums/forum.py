@@ -270,3 +270,9 @@ def GeneralForumCommunityAdapter(community):
 		__traceback_info__ = errors
 		raise errors[0][1]
 	return forum
+
+@interface.implementer(frm_interfaces.IClassForum)
+class ClassForum(GeneralForum):
+	__external_can_create__ = True
+	__name__ = __default_name__ = 'ClassForum'
+	_ntiid_type = frm_interfaces.NTIID_TYPE_CLASS_FORUM

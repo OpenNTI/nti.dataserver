@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 $Id$
 """
 
@@ -37,17 +35,15 @@ from zope.container.interfaces import InvalidItemType, InvalidContainerType
 
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
-from ..interfaces import IBoard, IForum
-from ..board import Board
+from ..interfaces import IBoard, IForum, IClassBoard
+from ..board import Board, ClassBoard
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
 tearDownModule = nti.tests.module_teardown
 
-
 def test_board_interfaces():
 	post = Board()
 	assert_that( post, verifiably_provides( IBoard ) )
-
 	assert_that( post, validly_provides( IBoard ) )
 
 def test_board_constraints():
@@ -89,3 +85,11 @@ def test_blog_externalizes():
 	post['k'] = X()
 	assert_that( post,
 				 externalizes( has_entry( 'ForumCount', 1 ) ) )
+
+
+def test_class_board():
+	post = ClassBoard()
+	post.title = 'class'
+	post.description = 'the long\ndescription'
+	assert_that(post, verifiably_provides(IClassBoard))
+	assert_that(post, validly_provides(IClassBoard))

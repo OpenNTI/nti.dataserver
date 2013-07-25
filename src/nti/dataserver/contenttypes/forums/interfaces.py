@@ -66,6 +66,14 @@ NTIID_TYPE_POST = 'Post'
 #: The type of NTIID used to represent a comment within a blog post, an :class:`IPersonalBlogComment`
 NTIID_TYPE_BLOG_COMMENT = NTIID_TYPE_POST + ':PersonalBlogComment'
 
+#: The subtype of NTIID used to represent a :class:`.IClassBoard`
+NTIID_TYPE_CLASS_BOARD = NTIID_TYPE_GENERAL_BOARD + 'Class'
+
+# The subtype of NTIID used for class topics
+NTIID_TYPE_CLASS_TOPIC = NTIID_TYPE_GENERAL_TOPIC + "Class"
+
+#: The subtype of NTIID used to represent a :class:`.IClassForum`
+NTIID_TYPE_CLASS_FORUM = NTIID_TYPE_GENERAL_FORUM + 'Class'
 
 class IPost(IContained, IAcquirer,
 			nti_interfaces.IModeledContent,
@@ -169,7 +177,6 @@ class IHeadlineTopic(ITopic):
 	A special kind of topic that starts off with a distinguished post to discuss. Blogs will
 	be implemented with this.
 	"""
-
 	headline = schema.Object(IHeadlinePost, title="The main, first post of this topic.")
 
 class IPersonalBlog(IForum, nti_interfaces.ICreated, nti_interfaces.IShouldHaveTraversablePath):
@@ -333,3 +340,28 @@ class IGeneralForumComment(IGeneralPost, nti_interfaces.IShouldHaveTraversablePa
 	"""Secondary comments in a general topic."""
 	containers(IGeneralTopic)
 	__parent__.required = False
+
+class IClassBoard(IGeneralBoard, nti_interfaces.IShouldHaveTraversablePath):
+	"""
+	A board belonging to a particular class.
+	"""
+	contains(b'.IClassForum')
+	__setitem__.__doc__ = None
+
+class IClassForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
+	"""
+	A forum belonging to a particular class.
+	"""
+	containers(nti_interfaces.IUser, IClassBoard)
+	__parent__.required = False
+
+class IClassHeadlinePost(IGeneralHeadlinePost):
+	"""The headline of a class topic"""
+	containers(b'.IClassHeadlineTopic')
+	__parent__.required = False
+
+class IClassHeadlineTopic(IGeneralHeadlineTopic,
+						  nti_interfaces.IPublishable):
+	containers(IClassForum)
+	__parent__.required = False
+	headline = schema.Object(IClassHeadlinePost, title="The main, first post of this topic.")

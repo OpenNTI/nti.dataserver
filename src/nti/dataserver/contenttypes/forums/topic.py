@@ -285,7 +285,6 @@ class PersonalBlogEntryNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	"""
 	Handles NTIID-safe name choosing for an entry in a blog.
 	"""
-
 	leaf_iface = for_interfaces.IPersonalBlog
 
 @component.adapter(for_interfaces.IGeneralForum)
@@ -294,5 +293,11 @@ class GeneralForumEntryNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	"""
 	Handles NTIID-safe name choosing for an general forum entries.
 	"""
-
 	leaf_iface = for_interfaces.IGeneralForum
+
+@interface.implementer(for_interfaces.IClassHeadlineTopic)
+class ClassHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
+						 GeneralHeadlineTopic):
+	mimeType = None
+	headline = AcquisitionFieldProperty(for_interfaces.IClassHeadlineTopic['headline'])
+	_ntiid_type = for_interfaces.NTIID_TYPE_CLASS_TOPIC

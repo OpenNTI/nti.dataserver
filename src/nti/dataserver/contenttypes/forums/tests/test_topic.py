@@ -42,8 +42,8 @@ from zope.container.interfaces import InvalidItemType, InvalidContainerType, INa
 from nti.tests import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry, IGeneralHeadlineTopic, IPost
-from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralHeadlineTopic
-from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost, GeneralHeadlinePost
+from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralHeadlineTopic, ClassHeadlineTopic
+from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost, GeneralHeadlinePost, ClassHeadlinePost
 
 from zope import interface
 from nti.dataserver.interfaces import IUser, IWritableShared
@@ -223,8 +223,6 @@ def test_headline_topic_externalizes():
 											'NewestDescendant', has_entries('Class','Post',
 																	  'Last Modified', 42 ) ) ) )
 
-
-
 def test_blog_topic_externalizes():
 
 	post = PersonalBlogEntry()
@@ -248,3 +246,24 @@ def test_blog_topic_externalizes():
 								'headline', has_entry( 'Class', 'PersonalBlogEntryPost' ),
 					 			'PostCount', 1,
 								'NewestDescendant', has_entry('Last Modified', 42) ) ) )
+
+def test_class_topic_externalizes():
+	topic = ClassHeadlineTopic()
+	topic.title = 'foo'
+	assert_that(topic,
+				 externalizes(all_of(
+					 has_entries('title', 'foo',
+								 'Class', 'ClassHeadlineTopic',
+								 'MimeType', 'application/vnd.nextthought.forums.classheadlinetopic',
+								 'PostCount', 0,
+								 'NewestDescendant', none(),
+								 'sharedWith', is_empty()),
+					is_not(has_key('flattenedSharingTargets')))))
+
+	# With a comment
+	topic['k'] = ClassHeadlinePost()
+	topic['k'].lastModified = 42
+	assert_that(topic,
+				 externalizes(has_entries('PostCount', 1,
+										  'NewestDescendant', has_entries('Class', 'ClassHeadlinePost',
+																		  'Last Modified', 42))))
