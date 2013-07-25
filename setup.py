@@ -238,6 +238,7 @@ setup(
 		'pyramid_zcml >= 1.0.0',
 		'pyramid_zodbconn >= 0.4',
 		'pyramid-openid >= 0.3.4',
+		'psycopg2 >= 2.5.1',  # PostGressSQL
 		# Monitoring stats and instrumenting code
 		'python-statsd >= 1.6.0',  # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
