@@ -566,6 +566,8 @@ def createApplication( http_port,
 	pyramid_config.add_forbidden_view( forbidden_view )
 
 	_logon_account_views(pyramid_config)
+	_salesforce_views(pyramid_config)
+
 	_socketio_views(pyramid_config)
 	_dictionary_views(pyramid_config, settings)
 
@@ -595,8 +597,6 @@ def createApplication( http_port,
 	_classinfo_views(pyramid_config)
 
 	_patching_restore_views(pyramid_config)
-
-	_salesforce_views(pyramid_config)
 
 	# register change listeners
 	# Now, fork off the change listeners
