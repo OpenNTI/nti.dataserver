@@ -21,7 +21,6 @@ from nti.utils._compat import aq_base
 
 from nti.appserver.traversal import find_interface
 from nti.appserver._util import uncached_in_response
-from nti.appserver import interfaces as app_interfaces
 from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
@@ -37,7 +36,6 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
-from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -48,11 +46,14 @@ frm_ext = frm_ext
 
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
+from nti.dataserver.contenttypes.forums.post import Post
+from nti.dataserver.contenttypes.forums.post import ClassHeadlinePost
+from nti.dataserver.contenttypes.forums.post import ClassForumComment
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
+from nti.dataserver.contenttypes.forums.topic import ClassHeadlineTopic
 from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
-from nti.dataserver.contenttypes.forums.post import Post
 from nti.dataserver.contenttypes.forums.post import CommunityHeadlinePost
 from nti.dataserver.contenttypes.forums.post import GeneralForumComment
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
@@ -64,7 +65,6 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults # NOTE: Only usable on classes
 
 from zope.container.interfaces import INameChooser
-from zope.container.contained import dispatchToSublocations
 from zope import component
 from zope import interface
 from zope import lifecycleevent
@@ -102,6 +102,37 @@ def _UserBlogCollectionFactory(workspace):
 	blog = frm_interfaces.IPersonalBlog( workspace.user, None )
 	if blog is not None:
 		return _UserBlogCollection( workspace )
+
+@interface.implementer(app_interfaces.IContainerCollection)
+@component.adapter(app_interfaces.IUserWorkspace)
+class _UserClassBoardCollection(object):
+
+	name = 'ClassBoard'
+	__name__ = name
+	__parent__ = None
+
+	def __init__(self, user_workspace):
+		self.__parent__ = user_workspace
+
+	@property
+	def container(self):
+		result = []
+		board = frm_interfaces.IClassBoard(self.__parent__.user, {})
+		for forum in board.values():
+			for blog in forum.values():
+				result.append(blog)
+		return result
+
+	@property
+	def accepts(self):
+		return (ClassHeadlinePost.mimeType, Post.mimeType)
+
+@interface.implementer(app_interfaces.IContainerCollection)
+@component.adapter(app_interfaces.IUserWorkspace)
+def _UserClassBoardCollectionFactory(workspace):
+	board = frm_interfaces.IClassBoard(workspace.user, None)
+	if board:
+		return _UserClassBoardCollection(workspace)
 
 class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
 	""" HTTP says POST creates a NEW entity under the Request-URI """
@@ -271,6 +302,17 @@ class CommunityForumPostView(_AbstractForumPostView):
 	_factory = CommunityHeadlineTopic
 
 
+@view_config(name='')
+@view_config(name=VIEW_CONTENTS)
+@view_defaults(context=frm_interfaces.IClassForum,
+				**_c_view_defaults)
+class ClassForumPostView(_AbstractForumPostView):
+	""" Given an incoming IPost, creates a new topic in a class forum """
+
+	_constraint = frm_interfaces.IClassHeadlinePost.providedBy
+	_override_content_type = ClassHeadlinePost.mimeType
+	_factory = ClassHeadlineTopic
+
 class _AbstractTopicPostView(_AbstractIPostPOSTView):
 
 	_allowed_content_types = ('Post', Post.mimeType, 'Posts')
@@ -312,27 +354,41 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 	_constraint = frm_interfaces.IPersonalBlogComment.providedBy
 	_override_content_type = PersonalBlogComment.mimeType
 
+@view_config(name='')
+@view_config(name=VIEW_CONTENTS)
+@view_defaults(context=frm_interfaces.IClassHeadlineTopic,
+				**_c_view_defaults)
+class ClassHeadlineTopicPostView(_AbstractTopicPostView):
 
-@view_config( context=frm_interfaces.IHeadlineTopic )
-@view_config( context=frm_interfaces.IForum )
-@view_config( context=frm_interfaces.ICommunityForum )
-@view_config( context=frm_interfaces.ICommunityBoard )
-@view_config( context=frm_interfaces.IPersonalBlog ) # need to re-list this one
-@view_config( context=frm_interfaces.IPersonalBlogEntry ) # need to re-list this one
-@view_config( context=frm_interfaces.IPersonalBlogComment ) # need to re-list this one
-@view_config( context=frm_interfaces.IPersonalBlogEntryPost ) # need to re-list this one
-@view_config( context=frm_interfaces.ICommunityHeadlineTopic ) # need to re-list
-@view_config( context=frm_interfaces.ICommunityHeadlinePost ) # need to re-list
-@view_config( context=frm_interfaces.IGeneralForumComment ) # need to re-list
-@view_config( context=frm_interfaces.IPost )
+	_constraint = frm_interfaces.IClassForumComment.providedBy
+	_override_content_type = ClassForumComment.mimeType
+
+
+@view_config(context=frm_interfaces.IHeadlineTopic)
+@view_config(context=frm_interfaces.IForum)
+@view_config(context=frm_interfaces.ICommunityForum)
+@view_config(context=frm_interfaces.ICommunityBoard)
+@view_config(context=frm_interfaces.IClassForum)
+@view_config(context=frm_interfaces.IClassBoard)
+@view_config(context=frm_interfaces.IPersonalBlog)  # need to re-list this one
+@view_config(context=frm_interfaces.IPersonalBlogEntry)  # need to re-list this one
+@view_config(context=frm_interfaces.IPersonalBlogComment)  # need to re-list this one
+@view_config(context=frm_interfaces.IPersonalBlogEntryPost)  # need to re-list this one
+@view_config(context=frm_interfaces.ICommunityHeadlineTopic)  # need to re-list
+@view_config(context=frm_interfaces.ICommunityHeadlinePost)  # need to re-list
+@view_config(context=frm_interfaces.IClassHeadlinePost)  # need to re-list
+@view_config(context=frm_interfaces.IGeneralForumComment)  # need to re-list
+@view_config(context=frm_interfaces.IClassForumComment)  # need to re-list
+@view_config(context=frm_interfaces.IPost)
 @view_defaults( **_r_view_defaults )
 class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 
 
-@view_config( context=frm_interfaces.IBoard )
-@view_config( context=frm_interfaces.ICommunityHeadlineTopic )
-@view_config( context=frm_interfaces.IPersonalBlogEntry )
+@view_config(context=frm_interfaces.IBoard)
+@view_config(context=frm_interfaces.IClassHeadlineTopic)
+@view_config(context=frm_interfaces.ICommunityHeadlineTopic)
+@view_config(context=frm_interfaces.IPersonalBlogEntry)
 @view_defaults( name=VIEW_CONTENTS,
 				**_r_view_defaults )
 class ForumsContainerContentsGetView(UGDQueryView):
@@ -406,12 +462,15 @@ class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
 		result.lastModified = lastMod
 		super(CommunityBoardContentsGetView,self)._update_last_modified_after_sort( objects, result )
 
+@view_config(context=frm_interfaces.IClassBoard)
+class ClassBoardContentsGetView(ForumsContainerContentsGetView):
+	pass
 
 
-
-@view_config( context=frm_interfaces.IForum )
-@view_config( context=frm_interfaces.ICommunityForum )
-@view_config( context=frm_interfaces.IPersonalBlog )
+@view_config(context=frm_interfaces.IForum)
+@view_config(context=frm_interfaces.IClassForum)
+@view_config(context=frm_interfaces.ICommunityForum)
+@view_config(context=frm_interfaces.IPersonalBlog)
 @view_defaults( name=VIEW_CONTENTS,
 				**_r_view_defaults )
 class ForumContentsGetView(ForumsContainerContentsGetView):
@@ -460,13 +519,16 @@ class ForumContentsFeedView(AbstractFeedView):
 		data_object = ipost_or_itopic.headline if frm_interfaces.IHeadlineTopic.providedBy( ipost_or_itopic ) else ipost_or_itopic
 		return data_object, ipost_or_itopic.creator, title, ipost_or_itopic.tags
 
-@view_config( context=frm_interfaces.IHeadlinePost )
-@view_config( context=frm_interfaces.IPersonalBlogEntry )
-@view_config( context=frm_interfaces.IPersonalBlogEntryPost )
-@view_config( context=frm_interfaces.IPersonalBlogComment )
-@view_config( context=frm_interfaces.IGeneralForumComment )
-@view_config( context=frm_interfaces.ICommunityHeadlinePost )
-@view_config( context=frm_interfaces.ICommunityForum )
+@view_config(context=frm_interfaces.IHeadlinePost)
+@view_config(context=frm_interfaces.IPersonalBlogEntry)
+@view_config(context=frm_interfaces.IPersonalBlogEntryPost)
+@view_config(context=frm_interfaces.IPersonalBlogComment)
+@view_config(context=frm_interfaces.IGeneralForumComment)
+@view_config(context=frm_interfaces.ICommunityHeadlinePost)
+@view_config(context=frm_interfaces.ICommunityForum)
+@view_config(context=frm_interfaces.IClassHeadlinePost)
+@view_config(context=frm_interfaces.IClassForum)
+@view_config(context=frm_interfaces.IClassForumComment)
 @view_defaults( permission=nauth.ACT_UPDATE,
 				request_method='PUT',
 				**_view_defaults)
@@ -474,8 +536,9 @@ class ForumObjectPutView(UGDPutView):
 	""" Editing an existing forum post, etc """
 	# Exists entirely for registration sake.
 
-@view_config( context=frm_interfaces.ICommunityHeadlineTopic )
-@view_config( context=frm_interfaces.IPersonalBlogEntry )
+@view_config(context=frm_interfaces.IClassHeadlineTopic)
+@view_config(context=frm_interfaces.ICommunityHeadlineTopic)
+@view_config(context=frm_interfaces.IPersonalBlogEntry)
 @view_defaults(**_d_view_defaults)
 class HeadlineTopicDeleteView(UGDDeleteView):
 	""" Deleting an existing topic """
@@ -488,7 +551,8 @@ class HeadlineTopicDeleteView(UGDDeleteView):
 		del aq_base(theObject.__parent__)[theObject.__name__]
 		return theObject
 
-@view_config( context=frm_interfaces.ICommunityForum )
+@view_config(context=frm_interfaces.IClassForum)
+@view_config(context=frm_interfaces.ICommunityForum)
 @view_defaults(**_d_view_defaults)
 class ForumDeleteView(UGDDeleteView):
 	""" Deleting an existing forum """
@@ -502,6 +566,7 @@ class ForumDeleteView(UGDDeleteView):
 
 @view_config(context=frm_interfaces.IGeneralForumComment)
 @view_config(context=frm_interfaces.IPersonalBlogComment)
+@view_config(context=frm_interfaces.IClassForumComment)
 @view_defaults(**_d_view_defaults)
 class CommentDeleteView(UGDDeleteView):
 	""" Deleting an existing forum comment.
@@ -567,8 +632,9 @@ class _AbstractPublishingView(object):
 		request.response.location = request.resource_path( topic )
 		return uncached_in_response( topic )
 
-@view_config( context=frm_interfaces.ICommunityHeadlineTopic )
-@view_config( context=frm_interfaces.IPersonalBlogEntry )
+@view_config(context=frm_interfaces.ICommunityHeadlineTopic)
+@view_config(context=frm_interfaces.IClassHeadlineTopic)
+@view_config(context=frm_interfaces.IPersonalBlogEntry)
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_UPDATE,
@@ -580,8 +646,9 @@ class _PublishView(_AbstractPublishingView):
 	def _test_provides( self, topic ):
 		return not nti_interfaces.IDefaultPublished.providedBy( topic )
 
-@view_config( context=frm_interfaces.ICommunityHeadlineTopic )
-@view_config( context=frm_interfaces.IPersonalBlogEntry )
+@view_config(context=frm_interfaces.ICommunityHeadlineTopic)
+@view_config(context=frm_interfaces.IClassHeadlineTopic)
+@view_config(context=frm_interfaces.IPersonalBlogEntry)
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_UPDATE,
