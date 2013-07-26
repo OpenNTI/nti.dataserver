@@ -132,3 +132,5 @@ class _ClassForumACLProvider(_CommunityForumACLProvider):
 	def _get_sharing_target_names(self):
 		return self.context.flattenedSharingTargetNames
 
+	def _extend_acl_after_creator_and_sharing(self, acl):
+		self._extend_with_admin_privs(acl)
