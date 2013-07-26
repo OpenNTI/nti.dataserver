@@ -7,18 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-
-import simplejson
-from datetime import date
-
-from zope import interface
-
-from nti.appserver import site_policies
-from nti.appserver.link_providers import flag_link_provider
-
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as users_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.externalization.externalization import to_json_representation
@@ -28,7 +18,7 @@ from nti.appserver.tests.test_application import TestApp
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length, has_entry, has_key)
+from hamcrest import (assert_that, is_, has_length, none, is_not, has_property)
 
 class TestForumAdminViews(SharedApplicationTestBase):
 
@@ -46,19 +36,25 @@ class TestForumAdminViews(SharedApplicationTestBase):
 			for user in (aizen, ichigo, kuchiki):
 				user.join_community(comm)
 
-		return
 		testapp = TestApp(self.app)
 
 		path = '/dataserver2/@@set_class_community_forum'
 		environ = self._make_extra_environ()
 		data = to_json_representation({'community': 'bleach',
-									   'sharedWith': ['aizen@nt.com', 'ichigo@nt.com', 'kuchiki@nt.com'] })
+									   'instructors': ['aizen@nt.com', 'ichigo@nt.com', 'kuchiki@nt.com'] })
 		
 		res = testapp.post(path, data, extra_environ=environ)
-		assert_that(res.status_int, is_(200))
+		assert_that(res.status_int, is_(204))
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			comm = users.Community.get_community('bleach')
 			forum = frm_interfaces.ICommunityForum(comm)
 			assert_that(frm_interfaces.IClassForum.providedBy(forum), is_(True))
-			assert_that(frm_interfaces.ICommunityForum.providedBy(forum), is_(True))
+
+			instructors = getattr(forum, 'Instructors', None)
+			assert_that(instructors, is_not(none()))
+			assert_that(instructors, has_length(3))
+
+			provider = nti_interfaces.IACLProvider(forum)
+			assert_that(provider, has_property('_CLASS_FORUM', is_(True)))
+

@@ -124,13 +124,17 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 class _ClassForumACLProvider(_CommunityForumACLProvider):
 	"""
-	Only the shared users can create new topics within it.
+	Only the shared users can create new topics within it. Everyone else can read
 	"""
 
-	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ, nauth.ACT_CREATE)
+	_CLASS_FORUM = True
+	_PERMS_FOR_SHARING_TARGETS = AbstractCreatedAndSharedACLProvider._PERMS_FOR_SHARING_TARGETS
 
 	def _get_sharing_target_names(self):
-		return self.context.flattenedSharingTargetNames
+		return self.context.creator
 
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		self._extend_with_admin_privs(acl)
+		for instructor in getattr(self.context, 'Instructors', ()):
+			acl.append(ace_allowing(instructor, nauth.ACT_DELETE, self))
+			acl.append(ace_allowing(instructor, nauth.ACT_READ, self))

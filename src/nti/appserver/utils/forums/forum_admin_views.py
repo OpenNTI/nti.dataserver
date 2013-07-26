@@ -22,8 +22,6 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
-from nti.externalization.internalization import update_from_external_object
-
 from nti.appserver.utils import _JsonBodyView
 
 @view_config(route_name='objects.generic.traversal',
@@ -39,18 +37,16 @@ class SetClassCommunityForum(_JsonBodyView):
 		if not community or not nti_interfaces.ICommunity.providedBy(community):
 			raise hexc.HTTPNotFound(detail='Community not found')
 		
-		sharedWith = values.get('sharedWith', None)
-		if sharedWith and isinstance(sharedWith, six.string_types):
-			sharedWith = sharedWith.split(',')
-		if not sharedWith:
+		instructors = values.get('instructors', ())
+		if instructors and isinstance(instructors, six.string_types):
+			instructors = instructors.split(',')
+		if not instructors:
 			raise hexc.HTTPUnprocessableEntity(detail='Sharing not specified')
 
 		forum = frm_interfaces.ICommunityForum(community, None)
-		if not forum:
+		if forum is None:
 			raise hexc.HTTPUnprocessableEntity(detail='Community does not allow a forum')
 
-		interface.noLongerProvides(forum, frm_interfaces.ICommunityForum)
 		interface.alsoProvides(forum, frm_interfaces.IClassForum)
-
-		update_from_external_object(forum, {'sharedWith':[sharedWith]})
+		setattr(forum, 'Instructors', list(set(instructors)))
 		return hexc.HTTPNoContent()
