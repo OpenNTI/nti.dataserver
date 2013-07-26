@@ -295,6 +295,14 @@ class GeneralForumEntryNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	"""
 	leaf_iface = for_interfaces.IGeneralForum
 
+@component.adapter(for_interfaces.IClassForum)
+@interface.implementer(INameChooser)
+class ClassForumEntryNameChooser(containers.AbstractNTIIDSafeNameChooser):
+	"""
+	Handles NTIID-safe name choosing for an class forum entries.
+	"""
+	leaf_iface = for_interfaces.IClassForum
+
 @interface.implementer(for_interfaces.IClassHeadlineTopic)
 class ClassHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 						 GeneralHeadlineTopic):

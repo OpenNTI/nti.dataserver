@@ -60,6 +60,24 @@ class CommunityBoard(GeneralBoard,_CreatedNamedNTIIDMixin):
 	__external_can_create__ = False
 	_ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_BOARD
 
+def _prepare_annotation_board(clazz, iface, creator, title, name=None):
+	board = clazz()
+	board.__parent__ = creator
+	board.creator = creator
+	board.title = _(title)
+
+	name = name or clazz.__default_name__
+	annotations = an_interfaces.IAnnotations(creator)
+	annotations[name] = board
+
+	jar = IConnection(creator, None)
+	if jar:
+		jar.add(board)
+	errors = schema.getValidationErrors(for_interfaces.ICommunityBoard, board)
+	if errors:
+		__traceback_info__ = errors
+		raise errors[0][1]
+	return board
 
 @interface.implementer(for_interfaces.ICommunityBoard)
 @component.adapter(nti_interfaces.ICommunity)
@@ -74,22 +92,8 @@ def GeneralBoardCommunityAdapter(community):
 	annotations = an_interfaces.IAnnotations( community )
 	board = annotations.get( CommunityBoard.__default_name__ )
 	if board is None:
-		board = CommunityBoard()
-		annotations[CommunityBoard.__default_name__] = board
-		board.__parent__ = community
-		board.creator = community
-		board.title = _('Discussion Board')
-
-		jar = IConnection( community, None )
-		if jar:
-			jar.add( board )
-		errors = schema.getValidationErrors( for_interfaces.ICommunityBoard, board )
-		if errors:
-			__traceback_info__ = errors
-			raise errors[0][1]
+		board = _prepare_annotation_board(CommunityBoard, for_interfaces.ICommunityBoard, community, 'Discussion Board')
 	return board
-
-
 
 @component.adapter(for_interfaces.IBoard)
 @interface.implementer(INameChooser)
@@ -99,9 +103,21 @@ class BoardNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	"""
 	leaf_iface = for_interfaces.IBoard
 
-
 @interface.implementer(for_interfaces.IClassBoard)
 class ClassBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
 	__external_can_create__ = True
+	__name__ = __default_name__ = 'ClassBoard'
 	_ntiid_type = for_interfaces.NTIID_TYPE_CLASS_BOARD
 	
+@interface.implementer(for_interfaces.IClassBoard)
+@component.adapter(nti_interfaces.IUser)
+def ClassBoardUserAdapter(user):
+	"""
+	A user (teacher) has a class board.
+	Only administrators can create class forums within the board
+	"""
+	annotations = an_interfaces.IAnnotations(user)
+	board = annotations.get(ClassBoard.__default_name__)
+	if board is None:
+		board = _prepare_annotation_board(ClassBoard, for_interfaces.IClassBoard, user, 'Class Board')
+	return board

@@ -11,36 +11,44 @@
 	<!-- Adapters for creating the default objects -->
 	<adapter factory=".forum.PersonalBlogAdapter"
 			 provides=".interfaces.IPersonalBlog" />
+			 
 	<adapter factory=".forum.GeneralForumCommunityAdapter"
 			 provides=".interfaces.ICommunityForum" />
+			 
 	<adapter factory=".board.GeneralBoardCommunityAdapter"
 			 provides=".interfaces.ICommunityBoard" />
 
+	<adapter factory=".board.ClassBoardUserAdapter"
+			 provides=".interfaces.IClassBoard" />
+			 
 	<adapter provides="zope.location.interfaces.ISublocations"
 			 for=".interfaces.IHeadlineTopic"
 			 factory=".topic.HeadlineTopicSublocations" />
 
 	<adapter factory=".topic.PersonalBlogEntryNameChooser" />
 	<adapter factory=".topic.GeneralForumEntryNameChooser" />
+	<adapter factory=".topic.ClassForumEntryNameChooser" />
 	<adapter factory=".board.BoardNameChooser" />
-
+	
 	<!-- WeakRefs -->
 	<!-- (IPost is covered as IModeledContent) -->
 	<adapter factory="nti.intid.wref.ArbitraryOrderableWeakRef"
 			 provides="nti.wref.interfaces.IWeakRef"
 			 for=".interfaces.IForum" />
+			 
 	<adapter factory="nti.intid.wref.ArbitraryOrderableWeakRef"
 			 provides="nti.wref.interfaces.IWeakRef"
 			 for=".interfaces.ITopic" />
 
-
-
 	<!-- NTIID resolvers -->
-	<utility factory=".ntiids._CommunityBoardResolver" name="Board:GeneralCommunity" />
 	<utility factory=".ntiids._BlogResolver" name="Forum:PersonalBlog" />
-	<utility factory=".ntiids._CommunityForumResolver" name="Forum:GeneralCommunity" />
 	<utility factory=".ntiids._BlogEntryResolver" name="Topic:PersonalBlogEntry" />
+	<utility factory=".ntiids._CommunityBoardResolver" name="Board:GeneralCommunity" />
+	<utility factory=".ntiids._CommunityForumResolver" name="Forum:GeneralCommunity" />
 	<utility factory=".ntiids._CommunityTopicResolver" name="Topic:GeneralCommunity" />
+	<utility factory=".ntiids._ClassBoardResolver" name="Board:GeneralClass" />
+	<utility factory=".ntiids._ClassForumResolver" name="Forum:GeneralClass" />
+	<utility factory=".ntiids._ClassTopicResolver" name="Topic:GeneralClass" />
 
 	<!-- Events -->
 	<subscriber handler=".topic._post_added_to_topic" />
@@ -50,10 +58,13 @@
 	<!-- Externalization -->
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IBoard" />
+			 
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IForum" />
+			 
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.ITopic" />
+			 
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IPost" />
 
