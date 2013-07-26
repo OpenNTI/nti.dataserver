@@ -36,6 +36,10 @@
 				provides="nti.appserver.interfaces.ICollection"
 				for="nti.appserver.interfaces.IUserWorkspace" />
 
+	<subscriber factory=".views._UserClassBoardCollectionFactory"
+				provides="nti.appserver.interfaces.ICollection"
+				for="nti.appserver.interfaces.IUserWorkspace" />
+				
 
 	<!-- Object updating -->
 	<subscriber handler=".views.match_title_of_post_to_blog" />
