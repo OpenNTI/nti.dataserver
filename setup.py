@@ -422,7 +422,7 @@ setup(
 			# See also https://github.com/hathawsh/graphite_buildout for a buildout to install node's statsd and graphite
 			# locally (you may need to use a different version of node)
 			# Managing translations
-			'Babel >= 0.9.6',
+			'Babel >= 1.0.0',
 			'lingua >= 1.5',
 			]
 	},
