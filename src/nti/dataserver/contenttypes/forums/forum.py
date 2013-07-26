@@ -5,11 +5,11 @@ Definitions for forums.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
 from . import MessageFactory as _
 
 from zope import interface
@@ -237,7 +237,6 @@ class CommunityForum(GeneralForum):
 	__external_can_create__ = False
 	_ntiid_type = frm_interfaces.NTIID_TYPE_COMMUNITY_FORUM
 
-
 @interface.implementer(frm_interfaces.ICommunityForum)
 @component.adapter(nti_interfaces.ICommunity)
 def GeneralForumCommunityAdapter(community):
@@ -276,3 +275,4 @@ class ClassForum(GeneralForum):
 	__external_can_create__ = True
 	__name__ = __default_name__ = 'ClassForum'
 	_ntiid_type = frm_interfaces.NTIID_TYPE_CLASS_FORUM
+
