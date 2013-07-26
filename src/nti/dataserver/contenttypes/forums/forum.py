@@ -271,8 +271,8 @@ def GeneralForumCommunityAdapter(community):
 	return forum
 
 @interface.implementer(frm_interfaces.IClassForum)
-class ClassForum(GeneralForum):
-	__external_can_create__ = True
-	__name__ = __default_name__ = 'ClassForum'
-	_ntiid_type = frm_interfaces.NTIID_TYPE_CLASS_FORUM
+class ClassForum(CommunityForum):
+	"""
+	A special case of the default community forum
+	"""
 

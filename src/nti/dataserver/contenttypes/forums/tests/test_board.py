@@ -14,16 +14,15 @@ logger = __import__('logging').getLogger(__name__)
 
 
 from hamcrest import assert_that
-from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import all_of
-from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_entries
 from hamcrest import has_entry
 from nose.tools import assert_raises
 
 from zope import interface
+
 import nti.tests
 from nti.tests import is_empty
 from Acquisition import Implicit
@@ -31,12 +30,11 @@ from nti.tests import aq_inContextOf
 from nti.tests import verifiably_provides, validly_provides
 
 from nti.externalization.tests import externalizes
-from zope.container.interfaces import InvalidItemType, InvalidContainerType
+from zope.container.interfaces import InvalidItemType
 
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+from ..board import Board
+from ..interfaces import IBoard, IForum
 
-from ..interfaces import IBoard, IForum, IClassBoard
-from ..board import Board, ClassBoard
 
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
 tearDownModule = nti.tests.module_teardown
@@ -86,10 +84,3 @@ def test_blog_externalizes():
 	assert_that( post,
 				 externalizes( has_entry( 'ForumCount', 1 ) ) )
 
-
-def test_class_board():
-	post = ClassBoard()
-	post.title = 'class'
-	post.description = 'the long\ndescription'
-	assert_that(post, verifiably_provides(IClassBoard))
-	assert_that(post, validly_provides(IClassBoard))

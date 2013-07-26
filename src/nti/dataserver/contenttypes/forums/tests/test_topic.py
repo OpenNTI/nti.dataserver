@@ -30,7 +30,6 @@ from hamcrest import has_property
 from nose.tools import assert_raises
 import nti.tests
 
-import nti.tests
 import fudge
 
 from nti.tests import is_empty, is_true
@@ -42,10 +41,13 @@ from zope.container.interfaces import InvalidItemType, InvalidContainerType, INa
 from nti.tests import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry, IGeneralHeadlineTopic, IPost
-from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralHeadlineTopic, ClassHeadlineTopic
-from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost, GeneralHeadlinePost, ClassHeadlinePost
+from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralHeadlineTopic
+from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost, GeneralHeadlinePost
 
+from zope import component
 from zope import interface
+from zope.keyreference.interfaces import IKeyReference
+
 from nti.dataserver.interfaces import IUser, IWritableShared
 
 from ExtensionClass import Base
@@ -57,8 +59,7 @@ def setUpModule():
 	import zope.intid
 	import zc.intid
 	import BTrees
-	from zope import component, interface
-	from zope.keyreference.interfaces import IKeyReference
+
 	intids = intid_utility.IntIds('_ds_intid', family=BTrees.family64 )
 	intids.__name__ = '++etc++intids'
 	component.provideUtility( intids, provides=zope.intid.IIntIds )
@@ -246,24 +247,3 @@ def test_blog_topic_externalizes():
 								'headline', has_entry( 'Class', 'PersonalBlogEntryPost' ),
 					 			'PostCount', 1,
 								'NewestDescendant', has_entry('Last Modified', 42) ) ) )
-
-def test_class_topic_externalizes():
-	topic = ClassHeadlineTopic()
-	topic.title = 'foo'
-	assert_that(topic,
-				 externalizes(all_of(
-					 has_entries('title', 'foo',
-								 'Class', 'ClassHeadlineTopic',
-								 'MimeType', 'application/vnd.nextthought.forums.classheadlinetopic',
-								 'PostCount', 0,
-								 'NewestDescendant', none(),
-								 'sharedWith', is_empty()),
-					is_not(has_key('flattenedSharingTargets')))))
-
-	# With a comment
-	topic['k'] = ClassHeadlinePost()
-	topic['k'].lastModified = 42
-	assert_that(topic,
-				 externalizes(has_entries('PostCount', 1,
-										  'NewestDescendant', has_entries('Class', 'ClassHeadlinePost',
-																		  'Last Modified', 42))))

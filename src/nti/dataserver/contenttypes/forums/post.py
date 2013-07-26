@@ -96,10 +96,3 @@ class PersonalBlogComment(Post):
 #								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
 #								  specific=ntiids.escape_provider(self.username.lower()))
 
-@interface.implementer(for_interfaces.IClassHeadlinePost)
-class ClassHeadlinePost(GeneralHeadlinePost):
-	sharingTargets = _AcquiredSharingTargetsProperty()
-
-@interface.implementer(for_interfaces.IClassForumComment)
-class ClassForumComment(Post):
-	sharingTargets = _AcquiredSharingTargetsProperty()

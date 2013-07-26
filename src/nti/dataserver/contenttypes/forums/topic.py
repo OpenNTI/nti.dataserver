@@ -5,42 +5,39 @@ Definitions for topics.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import interface
 from zope import component
+from zope.event import notify
+from zope import lifecycleevent
+from zope.cachedescriptors.property import Lazy
+from zope.container.interfaces import INameChooser
+from zope.intid.interfaces import IIntIdAddedEvent
+from zope.schema.fieldproperty import FieldProperty
+from zope.annotation import interfaces as an_interfaces
+from zope.container.contained import ContainerSublocations
+from zope.container.contained import dispatchToSublocations
+
+from nti.dataserver import sharing
+from nti.dataserver import containers
+from nti.dataserver import datastructures
+from nti.dataserver.interfaces import ObjectSharingModifiedEvent
+from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
+
+from nti.utils.schema import AdaptingFieldProperty
+from nti.utils.schema import AcquisitionFieldProperty
+
+from nti.wref import interfaces as wref_interfaces
 
 from ._compat import Implicit
 from . import _CreatedNamedNTIIDMixin
 from . import _containerIds_from_parent
-
-from nti.dataserver import containers
-from nti.dataserver import datastructures
-from nti.dataserver import sharing
-from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
-from nti.dataserver.interfaces import ObjectSharingModifiedEvent
-
-from zope.cachedescriptors.property import Lazy
-from zope import lifecycleevent
-from zope.event import notify
-
-from zope.schema.fieldproperty import FieldProperty
-from nti.utils.schema import AdaptingFieldProperty
-from nti.utils.schema import AcquisitionFieldProperty
-
 from . import interfaces as for_interfaces
-from nti.wref import interfaces as wref_interfaces
-from zope.annotation import interfaces as an_interfaces
-from zope.intid.interfaces import IIntIdAddedEvent
-from zope.container.interfaces import INameChooser
-from zope.container.contained import dispatchToSublocations
 
-from zope.container.contained import ContainerSublocations
 class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 							 containers.CheckingLastModifiedBTreeContainer,
 							 datastructures.ContainedMixin, # Pulls in nti_interfaces.IContained, containerId, id
@@ -241,10 +238,10 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 		super(PersonalBlogEntry,self).unpublish()
 
 	def _forward_not_published(name):
-		def f( self, *args, **kwargs ):
-			if IDefaultPublished.providedBy( self ):
-				return # ignored
-			getattr( self._sharing_storage, name )( *args, **kwargs )
+		def f(self, *args, **kwargs):
+			if IDefaultPublished.providedBy(self):
+				return  # ignored
+			getattr(self._sharing_storage, name)(*args, **kwargs)
 		return f
 
 	updateSharingTargets = _forward_not_published( 'updateSharingTargets' )
@@ -294,18 +291,3 @@ class GeneralForumEntryNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	Handles NTIID-safe name choosing for an general forum entries.
 	"""
 	leaf_iface = for_interfaces.IGeneralForum
-
-@component.adapter(for_interfaces.IClassForum)
-@interface.implementer(INameChooser)
-class ClassForumEntryNameChooser(containers.AbstractNTIIDSafeNameChooser):
-	"""
-	Handles NTIID-safe name choosing for an class forum entries.
-	"""
-	leaf_iface = for_interfaces.IClassForum
-
-@interface.implementer(for_interfaces.IClassHeadlineTopic)
-class ClassHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
-						 GeneralHeadlineTopic):
-	mimeType = None
-	headline = AcquisitionFieldProperty(for_interfaces.IClassHeadlineTopic['headline'])
-	_ntiid_type = for_interfaces.NTIID_TYPE_CLASS_TOPIC

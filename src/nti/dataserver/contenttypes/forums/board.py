@@ -5,7 +5,6 @@ Definitions of boards.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -13,24 +12,23 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
+from zope import schema
 from zope import interface
 from zope import component
-from zope import schema
-
-from zope.annotation import interfaces as an_interfaces
-from . import interfaces as for_interfaces
-from nti.dataserver import interfaces as nti_interfaces
-from ZODB.interfaces import IConnection
 from zope.container.interfaces import INameChooser
+from zope.annotation import interfaces as an_interfaces
 
-from ._compat import Base
-from . import _CreatedNamedNTIIDMixin
+from ZODB.interfaces import IConnection
 
-from nti.dataserver import containers
 from nti.dataserver import sharing
+from nti.dataserver import containers
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils.schema import AdaptingFieldProperty
 
+from ._compat import Base
+from . import _CreatedNamedNTIIDMixin
+from . import interfaces as for_interfaces
 
 @interface.implementer(for_interfaces.IBoard)
 class Board(Base,
@@ -103,21 +101,3 @@ class BoardNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	"""
 	leaf_iface = for_interfaces.IBoard
 
-@interface.implementer(for_interfaces.IClassBoard)
-class ClassBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
-	__external_can_create__ = True
-	__name__ = __default_name__ = 'ClassBoard'
-	_ntiid_type = for_interfaces.NTIID_TYPE_CLASS_BOARD
-	
-@interface.implementer(for_interfaces.IClassBoard)
-@component.adapter(nti_interfaces.IUser)
-def ClassBoardUserAdapter(user):
-	"""
-	A user (teacher) has a class board.
-	Only administrators can create class forums within the board
-	"""
-	annotations = an_interfaces.IAnnotations(user)
-	board = annotations.get(ClassBoard.__default_name__)
-	if board is None:
-		board = _prepare_annotation_board(ClassBoard, for_interfaces.IClassBoard, user, 'Class Board')
-	return board
