@@ -5,8 +5,9 @@
 			i18n_domain="zope">
 
 	<include package="zope.component" />
-	<include package="nti.contentfragments" />
+	
 	<include package="nti.mimetype" />
+	<include package="nti.contentfragments" />
 
 	<!-- Adapters for creating the default objects -->
 	<adapter factory=".forum.PersonalBlogAdapter"
@@ -17,9 +18,6 @@
 			 
 	<adapter factory=".board.GeneralBoardCommunityAdapter"
 			 provides=".interfaces.ICommunityBoard" />
-
-	<adapter factory=".board.ClassBoardUserAdapter"
-			 provides=".interfaces.IClassBoard" />
 			 
 	<adapter provides="zope.location.interfaces.ISublocations"
 			 for=".interfaces.IHeadlineTopic"
@@ -27,7 +25,6 @@
 
 	<adapter factory=".topic.PersonalBlogEntryNameChooser" />
 	<adapter factory=".topic.GeneralForumEntryNameChooser" />
-	<adapter factory=".topic.ClassForumEntryNameChooser" />
 	<adapter factory=".board.BoardNameChooser" />
 	
 	<!-- WeakRefs -->
@@ -46,9 +43,6 @@
 	<utility factory=".ntiids._CommunityBoardResolver" name="Board:GeneralCommunity" />
 	<utility factory=".ntiids._CommunityForumResolver" name="Forum:GeneralCommunity" />
 	<utility factory=".ntiids._CommunityTopicResolver" name="Topic:GeneralCommunity" />
-	<utility factory=".ntiids._ClassBoardResolver" name="Board:GeneralClass" />
-	<utility factory=".ntiids._ClassForumResolver" name="Forum:GeneralClass" />
-	<utility factory=".ntiids._ClassTopicResolver" name="Topic:GeneralClass" />
 
 	<!-- Events -->
 	<subscriber handler=".topic._post_added_to_topic" />
@@ -96,8 +90,8 @@
 			 for=".interfaces.ICommunityBoard"/>
 
 	<adapter factory=".acl._PostACLProvider" />
-
+			 
 	<adapter factory=".acl._ClassForumACLProvider"
-			 for=".interfaces.IClassForum"/>
+			 for=".interfaces.IClassForum"/>		
 			 
 </configure>

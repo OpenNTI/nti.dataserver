@@ -23,14 +23,13 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
-from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver import authorization as nauth
-
 from nti.dataserver.traversal import find_interface
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.authorization_acl import ace_allowing
+from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 
 from . import interfaces as frm_interfaces
-from nti.dataserver import interfaces as nti_interfaces
 
 class _ForumACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
@@ -110,7 +109,6 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	_DENY_ALL = True
 
-
 	def _get_sharing_target_names( self ):
 		try:
 			return self.context.__parent__.flattenedSharingTargetNames
@@ -123,7 +121,6 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 		if topic_creator:
 			acl.append( ace_allowing( topic_creator, nauth.ACT_DELETE, self ) )
 			acl.append( ace_allowing( topic_creator, nauth.ACT_READ, self ) )
-
 
 class _ClassForumACLProvider(_ForumACLProvider):
 	"""
