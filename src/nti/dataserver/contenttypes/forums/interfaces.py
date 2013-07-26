@@ -22,7 +22,7 @@ from zope.container.interfaces import IContentContainer, IContained
 from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 
 from nti.utils import schema
-from nti.utils.schema import Object, Number, Variant
+from nti.utils.schema import Object, Number, Variant, ValidTextLine
 from zope.schema import Int
 
 ### NTIID values
@@ -336,3 +336,4 @@ class IClassForum(ICommunityForum):
 	"""
 	A forum belonging to a particular class.
 	"""
+	Instructors = schema.ListOrTuple(value_type=ValidTextLine(title="uid"), title="user ids", required=False)
