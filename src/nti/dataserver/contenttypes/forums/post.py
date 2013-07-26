@@ -12,21 +12,21 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope.schema.fieldproperty import FieldProperty
+from zope.annotation import interfaces as an_interfaces
 
-from ._compat import Implicit
 from persistent import Persistent
 
 from nti.dataserver import datastructures
 from nti.dataserver import sharing
 
-from ..note import BodyFieldProperty
 from nti.utils.schema import AdaptingFieldProperty
-from nti.utils.property import alias
-from . import _containerIds_from_parent
-from zope.schema.fieldproperty import FieldProperty
 
+from ..note import BodyFieldProperty
+
+from ._compat import Implicit
+from . import _containerIds_from_parent
 from . import interfaces as for_interfaces
-from zope.annotation import interfaces as an_interfaces
 
 @interface.implementer(for_interfaces.IPost, an_interfaces.IAttributeAnnotatable)
 class Post(
@@ -83,7 +83,6 @@ class CommunityHeadlinePost(GeneralHeadlinePost):
 
 @interface.implementer(for_interfaces.IPersonalBlogEntryPost)
 class PersonalBlogEntryPost(HeadlinePost):
-
 	sharingTargets = _AcquiredSharingTargetsProperty()
 
 @interface.implementer(for_interfaces.IPersonalBlogComment)
@@ -99,4 +98,8 @@ class PersonalBlogComment(Post):
 
 @interface.implementer(for_interfaces.IClassHeadlinePost)
 class ClassHeadlinePost(GeneralHeadlinePost):
-	pass
+	sharingTargets = _AcquiredSharingTargetsProperty()
+
+@interface.implementer(for_interfaces.IClassForumComment)
+class ClassForumComment(Post):
+	sharingTargets = _AcquiredSharingTargetsProperty()

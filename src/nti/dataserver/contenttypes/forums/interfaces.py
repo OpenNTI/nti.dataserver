@@ -67,13 +67,13 @@ NTIID_TYPE_POST = 'Post'
 NTIID_TYPE_BLOG_COMMENT = NTIID_TYPE_POST + ':PersonalBlogComment'
 
 #: The subtype of NTIID used to represent a :class:`.IClassBoard`
-NTIID_TYPE_CLASS_BOARD = NTIID_TYPE_GENERAL_BOARD + 'Class'
+NTIID_TYPE_CLASS_BOARD = NTIID_TYPE_BOARD + ':Class'
 
 # The subtype of NTIID used for class topics
-NTIID_TYPE_CLASS_TOPIC = NTIID_TYPE_GENERAL_TOPIC + "Class"
+NTIID_TYPE_CLASS_TOPIC = NTIID_TYPE_TOPIC + ":Class"
 
 #: The subtype of NTIID used to represent a :class:`.IClassForum`
-NTIID_TYPE_CLASS_FORUM = NTIID_TYPE_GENERAL_FORUM + 'Class'
+NTIID_TYPE_CLASS_FORUM = NTIID_TYPE_FORUM + ':Class'
 
 class IPost(IContained, IAcquirer,
 			nti_interfaces.IModeledContent,
@@ -365,3 +365,8 @@ class IClassHeadlineTopic(IGeneralHeadlineTopic,
 	containers(IClassForum)
 	__parent__.required = False
 	headline = schema.Object(IClassHeadlinePost, title="The main, first post of this topic.")
+
+class IClassForumComment(IGeneralPost, nti_interfaces.IShouldHaveTraversablePath):
+	"""Secondary comments in a class topic."""
+	containers(IClassHeadlineTopic)
+	__parent__.required = False
