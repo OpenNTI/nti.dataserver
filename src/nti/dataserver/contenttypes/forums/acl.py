@@ -122,12 +122,13 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 			acl.append( ace_allowing( topic_creator, nauth.ACT_DELETE, self ) )
 			acl.append( ace_allowing( topic_creator, nauth.ACT_READ, self ) )
 
-class _ClassForumACLProvider(_ForumACLProvider):
+class _ClassForumACLProvider(_CommunityForumACLProvider):
 	"""
-	Only the creator and shared users can create new topics within it.
+	Only the shared users can create new topics within it.
 	"""
 
 	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ, nauth.ACT_CREATE)
 
 	def _get_sharing_target_names(self):
 		return self.context.flattenedSharingTargetNames
+
