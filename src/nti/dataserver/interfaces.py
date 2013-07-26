@@ -695,6 +695,16 @@ class ICoppaUserWithoutAgreement(ICoppaUser):
 	and the two states are mutually exclusive.
 	"""
 
+class IInstructor(IUser):
+	"""
+	A marker interface to denote an instructor
+	"""
+
+class IStudent(IUser):
+	"""
+	A marker interface to denote a student
+	"""
+	
 # ## ACLs
 
 class IACE(interface.Interface):
