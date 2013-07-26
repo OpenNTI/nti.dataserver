@@ -96,21 +96,24 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 		# Support raw body, not wrapped
 		if isinstance(body, six.string_types ):
 			body = [body]
+
 		for i, item in enumerate(body):
-			if not nti_interfaces.ICanvas.providedBy( item ):
+			if not (nti_interfaces.ICanvas.providedBy(item) or nti_interfaces.IMedia.providedBy(item)):
 				continue
-			ext_val = getattr( item, '_v_updated_from_external_source', {} )
+
+			ext_val = getattr(item, '_v_updated_from_external_source', {})
 			if 'NTIID' not in ext_val:
 				continue
-			existing_canvas = find_object_with_ntiid( ext_val['NTIID'] )
-			if getattr( existing_canvas, '__parent__', None ) is not note:
+			existing_object = find_object_with_ntiid(ext_val['NTIID'])
+			if getattr(existing_object, '__parent__', None) is not note:
 				continue
 			# Ok, so we found one of my children. Update it in place. Don't notify for it,
 			# so that it doesn't falsely get in a stream or whatever
-			__traceback_info__ = i, item, ext_val, existing_canvas, note
-			update_from_external_object( existing_canvas, ext_val, context=context, notify=False )
-			existing_canvas.updateLastMod()
-			body[i] = existing_canvas
+			__traceback_info__ = i, item, ext_val, existing_object, note
+			update_from_external_object(existing_object, ext_val, context=context, notify=False)
+			existing_object.updateLastMod()
+			body[i] = existing_object
+				
 		return body
 
 	__external_resolvers__ = { 'body': _resolve_external_body }

@@ -809,7 +809,8 @@ def CompoundModeledContentBody():
 									""",
 								  value_type=Variant((SanitizedHTMLContentFragment(min_length=1, description="HTML content that is sanitized and non-empty"),
 													   PlainText(min_length=1, description="Plain text that is sanitized and non-empty"),
-													   Object(ICanvas, description="A :class:`.ICanvas`")),
+													   Object(ICanvas, description="A :class:`.ICanvas`"),
+													   Object(IMedia, description="A :class:`.IMedia`")),
 													 title="A body part of a note",
 													 __name__='body'),
 								  min_length=1,
@@ -1161,6 +1162,24 @@ class ICanvas(IShareableModeledContent, IThreadable):
 		"""
 		Adds the shape to the top of the list of shapes.
 		"""
+
+class IMedia(IShareableModeledContent, IThreadable):
+	"""
+	A media object
+	"""
+
+class IMediaSource(IMedia):
+	href = ValidTextLine(title=u'media URI', required=False)
+
+class IVideoSource(IMediaSource):
+	"""
+	A video source object
+	"""
+
+class IAudioSource(IMediaSource):
+	"""
+	A video source object
+	"""
 
 class ISelectedRange(IShareableModeledContent, IAnchoredRepresentation, IUserTaggedContent):
 	"""

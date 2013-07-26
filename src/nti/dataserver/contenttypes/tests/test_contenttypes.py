@@ -30,7 +30,9 @@ from nti.tests import verifiably_provides
 from nti.tests import is_true
 from nti.dataserver import intid_wref
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Bookmark as _Bookmark, Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
+from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Bookmark as _Bookmark
+from nti.dataserver.contenttypes import Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
+from nti.dataserver.contenttypes import VideoSource
 from nti.dataserver.contenttypes import NonpersistentCanvasPathShape
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
@@ -526,6 +528,32 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( n.body[0], is_( Canvas ) )
 		assert_that( n.body[0][0], is_( NonpersistentCanvasPathShape ) )
 		assert_that( n.body[0][0].closed, same_instance( True ) )
+
+	@WithMockDS
+	def test_external_body_with_media(self):
+		n = Note()
+		m = VideoSource()
+		m.href = u"http://foo.org/video.mp4"
+		
+		n.body = [m]
+		n.updateLastMod()
+		ext = to_external_object(n)
+		del ext['Last Modified']
+		del ext['CreatedTime']
+		assert_that(ext, has_entries("Class", "Note",
+									 "body", only_contains(has_entries('Class', u'VideoSource',
+																	   'href', u'http://foo.org/video.mp4',
+																	   'CreatedTime', m.createdTime))))
+
+
+		n = Note()
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
+			update_from_external_object(n, ext, context=ds)
+
+		assert_that(n.body[0], is_(VideoSource))
+		assert_that(n.body[0].href, is_(u"http://foo.org/video.mp4"))
+
 
 	@WithMockDS
 	def test_external_body_mimetypes(self):

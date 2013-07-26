@@ -22,12 +22,12 @@
 	<ext:registerMimeFactories module=".redaction" />
 	<ext:registerMimeFactories module=".canvas" />
 
-	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
-	<adapter factory=".canvas.CanvasInternalObjectIO" />
-	<adapter factory=".highlight.HighlightInternalObjectIO"/>
 	<adapter factory=".note.NoteInternalObjectIO" />
+	<adapter factory=".media.MediaInternalObjectIO" />
+	<adapter factory=".canvas.CanvasInternalObjectIO" />
+	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
+	<adapter factory=".highlight.HighlightInternalObjectIO"/>
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
-
 
 	<!-- Blob file URL storage for canvas images -->
 	<exclude package="zope.file" file="browser.zcml" />

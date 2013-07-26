@@ -25,6 +25,11 @@ from .highlight import Highlight
 from .note import Note
 from .redaction import Redaction
 
+from .media import Media
+from .media import MediaSource
+from .media import VideoSource
+from .media import AudioSource
+
 from .canvas import Canvas
 from .canvas import CanvasAffineTransform
 from .canvas import CanvasCircleShape
