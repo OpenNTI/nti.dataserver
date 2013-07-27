@@ -1169,7 +1169,7 @@ class IMedia(IShareableModeledContent, IThreadable):
 	"""
 
 class IEmbeddedMedia(IMedia):
-	href = ValidTextLine(title=u'media URI', required=True)
+	embedURL = ValidTextLine(title=u'media URL', required=True)
 	type = ValidTextLine(title=u'media type', required=False)
 
 class IEmbeddedVideo(IEmbeddedMedia):
