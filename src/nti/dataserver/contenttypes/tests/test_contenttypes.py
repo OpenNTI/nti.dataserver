@@ -533,7 +533,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 	def test_external_body_with_media(self):
 		n = Note()
 		m = EmbeddedVideo()
-		m.href = u"http://foo.org/video.mp4"
+		m.embedURL = u"http://foo.org/video.mp4"
 		
 		n.body = [m]
 		n.updateLastMod()
@@ -552,7 +552,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 			update_from_external_object(n, ext, context=ds)
 
 		assert_that(n.body[0], is_(EmbeddedVideo))
-		assert_that(n.body[0].href, is_(u"http://foo.org/video.mp4"))
+		assert_that(n.body[0].embedURL, is_(u"http://foo.org/video.mp4"))
 
 
 	@WithMockDS
