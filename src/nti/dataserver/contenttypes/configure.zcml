@@ -21,6 +21,7 @@
 	<ext:registerMimeFactories module=".highlight" />
 	<ext:registerMimeFactories module=".redaction" />
 	<ext:registerMimeFactories module=".canvas" />
+	<ext:registerMimeFactories module=".media" />
 
 	<adapter factory=".note.NoteInternalObjectIO" />
 	<adapter factory=".media.MediaInternalObjectIO" />
