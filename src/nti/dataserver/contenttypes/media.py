@@ -30,22 +30,17 @@ class Media(ThreadableMixin, UserContentRoot, zcontained.Contained, SchemaConfig
 	def __init__(self):
 		super(Media, self).__init__()
 
-@interface.implementer(nti_interfaces.IMediaSource)
-class MediaSource(Media):
-	__external_can_create__ = True
-	mime_type = mimeType = 'application/vnd.nextthought.embeddedmedia'
+@interface.implementer(nti_interfaces.IEmbeddedMedia)
+class EmbeddedMedia(Media):
+	pass
 
-@interface.implementer(nti_interfaces.IVideoSource)
-class VideoSource(MediaSource):
-	__external_can_create__ = True
-	mime_type = mimeType = 'application/vnd.nextthought.embeddedvideo'
-	createDirectFieldProperties(nti_interfaces.IVideoSource)
+@interface.implementer(nti_interfaces.IEmbeddedVideo)
+class EmbeddedVideo(EmbeddedMedia):
+	createDirectFieldProperties(nti_interfaces.IEmbeddedVideo)
 
-@interface.implementer(nti_interfaces.IAudioSource)
-class AudioSource(MediaSource):
-	__external_can_create__ = True
-	mime_type = mimeType = 'application/vnd.nextthought.embeddedaudio'
-	createDirectFieldProperties(nti_interfaces.IAudioSource)
+@interface.implementer(nti_interfaces.IEmbeddedAudio)
+class EmbeddedAudio(EmbeddedMedia):
+	createDirectFieldProperties(nti_interfaces.IEmbeddedAudio)
 
 @component.adapter(nti_interfaces.IMedia)
 class MediaInternalObjectIO(UserContentRootInternalObjectIO):
