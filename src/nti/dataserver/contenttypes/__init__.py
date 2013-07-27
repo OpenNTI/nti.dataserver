@@ -26,9 +26,9 @@ from .note import Note
 from .redaction import Redaction
 
 from .media import Media
-from .media import MediaSource
-from .media import VideoSource
-from .media import AudioSource
+from .media import EmbeddedMedia
+from .media import EmbeddedVideo
+from .media import EmbeddedAudio
 
 from .canvas import Canvas
 from .canvas import CanvasAffineTransform

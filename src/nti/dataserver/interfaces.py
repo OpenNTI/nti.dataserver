@@ -1168,15 +1168,15 @@ class IMedia(IShareableModeledContent, IThreadable):
 	A media object
 	"""
 
-class IMediaSource(IMedia):
+class IEmbeddedMedia(IMedia):
 	href = ValidTextLine(title=u'media URI', required=False)
 
-class IVideoSource(IMediaSource):
+class IEmbeddedVideo(IEmbeddedMedia):
 	"""
 	A video source object
 	"""
 
-class IAudioSource(IMediaSource):
+class IEmbeddedAudio(IEmbeddedMedia):
 	"""
 	A video source object
 	"""
