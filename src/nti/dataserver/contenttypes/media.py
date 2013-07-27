@@ -32,14 +32,19 @@ class Media(ThreadableMixin, UserContentRoot, zcontained.Contained, SchemaConfig
 
 @interface.implementer(nti_interfaces.IMediaSource)
 class MediaSource(Media):
-	pass
+	__external_can_create__ = True
+	mime_type = mimeType = 'application/vnd.nextthought.embeddedmedia'
 
 @interface.implementer(nti_interfaces.IVideoSource)
 class VideoSource(MediaSource):
+	__external_can_create__ = True
+	mime_type = mimeType = 'application/vnd.nextthought.embeddedvideo'
 	createDirectFieldProperties(nti_interfaces.IVideoSource)
 
 @interface.implementer(nti_interfaces.IAudioSource)
 class AudioSource(MediaSource):
+	__external_can_create__ = True
+	mime_type = mimeType = 'application/vnd.nextthought.embeddedaudio'
 	createDirectFieldProperties(nti_interfaces.IAudioSource)
 
 @component.adapter(nti_interfaces.IMedia)
