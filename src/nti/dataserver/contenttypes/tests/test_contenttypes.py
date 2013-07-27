@@ -542,7 +542,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		del ext['CreatedTime']
 		assert_that(ext, has_entries("Class", "Note",
 									 "body", only_contains(has_entries('Class', u'EmbeddedVideo',
-																	   'href', u'http://foo.org/video.mp4',
+																	   'embedURL', u'http://foo.org/video.mp4',
 																	   'CreatedTime', m.createdTime))))
 
 
