@@ -5,11 +5,11 @@ View functions relating to searching for users.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
 import operator
 
 from zope import component
@@ -20,20 +20,19 @@ from ZODB.utils import u64
 
 from pyramid.view import view_config
 
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
-from nti.dataserver import mimetype as nti_mimetype
 from nti.dataserver import authorization as nauth
+from nti.dataserver import mimetype as nti_mimetype
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
-
 
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
-from . import interfaces as app_interfaces
-from . import site_policies
+from .policies import site_policies
 from . import httpexceptions as hexc
 from ._view_utils import get_remote_user
+from . import interfaces as app_interfaces
 
 def _is_valid_search( search_term, remote_user ):
 	"""Should the search be executed?
@@ -247,9 +246,9 @@ def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains
 		else:
 			names = user_interfaces.IFriendlyNamed( x, None )
 			if names:
-				if op( (names.realname or '').lower(), search_term ) \
-				  or op( (names.alias or '').lower(), search_term ):
-				   result.add( x )
+				if	op((names.realname or '').lower(), search_term) \
+					or op((names.alias or '').lower(), search_term):
+					result.add(x)
 
 	if not ignore_fl:
 		# Given a remote user, add matching friends lists, too

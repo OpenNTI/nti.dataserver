@@ -34,10 +34,7 @@ import nti.socketio.session_consumer
 
 from nti.socketio.persistent_session import AbstractSession
 
-#from nti.socketio import interfaces as socketio_interfaces
-import nti.socketio.protocol
-
-from nti.appserver import site_policies
+from nti.appserver.policies import site_policies
 
 class Session( AbstractSession ):
 	"""

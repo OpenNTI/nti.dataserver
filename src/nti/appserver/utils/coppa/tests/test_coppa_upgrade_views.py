@@ -13,7 +13,7 @@ from datetime import date
 
 from zope import interface
 
-from nti.appserver import site_policies
+from nti.appserver.policies import site_policies
 from nti.appserver.link_providers import flag_link_provider
 
 from nti.dataserver import users

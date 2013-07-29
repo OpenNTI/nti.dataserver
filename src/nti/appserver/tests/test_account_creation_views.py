@@ -37,17 +37,15 @@ import itertools
 from nti.appserver.workspaces import UserService
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.account_creation_views import account_create_view, account_preflight_view
-from nti.appserver import site_policies
-from nti.appserver import z3c_zpt
+from nti.appserver.policies import site_policies
 from nti.appserver.tests import NewRequestSharedConfiguringTestBase as SharedConfiguringTestBase, ITestMailDelivery
 
 import pyramid.httpexceptions as hexc
-import pyramid.interfaces
 
 from nti.dataserver.interfaces import IShardLayout, INewUserPlacer
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
-import nti.dataserver.tests.mock_dataserver
+
 from nti.dataserver import shards
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.externalization.externalization import to_json_representation
@@ -392,7 +390,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 
 		assert_that( profile_schema,
 					 has_entry( 'affiliation',
-								has_entry( 'type', 'nti.appserver.site_policies.school' ) ) )
+								has_entry('type', 'nti.appserver.site_policies.school')))
 
 		assert_that( profile_schema,
 					 has_entry( 'home_page',
@@ -848,7 +846,8 @@ class TestCreateView(_AbstractValidationViewBase):
 
 		# Which means we sent no mail, except to the parent
 		assert_that( mailer.queue, has_length( 1 ) )
-		from .. import user_policies
+
+		from ..policies import user_policies
 		assert_that( IAnnotations(new_user), has_entry( user_policies.CONTACT_EMAIL_RECOVERY_ANNOTATION, '823776525776c8f23a87176c59d25759da7a52c4' ) )
 
 
@@ -1008,8 +1007,9 @@ class TestCreateView(_AbstractValidationViewBase):
 		finally:
 			component.getGlobalSiteManager().unregisterUtility( utility, provided=INewUserPlacer, name='example.com' )
 
-from .test_application import ApplicationTestBase, WithSharedApplicationMockDS, SharedApplicationTestBase
 from .test_application import TestApp
+from .test_application import WithSharedApplicationMockDS, SharedApplicationTestBase
+
 from nti.dataserver.tests import mock_dataserver
 
 class _AbstractApplicationCreateUserTest(SharedApplicationTestBase):
@@ -1068,7 +1068,7 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
 
 		path = b'/dataserver2/users/@@account.create'
 
-		for i in range(50):
+		for _ in range(50):
 			res = app.post( path, data, extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'} )
 
 			assert_that( res, has_property( 'status_int', 201 ) )
@@ -1128,7 +1128,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 	def test_create_user_mathcounts_policy_censors_profile_fields( self ):
 
 		app = TestApp( self.app )
-		from .test_application_censoring import bad_val, censored_val
+		from ..policies.tests.test_application_censoring import bad_val, censored_val
 
 
 		data = to_json_representation(  {'Username': 'jason2_nextthought_com',
@@ -1318,7 +1318,6 @@ def main(email=None, uname=None, cname=None):
 
 	import nti.dataserver.utils
 	from pyramid.testing import setUp as psetUp
-	from pyramid.testing import tearDown as ptearDown
 	from pyramid.testing import DummyRequest
 	nti.dataserver.utils._configure( set_up_packages=('nti.appserver',) )
 	request = DummyRequest()
@@ -1333,8 +1332,8 @@ def main(email=None, uname=None, cname=None):
 	import nti.appserver.z3c_zpt
 	from pyramid.interfaces import IRendererFactory
 	component.provideUtility( nti.appserver.z3c_zpt.renderer_factory, IRendererFactory, name='.pt' )
-	import nti.appserver.user_policies
-	nti.appserver.user_policies.send_consent_request_on_new_coppa_account( FakeUser(), FakeEvent )
+	import nti.appserver.policies.user_policies
+	nti.appserver.policies.user_policies.send_consent_request_on_new_coppa_account(FakeUser(), FakeEvent)
 
 	import transaction
 	transaction.commit()

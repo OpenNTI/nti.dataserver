@@ -14,7 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 from pyramid.threadlocal import get_current_request
 
 from nti.appserver._email_utils import queue_simple_html_text_email
-from nti.appserver import site_policies
+from nti.appserver.policies import site_policies
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces

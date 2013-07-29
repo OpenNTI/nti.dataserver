@@ -26,9 +26,11 @@
 	<!-- Languages -->
 	<!-- Pyramid requests, via Zope -->
 	<adapter factory="._pyramid_zope_integrations.PyramidBrowserPreferredLanguages" />
+	
 	<!-- Zope Requests. This is also cacheable. -->
 	<adapter factory="zope.publisher.browser.ModifiableBrowserLanguages"
 			 provides="zope.i18n.interfaces.IModifiableUserPreferredLanguages"/>
+			 
 	<!-- Requests themselves -->
 	<adapter factory="._pyramid_zope_integrations.PyramidZopeRequestProxy" />
 
@@ -45,16 +47,16 @@
 
 	<!-- __________________ -->
 
-	<!-- Account Creation -->
-	<utility factory=".site_policies.RequestAwareUserPlacer" />
-
 	<!-- Resource traversal -->
 	<adapter factory="._dataserver_pyramid_traversal.Dataserver2RootTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
+			 
 	<adapter factory="._dataserver_pyramid_traversal.UserTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
+			 
 	<adapter factory="._dataserver_pyramid_traversal.CommunityTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
+			 
 	<adapter factory="._dataserver_pyramid_traversal.ProviderTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
 
@@ -76,20 +78,25 @@
 
 	<adapter factory=".pyramid_renderers.UseTheRequestContextCacheController"
 			 for=".interfaces.IUseTheRequestContextUGDExternalCollection" />
+			 
 	<adapter factory=".pyramid_renderers.UseTheRequestContextCacheController"
 			 for=".interfaces.ILibraryCollection" />
 
 	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+				
 	<subscriber factory="._adapters._DFLUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+				
 	<subscriber factory=".dfl_views.DFLGetMembershipLinkProvider"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				
 	<subscriber factory="._adapters._EnglishFirstAndLastNameDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<subscriber factory=".contentlibrary_views._ContentUnitAssessmentItemDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
+				
 	<adapter factory=".contentlibrary_views._ContainerContentUnitPreferencesFactory"
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
 			 provides=".interfaces.IContentUnitPreferences" />
@@ -104,6 +111,7 @@
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
+			 
 	<adapter factory=".contentlibrary_views._ContainerFieldsTraversable"
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
@@ -113,6 +121,7 @@
 			 for="nti.contentlibrary.interfaces.IContentUnit"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
+			 
 	<adapter factory=".contentlibrary_views._ContentUnitFieldsTraversable"
 			 for="nti.contentlibrary.interfaces.IContentUnit pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
@@ -148,6 +157,7 @@
 	<!-- Favorites/liking -->
 	<subscriber factory=".liking_views.FavoriteLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				
 	<subscriber factory=".liking_views.LikeLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
@@ -184,6 +194,7 @@
 	<adapter factory=".ugd_edit_views._question_submission_transformer"
 			 for="nti.assessment.interfaces.IQuestionSubmission"
 			 provides=".interfaces.INewObjectTransformer" />
+			 
 	<adapter factory=".ugd_edit_views._question_set_submission_transformer"
 			 for="nti.assessment.interfaces.IQuestionSetSubmission"
 			 provides=".interfaces.INewObjectTransformer" />
@@ -209,6 +220,7 @@
 			 for="nti.dataserver.interfaces.IModeledContent pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
+			 
 	<adapter factory="._adapters.UserExternalFieldTraverser"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
@@ -218,6 +230,7 @@
 			 for="nti.dataserver.interfaces.IModeledContent"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
+			 
 	<adapter factory="._adapters.UserExternalFieldTraverser"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides="zope.traversing.interfaces.ITraversable"
@@ -236,10 +249,12 @@
 	<adapter for="* pyramid.interfaces.IRequest"
 			 factory="zope.traversing.adapters.DefaultTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
+			 
 	<adapter name="adapter"
 			 for="* pyramid.interfaces.IRequest"
 			 factory="._dataserver_pyramid_traversal.adapter_request"
 			 provides="zope.traversing.interfaces.ITraversable" />
+			 
 	<!-- Resources -->
 	<adapter name="resource"
 			 for="* pyramid.interfaces.IRequest"
@@ -296,6 +311,7 @@
 	<class class="nti.dataserver.users.FriendsList">
 		<implements interface=".interfaces.IUnModifiedInResponse" />
 	</class>
+	
 	<class class=".workspaces.FriendsListContainerCollection">
 		<implements interface=".interfaces.IUnModifiedInResponse" />
 	</class>
@@ -325,9 +341,7 @@
 	<include package="." file="configure_tables.zcml" />
 	<include package="." file="configure_feeds.zcml" />
 	<include package="z3c.ptcompat" /> <!-- regular pagetemplate usage uses chamelean engine -->
-	<!-- Content censoring -->
-	<include package="." file="configure_censor.zcml" />
-
+	
 	<!-- Content restrictions -->
 	<!--
 	Sadly, the include overrides only works at the top-level (?)
@@ -340,26 +354,7 @@
 
 	<includeOverrides file="overrides.zcml" />
 
-	<!-- Named site policies -->
-	<include package="." file="configure_site_policies.zcml" />
-	<!-- User-type policies -->
-	<include package="." file="configure_user_policies.zcml" />
-
-	<include package="." file="configure_site_policy_adult_base.zcml" />
-	<include package="." file="configure_site_policy_alpha.zcml" />
-	<include package="." file="configure_site_policy_collegiate.zcml" />
-	<include package="." file="configure_site_policy_columbia.zcml" />
-	<include package="." file="configure_site_policy_demo.zcml" />
-	<include package="." file="configure_site_policy_fintimes.zcml" />
-	<include package="." file="configure_site_policy_fintech.zcml" />
-	<include package="." file="configure_site_policy_gloriamundi.zcml" />
-	<include package="." file="configure_site_policy_law.zcml" />
-	<include package="." file="configure_site_policy_litworld.zcml" />
-	<include package="." file="configure_site_policy_mathcounts.zcml" />
-	<include package="." file="configure_site_policy_prmia.zcml" />
-	<include package="." file="configure_site_policy_rwanda.zcml" />
-	<include package="." file="configure_site_policy_testmathcounts.zcml" />
-
+	<include package=".policies" file="configure.zcml" />
 	<include package="." file="configure_invitations.zcml" />
 	<include package="." file="configure_store.zcml" />
 	<include package="." file="configure_salesforce.zcml" />

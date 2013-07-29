@@ -17,12 +17,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import none
 from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_length
-from hamcrest import has_entry
-from hamcrest import is_in
 from nose.tools import assert_raises
 
 import nti.tests
@@ -34,7 +31,7 @@ from zope.component.hooks import site
 from zope.configuration.exceptions import ConfigurationError
 
 from nti.dataserver.site import _TrivialSite
-from nti.appserver.sites import MATHCOUNTS
+from nti.appserver.policies.sites import MATHCOUNTS
 
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -54,11 +51,11 @@ ZCML_STRING = """
 		<include package="." file="meta.zcml" />
 
 		<utility
-			component="nti.appserver.sites.MATHCOUNTS"
+			component="nti.appserver.policies.sites.MATHCOUNTS"
 			provides="zope.component.interfaces.IComponents"
 			name="mathcounts.nextthought.com" />
 
-		<registerIn registry="nti.appserver.sites.MATHCOUNTS">
+		<registerIn registry="nti.appserver.policies.sites.MATHCOUNTS">
 			<link:userLink
 				name='foo.bar'
 				minGeneration='1234'
@@ -69,8 +66,6 @@ ZCML_STRING = """
 		"""
 
 class TestZcml(nti.tests.ConfiguringTestBase):
-
-
 
 	def test_site_registrations(self):
 		"Can we add new registrations in a sub-site?"

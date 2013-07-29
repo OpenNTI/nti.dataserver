@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -14,14 +9,12 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_property
-from hamcrest import has_entry
 from hamcrest import is_in
 
 import nti.tests
@@ -49,7 +42,7 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 
 	def test_site_registrations(self):
 		"Can we add new registrations in a sub-site?"
-		from nti.appserver import sites
+
 		self.configure_packages( set_up_packages=('nti.appserver.capabilities',) )
 		zcml_string = """
 		<configure xmlns="http://namespaces.zope.org/zope"
@@ -61,11 +54,11 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 		<include package="z3c.baseregistry" file="meta.zcml" />
 
 		<utility
-			component="nti.appserver.sites.MATHCOUNTS"
+			component="nti.appserver.policies.sites.MATHCOUNTS"
 			provides="zope.component.interfaces.IComponents"
 			name="mathcounts.nextthought.com" />
 
-		<registerIn registry="nti.appserver.sites.MATHCOUNTS">
+		<registerIn registry="nti.appserver.policies.sites.MATHCOUNTS">
 			<cap:capability
 			id='nti.only_in_mathcounts'
 			title="only_in_mathcounts"/>
@@ -75,7 +68,7 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 		self.configure_string( zcml_string )
 		self._check_cap_present() # the defaults are there
 		from nti.dataserver.site import _TrivialSite
-		from nti.appserver.sites import MATHCOUNTS
+		from nti.appserver.policies.sites import MATHCOUNTS
 
 		# First, it's not present globally, in any utility
 		cap_name = 'nti.only_in_mathcounts'

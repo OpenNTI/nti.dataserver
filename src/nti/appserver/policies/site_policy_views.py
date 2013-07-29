@@ -11,13 +11,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
-
-from nti.appserver import site_policies
-from nti.appserver import httpexceptions as hexc
-
 from pyramid.view import view_config
 
+from zope import interface
+
+from nti.appserver import httpexceptions as hexc
+
+from . import site_policies
 
 class ISiteCSSMarker(interface.Interface):
 	pass

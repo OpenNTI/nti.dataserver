@@ -18,7 +18,7 @@ from urllib import quote as UQ
 from zope import interface
 from zope import component
 
-import nti.appserver.censor_policies
+from nti.appserver.policies import censor_policies
 
 import nti.contentfragments.censor
 from nti.contentfragments.interfaces import IPlainTextContentFragment
@@ -42,8 +42,8 @@ from nti.socketio import interfaces as sio_interfaces
 
 from nti.dataserver.tests import mock_dataserver
 
-from .test_application import TestApp
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from nti.appserver.tests.test_application import TestApp
+from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
 #class TestApplicationAssessment(ApplicationTestBase):
 #	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
@@ -134,7 +134,7 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 		assert_that( args[0], has_property( 'creator', Session.owner ) )
 		args[0].creator = self
 
-		assert_that( nti.appserver.censor_policies.creator_and_location_censor_policy( '', args[0] ),
+		assert_that(censor_policies.creator_and_location_censor_policy('', args[0]),
 					 is_( none() ) )
 
 	@WithSharedApplicationMockDS
@@ -185,7 +185,7 @@ class TestApplicationCensoringWithDefaultPolicyForAllUsers(_CensorTestMixin,Shar
 		super(TestApplicationCensoringWithDefaultPolicyForAllUsers,cls).setUpClass()
 		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
 								  adapts=(nti.dataserver.interfaces.IUser, None) )
-		component.provideAdapter( nti.appserver.censor_policies.user_filesystem_censor_policy )
+		component.provideAdapter(censor_policies.user_filesystem_censor_policy)
 
 	@WithSharedApplicationMockDS
 	def test_censoring_can_be_disabled_by_file_in_library( self ):

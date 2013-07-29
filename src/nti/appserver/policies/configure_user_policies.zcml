@@ -4,7 +4,7 @@
 		   xmlns:link="http://nextthought.com/ntp/link_providers">
 
 	<include package="zope.component" />
-	<include package=".link_providers" file="meta.zcml" />
+	<include package="nti.appserver.link_providers" file="meta.zcml" />
 
 	<!-- Information used during sending/retrieving contact emails. -->
 	<adapter factory=".user_policies.ContactEmailRecovery" />
@@ -19,6 +19,7 @@
 	<subscriber handler=".user_policies.send_consent_request_on_new_coppa_account" />
 	<subscriber handler=".user_policies.send_consent_request_when_contact_email_changes" />
 	<subscriber handler=".user_policies.send_consent_ack_email" />
+	
 	<!--
 	Default to "sending" new object emails in dev mode.
 	These will actually just get queued to disk in the usual case.
@@ -27,7 +28,7 @@
 	to site.zcml, and give it a 'name' attribute matching the username
 	of the user that wants email.
 	-->
-	<utility factory="._stream_event_listeners.TemporaryChangeEmailMarker"
+	<utility factory="nti.appserver._stream_event_listeners.TemporaryChangeEmailMarker"
 			 zcml:condition="have devmode" />
 
 	<!-- Filter capabilities -->
@@ -70,15 +71,15 @@
 		 configure_mathcounts.zcml now)
 	-->
 	<adapter
-		factory="._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
+		factory="nti.appserver._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
 		for=".site_policies.IMathcountsCoppaUserWithAgreement" />
 
 	<adapter
-		factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
+		factory="nti.appserver._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
 		for=".site_policies.IMathcountsCoppaUserWithoutAgreement" />
 
 	<adapter
-		factory="._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
+		factory="nti.appserver._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
 		for=".site_policies.IMathcountsUser" />
 
 	<!-- Privacy links as needed -->

@@ -1,7 +1,7 @@
 <!-- -*- mode: nxml -*- -->
-<configure
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:zcml="http://namespaces.zope.org/zcml">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+			
 	<include package="zope.component" />
 	<include package="z3c.baseregistry" file="meta.zcml" />
 
@@ -13,7 +13,6 @@
 	<registerIn registry=".sites.COLLEGIATE">
 
 		<utility factory=".site_policies.CollegiateSitePolicyEventListener" />
-
 
 		<adapter factory="nti.contentfragments.censor.DefaultCensoredContentPolicy"
 				 provides="nti.contentfragments.interfaces.ICensoredContentPolicy"

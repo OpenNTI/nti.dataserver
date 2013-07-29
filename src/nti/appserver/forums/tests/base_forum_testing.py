@@ -23,7 +23,6 @@ is_not = does_not
 from hamcrest import not_none
 from hamcrest import has_item
 from hamcrest import contains
-from hamcrest import contains_inanyorder
 from hamcrest import contains_string
 from hamcrest import none
 from hamcrest import starts_with
@@ -37,16 +36,14 @@ from hamcrest import has_key
 
 from nti.tests import is_empty
 from nti.tests import time_monotonically_increases
-import fudge
 
 from nti.appserver.tests.test_application import TestApp as _TestApp
-from nti.appserver.tests import test_application_censoring
+from nti.appserver.policies.tests import test_application_censoring
 
 import datetime
 import webob.datetime_utils
 
 from zope import lifecycleevent
-from zope import interface
 from zope.component import eventtesting
 from zope.intid.interfaces import IIntIdRemovedEvent
 from zope.location.interfaces import ISublocations

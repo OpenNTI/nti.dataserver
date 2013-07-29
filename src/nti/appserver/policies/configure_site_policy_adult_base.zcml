@@ -15,12 +15,13 @@
 
 	<registerIn registry=".sites.BASEADULT">
 		<link:userLink
-			named='.logon.REL_INITIAL_WELCOME_PAGE'
+			named='nti.appserver.logon.REL_INITIAL_WELCOME_PAGE'
 			minGeneration='20130313'
 			url='/NextThoughtWebApp/content/welcome/welcome.html'
 			mimeType='text/html'/>
+			
 		<link:userLink
-			named='.logon.REL_PERMANENT_WELCOME_PAGE'
+			named='nti.appserver.logon.REL_PERMANENT_WELCOME_PAGE'
 			url='/NextThoughtWebApp/content/welcome/welcome.html'
 			mimeType='text/html'/>
 	</registerIn>

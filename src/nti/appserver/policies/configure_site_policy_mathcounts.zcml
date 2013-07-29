@@ -1,7 +1,7 @@
 <!-- -*- mode: nxml -*- -->
-<configure
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:zcml="http://namespaces.zope.org/zcml">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+			
 	<include package="zope.component" />
 	<include package="z3c.baseregistry" file="meta.zcml" />
 
@@ -28,13 +28,13 @@
 			we force the value returned for alias to be the username as well, even if you
 			have something else defined.
 		-->
-		<adapter factory="._adapters._NoOpUserSearchPolicyAndRealnameStripper"
+		<adapter factory="nti.appserver._adapters._NoOpUserSearchPolicyAndRealnameStripper"
 				 for="nti.dataserver.interfaces.IUser"
-				 provides=".interfaces.IUserSearchPolicy" />
+				 provides="nti.appserver.interfaces.IUserSearchPolicy" />
 
 
 		<!-- Likewise, we never reveal real names -->
-		<adapter factory="._adapters._NoOpUserSearchPolicyAndRealnameStripper"
+		<adapter factory="nti.appserver._adapters._NoOpUserSearchPolicyAndRealnameStripper"
 				 provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
 
