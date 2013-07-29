@@ -25,23 +25,23 @@ class TestTimeLineRange(ConfiguringTestBase):
 					is_(clazz(**kwargs)))
 
 	def test_default_verifies_externalization(self):
-		self.verify(timeline.TimeContentPointer, interfaces.ITimeContentPointer, {'role':"start", 'seconds':1.0})
+		self.verify(timeline.TimeContentPointer, interfaces.ITimeContentPointer, {'role':"start", 'seconds':1})
 
 		self.verify(timeline.TimeRangeDescription, interfaces.ITimeRangeDescription,
 		 		    {'seriesId':"myseries",
-		 			 'start':timeline.TimeContentPointer(role='start', seconds=1.0),
-			 		 'end':timeline.TimeContentPointer(role='end', seconds=2.0)})
+		 			 'start':timeline.TimeContentPointer(role='start', seconds=1),
+			 		 'end':timeline.TimeContentPointer(role='end', seconds=2)})
 
 		self.verify(timeline.TranscriptContentPointer, interfaces.ITranscriptContentPointer,
-		 		    {'role':"start", 'seconds':1.0,
+		 		    {'role':"start", 'seconds':1,
 		 			 'pointer':contentrange.DomContentPointer(elementId='foo', role='start', elementTagName='p'),
 			 		 'cueid':'myid'})
 
 		self.verify(timeline.TranscriptRangeDescription, interfaces.ITranscriptRangeDescription,
 		 		    {'seriesId':"myseries",
-					 'start':timeline.TranscriptContentPointer(role="start", seconds=1.0, cueid='myid',
+					 'start':timeline.TranscriptContentPointer(role="start", seconds=1, cueid='myid',
 															   pointer=contentrange.DomContentPointer(elementId='foo', role='start', elementTagName='p')),
-		 			 'end':timeline.TranscriptContentPointer(role="end", seconds=1.0, cueid='myid',
+		 			 'end':timeline.TranscriptContentPointer(role="end", seconds=1, cueid='myid',
 															 pointer=contentrange.DomContentPointer(elementId='foo', role='end', elementTagName='p'))})
 
 
