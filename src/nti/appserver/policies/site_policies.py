@@ -15,42 +15,55 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)\
+logger = __import__('logging').getLogger(__name__)
+
+import urllib
+import datetime
+import nameparser
 
 from nti.appserver import MessageFactory as _
 
+import zope.annotation
 from zope import component
-from zope.component.interfaces import IComponents
 from zope import interface
-from zope import schema
 from zope.event import notify
+from zope.interface.common.idatetime import IDate
+from zope.component.interfaces import IComponents
+from zope.schema import interfaces as sch_interfaces
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+
 from ZODB.loglevels import TRACE
 
 from pyramid.threadlocal import get_current_request
 
-from zope.schema import interfaces as sch_interfaces
+from nti.appserver import interfaces as app_interfaces
+from nti.appserver._email_utils import queue_simple_html_text_email
+
+from nti.contentfragments import censor
+
 from nti.contentlibrary import interfaces as lib_interfaces
+
+from nti.dataserver import users
+from nti.dataserver.users import user_profile
+from nti.dataserver import shards as nti_shards
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
-from nti.appserver import interfaces as app_interfaces
+
 from nti.externalization import interfaces as ext_interfaces
 
 from nti.externalization.singleton import SingletonDecorator
 
-from nti.contentfragments import censor
-from nti.contentfragments.schema import PlainText
-
 from nti.utils.schema import InvalidValue
-from nti.utils.schema import ValidChoice as Choice
 from nti.utils.schema import find_most_derived_interface
 
-from nti.dataserver import shards as nti_shards
-
-from nti.appserver._email_utils import queue_simple_html_text_email
-
-import nameparser
-import datetime
-import urllib
+from .interfaces import IMathcountsUser
+from .interfaces import ISitePolicyUserEventListener
+from .interfaces import IColumbiaBusinessUserProfile
+from .interfaces import IMathcountsCoppaUserWithAgreement
+from .interfaces import IMathcountsCoppaUserWithoutAgreement
+from .interfaces import IMathcountsCoppaUserWithAgreementUpgraded
+from .interfaces import IMathcountsCoppaUserWithAgreementUserProfile
+from .interfaces import IMathcountsCoppaUserWithoutAgreementUserProfile
 
 def get_possible_site_names(request=None, include_default=False):
 	"""
@@ -93,7 +106,6 @@ def _find_site_components(request, include_default=False, site_names=None):
 
 		if components is not None:
 			return components
-
 
 _marker = object()
 
@@ -218,6 +230,7 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 		if not placed:
 			component.getUtility(nti_interfaces.INewUserPlacer, name='default').placeNewUser(user, users_directory, shards)
 
+
 ####
 # # Handling events within particular sites
 #
@@ -262,51 +275,6 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 # part of that is to integrate with traversal. At some point the ISitePolicy objects die
 # and become simply normal event listeners.
 ####
-
-class ISitePolicyUserEventListener(interface.Interface):
-	"""
-	Register instances of these as utilities by the name of the site
-	they should apply to.
-	"""
-
-	def map_validation_exception(incoming_data, exception):
-		"""
-		Gives a site policy a chance to change an exception being returned
-		during validation.
-		"""
-
-	def user_will_update_new(user, event):
-		"""
-		Handler for the IWillUpdateNewEntityEvent, called
-		before creation is complete or the user is updated.
-		"""
-
-	def user_created(user, event):
-		"""
-		Called when a user is created.
-		"""
-
-	def user_created_with_request(user, event):
-		"""
-		Called when a user is created in the scope of an interactive
-		request (after user_created).
-		"""
-
-	def user_will_create(user, event):
-		"""
-		Called just before a user is created. Do most validation here.
-		"""
-
-	# TODO : I'm not entirely sure this belongs here. Might want to rethink this a lot
-	def upgrade_user(user):
-		"""
-		Transition a user from a limited form to the next lest limited forrm.
-		Specifically intended to deal with providing coppa consent.
-		"""
-
-
-from zope.lifecycleevent.interfaces import IObjectCreatedEvent
-from nti.dataserver import users
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class SiteBasedExternalObjectDecorator(object):
@@ -418,10 +386,13 @@ class UsernameCannotContainRealname(InvalidValue): pass
 class UsernameCannotContainAt(user_interfaces.UsernameContainsIllegalChar): pass
 class UsernameCannotContainNextthoughtCom(InvalidValue): pass
 class FieldContainsCensoredSequence(InvalidValue): pass
+
 class MissingFirstName(sch_interfaces.RequiredMissing):
 	field = 'realname'
+
 class MissingLastName(sch_interfaces.RequiredMissing):
 	field = 'realname'
+
 class AtInUsernameImpliesMatchingEmail(InvalidValue): pass
 
 @interface.implementer(ISitePolicyUserEventListener)
@@ -575,7 +546,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		interface.alsoProvides(user, self.IF_ROOT)
 		iface_to_provide = self.IF_WOUT_AGREEMENT
 
-		if event.ext_value.get('birthdate') and _is_thirteen_or_more_years_ago(zope.interface.common.idatetime.IDate(event.ext_value['birthdate'])):
+		if event.ext_value.get('birthdate') and _is_thirteen_or_more_years_ago(IDate(event.ext_value['birthdate'])):
 			iface_to_provide = self.IF_WITH_AGREEMENT
 		elif 'contact_email' in event.ext_value and 'email' not in event.ext_value:
 			event.ext_value['email'] = event.ext_value['contact_email']
@@ -673,78 +644,8 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 				elif user.username != email:
 					raise AtInUsernameImpliesMatchingEmail("If you want to use an email address for the username, it must match the email address you enter", 'Username', user.username)
 
-class IMathcountsUser(nti_interfaces.ICoppaUser):
-	pass
-
-class IMathcountsCoppaUserWithoutAgreement(IMathcountsUser, nti_interfaces.ICoppaUserWithoutAgreement):
-	pass
-class IMathcountsCoppaUserWithAgreement(IMathcountsUser, nti_interfaces.ICoppaUserWithAgreement):
-	pass
-class IMathcountsCoppaUserWithAgreementUpgraded(IMathcountsCoppaUserWithAgreement, nti_interfaces.ICoppaUserWithAgreementUpgraded):
-	pass
 
 # Profiles for MC
-from nti.dataserver.users import user_profile
-from nti.utils.schema import ValidTextLine
-import zope.annotation
-
-class IMathcountsCoppaUserWithoutAgreementUserProfile(user_interfaces.IRestrictedUserProfileWithContactEmail):
-
-	participates_in_mathcounts = schema.Bool(
-		title="Do you currently participate in MATHCOUNTS?",
-		required=False,
-		default=False)
-
-	password_recovery_email_hash = ValidTextLine(
-		title="A secure hash of an email address used during password recovery",
-		description="Typically auto-generated by setting the `email` field.",
-		required=True)
-
-	password_recovery_email_hash.setTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI, True)
-	password_recovery_email_hash.setTaggedValue(user_interfaces.TAG_UI_TYPE, user_interfaces.UI_TYPE_HASHED_EMAIL)
-
-	email = ValidTextLine(
-		title='Email',
-		description=u'Email is not stored at this level, but the field is specified here as a convenient way'
-			' to be able to set the password_recovery_email_hash',
-		required=False,  # But we require it in the UI to get the recovery
-		constraint=user_interfaces.checkEmailAddress)
-
-	email.setTaggedValue(user_interfaces.TAG_UI_TYPE, user_interfaces.UI_TYPE_HASHED_EMAIL)
-	email.setTaggedValue(user_interfaces.TAG_REQUIRED_IN_UI, True)
-
-	# No affiliation
-	# No role
-
-class IMathcountsCoppaUserWithAgreementUserProfile(user_interfaces.IEmailRequiredUserProfile):
-
-	participates_in_mathcounts = schema.Bool(
-		title="Do you currently participate in MATHCOUNTS?",
-		required=False,
-		default=False)
-
-	affiliation = ValidTextLine(
-		title='Affiliation',
-		description="Your affiliation, such as school name",
-		required=False)  # redefined because we tag it
-	affiliation.setTaggedValue(user_interfaces.TAG_UI_TYPE, 'nti.appserver.site_policies.school')
-	affiliation.setTaggedValue(user_interfaces.TAG_READONLY_IN_UI, True)  # post-creation
-
-	role = schema.Choice(title="Your role in the organization",
-						  values=("Student", "Teacher", "Coach", "Parent", "Volunteer", "Other"),
-						  default="Other",
-						  required=False)  # redefined because we tag it
-	role.setTaggedValue(user_interfaces.TAG_READONLY_IN_UI, True)  # post-creation
-
-	# When we upgrade accounts, we need to keep the contact email
-	contact_email = ValidTextLine(
-		title='Contact email',
-		description=u"An email address to use to contact someone responsible for this accounts' user",
-		required=False,
-		constraint=user_interfaces.checkEmailAddress)
-	contact_email.setTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI, True)
-	contact_email.setTaggedValue(user_interfaces.TAG_UI_TYPE, user_interfaces.UI_TYPE_EMAIL)
-
 
 
 @component.adapter(IMathcountsCoppaUserWithoutAgreement)
@@ -1017,42 +918,6 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 # (TODO: Is their anything weird with the user indexes that can happen with this?)
 ###
 
-class IColumbiaBusinessUserProfile(user_interfaces.IEmailRequiredUserProfile):
-	"""
-	The definition of a complete profile for a columbia business school
-	user. This includes the standard fields, plus some random information
-	about a company the user might be associated with, as well as expanded
-	personal information.
-	"""
-
-	company = ValidTextLine(
-		title=_('Company Name'),
-		description=_("The name of the company you are affiliated with."),
-		required=False )
-	companyCountry = Choice(
-		title=_("Company Country"),
-		description=_("The country the company you are affiliated with is located in."),
-		vocabulary="Countries",
-		required=False )
-	companyDescription = PlainText(
-		title=_("Company Description"),
-		description=_("One to three paragraph description of your company."),
-		required=False,
-		min_length=1,
-		max_length=2000 ) # Somewhat arbitrary estimate of three paragraphs
-	companyRole = PlainText(
-		title=_("Company Role and Responsibilities"),
-		description=_("One to three paragraph description of your role and responsibilities in the company."),
-		required=False,
-		min_length=1,
-		max_length=2000 ) # Somewhat arbitrary estimate of three paragraphs
-	birthCountry = Choice(
-		title=_("Birth Country"),
-		description=_("The country you were born in."),
-		vocabulary="Countries",
-		required=False )
-
-
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(IColumbiaBusinessUserProfile)
 class ColumbiaBusinessUserProfile(user_profile.EmailRequiredUserProfile):
@@ -1066,7 +931,7 @@ def ColumbiaBusinessUserProfileFactory(context):
 	# The special logic to look for a profile under a *different* annotation key,
 	# and if found, copy it to the new data.
 	# (Depending on whether we are in dev mode or not, we could have two different keys)
-	columbia_profile_key = 'nti.appserver.site_policies.ColumbiaBusinessUserProfile'
+	columbia_profile_key = 'nti.appserver.site_policies.ColumbiaBusinessUserProfile'  # BWC
 	annotations = zope.annotation.interfaces.IAnnotations(context)
 	try:
 		return annotations[columbia_profile_key]
