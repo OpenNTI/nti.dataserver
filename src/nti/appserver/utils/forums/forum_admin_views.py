@@ -40,13 +40,15 @@ class SetClassCommunityForum(_JsonBodyView):
 		instructors = values.get('instructors', ())
 		if instructors and isinstance(instructors, six.string_types):
 			instructors = instructors.split(',')
+
+		instructors = {x for x in instructors or () if nti_interfaces.IUser.providedBy(users.User.get_user(x))}
 		if not instructors:
-			raise hexc.HTTPUnprocessableEntity(detail='Sharing not specified')
+			raise hexc.HTTPUnprocessableEntity(detail='No valid instructors were specified')
 
 		forum = frm_interfaces.ICommunityForum(community, None)
 		if forum is None:
 			raise hexc.HTTPUnprocessableEntity(detail='Community does not allow a forum')
 
 		interface.alsoProvides(forum, frm_interfaces.IClassForum)
-		setattr(forum, 'Instructors', list(set(instructors)))
+		setattr(forum, 'Instructors', list(instructors))
 		return hexc.HTTPNoContent()
