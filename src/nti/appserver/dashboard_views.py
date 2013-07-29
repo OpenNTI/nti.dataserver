@@ -33,7 +33,13 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		result = LocatedExternalDict()
 		all_objects = _UGDAndRecursiveStreamView(self.request).getObjectsForId(self.user, self.ntiid)
 		for iterable in all_objects:
-			for o in iterable:
+			try:
+				to_iter = iterable.itervalues()
+			except (AttributeError, TypeError):
+				to_iter = iterable
+			
+			for o in to_iter:
+
 				if not nti_interfaces.IModeledContent.providedBy(o) or nti_interfaces.IStreamChangeEvent.providedBy(o):
 					continue
 
