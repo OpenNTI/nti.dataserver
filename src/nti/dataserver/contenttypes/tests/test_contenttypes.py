@@ -648,9 +648,9 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 	def test_inherit_timeline_properties( self ):
 		n = Note()
 		range_ = timeline.TranscriptRangeDescription(seriesId=u"myseries",
-													 start=timeline.TranscriptContentPointer(role="start", seconds=1.0, cueid='myid',
+													 start=timeline.TranscriptContentPointer(role="start", seconds=1, cueid='myid',
 																							 pointer=ElementDomContentPointer(elementTagName='p', elementId='id', role="start")),
-													 end=timeline.TranscriptContentPointer(role="end", seconds=1.0, cueid='myid',
+													 end=timeline.TranscriptContentPointer(role="end", seconds=1, cueid='myid',
 																						   pointer=ElementDomContentPointer(elementTagName='p', elementId='id', role="end")))
 		n.applicableRange = range_
 

@@ -30,9 +30,8 @@ from zope import interface
 from zope import component
 from zope.component.hooks import site
 
-
 from nti.dataserver.site import _TrivialSite
-from nti.appserver.sites import MATHCOUNTS
+from nti.appserver.policies.sites import MATHCOUNTS
 from nti.externalization.externalization import to_external_object
 
 from ..interfaces import IContentPackageLibrary
@@ -54,11 +53,11 @@ HEAD_ZCML_STRING = """
 		<include package="." file="meta.zcml" />
 
 		<utility
-			component="nti.appserver.sites.MATHCOUNTS"
+			component="nti.appserver.policies.sites.MATHCOUNTS"
 			provides="zope.component.interfaces.IComponents"
 			name="mathcounts.nextthought.com" />
 
-		<registerIn registry="nti.appserver.sites.MATHCOUNTS">
+		<registerIn registry="nti.appserver.policies.sites.MATHCOUNTS">
 """
 
 ZCML_STRING = HEAD_ZCML_STRING + """
