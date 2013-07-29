@@ -8,10 +8,9 @@
 	<include package="z3c.baseregistry" file="meta.zcml" />
 	<include package="nti.appserver.link_providers" file="meta.zcml" />
 
-	<utility
-		component=".sites.COLUMBIA"
-		provides="zope.component.interfaces.IComponents"
-		name="columbia.nextthought.com" />
+	<utility	component=".sites.COLUMBIA"
+				provides="zope.component.interfaces.IComponents"
+				name="columbia.nextthought.com" />
 
 	<registerIn registry=".sites.COLUMBIA">
 		<!-- Special profile -->

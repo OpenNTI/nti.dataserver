@@ -1,0 +1,37 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+
+	<!-- Account Creation -->
+	<utility factory=".site_policies.RequestAwareUserPlacer" />
+	
+	<!-- Content censoring -->
+	<include package="." file="configure_censor.zcml" />
+	
+	<!-- Named site policies -->
+	<include package="." file="configure_site_policies.zcml" />
+	
+	<!-- User-type policies -->
+	<include package="." file="configure_user_policies.zcml" />
+
+	<include package="." file="configure_site_policy_adult_base.zcml" />
+	<include package="." file="configure_site_policy_alpha.zcml" />
+	<include package="." file="configure_site_policy_collegiate.zcml" />
+	<include package="." file="configure_site_policy_columbia.zcml" />
+	<include package="." file="configure_site_policy_demo.zcml" />
+	<include package="." file="configure_site_policy_fintimes.zcml" />
+	<include package="." file="configure_site_policy_fintech.zcml" />
+	<include package="." file="configure_site_policy_gloriamundi.zcml" />
+	<include package="." file="configure_site_policy_law.zcml" />
+	<include package="." file="configure_site_policy_litworld.zcml" />
+	<include package="." file="configure_site_policy_mathcounts.zcml" />
+	<include package="." file="configure_site_policy_prmia.zcml" />
+	<include package="." file="configure_site_policy_rwanda.zcml" />
+	<include package="." file="configure_site_policy_testmathcounts.zcml" />
+
+</configure>

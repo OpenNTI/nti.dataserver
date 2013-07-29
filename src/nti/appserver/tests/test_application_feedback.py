@@ -18,7 +18,7 @@ from zope import component
 
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver import users
-from nti.appserver import site_policies
+from nti.appserver.policies import site_policies
 from nti.appserver.feedback_views import REL_SEND_FEEDBACK
 
 from nti.dataserver.tests import mock_dataserver

@@ -18,12 +18,13 @@ from zope import interface
 from zope import component
 from zope.component import eventtesting
 
-from nti.appserver import user_policies
-
 from nti.dataserver import users
 from nti.dataserver.users import interfaces as user_interfaces
-from nti.appserver import site_policies
+
+from nti.appserver.policies import user_policies
+from nti.appserver.policies import site_policies
 from nti.appserver import interfaces as app_interfaces
+
 from nti.dataserver.tests import mock_dataserver
 
 from nti.appserver.tests import ITestMailDelivery

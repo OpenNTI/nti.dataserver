@@ -15,8 +15,9 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-from . import MessageFactory as _
+logger = __import__('logging').getLogger(__name__)\
+
+from nti.appserver import MessageFactory as _
 
 from zope import component
 from zope.component.interfaces import IComponents
@@ -45,7 +46,7 @@ from nti.utils.schema import find_most_derived_interface
 
 from nti.dataserver import shards as nti_shards
 
-from ._email_utils import queue_simple_html_text_email
+from nti.appserver._email_utils import queue_simple_html_text_email
 
 import nameparser
 import datetime
@@ -164,7 +165,7 @@ class RequestAwareS3KeyHrefMapper(object):
 	"""
 	href = None
 
- 	def __init__(self, key):
+	def __init__(self, key):
 		# TODO: The following may not be the case?
 		# We have to force HTTP here, because using https (or protocol relative)
 		# falls down for the browser: the certs on the CNAME we redirect to, *.s3.aws.amazon.com

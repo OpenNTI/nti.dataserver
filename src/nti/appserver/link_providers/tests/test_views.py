@@ -17,8 +17,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_key
-from hamcrest import has_entry
 from hamcrest import has_item
 
 import nti.tests
@@ -26,11 +24,11 @@ import nti.tests
 from zope import interface
 from zope.component.hooks import site
 from nti.dataserver.site import _TrivialSite
-from nti.appserver.sites import MATHCOUNTS
+from nti.appserver.policies.sites import MATHCOUNTS
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
-from nti.appserver.httpexceptions import HTTPNotFound, HTTPNoContent, HTTPForbidden, HTTPSeeOther
+from nti.appserver.httpexceptions import HTTPNotFound, HTTPNoContent, HTTPSeeOther
 from pyramid.request import Request
 
 from .test_zcml import ZCML_STRING

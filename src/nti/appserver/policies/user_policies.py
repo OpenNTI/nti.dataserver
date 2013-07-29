@@ -27,21 +27,18 @@ from zope.lifecycleevent import IObjectModifiedEvent
 from zope.annotation.interfaces import IAnnotations
 from zope.schema import interfaces as sch_interfaces
 
-from pyramid import interfaces as pyramid_interfaces
-
-from nti.dataserver.links import Link
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.appserver import _email_utils
-from nti.appserver import site_policies
 from nti.appserver import MessageFactory as _
 from nti.appserver import httpexceptions as hexc
-from nti.appserver._util import link_belongs_to_user
 from nti.appserver import interfaces as app_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.utils.property import annotation_alias
 from nti.utils.schema import IBeforeTextAssignedEvent
+
+from . import site_policies
 
 @component.adapter(nti_interfaces.IModeledContent, IObjectCreatedEvent)
 def dispatch_content_created_to_user_policies( content, event ):
@@ -165,7 +162,6 @@ from pyramid.renderers import render
 from pyramid.renderers import get_renderer
 from pyramid_mailer.message import Message
 from pyramid_mailer.message import Attachment
-from email.mime.multipart import MIMEMultipart
 
 CONTACT_EMAIL_RECOVERY_ANNOTATION = __name__ + '.contact_email_recovery_hash'
 #: The time.time() value at which the last consent request

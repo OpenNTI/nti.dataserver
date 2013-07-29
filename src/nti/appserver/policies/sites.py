@@ -16,9 +16,10 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-import sys
-from z3c.baseregistry.baseregistry import BaseComponents
 
+import sys
+
+from z3c.baseregistry.baseregistry import BaseComponents
 
 # TODO: Eventually we want these to use the main Dataserver site as their base,
 # which requires getting persistence into the mix. These objects pickle

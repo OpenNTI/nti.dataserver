@@ -20,25 +20,20 @@ from hamcrest import has_property
 from hamcrest import is_
 from hamcrest import is_not as does_not
 is_not = does_not
-from hamcrest import not_none
 from hamcrest import has_item
 from hamcrest import contains
 from hamcrest import contains_inanyorder
-from hamcrest import contains_string
 from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import has_entries
-from hamcrest import ends_with
 from hamcrest import greater_than
 from hamcrest import greater_than_or_equal_to
 from hamcrest import has_key
 
 from nti.tests import is_empty
 from nti.tests import time_monotonically_increases
-import fudge
 
-from nti.appserver.tests.test_application import TestApp as _TestApp
-from nti.appserver.tests import test_application_censoring
+from nti.appserver.policies.tests import test_application_censoring
 
 import datetime
 import webob.datetime_utils
@@ -52,7 +47,6 @@ from zope.intid.interfaces import IIntIdRemovedEvent
 from nti.ntiids import ntiids
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
-from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog

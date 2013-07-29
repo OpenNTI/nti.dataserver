@@ -14,7 +14,6 @@
 	<include package="nti.store" file="meta.zcml" />
     <include package="nti.store.payments.stripe" file="meta.zcml" />
 
-
 	<utility
 		component=".sites.PRMIA"
 		provides="zope.component.interfaces.IComponents"
@@ -29,31 +28,37 @@
 			 to make 127.0.0.1 be prmia.nextthought.com, it won't work!
 			 This should eventually go away.
 		-->
-		<subscriber factory=".logon._MissingUserMallowstreetLoginLinkProvider"
-					provides=".interfaces.ILogonLinkProvider" />
-		<adapter factory=".logon._MissingUserMallowstreetLoginLinkProvider"
-				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
+		<subscriber factory="nti.appserver.logon._MissingUserMallowstreetLoginLinkProvider"
+					provides="nti.appserver.interfaces.ILogonLinkProvider" />
+					
+		<adapter factory="nti.appserver.logon._MissingUserMallowstreetLoginLinkProvider"
+				 provides="nti.appserver.interfaces.ILogonUsernameFromIdentityURLProvider"
 				 for="* pyramid.interfaces.IRequest"
 				 name="demo.mallowstreet.com" />
 	</configure>
+	
 	<registerIn registry=".sites.PRMIA">
 		<utility factory=".site_policies.PrmiaSitePolicyEventListener" />
 
 		<!-- Logon -->
 		<!-- Federated from mallowstreet -->
-		<subscriber factory=".logon._MissingUserMallowstreetLoginLinkProvider"
-					provides=".interfaces.ILogonLinkProvider" />
-		<adapter factory=".logon._MissingUserMallowstreetLoginLinkProvider"
-				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
+		<subscriber factory="nti.appserver.logon._MissingUserMallowstreetLoginLinkProvider"
+					provides="nti.appserver.interfaces.ILogonLinkProvider" />
+					
+		<adapter factory="nti.appserver.logon._MissingUserMallowstreetLoginLinkProvider"
+				 provides="nti.appserver.interfaces.ILogonUsernameFromIdentityURLProvider"
 				 for="* pyramid.interfaces.IRequest"
 				 name="demo.mallowstreet.com" /> <!-- Temporary -->
-		<adapter factory=".logon._MissingUserMallowstreetLoginLinkProvider"
-				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
+				 
+		<adapter factory="nti.appserver.logon._MissingUserMallowstreetLoginLinkProvider"
+				 provides="nti.appserver.interfaces.ILogonUsernameFromIdentityURLProvider"
 				 for="* pyramid.interfaces.IRequest"
 				 name="secure.mallowstreet.com" />
-		<subscriber factory=".logon._ExistingOpenIdUserLoginLinkProvider"
-					provides=".interfaces.ILogonLinkProvider" />
-		<subscriber handler=".store_views.prmia_purchase_attempt_successful" />
+				 
+		<subscriber factory="nti.appserver.logon._ExistingOpenIdUserLoginLinkProvider"
+					provides="nti.appserver.interfaces.ILogonLinkProvider" />
+					
+		<subscriber handler="nti.appserver.store_views.prmia_purchase_attempt_successful" />
 
 		<!-- PRMIA PROD KEYS -->
 

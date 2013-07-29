@@ -109,7 +109,7 @@ class StripePaymentProcessor(_BasePaymentProcessor, stripe_customer._StripeCusto
 
 		# capture the site names so the purchasables
 		# can be read by sub-transactions
-		from nti.appserver import site_policies
+		from nti.appserver.policies import site_policies
 		request = request or get_current_request()
 		site_names = site_policies.get_possible_site_names(request, include_default=True)
 

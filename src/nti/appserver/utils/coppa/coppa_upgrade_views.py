@@ -26,11 +26,11 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
-from nti.appserver import user_policies
-from nti.appserver import site_policies
 from nti.appserver.utils import is_true
 from nti.appserver import MessageFactory as _
 from nti.appserver.utils import _JsonBodyView
+from nti.appserver.policies import user_policies
+from nti.appserver.policies import site_policies
 from nti.appserver import httpexceptions as hexc
 from nti.appserver.utils import CaseInsensitiveDict
 from nti.appserver import _external_object_io as obj_io

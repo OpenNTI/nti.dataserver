@@ -24,8 +24,8 @@ import pyramid.httpexceptions  as hexc
 from pyramid.view import view_config
 
 from nti.appserver import _table_utils
-from nti.appserver import site_policies
 from nti.appserver import MessageFactory as _
+from nti.appserver.policies import site_policies
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces

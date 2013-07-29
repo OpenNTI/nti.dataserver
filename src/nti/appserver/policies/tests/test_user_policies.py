@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 import pyPdf
 
-from nti.appserver import user_policies
+from .. import user_policies
 
 from nti.appserver.tests.test_application import SharedApplicationTestBase
 

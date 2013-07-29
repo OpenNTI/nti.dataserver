@@ -20,12 +20,12 @@ import random
 
 import nti.dictserver.storage
 
-from nti.dataserver import interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 
 import nti.dataserver.users
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserver
+from nti.dataserver import interfaces as nti_interfaces
 
 from zope import interface
 from zope import component
@@ -121,7 +121,7 @@ def _logon_account_views(pyramid_config):
 
 	# Site-specific CSS packages
 	pyramid_config.add_route(name="logon.logon_css", pattern="/login/resources/css/site.css")
-	pyramid_config.scan('nti.appserver.site_policy_views')
+	pyramid_config.scan('nti.appserver.policies.site_policy_views')
 
 	pyramid_config.add_route(name="logon.forgot.username", pattern="/dataserver2/logon.forgot.username")
 	pyramid_config.add_route(name="logon.forgot.passcode", pattern="/dataserver2/logon.forgot.passcode")

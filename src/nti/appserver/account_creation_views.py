@@ -46,7 +46,7 @@ from nti.appserver.invitations.utility import accept_invitations
 
 from nti.appserver._util import logon_user_with_request
 from nti.appserver import _external_object_io as obj_io
-from nti.appserver import site_policies
+from nti.appserver.policies import site_policies
 from nti.appserver._util import raise_json_error as _raise_error
 from nti.appserver.link_providers import flag_link_provider
 

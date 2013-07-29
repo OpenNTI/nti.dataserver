@@ -5,31 +5,33 @@ Policies for the censoring of modeled content objects.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+import six
 
 from zope import component
 from zope import interface
 
 from pyramid.traversal import find_interface
 
-import six
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.contentfragments import interfaces as frg_interfaces
-from nti.contentlibrary import interfaces as lib_interfaces
 from nti.chatserver import interfaces as chat_interfaces
-from nti.socketio import interfaces as sio_interfaces
-
-from nti.dataserver import users
 
 from nti.contentfragments import censor
+from nti.contentfragments import interfaces as frg_interfaces
 
-from nti.appserver import site_policies
+from nti.contentlibrary import interfaces as lib_interfaces
+
+from nti.dataserver import users
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.socketio import interfaces as sio_interfaces
+
 from nti.appserver._view_utils import get_remote_user
+
+from . import site_policies
 
 class IObjectNotTiedToContent(interface.Interface):
 	"""
