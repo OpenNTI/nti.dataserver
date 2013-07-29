@@ -557,12 +557,12 @@ class _NTIIDEntry(object):
 	__external_class_name__ = 'PageInfo'
 	mimeType = mimetype.nti_mimetype_with_class( __external_class_name__ )
 
-	# TODO: This list is defined again in dataserver_pyramid_views.py
-	# in the _PageContainerResource
+	# TODO: This list is defined again in dataserver_pyramid_views.py ( _PageContainerResource)
+	# application.py (_ugd_odata_views)
 	__operations__ = ('UserGeneratedData', 'RecursiveUserGeneratedData',
 					  'Stream', 'RecursiveStream',
 					  'UserGeneratedDataAndRecursiveStream',
-					  'Glossary')
+					  'Glossary', 'TopUserSummaryData')
 
 	extra_links = ()
 	contentUnit = None

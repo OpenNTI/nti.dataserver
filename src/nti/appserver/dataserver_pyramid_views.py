@@ -3,19 +3,19 @@
 Defines traversal views and resources for the dataserver.
 """
 from __future__ import print_function, unicode_literals, absolute_import
-logger = __import__( 'logging' ).getLogger( __name__ )
+__docformat__ = "restructuredtext en"
 
+logger = __import__( 'logging' ).getLogger( __name__ )
 
 from zope import component
 from zope.location.location import LocationProxy
 
-from nti.appserver import interfaces as app_interfaces
+from pyramid.view import view_defaults
 
 from nti.appserver import httpexceptions as hexc
-from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import AbstractView
-
-from pyramid.view import view_defaults
+from nti.appserver import interfaces as app_interfaces
+from nti.appserver._view_utils import AbstractAuthenticatedView
 
 from nti.dataserver import authorization as nauth
 
