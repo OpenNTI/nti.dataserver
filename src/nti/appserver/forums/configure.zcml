@@ -9,6 +9,7 @@
 	<include package="nti.appserver.capabilities" file="meta.zcml" />
 
 	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityStorageFactory" />
+	
 	<!--
 		We are collecting both comments and community forum posts in activity.
 		The app isn't ready for comments yet, though, so we only return
@@ -17,6 +18,7 @@
 	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityProvider"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 zcml:condition="have testmode_all_activity"/>
+			 
 	<adapter factory=".activity.NoCommentActivityProvider"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 zcml:condition="not-have testmode_all_activity"/>
@@ -25,11 +27,11 @@
 		id='nti.platform.blogging.createblogentry'
 		title="Create Blog Entry"
 		description='Can the user create new blog entries?' />
+		
 	<cap:capability
 		id='nti.platform.forums.communityforums'
 		title="Participate in community forums"
 		description='Can the user participate in community forums?' />
-
 
 	<!-- Entry in service doc -->
 	<subscriber factory=".views._UserBlogCollectionFactory"
@@ -43,34 +45,36 @@
 	<subscriber handler=".activity.notify_online_author_of_blog_comment" />
 	<subscriber handler=".activity.notify_online_author_of_topic_comment" />
 
-
 	<!-- Activity stream updating -->
 	<subscriber handler=".activity.store_created_object_in_global_activity"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment zope.intid.interfaces.IIntIdAddedEvent"/>
+				
 	<subscriber handler=".activity.unstore_created_object_from_global_activity"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment zope.intid.interfaces.IIntIdRemovedEvent" />
+				
 	<!--
 	Normal Blog entries are in /Activity automatically by dint of being stored as a user container.
 	We have to do something special to make other forum posts show up there.
 	-->
 	<subscriber handler=".activity.store_created_object_in_global_activity"
 				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic zope.intid.interfaces.IIntIdAddedEvent"/>
+				
 	<subscriber handler=".activity.unstore_created_object_from_global_activity"
 				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic zope.intid.interfaces.IIntIdRemovedEvent" />
 
 	<!--
-	Anything that becomes a deleted placeholder should no longer be
-	in /Activity.
+	Anything that becomes a deleted placeholder should no longer be in /Activity.
 	-->
 	<subscriber handler=".activity.unstore_created_object_from_global_activity"
 				for="nti.appserver.interfaces.IDeletedObjectPlaceholder zope.lifecycleevent.interfaces.IObjectModifiedEvent" />
 
-
 	<!-- Externalization -->
 	<subscriber factory=".decorators.BlogLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				
 	<subscriber factory=".decorators.CommunityBoardLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				
 	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.IBoard"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
@@ -79,9 +83,14 @@
 				for="nti.dataserver.contenttypes.forums.interfaces.IForum"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
+	<subscriber factory=".decorators.ForumObjectWritableDecorator"
+				for="nti.dataserver.contenttypes.forums.interfaces.IForum"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				
 	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				
 	<subscriber factory=".decorators.SecurityAwareForumTopicCountDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
@@ -94,12 +103,15 @@
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry" />
+				
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic" />
+				
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityForum" />
+				
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityBoard" />
@@ -116,14 +128,17 @@
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
+			 
 	<adapter factory=".traversal._PostFieldTraverser"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
+			 
 	<adapter factory="nti.appserver._adapters.TitledDescribedExternalFieldTraverser"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IForum pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
+			 
 	<adapter factory="nti.appserver._adapters.TitledDescribedExternalFieldTraverser"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IForum"
 			 provides="zope.traversing.interfaces.ITraversable"
@@ -133,6 +148,7 @@
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
+			 
 	<adapter factory="nti.appserver._adapters.SharedWithExternalFieldTraverser"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry"
 			 provides="zope.traversing.interfaces.ITraversable"
@@ -174,20 +190,22 @@
 	<!-- Storing favorite objects -->
 	<subscriber handler=".views.temp_store_favorite_object"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry contentratings.interfaces.IObjectRatedEvent"/>
+				
 	<subscriber handler=".views.temp_store_favorite_object"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment contentratings.interfaces.IObjectRatedEvent"/>
+				
 	<!-- Storing favorite objects -->
 	<subscriber handler=".views.temp_store_favorite_object"
 				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic contentratings.interfaces.IObjectRatedEvent"/>
+				
 	<subscriber handler=".views.temp_store_favorite_object"
 				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForumComment contentratings.interfaces.IObjectRatedEvent"/>
-
-
 
 	<!-- Publishing workflow -->
 	<subscriber factory=".decorators.PublishLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry"/>
+				
 	<subscriber factory=".decorators.PublishLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic"/>
