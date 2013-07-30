@@ -1,33 +1,33 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Views relating to working with enclosures.
+
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
-logger = __import__( 'logging' ).getLogger( __name__ )
+__docformat__ = "restructuredtext en"
 
+logger = __import__( 'logging' ).getLogger( __name__ )
 
 import time
 
-
 from pyramid import traversal
-
 
 from zope.location.location import LocationProxy
 
-from nti.externalization.interfaces import StandardExternalFields
-import nti.externalization.internalization
+from nti.appserver import httpexceptions as hexc
+from nti.appserver import _external_object_io as obj_io
+from nti.appserver._view_utils import UploadRequestUtilsMixin
+from nti.appserver._view_utils import AbstractAuthenticatedView
+from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
 from nti.dataserver import enclosures
 from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object
 from nti.dataserver.interfaces import (ISimpleEnclosureContainer, IEnclosedContent)
 
-
-from nti.appserver import httpexceptions as hexc
-from nti.appserver import _external_object_io as obj_io
-from nti.appserver._view_utils import UploadRequestUtilsMixin
-from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
-from nti.appserver._view_utils import AbstractAuthenticatedView
-
+import nti.externalization.internalization
+from nti.externalization.interfaces import StandardExternalFields
 
 def _force_update_modification_time( obj, lastModified, max_depth=-1 ):
 	"""Traverse up the parent tree (up to `max_depth` times) updating modification times."""
@@ -59,7 +59,6 @@ class EnclosurePostView(AbstractAuthenticatedView, UploadRequestUtilsMixin, Mode
 			# actually meant to be a PUT to update existing data
 			raise hexc.HTTPForbidden("Cannot POST here. Did you mean to PUT?")
 
-		content = None
 		content_type = self._get_body_type()
 		# Chop a trailing '+json' off if present
 		if '+' in content_type:
