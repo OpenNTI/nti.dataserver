@@ -3,7 +3,7 @@
 """
 Views for user dashboard
 
-$Id: ugd_query_views.py 20912 2013-07-13 16:15:43Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
