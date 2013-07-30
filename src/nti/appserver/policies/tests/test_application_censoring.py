@@ -58,8 +58,7 @@ class _CensorTestMixin(object):
 
 	@classmethod
 	def _setup_library( cls, *args, **kwargs ):
-		return FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
-
+		return FileLibrary(os.path.join(os.path.dirname(__file__), '../../tests/ExLibrary'))
 
 	def _do_test_censor_note( self, containerId, censored=True, extra_ifaces=(), environ=None ):
 		with mock_dataserver.mock_db_trans( self.ds ):
