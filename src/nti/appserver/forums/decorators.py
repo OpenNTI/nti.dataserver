@@ -8,27 +8,28 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
+from zope.container.interfaces import ILocation
+
+from pyramid.threadlocal import get_current_request
+
+from nti.appserver._util import AbstractTwoStateViewLinkDecorator
+
+from nti.dataserver.links import Link
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum
+from nti.dataserver.interfaces import IUser, ICommunity, IUnscopedGlobalCommunity, IDefaultPublished
+
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.singleton import SingletonDecorator
 
 from nti.utils._compat import aq_base
 
-from nti.externalization import interfaces as ext_interfaces
-from nti.dataserver.interfaces import IUser, ICommunity, IUnscopedGlobalCommunity, IDefaultPublished
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum, ITopic
-from zope.container.interfaces import ILocation
-
-from nti.appserver._util import AbstractTwoStateViewLinkDecorator
-from nti.externalization.singleton import SingletonDecorator
+from .._util import link_belongs_to_user
+from .._view_utils import get_remote_user
+from ..pyramid_authorization import is_readable
+from ..pyramid_authorization import is_writable
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
 LINKS = ext_interfaces.StandardExternalFields.LINKS
-
-from nti.dataserver.links import Link
-
-from .._util import link_belongs_to_user
-from .._view_utils import get_remote_user
-
-from ..pyramid_authorization import is_readable
-from pyramid.threadlocal import get_current_request
 
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 _BLOG_NAME = PersonalBlog.__default_name__
@@ -37,8 +38,8 @@ from nti.dataserver.contenttypes.forums.board import CommunityBoard
 _BOARD_NAME = CommunityBoard.__default_name__
 
 from . import VIEW_PUBLISH
-from . import VIEW_UNPUBLISH
 from . import VIEW_CONTENTS
+from . import VIEW_UNPUBLISH
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(IUser)
@@ -73,9 +74,9 @@ class CommunityBoardLinkDecorator(object):
 			# (e.g., Everyone) do not get a forum
 			return
 
-		 # TODO: This may be slow, if the forum doesn't persistently
-		 # exist and we keep creating it and throwing it away (due to
-		 # not commiting on GET)
+		# TODO: This may be slow, if the forum doesn't persistently
+		# exist and we keep creating it and throwing it away (due to
+		# not commiting on GET)
 		board = ICommunityBoard( context, None )
 		if board is not None: # Not checking security. If the community is visible to you, the forum is too
 			the_links = mapping.setdefault( LINKS, [] )
@@ -105,6 +106,16 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 		super(PublishLinkDecorator,self).decorateExternalMapping( context, mapping )
 
 
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+class ForumObjectWritableDecorator(object):
+	
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalMapping( self, context, mapping ):
+		request = get_current_request()
+		if request:
+			mapping['IsWritable'] = True if is_writable(context, request) else False
+		
 # Notice we do not declare what we adapt--we adapt too many things
 # that share no common ancestor. (We could be declared on IContainer,
 # but its not clear what if any IContainers we externalize besides
