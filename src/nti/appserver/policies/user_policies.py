@@ -19,6 +19,15 @@ logger = __import__('logging').getLogger(__name__)
 import time
 import pkg_resources
 import dolmen.builtins
+from cStringIO import StringIO
+
+try:
+	from gevent.lock import RLock
+except ImportError:
+	from threading import RLock
+
+import pyPdf
+from pyPdf import generic as pdf_generic
 
 from zope import component
 from zope import interface
@@ -27,12 +36,12 @@ from zope.lifecycleevent import IObjectModifiedEvent
 from zope.annotation.interfaces import IAnnotations
 from zope.schema import interfaces as sch_interfaces
 
-from nti.dataserver import interfaces as nti_interfaces
-
 from nti.appserver import _email_utils
 from nti.appserver import MessageFactory as _
 from nti.appserver import httpexceptions as hexc
 from nti.appserver import interfaces as app_interfaces
+
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.utils.property import annotation_alias
@@ -239,13 +248,15 @@ def send_consent_request_on_coppa_account( user, profile, email, request, rate_l
 	# Need to send both HTML and plain text if we send HTML, because
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 	# only works with a text part)
-	master = get_renderer('templates/master_email.pt').implementation()
-	html_body = render( 'templates/coppa_consent_request_email.pt',
-						dict(user=user, profile=profile, context=user,master=master),
-						request=request )
-	text_body = render( 'templates/coppa_consent_request_email.txt',
-						dict(user=user, profile=profile, context=user,master=master),
-						request=request )
+	master = get_renderer('../templates/master_email.pt').implementation()
+
+	html_body = render('../templates/coppa_consent_request_email.pt',
+					   dict(user=user, profile=profile, context=user, master=master),
+					   request=request)
+
+	text_body = render('../templates/coppa_consent_request_email.txt',
+					  dict(user=user, profile=profile, context=user, master=master),
+					  request=request)
 
 	attachment_filename = 'coppa_consent_request_email_attachment.pdf'
 
@@ -308,13 +319,6 @@ class ContactEmailRecovery(object):
 	contact_email_recovery_hash = annotation_alias(CONTACT_EMAIL_RECOVERY_ANNOTATION, 'context')
 	consent_email_last_sent = annotation_alias(CONSENT_EMAIL_LAST_SENT_ANNOTATION, 'context')
 
-import pyPdf
-import pyPdf.generic
-from cStringIO import StringIO
-try:
-	from gevent.lock import RLock
-except ImportError:
-	from threading import RLock
 
 # Reading the pristine PDF is fairly time consuming; fortunately, it
 # returns a dict we can clone
@@ -386,7 +390,6 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 
 		_cached_pages[pdf_filename] = pdf_page, page_content, lock
 
-
 	def _pdf_clean( text ):
 		# Many punctuation characters are handled specially and overlap
 		# each other. They don't work in the Tj operator.
@@ -396,9 +399,9 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 	writer = pyPdf.PdfFileWriter()
 	stream = StringIO()
 	with lock:
-		page_content.operations[IX_EMAIL] = ( [pyPdf.generic.TextStringObject( _pdf_clean(parent_email) )], 'Tj') # Tj being the simple text operator
-		page_content.operations[IX_UNAME] = ( [pyPdf.generic.TextStringObject( _pdf_clean(username) )], 'Tj')
-		page_content.operations[IX_FNAME] = ( [pyPdf.generic.TextStringObject( child_firstname )], 'Tj')
+		page_content.operations[IX_EMAIL] = ([pdf_generic.TextStringObject(_pdf_clean(parent_email))], 'Tj')  # Tj being the simple text operator
+		page_content.operations[IX_UNAME] = ([pdf_generic.TextStringObject(_pdf_clean(username))], 'Tj')
+		page_content.operations[IX_FNAME] = ([pdf_generic.TextStringObject(child_firstname)], 'Tj')
 		
 		writer.addPage( pdf_page )
 		writer.write( stream )
