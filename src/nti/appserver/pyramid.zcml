@@ -68,10 +68,6 @@
 	<pyramid:scan package=".bulk_email_views" />
 
 	<pyramid:scan package=".content_card_views" />
-
-	<configure zcml:condition="have devmode">
-		<pyramid:scan package='nti.salesforce.auth' />
-	</configure>
 	
 	<!-- Util/Admin views -->
 	<pyramid:scan package='.utils.user_export_views' />

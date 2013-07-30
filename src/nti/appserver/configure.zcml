@@ -357,10 +357,8 @@
 	<include package=".policies" file="configure.zcml" />
 	<include package="." file="configure_invitations.zcml" />
 	<include package="." file="configure_store.zcml" />
-	<include package="." file="configure_salesforce.zcml" />
 	
 	<include package=".forums" />
-
 
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"
@@ -382,6 +380,7 @@
 
 	<!-- Resolving metadata, used in the implementation of links -->
 	<adapter factory=".metadata_resolvers.ContentMetadataFromContentUnit" />
+	
 	<utility name="tag"
 			 factory=".metadata_resolvers.TagURLHandler" />
 

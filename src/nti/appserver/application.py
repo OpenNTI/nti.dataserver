@@ -388,10 +388,6 @@ def _patching_restore_views(pyramid_config):
 							renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
 							permission=nauth.ACT_READ, request_method='GET')
 
-def _salesforce_views(pyramid_config):
-	pyramid_config.add_route(name='oauth.salesforce', pattern='/dataserver2/oauth.salesforce')
-	pyramid_config.scan('nti.salesforce.auth')
-
 def createApplication( http_port,
 					   library=None,
 					   process_args=False,
@@ -573,7 +569,6 @@ def createApplication( http_port,
 	pyramid_config.add_forbidden_view( forbidden_view )
 
 	_logon_account_views(pyramid_config)
-	_salesforce_views(pyramid_config)
 
 	_socketio_views(pyramid_config)
 	_dictionary_views(pyramid_config, settings)
