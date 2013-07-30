@@ -68,6 +68,13 @@ class course(Environment, plastexids.NTIIDMixin):
 
         return tok
 
+    class courseboard(Command):
+        args = '[ options:dict ] ntiid:str'
+
+        def digest(self, tokens):
+            super(course.courseboard, self).digest(tokens)
+            self.parentNode.discussion_board = self.attributes.get('ntiid')
+
 class courseunitname(Command):
     pass
 
@@ -148,6 +155,7 @@ class _CourseExtractor(object):
         toc_el = XMLDocument().createElement('course')
         toc_el.setAttribute('label', unicode(doc_el.title) )
         toc_el.setAttribute('ntiid', doc_el.ntiid )
+        toc_el.setAttribute('discussionBoard', doc_el.discussion_board)
         units = doc_el.getElementsByTagName( 'courseunit' )
         for unit in units:
             toc_el.appendChild(XMLDocument().createTextNode(u'\n        '))
