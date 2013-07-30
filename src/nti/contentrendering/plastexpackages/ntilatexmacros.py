@@ -1038,7 +1038,7 @@ class _NTIVideoExtractor(object):
 			val['type'] = transcript.transcript_mime_type
 			val['lang'] = transcript.attributes['lang']
 			val['purpose'] = transcript.attributes['purpose']
-			entry['sources'].append(val)
+			entry['transcripts'].append(val)
 
 		return entry
 
