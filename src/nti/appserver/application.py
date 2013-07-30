@@ -591,12 +591,13 @@ def createApplication( http_port,
 	_ugd_odata_views(pyramid_config)
 
 	# scan packages
-	pyramid_config.scan( 'nti.appserver.ugd_query_views' )
-	pyramid_config.scan( 'nti.appserver.ugd_feed_views' )
-	pyramid_config.scan( 'nti.appserver.glossary_views' )
-	pyramid_config.scan( 'nti.appserver.forums.views' )
-	pyramid_config.scan( 'nti.appserver.user_activity_views' )
-	pyramid_config.scan( 'nti.appserver.store_views' )	
+	pyramid_config.scan('nti.appserver.ugd_query_views')
+	pyramid_config.scan('nti.appserver.ugd_feed_views')
+	pyramid_config.scan('nti.appserver.glossary_views')
+	pyramid_config.scan('nti.appserver.forums.views')
+	pyramid_config.scan('nti.appserver.user_activity_views')
+	pyramid_config.scan('nti.appserver.dashboard_views')
+	pyramid_config.scan('nti.appserver.store_views')
 
 	_modifying_ugd_views(pyramid_config)
 
