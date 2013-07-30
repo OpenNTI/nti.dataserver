@@ -19,6 +19,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.oids import to_external_oid
 from nti.externalization.interfaces import LocatedExternalDict
 
+from .ugd_query_views import check_container
 from .ugd_query_views import _UGDAndRecursiveStreamView
 
 class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
@@ -30,6 +31,8 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 			self.ntiid = the_ntiid or self.request.context.ntiid
 
 	def __call__( self ):
+		check_container(self.ntiid, self.request.registry)
+
 		# query objects
 		view = _UGDAndRecursiveStreamView(self.request)
 		view._DEFAULT_BATCH_SIZE = view._DEFAULT_BATCH_START = None

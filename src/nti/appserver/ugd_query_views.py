@@ -5,55 +5,52 @@ Views for querying user generated data.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
-import logging
-logger = logging.getLogger(__name__)
+
+logger = __import__('logging').getLogger(__name__)
 
 import sys
-from numbers import Number
-import functools
-import itertools
 import heapq
+import itertools
+import functools
+from numbers import Number
 
 from zope import interface
 from zope import component
 from zope.intid.interfaces import IIntIds
 
+from z3c.batching.batch import Batch
+
 from pyramid.view import view_config
 from pyramid import security as psec
 
-
-from nti.appserver import httpexceptions as hexc
 from nti.appserver import _util
 from nti.appserver import _view_utils
+from nti.appserver import httpexceptions as hexc
 from nti.appserver._view_utils import get_remote_user
 from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.interfaces import IUGDExternalCollection
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from nti.dataserver import users
+from nti.dataserver import liking
+from nti.dataserver.links import Link
+from nti.dataserver.users import entity
+from nti.dataserver import authorization as nauth
+from nti.dataserver.sharing import SharingContextCache
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.mimetype import nti_mimetype_from_object, nti_mimetype_with_class
+liking_like_count = liking.like_count  # minor optimization
+
+from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
-
-from nti.externalization.externalization import to_standard_external_last_modified_time
 from nti.externalization.externalization import to_standard_external_created_time
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import to_standard_external_last_modified_time
 
 from nti.ntiids import ntiids
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.sharing import SharingContextCache
-from nti.dataserver import users
-from nti.dataserver.users import entity
-from nti.dataserver import liking
-liking_like_count = liking.like_count # minor optimization
-from nti.dataserver import authorization as nauth
-from nti.dataserver.mimetype import nti_mimetype_from_object, nti_mimetype_with_class
-from nti.dataserver.links import Link
-
-from z3c.batching.batch import Batch
 
 class Operator(object):
 	union = 0
@@ -66,7 +63,8 @@ class Operator(object):
 			return Operator.union
 		return Operator.intersection
 	
-def _TRUE(x): return True
+def _TRUE(x):
+	return True
 
 def _lists_and_dicts_to_iterables( lists_and_dicts ):
 	result = []
@@ -333,8 +331,10 @@ def _created_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 
 from nti.assessment.assessed import QAssessedQuestionSet
 QAssessedQuestionSet.xxx_isReadableByAnyIdOfUser = _created_xxx_isReadableByAnyIdOfUser
+
 from nti.dataserver.chat_transcripts import _AbstractMeetingTranscriptStorage
 _AbstractMeetingTranscriptStorage.xxx_isReadableByAnyIdOfUser = _created_xxx_isReadableByAnyIdOfUser
+
 from nti.dataserver.traversal import find_interface
 def _personalblogcomment_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 	# XXX Duplicates much of the ACL logic
@@ -344,6 +344,7 @@ def _personalblogcomment_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 		return True
 	if find_interface( self, nti_interfaces.IUser, strict=False ) == user:
 		return True
+
 from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
 PersonalBlogComment.xxx_isReadableByAnyIdOfUser = _personalblogcomment_xxx_isReadableByAnyIdOfUser
 
@@ -351,6 +352,12 @@ def _communityforum_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 	return self.creator in user.dynamic_memberships
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 CommunityForum.xxx_isReadableByAnyIdOfUser = _communityforum_xxx_isReadableByAnyIdOfUser
+
+def check_container(ntiid, registry):
+	if ntiid != ntiids.ROOT:
+		lib = registry.getUtility(lib_interfaces.IContentPackageLibrary)
+		if lib is not None and getattr(lib, "pathToNTIID", None) and not lib.pathToNTIID(ntiid):
+			raise hexc.HTTPNotFound()
 
 class _UGDView(_view_utils.AbstractAuthenticatedView):
 	"""
@@ -403,8 +410,12 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			if self.user != self.remoteUser:
 				raise hexc.HTTPForbidden()
 
+	def check_container(self):
+		pass
+
 	def __call__( self ):
 		self.check_cross_user()
+		self.check_container()
 		# pre-flight the batch
 		self._get_batch_size_start()
 
@@ -888,6 +899,9 @@ class _RecursiveUGDView(_UGDView):
 	_iter_ntiids_stream_only = False
 	_iter_ntiids_include_stream = True
 
+	def check_container(self):
+		check_container(self.ntiid, self.request.registry)
+
 	def _get_filter_names( self ):
 		"""
 		Special case some things to account for some interesting patterns the app has.
@@ -956,8 +970,6 @@ class _RecursiveUGDView(_UGDView):
 			# Throw the previous not found exception.
 			raise exc_info[0], exc_info[1], exc_info[2]
 
-
-
 class _ChangeMimeFilter(_MimeFilter):
 
 	def _object( self, o ):
@@ -971,6 +983,9 @@ class _UGDStreamView(_UGDView):
 	_support_cross_user = False
 
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
+
+	def check_container(self):
+		check_container(self.ntiid, self.request.registry)
 
 class _RecursiveUGDStreamView(_RecursiveUGDView):
 	"""
@@ -1030,8 +1045,6 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 			raise hexc.HTTPNotFound()
 		return items
 
-
-
 class _UGDAndRecursiveStreamView(_UGDView):
 	"""
 	Returns both the generated data and the stream data.
@@ -1040,8 +1053,12 @@ class _UGDAndRecursiveStreamView(_UGDView):
 	"""
 
 	_support_cross_user = False
+
 	def __init__(self, request ):
 		super(_UGDAndRecursiveStreamView,self).__init__( request )
+
+	def check_container(self):
+		check_container(self.ntiid, self.request.registry)
 
 	def __call__( self ):
 		"""
@@ -1051,6 +1068,7 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		# FIXME: This doesn't support paging or filtering or cross-user security
 		user, ntiid = self.user, self.ntiid
 		self.check_cross_user()
+		self.check_container()
 
 		page_data, stream_data = self._getAllObjects( user, ntiid )
 		all_data = []
@@ -1141,8 +1159,8 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
-from .interfaces import IETagCachedUGDExternalCollection
 from nti.dataserver.datastructures import LastModifiedCopyingUserList
+
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=nti_interfaces.INote,
@@ -1165,10 +1183,9 @@ def replies_view(request):
 
 	result_iface = IUGDExternalCollection
 	if request.subpath:
-		#result_iface = IETagCachedUGDExternalCollection
+		# result_iface = IETagCachedUGDExternalCollection
 		# temporarily disabled, see forums/views
 		pass
-
 
 	referents = LastModifiedCopyingUserList()
 	referents.updateLastMod( root_note.lastModified )
