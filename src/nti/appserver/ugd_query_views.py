@@ -353,10 +353,11 @@ def _communityforum_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 CommunityForum.xxx_isReadableByAnyIdOfUser = _communityforum_xxx_isReadableByAnyIdOfUser
 
-def check_container(ntiid, registry):
+def check_container(ntiid, user, registry):
 	if ntiid != ntiids.ROOT:
 		lib = registry.getUtility(lib_interfaces.IContentPackageLibrary)
-		if lib is not None and getattr(lib, "pathToNTIID", None) and not lib.pathToNTIID(ntiid):
+		if 	lib is not None and getattr(lib, "pathToNTIID", None) and not lib.pathToNTIID(ntiid) and \
+			user.getContainer(ntiid) is None and user.getSharedContainer(ntiid, defaultValue=None) is None:
 			raise hexc.HTTPNotFound()
 
 class _UGDView(_view_utils.AbstractAuthenticatedView):
@@ -900,7 +901,7 @@ class _RecursiveUGDView(_UGDView):
 	_iter_ntiids_include_stream = True
 
 	def check_container(self):
-		check_container(self.ntiid, self.request.registry)
+		check_container(self.ntiid, self.user, self.request.registry)
 
 	def _get_filter_names( self ):
 		"""
@@ -985,7 +986,7 @@ class _UGDStreamView(_UGDView):
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
 
 	def check_container(self):
-		check_container(self.ntiid, self.request.registry)
+		check_container(self.ntiid, self.user, self.request.registry)
 
 class _RecursiveUGDStreamView(_RecursiveUGDView):
 	"""
@@ -1058,7 +1059,7 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		super(_UGDAndRecursiveStreamView,self).__init__( request )
 
 	def check_container(self):
-		check_container(self.ntiid, self.request.registry)
+		check_container(self.ntiid, self.user, self.request.registry)
 
 	def __call__( self ):
 		"""

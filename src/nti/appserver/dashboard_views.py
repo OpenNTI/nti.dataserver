@@ -31,7 +31,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 			self.ntiid = the_ntiid or self.request.context.ntiid
 
 	def __call__( self ):
-		check_container(self.ntiid, self.request.registry)
+		check_container(self.ntiid, self.user, self.request.registry)
 
 		# query objects
 		view = _UGDAndRecursiveStreamView(self.request)
