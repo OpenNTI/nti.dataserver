@@ -9,35 +9,32 @@ recommend NetNewsWire.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
-import logging
-logger = logging.getLogger(__name__)
 
-import feedgenerator
+logger = __import__('logging').getLogger(__name__)
+
 import datetime
-
-from pyramid.view import view_config
+import feedgenerator
 
 from zope import interface
 from zope import component
-
 from zope.dublincore import interfaces as dc_interfaces
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
-
-
-from nti.appserver import httpexceptions as hexc
-from nti.appserver.ugd_query_views import _RecursiveUGDStreamView
-
-from nti.dataserver import authorization as nauth
-
-from nti.externalization.oids import to_external_ntiid_oid
-
 from zope.contentprovider.interfaces import IContentProvider
 from zope.contentprovider.provider import ContentProviderBase
 
+from pyramid.view import view_config
+
+from nti.appserver import httpexceptions as hexc
+
+from nti.dataserver import authorization as nauth
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
+
+from nti.externalization.oids import to_external_ntiid_oid
+
+from ._table_utils import NoteContentProvider
+from .ugd_query_views import _RecursiveUGDStreamView
 
 class _BetterDateAtom1Feed(feedgenerator.Atom1Feed):
 	"""
@@ -45,11 +42,11 @@ class _BetterDateAtom1Feed(feedgenerator.Atom1Feed):
 	is missing and only ``updated`` is present (the default in the super class)
 	some readers will fail to present a valid date.
 	"""
+
 	def add_item_elements(self, handler, item):
 		super(_BetterDateAtom1Feed,self).add_item_elements( handler, item )
 		if item.get('published') is not None:
 			handler.addQuickElement(u"published", feedgenerator.rfc3339_date(item['published']).decode('utf-8'))
-
 
 class AbstractFeedView(object):
 	"""
@@ -91,7 +88,6 @@ class AbstractFeedView(object):
 				not_mod.cache_control = 'must-revalidate'
 				raise not_mod
 
-
 		feed_factory = feedgenerator.Rss201rev2Feed if request.view_name == 'feed.rss' else _BetterDateAtom1Feed
 
 		feed = feed_factory(
@@ -125,13 +121,11 @@ class AbstractFeedView(object):
 				published=dc_interfaces.IDCTimes( data_item ).created,
 				)
 
-
 		feed_string = feed.writeString( 'utf-8' )
 		response.content_type = feed.mime_type.encode( 'utf-8' )
 		response.body = feed_string
 
 		return response
-
 
 @view_config( route_name='user.pages.odata.traversal.feeds',
 			  context='nti.appserver.interfaces.IPageContainerResource',
@@ -148,14 +142,13 @@ class UGDFeedView(AbstractFeedView):
 
 	def _object_and_creator( self, change ):
 		creator_profile = user_interfaces.IUserProfile( change.creator )
-		title = "%s %s a %s" % (creator_profile.realname or creator_profile.alias or change.creator, change.type.lower(), change.object.__class__.__name__)
+		title = "%s %s a %s" % (creator_profile.realname or creator_profile.alias or change.creator, \
+								change.type.lower(), change.object.__class__.__name__)
 		return change.object, change.creator, title, (change.type,)
 
 	def _feed_title( self ):
 		return self.request.context.ntiid # TODO: Better title
 
-
-from ._table_utils import NoteContentProvider
 @interface.implementer(IContentProvider)
 @component.adapter(nti_interfaces.INote, interface.Interface, AbstractFeedView)
 class NoteFeedRenderer(NoteContentProvider):
@@ -164,7 +157,6 @@ class NoteFeedRenderer(NoteContentProvider):
 	which is to include their URL.
 
 	"""
-
 
 @interface.implementer(IContentProvider)
 @component.adapter(nti_interfaces.ISelectedRange, interface.Interface, AbstractFeedView)
