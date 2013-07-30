@@ -169,7 +169,7 @@ name: worktitle workcreator worksource
 
 name: relatedworkref
 
-name: ntidiscussion
+name: ntidiscussion ntidiscussionref
 
 name: targetntiid
 

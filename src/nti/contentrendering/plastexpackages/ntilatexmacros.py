@@ -740,10 +740,13 @@ class relatedworkref(Base.Crossref.ref):
 		return tok
 
 ###############################################################################
-# The following block of commands concern representing related readings
+# The following block of commands concern representing forum discussions.
 ###############################################################################
 
 class ntidiscussionname(Base.Command):
+	pass
+
+class ntidiscussionref(Base.Crossref.ref):
 	pass
 
 class ntidiscussion(Base.Environment):
@@ -887,7 +890,8 @@ class _DiscussionExtractor(object):
 	def _process_lessons(self, dom, els):
 		for el in els:
 			discussion_els = el.getElementsByTagName('ntidiscussion')
-			if discussion_els:
+			discussionref_els = el.getElementsByTagName('ntidiscussionref')
+			if discussion_els or discussionref_els:
 				lesson_el = None
 
 				# Determine which topic represents the lesson
@@ -915,6 +919,29 @@ class _DiscussionExtractor(object):
 					toc_el.setAttribute('title', discussion_el.subtitle)
 					toc_el.setAttribute('ntiid', discussion_el.topic_ntiid)
 					toc_el.setAttribute('mimeType', discussion_el.targetMimeType)
+					toc_el.setAttribute('icon', icon)
+					lesson_el.appendChild(toc_el)
+					lesson_el.appendChild(dom.createTextNode(u'\n'))
+
+				for discussionref_el in discussionref_els:
+					lesson_el = None
+
+					# Determine which topic represents the lesson
+					topic_els = dom.getElementsByTagName('topic')
+					for topic_el in topic_els:
+						if topic_el.getAttribute('ntiid') == el.ntiid:
+							lesson_el = topic_el
+
+					if discussionref_el.idref['label'].iconResource is not None:
+						icon = discussionref_el.idref['label'].iconResource.image.url
+					else:
+						icon = ''
+
+					toc_el = dom.createElement('object')
+					toc_el.setAttribute('label', discussionref_el.idref['label'].title)
+					toc_el.setAttribute('title', discussionref_el.idref['label'].subtitle)
+					toc_el.setAttribute('ntiid', discussionref_el.idref['label'].topic_ntiid)
+					toc_el.setAttribute('mimeType', discussionref_el.idref['label'].targetMimeType)
 					toc_el.setAttribute('icon', icon)
 					lesson_el.appendChild(toc_el)
 					lesson_el.appendChild(dom.createTextNode(u'\n'))
