@@ -155,7 +155,8 @@ class _CourseExtractor(object):
         toc_el = XMLDocument().createElement('course')
         toc_el.setAttribute('label', unicode(doc_el.title) )
         toc_el.setAttribute('ntiid', doc_el.ntiid )
-        toc_el.setAttribute('discussionBoard', doc_el.discussion_board)
+        if hasattr(doc_el, 'discussion_board'):
+            toc_el.setAttribute('discussionBoard', doc_el.discussion_board)
         units = doc_el.getElementsByTagName( 'courseunit' )
         for unit in units:
             toc_el.appendChild(XMLDocument().createTextNode(u'\n        '))
