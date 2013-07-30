@@ -46,10 +46,10 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 				to_iter = iterable
 			
 			for o in to_iter or ():
-
+				# check for model content and Change events
 				if nti_interfaces.IStreamChangeEvent.providedBy(o) and o.type in (nti_interfaces.SC_CREATED, nti_interfaces.SC_MODIFIED):
 					obj = o.object
-				elif not nti_interfaces.IModeledContent.providedBy(o) or nti_interfaces.IStreamChangeEvent.providedBy(o):
+				elif nti_interfaces.IModeledContent.providedBy(o):
 					obj = o
 				else:
 					continue
