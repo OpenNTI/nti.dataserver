@@ -147,10 +147,10 @@ class site_tween(object):
 		site = get_site_for_request( request, site )
 
 		setSite( site )
+		__traceback_info__ = self.handler
 		# See comments in the class doc about why we cannot set the Pyramid request/current site
 		try:
 			self._configure_transaction( request )
-
 			return self.handler(request)
 		finally:
 			clearSite()
