@@ -7,19 +7,19 @@ code to work with the newer physical resource tree.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from zope import interface
 from zope import component
-from zope.traversing import interfaces as trv_interfaces
+from zope import interface
 from zope.location import interfaces as loc_interfaces
-
+from zope.traversing import interfaces as trv_interfaces
 
 import pyramid.traversal
 import pyramid.interfaces
 import pyramid.security as sec
-from pyramid.interfaces import IViewClassifier
 from pyramid.interfaces import IView
+from pyramid.interfaces import IViewClassifier
 
 from nti.ntiids import ntiids
 
@@ -229,7 +229,6 @@ class Dataserver2RootTraversable(_PseudoTraversableMixin):
 			return adapter_request( self.context, self.request ).traverse( key, remaining_path )
 
 
-
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class _AbstractUserPseudoContainerResource(object):
 	"""
@@ -258,31 +257,20 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 	"""
 
 	def traverse( self, key, remaining_path ):
-		resource = None
-		if key == ntiids.ROOT:
-			# The root is always available
-			resource = _PageContainerResource( self, self.request, name=key, parent=self.user )
-		# What about an owned container, or a shared container?
-		elif self.user.getContainer( key ) is not None or self.user.getSharedContainer( key, defaultValue=None ) is not None:
-			resource = _PageContainerResource( self, self.request, name=key, parent=self.user )
-			# Note that the container itself doesn't matter
-			# much, the _PageContainerResource only supports a few child items
-		else:
-			# Nope.
-			raise loc_interfaces.LocationError( key )
-
-
+		# CAS 2013-0729 PER JSG always return a _PageContainerResource whenever  /Pages /Pages(ID) is requested
+		resource = _PageContainerResource(self, self.request, name=key, parent=self.user)
 		# These have the same ACL as the user itself (for now)
 		resource.__acl__ = nacl.ACL( self.user )
 		return resource
 
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 def _BlogResource( context, request ):
 	return IPersonalBlog( context, None ) # Does the user have access to a default forum/blog? If no, 403.
+
 def _CommunityBoardResource( context, request ):
 	return ICommunityBoard( context, None )
 
