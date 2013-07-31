@@ -5,7 +5,6 @@ Views and other functions related to forums and blogs.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -15,7 +14,15 @@ import datetime
 import operator
 from abc import ABCMeta, abstractmethod
 
+from zope import component
+from zope import interface
+from zope import lifecycleevent
+from zope.event import notify
 from ZODB.interfaces import IConnection
+from zope.container.interfaces import INameChooser
+
+from pyramid.view import view_config
+from pyramid.view import view_defaults  # NOTE: Only usable on classes
 
 from nti.utils._compat import aq_base
 
@@ -24,18 +31,16 @@ from nti.appserver._util import uncached_in_response
 from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
-from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 from nti.appserver.ugd_edit_views import UGDPutView
 from nti.appserver.ugd_edit_views import UGDDeleteView
-from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
-
 from nti.appserver.ugd_feed_views import AbstractFeedView
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.appserver import interfaces as app_interfaces
+from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
+from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
+from nti.appserver import interfaces as app_interfaces
+from nti.dataserver import interfaces as nti_interfaces
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -47,25 +52,15 @@ frm_ext = frm_ext
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.dataserver.contenttypes.forums.post import Post
-from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
-from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
-from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
-from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
-from nti.dataserver.contenttypes.forums.post import CommunityHeadlinePost
-from nti.dataserver.contenttypes.forums.post import GeneralForumComment
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
-
+from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
+from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
+from nti.dataserver.contenttypes.forums.post import GeneralForumComment
+from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
+from nti.dataserver.contenttypes.forums.post import CommunityHeadlinePost
+from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
 from nti.externalization.interfaces import StandardExternalFields
-
-from pyramid.view import view_config
-from pyramid.view import view_defaults # NOTE: Only usable on classes
-
-from zope.container.interfaces import INameChooser
-from zope import component
-from zope import interface
-from zope import lifecycleevent
-from zope.event import notify
 
 from . import VIEW_PUBLISH
 from . import VIEW_UNPUBLISH
@@ -314,7 +309,6 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 @view_config(context=frm_interfaces.IForum)
 @view_config(context=frm_interfaces.ICommunityForum)
 @view_config(context=frm_interfaces.ICommunityBoard)
-@view_config(context=frm_interfaces.IClassForum)
 @view_config(context=frm_interfaces.IPersonalBlog)  # need to re-list this one
 @view_config(context=frm_interfaces.IPersonalBlogEntry)  # need to re-list this one
 @view_config(context=frm_interfaces.IPersonalBlogComment)  # need to re-list this one
@@ -406,7 +400,6 @@ class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
 
 
 @view_config(context=frm_interfaces.IForum)
-@view_config(context=frm_interfaces.IClassForum)
 @view_config(context=frm_interfaces.ICommunityForum)
 @view_config(context=frm_interfaces.IPersonalBlog)
 @view_defaults( name=VIEW_CONTENTS,
