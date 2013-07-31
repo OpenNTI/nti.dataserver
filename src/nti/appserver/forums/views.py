@@ -309,6 +309,7 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 @view_config(context=frm_interfaces.IForum)
 @view_config(context=frm_interfaces.ICommunityForum)
 @view_config(context=frm_interfaces.ICommunityBoard)
+@view_config(context=frm_interfaces.IClassForum)
 @view_config(context=frm_interfaces.IPersonalBlog)  # need to re-list this one
 @view_config(context=frm_interfaces.IPersonalBlogEntry)  # need to re-list this one
 @view_config(context=frm_interfaces.IPersonalBlogComment)  # need to re-list this one
@@ -457,7 +458,6 @@ class ForumContentsFeedView(AbstractFeedView):
 @view_config(context=frm_interfaces.IGeneralForumComment)
 @view_config(context=frm_interfaces.ICommunityHeadlinePost)
 @view_config(context=frm_interfaces.ICommunityForum)
-@view_config(context=frm_interfaces.IClassForum)
 @view_defaults( permission=nauth.ACT_UPDATE,
 				request_method='PUT',
 				**_view_defaults)
@@ -479,7 +479,6 @@ class HeadlineTopicDeleteView(UGDDeleteView):
 		del aq_base(theObject.__parent__)[theObject.__name__]
 		return theObject
 
-@view_config(context=frm_interfaces.IClassForum)
 @view_config(context=frm_interfaces.ICommunityForum)
 @view_defaults(**_d_view_defaults)
 class ForumDeleteView(UGDDeleteView):
