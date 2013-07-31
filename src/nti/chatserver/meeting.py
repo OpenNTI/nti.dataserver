@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Chatserver functionality.
 
-""" Chatserver functionality. """
-
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -10,28 +12,26 @@ logger = __import__('logging').getLogger(__name__)
 
 import time
 
-from nti.utils.property import alias
-from nti.utils.property import read_alias
-from nti.externalization import datastructures
-from nti.zodb.minmax import MergingCounter
+import BTrees.OOBTree
+from persistent import Persistent
+
+from zope import interface
+from zope import component
+from zope.event import notify
+from zope.deprecation import deprecated
 
 # TODO: Break this dep
 from nti.dataserver.contenttypes import threadable
 
-import persistent
-from persistent import Persistent
-import BTrees.OOBTree
+from nti.externalization import datastructures
 
-from zope import interface
-from zope import component
-from zope.deprecation import deprecated
-from zope.event import notify
+from nti.utils.property import alias
+from nti.utils.property import read_alias
 
+from nti.zodb.minmax import MergingCounter
 
 from . import interfaces
 from ._metaclass import _ChatObjectMeta
-from .interfaces import CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNELS
-from .interfaces import STATUS_POSTED, STATUS_SHADOWED, STATUS_PENDING #, STATUS_INITIAL
 
 ####
 # A note on the object model:
@@ -47,12 +47,10 @@ from .interfaces import STATUS_POSTED, STATUS_SHADOWED, STATUS_PENDING #, STATUS
 # from that location, as is anything contained there.)
 ####
 
-
 EVT_ENTERED_ROOM = 'chat_enteredRoom'
 EVT_EXITED_ROOM  = 'chat_exitedRoom'
 EVT_POST_MESSOGE = 'chat_postMessage'
 EVT_RECV_MESSAGE = 'chat_recvMessage'
-
 
 def _discard( s, k ):
 	try:
@@ -81,7 +79,7 @@ def _discard( s, k ):
 		# 				yield rec.oid, rec.tid, cStringIO.StringIO(rec.data)
 		# 	return
 		# 	while True:
-from ._meeting_post_policy import _ModeratedMeetingState
+
 _bwc_renames = { 'nti.chatserver.meeting _ModeratedMeetingState': 'nti.chatserver._meeting_post_policy _ModeratedMeetingState' }
 
 @interface.implementer( interfaces.IMeeting )

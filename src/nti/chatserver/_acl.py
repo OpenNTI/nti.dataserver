@@ -2,16 +2,20 @@
 # -*- coding: utf-8 -*-
 """
 Relating to ACL implementations for objects in this package.
+
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
 from nti.chatserver import interfaces as chat_interfaces
 
-from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 from nti.dataserver.authorization_acl import ace_allowing
+from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 
 @component.adapter(chat_interfaces.IMeeting)
 class _MeetingACLProvider(AbstractCreatedAndSharedACLProvider):
@@ -26,6 +30,5 @@ class _MeetingACLProvider(AbstractCreatedAndSharedACLProvider):
 		return self.context.occupant_names
 
 	def _extend_acl_before_deny( self, acl ):
-
 		for occupant_name in self.context.historical_occupant_names:
 			acl.append( ace_allowing( occupant_name, chat_interfaces.ACT_ENTER, _MeetingACLProvider ) )

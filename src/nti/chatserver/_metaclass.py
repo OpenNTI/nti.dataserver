@@ -1,13 +1,17 @@
 #!/usr/bin/env python
-""" Metaclasses to make sending chat events easy. """
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Metaclasses to make sending chat events easy.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
-import collections
 import six
+import collections
 
 from zope import component
 
@@ -24,9 +28,9 @@ def _send_event( chatserver, names, evt_name, *args ):
 
 class _ChatObjectMeta(type):
 
-	def __new__( mcs, clsname, clsbases, clsdict ):
+	def __new__(cls, clsname, clsbases, clsdict):
 		if '__emits__' not in clsdict:
-			return type.__new__( mcs, clsname, clsbases, clsdict )
+			return type.__new__(cls, clsname, clsbases, clsdict)
 
 		def make_emit(signal):
 			return lambda s, sessions, *args: _send_event( getattr(s, '_chatserver', None) or component.queryUtility( interfaces.IChatserver ),
@@ -36,4 +40,4 @@ class _ChatObjectMeta(type):
 		for signal in (clsdict['__emits__']):
 			clsdict['emit_' + signal] = make_emit( signal if '_' in signal else 'chat_' + signal )
 
-		return type.__new__( mcs, clsname, clsbases, clsdict )
+		return type.__new__(cls, clsname, clsbases, clsdict)

@@ -3,30 +3,29 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
-
+from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
+
 from . import MessageFactory as _
 
-import collections
 import functools
-
-from persistent import Persistent
-import BTrees.OOBTree
-import BTrees
+import collections
 
 from zope import interface
 from zope import component
 from zope.event import notify
-from nti.socketio import interfaces as sio_interfaces
-
 
 from zc import intid as zc_intid
 
+import BTrees
+from persistent import Persistent
+
 from nti.ntiids import ntiids
+
+from nti.socketio import interfaces as sio_interfaces
+
 from . import interfaces
 from ._metaclass import _ChatObjectMeta
 from .interfaces import CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_STATE, CHANNELS
@@ -215,9 +214,9 @@ class _MeetingMessagePostPolicy(object):
 
 	def _post_message_handle_STATE( self, msg_info ):
 		STATES = ( 'active', 'composing', 'paused', 'inactive', 'gone' )
-		if not isinstance( msg_info.body, collections.Mapping ) \
-		  or 'state' not in msg_info.body or msg_info.body['state'] not in STATES:
-		  return False
+		if 	not isinstance(msg_info.body, collections.Mapping) \
+			or 'state' not in msg_info.body or msg_info.body['state'] not in STATES:
+			return False
 
 		# Ok, great. Send it to everyone without storing it or transcripting it
 		# or incrementing room message counts
@@ -345,7 +344,6 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 
 	__metaclass__ = _ChatObjectMeta
 	__emits__ = ('recvMessageForModeration', 'recvMessageForShadow')
-
 
 	def __init__( self, *args, **kwargs ):
 		self.moderation_state = kwargs.pop('moderation_state')
