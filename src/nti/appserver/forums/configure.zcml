@@ -82,10 +82,6 @@
 	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.IForum"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
-
-	<subscriber factory=".decorators.ForumObjectWritableDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.IForum"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 				
 	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"
