@@ -25,8 +25,7 @@ from nti.utils._compat import aq_base
 
 from .._util import link_belongs_to_user
 from .._view_utils import get_remote_user
-from ..pyramid_authorization import is_readable
-from ..pyramid_authorization import is_writable
+from ..pyramid_authorization import is_readable, is_deletable, is_writable
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
 LINKS = ext_interfaces.StandardExternalFields.LINKS
@@ -104,17 +103,6 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 		if not current_user or current_user != context.creator:
 			return
 		super(PublishLinkDecorator,self).decorateExternalMapping( context, mapping )
-
-
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-class ForumObjectWritableDecorator(object):
-	
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalMapping( self, context, mapping ):
-		request = get_current_request()
-		if request:
-			mapping['IsWritable'] = True if is_writable(context, request) else False
 		
 # Notice we do not declare what we adapt--we adapt too many things
 # that share no common ancestor. (We could be declared on IContainer,
@@ -132,6 +120,7 @@ class ForumObjectContentsLinkProvider(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, context, mapping ):
+		request = get_current_request()
 		# We only do this for parented objects. Otherwise, we won't
 		# be able to render the links. A non-parented object is usually
 		# a weakref to an object that has been left around
@@ -163,15 +152,21 @@ class ForumObjectContentsLinkProvider(object):
 		# We also advertise that you can POST new items to this url, which is good for caching
 		elements=(VIEW_CONTENTS, md5_etag(context.lastModified, _get_remote_username()).replace('/','_'))
 		_links = mapping.setdefault( LINKS, [] )
-		for rel in VIEW_CONTENTS, 'add':
+		
+		def _linker(rel):
 			link = Link( context, rel=rel, elements=elements )
 			interface.alsoProvides( link, ILocation )
 			link.__name__ = ''
 			link.__parent__ = context
 			_links.append( link )
-
-		# The last link is the add link; we want to be specific about its method
-		link.method = 'POST'
+			return link
+			
+		# add contents
+		_linker(VIEW_CONTENTS)
+		if request is None or is_writable(context, request) or is_deletable(context, request):
+			link = _linker('add')
+			# we want to be specific about its method
+			link.method = 'POST'
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 @component.adapter(IForum)
