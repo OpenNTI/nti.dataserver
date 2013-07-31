@@ -5,9 +5,8 @@ Interfaces having to do with chat.
 
 $Id$
 """
-from __future__ import unicode_literals, absolute_import, print_function
-
-# pylint: disable=E0213,E0211
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import six
 
@@ -58,7 +57,6 @@ STATUS_PENDING = 'st_PENDING'
 STATUS_POSTED  = 'st_POSTED'
 STATUS_SHADOWED = 'st_SHADOWED'
 STATUSES = (STATUS_INITIAL,STATUS_PENDING,STATUS_POSTED,STATUS_SHADOWED)
-
 
 class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 	"""

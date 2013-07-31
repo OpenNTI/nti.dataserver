@@ -5,7 +5,6 @@ Implementations related to :class:`IContacts.`
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -15,12 +14,13 @@ from zope import interface
 from zope import component
 from zope.event import notify
 
-from .interfaces import IContacts
-from .interfaces import ContactISubscribeToAddedToContactsEvent
-from nti.dataserver.interfaces import IFollowerAddedEvent
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IFollowerAddedEvent
 
 from nti.utils.property import alias
+
+from .interfaces import IContacts
+from .interfaces import ContactISubscribeToAddedToContactsEvent
 
 @interface.implementer(IContacts)
 @component.adapter(IUser)

@@ -1,45 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
-
 __docformat__ = "restructuredtext en"
 
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 import time
 import uuid
 import datetime
 
+from zope import interface
+from zope import component
+from zope.deprecation import deprecate
+from zope.schema import interfaces as sch_interfaces
+from zope.schema.fieldproperty import FieldProperty
+from zope.dublincore import interfaces as dc_interfaces
+
 from persistent import Persistent
 from persistent.list import PersistentList
-
-from nti.utils.property import alias, read_alias
-
-from nti.externalization.externalization import to_external_object
-from nti.externalization.internalization import update_from_external_object
 
 from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver.users import entity
 from nti.dataserver.contenttypes import threadable
-#from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.base import _make_getitem
 
-from zope.deprecation import deprecate
+from nti.externalization.datastructures import InterfaceObjectIO
+from nti.externalization.externalization import to_external_object
+from nti.externalization.internalization import update_from_external_object
+from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
-from zope import interface
-from zope import component
-from zope.dublincore import interfaces as dc_interfaces
-
-from zope.schema import interfaces as sch_interfaces
-from zope.schema.fieldproperty import FieldProperty
+from nti.utils.proxy import removeAllProxies
+from nti.utils.property import alias, read_alias
 
 from . import interfaces
 
@@ -68,13 +63,10 @@ class _BodyFieldProperty(FieldProperty):
 			value = self._field.fromObject( value )
 			super(_BodyFieldProperty, self).__set__( inst, value )
 
-
-
 # TODO: MessageInfo is a mess. Unify better with IContent
 # and the other content types.
 # We manually re-implement IDCTimes (should extend CreatedModDateTrackingObject)
-@interface.implementer( interfaces.IMessageInfo,
-						dc_interfaces.IDCTimes)
+@interface.implementer(interfaces.IMessageInfo, dc_interfaces.IDCTimes)
 class MessageInfo( sharing.AbstractReadableSharedMixin,
 				   threadable.ThreadableMixin,
 				   Persistent ):
@@ -121,16 +113,17 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 	# From IWritableSharable
 	def clearSharingTargets(self):
 		self.sharedWith = MessageInfo.sharedWith
+
 	# We don't really do sharing with entities, just usernames. So the entity-based
 	# methods are not implemented
 	def addSharingTarget(self, target ):
 		raise NotImplementedError()
+
 	def updateSharingTargets( self, replacements ):
 		raise NotImplementedError()
 
 	def setSharedWithUsernames( self, usernames ):
 		self.sharedWith = usernames
-
 
 	id = read_alias('ID')
 	MessageId = read_alias('ID') # bwc
@@ -139,11 +132,14 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 	createdTime = alias('CreatedTime')
 	lastModified = alias('LastModified')
 	Timestamp = alias('LastModified') # bwc
+
 	# IDCTimes
 	created = property( lambda self: datetime.datetime.fromtimestamp( self.createdTime ),
 						lambda self, dt: setattr( self, 'createdTime', time.mktime( dt.timetuple() ) ) )
+
 	modified = property( lambda self: datetime.datetime.fromtimestamp( self.lastModified ),
 						lambda self, dt: self.updateLastModIfGreater( time.mktime( dt.timetuple() ) ) )
+
 	def updateLastModIfGreater( self, t ): # copied from ModDateTrackingObject
 		"Only if the given time is (not None and) greater than this object's is this object's time changed."
 		if t is not None and t > self.lastModified:
@@ -162,6 +158,7 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 		return getattr( self, '_v_sender_sid', None )
 	def set_sender_sid( self, sid ):
 		setattr( self, '_v_sender_sid', sid )
+
 	sender_sid = property( get_sender_sid, set_sender_sid )
 
 	@property
@@ -203,17 +200,14 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 	def updateFromExternalObject( self, ext_object, context=None ):
 		return update_from_external_object( self, ext_object, context=context )
 
-from nti.externalization.datastructures import InterfaceObjectIO
-from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
-from nti.utils.proxy import removeAllProxies
-
 @component.adapter(interfaces.IMessageInfo)
 class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,InterfaceObjectIO):
 
 	_ext_iface_upper_bound = interfaces.IMessageInfo
 
 	# NOTE: inReplyTo and 'references' do not really belong here
-	_excluded_out_ivars_ = { 'MessageId', 'flattenedSharingTargetNames', 'flattenedSharingTargets', 'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
+	_excluded_out_ivars_ = {'MessageId', 'flattenedSharingTargetNames', 'flattenedSharingTargets',
+							'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
 
 
 	def __init__( self, context ):
