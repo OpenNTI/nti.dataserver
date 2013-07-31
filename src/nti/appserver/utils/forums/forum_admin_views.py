@@ -45,9 +45,16 @@ class SetClassCommunityForum(_JsonBodyView):
 		if not instructors:
 			raise hexc.HTTPUnprocessableEntity(detail='No valid instructors were specified')
 
-		forum = frm_interfaces.ICommunityForum(community, None)
-		if forum is None:
-			raise hexc.HTTPUnprocessableEntity(detail='Community does not allow a forum')
+		forum = values.get('forum', None)
+		if not forum:  # default forum
+			forum = frm_interfaces.ICommunityForum(community, None)
+			if forum is None:
+				raise hexc.HTTPUnprocessableEntity(detail='Community does not allow a forum')
+		else:
+			board = frm_interfaces.ICommunityBoard(community, None)
+			forum = board.get(forum, None)
+			if forum is None:
+				raise hexc.HTTPNotFound(detail='Forum not found')
 
 		interface.alsoProvides(forum, frm_interfaces.IClassForum)
 		setattr(forum, 'Instructors', list(instructors))
