@@ -138,6 +138,5 @@ class _ClassForumACLProvider(_CommunityForumACLProvider):
 		self._extend_with_admin_privs(acl)
 		for username in getattr(self.context, 'Instructors', ()):
 			instructor = users.User.get_user(username)
-			if not instructor: continue
-			for perm in (nauth.ACT_CREATE, nauth.ACT_DELETE, nauth.ACT_UPDATE, nauth.ACT_READ):
-				acl.append(ace_allowing(instructor, perm, self))
+			if instructor:
+				acl.append(ace_allowing(instructor, nti_interfaces.ALL_PERMISSIONS, self))
