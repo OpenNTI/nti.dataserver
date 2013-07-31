@@ -23,6 +23,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from nti.dataserver.users import users
 from nti.dataserver import authorization as nauth
 from nti.dataserver.traversal import find_interface
 from nti.dataserver import interfaces as nti_interfaces
@@ -131,10 +132,12 @@ class _ClassForumACLProvider(_CommunityForumACLProvider):
 	_PERMS_FOR_SHARING_TARGETS = AbstractCreatedAndSharedACLProvider._PERMS_FOR_SHARING_TARGETS
 
 	def _get_sharing_target_names(self):
-		return self.context.creator
+		return (self.context.creator,)  # ICommunity
 
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		self._extend_with_admin_privs(acl)
-		for instructor in getattr(self.context, 'Instructors', ()):
-			acl.append(ace_allowing(instructor, nauth.ACT_DELETE, self))
-			acl.append(ace_allowing(instructor, nauth.ACT_READ, self))
+		for username in getattr(self.context, 'Instructors', ()):
+			instructor = users.User.get_user(username)
+			if not instructor: continue
+			for perm in (nauth.ACT_CREATE, nauth.ACT_DELETE, nauth.ACT_UPDATE, nauth.ACT_READ):
+				acl.append(ace_allowing(instructor, perm, self))
