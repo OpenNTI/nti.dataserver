@@ -163,7 +163,10 @@ class ForumObjectContentsLinkProvider(object):
 			
 		# add contents
 		_linker(VIEW_CONTENTS)
-		if request is None or can_create(context, request):
+
+		# check the create permission in the forum acl. This is due to the IClassForum interface
+		# which changes the acl provider of the forum object
+		if not IForum.providedBy(context) or request is None or can_create(context, request):
 			link = _linker('add')
 			link.method = 'POST'
 
