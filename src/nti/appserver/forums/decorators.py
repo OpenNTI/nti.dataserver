@@ -15,8 +15,8 @@ from pyramid.threadlocal import get_current_request
 from nti.appserver._util import AbstractTwoStateViewLinkDecorator
 
 from nti.dataserver.links import Link
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum
-from nti.dataserver.interfaces import IUser, ICommunity, IUnscopedGlobalCommunity, IDefaultPublished
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
@@ -25,7 +25,7 @@ from nti.utils._compat import aq_base
 
 from .._util import link_belongs_to_user
 from .._view_utils import get_remote_user
-from ..pyramid_authorization import is_readable, is_deletable, is_writable
+from ..pyramid_authorization import is_readable, can_create
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
 LINKS = ext_interfaces.StandardExternalFields.LINKS
@@ -41,7 +41,7 @@ from . import VIEW_CONTENTS
 from . import VIEW_UNPUBLISH
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(IUser)
+@component.adapter(nti_interfaces.IUser)
 class BlogLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
@@ -62,13 +62,13 @@ class BlogLinkDecorator(object):
 			the_links.append( link )
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(ICommunity)
+@component.adapter(nti_interfaces.ICommunity)
 class CommunityBoardLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, context, mapping ):
-		if IUnscopedGlobalCommunity.providedBy( context ):
+		if nti_interfaces.IUnscopedGlobalCommunity.providedBy( context ):
 			# The global communities that do not participate in security
 			# (e.g., Everyone) do not get a forum
 			return
@@ -94,7 +94,7 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	true_view = VIEW_UNPUBLISH
 
 	def predicate( self, context, current_username ):
-		if IDefaultPublished.providedBy( context ):
+		if nti_interfaces.IDefaultPublished.providedBy( context ):
 			return True
 
 	def decorateExternalMapping( self, context, mapping ):
@@ -119,7 +119,7 @@ class ForumObjectContentsLinkProvider(object):
 
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping( self, context, mapping ):
+	def decorateExternalMapping(self, context, mapping):
 		request = get_current_request()
 		# We only do this for parented objects. Otherwise, we won't
 		# be able to render the links. A non-parented object is usually
@@ -163,9 +163,8 @@ class ForumObjectContentsLinkProvider(object):
 			
 		# add contents
 		_linker(VIEW_CONTENTS)
-		if request is None or is_writable(context, request) or is_deletable(context, request):
+		if request is None or can_create(context, request):
 			link = _linker('add')
-			# we want to be specific about its method
 			link.method = 'POST'
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)

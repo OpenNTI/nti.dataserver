@@ -12,16 +12,17 @@ logger = __import__( 'logging' ).getLogger(__name__)
 
 from zope import component
 
-from nti.dataserver.authorization import ACT_UPDATE, ACT_READ
+import pyramid.authorization
+import pyramid.security as psec
+from pyramid.threadlocal import get_current_request
+from pyramid.traversal import lineage as _pyramid_lineage
+
 from nti.dataserver.authorization_acl import ACL
+from nti.dataserver.authorization import ACT_UPDATE, ACT_READ, ACT_CREATE
 from nti.dataserver.interfaces import ACLProxy, IAuthenticationPolicy, IAuthorizationPolicy
 
 from nti.externalization.interfaces import StandardExternalFields
 
-import pyramid.authorization
-import pyramid.security as psec
-from pyramid.traversal import lineage as _pyramid_lineage
-from pyramid.threadlocal import get_current_request
 # Hope nobody is monkey patching this after we're imported
 
 def ACLAuthorizationPolicy():
@@ -113,19 +114,27 @@ def _lineage_that_ensures_acls(obj):
 				# Yes we can. So do so
 				yield ACLProxy( location, acl )
 
+
+def can_create(obj, request=None):
+	"""
+	Can the current user create over the specified object? Yes if the creator matches,
+	or Yes if it is the returned object and we have permission.
+	"""
+	return _caching_permission_check('_acl_is_writable_cache', ACT_CREATE, obj, request)
+
 def is_writable(obj, request=None):
 	"""
 	Is the given object writable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check( '_acl_is_writable_cache', ACT_UPDATE, obj, request )
+	return _caching_permission_check('_acl_is_writable_cache', ACT_UPDATE, obj, request)
 
 def is_readable(obj, request=None):
 	"""
 	Is the given object readable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check( '_acl_is_readable_cache', ACT_READ, obj, request )
+	return _caching_permission_check('_acl_is_readable_cache', ACT_READ, obj, request)
 
 def _caching_permission_check(cache_name, permission, obj, request):
 	"""
