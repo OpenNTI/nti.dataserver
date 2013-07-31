@@ -269,7 +269,7 @@ setup(
 		'sympy >= 0.7.2' if not IS_PYPY else '',
 		'stripe >= 1.9.2',  # stripe payments
 		# 'slimit',
-		'supervisor >= 3.0b2',
+		'supervisor >= 3.0',
 		'transaction >= 1.4.1',
 		# See http://pypi.python.org/pypi/user-agents/ for a high-level
 		# library to do web user agent detection
