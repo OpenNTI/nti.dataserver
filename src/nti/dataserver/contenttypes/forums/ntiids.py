@@ -92,5 +92,10 @@ class _CommunityTopicResolver(AbstractUserBasedResolver):
 		board = frm_interfaces.ICommunityBoard( community, None )
 		if board is None:
 			return None
-		forum_name, topic_name = get_specific( ntiid ).split( '.', 1 )
+		specific = get_specific(ntiid)
+		if '.' in specific:
+			forum_name, topic_name = specific.split('.', 1)
+		else:
+			forum_name, topic_name = specific, u''
+			logger.warn("unexpected nttid specific part '%s' while resolving topic " % specific)
 		return board.get( forum_name, {} ).get( topic_name )
