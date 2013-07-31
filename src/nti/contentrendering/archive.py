@@ -33,6 +33,11 @@ def is_black_listed(name):
 	return False
 
 def _archive(source_path, out_dir=None, verbose=False):
+	source_path = os.path.expanduser(source_path)
+	source_path = source_path + '/' if not source_path.endswith('/') else source_path
+	if not os.path.exists(source_path) or not os.path.isdir(source_path):
+		raise Exception("Invalid source directory")
+	
 	added = set()
 	out_dir = out_dir or source_path
 	out_dir = os.path.expanduser(out_dir)
@@ -44,9 +49,8 @@ def _archive(source_path, out_dir=None, verbose=False):
 
 	zf = zipfile.ZipFile(outfile, mode="w")
 	try:
-		source_path = os.path.expanduser(source_path)
-		source_path = source_path + '/' if not source_path.endswith('/') else source_path
 		os.chdir(source_path)
+		dname = os.path.basename(source_path[0:-1])
 
 		def _process(path):
 			pattern = os.path.join(path, "*")
@@ -57,7 +61,7 @@ def _archive(source_path, out_dir=None, verbose=False):
 				if os.path.isdir(pathname):
 					_process(pathname)
 				else:
-					arcname = pathname[len(source_path):]
+					arcname = dname + '/' + pathname[len(source_path):]
 					added.add(arcname)
 					if verbose:
 						print("Adding %s" % arcname)
