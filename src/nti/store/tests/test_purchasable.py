@@ -7,7 +7,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from zope.schema import vocabulary
+from zope import component
 
 from nti.dataserver.users import User
 
@@ -31,15 +31,13 @@ class TestPurchasable(ConfiguringTestBase):
 		return usr
 
 	def test_zmcl(self):
-		voc = vocabulary.getVocabularyRegistry().get(None, store_interfaces.PURCHASABLE_VOCAB_NAME)
-		assert_that(voc, is_not(none()))
-
-		util = purchasable.PurchasableUtilityVocabulary(None)
+		util = component.queryUtility(store_interfaces.IPurchasableStore)
+		assert_that(util, is_not(none()))
 		assert_that(util, has_length(greater_than_or_equal_to(4)))
 
-		assert_that(util.getTermByToken('iid_0'), is_not(none()))
+		assert_that(util.get_purchasable('iid_0'), is_not(none()))
 
-		ps = util.getTermByToken('iid_3').value
+		ps = util.get_purchasable('iid_3')
 		assert_that(ps.NTIID, "iid_3")
 		assert_that(ps.Title, "Risk Course")
 		assert_that(ps.Title, "Risk Course")

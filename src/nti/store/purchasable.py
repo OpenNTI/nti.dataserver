@@ -126,7 +126,10 @@ class ZcmlPurchasableStore(object):
 	def get_purchasable_ids(self):
 		for p in self.vocabulary:
 			yield p.value.NTIID
-		
+
+	def __len__(self):
+		return len(self.vocabulary)
+
 def get_purchasable(pid):
 	util = component.getUtility(store_interfaces.IPurchasableStore)
 	result = util.get_purchasable(pid)
