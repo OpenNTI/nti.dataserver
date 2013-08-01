@@ -25,6 +25,7 @@ Dependencies (macports):
 - mongodb			# 2012-06-13 (Optional)
 - subversion		# 2013-06-12 (Optional)
 - git-core 			# 2013-06-12 (Optional) install as git-core +subversion
+- mcrypt			# 2013-08-01 (Optional)
 
 Dependencies for content generation:
 - Full TeX distribution (including extras) - macports
