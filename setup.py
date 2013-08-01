@@ -224,7 +224,7 @@ setup(
 		'plone.i18n >= 2.0.8',  # provides ISO3166 country/codes and flag images
 		'plone.scale >= 1.3.2',  # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0.2',  # much like zope.file, but some image-specific goodness.
-		'pyparsing >= 1.5.6, < 2.0.2',  # used by matplotlib, experimental in zopyx.txng.core
+		'pyparsing >= 1.5.6, <=1.5.7',  # used by matplotlib, rdflib, experimental zopyx.txng3.core
 		# Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
 		'pyPDF >= 1.13',
 		# See also z3c.rml for a complete PDF layout and rendering environment, which should
