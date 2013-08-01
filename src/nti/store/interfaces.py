@@ -57,6 +57,11 @@ class IPurchasableStore(interface.Interface):
 		Return an iterable with purchasable ids
 		"""
 
+	def __len__():
+		"""
+		Return the number of items in this store
+		"""
+
 class IPurchasable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
 	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=False)
