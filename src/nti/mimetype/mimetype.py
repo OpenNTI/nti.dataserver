@@ -93,7 +93,7 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 	def external_mime_types(mcs):
 		return {x.mimeType for x in _mm_types if getattr(x, '__external_can_create__', False)}
 
-	def __new__(mcs, name, bases, cls_dict):
+	def __new__(cls, name, bases, cls_dict):
 		if '__eq__' in cls_dict and '__hash__' not in cls_dict:
 			# This is a deprecated scenario; but the built-in DeprecationWarning includes
 			# no useful information (it points to the metaclass)
@@ -102,7 +102,7 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 			warnings.warn( "Overriding __eq__ blocks inheritance of __hash__ in 3.x", DeprecationWarning, stacklevel=2 )
 			warnings.warn( "Overriding __eq__ blocks inheritance of __hash__ in 3.x", DeprecationWarning, stacklevel=3 )
 
-		new_type = type.__new__( mcs, name, bases, cls_dict )
+		new_type = type.__new__(cls, name, bases, cls_dict)
 		# elide internal classes. (In the future, we may want
 		# finer control with a class dictionary attribute.)
 		# Also don't overwrite an existing value
