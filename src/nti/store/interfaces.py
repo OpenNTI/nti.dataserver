@@ -40,6 +40,23 @@ PA_STATE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.Simp
 PAYMENT_PROCESSORS = ('stripe', 'fps')
 PAYMENT_PROCESSORS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PAYMENT_PROCESSORS])
 
+class IPurchasableStore(interface.Interface):
+
+	def get_purchasable(pid):
+		"""
+		Return purchasable with the specified id
+		"""
+
+	def get_all_purchasables():
+		"""
+		Return an iterable with purchasable items
+		"""
+
+	def get_purchasable_ids():
+		"""
+		Return an iterable with purchasable ids
+		"""
+
 class IPurchasable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
 	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=False)

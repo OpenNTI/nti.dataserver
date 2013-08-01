@@ -9,12 +9,12 @@ __docformat__ = "restructuredtext en"
 
 import six
 
+from zope import component
 from zope import interface
 from zope.cachedescriptors.property import Lazy
+from zope.schema import interfaces as sch_interfaces
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
-
-from zope.schema import interfaces as sch_interfaces
 
 from zope.componentvocabulary.vocabulary import UtilityNames
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
@@ -101,37 +101,51 @@ def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=No
 						 License=license_, Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
 	return result
 
-def _get_vocabulary():
-	_vocabulary = PurchasableUtilityVocabulary(None)
-	return _vocabulary
+@interface.implementer(store_interfaces.IPurchasableStore)
+class ZcmlPurchasableStore(object):
 
+	_vocabulary = None
+	
+	@property
+	def vocabulary(self):
+		if self._vocabulary is None:
+			self._vocabulary = PurchasableUtilityVocabulary(None)
+		return self._vocabulary
+
+	def get_purchasable(self, pid):
+		util = self.vocabulary
+		try:
+			result = util.getTermByToken(pid) if pid else None
+		except (LookupError, KeyError):
+			result = None
+		return result.value if result is not None else None
+
+	def get_all_purchasables(self):
+		util = self.vocabulary
+		for p in util:
+			yield p.value
+
+	def get_purchasable_ids(self):
+		util = self.vocabulary
+		for p in util:
+			yield p.value.NTIID
+		
 def get_purchasable(pid):
-	"""
-	Return purchasable with the specified id
-	"""
-	util = _get_vocabulary()
-	try:
-		result = util.getTermByToken(pid) if pid else None
-	except (LookupError, KeyError):
-		result = None
-	return result.value if result is not None else None
+	util = component.getUtility(store_interfaces.IPurchasableStore)
+	result = util.get_purchasable(pid)
+	return result
 
 def get_all_purchasables():
-	"""
-	Return all purchasable items
-	"""
-	result = LocatedExternalList()
-	util = _get_vocabulary()
-	for p in util:
-		result.append(p.value)
+	util = component.getUtility(store_interfaces.IPurchasableStore)
+	result = LocatedExternalList(util.get_all_purchasables())
 	return result
 
 def get_available_items(user):
 	"""
 	Return all item that can be purchased
 	"""
-	util = _get_vocabulary()
-	all_ids = set([p.value.NTIID for p in util])
+	util = component.getUtility(store_interfaces.IPurchasableStore)
+	all_ids = set(util.get_purchasable_ids())
 
 	# get purchase history
 	purchased = set()
@@ -142,7 +156,7 @@ def get_available_items(user):
 			purchased.update(p.Items)
 
 	available = all_ids - purchased
-	result = LocatedExternalDict({k:util.getTermByToken(k).value for k in available})
+	result = LocatedExternalDict({k:util.get_purchasable(k) for k in available})
 	return result
 
 def get_content_items(purchased_items):
@@ -153,13 +167,11 @@ def get_content_items(purchased_items):
 		purchased_items = to_collection(purchased_items)
 
 	result = set()
-	util = _get_vocabulary()
+	util = component.getUtility(store_interfaces.IPurchasableStore)
 	for item in purchased_items:
-		try:
-			p = util.getTermByToken(item).value
+		p = util.get_purchasable(item)
+		if p is not None:
 			result.update(p.Items)
-		except (LookupError, KeyError):
-			pass
 	return result
 
 def get_providers(purchasables):
