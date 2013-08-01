@@ -113,21 +113,18 @@ class ZcmlPurchasableStore(object):
 		return self._vocabulary
 
 	def get_purchasable(self, pid):
-		util = self.vocabulary
 		try:
-			result = util.getTermByToken(pid) if pid else None
+			result = self.vocabulary.getTermByToken(pid) if pid else None
 		except (LookupError, KeyError):
 			result = None
 		return result.value if result is not None else None
 
 	def get_all_purchasables(self):
-		util = self.vocabulary
-		for p in util:
+		for p in self.vocabulary:
 			yield p.value
 
 	def get_purchasable_ids(self):
-		util = self.vocabulary
-		for p in util:
+		for p in self.vocabulary:
 			yield p.value.NTIID
 		
 def get_purchasable(pid):
