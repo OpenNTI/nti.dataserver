@@ -20,7 +20,7 @@ from zope import interface
 
 from nti.contentrendering import interfaces as cr_interfaces
 
-interface.moduleProvides(cr_interfaces.IRenderedBookExtractor)
+interface.moduleProvides(cr_interfaces.ISlideDeckExtractor)
 
 def get_attribute(node, name):
 	attributes = node.attrib if node is not None else {}

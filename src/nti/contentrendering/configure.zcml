@@ -36,7 +36,7 @@
 
 	<utility component=".archive" provides=".interfaces.IRenderedBookArchiver" />
 			 
-	<utility component=".slidedeckextractor" provides=".interfaces.IRenderedBookExtractor" name="slidedeck"/>
+	<utility component=".slidedeckextractor" provides=".interfaces.ISlideDeckExtractor" name="SlideDeckExtractor"/>
 		
 	<utility component=".nticard_indexer" provides=".interfaces.IRenderedBookIndexer" name="nticard"/>
 	<utility component=".book_content_indexer" provides=".interfaces.IRenderedBookIndexer" name="book"/>
