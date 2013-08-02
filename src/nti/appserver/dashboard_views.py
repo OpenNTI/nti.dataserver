@@ -127,7 +127,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		for unit in all_paths:
 			questions = question_map.by_file.get(getattr(unit, 'key', None))
 			for question in questions or ():
-				ntiid = getattr(question, 'containerId', None) or getattr(question, 'ntiid', None)
+				ntiid = getattr(question, 'ntiid', None)
 				usr_map, by_type = self._get_summary_items(ntiid, False) if ntiid else ({}, {})
 				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
 
