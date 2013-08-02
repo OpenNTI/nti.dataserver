@@ -214,7 +214,7 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 					self.poster = self.attributes['id'] + '-poster.jpg'
 					self.thumbnail = self.attributes['id'] + '-thumb.jpg'
 				else:
-					logger.warning('Unknown video type: %s', self.attributes['type'])
+					logger.warning('Unknown video type: %s', self.attributes['service'])
 
 	def digest(self, tokens):
 		res = super(ntivideo, self).digest(tokens)
