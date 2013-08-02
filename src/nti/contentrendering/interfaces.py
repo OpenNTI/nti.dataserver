@@ -250,6 +250,11 @@ class IHackExtractor(IRenderedBookExtractor):
 	Looks through the rendered book and injects hacks.
 	"""
 
+class ISlideDeckExtractor(IRenderedBookExtractor):
+	"""
+	Looks through the rendered book and extracts slide decks.
+	"""
+
 from zope.interface import registry
 from zope.component import getGlobalSiteManager
 

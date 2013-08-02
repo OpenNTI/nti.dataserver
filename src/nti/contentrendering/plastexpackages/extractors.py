@@ -12,9 +12,12 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import simplejson
+import collections
 
 from zope import component
 from zope import interface
+
+from plasTeX.Base.LaTeX import Document as LaTexDocument
 
 from nti.contentrendering import interfaces as crd_interfaces
 
@@ -89,8 +92,7 @@ class _RelatedWorkExtractor(object):
 @component.adapter(crd_interfaces.IRenderedBook)
 class _DiscussionExtractor(object):
 
-	def __init__( self, book=None ):
-		# Usable as either a utility factory or an adapter
+	def __init__(self, book=None):
 		pass
 
 	def transform( self, book ):
@@ -163,7 +165,7 @@ class _DiscussionExtractor(object):
 @component.adapter(crd_interfaces.IRenderedBook)
 class _NTIVideoExtractor(object):
 
-	def __init__( self, book=None ):
+	def __init__(self, book=None):
 		pass
 
 	def transform( self, book ):
@@ -176,6 +178,13 @@ class _NTIVideoExtractor(object):
 			self._process_videos(dom, video_els, outpath)
 			book.toc.save()
 
+	def _find_topic_els(self, dom, ntiid):
+		topic_els = dom.getElementsByTagName('topic')
+		for topic_el in topic_els:
+			if topic_el.getAttribute('ntiid') == ntiid:
+				return topic_el
+		return None
+
 	def _process_lessons(self, dom, els):
 		for el in els:
 			video_els = el.getElementsByTagName('ntivideoref')
@@ -183,19 +192,12 @@ class _NTIVideoExtractor(object):
 				lesson_el = None
 
 				# Determine which topic represents the lesson
-				topic_els = dom.getElementsByTagName('topic')
-				for topic_el in topic_els:
-					if topic_el.getAttribute('ntiid') == el.ntiid:
-						lesson_el = topic_el
+				lesson_el = self._find_topic_els(dom, el.ntiid)
 
 				for video_el in video_els:
-					lesson_el = None
 
 					# Determine which topic represents the lesson
-					topic_els = dom.getElementsByTagName('topic')
-					for topic_el in topic_els:
-						if topic_el.getAttribute('ntiid') == el.ntiid:
-							lesson_el = topic_el
+					lesson_el = self._find_topic_els(dom, el.ntiid)
 
 					poster = ''
 					source_els = video_el.idref['label'].getElementsByTagName('ntivideosource')
@@ -210,19 +212,24 @@ class _NTIVideoExtractor(object):
 					toc_el.setAttribute('poster', poster)
 					toc_el.setAttribute('ntiid', video_el.idref['label'].ntiid)
 					toc_el.setAttribute('mimeType', video_el.idref['label'].mimeType)
-					lesson_el.appendChild(toc_el)
-					lesson_el.appendChild(dom.createTextNode(u'\n'))
+					if lesson_el is not None:
+						lesson_el.appendChild(toc_el)
+						lesson_el.appendChild(dom.createTextNode(u'\n'))
 
 	def _process_videos(self, dom, els, outpath):
-		video_index = {}
+		items = {}
 		filename = 'video_index.json'
+		containers = collections.defaultdict(list)
+		video_index = {'Items': items, 'Containers':containers}
 		for el in els:
-			video = self._process_video(el)
-			video_index[video['ntiid']] = video
+			video, container = self._process_video(el)
+			items[video['ntiid']] = video
+			if container:
+				containers[container].append(video['ntiid'])
 
 		# Write the normal version
 		with open(os.path.join(outpath, filename), "wb") as fp:
-			simplejson.dump(video_index, fp, indent=2)
+			simplejson.dump(video_index, fp, indent=4)
 
 		# Write the JSONP version
 		with open(os.path.join(outpath, filename+'p'), "wb") as fp:
@@ -231,7 +238,7 @@ class _NTIVideoExtractor(object):
 							 'Content-Type': 'application/json',
 							 'Content-Encoding': 'json',
 							 'content': video_index,
-							 'version': '1'}, fp)
+							 'version': '1'}, fp, indent=4)
 			fp.write(');')
 
 		toc_el = dom.createElement('reference')
@@ -242,58 +249,63 @@ class _NTIVideoExtractor(object):
 		dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
 
 	def _process_video(self, video):
-		entry = {}
+		entry = {'sources':[], 'transcripts':[]}
+
 		entry['ntiid'] = video.ntiid
 		entry['creator'] = video.creator
 		if hasattr(video.title, 'textContent'):
 			entry['title'] = video.title.textContent
 		else:
 			entry['title'] = video.title
-		entry['description'] = video.description
+
 		entry['mimeType'] = video.mimeType
+		entry['description'] = video.description
 		entry['closedCaptions'] = video.closed_caption
-		entry['sources'] = []
-		entry['transcripts'] = []
 
 		for source in video.getElementsByTagName('ntivideosource'):
-			val = {}
-			val['poster'] = source.poster
-			val['thumbnail'] = source.thumbnail
-			val['height'] = source.height
+			val = {'source':[], 'type':[]}
+
 			val['width'] = source.width
+			val['poster'] = source.poster
+			val['height'] = source.height
 			val['service'] = source.service
-			val['source'] = []
-			val['type'] = []
+			val['thumbnail'] = source.thumbnail
+
 			if source.service == 'html5':
-				val['source'].append(source.src['mp4'])
 				val['type'].append('video/mp4')
-				val['source'].append(source.src['webm'])
 				val['type'].append('video/webm')
+				val['source'].append(source.src['mp4'])
+				val['source'].append(source.src['webm'])
 			elif source.service == 'youtube':
-				val['source'].append(source.src['other'])
 				val['type'].append('video/youtube')
-			elif source.service == 'kaltura':
 				val['source'].append(source.src['other'])
+			elif source.service == 'kaltura':
 				val['type'].append('video/kaltura')
+				val['source'].append(source.src['other'])
 			entry['sources'].append(val)
 
 		for transcript in video.getElementsByTagName('mediatranscript'):
 			val = {}
 			val['src'] = transcript.raw.url
 			val['srcjsonp'] = transcript.wrapped.url
-			val['type'] = transcript.transcript_mime_type
 			val['lang'] = transcript.attributes['lang']
+			val['type'] = transcript.transcript_mime_type
 			val['purpose'] = transcript.attributes['purpose']
 			entry['transcripts'].append(val)
-
-		return entry
+			
+		# find parent document
+		parent = video.parentNode
+		while parent is not None and not isinstance(parent, LaTexDocument.document):
+			parent = parent.parentNode
+		
+		container = getattr(parent, 'ntiid', None) if parent else None
+		return entry, container
 
 @interface.implementer(crd_interfaces.IHackExtractor)
 @component.adapter(crd_interfaces.IRenderedBook)
 class _HackExtractor(object):
 
-	def __init__( self, book=None ):
-		# Usable as either a utility factory or an adapter
+	def __init__(self, book=None):
 		pass
 
 	def transform( self, book ):
@@ -320,35 +332,3 @@ class _HackExtractor(object):
 						topic_el.appendChild(book.toc.dom.createTextNode(u'\n'))
 						book.toc.save()
 
-
-def main():
-	import argparse
-	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
-
-	def register():
-		from zope.configuration import xmlconfig
-		from zope.configuration.config import ConfigurationMachine
-		from zope.configuration.xmlconfig import registerCommonDirectives
-		context = ConfigurationMachine()
-		registerCommonDirectives(context)
-
-		import nti.contentrendering as contentrendering
-		xmlconfig.file("configure.zcml", contentrendering, context=context)
-	register()
-
-	arg_parser = argparse.ArgumentParser(description="Video Transcript indexer")
-	arg_parser.add_argument('contentpath', help="Content book location")
-	args = arg_parser.parse_args()
-
-	contentpath = os.path.expanduser(args.contentpath)
-	jobname = os.path.basename(contentpath)
-	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
-
-	document = EmptyMockDocument()
-	document.userdata['jobname'] = jobname
-	book = NoConcurrentPhantomRenderedBook(document, contentpath)
-
-	_NTIVideoExtractor().transform(book)
-
-if __name__ == '__main__':
-	main()
