@@ -178,9 +178,20 @@ class _NTIVideoExtractor(object):
 			self._process_videos(dom, video_els, outpath)
 			book.toc.save()
 
+	def _find_toc_videos(self, dom):
+		result = collections.defaultdict(set)
+		for topic_el in dom.getElementsByTagName('topic'):
+			topic_ntiid = topic_el.getAttribute('ntiid')
+			for obj in topic_el.getElementsByTagName('object'):
+				if obj.getAttribute('mimeType') != u'application/vnd.nextthought.ntivideo':
+					continue
+				ntiid = obj.getAttribute('ntiid')
+				if ntiid and topic_ntiid:
+					result[ntiid].add(topic_ntiid)
+		return result
+					
 	def _find_topic_els(self, dom, ntiid):
-		topic_els = dom.getElementsByTagName('topic')
-		for topic_el in topic_els:
+		for topic_el in dom.getElementsByTagName('topic'):
 			if topic_el.getAttribute('ntiid') == ntiid:
 				return topic_el
 		return None
@@ -219,6 +230,7 @@ class _NTIVideoExtractor(object):
 	def _process_videos(self, dom, els, outpath):
 		items = {}
 		filename = 'video_index.json'
+		inverted = collections.defaultdict(set)
 		containers = collections.defaultdict(list)
 		video_index = {'Items': items, 'Containers':containers}
 		for el in els:
@@ -226,6 +238,7 @@ class _NTIVideoExtractor(object):
 			items[video['ntiid']] = video
 			if container:
 				containers[container].append(video['ntiid'])
+				inverted[video['ntiid']].add(container)
 
 		# Write the normal version
 		with open(os.path.join(outpath, filename), "wb") as fp:
@@ -247,6 +260,33 @@ class _NTIVideoExtractor(object):
 
 		dom.childNodes[0].appendChild(toc_el)
 		dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
+		doc_ntiid = dom.documentElement.getAttribute('ntiid')
+
+		# add video objects to toc
+		videos_in_toc = self._find_toc_videos(dom)
+		for ntiid, containers in inverted.items():
+			
+			if ntiid in videos_in_toc:
+				continue
+			
+			for container in containers:
+				if container == doc_ntiid:
+					parent = dom.documentElement
+				else:
+					parent = self._find_topic_els(dom, container)
+					if parent is None:
+						continue
+
+				# create new elemenet
+				video = items.get(ntiid)
+				obj_el = dom.createElement('object')
+				label = video.get('title') if video else None
+				obj_el.setAttribute(u'label', label or u'')
+				obj_el.setAttribute(u'mimeType', u'application/vnd.nextthought.ntivideo')
+				obj_el.setAttribute(u'ntiid', ntiid)
+
+				# add to parent
+				parent.childNodes.append(obj_el)
 
 	def _process_video(self, video):
 		entry = {'sources':[], 'transcripts':[]}
