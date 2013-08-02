@@ -119,15 +119,18 @@ def _logon_account_views(pyramid_config):
 	# 	pyramid_config.add_view( route_name='verify_openid', view='pyramid_openid.verify_openid' )
 	# 	pyramid_config.add_view( name='verify_openid', route_name='verify_openid', view='pyramid_openid.verify_openid' )
 
-	# Site-specific CSS packages
-	pyramid_config.add_route(name="logon.logon_css", pattern="/login/resources/css/site.css")
-	pyramid_config.scan('nti.appserver.policies.site_policy_views')
-
 	pyramid_config.add_route(name="logon.forgot.username", pattern="/dataserver2/logon.forgot.username")
 	pyramid_config.add_route(name="logon.forgot.passcode", pattern="/dataserver2/logon.forgot.passcode")
 	pyramid_config.add_route(name="logon.reset.passcode", pattern="/dataserver2/logon.reset.passcode")
 
 	pyramid_config.scan('nti.appserver.account_recovery_views')
+
+def _webapp_resource_views(pyramid_config):
+	# Site-specific CSS packages
+	pyramid_config.add_route(name="logon.logon_css", pattern="/login/resources/css/site.css")
+
+	pyramid_config.add_route(name="webapp.strings_js", pattern="/NextThoughtWebApp/resources/strings/site.js")
+	pyramid_config.scan('nti.appserver.policies.site_policy_views')
 
 def _socketio_views(pyramid_config):
 	pyramid_config.add_route(name=dataserver_socketio_views.RT_HANDSHAKE, pattern=dataserver_socketio_views.URL_HANDSHAKE)
@@ -238,7 +241,7 @@ def _ugd_odata_views(pyramid_config):
 									context='nti.appserver.interfaces.IPageContainerResource',
 									name=name, renderer='rest',
 									permission=nauth.ACT_READ, request_method='GET')
-			
+
 	for name, view in {"TopUserSummaryData":'_TopUserSummaryView'}.items():
 		for route in _route_names:
 			pyramid_config.add_view(route_name=route, view='nti.appserver.dashboard_views.' + view,
@@ -353,7 +356,7 @@ def _enclosure_views(pyramid_config):
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							renderer='rest', context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
 							permission=nauth.ACT_READ, request_method='GET')
-	
+
 def _classinfo_views(pyramid_config):
 	# ClassInfo conflicts with enclosures for PUT/POST somehow
 	# TODO: This will all go away when we get to ++enclosures
@@ -569,6 +572,7 @@ def createApplication( http_port,
 	pyramid_config.add_forbidden_view( forbidden_view )
 
 	_logon_account_views(pyramid_config)
+	_webapp_resource_views(pyramid_config)
 
 	_socketio_views(pyramid_config)
 	_dictionary_views(pyramid_config, settings)
