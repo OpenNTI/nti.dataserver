@@ -168,20 +168,28 @@ class _NTIVideoExtractor(object):
 	def __init__(self, book=None):
 		pass
 
-	def transform( self, book ):
-		lesson_els = book.document.getElementsByTagName( 'courselesson' )
-		video_els = book.document.getElementsByTagName( 'ntivideo' )
+	def transform(self, book):
+		lesson_els = book.document.getElementsByTagName('courselesson')
+		video_els = book.document.getElementsByTagName('ntivideo')
 		outpath = os.path.expanduser(book.contentLocation)
 		dom = book.toc.dom
 		if lesson_els or video_els:
-			self._process_lessons(dom, lesson_els)
-			self._process_videos(dom, video_els, outpath)
+			topic_map = self._get_topic_map(dom)
+			self._process_lessons(dom, lesson_els, topic_map)
+			self._process_videos(dom, video_els, outpath, topic_map)
 			book.toc.save()
 
-	def _find_toc_videos(self, dom):
-		result = collections.defaultdict(set)
+	def _get_topic_map(self, dom):
+		result = {}
 		for topic_el in dom.getElementsByTagName('topic'):
-			topic_ntiid = topic_el.getAttribute('ntiid')
+			ntiid = topic_el.getAttribute('ntiid')
+			if ntiid:
+				result[ntiid] = topic_el
+		return result
+
+	def _find_toc_videos(self, topic_map):
+		result = collections.defaultdict(set)
+		for topic_ntiid, topic_el in topic_map.items():
 			for obj in topic_el.getElementsByTagName('object'):
 				if obj.getAttribute('mimeType') != u'application/vnd.nextthought.ntivideo':
 					continue
@@ -190,105 +198,7 @@ class _NTIVideoExtractor(object):
 					result[ntiid].add(topic_ntiid)
 		return result
 					
-	def _find_topic_els(self, dom, ntiid):
-		for topic_el in dom.getElementsByTagName('topic'):
-			if topic_el.getAttribute('ntiid') == ntiid:
-				return topic_el
-		return None
-
-	def _process_lessons(self, dom, els):
-		for el in els:
-			video_els = el.getElementsByTagName('ntivideoref')
-			if video_els:
-				lesson_el = None
-
-				# Determine which topic represents the lesson
-				lesson_el = self._find_topic_els(dom, el.ntiid)
-
-				for video_el in video_els:
-
-					# Determine which topic represents the lesson
-					lesson_el = self._find_topic_els(dom, el.ntiid)
-
-					poster = ''
-					source_els = video_el.idref['label'].getElementsByTagName('ntivideosource')
-					if source_els:
-						poster = source_els[0].poster
-
-					toc_el = dom.createElement('object')
-					if hasattr(video_el.idref['label'].title, 'textContent'):
-						toc_el.setAttribute('label', video_el.idref['label'].title.textContent)
-					else:
-						toc_el.setAttribute('label', video_el.idref['label'].title)
-					toc_el.setAttribute('poster', poster)
-					toc_el.setAttribute('ntiid', video_el.idref['label'].ntiid)
-					toc_el.setAttribute('mimeType', video_el.idref['label'].mimeType)
-					if lesson_el is not None:
-						lesson_el.appendChild(toc_el)
-						lesson_el.appendChild(dom.createTextNode(u'\n'))
-
-	def _process_videos(self, dom, els, outpath):
-		items = {}
-		filename = 'video_index.json'
-		inverted = collections.defaultdict(set)
-		containers = collections.defaultdict(list)
-		video_index = {'Items': items, 'Containers':containers}
-		for el in els:
-			video, container = self._process_video(el)
-			items[video['ntiid']] = video
-			if container:
-				containers[container].append(video['ntiid'])
-				inverted[video['ntiid']].add(container)
-
-		# Write the normal version
-		with open(os.path.join(outpath, filename), "wb") as fp:
-			simplejson.dump(video_index, fp, indent=4)
-
-		# Write the JSONP version
-		with open(os.path.join(outpath, filename+'p'), "wb") as fp:
-			fp.write('jsonpReceiveContent(')
-			simplejson.dump({'ntiid': dom.childNodes[0].getAttribute('ntiid'),
-							 'Content-Type': 'application/json',
-							 'Content-Encoding': 'json',
-							 'content': video_index,
-							 'version': '1'}, fp, indent=4)
-			fp.write(');')
-
-		toc_el = dom.createElement('reference')
-		toc_el.setAttribute('href', filename)
-		toc_el.setAttribute('type', 'application/vnd.nextthought.videoindex')
-
-		dom.childNodes[0].appendChild(toc_el)
-		dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
-		doc_ntiid = dom.documentElement.getAttribute('ntiid')
-
-		# add video objects to toc
-		videos_in_toc = self._find_toc_videos(dom)
-		for ntiid, containers in inverted.items():
-			
-			if ntiid in videos_in_toc:
-				continue
-			
-			for container in containers:
-				if container == doc_ntiid:
-					parent = dom.documentElement
-				else:
-					parent = self._find_topic_els(dom, container)
-					if parent is None:
-						continue
-
-				# create new elemenet
-				video = items.get(ntiid)
-				obj_el = dom.createElement('object')
-				label = video.get('title') if video else None
-				obj_el.setAttribute(u'label', label or u'')
-				obj_el.setAttribute(u'mimeType', u'application/vnd.nextthought.ntivideo')
-				obj_el.setAttribute(u'ntiid', ntiid)
-
-				# add to parent
-				parent.childNodes.append(obj_el)
-
-	def _process_video(self, video):
+	def _process_video(self, dom, video, topic_map):
 		entry = {'sources':[], 'transcripts':[]}
 
 		entry['ntiid'] = video.ntiid
@@ -332,14 +242,110 @@ class _NTIVideoExtractor(object):
 			val['type'] = transcript.transcript_mime_type
 			val['purpose'] = transcript.attributes['purpose']
 			entry['transcripts'].append(val)
-			
+
 		# find parent document
 		parent = video.parentNode
 		while parent is not None and not isinstance(parent, LaTexDocument.document):
-			parent = parent.parentNode
-		
+			ntiid = getattr(parent, 'ntiid', None) or u''
+			if ntiid in topic_map:
+				break
+			else:
+				parent = parent.parentNode
+
 		container = getattr(parent, 'ntiid', None) if parent else None
 		return entry, container
+
+	def _process_videos(self, dom, els, outpath, topic_map):
+		items = {}
+		filename = 'video_index.json'
+		inverted = collections.defaultdict(set)
+		containers = collections.defaultdict(list)
+		video_index = {'Items': items, 'Containers':containers}
+		for el in els:
+			video, container = self._process_video(dom, el, topic_map)
+			items[video['ntiid']] = video
+			if container:
+				containers[container].append(video['ntiid'])
+				inverted[video['ntiid']].add(container)
+
+		# Write the normal version
+		with open(os.path.join(outpath, filename), "wb") as fp:
+			simplejson.dump(video_index, fp, indent=4)
+
+		# Write the JSONP version
+		with open(os.path.join(outpath, filename+'p'), "wb") as fp:
+			fp.write('jsonpReceiveContent(')
+			simplejson.dump({'ntiid': dom.childNodes[0].getAttribute('ntiid'),
+							 'Content-Type': 'application/json',
+							 'Content-Encoding': 'json',
+							 'content': video_index,
+							 'version': '1'}, fp, indent=4)
+			fp.write(');')
+
+		toc_el = dom.createElement('reference')
+		toc_el.setAttribute('href', filename)
+		toc_el.setAttribute('type', 'application/vnd.nextthought.videoindex')
+
+		dom.childNodes[0].appendChild(toc_el)
+		dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
+		doc_ntiid = dom.documentElement.getAttribute('ntiid')
+
+		# add video objects to toc
+		videos_in_toc = self._find_toc_videos(topic_map)
+		for ntiid, containers in inverted.items():
+			
+			if ntiid in videos_in_toc:
+				continue
+			
+			for container in containers:
+				if container == doc_ntiid:
+					parent = dom.documentElement
+				else:
+					parent = topic_map.get(container)
+					if parent is None:
+						continue
+
+				# create new elemenet
+				video = items.get(ntiid)
+				obj_el = dom.createElement('object')
+				label = video.get('title') if video else None
+				obj_el.setAttribute(u'label', label or u'')
+				obj_el.setAttribute(u'mimeType', u'application/vnd.nextthought.ntivideo')
+				obj_el.setAttribute(u'ntiid', ntiid)
+
+				# add to parent
+				parent.childNodes.append(obj_el)
+
+	def _process_lessons(self, dom, els, topic_map):
+		for el in els:
+			video_els = el.getElementsByTagName('ntivideoref')
+			if video_els:
+				lesson_el = None
+
+				# Determine which topic represents the lesson
+				lesson_el = topic_map.get(el.ntiid)
+
+				for video_el in video_els:
+
+					# Determine which topic represents the lesson
+					lesson_el = topic_map.get(el.ntiid)
+
+					poster = ''
+					source_els = video_el.idref['label'].getElementsByTagName('ntivideosource')
+					if source_els:
+						poster = source_els[0].poster
+
+					toc_el = dom.createElement('object')
+					if hasattr(video_el.idref['label'].title, 'textContent'):
+						toc_el.setAttribute('label', video_el.idref['label'].title.textContent)
+					else:
+						toc_el.setAttribute('label', video_el.idref['label'].title)
+					toc_el.setAttribute('poster', poster)
+					toc_el.setAttribute('ntiid', video_el.idref['label'].ntiid)
+					toc_el.setAttribute('mimeType', video_el.idref['label'].mimeType)
+					if lesson_el is not None:
+						lesson_el.appendChild(toc_el)
+						lesson_el.appendChild(dom.createTextNode(u'\n'))
 
 @interface.implementer(crd_interfaces.IHackExtractor)
 @component.adapter(crd_interfaces.IRenderedBook)
