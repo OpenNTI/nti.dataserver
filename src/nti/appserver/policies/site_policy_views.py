@@ -50,3 +50,21 @@ def logon_site_css_view(request):
 	request.response.content_type = b'text/css'
 	request.response.text = ''
 	return request.response
+
+
+@view_config(route_name="webapp.strings_js",
+			 request_method='GET')
+def webapp_strings_view(request):
+	"""
+	Redirects to a site specific strings file based on the current site policy.
+	"""
+	site_name = site_policies.get_possible_site_names()[0]
+	if site_name:
+		new_path = request.path.split( '/' )[1:-1]
+		new_path.append( site_name )
+		new_path.append( 'strings.js' )
+		return hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path ) )
+
+	request.response.content_type = b'application/json'
+	request.response.text = ''
+	return request.response
