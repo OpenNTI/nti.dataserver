@@ -220,6 +220,35 @@ class INTICardIndexer(IContentIndexer):
 class IRenderedBookExtractor(IRenderedBookTransformer):
 	pass
 		
+class INTIVideoExtractor(IRenderedBookExtractor):
+	"""
+	Looks through the rendered book and extracts NTIVideos.
+	"""
+
+class IAssessmentExtractor(IRenderedBookExtractor):
+	"""
+	Looks through the rendered book and extracts assessment information.
+	"""
+
+class ICourseExtractor(IRenderedBookExtractor):
+	"""
+	Looks through the rendered book and extracts course information.
+	"""
+
+class IRelatedWorkExtractor(IRenderedBookExtractor):
+	"""
+	Looks through the rendered book and extracts related work information.
+	"""
+
+class IDiscussionExtractor(IRenderedBookExtractor):
+	"""
+	Looks through the rendered book and extracts discussions.
+	"""
+
+class IHackExtractor(IRenderedBookExtractor):
+	"""
+	Looks through the rendered book and injects hacks.
+	"""
 
 from zope.interface import registry
 from zope.component import getGlobalSiteManager

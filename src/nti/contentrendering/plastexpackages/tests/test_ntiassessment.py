@@ -336,7 +336,7 @@ def test_matching_macros():
 	assert_that( part, has_property( 'values', has_length( 3 ) ) )
 	assert_that( part.values, has_item( 'Black' ) )
 
-from nti.contentrendering.plastexpackages import interfaces
+
 from zope import component
 from zope import interface
 from nti.contentrendering import interfaces as cdr_interfaces
@@ -401,7 +401,7 @@ class TestRenderableSymMathPart(unittest.TestCase):
 		self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1', units=r'<unit1,\%>', units_html="unit1,%")
 
 	def test_render_units_with_unicode( self ):
-		self._do_test_render( '', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1', units=r'<m²>', input_encoding='utf-8') # m squared, u'\xb2'
+		self._do_test_render('', 'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.1', units=r'<m²>', input_encoding='utf-8')  # m squared, u'\xb2'
 
 	def test_render_units_with_latex_math_not_allowed( self ):
 		with self.assertRaises(ValueError):
@@ -445,7 +445,7 @@ class TestRenderableSymMathPart(unittest.TestCase):
 			rendered_book.document = dom
 			rendered_book.contentLocation = ctx.docdir
 
-			extractor = component.getAdapter( rendered_book, interfaces.IAssessmentExtractor )
+			extractor = component.getAdapter(rendered_book, cdr_interfaces.IAssessmentExtractor)
 			extractor.transform( rendered_book )
 
 			jsons = open(os.path.join( ctx.docdir, 'assessment_index.json' ), 'rU' ).read()

@@ -64,8 +64,6 @@ import itertools
 import simplejson as json # Needed for sort_keys, ensure_ascii
 import codecs
 
-from nti.contentrendering.plastexpackages import interfaces
-
 import nti.externalization.internalization
 from nti.externalization.externalization import toExternalObject
 from nti.assessment import interfaces as as_interfaces, parts, question
@@ -572,8 +570,8 @@ class naquestion(_LocalContentMixin,Base.Environment,plastexids.NTIIDMixin):
 
 	def _asm_videos(self):
 		videos = []
-		video_els = self.getElementsByTagName( 'naqvideo' )
-		#for video_el in video_els:
+		# video_els = self.getElementsByTagName( 'naqvideo' )
+		# for video_el in video_els:
 		#	videos.append( video_el._asm_local_content )
 
 		return ''.join(videos)
@@ -622,7 +620,7 @@ def ProcessOptions( options, document ):
 	document.context.newcounter( 'naquestion' )
 	document.context.newcounter( 'naquestionset' )
 
-@interface.implementer(interfaces.IAssessmentExtractor)
+@interface.implementer(cdr_interfaces.IAssessmentExtractor)
 @component.adapter(cdr_interfaces.IRenderedBook)
 class _AssessmentExtractor(object):
 	"""
