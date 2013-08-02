@@ -213,6 +213,12 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 					self.src['webm'] = self.attributes['id'] + '.webm'
 					self.poster = self.attributes['id'] + '-poster.jpg'
 					self.thumbnail = self.attributes['id'] + '-thumb.jpg'
+				elif self.attributes['service'] == 'kaltura':
+					self.service = 'kaltura'
+					self.src['other'] = self.attributes['id']
+					partnerId, entryId = self.attributes['id'].split(':')
+					self.poster = '//www.kaltura.com/p/' + partnerId + '/thumbnail/entry_id/' + entryId + '/width/1280/'
+					self.thumbnail = '//www.kaltura.com/p/' + partnerId + '/thumbnail/entry_id/' + entryId + '/width/640/'
 				else:
 					logger.warning('Unknown video type: %s', self.attributes['service'])
 
@@ -1056,6 +1062,9 @@ class _NTIVideoExtractor(object):
 			elif source.service == 'youtube':
 				val['source'].append(source.src['other'])
 				val['type'].append('video/youtube')
+			elif source.service == 'kaltura':
+				val['source'].append(source.src['other'])
+				val['type'].append('video/kaltura')
 			entry['sources'].append(val)
 
 		for transcript in video.getElementsByTagName('mediatranscript'):
