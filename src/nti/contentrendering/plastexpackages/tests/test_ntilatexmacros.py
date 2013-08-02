@@ -3,19 +3,9 @@
 """ """
 from __future__ import print_function, unicode_literals
 import os
-from hamcrest import assert_that, is_, has_length, contains_string
-from hamcrest import has_property
-from hamcrest import contains, has_item
-from hamcrest import has_entry
-from hamcrest import is_not as does_not
+from hamcrest import assert_that, contains_string
 import unittest
 
-import plasTeX
-from plasTeX.TeX import TeX
-
-from ..ntiassessment import naquestion, naquestionset
-
-from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
 from nti.contentrendering.tests import simpleLatexDocumentText
 from nti.contentrendering.tests import RenderContext
 
@@ -35,9 +25,6 @@ def _simpleLatexDocument(maths):
 setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentrendering,nti.assessment,nti.externalization) )
 tearDownModule = nti.tests.module_teardown
 
-
-from nti.contentrendering.plastexpackages import interfaces
-from zope import component
 from zope import interface
 from nti.contentrendering import interfaces as cdr_interfaces
 from nti.contentrendering.resources import ResourceRenderer
@@ -193,7 +180,7 @@ class TestNTICard(unittest.TestCase):
 			href=url,
 			image='' )
 
-		assert_that( index, contains_string( '<span class="description">Apollo Robbins takes things from people’s jackets, pants, purses, wrists, fingers, and necks, then returns them in amusing and mind-boggling ways.</span>' ) )
+		assert_that(index, contains_string('<span class="description">Apollo Robbins takes things from people’s jackets, pants, purses, wrists, fingers, and necks, then returns them in amusing and mind-boggling ways.</span>'))
 		assert_that( index, contains_string( '<img src="http://www.newyorker.com/images/2013/01/07/g120/130107_r23011_g120_cropth.jpg" height="120" width="120"' ) )
 
 

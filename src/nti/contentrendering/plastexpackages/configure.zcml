@@ -6,52 +6,52 @@
 
 	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
 			 factory=".ntiassessment._AssessmentExtractor"
-			 provides=".interfaces.IAssessmentExtractor" />
+			 provides="nti.contentrendering.interfaces.IAssessmentExtractor" />
 
 	<utility factory=".ntiassessment._AssessmentExtractor"
-			 provides=".interfaces.IAssessmentExtractor"
+			 provides="nti.contentrendering.interfaces.IAssessmentExtractor"
 			 name="AssessmentExtractor" />
 
 	<include package="nti.assessment" />
 
-	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
-			 factory=".nticourse._CourseExtractor"
-			 provides=".interfaces.ICourseExtractor" />
+	<adapter factory=".nticourse._CourseExtractor"
+			 for="nti.contentrendering.interfaces.IRenderedBook"
+			 provides="nti.contentrendering.interfaces.ICourseExtractor" />
 
 	<utility factory=".nticourse._CourseExtractor"
-			 provides=".interfaces.ICourseExtractor"
+			 provides="nti.contentrendering.interfaces.ICourseExtractor"
 			 name="CourseExtractor" />
 
-	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
-			 factory=".ntilatexmacros._RelatedWorkExtractor"
-			 provides=".interfaces.IRelatedWorkExtractor" />
+	<adapter factory=".extractors._RelatedWorkExtractor"
+			 for="nti.contentrendering.interfaces.IRenderedBook"
+			 provides="nti.contentrendering.interfaces.IRelatedWorkExtractor" />
 
-	<utility factory=".ntilatexmacros._RelatedWorkExtractor"
-			 provides=".interfaces.IRelatedWorkExtractor"
+	<utility factory=".extractors._RelatedWorkExtractor"
+			 provides="nti.contentrendering.interfaces.IRelatedWorkExtractor"
 			 name="RelatedWorkExtractor" />
 
-	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
-			 factory=".ntilatexmacros._DiscussionExtractor"
-			 provides=".interfaces.IDiscussionExtractor" />
+	<adapter factory=".extractors._DiscussionExtractor"
+			 for="nti.contentrendering.interfaces.IRenderedBook"
+			 provides="nti.contentrendering.interfaces.IDiscussionExtractor" />
 
-	<utility factory=".ntilatexmacros._DiscussionExtractor"
-			 provides=".interfaces.IDiscussionExtractor"
+	<utility factory=".extractors._DiscussionExtractor"
+			 provides="nti.contentrendering.interfaces.IDiscussionExtractor"
 			 name="DiscussionExtractor" />
 
-	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
-			 factory=".ntilatexmacros._NTIVideoExtractor"
-			 provides=".interfaces.INTIVideoExtractor" />
+	<adapter factory=".extractors._NTIVideoExtractor"
+			 for="nti.contentrendering.interfaces.IRenderedBook"
+			 provides="nti.contentrendering.interfaces.INTIVideoExtractor" />
 
-	<utility factory=".ntilatexmacros._NTIVideoExtractor"
-			 provides=".interfaces.INTIVideoExtractor"
+	<utility factory=".extractors._NTIVideoExtractor"
+			 provides="nti.contentrendering.interfaces.INTIVideoExtractor"
 			 name="NTIVideoExtractor" />
 
-	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
-			 factory=".ntilatexmacros._HackExtractor"
-			 provides=".interfaces.IHackExtractor" />
+	<adapter factory=".extractors._HackExtractor"
+			 for="nti.contentrendering.interfaces.IRenderedBook"
+			 provides="nti.contentrendering.interfaces.IHackExtractor" />
 
-	<utility factory=".ntilatexmacros._HackExtractor"
-			 provides=".interfaces.IHackExtractor"
+	<utility factory=".extractors._HackExtractor"
+			 provides="nti.contentrendering.interfaces.IHackExtractor"
 			 name="HackExtractor" />
 
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">

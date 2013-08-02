@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+NTI course macros
+
+$Id: slidedeckextractor.py 21266 2013-07-23 21:52:35Z sean.jones $
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -9,24 +11,23 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from datetime import datetime
-from xml.dom.minidom import Document as XMLDocument
 
-from nti.contentrendering import plastexids
-from nti.contentfragments import interfaces as cfg_interfaces
-from nti.contentrendering import interfaces as crd_interfaces
-from nti.contentrendering.plastexpackages import interfaces
+from zope import component
+from zope import interface
 
 from plasTeX.Base import Command
 from plasTeX.Base import Crossref
 from plasTeX.Base import Environment
 from plasTeX.Base import StartSection
 
-from pytz import all_timezones
 from pytz import timezone
+from pytz import all_timezones
 from pytz import utc as tz_utc
 
-from zope import component
-from zope import interface
+from xml.dom.minidom import Document as XMLDocument
+
+from nti.contentrendering import plastexids
+from nti.contentrendering import interfaces as crd_interfaces
 
 DEFAULT_TZ = 'US/Central'
 
@@ -59,7 +60,7 @@ class course(Environment, plastexids.NTIIDMixin):
 
             options = self.attributes.get( 'options', {} ) or {}
             if 'tz' in options and options['tz'] in all_timezones:
-                self.tz = timezone( option['tz'] )
+                self.tz = timezone(options['tz'])
             else:
                 logger.warn('No valid timezone specified')
                 self.tz = timezone( DEFAULT_TZ )
@@ -134,16 +135,15 @@ class courselesson(StartSection):
     level = Command.CHAPTER_LEVEL
 
 def ProcessOptions( options, document ):
-	document.context.newcounter('course')
-	document.context.newcounter('courselesson')
-	document.context.newcounter('courseunit')
+    document.context.newcounter('course')
+    document.context.newcounter('courselesson')
+    document.context.newcounter('courseunit')
 
-@interface.implementer(interfaces.ICourseExtractor)
+@interface.implementer(crd_interfaces.ICourseExtractor)
 @component.adapter(crd_interfaces.IRenderedBook)
 class _CourseExtractor(object):
 
-    def __init__( self, book=None ):
-        # Usable as either a utility factory or an adapter
+    def __init__(self, book=None):
         pass
 
     def transform( self, book ):
