@@ -104,13 +104,10 @@ def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=No
 @interface.implementer(store_interfaces.IPurchasableStore)
 class ZcmlPurchasableStore(object):
 
-	_vocabulary = None
-	
 	@property
 	def vocabulary(self):
-		if self._vocabulary is None:
-			self._vocabulary = PurchasableUtilityVocabulary(None)
-		return self._vocabulary
+		result = PurchasableUtilityVocabulary(None)
+		return result
 
 	def get_purchasable(self, pid):
 		try:
