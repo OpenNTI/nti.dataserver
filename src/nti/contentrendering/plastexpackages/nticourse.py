@@ -12,9 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from datetime import datetime
 
-from zope import component
-from zope import interface
-
 from plasTeX.Base import Command
 from plasTeX.Base import Crossref
 from plasTeX.Base import Environment
@@ -22,12 +19,8 @@ from plasTeX.Base import StartSection
 
 from pytz import timezone
 from pytz import all_timezones
-from pytz import utc as tz_utc
-
-from xml.dom.minidom import Document as XMLDocument
 
 from nti.contentrendering import plastexids
-from nti.contentrendering import interfaces as crd_interfaces
 
 DEFAULT_TZ = 'US/Central'
 
@@ -138,63 +131,3 @@ def ProcessOptions( options, document ):
     document.context.newcounter('course')
     document.context.newcounter('courselesson')
     document.context.newcounter('courseunit')
-
-@interface.implementer(crd_interfaces.ICourseExtractor)
-@component.adapter(crd_interfaces.IRenderedBook)
-class _CourseExtractor(object):
-
-    def __init__(self, book=None):
-        pass
-
-    def transform( self, book ):
-        course_els = book.document.getElementsByTagName( 'course' )
-        dom = book.toc.dom
-        if course_els:
-            dom.childNodes[0].appendChild(dom.createTextNode(u'    '))
-            dom.childNodes[0].appendChild(self._process_course( course_els[0] ))
-            dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
-            dom.childNodes[0].setAttribute('isCourse', 'true')
-        else:
-            dom.childNodes[0].setAttribute('isCourse', 'false')
-        book.toc.save()
-
-    def _process_course( self, doc_el ):
-        toc_el = XMLDocument().createElement('course')
-        toc_el.setAttribute('label', unicode(doc_el.title) )
-        toc_el.setAttribute('ntiid', doc_el.ntiid )
-        if hasattr(doc_el, 'discussion_board'):
-            toc_el.setAttribute('discussionBoard', doc_el.discussion_board)
-        if hasattr(doc_el, 'announcement_board'):
-            toc_el.setAttribute('instructorForum', doc_el.announcement_board)
-        units = doc_el.getElementsByTagName( 'courseunit' )
-        for unit in units:
-            toc_el.appendChild(XMLDocument().createTextNode(u'\n        '))
-            toc_el.appendChild(self._process_unit(unit))
-        toc_el.appendChild(XMLDocument().createTextNode(u'\n    '))
-        return toc_el
-
-    def _process_unit( self, doc_el ):
-        toc_el = XMLDocument().createElement('unit')
-        toc_el.setAttribute('label', unicode(doc_el.title) )
-        toc_el.setAttribute('ntiid', doc_el.ntiid )
-        lessons = doc_el.getElementsByTagName( 'courselessonref' )
-        for lesson in lessons:
-            toc_el.appendChild(XMLDocument().createTextNode(u'\n            '))
-            toc_el.appendChild(self._process_lesson(lesson))
-        toc_el.appendChild(XMLDocument().createTextNode(u'\n        '))
-        return toc_el
-
-    def _process_lesson( self, doc_el ):
-        # SAJ: Lets find our parent course node
-        course = doc_el.parentNode
-        while (course.tagName != 'course'):
-            course = course.parentNode
-
-        # SAJ: Add the course's timezone and translate to UTC
-        tz = course.tz
-        doc_el.date = tz_utc.normalize(tz.localize(doc_el.date).astimezone(tz_utc))
-
-        toc_el = XMLDocument().createElement('lesson')
-        toc_el.setAttribute('date', doc_el.date.isoformat())
-        toc_el.setAttribute('topic-ntiid', doc_el.idref['label'].ntiid )
-        return toc_el

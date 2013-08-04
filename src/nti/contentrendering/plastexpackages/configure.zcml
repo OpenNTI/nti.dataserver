@@ -3,22 +3,22 @@
 		   i18n_domain="zope">
 	<include package="zope.component" />
 	<include package="nti.mimetype" />
-
-	<adapter for="nti.contentrendering.interfaces.IRenderedBook"
-			 factory=".ntiassessment._AssessmentExtractor"
+	
+	<include package="nti.assessment" />
+		
+	<adapter factory=".extractors._AssessmentExtractor"
+			 for="nti.contentrendering.interfaces.IRenderedBook"
 			 provides="nti.contentrendering.interfaces.IAssessmentExtractor" />
 
-	<utility factory=".ntiassessment._AssessmentExtractor"
+	<utility factory=".extractors._AssessmentExtractor"
 			 provides="nti.contentrendering.interfaces.IAssessmentExtractor"
 			 name="AssessmentExtractor" />
 
-	<include package="nti.assessment" />
-
-	<adapter factory=".nticourse._CourseExtractor"
+	<adapter factory=".extractors._CourseExtractor"
 			 for="nti.contentrendering.interfaces.IRenderedBook"
 			 provides="nti.contentrendering.interfaces.ICourseExtractor" />
 
-	<utility factory=".nticourse._CourseExtractor"
+	<utility factory=".extractors._CourseExtractor"
 			 provides="nti.contentrendering.interfaces.ICourseExtractor"
 			 name="CourseExtractor" />
 
@@ -55,13 +55,13 @@
 			 name="HackExtractor" />
 
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">
-        	<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
-        	<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />
+		<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
+		<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />
 	</class>
 
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.mediatranscript">
-        	<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
-        	<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />
+		<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
+		<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />
 	</class>
 
 </configure>
