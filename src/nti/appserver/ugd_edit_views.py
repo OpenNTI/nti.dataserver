@@ -1,41 +1,37 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 User-generated data CRUD functions.
+
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
-logger = __import__( 'logging' ).getLogger( __name__ )
+__docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
+import transaction
 
 from zope import interface
-
 from zope import lifecycleevent
 from zope.container.interfaces import InvalidContainerType
 
-from nti.appserver import httpexceptions as hexc
-
 from pyramid import traversal
-import transaction
-
 
 from nti.dataserver import interfaces as nti_interfaces
 
-
 from nti.externalization.externalization import toExternalObject
-
-from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 from nti.externalization.interfaces import StandardInternalFields
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 
+from nti.appserver import httpexceptions as hexc
 from nti.appserver import interfaces as app_interfaces
-from nti.assessment import interfaces as asm_interfaces
-
-
-from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
-from nti.appserver._view_utils import ModeledContentEditRequestUtilsMixin
 from nti.appserver._view_utils import AbstractAuthenticatedView
+from nti.appserver._view_utils import ModeledContentEditRequestUtilsMixin
+from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
-
-
+from nti.assessment import interfaces as asm_interfaces
 
 def _id(x): return x
 
@@ -100,13 +96,13 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		# If we transformed, copy the container and creator
 		if transformedObject is not containedObject:
 			transformedObject.creator = creator
-			if getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ) \
-			  and not getattr( transformedObject, StandardInternalFields.CONTAINER_ID, None ):
-			  transformedObject.containerId = containedObject.containerId
-			  # TODO: JAM: I really don't like doing this. Straighten out the
-			  # location of IContained so that things like assessment can implement it
-			  if not nti_interfaces.IContained.providedBy( transformedObject ):
-				  interface.alsoProvides( transformedObject, nti_interfaces.IContained )
+			if 	getattr(containedObject, StandardInternalFields.CONTAINER_ID, None) \
+				and not getattr(transformedObject, StandardInternalFields.CONTAINER_ID, None):
+				transformedObject.containerId = containedObject.containerId
+				# TODO: JAM: I really don't like doing this. Straighten out the
+				# location of IContained so that things like assessment can implement it
+				if not nti_interfaces.IContained.providedBy(transformedObject):
+					interface.alsoProvides(transformedObject, nti_interfaces.IContained)
 			containedObject = transformedObject
 		# TODO: The WSGI code would attempt to infer a containerID from the
 		# path. Should we?
@@ -158,8 +154,6 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		# We used to ACL proxy here
 		return containedObject
 
-
-
 class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixin):
 	""" DELETing an existing object is possible. Only the user
 	that owns the object can DELETE it."""
@@ -173,7 +167,6 @@ class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixi
 
 		self._check_object_exists( theObject )
 
-		lastModified = 0
 		objectId = theObject.id
 		if self._do_delete_object( theObject )  is None: # Should fire lifecycleevent.removed
 			raise hexc.HTTPNotFound()
@@ -240,7 +233,6 @@ class UGDPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin
 
 		return theObject
 		# We used to ACL proxy here, but that should no longer be necessary.
-
 
 class UGDFieldPutView(UGDPutView):
 	"""
