@@ -30,7 +30,7 @@ class TestSlideDeckExtractor(ConfiguringTestBase):
 		shutil.rmtree(self.temp_dir)
 
 	def test_utility(self):
-		u = component.queryUtility(interfaces.IRenderedBookExtractor, name="slidedeck")
+		u = component.queryUtility(interfaces.IRenderedBookExtractor, name="SlideDeckExtractor")
 		assert_that(u, is_not(none()))
 
 	def test_extractor_prmia(self):
