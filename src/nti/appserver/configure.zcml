@@ -2,23 +2,26 @@
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
 			xmlns:zcml="http://namespaces.zope.org/zcml">
+	
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.security" />
+	
+	<include package="zope.formlib" />
+	<include package="zope.contentprovider" />
+	<include package="zope.browserresource" />
+	<include package="zope.componentvocabulary" />
 	<include package="zope.browserpage" file="meta.zcml" /> <!-- tales:expressiontype -->
 	<include package="zope.browserresource" file="meta.zcml" /> <!-- browser:resource[Directory] -->
-	<include package="zope.contentprovider" />
-	<include package="zope.componentvocabulary" />
-	<include package="zope.formlib" />
-	<include package="zope.browserresource" />
-
+	
 	<include package="nti.dataserver" />
 
 	<include package=".capabilities" />
+	
 	<!-- I18N -->
-
 	<i18n:registerTranslations directory="locales" />
+	
 	<!--
 		Let requests be used for negotiating locales in the Zope way.
 		Needed for tables based on z3c/ZPT, which use the Zope-based request
@@ -39,6 +42,7 @@
 
 	<!-- Charsets -->
 	<adapter factory="._pyramid_zope_integrations.PyramidBrowserPreferredCharsets" />
+	
 	<adapter factory="zope.publisher.http.HTTPCharsets"
 			 provides="zope.i18n.interfaces.IUserPreferredCharsets" />
 
@@ -201,6 +205,7 @@
 
 	<!-- Events -->
 	<subscriber	handler="._question_map.add_assessment_items_from_new_content" />
+	<subscriber	handler="._videoindex_map.add_video_items_from_new_content" />
 
 	<subscriber handler="._indexmanager_event_listeners.add_filesystem_index" />
 	<subscriber handler="._indexmanager_event_listeners.add_s3_index" />

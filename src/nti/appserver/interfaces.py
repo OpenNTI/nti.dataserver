@@ -5,8 +5,9 @@ $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 
-from zope import interface
 from zope import schema
+from zope import interface
+from zope.interface.common import mapping
 from zope.traversing import interfaces as trv_interfaces
 
 import nti.dataserver.interfaces as nti_interfaces
@@ -458,7 +459,6 @@ class IUserCheckout(interface.Interface):
 		If the user validly contains the given object, return it. Otherwise return None.
 		"""
 
-
 ###
 # Assessment Support
 ###
@@ -476,6 +476,14 @@ class INewObjectTransformer(interface.Interface):
 		"""
 		Given the object posted from external, return the object to actually store.
 		"""
+
+# ##
+# Video Support
+# ##
+
+class IVideoIndexMap(mapping.IReadMapping):
+	by_container = schema.Dict(key_type=schema.TextLine(title="The container of the video"),
+							   value_type=schema.List(title="The video ntiid"))
 
 
 ###
