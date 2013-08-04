@@ -84,7 +84,15 @@ def clean_search_query(query, language='en'):
 
 	table = get_content_translation_table(language)
 	result = result.translate(table) if result else u''
-	return unicode(result)
+	result = unicode(result)
+
+	# auto complete phrase search
+	if result.startswith('"') and not result.endswith('"'):
+		result += '"'
+	elif result.endswith('"') and not result.startswith('"'):
+		result = '"' + result
+
+	return result
 
 #### from IPython.core.debugger import Tracer; Tracer()() #####
 
