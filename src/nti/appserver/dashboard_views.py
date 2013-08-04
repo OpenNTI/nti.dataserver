@@ -107,6 +107,16 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		# merge by mime_type
 		self._merge_map(total_by_type, by_type)
 
+	def _get_self_and_children(self, ntiid):
+		result = None
+		library = self.request.registry.getUtility(lib_interfaces.IContentPackageLibrary)
+		paths = library.pathToNTIID(ntiid) if library else None
+		children = library.childrenOfNTIID(ntiid) if library else None
+		if paths:
+			result = [paths[-1]]
+			result.extend(children or ())
+		return result
+
 	def _scan_quizzes(self, total_user_map, total_by_type):
 		# check there are questions
 		question_map = component.getUtility(app_interfaces.IFileQuestionMap)
@@ -114,27 +124,37 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 			return
 
 		# gather all paths for the request ntiid
-		library = self.request.registry.getUtility(lib_interfaces.IContentPackageLibrary)
-		paths = library.pathToNTIID(self.ntiid) if library else None
-		children = library.childrenOfNTIID(self.ntiid) if library else None
-
-		if not paths:
-			return
+		all_paths = self._get_self_and_children(self.ntiid)
 
 		# gather all ugd in the question containers
-		all_paths = [paths[-1]]
-		all_paths.extend(children or ())
-		for unit in all_paths:
+		for unit in all_paths or ():
 			questions = question_map.by_file.get(getattr(unit, 'key', None))
 			for question in questions or ():
 				ntiid = getattr(question, 'ntiid', None)
 				usr_map, by_type = self._get_summary_items(ntiid, False) if ntiid else ({}, {})
+				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
+	
+	def _scan_videos(self, total_user_map, total_by_type):
+		video_map = component.getUtility(app_interfaces.IVideoIndexMap)
+		if not video_map:
+			return
+		
+		# gather all paths for the request ntiid
+		all_paths = self._get_self_and_children(self.ntiid)
+
+		# gather all ugd in the video containers
+		for unit in all_paths or ():
+			ntiid = getattr(unit, 'ntiid', None)
+			videos = video_map.by_container.get(ntiid)
+			for video_id in videos or ():
+				usr_map, by_type = self._get_summary_items(video_id, False)
 				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
 
 	def __call__( self ):
 		# gather data
 		total_ugd, total_by_type = self._get_summary_items(self.ntiid)
 		self._scan_quizzes(total_ugd, total_by_type)
+		self._scan_videos(total_ugd, total_by_type)
 
 		# sort
 		items_sorted = sorted(total_ugd.items(), key=lambda e: sum(e[1].values()), reverse=True)
