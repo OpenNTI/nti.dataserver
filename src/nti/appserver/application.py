@@ -51,6 +51,7 @@ from paste.deploy.converters import asbool
 import nti.appserver
 from nti.appserver import pyramid_auth
 from nti.appserver import _question_map
+from nti.appserver import _videoindex_map
 from nti.appserver import pyramid_authorization
 from nti.appserver import dataserver_socketio_views
 from nti.appserver import interfaces as app_interfaces
@@ -653,6 +654,10 @@ def _content_package_library_registered( library, event ):
 	if registry.queryUtility( app_interfaces.IFileQuestionMap ) is None:
 		question_map = _question_map.QuestionMap()
 		registry.registerUtility( question_map, app_interfaces.IFileQuestionMap )
+
+	if registry.queryUtility(app_interfaces.IVideoIndexMap) is None:
+		video_map = _videoindex_map.VideoIndexMap()
+		registry.registerUtility(video_map, app_interfaces.IVideoIndexMap)
 
 	# Now fire the events letting listeners (e.g., index and question adders)
 	# know that we have content. Randomize the order of this across worker
