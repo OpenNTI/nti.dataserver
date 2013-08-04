@@ -4,7 +4,7 @@
 Implementation of the video index  map and supporting
 functions to maintain it.
 
-$Id: _question_map.py 18636 2013-04-25 00:02:35Z jason.madden $
+$Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
