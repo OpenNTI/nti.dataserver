@@ -162,7 +162,7 @@ class _CourseExtractor(object):
 		dom = book.toc.dom
 		if course_els:
 			dom.childNodes[0].appendChild(dom.createTextNode(u'	'))
-			dom.childNodes[0].appendChild(self._process_course(course_els[0]), courseinfo)
+			dom.childNodes[0].appendChild(self._process_course(course_els[0], courseinfo))
 			dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
 			dom.childNodes[0].setAttribute('isCourse', 'true')
 		else:
