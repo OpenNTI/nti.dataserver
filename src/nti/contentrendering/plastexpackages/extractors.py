@@ -61,7 +61,9 @@ class _AssessmentExtractor(object):
 		# index['filename'] = index.get( 'filename', 'index.html' ) # This leads to duplicate data
 		index['href'] = index.get('href', 'index.html')
 		with codecs.open(os.path.join(book.contentLocation, 'assessment_index.json'), 'w', encoding='utf-8') as fp:
-			json.dump(index, fp, indent='\t', sort_keys=True, ensure_ascii=True)  # sort_keys for repeatability. Do force ensure_ascii because even though we're using codes to encode automatically, the reader might not decode
+			# sort_keys for repeatability. Do force ensure_ascii because even though we're using codes to
+			# encode automatically, the reader might not decode
+			json.dump(index, fp, indent='\t', sort_keys=True, ensure_ascii=True)
 		return index
 
 	def _build_index(self, element, index):
@@ -219,22 +221,25 @@ class _RelatedWorkExtractor(object):
 		related_els = book.document.getElementsByTagName( 'relatedwork' )
 		dom = book.toc.dom
 		if lesson_els or related_els:
-			self._process_lessons(dom, lesson_els)
+			topic_map = self._get_topic_map(dom)
+			self._process_lessons(dom, lesson_els, topic_map)
 			self._process_related(dom, related_els)
 			dom.childNodes[0].setAttribute('xmlns:content', "http://www.nextthought.com/toc")
 			book.toc.save()
 
-	def _process_lessons(self, dom, els):
+	def _get_topic_map(self, dom):
+		result = {}
+		for topic_el in dom.getElementsByTagName('topic'):
+			ntiid = topic_el.getAttribute('ntiid')
+			if ntiid:
+				result[ntiid] = topic_el
+		return result
+
+	def _process_lessons(self, dom, els, topic_map):
 		for el in els:
 			ref_els = el.getElementsByTagName('relatedworkref')
 			if ref_els:
-				lesson_el = None
-
-				# Determine which topic represents the lesson
-				topic_els = dom.getElementsByTagName('topic')
-				for topic_el in topic_els:
-					if topic_el.getAttribute('ntiid') == el.ntiid:
-						lesson_el = topic_el
+				lesson_el = topic_map.get(el.ntiid)
 
 				for ref_el in ref_els:
 					if ref_el.relatedwork.iconResource is not None:
@@ -252,8 +257,9 @@ class _RelatedWorkExtractor(object):
 					toc_el.setAttribute('icon', icon)
 					toc_el.setAttribute('desc', ref_el.description)
 					toc_el.setAttribute('section', ref_el.category)
-					lesson_el.appendChild(toc_el)
-					lesson_el.appendChild(dom.createTextNode(u'\n'))
+					if lesson_el:
+						lesson_el.appendChild(toc_el)
+						lesson_el.appendChild(dom.createTextNode(u'\n'))
 
 	def _process_related(self, dom, els):
 		for el in els:
@@ -285,30 +291,25 @@ class _DiscussionExtractor(object):
 		lesson_els = book.document.getElementsByTagName( 'courselesson' )
 		dom = book.toc.dom
 		if lesson_els:
-			self._process_lessons(dom, lesson_els)
+			topic_map = self._get_topic_map(dom)
+			self._process_lessons(dom, lesson_els, topic_map)
 			book.toc.save()
 
-	def _process_lessons(self, dom, els):
+	def _get_topic_map(self, dom):
+		result = {}
+		for topic_el in dom.getElementsByTagName('topic'):
+			ntiid = topic_el.getAttribute('ntiid')
+			if ntiid:
+				result[ntiid] = topic_el
+		return result
+
+	def _process_lessons(self, dom, els, topic_map):
 		for el in els:
 			discussion_els = el.getElementsByTagName('ntidiscussion')
 			discussionref_els = el.getElementsByTagName('ntidiscussionref')
 			if discussion_els or discussionref_els:
-				lesson_el = None
-
-				# Determine which topic represents the lesson
-				topic_els = dom.getElementsByTagName('topic')
-				for topic_el in topic_els:
-					if topic_el.getAttribute('ntiid') == el.ntiid:
-						lesson_el = topic_el
-
 				for discussion_el in discussion_els:
-					lesson_el = None
-
-					# Determine which topic represents the lesson
-					topic_els = dom.getElementsByTagName('topic')
-					for topic_el in topic_els:
-						if topic_el.getAttribute('ntiid') == el.ntiid:
-							lesson_el = topic_el
+					lesson_el = topic_map.get(el.ntiid)
 
 					if discussion_el.iconResource is not None:
 						icon = discussion_el.iconResource.image.url
@@ -321,17 +322,12 @@ class _DiscussionExtractor(object):
 					toc_el.setAttribute('ntiid', discussion_el.topic_ntiid)
 					toc_el.setAttribute('mimeType', discussion_el.targetMimeType)
 					toc_el.setAttribute('icon', icon)
-					lesson_el.appendChild(toc_el)
-					lesson_el.appendChild(dom.createTextNode(u'\n'))
+					if lesson_el:
+						lesson_el.appendChild(toc_el)
+						lesson_el.appendChild(dom.createTextNode(u'\n'))
 
 				for discussionref_el in discussionref_els:
-					lesson_el = None
-
-					# Determine which topic represents the lesson
-					topic_els = dom.getElementsByTagName('topic')
-					for topic_el in topic_els:
-						if topic_el.getAttribute('ntiid') == el.ntiid:
-							lesson_el = topic_el
+					lesson_el = topic_map.get(el.ntiid)
 
 					if discussionref_el.idref['label'].iconResource is not None:
 						icon = discussionref_el.idref['label'].iconResource.image.url
@@ -344,8 +340,9 @@ class _DiscussionExtractor(object):
 					toc_el.setAttribute('ntiid', discussionref_el.idref['label'].topic_ntiid)
 					toc_el.setAttribute('mimeType', discussionref_el.idref['label'].targetMimeType)
 					toc_el.setAttribute('icon', icon)
-					lesson_el.appendChild(toc_el)
-					lesson_el.appendChild(dom.createTextNode(u'\n'))
+					if lesson_el:
+						lesson_el.appendChild(toc_el)
+						lesson_el.appendChild(dom.createTextNode(u'\n'))
 
 @interface.implementer(crd_interfaces.INTIVideoExtractor)
 @component.adapter(crd_interfaces.IRenderedBook)
