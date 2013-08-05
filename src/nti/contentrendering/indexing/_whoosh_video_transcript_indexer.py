@@ -14,6 +14,7 @@ from datetime import datetime
 from zope import component
 from zope import interface
 
+from nti.contentprocessing import split_content
 from nti.contentprocessing import get_content_translation_table
 
 from nti.contentsearch import vtrans_prefix
@@ -21,6 +22,7 @@ from nti.contentsearch import videotimestamp_to_datetime
 from nti.contentsearch import interfaces as search_interfaces
 
 from . import _node_utils as node_utils
+from . import _termextract as termextract
 from . import _content_utils as content_utils
 from . import interfaces as cridxr_interfaces
 from ._common_indexer import _BasicWhooshIndexer
@@ -82,7 +84,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 	@classmethod
 	def _get_video_transcript_parser_names(cls):
 		utils = component.getUtilitiesFor(media_interfaces.IVideoTranscriptParser)
-		result = [x for x, _ in utils]
+		result = {x for x, _ in utils}
 		return result
 
 	def _get_topic_map(self, dom):
@@ -156,7 +158,6 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		video_sources = []
 		video_ntiid = node_utils.get_attribute(node, 'data-ntiid')
 		for p in node.iterchildren():
-			self._capture_param(p, params)
 			if p.tag == 'object':
 				# check for transcript
 				trax = self._process_transcript(p)
@@ -167,6 +168,8 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 				vidsrc = self._process_videosource(p)
 				if vidsrc:
 					video_sources.append(vidsrc)
+			else:
+				self._capture_param(p, params)
 				
 		title = params.get('title', u'')
 
@@ -212,16 +215,19 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		if not content:
 			return False
 
+		table = get_content_translation_table(language)
+		content = unicode(content_utils.sanitize_content(content, table=table))
+		tokenized_words = split_content(content, language)
 		try:
-			table = get_content_translation_table(language)
 			last_modified = datetime.fromtimestamp(time.time())
-			content = unicode(content_utils.sanitize_content(content, table=table))
+			keywords = termextract.extract_key_words(tokenized_words)
 			writer.add_document(containerId=containerId,
 								videoId=video_id,
 								language=language,
 								title=title,
 								content=content,
 								quick=content,
+								keywords=keywords,
 								last_modified=last_modified,
 								end_timestamp=videotimestamp_to_datetime(entry.end_timestamp),
 								start_timestamp=videotimestamp_to_datetime(entry.start_timestamp))
