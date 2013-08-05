@@ -127,7 +127,18 @@ class courselesson(StartSection):
     forcePars = False
     level = Command.CHAPTER_LEVEL
 
+class courseinfoname(Command):
+    pass
+
+class courseinfo(StartSection):
+    args = '* [ toc ] title'
+    blockType = True
+    counter = 'courseinfo'
+    forcePars = False
+    level = Command.SECTION_LEVEL
+
 def ProcessOptions( options, document ):
     document.context.newcounter('course')
+    document.context.newcounter('courseinfo')
     document.context.newcounter('courselesson')
     document.context.newcounter('courseunit')
