@@ -445,14 +445,60 @@ class _NTIVideoExtractor(object):
 		items = {}
 		filename = 'video_index.json'
 		inverted = collections.defaultdict(set)
-		containers = collections.defaultdict(list)
+		containers = collections.defaultdict(set)
 		video_index = {'Items': items, 'Containers':containers}
 		for el in els:
 			video, container = self._process_video(dom, el, topic_map)
 			items[video['ntiid']] = video
 			if container:
-				containers[container].append(video['ntiid'])
+				containers[container].add(video['ntiid'])
 				inverted[video['ntiid']].add(container)
+
+		# add video objects to toc
+		doc_ntiid = dom.documentElement.getAttribute('ntiid')
+		overrides = collections.defaultdict(set)
+		videos_in_toc = self._find_toc_videos(topic_map)
+		for vid_ntiid, cnt_ids in inverted.items():
+			toc_entries = videos_in_toc.get(vid_ntiid)
+			if toc_entries:
+				for toc_container_id in toc_entries:
+					overrides[vid_ntiid].add(toc_container_id)
+			else:
+				for container in cnt_ids:
+					if container == doc_ntiid:
+						parent = dom.documentElement
+					else:
+						parent = topic_map.get(container)
+						if parent is None:
+							continue
+
+					# create new elemenet
+					video = items.get(vid_ntiid)
+					obj_el = dom.createElement('object')
+					label = video.get('title') if video else None
+					obj_el.setAttribute(u'label', label or u'')
+					obj_el.setAttribute(u'mimeType', u'application/vnd.nextthought.ntivideo')
+					obj_el.setAttribute(u'ntiid', vid_ntiid)
+
+					# add to parent
+					parent.childNodes.append(obj_el)
+				
+		# apply overrides
+		# remove from all existing. TOC always win
+		for vid_ntiid in overrides.keys():
+			for container in containers.values():
+				container.discard(vid_ntiid)
+
+		for vid_ntiid, cnt_ids in overrides.items():
+			for container in cnt_ids:
+				containers[container].add(vid_ntiid)
+			
+		# remove any empty elements
+		for ntiid, vid_ids in list(containers.items()):
+			if not vid_ids:
+				containers.pop(ntiid)
+			else:
+				containers[ntiid] = list(vid_ids)  # Make JSON Serializable
 
 		# Write the normal version
 		with open(os.path.join(outpath, filename), "wb") as fp:
@@ -474,33 +520,7 @@ class _NTIVideoExtractor(object):
 
 		dom.childNodes[0].appendChild(toc_el)
 		dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
-		doc_ntiid = dom.documentElement.getAttribute('ntiid')
 
-		# add video objects to toc
-		videos_in_toc = self._find_toc_videos(topic_map)
-		for ntiid, containers in inverted.items():
-			
-			if ntiid in videos_in_toc:
-				continue
-			
-			for container in containers:
-				if container == doc_ntiid:
-					parent = dom.documentElement
-				else:
-					parent = topic_map.get(container)
-					if parent is None:
-						continue
-
-				# create new elemenet
-				video = items.get(ntiid)
-				obj_el = dom.createElement('object')
-				label = video.get('title') if video else None
-				obj_el.setAttribute(u'label', label or u'')
-				obj_el.setAttribute(u'mimeType', u'application/vnd.nextthought.ntivideo')
-				obj_el.setAttribute(u'ntiid', ntiid)
-
-				# add to parent
-				parent.childNodes.append(obj_el)
 
 	def _process_lessons(self, dom, els, topic_map):
 		for el in els:
