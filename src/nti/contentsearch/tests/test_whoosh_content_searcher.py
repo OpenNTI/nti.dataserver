@@ -25,7 +25,7 @@ from .._whoosh_schemas import create_video_transcript_schema
 from .._whoosh_content_searcher import WhooshContentSearcher
 
 from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID,
-						 SUGGESTIONS, SCORE, START_TIMESTAMP, END_TIMESTAMP, VIDEO_ID, TITLE,
+						 SUGGESTIONS, SCORE, START_MILLISECS, END_MILLISECS, VIDEO_ID, TITLE,
 						 HREF, TARGET_NTIID)
 
 from . import zanpakuto_commands
@@ -78,6 +78,7 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 								videoId=unicode(make_ntiid(provider='bleachget', nttype='bleach', specific=e)),
 								content=x,
 								quick=x,
+								title=unicode(e),
 								start_timestamp=videotimestamp_to_datetime(u'00:00:01,630'),
 								end_timestamp=videotimestamp_to_datetime('00:00:22,780'),
 								last_modified=datetime.fromtimestamp(cls.now))
@@ -133,8 +134,8 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 		assert_that(items[0], has_entry(VIDEO_ID, is_not(None)))
 		assert_that(items[0], has_entry(CONTAINER_ID, is_not(None)))
 		assert_that(items[0], has_entry(SNIPPET, 'Secret of the Substitute Badge'))
-		assert_that(items[0], has_entry(START_TIMESTAMP, '00:00:01.630'))
-		assert_that(items[0], has_entry(END_TIMESTAMP, '00:00:22.780'))
+		assert_that(items[0], has_entry(START_MILLISECS, 1630.0))
+		assert_that(items[0], has_entry(END_MILLISECS, 22780.0))
 
 	def test_search_nticard(self):
 		hits = toExternalObject(self.bim.search("Xcution"))

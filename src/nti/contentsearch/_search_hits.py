@@ -34,7 +34,7 @@ from . import _discriminators as discriminators
 from .constants import (title_)
 from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, SNIPPET, HIT, ID, CONTENT, SCORE, OID,
 						POST, MIME_TYPE, VIDEO_ID, BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT, VIDEO_TRANSCRIPT_MIME_TYPE,
-					 	START_TIMESTAMP, END_TIMESTAMP, NTI_CARD, NTI_CARD_MIME_TYPE, TITLE, HREF, TARGET_NTIID)
+					 	START_MILLISECS, END_MILLISECS, NTI_CARD, NTI_CARD_MIME_TYPE, TITLE, HREF, TARGET_NTIID)
 
 def get_hit_id(obj):
 	if nti_interfaces.IModeledContent.providedBy(obj):
@@ -206,13 +206,14 @@ class _WhooshVideoTranscriptSearchHit(_BaseSearchHit):
 	def set_hit_info(self, hit, score):
 		super(_WhooshVideoTranscriptSearchHit, self).set_hit_info(hit, score)
 		self[TYPE] = VIDEO_TRANSCRIPT
+		self[TITLE] = hit.title
 		self[NTIID] = hit.videoId
 		self[SNIPPET] = hit.content
 		self[VIDEO_ID] = hit.videoId
 		self[CONTAINER_ID] = hit.containerId
 		self[LAST_MODIFIED] = hit.last_modified
-		self[END_TIMESTAMP] = hit.end_timestamp
-		self[START_TIMESTAMP] = hit.start_timestamp
+		self[END_MILLISECS] = hit.end_millisecs
+		self[START_MILLISECS] = hit.start_millisecs
 		self[MIME_TYPE] = VIDEO_TRANSCRIPT_MIME_TYPE
 
 	@classmethod
