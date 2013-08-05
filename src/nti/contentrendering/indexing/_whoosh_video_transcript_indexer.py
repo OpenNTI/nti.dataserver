@@ -9,7 +9,6 @@ __docformat__ = "restructuredtext en"
 
 import os
 import time
-import collections
 from datetime import datetime
 
 from zope import component
@@ -27,13 +26,51 @@ from . import interfaces as cridxr_interfaces
 from ._common_indexer import _BasicWhooshIndexer
 from ..media import interfaces as media_interfaces
 
-_Video = collections.namedtuple('Video', 'parser_name, video_ntiid, video_path, title, language')
-
 _video_types = (u'application/vnd.nextthought.ntivideo')
 
 _media_transcript_types = (u'application/vnd.nextthought.mediatranscript',)
 
 _video_source_types = (u'application/vnd.nextthought.videosource',)
+
+class _Video(object):
+
+	def __init__(self, parser_name, video_ntiid, video_path, title=None, language='en'):
+		self.title = title
+		self.containerId = None
+		self.language = language
+		self.video_path = video_path
+		self.parser_name = parser_name
+		self.video_ntiid = video_ntiid
+
+	@property
+	def path(self):
+		return self.video_path
+
+	@property
+	def parser(self):
+		return self.parser_name
+
+	@property
+	def ntiid(self):
+		return self.video_ntiid
+
+	def __str__(self):
+		return "%s,%s" % (self.ntiid, self.path)
+
+	def __repr__(self):
+		return "%s(%s,%s,%s)" % (self.__class__, self.ntiid, self.path, self.language)
+
+	def __eq__(self, other):
+		try:
+			return self is other or (self.ntiid == other.ntiid and self.path == self.path)
+		except AttributeError:
+			return NotImplemented
+
+	def __hash__(self):
+		xhash = 47
+		xhash ^= hash(self.path)
+		xhash ^= hash(self.ntiid)
+		return xhash
 
 @interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
 class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
@@ -46,6 +83,25 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 	def _get_video_transcript_parser_names(cls):
 		utils = component.getUtilitiesFor(media_interfaces.IVideoTranscriptParser)
 		result = [x for x, _ in utils]
+		return result
+
+	def _get_topic_map(self, dom):
+		result = {}
+		for topic_el in dom.getElementsByTagName('topic'):
+			ntiid = topic_el.getAttribute('ntiid')
+			if ntiid:
+				result[ntiid] = topic_el
+		return result
+
+	def _find_toc_videos(self, topic_map):
+		result = {}
+		for topic_ntiid, topic_el in topic_map.items():
+			for obj in topic_el.getElementsByTagName('object'):
+				if obj.getAttribute('mimeType') != u'application/vnd.nextthought.ntivideo':
+					continue
+				ntiid = obj.getAttribute('ntiid')
+				if ntiid and topic_ntiid:
+					result[ntiid] = topic_ntiid  # Pick one contaienr
 		return result
 
 	def _find_video_transcript(self, base_location, bases, parser_names):
@@ -63,10 +119,11 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		return None
 
 	def _capture_param(self, p, params):
-		name = node_utils.get_attribute(p, 'name')
-		value = node_utils.get_attribute(p, 'value')
-		if name and value:
-			params[name] = value
+		if p.tag == 'param':
+			name = node_utils.get_attribute(p, 'name')
+			value = node_utils.get_attribute(p, 'value')
+			if name and value:
+				params[name] = value
 
 	def _process_transcript(self, node):
 		params = {}
@@ -74,8 +131,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		if type_ in _media_transcript_types:
 			data_lang = node_utils.get_attribute(node, 'data-lang') or 'en'
 			for p in node.iterchildren():
-				if p.tag == 'param':
-					self._capture_param(p, params)
+				self._capture_param(p, params)
 		
 			if 'src' in params and 'lang' not in params:
 				params['lang'] = data_lang
@@ -87,8 +143,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		type_ = node_utils.get_attribute(node, 'type')
 		if type_ in _video_source_types:
 			for p in node.iterchildren():
-				if p.tag == 'param':
-					self._capture_param(p, params)
+				self._capture_param(p, params)
 		return params if params else None
 
 	def _process_ntivideo(self, topic, node):
@@ -101,9 +156,8 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		video_sources = []
 		video_ntiid = node_utils.get_attribute(node, 'data-ntiid')
 		for p in node.iterchildren():
-			if p.tag == 'param':
-				self._capture_param(p, params)
-			elif p.tag == 'object':
+			self._capture_param(p, params)
+			if p.tag == 'object':
 				# check for transcript
 				trax = self._process_transcript(p)
 				if trax:
@@ -181,7 +235,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		indexname = vtrans_prefix + indexname
 		return indexname
 
-	def process_topic(self, idxspec, topic, writer):
+	def process_topic(self, idxspec, topic, writer, toc_videos={}):
 		videos = set()
 		containerId = unicode(topic.ntiid) or u''
 
@@ -190,34 +244,46 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 			if nti_vids:
 				videos.update(nti_vids)
 
-		return (videos, containerId)
+		for video in videos:
+			video.containerId = toc_videos.get(video.ntiid, containerId)
+		return videos
 
-	def _parse_and_index_videos(self, videos, containerId, writer):
+	def _parse_and_index_videos(self, videos, writer):
 		if isinstance(videos, _Video):
 			videos = [videos]
 
 		count = 0
 		for video in videos:
-			pname, video_ntiid, video_path, title, lang = video
-			parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name=pname)
-			with open(video_path, "r") as source:
+			parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name=video.parser)
+			with open(video.path, "r") as source:
 				transcript = parser.parse(source)
 
-			video_ntiid = unicode(video_ntiid)
-			for e in transcript:
-				if self.index_transcript_entry(writer, containerId, video_ntiid, title, e, lang):
+			for entry in transcript:
+				if self.index_transcript_entry(writer,
+											   unicode(video.containerId),
+											   unicode(video.ntiid),
+											   unicode(video.title),
+											   entry,
+											   unicode(video.language)):
 					count += 1
 		return count
 
 	def process_book(self, idxspec, writer, *args, **kwargs):
+
+		# find videos in toc
+		if idxspec:
+			dom = idxspec.book.toc.dom
+			topic_map = self._get_topic_map(dom)
+			toc_videos = self._find_toc_videos(topic_map)
+		else:
+			toc_videos = {}
+
 		# capture all videos to parse
-		result = {}
+		result = set()
 		toc = idxspec.book.toc
 		def _loop(topic):
-			videos, containerId = self.process_topic(idxspec, topic, writer)
-			for video in videos:
-				if video not in result:
-					result[video] = containerId
+			videos = self.process_topic(idxspec, topic, writer, toc_videos)
+			result.update(videos)
 			# parse children
 			for t in topic.childTopics:
 				_loop(t)
@@ -225,8 +291,8 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 		# parse and index
 		count = 0
-		for video, containerId in result.items():
-			count += self._parse_and_index_videos(video, containerId, writer)
+		for video in result:
+			count += self._parse_and_index_videos(video, writer)
 		return count
 
 _DefaultWhooshVideoTranscriptIndexer = _WhooshVideoTranscriptIndexer
