@@ -55,6 +55,11 @@ def get_datetime(x=None):
 	x = x or time.time()
 	return datetime.fromtimestamp(float(x))
 
+def video_date_to_millis(dt):
+	start = datetime(year=1, month=1, day=1)
+	diff = dt - start
+	return diff.total_seconds() * 1000
+
 def date_to_videotimestamp(dt):
 	dt = float(dt) if isinstance(dt, six.string_types) else dt
 	dt = get_datetime(dt) if isinstance(dt, (float, long)) else dt

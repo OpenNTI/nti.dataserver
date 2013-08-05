@@ -386,8 +386,9 @@ class IVideoTranscriptContent(interface.Interface):
 	containerId = nti_schema.ValidTextLine(title="NTIID of video container", required=True)
 	videoId = nti_schema.ValidTextLine(title="Either the video NTIID or Id", required=True)
 	content = nti_schema.ValidText(title="Text content", required=True)
-	start_timestamp = nti_schema.ValidTextLine(title="Start timestamp", required=True)
-	end_timestamp = nti_schema.ValidTextLine(title="End timestamp", required=True)
+	title = nti_schema.ValidText(title="Video title", required=False)
+	start_millisecs = schema.Float(title="Start timestamp", required=True)
+	end_millisecs = schema.Float(title="End timestamp", required=True)
 	last_modified = nti_schema.Number(title="Last modified date", required=True)
 
 class IWhooshVideoTranscriptContent(IVideoTranscriptContent):
@@ -695,18 +696,22 @@ class ISuggestResults(IBaseSearchResults):
 	add = add_suggestions
 
 class ISuggestAndSearchResults(ISearchResults, ISuggestResults):
+
 	def add(hit_or_hits):
 		"""add a search hit(s) to this result"""
 
 class ISearchResultsCreator(interface.Interface):
+
 	def __call__(query):
 		"""return a new instance of a ISearchResults"""
 
 class ISuggestResultsCreator(interface.Interface):
+
 	def __call__(query):
 		"""return a new instance of a ISuggestResults"""
 
 class ISuggestAndSearchResultsCreator(interface.Interface):
+
 	def __call__(query):
 		"""return a new instance of a ISuggestAndSearchResults"""
 

@@ -166,12 +166,13 @@ class VideoTranscript(_SearchableContent):
 			data = _VideoTranscriptContent(
 							score=score,
 							docnum=docnum,
+							title=hit[title_],
 							content=hit[content_],
 							videoId=hit[videoId_],
 				 			containerId=hit[containerId_],
 							last_modified=common.epoch_time(hit[last_modified_]),
-				 			end_timestamp=common.date_to_videotimestamp(hit[end_timestamp_]),
-				 			start_timestamp=common.date_to_videotimestamp(hit[start_timestamp_]))
+				 			end_millisecs=common.video_date_to_millis(hit[end_timestamp_]),
+				 			start_millisecs=common.video_date_to_millis(hit[start_timestamp_]))
 			result.append((data, score))
 		return result
 
