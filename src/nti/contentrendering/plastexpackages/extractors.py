@@ -158,17 +158,18 @@ class _CourseExtractor(object):
 
 	def transform(self, book):
 		course_els = book.document.getElementsByTagName('course')
+		courseinfo = book.document.getElementsByTagName('courseinfo')
 		dom = book.toc.dom
 		if course_els:
 			dom.childNodes[0].appendChild(dom.createTextNode(u'	'))
-			dom.childNodes[0].appendChild(self._process_course(course_els[0]))
+			dom.childNodes[0].appendChild(self._process_course(course_els[0]), courseinfo)
 			dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
 			dom.childNodes[0].setAttribute('isCourse', 'true')
 		else:
 			dom.childNodes[0].setAttribute('isCourse', 'false')
 		book.toc.save()
 
-	def _process_course(self, doc_el):
+	def _process_course(self, doc_el, courseinfo):
 		toc_el = XMLDocument().createElement('course')
 		toc_el.setAttribute('label', unicode(doc_el.title))
 		toc_el.setAttribute('ntiid', doc_el.ntiid)
@@ -176,6 +177,8 @@ class _CourseExtractor(object):
 			toc_el.setAttribute('discussionBoard', doc_el.discussion_board)
 		if hasattr(doc_el, 'announcement_board'):
 			toc_el.setAttribute('instructorForum', doc_el.announcement_board)
+		if courseinfo:
+			toc_el.setAttribute('courseInfo', courseinfo[0].ntiid)
 		units = doc_el.getElementsByTagName('courseunit')
 		for unit in units:
 			toc_el.appendChild(XMLDocument().createTextNode(u'\n		'))
