@@ -1,7 +1,12 @@
-#!/usr/bin/env python                                                                                                   
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from plasTeX import Command
-from plasTeX import Environment
 
 class bm(Command):
     args = 'self'
