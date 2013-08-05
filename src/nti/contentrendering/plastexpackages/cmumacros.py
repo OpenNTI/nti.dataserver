@@ -1,18 +1,20 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+CMU macros
 
-
-
-from nti.contentrendering import plastexids
-from nti.contentrendering.resources import interfaces as res_interfaces
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from plasTeX import Base
 from plasTeX.Base import ColumnType
 
 class _Ignored(Base.Command):
-        unicode = ''
-        def invoke( self, tex ):
-                return []
+	unicode = ''
+	def invoke(self, tex):
+			return []
 
 class lecture(Base.chapter):
 	args = '* [shorttitle] title { label }'
@@ -25,27 +27,27 @@ class frametitle(Base.paragraph):
 # Parses the \frame environment and produces no output.  The childred of
 # this environment print as if they were not inside the frame environment.
 class frame(Base.Environment):
-        args = ' {title:str} [unknown:str]'
+	args = ' {title:str} [unknown:str]'
 
-        def invoke( self, tex ):
-                self.parse(tex)
-                return []
+	def invoke(self, tex):
+		self.parse(tex)
+		return []
 
 # Parses the \columns environment and produces no output.  The childred of
 # this environment print as if they were not inside the solumns environment.
 class columns(Base.Environment):
-        args = '[ pos:str ]'
+	args = '[ pos:str ]'
 
-        def invoke( self, tex ):
-                self.parse(tex)
-                return []
+	def invoke(self, tex):
+		self.parse(tex)
+		return []
 
 class column(Base.Command):
-        args = '[ pos:str ] width:int'
+	args = '[ pos:str ] width:int'
 
-        def invoke( self, tex ):
-                self.parse(tex)
-                return []
+	def invoke(self, tex):
+		self.parse(tex)
+		return []
 
 class framebreak(_Ignored):
 	pass
@@ -54,7 +56,7 @@ class noframebreak(_Ignored):
 	pass
 
 class mtiny(Base.Command):
-        pass
+		pass
 
 class pause(Base.Command):
 	pass
@@ -101,17 +103,17 @@ class titlerow(Base.Command):
 
 # Custom commands for use with the algorithm2e environment
 class Label(Base.Command):
-    blockType = True
-    args = 'self'
+	blockType = True
+	args = 'self'
 
 class Goto(Base.Command):
-    blockType = True
-    args = 'self'
+	blockType = True
+	args = 'self'
 
 class Procedure(Base.Command):
-    blockType = True
-    args = 'self'
+	blockType = True
+	args = 'self'
 
 class Input(Base.Command):
-    blockType = True
-    args = 'self'
+	blockType = True
+	args = 'self'
