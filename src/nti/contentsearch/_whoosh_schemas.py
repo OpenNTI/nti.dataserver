@@ -152,6 +152,7 @@ def create_video_transcript_schema():
 	title: Video title
 	content: transcript text
 	quick: transcript text ngrams
+	keywords: transcript keywords
 	start_timestamp: Start video timestamp
 	end_timestamp: End video timestamp
 	"""
@@ -161,6 +162,7 @@ def create_video_transcript_schema():
 						title=fields.STORED(),
 					 	content=create_content_field(stored=True),
 					 	quick=create_ngram_field(),
+					 	keywords=fields.KEYWORD(stored=True),
 					 	start_timestamp=VIDEO_TIMESTAMP(stored=True),
 					 	end_timestamp=VIDEO_TIMESTAMP(stored=True),
 					 	last_modified=fields.DATETIME(stored=True))
