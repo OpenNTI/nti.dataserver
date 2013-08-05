@@ -149,6 +149,7 @@ def create_video_transcript_schema():
 
 	containerId: NTIID of the video location
 	videoId: Video NTIID or custom identifier
+	title: Video title
 	content: transcript text
 	quick: transcript text ngrams
 	start_timestamp: Start video timestamp
@@ -157,6 +158,7 @@ def create_video_transcript_schema():
 	sch = fields.Schema(containerId=fields.ID(stored=True, unique=False),
 						videoId=fields.ID(stored=True, unique=False),
 						language=fields.ID(stored=True, unique=False),
+						title=fields.STORED(),
 					 	content=create_content_field(stored=True),
 					 	quick=create_ngram_field(),
 					 	start_timestamp=VIDEO_TIMESTAMP(stored=True),

@@ -9,7 +9,6 @@ __docformat__ = "restructuredtext en"
 
 import os
 import time
-import urlparse
 import collections
 from datetime import datetime
 
@@ -28,12 +27,13 @@ from . import interfaces as cridxr_interfaces
 from ._common_indexer import _BasicWhooshIndexer
 from ..media import interfaces as media_interfaces
 
-_Video = collections.namedtuple('Video', 'parser_name, video_ntiid, video_path, language')
+_Video = collections.namedtuple('Video', 'parser_name, video_ntiid, video_path, title, language')
 
-_video_types = (u'application/vnd.nextthought.ntivideo', u'application/vnd.nextthought.slidevideo',
-				u'application/vnd.nextthought.ntislidevideo')
+_video_types = (u'application/vnd.nextthought.ntivideo')
 
 _media_transcript_types = (u'application/vnd.nextthought.mediatranscript',)
+
+_video_source_types = (u'application/vnd.nextthought.videosource',)
 
 @interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
 class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
@@ -62,24 +62,6 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 						return pn, video_path
 		return None
 
-	def _get_externalvideo_info(self, topic, node):
-		content_path = os.path.dirname(topic.location)
-		video_ntiid = node_utils.get_attribute(node, 'id')
-		parser_names = self._get_video_transcript_parser_names()
-		language = node_utils.get_attribute(node, 'language') or 'en'
-		for obj in node.iterchildren():
-			if obj.tag == 'iframe':
-				src = node_utils.get_attribute(obj, 'src')
-				if src:
-					path = urlparse.urlparse(src).path
-					vid = os.path.splitext(os.path.basename(path))[0]
-					language = node_utils.get_attribute(obj, 'language') or language
-					vid_tupl = self._find_video_transcript(content_path, [vid], parser_names)
-					if vid_tupl:
-						parser_name, video_path = vid_tupl
-						return _Video(parser_name, video_ntiid, video_path, language)
-		return None
-
 	def _capture_param(self, p, params):
 		name = node_utils.get_attribute(p, 'name')
 		value = node_utils.get_attribute(p, 'value')
@@ -100,6 +82,15 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		
 		return params if 'src' in params else None
 
+	def _process_videosource(self, node):
+		params = {}
+		type_ = node_utils.get_attribute(node, 'type')
+		if type_ in _video_source_types:
+			for p in node.iterchildren():
+				if p.tag == 'param':
+					self._capture_param(p, params)
+		return params if params else None
+
 	def _process_ntivideo(self, topic, node):
 		type_ = node_utils.get_attribute(node, 'type')
 		if type_ not in _video_types:
@@ -107,14 +98,24 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 		params = {}
 		transcripts = []
+		video_sources = []
 		video_ntiid = node_utils.get_attribute(node, 'data-ntiid')
 		for p in node.iterchildren():
 			if p.tag == 'param':
 				self._capture_param(p, params)
 			elif p.tag == 'object':
-				t = self._process_transcript(p)
-				if t: transcripts.append(t)
+				# check for transcript
+				trax = self._process_transcript(p)
+				if trax:
+					transcripts.append(trax)
+
+				# check for video sources
+				vidsrc = self._process_videosource(p)
+				if vidsrc:
+					video_sources.append(vidsrc)
 				
+		title = params.get('title', u'')
+
 		# makre sure we have a ntiid for the video
 		if not video_ntiid:
 			video_ntiid = params.get('data-ntiid', params.get('ntiid'))  or u''
@@ -123,21 +124,22 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		parser_names = self._get_video_transcript_parser_names()
 
 		result = ()
-		if not transcripts:
+		if not transcripts and video_sources:
 			# process legacy spec
 			language = node_utils.get_attribute(node, 'data-lang') or \
 					   params.get('data-lang', params.get('lang')) or 'en'
 
-			# collect video-base names
-			bases = {video_ntiid, params.get('subtitle', None)}
-			if params.get('type') == 'youtube':
-				bases.add(params.get('id'))
-			bases.discard(None)
+			for vrdsrc in video_sources:
+				bases = {video_ntiid, vrdsrc.get('subtitle', None), params.get('subtitle')}
+				if vrdsrc.get('service', vrdsrc.get('type', u'')).lower() == 'youtube':
+					bases.add(vrdsrc.get('source'))
+				bases.discard(None)
 
-			vid_tupl = self._find_video_transcript(content_path, bases, parser_names)
-			if vid_tupl:
-				parser_name, video_path = vid_tupl
-				result = (_Video(parser_name, video_ntiid, video_path, language),)
+				vid_tupl = self._find_video_transcript(content_path, bases, parser_names)
+				if vid_tupl:
+					parser_name, video_path = vid_tupl
+					result = (_Video(parser_name, video_ntiid, video_path, title, language),)
+					break
 		else:
 			result = []
 			for t in transcripts:
@@ -146,12 +148,12 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 				video_path = os.path.join(content_path, location)
 				if os.path.exists(video_path) and ext.lower() in parser_names:
 					language = t['lang']
-					vid = _Video(ext.lower(), video_ntiid, video_path, language)
+					vid = _Video(ext.lower(), video_ntiid, video_path, title, language)
 					result.append(vid)
 
 		return result
 
-	def index_transcript_entry(self, writer, containerId, video_id, entry, language=u'en'):
+	def index_transcript_entry(self, writer, containerId, video_id, title, entry, language=u'en'):
 		content = entry.transcript
 		if not content:
 			return False
@@ -163,6 +165,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 			writer.add_document(containerId=containerId,
 								videoId=video_id,
 								language=language,
+								title=title,
 								content=content,
 								quick=content,
 								last_modified=last_modified,
@@ -182,11 +185,6 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		videos = set()
 		containerId = unicode(topic.ntiid) or u''
 
-		for n in topic.dom(b'div').filter(b'.externalvideo'):
-			info = self._get_externalvideo_info(topic, n)
-			if info:
-				videos.add(info)
-
 		for n in topic.dom(b'object'):
 			nti_vids = self._process_ntivideo(topic, n)
 			if nti_vids:
@@ -200,14 +198,14 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 		count = 0
 		for video in videos:
-			pname, video_ntiid, video_path, lang = video
+			pname, video_ntiid, video_path, title, lang = video
 			parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name=pname)
 			with open(video_path, "r") as source:
 				transcript = parser.parse(source)
 
 			video_ntiid = unicode(video_ntiid)
 			for e in transcript:
-				if self.index_transcript_entry(writer, containerId, video_ntiid, e, lang):
+				if self.index_transcript_entry(writer, containerId, video_ntiid, title, e, lang):
 					count += 1
 		return count
 
