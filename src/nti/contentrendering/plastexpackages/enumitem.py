@@ -1,13 +1,17 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+$Id: slidedeckextractor.py 21266 2013-07-23 21:52:35Z sean.jones $
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from plasTeX import Base
-from plasTeX import Command
 from plasTeX import Environment
 
 # SAJ: Extremely limited support for the enumitem package.
 
-class enumerate_( Base.enumerate_ ):
+class enumerate_(Base.enumerate_):
     macroName = 'enumerate'
     args = '[ options ]'
 
