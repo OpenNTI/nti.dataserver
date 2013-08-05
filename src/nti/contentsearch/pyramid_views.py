@@ -11,12 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 import re
 
 from zope import component
+from zope import interface
+from zope.location import locate
 
 import pyramid.httpexceptions as hexc
 from pyramid.security import authenticated_userid
-
-from zope import interface
-from zope.location import locate
 
 from . import constants
 from .common import sort_search_types

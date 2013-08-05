@@ -33,7 +33,6 @@ def get_collection(ntiid, registry=component):
 	return unicode(result[0].lower()) if result else None
 
 def get_user_accessible_content(user, registry=component):
-	
 	user = users.User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
 	member = component.getAdapter( user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX )
 	library = registry.queryUtility(IContentPackageLibrary)

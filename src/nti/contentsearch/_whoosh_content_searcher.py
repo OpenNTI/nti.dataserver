@@ -30,6 +30,7 @@ from ._whoosh_index import VideoTranscript
 from . import interfaces as search_interfaces
 from ._whoosh_indexstorage import DirectoryStorage
 from ._whoosh_query import CosineScorerModel as CSM
+from .constants import (content_, videotranscript_, nticard_)
 
 class _BoundingProxy(ProxyBase):
 
@@ -54,9 +55,10 @@ class _BoundingProxy(ProxyBase):
 
 class _Searchable(object):
 
-	def __init__(self, searchable, indexname, index):
+	def __init__(self, searchable, indexname, index, classname):
 		self.index = index
 		self.indexname = indexname
+		self.classname = classname
 		self.searchable = searchable
 
 	def __str__(self):
@@ -90,19 +92,19 @@ class _Searchable(object):
 @interface.implementer(search_interfaces.IWhooshContentSearcher)
 class WhooshContentSearcher(object):
 
-	idx_factories = (('', Book),
-					 (constants.vtrans_prefix, VideoTranscript),
-					 (constants.nticard_prefix, NTICard))
+	idx_factories = (('', Book, content_),
+					 (constants.nticard_prefix, NTICard, nticard_),
+					 (constants.vtrans_prefix, VideoTranscript, videotranscript_),)
 
 	def __init__(self, baseindexname, storage, ntiid=None):
 		self._searchables = {}
 		self.storage = storage
 		self.ntiid = ntiid if ntiid else baseindexname
-		for prefix, factory in self.idx_factories:
+		for prefix, factory, classsname in self.idx_factories:
 			indexname = prefix + baseindexname
 			if storage.index_exists(indexname):
 				index = storage.get_index(indexname)
-				self._searchables[indexname] = _Searchable(factory(), indexname, index)
+				self._searchables[indexname] = _Searchable(factory(), indexname, index, classsname)
 
 	@property
 	def indices(self):
@@ -122,29 +124,38 @@ class WhooshContentSearcher(object):
 	def __len__(self):
 		return len(self._searchables)
 
+	def is_valid_content_query(self, s, query):
+		result = not query.is_empty
+		if result:
+			result = not query.searchOn or s.classname in query.searchOn
+		return result
+
 	@metric
 	def search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		results = srlts.empty_search_results(query)
 		for s in self._searchables.values():
-			rs = s.search(query)
-			results = srlts.merge_search_results(results, rs)
+			if self.is_valid_content_query(s, query):
+				rs = s.search(query)
+				results = srlts.merge_search_results(results, rs)
 		return results
 
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		results = srlts.empty_suggest_and_search_results(query)
 		for s in self._searchables.values():
-			rs = s.suggest_and_search(query)
-			results = srlts.merge_suggest_and_search_results(results, rs)
+			if self.is_valid_content_query(s, query):
+				rs = s.suggest_and_search(query)
+				results = srlts.merge_suggest_and_search_results(results, rs)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		results = srlts.empty_suggest_results(query)
 		for s in self._searchables.values():
-			rs = s.suggest(query)
-			results = srlts.merge_suggest_results(results, rs)
+			if self.is_valid_content_query(s, query):
+				rs = s.suggest(query)
+				results = srlts.merge_suggest_results(results, rs)
 		return results
 
 	def close(self):
