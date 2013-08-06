@@ -2,25 +2,28 @@
 # -*- coding: utf-8 -*-
 """
 Constants and types for dealing with our unique IDs.
-$Revision$
+
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import datetime
-import numbers
-import time
-import collections
-import warnings
-import string
-import six
-
 from . import MessageFactory as _
+
+import six
+import time
+import string
+import numbers
+import datetime
+import warnings
+import collections
 
 from zope import interface
 from zope import component
 from zope.schema import interfaces as sch_interfaces
+
 from nti.ntiids import interfaces
 
 # Well-known IDs

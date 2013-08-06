@@ -3,14 +3,15 @@
 """
 NTIID related interfaces.
 
-
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from zope import interface
 from zope import schema
+from zope import interface
 from zope.interface.common import sequence
+
 from dolmen.builtins import ITuple
 
 class INTIID(ITuple,sequence.IMinimalSequence):
