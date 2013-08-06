@@ -1,20 +1,23 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-import logging
-logger = logging.getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
+
 import six
-
 import anyjson as json
-from nti.externalization.externalization import to_json_representation_externalized
-
-from . import interfaces
 
 from zope import interface
 from zope import component
-
 from zope.cachedescriptors.property import Lazy
+
+from nti.externalization.externalization import to_json_representation_externalized
+
+from . import interfaces
 
 @interface.implementer(interfaces.ISocketIOSocket)
 class SocketIOSocket(object):
@@ -275,8 +278,10 @@ class SocketIOProtocolFormatter1(object):
 			if len_str <= 0: raise ValueError( 'Bad length' )
 			end_data = end + dl + len_str
 			sub_data = data[end+dl:end_data]
-			if not sub_data: raise ValueError( "Data from %s to %s was not len %s (got %s)" % (start_search, end_data, len_str, sub_data ) )
-			if not len(sub_data) == len_str: raise ValueError( "Data from %s to %s was not len %s (got %s)" % (start_search, end_data, len_str, sub_data ) )
+			if not sub_data:
+				raise ValueError("Data from %s to %s was not len %s (got %s)" % (start_search, end_data, len_str, sub_data))
+			if not len(sub_data) == len_str:
+				raise ValueError("Data from %s to %s was not len %s (got %s)" % (start_search, end_data, len_str, sub_data))
 			messages.append( self.decode( sub_data ) )
 
 			start = end_data
