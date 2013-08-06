@@ -57,6 +57,7 @@ __docformat__ = "restructuredtext en"
 
 import itertools
 
+from zope import interface
 from zope import schema
 from zope.cachedescriptors.property import readproperty
 
@@ -68,6 +69,7 @@ from nti.assessment import interfaces as as_interfaces, parts, question
 from nti.contentfragments import interfaces as cfg_interfaces
 
 from nti.contentrendering import plastexids
+from nti.contentrendering import interfaces as crd_interfaces
 from nti.contentrendering.plastexpackages.ntilatexmacros import ntiincludevideo
 from nti.contentrendering.plastexpackages._util import LocalContentMixin as _BaseLocalContentMixin
 
@@ -587,6 +589,7 @@ class naquestionref(Crossref.ref):
 	pass
 
 from persistent.list import PersistentList
+@interface.implementer(crd_interfaces.IEmbeddedContainer)
 class naquestionset(Base.List, plastexids.NTIIDMixin):
 
 	# Only classes with counters can be labeled, and \label sets the
@@ -598,6 +601,7 @@ class naquestionset(Base.List, plastexids.NTIIDMixin):
 	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
 	_ntiid_type = as_interfaces.NTIID_TYPE
 
+	#: From IEmbeddedContainer
 	mimeType = "application/vnd.nextthought.naquestionset"
 
 	def assessment_object(self):
