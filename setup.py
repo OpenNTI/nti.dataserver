@@ -75,7 +75,7 @@ TESTS_REQUIRE = [
 	'WebTest >= 2.0.6',  # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
 	'blessings >= 1.5',  # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
 	'coverage >= 3.6',  # Test coverage
-	'fakeredis >= 0.3.1',
+	'fakeredis >= 0.4.0',
 	'fudge',
 	'ipdb >= 0.7',  # easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
 	'nose >= 1.3.0',
@@ -398,7 +398,7 @@ setup(
 			'pip >= 1.3.1',
 			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
 			'pudb >= 2013.3.4',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
-			'pylint >= 0.28.0' if not IS_PYPY else '',
+			'pylint >= 1.0.0' if not IS_PYPY else '',
 			'pyramid_debugtoolbar >= 1.0.6',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
 			'repoze.sphinx.autointerface >= 0.7.1',
