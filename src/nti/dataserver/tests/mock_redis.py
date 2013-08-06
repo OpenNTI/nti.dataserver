@@ -11,6 +11,9 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import numbers
+import datetime
+import fakeredis
 import threading
 
 from zope import interface
@@ -18,7 +21,7 @@ import zope.testing.cleanup
 
 from nti.dataserver import interfaces as nti_interfaces
 
-import fakeredis
+from hamcrest import (assert_that, instance_of, greater_than_or_equal_to, is_, any_of)
 
 interface.classImplements( fakeredis.FakeStrictRedis, nti_interfaces.IRedisClient )
 zope.testing.cleanup.addCleanUp( fakeredis.DATABASES.clear )
@@ -83,21 +86,16 @@ if not hasattr( InMemoryMockRedis, 'lock' ):
 # Enforce the type of time arguments for some methods
 # that are commonly mixed up (these arguments are
 # ignored my fakeredis)
-from hamcrest import assert_that
-from hamcrest import instance_of
-from hamcrest import greater_than_or_equal_to
-from hamcrest import is_
-from hamcrest import any_of
-import numbers
-import datetime
+
 def _check_time( time ):
-	assert_that( time, any_of( instance_of( numbers.Rational ),
-							   instance_of( datetime.timedelta) ) )
+	assert_that(time, any_of(instance_of(numbers.Rational), instance_of(datetime.timedelta)))
 	if isinstance( time, numbers.Rational ):
 		assert_that( time, is_( greater_than_or_equal_to( 0 ) ) )
 
 _orig_setex = InMemoryMockRedis.setex
 def _setex( self, name, time, value ):
 	_check_time( time )
+	if isinstance(time, datetime.timedelta):
+		time = time.total_seconds()
 	_orig_setex( self, name, time, value )
 InMemoryMockRedis.setex = _setex
