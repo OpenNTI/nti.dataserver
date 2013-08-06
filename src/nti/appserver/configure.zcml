@@ -183,14 +183,19 @@
 
 	<subscriber factory=".pyramid_renderers_profile_link_decorator.ProfileLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				
 	<subscriber factory="._adapters._AuthenticatedUserLinkAdder"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
+	<subscriber factory=".usersearch_views._SharedDynamicMembershipProviderDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<adapter factory="._adapters.EnclosureExternalObject" />
 	<adapter factory="._adapters.BrokenExternalObject" />
+	
 	<subscriber factory="._adapters._DeletedObjectPlaceholderDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+				
 	<adapter factory=".pyramid_renderers.render_enclosure_factory" />
 
 	<!-- Assessment -->
@@ -219,8 +224,7 @@
 	<include package="." file="configure_logon.zcml" />
 
 	<!-- Individual field updates -->
-	<!-- Normal traversing of the fields namespace, both with and
-	 without request -->
+	<!-- Normal traversing of the fields namespace, both with and without request -->
 	<adapter factory="._adapters.GenericModeledContentExternalFieldTraverser"
 			 for="nti.dataserver.interfaces.IModeledContent pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"

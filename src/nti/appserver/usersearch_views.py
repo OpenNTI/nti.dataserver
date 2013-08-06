@@ -19,6 +19,7 @@ from zope.mimetype import interfaces as zmime_interfaces
 from ZODB.utils import u64
 
 from pyramid.view import view_config
+from pyramid.threadlocal import get_current_request
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
@@ -26,6 +27,8 @@ from nti.dataserver import mimetype as nti_mimetype
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
@@ -162,15 +165,16 @@ def _ResolveUserView(request):
 		# username in the next little bit
 		request.response.cache_control.max_age = 600 # ten minutes
 
-	return _format_result( result, remote_user, dataserver )
+	formatted = _format_result(result, remote_user, dataserver)
+	return formatted
 
 def _format_result( result, remote_user, dataserver ):
 	# Since we are already looking in the object we might as well return the summary form
 	# For this reason, we are doing the externalization ourself.
-	result = [toExternalObject( user, name=('personal-summary'
+	result = [toExternalObject(user, name=('personal-summary'
 											if user == remote_user
-											else 'summary') )
-				  for user in result]
+											else 'summary'))
+				for user in result]
 
 	# We have no good modification data for this list, due to changing Presence
 	# values of users, so caching is limited to etag matches
@@ -272,7 +276,6 @@ def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains
 
 	return result
 
-
 def _make_visibility_test(remote_user):
 	# TODO: Hook this up to the ACL support
 	if remote_user:
@@ -298,3 +301,24 @@ def _make_visibility_test(remote_user):
 			return not hasattr(x, 'usernames_of_dynamic_memberships') or x.usernames_of_dynamic_memberships.intersection( remote_com_names )
 		return test
 	return lambda x: True
+
+
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+class _SharedDynamicMembershipProviderDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalMapping(self, original, mapping):
+		request = get_current_request()
+		dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+		remote_user = get_remote_user(request, dataserver) if request and dataserver else None
+		if 	remote_user is None or original == remote_user or \
+			nti_interfaces.ICoppaUserWithoutAgreement.providedBy(original) or \
+			not hasattr(original, 'usernames_of_dynamic_memberships'):
+			return
+
+		remote_dmemberships = remote_user.usernames_of_dynamic_memberships - set(('Everyone',))
+		shared_dmemberships = original.usernames_of_dynamic_memberships.intersection(remote_dmemberships)
+		mapping['SharedDynamicMemberships'] = list(shared_dmemberships)
+
