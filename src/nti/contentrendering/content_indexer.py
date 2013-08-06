@@ -19,8 +19,6 @@ from zope import component
 
 from nti.contentrendering import interfaces as cr_interfaces
 
-interface.moduleProvides(cr_interfaces.IRenderedBookIndexer)
-
 _type_map = { 'book': cr_interfaces.IBookIndexer,
 			  'video': cr_interfaces.IVideoTranscriptIndexer,
 			  'nticard': cr_interfaces.INTICardIndexer }
