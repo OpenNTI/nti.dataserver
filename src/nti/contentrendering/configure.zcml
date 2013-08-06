@@ -38,9 +38,17 @@
 			 
 	<utility component=".slidedeckextractor" provides=".interfaces.ISlideDeckExtractor" name="SlideDeckExtractor"/>
 		
-	<utility component=".nticard_indexer" provides=".interfaces.IRenderedBookIndexer" name="nticard"/>
-	<utility component=".book_content_indexer" provides=".interfaces.IRenderedBookIndexer" name="book"/>
-	<utility component=".video_transcript_indexer" provides=".interfaces.IRenderedBookIndexer" name="video"/>
+	<utility factory=".content_indexer.NTICardIndexer"
+			 provides=".interfaces.IRenderedBookIndexer" 
+			 name="nticard"/>
+			 
+	<utility factory=".content_indexer.BookIndexer"
+			 provides=".interfaces.IRenderedBookIndexer"
+			 name="book"/>
+			 
+	<utility factory=".content_indexer.VideoTrancriptIndexer" 
+			 provides=".interfaces.IRenderedBookIndexer"
+			 name="video"/>
 	
 	<!-- Content fragments and conversion, mime types -->
 	

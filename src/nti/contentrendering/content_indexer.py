@@ -32,6 +32,21 @@ def transform(book, iface=cr_interfaces.IBookIndexer, name=''):
 		indexer = component.getUtility(iface)
 	indexer.index(book)
 
+@interface.implementer(cr_interfaces.IRenderedBookIndexer)
+class BookIndexer(object):
+	def transform(self, book):
+		transform(book, cr_interfaces.IBookIndexer)
+
+@interface.implementer(cr_interfaces.IRenderedBookIndexer)
+class NTICardIndexer(object):
+	def transform(self, book):
+		transform(book, cr_interfaces.INTICardIndexer)
+
+@interface.implementer(cr_interfaces.IRenderedBookIndexer)
+class VideoTrancriptIndexer(object):
+	def transform(self, book):
+		transform(book, cr_interfaces.IVideoTranscriptIndexer)
+
 def main():
 	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 
@@ -65,7 +80,7 @@ def main():
 	name = args.name or jobname
 	indexer = _type_map[args.type]
 	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
-	if os.path.exists(contentpath) or not os.path.isdir(contentpath):
+	if not os.path.exists(contentpath) or not os.path.isdir(contentpath):
 		raise IOError("Invalid content directory")
 
 	if verbose:
