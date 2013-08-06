@@ -594,7 +594,7 @@ class _LessonQuestionSetExtractor(object):
 					count = unicode(len(questionset_el.getElementsByTagName('naquestionref')))
 
 					toc_el = dom.createElement('object')
-					toc_el.setAttribute('ntiid', questionset_el.ntiid)
+					toc_el.setAttribute('target-ntiid', questionset_el.ntiid)
 					toc_el.setAttribute('mimeType', questionset_el.mimeType)
 					toc_el.setAttribute('label', label)
 					toc_el.setAttribute('question-count', count)
