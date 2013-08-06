@@ -250,6 +250,11 @@ class IHackExtractor(IRenderedBookExtractor):
 	Looks through the rendered book and injects hacks.
 	"""
 
+class ILessonQuestionSetExtractor(IRenderedBookExtractor):
+	"""
+	Looks through the rendered book and extracts the question sets in a lesson.
+	"""
+
 class ISlideDeckExtractor(IRenderedBookExtractor):
 	"""
 	Looks through the rendered book and extracts slide decks.

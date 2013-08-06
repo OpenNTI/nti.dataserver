@@ -598,6 +598,7 @@ class naquestionset(Base.List, plastexids.NTIIDMixin):
 	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
 	_ntiid_type = as_interfaces.NTIID_TYPE
 
+	mimeType = "application/vnd.nextthought.naquestionset"
 
 	def assessment_object(self):
 		questions = [qref.idref['label'].assessment_object() for qref in self.getElementsByTagName( 'naquestionref' )]

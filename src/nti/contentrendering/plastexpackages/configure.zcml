@@ -54,6 +54,14 @@
 			 provides="nti.contentrendering.interfaces.IHackExtractor"
 			 name="HackExtractor" />
 
+	<adapter factory=".extractors._LessonQuestionSetExtractor"
+			 for="nti.contentrendering.interfaces.IRenderedBook"
+			 provides="nti.contentrendering.interfaces.ILessonQuestionSetExtractor" />
+
+	<utility factory=".extractors._LessonQuestionSetExtractor"
+			 provides="nti.contentrendering.interfaces.ILessonQuestionSetExtractor"
+			 name="LessonQuestionSetExtractor" />
+
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">
 		<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
 		<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />
