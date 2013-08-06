@@ -485,7 +485,6 @@ class IVideoIndexMap(mapping.IReadMapping):
 	by_container = schema.Dict(key_type=schema.TextLine(title="The container of the video"),
 							   value_type=schema.List(title="The video ntiid"))
 
-
 ###
 # Policies
 ###
@@ -508,7 +507,6 @@ class IUserSearchPolicy(interface.Interface):
 
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 IContactEmailRecovery = IContactEmailRecovery # BBB
-
 
 ###
 # Additional indexed data storage
