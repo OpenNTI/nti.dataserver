@@ -24,6 +24,8 @@ from hamcrest import (assert_that, has_length, is_)
 
 class TestWhooshVideoTranscriptIndexer(ConfiguringTestBase):
 
+	features = ()  # to load the tagger
+
 	@classmethod
 	def setUpClass(cls):
 		super(TestWhooshVideoTranscriptIndexer, cls).setUpClass()
