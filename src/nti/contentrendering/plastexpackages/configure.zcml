@@ -46,14 +46,6 @@
 			 provides="nti.contentrendering.interfaces.INTIVideoExtractor"
 			 name="NTIVideoExtractor" />
 
-	<adapter factory=".extractors._HackExtractor"
-			 for="nti.contentrendering.interfaces.IRenderedBook"
-			 provides="nti.contentrendering.interfaces.IHackExtractor" />
-
-	<utility factory=".extractors._HackExtractor"
-			 provides="nti.contentrendering.interfaces.IHackExtractor"
-			 name="HackExtractor" />
-
 	<adapter factory=".extractors._LessonQuestionSetExtractor"
 			 for="nti.contentrendering.interfaces.IRenderedBook"
 			 provides="nti.contentrendering.interfaces.ILessonQuestionSetExtractor" />
