@@ -24,6 +24,8 @@ from hamcrest import (assert_that, has_length, is_, is_not)
 
 class TestNTICardIndexer(ConfiguringTestBase):
 
+	features = ()  # to load the tagger
+
 	@classmethod
 	def setUpClass(cls):
 		super(TestNTICardIndexer, cls).setUpClass()
