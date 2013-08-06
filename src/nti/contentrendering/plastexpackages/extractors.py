@@ -23,6 +23,7 @@ from zope import interface
 from pytz import utc as tz_utc
 
 from plasTeX.Base.LaTeX import Document as LaTexDocument
+from plasTeX.Renderers import render_children
 
 from nti.contentrendering import interfaces as crd_interfaces
 
@@ -583,3 +584,52 @@ class _HackExtractor(object):
 						topic_el.appendChild(hack_el)
 						topic_el.appendChild(book.toc.dom.createTextNode(u'\n'))
 						book.toc.save()
+
+@interface.implementer(crd_interfaces.ILessonQuestionSetExtractor)
+@component.adapter(crd_interfaces.IRenderedBook)
+class _LessonQuestionSetExtractor(object):
+
+	def __init__(self, book=None):
+		pass
+
+	def transform( self, book ):
+		lesson_els = book.document.getElementsByTagName( 'courselesson' )
+		dom = book.toc.dom
+		if lesson_els:
+			topic_map = self._get_topic_map(dom)
+			self._process_lessons(dom, lesson_els, topic_map)
+			book.toc.save()
+
+	def _get_topic_map(self, dom):
+		result = {}
+		for topic_el in dom.getElementsByTagName('topic'):
+			ntiid = topic_el.getAttribute('ntiid')
+			if ntiid:
+				result[ntiid] = topic_el
+		return result
+
+	def _process_lessons(self, dom, els, topic_map):
+		for el in els:
+			questionset_els = el.getElementsByTagName('naquestionset')
+			if questionset_els:
+				for questionset_el in questionset_els:
+					lesson_el = topic_map.get(el.ntiid)
+
+					# SAJ: Hack to give question sets a title
+					title_el = questionset_el.parentNode
+					while (not hasattr(title_el, 'title')):
+						title_el = title_el.parentNode
+					label = render_children( title_el.renderer, title_el.title)[0]
+
+					# Count how many questions are in a question set
+					count = unicode(len(questionset_el.getElementsByTagName('naquestionref')))
+
+					toc_el = dom.createElement('object')
+					toc_el.setAttribute('ntiid', questionset_el.ntiid)
+					toc_el.setAttribute('mimeType', questionset_el.mimeType)
+					toc_el.setAttribute('label', label)
+					toc_el.setAttribute('question-count', count)
+					if lesson_el:
+						lesson_el.appendChild(toc_el)
+						lesson_el.appendChild(dom.createTextNode(u'\n'))
+
