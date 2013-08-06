@@ -34,18 +34,18 @@ def transform(book, iface=cr_interfaces.IBookIndexer, name=''):
 
 @interface.implementer(cr_interfaces.IRenderedBookIndexer)
 class BookIndexer(object):
-	def transform(self, book):
-		transform(book, cr_interfaces.IBookIndexer)
+	def transform(self, book, name=''):
+		transform(book, cr_interfaces.IBookIndexer, name=name)
 
 @interface.implementer(cr_interfaces.IRenderedBookIndexer)
 class NTICardIndexer(object):
-	def transform(self, book):
-		transform(book, cr_interfaces.INTICardIndexer)
+	def transform(self, book, name=''):
+		transform(book, cr_interfaces.INTICardIndexer, name=name)
 
 @interface.implementer(cr_interfaces.IRenderedBookIndexer)
 class VideoTrancriptIndexer(object):
-	def transform(self, book):
-		transform(book, cr_interfaces.IVideoTranscriptIndexer)
+	def transform(self, book, name=''):
+		transform(book, cr_interfaces.IVideoTranscriptIndexer, name=name)
 
 def main():
 	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
