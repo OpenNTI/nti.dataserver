@@ -3,17 +3,19 @@
 """
 Views relating to liking and unliking objects.
 
-
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from pyramid.security import authenticated_userid
-
-from pyramid.view import view_config
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
+
+from pyramid.view import view_config
+
+from pyramid.security import authenticated_userid
 
 from nti.appserver import _util
 
@@ -22,7 +24,6 @@ from nti.dataserver import liking
 from nti.dataserver import authorization as nauth
 
 from nti.externalization import interfaces as ext_interfaces
-
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.ILikeable)
@@ -48,7 +49,6 @@ def _LikeView(request):
 	Registered as a named view, so invoked via the @@like syntax.
 
 	"""
-
 	liking.like_object( request.context, authenticated_userid( request ) )
 	return _util.uncached_in_response( request.context )
 
@@ -67,7 +67,6 @@ def _UnlikeView(request):
 	Registered as a named view, so invoked via the @@unlike syntax.
 
 	"""
-
 	liking.unlike_object( request.context, authenticated_userid( request ) )
 	return _util.uncached_in_response( request.context )
 
@@ -81,7 +80,6 @@ class FavoriteLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	false_view = 'favorite'
 	true_view = 'unfavorite'
 	predicate = staticmethod(liking.favorites_object)
-
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -97,7 +95,6 @@ def _FavoriteView(request):
 	Registered as a named view, so invoked via the @@favorite syntax.
 
 	"""
-
 	liking.favorite_object( request.context, authenticated_userid( request ) )
 	return _util.uncached_in_response( request.context )
 
@@ -115,6 +112,5 @@ def _UnfavoriteView(request):
 	Registered as a named view, so invoked via the @@unlike syntax.
 
 	"""
-
 	liking.unfavorite_object( request.context, authenticated_userid( request ) )
 	return _util.uncached_in_response( request.context )
