@@ -69,7 +69,8 @@ class _Recorder(object):
 		return "%s(%s,%s)" % (self.__class__, self.score, self.total)
 
 	def __iadd__(self, other):
-		self.score = other.score
+		self.total += other.total
+		self.score += other.score
 		_merge_map(self.counter, other.counter)
 		return self
 
