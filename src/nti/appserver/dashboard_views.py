@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import functools
 import collections
 
 from zope import component
@@ -28,10 +29,78 @@ from nti.externalization.interfaces import LocatedExternalDict
 from . import interfaces as app_interfaces
 from . import ugd_query_views as query_views
 
+def _merge_map(ref, m):
+	for k, v in m.items():
+		if k not in ref:
+			ref[k] = v
+		else:
+			ref[k] = ref[k] + v
+
+@functools.total_ordering
+class _Recorder(object):
+
+	__slots__ = ('score', 'total', 'counter')
+	
+	def __init__(self):
+		self.score = 0
+		self.total = 0
+		self.counter = collections.defaultdict(int)
+		
+	def record(self, mime_type, sharingTargets=()):
+		self.total += 1
+		self.counter[mime_type] += 1
+		s = 0
+		for st in sharingTargets or ():
+			if nti_interfaces.IUser.providedBy(st):
+				s += 1
+			elif nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(st):
+				s += 5
+			elif nti_interfaces.ICommunity.providedBy(st):
+				s += 10
+		self.score += s
+
+	def counterMap(self):
+		return LocatedExternalDict(**self.counter)
+
+	def __str__(self):
+		return "%s" % self.score
+
+	def __repr__(self):
+		return "%s(%s,%s)" % (self.__class__, self.score, self.total)
+
+	def __iadd__(self, other):
+		self.score = other.score
+		_merge_map(self.counter, other.counter)
+		return self
+
+	def __lt__(self, other):
+		try:
+			return self.score < other.score
+		except AttributeError:
+			return NotImplemented
+
+	def __gt__(self, other):
+		try:
+			return self.score > other.score
+		except AttributeError:
+			return NotImplemented
+
+	def __cmp__(self, other):
+		result = cmp(self, other)
+		if result == 0:
+			result = cmp(self.total, other.total)
+		return result
+	
+	def __eq__(self, other):
+		try:
+			return self is other or self.username == other.username
+		except AttributeError:
+			return NotImplemented
+
 class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 
-	def __init__( self, request, the_user=None, the_ntiid=None ):
-		super(_TopUserSummaryView,self).__init__( request )
+	def __init__(self, request, the_user=None, the_ntiid=None):
+		super(_TopUserSummaryView, self).__init__(request)
 		if self.request.context:
 			self.user = the_user or self.request.context.user
 			self.ntiid = the_ntiid or self.request.context.ntiid
@@ -74,38 +143,28 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 				creator = getattr(obj, 'creator', None)
 				creator = getattr(creator, 'username', creator)
 				mime_type = getattr(obj, "mimeType", getattr(obj, "mime_type", None))
+				sharingTargets = getattr(obj, 'flattenedSharingTargets', ())
 
 				if creator and mime_type:
-					counter = result.get(creator)
-					if counter is None:
-						result[creator] = counter = LocatedExternalDict()
-					if mime_type not in counter:
-						counter[mime_type] = 1
-					else:
-						counter[mime_type] = counter[mime_type] + 1
+					recorder = result.get(creator)
+					if recorder is None:
+						result[creator] = recorder = _Recorder()
+					recorder.record(mime_type, sharingTargets)
 					by_type[mime_type] = by_type[mime_type] + 1
 
 		return result, by_type
-
-	def _merge_map(self, total, m):
-		# merge by mime_type
-		for k, v in m.items():
-			if k not in total:
-				total[k] = v
-			else:
-				total[k] = total[k] + v
 				
 	def _merge_maps(self, total_user_map, total_by_type, usr_map, by_type):
-		# merge by user
+		# merge by recoder objecrs
 		for username, m in usr_map.items():
-			counter = total_user_map.get(username, None)
-			if counter is None:
+			recorder = total_user_map.get(username, None)
+			if recorder is None:
 				total_user_map[username] = m
 			else:
-				self._merge_map(counter, m)
+				recorder += m
 
 		# merge by mime_type
-		self._merge_map(total_by_type, by_type)
+		_merge_map(total_by_type, by_type)
 
 	def _get_self_and_children(self, ntiid):
 		result = None
@@ -157,14 +216,14 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		self._scan_videos(total_ugd, total_by_type)
 
 		# sort
-		items_sorted = sorted(total_ugd.items(), key=lambda e: sum(e[1].values()), reverse=True)
+		items_sorted = sorted(total_ugd.items(), reverse=True)
 
 		# compute
 		total = 0
 		items = []
 		result = LocatedExternalDict()
 		for k, v in items_sorted:
-			entry = {'Username': k, 'Types':v, 'Total':sum(v.values())}
+			entry = {'Username': k, 'Types':v.counterMap(), 'Total':v.total, 'Score':v.score}
 			total += entry['Total']
 			items.append(entry)
 		result['Items'] = items
