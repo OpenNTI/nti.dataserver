@@ -9,9 +9,11 @@
 
 	<!-- Externalization -->
 				
-	<subscriber factory=".decorators.ForumObjectDashboardLinkProvider"
+	<subscriber factory=".decorators.ForumObjectTopTopicsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.IBoard"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
-
+	<subscriber factory=".decorators.ForumObjectTopTopicsLinkProvider"
+				for="nti.dataserver.contenttypes.forums.interfaces.IForum"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 </configure>

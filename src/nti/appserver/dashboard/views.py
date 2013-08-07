@@ -10,21 +10,28 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import math
+import time
 import collections
+from datetime import datetime
 
 from zope import component
+
+from z3c.batching.batch import Batch
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid import httpexceptions as _hexc
 
 from nti.appserver import _view_utils
+from nti.utils._compat import aq_base
 from nti.appserver.traversal import find_interface
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver import ugd_query_views as query_views
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
@@ -55,18 +62,10 @@ class _Recorder(object):
 		self.total = 0
 		self.counter = collections.defaultdict(int)
 		
-	def record(self, mime_type, sharingTargets=()):
-		self.total += 1
-		self.counter[mime_type] += 1
-		s = 0
-		for st in sharingTargets or ():
-			if nti_interfaces.IUser.providedBy(st):
-				s += 1
-			elif nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(st):
-				s += 5
-			elif nti_interfaces.ICommunity.providedBy(st):
-				s += 10
-		self.score += s
+	def record(self, key, cnt=1, score=0.0):
+		self.total += cnt
+		self.score += score
+		self.counter[key] += cnt
 
 	def counterMap(self):
 		return LocatedExternalDict(**self.counter)
@@ -90,6 +89,18 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		if self.request.context:
 			self.user = the_user or self.request.context.user
 			self.ntiid = the_ntiid or self.request.context.ntiid
+
+	def _score(self, obj):
+		result = 0
+		sharingTargets = getattr(obj, 'flattenedSharingTargets', ())
+		for st in sharingTargets or ():
+			if nti_interfaces.IUser.providedBy(st):
+				result += 1
+			elif nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(st):
+				result += 5
+			elif nti_interfaces.ICommunity.providedBy(st):
+				result += 10
+		return result
 
 	def _get_summary_items(self, ntiid, recurse=True):
 
@@ -129,13 +140,12 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 				creator = getattr(obj, 'creator', None)
 				creator = getattr(creator, 'username', creator)
 				mime_type = getattr(obj, "mimeType", getattr(obj, "mime_type", None))
-				sharingTargets = getattr(obj, 'flattenedSharingTargets', ())
 
 				if creator and mime_type:
 					recorder = result.get(creator)
 					if recorder is None:
 						result[creator] = recorder = _Recorder()
-					recorder.record(mime_type, sharingTargets)
+					recorder.record(mime_type, score=self._score(obj))
 					by_type[mime_type] = by_type[mime_type] + 1
 
 		return result, by_type
@@ -221,23 +231,97 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		result['Summary'] = LocatedExternalDict(total_by_type)
 		return result
 
-##### Forum/Board dashboard view ####
+##### Forum/Board TopTopic view ####
+
+TOP_TOPICS_VIEW = u'TopTopics'
 
 @view_config(context=frm_interfaces.IBoard)
-@view_defaults(name="dashboard", **_r_view_defaults)
-class ForumDashboardGetView(_view_utils.AbstractAuthenticatedView):
+@view_config(context=frm_interfaces.IForum)
+@view_defaults(name=TOP_TOPICS_VIEW, **_r_view_defaults)
+class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
+
+	_DEFAULT_DECAY = 0.94
+	_DEFAULT_BATCH_SIZE = query_views._RecursiveUGDStreamView._DEFAULT_BATCH_SIZE
+	_DEFAULT_BATCH_START = query_views._RecursiveUGDStreamView._DEFAULT_BATCH_START
 
 	def __init__(self, request):
-		super(_TopUserSummaryView, self).__init__(request)
-		self.ntiid = self.request.context.ntiid
+		super(ForumTopTopicGetView, self).__init__(request)
+		self.now = datetime.fromtimestamp(time.time())
 		self.user = find_interface(self.request.context, nti_interfaces.IEntity)
 
-	def __call__(self):
-		view = query_views._UGDView(self.request)
-		the_objects = view.getObjectsForId(self.user, self.ntiid)
-		if not the_objects:
-			raise _hexc.HTTPNotFound()
+	def _score(self, topic, decay):
+		lm = datetime.fromtimestamp(topic.lastModified)
+		delta = self.now - lm
+		result = math.pow(decay, delta.days) * len(topic)
+		return result
 
+	def _get_decay(self):
+		decay = self.request.params.get('decay', self._DEFAULT_DECAY)
+		if decay is not None:
+			try:
+				decay = float(decay)
+			except ValueError:
+				raise _hexc.HTTPBadRequest(detail='Invalid decay factor')
+		return decay
+	
+	def _get_batch_size_start(self):
+		batch_size = self.request.params.get('batchSize', self._DEFAULT_BATCH_SIZE)
+		batch_start = self.request.params.get('batchStart', self._DEFAULT_BATCH_START)
+		if batch_size is not None and batch_start is not None:
+			try:
+				batch_size = int(batch_size)
+				batch_start = int(batch_start)
+			except ValueError:
+				raise _hexc.HTTPBadRequest()
+			if batch_size <= 0 or batch_start < 0:
+				raise _hexc.HTTPBadRequest()
+			result = (batch_size, batch_start)
+		else:
+			result = (self._DEFAULT_BATCH_SIZE, self._DEFAULT_BATCH_START)
+		return result
+
+	def _batch(self, mapping, result_list, batch_size=None, batch_start=None):
+		if batch_size is not None and batch_start is not None:
+			if batch_start >= len(result_list):
+				result_list = []
+			else:
+				result_list = Batch(result_list, batch_start, batch_size)
+				next_batch, prev_batch = result_list.next, result_list.previous
+				for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
+					if batch is not None and batch != result_list:
+						batch_params = self.request.params.copy()
+						batch_params['batchStart'] = batch.start
+						link_next_href = self.request.current_route_path(_query=sorted(batch_params.items()))
+						link_next = Link( link_next_href, rel=rel )
+						mapping.setdefault('Links', []).append(link_next)
+
+			mapping['Items'] = result_list
+		else:
+			mapping['Items'] = result_list
+
+	def __call__(self):
+		context = aq_base(self.request.context)
+		if frm_interfaces.IBoard.providedBy(context):
+			forums = context.values()
+		else:
+			forums = (context,)
+
+		# read params
+		decay = self._get_decay()
+		batch_size, batch_start = self._get_batch_size_start()
+
+		# capture all topic data
+		items = []
+		for forum in forums:
+			for topic in forum.values():
+				items.append((topic, self._score(topic, decay)))
+		items_sorted = sorted(items, key=lambda t: t[1], reverse=True)
+		items = map(lambda x: x[0], items_sorted)
+
+		# prepare output
+		result = LocatedExternalDict()
+		self._batch(result, items, batch_size, batch_start)
+		return result
 
 del _view_defaults
 del _r_view_defaults

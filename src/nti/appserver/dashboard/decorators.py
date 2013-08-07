@@ -14,6 +14,7 @@ from zope import interface
 
 from pyramid.threadlocal import get_current_request
 
+from nti.appserver.pyramid_renderers import md5_etag, _get_remote_username
 from nti.appserver.forums.decorators import ForumObjectContentsLinkProvider
 
 from nti.externalization import interfaces as ext_interfaces
@@ -21,8 +22,10 @@ from nti.externalization.singleton import SingletonDecorator
 
 from nti.utils._compat import aq_base
 
+from .views import TOP_TOPICS_VIEW
+
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-class ForumObjectDashboardLinkProvider(ForumObjectContentsLinkProvider):
+class ForumObjectTopTopicsLinkProvider(ForumObjectContentsLinkProvider):
 
 	__metaclass__ = SingletonDecorator
 
@@ -30,8 +33,9 @@ class ForumObjectDashboardLinkProvider(ForumObjectContentsLinkProvider):
 		context = aq_base(context)
 		request = get_current_request()
 		if context.__parent__:
-			self.add_link('dashboard', context, mapping, request)
+			elements = (TOP_TOPICS_VIEW, md5_etag(context.lastModified, _get_remote_username()).replace('/', '_'))
+			self.add_link(TOP_TOPICS_VIEW, context, mapping, request, elements)
 		else:
-			logger.warn("No parent; failing to add %s link to %s", 'dashboard', context)
+			logger.warn("No parent; failing to add %s link to %s", TOP_TOPICS_VIEW, context)
 
 
