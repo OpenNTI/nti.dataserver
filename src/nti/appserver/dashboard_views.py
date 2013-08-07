@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import functools
 import collections
 
 from zope import component
@@ -36,7 +35,6 @@ def _merge_map(ref, m):
 		else:
 			ref[k] = ref[k] + v
 
-@functools.total_ordering
 class _Recorder(object):
 
 	__slots__ = ('score', 'total', 'counter')
@@ -66,31 +64,13 @@ class _Recorder(object):
 		return "%s" % self.score
 
 	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__, self.score, self.total)
+		return "%s(%s,%s)" % (self.__class__.__name__, self.score, self.total)
 
 	def __iadd__(self, other):
 		self.total += other.total
 		self.score += other.score
 		_merge_map(self.counter, other.counter)
 		return self
-
-	def __lt__(self, other):
-		try:
-			return self.score < other.score
-		except AttributeError:
-			return NotImplemented
-
-	def __gt__(self, other):
-		try:
-			return self.score > other.score
-		except AttributeError:
-			return NotImplemented
-	
-	def __eq__(self, other):
-		try:
-			return self is other or self.username == other.username
-		except AttributeError:
-			return NotImplemented
 
 class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 
