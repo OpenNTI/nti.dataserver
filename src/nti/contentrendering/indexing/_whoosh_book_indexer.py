@@ -78,7 +78,7 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 		ntiid = unicode(node.ntiid) or u''
 		content_file = node.location
 
-		logger.info("Indexing Node (%s, %s, %s)", os.path.basename(content_file), title, ntiid)
+		logger.debug("Indexing Node (%s, %s, %s)", os.path.basename(content_file), title, ntiid)
 
 		table = get_content_translation_table(language)
 		related = node_utils.get_related(node.topic)
@@ -156,7 +156,7 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 		ntiid = unicode(node.ntiid) or u''
 		content_file = node.location
 
-		logger.info("Indexing File (%s, %s, %s)", os.path.basename(content_file), title, ntiid)
+		logger.debug("Indexing File (%s, %s, %s)", os.path.basename(content_file), title, ntiid)
 
 		table = get_content_translation_table(language)
 		related = node_utils.get_related(node.topic)
