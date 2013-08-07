@@ -261,6 +261,8 @@ class _RelatedWorkExtractor(object):
 					toc_el.setAttribute('icon', icon)
 					toc_el.setAttribute('desc', ref_el.description)
 					toc_el.setAttribute('section', ref_el.category)
+					toc_el.setAttribute('target-ntiid', ref_el.target_ntiid)
+					toc_el.setAttribute('ntiid', ref_el.ntiid)
 					if lesson_el:
 						lesson_el.appendChild(toc_el)
 						lesson_el.appendChild(dom.createTextNode(u'\n'))
@@ -281,6 +283,8 @@ class _RelatedWorkExtractor(object):
 			toc_el.setAttribute('type', el.targetMimeType)
 			toc_el.setAttribute('icon', icon)
 			toc_el.setAttribute('desc', el.description)
+			toc_el.setAttribute('target-ntiid', el.target_ntiid)
+			toc_el.setAttribute('ntiid', el.ntiid)
 			dom.childNodes[0].appendChild(toc_el)
 			dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
 
