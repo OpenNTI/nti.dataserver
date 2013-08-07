@@ -1,8 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 External decorators to provide access to the things exposed through this package.
+
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -118,6 +122,18 @@ class ForumObjectContentsLinkProvider(object):
 	"""
 
 	__metaclass__ = SingletonDecorator
+	
+	@classmethod
+	def add_link(cls, rel, context, mapping, request, elements=None):
+		_links = mapping.setdefault(LINKS, [])
+		elements = elements or (VIEW_CONTENTS,
+								md5_etag(context.lastModified, _get_remote_username()).replace('/', '_'))
+		link = Link(context, rel=rel, elements=elements)
+		interface.alsoProvides(link, ILocation)
+		link.__name__ = ''
+		link.__parent__ = context
+		_links.append(link)
+		return link
 
 	def decorateExternalMapping(self, context, mapping):
 		request = get_current_request()
@@ -151,23 +167,12 @@ class ForumObjectContentsLinkProvider(object):
 		# our timestamp is also modified. We include the user asking just to be safe
 		# We also advertise that you can POST new items to this url, which is good for caching
 		elements=(VIEW_CONTENTS, md5_etag(context.lastModified, _get_remote_username()).replace('/','_'))
-		_links = mapping.setdefault( LINKS, [] )
-		
-		def _linker(rel):
-			link = Link( context, rel=rel, elements=elements )
-			interface.alsoProvides( link, ILocation )
-			link.__name__ = ''
-			link.__parent__ = context
-			_links.append( link )
-			return link
-			
-		# add contents
-		_linker(VIEW_CONTENTS)
+		self.add_link(VIEW_CONTENTS, context, mapping, request, elements)
 
-		# check the create permission in the forum acl. This is due to the IClassForum interface
+		# Check the create permission in the forum acl. This is due to the IClassForum interface
 		# which changes the acl provider of the forum object
 		if not IForum.providedBy(context) or request is None or can_create(context, request):
-			link = _linker('add')
+			link = self.add_link('add', context, mapping, request, elements)
 			link.method = 'POST'
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
