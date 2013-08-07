@@ -206,7 +206,7 @@ setup(
 		# parallelism involved. This is under python 2.7.3
 		'html5lib == 0.95',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
-		'logilab-common >= 0.59.1',
+		'logilab-common >= 0.60.0',
 		'lxml >= 3.2.3',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.7',  # Human name parsing
 		'nltk >= 2.0.4',
@@ -398,7 +398,7 @@ setup(
 			'pip >= 1.3.1',
 			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
 			'pudb >= 2013.3.4',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
-			'pylint >= 0.28.0' if not IS_PYPY else '',  # install astroid
+			'pylint >= 1.0.0' if not IS_PYPY else '',  # install astroid
 			'pyramid_debugtoolbar >= 1.0.6',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
 			'repoze.sphinx.autointerface >= 0.7.1',
