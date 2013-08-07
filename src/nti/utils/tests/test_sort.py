@@ -11,11 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 import unittest
 
-from .._search_utils import isorted
+from ..sort import isorted
 
 from hamcrest import (assert_that, is_)
 
-class TestSearchUtils(unittest.TestCase):
+class TestSort(unittest.TestCase):
 
 	def test_istored(self):
 		l =  [2, 1, 5, 3, 7, 9, 4]
