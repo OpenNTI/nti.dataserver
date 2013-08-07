@@ -66,7 +66,7 @@ class _BasicWhooshIndexer(object):
 		self.remove_index_files(indexdir, indexname)
 		idxspec = _WhooshIndexSpec(book, indexname, indexdir)
 
-		logger.info('Indexing %s(%s)' % (indexname, indexdir))
+		logger.info('Indexing %s' % indexname)
 
 		idx = self.create_index(indexdir, indexname)
 		writer = idx.writer(optimize=False, merge=False)
