@@ -85,12 +85,6 @@ class _Recorder(object):
 			return self.score > other.score
 		except AttributeError:
 			return NotImplemented
-
-	def __cmp__(self, other):
-		result = cmp(self, other)
-		if result == 0:
-			result = cmp(self.total, other.total)
-		return result
 	
 	def __eq__(self, other):
 		try:
@@ -109,7 +103,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 	def _get_summary_items(self, ntiid, recurse=True):
 
 		# query objects
-		view = query_views._UGDAndRecursiveStreamView(self.request) if recurse else query_views._UGDView(self.request)
+		view = query_views._UGDAndRecursiveStreamView(self.request) if recurse else query_views._UGDStreamView(self.request)
 		view._DEFAULT_BATCH_SIZE = view._DEFAULT_BATCH_START = None
 		try:
 			all_objects = view.getObjectsForId(self.user, ntiid)
@@ -217,7 +211,11 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		self._scan_videos(total_ugd, total_by_type)
 
 		# sort
-		items_sorted = sorted(total_ugd.items(), reverse=True)
+		def _cmp(x,y):
+			result = cmp(x[1].score, y[1].score)
+			result = cmp(x[1].total, y[1].total) if result == 0 else result
+			return result
+		items_sorted = sorted(total_ugd.items(), cmp=_cmp, reverse=True)
 
 		# compute
 		total = 0
