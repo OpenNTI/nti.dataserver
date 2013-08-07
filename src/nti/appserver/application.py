@@ -245,7 +245,7 @@ def _ugd_odata_views(pyramid_config):
 
 	for name, view in {"TopUserSummaryData":'_TopUserSummaryView'}.items():
 		for route in _route_names:
-			pyramid_config.add_view(route_name=route, view='nti.appserver.dashboard_views.' + view,
+			pyramid_config.add_view(route_name=route, view='nti.appserver.dashboard.views.' + view,
 									context='nti.appserver.interfaces.IPageContainerResource',
 									name=name, renderer='rest',
 									permission=nauth.ACT_READ, request_method='GET')
@@ -596,8 +596,8 @@ def createApplication( http_port,
 	pyramid_config.scan('nti.appserver.glossary_views')
 	pyramid_config.scan('nti.appserver.forums.views')
 	pyramid_config.scan('nti.appserver.user_activity_views')
-	pyramid_config.scan('nti.appserver.dashboard_views')
 	pyramid_config.scan('nti.appserver.store_views')
+	pyramid_config.scan('nti.appserver.dashboard.views')
 
 	_modifying_ugd_views(pyramid_config)
 

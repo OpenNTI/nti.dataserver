@@ -368,6 +368,7 @@
 	<include package="." file="configure_store.zcml" />
 	
 	<include package=".forums" />
+	<include package=".dashboard" />
 
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"

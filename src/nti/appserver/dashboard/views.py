@@ -14,19 +14,30 @@ import collections
 
 from zope import component
 
-import pyramid.httpexceptions as _hexc
+from pyramid.view import view_config
+from pyramid.view import view_defaults
+from pyramid import httpexceptions as _hexc
 
 from nti.appserver import _view_utils
+from nti.appserver.traversal import find_interface
+from nti.appserver import interfaces as app_interfaces
+from nti.appserver import ugd_query_views as query_views
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.externalization.oids import to_external_oid
 from nti.externalization.interfaces import LocatedExternalDict
 
-from . import interfaces as app_interfaces
-from . import ugd_query_views as query_views
+_view_defaults = dict(route_name='objects.generic.traversal', renderer='rest')
+
+_r_view_defaults = _view_defaults.copy()
+_r_view_defaults.update(permission=nauth.ACT_READ, request_method='GET')
+
+##### Top user dashboard view ####
 
 def _merge_map(ref, m):
 	for k, v in m.items():
@@ -184,7 +195,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 				usr_map, by_type = self._get_summary_items(video_id, False)
 				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
 
-	def __call__( self ):
+	def __call__(self):
 		# gather data
 		total_ugd, total_by_type = self._get_summary_items(self.ntiid)
 		self._scan_quizzes(total_ugd, total_by_type)
@@ -209,3 +220,24 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		result['Total'] = total
 		result['Summary'] = LocatedExternalDict(total_by_type)
 		return result
+
+##### Forum/Board dashboard view ####
+
+@view_config(context=frm_interfaces.IBoard)
+@view_defaults(name="dashboard", **_r_view_defaults)
+class ForumDashboardGetView(_view_utils.AbstractAuthenticatedView):
+
+	def __init__(self, request):
+		super(_TopUserSummaryView, self).__init__(request)
+		self.ntiid = self.request.context.ntiid
+		self.user = find_interface(self.request.context, nti_interfaces.IEntity)
+
+	def __call__(self):
+		view = query_views._UGDView(self.request)
+		the_objects = view.getObjectsForId(self.user, self.ntiid)
+		if not the_objects:
+			raise _hexc.HTTPNotFound()
+
+
+del _view_defaults
+del _r_view_defaults
