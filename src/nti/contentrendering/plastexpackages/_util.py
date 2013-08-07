@@ -5,17 +5,16 @@ Helpers and utilities used for implementing other parts of the packages.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope.cachedescriptors.property import readproperty
 
-from nti.contentfragments import interfaces as cfg_interfaces
 from plasTeX.Renderers import render_children
+
+from nti.contentfragments import interfaces as cfg_interfaces
 
 def _asm_local_textcontent(self):
 	"""
