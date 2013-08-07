@@ -651,6 +651,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 class relatedworkname(Base.Command):
 	pass
 
+@interface.implementer(crd_interfaces.IEmbeddedContainer)
 class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 	args = '[ options:dict ]'
 
@@ -661,7 +662,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 	_ntiid_cache_map_name = '_relatedwork_ntiid_map'
 	_ntiid_allow_missing_title = False
 	_ntiid_suffix = 'relatedwork.'
-	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
+	_ntiid_title_attr_name = 'rel' # Use our counter to generate IDs if no ID is given
 	_ntiid_type = 'RelatedWork'
 
 	#: From IEmbeddedContainer
@@ -669,6 +670,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 	targetMimeType = "application/vnd.nextthought.content"
 	icon = None
 	iconResource = None
+	target_ntiid = None
 
 	class worktitle(Base.Command):
 		args = 'title:str'
@@ -707,6 +709,19 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 		icons = self.getElementsByTagName('includegraphics')
 		if icons:
 			self.iconResource = icons[0]
+			
+		from nti.ntiids.ntiids import is_valid_ntiid_string
+
+		if is_valid_ntiid_string( self.uri ):
+			self.target_ntiid = self.uri
+		else:
+			from nti.ntiids.ntiids import make_ntiid, TYPE_UUID
+			from hashlib import md5
+			# TODO: Hmm, what to use as the provider? Look for a hostname in the
+			# URL?
+			self.target_ntiid = make_ntiid( provider='NTI',
+											nttype=TYPE_UUID,
+											specific=md5(self.uri).hexdigest() )
 		return tok
 
 	@readproperty
@@ -719,8 +734,24 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 
 		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
 
-class relatedworkref(Base.Crossref.ref):
+class relatedworkrefname(Base.Command):
+	pass
+
+@interface.implementer(crd_interfaces.IEmbeddedContainer)
+class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 	args = '[ options:dict ] label:idref uri:str desc:str'
+
+	counter = 'relatedworkref'
+	blockType = True
+	_ntiid_cache_map_name = '_relatedworkref_ntiid_map'
+	_ntiid_allow_missing_title = False
+	_ntiid_suffix = 'relatedworkref.'
+	_ntiid_title_attr_name = 'relref' # Use our counter to generate IDs if no ID is given
+	_ntiid_type = 'RelatedWorkRef'
+
+	#: From IEmbeddedContainer
+	mimeType = "application/vnd.nextthought.relatedworkref"
+	target_ntiid = None
 
 	def digest(self, tokens):
 		tok = super(relatedworkref, self).digest(tokens)
@@ -738,7 +769,35 @@ class relatedworkref(Base.Crossref.ref):
 		self.uri = self.attributes['uri']
 		self.description = self.attributes['desc']
 		self.relatedwork = self.idref['label']
+
+		from nti.ntiids.ntiids import is_valid_ntiid_string
+
+		if is_valid_ntiid_string( self.uri ):
+			self.target_ntiid = self.uri
+		else:
+			from nti.ntiids.ntiids import make_ntiid, TYPE_UUID
+			from hashlib import md5
+			# TODO: Hmm, what to use as the provider? Look for a hostname in the
+			# URL?
+			self.target_ntiid = make_ntiid( provider='NTI',
+											nttype=TYPE_UUID,
+											specific=md5(self.uri).hexdigest() )
+
 		return tok
+
+	def regen_target_ntiid(self):
+		from nti.ntiids.ntiids import is_valid_ntiid_string
+
+		if is_valid_ntiid_string( self.uri ):
+			self.target_ntiid = self.uri
+		else:
+			from nti.ntiids.ntiids import make_ntiid, TYPE_UUID
+			from hashlib import md5
+			# TODO: Hmm, what to use as the provider? Look for a hostname in the
+			# URL?
+			self.target_ntiid = make_ntiid( provider='NTI',
+											nttype=TYPE_UUID,
+											specific=md5(self.uri).hexdigest() )
 
 ###############################################################################
 # The following block of commands concern representing forum discussions.
@@ -803,6 +862,7 @@ def ProcessOptions( options, document ):
 	document.context.newcounter( 'ntiimagecollection' )
 	document.context.newcounter( 'nticard' )
 	document.context.newcounter( 'relatedwork' )
+	document.context.newcounter( 'relatedworkref' )
 	document.context.newcounter( 'ntidiscussion' )
 
 
