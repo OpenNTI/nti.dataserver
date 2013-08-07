@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Search utilities
+Sort utilities
 
-$Id$
+$Id: _search_utils.py 16109 2013-02-20 22:29:23Z carlos.sanchez $
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"

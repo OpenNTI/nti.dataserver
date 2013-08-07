@@ -17,8 +17,10 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
+from nti.utils.sort import isorted
+
 from .common import get_type_name
-from ._search_utils import isorted
+
 from . import interfaces as search_interfaces
 
 class _BaseSearchResults(zcontained.Contained):
