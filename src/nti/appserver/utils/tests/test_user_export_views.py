@@ -114,7 +114,6 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 		path = '/dataserver2/@@export_user_objects'
 		res = testapp.get(path, extra_environ=environ)
 		assert_that(res.status_int, is_(200))
-		assert_that(res.headers, has_entry('Content-Encoding', 'gzip'))
 		assert_that(res.headers, has_entry('Content-Length', greater_than(500)))
 		stream = BytesIO(res.body)
 		stream.seek(0)
