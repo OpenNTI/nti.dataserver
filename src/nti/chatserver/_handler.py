@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from . import MessageFactory as _
+
 import os
 import time
 import warnings
@@ -23,6 +25,10 @@ from zope.interface.common import mapping as imapping
 
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
+
+from nti.chatserver import interfaces
+from nti.chatserver._metaclass import _ChatObjectMeta
+from nti.chatserver import interfaces as chat_interfaces
 
 # FIXME: Break this dependency
 
@@ -38,11 +44,6 @@ from nti.socketio import interfaces as sio_interfaces
 
 from nti.zodb import interfaces as zodb_interfaces
 from nti.zodb.tokenbucket import PersistentTokenBucket
-
-from . import interfaces
-from . import MessageFactory as _
-from ._metaclass import _ChatObjectMeta
-from nti.chatserver import interfaces as chat_interfaces
 
 EVT_ENTERED_ROOM = 'chat_enteredRoom'
 EVT_EXITED_ROOM = 'chat_exitedRoom'
