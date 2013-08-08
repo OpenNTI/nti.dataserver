@@ -23,8 +23,9 @@ from zope.annotation import factory as an_factory
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.utils.maps import LFUMap
+
 from .common import get_type_name
-from ._datastructures import LFUMap
 from .common import sort_search_types
 from ._search_query import QueryObject
 from . import _search_results as srlts
