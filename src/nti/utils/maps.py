@@ -3,7 +3,7 @@
 """
 Utilities for working with maps.
 
-$Id: sets.py 9464 2012-07-29 19:25:37Z jason.madden $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -17,6 +17,9 @@ class CaseInsensitiveDict(dict):
 
     def has_key(self, key):
         return super(CaseInsensitiveDict, self).has_key(key.lower())
+
+    def __contains__(self, key):
+        return super(CaseInsensitiveDict, self).__contains__(key.lower())
 
     def __setitem__(self, key, value):
         super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)

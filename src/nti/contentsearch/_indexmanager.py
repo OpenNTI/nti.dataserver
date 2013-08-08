@@ -19,11 +19,12 @@ from perfmetrics import metric
 from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.utils.maps import CaseInsensitiveDict
+
 from . import _search_results as srs
 from ._search_query import QueryObject
 from ._indexagent import handle_index_event
 from . import interfaces as search_interfaces
-from . import _datastructures as datastructures
 
 @interface.implementer(search_interfaces.IIndexManager)
 class IndexManager(object):
@@ -40,7 +41,7 @@ class IndexManager(object):
 		return cls.indexmanager
 
 	def __init__(self, bookidx_manager_factory, useridx_manager_adapter):
-		self.books = datastructures.CaseInsensitiveDict()
+		self.books = CaseInsensitiveDict()
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_adapter = useridx_manager_adapter
 

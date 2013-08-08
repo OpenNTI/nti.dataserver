@@ -17,6 +17,7 @@ from zope import interface
 from nti.contentprocessing import rank_words
 
 from nti.utils.schema import SchemaConfigured
+from nti.utils.maps import CaseInsensitiveDict
 from nti.utils.schema import createDirectFieldProperties
 
 from . import common
@@ -26,7 +27,6 @@ from . import _whoosh_schemas as wschs
 from . import _search_results as srlts
 from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
-from ._datastructures import CaseInsensitiveDict
 
 from .constants import (channel_, content_, keywords_, references_, sharedWith_,
 						ntiid_, last_modified_, videoId_, creator_, containerId_,

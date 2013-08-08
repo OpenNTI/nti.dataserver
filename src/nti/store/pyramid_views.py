@@ -30,6 +30,8 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import LocatedExternalDict
 
+from nti.utils.maps import CaseInsensitiveDict
+
 from . import priceable
 from . import purchasable
 from . import invitations
@@ -38,7 +40,7 @@ from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
 from .payments import pyramid_views as payment_pyramid
-from .utils import is_valid_pve_int, CaseInsensitiveDict, raise_field_error, is_valid_timestamp
+from .utils import is_valid_pve_int, raise_field_error, is_valid_timestamp
 
 class _PurchaseAttemptView(object):
 

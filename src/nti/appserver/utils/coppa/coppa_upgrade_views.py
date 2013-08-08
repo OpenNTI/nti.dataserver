@@ -32,12 +32,13 @@ from nti.appserver.utils import _JsonBodyView
 from nti.appserver.policies import user_policies
 from nti.appserver.policies import site_policies
 from nti.appserver import httpexceptions as hexc
-from nti.appserver.utils import CaseInsensitiveDict
+
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver.link_providers import flag_link_provider
 from nti.appserver._util import raise_json_error as _raise_error
 
 from nti.utils import schema as nti_schema
+from nti.utils.maps import CaseInsensitiveDict
 from nti.utils.jsonschema import JsonSchemafier
 
 _is_x_or_more_years_ago = site_policies._is_x_or_more_years_ago

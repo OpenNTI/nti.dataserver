@@ -20,16 +20,18 @@ from pyramid.security import authenticated_userid
 
 from nti.externalization.datastructures import LocatedExternalDict
 
-from . import stripe_purchase
-from . import InvalidStripeCoupon
-from . import interfaces as stripe_interfaces
-
 from nti.store import purchase_history
 from nti.store import InvalidPurchasable
 from nti.store import purchasable as source
+from nti.store.utils import raise_field_error
 from nti.store import interfaces as store_interfaces
 from nti.store.payments import is_valid_amount, is_valid_pve_int
-from nti.store.utils import CaseInsensitiveDict, raise_field_error
+
+from nti.utils.maps import CaseInsensitiveDict
+
+from . import stripe_purchase
+from . import InvalidStripeCoupon
+from . import interfaces as stripe_interfaces
 
 class _BaseStripeView(object):
 	processor = 'stripe'
