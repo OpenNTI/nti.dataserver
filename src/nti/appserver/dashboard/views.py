@@ -249,10 +249,11 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 		self.now = datetime.fromtimestamp(time.time())
 		self.user = find_interface(self.request.context, nti_interfaces.IEntity)
 
-	def _score(self, topic, decay):
+	def _score(self, topic, decay, use_days=True):
 		lm = datetime.fromtimestamp(topic.lastModified)
 		delta = self.now - lm
-		result = math.pow(decay, delta.days) * len(topic)
+		x = delta.days if use_days else delta.total_seconds() / 60 / 60
+		result = math.pow(decay, x) * len(topic)
 		return result
 
 	def _get_decay(self):
