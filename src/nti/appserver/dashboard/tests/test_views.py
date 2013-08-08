@@ -7,21 +7,31 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import random
+import collections
+from urllib import quote
+from operator import itemgetter
+
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.dataserver import users
 from nti.dataserver.contenttypes import Note
+from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.appserver.tests.test_application import TestApp
 
 from nti.dataserver.tests import mock_dataserver
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDSWithChanges
+from nti.appserver.tests.test_application import SharedApplicationTestBase
+from nti.appserver.tests.test_application import WithSharedApplicationMockDS
+from nti.appserver.tests.test_application import WithSharedApplicationMockDSWithChanges
 
 from hamcrest import (assert_that, is_, has_length, has_entry)
 
 class TestDashboardViews(SharedApplicationTestBase):
+
+	features = SharedApplicationTestBase.features + ('forums',)
 
 	def _create_note(self, user, msg, title=None, containerId=None, sharedWith=()):
 		note = Note()
@@ -85,3 +95,70 @@ class TestDashboardViews(SharedApplicationTestBase):
 		assert_that(items[3], has_entry('Score', 0))
 		assert_that(items[3], has_entry('Total', 1))
 		assert_that(items[3], has_entry('Username', u'ichigo@nt.com'))
+
+	def _create_comment_data_for_POST(self, unique):
+		data = { 'Class': 'Post',
+				 'title': 'A comment',
+				 'body': ['This is a comment body %s ' % unique ] }
+		return data
+
+	def _create_post_data_for_POST(self, title, unique=''):
+		data = { 'Class': 'Post',
+				 'MimeType': 'application/vnd.nextthought.forums.post',
+				 'title': title,
+				 'description': "This is a description of the thing I'm creating",
+				 'body': ['My first thought. %s' % unique] }
+
+		return data
+
+	@WithSharedApplicationMockDS(testapp=True, users=True)
+	def test_toptopics_view(self):
+		forum_pretty_url = quote('/dataserver2/users/Bleach/DiscussionBoard/Forum')
+		# board_pretty_url = forum_pretty_url[:-(len(_FORUM_NAME) + 1)]
+
+		usernames = ('aizen@nt.com', 'ichigo@nt.com', 'urahara@nt.com')
+		with mock_dataserver.mock_db_trans(self.ds):
+			usrlst = []
+			for username in usernames:
+				user = self._create_user(username=username)
+				usrlst.append(user)
+				
+			c = users.Community.create_community(self.ds, username='Bleach')
+			for u in usrlst:
+				u.record_dynamic_membership(c)
+				u.follow(c)
+			frm_interfaces.ICommunityForum(c)
+
+		locations = collections.defaultdict(int)
+		for x in range(random.randint(5, 10)):
+			requestor = random.choice(usernames)
+			testapp = TestApp(self.app, extra_environ=self._make_extra_environ(user=requestor))
+			data = self._create_post_data_for_POST('From %s(%s)' % (requestor, random.random()), str(x))
+			res = testapp.post_json(forum_pretty_url, data, status=201)
+			locations[res.location] = 0
+			publish_url = self.require_link_href_with_rel(res.json_body, u'publish')
+			testapp.post_json(publish_url, data, status=200)
+
+		for x in range(random.randint(5, 10)):
+			username = random.choice(usernames)
+			location = random.choice(locations.keys())
+			testapp = TestApp(self.app, extra_environ=self._make_extra_environ(user=username))
+			for x in range(random.randint(5, 10)):
+				data = self._create_comment_data_for_POST(random.random())
+				testapp.post_json(location, data, status=201)
+				locations[location] += 1
+
+		username = random.choice(usernames)
+		testapp = TestApp(self.app, extra_environ=self._make_extra_environ(user=username))
+		res = testapp.get(forum_pretty_url, status=200)
+		top_topics = self.require_link_href_with_rel(res.json_body, u'TopTopics')
+		res = testapp.get(top_topics, status=200)
+
+		sorted_locations = sorted(locations.items(), key=itemgetter(1), reverse=True)
+		data = res.json_body
+		assert_that(data, has_entry('Items', has_length(len(locations))))
+		items = data['Items']
+		x = 0
+		for _, count in sorted_locations:
+			assert_that(items[x], has_entry('PostCount', count))
+			x+=1
