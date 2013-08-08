@@ -3,7 +3,7 @@
 """
 External decorators to provide access to the things exposed through this package.
 
-$Id: dashboard_views.py 22126 2013-08-07 16:41:55Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
