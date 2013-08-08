@@ -261,6 +261,8 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 		if decay is not None:
 			try:
 				decay = float(decay)
+				if decay <= 0 or decay > 1:
+					raise _hexc.HTTPBadRequest(detail='Invalid decay factor')
 			except ValueError:
 				raise _hexc.HTTPBadRequest(detail='Invalid decay factor')
 		return decay
