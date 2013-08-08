@@ -24,20 +24,6 @@ class LFUMap(LFUCache):
         if self.on_removal_callback:
             self.on_removal_callback(key, value)
 
-class CaseInsensitiveDict(dict):
-
-    def __setitem__(self, key, value):
-        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
-
-    def get(self, key, default=None):
-        return super(CaseInsensitiveDict, self).get(key.lower(), default)
-
-    def __getitem__(self, key):
-        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
-
-    def __delitem__(self, key):
-        return super(CaseInsensitiveDict, self).__delitem__(key.lower())
-
 class IterableWrapper(object):
 
     def __init__(self, it, size=0):

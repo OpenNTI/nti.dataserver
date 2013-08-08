@@ -25,6 +25,7 @@ from pyramid import httpexceptions as _hexc
 
 from nti.appserver import _view_utils
 from nti.utils._compat import aq_base
+from nti.appserver.utils import is_true
 from nti.appserver.traversal import find_interface
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver import ugd_query_views as query_views
@@ -249,10 +250,10 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 		self.now = datetime.fromtimestamp(time.time())
 		self.user = find_interface(self.request.context, nti_interfaces.IEntity)
 
-	def _score(self, topic, decay, use_days=True):
+	def _score(self, topic, decay, use_hours=True):
 		lm = datetime.fromtimestamp(topic.lastModified)
 		delta = self.now - lm
-		x = delta.days if use_days else delta.total_seconds() / 60 / 60
+		x = delta.days if not use_hours else delta.total_seconds() / 60 / 60
 		result = math.pow(decay, x) * len(topic)
 		return result
 
@@ -312,12 +313,13 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 		# read params
 		decay = self._get_decay()
 		batch_size, batch_start = self._get_batch_size_start()
+		use_hours = is_true(self.request.params.get('useHours', False))
 
 		# capture all topic data
 		items = []
 		for forum in forums:
 			for topic in forum.values():
-				items.append((topic, self._score(topic, decay)))
+				items.append((topic, self._score(topic, decay, use_hours)))
 		items_sorted = sorted(items, key=lambda t: t[1], reverse=True)
 		items = map(lambda x: x[0], items_sorted)
 

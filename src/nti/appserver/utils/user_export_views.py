@@ -27,6 +27,8 @@ from zope import component
 from zope.catalog.interfaces import ICatalog
 from zope.generations.utility import findObjectsMatching
 
+from nti.appserver.utils import is_true, _JsonBodyView
+
 from nti.chatserver import interfaces as chat_interfaces
 
 from nti.dataserver import users
@@ -39,7 +41,7 @@ from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DM
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_json_representation_externalized
 
-from nti.appserver.utils import is_true, _JsonBodyView, CaseInsensitiveDict
+from nti.utils.maps import CaseInsensitiveDict
 
 # user_info_extract
 
