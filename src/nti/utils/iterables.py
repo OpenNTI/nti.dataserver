@@ -3,7 +3,7 @@
 """
 Utilities for working with iterables/sequences.
 
-$Id: maps.py 22201 2013-08-08 20:11:55Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
