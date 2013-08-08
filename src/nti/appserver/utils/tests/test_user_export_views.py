@@ -7,7 +7,6 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import gzip
 import simplejson
 
 from io import BytesIO
@@ -117,7 +116,6 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 		assert_that(res.headers, has_entry('Content-Length', greater_than(500)))
 		stream = BytesIO(res.body)
 		stream.seek(0)
-		stream = gzip.GzipFile(fileobj=stream, mode="rb")
 		d = simplejson.load(stream)
 		assert_that(d, has_entry(u'body', [u'bankai']))
 		
