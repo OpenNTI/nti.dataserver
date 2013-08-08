@@ -5,7 +5,8 @@ Utilities for working with sets.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 def discard( the_set, the_value ):
 	"""
