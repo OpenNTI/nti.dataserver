@@ -1,7 +1,7 @@
 <!-- -*- mode: nxml -*- -->
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:zcml="http://namespaces.zope.org/zcml">
-			
+
 	<include package="zope.component" />
 	<include package="z3c.baseregistry" file="meta.zcml" />
 
@@ -63,6 +63,9 @@
 
 		<!-- CSS for mathcounts -->
 		<utility factory=".site_policy_views.SiteCSSMarker" />
+
+		<!-- Strings for mathcounts -->
+		<utility factory=".site_policy_views.SiteStringsMarker" />
 
 		<!--
 			The policy for censoring things from regular, non-coppa
