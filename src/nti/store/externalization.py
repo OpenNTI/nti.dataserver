@@ -52,6 +52,28 @@ class InvitationPurchaseAttemptExternal(InterfaceObjectIO):
 class RedeemedPurchaseAttemptExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = store_interfaces.IRedeemedPurchaseAttempt
 
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPurchasable)
+class PurchasableExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPurchasable
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPriceable)
+class PriceableExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPriceable
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPricedItem)
+class PricedItemExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPricedItem
+	_excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | {'PurchaseFee'}
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPricingResults)
+class PricingResultsExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPricingResults
+	_excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | {'TotalPurchaseFee'}
+
 @component.adapter(store_interfaces.IPurchaseAttempt)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class PurchaseAttemptDecorator(object):
@@ -64,11 +86,6 @@ class PurchaseAttemptDecorator(object):
 			external['InvitationCode'] = code
 			external['RemainingInvitations'] = original.tokens
 
-@interface.implementer(ext_interfaces.IInternalObjectIO)
-@component.adapter(store_interfaces.IPurchasable)
-class PurchasableExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = store_interfaces.IPurchasable
-
 @component.adapter(store_interfaces.IPurchasable)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class PurchasableDecorator(object):
@@ -76,24 +93,14 @@ class PurchasableDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def set_links(self, username, original, external):
-		request = get_current_request()
-		if request is None: return
-
 		# insert history link
 		if purchase_history.has_history_by_item(username, original.NTIID):
-			link_hist_href = "/dataserver2/store/get_purchase_history?purchasableID=" + urllib.quote(original.NTIID)
+			history_path = "/dataserver2/store/get_purchase_history?purchasableID=%s"
+			link_hist_href = history_path % urllib.quote(original.NTIID)
 			link_hist = Link(link_hist_href, rel="history")
 			external.setdefault('Links', []).append(link_hist)
 
-	def decorateExternalObject(self, original, external):
-		# check if item has been purchased
-		username = authenticated_userid(get_current_request())
-		if username:
-			activated = purchase_history.is_item_activated(username, original.NTIID)
-			external['Activated'] = activated
-			self.set_links(username, original, external)
-
-		# fill details from library
+	def add_library_details(self, original, external):
 		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 		unit = library.get(original.NTIID) if library else None
 		if not original.Title:
@@ -101,16 +108,16 @@ class PurchasableDecorator(object):
 		if not original.Description:
 			external['Description'] = unit.title if unit else u''
 
-@interface.implementer(ext_interfaces.IInternalObjectIO)
-@component.adapter(store_interfaces.IPriceable)
-class PriceableExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = store_interfaces.IPriceable
+	def add_activation(self, username, original, external):
+		activated = purchase_history.is_item_activated(username, original.NTIID)
+		external['Activated'] = activated
 
-@interface.implementer(ext_interfaces.IInternalObjectIO)
-@component.adapter(store_interfaces.IPricedItem)
-class PricedItemExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = store_interfaces.IPricedItem
-	_excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | {'PurchaseFee'}
+	def decorateExternalObject(self, original, external):
+		username = authenticated_userid(get_current_request())
+		if username:
+			self.add_activation(username, original, external)
+			self.set_links(username, original, external)
+		self.add_library_details(original, external)
 
 @component.adapter(store_interfaces.IPricedItem)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
@@ -126,8 +133,11 @@ class PricedItemDecorator(object):
 		external['Amount'] = original.Amount
 		external['Currency'] = original.Currency
 
-@interface.implementer(ext_interfaces.IInternalObjectIO)
-@component.adapter(store_interfaces.IPricingResults)
-class PricingResultsExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = store_interfaces.IPricingResults
-	_excluded_out_ivars_ = InterfaceObjectIO._excluded_out_ivars_ | {'TotalPurchaseFee'}
+@component.adapter(store_interfaces.ICourse)
+class CourseDecorator(PurchasableDecorator):
+
+	def set_links(self, username, original, external):
+		super(CourseDecorator, self).set_links(username, original, external)
+
+	def decorateExternalObject(self, original, external):
+		pass

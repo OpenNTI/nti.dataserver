@@ -34,7 +34,11 @@
 	<adapter factory=".purchase_error.nti_store_exception_adpater"
 			 provides=".interfaces.IPurchaseError"
 			 for=".interfaces.INTIStoreException" />
-			 
+
+	<subscriber factory=".externalization.CourseDecorator"
+				for=".interfaces.ICourse"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+							 
 	<subscriber factory=".externalization.PurchasableDecorator"
 				for=".interfaces.IPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
