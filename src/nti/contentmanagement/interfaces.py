@@ -3,7 +3,7 @@
 """
 Content management interfaces
 
-$Id: interfaces.py 21749 2013-08-01 23:34:25Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
