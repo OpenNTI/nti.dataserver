@@ -25,9 +25,13 @@ from nti.contentlibrary import interfaces as lib_interfaces
 @interface.implementer(app_interfaces.IVideoIndexMap)
 class VideoIndexMap(dict):
 
-	def __init__( self ):
+	def __init__(self):
 		super(VideoIndexMap, self).__init__()
 		self.by_container = {}  # {ntiid => [video id]}
+
+	def clear(self):
+		super(VideoIndexMap, self).clear()
+		self.by_container.clear()
 
 @component.adapter(lib_interfaces.IContentPackage, IObjectCreatedEvent)
 def add_video_items_from_new_content(content_package, event):
