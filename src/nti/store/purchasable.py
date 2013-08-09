@@ -114,22 +114,26 @@ class ZcmlPurchasableStore(object):
 	def __len__(self):
 		return len(self.vocabulary)
 
+DefaultPurchasableStore = ZcmlPurchasableStore
+
 def get_purchasable(pid):
 	util = component.getUtility(store_interfaces.IPurchasableStore)
 	result = util.get_purchasable(pid)
 	return result
 
 def get_all_purchasables():
-	util = component.getUtility(store_interfaces.IPurchasableStore)
-	result = LocatedExternalList(util.get_all_purchasables())
+	util = component.queryUtility(store_interfaces.IPurchasableStore)
+	result = LocatedExternalList(util.get_all_purchasables()) if util else []
 	return result
 
 def get_available_items(user):
 	"""
 	Return all item that can be purchased
 	"""
-	util = component.getUtility(store_interfaces.IPurchasableStore)
-	all_ids = set(util.get_purchasable_ids())
+	util = component.queryUtility(store_interfaces.IPurchasableStore)
+	all_ids = set(util.get_purchasable_ids()) if util else ()
+	if not all_ids:
+		return {}
 
 	# get purchase history
 	purchased = set()
