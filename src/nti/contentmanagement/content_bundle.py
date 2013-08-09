@@ -3,7 +3,7 @@
 """
 Defines content bundle object
 
-$Id: purchasable.py 21785 2013-08-02 05:25:43Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
