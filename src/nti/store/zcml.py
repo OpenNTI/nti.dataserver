@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Directives to be used in ZCML: registering static keys.
 
@@ -16,6 +17,7 @@ from zope import interface
 from zope.configuration import fields
 from zope.component.zcml import utility
 
+from .course import create_course
 from .purchasable import create_purchasable
 from . import interfaces as store_interfaces
 
@@ -38,20 +40,46 @@ class IRegisterPurchasableDirective(interface.Interface):
 	license = fields.TextLine(title='Purchasable License', required=False)
 	items = fields.Tokens(value_type=schema.TextLine(title='The item identifier'), title="Purchasable content items", required=False)
 
+class IRegisterCourseDirective(IRegisterPurchasableDirective):
+	amount = schema.Float(title="Cost amount", required=False)
+	provider = fields.TextLine(title='Course provider', required=False)
 
-def registerPurchasable(_context, ntiid, provider, title, description=None, amount=None, currency=None,
-						items=None, fee=None, author=None, icon=None, license=None, discountable=False, bulk_purchase=True):
-	"""
-	Register a purchasable
-	"""
+def do_registration(creator_func, iface, _context, ntiid, provider, title, description=None,
+					amount=None, currency=None, items=None, fee=None, author=None, icon=None,
+					license_=None, discountable=False, bulk_purchase=True):
+
 	if description is None:
-		description = _context.info.text.strip() # TODO: Will leading spaces matter across multiple lines?
+		description = _context.info.text.strip()  # TODO: Will leading spaces matter across multiple lines?
 
 	# It is important to use a factory rather than create the component because
 	# the call may depend on other registrations like adapters being in effect
-	factory = functools.partial( create_purchasable, ntiid=ntiid, provider=provider, title=title, author=author,
-								 description=description, items=items, amount=amount,
-								 currency=currency, icon=icon, fee=fee, license_=license,
-								 discountable=discountable, bulk_purchase=bulk_purchase )
-	utility(_context, provides=store_interfaces.IPurchasable, factory=factory, name=ntiid)
+	factory = functools.partial(creator_func, ntiid=ntiid, provider=provider, title=title, author=author,
+								description=description, items=items, amount=amount,
+								currency=currency, icon=icon, fee=fee, license_=license_,
+								discountable=discountable, bulk_purchase=bulk_purchase)
+	utility(_context, provides=iface, factory=factory, name=ntiid)
+	
+def registerPurchasable(_context, ntiid, provider, title, description=None, amount=None, currency=None,
+						items=None, fee=None, author=None, icon=None, license=None, discountable=False,
+						bulk_purchase=True):
+	"""
+	Register a purchasable
+	"""
+	do_registration(create_purchasable, store_interfaces.IPurchasable, _context,
+					ntiid=ntiid, provider=provider, title=title, description=description,
+					amount=amount, currency=currency, items=items, fee=fee, author=author,
+					icon=icon, license_=license, discountable=discountable, bulk_purchase=bulk_purchase)
 	logger.debug("Purchasable '%s' has been registered", ntiid)
+
+
+def registerCourse(_context, ntiid, title, description=None, provider=None, amount=0.0, currency='USD',
+				   items=None, fee=None, author=None, icon=None, license=None, discountable=False,
+				   bulk_purchase=False):
+	"""
+	Register a course
+	"""
+	do_registration(create_course, store_interfaces.ICourse, _context,
+					ntiid=ntiid, provider=provider, title=title, description=description,
+					amount=amount, currency=currency, items=items, fee=fee, author=author,
+					icon=icon, license_=license, discountable=discountable, bulk_purchase=bulk_purchase)
+	logger.debug("Course '%s' has been registered", ntiid)

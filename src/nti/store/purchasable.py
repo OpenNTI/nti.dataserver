@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Defines purchasable object and operations on them
 
@@ -80,12 +81,13 @@ class Purchasable(content_bundle.ContentBundle):
 		return (a_acl.ace_allowing(nti_interfaces.EVERYONE_USER_NAME, authorization.ACT_READ, self),)
 
 def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=None, title=None, license_=None,
-					   author=None, description=None, icon=None, discountable=False, bulk_purchase=True):
+					   author=None, description=None, icon=None, discountable=False, bulk_purchase=True,
+					   cls=Purchasable):
 	fee = float(fee) if fee is not None else None
 	items = to_frozenset(items) if items else frozenset((ntiid,))
-	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Author=author, Items=items,
-						 Description=description, Amount=float(amount), Currency=currency, Fee=fee,
-						 License=license_, Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
+	result = cls(NTIID=ntiid, Provider=provider, Title=title, Author=author, Items=items,
+				 Description=description, Amount=float(amount), Currency=currency, Fee=fee,
+				 License=license_, Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
 	return result
 
 @interface.implementer(store_interfaces.IPurchasableStore)

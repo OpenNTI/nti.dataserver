@@ -56,7 +56,8 @@
 	<utility factory=".pricing.DefaultPurchasablePricer" />
 
 	<utility factory=".purchasable._PurchasableResolver" name="purchasable" />
-
+	<utility factory=".course._CourseResolver" name="course" />
+	
 	<!--
 		The purchasables included in here are only for test purposes
 	-->
