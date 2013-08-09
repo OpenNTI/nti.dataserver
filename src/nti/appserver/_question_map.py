@@ -46,9 +46,13 @@ def _ntiid_object_hook( k, v, x ):
 @interface.implementer( app_interfaces.IFileQuestionMap )
 class QuestionMap(dict):
 
-	def __init__( self ):
+	def __init__(self):
 		super(QuestionMap,self).__init__()
 		self.by_file = {} # {ntiid => [question]}
+
+	def clear(self):
+		super(QuestionMap, self).clear()
+		self.by_file.clear()
 
 	def __process_assessments( self, assessment_item_dict, containing_filename, hierarchy_entry, level_ntiid=None ):
 		for k, v in assessment_item_dict.items():
