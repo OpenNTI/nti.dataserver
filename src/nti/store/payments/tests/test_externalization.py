@@ -55,18 +55,3 @@ class TestPaymentsExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('TokenID', is_(None)))
 		assert_that(ext, has_entry('OID', is_not(None)))
 
-	@WithMockDSTrans
-	def test_fps_purchase_attempt(self):
-		user = self._create_user()
-		hist = store_interfaces.IPurchaseHistory(user, None)
-
-		processor = 'fps'
-		pa = self._create_purchase_attempt(processor=processor)
-		hist.add_purchase(pa)
-
-		ext = to_external_object(pa)
-		assert_that(ext, has_entry('TokenID', is_(None)))
-		assert_that(ext, has_entry('TransactionID', is_(None)))
-		assert_that(ext, has_entry('CallerReference', is_(None)))
-		assert_that(ext, has_entry('OID', is_not(None)))
-

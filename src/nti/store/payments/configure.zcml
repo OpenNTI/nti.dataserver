@@ -8,9 +8,8 @@
 	<include package="zope.component" />
 	
 	<include package=".stripe" file="configure.zcml" />
-	<include package=".fps" file="configure.zcml" />
 	
-	<subscriber factory=".externalization.PurchaseAttemptDecoratorFactory"
+	<subscriber factory=".externalization.PurchaseAttemptDecorator"
 				for="..interfaces.IPurchaseAttempt"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 

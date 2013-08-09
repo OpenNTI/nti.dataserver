@@ -11,6 +11,7 @@ import urllib
 
 from zope import interface
 from zope import component
+from zope.container.interfaces import ILocation
 
 from pyramid.security import authenticated_userid
 from pyramid.threadlocal import get_current_request
@@ -26,6 +27,8 @@ from nti.contentlibrary import interfaces as lib_interfaces
 from . import invitations
 from . import purchase_history
 from . import interfaces as store_interfaces
+
+LINKS = ext_interfaces.StandardExternalFields.LINKS
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
 @component.adapter(store_interfaces.IPurchaseItem)
@@ -96,9 +99,10 @@ class PurchasableDecorator(object):
 		# insert history link
 		if purchase_history.has_history_by_item(username, original.NTIID):
 			history_path = "/dataserver2/store/get_purchase_history?purchasableID=%s"
-			link_hist_href = history_path % urllib.quote(original.NTIID)
-			link_hist = Link(link_hist_href, rel="history")
-			external.setdefault('Links', []).append(link_hist)
+			history_href = history_path % urllib.quote(original.NTIID)
+			link = Link(history_href, rel="history")
+			interface.alsoProvides(link, ILocation)
+			external.setdefault(LINKS, []).append(link)
 
 	def add_library_details(self, original, external):
 		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
@@ -132,12 +136,3 @@ class PricedItemDecorator(object):
 		external['Provider'] = original.Provider
 		external['Amount'] = original.Amount
 		external['Currency'] = original.Currency
-
-@component.adapter(store_interfaces.ICourse)
-class CourseDecorator(PurchasableDecorator):
-
-	def set_links(self, username, original, external):
-		super(CourseDecorator, self).set_links(username, original, external)
-
-	def decorateExternalObject(self, original, external):
-		pass
