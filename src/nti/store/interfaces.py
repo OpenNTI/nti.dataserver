@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Store interfaces
 
@@ -64,7 +65,7 @@ class IPurchasableStore(interface.Interface):
 		"""
 
 class IPurchasable(mgt_interfaces.IContentBundle):
-	Amount = schema.Float(title="Cost amount", required=True)
+	Amount = schema.Float(title="Cost amount", required=True, min=0.0)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
 	BulkPurchase = schema.Bool(title="Bulk purchase flag", required=True, default=False)
@@ -75,7 +76,7 @@ class IPurchasable(mgt_interfaces.IContentBundle):
 
 class IPriceable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
-	Quantity = schema.Int(title="Quantity", required=False, default=1)
+	Quantity = schema.Int(title="Quantity", required=False, default=1, min=0)
 
 	def copy():
 		"""makes a new copy of this priceable"""
@@ -345,3 +346,6 @@ class IPurchaseHistory(IIterable):
 		"""
 class IStorePurchaseInvitation(interface.Interface):
 	pass
+
+class ICourse(IPurchasable):
+	Provider = nti_schema.ValidTextLine(title='Course provider', required=False)

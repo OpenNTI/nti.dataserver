@@ -24,17 +24,4 @@
 		license="1 Year License"
 		items="tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center" />
 
-	<pcs:registerPurchasable
-		ntiid="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse"
-		title="PRMIA RiskCourse"
-		description="PRMIA RiskCourse"
-		provider="NTI-TEST"
-		author="NEXTTHOUGHT"
-		amount="200"
-		currency="USD"
-		discountable="False"
-		bulk_purchase="True"
-		license="1 Year License"
-		items="tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.advanced_stress_testing_for_financial_institutions" />
-
 </configure>

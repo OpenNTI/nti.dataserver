@@ -7,4 +7,9 @@
 						handler=".zcml.registerPurchasable" />
 	</meta:directives>
 
+	<meta:directives namespace="http://nextthought.com/ntp/course">
+		<meta:directive	name="registerCourse"
+						schema=".zcml.IRegisterCourseDirective"
+						handler=".zcml.registerCourse" />
+	</meta:directives>
 </configure>
