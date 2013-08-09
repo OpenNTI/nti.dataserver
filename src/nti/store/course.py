@@ -3,7 +3,7 @@
 """
 Defines course object and operations on them
 
-$Id: purchasable.py 22284 2013-08-09 20:10:08Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
