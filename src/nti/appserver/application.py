@@ -129,7 +129,7 @@ def _logon_account_views(pyramid_config):
 def _webapp_resource_views(pyramid_config):
 	# Site-specific CSS packages
 	pyramid_config.add_route(name="logon.logon_css", pattern="/login/resources/css/site.css")
-
+	pyramid_config.add_route(name="webapp.site_css", pattern="/NextThoughtWebApp/resources/css/site.css")
 	pyramid_config.add_route(name="webapp.strings_js", pattern="/NextThoughtWebApp/resources/strings/site.js")
 	pyramid_config.scan('nti.appserver.policies.site_policy_views')
 

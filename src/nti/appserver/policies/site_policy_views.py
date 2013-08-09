@@ -26,11 +26,16 @@ class ISiteCSSMarker(interface.Interface):
 class SiteCSSMarker(object):
 	pass
 
-@view_config(route_name='logon.logon_css',
-			 request_method='GET')
-def logon_site_css_view(request):
+class ISiteStringsMarker(interface.Interface):
+	pass
+
+@interface.implementer(ISiteStringsMarker)
+class SiteStringsMarker(object):
+	pass
+
+def response_for_site_resource_with_marker( marker_interface, request, resource, mime_type ):
 	"""
-	Either redirects to a configured site css, or returns an empty CSS, based
+	Either redirects to a configured resource or returns an empty response with the give mimetype, based
 	on the active sites. We should be registered as a view on a path to a CSS file, and
 	we will return responses within the directory enclosing that css file.
 
@@ -39,17 +44,30 @@ def logon_site_css_view(request):
 	unconditionally, but we might wind up getting lots of 404 responses which is ugly.
 	"""
 
-	marker, site_name = site_policies.queryUtilityInSite( ISiteCSSMarker, request=request, return_site_name=True )
+	marker, site_name = site_policies.queryUtilityInSite( marker_interface, request=request, return_site_name=True )
 	if marker:
 		new_path = request.path.split( '/' )[1:-1] # the path to the directory
 		new_path.append( site_name )
-		new_path.append( 'site.css' )
+		new_path.append( resource )
 		return hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path ) )
 
 	# Nothing found
-	request.response.content_type = b'text/css'
+	request.response.content_type = mime_type
 	request.response.text = ''
 	return request.response
+
+@view_config(route_name='logon.logon_css',
+			 request_method='GET')
+@view_config(route_name='webapp.site_css',
+			 request_method='GET')
+def site_css_view(request):
+	"""
+	Returns a configure site specific css or an empty response.
+	We should be registered as a view on a path to a CSS file, and
+	we will return responses within the directory enclosing that css file.
+	"""
+
+	return response_for_site_resource_with_marker( ISiteCSSMarker, request, 'site.css', b'text/css' )
 
 
 @view_config(route_name="webapp.strings_js",
@@ -58,13 +76,6 @@ def webapp_strings_view(request):
 	"""
 	Redirects to a site specific strings file based on the current site policy.
 	"""
-	site_name = site_policies.get_possible_site_names()[0]
-	if site_name:
-		new_path = request.path.split( '/' )[1:-1]
-		new_path.append( site_name )
-		new_path.append( 'strings.js' )
-		return hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path ) )
 
-	request.response.content_type = b'application/json'
-	request.response.text = ''
-	return request.response
+	return response_for_site_resource_with_marker( ISiteStringsMarker, request, 'strings.js', b'application/json')
+
