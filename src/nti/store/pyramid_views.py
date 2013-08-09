@@ -25,6 +25,8 @@ from zope.annotation import IAnnotations
 
 from pyramid.security import authenticated_userid
 
+from nti.contentmanagement import content_roles
+
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -35,7 +37,6 @@ from nti.utils.maps import CaseInsensitiveDict
 from . import priceable
 from . import purchasable
 from . import invitations
-from . import _content_roles
 from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
@@ -276,7 +277,7 @@ class PermissionPurchasableView(_PostView):
 		if not psble:
 			raise hexc.HTTPNotFound(detail='Purchasable not found')
 
-		_content_roles._add_users_content_roles(user, psble.Items)
+		content_roles.add_users_content_roles(user, psble.Items)
 		logger.info("Activating %s for user %s" % (purchasable_id, user))
 		purchase_history.activate_items(user, purchasable_id)
 
@@ -294,7 +295,7 @@ class GetContentRolesView(object):
 		if not user:
 			raise hexc.HTTPNotFound(detail='User not found')
 
-		roles = _content_roles._get_users_content_roles(user)
+		roles = content_roles.get_users_content_roles(user)
 		result = LocatedExternalDict()
 		result['Username'] = username
 		result['Items'] = roles

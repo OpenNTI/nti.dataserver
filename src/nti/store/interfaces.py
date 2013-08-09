@@ -15,8 +15,9 @@ from zope.interface.interfaces import ObjectEvent, IObjectEvent
 
 from dolmen.builtins import IIterable
 
+from nti.contentmanagement import interfaces as mgt_interfaces
+
 from nti.utils import schema as nti_schema
-from nti.contentfragments.schema import HTMLContentFragment
 
 # : A :class:`zope.schema.interfaces.IVocabularyTokenized` vocabulary
 # : will be available as a registered vocabulary under this name
@@ -62,11 +63,7 @@ class IPurchasableStore(interface.Interface):
 		Return the number of items in this store
 		"""
 
-class IPurchasable(interface.Interface):
-	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
-	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=False)
-	Author = nti_schema.ValidTextLine(title='Purchasable item author', required=False)
-	Description = HTMLContentFragment(title='Purchasable item description', required=False, default='')  # TODO: Right interface?
+class IPurchasable(mgt_interfaces.IContentBundle):
 	Amount = schema.Float(title="Cost amount", required=True)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
@@ -75,7 +72,6 @@ class IPurchasable(interface.Interface):
 	Icon = nti_schema.ValidTextLine(title='Icon URL', required=False)
 	Provider = nti_schema.ValidTextLine(title='Purchasable item provider', required=True)
 	License = nti_schema.ValidTextLine(title='Purchasable license', required=False)
-	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Purchasable content items")
 
 class IPriceable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)

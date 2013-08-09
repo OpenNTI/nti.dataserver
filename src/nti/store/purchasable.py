@@ -13,11 +13,12 @@ from zope import component
 from zope import interface
 from zope.cachedescriptors.property import Lazy
 from zope.schema import interfaces as sch_interfaces
-from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
 from zope.componentvocabulary.vocabulary import UtilityNames
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
+
+from nti.contentmanagement import content_bundle
 
 from nti.dataserver.users import User
 from nti.dataserver import authorization
@@ -29,7 +30,6 @@ from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.ntiids import interfaces as nid_interfaces
 
-from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import AdaptingFieldProperty
 from nti.utils.schema import createDirectFieldProperties
 
@@ -51,9 +51,8 @@ class PurchasableNameVocabulary(PurchasableUtilityVocabulary):
 
 @interface.implementer(store_interfaces.IPurchasable,
 					   nti_interfaces.IACLProvider,
-					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
-class Purchasable(SchemaConfigured):
+class Purchasable(content_bundle.ContentBundle):
 
 	__metaclass__ = MetaStoreObject
 
@@ -62,13 +61,6 @@ class Purchasable(SchemaConfigured):
 
 	# Override Description to adapt to a content fragment
 	Description = AdaptingFieldProperty(store_interfaces.IPurchasable['Description'])
-
-	@property
-	def id(self):
-		return self.NTIID
-
-	def __str__(self):
-		return self.NTIID
 
 	def __repr__(self):
 		return "%s(%s,%s,%s,%s)" % (self.__class__, self.Description, self.NTIID, self.Currency, self.Amount)
@@ -79,11 +71,6 @@ class Purchasable(SchemaConfigured):
 									 and self.NTIID == other.NTIID)
 		except AttributeError:
 			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.NTIID)
-		return xhash
 
 	def __reduce__(self):
 		raise TypeError()

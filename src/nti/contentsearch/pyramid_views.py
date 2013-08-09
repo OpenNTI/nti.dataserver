@@ -17,11 +17,12 @@ from zope.location import locate
 import pyramid.httpexceptions as hexc
 from pyramid.security import authenticated_userid
 
+from nti.contentmanagement import get_collection_root_ntiid as get_collection
+
 from . import constants
 from .common import sort_search_types
 from .interfaces import IIndexManager
 from ._search_query import QueryObject
-from ._views_utils import get_collection
 from .common import get_type_from_mimetype
 from ._content_utils import get_content_translation_table
 
@@ -113,7 +114,7 @@ def create_queryobject(username, params, matchdict, registry=component):
 	if ntiid:
 		# make sure we register the location where the search query is being made
 		args['location'] = ntiid
-		indexid = get_collection(ntiid, registry)
+		indexid = get_collection(ntiid, registry=registry)
 		if indexid is None:
 			logger.debug("Could not find collection for ntiid '%s'" % ntiid)
 		else:

@@ -15,9 +15,10 @@ from zope import component
 
 from nti.appserver.invitations import interfaces as invite_interfaces
 
+from nti.contentmanagement import content_roles
+
 from . import invitations
 from . import purchasable
-from . import _content_roles
 from . import purchase_history
 from . import purchase_attempt
 from . import interfaces as store_interfaces
@@ -44,14 +45,14 @@ def _purchase_attempt_successful(event):
 		# allow content roles
 		purchase_history.activate_items(purchase.creator, purchase.Items)
 		lib_items = purchasable.get_content_items(purchase.Items)
-		_content_roles._add_users_content_roles(purchase.creator, lib_items)
+		content_roles.add_users_content_roles(purchase.creator, lib_items)
 	logger.info('%r completed successfully', purchase)
 
 def _return_items(purchase, user):
 	if purchase is not None:
 		purchase_history.deactivate_items(user, purchase.Items)
 		lib_items = purchasable.get_content_items(purchase.Items)
-		_content_roles._remove_users_content_roles(user, lib_items)
+		content_roles.remove_users_content_roles(user, lib_items)
 
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
 def _purchase_attempt_refunded(event):
@@ -118,4 +119,4 @@ def _purchase_invitation_accepted(invitation, event):
 
 		# activate role(s)
 		lib_items = purchasable.get_content_items(original.Items)
-		_content_roles._add_users_content_roles(event.user, lib_items)
+		content_roles.add_users_content_roles(event.user, lib_items)

@@ -18,6 +18,8 @@ import repoze.lru
 
 from nti.contentfragments import interfaces as frg_interfaces
 
+from nti.contentmanagement import get_ntiid_path
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
@@ -25,7 +27,6 @@ from nti.chatserver import interfaces as chat_interfaces
 
 from nti.mimetype import mimetype
 
-from ._views_utils import get_ntiid_path
 from . import interfaces as search_interfaces
 
 from .common import get_type_name
