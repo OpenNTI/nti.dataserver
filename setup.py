@@ -5,7 +5,6 @@ entry_points = {
 	'console_scripts': [
 		"nti_render = nti.contentrendering.nti_render:main",
 		"nti_init_env = nti.dataserver.utils.nti_init_env:main",
-		"nti_pubsub_device = nti.dataserver._PubSubDevice:main",
 		"nti_init_shard = nti.dataserver.utils.nti_init_shard:main",
 		"nti_cache_avatars = nti.dataserver.utils.nti_cache_avatars:main",
 		"nti_create_user = nti.dataserver.utils.nti_create_user:main",
