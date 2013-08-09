@@ -1,6 +1,7 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Store content role management.
+Content role management.
 
 $Id$
 """
@@ -19,34 +20,23 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.ntiids import ntiids
 
-def _get_collection_root(library, ntiid):
-	result = None
-	if library and ntiid:
-		paths = library.pathToNTIID(ntiid)
-		result = paths[0] if paths else None
-	return result
+from nti.contentmanagement import get_collection_root_ntiid
 
-def _get_descendants(unit):
+def get_descendants(unit):
 	yield unit
 	last = unit
-	for node in _get_descendants(unit):
+	for node in get_descendants(unit):
 		for child in node.children:
 			yield child
 			last = child
 		if last == node:
 			return
 
-def _get_collection(library, ntiid):
-	croot = _get_collection_root(library, ntiid)
-	result = croot.ntiid.lower() if croot else None
-	return result
-
-def _check_item_in_library(item):
-	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
-	item = _get_collection(library, item) if item and ntiids.is_valid_ntiid_string(item) else None
+def check_item_in_library(item, library=None, registry=component):
+	item = get_collection_root_ntiid(item, library=library, registry=registry) if item and ntiids.is_valid_ntiid_string(item) else None
 	return item
 
-def _add_users_content_roles(user, items):
+def add_users_content_roles(user, items, library=None, registry=component):
 	"""
 	Add the content roles to the given user
 
@@ -57,13 +47,13 @@ def _add_users_content_roles(user, items):
 	if not user or not items:
 		return 0
 
-	member = component.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
+	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
 
 	roles_to_add = set()
 	current_roles = {x.id:x for x in member.groups}
 
 	for item in items:
-		item = _check_item_in_library(item)
+		item = check_item_in_library(item, library, registry)
 		if item is None:
 			continue
 
@@ -77,7 +67,7 @@ def _add_users_content_roles(user, items):
 	member.setGroups(list(current_roles.values()) + list(roles_to_add))
 	return len(roles_to_add)
 
-def _remove_users_content_roles(user, items):
+def remove_users_content_roles(user, items, library=None, registry=component):
 	"""
 	Remove the content roles from the given user
 
@@ -88,7 +78,7 @@ def _remove_users_content_roles(user, items):
 	if not user or not items:
 		return 0
 
-	member = component.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
+	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
 	if not member.hasGroups():
 		return 0
 
@@ -97,7 +87,7 @@ def _remove_users_content_roles(user, items):
 	current_size = len(current_roles)
 
 	for item in items:
-		item = _check_item_in_library(item)
+		item = check_item_in_library(item, library, registry)
 		if item:
 			provider = ntiids.get_provider(item).lower()
 			specific = ntiids.get_specific(item).lower()
@@ -111,14 +101,14 @@ def _remove_users_content_roles(user, items):
 	member.setGroups(list(current_roles.values()))
 	return current_size - len(current_roles)
 
-def _get_users_content_roles(user):
+def get_users_content_roles(user, registry=component):
 	"""
 	Return a list of tuples with the user content roles 
 
 	:param user: The user object
 	"""
 	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-	member = component.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
+	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
 
 	result = []
 	for x in member.groups or ():
@@ -126,4 +116,24 @@ def _get_users_content_roles(user):
 			spl = x.id[len(nauth.CONTENT_ROLE_PREFIX):].split(':')
 			if len(spl) >= 2:
 				result.append((spl[0], spl[1]))
+	return result
+
+def get_user_accessible_content(user, library=None, registry=component):
+	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
+	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary) if library is None else library
+
+	packages = {}
+	for package in (library.contentPackages if library is not None else ()):
+		provider = ntiids.get_provider(package.ntiid).lower()
+		specific = ntiids.get_specific(package.ntiid).lower()
+		role = nauth.role_for_providers_content(provider, specific)
+		packages[role.id] = package.ntiid
+
+	result = set()
+	for x in member.groups or ():
+		ntiid = packages.get(x.id, None)
+		if ntiid:
+			ntiid = get_collection_root_ntiid(ntiid, library=library, registry=registry)
+			result.add(ntiid)
 	return result
