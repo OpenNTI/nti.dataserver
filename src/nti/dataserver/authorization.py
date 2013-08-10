@@ -335,4 +335,11 @@ class _UserGroupAwarePrincipal(_UserPrincipal):
 @interface.implementer(nti_interfaces.IPrincipal)
 class _CommunityGroup(_UserPrincipal): # IGroup extends IPrincipal
 	pass
+
+@interface.implementer(nti_interfaces.IPrincipal)
+@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
+class _DFLPrincipal(_UserPrincipal):
+	pass
+_DFLGroup = _DFLPrincipal
+
 # IACLProvider implementations live in authorization_acl

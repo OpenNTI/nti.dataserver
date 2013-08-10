@@ -275,9 +275,3 @@ class ACLCommunityForum(CommunityForum):
 	__external_can_create__ = True
 	ACL = ()
 
-@interface.implementer(frm_interfaces.IClassForum)
-class ClassForum(CommunityForum):
-	"""
-	A special case of the default community forum
-	"""
-

@@ -11,18 +11,20 @@ __docformat__ = "restructuredtext en"
 
 from zope import component
 
+from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.externalization import toExternalObject
 
 from ..interfaces import IForumACE
 from ..interfaces import IACLCommunityForum
 
-from .._ace import ForumACE
+from ..ace import ForumACE
 from ..forum import ACLCommunityForum
+from ..acl import _ACLCommunityForumACLProvider
 
 import nti.tests
 from nti.tests import verifiably_provides, validly_provides
 
-from hamcrest import (assert_that, has_length, has_entry, has_entries)
+from hamcrest import (assert_that, has_length, has_entry, has_entries, instance_of)
 
 def setUpModule():
 	nti.tests.module_setup(set_up_packages=(('subscribers.zcml', 'nti.intid'),
@@ -36,7 +38,6 @@ def setUpModule():
 
 tearDownModule = nti.tests.module_teardown
 
-
 def test_acl_forum_interfaces():
 	forum = ACLCommunityForum()
 	assert_that(forum, verifiably_provides(IACLCommunityForum))
@@ -45,6 +46,15 @@ def test_acl_forum_interfaces():
 def test_forum_ace_interfaces():
 	ace = ForumACE()
 	assert_that(ace, verifiably_provides(IForumACE))
+
+def test_forum_iter():
+	ace = ForumACE(Action='Allow', Permission='All', Entities=('foo', 'foo2'))
+	assert_that(list(ace), has_length(2))
+
+def test_forum_acl_provider():
+	forum = ACLCommunityForum()
+	provider = nti_interfaces.IACLProvider(forum)
+	assert_that(provider, instance_of(_ACLCommunityForumACLProvider))
 
 def test_externalizes():
 	ace = ForumACE(Action='Allow', Permission='All', Entities=('foo',))

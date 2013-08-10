@@ -141,29 +141,37 @@ class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
 		return ()
 	
 	def _resolve_entity(self, eid):
-		result = ()
+		result = None
 		if ntiids.is_valid_ntiid_string(eid):
 			dfl = ntiids.find_object_with_ntiid(eid)
 			if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(dfl):
-				result = tuple(dfl)
+				result = dfl
 		else:
-			entity = Entity.get_entity(eid)
-			result = (entity,) if entity else ()
+			result = Entity.get_entity(eid)
 		return result
 	
+	def _resolve_perm(self, perm):
+		result = nauth.ACT_READ
+		if perm in (frm_interfaces.ALL_PERMISSIONS, frm_interfaces.WRITE_PERMISSION):
+			result = ALL_PERMISSIONS
+		elif perm == frm_interfaces.CREATE_PERMISSION:
+			result = nauth.ACT_CREATE
+		elif perm == frm_interfaces.DELETE_PERMISSION:
+			result = nauth.ACT_DELETE
+		return result
+
 	def _extend_acl_after_creator_and_sharing(self, acl):
-		acl = self.get_acl()
-		if not acl:
+		forum_acl = self.get_acl()
+		if not forum_acl:
 			super(_ACLCommunityForumACLProvider, self)._extend_acl_after_creator_and_sharing(acl)
 		else:
 			self._extend_with_admin_privs(acl)  # always include admin
-			for ace in acl:
-				action = ace_allowing if ace.Action == nti_interfaces.ACE_ACT_ALLOW else ace_denying
-				perm = ALL_PERMISSIONS if ace.Action in (frm_interfaces.ALL_PERMISSIONS, frm_interfaces.WRITE_PERMISSION) \
-					   else nauth.ACT_READ
-				for eid in acl.Entities:
-					for resolved in self._resolve_entity(eid):
-						acl.append(action(resolved, perm, self))
+			for action, eid, perm in forum_acl:
+				action = ace_allowing if action == nti_interfaces.ACE_ACT_ALLOW else ace_denying
+				perm = self._resolve_perm(perm)
+				resolved = self._resolve_entity(eid)
+				if resolved:
+					acl.append(action(resolved, perm, self))
 
 
 # FIXME: this has to be removed
