@@ -62,6 +62,9 @@
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IPost" />
 
+	<adapter factory=".externalization._ForumACEObjectIO"
+			 for=".interfaces.IForumACE" />
+			 
 	<!--
 		 Make sure and do this after the .externalization package has
 		 worked its magic.
