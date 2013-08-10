@@ -61,10 +61,11 @@ def test_externalizes():
 	forum = ACLCommunityForum()
 	forum.ACL = [ace]
 	external = toExternalObject(forum)
+	assert_that(external, has_entry('MimeType', u'application/vnd.nextthought.forums.aclcommunityforum'))
 	assert_that(external, has_entry('ACL', has_length(1)))
 	assert_that(external['ACL'][0], 
 				has_entries('Action', u'Allow',
           					'Class', 'ForumACE',
           	    			'Entities', [u'foo'],
-         		 	     	'MimeType', u'application/vnd.nextthought.forumace',
+         		 	     	'MimeType', u'application/vnd.nextthought.forums.ace',
           		 	     	'Permissions', [u'All']))
