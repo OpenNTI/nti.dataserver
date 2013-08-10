@@ -273,5 +273,6 @@ def GeneralForumCommunityAdapter(community):
 @interface.implementer(frm_interfaces.IACLCommunityForum)
 class ACLCommunityForum(CommunityForum):
 	__external_can_create__ = True
+	__external_class_name__ = "CommunityForum"
 	ACL = ()
 
