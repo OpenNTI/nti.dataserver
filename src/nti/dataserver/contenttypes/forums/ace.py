@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
 
+from nti.dataserver import mimetype
 from nti.dataserver import interfaces as nti_interfacess
 
 from nti.utils.schema import SchemaConfigured
@@ -24,9 +25,7 @@ from . import interfaces as frm_interfaces
 					   nti_interfacess.IACE,
 					   zmime_interfaces.IContentTypeAware)
 class ForumACE(SchemaConfigured):
-
-	__external_class_name__ = u"ACE"
-	mime_type = u'application/vnd.nextthought.forums.ace'
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	createDirectFieldProperties(frm_interfaces.IForumACE)
 
