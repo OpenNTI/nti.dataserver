@@ -42,6 +42,7 @@ from nti.utils.schema import DecodingValidTextLine
 from nti.utils.schema import ValidTextLine
 from nti.utils.schema import ValidText
 from nti.utils.schema import ValidSet as Set
+from zope.schema import Bool
 from zope.schema import Iterable
 
 from nti.contentfragments.schema import PlainTextLine
@@ -1115,7 +1116,7 @@ class IDynamicSharingTargetFriendsList(IDynamicSharingTarget, IFriendsList):
 	"""
 	A type of :class:`IDynamicSharingTarget` that is a list of members.
 	"""
-
+	Locked = Bool(title='Locked flag. No group code, no removal', required=False, default=False)
 
 from zope.container.constraints import contains
 

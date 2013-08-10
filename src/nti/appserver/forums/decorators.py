@@ -169,9 +169,8 @@ class ForumObjectContentsLinkProvider(object):
 		elements=(VIEW_CONTENTS, md5_etag(context.lastModified, _get_remote_username()).replace('/','_'))
 		self.add_link(VIEW_CONTENTS, context, mapping, request, elements)
 
-		# Check the create permission in the forum acl. This is due to the IClassForum interface
-		# which changes the acl provider of the forum object
-		if not IForum.providedBy(context) or request is None or can_create(context, request):
+		# Check the create permission in the forum acl.
+		if request is None or can_create(context, request):
 			link = self.add_link('add', context, mapping, request, elements)
 			link.method = 'POST'
 
