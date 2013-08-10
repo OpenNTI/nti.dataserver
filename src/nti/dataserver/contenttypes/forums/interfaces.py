@@ -345,9 +345,9 @@ PERMISSIONS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.S
 
 class IForumACE(interface.Interface):
 	Action = schema.Choice(vocabulary=ACTION_VOCABULARY, title='ACE action', required=True)
-	Permission = schema.Choice(vocabulary=PERMISSIONS_VOCABULARY, title='ACE permission', required=True)
 	Entities = ListOrTuple(value_type=ValidTextLine(title="entity id"), title="entities ids", required=True)
-	
+	Permissions = ListOrTuple(value_type=schema.Choice(vocabulary=PERMISSIONS_VOCABULARY, title='ACE permission'), required=True)
+
 class IACLGeneralForum(IForum, nti_interfaces.ICreated):
 	"""
 	A general purpose forum that has its own ACL

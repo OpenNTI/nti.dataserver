@@ -30,19 +30,20 @@ class ForumACE(SchemaConfigured):
 	createDirectFieldProperties(frm_interfaces.IForumACE)
 
 	def __iter__(self):
-		for entity in self.Entities:
-			yield (self.Action, entity, self.Permission)
+		for perm in self.Permissions:
+			for entity in self.Entities:
+				yield (self.Action, entity, perm)
 
 	def __str__(self):
-		return "%s(%s,%s,%s)" % (self.__class__, self.Action, self.Permission, self.Entities)
+		return "%s(%s,%s,%s)" % (self.__class__, self.Action, self.Permissions, self.Entities)
 
 	__repr__ = __str__
 
 	def __eq__(self, other):
 		try:
 			return self is other or (self.Action == other.Action
-									 and self.Permission == other.Permission
-									 and set(self.Entities) == set(other.Entities))
+									 and set(self.Entities) == set(other.Entities)
+									 and set(self.Permissions) == set(other.Permissions))
 		except AttributeError:
 			return NotImplemented
 
@@ -50,5 +51,5 @@ class ForumACE(SchemaConfigured):
 		xhash = 47
 		xhash ^= hash(self.Action)
 		xhash ^= hash(self.Entities)
-		xhash ^= hash(self.Permission)
+		xhash ^= hash(self.Permissions)
 		return xhash
