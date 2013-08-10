@@ -3,7 +3,7 @@
 """
 Relating to ACE implementations for objects defined in this package.
 
-$Id: acl.py 22312 2013-08-10 02:42:48Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
