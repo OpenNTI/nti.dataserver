@@ -13,17 +13,17 @@ __docformat__ = "restructuredtext en"
 # all the __setitem__ and __parent__ in the interfaces.
 #pylint: disable=E0602
 
+from zope import schema
+from zope import interface
+from zope.schema import Int
+from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
+from zope.container.interfaces import IContentContainer, IContained
+
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.utils.schema import Object, Number, Variant, ValidTextLine, ListOrTuple
 
 from ._compat import IAcquirer
-from nti.dataserver import interfaces as nti_interfaces
-#from nti.contentfragments import interfaces as frg_interfaces
-
-from zope.container.interfaces import IContentContainer, IContained
-from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
-
-from nti.utils import schema
-from nti.utils.schema import Object, Number, Variant, ValidTextLine
-from zope.schema import Int
 
 ### NTIID values
 
@@ -168,7 +168,7 @@ class IHeadlineTopic(ITopic):
 	A special kind of topic that starts off with a distinguished post to discuss. Blogs will
 	be implemented with this.
 	"""
-	headline = schema.Object(IHeadlinePost, title="The main, first post of this topic.")
+	headline = Object(IHeadlinePost, title="The main, first post of this topic.")
 
 class IPersonalBlog(IForum, nti_interfaces.ICreated, nti_interfaces.IShouldHaveTraversablePath):
 	"""
@@ -259,7 +259,7 @@ class IPersonalBlogEntry(IHeadlineTopic,
 	containers(IPersonalBlog) # Adds __parent__ as required
 	__parent__.required = False
 
-	headline = schema.Object(IPersonalBlogEntryPost, title="The main, first post of this topic.")
+	headline = Object(IPersonalBlogEntryPost, title="The main, first post of this topic.")
 
 class IGeneralPost(IPost):
 	containers(b'.IGeneralTopic')
@@ -312,7 +312,7 @@ class IGeneralHeadlineTopic(IGeneralTopic,IHeadlineTopic,
 							nti_interfaces.IShouldHaveTraversablePath):
 	containers(IGeneralForum)
 	__parent__.required = False
-	headline = schema.Object(IGeneralHeadlinePost, title="The main, first post of this topic.")
+	headline = Object(IGeneralHeadlinePost, title="The main, first post of this topic.")
 
 
 class ICommunityHeadlinePost(IGeneralHeadlinePost):
@@ -324,7 +324,7 @@ class ICommunityHeadlineTopic(IGeneralHeadlineTopic,
 							  nti_interfaces.IPublishable):
 	containers(ICommunityForum)
 	__parent__.required = False
-	headline = schema.Object(ICommunityHeadlinePost, title="The main, first post of this topic.")
+	headline = Object(ICommunityHeadlinePost, title="The main, first post of this topic.")
 
 
 class IGeneralForumComment(IGeneralPost, nti_interfaces.IShouldHaveTraversablePath):
@@ -332,8 +332,30 @@ class IGeneralForumComment(IGeneralPost, nti_interfaces.IShouldHaveTraversablePa
 	containers(IGeneralTopic)
 	__parent__.required = False
 
+ACTIONS = (nti_interfaces.ACE_ACT_ALLOW, nti_interfaces.ACE_ACT_DENY)
+ACTION_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in ACTIONS])
+
+PERMISSIONS = ('All', 'Read', 'Write')
+PERMISSIONS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PERMISSIONS])
+
+class IForumACE(interface.Interface):
+	Action = schema.Choice(vocabulary=ACTION_VOCABULARY, title='ACE action', required=True)
+	Permission = schema.Choice(vocabulary=PERMISSIONS_VOCABULARY, title='ACE permission', required=True)
+	Entities = ListOrTuple(value_type=ValidTextLine(title="entity id"), title="entities ids", required=True)
+	
+class IACLGeneralForum(IForum, nti_interfaces.ICreated):
+	"""
+	A general purpose forum that has its own ACL
+	"""
+	ACL = ListOrTuple(value_type=Object(IForumACE, title="the ace"), title="ACL spec", required=False)
+
+class IACLCommunityForum(IACLGeneralForum, ICommunityForum):
+	"""
+	A community with its own ACL
+	"""
+
 class IClassForum(ICommunityForum):
 	"""
 	A forum belonging to a particular class.
 	"""
-	Instructors = schema.ListOrTuple(value_type=ValidTextLine(title="uid"), title="user ids", required=False)
+	Instructors = ListOrTuple(value_type=ValidTextLine(title="uid"), title="user ids", required=False)
