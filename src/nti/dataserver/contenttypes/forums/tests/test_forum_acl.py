@@ -13,6 +13,8 @@ from zope import component
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.internalization import find_factory_for
+from nti.externalization.internalization import update_from_external_object
 
 from ..interfaces import IForumACE
 from ..interfaces import IACLCommunityForum
@@ -24,7 +26,7 @@ from ..acl import _ACLCommunityForumACLProvider
 import nti.tests
 from nti.tests import verifiably_provides, validly_provides
 
-from hamcrest import (assert_that, has_length, has_entry, has_entries, instance_of)
+from hamcrest import (assert_that, has_length, has_entry, has_entries, instance_of, is_)
 
 def setUpModule():
 	nti.tests.module_setup(set_up_packages=(('subscribers.zcml', 'nti.intid'),
@@ -63,9 +65,15 @@ def test_externalizes():
 	external = toExternalObject(forum)
 	assert_that(external, has_entry('MimeType', u'application/vnd.nextthought.forums.aclcommunityforum'))
 	assert_that(external, has_entry('ACL', has_length(1)))
-	assert_that(external['ACL'][0], 
+	ace_external = external['ACL'][0]
+	assert_that(ace_external,
 				has_entries('Action', u'Allow',
           					'Class', 'ForumACE',
           	    			'Entities', [u'foo'],
          		 	     	'MimeType', u'application/vnd.nextthought.forums.ace',
           		 	     	'Permissions', [u'All']))
+
+	factory = find_factory_for(ace_external)
+	new_ace = factory()
+	update_from_external_object(new_ace, ace_external)
+	assert_that(ace, is_(new_ace))
