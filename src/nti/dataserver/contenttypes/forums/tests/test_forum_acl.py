@@ -64,7 +64,7 @@ def test_externalizes():
 	assert_that(external, has_entry('ACL', has_length(1)))
 	assert_that(external['ACL'][0], 
 				has_entries('Action', u'Allow',
-          					'Class','ACE',
+          					'Class', 'ForumACE',
           	    			'Entities', [u'foo'],
-         		 	     	'MimeType', u'application/vnd.nextthought.forums.ace',
+         		 	     	'MimeType', u'application/vnd.nextthought.forumace',
           		 	     	'Permission','All'))
