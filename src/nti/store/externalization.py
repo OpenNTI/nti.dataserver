@@ -108,8 +108,7 @@ class PurchasableDecorator(object):
 				_links.append(link)
 
 			# insert price link
-			price_path = DS_STORE_PATH + 'price_purchasable'
-			price_href = price_path % urllib.quote(original.NTIID)
+			price_href = DS_STORE_PATH + 'price_purchasable'
 			link = Link(price_href, rel="price")
 			link.method = 'Post'
 			interface.alsoProvides(link, ILocation)

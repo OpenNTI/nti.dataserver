@@ -5,7 +5,6 @@ Views and other objects relating to functions exposed for dynamic friends lists.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -48,17 +47,15 @@ def _authenticated_user_is_member(context, request):
 			  request_method='DELETE',
 			  name=REL_MY_MEMBERSHIP,
 			  custom_predicates=(_authenticated_user_is_member,))
-def exit_dfl_view( context, request ):
+def exit_dfl_view(context, request):
 	"""
 	Accept a ``DELETE`` request from a member of a DFL, causing that member to
 	no longer be a member.
 	"""
-
-	context.removeFriend( get_remote_user( request ) ) # We know we must be a member
+	context.removeFriend(get_remote_user(request))  # We know we must be a member
 	# return the new object that we can no longer actually see but could just a moment ago
 	# TODO: Not sure what I really want to return
 	return context
-
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
@@ -68,4 +65,6 @@ class DFLGetMembershipLinkProvider(AbstractTwoStateViewLinkDecorator):
 
 	def predicate( self, context, current_username ):
 		user = users.User.get_user( current_username )
-		return user is not None and user in context
+		result = user is not None and user in context and not context.Locked
+		return result
+
