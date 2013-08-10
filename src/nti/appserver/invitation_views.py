@@ -17,9 +17,13 @@ from zope import component
 from zc import intid as zc_intid
 
 from pyramid.view import view_config
-from pyramid import interfaces as pyramid_interfaces
 
-from nti.dataserver.links import Link
+from nti.appserver import _util
+from nti.appserver.pyramid_authorization import is_writable
+from nti.appserver.invitations import interfaces as invite_interfaces
+from nti.appserver.invitations.invitation import JoinEntitiesInvitation
+from nti.appserver.invitations.utility import accept_invitations, ZcmlInvitations
+
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -27,15 +31,7 @@ from nti.externalization import integer_strings
 from nti.externalization import interfaces as ext_interfaces
 
 from . import httpexceptions as hexc
-from ._util import link_belongs_to_user
 from . import _external_object_io as obj_io
-
-from nti.appserver import _util
-from nti.appserver import interfaces as app_interfaces
-from nti.appserver.pyramid_authorization import is_writable
-from nti.appserver.invitations import interfaces as invite_interfaces
-from nti.appserver.invitations.invitation import JoinEntitiesInvitation
-from nti.appserver.invitations.utility import accept_invitations, ZcmlInvitations
 
 # : The link relationship type to which an authenticated
 # : user can ``POST`` data to accept outstanding invitations. Also the name of a
@@ -137,4 +133,4 @@ class DFLGetInvitationLinkProvider(_util.AbstractTwoStateViewLinkDecorator):
 	true_view = REL_TRIVIAL_DEFAULT_INVITATION_CODE
 
 	def predicate(self, context, username):
-		return is_writable(context)
+		return is_writable(context) and not context.Locked
