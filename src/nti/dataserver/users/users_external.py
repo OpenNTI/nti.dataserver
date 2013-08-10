@@ -107,7 +107,14 @@ class _FriendListSummaryExternalObject(_AbstractEntitySummaryExternalObject):
 	def _do_toExternalObject( self ):
 		extDict = super(_FriendListSummaryExternalObject, self)._do_toExternalObject()
 		extDict['IsDynamicSharing'] = nti_interfaces.IDynamicSharingTarget.providedBy( self.entity )
+		return extDict
 
+@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
+class _DynamicFriendListSummaryExternalObject(_FriendListSummaryExternalObject):
+
+	def _do_toExternalObject(self):
+		extDict = super(_DynamicFriendListSummaryExternalObject, self)._do_toExternalObject()
+		extDict['Locked'] = self.entity.Locked
 		return extDict
 
 class _EntityExternalObject(_EntitySummaryExternalObject):
@@ -117,9 +124,7 @@ class _EntityExternalObject(_EntitySummaryExternalObject):
 		result = super(_EntityExternalObject,self)._do_toExternalObject()
 		# restore last modified since we are the true representation
 		result['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
-
 		return result
-
 
 @component.adapter( nti_interfaces.IFriendsList )
 class _FriendsListExternalObject(_EntityExternalObject):
@@ -163,6 +168,14 @@ class _FriendsListExternalObject(_EntityExternalObject):
 			return ()
 		rand = random.Random( hash(self.entity.username) )
 		return rand.sample( friends, min(4,len(friends)) )
+
+@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
+class _DynamicFriendsListExternalObject(_FriendsListExternalObject):
+
+	def _do_toExternalObject(self):
+		extDict = super(_DynamicFriendsListExternalObject, self)._do_toExternalObject()
+		extDict['Locked'] = self.entity.Locked
+		return extDict
 
 @component.adapter( nti_interfaces.IUser )
 class _UserSummaryExternalObject(_EntitySummaryExternalObject):

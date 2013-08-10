@@ -193,9 +193,10 @@ def test_create_update_dynamic_friendslist():
 
 		# The external form masquerades as a normal FL...
 		x = to_external_object( fl1 )
-		assert_that( x, has_entry( 'Class', 'FriendsList' ) )
-		assert_that( x, has_entry( 'MimeType', 'application/vnd.nextthought.friendslist' ) )
-		assert_that( x, has_entry( 'NTIID', 'tag:nextthought.com,2011-10:foo23-MeetingRoom:Group-friends' ) )
+		assert_that(x, has_entry('Class', 'FriendsList'))
+		assert_that(x, has_entry('MimeType', 'application/vnd.nextthought.friendslist'))
+		assert_that(x, has_entry('NTIID', 'tag:nextthought.com,2011-10:foo23-MeetingRoom:Group-friends'))
+		assert_that(x, has_entry('Locked', is_(False)))
 		# ... with one exception
 		assert_that( x, has_entry( 'IsDynamicSharing', True ) )
 
