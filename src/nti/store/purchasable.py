@@ -84,9 +84,10 @@ def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=No
 					   author=None, description=None, icon=None, discountable=False, bulk_purchase=True,
 					   cls=Purchasable):
 	fee = float(fee) if fee is not None else None
+	amount = float(amount) if amount is not None else amount
 	items = to_frozenset(items) if items else frozenset((ntiid,))
 	result = cls(NTIID=ntiid, Provider=provider, Title=title, Author=author, Items=items,
-				 Description=description, Amount=float(amount), Currency=currency, Fee=fee,
+				 Description=description, Amount=amount, Currency=currency, Fee=fee,
 				 License=license_, Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
 	return result
 

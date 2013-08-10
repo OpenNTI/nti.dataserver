@@ -69,7 +69,7 @@ class IPurchasable(mgt_interfaces.IContentBundle):
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
 	BulkPurchase = schema.Bool(title="Bulk purchase flag", required=True, default=False)
-	Fee = schema.Float(title="Percentage fee", required=False)
+	Fee = schema.Float(title="Percentage fee", required=False, min=0.0)
 	Icon = nti_schema.ValidTextLine(title='Icon URL', required=False)
 	Provider = nti_schema.ValidTextLine(title='Purchasable item provider', required=True)
 	License = nti_schema.ValidTextLine(title='Purchasable license', required=False)
@@ -348,4 +348,6 @@ class IStorePurchaseInvitation(interface.Interface):
 	pass
 
 class ICourse(IPurchasable):
+	Amount = schema.Float(title="Cost amount", required=False, min=0.0)
+	Currency = nti_schema.ValidTextLine(title='Currency amount', required=False)
 	Provider = nti_schema.ValidTextLine(title='Course provider', required=False)

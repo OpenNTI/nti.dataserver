@@ -42,6 +42,7 @@ class IRegisterPurchasableDirective(interface.Interface):
 
 class IRegisterCourseDirective(IRegisterPurchasableDirective):
 	amount = schema.Float(title="Cost amount", required=False)
+	currency = fields.TextLine(title="Currency amount", required=False)
 	provider = fields.TextLine(title='Course provider', required=False)
 
 def do_registration(creator_func, iface, _context, ntiid, provider, title, description=None,
@@ -72,7 +73,7 @@ def registerPurchasable(_context, ntiid, provider, title, description=None, amou
 	logger.debug("Purchasable '%s' has been registered", ntiid)
 
 
-def registerCourse(_context, ntiid, title, description=None, provider=None, amount=0.0, currency='USD',
+def registerCourse(_context, ntiid, title, description=None, provider=None, amount=None, currency=None,
 				   items=None, fee=None, author=None, icon=None, license=None, discountable=False,
 				   bulk_purchase=False):
 	"""

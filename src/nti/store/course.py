@@ -33,11 +33,14 @@ class Course(purchasable.Purchasable):
 		except AttributeError:
 			return NotImplemented
 
-def create_course(ntiid, provider=None, amount=0.0, currency='USD', items=(), fee=None, title=None, license_=None,
+def create_course(ntiid, provider=None, amount=None, currency=None, items=(), fee=None, title=None, license_=None,
 				  author=None, description=None, icon=None, discountable=False, bulk_purchase=False):
-	amount = amount or 0.0
 	if amount and not provider:
 		raise AssertionError("Must specfify a provider")
+
+	if amount and not currency:
+		raise AssertionError("Must specfify a currency")
+
 	result = purchasable.create_purchasable(ntiid=ntiid, provider=provider, amount=amount, currency=currency,
 											items=items, fee=fee, title=title, license_=license_, author=author,
 											description=description, icon=icon, discountable=discountable,

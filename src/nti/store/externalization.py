@@ -29,6 +29,7 @@ from . import purchase_history
 from . import interfaces as store_interfaces
 
 LINKS = ext_interfaces.StandardExternalFields.LINKS
+DS_STORE_PATH = u'/dataserver2/store/'
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
 @component.adapter(store_interfaces.IPurchaseItem)
@@ -96,14 +97,24 @@ class PurchasableDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def set_links(self, username, original, external):
-		# insert history link
-		if purchase_history.has_history_by_item(username, original.NTIID):
-			history_path = "/dataserver2/store/get_purchase_history?purchasableID=%s"
-			history_href = history_path % urllib.quote(original.NTIID)
-			link = Link(history_href, rel="history")
-			interface.alsoProvides(link, ILocation)
-			external.setdefault(LINKS, []).append(link)
+		if original.Amount:
+			_links = external.setdefault(LINKS, [])
+			# insert history link
+			if purchase_history.has_history_by_item(username, original.NTIID):
+				history_path = DS_STORE_PATH + 'get_purchase_history?purchasableID=%s'
+				history_href = history_path % urllib.quote(original.NTIID)
+				link = Link(history_href, rel="history")
+				interface.alsoProvides(link, ILocation)
+				_links.append(link)
 
+			# insert price link
+			price_path = DS_STORE_PATH + 'price_purchasable'
+			price_href = price_path % urllib.quote(original.NTIID)
+			link = Link(price_href, rel="price")
+			link.method = 'Post'
+			interface.alsoProvides(link, ILocation)
+			_links.append(link)
+		
 	def add_library_details(self, original, external):
 		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 		unit = library.get(original.NTIID) if library else None
@@ -136,3 +147,23 @@ class PricedItemDecorator(object):
 		external['Provider'] = original.Provider
 		external['Amount'] = original.Amount
 		external['Currency'] = original.Currency
+
+@component.adapter(store_interfaces.ICourse)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class CourseDecorator(PurchasableDecorator):
+
+	def set_links(self, username, original, external):
+		if not original.Amount is None:
+			_links = external.setdefault(LINKS, [])
+			if not purchase_history.has_history_by_item(username, original.NTIID):
+				erroll_path = DS_STORE_PATH + 'erroll_course'
+				link = Link(erroll_path, rel="erroll")
+			else:
+				unerroll_path = DS_STORE_PATH + 'unerroll_course'
+				link = Link(unerroll_path, rel="erroll")
+
+			link.method = 'Post'
+			interface.alsoProvides(link, ILocation)
+			_links.append(link)
+		else:
+			super(CourseDecorator, self).set_links(original, external)
