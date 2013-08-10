@@ -106,11 +106,11 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		assert_that( board_res.json_body, has_entry( 'NTIID', self.board_ntiid ) )
 		assert_that( board_res.json_body, has_entry( 'href', self.board_pretty_url ) )
 		__traceback_info__ = board_res.json_body
+		contents_href = self.require_link_href_with_rel(board_res.json_body, 'contents')
 		add = self.link_with_rel( board_res.json_body, 'add' )
-		assert_that( add, has_entry( 'method', 'POST' ) )
-
-		contents_href = self.require_link_href_with_rel( board_res.json_body, 'contents' )
-		assert_that( contents_href, is_( add['href'] ) )
+		if add is not None:
+			assert_that(add, has_entry('method', 'POST'))
+			assert_that(contents_href, is_(add['href']))
 
 		contents_res = self.testapp.get( contents_href )
 		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 1 ) ) )

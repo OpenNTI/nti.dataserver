@@ -166,12 +166,13 @@ class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
 			super(_ACLCommunityForumACLProvider, self)._extend_acl_after_creator_and_sharing(acl)
 		else:
 			self._extend_with_admin_privs(acl)  # always include admin
-			for action, eid, perm in forum_acl:
-				action = ace_allowing if action == nti_interfaces.ACE_ACT_ALLOW else ace_denying
-				perm = self._resolve_perm(perm)
-				resolved = self._resolve_entity(eid)
-				if resolved:
-					acl.append(action(resolved, perm, self))
+			for ace in forum_acl:
+				for action, eid, perm in ace:
+					action = ace_allowing if action == nti_interfaces.ACE_ACT_ALLOW else ace_denying
+					perm = self._resolve_perm(perm)
+					resolved = self._resolve_entity(eid)
+					if resolved:
+						acl.append(action(resolved, perm, self))
 
 
 # FIXME: this has to be removed
