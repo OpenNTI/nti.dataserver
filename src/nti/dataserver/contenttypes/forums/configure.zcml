@@ -49,7 +49,7 @@
 	<subscriber handler=".forum._post_added_to_topic" />
 	<subscriber handler=".forum._topic_added_to_forum" />
 
-	<!-- Externalization -->
+	<!-- Externalization -->			 
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IBoard" />
 			 
@@ -61,10 +61,10 @@
 			 
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IPost" />
-
-	<adapter factory=".externalization._ForumACEObjectIO"
+		
+	<adapter factory=".externalization._ForumACEInternalObjectIO"
 			 for=".interfaces.IForumACE" />
-			 
+			 	 
 	<!--
 		 Make sure and do this after the .externalization package has
 		 worked its magic.
@@ -76,7 +76,7 @@
 	<ext:registerMimeFactories module=".post" />
 	<ext:registerMimeFactories module=".topic" />
 	<ext:registerMimeFactories module=".ace" />
-
+			 
 	<!-- ACLs -->
 	<adapter factory=".acl._TopicACLProvider"
 			 for=".interfaces.IPersonalBlogEntry"/>
