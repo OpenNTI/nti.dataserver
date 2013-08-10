@@ -28,7 +28,7 @@ class coursename(Command):
     pass
 
 class course(Environment, plastexids.NTIIDMixin):
-    args = '[ options:dict ] title:str'
+    args = '[ options:dict ] title:str number:str'
 
     counter = 'course'
     blockType = True
@@ -43,6 +43,7 @@ class course(Environment, plastexids.NTIIDMixin):
         res = super(course,self).invoke(tex)
         if self.macroMode == self.MODE_BEGIN:
             self.title = self.attributes['title']
+            self.number = self.attributes['number']
         return res
 
     def digest(self, tokens):
