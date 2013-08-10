@@ -48,8 +48,8 @@ def test_forum_ace_interfaces():
 	assert_that(ace, verifiably_provides(IForumACE))
 
 def test_forum_iter():
-	ace = ForumACE(Action='Allow', Permission='All', Entities=('foo', 'foo2'))
-	assert_that(list(ace), has_length(2))
+	ace = ForumACE(Action='Allow', Permissions=('Read', 'Create'), Entities=('foo', 'foo2'))
+	assert_that(list(ace), has_length(4))
 
 def test_forum_acl_provider():
 	forum = ACLCommunityForum()
@@ -57,7 +57,7 @@ def test_forum_acl_provider():
 	assert_that(provider, instance_of(_ACLCommunityForumACLProvider))
 
 def test_externalizes():
-	ace = ForumACE(Action='Allow', Permission='All', Entities=('foo',))
+	ace = ForumACE(Action='Allow', Permissions=('All',), Entities=('foo',))
 	forum = ACLCommunityForum()
 	forum.ACL = [ace]
 	external = toExternalObject(forum)
@@ -67,4 +67,4 @@ def test_externalizes():
           					'Class', 'ForumACE',
           	    			'Entities', [u'foo'],
          		 	     	'MimeType', u'application/vnd.nextthought.forumace',
-          		 	     	'Permission','All'))
+          		 	     	'Permissions', [u'All']))
