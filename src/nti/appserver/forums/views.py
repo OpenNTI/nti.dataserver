@@ -53,6 +53,7 @@ from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.dataserver.contenttypes.forums.post import Post
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
+from nti.dataserver.contenttypes.forums.forum import ACLCommunityForum
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
 from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
 from nti.dataserver.contenttypes.forums.post import GeneralForumComment
@@ -155,6 +156,9 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 	_allowed_content_types = ('Post', Post.mimeType, 'Posts' )
 	_factory = None
 
+	def _constructor(self, external_value=None):
+		return self._factory()
+
 	def _get_topic_creator( self ):
 		return self.getRemoteUser()
 
@@ -163,7 +167,7 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 		topic_post, external_value = self._read_incoming_post()
 
 		# Now the topic
-		topic = self._factory()
+		topic = self._constructor(external_value)
 		topic.creator = self._get_topic_creator()
 
 		# Business rule: titles of the personal blog entry match the post
@@ -240,13 +244,25 @@ class PersonalBlogPostView(_AbstractForumPostView):
 				**_c_view_defaults)
 class CommunityBoardPostView(_AbstractForumPostView):
 	""" Given an incoming IPost, creates a new forum in the community board """
+
 	# Still read the incoming IPost-like thing, but we discard it since our "topic" (aka forum)
 	# does not have a headline
-	_factory = CommunityForum
+	_factory = None
+
 	#: We always override the incoming content type and parse simply as an IPost.
 	#: All we care about is topic and description.
 	_allowed_content_types = None
 	_override_content_type = Post.mimeType
+
+	def _constructor(self, external_value):
+		# TODO: cleaner way to handle community forums with ACL
+		if external_value and 'ACL' in external_value:
+			result = ACLCommunityForum()
+			# at this point the ACE objects should have been created when _read_incoming_post is called
+			result.ACL = [x for x in external_value['ACL'] if frm_interfaces.IForumACE.providedBy(x)]
+		else:
+			result = CommunityForum()
+		return result
 
 	def _get_topic_creator( self ):
 		return self.request.context.creator # the community
