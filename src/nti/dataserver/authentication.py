@@ -20,11 +20,9 @@ def _dynamic_memberships_that_participate_in_security( user, as_principals=True 
 	# as users (so no need to prefix with community_ or something like that)
 	for community in getattr( user, 'dynamic_memberships', ()): # Mostly tests pass in a non-User user_factory
 		# Make sure it's a valid community
-		# (TODO: Why? Do we not have an IPrincipal adapter for DynamicFriendsLists?
-		# If we did allow them here, that would change the need to expand them
-		# in ACLs)
-		if nti_interfaces.ICommunity.providedBy( community ) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy( community ):
-			yield nti_interfaces.IPrincipal( community ) if as_principals else community
+		if 	nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(community) or \
+			(nti_interfaces.ICommunity.providedBy(community) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy(community)):
+			yield nti_interfaces.IPrincipal(community) if as_principals else community
 
 def _user_factory( username ):
 	# To avoid circular imports (sharing imports us, users imports us, we import users). sigh.

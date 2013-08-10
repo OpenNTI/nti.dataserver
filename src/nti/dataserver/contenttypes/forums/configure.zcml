@@ -75,7 +75,7 @@
 	<ext:registerMimeFactories module=".forum" />
 	<ext:registerMimeFactories module=".post" />
 	<ext:registerMimeFactories module=".topic" />
-	<ext:registerMimeFactories module="._ace" />
+	<ext:registerMimeFactories module=".ace" />
 
 	<!-- ACLs -->
 	<adapter factory=".acl._TopicACLProvider"
