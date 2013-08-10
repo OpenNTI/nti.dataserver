@@ -66,5 +66,5 @@ def test_externalizes():
 				has_entries('Action', u'Allow',
           					'Class','ACE',
           	    			'Entities', [u'foo'],
-         		 	     	'MimeType', 'application/vnd.nextthought.forumace',
+         		 	     	'MimeType', u'application/vnd.nextthought.forums.ace',
           		 	     	'Permission','All'))
