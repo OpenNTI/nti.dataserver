@@ -335,7 +335,10 @@ class IGeneralForumComment(IGeneralPost, nti_interfaces.IShouldHaveTraversablePa
 ACTIONS = (nti_interfaces.ACE_ACT_ALLOW, nti_interfaces.ACE_ACT_DENY)
 ACTION_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in ACTIONS])
 
-PERMISSIONS = ('All', 'Read', 'Write')
+ALL_PERMISSIONS = u'All'
+READ_PERMISSION = u'Read'
+WRITE_PERMISSION = u'Write'
+PERMISSIONS = (ALL_PERMISSIONS, READ_PERMISSION, WRITE_PERMISSION)
 PERMISSIONS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PERMISSIONS])
 
 class IForumACE(interface.Interface):

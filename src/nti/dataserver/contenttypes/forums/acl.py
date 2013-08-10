@@ -24,13 +24,19 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 
 from nti.dataserver.users import users
+from nti.dataserver.users import Entity
 from nti.dataserver import authorization as nauth
 from nti.dataserver.traversal import find_interface
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.authorization_acl import ace_denying
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 
+from nti.ntiids import ntiids
+
 from . import interfaces as frm_interfaces
+
+ALL_PERMISSIONS = nti_interfaces.ALL_PERMISSIONS
 
 class _ForumACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
@@ -123,9 +129,42 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 			acl.append( ace_allowing( topic_creator, nauth.ACT_DELETE, self ) )
 			acl.append( ace_allowing( topic_creator, nauth.ACT_READ, self ) )
 
-
 class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
-	pass
+	
+	def get_acl(self):
+		return getattr(self.context, 'ACL', ())
+
+	def _get_sharing_target_names(self):
+		acl = self.get_acl()
+		if not acl:
+			return super(_ACLCommunityForumACLProvider, self)._get_sharing_target_names()
+		return ()
+	
+	def _resolve_entity(self, eid):
+		result = ()
+		if ntiids.is_valid_ntiid_string(eid):
+			dfl = ntiids.find_object_with_ntiid(eid)
+			if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(dfl):
+				result = tuple(dfl)
+		else:
+			entity = Entity.get_entity(eid)
+			result = (entity,) if entity else ()
+		return result
+	
+	def _extend_acl_after_creator_and_sharing(self, acl):
+		acl = self.get_acl()
+		if not acl:
+			super(_ACLCommunityForumACLProvider, self)._extend_acl_after_creator_and_sharing(acl)
+		else:
+			self._extend_with_admin_privs(acl)  # always include admin
+			for ace in acl:
+				action = ace_allowing if ace.Action == nti_interfaces.ACE_ACT_ALLOW else ace_denying
+				perm = ALL_PERMISSIONS if ace.Action in (frm_interfaces.ALL_PERMISSIONS, frm_interfaces.WRITE_PERMISSION) \
+					   else nauth.ACT_READ
+				for eid in acl.Entities:
+					for resolved in self._resolve_entity(eid):
+						acl.append(action(resolved, perm, self))
+
 
 # FIXME: this has to be removed
 class _ClassForumACLProvider(_CommunityForumACLProvider):
