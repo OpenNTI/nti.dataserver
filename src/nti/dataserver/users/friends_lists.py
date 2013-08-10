@@ -321,6 +321,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 	stop following this DFL, cutting down on the visible noise.
 	"""
 
+	Locked = False
 	defaultGravatarType = 'retro'
 
 	__external_class_name__ = 'FriendsList'
@@ -353,6 +354,9 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 			ex_friend.stop_following( self )
 		return result
 
+	def is_locked(self):
+		return self.Locked
+
 	def accept_shared_data_from( self, source ):
 		"""
 		Override to save space. Only the membership matters.
@@ -374,6 +378,13 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 		return True
 		#return source is self.creator or source in list(self)
 
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		locked = parsed.pop('Locked', None)
+		updated = super(DynamicFriendsList, self).updateFromExternalObject(parsed, *args, **kwargs)
+		if locked is not None:
+			updated.Locked = locked
+			self.updateLastMod()
+		return 	updated
 
 @interface.implementer(nti_interfaces.IUsernameIterable)
 @component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
