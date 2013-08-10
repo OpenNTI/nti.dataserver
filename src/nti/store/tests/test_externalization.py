@@ -18,9 +18,9 @@ from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
 
-from ..import pricing
-from ..import priceable
-from ..import purchasable
+from .. import pricing
+from .. import priceable
+from .. import purchasable
 from .. import purchase_order
 from .. import purchase_attempt
 from .. import interfaces as store_interfaces
@@ -29,11 +29,12 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, is_not, has_key, has_entry, has_length, none)
+from hamcrest import (assert_that, is_, is_not, has_key, has_entry, has_length, none, greater_than_or_equal_to)
 
 class TestStoreExternal(ConfiguringTestBase):
 
-	set_up_packages = ConfiguringTestBase.set_up_packages + (('purchasables.zcml', 'nti.store.tests'),)
+	set_up_packages = ConfiguringTestBase.set_up_packages + \
+					  (('purchasables.zcml', 'nti.store.tests'), ('courses.zcml', 'nti.store.tests'))
 
 	processor = 'stripe'
 
@@ -102,8 +103,7 @@ class TestStoreExternal(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_purchasable(self):
-		util = purchasable.PurchasableUtilityVocabulary(None)
-		ps = util.getTermByToken('iid_3').value
+		ps = purchasable.get_purchasable('iid_3')
 		ext = to_external_object(ps)
 
 		assert_that(ext, has_key('MimeType'))
@@ -153,3 +153,16 @@ class TestStoreExternal(ConfiguringTestBase):
 		ext = to_external_object(pe)
 		assert_that(ext, has_entry('Title', u'COSMETOLOGY'))
 		assert_that(ext, has_entry('Description', u'COSMETOLOGY'))
+
+	def test_course(self):
+		cs = purchasable.get_purchasable('tag:nextthought.com,2011-10:OU-course-CLC3403LawAndJustice')
+		ext = to_external_object(cs)
+		assert_that(ext, has_entry('Title', u'CLC 3403 Law and Justice'))
+		assert_that(ext, has_entry('Description', has_length(greater_than_or_equal_to(140))))
+		assert_that(ext, has_entry('Author', u'Kyle Harper'))
+		assert_that(ext, has_entry('Amount', is_(none())))
+		assert_that(ext, has_entry('Currency', is_(none())))
+		assert_that(ext, has_entry('Provider', is_(none())))
+		assert_that(ext, has_entry('ID', is_('tag:nextthought.com,2011-10:OU-course-CLC3403LawAndJustice')))
+		assert_that(ext, has_entry('MimeType', u'application/vnd.nextthought.course'))
+		assert_that(ext, has_entry('Items', is_([u'tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.clc_3403_law_and_justice'])))
