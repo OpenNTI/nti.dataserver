@@ -264,11 +264,16 @@ def GeneralForumCommunityAdapter(community):
 	board[forum.__default_name__] = forum
 	forum.title = _('Forum')
 
-	errors = schema.getValidationErrors( frm_interfaces.ICommunityForum, forum )
+	errors = schema.getValidationErrors(frm_interfaces.ICommunityForum, forum)
 	if errors:
 		__traceback_info__ = errors
 		raise errors[0][1]
 	return forum
+
+@interface.implementer(frm_interfaces.IACLCommunityForum)
+class ACLCommunityForum(CommunityForum):
+	__external_can_create__ = True
+	ACL = ()
 
 @interface.implementer(frm_interfaces.IClassForum)
 class ClassForum(CommunityForum):
