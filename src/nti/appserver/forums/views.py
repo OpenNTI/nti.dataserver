@@ -31,10 +31,11 @@ from nti.appserver._util import uncached_in_response
 from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
+from nti.appserver.ugd_query_views import Operator
 from nti.appserver.ugd_edit_views import UGDPutView
 from nti.appserver.ugd_edit_views import UGDDeleteView
 from nti.appserver.ugd_feed_views import AbstractFeedView
-from nti.appserver.ugd_query_views import _flatten_list_and_dicts
+from nti.appserver.ugd_query_views import _combine_predicate
 from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
@@ -63,7 +64,6 @@ from nti.dataserver.contenttypes.forums.post import CommunityHeadlinePost
 from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.datastructures import LocatedExternalList
 
 from . import VIEW_PUBLISH
 from . import VIEW_UNPUBLISH
@@ -400,12 +400,13 @@ class ForumsContainerContentsGetView(UGDQueryView):
 			result = is_readable(x, self.request)
 		return result
 	
-	def getObjectsForId( self, *args ):
-		lastMod = self.request.context.lastModified
-		objects = LocatedExternalList(_flatten_list_and_dicts((self.request.context,), self._is_readable))
-		objects.lastModified = lastMod
-		return (objects,)
+	def _make_complete_predicate(self, operator=Operator.intersection):
+		predicate = super(ForumsContainerContentsGetView, self)._make_complete_predicate(operator)
+		predicate = _combine_predicate(self._is_readable, predicate, Operator.intersection)
+		return predicate
 
+	def getObjectsForId( self, *args ):
+		return (self.request.context,)
 
 @view_config( context=frm_interfaces.ICommunityBoard )
 class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
@@ -419,8 +420,8 @@ class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
 		# We need to somehow take the modification date of the children
 		# into account since we aren't tracking that directly (it doesn't
 		# propagate upward). TODO: This should be cached somewhere
-		forums = objects[0]
-		forumLastMod = max((x.lastModified for x in forums))
+		board = objects[0]
+		forumLastMod = max((x.lastModified for x in board.itervalues()))
 		lastMod = max(result.lastModified, forumLastMod)
 		result.lastModified = lastMod
 		super(CommunityBoardContentsGetView,self)._update_last_modified_after_sort( objects, result )
