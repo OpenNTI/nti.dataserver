@@ -75,7 +75,7 @@ def _get_cache( obj, name ):
 
 
 
-def _clear_caches( ):
+def _clear_caches():
 	req = get_current_request()
 	if req is None:
 		return
@@ -115,28 +115,28 @@ def _lineage_that_ensures_acls(obj):
 				yield ACLProxy( location, acl )
 
 
-def can_create(obj, request=None):
+def can_create(obj, request=None, skip_cache=False):
 	"""
 	Can the current user create over the specified object? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_writable_cache', ACT_CREATE, obj, request)
+	return _caching_permission_check('_acl_is_writable_cache', ACT_CREATE, obj, request, skip_cache=skip_cache)
 
-def is_writable(obj, request=None):
+def is_writable(obj, request=None, skip_cache=False):
 	"""
 	Is the given object writable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_writable_cache', ACT_UPDATE, obj, request)
+	return _caching_permission_check('_acl_is_writable_cache', ACT_UPDATE, obj, request, skip_cache=skip_cache)
 
-def is_readable(obj, request=None):
+def is_readable(obj, request=None, skip_cache=False):
 	"""
 	Is the given object readable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_readable_cache', ACT_READ, obj, request)
+	return _caching_permission_check('_acl_is_readable_cache', ACT_READ, obj, request, skip_cache=skip_cache)
 
-def _caching_permission_check(cache_name, permission, obj, request):
+def _caching_permission_check(cache_name, permission, obj, request, skip_cache=False):
 	"""
 	Check for the permission on the object. Assumes that the creator of the object
 	has full control.
@@ -144,13 +144,13 @@ def _caching_permission_check(cache_name, permission, obj, request):
 	if request is None:
 		request = get_current_request()
 
-	the_cache = _get_cache( request or _Fake(), cache_name )
+	the_cache = _get_cache(request or _Fake(), cache_name)
 	# The authentication information in use can actually change
 	# during the course of a single request due to authentication (used when broadcasting events)
 	# so our cache must be aware of this
-	principals, authn_policy, reg = _get_effective_principals( request )
+	principals, authn_policy, reg = _get_effective_principals(request)
 
-	cached_val = the_cache.get( (id(obj), principals), _marker )
+	cached_val = the_cache.get((id(obj), principals), _marker) if not skip_cache else _marker
 	if cached_val is not _marker:
 		return cached_val
 
@@ -174,7 +174,8 @@ def _caching_permission_check(cache_name, permission, obj, request):
 		except (KeyError,AttributeError,TypeError):
 			pass
 
-	the_cache[(id(obj),principals)] = check_value
+	if not skip_cache:
+		the_cache[(id(obj), principals)] = check_value
 
 	return check_value
 
