@@ -436,6 +436,9 @@ class _CreatedACLProvider(object):
 	_REQUIRE_CREATOR = False
 	_PERMS_FOR_CREATOR = (nti_interfaces.ALL_PERMISSIONS,)
 
+	def _perms_for_creator(self):
+		return self._PERMS_FOR_CREATOR
+
 	def _creator_acl( self ):
 		"""
 		Creates the ACL for just the creator; subclasses may call.
@@ -443,9 +446,9 @@ class _CreatedACLProvider(object):
 		:return: A fresh, mutable list containing at most one :class:`_ACE` for
 				the creator (if there is a creator).
 		"""
-		result = _ACL([ace_allowing( self._created.creator, x, self ) for x in self._PERMS_FOR_CREATOR]
-					if getattr(self._created, 'creator', None ) # They don't all comply with the interface
-					else [])
+		result = _ACL([ace_allowing(self._created.creator, x, self) for x in self._perms_for_creator()]
+					  if getattr(self._created, 'creator', None)  # They don't all comply with the interface
+					  else [])
 		if self._REQUIRE_CREATOR and len(result) != 1:
 			raise ValueError( "Unable to get creator", self._created )
 		return result
@@ -514,8 +517,11 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_READ, provenance ) )
 		acl.append( ace_allowing( authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, provenance ) )
 
+	def _perms_for_sharing_targets(self):
+		return self._PERMS_FOR_SHARING_TARGETS
+
 	def _extend_for_sharing_target( self, target, acl ):
-		for perm in self._PERMS_FOR_SHARING_TARGETS:
+		for perm in self._perms_for_sharing_targets():
 			acl.append( ace_allowing( target, perm, type(self) ) )
 
 	@Lazy
