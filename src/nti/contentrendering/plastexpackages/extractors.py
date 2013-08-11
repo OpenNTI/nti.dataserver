@@ -185,6 +185,9 @@ class _CourseExtractor(object):
 		for unit in units:
 			toc_el.appendChild(XMLDocument().createTextNode(u'\n		'))
 			toc_el.appendChild(self._process_unit(unit))
+		for node in self._process_communities(doc_el):
+			toc_el.appendChild(XMLDocument().createTextNode(u'\n		'))
+			toc_el.appendChild(node)
 		toc_el.appendChild(XMLDocument().createTextNode(u'\n	'))
 		return toc_el
 
@@ -213,6 +216,39 @@ class _CourseExtractor(object):
 		toc_el.setAttribute('date', doc_el.date.isoformat())
 		toc_el.setAttribute('topic-ntiid', doc_el.idref['label'].ntiid)
 		return toc_el
+
+	def _process_communities(self, doc_el):
+		communities = doc_el.getElementsByTagName('coursecommunity')
+		com_els = []
+		public = []
+		restricted = []
+		for community in communities:
+			entry_el = XMLDocument().createElement('entry')
+			entry_el.appendChild(XMLDocument().createTextNode(community.attributes['ntiid']))
+			if community.scope == 'restricted':
+				restricted.append(entry_el)
+			else:
+				public.append(entry_el)
+
+		if public:
+			scope_el = XMLDocument().createElement('scope')
+			scope_el.setAttribute('type', u'public')
+			for entry in public:
+				scope_el.appendChild(XMLDocument().createTextNode(u'\n			'))
+				scope_el.appendChild(entry)
+			scope_el.appendChild(XMLDocument().createTextNode(u'\n		'))
+			com_els.append(scope_el)
+
+		if restricted:
+			scope_el = XMLDocument().createElement('scope')
+			scope_el.setAttribute('type', u'restricted')
+			for entry in restricted:
+				scope_el.appendChild(XMLDocument().createTextNode(u'\n			'))
+				scope_el.appendChild(entry)
+			scope_el.appendChild(XMLDocument().createTextNode(u'\n		'))
+			com_els.append(scope_el)
+
+		return com_els
 
 @interface.implementer(crd_interfaces.IRelatedWorkExtractor)
 @component.adapter(crd_interfaces.IRenderedBook)

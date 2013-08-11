@@ -1,6 +1,6 @@
 # -*- mode: html -*-
 
-name: course courseunit courselessonref
+name: course courseunit courselessonref coursecommunity
 
 name: courselesson courseinfo
 <div tal:attributes="id self/id; data-ntiid self/ntiid">
