@@ -106,8 +106,7 @@ class _ContentPackageExternal(object):
 
 		isCourse = getattr(self.package, 'isCourse', False)
 		result['isCourse'] = isCourse
-		if isCourse:
-			result['courseName'] = getattr(self.package, 'courseName', u'')
+		result['courseName'] = getattr(self.package, 'courseName', u'')
 
 		result['installable'] = self.package.installable
 		if self.package.installable:

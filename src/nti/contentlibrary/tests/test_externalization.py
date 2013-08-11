@@ -19,6 +19,7 @@ from hamcrest import greater_than_or_equal_to
 from hamcrest import has_key
 from hamcrest import is_not
 from hamcrest import is_
+from hamcrest import none
 
 from nti.contentlibrary import filesystem
 from nti.contentlibrary import boto_s3
@@ -36,7 +37,6 @@ setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.externalizati
 tearDownModule = nti.tests.module_teardown
 
 from unittest import TestCase
-import boto.s3.bucket
 import boto.s3.key
 import fudge
 
@@ -82,6 +82,9 @@ class TestExternalization(TestCase):
 		assert_that( result,
 					 has_entry( 'isCourse', True ) )
 		assert_that( result, has_entry( 'Class', 'ContentPackage' ) )
+
+		assert_that(result,
+					has_entry('courseName', is_(none())))
 
 		# More coverage
 		assert_that( result,
