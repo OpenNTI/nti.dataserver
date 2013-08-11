@@ -63,7 +63,8 @@ def test_externalizes():
 	forum = ACLCommunityForum()
 	forum.ACL = [ace]
 	external = toExternalObject(forum)
-	assert_that(external, has_entry('MimeType', u'application/vnd.nextthought.forums.aclcommunityforum'))
+	assert_that(external, has_entry('Class', u'CommunityForum'))
+	assert_that(external, has_entry('MimeType', u'application/vnd.nextthought.forums.communityforum'))
 	assert_that(external, has_entry('ACL', has_length(1)))
 	ace_external = external['ACL'][0]
 	assert_that(ace_external,
