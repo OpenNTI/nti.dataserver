@@ -380,11 +380,6 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		if False and frm_interfaces.IHeadlineTopic.providedBy( request.context ) and self.request.subpath:
 			self.result_iface = app_interfaces.IETagCachedUGDExternalCollection
 
-	# def getObjectsForId(self, user, ntiid):
-	# 	objects = super(ForumsContainerContentsGetView, self).getObjectsForId()
-	# 	objects = [x for x in _flatten_list_and_dicts(objects) if is_readable(x, self.request)]
-	# 	return objects
-
 	def __call__( self ):
 		try:
 			# See if we are something that maintains reliable modification dates
@@ -400,7 +395,7 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		return super(ForumsContainerContentsGetView,self).__call__()
 
 	def getObjectsForId( self, *args ):
-		return (self.request.context,)
+		return (self.request.context,) if is_readable(self.request.context, self.request) else ()
 
 
 @view_config( context=frm_interfaces.ICommunityBoard )
