@@ -290,6 +290,13 @@ class _RelatedWorkExtractor(object):
 					else:
 						icon = ''
 
+					if ref_el.uri == '':
+						ref_el.uri = ref_el.relatedwork.uri
+						ref_el.regen_target_ntiid()
+
+					if ref_el.description == '':
+						ref_el.description = ref_el.relatedwork.description
+
 					toc_el = dom.createElement('content:related')
 					toc_el.setAttribute('label', ref_el.relatedwork.title)
 					toc_el.setAttribute('creator', ref_el.relatedwork.creator)
