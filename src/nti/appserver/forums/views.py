@@ -339,7 +339,6 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 
-
 @view_config(context=frm_interfaces.IBoard)
 @view_config(context=frm_interfaces.ICommunityHeadlineTopic)
 @view_config(context=frm_interfaces.IPersonalBlogEntry)
@@ -395,7 +394,9 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		return super(ForumsContainerContentsGetView,self).__call__()
 
 	def getObjectsForId( self, *args ):
-		return (self.request.context,) if is_readable(self.request.context, self.request) else ()
+		predicate = lambda x : is_readable(x, self.request)
+		objects = list(_flatten_list_and_dicts((self.request.context,), predicate))
+		return (objects,)
 
 
 @view_config( context=frm_interfaces.ICommunityBoard )
@@ -410,8 +411,8 @@ class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
 		# We need to somehow take the modification date of the children
 		# into account since we aren't tracking that directly (it doesn't
 		# propagate upward). TODO: This should be cached somewhere
-		board = objects[0]
-		forumLastMod = max( (x.lastModified for x in board.itervalues()) )
+		forums = objects[0]
+		forumLastMod = max((x.lastModified for x in forums))
 		lastMod = max(result.lastModified, forumLastMod)
 		result.lastModified = lastMod
 		super(CommunityBoardContentsGetView,self)._update_last_modified_after_sort( objects, result )
