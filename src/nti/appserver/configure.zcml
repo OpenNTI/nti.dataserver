@@ -365,7 +365,7 @@
 
 	<include package=".policies" file="configure.zcml" />
 	<include package="." file="configure_invitations.zcml" />
-	<include package="." file="configure_store.zcml" />
+	<include package=".store" file="configure.zcml" />
 	
 	<include package=".forums" />
 	<include package=".dashboard" />
