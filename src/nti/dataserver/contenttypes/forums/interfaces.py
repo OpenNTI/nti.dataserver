@@ -343,6 +343,8 @@ DELETE_PERMISSION = u'Delete'
 PERMISSIONS = (ALL_PERMISSIONS, READ_PERMISSION, WRITE_PERMISSION, CREATE_PERMISSION, DELETE_PERMISSION)
 PERMISSIONS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PERMISSIONS])
 
+# This is defined to allow control to whom can create a forum or a board in a class
+# Eventually this neends to be migrated to forums inside a special class object
 class IForumACE(interface.Interface):
 	Action = schema.Choice(vocabulary=ACTION_VOCABULARY, title='ACE action', required=True)
 	Entities = ListOrTuple(value_type=ValidTextLine(title="entity id"), title="entities ids", required=True)
