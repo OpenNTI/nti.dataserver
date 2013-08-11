@@ -382,7 +382,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 		locked = parsed.pop('Locked', None)
 		updated = super(DynamicFriendsList, self).updateFromExternalObject(parsed, *args, **kwargs)
 		if locked is not None:
-			updated.Locked = locked
+			self.Locked = locked
 			self.updateLastMod()
 		return 	updated
 
