@@ -131,23 +131,36 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
 	
-	def get_acl(self):
+	def _get_forum_acl(self):
 		return getattr(self.context, 'ACL', ())
 
+	def _perms_for_creator(self):
+		# if there is a forum ACL make sure the don't give any permissions to the creator
+		# only admins would be able to delete the forum
+		acl = self._get_forum_acl()
+		if not acl:
+			return super(_ACLCommunityForumACLProvider, self)._perms_for_creator()
+		return ()
+
 	def _get_sharing_target_names(self):
-		acl = self.get_acl()
+		acl = self._get_forum_acl()
 		if not acl:
 			return super(_ACLCommunityForumACLProvider, self)._get_sharing_target_names()
 		return ()
 	
-	def _resolve_entity(self, eid):
-		result = None
+	def _resolve_action(self, action):
+		result = ace_allowing if action == nti_interfaces.ACE_ACT_ALLOW else ace_denying
+		return result
+
+	def _resolve_entities(self, eid):
+		result = ()
 		if ntiids.is_valid_ntiid_string(eid):
 			dfl = ntiids.find_object_with_ntiid(eid)
 			if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(dfl):
-				result = dfl
+				result = (dfl, dfl.creator)  # make sure we  specify the DFL creator
 		else:
-			result = Entity.get_entity(eid)
+			entity = Entity.get_entity(eid)
+			result = (entity,) if entity is not None else ()
 		return result
 	
 	def _resolve_perm(self, perm):
@@ -161,18 +174,19 @@ class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
 		return result
 
 	def _extend_acl_after_creator_and_sharing(self, acl):
-		forum_acl = self.get_acl()
+		forum_acl = self._get_forum_acl()
 		if not forum_acl:
 			super(_ACLCommunityForumACLProvider, self)._extend_acl_after_creator_and_sharing(acl)
 		else:
-			self._extend_with_admin_privs(acl)  # always include admin
+			# always include admin
+			self._extend_with_admin_privs(acl)
+			# loop over the aces
 			for ace in forum_acl:
 				for action, eid, perm in ace:
-					action = ace_allowing if action == nti_interfaces.ACE_ACT_ALLOW else ace_denying
 					perm = self._resolve_perm(perm)
-					resolved = self._resolve_entity(eid)
-					if resolved:
-						acl.append(action(resolved, perm, self))
+					action = self._resolve_action(action)
+					for entity in self._resolve_entities(eid):
+						acl.append(action(entity, perm, self))
 
 
 # FIXME: this has to be removed
