@@ -77,6 +77,23 @@ class course(Environment, plastexids.NTIIDMixin):
             super(course.courseannouncementboard, self).digest(tokens)
             self.parentNode.announcement_board = self.attributes.get('ntiid')
 
+    class coursecommunity(Command):
+        args = '[ options:dict ] ntiid:str'
+        
+        def digest(self, tokens):
+            tok = super(course.coursecommunity,self).digest(tokens)
+
+            options = self.attributes.get( 'options', {} ) or {}
+            if 'scope' in options:
+                self.scope = options['scope']
+            else:
+                self.scope = u'public'
+            
+            __traceback_info__ = options, self.attributes
+
+            return tok
+
+
 class courseunitname(Command):
     pass
 
