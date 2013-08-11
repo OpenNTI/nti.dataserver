@@ -58,8 +58,7 @@ class EditLinkDecorator(object):
 			except AttributeError:
 				pass
 
-
-		if is_writable( context ):
+		if is_writable(context, skip_cache=True):
 			# TODO: This is weird, assuming knowledge about the URL structure here
 			# Should probably use request ILocationInfo to traverse back up to the ISite
 			__traceback_info__ = context, mapping

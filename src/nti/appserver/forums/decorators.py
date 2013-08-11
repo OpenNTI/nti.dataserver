@@ -170,7 +170,7 @@ class ForumObjectContentsLinkProvider(object):
 		self.add_link(VIEW_CONTENTS, context, mapping, request, elements)
 
 		# Check the create permission in the forum acl.
-		if request is None or can_create(context, request):
+		if request is None or can_create(context, request, skip_cache=True):
 			link = self.add_link('add', context, mapping, request, elements)
 			link.method = 'POST'
 
