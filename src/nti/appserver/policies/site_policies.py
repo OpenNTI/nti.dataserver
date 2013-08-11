@@ -916,9 +916,9 @@ class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	Implements the policy for ``platform.ou.edu``.
 	"""
 
-	#COM_USERNAME = 'ou.edu'
-	#COM_ALIAS = 'OU'
-	#COM_REALNAME = "The University of Oklahoma"
+	COM_USERNAME = 'ou.nextthought.com'
+	COM_ALIAS = 'OU'
+	COM_REALNAME = "The University of Oklahoma"
 
 @interface.implementer(ISitePolicyUserEventListener)
 class OUTestSitePolicyEventListener(OUSitePolicyEventListener):
@@ -926,9 +926,9 @@ class OUTestSitePolicyEventListener(OUSitePolicyEventListener):
 	Implements the policy for the ou test site.
 	"""
 
-	#COM_USERNAME = 'ou-test.nextthought.com'
-	#COM_ALIAS = 'TEST OU TEST'
-	#COM_REALNAME = 'TEST The University of Oklahoma TEST'
+	COM_USERNAME = 'ou-test.nextthought.com'
+	COM_ALIAS = '*OU*'
+	COM_REALNAME = '*The University of Oklahoma*'
 
 
 ###
