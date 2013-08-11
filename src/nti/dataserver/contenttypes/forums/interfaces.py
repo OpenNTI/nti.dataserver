@@ -358,6 +358,7 @@ class IACLCommunityForum(IACLGeneralForum, ICommunityForum):
 	"""
 	A community with its own ACL
 	"""
+IACLCommunityForum.setTaggedValue('__external_class_name__', "CommunityForum")
 
 class IClassForum(ICommunityForum):
 	"""
