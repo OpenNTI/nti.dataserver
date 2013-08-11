@@ -102,8 +102,12 @@ class _ContentPackageExternal(object):
 
 		result['version'] = '1.0' # This field was never defined. What does it mean?  I think we were thinking of generations
 		result['renderVersion'] = self.package.renderVersion
-		result['isCourse'] = getattr(self.package, 'isCourse', False)
 		result[StandardExternalFields.NTIID] = self.package.ntiid
+
+		isCourse = getattr(self.package, 'isCourse', False)
+		result['isCourse'] = isCourse
+		if isCourse:
+			result['courseName'] = getattr(self.package, 'courseName', u'')
 
 		result['installable'] = self.package.installable
 		if self.package.installable:
