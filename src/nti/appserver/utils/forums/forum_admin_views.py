@@ -13,13 +13,14 @@ import six
 
 from zope import interface
 
-import pyramid.httpexceptions  as hexc
+import pyramid.httpexceptions as hexc
 
 from pyramid.view import view_config
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.forums.ace import ForumACE
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.appserver.utils import _JsonBodyView
@@ -56,6 +57,9 @@ class SetClassCommunityForum(_JsonBodyView):
 			if forum is None:
 				raise hexc.HTTPNotFound(detail='Forum not found')
 
-		interface.alsoProvides(forum, frm_interfaces.IClassForum)
-		setattr(forum, 'Instructors', list(instructors))
+		if not frm_interfaces.IACLCommunityForum.providedBy(forum):
+			interface.alsoProvides(forum, frm_interfaces.IACLCommunityForum)
+
+		ace = ForumACE(Action='Allow', Permissions=('All',), Entities=list(instructors))
+		setattr(forum, 'ACL', [ace])
 		return hexc.HTTPNoContent()

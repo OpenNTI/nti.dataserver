@@ -34,6 +34,7 @@ from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 from nti.appserver.ugd_edit_views import UGDPutView
 from nti.appserver.ugd_edit_views import UGDDeleteView
 from nti.appserver.ugd_feed_views import AbstractFeedView
+from nti.appserver.ugd_query_views import _flatten_list_and_dicts
 from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
@@ -66,6 +67,7 @@ from nti.externalization.interfaces import StandardExternalFields
 from . import VIEW_PUBLISH
 from . import VIEW_UNPUBLISH
 from . import VIEW_CONTENTS
+from ..pyramid_authorization import is_readable
 
 @interface.implementer(app_interfaces.IContainerCollection)
 @component.adapter(app_interfaces.IUserWorkspace)
@@ -325,7 +327,6 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 @view_config(context=frm_interfaces.IForum)
 @view_config(context=frm_interfaces.ICommunityForum)
 @view_config(context=frm_interfaces.ICommunityBoard)
-@view_config(context=frm_interfaces.IClassForum)
 @view_config(context=frm_interfaces.IPersonalBlog)  # need to re-list this one
 @view_config(context=frm_interfaces.IPersonalBlogEntry)  # need to re-list this one
 @view_config(context=frm_interfaces.IPersonalBlogComment)  # need to re-list this one
@@ -378,6 +379,11 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		# to HTTP cache them.
 		if False and frm_interfaces.IHeadlineTopic.providedBy( request.context ) and self.request.subpath:
 			self.result_iface = app_interfaces.IETagCachedUGDExternalCollection
+
+	# def getObjectsForId(self, user, ntiid):
+	# 	objects = super(ForumsContainerContentsGetView, self).getObjectsForId()
+	# 	objects = [x for x in _flatten_list_and_dicts(objects) if is_readable(x, self.request)]
+	# 	return objects
 
 	def __call__( self ):
 		try:
