@@ -43,6 +43,8 @@ from . import interfaces as store_interfaces
 from .payments import pyramid_views as payment_pyramid
 from .utils import is_valid_pve_int, raise_field_error, is_valid_timestamp
 
+DS_STORE_PATH = u'/dataserver2/store/'
+
 class _PurchaseAttemptView(object):
 
 	def __init__(self, request):

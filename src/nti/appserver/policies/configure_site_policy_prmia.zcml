@@ -58,7 +58,7 @@
 		<subscriber factory="nti.appserver.logon._ExistingOpenIdUserLoginLinkProvider"
 					provides="nti.appserver.interfaces.ILogonLinkProvider" />
 					
-		<subscriber handler="nti.appserver.store_views.prmia_purchase_attempt_successful" />
+		<subscriber handler="nti.appserver.store.views.prmia_purchase_attempt_successful" />
 
 		<!-- PRMIA PROD KEYS -->
 

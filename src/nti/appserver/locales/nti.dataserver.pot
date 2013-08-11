@@ -106,7 +106,7 @@ msgstr ""
 msgid "Username ${username} cannot include any part of the real name ${realname}."
 msgstr ""
 
-#: src/nti/appserver/store_views.py:92
+#: src/nti/appserver/store/views.py:92
 msgid "Purchase Confirmation"
 msgstr ""
 
