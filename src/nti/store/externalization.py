@@ -26,10 +26,10 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from . import invitations
 from . import purchase_history
+from .pyramid_views import DS_STORE_PATH
 from . import interfaces as store_interfaces
 
 LINKS = ext_interfaces.StandardExternalFields.LINKS
-DS_STORE_PATH = u'/dataserver2/store/'
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
 @component.adapter(store_interfaces.IPurchaseItem)
