@@ -49,6 +49,10 @@ PRMIA = BaseComponents(BASEADULT, name='prmia.nextthought.com', bases=(BASEADULT
 FINTECH = BaseComponents(BASEADULT, name='fintech.nextthought.com', bases=(BASEADULT,))
 COLUMBIA = BaseComponents(BASEADULT, name='columbia.nextthought.com', bases=(BASEADULT,))
 
+# for OU
+OU = BaseComponents(BASEADULT, name='platform.ou.edu', bases=(BASEADULT,))
+OUTEST = BaseComponents(BASEADULT, name='ou-test.nextthought.com', bases=(OU,))
+
 def _reinit():
 	"""
 	ZCA cleans up the base registry on testing cleanup. It does so by

@@ -1,0 +1,16 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" />
+	<include package="z3c.baseregistry" file="meta.zcml" />
+
+	<utility
+		component=".sites.OUTEST"
+		provides="zope.component.interfaces.IComponents"
+		name="ou-test.nextthought.com" />
+
+	<registerIn registry=".sites.OUTEST">
+		<utility factory=".site_policies.OUTestSitePolicyEventListener" />
+	</registerIn>
+</configure>

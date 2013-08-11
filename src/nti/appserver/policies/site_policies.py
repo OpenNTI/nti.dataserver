@@ -908,6 +908,29 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 				logger.info("User '%s' added to DFL '%s" % (user, self.DFL_NAME))
 				break
 
+#OU site policies
+
+@interface.implementer(ISitePolicyUserEventListener)
+class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+	"""
+	Implements the policy for ``platform.ou.edu``.
+	"""
+
+	#COM_USERNAME = 'ou.edu'
+	#COM_ALIAS = 'OU'
+	#COM_REALNAME = "The University of Oklahoma"
+
+@interface.implementer(ISitePolicyUserEventListener)
+class OUTestSitePolicyEventListener(OUSitePolicyEventListener):
+	"""
+	Implements the policy for the ou test site.
+	"""
+
+	#COM_USERNAME = 'ou-test.nextthought.com'
+	#COM_ALIAS = 'TEST OU TEST'
+	#COM_REALNAME = 'TEST The University of Oklahoma TEST'
+
+
 ###
 # Columbia site profiles.
 # These are somewhat special in that the users may already have an existing adult profile,
@@ -951,3 +974,6 @@ def ColumbiaBusinessUserProfileFactory(context):
 				columbia_profile._p_changed = True
 				break
 		return columbia_profile
+
+
+#
