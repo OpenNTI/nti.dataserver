@@ -134,7 +134,13 @@ class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
 	def _get_forum_acl(self):
 		return getattr(self.context, 'ACL', ())
 
-	def _perms_for_creator(self):
+	def _do_get_deny_all(self):
+		acl = self._get_forum_acl()
+		if not acl:
+			return super(_ACLCommunityForumACLProvider, self)._do_get_deny_all()
+		return True
+
+	def _do_get_perms_for_creator(self):
 		# if there is a forum ACL make sure the don't give any permissions to the creator
 		# only admins would be able to delete the forum
 		acl = self._get_forum_acl()

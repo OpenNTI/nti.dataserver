@@ -386,6 +386,9 @@ class _EntityACLProvider(object):
 	def _viewers(self):
 		return ( nti_interfaces.AUTHENTICATED_GROUP_NAME, )
 
+	def _do_get_deny_all(self):
+		return self._DENY_ALL
+
 	@Lazy
 	def __acl__( self ):
 		"""
@@ -396,7 +399,7 @@ class _EntityACLProvider(object):
 		for viewer in self._viewers():
 			acl.append( ace_allowing( viewer, authorization.ACT_READ, self) )
 		_add_admin_moderation( acl, self )
-		if self._DENY_ALL:
+		if self._do_get_deny_all():
 			# Everyone else can do nothing
 			acl.append( _ace_denying_all( _EntityACLProvider ) )
 		return acl
@@ -436,7 +439,7 @@ class _CreatedACLProvider(object):
 	_REQUIRE_CREATOR = False
 	_PERMS_FOR_CREATOR = (nti_interfaces.ALL_PERMISSIONS,)
 
-	def _perms_for_creator(self):
+	def _do_get_perms_for_creator(self):
 		return self._PERMS_FOR_CREATOR
 
 	def _creator_acl( self ):
@@ -446,7 +449,7 @@ class _CreatedACLProvider(object):
 		:return: A fresh, mutable list containing at most one :class:`_ACE` for
 				the creator (if there is a creator).
 		"""
-		result = _ACL([ace_allowing(self._created.creator, x, self) for x in self._perms_for_creator()]
+		result = _ACL([ace_allowing(self._created.creator, x, self) for x in self._do_get_perms_for_creator()]
 					  if getattr(self._created, 'creator', None)  # They don't all comply with the interface
 					  else [])
 		if self._REQUIRE_CREATOR and len(result) != 1:
@@ -481,6 +484,9 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 
 	_DENY_ALL = False
 	_PERMS_FOR_SHARING_TARGETS = (authorization.ACT_READ,)
+
+	def _do_get_deny_all(self):
+		return self._DENY_ALL
 
 	def _get_sharing_target_names(self):
 		"""
@@ -517,11 +523,11 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_READ, provenance ) )
 		acl.append( ace_allowing( authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, provenance ) )
 
-	def _perms_for_sharing_targets(self):
+	def _do_get_perms_for_sharing_targets(self):
 		return self._PERMS_FOR_SHARING_TARGETS
 
 	def _extend_for_sharing_target( self, target, acl ):
-		for perm in self._perms_for_sharing_targets():
+		for perm in self._do_get_perms_for_sharing_targets():
 			acl.append( ace_allowing( target, perm, type(self) ) )
 
 	@Lazy
@@ -535,7 +541,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 			__traceback_info__ = name
 			self._extend_for_sharing_target( name, result )
 		self._extend_acl_after_creator_and_sharing( result )
-		if self._DENY_ALL:
+		if self._do_get_deny_all():
 			self._extend_acl_before_deny( result )
 			result.append( _ace_denying_all( type(self) ) )
 		return result
