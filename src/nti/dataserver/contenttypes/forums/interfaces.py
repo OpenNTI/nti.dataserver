@@ -335,6 +335,10 @@ class IGeneralForumComment(IGeneralPost, nti_interfaces.IShouldHaveTraversablePa
 ACTIONS = (nti_interfaces.ACE_ACT_ALLOW, nti_interfaces.ACE_ACT_DENY)
 ACTION_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in ACTIONS])
 
+# ACL Boards and Forums.
+# This is defined to allow control to whom can create a forum or a board in a class
+# Eventually this neends to be migrated to forums inside a special class object
+
 ALL_PERMISSIONS = u'All'
 READ_PERMISSION = u'Read'
 WRITE_PERMISSION = u'Write'
@@ -343,8 +347,6 @@ DELETE_PERMISSION = u'Delete'
 PERMISSIONS = (ALL_PERMISSIONS, READ_PERMISSION, WRITE_PERMISSION, CREATE_PERMISSION, DELETE_PERMISSION)
 PERMISSIONS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PERMISSIONS])
 
-# This is defined to allow control to whom can create a forum or a board in a class
-# Eventually this neends to be migrated to forums inside a special class object
 class IForumACE(interface.Interface):
 	Action = schema.Choice(vocabulary=ACTION_VOCABULARY, title='ACE action', required=True)
 	Entities = ListOrTuple(value_type=ValidTextLine(title="entity id"), title="entities ids", required=True)
@@ -352,6 +354,21 @@ class IForumACE(interface.Interface):
 
 class IACLEnabled(interface.Interface):
 	ACL = ListOrTuple(value_type=Object(IForumACE, title="the ace"), title="ACL spec", required=False)
+
+# ACL Boards
+
+class IACLGeneralBoard(IACLEnabled, IGeneralBoard):
+	"""
+	A general purpose forum that has its own ACL
+	"""
+
+class IACLCommunityBoard(IACLGeneralBoard, ICommunityBoard):
+	"""
+	A community board with its own ACL
+	"""
+IACLCommunityBoard.setTaggedValue('__external_class_name__', "CommunityBoard")
+
+# ACL Forums
 	
 class IACLGeneralForum(IACLEnabled, IForum, nti_interfaces.ICreated):
 	"""
@@ -360,6 +377,7 @@ class IACLGeneralForum(IACLEnabled, IForum, nti_interfaces.ICreated):
 
 class IACLCommunityForum(IACLGeneralForum, ICommunityForum):
 	"""
-	A community with its own ACL
+	A community forum with its own ACL
 	"""
 IACLCommunityForum.setTaggedValue('__external_class_name__', "CommunityForum")
+
