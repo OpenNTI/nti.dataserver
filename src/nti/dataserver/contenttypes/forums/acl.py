@@ -23,7 +23,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.dataserver.users import users
 from nti.dataserver.users import Entity
 from nti.dataserver import authorization as nauth
 from nti.dataserver.traversal import find_interface
@@ -138,6 +137,7 @@ class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
 		acl = self._get_forum_acl()
 		if not acl:
 			return super(_ACLCommunityForumACLProvider, self)._do_get_deny_all()
+		# don't allow inheritance
 		return True
 
 	def _do_get_perms_for_creator(self):
@@ -146,12 +146,14 @@ class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
 		acl = self._get_forum_acl()
 		if not acl:
 			return super(_ACLCommunityForumACLProvider, self)._perms_for_creator()
+		# no permission for creator. ACL will be set in _extend_acl_after_creator_and_sharing
 		return ()
 
 	def _get_sharing_target_names(self):
 		acl = self._get_forum_acl()
 		if not acl:
 			return super(_ACLCommunityForumACLProvider, self)._get_sharing_target_names()
+		# no one sharing. ACL will be set in _extend_acl_after_creator_and_sharing
 		return ()
 	
 	def _resolve_action(self, action):
@@ -194,22 +196,3 @@ class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
 					for entity in self._resolve_entities(eid):
 						acl.append(action(entity, perm, self))
 
-
-# FIXME: this has to be removed
-class _ClassForumACLProvider(_CommunityForumACLProvider):
-	"""
-	Only the shared users can create new topics within it. Everyone else can read
-	"""
-
-	_CLASS_FORUM = True
-	_PERMS_FOR_SHARING_TARGETS = AbstractCreatedAndSharedACLProvider._PERMS_FOR_SHARING_TARGETS
-
-	def _get_sharing_target_names(self):
-		return (self.context.creator,)  # ICommunity
-
-	def _extend_acl_after_creator_and_sharing(self, acl):
-		self._extend_with_admin_privs(acl)
-		for username in getattr(self.context, 'Instructors', ()):
-			instructor = users.User.get_user(username)
-			if instructor:
-				acl.append(ace_allowing(instructor, nti_interfaces.ALL_PERMISSIONS, self))

@@ -52,7 +52,6 @@ class Board(Base,
 class GeneralBoard(Board):
 	__external_can_create__ = False
 
-
 @interface.implementer(for_interfaces.ICommunityBoard)
 class CommunityBoard(GeneralBoard,_CreatedNamedNTIIDMixin):
 	__external_can_create__ = False
@@ -101,3 +100,9 @@ class BoardNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	"""
 	leaf_iface = for_interfaces.IBoard
 
+
+@interface.implementer(for_interfaces.IACLCommunityBoard)
+class ACLCommunityBoard(CommunityBoard):
+	__external_can_create__ = True
+	mime_type = 'application/vnd.nextthought.forums.communityboard'
+	ACL = ()
