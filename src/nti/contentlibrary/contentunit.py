@@ -66,7 +66,6 @@ class ContentPackage(ContentUnit):
 
 	root = None
 	index = None
-	isCourse = False
 	index_last_modified = None
 	index_jsonp = None
 	installable = False
@@ -80,6 +79,10 @@ class ContentPackage(ContentUnit):
 	contributors = ()
 	publisher = ''
 	description = ''
+
+	# Course support
+	isCourse = False
+	courseName = None
 
 	# : A tuple of things thrown by the implementation's
 	# : IO methods that represent transient states that may

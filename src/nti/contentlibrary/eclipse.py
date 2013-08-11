@@ -142,9 +142,15 @@ def EclipseContentPackage( toc_entry,
 	if renderVersion:
 		content_package.renderVersion = int(renderVersion)
 		
-	isCourse = root.get( 'isCourse' )
-	isCourse = False if not isCourse else str(isCourse).lower() in ('1', 'true', 'yes')
+	isCourse = root.get('isCourse')
+	isCourse = False if not isCourse else str(isCourse).lower() in ('1', 'true', 'yes', 'y', 't')
 	content_package.isCourse = isCourse
+	if isCourse:
+		courses = root.xpath('/toc/course')
+		courseName = courses[0].get('courseName') if courses else None
+	else:
+		courseName = None
+	content_package.courseName = courseName
 
 	if content_package.does_sibling_entry_exist( ARCHIVE_FILENAME ):
 		content_package.archive = ARCHIVE_FILENAME
