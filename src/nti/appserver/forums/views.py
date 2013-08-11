@@ -63,6 +63,7 @@ from nti.dataserver.contenttypes.forums.post import CommunityHeadlinePost
 from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.datastructures import LocatedExternalList
 
 from . import VIEW_PUBLISH
 from . import VIEW_UNPUBLISH
@@ -393,9 +394,16 @@ class ForumsContainerContentsGetView(UGDQueryView):
 
 		return super(ForumsContainerContentsGetView,self).__call__()
 
+	def _is_readable(self, x):
+		result = True
+		if frm_interfaces.IACLEnabled.providedBy(x):
+			result = is_readable(x, self.request)
+		return result
+	
 	def getObjectsForId( self, *args ):
-		predicate = lambda x : is_readable(x, self.request)
-		objects = list(_flatten_list_and_dicts((self.request.context,), predicate))
+		lastMod = self.request.context.lastModified
+		objects = LocatedExternalList(_flatten_list_and_dicts((self.request.context,), self._is_readable))
+		objects.lastModified = lastMod
 		return (objects,)
 
 

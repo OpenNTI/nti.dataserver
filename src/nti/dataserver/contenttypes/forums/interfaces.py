@@ -348,11 +348,13 @@ class IForumACE(interface.Interface):
 	Entities = ListOrTuple(value_type=ValidTextLine(title="entity id"), title="entities ids", required=True)
 	Permissions = ListOrTuple(value_type=schema.Choice(vocabulary=PERMISSIONS_VOCABULARY, title='ACE permission'), required=True)
 
-class IACLGeneralForum(IForum, nti_interfaces.ICreated):
+class IACLEnabled(interface.Interface):
+	ACL = ListOrTuple(value_type=Object(IForumACE, title="the ace"), title="ACL spec", required=False)
+	
+class IACLGeneralForum(IACLEnabled, IForum, nti_interfaces.ICreated):
 	"""
 	A general purpose forum that has its own ACL
 	"""
-	ACL = ListOrTuple(value_type=Object(IForumACE, title="the ace"), title="ACL spec", required=False)
 
 class IACLCommunityForum(IACLGeneralForum, ICommunityForum):
 	"""
