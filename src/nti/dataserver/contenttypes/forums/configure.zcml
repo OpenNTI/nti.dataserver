@@ -96,9 +96,6 @@
 	<adapter factory=".acl._PostACLProvider" />
 			 
 	<adapter factory=".acl._ACLCommunityForumACLProvider"
-			 for=".interfaces.IACLGeneralForum"/>	
-			 
-	<adapter factory=".acl._ClassForumACLProvider"
-			 for=".interfaces.IClassForum"/>		
+			 for=".interfaces.IACLGeneralForum"/>		
 			 
 </configure>

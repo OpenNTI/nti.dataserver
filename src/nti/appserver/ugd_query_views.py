@@ -91,6 +91,19 @@ def _lists_and_dicts_to_iterables( lists_and_dicts ):
 		result.append( to_iter )
 	return result, lastMod
 
+def _flatten_list_and_dicts(lists_and_dicts):
+	for list_or_dict in lists_and_dicts:
+		if list_or_dict is None:
+			continue
+		try:
+			to_iter = list_or_dict.itervalues()
+		except (AttributeError, TypeError):
+			to_iter = list_or_dict
+
+		for item in to_iter:
+			if item is not None:
+				yield item
+
 def _iterables_to_filtered_iterables( iterables, predicate ):
 	if predicate is _TRUE:
 		return iterables

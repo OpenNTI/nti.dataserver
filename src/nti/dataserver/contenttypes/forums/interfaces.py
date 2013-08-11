@@ -359,9 +359,3 @@ class IACLCommunityForum(IACLGeneralForum, ICommunityForum):
 	A community with its own ACL
 	"""
 IACLCommunityForum.setTaggedValue('__external_class_name__', "CommunityForum")
-
-class IClassForum(ICommunityForum):
-	"""
-	A forum belonging to a particular class.
-	"""
-	Instructors = ListOrTuple(value_type=ValidTextLine(title="uid"), title="user ids", required=False)

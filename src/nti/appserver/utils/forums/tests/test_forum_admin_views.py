@@ -8,7 +8,6 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.externalization.externalization import to_json_representation
@@ -18,7 +17,7 @@ from nti.appserver.tests.test_application import TestApp
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length, none, is_not, has_property)
+from hamcrest import (assert_that, is_, has_length)
 
 class TestForumAdminViews(SharedApplicationTestBase):
 
@@ -49,12 +48,9 @@ class TestForumAdminViews(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			comm = users.Community.get_community('bleach')
 			forum = frm_interfaces.ICommunityForum(comm)
-			assert_that(frm_interfaces.IClassForum.providedBy(forum), is_(True))
+			assert_that(frm_interfaces.IACLCommunityForum.providedBy(forum), is_(True))
 
-			instructors = getattr(forum, 'Instructors', None)
-			assert_that(instructors, is_not(none()))
-			assert_that(instructors, has_length(3))
+			acl = getattr(forum, 'ACL', None)
+			assert_that(acl, has_length(1))
 
-			provider = nti_interfaces.IACLProvider(forum)
-			assert_that(provider, has_property('_CLASS_FORUM', is_(True)))
 
