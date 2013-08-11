@@ -11,6 +11,9 @@ import six
 
 from zope import interface
 from zope import component
+from zope.container.interfaces import ILocation
+
+from nti.dataserver.links import Link
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization import interfaces as ext_interfaces
@@ -23,6 +26,9 @@ from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
 from ...externalization import PricedItemExternal
 from ...externalization import PricedItemDecorator
+
+LINKS = ext_interfaces.StandardExternalFields.LINKS
+DS_STORE_PATH = u'/dataserver2/store/'
 
 def _makenone(s):
 	if isinstance(s, six.string_types) and s == 'None':
@@ -64,18 +70,6 @@ class StripeCouponExternalizer(object):
 			result['MaxRedemptions'] = self.coupon.max_redemptions
 		return result
 
-@component.adapter(store_interfaces.IPurchasable)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class PurchasableDecorator(object):
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalObject(self, original, external):
-		keyname = original.Provider
-		result = component.queryUtility(stripe_interfaces.IStripeConnectKey, keyname)
-		if result:
-			external['StripeConnectKey'] = toExternalObject(result)
-
 @interface.implementer(IInternalObjectIO)
 @component.adapter(stripe_interfaces.IStripePurchaseError)
 class StripePurchaseErrorExternal(InterfaceObjectIO):
@@ -89,3 +83,25 @@ class StripePricedItemExternal(PricedItemExternal):
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class StripePricedItemDecorator(PricedItemDecorator):
 	pass
+
+@component.adapter(store_interfaces.IPurchasable)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class PurchasableDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def set_links(self, original, external):
+		if original.Amount:
+			_links = external.setdefault(LINKS, [])
+			price_href = DS_STORE_PATH + 'price_purchasable_with_stripe_coupon'
+			link = Link(price_href, rel="price_with_stripe_coupon")
+			interface.alsoProvides(link, ILocation)
+			link.method = 'Post'
+			_links.append(link)
+
+	def decorateExternalObject(self, original, external):
+		keyname = original.Provider
+		result = component.queryUtility(stripe_interfaces.IStripeConnectKey, keyname)
+		if result:
+			external['StripeConnectKey'] = toExternalObject(result)
+		self.set_links(original, external)
