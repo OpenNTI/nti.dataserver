@@ -76,6 +76,7 @@ class SetCommunityBoardACL(_JsonBodyView):
 
 		# set acl
 		setattr(board, 'ACL', acl)
+		board.updateLastMod()
 		return hexc.HTTPNoContent()
 
 def _validate_community(values):
@@ -124,6 +125,7 @@ class SetCommunityForumACL(_JsonBodyView):
 			interface.alsoProvides(forum, frm_interfaces.IACLCommunityForum)
 
 		setattr(forum, 'ACL', acl)
+		forum.updateLastMod()
 		return hexc.HTTPNoContent()
 
 @view_config(route_name='objects.generic.traversal',
@@ -148,5 +150,6 @@ class DeleteCommunityForum(_JsonBodyView):
 			if forum is None:
 				raise hexc.HTTPNotFound(detail='Forum not found')
 			del board[forum_name]
+			board.updateLastMod()
 
 		return hexc.HTTPNoContent()
