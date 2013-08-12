@@ -128,49 +128,19 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 			acl.append( ace_allowing( topic_creator, nauth.ACT_DELETE, self ) )
 			acl.append( ace_allowing( topic_creator, nauth.ACT_READ, self ) )
 
-class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
-	
-	def _get_forum_acl(self):
-		return getattr(self.context, 'ACL', ())
 
-	def _do_get_deny_all(self):
-		acl = self._get_forum_acl()
-		if not acl:
-			return super(_ACLCommunityForumACLProvider, self)._do_get_deny_all()
-		# don't allow inheritance
-		return True
+###################################################
+# ACL Providers for ACL dependent forums and boards
+###################################################
 
-	def _do_get_perms_for_creator(self):
-		# if there is a forum ACL make sure the don't give any permissions to the creator
-		# only admins would be able to delete the forum
-		acl = self._get_forum_acl()
-		if not acl:
-			return super(_ACLCommunityForumACLProvider, self)._perms_for_creator()
-		# no permission for creator. ACL will be set in _extend_acl_after_creator_and_sharing
-		return ()
+class _ACLBasedProvider(object):
 
-	def _get_sharing_target_names(self):
-		acl = self._get_forum_acl()
-		if not acl:
-			return super(_ACLCommunityForumACLProvider, self)._get_sharing_target_names()
-		# no one sharing. ACL will be set in _extend_acl_after_creator_and_sharing
-		return ()
-	
+	@classmethod
 	def _resolve_action(self, action):
 		result = ace_allowing if action == nti_interfaces.ACE_ACT_ALLOW else ace_denying
 		return result
 
-	def _resolve_entities(self, eid):
-		result = ()
-		if ntiids.is_valid_ntiid_string(eid):
-			dfl = ntiids.find_object_with_ntiid(eid)
-			if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(dfl):
-				result = (dfl, dfl.creator)  # make sure we  specify the DFL creator
-		else:
-			entity = Entity.get_entity(eid)
-			result = (entity,) if entity is not None else ()
-		return result
-	
+	@classmethod
 	def _resolve_perm(self, perm):
 		result = nauth.ACT_READ
 		if perm in (frm_interfaces.ALL_PERMISSIONS, frm_interfaces.WRITE_PERMISSION):
@@ -181,8 +151,56 @@ class _ACLCommunityForumACLProvider(_CommunityForumACLProvider):
 			result = nauth.ACT_DELETE
 		return result
 
+	@classmethod
+	def _resolve_entities(self, eid):
+		result = ()
+		if ntiids.is_valid_ntiid_string(eid):
+			dfl = ntiids.find_object_with_ntiid(eid)
+			if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(dfl):
+				result = (dfl, dfl.creator)  # make sure we  specify the DFL creator
+		else:
+			entity = Entity.get_entity(eid)
+			result = (entity,) if entity is not None else ()
+		return result
+
+	def _get_context_acl(self):
+		return getattr(self.context, 'ACL', ())
+
+class _ACLCommunityBoardACLProvider(_CommunityBoardACLProvider, _ACLBasedProvider):
+
+	def _get_sharing_target_names(self):
+		return ()
+
 	def _extend_acl_after_creator_and_sharing(self, acl):
-		forum_acl = self._get_forum_acl()
+		self._extend_with_admin_privs(acl)
+
+class _ACLCommunityForumACLProvider(_CommunityForumACLProvider, _ACLBasedProvider):
+	
+	def _do_get_deny_all(self):
+		acl = self._get_context_acl()
+		if not acl:
+			return super(_ACLCommunityForumACLProvider, self)._do_get_deny_all()
+		# don't allow inheritance
+		return True
+
+	def _do_get_perms_for_creator(self):
+		# if there is a forum ACL make sure the don't give any permissions to the creator
+		# only admins would be able to delete the forum
+		acl = self._get_context_acl()
+		if not acl:
+			return super(_ACLCommunityForumACLProvider, self)._perms_for_creator()
+		# no permission for creator. ACL will be set in _extend_acl_after_creator_and_sharing
+		return ()
+
+	def _get_sharing_target_names(self):
+		acl = self._get_context_acl()
+		if not acl:
+			return super(_ACLCommunityForumACLProvider, self)._get_sharing_target_names()
+		# no one sharing. ACL will be set in _extend_acl_after_creator_and_sharing
+		return ()
+
+	def _extend_acl_after_creator_and_sharing(self, acl):
+		forum_acl = self._get_context_acl()
 		if not forum_acl:
 			super(_ACLCommunityForumACLProvider, self)._extend_acl_after_creator_and_sharing(acl)
 		else:

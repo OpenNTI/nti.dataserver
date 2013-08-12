@@ -54,3 +54,41 @@ class TestForumAdminViews(SharedApplicationTestBase):
 			assert_that(acl, has_length(1))
 
 
+	@WithSharedApplicationMockDS
+	def test_set_community_board_acl(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+			aizen = self._create_user(username='aizen@nt.com')
+			ichigo = self._create_user(username='ichigo@nt.com')
+			kuchiki = self._create_user(username='kuchiki@nt.com')
+
+			comm = users.Community.create_community(self.ds, username='bleach')
+			for user in (aizen, ichigo, kuchiki):
+				user.join_community(comm)
+
+		testapp = TestApp(self.app)
+
+		path = '/dataserver2/@@set_community_board_acl'
+		environ = self._make_extra_environ()
+		data = to_json_representation({'community': 'bleach',
+									   'ACL': [ {"Action": "Allow", 
+												 "Class": "ForumACE", 
+												 "Entities": ["aizen@nt.com"], 
+												 "MimeType": "application/vnd.nextthought.forums.ace", 
+												 "Permissions": ["All"] },
+												{"Action": "Allow", 
+												 "Class": "ForumACE", 
+												 "Entities": ["ichigo@nt.com", 'kuchiki@nt.com'], 
+												 "MimeType": "application/vnd.nextthought.forums.ace", 
+												 "Permissions": ["All"] }
+											   ] } )
+		res = testapp.post(path, data, extra_environ=environ)
+		assert_that(res.status_int, is_(204))
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			comm = users.Community.get_community('bleach')
+			board = frm_interfaces.ICommunityBoard(comm)
+			assert_that(frm_interfaces.IACLCommunityBoard.providedBy(board), is_(True))
+
+			acl = getattr(board, 'ACL', None)
+			assert_that(acl, has_length(2))

@@ -100,9 +100,3 @@ class BoardNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	"""
 	leaf_iface = for_interfaces.IBoard
 
-
-@interface.implementer(for_interfaces.IACLCommunityBoard)
-class ACLCommunityBoard(CommunityBoard):
-	__external_can_create__ = True
-	mime_type = 'application/vnd.nextthought.forums.communityboard'
-	ACL = ()
