@@ -85,8 +85,6 @@ class TestExternalization(TestCase):
 
 		assert_that(result,
 					has_entry('courseName', is_(none())))
-		assert_that(result,
-					has_entry('courseIdentifier', is_(none())))
 
 		# More coverage
 		assert_that( result,
