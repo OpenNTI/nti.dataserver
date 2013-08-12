@@ -152,7 +152,7 @@ class PricedItemDecorator(object):
 class CourseDecorator(PurchasableDecorator):
 
 	def set_links(self, username, original, external):
-		if not original.Amount is None:
+		if original.Amount is None:
 			_links = external.setdefault(LINKS, [])
 			if not purchase_history.has_history_by_item(username, original.NTIID):
 				erroll_path = DS_STORE_PATH + 'erroll_course'
@@ -165,4 +165,4 @@ class CourseDecorator(PurchasableDecorator):
 			interface.alsoProvides(link, ILocation)
 			_links.append(link)
 		else:
-			super(CourseDecorator, self).set_links(original, external)
+			super(CourseDecorator, self).set_links(username, original, external)
