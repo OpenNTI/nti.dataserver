@@ -5,7 +5,6 @@ Adapters and utilities for working with avatar URLs.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -168,10 +167,15 @@ class EntityGravatarComputedAvatarURLChoices(object):
 	"""
 
 	def __init__( self, context ):
-		self.avatarURL = interfaces.IAvatarURL( context ).avatarURL
+		try:
+			self.avatarURL = interfaces.IAvatarURL(context).avatarURL
+		except KeyError:  # pragma: no cover
+			# Typically POSKeyError blob not found?
+			logger.exception('Could not resolve avatar URL')
+			self.avatarURL = None
 
 	def get_choices( self ):
-		return (self.avatarURL,)
+		return (self.avatarURL,) if self.avatarURL else ()
 
 
 @component.adapter(nti_interfaces.IUser)
