@@ -168,11 +168,14 @@ class _ACLBasedProvider(object):
 
 class _ACLCommunityBoardACLProvider(_CommunityBoardACLProvider, _ACLBasedProvider):
 
-	def _get_sharing_target_names(self):
-		return ()
-
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		self._extend_with_admin_privs(acl)
+		for ace in self._get_context_acl() or ():
+			for action, eid, perm in ace:
+				perm = self._resolve_perm(perm)
+				action = self._resolve_action(action)
+				for entity in self._resolve_entities(eid):
+					acl.append(action(entity, perm, self))
 
 class _ACLCommunityForumACLProvider(_CommunityForumACLProvider, _ACLBasedProvider):
 	
