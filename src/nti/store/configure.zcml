@@ -67,6 +67,6 @@
 	<!--
 		The purchasables included in here are only for test purposes
 	-->
-	<include file="purchasable.zcml" zcml:condition="have devmode"/>
+	<include file="_sample.zcml" zcml:condition="have devmode"/>
 
 </configure>

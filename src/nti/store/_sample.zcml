@@ -2,6 +2,7 @@
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:cos="http://nextthought.com/ntp/course"
 			xmlns:pcs="http://nextthought.com/ntp/purchasable">
 
 	<include package="zope.component" file="meta.zcml" />
@@ -23,5 +24,12 @@
 		bulk_purchase="True"
 		license="1 Year License"
 		items="tag:nextthought.com,2011-10:NextThought-HTML-NextThoughtHelpCenter.nextthought_help_center" />
+
+	<cos:registerCourse
+		ntiid="tag:nextthought.com,2011-10:NextThought-course-CourseTestContent"
+		title="NTI Test Course"
+		description="The Process and Methods to Decipher Problems"
+		author="NTI"
+		items="tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.course_test_content" />
 
 </configure>
