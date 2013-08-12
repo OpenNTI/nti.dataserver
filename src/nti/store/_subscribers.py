@@ -34,11 +34,12 @@ def _purchase_attempt_started(event):
 	_update_state(purchase, store_interfaces.PA_STATE_STARTED)
 	logger.info('%r started' % purchase)
 
-def _activate_items(purchase, user=None):
+def _activate_items(purchase, user=None, add_roles=True):
 	user = user or purchase.creator
 	purchase_history.activate_items(user, purchase.Items)
-	lib_items = purchasable.get_content_items(purchase.Items)
-	content_roles.add_users_content_roles(user, lib_items)
+	if add_roles:
+		lib_items = purchasable.get_content_items(purchase.Items)
+		content_roles.add_users_content_roles(user, lib_items)
 
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful(event):
@@ -51,10 +52,12 @@ def _purchase_attempt_successful(event):
 		_activate_items(purchase)
 	logger.info('%r completed successfully', purchase)
 
-def _return_items(purchase, user=None):
-	if purchase is not None:
-		user = user or purchase.creator
-		purchase_history.deactivate_items(user, purchase.Items)
+def _return_items(purchase, user=None, remove_foles=True):
+	if purchase is None:
+		return
+	user = user or purchase.creator
+	purchase_history.deactivate_items(user, purchase.Items)
+	if remove_foles:
 		lib_items = purchasable.get_content_items(purchase.Items)
 		content_roles.remove_users_content_roles(user, lib_items)
 
