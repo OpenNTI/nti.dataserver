@@ -36,6 +36,12 @@ NTIID_TYPE_GENERAL_BOARD = NTIID_TYPE_BOARD + ':General'
 #: The subtype of NTIID used to represent a :class:`.ICommunityBoard`
 NTIID_TYPE_COMMUNITY_BOARD = NTIID_TYPE_GENERAL_BOARD + 'Community'
 
+# The subtype of NTIID used to represent a :class:`.IClassBoard`
+NTIID_TYPE_CLASS_BOARD = NTIID_TYPE_GENERAL_BOARD + 'Class'
+
+# The subtype of NTIID used to represent a :class:`.ISectionBoard`
+NTIID_TYPE_CLASS_SECTION_BOARD = NTIID_TYPE_GENERAL_BOARD + 'ClassSection'
+
 #: The type of NTIID used for a :class:`IForum` object
 NTIID_TYPE_FORUM = 'Forum'
 
@@ -47,6 +53,12 @@ NTIID_TYPE_GENERAL_FORUM = NTIID_TYPE_FORUM + ':General'
 
 #: The subtype of NTIID used to represent a :class:`.ICommunityForum`
 NTIID_TYPE_COMMUNITY_FORUM = NTIID_TYPE_GENERAL_FORUM + 'Community'
+
+#: The subtype of NTIID used to represent a :class:`.ICommunityForum`
+NTIID_TYPE_CLASS_FORUM = NTIID_TYPE_GENERAL_FORUM + 'Class'
+
+#: The subtype of NTIID used to represent a :class:`.ICommunityForum`
+NTIID_TYPE_CLASS_SECTION_FORUM = NTIID_TYPE_GENERAL_FORUM + 'ClassSection'
 
 #: The type of NTIID used for a :class:`ITopic`
 NTIID_TYPE_TOPIC = 'Topic'
@@ -294,11 +306,39 @@ class ICommunityBoard(IGeneralBoard, nti_interfaces.IShouldHaveTraversablePath):
 	__setitem__.__doc__ = None
 
 
+class IClassBoard(IGeneralBoard, nti_interfaces.IShouldHaveTraversablePath):
+	"""
+	A board belonging to a particular class.
+	"""
+	contains(b'.IClassForum')
+	__setitem__.__doc__ = None
+
+class IClassSectionBoard(IGeneralBoard, nti_interfaces.IShouldHaveTraversablePath):
+	"""
+	A board belonging to a particular class section
+	"""
+	contains(b'.IClassSectionForum')
+	__setitem__.__doc__ = None
+
 class ICommunityForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
 	"""
 	A forum belonging to a particular community.
 	"""
 	containers(nti_interfaces.ICommunity, ICommunityBoard)
+	__parent__.required = False
+
+class IClassForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
+	"""
+	A forum belonging to a particular class.
+	"""
+	containers(nti_interfaces.IClassInfo, IClassBoard)
+	__parent__.required = False
+
+class IClassSectionForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
+	"""
+	A forum belonging to a particular class section.
+	"""
+	containers(nti_interfaces.ISectionInfo, IClassSectionBoard)
 	__parent__.required = False
 
 class IGeneralTopic(ITopic):

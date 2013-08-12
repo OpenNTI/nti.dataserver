@@ -57,6 +57,16 @@ class CommunityBoard(GeneralBoard,_CreatedNamedNTIIDMixin):
 	__external_can_create__ = False
 	_ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_BOARD
 
+@interface.implementer(for_interfaces.IClassBoard)
+class ClassBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
+	__external_can_create__ = False
+	_ntiid_type = for_interfaces.NTIID_TYPE_CLASS_BOARD
+
+@interface.implementer(for_interfaces.IClassSectionBoard)
+class ClassSectionBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
+	__external_can_create__ = False
+	_ntiid_type = for_interfaces.NTIID_TYPE_CLASS_SECTION_BOARD
+
 def _prepare_annotation_board(clazz, iface, creator, title, name=None):
 	board = clazz()
 	board.__parent__ = creator
@@ -76,6 +86,13 @@ def _prepare_annotation_board(clazz, iface, creator, title, name=None):
 		raise errors[0][1]
 	return board
 
+def _adapt_fixed_board(owner, board_cls, board_iface, name='Discussion Board'):
+	annotations = an_interfaces.IAnnotations(owner)
+	board = annotations.get(board_cls.__default_name__)
+	if board is None:
+		board = _prepare_annotation_board(board_cls, board_iface, owner, name)
+	return board
+
 @interface.implementer(for_interfaces.ICommunityBoard)
 @component.adapter(nti_interfaces.ICommunity)
 def GeneralBoardCommunityAdapter(community):
@@ -86,10 +103,28 @@ def GeneralBoardCommunityAdapter(community):
 	purpose forum that always exists)
 	"""
 	# TODO: Note the similarity to personalBlogAdapter
-	annotations = an_interfaces.IAnnotations( community )
-	board = annotations.get( CommunityBoard.__default_name__ )
-	if board is None:
-		board = _prepare_annotation_board(CommunityBoard, for_interfaces.ICommunityBoard, community, 'Discussion Board')
+	board = _adapt_fixed_board(community, CommunityBoard, for_interfaces.ICommunityBoard)
+	return board
+
+@interface.implementer(for_interfaces.ICommunityBoard)
+@component.adapter(nti_interfaces.IClassInfo)
+def GeneralBoardClassAdapter(clazz):
+	"""
+	For the moment, we will say that all classes have a single board, in the same
+	way of communities. Only administrators can create forums
+	within the board
+	"""
+	board = _adapt_fixed_board(clazz, ClassBoard, for_interfaces.IClassBoard)
+	return board
+
+@interface.implementer(for_interfaces.IClassSectionBoard)
+@component.adapter(nti_interfaces.ISectionInfo)
+def GeneralBoardClassSectionAdapter(section):
+	"""
+	For the moment, we will say that all class sections have a single board, in the same
+	way of classrs. Only administrators can create forums within the board
+	"""
+	board = _adapt_fixed_board(section, ClassSectionBoard, for_interfaces.IClassSectionBoard)
 	return board
 
 @component.adapter(for_interfaces.IBoard)
