@@ -45,5 +45,41 @@
 				name="PHIL 1203"
 				items="tag:nextthought.com,2011-10:OU-HTML-PHIL1203_HumanDestiny.phil_1203__philosophy_and_human_destiny,_east_and_west" />
 
+		<pcs:registerCourse
+				ntiid="tag:nextthought.com,2011-10:OU-course-METR2603SevereAndUnusualWeather"
+				title="Severe and Unusual Weather"
+				communities="METR2603.ou-test.nextthought.com"
+				description="Provide non-majors and majors a detailed descriptive account of the physical processes important in the formation of various severe and unusual weather phenomena including: thunderstorms, tornadoes, hail storms, lightning, hurricanes, midlatitude snowstorms, lake effect snows, atmospheric optical effects, and global climate change. This course does not count for major credit in the School of Meteorology."
+				author="Susan E Postawko"
+				name="METR 2603"
+				items="tag:nextthought.com,2011-10:OU-HTML-METR2603_SevereWeather.metr_2603__understanding_severe_and_unusual_weather" />
+
+		<pcs:registerCourse
+				ntiid="tag:nextthought.com,2011-10:OU-course-CHEM1315GeneralChemistry"
+				title="General Chemistry"
+				communities="CHEM1315.ou-test.nextthought.com"
+				description="First of a two-semester sequence in general chemistry. Topics covered: basic measurement, gas laws and changes in state, stoichiometry, atomic theory, electron configuration, periodicity, bonding, molecular structure and thermochemistry."
+				author="Mark Morvant"
+				name="CHEM 1315"
+				items="tag:nextthought.com,2011-10:OU-HTML-CHEM1315_GeneralChemistry.chem_1315__general_chemistry" />
+
+		<pcs:registerCourse
+				ntiid="tag:nextthought.com,2011-10:OU-course-IAS2003UnderstandingTheGlobalCommunity"
+				title="Understanding the Global Community"
+				communities="IAS2003.ou-test.nextthought.com"
+				description="The world today is an interdependent global community that requires an awareness of international politics and economics. This course seeks to enhance our understanding of the global community because of the impact of international relations on our lives and the lives of others around the world."
+				author="Suzette Grillot"
+				name="IAS 2003"
+				items="tag:nextthought.com,2011-10:OU-HTML-CourseReader_IAS2003.course_reader_ias_2003" />
+
+		<pcs:registerCourse
+				ntiid="tag:nextthought.com,2011-10:OU-course-SOC3123"
+				title="Social Statistics"
+				communities="SOC3123.ou-test.nextthought.com"
+				description="Descriptive and inferential statistics as they are used in sociology to analyze survey and macro-level data. Problems of research design and interpretation of analysis in sociological theory are major topics. A grade of C or higher in this course is a prerequisite for Sociology capstone courses."
+				author="B. Mitch Peck"
+				name="SOC 3123"
+				items="tag:nextthought.com,2011-10:OU-HTML-CourseReader_IAS2003.course_reader_ias_2003" />
+
 	</registerIn>
 </configure>
