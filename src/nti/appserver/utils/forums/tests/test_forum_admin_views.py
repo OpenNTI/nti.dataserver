@@ -25,35 +25,6 @@ class TestForumAdminViews(SharedApplicationTestBase):
 	features = SharedApplicationTestBase.features + ('forums',)
 
 	@WithSharedApplicationMockDS
-	def test_set_class_community_forum(self):
-		with mock_dataserver.mock_db_trans(self.ds):
-			self._create_user()
-			aizen = self._create_user(username='aizen@nt.com')
-			ichigo = self._create_user(username='ichigo@nt.com')
-			kuchiki = self._create_user(username='kuchiki@nt.com')
-
-			comm = users.Community.create_community(self.ds, username='bleach')
-			for user in (aizen, ichigo, kuchiki):
-				user.record_dynamic_membership(comm)
-
-		testapp = TestApp(self.app)
-
-		path = '/dataserver2/@@set_class_community_forum'
-		environ = self._make_extra_environ()
-		data = to_json_representation({'community': 'bleach',
-									   'instructors': ['aizen@nt.com', 'ichigo@nt.com', 'kuchiki@nt.com'] })
-		
-		res = testapp.post(path, data, extra_environ=environ)
-		assert_that(res.status_int, is_(204))
-
-		with mock_dataserver.mock_db_trans(self.ds):
-			comm = users.Community.get_community('bleach')
-			forum = frm_interfaces.ICommunityForum(comm)
-			assert_that(frm_interfaces.IACLCommunityForum.providedBy(forum), is_(True))
-			acl = getattr(forum, 'ACL', None)
-			assert_that(acl, has_length(1))
-
-	@WithSharedApplicationMockDS
 	def test_set_community_forum_acl(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
