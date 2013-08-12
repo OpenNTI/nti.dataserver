@@ -371,6 +371,9 @@ class IStorePurchaseInvitation(interface.Interface):
 	pass
 
 class ICourse(IPurchasable):
+	Name = nti_schema.ValidTextLine(title='Course Name', required=False)
+	Communities = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The community identifier'), title="Communities")
+	# overrides
 	Amount = schema.Float(title="Cost amount", required=False, min=0.0)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=False)
 	Provider = nti_schema.ValidTextLine(title='Course provider', required=False)

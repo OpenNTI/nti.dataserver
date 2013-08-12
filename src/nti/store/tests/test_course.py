@@ -48,6 +48,8 @@ class TestCourse(ConfiguringTestBase):
 		assert_that(ps.BulkPurchase, is_(False))
 		assert_that(ps.Items, has_length(1))
 		assert_that(ps.License, is_(none()))
+		assert_that(ps.Name, is_('CLC 3403'))
+		assert_that(ps.Communities, has_length(1))
 
 	@WithMockDSTrans
 	def test_available(self):

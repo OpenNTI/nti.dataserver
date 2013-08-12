@@ -16,6 +16,7 @@ from nti.utils.schema import AdaptingFieldProperty
 from nti.utils.schema import createDirectFieldProperties
 
 from . import purchasable
+from . import to_frozenset
 from . import interfaces as store_interfaces
 
 @interface.implementer(store_interfaces.ICourse)
@@ -33,18 +34,25 @@ class Course(purchasable.Purchasable):
 		except AttributeError:
 			return NotImplemented
 
-def create_course(ntiid, provider=None, amount=None, currency=None, items=(), fee=None, title=None, license_=None,
-				  author=None, description=None, icon=None, discountable=False, bulk_purchase=False):
+def create_course(ntiid, name=None, provider=None, amount=None, currency=None, items=(), fee=None, title=None,
+				  license_=None, author=None, description=None, icon=None, discountable=False,
+				  bulk_purchase=False, communities=()):
 	if amount and not provider:
 		raise AssertionError("Must specfify a provider")
 
 	if amount and not currency:
 		raise AssertionError("Must specfify a currency")
 
-	result = purchasable.create_purchasable(ntiid=ntiid, provider=provider, amount=amount, currency=currency,
-											items=items, fee=fee, title=title, license_=license_, author=author,
-											description=description, icon=icon, discountable=discountable,
-											bulk_purchase=bulk_purchase, cls=Course)
+	fee = float(fee) if fee is not None else None
+	amount = float(amount) if amount is not None else amount
+	communities = to_frozenset(communities) if items else None
+	items = to_frozenset(items) if items else frozenset((ntiid,))
+
+	result = Course(NTIID=ntiid, Name=name, Provider=provider, Title=title, Author=author,
+					Items=items, Description=description, Amount=amount, Currency=currency,
+					Fee=fee, License=license_, Discountable=discountable, BulkPurchase=bulk_purchase,
+				 	Icon=icon, Communities=communities)
+
 	return result
 
 @interface.implementer(nid_interfaces.INTIIDResolver)

@@ -78,4 +78,4 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 			pur = component.getUtility(IPurchasable, name="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse")
 			assert_that(pur, verifiably_provides(IPurchasable))
 			assert_that(pur, has_property('Description',
-											"also here is some text\n\t\t& some more text\n\t\t\n\t\t<p>html paragraph</p>\n\t\t<div class='foo'>html div</div>"))
+										  "also here is some text\n\t\t& some more text\n\t\t\n\t\t<p>html paragraph</p>\n\t\t<div class='foo'>html div</div>"))

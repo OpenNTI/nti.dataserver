@@ -81,14 +81,13 @@ class Purchasable(content_bundle.ContentBundle):
 		return (a_acl.ace_allowing(nti_interfaces.EVERYONE_USER_NAME, authorization.ACT_READ, self),)
 
 def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=None, title=None, license_=None,
-					   author=None, description=None, icon=None, discountable=False, bulk_purchase=True,
-					   cls=Purchasable):
+					   author=None, description=None, icon=None, discountable=False, bulk_purchase=True):
 	fee = float(fee) if fee is not None else None
 	amount = float(amount) if amount is not None else amount
 	items = to_frozenset(items) if items else frozenset((ntiid,))
-	result = cls(NTIID=ntiid, Provider=provider, Title=title, Author=author, Items=items,
-				 Description=description, Amount=amount, Currency=currency, Fee=fee,
-				 License=license_, Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
+	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Author=author, Items=items,
+						 Description=description, Amount=amount, Currency=currency, Fee=fee,
+						 License=license_, Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon)
 	return result
 
 @interface.implementer(store_interfaces.IPurchasableStore)
