@@ -19,6 +19,12 @@
 	<adapter factory=".board.GeneralBoardCommunityAdapter"
 			 provides=".interfaces.ICommunityBoard" />
 			 
+	<adapter factory=".board.GeneralBoardClassAdapter"
+			 provides=".interfaces.IClassBoard" />
+			 
+	<adapter factory=".board.GeneralBoardClassSectionAdapter"
+			 provides=".interfaces.IClassSectionBoard" />
+			 
 	<adapter provides="zope.location.interfaces.ISublocations"
 			 for=".interfaces.IHeadlineTopic"
 			 factory=".topic.HeadlineTopicSublocations" />

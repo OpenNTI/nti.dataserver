@@ -238,6 +238,16 @@ class CommunityForum(GeneralForum):
 	_ntiid_type = frm_interfaces.NTIID_TYPE_COMMUNITY_FORUM
 
 @interface.implementer(frm_interfaces.ICommunityForum)
+class ClassForum(GeneralForum):
+	__external_can_create__ = False
+	_ntiid_type = frm_interfaces.NTIID_TYPE_CLASS_FORUM
+
+@interface.implementer(frm_interfaces.IClassSectionForum)
+class ClassSectionForum(GeneralForum):
+	__external_can_create__ = False
+	_ntiid_type = frm_interfaces.NTIID_TYPE_CLASS_SECTION_FORUM
+
+@interface.implementer(frm_interfaces.ICommunityForum)
 @component.adapter(nti_interfaces.ICommunity)
 def GeneralForumCommunityAdapter(community):
 	"""
