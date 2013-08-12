@@ -34,7 +34,7 @@ class TestForumAdminViews(SharedApplicationTestBase):
 
 			comm = users.Community.create_community(self.ds, username='bleach')
 			for user in (aizen, ichigo, kuchiki):
-				user.join_community(comm)
+				user.record_dynamic_membership(comm)
 
 		testapp = TestApp(self.app)
 
@@ -64,7 +64,7 @@ class TestForumAdminViews(SharedApplicationTestBase):
 
 			comm = users.Community.create_community(self.ds, username='bleach')
 			for user in (aizen, ichigo, kuchiki):
-				user.join_community(comm)
+				user.record_dynamic_membership(comm)
 
 		testapp = TestApp(self.app)
 
