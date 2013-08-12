@@ -23,6 +23,7 @@ from zope.container.interfaces import INameChooser
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults  # NOTE: Only usable on classes
+from pyramid import httpexceptions as hexc
 
 from nti.utils._compat import aq_base
 
@@ -339,6 +340,11 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 @view_defaults( **_r_view_defaults )
 class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
+	def __call__(self):
+		result = super(ForumGetView, self).__call__()
+		if result is not None and not  is_readable(result) :
+			raise hexc.HTTPForbidden()
+		return result
 
 @view_config(context=frm_interfaces.IBoard)
 @view_config(context=frm_interfaces.ICommunityHeadlineTopic)
