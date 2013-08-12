@@ -163,6 +163,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		assert_that(ext, has_entry('Amount', is_(none())))
 		assert_that(ext, has_entry('Currency', is_(none())))
 		assert_that(ext, has_entry('Provider', is_(none())))
+		assert_that(ext, has_entry('Featured', is_(True)))
 		assert_that(ext, has_entry('Icon', is_("http://www.ou.edu/icon.gif")))
 		assert_that(ext, has_entry('Thumbnail', is_("http://www.ou.edu/thumbnail.gif")))
 		assert_that(ext, has_entry('ID', is_('tag:nextthought.com,2011-10:OU-course-CLC3403LawAndJustice')))
