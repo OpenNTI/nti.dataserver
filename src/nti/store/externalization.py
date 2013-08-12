@@ -7,6 +7,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import os
 import urllib
 
 from zope import interface
@@ -26,7 +27,6 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from . import invitations
 from . import purchase_history
-from .pyramid_views import DS_STORE_PATH
 from . import interfaces as store_interfaces
 
 LINKS = ext_interfaces.StandardExternalFields.LINKS
@@ -96,21 +96,23 @@ class PurchasableDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
-	def set_links(self, username, original, external):
+	def set_links(self, request, username, original, external):
 		if original.Amount:
+			request = get_current_request()
+			_ds_path = os.path.split(request.current_route_path())[0]
 			_links = external.setdefault(LINKS, [])
+
 			# insert history link
 			if purchase_history.has_history_by_item(username, original.NTIID):
-				history_path = DS_STORE_PATH + 'get_purchase_history?purchasableID=%s'
+				history_path = _ds_path + '/get_purchase_history?purchasableID=%s'
 				history_href = history_path % urllib.quote(original.NTIID)
 				link = Link(history_href, rel="history")
 				interface.alsoProvides(link, ILocation)
 				_links.append(link)
 
 			# insert price link
-			price_href = DS_STORE_PATH + 'price_purchasable'
-			link = Link(price_href, rel="price")
-			link.method = 'Post'
+			price_href = _ds_path + '/price_purchasable'
+			link = Link(price_href, rel="price", method='Post')
 			interface.alsoProvides(link, ILocation)
 			_links.append(link)
 		
@@ -127,10 +129,11 @@ class PurchasableDecorator(object):
 		external['Activated'] = activated
 
 	def decorateExternalObject(self, original, external):
-		username = authenticated_userid(get_current_request())
+		request = get_current_request()
+		username = authenticated_userid(request) if request else None
 		if username:
 			self.add_activation(username, original, external)
-			self.set_links(username, original, external)
+			self.set_links(request, username, original, external)
 		self.add_library_details(original, external)
 
 @component.adapter(store_interfaces.IPricedItem)
@@ -151,18 +154,18 @@ class PricedItemDecorator(object):
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class CourseDecorator(PurchasableDecorator):
 
-	def set_links(self, username, original, external):
-		if original.Amount is None:
-			_links = external.setdefault(LINKS, [])
-			if not purchase_history.has_history_by_item(username, original.NTIID):
-				erroll_path = DS_STORE_PATH + 'erroll_course'
-				link = Link(erroll_path, rel="erroll")
-			else:
-				unerroll_path = DS_STORE_PATH + 'unerroll_course'
-				link = Link(unerroll_path, rel="erroll")
-
-			link.method = 'Post'
-			interface.alsoProvides(link, ILocation)
-			_links.append(link)
+	def set_links(self, request, username, original, external):
+		if original.Amount is not None:
+			super(CourseDecorator, self).set_links(request, username, original, external)
 		else:
-			super(CourseDecorator, self).set_links(username, original, external)
+			request = get_current_request()
+			_ds_path = os.path.split(request.current_route_path())[0]
+			if not purchase_history.has_history_by_item(username, original.NTIID):
+				erroll_path = _ds_path + '/enroll_course'
+				link = Link(erroll_path, rel="enroll", method='Post')
+			else:
+				unerroll_path = _ds_path + '/unenroll_course'
+				link = Link(unerroll_path, rel="unenroll", method='Post')
+			interface.alsoProvides(link, ILocation)
+			external.setdefault(LINKS, []).append(link)
+
