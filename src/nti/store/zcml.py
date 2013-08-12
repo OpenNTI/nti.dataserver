@@ -43,6 +43,7 @@ class IRegisterPurchasableDirective(interface.Interface):
 
 class IRegisterCourseDirective(IRegisterPurchasableDirective):
 	name = schema.TextLine(title="Course name", required=False)
+	featured = schema.Bool(title="Featured flag", required=False)
 	communities = fields.Tokens(value_type=schema.TextLine(title='The community'), title="Course communities", required=False)
 	# overrides
 	amount = schema.Float(title="Cost amount", required=False)
@@ -66,15 +67,16 @@ def registerPurchasable(_context, ntiid, provider, title, description=None, amou
 
 def registerCourse(_context, ntiid, title, description=None, provider=None, amount=None, currency=None,
 				   items=None, fee=None, author=None, icon=None, thumbnail=None, license=None,
-				   discountable=False, bulk_purchase=False, name=None, communities=None):
+				   discountable=False, bulk_purchase=False, name=None, communities=None, featured=False):
 	"""
 	Register a course
 	"""
 	description = _context.info.text.strip() if description is None else description
 	factory = functools.partial(create_course, ntiid=ntiid, provider=provider, title=title, author=author,
 								name=name, description=description, items=items, amount=amount,
-								currency=currency, icon=icon, fee=fee, license_=license, thumbnail=thumbnail,
-								communities=communities, discountable=discountable, bulk_purchase=bulk_purchase)
+								currency=currency, icon=icon, fee=fee, license_=license,
+								thumbnail=thumbnail, communities=communities, discountable=discountable,
+								bulk_purchase=bulk_purchase, featured=featured)
 	utility(_context, provides=store_interfaces.ICourse, factory=factory, name=ntiid)
 	logger.debug("Course '%s' has been registered", ntiid)
 
