@@ -71,8 +71,17 @@ class IPurchasable(mgt_interfaces.IContentBundle):
 	BulkPurchase = schema.Bool(title="Bulk purchase flag", required=True, default=False)
 	Fee = schema.Float(title="Percentage fee", required=False, min=0.0)
 	Icon = nti_schema.ValidTextLine(title='Icon URL', required=False)
+	Thumbnail = nti_schema.ValidTextLine(title='Thumbnail URL', required=False)
 	Provider = nti_schema.ValidTextLine(title='Purchasable item provider', required=True)
 	License = nti_schema.ValidTextLine(title='Purchasable license', required=False)
+
+class ICourse(IPurchasable):
+	Name = nti_schema.ValidTextLine(title='Course Name', required=False)
+	Communities = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The community identifier'), title="Communities")
+	# overrides
+	Amount = schema.Float(title="Cost amount", required=False, min=0.0)
+	Currency = nti_schema.ValidTextLine(title='Currency amount', required=False)
+	Provider = nti_schema.ValidTextLine(title='Course provider', required=False)
 
 class IPriceable(interface.Interface):
 	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
@@ -370,10 +379,3 @@ class IPurchaseHistory(IIterable):
 class IStorePurchaseInvitation(interface.Interface):
 	pass
 
-class ICourse(IPurchasable):
-	Name = nti_schema.ValidTextLine(title='Course Name', required=False)
-	Communities = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The community identifier'), title="Communities")
-	# overrides
-	Amount = schema.Float(title="Cost amount", required=False, min=0.0)
-	Currency = nti_schema.ValidTextLine(title='Currency amount', required=False)
-	Provider = nti_schema.ValidTextLine(title='Course provider', required=False)

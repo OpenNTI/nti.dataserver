@@ -49,6 +49,8 @@ class TestCourse(ConfiguringTestBase):
 		assert_that(ps.Items, has_length(1))
 		assert_that(ps.License, is_(none()))
 		assert_that(ps.Name, is_('CLC 3403'))
+		assert_that(ps.Icon, is_('http://www.ou.edu/icon.gif'))
+		assert_that(ps.Thumbnail, is_('http://www.ou.edu/thumbnail.gif'))
 		assert_that(ps.Communities, has_length(1))
 
 	@WithMockDSTrans
