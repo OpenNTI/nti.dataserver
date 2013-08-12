@@ -8,6 +8,7 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from nti.dataserver import users
+from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.externalization.externalization import to_json_representation
@@ -17,7 +18,7 @@ from nti.appserver.tests.test_application import TestApp
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length)
+from hamcrest import (assert_that, is_, has_length, none)
 
 class TestForumAdminViews(SharedApplicationTestBase):
 
@@ -52,7 +53,6 @@ class TestForumAdminViews(SharedApplicationTestBase):
 
 			acl = getattr(forum, 'ACL', None)
 			assert_that(acl, has_length(1))
-
 
 	@WithSharedApplicationMockDS
 	def test_set_community_board_acl(self):
@@ -92,3 +92,25 @@ class TestForumAdminViews(SharedApplicationTestBase):
 
 			acl = getattr(board, 'ACL', None)
 			assert_that(acl, has_length(2))
+
+	@WithSharedApplicationMockDS
+	def test_delete_comminiy_forum(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+			community = users.Community.create_community(self.ds, username='bleach')
+			board = frm_interfaces.ICommunityBoard(community)
+			board['bankai'] = CommunityForum()
+		testapp = TestApp(self.app)
+
+		path = '/dataserver2/@@delete_community_forum'
+		environ = self._make_extra_environ()
+		data = to_json_representation({'community': 'bleach', 'forum':'bankai'})
+		res = testapp.post(path, data, extra_environ=environ)
+		assert_that(res.status_int, is_(204))
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			comm = users.Community.get_community('bleach')
+			board = frm_interfaces.ICommunityBoard(comm)
+			forum = board.get('bankai')
+			assert_that(forum, is_(none()))
+

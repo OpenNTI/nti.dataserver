@@ -56,7 +56,7 @@ class SetClassCommunityForum(_JsonBodyView):
 			if forum is None:
 				raise hexc.HTTPUnprocessableEntity(detail='Community does not allow a forum')
 		else:
-			board = frm_interfaces.ICommunityBoard(community, None)
+			board = frm_interfaces.ICommunityBoard(community)
 			forum = board.get(forum, None)
 			if forum is None:
 				raise hexc.HTTPNotFound(detail='Forum not found')
@@ -109,4 +109,29 @@ class SetCommunityBoardACL(_JsonBodyView):
 
 		# set acl
 		setattr(board, 'ACL', acl)
+		return hexc.HTTPNoContent()
+
+@view_config(route_name='objects.generic.traversal',
+			 name='delete_community_forum',
+			 request_method='POST',
+			 permission=nauth.ACT_MODERATE)
+class DeleteCommunityForum(_JsonBodyView):
+
+	def __call__(self):
+		values = self.readInput()
+		community = values.get('community', '')
+		community = users.Community.get_community(community)
+		if not community or not nti_interfaces.ICommunity.providedBy(community):
+			raise hexc.HTTPNotFound(detail='Community not found')
+
+		forum_name = values.get('forum', None)
+		if not forum_name:  # default forum
+			raise hexc.HTTPUnprocessableEntity(detail='Cannot delete default forum')
+		else:
+			board = frm_interfaces.ICommunityBoard(community)
+			forum = board.get(forum_name, None)
+			if forum is None:
+				raise hexc.HTTPNotFound(detail='Forum not found')
+			del board[forum_name]
+
 		return hexc.HTTPNoContent()
