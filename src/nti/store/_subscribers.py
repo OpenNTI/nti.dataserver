@@ -85,12 +85,12 @@ def _purchase_attempt_successful(event):
 		_dynamic_memberships(purchase)
 	logger.info('%r completed successfully', purchase)
 
-def _return_items(purchase, user=None, remove_foles=True):
+def _return_items(purchase, user=None, remove_roles=True):
 	if purchase is None:
 		return
 	user = user or purchase.creator
 	purchase_history.deactivate_items(user, purchase.Items)
-	if remove_foles:
+	if remove_roles:
 		lib_items = purchasable.get_content_items(purchase.Items)
 		content_roles.remove_users_content_roles(user, lib_items)
 
@@ -99,7 +99,7 @@ def _unenrollment_attempt_successful(event):
 	purchase = event.object
 	purchase.EndTime = time.time()
 	to_exit = _dynamic_memberships(purchase, False)
-	_return_items(purchase, add_roles=not to_exit)
+	_return_items(purchase, remove_roles=not to_exit)
 	logger.info('Unenrollment for %r completed successfully', purchase)
 
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)

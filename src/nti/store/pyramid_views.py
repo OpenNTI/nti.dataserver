@@ -240,8 +240,7 @@ class EnrollCourseView(_PostView):
 		username = authenticated_userid(self.request)
 		course_id = values.get('courseID', u'')
 		description = values.get('description', u'')
-		course = course.get_course(course_id)
-		if course is None:
+		if course.get_course(course_id) is None:
 			raise_field_error(self.request, 'courseID', 'course not found')
 
 		if not purchase_history.has_history_by_item(username, course_id):
@@ -260,8 +259,7 @@ class UnenrollCourseView(_PostView):
 		values = values or self.readInput()
 		username = authenticated_userid(self.request)
 		course_id = values.get('courseID', u'')
-		course = course.get_course(course_id)
-		if course is None:
+		if course.get_course(course_id) is None:
 			raise_field_error(self.request, 'courseID', 'course not found')
 
 		history = purchase_history.get_purchase_history_by_item(username, course_id)
