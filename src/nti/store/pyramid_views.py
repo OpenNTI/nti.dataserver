@@ -34,9 +34,12 @@ from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.utils.maps import CaseInsensitiveDict
 
+from . import course
 from . import priceable
 from . import purchasable
 from . import invitations
+from . import purchase_order
+from . import purchase_attempt
 from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
@@ -212,6 +215,59 @@ class PricePurchasableView(_PostView):
 
 	def __call__(self):
 		result = self.price_purchasable()
+		return result
+
+class EnrollCourseView(_PostView):
+
+	def _create_purchase_attempt(self, course_id, description=None):
+		item = purchase_order.create_purchase_item(course_id, 1)
+		order = purchase_order.create_purchase_order(item, quantity=1)
+		result = purchase_attempt.create_errollment_attempt(order, description=description)
+		return result
+				
+	def enroll(self, values=None):
+		values = values or self.readInput()
+		username = authenticated_userid(self.request)
+		course_id = values.get('courseID', u'')
+		description = values.get('description', u'')
+		course = course.get_course(course_id)
+		if course is None:
+			raise_field_error(self.request, 'courseID', 'course not found')
+
+		if not purchase_history.has_history_by_item(username, course_id):
+			purchase = self._create_purchase_attempt(course_id, description)
+			purchase_history.register_purchase_attempt(purchase, username)
+			notify(store_interfaces.EnrollmentAttemptSuccessful(purchase, self.request))
+		return hexc.HTTPNoContent()
+
+	def __call__(self):
+		result = self.enroll()
+		return result
+
+class UnenrollCourseView(_PostView):
+
+	def unenroll(self, values=None):
+		values = values or self.readInput()
+		username = authenticated_userid(self.request)
+		course_id = values.get('courseID', u'')
+		course = course.get_course(course_id)
+		if course is None:
+			raise_field_error(self.request, 'courseID', 'course not found')
+
+		history = purchase_history.get_purchase_history_by_item(username, course_id)
+		if not history or len(history) != 1:
+			raise_field_error(self.request, 'courseID', 'user not enrroll in course')
+		else:
+			purchase = history[0]
+			if not store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase):
+				raise_field_error(self.request, 'courseID', 'Invalid enrollment attempt')
+			notify(store_interfaces.UnenrollmentAttemptSuccessful(purchase, self.request))
+			purchase_history.remove_purchase_attempt(purchase, username)
+
+		return hexc.HTTPNoContent()
+
+	def __call__(self):
+		result = self.unenroll()
 		return result
 
 # admin - views (restricted access)

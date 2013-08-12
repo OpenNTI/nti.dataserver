@@ -168,6 +168,10 @@ class RedeemedPurchaseAttempt(PurchaseAttempt):
 	RedemptionCode = FP(store_interfaces.IRedeemedPurchaseAttempt['RedemptionCode'])
 	RedemptionTime = FP(store_interfaces.IRedeemedPurchaseAttempt['RedemptionTime'])
 
+@interface.implementer(store_interfaces.IEnrollmentPurchaseAttempt)
+class EnrollmentPurchaseAttempt(PurchaseAttempt):
+	Processor = FP(store_interfaces.IEnrollmentPurchaseAttempt['Processor'])
+
 def get_purchasables(purchase):
 	return purchase_order.get_purchasables(purchase.Order)
 
@@ -198,5 +202,13 @@ def create_redeemed_purchase_attempt(purchase, redemption_code, redemption_time=
 							 		 State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
 									 Error=purchase.Error, Synced=purchase.Synced, RedemptionTime=float(redemption_time),
 									 RedemptionCode=unicode(redemption_code))
+	return result
+
+
+def create_errollment_attempt(order, processor=None, description=None, start_time=None):
+	state = store_interfaces.PA_STATE_SUCCESS
+	start_time = start_time if start_time else time.time()
+	result = EnrollmentPurchaseAttempt(Order=order, Processor=processor, Description=description,
+									   State=state, StartTime=float(start_time))
 	return result
 

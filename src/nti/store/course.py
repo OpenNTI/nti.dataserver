@@ -52,3 +52,7 @@ class _CourseResolver(object):
 
 	def resolve(self, ntiid_string):
 		return purchasable.get_purchasable(ntiid_string)
+
+def get_course(course_id):
+	result = purchasable.get_purchasable(course_id)
+	return result

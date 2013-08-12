@@ -243,6 +243,9 @@ class IRedeemedPurchaseAttempt(IPurchaseAttempt):
 	RedemptionTime = nti_schema.Number(title='Redemption time', required=True)
 	RedemptionCode = nti_schema.ValidTextLine(title='Redemption Code', required=True)
 
+class IEnrollmentPurchaseAttempt(IPurchaseAttempt):
+	Processor = nti_schema.ValidTextLine(title='Enrollment institution', required=False)
+
 class IPurchaseAttemptEvent(IObjectEvent):
 	object = schema.Object(IPurchaseAttempt, title="The purchase")
 
@@ -273,6 +276,12 @@ class IPurchaseAttemptReserved(IPurchaseAttemptStateEvent):
 
 class IPurchaseAttemptFailed(IPurchaseAttemptStateEvent):
 	error = interface.Attribute('Failure error')
+
+class IEnrollmentAttemptSuccessful(IPurchaseAttemptEvent):
+	request = interface.Attribute('Pyramid request')
+
+class IUnenrollmentAttemptSuccessful(IPurchaseAttemptEvent):
+	request = interface.Attribute('Pyramid request')
 
 @interface.implementer(IPurchaseAttemptEvent)
 class PurchaseAttemptEvent(ObjectEvent):
@@ -322,6 +331,20 @@ class PurchaseAttemptFailed(PurchaseAttemptEvent):
 	def __init__(self, purchase, error=None):
 		super(PurchaseAttemptFailed, self).__init__(purchase)
 		self.error = error
+
+@interface.implementer(IEnrollmentAttemptSuccessful)
+class EnrollmentAttemptSuccessful(PurchaseAttemptEvent):
+
+	def __init__(self, purchase, request=None):
+		super(EnrollmentAttemptSuccessful, self).__init__(purchase)
+		self.request = request
+
+@interface.implementer(IUnenrollmentAttemptSuccessful)
+class UnenrollmentAttemptSuccessful(PurchaseAttemptEvent):
+
+	def __init__(self, purchase, request=None):
+		super(UnenrollmentAttemptSuccessful, self).__init__(purchase)
+		self.request = request
 
 class IPurchaseHistory(IIterable):
 

@@ -71,12 +71,12 @@ class _PurchaseIndex(Persistent):
 			return True
 		return False
 
-	def has_history_by_item(self, purchasabe_id):
-		item_set = self.item_index.get(purchasabe_id) or ()
+	def has_history_by_item(self, purchasable_id):
+		item_set = self.item_index.get(purchasable_id) or ()
 		return len(item_set) > 0
 
-	def get_history_by_item(self, purchasabe_id):
-		item_set = self.item_index.get(purchasabe_id)
+	def get_history_by_item(self, purchasable_id):
+		item_set = self.item_index.get(purchasable_id)
 		for iid in item_set or ():
 			p = component.getUtility(zope.intid.IIntIds).queryObject(iid)
 			if store_interfaces.IPurchaseAttempt.providedBy(p):
@@ -191,8 +191,8 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 	def get_purchase_history(self, start_time=None, end_time=None):
 		return self._index.get_history_by_time(start_time, end_time)
 
-	def has_history_by_item(self, purchasabe_id):
-		return self._index.has_history_by_item(purchasabe_id)
+	def has_history_by_item(self, purchasable_id):
+		return self._index.has_history_by_item(purchasable_id)
 
 	def values(self):
 		return self._index.values()
