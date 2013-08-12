@@ -40,6 +40,9 @@ def create_user(args=None):
 	arg_parser.add_argument( '-n', '--name',
 							 dest='name',
 							 help="The realname of the user" )
+	arg_parser.add_argument( '-a', '--alias',
+							 dest='alias',
+							 help="The alias of the user" )
 	arg_parser.add_argument( '--email',
 							 dest='email',
 							 help="The email address of the user" )
@@ -124,6 +127,8 @@ def _create_user( factory, username, password, realname, communities=(), options
 		ext_value['email'] = unicode(options.email)
 	if options.name:
 		ext_value['realname'] = unicode(options.name)
+	if options.alias:
+		ext_value['alias'] = unicode(options.alias)
 	if options.birthdate:
 		ext_value['birthdate'] = unicode(options.birthdate)
 
