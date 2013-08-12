@@ -20,7 +20,7 @@ from nti.appserver._util import AbstractTwoStateViewLinkDecorator
 
 from nti.dataserver.links import Link
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum, IBoard
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
@@ -233,7 +233,7 @@ class SecurityAwareForumTopicCountDecorator(object):
 				mapping['NewestDescendantCreatedTime'] = newest_topic.createdTime
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
-@component.adapter(IBoard)
+@component.adapter(ICommunityBoard)
 class SecurityAwareBoardForumCountDecorator(object):
 	"""
 	Adjust the reported ``ForumCount`` to reflect publication status/security.
