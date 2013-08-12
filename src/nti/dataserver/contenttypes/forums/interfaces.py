@@ -359,7 +359,7 @@ class IACLEnabled(interface.Interface):
 
 class IACLGeneralBoard(IACLEnabled, IGeneralBoard):
 	"""
-	A general purpose forum that has its own ACL
+	A general purpose board that has its own ACL
 	"""
 
 class IACLCommunityBoard(IACLGeneralBoard, ICommunityBoard):
