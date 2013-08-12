@@ -29,6 +29,7 @@ from nti.appserver.utils import is_true
 from nti.appserver.traversal import find_interface
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver import ugd_query_views as query_views
+from nti.appserver.pyramid_authorization import is_readable
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -318,6 +319,9 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 		# capture all topic data
 		items = []
 		for forum in forums:
+			# check we can read the forum
+			if not is_readable(forum, self.request, skip_cache=True):
+				continue
 			for topic in forum.values():
 				items.append((topic, self._score(topic, decay, use_hours)))
 		items_sorted = sorted(items, key=lambda t: t[1], reverse=True)
