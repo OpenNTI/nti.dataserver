@@ -13,6 +13,7 @@ import six
 import time
 import gevent
 import numbers
+import itertools
 import simplejson
 import dateutil.parser
 
@@ -45,8 +46,6 @@ from . import InvalidPurchasable
 from . import interfaces as store_interfaces
 from .payments import pyramid_views as payment_pyramid
 from .utils import is_valid_pve_int, raise_field_error, is_valid_timestamp
-
-DS_STORE_PATH = u'/dataserver2/store/'
 
 class _PurchaseAttemptView(object):
 
@@ -141,6 +140,17 @@ class GetPurchasablesView(object):
 	def __call__(self):
 		purchasables = purchasable.get_all_purchasables()
 		result = LocatedExternalDict({'Items': purchasables, 'Last Modified':0})
+		return result
+
+class GetCoursesView(object):
+
+	def __init__(self, request):
+		self.request = request
+
+	def __call__(self):
+		purchasables = purchasable.get_all_purchasables()
+		courses = list(itertools.ifilter(store_interfaces.ICourse.providedBy, purchasables))
+		result = LocatedExternalDict({'Items': courses, 'Last Modified':0})
 		return result
 
 # post - views

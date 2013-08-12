@@ -7,11 +7,14 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import os
 import six
 
 from zope import interface
 from zope import component
 from zope.container.interfaces import ILocation
+
+from pyramid.threadlocal import get_current_request
 
 from nti.dataserver.links import Link
 
@@ -28,7 +31,6 @@ from ...externalization import PricedItemExternal
 from ...externalization import PricedItemDecorator
 
 LINKS = ext_interfaces.StandardExternalFields.LINKS
-DS_STORE_PATH = u'/dataserver2/store/'
 
 def _makenone(s):
 	if isinstance(s, six.string_types) and s == 'None':
@@ -91,13 +93,13 @@ class PurchasableDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def set_links(self, original, external):
-		if original.Amount:
-			_links = external.setdefault(LINKS, [])
-			price_href = DS_STORE_PATH + 'price_purchasable_with_stripe_coupon'
-			link = Link(price_href, rel="price_with_stripe_coupon")
+		request = get_current_request()
+		if original.Amount and request:
+			_ds_path = os.path.split(request.current_route_path())[0]
+			price_href = _ds_path + '/price_purchasable_with_stripe_coupon'
+			link = Link(price_href, rel="price_with_stripe_coupon", method='Post')
 			interface.alsoProvides(link, ILocation)
-			link.method = 'Post'
-			_links.append(link)
+			external.setdefault(LINKS, []).append(link)
 
 	def decorateExternalObject(self, original, external):
 		keyname = original.Provider
