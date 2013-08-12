@@ -34,6 +34,12 @@ def _purchase_attempt_started(event):
 	_update_state(purchase, store_interfaces.PA_STATE_STARTED)
 	logger.info('%r started' % purchase)
 
+def _activate_items(purchase, user=None):
+	user = user or purchase.creator
+	purchase_history.activate_items(user, purchase.Items)
+	lib_items = purchasable.get_content_items(purchase.Items)
+	content_roles.add_users_content_roles(user, lib_items)
+
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful(event):
 	purchase = event.object
@@ -42,14 +48,12 @@ def _purchase_attempt_successful(event):
 
 	# if not register invitation
 	if not purchase.Quantity:
-		# allow content roles
-		purchase_history.activate_items(purchase.creator, purchase.Items)
-		lib_items = purchasable.get_content_items(purchase.Items)
-		content_roles.add_users_content_roles(purchase.creator, lib_items)
+		_activate_items(purchase)
 	logger.info('%r completed successfully', purchase)
 
-def _return_items(purchase, user):
+def _return_items(purchase, user=None):
 	if purchase is not None:
+		user = user or purchase.creator
 		purchase_history.deactivate_items(user, purchase.Items)
 		lib_items = purchasable.get_content_items(purchase.Items)
 		content_roles.remove_users_content_roles(user, lib_items)
@@ -57,6 +61,9 @@ def _return_items(purchase, user):
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
 def _purchase_attempt_refunded(event):
 	purchase = event.object
+	if store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase):
+		return
+
 	purchase.EndTime = time.time()
 	_update_state(purchase, store_interfaces.PA_STATE_REFUNDED)
 
@@ -120,3 +127,18 @@ def _purchase_invitation_accepted(invitation, event):
 		# activate role(s)
 		lib_items = purchasable.get_content_items(original.Items)
 		content_roles.add_users_content_roles(event.user, lib_items)
+
+@component.adapter(store_interfaces.IEnrollmentAttemptSuccessful)
+def _enrollment_attempt_successful(event):
+	purchase = event.object
+	purchase.EndTime = time.time()
+	_update_state(purchase, store_interfaces.PA_STATE_SUCCESS)
+	_activate_items(purchase)
+	logger.info('Enrollment for %r completed successfully', purchase)
+
+@component.adapter(store_interfaces.IUnenrollmentAttemptSuccessful)
+def _unenrollment_attempt_successful(event):
+	purchase = event.object
+	purchase.EndTime = time.time()
+	_return_items(purchase)
+	logger.info('Unenrollment for %r completed successfully', purchase)
