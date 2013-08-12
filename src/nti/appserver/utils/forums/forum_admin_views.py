@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
 import collections
 
 from zope import interface
@@ -22,7 +21,6 @@ from pyramid.view import view_config
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums.ace import ForumACE
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.externalization.internalization import find_factory_for
@@ -126,33 +124,6 @@ class SetCommunityForumACL(_JsonBodyView):
 			interface.alsoProvides(forum, frm_interfaces.IACLCommunityForum)
 
 		setattr(forum, 'ACL', acl)
-		return hexc.HTTPNoContent()
-
-@view_config(route_name='objects.generic.traversal',
-			 name='set_class_community_forum',
-			 request_method='POST',
-			 permission=nauth.ACT_MODERATE)
-class SetClassCommunityForum(_JsonBodyView):
-
-	def __call__(self):
-		values = self.readInput()
-		community = _validate_community(values)
-
-		instructors = values.get('instructors', ())
-		if instructors and isinstance(instructors, six.string_types):
-			instructors = instructors.split(',')
-
-		instructors = {x for x in instructors or () if nti_interfaces.IUser.providedBy(users.User.get_user(x))}
-		if not instructors:
-			raise hexc.HTTPUnprocessableEntity(detail='No valid instructors were specified')
-
-		forum = _validate_community_forum(community, values)
-
-		if not frm_interfaces.IACLCommunityForum.providedBy(forum):
-			interface.alsoProvides(forum, frm_interfaces.IACLCommunityForum)
-
-		ace = ForumACE(Action='Allow', Permissions=('All',), Entities=list(instructors))
-		setattr(forum, 'ACL', [ace])
 		return hexc.HTTPNoContent()
 
 @view_config(route_name='objects.generic.traversal',
