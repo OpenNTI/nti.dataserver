@@ -17,10 +17,11 @@ import simplejson
 
 from zope import interface
 from zope import component
-from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+from zope.lifecycleevent import interfaces as lce_interfaces
+
+from nti.contentlibrary import interfaces as lib_interfaces
 
 from . import interfaces as app_interfaces
-from nti.contentlibrary import interfaces as lib_interfaces
 
 @interface.implementer(app_interfaces.IVideoIndexMap)
 class VideoIndexMap(dict):
@@ -33,7 +34,7 @@ class VideoIndexMap(dict):
 		super(VideoIndexMap, self).clear()
 		self.by_container.clear()
 
-@component.adapter(lib_interfaces.IContentPackage, IObjectCreatedEvent)
+@component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectCreatedEvent)
 def add_video_items_from_new_content(content_package, event):
 	#### from IPython.core.debugger import Tracer; Tracer()()  ####
 	video_map = component.getUtility(app_interfaces.IVideoIndexMap)
@@ -66,3 +67,13 @@ def _populate_video_map_from_text(video_map, video_index_text, content_package):
 	for k, v in containers.items():
 		video_map.by_container[k] = v
 
+@component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectRemovedEvent)
+def remove_video_items_from_old_content(content_package, event):
+	video_map = component.getUtility(app_interfaces.IVideoIndexMap)
+	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
+	if video_map and library:  # pragma: no cover
+		logger.debug("Clearing video items from old content %s %s", content_package, event)
+		for unit in library.childrenOfNTIID(content_package.ntiid):
+			videos = video_map.by_container.pop(unit.ntiid, ())
+			for vid in videos:
+				video_map.pop(vid)
