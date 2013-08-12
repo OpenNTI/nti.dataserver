@@ -44,6 +44,34 @@ def _activate_items(purchase, user=None, add_roles=True):
 		lib_items = purchasable.get_content_items(purchase.Items)
 		content_roles.add_users_content_roles(user, lib_items)
 
+def _dynamic_memberships(purchase, join=True):
+	names = set()
+	for course_id in purchase.Items:
+		course = purchasable.get_purchasable(course_id)
+		communities = getattr(course, 'Communities', ())
+		names.update(communities)
+
+	creator = purchase.creator
+	for name in names:
+		comm = Community.get_community(name)
+		if nti_interfaces.ICommunity.providedBy(comm):
+			if join:
+				creator.record_dynamic_membership(comm)
+				creator.follow(comm)
+			else:
+				creator.record_no_longer_dynamic_member(comm)
+				creator.stop_following(comm)
+	return names
+
+@component.adapter(store_interfaces.IEnrollmentAttemptSuccessful)
+def _enrollment_attempt_successful(event):
+	purchase = event.object
+	purchase.EndTime = time.time()
+	_update_state(purchase, store_interfaces.PA_STATE_SUCCESS)
+	to_join = _dynamic_memberships(purchase)
+	_activate_items(purchase, add_roles=not to_join)
+	logger.info('Enrollment for %r completed successfully', purchase)
+
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful(event):
 	purchase = event.object
@@ -53,6 +81,8 @@ def _purchase_attempt_successful(event):
 	# if not register invitation
 	if not purchase.Quantity:
 		_activate_items(purchase)
+	if store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase):
+		_dynamic_memberships(purchase)
 	logger.info('%r completed successfully', purchase)
 
 def _return_items(purchase, user=None, remove_foles=True):
@@ -64,10 +94,19 @@ def _return_items(purchase, user=None, remove_foles=True):
 		lib_items = purchasable.get_content_items(purchase.Items)
 		content_roles.remove_users_content_roles(user, lib_items)
 
+@component.adapter(store_interfaces.IUnenrollmentAttemptSuccessful)
+def _unenrollment_attempt_successful(event):
+	purchase = event.object
+	purchase.EndTime = time.time()
+	to_exit = _dynamic_memberships(purchase, False)
+	_return_items(purchase, add_roles=not to_exit)
+	logger.info('Unenrollment for %r completed successfully', purchase)
+
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
 def _purchase_attempt_refunded(event):
 	purchase = event.object
 	if store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase):
+		_dynamic_memberships(purchase, False)
 		return
 
 	purchase.EndTime = time.time()
@@ -134,47 +173,3 @@ def _purchase_invitation_accepted(invitation, event):
 		lib_items = purchasable.get_content_items(original.Items)
 		content_roles.add_users_content_roles(event.user, lib_items)
 
-@component.adapter(store_interfaces.IEnrollmentAttemptSuccessful)
-def _enrollment_attempt_successful(event):
-	purchase = event.object
-	creator = purchase.creator
-	purchase.EndTime = time.time()
-	_update_state(purchase, store_interfaces.PA_STATE_SUCCESS)
-	
-	# get any communities to join
-	to_join = set()
-	for course_id in purchase.Items:
-		course = purchasable.get_purchasable(course_id)
-		communities = getattr(course, 'Communities', ())
-		to_join.update(communities)
-	
-	for name in to_join:
-		comm = Community.get_community(name)
-		if nti_interfaces.ICommunity.providedBy(comm):
-			creator.record_dynamic_membership(comm)
-			creator.follow(comm)
-			
-	_activate_items(purchase, add_roles=not to_join)
-	logger.info('Enrollment for %r completed successfully', purchase)
-
-@component.adapter(store_interfaces.IUnenrollmentAttemptSuccessful)
-def _unenrollment_attempt_successful(event):
-	purchase = event.object
-	creator = purchase.creator
-	purchase.EndTime = time.time()
-
-	# get any communities to exit
-	to_exit = set()
-	for course_id in purchase.Items:
-		course = purchasable.get_purchasable(course_id)
-		communities = getattr(course, 'Communities', ())
-		to_exit.update(communities)
-
-	for name in to_exit:
-		comm = Community.get_community(name)
-		if nti_interfaces.ICommunity.providedBy(comm):
-			creator.record_no_longer_dynamic_member(comm)
-			creator.stop_following(comm)
-
-	_return_items(purchase, add_roles=not to_exit)
-	logger.info('Unenrollment for %r completed successfully', purchase)
