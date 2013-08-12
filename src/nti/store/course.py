@@ -35,7 +35,7 @@ class Course(purchasable.Purchasable):
 			return NotImplemented
 
 def create_course(ntiid, name=None, provider=None, amount=None, currency=None, items=(), fee=None, title=None,
-				  license_=None, author=None, description=None, icon=None, discountable=False,
+				  license_=None, author=None, description=None, icon=None, thumbnail=None, discountable=False,
 				  bulk_purchase=False, communities=()):
 	if amount and not provider:
 		raise AssertionError("Must specfify a provider")
@@ -51,7 +51,7 @@ def create_course(ntiid, name=None, provider=None, amount=None, currency=None, i
 	result = Course(NTIID=ntiid, Name=name, Provider=provider, Title=title, Author=author,
 					Items=items, Description=description, Amount=amount, Currency=currency,
 					Fee=fee, License=license_, Discountable=discountable, BulkPurchase=bulk_purchase,
-				 	Icon=icon, Communities=communities)
+				 	Icon=icon, Thumbnail=thumbnail, Communities=communities)
 
 	return result
 

@@ -35,6 +35,7 @@ class IRegisterPurchasableDirective(interface.Interface):
 	discountable = fields.Bool(title="Discountable flag", required=False, default=False)
 	bulk_purchase = fields.Bool(title="Bulk purchase flag", required=False, default=True)
 	icon = fields.TextLine(title='Icon URL', required=False)
+	thumbnail = fields.TextLine(title='Thumbnail URL', required=False)
 	fee = schema.Float(title="Percentage fee", required=False)
 	provider = fields.TextLine(title='Purchasable item provider', required=True)
 	license = fields.TextLine(title='Purchasable License', required=False)
@@ -49,14 +50,14 @@ class IRegisterCourseDirective(IRegisterPurchasableDirective):
 	provider = fields.TextLine(title='Course provider', required=False)
 	
 def registerPurchasable(_context, ntiid, provider, title, description=None, amount=None, currency=None,
-						items=None, fee=None, author=None, icon=None, license=None, discountable=False,
-						bulk_purchase=True):
+						items=None, fee=None, author=None, icon=None, thumbnail=None, license=None,
+						discountable=False, bulk_purchase=True):
 	"""
 	Register a purchasable
 	"""
 	description = _context.info.text.strip() if description is None else description
 	factory = functools.partial(create_purchasable, ntiid=ntiid, provider=provider, title=title, author=author,
-								description=description, items=items, amount=amount,
+								description=description, items=items, amount=amount, thumbnail=thumbnail,
 								currency=currency, icon=icon, fee=fee, license_=license,
 								discountable=discountable, bulk_purchase=bulk_purchase)
 	utility(_context, provides=store_interfaces.IPurchasable, factory=factory, name=ntiid)
@@ -64,15 +65,15 @@ def registerPurchasable(_context, ntiid, provider, title, description=None, amou
 
 
 def registerCourse(_context, ntiid, title, description=None, provider=None, amount=None, currency=None,
-				   items=None, fee=None, author=None, icon=None, license=None, discountable=False,
-				   bulk_purchase=False, name=None, communities=None):
+				   items=None, fee=None, author=None, icon=None, thumbnail=None, license=None,
+				   discountable=False, bulk_purchase=False, name=None, communities=None):
 	"""
 	Register a course
 	"""
 	description = _context.info.text.strip() if description is None else description
 	factory = functools.partial(create_course, ntiid=ntiid, provider=provider, title=title, author=author,
 								name=name, description=description, items=items, amount=amount,
-								currency=currency, icon=icon, fee=fee, license_=license,
+								currency=currency, icon=icon, fee=fee, license_=license, thumbnail=thumbnail,
 								communities=communities, discountable=discountable, bulk_purchase=bulk_purchase)
 	utility(_context, provides=store_interfaces.ICourse, factory=factory, name=ntiid)
 	logger.debug("Course '%s' has been registered", ntiid)
