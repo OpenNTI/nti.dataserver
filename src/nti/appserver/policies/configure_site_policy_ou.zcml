@@ -36,5 +36,14 @@
 				name="CLC 3403"
 				items="tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.clc_3403_law_and_justice" />
 
+		<pcs:registerCourse
+				ntiid="tag:nextthought.com,2011-10:OU-course-PHIL1203PhilosophyAndHumanDestinyEastAndWest"
+				title="Open Philosophy and Human Destiny, East and West"
+				communities="PHIL1203.ou-test.nextthought.com"
+				description="What is it to be human? How did we get here, and what should we strive for, or try to be like? What can we hope for in this life, or (if there is one) the next? We will examine different answers to these questions, both Religious and Secular, from both the East and West. We will examine accounts of human nature and destiny in the writings of philosophers, theologians and authors who explore the fundamental meaning of our lives and the destiny of humanity."
+				author="Neal Judisch"
+				name="PHIL 1203"
+				items="tag:nextthought.com,2011-10:OU-HTML-PHIL1203_HumanDestiny.phil_1203__philosophy_and_human_destiny,_east_and_west" />
+
 	</registerIn>
 </configure>
