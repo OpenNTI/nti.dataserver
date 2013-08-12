@@ -1,7 +1,8 @@
 <!-- -*- mode: nxml -*- -->
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
-			xmlns:zcml="http://namespaces.zope.org/zcml">
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:pcs="http://nextthought.com/ntp/course">
 
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
@@ -15,6 +16,8 @@
 		provides="zope.component.interfaces.IComponents"
 		name="platform.ou.edu" />
 
+	<include package="nti.store" file="meta.zcml" />
+
 
 	<registerIn registry=".sites.OU">
 		<utility factory=".site_policies.OUSitePolicyEventListener" />
@@ -23,5 +26,15 @@
 		<!-- CSS for OU -->
 		<utility factory=".site_policy_views.SiteCSSMarker" />
 		<utility factory=".site_policy_views.SiteStringsMarker" />
+
+		<pcs:registerCourse
+				ntiid="tag:nextthought.com,2011-10:OU-course-CLC3403LawAndJustice"
+				title="Law and Justice"
+				communities="CLC3403.ou-test.nextthought.com"
+				description="Introduction to the concept of justice as it developed in ancient Greece broken into three types: corrective, distributive, and transactional justice"
+				author="Kyle Harper"
+				name="CLC 3403"
+				items="tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.clc_3403_law_and_justice" />
+
 	</registerIn>
 </configure>
