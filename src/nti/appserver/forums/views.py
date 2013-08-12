@@ -421,7 +421,7 @@ class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
 		# into account since we aren't tracking that directly (it doesn't
 		# propagate upward). TODO: This should be cached somewhere
 		board = objects[0]
-		forumLastMod = max((x.lastModified for x in board.itervalues()))
+		forumLastMod = max((x.lastModified for x in board.itervalues() if is_readable(x, self.request)))
 		lastMod = max(result.lastModified, forumLastMod)
 		result.lastModified = lastMod
 		super(CommunityBoardContentsGetView,self)._update_last_modified_after_sort( objects, result )
