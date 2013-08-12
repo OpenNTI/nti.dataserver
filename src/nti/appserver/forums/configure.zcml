@@ -90,6 +90,9 @@
 	<subscriber factory=".decorators.SecurityAwareForumTopicCountDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
+	<subscriber factory=".decorators.SecurityAwareBoardForumCountDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+				
 	<!--
 		Decorate blog entries and forum topics. This is configured for modeled content in configure.zcml.
 		This isn't quite right, as these aren't exactly editable, just deletable.

@@ -20,7 +20,7 @@ from nti.appserver._util import AbstractTwoStateViewLinkDecorator
 
 from nti.dataserver.links import Link
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum, IBoard
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
@@ -231,3 +231,32 @@ class SecurityAwareForumTopicCountDecorator(object):
 			if newest_topic is not None:
 				mapping['NewestDescendant'] = newest_topic
 				mapping['NewestDescendantCreatedTime'] = newest_topic.createdTime
+
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(IBoard)
+class SecurityAwareBoardForumCountDecorator(object):
+	"""
+	Adjust the reported ``ForumCount`` to reflect publication status/security.
+
+	.. note:: This is not scalable, as instead of using the cached
+		BTree length it requires loading all of the btree nodes
+		and the data in order to security check each one. Something
+		will have to be done about this. We rationalize its existence
+		now by assuming our other scalability problems are worse and we'll
+		have to fix them all eventually; this won't be an issue in the short term.
+
+	"""
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalObject(self, context, mapping):
+		if not mapping['ForumCount']:
+			# Nothing to do if its already empty
+			return
+
+		i = 0
+		request = get_current_request()
+		for x in context.values():
+			if is_readable(x, request, skip_cache=True):
+				i += 1
+		mapping['ForumCount'] = i
