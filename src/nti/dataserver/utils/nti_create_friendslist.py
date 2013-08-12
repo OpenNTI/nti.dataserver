@@ -14,16 +14,18 @@ from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.externalization.externalization import to_external_object
 
-def create_friends_list(owner, username, realname=None, members=(), dynamic=False ):
+def create_friends_list(owner, username, realname=None, members=(), dynamic=False, locked=False ):
 	factory = users.DynamicFriendsList if dynamic else users.FriendsList
 	dfl = factory( username=unicode(username) )
 	dfl.creator = owner
+	if dynamic:
+		dfl.Locked = locked
 	if realname:
 		user_interfaces.IFriendlyNamed( dfl ).realname = unicode(realname)
-	
+
 	# add to container b4 adding members
 	owner.addContainedObject( dfl )
-	
+
 	for member_name in members or ():
 		member = users.User.get_user( member_name )
 		if member and member != owner:
@@ -37,10 +39,10 @@ def _create_fl( args ):
 		print( "No owner found", args, file=sys.stderr )
 		sys.exit( 2 )
 
-	fl = create_friends_list(owner, args.username, args.name, args.members, args.dynamic)
+	fl = create_friends_list(owner, args.username, args.name, args.members, args.dynamic, args.locked)
 	if args.verbose:
 		pprint.pprint( to_external_object( fl ) )
-		
+
 	return fl
 
 def main():
@@ -56,6 +58,10 @@ def main():
 							 help="Create a Dynamic FriendsList",
 							 action='store_true',
 							 dest='dynamic' )
+	arg_parser.add_argument( '--locked',
+							 help="Lock the DFL. Only valid used with --dynamic",
+							 action='store_true',
+							 dest='locked' )
 	arg_parser.add_argument( '-m', '--members',
 							 dest='members',
 							 nargs="+",
@@ -70,4 +76,4 @@ def main():
 
 if __name__ == '__main__':
 	main()
-	
+
