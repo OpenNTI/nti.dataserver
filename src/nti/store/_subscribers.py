@@ -13,6 +13,9 @@ import time
 
 from zope import component
 
+from nti.dataserver.users import Community
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.appserver.invitations import interfaces as invite_interfaces
 
 from nti.contentmanagement import content_roles
@@ -134,14 +137,44 @@ def _purchase_invitation_accepted(invitation, event):
 @component.adapter(store_interfaces.IEnrollmentAttemptSuccessful)
 def _enrollment_attempt_successful(event):
 	purchase = event.object
+	creator = purchase.creator
 	purchase.EndTime = time.time()
 	_update_state(purchase, store_interfaces.PA_STATE_SUCCESS)
-	_activate_items(purchase)
+	
+	# get any communities to join
+	to_join = set()
+	for course_id in purchase.Items:
+		course = purchasable.get_purchasable(course_id)
+		communities = getattr(course, 'Communities', ())
+		to_join.update(communities)
+	
+	for name in to_join:
+		comm = Community.get_community(name)
+		if nti_interfaces.ICommunity.providedBy(comm):
+			creator.record_dynamic_membership(comm)
+			creator.follow(comm)
+			
+	_activate_items(purchase, add_roles=not to_join)
 	logger.info('Enrollment for %r completed successfully', purchase)
 
 @component.adapter(store_interfaces.IUnenrollmentAttemptSuccessful)
 def _unenrollment_attempt_successful(event):
 	purchase = event.object
+	creator = purchase.creator
 	purchase.EndTime = time.time()
-	_return_items(purchase)
+
+	# get any communities to exit
+	to_exit = set()
+	for course_id in purchase.Items:
+		course = purchasable.get_purchasable(course_id)
+		communities = getattr(course, 'Communities', ())
+		to_exit.update(communities)
+
+	for name in to_exit:
+		comm = Community.get_community(name)
+		if nti_interfaces.ICommunity.providedBy(comm):
+			creator.record_no_longer_dynamic_member(comm)
+			creator.stop_following(comm)
+
+	_return_items(purchase, add_roles=not to_exit)
 	logger.info('Unenrollment for %r completed successfully', purchase)
