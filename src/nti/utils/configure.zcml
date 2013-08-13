@@ -7,8 +7,8 @@
 	<include package="zope.browserresource" file="meta.zcml" /> <!-- browser:resourceDirectory directive, used by plone.i18n -->
 	<include package="plone.i18n" />
 	<include package="zope.vocabularyregistry" />
+	
 	<subscriber handler=".schema.before_object_assigned_event_dispatcher" />
-
 
 	<utility component=".schema.CountryVocabularyFactory"
 			 provides="zope.schema.interfaces.IVocabularyFactory"
