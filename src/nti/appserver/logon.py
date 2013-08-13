@@ -887,10 +887,14 @@ def _deal_with_external_account( request, username, fname, lname, email, idurl, 
 	else:
 		# When creating, we go through the same steps as account_creation_views,
 		# guaranteeing the proper validation
-		external_value = { 'Username': username,
-						   'realname': fname + ' ' + lname,
-						   url_attr: idurl,
-						   'email': email }
+		external_value = { 'Username': username }
+		if fname and lname:
+			external_value['realname'] = fname + ' ' + lname
+		if idurl:
+			external_value['url_attr'] = idurl
+		if email:
+			external_value['email'] = email
+
 		from .account_creation_views import _create_user # XXX A bit scuzzy
 
 		# This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
