@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import urllib
 import functools
 
 from zope import interface
@@ -33,5 +34,6 @@ def registerLDAP(_context, id, url, username, password, baseDN=None):
 	"""
 	Register an ldap
 	"""
+	password = urllib.unquote(password)
 	factory = functools.partial(ldap.LDAP, ID=id, URL=url, Username=username, Password=password, BaseDN=baseDN)
 	utility(_context, provides=util_interfaces.ILDAP, factory=factory, name=id)
