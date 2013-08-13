@@ -27,10 +27,11 @@ class IRegisterLDAP(interface.Interface):
 	url = fields.TextLine(title="ldap url", required=True)
 	username = fields.TextLine(title="Bind username", required=True)
 	password = fields.TextLine(title="Bind password", required=True)
+	baseDN = fields.TextLine(title="Base DN", required=False)
 	
-def registerLDAP(_context, id, url, username, password):
+def registerLDAP(_context, id, url, username, password, baseDN=None):
 	"""
 	Register an ldap
 	"""
-	factory = functools.partial(ldap.LDAP, ID=id, URL=url, Username=username, Password=password)
+	factory = functools.partial(ldap.LDAP, ID=id, URL=url, Username=username, Password=password, BaseDN=baseDN)
 	utility(_context, provides=util_interfaces.ILDAP, factory=factory, name=id)
