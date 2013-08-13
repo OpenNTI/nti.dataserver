@@ -17,3 +17,4 @@ class ILDAP(interface.Interface):
 	URL = nti_schema.ValidTextLine(title="Ldap URL", required=True)
 	Username = nti_schema.ValidTextLine(title="Bind username", required=True)
 	Password = nti_schema.ValidTextLine(title="Bind password flag", required=True)
+	BaseDN = nti_schema.ValidTextLine(title="Base DN", required=False)
