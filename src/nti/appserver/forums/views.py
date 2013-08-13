@@ -342,7 +342,7 @@ class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 	def __call__(self):
 		result = super(ForumGetView, self).__call__()
-		if result is not None and not  is_readable(result) :
+		if result is not None and not  is_readable(result, skip_cache=True) :
 			raise hexc.HTTPForbidden()
 		return result
 
