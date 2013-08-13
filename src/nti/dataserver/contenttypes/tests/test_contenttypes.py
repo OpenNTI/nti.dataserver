@@ -556,6 +556,18 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 
 
 	@WithMockDS
+	def test_external_body_with_media_and_text(self):
+		n = Note()
+		m = EmbeddedVideo()
+		m.embedURL = u"http://foo.org/video.mp4"
+
+		n.body = ['NTI', m]
+		n.updateLastMod()
+		ext = to_external_object(n)
+		assert_that(ext, has_entries("body", has_length(2)))
+
+
+	@WithMockDS
 	def test_external_body_mimetypes(self):
 		n = Note()
 		c = Canvas()
