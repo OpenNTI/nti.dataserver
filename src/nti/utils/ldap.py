@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Defines an ldap registration object object
+Defines an ldap registration object
 
-$Id: content_bundle.py 22257 2013-08-09 17:44:22Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"

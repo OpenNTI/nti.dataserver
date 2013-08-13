@@ -3,7 +3,7 @@
 """
 Directives to be used in ZCML: registering static keys.
 
-$Id: zcml.py 22564 2013-08-12 11:13:26Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
