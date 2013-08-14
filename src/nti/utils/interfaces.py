@@ -18,3 +18,4 @@ class ILDAP(interface.Interface):
 	Username = nti_schema.ValidTextLine(title="Bind username", required=True)
 	Password = nti_schema.ValidTextLine(title="Bind password flag", required=True)
 	BaseDN = nti_schema.ValidTextLine(title="Base DN", required=False)
+
