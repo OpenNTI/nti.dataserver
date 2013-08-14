@@ -398,6 +398,23 @@ class IUseTheRequestContextUGDExternalCollection(IUGDExternalCollection):
 	that the view results create are the same as the ones you checked against.
 	"""
 
+# ##
+# Pyramid support
+# ##
+
+from pyramid import events as pyramid_events
+
+class IApplicationCreated(pyramid_interfaces.IApplicationCreated):
+	app = interface.Attribute("Created application")
+	config = interface.Attribute("Pyramid configurator")
+
+@interface.implementer(IApplicationCreated)
+class ApplicationCreated(pyramid_events.ApplicationCreated):
+
+	def __init__(self, app, config):
+		super(ApplicationCreated, self).__init__(app)
+		self.config = config
+
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder # BWC
 
 ###
