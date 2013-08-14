@@ -604,7 +604,9 @@ def createApplication( http_port,
 	if create_ds:
 		_configure_async_changes( server )
 
-	return pyramid_config.make_wsgi_app()
+	app = pyramid_config.make_wsgi_app()
+	app.registry.notify(app_interfaces.ApplicationCreated(app, pyramid_config))
+	return app
 
 def _configure_async_changes( ds, indexmanager=None ):
 
