@@ -28,7 +28,7 @@ class coursename(Command):
     pass
 
 class course(Environment, plastexids.NTIIDMixin):
-    args = '[ options:dict ] title:str number:str'
+    args = '[ options:dict ] title number'
 
     counter = 'course'
     blockType = True
