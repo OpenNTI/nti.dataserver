@@ -863,7 +863,7 @@ def openid_login(context, request):
 	return _openid_login( context, request, request.params['openid'] )
 
 
-def _deal_with_external_account( request, username, fname, lname, email, idurl, iface, user_factory ):
+def _deal_with_external_account(request, username, fname, lname, email, idurl, iface, user_factory, password=None):
 	"""
 	Finds or creates an account based on an external authentication.
 
@@ -894,12 +894,18 @@ def _deal_with_external_account( request, username, fname, lname, email, idurl, 
 			external_value['url_attr'] = idurl
 		if email:
 			external_value['email'] = email
-
+		if password:
+			external_value['password'] = password
+			require_password = True
+		else:
+			require_password = False
+			
 		from .account_creation_views import _create_user # XXX A bit scuzzy
 
 		# This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
 		# will be None
-		user = _create_user( request, external_value, require_password=False, user_factory=user_factory )
+		user = _create_user(request, external_value, require_password=require_password, user_factory=user_factory,
+							password=password )
 		__traceback_info__ = request, user_factory, iface, user
 		assert getattr( user, url_attr ) is None # doesn't get read from the external value right now
 		setattr( user, url_attr, idurl )
@@ -1003,13 +1009,14 @@ def _openidcallback( context, request, success_dict ):
 
 
 	if _checksum(username) != oidcsum:
-		   logger.warn( "Checksum mismatch. Logged in multiple times? %s %s username=%s prov=%s", oidcsum, success_dict, username, username_provider)
-		   return _create_failure_response(request, error='Username/Email checksum mismatch')
+		logger.warn("Checksum mismatch. Logged in multiple times? %s %s username=%s prov=%s", oidcsum, success_dict, username, username_provider)
+		return _create_failure_response(request, error='Username/Email checksum mismatch')
 
 	try:
 		# TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
 		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
-		the_user = _deal_with_external_account( request, username, fname, lname, email, idurl, nti_interfaces.IOpenIdUser, users.OpenIdUser.create_user )
+		the_user = _deal_with_external_account(request, username=username, fname=fname, lname=lname, email=email,
+											   idurl=idurl, iface=nti_interfaces.IOpenIdUser, user_factory=users.OpenIdUser.create_user)
 		_update_users_content_roles( the_user, idurl, content_roles )
 	except hexc.HTTPError:
 		raise
@@ -1087,11 +1094,11 @@ def facebook_oauth2(request):
 		logger.warn( "Facebook username returned different emails %s != %s", data['email'], request.session.get('facebook.username') )
 		return _create_failure_response( request, request.session.get('facebook.failure'), error='Facebook resolved to different username' )
 
-	user = _deal_with_external_account( request, data['email'], # TODO: Assuming email address == username
-										data['first_name'], data['last_name'],
-										data['email'], data['link'],
-										nti_interfaces.IFacebookUser,
-										users.FacebookUser.create_user )
+	user = _deal_with_external_account( request, username=data['email'], # TODO: Assuming email address == username
+										fname=data['first_name'], lname=data['last_name'],
+										email=data['email'], idurl=data['link'],
+										iface=nti_interfaces.IFacebookUser,
+										user_factory=users.FacebookUser.create_user )
 
 
 	# For the data formats, see here:
