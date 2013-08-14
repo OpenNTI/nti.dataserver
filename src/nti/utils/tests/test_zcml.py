@@ -45,6 +45,7 @@ LDAP_ZCML_STRING = HEAD_ZCML_STRING + """
 		url="ldaps://ldaps.nextthought.com:636"
 		username="jason.madden@nextthougt.com"
 		password="NTI%26123"
+		encoding="urlquote"
 		baseDN="OU=Accounts" />
 </registerIn>
 </configure>
