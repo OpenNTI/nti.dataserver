@@ -904,8 +904,7 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 
 		# This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
 		# will be None
-		user = _create_user(request, external_value, require_password=require_password, user_factory=user_factory,
-							password=password )
+		user = _create_user(request, external_value, require_password=require_password, user_factory=user_factory)
 		__traceback_info__ = request, user_factory, iface, user
 		assert getattr( user, url_attr ) is None # doesn't get read from the external value right now
 		setattr( user, url_attr, idurl )

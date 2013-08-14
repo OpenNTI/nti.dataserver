@@ -7,55 +7,49 @@ Creating an account is expected to be carried out in an asynchronous,
 XHR based fashion involving no redirects. Contrast this with the logon
 process, where there are page redirects happening frequently.
 
-
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
 from . import MessageFactory as _
+
 import sys
 import itertools
-
 import transaction
+import nameparser.parser
 
 from zope import interface
 from zope import component
 from zope.event import notify
-
-import zope.schema
 import zope.schema.interfaces
+
 import z3c.password.interfaces
 
-import nti.utils.schema
+from pyramid import security as sec
+from pyramid.view import view_config
 
-from nti.dataserver import users
-from nti.dataserver import authorization as nauth
-from nti.dataserver.intid_utility import IntIdMissingError
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
+import nti.appserver.httpexceptions as hexc
+from nti.appserver.policies import site_policies
 from nti.appserver import interfaces as app_interfaces
+from nti.appserver._util import logon_user_with_request
+from nti.appserver import _external_object_io as obj_io
+from nti.appserver.link_providers import flag_link_provider
+from nti.appserver.invitations.utility import accept_invitations
+from nti.appserver._util import raise_json_error as _raise_error
 from nti.appserver.invitations import interfaces as invite_interfaces
 from nti.appserver.link_providers import interfaces as link_interfaces
 
+from nti.dataserver import users
+from nti.dataserver import authorization as nauth
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.intid_utility import IntIdMissingError
+from nti.dataserver.users import interfaces as user_interfaces
+
+import nti.utils.schema
 from nti.utils.schema import find_most_derived_interface
-from nti.appserver.invitations.utility import accept_invitations
-
-from nti.appserver._util import logon_user_with_request
-from nti.appserver import _external_object_io as obj_io
-from nti.appserver.policies import site_policies
-from nti.appserver._util import raise_json_error as _raise_error
-from nti.appserver.link_providers import flag_link_provider
-
-from pyramid.view import view_config
-from pyramid import security as sec
-
-import nti.appserver.httpexceptions as hexc
-
-import nameparser.parser
 
 #: The link relationship type for a link used to create an account.
 #: Also serves as a view name for that same purpose
@@ -86,7 +80,7 @@ REL_ACCOUNT_PROFILE_UPGRADE = "account.profile.needs.updated"
 _PLACEHOLDER_USERNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_USERNAME
 _PLACEHOLDER_REALNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME
 
-def _create_user( request, externalValue, preflight_only=False, require_password=True, user_factory=users.User.create_user ):
+def _create_user(request, externalValue, preflight_only=False, require_password=True, user_factory=users.User.create_user):
 
 	try:
 		desired_userid = externalValue['Username'] # May throw KeyError
