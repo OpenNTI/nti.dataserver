@@ -226,6 +226,12 @@ def _library_settings(pyramid_config, server, library):
 
 	return library
 
+def _external_view_settings(pyramid_config):
+	# FIXME: This needs to move to the IRegistrationEvent listener, but
+	# we need access to the pyramid config...
+	for _, mapper in component.getUtilitiesFor(app_interfaces.IViewConfigurator):
+		mapper.add_views(pyramid_config)
+
 def _ugd_odata_views(pyramid_config):
 
 	_m = {'UserGeneratedData': '_UGDView',
@@ -573,6 +579,7 @@ def createApplication( http_port,
 
 	_renderer_settings(pyramid_config)
 	_library_settings(pyramid_config, server, library)
+	_external_view_settings(pyramid_config)
 
 	_search_views(pyramid_config)
 	_service_odata_views(pyramid_config)
@@ -605,7 +612,6 @@ def createApplication( http_port,
 		_configure_async_changes( server )
 
 	app = pyramid_config.make_wsgi_app()
-	app.registry.notify(app_interfaces.ApplicationCreated(app, pyramid_config))
 	return app
 
 def _configure_async_changes( ds, indexmanager=None ):
@@ -669,10 +675,10 @@ def _content_package_library_registered( library, event ):
 @interface.implementer(app_interfaces.ILibraryStaticFileConfigurator)
 class _FilesystemStaticFileConfigurator(object):
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		self.context = context
 
-	def add_static_views( self, pyramid_config ):
+	def add_static_views(self, pyramid_config):
 		# We'll volunteer to serve all the files in the root directory
 		# Note that this is not dynamic (the library isn't either)
 		# but in production we expect to have static files served by

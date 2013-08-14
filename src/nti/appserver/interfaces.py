@@ -78,6 +78,17 @@ class ILibraryStaticFileConfigurator(interface.Interface):
 		Add the static views to the given configurator.
 		"""
 
+class IViewConfigurator(interface.Interface):
+	"""
+	Registered as an utility to configure pyramid
+	with external views.
+	"""
+
+	def add_views(context, pyramid_config):
+		"""
+		Add views to the given configurator.
+		"""
+
 class IWorkspace(ILocation):
 	"""
 	A workspace (in the Atom sense) is a collection of collections.
@@ -397,23 +408,6 @@ class IUseTheRequestContextUGDExternalCollection(IUGDExternalCollection):
 	view. If you do have to calculate the view, you are assured that the ETag values
 	that the view results create are the same as the ones you checked against.
 	"""
-
-# ##
-# Pyramid support
-# ##
-
-from pyramid import events as pyramid_events
-
-class IApplicationCreated(pyramid_interfaces.IApplicationCreated):
-	app = interface.Attribute("Created application")
-	config = interface.Attribute("Pyramid configurator")
-
-@interface.implementer(IApplicationCreated)
-class ApplicationCreated(pyramid_events.ApplicationCreated):
-
-	def __init__(self, app, config):
-		super(ApplicationCreated, self).__init__(app)
-		self.config = config
 
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder # BWC
 
