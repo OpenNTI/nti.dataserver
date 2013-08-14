@@ -345,8 +345,8 @@ class ForumGetView(GenericGetView):
 		result = super(ForumGetView, self).__call__()
 		if result is not None:
 			current = result
-			while readable and current:
-				current = is_readable(current, skip_cache=True)
+			while readable and current is not None and not nti_interfaces.IEntity.providedBy(current):
+				readable = is_readable(current, skip_cache=True)
 				current = getattr(current, '__parent__', None)
 			if not readable:
 				raise hexc.HTTPForbidden()
