@@ -341,9 +341,15 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 	def __call__(self):
+		readable = True
 		result = super(ForumGetView, self).__call__()
-		if result is not None and not is_readable(result, skip_cache=True):
-			raise hexc.HTTPForbidden()
+		if result is not None:
+			current = result
+			while readable and current:
+				current = is_readable(current, skip_cache=True)
+				current = getattr(current, '__parent__', None)
+			if not readable:
+				raise hexc.HTTPForbidden()
 		return result
 
 @view_config(context=frm_interfaces.IBoard)
