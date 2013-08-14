@@ -172,8 +172,8 @@ class _CourseExtractor(object):
 
 	def _process_course(self, doc_el, courseinfo):
 		toc_el = XMLDocument().createElement('course')
-		toc_el.setAttribute('label', unicode(doc_el.title))
-		toc_el.setAttribute('courseName', unicode(doc_el.number))
+		toc_el.setAttribute('label', ''.join(render_children( doc_el.renderer, doc_el.title)))
+		toc_el.setAttribute('courseName', ''.join(render_children( doc_el.renderer, doc_el.number)))
 		toc_el.setAttribute('ntiid', doc_el.ntiid)
 		if hasattr(doc_el, 'discussion_board'):
 			toc_el.setAttribute('discussionBoard', doc_el.discussion_board)
