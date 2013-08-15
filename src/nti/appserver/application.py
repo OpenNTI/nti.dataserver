@@ -579,7 +579,6 @@ def createApplication( http_port,
 
 	_renderer_settings(pyramid_config)
 	_library_settings(pyramid_config, server, library)
-	_external_view_settings(pyramid_config)
 
 	_search_views(pyramid_config)
 	_service_odata_views(pyramid_config)
@@ -603,6 +602,8 @@ def createApplication( http_port,
 	_classinfo_views(pyramid_config)
 
 	_patching_restore_views(pyramid_config)
+
+	_external_view_settings(pyramid_config)
 
 	# register change listeners
 	# Now, fork off the change listeners
