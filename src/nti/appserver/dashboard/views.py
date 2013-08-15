@@ -176,7 +176,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 
 	def _scan_quizzes(self, total_user_map, total_by_type):
 		# check there are questions
-		question_map = component.getUtility(app_interfaces.IFileQuestionMap)
+		question_map = component.queryUtility(app_interfaces.IFileQuestionMap)
 		if not question_map:
 			return
 
@@ -192,7 +192,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
 	
 	def _scan_videos(self, total_user_map, total_by_type):
-		video_map = component.getUtility(app_interfaces.IVideoIndexMap)
+		video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
 		if not video_map:
 			return
 		

@@ -36,7 +36,7 @@ class VideoIndexMap(dict):
 @component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectCreatedEvent)
 def add_video_items_from_new_content(content_package, event):
 	#### from IPython.core.debugger import Tracer; Tracer()()  ####
-	video_map = component.getUtility(app_interfaces.IVideoIndexMap)
+	video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
 	if video_map is None:  # pragma: no cover
 		return
 
@@ -55,12 +55,6 @@ def _populate_video_map_from_text(video_map, video_index_text, content_package):
 	video_index_text = unicode(video_index_text, 'utf-8') if isinstance(video_index_text, six.binary_type) else video_index_text
 	index = simplejson.loads(video_index_text)
 
-	# add items
-	items = index.get('Items') if 'Items' in index else index
-	for k, _ in items.items():
-		# TODO: eventually we will add NTIVideo object
-		video_map[k] = None
-
 	# add containers:
 	containers = index.get('Containers', {})
 	for k, v in containers.items():
@@ -68,7 +62,7 @@ def _populate_video_map_from_text(video_map, video_index_text, content_package):
 
 @component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectRemovedEvent)
 def remove_video_items_from_old_content(content_package, event):
-	video_map = component.getUtility(app_interfaces.IVideoIndexMap)
+	video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
 	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 	if video_map and library:  # pragma: no cover
 		logger.debug("Clearing video items from old content %s %s", content_package, event)

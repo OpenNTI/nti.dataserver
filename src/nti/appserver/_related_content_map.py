@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Implementation of the video index  map and supporting
+Implementation of the relatex content index  map and supporting
 functions to maintain it.
 
-$Id: _videoindex_map.py 22669 2013-08-13 21:48:32Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -22,57 +22,55 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from . import interfaces as app_interfaces
 
-@interface.implementer(app_interfaces.IVideoIndexMap)
-class VideoIndexMap(dict):
+@interface.implementer(app_interfaces.IRelatedContentIndexMap)
+class RelatedContentIndexMap(dict):
 
 	def __init__(self):
-		super(VideoIndexMap, self).__init__()
-		self.by_container = {}  # {ntiid => [video id]}
+		super(RelatedContentIndexMap, self).__init__()
+		self.by_container = {}  # {ntiid => [related content ntiid]}
 
 	def clear(self):
-		super(VideoIndexMap, self).clear()
+		super(RelatedContentIndexMap, self).clear()
 		self.by_container.clear()
 
 @component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectCreatedEvent)
-def add_video_items_from_new_content(content_package, event):
-	#### from IPython.core.debugger import Tracer; Tracer()()  ####
-	video_map = component.getUtility(app_interfaces.IVideoIndexMap)
-	if video_map is None:  # pragma: no cover
-		return
+def add_related_content_items_from_new_content(content_package, event):
+	rc_map = component.queryUtility(app_interfaces.IRelatedContentIndexMap)
+	if rc_map is None:  # pragma: no cover
+		rc_map
 
 	logger.debug("Adding video items from new content %s %s", content_package, event)
 
 	try:
-		video_index_text = content_package.read_contents_of_sibling_entry('video_index.json')
-		_populate_video_map_from_text(video_map, video_index_text, content_package)
+		index_text = content_package.read_contents_of_sibling_entry('related_content_index.json')
+		_populate_rc_map_from_text(rc_map, index_text, content_package)
 	except:
-		logger.exception("Failed to load video items, invalid video_index for %s", content_package)
+		logger.exception("Failed to load related content items, invalid cache index for %s", content_package)
 
-def _populate_video_map_from_text(video_map, video_index_text, content_package):
-	if not video_index_text:
+def _populate_rc_map_from_text(rc_map, index_text, content_package):
+	if not index_text:
 		return
 
-	video_index_text = unicode(video_index_text, 'utf-8') if isinstance(video_index_text, six.binary_type) else video_index_text
+	video_index_text = unicode(index_text, 'utf-8') if isinstance(index_text, six.binary_type) else index_text
 	index = simplejson.loads(video_index_text)
 
 	# add items
 	items = index.get('Items') if 'Items' in index else index
-	for k, _ in items.items():
-		# TODO: eventually we will add NTIVideo object
-		video_map[k] = None
+	for k, v in items.items():
+		rc_map[k] = v
 
 	# add containers:
 	containers = index.get('Containers', {})
 	for k, v in containers.items():
-		video_map.by_container[k] = v
+		rc_map.by_container[k] = v
 
 @component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectRemovedEvent)
-def remove_video_items_from_old_content(content_package, event):
-	video_map = component.getUtility(app_interfaces.IVideoIndexMap)
+def remove_related_content_items_from_old_content(content_package, event):
+	rc_map = component.queryUtility(app_interfaces.IRelatedContentIndexMap)
 	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
-	if video_map and library:  # pragma: no cover
-		logger.debug("Clearing video items from old content %s %s", content_package, event)
+	if rc_map and library:  # pragma: no cover
+		logger.debug("Clearing related content items from old content %s %s", content_package, event)
 		for unit in library.childrenOfNTIID(content_package.ntiid):
-			videos = video_map.by_container.pop(unit.ntiid, ())
-			for vid in videos:
-				video_map.pop(vid)
+			related_content = rc_map.by_container.pop(unit.ntiid, ())
+			for vid in related_content:
+				rc_map.pop(vid)

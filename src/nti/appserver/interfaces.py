@@ -492,10 +492,18 @@ class INewObjectTransformer(interface.Interface):
 		"""
 
 # ##
-# Video Support
+# Video support
 # ##
 
 class IVideoIndexMap(mapping.IReadMapping):
+	by_container = schema.Dict(key_type=schema.TextLine(title="The container of the video"),
+							   value_type=schema.List(title="The video ntiid"))
+
+# #
+# Related content support
+# ##
+
+class IRelatedContentIndexMap(IVideoIndexMap):
 	by_container = schema.Dict(key_type=schema.TextLine(title="The container of the video"),
 							   value_type=schema.List(title="The video ntiid"))
 
