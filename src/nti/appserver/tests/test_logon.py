@@ -369,15 +369,15 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		assert_that( result, has_property( 'location', '/the/url/to/go/to' ) )
 
 	@WithMockDSTrans
-	def test_create_openid_from_external( self ):
-		user = logon._deal_with_external_account( get_current_request(),
-												  "jason.madden@nextthought.com",
-												  "Jason",
-												  "Madden",
-												  "jason.madden@nextthought.com",
-												  "http://example.com",
-												  nti_interfaces.IOpenIdUser,
-												  users.OpenIdUser.create_user )
+	def test_create_openid_from_external( self ):  
+		user = logon._deal_with_external_account( request=get_current_request(),
+												  username="jason.madden@nextthought.com",
+												  fname="Jason",
+												  lname="Madden",
+												  email="jason.madden@nextthought.com",
+												  idurl="http://example.com",
+												  iface=nti_interfaces.IOpenIdUser,
+												  user_factory=users.OpenIdUser.create_user )
 		assert_that( user, provides( nti_interfaces.IOpenIdUser ) )
 		assert_that( user, is_( users.OpenIdUser ) )
 		assert_that( user, has_property( 'identity_url', 'http://example.com' ) )
@@ -394,14 +394,15 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 
 		# Can also auth as facebook for the same email address
 		# TODO: Think about that
-		fb_user = logon._deal_with_external_account( get_current_request(),
-													 "jason.madden@nextthought.com",
-													 "Jason",
-													 "Madden",
-													 "jason.madden@nextthought.com",
-													 "http://facebook.com",
-													 nti_interfaces.IFacebookUser,
-													 users.FacebookUser.create_user )
+
+		fb_user = logon._deal_with_external_account( request=get_current_request(),
+													 username="jason.madden@nextthought.com",
+													 fname="Jason",
+													 lname="Madden",
+													 email="jason.madden@nextthought.com",
+													 idurl="http://facebook.com",
+													 iface=nti_interfaces.IFacebookUser,
+													 user_factory=users.FacebookUser.create_user )
 
 		assert_that( fb_user, is_( same_instance( user ) ) )
 		assert_that( fb_user, provides( nti_interfaces.IFacebookUser ) )
