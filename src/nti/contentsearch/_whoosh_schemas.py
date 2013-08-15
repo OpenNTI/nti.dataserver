@@ -159,7 +159,7 @@ def create_video_transcript_schema():
 	sch = fields.Schema(containerId=fields.ID(stored=True, unique=False),
 						videoId=fields.ID(stored=True, unique=False),
 						language=fields.ID(stored=True, unique=False),
-						title=fields.STORED(),
+						title=create_content_field(stored=True),
 					 	content=create_content_field(stored=True),
 					 	quick=create_ngram_field(),
 					 	keywords=fields.KEYWORD(stored=True),
