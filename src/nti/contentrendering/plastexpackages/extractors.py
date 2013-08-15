@@ -210,10 +210,12 @@ class _CourseExtractor(object):
 
 		# SAJ: Add the course's timezone and translate to UTC
 		tz = course.tz
-		doc_el.date = tz_utc.normalize(tz.localize(doc_el.date).astimezone(tz_utc))
+		dates = []
+		for date in doc_el.date:
+			dates.append(tz_utc.normalize(tz.localize(date).astimezone(tz_utc)).isoformat())
 
 		toc_el = XMLDocument().createElement('lesson')
-		toc_el.setAttribute('date', doc_el.date.isoformat())
+		toc_el.setAttribute('date', ','.join(dates))
 		toc_el.setAttribute('topic-ntiid', doc_el.idref['label'].ntiid)
 		return toc_el
 

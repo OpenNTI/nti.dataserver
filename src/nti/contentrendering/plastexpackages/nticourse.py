@@ -134,8 +134,11 @@ class courselessonref(Crossref.ref):
     
     def invoke( self, tex ):
         res = super(courselessonref, self).invoke( tex )
-        date = self.attributes['date'].split('/')
-        self.date = datetime(int(date[2]), int(date[0]), int(date[1]))
+        dates = self.attributes['date'].split(',')
+        self.date = []
+        for date in dates:
+            date = date.split('/')
+            self.date.append(datetime(int(date[2]), int(date[0]), int(date[1])))
         return res
 
 class courselesson(StartSection):
