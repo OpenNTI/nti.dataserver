@@ -877,7 +877,7 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 
 	dataserver = component.getUtility(nti_interfaces.IDataserver)
 	user = users.User.get_user( username=username, dataserver=dataserver )
-	url_attr = iface.names()[0]
+	url_attr = iface.names()[0] if iface.names() and idurl else None
 	if user:
 		if not iface.providedBy( user ):
 			interface.alsoProvides( user, iface )
@@ -891,7 +891,7 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 		if fname and lname:
 			external_value['realname'] = fname + ' ' + lname
 		if idurl:
-			external_value['url_attr'] = idurl
+			external_value[url_attr] = idurl
 
 		require_password = False
 		from .account_creation_views import _create_user # XXX A bit scuzzy
