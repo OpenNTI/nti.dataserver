@@ -334,7 +334,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		assert_that( result, is_( hexc.HTTPUnauthorized ) )
 		assert_that( result.headers, has_entry( "Policy", "Me" ) )
 
-        # Or a redirect
+		# Or a redirect
 		self.beginRequest(request_factory=pyramid.request.Request.blank, request_args=('/?failure=/the/url/to/go/to',))
 		#get_current_request().registry.registerUtility( Policy() )
 		#get_current_request().params['failure'] = '/the/url/to/go/to'
@@ -421,14 +421,14 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_facebook_from_external( self ):
 
-		fb_user = logon._deal_with_external_account( get_current_request(),
-													 "jason.madden@nextthought.com",
-													 "Jason",
-													 "Madden",
-													 "jason.madden@nextthought.com",
-													 "http://facebook.com",
-													 nti_interfaces.IFacebookUser,
-													 users.FacebookUser.create_user )
+		fb_user = logon._deal_with_external_account(request=get_current_request(),
+													username="jason.madden@nextthought.com",
+													fname="Jason",
+													lname="Madden",
+													email="jason.madden@nextthought.com",
+													idurl="http://facebook.com",
+													iface=nti_interfaces.IFacebookUser,
+													user_factory=users.FacebookUser.create_user)
 
 
 		assert_that( fb_user, provides( nti_interfaces.IFacebookUser ) )
@@ -446,14 +446,14 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 	@WithMockDSTrans
 	def test_create_from_external_bad_data( self ):
 		with assert_raises(hexc.HTTPError):
-			logon._deal_with_external_account( get_current_request(),
-											   "jason.madden@nextthought.com",
-											   "Jason",
-											   "Madden",
-											   "jason.madden_nextthought_com", # Bad email
-											   "http://facebook.com",
-											   nti_interfaces.IFacebookUser,
-											   users.FacebookUser.create_user )
+			logon._deal_with_external_account(request=get_current_request(),
+											  username="jason.madden@nextthought.com",
+											  fname="Jason",
+											  lname="Madden",
+											  email="jason.madden_nextthought_com",  # Bad email
+											  idurl="http://facebook.com",
+											  iface=nti_interfaces.IFacebookUser,
+											  user_factory=users.FacebookUser.create_user)
 	@WithMockDSTrans
 	def test_update_provider_content_access_not_in_library(self):
 		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com', password='temp001' )
