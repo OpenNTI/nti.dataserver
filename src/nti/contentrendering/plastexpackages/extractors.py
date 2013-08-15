@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -260,14 +261,20 @@ class _RelatedWorkExtractor(object):
 		pass
 
 	def transform( self, book ):
+		dom = book.toc.dom
 		lesson_els = book.document.getElementsByTagName( 'courselesson' )
 		related_els = book.document.getElementsByTagName( 'relatedwork' )
-		dom = book.toc.dom
 		if lesson_els or related_els:
-			topic_map = self._get_topic_map(dom)
-			self._process_lessons(dom, lesson_els, topic_map)
-			self._process_related(dom, related_els)
+			outpath = os.path.expanduser(book.contentLocation)
+			# add name space
 			dom.childNodes[0].setAttribute('xmlns:content', "http://www.nextthought.com/toc")
+			# cache topics
+			topic_map = self._get_topic_map(dom)
+			# get content data
+			content = self._process_lessons(dom, lesson_els, topic_map)
+			content.extend(self._process_related(dom, related_els))
+			# save dom and files
+			self._save_related_content(outpath, dom, content)
 			book.toc.save()
 
 	def _get_topic_map(self, dom):
@@ -279,6 +286,7 @@ class _RelatedWorkExtractor(object):
 		return result
 
 	def _process_lessons(self, dom, els, topic_map):
+		result = []
 		for el in els:
 			ref_els = el.getElementsByTagName('relatedworkref')
 			if ref_els:
@@ -299,21 +307,23 @@ class _RelatedWorkExtractor(object):
 					if ref_el.description == '':
 						ref_el.description = ref_el.relatedwork.description
 
-					toc_el = dom.createElement('content:related')
-					toc_el.setAttribute('label', ref_el.relatedwork.title)
-					toc_el.setAttribute('creator', ref_el.relatedwork.creator)
-					toc_el.setAttribute('href', ref_el.uri)
-					toc_el.setAttribute('type', ref_el.relatedwork.targetMimeType)
-					toc_el.setAttribute('icon', icon)
-					toc_el.setAttribute('desc', ref_el.description)
-					toc_el.setAttribute('section', ref_el.category)
-					toc_el.setAttribute('target-ntiid', ref_el.target_ntiid)
-					toc_el.setAttribute('ntiid', ref_el.ntiid)
+					content = {
+						'label': ref_el.relatedwork.title,
+						'creator': ref_el.relatedwork.creator,
+						'href': ref_el.uri,
+						'type': ref_el.relatedwork.targetMimeType,
+						'icon': icon,
+						'desc': ref_el.description,
+						'section': ref_el.category,
+						'target-ntiid': ref_el.target_ntiid,
+						'ntiid': ref_el.ntiid
+					}
 					if lesson_el:
-						lesson_el.appendChild(toc_el)
-						lesson_el.appendChild(dom.createTextNode(u'\n'))
+						result.append((content, lesson_el))
+		return result
 
 	def _process_related(self, dom, els):
+		result = []
 		for el in els:
 			if el.iconResource is not None:
 				icon = el.iconResource.image.url
@@ -322,17 +332,55 @@ class _RelatedWorkExtractor(object):
 			else:
 				icon = ''
 
-			toc_el = dom.createElement('content:related')
-			toc_el.setAttribute('label', el.title)
-			toc_el.setAttribute('creator', el.creator)
-			toc_el.setAttribute('href', el.uri)
-			toc_el.setAttribute('type', el.targetMimeType)
-			toc_el.setAttribute('icon', icon)
-			toc_el.setAttribute('desc', el.description)
-			toc_el.setAttribute('target-ntiid', el.target_ntiid)
-			toc_el.setAttribute('ntiid', el.ntiid)
-			dom.childNodes[0].appendChild(toc_el)
-			dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
+			content = {
+				'label': el.title,
+				'creator': el.creator,
+				'href': el.uri,
+				'type': el.targetMimeType,
+				'icon': icon,
+				'desc': el.description,
+				'target-ntiid': el.target_ntiid,
+				'ntiid': el.ntiid
+			}
+			result.append((content, dom.childNodes[0]))
+		return result
+	
+	def _save_related_content(self, outpath, dom, content_items):
+		items = {}
+		filename = 'related_content_index.json'
+		containers = collections.defaultdict(set)
+		related_content_index = {'Items': items, 'Containers':containers}
+		doc_ntiid = dom.documentElement.getAttribute('ntiid')
+
+		for d, node in content_items:
+			if node is None:
+				continue
+			el = dom.createElement('content:related')
+			for name, value in d.items():
+				el.setAttribute(unicode(name), unicode(value))
+			node.appendChild(el)
+			node.appendChild(dom.createTextNode(u'\n'))
+
+			items[d['ntiid']] = d
+			container = node.getAttribute('ntiid') or doc_ntiid
+			containers[container].add(d['ntiid'])
+
+		for ntiid, vid_ids in list(containers.items()):
+			containers[ntiid] = list(vid_ids)  # Make JSON Serializable
+
+		# Write the normal version
+		with open(os.path.join(outpath, filename), "wb") as fp:
+			json.dump(related_content_index, fp, indent=4)
+
+		# Write the JSONP version
+		with open(os.path.join(outpath, filename + 'p'), "wb") as fp:
+			fp.write('jsonpReceiveContent(')
+			json.dump({'ntiid': dom.childNodes[0].getAttribute('ntiid'),
+					   'Content-Type': 'application/json',
+					   'Content-Encoding': 'json',
+					   'content': related_content_index,
+					   'version': '1'}, fp, indent=4)
+			fp.write(');')
 
 @interface.implementer(crd_interfaces.IDiscussionExtractor)
 @component.adapter(crd_interfaces.IRenderedBook)
