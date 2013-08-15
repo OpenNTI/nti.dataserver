@@ -131,8 +131,8 @@ def _logon_account_views(pyramid_config):
 
 def _webapp_resource_views(pyramid_config, settings):
 	# Site-specific CSS packages
-	web_root = settings['web_app_root'] if 'web_app_root' in settings else '/NextThoughtWebApp'
-	login_root = settings['login_app_root'] if 'login_app_root' in settings else '/login'
+	web_root = settings.get('web_app_root', '/NextThoughtWebApp')
+	login_root = settings.get('login_app_root', '/login')
 
 	pyramid_config.add_route(name="logon.logon_css", pattern=login_root+"/resources/css/site.css")
 	pyramid_config.add_route(name="webapp.site_css", pattern=web_root+"/resources/css/site.css")
