@@ -38,7 +38,7 @@
 		description='Can the user upload custom avatar pictures?' />
 		
 	<cap:capability
-		id='nti.platform.logon.can_change_password'
+		id='nti.platform.customization.can_change_password'
 		title="Change Password"
 		description='Can the user change his/her password?' />
 
