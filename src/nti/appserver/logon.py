@@ -863,9 +863,7 @@ def openid_login(context, request):
 	return _openid_login( context, request, request.params['openid'] )
 
 
-_marker = object()
-
-def _deal_with_external_account(request, username, fname, lname, email, iface, user_factory, idurl=_marker):
+def _deal_with_external_account(request, username, fname, lname, email, idurl, iface, user_factory):
 	"""
 	Finds or creates an account based on an external authentication.
 
@@ -883,11 +881,9 @@ def _deal_with_external_account(request, username, fname, lname, email, iface, u
 	if user:
 		if not iface.providedBy( user ):
 			interface.alsoProvides( user, iface )
-			if idurl is not _marker:
-				setattr(user, url_attr, idurl)
-				lifecycleevent.modified(user, lifecycleevent.Attributes(iface, url_attr))
-		if idurl is not _marker:
-			assert getattr(user, url_attr) == idurl
+			setattr(user, url_attr, idurl)
+			lifecycleevent.modified(user, lifecycleevent.Attributes(iface, url_attr))
+		assert getattr(user, url_attr) == idurl
 	else:
 		# When creating, we go through the same steps as account_creation_views,
 		# guaranteeing the proper validation
@@ -904,10 +900,10 @@ def _deal_with_external_account(request, username, fname, lname, email, iface, u
 		# will be None
 		user = _create_user(request, external_value, require_password=require_password, user_factory=user_factory)
 		__traceback_info__ = request, user_factory, iface, user
-		if idurl is not _marker:
-			assert getattr(user, url_attr) is None  # doesn't get read from the external value right now
-			setattr(user, url_attr, idurl)
-			assert getattr(user, url_attr) == idurl
+
+		assert getattr(user, url_attr) is None  # doesn't get read from the external value right now
+		setattr(user, url_attr, idurl)
+		assert getattr(user, url_attr) == idurl
 		assert iface.providedBy( user )
 		# We manually fire the user_created event. See account_creation_views
 		notify( app_interfaces.UserCreatedWithRequestEvent( user, request ) )
