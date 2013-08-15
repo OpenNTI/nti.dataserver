@@ -20,6 +20,8 @@
 
 
 	<registerIn registry=".sites.OU">
+		<include package="nti.integration.ou" file="configure.zcml" />
+
 		<utility factory=".site_policies.OUSitePolicyEventListener" />
 
 
