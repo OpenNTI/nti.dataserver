@@ -137,8 +137,11 @@ class courselessonref(Crossref.ref):
         dates = self.attributes['date'].split(',')
         self.date = []
         for date in dates:
-            date = date.split('/')
-            self.date.append(datetime(int(date[2]), int(date[0]), int(date[1])))
+            if date:
+                date = date.split('/')
+                self.date.append(datetime(int(date[2]), int(date[0]), int(date[1])))
+            else:
+                self.date.append(datetime.today())
         return res
 
 class courselesson(StartSection):
