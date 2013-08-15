@@ -887,13 +887,11 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 	else:
 		# When creating, we go through the same steps as account_creation_views,
 		# guaranteeing the proper validation
-		external_value = { 'Username': username }
+		external_value = { 'Username': username, 'email':email }
 		if fname and lname:
 			external_value['realname'] = fname + ' ' + lname
 		if idurl:
 			external_value['url_attr'] = idurl
-		if email:
-			external_value['email'] = email
 		if password:
 			external_value['password'] = password
 			require_password = True
@@ -906,9 +904,10 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 		# will be None
 		user = _create_user(request, external_value, require_password=require_password, user_factory=user_factory)
 		__traceback_info__ = request, user_factory, iface, user
-		assert getattr( user, url_attr ) is None # doesn't get read from the external value right now
-		setattr( user, url_attr, idurl )
-		assert getattr( user, url_attr ) == idurl
+		if idurl:
+			assert getattr(user, url_attr) is None  # doesn't get read from the external value right now
+			setattr(user, url_attr, idurl)
+			assert getattr(user, url_attr) == idurl
 		assert iface.providedBy( user )
 		# We manually fire the user_created event. See account_creation_views
 		notify( app_interfaces.UserCreatedWithRequestEvent( user, request ) )
