@@ -877,20 +877,22 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 
 	dataserver = component.getUtility(nti_interfaces.IDataserver)
 	user = users.User.get_user( username=username, dataserver=dataserver )
-	url_attr = iface.names()[0] if iface.names() and idurl else None
+	url_attr = iface.names()[0] if iface and iface.names() and idurl else None
 	if user:
-		if not iface.providedBy( user ):
-			interface.alsoProvides( user, iface )
-			setattr(user, url_attr, idurl)
-			lifecycleevent.modified(user, lifecycleevent.Attributes(iface, url_attr))
-		assert getattr(user, url_attr) == idurl
+		if iface and not iface.providedBy(user):
+			interface.alsoProvides(user, iface)
+			if url_attr:
+				setattr(user, url_attr, idurl)
+				lifecycleevent.modified(user, lifecycleevent.Attributes(iface, url_attr))
+		if url_attr:
+			assert getattr(user, url_attr) == idurl
 	else:
 		# When creating, we go through the same steps as account_creation_views,
 		# guaranteeing the proper validation
 		external_value = { 'Username': username, 'email':email }
 		if fname and lname:
 			external_value['realname'] = fname + ' ' + lname
-		if idurl:
+		if url_attr:
 			external_value[url_attr] = idurl
 
 		require_password = False
@@ -901,10 +903,12 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 		user = _create_user(request, external_value, require_password=require_password, user_factory=user_factory)
 		__traceback_info__ = request, user_factory, iface, user
 
-		assert getattr(user, url_attr) is None  # doesn't get read from the external value right now
-		setattr(user, url_attr, idurl)
-		assert getattr(user, url_attr) == idurl
-		assert iface.providedBy( user )
+		if url_attr:
+			assert getattr(user, url_attr) is None  # doesn't get read from the external value right now
+			setattr(user, url_attr, idurl)
+			assert getattr(user, url_attr) == idurl
+		if iface:
+			assert iface.providedBy(user)
 		# We manually fire the user_created event. See account_creation_views
 		notify( app_interfaces.UserCreatedWithRequestEvent( user, request ) )
 	return user
