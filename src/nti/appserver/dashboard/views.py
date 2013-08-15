@@ -230,6 +230,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		total_ugd, total_by_type = self._get_summary_items(self.ntiid)
 		self._scan_quizzes(total_ugd, total_by_type)
 		self._scan_videos(total_ugd, total_by_type)
+		self._scan_related_content(total_ugd, total_by_type)
 
 		# sort
 		def _cmp(x,y):
