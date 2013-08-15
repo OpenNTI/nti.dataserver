@@ -150,7 +150,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 	def _process_ntivideo(self, topic, node):
 		type_ = node_utils.get_attribute(node, 'type')
-		if type_ not in _video_types:
+		if not type_ or type_ not in _video_types:
 			return ()
 
 		params = {}
