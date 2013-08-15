@@ -24,12 +24,6 @@
 
 		<utility factory=".site_policies.OUSitePolicyEventListener" />
 
-		<!-- On the OU site IOUUser accounts (those from ldap) can't
-			 change passwords-->
-		<adapter factory="nti.integration.ou.policies.NoChangePasswordCapabilityFilter"
-				 for="nti.integration.ou.interfaces.IOUUser"
-				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
-
 
 		<!-- CSS for OU -->
 		<utility factory=".site_policy_views.SiteCSSMarker" />
