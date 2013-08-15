@@ -863,7 +863,9 @@ def openid_login(context, request):
 	return _openid_login( context, request, request.params['openid'] )
 
 
-def _deal_with_external_account(request, username, fname, lname, email, idurl, iface, user_factory, password=None):
+_marker = object()
+
+def _deal_with_external_account(request, username, fname, lname, email, iface, user_factory, idurl=_marker):
 	"""
 	Finds or creates an account based on an external authentication.
 
@@ -881,9 +883,11 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 	if user:
 		if not iface.providedBy( user ):
 			interface.alsoProvides( user, iface )
-			setattr( user, url_attr, idurl )
-			lifecycleevent.modified( user, lifecycleevent.Attributes( iface, url_attr ) )
-		assert getattr( user, url_attr ) == idurl
+			if idurl is not _marker:
+				setattr(user, url_attr, idurl)
+				lifecycleevent.modified(user, lifecycleevent.Attributes(iface, url_attr))
+		if idurl is not _marker:
+			assert getattr(user, url_attr) == idurl
 	else:
 		# When creating, we go through the same steps as account_creation_views,
 		# guaranteeing the proper validation
@@ -892,19 +896,15 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 			external_value['realname'] = fname + ' ' + lname
 		if idurl:
 			external_value['url_attr'] = idurl
-		if password:
-			external_value['password'] = password
-			require_password = True
-		else:
-			require_password = False
-			
+
+		require_password = False
 		from .account_creation_views import _create_user # XXX A bit scuzzy
 
 		# This fires lifecycleevent.IObjectCreatedEvent and IObjectAddedEvent. The oldParent attribute
 		# will be None
 		user = _create_user(request, external_value, require_password=require_password, user_factory=user_factory)
 		__traceback_info__ = request, user_factory, iface, user
-		if idurl:
+		if idurl is not _marker:
 			assert getattr(user, url_attr) is None  # doesn't get read from the external value right now
 			setattr(user, url_attr, idurl)
 			assert getattr(user, url_attr) == idurl
@@ -1014,7 +1014,8 @@ def _openidcallback( context, request, success_dict ):
 		# TODO: Make this look the interface and factory to assign up by name (something in the idurl?)
 		# That way we can automatically assign an IAoPSUser and use a users.AoPSUser
 		the_user = _deal_with_external_account(request, username=username, fname=fname, lname=lname, email=email,
-											   idurl=idurl, iface=nti_interfaces.IOpenIdUser, user_factory=users.OpenIdUser.create_user)
+											   idurl=idurl, iface=nti_interfaces.IOpenIdUser,
+											   user_factory=users.OpenIdUser.create_user)
 		_update_users_content_roles( the_user, idurl, content_roles )
 	except hexc.HTTPError:
 		raise
