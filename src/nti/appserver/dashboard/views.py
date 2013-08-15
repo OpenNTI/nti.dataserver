@@ -191,6 +191,24 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 				usr_map, by_type = self._get_summary_items(ntiid, False) if ntiid else ({}, {})
 				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
 	
+	def _scan_related_content(self, total_user_map, total_by_type):
+		rc_map = component.queryUtility(app_interfaces.IRelatedContentIndexMap)
+		if not rc_map:
+			return
+
+		# gather all paths for the request ntiid
+		all_paths = self._get_self_and_children(self.ntiid)
+
+		for unit in all_paths or ():
+			ntiid = getattr(unit, 'ntiid', None)
+			items = rc_map.by_container.get(ntiid)
+			for rc_id in items or ():
+				rc_entry = rc_map.get(rc_id, {})
+				ntiid = rc_entry.get('ntiid')
+				if ntiid and rc_entry.get('ntiid') == u"application/vnd.nextthought.content":
+					usr_map, by_type = self._get_summary_items(ntiid, False)
+					self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
+
 	def _scan_videos(self, total_user_map, total_by_type):
 		video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
 		if not video_map:
