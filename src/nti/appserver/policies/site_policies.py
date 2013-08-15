@@ -56,6 +56,7 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.utils.schema import InvalidValue
 from nti.utils.schema import find_most_derived_interface
 
+from . import sites
 from .interfaces import IMathcountsUser
 from .interfaces import ISitePolicyUserEventListener
 from .interfaces import IColumbiaBusinessUserProfile
@@ -975,5 +976,15 @@ def ColumbiaBusinessUserProfileFactory(context):
 				break
 		return columbia_profile
 
-
-#
+####
+# Make sure we load views from any registered site.
+####
+@interface.implementer(app_interfaces.IViewConfigurator)
+class _SiteViewConfigurator(object):
+	"""
+	Load any views that belong to an specific site
+	"""
+	def add_views(self, config):
+		for site in sites._get_sties():
+			for _, mapper in site.getUtilitiesFor(app_interfaces.ISiteViewConfigurator):
+				mapper.add_views(config)

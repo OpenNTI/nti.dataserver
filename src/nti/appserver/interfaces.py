@@ -89,6 +89,9 @@ class IViewConfigurator(interface.Interface):
 		Add views to the given configurator.
 		"""
 
+class ISiteViewConfigurator(IViewConfigurator):
+	pass
+
 class IWorkspace(ILocation):
 	"""
 	A workspace (in the Atom sense) is a collection of collections.
