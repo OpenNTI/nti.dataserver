@@ -28,13 +28,13 @@ class InvalidEnrollmentAttemptException(Exception):
 	pass
 
 def enroll_course(user, course_id, description=None, request=None):
+	if course.get_course(course_id) is None:
+		raise CourseNotFoundException()
+
 	item = purchase_order.create_purchase_item(course_id, 1)
 	order = purchase_order.create_purchase_order(item, quantity=1)
 	purchase = purchase_attempt.create_errollment_attempt(order, description=description)
 	
-	if course.get_course(course_id) is None:
-		raise CourseNotFoundException()
-
 	if not purchase_history.has_history_by_item(user, course_id):
 		purchase_history.register_purchase_attempt(purchase, user)
 		notify(store_interfaces.EnrollmentAttemptSuccessful(purchase, request))
