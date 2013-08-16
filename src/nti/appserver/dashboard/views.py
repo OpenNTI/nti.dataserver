@@ -277,6 +277,14 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 		result = math.pow(decay, x) * len(topic)
 		return result
 
+	def _get_exclude(self):
+		result = set()
+		param = self.request.params.get('exclude', '')
+		if param:
+			splits = param.split(',')
+			result.update(splits)
+		return result
+
 	def _get_decay(self):
 		decay = self.request.params.get('decay', self._DEFAULT_DECAY)
 		if decay is not None:
@@ -332,6 +340,7 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 
 		# read params
 		decay = self._get_decay()
+		exclude = self._get_exclude()
 		batch_size, batch_start = self._get_batch_size_start()
 		use_hours = is_true(self.request.params.get('useHours', False))
 
@@ -341,8 +350,11 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 			# check we can read the forum
 			if not is_readable(forum, self.request, skip_cache=True):
 				continue
+			if forum.NTIID in exclude:
+				continue
 			for topic in forum.values():
-				items.append((topic, self._score(topic, decay, use_hours)))
+				if not topic.NTIID in exclude:
+					items.append((topic, self._score(topic, decay, use_hours)))
 		items_sorted = sorted(items, key=lambda t: t[1], reverse=True)
 		items = map(lambda x: x[0], items_sorted)
 
