@@ -462,12 +462,15 @@ class GenericSitePolicyEventListener(object):
 		names.realname = unicode(human_name)
 		names.alias = human_name.first + ' ' + human_name.last
 
+	def _censor_usernames(self, user):
+		_censor_usernames(user)
+		
 	def user_will_create(self, user, event):
 		"""
 		This policy verifies naming restraints.
-
 		"""
-		_censor_usernames(user)
+		self._censor_usernames(user)
+
 		if user.username.endswith('@nextthought.com') or nti_interfaces.username_is_reserved(user.username):
 			raise UsernameCannotContainNextthoughtCom(_("That username is not valid. Please choose another."), 'Username', user.username, value=user.username)
 
@@ -924,6 +927,9 @@ class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_USERNAME = 'ou.nextthought.com'
 	COM_ALIAS = 'OU'
 	COM_REALNAME = "The University of Oklahoma"
+
+	def _censor_usernames(self, user):
+		pass
 
 	def _check_name(self, user):
 		names = user_interfaces.IFriendlyNamed(user)
