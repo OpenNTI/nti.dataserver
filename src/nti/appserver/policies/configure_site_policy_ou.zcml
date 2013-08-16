@@ -94,7 +94,7 @@
 				name="SOC 3123"
 				icon="https://ou-platform.nextthought.com/purchasables/SOC3123_promo.jpg"
 				thumbnail="https://ou-platform.nextthought.com/purchasables/SOC3123_cover.jpg"
-				items="tag:nextthought.com,2011-10:OU-HTML-CourseReader_IAS2003.course_reader_ias_2003" />
+				items="tag:nextthought.com,2011-10:OU-HTML-CourseReader_SOC3123.course_reader_soc_3123_social_statistics" />
 
 	</registerIn>
 </configure>
