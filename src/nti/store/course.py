@@ -8,6 +8,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+from zope import component
 from zope import interface
 
 from nti.ntiids import interfaces as nid_interfaces
@@ -61,6 +62,6 @@ class _CourseResolver(object):
 	def resolve(self, ntiid_string):
 		return purchasable.get_purchasable(ntiid_string)
 
-def get_course(course_id):
-	result = purchasable.get_purchasable(course_id)
+def get_course(course_id, registry=component):
+	result = purchasable.get_purchasable(course_id, registry)
 	return result

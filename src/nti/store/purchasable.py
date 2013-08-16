@@ -120,21 +120,21 @@ class ZcmlPurchasableStore(object):
 
 DefaultPurchasableStore = ZcmlPurchasableStore
 
-def get_purchasable(pid):
-	util = component.getUtility(store_interfaces.IPurchasableStore)
+def get_purchasable(pid, registry=component):
+	util = registry.getUtility(store_interfaces.IPurchasableStore)
 	result = util.get_purchasable(pid)
 	return result
 
-def get_all_purchasables():
-	util = component.queryUtility(store_interfaces.IPurchasableStore)
+def get_all_purchasables(registry=component):
+	util = registry.queryUtility(store_interfaces.IPurchasableStore)
 	result = LocatedExternalList(util.get_all_purchasables()) if util else []
 	return result
 
-def get_available_items(user):
+def get_available_items(user, registry=component):
 	"""
 	Return all item that can be purchased
 	"""
-	util = component.queryUtility(store_interfaces.IPurchasableStore)
+	util = registry.queryUtility(store_interfaces.IPurchasableStore)
 	all_ids = set(util.get_purchasable_ids()) if util else ()
 	if not all_ids:
 		return {}
@@ -151,7 +151,7 @@ def get_available_items(user):
 	result = LocatedExternalDict({k:util.get_purchasable(k) for k in available})
 	return result
 
-def get_content_items(purchased_items):
+def get_content_items(purchased_items, registry=component):
 	"""
 	return the nttids of the library items that were purchased
 	"""
@@ -159,7 +159,7 @@ def get_content_items(purchased_items):
 		purchased_items = to_collection(purchased_items)
 
 	result = set()
-	util = component.getUtility(store_interfaces.IPurchasableStore)
+	util = registry.getUtility(store_interfaces.IPurchasableStore)
 	for item in purchased_items:
 		p = util.get_purchasable(item)
 		if p is not None:
