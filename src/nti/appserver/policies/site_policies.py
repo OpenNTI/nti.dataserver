@@ -446,15 +446,7 @@ class GenericSitePolicyEventListener(object):
 	def user_created(self, user, event):
 		pass
 
-	def user_will_create(self, user, event):
-		"""
-		This policy verifies naming restraints.
-
-		"""
-		_censor_usernames(user)
-		if user.username.endswith('@nextthought.com') or nti_interfaces.username_is_reserved(user.username):
-			raise UsernameCannotContainNextthoughtCom(_("That username is not valid. Please choose another."), 'Username', user.username, value=user.username)
-
+	def _check_name(self, user):
 		# Icky. For some random reason we require everyone to provide their real name,
 		# and we force the display name to be derived from it.
 		names = user_interfaces.IFriendlyNamed(user)
@@ -469,6 +461,18 @@ class GenericSitePolicyEventListener(object):
 		human_name.capitalize()
 		names.realname = unicode(human_name)
 		names.alias = human_name.first + ' ' + human_name.last
+
+	def user_will_create(self, user, event):
+		"""
+		This policy verifies naming restraints.
+
+		"""
+		_censor_usernames(user)
+		if user.username.endswith('@nextthought.com') or nti_interfaces.username_is_reserved(user.username):
+			raise UsernameCannotContainNextthoughtCom(_("That username is not valid. Please choose another."), 'Username', user.username, value=user.username)
+
+		self._check_name(user)
+
 		# As of 2012-10-01, the acct creation UI has two very anglocentric fields labeled distinctly
 		# 'first' and 'last' name, which it concats to form the 'realname'. So this makes
 		# realname and alias exactly the same. As of this same date, we are also never returning
@@ -920,6 +924,13 @@ class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_USERNAME = 'ou.nextthought.com'
 	COM_ALIAS = 'OU'
 	COM_REALNAME = "The University of Oklahoma"
+
+	def _check_name(self, user):
+		names = user_interfaces.IFriendlyNamed(user)
+		if names.realname is None or not names.realname.strip():
+			raise nameparser.parser.BlankHumanNameError()
+		human_name = names.realname.capitalize()
+		names.alias = names.realname = unicode(human_name)
 
 @interface.implementer(ISitePolicyUserEventListener)
 class OUTestSitePolicyEventListener(OUSitePolicyEventListener):
