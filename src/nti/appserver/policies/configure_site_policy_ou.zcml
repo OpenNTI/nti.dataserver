@@ -61,7 +61,7 @@
 				name="METR 2603"
 				icon="https://ou-platform.nextthought.com/purchasables/METR2603_promo.png"
 				thumbnail="https://ou-platform.nextthought.com/purchasables/METR2603_cover.png"
-				items="tag:nextthought.com,2011-10:OU-HTML-METR2603_SevereWeather.metr_2603__understanding_severe_and_unusual_weather" />
+				items="tag:nextthought.com,2011-10:OU-HTML-METR2603_SevereWeather.metr_2603_understanding_severe_and_unusual_weather" />
 
 		<pcs:registerCourse
 				ntiid="tag:nextthought.com,2011-10:OU-course-CHEM1315GeneralChemistry"
@@ -83,7 +83,7 @@
 				name="IAS 2003"
 				icon="https://ou-platform.nextthought.com/purchasables/IAS2003_promo.png"
 				thumbnail="https://ou-platform.nextthought.com/purchasables/IAS2003_cover.png"
-				items="tag:nextthought.com,2011-10:OU-HTML-CourseReader_IAS2003.course_reader_ias_2003" />
+				items="tag:nextthought.com,2011-10:OU-HTML-IAS2003_GlobalCommunity.ias_2003__understanding_the_global_community" />
 
 		<pcs:registerCourse
 				ntiid="tag:nextthought.com,2011-10:OU-course-SOC3123"
@@ -94,7 +94,7 @@
 				name="SOC 3123"
 				icon="https://ou-platform.nextthought.com/purchasables/SOC3123_promo.jpg"
 				thumbnail="https://ou-platform.nextthought.com/purchasables/SOC3123_cover.jpg"
-				items="tag:nextthought.com,2011-10:OU-HTML-CourseReader_SOC3123.course_reader_soc_3123_social_statistics" />
+				items="tag:nextthought.com,2011-10:OU-HTML-SOC3123_SocialStatistics.soc_3123_social_statistics" />
 
 	</registerIn>
 </configure>
