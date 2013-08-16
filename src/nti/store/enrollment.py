@@ -27,6 +27,14 @@ class UserNotEnrolledException(Exception):
 class InvalidEnrollmentAttemptException(Exception):
 	pass
 
+def is_enrolled(user, course_id):
+	history = purchase_history.get_purchase_history_by_item(user, course_id)
+	if not history or len(history) != 1:
+		return False
+	else:
+		purchase = history[0]
+		return store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase)
+
 def enroll_course(user, course_id, description=None, request=None):
 	if course.get_course(course_id) is None:
 		raise CourseNotFoundException()
