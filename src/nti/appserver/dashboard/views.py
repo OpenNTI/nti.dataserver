@@ -281,7 +281,7 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 		result = set()
 		param = self.request.params.get('exclude', '')
 		if param:
-			splits = param.split(',')
+			splits = param.split()
 			result.update(splits)
 		return result
 
