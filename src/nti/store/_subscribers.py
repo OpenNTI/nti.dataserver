@@ -70,7 +70,7 @@ def _enrollment_attempt_successful(event):
 	_update_state(purchase, store_interfaces.PA_STATE_SUCCESS)
 	to_join = _dynamic_memberships(purchase)
 	_activate_items(purchase, add_roles=not to_join)
-	logger.info('Enrollment for %r completed successfully', purchase)
+	logger.info('%s has been enrolled in %s' % (purchase.creator, list(purchase.Items)))
 
 @component.adapter(store_interfaces.IPurchaseAttemptSuccessful)
 def _purchase_attempt_successful(event):
@@ -100,7 +100,7 @@ def _unenrollment_attempt_successful(event):
 	purchase.EndTime = time.time()
 	to_exit = _dynamic_memberships(purchase, False)
 	_return_items(purchase, remove_roles=not to_exit)
-	logger.info('Unenrollment for %r completed successfully', purchase)
+	logger.info('%s has been unenrolled from %s' % (purchase.creator, list(purchase.Items)))
 
 @component.adapter(store_interfaces.IPurchaseAttemptRefunded)
 def _purchase_attempt_refunded(event):
