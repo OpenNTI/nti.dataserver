@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope.event import notify
 
 from . import course
@@ -35,8 +36,8 @@ def is_enrolled(user, course_id):
 		purchase = history[0]
 		return store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase)
 
-def enroll_course(user, course_id, description=None, request=None):
-	if course.get_course(course_id) is None:
+def enroll_course(user, course_id, description=None, request=None, registry=component):
+	if course.get_course(course_id, registry) is None:
 		raise CourseNotFoundException()
 
 	item = purchase_order.create_purchase_item(course_id, 1)
@@ -49,8 +50,8 @@ def enroll_course(user, course_id, description=None, request=None):
 		return True
 	return False
 
-def unenroll_course(user, course_id, request=None):
-	if course.get_course(course_id) is None:
+def unenroll_course(user, course_id, request=None, registry=component):
+	if course.get_course(course_id, registry) is None:
 		raise CourseNotFoundException()
 
 	history = purchase_history.get_purchase_history_by_item(user, course_id)
