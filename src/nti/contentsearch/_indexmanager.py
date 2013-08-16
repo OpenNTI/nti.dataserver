@@ -17,6 +17,7 @@ from zope.event import notify
 from perfmetrics import metric
 
 from nti.dataserver.users import Entity
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils.maps import CaseInsensitiveDict
 
@@ -57,11 +58,23 @@ class IndexManager(object):
 		result = self.get_entity(username)
 		return result is not None
 
-	def get_search_memberships(self, username):
+	def get_dfls(self, username, sort=False):
+		user = self.get_entity(username)
+		fls = getattr(user, 'getFriendsLists', lambda s: ())(user)
+		result = [x for x in fls if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(x)]
+		return result
+
+	def get_user_dymamic_memberships(self, username, sort=False):
 		user = self.get_entity(username)
 		everyone = self.get_entity('Everyone')
 		result = getattr(user, 'dynamic_memberships', ())
 		result = [x for x in result if x != everyone and x is not None]
+		return result
+
+	def get_search_memberships(self, username):
+		result = self.get_user_dymamic_memberships(username) + self.get_dfls(username)
+		result = {e.username.lower():e for e in result}  # make sure there is no duplicate
+		result = sorted(result.values(), key=lambda e: e.username.lower())
 		return result
 
 	@metric
