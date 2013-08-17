@@ -10,7 +10,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
 import operator
+import simplejson
 
 from zope import component
 from zope import interface
@@ -129,26 +131,7 @@ def _ResolveUserView(request):
 	if isinstance( exact_match, bytes ):
 		exact_match = exact_match.decode( 'utf-8' )
 
-	exact_match = exact_match.lower()
-	entity = users.Entity.get_entity( exact_match )
-	# NOTE2: Going through this API lets some private objects be found if an NTIID is passed
-	# (DynamicFriendsLists, specifically). We should probably lock that down
-
-	if entity is None:
-		# To avoid ambiguity, we limit this to just friends lists.
-		scoped = _search_scope_to_remote_user( remote_user, exact_match, op=operator.eq, fl_only=True )
-		if not scoped:
-			# Hmm. Ok, try everything else. Note that this could produce ambiguous results
-			# in which case we make an arbitrary choice
-			scoped = _search_scope_to_remote_user( remote_user, exact_match, op=operator.eq, ignore_fl=True )
-		if scoped:
-			entity = scoped.pop() # there can only be one exact match
-
-	result = ()
-	if entity is not None:
-		if _make_visibility_test( remote_user )(entity):
-			result = (entity,)
-
+	result = _resolve_user(exact_match, remote_user)
 	if result:
 		# If we matched one user entity, see if we can get away without rendering it
 		# TODO: This isn't particularly clean
@@ -168,7 +151,60 @@ def _ResolveUserView(request):
 	formatted = _format_result(result, remote_user, dataserver)
 	return formatted
 
-def _format_result( result, remote_user, dataserver ):
+@view_config(route_name='search.resolve_users',
+			 renderer='rest',
+			 permission=nauth.ACT_SEARCH,
+			 request_method='POST')
+def _ResolveUsersView(request):
+	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+	remote_user = get_remote_user(request, dataserver)
+	assert remote_user is not None
+
+	values = simplejson.loads(unicode(request.body, request.charset))
+	usernames = values.get('usernames', values.get('terms', ()))
+	if isinstance(usernames, six.string_types):
+		usernames = usernames.split()
+	
+	result = {}
+	for term in set(usernames):
+		item = _resolve_user(term, remote_user)
+		if item:
+			match = item[0]
+			app_interfaces.IPreRenderResponseCacheController(match)(match, {'request': request})
+			result[match.username] = toExternalObject(match, name=('personal-summary'
+													  if match == remote_user
+													  else 'summary'))
+	
+	result = LocatedExternalDict({'Last Modified': 0, 'Items': result, 'Total':len(result)})
+	return _provide_location(result, dataserver)
+
+def _resolve_user(exact_match, remote_user):
+
+	if isinstance(exact_match, bytes):
+		exact_match = exact_match.decode('utf-8')
+
+	exact_match = exact_match.lower()
+	entity = users.Entity.get_entity(exact_match)
+	# NOTE2: Going through this API lets some private objects be found if an NTIID is passed
+	# (DynamicFriendsLists, specifically). We should probably lock that down
+
+	if entity is None:
+		# To avoid ambiguity, we limit this to just friends lists.
+		scoped = _search_scope_to_remote_user(remote_user, exact_match, op=operator.eq, fl_only=True)
+		if not scoped:
+			# Hmm. Ok, try everything else. Note that this could produce ambiguous results
+			# in which case we make an arbitrary choice
+			scoped = _search_scope_to_remote_user(remote_user, exact_match, op=operator.eq, ignore_fl=True)
+		if scoped:
+			entity = scoped.pop()  # there can only be one exact match
+
+	result = ()
+	if entity is not None:
+		if _make_visibility_test(remote_user)(entity):
+			result = (entity,)
+	return result
+
+def _format_result(result, remote_user, dataserver):
 	# Since we are already looking in the object we might as well return the summary form
 	# For this reason, we are doing the externalization ourself.
 	result = [toExternalObject(user, name=('personal-summary'
@@ -179,11 +215,14 @@ def _format_result( result, remote_user, dataserver ):
 	# We have no good modification data for this list, due to changing Presence
 	# values of users, so caching is limited to etag matches
 	result = LocatedExternalDict( {'Last Modified': 0, 'Items': result} )
-	interface.alsoProvides( result, app_interfaces.IUnModifiedInResponse )
-	interface.alsoProvides( result, zmime_interfaces.IContentTypeAware )
-	result.mimeType = nti_mimetype.nti_mimetype_with_class( None )
+	return _provide_location(result, dataserver)
+
+def _provide_location(result, dataserver):
+	interface.alsoProvides(result, app_interfaces.IUnModifiedInResponse)
+	interface.alsoProvides(result, zmime_interfaces.IContentTypeAware)
+	result.mimeType = nti_mimetype.nti_mimetype_with_class(None)
 	result.__parent__ = dataserver.root
-	result.__name__ = 'UserSearch' # TODO: Hmm
+	result.__name__ = 'UserSearch'  # TODO: Hmm
 	return result
 
 def _authenticated_search( request, remote_user, dataserver, search_term ):

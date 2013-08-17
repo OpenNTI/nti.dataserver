@@ -293,7 +293,7 @@ class GlobalWorkspace(object):
 			self.__parent__ = parent
 		# TODO: Hardcoding both these things
 		lnks = []
-		for l in ('UserSearch', 'ResolveUser'):
+		for l in ('UserSearch', 'ResolveUser', 'ResolveUsers'):
 			link = links.Link( l, rel=l )
 			link.__name__ = link.target
 			link.__parent__ = self.__parent__
