@@ -422,7 +422,7 @@ def _create_server(create_ds, process_args=False):
 
 def _set_globals(settings):
 	sync_stream = settings.get('sync_stream', True)
-	os.environ['DATASERVER_SYNC_STREAM'] = sync_stream
+	os.environ['DATASERVER_SYNC_STREAM'] = str(sync_stream)
 
 def createApplication( http_port,
 					   library=None,
