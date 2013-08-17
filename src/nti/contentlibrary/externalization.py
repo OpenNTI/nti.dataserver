@@ -104,9 +104,9 @@ class _ContentPackageExternal(object):
 		result['renderVersion'] = self.package.renderVersion
 		result[StandardExternalFields.NTIID] = self.package.ntiid
 
-		isCourse = getattr(self.package, 'isCourse', False)
-		result['isCourse'] = isCourse
+		result['isCourse'] = getattr(self.package, 'isCourse', False)
 		result['courseName'] = getattr(self.package, 'courseName', u'')
+		result['courseTitle'] = getattr(self.package, 'courseTitle', u'')
 
 		result['installable'] = self.package.installable
 		if self.package.installable:

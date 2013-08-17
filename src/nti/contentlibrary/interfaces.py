@@ -216,6 +216,7 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 	# Course support
 	isCourse = schema.Bool(title="If this package is for a course.", default=False, required=False)
 	courseName = TextLine(title="Course name.", required=False)
+	courseTitle = TextLine(title="Course title.", required=False)
 
 class IDelimitedHierarchyContentUnit(IContentUnit, IDelimitedHierarchyEntry):
 	"""

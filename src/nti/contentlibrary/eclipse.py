@@ -148,9 +148,11 @@ def EclipseContentPackage( toc_entry,
 	if isCourse:
 		courses = root.xpath('/toc/course')
 		courseName = courses[0].get('courseName') if courses else None
+		courseTitle = courses[0].get('label') if courses else None
 	else:
-		courseName = None
+		courseTitle = courseName = None
 	content_package.courseName = courseName
+	content_package.courseTitle = courseTitle
 
 	if content_package.does_sibling_entry_exist( ARCHIVE_FILENAME ):
 		content_package.archive = ARCHIVE_FILENAME

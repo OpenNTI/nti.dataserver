@@ -83,6 +83,7 @@ class ContentPackage(ContentUnit):
 	# Course support
 	isCourse = False
 	courseName = None
+	courseTitle = None
 
 	# : A tuple of things thrown by the implementation's
 	# : IO methods that represent transient states that may
