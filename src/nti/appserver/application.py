@@ -397,6 +397,33 @@ def _patching_restore_views(pyramid_config):
 							renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
 							permission=nauth.ACT_READ, request_method='GET')
 
+def _create_server(create_ds, process_args=False):
+	server = None
+
+	if IDataserver.providedBy(create_ds):  # not isinstance( create_ds, bool ):
+		server = create_ds
+	elif not create_ds:
+		class MockServer(object):
+			_parentDir = '.'
+			_dataFileName = 'data.fs'
+			db = None
+			chatserver = None
+		server = MockServer()
+	else:
+		ds_class = dataserver._Dataserver.Dataserver if not callable(create_ds) else create_ds
+		if process_args:
+			dataDir = None
+			if '--dataDir' in sys.argv: dataDir = sys.argv[sys.argv.index('--dataDir') + 1]
+			os.environ['DATASERVER_NO_REDIRECT'] = '1'
+			server = ds_class(dataDir)
+		else:
+			server = ds_class()
+	return server
+
+def _set_globals(settings):
+	sync_stream = settings.get('sync_stream', True)
+	os.environ['DATASERVER_SYNC_STREAM'] = sync_stream
+
 def createApplication( http_port,
 					   library=None,
 					   process_args=False,
@@ -407,7 +434,6 @@ def createApplication( http_port,
 	"""
 	:return: A WSGI callable.
 	"""
-
 	# Configure subscribers, etc.
 	__traceback_info__ = settings
 
@@ -442,7 +468,8 @@ def createApplication( http_port,
 	library_zcml = None
 	if 'library_zcml' in settings:
 		library_zcml = settings['library_zcml']
-	elif os.path.isdir( os.getenv( 'DATASERVER_DIR', '' ) ) and os.path.isfile( os.path.join( os.getenv( 'DATASERVER_DIR' ), 'etc', 'library.zcml' ) ):
+	elif os.path.isdir(os.getenv('DATASERVER_DIR', '')) and \
+		 os.path.isfile(os.path.join(os.getenv('DATASERVER_DIR'), 'etc', 'library.zcml')):
 		library_zcml = os.path.join( os.getenv( 'DATASERVER_DIR' ), 'etc', 'library.zcml' )
 	elif '__file__' in settings and os.path.isfile( os.path.join( os.path.dirname( settings['__file__'] ), 'library.zcml' ) ):
 		library_zcml = os.path.join( os.path.dirname( settings['__file__'] ), 'library.zcml' )
@@ -461,26 +488,8 @@ def createApplication( http_port,
 	logger.debug( 'Began starting dataserver' )
 	template_cache_dir = setupChameleonCache(config=True) # must do this early
 
-	server = None
-
-	if IDataserver.providedBy( create_ds ): #not isinstance( create_ds, bool ):
-		server = create_ds
-	elif not create_ds:
-		class MockServer(object):
-			_parentDir = '.'
-			_dataFileName = 'data.fs'
-			db = None
-			chatserver = None
-		server = MockServer()
-	else:
-		ds_class = dataserver._Dataserver.Dataserver if not callable(create_ds) else create_ds
-		if process_args:
-			dataDir = None
-			if '--dataDir' in sys.argv: dataDir = sys.argv[sys.argv.index('--dataDir') + 1]
-			os.environ['DATASERVER_NO_REDIRECT'] = '1'
-			server = ds_class( dataDir )
-		else:
-			server = ds_class()
+	_set_globals(settings)
+	server = _create_server(create_ds, process_args)
 
 	logger.debug( 'Finished starting dataserver' )
 
