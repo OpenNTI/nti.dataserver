@@ -504,7 +504,7 @@ class WebVTTParser(object):
 
 		already_collected = False
 		source = StringIO(source) if isinstance(source, six.string_types) else source
-		lines = [re.sub('\r', '', x.lstrip()) for x in re.split('\n', source.read())]
+		lines = [re.sub('\r', '', x.lstrip()).decode('utf-8') for x in re.split('\n', source.read())]
 
 		# SIGNATURE
 		if 	len(lines[linepos]) < 6 or lines[linepos].find("WEBVTT") != 0 or \
