@@ -1,23 +1,39 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Functions and architecture for general activity streams.
+
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-from ZODB.loglevels import TRACE
+
+import os
+import gevent
+import functools
+import transaction
 
 from zope import component
-
-from nti.dataserver import interfaces as nti_interfaces
 from zope.lifecycleevent import IObjectModifiedEvent
+
 import zope.intid.interfaces
+
+from ZODB.loglevels import TRACE
+
+from nti.dataserver import users
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.intid.interfaces import IntIdMissingError
 
 from .activitystream_change import Change
+
+def _sync_stream():
+	# TODO: We really need to send changes to a queue (e.g RQ)
+	# to be process there.
+	result = os.environ.get('DATASERVER_SYNC_STREAM', 'True')
+	return str(result).lower() in ('1', 't', 'true', 'y', 'yes')
 
 def enqueue_change( change, **kwargs ):
 	ds = component.queryUtility( nti_interfaces.IDataserver )
@@ -91,31 +107,79 @@ def stream_willRemoveIntIdForContainedObject( contained, event ):
 	for target in deletion_targets:
 		_enqueue_change_to_target( target, event, accum )
 
-@component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdAddedEvent)
-def stream_didAddIntIdForContainedObject( contained, event ):
-	creation_targets = _stream_preflight( contained )
+def _process_added_event(contained=None, iid=None):
+	if contained is None:
+		intids = component.getUtility(zope.intid.IIntIds)
+		contained = intids.queryObject(iid)
+		if contained is None:
+			return
+
+	creation_targets = _stream_preflight(contained)
 	if creation_targets is None:
 		return
 
 	# First a broadcast
-	event = Change( Change.CREATED, contained )
+	event = Change(Change.CREATED, contained)
 	event.creator = contained.creator
-	enqueue_change( event, broadcast=True, target=contained.creator )
+	enqueue_change(event, broadcast=True, target=contained.creator)
 	# Then targeted
 	accum = set()
 	for target in creation_targets:
-		_enqueue_change_to_target( target, event, accum )
+		_enqueue_change_to_target(target, event, accum)
+
+@component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdAddedEvent)
+def stream_didAddIntIdForContainedObject( contained, event ):
+	if _sync_stream():
+		_process_added_event(contained)
+	else:
+		intids = component.getUtility(zope.intid.IIntIds)
+		iid = intids.queryId(contained)
+
+		def _process_event():
+			transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+			function = functools.partial(_process_added_event, iid=iid)
+			transactionRunner(function)
+
+		transaction.get().addAfterCommitHook(lambda s: s and gevent.spawn(_process_event))
 
 @component.adapter(nti_interfaces.IContained, IObjectModifiedEvent)
 def stream_didModifyObject( contained, event ):
-	current_sharing_targets = _stream_preflight( contained )
+	oldSharingTargets = getattr(event, 'oldSharingTargets', ())
+	is_objectSharing = nti_interfaces.IObjectSharingModifiedEvent.providedBy(event)
+	if _sync_stream():
+		_process_modified_event(contained, is_objectSharing, oldSharingTargets)
+	else:
+		intids = component.getUtility(zope.intid.IIntIds)
+		iid = intids.queryId(contained)
+		oldSharingTargets = {getattr(x, 'username', x) for x in oldSharingTargets}
+		def _process_event():
+			transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+			function = functools.partial(_process_modified_event, is_objectSharing=is_objectSharing,
+										 iid=iid, oldSharingTargets=oldSharingTargets)
+			transactionRunner(function)
+
+		transaction.get().addAfterCommitHook(lambda s: s and gevent.spawn(_process_event))
+
+def _process_modified_event(contained=None, is_objectSharing=True, oldSharingTargets=(), iid=None):
+	if contained is None:
+		intids = component.getUtility(zope.intid.IIntIds)
+		contained = intids.queryObject(iid)
+		if contained is None:
+			return
+
+		# make sure we get real entities
+		oldSharingTargets = {(x if nti_interfaces.IEntity.providedBy(x) else users.Entity.get_entity(x))
+						 	 for x in oldSharingTargets}
+		oldSharingTargets.discard(None)
+
+	current_sharing_targets = _stream_preflight(contained)
 	if current_sharing_targets is None:
 		return
 
-	if nti_interfaces.IObjectSharingModifiedEvent.providedBy( event ):
-		_stream_enqeue_modification( contained.creator, Change.MODIFIED, contained, current_sharing_targets, event.oldSharingTargets)
+	if is_objectSharing:
+		_stream_enqeue_modification(contained.creator, Change.MODIFIED, contained, current_sharing_targets, oldSharingTargets)
 	else:
-		_stream_enqeue_modification( contained.creator, Change.MODIFIED, contained, current_sharing_targets )
+		_stream_enqeue_modification(contained.creator, Change.MODIFIED, contained, current_sharing_targets)
 
 def _stream_enqeue_modification( self, changeType, obj, current_sharing_targets, origSharing=None ):
 	assert changeType == Change.MODIFIED
