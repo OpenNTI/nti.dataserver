@@ -73,18 +73,14 @@ class TestExternalization(TestCase):
 				unit.archive_unit.key.__parent__ = filesystem.FilesystemBucket( name='prealgebra', parent=unit )
 
 		result = IExternalObject( unit ).toExternalObject()
-		assert_that( result,
-					 has_entry( 'icon', prefix + '/prealgebra/icons/The%20Icon.png' ) )
+		assert_that(result, has_entry('icon', prefix + '/prealgebra/icons/The%20Icon.png'))
 
 		assert_that( result, has_key( 'index_jsonp' ) )
-		assert_that( result,
-					 has_entry( 'renderVersion', 1 ) )
-		assert_that( result,
-					 has_entry( 'isCourse', True ) )
+		assert_that(result, has_entry('renderVersion', 1))
+		assert_that(result, has_entry('isCourse', True))
 		assert_that( result, has_entry( 'Class', 'ContentPackage' ) )
-
-		assert_that(result,
-					has_entry('courseName', is_(none())))
+		assert_that(result, has_entry('courseName', is_(none())))
+		assert_that(result, has_entry('courseTitle', is_(none())))
 
 		# More coverage
 		assert_that( result,
