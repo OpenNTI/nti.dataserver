@@ -11,16 +11,16 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import sys
+import transaction
 
 try:
 	from Acquisition import aq_base
 except ImportError: #PyPy?
 	def aq_base(o): return o
 
-import transaction
-
 from zope import interface
 from zope import component
+from zope.cachedescriptors.property import Lazy
 from zope.schema import interfaces as sch_interfaces
 
 from pyramid import security as sec
@@ -37,23 +37,22 @@ from nti.externalization.interfaces import StandardInternalFields, StandardExter
 
 from nti.mimetype import mimetype
 
-from zope.cachedescriptors.property import Lazy
 
-def get_remote_user( request=None, dataserver=None ):
+def get_remote_user(request=None, dataserver=None):
 	"""
 	Returns the user object corresponding to the authenticated user of the
 	request, or None.
 	"""
 	request = request or get_current_request()
 	dataserver = dataserver or component.getUtility( IDataserver )
-	return users.User.get_user(sec.authenticated_userid(request), dataserver=dataserver) if request else None
+	result = users.User.get_user(sec.authenticated_userid(request), dataserver=dataserver) if request else None
+	return result
 
 class AbstractView(object):
 	"""
 	Base class for views. Defines the ``request`` and ``dataserver`` property.
 	"""
-
-	def __init__( self, request ):
+	def __init__(self, request):
 		self.request = request
 		self.dataserver = component.getUtility(IDataserver)
 
