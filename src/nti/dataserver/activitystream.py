@@ -25,6 +25,9 @@ from ZODB.loglevels import TRACE
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.externalization import externalization
+from nti.externalization import internalization
+
 from nti.intid.interfaces import IntIdMissingError
 
 from .activitystream_change import Change
@@ -80,6 +83,39 @@ def _enqueue_change_to_target( target, change, accum=None ):
 
 # TODO: These listeners should probably be registered on something
 # higher, like IModeledContent?
+
+def _to_proxy_dict(contained):
+	# get the attribute where the intid is saved
+	intids = component.getUtility(zope.intid.IIntIds)
+	attribute = getattr(intids, 'attribute', '_ds_intid')
+	# externalize and save intid
+	result = externalization.toExternalObject(contained, contained)
+	result[attribute] = intids.queryId(contained)
+	# save parent and name
+	parent = getattr(contained, '__parent__', None),
+	iid = intids.queryId(parent) if parent is not None else None
+	result['__parent__'] = iid
+	result['__name__'] = getattr(contained, '__name__', None)
+	return dict(result)
+
+def _to_proxy_object(data):
+	intids = component.getUtility(zope.intid.IIntIds)
+	attribute = getattr(intids, 'attribute', '_ds_intid')
+	# remove not updatable fields
+	_parent = data.pop('__parent__')
+	_name = data.pop('__name__')
+	iid = data.pop(attribute)
+	# try to rebuild the obkect
+	factory = internalization.find_factory_for(data)
+	result = factory() if iid is not None and factory is not None else None
+	if result:
+		internalization.update_from_external_object(result, data, notify=False)
+		# reset internal fields
+		setattr(result, attribute, iid)
+		setattr(result, '__name__', _name)
+		_parent = intids.queryObject(_parent) if _parent is not None else None
+		setattr(result, '__parent__', _parent)
+	return result
 
 def _stream_preflight( contained ):
 	if not nti_interfaces.IEntity.providedBy( getattr( contained, 'creator', None ) ):
