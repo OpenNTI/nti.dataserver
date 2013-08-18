@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:metal="http://xml.zope.org/namespaces/metal"
+	  xmlns:tal="http://xml.zope.org/namespaces/tal">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Welcome To NextThought</title>
+		<style metal:use-macro="options/master/macros/style">
+			#crimson-bar {
+			background-color: #981b1e;
+			width: 100%;
+			height: 5px;
+			margin-left: -30px;
+			padding-right: 40px;
+			}
+			#logo-bar {
+			margin-top: 20px;
+			margin-bottom: 30px;
+			}
+			body {
+			margin-left: 30px;
+			margin-right: 0px;
+			font-family: Arial, sans-serif;
+			font-size: 14pt;
+			color: #757474;
+			}
+			a {
+			text-decoration: none;
+			color: #3fb3f6;
+			}
+			.tterm, strong {
+			font-weight: bold;
+			color: #494949;
+			}
+			h1, h2, h3, h4, h5, h6 {
+			font-weight: bold;
+			}
+			h3{
+				margin-bottom: 2px;
+			}
+			.point{margin-top: 0px;}
+
+			.logo-bar.nti{margin-bottom: 0px}
+
+			.logo-bar.nti{margin-bottom: 3px}
+
+			.footer{margin-top: 0px}
+		</style>
+	</head>
+	<body>
+		<div metal:use-macro="options/master/macros/header">
+		<div id="crimson-bar"></div>
+		<div id="logo-bar">
+			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_ou_logo.png" width="540" height="94"
+			alt="The University of Oklahoma Logo." />
+		</div>
+		</div>
+		<p>Hi <span tal:content="options/profile/realname" class="realname tterm">John Doe</span>!</p>
+
+		<p>
+			Welcome to the OU Digital Course Platform powered by
+			NextThought!
+		</p>
+		<p>
+			<strong>Username:</strong> <span tal:content="options/user/username" class="tterm-color">username</span> <br />
+			<strong>Log in at:</strong> <a href="https://platform.ou.edu"
+							tal:attributes="href request/application_url"
+							tal:content="request/application_url">https://platform.ou.edu</a>
+		</p>
+		<p>
+			Get the most out of your courses with this
+			new social learning program and connect in ways
+			never-before possible outside the classroom. Here are a
+			few tips to get you started.
+		</p>
+
+		<h3><strong>Announcements</strong></h3>
+		<p class="point">
+			Keep an eye on the course dashboard for announcements about the platform or notes from faculty.
+		</p>
+		<h3><strong>Choose What You Share</strong></h3>
+		<p class="point">
+			When adding notes within a course, you can choose to share them with your classmates, a friend, or even keep them private.
+		</p>
+		<h3><strong>Friends</strong></h3>
+		<p class="point">
+			Your experience within the platform is as engaging as you make it. Add friends, create groups, and share notes.
+		</p>
+
+		<p>
+		<a href="https://platform.ou.edu"
+							tal:attributes="href request/application_url">Get
+		started today.</a>
+		</p>
+
+		<br/>
+			<div id="logo-bar nti">
+			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+			alt="NextThought Logo" />
+		</div>
+
+		<p class="footer" style="font-size: smaller">
+			If you feel this email was sent in error, or this account was created
+			without your consent, you may email
+			<a href="mailto:support@nextthought.com">support@nextthought.com</a>.
+		</p>
+
+
+
+	</body>
+</html>

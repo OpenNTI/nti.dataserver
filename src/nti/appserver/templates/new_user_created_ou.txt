@@ -1,0 +1,23 @@
+Hi ${profile.realname}!
+
+Welcome to the OU Digital Course Platform powered by NextThought!
+
+Username: ${user.username}
+Log in at: ${request.application_url}
+
+Get the most out of your courses with this new social learning program and connect in ways never-before possible outside the classroom. Here are a few tips to get you started.
+
+* Announcements
+Keep an eye on the course dashboard for announcements about the platform or notes from faculty.
+
+* Choose What You Share
+When adding notes within a course, you can choose to share them with your classmates, a friend, or even keep them private.
+
+* Friends
+Your experience within the platform is as engaging as you make it. Add friends, create groups, and share notes.
+
+Get started today at ${request.application_url}
+
+
+If you feel this email was sent in error, or this account was created without your consent, you may email support@nextthought.com.
+
