@@ -29,6 +29,9 @@
 		<utility factory=".site_policy_views.SiteCSSMarker" />
 		<utility factory=".site_policy_views.SiteStringsMarker" />
 
+		<!-- OU Landing Page -->
+		<utility factory=".site_policy_views.SiteLandingMarker" />
+
 		<pcs:registerCourse
 				ntiid="tag:nextthought.com,2011-10:OU-course-CLC3403LawAndJustice"
 				title="Law and Justice"
