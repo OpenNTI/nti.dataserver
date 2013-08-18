@@ -4,7 +4,7 @@
 A entry point to help us ensure that we are loading rqworkers
 along w/ the dataserver code
 
-$Id: nti_pserve.py 15952 2013-02-16 22:36:48Z jason.madden $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
