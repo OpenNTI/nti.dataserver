@@ -1,26 +1,31 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Functions and architecture for general activity streams.
+
+$Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-import persistent
+logger = __import__('logging').getLogger(__name__)
+
 from operator import setitem
 
 from zope import interface
 from zope import component
+
 from ZODB.POSException import POSError
 
+from nti.dataserver import mimetype
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import mimetype
 
-from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.oids import toExternalOID
-from nti.externalization.externalization import toExternalObject
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.datastructures import LocatedExternalDict
 
 def _weak_ref_to( obj ):
 	try:
