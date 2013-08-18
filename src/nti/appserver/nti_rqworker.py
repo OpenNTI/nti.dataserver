@@ -26,5 +26,9 @@ def main():
 	env_dir = args[0]
 	sys.argv = args[1:]
 	run_with_dataserver(environment_dir=env_dir,
-						function=lambda: _run_worker(args))
+						function=lambda: _run_worker())
 	sys.exit(0)
+
+
+if __name__ == '__main__':
+	main()
