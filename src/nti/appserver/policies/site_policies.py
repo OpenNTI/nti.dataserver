@@ -935,7 +935,7 @@ class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 		names = user_interfaces.IFriendlyNamed(user)
 		if names.realname is None or not names.realname.strip():
 			raise nameparser.parser.BlankHumanNameError()
-		human_name = names.realname.capitalize()
+		human_name = names.realname
 		names.alias = names.realname = unicode(human_name)
 
 @interface.implementer(ISitePolicyUserEventListener)
