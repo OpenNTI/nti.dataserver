@@ -49,7 +49,6 @@
 		</style>
 	</head>
 	<body>
-		<div metal:use-macro="options/master/macros/header">
 		<div id="crimson-bar"></div>
 		<div id="logo-bar">
 			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_ou_logo.png" width="540" height="94"
