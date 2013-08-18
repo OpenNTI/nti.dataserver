@@ -24,7 +24,6 @@ from pyramid.view import view_defaults
 from pyramid import httpexceptions as _hexc
 
 from nti.appserver import _view_utils
-from nti.utils._compat import aq_base
 from nti.appserver.utils import is_true
 from nti.appserver.traversal import find_interface
 from nti.appserver import interfaces as app_interfaces
@@ -40,6 +39,10 @@ from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.externalization.oids import to_external_oid
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.externalization import to_standard_external_created_time
+from nti.externalization.externalization import to_standard_external_last_modified_time
+
+from nti.utils._compat import aq_base
 
 _view_defaults = dict(route_name='objects.generic.traversal', renderer='rest')
 
@@ -105,9 +108,9 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		return result
 
 	def _get_summary_items(self, ntiid, recurse=True):
-
 		# query objects
-		view = query_views._UGDAndRecursiveStreamView(self.request) if recurse else query_views._UGDStreamView(self.request)
+		view = 	query_views._UGDAndRecursiveStreamView(self.request) \
+				if recurse else query_views._UGDStreamView(self.request)
 		view._DEFAULT_BATCH_SIZE = view._DEFAULT_BATCH_START = None
 		try:
 			all_objects = view.getObjectsForId(self.user, ntiid)
@@ -116,39 +119,33 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 
 		# loop and collect
 		seen = set()
-		by_type = collections.defaultdict(int)
 		result = LocatedExternalDict()
-		for iterable in all_objects:
-			try:
-				to_iter = iterable.itervalues()
-			except (AttributeError, TypeError):
-				to_iter = iterable
+		by_type = collections.defaultdict(int)
+		for o in query_views._flatten_list_and_dicts(all_objects):
+			# check for model content and Change events
+			if 	nti_interfaces.IStreamChangeEvent.providedBy(o) and \
+				o.type in (nti_interfaces.SC_CREATED, nti_interfaces.SC_MODIFIED):
+				obj = o.object
+			elif nti_interfaces.IModeledContent.providedBy(o):
+				obj = o
+			else:
+				continue
 
-			for o in to_iter or ():
-				# check for model content and Change events
-				if 	nti_interfaces.IStreamChangeEvent.providedBy(o) and \
-					o.type in (nti_interfaces.SC_CREATED, nti_interfaces.SC_MODIFIED):
-					obj = o.object
-				elif nti_interfaces.IModeledContent.providedBy(o):
-					obj = o
-				else:
-					continue
+			oid = to_external_oid(obj)
+			if oid in seen:
+				continue
 
-				oid = to_external_oid(obj)
-				if oid in seen:
-					continue
+			seen.add(oid)
+			creator = getattr(obj, 'creator', None)
+			creator = getattr(creator, 'username', creator)
+			mime_type = getattr(obj, "mimeType", getattr(obj, "mime_type", None))
 
-				seen.add(oid)
-				creator = getattr(obj, 'creator', None)
-				creator = getattr(creator, 'username', creator)
-				mime_type = getattr(obj, "mimeType", getattr(obj, "mime_type", None))
-
-				if creator and mime_type:
-					recorder = result.get(creator)
-					if recorder is None:
-						result[creator] = recorder = _Recorder()
-					recorder.record(mime_type, score=self._score(obj))
-					by_type[mime_type] = by_type[mime_type] + 1
+			if creator and mime_type:
+				recorder = result.get(creator)
+				if recorder is None:
+					result[creator] = recorder = _Recorder()
+				recorder.record(mime_type, score=self._score(obj))
+				by_type[mime_type] = by_type[mime_type] + 1
 
 		return result, by_type
 				
@@ -250,6 +247,67 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		result['Items'] = items
 		result['Total'] = total
 		result['Summary'] = LocatedExternalDict(total_by_type)
+		return result
+
+##### Min/Max dashboard view ####
+
+class _UniqueMinMaxSummaryView(_view_utils.AbstractAuthenticatedView):
+
+	def __init__(self, request, the_user=None, the_ntiid=None):
+		super(_UniqueMinMaxSummaryView, self).__init__(request)
+		if self.request.context:
+			self.user = the_user or self.request.context.user
+			self.ntiid = the_ntiid or self.request.context.ntiid
+
+	def _get_cmp_value(self, obj, field):
+		if field == 'lastModified':
+			value = to_standard_external_last_modified_time(obj) or 0
+		else:
+			value = to_standard_external_created_time(obj) or 0
+		return value
+	
+	def _get_summary_items(self, ntiid, recurse=False):
+		# query objects
+		view = 	query_views._UGDView(self.request) if not recurse \
+				else query_views._RecursiveUGDView(self.request)
+		view._DEFAULT_BATCH_SIZE = view._DEFAULT_BATCH_START = None
+		try:
+			all_objects = view.getObjectsForId(self.user, ntiid)
+		except _hexc.HTTPNotFound:
+			return {}
+
+		attribute = self.request.params.get('attribute', None)
+		sort_on = self.request.params.get('sortOn', 'lastModified')
+		sort_order = self.request.params.get('sortOrder', 'ascending')
+		is_ascending = sort_order == 'ascending'
+		if not attribute or sort_on not in ('lastModified', 'createdTime'):
+			return {}
+			
+		seen = {}
+		for o in query_views._flatten_list_and_dicts(all_objects):
+			if not hasattr(o, attribute):
+				continue
+			key = getattr(o, attribute, None)
+			if key is None:
+				continue
+			ref = seen.get(key)
+			if ref is None:
+				seen[key] = o
+			else:
+				o_value = self._get_cmp_value(o, sort_on)
+				r_value = self._get_cmp_value(ref, sort_on)
+				if is_ascending and o_value > r_value:
+					seen[key] = o
+				elif not is_ascending and o_value < r_value:
+					seen[key] = o
+		return seen
+
+	def __call__(self):
+		# gather data
+		items = self._get_summary_items(self.ntiid)
+		result = LocatedExternalDict()
+		result['Items'] = items
+		result['Total'] = len(items)
 		return result
 
 ##### Forum/Board TopTopic view ####
