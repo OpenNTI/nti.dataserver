@@ -6,7 +6,7 @@
 			
 	<include package="pyramid_zcml" />
 
-	<pyramid:view route_name='objects.generic.traversal'
+	<pyramid:view route_name='user.pages.odata.traversal'
 				  view='.views._TopUserSummaryView'
 				  context='nti.appserver.interfaces.IPageContainerResource'
 				  name='TopUserSummaryData'
@@ -14,7 +14,7 @@
 				  permission='zope.View'
 				  request_method='GET'>
 	</pyramid:view>
-
+	
 	<pyramid:view route_name='user.pages.odata.traversal'
 				  view='.views._UniqueMinMaxSummaryView'
 				  context='nti.appserver.interfaces.IPageContainerResource'
