@@ -562,7 +562,8 @@ class _NTIIDEntry(object):
 	__operations__ = ('UserGeneratedData', 'RecursiveUserGeneratedData',
 					  'Stream', 'RecursiveStream',
 					  'UserGeneratedDataAndRecursiveStream',
-					  'Glossary', 'TopUserSummaryData')
+					  'Glossary',
+					  'TopUserSummaryData', 'UniqueMinMaxSummary')
 
 	extra_links = ()
 	contentUnit = None

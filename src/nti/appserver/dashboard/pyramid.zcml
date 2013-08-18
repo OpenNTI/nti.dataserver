@@ -16,9 +16,9 @@
 	</pyramid:view>
 
 	<pyramid:view route_name='user.pages.odata.traversal'
-				  view='.views._TopUserSummaryView'
+				  view='.views._UniqueMinMaxSummaryView'
 				  context='nti.appserver.interfaces.IPageContainerResource'
-				  name='TopUserSummaryData'
+				  name='UniqueMinMaxSummary'
 				  renderer='rest'
 				  permission='zope.View'
 				  request_method='GET'>
