@@ -3,10 +3,8 @@
 """
 Utilities relating to views.
 
-
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -20,24 +18,24 @@ except ImportError: #PyPy?
 	def aq_base(o): return o
 
 import transaction
+
 from zope import interface
 from zope import component
+from zope.schema import interfaces as sch_interfaces
 
-from pyramid.interfaces import IRequest
 from pyramid import security as sec
 from pyramid.threadlocal import get_current_request
 
-from nti.dataserver.interfaces import IDataserver
-from nti.dataserver import users
-
+from nti.appserver import httpexceptions as hexc
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver import _external_object_io as obj_io
-from nti.appserver import httpexceptions as hexc
+
+from nti.dataserver import users
+from nti.dataserver.interfaces import IDataserver
+
+from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
 
 from nti.mimetype import mimetype
-
-from zope.schema import interfaces as sch_interfaces
-from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
 
 from zope.cachedescriptors.property import Lazy
 
@@ -48,7 +46,7 @@ def get_remote_user( request=None, dataserver=None ):
 	"""
 	request = request or get_current_request()
 	dataserver = dataserver or component.getUtility( IDataserver )
-	return users.User.get_user( sec.authenticated_userid( request ), dataserver=dataserver )
+	return users.User.get_user(sec.authenticated_userid(request), dataserver=dataserver) if request else None
 
 class AbstractView(object):
 	"""
