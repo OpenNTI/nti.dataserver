@@ -88,6 +88,7 @@ def _to_proxy_dict(contained):
 	# get the attribute where the intid is saved
 	intids = component.getUtility(zope.intid.IIntIds)
 	attribute = getattr(intids, 'attribute', '_ds_intid')
+	creator = getattr(contained, 'creator', None)
 	# externalize and save intid
 	result = externalization.toExternalObject(contained, contained)
 	result[attribute] = intids.queryId(contained)
@@ -96,6 +97,7 @@ def _to_proxy_dict(contained):
 	iid = intids.queryId(parent) if parent is not None else None
 	result['__parent__'] = iid
 	result['__name__'] = getattr(contained, '__name__', None)
+	result['__creator__'] = getattr(creator, 'username', creator)
 	return dict(result)
 
 def _to_proxy_object(data):
@@ -104,6 +106,7 @@ def _to_proxy_object(data):
 	# remove not updatable fields
 	_parent = data.pop('__parent__')
 	_name = data.pop('__name__')
+	_creator = data.pop('__creator__')
 	iid = data.pop(attribute)
 	# try to rebuild the obkect
 	factory = internalization.find_factory_for(data)
@@ -112,6 +115,7 @@ def _to_proxy_object(data):
 		internalization.update_from_external_object(result, data, notify=False)
 		# reset internal fields
 		setattr(result, attribute, iid)
+		setattr(result, 'creator', users.Entity.get_entity(_creator or u''))
 		setattr(result, '__name__', _name)
 		_parent = intids.queryObject(_parent) if _parent is not None else None
 		setattr(result, '__parent__', _parent)
