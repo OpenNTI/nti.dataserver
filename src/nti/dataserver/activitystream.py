@@ -10,8 +10,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import os
-
 from zope import component
 from zope.lifecycleevent import IObjectModifiedEvent
 
@@ -24,12 +22,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.intid.interfaces import IntIdMissingError
 
 from .activitystream_change import Change
-
-def _sync_stream():
-	# TODO: We really need to send changes to a queue (e.g RQ)
-	# to be process there.
-	result = os.environ.get('DATASERVER_SYNC_STREAM', 'True')
-	return str(result).lower() in ('1', 't', 'true', 'y', 'yes')
 
 def enqueue_change( change, **kwargs ):
 	ds = component.queryUtility( nti_interfaces.IDataserver )
