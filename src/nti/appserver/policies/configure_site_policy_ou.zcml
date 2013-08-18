@@ -40,8 +40,8 @@
 				author="Kyle Harper"
 				name="CLC 3403"
 				featured="True"
-				icon="https://ou-platform.nextthought.com/purchasables/CLC3403_promo.png"
-				thumbnail="https://ou-platform.nextthought.com/purchasables/CLC3403_cover.png"
+				icon="https://platform.ou.edu/purchasables/CLC3403_promo.png"
+				thumbnail="https://platform.ou.edu/purchasables/CLC3403_cover.png"
 				items="tag:nextthought.com,2011-10:OU-HTML-CLC3403_LawAndJustice.clc_3403_law_and_justice" />
 
 		<pcs:registerCourse
@@ -51,8 +51,8 @@
 				description="What is it to be human? How did we get here, and what should we strive for, or try to be like? What can we hope for in this life, or (if there is one) the next? We will examine different answers to these questions, both Religious and Secular, from both the East and West. We will examine accounts of human nature and destiny in the writings of philosophers, theologians and authors who explore the fundamental meaning of our lives and the destiny of humanity."
 				author="Neal Judisch"
 				name="PHIL 1203"
-				icon="https://ou-platform.nextthought.com/purchasables/PHIL1203_promo.png"
-				thumbnail="https://ou-platform.nextthought.com/purchasables/PHIL1203_cover.png"
+				icon="https://platform.ou.edu/purchasables/PHIL1203_promo.png"
+				thumbnail="https://platform.ou.edu/purchasables/PHIL1203_cover.png"
 				items="tag:nextthought.com,2011-10:OU-HTML-PHIL1203_HumanDestiny.phil_1203__philosophy_and_human_destiny,_east_and_west" />
 
 		<pcs:registerCourse
@@ -62,8 +62,8 @@
 				description="Provide non-majors and majors a detailed descriptive account of the physical processes important in the formation of various severe and unusual weather phenomena including: thunderstorms, tornadoes, hail storms, lightning, hurricanes, midlatitude snowstorms, lake effect snows, atmospheric optical effects, and global climate change. This course does not count for major credit in the School of Meteorology."
 				author="Susan E Postawko"
 				name="METR 2603"
-				icon="https://ou-platform.nextthought.com/purchasables/METR2603_promo.png"
-				thumbnail="https://ou-platform.nextthought.com/purchasables/METR2603_cover.png"
+				icon="https://platform.ou.edu/purchasables/METR2603_promo.png"
+				thumbnail="https://platform.ou.edu/purchasables/METR2603_cover.png"
 				items="tag:nextthought.com,2011-10:OU-HTML-METR2603_SevereWeather.metr_2603_understanding_severe_and_unusual_weather" />
 
 		<pcs:registerCourse
@@ -73,8 +73,8 @@
 				description="First of a two-semester sequence in general chemistry. Topics covered: basic measurement, gas laws and changes in state, stoichiometry, atomic theory, electron configuration, periodicity, bonding, molecular structure and thermochemistry."
 				author="Mark Morvant"
 				name="CHEM 1315"
-				icon="https://ou-platform.nextthought.com/purchasables/CHEM1315_promo.png"
-				thumbnail="https://ou-platform.nextthought.com/purchasables/CHEM1315_cover.png"
+				icon="https://platform.ou.edu/purchasables/CHEM1315_promo.png"
+				thumbnail="https://platform.ou.edu/purchasables/CHEM1315_cover.png"
 				items="tag:nextthought.com,2011-10:OU-HTML-CHEM1315_GeneralChemistry.chem_1315__general_chemistry" />
 
 		<pcs:registerCourse
@@ -84,8 +84,8 @@
 				description="The world today is an interdependent global community that requires an awareness of international politics and economics. This course seeks to enhance our understanding of the global community because of the impact of international relations on our lives and the lives of others around the world."
 				author="Suzette Grillot"
 				name="IAS 2003"
-				icon="https://ou-platform.nextthought.com/purchasables/IAS2003_promo.png"
-				thumbnail="https://ou-platform.nextthought.com/purchasables/IAS2003_cover.png"
+				icon="https://platform.ou.edu/purchasables/IAS2003_promo.png"
+				thumbnail="https://platform.ou.edu/purchasables/IAS2003_cover.png"
 				items="tag:nextthought.com,2011-10:OU-HTML-IAS2003_GlobalCommunity.ias_2003__understanding_the_global_community" />
 
 		<pcs:registerCourse
@@ -95,8 +95,8 @@
 				description="Descriptive and inferential statistics as they are used in sociology to analyze survey and macro-level data. Problems of research design and interpretation of analysis in sociological theory are major topics. A grade of C or higher in this course is a prerequisite for Sociology capstone courses."
 				author="B. Mitch Peck"
 				name="SOC 3123"
-				icon="https://ou-platform.nextthought.com/purchasables/SOC3123_promo.jpg"
-				thumbnail="https://ou-platform.nextthought.com/purchasables/SOC3123_cover.jpg"
+				icon="https://platform.ou.edu/purchasables/SOC3123_promo.jpg"
+				thumbnail="https://platform.ou.edu/purchasables/SOC3123_cover.jpg"
 				items="tag:nextthought.com,2011-10:OU-HTML-SOC3123_SocialStatistics.soc_3123_social_statistics" />
 
 	</registerIn>
