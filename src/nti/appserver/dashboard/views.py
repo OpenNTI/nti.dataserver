@@ -266,7 +266,10 @@ class _UniqueMinMaxSummaryView(_view_utils.AbstractAuthenticatedView):
 			value = to_standard_external_created_time(obj) or 0
 		return value
 	
-	def _get_summary_items(self, ntiid, recurse=False):
+	def _get_summary_items(self, ntiid):
+		recurse = self.request.params.get('recurse', 'False')
+		recurse = str(recurse).lower() in ('true', 't', 'yes', 'y', '1')
+		
 		# query objects
 		view = 	query_views._UGDView(self.request) if not recurse \
 				else query_views._RecursiveUGDView(self.request)
