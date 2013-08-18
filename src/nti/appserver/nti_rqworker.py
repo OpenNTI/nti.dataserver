@@ -19,12 +19,13 @@ def _run_worker():
 	rqworker.main()
 
 def main():
+	exe = sys.argv[0]
 	args = sys.argv[1:]
 	if not args:
 		raise Exception('Specify a dataserver environment root directory')
 
 	env_dir = args[0]
-	sys.argv = args[1:]
+	sys.argv = [exe] + args[1:]
 	run_with_dataserver(environment_dir=env_dir,
 						function=lambda: _run_worker())
 	sys.exit(0)
