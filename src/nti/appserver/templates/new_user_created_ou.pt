@@ -49,7 +49,8 @@
 		</style>
 	</head>
 	<body>
-		<div id="crimson-bar"></div>
+		<div>
+		<div id="crimson-bar" style="background-color: #981b1e; width: 100%; height: 5px; margin-left: -30px; padding-right: 40px;"></div>
 		<div id="logo-bar">
 			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_ou_logo.png" width="540" height="94"
 			alt="The University of Oklahoma Logo." />
@@ -94,7 +95,7 @@
 		</p>
 
 		<br/>
-			<div id="logo-bar nti">
+		<div id="logo-bar nti">
 			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
 			alt="NextThought Logo" />
 		</div>
