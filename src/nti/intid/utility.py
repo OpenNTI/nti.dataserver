@@ -45,20 +45,20 @@ class IntIds(_ZCIntIds):
 	# object, in which case queryId will take either the proxy or the wrapped object;
 	# alternatively, they define __slots__ and forbid new attributes
 
-	def queryId( self, ob, default=None ):
+	def queryId(self, ob, default=None):
 		return _ZCIntIds.queryId(self, aq_base(ob), default=default)
 
-	def register( self, ob ):
+	def register(self, ob):
 		return _ZCIntIds.register(self, aq_base(ob))
 
-	def getId( self, ob ):
+	def getId(self, ob):
 		ob = aq_base( ob )
 		try:
 			return _ZCIntIds.getId(self, ob)
 		except KeyError:
 			raise IntIdMissingError(ob, id(ob), self)
 
-	def getObject( self, ID ):
+	def getObject(self, ID):
 		try:
 			return _ZCIntIds.getObject(self, ID)
 		except KeyError:
@@ -71,10 +71,10 @@ class IntIds(_ZCIntIds):
 		self.refs[uid] = unwrapped
 		return uid
 
-	def forceUnregister(self, ob, notify=False):
-		uid = self.queryId(ob)
-		if uid is None:
-			return
+	def forceUnregister(self, uid, ob, notify=False):
+		unwrapped = unwrap(ob)
+		if not uid in self.refs or self.refs[uid] is not unwrapped:
+			raise KeyError(ob)
 		del self.refs[uid]
 		setattr(ob, self.attribute, None)
 		if notify:
