@@ -35,6 +35,7 @@ class TestDashboardViews(SharedApplicationTestBase):
 
 	def _create_note(self, user, msg, title=None, containerId=None, sharedWith=()):
 		note = Note()
+		note.updateLastMod()
 		note.body = [unicode(msg)]
 		note.creator = user.username
 		note.title = IPlainTextContentFragment(title) if title else None
@@ -95,6 +96,26 @@ class TestDashboardViews(SharedApplicationTestBase):
 		assert_that(items[3], has_entry('Score', 0))
 		assert_that(items[3], has_entry('Total', 1))
 		assert_that(items[3], has_entry('Username', u'ichigo@nt.com'))
+
+	@WithSharedApplicationMockDS(testapp=True, users=True)
+	def test_unique_minmax_summary_vieww(self):
+		requestor = 'ichigo@nt.com'
+		containerId = make_ntiid(nttype='bleach', specific='manga')
+		with mock_dataserver.mock_db_trans(self.ds):
+			ichigo = self._create_user(username='ichigo@nt.com')
+			self._create_note(ichigo, "Kamishini no Yari", 'Bankai', containerId)
+			self._create_note(ichigo, "kyoka suigetsu", 'Bankai', containerId)
+			self._create_note(ichigo, "Sode no Shirayuki", 'Bankai', containerId)
+			self._create_note(ichigo, "tensa zangetsu", 'Bankai', containerId)
+
+		testapp = TestApp(self.app)
+		path = '/dataserver2/users/%s/Pages(%s)/UniqueMinMaxSummary?attribute=%s' % (requestor, containerId, 'containerId')
+		res = testapp.get(str(path), extra_environ=self._make_extra_environ(user=requestor))
+		assert_that(res.status_int, is_(200))
+		assert_that(res.json_body, has_entry('Total', 1))
+		assert_that(res.json_body, has_entry('Items', has_length(1)))
+		items = res.json_body['Items']
+		assert_that(items[0], has_entry('body', is_([u'tensa zangetsu'])))
 
 	def _create_comment_data_for_POST(self, unique):
 		data = { 'Class': 'Post',

@@ -309,7 +309,7 @@ class _UniqueMinMaxSummaryView(_view_utils.AbstractAuthenticatedView):
 		# gather data
 		items = self._get_summary_items(self.ntiid)
 		result = LocatedExternalDict()
-		result['Items'] = items
+		result['Items'] = list(items.values())
 		result['Total'] = len(items)
 		return result
 
