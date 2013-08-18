@@ -464,7 +464,7 @@ class GenericSitePolicyEventListener(object):
 
 	def _censor_usernames(self, user):
 		_censor_usernames(user)
-		
+
 	def user_will_create(self, user, event):
 		"""
 		This policy verifies naming restraints.
@@ -923,6 +923,8 @@ class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for ``platform.ou.edu``.
 	"""
+
+	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created_ou'
 
 	COM_USERNAME = 'ou.nextthought.com'
 	COM_ALIAS = 'OU'
