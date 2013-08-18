@@ -125,23 +125,42 @@ def _stream_preflight( contained ):
 	except AttributeError:
 		return None
 
-@component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdRemovedEvent)
-def stream_willRemoveIntIdForContainedObject( contained, event ):
+def _process_removed_event(contained=None, data=None):
+	if contained is None:
+		contained = _to_proxy_object(data)
+		if contained is None:
+			return
+
 	# Make the containing owner broadcast the stream DELETED event /now/,
 	# while we can still get an ID, to keep catalogs and whatnot
 	# up-to-date.
-	deletion_targets = _stream_preflight( contained )
+	deletion_targets = _stream_preflight(contained)
 	if deletion_targets is None:
 		return
 
 	# First a broadcast
-	event = Change( Change.DELETED, contained )
+	event = Change(Change.DELETED, contained)
 	event.creator = contained.creator
-	enqueue_change( event, broadcast=True, target=contained.creator )
+	enqueue_change(event, broadcast=True, target=contained.creator)
+
 	# Then targeted
 	accum = set()
-	for target in deletion_targets:
-		_enqueue_change_to_target( target, event, accum )
+	for target in deletion_targets or ():
+		_enqueue_change_to_target(target, event, accum)
+
+@component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdRemovedEvent)
+def stream_willRemoveIntIdForContainedObject( contained, event ):
+	if _sync_stream():
+		_process_removed_event(contained)
+	else:
+		data = _to_proxy_dict(_to_proxy_dict)
+
+		def _process_event():
+			transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+			function = functools.partial(_process_removed_event, data=data)
+			transactionRunner(function)
+
+		transaction.get().addAfterCommitHook(lambda s: s and gevent.spawn(_process_event))
 
 def _process_added_event(contained=None, iid=None):
 	if contained is None:
