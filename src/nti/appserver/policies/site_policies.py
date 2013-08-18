@@ -624,7 +624,7 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 		Also enforces the email requirement constraint for newly created objects.
 		"""
 		super(GenericAdultSitePolicyEventListener, self).user_will_update_new(user, event)
-		ext_value = event.ext_value
+		ext_value = getattr(event, 'ext_value', {})
 		if 'email' not in ext_value and '@' in ext_value.get('Username', ''):
 			ext_value['email'] = ext_value['Username']
 
