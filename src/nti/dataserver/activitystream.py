@@ -153,7 +153,7 @@ def stream_willRemoveIntIdForContainedObject( contained, event ):
 	if _sync_stream():
 		_process_removed_event(contained)
 	else:
-		data = _to_proxy_dict(_to_proxy_dict)
+		data = _to_proxy_dict(contained)
 
 		def _process_event():
 			transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
