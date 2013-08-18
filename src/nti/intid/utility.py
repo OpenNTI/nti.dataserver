@@ -8,17 +8,23 @@ of behaviour.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import interface
-from zc.intid.utility import IntIds as _ZCIntIds
-
+from zope import event as zope_event
 from zope.container.interfaces import IContained
+from zope.security.proxy import removeSecurityProxy
+
+from zc.intid.utility import IntIds as _ZCIntIds
 
 from nti.utils._compat import aq_base
 
 from .interfaces import IntIdMissingError
 from .interfaces import ObjectMissingError
+from .interfaces import IntIdAlreadyInUseError
+
+unwrap = removeSecurityProxy
 
 # Make pylint not complain about "badly implemented container"
 #pylint: disable=R0924
@@ -40,23 +46,39 @@ class IntIds(_ZCIntIds):
 	# alternatively, they define __slots__ and forbid new attributes
 
 	def queryId( self, ob, default=None ):
-		return _ZCIntIds.queryId( self, aq_base( ob ), default=default )
+		return _ZCIntIds.queryId(self, aq_base(ob), default=default)
 
 	def register( self, ob ):
-		return _ZCIntIds.register( self, aq_base( ob ) )
+		return _ZCIntIds.register(self, aq_base(ob))
 
 	def getId( self, ob ):
 		ob = aq_base( ob )
 		try:
-			return _ZCIntIds.getId( self, ob )
+			return _ZCIntIds.getId(self, ob)
 		except KeyError:
-			raise IntIdMissingError( ob, id(ob), self )
+			raise IntIdMissingError(ob, id(ob), self)
 
 	def getObject( self, ID ):
 		try:
-			return _ZCIntIds.getObject( self, ID )
+			return _ZCIntIds.getObject(self, ID)
 		except KeyError:
-			raise ObjectMissingError( ID, self )
+			raise ObjectMissingError(ID, self)
+
+	def forceRegister(self, uid, ob):
+		unwrapped = unwrap(ob)
+		if uid in self.refs:
+			raise IntIdAlreadyInUseError(ob)
+		self.refs[uid] = unwrapped
+		return uid
+
+	def forceUnregister(self, ob, notify=False):
+		uid = self.queryId(ob)
+		if uid is None:
+			return
+		del self.refs[uid]
+		setattr(ob, self.attribute, None)
+		if notify:
+			zope_event.notify(_ZCIntIds.RemovedEvent(ob, self, uid))
 
 	def __repr__( self ):
 		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__, self.__class__.__name__,

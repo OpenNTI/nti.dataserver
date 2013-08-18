@@ -20,6 +20,13 @@ class IntIdMissingError(KeyError):
 	def __str__(self):
 		return Exception.__str__( self )
 
+class IntIdAlreadyInUseError(KeyError):
+	"""
+	Raised by the utility when ``force`` fails.
+	"""
+	def __str__(self):
+		return Exception.__str__(self)
+
 class ObjectMissingError(KeyError):
 	"""
 	Raised by the utility when ``getObject`` fails.
