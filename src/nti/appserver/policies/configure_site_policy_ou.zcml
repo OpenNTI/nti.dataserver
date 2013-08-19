@@ -57,7 +57,7 @@
 
 		<pcs:registerCourse
 				ntiid="tag:nextthought.com,2011-10:OU-course-METR2603SevereAndUnusualWeather"
-				title="Severe and Unusual Weather"
+				title="Understanding Severe and Unusual Weather"
 				communities="METR2603.ou.nextthought.com"
 				description="Provide non-majors and majors a detailed descriptive account of the physical processes important in the formation of various severe and unusual weather phenomena including: thunderstorms, tornadoes, hail storms, lightning, hurricanes, midlatitude snowstorms, lake effect snows, atmospheric optical effects, and global climate change. This course does not count for major credit in the School of Meteorology."
 				author="Susan E Postawko"
@@ -92,7 +92,7 @@
 				ntiid="tag:nextthought.com,2011-10:OU-course-SOC3123"
 				title="Social Statistics"
 				communities="SOC3123.ou.nextthought.com"
-				description="Descriptive and inferential statistics as they are used in sociology to analyze survey and macro-level data. Problems of research design and interpretation of analysis in sociological theory are major topics. A grade of C or higher in this course is a prerequisite for Sociology capstone courses."
+				description="This course is an undergraduate-level introduction to social statistics. The central focus is descriptive, bivariate, and inferential statistics as they are used in social sciences to analyze survey data. Students will be introduced to how statistics are calculated. The class will focus on (1) understanding the intuitive meaning behind a variety of common social statistics, (2) calculating these statistics by hand with commonly-available spreadsheet software, and (3) practical application of statistical procedures."
 				author="B. Mitch Peck"
 				name="SOC 3123"
 				icon="https://platform.ou.edu/purchasables/SOC3123_promo.png"
