@@ -304,8 +304,11 @@ class UserIndexableContent(_SearchableContent):
 
 	def delete_content(self, writer, data, auto_commit=True, **commit_args):
 		_dsid = get_uid(data)
+		return self.unindex_content(writer, _dsid, auto_commit, **commit_args)
+
+	def unindex_content(self, writer, uid, auto_commit=True, **commit_args):
 		try:
-			writer.delete_by_term(intid_, _dsid)
+			writer.delete_by_term(intid_, unicode(uid))
 			if auto_commit:
 				writer.commit(**commit_args)
 			return True
@@ -393,6 +396,10 @@ for k, v in globals().items():
 	if inspect.isclass(v) and getattr(v, '__indexable__', False):
 		name = common.normalize_type_name(k)
 		_indexables[name] = v
+
+def get_indexable_objects():
+	result = {n:c() for n, c in _indexables.items()}
+	return result
 
 def get_indexable_object(type_name=None):
 	name = common.normalize_type_name(type_name)

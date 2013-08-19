@@ -98,6 +98,12 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		service.handle_cs_errors(result, throw=True)
 		return True
 
+	def unindex(self, uid):
+		service = self._get_cs_store()
+		result = service.delete(uid, self.username)
+		service.handle_cs_errors(result, throw=True)
+		return True
+
 	def get_aws_oids(self, type_name=None, size=sys.maxint):
 		"""
 		return a generator w/ ids of the objects indexed in aws
