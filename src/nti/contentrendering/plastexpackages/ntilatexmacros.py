@@ -689,7 +689,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 			return tok
 
 	class worksource(Base.Command):
-		args = 'uri:str'
+		args = 'uri:url'
 
 		def digest(self, tokens):
 			tok = super(relatedwork.worksource,self).digest(tokens)
@@ -721,7 +721,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 			# URL?
 			self.target_ntiid = make_ntiid( provider='NTI',
 											nttype=TYPE_UUID,
-											specific=md5(self.uri).hexdigest() )
+											specific=md5(self.uri.source).hexdigest() )
 		return tok
 
 	@readproperty
@@ -739,7 +739,7 @@ class relatedworkrefname(Base.Command):
 
 @interface.implementer(crd_interfaces.IEmbeddedContainer)
 class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
-	args = '[ options:dict ] label:idref uri:str desc:str'
+	args = '[ options:dict ] label:idref uri:url desc:str'
 
 	counter = 'relatedworkref'
 	blockType = True
@@ -781,7 +781,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 			# URL?
 			self.target_ntiid = make_ntiid( provider='NTI',
 											nttype=TYPE_UUID,
-											specific=md5(self.uri).hexdigest() )
+											specific=md5(self.uri.source).hexdigest() )
 
 		return tok
 
