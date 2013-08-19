@@ -310,7 +310,7 @@ class _RelatedWorkExtractor(object):
 					content = {
 						'label': ref_el.relatedwork.title,
 						'creator': ref_el.relatedwork.creator,
-						'href': ref_el.uri,
+						'href': ''.join(render_children( ref_el.renderer, ref_el.uri )),
 						'type': ref_el.relatedwork.targetMimeType,
 						'icon': icon,
 						'desc': ref_el.description,
@@ -335,7 +335,7 @@ class _RelatedWorkExtractor(object):
 			content = {
 				'label': el.title,
 				'creator': el.creator,
-				'href': el.uri,
+				'href': ''.join(render_children( el.renderer, el.uri )),
 				'type': el.targetMimeType,
 				'icon': icon,
 				'desc': el.description,
