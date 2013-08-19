@@ -300,17 +300,27 @@ class _RelatedWorkExtractor(object):
 					else:
 						icon = ''
 
-					if ref_el.uri == '':
-						ref_el.uri = ref_el.relatedwork.uri
-						ref_el.regen_target_ntiid()
-
 					if ref_el.description == '':
 						ref_el.description = ref_el.relatedwork.description
+
+					uri = ref_el.uri
+					if hasattr(uri, 'nodeName'):
+						uri = ''.join(render_children( ref_el.renderer, ref_el.uri ))
+
+					if uri == '':
+						ref_el.uri = ref_el.relatedwork.uri
+						ref_el.regen_target_ntiid()
+						uri = ref_el.uri
+						if hasattr(uri, 'nodeName'):
+							uri = ''.join(render_children( ref_el.renderer, ref_el.uri ))
+
+					if uri == '':
+						logger.warn('We are still empty!!!!!!!!!!!!!!!!!!!!!!!! %s %s' % (ref_el.ntiid, ref_el.relatedwork.ntiid))
 
 					content = {
 						'label': ref_el.relatedwork.title,
 						'creator': ref_el.relatedwork.creator,
-						'href': ''.join(render_children( ref_el.renderer, ref_el.uri )),
+						'href': uri,
 						'type': ref_el.relatedwork.targetMimeType,
 						'icon': icon,
 						'desc': ref_el.description,
@@ -332,10 +342,17 @@ class _RelatedWorkExtractor(object):
 			else:
 				icon = ''
 
+			uri = el.uri
+			if hasattr(uri, 'nodeName'):
+				uri = ''.join(render_children( el.renderer, el.uri ))
+
+			if uri == '':
+				logger.warn('We are still empty!!!!!!!!!!!!!!!!!!!!!!!! %s' % el.ntiid)
+
 			content = {
 				'label': el.title,
 				'creator': el.creator,
-				'href': ''.join(render_children( el.renderer, el.uri )),
+				'href': uri,
 				'type': el.targetMimeType,
 				'icon': icon,
 				'desc': el.description,

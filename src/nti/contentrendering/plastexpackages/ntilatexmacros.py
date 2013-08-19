@@ -797,7 +797,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 			# URL?
 			self.target_ntiid = make_ntiid( provider='NTI',
 											nttype=TYPE_UUID,
-											specific=md5(self.uri).hexdigest() )
+											specific=md5(self.uri.source).hexdigest() )
 
 ###############################################################################
 # The following block of commands concern representing forum discussions.
