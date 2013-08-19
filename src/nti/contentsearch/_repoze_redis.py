@@ -9,9 +9,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
 
 from nti.dataserver import users
+from nti.dataserver import interfaces as nti_interfaces
 
 from . import _discriminators
 from ._redis_indexstore import sort_messages
@@ -45,15 +47,16 @@ class _RepozeStorageService(_RedisStorageService):
 		return False
 
 	def process_messages(self, msgs):
+		runner = component.queryUtility(nti_interfaces.IDataserverTransactionRunner)
 		for m in sort_messages(msgs):
 			__traceback_info__ = m
 			try:
 				op, docid, username = m
 				if op == 'add':
-					self.index_content(docid, username)
+					runner(lambda : self.index_content(docid, username))
 				elif op == 'update':
-					self.update_content(docid, username)
+					runner(lambda : self.update_content(docid, username))
 				elif op == 'delete':
-					self.unindex(docid, username)
+					runner(lambda : self.unindex(docid, username))
 			except:
 				logger.exception("Failed to run index operation")
