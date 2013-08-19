@@ -123,9 +123,9 @@ class _RedisStorageService(object):
 	
 	def _get_index_msgs(self):
 		redis = self.redis
-		msgs, _ = redis.pipeline().lrange(self.queue_name, 0, -1).delete(self.queue_name).execute() \
-				  if redis is not None else (), None
-		return msgs
+		result = redis.pipeline().lrange(self.queue_name, 0, -1).delete(self.queue_name).execute() \
+				 if redis is not None else None
+		return result[0] if result else ()
 	
 	def _put_msg(self, msg, queue_name=None):
 		if msg is not None:
