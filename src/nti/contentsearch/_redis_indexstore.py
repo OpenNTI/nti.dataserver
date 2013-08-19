@@ -58,9 +58,7 @@ class _RedisStorageService(object):
 
 	@property
 	def redis(self):
-		if self._redis is None:
-			self._redis = component.getUtility( nti_interfaces.IRedisClient )
-		return self._redis
+		return component.queryUtility(nti_interfaces.IRedisClient)
 	
 	@property
 	def queue_name(self):
@@ -124,7 +122,9 @@ class _RedisStorageService(object):
 		self._put_msg(msg)
 	
 	def _get_index_msgs(self):
-		msgs, _ = self.redis.pipeline().lrange(self.queue_name, 0, -1).delete(self.queue_name).execute()
+		redis = self.redis
+		msgs, _ = redis.pipeline().lrange(self.queue_name, 0, -1).delete(self.queue_name).execute() \
+				  if redis is not None else (), None
 		return msgs
 	
 	def _put_msg(self, msg, queue_name=None):
@@ -133,14 +133,17 @@ class _RedisStorageService(object):
 			self._put_msg_to_redis(msg)
 	
 	def _put_msg_to_redis(self, msg):
-		self.redis.pipeline().rpush(self.queue_name, msg).expire(self.queue_name, self.expiration_time).execute()
+		redis = self.redis
+		if redis is not None:
+			redis.pipeline().rpush(self.queue_name, msg).expire(self.queue_name, self.expiration_time).execute()
 			
 	def _push_back_msgs(self, msgs, encode=True):
-		if msgs:
+		redis = self.redis
+		if msgs and redis is not None:
 			logger.info( "Pushing messages back onto %s on exception", self.queue_name )
 			msgs.reverse()
 			msgs = [zlib.compress(repr(m)) for m in msgs] if encode else msgs
-			self.redis.lpush(self.queue_name, *msgs)
+			redis.lpush(self.queue_name, *msgs)
 		
 	def read_process_index_msgs(self):
 		encoded_msgs = ()
