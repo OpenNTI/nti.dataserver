@@ -25,4 +25,8 @@ def create_index_manager_with_cloudsearch():
 	content_idx_manager = wbm_factory()
 	return _RedisIndexManager(content_idx_manager, cloudsearch_interfaces.ICloudSearchEntityIndexManager)
 
+def create_index_manager_with_repoze_redis():
+	content_idx_manager = wbm_factory()
+	return _RedisIndexManager(content_idx_manager, search_interfaces.IRepozeEntityIndexManager)
+
 create_index_manager = create_index_manager_with_repoze
