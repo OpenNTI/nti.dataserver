@@ -17,7 +17,7 @@ from . import _discriminators as discriminators
 
 class _RedisIndexManager(IndexManager):
 
-	_v_service = None
+	indexmanager = None
 
 	def __new__(cls, *args, **kwargs):
 		if not cls.indexmanager:
@@ -26,9 +26,7 @@ class _RedisIndexManager(IndexManager):
 
 	@property
 	def service(self):
-		if self._v_service is None:
-			self._v_service = component.getUtility(search_interfaces.IRedisStoreService)
-		return self._v_service
+		return component.getUtility(search_interfaces.IRedisStoreService)
 
 	def index_user_content(self, target, data, type_name=None):
 		if data is not None and target is not None:
