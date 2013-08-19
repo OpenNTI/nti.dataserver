@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Search index manager.
@@ -210,10 +211,6 @@ class IndexManager(object):
 		if um is not None and data is not None and um.delete_content(data, type_name=type_name):
 			notify(search_interfaces.ObjectUnIndexedEvent(data, target))
 
-	@classmethod
-	def onChange(cls, datasvr, msg, target=None, broadcast=None):
-		handle_index_event(cls.get_shared_indexmanager(), target, msg, broadcast=broadcast)
-
 	def close(self):
 		for bm in self.books.itervalues():
 			self._close(bm)
@@ -222,3 +219,7 @@ class IndexManager(object):
 		close_m = getattr(bm, 'close', None)
 		if close_m is not None:
 			close_m()
+
+	@classmethod
+	def onChange(cls, datasvr, msg, target=None, broadcast=None):
+		handle_index_event(cls.get_shared_indexmanager(), target, msg, broadcast=broadcast)
