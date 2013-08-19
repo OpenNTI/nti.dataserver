@@ -1,6 +1,7 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Index agent
+Index agent implementation
 
 $Id$
 """
@@ -11,10 +12,14 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 
+from zope import component
+
 from ZODB import loglevels
 
 from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.ntiids import ntiids
 
 from . import get_indexable_types
 from .common import get_type_name
@@ -47,6 +52,24 @@ def _process_event(indexmanager, target, change_type, data_type, data):
 		return func(target, data=data, type_name=data_type) or True if func else False
 	return False
 
+def _handle_event(indexmanager, entity, changeType, change_object, broadcast=None):
+	# make sure we have a valid entity
+	entity = Entity.get_entity(entity) if isinstance(entity, six.string_types) else entity
+
+	should_process = True
+	if not broadcast:  # only check if we're not a global broadcast
+		if changeType in (nti_interfaces.SC_CREATED, nti_interfaces.SC_SHARED, nti_interfaces.SC_MODIFIED):
+			should_process = change_object.isSharedDirectlyWith(entity)
+
+	result = False
+	if should_process:
+		data_type = get_type_name(change_object)
+		result = _process_event(indexmanager, entity, changeType, data_type, change_object)
+		logger.log(loglevels.TRACE, 'Index event target="%s", change=%s, data_type=%s, broadcast=%s handled=%s',
+				   entity, changeType, data_type, broadcast, result)
+
+	return result
+
 def handle_index_event(indexmanager, target, change, broadcast=None):
 	"""
 	Updates indexes according to the change being communicated. Indexes are
@@ -70,18 +93,19 @@ def handle_index_event(indexmanager, target, change, broadcast=None):
 	if not indexmanager or not target or not change or change.object is None:
 		return False
 
-	should_process = True
-	change_object = change.object
-	if not broadcast:  # only check if we're not a global broadcast
-		if change.type in (nti_interfaces.SC_CREATED, nti_interfaces.SC_SHARED, nti_interfaces.SC_MODIFIED):
-			entity = Entity.get_entity(target) if isinstance(target, six.string_types) else target  # FIXME: Tightly coupled
-			should_process = change_object.isSharedDirectlyWith(entity)
+	result = _handle_event(indexmanager, target, change.type, change.object, broadcast)
+	return result
 
-	result = False
-	if should_process:
-		data_type = get_type_name(change.object)
-		result = _process_event(indexmanager, target, change.type, data_type, change_object)
-		logger.log(loglevels.TRACE, 'Index event target="%s", change=%s, data_type=%s, broadcast=%s handled=%s',
-				   target, change, data_type, broadcast, result)
+def handle_external(entity, changeType, oid, broadcast=None):
+	change_object = None
+	try:
+		change_object = ntiids.find_object_with_ntiid(oid)
+	except KeyError:
+		return
 
+	indexmanager = component.queryUtility(search_interfaces.IIndexManager)
+	if indexmanager is None or change_object is None:
+		return
+
+	result = _handle_event(indexmanager, entity, changeType, change_object, broadcast)
 	return result
