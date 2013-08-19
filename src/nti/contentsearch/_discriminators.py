@@ -12,8 +12,14 @@ from zope import component
 
 from nti.contentprocessing import compute_ngrams
 
+from nti.externalization import oids
+
 from ._content_utils import get_content
 from . import interfaces as search_interfaces
+
+def get_oid(obj):
+	result = oids.to_external_ntiid_oid(obj)
+	return result
 
 def get_uid(obj, intids=None):
 	intids = intids or component.getUtility(zope.intid.IIntIds)
