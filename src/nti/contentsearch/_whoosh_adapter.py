@@ -33,6 +33,7 @@ from . import interfaces as search_interfaces
 from .constants import ugd_indexable_type_names
 from .common import normalize_type_name as _ntm
 from ._whoosh_index import get_indexable_object
+from ._whoosh_index import get_indexable_objects
 from ._whoosh_indexstorage import get_index_writer
 from ._search_indexmanager import _SearchEntityIndexManager
 
@@ -215,6 +216,16 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 				writer = self._get_index_writer(index)
 				return self._delete_content(indexable, writer, data)
 		return False
+
+	def unindex(self, uid):
+		for type_name, indexable in get_indexable_objects().items():
+			index = self._get_or_create_index(type_name)
+			if index is None:
+				continue
+			with index:
+				writer = self._get_index_writer(index)
+				indexable.unindex_content(writer, uid)
+		return True
 
 	def remove_index(self, type_name, *args, **kwargs):
 		type_name = _ntm(type_name)

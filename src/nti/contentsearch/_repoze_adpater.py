@@ -182,9 +182,12 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 			return True
 		return False
 
-	def unindex_doc(self, docid):
+	def unindex(self, uid):
 		for catalog in self.values():
-			catalog.unindex_doc(docid)
+			catalog.unindex_doc(uid)
+		return True
+	
+	unindex_doc = unindex
 
 	def remove_index(self, type_name):
 		result = self.remove_catalog(type_name)

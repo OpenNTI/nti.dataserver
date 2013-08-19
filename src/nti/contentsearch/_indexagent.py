@@ -96,7 +96,14 @@ def handle_index_event(indexmanager, target, change, broadcast=None):
 	result = _handle_event(indexmanager, target, change.type, change.object, broadcast)
 	return result
 
-def handle_external(entity, changeType, oid, broadcast=None):
+def handle_external(entity, changeType, oid, uid, broadcast=None):
+	"""
+	entity: Entity to which the event is directed
+	changeType: Change type
+	oid: Object unicode id
+	uid: Object int id
+	broadcast: Broadcast flag
+	"""
 	change_object = None
 	try:
 		change_object = ntiids.find_object_with_ntiid(oid)
@@ -104,8 +111,11 @@ def handle_external(entity, changeType, oid, broadcast=None):
 		return
 
 	indexmanager = component.queryUtility(search_interfaces.IIndexManager)
-	if indexmanager is None or change_object is None:
+	if indexmanager is None:
 		return
 
-	result = _handle_event(indexmanager, entity, changeType, change_object, broadcast)
+	if changeType == nti_interfaces.SC_DELETED:
+		result = indexmanager.unindex(entity, uid)
+	else:
+		result = _handle_event(indexmanager, entity, changeType, change_object, broadcast)
 	return result

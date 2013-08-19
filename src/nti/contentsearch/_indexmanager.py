@@ -211,6 +211,12 @@ class IndexManager(object):
 		if um is not None and data is not None and um.delete_content(data, type_name=type_name):
 			notify(search_interfaces.ObjectUnIndexedEvent(data, target))
 
+	def unindex(self, target, uid):
+		um = self._get_user_index_manager(target)
+		if um is not None:
+			return um.unindex(uid)
+		return False
+
 	def close(self):
 		for bm in self.books.itervalues():
 			self._close(bm)

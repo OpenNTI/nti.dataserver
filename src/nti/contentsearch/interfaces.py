@@ -140,6 +140,11 @@ class IEntityIndexManager(ISearcher):
 		:param type_name: index type
 		"""
 
+	def unindex(oid):
+		"""
+		unindex the object with the specified id
+		"""
+
 # index events
 
 class IIndexEvent(component.interfaces.IObjectEvent):
@@ -251,31 +256,39 @@ class IIndexManager(interface.Interface):
 		:param word: Word fragment
 		"""
 
-	def index_user_content(username, data, type_name=None):
+	def index_user_content(user, data, type_name=None):
 		"""
 		index the specified content
 
-		:param username: content owner
+		:param user: content owner
 		:param data: data to index
 		:param type_name: data type
 		"""
 
-	def update_user_content(username, data, type_name=None):
+	def update_user_content(user, data, type_name=None):
 		"""
 		update the index for specified content
 
-		:param username: content owner
+		:param user: content owner
 		:param data: data to index
 		:param type_name: data type
 		"""
 
-	def delete_user_content(username, data, type_name=None):
+	def delete_user_content(user, data, type_name=None):
 		"""
 		delete from the index the specified content
 
 		:param username: content owner
 		:param data: data to remove from index
 		:param type_name: data type
+		"""
+
+	def unindex(user, oid):
+		"""
+		unindex the object with the specified id
+
+		:param user: content owner
+		:oid object id
 		"""
 
 # whoosh index storage
