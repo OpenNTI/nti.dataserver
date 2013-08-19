@@ -406,6 +406,7 @@ class GenericSitePolicyEventListener(object):
 		self._send_email_on_new_account(user, event)
 
 	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created'
+	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to NextThought")
 
 	def _send_email_on_new_account(self, user, event):
 		"""
@@ -415,6 +416,7 @@ class GenericSitePolicyEventListener(object):
 		they will never get a notice here. (And we don't have to specifically check for that).
 
 		Uses the self/class attribute ``NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME`` to generate the email text.
+		Uses the self/class attribute ``NEW_USER_CREATED_EMAIL_SUBJECT`` to generate the subject
 		"""
 
 		if not event.request:  # pragma: no cover
@@ -429,7 +431,7 @@ class GenericSitePolicyEventListener(object):
 		# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 		# only works with a text part)
 		queue_simple_html_text_email(self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
-									  subject=_("Welcome to NextThought"),
+									  subject=NEW_USER_CREATED_EMAIL_SUBJECT,
 									  recipients=[email],
 									  template_args={'user': user, 'profile': profile, 'context': user },
 									  request=event.request)
@@ -925,6 +927,7 @@ class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
 
 	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created_ou'
+	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to the OU Digital Course Platform")
 
 	COM_USERNAME = 'ou.nextthought.com'
 	COM_ALIAS = 'OU'
