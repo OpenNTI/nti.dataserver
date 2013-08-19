@@ -402,11 +402,13 @@ class GenericSitePolicyEventListener(object):
 	Implements a generic policy for all sites.
 	"""
 
+	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created'
+	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to NextThought")
+
+
 	def user_created_with_request(self, user, event):
 		self._send_email_on_new_account(user, event)
 
-	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created'
-	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to NextThought")
 
 	def _send_email_on_new_account(self, user, event):
 		"""
@@ -431,10 +433,10 @@ class GenericSitePolicyEventListener(object):
 		# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 		# only works with a text part)
 		queue_simple_html_text_email(self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
-									  subject=NEW_USER_CREATED_EMAIL_SUBJECT,
-									  recipients=[email],
-									  template_args={'user': user, 'profile': profile, 'context': user },
-									  request=event.request)
+									 subject=self.NEW_USER_CREATED_EMAIL_SUBJECT,
+									 recipients=[email],
+									 template_args={'user': user, 'profile': profile, 'context': user },
+									 request=event.request)
 
 	def map_validation_exception(self, incoming_data, exception):
 		return exception
