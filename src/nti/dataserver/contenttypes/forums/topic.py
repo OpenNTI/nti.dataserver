@@ -148,12 +148,12 @@ class HeadlineTopic(Topic):
 
 	def unpublish(self):
 		"""Causes an ObjectSharingModifiedEvent to be fired if sharing changes."""
-		if not IDefaultPublished.providedBy( self ):
+		if not IDefaultPublished.providedBy(self):
 			return
 
 		oldSharingTargets = set(self.sharingTargets)
 		interface.noLongerProvides( self, IDefaultPublished )
-		self.__did_modify_publication_status( oldSharingTargets )
+		self._did_modify_publication_status(oldSharingTargets)
 
 @interface.implementer(for_interfaces.IGeneralTopic)
 class GeneralTopic(Topic):
