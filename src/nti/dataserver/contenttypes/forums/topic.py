@@ -193,6 +193,7 @@ class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 		# HACK: We need to check the of the community forum has an ACL
 		# if so then share the note with the entities that can read the forum
 		# This ACL must be static.
+		# TODO: Remove hack
 		_forum = self.__parent__
 		if for_interfaces.IACLEnabled.providedBy(_forum):
 			result = []

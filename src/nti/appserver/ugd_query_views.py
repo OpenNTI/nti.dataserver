@@ -41,6 +41,7 @@ from nti.dataserver.users import entity
 from nti.dataserver import authorization as nauth
 from nti.dataserver.sharing import SharingContextCache
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 from nti.dataserver.mimetype import nti_mimetype_from_object, nti_mimetype_with_class
 liking_like_count = liking.like_count  # minor optimization
 
@@ -947,6 +948,29 @@ class _RecursiveUGDView(_UGDView):
 		containers.add( '' ) # root
 
 		return containers
+
+	def _filter_inaccessible_object(self, obj):
+		# HACK FOR ACL community topics. Make sure the object
+		# can be read before being returned
+		# TODO: Remove hack
+		if 	nti_interfaces.IStreamChangeEvent.providedBy(obj) and \
+			(for_interfaces.ICommunityHeadlineTopic.providedBy(obj.object) or \
+			 for_interfaces.ICommunityHeadlinePost.providedBy(obj.object)):
+
+			readable = True
+			current = obj.object
+			while readable and current is not None and not nti_interfaces.IEntity.providedBy(current):
+				readable = is_readable(current, skip_cache=True)
+				current = getattr(current, '__parent__', None)
+				if not readable:
+					return False
+		return True
+
+	def _make_complete_predicate(self, operator=Operator.intersection):
+		predicate = super(_RecursiveUGDView, self)._make_complete_predicate(operator=operator)
+		return predicate
+		# predicate = _combine_predicate(filter_inaccessible_object, predicate, operator=Operator.intersection)
+		# return predicate
 
 	def getObjectsForId( self, user, ntiid ):
 		containers = self._get_containerids_for_id( user, ntiid )
