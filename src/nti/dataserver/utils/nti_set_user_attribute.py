@@ -26,7 +26,7 @@ from nti.externalization.internalization import update_from_external_object
 def _find_allowed_fields(user):
 	profile_iface = user_interfaces.IUserProfileSchemaProvider(user).getSchema()
 	profile = profile_iface(user)
-	profile_schema = find_most_derived_interface( profile, profile_iface, possibilities=interface.providedBy(profile) )
+	profile_schema = find_most_derived_interface(profile, profile_iface, possibilities=interface.providedBy(profile))
 
 	result = {}
 	for k, v in profile_schema.namesAndDescriptions(all=True):
@@ -56,6 +56,12 @@ def _change_attributes(args):
 		print("No user found", args.username, file=sys.stderr)
 		sys.exit(2)
 
+	restore_iface = False
+	if args.force:
+		if user_interfaces.IImmutableFriendlyNamed.providedBy(user):
+			restore_iface = True
+			interface.noLongerProvides(user, user_interfaces.IImmutableFriendlyNamed)
+		
 	external = {}
 	fields = _find_allowed_fields(user)
 	if args.verbose:
@@ -72,15 +78,19 @@ def _change_attributes(args):
 		pprint.pprint(external)
 	update_from_external_object(user, external)
 
+	if restore_iface:
+		interface.alsoProvides(user, user_interfaces.IImmutableFriendlyNamed)
+
 	if args.verbose:
 		pprint.pprint("Updated user")
 		pprint.pprint(to_external_object(user, name="summary"))
 
 def _create_args_parser():
 	arg_parser = argparse.ArgumentParser( description="Set user attributes." )
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( 'username', help="The username to edit" )
-	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
+	arg_parser.add_argument('username', help="The username to edit")
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('-f', '--force', help="Force update of immutable fields", action='store_true', dest='force')
 	arg_parser.add_argument('--site',
 							dest='site',
 							help="Change the the user attributes as if done by a request in this application SITE")
