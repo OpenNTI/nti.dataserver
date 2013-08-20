@@ -12,6 +12,7 @@ import sys
 import pprint
 import argparse
 
+from zope import component
 from zope import interface
 from zope.schema import getFields
 
@@ -37,6 +38,19 @@ def _find_allowed_fields(user):
 	return result
 
 def _change_attributes(args):
+
+	if args.site:
+		from pyramid.testing import setUp as psetUp
+		from pyramid.testing import DummyRequest
+
+		request = DummyRequest()
+		config = psetUp(registry=component.getGlobalSiteManager(),
+						request=request,
+						hook_zca=False)
+		config.setup_registry()
+		request.headers['origin'] = 'http://' + args.site if not args.site.startswith('http') else args.site
+		request.possible_site_names = (args.site if not args.site.startswith('http') else args.site[7:],)
+
 	user = users.User.get_user( args.username )
 	if not user:
 		print("No user found", args.username, file=sys.stderr)
@@ -44,16 +58,22 @@ def _change_attributes(args):
 
 	external = {}
 	fields = _find_allowed_fields(user)
+	if args.verbose:
+		pprint.pprint("Allowed Fields")
+		pprint.pprint(fields)
 	for name, sch_def in fields.items():
 		value = getattr(args, name, None)
 		if value is not None:
 			value = None if not value else unicode(value)
 			external[name] = sch_def.fromUnicode(value) if value else None
 
+	if args.verbose:
+		pprint.pprint("External change")
+		pprint.pprint(fields)
 	update_from_external_object(user, external)
 
 	if args.verbose:
-		pprint.pprint(external)
+		pprint.pprint("Updated user")
 		pprint.pprint(to_external_object(user))
 
 def _create_args_parser():
@@ -63,8 +83,7 @@ def _create_args_parser():
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument('--site',
 							dest='site',
-							action='store_true',
-							help="Application SITE. Use this when site policy should be invoked to set interfaces" )
+							help="Change the the user attributes as if done by a request in this application SITE")
 	attributes = {}
 	def get_schema_fields(iface, attributes):
 		names = iface.names()
