@@ -1,6 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*
+"""
+Change a user attribute
 
-from __future__ import print_function, unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import sys
 import argparse
@@ -17,8 +23,8 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
 def _find_allowed_fields(user):
-	profile_iface = user_interfaces.IUserProfileSchemaProvider( user ).getSchema()
-	profile = profile_iface( user )
+	profile_iface = user_interfaces.IUserProfileSchemaProvider(user).getSchema()
+	profile = profile_iface(user)
 	profile_schema = find_most_derived_interface( profile, profile_iface, possibilities=interface.providedBy(profile) )
 
 	result = {}
@@ -33,8 +39,8 @@ def _find_allowed_fields(user):
 def _change_attributes(args):
 	user = users.User.get_user( args.username )
 	if not user:
-		print( "No user found", args.username, file=sys.stderr )
-		sys.exit( 2 )
+		print("No user found", args.username, file=sys.stderr)
+		sys.exit(2)
 
 	external = {}
 	fields = _find_allowed_fields(user)
@@ -47,7 +53,8 @@ def _change_attributes(args):
 	update_from_external_object(user, external)
 
 	if args.verbose:
-		pprint( to_external_object( user ) )
+		pprint("change", external)
+		pprint("user", to_external_object(user))
 
 def _create_args_parser():
 	arg_parser = argparse.ArgumentParser( description="Set user attributes." )
