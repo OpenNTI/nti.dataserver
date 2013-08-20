@@ -968,9 +968,8 @@ class _RecursiveUGDView(_UGDView):
 
 	def _make_complete_predicate(self, operator=Operator.intersection):
 		predicate = super(_RecursiveUGDView, self)._make_complete_predicate(operator=operator)
+		predicate = _combine_predicate(self._filter_inaccessible_object, predicate, operator=Operator.intersection)
 		return predicate
-		# predicate = _combine_predicate(filter_inaccessible_object, predicate, operator=Operator.intersection)
-		# return predicate
 
 	def getObjectsForId( self, user, ntiid ):
 		containers = self._get_containerids_for_id( user, ntiid )
