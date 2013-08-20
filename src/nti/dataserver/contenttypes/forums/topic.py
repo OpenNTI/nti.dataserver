@@ -111,7 +111,7 @@ def _post_added_to_topic( post, event ):
 class HeadlineTopic(Topic):
 	headline = AcquisitionFieldProperty(for_interfaces.IHeadlineTopic['headline'])
 
-	def __did_modify_publication_status( self, oldSharingTargets ):
+	def _did_modify_publication_status(self, oldSharingTargets):
 		"Fire off a modified event when the publication status changes. The event notes the sharing has changed."
 
 		newSharingTargets = set(self.sharingTargets)
@@ -144,7 +144,7 @@ class HeadlineTopic(Topic):
 		oldSharingTargets = set(self.sharingTargets)
 		interface.alsoProvides( self, IDefaultPublished )
 
-		self.__did_modify_publication_status( oldSharingTargets )
+		self._did_modify_publication_status(oldSharingTargets)
 
 	def unpublish(self):
 		"""Causes an ObjectSharingModifiedEvent to be fired if sharing changes."""
