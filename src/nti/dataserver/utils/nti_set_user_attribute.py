@@ -9,8 +9,8 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import sys
+import pprint
 import argparse
-from pprint import pprint
 
 from zope import interface
 from zope.schema import getFields
@@ -53,8 +53,8 @@ def _change_attributes(args):
 	update_from_external_object(user, external)
 
 	if args.verbose:
-		pprint("change", external)
-		pprint("user", to_external_object(user))
+		pprint.pprint(external)
+		pprint.pprint(to_external_object(user))
 
 def _create_args_parser():
 	arg_parser = argparse.ArgumentParser( description="Set user attributes." )
