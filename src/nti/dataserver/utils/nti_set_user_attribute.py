@@ -60,7 +60,7 @@ def _change_attributes(args):
 	fields = _find_allowed_fields(user)
 	if args.verbose:
 		pprint.pprint("Allowed Fields")
-		pprint.pprint(fields)
+		pprint.pprint(list(fields.keys()))
 	for name, sch_def in fields.items():
 		value = getattr(args, name, None)
 		if value is not None:
@@ -69,12 +69,12 @@ def _change_attributes(args):
 
 	if args.verbose:
 		pprint.pprint("External change")
-		pprint.pprint(fields)
+		pprint.pprint(external)
 	update_from_external_object(user, external)
 
 	if args.verbose:
 		pprint.pprint("Updated user")
-		pprint.pprint(to_external_object(user))
+		pprint.pprint(to_external_object(user, name="summary"))
 
 def _create_args_parser():
 	arg_parser = argparse.ArgumentParser( description="Set user attributes." )
