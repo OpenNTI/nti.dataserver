@@ -387,6 +387,9 @@ DELETE_PERMISSION = u'Delete'
 PERMISSIONS = (ALL_PERMISSIONS, READ_PERMISSION, WRITE_PERMISSION, CREATE_PERMISSION, DELETE_PERMISSION)
 PERMISSIONS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PERMISSIONS])
 
+def can_read(perm):
+	return perm in (ALL_PERMISSIONS, READ_PERMISSION, WRITE_PERMISSION)
+
 class IForumACE(interface.Interface):
 	Action = schema.Choice(vocabulary=ACTION_VOCABULARY, title='ACE action', required=True)
 	Entities = ListOrTuple(value_type=ValidTextLine(title="entity id"), title="entities ids", required=True)

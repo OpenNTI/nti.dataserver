@@ -22,9 +22,11 @@ from zope.annotation import interfaces as an_interfaces
 from zope.container.contained import ContainerSublocations
 from zope.container.contained import dispatchToSublocations
 
+from nti.dataserver import users
 from nti.dataserver import sharing
 from nti.dataserver import containers
 from nti.dataserver import datastructures
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
 
@@ -185,6 +187,24 @@ class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 			return self.__parent__.creator.username
 		except AttributeError:
 			return None
+		
+	@property
+	def sharingTargetsWhenPublished(self):
+		# HACK: We need to check the of the community forum has an ACL
+		# if so then share the note with the entities that can read the forum
+		# This ACL must be static.
+		_forum = self.__parent__
+		if for_interfaces.IACLEnabled.providedBy(_forum):
+			result = []
+			for ace in _forum.ACL:
+				for action, entity, perm in ace:
+					if action == nti_interfaces.ACE_ACT_ALLOW and for_interfaces.can_read(perm):
+						entity = users.Entity.get_entity(entity)
+						if entity:
+							result.append(entity)
+			return result
+		else:
+			return super(CommunityHeadlineTopic, self).sharingTargetsWhenPublished
 
 @interface.implementer(for_interfaces.IPersonalBlogEntry)
 class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
