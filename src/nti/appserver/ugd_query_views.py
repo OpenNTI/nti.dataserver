@@ -951,7 +951,7 @@ class _RecursiveUGDView(_UGDView):
 
 	def _filter_inaccessible_object(self, obj):
 		# HACK FOR ACL community topics. Make sure the object
-		# can be read before being returned
+		# can be read (along w/ its parent) before being returned
 		# TODO: Remove hack
 		if 	nti_interfaces.IStreamChangeEvent.providedBy(obj) and \
 			(for_interfaces.ICommunityHeadlineTopic.providedBy(obj.object) or \
@@ -968,7 +968,7 @@ class _RecursiveUGDView(_UGDView):
 
 	def _make_complete_predicate(self, operator=Operator.intersection):
 		predicate = super(_RecursiveUGDView, self)._make_complete_predicate(operator=operator)
-		# predicate = _combine_predicate(self._filter_inaccessible_object, predicate, operator=Operator.intersection)
+		predicate = _combine_predicate(self._filter_inaccessible_object, predicate, operator=Operator.intersection)
 		return predicate
 
 	def getObjectsForId( self, user, ntiid ):
