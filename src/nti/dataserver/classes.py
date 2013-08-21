@@ -5,70 +5,62 @@ Objects for classrooms.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
+import BTrees
 import itertools
 
 from zope import interface
 from zope.component.factory import Factory
 from zope.container.btree import BTreeContainer
 from zope.container.interfaces import INameChooser
-import BTrees
-
-# pylint chokes on from . import ... stuff,
-# which means it assumes old-style classes, which
-# is annoying.
-from nti.ntiids import ntiids
-from nti.externalization.datastructures import ExternalizableInstanceDict
-from nti.externalization.externalization import toExternalObject
-
-from nti.dataserver import enclosures
-from nti.dataserver import datastructures
-from nti.dataserver.contenttypes.base import UserContentRoot
-from nti.dataserver.contenttypes.canvas import Canvas
-#from nti.dataserver.contenttypes.note import BodyFieldProperty
-from nti.dataserver import mimetype
-
-from nti.dataserver import interfaces as nti_interfaces
 from zope.annotation import interfaces as an_interfaces
-
-from nti.dataserver import links
-
-from nti.utils.property import alias
 
 from persistent import Persistent
 from persistent.list import PersistentList
 
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.datastructures import ExternalizableInstanceDict
+
+from nti.dataserver import links
+from nti.dataserver import mimetype
+from nti.dataserver import enclosures
+from nti.dataserver import datastructures
+from nti.dataserver.contenttypes.media import Media
+from nti.dataserver.contenttypes.canvas import Canvas
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.base import UserContentRoot
+
+from nti.ntiids import ntiids
+from nti.utils.property import alias
+
+@interface.implementer(nti_interfaces.IClassScript, nti_interfaces.IZContained)
 class ClassScript(UserContentRoot,ExternalizableInstanceDict):
 	"""
 	Default implementation of :class:`IClassScript`
 	"""
-	interface.implements(nti_interfaces.IClassScript,nti_interfaces.IZContained)
-
-	__parent__ = None
 	__name__ = None
+	__parent__ = None
 
-	def __init__( self, body=() ):
+	def __init__(self, body=()):
 		"""
 		:param body: An iterable of parts for the body.
 		"""
 		super(ClassScript,self).__init__()
 		self.body = PersistentList( body ) # TODO: Convert to contenttypes.note.BodyFieldProperty
 
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		super(ClassScript, self).updateFromExternalObject( parsed, *args, **kwargs )
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		super(ClassScript, self).updateFromExternalObject(parsed, *args, **kwargs)
 
 		# TODO: Same issue with Note about resolving objects that may already
 		# exist. Part of that goes away with BodyFieldProperty. Part of that
 		# needs its same _ext_resolve implementation
-		assert all( [isinstance(x, (basestring,Canvas)) for x in self.body] )
+		assert all([isinstance(x, (basestring, Canvas, Media)) for x in self.body])
 
-def _add_accepts( collection, ext_collection, accepts=() ):
+def _add_accepts(collection, ext_collection, accepts=()):
 	if accepts is not None:
 		ext_collection['accepts'] = [mimetype.nti_mimetype_from_object( x ) for x in accepts]
 		if nti_interfaces.ISimpleEnclosureContainer.providedBy( collection ):
@@ -77,8 +69,8 @@ def _add_accepts( collection, ext_collection, accepts=() ):
 			ext_collection['accepts'].append(ClassScript.mime_type)
 	return ext_collection
 
-def _add_container_iface( obj, iface ):
-	if not iface.providedBy( obj ):
+def _add_container_iface(obj, iface):
+	if not iface.providedBy(obj):
 		interface.alsoProvides( obj, iface )
 		obj.container_name = obj.__name__
 
@@ -95,7 +87,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 
 	__external_can_create__ = True
 
-	def __init__( self, ID=None ):
+	def __init__(self, ID=None):
 		# All classes will have at least one section. The sections
 		# will vary per year.
 		# The section list is a IContainer
@@ -114,9 +106,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		super(ClassInfo,self).__init__()
 
 		self.Description = ""
-		#self.Provider = 'NTI' # Provider abbreviation, suitable for NTIID
-		self.ID = ID # Provider specific, e.g., CS2051
-		#self._v_parent = None
+		self.ID = ID  # Provider specific, e.g., CS2051
 
 	@property
 	def Sections(self):
@@ -126,7 +116,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		return self.creator
 	def _set_Provider(self, np):
 		self.creator = np
-	Provider = property(_get_Provider,_set_Provider)
+	Provider = property(_get_Provider, _set_Provider)
 
 	# We own the sections, and their provider/creator
 	# is /our/ provider/creator. Make sure they stay in sync
@@ -136,11 +126,11 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	# able to do anything).
 	def _get_creator(self):
 		return self.__dict__['creator']
-	def _set_creator(self,nc):
+	def _set_creator(self, nc):
 		self.__dict__['creator'] = nc
 		for section in self.Sections:
 			section.Provider = nc
-	creator = property(_get_creator,_set_creator)
+	creator = property(_get_creator, _set_creator)
 
 
 	__name__ = alias('ID')
@@ -156,18 +146,20 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 			section.containerId = self.NTIID
 		self._sections[section.ID] = section
 
-	def __getitem__( self, key ):
+	def __getitem__(self, key):
 		return self._sections[key]
 
-	def __len__( self ):
-		return len( self._sections )
+	def __len__(self):
+		return len(self._sections)
+
 	def __delitem__(self, key):
 		raise TypeError()
-	def __setitem__( self, key ):
-		raise TypeError()
-	def __nonzero__( self ):
-		return True
 
+	def __setitem__(self, key):
+		raise TypeError()
+
+	def __nonzero__(self):
+		return True
 
 	def __setstate__( self, state ):
 		if 'Sections' in state:
@@ -191,7 +183,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		# If we are inserted into a container without having been given an ID,
 		# one is generated for us, and we cannot use it correctly in our NTIID
 		try:
-			if ntiids.is_valid_ntiid_string( self.ID ):
+			if ntiids.is_valid_ntiid_string(self.ID):
 				return ntiids.make_ntiid( date=ntiids.DATE, provider=self.Provider,
 										  nttype=ntiids.TYPE_CLASS,
 										  base=self.ID )
@@ -240,7 +232,6 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 			updated = True
 			del self._sections[k]
 		return updated
-
 
 
 nti_interfaces.IClassInfo.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
