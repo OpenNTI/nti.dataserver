@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Store admin views
+Find which user container keys cannot be resolved by the library
 
 $Id$
 """
@@ -12,8 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import sys
 import argparse
+import simplejson
 
-from zope import interface
 from zope import component
 
 from nti.contentmanagement import get_collection_root
@@ -24,7 +24,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 exclude_containers = (u'Devices', u'FriendsLists', u'')
 
-def _check_users(usernames=(), args=(), options=None):
+def _check_users(usernames=(), options=None):
 	__traceback_info__ = locals().items()
 
 	if usernames:
@@ -40,12 +40,20 @@ def _check_users(usernames=(), args=(), options=None):
 		method = getattr(user, 'getAllContainers', lambda : ())
 		usermap = {}
 		for name in method():
+			if name in exclude_containers:
+				continue
+			
 			if get_collection_root(name) is None:
 				container = user.getContainer(name)
 				usermap[name] = len(container) if container is not None else 0
-			print(type(container))
-	
+
+		if usermap:
+			result[user.username] = usermap
 	return result
+
+def _process(usernames=(), options=None):
+	result = _check_users(usernames, options)
+	simplejson.dump(result, indent=4)
 
 def main(args=None):
 	arg_parser = argparse.ArgumentParser(description="Create a user-type object")
@@ -66,5 +74,5 @@ def main(args=None):
 	run_with_dataserver(environment_dir=env_dir,
 						xmlconfig_packages=conf_packages,
 						verbose=args.verbose,
-						function=lambda: _check_users(usernames, args))
+						function=lambda: _process(usernames, args))
 	sys.exit(0)
