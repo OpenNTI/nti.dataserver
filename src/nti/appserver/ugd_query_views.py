@@ -955,7 +955,8 @@ class _RecursiveUGDView(_UGDView):
 		# TODO: Remove hack
 		if 	nti_interfaces.IStreamChangeEvent.providedBy(obj) and \
 			(for_interfaces.ICommunityHeadlineTopic.providedBy(obj.object) or \
-			 for_interfaces.ICommunityHeadlinePost.providedBy(obj.object)):
+			 for_interfaces.ICommunityHeadlinePost.providedBy(obj.object) or \
+			 for_interfaces.IGeneralForumComment.providedBy(obj.object)):
 
 			readable = True
 			current = obj.object
