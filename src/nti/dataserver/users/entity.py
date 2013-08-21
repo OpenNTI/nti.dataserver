@@ -145,22 +145,25 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 			IKeyReference( user ) # Ensure it gets added to the database
 			assert getattr( user, '_p_jar', None ), "User should have a connection"
 
+		# meta data
+		meta_data = kwargs.pop('meta_data', None)
+		
 		# Finally, we init the user
 		ext_value = kwargs.pop( 'external_value', None )
 		user.__init__( **kwargs )
 		assert preflight_only or getattr( user, '_p_jar', None ), "User should still have a connection"
 
 		# Notify we're about to update
-		notify( interfaces.WillUpdateNewEntityEvent( user, ext_value ) )
+		notify(interfaces.WillUpdateNewEntityEvent(user, ext_value, meta_data))
 
 		# Update from the external value, if provided
 		if ext_value:
-			nti.externalization.internalization.update_from_external_object( user, ext_value, context=dataserver, notify=False )
+			nti.externalization.internalization.update_from_external_object(user, ext_value, context=dataserver, notify=False)
 
 		# Register an intid for this user that we are creating so that the events that fire before
 		# ObjectAdded (which is usually when intids get assigned) can use it.
-		component.getUtility( zc_intid.IIntIds ).register( user )
-		notify( interfaces.WillCreateNewEntityEvent( user, ext_value, preflight_only ) )
+		component.getUtility(zc_intid.IIntIds).register(user)
+		notify(interfaces.WillCreateNewEntityEvent(user, ext_value, preflight_only, meta_data))
 		if preflight_only:
 			if user.username in root_users:
 				raise KeyError( user.username )
