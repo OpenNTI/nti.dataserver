@@ -295,10 +295,15 @@ def _datetime_to_epoch( dt ):
 
 def _choose_field(result, self, ext_name, converter=lambda x: x, fields=(), sup_iface=None, sup_fields=(), sup_converter=lambda x: x):
 	for x in fields:
-		value = getattr( self, x, None )
+		try:
+			value = getattr(self, x, None)
+		except ZODB.POSException.POSKeyError:
+			logger.exception("Could not get attribute %s for object %s" % (x, self))
+			continue
 		if value is not None:
 			result[ext_name] = converter(value)
 			return
+
 	# Nothing. Can we adapt it?
 	self = sup_iface(self, None) if sup_iface else None
 	for x in sup_fields:
@@ -308,7 +313,6 @@ def _choose_field(result, self, ext_name, converter=lambda x: x, fields=(), sup_
 		except ZODB.POSException.POSKeyError:
 			logger.exception("Could not get attribute %s for object %s" % (x, self))
 			continue
-
 		if value is not None:
 			value = sup_converter( value )
 			if value is not None:
