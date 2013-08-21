@@ -99,9 +99,8 @@ def _notify_online_author_of_comment( comment, topic_author ):
 	# This also has the effect of sending a socket notification, if needed.
 	# Because it is not shared directly with the author, it doesn't go
 	# in the shared data
-	assert not comment.isSharedDirectlyWith( topic_author )
-
-	topic_author._noticeChange( change, force=True )
+	if not comment.isSharedDirectlyWith(topic_author):
+		topic_author._noticeChange(change, force=True)
 
 	# (Except for being in the stream, the effect of the notification can be done with component.handle( blog_author, change ) )
 
