@@ -4,24 +4,24 @@ Functions related to actually externalizing objects.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import logging
 logger = logging.getLogger( __name__ )
 
-
+import six
+import time
+import numbers
+import plistlib
 import collections
+import simplejson as json  # import the fast, flexible C version
 
+import ZODB
 import persistent
 import BTrees.OOBTree
-import ZODB
-
-import plistlib
-import simplejson as json # import the fast, flexible C version
-
-import six
-import numbers
-import time
 
 from zope import interface
 from zope import component
@@ -29,14 +29,13 @@ from zope import deprecation
 from zope.interface.common import sequence
 from zope.dublincore import interfaces as dub_interfaces
 
-
 from nti.ntiids import ntiids
 
+from .oids import to_external_ntiid_oid
 from .interfaces import IExternalObject, IExternalObjectDecorator, IExternalMappingDecorator, StandardExternalFields, StandardInternalFields
 from .interfaces import INonExternalizableReplacer, INonExternalizableReplacement
 from .interfaces import ILocatedExternalSequence
 from .interfaces import LocatedExternalDict
-from .oids import to_external_ntiid_oid
 
 # It turns out that the name we use for externalization (and really the registry, too)
 # we must keep thread-local. We call into objects without any context,
@@ -99,7 +98,8 @@ class _ExternalizationState(object):
 		for k, v in kwargs.iteritems():
 			setattr( self, k, v )
 
-def _to_external_object_state( obj, state, top_level=False ):
+def _to_external_object_state(obj, state, top_level=False):
+	__traceback_info__ = obj
 	try:
 		orig_obj = obj
 		# TODO: This is needless for the mapping types and sequence types. rework to avoid.
