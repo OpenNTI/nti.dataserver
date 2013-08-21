@@ -215,14 +215,16 @@ class IWillUpdateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 	especially if they can guide the updating process.
 	"""
 
-	ext_value = interface.Attribute( "The external value that will drive the update" )
+	ext_value = interface.Attribute("The external value that will drive the update")
+	meta_data = interface.Attribute("A dictionary with update meta data")
 
 @interface.implementer(IWillUpdateNewEntityEvent)
 class WillUpdateNewEntityEvent(zope.component.interfaces.ObjectEvent):
 
-	def __init__( self, obj, ext_value=None ):
-		super(WillUpdateNewEntityEvent,self).__init__( obj )
+	def __init__(self, obj, ext_value=None, meta_data=None):
+		super(WillUpdateNewEntityEvent, self).__init__(obj)
 		self.ext_value = ext_value
+		self.meta_data = meta_data
 
 class IWillCreateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 	"""
@@ -235,17 +237,18 @@ class IWillCreateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 	This is a good time to perform final validation of the entity.
 	"""
 
-	ext_value = interface.Attribute( "If the entity was created with external data, this will be it." )
-
-	preflight_only = interface.Attribute( "A boolean, set to true if this is a preflight-only event." )
+	ext_value = interface.Attribute("If the entity was created with external data, this will be it.")
+	meta_data = interface.Attribute("A dictionary with creation meta data")
+	preflight_only = interface.Attribute("A boolean, set to true if this is a preflight-only event.")
 
 
 @interface.implementer(IWillCreateNewEntityEvent)
 class WillCreateNewEntityEvent(zope.component.interfaces.ObjectEvent):
 
-	def __init__( self, obj, ext_value=None, preflight_only=False ):
-		super(WillCreateNewEntityEvent,self).__init__( obj )
+	def __init__(self, obj, ext_value=None, preflight_only=False, meta_data=None):
+		super(WillCreateNewEntityEvent, self).__init__(obj)
 		self.ext_value = ext_value
+		self.meta_data = meta_data
 		self.preflight_only = preflight_only
 
 class IWillDeleteEntityEvent(zope.component.interfaces.IObjectEvent):
