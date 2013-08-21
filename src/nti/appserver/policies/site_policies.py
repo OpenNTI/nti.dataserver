@@ -17,6 +17,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import re
 import urllib
 import datetime
 import nameparser
@@ -383,10 +384,11 @@ _is_thirteen_or_more_years_ago = _is_x_or_more_years_ago
 class BirthdateInFuture(InvalidValue): pass
 class BirthdateTooRecent(InvalidValue): pass
 class BirthdateTooAncient(InvalidValue): pass
+class InvalidUsernamePattern(InvalidValue): pass
 class UsernameCannotContainRealname(InvalidValue): pass
-class UsernameCannotContainAt(user_interfaces.UsernameContainsIllegalChar): pass
-class UsernameCannotContainNextthoughtCom(InvalidValue): pass
 class FieldContainsCensoredSequence(InvalidValue): pass
+class UsernameCannotContainNextthoughtCom(InvalidValue): pass
+class UsernameCannotContainAt(user_interfaces.UsernameContainsIllegalChar): pass
 
 class MissingFirstName(sch_interfaces.RequiredMissing):
 	field = 'realname'
@@ -937,6 +939,14 @@ class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 
 	def _censor_usernames(self, user):
 		pass
+	
+	def user_will_create(self, user, event):
+		# check if username is a 4x4
+		if re.match('[a-zA-z]{2,4}[0-9]{4}', user.username):
+			raise InvalidUsernamePattern(_("4x4 usernames are not allowed. Please choose another."),
+										'Username', user.username, value=user.username)
+		# continue w/ validation
+		super(OUSitePolicyEventListener, self).user_will_create(user, event)
 
 	def _check_name(self, user):
 		names = user_interfaces.IFriendlyNamed(user)
