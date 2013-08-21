@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+
 from zope import interface
 from zope import component
 from zope.event import notify
@@ -196,13 +198,15 @@ class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 		# TODO: Remove hack
 		_forum = self.__parent__
 		if for_interfaces.IACLEnabled.providedBy(_forum):
-			result = []
+			creator = getattr(_forum, 'creator', None)
+			creator = users.Entity.get_entity(creator) if isinstance(creator, six.string_types) else creator
+			result = set([creator])
 			for ace in _forum.ACL:
 				for action, entity, perm in ace:
 					if action == nti_interfaces.ACE_ACT_ALLOW and for_interfaces.can_read(perm):
 						entity = users.Entity.get_entity(entity)
-						if entity:
-							result.append(entity)
+						result.add(entity)
+			result.discard(None)
 			return result
 		else:
 			return super(CommunityHeadlineTopic, self).sharingTargetsWhenPublished
