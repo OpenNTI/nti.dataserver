@@ -31,6 +31,8 @@ from nti.appserver.utils import is_true, _JsonBodyView
 
 from nti.chatserver import interfaces as chat_interfaces
 
+from nti.contentmanagement import get_collection_root
+
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.dataserver.users import index as user_index
@@ -319,3 +321,57 @@ class DeleteObjectObjects(_JsonBodyView):
 		response.content_type = b'application/json; charset=UTF-8'
 		response.body = simplejson.dumps(counter_map)
 		return response
+
+
+exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog')
+
+def _check_users_containers(usernames=()):
+	if usernames:
+		_users = {users.User.get_entity(x) for x in usernames}
+		_users.discard(None)
+	else:
+		dataserver = component.getUtility(nti_interfaces.IDataserver)
+		_users = nti_interfaces.IShardLayout(dataserver).users_folder
+		_users = _users.values()
+
+	for user in _users:
+		method = getattr(user, 'getAllContainers', lambda : ())
+		usermap = {}
+		for name in method():
+			if name in exclude_containers:
+				continue
+
+			if get_collection_root(name) is None:
+				container = user.getContainer(name)
+				usermap[name] = len(container) if container is not None else 0
+		if usermap:
+			yield user.username, usermap
+
+@view_config(route_name='objects.generic.traversal',
+			 name='user_ghost_containers',
+			 request_method='GET',
+			 permission=nauth.ACT_MODERATE)
+def user_ghost_containers(request):
+	values = request.params
+	usernames = values.get('usernames')
+	usernames = usernames.split(',') if usernames else ()
+
+	stream = BytesIO()
+	gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
+
+	response = request.response
+	response.content_encoding = b'gzip'
+	response.content_type = b'application/json; charset=UTF-8'
+	response.content_disposition = b'attachment; filename="ghost_containers.txt.gz"'
+	def _generator():
+		for username, rmap in _check_users_containers(usernames):
+			rmap = {username:rmap}
+			external = simplejson.dumps(rmap, indent=2)
+			yield external
+
+	_write_generator(_generator, gzstream, seek0=False)
+	gzstream.close()
+	stream.seek(0)
+	response.body_file = stream
+	return response
+
