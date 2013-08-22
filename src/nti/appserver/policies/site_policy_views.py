@@ -77,6 +77,8 @@ def site_css_view(request):
 	return response_for_site_resource_with_marker( ISiteCSSMarker, request, 'site.css', b'text/css' )
 
 
+@view_config(route_name="logon.strings_js",
+			 request_method='GET')
 @view_config(route_name="webapp.strings_js",
 			 request_method='GET')
 def webapp_strings_view(request):
