@@ -350,8 +350,10 @@ class _SharedDynamicMembershipProviderDecorator(object):
 
 	def decorateExternalMapping(self, original, mapping):
 		request = get_current_request()
+		if request is None:
+			return
 		dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
-		remote_user = get_remote_user(request, dataserver) if request and dataserver else None
+		remote_user = get_remote_user(request, dataserver) if dataserver else None
 		if 	remote_user is None or original == remote_user or \
 			nti_interfaces.ICoppaUserWithoutAgreement.providedBy(original) or \
 			not hasattr(original, 'usernames_of_dynamic_memberships'):
