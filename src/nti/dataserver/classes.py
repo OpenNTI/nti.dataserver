@@ -281,8 +281,8 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	def __eq__( self, other ):
 		try:
 			# Interestingly, BTreeContainer does a poor job implementing __eq__
-			return self.ID == other.ID and self.Provider == other.Provider and self.InstructorInfo == other.InstructorInfo \
-				and list(self._enrolled.keys()) == list(other._enrolled.keys())
+			return	self.ID == other.ID and self.Provider == other.Provider and self.InstructorInfo == other.InstructorInfo \
+					and list(self._enrolled.keys()) == list(other._enrolled.keys())
 		except AttributeError:
 			return NotImplemented
 
@@ -292,12 +292,15 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	def enroll(self, student):
 		self._enrolled[student] = student
 
+	def is_errolled(self, student):
+		result = student in self._enrolled
+		return result
+
 	@property
 	def links(self):
 		if not self.__parent__:
 			return ()
 		return (links.Link( self.__parent__.__parent__, rel='parent' ),)
-
 
 	@property
 	def Enrolled(self):
