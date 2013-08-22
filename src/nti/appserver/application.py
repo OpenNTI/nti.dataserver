@@ -136,6 +136,7 @@ def _webapp_resource_views(pyramid_config, settings):
 	landing_root = settings.get('landing_root', '/landing/')
 
 	pyramid_config.add_route(name="logon.logon_css", pattern=login_root+"resources/css/site.css")
+	pyramid_config.add_route(name="logon.strings_js", pattern=login_root+"resources/strings/site.js");
 	pyramid_config.add_route(name="webapp.site_css", pattern=web_root+"resources/css/site.css")
 	pyramid_config.add_route(name="webapp.strings_js", pattern=web_root+"resources/strings/site.js")
 	pyramid_config.add_route(name="landing.site_html", pattern=landing_root+"site.html")
