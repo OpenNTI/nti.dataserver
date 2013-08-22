@@ -108,16 +108,7 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 		self.Description = ""
 		self.ID = ID  # Provider specific, e.g., CS2051
 
-	@property
-	def Sections(self):
-		return self._sections.values()
-
-	@property
-	def Instructors(self):
-		result = set()
-		for section in self.Sections():
-			result.update(section.Instructors)
-		return result
+	# Provider
 
 	def _get_Provider(self):
 		return self.creator
@@ -142,6 +133,32 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	id = alias('ID')
 	__parent__ = None
 	__name__ = alias('ID')
+
+	# Sections
+
+	@property
+	def Sections(self):
+		return self._sections.values()
+
+	@property
+	def Instructors(self):
+		result = set()
+		for section in self.Sections:
+			result.update(section.Instructors)
+		return result
+
+	@property
+	def Enrolled(self):
+		result = set()
+		for section in self.Sections:
+			result.update(section.Enrolled)
+		return result
+
+	def is_enrolled(self, student):
+		for section in self.Sections:
+			if section.is_enrolled(student):
+				return True
+		return False
 
 	def add_section( self, section ):
 		# TODO: Historical and time based (reuse of IDs)? We're requiring
@@ -298,7 +315,7 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	def enroll(self, student):
 		self._enrolled[student] = student
 
-	def is_errolled(self, student):
+	def is_enrolled(self, student):
 		result = student in self._enrolled
 		return result
 
