@@ -33,7 +33,7 @@ class TestApplicationContentCard(SharedApplicationTestBase):
 	def test_fetch_content_card_by_ntiid_accept_pageinfo(self):
 		# If we fetch the URL of a content card, but specify that we accept PageInfo,
 		# that's what we get back
-		from nti.appserver.content.library_views import PAGE_INFO_MT_JSON as page_info_mt_json
+		from nti.appserver.contentlibrary.library_views import PAGE_INFO_MT_JSON as page_info_mt_json
 
 		res = self.fetch_by_ntiid( self.card_ntiid,
 								   headers={b'Accept': str(page_info_mt_json)} )

@@ -327,9 +327,9 @@
 	
 	<include package=".store" />
 	<include package=".forums" />
-	<include package=".content" />
 	<include package=".dashboard" />
-	
+	<include package=".contentlibrary" />
+		
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"
 			 for="*"
