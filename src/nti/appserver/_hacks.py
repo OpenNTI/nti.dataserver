@@ -3,18 +3,18 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from .ugd_edit_views import UGDPutView
-from nti.appserver import httpexceptions as hexc
+import requests
 
 from pyramid.view import view_config
 
-
-from nti.dataserver import interfaces as nti_interfaces
+from nti.appserver import httpexceptions as hexc
+from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.dataserver import authorization as nauth
-
+from nti.dataserver import interfaces as nti_interfaces
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -38,9 +38,6 @@ class _FriendsListsFriendsFieldUpdateView(UGDPutView):
 
 	def _transformInput( self, externalValue ):
 		return {"friends": externalValue}
-
-import requests
-import requests.exceptions
 
 @view_config( route_name='objects.generic.traversal',
 			  context=nti_interfaces.IDataserverFolder,
