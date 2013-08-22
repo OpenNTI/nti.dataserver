@@ -48,7 +48,9 @@
 	<utility factory="._repoze_index._RepozeHighlightCatalogCreator" name="highlight" />
 	<utility factory="._repoze_index._RepozeRedactionCatalogCreator" name="redaction" />
 	<utility factory="._repoze_index._RepozeMessageInfoCatalogCreator" name="messageinfo" />
-	<!--
-	<utility factory="._repoze_redis._RepozeStorageService"  />
-	-->
+	
+	<configure zcml:condition="not-have devmode">
+		<utility factory="._repoze_redis._RepozeStorageService"  />
+	</configure>
+	
 </configure>
