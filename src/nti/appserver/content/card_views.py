@@ -5,28 +5,28 @@ Views related to cards in content.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import pyquery
+
 from zope import component
 from zope import interface
+from zope.container.contained import Contained
 
-import pyramid.httpexceptions as hexc
 from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
 
 from nti.contentlibrary import interfaces as lib_interfaces
-from nti.ntiids import interfaces as nid_interfaces
 
 from nti.dataserver import authorization as nauth
 
-from zope.container.contained import Contained
+from nti.ntiids import interfaces as nid_interfaces
 
-from .contentlibrary_views import find_page_info_view_helper
-from .contentlibrary_views import PAGE_INFO_MT_JSON
-
+from .library_views import PAGE_INFO_MT_JSON
+from .library_views import find_page_info_view_helper
 
 # See also assessment_views, especially for notes on Accept header handling.
 
@@ -34,15 +34,17 @@ from .contentlibrary_views import PAGE_INFO_MT_JSON
 # contains traversal helpers to fake it
 class _ContentCard(Contained):
 
-	def __init__( self, path ):
+	def __init__(self, path):
 		self.path = path
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _ContentCardResolver(object):
-	"Provisional resolver for cards in content."
-	def resolve( self, key ):
+	"""
+	Provisional resolver for cards in content.
+	"""
+	def resolve(self, key):
 		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
-		paths = library.pathsToEmbeddedNTIID( key )
+		paths = library.pathsToEmbeddedNTIID(key) if library else None
 		if paths:
 			# We arbitrarily choose the first one.
 			# We might instead want to go through and find one that
@@ -59,9 +61,8 @@ _view_defaults = dict( route_name='objects.generic.traversal',
 					   permission=nauth.ACT_READ,
 					   request_method='GET' )
 @view_config(accept=PAGE_INFO_MT_JSON.encode('ascii'), **_view_defaults)
-def pageinfo_from_content_card_view( request ):
+def pageinfo_from_content_card_view(request):
 	assert request.accept
-
 	return find_page_info_view_helper( request, request.context.path[-1] )
 
 
@@ -70,9 +71,10 @@ def get_card_view_link( request ):
 	# Not supported.
 	return hexc.HTTPBadRequest()
 
-@view_config(accept=b'', **_view_defaults) # explicit empty accept, else we get a ConfigurationConflict and/or no-Accept header goes to the wrong place
+# explicit empty accept, else we get a ConfigurationConflict and/or no-Accept header goes to the wrong place
+@view_config(accept=b'', **_view_defaults)
 @view_config(**_view_defaults)
-def get_card_view( request ):
+def get_card_view(request):
 	# NOTE: These are not modeled content. What we are returning is arbitrary
 	# and WILL change.
 
@@ -84,7 +86,7 @@ def get_card_view( request ):
 
 	if not contents:
 		return hexc.HTTPNotFound()
-	import pyquery
+
 	pq = pyquery.PyQuery( contents, parser='html' )
 	# Because of syntax issues, and unicode issues, we have to iterate
 	# for the object ourself

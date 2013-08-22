@@ -16,8 +16,8 @@ from pyramid.view import view_config
 
 from nti.dataserver import authorization as nauth
 
-from .contentlibrary_views import find_page_info_view_helper
-from .contentlibrary_views import PAGE_INFO_MT_JSON
+from .content.library_views import PAGE_INFO_MT_JSON
+from .content.library_views import find_page_info_view_helper
 
 ####
 ## In pyramid 1.4, there is some minor wonkiness with the accept= request predicate.

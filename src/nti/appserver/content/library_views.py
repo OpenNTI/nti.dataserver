@@ -9,51 +9,52 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
-import persistent
-
-import pyramid.security as sec
-import pyramid.httpexceptions as hexc
-from pyramid.threadlocal import get_current_request
-from pyramid import traversal
-from pyramid.view import view_config, view_defaults
-
 import sys
 import time
 import itertools
-import warnings
+import persistent
+from urllib import quote as UQ
 
 from zope import interface
 from zope import component
-from zope.location import interfaces as loc_interfaces
 from zope.location.interfaces import LocationError
+from zope.location import interfaces as loc_interfaces
 from zope.annotation.factory import factory as an_factory
 from zope.traversing import interfaces as trv_interfaces
 
-from nti.dataserver import interfaces as nti_interfaces
+from pyramid import traversal
+from pyramid import security as sec
+from pyramid import httpexceptions as hexc
+from pyramid.threadlocal import get_current_request
+from pyramid.view import view_config, view_defaults
+
+from nti.appserver import interfaces as app_interfaces
+from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
+from nti.appserver._view_utils import AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
+
+from nti.contentlibrary import interfaces as lib_interfaces
+
 from nti.dataserver import users
 from nti.dataserver import links
 from nti.dataserver import containers
-from nti.dataserver.mimetype import  nti_mimetype_with_class
 from nti.dataserver import authorization as nauth
 from nti.dataserver import authorization_acl as nacl
-from nti.ntiids import ntiids
-
-from nti.appserver import interfaces as app_interfaces
-from nti.contentlibrary import interfaces as lib_interfaces
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.mimetype import  nti_mimetype_with_class
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import to_external_object
 from nti.externalization.singleton import SingletonDecorator
 
-from .dataserver_pyramid_views import _GenericGetView as GenericGetView
-from urllib import quote as UQ
+from nti.ntiids import ntiids
 
-PAGE_INFO_MT = nti_mimetype_with_class( 'pageinfo' )
+PAGE_INFO_MT = nti_mimetype_with_class('pageinfo')
 PAGE_INFO_MT_JSON = PAGE_INFO_MT + '+json'
 
-
 def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
-	"Helper function to resolve a NTIID to PageInfo."
+	"""
+	Helper function to resolve a NTIID to PageInfo.
+	"""
 
 	# XXX Assuming one location in the hierarchy, plus assuming things
 	# about the filename For the sake of the application (trello #932
@@ -62,7 +63,8 @@ def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
 	# for the nearest containing *physical* file. In short, this means
 	# we look for an href that does not have a '#' in it.
 
-	content_unit = ntiids.find_object_with_ntiid( page_ntiid_or_content_unit ) if not lib_interfaces.IContentUnit.providedBy( page_ntiid_or_content_unit ) else page_ntiid_or_content_unit
+	content_unit = ntiids.find_object_with_ntiid(page_ntiid_or_content_unit) \
+				   if not lib_interfaces.IContentUnit.providedBy(page_ntiid_or_content_unit) else page_ntiid_or_content_unit
 	while content_unit and '#' in getattr( content_unit, 'href', '' ):
 		content_unit = getattr( content_unit, '__parent__', None )
 
@@ -90,7 +92,8 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	# Traverse down to the pages collection and use it to create the info.
 	# This way we get the correct link structure
 
-	remote_user = users.User.get_user( sec.authenticated_userid( request ), dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
+	remote_user = users.User.get_user(sec.authenticated_userid(request),
+									  dataserver=request.registry.getUtility(nti_interfaces.IDataserver))
 	if not remote_user:
 		raise hexc.HTTPForbidden()
 	user_service = request.registry.getAdapter( remote_user, app_interfaces.IService )
@@ -336,7 +339,6 @@ class _ContentUnitFieldsTraversable(object):
 
 		raise LocationError( name ) # pragma: no cover
 
-from ._view_utils import AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=app_interfaces.IContentUnitPreferences,
@@ -457,7 +459,6 @@ class _LibraryTOCRedirectClassView(object):
 		href = request.context.href
 
 		jsonp_href = None
-		lastModified = 0
 		# Right now, the ILibraryTOCEntries always have relative hrefs,
 		# which may or may not include a leading /.
 		assert not href.startswith( '/' ) or '://' not in href # Is it a relative path?

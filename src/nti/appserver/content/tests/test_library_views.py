@@ -1,35 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-$Id$
-"""
-from __future__ import print_function, unicode_literals
 
-#pylint: disable=R0904
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+import anyjson as json
+
+from zope import interface
+from zope.traversing.api import traverse
+
+from pyramid import traversal
+
+from nti.appserver import interfaces as app_interfaces
+
+from nti.appserver.tests import NewRequestSharedConfiguringTestBase
+
+from nti.contentlibrary import interfaces as lib_interfaces
+
+from nti.dataserver import users
+from nti.dataserver.contenttypes import Note
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
+from nti.ntiids import ntiids
+
+from nti.tests import verifiably_provides
+
+from ..library_views import _ContentUnitPreferencesPutView, _ContentUnitPreferencesDecorator
 
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import has_entry
 from hamcrest import has_key
 from hamcrest import greater_than
-
-from nti.appserver.tests import NewRequestSharedConfiguringTestBase
-from nti.tests import verifiably_provides
-from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans
-
-import anyjson as json
-from nti.appserver import interfaces as app_interfaces
-from nti.contentlibrary import interfaces as lib_interfaces
-
-from nti.dataserver import users
-from nti.dataserver.contenttypes import Note
-from nti.ntiids import ntiids
-
-from zope import interface
-from zope.traversing.api import traverse
-from pyramid import traversal
-
-from nti.appserver.contentlibrary_views import _ContentUnitPreferencesPutView, _ContentUnitPreferencesDecorator
 
 @interface.implementer(lib_interfaces.IContentUnit)
 class ContentUnit(object):
@@ -233,7 +238,7 @@ class TestContainerPrefs(NewRequestSharedConfiguringTestBase):
 	def test_prefs_from_content_unit(self):
 		_ = users.User.create_user( username=self.rem_username )
 		# Note the container does not exist
-		containerId = "tag:nextthought.com:foo,bar"
+		# containerId = "tag:nextthought.com:foo,bar"
 
 		content_unit = ContentUnit()
 		content_unit.ntiid = ntiids.ROOT
