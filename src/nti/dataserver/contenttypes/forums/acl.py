@@ -130,6 +130,10 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 
 ###################################################
+# Class / Section forums
+###################################################
+
+###################################################
 # ACL Providers for ACL dependent forums and boards
 ###################################################
 
