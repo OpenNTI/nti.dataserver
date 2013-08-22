@@ -941,7 +941,7 @@ class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 		pass
 	
 	def user_will_create(self, user, event):
-		meta_data = getattr(event, 'meta_data', {})
+		meta_data = getattr(event, 'meta_data', None) or {}
 
 		# check if username is a 4x4
 		if meta_data.get('check_4x4', True) and re.match('[a-zA-z]{2,4}[0-9]{4}', user.username):
