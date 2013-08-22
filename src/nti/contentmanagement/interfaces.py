@@ -16,9 +16,9 @@ from nti.contentfragments.schema import HTMLContentFragment
 from nti.utils import schema as nti_schema
 
 class IContentBundle(interface.Interface):
-	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
-	Title = nti_schema.ValidTextLine(title='Purchasable item title', required=False)
-	Author = nti_schema.ValidTextLine(title='Purchasable item author', required=False)
-	Description = HTMLContentFragment(title='Purchasable item description', required=False, default='')
+	NTIID = nti_schema.ValidTextLine(title='Content bundle NTTID', required=True)
+	Title = nti_schema.ValidTextLine(title='Content bundle title', required=False)
+	Author = nti_schema.ValidTextLine(title='Content bundle author', required=False)
+	Description = HTMLContentFragment(title='Content bundle description', required=False, default='')
 	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Bundle items")
 
