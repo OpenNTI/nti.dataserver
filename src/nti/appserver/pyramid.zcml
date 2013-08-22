@@ -54,7 +54,6 @@
 	</pyramid:view>
 
 	<pyramid:scan package='nti.appserver.usersearch_views' />
-	<pyramid:scan package='.contentlibrary_views' />
 	<pyramid:scan package='.liking_views' />
 	<pyramid:scan package='.flagging_views' />
 	<pyramid:scan package='._hacks' />
@@ -70,8 +69,7 @@
 	<pyramid:scan package=".link_providers.views" />
 	<pyramid:scan package=".bulk_email_views" />
 
-	<pyramid:scan package=".content_card_views" />
-	
+	<include package=".content" file="pyramid.zcml" />
 	<include package=".dashboard" file="pyramid.zcml" />
 	
 	<!-- Util/Admin views -->

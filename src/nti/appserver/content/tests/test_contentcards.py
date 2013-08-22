@@ -4,29 +4,19 @@ from __future__ import print_function, unicode_literals
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+import os.path
+
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_entry
-from hamcrest import has_length
 from hamcrest import has_item
-from hamcrest import has_key
 from hamcrest import has_entries
-from hamcrest import greater_than
-from hamcrest import not_none
-from hamcrest.library import has_property
-
 from hamcrest import is_not
 does_not = is_not
 
-import os
-import os.path
-
-
-
 from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
 
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
-
+from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
 class TestApplicationContentCard(SharedApplicationTestBase):
 	child_ntiid = b'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1'
@@ -43,7 +33,7 @@ class TestApplicationContentCard(SharedApplicationTestBase):
 	def test_fetch_content_card_by_ntiid_accept_pageinfo(self):
 		# If we fetch the URL of a content card, but specify that we accept PageInfo,
 		# that's what we get back
-		from nti.appserver.contentlibrary_views import PAGE_INFO_MT_JSON as page_info_mt_json
+		from nti.appserver.content.library_views import PAGE_INFO_MT_JSON as page_info_mt_json
 
 		res = self.fetch_by_ntiid( self.card_ntiid,
 								   headers={b'Accept': str(page_info_mt_json)} )
