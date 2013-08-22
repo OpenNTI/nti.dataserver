@@ -23,6 +23,11 @@ from ZODB.utils import u64
 from pyramid.view import view_config
 from pyramid.threadlocal import get_current_request
 
+from nti.appserver.policies import site_policies
+from nti.appserver import httpexceptions as hexc
+from nti.appserver._view_utils import get_remote_user
+from nti.appserver import interfaces as app_interfaces
+
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.dataserver import mimetype as nti_mimetype
@@ -34,10 +39,6 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
-from .policies import site_policies
-from . import httpexceptions as hexc
-from ._view_utils import get_remote_user
-from . import interfaces as app_interfaces
 
 def _is_valid_search( search_term, remote_user ):
 	"""Should the search be executed?
@@ -341,7 +342,6 @@ def _make_visibility_test(remote_user):
 		return test
 	return lambda x: True
 
-
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 class _SharedDynamicMembershipProviderDecorator(object):
@@ -350,16 +350,14 @@ class _SharedDynamicMembershipProviderDecorator(object):
 
 	def decorateExternalMapping(self, original, mapping):
 		request = get_current_request()
-		if request is None:
-			return
-		dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
-		remote_user = get_remote_user(request, dataserver) if dataserver else None
-		if 	remote_user is None or original == remote_user or \
-			nti_interfaces.ICoppaUserWithoutAgreement.providedBy(original) or \
-			not hasattr(original, 'usernames_of_dynamic_memberships'):
-			return
-
-		remote_dmemberships = remote_user.usernames_of_dynamic_memberships - set(('Everyone',))
-		shared_dmemberships = original.usernames_of_dynamic_memberships.intersection(remote_dmemberships)
-		mapping['SharedDynamicMemberships'] = list(shared_dmemberships)
+		if request is not None:
+			dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+			remote_user = get_remote_user(request, dataserver) if dataserver else None
+			if 	remote_user is None or original == remote_user or \
+				nti_interfaces.ICoppaUserWithoutAgreement.providedBy(original) or \
+				not hasattr(original, 'usernames_of_dynamic_memberships'):
+				return
+			remote_dmemberships = remote_user.usernames_of_dynamic_memberships - set(('Everyone',))
+			shared_dmemberships = original.usernames_of_dynamic_memberships.intersection(remote_dmemberships)
+			mapping['SharedDynamicMemberships'] = list(shared_dmemberships)
 
