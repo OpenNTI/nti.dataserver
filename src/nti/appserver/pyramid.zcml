@@ -69,7 +69,7 @@
 	<pyramid:scan package=".link_providers.views" />
 	<pyramid:scan package=".bulk_email_views" />
 
-	<include package=".content" file="pyramid.zcml" />
+	<include package=".contentlibrary" file="pyramid.zcml" />
 	<include package=".dashboard" file="pyramid.zcml" />
 	
 	<!-- Util/Admin views -->
