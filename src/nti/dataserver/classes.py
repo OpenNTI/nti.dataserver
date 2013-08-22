@@ -112,6 +112,13 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	def Sections(self):
 		return self._sections.values()
 
+	@property
+	def Instructors(self):
+		result = set()
+		for section in self.Sections():
+			result.update(section.Instructors)
+		return result
+
 	def _get_Provider(self):
 		return self.creator
 	def _set_Provider(self, np):
@@ -132,10 +139,9 @@ class ClassInfo( datastructures.PersistentCreatedModDateTrackingObject,
 			section.Provider = nc
 	creator = property(_get_creator, _set_creator)
 
-
-	__name__ = alias('ID')
 	id = alias('ID')
 	__parent__ = None
+	__name__ = alias('ID')
 
 	def add_section( self, section ):
 		# TODO: Historical and time based (reuse of IDs)? We're requiring
@@ -305,7 +311,11 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 	@property
 	def Enrolled(self):
 		return self._enrolled.keys()
-
+	
+	@property
+	def Instructors(self):
+		return self.InstructorInfo.Instructors
+	
 	def __iter__(self):
 		# IUsernameIterable
 		return itertools.chain( iter(self.Enrolled), self.InstructorInfo.Instructors)
@@ -358,20 +368,19 @@ class SectionInfo( datastructures.PersistentCreatedModDateTrackingObject,
 
 
 @interface.implementer(nti_interfaces.IInstructorInfo)
-class InstructorInfo( Persistent,
-					  ExternalizableInstanceDict ):
+class InstructorInfo(Persistent, ExternalizableInstanceDict):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-	def __init__( self ):
+	def __init__(self):
 		super(InstructorInfo,self).__init__()
 		self.Instructors = PersistentList() # list of the names of the instructors
 
-	def __eq__( self, other ):
+	def __eq__(self, other):
 		try:
-			return self.Instructors == other.Instructors
+			return set(self.Instructors) == set(other.Instructors)
 		except AttributeError:
 			return NotImplemented
 
 	def __hash__(self):
-		return hash( tuple(self.Instructors) )
+		return hash(tuple(self.Instructors))
