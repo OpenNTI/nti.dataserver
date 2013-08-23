@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Implementation of the relatex content index  map and supporting
+Implementation of the related content index map and supporting
 functions to maintain it.
 
 $Id$

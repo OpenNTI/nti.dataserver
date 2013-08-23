@@ -5,23 +5,20 @@ Listeners for socket activity.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.dataserver import interfaces as nti_interfaces
-from nti.chatserver import interfaces as chat_interfaces
-from nti.socketio import interfaces as sio_interfaces
-from nti.externalization import interfaces as ext_interfaces
-
-#from nti.externalization.singleton import SingletonDecorator
-from nti.dataserver import users
-
-from zope.event import notify
 from zope import component
-from zope import interface
+from zope.event import notify
+
+from nti.chatserver import interfaces as chat_interfaces
+
+from nti.dataserver import users
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.socketio import interfaces as sio_interfaces
 
 def _is_user_online(dataserver, username, ignoring_session=None):
 	"""
@@ -47,7 +44,6 @@ def _notify_friends_of_presence( session, presence, event=None ):
 	has_me_in_buddy_list = chat_interfaces.IContacts(user).contactNamesSubscribedToMyPresenceUpdates
 	logger.debug( "Notifying %s of presence change of %s/%s to %s for %s", has_me_in_buddy_list, session.owner, session, presence, event )
 	notify( chat_interfaces.PresenceChangedUserNotificationEvent( has_me_in_buddy_list, session.owner, presence ) )
-
 
 @component.adapter( sio_interfaces.ISocketSession, sio_interfaces.ISocketSessionDisconnectedEvent )
 def session_disconnected_broadcaster( session, event ):
