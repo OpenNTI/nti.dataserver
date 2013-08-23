@@ -939,7 +939,7 @@ class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 
 	def _censor_usernames(self, user):
 		pass
-	
+
 	def user_will_create(self, user, event):
 		meta_data = getattr(event, 'meta_data', None) or {}
 
@@ -963,7 +963,7 @@ class OUTestSitePolicyEventListener(OUSitePolicyEventListener):
 	Implements the policy for the ou test site.
 	"""
 
-	COM_USERNAME = 'ou-test.nextthought.com'
+	COM_USERNAME = 'ou.nextthought.com'
 	COM_ALIAS = '*OU*'
 	COM_REALNAME = '*The University of Oklahoma*'
 
