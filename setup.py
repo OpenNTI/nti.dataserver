@@ -260,7 +260,7 @@ setup(
 		 # give a version) (?). grequests 0.1.0 is not compatible with this.
 		 # If something used hooks, a change from 1.1 to 1.2 might break it; no initial issues seen
 		'requests >= 1.2.3',
-		'rq >= 0.3.10',  # queues for python
+		'rq >= 0.3.11',  # queues for python
 		'setproctitle >= 1.1.7',  # used by gunicorn
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.3.0',
