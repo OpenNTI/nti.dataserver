@@ -198,9 +198,8 @@ class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 		# TODO: Remove hack
 		_forum = self.__parent__
 		if for_interfaces.IACLEnabled.providedBy(_forum):
-			creator = getattr(_forum, 'creator', None)
-			creator = users.Entity.get_entity(creator) if isinstance(creator, six.string_types) else creator
-			result = set([creator])
+			# don't include the creator of the forum (e.g. community) if we have a ACL
+			result = set()
 			for ace in _forum.ACL:
 				for action, entity, perm in ace:
 					if action == nti_interfaces.ACE_ACT_ALLOW and for_interfaces.can_read(perm):
