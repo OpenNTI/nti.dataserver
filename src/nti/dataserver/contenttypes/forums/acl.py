@@ -133,7 +133,7 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 # Class / Section forums
 ###################################################
 
-class _ClassCommunityBoardACLProvider(_CommunityBoardACLProvider):
+class _ClassInfoBoardACLProvider(_CommunityBoardACLProvider):
 
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		# admins have full control
@@ -144,12 +144,13 @@ class _ClassCommunityBoardACLProvider(_CommunityBoardACLProvider):
 			if entity is not None:
 				acl.append(ace_allowing(entity, nti_interfaces.ALL_PERMISSIONS, self))
 		# students have read access
-		# TODO: make class a principal
 		for student in self.context.Enrolled:
 			entity = Entity.get_entity(student)
 			if entity is not None:
 				acl.append(ace_allowing(entity, nauth.ACT_READ, self))
 
+class _SectionInfoBoardACLProvider(_ClassInfoBoardACLProvider):
+	pass
 
 ###################################################
 # ACL Providers for ACL dependent forums and boards
