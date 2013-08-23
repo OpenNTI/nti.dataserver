@@ -33,7 +33,7 @@ zanpakuto_commands =  (	"Shoot To Kill",
 
 
 class ConfiguringTestBase(DSConfiguringTestBase):
-	set_up_packages = (dataserver, contentsearch, ('repoze_full.zcml', contentsearch))
+	set_up_packages = (dataserver, contentsearch)
 
 
 class ApplicationTestBase(SharedApplicationTestBase):
