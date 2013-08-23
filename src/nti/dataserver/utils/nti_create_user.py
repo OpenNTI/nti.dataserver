@@ -138,7 +138,7 @@ def _create_user( factory, username, password, realname, communities=(), options
 		for com_name in communities or ():
 			community = users.Entity.get_entity( com_name, default='' )
 			if community:
-				user.join_community( community )
+				user.record_dynamic_membership(community)
 				user.follow( community )
 
 		if options.coppa and not nti_interfaces.ICoppaUserWithoutAgreement.providedBy( user ):

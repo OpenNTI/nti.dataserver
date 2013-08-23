@@ -91,11 +91,11 @@ class UserCommunityFixture(object):
 
 			# make them share a community
 			community = users.Community.get_community( community_name, self.ds ) or users.Community.create_community( username=community_name )
-			user.join_community( community )
-			user2.join_community( community )
-			user3.join_community( community )
-			user_following_2.join_community( community )
-			user2_following_2.join_community( community )
+			user.record_dynamic_membership(community)
+			user2.record_dynamic_membership(community)
+			user3.record_dynamic_membership(community)
+			user_following_2.record_dynamic_membership(community)
+			user2_following_2.record_dynamic_membership(community)
 
 			user2.follow( user )
 			user_following_2.follow( user2 )
