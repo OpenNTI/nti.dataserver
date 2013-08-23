@@ -10,8 +10,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
-
 from zope import interface
 from zope import component
 from zope.event import notify
