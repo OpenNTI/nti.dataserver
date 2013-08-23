@@ -47,11 +47,11 @@ from nti.utils.maps import CaseInsensitiveDict
 
 # user_info_extract
 
-def _write_generator(generator, stream=None, seek0=True):
+def _write_generator(generator, stream=None, seek0=True, separator="\n"):
 	stream = StringIO() if stream is None else stream
 	for line in generator():
 		stream.write(line)
-		stream.write("\n")
+		stream.write(separator)
 	stream.flush()
 	if seek0:
 		stream.seek(0)
@@ -245,7 +245,7 @@ def user_export_objects(request):
 
 	stream = BytesIO()
 	gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
-
+	gzstream.write("[\n")
 	response = request.response
 	response.content_encoding = b'gzip'
 	response.content_type = b'application/json; charset=UTF-8'
@@ -255,7 +255,8 @@ def user_export_objects(request):
 			external = to_json_representation_externalized(obj)
 			yield external
 
-	_write_generator(_generator, gzstream, seek0=False)
+	_write_generator(_generator, gzstream, seek0=False, separator=",\n")
+	gzstream.write("]")
 	gzstream.close()
 	stream.seek(0)
 	response.body_file = stream
@@ -358,6 +359,7 @@ def user_ghost_containers(request):
 
 	stream = BytesIO()
 	gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
+	gzstream.write("[\n")
 
 	response = request.response
 	response.content_encoding = b'gzip'
@@ -369,7 +371,8 @@ def user_ghost_containers(request):
 			external = simplejson.dumps(rmap, indent=2)
 			yield external
 
-	_write_generator(_generator, gzstream, seek0=False)
+	_write_generator(_generator, gzstream, seek0=False, separator=",\n")
+	gzstream.write("]")
 	gzstream.close()
 	stream.seek(0)
 	response.body_file = stream
