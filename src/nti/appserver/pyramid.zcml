@@ -8,6 +8,7 @@
 	<pyramid:route name="dictionary.word"
 				   pattern="/dictionary/{word}"
 				   request_method="GET" />
+				   
 	<pyramid:static name="/dictionary/static"
 					path="nti.dictserver:static/"
 					cache_max_age="864000" />
@@ -42,6 +43,7 @@
 				   factory='._dataserver_pyramid_traversal.dataserver2_root_resource_factory'>
 		The main traversal route.
 	</pyramid:route>
+	
 	<pyramid:view route_name='objects.generic.traversal'
 				  view='nti.appserver.dataserver_pyramid_views._GenericGetView_OFF'
 				  renderer='rest'
@@ -69,8 +71,10 @@
 	<pyramid:scan package=".link_providers.views" />
 	<pyramid:scan package=".bulk_email_views" />
 
-	<include package=".contentlibrary" file="pyramid.zcml" />
+	<include package=".forums" file="pyramid.zcml" />
 	<include package=".dashboard" file="pyramid.zcml" />
+	<include package=".contentlibrary" file="pyramid.zcml" />
+
 	
 	<!-- Util/Admin views -->
 	<pyramid:scan package='.utils.user_export_views' />
