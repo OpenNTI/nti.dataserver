@@ -5,49 +5,51 @@ Dataserver interfaces
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-# logger = __import__('logging').getLogger(__name__)
-
-from zope import component
 from zope import interface
-# from zope import schema
-from zope.lifecycleevent.interfaces import IObjectModifiedEvent
-from zope.lifecycleevent import ObjectModifiedEvent
-from zope.mimetype.interfaces import IContentTypeAware
+
 from zope.annotation.interfaces import IAnnotatable
+
 from zope.container.interfaces import IContainer as IZContainer
 from zope.container.interfaces import IContainerNamesContainer as IZContainerNamesContainer
-from zope.location.interfaces import IContained as IZContained
-from zope.location.location import LocationProxy
 
-from zope.proxy import ProxyBase
-import zope.site.interfaces
+from zope.lifecycleevent import ObjectModifiedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+
+from zope.location.location import LocationProxy
+from zope.location.interfaces import IContained as IZContained
 
 from zope.mimetype import interfaces as mime_interfaces
+from zope.mimetype.interfaces import IContentTypeAware
+
+from zope.proxy import ProxyBase
+
+import zope.site.interfaces
+
+from zope.schema import Bool
+from zope.schema import Iterable
+
+from nti.contentfragments.schema import PlainText
+from nti.contentfragments.schema import PlainTextLine
+from nti.contentfragments.schema import SanitizedHTMLContentFragment
+
 from nti.contentrange import interfaces as rng_interfaces
 from nti.contentrange.contentrange import ContentRangeDescription
 
 from nti.utils.schema import Object
-from nti.utils.schema import ValidChoice as Choice
 from nti.utils.schema import Variant
 from nti.utils.schema import Number
+from nti.utils.schema import ValidText
+from nti.utils.schema import ListOrTuple
+from nti.utils.schema import ValidTextLine
 from nti.utils.schema import UniqueIterable
 from nti.utils.schema import TupleFromObject
-from nti.utils.schema import ListOrTupleFromObject
-from nti.utils.schema import ListOrTuple
-from nti.utils.schema import DecodingValidTextLine
-from nti.utils.schema import ValidTextLine
-from nti.utils.schema import ValidText
 from nti.utils.schema import ValidSet as Set
-from zope.schema import Bool
-from zope.schema import Iterable
-
-from nti.contentfragments.schema import PlainTextLine
-from nti.contentfragments.schema import PlainText
-from nti.contentfragments.schema import SanitizedHTMLContentFragment
+from nti.utils.schema import ListOrTupleFromObject
+from nti.utils.schema import ValidChoice as Choice
+from nti.utils.schema import DecodingValidTextLine
 
 class ACLLocationProxy(LocationProxy):
 	"""
@@ -1317,7 +1319,17 @@ class IDeletedObjectPlaceholder(interface.Interface):
 
 # ## Content types for classes
 
-class IClassInfo(IModeledContent):
+class IInstructorInfo(IModeledContent):
+	"""
+	Describes the instructor(s) for a class section.
+	"""
+	Instructors = Iterable(title="The usernames of the instructors.")
+
+class ISimpleCourse(IModeledContent):
+	Instructors = Iterable(title="The usernames of the instructors.")
+	Enrolled = Iterable(title="The usernames of those enrolled.")
+
+class IClassInfo(ISimpleCourse):
 	"""
 	Describes a class.
 	"""
@@ -1334,13 +1346,7 @@ class IClassInfo(IModeledContent):
 	def add_section(section):
 		"Adds a new :class:ISectionInfo to this class."
 
-class IInstructorInfo(IModeledContent):
-	"""
-	Describes the instructor(s) for a class section.
-	"""
-	Instructors = Iterable(title="The usernames of the instructors.")
-
-class ISectionInfo(IModeledContent):
+class ISectionInfo(ISimpleCourse):
 	"""
 	Describes a section of a class.
 	"""
@@ -1348,8 +1354,6 @@ class ISectionInfo(IModeledContent):
 	InstructorInfo = Object(
 		IInstructorInfo,
 		title="The instructors of the section")
-
-	Enrolled = Iterable(title="The usernames of those enrolled.")
 
 	def enroll(student):
 		"""
