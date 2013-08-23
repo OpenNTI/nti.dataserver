@@ -945,7 +945,7 @@ class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 
 		# check if username is a 4x4
 		if meta_data.get('check_4x4', True) and re.match('[a-zA-z]{2,4}[0-9]{4}', user.username):
-			raise InvalidUsernamePattern(_("4x4 usernames are not allowed. Please choose another."),
+			raise InvalidUsernamePattern(_("The username is not allowed. Please choose another."),
 										'Username', user.username, value=user.username)
 		# continue w/ validation
 		super(OUSitePolicyEventListener, self).user_will_create(user, event)
