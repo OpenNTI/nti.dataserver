@@ -245,7 +245,6 @@ def user_export_objects(request):
 
 	stream = BytesIO()
 	gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
-	gzstream.write("[\n")
 	response = request.response
 	response.content_encoding = b'gzip'
 	response.content_type = b'application/json; charset=UTF-8'
@@ -255,8 +254,7 @@ def user_export_objects(request):
 			external = to_json_representation_externalized(obj)
 			yield external
 
-	_write_generator(_generator, gzstream, seek0=False, separator=",\n")
-	gzstream.write("]")
+	_write_generator(_generator, gzstream, seek0=False)
 	gzstream.close()
 	stream.seek(0)
 	response.body_file = stream
@@ -359,8 +357,6 @@ def user_ghost_containers(request):
 
 	stream = BytesIO()
 	gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
-	gzstream.write("[\n")
-
 	response = request.response
 	response.content_encoding = b'gzip'
 	response.content_type = b'application/json; charset=UTF-8'
@@ -371,8 +367,7 @@ def user_ghost_containers(request):
 			external = simplejson.dumps(rmap, indent=2)
 			yield external
 
-	_write_generator(_generator, gzstream, seek0=False, separator=",\n")
-	gzstream.write("]")
+	_write_generator(_generator, gzstream, seek0=False)
 	gzstream.close()
 	stream.seek(0)
 	response.body_file = stream
