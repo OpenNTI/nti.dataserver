@@ -23,7 +23,6 @@ from . import _discriminators as discriminators
 
 # repoze discriminator functions. Some of them are simply aliases for legacy purposes
 get_ntiid = discriminators.get_ntiid
-get_channel = discriminators.get_channel
 get_creator = discriminators.get_creator
 get_keywords = discriminators.get_keywords
 get_post_tags = discriminators.get_post_tags
@@ -57,6 +56,11 @@ def get_references(obj, default=None):
 def get_recipients(obj, default=None):
 	result = discriminators.get_recipients(obj)
 	return _flatten_list(result, default)
+
+def get_channel(obj, default=None):
+	result = discriminators.get_channel(obj)
+	result = (result,) if result else default
+	return result
 
 def create_catalog(type_name):
 	creator = component.queryUtility(search_interfaces.IRepozeCatalogCreator, name=type_name)
