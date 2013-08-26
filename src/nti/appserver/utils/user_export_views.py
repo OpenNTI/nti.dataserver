@@ -192,6 +192,8 @@ def user_profile_info(request):
 # user export
 
 _transcript_mime_type = u'application/vnd.nextthought.transcript'
+_forum_comment_mime_type = u'application/vnd.nextthought.forums.generalforumcomment'
+_headline_community_topic_mime_type = u'application/vnd.nextthought.forums.communityheadlinetopic'
 
 def _get_mime_type(x):
 	mt = getattr(x, "mimeType", getattr(x, 'mime_type', None))
@@ -233,9 +235,7 @@ def _get_user_objects(user, mime_types=(), broken=False):
 				else:
 					yield obj, obj
 
-	if 	not mime_types or 'application/vnd.nextthought.forums.generalforumcomment' in mime_types or \
-		'application/vnd.nextthought.forums.communityheadlinetopic' in mime_types:
-
+	if not mime_types or _forum_comment_mime_type in mime_types or _headline_community_topic_mime_type in mime_types:
 		for community in getattr(user, 'dynamic_memberships', ()):
 			if not nti_interfaces.ICommunity.providedBy(community):
 				continue
