@@ -29,6 +29,19 @@ class NTIWorker(Worker):
 		"""
 		self._horse_pid = os.getpid()
 		self.main_work_horse(job)
+		
+	def main_work_horse(self, job):
+		self._is_horse = True
+		self.log = logger
+		success = self.perform_job(job)
+		return success
+	
+	def work(self, burst=False):  # noqa
+		try:
+			result = super(NTIWorker, self).work(burst=burst)
+			return result
+		finally:
+			self.register_death()
 
 def _run_worker():
 	args = rqworker.parse_args()
