@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
 import gzip
 import simplejson
 from io import BytesIO
@@ -43,6 +44,8 @@ from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DM
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_json_representation_externalized
+
+from nti.ntiids import ntiids
 
 from nti.utils.maps import CaseInsensitiveDict
 
@@ -270,6 +273,35 @@ def user_export_objects(request):
 		for obj, _ in _get_user_objects(user, mime_types):
 			external = to_json_representation_externalized(obj)
 			yield external
+
+	_write_generator(_generator, gzstream, seek0=False)
+	gzstream.close()
+	stream.seek(0)
+	response.body_file = stream
+	return response
+
+@view_config(route_name='objects.generic.traversal',
+			 name='object_resolver',
+			 request_method='GET',
+			 permission=nauth.ACT_MODERATE)
+def object_resolver(request):
+	values = request.params
+	keys = values.get('id', values.get('key', values.get('ids', values.get('keys'))))
+	if isinstance(keys, six.string_types):
+		keys = keys.split()
+
+	stream = BytesIO()
+	gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
+	response = request.response
+	response.content_encoding = b'gzip'
+	response.content_type = b'application/json; charset=UTF-8'
+	response.content_disposition = b'attachment; filename="objects.txt.gz"'
+	def _generator():
+		for key in keys:
+			obj = ntiids.find_object_with_ntiid(key)
+			if obj is not None:
+				external = to_json_representation_externalized(obj)
+				yield external
 
 	_write_generator(_generator, gzstream, seek0=False)
 	gzstream.close()
