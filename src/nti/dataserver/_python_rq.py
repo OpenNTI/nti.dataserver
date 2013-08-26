@@ -3,7 +3,7 @@
 """
 Python RQ utils.
 
-$Id: priceable.py 19074 2013-05-10 03:16:18Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
