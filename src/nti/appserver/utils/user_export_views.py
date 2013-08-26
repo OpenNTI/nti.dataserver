@@ -38,6 +38,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.users import index as user_index
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
 from nti.externalization.oids import to_external_ntiid_oid
@@ -228,6 +229,22 @@ def _get_user_objects(user, mime_types=(), broken=False):
 					yield adapted, obj
 				else:
 					yield obj, obj
+
+	if 	not mime_types or 'application/vnd.nextthought.forums.generalforumcomment' in mime_types or \
+		'application/vnd.nextthought.forums.communityheadlinetopic' in mime_types:
+
+		for community in getattr(user, 'dynamic_memberships', ()):
+			if not nti_interfaces.ICommunity.providedBy(community):
+				continue
+			board = for_interfaces.IBoard(community, {})
+			for forum in board.values():
+				for topic in forum.values():
+					if getattr(topic, 'creator') == user:
+						yield topic, topic
+
+					for comment in topic.values():
+						if getattr(comment, 'creator') == user:
+							yield comment, comment
 
 @view_config(route_name='objects.generic.traversal',
 			 name='export_user_objects',
