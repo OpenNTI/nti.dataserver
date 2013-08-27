@@ -72,15 +72,15 @@
 	-->
 	<adapter
 		factory="nti.appserver._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
-		for=".site_policies.IMathcountsCoppaUserWithAgreement" />
+		for=".interfaces.IMathcountsCoppaUserWithAgreement" />
 
 	<adapter
 		factory="nti.appserver._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
-		for=".site_policies.IMathcountsCoppaUserWithoutAgreement" />
+		for=".interfaces.IMathcountsCoppaUserWithoutAgreement" />
 
 	<adapter
 		factory="nti.appserver._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
-		for=".site_policies.IMathcountsUser" />
+		for=".interfaces.IMathcountsUser" />
 
 	<!-- Privacy links as needed -->
 	<link:userLink named=".user_policies.REL_CHILDRENS_PRIVACY_PAGE"
