@@ -1,29 +1,37 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*
+"""
+Dataserver config routines
 
-from __future__ import print_function, unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 # Patch for relstorage.
 import nti.monkey.relstorage_umysqldb_patch_on_import
 nti.monkey.relstorage_umysqldb_patch_on_import.patch()
 
-
-import logging
-logger = logging.getLogger(__name__)
-
 import os
-import urllib
 import stat
+import urllib
 import ConfigParser
-from ConfigParser import SafeConfigParser
 
 from zope import interface
+from zope.event import notify
+from zope.processlifetime import DatabaseOpened
+from zope.processlifetime import DatabaseOpenedWithRoot
+
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.zodb.zlibstorage import install_zlib_client_resolver
 
-
 def _file_contents_equal( path, contents ):
-	""" :return: Whether the file at `path` exists and has `contents` """
+	"""
+	:return: Whether the file at `path` exists and has `contents`
+	"""
 	result = False
 	if os.path.exists( path ):
 		with open( path, 'rU', 1 ) as f:
@@ -33,7 +41,8 @@ def _file_contents_equal( path, contents ):
 	return result
 
 def write_configuration_file( path, contents, overwrite=True ):
-	""" Ensures the contents of `path` contain `contents`.
+	"""
+	Ensures the contents of `path` contain `contents`.
 	:param bool overwrite: If true (the default), existing files will be replaced. Othewise, existing
 		files will not be modified.
 	:return: The path.
@@ -46,18 +55,19 @@ def write_configuration_file( path, contents, overwrite=True ):
 		logger.debug( 'Writing config file %s', path )
 		try:
 			os.mkdir( os.path.dirname( path ) )
-		except OSError: pass
+		except OSError:
+			pass
 		with open( path, 'w' ) as f:
 			print( contents, file=f )
 
 	return path
 
 class _Program(object):
-	cmd_line = None
 	name = None
+	cmd_line = None
 	priority = 999
 
-	def __init__( self, name, cmd_line=None ):
+	def __init__(self, name, cmd_line=None):
 		self.name = name
 		if cmd_line is None:
 			cmd_line = name
@@ -76,7 +86,7 @@ class _ReadableEnv(object):
 	settings = {}
 	programs = ()
 
-	def __init__( self, root='/', settings=None ):
+	def __init__(self, root='/', settings=None):
 		self.env_root = os.path.abspath( os.path.expanduser( root ) )
 		self.settings = settings if settings is not None else dict(os.environ)
 		self.programs = []
@@ -106,29 +116,6 @@ class _ReadableEnv(object):
 
 	def log_file( self, name ):
 		return os.path.join( self.env_root, 'var', 'log', name )
-
-	#from gevent_zeromq import zmq # If things crash, remove core.so
-
-	# def _create_pubsub_pair(self, pub_addr, sub_addr, connect_sub=True, connect_pub=True):
-	# 	pub_socket = zmq.Context.instance().socket( zmq.PUB )
-	# 	if connect_pub:
-	# 		pub_socket.connect( sub_addr )
-
-	# 	sub_socket = zmq.Context.instance().socket( zmq.SUB )
-	# 	sub_socket.setsockopt( zmq.SUBSCRIBE, b"" )
-	# 	if connect_sub:
-	# 		sub_socket.connect( pub_addr )
-
-	# 	return pub_socket, sub_socket
-
-	# def create_pubsub_pair( self, section_name, connect_sub=True, connect_pub=True ):
-	# 	"""
-	# 	:return: A pair of ZMQ sockets (pub, sub), connected as specified.
-	# 	"""
-	# 	return self._create_pubsub_pair( self.main_conf.get( section_name, 'pub_addr' ),
-	# 									 self.main_conf.get( section_name, 'sub_addr' ),
-	# 									 connect_sub=connect_sub,
-	# 									 connect_pub=connect_pub )
 
 class _Env(_ReadableEnv):
 
@@ -210,28 +197,6 @@ class _Env(_ReadableEnv):
 		with open( self.conf_file( 'supervisord_demo.conf' ), 'wb' ) as fp:
 			ini.write( fp )
 
-def _configure_pubsub( env, name ):
-
-	pub_file = env.run_file( 'pub.%s.sock' % name )
-	sub_file = env.run_file( 'sub.%s.sock' % name )
-	pid_file = env.run_file( 'pubsub.%s.pid' % name )
-
-	cmd_line = ' '.join( ['nti_pubsub_device', pid_file, 'ipc://' + pub_file, 'ipc://' + sub_file ] )
-
-	env.add_program( _Program( 'pubsub_%s' % name, cmd_line ) )
-
-	if not env.main_conf.has_section( name ):
-		env.main_conf.add_section( name )
-	env.main_conf.set( name, 'pub_addr', 'ipc://' + pub_file )
-	env.main_conf.set( name, 'sub_addr', 'ipc://' + sub_file )
-
-def _configure_pubsub_changes( env ):
-	"This is now a no-op, it isn't used"
-
-
-def _configure_pubsub_session( env ):
-	"This is now a no-op, as we switched sessions to Redis pubsub"
-
 def _configure_redis( env ):
 	redis_file = env.run_file( 'redis.sock' )
 	redis_conf = env.conf_file( 'redis.conf' )
@@ -281,6 +246,13 @@ def _configure_redis( env ):
 def _create_zeo_program(env_root, zeo_config='zeo_conf.xml' ):
 	program = _Program( 'zeo', 'runzeo -C ' + env_root.conf_file( zeo_config ) )
 	program.priority = 0
+	return program
+
+def _create_rqworker_program(env):
+	redis_file = env.run_file('redis.sock')
+	program = _Program('rqworker', 'rqworker %s --socket %s' % (env.env_root, redis_file))
+	program.priority = 50
+	env.add_program(program)
 	return program
 
 def _configure_zeo( env_root ):
@@ -464,8 +436,7 @@ def _configure_zeo( env_root ):
 	file_uris = []
 	relstorage_uris = []
 	for storage, name, data_file, blob_dir, demo_blob_dir in ((1, 'Users',    dataFile, blobDir, demoBlobDir),):
-															  #(2, 'Sessions', sessionDataFile, sessionBlobDir, sessionDemoBlobDir),
-															  #(3, 'Search',   searchDataFile, searchBlobDir, searchDemoBlobDir)):
+
 		uri = base_uri % {'addr': clientPipe, 'storage': storage, 'name': name, 'blob_dir': blob_dir, 'shared': True }
 		uris.append( uri )
 
@@ -483,7 +454,6 @@ def _configure_zeo( env_root ):
 		# breaking all references, but in the future it would be a good idea to name databases in lower case).
 		relstorage_uris.append( relstorage_zconfig_uri + '#' + name.lower() )
 
-
 		convert_configuration = """
 		<filestorage source>
 			path %s
@@ -493,7 +463,6 @@ def _configure_zeo( env_root ):
 		env_root.write_conf_file( 'zodbconvert_%s.xml' % name, convert_configuration )
 
 		env_root.write_conf_file( 'relstorage_pack_%s.xml' %name, _relstorage_stanza( name=name, blobDir=blob_dir, storage_only=True ) )
-
 
 	uri_conf = '[ZODB]\nuris = ' + ' '.join( uris )
 	demo_uri_conf = '[ZODB]\nuris = ' + ' '.join( demo_uris )
@@ -515,18 +484,13 @@ def db_from_uri( uris ):
 	from repoze.zodbconn.uri import db_from_uri as _real_db_from_uri
 	return _real_db_from_uri( uris )
 
-from zope.event import notify
-from zope.processlifetime import DatabaseOpened
-from zope.processlifetime import DatabaseOpenedWithRoot
-
 def _configure_database( env, uris ):
 	install_zlib_client_resolver()
 	db = db_from_uri( uris )
-	notify( DatabaseOpened( db ) )
+	notify(DatabaseOpened(db))
 	# Now, simply broadcasting the DatabaseOpenedWithRoot option
 	# will trigger the installers from zope.generations
-	notify( DatabaseOpenedWithRoot( db ) )
-
+	notify(DatabaseOpenedWithRoot(db))
 
 def temp_get_config( root, demo=False ):
 	if not root:
@@ -539,17 +503,15 @@ def temp_get_config( root, demo=False ):
 	env.zeo_conf = env.conf_file( pfx + 'zeo_conf.xml' )
 	env.zeo_client_conf = env.conf_file( pfx + 'zeo_uris.ini' )
 	env.zeo_launched = True
-	ini = SafeConfigParser()
+	ini = ConfigParser.SafeConfigParser()
 	ini.read( env.zeo_client_conf )
 
 	env.connect_databases = _make_connect_databases( env, root=root, ini=ini )
-
 	return env
 
-def _make_connect_databases( env, ini=None, root=None ):
-	if ini is None:
-		ini = {}
-	def connect_databases(  ):
+def _make_connect_databases(env, ini=None, root=None):
+	ini = {} if ini is None else ini
+	def connect_databases():
 		__traceback_info__ = root, env.zeo_conf, env.zeo_client_conf, ini
 		env.zeo_launched = True
 		if not hasattr( env, 'zeo_uris' ):
@@ -564,22 +526,15 @@ def _make_connect_databases( env, ini=None, root=None ):
 		return (db.databases['Users'], db.databases.get('Sessions'), db.databases.get('Search'))
 	return connect_databases
 
-
-def write_configs(root_dir, pserve_ini, update_existing=False, write_supervisord=False):
-	env = _Env( root_dir, create=(not update_existing), only_new=update_existing )
+def write_configs(root_dir, pserve_ini, update_existing=False, write_supervisord=False, write_rqworker=False):
+	env = _Env(root_dir, create=(not update_existing), only_new=update_existing)
 	uris = _configure_zeo( env )
 	if not update_existing:
 		_configure_database( env, uris )
-	_configure_pubsub_changes( env )
-	_configure_pubsub_session( env )
-	_configure_redis( env )
-	listener = _Program( 'nti_sharing_listener' )
-	listener.priority = 50
-	env.add_program( listener )
 
-	listener = _Program( 'nti_index_listener' )
-	listener.priority = 50
-	env.add_program( listener )
+	_configure_redis( env )
+	if write_rqworker:
+		_create_rqworker_program(env)
 
 	if not update_existing or write_supervisord:
 		env.write_supervisor_conf_file( pserve_ini )
