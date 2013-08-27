@@ -116,7 +116,8 @@ class CoppaUserWithoutAgreementCapabilityFilter(object):
 		pass
 
 	def filterCapabilities( self, capabilities ):
-		return set()
+		result = {'nti.platform.forums.readcommunityforums'}
+		return result
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
 @component.adapter(nti_interfaces.IUser)
@@ -136,8 +137,6 @@ class MathCountsCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
 		if role is None or role.lower() in ('student', 'other'):
 			result.discard(u'nti.platform.p2p.dynamicfriendslists')
 
-		result.discard('nti.platform.blogging.createblogentry')
-		result.discard('nti.platform.forums.communityforums' )
 		return result
 
 #: This relationship is exposed on Users and in the handshake/ping
