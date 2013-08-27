@@ -11,7 +11,7 @@ import BTrees
 
 from .._repoze_index import create_catalog
 
-from ..constants import (channel_, content_, keywords_, references_, note_, ntiid_,
+from ..constants import (content_, keywords_, references_, note_, ntiid_,
 						 last_modified_, containerId_, creator_, recipients_, sharedWith_,
 						 highlight_, redaction_, replacementContent_, redactionExplanation_,
 						 messageinfo_)
@@ -52,7 +52,6 @@ class TestRepozeIndex(ConfiguringTestBase):
 	def test_messageinfo_catalog(self):
 		catalog = create_catalog(messageinfo_)
 		self._test_common_catalog(catalog)
-		assert_that(catalog, has_key(channel_))
 		assert_that(catalog, has_key(recipients_))
 		assert_that(catalog, has_key(references_))
 		assert_that(catalog, has_key(content_))
