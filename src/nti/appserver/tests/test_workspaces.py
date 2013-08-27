@@ -293,10 +293,6 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 		vocab = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( user )
 		terms = [x.token for x in vocab]
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( terms ) ) )
-		# blogs too
-		assert_that( 'application/vnd.nextthought.forums.post', is_not( is_in( terms ) ) )
-
-
 
 class TestUserClassesCollection(unittest.TestCase,tests.TestBaseMixin):
 
@@ -316,11 +312,6 @@ class TestUserClassesCollection(unittest.TestCase,tests.TestBaseMixin):
 
 		ext_object = toExternalObject( _UserClassesCollection( UEW(user) ) )
 		assert_that( ext_object, has_entry( 'Title', 'EnrolledClassSections' ) )
-		#assert_that( ext_object, has_entry( 'Items',
-		#									has_item( has_entry( 'href',
-		#														 '/dataserver2/Objects/' + urllib.quote( ext_oids.to_external_ntiid_oid( section ) ) ) ) ) )
-		#														# '/dataserver2/providers/OU/Classes/CS5201/CS5201.501' ) ) ) )
-
 
 import tempfile
 import shutil
