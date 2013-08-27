@@ -15,6 +15,8 @@ from zope import interface
 from nti.dataserver.contenttypes import Note
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.externalization import externalization
+
 from nti.appserver.tests.test_application import TestApp
 
 from nti.dataserver.tests import mock_dataserver
@@ -153,9 +155,26 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 		path = '/dataserver2/@@user_ghost_containers'
 		res = testapp.get(path, params={"usernames":username}, extra_environ=environ)
 		assert_that(res.status_int, is_(200))
-		stream = BytesIO(res.body)
-		stream.seek(0)
-		result = simplejson.load(stream)
-		assert_that(result, has_length(1))
+		result = simplejson.loads(res.body)
 		assert_that(result, has_entry('sjohnson@nextthought.com', has_length(1)))
 		assert_that(result['sjohnson@nextthought.com'], has_entry('mycontainer', 1))
+
+	@WithSharedApplicationMockDS
+	def test_object_resolver(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user(external_value={u'email':u"nti@nt.com", u'opt_in_email_communication':True})
+			note = Note()
+			note.body = [u'bankai']
+			note.creator = user
+			note.containerId = u'mycontainer'
+			note = user.addContainedObject(note)
+			oid = externalization.to_external_ntiid_oid(note)
+
+		testapp = TestApp(self.app)
+		environ = self._make_extra_environ()
+		path = '/dataserver2/@@object_resolver'
+		res = testapp.get(path, params={"keys":oid}, extra_environ=environ)
+		assert_that(res.status_int, is_(200))
+		d = simplejson.loads(res.body)
+		assert_that(d, has_length(1))
+		assert_that(d[0], has_entry('OID', oid))
