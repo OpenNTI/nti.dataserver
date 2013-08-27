@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 import gzip
-import simplejson
 from io import BytesIO
 from datetime import datetime
 from cStringIO import StringIO
@@ -281,6 +280,7 @@ def user_export_objects(request):
 	return response
 
 @view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
 			 name='object_resolver',
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
@@ -290,27 +290,17 @@ def object_resolver(request):
 	if isinstance(keys, six.string_types):
 		keys = keys.split()
 
-	stream = BytesIO()
-	gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
-	response = request.response
-	response.content_encoding = b'gzip'
-	response.content_type = b'application/json; charset=UTF-8'
-	response.content_disposition = b'attachment; filename="objects.txt.gz"'
-	def _generator():
-		for key in keys:
-			obj = ntiids.find_object_with_ntiid(key)
-			if obj is not None:
-				external = to_json_representation_externalized(obj)
-				yield external
+	result = []
+	for key in set(keys):
+		obj = ntiids.find_object_with_ntiid(key)
+		if obj is not None:
+			result.append(obj)
 
-	_write_generator(_generator, gzstream, seek0=False)
-	gzstream.close()
-	stream.seek(0)
-	response.body_file = stream
-	return response
+	return result
 
 @view_config(route_name='objects.generic.traversal',
 			 name='delete_user_objects',
+			 renderer='rest',
 			 request_method='POST',
 			 permission=nauth.ACT_MODERATE)
 class DeleteObjectObjects(_JsonBodyView):
@@ -364,12 +354,7 @@ class DeleteObjectObjects(_JsonBodyView):
 						counter_map['broken'] = counter_map['broken'] + 1
 						user.containers._v_removeFromContainer(container, obj)
 
-
-		response = self.request.response
-		response.content_type = b'application/json; charset=UTF-8'
-		response.body = simplejson.dumps(counter_map)
-		return response
-
+		return counter_map
 
 exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog')
 
@@ -397,28 +382,16 @@ def _check_users_containers(usernames=()):
 
 @view_config(route_name='objects.generic.traversal',
 			 name='user_ghost_containers',
+			 renderer='rest',
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
 def user_ghost_containers(request):
 	values = request.params
 	usernames = values.get('usernames')
-	usernames = usernames.split(',') if usernames else ()
+	usernames = set(usernames.split(',')) if usernames else ()
 
-	stream = BytesIO()
-	gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
-	response = request.response
-	response.content_encoding = b'gzip'
-	response.content_type = b'application/json; charset=UTF-8'
-	response.content_disposition = b'attachment; filename="ghost_containers.txt.gz"'
-	def _generator():
-		for username, rmap in _check_users_containers(usernames):
-			rmap = {username:rmap}
-			external = simplejson.dumps(rmap, indent=2)
-			yield external
-
-	_write_generator(_generator, gzstream, seek0=False)
-	gzstream.close()
-	stream.seek(0)
-	response.body_file = stream
-	return response
+	result = {}
+	for username, rmap in _check_users_containers(usernames):
+		result[username]= rmap
+	return result
 
