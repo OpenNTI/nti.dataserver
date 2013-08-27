@@ -32,11 +32,6 @@
 		id='nti.platform.forums.communityforums'
 		title="Participate in community forums"
 		description='Can the user participate in community forums?' />
-
-	<cap:capability
-		id='nti.platform.forums.readcommunityforums'
-		title="Read content in community forums"
-		description='Can the user read content in community forums?' />
 		
 	<!-- Entry in service doc -->
 	<subscriber factory=".views._UserBlogCollectionFactory"

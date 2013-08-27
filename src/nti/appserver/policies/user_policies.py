@@ -116,7 +116,7 @@ class CoppaUserWithoutAgreementCapabilityFilter(object):
 		pass
 
 	def filterCapabilities( self, capabilities ):
-		result = {'nti.platform.forums.readcommunityforums'}
+		result = {'nti.platform.forums.communityforums'}
 		return result
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
