@@ -169,8 +169,12 @@ class ForumObjectContentsLinkProvider(object):
 		elements=(VIEW_CONTENTS, md5_etag(context.lastModified, _get_remote_username()).replace('/','_'))
 		self.add_link(VIEW_CONTENTS, context, mapping, request, elements)
 
+
+		current_user = get_remote_user(get_current_request())
+		is_coppa = nti_interfaces.ICoppaUserWithoutAgreement.providedBy(current_user)
+
 		# Check the create permission in the forum acl.
-		if request is None or can_create(context, request, skip_cache=True):
+		if request is None or (not is_coppa and can_create(context, request, skip_cache=True)):
 			link = self.add_link('add', context, mapping, request, elements)
 			link.method = 'POST'
 
