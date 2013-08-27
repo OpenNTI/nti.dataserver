@@ -56,11 +56,6 @@
 			 	 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
 			 	 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
 
-		<!-- Explicitly cancel out the blog workspace that we might
-		have inherited. -->
-		<adapter factory="nti.dataserver.contenttypes.forums.forum.NoBlogAdapter"
-				 for="nti.dataserver.interfaces.IUser" />
-
 		<!-- CSS for mathcounts -->
 		<utility factory=".site_policy_views.SiteCSSMarker" />
 
