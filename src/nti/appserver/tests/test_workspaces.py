@@ -224,6 +224,7 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 		ext_object = toExternalObject( service )
 		# No defined capabilities
 		assert_that(ext_object, has_entry('CapabilityList', has_length(1)))
+		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.forums.readcommunityforums')))
 
 
 	@mock_dataserver.WithMockDSTrans

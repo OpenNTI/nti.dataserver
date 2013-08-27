@@ -546,7 +546,7 @@ class TestApplication(SharedApplicationTestBase):
 		res = testapp.get( '/dataserver2',
 						   extra_environ=self._make_extra_environ( HTTP_ORIGIN=b'http://mathcounts.nextthought.com' ),
 						   status=200 )
-		assert_that( res.json_body['CapabilityList'], is_empty() )
+		assert_that(res.json_body['CapabilityList'], has_length(1))
 
 
 	@WithSharedApplicationMockDS
