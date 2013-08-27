@@ -127,7 +127,7 @@ setup(
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
 		'Chameleon >= 2.11',  # (preferred) template rendering. pulled in by pyramid, but ensure latest version
 		'ExtensionClass >= 4.1a1',
-		'Mako >= 0.8.1',  # fallback plain-text template render. pulled in by pyramid, but ensure latest version
+		'Mako >= 0.9.0',  # fallback plain-text template render. pulled in by pyramid, but ensure latest version
 		# 'friendly' fork of PIL, developed by Zope/Plone.
 		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
 		# is the version that Pillow forked from in 2010 as version 1.0. So
@@ -359,7 +359,7 @@ setup(
 		'zope.schema >= 4.3.2',
 		'zope.security[zcml,untrustedpython] >= 4.0.0',  # >= 4.0.0b1 gets PyPy support!
 		'zope.securitypolicy >= 4.0.0a1',
-		'zope.session >= 4.0.0a1',  # 4.0.0a1 is out, should be fine
+		'zope.session >= 4.0.0a2',  # 4.0.0a2 is out, should be fine
 		'zope.site >= 4.0.0a1' if HAVE_ZCONT else '',  # local, persistent ZCA sites. zope.container dep
 		'zope.size >= 4.0.1',
 		# parser and renderers for the classic Zope "structured text" markup dialect (STX).
