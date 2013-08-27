@@ -49,19 +49,12 @@ class _CreatableMimeObjectVocabulary(UtilityVocabulary):
 @interface.implementer(app_interfaces.ICreatableObjectFilter)
 class _SimpleRestrictedContentObjectFilter(object):
 
-	from nti.dataserver.contenttypes.forums.post import Post, PersonalBlogEntryPost, HeadlinePost, PersonalBlogComment, GeneralForumComment
-	from nti.dataserver.contenttypes.forums.topic import Topic, HeadlineTopic, GeneralTopic, GeneralHeadlineTopic, CommunityHeadlineTopic
-
 	RESTRICTED = ('application/vnd.nextthought.canvasurlshape',  # images
 				  'application/vnd.nextthought.redaction',
 				  'application/vnd.nextthought.friendslist',
 				  'application/vnd.nextthought.embeddedaudio',
 				  'application/vnd.nextthought.embeddedmedia',
-				  'application/vnd.nextthought.embeddedvideo',
-				  # Blogging/Forums # TODO: This is in the wrong spot
-				  Post.mimeType, PersonalBlogEntryPost.mimeType,
-				  HeadlinePost.mimeType, PersonalBlogComment.mimeType, GeneralForumComment.mimeType,
-				  Topic.mimeType, HeadlineTopic.mimeType, GeneralTopic.mimeType, GeneralHeadlineTopic.mimeType, CommunityHeadlineTopic.mimeType)
+				  'application/vnd.nextthought.embeddedvideo')
 
 	def __init__( self, context=None ):
 		pass
