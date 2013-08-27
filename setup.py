@@ -206,6 +206,7 @@ setup(
 		# parallelism involved. This is under python 2.7.3
 		'html5lib == 0.95',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
+		'joblib >= 0.7.1',  # Python functions as pipeline jobs.
 		'logilab-common >= 0.60.0',
 		'lxml >= 3.2.3',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.7',  # Human name parsing
