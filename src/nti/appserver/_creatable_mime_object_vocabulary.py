@@ -55,7 +55,8 @@ class _SimpleRestrictedContentObjectFilter(object):
 				  'application/vnd.nextthought.media',
 				  'application/vnd.nextthought.embeddedaudio',
 				  'application/vnd.nextthought.embeddedmedia',
-				  'application/vnd.nextthought.embeddedvideo')
+				  'application/vnd.nextthought.embeddedvideo',
+				  'application/vnd.nextthought.forums.ace')
 
 	def __init__( self, context=None ):
 		pass
@@ -73,7 +74,8 @@ class _ImageAndRedactionRestrictedContentObjectFilter(_SimpleRestrictedContentOb
 				  'application/vnd.nextthought.media',
 				  'application/vnd.nextthought.embeddedaudio',
 				  'application/vnd.nextthought.embeddedmedia',
-				  'application/vnd.nextthought.embeddedvideo')
+				  'application/vnd.nextthought.embeddedvideo',
+				  'application/vnd.nextthought.forums.ace')
 
 
 @interface.implementer(sch_interfaces.IVocabularyFactory)
