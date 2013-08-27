@@ -5,7 +5,6 @@ Implements vocabularies that limit what a user can create.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -17,15 +16,16 @@ from zope.schema import interfaces as sch_interfaces
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
 from pyramid import security as psec
-from pyramid.threadlocal import get_current_request
 from pyramid import httpexceptions as hexc
+from pyramid.threadlocal import get_current_request
 
-from nti.externalization import interfaces as ext_interfaces
-from . import interfaces as app_interfaces
-
-from nti.externalization.internalization import default_externalized_object_factory_finder
+from nti.appserver import interfaces as app_interfaces
 
 from nti.dataserver import users
+
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.internalization import default_externalized_object_factory_finder
+
 
 # TODO: zope.schema.vocabulary provides a vocab registry
 # Should we make use of that? Especially since these registries
@@ -37,28 +37,31 @@ class _CreatableMimeObjectVocabulary(UtilityVocabulary):
 	:class:`nti.externalization.interfaces.IMimeObjectFactory` objects.
 	There
 	"""
- 	nameOnly = False
- 	interface = ext_interfaces.IMimeObjectFactory
+	nameOnly = False
+	interface = ext_interfaces.IMimeObjectFactory
 
- 	def __init__( self, context ):
- 		super(_CreatableMimeObjectVocabulary,self).__init__( context )
+	def __init__(self, context):
+		super(_CreatableMimeObjectVocabulary, self).__init__(context)
 		term_filter = component.queryAdapter(context, app_interfaces.ICreatableObjectFilter, context=context)
 		if term_filter:
-			self._terms = term_filter.filter_creatable_objects( self._terms )
+			self._terms = term_filter.filter_creatable_objects(self._terms)
 
 @interface.implementer(app_interfaces.ICreatableObjectFilter)
 class _SimpleRestrictedContentObjectFilter(object):
+
 	from nti.dataserver.contenttypes.forums.post import Post, PersonalBlogEntryPost, HeadlinePost, PersonalBlogComment, GeneralForumComment
 	from nti.dataserver.contenttypes.forums.topic import Topic, HeadlineTopic, GeneralTopic, GeneralHeadlineTopic, CommunityHeadlineTopic
 
-	RESTRICTED = ('application/vnd.nextthought.canvasurlshape', #images
+	RESTRICTED = ('application/vnd.nextthought.canvasurlshape',  # images
 				  'application/vnd.nextthought.redaction',
 				  'application/vnd.nextthought.friendslist',
+				  'application/vnd.nextthought.embeddedaudio',
+				  'application/vnd.nextthought.embeddedmedia',
+				  'application/vnd.nextthought.embeddedvideo',
 				  # Blogging/Forums # TODO: This is in the wrong spot
 				  Post.mimeType, PersonalBlogEntryPost.mimeType,
 				  HeadlinePost.mimeType, PersonalBlogComment.mimeType, GeneralForumComment.mimeType,
-				  Topic.mimeType, HeadlineTopic.mimeType, GeneralTopic.mimeType, GeneralHeadlineTopic.mimeType, CommunityHeadlineTopic.mimeType
-				  )
+				  Topic.mimeType, HeadlineTopic.mimeType, GeneralTopic.mimeType, GeneralHeadlineTopic.mimeType, CommunityHeadlineTopic.mimeType)
 
 	def __init__( self, context=None ):
 		pass
@@ -72,7 +75,10 @@ class _SimpleRestrictedContentObjectFilter(object):
 class _ImageAndRedactionRestrictedContentObjectFilter(_SimpleRestrictedContentObjectFilter):
 
 	RESTRICTED = ('application/vnd.nextthought.canvasurlshape', #images
-				  'application/vnd.nextthought.redaction' )
+				  'application/vnd.nextthought.redaction',
+				  'application/vnd.nextthought.embeddedaudio',
+				  'application/vnd.nextthought.embeddedmedia',
+				  'application/vnd.nextthought.embeddedvideo')
 
 
 @interface.implementer(sch_interfaces.IVocabularyFactory)
@@ -85,7 +91,7 @@ class _UserCreatableMimeObjectVocabularyFactory(object):
 		return _CreatableMimeObjectVocabulary( user )
 
 @interface.implementer(ext_interfaces.IExternalizedObjectFactoryFinder)
-def _user_sensitive_factory_finder( ext_object ):
+def _user_sensitive_factory_finder(ext_object):
 	vocabulary = None
 
 	# TODO: This process is probably horribly expensive and should be cached
@@ -122,7 +128,6 @@ def _user_sensitive_factory_finder( ext_object ):
 	return factory
 
 _user_sensitive_factory_finder.find_factory = _user_sensitive_factory_finder
-
 
 @interface.implementer(ext_interfaces.IExternalizedObjectFactoryFinder)
 def _user_sensitive_factory_finder_factory( externalized_object ):
