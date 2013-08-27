@@ -700,7 +700,8 @@ class _UserPagesCollection(object):
 		# devices and friendslists are sneaking in here where they
 		# don't belong...even though they can be posted here (?)
 		# The fix is to add the right constraints
-		vocab = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( self._user )
+		util_callable = component.getUtility(sch_interfaces.IVocabularyFactory, "Creatable External Object Types")
+		vocab = util_callable(self._user)
 		for term in vocab:
 			factory = term.value
 			implementing = factory.getInterfaces()
