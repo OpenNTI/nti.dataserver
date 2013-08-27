@@ -52,6 +52,7 @@ class _SimpleRestrictedContentObjectFilter(object):
 	RESTRICTED = ('application/vnd.nextthought.canvasurlshape',  # images
 				  'application/vnd.nextthought.redaction',
 				  'application/vnd.nextthought.friendslist',
+				  'application/vnd.nextthought.media',
 				  'application/vnd.nextthought.embeddedaudio',
 				  'application/vnd.nextthought.embeddedmedia',
 				  'application/vnd.nextthought.embeddedvideo')
@@ -69,6 +70,7 @@ class _ImageAndRedactionRestrictedContentObjectFilter(_SimpleRestrictedContentOb
 
 	RESTRICTED = ('application/vnd.nextthought.canvasurlshape', #images
 				  'application/vnd.nextthought.redaction',
+				  'application/vnd.nextthought.media',
 				  'application/vnd.nextthought.embeddedaudio',
 				  'application/vnd.nextthought.embeddedmedia',
 				  'application/vnd.nextthought.embeddedvideo')
