@@ -4,59 +4,57 @@
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
-
+__docformat__ = "restructuredtext en"
 
 logger = __import__( 'logging' ).getLogger( __name__ )
 
-import time
+import os
 import six
+import sys
+import time
 import numbers
 import warnings
 import functools
 import collections
-import os
-import sys
 
-
-import persistent
+import zope.intid
 from zope import interface
 from zope import component
+from zope import annotation
 from ZODB.interfaces import IConnection
-from zope.deprecation import deprecated, deprecate
+from zope.deprecation import deprecated
 from zope.component.factory import Factory
-from zope.location import interfaces as loc_interfaces
 from zope.cachedescriptors.property import cachedIn
-import zope.intid
-
+from zope.password.interfaces import IPasswordManager
+from zope.location import interfaces as loc_interfaces
 
 from z3c.password import interfaces as pwd_interfaces
-
-from nti.ntiids import ntiids
-from nti.zodb import minmax
-
-from nti.externalization.datastructures import ExternalizableDictionaryMixin
-
 
 from nti.dataserver import dicts
 from nti.dataserver import sharing
 from nti.dataserver import mimetype
 from nti.dataserver import datastructures
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users.entity import Entity
 from nti.dataserver.activitystream_change import Change
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 
+from nti.externalization.datastructures import ExternalizableDictionaryMixin
+
+from nti.ntiids import ntiids
+
+from nti.zodb import minmax
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
-		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
-	return component.getUtility( nti_interfaces.IDataserver, context=context )
+		return component.queryUtility(nti_interfaces.IDataserver, context=context, default=default)
+	return component.getUtility(nti_interfaces.IDataserver, context=context)
+
 # Starts as none, which matches what _get_shared_dataserver takes as its
 # clue to use get instead of query. But set to False or 0 to use
 # query during evolutions.
 BROADCAST_DEFAULT_DS = None
-
-from nti.dataserver.users.entity import Entity
-from nti.dataserver.users import interfaces as user_interfaces
 
 SharingTarget = sharing.SharingTargetMixin
 deprecated( 'SharingTarget', 'Prefer sharing.SharingTargetMixin' )
@@ -66,8 +64,6 @@ deprecated( 'SharingSource', 'Prefer sharing.SharingSourceMixin' )
 
 DynamicSharingTarget = sharing.DynamicSharingTargetMixin
 deprecated( 'DynamicSharingTarget', 'Prefer sharing.DynamicSharingTargetMixin' )
-
-from zope.password.interfaces import IPasswordManager
 
 class _Password(object):
 	"""
@@ -108,7 +104,7 @@ def named_entity_ntiid(entity):
 							  specific=ntiids.escape_provider(entity.username.lower()))
 
 
-class Principal(sharing.SharingSourceMixin,Entity): # order matters
+class Principal(sharing.SharingSourceMixin, Entity):  # order matters
 	""" A Principal represents a set of credentials that has access to the system.
 
 	.. py:attribute:: username
@@ -204,7 +200,7 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 		# See User; this may not be right (but we are less annotated so
 		# it is probably less of a problem). Forums break if they are only
 		# annotations and we don't return them.
-		annotations = zope.annotation.interfaces.IAnnotations(self, {})
+		annotations = annotation.interfaces.IAnnotations(self, {})
 		for val in annotations.values():
 			if getattr( val, '__parent__', None ) is self:
 				yield val
@@ -252,13 +248,16 @@ deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
 @interface.implementer( nti_interfaces.IDevice, nti_interfaces.IZContained )
 class Device(datastructures.PersistentCreatedModDateTrackingObject,
 			 ExternalizableDictionaryMixin):
+
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	__external_can_create__ = True
 
 	__name__ = None
 	__parent__ = None
 
-	def __init__(self, deviceId):
+	Metadata = None
+
+	def __init__(self, deviceId, metadata=None):
 		"""
 		:param deviceId: Either a basic dictionary containing `StandardExternalFields.ID`
 			or a string in hex encoding the bytes of a device id.
@@ -268,6 +267,9 @@ class Device(datastructures.PersistentCreatedModDateTrackingObject,
 			deviceId = deviceId[datastructures.StandardExternalFields.ID]
 		# device id arrives in hex encoding
 		self.deviceId = deviceId.decode( 'hex' )
+		# set any meta data
+		if metadata:
+			self.Metadata = metadata
 
 	def get_containerId( self ):
 		return _DevicesMap.container_name
@@ -281,11 +283,14 @@ class Device(datastructures.PersistentCreatedModDateTrackingObject,
 		return self.deviceId.encode('hex')
 
 	def toExternalObject(self):
-		result = super(Device,self).toExternalDictionary()
+		result = super(Device, self).toExternalDictionary()
+		result['Metadata'] = self.Metadata
 		return result
 
-	def updateFromExternalObject(self,ext):
-		pass
+	def updateFromExternalObject(self, ext):
+		mdata = ext.pop('Metadata', None)
+		if mdata and isinstance(mdata, collections.Mapping):
+			self.Metadata = {unicode(k):v for k, v in mdata}
 
 	def __eq__(self, other):
 		try:

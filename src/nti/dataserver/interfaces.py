@@ -29,6 +29,7 @@ from zope.proxy import ProxyBase
 import zope.site.interfaces
 
 from zope.schema import Bool
+from zope.schema import Dict
 from zope.schema import Iterable
 
 from nti.contentfragments.schema import PlainText
@@ -38,9 +39,9 @@ from nti.contentfragments.schema import SanitizedHTMLContentFragment
 from nti.contentrange import interfaces as rng_interfaces
 from nti.contentrange.contentrange import ContentRangeDescription
 
+from nti.utils.schema import Number
 from nti.utils.schema import Object
 from nti.utils.schema import Variant
-from nti.utils.schema import Number
 from nti.utils.schema import ValidText
 from nti.utils.schema import ListOrTuple
 from nti.utils.schema import ValidTextLine
@@ -1144,7 +1145,8 @@ class IFriendsListContainer(INamedContainer):
 
 	contains(IFriendsList)
 
-class IDevice(IModeledContent): pass
+class IDevice(IModeledContent): 
+	Metadata = Dict(key_type=ValidTextLine(title='The key'), required=False)
 
 class IDeviceContainer(INamedContainer):
 	contains(IDevice)
