@@ -156,8 +156,8 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 		res = testapp.get(path, params={"usernames":username}, extra_environ=environ)
 		assert_that(res.status_int, is_(200))
 		result = simplejson.loads(res.body)
-		assert_that(result, has_entry('sjohnson@nextthought.com', has_length(1)))
-		assert_that(result['sjohnson@nextthought.com'], has_entry('mycontainer', 1))
+		assert_that(result, has_entry('Items', has_entry('sjohnson@nextthought.com', has_length(1))))
+		assert_that(result['Items']['sjohnson@nextthought.com'], has_entry('mycontainer', 1))
 
 	@WithSharedApplicationMockDS
 	def test_object_resolver(self):
@@ -176,5 +176,5 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 		res = testapp.get(path, params={"keys":oid}, extra_environ=environ)
 		assert_that(res.status_int, is_(200))
 		d = simplejson.loads(res.body)
-		assert_that(d, has_length(1))
-		assert_that(d[0], has_entry('OID', oid))
+		assert_that(d, has_entry('Items', has_length(1)))
+		assert_that(d['Items'][0], has_entry('OID', oid))
