@@ -423,10 +423,6 @@ def _create_server(create_ds, process_args=False):
 			server = ds_class()
 	return server
 
-def _set_globals(settings):
-	sync_stream = settings.get('sync_stream', True)
-	os.environ['DATASERVER_SYNC_STREAM'] = str(sync_stream)
-
 def createApplication( http_port,
 					   library=None,
 					   process_args=False,
@@ -486,12 +482,11 @@ def createApplication( http_port,
 
 	# Notify of startup. (Note that configuring the packages loads zope.component:configure.zcml
 	# which in turn hooks up zope.component.event to zope.event for event dispatching)
-	notify( ProcessStarting() )
+	notify(ProcessStarting())
 
 	logger.debug( 'Began starting dataserver' )
 	template_cache_dir = setupChameleonCache(config=True) # must do this early
 
-	_set_globals(settings)
 	server = _create_server(create_ds, process_args)
 
 	logger.debug( 'Finished starting dataserver' )
@@ -667,18 +662,14 @@ def _content_package_library_registered( library, event ):
 	# When a library is registered in a ZCA site, we need to provide
 	# for the things that go along with that registry,
 	# notably the assessment question map
+	utilities = ((_question_map.QuestionMap, app_interfaces.IFileQuestionMap),
+				 (_videoindex_map.VideoIndexMap, app_interfaces.IVideoIndexMap),
+				 (_related_content_map.RelatedContentIndexMap, app_interfaces.IRelatedContentIndexMap))
+	
 	registry = event.object.registry
-	if registry.queryUtility( app_interfaces.IFileQuestionMap ) is None:
-		question_map = _question_map.QuestionMap()
-		registry.registerUtility( question_map, app_interfaces.IFileQuestionMap )
-
-	if registry.queryUtility(app_interfaces.IVideoIndexMap) is None:
-		video_map = _videoindex_map.VideoIndexMap()
-		registry.registerUtility(video_map, app_interfaces.IVideoIndexMap)
-
-	if registry.queryUtility(app_interfaces.IRelatedContentIndexMap) is None:
-		rc_map = _related_content_map.RelatedContentIndexMap()
-		registry.registerUtility(rc_map, app_interfaces.IRelatedContentIndexMap)
+	for factory, iface in utilities:
+		if registry.queryUtility(iface) is None:
+			registry.registerUtility(factory(), iface)
 
 	# Now fire the events letting listeners (e.g., index and question adders)
 	# know that we have content. Randomize the order of this across worker
@@ -688,8 +679,8 @@ def _content_package_library_registered( library, event ):
 	# z3c.baseregistry, does the IRegistrationEvent still occur
 	# in the context of that site? I *think* so, need to prove it
 	titles = list(library.titles)
-	random.seed( )
-	random.shuffle( titles )
+	random.seed()
+	random.shuffle(titles)
 	for title in titles:
 		lifecycleevent.created( title )
 
