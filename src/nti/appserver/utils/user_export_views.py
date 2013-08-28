@@ -42,6 +42,7 @@ from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.externalization import to_json_representation_externalized
 
 from nti.ntiids import ntiids
@@ -290,12 +291,12 @@ def object_resolver(request):
 	if isinstance(keys, six.string_types):
 		keys = keys.split()
 
-	result = []
+	result = LocatedExternalDict()
+	items = result['Items'] = []
 	for key in set(keys):
 		obj = ntiids.find_object_with_ntiid(key)
 		if obj is not None:
-			result.append(obj)
-
+			items.append(obj)
 	return result
 
 @view_config(route_name='objects.generic.traversal',
@@ -390,8 +391,9 @@ def user_ghost_containers(request):
 	usernames = values.get('usernames')
 	usernames = set(usernames.split(',')) if usernames else ()
 
-	result = {}
+	result = LocatedExternalDict()
+	items = result['Items'] = {}
 	for username, rmap in _check_users_containers(usernames):
-		result[username]= rmap
+		items[username] = rmap
 	return result
 
