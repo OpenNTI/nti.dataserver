@@ -12,37 +12,46 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
-from zope import interface
-from zope import component
-from zope import schema
-
-try:
-	import cPickle as pickle
-except ImportError:
-	import pickle
-
 import datetime
 
-from ._compat import Implicit
-from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
-from . import _containerIds_from_parent
-
-from nti.dataserver import containers as nti_containers
-from nti.dataserver import datastructures
-from nti.dataserver import sharing
-from nti.dataserver.traversal import find_interface
-
-from nti.utils.schema import AdaptingFieldProperty
-from nti.utils import transactions
-
-from . import interfaces as frm_interfaces
+from zope import schema
+from zope import interface
+from zope import component
 from zope.annotation import interfaces as an_interfaces
-from nti.dataserver import interfaces as nti_interfaces
-from nti.wref import interfaces as wref_interfaces
+
+import zope.intid
 from zope.intid.interfaces import IIntIdAddedEvent
+
 from ZODB.interfaces import IConnection
 
+from nti.dataserver import sharing
+from nti.dataserver import datastructures
+from nti.dataserver.traversal import find_interface
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver import containers as nti_containers
+
+from nti.utils import transactions
+from nti.utils.schema import AdaptingFieldProperty
+
+from ._compat import Implicit
+from . import _containerIds_from_parent
+from . import interfaces as frm_interfaces
+from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
+
 _NEWEST_TTL = datetime.timedelta( days=7 )
+
+def query_uid(obj, intids=None):
+	intids = intids or component.getUtility(zope.intid.IIntIds)
+	result = intids.queryId(obj)
+	return result
+
+def query_object(uid, intids=None):
+	intids = intids or component.getUtility(zope.intid.IIntIds)
+	try:
+		result = intids.queryObject(int(uid), None)
+	except (TypeError, ValueError):
+		result = None
+	return result
 
 @interface.implementer(frm_interfaces.IForum, an_interfaces.IAttributeAnnotatable)
 class Forum(Implicit,
@@ -52,9 +61,10 @@ class Forum(Implicit,
 			sharing.AbstractReadableSharedWithMixin):
 
 	__external_can_create__ = False
+
+	sharingTargets = ()
 	title = AdaptingFieldProperty(frm_interfaces.IForum['title'])
 	description = AdaptingFieldProperty(frm_interfaces.IBoard['description'])
-	sharingTargets = ()
 	TopicCount = property(nti_containers.CheckingLastModifiedBTreeContainer.__len__)
 
 	id, containerId = _containerIds_from_parent()
@@ -80,31 +90,18 @@ class Forum(Implicit,
 			logger.warn( "No stable key for newestDescendant of %s", self )
 			return 'broken/' + unicode(id(self)) + '/newestDescendant'
 
-	# If we can keep an weakref in memory, then it in turn
-	# holds a cache of the ref'd object; together, that can save
-	# some database loads if self doesn't go invalid
-	_v_newestDescendantWref_data = None
-	_v_newestDescendantWref = None
 	def _get_NewestDescendant(self):
-		redis = component.getUtility( nti_interfaces.IRedisClient )
-		wref_data = redis.get( self._descendent_key() )
-		newestDescendantWref = None
 		newest_object = None
-		if wref_data:
-			if wref_data == self._v_newestDescendantWref_data:
-				newestDescendantWref = self._v_newestDescendantWref or pickle.loads( wref_data )
-			else:
-				newestDescendantWref = pickle.loads( wref_data )
-			self._v_newestDescendantWref_data = wref_data
-			self._v_newestDescendantWref = newestDescendantWref
-			newest_object = newestDescendantWref()
+		redis = component.getUtility( nti_interfaces.IRedisClient )
+		data = redis.get(self._descendent_key())
+		if data:
+			newest_object = query_object(data)
 			if newest_object is not None:
 				return newest_object
 
-		if newestDescendantWref is None and self.TopicCount:
+		if newest_object is None and self.TopicCount:
 			# Lazily finding one
 			newest_created = -1.0
-			newest_object = None
 			for topic in self.values():
 				if topic.createdTime > newest_created:
 					newest_object = topic
@@ -113,31 +110,28 @@ class Forum(Implicit,
 					newest_object = topic.NewestDescendant
 					newest_created = topic.NewestDescendantCreatedTime
 			if newest_object is not None:
-				self._set_NewestDescendant( newest_object, False )
+				self._set_NewestDescendant(newest_object, False)
 				return newest_object
 
-	def _set_NewestDescendant(self,descendant,transactional=True):
-		newestDescendantWref = wref_interfaces.IWeakRef(descendant)
-		redis = component.getUtility( nti_interfaces.IRedisClient )
-		args = (redis, pickle.dumps( newestDescendantWref, pickle.HIGHEST_PROTOCOL ),)
+	def _set_NewestDescendant(self, descendant, transactional=True):
+		uid = query_uid(descendant)
+		redis = component.getUtility(nti_interfaces.IRedisClient)
+		if uid:
+			args = (redis, unicode(uid),)
+			if transactional:
+				transactions.do(target=self,
+								 call=self._publish_descendant_to_redis,
+								 args=args)
+			else:
+				self._publish_descendant_to_redis(*args)
 
-		if transactional:
-			transactions.do( target=self,
-							 call=self._publish_descendant_to_redis,
-							 args=args )
-		else:
-			self._publish_descendant_to_redis( *args )
-
-	def _publish_descendant_to_redis( self, redis, data ):
-		self._v_newestDescendantWref_data = data
-		self._v_newestDescendantWref = None
-		redis.setex( self._descendent_key(), _NEWEST_TTL, data )
+	def _publish_descendant_to_redis(self, redis, data):
+		redis.setex(self._descendent_key(), _NEWEST_TTL, data)
 
 	NewestDescendant = property(_get_NewestDescendant)
 
-
 @component.adapter(frm_interfaces.IPost,IIntIdAddedEvent)
-def _post_added_to_topic( post, event ):
+def _post_added_to_topic(post, event):
 	"""
 	Watch for a post to be added to a topic and keep track of the
 	creation time of the latest post within the entire forum.
@@ -145,11 +139,9 @@ def _post_added_to_topic( post, event ):
 	The ContainerModifiedEvent does not give us the object (post)
 	and it also can't tell us if the post was added or removed.
 	"""
-
-	forum = find_interface( post, frm_interfaces.IForum, strict=False )
+	forum = find_interface(post, frm_interfaces.IForum, strict=False)
 	if forum is not None:
-		forum._set_NewestDescendant( post )
-
+		forum._set_NewestDescendant(post)
 
 @component.adapter(frm_interfaces.ITopic,IIntIdAddedEvent)
 def _topic_added_to_forum(topic, event):
