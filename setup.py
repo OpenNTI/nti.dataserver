@@ -190,7 +190,7 @@ setup(
 		'futures >= 2.1.4',
 		# 'gevent == 1.0rc1', Coming from requirements.txt right now
 		'greenlet >= 0.4.1',
-		'gunicorn >= 17.5',
+		'gunicorn >= 18.0',
 		'hiredis >= 0.1.1',  # Redis C parser
 		# HTML5 parsing library
 		# JAM: 1.0b1 is out, but demonstrates some strange behaviour. When
@@ -232,7 +232,7 @@ setup(
 		# jquery-like traversing of python datastructures. lxml, cssselect
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
-		'pyramid >= 1.4.3' ,
+		'pyramid >= 1.4.4' ,
 		'pyramid_mailer >= 0.13',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
