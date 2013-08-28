@@ -6,26 +6,29 @@ functions to maintain it.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import simplejson
 import six
+import simplejson
 
 from zope import interface
 from zope import component
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 
-import nti.externalization.internalization
+from nti.appserver import interfaces as app_interfaces
 
-from . import interfaces as app_interfaces
-from nti.dataserver import interfaces as nti_interfaces
-from nti.contentfragments import interfaces as cfg_interfaces
-from nti.contentlibrary import interfaces as lib_interfaces
 from nti.assessment import interfaces as asm_interfaces
+
+from nti.contentfragments import interfaces as cfg_interfaces
+
+from nti.contentlibrary import interfaces as lib_interfaces
+
+from nti.dataserver import interfaces as nti_interfaces
+
+import nti.externalization.internalization
 
 def _ntiid_object_hook( k, v, x ):
 	"""
@@ -157,7 +160,7 @@ def add_assessment_items_from_new_content( content_package, event ):
 	if question_map is None: #pragma: no cover
 		return
 
-	logger.debug( "Adding assessment items from new content %s %s", content_package, event )
+	logger.info("Adding assessment items from new content %s %s", content_package, event)
 
 	asm_index_text = content_package.read_contents_of_sibling_entry( 'assessment_index.json' )
 	_populate_question_map_from_text( question_map, asm_index_text, content_package )

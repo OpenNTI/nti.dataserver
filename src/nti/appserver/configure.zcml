@@ -166,12 +166,7 @@
 			 provides=".interfaces.INewObjectTransformer" />
 
 	<!-- Events -->
-	<subscriber	handler="._question_map.add_assessment_items_from_new_content" />
-	<subscriber	handler="._videoindex_map.add_video_items_from_new_content" />
-	<subscriber	handler="._videoindex_map.remove_video_items_from_old_content" />
-	<subscriber	handler="._related_content_map.add_related_content_items_from_new_content" />
-	<subscriber	handler="._related_content_map.remove_related_content_items_from_old_content" />
-	
+
 	<subscriber handler="._indexmanager_event_listeners.add_filesystem_index" />
 	<subscriber handler="._indexmanager_event_listeners.add_s3_index" />
 	<subscriber handler=".glossary_views.add_main_glossary_from_new_content" />
@@ -341,8 +336,6 @@
 			 for="nti.dataserver.interfaces.IUser"
 			 factory=".pyramid_auth.NextthoughtDotComAdmin"
 			 provides="nti.dataserver.interfaces.IGroupMember" />
-
-	<adapter factory="._question_map._QuestionACLProvider" />
 
 	<!-- Resolving metadata, used in the implementation of links -->
 	<adapter factory=".metadata_resolvers.ContentMetadataFromContentUnit" />

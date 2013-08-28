@@ -1,24 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
-import nti.tests
-from hamcrest import assert_that
-from hamcrest import is_
-from hamcrest import has_length
-from hamcrest import has_property
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import simplejson as json
 
-from .._question_map import QuestionMap, _populate_question_map_from_text
+import nti.appserver
+from nti.appserver.contentlibrary._question_map import QuestionMap, _populate_question_map_from_text
+
 from nti.dataserver.authorization_acl import ACL
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.appserver,) )
+
+import nti.tests
+
+setUpModule = lambda: nti.tests.module_setup(set_up_packages=(nti.appserver,))
 tearDownModule = nti.tests.module_teardown
+
+from hamcrest import (assert_that, is_, has_length, has_property)
 
 ASSM_ITEMS = {
 	'tag:nextthought.com,2011-10:testing-NAQ-temp.naq.testquestion': {'Class': 'Question',

@@ -18,9 +18,9 @@ from zope import interface
 from zope import component
 from zope.lifecycleevent import interfaces as lce_interfaces
 
-from nti.contentlibrary import interfaces as lib_interfaces
+from nti.appserver import interfaces as app_interfaces
 
-from . import interfaces as app_interfaces
+from nti.contentlibrary import interfaces as lib_interfaces
 
 @interface.implementer(app_interfaces.IVideoIndexMap)
 class VideoIndexMap(dict):
@@ -40,7 +40,7 @@ def add_video_items_from_new_content(content_package, event):
 	if video_map is None:  # pragma: no cover
 		return
 
-	logger.debug("Adding video items from new content %s %s", content_package, event)
+	logger.info("Adding video items from new content %s %s", content_package, event)
 
 	try:
 		video_index_text = content_package.read_contents_of_sibling_entry('video_index.json')
