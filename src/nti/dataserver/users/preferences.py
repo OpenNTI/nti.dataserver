@@ -3,7 +3,7 @@
 """
 Defines a simple key/value store to store metadata for an entity
 
-$Id: course.py 22938 2013-08-16 18:13:50Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
