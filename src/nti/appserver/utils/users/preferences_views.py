@@ -3,7 +3,7 @@
 """
 User export views.
 
-$Id: user_export_views.py 23700 2013-08-28 15:26:32Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -59,7 +59,7 @@ def set_preferences(request):
 			 context=nti_interfaces.IUser,
 			 permission=nauth.ACT_DELETE)
 def delete_preferences(request):
-	values = simplejson.loads(unicode(request.body, request.charset))
+	values = simplejson.loads(unicode(request.body, request.charset)) if request.body else ()
 	username = request.context.username
 	user = users.User.get_user(username)
 	preferences = user_interfaces.IEntityPreferences(user)
