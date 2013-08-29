@@ -38,6 +38,8 @@ from nti.appserver import _external_object_io as obj_io
 from nti.appserver.link_providers import flag_link_provider
 from nti.appserver._util import raise_json_error as _raise_error
 
+from nti.externalization.datastructures import LocatedExternalDict
+
 from nti.utils import schema as nti_schema
 from nti.utils.maps import CaseInsensitiveDict
 from nti.utils.jsonschema import JsonSchemafier
@@ -286,18 +288,30 @@ def upgrade_coppa_user_view(request):
 	flag_link_provider.delete_link(user, 'coppa.upgraded.rollbacked')
 	return hexc.HTTPNoContent()
 
-@view_config(name="make_mathcounts_user",
+@view_config(name="make_mathcounts_users",
 			 **_post_admin_view_defaults)
-def make_mathcounts_user_view(request):
+def make_mathcounts_users_view(request):
 	externalValue = obj_io.read_body_as_external_object(request)
-	username = externalValue.get('username', externalValue.get('Username'))
-	user = users.User.get_user(username) if username else None
-	if not user:
-		return hexc.HTTPNotFound(detail='User %s not found' % username)
+	usernames = externalValue.get('usernames', externalValue.get('Usernames'))
+	if usernames:
+		usernames = usernames.split(",")
+		_users = {users.User.get_entity(x) for x in usernames}
+		_users.discard(None)
+	else:
+		dataserver = component.getUtility(nti_interfaces.IDataserver)
+		_users = nti_interfaces.IShardLayout(dataserver).users_folder
+		_users = _users.values()
 
-	interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
-	is_mc = sp_interfaces.IMathcountsUser.providedBy(user)
-	return hexc.HTTPNoContent(detail='Mathcounts user flag is set to %s' % is_mc)
+	result = LocatedExternalDict()
+	items = result['Items'] = []
+	for user in _users:
+		username = user.username.lower()
+		if username.endswith('@nextthought.com') or not nti_interfaces.IUser.providedBy(user):
+			continue
+		if not sp_interfaces.IMathcountsUser.providedBy(user):
+			interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
+			items.append(username)
+	return result
 
 del _view_defaults
 del _post_view_defaults
