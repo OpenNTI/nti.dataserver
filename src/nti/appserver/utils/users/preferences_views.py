@@ -67,6 +67,8 @@ def delete_preferences(request):
 		keys = list(preferences.keys())
 	else:
 		keys = values.get('keys', list(values.keys()))
+		if keys=="*":
+			keys = list(preferences.keys())
 
 	if isinstance(keys, six.string_types):
 		keys = keys.split()
