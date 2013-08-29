@@ -14,28 +14,27 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
-from zope.interface import Interface
-from zope import schema
+from . import MessageFactory as _
 
-import zope.schema.interfaces
+import re
+import string
+import codecs
+import pkg_resources
+
+from zope import schema
+from zope import interface
+from zope.i18n import translate
+from zope.interface import Interface
+from zope.interface.common.mapping import IMapping
+
 import zope.component.interfaces
 
 from z3c.password import interfaces as pwd_interfaces
 
-import re
-import string
-
-from zope.i18n import translate
-from . import MessageFactory as _
-
 import nti.utils.schema
-from nti.utils.schema import ValidTextLine
 from nti.utils.schema import ValidText
+from nti.utils.schema import ValidTextLine
 from nti.utils.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE, TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
-
-import pkg_resources
-import codecs
 
 class _InvalidData(nti.utils.schema.InvalidValue):
 	"""Invalid Value"""
@@ -502,3 +501,8 @@ def validateAccept(value):
 	if not value == True:
 		return False
 	return True
+
+class IEntityPreferences(IMapping):
+	"""
+	Something that can store key value data for an entity
+	"""

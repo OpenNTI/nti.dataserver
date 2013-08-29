@@ -122,4 +122,9 @@
 	<adapter factory=".user_profile.EmailRequiredUserProfileFactory"
 			 zcml:condition="not-have devmode" />
 
+	<!-- Entity adapters -->
+	<adapter factory=".preferences.EntityPreferencesFactory"
+			 for="nti.dataserver.interfaces.IEntity"
+			 provides=".interfaces.IEntityPreferences" />
+			 
 </configure>
