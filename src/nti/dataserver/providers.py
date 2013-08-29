@@ -1,27 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+Provider definition
+
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
 
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import datastructures
-from nti.ntiids import ntiids
 from nti.dataserver import authorization as auth
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.authorization_acl import ace_allowing, ace_denying
 
 class _ClassMap(datastructures.AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
-
 	contained_type = nti_interfaces.IClassInfo
 	container_name = 'Classes'
 	__name__ = container_name
 
-@interface.implementer( nti_interfaces.IProviderOrganization )
+@interface.implementer(nti_interfaces.IProviderOrganization)
 class Provider(users.User):
 	"""
 	Represents a provider in the system.
@@ -38,20 +41,21 @@ class Provider(users.User):
 	# hold Classes
 	def __init__( self, username, *args, **kwargs ):
 		if '@' in username:
-			raise ValueError( "Providers do not use @" )
+			raise ValueError("Providers do not use @")
 		# Yet we must fake out the superclass
 		username = username + '@nextthought.com'
 
 		super(Provider,self).__init__( username, *args, **kwargs )
 		self.classes = _ClassMap()
-		self.containers.addContainer( 'Classes', self.classes )
 		self.classes.__parent__ = self
+		self.containers.addContainer( 'Classes', self.classes )
+
 		# Strip the '@'
-		self.username = self.username.split( '@' )[0]
+		self.username = self.username.split('@')[0]
 		# Providers don't have friends or devices
 		for k in ('FriendsLists', 'Devices'):
 			try:
-				self.containers.deleteContainer( k )
+				self.containers.deleteContainer(k)
 			except KeyError:
 				pass
 
@@ -60,30 +64,29 @@ class Provider(users.User):
 		# Providers don't have friends or devices
 		for k in ('FriendsLists', 'Devices'):
 			try:
-				self.containers.deleteContainer( k )
+				self.containers.deleteContainer(k)
 			except KeyError:
 				pass
 		if self.classes.__parent__ is None:
 			self.classes.__parent__ = self
 
-
-@interface.implementer( nti_interfaces.IACLProvider )
-@component.adapter( nti_interfaces.IProviderOrganization )
+@interface.implementer(nti_interfaces.IACLProvider)
+@component.adapter(nti_interfaces.IProviderOrganization)
 class _ProviderACLProvider(object):
 	"""
 	Creates ACLs using pseudo-roles within the provider's namespace.
 	"""
 
-	def __init__( self, provider ):
+	def __init__(self, provider):
 		self.provider = provider
 
 	@property
 	def __acl__(self):
-		localname = self.provider.username.split( '@' )[0]
+		localname = self.provider.username.split('@')[0]
 		acl = list()
 		# These roles are obviously placeholders.
-		acl.append( ace_allowing( "role:" + localname + ".Admin", nti_interfaces.ALL_PERMISSIONS ) )
-		acl.append( ace_allowing( "role:" + localname + ".Instructor", auth.ACT_READ ) )
-		acl.append( ace_allowing( "role:" + localname + ".Student", auth.ACT_READ ) )
-		acl.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS ) )
+		acl.append(ace_allowing("role:" + localname + ".Admin", nti_interfaces.ALL_PERMISSIONS))
+		acl.append(ace_allowing("role:" + localname + ".Instructor", auth.ACT_READ))
+		acl.append(ace_allowing("role:" + localname + ".Student", auth.ACT_READ))
+		acl.append(ace_denying(nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS))
 		return acl
