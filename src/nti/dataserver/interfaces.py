@@ -29,7 +29,6 @@ from zope.proxy import ProxyBase
 import zope.site.interfaces
 
 from zope.schema import Bool
-from zope.schema import Dict
 from zope.schema import Iterable
 
 from nti.contentfragments.schema import PlainText
@@ -1146,7 +1145,7 @@ class IFriendsListContainer(INamedContainer):
 	contains(IFriendsList)
 
 class IDevice(IModeledContent): 
-	Metadata = Dict(key_type=ValidTextLine(title='The key'), required=False)
+	pass
 
 class IDeviceContainer(INamedContainer):
 	contains(IDevice)
