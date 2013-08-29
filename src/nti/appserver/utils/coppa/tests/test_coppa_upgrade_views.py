@@ -195,24 +195,28 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 			assert_that(flag_link_provider.has_link(u, 'coppa.upgraded.rollbacked'), is_(False))
 
 	@WithSharedApplicationMockDS
-	def test_make_mc_user(self):
+	def test_make_mc_users(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
+			u = self._create_user('ichigo@nt.com')
+			interface.alsoProvides(u, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
 			u = self._create_user('aizen@nt.com')
 			assert_that(sp_interfaces.IMathcountsUser.providedBy(u), is_(False))
 			assert_that(sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded.providedBy(u), is_(False))
 
-		data = to_json_representation({'Username': 'aizen@nt.com'})
 		testapp = TestApp(self.app)
-		path = '/dataserver2/@@make_mathcounts_user'
+		path = '/dataserver2/@@make_mathcounts_users'
 		environ = self._make_extra_environ()
-		# environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
+		environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
+
+		data = to_json_representation({})
 		res = testapp.post(path, data, extra_environ=environ)
-		assert_that(res.status_int, is_(204))
+		assert_that(res.status_int, is_(200))
+		d = simplejson.loads(res.body)
+		assert_that(d, has_entry('Items', has_length(1)))
+		assert_that(d['Items'][0], is_('aizen@nt.com'))
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = users.User.get_user('aizen@nt.com')
 			assert_that(sp_interfaces.IMathcountsUser.providedBy(u), is_(True))
 			assert_that(sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded.providedBy(u), is_(True))
-
-
