@@ -32,6 +32,7 @@ from nti.appserver.utils import _JsonBodyView
 from nti.appserver.policies import user_policies
 from nti.appserver.policies import site_policies
 from nti.appserver import httpexceptions as hexc
+from nti.appserver.policies import interfaces as sp_interfaces
 
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver.link_providers import flag_link_provider
@@ -127,10 +128,10 @@ class RollbackCoppaUsers(_JsonBodyView):
 				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
 
-				if site_policies.IMathcountsUser.providedBy(user):
-					interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreement)
-					interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
-					interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
+				if sp_interfaces.IMathcountsUser.providedBy(user):
+					interface.noLongerProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreement)
+					interface.noLongerProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
+					interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
 				else:
 					interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 	
@@ -257,9 +258,9 @@ def upgrade_coppa_user_view(request):
 		return hexc.HTTPUnprocessableEntity(detail='User is not a coppa user')
 
 	if iface is IOver13Schema:
-		if site_policies.IMathcountsUser.providedBy(user):
-			interface.noLongerProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
-			interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
+		if sp_interfaces.IMathcountsUser.providedBy(user):
+			interface.noLongerProvides(user, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
+			interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
 		else:
 			interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 			interface.alsoProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
@@ -271,8 +272,8 @@ def upgrade_coppa_user_view(request):
 		setattr(profile, 'opt_in_email_communication', is_true(externalValue.get('opt_in_email_communication')))
 	else:
 		contact_email = externalValue.get('contact_email')
-		if site_policies.IMathcountsUser.providedBy(user):
-			interface.alsoProvides(user, site_policies.IMathcountsCoppaUserWithoutAgreement)
+		if sp_interfaces.IMathcountsUser.providedBy(user):
+			interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
 		else:
 			interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 		profile = user_interfaces.IUserProfile(user)
@@ -281,6 +282,16 @@ def upgrade_coppa_user_view(request):
 	# remove link
 	flag_link_provider.delete_link(user, 'coppa.upgraded.rollbacked')
 	return hexc.HTTPNoContent()
+
+@view_config(name="make_mathcounts_user",
+			 context=nti_interfaces.IUser,
+			 **_post_update_view_defaults)
+def make_mathcounts_user_view(request):
+	username = request.context.username
+	user = users.User.get_user(username)
+	interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
+	is_mc = sp_interfaces.IMathcountsUser.providedBy(user)
+	return hexc.HTTPNoContent(detail='Mathcounts user flag is set to %s' % is_mc)
 
 del _view_defaults
 del _post_view_defaults
