@@ -13,8 +13,8 @@ from datetime import date
 
 from zope import interface
 
-from nti.appserver.policies import site_policies
 from nti.appserver.link_providers import flag_link_provider
+from nti.appserver.policies import interfaces as sp_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
@@ -51,13 +51,13 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 
 			u = self._create_user(username='kuchiki@nt.com',
 								  external_value={u'email':u'kuchiki@nt.com', u'opt_in_email_communication':True})
-			interface.alsoProvides(u, site_policies.IMathcountsUser)
-			interface.alsoProvides(u, site_policies.IMathcountsCoppaUserWithAgreementUpgraded)
+			interface.alsoProvides(u, sp_interfaces.IMathcountsUser)
+			interface.alsoProvides(u, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
 
 			u = self._create_user(username='kenpachi@nt.com',
 								  external_value={u'email':u'kenpachi@nt.com', u'opt_in_email_communication':True})
-			interface.alsoProvides(u, site_policies.IMathcountsUser)
-			interface.alsoProvides(u, site_policies.IMathcountsCoppaUserWithAgreement)
+			interface.alsoProvides(u, sp_interfaces.IMathcountsUser)
+			interface.alsoProvides(u, sp_interfaces.IMathcountsCoppaUserWithAgreement)
 
 		testapp = TestApp(self.app)
 
@@ -137,8 +137,8 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 	def test_upgrade_coppa_user_over_13(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = self._create_user()
-			interface.alsoProvides(u, site_policies.IMathcountsUser)
-			interface.alsoProvides(u, site_policies.IMathcountsCoppaUserWithoutAgreement)
+			interface.alsoProvides(u, sp_interfaces.IMathcountsUser)
+			interface.alsoProvides(u, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
 			flag_link_provider.add_link(u, 'coppa.upgraded.rollbacked')
 
 		testapp = TestApp(self.app)
@@ -157,9 +157,9 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = users.User.get_user('sjohnson@nextthought.com')
-			assert_that(site_policies.IMathcountsUser.providedBy(u), is_(True))
-			assert_that(site_policies.IMathcountsCoppaUserWithoutAgreement.providedBy(u), is_(False))
-			assert_that(site_policies.IMathcountsCoppaUserWithAgreementUpgraded.providedBy(u), is_(True))
+			assert_that(sp_interfaces.IMathcountsUser.providedBy(u), is_(True))
+			assert_that(sp_interfaces.IMathcountsCoppaUserWithoutAgreement.providedBy(u), is_(False))
+			assert_that(sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded.providedBy(u), is_(True))
 			profile = users_interfaces.IUserProfile(u)
 			assert_that(profile.email, is_('aizen@bleach.com'))
 			assert_that(flag_link_provider.has_link(u, 'coppa.upgraded.rollbacked'), is_(False))
@@ -168,8 +168,8 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 	def test_upgrade_coppa_user_under_13(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = self._create_user()
-			interface.alsoProvides(u, site_policies.IMathcountsUser)
-			interface.alsoProvides(u, site_policies.IMathcountsCoppaUserWithoutAgreement)
+			interface.alsoProvides(u, sp_interfaces.IMathcountsUser)
+			interface.alsoProvides(u, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
 			flag_link_provider.add_link(u, 'coppa.upgraded.rollbacked')
 
 		testapp = TestApp(self.app)
@@ -190,8 +190,27 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = users.User.get_user('sjohnson@nextthought.com')
-			assert_that(site_policies.IMathcountsUser.providedBy(u), is_(True))
-			assert_that(site_policies.IMathcountsCoppaUserWithoutAgreement.providedBy(u), is_(True))
+			assert_that(sp_interfaces.IMathcountsUser.providedBy(u), is_(True))
+			assert_that(sp_interfaces.IMathcountsCoppaUserWithoutAgreement.providedBy(u), is_(True))
 			assert_that(flag_link_provider.has_link(u, 'coppa.upgraded.rollbacked'), is_(False))
+
+	@WithSharedApplicationMockDS
+	def test_make_mc_user(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			u = self._create_user()
+			assert_that(sp_interfaces.IMathcountsUser.providedBy(u), is_(False))
+			assert_that(sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded.providedBy(u), is_(False))
+
+		testapp = TestApp(self.app)
+		path = '/dataserver2/users/sjohnson@nextthought.com/@@make_mathcounts_user'
+		environ = self._make_extra_environ()
+		environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
+		res = testapp.post(path, extra_environ=environ)
+		assert_that(res.status_int, is_(204))
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			u = users.User.get_user('sjohnson@nextthought.com')
+			assert_that(sp_interfaces.IMathcountsUser.providedBy(u), is_(True))
+			assert_that(sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded.providedBy(u), is_(True))
 
 
