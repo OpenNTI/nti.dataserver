@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from datetime import datetime
+from datetime import timedelta
 
 from plasTeX.Base import Command
 from plasTeX.Base import Crossref
@@ -142,6 +143,7 @@ class courselessonref(Crossref.ref):
                 self.date.append(datetime(int(date[2]), int(date[0]), int(date[1])))
             else:
                 self.date.append(datetime.today())
+        self.date[-1] = self.date[-1] + timedelta(days=1) - timedelta(microseconds=1)
         return res
 
 class courselesson(StartSection):
