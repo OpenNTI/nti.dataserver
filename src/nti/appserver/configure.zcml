@@ -325,6 +325,8 @@
 	<include package=".dashboard" />
 	<include package=".contentlibrary" />
 		
+	<include package=".utils.users" />
+	
 	<!-- Hacky temporary stuff -->
 	<adapter name="OUAdminFactory"
 			 for="*"

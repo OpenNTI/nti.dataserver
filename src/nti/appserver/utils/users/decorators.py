@@ -3,7 +3,7 @@
 """
 External decorators to provide access to the things exposed through this package.
 
-$Id: decorators.py 23627 2013-08-27 16:32:35Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
