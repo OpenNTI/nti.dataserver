@@ -76,8 +76,10 @@
 	<include package=".contentlibrary" file="pyramid.zcml" />
 
 	
-	<!-- Util/Admin views -->
-	<pyramid:scan package='.utils.user_export_views' />
+	<!-- Util views -->
+	<include package=".utils.users" file="pyramid.zcml" />
+	
+	<!-- Admin views -->
 	<pyramid:scan package='.utils.store_admin_views' />
 	<pyramid:scan package='.utils.forums.forum_admin_views' />
 	<pyramid:scan package='.utils.coppa.coppa_admin_views' />
