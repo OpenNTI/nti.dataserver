@@ -58,6 +58,9 @@ _post_view_defaults['request_method'] = 'POST'
 _post_update_view_defaults = _post_view_defaults.copy()
 _post_update_view_defaults['permission'] = nauth.ACT_UPDATE
 
+_post_admin_view_defaults = _post_view_defaults.copy()
+_post_admin_view_defaults['permission'] = nauth.ACT_COPPA_ADMIN
+
 class _ICommon(interface.Interface):
 	birthdate = schema.Date(
 					title='birthdate',
@@ -284,11 +287,14 @@ def upgrade_coppa_user_view(request):
 	return hexc.HTTPNoContent()
 
 @view_config(name="make_mathcounts_user",
-			 context=nti_interfaces.IUser,
-			 **_post_update_view_defaults)
+			 **_post_admin_view_defaults)
 def make_mathcounts_user_view(request):
-	username = request.context.username
-	user = users.User.get_user(username)
+	externalValue = obj_io.read_body_as_external_object(request)
+	username = externalValue.get('username', externalValue.get('Username'))
+	user = users.User.get_user(username) if username else None
+	if not user:
+		return hexc.HTTPNotFound(detail='User %s not found' % username)
+
 	interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
 	is_mc = sp_interfaces.IMathcountsUser.providedBy(user)
 	return hexc.HTTPNoContent(detail='Mathcounts user flag is set to %s' % is_mc)
@@ -297,4 +303,4 @@ del _view_defaults
 del _post_view_defaults
 del _view_admin_defaults
 del _post_update_view_defaults
-
+del _post_admin_view_defaults
