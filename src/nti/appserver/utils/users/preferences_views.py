@@ -66,7 +66,7 @@ def delete_preferences(request):
 	if not values:
 		keys = list(preferences.keys())
 	else:
-		keys = values.get('keys', None)
+		keys = values.get('keys', list(values.keys()))
 		keys = list(preferences.keys()) if not keys or keys == "*" else keys
 
 	if isinstance(keys, six.string_types):
