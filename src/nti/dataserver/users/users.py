@@ -255,9 +255,8 @@ class Device(datastructures.PersistentCreatedModDateTrackingObject,
 	__name__ = None
 	__parent__ = None
 
-	Metadata = None
 
-	def __init__(self, deviceId, metadata=None):
+	def __init__(self, deviceId):
 		"""
 		:param deviceId: Either a basic dictionary containing `StandardExternalFields.ID`
 			or a string in hex encoding the bytes of a device id.
@@ -267,9 +266,6 @@ class Device(datastructures.PersistentCreatedModDateTrackingObject,
 			deviceId = deviceId[datastructures.StandardExternalFields.ID]
 		# device id arrives in hex encoding
 		self.deviceId = deviceId.decode( 'hex' )
-		# set any meta data
-		if metadata:
-			self.Metadata = metadata
 
 	def get_containerId( self ):
 		return _DevicesMap.container_name
@@ -284,13 +280,10 @@ class Device(datastructures.PersistentCreatedModDateTrackingObject,
 
 	def toExternalObject(self):
 		result = super(Device, self).toExternalDictionary()
-		result['Metadata'] = self.Metadata
 		return result
 
 	def updateFromExternalObject(self, ext):
-		mdata = ext.pop('Metadata', None)
-		if mdata and isinstance(mdata, collections.Mapping):
-			self.Metadata = {unicode(k):v for k, v in mdata}
+		pass
 
 	def __eq__(self, other):
 		try:
