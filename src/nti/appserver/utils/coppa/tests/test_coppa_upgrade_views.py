@@ -197,19 +197,21 @@ class TestCoppaUpgradeViews(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS
 	def test_make_mc_user(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			u = self._create_user()
+			self._create_user()
+			u = self._create_user('aizen@nt.com')
 			assert_that(sp_interfaces.IMathcountsUser.providedBy(u), is_(False))
 			assert_that(sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded.providedBy(u), is_(False))
 
+		data = to_json_representation({'Username': 'aizen@nt.com'})
 		testapp = TestApp(self.app)
-		path = '/dataserver2/users/sjohnson@nextthought.com/@@make_mathcounts_user'
+		path = '/dataserver2/@@make_mathcounts_user'
 		environ = self._make_extra_environ()
-		environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
-		res = testapp.post(path, extra_environ=environ)
+		# environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
+		res = testapp.post(path, data, extra_environ=environ)
 		assert_that(res.status_int, is_(204))
 
 		with mock_dataserver.mock_db_trans(self.ds):
-			u = users.User.get_user('sjohnson@nextthought.com')
+			u = users.User.get_user('aizen@nt.com')
 			assert_that(sp_interfaces.IMathcountsUser.providedBy(u), is_(True))
 			assert_that(sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded.providedBy(u), is_(True))
 
