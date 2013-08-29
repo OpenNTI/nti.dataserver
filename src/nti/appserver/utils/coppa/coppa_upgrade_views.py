@@ -309,7 +309,10 @@ def make_mathcounts_users_view(request):
 		if username.endswith('@nextthought.com') or not nti_interfaces.IUser.providedBy(user):
 			continue
 		if not sp_interfaces.IMathcountsUser.providedBy(user):
-			interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
+			if flag_link_provider.has_link(user, 'coppa.upgraded.rollbacked'):
+				interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
+			else:
+				interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
 			items.append(username)
 	return result
 
