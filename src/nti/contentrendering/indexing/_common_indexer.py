@@ -26,7 +26,10 @@ class _BasicWhooshIndexer(object):
 		if os.path.exists(indexdir):
 			pathname = '%s/*%s*' % (indexdir, indexname)
 			for name in glob.glob(pathname):
-				os.remove(name)
+				try:
+					os.remove(name)
+				except OSError:
+					logger.warn("Cannot remove %s", name)
 
 	def create_index(self, indexdir, indexname):
 		if not os.path.exists(indexdir):
@@ -60,6 +63,12 @@ class _BasicWhooshIndexer(object):
 		indexdir = indexdir or os.path.join(content_path, "indexdir")
 		return indexdir
 
+	def get_index_writer(self, index):
+		return index.writer(optimize=False, merge=False)
+	
+	def commit_writer(self, writer):
+		writer.commit(optimize=False, merge=False)
+
 	def index(self, book, indexdir=None, indexname=None, optimize=True):
 		indexname = self.get_index_name(book, indexname)
 		indexdir = self.get_index_dir(book, indexdir)
@@ -69,13 +78,13 @@ class _BasicWhooshIndexer(object):
 		logger.info('Indexing %s' % indexname)
 
 		idx = self.create_index(indexdir, indexname)
-		writer = idx.writer(optimize=False, merge=False)
+		writer = self.get_index_writer(idx)
 		docs = self.process_book(idxspec, writer)
 
 		logger.info("%s total document(s) produced" % docs)
 
 		# commit changes
-		writer.commit(optimize=False, merge=False)
+		self.commit_writer(writer)
 
 		if optimize:  # for testing
 			logger.info("Optimizing index")
