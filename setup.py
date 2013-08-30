@@ -232,7 +232,7 @@ setup(
 		# jquery-like traversing of python datastructures. lxml, cssselect
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
-		'pyramid >= 1.4.4' ,
+		'pyramid == 1.4.4' ,
 		'pyramid_mailer >= 0.13',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
