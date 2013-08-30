@@ -5,31 +5,29 @@ Implementations for user externalization.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
 
 import random
 
 from zope import component
 from zope import interface
 
-from nti.zodb import urlproperty
-
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 from nti.dataserver import links
 from nti.dataserver import authorization_acl as auth
 
+from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import to_standard_external_dictionary, decorate_external_mapping
-from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.utils.schema import find_most_derived_interface
+
+from nti.zodb import urlproperty
 
 from . import interfaces
 
@@ -290,6 +288,15 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 _UserExternalObject = _UserPersonalSummaryExternalObject
 
+@component.adapter(nti_interfaces.IUser)
+class _UserPersonalSummaryPlusPreferencesExternalObject(_UserPersonalSummaryExternalObject):
+
+	def _do_toExternalObject(self):
+		extDict = super(_UserPersonalSummaryPlusPreferencesExternalObject, self)._do_toExternalObject()
+		prefs = interfaces.IEntityPreferences(self.entity, None) or {}
+		extDict['Preferences'] = dict(prefs)
+		return extDict
+
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject):
 
@@ -300,3 +307,12 @@ class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject
 		return extDict
 
 _CoppaUserExternalObject = _CoppaUserPersonalSummaryExternalObject
+
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
+class _CoppaUserPersonalSummaryPlusPreferencesExternalObject(_CoppaUserPersonalSummaryExternalObject):
+
+	def _do_toExternalObject(self):
+		extDict = super(_CoppaUserPersonalSummaryPlusPreferencesExternalObject, self)._do_toExternalObject()
+		prefs = interfaces.IEntityPreferences(self.entity, None) or {}
+		extDict['Preferences'] = dict(prefs)
+		return extDict

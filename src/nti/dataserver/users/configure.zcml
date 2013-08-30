@@ -35,14 +35,17 @@
 			 name="summary" />
 	<adapter factory=".users_external._UserPersonalSummaryExternalObject"
 			 name="personal-summary" />
-
+	<adapter factory=".users_external._UserPersonalSummaryPlusPreferencesExternalObject"
+			 name="personal-summary-preferences" />
 
 	<adapter factory=".users_external._CoppaUserExternalObject" />
 	<adapter factory=".users_external._CoppaUserSummaryExternalObject"
 			 name="summary" />
 	<adapter factory=".users_external._CoppaUserPersonalSummaryExternalObject"
 			 name="personal-summary" />
-
+	<adapter factory=".users_external._CoppaUserPersonalSummaryPlusPreferencesExternalObject"
+			 name="personal-summary-preferences" />
+			 
 	<!-- Groups and ACLs -->
 	<!-- First, make something that can store group names on the user -->
 	<class class=".users.Entity">
