@@ -260,7 +260,7 @@ def upgrade_coppa_user_view(request):
 	username = request.context.username
 	user = users.User.get_user(username)
 	if not nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user):
-		return hexc.HTTPUnprocessableEntity(detail='User is not a coppa user')
+		raise hexc.HTTPUnprocessableEntity(detail='User is not a coppa user')
 
 	if iface is IOver13Schema:
 		if sp_interfaces.IMathcountsUser.providedBy(user):
