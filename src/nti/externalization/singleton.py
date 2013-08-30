@@ -37,10 +37,10 @@ class SingletonDecorator(type):
 
 	"""
 
-	def __new__(mcs, name, bases, cls_dict):
+	def __new__(cls, name, bases, cls_dict):
 		cls_dict['__slots__'] = () # no ivars
 
-		cls = type.__new__(mcs, name, bases, cls_dict)
+		cls = type.__new__(cls, name, bases, cls_dict)
 
 		ancestor = object
 		for ancestor in cls.mro():
