@@ -21,16 +21,14 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 
-LINKS = ext_interfaces.StandardExternalFields.LINKS
-
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 class PreferencesDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping( self, context, mapping ):
-		the_links = mapping.setdefault( LINKS, [] )
+	def decorateExternalMapping(self, context, mapping):
+		the_links = mapping.setdefault(ext_interfaces.StandardExternalFields.LINKS, [])
 		for name, method in (('set_preferences', 'POST'), ('get_preferences', 'GET'), ('delete_preferences', 'DELETE')):
 			link = Link( context,
 						 rel=name,
