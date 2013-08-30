@@ -153,3 +153,25 @@ class DeleteCommunityForum(_JsonBodyView):
 			board.updateLastMod()
 
 		return hexc.HTTPNoContent()
+
+@view_config(route_name='objects.generic.traversal',
+			 name='remove_class_community_forum',
+			 request_method='POST',
+			 permission=nauth.ACT_MODERATE)
+class RemoveClassCommunityForum(_JsonBodyView):
+
+	def __call__(self):
+		values = self.readInput()
+		community = values.get('community', '')
+		community = users.Community.get_community(community)
+		if not community or not nti_interfaces.ICommunity.providedBy(community):
+			raise hexc.HTTPNotFound(detail='Community not found')
+
+		forum = frm_interfaces.ICommunityForum(community, None)
+		if not forum:
+			raise hexc.HTTPUnprocessableEntity(detail='Community does not allow a forum')
+
+		interface.noLongerProvides(forum, frm_interfaces.IClassForum)
+		interface.alsoProvides(forum, frm_interfaces.ICommunityForum)
+
+		return hexc.HTTPNoContent()
