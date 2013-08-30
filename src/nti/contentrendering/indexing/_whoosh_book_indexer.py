@@ -17,6 +17,8 @@ from datetime import datetime
 
 import lxml.etree as etree
 
+from whoosh.writing import BufferedWriter
+
 from zope import component
 from zope import interface
 
@@ -189,6 +191,15 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 							  node.related, node.keywords, node.last_modified)
 		return result
 
+	def get_index_writer(self, index):
+		wargs = {'optimize':False, 'merge':False}
+		cargs = {'optimize':True, 'merge':True}
+		writer = BufferedWriter(index, period=None, limit=10000, writerargs=wargs, commitargs=cargs)
+		return writer
+
+	def commit_writer(self, writer):
+		writer.commit()
+
 	def process_topic(self, idxspec, node, writer, language='en'):
 		result = self._index_datanode(_DataNode(node), writer, language)
 		return result
@@ -213,5 +224,9 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 			for node in executor.map(_process_datanode, nodes, langs):
 				docs += self._index_datanode(node, writer, language)
 		return docs
+
+	def index(self, book, indexdir=None, indexname=None, optimize=True):
+		idx, docs = super(_BookFileWhooshIndexer, self).index(book, indexdir, indexname, False)
+		return idx, docs
 
 _DefaultWhooshBookIndexer = _BookFileWhooshIndexer
