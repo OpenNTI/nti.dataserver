@@ -106,7 +106,7 @@ def _ResolveMyself(request):
 	request.response.etag = None
 	# We don't want the simple summary, we want the personal summary, so we have
 	# to do that ourself
-	return toExternalObject( request.context, name='personal-summary' )
+	return toExternalObject(request.context, name='personal-summary-preferences')
 
 @view_config( route_name='search.resolve_user',
 			  renderer='rest',
