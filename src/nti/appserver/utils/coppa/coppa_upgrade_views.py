@@ -264,6 +264,10 @@ def upgrade_coppa_user_view(request):
 
 	if iface is IOver13Schema:
 		if sp_interfaces.IMathcountsUser.providedBy(user):
+			# let's make sure we remove this interface if it's there
+			if nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user):
+				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
+
 			interface.noLongerProvides(user, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
 			interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
 		else:
