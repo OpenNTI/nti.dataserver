@@ -400,7 +400,7 @@ setup(
 			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
 			'pudb >= 2013.3.5',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 1.0.0' if not IS_PYPY else '',  # install astroid
-			'pyramid_debugtoolbar >= 1.0.6',
+			'pyramid_debugtoolbar >= 1.0.7',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
 			'repoze.sphinx.autointerface >= 0.7.1',
 			'rope >= 0.9.4',  # refactoring library. c.f. ropemacs
