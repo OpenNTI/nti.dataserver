@@ -18,7 +18,7 @@ from nti.appserver.tests.test_application import SharedApplicationTestBase, With
 
 from hamcrest import (assert_that, is_, has_length, has_entry)
 
-class TestApplicationUserExporViews(SharedApplicationTestBase):
+class TestUsePreferencesViews(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_set_preferences(self):
