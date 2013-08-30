@@ -127,17 +127,17 @@ class RollbackCoppaUsers(_JsonBodyView):
 				if testmode:
 					continue
 
+				is_mc_user = sp_interfaces.IMathcountsUser.providedBy(user)
+
 				# reset interfaces
 
-				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
-				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
-				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
-
-				if sp_interfaces.IMathcountsUser.providedBy(user):
+				if is_mc_user:
 					interface.noLongerProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreement)
 					interface.noLongerProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
 					interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
 				else:
+					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
+					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
 					interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 	
 				# remove birthday
