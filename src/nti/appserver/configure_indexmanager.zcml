@@ -12,7 +12,14 @@ it will usually be done there and this file excluded.
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	
-	<utility factory="nti.contentsearch.indexmanager.create_index_manager" 
-			 provides="nti.contentsearch.interfaces.IIndexManager" />
+	<configure zcml:condition="not-have devmode">
+		<utility factory="nti.contentsearch.indexmanager.create_index_manager_with_repoze_redis" 
+						  provides="nti.contentsearch.interfaces.IIndexManager" />
+	</configure>
+	
+	<configure zcml:condition="have devmode">
+		<utility factory="nti.contentsearch.indexmanager.create_index_manager" 
+						  provides="nti.contentsearch.interfaces.IIndexManager" />
+	</configure>
 
 </configure>
