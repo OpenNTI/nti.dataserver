@@ -17,7 +17,6 @@ from whoosh.query import (Or, Term)
 
 from ...RenderedBook import _EclipseTOCMiniDomTopic
 from .._whoosh_book_indexer import _BookFileWhooshIndexer
-from .._whoosh_book_indexer import _DefaultWhooshBookIndexer
 from .._whoosh_book_indexer import _IdentifiableNodeWhooshIndexer
 from ...utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 
@@ -39,7 +38,7 @@ class TestWhooshBookIndexer(ConfiguringTestBase):
 		shutil.rmtree(cls.idxdir, True)
 		super(TestWhooshBookIndexer, cls).tearDownClass()
 
-	def test_identifiable_node_indexer(self):
+	def _test_book_indexer(self, clazz, bio_expected, homeo_expected):
 		indexname = 'biology'
 		path = os.path.join(os.path.dirname(__file__), '../../tests/intro-biology-rendered-book')
 
@@ -47,7 +46,7 @@ class TestWhooshBookIndexer(ConfiguringTestBase):
 		document.userdata['jobname'] = indexname
 		book = NoConcurrentPhantomRenderedBook(document, path)
 
-		indexer = _IdentifiableNodeWhooshIndexer()
+		indexer = clazz()
 		idx, _ = indexer.index(book, self.idxdir, optimize=False)
 
 		q = Term("keywords", u"mathcounts")
@@ -58,17 +57,23 @@ class TestWhooshBookIndexer(ConfiguringTestBase):
 		q = Or([Term("content", u'biology'), ])
 		with idx.searcher() as s:
 			r = s.search(q, limit=None)
-			assert_that(r, has_length(26))
+			assert_that(r, has_length(bio_expected))
 
 		q = Or([Term("content", u'homeostasis'), ])
 		with idx.searcher() as s:
 			r = s.search(q, limit=None)
-			assert_that(r, has_length(16))
+			assert_that(r, has_length(homeo_expected))
 
 		idx.close()
 
+	def test_identifiable_node_indexer(self):
+		self._test_book_indexer(_IdentifiableNodeWhooshIndexer, 26, 16)
+
+	def test_bookfile_indexer(self):
+		self._test_book_indexer(_BookFileWhooshIndexer, 7, 4)
+
 	def _index_file(self, path, indexname, nodename, indexer=None):
-		indexer = indexer or _DefaultWhooshBookIndexer()
+		indexer = indexer or _BookFileWhooshIndexer()
 		idx = indexer.create_index(self.idxdir, indexname)
 		writer = idx.writer(optimize=False, merge=False)
 		node = _EclipseTOCMiniDomTopic(None, path, path, None, nodename)
