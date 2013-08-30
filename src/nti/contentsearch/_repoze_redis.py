@@ -59,4 +59,4 @@ class _RepozeStorageService(_RedisStorageService):
 				elif op == 'delete':
 					runner(lambda : self.unindex(docid, username))
 			except:
-				logger.exception("Failed to run index operation")
+				logger.exception("Failed to run index operation %s" % repr(m))
