@@ -290,6 +290,8 @@ def upgrade_coppa_user_view(request):
 
 	# remove link
 	flag_link_provider.delete_link(user, 'coppa.upgraded.rollbacked')
+
+	logger.info("User %s has been upgraded" % username)
 	return hexc.HTTPNoContent()
 
 @view_config(name="make_mathcounts_users",
