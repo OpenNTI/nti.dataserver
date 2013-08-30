@@ -522,7 +522,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	def upgrade_user(self, user):
 		if not self.IF_WOUT_AGREEMENT.providedBy(user):
 			logger.debug("No need to upgrade user %s that doesn't provide %s", user, self.IF_WOUT_AGREEMENT)
-			return
+			return False
 
 		# Copy the profile info. First, adapt to the old profile:
 		orig_profile = user_interfaces.IUserProfile(user)
@@ -544,9 +544,10 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		# user.transitionTime = time.time()
 
 		notify(app_interfaces.UserUpgradedEvent(user,
-												  restricted_interface=self.IF_WOUT_AGREEMENT, restricted_profile=orig_profile,
-												  upgraded_interface=self.IF_WITH_AGREEMENT, upgraded_profile=new_profile,
-												  request=get_current_request()))
+												restricted_interface=self.IF_WOUT_AGREEMENT, restricted_profile=orig_profile,
+												upgraded_interface=self.IF_WITH_AGREEMENT, upgraded_profile=new_profile,
+												request=get_current_request()))
+		return True
 		# TODO: If the new profile required some values the old one didn't, then what?
 		# Prime example: email, not required for kids, yes required for adults.
 
@@ -720,6 +721,12 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 		"""
 		super(MathcountsSitePolicyEventListener, self).user_created(user, event)
 		_join_community_user_created(self, user, event)
+
+	def upgrade_user(self, user):
+		super(MathcountsSitePolicyEventListener, self).upgrade_user(user)
+		# let's make sure we remove this interface if it's there
+		if nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user):
+			interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 
 
 @interface.implementer(ISitePolicyUserEventListener)
