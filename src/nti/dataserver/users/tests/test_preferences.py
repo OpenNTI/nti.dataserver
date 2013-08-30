@@ -33,5 +33,5 @@ def test_decorator():
 	user = User.create_user(username="foo@bar")
 	pref = user_interfaces.IEntityPreferences(user)
 	pref['foo'] = 'bar'
-	ext_user = to_external_object(user)
+	ext_user = to_external_object(user, name='personal-summary-preferences')
 	assert_that(ext_user, has_entry('Preferences', has_entry('foo', 'bar')))
