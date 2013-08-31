@@ -67,9 +67,9 @@ class _BasicWhooshIndexer(object):
 		return index.writer(optimize=False, merge=False)
 	
 	def commit_writer(self, writer):
-		writer.commit(optimize=False, merge=False)
+		writer.commit(optimize=True, merge=True)
 
-	def index(self, book, indexdir=None, indexname=None, optimize=True):
+	def index(self, book, indexdir=None, indexname=None, optimize=False):
 		indexname = self.get_index_name(book, indexname)
 		indexdir = self.get_index_dir(book, indexdir)
 		self.remove_index_files(indexdir, indexname)
@@ -89,5 +89,5 @@ class _BasicWhooshIndexer(object):
 		if optimize:  # for testing
 			logger.info("Optimizing index")
 			idx.optimize()
-
+		logger.info('Indexing %s completed' % indexname)
 		return idx, docs

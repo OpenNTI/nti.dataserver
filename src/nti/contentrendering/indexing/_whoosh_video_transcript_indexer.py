@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import os
 import time
 from datetime import datetime
@@ -16,6 +18,8 @@ from zope import interface
 
 from nti.contentprocessing import split_content
 from nti.contentprocessing import get_content_translation_table
+
+from nti.contentrendering import ConcurrentExecutor
 
 from nti.contentsearch import vtrans_prefix
 from nti.contentsearch import videotimestamp_to_datetime
@@ -38,6 +42,7 @@ class _Video(object):
 
 	def __init__(self, parser_name, video_ntiid, video_path, title=None, language='en'):
 		self.title = title
+		self.transcript = None
 		self.containerId = None
 		self.language = language
 		self.video_path = video_path
@@ -73,6 +78,12 @@ class _Video(object):
 		xhash ^= hash(self.path)
 		xhash ^= hash(self.ntiid)
 		return xhash
+
+def _parse_video_source(video):
+	parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name=video.parser)
+	with open(video.path, "r") as source:
+		transcript = parser.parse(source)
+	return video, transcript
 
 @interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
 class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
@@ -254,17 +265,20 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 			video.containerId = toc_videos.get(video.ntiid, containerId)
 		return videos
 
+	def _parse_video_sources(self, videos):
+		result = []
+		videos = [videos] if isinstance(videos, _Video) else videos
+		with ConcurrentExecutor() as executor:
+			for v, t in executor.map(_parse_video_source, videos):
+				v.transcript = t
+				result.append(v)
+		return result
+
 	def _parse_and_index_videos(self, videos, writer):
-		if isinstance(videos, _Video):
-			videos = [videos]
-
 		count = 0
+		videos = self._parse_video_sources(videos)
 		for video in videos:
-			parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name=video.parser)
-			with open(video.path, "r") as source:
-				transcript = parser.parse(source)
-
-			for entry in transcript:
+			for entry in video.transcript or ():
 				if self.index_transcript_entry(writer,
 											   unicode(video.containerId),
 											   unicode(video.ntiid),
@@ -275,7 +289,6 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		return count
 
 	def process_book(self, idxspec, writer, *args, **kwargs):
-
 		# find videos in toc
 		if idxspec:
 			dom = idxspec.book.toc.dom
@@ -296,9 +309,7 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		_loop(toc.root_topic)
 
 		# parse and index
-		count = 0
-		for video in result:
-			count += self._parse_and_index_videos(video, writer)
+		count = self._parse_and_index_videos(result, writer)
 		return count
 
 _DefaultWhooshVideoTranscriptIndexer = _WhooshVideoTranscriptIndexer
