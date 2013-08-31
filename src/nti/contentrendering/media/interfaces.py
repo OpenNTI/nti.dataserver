@@ -21,6 +21,7 @@ class IVideoTranscriptEntry(interface.Interface):
 	transcript = nti_schema.ValidText(title='Transcript text')
 	start_timestamp = nti_schema.ValidTextLine(title='Start time stamp')
 	end_timestamp = nti_schema.ValidTextLine(title='End time stamp')
+	language = nti_schema.ValidTextLine(title='Transcript language', required=False, default='en')
 
 class IVideoTranscript(IMinimalSequence):
 	"""

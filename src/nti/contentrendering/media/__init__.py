@@ -10,19 +10,15 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as media_interfaces
 
 @interface.implementer(media_interfaces.IVideoTranscriptEntry)
 class VideoTranscriptEntry(SchemaConfigured):
-
-	id = FP(media_interfaces.IVideoTranscriptEntry['id'])
-	transcript = FP(media_interfaces.IVideoTranscriptEntry['transcript'])
-	start_timestamp = FP(media_interfaces.IVideoTranscriptEntry['start_timestamp'])
-	end_timestamp = FP(media_interfaces.IVideoTranscriptEntry['end_timestamp'])
+	createDirectFieldProperties(media_interfaces.IVideoTranscriptEntry)
 
 	def __str__(self):
 		return "%s,%s,%s" % (self.id, self.start_timestamp, self.end_timestamp)
