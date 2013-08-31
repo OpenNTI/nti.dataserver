@@ -85,6 +85,18 @@ def _parse_video_source(video):
 		transcript = parser.parse(source)
 	return video, transcript
 
+def _prepare_entry(entry, language):
+	content = entry.transcript
+	if content:
+		table = get_content_translation_table(language)
+		entry.content = unicode(content_utils.sanitize_content(content, table=table))
+		tokenized_words = split_content(entry.content, language)
+		entry.keywords = termextract.extract_key_words(tokenized_words)
+		entry.processed = True
+	else:
+		entry.processed = False
+	return entry
+
 @interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
 class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
@@ -222,23 +234,21 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		return result
 
 	def index_transcript_entry(self, writer, containerId, video_id, title, entry, language=u'en'):
-		content = entry.transcript
-		if not content:
+		if not getattr(entry, 'processed', False):
+			_prepare_entry(entry, language)
+
+		if not entry.processed:
 			return False
 
-		table = get_content_translation_table(language)
-		content = unicode(content_utils.sanitize_content(content, table=table))
-		tokenized_words = split_content(content, language)
 		try:
 			last_modified = datetime.fromtimestamp(time.time())
-			keywords = termextract.extract_key_words(tokenized_words)
 			writer.add_document(containerId=containerId,
 								videoId=video_id,
 								language=language,
 								title=title,
-								content=content,
-								quick=content,
-								keywords=keywords,
+								content=entry.content,
+								quick=entry.content,
+								keywords=entry.keywords,
 								last_modified=last_modified,
 								end_timestamp=videotimestamp_to_datetime(entry.end_timestamp),
 								start_timestamp=videotimestamp_to_datetime(entry.start_timestamp))
