@@ -218,22 +218,13 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 				_loop(t)
 		_loop(idxspec.book.toc.root_topic)
 
-		docs = []
-		def _callback(future):
-			node = future._result
-			if node is not None:
-				docs.append(self._index_datanode(node, writer, language))
-
 		# process and index nodes
+		docs = 0
 		with ConcurrentExecutor() as executor:
-			futures = []
-			for node in nodes:
-				future = executor.submit(_process_datanode, node, language)
-				future.add_done_callback(_callback)
-				futures.append(future)
-			[future.result() for future in futures]
-
-		return sum(docs)
+			langs = [language] * len(nodes)
+			for node in executor.map(_process_datanode, nodes, langs):
+				docs += self._index_datanode(node, writer, language)
+		return docs
 
 	def index(self, book, indexdir=None, indexname=None, optimize=True):
 		idx, docs = super(_BookFileWhooshIndexer, self).index(book, indexdir, indexname, False)
