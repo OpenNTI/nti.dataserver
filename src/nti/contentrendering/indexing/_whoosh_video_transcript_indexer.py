@@ -97,6 +97,14 @@ def _prepare_entry(entry, language):
 		entry.processed = False
 	return entry
 
+def _parse_and_prepare(video):
+	result = []
+	video, transcript = _parse_video_source(video)
+	for entry in transcript:
+		_prepare_entry(entry, video.language)
+		result.append((video, entry))
+	return result
+
 @interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
 class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
@@ -275,27 +283,25 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 			video.containerId = toc_videos.get(video.ntiid, containerId)
 		return videos
 
-	def _parse_video_sources(self, videos):
+	def _process_video_source(self, videos):
 		result = []
 		videos = [videos] if isinstance(videos, _Video) else videos
 		with ConcurrentExecutor() as executor:
-			for v, t in executor.map(_parse_video_source, videos):
-				v.transcript = t
-				result.append(v)
+			for lst in executor.map(_parse_and_prepare, videos):
+				result.extend(lst)
 		return result
 
 	def _parse_and_index_videos(self, videos, writer):
 		count = 0
-		videos = self._parse_video_sources(videos)
-		for video in videos:
-			for entry in video.transcript or ():
-				if self.index_transcript_entry(writer,
-											   unicode(video.containerId),
-											   unicode(video.ntiid),
-											   unicode(video.title),
-											   entry,
-											   unicode(video.language)):
-					count += 1
+		zipped = self._process_video_source(videos)
+		for video, entry in zipped:
+			if self.index_transcript_entry(writer,
+										   unicode(video.containerId),
+										   unicode(video.ntiid),
+										   unicode(video.title),
+										   entry,
+										   unicode(video.language)):
+				count += 1
 		return count
 
 	def process_book(self, idxspec, writer, *args, **kwargs):
