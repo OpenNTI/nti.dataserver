@@ -186,7 +186,7 @@ setup(
 		'filechunkio >= 1.5',  # Req'd for multi-put in boto == 2.5.2
 		# A very simple (one module, no deps) RSS and Atom feed generator.
 		# 1.7 is a modern rewrite with much better unicode and Py3k support
-		'feedgenerator => 1.7',
+		'feedgenerator >= 1.7',
 		'futures >= 2.1.4',
 		# 'gevent == 1.0rc1', Coming from requirements.txt right now
 		'greenlet >= 0.4.1',
