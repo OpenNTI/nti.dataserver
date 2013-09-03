@@ -5,14 +5,13 @@ Interfaces for the dictionary/glossary component.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 
+from zope import schema
 from zope import interface
 from zope.interface.common.mapping import IReadMapping
-from zope import schema
 
 class IDictionaryTermData(IReadMapping):
 	"""

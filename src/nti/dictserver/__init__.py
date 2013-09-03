@@ -3,12 +3,15 @@
 """
 $Id$
 """
-from __future__ import unicode_literals, print_function, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
 logger = __import__( 'logging' ).getLogger( __name__ )
 
 from zope import component
-from . import interfaces
+
 from . import term
+from . import interfaces
 
 def lookup( info, dictionary=None ):
 	"""
