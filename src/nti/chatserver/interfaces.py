@@ -292,15 +292,22 @@ class IMessageInfoStorage(Interface):
 		and so events will be emitted and ``intids``  will be assigned.
 		"""
 
+	def remove_message(msg_info):
+		"""
+		Remove the specifed message info
+		"""
+
 class IUserTranscriptStorage(Interface):
 	"""
 	An object that knows how to store transcripts for users
 	in a meeting.
 	"""
 
-	def transcript_for_meeting( meeting_id ): pass
+	def transcript_for_meeting(meeting_id): pass
 
-	def add_message( meeting, msg ): pass
+	def add_message(meeting, msg): pass
+
+	def remove_message(meeting, msg): pass
 
 # Presence
 
