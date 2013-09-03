@@ -108,11 +108,14 @@ class _MessageInfoContainer(CheckingLastModifiedBTreeContainer): # TODO: Contain
 	TODO: Can we be more efficient?
 	"""
 
-	def add_message( self, msg_info ):
+	def add_message(self, msg_info):
 		self[msg_info.ID] = msg_info
 
-EntityMessageInfoContainerAnnotation = zope.annotation.factory(_MessageInfoContainer)
+	def remove_message(self, msg_info):
+		if msg_info.ID in self:
+			del self[msg_info.ID]
 
+EntityMessageInfoContainerAnnotation = zope.annotation.factory(_MessageInfoContainer)
 
 @interface.implementer(chat_interfaces.IMessageInfoStorage)
 @component.adapter(chat_interfaces.IMessageInfo)
