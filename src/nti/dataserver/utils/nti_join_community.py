@@ -14,22 +14,25 @@ import argparse
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.externalization import to_external_object
 
 def join_communities(user, communities=(), follow=False, exitOnError=False):
 	not_found = set()
 	for com_name in communities:
 		comm = users.Community.get_entity(com_name)
-		if not comm:
+		if not comm or not nti_interfaces.ICommunity.providedBy(com_name):
 			not_found.add(com_name)
-			if exitOnError: break
-		user.record_dynamic_membership(comm)
-		if follow:
-			user.follow( comm )
+			if exitOnError:
+				break
+		else:
+			user.record_dynamic_membership(comm)
+			if follow:
+				user.follow(comm)
 
 	return tuple(not_found)
 
-def _process_args( args ):
+def _process_args(args):
 	user = users.User.get_user(args.username)
 	if not user:
 		print("No user found", args, file=sys.stderr)
@@ -57,3 +60,7 @@ def main():
 
 	env_dir = args.env_dir
 	run_with_dataserver( environment_dir=env_dir, function=lambda: _process_args(args) )
+
+if __name__ == '__main__':
+	main()
+

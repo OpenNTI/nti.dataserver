@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -12,11 +15,12 @@ import argparse
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.users import interfaces as user_interfaces
+
 from nti.externalization.externalization import to_external_object
 
 def create_friends_list(owner, username, realname=None, members=(), dynamic=False, locked=False ):
 	factory = users.DynamicFriendsList if dynamic else users.FriendsList
-	dfl = factory( username=unicode(username) )
+	dfl = factory(username=unicode(username))
 	dfl.creator = owner
 	if dynamic:
 		dfl.Locked = locked
@@ -41,31 +45,31 @@ def _create_fl( args ):
 
 	fl = create_friends_list(owner, args.username, args.name, args.members, args.dynamic, args.locked)
 	if args.verbose:
-		pprint.pprint( to_external_object( fl ) )
+		pprint.pprint(to_external_object(fl))
 
 	return fl
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Create a (Dynamic)FriendsList" )
-	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( 'owner', help="The username of the owner" )
-	arg_parser.add_argument( 'username', help="The username of the new DFL" )
-	arg_parser.add_argument( '-n', '--name',
-							 dest='name',
-							 help="The display name of the list" )
-	arg_parser.add_argument( '--dynamic',
-							 help="Create a Dynamic FriendsList",
-							 action='store_true',
-							 dest='dynamic' )
-	arg_parser.add_argument( '--locked',
-							 help="Lock the DFL. Only valid used with --dynamic",
-							 action='store_true',
-							 dest='locked' )
-	arg_parser.add_argument( '-m', '--members',
-							 dest='members',
-							 nargs="+",
-							 help="The usernames of the entities to add; must already exist" )
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
+	arg_parser.add_argument('owner', help="The username of the owner")
+	arg_parser.add_argument('username', help="The username of the new DFL")
+	arg_parser.add_argument('-n', '--name',
+							dest='name',
+							help="The display name of the list")
+	arg_parser.add_argument('--dynamic',
+							help="Create a Dynamic FriendsList",
+							action='store_true',
+							dest='dynamic')
+	arg_parser.add_argument('--locked',
+							help="Lock the DFL. Only valid used with --dynamic",
+							action='store_true',
+							dest='locked')
+	arg_parser.add_argument('-m', '--members',
+							dest='members',
+							nargs="+",
+							help="The usernames of the entities to add; must already exist")
 	args = arg_parser.parse_args()
 
 	env_dir = args.env_dir
@@ -76,4 +80,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
