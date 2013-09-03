@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+Creates a friend list
+
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
 
 import sys
 import pprint
@@ -14,11 +14,12 @@ import argparse
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.externalization import to_external_object
 
-def create_friends_list(owner, username, realname=None, members=(), dynamic=False, locked=False ):
+def create_friends_list(owner, username, realname=None, members=(), dynamic=False, locked=False):
 	factory = users.DynamicFriendsList if dynamic else users.FriendsList
 	dfl = factory(username=unicode(username))
 	dfl.creator = owner
@@ -37,17 +38,16 @@ def create_friends_list(owner, username, realname=None, members=(), dynamic=Fals
 
 	return dfl
 
-def _create_fl( args ):
-	owner = users.User.get_user( args.owner )
-	if not owner:
+def _create_fl(args):
+	owner = users.User.get_user(args.owner)
+	if not owner or not nti_interfaces.IUser.providedBy(owner):
 		print( "No owner found", args, file=sys.stderr )
 		sys.exit( 2 )
 
-	fl = create_friends_list(owner, args.username, args.name, args.members, args.dynamic, args.locked)
+	result = create_friends_list(owner, args.username, args.name, args.members, args.dynamic, args.locked)
 	if args.verbose:
-		pprint.pprint(to_external_object(fl))
-
-	return fl
+		pprint.pprint(to_external_object(result))
+	return result
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Create a (Dynamic)FriendsList" )

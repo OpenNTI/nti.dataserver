@@ -34,14 +34,14 @@ def join_communities(user, communities=(), follow=False, exitOnError=False):
 
 def _process_args(args):
 	user = users.User.get_user(args.username)
-	if not user:
+	if not user or not nti_interfaces.IUser.providedBy(user):
 		print("No user found", args, file=sys.stderr)
-		sys.exit( 2 )
+		sys.exit(2)
 
 	not_found = join_communities(user, args.communities, args.follow, True)
 	if not_found:
 		print("No community found", args, file=sys.stderr)
-		sys.exit( 3 )
+		sys.exit(3)
 
 	if args.verbose:
 		pprint.pprint(to_external_object(user))
