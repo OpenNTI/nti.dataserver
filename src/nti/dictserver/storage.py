@@ -6,12 +6,14 @@ Various dictionary implementations.
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
 logger = __import__('logging').getLogger(__name__)
 
-import sqlite3
-import simplejson as json
 import re
 import csv
+import sqlite3
+import simplejson as json
 
 from zope import interface
 from zope import component

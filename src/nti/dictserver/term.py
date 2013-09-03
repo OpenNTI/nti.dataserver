@@ -5,17 +5,16 @@ Implementation of dictionary term objects.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from . import interfaces
-
 
 from xml.dom.minidom import getDOMImplementation
+
+from . import interfaces
 
 _InfoRoot = object
 
@@ -24,7 +23,6 @@ class DictionaryTerm(_InfoRoot):
 
 	ipa = None
 	etymology = None
-
 
 	def __init__( self, word ):
 		self.word = word
@@ -52,8 +50,7 @@ class DictionaryTerm(_InfoRoot):
 
 	def toXML( self ):
 		""" Returns a DOM """
-		dom = getDOMImplementation().createDocument( None, 'WordInfo',
-													 None )
+		dom = getDOMImplementation().createDocument(None, 'WordInfo', None)
 
 		top_element = dom.documentElement
 		top_element.setAttribute( 'word', self.word )
@@ -138,8 +135,6 @@ class DictInfo(_InfoRoot):
 		for child in self:
 			child.toXML( dom, info )
 
-
-
 class LinkInfo(_InfoRoot):
 
 	def __init__( self, href, title='Search on Google', source='Google', display='inline'):
@@ -171,7 +166,6 @@ class TherInfo(_InfoRoot):
 		How many synonyms we hold. Note that this also makes us False when empty.
 		"""
 		return len(self.synonyms)
-
 
 	def toXML( self, dom, parent ):
 		if not self.synonyms: return
