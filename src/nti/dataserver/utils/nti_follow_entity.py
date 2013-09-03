@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 """
-Change a user password.
+Follow/Unfollow entities.
 
 $Id$
 """
@@ -23,15 +23,14 @@ def _follow_entities(user, to_follow=(), follow=None, record=None, addFriend=Non
 	not_found = set()
 	member_of = set()
 	for username in to_follow:
-		entity = users.Entity.get_entity( username )
+		entity = users.Entity.get_entity(username)
 		if entity:
 			found.add(username)
-			follow( user, entity )
+			follow(user, entity)
 
 			if nti_interfaces.IDynamicSharingTarget(entity):
-				record( user, entity )
-				addFriend( entity, user )
-
+				record(user, entity)
+				addFriend(entity, user)
 				member_of.add(username)
 		else:
 			not_found.add(username)
@@ -39,6 +38,7 @@ def _follow_entities(user, to_follow=(), follow=None, record=None, addFriend=Non
 	return found, not_found, member_of
 
 def follow_entities(user, to_follow=()):
+
 	def follow(user, entity):
 		user.follow( entity )
 
@@ -52,6 +52,7 @@ def follow_entities(user, to_follow=()):
 	return _follow_entities( user, to_follow=to_follow, follow=follow, record=record, addFriend=add )
 
 def unfollow_entities(user, to_follow=()):
+
 	def follow(user, entity):
 		user.stop_following( entity )
 
@@ -74,6 +75,7 @@ def _action( args ):
 		found, not_found, member_of = unfollow_entities(user, args.follow)
 	else:
 		found, not_found, member_of = follow_entities(user, args.follow)
+
 	if args.verbose:
 		now = "now"
 		follow = "follow"
