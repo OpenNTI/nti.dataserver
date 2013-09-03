@@ -21,7 +21,7 @@ def join_communities(user, communities=(), follow=False, exitOnError=False):
 	not_found = set()
 	for com_name in communities:
 		comm = users.Community.get_entity(com_name)
-		if not comm or not nti_interfaces.ICommunity.providedBy(com_name):
+		if not comm or not nti_interfaces.ICommunity.providedBy(comm):
 			not_found.add(com_name)
 			if exitOnError:
 				break
