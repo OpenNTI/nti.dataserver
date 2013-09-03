@@ -1,18 +1,24 @@
 #!/usr/bin/env python
-""" Session distribution and management. """
+# -*- coding: utf-8 -*
+"""
+Session distribution and management. 
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger( __name__ )
-from ZODB import loglevels
 
-import warnings
 import time
-import simplejson as json
-import cPickle as pickle
 import zlib
 import numbers
+import warnings
 import contextlib
+import transaction
+import cPickle as pickle
+import simplejson as json
+
 try:
 	import gevent
 except ImportError:
@@ -21,30 +27,37 @@ except ImportError:
 from zope import interface
 from zope import component
 from zope.event import notify
-
 from zope.cachedescriptors.property import Lazy
 
-from nti.utils import transactions
-import transaction
-
-from nti.externalization.externalization import toExternalObject, DevmodeNonExternalizableObjectReplacer
+from ZODB import loglevels
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.socketio.interfaces import SocketSessionDisconnectedEvent
-from nti.socketio.interfaces import ISocketIOSocket
-from nti.socketio.interfaces import ISocketSession
-from nti.socketio.persistent_session import AbstractSession as Session
 from nti.dataserver.interfaces import SiteNotInstalledError
 
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import DevmodeNonExternalizableObjectReplacer 
+
+from nti.socketio.interfaces import ISocketIOSocket
+from nti.socketio.interfaces import ISocketSession
+from nti.socketio.interfaces import SocketSessionDisconnectedEvent
+from nti.socketio.persistent_session import AbstractSession as Session
+
+from nti.utils import transactions
+
 class _AlwaysIn(object):
-	"""Everything is `in` this class."""
-	def __init__(self): pass
-	def __contains__(self,obj): return True
+	"""
+	Everything is `in` this class.
+	"""
+
+	def __init__(self):
+		pass
+
+	def __contains__(self, obj):
+		return True
 
 @contextlib.contextmanager
 def _NOP_CM():
 	yield
-
 
 @interface.implementer( nti_interfaces.ISessionService )
 class SessionService(object):
@@ -516,29 +529,24 @@ class SessionService(object):
 
 
 	def get_last_heartbeat_time(self, session_id, session=None ):
-		result = 0
 		# TODO: This gets called a fair amount. Do we need to cache?
 		key_name = self._heartbeat_key( session_id )
 		val = self._redis.get( key_name )
 		result = float( val or '0' )
-
 		return result
-
-
-
 
 # TODO: Find a better spot for this
 @component.adapter(nti_interfaces.IUserNotificationEvent)
-def _send_notification( user_notification_event ):
+def _send_notification(user_notification_event):
 	"""
 	Event handler that sends notifications to connected users.
 	"""
-	sessions = getattr( component.queryUtility( nti_interfaces.IDataserver ), 'session_manager', None )
+	sessions = getattr(component.queryUtility(nti_interfaces.IDataserver), 'session_manager', None)
 	if sessions:
 		for target in user_notification_event.targets:
 			try:
-				sessions.send_event_to_user( target, user_notification_event.name, *user_notification_event.args )
+				sessions.send_event_to_user(target, user_notification_event.name, *user_notification_event.args)
 			except AttributeError: # pragma: no cover
 				raise
 			except Exception: # pragma: no cover
-				logger.exception( "Failed to send %s to %s", user_notification_event, target )
+				logger.exception("Failed to send %s to %s", user_notification_event, target)
