@@ -29,4 +29,4 @@ file:../lib/pywikipedia/#egg=pywikipedia
 # -e git+https://github.com/benoitc/gunicorn.git#egg=gunicorn-dev
 #
 # SymPy
--e git+https://github.com/sympy/sympy.git#egg=simpy
+-e git+https://github.com/sympy/sympy.git#egg=sympy
