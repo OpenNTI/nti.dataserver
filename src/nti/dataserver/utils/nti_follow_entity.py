@@ -1,16 +1,22 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*
+"""
+Change a user password.
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import sys
 import argparse
 from pprint import pprint
 
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
-from nti.externalization.externalization import to_external_object
-
 from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.externalization.externalization import to_external_object
 
 def _follow_entities(user, to_follow=(), follow=None, record=None, addFriend=None):
 	found = set()
@@ -35,20 +41,23 @@ def _follow_entities(user, to_follow=(), follow=None, record=None, addFriend=Non
 def follow_entities(user, to_follow=()):
 	def follow(user, entity):
 		user.follow( entity )
+
 	def record(user, entity ):
 		user.record_dynamic_membership( entity )
+
 	def add(entity, user):
 		if hasattr( entity, 'addFriend' ):
 			entity.addFriend( user )
 
 	return _follow_entities( user, to_follow=to_follow, follow=follow, record=record, addFriend=add )
 
-
 def unfollow_entities(user, to_follow=()):
 	def follow(user, entity):
 		user.stop_following( entity )
+
 	def record(user, entity ):
 		user.record_no_longer_dynamic_member( entity )
+
 	def add(entity, user):
 		if hasattr( entity, 'removeFriend' ):
 			entity.removeFriend( user )
@@ -58,8 +67,8 @@ def unfollow_entities(user, to_follow=()):
 def _action( args ):
 	user = users.User.get_user( args.username )
 	if not user:
-		print( "No user found", args, file=sys.stderr )
-		sys.exit( 2 )
+		print("No user found", args, file=sys.stderr)
+		sys.exit(2)
 
 	if args.unfollow:
 		found, not_found, member_of = unfollow_entities(user, args.follow)
@@ -85,17 +94,20 @@ def _action( args ):
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Make a user (un)follow an existing entity; if a DynamicSharingTarget, they also join it." )
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( 'username', help="The username to edit" )
-	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	arg_parser.add_argument( '-x', '--unfollow', help="Unfollow instead of follow", action='store_true', dest='unfollow')
-	arg_parser.add_argument( '-f', '--follow',
-							 dest='follow',
-							 nargs="+",
-							 required=True,
-							 help="The usernames of the entities to (un)follow" )
+	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
+	arg_parser.add_argument('username', help="The username to edit")
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('-x', '--unfollow', help="Unfollow instead of follow", action='store_true', dest='unfollow')
+	arg_parser.add_argument('-f', '--follow',
+							dest='follow',
+							nargs="+",
+							required=True,
+							help="The usernames of the entities to (un)follow")
 	args = arg_parser.parse_args()
 
 	env_dir = args.env_dir
 
 	run_with_dataserver( environment_dir=env_dir, function=lambda: _action(args) )
+
+if __name__ == '__main__':
+	main()

@@ -1,6 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*
+"""
+Update an existing object.
 
-from __future__ import print_function, unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import os
 import six
@@ -20,9 +26,6 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids import ntiids
 
-import logging
-logger = logging.getLogger( __name__ )
-
 def _get_internal_forbidden_fields():
 	result = set()
 	for k,v in ext_interfaces.StandardExternalFields.__dict__.iteritems():
@@ -38,17 +41,6 @@ def _get_internal_forbidden_fields():
 internal_forbidden_fields = tuple(_get_internal_forbidden_fields())
 input_forbidden_fields = internal_forbidden_fields + ('flattenedSharingTargetNames', 'sharedWith', 'body')
 
-def _create_args_parser():
-	arg_parser = argparse.ArgumentParser( description="Set object attributes." )
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( 'id', help="Object's OID or NTIID" )
-	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')		
-	arg_parser.add_argument( '-j', '--json', dest='json', help="JSON expression" )
-	arg_parser.add_argument( '-i', '--input', dest='input', help="JSON input file" )
-	arg_parser.add_argument( '-f', '--fields', dest='fields', nargs="*", help="Key=value pairs" )
-	arg_parser.add_argument( '--cascade', help="Cascade operation on threadable objects", action='store_true', dest='cascade')	
-	return arg_parser
-	
 def get_ntiid(arg):
 	try:
 		oid = int( arg, 0 )
@@ -87,7 +79,7 @@ def get_external_object(json_exp=None, json_file=None, fields=()):
 def find_object(ntiid):
 	obj = ntiids.find_object_with_ntiid(ntiid)
 	if obj is None:
-		raise Exception("Cannot find object with NTIID '%s'" % ntiid)
+		raise Exception("Cannot find object '%s'" % ntiid)
 	elif not nti_interfaces.IModeledContent.providedBy(obj):
 		raise Exception("Object referenced by '%s' does not implement IModeledContent interface" % ntiid)
 	return obj
@@ -162,6 +154,17 @@ def process_update(oid, json_exp=None, json_file=None, fields=(), cascade=False,
 
 def _process_args(args):
 	process_update(args.id, args.json, args.input, args.fields, args.cascade, args.verbose)
+
+def _create_args_parser():
+	arg_parser = argparse.ArgumentParser(description="Update an object.")
+	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
+	arg_parser.add_argument('id', help="Object's OID or NTIID")
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('-j', '--json', dest='json', help="JSON expression")
+	arg_parser.add_argument('-i', '--input', dest='input', help="JSON input file")
+	arg_parser.add_argument('-f', '--fields', dest='fields', nargs="*", help="Key=value pairs")
+	arg_parser.add_argument('--cascade', help="Cascade operation on threadable objects", action='store_true', dest='cascade')
+	return arg_parser
 
 def main():
 	arg_parser = _create_args_parser()
