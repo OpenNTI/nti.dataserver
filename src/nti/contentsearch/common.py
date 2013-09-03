@@ -113,6 +113,14 @@ def get_type_name(obj):
 		result = None
 	return normalize_type_name(result) if result else u''
 
+def get_mimetype_from_type(name):
+	name = name.lower() if name else u''
+	mmap = get_mime_type_map()
+	for k, v in mmap.items():
+		if v == name:
+			return k
+	return None
+
 def get_type_from_mimetype(mt):
 	mt = mt.lower() if mt else u''
 	mmap = get_mime_type_map()

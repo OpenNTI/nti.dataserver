@@ -9,13 +9,15 @@ __docformat__ = "restructuredtext en"
 
 from ZODB.POSException import POSKeyError
 
-from .. import constants
-from . import find_user_dfls
-from .. import get_indexable_types
-from .. import interfaces as search_interfaces
+from nti.contentsearch import constants
+from nti.contentsearch import get_indexable_types
+from nti.contentsearch.utils import find_user_dfls
+from nti.contentsearch import interfaces as search_interfaces
 
 def remove_rim_catalogs(rim, content_types=()):
-	"""remove all the repoze catalogs from the specified entity manager"""
+	"""
+	Remove all the repoze catalogs from the specified entity manager
+	"""
 	count = 0
 	content_types = content_types if content_types else get_indexable_types()
 	for key in list(rim.keys()):
@@ -25,7 +27,9 @@ def remove_rim_catalogs(rim, content_types=()):
 	return count
 
 def remove_entity_catalogs(entity, content_types=()):
-	"""remove all the repoze catalogs from the specified entity"""
+	"""
+	Remove all the repoze catalogs from the specified entity
+	"""
 	result = 0
 	content_types = content_types if content_types else get_indexable_types()
 	try:
