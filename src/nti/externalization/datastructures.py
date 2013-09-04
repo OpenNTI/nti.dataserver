@@ -1,31 +1,40 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Datastructures to help externalization.
 
 $Id$
 """
-from __future__ import unicode_literals, print_function
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
+import six
 import sys
-logger = __import__('logging').getLogger( __name__ )
-
-import ZODB
+import numbers
 
 from zope import interface
 from zope import schema
 from zope.schema import interfaces as sch_interfaces
 
+import ZODB
+
 from nti.utils.schema import find_most_derived_interface
 
-from .interfaces import IExternalObject
-from .interfaces import IInternalObjectIO
-from .interfaces import ILocatedExternalMapping
-from .interfaces import ILocatedExternalSequence
 from .interfaces import StandardInternalFields
 from .interfaces import StandardExternalFields
+from .internalization import validate_named_field_value
 from .externalization import to_standard_external_dictionary, toExternalObject
 from .externalization import to_minimal_standard_external_dictionary
-from .internalization import validate_named_field_value
+
+#  BWC export
+from .interfaces import IExternalObject
+from .interfaces import IInternalObjectIO
+from .interfaces import LocatedExternalDict
+from .interfaces import LocatedExternalList
+from .interfaces import ILocatedExternalMapping
+from .interfaces import ILocatedExternalSequence
 
 def _syntheticKeys( ):
 	return ('OID', 'ID', 'Last Modified', 'Creator', 'ContainerId', 'Class')
@@ -36,10 +45,6 @@ def _isMagicKey( key ):
 	return key in _syntheticKeys()
 
 isSyntheticKey = _isMagicKey
-
-# BWC export
-from .interfaces import LocatedExternalDict
-from .interfaces import LocatedExternalList
 
 class ExternalizableDictionaryMixin(object):
 	""" Implements a toExternalDictionary method as a base for subclasses. """
@@ -239,8 +244,6 @@ class ExternalizableInstanceDict(AbstractDynamicObjectIO):
 		except (AttributeError) as e: # Another weird database-related issue
 			return '<%s(%s)>' % (self.__class__.__name__, e)
 
-import six
-import numbers
 _primitives = six.string_types + (numbers.Number,bool)
 
 class _InterfaceCache(object):

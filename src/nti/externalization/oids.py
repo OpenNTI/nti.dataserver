@@ -1,24 +1,29 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Functions for externalizing OIDs.
-$Revision$
+
+$Id$
 """
-from __future__ import print_function, absolute_import, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import six
 import collections
 
 from zope import component
-
 from zope.security.management import system_user
 
-from ZODB.interfaces import IConnection
 from zc import intid as zc_intid
 
-from nti.ntiids import ntiids
-from . import integer_strings
+from ZODB.interfaces import IConnection
 
+from nti.ntiids import ntiids
 from nti.utils.proxy import removeAllProxies
+
+from . import integer_strings
 
 #disable: accessing protected members
 #pylint: disable=W0212
@@ -63,7 +68,7 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 				jar = IConnection(self)
 				jar.add( self )
 				oid = self._p_oid
-			except Exception as e:
+			except Exception:
 				return default
 		else:
 			return default
@@ -155,7 +160,6 @@ def fromExternalOID( ext_oid ):
 from_external_oid = fromExternalOID
 
 DEFAULT_EXTERNAL_CREATOR = system_user.id
-
 
 def to_external_ntiid_oid( contained, default_oid=None, add_to_connection=False, add_to_intids=False ):
 	"""

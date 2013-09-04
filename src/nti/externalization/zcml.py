@@ -6,13 +6,14 @@ for mime types.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope.component.factory import Factory
 import zope.configuration.fields
 from zope import interface
+from zope.component.factory import Factory
 from zope.component import zcml as component_zcml
 
 import ZODB.POSException

@@ -1,29 +1,33 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Functions for taking externalized objects and creating application
 model objects.
+
+$Id$
 """
-from __future__ import print_function, unicode_literals
-
-import sys
-import collections
-import inspect
-import six
-import numbers
-
-from zope import component
-from zope import interface
-
-from persistent.interfaces import IPersistent
-from zope.schema import interfaces as sch_interfaces
-from zope.dottedname.resolve import resolve
-
-from zope.lifecycleevent import ObjectModifiedEvent, Attributes
-import zope.event
-
-from . import interfaces
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+import six
+import sys
+import inspect
+import isodate
+import numbers
+import collections
+
+import zope.event
+from zope import component
+from zope import interface
+from zope.dottedname.resolve import resolve
+from zope.schema import interfaces as sch_interfaces
+from zope.lifecycleevent import ObjectModifiedEvent, Attributes
+
+from persistent.interfaces import IPersistent
+
+from . import interfaces
 
 LEGACY_FACTORY_SEARCH_MODULES = set()
 
@@ -158,7 +162,7 @@ def _resolve_externals(object_io, updating_object, externalObject, registry=comp
 
 	for ext_key, resolver_func in getattr( object_io, '__external_resolvers__', {} ).iteritems():
 		if not externalObject.get( ext_key ):
-			 continue
+			continue
 		# classmethods and static methods are implemented with descriptors,
 		# which don't work when accessed through the dictionary in this way,
 		# so we special case it so instances don't have to.
@@ -216,7 +220,7 @@ def update_from_external_object( containedObject, externalObject,
 	:return: `containedObject` after updates from `externalObject`
 	"""
 
-	kwargs = dict( registry=registry, context=context, require_updater=require_updater, notify=notify, object_hook=object_hook )
+	kwargs = dict(registry=registry, context=context, require_updater=require_updater, notify=notify, object_hook=object_hook)
 
 	# Parse any contained objects
 	# TODO: We're (deliberately?) not actually updating any contained
@@ -434,7 +438,6 @@ def validate_named_field_value( self, iface, field_name, value ):
 	return lambda: setattr( self, field_name, value )
 
 
-import isodate
 def _date_from_string( string ):
 	# This:
 	#   datetime.date.fromtimestamp( zope.datetime.time( string ) )
