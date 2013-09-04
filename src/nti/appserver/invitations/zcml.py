@@ -5,20 +5,17 @@ Directives to be used in ZCML: registering static invitations with known codes.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
-import zope.configuration.fields
 from zope import interface
 from zope import component
+import zope.configuration.fields
 
-
-from . import interfaces as invite_interfaces
 from . import invitation
+from . import interfaces as invite_interfaces
 
 class IRegisterJoinCommunityInvitationDirective(interface.Interface):
 	"""
@@ -36,18 +33,17 @@ class IRegisterJoinCommunityInvitationDirective(interface.Interface):
 		value_type = zope.configuration.fields.TextLine(title="The entity identifier."),
 		)
 
-def _register( code, entities ):
-	invitations = component.getUtility( invite_interfaces.IInvitations )
-	invitations.registerInvitation( invitation.JoinCommunityInvitation( code, entities ) )
+def _register(code, entities):
+	invitations = component.getUtility(invite_interfaces.IInvitations)
+	invitations.registerInvitation(invitation.JoinCommunityInvitation(code, entities))
 
-def registerJoinCommunityInvitation( _context, code, entities ):
+def registerJoinCommunityInvitation(_context, code, entities):
 	"""
 	Register an invitation with the given code that, at runtime,
 	will resolve and try to join the named entities.
 
 	:param module module: The module to inspect.
 	"""
-	_context.action(
-		discriminator=('registerJoinCommunityInvitation', code ),
-		callable=_register,
-		args=(code,entities) )
+	_context.action(discriminator=('registerJoinCommunityInvitation', code),
+					callable=_register,
+					args=(code, entities))

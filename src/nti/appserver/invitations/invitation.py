@@ -5,7 +5,6 @@ Implementations of the :class:`nti.appserver.invitations.interfaces.IInvitation`
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -14,16 +13,15 @@ logger = __import__('logging').getLogger(__name__)
 import persistent
 
 from zope import interface
-
-from zope.container import contained
 from zope.event import notify
-
+from zope.container import contained
 from zope.annotation import interfaces as an_interfaces
-from . import interfaces as invite_interfaces
+
+from nti.dataserver import users
+from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.dataserver import datastructures
-from nti.dataserver import users
+from . import interfaces as invite_interfaces
 
 @interface.implementer(invite_interfaces.IInvitation, an_interfaces.IAttributeAnnotatable)
 class BaseInvitation(datastructures.CreatedModDateTrackingObject,contained.Contained):
@@ -33,12 +31,13 @@ class BaseInvitation(datastructures.CreatedModDateTrackingObject,contained.Conta
 
 	code = None
 
-	def accept( self, user ):
+	def accept(self, user):
 		"""
 		This implementation simply broadcasts the accept event.
 		"""
-		if not user: raise ValueError()
-		notify( invite_interfaces.InvitationAcceptedEvent( self, user ) )
+		if not user:
+			raise ValueError()
+		notify(invite_interfaces.InvitationAcceptedEvent(self, user))
 
 
 class PersistentInvitation(persistent.Persistent,BaseInvitation):
@@ -59,8 +58,8 @@ class JoinEntitiesInvitation(ZcmlInvitation):
 
 	creator = nti_interfaces.SYSTEM_USER_NAME
 
-	def __init__( self, code, entities ):
-		super(JoinCommunityInvitation,self).__init__()
+	def __init__(self, code, entities):
+		super(JoinEntitiesInvitation, self).__init__()
 		self.code = code
 		self.entities = entities
 
@@ -68,21 +67,21 @@ class JoinEntitiesInvitation(ZcmlInvitation):
 		for entity_name in self.entities:
 			entity = users.Entity.get_entity( entity_name )
 			if entity is None:
-				logger.warn( "Unable to accept invitation to join non-existent entity %s", entity_name )
+				logger.warn("Unable to accept invitation to join non-existent entity %s", entity_name)
 				continue
 			yield entity
 
-	def accept( self, user ):
+	def accept(self, user):
 		for entity in self._iter_entities():
 			if nti_interfaces.ICommunity.providedBy( entity ):
-				logger.info( "Accepting invitation to join community %s", entity )
-				user.record_dynamic_membership( entity )
-				user.follow( entity )
-			elif nti_interfaces.IFriendsList.providedBy( entity ):
-				logger.info( "Accepting invitation to join DFL %s", entity )
-				entity.addFriend( user )
+				logger.info("Accepting invitation to join community %s", entity)
+				user.record_dynamic_membership(entity)
+				user.follow(entity)
+			elif nti_interfaces.IFriendsList.providedBy(entity):
+				logger.info("Accepting invitation to join DFL %s", entity)
+				entity.addFriend(user)
 			else:
-				logger.warn( "Don't know how to accept invitation to join entity %s", entity )
-		super(JoinCommunityInvitation,self).accept( user )
+				logger.warn("Don't know how to accept invitation to join entity %s", entity)
+		super(JoinEntitiesInvitation, self).accept(user)
 
 JoinCommunityInvitation = JoinEntitiesInvitation
