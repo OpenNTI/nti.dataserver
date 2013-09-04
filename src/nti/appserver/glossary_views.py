@@ -26,24 +26,32 @@ content, class or personal glossaries, the clarity is a net win (since it's one 
 would have to be crammed into a ``Vary`` header, and we can probably set longer expiration
 times).
 
-
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import datetime
+from cStringIO import StringIO
 
-from pyramid.view import view_config, view_defaults
+from zope import component
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+
 from pyramid import httpexceptions as hexc
+from pyramid.view import view_config, view_defaults
 
-import nti.contentlibrary.interfaces as lib_interfaces
 import nti.appserver.interfaces as app_interfaces
-import nti.dictserver.interfaces as dict_interfaces
+
+from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.eclipse import MAIN_CSV_CONTENT_GLOSSARY_FILENAME
+
+from nti.dataserver import authorization as nauth
 
 import nti.dictserver as dictserver
-from nti.dataserver import authorization as nauth
+import nti.dictserver.interfaces as dict_interfaces
+from nti.dictserver.storage import TrivialExcelCSVDataStorage
 
 @view_defaults(name='Glossary',
 			   route_name='objects.generic.traversal',
@@ -102,20 +110,10 @@ class GlossaryView(object):
 
 		return request.response
 
-from zope import component
-from zope.lifecycleevent.interfaces import IObjectCreatedEvent
-
-from nti.contentlibrary import interfaces as lib_interfaces
-from nti.contentlibrary.eclipse import MAIN_CSV_CONTENT_GLOSSARY_FILENAME
-from cStringIO import StringIO
-
-from nti.dictserver.storage import TrivialExcelCSVDataStorage
-
 @component.adapter(lib_interfaces.IContentPackage,IObjectCreatedEvent)
 def add_main_glossary_from_new_content( title, event ):
 	glossary_source = title.read_contents_of_sibling_entry( MAIN_CSV_CONTENT_GLOSSARY_FILENAME )
 	if glossary_source:
 		logger.info( "Adding content-glossary from %s at %s", title, title.ntiid )
-
 		csv_dict = TrivialExcelCSVDataStorage( StringIO( glossary_source ) )
 		component.provideUtility( csv_dict, name=title.ntiid )
