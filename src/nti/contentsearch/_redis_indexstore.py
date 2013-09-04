@@ -21,7 +21,7 @@ from ZODB import loglevels
 from nti.dataserver import interfaces as nti_interfaces
 
 SLEEP_WAIT_TIME = 10
-EXPIRATION_TIME_IN_SECS = 120
+EXPIRATION_TIME_IN_SECS = 86400
 DEFAULT_QUEUE_NAME = u'nti/indexing/ops'
 
 ADD_OPERATION = 'add'
