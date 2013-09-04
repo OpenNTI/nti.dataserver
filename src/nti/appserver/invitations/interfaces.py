@@ -23,17 +23,14 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
-from zope import interface
-from zope.interface.interfaces import ObjectEvent, IObjectEvent
 from zope import schema
-
+from zope import interface
 from zope.schema import ValidationError
-
 from zope.annotation import interfaces as an_interfaces
-from nti.dataserver import interfaces as nti_interfaces
 from zope.container import interfaces as cnt_interfaces
+from zope.interface.interfaces import ObjectEvent, IObjectEvent
 
-
+from nti.dataserver import interfaces as nti_interfaces
 
 class IInvitation(cnt_interfaces.IContained,
 				  nti_interfaces.ICreated,
@@ -125,7 +122,6 @@ class IInvitationEvent(IObjectEvent):
 	object = schema.Object(IInvitation,
 						   title="The invitation.")
 
-
 class IInvitationAcceptedEvent(IInvitationEvent):
 	"""
 	An invitation has been accepted.
@@ -133,14 +129,12 @@ class IInvitationAcceptedEvent(IInvitationEvent):
 	user = schema.Object(nti_interfaces.IUser,
 						 title="The user that accepted the invitation.")
 
-
 @interface.implementer(IInvitationAcceptedEvent)
 class InvitationAcceptedEvent(ObjectEvent):
 
 	def __init__(self, obj, user):
 		super(InvitationAcceptedEvent, self).__init__(obj)
 		self.user = user
-
 
 class InvitationValidationError(ValidationError):
 	"""
