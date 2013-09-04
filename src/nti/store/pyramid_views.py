@@ -161,7 +161,7 @@ class _PostView(object):
 
 	def readInput(self):
 		request = self.request
-		values = simplejson.loads(unicode(request.body, request.charset))
+		values = simplejson.loads(unicode(request.body, request.charset)) if request.body else {}
 		return CaseInsensitiveDict(**values)
 
 class RedeemPurchaseCodeView(_PostView):
