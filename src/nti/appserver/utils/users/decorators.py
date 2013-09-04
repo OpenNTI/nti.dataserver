@@ -32,7 +32,7 @@ class PreferencesDecorator(object):
 
 	def decorateExternalMapping(self, context, mapping):
 		request = get_current_request()
-		if request is None:
+		if request is not None:
 			dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
 			remote_user = get_remote_user(request, dataserver) if dataserver else None
 			if remote_user != context:
