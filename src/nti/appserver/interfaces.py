@@ -4,24 +4,29 @@
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
 from zope.interface.common import mapping
+from zope.location.interfaces import ILocation
 from zope.traversing import interfaces as trv_interfaces
+
+from pyramid import interfaces as pyramid_interfaces
+
+from dolmen.builtins import IUnicode
+
+from nti.contentlibrary import interfaces as lib_interfaces
 
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
-from pyramid import interfaces as pyramid_interfaces
-
-from nti.contentlibrary import interfaces as lib_interfaces
-from zope.location.interfaces import ILocation
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder  # BWC
+from nti.dataserver.users.interfaces import IContactEmailRecovery
 
 from nti.utils.schema import Object
 from nti.utils.schema import IndexedIterable as TypedIterable
 
-from dolmen.builtins import IUnicode
-
+IContactEmailRecovery = IContactEmailRecovery  # BBB
 
 class IUserRootResource(ILocation):
 	"""
@@ -124,7 +129,6 @@ class IUserService(IService):
 	"""
 	user_workspace = Object( IUserWorkspace, title="The main workspace for the user" )
 	user = Object(nti_interfaces.IUser, title="The user" )
-
 
 class ICreatableObjectFilter(interface.Interface):
 	"""
@@ -314,7 +318,7 @@ class UserUpgradedEvent(_UserEventWithRequest):
 	upgraded_interface = None
 	upgraded_profile = None
 
-	def __init__( self, user, restricted_interface=None, restricted_profile=None, upgraded_interface=None, upgraded_profile=None, request=None ):
+	def __init__(self, user, restricted_interface=None, restricted_profile=None, upgraded_interface=None, upgraded_profile=None, request=None):
 		super(UserUpgradedEvent,self).__init__( user, request=request )
 		for k in UserUpgradedEvent.__dict__:
 			if k in locals() and locals()[k]:
@@ -330,7 +334,6 @@ class IResponseRenderer(pyramid_interfaces.IRenderer):
 	The default implementation will use the externalization machinery,
 	specialized implementations will directly access and return data.
 	"""
-
 
 class IResponseCacheController(pyramid_interfaces.IRenderer):
 	"""
@@ -368,7 +371,6 @@ class IUncacheableUnModifiedInResponse(IUncacheableInResponse,IUnModifiedInRespo
 	Marker interface for things that not only should not be cached but should provide
 	no Last-Modified date at all.
 	"""
-
 
 class IModeratorDealtWithFlag(interface.Interface):
 	"""
@@ -411,8 +413,6 @@ class IUseTheRequestContextUGDExternalCollection(IUGDExternalCollection):
 	view. If you do have to calculate the view, you are assured that the ETag values
 	that the view results create are the same as the ones you checked against.
 	"""
-
-from nti.dataserver.interfaces import IDeletedObjectPlaceholder # BWC
 
 ###
 # Traversing into objects
@@ -524,11 +524,6 @@ class IUserSearchPolicy(interface.Interface):
 			possibly empty, that match the search term, according to the rules of the
 			policy.
 		"""
-
-
-
-from nti.dataserver.users.interfaces import IContactEmailRecovery
-IContactEmailRecovery = IContactEmailRecovery # BBB
 
 ###
 # Additional indexed data storage

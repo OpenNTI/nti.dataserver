@@ -3,40 +3,41 @@
 """
 Views relating to flagging and moderating flagged objects.
 
-
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger('__name__')
+logger = __import__('logging').getLogger(__name__)
+
 from . import MessageFactory as _
-
-from pyramid.security import authenticated_userid
-import pyramid.httpexceptions  as hexc
-from pyramid.view import view_config
-from pyramid.request import Request
 
 from zope import interface
 from zope import component
+
 from zc import intid as zc_intid
+
+from pyramid.request import Request
+from pyramid.view import view_config
+import pyramid.httpexceptions  as hexc
+from pyramid.security import authenticated_userid
 
 from nti.appserver import _util
 from nti.appserver import interfaces as app_interfaces
 
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import flagging
 from nti.dataserver import authorization as nauth
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.internalization import update_from_external_object
 
+from .interfaces import IModeratorDealtWithFlag  # BWC export
+
 FLAG_VIEW = 'flag'
-FLAG_AGAIN_VIEW = 'flag.metoo'
 UNFLAG_VIEW = 'unflag'
-
-from .interfaces import IModeratorDealtWithFlag # BWC export
-
+FLAG_AGAIN_VIEW = 'flag.metoo'
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IFlaggable)
@@ -60,14 +61,13 @@ class FlagLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 
 		super(FlagLinkDecorator,self).decorateExternalMapping( context, mapping )
 
-def _do_flag( f, request ):
+def _do_flag(f, request):
 	try:
 		f( request.context, authenticated_userid( request ) )
 		return _util.uncached_in_response( request.context )
 	except KeyError: # pragma: no cover
 		logger.warn( "Attempting to un/flag something not found. Was it deleted and the link is stale? %s", request.context, exc_info=True )
 		raise hexc.HTTPNotFound()
-
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -111,14 +111,12 @@ def _UnFlagView(request):
 	"""
 	return _do_flag( flagging.unflag_object, request )
 
-
 ########
 ## Right here is code for a moderation view:
 ## There is a static template that views all
 ## flagged objects and presents two options: delete to remove the object,
 ## and 'unflag' to unflag the object. The view code will accept the POST of that
 ## form and take the appropriate actions.
-
 
 from z3c.table import table
 from zope.publisher.interfaces.browser import IBrowserRequest
@@ -191,7 +189,7 @@ def moderation_admin_post( request ):
 			subrequest.environ['REMOTE_USER'] = creator
 			subrequest.environ['repoze.who.identity'] = {'repoze.who.userid': creator}
 			try:
-				response = request.invoke_subrequest( subrequest ) # Don't use tweens, run in same site, same transaction
+				request.invoke_subrequest(subrequest)  # Don't use tweens, run in same site, same transaction
 			except (hexc.HTTPForbidden,hexc.HTTPMethodNotAllowed): # What else to catch?
 				del_item = None
 				try:
@@ -205,12 +203,10 @@ def moderation_admin_post( request ):
 					update_from_external_object( item, {'body': [_("This item has been deleted by the moderator.")] } )
 					logger.warn( "Failed to delete moderated item %s", item )
 
-
 	# Else, no action.
 	# Redisplay the page with a get request to avoid the "re-send this POST?" problem
 	get_path = request.path  + (('?' + request.query_string) if request.query_string else '')
 	return hexc.HTTPFound(location=get_path)
-
 
 class ModerationAdminTable(table.SequenceTable):
 	pass

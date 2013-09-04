@@ -6,7 +6,6 @@ functionality for items in the content library.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -15,12 +14,13 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 
-from nti.ntiids.ntiids import find_object_with_ntiid
-from nti.contentprocessing.metadata_extractors import ContentMetadata
+from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing.metadata_extractors import ImageMetadata
+from nti.contentprocessing.metadata_extractors import ContentMetadata
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 @interface.implementer(cp_interfaces.IContentMetadataURLHandler)
 class TagURLHandler(object):
@@ -33,7 +33,6 @@ class TagURLHandler(object):
 		obj = find_object_with_ntiid( url )
 		if obj is not None:
 			return cp_interfaces.IContentMetadata( obj, None )
-
 
 @interface.implementer(cp_interfaces.IContentMetadata)
 @component.adapter(lib_interfaces.IContentUnit)

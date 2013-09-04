@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Support for running the application with gunicorn.
 
@@ -10,20 +11,25 @@ You must use our worker (:class:`GeventApplicationWorker`), configured with past
 	port = %(http_port)s
 	worker_class =  nti.appserver.gunicorn.GeventApplicationWorker
 	workers = 1
-"""
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 import logging
 logger = logging.getLogger(__name__)
+
 import os
 
 from pyramid.security import unauthenticated_userid
 from pyramid.threadlocal import get_current_request
 
 import gunicorn
-import gunicorn.workers.ggevent as ggevent
 import gunicorn.http.wsgi
+import gunicorn.workers.ggevent as ggevent
+from gunicorn.app.pasterapp import PasterServerApplication
+
 try:
 	# gunicorn 0.17.2 finally finishes the process
 	# of enforcing proper byte bodies (not unicode)
@@ -39,7 +45,6 @@ import gevent.socket
 
 from .application_server import FlashPolicyServer
 from .application_server import WebSocketServer
-
 
 from paste.deploy import loadwsgi
 
@@ -70,6 +75,7 @@ class _PhonyRequest(object):
 	body = None
 	version = (1,0)
 	proxy_protocol_info = None # added in 0.15.0
+
 	def get_input_headers(self):
 		raise Exception("Not implemented for phony request")
 
@@ -417,7 +423,6 @@ def _pre_exec( arbiter ):
 	# but before exec'ing the new master
 	notify( _GunicornDidForkWillExec( arbiter ) )
 
-from gunicorn.app.pasterapp import PasterServerApplication
 class _PasterServerApplication(PasterServerApplication):
 	"""
 	Exists to prevent loading of the app multiple times.
@@ -431,7 +436,6 @@ class _PasterServerApplication(PasterServerApplication):
 		self.cfg.set( 'pre_exec', _pre_exec )
 		if self.cfg.pidfile is None:
 			# Give us a pidfile in the $DATASERVER_DIR var directory
-			import os
 			ds_dir = os.environ.get( 'DATASERVER_DIR' )
 			if ds_dir:
 				pidfile = os.path.join( ds_dir, 'var', 'gunicorn.pid' )
@@ -463,7 +467,6 @@ class _PasterServerApplication(PasterServerApplication):
 		if self.app is None:
 			self.app = loadwsgi.loadapp(self.cfgurl, name='dataserver_gunicorn', relative_to=self.relpath)
 		return self.app
-
 
 def paste_server_runner(app, gcfg=None, host="127.0.0.1", port=None, *args, **kwargs):
 	"""

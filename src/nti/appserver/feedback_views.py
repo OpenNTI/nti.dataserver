@@ -5,7 +5,6 @@ Views relating to sending feedback.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -13,22 +12,14 @@ logger = __import__('logging').getLogger(__name__)
 
 import textwrap
 
-from zope import interface
-from zope import component
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.appserver import interfaces as app_interfaces
-from pyramid import interfaces as pyramid_interfaces
-
 from pyramid.view import view_config
 from pyramid import security as psec
 
-from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
+from nti.dataserver import interfaces as nti_interfaces
 
-from . import httpexceptions as hexc
-from ._util import link_belongs_to_user
 from . import _email_utils
+from . import httpexceptions as hexc
 from ._external_object_io import read_body_as_external_object
 
 #: The link relationship type to which an authenticated
