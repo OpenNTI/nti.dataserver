@@ -17,7 +17,6 @@ entry_points = {
 		"nti_set_password = nti.dataserver.utils.nti_set_password:main",
 		"nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",
 		"nti_remove_user = nti.dataserver.utils.nti_remove_user:main",
-		"nti_update_object = nti.dataserver.utils.nti_update_object:main",
 		"nti_set_user_attribute = nti.dataserver.utils.nti_set_user_attribute:main",
 		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
 		"nti_index_listener = nti.appserver.application:index_listener_main",
