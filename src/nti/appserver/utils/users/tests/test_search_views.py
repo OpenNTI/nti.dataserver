@@ -107,7 +107,7 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 			assert_that(hits, has_length(0))
 
 	@WithSharedApplicationMockDS
-	def test_reindex_zero_mimetype(self):
+	def test_reindex_with_mimetype(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = self._create_user()
 			self._create_notes(u)
