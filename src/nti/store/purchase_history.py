@@ -154,6 +154,7 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 
 	def register_purchase(self, purchase):
 		locate(purchase, self, repr(purchase))
+		# fire event to get an iid
 		lifecycleevent.added(purchase)
 		self._index.add(purchase)
 
@@ -161,6 +162,7 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 
 	def remove_purchase(self, purchase):
 		if self._index.remove(purchase):
+			# fire to remove iid
 			lifecycleevent.removed(purchase)
 			return True
 		return False
