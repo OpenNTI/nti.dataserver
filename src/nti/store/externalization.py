@@ -99,7 +99,6 @@ class PurchasableDecorator(object):
 
 	def set_links(self, request, username, original, external):
 		if original.Amount:
-			request = get_current_request()
 			_ds_path = os.path.split(request.current_route_path())[0]
 			_links = external.setdefault(LINKS, [])
 
@@ -159,7 +158,6 @@ class CourseDecorator(PurchasableDecorator):
 		if original.Amount is not None:
 			super(CourseDecorator, self).set_links(request, username, original, external)
 		else:
-			request = get_current_request()
 			_ds_path = os.path.split(request.current_route_path())[0]
 			if not purchase_history.has_history_by_item(username, original.NTIID):
 				erroll_path = _ds_path + '/enroll_course'
