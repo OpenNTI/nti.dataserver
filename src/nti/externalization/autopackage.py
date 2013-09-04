@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -71,12 +68,12 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 			pass
 		for mod_name in cls._ap_enumerate_module_names():
 			mod = dottedname.resolve( package_name + '.' + mod_name )
-			for k, v in mod.__dict__.items():
+			for _, v in mod.__dict__.items():
 				# ignore imports and non-concrete classes
 				# NOTE: using issubclass to properly support metaclasses
 				if getattr( v, '__module__', None) != mod.__name__ or not issubclass( type(v), type ):
 					continue
-				implementation_name = k
+				# implementation_name = k
 				implementation_class = v
 				# Does this implement something that should be externalizable?
 				if any( (iface.queryTaggedValue( '__external_class_name__') for iface in interface.implementedBy(implementation_class)) ):

@@ -6,23 +6,27 @@ Classes and functions for dealing with persistence in an external context.
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import collections
 
+from zope import interface
+
 import persistent
-import persistent.mapping
 import persistent.wref
 import persistent.list
+import persistent.mapping
 from persistent.wref import WeakRef as PWeakRef
 
 
-from zope import interface
 from nti.utils.proxy import removeAllProxies
 
 from . import datastructures
-from .externalization import toExternalObject
-from .interfaces import IExternalObject
 from .oids import toExternalOID
+from .interfaces import IExternalObject
+from .externalization import toExternalObject
 
 #disable: accessing protected members
 #pylint: disable=W0212

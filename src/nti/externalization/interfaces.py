@@ -1,17 +1,21 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Externalization Interfaces
 
-from __future__ import unicode_literals
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-
 from zope.location import ILocation
-from zope.interface.common.mapping import IFullMapping
-from zope.interface.common.sequence import ISequence
-
 from zope.component.interfaces import IFactory
-
-#pylint: disable=E0213,E0211
+from zope.interface.common.sequence import ISequence
+from zope.interface.common.mapping import IFullMapping
 
 class StandardExternalFields(object):
 	"""
@@ -30,9 +34,7 @@ class StandardExternalFields(object):
 	LINKS = 'Links'
 	HREF = 'href'
 
-
 StandardExternalFields.ALL = (lambda : [ v for k,v in StandardExternalFields.__dict__.iteritems() if not k.startswith( '_' ) ])()
-
 
 class StandardInternalFields(object):
 	"""
@@ -48,7 +50,6 @@ class StandardInternalFields(object):
 	LAST_MODIFIEDU = 'LastModified'
 	CREATED_TIME = 'createdTime'
 	CONTAINER_ID = 'containerId'
-
 
 class IInternalObjectExternalizer(interface.Interface):
 	"""

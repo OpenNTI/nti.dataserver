@@ -11,16 +11,19 @@ of :mod:`zope.dublincore.interfaces`.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
 
+from zope.dublincore import interfaces as dub_interfaces
+
+from nti.externalization.singleton import SingletonDecorator
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.singleton import SingletonDecorator
-
-from zope.dublincore import interfaces as dub_interfaces
 
 # Note that its fairly common for things to claim to implement these interfaces,
 # but only provide a subset of the properties. (mostly due to programming errors).
