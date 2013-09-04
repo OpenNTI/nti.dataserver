@@ -13,7 +13,10 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
+from pyramid.threadlocal import get_current_request
+
 from nti.appserver._util import link_belongs_to_user
+from nti.appserver._view_utils import get_remote_user
 
 from nti.dataserver.links import Link
 from nti.dataserver import interfaces as nti_interfaces
@@ -28,6 +31,13 @@ class PreferencesDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping(self, context, mapping):
+		request = get_current_request()
+		if request is None:
+			dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
+			remote_user = get_remote_user(request, dataserver) if dataserver else None
+			if remote_user != context:
+				return
+
 		the_links = mapping.setdefault(ext_interfaces.StandardExternalFields.LINKS, [])
 		for name, method in (('set_preferences', 'POST'), ('get_preferences', 'GET'), ('delete_preferences', 'DELETE')):
 			link = Link( context,
