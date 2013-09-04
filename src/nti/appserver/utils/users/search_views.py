@@ -3,7 +3,7 @@
 """
 User search views.
 
-$Id: export_views.py 23778 2013-08-29 20:38:14Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
+import simplejson
 import collections
 
 from pyramid.view import view_config
@@ -55,13 +56,22 @@ def _parse_mime_types(value):
 		mime_types.discard(u'')
 	return mime_types
 
+def _remove_catalogs(entity, content_types=()):
+	count = 0
+	rim = search_interfaces.IRepozeEntityIndexManager(entity)
+	for key in list(rim.keys()):
+		if not content_types or key in content_types:
+			rim.pop(key, None)
+			count += 1
+	return count
+
 def _do_content_reindex(entity, predicate):
 	t = time.time()
 	countermap = collections.defaultdict(int)
 	for e, obj in search_utils.find_all_indexable_pairs(entity, predicate):
 		try:
-			rim = search_interfaces.IRepozeEntityIndexManager(e, None)
-			catalog = rim.get_create_catalog(obj) if rim is not None else None
+			rim = search_interfaces.IRepozeEntityIndexManager(e)
+			catalog = rim.get_create_catalog(obj)
 			if catalog is not None:
 				docid = discriminators.query_uid(obj)
 				if docid is not None:
@@ -80,26 +90,28 @@ def _do_content_reindex(entity, predicate):
 			 request_method='POST',
 			 permission=nauth.ACT_MODERATE)
 def reindex_content(request):
-	values = CaseInsensitiveDict(request.params)
+	values = simplejson.loads(unicode(request.body, request.charset)) if request.body else {}
+	values = CaseInsensitiveDict(**values)
 	username = values.get('username', authenticated_userid(request))
-	user = users.User.get_user(username)
-	if not user:
-		raise hexc.HTTPNotFound(detail='User not found')
+	entity = users.User.get_entity(username)
+	if not entity:
+		raise hexc.HTTPNotFound(detail='Entity not found')
 
 	mime_types = values.get('mime_types', values.get('mimeTypes'))
-	mime_types = _parse_mime_types(mime_types)
+	mime_types = _parse_mime_types(mime_types) if mime_types else ()
 	content_types = {common.get_type_from_mimetype(x) for x in mime_types}
 	content_types.discard(None)
 
-	if not content_types:
+	if not content_types and not mime_types:
 		predicate = None  # ALL
 	else:
 		predicate = lambda x:False
 		for t in content_types:
 			f = _func_map.get(t)
-			predicate = _combine_predicate(predicate, f) if f else predicate
+			predicate = _combine_predicate(predicate, f()) if f else predicate
 
-	countermap, elapsed = _do_content_reindex(user, predicate)
+	_remove_catalogs(entity, content_types)
+	countermap, elapsed = _do_content_reindex(entity, predicate)
 	result = LocatedExternalDict()
 	result['Elapsed'] = elapsed
 	result['Items'] = dict(countermap)
