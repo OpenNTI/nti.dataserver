@@ -47,6 +47,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.utils.property import annotation_alias
 from nti.utils.schema import IBeforeTextAssignedEvent
 
+from . import interfaces
 from . import site_policies
 
 @component.adapter(nti_interfaces.IModeledContent, IObjectCreatedEvent)
@@ -129,14 +130,8 @@ class MathCountsCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
 
 	def filterCapabilities( self, capabilities ):
 		result = super(MathCountsCapabilityFilter, self).filterCapabilities(capabilities)
-
-		# JAM: The 'role' value is not something suitable to base permissions on (it is never verified)
-		# this filter should NOT be used unless it is extremely necessary
-		profile = user_interfaces.IUserProfile(self.context) if self.context else None
-		role = getattr(profile, 'role', None)
-		if role is None or role.lower() in ('student', 'other'):
+		if not self.context or interfaces.IMathcountsCoppaUserWithoutAgreement.providedBy(self.context):
 			result.discard(u'nti.platform.p2p.dynamicfriendslists')
-
 		return result
 
 #: This relationship is exposed on Users and in the handshake/ping
