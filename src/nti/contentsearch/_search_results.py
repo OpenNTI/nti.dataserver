@@ -71,8 +71,8 @@ class _IndexHit(zcontained.Contained):
 	@property
 	def obj(self):
 		result = self.ref
-		if isinstance(self.ref, numbers.Integral):
-			result = discriminators.get_object(self.ref)
+		if isinstance(self.ref, (numbers.Integral, six.string_types)):
+			result = discriminators.get_object(int(self.ref))
 		return result
 			
 	@property

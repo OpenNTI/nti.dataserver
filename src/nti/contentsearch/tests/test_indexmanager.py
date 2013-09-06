@@ -324,7 +324,7 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 class TestIndexManagerWithRepoze(_BaseIndexManagerTest):
 
 	def create_index_mananger(self):
-		result = create_index_manager_with_repoze()
+		result = create_index_manager_with_repoze(parallel_search=False)
 		component.provideUtility(result, search_interfaces.IIndexManager)
 		return result
 
@@ -344,6 +344,6 @@ class TestIndexManagerWithWhoosh(_BaseIndexManagerTest):
 		super(TestIndexManagerWithWhoosh, cls).tearDownClass()
 
 	def create_index_mananger(self):
-		result = create_index_manager_with_whoosh(indexdir=self.whoosh_dir, use_md5=False)
+		result = create_index_manager_with_whoosh(indexdir=self.whoosh_dir, use_md5=False, parallel_search=False)
 		component.provideUtility(result, search_interfaces.IIndexManager)
 		return result
