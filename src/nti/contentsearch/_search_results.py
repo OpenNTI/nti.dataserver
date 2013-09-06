@@ -24,49 +24,18 @@ from .common import get_type_name
 from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
 
-class _BaseSearchResults(zcontained.Contained):
-
-	sorted = False
-
-	def __init__(self, query):
-		assert search_interfaces.ISearchQuery.providedBy(query)
-		self._query = query
-
-	def __str__(self):
-		return self.__repr__()
-
-	def __repr__(self):
-		return '%s(hits=%s)' % (self.__class__.__name__, self.total)
-
-	@property
-	def query(self):
-		return self._query
-
-	@property
-	def hits(self):
-		raise NotImplementedError()
-
-	@property
-	def total(self):
-		return len(self.hits)
-
-	def __len__(self):
-		return len(self.hits)
-
-	def __getitem__(self, n):
-		return self.hits[n]
-
-	def __iter__(self):
-		return iter(self.hits)
-
 @interface.implementer(search_interfaces.IIndexHit)
-class _IndexHit(zcontained.Contained):
+class IndexHit(zcontained.Contained):
+
+	mime_type = mimeType = 'application/vnd.nextthought.search.indexhit'
+	__external_can_create__ = True
 
 	__slots__ = ('ref', 'score', '__parent__', '__name__')
 
 	def __init__(self, obj, score):
 		self.ref = obj
 		self.score = score
+		self.__parent__ = None
 	
 	@property
 	def obj(self):
@@ -77,12 +46,22 @@ class _IndexHit(zcontained.Contained):
 			
 	@property
 	def query(self):
-		return self.__parent__.query
+		return None if self.__parent__ is None else self.__parent__.query
 
-IndexHit = _IndexHit
+	def __eq__(self, other):
+		try:
+			return self is other or (self.ref == other.ref and self.score == other.score)
+		except AttributeError:
+			return NotImplemented
+
+	def __hash__(self):
+		xhash = 47
+		xhash ^= hash(self.ref)
+		xhash ^= hash(self.score)
+		return xhash
 
 @interface.implementer(search_interfaces.IIndexHitMetaData)
-class _IndexHitMetaData(object):
+class IndexHitMetaData(object):
 
 	unspecified_container = u'+++unspecified_container+++'
 
@@ -138,14 +117,46 @@ class _MetaSearchResults(type):
 
 	def __new__(cls, name, bases, dct):
 		t = type.__new__(cls, name, bases, dct)
-		t.mimeType = nti_mimetype_with_class(name[1:])
-		# legacy, deprecated
-		t.mime_type = t.mimeType
-		t.parameters = dict()  # IContentTypeAware
+		t.mime_type = t.mimeType = nti_mimetype_with_class(name[1:])
+		t.parameters = dict()
 		return t
 
-@interface.implementer(search_interfaces.ISearchResults,
-						zmime_interfaces.IContentTypeAware)
+class _BaseSearchResults(zcontained.Contained):
+
+	sorted = False
+
+	def __init__(self, query):
+		assert search_interfaces.ISearchQuery.providedBy(query)
+		self._query = query
+
+	def __str__(self):
+		return self.__repr__()
+
+	def __repr__(self):
+		return '%s(hits=%s)' % (self.__class__.__name__, self.total)
+
+	@property
+	def query(self):
+		return self._query
+
+	@property
+	def hits(self):
+		raise NotImplementedError()
+
+	@property
+	def total(self):
+		return len(self.hits)
+
+	def __len__(self):
+		return len(self.hits)
+
+	def __getitem__(self, n):
+		return self.hits[n]
+
+	def __iter__(self):
+		return iter(self.hits)
+
+@interface.implementer(search_interfaces.ISearchResults, zmime_interfaces.IContentTypeAware)
 class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
@@ -153,7 +164,7 @@ class _SearchResults(_BaseSearchResults):
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
-		self._ihitmeta = _IndexHitMetaData()
+		self._ihitmeta = IndexHitMetaData()
 
 	def get_hits(self):
 		return self._hits
@@ -171,9 +182,9 @@ class _SearchResults(_BaseSearchResults):
 				ihit = item
 		elif isinstance(item, tuple):
 			if item[0] is not None:
-				ihit = _IndexHit(item[0], item[1])
+				ihit = IndexHit(item[0], item[1])
 		elif item is not None:
-			ihit = _IndexHit(item, 1.0)
+			ihit = IndexHit(item, 1.0)
 
 		if ihit is not None:
 			self.sorted = False
@@ -208,8 +219,7 @@ class _SearchResults(_BaseSearchResults):
 
 		return self
 
-@interface.implementer(search_interfaces.ISuggestResults,
-						zmime_interfaces.IContentTypeAware)
+@interface.implementer(search_interfaces.ISuggestResults, zmime_interfaces.IContentTypeAware)
 class _SuggestResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults

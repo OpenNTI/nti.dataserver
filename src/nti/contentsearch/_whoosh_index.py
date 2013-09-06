@@ -103,10 +103,19 @@ class _SearchableContent(object):
 		raise NotImplementedError()
 
 
+class _MetaSearchWhooshContent(type):
+
+	def __new__(cls, name, bases, dct):
+		t = type.__new__(cls, name, bases, dct)
+		t.mime_type = t.mimeType = 'application/vnd.nextthought.search.%s' % name[1:].lower()
+		t.parameters = dict()
+		setattr(t, '__external_can_create__', True)
+		setattr(t, '__external_class_name__', name[1:])
+		return t
+
 @interface.implementer(search_interfaces.IWhooshBookContent)
 class _BookContent(SchemaConfigured):
-
-	# create all interface fields
+	__metaclass__ = _MetaSearchWhooshContent
 	createDirectFieldProperties(search_interfaces.IWhooshBookContent)
 
 	@property
@@ -144,8 +153,7 @@ class Book(_SearchableContent):
 
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
 class _VideoTranscriptContent(SchemaConfigured):
-
-	# create all interface fields
+	__metaclass__ = _MetaSearchWhooshContent
 	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
 
 	@property
@@ -178,10 +186,9 @@ class VideoTranscript(_SearchableContent):
 
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
 class _NTICardContent(SchemaConfigured):
-
-	# create all interface fields
+	__metaclass__ = _MetaSearchWhooshContent
 	createDirectFieldProperties(search_interfaces.IWhooshNTICardContent)
-
+	
 	@property
 	def content(self):
 		return self.description

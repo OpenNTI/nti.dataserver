@@ -19,8 +19,6 @@ from zope import interface
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.datastructures import LocatedExternalDict
 
-from nti.mimetype.mimetype import nti_mimetype_with_class
-
 from .constants import descending_
 from . import interfaces as search_interfaces
 
@@ -83,8 +81,8 @@ class _MetaQueryObject(type):
 
 	def __new__(cls, name, bases, dct):
 		t = type.__new__(cls, name, bases, dct)
-		t.mime_type = t.mimeType = nti_mimetype_with_class(name)
-		t.parameters = dict()  # IContentTypeAware
+		t.mime_type = t.mimeType = 'application/vnd.nextthought.search.query'
+		t.parameters = dict()
 
 		# string properties
 		for name in t.__str_properties__:
@@ -115,6 +113,7 @@ _empty_subqueries = {}
 class QueryObject(object, UserDict.DictMixin):
 
 	__external_can_create__ = True
+	__external_class_name__ = 'SearchQuery'
 	__metaclass__ = _MetaQueryObject
 
 	__float_properties__ = ('threshold',)
@@ -174,6 +173,8 @@ class QueryObject(object, UserDict.DictMixin):
 
 	def toExternalObject(self):
 		result = LocatedExternalDict()
+		result[ext_interfaces.StandardExternalFields.MIMETYPE] = self.mimeType
+		result[ext_interfaces.StandardExternalFields.CLASS] = self.__external_class_name__
 		items = result['Items'] = {}
 		metadata = result['Metadata'] = {}
 		for name, value in self._data.items():

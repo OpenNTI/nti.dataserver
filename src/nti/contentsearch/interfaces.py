@@ -7,10 +7,11 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 
 from zope import schema
-from zope import interface
 from zope import component
+from zope import interface
 from zope.deprecation import deprecated
-from zope.interface.common.mapping import IReadMapping, IMapping, IFullMapping
+from zope.mimetype import interfaces as zmime_interfaces
+from zope.interface.common.mapping import IMapping, IFullMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -385,13 +386,16 @@ class IRedisStoreService(interface.Interface):
 
 # content
 
+class IWhooshContent(zmime_interfaces.IContentTypeAware):
+	pass
+
 class IBookContent(interface.Interface):
 	ntiid = nti_schema.ValidTextLine(title="NTIID", required=True)
 	title = nti_schema.ValidText(title="Content title", required=True)
 	content = nti_schema.ValidText(title="Text content", required=True)
 	last_modified = nti_schema.Number(title="Last modified date", required=True)
 
-class IWhooshBookContent(IBookContent, IReadMapping):
+class IWhooshBookContent(IBookContent, IWhooshContent):
 	docnum = schema.Int(title="Document number", required=True)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
@@ -404,7 +408,7 @@ class IVideoTranscriptContent(interface.Interface):
 	end_millisecs = schema.Float(title="End timestamp", required=True)
 	last_modified = nti_schema.Number(title="Last modified date", required=True)
 
-class IWhooshVideoTranscriptContent(IVideoTranscriptContent):
+class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IWhooshContent):
 	docnum = schema.Int(title="Document number", required=False)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
@@ -418,7 +422,7 @@ class INTICardContent(interface.Interface):
 	target_ntiid = nti_schema.ValidTextLine(title="card target ntiid", required=False)
 	containerId = nti_schema.ValidTextLine(title="card container ntiid", required=False)
 
-class IWhooshNTICardContent(INTICardContent):
+class IWhooshNTICardContent(INTICardContent, IWhooshContent):
 	docnum = schema.Int(title="Document number", required=False)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
@@ -621,12 +625,16 @@ class IRepozeSearchQueryValidator(ISearchQueryValidator):
 
 class IBaseHit(interface.Interface):
 	"""represent a base search hit"""
-	query = schema.Object(ISearchQuery, title="Search query", required=True)
+	query = schema.Object(ISearchQuery, title="Search query", required=False)
 	score = nti_schema.Number(title="hit relevance score", required=True)
 
 class IIndexHit(IBaseHit):
 	"""represent a search hit stored in a ISearchResults"""
-	obj = interface.Attribute("The hit object")
+	ref = nti_schema.Variant((nti_schema.Object(nti_interfaces.IModeledContent, description="A :class:`.IModeledContent`"),
+							  nti_schema.Object(IWhooshContent, description="A :class:`.IWhooshContent`"),
+							  nti_schema.ValidTextLine(title='Object int id as string'),
+							  nti_schema.Number(title="Object int id")),
+							 title="The hit object")
 
 class ISearchHit(IBaseHit, IMapping):
 	"""represent an externalized search hit"""

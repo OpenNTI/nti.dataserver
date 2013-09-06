@@ -18,6 +18,7 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
+from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
 
 from nti.dataserver.links import Link
 
@@ -286,3 +287,19 @@ class _SearchResultsLinkDecorator(object):
 					link_next_href = request.current_route_path(_query=sorted(batch_params.items()))
 					link_next = Link(link_next_href, rel=rel)
 					external.setdefault('Links', []).append(link_next)
+
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+class _SearchInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
+
+	@classmethod
+	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):
+		return (search_interfaces.IWhooshBookContent, search_interfaces.IWhooshVideoTranscriptContent,
+				search_interfaces.IWhooshNTICardContent, search_interfaces.IIndexHit, search_interfaces.ISearchQuery)
+
+	@classmethod
+	def _ap_enumerate_module_names(cls):
+		return ('_whoosh_index', '_search_results', '_search_query')
+
+_SearchInternalObjectIO.__class_init__()
+
