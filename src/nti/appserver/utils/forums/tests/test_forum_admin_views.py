@@ -9,16 +9,17 @@ __docformat__ = "restructuredtext en"
 
 from nti.dataserver import users
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
+from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
-from nti.externalization.externalization import to_json_representation
+from nti.externalization.externalization import to_json_representation, to_external_ntiid_oid
 
 from nti.appserver.tests.test_application import TestApp
 
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length, none)
+from hamcrest import (assert_that, is_, has_length, none, is_not, has_key)
 
 class TestForumAdminViews(SharedApplicationTestBase):
 
@@ -114,4 +115,28 @@ class TestForumAdminViews(SharedApplicationTestBase):
 			board = frm_interfaces.ICommunityBoard(comm)
 			forum = board.get('bankai')
 			assert_that(forum, is_(none()))
+
+	@WithSharedApplicationMockDS
+	def test_recreate_community_forum(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user()
+			community = users.Community.create_community(self.ds, username='bleach')
+			frm_interfaces.ICommunityBoard(community)
+			forum = frm_interfaces.ICommunityForum(community)
+			forum['foo'] = CommunityHeadlineTopic()
+			oid = to_external_ntiid_oid(forum)
+
+		testapp = TestApp(self.app)
+
+		path = '/dataserver2/@@recreate_community_forum'
+		environ = self._make_extra_environ()
+		data = to_json_representation({'community': 'bleach' })
+		res = testapp.post(path, data, extra_environ=environ)
+		assert_that(res.status_int, is_(204))
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			community = users.Community.get_community('bleach')
+			forum = frm_interfaces.ICommunityForum(community)
+			assert_that(oid, is_not(to_external_ntiid_oid(forum)))
+			assert_that(forum, has_key('foo'))
 
