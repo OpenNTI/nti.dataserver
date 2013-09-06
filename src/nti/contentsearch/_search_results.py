@@ -32,7 +32,7 @@ class IndexHit(zcontained.Contained):
 
 	__slots__ = ('ref', 'score', '__parent__', '__name__')
 
-	def __init__(self, obj, score):
+	def __init__(self, obj=None, score=None):
 		self.ref = obj
 		self.score = score
 		self.__parent__ = None
