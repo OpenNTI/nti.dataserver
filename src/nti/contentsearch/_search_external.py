@@ -210,10 +210,10 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
 		for hit in self.hits:
 
-			if hit is None or hit.obj is None:
+			item = hit.obj if hit is not None else None
+			if item is None:
 				continue
 
-			item = hit.obj
 			score = hit.score
 			query = hit.query
 
