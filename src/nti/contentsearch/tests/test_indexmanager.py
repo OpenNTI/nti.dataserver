@@ -14,6 +14,8 @@ import shutil
 import tempfile
 from datetime import datetime
 
+from zope import component
+
 from nti.dataserver.users import User
 from nti.dataserver.users import Community
 from nti.dataserver.contenttypes import Note
@@ -24,11 +26,13 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.externalization.externalization import toExternalObject
 
 from .._search_query import QueryObject
+from .. import interfaces as search_interfaces
 from .._whoosh_schemas import create_book_schema
 from .._whoosh_indexstorage import create_directory_index
 from ..indexmanager import create_index_manager_with_repoze
 from ..indexmanager import create_index_manager_with_whoosh
 from .._whoosh_content_searcher import WhooshContentSearcher
+
 from ..constants import (ITEMS, HIT_COUNT)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -320,7 +324,9 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 class TestIndexManagerWithRepoze(_BaseIndexManagerTest):
 
 	def create_index_mananger(self):
-		return create_index_manager_with_repoze()
+		result = create_index_manager_with_repoze()
+		component.provideUtility(result, search_interfaces.IIndexManager)
+		return result
 
 class TestIndexManagerWithWhoosh(_BaseIndexManagerTest):
 
@@ -338,4 +344,6 @@ class TestIndexManagerWithWhoosh(_BaseIndexManagerTest):
 		super(TestIndexManagerWithWhoosh, cls).tearDownClass()
 
 	def create_index_mananger(self):
-		return create_index_manager_with_whoosh(indexdir=self.whoosh_dir, use_md5=False)
+		result = create_index_manager_with_whoosh(indexdir=self.whoosh_dir, use_md5=False)
+		component.provideUtility(result, search_interfaces.IIndexManager)
+		return result
