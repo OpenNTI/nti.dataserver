@@ -8,6 +8,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 import six
+import numbers
 import collections
 
 from zope import interface
@@ -20,8 +21,8 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 from nti.utils.sort import isorted
 
 from .common import get_type_name
-
 from . import interfaces as search_interfaces
+from . import _discriminators as discriminators
 
 class _BaseSearchResults(zcontained.Contained):
 
@@ -61,15 +62,24 @@ class _BaseSearchResults(zcontained.Contained):
 @interface.implementer(search_interfaces.IIndexHit)
 class _IndexHit(zcontained.Contained):
 
-	__slots__ = ('obj', 'score', '__parent__', '__name__')
+	__slots__ = ('ref', 'score', '__parent__', '__name__')
 
 	def __init__(self, obj, score):
-		self.obj = obj
+		self.ref = obj
 		self.score = score
-
+	
+	@property
+	def obj(self):
+		result = self.ref
+		if isinstance(self.ref, numbers.Integral):
+			result = discriminators.get_object(self.ref)
+		return result
+			
 	@property
 	def query(self):
 		return self.__parent__.query
+
+IndexHit = _IndexHit
 
 @interface.implementer(search_interfaces.IIndexHitMetaData)
 class _IndexHitMetaData(object):
@@ -157,7 +167,7 @@ class _SearchResults(_BaseSearchResults):
 	def _add(self, item):
 		ihit = None
 		if search_interfaces.IIndexHit.providedBy(item):
-			if item.obj is not None:
+			if item.ref is not None:
 				ihit = item
 		elif isinstance(item, tuple):
 			if item[0] is not None:
