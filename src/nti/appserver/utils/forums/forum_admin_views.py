@@ -181,7 +181,6 @@ class RecreateCommunityForum(_JsonBodyView):
 		forum = frm_interfaces.ICommunityForum(community, None)
 		for k, v in data.items():
 			forum[k] = v
-			v.__parent__ = forum
 		board.updateLastMod()
 
 		return hexc.HTTPNoContent()
