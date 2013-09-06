@@ -194,12 +194,11 @@ class _SearchResults(_BaseSearchResults):
 
 	def add(self, hits):
 		if search_interfaces.IIndexHit.providedBy(hits) or isinstance(hits, tuple):
-			items = [hits]
+			self._add(hits)
 		else:
 			items = [hits] if not isinstance(hits, collections.Iterable) else hits
-
-		for item in items or ():
-			self._add(item)
+			for item in items or ():
+				self._add(item)
 
 	def sort(self, sortOn=None):
 		sortOn = sortOn or self.query.sortOn
@@ -214,8 +213,8 @@ class _SearchResults(_BaseSearchResults):
 			search_interfaces.ISuggestAndSearchResults.providedBy(other):
 
 			self.sorted = False
-			self._ihitmeta += other._ihitmeta
 			self._hits.extend(other.hits)
+			self._ihitmeta += other._ihitmeta
 
 		return self
 
