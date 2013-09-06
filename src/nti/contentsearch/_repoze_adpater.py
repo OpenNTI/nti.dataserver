@@ -20,6 +20,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.contentprocessing import rank_words
 
 from .constants import content_
+from ._search_results import IndexHit
 from ._search_query import QueryObject
 from ._repoze_query import parse_query
 from ._repoze_index import create_catalog
@@ -87,8 +88,9 @@ class _RepozeEntityIndexManager(_SearchEntityIndexManager):
 	def _get_hits_from_docids(self, results, doc_weights, type_name):
 		# get all objects from the ds
 		for docid, score in doc_weights.items():
-			obj = self.get_object(docid)
-			results.add((obj, score))
+			obj = self.get_object(docid)  # make sure we have access and cache it
+			if obj is not None:
+				results.add(IndexHit(docid, score))
 
 	@metricmethod
 	def _do_catalog_query(self, catalog, qo, type_name):

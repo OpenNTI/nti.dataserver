@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+import gevent
 import functools
 
 from zope import component
@@ -35,8 +36,8 @@ def uim_search(username, query):
 	result = uim.search(query=query) if uim is not None else None
 	return result
 
-def entity_search(username, query, trax=True):
-	transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+def entity_ugd_search(username, query, trax=True):
+	transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner) if trax else None
 	func = functools.partial(uim_search, username=username, query=query)
 	result = transactionRunner(func) if trax else func()
 	return result
@@ -55,8 +56,9 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls)
 		return cls.indexmanager
 
-	def __init__(self, bookidx_manager_factory, useridx_manager_adapter):
+	def __init__(self, bookidx_manager_factory, useridx_manager_adapter, parallel_search=True):
 		self.books = CaseInsensitiveDict()
+		self.parallel_search = parallel_search
 		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_adapter = useridx_manager_adapter
 
@@ -193,9 +195,18 @@ class IndexManager(object):
 	def user_data_search(self, query):
 		query = QueryObject.create(query)
 		results = srs.empty_search_results(query)
-		for uim in self._get_search_uims(query.username):
-			rest = uim.search(query=query)
-			results = srs.merge_search_results (results, rest)
+		entities = self._get_search_entities(query.username)
+		if self.parallel_search:
+			procs = [gevent.spawn(entity_ugd_search, username, query) for username in entities]
+			gevent.joinall(procs)
+			for proc in procs:
+				rest = proc.value
+				results = srs.merge_search_results (results, rest)
+		else:
+			for name in entities:
+				uim = self._get_user_index_manager(name)
+				rest = uim.search(query=query) if uim is not None else None
+				results = srs.merge_search_results (results, rest)
 		return results
 
 	def user_data_suggest_and_search(self, query):

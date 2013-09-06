@@ -17,6 +17,7 @@ from perfmetrics import metricmethod
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from ._search_results import IndexHit
 from ._search_query import QueryObject
 from ._cloudsearch_query import parse_query
 from ._search_results import empty_search_results
@@ -44,7 +45,7 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 		uid = cloud_data.get(intid_, None)
 		uid = uid[0] if isinstance(uid, (list, tuple)) else uid
 		result = self.get_object(uid) if uid is not None else None
-		return (result, 1.0)
+		return IndexHit(int(uid), 1.0) if result is not None else None
 
 	def _do_search(self, qo, creator_method=None):
 		creator_method = creator_method or empty_search_results
@@ -62,8 +63,9 @@ class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 
 		# get ds objects
 		for obj in objects:
-			hit_score = self._get_search_hit(obj)
-			results.add(hit_score)
+			index_hit = self._get_search_hit(obj)
+			if index_hit is not None:
+				results.add(index_hit)
 		return results
 
 	@metricmethod

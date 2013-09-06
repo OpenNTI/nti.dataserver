@@ -139,7 +139,7 @@ class Book(_SearchableContent):
 						 			title=hit[title_],
 						 			content=hit[content_],
 						 			last_modified=last_modified)
-				result.append((data, score))
+				result.append(srlts.IndexHit(data, score))
 		return result
 
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
@@ -173,7 +173,7 @@ class VideoTranscript(_SearchableContent):
 							last_modified=common.epoch_time(hit[last_modified_]),
 				 			end_millisecs=common.video_date_to_millis(hit[end_timestamp_]),
 				 			start_millisecs=common.video_date_to_millis(hit[start_timestamp_]))
-			result.append((data, score))
+			result.append(srlts.IndexHit(data, score))
 		return result
 
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
@@ -209,7 +209,7 @@ class NTICard(_SearchableContent):
 							last_modified=last_modified,
 					 		containerId=hit[containerId_],
 					 		target_ntiid=hit[target_ntiid_])
-			result.append((data, score))
+			result.append(srlts.IndexHit(data, score))
 		return result
 
 # ugd content getter
@@ -270,8 +270,9 @@ class UserIndexableContent(_SearchableContent):
 				if docids is not None:
 					docids.add(uid)
 				score = hit.score or 1.0
-				obj = self.get_object(uid)
-				result.append((obj, score))
+				obj = self.get_object(uid)  # make sure we have access and cache it
+				if obj is not None:
+					result.append(srlts.IndexHit(uid, score))
 		return result
 
 	def get_object(self, uid):
