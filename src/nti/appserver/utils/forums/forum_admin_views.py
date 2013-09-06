@@ -21,6 +21,7 @@ from pyramid.view import view_config
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.externalization.internalization import find_factory_for
@@ -155,10 +156,10 @@ class DeleteCommunityForum(_JsonBodyView):
 		return hexc.HTTPNoContent()
 
 @view_config(route_name='objects.generic.traversal',
-			 name='remove_class_community_forum',
+			 name='recreate_community_forum',
 			 request_method='POST',
 			 permission=nauth.ACT_MODERATE)
-class RemoveClassCommunityForum(_JsonBodyView):
+class RecreateCommunityForum(_JsonBodyView):
 
 	def __call__(self):
 		values = self.readInput()
@@ -168,10 +169,19 @@ class RemoveClassCommunityForum(_JsonBodyView):
 			raise hexc.HTTPNotFound(detail='Community not found')
 
 		forum = frm_interfaces.ICommunityForum(community, None)
-		if not forum:
+		if forum is None:
 			raise hexc.HTTPUnprocessableEntity(detail='Community does not allow a forum')
 
-		interface.noLongerProvides(forum, frm_interfaces.IClassForum)
-		interface.alsoProvides(forum, frm_interfaces.ICommunityForum)
+		# get copy of the data
+		data = dict(forum)
+		# remove forum
+		board = frm_interfaces.ICommunityBoard(community, None)
+		del board[CommunityForum.__default_name__]
+		# recreate
+		forum = frm_interfaces.ICommunityForum(community, None)
+		for k, v in data.items():
+			forum[k] = v
+			v.__parent__ = forum
+		board.updateLastMod()
 
 		return hexc.HTTPNoContent()
