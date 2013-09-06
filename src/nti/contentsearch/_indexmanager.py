@@ -51,29 +51,34 @@ class IndexManager(object):
 
 	__repr__ = __str__
 
-	def get_entity(self, username):
+	@classmethod
+	def get_entity(cls, username):
 		result = Entity.get_entity(username)
 		return result
 
-	def users_exists(self, username):
-		result = self.get_entity(username)
+	@classmethod
+	def users_exists(cls, username):
+		result = cls.get_entity(username)
 		return result is not None
 
-	def get_dfls(self, username, sort=False):
-		user = self.get_entity(username)
+	@classmethod
+	def get_dfls(cls, username, sort=False):
+		user = cls.get_entity(username)
 		fls = getattr(user, 'getFriendsLists', lambda s: ())(user)
 		result = [x for x in fls if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(x)]
 		return result
 
-	def get_user_dymamic_memberships(self, username, sort=False):
-		user = self.get_entity(username)
-		everyone = self.get_entity('Everyone')
+	@classmethod
+	def get_user_dymamic_memberships(cls, username, sort=False):
+		user = cls.get_entity(username)
+		everyone = cls.get_entity('Everyone')
 		result = getattr(user, 'dynamic_memberships', ())
 		result = [x for x in result if x != everyone and x is not None]
 		return result
 
-	def get_search_memberships(self, username):
-		result = self.get_user_dymamic_memberships(username) + self.get_dfls(username)
+	@classmethod
+	def get_search_memberships(cls, username):
+		result = cls.get_user_dymamic_memberships(username) + cls.get_dfls(username)
 		result = {e.username.lower():e for e in result}  # make sure there is no duplicate
 		result = sorted(result.values(), key=lambda e: e.username.lower())
 		return result
@@ -158,9 +163,14 @@ class IndexManager(object):
 		result = self.useridx_manager_adapter(target, None) if target and create else None
 		return result
 
+	@classmethod
+	def _get_search_entities(cls, username):
+		result = [username] + cls.get_search_memberships(username)
+		return result
+
 	def _get_search_uims(self, username):
 		result = []
-		for name in [username] + self.get_search_memberships(username):
+		for name in self._get_search_entities(username):
 			uim = self._get_user_index_manager(name)
 			if uim is not None:
 				result.append(uim)
