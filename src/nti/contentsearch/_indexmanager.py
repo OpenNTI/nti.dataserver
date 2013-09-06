@@ -11,7 +11,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+import functools
 
+from zope import component
 from zope import interface
 from zope.event import notify
 
@@ -26,6 +28,18 @@ from . import _search_results as srs
 from ._search_query import QueryObject
 from ._indexagent import handle_index_event
 from . import interfaces as search_interfaces
+
+def uim_search(username, query):
+	indexmanager = component.getUtility(search_interfaces.IIndexManager)
+	uim = indexmanager._get_user_index_manager(username)
+	result = uim.search(query=query) if uim is not None else None
+	return result
+
+def entity_search(username, query, trax=True):
+	transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+	func = functools.partial(uim_search, username=username, query=query)
+	result = transactionRunner(func) if trax else func()
+	return result
 
 @interface.implementer(search_interfaces.IIndexManager)
 class IndexManager(object):
