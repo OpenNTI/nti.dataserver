@@ -7,4 +7,5 @@ In the future it might also provide ways to work with (locate and manipulate) th
 content, and to migrate ranges of content from one version to another.
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
