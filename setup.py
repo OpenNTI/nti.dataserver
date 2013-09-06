@@ -272,7 +272,7 @@ setup(
 		# library to do web user agent detection
 		'WebError >= 0.10.3',  # Error-handling middleware, extracted from Paste (yet turns out to still be dependent on paste. sigh)
 		'webob >= 1.2.3',
-		'whoosh >= 2.5.2',
+		'whoosh >= 2.5.3',
 		'z3c.baseregistry >= 2.0.0',  # ZCML configurable local component registries
 		'z3c.batching >= 2.0.0',  # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
@@ -395,7 +395,7 @@ setup(
 			'logilab_astng >= 0.24.3',
 			'pip >= 1.3.1',
 			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
-			'pudb >= 2013.3.5',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
+			'pudb >= 2013.3.6',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 1.0.0' if not IS_PYPY else '',  # install astroid
 			'pyramid_debugtoolbar >= 1.0.7',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
