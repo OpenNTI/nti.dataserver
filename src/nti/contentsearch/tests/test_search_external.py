@@ -16,10 +16,10 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
+from .._search_results import IndexHit
 from .._search_query import QueryObject
 from .. import interfaces as search_interfaces
-from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, SCORE,
-						 HIT_META_DATA, TYPE_COUNT)
+from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, SCORE, HIT_META_DATA, TYPE_COUNT)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -116,7 +116,6 @@ class TestSearchExternal(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_search_results_sort_relevance(self):
-
 		qo = QueryObject.create("sode no shirayuki", sortOn='relevance')
 		containerId = make_ntiid(nttype='bleach', specific='manga')
 		searchResults = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
@@ -136,3 +135,33 @@ class TestSearchExternal(ConfiguringTestBase):
 		for idx, hit in enumerate(items):
 			score = len(items) - idx
 			assert_that(hit[SCORE], is_(score))
+
+	@WithMockDSTrans
+	def test_search_query(self):
+		qo = QueryObject.create("sode no shirayuki", sortOn='relevance', searchOn=('note',), type='shikai')
+		eo = toExternalObject(qo)
+		assert_that(eo, has_entry(u'Class', u'SearchQuery'))
+		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.query'))
+		assert_that(eo, has_entry(u'Items', has_entry(u'sortOn', u'relevance')))
+		assert_that(eo, has_entry(u'Items', has_entry(u'term', u'sode no shirayuki')))
+		assert_that(eo, has_entry(u'Items', has_entry(u'searchOn', is_([u'note']))))
+		assert_that(eo, has_entry(u'Metadata', has_entry(u'type', 'shikai')))
+
+	@WithMockDSTrans
+	def test_index_hit(self):
+		qo = IndexHit(1L, 1.0)
+		eo = toExternalObject(qo)
+		assert_that(eo, has_entry(u'Class', u'IndexHit'))
+		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.indexhit'))
+		assert_that(eo, has_entry(u'ref', 1L))
+		assert_that(eo, has_entry(u'score', 1.0))
+
+		note = Note()
+		note.body = [unicode('rubby haddock')]
+		qo = IndexHit(note, 0.5)
+		eo = toExternalObject(qo)
+		assert_that(eo, has_entry(u'Class', u'IndexHit'))
+		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.indexhit'))
+		assert_that(eo, has_entry(u'ref', has_entry('body', is_([u'rubby haddock']))))
+		assert_that(eo, has_entry(u'score', 0.5))
+
