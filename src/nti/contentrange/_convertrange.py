@@ -1,19 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
-
-from . import contentrange
-from . import _domrange
+__docformat__ = "restructuredtext en"
 
 import re
 import math
 from abc import ABCMeta
 from abc import abstractmethod
+
+from . import _domrange
+from . import contentrange
 
 class treewalker(object):
 	"""
@@ -34,7 +33,6 @@ class treewalker(object):
 	def end(self, sequence):
 		raise NotImplementedError()
 
-
 	def onestep(self,node):
 		"""
 		Goes to next or previous node in the order that nodes come in the XML
@@ -44,7 +42,7 @@ class treewalker(object):
 		while cur_node is not None and self.near_sibling(cur_node) is None:
 			cur_node = cur_node.parentNode
 		if cur_node is None:
-			 return None
+			return None
 		cur_node = self.near_sibling(cur_node)
 		while len(cur_node.childNodes) > 0:
 			cur_node = self.near_child(cur_node)
@@ -60,7 +58,7 @@ class treewalker(object):
 
 	def first_word(self,node):
 		if node is None or node.nodeType != node.TEXT_NODE:
-			 raise NotImplementedError() # following return would raise, no 'offset' defined: #return '', node, offset
+			raise NotImplementedError()  # following return would raise, no 'offset' defined: #return '', node, offset
 		return re.search(self.first_word_regexp,node.data).group(0)
 
 	def near_child(self,node):
@@ -79,6 +77,7 @@ class backward(treewalker):
 	def near_sibling(self,node): return node.previousSibling
 	def find_space(self,string,offset): return string.rfind(' ',0,offset - 1)
 	def context_offset(self,node,lastspace,ctx): return len(node.data) - lastspace
+
 class forward(treewalker):
 	role = "end"
 	front_element = 0
@@ -113,7 +112,7 @@ def is_anchorable(node):
 
 def list_all_children (node):
 	if len(node.childNodes) == 0:
-		 return [node]
+		return [node]
 	total = []
 	for c in node.childNodes:
 		total.extend(list_all_children(c))
@@ -273,14 +272,13 @@ def contentToDomRange(contentrange,document):
 			#print ("Contexts: ",[c.contextText+'/'+str(c.contextOffset) for c in point.contexts])
 			return all_matches[-1][0] if len(all_matches) > 0 else None
 
-
 	output = _domrange.Range()
 	point = point_convert(contentrange.start)
 	if point is None or point.node is None:
-		 return None
+		return None
 	output.start.set(point.node,point.offset)
 	point = point_convert(contentrange.end,point)
 	if point is None:
-		 return None
+		return None
 	output.end.set(point.node,point.offset)
 	return output
