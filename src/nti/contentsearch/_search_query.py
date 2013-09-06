@@ -16,6 +16,11 @@ import collections
 from zope import component
 from zope import interface
 
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.datastructures import LocatedExternalDict
+
+from nti.mimetype.mimetype import nti_mimetype_with_class
+
 from .constants import descending_
 from . import interfaces as search_interfaces
 
@@ -78,6 +83,8 @@ class _MetaQueryObject(type):
 
 	def __new__(cls, name, bases, dct):
 		t = type.__new__(cls, name, bases, dct)
+		t.mime_type = t.mimeType = nti_mimetype_with_class(name)
+		t.parameters = dict()  # IContentTypeAware
 
 		# string properties
 		for name in t.__str_properties__:
@@ -104,9 +111,10 @@ class _MetaQueryObject(type):
 
 _empty_subqueries = {}
 
-@interface.implementer(search_interfaces.ISearchQuery)
+@interface.implementer(search_interfaces.ISearchQuery, ext_interfaces.IExternalObject)
 class QueryObject(object, UserDict.DictMixin):
 
+	__external_can_create__ = True
 	__metaclass__ = _MetaQueryObject
 
 	__float_properties__ = ('threshold',)
@@ -163,6 +171,28 @@ class QueryObject(object, UserDict.DictMixin):
 	@property
 	def is_batching(self):
 		return self.batchStart is not None and self.batchSize
+
+	def toExternalObject(self):
+		result = LocatedExternalDict()
+		items = result['Items'] = {}
+		metadata = result['Metadata'] = {}
+		for name, value in self._data.items():
+			if name in self.__properties__:
+				if name in self.__set_properties__:
+					value = list(value) if value else []
+				items[name] = value
+			else:
+				metadata[name] = value
+		return result
+
+	def updateFromExternalObject(self, externalObject, *args, **kwargs):
+		props = externalObject.get('Items', {})
+		for k, v in props.items():
+			setattr(k, v)
+		meta = externalObject.get('Metadata', {})
+		for k, v in meta.items():
+			self[k] = v
+		return self
 
 	# ---------------
 
