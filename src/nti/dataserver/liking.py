@@ -11,7 +11,10 @@ directly.]
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import functools
 
@@ -20,15 +23,16 @@ from zope import component
 from zope.event import notify
 from zope.annotation import interfaces as an_interfaces
 
-import contentratings.interfaces
 import contentratings.events
+import contentratings.interfaces
 from contentratings.category import BASE_KEY
 from contentratings.storage import UserRatingStorage
 
 from nti.dataserver import interfaces
+
+from nti.externalization.oids import to_external_oid
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
-from nti.externalization.oids import to_external_oid
 
 #: Category name for liking; use this as the name of the adapter
 LIKE_CAT_NAME = 'likes'

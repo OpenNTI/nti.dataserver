@@ -1,35 +1,37 @@
 #!/usr/bin/env python
 """
 ACL providers for the various content types.
+
+$Id$
 """
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from __future__ import unicode_literals, print_function, absolute_import
-
-import logging
-logger = logging.getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 import six
 import codecs
 
 from zope import interface
 from zope import component
-
 from zope.cachedescriptors.property import Lazy
 from zope.interface.interfaces import ComponentLookupError
 
 import pyramid.security
 
-from nti.utils.property import alias
-from nti.ntiids import ntiids
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import authorization
-from nti.dataserver import authentication
 from nti.contentlibrary import interfaces as content_interfaces
-from nti.externalization import interfaces as ext_interfaces
 
 from nti.dataserver import traversal
+from nti.dataserver import authorization
+from nti.dataserver import authentication
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization.singleton import SingletonDecorator
+from nti.externalization import interfaces as ext_interfaces
+
+from nti.ntiids import ntiids
+
+from nti.utils.property import alias
 
 @interface.implementer( nti_interfaces.IACE )
 class _ACE(object):

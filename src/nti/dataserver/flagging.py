@@ -5,25 +5,24 @@ Support for flagging modeled content.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import intid
 from zope import component
 from zope import interface
-from zope import intid
-from zope.intid import interfaces as intid_interfaces
 from zope.event import notify
-
+from zope.intid import interfaces as intid_interfaces
 from zope.cachedescriptors.property import CachedProperty
 
 import BTrees
 import persistent
 
-from nti.utils import sets
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.utils import sets
 
 def flag_object(context, username):
 	"""
