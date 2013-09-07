@@ -3,24 +3,25 @@
 """
 Implementations of persistent dicts with various qualities.
 
-
 $Id$
 """
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
+logger = __import__('logging').getLogger(__name__)
 
 import time
 import collections
 
 from zope import interface
 
+import zc.dict
+
 from . import interfaces
 from .containers import _tx_key_insen
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 from nti.zodb.minmax import NumericMaximum, NumericPropertyDefaultingToZero
-
-import zc.dict
 
 @interface.implementer(interfaces.ILastModified)
 class LastModifiedDict(PersistentPropertyHolder,zc.dict.Dict):

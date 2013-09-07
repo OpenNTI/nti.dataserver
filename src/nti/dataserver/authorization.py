@@ -67,8 +67,10 @@ sub-types of roles may have a prefix to that, such as ``content-role:``.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import functools
 
@@ -76,15 +78,14 @@ import persistent
 from BTrees.OOBTree import OOSet
 
 from zope import interface
-from zope import annotation
 from zope import component
-from zope.cachedescriptors.property import Lazy
+from zope import annotation
 from zope.container import contained
+from zope.cachedescriptors.property import Lazy
 
 from zope.security.permission import Permission
 
 import nti.dataserver.interfaces as nti_interfaces
-
 
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:

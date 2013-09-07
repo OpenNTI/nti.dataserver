@@ -5,19 +5,18 @@ Relating to enclosures.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope.mimetype.interfaces import IContentTypeAware
 from zope import interface
 from zope.container.interfaces import INameChooser
+from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.dataserver import containers
 from nti.dataserver import interfaces
 from nti.dataserver import datastructures
-from nti.dataserver import containers
 
 from nti.utils.property import alias
 

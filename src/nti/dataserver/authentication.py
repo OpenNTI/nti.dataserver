@@ -5,7 +5,10 @@ Classes and functions related to authentication.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import contextlib
 
@@ -140,7 +143,6 @@ class _delegating_descriptor(object):
 		if inst is None:
 			return self
 		return getattr( inst._locals.get(), self.name )
-
 
 
 @interface.implementer(nti_interfaces.IImpersonatedAuthenticationPolicy)
