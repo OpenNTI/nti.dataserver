@@ -189,7 +189,7 @@ class QueryObject(object, UserDict.DictMixin):
 	def updateFromExternalObject(self, externalObject, *args, **kwargs):
 		props = externalObject.get('Items', {})
 		for k, v in props.items():
-			setattr(k, v)
+			setattr(self, k, v)
 		meta = externalObject.get('Metadata', {})
 		for k, v in meta.items():
 			self[k] = v

@@ -15,6 +15,8 @@ from nti.dataserver.contenttypes import Note
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.internalization import find_factory_for
+from nti.externalization.internalization import update_from_external_object
 
 from .._search_results import IndexHit
 from .._search_query import QueryObject
@@ -28,7 +30,7 @@ from . import zanpakuto_commands
 from . import ConfiguringTestBase
 from . import domain as domain_words
 
-from hamcrest import (assert_that, has_entry, has_key, has_length, greater_than_or_equal_to, is_)
+from hamcrest import (assert_that, has_entry, has_key, has_length, greater_than_or_equal_to, is_, has_property)
 
 class TestSearchExternal(ConfiguringTestBase):
 
@@ -139,6 +141,7 @@ class TestSearchExternal(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_search_query(self):
 		qo = QueryObject.create("sode no shirayuki", sortOn='relevance', searchOn=('note',), type='shikai')
+		# externalize
 		eo = toExternalObject(qo)
 		assert_that(eo, has_entry(u'Class', u'SearchQuery'))
 		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.query'))
@@ -146,22 +149,41 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo, has_entry(u'Items', has_entry(u'term', u'sode no shirayuki')))
 		assert_that(eo, has_entry(u'Items', has_entry(u'searchOn', is_([u'note']))))
 		assert_that(eo, has_entry(u'Metadata', has_entry(u'type', 'shikai')))
+		# internalize
+		factory = find_factory_for(eo)
+		new_query = factory()
+		update_from_external_object(new_query, eo)
+		assert_that(new_query, has_property('term', 'sode no shirayuki'))
+		assert_that(new_query, has_property('sortOn', 'relevance'))
+		assert_that(new_query, has_property('searchOn', is_(('note',))))
 
 	@WithMockDSTrans
 	def test_index_hit(self):
-		qo = IndexHit(1L, 1.0)
-		eo = toExternalObject(qo)
+		hit = IndexHit(1L, 1.0)
+		# externalize
+		eo = toExternalObject(hit)
 		assert_that(eo, has_entry(u'Class', u'IndexHit'))
 		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.indexhit'))
 		assert_that(eo, has_entry(u'ref', 1L))
 		assert_that(eo, has_entry(u'score', 1.0))
+		# internalize
+		factory = find_factory_for(eo)
+		new_index = factory()
+		update_from_external_object(new_index, eo)
+		assert_that(hit, new_index)
 
+		# test w/ a note
 		note = Note()
 		note.body = [unicode('rubby haddock')]
-		qo = IndexHit(note, 0.5)
-		eo = toExternalObject(qo)
+		hit = IndexHit(note, 0.5)
+		eo = toExternalObject(hit)
 		assert_that(eo, has_entry(u'Class', u'IndexHit'))
 		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.indexhit'))
 		assert_that(eo, has_entry(u'ref', has_entry('body', is_([u'rubby haddock']))))
 		assert_that(eo, has_entry(u'score', 0.5))
+		# internalize
+		factory = find_factory_for(eo)
+		new_index = factory()
+		update_from_external_object(new_index, eo)
+		assert_that(hit, new_index)
 
