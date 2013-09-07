@@ -295,11 +295,26 @@ class _SearchInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):
 		return (search_interfaces.IWhooshBookContent, search_interfaces.IWhooshVideoTranscriptContent,
-				search_interfaces.IWhooshNTICardContent, search_interfaces.IIndexHit, search_interfaces.ISearchQuery)
+				search_interfaces.IWhooshNTICardContent, search_interfaces.ISearchQuery)
 
 	@classmethod
 	def _ap_enumerate_module_names(cls):
-		return ('_whoosh_index', '_search_results', '_search_query')
+		return ('_whoosh_index', '_search_query')
 
 _SearchInternalObjectIO.__class_init__()
 
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+class _IndexHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
+	
+	_excluded_out_ivars_ = {'query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
+	_excluded_in_ivars_ = {'query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_in_ivars_
+
+	@classmethod
+	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):
+		return (search_interfaces.IIndexHit,)
+
+	@classmethod
+	def _ap_enumerate_module_names(cls):
+		return ('_search_results',)
+
+_IndexHitInternalObjectIO.__class_init__()

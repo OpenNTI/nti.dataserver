@@ -271,7 +271,7 @@ def update_from_external_object( containedObject, externalObject,
 
 		updater = get( containedObject, interfaces.IInternalObjectUpdater )
 
-	if updater:
+	if updater is not None:
 		# Let the updater resolve externals too
 		_resolve_externals( updater, containedObject, externalObject, registry=registry, context=context )
 

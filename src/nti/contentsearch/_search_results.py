@@ -30,7 +30,7 @@ class IndexHit(zcontained.Contained):
 	mime_type = mimeType = 'application/vnd.nextthought.search.indexhit'
 	__external_can_create__ = True
 
-	__slots__ = ('ref', 'score', '__parent__', '__name__')
+	__slots__ = ('ref', 'score', '__parent__', '__name__', 'query')
 
 	def __init__(self, obj=None, score=None):
 		self.ref = obj
