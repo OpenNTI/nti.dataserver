@@ -30,8 +30,8 @@ from ._search_query import QueryObject
 from ._indexagent import handle_index_event
 from . import interfaces as search_interfaces
 
-def uim_search(username, query):
-	indexmanager = component.getUtility(search_interfaces.IIndexManager)
+def uim_search(username, query, indexmanager=None):
+	indexmanager = component.getUtility(search_interfaces.IIndexManager) if indexmanager is None else indexmanager
 	uim = indexmanager._get_user_index_manager(username)
 	result = uim.search(query=query) if uim is not None else None
 	return result
@@ -204,8 +204,7 @@ class IndexManager(object):
 				results = srs.merge_search_results (results, rest)
 		else:
 			for name in entities:
-				uim = self._get_user_index_manager(name)
-				rest = uim.search(query=query) if uim is not None else None
+				rest = uim_search(name, query, self)
 				results = srs.merge_search_results (results, rest)
 		return results
 
