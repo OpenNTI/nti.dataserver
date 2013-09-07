@@ -143,6 +143,11 @@ class VIDEO_TIMESTAMP(fields.DATETIME):
 		result = videotimestamp_to_datetime(qstring)
 		return result
 
+	def __setstate__(self, d):
+		d['bits'] = 64
+		d['numtype'] = int
+		super(VIDEO_TIMESTAMP, self).__setstate__(d)
+
 def create_video_transcript_schema():
 	"""
 	Video transcript schema

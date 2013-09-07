@@ -272,7 +272,7 @@ setup(
 		# library to do web user agent detection
 		'WebError >= 0.10.3',  # Error-handling middleware, extracted from Paste (yet turns out to still be dependent on paste. sigh)
 		'webob >= 1.2.3',
-		'whoosh == 2.5.2',
+		'whoosh >= 2.5.3',
 		'z3c.baseregistry >= 2.0.0',  # ZCML configurable local component registries
 		'z3c.batching >= 2.0.0',  # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
