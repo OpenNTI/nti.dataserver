@@ -10,14 +10,13 @@ point must remain for compatibility with existing configs.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import sys
 import os
+import sys
 
 try:
 	from gevent_zeromq import zmq # If things crash, remove core.so
@@ -25,7 +24,6 @@ try:
 except ImportError:
 	zmq = None
 	Device = None
-
 
 def __main__( flag_file, pub_addr, sub_addr ):
 	if zmq is None or Device is None:

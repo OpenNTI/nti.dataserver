@@ -1,14 +1,32 @@
 #!/usr/bin/env python
 """
 Constants and types for dealing with our unique IDs.
-$Revision$
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
 logger = __import__('logging').getLogger(__name__)
 
 import numbers
+from abc import ABCMeta, abstractmethod
+
+from zope import component
+from zope import interface
 
 from zope.deprecation import deprecated
+
+from nti.assessment import interfaces as asm_interfaces
+
+from nti.chatserver import interfaces as chat_interfaces
+
+from nti.contentlibrary import interfaces as lib_interfaces
+
+from nti.dataserver import authorization_acl as nacl
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.ntiids import interfaces as nid_interfaces
+
 from nti.ntiids.ntiids import TYPE_MEETINGROOM_CLASS
 deprecated( "TYPE_MEETINGROOM_CLASS", "Prefer nti.ntiids.ntiids.TYPE_MEETINGROOM_CLASS" )
 from nti.ntiids.ntiids import unicode_literals
@@ -71,15 +89,6 @@ deprecated( "TYPE_CLASS", "Prefer nti.ntiids.ntiids.TYPE_CLASS" )
 from nti.ntiids.ntiids import find_object_with_ntiid
 deprecated( "find_object_with_ntiid", "Prefer nti.ntiids.ntiids.find_object_with_ntiid" )
 
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import authorization_acl as nacl
-from nti.contentlibrary import interfaces as lib_interfaces
-from nti.assessment import interfaces as asm_interfaces
-from nti.ntiids import interfaces as nid_interfaces
-
-from zope import component
-from zope import interface
-
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _OIDResolver(object):
 
@@ -117,7 +126,6 @@ class _NamedEntityResolver(object):
 		ent_name = get_specific( key )
 		return _resolve_user( ent_name, 'users' )
 
-
 def _match( x, container_id, case_sensitive=True ):
 	"""
 	Things that are user-like, or might have their NTIID used like a Username
@@ -130,7 +138,6 @@ def _match( x, container_id, case_sensitive=True ):
 	#warnings.warn( "Hack for UI: making some NTIIDS case-insensitive." )
 	return x if getattr( x, 'NTIID', '' ).lower() == (container_id.lower() or 'B').lower() else None
 
-from abc import ABCMeta, abstractmethod
 class AbstractUserBasedResolver(object):
 	"""
 	A base class for resolving NTIIDs within the context of a user
@@ -247,8 +254,6 @@ class _MeetingRoomResolver(_AbstractUserBasedResolver):
 				result = x
 				break
 		return result
-
-from nti.chatserver import interfaces as chat_interfaces
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _TranscriptResolver(_AbstractUserBasedResolver):
