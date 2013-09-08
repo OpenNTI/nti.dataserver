@@ -9,39 +9,43 @@ insensitivity.
 
 $Id$
 """
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
+logger = __import__('logging').getLogger(__name__)
 
 import time
-import collections
 import numbers
+import collections
 from random import randint
 
 from zope import interface
 from zope import component
+from zope.annotation import interfaces as annotation
 from zope.location import interfaces as loc_interfaces
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
-from zope.container.interfaces import IContainerModifiedEvent
+from zope.container.contained import contained
+from zope.container.btree import BTreeContainer
+from zope.container.contained import uncontained
+from zope.container.contained import NameChooser
 from zope.container.interfaces import IContained
-from zope.container.interfaces import IBTreeContainer
 from zope.container.interfaces import INameChooser
+from zope.container.interfaces import IBTreeContainer
+from zope.container.interfaces import IContainerModifiedEvent
+
+from zope.site.interfaces import IFolder
+from zope.site.site import SiteManagerContainer
 
 from ZODB.interfaces import IConnection
 
-from zope.annotation import interfaces as annotation
+from nti.ntiids import ntiids
 
-from . import interfaces
-
-from zope.container.btree import BTreeContainer
-from zope.container.contained import uncontained
-from zope.container.contained import contained
-from zope.container.contained import NameChooser
-
-from nti.zodb.persistentproperty import PersistentPropertyHolder
 from nti.zodb.minmax import NumericMaximum
 from nti.zodb.minmax import NumericPropertyDefaultingToZero
-from nti.ntiids import ntiids
+from nti.zodb.persistentproperty import PersistentPropertyHolder
+
+from . import interfaces
 
 _MAX_UNIQUEID_ATTEMPTS = 1000
 
@@ -499,9 +503,6 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 			if isinstance( v, numbers.Number ): # pragma: no cover
 				continue
 			yield v
-
-from zope.site.interfaces import IFolder
-from zope.site.site import SiteManagerContainer
 
 @interface.implementer(IFolder)
 class CaseInsensitiveLastModifiedBTreeFolder(CaseInsensitiveLastModifiedBTreeContainer, SiteManagerContainer):

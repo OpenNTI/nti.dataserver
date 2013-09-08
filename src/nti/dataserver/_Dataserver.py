@@ -1,47 +1,52 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
-import logging
-logger = logging.getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 # Patch for relstorage.
 import nti.monkey.relstorage_umysqldb_patch_on_import
 nti.monkey.relstorage_umysqldb_patch_on_import.patch()
 
 import os
-
+import redis
+import struct
+import logging
 from urlparse import urlparse
 
 import ZODB.interfaces
 from ZODB.interfaces import IConnection
-import ZODB.POSException
-import struct # Connection can throw struct.error unpacking an OID
 
+import zope.deprecation
 from zope import interface
 from zope import component
 from zope.event import notify
 from zope.processlifetime import DatabaseOpened, DatabaseOpenedWithRoot
-import zope.generations.generations
-import zope.deprecation
+
 from zc import intid as zc_intid
+
 from persistent import Persistent
 
-import redis
-
-from nti.externalization import oids
 from nti.apns.connection import APNS
-from nti.ntiids import ntiids
-from nti.externalization import interfaces as ext_interfaces
 
+from nti.chatserver.chatserver import Chatserver
 
 from nti.dataserver import sessions
 from nti.dataserver import interfaces
+from nti.dataserver.interfaces import InappropriateSiteError
 
-from nti.chatserver.chatserver import Chatserver
-from . import meeting_container_storage
-from . import meeting_storage
+from nti.externalization import oids
+from nti.externalization import interfaces as ext_interfaces
+
+from nti.ntiids import ntiids
 
 from . import config
+from . import meeting_storage
+from . import meeting_container_storage
 
 ###
 ### Note: There is a bug is some versions of the python interpreter
@@ -52,18 +57,13 @@ from . import config
 ### into its own function and call it explicitly.
 ###
 
-from nti.dataserver.interfaces import InappropriateSiteError
-
-
-from .site import _connection_cm
 from .site import _site_cm
+from .site import _connection_cm
 from .site import run_job_in_site
-zope.deprecation.deprecated( _connection_cm.__name__,
-							 'Moved to .site' )
-zope.deprecation.deprecated( _site_cm.__name__,
-							 'Moved to .site' )
-zope.deprecation.deprecated( run_job_in_site.__name__,
-							 'Moved to .site' )
+
+zope.deprecation.deprecated(_connection_cm.__name__, 'Moved to .site')
+zope.deprecation.deprecated(_site_cm.__name__, 'Moved to .site')
+zope.deprecation.deprecated(run_job_in_site.__name__, 'Moved to .site')
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 

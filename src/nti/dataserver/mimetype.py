@@ -5,21 +5,21 @@ Having to do with mime types.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.dataserver import interfaces
 from zope import interface
 from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.dataserver import interfaces
+
 from nti.mimetype.mimetype import MIME_BASE
+from nti.mimetype.mimetype import MIME_BASE_JSON
 from nti.mimetype.mimetype import MIME_EXT_JSON
 from nti.mimetype.mimetype import MIME_EXT_PLIST
 from nti.mimetype.mimetype import MIME_BASE_PLIST
-from nti.mimetype.mimetype import MIME_BASE_JSON
 
 from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
