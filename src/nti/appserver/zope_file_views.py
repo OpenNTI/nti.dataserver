@@ -5,21 +5,29 @@ Views for :mod:`zope.file` objects, and likewise :class:`zope.browserresource.in
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from pyramid.view import view_config
-
 from zope.file import download
+
+from zope.browserresource.interfaces import IFileResource
+
 import zope.file.interfaces
+
+from zope.publisher.interfaces.browser import IBrowserRequest
+
+from pyramid.view import view_config
+from pyramid.security import NO_PERMISSION_REQUIRED
 
 try:
 	from plone.namedfile import NamedImage
 except ImportError: # pypy? Doesn't make sense
 	NamedImage = None
+
+from nti.appserver import httpexceptions as hexc
+from nti.appserver._view_utils import UploadRequestUtilsMixin
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
@@ -27,12 +35,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.utils import dataurl
 
 from . import interfaces as app_interfaces
-from nti.appserver import httpexceptions as hexc
-from zope.publisher.interfaces.browser import IBrowserRequest
-from zope.browserresource.interfaces import IFileResource
-from nti.appserver._view_utils import UploadRequestUtilsMixin
-
-from pyramid.security import NO_PERMISSION_REQUIRED
 
 @view_config( route_name='objects.generic.traversal',
 			  context=zope.file.interfaces.IFile,
@@ -64,9 +66,7 @@ def file_view(request):
 	# from something like putting the blobs up in S3/cloudfront and serving from there,
 	# or at least not serving from the dataserver directly.
 
-
 	return request.response
-
 
 @view_config( route_name='objects.generic.traversal',
 			  context=IFileResource,
@@ -76,7 +76,6 @@ def file_resource_get_view(request):
 	data = request.context.GET()
 	request.response.body = data
 	return request.response
-
 
 @view_config( route_name='objects.generic.traversal',
 			  context=IFileResource,

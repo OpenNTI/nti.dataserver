@@ -4,6 +4,7 @@
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__ )
 
@@ -18,22 +19,23 @@ import nti.monkey.paste_auth_tkt_sha512_patch_on_import
 nti.monkey.paste_auth_tkt_sha512_patch_on_import.patch()
 
 from pyramid.interfaces import IAuthenticationPolicy
-from repoze.who.interfaces import IAuthenticator, IIdentifier, IChallenger, IChallengeDecider, IRequestClassifier
-from nti.dataserver import interfaces as nti_interfaces
 
 from repoze.who.api import APIFactory
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 from repoze.who.classifiers import default_request_classifier
+from repoze.who.interfaces import IAuthenticator, IIdentifier, IChallenger, IChallengeDecider, IRequestClassifier
 
+from pyramid.request import Request
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 from pyramid_who.classifiers import forbidden_challenger
-from pyramid.request import Request
 
 from nti.dataserver.users import User
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authentication as nti_authentication
 from nti.dataserver import authorization as nti_authorization
 
+from . import httpexceptions as hexc
 from .pyramid_renderers import default_vary_on
 
 def _decode_username_request( request ):
@@ -69,7 +71,6 @@ def _decode_username_request( request ):
 		request.remote_user = username
 
 	return (username, password)
-
 
 class _NTIUsers(object):
 
@@ -122,7 +123,6 @@ class _NTIUsers(object):
 
 		identity[CACHE_KEY] = result
 		return result
-
 
 @interface.implementer(IAuthenticator)
 class _NTIUsersAuthenticatorPlugin(object):
@@ -326,7 +326,6 @@ class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 
 		return self._api_factory( environ )
 
-from . import httpexceptions as hexc
 class NTIForbiddenView(object):
 	"""
 	Works with the configured `IChallengeDecider` and `IChallenger` to

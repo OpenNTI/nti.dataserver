@@ -2,53 +2,57 @@
 # -*- coding: utf-8 -*-
 """
 Contains renderers for the REST api.
-"""
 
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import collections
+from hashlib import md5
 
 import pyramid.httpexceptions
 
 from zope import interface
 from zope import component
 
-from zope.mimetype.interfaces import IContentTypeAware
-
-from nti.externalization.externalization import toExternalObject,  catch_replace_action
-from nti.externalization.externalization import to_json_representation_externalized
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.dataserver.mimetype import (MIME_BASE_JSON,
-									 MIME_EXT_JSON,
-									 nti_mimetype_from_object,
-									 MIME_BASE)
-
-
-from nti.dataserver import traversal as nti_traversal
-from nti.dataserver.links import Link
-from nti.dataserver import flagging
-from nti.dataserver.links_external import render_link
-
-import nti.appserver.interfaces as app_interfaces
-import nti.dataserver.interfaces as nti_interfaces
-from nti.contentlibrary import interfaces as lib_interfaces
-from nti.externalization import interfaces as ext_interfaces
-from .interfaces import IPreRenderResponseCacheController, IResponseRenderer, IResponseCacheController
 from zope.file import interfaces as zf_interfaces
 
-from nti.appserver import traversal
-from ._view_utils import get_remote_user
+from zope.mimetype.interfaces import IContentTypeAware
+
 from pyramid.threadlocal import get_current_request
 
 from perfmetrics import metric
+
+from nti.appserver import traversal
+from nti.appserver import interfaces as app_interfaces
+
+from nti.contentlibrary import interfaces as lib_interfaces
+
+from nti.dataserver import flagging
+from nti.dataserver.links import Link
+from nti.dataserver import traversal as nti_traversal
+from nti.dataserver.links_external import render_link
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.mimetype import nti_mimetype_from_object
+from nti.dataserver.mimetype import (MIME_BASE_JSON, MIME_EXT_JSON, MIME_BASE)
+
+from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import to_json_representation_externalized
+from nti.externalization.externalization import toExternalObject,  catch_replace_action
+
+from .interfaces import IPreRenderResponseCacheController, IResponseRenderer, IResponseCacheController
+
+
+from ._view_utils import get_remote_user
 
 # To allow swizzling out the replacement during devmode and testing,
 # we define our catch_component_action as a utility
 class ICatchComponentAction(interface.Interface):
 	"see :func:`.catch_replace_action`"
+
 @interface.provider(ICatchComponentAction)
 def _throw_action(*args):
 	raise
@@ -290,7 +294,6 @@ def default_cache_controller( data, system ):
 
 	return response
 
-
 @interface.provider( app_interfaces.IResponseCacheController )
 def uncacheable_cache_controller( data, system ):
 	request = system['request']
@@ -325,8 +328,6 @@ def unmodified_cache_controller( data, system ):
 @component.adapter(app_interfaces.IUnModifiedInResponse)
 def unmodified_factory( data ):
 	return unmodified_cache_controller
-
-from hashlib import md5
 
 def md5_etag( *args ):
 	digest = md5()
@@ -431,7 +432,6 @@ class _UserCacheController(_EntityCacheController):
 	# In the past, when we added presence info directly
 	# to the external rep of a user, we needed to include
 	# that in the etag. We no longer do that.
-
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)
 @component.adapter(nti_interfaces.IModeledContent)
@@ -577,6 +577,5 @@ class REST(object):
 		system['nti.rendered'] = body
 
 		IResponseCacheController( data, default_cache_controller )( data, system )
-
 
 		return body

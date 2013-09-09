@@ -6,7 +6,6 @@ and other niceties that Chameleon itself doesn't support
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -14,15 +13,14 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from zope.publisher.interfaces.browser import IBrowserRequest
+
 from z3c.pt.pagetemplate import ViewPageTemplateFile
 
-
-from pyramid.interfaces import ITemplateRenderer
-from pyramid.decorator import reify
 from pyramid import renderers
+from pyramid.decorator import reify
 from pyramid.renderers import get_renderer
-
-from zope.publisher.interfaces.browser import IBrowserRequest
+from pyramid.interfaces import ITemplateRenderer
 
 def renderer_factory(info):
 	"""

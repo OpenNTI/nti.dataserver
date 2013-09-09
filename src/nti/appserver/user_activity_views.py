@@ -5,7 +5,6 @@ Views relating to user activity.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -15,19 +14,20 @@ from zope import interface
 from zope import component
 from zope.annotation import factory as an_factory
 
-from .ugd_query_views import _RecursiveUGDView as RecursiveUGDQueryView
-from .ugd_query_views import _toplevel_filter
-from .httpexceptions import HTTPNotFound
+from pyramid.view import view_config
 
 from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
-from nti.ntiids import ntiids
 
 from nti.dataserver import authorization as nauth
-from pyramid.view import view_config
 
 from nti.intid.containers import IntidContainedStorage
+
+from nti.ntiids import ntiids
+
+from .ugd_query_views import _toplevel_filter
+from .ugd_query_views import _RecursiveUGDView as RecursiveUGDQueryView
 
 #: The link relationship type for a link to retrieve activity
 #: for a particular user.
@@ -41,8 +41,6 @@ def _always_toplevel_filter( x ):
 		return not x.isOrWasChildInThread()
 	except AttributeError:
 		return _toplevel_filter( x )
-
-
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
