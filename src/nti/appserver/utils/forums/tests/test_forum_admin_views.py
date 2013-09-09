@@ -12,14 +12,14 @@ from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
-from nti.externalization.externalization import to_json_representation, to_external_ntiid_oid
+from nti.externalization.externalization import to_json_representation, to_external_ntiid_oid, toExternalObject
 
 from nti.appserver.tests.test_application import TestApp
 
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length, none, is_not, has_key)
+from hamcrest import (assert_that, is_, has_length, none, is_not, has_key, has_entry)
 
 class TestForumAdminViews(SharedApplicationTestBase):
 
@@ -119,11 +119,12 @@ class TestForumAdminViews(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS
 	def test_recreate_community_forum(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			self._create_user()
+			user = self._create_user()
 			community = users.Community.create_community(self.ds, username='bleach')
 			frm_interfaces.ICommunityBoard(community)
 			forum = frm_interfaces.ICommunityForum(community)
 			forum['foo'] = CommunityHeadlineTopic()
+			forum['foo'].creator = user
 			oid = to_external_ntiid_oid(forum)
 
 		testapp = TestApp(self.app)
@@ -139,4 +140,8 @@ class TestForumAdminViews(SharedApplicationTestBase):
 			forum = frm_interfaces.ICommunityForum(community)
 			assert_that(oid, is_not(to_external_ntiid_oid(forum)))
 			assert_that(forum, has_key('foo'))
-
+			ext = toExternalObject(forum)
+			assert_that(ext, has_entry('NTIID', is_not(none())))
+			assert_that(ext, has_entry('OID', is_not(none())))
+			assert_that(ext, has_entry('ID', is_('Forum')))
+			assert_that(ext, has_entry('ContainerId', is_not(none())))
