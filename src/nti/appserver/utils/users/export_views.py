@@ -222,18 +222,21 @@ def _get_user_objects(user, mime_types=(), broken=False):
 		if ZODB.interfaces.IBroken.providedBy(obj):
 			yield obj, obj
 		else:
+			mime_type = _get_mime_type(obj)
+			if mime_types and mime_type not in mime_types:
+				continue
+
 			oid = to_external_ntiid_oid(obj)
-			if oid not in seen:
-				seen.add(oid)
-				mime_type = _get_mime_type(obj)
-				if mime_types and mime_type not in mime_types:
-					continue
-				
-				if isinstance(obj, DMTS) and (not mime_types or _transcript_mime_type in mime_types):
+			if oid in seen:
+				continue
+			seen.add(oid)
+
+			if isinstance(obj, DMTS):
+				if not mime_types or _transcript_mime_type in mime_types:
 					adapted = component.getAdapter(obj, nti_interfaces.ITranscript)
 					yield adapted, obj
-				else:
-					yield obj, obj
+			else:
+				yield obj, obj
 
 	if not mime_types or _forum_comment_mime_type in mime_types or _headline_community_topic_mime_type in mime_types:
 		for community in getattr(user, 'dynamic_memberships', ()):
