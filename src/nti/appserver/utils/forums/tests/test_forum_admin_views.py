@@ -19,7 +19,7 @@ from nti.appserver.tests.test_application import TestApp
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length, none, is_not, has_key, has_entry)
+from hamcrest import (assert_that, is_, has_length, none, is_not, has_key, has_entry, has_property)
 
 class TestForumAdminViews(SharedApplicationTestBase):
 
@@ -138,8 +138,11 @@ class TestForumAdminViews(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			community = users.Community.get_community('bleach')
 			forum = frm_interfaces.ICommunityForum(community)
+			assert_that(forum, has_property('__parent__', is_not(none())))
+			assert_that(forum, has_property('__name__', is_not(none())))
 			assert_that(oid, is_not(to_external_ntiid_oid(forum)))
 			assert_that(forum, has_key('foo'))
+			# check externalization
 			ext = toExternalObject(forum)
 			assert_that(ext, has_entry('NTIID', is_not(none())))
 			assert_that(ext, has_entry('OID', is_not(none())))
