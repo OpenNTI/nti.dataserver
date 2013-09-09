@@ -20,7 +20,8 @@ from nti.appserver._util import AbstractTwoStateViewLinkDecorator
 
 from nti.dataserver.links import Link
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard, IForum
+from nti.dataserver.contenttypes.forums.interfaces import IForum
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
@@ -168,7 +169,6 @@ class ForumObjectContentsLinkProvider(object):
 		# We also advertise that you can POST new items to this url, which is good for caching
 		elements=(VIEW_CONTENTS, md5_etag(context.lastModified, _get_remote_username()).replace('/','_'))
 		self.add_link(VIEW_CONTENTS, context, mapping, request, elements)
-
 
 		current_user = get_remote_user(get_current_request())
 		is_coppa = nti_interfaces.ICoppaUserWithoutAgreement.providedBy(current_user)
