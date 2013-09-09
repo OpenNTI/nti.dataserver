@@ -25,6 +25,7 @@ from . import get_indexable_types
 from .common import get_type_name
 from .common import normalize_type_name
 from . import interfaces as search_interfaces
+from . import _discriminators as discriminators
 
 _event_types = { nti_interfaces.SC_CREATED: 'index_user_content',
 				 nti_interfaces.SC_SHARED:  'index_user_content',
@@ -104,12 +105,6 @@ def handle_external(entity, changeType, oid, uid, broadcast=None):
 	uid: Object int id
 	broadcast: Broadcast flag
 	"""
-	change_object = None
-	try:
-		change_object = ntiids.find_object_with_ntiid(oid)
-	except KeyError:
-		return
-
 	indexmanager = component.queryUtility(search_interfaces.IIndexManager)
 	if indexmanager is None:
 		return
@@ -117,5 +112,11 @@ def handle_external(entity, changeType, oid, uid, broadcast=None):
 	if changeType == nti_interfaces.SC_DELETED:
 		result = indexmanager.unindex(entity, uid)
 	else:
+		change_object = discriminators.query_object(uid)
+		try:
+			change_object = ntiids.find_object_with_ntiid(oid) if change_object is None else change_object
+		except KeyError:
+			return
+
 		result = _handle_event(indexmanager, entity, changeType, change_object, broadcast)
 	return result
