@@ -79,8 +79,11 @@ class _CreatedNamedNTIIDMixin(object):
 		if not self._ntiid_include_parent_name:
 			return self.__name__
 		try:
-			return self.__parent__.__name__ + '.' + self.__name__
-		except AttributeError: # Not ready yet
+			if self.__parent__.__name__:
+				return self.__parent__.__name__ + '.' + self.__name__
+			else:
+				return None
+		except (AttributeError):  # Not ready yet
 			return None
 
 	@_CachedProperty('_ntiid_creator_username','_ntiid_specific_part')
