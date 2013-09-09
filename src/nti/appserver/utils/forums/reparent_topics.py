@@ -3,7 +3,7 @@
 """
 Temp utility to reparent topics
 
-$Id: forum_admin_views.py 24101 2013-09-06 21:47:52Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
