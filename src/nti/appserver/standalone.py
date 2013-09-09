@@ -1,27 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import codecs
 import platform
 
-import codecs
+from zope import component
+
+from paste.deploy.converters import asbool
 
 from nti.dataserver import interfaces as nti_interfaces
-from zope import component
 
 from .application import createApplication
 from .application_server import WebSocketServer
-from paste.deploy.converters import asbool
 
 SOCKET_IO_PATH = 'socket.io'
 
