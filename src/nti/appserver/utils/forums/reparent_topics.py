@@ -19,7 +19,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
-
 def reparent_topics(community, verbose=False):
 	community = users.Community.get_community(community)
 	if not community or not nti_interfaces.ICommunity.providedBy(community):
@@ -30,9 +29,9 @@ def reparent_topics(community, verbose=False):
 	if board is None:
 		print('Community does not allow a board')
 		sys.exit(2)
-		
+
 	forum = frm_interfaces.ICommunityForum(community, None)
-	if forum.__parent__ is None:
+	if forum.__parent__ != board:
 		forum.__parent__ = board
 		forum.__name__ = CommunityForum.__default_name__
 		if verbose:
@@ -40,7 +39,7 @@ def reparent_topics(community, verbose=False):
 
 	count = 0
 	for name, topic in forum.items():
-		if topic.__parent__ is None:
+		if topic.__parent__ != forum:
 			topic.__parent__ = forum
 			topic.__name__ = name
 			count += 1
@@ -56,7 +55,7 @@ def main():
 	args = arg_parser.parse_args()
 
 	env_dir = args.env_dir
-	community = args.shard_name
+	community = args.community
 	verbose = args.verbose
 	run_with_dataserver(environment_dir=env_dir, function=lambda: reparent_topics(community, verbose))
 	sys.exit(0)
