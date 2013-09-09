@@ -177,6 +177,7 @@ class RecreateCommunityForum(_JsonBodyView):
 		# remove forum
 		board = frm_interfaces.ICommunityBoard(community, None)
 		del board[CommunityForum.__default_name__]
+		forum.__name__ = forum.__parent__ = None
 		# recreate
 		forum = frm_interfaces.ICommunityForum(community, None)
 		for k, v in data.items():
