@@ -54,6 +54,7 @@ CONTAINER_ID	 = unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 LAST_MODIFIED	 = unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
 
 id_				 = unicode(ext_interfaces.StandardInternalFields.ID)
+_id				 = u'_id'
 oid_			 = u'oid'
 body_ 			 = u'body'
 text_			 = u'text'
@@ -96,9 +97,9 @@ redaction_explanation_ = u'redaction_explanation'
 flattenedSharingTargetNames_ = u'flattenedSharingTargetNames'
 
 ntiid_fields = (NTIID, ntiid_)
+tag_fields = (tags_, AUTO_TAGS)
 creator_fields = (CREATOR, creator_)
 oid_fields = (OID, p_oid_, oid_, id_)
-keyword_fields = (keywords_, tags_, AUTO_TAGS)
 container_id_fields = (CONTAINER_ID, 'ContainerID', containerId_, 'container')
 last_modified_fields = (ext_interfaces.StandardInternalFields.LAST_MODIFIED,
 						ext_interfaces.StandardInternalFields.LAST_MODIFIEDU,
