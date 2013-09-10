@@ -391,13 +391,13 @@ setup(
 			'dblatex >= 0.3.4',  # content rendering, convert docbook to tex
 			'epydoc >= 3.0.1',  # auto-api docs
 			'httpie >= 0.6.0',
-			'ipython >= 1.0.0',  # the extra notebook is web based, pulls in tornado
+			'ipython >= 1.1.0',  # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
 			'pip >= 1.3.1',
 			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
 			'pudb >= 2013.3.6',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 1.0.0' if not IS_PYPY else '',  # install astroid
-			'pyramid_debugtoolbar >= 1.0.7',
+			'pyramid_debugtoolbar >= 1.0.8',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
 			'repoze.sphinx.autointerface >= 0.7.1',
 			'rope >= 0.9.4',  # refactoring library. c.f. ropemacs
