@@ -3,7 +3,8 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -11,15 +12,13 @@ from nti.monkey import traversing_patch_on_import
 traversing_patch_on_import.patch()
 del traversing_patch_on_import
 
+from zope import component
+from zope.location import LocationIterator
+from zope.location import interfaces as loc_interfaces
 
 from pyramid.traversal import _join_path_tuple, find_interface as _p_find_interface # TODO: Remove the dependency on pyramid at this level
 
-from zope import component
-from zope.location import interfaces as loc_interfaces
-from zope.location import LocationIterator
-
 from nti.dataserver import interfaces as nti_interfaces
-
 
 def resource_path( res ):
 	# This function is somewhat more flexible than Pyramid's, and
@@ -55,7 +54,6 @@ def resource_path( res ):
 		names.append( p. __name__ )
 	return _join_path_tuple( tuple(names) )
 
-
 def normal_resource_path( res ):
 	"""
 	:return: The result of traversing the containers of `res`,
@@ -76,7 +74,6 @@ def is_valid_resource_path( target ):
 	# We really want to check if this is a valid HTTP URL path. How best to do that?
 	# Not documented until we figure it out.
 	return isinstance( target, basestring ) and  (target.startswith( '/' ) or target.startswith( 'http://' ) or target.startswith( 'https://' ) )
-
 
 def find_nearest_site(context):
 	"""
@@ -108,7 +105,6 @@ def find_nearest_site(context):
 			if not nti_interfaces.ILink.providedBy( context ):
 				raise
 			nearest_site = component.getUtility( nti_interfaces.IDataserver ).root
-
 
 	return nearest_site
 

@@ -5,7 +5,6 @@ Objects relating to database sharding.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -16,6 +15,7 @@ import persistent
 from zope import interface
 from zope import component
 from zope.site.site import SiteManagerContainer
+
 from ZODB.interfaces import IConnection
 
 from nti.dataserver import datastructures as ds

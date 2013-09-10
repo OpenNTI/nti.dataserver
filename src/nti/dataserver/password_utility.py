@@ -6,7 +6,6 @@ designed for persistence and storing in ZODB.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -15,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 import persistent
+
 import z3c.password.password
 
 from nti.dataserver import interfaces as nti_interfaces
