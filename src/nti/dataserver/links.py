@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Implementation of the link data type.
 
@@ -32,7 +33,7 @@ class Link(object):
 	method = None
 	title = None
 
-	def __init__( self, target, rel='alternate', elements=(), target_mime_type=None, method=None, title=None ):
+	def __init__(self, target, rel='alternate', elements=(), target_mime_type=None, method=None, title=None):
 		"""
 		:param target: The destination object for this link. Required to be
 			non-``None``. The exact value of what is accepted depends on
@@ -109,7 +110,7 @@ class NoOpLinkExternalObjectAdapter(object):
 	That is why it is so specific.
 	"""
 
-	def __init__( self, link ):
+	def __init__(self, link):
 		pass
 
 	def toExternalObject(self):

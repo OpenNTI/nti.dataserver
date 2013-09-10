@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Constants and types for dealing with our unique IDs.
+
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import

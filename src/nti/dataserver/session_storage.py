@@ -5,25 +5,25 @@ Storage for sessions, providing an implementation of :class:`nti.dataserver.inte
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
-from zope.lifecycleevent import IObjectRemovedEvent, IObjectCreatedEvent
+from zope import interface
 from zope.annotation import IAnnotations
+from zope.lifecycleevent import IObjectRemovedEvent, IObjectCreatedEvent
 
-import persistent
 import BTrees
 
-from nti.utils.sets import discard
+import persistent
 
 from nti.dataserver import users
 from nti.dataserver import intid_utility
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.utils.sets import discard
 
 _OWNED_SESSIONS_KEY = __name__ + '.' + '_OwnerAnnotationBasedServiceStorage' + '.' + 'session_set'
 

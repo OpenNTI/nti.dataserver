@@ -34,26 +34,26 @@ also construct a site that descends from that site and contains any applicable p
 #pylint: disable=W0233,W0231,W0212
 
 from __future__ import print_function, unicode_literals, absolute_import
-logger = __import__( 'logging' ).getLogger( __name__ )
+__docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
 
 import contextlib
 
 from zope import interface
 from zope import component
 
-from zope.component.hooks import site as using_site
 from zope.component.hooks import getSite
+from zope.component.hooks import site as using_site
+from zope.component import interfaces as comp_interfaces
 from zope.component.persistentregistry import PersistentComponents as _ZPersistentComponents
 
-from zope.site.site import LocalSiteManager as _ZLocalSiteManager
 from zope.container.contained import Contained as _ZContained
 
+from zope.site.site import LocalSiteManager as _ZLocalSiteManager
 
-from zope.component import interfaces as comp_interfaces
 from nti.dataserver import interfaces
 from nti.dataserver.interfaces import InappropriateSiteError, SiteNotInstalledError
-
 
 @contextlib.contextmanager
 def _connection_cm():
@@ -86,7 +86,6 @@ def _site_cm(conn, site_names=()):
 		if component.getUtility( interfaces.IDataserver ) is None: # pragma: no cover
 			raise InappropriateSiteError()
 		yield sitemanc
-
 
 def _find_site_components(site_names):
 	"""
@@ -177,7 +176,6 @@ def get_site_for_site_names( site_names, site=None ):
 	:keyword site: If given, this will be the fallback site manager. If
 		not given, then the currently installed site will be used.
 	"""
-
 
 	if site is None:
 		site = getSite()

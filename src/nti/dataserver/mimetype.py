@@ -16,17 +16,17 @@ from zope.mimetype.interfaces import IContentTypeAware
 from nti.dataserver import interfaces
 
 from nti.mimetype.mimetype import MIME_BASE
-from nti.mimetype.mimetype import MIME_BASE_JSON
 from nti.mimetype.mimetype import MIME_EXT_JSON
+from nti.mimetype.mimetype import MIME_BASE_JSON
 from nti.mimetype.mimetype import MIME_EXT_PLIST
 from nti.mimetype.mimetype import MIME_BASE_PLIST
-
-from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
 from nti.mimetype.mimetype import is_nti_mimetype
 from nti.mimetype.mimetype import nti_mimetype_class
 from nti.mimetype.mimetype import nti_mimetype_with_class
 from nti.mimetype.mimetype import nti_mimetype_from_object
+
+from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
 # XXX Now make all the interfaces previously
 # declared implement the correct interface

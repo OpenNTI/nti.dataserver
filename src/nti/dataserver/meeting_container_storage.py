@@ -1,22 +1,23 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 $Id$
 """
-
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
 
-#from zope.annotation import interfaces as ant_interfaces
-from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 
-from nti.ntiids import ntiids
 from nti.dataserver import authorization
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization_acl as auth_acl
+
+from nti.ntiids import ntiids
 
 from nti.utils.property import alias, annotation_alias
 

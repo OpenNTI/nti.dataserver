@@ -5,24 +5,29 @@ Dataserver-specific storage for :mod:`nti.chatserver` :class:`nti.chatserver.mee
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
+import zope.annotation
 from zope import interface
 from zope import component
-import zope.annotation
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.chatserver import interfaces as chat_interfaces
-from ZODB.interfaces import IConnection
-from zope.container.interfaces import IBTreeContainer
 from zope.container.constraints import contains
+from zope.container.interfaces import IBTreeContainer
+
+from ZODB.interfaces import IConnection
+
+from nti.chatserver import interfaces as chat_interfaces
+
+from nti.dataserver import users
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+from nti.dataserver.datastructures import check_contained_object_for_storage
 
 from nti.externalization import oids
+
 from nti.ntiids import ntiids
-from nti.dataserver import users
-from nti.dataserver.datastructures import check_contained_object_for_storage
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
 class IMeetingContainer(IBTreeContainer):
 	contains(chat_interfaces.IMeeting)
@@ -94,7 +99,6 @@ class CreatorBasedAnnotationMeetingStorage(object):
 			raise ValueError( "Unable to get OID for room" )
 
 		meeting_container[room.id] = room
-
 
 class IMessageInfoContainer(IBTreeContainer, chat_interfaces.IMessageInfoStorage):
 	contains(chat_interfaces.IMessageInfo)
