@@ -259,9 +259,9 @@ def _get_user_objects(user, mime_types=(), broken=False):
 def user_export_objects(request):
 	values = request.params
 	username = values.get('username', authenticated_userid(request))
-	user = users.User.get_user(username)
+	user = users.Entity.get_entity(username)
 	if not user:
-		raise hexc.HTTPNotFound(detail='User not found')
+		raise hexc.HTTPNotFound(detail='User %s not found' % username)
 
 	mime_types = values.get('mime_types', u'')
 	mime_types = _parse_mime_types(mime_types)
