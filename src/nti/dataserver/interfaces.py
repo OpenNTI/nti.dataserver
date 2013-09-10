@@ -132,6 +132,11 @@ class IRQClient(interface.Interface):
 		Returns a Queue instance
 		"""
 
+class IMongoDBClient(interface.Interface):
+	"""
+	Marker interface for a MongoDB client.
+	"""
+
 class InappropriateSiteError(LookupError):
 	pass
 class SiteNotInstalledError(AssertionError):
