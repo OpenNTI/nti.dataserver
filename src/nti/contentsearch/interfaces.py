@@ -487,6 +487,14 @@ class ITitleResolver(interface.Interface):
 	def get_title():
 		"""return the post/forum title"""
 
+class ITagsResolver(interface.Interface):
+	def get_tags():
+		"""return the tags"""
+
+class IKeywordsResolver(interface.Interface):
+	def get_keywords():
+		"""return the key words"""
+
 class IShareableContentResolver(interface.Interface):
 
 	def get_sharedWith():
@@ -512,10 +520,7 @@ class _ContentMixinResolver(IContentResolver,
 class IUserContentResolver(_ContentMixinResolver, ICreatorResolver):
 	pass
 
-class IThreadableContentResolver(IUserContentResolver, IShareableContentResolver):
-
-	def get_keywords():
-		"""return the key words"""
+class IThreadableContentResolver(IUserContentResolver, ITagsResolver, IKeywordsResolver, IShareableContentResolver):
 
 	def get_inReplyTo():
 		"""return the inReplyTo nttid"""
@@ -550,13 +555,11 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 class IBlogContentResolver(_ContentMixinResolver,
 							ICreatorResolver,
 						  	IShareableContentResolver,
-						  	ITitleResolver):
+						  	ITitleResolver,
+						  	ITagsResolver):
 
 	def get_id():
 		"""return the post id"""
-
-	def get_tags():
-		"""return the post/forum tags"""
 
 class IPostContentResolver(IBlogContentResolver):
 	pass

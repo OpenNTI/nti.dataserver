@@ -69,8 +69,13 @@ def get_last_modified(obj, default=None):
 	result = adapted.get_last_modified()
 	return result if result else default
 
+def get_tags(obj, default=()):
+	adapted = component.queryAdapter(obj, search_interfaces.ITagsResolver)
+	result = adapted.get_tags() if adapted else None
+	return result or default
+
 def get_keywords(obj, default=()):
-	adapted = component.queryAdapter(obj, search_interfaces.IThreadableContentResolver)
+	adapted = component.queryAdapter(obj, search_interfaces.IKeywordsResolver)
 	result = adapted.get_keywords() if adapted else None
 	return result or default
 
@@ -117,13 +122,12 @@ def get_redaction_explanation_and_ngrams(obj, default=None, language='en'):
 	result = '%s %s' % (result, ngrams) if result else None
 	return result or default
 
+get_note_title = get_title
+get_note_title_and_ngrams = get_title_and_ngrams
+
+get_post_tags = get_tags
 get_post_title = get_title
 get_post_title_and_ngrams = get_title_and_ngrams
-
-def get_post_tags(obj, default=()):
-	adapted = component.getAdapter(obj, search_interfaces.IBlogContentResolver)
-	result = adapted.get_tags() or default
-	return result
 
 def get_object_content(obj, default=None, language='en'):
 	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)

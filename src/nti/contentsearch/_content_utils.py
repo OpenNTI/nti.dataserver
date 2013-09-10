@@ -27,15 +27,17 @@ from nti.dataserver.contenttypes.forums import interfaces as forum_interfaces
 
 from nti.externalization.oids import to_external_ntiid_oid
 
+from nti.utils.maps import CaseInsensitiveDict
+
 from .common import to_list
 from . import interfaces as search_interfaces
 
-from .constants import (CLASS, BODY, ID)
+from .constants import (CLASS, BODY, ID, NTIID, CREATOR, CONTAINER_ID, AUTO_TAGS)
 from .constants import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
-					 	creator_fields, keyword_fields, last_modified_fields, sharedWith_,
-					 	container_id_fields, ntiid_fields, highlight_, note_, post_, tags_,
-					 	messageinfo_, redaction_, canvas_, canvastextshape_, references_,
-					 	title_, inReplyTo_, recipients_, channel_, flattenedSharingTargetNames_)
+					 	keywords_, tag_fields, last_modified_fields, sharedWith_,
+					 	highlight_, note_, post_, tags_, messageinfo_, redaction_, canvas_,
+					 	canvastextshape_, references_, title_, inReplyTo_, recipients_, channel_,
+					 	flattenedSharingTargetNames_)
 
 def get_content(text=None, language='en'):
 	result = ()
@@ -108,11 +110,16 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 
 class _ThreadableContentResolver(_AbstractIndexDataResolver):
 
-	def get_keywords(self):
+	def get_tags(self):
 		result = set()
-		for name in keyword_fields:
-			data = getattr(self.obj, name, None)
+		for name in tag_fields:
+			data = getattr(self.obj, name, ())
 			result.update(_process_words(data))
+		return list(result) if result else []
+
+	def get_keywords(self):
+		result = getattr(self.obj, keywords_, None)
+		result = set(_process_words(result)) if result else None
 		return list(result) if result else []
 
 	def get_references(self):
@@ -254,7 +261,7 @@ class _DictContentResolver(object):
 	__slots__ = ('obj',)
 
 	def __init__(self, obj):
-		self.obj = obj
+		self.obj = CaseInsensitiveDict(**obj)
 
 	def _get_attr(self, names, default=None):
 		for name in names:
@@ -312,22 +319,25 @@ class _DictContentResolver(object):
 		return unicode(result) if result else None
 
 	def get_ntiid(self):
-		return self._get_attr(ntiid_fields)
+		result = self.obj.get(NTIID)
+		return unicode(result) if result else None
 
 	def get_creator(self):
-		result = self._get_attr(creator_fields)
+		result = self.obj.get(CREATOR)
 		return unicode(result) if result else None
 
 	def get_containerId(self):
-		result = self._get_attr(container_id_fields)
+		result = self.obj.get(CONTAINER_ID)
 		return unicode(result) if result else None
 
 	def get_keywords(self):
-		result = set()
-		for name in keyword_fields:
-			data = self._get_attr([name])
-			result.update(_process_words(data))
-		return list(result) if result else ()
+		result = self.obj.get(keywords_)
+		result = set(_process_words(result)) if result else None
+		return list(result) if result else []
+
+	def get_tags(self):
+		result = self.obj.get(tags_, self.obj.get(AUTO_TAGS, ()))
+		return _process_words(result)
 
 	def get_sharedWith(self):
 		data = self.obj.get(sharedWith_, self.obj.get(flattenedSharingTargetNames_, ()))
@@ -373,12 +383,6 @@ class _DictContentResolver(object):
 	def get_recipients(self):
 		data = self.obj.get(recipients_, ())
 		return _process_words(data)
-
-	# post content resolver
-
-	def get_tags(self):
-		result = self.obj.get(tags_, ())
-		return _process_words(result)
 
 @component.adapter(search_interfaces.IBookContent)
 @interface.implementer(search_interfaces.IBookContentResolver)
@@ -438,7 +442,6 @@ class _NTICardContentResolver(_BasicContentResolver):
 
 	def get_last_modified(self):
 		return self.obj.last_modified
-
 
 @interface.implementer(search_interfaces.IStopWords)
 class _DefaultStopWords(object):
