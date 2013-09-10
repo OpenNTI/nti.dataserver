@@ -2,7 +2,7 @@
 """
 MongoDB index definition.
 
-$Id: _cloudsearch_index.py 17789 2013-03-31 04:18:10Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"

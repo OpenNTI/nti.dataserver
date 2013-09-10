@@ -2,7 +2,7 @@
 """
 MongoDB Search interfaces.
 
-$Id: _cloudsearch_interfaces.py 17836 2013-04-02 17:22:04Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
