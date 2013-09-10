@@ -452,13 +452,13 @@ class User(Principal):
 		self.containers.__parent__ = self
 		self.containers.__name__ = '' # TODO: This is almost certainly wrong. We hack around it
 
-	def __setstate__( self, state ):
+	def __setstate__(self, data):
 		# Old objects might have a 'stream' of none? For no particular
 		# reason?
-		if 'stream' in state and state['stream'] is None:
-			del state['stream']
+		if isinstance(data, collections.Mapping) and 'stream' in data and data['stream'] is None:
+			del data['stream']
 
-		super(User,self).__setstate__( state )
+		super(User, self).__setstate__(data)
 
 	@property
 	def creator(self):
