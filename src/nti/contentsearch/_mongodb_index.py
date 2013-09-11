@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 MongoDB index definition.
@@ -39,23 +40,16 @@ def create_text_index(username, language='english', recreate=False):
 			db.nti[username].drop_index(indexname)
 		else:
 			return False
-	db.nti[username].ensure_index([
-									(tags_, 'text'),
-									(title_, 'text'),
-									(ngrams_, 'text'),
-									(content_, 'text'),
-									(replacement_content_, 'text')
-									(redaction_explanation_, 'text')
-									],
+	db.nti[username].ensure_index([ ('$**', 'text'), ],
 								   	name=indexname,
 								   	background=True,
 								   	weights= {
-                                 		content_: 20,
-                                 		ngrams_: 15,
-                                    	title_: 10,
-                                    	tags_: 5,
+                                 		content_: 30,
+                                 		ngrams_: 20,
+                                    	title_: 15,
+                                    	tags_: 10,
                                     	replacement_content_: 5,
-									   	redaction_explanation_:5
+									   	redaction_explanation_: 5,
                                	     },
 								   	default_language=language
 								   )
@@ -69,7 +63,7 @@ class _AbstractMongoDBObject(externalization.LocatedExternalDict):
 
 	def _set_items(self, src):
 		self[_id] = get_uid(src)
-		self[type_] = common.get_type_name(src)
+		self[type_] = hash(common.get_type_name(src))
 		self[tags_] = discriminators.get_tags(src)
 		self[creator_] = discriminators.get_creator(src)
 		self[ngrams_] = discriminators.get_object_ngrams(src)

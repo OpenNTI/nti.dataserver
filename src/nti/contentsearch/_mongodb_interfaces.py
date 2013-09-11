@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 MongoDB Search interfaces.
@@ -9,7 +10,12 @@ __docformat__ = "restructuredtext en"
 
 from dolmen.builtins import IDict
 
+from . import interfaces as search_interfaces
+
 class IMongoDBObject(IDict):
 
 	def toJSON():
 		pass
+
+class IMongoDBQueryParser(search_interfaces.ISearchQueryParser):
+	pass
