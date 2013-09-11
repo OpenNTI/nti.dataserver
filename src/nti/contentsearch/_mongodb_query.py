@@ -3,7 +3,7 @@
 """
 MongoDB query utils
 
-$Id: _cloudsearch_query.py 19987 2013-06-07 14:43:10Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
