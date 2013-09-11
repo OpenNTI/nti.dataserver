@@ -51,7 +51,7 @@ class _AbstractMongoDBObject(externalization.LocatedExternalDict):
 class _MDBNote(_AbstractMongoDBObject):
 	def _set_items(self, src):
 		super(_MDBPost, self)._set_items(src)
-		self[title_] = discriminators.get_post_title(src)
+		self[title_] = discriminators.get_note_title(src)
 
 @component.adapter(nti_interfaces.IHighlight)
 class _MDBHighlight(_AbstractMongoDBObject):
