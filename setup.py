@@ -339,7 +339,7 @@ setup(
 		'zope.interface >= 4.0.5',
 		'zope.intid >= 4.0.0a1' if HAVE_ZCONT else '',
 		'zope.keyreference >= 4.0.0a2',
-		'zope.lifecycleevent >= 4.0.2',  # Object Added/Removed/etc events
+		'zope.lifecycleevent >= 4.0.3',  # Object Added/Removed/etc events
 		'zope.login >= 2.0.0a1',  # Providers of Zope3 authentication.ILoginPassword for Zope3 publisher interfaces; pulled in by zope.file[test] and indirectly zope.app.component[test]
 		'zope.location >= 4.0.2',
 		'zope.mimetype == 1.3.1',  # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
