@@ -303,6 +303,8 @@ class _RelatedWorkExtractor(object):
 					if ref_el.description == '':
 						ref_el.description = ref_el.relatedwork.description
 
+					visibility = (ref_el.visibility or ref_el.relatedwork.visibility)
+
 					uri = unicode(''.join(render_children( ref_el.renderer, ref_el.uri )))
 
 					if uri == '':
@@ -327,6 +329,7 @@ class _RelatedWorkExtractor(object):
 						'icon': icon,
 						'desc': ref_el.description,
 						'section': ref_el.category,
+						'visibility': visibility,
 						'target-ntiid': ref_el.target_ntiid,
 						'ntiid': ref_el.ntiid
 					}
@@ -359,6 +362,7 @@ class _RelatedWorkExtractor(object):
 				'type': el.targetMimeType,
 				'icon': icon,
 				'desc': el.description,
+				'visibility': el.visibility,
 				'target-ntiid': el.target_ntiid,
 				'ntiid': el.ntiid
 			}
