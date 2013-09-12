@@ -699,6 +699,11 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 	def digest(self, tokens):
 		tok = super(relatedwork,self).digest(tokens)
 
+		options = self.attributes.get( 'options', {} ) or {}
+		self.visibility = 'everyone'
+		if 'visibility' in options.keys():
+			self.visibility = options['visibility']
+
 		self.target_ntiid = None
 		self.targetMimeType = None
 
@@ -765,6 +770,9 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		self.category = 'required'
 		if 'category' in options:
 			self.category = options['category']
+		self.visibility = u''
+		if 'visibility' in options.keys():
+			self.visibility = options['visibility']
 
 		self.uri = self.attributes['uri']
 		self.description = self.attributes['desc']
