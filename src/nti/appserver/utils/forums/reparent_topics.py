@@ -56,7 +56,7 @@ def main():
 	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('community', help="The name of the community")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	arg_parser.add_argument('-l', '--verbose', help="List forums", action='store_true', dest='list_forums')
+	arg_parser.add_argument('-l', '--listforums', help="List forums", action='store_true', dest='list_forums')
 	args = arg_parser.parse_args()
 
 	env_dir = args.env_dir
