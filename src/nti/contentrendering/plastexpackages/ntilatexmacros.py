@@ -662,7 +662,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 	_ntiid_cache_map_name = '_relatedwork_ntiid_map'
 	_ntiid_allow_missing_title = False
 	_ntiid_suffix = 'relatedwork.'
-	_ntiid_title_attr_name = 'rel' # Use our counter to generate IDs if no ID is given
+	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
 	_ntiid_type = 'RelatedWork'
 
 	#: From IEmbeddedContainer
@@ -699,29 +699,13 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 	def digest(self, tokens):
 		tok = super(relatedwork,self).digest(tokens)
 
-		if ntiids.is_valid_ntiid_string( self.uri ):
-			self.targetMimeType = 'application/vnd.nextthought.content'
-			ntiid_specific = ntiids.get_specific( self.uri )
-			self.icon = '/'.join([u'..', ntiid_specific.split('.')[0], 'icons', 'chapters', 'generic_book.png'])
-		else:
-			self.targetMimeType = 'application/vnd.nextthought.externallink'
+		self.target_ntiid = None
+		self.targetMimeType = None
 
 		icons = self.getElementsByTagName('includegraphics')
 		if icons:
 			self.iconResource = icons[0]
-			
-		from nti.ntiids.ntiids import is_valid_ntiid_string
 
-		if is_valid_ntiid_string( self.uri ):
-			self.target_ntiid = self.uri
-		else:
-			from nti.ntiids.ntiids import make_ntiid, TYPE_UUID
-			from hashlib import md5
-			# TODO: Hmm, what to use as the provider? Look for a hostname in the
-			# URL?
-			self.target_ntiid = make_ntiid( provider='NTI',
-											nttype=TYPE_UUID,
-											specific=md5(self.uri.source).hexdigest() )
 		return tok
 
 	@readproperty
@@ -733,6 +717,27 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 				texts.append( unicode( child ) )
 
 		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
+
+	def gen_target_ntiid(self):
+		logger.info('Computing target NTIID.')
+		from nti.ntiids.ntiids import is_valid_ntiid_string
+
+		uri = ''.join(render_children( self.renderer, self.uri ))
+		if is_valid_ntiid_string( uri ):
+			self.target_ntiid = uri
+			self.targetMimeType = 'application/vnd.nextthought.content'
+			ntiid_specific = ntiids.get_specific( uri )
+			self.icon = '/'.join([u'..', ntiid_specific.split('.')[0], 'icons', 'chapters', 'generic_book.png'])
+
+		else:
+			from nti.ntiids.ntiids import make_ntiid, TYPE_UUID
+			from hashlib import md5
+			# TODO: Hmm, what to use as the provider? Look for a hostname in the
+			# URL?
+			self.target_ntiid = make_ntiid( provider='NTI',
+											nttype=TYPE_UUID,
+											specific=md5(uri).hexdigest() )
+			self.targetMimeType = 'application/vnd.nextthought.externallink'
 
 class relatedworkrefname(Base.Command):
 	pass
@@ -746,7 +751,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 	_ntiid_cache_map_name = '_relatedworkref_ntiid_map'
 	_ntiid_allow_missing_title = False
 	_ntiid_suffix = 'relatedworkref.'
-	_ntiid_title_attr_name = 'relref' # Use our counter to generate IDs if no ID is given
+	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
 	_ntiid_type = 'RelatedWorkRef'
 
 	#: From IEmbeddedContainer
@@ -757,39 +762,25 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		tok = super(relatedworkref, self).digest(tokens)
 
 		options = self.attributes.get( 'options', {} ) or {}
+		self.category = 'required'
 		if 'category' in options:
 			self.category = options['category']
-		else:
-			self.category = 'required'
-
-		# SAJ: If the value is not one of the two we support force it to one.
-		if self.category != 'related' and self.category != 'additional':
-			self.category = 'required'
 
 		self.uri = self.attributes['uri']
 		self.description = self.attributes['desc']
 		self.relatedwork = self.idref['label']
 
-		from nti.ntiids.ntiids import is_valid_ntiid_string
-
-		if is_valid_ntiid_string( self.uri ):
-			self.target_ntiid = self.uri
-		else:
-			from nti.ntiids.ntiids import make_ntiid, TYPE_UUID
-			from hashlib import md5
-			# TODO: Hmm, what to use as the provider? Look for a hostname in the
-			# URL?
-			self.target_ntiid = make_ntiid( provider='NTI',
-											nttype=TYPE_UUID,
-											specific=md5(self.uri.source).hexdigest() )
+		self.target_ntiid = None
 
 		return tok
 
-	def regen_target_ntiid(self):
+	def gen_target_ntiid(self):
+		logger.info('Computing target NTIID.')
 		from nti.ntiids.ntiids import is_valid_ntiid_string
 
-		if is_valid_ntiid_string( self.uri ):
-			self.target_ntiid = self.uri
+		uri = unicode(''.join(render_children( self.renderer, self.uri )))
+		if is_valid_ntiid_string( uri ):
+			self.target_ntiid = uri
 		else:
 			from nti.ntiids.ntiids import make_ntiid, TYPE_UUID
 			from hashlib import md5
@@ -797,7 +788,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 			# URL?
 			self.target_ntiid = make_ntiid( provider='NTI',
 											nttype=TYPE_UUID,
-											specific=md5(self.uri.source).hexdigest() )
+											specific=md5(uri).hexdigest() )
 
 ###############################################################################
 # The following block of commands concern representing forum discussions.
@@ -862,7 +853,7 @@ def ProcessOptions( options, document ):
 	document.context.newcounter( 'ntiimagecollection' )
 	document.context.newcounter( 'nticard' )
 	document.context.newcounter( 'relatedwork' )
-	document.context.newcounter( 'relatedworkref' )
+	document.context.newcounter( 'relatedworkref', initial=-1 )
 	document.context.newcounter( 'ntidiscussion' )
 
 
