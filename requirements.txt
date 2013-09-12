@@ -20,13 +20,11 @@ file:../lib/pywikipedia/#egg=pywikipedia
 ## local paths can be made to work
 ## see https://github.com/pypa/pip/issues/328
 #
--e ../site-lib/plastex-dist
+#-e ../site-lib/plastex-dist
+-e git+https://github.com/NextThought/nti.plasTeX.git#egg=plasTeX
 # context not currently used
 # -e ../site-lib/context
 #
 -e ../site-lib/geventwebsocket
 # Gunicorn dev for testing
 # -e git+https://github.com/benoitc/gunicorn.git#egg=gunicorn-dev
-#
-# SymPy
--e git+https://github.com/sympy/sympy.git#egg=sympy

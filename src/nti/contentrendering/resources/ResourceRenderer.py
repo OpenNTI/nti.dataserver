@@ -68,6 +68,7 @@ def createResourceRenderer(baserenderername, resourcedb, unmix=True):
 	factory = type( str('_%sResourceRenderer' % baserenderername), tuple(bases), factory_dict )
 
 	renderer = factory()
+	renderer._XXX_ECLIPSE_DISABLED = False # Re-enable since we have the right template.
 	renderer.renderableClass = Renderable
 	renderer.resourcedb = resourcedb
 	if not unmix:
