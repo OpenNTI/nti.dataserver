@@ -164,25 +164,38 @@ class RecreateCommunityForum(_JsonBodyView):
 	def __call__(self):
 		values = self.readInput()
 		community = values.get('community', '')
+		forum_name = values.get('forum', '')
 		community = users.Community.get_community(community)
 		if not community or not nti_interfaces.ICommunity.providedBy(community):
 			raise hexc.HTTPNotFound(detail='Community not found')
 
-		forum = frm_interfaces.ICommunityForum(community, None)
+		if not forum_name:
+			forum_name = CommunityForum.__default_name__
+
+		board = frm_interfaces.ICommunityBoard(community, {})
+		forum = board.get(forum_name)
 		if forum is None:
-			raise hexc.HTTPUnprocessableEntity(detail='Community does not allow a forum')
+			raise hexc.HTTPUnprocessableEntity(detail='Forum not found')
 
 		# get copy of the data
 		data = dict(forum)
-		# remove forum
-		board = frm_interfaces.ICommunityBoard(community, None)
-		del board[CommunityForum.__default_name__]
-		forum.__name__ = forum.__parent__ = None
-		# recreate
-		forum = frm_interfaces.ICommunityForum(community, None)
+
+		# remove old forum
+		del board[forum_name]
+
+		# recrete
+		new_forum = CommunityForum()
+		new_forum.creator = community
+		board[forum_name] = new_forum
+		new_forum.title = forum.title
+
+		# reassign
 		for k, v in data.items():
-			forum[k] = v
-			v.__parent__ = forum  # reset
+			new_forum[k] = v
+			v.__parent__ = new_forum  # reset
 		board.updateLastMod()
+
+		# clean
+		forum.__name__ = forum.__parent__ = None
 
 		return hexc.HTTPNoContent()

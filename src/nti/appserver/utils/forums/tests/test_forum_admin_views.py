@@ -121,8 +121,13 @@ class TestForumAdminViews(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user()
 			community = users.Community.create_community(self.ds, username='bleach')
-			frm_interfaces.ICommunityBoard(community)
-			forum = frm_interfaces.ICommunityForum(community)
+			board = frm_interfaces.ICommunityBoard(community)
+
+			forum = CommunityForum()
+			forum.creator = community
+			board['foo'] = forum
+			forum.title = u'foo'
+
 			forum['foo'] = CommunityHeadlineTopic()
 			forum['foo'].creator = user
 			oid = to_external_ntiid_oid(forum)
@@ -131,13 +136,15 @@ class TestForumAdminViews(SharedApplicationTestBase):
 
 		path = '/dataserver2/@@recreate_community_forum'
 		environ = self._make_extra_environ()
-		data = to_json_representation({'community': 'bleach' })
+		data = to_json_representation({'community': 'bleach', 'forum':'foo'})
 		res = testapp.post(path, data, extra_environ=environ)
 		assert_that(res.status_int, is_(204))
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			community = users.Community.get_community('bleach')
-			forum = frm_interfaces.ICommunityForum(community)
+			board = frm_interfaces.ICommunityBoard(community)
+			assert_that(board, has_key('foo'))
+			forum = board['foo']
 			assert_that(forum, has_property('__parent__', is_not(none())))
 			assert_that(forum, has_property('__name__', is_not(none())))
 			assert_that(oid, is_not(to_external_ntiid_oid(forum)))
@@ -146,5 +153,5 @@ class TestForumAdminViews(SharedApplicationTestBase):
 			ext = toExternalObject(forum)
 			assert_that(ext, has_entry('NTIID', is_not(none())))
 			assert_that(ext, has_entry('OID', is_not(none())))
-			assert_that(ext, has_entry('ID', is_('Forum')))
+			assert_that(ext, has_entry('ID', is_('foo')))
 			assert_that(ext, has_entry('ContainerId', is_not(none())))
