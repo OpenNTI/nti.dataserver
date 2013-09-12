@@ -39,7 +39,9 @@ import plasTeX.Imagers.gspdfpng
 
 def _size(key, png):
 	# identify, from ImageMagick, is much easier to work with than pdfinfo --box
-	width_in_pt, height_in_pt = subprocess.Popen( "identify %s | awk '{print $3}'" % (png), shell=True, stdout=subprocess.PIPE).communicate()[0].split('x')
+	command = ['identify', '-format', '%w %h', png]
+	output = subprocess.check_output( command )
+	width_in_pt, height_in_pt = output.split()
 	return (key, width_in_pt, height_in_pt)
 
 def _scale(input, output, scale, defaultScale):
@@ -165,6 +167,7 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		# Record the fact that we've cropped them (in parallel, getting the size takes time)
 		with ProcessPoolExecutor() as executor:
 			for the_tuple in executor.map( _size, self.images.keys(), pngs ):
+				__traceback_info__ = self.command, the_tuple
 				img = self.images[the_tuple[0]]
 				img._cropped = True
 				#img.width = math.ceil( float(the_tuple[1]) / 1.3 )
