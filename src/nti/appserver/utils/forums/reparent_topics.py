@@ -19,7 +19,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
-def reparent_topics(community, verbose=False):
+def reparent_topics(community, list_forums=False, verbose=False):
 	community = users.Community.get_community(community)
 	if not community or not nti_interfaces.ICommunity.providedBy(community):
 		print('Community not found')
@@ -30,6 +30,10 @@ def reparent_topics(community, verbose=False):
 		print('Community does not allow a board')
 		sys.exit(2)
 
+	if list_forums:
+		for forum in board.keys():
+			print(forum)
+		return
 	forum = frm_interfaces.ICommunityForum(community, None)
 	if forum.__parent__ != board:
 		forum.__parent__ = board
@@ -52,12 +56,14 @@ def main():
 	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('community', help="The name of the community")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('-l', '--verbose', help="List forums", action='store_true', dest='list_forums')
 	args = arg_parser.parse_args()
 
 	env_dir = args.env_dir
 	community = args.community
 	verbose = args.verbose
-	run_with_dataserver(environment_dir=env_dir, function=lambda: reparent_topics(community, verbose))
+	list_forums = args.list_forums
+	run_with_dataserver(environment_dir=env_dir, function=lambda: reparent_topics(community, list_forums, verbose))
 	sys.exit(0)
 
 if __name__ == '__main__':
