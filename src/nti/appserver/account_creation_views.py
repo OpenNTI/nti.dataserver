@@ -446,6 +446,10 @@ class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
 
 		result = super(_AccountCreationProfileSchemafier,self).make_schema()
 
+		if nti_interfaces.ICoppaUser.providedBy(self.user):
+			for x in ('about', 'About'):
+				result.pop(x, None)
+
 		if not nti_interfaces.ICoppaUserWithoutAgreement.providedBy( self.user ):
 			# Business rule on 12/12/12: don't provide invitation codes to coppa users
 			item_schema = { 'name': 'invitation_codes',
