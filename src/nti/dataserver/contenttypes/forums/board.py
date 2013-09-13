@@ -86,9 +86,10 @@ def _prepare_annotation_board(clazz, iface, creator, title, name=None):
 		raise errors[0][1]
 	return board
 
-def _adapt_fixed_board(owner, board_cls, board_iface, name='Discussion Board'):
+def _adapt_fixed_board(owner, board_cls, board_iface, name=None):
 	annotations = an_interfaces.IAnnotations(owner)
-	board = annotations.get(board_cls.__default_name__)
+	name = name or board_cls.__default_name__
+	board = annotations.get(name)
 	if board is None:
 		board = _prepare_annotation_board(board_cls, board_iface, owner, name)
 	return board
