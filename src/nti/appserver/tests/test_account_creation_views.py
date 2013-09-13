@@ -367,6 +367,7 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( val, has_key( 'ProfileSchema' ) )
 		profile_schema = val['ProfileSchema']
 
+		assert_that(profile_schema, is_not(has_key('about')))
 		assert_that( profile_schema, has_key( 'opt_in_email_communication' ) )
 		assert_that( profile_schema, has_entry( 'Username', has_entry( 'min_length', 5 ) ) )
 		assert_that( profile_schema,
