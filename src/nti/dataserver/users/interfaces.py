@@ -392,6 +392,11 @@ class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
 	contact_email.setTaggedValue( TAG_REQUIRED_IN_UI, True )
 	contact_email.setTaggedValue( TAG_UI_TYPE, UI_TYPE_EMAIL )
 
+	about = ValidTextLine(
+		title='About',
+		description="A short description of a user",
+		max_length=140,
+		required=False)
 
 class IContactEmailRecovery(interface.Interface):
 	"""
