@@ -54,7 +54,9 @@
 				icon="https://platform.ou.edu/purchasables/PHIL1203_promo.png"
 				thumbnail="https://platform.ou.edu/purchasables/PHIL1203_cover.png"
 				items="tag:nextthought.com,2011-10:OU-HTML-PHIL1203_HumanDestiny.phil_1203__philosophy_and_human_destiny,_east_and_west" />
-
+		
+		<!-- 
+		
 		<pcs:registerCourse
 				ntiid="tag:nextthought.com,2011-10:OU-course-METR2603SevereAndUnusualWeather"
 				title="Understanding Severe and Unusual Weather"
@@ -65,7 +67,8 @@
 				icon="https://platform.ou.edu/purchasables/METR2603_promo.png"
 				thumbnail="https://platform.ou.edu/purchasables/METR2603_cover.png"
 				items="tag:nextthought.com,2011-10:OU-HTML-METR2603_SevereWeather.metr_2603_understanding_severe_and_unusual_weather" />
-
+		-->
+		
 		<pcs:registerCourse
 				ntiid="tag:nextthought.com,2011-10:OU-course-CHEM1315GeneralChemistry"
 				title="General Chemistry"
