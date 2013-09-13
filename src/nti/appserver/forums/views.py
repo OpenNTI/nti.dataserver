@@ -502,7 +502,16 @@ class ForumContentsFeedView(AbstractFeedView):
 				**_view_defaults)
 class ForumObjectPutView(UGDPutView):
 	""" Editing an existing forum post, etc """
-	# Exists entirely for registration sake.
+
+	def readInput(self):
+		externalValue = super(ForumObjectPutView, self).readInput()
+		theObject = self._get_object_to_update()
+		if frm_interfaces.IForum.providedBy(theObject):
+			# remove read only properties
+			for name in ('TopicCount', 'NewestDescendantCreatedTime', 'NewestDescendant'):
+				if name in externalValue:
+					del externalValue[name]
+		return externalValue
 
 @view_config(context=frm_interfaces.ICommunityHeadlineTopic)
 @view_config(context=frm_interfaces.IPersonalBlogEntry)
