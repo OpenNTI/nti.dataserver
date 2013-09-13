@@ -127,6 +127,13 @@ class IMathcountsCoppaUserWithAgreementUserProfile(user_interfaces.IEmailRequire
     contact_email.setTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI, True)
     contact_email.setTaggedValue(user_interfaces.TAG_UI_TYPE, user_interfaces.UI_TYPE_EMAIL)
 
+    about = ValidTextLine(
+        title='About',
+        description="A short description of a user",
+        max_length=500,
+        required=False)
+    about.setTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI, True)
+
 class IColumbiaBusinessUserProfile(user_interfaces.IEmailRequiredUserProfile):
     """
     The definition of a complete profile for a columbia business school
