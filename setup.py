@@ -49,7 +49,7 @@ entry_points = {
 		"http = nti.appserver.standalone:server_runner",
 		"gunicorn = nti.appserver.gunicorn:paste_server_runner"
 	],
-	"nose.plugins.0.10" : [
+	"nose.plugins.0.10" : [ # DEPRECATED: Use nti.nose_traceback_info
 		"zopeexceptionlogpatch = nti.tests:ZopeExceptionLogPatch"
 	],
 	"zodbupdate" : [  # Migrating class names through zodbupdate >= 0.5
@@ -83,6 +83,7 @@ TESTS_REQUIRE = [
 	'tempstorage >= 2.12.2',  # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
 	# 'z3c.coverage >= 2.0.0', # For HTML coverage reports that are prettier than plain 'coverage' TODO: Do we need this?
 	'zope.testing >= 4.1.2',
+	'nti.nose_traceback_info'
 ]
 
 setup(
@@ -429,7 +430,9 @@ setup(
 		('**.pt', 'lingua_xml', None),
 		('**.zcml', 'lingua_zcml', None),
 		]},
-	dependency_links=['http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/'],
+	dependency_links=[
+		'git+https://github.com/NextThought/nti.nose_traceback_info.git#egg=nti.nose_traceback_info'
+	],
 	packages=find_packages('src'),
 	package_dir={'': 'src'},
 	include_package_data=True,
