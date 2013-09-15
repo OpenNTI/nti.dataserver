@@ -120,6 +120,7 @@ setup(
 		# 'setuptools_subversion >= 3.0'
 	],
 	install_requires=[
+		'nti.plasTeX',
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
@@ -156,10 +157,18 @@ setup(
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
 		# 'MySQL-python', # mysql adapter--NOT needed, loaded from umysqldb
 		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
-		# It depends on umysql, which has been released as 2.5 on pypi. NOTE: This does not support unix socket connections
+		# It depends on umysql, which has been released as 2.5 on pypi.
+		# NOTE: This does not support unix socket connections
+		# MySQL-python is mostly in C. umysql is entirely in C.
+		# umysqldb uses (very small) parts of PyMySQL (which is entirely in python),
+		# As of 2010-09-15, PyMySQL at github/petehunt is not being maintained,
+		# but the original it was forked from, at github/lecram seems to be; both
+		# have commits not in the released 0.5 that we need.
+		# MySQL-python (aka MySQLdb) has been renamed to moist (https://github.com/farcepest/moist)
 		'umysql == 2.61',
 		'umysqldb >= 1.0.2',
 		'RelStorage >= 1.5.1',
+		'PyMySQL >= 0.5',
 		'python-memcached >= 1.53',  # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
@@ -186,7 +195,7 @@ setup(
 		# 1.7 is a modern rewrite with much better unicode and Py3k support
 		'feedgenerator >= 1.7',
 		'futures >= 2.1.4',
-		# 'gevent == 1.0rc1', Coming from requirements.txt right now
+		'gevent == 1.0dev', # Really 1.0rc3; see dependency_links
 		'greenlet >= 0.4.1',
 		'gunicorn >= 18.0',
 		'hiredis >= 0.1.1',  # Redis C parser
@@ -431,7 +440,10 @@ setup(
 		('**.zcml', 'lingua_zcml', None),
 		]},
 	dependency_links=[
-		'git+https://github.com/NextThought/nti.nose_traceback_info.git#egg=nti.nose_traceback_info'
+		'git+https://github.com/NextThought/nti.nose_traceback_info.git#egg=nti.nose_traceback_info',
+		'git+https://github.com/surfly/gevent.git@1.0rc3#egg=gevent-1.0dev', # tag is 1.0rc3, but setup.py says 1.0dev
+		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
+		'git+https://github.com/lecram/PyMySQL.git#egg=PyMySQL-0.5' # no tag for this sadly
 	],
 	packages=find_packages('src'),
 	package_dir={'': 'src'},
