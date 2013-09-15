@@ -108,6 +108,8 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 		request.headers = []
 		request.path = environ['PATH_INFO']
 		request.body = environ['wsgi.input']
+		if environ.get('SERVER_PROTOCOL') == 'HTTP/1.1':
+			request.version = (1,1)
 		for header in self.headers.headers:
 			# If we're not careful to split with a byte string here, we can
 			# run into UnicodeDecodeErrors: True, all the headers are supposed to be sent
@@ -416,6 +418,8 @@ def _post_fork( arbiter, worker ):
 	if hub._threadpool is not None and hub._threadpool._size: # same condition it uses
 		hub._threadpool._on_fork()
 	notify( ProcessDidFork() )
+	# See also
+	# https://bitbucket.org/jgehrcke/gipc/src/bbfa4a02c756c81408e15016ad0ef836d1dcbad5/gipc/gipc.py?at=default#cl-217
 
 def _pre_exec( arbiter ):
 	# Called during sigusr2 handling from arbiter.reexec(),

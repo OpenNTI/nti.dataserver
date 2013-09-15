@@ -4,7 +4,7 @@ numpy >= 1.7.1
 file:../lib/pywikipedia/#egg=pywikipedia
 #
 # See https://github.com/SiteSupport/gevent/blob/master/changelog.rst
--e git+https://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+-e git+https://github.com/surfly/gevent.git@1.0rc3#egg=gevent
 #
 # gevent mysql-compat driver. Base client:
 # Note: Released as 2.4 so currently in setup.py
