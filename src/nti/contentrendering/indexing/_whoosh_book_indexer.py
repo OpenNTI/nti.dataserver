@@ -164,6 +164,7 @@ def _get_page_content(text):
 
 def _process_datanode(node, language='en'):
 	content_file = node.location
+	__traceback_info__ = content_file, language, node
 	logger.debug("Processing File %s", node)
 
 	if os.path.exists(content_file):
@@ -212,6 +213,8 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 		with ConcurrentExecutor() as executor:
 			langs = [language] * len(nodes)
 			for node in executor.map(_process_datanode, nodes, langs):
+				if isinstance(node,Exception):
+					raise node
 				docs += self._index_datanode(node, writer, language)
 		return docs
 

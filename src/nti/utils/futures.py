@@ -66,5 +66,7 @@ class _nothrow(object):
 			return self.__fn(*args, **kwargs)
 		except Exception as e:
 			# logging may not be reliable in this pool
-			import traceback; traceback.print_exc()
+			from zope.exceptions import print_exception
+			import sys
+			print_exception( *sys.exc_info() )
 			return e # TODO: These may not be serializable?
