@@ -79,3 +79,19 @@ def delete_preferences(request):
 	result = LocatedExternalDict()
 	result['Items'] = dict(preferences)
 	return result
+
+
+from zope.preference.interfaces import IPreferenceGroup
+@view_config(route_name='objects.generic.traversal',
+			 request_method='GET',
+			 renderer='rest',
+			 context=IPreferenceGroup,
+			 permission=nauth.ACT_READ)
+def _temp_zope_get_prefs(request):
+	# This checks adaptation to annotations
+	# and the security interaction all at the same time
+	# Because we load the ++preference++ traversal namespace,
+	# this is available at /path/to/principal/++preference++
+	# (and sub-paths, nice! for automatic fetch-in-part)
+	# Until we set up externalizable stuff, return the raw data
+	return request.context.data
