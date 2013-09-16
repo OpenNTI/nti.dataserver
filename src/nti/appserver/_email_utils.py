@@ -80,9 +80,10 @@ def create_simple_html_text_email(base_template, subject='', request=None, recip
 									make_args(extension),
 									request=request )
 							for extension in ('.pt', text_template_extension)]
-	# PageTemplates produce Unicode strings.
-	# Under python2, at least, Mako produces byte objects,
+	# PageTemplates (Chameleon and Z3c.pt) produce Unicode strings.
+	# Under python2, at least, the text templates (Chameleon alone) produces byte objects,
 	# (JAM: TODO: Can we make it stay in the unicode realm? Pyramid config?)
+	# (JAM: TODO: Not sure about what Mako does?)
 	# apparently encoded as UTF-8, which is not ideal. This either is
 	# a bug itself (we shouldn't pass non-ascii values as text/plain)
 	# or triggers a bug in pyramid mailer when it tries to figure out the encoding,
