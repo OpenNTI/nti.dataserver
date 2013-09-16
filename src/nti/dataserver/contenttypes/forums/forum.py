@@ -48,8 +48,14 @@ def query_uid(obj, intids=None):
 def query_object(uid, intids=None):
 	intids = intids or component.getUtility(zope.intid.IIntIds)
 	try:
+		# JAM: FIXME: Shouldn't this be long? We need to check the family
 		result = intids.queryObject(int(uid), None)
+		if hasattr(result, '_p_activate'):
+			result._p_activate()
 	except (TypeError, ValueError):
+		result = None
+	except KeyError: # POSKeyError
+		logger.exception("Failed to activate object stored at %s", uid)
 		result = None
 	return result
 
@@ -68,6 +74,8 @@ class Forum(Implicit,
 	TopicCount = property(nti_containers.CheckingLastModifiedBTreeContainer.__len__)
 
 	id, containerId = _containerIds_from_parent()
+
+	_v_newest_descendant = None
 
 	@property
 	def NewestDescendantCreatedTime(self):
@@ -91,16 +99,18 @@ class Forum(Implicit,
 			return 'broken/' + unicode(id(self)) + '/newestDescendant'
 
 	def _get_NewestDescendant(self):
-		newest_object = None
-		redis = component.getUtility( nti_interfaces.IRedisClient )
-		data = redis.get(self._descendent_key())
-		if data:
-			newest_object = query_object(data)
-			if newest_object is not None:
-				return newest_object
+		# 1. Local cache (this may get slightly stale, but not
+		# too stale) (Confirm that)
+		newest_object = self._v_newest_descendant
 
+		# 2. Remote cache
+		if newest_object is None:
+			redis = component.getUtility( nti_interfaces.IRedisClient )
+			data = redis.get(self._descendent_key())
+			newest_object = query_object(data) if data else None
+
+		# 3. Lazily finding one
 		if newest_object is None and self.TopicCount:
-			# Lazily finding one
 			newest_created = -1.0
 			for topic in self.values():
 				if topic.createdTime > newest_created:
@@ -109,21 +119,31 @@ class Forum(Implicit,
 				if topic.NewestDescendantCreatedTime > newest_created:
 					newest_object = topic.NewestDescendant
 					newest_created = topic.NewestDescendantCreatedTime
-			if newest_object is not None:
-				self._set_NewestDescendant(newest_object, False)
-				return newest_object
 
-	def _set_NewestDescendant(self, descendant, transactional=True):
+		# If we found one, it may have been cached locally
+		# or externally. If it was local, we need to be sure
+		# its still in the catalog
+		if newest_object is not None and query_uid(newest_object):
+			# Notice that we cache this locally on the object for
+			# this thread, but we DO NOT cache it externally.
+			# This is because this is probably a GET request
+			# and wouldn't be safe to store it anyway. Also,
+			# there's bound to be write activity that updates it soon
+			# anyway, so the only time we have to resort to method 3
+			# should be extremely rare
+			self._v_newest_descendant = newest_object
+			return newest_object
+
+	def _set_NewestDescendant(self, descendant):
 		uid = query_uid(descendant)
-		redis = component.getUtility(nti_interfaces.IRedisClient)
 		if uid:
+			self._v_newest_descendant = descendant
+
+			redis = component.getUtility(nti_interfaces.IRedisClient)
 			args = (redis, unicode(uid),)
-			if transactional:
-				transactions.do(target=self,
-								 call=self._publish_descendant_to_redis,
-								 args=args)
-			else:
-				self._publish_descendant_to_redis(*args)
+			transactions.do(target=self,
+							call=self._publish_descendant_to_redis,
+							args=args)
 
 	def _publish_descendant_to_redis(self, redis, data):
 		redis.setex(self._descendent_key(), _NEWEST_TTL, data)
@@ -277,4 +297,3 @@ class ACLCommunityForum(CommunityForum):
 	__external_can_create__ = True
 	mime_type = 'application/vnd.nextthought.forums.communityforum'
 	ACL = ()
-

@@ -107,10 +107,9 @@ def landing_html_view(request):
 
 	response = hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path, query=request.params ) )
 
-	if(marker):
+	if marker:
 		response.set_cookie(_SITE_LANDING_COOKIE_NAME, site_name.encode( 'utf-8' ), 600) #Live for 5 minutes.  We really just want this long enough to get through the redirect
 	else:
-		response.delete_cookie(_SITE_LANDING_COOKIE_NAME);
+		response.delete_cookie(_SITE_LANDING_COOKIE_NAME)
 
 	return response
-
