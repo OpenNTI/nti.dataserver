@@ -80,11 +80,30 @@ def create_simple_html_text_email(base_template, subject='', request=None, recip
 									make_args(extension),
 									request=request )
 							for extension in ('.pt', text_template_extension)]
+	# PageTemplates produce Unicode strings.
+	# Under python2, at least, Mako produces byte objects,
+	# (JAM: TODO: Can we make it stay in the unicode realm? Pyramid config?)
+	# apparently encoded as UTF-8, which is not ideal. This either is
+	# a bug itself (we shouldn't pass non-ascii values as text/plain)
+	# or triggers a bug in pyramid mailer when it tries to figure out the encoding,
+	# leading to a UnicodeError.
+	# The fix is to supply the charset parameter we want to encode as;
+	# Or we could decode it ourself, which lets us use the optimal encoding
+	# pyramid_mailer picks...we ignore errors
+	# here to make sure that we can send /something/
+	if isinstance(text_body, bytes):
+		text_body = text_body.decode('utf-8', 'replace')
 
+	# JAM: Why are we quoted-printable encoding? That produces much bigger
+	# output
 	message = Message( subject=subject,
 					   recipients=recipients,
-					   body=Attachment(data=text_body, disposition='inline', content_type='text/plain', transfer_encoding='quoted-printable'),
-					   html=Attachment(data=html_body, disposition='inline', content_type='text/html', transfer_encoding='quoted-printable') )
+					   body=Attachment(data=text_body, disposition='inline',
+									   content_type='text/plain',
+									   transfer_encoding='quoted-printable'),
+					   html=Attachment(data=html_body, disposition='inline',
+									   content_type='text/html',
+									   transfer_encoding='quoted-printable') )
 	return message
 
 
