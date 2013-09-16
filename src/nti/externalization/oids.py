@@ -173,6 +173,8 @@ def to_external_ntiid_oid( contained, default_oid=None, add_to_connection=False,
 		its containment tree, thus letting it have an OID.
 	"""
 
+	__traceback_info__ = type(contained)
+
 	if callable( getattr( contained, 'to_external_ntiid_oid', None ) ):
 		return contained.to_external_ntiid_oid()
 
