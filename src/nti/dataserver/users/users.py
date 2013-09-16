@@ -157,7 +157,9 @@ class Principal(sharing.SharingSourceMixin, Entity):  # order matters
 	NTIID = cachedIn('_v_ntiid')(named_entity_ntiid)
 
 if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
-	# For use by nti_run_integration_tests, nti_run_general_purpose_tests
+	# For use by nti_run_integration_tests, nti_run_general_purpose_tests;
+	# plain text passwords are much faster than bcrpyt, and since
+	# the tests use HTTP Basic Auth, this makes a difference
 	print( "users.py: WARN: Configuring with plain text passwords", file=sys.stderr )
 	Principal.password_manager_name = 'Plain Text'
 

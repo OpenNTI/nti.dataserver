@@ -1424,7 +1424,7 @@ class TestApplication(SharedApplicationTestBase):
 		res = testapp.get( path )
 		assert_that( res.json_body, has_key( 'Username' ) )
 		# Another user cannot
-		othertestapp.get( path, status=404 )
+		othertestapp.get( path, status=403 )
 
 
 	@WithSharedApplicationMockDS
@@ -1716,7 +1716,7 @@ class TestApplicationSearch(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_search_empty_term_user_ugd_book(self):
-		"Searching with an empty term returns empty results"
+		#"Searching with an empty term returns empty results"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			contained = ContainedExternal()
 			user = self._create_user()
