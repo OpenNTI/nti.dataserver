@@ -891,6 +891,8 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
 	def test_community_user_can_search_for_publish_unpublished_comments(self):
+		#from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
+
 		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
 		testapp2 = fixture.testapp2

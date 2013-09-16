@@ -384,6 +384,7 @@ def _classinfo_views(pyramid_config):
 def _patching_restore_views(pyramid_config):
 	# Restore DELETE for IFriendsList.
 	# It is-a ISimpleEnclosureContainer, and that trumps before the request_method, sadly
+	# JAM: FIXME: This can probably go away with pyramid 1.5?
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
 							renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
 							permission=nauth.ACT_DELETE, request_method='DELETE')
@@ -665,7 +666,7 @@ def _content_package_library_registered( library, event ):
 	utilities = ((_question_map.QuestionMap, app_interfaces.IFileQuestionMap),
 				 (_videoindex_map.VideoIndexMap, app_interfaces.IVideoIndexMap),
 				 (_related_content_map.RelatedContentIndexMap, app_interfaces.IRelatedContentIndexMap))
-	
+
 	registry = event.object.registry
 	for factory, iface in utilities:
 		if registry.queryUtility(iface) is None:

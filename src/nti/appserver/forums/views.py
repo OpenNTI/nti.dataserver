@@ -411,7 +411,7 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		if frm_interfaces.IACLEnabled.providedBy(x):
 			result = is_readable(x, self.request)
 		return result
-	
+
 	def _make_complete_predicate(self, operator=Operator.intersection):
 		predicate = super(ForumsContainerContentsGetView, self)._make_complete_predicate(operator)
 		predicate = _combine_predicate(self._is_readable, predicate, Operator.intersection)
@@ -512,6 +512,21 @@ class ForumObjectPutView(UGDPutView):
 				if name in externalValue:
 					del externalValue[name]
 		return externalValue
+
+@view_config(context=frm_interfaces.ICommunityHeadlineTopic)
+@view_defaults( permission=nauth.ACT_UPDATE,
+				request_method='PUT',
+				**_view_defaults)
+class CommunityTopicPutDisabled(object):
+	"""Restricts PUT on topics to return 403. In pyramid 1.5 this otherwise
+	would find the PUT for the superclass of the object, but we don't want to
+	allow it. (In pyramid 1.4 it resulted in a 404)"""
+
+	def __init__(self, request):
+		pass
+
+	def __call__(self):
+		raise hexc.HTTPForbidden()
 
 @view_config(context=frm_interfaces.ICommunityHeadlineTopic)
 @view_config(context=frm_interfaces.IPersonalBlogEntry)

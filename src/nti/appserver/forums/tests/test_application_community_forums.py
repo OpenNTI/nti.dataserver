@@ -342,7 +342,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		# The entry itself simply cannot be modified (predicate mismatch right now)
 		testapp.put_json( topic_url,
 						  {'sharedWith': ['Everyone']},
-						  status=404 )
+						  status=403 )
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
