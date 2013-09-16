@@ -42,6 +42,7 @@ from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.externalization import to_json_representation_externalized
 
@@ -400,3 +401,28 @@ def user_ghost_containers(request):
 		items[username] = rmap
 	return result
 
+@view_config(route_name='objects.generic.traversal',
+			 name='export_users',
+			 renderer='rest',
+			 request_method='GET',
+			 permission=nauth.ACT_MODERATE)
+def export_users(request):
+	values = request.params
+	usernames = values.get('usernames')
+	if usernames:
+		if isinstance(usernames, six.string_types):
+			usernames = usernames.split(',')
+		_users = {users.User.get_user(x) for x in usernames}
+		_users.discard(None)
+	else:
+		dataserver = component.getUtility(nti_interfaces.IDataserver)
+		_users = nti_interfaces.IShardLayout(dataserver).users_folder
+		_users = _users.values()
+
+	result = LocatedExternalDict()
+	items = result['Items'] = {}
+	for user in _users:
+		if not nti_interfaces.IUser.providedBy(user):
+			continue
+		items[user.username] = toExternalObject(user, name='summary')
+	return result

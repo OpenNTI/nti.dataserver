@@ -160,6 +160,39 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 		assert_that(result['Items']['sjohnson@nextthought.com'], has_entry('mycontainer', 1))
 
 	@WithSharedApplicationMockDS
+	def test_export_users(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user(external_value={u'email':u"nti@nt.com", u'realname':u'steve',
+											  u'alias':u'citadel'})
+			self._create_user(username='rukia@nt.com',
+							  external_value={u'email':u'rukia@nt.com', u'realname':u'rukia',
+											  u'alias':u'sode no shirayuki'})
+			self._create_user(username='ichigo@nt.com',
+							  external_value={u'email':u'ichigo@nt.com', u'realname':u'ichigo',
+											  u'alias':u'zangetsu'})
+			self._create_user(username='aizen@nt.com',
+							  external_value={u'email':u'aizen@nt.com', u'realname':u'aizen',
+											  u'alias':u'kyoka suigetsu'})
+
+		testapp = TestApp(self.app)
+		environ = self._make_extra_environ()
+		path = '/dataserver2/@@export_users'
+		res = testapp.get(path, params={"usernames":'ichigo@nt.com,aizen@nt.com'}, extra_environ=environ)
+		assert_that(res.status_int, is_(200))
+		result = simplejson.loads(res.body)
+		assert_that(result, has_entry('Items', has_length(2)))
+
+		res = testapp.get(path, params={"usernames":['rukia@nt.com']}, extra_environ=environ)
+		assert_that(res.status_int, is_(200))
+		result = simplejson.loads(res.body)
+		assert_that(result, has_entry('Items', has_length(1)))
+
+		res = testapp.get(path, extra_environ=environ)
+		assert_that(res.status_int, is_(200))
+		result = simplejson.loads(res.body)
+		assert_that(result, has_entry('Items', has_length(4)))
+
+	@WithSharedApplicationMockDS
 	def test_object_resolver(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user(external_value={u'email':u"nti@nt.com", u'opt_in_email_communication':True})
