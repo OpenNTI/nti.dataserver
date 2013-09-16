@@ -83,6 +83,8 @@ from zope import annotation
 from zope.container import contained
 from zope.cachedescriptors.property import Lazy
 
+from zope.annotation.interfaces import IAnnotations
+
 from zope.security.permission import Permission
 
 import nti.dataserver.interfaces as nti_interfaces
@@ -332,6 +334,10 @@ class _UserGroupAwarePrincipal(_UserPrincipal):
 	@property
 	def groups(self):
 		return nti_interfaces.IMutableGroupMember(self.context).groups
+
+# Reverses that back to annotations
+def _UserGroupAwarePrincipalAnnotations( _ugaware_principal, *args ): # optional multi-adapt
+	return IAnnotations(_ugaware_principal.context)
 
 @interface.implementer(nti_interfaces.IPrincipal)
 class _CommunityGroup(_UserPrincipal): # IGroup extends IPrincipal

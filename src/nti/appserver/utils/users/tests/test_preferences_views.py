@@ -16,9 +16,22 @@ from nti.appserver.tests.test_application import TestApp
 from nti.dataserver.tests import mock_dataserver
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length, has_entry)
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import has_entry
+from hamcrest import has_entries
 
 class TestUsePreferencesViews(SharedApplicationTestBase):
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_traverse_to_my_prefs(self):
+		res = self._fetch_user_url( '/++preferences++' )
+		assert_that( res.json_body,
+					 has_entries( {u'Class': u'OOBTree',
+								  u'href': u'/dataserver2/users/sjohnson@nextthought.COM/++preferences++'} ) )
+
+
 
 	@WithSharedApplicationMockDS
 	def test_set_preferences(self):
@@ -38,7 +51,7 @@ class TestUsePreferencesViews(SharedApplicationTestBase):
 		assert_that(res.status_int, is_(200))
 		d = simplejson.loads(res.body)
 		assert_that(d, has_entry(u'Items', has_length(3)))
-		
+
 		path = '/dataserver2/users/sjohnson@nextthought.com/@@get_preferences'
 		res = testapp.get(path, extra_environ=environ)
 		assert_that(res.status_int, is_(200))
@@ -69,7 +82,7 @@ class TestUsePreferencesViews(SharedApplicationTestBase):
 
 		path = '/dataserver2/users/sjohnson@nextthought.com/@@delete_preferences'
 		data = to_json_representation({'keys': 'power'})
-		
+
 		res = testapp.delete(path, data, extra_environ=environ)
 		assert_that(res.status_int, is_(200))
 		d = simplejson.loads(res.body)
@@ -89,4 +102,3 @@ class TestUsePreferencesViews(SharedApplicationTestBase):
 		assert_that(res.status_int, is_(200))
 		d = simplejson.loads(res.body)
 		assert_that(d, has_entry(u'Items', has_length(0)))
-

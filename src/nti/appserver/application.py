@@ -552,6 +552,10 @@ def createApplication( http_port,
 	# Add a tween that ensures we are within a SiteManager.
 	pyramid_config.add_tween( 'nti.appserver.tweens.zope_site_tween.site_tween_factory', under='nti.appserver.tweens.transaction_tween.transaction_tween_factory' )
 
+	# And a tween that handles Zope security integration
+	pyramid_config.add_tween( 'nti.appserver.tweens.zope_security_interaction_tween.security_interaction_tween_factory',
+							  under='nti.appserver.tweens.zope_site_tween.site_tween_factory' )
+
 	pyramid_config.include( 'pyramid_zcml' )
 	import pyramid_zcml
 	# make it respect the features we choose to provide

@@ -357,6 +357,9 @@ setup(
 		'zope.pagetemplate >= 4.0.4',
 		'zope.password >= 4.0.2',  # encrypted password management
 		'zope.pluggableauth >= 2.0.0a1' if HAVE_ZCONT else '',  # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
+		# Persistent, schema-based preferences with
+		# site- and local defaults
+		'zope.preference >= 4.0.0a1' if HAVE_ZCONT else '',
 		'zope.ptresource >= 4.0.0a1',
 		'zope.publisher >= 4.0.0a4',
 		'zope.principalannotation >= 4.0.0a1',  # Annotating principals in Zope3's global reg; pulled in indirectly by zope.app.component[test]
