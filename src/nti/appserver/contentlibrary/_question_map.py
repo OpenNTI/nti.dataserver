@@ -70,8 +70,9 @@ class QuestionMap(dict):
 
 			# Fixes for pyramid.traversal: must be sure that the things
 			# in the tree are actually, strictly, unicode objects, not subclasses.
-			obj.__name__ = unicode( k )
-			obj.__parent__ = unicode(level_ntiid) if level_ntiid else None
+			# (The unicode function isnt enough as __unicode__ can override that)
+			obj.__name__ = unicode( k ).encode('utf8').decode('utf8')
+			obj.__parent__ = unicode(level_ntiid).encode('utf8').decode('utf8') if level_ntiid else None
 
 			if containing_filename:
 				assert containing_filename in self.by_file, "Container for file must already be present"

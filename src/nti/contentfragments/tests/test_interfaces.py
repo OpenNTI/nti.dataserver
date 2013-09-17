@@ -78,3 +78,13 @@ def test_cannot_set_attributes_but_can_provide_interfaces_across_pickles():
 		copy = pickle.loads( pickle.dumps( s1 ) )
 
 		assert_that( copy, verifiably_provides( ITest ) )
+
+def test_dont_lose_type_on_common_ops():
+
+	for t in SanitizedHTMLContentFragment, HTMLContentFragment, PlainTextContentFragment:
+		s1 = t( 'safe' )
+
+		assert_that( s1.translate( {ord('s'): 't'} ), is_( t ) )
+		assert_that( s1.translate( {ord('s'): 't'} ), is_( 'tafe') )
+
+		assert_that( unicode(s1), is_( t ) )

@@ -200,32 +200,9 @@ setup(
 		'gunicorn >= 18.0',
 		'hiredis >= 0.1.1',  # Redis C parser
 		# HTML5 parsing library
-		# JAM: 1.0b1 is out, but demonstrates some strange behaviour. When
-		# indexing a book, each XHTML file is converted to plain
-		# text using nti.contentfragments, which in turn uses html5lib
-		# to parse. In the Prealgebra book, when we get to the Inequalities
-		# section (~40 files in), the file is suddenly misparsed, with random <c> element tokens
-		# being created, having attributes of the text content: <c warren buffett 100-million-dollars>
-		# xmllint reports the file to be well-formed (though not actually valid XHTML),
-		# and it is always this file.
-		# it almost looks like something is messing up all the regexes it uses? Or
-		# maybe we are not closing something right? There doesn't seem to be any
-		# parallelism involved. This is under python 2.7.3
-		# JAM: Update for 1.0b3: Some more debugging points to a serious problem in the
-		# parser (the actual SanitizerFilter seems to have no part in it).
-		# Given a well-formed XML file, when the parser encounters
-		# text like:
-		#     &lt;<a>link text</a>http://.....&gt;
-		# it attempts to parse that like a <link> tag found in the <head>, and attempts
-		# to make everything up to &gt; be an attribute of the link tag. This produces
-		# garbage attributes, and now, the wonderfully named 'ihatexml' module (probably
-		# because you don't understand it!) produces lots of DataLossWarnings about
-		# bad attribute names (and we can force it to throw errors there, which is
-		# actually best)...no doubt this gibberish is what produces corrupted output files
-		# It seems to requires some particular state to trigger this bad behaviour; unit tests
-		# for sanitizing tend to work fine, but the parallel indexing unit tests (as well
-		# as the render) have this problem. The above text is in nti/contentrendering/tests/intro-biology-rendered-book/id36074449.html
-		'html5lib == 0.95',
+		# Note that the 1.0 series is a much improved parser over 0.95;
+		# this may result in some differences
+		'html5lib >= 1.0b3',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
 		'joblib >= 0.7.1',  # Python functions as pipeline jobs.
 		'logilab-common >= 0.60.0',
