@@ -30,6 +30,7 @@ from . import interfaces as chat_interfaces
 
 @interface.implementer(chat_interfaces.IPresenceInfo)
 class PresenceInfo(SchemaConfigured): # NOT persistent
+	createDirectFieldProperties(chat_interfaces.IUnattachedPresenceInfo)
 	createDirectFieldProperties(chat_interfaces.IPresenceInfo)
 	createDirectFieldProperties(nti_interfaces.ILastModified)
 	createdTime = alias('lastModified') # overwrite

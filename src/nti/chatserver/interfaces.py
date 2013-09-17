@@ -310,14 +310,10 @@ class IUserTranscriptStorage(Interface):
 	def remove_message(meeting, msg): pass
 
 # Presence
-
-class IPresenceInfo(nti_interfaces.ILastModified):
+class IUnattachedPresenceInfo(Interface):
 	"""
-	A description of the chat presence for a particular user.
+	Basic description of what goes into generic presence info.
 	"""
-	username = TextLine( title="The global username to which this presence applies.",
-						 description="If set when reading from external, may be ignored and replaced with canonical value.",
-						 required=False )
 
 	type = Choice( title="What kind of presence this describes",
 				   values=('available', 'unavailable'),
@@ -331,6 +327,13 @@ class IPresenceInfo(nti_interfaces.ILastModified):
 							required=False,
 							max_length=140 )
 
+class IPresenceInfo(IUnattachedPresenceInfo,nti_interfaces.ILastModified):
+	"""
+	A description of the chat presence for a particular user.
+	"""
+	username = TextLine( title="The global username to which this presence applies.",
+						 description="If set when reading from external, may be ignored and replaced with canonical value.",
+						 required=False )
 	def isAvailable():
 		"""Does the presence represent a user who is available for chat/chat APIs?"""
 

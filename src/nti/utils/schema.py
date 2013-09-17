@@ -28,7 +28,13 @@ from zope.schema import interfaces as sch_interfaces
 
 from zope.schema.fieldproperty import FieldProperty
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField
-from zope.schema.fieldproperty import createFieldProperties # public API
+# Re-export some things as part of our public API so we can
+# later re-implement them locally if needed
+from zope.schema.fieldproperty import createFieldProperties
+from zope.schema import Bool
+from zope.schema import Decimal
+
+
 try:
 	from Acquisition.interfaces import IAcquirer
 	from Acquisition import aq_base

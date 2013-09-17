@@ -32,7 +32,14 @@ class TestUsePreferencesViews(SharedApplicationTestBase):
 		res = self._fetch_user_url( '/++preferences++' )
 		assert_that( res.json_body,
 					 has_entries( {u'Class': u'Preference_Root',
-								  u'href': u'/dataserver2/users/sjohnson@nextthought.COM/++preferences++'} ) )
+								   u'href': u'/dataserver2/users/sjohnson@nextthought.COM/++preferences++',
+								   u'WebApp': has_entries( {u'Class': u'Preference_WebApp',
+															u'MimeType': u'application/vnd.nextthought.preference.webapp',
+															u'preferFlashVideo': False} ),
+								u'ChatPresence': has_entries( {u'Class': u'Preference_ChatPresence',
+															   u'MimeType': u'application/vnd.nextthought.preference.chatpresence'} ) }) )
+
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_traverse_to_my_zmi_prefs(self):
