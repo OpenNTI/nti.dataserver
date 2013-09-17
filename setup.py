@@ -70,7 +70,7 @@ else:
 
 TESTS_REQUIRE = [
 	'WebTest >= 2.0.7',  # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
-	'blessings >= 1.5',  # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
+	'blessings >= 1.5.1',  # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
 	'coverage >= 3.6',  # Test coverage
 	'fakeredis >= 0.4.0',
 	'fudge',
@@ -174,7 +174,7 @@ setup(
 		'anyjson >= 0.3.3',
 		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
 		# See also blist for a tree-structured list
-		'boto >= 2.13.0',  # amazon
+		'boto >= 2.13.3',  # amazon
 		'brownie >= 0.5.1',  # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
@@ -211,6 +211,20 @@ setup(
 		# it almost looks like something is messing up all the regexes it uses? Or
 		# maybe we are not closing something right? There doesn't seem to be any
 		# parallelism involved. This is under python 2.7.3
+		# JAM: Update for 1.0b3: Some more debugging points to a serious problem in the
+		# parser (the actual SanitizerFilter seems to have no part in it).
+		# Given a well-formed XML file, when the parser encounters
+		# text like:
+		#     &lt;<a>link text</a>http://.....&gt;
+		# it attempts to parse that like a <link> tag found in the <head>, and attempts
+		# to make everything up to &gt; be an attribute of the link tag. This produces
+		# garbage attributes, and now, the wonderfully named 'ihatexml' module (probably
+		# because you don't understand it!) produces lots of DataLossWarnings about
+		# bad attribute names (and we can force it to throw errors there, which is
+		# actually best)...no doubt this gibberish is what produces corrupted output files
+		# It seems to requires some particular state to trigger this bad behaviour; unit tests
+		# for sanitizing tend to work fine, but the parallel indexing unit tests (as well
+		# as the render) have this problem. The above text is in nti/contentrendering/tests/intro-biology-rendered-book/id36074449.html
 		'html5lib == 0.95',
 		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
 		'joblib >= 0.7.1',  # Python functions as pipeline jobs.
