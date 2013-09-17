@@ -29,9 +29,7 @@ from nti.externalization.datastructures import ExternalizableDictionaryMixin
 from zope import component
 import nti.tests
 
-class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
-	set_up_packages = (nti.externalization,)
-
+from . import ConfiguringTestBase
 
 class TestFunctions(ConfiguringTestBase):
 

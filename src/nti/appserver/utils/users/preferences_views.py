@@ -93,5 +93,4 @@ def _temp_zope_get_prefs(request):
 	# Because we load the ++preference++ traversal namespace,
 	# this is available at /path/to/principal/++preference++
 	# (and sub-paths, nice! for automatic fetch-in-part)
-	# Until we set up externalizable stuff, return the raw data
-	return request.context.data
+	return request.context

@@ -51,3 +51,8 @@ def externalizes( matcher=None ):
 	the externalized object.
 	"""
 	return Externalizes( matcher=matcher )
+
+
+import nti.tests
+class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
+	set_up_packages = (nti.externalization,)
