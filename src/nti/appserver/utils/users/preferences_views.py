@@ -82,6 +82,8 @@ def delete_preferences(request):
 
 
 from zope.preference.interfaces import IPreferenceGroup
+from nti.appserver._view_utils import AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
+
 @view_config(route_name='objects.generic.traversal',
 			 request_method='GET',
 			 renderer='rest',
@@ -94,3 +96,20 @@ def _temp_zope_get_prefs(request):
 	# this is available at /path/to/principal/++preference++
 	# (and sub-paths, nice! for automatic fetch-in-part)
 	return request.context
+
+
+@view_config(route_name='objects.generic.traversal',
+			 request_method='PUT',
+			 renderer='rest',
+			 context=IPreferenceGroup,
+			 permission=nauth.ACT_UPDATE)
+class PreferencesPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
+	# Although this is the UPDATE permission,
+	# the prefs being updated are always those of the current user
+	# implicitly, regardless of traversal path. We could add
+	# an ACLProvider (and hook into the zope checker machinery?)
+	# but that would be primarily for aesthetics
+	def __call__(self):
+		externalValue = self.readInput( )
+
+		return self.updateContentObject( self.request.context, externalValue, notify=False )
