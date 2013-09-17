@@ -43,6 +43,10 @@ class Serializer(serializer.HTMLSerializer):
 	space_before_trailing_solidus = True
 	sanitize = False
 
+	# In 1.0b3, the order changed to preserve
+	# the source order. But for tests, its best of
+	# they are in a known order
+	alphabetical_attributes = True
 
 from html5lib.filters import sanitizer
 
@@ -241,6 +245,7 @@ def _to_sanitized_doc(user_input):
 	# We cannot sanitize and parse in one step; if there is already
 	# HTML around it, then we wind up with escaped HTML as text:
 	# <html>...</html> => <html><body>&lthtml&gt...&lt/html&gt</html>
+	__traceback_info__ = user_input
 	p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"),
 							namespaceHTMLElements=False)
 	doc = p.parse(user_input)
@@ -317,6 +322,7 @@ def sanitize_user_html(user_input, method='html'):
 		# remove trailing breaks
 		normalized = normalized[0:-6]
 	# If it has no more tags, we can be plain text.
+	# FIXME: This probably breaks on entities like &lt;
 	if '<' not in normalized:
 		string = frg_interfaces.PlainTextContentFragment(normalized.strip())
 	else:
@@ -341,12 +347,21 @@ def _sanitize_user_html_to_text(user_input):
 
 	See :func:`sanitize_user_html`.
 	"""
+	# We are sometimes used as a named adapter, or even sadly called
+	# directly, which means we can get called even with the right kind
+	# of input already. It messes the content up if we try to reparse
+	if frg_interfaces.IPlainTextContentFragment.providedBy(user_input):
+		return user_input
+	__traceback_info__ = user_input, type(user_input)
 	return sanitize_user_html(user_input, method='text')
 
 @interface.implementer(frg_interfaces.IPlainTextContentFragment)
 @component.adapter(frg_interfaces.IHTMLContentFragment)
 @lru_cache(10000)
 def _html_to_sanitized_text(html):
+	if frg_interfaces.IPlainTextContentFragment.providedBy(html):
+		return user_input
+
 	return _doc_to_plain_text(_to_sanitized_doc(html))
 
 @interface.implementer(frg_interfaces.IPlainTextContentFragment)

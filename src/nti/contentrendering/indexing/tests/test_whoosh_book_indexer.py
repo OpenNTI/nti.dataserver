@@ -70,7 +70,7 @@ class TestWhooshBookIndexer(ConfiguringTestBase):
 		self._test_book_indexer(_IdentifiableNodeWhooshIndexer, 26, 16)
 
 	def test_bookfile_indexer(self):
-		self._test_book_indexer(_BookFileWhooshIndexer, 7, 4)
+		self._test_book_indexer(_BookFileWhooshIndexer, 8, 4)
 
 	def _index_file(self, path, indexname, nodename, indexer=None):
 		indexer = indexer or _BookFileWhooshIndexer()

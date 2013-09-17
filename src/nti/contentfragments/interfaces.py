@@ -8,6 +8,8 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__('logging').getLogger(__name__)
 
+import copy_reg
+
 import zope.contenttype
 
 from zope import interface
@@ -62,7 +64,7 @@ class UnicodeContentFragment(unicode):
 	This object *DOES NOT* add a dictionary to the :class:`unicode` type.
 	In particular, it should not be weak referenced. Subclasses that
 	do not expect to be persisted in the ZODB *may* add additional attributes
-	by adding to the ``__slots__`` field.
+	by adding to the ``__slots__`` field (not the instance value).
 	"""
 
 	# We do need to allow the things used by zope.interface/zope.component
@@ -77,15 +79,17 @@ class UnicodeContentFragment(unicode):
 
 	def __setattr__(self, name, value):
 		# We do allow the attributes used by the ZCA
-		if name in self.__slots__:
-			unicode.__setattr__(self, name, value)
+		if name in type(self).__slots__:
+			super(UnicodeContentFragment,self).__setattr__(name, value)
 			return
 		raise AttributeError(name, type(self))
 
 	def __getattribute__(self, name):
-		if name in ('__dict__', '__weakref__'):  # Though this does not actually prevent creating a weak ref
+		if name in (b'__dict__', b'__weakref__'):  # Though this does not actually prevent creating a weak ref
 			raise AttributeError(name, type(self))
-		return unicode.__getattribute__(self, name)
+		if name == b'__class__':
+			return type(self)
+		return super(UnicodeContentFragment,self).__getattribute__(name)
 
 	def __setstate__(self, state):
 		# If we had any state saved due to bad pickles in the past
@@ -99,15 +103,31 @@ class UnicodeContentFragment(unicode):
 			if state and (len(state) > 1 or '__parent__' not in state):
 				logger.warn("Ignoring bad state for %s: %s", self, state)
 
-
 	def __getstate__(self):
 		# Support just the ZCA attributes
-		state = unicode.__getattribute__(self, '__dict__')
+		state = super(UnicodeContentFragment,self).__getattribute__(b'__dict__')
 		if state:
-			state = {k: v for k, v in state.items() if k in self.__slots__}
+			state = {k: v for k, v in state.items() if k in type(self).__slots__}
 			return state
 
 		return ()
+
+	def __reduce_ex__(self, protocol):
+		return ( copy_reg.__newobj__, # Constructor
+				 # Constructor args. Note we pass a real base unicode object;
+				 # otherwise, we get infinite recursion as pickle tries to
+				 # reduce use again using __unicode__
+				 (type(self), self.encode('utf-8').decode('utf-8')),
+				 self.__getstate__() or None,
+				 None,
+				 None )
+
+
+	def __unicode__(self):
+		""""We are-a unicode instance, but if we don't override this method,
+		calling unicode(UnicodeContentFragment('')) produces a plain, base,
+		unicode object, thus losing all our interfaces."""
+		return self
 
 	def __rmul__(self, times):
 		result = unicode.__rmul__(self, times)
@@ -117,6 +137,12 @@ class UnicodeContentFragment(unicode):
 
 	def __mul__(self, times):
 		result = unicode.__mul__(self, times)
+		if result is not self:
+			result = self.__class__(result)
+		return result
+
+	def translate(self, table):
+		result = unicode.translate(self, table)
 		if result is not self:
 			result = self.__class__(result)
 		return result
