@@ -14,7 +14,6 @@ from zope import component
 from nti.contentprocessing import split_content
 
 from nti.contentfragments import interfaces as frg_interfaces
-from nti.contentfragments.html import _sanitize_user_html_to_text
 
 def sanitize_content(text, table=None, tokens=False):
 	"""
@@ -37,6 +36,7 @@ def sanitize_content(text, table=None, tokens=False):
 	# since its nothing actually close to HTML
 	# Since we're using a named adapter, we need to be careful
 	# not to re-adapt multiple times
+	raw = text
 	text = component.getAdapter(text, frg_interfaces.IPlainTextContentFragment, name='text')
 	__traceback_info__ = raw, text, type(text)
 	# translate and tokenize words
