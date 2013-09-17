@@ -28,7 +28,7 @@ class TestUsePreferencesViews(SharedApplicationTestBase):
 	def test_traverse_to_my_prefs(self):
 		res = self._fetch_user_url( '/++preferences++' )
 		assert_that( res.json_body,
-					 has_entries( {u'Class': u'OOBTree',
+					 has_entries( {u'Class': u'Preference_Root',
 								  u'href': u'/dataserver2/users/sjohnson@nextthought.COM/++preferences++'} ) )
 
 
