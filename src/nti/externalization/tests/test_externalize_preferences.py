@@ -20,12 +20,15 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import has_entries
+from hamcrest import has_property
 
 import nti.tests
 
 from zope.preference import preference
 from zope.preference.interfaces import IPreferenceGroup
 from zope.component import provideUtility
+
+from ..internalization import update_from_external_object
 
 # First, define a basic preference schema
 import zope.interface
@@ -36,7 +39,8 @@ class IZMIUserSettings(zope.interface.Interface):
 
 	email = zope.schema.TextLine(
 		title=u"E-mail Address",
-		description=u"E-mail Address used to send notifications")
+		description=u"E-mail Address used to send notifications",
+		required=False)
 
 	skin = zope.schema.Choice(
 		title=u"Skin",
@@ -89,6 +93,10 @@ class TestExternalizePreferences(ConfiguringTestBase):
 
 	def setUp(self):
 		super(TestExternalizePreferences,self).setUp()
+		self._create_prefs()
+
+	def _create_prefs(self):
+
 		self.settings = preference.PreferenceGroup(
 			"ZMISettings",
 			schema=IZMIUserSettings,
@@ -132,8 +140,6 @@ class TestExternalizePreferences(ConfiguringTestBase):
 		# When we start with a root object,
 		# and there are sub-objects in ZCA,
 		# we get those as well
-
-
 		participation = self.Participation(self.Principal())
 		zope.security.management.newInteraction(participation)
 
@@ -145,3 +151,32 @@ class TestExternalizePreferences(ConfiguringTestBase):
 						 'Folder', has_entries(
 							 'Class', 'Preference_ZMISettings_Folder',
 							 'MimeType', 'application/vnd.nextthought.preference.zmisettings.folder') ) ) )
+
+	def test_update_prefs(self):
+		participation = self.Participation(self.Principal())
+		zope.security.management.newInteraction(participation)
+
+		assert_that( self.settings, has_property( 'skin', 'Rotterdam' ) )
+		update_from_external_object( self.settings, {'skin': 'Basic'} )
+		assert_that( self.settings, has_property( 'skin', 'Basic' ) )
+
+	def test_update_sub_prefs(self):
+		participation = self.Participation(self.Principal())
+		zope.security.management.newInteraction(participation)
+
+		provideUtility( self.settings, IPreferenceGroup, name=self.settings.__id__ )
+		provideUtility( self.folder_settings, IPreferenceGroup, name=self.folder_settings.__id__ )
+
+		assert_that( self.settings, has_property( 'skin', 'Rotterdam' ) )
+		assert_that( self.folder_settings, has_property( 'sortedBy', 'name' ) )
+
+		update_from_external_object( self.settings, {'skin': 'Basic', 'Folder': {'sortedBy': 'creator'}} )
+
+		assert_that( self.settings, has_property( 'skin', 'Basic' ) )
+		assert_that( self.folder_settings, has_property( 'sortedBy', 'creator' ) )
+
+		# Be sure that it is actually in the annotations by
+		# re-creating the objects
+		self._create_prefs()
+		assert_that( self.settings, has_property( 'skin', 'Basic' ) )
+		assert_that( self.folder_settings, has_property( 'sortedBy', 'creator' ) )
