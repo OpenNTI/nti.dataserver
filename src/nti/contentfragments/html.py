@@ -52,7 +52,7 @@ from . import interfaces as frg_interfaces
 
 class _SliceDict(dict):
 	"""
-	There is a bug in html5lib 0.95 (and 1.0b1): The _base.TreeWalker now returns
+	There is a bug in html5lib 0.95 (and 1.0b1 and b3): The _base.TreeWalker now returns
 	a dictionary from normalizeAttrs. Some parts of the code, notably sanitizer.py 171
 	haven't been updated from 0.90 and expect a list. They try to reverse it using a
 	slice, and the result is a type error. We can fix this.
@@ -67,10 +67,11 @@ class _SliceDict(dict):
 # TODO: Consider also http://packages.python.org/PottyMouth/
 from html5lib.sanitizer import HTMLSanitizerMixin
 
-# There is a bug in 0.95 and 1.0b1: the sanitizer converts attribute dicts
+# There is a bug in 0.95 and 1.0b1 and b3: the sanitizer converts attribute dicts
 # to lists when they should stay dicts. We fix that globally.
 _orig_sanitize = HTMLSanitizerMixin.sanitize_token
 def _sanitize_token(self, token):
+	__traceback_info__ = token
 	to_dict = False
 
 	if token.get('name') in self.allowed_elements and isinstance(token.get('data'), dict):
@@ -78,6 +79,7 @@ def _sanitize_token(self, token):
 			token['data'] = _SliceDict({k[1]:v for k, v in token['data'].items()})
 		to_dict = True
 	result = _orig_sanitize(self, token)
+	__traceback_info__ = token, result
 	if to_dict:
 		# TODO: We're losing namespaces for attributes in this process
 		result['data'] = {(None, k):v for k, v in result['data']}
@@ -239,7 +241,8 @@ def _to_sanitized_doc(user_input):
 	# We cannot sanitize and parse in one step; if there is already
 	# HTML around it, then we wind up with escaped HTML as text:
 	# <html>...</html> => <html><body>&lthtml&gt...&lt/html&gt</html>
-	p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False)
+	p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"),
+							namespaceHTMLElements=False)
 	doc = p.parse(user_input)
 	string = _html5lib_tostring(doc, sanitize=True)
 
@@ -248,7 +251,8 @@ def _to_sanitized_doc(user_input):
 	string = string.replace(u'\u00A0', ' ')
 
 	# Back to lxml to do some dom manipulation
-	p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False)
+	p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"),
+							namespaceHTMLElements=False)
 	doc = p.parse(string)
 
 	return doc
