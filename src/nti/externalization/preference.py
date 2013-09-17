@@ -32,6 +32,7 @@ from zope.preference.interfaces import IPreferenceGroup
 from .interfaces import IInternalObjectIO
 from .interfaces import StandardExternalFields
 from .externalization import toExternalObject
+from .internalization import update_from_external_object
 from .datastructures import InterfaceObjectIO
 
 
@@ -63,6 +64,24 @@ class PreferenceGroupObjectIO(InterfaceObjectIO):
 		super(PreferenceGroupObjectIO,self).__init__( context,
 													  iface_upper_bound=context.__schema__ or IPreferenceGroup )
 
+	@property
+	def __external_resolvers__(self):
+		"Sub-groups are resolved to the actual utility, if they exist"
+		# We have to update them from the external value as we
+		# get them because simply assigning the attribute on the PrefGroup
+		# does nothing. Because of this, we don't even need to include
+		# subgroups in the result of _ext_all_possible_keys
+		context = self._ext_replacement()
+		def _make_resolver(local_name):
+			return lambda _x, _z, local_data: update_from_external_object(getattr(context, local_name), local_data)
+
+		return {local_name: _make_resolver(local_name)
+				for local_name in context.keys()}
+
+	# Note: _ext_setattr winds up doing double-validation (because the
+	# PrefGroup does so as well). But it does add the security of not
+	# being able to set a key that isn't in the interface
+
 	def toExternalObject(self, mergeFrom=None ):
 		result = super(PreferenceGroupObjectIO,self).toExternalObject( mergeFrom=mergeFrom )
 		context = self._ext_replacement()
@@ -77,6 +96,8 @@ class PreferenceGroupObjectIO(InterfaceObjectIO):
 		result[StandardExternalFields.MIMETYPE] = 'application/vnd.nextthought.preference.' + group_id.lower()
 
 		# Last but not least, add any registered sub-groups
+		# (Since they are not added as possible keys, we have to do
+		# this manually. See __external_resolvers__)
 		for local_name, group in context.items():
 			assert local_name not in result, "Invalid group name, developer error"
 			result[local_name] = toExternalObject( group )
