@@ -120,6 +120,11 @@ setup(
 		# problems with buildout, so we need to disable tagging
 		# in setup.cfg
 		# 'setuptools_subversion >= 3.1'
+		# Babel and lingua need to be here so we get the
+		# correct distutils extensions, otherwise
+		# we can get a warning about 'unknown option message extractors'
+		'Babel',
+		'lingua'
 	],
 	install_requires=[
 		'nti.plasTeX',
@@ -395,7 +400,7 @@ setup(
 			# fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 		 	'linesman >= 0.3.1',  # less that 0.3.0 conflicts with pillow (wanted PIL)
 			# 'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
-			'dblatex >= 0.3.4',  # content rendering, convert docbook to tex
+			#'dblatex >= 0.3.4',  # content rendering, convert docbook to tex. disabled due to sandbox violation
 			'epydoc >= 3.0.1',  # auto-api docs
 			'httpie >= 0.6.0',
 			'ipython >= 1.1.0',  # the extra notebook is web based, pulls in tornado
@@ -416,7 +421,7 @@ setup(
 			'virtualenvwrapper >= 4.1.1',
 			'zc.buildout >= 2.2.1',
 			'z3c.dependencychecker >= 1.11',  # unused/used imports; see also tl.eggdeps
-			'zodbbrowser >= 0.11.0',
+			#'zodbbrowser >= 0.11.0', leads to version conflicts due to its old deps
 			'zodbupdate >= 0.5',
 			# Monitoring stats and instrumenting code
 			# See above for python-statsd
