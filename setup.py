@@ -64,7 +64,10 @@ IS_PYPY = py_impl() == 'PyPy'
 try:
 	import zope.container
 except ImportError:
-	HAVE_ZCONT = False
+	# FIXME: Under buildout, this runs
+	# in the system python, which means 
+	# we can never properly detect this
+	HAVE_ZCONT = True
 else:
 	HAVE_ZCONT = True
 
