@@ -117,7 +117,7 @@ setup(
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
 		# to work (with distribute?)
-		# 'setuptools_subversion >= 3.0'
+		'setuptools_subversion >= 3.1'
 	],
 	install_requires=[
 		'nti.plasTeX',
