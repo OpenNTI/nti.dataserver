@@ -95,8 +95,7 @@ def main():
 	arg_parser = argparse.ArgumentParser(description="Export user objects")
 	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	arg_parser.add_argument('--site', dest='site', action='store_true',
-							help="Application SITE. Use this to get profile info")
+	arg_parser.add_argument('--site', dest='site', help="Application SITE. Use this to get profile info")
 	arg_parser.add_argument('--profile', help="Return profile info", action='store_true', dest='profile')
 	arg_parser.add_argument('--all', help="Process all entities", action='store_true', dest='all')
 	arg_parser.add_argument('entities',
