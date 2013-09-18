@@ -116,8 +116,10 @@ setup(
 		# 'distribute >= 0.7.3', # Can't seem to include that anywhere
 		# In theory this should make it possible to get
 		# the svn revision number from svn 1.7. Doesn't seem
-		# to work (with distribute?)
-		'setuptools_subversion >= 3.1'
+		# to work (with distribute?) at all. This causes
+		# problems with buildout, so we need to disable tagging
+		# in setup.cfg
+		# 'setuptools_subversion >= 3.1'
 	],
 	install_requires=[
 		'nti.plasTeX',
