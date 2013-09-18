@@ -3,7 +3,7 @@
 """
 Export entity information
 
-$Id: nti_create_user.py 23948 2013-09-03 21:29:21Z carlos.sanchez $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
