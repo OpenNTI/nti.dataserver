@@ -26,7 +26,7 @@ import nti.tests
 
 from zope.preference import preference
 from zope.preference.interfaces import IPreferenceGroup
-from zope.component import provideUtility
+from zope.component import provideUtility, provideAdapter
 
 from ..internalization import update_from_external_object
 
@@ -76,12 +76,22 @@ from . import externalizes
 from zope.security.interfaces import NoInteraction
 import zope.security.management
 from zope.annotation.interfaces import IAttributeAnnotatable
+from zope.annotation.interfaces import IAnnotations
+from zope.annotation.attribute import AttributeAnnotations
+
 from zope import interface
+
+def _PrincipalAnnotationFactory(prin, group):
+	# The principal in the interaction must be annotatable
+	# Making it implement IAttributeAnnotatable
+	# seems like it should be enough (and it works for JAM)
+	# but it doesn't work everywhere. So this is
+	# an explicit factory.
+	return AttributeAnnotations(prin)
 
 class TestExternalizePreferences(ConfiguringTestBase):
 
-	# The principal in the interaction must be annotatable
-	@interface.implementer(IAttributeAnnotatable)
+
 	class Principal(object):
 		id = 'zope.user'
 
@@ -94,6 +104,9 @@ class TestExternalizePreferences(ConfiguringTestBase):
 	def setUp(self):
 		super(TestExternalizePreferences,self).setUp()
 		self._create_prefs()
+		provideAdapter( _PrincipalAnnotationFactory,
+						(self.Principal,IPreferenceGroup),
+						IAnnotations )
 
 	def _create_prefs(self):
 
