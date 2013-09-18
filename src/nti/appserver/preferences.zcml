@@ -26,9 +26,37 @@
 		title='WebApp Settings'
 		schema='.preferences.IWebAppUserSettings'
 		category='true' />
+
+	<!-- The chat tree -->
+
 	<preferenceGroup
 		id='ChatPresence'
 		title='Chat Presence Settings'
 		schema='.preferences.IChatPresenceSettings'
 		/>
+	<preferenceGroup
+		id="ChatPresence.Active"
+		title="The Default Presence"
+		description="The presence to use when a user enters the application, potentially copied from another option or updated when the user updates"
+		schema="nti.chatserver.interfaces.IUnattachedPresenceInfo"
+		/>
+
+	<preferenceGroup
+		id="ChatPresence.Available"
+		title="Available"
+		schema=".preferences..IAvailableChatPresenceSettings"
+		/>
+
+	<preferenceGroup
+		id="ChatPresence.Away"
+		title="Away"
+		schema=".preferences.IAwayChatPresenceSettings"
+		/>
+
+	<preferenceGroup
+		id="ChatPresence.DND"
+		title="Do Not Disturb"
+		schema=".preferences.IDNDChatPresenceSettings"
+		/>
+
 </configure>

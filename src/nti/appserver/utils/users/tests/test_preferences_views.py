@@ -37,8 +37,21 @@ class TestUsePreferencesViews(SharedApplicationTestBase):
 															u'MimeType': u'application/vnd.nextthought.preference.webapp',
 															u'preferFlashVideo': False} ),
 								u'ChatPresence': has_entries( {u'Class': u'Preference_ChatPresence',
-															   u'MimeType': u'application/vnd.nextthought.preference.chatpresence'} ) }) )
-
+															   u'MimeType': u'application/vnd.nextthought.preference.chatpresence',
+															   'Away': has_entry('status', 'Away'),
+															   'Available': has_entry('status', 'Available'),
+															   'DND': has_entry('status', 'Do Not Disturb'),
+															   'Active': is_(dict)} ) }) )
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_update_chat_active_prefs(self):
+		href = '/dataserver2/users/sjohnson@nextthought.COM/++preferences++/ChatPresence/Active'
+		self.testapp.put_json( href,
+							   {'status': "This is my new status"} )
+		res = self._fetch_user_url( '/++preferences++' )
+		assert_that( res.json_body,
+					 has_entries( 'ChatPresence',
+								  has_entry( 'Active',
+											 has_entry( 'status', 'This is my new status' ) ) ) )
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
