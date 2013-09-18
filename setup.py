@@ -162,7 +162,7 @@ setup(
 		'BTrees >= 4.0.8',
 		'zdaemon >= 4.0.0',
 		'persistent >= 4.0.6',
-		'ZEO >= 4.0.0b1',
+		'ZEO >= 4.0.0',
 		# ZODB RelStorage:
 		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
 		# 'MySQL-python', # mysql adapter--NOT needed, loaded from umysqldb
