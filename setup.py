@@ -353,7 +353,7 @@ setup(
 		'zope.preference >= 4.0.0a1' if HAVE_ZCONT else '',
 		'zope.ptresource >= 4.0.0a1',
 		'zope.publisher >= 4.0.0a4',
-		'zope.principalannotation >= 4.0.0a1',  # Annotating principals in Zope3's global reg; pulled in indirectly by zope.app.component[test]
+		'zope.principalannotation >= 4.0.0a2',  # Annotating principals in Zope3's global reg; pulled in indirectly by zope.app.component[test]
 		'zope.principalregistry >= 4.0.0a2',  # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
 		'zope.proxy >= 4.1.3',  # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
