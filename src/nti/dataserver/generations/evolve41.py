@@ -27,6 +27,8 @@ from zope.security.management import newInteraction, endInteraction
 
 from zc import intid as zc_intid
 
+from nti.contentfragments.interfaces import PlainTextContentFragment
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users.preferences import EntityPreferences
 
@@ -46,7 +48,7 @@ def migrate_preferences(user):
         key = EntityPreferences.__module__ + '.' + EntityPreferences.__name__ 
         ep = getattr(user, '__annotations__', {}).get(key, None)
         if ep is None:
-            continue 
+            return
         
         root_prefs = pref_interfaces.IUserPreferences(user)
 
@@ -58,15 +60,15 @@ def migrate_preferences(user):
         presence = ep.get('presence', {})
         current = presence.get('active')
         if current and current in presence:
-            status = presence.get(presence, {}).get('status')
+            status = presence.get(current, {}).get('status')
             if status:
-                root_prefs.ChatPresence.Active.status = unicode(status)
+                root_prefs.ChatPresence.Active.status = PlainTextContentFragment(status)
 
         for name in ('Available', 'Away', 'DND'):
             status = presence.get(name.lower(), {}).get('status')
             pref_grp = getattr(root_prefs.ChatPresence, name)
             if status:
-                pref_grp.status = unicode(status)
+                pref_grp.status = PlainTextContentFragment(status)
         
         del user.__annotations__[key]
     finally:
