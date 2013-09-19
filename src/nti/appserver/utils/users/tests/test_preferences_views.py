@@ -25,57 +25,6 @@ from hamcrest import none
 
 class TestUsePreferencesViews(SharedApplicationTestBase):
 
-	set_up_packages = SharedApplicationTestBase.set_up_packages + (('test_preferences_views.zcml', 'nti.appserver.utils.users.tests'),)
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_traverse_to_my_root_prefs(self):
-		res = self._fetch_user_url( '/++preferences++' )
-		assert_that( res.json_body,
-					 has_entries( {u'Class': u'Preference_Root',
-								   u'href': u'/dataserver2/users/sjohnson@nextthought.COM/++preferences++',
-								   u'WebApp': has_entries( {u'Class': u'Preference_WebApp',
-															u'MimeType': u'application/vnd.nextthought.preference.webapp',
-															u'preferFlashVideo': False} ),
-								u'ChatPresence': has_entries( {u'Class': u'Preference_ChatPresence',
-															   u'MimeType': u'application/vnd.nextthought.preference.chatpresence',
-															   'Away': has_entry('status', 'Away'),
-															   'Available': has_entry('status', 'Available'),
-															   'DND': has_entry('status', 'Do Not Disturb'),
-															   'Active': is_(dict)} ) }) )
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_update_chat_active_prefs(self):
-		href = '/dataserver2/users/sjohnson@nextthought.COM/++preferences++/ChatPresence/Active'
-		self.testapp.put_json( href,
-							   {'status': "This is my new status"} )
-		res = self._fetch_user_url( '/++preferences++' )
-		assert_that( res.json_body,
-					 has_entries( 'ChatPresence',
-								  has_entry( 'Active',
-											 has_entry( 'status', 'This is my new status' ) ) ) )
-
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_traverse_to_my_zmi_prefs(self):
-		res = self._fetch_user_url( '/++preferences++/ZMISettings' )
-		assert_that( res.json_body,
-					 has_entries( 'href', '/dataserver2/users/sjohnson@nextthought.COM/++preferences++/ZMISettings',
-								  'email', none(),
-								  'showZopeLogo', True,
-								  'skin', 'Rotterdam',
-								  'Class', 'Preference_ZMISettings',
-								  'MimeType', 'application/vnd.nextthought.preference.zmisettings',
-								  'Folder',  has_entries(
-									  'Class', 'Preference_ZMISettings_Folder',
-									  'MimeType', 'application/vnd.nextthought.preference.zmisettings.folder') ) )
-		# And I can update them just like any external object
-		self.testapp.put_json( res.json_body['href'], {'skin': 'Basic'} )
-
-		res = self._fetch_user_url( '/++preferences++/ZMISettings' )
-		assert_that( res.json_body,
-					 has_entries( 'skin', 'Basic' ) )
-
-
-
 	@WithSharedApplicationMockDS
 	def test_set_preferences(self):
 		with mock_dataserver.mock_db_trans(self.ds):

@@ -45,10 +45,6 @@
 			 factory=".internalization.default_externalized_object_factory_finder_factory"
 			 provides=".interfaces.IExternalizedObjectFactoryFinder" />
 
-	<!-- Preferences -->
-	<adapter for="zope.preference.interfaces.IPreferenceGroup"
-			 factory=".preference.PreferenceGroupObjectIO" />
-
 	<adapter for=""
 			 factory=".externalization._DevmodeNonExternalizableObjectReplacer"
 			 zcml:condition="have devmode" />
