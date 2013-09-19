@@ -3,6 +3,11 @@ numpy >= 1.7.1
 # matplotlib >= 1.2.1
 
 file:../lib/pywikipedia/#egg=pywikipedia
+# Temporary. We depend on this only for
+# setup files; this will go away with buildout.
+# It actually depends on us but doesn't declare that
+-e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.client_preferences/trunk#egg=nti.app.client_preferences
+
 
 ## Sadly, issue 328 prevents us from using local paths for these things,
 ## if we include the egg name. If we're otherwise very careful,
