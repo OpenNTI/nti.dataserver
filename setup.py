@@ -277,7 +277,7 @@ setup(
 		'simplejson >= 3.3.0',
 		'six >= 1.4.1',
 		'sympy >= 0.7.2' if not IS_PYPY else '',
-		'stripe >= 1.9.4',  # stripe payments
+		'stripe >= 1.9.5',  # stripe payments
 		# 'slimit',
 		'supervisor >= 3.0',
 		'transaction >= 1.4.1',
