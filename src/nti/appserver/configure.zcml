@@ -315,8 +315,6 @@
 	<includeOverrides file="restricted_overrides.zcml" />
 
 	<include package="." file="configure_restricted_contenttypes.zcml" />
-	<!-- See preferences.py; expect this to move or be split up -->
-	<include package="." file="preferences.zcml" />
 
 	<includeOverrides file="overrides.zcml" />
 	<include package=".policies" file="configure.zcml" />
