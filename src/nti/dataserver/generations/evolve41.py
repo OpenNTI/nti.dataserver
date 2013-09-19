@@ -5,7 +5,6 @@ Generation 41 evolver, which migrats user preferences
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
@@ -19,8 +18,6 @@ from zope import component
 from zope import interface
 from zope.component.hooks import site, setHooks
 
-from zope.annotation import IAnnotations
-
 from zope.preference import interfaces as pref_interfaces
 
 from zope.security.interfaces import IPrincipal
@@ -31,7 +28,7 @@ from zope.security.management import newInteraction, endInteraction
 from zc import intid as zc_intid
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.users.preferences import EntityPreferences
 
 @interface.implementer(IParticipation)
 class _Participation(object):
@@ -46,30 +43,32 @@ def migrate_preferences(user):
     principal = IPrincipal(user)
     newInteraction(_Participation(principal))
     try:
-        ep = user_interfaces.IEntityPreferences(user)
+        key = EntityPreferences.__module__ + '.' + EntityPreferences.__name__ 
+        ep = getattr(user, '__annotations__', {}).get(key, None)
+        if ep is None:
+            continue 
+        
+        root_prefs = pref_interfaces.IUserPreferences(user)
+
         kalturaPreferFlash = ep.get('kalturaPreferFlash')
         if kalturaPreferFlash is not None:
-            webapp = component.getUtility(pref_interfaces.IPreferenceGroup, name='WebApp')
+            webapp = root_prefs.WebApp
             webapp.preferFlashVideo = kalturaPreferFlash
 
         presence = ep.get('presence', {})
         current = presence.get('active')
         if current and current in presence:
-            current = presence.get(presence, {})
-            cp_active = component.getUtility(pref_interfaces.IPreferenceGroup, name='ChatPresence.Active')
-            status = presence.get('status')
+            status = presence.get(presence, {}).get('status')
             if status:
-                cp_active.status = unicode(status)
+                root_prefs.ChatPresence.Active.status = unicode(status)
 
-        for key in ('Available', 'Away', 'DND'):
-            entry = presence.get(key.lower(), {})
-            status = entry.get('status')
-            pref_grp = component.getUtility(pref_interfaces.IPreferenceGroup, name='ChatPresence.%s' % key)
+        for name in ('Available', 'Away', 'DND'):
+            status = presence.get(name.lower(), {}).get('status')
+            pref_grp = getattr(root_prefs.ChatPresence, name)
             if status:
                 pref_grp.status = unicode(status)
         
-        # remove prefrerence annotation
-        IAnnotations(user).pop("%s.%s" % (ep.__class__.__module__, ep.__class__.__name__), None)
+        del user.__annotations__[key]
     finally:
         endInteraction()
 
