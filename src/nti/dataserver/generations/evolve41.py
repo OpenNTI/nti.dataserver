@@ -52,7 +52,7 @@ def migrate_preferences(user):
         
         root_prefs = pref_interfaces.IUserPreferences(user)
 
-        kalturaPreferFlash = ep.get('kalturaPreferFlash')
+        kalturaPreferFlash = ep.get('webapp_kalturaPreferFlash', ep.get('kalturaPreferFlash'))
         if kalturaPreferFlash is not None:
             webapp = root_prefs.WebApp
             webapp.preferFlashVideo = kalturaPreferFlash

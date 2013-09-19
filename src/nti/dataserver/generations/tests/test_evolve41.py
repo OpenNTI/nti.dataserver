@@ -34,7 +34,7 @@ from hamcrest import (assert_that, none, is_)
 
 _user_preferences = """
 {
-    "kalturaPreferFlash": true,
+    "webapp_kalturaPreferFlash": true,
     "presence": {
         "active": "available",
         "available": {
