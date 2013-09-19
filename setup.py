@@ -78,7 +78,7 @@ TESTS_REQUIRE = [
 	'coverage >= 3.6',  # Test coverage
 	'fakeredis >= 0.4.0',
 	'fudge',
-	'ipdb >= 0.7',  # easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
+	'ipdb >= 0.7.1',  # easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
 	'nose >= 1.3.0',
 	'nose-timer >= 0.1.2',
 	'nose-progressive >= 1.5',
