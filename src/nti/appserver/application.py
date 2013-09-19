@@ -457,6 +457,34 @@ def createApplication( http_port,
 		# do the right thing (see e.g., _indexmanager_event_listeners)
 		xml_conf_machine = xmlconfig.file( 'configure_indexmanager.zcml',  package=nti.appserver, context=xml_conf_machine, execute=False )
 
+	DATASERVER_DIR = os.getenv('DATASERVER_DIR', '')
+	dataserver_dir_exists = os.path.isdir( DATASERVER_DIR )
+	if dataserver_dir_exists:
+		DATASERVER_DIR = os.path.abspath( DATASERVER_DIR )
+	def dataserver_file( *args ):
+		return os.path.join( DATASERVER_DIR, *args )
+	def is_dataserver_file( *args ):
+		return dataserver_dir_exists and os.path.isfile( dataserver_file( *args ) )
+	def is_dataserver_dir( *args ):
+		return dataserver_dir_exists and os.path.isdir( dataserver_file( *args ) )
+
+	# Load the package include slugs created by buildout
+	if is_dataserver_dir( 'etc', 'package-includes' ):
+		ordered_zcml_files = sorted([dataserver_file( 'etc', 'package-includes', f )
+									 for f in os.listdir( dataserver_dir( 'etc', 'package-includes' ) )
+									 if (is_dataserver_file( 'etc', 'package-includes', f )
+										 and f.endswith(".zcml") and not f.startswith( '.' ))])
+		for f in ordered_zcml_files:
+			with open( f, 'r' ) as ff:
+				contents = ff.read()
+			contents = """<configure xmlns="http://namespaces.zope.org/zope">
+							%s
+						</configure>"""
+			xml_conf_machine = xmlconfig.string( contents,
+												 context=xml_conf_machine,
+												 name=f,
+												 execute=False )
+
 	# Load a library, if needed. We take the first of:
 	# settings['library_zcml']
 	# $DATASERVER_DIR/etc/library.zcml
@@ -465,12 +493,16 @@ def createApplication( http_port,
 	# file beside development.ini). In most environments, this can be handled
 	# with site.zcml; NOTE: this could not be in pre_site_zcml, as we depend
 	# on our configuration listeners being in place
+	# TODO: Note that these should probably be configured by site (e.g, componont registery)
+	# A global one is fine, but lower level sites need the ability to override it
+	# easily.
+	# This will come with the splitting of the policy files into their own
+	# projects, together with buildout.
 	library_zcml = None
 	if 'library_zcml' in settings:
 		library_zcml = settings['library_zcml']
-	elif os.path.isdir(os.getenv('DATASERVER_DIR', '')) and \
-		 os.path.isfile(os.path.join(os.getenv('DATASERVER_DIR'), 'etc', 'library.zcml')):
-		library_zcml = os.path.join( os.getenv( 'DATASERVER_DIR' ), 'etc', 'library.zcml' )
+	elif is_dataserver_file( 'etc', 'library.zcml'):
+		library_zcml = dataserver_file( 'etc', 'library.zcml' )
 	elif '__file__' in settings and os.path.isfile( os.path.join( os.path.dirname( settings['__file__'] ), 'library.zcml' ) ):
 		library_zcml = os.path.join( os.path.dirname( settings['__file__'] ), 'library.zcml' )
 
