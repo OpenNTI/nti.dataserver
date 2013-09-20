@@ -66,7 +66,7 @@ try:
 	import zope.container
 except ImportError:
 	# FIXME: Under buildout, this runs
-	# in the system python, which means 
+	# in the system python, which means
 	# we can never properly detect this
 	HAVE_ZCONT = True
 else:
@@ -190,7 +190,7 @@ setup(
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
-		'contentratings == 1.0',  # requires small patch to work without acquisition
+		'contentratings == 1.1',  # requires small patch to work without acquisition
 		'cryptacular >= 1.4.1',  # see z3c.crypt
 		'cssselect == 0.7.1',  # Used by pyquery (0.8 not compatible with pyquery 1.2.4, :first raises AttributeError)
 		'cython >= 0.19.1',
