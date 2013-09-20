@@ -468,22 +468,26 @@ def createApplication( http_port,
 	def is_dataserver_dir( *args ):
 		return dataserver_dir_exists and os.path.isdir( dataserver_file( *args ) )
 
+	def load_dataserver_slugs( include_dir_name, context ):
+		if is_dataserver_dir( 'etc', include_dir_name ):
+			ordered_zcml_files = sorted([dataserver_file( 'etc', include_dir_name, f )
+										 for f in os.listdir( dataserver_dir( 'etc', include_dir_name ) )
+										 if (is_dataserver_file( 'etc', include_dir_name, f )
+											 and f.endswith(".zcml") and not f.startswith( '.' ))])
+			for f in ordered_zcml_files:
+				with open( f, 'r' ) as ff:
+					contents = ff.read()
+				contents = """<configure xmlns="http://namespaces.zope.org/zope">
+								%s
+							</configure>"""
+				context = xmlconfig.string( contents,
+											context=context,
+											name=f,
+											execute=False )
+		return context
+
 	# Load the package include slugs created by buildout
-	if is_dataserver_dir( 'etc', 'package-includes' ):
-		ordered_zcml_files = sorted([dataserver_file( 'etc', 'package-includes', f )
-									 for f in os.listdir( dataserver_dir( 'etc', 'package-includes' ) )
-									 if (is_dataserver_file( 'etc', 'package-includes', f )
-										 and f.endswith(".zcml") and not f.startswith( '.' ))])
-		for f in ordered_zcml_files:
-			with open( f, 'r' ) as ff:
-				contents = ff.read()
-			contents = """<configure xmlns="http://namespaces.zope.org/zope">
-							%s
-						</configure>"""
-			xml_conf_machine = xmlconfig.string( contents,
-												 context=xml_conf_machine,
-												 name=f,
-												 execute=False )
+	xml_conf_machine = load_dataserver_slugs( 'package-includes', xml_conf_machine )
 
 	# Load a library, if needed. We take the first of:
 	# settings['library_zcml']
@@ -590,7 +594,7 @@ def createApplication( http_port,
 
 	pyramid_config.include( 'pyramid_zcml' )
 	import pyramid_zcml
-	# make it respect the features we choose to provide
+	# XXX: HACK:  make it respect the features we choose to provide
 	pyramid_zcml.ConfigurationMachine = lambda: _create_xml_conf_machine( settings )
 
 	# Our traversers
@@ -635,6 +639,7 @@ def createApplication( http_port,
 
 	# Declarative configuration.
 	# NOTE: More things are moving into this.
+	# NOTE: This is hacked above, and also hacked below
 	pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' ) # must use full spec, we may not have created the pyramid_config object so its working package may be unknown
 
 	_ugd_odata_views(pyramid_config)
@@ -653,6 +658,23 @@ def createApplication( http_port,
 	_patching_restore_views(pyramid_config)
 
 	_external_view_settings(pyramid_config)
+
+	# Now load the registered pyramid slugs from buildout
+	# XXX: HACK: The easiest way to do this, without
+	# copying the pyramid_zcml code, is a second hack, overloading its
+	# use of xmlconfig.file to actually take all the files in the directory,
+	# ignoring the argument. A second option is a new ZCML directive,
+	# if we could figure out how to get all the information to it
+	# (maybe writing out a tempfile with arguments filled in?)
+	class _pyramid_xmlconfig(object):
+		def file( self, filename, package, context=None, execute=False ):
+			# Ignore all that stuff except the context.
+			load_dataserver_slugs( 'pyramid-includes', context )
+	try:
+		pyramid_zcml.xmlconfig = _pyramid_xmlconfig()
+		pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' )
+	finally:
+		pyramid_zcml.xmlconfig = xmlconfig
 
 	# register change listeners
 	# Now, fork off the change listeners
