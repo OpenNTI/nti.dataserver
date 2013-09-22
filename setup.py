@@ -242,7 +242,7 @@ setup(
 		# jquery-like traversing of python datastructures. lxml, cssselect
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
-		'pyramid >= 1.5a1' ,
+		'pyramid == 1.5a1' ,
 		'pyramid_mailer >= 0.13',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
@@ -285,7 +285,7 @@ setup(
 		# library to do web user agent detection
 		'WebError >= 0.10.3',  # Error-handling middleware, extracted from Paste (yet turns out to still be dependent on paste. sigh)
 		'webob >= 1.2.3',
-		'whoosh >= 2.5.3',
+		'whoosh >= 2.5.4',
 		'z3c.baseregistry >= 2.0.0',  # ZCML configurable local component registries
 		'z3c.batching >= 2.0.0',  # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
