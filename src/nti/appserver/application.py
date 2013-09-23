@@ -557,7 +557,10 @@ def createApplication( http_port,
 		# This branch exists only for tests
 		pyramid_config.set_root_factory( 'nti.appserver._dataserver_pyramid_traversal.root_resource_factory' )
 
+	# Chameleon templating support; see also _renderer_settings
+	pyramid_config.include( 'pyramid_chameleon' )
 	# Configure Mako for plain text templates (Only! Use ZPT for XML/HTML)
+	pyramid_config.include('pyramid_mako')
 	pyramid_config.registry.settings['mako.directories'] = 'nti.appserver:templates'
 	pyramid_config.registry.settings['mako.module_directory'] = template_cache_dir
 	pyramid_config.registry.settings['mako.strict_undefined'] = True

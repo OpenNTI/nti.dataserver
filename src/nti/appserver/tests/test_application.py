@@ -473,7 +473,7 @@ class TestApplication(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_mako_renderer(self):
 		from pyramid.renderers import render
-		from pyramid.mako_templating import MakoRenderingException
+		from pyramid_mako import MakoRenderingException
 		value = {'world': 'you&me'} # a value to prove that HTML escapes are not done
 		val = render( 'nti.appserver.tests:templates/basic_mako_template.mak',
 				value,

@@ -17,7 +17,7 @@ from zope.publisher.interfaces.browser import IBrowserRequest
 
 from z3c.pt.pagetemplate import ViewPageTemplateFile
 
-from pyramid import renderers
+from pyramid_chameleon.renderer import template_renderer_factory
 from pyramid.decorator import reify
 from pyramid.renderers import get_renderer
 from pyramid.interfaces import ITemplateRenderer
@@ -28,7 +28,7 @@ def renderer_factory(info):
 
 	.. note:: At this time, this does not support the pyramid 1.4 macro syntax.
 	"""
-	return renderers.template_renderer_factory(info, ZPTTemplateRenderer)
+	return template_renderer_factory(info, ZPTTemplateRenderer)
 
 @interface.implementer(ITemplateRenderer)
 class ZPTTemplateRenderer(object):
