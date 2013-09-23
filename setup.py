@@ -243,6 +243,8 @@ setup(
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
 		'pyquery >= 1.2.4',
 		'pyramid >= 1.5a2' ,
+		'pyramid_chameleon >= 0.1',
+		'pyramid_mako >= 0.2',
 		'pyramid_mailer >= 0.13',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
