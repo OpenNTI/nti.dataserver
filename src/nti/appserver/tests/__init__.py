@@ -181,6 +181,9 @@ class ConfiguringTestBase(_TestBaseMixin,nti.tests.ConfiguringTestBase):
 		if self.set_up_mailer:
 			# Must provide the correct zpt template renderer or the email process blows up
 			# See application.py
+			self.config.include('pyramid_chameleon')
+			self.config.include('pyramid_mako')
+
 			component.provideUtility( z3c_zpt.renderer_factory, pyramid.interfaces.IRendererFactory, name=".pt" )
 			mailer = TestMailDelivery()
 			component.provideUtility( mailer, ITestMailDelivery )
@@ -213,6 +216,8 @@ class SharedConfiguringTestBase(_TestBaseMixin,nti.tests.SharedConfiguringTestBa
 		if cls.set_up_mailer:
 			# Must provide the correct zpt template renderer or the email process blows up
 			# See application.py
+			cls.config.include('pyramid_chameleon')
+			cls.config.include('pyramid_mako')
 			component.provideUtility( z3c_zpt.renderer_factory, pyramid.interfaces.IRendererFactory, name=".pt" )
 			cls._mailer = mailer = TestMailDelivery()
 			component.provideUtility( mailer, ITestMailDelivery )
