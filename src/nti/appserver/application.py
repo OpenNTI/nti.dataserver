@@ -477,7 +477,9 @@ def createApplication( http_port,
 			for f in ordered_zcml_files:
 				with open( f, 'r' ) as ff:
 					contents = ff.read()
-				contents = """<configure xmlns="http://namespaces.zope.org/zope">
+				contents = """<configure
+								xmlns="http://namespaces.zope.org/zope
+								xmlns:meta="http://namespaces.zope.org/meta">
 								%s
 							</configure>"""
 				context = xmlconfig.string( contents,
