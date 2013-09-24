@@ -80,7 +80,7 @@ TESTS_REQUIRE = [
 	'fudge',
 	'ipdb >= 0.8',  # easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
 	'nose >= 1.3.0',
-	'nose-timer >= 0.1.2',
+	'nose-timer >= 0.2.0',
 	'nose-progressive >= 1.5',
 	'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 	'pyhamcrest >= 1.7.2',
@@ -273,7 +273,7 @@ setup(
 		 # stripe also depends on just the minimal part of the api (their setup.py doesn't
 		 # give a version) (?). grequests 0.1.0 is not compatible with this.
 		 # If something used hooks, a change from 1.1 to 1.2 might break it; no initial issues seen
-		'requests >= 1.2.3',
+		'requests >= 2.0.0',
 		'rq >= 0.3.11',  # queues for python
 		'setproctitle >= 1.1.7',  # used by gunicorn
 		'setuptools >= 0.6c11',
@@ -409,7 +409,7 @@ setup(
 			# 'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			#'dblatex >= 0.3.4',  # content rendering, convert docbook to tex. disabled due to sandbox violation
 			'epydoc >= 3.0.1',  # auto-api docs
-			'httpie >= 0.6.0',
+			'httpie >= 0.7.0',
 			'ipython >= 1.1.0',  # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
 			'pip >= 1.3.1',
