@@ -425,4 +425,5 @@ def export_users(request):
 		if not nti_interfaces.IUser.providedBy(user):
 			continue
 		items[user.username] = toExternalObject(user, name='summary')
+	result['Total'] = len(items)
 	return result
