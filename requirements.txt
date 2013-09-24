@@ -14,4 +14,4 @@ file:../lib/pywikipedia/#egg=pywikipedia
 ## local paths can be made to work
 ## see https://github.com/pypa/pip/issues/328
 
--e ../site-lib/geventwebsocket
+#-e ../site-lib/geventwebsocket
