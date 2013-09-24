@@ -30,6 +30,7 @@ def _patch_zlibstorage_for_IMVCCStorage():
 		# so might as well fix that here.
 		# (Sigh, this means all our databases are currently uncompressed)
 		# see https://mail.zope.org/pipermail/zodb-dev/2013-March/014965.html
+		# see also https://github.com/zopefoundation/zc.zlibstorage/issues/2
 		def new_instance(self):
 			new_self = type(self).__new__(type(self))
 			new_self.__dict__ = self.__dict__.copy()
