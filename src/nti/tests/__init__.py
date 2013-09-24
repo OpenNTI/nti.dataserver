@@ -499,18 +499,22 @@ class SharedConfiguringTestBase(AbstractSharedTestBase):
 				component.provideHandler( eventtesting.events.append, (None,) )
 			else:
 				eventtesting.setUp()
-		cls.configuration_context = cls.configure_packages( cls.set_up_packages, cls.features, cls.configuration_context)
+		cls.configuration_context = cls.configure_packages(set_up_packages=cls.set_up_packages,
+														   features=cls.features,
+														   context=cls.configuration_context)
 
 	@classmethod
 	def configure_packages(cls, set_up_packages=(), features=(), context=None ):
-		cls.configuration_context = _configure( cls, set_up_packages, features, context or cls.configuration_context )
+		cls.configuration_context = _configure(self=cls,
+											   set_up_packages=set_up_packages,
+											   features=features,
+											   context=context or cls.configuration_context)
 		return cls.configuration_context
 
 	@classmethod
 	def tearDownClass( cls ):
 		# always safe to clear events
 		eventtesting.clearEvents() # redundant with zope.testing.cleanup
-
 		resetHooks()
 		super(SharedConfiguringTestBase,cls).tearDownClass()
 
