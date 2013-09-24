@@ -191,6 +191,7 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 		assert_that(res.status_int, is_(200))
 		result = simplejson.loads(res.body)
 		assert_that(result, has_entry('Items', has_length(4)))
+		assert_that(result, has_entry('Total', is_(4)))
 
 	@WithSharedApplicationMockDS
 	def test_object_resolver(self):
