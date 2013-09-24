@@ -132,6 +132,7 @@ setup(
 	],
 	install_requires=[
 		'nti.plasTeX',
+		'nti.geventwebsocket',
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
@@ -450,6 +451,7 @@ setup(
 		'git+https://github.com/NextThought/nti.nose_traceback_info.git#egg=nti.nose_traceback_info',
 		'git+https://github.com/surfly/gevent.git@1.0rc3#egg=gevent-1.0dev', # tag is 1.0rc3, but setup.py says 1.0dev
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
+		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/lecram/PyMySQL.git#egg=PyMySQL-0.5' # no tag for this sadly
 	],
 	packages=find_packages('src'),
