@@ -8,6 +8,10 @@ file:../lib/pywikipedia/#egg=pywikipedia
 # It actually depends on us but doesn't declare that
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.client_preferences/trunk#egg=nti.app.client_preferences
 
+# Also temporary, going away with buildout
+-e svn+https://repos.nextthought.com/svn/nti-svn/nti.testing/trunk#egg=nti.testing
+-e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.testing/trunk#egg=nti.app.testing
+
 
 ## Sadly, issue 328 prevents us from using local paths for these things,
 ## if we include the egg name. If we're otherwise very careful,
