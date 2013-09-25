@@ -71,12 +71,17 @@ def configure_app( global_config,
 			with codecs.open(zcml_path, 'w', encoding='utf-8') as f:
 				f.write( _ZCML_LIBRARY_TEMPLATE % lib_str )
 
-	application = createApplication( int(settings.get('http_port','8081')),
-									 library=None,
-									 process_args=True,
-									 create_ds=nti_create_ds,
-									 sync_changes=asbool(sync_changes),
-									 **settings)
+	try:
+		__traceback_info__ = global_config, settings
+		application = createApplication( int(settings.get('http_port','8081')),
+										 library=None,
+										 process_args=True,
+										 create_ds=nti_create_ds,
+										 sync_changes=asbool(sync_changes),
+										 **settings)
+	except:
+		logger.exception("Failed to create application")
+		raise
 
 	return application
 
