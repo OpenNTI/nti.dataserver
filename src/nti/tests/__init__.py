@@ -37,6 +37,7 @@ zope.deferredimport.deprecated(
 	SharedConfiguringTestBase = 'nti.testing.base:SharedConfiguringTestBase',
 	module_setup = 'nti.testing.base:module_setup',
 	module_teardown = 'nti.testing.base:module_teardown',
+	BoolMatcher='nti.testing.matchers:BoolMatcher',
 	TypeCheckedDict = 'nti.testing.matchers:TypeCheckedDict',
 	ByteHeadersResponse = 'nti.app.testing.request_response:ByteHeadersResponse',
 	ByteHeadersDummyRequest = 'nti.app.testing.request_response:ByteHeadersDummyRequest' )
