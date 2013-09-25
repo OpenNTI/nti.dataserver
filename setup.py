@@ -50,9 +50,6 @@ entry_points = {
 		"http = nti.appserver.standalone:server_runner",
 		"gunicorn = nti.appserver.gunicorn:paste_server_runner"
 	],
-	"nose.plugins.0.10" : [ # DEPRECATED: Use nti.nose_traceback_info
-		"zopeexceptionlogpatch = nti.tests:ZopeExceptionLogPatch"
-	],
 	"zodbupdate" : [  # Migrating class names through zodbupdate >= 0.5
 		"chatserver_meetings = nti.chatserver.meeting:_bwc_renames"
 	]
