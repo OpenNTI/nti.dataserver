@@ -471,17 +471,18 @@ def createApplication( http_port,
 	def load_dataserver_slugs( include_dir_name, context ):
 		if is_dataserver_dir( 'etc', include_dir_name ):
 			ordered_zcml_files = sorted([dataserver_file( 'etc', include_dir_name, f )
-										 for f in os.listdir( dataserver_dir( 'etc', include_dir_name ) )
+										 for f in os.listdir( dataserver_file( 'etc', include_dir_name ) )
 										 if (is_dataserver_file( 'etc', include_dir_name, f )
 											 and f.endswith(".zcml") and not f.startswith( '.' ))])
 			for f in ordered_zcml_files:
 				with open( f, 'r' ) as ff:
 					contents = ff.read()
 				contents = """<configure
-								xmlns="http://namespaces.zope.org/zope
+								xmlns="http://namespaces.zope.org/zope"
 								xmlns:meta="http://namespaces.zope.org/meta">
 								%s
-							</configure>"""
+							</configure>""" % contents
+				__traceback_info__ = f, contents
 				context = xmlconfig.string( contents,
 											context=context,
 											name=f,

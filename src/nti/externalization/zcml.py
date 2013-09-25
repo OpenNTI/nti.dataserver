@@ -25,7 +25,17 @@ from . import interfaces
 class _MimeObjectFactory(Factory):
 	"""
 	A factory meant to be registered as a named utility.
+	The callable object SHOULD be a type/class object, because
+	that's the only thing we base equality off of (class identity).
 	"""
+
+	def __eq__( self, other ):
+		# Implementing equality is needed to prevent multiple inclusions
+		# of the same module from different places from conflicting.
+		try:
+			return self._callable is other._callable
+		except AttributeError:
+			return NotImplemented
 
 class IRegisterInternalizationMimeFactoriesDirective(interface.Interface):
 	"""
