@@ -8,8 +8,9 @@
 	<include package="zope.component" />
 
 	<!-- Pramid -->
+	<!-- DEPRECATED. Going away -->
 	<utility name="nti.sites.view.config" factory=".site_policies._SiteViewConfigurator" />
-				
+
 	<!-- Account Creation -->
 	<utility factory=".site_policies.RequestAwareUserPlacer" />
 
@@ -23,6 +24,29 @@
 	<include package="." file="configure_user_policies.zcml" />
 
 	<include package="." file="configure_site_policy_adult_base.zcml" />
+	<include package="." file="configure_site_policy_coppa_base.zcml" />
+
+	<!--
+		 From this point on, these should all be moving to their own package.
+		 During that transition, protect them with a feature flag
+		 so as to avoid conflicts.
+	-->
+	<!--
+		If the entire app is configured, the new stuff will be
+		loaded from the slugs; for temporary bwc if the entire app isn't loaded,
+		include them here manually too (this safely avoids conflicts
+		because it's the exact same file being included, which is a no-op).
+		NOTE: Removing this is a good way to find tests that should be moved
+		to the new package
+	-->
+	<configure zcml:condition="not-installed nti.app.sites.mathcounts">
+		<include package="." file="configure_site_policy_mathcounts.zcml" />
+		<include package="." file="configure_site_policy_testmathcounts.zcml" />
+	</configure>
+	<configure zcml:condition="installed nti.app.sites.mathcounts">
+		<include package="nti.app.sites.mathcounts" />
+	</configure>
+
 	<include package="." file="configure_site_policy_alpha.zcml" />
 	<include package="." file="configure_site_policy_collegiate.zcml" />
 	<include package="." file="configure_site_policy_columbia.zcml" />
@@ -32,10 +56,10 @@
 	<include package="." file="configure_site_policy_gloriamundi.zcml" />
 	<include package="." file="configure_site_policy_law.zcml" />
 	<include package="." file="configure_site_policy_litworld.zcml" />
-	<include package="." file="configure_site_policy_mathcounts.zcml" />
+
 	<include package="." file="configure_site_policy_prmia.zcml" />
 	<include package="." file="configure_site_policy_rwanda.zcml" />
-	<include package="." file="configure_site_policy_testmathcounts.zcml" />
+
 	<include package="." file="configure_site_policy_ou.zcml" />
 	<include package="." file="configure_site_policy_outest.zcml" />
 
