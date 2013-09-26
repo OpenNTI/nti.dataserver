@@ -36,8 +36,16 @@ BASECOPPA = BaseComponents(BASE, name='genericcoppabase', bases=(BASE,))
 BASEADULT = BaseComponents(BASE, name="genericadultbase", bases=(BASE,))
 
 
-MATHCOUNTS = BaseComponents(BASECOPPA, name='mathcounts.nextthought.com', bases=(BASECOPPA,))
-TESTMATHCOUNTS = BaseComponents(MATHCOUNTS, name='testmathcounts.nextthought.com', bases=(MATHCOUNTS,))
+# Moved to the mathcounts package
+#MATHCOUNTS = BaseComponents(BASECOPPA, name='mathcounts.nextthought.com', bases=(BASECOPPA,))
+#TESTMATHCOUNTS = BaseComponents(MATHCOUNTS, name='testmathcounts.nextthought.com', bases=(MATHCOUNTS,))
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Import from nti.app.sites.mathcounts",
+	"nti.app.sites.mathcounts",
+	"MATHCOUNTS",
+	"TESTMATHCOUNTS" )
 
 ALPHA = BaseComponents(BASEADULT,name='alpha.nextthought.com', bases=(BASEADULT,))
 DEMO = BaseComponents(BASEADULT,name='demo.nextthought.com', bases=(BASEADULT,))
@@ -75,7 +83,7 @@ def _find_sites():
 	# Find all the extent sub-components of the root
 	# components. This is roughly in topological order
 	# from the root down
-	top_down_components = [BASEADULT, MATHCOUNTS]
+	top_down_components = [BASEADULT, BASECOPPA]
 	for top in list(top_down_components):
 		_collect_subs( top, top_down_components )
 

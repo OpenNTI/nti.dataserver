@@ -31,7 +31,7 @@ from zope.component.hooks import site
 from zope.configuration.exceptions import ConfigurationError
 
 from nti.dataserver.site import _TrivialSite
-from nti.appserver.policies.sites import MATHCOUNTS
+from nti.appserver.policies.sites import BASECOPPA as MATHCOUNTS
 
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -51,11 +51,11 @@ ZCML_STRING = """
 		<include package="." file="meta.zcml" />
 
 		<utility
-			component="nti.appserver.policies.sites.MATHCOUNTS"
+			component="nti.appserver.policies.sites.BASECOPPA"
 			provides="zope.component.interfaces.IComponents"
 			name="mathcounts.nextthought.com" />
 
-		<registerIn registry="nti.appserver.policies.sites.MATHCOUNTS">
+		<registerIn registry="nti.appserver.policies.sites.BASECOPPA">
 			<link:userLink
 				name='foo.bar'
 				minGeneration='1234'
