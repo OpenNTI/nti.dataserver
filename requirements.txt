@@ -3,10 +3,11 @@ numpy >= 1.7.1
 # matplotlib >= 1.2.1
 
 file:../lib/pywikipedia/#egg=pywikipedia
-# Temporary. We depend on this only for
+# Temporary. We depend on these only for
 # setup files; this will go away with buildout.
-# It actually depends on us but doesn't declare that
+# They actually depends on us but doesn't declare that
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.client_preferences/trunk#egg=nti.app.client_preferences
+-e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.mathcounts/trunk#egg=nti.app.sites.mathcounts
 
 # Also temporary, going away with buildout
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.testing/trunk#egg=nti.testing

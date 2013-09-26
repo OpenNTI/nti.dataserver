@@ -680,8 +680,10 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 
 # Profiles for MC
 
-# TODO: These need to move to the mathcount site package.
-# But becareful for BWC
+# TODO: These need to move to the mathcounts site package.
+# But be careful for BWC.
+# XXX: Note: It appears we've lost all profile data on that site at least once
+# already
 @component.adapter(IMathcountsCoppaUserWithoutAgreement)
 @interface.implementer(IMathcountsCoppaUserWithoutAgreementUserProfile)
 class MathcountsCoppaUserWithoutAgreementUserProfile(user_profile.RestrictedUserProfileWithContactEmail):
@@ -698,50 +700,6 @@ user_profile.add_profile_fields(IMathcountsCoppaUserWithAgreementUserProfile, Ma
 
 MathcountsCoppaUserWithoutAgreementUserProfileFactory = zope.annotation.factory(MathcountsCoppaUserWithoutAgreementUserProfile)
 MathcountsCoppaUserWithAgreementUserProfileFactory = zope.annotation.factory(MathcountsCoppaUserWithAgreementUserProfile)
-
-
-@interface.implementer(ISitePolicyUserEventListener)
-class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
-	"""
-	Implements the policy for the mathcounts site.
-	"""
-
-	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created_mathcounts'
-
-	IF_ROOT = IMathcountsUser
-	IF_WITH_AGREEMENT = IMathcountsCoppaUserWithAgreement
-	IF_WOUT_AGREEMENT = IMathcountsCoppaUserWithoutAgreement
-	IF_WITH_AGREEMENT_UPGRADED = IMathcountsCoppaUserWithAgreementUpgraded
-
-	COM_USERNAME = 'MATHCOUNTS'
-	COM_ALIAS = 'MATHCOUNTS'
-	COM_REALNAME = 'MATHCOUNTS'
-
-	def user_created(self, user, event):
-		"""
-		This policy places newly created users in the ``MathCounts`` community
-		(creating it if it doesn't exist).
-
-		"""
-		super(MathcountsSitePolicyEventListener, self).user_created(user, event)
-		self._join_community_user_created(user, event)
-
-	def upgrade_user(self, user):
-		super(MathcountsSitePolicyEventListener, self).upgrade_user(user)
-		# let's make sure we remove this interface if it's there
-		if nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user):
-			interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
-
-
-@interface.implementer(ISitePolicyUserEventListener)
-class TestMathcountsSitePolicyEventListener(MathcountsSitePolicyEventListener):
-	"""
-	Implements the policy for the mathcounts site.
-	"""
-
-	COM_USERNAME = 'testmathcounts.nextthought.com'
-	COM_ALIAS = 'TEST MATHCOUNTS TEST'
-	COM_REALNAME = 'TEST MATHCOUNTS TEST'
 
 
 _SITE_LANDING_PAGES = {

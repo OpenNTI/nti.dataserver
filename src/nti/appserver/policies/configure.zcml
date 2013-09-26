@@ -39,6 +39,12 @@
 		NOTE: Removing this is a good way to find tests that should be moved
 		to the new package
 	-->
+	<!--
+		Leave the not-installed branch even after you add the package
+		to requirements.txt and delete the files; that way if someone
+		forgets to run requirements.txt they get a startup error
+		instead of missing sites at runtime.
+	-->
 	<configure zcml:condition="not-installed nti.app.sites.mathcounts">
 		<include package="." file="configure_site_policy_mathcounts.zcml" />
 		<include package="." file="configure_site_policy_testmathcounts.zcml" />
