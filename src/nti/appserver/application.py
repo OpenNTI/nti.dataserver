@@ -666,7 +666,9 @@ def createApplication( http_port,
 
 	_patching_restore_views(pyramid_config)
 
-	_external_view_settings(pyramid_config)
+	if not os.getenv('DATASERVER_DIR_IS_BUILDOUT'): # XXX Temp hack
+		warnings.warn("External IViewConfigurators are deprecated and not used in buildouts; use pyramid.zcml")
+		_external_view_settings(pyramid_config)
 
 	# Now load the registered pyramid slugs from buildout
 	# XXX: HACK: The easiest way to do this, without

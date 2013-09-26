@@ -125,7 +125,7 @@ class IndexStorage(object):
 
 def prepare_index_directory(indexdir=None):
 	dsdir = os.getenv('DATASERVER_DIR', "/tmp")
-	indexdir = os.path.join(dsdir, "indicies") if not indexdir else indexdir
+	indexdir = os.path.join(dsdir, 'data', "indexes") if not indexdir else indexdir
 	indexdir = os.path.expanduser(indexdir)
 	if not os.path.exists(indexdir):
 		os.makedirs(indexdir)
@@ -295,7 +295,7 @@ class RedisWhooshStorage(WhooshStorage):
 	def lock(self, name):
 		name = self.NTI_WHOOSH_LOCKS % name
 		return self.redis.lock(name=name, timeout=60, sleep=1)
-	
+
 	def temp_storage(self, name=None):
 		tdir = tempfile.gettempdir()
 		name = name or "%s.tmp" % random_name()
