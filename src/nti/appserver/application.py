@@ -17,6 +17,7 @@ if 'nti.monkey.gevent_patch_on_import' in sys.modules: # DON'T import this; it s
 
 import os
 import random
+import warnings
 
 import nti.dictserver.storage
 
@@ -107,7 +108,9 @@ def _logon_account_views(pyramid_config):
 	pyramid_config.add_route(name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook1')
 	pyramid_config.add_route(name='logon.facebook.oauth2', pattern='/dataserver2/logon.facebook2')
 
-	pyramid_config.add_route(name='logon.ldap.ou', pattern='/dataserver2/logon.ldap.ou')
+	if not os.getenv('DATASERVER_DIR_IS_BUILDOUT'): # XXX Temp hack
+		warnings.warn("Installing route; move this to pyramid")
+		pyramid_config.add_route(name='logon.ldap.ou', pattern='/dataserver2/logon.ldap.ou')
 
 	pyramid_config.scan('nti.appserver.logon')
 
@@ -135,11 +138,11 @@ def _webapp_resource_views(pyramid_config, settings):
 	login_root = settings.get('login_app_root', '/login/')
 	landing_root = settings.get('landing_root', '/landing/')
 
-	pyramid_config.add_route(name="logon.logon_css", pattern=login_root+"resources/css/site.css")
-	pyramid_config.add_route(name="logon.strings_js", pattern=login_root+"resources/strings/site.js");
-	pyramid_config.add_route(name="webapp.site_css", pattern=web_root+"resources/css/site.css")
-	pyramid_config.add_route(name="webapp.strings_js", pattern=web_root+"resources/strings/site.js")
-	pyramid_config.add_route(name="landing.site_html", pattern=landing_root+"site.html")
+	pyramid_config.add_route(name="logon.logon_css", pattern=login_root + "resources/css/site.css")
+	pyramid_config.add_route(name="logon.strings_js", pattern=login_root + "resources/strings/site.js")
+	pyramid_config.add_route(name="webapp.site_css", pattern=web_root + "resources/css/site.css")
+	pyramid_config.add_route(name="webapp.strings_js", pattern=web_root + "resources/strings/site.js")
+	pyramid_config.add_route(name="landing.site_html", pattern=landing_root + "site.html")
 	pyramid_config.scan('nti.appserver.policies.site_policy_views')
 
 def _socketio_views(pyramid_config):
