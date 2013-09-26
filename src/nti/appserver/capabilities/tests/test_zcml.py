@@ -56,7 +56,7 @@ class TestZcml(ConfiguringTestBase):
 		<utility
 			component="nti.appserver.policies.sites.BASECOPPA"
 			provides="zope.component.interfaces.IComponents"
-			name="mathcounts.nextthought.com" />
+			name="genericcoppabase" />
 
 		<registerIn registry="nti.appserver.policies.sites.BASECOPPA">
 			<cap:capability

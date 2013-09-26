@@ -23,7 +23,7 @@ from zope.contentprovider.interfaces import IContentProvider
 from zope.component.hooks import site
 
 from nti.dataserver.site import _TrivialSite
-from nti.appserver.policies.sites import MATHCOUNTS
+from nti.appserver.policies.sites import BASECOPPA
 
 ZCML_STRING = """
 		<configure xmlns="http://namespaces.zope.org/zope"
@@ -37,7 +37,7 @@ ZCML_STRING = """
 		<include package="." file="meta.zcml" />
 
 		<utility
-			component="nti.appserver.policies.sites.MATHCOUNTS"
+			component="nti.appserver.policies.sites.BASECOPPA"
 			provides="zope.component.interfaces.IComponents"
 			name="mathcounts.nextthought.com" />
 
@@ -48,7 +48,7 @@ ZCML_STRING = """
 				/>
 
 
-		<registerIn registry="nti.appserver.policies.sites.MATHCOUNTS">
+		<registerIn registry="nti.appserver.policies.sites.BASECOPPA">
 			<cp:pyramidTemplate
 				name='foo.bar'
 				for='* * *'
@@ -64,14 +64,14 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 		"Can we add new registrations in a sub-site?"
 
 		self.configure_string( ZCML_STRING )
-		assert_that( MATHCOUNTS.__bases__, is_( (component.globalSiteManager,) ) )
+		assert_that( BASECOPPA.__bases__, is_( (component.globalSiteManager,) ) )
 
 		top = component.getMultiAdapter( (None,None,None),
 										 IContentProvider,
 										 name='foo.bar' )
 		assert_that( top, has_property( '__name__', 'nti.appserver:templates/failed_username_recovery_email.txt' ) )
 
-		with site( _TrivialSite( MATHCOUNTS ) ):
+		with site( _TrivialSite( BASECOPPA ) ):
 			sub = component.getMultiAdapter( (None,None,None),
 											 IContentProvider,
 											 name='foo.bar' )
