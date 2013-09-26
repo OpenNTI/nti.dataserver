@@ -17,7 +17,7 @@ does_not = is_not
 from hamcrest import has_property
 from hamcrest import is_in
 
-import nti.tests
+from nti.testing.base import ConfiguringTestBase
 
 from zope import component
 from zope.component.hooks import site
@@ -26,7 +26,7 @@ from zope.schema import vocabulary
 from ..interfaces import ICapability, VOCAB_NAME
 from ..vocabulary import CapabilityNameTokenVocabulary, CapabilityUtilityVocabulary, CapabilityNameVocabulary
 
-class TestZcml(nti.tests.ConfiguringTestBase):
+class TestZcml(ConfiguringTestBase):
 
 	def test_default_registrations(self):
 		self.configure_packages( set_up_packages=( ('capabilities.zcml', 'nti.appserver.capabilities',), ) )
@@ -54,11 +54,11 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 		<include package="z3c.baseregistry" file="meta.zcml" />
 
 		<utility
-			component="nti.appserver.policies.sites.MATHCOUNTS"
+			component="nti.appserver.policies.sites.BASECOPPA"
 			provides="zope.component.interfaces.IComponents"
 			name="mathcounts.nextthought.com" />
 
-		<registerIn registry="nti.appserver.policies.sites.MATHCOUNTS">
+		<registerIn registry="nti.appserver.policies.sites.BASECOPPA">
 			<cap:capability
 			id='nti.only_in_mathcounts'
 			title="only_in_mathcounts"/>
@@ -68,7 +68,7 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 		self.configure_string( zcml_string )
 		self._check_cap_present() # the defaults are there
 		from nti.dataserver.site import _TrivialSite
-		from nti.appserver.policies.sites import MATHCOUNTS
+		from nti.appserver.policies.sites import BASECOPPA
 
 		# First, it's not present globally, in any utility
 		cap_name = 'nti.only_in_mathcounts'
@@ -80,6 +80,6 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 		assert_that( cap_name, is_not( is_in( vocabulary.getVocabularyRegistry().get( None, VOCAB_NAME ) ) ) )
 
 		# Now, in the sub site, they are bath present
-		with site( _TrivialSite( MATHCOUNTS ) ):
+		with site( _TrivialSite( BASECOPPA ) ):
 			self._check_cap_present( )
 			self._check_cap_present( cap_name )

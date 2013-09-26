@@ -486,6 +486,7 @@ def createApplication( http_port,
 								%s
 							</configure>""" % contents
 				__traceback_info__ = f, contents
+				logger.debug( "Loading include slug from %s into %s", f, context )
 				context = xmlconfig.string( contents,
 											context=context,
 											name=f,

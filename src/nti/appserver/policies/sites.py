@@ -28,13 +28,16 @@ from z3c.baseregistry.baseregistry import BaseComponents
 # as a name and they look it up in the component registry of their __parent__ (first arg)
 from zope.component import globalSiteManager as BASE
 
-
-MATHCOUNTS = BaseComponents(BASE, name='mathcounts.nextthought.com', bases=(BASE,))
-TESTMATHCOUNTS = BaseComponents(MATHCOUNTS, name='testmathcounts.nextthought.com', bases=(MATHCOUNTS,))
+# This one is a common base for all COPPA sites
+BASECOPPA = BaseComponents(BASE, name='genericcoppabase', bases=(BASE,))
 
 # This one serves as a common base for all the other non-COPPA (non-mathcounts) site
 # It is not a site of its own
 BASEADULT = BaseComponents(BASE, name="genericadultbase", bases=(BASE,))
+
+
+MATHCOUNTS = BaseComponents(BASECOPPA, name='mathcounts.nextthought.com', bases=(BASECOPPA,))
+TESTMATHCOUNTS = BaseComponents(MATHCOUNTS, name='testmathcounts.nextthought.com', bases=(MATHCOUNTS,))
 
 ALPHA = BaseComponents(BASEADULT,name='alpha.nextthought.com', bases=(BASEADULT,))
 DEMO = BaseComponents(BASEADULT,name='demo.nextthought.com', bases=(BASEADULT,))

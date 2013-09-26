@@ -404,6 +404,9 @@ class GenericSitePolicyEventListener(object):
 	Implements a generic policy for all sites.
 	"""
 
+	# XXX: FIXME: Templates are assumed to be in the nti.appserver.templates
+	# package, which makes completely pulling site policies out
+	# more difficult
 	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created'
 	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to NextThought")
 
@@ -411,6 +414,21 @@ class GenericSitePolicyEventListener(object):
 	def user_created_with_request(self, user, event):
 		self._send_email_on_new_account(user, event)
 
+	def _join_community_user_created(self, user, event):
+		"""
+		Helper method that places newly created users in the community defined by the fields
+		of this object (creating it if it doesn't exist).
+		"""
+		if self.COM_USERNAME and self.COM_ALIAS and self.COM_REALNAME:
+			community = users.Entity.get_entity(self.COM_USERNAME)
+			if community is None:
+				community = users.Community.create_community(username=self.COM_USERNAME)
+				com_names = user_interfaces.IFriendlyNamed(community)
+				com_names.alias = self.COM_ALIAS
+				com_names.realname = self.COM_REALNAME
+
+			user.record_dynamic_membership(community)
+			user.follow(community)
 
 	def _send_email_on_new_account(self, user, event):
 		"""
@@ -662,7 +680,8 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 
 # Profiles for MC
 
-
+# TODO: These need to move to the mathcount site package.
+# But becareful for BWC
 @component.adapter(IMathcountsCoppaUserWithoutAgreement)
 @interface.implementer(IMathcountsCoppaUserWithoutAgreementUserProfile)
 class MathcountsCoppaUserWithoutAgreementUserProfile(user_profile.RestrictedUserProfileWithContactEmail):
@@ -680,21 +699,6 @@ user_profile.add_profile_fields(IMathcountsCoppaUserWithAgreementUserProfile, Ma
 MathcountsCoppaUserWithoutAgreementUserProfileFactory = zope.annotation.factory(MathcountsCoppaUserWithoutAgreementUserProfile)
 MathcountsCoppaUserWithAgreementUserProfileFactory = zope.annotation.factory(MathcountsCoppaUserWithAgreementUserProfile)
 
-def _join_community_user_created(self, user, event):
-	"""
-	Helper method that places newly created users in the community defined by the fields
-	of this object (creating it if it doesn't exist).
-	"""
-	if self.COM_USERNAME and self.COM_ALIAS and self.COM_REALNAME:
-		community = users.Entity.get_entity(self.COM_USERNAME)
-		if community is None:
-			community = users.Community.create_community(username=self.COM_USERNAME)
-			com_names = user_interfaces.IFriendlyNamed(community)
-			com_names.alias = self.COM_ALIAS
-			com_names.realname = self.COM_REALNAME
-
-		user.record_dynamic_membership(community)
-		user.follow(community)
 
 @interface.implementer(ISitePolicyUserEventListener)
 class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
@@ -720,7 +724,7 @@ class MathcountsSitePolicyEventListener(GenericKidSitePolicyEventListener):
 
 		"""
 		super(MathcountsSitePolicyEventListener, self).user_created(user, event)
-		_join_community_user_created(self, user, event)
+		self._join_community_user_created(user, event)
 
 	def upgrade_user(self, user):
 		super(MathcountsSitePolicyEventListener, self).upgrade_user(user)
@@ -821,7 +825,7 @@ class _AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener
 
 		"""
 		super(_AdultCommunitySitePolicyEventListener, self).user_created(user, event)
-		_join_community_user_created(self, user, event)
+		self._join_community_user_created(user, event)
 
 
 @interface.implementer(ISitePolicyUserEventListener)
