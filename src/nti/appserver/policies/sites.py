@@ -9,6 +9,10 @@ that registers the constant as a utility with a matching name. Any configuration
 for that site belongs in a ``registerIn`` directive within that ZCML file. These
 files then have to be referenced from the main configuration file.
 
+When creating a site manager, you *MUST* use :const:`BASEADULT` or :const:`MATHCOUNTS`
+in its base chain. You do not (should not) create the site object
+in this module.
+
 $Id$
 """
 
@@ -17,11 +21,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import sys
-
 from z3c.baseregistry.baseregistry import BaseComponents
 
-# TODO: Eventually we want these to use the main Dataserver site as their base,
+# TODO: Eventually we probably want these to use the main Dataserver site as their base,
 # which requires getting persistence into the mix. These objects pickle
 # as a name and they look it up in the component registry of their __parent__ (first arg)
 from zope.component import globalSiteManager as BASE
@@ -53,10 +55,34 @@ COLUMBIA = BaseComponents(BASEADULT, name='columbia.nextthought.com', bases=(BAS
 OU = BaseComponents(BASEADULT, name='platform.ou.edu', bases=(BASEADULT,))
 OUTEST = BaseComponents(BASEADULT, name='ou-test.nextthought.com', bases=(OU,))
 
-def _get_sties():
-	for v in sys.modules[__name__].__dict__.values():
-		if isinstance(v, BaseComponents):
-			yield v
+def _find_sites():
+	"""
+	By using internal details, find all components
+	that are children of the root components declared in this module,
+	even if they are not declared in this module.
+	The list is returned in roughly top-down order.
+	"""
+
+	def _collect_subs(components,accum):
+		accum.append( components )
+		for subreg in components.adapters._v_subregistries.keys():
+			parent_component = subreg.__parent__
+			_collect_subs( parent_component, accum )
+
+	# Find all the extent sub-components of the root
+	# components. This is roughly in topological order
+	# from the root down
+	top_down_components = [BASEADULT, MATHCOUNTS]
+	for top in list(top_down_components):
+		_collect_subs( top, top_down_components )
+
+	# Remove dups, preserve order
+	result = []
+	for x in top_down_components:
+		if x not in result:
+			result.append( x )
+	return result
+
 
 def _reinit():
 	"""
@@ -76,16 +102,11 @@ def _reinit():
 	# directly have BASE as their __bases__ need to be reset FIRST, followed
 	# by things that internally descend from those objects, otherwise we wind up
 	# with the wrong resolution order still. Ideally we'd do a topographical
-	# sort, but with only two levels that's overkill
-	top_level = (BASEADULT, MATHCOUNTS)
-	for v in top_level:
-		v.__init__( v.__parent__, name=v.__name__, bases=v.__bases__ )
+	# sort, but with only two levels that's overkill. The _find_sites
+	# does a reasonable approximation.
 
-	for v in sys.modules[__name__].__dict__.values():
-		if isinstance( v, BaseComponents ):
-			if v in top_level:
-				continue
-			v.__init__( v.__parent__, name=v.__name__, bases=v.__bases__ )
+	for site in _find_sites():
+		site.__init__( site.__parent__, name=site.__name__, bases=site.__bases__ )
 
 from zope.testing.cleanup import addCleanUp
 addCleanUp( _reinit )
