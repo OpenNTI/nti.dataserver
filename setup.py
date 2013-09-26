@@ -132,6 +132,7 @@ setup(
 		'nti.geventwebsocket',
 		'nti.testing',
 		'nti.app.testing',
+		'nti.app.sites.mathcounts',
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
@@ -452,8 +453,6 @@ setup(
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/lecram/PyMySQL.git#egg=PyMySQL-0.5', # no tag for this sadly
-		'svn+https://repos.nextthought.com/svn/nti-svn/nti.testing/trunk#egg=nti.testing',
-		'svn+https://repos.nextthought.com/svn/nti-svn/nti.app.testing/trunk#egg=nti.app.testing',
 	],
 	packages=find_packages('src'),
 	package_dir={'': 'src'},
