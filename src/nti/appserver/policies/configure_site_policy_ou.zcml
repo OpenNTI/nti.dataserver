@@ -3,7 +3,7 @@
 			xmlns:i18n="http://namespaces.zope.org/i18n"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
 			xmlns:pcs="http://nextthought.com/ntp/course"
-			zcml:condition="have nti.integration.ou">
+			zcml:condition="installed nti.integration.ou">
 
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
