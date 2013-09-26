@@ -673,7 +673,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 	target_ntiid = None
 
 	class worktitle(Base.Command):
-		args = 'title:str'
+		args = 'title'
 
 		def digest(self, tokens):
 			tok = super(relatedwork.worktitle,self).digest(tokens)
@@ -681,7 +681,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 			return tok
 
 	class workcreator(Base.Command):
-		args = 'creator:str'
+		args = 'creator'
 
 		def digest(self, tokens):
 			tok = super(relatedwork.workcreator,self).digest(tokens)
@@ -823,7 +823,7 @@ class ntidiscussion(Base.Environment):
 	topic_ntiid = ''
 
 	class discussiontitle(Base.Command):
-		args = 'title:str'
+		args = 'title'
 
 		def digest(self, tokens):
 			tok = super(ntidiscussion.discussiontitle,self).digest(tokens)
@@ -831,7 +831,7 @@ class ntidiscussion(Base.Environment):
 			return tok
 
 	class discussionsubtitle(Base.Command):
-		args = 'subtitle:str'
+		args = 'subtitle'
 
 		def digest(self, tokens):
 			tok = super(ntidiscussion.discussionsubtitle,self).digest(tokens)

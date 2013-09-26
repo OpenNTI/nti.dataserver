@@ -321,13 +321,17 @@ class _RelatedWorkExtractor(object):
 					if ref_el.relatedwork.targetMimeType is None:
 						ref_el.relatedwork.gen_target_ntiid()
 
+					title = unicode(''.join(render_children( ref_el.relatedwork.renderer, ref_el.relatedwork.title )))
+					creator = unicode(''.join(render_children( ref_el.relatedwork.renderer, ref_el.relatedwork.creator )))
+					description = unicode(ref_el.description)
+
 					content = {
-						'label': ref_el.relatedwork.title,
-						'creator': ref_el.relatedwork.creator,
+						'label': title,
+						'creator': creator,
 						'href': uri,
 						'type': ref_el.relatedwork.targetMimeType,
 						'icon': icon,
-						'desc': ref_el.description,
+						'desc': description,
 						'section': ref_el.category,
 						'visibility': visibility,
 						'target-ntiid': ref_el.target_ntiid,
@@ -355,13 +359,17 @@ class _RelatedWorkExtractor(object):
 			if uri != '' and el.targetMimeType is None:
 				el.gen_target_ntiid()
 
+			title = unicode(''.join(render_children( el.renderer, el.title )))
+			creator = unicode(''.join(render_children( el.renderer, el.creator )))
+			description = unicode( el.description )
+
 			content = {
-				'label': el.title,
-				'creator': el.creator,
+				'label': title,
+				'creator': creator,
 				'href': uri,
 				'type': el.targetMimeType,
 				'icon': icon,
-				'desc': el.description,
+				'desc': description,
 				'visibility': el.visibility,
 				'target-ntiid': el.target_ntiid,
 				'ntiid': el.ntiid
@@ -442,9 +450,12 @@ class _DiscussionExtractor(object):
 					else:
 						icon = ''
 
+					title = unicode(''.join(render_children( discussion_el.renderer, discussion_el.title )))
+					subtitle = unicode(''.join(render_children( discussion_el.renderer, discussion_el.subtitle )))
+
 					toc_el = dom.createElement('object')
-					toc_el.setAttribute('label', discussion_el.title)
-					toc_el.setAttribute('title', discussion_el.subtitle)
+					toc_el.setAttribute('label', title)
+					toc_el.setAttribute('title', subtitle)
 					toc_el.setAttribute('ntiid', discussion_el.topic_ntiid)
 					toc_el.setAttribute('mimeType', discussion_el.targetMimeType)
 					toc_el.setAttribute('icon', icon)
@@ -460,9 +471,12 @@ class _DiscussionExtractor(object):
 					else:
 						icon = ''
 
+					title = unicode(''.join(render_children( discussionref_el.idref['label'].renderer, discussionref_el.idref['label'].title )))
+					subtitle = unicode(''.join(render_children( discussionref_el.idref['label'].renderer, discussionref_el.idref['label'].subtitle )))
+
 					toc_el = dom.createElement('object')
-					toc_el.setAttribute('label', discussionref_el.idref['label'].title)
-					toc_el.setAttribute('title', discussionref_el.idref['label'].subtitle)
+					toc_el.setAttribute('label', title)
+					toc_el.setAttribute('title', subtitle)
 					toc_el.setAttribute('ntiid', discussionref_el.idref['label'].topic_ntiid)
 					toc_el.setAttribute('mimeType', discussionref_el.idref['label'].targetMimeType)
 					toc_el.setAttribute('icon', icon)
