@@ -1027,7 +1027,8 @@ class _SiteViewConfigurator(object):
 	"""
 	Load any views that belong to an specific site
 	"""
+	# DEPRECATED: Do this with pyramid.zcml
 	def add_views(self, config):
-		for site in sites._get_sties():
+		for site in sites._find_sites():
 			for _, mapper in site.getUtilitiesFor(app_interfaces.ISiteViewConfigurator):
 				mapper.add_views(config)
