@@ -204,7 +204,6 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		assert_that( mailer, has_property( 'queue', has_length( 1 ) ) )
 		assert_that( mailer, has_property( 'queue', contains( has_property( 'subject', "Please Confirm Your Child's NextThought Account" ) ) ) )
 
-
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = users.User.get_user( 'ossmkitty' )
 			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithoutAgreement ) )

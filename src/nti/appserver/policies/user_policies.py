@@ -31,6 +31,7 @@ from pyPdf import generic as pdf_generic
 
 from zope import component
 from zope import interface
+from zope.dottedname import resolve as dottedname
 from zope.lifecycleevent import IObjectCreatedEvent
 from zope.lifecycleevent import IObjectModifiedEvent
 from zope.annotation.interfaces import IAnnotations
@@ -183,7 +184,12 @@ def send_consent_ack_email(user, event):
 		_email_utils.queue_simple_html_text_email( 'coppa_consent_approval_email',
 												   subject=_("NextThought Account Confirmation"),
 												   recipients=[event.upgraded_profile.contact_email],
-												   template_args={'user': user, 'profile': event.upgraded_profile, 'context': user },
+												   template_args={'user': user,
+																  'profile': event.upgraded_profile,
+																  'context': user },
+												   # XXX: FIXME: Temporary hack. See also
+												   # site_policies.
+												   package=dottedname.resolve('nti.appserver'),
 												   request=event.request )
 
 
@@ -242,43 +248,19 @@ def send_consent_request_on_coppa_account( user, profile, email, request, rate_l
 	# Need to send both HTML and plain text if we send HTML, because
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 	# only works with a text part)
-	master = get_renderer('../templates/master_email.pt').implementation()
-
-	html_body = render('../templates/coppa_consent_request_email.pt',
-					   dict(user=user, profile=profile, context=user, master=master),
-					   request=request)
-
-	text_body = render('../templates/coppa_consent_request_email.txt',
-					  dict(user=user, profile=profile, context=user, master=master),
-					  request=request)
-
 	attachment_filename = 'coppa_consent_request_email_attachment.pdf'
 
 	# Prefill the fields.
 	attachment_stream = _alter_pdf( attachment_filename, user.username, profile.realname, email )
 	attachment = Attachment(attachment_filename, "application/pdf", attachment_stream )
 
-	message = Message( subject=_("Please Confirm Your Child's NextThought Account"),
-					   recipients=[email],
-					   sender='NextThought No Reply <no-reply@nextthought.com>', # match default, required for to_message()
-					   body=text_body,
-					   html=html_body,
-					   attachments=[attachment] )
-	# It's a bit tricky to do alternative body parts plus attachments. It requires
-	# a nested MIME structure, which, prior to 0.11, Message won't do by default:
-	# multipart/mixed
-	#  |\
-	#  | - multipart/alternative
-	#  |  \
-	#  |   - text/plain
-	#  |   - text/html
-	#  |\
-	#    - application/pdf; content-disposition: attachment
-	#
-	# (See http://stackoverflow.com/questions/3902455/smtp-multipart-alternative-vs-multipart-mixed)
-	# In the past, we had to do this manually, as of 0.11 it is handled for us.
-
-	_email_utils.send_pyramid_mailer_mail( message )
+	_email_utils.queue_simple_html_text_email( 'coppa_consent_request_email',
+											   subject=_("Please Confirm Your Child's NextThought Account"),
+											   recipients=[email],
+											   template_args=dict(user=user, profile=profile, context=user),
+											   attachments=[attachment],
+											   package=dottedname.resolve('nti.appserver'), # XXX: Hack, see above
+											   request=request )
 
 	# We can log that we sent the message to the contact person for operational purposes,
 	# but legally we cannot preserve it in the database
@@ -288,7 +270,7 @@ def send_consent_request_on_coppa_account( user, profile, email, request, rate_l
 	# We do need to keep something machine readable, though, for purposes of bounces
 	recovery_info.contact_email_recovery_hash = user_profile.make_password_recovery_email_hash( email )
 	recovery_info.consent_email_last_sent = time.time()
-	
+
 def _send_consent_request( user, profile, email, event, rate_limit=False ):
 	if not email or not event.request: #pragma: no cover
 		return
@@ -396,7 +378,7 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 		page_content.operations[IX_EMAIL] = ([pdf_generic.TextStringObject(_pdf_clean(parent_email))], 'Tj')  # Tj being the simple text operator
 		page_content.operations[IX_UNAME] = ([pdf_generic.TextStringObject(_pdf_clean(username))], 'Tj')
 		page_content.operations[IX_FNAME] = ([pdf_generic.TextStringObject(child_firstname)], 'Tj')
-		
+
 		writer.addPage( pdf_page )
 		writer.write( stream )
 
