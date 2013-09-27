@@ -89,6 +89,7 @@ def create_simple_html_text_email(base_template,
 								  request=None,
 								  recipients=(),
 								  template_args=None,
+								  attachments=(),
 								  package=None,
 								  text_template_extension='.txt',
 								  _level=3):
@@ -161,15 +162,23 @@ def create_simple_html_text_email(base_template,
 		text_body = text_body.decode('utf-8', 'replace')
 
 	# JAM: Why are we quoted-printable encoding? That produces much bigger
-	# output
+	# output...whether we do it like this, or simply pass in the unicode
+	# strings, we get quoted-printable. We would pass Attachments if we
+	# wanted to specify the charset (see above)
+	#message = Message( subject=subject,
+	#				   recipients=recipients,
+	#				   body=Attachment(data=text_body, disposition='inline',
+	#								   content_type='text/plain',
+	#								   transfer_encoding='quoted-printable'),
+	#				   html=Attachment(data=html_body, disposition='inline',
+	#								   content_type='text/html',
+	#								   transfer_encoding='quoted-printable') )
 	message = Message( subject=subject,
 					   recipients=recipients,
-					   body=Attachment(data=text_body, disposition='inline',
-									   content_type='text/plain',
-									   transfer_encoding='quoted-printable'),
-					   html=Attachment(data=html_body, disposition='inline',
-									   content_type='text/html',
-									   transfer_encoding='quoted-printable') )
+					   body=text_body,
+					   html=html_body,
+					   attachments=attachments )
+
 	return message
 
 
