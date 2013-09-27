@@ -66,7 +66,18 @@
 	<include package="." file="configure_site_policy_prmia.zcml" />
 	<include package="." file="configure_site_policy_rwanda.zcml" />
 
-	<include package="." file="configure_site_policy_ou.zcml" />
-	<include package="." file="configure_site_policy_outest.zcml" />
+	<!--
+		This is moving to nti.app.products.ou from its previous home
+		in egg nti.clients, package nti.integration.ou. The new
+		package includes backwards compatibility shims for that old
+		package, though, so an 'installed' test is not sufficient;
+		hence the exclusion if we are in a buildout.
+	-->
+	<configure zcml:condition="not-have in-buildout">
+		<configure zcml:condition="installed nti.integration.ou">
+			<include package="." file="configure_site_policy_ou.zcml" />
+			<include package="." file="configure_site_policy_outest.zcml" />
+		</configure>
+	</configure>
 
 </configure>
