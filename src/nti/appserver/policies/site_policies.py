@@ -32,10 +32,12 @@ from zope.interface.common.idatetime import IDate
 from zope.component.interfaces import IComponents
 from zope.schema import interfaces as sch_interfaces
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+from zope.dottedname import resolve as dottedname
 
 from ZODB.loglevels import TRACE
 
 from pyramid.threadlocal import get_current_request
+from pyramid.path import package_of
 
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver._email_utils import queue_simple_html_text_email
@@ -404,12 +406,17 @@ class GenericSitePolicyEventListener(object):
 	Implements a generic policy for all sites.
 	"""
 
-	# XXX: FIXME: Templates are assumed to be in the nti.appserver.templates
-	# package, which makes completely pulling site policies out
-	# more difficult
+	#: The asset spec for a template having both text and
+	#: HTML versions. If the asset spec is a bare name
+	#: like "foobar", it is assumed to be located in the
+	#: ``templates`` directory in the package this object
+	#: is located in. Otherwise, it can be a complete spec
+	#: such as "the.package:other_dir/foobar"
 	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created'
 	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to NextThought")
 
+
+	_v_my_package = None
 
 	def user_created_with_request(self, user, event):
 		self._send_email_on_new_account(user, event)
@@ -429,6 +436,20 @@ class GenericSitePolicyEventListener(object):
 
 			user.record_dynamic_membership(community)
 			user.follow(community)
+
+	def __find_my_package(self):
+		if self._v_my_package is None:
+			package = package_of(dottedname.resolve(type(self).__module__))
+			# As a temporary measure, if we find that we are in the old
+			# nti.appserver.policies package, use the nti.appserver package
+			# instead. This is because the generic templates live there,
+			# and it's not worth moving them until the general reorganization
+			# is complete
+			if package is package_of(dottedname.resolve(__name__)):
+				package = dottedname.resolve('nti.appserver')
+			self._v_my_package = package
+
+		return self._v_my_package
 
 	def _send_email_on_new_account(self, user, event):
 		"""
@@ -456,7 +477,8 @@ class GenericSitePolicyEventListener(object):
 									 subject=self.NEW_USER_CREATED_EMAIL_SUBJECT,
 									 recipients=[email],
 									 template_args={'user': user, 'profile': profile, 'context': user },
-									 request=event.request)
+									 request=event.request,
+									 package=self.__find_my_package())
 
 	def map_validation_exception(self, incoming_data, exception):
 		return exception
