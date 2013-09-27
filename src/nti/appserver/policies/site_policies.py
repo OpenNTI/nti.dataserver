@@ -914,7 +914,7 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 				break
 
 #OU site policies
-
+# XXX: Deprecated and going away. moved to nti.app.products.ou
 @interface.implementer(ISitePolicyUserEventListener)
 class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
