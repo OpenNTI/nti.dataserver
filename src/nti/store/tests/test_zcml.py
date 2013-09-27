@@ -13,7 +13,7 @@ from zope import component
 from zope.component.hooks import site
 
 from nti.dataserver.site import _TrivialSite
-from nti.appserver.policies.sites import MATHCOUNTS
+from nti.appserver.policies.sites import BASECOPPA
 
 from ..interfaces import IPurchasable
 
@@ -34,11 +34,11 @@ HEAD_ZCML_STRING = """
 		<include package="." file="meta.zcml" />
 
 		<utility
-			component="nti.appserver.policies.sites.MATHCOUNTS"
+			component="nti.appserver.policies.sites.BASECOPPA"
 			provides="zope.component.interfaces.IComponents"
 			name="mathcounts.nextthought.com" />
 
-		<registerIn registry="nti.appserver.policies.sites.MATHCOUNTS">
+		<registerIn registry="nti.appserver.policies.sites.BASECOPPA">
 """
 
 ZCML_STRING = HEAD_ZCML_STRING + """
@@ -70,11 +70,11 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 
 		self.configure_packages(('nti.contentfragments',))
 		self.configure_string(ZCML_STRING)
-		assert_that(MATHCOUNTS.__bases__, is_((component.globalSiteManager,)))
+		assert_that(BASECOPPA.__bases__, is_((component.globalSiteManager,)))
 
 		assert_that(component.queryUtility(IPurchasable, name="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse"), is_(none()))
 
-		with site(_TrivialSite(MATHCOUNTS)):
+		with site(_TrivialSite(BASECOPPA)):
 			pur = component.getUtility(IPurchasable, name="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse")
 			assert_that(pur, verifiably_provides(IPurchasable))
 			assert_that(pur, has_property('Description',
