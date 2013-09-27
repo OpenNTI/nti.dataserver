@@ -11,7 +11,7 @@ from zope import component
 from zope.component.hooks import site
 
 from nti.dataserver.site import _TrivialSite
-from nti.appserver.policies.sites import MATHCOUNTS
+from nti.appserver.policies.sites import BASECOPPA
 
 from ..interfaces import ILDAP
 
@@ -29,14 +29,15 @@ HEAD_ZCML_STRING = """
 		<include package="zope.component" />
 		<include package="zope.annotation" />
 		<include package="z3c.baseregistry" file="meta.zcml" />
+
 		<include package="." file="meta.zcml" />
 
 		<utility
-			component="nti.appserver.policies.sites.MATHCOUNTS"
+			component="nti.appserver.policies.sites.BASECOPPA"
 			provides="zope.component.interfaces.IComponents"
 			name="mathcounts.nextthought.com" />
 
-		<registerIn registry="nti.appserver.policies.sites.MATHCOUNTS">
+		<registerIn registry="nti.appserver.policies.sites.BASECOPPA">
 """
 
 LDAP_ZCML_STRING = HEAD_ZCML_STRING + """
@@ -56,11 +57,11 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 	def test_site_registration_and_complex_description(self):
 
 		self.configure_string(LDAP_ZCML_STRING)
-		assert_that(MATHCOUNTS.__bases__, is_((component.globalSiteManager,)))
+		assert_that(BASECOPPA.__bases__, is_((component.globalSiteManager,)))
 
 		assert_that(component.queryUtility(ILDAP, name="nti-ldap"), is_(none()))
 
-		with site(_TrivialSite(MATHCOUNTS)):
+		with site(_TrivialSite(BASECOPPA)):
 			ldap = component.getUtility(ILDAP, name="nti-ldap")
 			assert_that(ldap, verifiably_provides(ILDAP))
 			assert_that(ldap, has_property('URL', "ldaps://ldaps.nextthought.com:636"))

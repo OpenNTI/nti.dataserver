@@ -14,6 +14,7 @@ import base64
 import urllib
 import functools
 
+from zope import schema
 from zope import interface
 from zope.configuration import fields
 from zope.component.zcml import utility
@@ -32,7 +33,7 @@ class IRegisterLDAP(interface.Interface):
 	id = fields.TextLine(title="ldap identifier", required=True)
 	url = fields.TextLine(title="ldap url", required=True)
 	username = fields.TextLine(title="Bind username", required=True)
-	password = fields.TextLine(title="Bind password", required=True)
+	password = schema.Password(title="Bind password", required=True)
 	baseDN = fields.TextLine(title="Base DN", required=False)
 	encoding = fields.TextLine(title="Password encoding", required=False)
 	
