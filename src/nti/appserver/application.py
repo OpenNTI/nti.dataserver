@@ -85,6 +85,9 @@ def _create_xml_conf_machine( settings ):
 		if settings.get( k ):
 			zcml_features.add( k )
 
+	if os.getenv('DATASERVER_DIR_IS_BUILDOUT'): # XXX Temp hack, mostly for tests
+		zcml_features.add( 'in-buildout' )
+
 	for feature in zcml_features:
 		logger.info( "Enabling %s", feature )
 		xml_conf_machine.provideFeature( feature )
