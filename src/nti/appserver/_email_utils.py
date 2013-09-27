@@ -15,6 +15,7 @@ from zope import component
 
 from pyramid.renderers import render
 from pyramid.renderers import get_renderer
+from pyramid.path import caller_package
 from pyramid.threadlocal import get_current_request
 
 from pyramid_mailer.message import Message
@@ -23,20 +24,74 @@ from pyramid_mailer.message import Attachment
 
 from repoze.sendmail import interfaces as mail_interfaces
 
-def do_html_text_templates_exist(base_template, text_template_extension='.txt'):
+def _get_renderer_spec_and_package(base_template,
+								   extension,
+								   package=None,
+								   level=3):
+	# Did they give us a package, either in the name or as an argument?
+	# If not, we need to get the right package
+	if ':' not in base_template and package is None:
+		package = caller_package(level) # 2 would be our caller, aka this module.
+	# Do we need to look in a subdirectory?
+	if ':' not in base_template and '/' not in base_template:
+		base_template = 'templates/' + base_template
+
+	# pyramid_mako does not properly accept a package argument
+	# and a relative template path; such a specification is
+	# considered to be relative to mako's search directory,
+	# which is not what we want. We could fix this with a special
+	# TemplateLookup object, but instead it's a quick
+	# hack to alter the names here
+	if extension == '.mak' and ':' not in base_template:
+		base_template = package.__name__ + ':' + base_template
+
+	return base_template + extension, package
+
+
+def _get_renderer(base_template,
+				  extension,
+				  package=None,
+				  level=3):
+	"""
+	Given a template name, find a renderer for it.
+	For template name, we accept either a relative or absolute
+	asset spec. If the spec is relative, it can be 'naked', in which
+	case it is assummed to be in the templates sub directory.
+
+	This *must* only be called from this module due to assumptions
+	about the call tree.
+	"""
+
+	template, package = _get_renderer_spec_and_package( base_template,
+														extension,
+														package=package,
+														level=level+1 )
+
+	return get_renderer( template, package=package )
+
+def do_html_text_templates_exist(base_template,
+								 text_template_extension='.txt',
+								 package=None):
 	"""
 	A preflight method for checking if templates exist. Returns a True value
 	if they do.
 	"""
 	try:
-		get_renderer( 'nti.appserver:templates/' + base_template + '.pt' )
-		get_renderer( 'nti.appserver:templates/' + base_template + text_template_extension )
+		_get_renderer( base_template, '.pt', package=package )
+		_get_renderer( base_template, text_template_extension, package=package )
 	except ValueError:
 		# Pyramid raises this if the template doesn't exist
 		return False
 	return True
 
-def create_simple_html_text_email(base_template, subject='', request=None, recipients=(), template_args=None, text_template_extension='.txt'):
+def create_simple_html_text_email(base_template,
+								  subject='',
+								  request=None,
+								  recipients=(),
+								  template_args=None,
+								  package=None,
+								  text_template_extension='.txt',
+								  _level=3):
 	"""
 	Create a :class:`pyramid_mailer.message.Message` by rendering
 	the pair of templates to create a text and html part.
@@ -45,6 +100,10 @@ def create_simple_html_text_email(base_template, subject='', request=None, recip
 		are ".txt" for Chameleon templates (this is the default and preferred version) and ".mak" for
 		Mako templates. Note that if you use Mako, the usual ``context`` argument is renamed to ``nti_context``,
 		as ``context`` is a reserved word in Mako.
+	:keyword package: If given, and the template is not an absolute
+		asset spec, then the template will be interpreted relative to this
+		package (and its templates/ subdirectory if no subdirectory is specified).
+		If no package is given, the package of the caller of this function is used.
 	"""
 	if not recipients:
 		logger.debug( "Refusing to attempt to send email with no recipients" )
@@ -75,11 +134,17 @@ def create_simple_html_text_email(base_template, subject='', request=None, recip
 			del result['context']
 		return result
 
-
-	html_body, text_body = [render( 'nti.appserver:templates/' + base_template + extension,
-									make_args(extension),
-									request=request )
+	specs_and_packages = [_get_renderer_spec_and_package( base_template,
+														  extension,
+														  package=package,
+														  level=_level) + (extension,)
 							for extension in ('.pt', text_template_extension)]
+
+	html_body, text_body = [render( spec,
+									make_args(extension),
+									request=request,
+									package=package)
+							for spec, package, extension in specs_and_packages]
 	# PageTemplates (Chameleon and Z3c.pt) produce Unicode strings.
 	# Under python2, at least, the text templates (Chameleon alone) produces byte objects,
 	# (JAM: TODO: Can we make it stay in the unicode realm? Pyramid config?)
@@ -121,6 +186,8 @@ def queue_simple_html_text_email(*args, **kwargs):
 	:return: The :class:`pyramid_mailer.message.Message` we sent.
 	"""
 
+	kwargs = dict(kwargs)
+	kwargs['_level'] = 4
 	return send_pyramid_mailer_mail( create_simple_html_text_email( *args, **kwargs ) )
 
 def send_pyramid_mailer_mail( message ):

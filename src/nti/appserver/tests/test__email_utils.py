@@ -29,8 +29,8 @@ from zope.publisher.interfaces.browser import IBrowserRequest
 
 
 class TestEmail(SharedConfiguringTestBase):
-	def test_create_mail_message_with_non_ascii_name(self):
 
+	def test_create_mail_message_with_non_ascii_name(self):
 		class User(object):
 			username = 'the_user'
 
