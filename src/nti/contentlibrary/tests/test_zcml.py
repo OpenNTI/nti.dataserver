@@ -31,7 +31,7 @@ from zope import component
 from zope.component.hooks import site
 
 from nti.dataserver.site import _TrivialSite
-from nti.appserver.policies.sites import MATHCOUNTS
+from nti.appserver.policies.sites import BASECOPPA
 from nti.externalization.externalization import to_external_object
 
 from ..interfaces import IContentPackageLibrary
@@ -53,11 +53,11 @@ HEAD_ZCML_STRING = """
 		<include package="." file="meta.zcml" />
 
 		<utility
-			component="nti.appserver.policies.sites.MATHCOUNTS"
+			component="nti.appserver.policies.sites.BASECOPPA"
 			provides="zope.component.interfaces.IComponents"
 			name="mathcounts.nextthought.com" />
 
-		<registerIn registry="nti.appserver.policies.sites.MATHCOUNTS">
+		<registerIn registry="nti.appserver.policies.sites.BASECOPPA">
 """
 
 ZCML_STRING = HEAD_ZCML_STRING + """
@@ -86,11 +86,11 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 
 		self.configure_packages( ('nti.contentlibrary', 'nti.externalization') )
 		self.configure_string( ZCML_STRING )
-		assert_that( MATHCOUNTS.__bases__, is_( (component.globalSiteManager,) ) )
+		assert_that( BASECOPPA.__bases__, is_( (component.globalSiteManager,) ) )
 
 		assert_that( component.queryUtility( IContentPackageLibrary ), is_( none() ) )
 
-		with site( _TrivialSite( MATHCOUNTS ) ):
+		with site( _TrivialSite( BASECOPPA ) ):
 			lib = component.getUtility( IContentPackageLibrary )
 			assert_that( lib, verifiably_provides( IFilesystemContentPackageLibrary ) )
 			assert_that( lib, is_( EnumerateOnceFilesystemLibrary ) )
@@ -112,7 +112,7 @@ class TestZcml(nti.tests.ConfiguringTestBase):
 		self.configure_string( BOTO_ZCML_STRING )
 		assert_that( component.queryUtility( IContentPackageLibrary ), is_( none() ) )
 
-		with site( _TrivialSite( MATHCOUNTS ) ):
+		with site( _TrivialSite( BASECOPPA ) ):
 			lib = component.getUtility( IContentPackageLibrary )
 			assert_that( lib, verifiably_provides( IContentPackageLibrary ) )
 			assert_that( lib, is_( BotoS3BucketContentLibrary ) )
