@@ -227,8 +227,10 @@ setup(
 		# Warning: distutils distribution has been initialized, it may be too late to add a subpackage command
 		# followed by compilation failures: fatal error 'Python.h' file not found. So you must
 		# install numpy manually with pip: pip install numpy
-		# or have it in requirements.txt (which we do)
-		'numpy' if not IS_PYPY else '',
+		# or have it in requirements.txt (which we do).
+		# It also works to install it with buildout, which is the currently
+		# supported mechanism.
+		'numpy >= 1.8.0b2' if not IS_PYPY else '',
 		'paste >= 1.7.5.1',
 		'perfmetrics >= 1.0',  # easy statsd metrics.
 		'plone.i18n >= 2.0.9',  # provides ISO3166 country/codes and flag images
@@ -453,6 +455,7 @@ setup(
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/lecram/PyMySQL.git#egg=PyMySQL-0.5', # no tag for this sadly
+		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
 	],
 	packages=find_packages('src'),
 	package_dir={'': 'src'},
