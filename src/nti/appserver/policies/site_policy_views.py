@@ -14,6 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from pyramid.view import view_config
 
 from zope import interface
+from zope import component
+from pyramid.interfaces import IView
 
 from nti.appserver import httpexceptions as hexc
 
@@ -40,6 +42,24 @@ class ISiteLandingMarker(interface.Interface):
 class SiteLandingMarker(object):
 	pass
 
+@interface.implementer(IView)
+class LegacyResourceView(object):
+	"""
+	For moving off of the SiteXXXMarkers but not actually correctly
+	using static views.
+	"""
+	def __init__( self, site, name ):
+		self.site = site
+		self.name = name
+
+	def __call__( self, context, request ):
+		new_path = request.path.split( '/' )[1:-1] # the path to the directory
+		new_path.append( self.site )
+		new_path.append( self.name )
+		return hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path ) )
+
+
+
 def response_for_site_resource_with_marker( marker_interface, request, resource, mime_type ):
 	"""
 	Either redirects to a configured resource or returns an empty response with the give mimetype, based
@@ -51,8 +71,14 @@ def response_for_site_resource_with_marker( marker_interface, request, resource,
 	unconditionally, but we might wind up getting lots of 404 responses which is ugly.
 	"""
 
+	view = component.queryUtility( IView, name=resource )
+	if view:
+		return view( None, request )
+
+	# Extra legacy support...these markers are DEPRECATED
 	marker, site_name = site_policies.queryUtilityInSite( marker_interface, request=request, return_site_name=True )
 	if marker:
+		logger.warn( "Site %s is still using legacy marker %s", site_name, marker )
 		new_path = request.path.split( '/' )[1:-1] # the path to the directory
 		new_path.append( site_name )
 		new_path.append( resource )
