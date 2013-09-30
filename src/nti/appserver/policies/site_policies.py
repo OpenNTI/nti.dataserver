@@ -357,6 +357,10 @@ def dispatch_user_will_create_to_site_policy(user, event):
 def dispatch_user_created_with_request_to_site_policy(user, event):
 	_dispatch_to_policy(user, event, 'user_created_with_request')
 
+@component.adapter(nti_interfaces.IUser, app_interfaces.IUserLogonEvent)
+def dispatch_user_logon_to_site_policy(user, event):
+	_dispatch_to_policy( user, event, 'user_did_logon' )
+
 def _censor_usernames(entity, event=None):
 	"""
 	Censore the username field of the entity. Can be used as an event listener as well.
@@ -415,6 +419,9 @@ class GenericSitePolicyEventListener(object):
 	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created'
 	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to NextThought")
 
+	#: If defined, this will be send in the ``nti.landing_page``
+	#: cookie when a user logs on. Must be a byte string.
+	LANDING_PAGE_NTIID = None
 
 	_v_my_package = None
 
@@ -491,6 +498,14 @@ class GenericSitePolicyEventListener(object):
 
 	def user_created(self, user, event):
 		pass
+
+	def user_did_logon(self, user, event):
+		self._set_landing_page_cookie(user, event)
+
+	def _set_landing_page_cookie( self, user, event ):
+		if self.LANDING_PAGE_NTIID:
+			event.request.response.set_cookie(b'nti.landing_page',
+											   value=urllib.quote(self.LANDING_PAGE_NTIID) )
 
 	def _check_name(self, user):
 		# Icky. For some random reason we require everyone to provide their real name,
@@ -724,30 +739,6 @@ MathcountsCoppaUserWithoutAgreementUserProfileFactory = zope.annotation.factory(
 MathcountsCoppaUserWithAgreementUserProfileFactory = zope.annotation.factory(MathcountsCoppaUserWithAgreementUserProfile)
 
 
-_SITE_LANDING_PAGES = {
-	'mathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2013.warm_up_1',
-	'testmathcounts.nextthought.com': b'tag:nextthought.com,2011-10:mathcounts-HTML-testmathcounts2013.warm_up_1',
-	'prmia.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.advanced_stress_testing_for_financial_institutions',
-	'fintech.nextthought.com': b'tag:nextthought.com,2011-10:PRMIA-HTML-FinTech_PRMIA_RiskCourseSample.framework_for_diagnosing_systemic_risk'
-	}
-
-@component.adapter(nti_interfaces.IUser, app_interfaces.IUserLogonEvent)
-def send_site_default_landing_page_cookie(user, event):
-	"""
-	This is a hardcoded logon listener to send a cookie to
-	tell the app to direct to a specific page at logon time.
-
-	We don't have a good way to direct events through site policies yet
-	so we hack it in with a dictionary.
-	"""
-
-	for site_name in get_possible_site_names(request=event.request):
-		if site_name in _SITE_LANDING_PAGES:
-			event.request.response.set_cookie(b'nti.landing_page',
-											   value=urllib.quote(_SITE_LANDING_PAGES[site_name]))
-			break
-
-
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class NoAvatarUploadCapabilityFilter(object):
@@ -834,6 +825,8 @@ class PrmiaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	Implements the policy for ``prmia.nextthought.com``.
 	"""
 
+	LANDING_PAGE_NTIID = b'tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.advanced_stress_testing_for_financial_institutions'
+
 	COM_USERNAME = 'prmia.nextthought.com'
 	COM_ALIAS = 'PRMIA'
 	COM_REALNAME = "Professional Risk Managers' International Association"
@@ -891,6 +884,8 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for ``fintech.nextthought.com``.
 	"""
+
+	LANDING_PAGE_NTIID = b'tag:nextthought.com,2011-10:PRMIA-HTML-FinTech_PRMIA_RiskCourseSample.framework_for_diagnosing_systemic_risk'
 
 	COM_USERNAME = 'fintech.nextthought.com'
 	COM_ALIAS = 'FinTech'
