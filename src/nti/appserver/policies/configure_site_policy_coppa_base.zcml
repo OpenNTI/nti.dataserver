@@ -53,12 +53,6 @@
 			 	 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
 			 	 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
 
-		<!-- CSS for mathcounts -->
-		<utility factory=".site_policy_views.SiteCSSMarker" />
-
-		<!-- Strings for mathcounts -->
-		<utility factory=".site_policy_views.SiteStringsMarker" />
-
 		<!--
 			The policy for censoring things from regular, non-coppa
 			users by default isn't enabled. If desired, it can be added in a
