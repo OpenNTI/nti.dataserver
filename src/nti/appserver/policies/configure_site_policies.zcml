@@ -2,7 +2,7 @@
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:link="http://nextthought.com/ntp/link_providers"
 			xmlns:zcml="http://namespaces.zope.org/zcml">
-	
+
 	<include package="z3c.baseregistry" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="nti.appserver.link_providers" file="meta.zcml" />
@@ -12,6 +12,7 @@
 	<subscriber handler=".site_policies.dispatch_user_will_update_to_site_policy" />
 	<subscriber handler=".site_policies.dispatch_user_will_create_to_site_policy" />
 	<subscriber handler=".site_policies.dispatch_user_created_with_request_to_site_policy" />
+	<subscriber handler=".site_policies.dispatch_user_logon_to_site_policy" />
 
 	<!--
 	Dispatch functions for objects we know we may want to externalize slightly differently
@@ -20,11 +21,11 @@
 	<subscriber factory=".site_policies.SiteBasedExternalObjectDecorator"
 				for="nti.appserver.logon._Pong"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
-				
+
 	<subscriber factory=".site_policies.SiteBasedExternalObjectDecorator"
 				for="nti.appserver.logon._Handshake"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
-				
+
 	<subscriber factory=".site_policies.SiteBasedExternalObjectDecorator"
 				for="nti.dataserver.interfaces.IUser"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
@@ -45,23 +46,18 @@
 			 provides="nti.appserver.interfaces.IUserSearchPolicy" />
 
 	<!--
-	Landing pages for sites. Note that this embeds configuration of its own.
-	-->
-	<subscriber handler=".site_policies.send_site_default_landing_page_cookie" />
-
-	<!--
 	General site policies
 	-->
 	<utility factory=".site_policies.GenericSitePolicyEventListener"
 			 name=''
 			 zcml:condition="not-have devmode" />
-			 
+
 	<link:userLink
 		named='nti.appserver.logon.REL_INITIAL_TOS_PAGE'
 		minGeneration='20130501'
 		url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
 		mimeType='text/html'/>
-		
+
 	<link:userLink
 		named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
 		url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'

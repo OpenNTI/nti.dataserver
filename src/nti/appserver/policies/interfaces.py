@@ -43,6 +43,11 @@ class ISitePolicyUserEventListener(interface.Interface):
         Called when a user is created.
         """
 
+	def user_did_logon(user, event):
+		"""
+		Called when a user logs on in response to a IUserLogonEvent.
+		"""
+
     def user_created_with_request(user, event):
         """
         Called when a user is created in the scope of an interactive
