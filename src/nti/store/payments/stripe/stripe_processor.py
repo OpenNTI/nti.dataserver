@@ -27,15 +27,17 @@ from pyramid.threadlocal import get_current_request
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
 
-from . import utils
-from . import stripe_io
-from . import stripe_customer
 from nti.store import purchase_history
 from nti.store import purchase_attempt
 from nti.store import NTIStoreException
-from . import interfaces as stripe_interfaces
+from nti.store import get_possible_site_names
 from nti.store.payments import _BasePaymentProcessor
 from nti.store import interfaces as store_interfaces
+
+from . import utils
+from . import stripe_io
+from . import stripe_customer
+from . import interfaces as stripe_interfaces
 
 @interface.implementer(stripe_interfaces.IStripePaymentProcessor)
 class StripePaymentProcessor(_BasePaymentProcessor, stripe_customer._StripeCustomer, stripe_io.StripeIO):
@@ -110,10 +112,8 @@ class StripePaymentProcessor(_BasePaymentProcessor, stripe_customer._StripeCusto
 
 		# capture the site names so the purchasables
 		# can be read by sub-transactions
-		# TODO: Break nti.appserver dep
-		from nti.appserver.policies import site_policies
 		request = request or get_current_request()
-		site_names = site_policies.get_possible_site_names(request, include_default=True)
+		site_names = get_possible_site_names(request, include_default=True)
 
 		# prepare transaction runner
 		transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
