@@ -99,7 +99,6 @@
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 	<ext:registerMimeFactories module="._search_query" />
-	<ext:registerMimeFactories module="._whoosh_index" />
 	<ext:registerMimeFactories module="._search_results" />
 	
 	<!-- Content Resolvers -->
