@@ -17,7 +17,8 @@ from hamcrest import has_value
 from hamcrest import same_instance
 does_not = is_not
 from nose.tools import assert_raises
-from nti.tests import is_empty, time_monotonically_increases
+from nti.testing.time import time_monotonically_increases
+from nti.testing.matchers import is_empty
 
 from nti.appserver.application import createApplication, _configure_async_changes
 from nti.contentlibrary.filesystem import StaticFilesystemLibrary as Library

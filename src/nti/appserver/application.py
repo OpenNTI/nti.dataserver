@@ -476,24 +476,16 @@ def createApplication( http_port,
 
 	def load_dataserver_slugs( include_dir_name, context ):
 		if is_dataserver_dir( 'etc', include_dir_name ):
-			ordered_zcml_files = sorted([dataserver_file( 'etc', include_dir_name, f )
-										 for f in os.listdir( dataserver_file( 'etc', include_dir_name ) )
-										 if (is_dataserver_file( 'etc', include_dir_name, f )
-											 and f.endswith(".zcml") and not f.startswith( '.' ))])
-			for f in ordered_zcml_files:
-				with open( f, 'r' ) as ff:
-					contents = ff.read()
-				contents = """<configure
-								xmlns="http://namespaces.zope.org/zope"
-								xmlns:meta="http://namespaces.zope.org/meta">
-								%s
-							</configure>""" % contents
-				__traceback_info__ = f, contents
-				logger.debug( "Loading include slug from %s into %s", f, context )
-				context = xmlconfig.string( contents,
-											context=context,
-											name=f,
-											execute=False )
+			# We need to include these files using the equivalent
+			# of the include directive. If we load them directly using
+			# xmlconfig.string, we lose context information about the include
+			# paths, and then we can get duplicate registrations.
+			# The files= parameter takes a shell-style glob,
+			# finds the matches, and sorts them, and then includes
+			# them.
+			xmlconfig.include( context, files=dataserver_file('etc', include_dir_name, '*.zcml' ), package=nti.appserver )
+			# This doesn't return a context, but that's ok,
+			# it is modified in place.
 		return context
 
 	# Load the package include slugs created by buildout
