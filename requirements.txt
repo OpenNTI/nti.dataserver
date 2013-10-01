@@ -13,6 +13,7 @@ file:../lib/pywikipedia/#egg=pywikipedia
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.litworld/trunk#egg=nti.app.sites.litworld
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.prmia/trunk#egg=nti.app.sites.prmia
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.law/trunk#egg=nti.app.sites.law
+-e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.rwanda/trunk#egg=nti.app.sites.rwanda
 
 # Also temporary, going away with buildout
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.testing/trunk#egg=nti.testing
