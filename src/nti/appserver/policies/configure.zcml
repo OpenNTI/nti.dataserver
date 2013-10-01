@@ -61,9 +61,6 @@
 	<configure zcml:condition="not-installed nti.app.sites.prmia">
 		<include package="." file="configure_site_policy_prmia.zcml" />
 	</configure>
-	<configure zcml:condition="not-installed nti.app.sites.columbia">
-		<include package="." file="configure_site_policy_columbia.zcml" />
-	</configure>
 	<configure zcml:condition="not-installed nti.app.sites.law">
 		<include package="." file="configure_site_policy_law.zcml" />
 	</configure>
@@ -96,9 +93,6 @@
 		</configure>
 		<configure zcml:condition="installed nti.app.sites.prmia">
 			<include package="nti.app.sites.prmia" />
-		</configure>
-		<configure zcml:condition="installed nti.app.sites.columbia">
-			<include package="nti.app.sites.columbia" />
 		</configure>
 		<configure zcml:condition="installed nti.app.sites.law">
 			<include package="nti.app.sites.law" />

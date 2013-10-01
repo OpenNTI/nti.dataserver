@@ -11,8 +11,7 @@ to preserve the names of existing persistent classes as well as the annotation f
 
 $Id$
 """
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -797,18 +796,6 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 		"""
 		super(AdultCommunitySitePolicyEventListener, self).user_created(user, event)
 		self._join_community_user_created(user, event)
-
-
-@interface.implementer(ISitePolicyUserEventListener)
-class RwandaSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
-	"""
-	Implements the policy for the rwanda site.
-	"""
-
-	COM_USERNAME = 'CarnegieMellonUniversity'
-	COM_ALIAS = 'CMU'
-	COM_REALNAME = 'Carnegie Mellon University'
-
 
 #OU site policies
 # XXX: Deprecated and going away. moved to nti.app.products.ou
