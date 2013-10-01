@@ -39,6 +39,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import contextlib
+import warnings
 
 from zope import interface
 from zope import component
