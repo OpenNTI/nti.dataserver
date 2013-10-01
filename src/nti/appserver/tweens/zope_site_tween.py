@@ -24,6 +24,9 @@ After this tween runs, the request has been modified in the following ways.
   also in the WSGI environment as ``nti.early_request_teardown`` as a function
   of the request. (See :func:`_early_request_teardown`.)
 
+* It has a method called ``nti_gevent_spawn`` for replacing :func:`gevent.spawn`
+  while maintaining the current request.
+
 .. $Id$
 """
 
@@ -34,9 +37,14 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import transaction
+import gevent
+
 import pyramid_zodbconn
 from pyramid_zodbconn import get_connection
+
 from pyramid.security import authenticated_userid
+
+from pyramid.threadlocal import manager
 from pyramid.threadlocal import get_current_request
 
 from zope.component.hooks import setSite, getSite, setHooks, clearSite
@@ -94,6 +102,16 @@ def _early_request_teardown(request):
 		if getattr( callback, '__module__', None ) == pyramid_zodbconn.__name__:
 			request.finished_callbacks.remove( callback )
 			break
+
+def _gevent_spawn(run, *args, **kwargs):
+	"""
+	Preserves the current pyramid request.
+	"""
+	tl_dict = manager.get().copy()
+	def _run(*a, **kw):
+		manager.push(tl_dict)
+		return run(*a, **kw)
+	return gevent.spawn(run, *args, **kwargs)
 
 # Make zope site managers a bit more compatible with pyramid.
 from zope.site.site import LocalSiteManager as _ZLocalSiteManager
@@ -159,11 +177,13 @@ class site_tween(object):
 		request.environ['nti.pid'] = os.getpid() # helpful in debug tracebacks
 		request.environ['nti.early_request_teardown'] = _early_request_teardown
 		request.environ['nti.possible_site_names'] = tuple(_get_possible_site_names( request ) )
+		request.environ['nti.gevent_spawn'] = _gevent_spawn
 		# The "proper" way to add properties is with request.set_property, but
 		# this is easier and faster.
 		request.early_request_teardown = _early_request_teardown
 		request.possible_site_names = request.environ['nti.possible_site_names']
 		request.nti_settings = request.registry.settings # shortcut
+		request.nti_gevent_spawn = _gevent_spawn
 		# In [15]: %%timeit
 		#   ....: r = pyramid.request.Request.blank( '/' )
 		#   ....: p(r)

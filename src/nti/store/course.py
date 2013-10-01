@@ -17,7 +17,7 @@ from nti.utils.schema import AdaptingFieldProperty
 from nti.utils.schema import createDirectFieldProperties
 
 from . import purchasable
-from . import to_frozenset
+from .utils import to_frozenset
 from . import interfaces as store_interfaces
 
 @interface.implementer(store_interfaces.ICourse)

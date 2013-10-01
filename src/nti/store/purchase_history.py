@@ -30,7 +30,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.zodb.containers import time_to_64bit_int
 
-from . import to_frozenset
+from .utils import to_frozenset
 from . import purchase_attempt
 from . import interfaces as store_interfaces
 
