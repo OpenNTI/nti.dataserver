@@ -135,6 +135,7 @@ setup(
 		'nti.app.sites.mathcounts',
 		'nti.app.sites.alpha',
 		'nti.app.sites.demo',
+        'nti.app.sites.litworld',
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy

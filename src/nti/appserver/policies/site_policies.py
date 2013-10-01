@@ -780,7 +780,7 @@ class NoChatAvatarDFLCapabilityFilter(NoDFLCapabilityFilter):
 
 
 @interface.implementer(ISitePolicyUserEventListener)
-class _AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener):
+class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener):
 	"""
 	Implements the policy for an adult site, adding new users to a single community.
 	"""
@@ -795,12 +795,12 @@ class _AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener
 		of this object (creating it if it doesn't exist).
 
 		"""
-		super(_AdultCommunitySitePolicyEventListener, self).user_created(user, event)
+		super(AdultCommunitySitePolicyEventListener, self).user_created(user, event)
 		self._join_community_user_created(user, event)
 
 
 @interface.implementer(ISitePolicyUserEventListener)
-class RwandaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+class RwandaSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for the rwanda site.
 	"""
@@ -810,7 +810,7 @@ class RwandaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_REALNAME = 'Carnegie Mellon University'
 
 @interface.implementer(ISitePolicyUserEventListener)
-class LawSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+class LawSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for ``law.nextthought.com``.
 	"""
@@ -820,7 +820,7 @@ class LawSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_REALNAME = 'Legal Studies'
 
 @interface.implementer(ISitePolicyUserEventListener)
-class PrmiaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+class PrmiaSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for ``prmia.nextthought.com``.
 	"""
@@ -831,18 +831,9 @@ class PrmiaSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_ALIAS = 'PRMIA'
 	COM_REALNAME = "Professional Risk Managers' International Association"
 
-@interface.implementer(ISitePolicyUserEventListener)
-class LitWorldSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
-	"""
-	Implements the policy for the litworld site.
-	"""
-
-	COM_USERNAME = 'litworld.nextthought.com'
-	COM_ALIAS = 'LitWorld'
-	COM_REALNAME = 'LitWorld'
 
 @interface.implementer(ISitePolicyUserEventListener)
-class CollegiateSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+class CollegiateSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for the Collegiate site.
 	"""
@@ -852,7 +843,7 @@ class CollegiateSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 	COM_REALNAME = 'Collegiate'
 
 @interface.implementer(ISitePolicyUserEventListener)
-class GloriaMundiSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+class GloriaMundiSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for the Gloria-Mundi site.
 	"""
@@ -880,7 +871,7 @@ class GloriaMundiSitePolicyEventListener(_AdultCommunitySitePolicyEventListener)
 				accept_invitations(user, [code])
 
 @interface.implementer(ISitePolicyUserEventListener)
-class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+class FintechSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for ``fintech.nextthought.com``.
 	"""
@@ -911,7 +902,7 @@ class FintechSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
 #OU site policies
 # XXX: Deprecated and going away. moved to nti.app.products.ou
 @interface.implementer(ISitePolicyUserEventListener)
-class OUSitePolicyEventListener(_AdultCommunitySitePolicyEventListener):
+class OUSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for ``platform.ou.edu``.
 	"""

@@ -58,11 +58,12 @@
 	<configure zcml:condition="not-installed nti.app.sites.demo">
 		<include package="." file="configure_site_policy_demo.zcml" />
 	</configure>
+	<configure zcml:condition="not-installed nti.app.sites.litworld">
+		<include package="." file="configure_site_policy_litworld.zcml" />
+	</configure>
 	
 	<include package="." file="configure_site_policy_columbia.zcml" />
-	<include package="." file="configure_site_policy_demo.zcml" />
 	<include package="." file="configure_site_policy_law.zcml" />
-	<include package="." file="configure_site_policy_litworld.zcml" />
 
 	<include package="." file="configure_site_policy_prmia.zcml" />
 	<include package="." file="configure_site_policy_rwanda.zcml" />
