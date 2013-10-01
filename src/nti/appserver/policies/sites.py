@@ -36,9 +36,7 @@ BASECOPPA = BaseComponents(BASE, name='genericcoppabase', bases=(BASE,))
 BASEADULT = BaseComponents(BASE, name="genericadultbase", bases=(BASE,))
 
 
-# Moved to the mathcounts package
-#MATHCOUNTS = BaseComponents(BASECOPPA, name='mathcounts.nextthought.com', bases=(BASECOPPA,))
-#TESTMATHCOUNTS = BaseComponents(MATHCOUNTS, name='testmathcounts.nextthought.com', bases=(MATHCOUNTS,))
+# Things that have moved
 import zope.deferredimport
 zope.deferredimport.initialize()
 zope.deferredimport.deprecatedFrom(
@@ -47,19 +45,20 @@ zope.deferredimport.deprecatedFrom(
 	"MATHCOUNTS",
 	"TESTMATHCOUNTS" )
 
-ALPHA = BaseComponents(BASEADULT,name='alpha.nextthought.com', bases=(BASEADULT,))
+zope.deferredimport.deprecatedFrom(
+	"Import from nti.app.sites.alpha",
+	"nti.app.sites.alpha",
+	"ALPHA" )
+
 DEMO = BaseComponents(BASEADULT,name='demo.nextthought.com', bases=(BASEADULT,))
-FINTIMES = BaseComponents(BASEADULT,name='ft.nextthought.com', bases=(BASEADULT,))
+
 
 RWANDA = BaseComponents(BASEADULT,name='rwanda.nextthought.com', bases=(BASEADULT,))
 LAW = BaseComponents(BASEADULT, name='law.nextthought.com', bases=(BASEADULT,))
 LITWORLD = BaseComponents(BASEADULT, name='litworld.nextthought.com', bases=(BASEADULT,))
-COLLEGIATE = BaseComponents(BASEADULT, name='collegiate.nextthought.com', bases=(BASEADULT,))
-GLORIA_MUNDI = BaseComponents(BASEADULT, name='gloria-mundi.nextthought.com', bases=(BASEADULT,))
 
 
 PRMIA = BaseComponents(BASEADULT, name='prmia.nextthought.com', bases=(BASEADULT,))
-FINTECH = BaseComponents(BASEADULT, name='fintech.nextthought.com', bases=(BASEADULT,))
 COLUMBIA = BaseComponents(BASEADULT, name='columbia.nextthought.com', bases=(BASEADULT,))
 
 # for OU
