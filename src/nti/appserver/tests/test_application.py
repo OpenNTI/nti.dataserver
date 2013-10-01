@@ -531,10 +531,31 @@ class TestApplication(SharedApplicationTestBase):
 		# No site, empty file
 		res = testapp.get( '/login/resources/css/site.css' )
 		assert_that( res, has_property( 'content_type', 'text/css' ) )
+		assert_that( res, has_property( 'text', '' ) )
 
 		# Configured site, redirect
-		res = testapp.get( '/login/resources/css/site.css', extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'}, status=303 )
-		assert_that( res.headers, has_entry( 'Location', ends_with( '/login/resources/css/mathcounts.nextthought.com/site.css' ) ) )
+		res = testapp.get( '/login/resources/css/site.css', extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'}, status=200 )
+		assert_that( res, has_property( 'content_type', 'text/css') )
+		assert_that( res, has_property( 'text', is_not( is_empty() ) ) )
+
+
+	@WithSharedApplicationMockDS
+	def test_webapp_strings_site_policy(self):
+		testapp = TestApp(self.app)
+		# No site, empty file
+		res = testapp.get( '/NextThoughtWebApp/resources/strings/site.js' )
+		assert_that( res, has_property( 'text', '' ) )
+		assert_that( res, has_property( 'content_type', 'application/javascript' ) )
+
+		# Configured site, content
+		# XXX: Note, the name of the file is not consistent
+		# and will be changing in one place or another
+		res = testapp.get( '/NextThoughtWebApp/resources/strings/site.js',
+						   extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'} )
+		assert_that( res, has_property( 'content_type', 'application/javascript' ) )
+		assert_that( res, has_property( 'text', is_not( is_empty() ) ) )
+
+
 
 	@WithSharedApplicationMockDS
 	def test_external_coppa_capabilities_mathcounts(self):
