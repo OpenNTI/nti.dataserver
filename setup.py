@@ -33,7 +33,7 @@ entry_points = {
 		'nti_testing_mark_emails_bounced = nti.appserver.bounced_email_workflow:mark_emails_bounced',
 		"pserve = nti.appserver.nti_pserve:main",  # This script overrides the one from pyramid
 		"rqworker = nti.appserver.nti_rqworker:main",  # This script overrides the one from rqworker
-		"runzeo = nti.monkey.nti_runzeo:main",  # This script overrides the one from ZEO
+		"runzeo = nti.monkey.nti_runzeo:main",	# This script overrides the one from ZEO
 		"zodbconvert = nti.monkey.nti_zodbconvert:main",  # This script overrides the one from relstorage
 	],
 	"paste.app_factory": [
@@ -70,12 +70,12 @@ else:
 	HAVE_ZCONT = True
 
 TESTS_REQUIRE = [
-	'WebTest >= 2.0.9',  # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
+	'WebTest >= 2.0.9',	 # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
 	'blessings >= 1.5.1',  # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
-	'coverage >= 3.6',  # Test coverage
+	'coverage >= 3.6',	# Test coverage
 	'fakeredis >= 0.4.0',
 	'fudge',
-	'ipdb >= 0.8',  # easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
+	'ipdb >= 0.8',	# easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
 	'nose >= 1.3.0',
 	'nose-timer >= 0.2.0',
 	'nose-progressive >= 1.5',
@@ -131,12 +131,14 @@ setup(
 		'nti.plasTeX',
 		'nti.geventwebsocket',
 		'nti.testing',
+		# NOTE: These are temporary!
 		'nti.app.testing',
 		'nti.app.sites.mathcounts',
 		'nti.app.sites.alpha',
 		'nti.app.sites.demo',
-        'nti.app.sites.litworld',
-        'nti.app.sites.prmia',
+		'nti.app.sites.litworld',
+		'nti.app.sites.prmia',
+		'nti.app.sites.law',
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
@@ -150,7 +152,7 @@ setup(
 		# includes transparent png support, and is much cleaned up, otherwise api compatible with pillow 1/PIL 1
 		'Pillow >= 2.1.0',
 		'RestrictedPython >= 3.6.0',
-		'ZConfig >= 3.0.3',  # 3.0.3 reqd for pypy/python3 support. requires zodb3 3.11.0a3+
+		'ZConfig >= 3.0.3',	 # 3.0.3 reqd for pypy/python3 support. requires zodb3 3.11.0a3+
 		 # NOTE: ZODB has a new release, 4.0.0b2 (Notice it's not ZODB3 anymore, so
 		 # there's no need to hard-pin the ZODB3 version.) For this version, we
 		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.5, and ZEO >= 4.0.0, and zdaemon
@@ -185,18 +187,18 @@ setup(
 		'umysqldb >= 1.0.2',
 		'RelStorage >= 1.5.1',
 		'PyMySQL >= 0.5',
-		'python-memcached >= 1.53',  # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
+		'python-memcached >= 1.53',	 # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
 		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
 		# See also blist for a tree-structured list
 		'boto >= 2.13.3',  # amazon
-		'brownie >= 0.5.1',  # Common utilities
+		'brownie >= 0.5.1',	 # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
 		'contentratings == 1.1',  # requires small patch to work without acquisition
-		'cryptacular >= 1.4.1',  # see z3c.crypt
+		'cryptacular >= 1.4.1',	 # see z3c.crypt
 		'cssselect == 0.7.1',  # Used by pyquery (0.8 not compatible with pyquery 1.2.4, :first raises AttributeError)
 		'cython >= 0.19.1',
 		# Adds support for detecting aborts to transactions which
@@ -205,7 +207,7 @@ setup(
 		# support for defining and evolving classes based on schemas
 		# pulls in dm.reuse
 		'dm.zope.schema >= 2.0.1',
-		'dolmen.builtins >= 0.3.1',  # interfaces for common python types
+		'dolmen.builtins >= 0.3.1',	 # interfaces for common python types
 		'filechunkio >= 1.5',  # Req'd for multi-put in boto == 2.5.2
 		# A very simple (one module, no deps) RSS and Atom feed generator.
 		# 1.7 is a modern rewrite with much better unicode and Py3k support
@@ -214,16 +216,16 @@ setup(
 		'gevent == 1.0dev', # Really 1.0rc3; see dependency_links
 		'greenlet >= 0.4.1',
 		'gunicorn >= 18.0',
-		'hiredis >= 0.1.1',  # Redis C parser
+		'hiredis >= 0.1.1',	 # Redis C parser
 		# HTML5 parsing library
 		# Note that the 1.0 series is a much improved parser over 0.95;
 		# this may result in some differences
 		'html5lib >= 1.0b3',
-		'isodate >= 0.4.9',  # ISO8601 date/time/duration parser and formatter
-		'joblib >= 0.7.1',  # Python functions as pipeline jobs.
+		'isodate >= 0.4.9',	 # ISO8601 date/time/duration parser and formatter
+		'joblib >= 0.7.1',	# Python functions as pipeline jobs.
 		'logilab-common >= 0.60.0',
 		'lxml >= 3.2.3',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
-		'nameparser >= 0.2.7',  # Human name parsing
+		'nameparser >= 0.2.7',	# Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
@@ -237,11 +239,11 @@ setup(
 		'numpy >= 1.8.0b2' if not IS_PYPY else '',
 		'paste >= 1.7.5.1',
 		'perfmetrics >= 1.0',  # easy statsd metrics.
-		'plone.i18n >= 2.0.9',  # provides ISO3166 country/codes and flag images
-		'plone.scale >= 1.3.2',  # image scaling/storage based on PIL
-		'plone.namedfile >= 2.0.2',  # much like zope.file, but some image-specific goodness.
+		'plone.i18n >= 2.0.9',	# provides ISO3166 country/codes and flag images
+		'plone.scale >= 1.3.2',	 # image scaling/storage based on PIL
+		'plone.namedfile >= 2.0.2',	 # much like zope.file, but some image-specific goodness.
 		'pymongo >= 2.6.2',
-		'pyparsing >= 1.5.6, <=1.5.7',  # used by matplotlib, rdflib, experimental zopyx.txng3.core
+		'pyparsing >= 1.5.6, <=1.5.7',	# used by matplotlib, rdflib, experimental zopyx.txng3.core
 		# Pure python PDF reading library. Not complex. Has newer fork pyPDF2, not yet on PyPI?
 		'pyPDF >= 1.13',
 		# See also z3c.rml for a complete PDF layout and rendering environment, which should
@@ -257,7 +259,7 @@ setup(
 		'pyramid_zcml >= 1.0.0',
 		'pyramid_zodbconn >= 0.4',
 		'pyramid-openid >= 0.3.4',
-		# 'psycopg2 >= 2.5.1',  # PostGreSQL
+		# 'psycopg2 >= 2.5.1',	# PostGreSQL
 		# Monitoring stats and instrumenting code
 		'python-statsd >= 1.6.0',  # statsd client. statsd must be installed separately: https://github.com/etsy/statsd
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
@@ -280,13 +282,13 @@ setup(
 		 # give a version) (?). grequests 0.1.0 is not compatible with this.
 		 # If something used hooks, a change from 1.1 to 1.2 might break it; no initial issues seen
 		'requests >= 2.0.0',
-		'rq >= 0.3.11',  # queues for python
+		'rq >= 0.3.11',	 # queues for python
 		'setproctitle >= 1.1.7',  # used by gunicorn
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.3.0',
 		'six >= 1.4.1',
 		'sympy >= 0.7.2' if not IS_PYPY else '',
-		'stripe >= 1.9.5',  # stripe payments
+		'stripe >= 1.9.5',	# stripe payments
 		# 'slimit',
 		'supervisor >= 3.0',
 		'transaction >= 1.4.1',
@@ -300,29 +302,29 @@ setup(
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt >= 1.1',
-		'z3c.password >= 1.0.0a1',  # password policies
+		'z3c.password >= 1.0.0a1',	# password policies
 		'z3c.pt >= 3.0.0a1',  # Better ZPT support than plastex, add-in to Chameleon
-		'z3c.ptcompat >= 2.0.0a1',  # Make zope.pagetemplate also use the Chameleon-based ZPT
-		'z3c.table >= 2.0.0a1',  # Flexible table rendering
+		'z3c.ptcompat >= 2.0.0a1',	# Make zope.pagetemplate also use the Chameleon-based ZPT
+		'z3c.table >= 2.0.0a1',	 # Flexible table rendering
 		'zc.blist >= 1.0b2',  # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
-		'zc.dict >= 1.3b1',  # BTree based dicts that are subclassable
+		'zc.dict >= 1.3b1',	 # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
 		'zc.lockfile >= 1.1.0',
 		'zc.queue >= 2.0.0a1',
-		'zc.zlibstorage >= 0.1.1',  # compressed records. Will be built-in to newer ZODB
+		'zc.zlibstorage >= 0.1.1',	# compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
 		# 'zetalibrary',
-		'zodburi >= 2.0b1',  # used by pyramid_zodbconn
-		'zope.app.broken >= 3.6.0',  # Improved broken objects
-		'zope.app.component >= 3.9.3',  # bwc only, DO NOT IMPORT. pulled in by contentratings
-		'zope.app.interface >= 3.6.0',  # bwc only, DO NOT IMPORT. pulled in by contentratings
+		'zodburi >= 2.0b1',	 # used by pyramid_zodbconn
+		'zope.app.broken >= 3.6.0',	 # Improved broken objects
+		'zope.app.component >= 3.9.3',	# bwc only, DO NOT IMPORT. pulled in by contentratings
+		'zope.app.interface >= 3.6.0',	# bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.applicationcontrol >= 4.0.0a1',  # Info about the app. currently unused
 		'zope.annotation >= 4.2.0',
 		'zope.authentication >= 4.1.0',
-		'zope.broken >= 3.6.0',  # This is actually deprecated, use the ZODB import
+		'zope.broken >= 3.6.0',	 # This is actually deprecated, use the ZODB import
 		'zope.browser >= 2.0.2',
 		'zope.browserpage >= 4.1.0a1',
-		'zope.browsermenu >= 4.1.0a1',  # Browser menu implementation for Zope.
+		'zope.browsermenu >= 4.1.0a1',	# Browser menu implementation for Zope.
 		'zope.browserresource >= 4.0.1',
 		'zope.catalog >= 4.0.0a1' if HAVE_ZCONT else '',  # zope.container dependency
 		'zope.cachedescriptors >= 4.0.0',
@@ -336,22 +338,22 @@ setup(
 		# reliably; nonetheless it is required because so many other things require zope.container:
 		# z3c.table, zope.catalog, zope.copypastemove, zope.file, zope.intid, zope.pluggableauth, zope.site
 		# If you do install it you can run this script again to get the missing deps
-		'zope.container[zcml,zodb] >= 4.0.0a3' if not IS_PYPY else '',  # 4.0.0a3 or greater is required in the 4 series
+		'zope.container[zcml,zodb] >= 4.0.0a3' if not IS_PYPY else '',	# 4.0.0a3 or greater is required in the 4 series
 		'zope.contentprovider >= 4.0.0a1',
 		'zope.contenttype >= 4.0.1',  # A utility module for content-type handling.
 		'zope.copy >= 4.0.2',
 		'zope.copypastemove[zcml] >= 4.0.0a1' if HAVE_ZCONT else '',  # zope.container dep
 		'zope.datetime >= 4.0.0',
 		'zope.deprecation >= 4.0.2',
-		'zope.deferredimport >= 4.0.0',  # useful with zope.deprecation. Req'd by contentratings
+		'zope.deferredimport >= 4.0.0',	 # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 4.0.1',
 		'zope.dublincore >= 4.0.0',
 		'zope.error >= 4.1.0',
 		'zope.event >= 4.0.2',
 		'zope.exceptions >= 4.0.6',
 		'zope.filerepresentation >= 4.0.2',
-		'zope.file >= 0.6.2' if HAVE_ZCONT else '',  # zope.container dep
-		'zope.formlib >= 4.3.0a1',  # Req'd by zope.mimetype among others,
+		'zope.file >= 0.6.2' if HAVE_ZCONT else '',	 # zope.container dep
+		'zope.formlib >= 4.3.0a1',	# Req'd by zope.mimetype among others,
 		'zope.generations >= 4.0.0a1',
 		'zope.hookable >= 4.0.1',  # explicitly list this to ensure we get the fast C version. Used by ZCA.
 		'zope.i18n >= 4.0.0a4',
@@ -360,29 +362,29 @@ setup(
 		'zope.interface >= 4.0.5',
 		'zope.intid >= 4.0.0a1' if HAVE_ZCONT else '',
 		'zope.keyreference >= 4.0.0a2',
-		'zope.lifecycleevent >= 4.0.3',  # Object Added/Removed/etc events
+		'zope.lifecycleevent >= 4.0.3',	 # Object Added/Removed/etc events
 		'zope.login >= 2.0.0a1',  # Providers of Zope3 authentication.ILoginPassword for Zope3 publisher interfaces; pulled in by zope.file[test] and indirectly zope.app.component[test]
 		'zope.location >= 4.0.2',
 		'zope.mimetype == 1.3.1',  # freeze on 1.3.1 pending 2.0.0a2, https://github.com/zopefoundation/zope.mimetype/pull/1
 		'zope.minmax >= 2.0.0',
 		'zope.pagetemplate >= 4.0.4',
 		'zope.password >= 4.0.2',  # encrypted password management
-		'zope.pluggableauth >= 2.0.0a1' if HAVE_ZCONT else '',  # pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
+		'zope.pluggableauth >= 2.0.0a1' if HAVE_ZCONT else '',	# pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		# Persistent, schema-based preferences with
 		# site- and local defaults
 		'zope.preference >= 4.0.0a1' if HAVE_ZCONT else '',
 		'zope.ptresource >= 4.0.0a1',
 		'zope.publisher >= 4.0.0a4',
-		'zope.principalannotation >= 4.0.0a2',  # Annotating principals in Zope3's global reg; pulled in indirectly by zope.app.component[test]
+		'zope.principalannotation >= 4.0.0a2',	# Annotating principals in Zope3's global reg; pulled in indirectly by zope.app.component[test]
 		'zope.principalregistry >= 4.0.0a2',  # Global principal registry component for Zope3
 		'zope.processlifetime >= 2.0.0',
-		'zope.proxy >= 4.1.3',  # 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
-		'zope.server >= 3.9.0',  # DO NOT USED. Included as transitive for latest.
+		'zope.proxy >= 4.1.3',	# 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
+		'zope.server >= 3.9.0',	 # DO NOT USED. Included as transitive for latest.
 		'zope.sequencesort >= 4.0.1',  # advanced locale aware sorting
 		'zope.schema >= 4.3.2',
-		'zope.security[zcml,untrustedpython] >= 4.0.0',  # >= 4.0.0b1 gets PyPy support!
+		'zope.security[zcml,untrustedpython] >= 4.0.0',	 # >= 4.0.0b1 gets PyPy support!
 		'zope.securitypolicy >= 4.0.0a1',
-		'zope.session >= 4.0.0a2',  # 4.0.0a2 is out, should be fine
+		'zope.session >= 4.0.0a2',	# 4.0.0a2 is out, should be fine
 		'zope.site >= 4.0.0a1' if HAVE_ZCONT else '',  # local, persistent ZCA sites. zope.container dep
 		'zope.size >= 4.0.1',
 		# parser and renderers for the classic Zope "structured text" markup dialect (STX).
@@ -398,10 +400,10 @@ setup(
 		# textindexng3
 		'zopyx.txng3.core >= 3.6.1.1' if not IS_PYPY else '',  # extensions don't build
 		'zopyx.txng3.ext >= 3.3.4' if not IS_PYPY else '',
-        # Data analysis
-        # pandas,
-        # scikit-learn,
-        # rpy2, -- Requires R installed.
+		# Data analysis
+		# pandas,
+		# scikit-learn,
+		# rpy2, -- Requires R installed.
 		],
 	extras_require={
 		'test': TESTS_REQUIRE,
@@ -411,23 +413,23 @@ setup(
 			# OK with websockets and greenlets.
 			# Depends on the system graphviz installation; an alternative is repoze.profile which has
 			# fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
-		 	'linesman >= 0.3.1',  # less that 0.3.0 conflicts with pillow (wanted PIL)
+			'linesman >= 0.3.1',  # less that 0.3.0 conflicts with pillow (wanted PIL)
 			# 'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			#'dblatex >= 0.3.4',  # content rendering, convert docbook to tex. disabled due to sandbox violation
-			'epydoc >= 3.0.1',  # auto-api docs
+			'epydoc >= 3.0.1',	# auto-api docs
 			'httpie >= 0.7.2',
-			'ipython >= 1.1.0',  # the extra notebook is web based, pulls in tornado
+			'ipython >= 1.1.0',	 # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
 			'pip >= 1.3.1',
 			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
-			'pudb >= 2013.3.6',  # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
+			'pudb >= 2013.3.6',	 # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 1.0.0' if not IS_PYPY else '',  # install astroid
 			'pyramid_debugtoolbar >= 1.0.8',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
 			'repoze.sphinx.autointerface >= 0.7.1',
 			'rope >= 0.9.4',  # refactoring library. c.f. ropemacs
-			'ropemode >= 0.2',  # IDE helper for rope
-			'sphinx >= 1.2b2',  # Narrative docs
+			'ropemode >= 0.2',	# IDE helper for rope
+			'sphinx >= 1.2b2',	# Narrative docs
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv >= 1.10.1',
