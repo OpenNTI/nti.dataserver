@@ -820,19 +820,6 @@ class LawSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
 	COM_REALNAME = 'Legal Studies'
 
 @interface.implementer(ISitePolicyUserEventListener)
-class PrmiaSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
-	"""
-	Implements the policy for ``prmia.nextthought.com``.
-	"""
-
-	LANDING_PAGE_NTIID = b'tag:nextthought.com,2011-10:PRMIA-HTML-PRMIA_RiskCourse.advanced_stress_testing_for_financial_institutions'
-
-	COM_USERNAME = 'prmia.nextthought.com'
-	COM_ALIAS = 'PRMIA'
-	COM_REALNAME = "Professional Risk Managers' International Association"
-
-
-@interface.implementer(ISitePolicyUserEventListener)
 class CollegiateSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
 	"""
 	Implements the policy for the Collegiate site.
