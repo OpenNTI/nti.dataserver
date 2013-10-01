@@ -235,13 +235,29 @@ class _RunJobInSite(TransactionLoop):
 			self.conn = conn
 			return super(_RunJobInSite,self).__call__( *args, **kwargs )
 
-def run_job_in_site(func, retries=0, sleep=None, site_names=()):
+_marker = object()
+
+def run_job_in_site(func, retries=0, sleep=None, site_names=_marker):
 	"""
 	Runs the function given in `func` in a transaction and dataserver local
 	site manager. See :class:`.IDataserverTransactionRunner`
 
 	:return: The value returned by the first successful invocation of `func`.
 	"""
+
+	# site_names is deprecated, we want to start preserving
+	# the current site. Because the current site should be based on the
+	# current site names FOR NOW, preserving the current site names
+	# is equivalent. THIS IS CHANGING though.
+	if site_names is not _marker:
+		warnings.warn("site_names is deprecated. "
+					  "Call this already in the appropriate site",
+					  FutureWarning )
+	else:
+		# This is a bit scuzzy; that's part of why this is going away.
+		# Note the nearly-circular import
+		from nti.appserver.policies.site_policies import get_possible_site_names
+		site_names = get_possible_site_names()
 
 	return _RunJobInSite( func, retries=retries, sleep=sleep, site_names=site_names )()
 

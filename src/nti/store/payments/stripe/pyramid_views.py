@@ -182,21 +182,20 @@ class StripePaymentView(_PostStripeView):
 		# check for any pending purchase for the items being bought
 		purchase = purchase_history.get_pending_purchase_for(username, purchase_attempt.Items)
 		if purchase is not None:
-			logger.warn("There is already a pending purchase for item(s) %s" % list(purchase_attempt.Items))
+			logger.warn("There is already a pending purchase for item(s) %s", list(purchase_attempt.Items))
 			return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
 
 		# register purchase
 		purchase_id = purchase_history.register_purchase_attempt(purchase_attempt, username)
-		logger.info("Purchase attempt (%s) created" % purchase_id)
+		logger.info("Purchase attempt (%s) created", purchase_id)
 
 		# after commit
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 		def process_purchase():
-			logger.info("Processing purchase %s" % purchase_id)
+			logger.info("Processing purchase %s", purchase_id)
 			manager.process_purchase(purchase_id=purchase_id, username=username, token=token,
-									 expected_amount=expected_amount, api_key=stripe_key.PrivateKey,
-									 request=request)
-		transaction.get().addAfterCommitHook(lambda success: success and gevent.spawn(process_purchase))
+									 expected_amount=expected_amount, api_key=stripe_key.PrivateKey)
+		transaction.get().addAfterCommitHook(lambda success: success and request.nti_gevent_spawn(process_purchase))
 
 		# return
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)

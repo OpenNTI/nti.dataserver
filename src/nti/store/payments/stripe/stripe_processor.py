@@ -14,7 +14,6 @@ import sys
 import six
 import math
 import time
-import functools
 import simplejson as json
 from datetime import date
 
@@ -30,7 +29,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.store import purchase_history
 from nti.store import purchase_attempt
 from nti.store import NTIStoreException
-from nti.store import get_possible_site_names
 from nti.store.payments import _BasePaymentProcessor
 from nti.store import interfaces as store_interfaces
 
@@ -103,21 +101,16 @@ class StripePaymentProcessor(_BasePaymentProcessor, stripe_customer._StripeCusto
 		result = self._do_pricing(purchase)
 		return result
 
-	def process_purchase(self, purchase_id, username, token, expected_amount=None, api_key=None, request=None):
+	def process_purchase(self, purchase_id, username, token, expected_amount=None, api_key=None):
 		"""
 		Executes the process purchase.
-		This function may be called in a greenlet (which cannot be run within a transaction runner)
+		This function may be called in a greenlet (which cannot be run within a transaction runner);
+		the request should be established when it is called.
 		"""
-		#### from IPython.core.debugger import Tracer; Tracer()() ####
-
-		# capture the site names so the purchasables
-		# can be read by sub-transactions
-		request = request or get_current_request()
-		site_names = get_possible_site_names(request, include_default=True)
+		request = get_current_request()
 
 		# prepare transaction runner
 		transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
-		transactionRunner = functools.partial(transactionRunner, site_names=site_names)
 
 		def start_purchase():
 			purchase = purchase_history.get_purchase_attempt(purchase_id, username)

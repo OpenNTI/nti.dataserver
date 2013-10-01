@@ -194,7 +194,7 @@ class IDataserverTransactionRunner(interface.Interface):
 	def __call__(func, retries=0, sleep=None, site_names=()):
 		"""
 		Runs the function given in `func` in a transaction and dataserver local
-		site manager.
+		site manager (defaulting to the current site manager).
 
 		:param function func: A function of zero parameters to run. If it has a docstring,
 			that will be used as the transactions note. A transaction will be begun before
@@ -205,8 +205,12 @@ class IDataserverTransactionRunner(interface.Interface):
 			Defaults to zero (so the job runs once).
 		:param float sleep: If not none, then the greenlet running this function will sleep for
 			this long between retry attempts.
-		:param site_names: Sequence of strings giving the virtual host names
+		:param site_names: DEPRECATED. Sequence of strings giving the virtual host names
 			to use. See :mod:`nti.dataserver.site` for more details.
+			If you do not provide this argument, then the currently installed
+			site will be maintained when the transaction is run. NOTE: The implementation
+			of this may maintain either the site names or the actual site
+			object.
 
 		:return: The value returned by the first successful invocation of `func`.
 		"""
@@ -726,7 +730,7 @@ class IStudent(IUser):
 	"""
 	A marker interface to denote a student
 	"""
-	
+
 # ## ACLs
 
 class IACE(interface.Interface):
@@ -1149,7 +1153,7 @@ class IFriendsListContainer(INamedContainer):
 
 	contains(IFriendsList)
 
-class IDevice(IModeledContent): 
+class IDevice(IModeledContent):
 	pass
 
 class IDeviceContainer(INamedContainer):

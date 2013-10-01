@@ -34,7 +34,7 @@ from nti.ntiids import interfaces as nid_interfaces
 from nti.utils.schema import AdaptingFieldProperty
 from nti.utils.schema import createDirectFieldProperties
 
-from . import to_frozenset
+from .utils import to_frozenset
 from . import interfaces as store_interfaces
 from .utils import MetaStoreObject, to_collection
 
