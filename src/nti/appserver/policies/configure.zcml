@@ -49,9 +49,6 @@
 		<include package="." file="configure_site_policy_mathcounts.zcml" />
 		<include package="." file="configure_site_policy_testmathcounts.zcml" />
 	</configure>
-	<configure zcml:condition="installed nti.app.sites.mathcounts">
-		<include package="nti.app.sites.mathcounts" />
-	</configure>
 	<configure zcml:condition="not-installed nti.app.sites.alpha">
 		<include package="." file="configure_site_policy_alpha.zcml" />
 	</configure>
@@ -64,13 +61,15 @@
 	<configure zcml:condition="not-installed nti.app.sites.prmia">
 		<include package="." file="configure_site_policy_prmia.zcml" />
 	</configure>
-
-	<include package="." file="configure_site_policy_columbia.zcml" />
+	<configure zcml:condition="not-installed nti.app.sites.columbia">
+		<include package="." file="configure_site_policy_columbia.zcml" />
+	</configure>
 	<configure zcml:condition="not-installed nti.app.sites.law">
 		<include package="." file="configure_site_policy_law.zcml" />
 	</configure>
-	<include package="." file="configure_site_policy_rwanda.zcml" />
-
+	<configure zcml:condition="not-installed nti.app.sites.rwanda">
+		<include package="." file="configure_site_policy_rwanda.zcml" />
+	</configure>
 	<!--
 		This is moving to nti.app.products.ou from its previous home
 		in egg nti.clients, package nti.integration.ou. The new
@@ -83,6 +82,31 @@
 			<include package="." file="configure_site_policy_ou.zcml" />
 			<include package="." file="configure_site_policy_outest.zcml" />
 		</configure>
+		<configure zcml:condition="installed nti.app.sites.mathcounts">
+			<include package="nti.app.sites.mathcounts" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.alpha">
+			<include package="nti.app.sites.alpha" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.demo">
+			<include package="nti.app.sites.demo" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.litworld">
+			<include package="nti.app.sites.litworld" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.prmia">
+			<include package="nti.app.sites.prmia" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.columbia">
+			<include package="nti.app.sites.columbia" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.law">
+			<include package="nti.app.sites.law" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.rwanda">
+			<include package="nti.app.sites.rwanda" />
+		</configure>
+
 	</configure>
 
 </configure>

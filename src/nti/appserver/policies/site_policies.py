@@ -866,39 +866,11 @@ class OUTestSitePolicyEventListener(OUSitePolicyEventListener):
 # (TODO: Is their anything weird with the user indexes that can happen with this?)
 ###
 
-@component.adapter(nti_interfaces.IUser)
-@interface.implementer(IColumbiaBusinessUserProfile)
-class ColumbiaBusinessUserProfile(user_profile.EmailRequiredUserProfile):
+try:
+	from nti.app.sites.columbia.interfaces import ColumbiaBusinessUserProfile
+except ImportError:
+	# BWC import for objects in the database
 	pass
-
-user_profile.add_profile_fields(IColumbiaBusinessUserProfile, ColumbiaBusinessUserProfile)
-
-@component.adapter(nti_interfaces.IUser)
-@interface.implementer(IColumbiaBusinessUserProfile)
-def ColumbiaBusinessUserProfileFactory(context):
-	# The special logic to look for a profile under a *different* annotation key,
-	# and if found, copy it to the new data.
-	# (Depending on whether we are in dev mode or not, we could have two different keys)
-	columbia_profile_key = 'nti.appserver.site_policies.ColumbiaBusinessUserProfile'  # BWC
-	annotations = zope.annotation.interfaces.IAnnotations(context)
-	try:
-		return annotations[columbia_profile_key]
-		#Yes, it already existed!
-	except KeyError:
-		# Nuts. Start with a fresh columbia profile
-		columbia_profile = zope.annotation.factory(ColumbiaBusinessUserProfile, key=columbia_profile_key)(context)
-		# Do we need to migrate anything?
-		for old_key in user_profile.EMAIL_REQUIRED_USER_PROFILE_KEY, user_profile.COMPLETE_USER_PROFILE_KEY:
-			old_prof = annotations.get( old_key )
-			if old_prof is not None:
-				old_prof._p_activate() # because we access the dict directly
-				old_data = old_prof.__dict__
-				for k, v in old_data.items():
-					if not k.startswith( '_p' ) and not k.startswith( '_v' ) and not k in ('__parent__', '__name__'):
-						columbia_profile.__dict__[k] = v
-				columbia_profile._p_changed = True
-				break
-		return columbia_profile
 
 ####
 # Make sure we load views from any registered site.
