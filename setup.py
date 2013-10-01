@@ -146,6 +146,8 @@ setup(
 		'nti.app.sites.litworld',
 		'nti.app.sites.prmia',
 		'nti.app.sites.law',
+		'nti.app.sites.rwanda',
+		'nti.app.sites.columbia',
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
