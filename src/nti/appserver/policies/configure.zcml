@@ -52,14 +52,11 @@
 	<configure zcml:condition="installed nti.app.sites.mathcounts">
 		<include package="nti.app.sites.mathcounts" />
 	</configure>
-
-	<include package="." file="configure_site_policy_alpha.zcml" />
-	<include package="." file="configure_site_policy_collegiate.zcml" />
+	<configure zcml:condition="not-installed nti.app.sites.alpha">
+		<include package="." file="configure_site_policy_alpha.zcml" />
+	</configure>
 	<include package="." file="configure_site_policy_columbia.zcml" />
 	<include package="." file="configure_site_policy_demo.zcml" />
-	<include package="." file="configure_site_policy_fintimes.zcml" />
-	<include package="." file="configure_site_policy_fintech.zcml" />
-	<include package="." file="configure_site_policy_gloriamundi.zcml" />
 	<include package="." file="configure_site_policy_law.zcml" />
 	<include package="." file="configure_site_policy_litworld.zcml" />
 
