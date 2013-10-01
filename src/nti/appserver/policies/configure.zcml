@@ -67,6 +67,10 @@
 	<configure zcml:condition="not-installed nti.app.sites.rwanda">
 		<include package="." file="configure_site_policy_rwanda.zcml" />
 	</configure>
+	<configure zcml:condition="not-installed nti.app.sites.columbia">
+		<include package="." file="configure_site_policy_columbia.zcml" />
+	</configure>
+
 	<!--
 		This is moving to nti.app.products.ou from its previous home
 		in egg nti.clients, package nti.integration.ou. The new
@@ -100,7 +104,9 @@
 		<configure zcml:condition="installed nti.app.sites.rwanda">
 			<include package="nti.app.sites.rwanda" />
 		</configure>
-
+		<configure zcml:condition="installed nti.app.sites.columbia">
+			<include package="nti.app.sites.columbia" />
+		</configure>
 	</configure>
 
 </configure>
