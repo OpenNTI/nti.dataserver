@@ -9,6 +9,10 @@ file:../lib/pywikipedia/#egg=pywikipedia
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.client_preferences/trunk#egg=nti.app.client_preferences
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.mathcounts/trunk#egg=nti.app.sites.mathcounts
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.alpha/trunk#egg=nti.app.sites.alpha
+-e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.demo/trunk#egg=nti.app.sites.demo
+-e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.litworld/trunk#egg=nti.app.sites.litworld
+-e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.prmia/trunk#egg=nti.app.sites.prmia
+-e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.sites.law/trunk#egg=nti.app.sites.law
 
 # Also temporary, going away with buildout
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.testing/trunk#egg=nti.testing
