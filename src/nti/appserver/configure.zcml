@@ -351,7 +351,9 @@
 			 provides=".pyramid_renderers.ICatchComponentAction" />
 
 	<!-- Pref setup. Note: This will be handled by buildout. -->
-	<include package="nti.app.client_preferences"
-			 zcml:condition="installed nti.app.client_preferences" />
+	<configure zcml:condition="not-have in-buildout">
+		<include package="nti.app.client_preferences"
+				 zcml:condition="installed nti.app.client_preferences" />
+	</configure>
 
 </configure>
