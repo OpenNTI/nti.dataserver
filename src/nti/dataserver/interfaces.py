@@ -625,6 +625,51 @@ class FollowerAddedEvent(interface.interfaces.ObjectEvent):
 		super(FollowerAddedEvent,self).__init__( entity )
 		self.followed_by = followed_by
 
+class IStopFollowingEvent(interface.interfaces.IObjectEvent):
+	"""
+	Fired when an entity stop following another entity.
+	The ``object`` is the entity that is no longer follows the other entity.
+	"""
+	object = Object(IEntity, title="The entity not longer following the other entity")
+	not_following = Object(IEntity, title="The entity that is no longer being followed by the object.")
+
+@interface.implementer(IStopFollowingEvent)
+class StopFollowingEvent(interface.interfaces.ObjectEvent):
+
+	def __init__(self, entity, not_following):
+		super(StopFollowingEvent, self).__init__(entity)
+		self.not_following = not_following
+
+class IStartDynamicMembershipEvent(interface.interfaces.IObjectEvent):
+	"""
+	Fired when an dynamic membershis (i.e. join a community is recorded)
+	The ``object`` is the entity that is is recording the membership.
+	"""
+	object = Object(IEntity, title="The entity joining the dynamic target")
+	target = Object(IDynamicSharingTarget, title="The dynamic target to join")
+
+@interface.implementer(IStartDynamicMembershipEvent)
+class StartDynamicMembershipEvent(interface.interfaces.ObjectEvent):
+
+	def __init__(self, entity, target):
+		super(StartDynamicMembershipEvent, self).__init__(entity)
+		self.target = target
+
+class IStopDynamicMembershipEvent(interface.interfaces.IObjectEvent):
+	"""
+	Fired when an dynamic membershis (i.e. unjoin a community) is removed
+	The ``object`` is the entity that is is leaving the membership.
+	"""
+	object = Object(IEntity, title="The entity unjoining the dynamic target")
+	target = Object(IDynamicSharingTarget, title="The dynamic target to be leaving")
+
+@interface.implementer(IStopDynamicMembershipEvent)
+class StopDynamicMembershipEvent(interface.interfaces.ObjectEvent):
+
+	def __init__(self, entity, target):
+		super(StopDynamicMembershipEvent, self).__init__(entity)
+		self.target = target
+
 class IMissingUser(IMissingEntity):
 	"""
 	A proxy object for a missing user.
