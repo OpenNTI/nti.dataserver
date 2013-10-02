@@ -274,7 +274,7 @@ setup(
 		 # statsd server implementation, pure python. probably easier than setting up node. Might want to get it from https://github.com/sivy/py-statsd
 		 # Consider also https://github.com/phensley/gstatsd
 		'pystatsd >= 0.1.10',
-		'pytz >= 2013.6',
+		'pytz >= 2013.7',
 		# RDF and embedded RDFa parsing.
 		'rdflib >= 4.0.1',
 		# Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
