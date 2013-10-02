@@ -46,6 +46,7 @@ Deployment and Setup
 	relstorage-and-rds
 	content-in-cdn
 	passenger
+	buildout
 
 The Application: Server and Setup
 =================================
