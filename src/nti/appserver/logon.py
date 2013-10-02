@@ -192,7 +192,7 @@ def _links_for_unauthenticated_users( request ):
 							   rel=REL_RESET_PASSCODE )
 
 		links = [create, preflight, forgot_username, forgot_passcode, reset_passcode]
-		
+
 		for provider in component.subscribers( (remote_user,request), app_interfaces.IUnauthenticatedUserLinkProvider ):
 			links.extend( provider.get_links() )
 

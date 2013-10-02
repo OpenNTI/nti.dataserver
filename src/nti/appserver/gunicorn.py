@@ -314,9 +314,12 @@ class _ServerFactory(object):
 				try:
 					uid = unauthenticated_userid( prequest )
 					cache = True
-				except LookupError: # pragma: no cover
+				except Exception: # pragma: no cover
 					# In some cases, pyramid tries to turn this into an authenticated
 					# user id, and if it's too early, we won't be able to use the dataserver
+					# This can also be a problem if there are broken objects in the
+					# database
+					import traceback; traceback.print_exc() # Temp for Utz
 					uid = prequest.remote_user
 
 				result = "%s:%s" % (prequest.path, uid or '' )

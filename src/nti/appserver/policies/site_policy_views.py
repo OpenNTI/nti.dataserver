@@ -141,7 +141,7 @@ def site_css_view(request):
 	we will return responses within the directory enclosing that css file.
 	"""
 
-	return response_for_site_resource_with_marker( ISiteCSSMarker, request, 'site.css', b'text/css' )
+	return _response_for_site_resource_with_marker( ISiteCSSMarker, request, 'site.css', b'text/css' )
 
 
 @view_config(route_name="logon.strings_js",
@@ -161,7 +161,7 @@ def webapp_strings_view(request):
 	assert request.environ['PATH_INFO'].endswith( 'site.js' )
 	request.environ['PATH_INFO'] = request.environ['PATH_INFO'][:-7] + 'strings.js'
 
-	return response_for_site_resource_with_marker( ISiteStringsMarker,
+	return _response_for_site_resource_with_marker( ISiteStringsMarker,
 												   request,
 												   'strings.js',
 												   b'application/javascript')
