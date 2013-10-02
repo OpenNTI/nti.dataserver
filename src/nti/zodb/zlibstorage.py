@@ -62,8 +62,6 @@ class ZlibStorageClientStorageURIResolver(resolvers.ClientStorageURIResolver):
 class ZlibStorageFileStorageURIResolver(resolvers.FileStorageURIResolver):
 
 	def __call__(self, uri):
-		from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
-
 		from zc.zlibstorage import ZlibStorage
 
 		# It expect to find 'file' so make that happen
