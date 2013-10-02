@@ -159,7 +159,7 @@ setup(
 		# is the version that Pillow forked from in 2010 as version 1.0. So
 		# Pillow is currently way ahead of PIL. Pillow 2 is Python 3 compatible (and partly pypy)
 		# includes transparent png support, and is much cleaned up, otherwise api compatible with pillow 1/PIL 1
-		'Pillow >= 2.1.0',
+		'Pillow >= 2.2.1',
 		'RestrictedPython >= 3.6.0',
 		'ZConfig >= 3.0.3',	 # 3.0.3 reqd for pypy/python3 support. requires zodb3 3.11.0a3+
 		 # NOTE: ZODB has a new release, 4.0.0b2 (Notice it's not ZODB3 anymore, so
