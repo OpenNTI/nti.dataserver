@@ -59,11 +59,30 @@ class ZlibStorageClientStorageURIResolver(resolvers.ClientStorageURIResolver):
 
 		return key, args, storage_kw, zlibfactory
 
+class ZlibStorageFileStorageURIResolver(resolvers.FileStorageURIResolver):
+
+	def __call__(self, uri):
+		from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
+
+		from zc.zlibstorage import ZlibStorage
+
+		# It expect to find 'file' so make that happen
+		uri = uri.replace( b'zlibfile://', b'file://' )
+		key, args, storage_kw, _factory = super(ZlibStorageFileStorageURIResolver,self).__call__(uri)
+		def zlibfactory():
+			db = _factory()
+			db.storage = ZlibStorage( db.storage )
+			return db
+
+		return key, args, storage_kw, zlibfactory
+
+
 def install_zlib_client_resolver():
 	"""
 	Makes it possible for :func:`repoze.zodbconn.uri.db_from_uri` to connect
 	to ZEO servers that are using zlib storage, through providing support for the
-	use of the ``zlibzeo`` URI scheme.
+	use of the ``zlibzeo`` URI scheme, and likewise for zlibfile://
 	"""
 	# The alternative to all this is to use a ZConfig file and ZConfig URI.
 	resolvers.RESOLVERS['zlibzeo'] = ZlibStorageClientStorageURIResolver()
+	resolvers.RESOLVERS['zlibfile'] = ZlibStorageFileStorageURIResolver()
