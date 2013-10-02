@@ -491,8 +491,9 @@ def _configure_database( env, uris ):
 	# Now, simply broadcasting the DatabaseOpenedWithRoot option
 	# will trigger the installers from zope.generations
 	notify(DatabaseOpenedWithRoot(db))
+	db.close()
 
-def temp_get_config( root, demo=False ):
+def temp_get_config( root, demo=False, uri_name='zeo_uris.ini' ):
 	if not root:
 		return None
 
@@ -501,13 +502,18 @@ def temp_get_config( root, demo=False ):
 	pfx = 'demo_' if demo else ''
 
 	env.zeo_conf = env.conf_file( pfx + 'zeo_conf.xml' )
-	env.zeo_client_conf = env.conf_file( pfx + 'zeo_uris.ini' )
+	env.zeo_client_conf = env.conf_file( pfx + uri_name )
 	env.zeo_launched = True
 	ini = ConfigParser.SafeConfigParser()
 	ini.read( env.zeo_client_conf )
+	env._ini = ini
 
 	env.connect_databases = _make_connect_databases( env, root=root, ini=ini )
 	return env
+
+def temp_configure_database( root, uri_name='zodb_file_uris.ini' ):
+	env = temp_get_config( root, uri_name=uri_name )
+	_configure_database( env, env._ini.get('ZODB', 'uris') )
 
 def _make_connect_databases(env, ini=None, root=None):
 	ini = {} if ini is None else ini
