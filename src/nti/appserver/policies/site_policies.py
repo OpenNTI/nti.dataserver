@@ -415,7 +415,7 @@ class GenericSitePolicyEventListener(object):
 	#: ``templates`` directory in the package this object
 	#: is located in. Otherwise, it can be a complete spec
 	#: such as "the.package:other_dir/foobar"
-	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created'
+	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'nti.appserver:templates/new_user_created'
 	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to NextThought")
 
 	#: If defined, this will be send in the ``nti.landing_page``
