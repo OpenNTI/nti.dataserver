@@ -21,8 +21,8 @@ from zope import component
 from zope.dottedname import resolve as dottedname
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.tests import ConfiguringTestBase as _BaseConfiguringTestBase
-from nti.tests import SharedConfiguringTestBase as _BaseSharedConfiguringTestBase
+from nti.testing.base import ConfiguringTestBase as _BaseConfiguringTestBase
+from nti.testing.base import SharedConfiguringTestBase as _BaseSharedConfiguringTestBase
 
 from . import mock_redis
 

@@ -63,8 +63,9 @@ from . import sites
 import zope.deferredimport
 zope.deferredimport.initialize()
 zope.deferredimport.deprecatedFrom(
-	"Unbreak mathcounts stuff",
-	"nti.appserver.policies.interfaces",
+	"Code should not access this directly; move your tests to the mathcounts site package."
+	" The only valid use is existing ZODB objects",
+	"nti.app.sites.mathcounts.interfaces",
 	"IMathcountsUser",
 	"IMathcountsCoppaUserWithoutAgreement",
 	"IMathcountsCoppaUserWithAgreement",
@@ -723,7 +724,8 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 # Profiles for MC
 
 zope.deferredimport.deprecatedFrom(
-	"Moved",
+	"Code should not access this directly; move your tests to the mathcounts site package."
+	" The only valid use is existing ZODB objects",
 	'nti.app.sites.mathcounts.profile',
 	"MathcountsCoppaUserWithoutAgreementUserProfile",
 	"MathcountsCoppaUserWithAgreementUserProfile" )
@@ -836,12 +838,15 @@ class OUTestSitePolicyEventListener(OUSitePolicyEventListener):
 
 # BWC import for objects in the database
 zope.deferredimport.deprecatedFrom(
-	"Moved",
+	"Code should not access this directly; move your tests to the columbia site package."
+	" The only valid use is existing ZODB objects",
+
 	"nti.app.sites.columbia.interfaces",
 	"IColumbiaBusinessUserProfile" )
 
 zope.deferredimport.deprecatedFrom(
-	"Moved",
+	"Code should not access this directly; move your tests to the columbia site package."
+	" The only valid use is existing ZODB objects",
 	"nti.app.sites.columbia.profile",
 	"ColumbiaBusinessUserProfile" )
 
