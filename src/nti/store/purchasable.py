@@ -5,7 +5,7 @@ Defines purchasable object and operations on them
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import six
@@ -18,8 +18,6 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from zope.componentvocabulary.vocabulary import UtilityNames
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
-
-from nti.contentmanagement import content_bundle
 
 from nti.dataserver.users import User
 from nti.dataserver import authorization
@@ -34,9 +32,9 @@ from nti.ntiids import interfaces as nid_interfaces
 from nti.utils.schema import AdaptingFieldProperty
 from nti.utils.schema import createDirectFieldProperties
 
-from .utils import to_frozenset
+from . import utils
+from . import content_bundle
 from . import interfaces as store_interfaces
-from .utils import MetaStoreObject, to_collection
 
 @interface.provider(sch_interfaces.IVocabularyFactory)  # Provider or implementer?
 class PurchasableTokenVocabulary(object, UtilityNames):
@@ -55,7 +53,7 @@ class PurchasableNameVocabulary(PurchasableUtilityVocabulary):
 					   zmime_interfaces.IContentTypeAware)
 class Purchasable(content_bundle.ContentBundle):
 
-	__metaclass__ = MetaStoreObject
+	__metaclass__ = utils.MetaStoreObject
 
 	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPurchasable)
@@ -85,7 +83,7 @@ def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=No
 					   discountable=False, bulk_purchase=True):
 	fee = float(fee) if fee is not None else None
 	amount = float(amount) if amount is not None else amount
-	items = to_frozenset(items) if items else frozenset((ntiid,))
+	items = utils.to_frozenset(items) if items else frozenset((ntiid,))
 	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Author=author, Items=items,
 						 Description=description, Amount=amount, Currency=currency, Fee=fee,
 						 License=license_, Discountable=discountable, BulkPurchase=bulk_purchase,
@@ -156,7 +154,7 @@ def get_content_items(purchased_items, registry=component):
 	return the nttids of the library items that were purchased
 	"""
 	if isinstance(purchased_items, six.string_types):
-		purchased_items = to_collection(purchased_items)
+		purchased_items = utils.to_collection(purchased_items)
 
 	result = set()
 	util = registry.getUtility(store_interfaces.IPurchasableStore)
