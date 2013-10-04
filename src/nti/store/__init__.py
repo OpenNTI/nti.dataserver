@@ -9,7 +9,7 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 import zope.i18nmessageid
-MessageFactory = zope.i18nmessageid.MessageFactory(__name__)
+MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
 from zope import interface
 
