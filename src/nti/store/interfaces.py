@@ -16,7 +16,7 @@ from zope.interface.interfaces import ObjectEvent, IObjectEvent
 
 from dolmen.builtins import IIterable
 
-from nti.contentmanagement import interfaces as mgt_interfaces
+from nti.contentfragments.schema import HTMLContentFragment
 
 from nti.utils import schema as nti_schema
 
@@ -64,7 +64,14 @@ class IPurchasableStore(interface.Interface):
 		Return the number of items in this store
 		"""
 
-class IPurchasable(mgt_interfaces.IContentBundle):
+class IContentBundle(interface.Interface):
+	NTIID = nti_schema.ValidTextLine(title='Content bundle NTTID', required=True)
+	Title = nti_schema.ValidTextLine(title='Content bundle title', required=False)
+	Author = nti_schema.ValidTextLine(title='Content bundle author', required=False)
+	Description = HTMLContentFragment(title='Content bundle description', required=False, default='')
+	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Bundle items")
+
+class IPurchasable(IContentBundle):
 	Amount = schema.Float(title="Cost amount", required=True, min=0.0)
 	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)

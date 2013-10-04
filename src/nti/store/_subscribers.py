@@ -5,7 +5,7 @@ Store event subscribers
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -19,12 +19,11 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.appserver.invitations import interfaces as invite_interfaces
 
-from nti.contentmanagement import content_roles
-
 from . import invitations
 from . import purchasable
-from . import purchase_history
+from . import content_roles
 from . import purchase_attempt
+from . import purchase_history
 from . import interfaces as store_interfaces
 
 def _update_state(purchase, state):
