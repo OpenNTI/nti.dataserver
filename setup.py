@@ -128,11 +128,6 @@ setup(
 		# problems with buildout, so we need to disable tagging
 		# in setup.cfg
 		# 'setuptools_subversion >= 3.1'
-		# Babel and lingua need to be here so we get the
-		# correct distutils extensions, otherwise
-		# we can get a warning about 'unknown option message extractors'
-		'Babel',
-		'lingua'
 	],
 	install_requires=[
 		'nti.plasTeX',
@@ -459,11 +454,6 @@ setup(
 			'lingua >= 1.5',
 			]
 	},
-	message_extractors={ 'src': [
-		('**.py', 'lingua_python', None),
-		('**.pt', 'lingua_xml', None),
-		('**.zcml', 'lingua_zcml', None),
-		]},
 	dependency_links=[
 		'git+https://github.com/NextThought/nti.nose_traceback_info.git#egg=nti.nose_traceback_info',
 		'git+https://github.com/surfly/gevent.git@1.0rc3#egg=gevent-1.0dev', # tag is 1.0rc3, but setup.py says 1.0dev

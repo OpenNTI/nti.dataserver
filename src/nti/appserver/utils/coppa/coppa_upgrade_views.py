@@ -119,7 +119,7 @@ class RollbackCoppaUsers(_JsonBodyView):
 
 			if 	nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user) or \
 				nti_interfaces.ICoppaUserWithAgreementUpgraded.providedBy(user):
-				
+
 				profile = user_interfaces.IUserProfile(user)
 				birthdate = getattr(profile, 'birthdate', None)
 				birthdate = birthdate.isoformat() if birthdate is not None else None
@@ -139,13 +139,13 @@ class RollbackCoppaUsers(_JsonBodyView):
 					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
 					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
 					interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
-	
+
 				# remove birthday
 				setattr(profile, 'birthdate', None)
-	
+
 				# add link
 				flag_link_provider.add_link(user, 'coppa.upgraded.rollbacked')
-				
+
 				logger.info("User '%s' has been rollbacked" % username)
 
 		return {'Count':len(items), 'Items':items}
@@ -157,16 +157,22 @@ def _check_email(email, request, field):
 		exc_info = sys.exc_info()
 		_raise_error(request,
 					  hexc.HTTPUnprocessableEntity,
-					  { 'message': _("Please provide a valid %s." % field.replace('_', ' ')),
+					  { 'message': _("Please provide a valid ${field}.",
+									 mapping={'field': field} ),
 						'field': field,
 						'code': e.__class__.__name__ },
 					  exc_info[2])
 
+### XXX: FIXME: This is largely a duplicate of account creation. The
+# strings are even exactly copied from site_polices. Unify this and
+# avoid duplicating code. This is especially important because this is
+# legal policy being duplicated. (Is this even necessary? All of this
+# should either already be checked or be checked by the profile code.)
 def _validate_user_data(data, request):
 	try:
 		birthdate = dateutil.parser.parse(data['birthdate'])
 		birthdate = datetime.date(birthdate.year, birthdate.month, birthdate.day)
-	except Exception, e:
+	except Exception as e:
 		exc_info = sys.exc_info()
 		_raise_error(request,
 					  hexc.HTTPUnprocessableEntity,
@@ -227,7 +233,7 @@ def _validate_user_data(data, request):
 			 context=nti_interfaces.IUser,
 			 **_post_update_view_defaults)
 def upgrade_preflight_coppa_user_view(request):
-	
+
 	externalValue = obj_io.read_body_as_external_object(request)
 
 	placeholder_data = {'Username': request.context.username,

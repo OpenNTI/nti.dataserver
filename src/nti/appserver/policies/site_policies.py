@@ -59,14 +59,20 @@ from nti.utils.schema import InvalidValue
 from nti.utils.schema import find_most_derived_interface
 
 from . import sites
-from .interfaces import IMathcountsUser
+
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Unbreak mathcounts stuff",
+	"nti.appserver.policies.interfaces",
+	"IMathcountsUser",
+	"IMathcountsCoppaUserWithoutAgreement",
+	"IMathcountsCoppaUserWithAgreement",
+	"IMathcountsCoppaUserWithAgreementUpgraded",
+	"IMathcountsCoppaUserWithoutAgreementUserProfile",
+	"IMathcountsCoppaUserWithAgreementUserProfile")
+
 from .interfaces import ISitePolicyUserEventListener
-from .interfaces import IColumbiaBusinessUserProfile
-from .interfaces import IMathcountsCoppaUserWithAgreement
-from .interfaces import IMathcountsCoppaUserWithoutAgreement
-from .interfaces import IMathcountsCoppaUserWithAgreementUpgraded
-from .interfaces import IMathcountsCoppaUserWithAgreementUserProfile
-from .interfaces import IMathcountsCoppaUserWithoutAgreementUserProfile
 
 def get_possible_site_names(request=None, include_default=False):
 	"""
@@ -716,26 +722,11 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 
 # Profiles for MC
 
-# TODO: These need to move to the mathcounts site package.
-# But be careful for BWC.
-# XXX: Note: It appears we've lost all profile data on that site at least once
-# already
-@component.adapter(IMathcountsCoppaUserWithoutAgreement)
-@interface.implementer(IMathcountsCoppaUserWithoutAgreementUserProfile)
-class MathcountsCoppaUserWithoutAgreementUserProfile(user_profile.RestrictedUserProfileWithContactEmail):
-	pass
-
-@component.adapter(IMathcountsCoppaUserWithAgreement)
-@interface.implementer(IMathcountsCoppaUserWithAgreementUserProfile)
-class MathcountsCoppaUserWithAgreementUserProfile(user_profile.EmailRequiredUserProfile):
-	pass
-
-user_profile.add_profile_fields(IMathcountsCoppaUserWithoutAgreementUserProfile, MathcountsCoppaUserWithoutAgreementUserProfile)
-del MathcountsCoppaUserWithoutAgreementUserProfile.email  # But restore the behaviour from the super
-user_profile.add_profile_fields(IMathcountsCoppaUserWithAgreementUserProfile, MathcountsCoppaUserWithAgreementUserProfile)
-
-MathcountsCoppaUserWithoutAgreementUserProfileFactory = zope.annotation.factory(MathcountsCoppaUserWithoutAgreementUserProfile)
-MathcountsCoppaUserWithAgreementUserProfileFactory = zope.annotation.factory(MathcountsCoppaUserWithAgreementUserProfile)
+zope.deferredimport.deprecatedFrom(
+	"Moved",
+	'nti.app.sites.mathcounts.profile',
+	"MathcountsCoppaUserWithoutAgreementUserProfile",
+	"MathcountsCoppaUserWithAgreementUserProfile" )
 
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
@@ -843,21 +834,16 @@ class OUTestSitePolicyEventListener(OUSitePolicyEventListener):
 	COM_REALNAME = '*The University of Oklahoma*'
 
 
-###
-# Columbia site profiles.
-# These are somewhat special in that the users may already have an existing adult profile,
-# from a non-columbia site, and when asked for their new profile, we want to be able to provide
-# one with all the right data. In some ways, this is similar to upgrading a COPPA account.
-# NOTE: This is a one-time copy; if the user logs in to another site, they will see
-# their non-columbia profile data, which can be updated separately, which is weird.
-# (TODO: Is their anything weird with the user indexes that can happen with this?)
-###
+# BWC import for objects in the database
+zope.deferredimport.deprecatedFrom(
+	"Moved",
+	"nti.app.sites.columbia.interfaces",
+	"IColumbiaBusinessUserProfile" )
 
-try:
-	from nti.app.sites.columbia.interfaces import ColumbiaBusinessUserProfile
-except ImportError:
-	# BWC import for objects in the database
-	pass
+zope.deferredimport.deprecatedFrom(
+	"Moved",
+	"nti.app.sites.columbia.profile",
+	"ColumbiaBusinessUserProfile" )
 
 ####
 # Make sure we load views from any registered site.
