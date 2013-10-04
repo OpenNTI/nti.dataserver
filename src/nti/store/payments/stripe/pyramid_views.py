@@ -9,7 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import gevent
 import simplejson
 import transaction
 
@@ -20,12 +19,13 @@ from pyramid.security import authenticated_userid
 
 from nti.externalization.datastructures import LocatedExternalDict
 
-from nti.store import purchase_history
 from nti.store import InvalidPurchasable
-from nti.store import purchasable as source
-from nti.store.utils import raise_field_error
+from nti.store import NTIStoreException
 from nti.store import interfaces as store_interfaces
+from nti.store import purchasable as source
+from nti.store import purchase_history
 from nti.store.payments import is_valid_amount, is_valid_pve_int
+from nti.store.utils import raise_field_error
 
 from nti.utils.maps import CaseInsensitiveDict
 
@@ -193,8 +193,13 @@ class StripePaymentView(_PostStripeView):
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 		def process_purchase():
 			logger.info("Processing purchase %s", purchase_id)
-			manager.process_purchase(purchase_id=purchase_id, username=username, token=token,
-									 expected_amount=expected_amount, api_key=stripe_key.PrivateKey)
+			try:
+				manager.process_purchase(purchase_id=purchase_id, username=username, token=token,
+										 expected_amount=expected_amount, api_key=stripe_key.PrivateKey)
+			except NTIStoreException:
+				# TODO: How should this actually be handled?
+				logger.exception("Failed to process purchase %s", purchase_id)
+
 		transaction.get().addAfterCommitHook(lambda success: success and request.nti_gevent_spawn(process_purchase))
 
 		# return
