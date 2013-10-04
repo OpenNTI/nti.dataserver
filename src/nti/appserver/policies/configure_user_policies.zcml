@@ -19,7 +19,7 @@
 	<subscriber handler=".user_policies.send_consent_request_on_new_coppa_account" />
 	<subscriber handler=".user_policies.send_consent_request_when_contact_email_changes" />
 	<subscriber handler=".user_policies.send_consent_ack_email" />
-	
+
 	<!--
 	Default to "sending" new object emails in dev mode.
 	These will actually just get queued to disk in the usual case.
@@ -51,36 +51,6 @@
 			 provides="nti.dataserver.users.interfaces.IEmailRequiredUserProfile"
 			 for="nti.dataserver.interfaces.ICoppaUserWithAgreement" />
 
-	<adapter factory=".site_policies.MathcountsCoppaUserWithoutAgreementUserProfileFactory"
-			 provides=".site_policies.IMathcountsCoppaUserWithoutAgreementUserProfile"
-			 for=".site_policies.IMathcountsCoppaUserWithoutAgreement" />
-
-	<adapter factory=".site_policies.MathcountsCoppaUserWithAgreementUserProfileFactory"
-			 provides=".site_policies.IMathcountsCoppaUserWithAgreementUserProfile"
-			 for=".site_policies.IMathcountsCoppaUserWithAgreement" />
-
-	<!--
-		 And apparently we've changed our minds and feel that even
-		 teachers should not be able to use images.
-		 Too bad for them.
-		 NOTE: This is wrong in several ways, chiefly that the
-		 presumed requirement is now site-based, not just user based,
-		 and we cannot express that, so this is definitely a horrible
-		 hack.
-		 (TODO: We should be able to move this to
-		 configure_mathcounts.zcml now)
-	-->
-	<adapter
-		factory="nti.appserver._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
-		for=".interfaces.IMathcountsCoppaUserWithAgreement" />
-
-	<adapter
-		factory="nti.appserver._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
-		for=".interfaces.IMathcountsCoppaUserWithoutAgreement" />
-
-	<adapter
-		factory="nti.appserver._creatable_mime_object_vocabulary._ImageAndRedactionRestrictedContentObjectFilter"
-		for=".interfaces.IMathcountsUser" />
 
 	<!-- Privacy links as needed -->
 	<link:userLink named=".user_policies.REL_CHILDRENS_PRIVACY_PAGE"

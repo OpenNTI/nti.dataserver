@@ -2,7 +2,7 @@ import zope.deferredimport
 zope.deferredimport.initialize()
 zope.deferredimport.deprecatedFrom(
 	"Unbreak mathcounts stuff",
-	"nti.appserver.policies.interfaces",
+	"nti.app.sites.mathcounts.interfaces",
 	"IMathcountsUser",
 	"IMathcountsCoppaUserWithoutAgreement",
 	"IMathcountsCoppaUserWithAgreement",
