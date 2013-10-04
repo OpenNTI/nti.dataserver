@@ -186,6 +186,8 @@ setup(
 		# As of 2010-09-15, PyMySQL at github/petehunt is not being maintained,
 		# but the original it was forked from, at github/lecram seems to be; both
 		# have commits not in the released 0.5 that we need.
+		# As of 2013-10-04 it looks like releases are being made to PyPI again,
+		# and lecram is now maintaining the master copy at https://github.com/PyMySQL/PyMySQL/
 		# MySQL-python (aka MySQLdb) has been renamed to moist (https://github.com/farcepest/moist)
 		'umysql == 2.61',
 		'umysqldb >= 1.0.2',
@@ -459,7 +461,6 @@ setup(
 		'git+https://github.com/surfly/gevent.git@1.0rc3#egg=gevent-1.0dev', # tag is 1.0rc3, but setup.py says 1.0dev
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
-		'git+https://github.com/lecram/PyMySQL.git#egg=PyMySQL-0.5', # no tag for this sadly
 		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
 	],
 	packages=find_packages('src'),
