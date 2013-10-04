@@ -4,7 +4,7 @@ Search pyramid views.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -17,14 +17,13 @@ from zope.location import locate
 import pyramid.httpexceptions as hexc
 from pyramid.security import authenticated_userid
 
-from nti.contentmanagement import get_collection_root_ntiid as get_collection
-
 from . import constants
 from .common import sort_search_types
 from .interfaces import IIndexManager
 from ._search_query import QueryObject
 from .common import get_type_from_mimetype
 from ._content_utils import get_content_translation_table
+from ._content_utils import get_collection_root_ntiid as get_collection
 
 class BaseView(object):
 

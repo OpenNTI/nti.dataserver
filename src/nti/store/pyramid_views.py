@@ -5,7 +5,7 @@ Store pyramid views.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -27,8 +27,6 @@ from zope.annotation import IAnnotations
 
 from pyramid.security import authenticated_userid
 
-from nti.contentmanagement import content_roles
-
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -38,8 +36,9 @@ from nti.utils.maps import CaseInsensitiveDict
 
 from . import priceable
 from . import enrollment
-from . import purchasable
 from . import invitations
+from . import purchasable
+from . import content_roles
 from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces

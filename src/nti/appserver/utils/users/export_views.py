@@ -5,7 +5,7 @@ User export views.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -31,7 +31,7 @@ from nti.appserver.utils import is_true, _JsonBodyView
 
 from nti.chatserver import interfaces as chat_interfaces
 
-from nti.contentmanagement import get_collection_root
+from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
@@ -362,6 +362,11 @@ class DeleteObjectObjects(_JsonBodyView):
 		return counter_map
 
 exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog')
+
+def get_collection_root(ntiid, library=None, registry=component):
+	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary) if library is None else library
+	paths = library.pathToNTIID(ntiid) if library else None
+	return paths[0] if paths else None
 
 def _check_users_containers(usernames=()):
 	if usernames:
