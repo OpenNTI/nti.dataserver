@@ -4,7 +4,7 @@ Search content utilities.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import six
@@ -14,6 +14,8 @@ from zope import component
 from zope import interface
 
 from dolmen.builtins import IDict
+
+from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.contentprocessing import split_content
 from nti.contentprocessing import get_content_translation_table
@@ -38,6 +40,24 @@ from .constants import (text_, body_, selectedText_, replacementContent_, redact
 					 	highlight_, note_, post_, tags_, messageinfo_, redaction_, canvas_,
 					 	canvastextshape_, references_, title_, inReplyTo_, recipients_, channel_,
 					 	flattenedSharingTargetNames_)
+
+def get_ntiid_path(ntiid, library=None, registry=component):
+	result = ()
+	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary) if library is None else library
+	if library and ntiid:
+		paths = library.pathToNTIID(ntiid)
+		result = tuple([p.ntiid for p in paths]) if paths else ()
+	return result
+
+def get_collection_root(ntiid, library=None, registry=component):
+	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary) if library is None else library
+	paths = library.pathToNTIID(ntiid) if library else None
+	return paths[0] if paths else None
+
+def get_collection_root_ntiid(ntiid, library=None, registry=component):
+	croot = get_collection_root(ntiid, library, registry)
+	result = croot.ntiid.lower() if croot else None
+	return result
 
 def get_content(text=None, language='en'):
 	result = ()

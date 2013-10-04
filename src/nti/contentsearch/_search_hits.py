@@ -4,7 +4,7 @@ Defines adaptes for search hits and hit comparators.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import six
@@ -16,22 +16,21 @@ from zope import interface
 
 import repoze.lru
 
-from nti.contentfragments import interfaces as frg_interfaces
+from nti.chatserver import interfaces as chat_interfaces
 
-from nti.contentmanagement import get_ntiid_path
+from nti.contentfragments import interfaces as frg_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
-from nti.chatserver import interfaces as chat_interfaces
-
 from nti.mimetype import mimetype
-
-from . import interfaces as search_interfaces
 
 from .common import get_type_name
 from .common import get_sort_order
+from ._content_utils import get_ntiid_path
+from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
+
 from .constants import (title_)
 from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, SNIPPET, HIT, ID, CONTENT, SCORE, OID,
 						POST, MIME_TYPE, VIDEO_ID, BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT, VIDEO_TRANSCRIPT_MIME_TYPE,
