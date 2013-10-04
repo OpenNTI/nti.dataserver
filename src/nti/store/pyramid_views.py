@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from . import MessageFactory as _
+
 import six
 import time
 import gevent
@@ -170,11 +172,11 @@ class RedeemPurchaseCodeView(_PostView):
 		values = self.readInput()
 		purchasable_id = values.get('purchasableID')
 		if not purchasable_id:
-			raise_field_error(request, "purchasableID", "Failed to provide a purchasable ID")
+			raise_field_error(request, "purchasableID", _("Failed to provide a purchasable ID"))
 
 		invitation_code = values.get('invitationCode', values.get('invitation_code'))
 		if not invitation_code:
-			raise_field_error(request, "invitation_code", "Failed to provide a invitation code")
+			raise_field_error(request, "invitation_code", _("Failed to provide a invitation code"))
 
 		purchase = invitations.get_purchase_by_code(invitation_code)
 		if purchase is None or not store_interfaces.IPurchaseAttempt.providedBy(purchase):
@@ -184,16 +186,16 @@ class RedeemPurchaseCodeView(_PostView):
 			raise hexc.HTTPUnprocessableEntity(detail='Not redeemable purchase')
 
 		if purchasable_id not in purchase.Items:
-			raise_field_error(request, "invitation_code", "The invitation code is not for this purchasable")
+			raise_field_error(request, "invitation_code", _("The invitation code is not for this purchasable"))
 
 		username = authenticated_userid(request)
 		try:
 			invite = invitations.create_store_purchase_invitation(purchase, invitation_code)
 			invite.accept(username)
 		except invitations.InvitationAlreadyAccepted:
-			raise_field_error(request, "invitation_code", "The invitation code has already been accepted")
+			raise_field_error(request, "invitation_code", _("The invitation code has already been accepted"))
 		except invitations.InvitationCapacityExceeded:
-			raise_field_error(request, "invitation_code", "There are no remaining invitations for this code")
+			raise_field_error(request, "invitation_code", _("There are no remaining invitations for this code"))
 
 		return hexc.HTTPNoContent()
 
@@ -212,14 +214,14 @@ class PricePurchasableView(_PostView):
 		# check quantity
 		quantity = values.get('quantity', 1)
 		if not is_valid_pve_int(quantity):
-			raise_field_error(self.request, 'quantity', 'invalid quantity')
+			raise_field_error(self.request, 'quantity', _('invalid quantity'))
 		quantity = int(quantity)
 
 		try:
 			result = self.price(purchasable_id, quantity)
 			return result
 		except InvalidPurchasable:
-			raise_field_error(self.request, 'purchasableID', 'purchasable not found')
+			raise_field_error(self.request, 'purchasableID', _('purchasable not found'))
 
 	def __call__(self):
 		result = self.price_purchasable()
@@ -270,7 +272,7 @@ class _BasePostPurchaseAttemptView(_PostView):
 		values = self.readInput()
 		purchase_id = values.get('purchaseID')
 		if not purchase_id:
-			raise_field_error(self.request, "purchaseID", "Must specify a valid purchase attempt id")
+			raise_field_error(self.request, "purchaseID", _("Must specify a valid purchase attempt id"))
 
 		purchase = purchase_history.get_purchase_attempt(purchase_id)
 		if not purchase:
@@ -283,7 +285,7 @@ class RefundPurchaseAttemptView(_BasePostPurchaseAttemptView):
 	def __call__(self):
 		purchase = super(RefundPurchaseAttemptView, self).__call__()
 		if not purchase.has_succeeded():
-			raise_field_error(self.request, "purchaseID", "Must specify a successfully completed purchase attempt")
+			raise_field_error(self.request, "purchaseID", _("Must specify a successfully completed purchase attempt"))
 
 		notify(store_interfaces.PurchaseAttemptRefunded(purchase))
 		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
