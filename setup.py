@@ -190,7 +190,7 @@ setup(
 		'umysql == 2.61',
 		'umysqldb >= 1.0.2',
 		'RelStorage >= 1.5.1',
-		'PyMySQL >= 0.5',
+		'PyMySQL >= 0.6',
 		'python-memcached >= 1.53',	 # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
