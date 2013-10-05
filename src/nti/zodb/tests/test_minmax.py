@@ -6,7 +6,7 @@ from hamcrest import same_instance
 from hamcrest import has_property
 from hamcrest import has_key
 
-from nti.tests import validly_provides
+from nti.testing.matchers import validly_provides
 
 from nti.zodb import interfaces
 from nti.zodb.minmax import MergingCounter, NumericMinimum, NumericMaximum, ConstantZeroValue, NumericPropertyDefaultingToZero

@@ -13,18 +13,6 @@ from pyramid.testing import tearDown as ptearDown
 from nti.testing.base import ConfiguringTestBase as _ConfiguringTestBase
 from nti.testing.base import SharedConfiguringTestBase as _SharedConfiguringTestBase
 
-zope.deferredimport.deprecatedFrom(
-	"Import from nti.app.testing.request_response instead.",
-	"nti.app.testing.request_response",
-	"ByteHeadersDummyRequest",
-	)
-
-zope.deferredimport.deprecatedFrom(
-	"Import from nti.app.testing.testing instead.", # Subject to change
-	"nti.app.testing.testing",
-	"unicode_check_headers",
-	"monkey_patch_check_headers",
-	)
 import nti.deprecated # Increase warning verbosity
 assert nti.deprecated
 from nti.app.testing.request_response import DummyRequest
@@ -56,7 +44,7 @@ import pyramid.interfaces
 import zope.component as component
 
 from nti.dataserver.tests import mock_dataserver
-import nti.tests
+import nti.testing.base
 
 
 

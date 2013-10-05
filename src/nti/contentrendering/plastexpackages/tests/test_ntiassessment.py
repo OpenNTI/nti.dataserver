@@ -21,9 +21,9 @@ from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
 from nti.contentrendering.tests import simpleLatexDocumentText
 from nti.contentrendering.tests import RenderContext
 
-import nti.tests
+import nti.testing.base
 from nti.externalization.tests import externalizes
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 import nti.contentrendering
 import nti.assessment
@@ -35,8 +35,8 @@ def _simpleLatexDocument(maths):
 									bodies=maths )
 
 # Nose module-level setup and teardown
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentrendering,nti.assessment,nti.externalization) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.contentrendering,nti.assessment,nti.externalization) )
+tearDownModule = nti.testing.base.module_teardown
 
 def test_macros():
 	example = br"""

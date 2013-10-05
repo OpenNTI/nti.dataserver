@@ -19,7 +19,7 @@ from hamcrest import assert_that
 from hamcrest import contains_string
 
 
-import nti.tests
+import nti.testing.base
 
 from . import SharedConfiguringTestBase
 from .._email_utils import create_simple_html_text_email

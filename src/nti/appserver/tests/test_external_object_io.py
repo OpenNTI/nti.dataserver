@@ -25,14 +25,14 @@ from hamcrest import contains
 from hamcrest import has_entries
 from nose.tools import assert_raises
 
-import nti.tests
+import nti.testing.base
 from . import DummyRequest
 
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver import httpexceptions as hexc
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.appserver',) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.appserver',) )
+tearDownModule = nti.testing.base.module_teardown
 
 from nti.contentrange import contentrange
 from nti.dataserver import contenttypes

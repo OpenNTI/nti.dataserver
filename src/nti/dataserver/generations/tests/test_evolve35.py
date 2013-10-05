@@ -21,7 +21,7 @@ from nti.dataserver.generations.evolve35 import evolve
 from BTrees.OOBTree import OOTreeSet
 
 
-import nti.tests
+import nti.testing.base
 import nti.dataserver
 from nti.dataserver import users
 

@@ -9,7 +9,7 @@ from hamcrest import (assert_that, is_, none, starts_with,
 					  contains_string, ends_with, all_of, has_entries)
 from hamcrest import is_not as does_not
 
-from nti.tests import validly_provides as verifiably_provides
+from nti.testing.matchers import validly_provides as verifiably_provides
 
 from zope import interface
 from zope.event import notify

@@ -19,9 +19,9 @@ from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
 from nti.contentrendering.tests import simpleLatexDocumentText
 from nti.contentrendering.tests import RenderContext
 
-import nti.tests
+import nti.testing.base
 from nti.externalization.tests import externalizes
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 import nti.contentrendering
 from nti.contentrendering.plastexpackages import picins

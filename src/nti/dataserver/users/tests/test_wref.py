@@ -20,7 +20,7 @@ from hamcrest import none
 from hamcrest import has_property
 from hamcrest import has_entry
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase

@@ -9,8 +9,8 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that, is_, greater_than
 from nose.tools import assert_raises
 
-import nti.tests
-from nti.tests import is_true, is_false
+import nti.testing.base
+from nti.testing.matchers import is_true, is_false
 import nti.dataserver
 
 from nti.dataserver import dicts
@@ -21,8 +21,8 @@ from zope.container import contained
 
 
 # Nose module-level setup and teardown
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.dataserver,) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.dataserver,) )
+tearDownModule = nti.testing.base.module_teardown
 
 def test_lastModified_dict():
 

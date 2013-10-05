@@ -9,8 +9,8 @@ from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_length
 from unittest import TestCase
-from nti.tests import is_false
-from nti.tests import validly_provides, verifiably_provides
+from nti.testing.matchers import is_false
+from nti.testing.matchers import validly_provides, verifiably_provides
 from nti.externalization.tests import externalizes
 
 from zope import interface
@@ -41,8 +41,8 @@ from nti.assessment.question import QQuestion, QQuestionSet
 
 
 # nose module-level setup
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.assessment,zope.annotation) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.assessment,zope.annotation) )
+tearDownModule = nti.testing.base.module_teardown
 
 def _check_old_dublin_core( qaq ):
 	"we can read old dublin core metadata"

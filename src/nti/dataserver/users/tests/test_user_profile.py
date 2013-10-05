@@ -19,13 +19,13 @@ from hamcrest import has_entry
 
 from nose.tools import assert_raises
 
-import nti.tests
-from nti.tests import verifiably_provides
-from nti.tests import is_false
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides
+from nti.testing.matchers import is_false
 from nti.dataserver.tests import mock_dataserver
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver',) )
+tearDownModule = nti.testing.base.module_teardown
 
 from zope import interface
 from nti.dataserver import interfaces as nti_interfaces

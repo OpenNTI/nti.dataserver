@@ -6,9 +6,9 @@ $Id$
 from __future__ import print_function, unicode_literals
 
 
-import nti.tests
+import nti.testing.base
 
 import nti.contentrange
 
-class ConfiguringTestBase(nti.tests.SharedConfiguringTestBase):
+class ConfiguringTestBase(nti.testing.base.SharedConfiguringTestBase):
 	set_up_packages = (nti.contentrange,)

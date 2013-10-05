@@ -8,7 +8,7 @@ import os
 import sys
 import shutil
 
-import nti.tests
+import nti.testing.base
 import nti.contentrendering
 from nti.contentrendering import gslopinionexport
 
@@ -20,7 +20,7 @@ except ImportError:
 import pyquery
 import fudge
 
-class TestGSL(nti.tests.SharedConfiguringTestBase):
+class TestGSL(nti.testing.base.SharedConfiguringTestBase):
 	set_up_packages = (nti.contentrendering,)
 
 	def test_runthrough(self):

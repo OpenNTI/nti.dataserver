@@ -37,10 +37,10 @@ from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.activitystream_change import Change
 
-from nti.tests import provides
-from nti.tests import verifiably_provides
-from nti.tests import is_false
-from nti.tests import time_monotonically_increases
+from nti.testing.matchers import provides
+from nti.testing.matchers import verifiably_provides
+from nti.testing.matchers import is_false
+from nti.testing.time import time_monotonically_increases
 
 from nti.externalization.persistence import getPersistentState
 from nti.externalization.externalization import to_external_object

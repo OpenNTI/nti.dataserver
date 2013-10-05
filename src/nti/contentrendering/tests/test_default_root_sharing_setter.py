@@ -19,7 +19,7 @@ from hamcrest import not_none
 from . import ConfiguringTestBase
 from nti.contentrendering import RenderedBook
 from nti.contentrendering import default_root_sharing_setter
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 from nti.contentrendering import interfaces
 from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 

@@ -12,7 +12,7 @@ from nti.contentprocessing.tests import ConfiguringTestBase
 
 from hamcrest import (assert_that, is_not)
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 class TestNLTK(ConfiguringTestBase):
 

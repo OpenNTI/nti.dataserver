@@ -22,7 +22,7 @@ from nti.dataserver.generations.evolve25 import evolve
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas, CanvasUrlShape, NonpersistentCanvasUrlShape
 
-import nti.tests
+import nti.testing.base
 import nti.dataserver
 
 import nti.dataserver.tests.mock_dataserver

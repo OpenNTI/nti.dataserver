@@ -2,9 +2,9 @@
 from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, is_
-import nti.tests
+import nti.testing.base
 
-from nti.tests import validly_provides
+from nti.testing.matchers import validly_provides
 
 import nti.assessment
 
@@ -16,7 +16,7 @@ from nti.assessment._latexplastexconverter import factory
 
 import plasTeX
 
-class TestAssessment(nti.tests.SharedConfiguringTestBase):
+class TestAssessment(nti.testing.base.SharedConfiguringTestBase):
 	set_up_packages = (nti.assessment,)
 
 	def test_latex_factory(self):

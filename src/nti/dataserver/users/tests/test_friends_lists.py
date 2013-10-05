@@ -26,16 +26,16 @@ from hamcrest import is_in
 from hamcrest import is_not as does_not
 is_not = does_not
 from hamcrest import greater_than_or_equal_to
-import nti.tests
-from nti.tests import is_true, is_false
+import nti.testing.base
+from nti.testing.matchers import is_true, is_false
 
 from zope.component import eventtesting
 
 def setUpModule():
-	nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
+	nti.testing.base.module_setup( set_up_packages=('nti.dataserver',) )
 
 def tearDownModule():
-	nti.tests.module_teardown()
+	nti.testing.base.module_teardown()
 
 #from zope import interface
 #from nti.dataserver import interfaces as nti_interfaces

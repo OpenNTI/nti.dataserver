@@ -25,7 +25,7 @@ import unittest
 import datetime
 import time
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 import nti.ntiids.ntiids as ntiids
 from nti.ntiids import interfaces
 

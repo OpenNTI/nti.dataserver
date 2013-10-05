@@ -23,8 +23,8 @@ from hamcrest import contains
 from hamcrest import contains_inanyorder
 from hamcrest import has_property, has_properties
 
-import nti.tests
-from nti.tests import validly_provides
+import nti.testing.base
+from nti.testing.matchers import validly_provides
 import fudge
 
 from nti.contentprocessing import metadata_extractors, interfaces
@@ -34,8 +34,8 @@ from rdflib import Graph
 
 
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.contentprocessing',) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.contentprocessing',) )
+tearDownModule = nti.testing.base.module_teardown
 
 def test_metadata_provides():
 

@@ -31,7 +31,7 @@ from nti.appserver.tests import ITestMailDelivery
 from nti.appserver.tests.test_application import TestApp
 from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from nti.tests import validly_provides as verifiably_provides
+from nti.testing.matchers import validly_provides as verifiably_provides
 
 class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 

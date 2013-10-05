@@ -19,12 +19,12 @@ from nti.contentfragments import censor as frag_censor
 from nti.contentfragments import schema as frag_schema
 from nti.contentfragments import interfaces as frag_interfaces
 
-import nti.tests
+import nti.testing.base
 from hamcrest import (assert_that, is_, is_not)
 
 # nose module-level setup
-setUpModule = lambda: nti.tests.module_setup(set_up_packages=(nti.contentfragments, nti.contentprocessing))
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup(set_up_packages=(nti.contentfragments, nti.contentprocessing))
+tearDownModule = nti.testing.base.module_teardown
 
 def test_defaults():
 	scanner = component.getUtility(frag_interfaces.ICensoredContentScanner)

@@ -26,7 +26,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.ntiids import ntiids
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 from ..library_views import _ContentUnitPreferencesPutView, _ContentUnitPreferencesDecorator
 

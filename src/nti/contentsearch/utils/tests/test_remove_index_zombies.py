@@ -23,7 +23,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.contentsearch.tests import zanpakuto_commands
 
-from nti.tests import ConfiguringTestBase
+from nti.testing.base import ConfiguringTestBase
 
 from hamcrest import (is_, has_length, assert_that)
 

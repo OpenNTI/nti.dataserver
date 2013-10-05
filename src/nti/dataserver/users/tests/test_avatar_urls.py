@@ -17,11 +17,11 @@ from hamcrest import is_
 from hamcrest import has_item
 from hamcrest import greater_than_or_equal_to
 
-import nti.tests
-from nti.tests import verifiably_provides
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver',) )
+tearDownModule = nti.testing.base.module_teardown
 
 from zope import interface
 from zope.annotation import interfaces as an_interfaces

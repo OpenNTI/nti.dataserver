@@ -20,8 +20,8 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
 
-import nti.tests
-from nti.tests import verifiably_provides, validly_provides
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides, validly_provides
 
 from ..interfaces import INotificationPayload
 from ..payload import APNSPayload

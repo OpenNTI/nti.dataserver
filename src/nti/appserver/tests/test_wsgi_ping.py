@@ -19,12 +19,12 @@ logger = __import__('logging').getLogger(__name__)
 # from hamcrest import has_key
 # from hamcrest import has_entry
 
-# import nti.tests
+# import nti.testing.base
 
 from webtest import TestApp
 
 from nti.appserver import wsgi_ping
-from . import monkey_patch_check_headers
+from nti.app.testing.testing import monkey_patch_check_headers
 # Webtest.lint catches a Unicode status string, but not headers.
 # This makes sure it catches headers too
 monkey_patch_check_headers()

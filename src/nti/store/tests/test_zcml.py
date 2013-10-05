@@ -17,8 +17,8 @@ from nti.appserver.policies.sites import BASECOPPA
 
 from ..interfaces import IPurchasable
 
-import nti.tests
-from nti.tests import  verifiably_provides
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides
 
 from hamcrest import (assert_that, is_, none, has_property)
 
@@ -64,7 +64,7 @@ ZCML_STRING = HEAD_ZCML_STRING + """
 </configure>
 """
 
-class TestZcml(nti.tests.ConfiguringTestBase):
+class TestZcml(nti.testing.base.ConfiguringTestBase):
 
 	def test_site_registration_and_complex_description(self):
 

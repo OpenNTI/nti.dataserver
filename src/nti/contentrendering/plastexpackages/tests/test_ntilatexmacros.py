@@ -9,7 +9,7 @@ import unittest
 from nti.contentrendering.tests import simpleLatexDocumentText
 from nti.contentrendering.tests import RenderContext
 
-import nti.tests
+import nti.testing.base
 import fudge
 
 import nti.contentrendering
@@ -22,8 +22,8 @@ def _simpleLatexDocument(maths):
 									bodies=maths )
 
 # Nose module-level setup and teardown
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.contentrendering,nti.assessment,nti.externalization) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.contentrendering,nti.assessment,nti.externalization) )
+tearDownModule = nti.testing.base.module_teardown
 
 from zope import interface
 from nti.contentrendering import interfaces as cdr_interfaces

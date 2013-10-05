@@ -20,7 +20,7 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_property
 
-import nti.tests
+import nti.testing.base
 
 def test_patch():
 	import nti.monkey.weberror_filereporter_patch_on_import

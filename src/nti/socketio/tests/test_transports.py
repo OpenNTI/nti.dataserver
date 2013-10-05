@@ -17,7 +17,7 @@ from nti.appserver.tests import SharedConfiguringTestBase as ConfiguringTestBase
 from nti.dataserver.tests import mock_dataserver
 
 #from pyramid.testing import DummyRequest
-from nti.tests import ByteHeadersDummyRequest as DummyRequest
+from nti.app.testing.request_response import ByteHeadersDummyRequest as DummyRequest
 
 class WebSocket(object):
 	server = None

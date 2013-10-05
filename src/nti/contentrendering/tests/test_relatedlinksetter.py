@@ -10,10 +10,10 @@ from nti.contentrendering.contentchecks import mathjaxerror
 import os
 from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_
 
-import nti.tests
+import nti.testing.base
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.contentrendering',) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.contentrendering',) )
+tearDownModule = nti.testing.base.module_teardown
 
 class TestTransforms(TestCase):
 

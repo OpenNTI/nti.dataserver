@@ -21,7 +21,7 @@ from hamcrest import not_none
 from hamcrest import has_property
 
 
-from nti.tests import validly_provides as verifiably_provides
+from nti.testing.matchers import validly_provides as verifiably_provides
 
 
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase

@@ -13,8 +13,8 @@ from hamcrest import contains
 from hamcrest import greater_than
 from hamcrest import has_length
 from hamcrest import has_entry
-from nti.tests import verifiably_provides, SharedConfiguringTestBase
-from nti.tests import validly_provides
+from nti.testing.matchers import verifiably_provides, SharedConfiguringTestBase
+from nti.testing.matchers import validly_provides
 
 from nti.contentlibrary import interfaces, filesystem
 import nti.contentlibrary

@@ -22,8 +22,8 @@ from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_property
 from hamcrest import has_entry
-import nti.tests
-from nti.tests import  verifiably_provides
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides
 import fudge
 
 from zope import interface
@@ -78,7 +78,7 @@ BOTO_ZCML_STRING = HEAD_ZCML_STRING + """
 		</configure>
 		"""
 
-class TestZcml(nti.tests.ConfiguringTestBase):
+class TestZcml(nti.testing.base.ConfiguringTestBase):
 
 
 	def test_filesystem_site_registrations(self):

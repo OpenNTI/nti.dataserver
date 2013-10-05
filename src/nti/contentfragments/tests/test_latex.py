@@ -7,8 +7,8 @@ from __future__ import print_function, unicode_literals
 
 
 
-from nti.tests import SharedConfiguringTestBase
-from nti.tests import implements, verifiably_provides
+from nti.testing.base import SharedConfiguringTestBase
+from nti.testing.matchers import implements, verifiably_provides
 
 import nti.contentfragments
 from nti.contentfragments import interfaces

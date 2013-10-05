@@ -50,7 +50,7 @@ def test_mime_types():
 				 is_( ('application/json',None) ) )
 
 from zope import interface
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 class ITest(interface.Interface):
 	pass
 

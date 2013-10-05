@@ -5,7 +5,7 @@ import tempfile
 from nti.contentrendering import interfaces
 from nti.contentrendering import sectionvideoadder
 from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
-from nti.tests import provides
+from nti.testing.matchers import provides
 from nti.contentrendering.tests import ConfiguringTestBase
 
 from hamcrest import assert_that, is_, same_instance

@@ -24,7 +24,7 @@ import os
 
 from boto.sqs.message import RawMessage
 
-import nti.tests
+import nti.testing.base
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver import users

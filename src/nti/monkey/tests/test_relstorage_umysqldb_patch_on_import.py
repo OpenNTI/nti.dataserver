@@ -20,7 +20,7 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
 
-import nti.tests
+import nti.testing.base
 
 def test_timestamp_to_tid_patch():
 	import nti.monkey.relstorage_umysqldb_patch_on_import

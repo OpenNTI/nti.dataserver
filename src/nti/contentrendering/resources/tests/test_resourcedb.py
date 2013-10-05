@@ -23,7 +23,7 @@ from nti.contentrendering.tests import simpleLatexDocumentText, ConfiguringTestB
 from nti.contentrendering.resources import interfaces
 from nti.contentrendering.resources.converters import ImagerContentUnitRepresentationBatchConverter, AbstractLatexCompilerDriver, AbstractCompilingContentUnitRepresentationBatchConverter
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 from nti.contentrendering.resources.ResourceDB import ResourceDB
 

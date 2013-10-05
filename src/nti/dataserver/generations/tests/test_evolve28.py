@@ -12,7 +12,7 @@ from nti.dataserver.utils.example_database_initializer import ExampleDatabaseIni
 from nti.dataserver.generations.evolve28 import evolve
 
 
-import nti.tests
+import nti.testing.base
 import nti.dataserver
 from nti.dataserver import users
 from nti.dataserver.tests import mock_dataserver

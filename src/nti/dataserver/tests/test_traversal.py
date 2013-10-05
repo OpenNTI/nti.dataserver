@@ -15,10 +15,10 @@ from zope.location import interfaces as loc_interfaces
 
 from nti.dataserver import traversal
 
-import nti.tests
+import nti.testing.base
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.dataserver,) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.dataserver,) )
+tearDownModule = nti.testing.base.module_teardown
 
 
 def test_unicode_resource_path():

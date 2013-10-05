@@ -23,7 +23,7 @@ from hamcrest import has_length
 from hamcrest import has_entries
 
 
-from nti.tests import validly_provides as verifiably_provides
+from nti.testing.matchers import validly_provides as verifiably_provides
 
 
 

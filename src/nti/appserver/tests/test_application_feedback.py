@@ -22,7 +22,7 @@ from nti.appserver.policies import site_policies
 from nti.appserver.feedback_views import REL_SEND_FEEDBACK
 
 from nti.dataserver.tests import mock_dataserver
-from nti.tests import is_empty
+from nti.testing.matchers import is_empty
 
 from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 from . import ITestMailDelivery

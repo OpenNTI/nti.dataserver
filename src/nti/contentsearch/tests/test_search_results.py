@@ -15,7 +15,7 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.dataserver.contenttypes import Note
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 from nti.ntiids.ntiids import make_ntiid
 

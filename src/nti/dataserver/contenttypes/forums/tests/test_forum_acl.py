@@ -23,13 +23,13 @@ from ..ace import ForumACE
 from ..forum import ACLCommunityForum
 from ..acl import _ACLCommunityForumACLProvider
 
-import nti.tests
-from nti.tests import verifiably_provides, validly_provides
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides, validly_provides
 
 from hamcrest import (assert_that, has_length, has_entry, has_entries, instance_of, is_)
 
 def setUpModule():
-	nti.tests.module_setup(set_up_packages=(('subscribers.zcml', 'nti.intid'),
+	nti.testing.base.module_setup(set_up_packages=(('subscribers.zcml', 'nti.intid'),
 											 'nti.dataserver.contenttypes.forums',
 											 'nti.contentfragments',
 											 'zope.annotation',))
@@ -38,7 +38,7 @@ def setUpModule():
 	client = mock_redis.InMemoryMockRedis()
 	component.provideUtility(client)
 
-tearDownModule = nti.tests.module_teardown
+tearDownModule = nti.testing.base.module_teardown
 
 def test_acl_forum_interfaces():
 	forum = ACLCommunityForum()

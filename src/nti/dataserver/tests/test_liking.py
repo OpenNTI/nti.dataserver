@@ -21,7 +21,7 @@ from hamcrest import has_key
 from hamcrest import has_entry
 from nose.tools import assert_raises
 
-import nti.tests
+import nti.testing.base
 
 from nti.dataserver import liking
 

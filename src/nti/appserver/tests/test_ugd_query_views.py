@@ -50,7 +50,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
 import nti.dataserver.contenttypes
 from nti.dataserver.activitystream_change import Change
-from nti.tests import time_monotonically_increases
+from nti.testing.time import time_monotonically_increases
 from zope import interface
 from zope import component
 from zope.intid.interfaces import IIntIds
@@ -1142,7 +1142,7 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 		assert_that( no_res.json_body['Items'], has_length( 0 ) )
 		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
 
-from nti.tests import is_true, is_false
+from nti.testing.matchers import is_true, is_false
 from nti.appserver.ugd_query_views import _MimeFilter, _ChangeMimeFilter
 
 def _do_test_mime_filter_exclude_subclass_order(filter_factory, wrap=False):

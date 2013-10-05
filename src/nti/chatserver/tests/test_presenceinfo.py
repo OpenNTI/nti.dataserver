@@ -23,9 +23,9 @@ from hamcrest import has_item
 from hamcrest import has_entries
 from hamcrest import has_property
 
-import nti.tests
-from nti.tests import verifiably_provides
-from nti.tests import validly_provides
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides
+from nti.testing.matchers import validly_provides
 from nose.tools import assert_raises
 
 from zope.schema.interfaces import TooLong
@@ -36,8 +36,8 @@ from ..interfaces import IPresenceInfo
 from nti.externalization import internalization
 from nti.externalization.externalization import toExternalObject
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.chatserver','nti.mimetype','nti.contentfragments') )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.chatserver','nti.mimetype','nti.contentfragments') )
+tearDownModule = nti.testing.base.module_teardown
 
 def test_implements():
 

@@ -24,7 +24,7 @@ from hamcrest import has_property
 
 from nose.tools import assert_raises
 
-import nti.tests
+import nti.testing.base
 
 from nti.appserver import bulk_email_views
 import time

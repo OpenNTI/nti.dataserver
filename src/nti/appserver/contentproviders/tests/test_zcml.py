@@ -16,7 +16,7 @@ does_not = is_not
 from hamcrest import has_property
 from nose.tools import assert_raises
 
-import nti.tests
+import nti.testing.base
 
 from zope import component
 from zope.contentprovider.interfaces import IContentProvider
@@ -58,7 +58,7 @@ ZCML_STRING = """
 		</configure>
 		"""
 
-class TestZcml(nti.tests.ConfiguringTestBase):
+class TestZcml(nti.testing.base.ConfiguringTestBase):
 
 	def test_site_registrations(self):
 		"Can we add new registrations in a sub-site?"

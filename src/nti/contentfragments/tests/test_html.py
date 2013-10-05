@@ -13,11 +13,11 @@ import plistlib
 import nti.contentfragments
 from nti.contentfragments import interfaces as frg_interfaces
 
-import nti.tests
-from nti.tests import verifiably_provides
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides
 
-setUpModule = lambda: nti.tests.module_setup(set_up_packages=(nti.contentfragments,))
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup(set_up_packages=(nti.contentfragments,))
+tearDownModule = nti.testing.base.module_teardown
 
 from hamcrest import assert_that, is_
 

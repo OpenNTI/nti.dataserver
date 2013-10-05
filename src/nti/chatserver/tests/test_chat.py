@@ -19,9 +19,9 @@ from hamcrest import assert_that, is_, has_entry
 from hamcrest import has_key,  not_none, is_not
 from hamcrest import same_instance, has_length, none, contains, same_instance
 from hamcrest import has_entries, only_contains, has_item, has_property
-from nti.tests import validly_provides as verifiably_provides, provides
-from nti.tests import is_empty
-from nti.tests import is_true
+from nti.testing.matchers import validly_provides as verifiably_provides, provides
+from nti.testing.matchers import is_empty
+from nti.testing.matchers import is_true
 from nose.tools import assert_raises
 
 from zope import interface, component

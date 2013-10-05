@@ -7,8 +7,8 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that, has_entry, is_
 from hamcrest import not_none, is_not
-from nti.tests import SharedConfiguringTestBase
-from nti.tests import verifiably_provides
+from nti.testing.base import SharedConfiguringTestBase
+from nti.testing.matchers import verifiably_provides
 from nti.externalization.tests import externalizes
 
 

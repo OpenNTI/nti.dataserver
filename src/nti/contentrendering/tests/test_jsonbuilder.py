@@ -2,7 +2,7 @@
 from . import ConfiguringTestBase
 from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 from nti.contentrendering import jsonpbuilder
-from nti.tests import provides
+from nti.testing.matchers import provides
 from nti.contentrendering import interfaces
 
 import base64

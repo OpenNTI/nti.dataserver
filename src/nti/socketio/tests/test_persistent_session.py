@@ -11,7 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 from hamcrest import assert_that
 from hamcrest import is_, is_not
 from hamcrest import has_property

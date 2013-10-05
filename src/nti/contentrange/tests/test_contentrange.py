@@ -12,7 +12,7 @@ from nose.tools import assert_raises
 
 from zope import interface
 from zope.schema import interfaces as sch_interfaces
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 from nti.contentrange import contentrange, interfaces
 from nti.contentrange.tests import ConfiguringTestBase
