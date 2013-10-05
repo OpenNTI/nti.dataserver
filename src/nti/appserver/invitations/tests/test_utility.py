@@ -17,16 +17,16 @@ from zope import component
 from zope import interface
 from zope.keyreference.interfaces import IKeyReference
 
-import nti.tests
-from nti.tests import verifiably_provides
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides
 
 from .. import interfaces
 from .. import utility
 from .. import invitation
 from nti.dataserver.generations.install import install_intids
 
-setUpModule = lambda: nti.tests.module_setup(set_up_packages=('nti.dataserver',))
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup(set_up_packages=('nti.dataserver',))
+tearDownModule = nti.testing.base.module_teardown
 
 def test_valid_interface():
 	assert_that(utility.PersistentInvitations(), verifiably_provides(interfaces.IInvitations))

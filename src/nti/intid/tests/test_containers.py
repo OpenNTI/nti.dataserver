@@ -23,14 +23,14 @@ does_not = is_not
 from hamcrest import has_key
 from hamcrest import has_length
 
-import nti.tests
+import nti.testing.base
 
 import BTrees
 
 from ..containers import IntidResolvingMappingFacade
 from ..containers import IntidContainedStorage
 
-class TestMappingFacade(nti.tests.AbstractTestBase):
+class TestMappingFacade(nti.testing.base.AbstractTestBase):
 
 	class MockUtility(object):
 
@@ -75,7 +75,7 @@ class TestMappingFacade(nti.tests.AbstractTestBase):
 
 		assert_that( self.utility.data[4], is_in( facade['b'] ) )
 
-class TestIntidContainedStorage(nti.tests.AbstractTestBase):
+class TestIntidContainedStorage(nti.testing.base.AbstractTestBase):
 
 	class MockUtility(object):
 

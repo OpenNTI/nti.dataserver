@@ -28,17 +28,17 @@ from hamcrest import not_none
 from hamcrest import none
 from hamcrest import has_property
 from nose.tools import assert_raises
-import nti.tests
+import nti.testing.base
 
 import fudge
 
-from nti.tests import is_empty, is_true
+from nti.testing.matchers import is_empty, is_true
 
 from nti.externalization.tests import externalizes
 
-from nti.tests import aq_inContextOf
+from nti.testing.matchers import aq_inContextOf
 from zope.container.interfaces import InvalidItemType, InvalidContainerType, INameChooser
-from nti.tests import verifiably_provides, validly_provides
+from nti.testing.matchers import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry, IGeneralHeadlineTopic, IPost
 from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralHeadlineTopic
@@ -53,7 +53,7 @@ from nti.dataserver.interfaces import IUser, IWritableShared
 from ExtensionClass import Base
 
 def setUpModule():
-	nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments', 'nti.dataserver') )
+	nti.testing.base.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments', 'nti.dataserver') )
 	# Set up weak refs
 	from nti.intid import utility as intid_utility
 	import zope.intid
@@ -80,7 +80,7 @@ def setUpModule():
 	component.provideUtility( client )
 
 
-tearDownModule = nti.tests.module_teardown
+tearDownModule = nti.testing.base.module_teardown
 
 def test_topic_interfaces():
 	post = Topic()

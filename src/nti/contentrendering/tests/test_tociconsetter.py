@@ -1,6 +1,6 @@
 from . import ConfiguringTestBase
 from nti.contentrendering import tociconsetter
-from nti.tests import provides
+from nti.testing.matchers import provides
 from nti.contentrendering import interfaces
 from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
 

@@ -9,7 +9,7 @@ from nti.dataserver.utils import nti_create_friendslist as nti_cfl
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.tests import ConfiguringTestBase
+from nti.testing.base import ConfiguringTestBase
 
 from hamcrest import (assert_that, has_length, is_)
 

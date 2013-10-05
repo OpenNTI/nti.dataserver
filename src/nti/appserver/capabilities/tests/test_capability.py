@@ -9,8 +9,8 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import assert_that
 
-from nti.tests import verifiably_provides
-from nti.tests import validly_provides
+from nti.testing.matchers import verifiably_provides
+from nti.testing.matchers import validly_provides
 
 from ..capability import Capability
 from ..interfaces import ICapability

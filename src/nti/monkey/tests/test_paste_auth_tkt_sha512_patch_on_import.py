@@ -22,7 +22,7 @@ import unittest
 
 from nose.tools import assert_raises
 
-import nti.tests
+import nti.testing.base
 
 from hashlib import sha512
 

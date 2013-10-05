@@ -18,7 +18,7 @@ from hamcrest.library import has_property
 from hamcrest import is_not
 does_not = is_not
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 import os
 import os.path

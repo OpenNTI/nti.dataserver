@@ -8,7 +8,7 @@ from hamcrest import assert_that, has_entry, is_, has_property, contains, same_i
 from hamcrest import has_key
 from hamcrest import not_none
 from unittest import TestCase
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 from nti.externalization.tests import externalizes
 from nose.tools import assert_raises
 
@@ -27,8 +27,8 @@ from nti.assessment import submission
 
 
 # nose module-level setup
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.assessment,) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.assessment,) )
+tearDownModule = nti.testing.base.module_teardown
 
 
 class TestQuestionSubmission(TestCase):

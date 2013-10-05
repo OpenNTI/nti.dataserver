@@ -20,9 +20,9 @@ from zope.intid import interfaces as intid_interfaces
 from zope.component import eventtesting
 import time
 
-from nti.tests import validly_provides as verifiably_provides
-from nti.tests import is_true, is_false
-from nti.tests import time_monotonically_increases
+from nti.testing.matchers import validly_provides as verifiably_provides
+from nti.testing.matchers import is_true, is_false
+from nti.testing.time import time_monotonically_increases
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import flagging

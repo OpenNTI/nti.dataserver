@@ -14,10 +14,10 @@ from nti.appserver.contentlibrary._question_map import QuestionMap, _populate_qu
 
 from nti.dataserver.authorization_acl import ACL
 
-import nti.tests
+import nti.testing.base
 
-setUpModule = lambda: nti.tests.module_setup(set_up_packages=(nti.appserver,))
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup(set_up_packages=(nti.appserver,))
+tearDownModule = nti.testing.base.module_teardown
 
 from hamcrest import (assert_that, is_, has_length, has_property)
 

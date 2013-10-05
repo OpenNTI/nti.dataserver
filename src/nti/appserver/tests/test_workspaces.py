@@ -37,10 +37,10 @@ from zc import intid as zc_intid
 from persistent import Persistent
 import transaction
 
-import nti.tests
+import nti.testing.base
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.appserver,), features=('devmode','forums') )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.appserver,), features=('devmode','forums') )
+tearDownModule = nti.testing.base.module_teardown
 
 class TestContainerEnumerationWorkspace(unittest.TestCase):
 

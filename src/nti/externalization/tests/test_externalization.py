@@ -15,7 +15,7 @@ import plistlib
 from ZODB.broken import Broken
 
 from nose.tools import assert_raises
-from nti.tests import has_attr
+from nti.testing.matchers import has_attr
 
 import nti.externalization
 from nti.externalization.persistence import getPersistentState
@@ -27,7 +27,7 @@ from nti.externalization.datastructures import ExternalizableDictionaryMixin
 
 
 from zope import component
-import nti.tests
+import nti.testing.base
 
 from . import ConfiguringTestBase
 
@@ -222,7 +222,7 @@ from zope.dublincore import interfaces as dub_interfaces
 from ..interfaces import IExternalObject, IExternalObjectDecorator, StandardExternalFields
 
 import datetime
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 class TestToExternalObject(ConfiguringTestBase):
 

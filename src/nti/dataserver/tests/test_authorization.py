@@ -8,9 +8,9 @@ from hamcrest import assert_that, has_length, is_, same_instance, is_not
 from hamcrest import contains
 from nti.dataserver.tests import has_attr, provides
 
-from nti.tests import validly_provides as verifiably_provides
+from nti.testing.matchers import validly_provides as verifiably_provides
 
-import nti.tests
+import nti.testing.base
 
 from zope.interface.verify import verifyObject
 from zope import component
@@ -21,8 +21,8 @@ import nti.dataserver.users as users
 import nti.dataserver.interfaces as nti_interfaces
 
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver',) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver',) )
+tearDownModule = nti.testing.base.module_teardown
 
 def test_user_adapts_to_group_member(  ):
 	u = users.User( 'sjohnson@nextthought.com', 't' )

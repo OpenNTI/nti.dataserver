@@ -9,9 +9,9 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that, is_, is_not
 from hamcrest import has_entry
 from unittest import TestCase
-from nti.tests import is_true, is_false
+from nti.testing.matchers import is_true, is_false
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 from zope import interface
 
@@ -28,8 +28,8 @@ grades_correct = grades_right
 
 
 # nose module-level setup
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.assessment,) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.assessment,) )
+tearDownModule = nti.testing.base.module_teardown
 
 
 

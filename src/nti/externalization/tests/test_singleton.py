@@ -21,7 +21,7 @@ from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import same_instance
 from nose.tools import assert_raises
-import nti.tests
+import nti.testing.base
 
 from ..singleton import SingletonDecorator
 

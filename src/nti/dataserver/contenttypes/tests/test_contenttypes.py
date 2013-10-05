@@ -25,9 +25,9 @@ from hamcrest import contains
 from zope.annotation import interfaces as an_interfaces
 from zope import component
 from nose.tools import with_setup
-import nti.tests
-from nti.tests import verifiably_provides
-from nti.tests import is_true
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides
+from nti.testing.matchers import is_true
 from nti.dataserver import intid_wref
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Bookmark as _Bookmark
@@ -59,7 +59,8 @@ from nti.externalization.internalization import update_from_external_object
 
 from zc import intid as zc_intid
 
-@with_setup(lambda: nti.tests.module_setup( set_up_packages=(nti.contentfragments,) ), nti.tests.module_teardown )
+@with_setup(lambda: nti.testing.base.module_setup( set_up_packages=(nti.contentfragments,) ),
+			nti.testing.base.module_teardown )
 def test_sanitize_html_contenttypes():
 	text = '<html><body><span style="color: rgb(0, 0, 0);">Hi, all.  I\'ve found the following </span><font color="#0000ff"><u>video series </u></font>to be very helpful as you learn algebra.  Let me know if questions or if you find others.</body></html>\n'
 	shape = CanvasTextShape()
@@ -534,7 +535,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		n = Note()
 		m = EmbeddedVideo()
 		m.embedURL = u"http://foo.org/video.mp4"
-		
+
 		n.body = [m]
 		n.updateLastMod()
 		ext = to_external_object(n)
@@ -674,7 +675,7 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 		update_from_external_object( child, {'inReplyTo': n, 'body': ( 'body', ) } )
 
 		assert_that( child.applicableRange, is_( n.applicableRange ) )
-		
+
 		child = Note()
 		external = toExternalObject(n)
 		update_from_external_object(child, external, require_updater=True)

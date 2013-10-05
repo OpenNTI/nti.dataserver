@@ -33,8 +33,8 @@ import cPickle as pickle
 
 import unittest
 
-from nti.tests import verifiably_provides
-from nti.tests import validly_provides
+from nti.testing.matchers import verifiably_provides
+from nti.testing.matchers import validly_provides
 
 from .mock_dataserver import SharedConfiguringTestBase, WithMockDS,  mock_db_trans
 from nti.chatserver.meeting import _Meeting as Meeting

@@ -23,11 +23,11 @@ from nose.tools import assert_raises
 
 from zope import interface
 
-import nti.tests
-from nti.tests import is_empty
+import nti.testing.base
+from nti.testing.matchers import is_empty
 from Acquisition import Implicit
-from nti.tests import aq_inContextOf
-from nti.tests import verifiably_provides, validly_provides
+from nti.testing.matchers import aq_inContextOf
+from nti.testing.matchers import verifiably_provides, validly_provides
 
 from nti.externalization.tests import externalizes
 from zope.container.interfaces import InvalidItemType
@@ -36,8 +36,8 @@ from ..board import Board
 from ..interfaces import IBoard, IForum
 
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
+tearDownModule = nti.testing.base.module_teardown
 
 def test_board_interfaces():
 	post = Board()

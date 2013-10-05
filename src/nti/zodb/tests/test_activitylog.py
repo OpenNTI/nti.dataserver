@@ -20,7 +20,7 @@ from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import has_property
 
-import nti.tests
+import nti.testing.base
 
 from nti.zodb.activitylog import _AbstractActivityMonitor as ActivityMonitor
 

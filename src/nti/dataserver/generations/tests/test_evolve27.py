@@ -18,8 +18,8 @@ from nti.dataserver import activitystream_change
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
-import nti.tests
-from nti.tests import verifiably_provides
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides
 import nti.dataserver
 
 from nti.dataserver.tests import mock_dataserver

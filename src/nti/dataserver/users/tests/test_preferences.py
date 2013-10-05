@@ -12,12 +12,12 @@ from hamcrest import has_property
 
 from nti.externalization.externalization import to_external_object
 
-import nti.tests
+import nti.testing.base
 
 from nti.dataserver.tests import mock_dataserver
 
-setUpModule = lambda: nti.tests.module_setup(set_up_packages=('nti.dataserver', 'nti.dataserver.users',))
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup(set_up_packages=('nti.dataserver', 'nti.dataserver.users',))
+tearDownModule = nti.testing.base.module_teardown
 
 from nti.dataserver.users import User
 from nti.dataserver.users import interfaces as user_interfaces

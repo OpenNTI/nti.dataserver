@@ -19,7 +19,7 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
 import sys
-import nti.tests
+import nti.testing.base
 
 from nti.externalization import integer_strings
 

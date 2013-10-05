@@ -20,9 +20,9 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
 
-import nti.tests
-from nti.tests import verifiably_provides
-from nti.tests import validly_provides
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides
+from nti.testing.matchers import validly_provides
 
 from nti.chatserver.meeting import _Meeting as Meeting
 from nti.chatserver import interfaces as chat_interfaces

@@ -21,8 +21,8 @@ from hamcrest import same_instance
 from hamcrest import has_key
 from hamcrest import has_entry
 
-import nti.tests
-from nti.tests import aq_inContextOf
+import nti.testing.base
+from nti.testing.matchers import aq_inContextOf
 try:
 	from zope.proxy import ProxyBase
 except ImportError:

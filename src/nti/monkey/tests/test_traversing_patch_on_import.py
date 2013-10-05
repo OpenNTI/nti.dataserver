@@ -17,10 +17,10 @@ from zope import interface
 from zope.traversing import interfaces as trv_interfaces, api as trv_api
 
 import nti.monkey.traversing_patch_on_import
-import nti.tests
+import nti.testing.base
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('zope.traversing',) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('zope.traversing',) )
+tearDownModule = nti.testing.base.module_teardown
 
 def test_patched_traversal_api():
 	assert nti.monkey.traversing_patch_on_import._patched_traversing, "No fixed version exists"

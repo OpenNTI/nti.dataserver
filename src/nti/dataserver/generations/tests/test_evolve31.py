@@ -15,7 +15,7 @@ from nti.dataserver.generations.evolve31 import evolve
 from zope.catalog.interfaces import ICatalog
 from zope import component
 
-import nti.tests
+import nti.testing.base
 import nti.dataserver
 from nti.dataserver import users
 from nti.dataserver.tests import mock_dataserver

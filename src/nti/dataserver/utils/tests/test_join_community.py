@@ -8,7 +8,7 @@ from nti.dataserver.utils import nti_join_community as nti_join
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.tests import ConfiguringTestBase
+from nti.testing.base import ConfiguringTestBase
 
 from hamcrest import (assert_that, has_item, has_length)
 

@@ -20,7 +20,7 @@ from hamcrest import is_not as does_not
 from hamcrest import has_key
 from hamcrest import none
 
-from nti.tests import validly_provides
+from nti.testing.matchers import validly_provides
 
 from pyramid.request import Request
 

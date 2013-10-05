@@ -14,8 +14,8 @@ from hamcrest import none
 
 from nose.tools import assert_raises
 
-import nti.tests
-from nti.tests import validly_provides as verifiably_provides, is_true, is_false
+import nti.testing.base
+from nti.testing.matchers import validly_provides as verifiably_provides, is_true, is_false
 import nti.dataserver
 
 from nti.dataserver import containers as container, interfaces, datastructures
@@ -27,8 +27,8 @@ from zope.container.interfaces import INameChooser
 from zope import lifecycleevent
 
 # Nose module-level setup and teardown
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.dataserver,) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.dataserver,) )
+tearDownModule = nti.testing.base.module_teardown
 
 @interface.implementer(interfaces.ILastModified)
 class Contained(datastructures.CreatedModDateTrackingObject,contained.Contained):

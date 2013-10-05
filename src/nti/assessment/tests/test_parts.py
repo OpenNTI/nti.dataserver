@@ -7,8 +7,8 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that, has_entry
 from hamcrest import is_, is_not
 from unittest import TestCase
-from nti.tests import is_true, is_false
-from nti.tests import verifiably_provides
+from nti.testing.matchers import is_true, is_false
+from nti.testing.matchers import verifiably_provides
 from nti.externalization.tests import externalizes
 from nose.tools import assert_raises
 
@@ -25,8 +25,8 @@ from . import grades_wrong
 
 
 # nose module-level setup
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=(nti.assessment,) )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.assessment,) )
+tearDownModule = nti.testing.base.module_teardown
 
 
 

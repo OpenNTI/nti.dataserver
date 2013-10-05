@@ -17,7 +17,7 @@ from .. import interfaces
 from .. import slidedeckextractor
 
 from . import ConfiguringTestBase
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 
 import fudge

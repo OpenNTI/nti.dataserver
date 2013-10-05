@@ -29,8 +29,8 @@ from hamcrest import has_entry
 from hamcrest import has_item
 does_not = is_not
 
-from nti.tests import verifiably_provides, validated_by, not_validated_by
-from nti.tests import module_setup, module_teardown
+from nti.testing.matchers import verifiably_provides, validated_by, not_validated_by
+from nti.testing.base import module_setup, module_teardown
 
 from nti.utils.schema import HTTPURL, Variant, ObjectLen, Object
 from nti.utils.schema import IVariant
@@ -230,7 +230,7 @@ def test_country_vocabulary():
 	assert_that( schema, has_entry( 'choice', has_entry( 'choices', has_item( ext ) ) ) )
 
 try:
-	from nti.tests import aq_inContextOf
+	from nti.testing.matchers import aq_inContextOf
 	from ..schema import AcquisitionFieldProperty
 	from Acquisition import Implicit
 	from ExtensionClass import Base

@@ -21,9 +21,9 @@ from hamcrest import has_entry
 
 import fudge
 
-import nti.tests
-from nti.tests import verifiably_provides, validly_provides
-from nti.tests import is_true, is_false
+import nti.testing.base
+from nti.testing.matchers import verifiably_provides, validly_provides
+from nti.testing.matchers import is_true, is_false
 
 from nti.zodb import interfaces
 from nti.zodb.tokenbucket import PersistentTokenBucket

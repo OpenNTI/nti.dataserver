@@ -14,7 +14,7 @@ import anyjson as json
 from zope import component
 import os.path
 
-import nti.tests
+import nti.testing.base
 from nose.tools import assert_raises
 import fudge
 
@@ -25,7 +25,7 @@ from nti.dictserver import lookup
 from nti.dictserver.term import DictionaryTerm as WordInfo
 
 
-class TestDictionary(nti.tests.ConfiguringTestBase):
+class TestDictionary(nti.testing.base.ConfiguringTestBase):
 
 	# this test makes sure that when a dict is constructed without a lookup path,
 	# or other bad path of some sort, it fails

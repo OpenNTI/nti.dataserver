@@ -21,7 +21,7 @@ from hamcrest import has_entry
 from hamcrest import has_property
 
 
-import nti.tests
+import nti.testing.base
 import fudge
 
 from nti.zodb.zlibstorage import ZlibStorageClientStorageURIResolver

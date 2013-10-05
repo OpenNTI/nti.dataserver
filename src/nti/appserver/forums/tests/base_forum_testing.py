@@ -34,8 +34,8 @@ from hamcrest import greater_than
 from hamcrest import greater_than_or_equal_to
 from hamcrest import has_key
 
-from nti.tests import is_empty
-from nti.tests import time_monotonically_increases
+from nti.testing.matchers import is_empty
+from nti.testing.time import time_monotonically_increases
 
 from nti.appserver.tests.test_application import TestApp as _TestApp
 from nti.appserver.policies.tests import test_application_censoring

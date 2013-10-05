@@ -13,8 +13,8 @@ from hamcrest import is_
 from hamcrest import same_instance
 
 from nti.appserver.tests import ConfiguringTestBase
-from nti.tests import is_true
-from nti.tests import is_false
+from nti.testing.matchers import is_true
+from nti.testing.matchers import is_false
 
 from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy, is_readable, is_writable
 

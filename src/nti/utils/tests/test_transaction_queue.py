@@ -2,7 +2,7 @@
 
 from __future__ import print_function, unicode_literals
 
-from nti.tests import AbstractTestBase
+from nti.testing.base import AbstractTestBase
 from hamcrest import assert_that, is_
 
 import transaction

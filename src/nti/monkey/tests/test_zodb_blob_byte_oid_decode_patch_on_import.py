@@ -20,7 +20,7 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
 
-import nti.tests
+import nti.testing.base
 
 def test_patch():
 	from ..zodb_blob_byte_oid_decode_patch_on_import import patch

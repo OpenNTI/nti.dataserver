@@ -30,15 +30,15 @@ from nti.externalization.tests import externalizes
 from nti.externalization.externalization import to_external_object
 from nti.externalization import internalization
 
-import nti.tests
-from nti.tests import aq_inContextOf
+import nti.testing.base
+from nti.testing.matchers import aq_inContextOf
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
+tearDownModule = nti.testing.base.module_teardown
 
 from zope import interface
-from nti.tests import verifiably_provides, validly_provides
-from nti.tests import is_empty
+from nti.testing.matchers import verifiably_provides, validly_provides
+from nti.testing.matchers import is_empty
 from zope.container.interfaces import InvalidContainerType
 from zope.mimetype.interfaces import IContentTypeAware
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer

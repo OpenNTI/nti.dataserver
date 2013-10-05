@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 
-from nti.tests import ConfiguringTestBase
+from nti.testing.base import ConfiguringTestBase
 
 import nti.contentfragments
 from nti.contentfragments import interfaces as frg_interfaces

@@ -23,11 +23,11 @@ from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import contains_inanyorder
 from unittest import TestCase
-import nti.tests
-from nti.tests import validly_provides
+import nti.testing.base
+from nti.testing.matchers import validly_provides
 
-setUpModule = lambda: nti.tests.module_setup( set_up_packages=('nti.dataserver','nti.contentrange','nti.contentfragments') )
-tearDownModule = nti.tests.module_teardown
+setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver','nti.contentrange','nti.contentfragments') )
+tearDownModule = nti.testing.base.module_teardown
 
 from nti.dataserver.contenttypes import Note as _Note
 from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer

@@ -10,7 +10,7 @@ from hamcrest import is_, is_not, none
 from hamcrest import has_property
 from hamcrest import contains
 from hamcrest import has_length
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 from zope.component.hooks import site
 from zope.event import notify

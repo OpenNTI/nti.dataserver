@@ -13,7 +13,7 @@ from hamcrest import contains
 from hamcrest import is_not
 does_not = is_not
 
-from nti.tests import validly_provides
+from nti.testing.matchers import validly_provides
 import os
 import os.path
 

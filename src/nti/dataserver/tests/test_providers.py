@@ -18,7 +18,7 @@ logger = __import__('logging').getLogger(__name__)
 
 
 from hamcrest import assert_that, has_length, contains_string, is_, same_instance, is_not, has_item
-from nti.tests import  verifiably_provides as provides
+from nti.testing.matchers import verifiably_provides as provides
 from zope.interface.verify import verifyObject
 
 

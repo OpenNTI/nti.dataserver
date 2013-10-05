@@ -20,7 +20,7 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
 
-import nti.tests
+import nti.testing.base
 
 from webtest import TestApp
 

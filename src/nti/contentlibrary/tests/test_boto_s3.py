@@ -30,8 +30,8 @@ from cStringIO import StringIO
 import gzip
 import boto.exception
 
-from nti.tests import SharedConfiguringTestBase
-from nti.tests import validly_provides
+from nti.testing.base import SharedConfiguringTestBase
+from nti.testing.matchers import validly_provides
 
 class TestBotoS3(SharedConfiguringTestBase):
 	set_up_packages = ('nti.externalization', 'nti.contentlibrary')

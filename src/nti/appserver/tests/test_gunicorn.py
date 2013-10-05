@@ -23,11 +23,11 @@ from hamcrest import has_property
 from hamcrest import none
 
 #from pyramid.testing import DummyRequest
-from nti.tests import ByteHeadersDummyRequest as DummyRequest
+from nti.app.testing.request_response import ByteHeadersDummyRequest as DummyRequest
 from pyramid.request import Request
 from cStringIO import StringIO
 
-import nti.tests
+import nti.testing.base
 import socket
 import gevent.pool
 from nose.tools import assert_raises
@@ -105,7 +105,7 @@ def test_create_flash_socket():
 	assert_that( cfg.bind, is_( ['bind', ':100' ] ) )
 
 
-class TestGeventApplicationWorker(nti.tests.SharedConfiguringTestBase):
+class TestGeventApplicationWorker(nti.testing.base.SharedConfiguringTestBase):
 	set_up_packages = ('nti.appserver',)
 
 	def test_prefork(self):

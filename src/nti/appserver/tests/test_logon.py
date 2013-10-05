@@ -12,13 +12,13 @@ from hamcrest import contains
 from hamcrest import none
 
 from hamcrest.library import has_property
-from nti.tests import provides
+from nti.testing.matchers import provides
 from nose.tools import assert_raises
 import zope.testing.loghandler
 
 import pyramid.testing
 #from pyramid.testing import DummyRequest
-from nti.tests import ByteHeadersDummyRequest as DummyRequest
+from nti.app.testing.request_response import ByteHeadersDummyRequest as DummyRequest
 
 from zope import component
 from zope import interface
@@ -43,7 +43,7 @@ import pyramid.request
 from nti.dataserver import authorization as nauth
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans#, WithMockDS
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 import nti.dataserver.interfaces as nti_interfaces
 import nti.appserver.interfaces as app_interfaces

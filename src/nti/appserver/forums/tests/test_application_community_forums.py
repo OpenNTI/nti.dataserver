@@ -25,7 +25,7 @@ from hamcrest import has_property
 from hamcrest import has_length
 from hamcrest import has_key
 
-from nti.tests import time_monotonically_increases
+from nti.testing.time import time_monotonically_increases
 
 from zope.component import eventtesting
 from zope.lifecycleevent import IObjectRemovedEvent

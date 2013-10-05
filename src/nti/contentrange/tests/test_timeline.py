@@ -13,7 +13,7 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.contentrange.tests import ConfiguringTestBase
 
-from nti.tests import verifiably_provides
+from nti.testing.matchers import verifiably_provides
 
 from hamcrest import assert_that, is_
 

@@ -22,7 +22,7 @@ from nti.dataserver import users
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Canvas, CanvasCircleShape, NonpersistentCanvasCircleShape
 
-import nti.tests
+import nti.testing.base
 import nti.dataserver
 
 import nti.dataserver.tests.mock_dataserver
