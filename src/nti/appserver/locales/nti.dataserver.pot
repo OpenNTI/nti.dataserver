@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-10-04 14:05-0500\n"
+"POT-Creation-Date: 2013-10-05 10:46-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -179,98 +179,56 @@ msgstr ""
 msgid "The mime type expected to be returned by the link"
 msgstr ""
 
-#: src/nti/appserver/policies/interfaces.py:151
-msgid "Company Name"
-msgstr ""
-
-#: src/nti/appserver/policies/interfaces.py:152
-msgid "The name of the company you are affiliated with."
-msgstr ""
-
-#: src/nti/appserver/policies/interfaces.py:156
-msgid "Company Country"
-msgstr ""
-
-#: src/nti/appserver/policies/interfaces.py:157
-msgid "The country the company you are affiliated with is located in."
-msgstr ""
-
-#: src/nti/appserver/policies/interfaces.py:162
-msgid "Company Description"
-msgstr ""
-
-#: src/nti/appserver/policies/interfaces.py:163
-msgid "One to three paragraph description of your company."
-msgstr ""
-
-#: src/nti/appserver/policies/interfaces.py:169
-msgid "Company Role and Responsibilities"
-msgstr ""
-
-#: src/nti/appserver/policies/interfaces.py:170
-msgid ""
-"One to three paragraph description of your role and responsibilities in the "
-"company."
-msgstr ""
-
-#: src/nti/appserver/policies/interfaces.py:176
-msgid "Birth Country"
-msgstr ""
-
-#: src/nti/appserver/policies/interfaces.py:177
-msgid "The country you were born in."
-msgstr ""
-
-#: src/nti/appserver/policies/site_policies.py:370
+#: src/nti/appserver/policies/site_policies.py:377
 msgid "Username contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:375
+#: src/nti/appserver/policies/site_policies.py:382
 msgid "Alias contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:419
+#: src/nti/appserver/policies/site_policies.py:426
 msgid "Welcome to NextThought"
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:518
+#: src/nti/appserver/policies/site_policies.py:525
 #: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:215
 msgid "Please provide your first name."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:520
+#: src/nti/appserver/policies/site_policies.py:527
 #: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:222
 msgid "Please provide your last name."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:535
+#: src/nti/appserver/policies/site_policies.py:542
 msgid "That username is not valid. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:548
+#: src/nti/appserver/policies/site_policies.py:555
 #: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:187
 msgid "Birthdate must be in the past."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:551
+#: src/nti/appserver/policies/site_policies.py:558
 #: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:193
 msgid "Birthdate must be at least four years ago."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:554
+#: src/nti/appserver/policies/site_policies.py:561
 #: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:199
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:650
+#: src/nti/appserver/policies/site_policies.py:657
 msgid "Username ${username} cannot include any part of the real name ${realname}."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:809
+#: src/nti/appserver/policies/site_policies.py:802
 msgid "Welcome to the OU Digital Course Platform"
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:823
+#: src/nti/appserver/policies/site_policies.py:816
 msgid "The username is not allowed. Please choose another."
 msgstr ""
 
@@ -442,6 +400,42 @@ msgstr ""
 
 #: src/nti/store/invitations.py:39
 msgid "Invitation already accepted"
+msgstr ""
+
+#: src/nti/store/pyramid_views.py:175
+msgid "Failed to provide a purchasable ID"
+msgstr ""
+
+#: src/nti/store/pyramid_views.py:179
+msgid "Failed to provide a invitation code"
+msgstr ""
+
+#: src/nti/store/pyramid_views.py:189
+msgid "The invitation code is not for this purchasable"
+msgstr ""
+
+#: src/nti/store/pyramid_views.py:196
+msgid "The invitation code has already been accepted"
+msgstr ""
+
+#: src/nti/store/pyramid_views.py:198
+msgid "There are no remaining invitations for this code"
+msgstr ""
+
+#: src/nti/store/pyramid_views.py:217
+msgid "invalid quantity"
+msgstr ""
+
+#: src/nti/store/pyramid_views.py:224
+msgid "purchasable not found"
+msgstr ""
+
+#: src/nti/store/pyramid_views.py:275
+msgid "Must specify a valid purchase attempt id"
+msgstr ""
+
+#: src/nti/store/pyramid_views.py:288
+msgid "Must specify a successfully completed purchase attempt"
 msgstr ""
 
 #: src/nti/store/payments/stripe/stripe_key.py:33
