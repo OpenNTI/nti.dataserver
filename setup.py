@@ -291,7 +291,7 @@ setup(
 		'rq >= 0.3.11',	 # queues for python
 		'setproctitle >= 1.1.7',  # used by gunicorn
 		'setuptools >= 0.6c11',
-		'simplejson >= 3.3.0',
+		'simplejson >= 3.3.1',
 		'six >= 1.4.1',
 		'sympy >= 0.7.2' if not IS_PYPY else '',
 		'stripe >= 1.9.5',	# stripe payments
