@@ -53,6 +53,6 @@ def externalizes( matcher=None ):
 	return Externalizes( matcher=matcher )
 
 
-import nti.tests
-class ConfiguringTestBase(nti.tests.ConfiguringTestBase):
+import nti.testing.base
+class ConfiguringTestBase(nti.testing.base.ConfiguringTestBase):
 	set_up_packages = (nti.externalization,)
