@@ -5,26 +5,20 @@
 			i18n_domain="zope">
 
 	<include package="zope.component" />
-	
+
 	<include package="nti.mimetype" />
 	<include package="nti.contentfragments" />
 
 	<!-- Adapters for creating the default objects -->
 	<adapter factory=".forum.PersonalBlogAdapter"
 			 provides=".interfaces.IPersonalBlog" />
-			 
+
 	<adapter factory=".forum.GeneralForumCommunityAdapter"
 			 provides=".interfaces.ICommunityForum" />
-			 
+
 	<adapter factory=".board.GeneralBoardCommunityAdapter"
 			 provides=".interfaces.ICommunityBoard" />
-			 
-	<adapter factory=".board.GeneralBoardClassAdapter"
-			 provides=".interfaces.IClassBoard" />
-			 
-	<adapter factory=".board.GeneralBoardClassSectionAdapter"
-			 provides=".interfaces.IClassSectionBoard" />
-			 
+
 	<adapter provides="zope.location.interfaces.ISublocations"
 			 for=".interfaces.IHeadlineTopic"
 			 factory=".topic.HeadlineTopicSublocations" />
@@ -32,13 +26,13 @@
 	<adapter factory=".topic.PersonalBlogEntryNameChooser" />
 	<adapter factory=".topic.GeneralForumEntryNameChooser" />
 	<adapter factory=".board.BoardNameChooser" />
-	
+
 	<!-- WeakRefs -->
 	<!-- (IPost is covered as IModeledContent) -->
 	<adapter factory="nti.intid.wref.ArbitraryOrderableWeakRef"
 			 provides="nti.wref.interfaces.IWeakRef"
 			 for=".interfaces.IForum" />
-			 
+
 	<adapter factory="nti.intid.wref.ArbitraryOrderableWeakRef"
 			 provides="nti.wref.interfaces.IWeakRef"
 			 for=".interfaces.ITopic" />
@@ -55,22 +49,22 @@
 	<subscriber handler=".forum._post_added_to_topic" />
 	<subscriber handler=".forum._topic_added_to_forum" />
 
-	<!-- Externalization -->			 
+	<!-- Externalization -->
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IBoard" />
-			 
+
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IForum" />
-			 
+
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.ITopic" />
-			 
+
 	<adapter factory=".externalization._ForumInternalObjectIO"
 			 for=".interfaces.IPost" />
-		
+
 	<adapter factory=".externalization._ForumACEInternalObjectIO"
 			 for=".interfaces.IForumACE" />
-			 	 
+
 	<!--
 		 Make sure and do this after the .externalization package has
 		 worked its magic.
@@ -82,29 +76,29 @@
 	<ext:registerMimeFactories module=".post" />
 	<ext:registerMimeFactories module=".topic" />
 	<ext:registerMimeFactories module=".ace" />
-			 
+
 	<!-- ACLs -->
 	<adapter factory=".acl._TopicACLProvider"
 			 for=".interfaces.IPersonalBlogEntry"/>
-			 
+
 	<adapter factory=".acl._TopicACLProvider"
 			 for=".interfaces.ICommunityHeadlineTopic"/>
 
 	<adapter factory=".acl._ForumACLProvider"
 			 for=".interfaces.IPersonalBlog"/>
-			 
+
 	<adapter factory=".acl._CommunityForumACLProvider"
 			 for=".interfaces.ICommunityForum"/>
-			 
+
 	<adapter factory=".acl._CommunityBoardACLProvider"
 			 for=".interfaces.ICommunityBoard"/>
 
 	<adapter factory=".acl._PostACLProvider" />
-			 
+
 	<adapter factory=".acl._ACLCommunityBoardACLProvider"
-			 for=".interfaces.IACLCommunityBoard"/>	
-			 
+			 for=".interfaces.IACLCommunityBoard"/>
+
 	<adapter factory=".acl._ACLCommunityForumACLProvider"
-			 for=".interfaces.IACLCommunityForum"/>		
-			 
+			 for=".interfaces.IACLCommunityForum"/>
+
 </configure>

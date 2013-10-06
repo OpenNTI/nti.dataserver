@@ -57,16 +57,6 @@ class CommunityBoard(GeneralBoard,_CreatedNamedNTIIDMixin):
 	__external_can_create__ = False
 	_ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_BOARD
 
-@interface.implementer(for_interfaces.IClassBoard)
-class ClassBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
-	__external_can_create__ = False
-	_ntiid_type = for_interfaces.NTIID_TYPE_CLASS_BOARD
-
-@interface.implementer(for_interfaces.IClassSectionBoard)
-class ClassSectionBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
-	__external_can_create__ = False
-	_ntiid_type = for_interfaces.NTIID_TYPE_CLASS_SECTION_BOARD
-
 def _prepare_annotation_board(clazz, iface, creator, title, name=None):
 	board = clazz()
 	board.__parent__ = creator
@@ -107,27 +97,6 @@ def GeneralBoardCommunityAdapter(community):
 	board = _adapt_fixed_board(community, CommunityBoard, for_interfaces.ICommunityBoard)
 	return board
 
-@interface.implementer(for_interfaces.ICommunityBoard)
-@component.adapter(nti_interfaces.IClassInfo)
-def GeneralBoardClassAdapter(clazz):
-	"""
-	For the moment, we will say that all classes have a single board, in the same
-	way of communities. Only administrators can create forums
-	within the board
-	"""
-	board = _adapt_fixed_board(clazz, ClassBoard, for_interfaces.IClassBoard)
-	return board
-
-@interface.implementer(for_interfaces.IClassSectionBoard)
-@component.adapter(nti_interfaces.ISectionInfo)
-def GeneralBoardClassSectionAdapter(section):
-	"""
-	For the moment, we will say that all class sections have a single board, in the same
-	way of classrs. Only administrators can create forums within the board
-	"""
-	board = _adapt_fixed_board(section, ClassSectionBoard, for_interfaces.IClassSectionBoard)
-	return board
-
 @component.adapter(for_interfaces.IBoard)
 @interface.implementer(INameChooser)
 class BoardNameChooser(containers.AbstractNTIIDSafeNameChooser):
@@ -135,4 +104,3 @@ class BoardNameChooser(containers.AbstractNTIIDSafeNameChooser):
 	Handles NTIID-safe name choosing for a forum in a board
 	"""
 	leaf_iface = for_interfaces.IBoard
-

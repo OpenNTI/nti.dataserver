@@ -192,60 +192,6 @@ class _FriendsListAdapter(_AbstractMeetingContainerAdapter):
 
 		return active_meeting
 
-@component.adapter( nti_interfaces.ISectionInfo )
-class _ClassSectionAdapter(_AbstractMeetingContainerAdapter):
-	"""
-	Implements the policy to allow a :class:`nti.dataserver.interfaces.ISectionInfo` (a class section)
-	to be used as a meeting container.
-	"""
-
-	def __init__( self, section ):
-		super(_ClassSectionAdapter,self).__init__( section )
-
-	@property
-	def _allowed_occupants( self ):
-		"""
-		The instructors and everyone enrolled in the section are allowed to be
-		occupants.
-
-		:return: A fresh :class:`set` of usernames.
-		"""
-		occupants = set( self.context.Enrolled )
-		occupants.update( self.context.InstructorInfo.Instructors )
-		return occupants
-
-	@property
-	def _allowed_creators( self ):
-		"""
-		The instructors of a class section are allowed to initiate the room.
-
-		:return: A fresh :class:`set` of usernames.
-		"""
-		return set(self.context.InstructorInfo.Instructors)
-
-	def enter_active_meeting( self, chatserver, meeting_dict ):
-		"""
-		If the creator of a class section (an instructor) re-enters it,
-		then all students are automatically re-added, whether or not
-		they had left. The same room and session are used for transcript purposes,
-		but we broadcast enter-room events to everyone.e This is to address some reliability
-		concerns.
-		"""
-		active_meeting = super(_ClassSectionAdapter,self).enter_active_meeting( chatserver, meeting_dict )
-		if active_meeting and meeting_dict.get( 'Creator' ) in self._allowed_creators:
-			logger.debug( "Rebroadcasting class section room for creator %s (due to missing people %s != %s?)",
-						  meeting_dict.get( 'Creator' ), active_meeting.occupant_names, self._allowed_occupants )
-			# First, silently add everyone to the room
-			active_meeting.add_occupant_names( self._allowed_occupants, broadcast=False )
-			# Now, to everyone, even the creator (who may or may not get his own event) broadcast
-			# that they're in the room and that the room membership has changed
-			event_to =  self._allowed_occupants
-			active_meeting.emit_enteredRoom( event_to, active_meeting )
-			active_meeting.emit_roomMembershipChanged( event_to, active_meeting )
-
-
-		return active_meeting
-
 class MeetingContainerStorage(object):
 	"""
 	An object that implements meeting container storage

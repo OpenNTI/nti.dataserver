@@ -2,7 +2,9 @@
 from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that
-from nti.testing.base import SharedConfiguringTestBase, is_true, is_false
+from nti.testing.base import SharedConfiguringTestBase
+from nti.testing.matchers import is_true
+from nti.testing.matchers import is_false
 from nti.testing.matchers import verifiably_provides
 from zope import component
 

@@ -130,29 +130,6 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 
 ###################################################
-# Class / Section forums
-###################################################
-
-class _ClassInfoBoardACLProvider(_CommunityBoardACLProvider):
-
-	def _extend_acl_after_creator_and_sharing(self, acl):
-		# admins have full control
-		self._extend_with_admin_privs(acl)
-		# instructors have full control
-		for instructor in self.context.Instructors:
-			entity = Entity.get_entity(instructor)
-			if entity is not None:
-				acl.append(ace_allowing(entity, nti_interfaces.ALL_PERMISSIONS, self))
-		# students have read access
-		for student in self.context.Enrolled:
-			entity = Entity.get_entity(student)
-			if entity is not None:
-				acl.append(ace_allowing(entity, nauth.ACT_READ, self))
-
-class _SectionInfoBoardACLProvider(_ClassInfoBoardACLProvider):
-	pass
-
-###################################################
 # ACL Providers for ACL dependent forums and boards
 ###################################################
 
@@ -201,7 +178,7 @@ class _ACLCommunityBoardACLProvider(_CommunityBoardACLProvider, _ACLBasedProvide
 					acl.append(action(entity, perm, self))
 
 class _ACLCommunityForumACLProvider(_CommunityForumACLProvider, _ACLBasedProvider):
-	
+
 	def _do_get_deny_all(self):
 		acl = self._get_context_acl()
 		if not acl:
@@ -239,4 +216,3 @@ class _ACLCommunityForumACLProvider(_CommunityForumACLProvider, _ACLBasedProvide
 					action = self._resolve_action(action)
 					for entity in self._resolve_entities(eid):
 						acl.append(action(entity, perm, self))
-

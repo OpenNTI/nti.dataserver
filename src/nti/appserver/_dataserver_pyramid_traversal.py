@@ -280,7 +280,6 @@ class UserTraversable(_PseudoTraversableMixin):
 
 	_pseudo_classes_ = { 'Library': lib_interfaces.IContentPackageLibrary,
 						 'Pages': _PagesResource,
-						 'EnrolledClassSections': _AbstractUserPseudoContainerResource,
 						 PersonalBlog.__default_name__: _BlogResource }
 	_pseudo_classes_.update( _PseudoTraversableMixin._pseudo_classes_ )
 
@@ -339,20 +338,6 @@ class UserTraversable(_PseudoTraversableMixin):
 			resource.__acl__ = resource.__acl__ + nacl.ace_denying_all( self )
 
 		return resource
-
-@component.adapter(nti_interfaces.IProviderOrganization, pyramid.interfaces.IRequest)
-class ProviderTraversable(UserTraversable):
-	"""
-	Respects the provider's ACL.
-	"""
-
-	# The user-specific things are dropped
-	_pseudo_classes_ = _PseudoTraversableMixin._pseudo_classes_
-
-	_DENY_ALL = False
-
-	def __init__( self, *args, **kwargs ):
-		super(ProviderTraversable,self).__init__( *args, **kwargs )
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(nti_interfaces.ICommunity, pyramid.interfaces.IRequest)

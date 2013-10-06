@@ -9,16 +9,9 @@
 	<!--
 		The user workspace builds its collections through a subscriber list.
 	-->
-	<subscriber factory=".workspaces._UserEnrolledClassSectionsCollection"
-				provides=".interfaces.ICollection"
-				for=".interfaces.IUserWorkspace" />
 	<subscriber factory=".workspaces._UserPagesCollection"
 				provides=".interfaces.ICollection"
 				for=".interfaces.IUserWorkspace" />
-	<!-- One of these collections is also visible as a named adapter for convenience -->
-	<adapter factory=".workspaces._UserEnrolledClassSectionsCollectionFactory"
-			 name='EnrolledClassSections'
-			 for="nti.dataserver.interfaces.IUser" />
 	<!--
 	One of them is the default ICollection adapter. See application.py for why this is
 	wrong.
@@ -26,7 +19,6 @@
 	<adapter factory=".workspaces._UserPagesCollectionFactory"
 			 for="nti.dataserver.interfaces.IUser" />
 
-	<adapter factory=".workspaces._ProviderCollection" />
 	<adapter factory=".workspaces.HomogeneousTypedContainerCollection" />
 	<!--
 	As it stands now, returning FriendsLists cannot be cached,
@@ -51,8 +43,6 @@
 	<subscriber factory=".workspaces._global_workspace"
 				provides=".interfaces.IWorkspace" />
 	<subscriber factory=".workspaces._library_workspace"
-				provides=".interfaces.IWorkspace" />
-	<subscriber factory=".workspaces._providers_workspace"
 				provides=".interfaces.IWorkspace" />
 
 	<adapter factory=".workspaces.ServiceExternalizer" />
