@@ -79,7 +79,7 @@ else:
 TESTS_REQUIRE = [
 	'WebTest >= 2.0.9',	 # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
 	'blessings >= 1.5.1',  # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
-	'coverage >= 3.6',	# Test coverage
+	'coverage >= 3.7',	# Test coverage
 	'fakeredis >= 0.4.0',
 	'fudge',
 	'ipdb >= 0.8',	# easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
@@ -322,8 +322,6 @@ setup(
 		# 'zetalibrary',
 		'zodburi >= 2.0b1',	 # used by pyramid_zodbconn
 		'zope.app.broken >= 3.6.0',	 # Improved broken objects
-		'zope.app.component >= 3.9.3',	# bwc only, DO NOT IMPORT. pulled in by contentratings
-		'zope.app.interface >= 3.6.0',	# bwc only, DO NOT IMPORT. pulled in by contentratings
 		'zope.applicationcontrol >= 4.0.0a1',  # Info about the app. currently unused
 		'zope.annotation >= 4.2.0',
 		'zope.authentication >= 4.1.0',
