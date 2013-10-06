@@ -293,7 +293,7 @@ setup(
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.3.1',
 		'six >= 1.4.1',
-		'sympy >= 0.7.2' if not IS_PYPY else '',
+		'sympy >= 0.7.3' if not IS_PYPY else '',
 		'stripe >= 1.9.5',	# stripe payments
 		# 'slimit',
 		'supervisor >= 3.0',
@@ -460,6 +460,7 @@ setup(
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
+		'https://pypi.python.org/packages/source/s/sympy/sympy-0.7.3-py2.7.tar.gz#egg=sympy-0.7.3',
 	],
 	packages=find_packages('src'),
 	package_dir={'': 'src'},
