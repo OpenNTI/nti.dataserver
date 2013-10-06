@@ -717,85 +717,11 @@ class _UserPagesCollection(object):
 				yield term.token
 
 @interface.implementer(app_interfaces.IContainerCollection)
-@component.adapter(app_interfaces.IUserWorkspace)
-class _UserEnrolledClassSectionsCollection(object):
-	"""
-	Turns a UserWorkspace into an ICollection of data about the individual classes
-	they are enrolled in.
-	"""
-
-
-	name = 'EnrolledClassSections'
-	__name__ = name
-	__parent__ = None
-	accepts = ()
-
-	def __init__( self, user_workspace ):
-		self.__parent__ = user_workspace
-
-	@property
-	def _user(self):
-		return self.__parent__.user
-
-	@property
-	def container(self):
-		# Obviously, we're doing this by walking through the entire
-		# tree of classes to see what we are enrolled in.
-		# If (when) this becomes painful, we can have an observer
-		# listen for the events that get broadcast by the SectionInfo
-		# and maintain an appropriate cache (on the user?).
-		result = datastructures.LastModifiedCopyingUserList()
-		ds = component.queryUtility( nti_interfaces.IDataserver )
-		for prov_name in (k for k in ds.root['providers'].iterkeys() if not isSyntheticKey( k ) ):
-			provider = ds.root['providers'][prov_name]
-			for clazz in provider.getContainer( 'Classes' ).values():
-				if not hasattr( clazz, 'Sections' ): continue
-				for section in clazz.Sections:
-					if self._user.username in section.Enrolled:
-						result.append( section )
-
-		return result
-
-@interface.implementer(app_interfaces.IContainerCollection)
-@component.adapter(nti_interfaces.IUser)
-def _UserEnrolledClassSectionsCollectionFactory( user ):
-	"Used as a shortcut from the user to the enrolled class sections. Deprecated."
-	return _UserEnrolledClassSectionsCollection( UserEnumerationWorkspace( user ) )
-
-@interface.implementer(app_interfaces.IContainerCollection)
 @component.adapter(nti_interfaces.IUser)
 def _UserPagesCollectionFactory( user ):
 	"Used as a shortcut from the user to the pages class sections. Deprecated."
 	return _UserPagesCollection( UserEnumerationWorkspace( user ) )
 
-
-@interface.implementer(app_interfaces.ICollection)
-@component.adapter(nti_interfaces.IProviderOrganization)
-class _ProviderCollection(object):
-
-	__parent__ = None
-
-	def __init__( self, provider ):
-		self._provider = provider
-
-	@property
-	def __name__(self):
-		return self._provider.username
-	name = __name__
-
-	@property
-	def accepts(self):
-		result = ()
-		request = get_current_request()
-		# Can we write to the provider?
-		if request and has_permission( nauth.ACT_CREATE, self._provider, request ):
-			result = []
-			for container in self._provider.getAllContainers().values():
-				# is it an IHomogeneousTypeContainer?
-				contained_type = getattr( container, 'contained_type', None )
-				if contained_type is not None:
-					result.append( contained_type )
-		return result
 
 @interface.implementer(app_interfaces.IWorkspace)
 @component.adapter(app_interfaces.IUserService)
@@ -825,23 +751,6 @@ def _library_workspace( user_service ):
 		lib_ws = LibraryWorkspace( _library )
 		lib_ws.__parent__ = tr
 		return lib_ws
-
-@interface.implementer(app_interfaces.IWorkspace)
-@component.adapter(app_interfaces.IUserService)
-def _providers_workspace(user_service):
-	ds = component.getUtility( nti_interfaces.IDataserver )
-
-	provider_root = location.Location()
-	provider_root.__parent__ = user_service.__parent__
-	provider_root.__name__ = 'providers'
-
-	# We want a workspace for providers: each provider
-	# is its own collection and its own entry in the workspace
-	workspace = ProviderEnumerationWorkspace( ds.root['providers'] )
-	workspace.__name__ = 'providers'
-	workspace.__parent__ = user_service.__parent__ # provider_root
-
-	return workspace
 
 
 @interface.implementer(app_interfaces.IUserService, mime_interfaces.IContentTypeAware)

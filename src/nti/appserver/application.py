@@ -285,14 +285,6 @@ def _modifying_ugd_views(pyramid_config):
 							permission=nauth.ACT_CREATE, request_method='POST')
 
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
-							renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
-							permission=nauth.ACT_CREATE, request_method='POST')
-
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._provider_redirect_classes',
-							renderer='rest', context='nti.dataserver.interfaces.IProviderOrganization',
-							permission=nauth.ACT_READ, request_method='GET')
-
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
 							renderer='rest', context='nti.appserver.interfaces.IContainerResource',
 							permission=nauth.ACT_CREATE, request_method='POST')
 
@@ -370,21 +362,6 @@ def _enclosure_views(pyramid_config):
 
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							renderer='rest', context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
-							permission=nauth.ACT_READ, request_method='GET')
-
-def _classinfo_views(pyramid_config):
-	# ClassInfo conflicts with enclosures for PUT/POST somehow
-	# TODO: This will all go away when we get to ++enclosures
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
-							renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
-							permission=nauth.ACT_UPDATE, request_method='PUT')
-
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.enclosure_views.EnclosurePostView',
-							renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
-							permission=nauth.ACT_CREATE, request_method='POST')
-
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							renderer='rest', context='nti.dataserver.interfaces.IClassInfo',
 							permission=nauth.ACT_READ, request_method='GET')
 
 def _patching_restore_views(pyramid_config):
@@ -658,7 +635,6 @@ def createApplication( http_port,
 	_modifying_ugd_views(pyramid_config)
 
 	_enclosure_views(pyramid_config)
-	_classinfo_views(pyramid_config)
 
 	_patching_restore_views(pyramid_config)
 

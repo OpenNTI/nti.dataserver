@@ -22,7 +22,6 @@ from nti.dataserver import authorization as auth
 from nti.dataserver import authorization_acl as auth_acl
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.users import User, FriendsList
-from .. import classes
 
 try:
 	# FIXME: I'm not really sure where this code should live
@@ -112,88 +111,6 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 
 		for action in (auth.ACT_CREATE,auth.ACT_DELETE,auth.ACT_UPDATE):
 			assert_that( acl_prov, denies( 'foo@bar', action ) )
-
-
-	def test_section_info_acl_provider(self):
-		section = classes.SectionInfo()
-		# With no instructors, no creator and no one enrolled, I have an ACL
-		# that simply denies everything
-		acl_prov = nti_interfaces.IACLProvider( section )
-		assert_that( acl_prov, provides( nti_interfaces.IACLProvider ) )
-		verifyObject( nti_interfaces.IACLProvider, acl_prov )
-
-		acl = acl_prov.__acl__
-		assert_that( acl, has_length( 2 ) )
-		assert_that( acl[0], is_(auth_acl.ace_allowing( 'role:NTI.Admin', nti_interfaces.ALL_PERMISSIONS ) ) )
-		assert_that( acl[1], is_(auth_acl.ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS ) ) )
-
-		# Some people enrolled should be able to view it
-		section.enroll( 'enrolled@bar' )
-		# clear the cache
-		del acl_prov.__acl__
-		assert_that( acl_prov, permits( 'enrolled@bar',
-										auth.ACT_READ ) )
-
-		# and an instructor can modify it
-		section.InstructorInfo.Instructors.append( "sjohnson@nti.com" )
-		# clear the cache
-		del acl_prov.__acl__
-
-		assert_that( acl_prov, permits( 'sjohnson@nti.com',
-										auth.ACT_UPDATE ) )
-
-		assert_that( acl_prov, permits( 'enrolled@bar',
-										auth.ACT_READ ) )
-
-		assert_that( acl_prov, denies( 'enrolled@bar',
-									   auth.ACT_UPDATE ) )
-
-
-	def test_class_info_acl_provider(self):
-		klass = classes.ClassInfo()
-		section = classes.SectionInfo()
-		section.ID = 'CS5201.501'
-		# With no instructors, no creator and no one enrolled, I have an ACL
-		# that simply denies everything
-		acl_prov = nti_interfaces.IACLProvider( klass )
-		assert_that( acl_prov, provides( nti_interfaces.IACLProvider ) )
-		verifyObject( nti_interfaces.IACLProvider, acl_prov )
-
-		acl = acl_prov.__acl__
-		# At this point, there's no provider set, so nothing changes
-		assert_that( acl, has_length( 1 ) )
-		assert_that( acl[0], is_(auth_acl.ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS ) ) )
-		# Give it a section, nothing changes because the section is empty
-		# except that we inherit a provider ACL from the section
-		# TODO: Is that right? We should probably be forcing
-		# consistency among providers
-		klass.add_section( section )
-		# clear the cache
-		del acl_prov.__acl__
-		acl = acl_prov.__acl__
-		assert_that( acl, has_length( 2 ) )
-		assert_that( acl[0], is_(auth_acl.ace_allowing( 'role:NTI.Admin', nti_interfaces.ALL_PERMISSIONS ) ) )
-		assert_that( acl[1], is_(auth_acl.ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS ) ) )
-
-		# But now start filling in the section and people start gaining
-		# rights.
-		# Some people enrolled should be able to view it
-		section.enroll( 'enrolled@bar' )
-		del acl_prov.__acl__
-		assert_that( acl_prov, permits( 'enrolled@bar',
-										auth.ACT_READ ) )
-
-		# and an instructor can modify it
-		section.InstructorInfo.Instructors.append( "sjohnson@nti.com" )
-		del acl_prov.__acl__
-		assert_that( acl_prov, permits( 'sjohnson@nti.com',
-										auth.ACT_UPDATE ) )
-
-		assert_that( acl_prov, permits( 'enrolled@bar',
-										auth.ACT_READ ) )
-
-		assert_that( acl_prov, denies( 'enrolled@bar',
-									   auth.ACT_UPDATE ) )
 
 
 	@mock_dataserver.WithMockDSTrans

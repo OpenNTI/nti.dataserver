@@ -594,80 +594,6 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 			return result
 		return super(_ShareableModeledContentACLProvider,self).__acl__
 
-# NOTE: All of the ACLs around classes will change as
-# roles become more defined. E.g., TAs will have some access.
-
-def _provider_admin_ace( obj ):
-	localname = str(obj.Provider).split('@')[0]
-	return ace_allowing( nti_interfaces.IGroup('role:' + localname + '.Admin'), nti_interfaces.ALL_PERMISSIONS )
-
-@component.adapter(nti_interfaces.ISectionInfo)
-class _SectionInfoACLProvider(_CreatedACLProvider):
-	"""
-	Class sections are viewable by those enrolled in the section;
-	the creator and instructors of the section have full write access.
-	"""
-
-	def __init__( self, obj ):
-		super(_SectionInfoACLProvider,self).__init__(obj)
-
-	@Lazy
-	def __acl__(self):
-		result = self._creator_acl()
-		# First, give the user's enrolled viewing
-		for name in self._created.Enrolled:
-			result.append( ace_allowing( name, authorization.ACT_READ, _SectionInfoACLProvider ) )
-		# And the instructors get full control
-		for name in (self._created.InstructorInfo or ()).Instructors:
-			result.append( ace_allowing( name, nti_interfaces.ALL_PERMISSIONS, _SectionInfoACLProvider ) )
-		# As do the admins
-		if self._created.Provider:
-			result.append( _provider_admin_ace( self._created ) )
-		# And finally nobody else gets jack squat
-		result.append( _ace_denying_all( _SectionInfoACLProvider ) )
-		return result
-
-@component.adapter( nti_interfaces.IClassInfo )
-class _ClassInfoACLProvider(_CreatedACLProvider):
-	"""
-	Classes are viewable by anyone enrolled in any section;
-	the creator and instructors of all sections have full
-	write access; admins of the providing organization have full access.
-	(Obviously this will change.)
-	"""
-
-	def __init__( self, obj ):
-		super(_ClassInfoACLProvider,self).__init__(obj)
-
-	@Lazy
-	def __acl__(self):
-		# We assume that a given username
-		# will not occur with contradictory rights,
-		# since we're only dealing with viewing and everything else.
-		# We can thus flatten the acls into a simple dictionary.
-		section_acls = dict()
-		for s in self._created.Sections:
-			acl = ACL(s)
-			for ace in acl:
-				section_acls[ace.actor] = ace
-		# The provider's admin role gets all perms
-		if self._created.Provider:
-			ace = _provider_admin_ace( self._created )
-			section_acls[ace.actor] = ace
-
-		result = self._creator_acl()
-		if result:
-			# We assume that the creator shows up in what we found.
-			# Replace that with the all-access right given
-			# by the superclass
-			section_acls[result[0].actor] = result[0]
-		section_acls.pop( nti_interfaces.IPrincipal(nti_interfaces.EVERYONE_GROUP_NAME), None )
-		result = [v for v in section_acls.values()]
-		# And finally nobody else gets jack squat
-		result.append( ace_denying( nti_interfaces.EVERYONE_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _ClassInfoACLProvider ) )
-
-		return _ACL(result)
-
 @component.adapter( nti_interfaces.IEnclosedContent )
 class _EnclosedContentACLProvider(_CreatedACLProvider):
 	"""
@@ -867,7 +793,7 @@ class _FriendsListACLProvider(_CreatedACLProvider):
 		for friend in self._created:
 			result.append( ace_allowing( friend.username, authorization.ACT_READ ) )
 		# And finally nobody else gets jack squat
-		result.append( ace_denying_all( _SectionInfoACLProvider ) )
+		result.append( ace_denying_all( _FriendsListACLProvider ) )
 		return result
 
 

@@ -114,6 +114,6 @@ def evolve( context ):
 		#for username, _ in bad_usernames:
 		#	del users[username]
 
-		for username, user in ds_folder['providers'].items():
+		for username, user in ds_folder.get('providers', {}).items():
 			#user._p_activate()
 			migrate( user, mock_ds )

@@ -165,25 +165,6 @@ class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
 from nti.utils import create_gravatar_url
 
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-@component.adapter(nti_interfaces.ISectionInfo)
-class _SectionInfoUserLikeDecorator(object):
-	"""
-	For purposes of the web UI, make SectionInfos, the other things that come back
-	from searching, look more like entities.
-	"""
-	__metaclass__ = SingletonDecorator
-	# SectionInfo implements toExternalObject() itself, so the IExternalMappingDecorator
-	# is useless
-
-	def decorateExternalObject( self, original, external ):
-		if 'Username' not in external:
-			external['Username'] = original.NTIID
-		for k in ('realname', 'alias' ):
-			if k not in external:
-				external[k] = original.Description if original.Description else original.ID
-		if 'avatarURL' not in external:
-			external['avatarURL'] = create_gravatar_url( original.ID, 'identicon' )
 
 from nti.dataserver.users import DynamicFriendsList
 

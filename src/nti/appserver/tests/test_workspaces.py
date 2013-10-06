@@ -15,14 +15,14 @@ import unittest
 from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
 from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
 from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
-from nti.appserver.workspaces import UserService, _UserEnrolledClassSectionsCollection as _UserClassesCollection, _UserPagesCollection as UserPagesCollection
+from nti.appserver.workspaces import UserService, _UserPagesCollection as UserPagesCollection
 from nti.appserver.workspaces import FriendsListContainerCollection
 
 from nti.appserver import tests
 from nti.appserver import interfaces as app_interfaces
 
 from nti.ntiids import ntiids
-from nti.dataserver import  users, providers
+from nti.dataserver import  users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject, to_external_object
@@ -211,8 +211,6 @@ class TestHomogeneousTypedContainerCollection (unittest.TestCase):
 		assert_that( cew.name, is_( 'NewName' ) )
 		assert_that( cew.__name__, is_( 'NewName' ) )
 
-from nti.dataserver.classes import ClassInfo, SectionInfo
-
 class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 
 	@mock_dataserver.WithMockDSTrans
@@ -250,18 +248,6 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 		assert_that( user_ws['Items'], has_item( has_entry( 'Links', has_item(
 			has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) ) ) ) )
 
-		# And a class
-		assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', 'EnrolledClassSections' ),
-																	has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/EnrolledClassSections' ) ) ) ) )
-
-		# A provider should show in the providers workspace
-		providers.Provider.create_provider( self.ds, username='OU' )
-		ext_object = toExternalObject( service )
-		assert_that( ext_object['Items'], has_item( has_entries( 'Title', 'providers',
-																 'Items', has_item( has_entry( 'href', '/dataserver2/providers/OU' ) ),
-																 # Because there is no authentication policy in use, we should be able to write to it
-																 'Items', has_item( has_entry( 'accepts', has_item( 'application/vnd.nextthought.classinfo' ) ) ) ) ) )
-
 	@mock_dataserver.WithMockDSTrans
 	def test_user_pages_collection_accepts_only_external_types(self):
 		"A user's Pages collection only claims to accept things that are externally creatable."
@@ -294,24 +280,6 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 		terms = [x.token for x in vocab]
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( terms ) ) )
 
-class TestUserClassesCollection(unittest.TestCase,tests.TestBaseMixin):
-
-	@mock_dataserver.WithMockDSTrans
-	def test_external( self ):
-		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
-		ou = providers.Provider.create_provider( self.ds, username='OU' )
-
-		clazz = ClassInfo( ID='CS5201' )
-		clazz.containerId = u'Classes'
-		ou.addContainedObject( clazz )
-		section = SectionInfo( ID='CS5201.501' )
-		clazz.add_section( section )
-		section.enroll( 'sjohnson@nextthought.com' )
-
-		assert_that( clazz.__parent__, is_not( none() ) )
-
-		ext_object = toExternalObject( _UserClassesCollection( UEW(user) ) )
-		assert_that( ext_object, has_entry( 'Title', 'EnrolledClassSections' ) )
 
 import tempfile
 import shutil

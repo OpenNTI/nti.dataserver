@@ -573,56 +573,6 @@ class TestChatserver(_ChatserverTestBase):
 		assert_that( auth_acl.ACLProvider(room3), permits( 'foo@bar', 'zope.View' ) )
 		assert_that( auth_acl.ACLProvider(room3), permits( 'friend@bar', 'zope.View' ) )
 
-
-	@WithMockDSTrans
-	def test_integration_chat_storage_class_section( self ):
-		ds = self.ds
-		import nti.dataserver.providers as providers
-		import nti.dataserver.classes as classes
-		import nti.dataserver.meeting_container_storage as mcs
-
-		user = providers.Provider( 'OU', parent=ds.root['providers'] )
-		ds.root['providers']['OU'] = user
-		fl1 = user.maybeCreateContainedObjectWithType(  'Classes', None )
-		fl1.containerId = 'Classes'
-		fl1.ID = 'CS2051'
-		fl1.Description = 'CS Class'
-		user.addContainedObject( fl1 )
-
-		section = classes.SectionInfo()
-		section.ID = 'CS2051.101'
-		fl1.add_section( section )
-		section.InstructorInfo = classes.InstructorInfo()
-		section.enroll( 'chris' )
-		section.InstructorInfo.Instructors.append( 'sjohnson' )
-		section.Provider = 'OU'
-
-
-		fl1 = fl1.Sections[0]
-
-		mc = mcs.MeetingContainerStorage( ds )
-		sessions = self.Sessions()
-		sessions[1] = self.Session( 'sjohnson' )
-		sessions[2] = self.Session( 'chris' )
-		sessions[3] = self.Session( 'jason' )
-		chatserver = chat.Chatserver( sessions, chat.TestingMappingMeetingStorage(), meeting_container_storage=mc )
-		other = chat.ChatHandler( chatserver, sessions[3] )
-		student = chat.ChatHandler( chatserver, sessions[2] )
-		instructor = chat.ChatHandler( chatserver, sessions[1] )
-
-
-		# I entered and created.
-		room = instructor.enterRoom( {'ContainerId': fl1.NTIID } )
-		assert_that( room, is_( not_none() ) )
-
-		# A student can enter and be in the same room.
-		assert_that( student.enterRoom( {"ContainerId": fl1.NTIID } ), is_( room ) )
-
-		# A foreigner cannot.
-		assert_that( other.enterRoom( {'ContainerId': fl1.NTIID } ), is_( none() ) )
-
-
-
 	@WithMockDSTrans
 	def test_msg_to_def_channel_unmod_goes_to_user_transcript(self):
 		sessions = self.Sessions()

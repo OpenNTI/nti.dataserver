@@ -278,7 +278,7 @@ class LikeDecorator(object):
 		mapping['LikeCount'] = like_count( context ) # go through the function to be safe
 
 
-from zope.app.container.contained import Contained
+from zope.container.contained import Contained
 from persistent import Persistent
 import BTrees
 from BTrees.Length import Length

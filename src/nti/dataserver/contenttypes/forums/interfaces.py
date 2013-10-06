@@ -305,40 +305,11 @@ class ICommunityBoard(IGeneralBoard, nti_interfaces.IShouldHaveTraversablePath):
 	contains(b'.ICommunityForum')
 	__setitem__.__doc__ = None
 
-
-class IClassBoard(IGeneralBoard, nti_interfaces.IShouldHaveTraversablePath):
-	"""
-	A board belonging to a particular class.
-	"""
-	contains(b'.IClassForum')
-	__setitem__.__doc__ = None
-
-class IClassSectionBoard(IGeneralBoard, nti_interfaces.IShouldHaveTraversablePath):
-	"""
-	A board belonging to a particular class section
-	"""
-	contains(b'.IClassSectionForum')
-	__setitem__.__doc__ = None
-
 class ICommunityForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
 	"""
 	A forum belonging to a particular community.
 	"""
 	containers(nti_interfaces.ICommunity, ICommunityBoard)
-	__parent__.required = False
-
-class IClassForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
-	"""
-	A forum belonging to a particular class.
-	"""
-	containers(nti_interfaces.IClassInfo, IClassBoard)
-	__parent__.required = False
-
-class IClassSectionForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
-	"""
-	A forum belonging to a particular class section.
-	"""
-	containers(nti_interfaces.ISectionInfo, IClassSectionBoard)
 	__parent__.required = False
 
 class IGeneralTopic(ITopic):
@@ -412,7 +383,7 @@ class IACLCommunityBoard(IACLGeneralBoard, ICommunityBoard):
 IACLCommunityBoard.setTaggedValue('__external_class_name__', "CommunityBoard")
 
 # ACL Forums
-	
+
 class IACLGeneralForum(IACLEnabled, IForum, nti_interfaces.ICreated):
 	"""
 	A general purpose forum that has its own ACL
@@ -423,4 +394,3 @@ class IACLCommunityForum(IACLGeneralForum, ICommunityForum):
 	A community forum with its own ACL
 	"""
 IACLCommunityForum.setTaggedValue('__external_class_name__', "CommunityForum")
-

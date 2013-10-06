@@ -12,9 +12,6 @@ from zope.component.hooks import site, getSite
 import zope.generations.generations
 from zope.generations import interfaces as gen_interfaces
 
-import nti.dataserver.classes as classes
-import nti.dataserver.providers as providers
-
 from nti.dataserver.users import User, Community, FriendsList
 
 import logging
@@ -239,23 +236,6 @@ class ExampleDatabaseInitializer(object):
 #				self._add_test_user_friendlist(user)
 
 		map(create_add_user, USERS)
-
-		provider = providers.Provider( 'OU', parent=root['providers'] )
-		root['providers']['OU'] = provider
-		klass = provider.maybeCreateContainedObjectWithType(  'Classes', None )
-		klass.containerId = 'Classes'
-		klass.ID = 'CS2051'
-		klass.Description = 'CS Class'
-		provider.addContainedObject( klass )
-
-		section = classes.SectionInfo()
-		section.ID = 'CS2051.101'
-		klass.add_section( section )
-		section.InstructorInfo = classes.InstructorInfo()
-		for user_tuple in USERS:
-			section.enroll( user_tuple[0] )
-		section.InstructorInfo.Instructors.append( 'jason.madden@nextthought.com' )
-		section.Provider = 'OU'
 
 	def evolve( self, context, generation ):
 		conn = context.connection

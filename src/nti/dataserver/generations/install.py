@@ -187,10 +187,10 @@ def install_flag_storage( dataserver_folder ):
 
 def install_root_folders( parent_folder,
 						  folder_type=container.CaseInsensitiveLastModifiedBTreeFolder,
-						  folder_names=('users', 'providers',),
+						  folder_names=('users',),
 						  extra_folder_names=(),
 						  exclude_folder_names=() ):
-	for key in set( ('users', 'providers', 'quizzes' ) + extra_folder_names) - set( exclude_folder_names ):
+	for key in (set( folder_names ) | set( extra_folder_names )) - set( exclude_folder_names ):
 		parent_folder[key] = folder_type()
 		parent_folder[key].__name__ = key
 
@@ -225,5 +225,4 @@ def install_shard( root_conn, new_shard_name ):
 	# Put the same things in there, but they must not take ownership or generate
 	# events
 	install_root_folders( dataserver_folder,
-						  folder_type=container.EventlessLastModifiedBTreeContainer,
-						  exclude_folder_names=('quizzes',) )
+						  folder_type=container.EventlessLastModifiedBTreeContainer )

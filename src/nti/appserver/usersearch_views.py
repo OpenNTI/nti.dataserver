@@ -165,7 +165,7 @@ def _ResolveUsersView(request):
 	usernames = values.get('usernames', values.get('terms', ()))
 	if isinstance(usernames, six.string_types):
 		usernames = usernames.split()
-	
+
 	result = {}
 	for term in set(usernames):
 		item = _resolve_user(term, remote_user)
@@ -175,7 +175,7 @@ def _ResolveUsersView(request):
 			result[match.username] = toExternalObject(match, name=('personal-summary'
 													  if match == remote_user
 													  else 'summary'))
-	
+
 	result = LocatedExternalDict({'Last Modified': 0, 'Items': result, 'Total':len(result)})
 	return _provide_location(result, dataserver)
 
@@ -271,6 +271,10 @@ def _authenticated_search( request, remote_user, dataserver, search_term ):
 def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains, fl_only=False, ignore_fl=False ):
 	"""
 
+	.. note:: This should be an extension point for new
+		relationship types. We could look for 'search provider' components
+		and use them.
+
 	:param remote_user: The active User object.
 	:param search_term: The (lowercase) search string.
 
@@ -300,15 +304,6 @@ def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains
 			check_entity( fl )
 	if fl_only:
 		return result
-
-	# Also add enrolled classes
-	# TODO: What about instructors?
-	enrolled_sections = component.getAdapter( remote_user, app_interfaces.IContainerCollection, name='EnrolledClassSections' )
-	for section in enrolled_sections.container:
-		# TODO: We really want to be searching the class as well, but
-		# we cannot get there from here
-		if op( section.ID.lower(), search_term ) or op( section.Description.lower(), search_term ):
-			result.add( section )
 
 	# Search their dynamic memberships
 	for x in remote_user.dynamic_memberships:
@@ -360,4 +355,3 @@ class _SharedDynamicMembershipProviderDecorator(object):
 			remote_dmemberships = remote_user.usernames_of_dynamic_memberships - set(('Everyone',))
 			shared_dmemberships = original.usernames_of_dynamic_memberships.intersection(remote_dmemberships)
 			mapping['SharedDynamicMemberships'] = list(shared_dmemberships)
-

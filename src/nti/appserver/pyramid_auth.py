@@ -356,17 +356,6 @@ class NTIForbiddenView(object):
 		result.vary = default_vary_on( request ) # TODO: Do this with a response factory or something similar
 		return result
 
-# Temporarily make everyone an OU admin
-@interface.implementer( nti_interfaces.IGroupMember )
-@component.adapter( object )
-class OUAdminFactory(object):
-	"""
-	If this is registered, it makes everyone an administrator of the OU provider.
-	"""
-
-	def __init__( self, context ):
-		self.groups = (nti_interfaces.IRole( "role:OU.Admin" ), )
-
 @interface.implementer(nti_interfaces.IGroupMember)
 @component.adapter(nti_interfaces.IUser)
 class NextthoughtDotComAdmin(object):

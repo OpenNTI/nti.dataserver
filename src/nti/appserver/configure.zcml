@@ -61,9 +61,6 @@
 	<adapter factory="._dataserver_pyramid_traversal.CommunityTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
 
-	<adapter factory="._dataserver_pyramid_traversal.ProviderTraversable"
-			 provides="zope.traversing.interfaces.ITraversable" />
-
 	<include package="." file="configure_workspaces.zcml" />
 
 	<adapter factory=".pyramid_renderers.uncacheable_factory" />
@@ -85,9 +82,6 @@
 
 	<adapter factory=".pyramid_renderers.UseTheRequestContextCacheController"
 			 for=".interfaces.ILibraryCollection" />
-
-	<subscriber factory="._adapters._SectionInfoUserLikeDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
 	<subscriber factory="._adapters._DFLUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
@@ -328,12 +322,6 @@
 	<include package=".utils.users" />
 
 	<!-- Hacky temporary stuff -->
-	<adapter name="OUAdminFactory"
-			 for="*"
-			 factory=".pyramid_auth.OUAdminFactory"
-			 provides="nti.dataserver.interfaces.IGroupMember"
-			 zcml:condition="have devmode" />
-
 	<adapter name="NextthoughtDotComAdmin"
 			 for="nti.dataserver.interfaces.IUser"
 			 factory=".pyramid_auth.NextthoughtDotComAdmin"
