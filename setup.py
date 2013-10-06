@@ -293,7 +293,7 @@ setup(
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.3.1',
 		'six >= 1.4.1',
-		'sympy >= 0.7.3' if not IS_PYPY else '',
+		'sympy >= 0.7.3',
 		'stripe >= 1.9.5',	# stripe payments
 		# 'slimit',
 		'supervisor >= 3.0',

@@ -69,9 +69,14 @@ def _symbolic( child ):
 	except (sympy_parser.TokenError,SyntaxError,AttributeError,TypeError): # TypeError arises on 1(2) -> function call of 1
 		return child
 	except NameError:
-		# sympy 0.7.2 has a bug: it wants to raise TokenError, instead raises NameError on "'''"
-		# In general, even github trunk (as-of 20121113) has problems parsing multi-line continued strings. The file is full
-		# of 'strstart' refs to undefined variables
+		# sympy 0.7.2 and 0.7.3 has a bug: in
+		# sympy.parsing.sympy_tokenize (line 318 in 0.7.3) it wants to
+		# raise TokenError, instead raises NameError on "'''" In
+		# general, even github trunk (as-of 20131006) has problems
+		# parsing multi-line continued strings. The file is full of
+		# 'strstart' refs to undefined variables.
+		# See https://github.com/sympy/sympy/issues/2515
+		# We have a test case for this.
 		return child
 
 def _mathChildIsEqual(child1, child2):
