@@ -187,12 +187,21 @@ setup(
 		# but the original it was forked from, at github/lecram seems to be; both
 		# have commits not in the released 0.5 that we need.
 		# As of 2013-10-04 it looks like releases are being made to PyPI again,
-		# and lecram is now maintaining the master copy at https://github.com/PyMySQL/PyMySQL/
+		# and lecram is now maintaining the master copy at https://github.com/PyMySQL/PyMySQL/.
+		# However, pymysql 0.6 is incompatible with relstorage. The cursors.Cursor
+		# class changed from storing self.connection as weakref.proxy to a plain
+		# weakref (requiring a call to dereference) which naturally breaks all users
+		# of cursors:
+		#  Module relstorage.storage:925 in f
+		#  >>  return list(self._adapter.oidallocator.new_oids(cursor))
+		#  Module relstorage.adapters.oidallocator:58 in new_oids
+		#  >>  n = cursor.connection.insert_id()
+		#  AttributeError: 'weakref' object has no attribute 'insert_id'
 		# MySQL-python (aka MySQLdb) has been renamed to moist (https://github.com/farcepest/moist)
 		'umysql == 2.61',
 		'umysqldb >= 1.0.2',
 		'RelStorage >= 1.5.1',
-		'PyMySQL >= 0.6',
+		'PyMySQL == 0.5',
 		'python-memcached >= 1.53',	 # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
@@ -460,6 +469,7 @@ setup(
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
+		'git+https://github.com/lecram/PyMySQL.git#egg=PyMySQL-0.5', # no tag for this sadly
 		'https://pypi.python.org/packages/source/s/sympy/sympy-0.7.3-py2.7.tar.gz#egg=sympy-0.7.3',
 	],
 	packages=find_packages('src'),
