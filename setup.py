@@ -197,6 +197,7 @@ setup(
 		#  Module relstorage.adapters.oidallocator:58 in new_oids
 		#  >>  n = cursor.connection.insert_id()
 		#  AttributeError: 'weakref' object has no attribute 'insert_id'
+		# See https://github.com/PyMySQL/PyMySQL/issues/180
 		# MySQL-python (aka MySQLdb) has been renamed to moist (https://github.com/farcepest/moist)
 		'umysql == 2.61',
 		'umysqldb >= 1.0.2',
