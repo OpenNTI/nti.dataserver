@@ -562,6 +562,7 @@ class _NTIIDEntry(object):
 	__operations__ = ('UserGeneratedData', 'RecursiveUserGeneratedData',
 					  'Stream', 'RecursiveStream',
 					  'UserGeneratedDataAndRecursiveStream',
+					  'RelevantUserGeneratedData',
 					  'Glossary',
 					  'TopUserSummaryData', 'UniqueMinMaxSummary')
 
