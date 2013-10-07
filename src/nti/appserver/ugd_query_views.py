@@ -615,6 +615,34 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 		return sort_key_function
 
 
+	def _get_security_check(self):
+		needs_security = self._force_apply_security or self.remoteUser != self.user
+		# Our security check is optimized for sharing objects, not taking the full
+		# ACL into account.
+		if not needs_security:
+			def security_check(x):
+				return True
+			predicate = security_check
+		else:
+			remote_user = self.remoteUser
+			my_ids = self.remoteUser.xxx_intids_of_memberships_and_self
+			family = component.getUtility(IIntIds).family
+			def security_check(x):
+				try:
+					if remote_user == x.creator:
+						return True
+				except AttributeError:
+					pass
+				try:
+					return x.xxx_isReadableByAnyIdOfUser(remote_user, my_ids, family)
+				except (AttributeError, TypeError):
+					try:
+						return x.isSharedWith(remote_user) # TODO: Might need to OR this with is_readable?
+					except AttributeError:
+						return is_readable(x)
+			predicate = security_check
+		return needs_security, predicate
+
 	def _sort_filter_batch_objects( self, objects ):
 		"""
 		Sort, filter, and batch (page) the objects collections,
@@ -736,33 +764,13 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			on the values in ``TotalItemCount`` or ``FilteredTotalItemCount``.
 
 		"""
-		needs_security = self._force_apply_security or self.remoteUser != self.user
 
-		# Our security check is optimized for sharing objects, not taking the full
-		# ACL into account.
-		if not needs_security:
-			def security_check(x):
-				return True
-			tuple_security_check = security_check
-		else:
-			remote_user = self.remoteUser
-			my_ids = self.remoteUser.xxx_intids_of_memberships_and_self
-			family = component.getUtility( IIntIds ).family
-			def security_check(x):
-				try:
-					if remote_user == x.creator:
-						return True
-				except AttributeError:
-					pass
-				try:
-					return x.xxx_isReadableByAnyIdOfUser( remote_user, my_ids, family )
-				except (AttributeError,TypeError):
-					try:
-						return x.isSharedWith( remote_user ) # TODO: Might need to OR this with is_readable?
-					except AttributeError:
-						return is_readable(x)
+		needs_security, security_check = self._get_security_check()
+		if needs_security:
 			def tuple_security_check(x):
 				return security_check(x[1])
+		else:
+			tuple_security_check = security_check
 
 		total_item_count = sum( (len(x) for x in objects if x is not None) )
 
