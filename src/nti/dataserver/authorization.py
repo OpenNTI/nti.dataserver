@@ -241,6 +241,8 @@ ROLE_ADMIN = _StringRole( ROLE_ADMIN_NAME )
 ROLE_MODERATOR_NAME = ROLE_PREFIX + 'nti.moderator'
 ROLE_MODERATOR = _StringRole( ROLE_MODERATOR_NAME )
 
+# TODO: Everyone and Authenticated can go away
+# through the use of the principal registry
 class _EveryoneGroup(_StringGroup):
 	"Everyone, authenticated or not."
 
