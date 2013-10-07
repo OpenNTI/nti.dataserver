@@ -20,11 +20,10 @@ from nti.appserver import ugd_query_views as query_views
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
-from nti.dataserver import interfaces as nti_interfaces
-
 from nti.externalization.interfaces import LocatedExternalDict
 
 union_operator = query_views.Operator.union
+intersection_operator = query_views.Operator.intersection
 
 class _RelevantUGDView(query_views._UGDView):
 	
@@ -35,7 +34,6 @@ class _RelevantUGDView(query_views._UGDView):
 	def _make_complete_predicate(self, operator=union_operator):
 		# accepted mime_types
 		predicate = self._make_accept_predicate()
-
 		# top level objects and my own
 		filter_names = ('TopLevel', 'OnlyMe')
 		for filter_name in filter_names:
@@ -47,7 +45,7 @@ class _RelevantUGDView(query_views._UGDView):
 		# things shared w/ me
 		def filter_shared_with(x):
 			x_sharedWith = getattr(x, 'sharedWith', ())
-			if self.user in x_sharedWith:
+			if self.user.username in x_sharedWith:
 				return True
 		predicate = query_views._combine_predicate(filter_shared_with, predicate, operator=operator)
 
@@ -64,44 +62,35 @@ class _RelevantUGDView(query_views._UGDView):
 		result.extend(query_views._flatten_list_and_dicts(objects, predicate))
 		return result
 
-	def _get_items(self, ntiid):
+	def _get_items(self, ntiid, result=None):
 		# query objects
-		view = query_views._UGDStreamView(self.request)
+		view = query_views._UGDView(self.request)
 		view._DEFAULT_BATCH_SIZE = view._DEFAULT_BATCH_START = None
 		try:
 			all_objects = view.getObjectsForId(self.user, ntiid)
 		except _hexc.HTTPNotFound:
 			return ()
 
-		result = []
+		result = [] if result is None else result
 		predicate = self._make_complete_predicate()
-		for o in query_views._flatten_list_and_dicts(all_objects, predicate):
-			# check for model content and Change events
-			if 	nti_interfaces.IStreamChangeEvent.providedBy(o) and \
-				o.type in (nti_interfaces.SC_CREATED, nti_interfaces.SC_MODIFIED):
-				obj = o.object
-			elif nti_interfaces.IModeledContent.providedBy(o):
-				obj = o
-			else:
-				continue
-			result.append(obj)
+		result.extend(query_views._flatten_list_and_dicts(all_objects, predicate))
 		return result
 
 	def _get_library_path(self, ntiid):
 		library = self.request.registry.getUtility(lib_interfaces.IContentPackageLibrary)
 		paths = library.pathToNTIID(ntiid) if library else None
-		return [paths[-1]] if paths else None
+		return paths[-1] if paths else None
 
 	def _scan_quizzes(self, result=None):
 		result = [] if result is None else result
 		question_map = component.queryUtility(app_interfaces.IFileQuestionMap)
 		if question_map:
-			unit = self._get_library_path(self.ntiid)
-			questions = question_map.by_file.get(getattr(unit, 'key', None))
+			path = self._get_library_path(self.ntiid)
+			questions = question_map.by_file.get(getattr(path, 'key', None))
 			for question in questions or ():
 				ntiid = getattr(question, 'ntiid', None)
-				items = self._get_items(ntiid) if ntiid else ()
-				result.extend(items)
+				if ntiid:
+					self._get_items(ntiid, result)
 		return result
 	
 	def _scan_videos(self, result=None):
@@ -112,8 +101,7 @@ class _RelevantUGDView(query_views._UGDView):
 			ntiid = getattr(unit, 'ntiid', None)
 			videos = video_map.by_container.get(ntiid)
 			for video_id in videos or ():
-				items = self._get_items(video_id) if ntiid else ()
-				result.extend(items)
+				self._get_items(video_id, result)
 		return result
 
 	def __call__(self):
