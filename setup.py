@@ -8,7 +8,6 @@ entry_points = {
 		"nti_init_shard = nti.dataserver.utils.nti_init_shard:main",
 		"nti_cache_avatars = nti.dataserver.utils.nti_cache_avatars:main",
 		"nti_create_user = nti.dataserver.utils.nti_create_user:main",
-		"nti_create_class = nti.dataserver.utils.nti_create_class:main",
 		"nti_create_friendslist = nti.dataserver.utils.nti_create_friendslist:main",
 		"nti_add_remove_friends = nti.dataserver.utils.nti_add_remove_friends:main",
 		"nti_enroll_class = nti.dataserver.utils.nti_enroll_class:main",
