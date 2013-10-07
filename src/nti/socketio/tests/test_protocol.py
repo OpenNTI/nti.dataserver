@@ -2,7 +2,8 @@
 #pylint: disable=R0904
 from __future__ import unicode_literals
 
-from nti.testing.matchers import verifiably_provides, AbstractTestBase
+from nti.testing.matchers import verifiably_provides
+from nti.testing.base import AbstractTestBase
 from nti.socketio import protocol
 from nti.socketio import interfaces
 
