@@ -393,6 +393,7 @@ class _AbstractReliableLastModifiedCacheController(object):
 class _ZopeFileCacheController(_AbstractReliableLastModifiedCacheController):
 	# All of our current uses of zope file objects replace them with
 	# new objects, they don't overwrite. so we can use the _p_oid and _p_serial
+	# of the IFile as a proxy for the underlying bits of the blob.
 
 	max_age = 3600 # an hour
 

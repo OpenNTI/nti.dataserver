@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from ZODB.POSException import POSKeyError
+
 from zope.file import download
 
 from zope.browserresource.interfaces import IFileResource
@@ -35,6 +37,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.utils import dataurl
 
 from . import interfaces as app_interfaces
+from . import httpexceptions as hexc
 
 @view_config( route_name='objects.generic.traversal',
 			  context=zope.file.interfaces.IFile,
@@ -48,15 +51,27 @@ def file_view(request):
 	Some ACL in the parent hierarchy must make this readable.
 	"""
 	# Best we can do is try to get good cache headers. Check this before
-	# opening a blob
+	# opening a blob; if etags match it raises NotModified
 	app_interfaces.IPreRenderResponseCacheController(request.context)(request.context, {'request': request} )
 
-	# For the typical IFile implementation backed by a ZODB blob,
-	# this opens the blob in 'committed' mode and reads the data from a local file.
-	# It is thus transaction and site independent making it safe to pass up through
-	# any tweens that do transaction and site management
+	# For the typical IFile implementation backed by a ZODB blob, this
+	# opens the blob in 'committed' mode and reads the data from a
+	# local file. It (the app_iter) is thus transaction and site
+	# independent making it safe to pass up through any tweens that do
+	# transaction and site management
 	view = download.Display( request.context, IBrowserRequest(request) )
-	app_iter = view()
+	try:
+		app_iter = view()
+	except POSKeyError:
+		# We get this from RelStorage if the blob directory is not
+		# configured correctly, typically on a new machine/new deployment.
+		# The wrapping IFile object exists, but the underling blob
+		# does not
+		logger.exception("A blob is missing. Is the blob-storage configured correctly?")
+		# 507. Not exactly right, but better than a 404 as it indicates
+		# a transient situation and an error on the server
+		raise hexc.HTTPInsufficientStorage()
+
 	request.response.app_iter = app_iter
 	# The correct mimetype will be set because the IFile is IContentTypeAware
 	# and zope.mimetype provides an adapter from that to IContentInfo, which Display
