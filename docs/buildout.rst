@@ -88,9 +88,25 @@ Initial Setup
 
 2. Checkout the buildout configurations::
 
-	 $ svn co https://repos.nextthought.com/svn/nti-svn/NextThoughtPlatform/trunk/nti.dataserver-buildout
+	 $ export REPO=https://repos.nextthought.com/svn/nti-svn
+	 $ svn co $REPO/NextThoughtPlatform/trunk/nti.dataserver-buildout
 
-3. Bootstrap the buildout::
+3. (Optional) The default locations for the web app, login app, and
+   content directory are all relative to the buildout configuration.
+   This lets one setup be used across machines for frontend and
+   backend developers alike. To use these locations, checkout the
+   projects (or move existing checkouts into place)::
+
+	 $ svn co $REPO/NextThoughtWebApp/trunk NextThoughtWebApp
+	 $ svn co $REPO/NextThoughtLoginApp/trunk NextThoughtLoginApp
+	 $ mkdir DataserverGlobalLibrary
+	 $ ls -F
+	 nti.dataserver-buildout/
+	 NextThoughtLoginApp/
+	 NextThoughtWebApp/
+	 DataserverGlobalLibrary/
+
+4. Bootstrap the buildout::
 
 	 $ cd nti.dataserver-buildout
 	 $ python ./bootstrap.py
@@ -98,11 +114,11 @@ Initial Setup
 This will generate some files and directories, notably the script
 ``bin/buildout``.
 
-4. Install the buildout using the appropriate configuration. For local
-   development, this is currently ``zeo_environment.cfg`` (subject to
+5. Install the buildout using the appropriate configuration. For local
+   development, this is currently ``developer_zeo_environment.cfg`` (subject to
    change)::
 
-	 $ bin/buildout -c zeo_environment.cfg
+	 $ bin/buildout -c developer_zeo_environment.cfg
 
 The first thing this does is checkout all of the relevant source from
 source control. Then it fetches their dependencies. It also creates a
@@ -128,7 +144,10 @@ Simply startup supervisord:
   $ bin/supervisord -n
 
 That runs all of the necessary elements in the foreground; stop them
-all with Control-C or ``bin/supervisorctl shutdown``.
+all with Control-C or ``bin/supervisorctl shutdown``. This includes
+HAProxy (on port 8082 by default) dispatching to Nginx for content and
+of course the dataserver. For HTTPs testing, a self-signed SSL
+endpoint exists on port 8443.
 
 Updating
 --------
