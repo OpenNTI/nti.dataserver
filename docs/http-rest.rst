@@ -15,7 +15,7 @@ Our MIME types (and our use of ``Content-Type`` and ``Accept``) is
 similar to `github's <http://developer.github.com/v3/mime/>`_. In
 particular, our format is::
 
-  application/vnd.nextthought[.version][.class][.param][+json|plist]
+  application/vnd.nextthought[.version][.class][.param][+json]
 
 If ``version`` is missing, it means the latest. ``Class`` is required
 for create and update operations (unless specified in the data itself;
@@ -29,7 +29,6 @@ JSON is the default but may be specified with ``+json``.
 Also valid in Accept headers are::
 
   application/json (for the default, latest JSON encoding)
-  application/xml  (for the default, latest XML encoding in PList schema)
 
-Therefore, ``application/json`` is equivalent to ``application/vnd.nextthought+json``
-and ``application/xml`` is equivalent to application/vnd.nextthought+plist.
+
+Therefore, ``application/json`` is equivalent to ``application/vnd.nextthought+json``.
