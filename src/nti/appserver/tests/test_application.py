@@ -11,6 +11,7 @@ from hamcrest import greater_than
 from hamcrest import not_none
 from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
+from hamcrest import less_than
 from hamcrest import is_not
 from hamcrest import contains, contains_inanyorder
 from hamcrest import has_value
@@ -693,7 +694,7 @@ class TestApplication(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDSHandleChanges(users=('foo@bar',), testapp=True,default_authenticate=True)
 	@time_monotonically_increases
-	def test_post_pages_collection(self):
+	def test_post_put_conditionalput_to_pages_collection(self):
 		self.ds.add_change_listener( users.onChange )
 
 		testapp = self.testapp
@@ -751,6 +752,14 @@ class TestApplication(SharedApplicationTestBase):
 		new_other_res = self.fetch_user_ugd( containerId, testapp=otherapp, username=otherapp.username )
 		assert_that( new_other_res.etag, is_not( other_res.etag ) )
 		assert_that( _lm(new_other_res.last_modified), is_(greater_than( _lm(other_res.last_modified ) ) ))
+
+		# I can conditionally try to put based on timestamp and
+		# get precondition failed
+		assert_that( res.json_body['CreatedTime'], is_( less_than( res.json_body['Last Modified'] ) ) )
+		since = datetime.datetime.fromtimestamp( res.json_body['CreatedTime'], webob.datetime_utils.UTC )
+		testapp.put_json( href, {'selectedText': 'Conditional'},
+						  headers={'If-Unmodified-Since': webob.datetime_utils.serialize_date(since) },
+						  status=412 )
 
 		# The pages collection should have complete URLs
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages'

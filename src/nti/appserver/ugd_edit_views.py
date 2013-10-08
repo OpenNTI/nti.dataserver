@@ -183,7 +183,9 @@ class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixi
 	def _do_delete_object( self, theObject ):
 		return theObject.creator.deleteContainedObject( theObject.containerId, theObject.id )
 
-class UGDPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin,ModeledContentEditRequestUtilsMixin):
+class UGDPutView(AbstractAuthenticatedView,
+				 ModeledContentUploadRequestUtilsMixin,
+				 ModeledContentEditRequestUtilsMixin):
 	""" PUTting to an existing object is possible (but not
 	creating an object with an arbitrary OID)."""
 
@@ -201,6 +203,10 @@ class UGDPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin
 		object_to_update = self._get_object_to_update()
 		theObject = object_to_update
 		self._check_object_exists( theObject )
+
+		# Now that we know we've got an object, see if they sent
+		# preconditions
+		self._check_object_unmodified_since( theObject )
 
 		# Then ensure the users match
 		# remoteUser = self.getRemoteUser()

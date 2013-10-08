@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import sys
+import datetime
 import transaction
 
 try:
@@ -25,6 +26,7 @@ from zope.schema import interfaces as sch_interfaces
 
 from pyramid import security as sec
 from pyramid.threadlocal import get_current_request
+import webob.datetime_utils
 
 from nti.appserver import httpexceptions as hexc
 from nti.appserver import interfaces as app_interfaces
@@ -34,7 +36,7 @@ from nti.dataserver import users
 from nti.dataserver.interfaces import IDataserver
 
 from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
-
+from nti.externalization.externalization import to_standard_external_last_modified_time
 from nti.mimetype import mimetype
 
 
@@ -260,3 +262,18 @@ class ModeledContentEditRequestUtilsMixin(object):
 		"""
 		if o is None or app_interfaces.IDeletedObjectPlaceholder.providedBy( o ):
 			raise hexc.HTTPNotFound( "No object %s/%s/%s" % (cr, cid,oid))
+
+	def _check_object_unmodified_since( self, obj ):
+		"""
+		If the request for this object has a 'If-Unmodified-Since' header,
+		and the provided object supports modification times, then the two
+		values will be compared, and if the objects modification time is
+		more recent than the request's, HTTP's 412 Precondition failed will be
+		raised.
+		"""
+
+		if self.request.if_unmodified_since is not None:
+			obj_last_mod = to_standard_external_last_modified_time( obj )
+			if obj_last_mod is not None \
+				and datetime.datetime.fromtimestamp( obj_last_mod, webob.datetime_utils.UTC ) > self.request.if_unmodified_since:
+				raise hexc.HTTPPreconditionFailed()
