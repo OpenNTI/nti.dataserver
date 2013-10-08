@@ -12,20 +12,16 @@ logger = __import__('logging').getLogger(__name__)
 import inspect
 from datetime import datetime
 
-from zope import interface
-
 from nti.contentprocessing import rank_words
 
-from nti.utils.schema import SchemaConfigured
 from nti.utils.maps import CaseInsensitiveDict
-from nti.utils.schema import createDirectFieldProperties
 
 from . import common
+from . import _whoosh_types
 from ._search_query import QueryObject
 from ._whoosh_query import parse_query
 from . import _whoosh_schemas as wschs
 from . import _search_results as srlts
-from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
 
 from .constants import (channel_, content_, keywords_, references_, sharedWith_,
@@ -103,29 +99,6 @@ class _SearchableContent(object):
 		raise NotImplementedError()
 
 
-class _MetaSearchWhooshContent(type):
-
-	def __new__(cls, name, bases, dct):
-		t = type.__new__(cls, name, bases, dct)
-		t.mime_type = t.mimeType = 'application/vnd.nextthought.search.%s' % name[1:].lower()
-		t.parameters = dict()
-		setattr(t, '__external_can_create__', True)
-		setattr(t, '__external_class_name__', name[1:])
-		return t
-
-@interface.implementer(search_interfaces.IWhooshBookContent)
-class _BookContent(SchemaConfigured):
-	__metaclass__ = _MetaSearchWhooshContent
-	createDirectFieldProperties(search_interfaces.IWhooshBookContent)
-
-	@property
-	def intid(self):
-		return self.docnum
-
-	@property
-	def containerId(self):
-		return self.ntiid
-
 class Book(_SearchableContent):
 
 	def __init__(self, schema=None):
@@ -142,23 +115,14 @@ class Book(_SearchableContent):
 
 				score = hit.score or 1.0
 				last_modified = common.epoch_time(hit[last_modified_])
-				data = _BookContent(docnum=docnum,
-									score=score,
-									ntiid=hit[ntiid_],
-						 			title=hit[title_],
-						 			content=hit[content_],
-						 			last_modified=last_modified)
+				data = _whoosh_types._BookContent(docnum=docnum,
+												  score=score,
+												  ntiid=hit[ntiid_],
+									 			  title=hit[title_],
+									 			  content=hit[content_],
+									 			  last_modified=last_modified)
 				result.append(srlts.IndexHit(data, score))
 		return result
-
-@interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
-class _VideoTranscriptContent(SchemaConfigured):
-	__metaclass__ = _MetaSearchWhooshContent
-	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
-
-	@property
-	def ntiid(self):
-		return self.videoId
 
 class VideoTranscript(_SearchableContent):
 
@@ -171,27 +135,18 @@ class VideoTranscript(_SearchableContent):
 		for hit in search_hits:
 			docnum = hit.docnum
 			score = hit.score or 1.0
-			data = _VideoTranscriptContent(
-							score=score,
-							docnum=docnum,
-							title=hit[title_],
-							content=hit[content_],
-							videoId=hit[videoId_],
-				 			containerId=hit[containerId_],
-							last_modified=common.epoch_time(hit[last_modified_]),
-				 			end_millisecs=common.video_date_to_millis(hit[end_timestamp_]),
-				 			start_millisecs=common.video_date_to_millis(hit[start_timestamp_]))
+			data = _whoosh_types._VideoTranscriptContent(
+									score=score,
+									docnum=docnum,
+									title=hit[title_],
+									content=hit[content_],
+									videoId=hit[videoId_],
+						 			containerId=hit[containerId_],
+									last_modified=common.epoch_time(hit[last_modified_]),
+						 			end_millisecs=common.video_date_to_millis(hit[end_timestamp_]),
+						 			start_millisecs=common.video_date_to_millis(hit[start_timestamp_]))
 			result.append(srlts.IndexHit(data, score))
 		return result
-
-@interface.implementer(search_interfaces.IWhooshNTICardContent)
-class _NTICardContent(SchemaConfigured):
-	__metaclass__ = _MetaSearchWhooshContent
-	createDirectFieldProperties(search_interfaces.IWhooshNTICardContent)
-	
-	@property
-	def content(self):
-		return self.description
 
 class NTICard(_SearchableContent):
 
@@ -205,17 +160,17 @@ class NTICard(_SearchableContent):
 			docnum = hit.docnum
 			score = hit.score or 1.0
 			last_modified = common.epoch_time(hit[last_modified_])
-			data = _NTICardContent(
-							score=score,
-							docnum=docnum,
-							href=hit[href_],
-							ntiid=hit[ntiid_],
-							title=hit[title_],
-							creator=hit[creator_],
-							description=hit[content_],
-							last_modified=last_modified,
-					 		containerId=hit[containerId_],
-					 		target_ntiid=hit[target_ntiid_])
+			data = _whoosh_types._NTICardContent(
+									score=score,
+									docnum=docnum,
+									href=hit[href_],
+									ntiid=hit[ntiid_],
+									title=hit[title_],
+									creator=hit[creator_],
+									description=hit[content_],
+									last_modified=last_modified,
+							 		containerId=hit[containerId_],
+							 		target_ntiid=hit[target_ntiid_])
 			result.append(srlts.IndexHit(data, score))
 		return result
 
