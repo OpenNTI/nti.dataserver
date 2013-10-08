@@ -16,6 +16,7 @@ def _patch():
 		import pymysql.err
 		umysqldb.install_as_MySQLdb()
 		import umysqldb.connections
+		import umysqldb.cursors
 	except ImportError:
 		import platform
 		py_impl = getattr(platform, 'python_implementation', lambda: None)
@@ -42,6 +43,7 @@ def _patch():
 				args = ()
 			super(Connection,self).query( sql, args=args )
 
+
 	# Patching the module itself seems to be not needed because
 	# RelStorage uses 'mysql.Connect' directly. And if we patch the module,
 	# we get into recursive super calls
@@ -50,6 +52,20 @@ def _patch():
 	umysqldb.connect = Connection
 	umysqldb.Connection = Connection
 	umysqldb.Connect = Connection
+
+
+	# As of 0.6, PyMySQL removed support for the connection-level
+	# errorhandler attribute, which was in turn copied to the cursor
+	# (See https://github.com/PyMySQL/PyMySQL/commit/e8ae4ce8812392c993d5029a5ccbf5667310b3fa)
+	# Released versions of umysqldb as of 2013-10-08 still use
+	# this attribute on the cursor, leading to attribute errors.
+	# Nothing was ever setting this on a connection, so we can statically
+	# set it ourself. Much of the below is predicated on this errorhandler
+	# behaviour
+	if hasattr(umysqldb.cursors.Cursor, 'errorhandler'):
+		raise ImportError("Internals of umysqldb have changed")
+
+	umysqldb.cursors.Cursor.errorhandler = Connection.errorhandler
 
 	# Now got to patch relstorage to recognize some exceptions. If these
 	# don't get caught, relstorage may not properly close the connection, or fail
