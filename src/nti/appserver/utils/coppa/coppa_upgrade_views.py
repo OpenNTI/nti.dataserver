@@ -30,7 +30,9 @@ from nti.appserver.utils import is_true
 from nti.appserver import MessageFactory as _
 from nti.appserver.utils import _JsonBodyView
 from nti.appserver.policies import user_policies
+from nti.appserver.policies import site_policies
 from nti.appserver import httpexceptions as hexc
+from nti.appserver.policies import interfaces as sp_interfaces
 
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver.link_providers import flag_link_provider
@@ -40,14 +42,8 @@ from nti.utils import schema as nti_schema
 from nti.utils.maps import CaseInsensitiveDict
 from nti.utils.jsonschema import JsonSchemafier
 
-from .. import interfaces as sp_interfaces
-
-def _is_x_or_more_years_ago(birthdate, years_ago=13):
-	today = datetime.date.today()
-	x_years_ago = datetime.date.today().replace(year=today.year - years_ago)
-	return birthdate < x_years_ago
-
-PLACEHOLDER_REALNAME = 'com.nextthought.account_creation_user WithALastName'
+_is_x_or_more_years_ago = site_policies._is_x_or_more_years_ago
+PLACEHOLDER_REALNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME
 
 _view_defaults = dict(route_name='objects.generic.traversal',
 					  renderer='rest',

@@ -13,8 +13,7 @@ from datetime import date
 from zope import interface
 
 from nti.appserver.link_providers import flag_link_provider
-
-from nti.app.sites.mathcounts import interfaces as sp_interfaces
+from nti.appserver.policies import interfaces as sp_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
