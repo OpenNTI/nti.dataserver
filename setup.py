@@ -196,12 +196,15 @@ setup(
 		#  Module relstorage.adapters.oidallocator:58 in new_oids
 		#  >>  n = cursor.connection.insert_id()
 		#  AttributeError: 'weakref' object has no attribute 'insert_id'
-		# See https://github.com/PyMySQL/PyMySQL/issues/180
+		# See https://github.com/PyMySQL/PyMySQL/issues/180.
+		# This is fixed in trunk, but not yet released, and it is impossible to install
+		# trunk from git because trunk still uses the 0.6 version number. Hence our fork
+		# and changed version number (which is really 0.6@315d164172ef784fbbb2af543bf5104f8f5ddf46
 		# MySQL-python (aka MySQLdb) has been renamed to moist (https://github.com/farcepest/moist)
 		'umysql == 2.61',
 		'umysqldb >= 1.0.2',
 		'RelStorage >= 1.5.1',
-		'PyMySQL == 0.5',
+		'PyMySQL == 0.7dev',
 		'python-memcached >= 1.53',	 # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
@@ -470,6 +473,7 @@ setup(
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
 		'git+https://github.com/lecram/PyMySQL.git#egg=PyMySQL-0.5', # no tag for this sadly
+		'git+https://github.com/NextThought/PyMySQL.git#egg=PyMySQL-0.7dev',
 		'https://pypi.python.org/packages/source/s/sympy/sympy-0.7.3-py2.7.tar.gz#egg=sympy-0.7.3',
 	],
 	packages=find_packages('src'),
