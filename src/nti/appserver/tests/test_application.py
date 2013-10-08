@@ -757,9 +757,15 @@ class TestApplication(SharedApplicationTestBase):
 		# get precondition failed
 		assert_that( res.json_body['CreatedTime'], is_( less_than( res.json_body['Last Modified'] ) ) )
 		since = datetime.datetime.fromtimestamp( res.json_body['CreatedTime'], webob.datetime_utils.UTC )
+		http_since = webob.datetime_utils.serialize_date(since)
 		testapp.put_json( href, {'selectedText': 'Conditional'},
-						  headers={'If-Unmodified-Since': webob.datetime_utils.serialize_date(since) },
+						  headers={'If-Unmodified-Since': http_since},
 						  status=412 )
+
+		# Same thing for delete
+		testapp.delete( href,
+						headers={'If-Unmodified-Since': http_since},
+						status=412 )
 
 		# The pages collection should have complete URLs
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages'

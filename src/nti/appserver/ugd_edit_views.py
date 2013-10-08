@@ -154,7 +154,8 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		# We used to ACL proxy here
 		return containedObject
 
-class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixin):
+class UGDDeleteView(AbstractAuthenticatedView,
+					ModeledContentEditRequestUtilsMixin):
 	""" DELETing an existing object is possible. Only the user
 	that owns the object can DELETE it."""
 
@@ -166,6 +167,10 @@ class UGDDeleteView(AbstractAuthenticatedView,ModeledContentEditRequestUtilsMixi
 		user = theObject.creator
 
 		self._check_object_exists( theObject )
+
+		# Now that we know we've got an object, see if they sent
+		# preconditions
+		self._check_object_unmodified_since( theObject )
 
 		objectId = theObject.id
 		if self._do_delete_object( theObject )  is None: # Should fire lifecycleevent.removed
@@ -219,8 +224,6 @@ class UGDPutView(AbstractAuthenticatedView,
 
 		externalValue = self.readInput( )
 
-		self._check_object_exists( theObject, creator, containerId, objId )
-
 		self.updateContentObject( theObject, externalValue ) # Should fire lifecycleevent.modified
 
 		# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
@@ -235,7 +238,8 @@ class UGDPutView(AbstractAuthenticatedView,
 			# TODO: This should be handled by the renderer. Maybe we set
 			# a name that controls the component lookup?
 			theObject = toExternalObject( theObject, 'personal-summary' )
-			self._check_object_exists( theObject, creator, containerId, objId )
+			# used to call self._check_object_exists, but this is a programming problem
+			assert theObject is not None
 
 		return theObject
 		# We used to ACL proxy here, but that should no longer be necessary.
