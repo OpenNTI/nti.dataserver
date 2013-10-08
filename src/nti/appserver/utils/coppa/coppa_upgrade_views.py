@@ -103,6 +103,7 @@ class RollbackCoppaUsers(_JsonBodyView):
 		values = CaseInsensitiveDict(**self.readInput())
 		usernames = values.get('usernames', '')
 		testmode = is_true(values.get('testmode', 'F'))
+		rollbackonly = is_true(values.get('rollbackonly', 'F'))
 		if usernames:
 			usernames = usernames.split(',')
 		else:
@@ -138,11 +139,11 @@ class RollbackCoppaUsers(_JsonBodyView):
 					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
 					interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 
-				# remove birthday
-				setattr(profile, 'birthdate', None)
-
-				# add link
-				flag_link_provider.add_link(user, 'coppa.upgraded.rollbacked')
+				if not rollbackonly:
+					# remove birthday
+					setattr(profile, 'birthdate', None)
+					# add link
+					flag_link_provider.add_link(user, 'coppa.upgraded.rollbacked')
 
 				logger.info("User '%s' has been rollbacked" % username)
 
