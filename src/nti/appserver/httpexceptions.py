@@ -23,6 +23,7 @@ HTTPNotModified = _hexc.HTTPNotModified
 HTTPMethodNotAllowed = _hexc.HTTPMethodNotAllowed
 HTTPUnsupportedMediaType = _hexc.HTTPUnsupportedMediaType
 HTTPInsufficientStorage = _hexc.HTTPInsufficientStorage
+HTTPPreconditionFailed = _hexc.HTTPPreconditionFailed
 
 # Dynamically import the rest
 def _copy_pyramid_exceptions():
