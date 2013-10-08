@@ -18,6 +18,8 @@ if 'nti.monkey.gevent_patch_on_import' in sys.modules: # DON'T import this; it s
 import os
 import random
 import warnings
+import time
+import gevent
 
 import nti.dictserver.storage
 
@@ -33,7 +35,7 @@ from zope import component
 from zope.event import notify
 from zope import lifecycleevent
 from zope.configuration import xmlconfig
-from zope.component.hooks import setHooks
+from zope.component.hooks import setHooks, getSite, site
 from zope.component.interfaces import IRegistrationEvent
 from zope.processlifetime import ProcessStarting, DatabaseOpenedWithRoot, IDatabaseOpenedWithRoot
 
@@ -242,8 +244,6 @@ def _library_settings(pyramid_config, server, library):
 	return library
 
 def _external_view_settings(pyramid_config):
-	# FIXME: This needs to move to the IRegistrationEvent listener, but
-	# we need access to the pyramid config...
 	for _, mapper in component.getUtilitiesFor(app_interfaces.IViewConfigurator):
 		mapper.add_views(pyramid_config)
 
@@ -422,6 +422,7 @@ def createApplication( http_port,
 	"""
 	:return: A WSGI callable.
 	"""
+	begin_time = time.time()
 	# Configure subscribers, etc.
 	__traceback_info__ = settings
 
@@ -672,6 +673,8 @@ def createApplication( http_port,
 		_configure_async_changes( server )
 
 	app = pyramid_config.make_wsgi_app()
+
+	logger.debug( "Configured Dataserver in %.3fs", time.time() - begin_time )
 	return app
 
 def _configure_async_changes( ds, indexmanager=None ):
@@ -721,15 +724,32 @@ def _content_package_library_registered( library, event ):
 	# Now fire the events letting listeners (e.g., index and question adders)
 	# know that we have content. Randomize the order of this across worker
 	# processes so that we don't collide too badly on downloading indexes if need be
-	# (only matters if we are not preloading)
+	# (only matters if we are not preloading).
+	# Do this in greenlets/parallel. This can radically speed up
+	# S3 loading when we need the network.
+
 	# TODO: If we are registering a library in a local site, via
 	# z3c.baseregistry, does the IRegistrationEvent still occur
-	# in the context of that site? I *think* so, need to prove it
+	# in the context of that site? I *think* so, need to prove it.
+	# We need to be careful to keep the correct site, then, as we fire off
+	# events in parallel
 	titles = list(library.titles)
 	random.seed()
 	random.shuffle(titles)
+
+	title_greenlets = []
+	current_site = getSite()
+
+	def _notify_in_site( title ):
+		# Need a level of functional redirection here
+		# to workaround python's awkward closure rules
+		with site(current_site):
+			lifecycleevent.created( title )
+
 	for title in titles:
-		lifecycleevent.created( title )
+		title_greenlets.append( gevent.spawn( _notify_in_site, title ) )
+
+	gevent.joinall( title_greenlets, raise_error=True )
 
 @component.adapter(lib_interfaces.IFilesystemContentPackageLibrary)
 @interface.implementer(app_interfaces.ILibraryStaticFileConfigurator)
