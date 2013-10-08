@@ -439,6 +439,30 @@ class _PasterServerApplication(PasterServerApplication):
 	Exists to prevent loading of the app multiple times.
 	"""
 
+	# Our pase class never calls its super class's __init__ method,
+	# which means attributes assigned there never get set.
+	# This in turn means errors later on (such as when handling
+	# SIGHUP). This is the set of missing attributes from 0.18.
+	usage = None
+	cfg = None
+	prog = None
+	logger = None
+
+	# Handling sighup currently produces this error:
+	#Traceback (most recent call last):
+	#File "/Users/jmadden/Projects/buildout-eggs/gunicorn-18.0-py2.7.egg/gunicorn/app/base.py", line 32, in do_load_config
+    #self.load_config()
+	#File "/Users/jmadden/Projects/buildout-eggs/gunicorn-18.0-py2.7.egg/gunicorn/app/pasterapp.py", line 68, in load_config
+    #super(PasterBaseApplication, self).load_config()
+	#File "/Users/jmadden/Projects/buildout-eggs/gunicorn-18.0-py2.7.egg/gunicorn/app/base.py", line 79, in load_config
+    #cfg = self.init(parser, args, args.args)
+	#File "/Users/jmadden/Projects/buildout-eggs/gunicorn-18.0-py2.7.egg/gunicorn/app/base.py", line 103, in init
+    #raise NotImplementedError
+	#
+	# Our whole strategy needs to be rethought, and with auto-gen config files
+	# now it can be. There are some basic workarounds below that seem to make it work,
+	# but they seem to fail to pass the socket on after the refork?
+
 	def __init__( self, app, gcfg=None, host="127.0.0.1", port=None, *args, **kwargs):
 
 		super(_PasterServerApplication, self).__init__( app, gcfg=gcfg, host=host, port=port, *args, **kwargs )
@@ -453,6 +477,12 @@ class _PasterServerApplication(PasterServerApplication):
 				self.cfg.set( 'pidfile',  pidfile )
 		assert len( self.cfg.bind ) == 1
 		self._setup_flash_port( self.cfg, gcfg )
+
+	def load(self,*args):
+		logger.warn("Not implemented load")
+
+	def init(self,*args):
+		logger.warn("Not implemented init")
 
 	@classmethod # for testing
 	def _setup_flash_port( cls, cfg, global_conf ):
