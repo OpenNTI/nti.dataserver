@@ -395,6 +395,9 @@ def _process_did_fork_will_exec( event ):
 	# First, kill the DS for good measure
 	_process_will_fork_listener( event )
 	# Now, run component cleanup, etc, for good measure
+	# First, ensure all cleanup hooks are in place.
+	# This was probably needed due to https://github.com/zopefoundation/zope.component/pull/1
+	# and can now be removed?
 	from zope import site
 	site = site
 	from zope.testing import cleanup
@@ -439,29 +442,20 @@ class _PasterServerApplication(PasterServerApplication):
 	Exists to prevent loading of the app multiple times.
 	"""
 
-	# Our pase class never calls its super class's __init__ method,
-	# which means attributes assigned there never get set.
-	# This in turn means errors later on (such as when handling
-	# SIGHUP). This is the set of missing attributes from 0.18.
+	# Our base class never calls its super class's __init__ method,
+	# which means attributes assigned there never get set. This in
+	# turn means errors later on (such as when handling SIGHUP; this
+	# particular error is worked around by implementing reload). This
+	# is the set of missing attributes from 0.18.
 	usage = None
 	cfg = None
 	prog = None
 	logger = None
 
-	# Handling sighup currently produces this error:
-	#Traceback (most recent call last):
-	#File "/Users/jmadden/Projects/buildout-eggs/gunicorn-18.0-py2.7.egg/gunicorn/app/base.py", line 32, in do_load_config
-    #self.load_config()
-	#File "/Users/jmadden/Projects/buildout-eggs/gunicorn-18.0-py2.7.egg/gunicorn/app/pasterapp.py", line 68, in load_config
-    #super(PasterBaseApplication, self).load_config()
-	#File "/Users/jmadden/Projects/buildout-eggs/gunicorn-18.0-py2.7.egg/gunicorn/app/base.py", line 79, in load_config
-    #cfg = self.init(parser, args, args.args)
-	#File "/Users/jmadden/Projects/buildout-eggs/gunicorn-18.0-py2.7.egg/gunicorn/app/base.py", line 103, in init
-    #raise NotImplementedError
-	#
-	# Our whole strategy needs to be rethought, and with auto-gen config files
-	# now it can be. There are some basic workarounds below that seem to make it work,
-	# but they seem to fail to pass the socket on after the refork?
+	# NOTE: The interaction between our server classes, our application classes,
+	# gunicorn, and gevent is fairly complex and prone to breakage.
+	# It seems like there's an opportunity to simplify some things;
+	# auto-gen config files should help facilitate that.
 
 	def __init__( self, app, gcfg=None, host="127.0.0.1", port=None, *args, **kwargs):
 
@@ -478,11 +472,29 @@ class _PasterServerApplication(PasterServerApplication):
 		assert len( self.cfg.bind ) == 1
 		self._setup_flash_port( self.cfg, gcfg )
 
-	def load(self,*args):
-		logger.warn("Not implemented load")
-
-	def init(self,*args):
-		logger.warn("Not implemented init")
+	def reload(self):
+		# In super, reload calls load_config, which is only
+		# implemented in the base.Application, not
+		# PasterServerApplication, because PasterServerApplication
+		# does all its config loading up-front in __init__. If we let
+		# that happen, we wind up with missing configuration
+		# information (not to mention running into NotImplemented
+		# errors from the init() method of super), and ultimately, due
+		# to the busted config, we stop listening on the socket.
+		#
+		# We're not (currently) worried about reloading configurations
+		# from pserve.ini, we're mostly worried about things in ZCML
+		# and the external resources they point to, like the library.
+		# Therefor, the easiest thing to do when asked to reload is to
+		# simply discard self.app, knowing that it will be asked for
+		# again and in turn do the loading of the dataserver files.
+		self.app = None # Our copy
+		self.callable = None # base.Application's copy
+		# Reset the component registry because we're about
+		# to reconfigure it; otherwise we get Configuration errors
+		from zope.testing import cleanup
+		cleanup.cleanUp()
+		return
 
 	@classmethod # for testing
 	def _setup_flash_port( cls, cfg, global_conf ):
