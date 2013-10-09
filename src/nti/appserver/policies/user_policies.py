@@ -26,8 +26,8 @@ try:
 except ImportError:
 	from threading import RLock
 
-import pyPdf
-from pyPdf import generic as pdf_generic
+import PyPDF2 as pyPdf
+from PyPDF2 import generic as pdf_generic
 
 from zope import component
 from zope import interface
@@ -330,6 +330,9 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 	fonts and setting compatibility to PDF 1.3.
 	"""
 
+	# NOTE: With the upgrade from pyPDF to pyPDF2, much of the constraints
+	# here need to be revisited. It is much more capable...
+
 	# The locations in the Contents array at which various things are
 	# found
 	IX_UNAME = 937
@@ -369,8 +372,9 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 	def _pdf_clean( text ):
 		# Many punctuation characters are handled specially and overlap
 		# each other. They don't work in the Tj operator.
-		# We can get pretty close with some padding.
+		# We can get pretty close with some padding
 		return text.replace( '-', '-  ' ).replace( '_', '_  ' ).replace( 'j', 'j ' )
+
 
 	writer = pyPdf.PdfFileWriter()
 	stream = StringIO()
