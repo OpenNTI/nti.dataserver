@@ -101,6 +101,9 @@ def install_main( context ):
 	# TODO: the 'users' key should probably be several different keys, one for each type of
 	# Entity object; that way traversal works out much nicer and dataserver_pyramid_views is
 	# simplified through dropping UserRootResource in favor of normal traversal
+	# TODO: These will become more than plain folders, they will
+	# become either zope.pluggableauth.plugins.principalfolder.PrincipalFolder
+	# or similar implementations of IAuthenticatorPlugin.
 	install_root_folders( dataserver_folder )
 
 

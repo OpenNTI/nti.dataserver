@@ -50,18 +50,41 @@ zope.deferredimport.deprecatedFrom(
 	"nti.app.sites.alpha",
 	"ALPHA" )
 
-DEMO = BaseComponents(BASEADULT,name='demo.nextthought.com', bases=(BASEADULT,))
+zope.deferredimport.deprecatedFrom(
+	"Import from nti.app.sites.columbia",
+	"nti.app.sites.columbia",
+	"COLUMBIA" )
 
+zope.deferredimport.deprecatedFrom(
+	"Import from nti.app.sites.demo",
+	"nti.app.sites.demo",
+	"DEMO" )
 
-RWANDA = BaseComponents(BASEADULT,name='rwanda.nextthought.com', bases=(BASEADULT,))
-LAW = BaseComponents(BASEADULT, name='law.nextthought.com', bases=(BASEADULT,))
-LITWORLD = BaseComponents(BASEADULT, name='litworld.nextthought.com', bases=(BASEADULT,))
+zope.deferredimport.deprecatedFrom(
+	"Import from nti.app.sites.law",
+	"nti.app.sites.law",
+	"LAW" )
 
+zope.deferredimport.deprecatedFrom(
+	"Import from nti.app.sites.litworld",
+	"nti.app.sites.litworld",
+	"LITWORLD" )
 
-PRMIA = BaseComponents(BASEADULT, name='prmia.nextthought.com', bases=(BASEADULT,))
-COLUMBIA = BaseComponents(BASEADULT, name='columbia.nextthought.com', bases=(BASEADULT,))
+zope.deferredimport.deprecatedFrom(
+	"Import from nti.app.sites.prmia",
+	"nti.app.sites.prmia",
+	"PRMIA" )
 
+zope.deferredimport.deprecatedFrom(
+	"Import from nti.app.sites.rwanda",
+	"nti.app.sites.rwanda",
+	"RWANDA" )
+
+##
 # for OU
+# Left behind bending the migration to nti.app.products.ou,
+# which happens in buildout
+##
 OU = BaseComponents(BASEADULT, name='platform.ou.edu', bases=(BASEADULT,))
 OUTEST = BaseComponents(BASEADULT, name='ou-test.nextthought.com', bases=(OU,))
 
