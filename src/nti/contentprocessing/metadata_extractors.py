@@ -24,7 +24,7 @@ from zope.cachedescriptors.property import Lazy
 from nti.utils.property import alias
 
 import os
-import pyPdf
+import PyPDF2 as pyPdf
 import pyquery
 import rdflib
 import requests
