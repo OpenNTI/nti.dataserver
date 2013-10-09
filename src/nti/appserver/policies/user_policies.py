@@ -335,9 +335,15 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 
 	# The locations in the Contents array at which various things are
 	# found
-	IX_UNAME = 937
-	IX_FNAME = 970
-	IX_EMAIL = 1021
+	IX_UNAME = 382
+	# In this version, the first name, because it has the lowercase 'j',
+	# spans several operations. The strategy is to put our simple text into
+	# the first section, and then whitespace over the remaining letters
+	# We need to use the same number of characters for following lines
+	# to be aligned correctly
+	IX_FNAME = 401
+	IX_FNAME_END = 407
+	IX_EMAIL = 424
 
 	pdf_page, page_content, lock = _cached_pages.get( pdf_filename, (None, None, None) )
 	if pdf_page is None:
@@ -373,7 +379,9 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 		# Many punctuation characters are handled specially and overlap
 		# each other. They don't work in the Tj operator.
 		# We can get pretty close with some padding
-		return text.replace( '-', '-  ' ).replace( '_', '_  ' ).replace( 'j', 'j ' )
+		#return text.replace( '-', '-  ' ).replace( '_', '_  ' ).replace( 'j', 'j ' )
+		# With this version of the template, this seems to not be needed
+		return text
 
 
 	writer = pyPdf.PdfFileWriter()
@@ -383,6 +391,10 @@ def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
 		page_content.operations[IX_UNAME] = ([pdf_generic.TextStringObject(_pdf_clean(username))], 'Tj')
 		page_content.operations[IX_FNAME] = ([pdf_generic.TextStringObject(child_firstname)], 'Tj')
 
+		for i in range(IX_FNAME+1,IX_FNAME_END):
+			page_content.operations[i] = ([pdf_generic.TextStringObject('')], 'Tj')
+		extra_text = 'klmnopqrstuvwxyz1234567890'
+		page_content.operations[IX_FNAME_END+1] = ([pdf_generic.TextStringObject(' ' * len(extra_text))], 'Tj')
 		writer.addPage( pdf_page )
 		writer.write( stream )
 
