@@ -4,7 +4,8 @@ Search interfaces.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import component
@@ -15,7 +16,7 @@ from zope.interface.common.mapping import IMapping, IFullMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from .constants import indexable_type_names
+from . import constants
 
 from nti.utils import schema as nti_schema
 
@@ -32,7 +33,7 @@ class IRepozeDataStore(IFullMapping):
 # search query
 
 SEARCH_TYPES_VOCABULARY = \
-	schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in indexable_type_names])
+	schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in constants.indexable_type_names])
 
 class ISearchQuery(interface.Interface):
 	term = nti_schema.ValidTextLine(title="Query search term", required=True)
