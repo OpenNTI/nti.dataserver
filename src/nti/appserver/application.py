@@ -42,9 +42,6 @@ from zope.processlifetime import ProcessStarting, DatabaseOpenedWithRoot, IDatab
 from nti.monkey import webob_cookie_escaping_patch_on_import
 webob_cookie_escaping_patch_on_import.patch()
 
-from nti.monkey import weberror_filereporter_patch_on_import
-weberror_filereporter_patch_on_import.patch()
-
 import pyramid.config
 import pyramid.registry
 from pyramid.threadlocal import get_current_registry
