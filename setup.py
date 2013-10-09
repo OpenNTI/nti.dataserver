@@ -262,8 +262,8 @@ setup(
 		'plone.namedfile >= 2.0.2',	 # much like zope.file, but some image-specific goodness.
 		'pymongo >= 2.6.2',
 		'pyparsing >= 1.5.6, <=1.5.7',	# used by matplotlib, rdflib, experimental zopyx.txng3.core
-		# Pure python PDF reading library.
-		'pyPDF2 >= 1.18', # 1.19 coming soon
+		# Pure python PDF reading and manipulation library.
+		'pyPDF2 >= 1.19',
 		# See also z3c.rml for a complete PDF layout and rendering environment, which should
 		# work with page templates as well.
 		# jquery-like traversing of python datastructures. lxml, cssselect
@@ -474,6 +474,8 @@ setup(
 		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
 		'git+https://github.com/lecram/PyMySQL.git#egg=PyMySQL-0.5', # no tag for this sadly
 		'git+https://github.com/NextThought/PyMySQL.git#egg=PyMySQL-0.7dev',
+		# PyPI download is not available yet
+		'git+https://github.com/mstamy2/PyPDF2.git@83bbfc2dbe74c0ad802efc9a35e73b05a3df711b#egg=PyPDF2-1.19',
 		'https://pypi.python.org/packages/source/s/sympy/sympy-0.7.3-py2.7.tar.gz#egg=sympy-0.7.3',
 	],
 	packages=find_packages('src'),
