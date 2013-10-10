@@ -14,21 +14,17 @@ class PingHandler(object):
 	"""
 	Handles the ``/_ops/ping`` url exactly.
 	"""
-	def __init__(self, app):
+	def __init__( self, app ):
 		self.captured = app
 
-	def __call__(self, environ, start_response):
+	def __call__( self, environ, start_response ):
 		if environ['PATH_INFO'] == b'/_ops/ping':
 			start_response( b'200 OK', [(b'Content-Type', b'text/plain')] )
 			result = (b"",)
 		else:
-			try:
-				result = self.captured(environ, start_response)
-			except:
-				logger.exception("Error during ping. Handler (%s)" % getattr(self.captured, "handle_request", None))
-				raise
+			result = self.captured( environ, start_response )
 		return result
 
-def ping_handler_factory(app, global_conf=None):
+def ping_handler_factory( app, global_conf=None ):
 	"Paste factory for :class:`PingHandler`"
-	return PingHandler(app)
+	return PingHandler( app )
