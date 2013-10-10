@@ -210,7 +210,7 @@ setup(
 		'anyjson >= 0.3.3',
 		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
 		# See also blist for a tree-structured list
-		'boto >= 2.13.3',  # amazon
+		'boto >= 2.14.0',  # amazon
 		'brownie >= 0.5.1',	 # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
@@ -306,7 +306,7 @@ setup(
 		'simplejson >= 3.3.1',
 		'six >= 1.4.1',
 		'sympy >= 0.7.3',
-		'stripe >= 1.9.5',	# stripe payments
+		'stripe >= 1.9.6',  # stripe payments
 		# 'slimit',
 		'supervisor >= 3.0',
 		'transaction >= 1.4.1',
