@@ -9,37 +9,62 @@ from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-
 from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
+from persistent import Persistent
+
 from nti.dataserver import mimetype
-from nti.dataserver.datastructures import ModDateTrackingObject
+from nti.dataserver import containers as nti_containers
+from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
-from nti.utils.schema import SchemaConfigured
-from nti.utils.schema import createDirectFieldProperties
-
-from nti.zodb.persistentproperty import PersistentPropertyHolder
+from nti.utils.schema import AdaptingFieldProperty
 
 from . import interfaces as book_interfaces
 
 @interface.implementer(book_interfaces.IGradeBook, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class GradeBook(ModDateTrackingObject, SchemaConfigured, zcontained.Contained, PersistentPropertyHolder):
+class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(book_interfaces.IGradeBook)
-
 
 @interface.implementer(book_interfaces.IGradeBookPart, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class GradeBookPart(SchemaConfigured, zcontained.Contained):
+class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(book_interfaces.IGradeBookPart)
+
+	name = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['name'])
+	order = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['order'])
+	weight = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['weight'])
+
+	def __str__(self):
+		return self.name
+
+	def __repr__(self):
+		return "%s(%s,%s)" % (self.__class__.__name__, self.name, self.weight)
 
 
 @interface.implementer(book_interfaces.IGradeBookEntry, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class GradeBookEntry(SchemaConfigured, zcontained.Contained):
+class GradeBookEntry(Persistent, CreatedModDateTrackingObject, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(book_interfaces.IGradeBookEntry)
+
+	name = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['name'])
+	order = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['order'])
+	NTIID = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['NTIID'])
+	weight = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['weight'])
+	questionSetID = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['questionSetID'])
+
+	def __str__(self):
+		return self.name
+
+	def __repr__(self):
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.name, self.weight, self.NTIID)
+
+	def __eq__(self, other):
+		try:
+			return self is other or (book_interfaces.IGradeBookEntry.providedBy(other)
+									 and self.NTIID == other.NTIID)
+		except AttributeError:
+			return NotImplemented
+

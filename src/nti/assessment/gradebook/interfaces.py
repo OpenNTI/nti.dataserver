@@ -7,37 +7,48 @@ from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import schema
-from zope import interface
+from zope.container.constraints import contains, containers
+from zope.container.interfaces import IContainer, IContained
 
 from nti.utils import schema as dmschema
 
-class IGradeBookEntry(interface.Interface):
+class IGradeBookEntry(IContained):
+
+	containers(b'.IGradeBookPart')
+
+	NTIID = dmschema.ValidTextLine(title="entry ntiid", required=True)
+	questionSetID = dmschema.ValidTextLine(title="question id", required=False)
 	name = dmschema.ValidTextLine(title="entry name", required=True)
 	weight = schema.Float(title="The relative weight of this entry, from 0 to 1",
 						  min=0.0,
 						  max=1.0,
 						  default=1.0)
 
-class IGradeBookPart(interface.Interface):
+	order = schema.Int(title="The entry order", min=1)
+
+class IGradeBookPart(IContainer, IContained):
 	"""
 	A Section of a grade book e.g. Quizzes, Exams, etc..
 	"""
-	name = dmschema.ValidTextLine(title="Part name", required=True)
+	containers(b'.IGradeBook')
+	contains(IGradeBookEntry)
+	__parent__.required = False
 
-	parts = dmschema.ListOrTuple(title="Grade item",
-								 required=True, min_length=0,
-			     				 value_type=schema.Object(IGradeBookEntry, title="The grade entry"))
+	name = dmschema.ValidTextLine(title="Part name", required=True)
 
 	weight = schema.Float(title="The relative weight of this part, from 0 to 1",
 						  min=0.0,
 						  max=1.0,
-						  default=1.0)
+						  default=1.0,
+						  required=True)
 
-class IGradeBook(interface.Interface):
+	order = schema.Int(title="The part order", min=1)
+
+class IGradeBook(IContainer, IContained):
 	"""
 	Grade book definition
 	"""
-	parts = dmschema.ListOrTuple(title="Grade book part",
-								 required=True, min_length=1,
-			     				 value_type=schema.Object(IGradeBookPart, title="The part"))
+	contains(IGradeBookPart)
+	__parent__.required = False
+
 
