@@ -217,7 +217,7 @@ setup(
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
 		'contentratings == 1.1',  # requires small patch to work without acquisition
 		'cryptacular >= 1.4.1',	 # see z3c.crypt
-		'cssselect == 0.7.1',  # Used by pyquery (0.8 not compatible with pyquery 1.2.4, :first raises AttributeError)
+		'cssselect >= 0.8',  # Used by pyquery
 		'cython >= 0.19.1',
 		# Adds support for detecting aborts to transactions which
 		# otherwise only detect failed commits
