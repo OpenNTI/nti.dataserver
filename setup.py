@@ -318,7 +318,7 @@ setup(
 		'z3c.batching >= 2.0.0',  # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
-		'z3c.bcrypt >= 1.1',
+		'z3c.bcrypt >= 1.2',
 		'z3c.password >= 1.0.0a1',	# password policies
 		'z3c.pt >= 3.0.0a1',  # Better ZPT support than plastex, add-in to Chameleon
 		'z3c.ptcompat >= 2.0.0a1',	# Make zope.pagetemplate also use the Chameleon-based ZPT
