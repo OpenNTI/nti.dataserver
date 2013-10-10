@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 40
+generation = 41
 
 from zope.generations.generations import SchemaManager
 
@@ -63,8 +63,8 @@ def install_main( context ):
 	# The root folder
 	root_folder = rootFolder()
 	# The root is generally presumed to be an ISite, so make it so
-	root_sm = LocalSiteManager( None, default_folder=False ) # No parent site, so  globalSiteManager == __bases__
-	assert root_sm.__parent__ is None
+	root_sm = LocalSiteManager( root_folder ) # site is IRoot, so __base__ is the GSM
+	assert root_sm.__parent__ is root_folder
 	assert root_sm.__bases__ == (component.getGlobalSiteManager(),)
 	conn.add( root_sm ) # Ensure we have a connection so we can become KeyRefs
 	conn.add( root_folder ) # Ensure we have a connection so we can become KeyRefs
@@ -79,11 +79,9 @@ def install_main( context ):
 	assert dataserver_folder.__name__ == 'dataserver2'
 	assert root_folder['dataserver2'] is dataserver_folder
 
-	lsm = LocalSiteManager( root_sm )
-	assert lsm.__parent__ is root_sm
-	# The LocalSiteManager starts looking at its grandparent to find a site, not
-	# its parent. Thus the base of this is the globalSiteManager as well
-	assert lsm.__bases__ == (component.getGlobalSiteManager(),)
+	lsm = LocalSiteManager( dataserver_folder )
+	assert lsm.__parent__ is dataserver_folder
+	assert lsm.__bases__ == (root_sm,)
 	# Change the dataserver_folder from IPossibleSite to ISite
 	dataserver_folder.setSiteManager( lsm )
 	assert ISite.providedBy( dataserver_folder )
@@ -110,6 +108,7 @@ def install_main( context ):
 	# Install the site manager and register components
 	root['nti.dataserver_root'] = root_folder
 	root['nti.dataserver'] = dataserver_folder
+	root['Application'] = root_folder # The name that many Zope components assume
 
 	oid_resolver =  _Dataserver.PersistentOidResolver()
 	conn.add( oid_resolver )
