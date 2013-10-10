@@ -18,7 +18,6 @@ class PingHandler(object):
 		self.captured = app
 
 	def __call__(self, environ, start_response):
-		__traceback_info__ = environ, start_response
 		if environ['PATH_INFO'] == b'/_ops/ping':
 			start_response( b'200 OK', [(b'Content-Type', b'text/plain')] )
 			result = (b"",)
