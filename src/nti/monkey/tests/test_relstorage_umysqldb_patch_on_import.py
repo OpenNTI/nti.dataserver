@@ -19,6 +19,9 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
+from hamcrest import same_instance
+
+from nose.tools import assert_raises
 
 import nti.testing.base
 
@@ -57,3 +60,39 @@ def test_timestamp_to_tid_patch():
 	storage._prepare_tid()
 
 	assert_that( storage._tid, is_( bytes ) ) # bytes, not unicode
+
+def test_umysqldb_cursor_errorhandler():
+	import nti.monkey.relstorage_umysqldb_patch_on_import
+	nti.monkey.relstorage_umysqldb_patch_on_import.patch()
+
+	from umysqldb.cursors import Cursor
+	from umysqldb.err import Error, InterfaceError
+	import sys
+
+	connection = None
+
+	cursor = Cursor(connection)
+
+	class FooError(Exception): pass
+
+	with assert_raises(Error):
+		# Cursor has calls like:
+		#   e, v, tb = sys.exc_info()
+		#   self.errorhandler( self, e, v )
+
+		cursor.errorhandler( cursor, FooError, '' )
+
+	with assert_raises(InterfaceError):
+		cursor.errorhandler( cursor, IOError, '' )
+
+	# The block that simply re-raises
+	err = Error("The error")
+
+	with assert_raises(Error) as ctx:
+		try:
+			raise err
+		except:
+			e, v, tb = sys.exc_info()
+			cursor.errorhandler(cursor, e, v )
+
+	assert_that( ctx.exception, is_( same_instance( err ) ) )

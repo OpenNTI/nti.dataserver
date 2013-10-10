@@ -53,51 +53,91 @@ def _patch():
 	umysqldb.Connection = Connection
 	umysqldb.Connect = Connection
 
+	# Error handling used to work like this:
+	#
+	# - A Connection has an errorhandler (NOTE: as of 0.6, pymysql no
+	# longer does)
+	#
+	# - A Cursor copies the Connection's errorhandler; both of these
+	# direct unexpected exceptions through the error handler.
+	#
+	# - pymysql's connections use pymysql.err.defaulterrorhandler,
+	# which translates anything that is NOT a subclass of
+	# pymysql.err.Error into that class (NOTE: as of 0.6, this is
+	# gone)
 
-	# As of 0.6, PyMySQL removed support for the connection-level
+	# umysql contains its own mapping layer and expects that to all
+	# happen before the errorhandler gets called, which in turn simply
+	# raises the error again
+	if Connection.errorhandler.im_func is not umysqldb.connections.defaulterrorhandler:
+		raise ImportError("Internals of umysqldb have changed")
+
+	# However, as of 0.6, PyMySQL removed support for the connection-level
 	# errorhandler attribute, which was in turn copied to the cursor
 	# (See https://github.com/PyMySQL/PyMySQL/commit/e8ae4ce8812392c993d5029a5ccbf5667310b3fa)
 	# Released versions of umysqldb as of 2013-10-08 still use
 	# this attribute on the cursor, leading to attribute errors.
 	# Nothing was ever setting this on a connection, so we can statically
-	# set it ourself. Much of the below is predicated on this errorhandler
-	# behaviour
+	# set it ourself.
 	if hasattr(umysqldb.cursors.Cursor, 'errorhandler'):
 		raise ImportError("Internals of umysqldb have changed")
 
-	umysqldb.cursors.Cursor.errorhandler = Connection.errorhandler
+	# The problem is that some errors are not mapped appropriately. In
+	# particular, IOError is prone to escaping as-is, which relstorage
+	# isn't expecting, thus defeating its try/except blocks.
+	#
+	# Now that pymysql doesn't have complex behaviour possible,
+	# the simplest thing to do as to adjust mapping in our own
+	# errorhandler when needed
+	from pymysql.err import Error,InterfaceError
+	import sys
+	def defaulterrorhandler(connection, cursor, errorclass, errorvalue):
+		del cursor
+		del connection
+
+		# IOErrors get mapped to InterfaceError
+		# if they get here
+		if issubclass(errorclass,IOError):
+			raise InterfaceError(errorclass, errorvalue)
+
+		if not issubclass(errorclass, Error):
+			raise Error(errorclass, errorvalue)
+
+		if isinstance(errorvalue, errorclass):
+			# saving stacktrace when errorhandler is called in catch
+			if sys.exc_info()[1] is errorvalue:
+				raise
+			raise errorvalue
+
+		raise errorclass(errorvalue)
+
+	Connection.errorhandler = defaulterrorhandler
+	# Because of how this is called, we can't just copy it from
+	# Connection or we get the wrong kind of bound method
+	umysqldb.cursors.Cursor.errorhandler = defaulterrorhandler
 
 	# Now got to patch relstorage to recognize some exceptions. If these
 	# don't get caught, relstorage may not properly close the connection, or fail
 	# to recognize that the connection is already closed
 	import relstorage.adapters.mysql
 	assert relstorage.adapters.mysql.MySQLdb is umysqldb
-	# NOTE: as-of the released version of umysqldb at 2013-01-14, the error handling
-	# mapping is broken. Error handling works like this:
-	# A Connection has an errorhandler
-	# A Cursor copies the Connection's errorhandler; both of these direct unexpected exceptions
-	# through the error handler.
-	# pymysql's connections use pymysql.err.defaulterrorhandler, which translates anything
-	# that is NOT a subclass of pymysql.err.Error into that class.
-	# However, umysqldb's defaulterrorhandler simply raises the exception; this is because
-	# many places already manually translate exceptions.
-	# The problem is that while many places do, some places do not.
-	# At this writing, it's not clear if the best thing to do is to add more exceptions
-	# to the lists below, or try to patch defaulterrorhandler.
-	# Since the more limited thing is to add more exceptions, then that's what we do.
-	# (However, changing defaulterrorhandler would probably result in a higher-level exception
-	# from relstorage, a POSException, which might get better handling by the transaction package.
-	# TODO: Investigate that.)
+
 	for attr in (relstorage.adapters.mysql,
 				 relstorage.adapters.mysql.MySQLdbConnectionManager ):
-		 # close_exceptions: "to ignore when closing the connection"
+		# close_exceptions: "to ignore when closing the connection"
 		attr.close_exceptions += (pymysql.err.Error, # The one usually mapped to
 								  IOError) # This one can escape mapping
 
 	for attr in (relstorage.adapters.mysql,
 				 relstorage.adapters.mysql.MySQLdbConnectionManager):
 		# disconnected_exceptions: "indicates the connection is disconnected"
-		attr.disconnected_exceptions += (IOError,) # This one can escape mapping; note we don't make pymysql.err.Error indicate disconnection
+		attr.disconnected_exceptions += (IOError,) # This one can
+                                                   # escape mapping;
+                                                   # note we don't
+                                                   # make
+                                                   # pymysql.err.Error
+                                                   # indicate
+                                                   # disconnection
 
 	from . import relstorage_timestamp_repr_patch_on_import
 	relstorage_timestamp_repr_patch_on_import.patch()

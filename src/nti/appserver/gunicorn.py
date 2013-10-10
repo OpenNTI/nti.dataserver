@@ -527,4 +527,11 @@ def paste_server_runner(app, gcfg=None, host="127.0.0.1", port=None, *args, **kw
 
 	See :func:`gunicorn.app.pasterapp.paste_server`.
 	"""
+
+	# Two arguments are passed by position, the application (as found
+	# in the [app:main] section, usually), and the global
+	# configuration dictionary (from the [DEFAULTS] section). All the
+	# remainder are actually keyword arguments corresponding to the
+	# setting values in the section that defined us ([server:main])
+
 	_PasterServerApplication(None, gcfg=gcfg, host=host, port=port, *args, **kwargs).run()
