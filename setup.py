@@ -268,7 +268,7 @@ setup(
 		# work with page templates as well.
 		# jquery-like traversing of python datastructures. lxml, cssselect
 		# optional dependency on 'restkit' for interactive WSGI stuff (used to be Paste)
-		'pyquery >= 1.2.5',
+		'pyquery >= 1.2.6',
 		'pyramid >= 1.5a2' ,
 		'pyramid_chameleon >= 0.1',
 		'pyramid_mako >= 0.2',
