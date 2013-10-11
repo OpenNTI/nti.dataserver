@@ -5,10 +5,11 @@ Provides a tween for integrating Pyramid with the ZCA notion of a site.
 This sets up the default (root) site before traversal happens. It also
 uses the host name to install applicable configuration, if found.
 
-In theory, traversal can then use listeners to set sub-sites as they
-are encountered (see :mod:`~nti.appserver.traversal`), but right now that interferes
-with our virtual hosting of multiple, differently configured sites by host name
-(since they are not part of the traversal tree).
+With the help of :func:`nti.dataserver.site.threadSiteSubscriber`,
+traversal can then use listeners to set sub-sites as they are
+encountered (see :mod:`~nti.appserver.traversal`), while also
+maintaining the host-level configuration.
+
 
 Request Modifications
 =====================
