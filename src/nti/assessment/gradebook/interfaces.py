@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id: interfaces.py 19693 2013-05-30 23:06:02Z carlos.sanchez $
+$Id$
 """
 from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
