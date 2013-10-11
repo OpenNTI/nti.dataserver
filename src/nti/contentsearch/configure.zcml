@@ -95,12 +95,6 @@
 	<subscriber factory="._search_external._SearchResultsLinkDecorator"
 				for=".interfaces.ISearchResults"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<include package="nti.externalization" file="meta.zcml" />
-	<include package="nti.externalization" />
-	<ext:registerMimeFactories module="._search_query" />
-	<ext:registerMimeFactories module="._whoosh_types" />
-	<ext:registerMimeFactories module="._search_results" />
 	
 	<!-- Content Resolvers -->
 
@@ -176,4 +170,10 @@
 	<include file="configure_repoze.zcml" />
 	<include file="configure_whoosh.zcml" />
 
+	<!-- Mime factories -->
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+	<ext:registerMimeFactories module="._search_query" />
+	<ext:registerMimeFactories module="._whoosh_types" />
+	<ext:registerMimeFactories module="._search_results" />
 </configure>
