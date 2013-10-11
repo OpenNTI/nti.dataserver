@@ -7,6 +7,7 @@ from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import schema
+from zope import interface
 from zope.container.constraints import contains, containers
 from zope.container.interfaces import IContainer, IContained
 
@@ -54,28 +55,19 @@ class IGradeBook(IContainer, IContained):
 	__parent__.required = False
 
 
-class IGrade(IContained):
+class IGrade(interface.Interface):
 	"""
 	Grade entry
 	"""
-	containers(b'.IUserGrades')
-	
-	grade = schema.Float(title="The real grade", min=0.0, max=100.0)
+	entry = dmschema.ValidTextLine(title="grade entry ntiid", required=True)
+	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
 	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
 
-class IUserGrades(IContainer, IContained):
-	"""
-	Grades for a user
-	"""
-	containers(b'.IGrades')
-	contains(IGrade)
-	__parent__.required = False
-
-class IGrades(IContainer, IContained):
+class IGrades(IContained):
 	"""
 	User grades
 	"""
-	contains(IUserGrades)
-	__parent__.required = False
+	matrix = schema.Dict(dmschema.ValidTextLine(title="username"),
+						 dmschema.ListOrTuple(IGrade, title="the grades"), title="grade matrix")
 
 
