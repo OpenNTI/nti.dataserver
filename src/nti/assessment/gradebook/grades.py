@@ -12,7 +12,8 @@ from zope import interface
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
-from persistent import Persistent
+from zc.blist import BList
+
 from persistent.mapping import PersistentMapping
 
 from nti.dataserver import mimetype
@@ -23,7 +24,7 @@ from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as book_interfaces
 
-@interface.implementer(book_interfaces.IGrade, zmime_interfaces.IContentTypeAware)
+@interface.implementer(book_interfaces.IGrade, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class Grade(SchemaConfigured, CreatedModDateTrackingObject):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
@@ -32,7 +33,7 @@ class Grade(SchemaConfigured, CreatedModDateTrackingObject):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (book_interfaces.IGradeBookEntry.providedBy(Grade)
+			return self is other or (book_interfaces.IGrade.providedBy(Grade)
 									 and self.entry == other.entry)
 		except AttributeError:
 			return NotImplemented
@@ -49,9 +50,39 @@ class Grade(SchemaConfigured, CreatedModDateTrackingObject):
 		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.entry, self.grade, self.autograde)
 
 @interface.implementer(book_interfaces.IGrades, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class Grades(Persistent):
+class Grades(PersistentMapping):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-	def __init__(self):
-		self.matrix = PersistentMapping()
+	def add_grade(self, username, grade):
+		grades = self.get(username, None)
+		if grades is None:
+			grades = self['username'] = BList()
+		idx = grades.index(grade)
+		if idx == -1:
+			grades.append(grade)
+		else:
+			grades[idx] = grade
+
+	set_grade = add_grade
+
+	def get_grades(self, username):
+		grades = self.get(username, None)
+		return list(grades) if grades else None
+
+	def remove_grade(self, username, grade):
+		result = False
+		grades = self.get(username, None)
+		if grades:
+			if book_interfaces.IGrade.providedBy(grade):
+				grade = grade.NTIID
+			idx = -1
+			grade = unicode(grade)
+			for i, g in enumerate(grades):
+				if g.NTIID == grade:
+					idx = i
+					break
+			if idx != -1:
+				grades.pop(idx)
+				result = True
+		return result

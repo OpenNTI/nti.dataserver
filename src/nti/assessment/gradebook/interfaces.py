@@ -8,10 +8,9 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
+from zope.interface.common.mapping import IMapping
 from zope.container.constraints import contains, containers
 from zope.container.interfaces import IContainer, IContained
-
-from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils import schema as dmschema
 
@@ -63,11 +62,16 @@ class IGrade(interface.Interface):
 	grade = schema.Float(title="The real grade", min=0.0, max=100.0, required=False)
 	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
 
-class IGrades(IContained):
+class IGrades(IMapping):
 	"""
 	User grades
 	"""
-	matrix = schema.Dict(dmschema.ValidTextLine(title="username"),
-						 dmschema.ListOrTuple(IGrade, title="the grades"), title="grade matrix")
+	
+	def get_grades(username):
+		pass
 
+	def add_grade(username, grade):
+		pass
 
+	def remove_grade(username, grade):
+		pass
