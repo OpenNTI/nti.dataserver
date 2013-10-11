@@ -3,7 +3,7 @@
 """
 Grade book
 
-$Id: graders.py 19693 2013-05-30 23:06:02Z carlos.sanchez $
+$Id$
 """
 from __future__ import unicode_literals, print_function, absolute_import
 __docformat__ = "restructuredtext en"
@@ -68,3 +68,7 @@ class GradeBookEntry(Persistent, CreatedModDateTrackingObject, zcontained.Contai
 		except AttributeError:
 			return NotImplemented
 
+	def __hash__(self):
+		xhash = 47
+		xhash ^= hash(self.NTIID)
+		return xhash
