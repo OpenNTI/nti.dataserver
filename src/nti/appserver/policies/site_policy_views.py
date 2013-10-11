@@ -152,7 +152,6 @@ def webapp_strings_view(request):
 	"""
 	Redirects to a site specific strings file based on the current site policy.
 	"""
-
 	# XXX: FIXME: The final part of the name of the path that matches this route
 	# is 'site.js', but the resource we want to look for is actually 'strings.js',
 	# This makes doing simple static redirections much harder than necessary and places
