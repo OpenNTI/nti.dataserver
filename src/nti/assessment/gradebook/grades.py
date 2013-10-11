@@ -22,18 +22,18 @@ from nti.dataserver.datastructures import CreatedModDateTrackingObject
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
-from . import interfaces as book_interfaces
+from . import interfaces as grades_interfaces
 
-@interface.implementer(book_interfaces.IGrade, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+@interface.implementer(grades_interfaces.IGrade, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class Grade(SchemaConfigured, CreatedModDateTrackingObject):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-	createDirectFieldProperties(book_interfaces.IGrade)
+	createDirectFieldProperties(grades_interfaces.IGrade)
 
 	def __eq__(self, other):
 		try:
-			return self is other or (book_interfaces.IGrade.providedBy(Grade)
+			return self is other or (grades_interfaces.IGrade.providedBy(Grade)
 									 and self.entry == other.entry)
 		except AttributeError:
 			return NotImplemented
@@ -49,7 +49,7 @@ class Grade(SchemaConfigured, CreatedModDateTrackingObject):
 	def __repr__(self):
 		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.entry, self.grade, self.autograde)
 
-@interface.implementer(book_interfaces.IGrades, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+@interface.implementer(grades_interfaces.IGrades, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class Grades(PersistentMapping):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
@@ -74,7 +74,7 @@ class Grades(PersistentMapping):
 		result = False
 		grades = self.get(username, None)
 		if grades:
-			if book_interfaces.IGrade.providedBy(grade):
+			if grades_interfaces.IGrade.providedBy(grade):
 				grade = grade.NTIID
 			idx = -1
 			grade = unicode(grade)
