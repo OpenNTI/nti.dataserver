@@ -20,9 +20,10 @@ def evolve(context):
 	"""
 
 	# Our root folder's SiteManager should have the 'default' subfolder, that's
-	# expected
+	# expected...depending on when it was created, it may or may not exist
 	root_folder = context.connection.root()['nti.dataserver_root']
-	root_folder.getSiteManager()['default'] = SiteManagementFolder()
+	if 'default' not in root_folder.getSiteManager():
+		root_folder.getSiteManager()['default'] = SiteManagementFolder()
 
 	# The root folder's SiteManager should have a proper parent
 	root_folder.getSiteManager().__parent__ = root_folder
