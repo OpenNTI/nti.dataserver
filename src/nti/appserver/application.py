@@ -81,7 +81,7 @@ def _create_xml_conf_machine( settings ):
 	zcml_features = set(zcml_features)
 	# BWC aliases
 	for k in 'devmode', 'testmode':
-		if settings.get( k ):
+		if asbool( settings.get( k ) ):
 			zcml_features.add( k )
 
 	if os.getenv('DATASERVER_DIR_IS_BUILDOUT'): # XXX Temp hack, mostly for tests
