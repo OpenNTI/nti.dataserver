@@ -10,6 +10,8 @@ from zope import schema
 from zope.container.constraints import contains, containers
 from zope.container.interfaces import IContainer, IContained
 
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.utils import schema as dmschema
 
 class IGradeBookEntry(IContained):
@@ -49,6 +51,31 @@ class IGradeBook(IContainer, IContained):
 	Grade book definition
 	"""
 	contains(IGradeBookPart)
+	__parent__.required = False
+
+
+class IGrade(IContained):
+	"""
+	Grade entry
+	"""
+	containers(b'.IUserGrades')
+	
+	grade = schema.Float(title="The real grade", min=0.0, max=100.0)
+	autograde = schema.Float(title="Auto grade", min=0.0, max=100.0, required=False)
+
+class IUserGrades(IContainer, IContained):
+	"""
+	Grades for a user
+	"""
+	containers(b'.IGrades')
+	contains(IGrade)
+	__parent__.required = False
+
+class IGrades(IContainer, IContained):
+	"""
+	User grades
+	"""
+	contains(IUserGrades)
 	__parent__.required = False
 
 
