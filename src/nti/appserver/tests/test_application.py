@@ -287,12 +287,23 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 		return Library()
 
 	@classmethod
+	def _extra_app_settings(cls):
+		return {}
+
+	@classmethod
 	def setUpClass(cls):
 		__show__.off()
 		#self.ds = mock_dataserver.MockDataserver()
 		super(SharedApplicationTestBase,cls).setUpClass()
-		cls.app = createApplication( 8080, cls._setup_library(), create_ds=False, force_create_indexmanager=True,
-									 pyramid_config=cls.config, devmode=cls.APP_IN_DEVMODE, testmode=True, zcml_features=cls.features )
+		cls.app = createApplication( 8080,
+									 cls._setup_library(),
+									 create_ds=False,
+									 force_create_indexmanager=True,
+									 pyramid_config=cls.config,
+									 devmode=cls.APP_IN_DEVMODE,
+									 testmode=True,
+									 zcml_features=cls.features,
+									 **cls._extra_app_settings())
 
 		component.provideHandler( eventtesting.events.append, (None,) )
 
