@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Grade book
+Grades
 
 $Id$
 """
-from __future__ import unicode_literals, print_function, absolute_import
+from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope.container import contained as zcontained
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 
 from persistent import Persistent
+from persistent.mapping import PersistentMapping
 
 from nti.dataserver import mimetype
-from nti.dataserver import containers as nti_containers
+from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
@@ -24,25 +24,34 @@ from nti.utils.schema import createDirectFieldProperties
 from . import interfaces as book_interfaces
 
 @interface.implementer(book_interfaces.IGrade, zmime_interfaces.IContentTypeAware)
-class Grade(Persistent, SchemaConfigured, zcontained.Contained):
+class Grade(SchemaConfigured, CreatedModDateTrackingObject):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
 	createDirectFieldProperties(book_interfaces.IGrade)
 
+	def __eq__(self, other):
+		try:
+			return self is other or (book_interfaces.IGradeBookEntry.providedBy(Grade)
+									 and self.entry == other.entry)
+		except AttributeError:
+			return NotImplemented
+
+	def __hash__(self):
+		xhash = 47
+		xhash ^= hash(self.NTIID)
+		return xhash
+
 	def __str__(self):
-		return self.grade
+		return "%s,%s" % (self.entry, self.grade)
 
 	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__.__name__, self.grade, self.autograde)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.entry, self.grade, self.autograde)
 
-@interface.implementer(book_interfaces.IUserGrades, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class UserGrades(nti_containers.CheckingLastModifiedBTreeContainer, zcontained.Contained):
-
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-
-
-@interface.implementer(book_interfaces.IGradeBookEntry, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class Grades(nti_containers.CheckingLastModifiedBTreeContainer, zcontained.Contained):
+@interface.implementer(book_interfaces.IGrades, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+class Grades(Persistent):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+
+	def __init__(self):
+		self.matrix = PersistentMapping()
