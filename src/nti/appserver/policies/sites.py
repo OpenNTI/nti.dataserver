@@ -86,7 +86,7 @@ zope.deferredimport.deprecatedFrom(
 # which happens in buildout
 ##
 OU = BaseComponents(BASEADULT, name='platform.ou.edu', bases=(BASEADULT,))
-OUTEST = BaseComponents(BASEADULT, name='ou-test.nextthought.com', bases=(OU,))
+OUTEST = BaseComponents(OU, name='ou-test.nextthought.com', bases=(OU,))
 
 def _find_sites():
 	"""

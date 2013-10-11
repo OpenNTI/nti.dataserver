@@ -297,6 +297,33 @@ Tips
 	$ cat $VIRTUAL_ENV/bin/postdeactivate
 	PATH=$JM_VE_OLDPATH
 
+* If you update your buildout checkout and/or recipe sources and then
+  proceed to get a DistributionNotFound error from a recipe, the
+  quickest fix is to re-bootstrap your buildout and then run the
+  buildout command again::
+
+	While:
+	Installing.
+	Getting section eggs.
+	Initializing section eggs.
+	Getting option eggs:initialization.
+	Getting section environment.
+	Initializing section environment.
+	Getting option environment:smtp_passwd.
+	Getting section passwords.
+	Initializing section passwords.
+	Loading zc.buildout recipe entry nti.recipes.passwords:default.
+
+	An internal error occurred due to a bug in either zc.buildout or in a
+	recipe being used:
+	Traceback (most recent call last):
+	...
+	raise DistributionNotFound(req)
+	DistributionNotFound: pycrypto>=2.6
+
+	$ $VIRTUAL_ENV/bin/python bootstrap.py
+	$ bin/bootstrap -c ....
+
 
 Having Buildout Automatically Update Sources
 --------------------------------------------
