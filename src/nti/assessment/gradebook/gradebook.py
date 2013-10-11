@@ -21,21 +21,21 @@ from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
 from nti.utils.schema import AdaptingFieldProperty
 
-from . import interfaces as book_interfaces
+from . import interfaces as grades_interfaces
 
-@interface.implementer(book_interfaces.IGradeBook, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+@interface.implementer(grades_interfaces.IGradeBook, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class GradeBook(nti_containers.CheckingLastModifiedBTreeContainer, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-@interface.implementer(book_interfaces.IGradeBookPart, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+@interface.implementer(grades_interfaces.IGradeBookPart, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-	name = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['name'])
-	order = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['order'])
-	weight = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['weight'])
+	name = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['name'])
+	order = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['order'])
+	weight = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['weight'])
 
 	def __str__(self):
 		return self.name
@@ -44,16 +44,16 @@ class GradeBookPart(nti_containers.CheckingLastModifiedBTreeContainer, zcontaine
 		return "%s(%s,%s)" % (self.__class__.__name__, self.name, self.weight)
 
 
-@interface.implementer(book_interfaces.IGradeBookEntry, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+@interface.implementer(grades_interfaces.IGradeBookEntry, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
 class GradeBookEntry(Persistent, CreatedModDateTrackingObject, zcontained.Contained):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 
-	name = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['name'])
-	order = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['order'])
-	NTIID = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['NTIID'])
-	weight = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['weight'])
-	questionSetID = AdaptingFieldProperty(book_interfaces.IGradeBookEntry['questionSetID'])
+	name = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['name'])
+	order = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['order'])
+	NTIID = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['NTIID'])
+	weight = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['weight'])
+	questionSetID = AdaptingFieldProperty(grades_interfaces.IGradeBookEntry['questionSetID'])
 
 	def __str__(self):
 		return self.name
@@ -63,7 +63,7 @@ class GradeBookEntry(Persistent, CreatedModDateTrackingObject, zcontained.Contai
 
 	def __eq__(self, other):
 		try:
-			return self is other or (book_interfaces.IGradeBookEntry.providedBy(other)
+			return self is other or (grades_interfaces.IGradeBookEntry.providedBy(other)
 									 and self.NTIID == other.NTIID)
 		except AttributeError:
 			return NotImplemented
