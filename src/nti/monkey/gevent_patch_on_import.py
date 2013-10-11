@@ -33,50 +33,6 @@ def _patch_process_pool_executor():
 		return concurrent.futures.ThreadPoolExecutor( max_workers )
 	concurrent.futures.ProcessPoolExecutor = ProcessPoolExecutor
 
-def _patch_zeo_client_storage_deadlock():
-	# Patch for try/finally missing in ZODB 3.10.5/3.11.0a1 ZEO4.0.0a1 that can lead to deadlock
-	# See https://bugs.launchpad.net/zodb/+bug/1048644
-	# See https://github.com/zopefoundation/ZEO/pull/1
-	from ZODB import POSException
-	import ZEO.ClientStorage
-	from ZEO.ClientStorage import disconnected_stub
-
-	def tpc_begin(self, txn, tid=None, status=' '):
-		"""Storage API: begin a transaction."""
-		if self._is_read_only:
-			raise POSException.ReadOnlyError()
-		self._tpc_cond.acquire()
-		try:
-			self._midtxn_disconnect = 0
-			while self._transaction is not None:
-				# It is allowable for a client to call two tpc_begins in a
-				# row with the same transaction, and the second of these
-				# must be ignored.
-				if self._transaction == txn:
-					raise POSException.StorageTransactionError(
-						"Duplicate tpc_begin calls for same transaction")
-
-				self._tpc_cond.wait(30)
-		finally:
-			self._tpc_cond.release()
-
-		self._transaction = txn
-
-		try:
-			self._server.tpc_begin(id(txn), txn.user, txn.description,
-								   txn._extension, tid, status)
-		except:
-			# Client may have disconnected during the tpc_begin().
-			if self._server is not disconnected_stub:
-				self.end_transaction()
-			raise
-
-		self._tbuf.clear()
-		self._seriald.clear()
-		del self._serials[:]
-
-	ZEO.ClientStorage.ClientStorage.tpc_begin = tpc_begin
-
 def _patch_thread_stop():
 	# The dummy-thread deletes __block, which interacts
 	# badly with forking process with subprocess: after forking,
@@ -229,9 +185,10 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	_threading_local = __import__('_threading_local') # TODO: Why is this imported now?
 
 	# And now the things to patch ProcessPoolExecutor as described
+	# TODO: What about the ``gipc`` project? It has a Process object compatible
+	# with multiprocessing's Process object (and it already has some monkey
+	# patches for multiprocessing), maybe we can use it here?
 	_patch_process_pool_executor()
-
-	_patch_zeo_client_storage_deadlock()
 
 	_patch_thread_stop()
 
@@ -248,9 +205,9 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	# We monkey patched threads out of the way, so there's
 	# no need for the GIL checking for thread switches. Turn it
 	# way down to reduce its overhead (default 100
-		_CHECK_INTERVAL = 10000
-		if sys.getcheckinterval() < _CHECK_INTERVAL:
-			sys.setcheckinterval( _CHECK_INTERVAL )
+	_CHECK_INTERVAL = 10000
+	if sys.getcheckinterval() < _CHECK_INTERVAL:
+		sys.setcheckinterval( _CHECK_INTERVAL )
 
 	del threading
 	del _threading_local
@@ -261,10 +218,6 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	# Monkey-patch for RelStorage to use pure-python drivers that are non-blocking
 	from . import relstorage_umysqldb_patch_on_import
 	relstorage_umysqldb_patch_on_import.patch()
-
-	from . import zodb_blob_byte_oid_decode_patch_on_import
-	zodb_blob_byte_oid_decode_patch_on_import.patch()
-
 
 else:
 	logger = __import__('logging').getLogger(__name__)

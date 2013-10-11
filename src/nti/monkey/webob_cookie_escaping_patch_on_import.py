@@ -42,6 +42,9 @@ if _quote( b'foo@bar' ) != 'foo@bar':
 		assert _quote( b'foo@bar' ) == 'foo@bar'
 	except AssertionError:
 		raise ImportError( "Unable to patch WebOb correctly" )
+else:
+	raise ImportError("WebOb internals have changed; review this patch")
+
 
 def patch():
 	pass

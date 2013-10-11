@@ -73,6 +73,8 @@ def _patch_traversing():
 
 		global _patched_traversing
 		_patched_traversing = True
+	else:
+		raise ImportError("Internals of zope.traversing have changed; review this patch")
 	assert not is_api_broken(), "Patched it"
 
 	# Now, is the default adapter broken?
