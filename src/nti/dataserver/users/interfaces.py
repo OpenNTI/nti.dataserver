@@ -217,13 +217,15 @@ class IWillUpdateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 	ext_value = interface.Attribute("The external value that will drive the update")
 	meta_data = interface.Attribute("A dictionary with update meta data")
 
+_marker = object()
+
 @interface.implementer(IWillUpdateNewEntityEvent)
 class WillUpdateNewEntityEvent(zope.component.interfaces.ObjectEvent):
 
-	def __init__(self, obj, ext_value=None, meta_data=None):
+	def __init__(self, obj, ext_value=_marker, meta_data=_marker):
 		super(WillUpdateNewEntityEvent, self).__init__(obj)
-		self.ext_value = ext_value
-		self.meta_data = meta_data
+		self.ext_value = ext_value if ext_value is not _marker else {}
+		self.meta_data = meta_data if ext_value is not _marker else {}
 
 class IWillCreateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 	"""

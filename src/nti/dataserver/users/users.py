@@ -168,6 +168,8 @@ if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 class Community(sharing.DynamicSharingTargetMixin,Entity):
 	# order of inheritance matters
 
+	mime_type = 'application/vnd.nextthought.community'
+
 	@classmethod
 	def create_community( cls, dataserver=None, **kwargs ):
 		""" Creates (and returns) and places in the dataserver a new community.

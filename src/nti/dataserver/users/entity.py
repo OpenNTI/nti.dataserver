@@ -145,11 +145,15 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 			IKeyReference( user ) # Ensure it gets added to the database
 			assert getattr( user, '_p_jar', None ), "User should have a connection"
 
-		# meta data
-		meta_data = kwargs.pop('meta_data', None)
-		
+		# Take out some extra arguments used during the
+		# creation process from external data but
+		# not internally. Site policies and the like will
+		# look for, and possibly modify these, so ensure
+		# that we have one dictionary throughout the process
+		meta_data = kwargs.pop( 'meta_data', {} )
+		ext_value = kwargs.pop( 'external_value', {} )
+
 		# Finally, we init the user
-		ext_value = kwargs.pop( 'external_value', None )
 		user.__init__( **kwargs )
 		assert preflight_only or getattr( user, '_p_jar', None ), "User should still have a connection"
 
