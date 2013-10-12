@@ -217,7 +217,7 @@ setup(
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
 		'contentratings == 1.1',  # requires small patch to work without acquisition
 		'cryptacular >= 1.4.1',	 # see z3c.crypt
-		'cssselect >= 0.8',  # Used by pyquery
+		'cssselect >= 0.9',  # Used by pyquery
 		'cython >= 0.19.1',
 		# Adds support for detecting aborts to transactions which
 		# otherwise only detect failed commits
@@ -260,7 +260,6 @@ setup(
 		'plone.i18n >= 2.0.9',	# provides ISO3166 country/codes and flag images
 		'plone.scale >= 1.3.2',	 # image scaling/storage based on PIL
 		'plone.namedfile >= 2.0.2',	 # much like zope.file, but some image-specific goodness.
-		'pymongo >= 2.6.2',
 		'pyparsing >= 1.5.6, <=1.5.7',	# used by matplotlib, rdflib, experimental zopyx.txng3.core
 		# Pure python PDF reading and manipulation library.
 		'pyPDF2 >= 1.19',
