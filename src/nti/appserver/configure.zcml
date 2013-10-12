@@ -27,22 +27,18 @@
 		Needed for tables based on z3c/ZPT, which use the Zope-based request
 	-->
 	<!-- Languages -->
-	<!-- Pyramid requests, via Zope -->
-	<adapter factory="._pyramid_zope_integrations.PyramidBrowserPreferredLanguages" />
+	<include package="nti.app.pyramid_zope" />
+
 
 	<!-- Zope Requests. This is also cacheable. -->
 	<adapter factory="zope.publisher.browser.ModifiableBrowserLanguages"
 			 provides="zope.i18n.interfaces.IModifiableUserPreferredLanguages"/>
 
-	<!-- Requests themselves -->
-	<adapter factory="._pyramid_zope_integrations.PyramidZopeRequestProxy" />
 
 	<!-- Entities -->
 	<adapter factory="._adapters.UserPreferredLanguages" />
 
 	<!-- Charsets -->
-	<adapter factory="._pyramid_zope_integrations.PyramidBrowserPreferredCharsets" />
-
 	<adapter factory="zope.publisher.http.HTTPCharsets"
 			 provides="zope.i18n.interfaces.IUserPreferredCharsets" />
 

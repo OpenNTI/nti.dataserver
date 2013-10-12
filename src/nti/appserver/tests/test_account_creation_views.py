@@ -1330,9 +1330,9 @@ def main(email=None, uname=None, cname=None):
 	from pyramid_mailer.interfaces import IMailer
 	component.provideUtility( pyramid_mailer.Mailer.from_settings( {'mail.queue_path': '/tmp/ds_maildir', 'mail.default_sender': 'no-reply@nextthought.com' } ), IMailer )
 
-	import nti.appserver.z3c_zpt
+	import nti.app.pyramid_zope.z3c_zpt
 	from pyramid.interfaces import IRendererFactory
-	component.provideUtility( nti.appserver.z3c_zpt.renderer_factory, IRendererFactory, name='.pt' )
+	component.provideUtility( nti.app.pyramid_zope.z3c_zpt.renderer_factory, IRendererFactory, name='.pt' )
 	import nti.appserver.policies.user_policies
 	nti.appserver.policies.user_policies.send_consent_request_on_new_coppa_account(FakeUser(), FakeEvent)
 
