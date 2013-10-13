@@ -61,6 +61,6 @@ class _RepozeStorageService(_RedisStorageService):
 				func = getattr( self, '_op_' + op )
 				func = functools.partial( func, docid, username )
 
-				run( func, retries=None )
+				run( func, retries=20, sleep=0.1, job_name=repr(m) )
 			except:
 				logger.exception("Failed to run index operation %s", repr(m))

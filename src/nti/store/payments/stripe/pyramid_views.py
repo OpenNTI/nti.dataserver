@@ -64,6 +64,7 @@ class CreateStripeTokenView(_PostStripeView):
 
 	def __call__(self):
 		values = self.readInput()
+		__traceback_info__ = values, self.request.params
 		stripe_key = self.get_stripe_connect_key(values)
 		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
 
