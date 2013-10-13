@@ -332,10 +332,14 @@ class _RunJobInSite(TransactionLoop):
 
 	def __init__( self, *args, **kwargs ):
 		self.site_names = kwargs.pop( 'site_names' )
+		self.job_name = kwargs.pop( 'job_name' )
 		super(_RunJobInSite,self).__init__( *args, **kwargs )
 		self.conn = None
 
 	def describe_transaction( self, *args, **kwargs ):
+		if self.job_name:
+			return self.job_name
+		# Derive from the function
 		func = self.handler
 		note = func.__doc__
 		if note:
@@ -365,7 +369,11 @@ class _RunJobInSite(TransactionLoop):
 
 _marker = object()
 
-def run_job_in_site(func, retries=0, sleep=None, site_names=_marker):
+def run_job_in_site(func,
+					retries=0,
+					sleep=None,
+					site_names=_marker,
+					job_name=None):
 	"""
 	Runs the function given in `func` in a transaction and dataserver local
 	site manager. See :class:`.IDataserverTransactionRunner`
@@ -387,7 +395,11 @@ def run_job_in_site(func, retries=0, sleep=None, site_names=_marker):
 		from nti.appserver.policies.site_policies import get_possible_site_names
 		site_names = get_possible_site_names()
 
-	return _RunJobInSite( func, retries=retries, sleep=sleep, site_names=site_names )()
+	return _RunJobInSite( func,
+						  retries=retries,
+						  sleep=sleep,
+						  site_names=site_names,
+						  job_name=job_name )()
 
 interface.directlyProvides( run_job_in_site, interfaces.IDataserverTransactionRunner )
 run_job_in_site.__doc__ = interfaces.IDataserverTransactionRunner['__call__'].getDoc()
