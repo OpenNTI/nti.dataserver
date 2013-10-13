@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+import functools
+
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -46,17 +48,19 @@ class _RepozeStorageService(_RedisStorageService):
 			return um.unindex(int(docid))
 		return False
 
+	_op_add = index_content
+	_op_update = update_content
+	_op_delete = unindex
+
 	def process_messages(self, msgs):
-		runner = component.queryUtility(nti_interfaces.IDataserverTransactionRunner)
+		run = component.queryUtility(nti_interfaces.IDataserverTransactionRunner)
 		for m in sort_messages(msgs):
 			__traceback_info__ = m
 			try:
 				op, docid, username = m
-				if op == 'add':
-					runner(lambda : self.index_content(docid, username))
-				elif op == 'update':
-					runner(lambda : self.update_content(docid, username))
-				elif op == 'delete':
-					runner(lambda : self.unindex(docid, username))
+				func = getattr( self, '_op_' + op )
+				func = functools.partial( func, docid, username )
+
+				run( func, retries=None )
 			except:
-				logger.exception("Failed to run index operation %s" % repr(m))
+				logger.exception("Failed to run index operation %s", repr(m))

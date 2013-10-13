@@ -250,7 +250,7 @@ def handle_validation_error( request, validation_error ):
 	"""
 	Handles a :class:`zope.schema.interfaces.ValidationError` within the context
 	of a Pyramid request by raising an :class:`pyramid.httpexceptions.HTTPUnprocessableEntity`
-	error. Call from within the scope of a ``catch`` block.
+	error. Call from within the scope of a ``except`` block.
 
 	This function never returns, it raises an exception.
 
