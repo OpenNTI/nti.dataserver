@@ -29,6 +29,8 @@ from persistent.interfaces import IPersistent
 
 from . import interfaces
 
+from nti.utils.schema import InvalidValue
+
 LEGACY_FACTORY_SEARCH_MODULES = set()
 
 def register_legacy_search_module( module_name ):
@@ -371,9 +373,20 @@ def validate_field_value( self, field_name, field, value ):
 		schema = list(interface.implementedBy(exp_type))[0]
 		try:
 			value = component.getAdapter( value, schema )
-			field.validate( value )
-		except (LookupError,TypeError, sch_interfaces.ValidationError):
+		except (LookupError,TypeError):
+			# No registered adapter, darn
 			raise exc_info[0], exc_info[1], exc_info[2]
+		except sch_interfaces.ValidationError as e:
+			# Found an adapter, but it does its own validation,
+			# and that validation failed (eg, IDate below)
+			# This is still a more useful error than WrongType,
+			# so go with it after ensuring it has a field
+			e.field = field
+			raise
+
+		# Lets try again with the adapted value
+		return validate_field_value( self, field_name, field, value )
+
 	except sch_interfaces.WrongContainedType as e:
 		# We failed to set a sequence. This would be of simple (non externalized)
 		# types.
@@ -448,4 +461,9 @@ def _date_from_string( string ):
 	#   return datetime.date( parsed[0], parsed[1], parsed[2] )
 	# accepts almost anything as a date (so it's great for human interfaces),
 	# but programatically we actually require ISO format
-	return isodate.parse_date( string )
+	try:
+		return isodate.parse_date( string )
+	except isodate.ISO8601Error:
+		t, v, tb = sys.exc_info()
+		e = InvalidValue( *v.args, value=string )
+		raise e, None, tb

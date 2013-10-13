@@ -196,20 +196,30 @@ class IDataserverTransactionRunner(interface.Interface):
 		Runs the function given in `func` in a transaction and dataserver local
 		site manager (defaulting to the current site manager).
 
-		:param function func: A function of zero parameters to run. If it has a docstring,
-			that will be used as the transactions note. A transaction will be begun before
-			this function executes, and committed after the function completes. This function may be rerun if
-			retries are requested, so it should be prepared for that.
-		:param int retries: The number of times to retry the transaction and execution of `func` if
-			:class:`transaction.interfaces.TransientError` is raised when committing.
-			Defaults to zero (so the job runs once).
-		:param float sleep: If not none, then the greenlet running this function will sleep for
-			this long between retry attempts.
-		:param site_names: DEPRECATED. Sequence of strings giving the virtual host names
-			to use. See :mod:`nti.dataserver.site` for more details.
-			If you do not provide this argument, then the currently installed
-			site will be maintained when the transaction is run. NOTE: The implementation
-			of this may maintain either the site names or the actual site
+		:param function func: A function of zero parameters to run. If
+			it has a docstring, that will be used as the transactions
+			note. A transaction will be begun before this function
+			executes, and committed after the function completes. This
+			function may be rerun if retries are requested, so it
+			should be prepared for that.
+
+		:param int retries: The number of times to retry the
+			transaction and execution of `func` if
+			:class:`transaction.interfaces.TransientError` is raised
+			when committing. Defaults to zero (so the job runs once).
+			If you specify None, an implementation-specific
+			number of retries will be used.
+
+		:param float sleep: If not none, then the greenlet running
+			this function will sleep for this long between retry
+			attempts.
+
+		:param site_names: DEPRECATED. Sequence of strings giving the
+			virtual host names to use. See :mod:`nti.dataserver.site`
+			for more details. If you do not provide this argument,
+			then the currently installed site will be maintained when
+			the transaction is run. NOTE: The implementation of this
+			may maintain either the site names or the actual site
 			object.
 
 		:return: The value returned by the first successful invocation of `func`.

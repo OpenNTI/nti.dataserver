@@ -285,6 +285,7 @@ class _AbstractNotDevmodeViewBase(SharedConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'four' ) ) )
 
+
 	@WithMockDSTrans
 	def test_create_blank_realname( self ):
 
@@ -942,6 +943,23 @@ class TestCreateView(_AbstractValidationViewBase):
 		# The user should have some capabilities
 		assert_that( ext_object, has_entry( 'CapabilityList', is_not(has_item( u'nti.platform.customization.avatar_upload' ))))
 		assert_that( ext_object, has_entry( 'CapabilityList', has_item( u'nti.platform.p2p.dynamicfriendslists')))
+
+	@WithMockDSTrans
+	def test_create_birthdate_unparseable_mathcounts( self ):
+		self.request.content_type = 'application/vnd.nextthought+json'
+		self.request.headers[b'orogin'] = b'http://mathcounts.nextthought.com'
+		self.request.body = to_json_representation( {
+													 'Username': 'jamadden',
+													 'realname': 'Jason Madden',
+													 'password': 'pass132word',
+													 'email': 'foo@bar.com',
+													 'birthdate': 'xx' } )
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'InvalidValue' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
 
 	@WithMockDSTrans
 	def _do_test_create_site_policy( self, host, com_name ):

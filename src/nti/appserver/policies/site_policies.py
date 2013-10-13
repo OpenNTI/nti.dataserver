@@ -382,6 +382,8 @@ def _censor_usernames(entity, event=None):
 			raise FieldContainsCensoredSequence(_("Alias contains a censored sequence"), 'alias', names.alias)
 
 def _is_x_or_more_years_ago(birthdate, years_ago=13):
+	if birthdate is None:
+		return False
 
 	today = datetime.date.today()
 	x_years_ago = datetime.date.today().replace(year=today.year - years_ago)
@@ -389,6 +391,12 @@ def _is_x_or_more_years_ago(birthdate, years_ago=13):
 	return birthdate < x_years_ago
 
 _is_thirteen_or_more_years_ago = _is_x_or_more_years_ago
+
+def _to_date( string, field=None ):
+	try:
+		return IDate(string) if string else None
+	except InvalidValue as e:
+		return None
 
 # Validation errors. The class names will be used as codes,
 # which will help the UI if they don't want to use our error
@@ -622,7 +630,9 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		interface.alsoProvides(user, self.IF_ROOT)
 		iface_to_provide = self.IF_WOUT_AGREEMENT
 
-		if event.ext_value.get('birthdate') and _is_thirteen_or_more_years_ago(IDate(event.ext_value['birthdate'])):
+		if (event.ext_value.get('birthdate')
+			and _is_thirteen_or_more_years_ago(_to_date(event.ext_value['birthdate'],
+														'birthdate'))):
 			iface_to_provide = self.IF_WITH_AGREEMENT
 		elif 'contact_email' in event.ext_value and 'email' not in event.ext_value:
 			event.ext_value['email'] = event.ext_value['contact_email']
