@@ -32,7 +32,6 @@ import pyramid.config
 
 
 from nti.appserver.tests import ConfiguringTestBase, SharedConfiguringTestBase
-from webtest import TestApp as _TestApp
 import webob.datetime_utils
 import datetime
 import time
@@ -120,51 +119,7 @@ def _trivial_db_transaction_cm():
 		finally:
 			conn.close()
 
-from nti.appserver.cors import cors_filter_factory as CORSInjector, cors_option_filter_factory as CORSOptionHandler
-from paste.exceptions.errormiddleware import ErrorMiddleware
-
-class ZODBGCMiddleware(object):
-
-	def __init__( self, app ):
-		self.app = app
-
-	def __call__( self, *args, **kwargs ):
-		result = self.app( *args, **kwargs )
-		mock_dataserver.reset_db_caches( )
-		return result
-
-
-class _UnicodeTestApp(_TestApp):
-	"To make using unicode literals easier"
-
-	def _make_( name ):
-		def f( self, path, *args, **kwargs ):
-			__traceback_info__ = path, args, kwargs
-			return getattr( super(_UnicodeTestApp,self), name )( str(path), *args, **kwargs )
-
-		f.__name__ = name
-		return f
-
-	get = _make_('get')
-	put = _make_('put')
-	post = _make_('post')
-	put_json = _make_('put_json')
-	post_json = _make_('post_json')
-	delete = _make_( 'delete' )
-
-	del _make_
-
-_TestApp = _UnicodeTestApp
-
-def TestApp(app, **kwargs):
-	"""Sets up the pipeline just like in real life.
-
-	:return: A WebTest testapp.
-	"""
-
-	return _TestApp( CORSInjector( CORSOptionHandler( ErrorMiddleware( ZODBGCMiddleware( app ), debug=True ) ) ),
-					 **kwargs )
-TestApp.__test__ = False # make nose not call this
+from nti.app.testing.webtest import TestApp
 
 class _AppTestBaseMixin(object):
 

@@ -41,7 +41,7 @@ _BOARD_NAME = CommunityBoard.__default_name__
 
 from nti.appserver.tests.test_application import SharedApplicationTestBase
 from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
-from nti.appserver.tests.test_application import _TestApp
+from nti.app.testing.webtest import TestApp as _TestApp
 
 from pyquery import PyQuery
 from urllib import quote as UQ
