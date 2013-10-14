@@ -19,6 +19,9 @@ from persistent.mapping import PersistentMapping
 from nti.dataserver import mimetype
 from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.internalization import update_from_external_object
+
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
@@ -53,7 +56,10 @@ class Grade(SchemaConfigured, CreatedModDateTrackingObject):
 	def __repr__(self):
 		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.entry, self.grade, self.autograde)
 
-@interface.implementer(grades_interfaces.IGrades, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
+@interface.implementer(grades_interfaces.IGrades, 
+					   ext_interfaces.IInternalObjectUpdater,
+					   an_interfaces.IAttributeAnnotatable,
+					   zmime_interfaces.IContentTypeAware)
 class Grades(PersistentMapping):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
@@ -90,3 +96,18 @@ class Grades(PersistentMapping):
 				grades.pop(idx)
 				result = True
 		return result
+
+	def clear(self, username):
+		grades = self.pop(username, None)
+		return grades
+
+	def updateFromExternalObject(self, ext, *args, **kwargs):
+		modified = False
+		items = ext.get('Items', {})
+		for username, grades in items.items():
+			for grade_ext in grades:
+				modified = True
+				grade = Grade()
+				update_from_external_object(grade, grade_ext)
+				self.set_grade(username, grade)
+		return modified
