@@ -96,7 +96,7 @@ class MinimalDataserver(object):
 
 		self._open_dbs()
 
-		self.memcache = self._setup_cache()
+		self.memcache = self._setup_cache( self.conf )
 		self.other_closeables.append( (self.memcache, self.memcache.disconnect_all) )
 
 		for deprecated in ('_setup_storage', '_setup_launch_zeo', '_setup_storages'):
@@ -162,7 +162,7 @@ class MinimalDataserver(object):
 		component.getGlobalSiteManager().registerUtility( client, interfaces.IRedisClient )
 		return client
 
-	def _setup_cache( self ):
+	def _setup_cache( self, conf ):
 		"""
 		Creates and returns a memcache instance to use. If we are
 		using RelStorage, we piggy back off its settings so we don't have to configure
@@ -179,10 +179,11 @@ class MinimalDataserver(object):
 		if cache is None:
 			# Import the python implementation
 			import memcache
-			# use the default local server; if one is not available
+			cache_servers = conf.main_conf.get( 'memcached', 'servers' ) or '127.0.0.1:11211'
+			# use the default local server if there is no configuration; if one is not available
 			# then nothing happens (the instance is constructed but does nothing)
 			# TODO: Mock this in tests
-			cache = memcache.Client(['127.0.0.1:11211'])
+			cache = memcache.Client(cache_servers.split())
 
 		interface.alsoProvides( cache, interfaces.IMemcacheClient )
 		import pickle
