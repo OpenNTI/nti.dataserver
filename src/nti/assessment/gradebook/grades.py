@@ -8,6 +8,8 @@ $Id$
 from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope import interface
 from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
@@ -100,6 +102,9 @@ class Grades(PersistentMapping):
 	def clear(self, username):
 		grades = self.pop(username, None)
 		return grades
+
+	def clearAll(self):
+		super(Grades, self).clear()
 
 	def updateFromExternalObject(self, ext, *args, **kwargs):
 		modified = False
