@@ -97,7 +97,8 @@ class MinimalDataserver(object):
 		self._open_dbs()
 
 		self.memcache = self._setup_cache( self.conf )
-		self.other_closeables.append( (self.memcache, self.memcache.disconnect_all) )
+		if self.memcache is not None:
+			self.other_closeables.append( (self.memcache, self.memcache.disconnect_all) )
 
 		for deprecated in ('_setup_storage', '_setup_launch_zeo', '_setup_storages'):
 			meth = getattr( self, deprecated, None )

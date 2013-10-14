@@ -27,14 +27,20 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.ntiids import ntiids
 
 from nti.testing.matchers import verifiably_provides
+from pyramid.request import Request
+from pyramid.router import Router
+from zope import component
 
 from ..library_views import _ContentUnitPreferencesPutView, _ContentUnitPreferencesDecorator
+from ..library_views import find_page_info_view_helper
+from nti.appserver.httpexceptions import HTTPNotFound
 
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import has_entry
 from hamcrest import has_key
 from hamcrest import greater_than
+from nose.tools import assert_raises
 
 @interface.implementer(lib_interfaces.IContentUnit)
 class ContentUnit(object):
@@ -67,6 +73,15 @@ class ContentUnitInfo(object):
 	contentUnit = None
 	lastModified = 0
 
+def test_unicode_in_page_href():
+	unit = ContentUnit()
+	unit.ntiid = u'\u2122'
+	request = Request.blank('/')
+	request.invoke_subrequest = Router(component.getGlobalSiteManager()).invoke_subrequest
+	request.environ['REMOTE_USER'] = 'foo'
+	request.environ['repoze.who.identity'] = {}
+	with assert_raises(HTTPNotFound):
+		find_page_info_view_helper( request, unit )
 
 class TestContainerPrefs(NewRequestSharedConfiguringTestBase):
 
@@ -176,7 +191,7 @@ class TestContainerPrefs(NewRequestSharedConfiguringTestBase):
 
 		self.request.accept = Accept()
 
-		interface.implementer( lib_interfaces.IContentPackageLibrary )
+		@interface.implementer( lib_interfaces.IContentPackageLibrary )
 		class Lib(object):
 			titles = ()
 			def pathToNTIID( self, ntiid ):
