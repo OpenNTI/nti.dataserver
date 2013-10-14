@@ -29,13 +29,16 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS
 	def test_user_info_extract(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			self._create_user(external_value={u'email':u"nti@nt.com", u'realname':u'steve',
+			self._create_user(external_value={u'email':u"nti@nt.com",
+											  u'realname':u'steve johnson',
 											  u'alias':u'citadel'})
 			self._create_user(username='rukia@nt.com',
-							  external_value={u'email':u'rukia@nt.com', u'realname':u'rukia',
+							  external_value={u'email':u'rukia@nt.com',
+											  u'realname':u'rukia foo',
 											  u'alias':u'sode no shirayuki'})
 			self._create_user(username='ichigo@nt.com',
-							  external_value={u'email':u'ichigo@nt.com', u'realname':u'ichigo',
+							  external_value={u'email':u'ichigo@nt.com',
+											  u'realname':u'ichigo bar',
 											  u'alias':u'zangetsu'})
 		testapp = TestApp(self.app)
 
@@ -120,7 +123,7 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 		stream.seek(0)
 		d = simplejson.load(stream)
 		assert_that(d, has_entry(u'body', [u'bankai']))
-		
+
 	@WithSharedApplicationMockDS
 	def test_delete_user_objects(self):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -162,16 +165,20 @@ class TestApplicationUserExporViews(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS
 	def test_export_users(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			self._create_user(external_value={u'email':u"nti@nt.com", u'realname':u'steve',
+			self._create_user(external_value={u'email':u"nti@nt.com",
+											  u'realname':u'steve johnson',
 											  u'alias':u'citadel'})
 			self._create_user(username='rukia@nt.com',
-							  external_value={u'email':u'rukia@nt.com', u'realname':u'rukia',
+							  external_value={u'email':u'rukia@nt.com',
+											  u'realname':u'rukia foo',
 											  u'alias':u'sode no shirayuki'})
 			self._create_user(username='ichigo@nt.com',
-							  external_value={u'email':u'ichigo@nt.com', u'realname':u'ichigo',
+							  external_value={u'email':u'ichigo@nt.com',
+											  u'realname':u'ichigo bar',
 											  u'alias':u'zangetsu'})
 			self._create_user(username='aizen@nt.com',
-							  external_value={u'email':u'aizen@nt.com', u'realname':u'aizen',
+							  external_value={u'email':u'aizen@nt.com',
+											  u'realname':u'aizen baz',
 											  u'alias':u'kyoka suigetsu'})
 
 		testapp = TestApp(self.app)

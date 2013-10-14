@@ -419,9 +419,9 @@ class MissingLastName(sch_interfaces.RequiredMissing):
 class AtInUsernameImpliesMatchingEmail(InvalidValue): pass
 
 @interface.implementer(ISitePolicyUserEventListener)
-class GenericSitePolicyEventListener(object):
+class AbstractSitePolicyEventListener(object):
 	"""
-	Implements a generic policy for all sites.
+	Basics of a site policy.
 	"""
 
 	#: The asset spec for a template having both text and
@@ -430,17 +430,22 @@ class GenericSitePolicyEventListener(object):
 	#: ``templates`` directory in the package this object
 	#: is located in. Otherwise, it can be a complete spec
 	#: such as "the.package:other_dir/foobar"
-	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'nti.appserver:templates/new_user_created'
-	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to NextThought")
+	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = None
+	NEW_USER_CREATED_EMAIL_SUBJECT = None
 
 	#: If defined, this will be send in the ``nti.landing_page``
 	#: cookie when a user logs on. Must be a byte string.
 	LANDING_PAGE_NTIID = None
 
+
+	COM_USERNAME = None
+	COM_ALIAS = None
+	COM_REALNAME = None
+
 	_v_my_package = None
 
-	def user_created_with_request(self, user, event):
-		self._send_email_on_new_account(user, event)
+	def __init__( self ):
+		pass
 
 	def _join_community_user_created(self, user, event):
 		"""
@@ -501,10 +506,66 @@ class GenericSitePolicyEventListener(object):
 									 request=event.request,
 									 package=self.__find_my_package())
 
+	def _set_landing_page_cookie( self, user, event ):
+		if self.LANDING_PAGE_NTIID:
+			event.request.response.set_cookie(b'nti.landing_page',
+											   value=urllib.quote(self.LANDING_PAGE_NTIID) )
+
+	def _check_realname(self, user, required=True):
+		# Icky. For some random reason we require everyone to provide
+		# their real name, and we force the display name to be derived
+		# from it.
+		names = user_interfaces.IFriendlyNamed(user)
+		# nameparser 0.2.5 no longer raises BlankHumanNameError, so we do
+		if names.realname is None or not names.realname.strip():
+			if required:
+				raise nameparser.parser.BlankHumanNameError()
+			return # Not required
+
+		human_name = nameparser.HumanName(names.realname)
+		if not human_name.first:
+			raise MissingFirstName(_("Please provide your first name."),
+								   'realname',
+								   names.realname)
+		if not human_name.last:
+			raise MissingLastName(_("Please provide your last name."),
+								  'realname',
+								  names.realname)
+
+		human_name.capitalize()
+		names.realname = unicode(human_name)
+		names.alias = human_name.first + ' ' + human_name.last
+
+	def _censor_usernames(self, user):
+		_censor_usernames(user)
+
+	def _check_age_makes_sense(self,user):
+		profile = user_interfaces.IUserProfile(user)
+		birthdate = getattr(profile, 'birthdate', None)
+		if birthdate:
+			t, v = None, None
+			if birthdate >= datetime.date.today():
+				t = BirthdateInFuture
+				v = _("Birthdate must be in the past.")
+			elif not _is_x_or_more_years_ago(birthdate, 4):
+				t = BirthdateTooRecent
+				v = _("Birthdate must be at least four years ago.")
+			elif _is_x_or_more_years_ago(birthdate, 150):
+				t = BirthdateTooAncient
+				v = _("Birthdate must be less than 150 years ago.")
+
+			if t:
+				raise t( v, 'birthdate', birthdate.isoformat(), value=birthdate )
+
+
+
 	def map_validation_exception(self, incoming_data, exception):
 		return exception
 
 	def upgrade_user(self, user):
+		pass
+
+	def user_created_with_request(self, user, event):
 		pass
 
 	def user_will_update_new(self, user, event):
@@ -516,29 +577,28 @@ class GenericSitePolicyEventListener(object):
 	def user_did_logon(self, user, event):
 		self._set_landing_page_cookie(user, event)
 
-	def _set_landing_page_cookie( self, user, event ):
-		if self.LANDING_PAGE_NTIID:
-			event.request.response.set_cookie(b'nti.landing_page',
-											   value=urllib.quote(self.LANDING_PAGE_NTIID) )
+	def user_will_create(self, user, event):
+		pass
 
-	def _check_name(self, user):
-		# Icky. For some random reason we require everyone to provide their real name,
-		# and we force the display name to be derived from it.
-		names = user_interfaces.IFriendlyNamed(user)
-		# nameparser 0.2.5 no longer raises BlankHumanNameError, so we do
-		if names.realname is None or not names.realname.strip():
-			raise nameparser.parser.BlankHumanNameError()
-		human_name = nameparser.HumanName(names.realname)
-		if not human_name.first:
-			raise MissingFirstName(_("Please provide your first name."), 'realname', names.realname)
-		if not human_name.last:
-			raise MissingLastName(_("Please provide your last name."), 'realname', names.realname)
-		human_name.capitalize()
-		names.realname = unicode(human_name)
-		names.alias = human_name.first + ' ' + human_name.last
 
-	def _censor_usernames(self, user):
-		_censor_usernames(user)
+class DevmodeSitePolicyEventListener(AbstractSitePolicyEventListener):
+
+	def user_will_create(self, user, event):
+		self._check_realname( user, required=False )
+		self._check_age_makes_sense( user )
+
+
+class GenericSitePolicyEventListener(AbstractSitePolicyEventListener):
+	"""
+	Implements a generic policy for all sites.
+	"""
+
+	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'nti.appserver:templates/new_user_created'
+	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to NextThought")
+
+
+	def user_created_with_request(self, user, event):
+		self._send_email_on_new_account(user, event)
 
 	def user_will_create(self, user, event):
 		"""
@@ -546,27 +606,23 @@ class GenericSitePolicyEventListener(object):
 		"""
 		self._censor_usernames(user)
 
-		if user.username.endswith('@nextthought.com') or nti_interfaces.username_is_reserved(user.username):
-			raise UsernameCannotContainNextthoughtCom(_("That username is not valid. Please choose another."), 'Username', user.username, value=user.username)
+		if (user.username.endswith('@nextthought.com')
+			or nti_interfaces.username_is_reserved(user.username)):
+			raise UsernameCannotContainNextthoughtCom(
+					_("That username is not valid. Please choose another."),
+					'Username',
+					user.username,
+					value=user.username)
 
-		self._check_name(user)
+		# As of 2012-10-01, the acct creation UI has two very
+		# anglocentric fields labeled distinctly 'first' and 'last'
+		# name, which it concats to form the 'realname'. So this makes
+		# realname and alias exactly the same. As of this same date,
+		# we are also never returning the realname value to any site,
+		# nor are we searching on it.
+		self._check_realname(user)
 
-		# As of 2012-10-01, the acct creation UI has two very anglocentric fields labeled distinctly
-		# 'first' and 'last' name, which it concats to form the 'realname'. So this makes
-		# realname and alias exactly the same. As of this same date, we are also never returning
-		# the realname value to any site, nor are we searching on it.
-
-		profile = user_interfaces.IUserProfile(user)
-		birthdate = getattr(profile, 'birthdate', None)
-		if birthdate:
-			if birthdate >= datetime.date.today():
-				raise BirthdateInFuture(_("Birthdate must be in the past."), 'birthdate', birthdate.isoformat(), value=birthdate)
-
-			if not _is_x_or_more_years_ago(birthdate, 4):
-				raise BirthdateTooRecent(_("Birthdate must be at least four years ago."), 'birthdate', birthdate.isoformat(), value=birthdate)
-
-			if _is_x_or_more_years_ago(birthdate, 150):
-				raise BirthdateTooAncient(_("Birthdate must be less than 150 years ago."), 'birthdate', birthdate.isoformat(), value=birthdate)
+		self._check_age_makes_sense(user)
 
 
 @interface.implementer(ISitePolicyUserEventListener)
@@ -828,7 +884,7 @@ class OUSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
 		# continue w/ validation
 		super(OUSitePolicyEventListener, self).user_will_create(user, event)
 
-	def _check_name(self, user):
+	def _check_realname(self, user):
 		names = user_interfaces.IFriendlyNamed(user)
 		if names.realname is None or not names.realname.strip():
 			raise nameparser.parser.BlankHumanNameError()

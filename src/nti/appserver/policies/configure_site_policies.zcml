@@ -49,8 +49,10 @@
 	General site policies
 	-->
 	<utility factory=".site_policies.GenericSitePolicyEventListener"
-			 name=''
 			 zcml:condition="not-have devmode" />
+	<utility factory=".site_policies.DevmodeSitePolicyEventListener"
+			 zcml:condition="have devmode" />
+
 
 	<link:userLink
 		named='nti.appserver.logon.REL_INITIAL_TOS_PAGE'
