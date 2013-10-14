@@ -56,6 +56,9 @@ class ChangePassingMockDataserver(Dataserver ):
 		component.provideUtility( client )
 		return client
 
+	def _setup_cache( self, *args ):
+		return None
+
 	def _setup_dbs( self, *args ):
 		self.conf.zeo_uris = ["memory://1?database_name=Users&demostorage=true",
 							  ]

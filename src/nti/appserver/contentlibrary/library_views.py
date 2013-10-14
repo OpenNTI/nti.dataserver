@@ -77,10 +77,12 @@ def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
 	# Rather than redirecting to the canonical URL for the page, request it
 	# directly. This saves a round trip, and is more compatible with broken clients that
 	# don't follow redirects
-	subrequest = request.blank( '/dataserver2/Objects/' + page_ntiid )
-	subrequest.method = 'GET'
-	subrequest.environ['REMOTE_USER'] = request.environ['REMOTE_USER']
-	subrequest.environ['repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
+	# parts of the request should be native strings, which under py2 are bytes
+	path = b'/dataserver2/Objects/' + (page_ntiid.encode('utf-8') if isinstance(page_ntiid,unicode) else page_ntiid)
+	subrequest = request.blank( path )
+	subrequest.method = b'GET'
+	subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
+	subrequest.environ[b'repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
 	subrequest.accept = PAGE_INFO_MT_JSON
 	return request.invoke_subrequest( subrequest )
 
