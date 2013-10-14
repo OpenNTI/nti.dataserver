@@ -17,6 +17,7 @@ import redis
 import struct
 import logging
 from urlparse import urlparse
+import ConfigParser
 
 import ZODB.interfaces
 from ZODB.interfaces import IConnection
@@ -180,7 +181,11 @@ class MinimalDataserver(object):
 		if cache is None:
 			# Import the python implementation
 			import memcache
-			cache_servers = conf.main_conf.get( 'memcached', 'servers' ) or '127.0.0.1:11211'
+			try:
+				cache_servers = conf.main_conf.get( 'memcached', 'servers' )
+			except ConfigParser.Error:
+				logger.warn("Main configuration missing memcached/servers. Update buildout.")
+				cache_servers = '127.0.0.1:11211'
 			# use the default local server if there is no configuration; if one is not available
 			# then nothing happens (the instance is constructed but does nothing)
 			# TODO: Mock this in tests
