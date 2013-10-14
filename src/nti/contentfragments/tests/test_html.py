@@ -47,6 +47,28 @@ def test_normalize_html_text_to_par():
 	assert_that(plain_text, verifiably_provides(frg_interfaces.IPlainTextContentFragment))
 	assert_that(plain_text, is_("The pad replies to my note.The server edits it."))
 
+def test_normalize_simple_style_color():
+	html = u'<html><body><p><span style="color: black;">4</span></p></body></html>'
+	exp = html
+	sanitized = _check_sanitized(html, exp, frg_interfaces.ISanitizedHTMLContentFragment)
+
+	assert_that( sanitized, is_( exp ) )
+
+def test_normalize_simple_style_font():
+	html = u'<html><body><p><span style="font-family: sans-serif;">4</span></p></body></html>'
+	exp = html
+	sanitized = _check_sanitized(html, exp, frg_interfaces.ISanitizedHTMLContentFragment)
+
+	assert_that( sanitized, is_( exp ) )
+
+
+def test_normalize_style_with_quoted_dash():
+	html = u'<html><body><p style="text-align: left;"><span style="font-family: \'Helvetica-Bold\'; font-size: 12pt; font-weight: bold; color: black;">4</span></p></body></html>'
+	exp = html
+	sanitized = _check_sanitized(html, exp, frg_interfaces.ISanitizedHTMLContentFragment)
+
+	assert_that( sanitized, is_( exp ) )
+
 def test_html_to_text():
 	exp = frg_interfaces.HTMLContentFragment('<html><body><p style="text-align: left;"><span>The pad replies to my note.</span></p><p style="text-align: left;">The server edits it.</p></body></html>')
 	plain_text = frg_interfaces.IPlainTextContentFragment(exp)

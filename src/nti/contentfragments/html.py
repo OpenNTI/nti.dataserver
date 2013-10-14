@@ -88,8 +88,29 @@ def _sanitize_token(self, token):
 		# TODO: We're losing namespaces for attributes in this process
 		result['data'] = {(None, k):v for k, v in result['data']}
 	return result
-
 HTMLSanitizerMixin.sanitize_token = _sanitize_token
+
+# HTML5Lib has a bug in its horribly-complicated regular expressions
+# it uses for CSS (https://github.com/html5lib/html5lib-python/issues/69):
+# It disallows dashes as being part of a quoted value, meaning you can't
+# use a font-name like "Helvetica-Bold" (though the literal ``sans-serif``
+# is fine; the problem is only in quotes). We fix this by patching the regex
+# in place. This is a very targeted fix.
+# TODO: Could this allow malformed CSS through now, enough to crash
+# the rest of the method?
+from html5lib import sanitizer as _html5_sanitizer_mod
+import re
+class FakeRe(object):
+
+	def match( self, regex, val ):
+		if regex == """^([:,;#%.\sa-zA-Z0-9!-]|\w-\w|'[\s\w]+'|"[\s\w]+"|\([\d,\s]+\))*$""":
+			regex = """^([:,;#%.\sa-zA-Z0-9!-]|\w-\w|'[\s\w-]+'|"[\s\w-]+"|\([\d,\s]+\))*$"""
+		return re.match( regex, val )
+
+	def __getattr__(self, attr):
+		return getattr( re, attr )
+_html5_sanitizer_mod.re = FakeRe()
+
 
 from html5lib.constants import tokenTypes
 
@@ -124,7 +145,11 @@ class _SanitizerFilter(sanitizer.Filter):
 	allowed_protocols = HTMLSanitizerMixin.acceptable_protocols + ['data']
 
 	# Lock down CSS for safety
-	allowed_css_properties = ['font-style', 'font', 'font-weight', 'font-size', 'font-family',
+	allowed_css_properties = ['font-style',
+							  'font',
+							  'font-weight',
+							  'font-size',
+							  'font-family',
 							  'color',
 							  'text-align']
 
