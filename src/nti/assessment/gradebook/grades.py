@@ -31,6 +31,10 @@ class Grade(SchemaConfigured, CreatedModDateTrackingObject):
 
 	createDirectFieldProperties(grades_interfaces.IGrade)
 
+	@property
+	def NTIID(self):
+		return self.entry
+
 	def __eq__(self, other):
 		try:
 			return self is other or (grades_interfaces.IGrade.providedBy(Grade)
@@ -40,7 +44,7 @@ class Grade(SchemaConfigured, CreatedModDateTrackingObject):
 
 	def __hash__(self):
 		xhash = 47
-		xhash ^= hash(self.NTIID)
+		xhash ^= hash(self.entry)
 		return xhash
 
 	def __str__(self):
