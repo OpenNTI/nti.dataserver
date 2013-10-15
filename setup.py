@@ -318,6 +318,7 @@ setup(
 		# library to do web user agent detection
 		'webob >= 1.2.3',
 		'whoosh >= 2.5.4',
+		'z3c.autoinclude >= 0.3.5',
 		'z3c.baseregistry >= 2.0.0',  # ZCML configurable local component registries
 		'z3c.batching >= 2.0.0',  # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
