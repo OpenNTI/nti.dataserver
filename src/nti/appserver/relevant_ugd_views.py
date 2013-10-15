@@ -81,25 +81,25 @@ class _RelevantUGDView(query_views._UGDView):
 		paths = library.pathToNTIID(ntiid) if library else None
 		return paths[-1] if paths else None
 
-	def _scan_quizzes(self, result=None):
+	def _scan_quizzes(self, ntiid, result=None):
 		result = [] if result is None else result
 		question_map = component.queryUtility(app_interfaces.IFileQuestionMap)
 		if question_map:
-			path = self._get_library_path(self.ntiid)
+			path = self._get_library_path(ntiid)
 			questions = question_map.by_file.get(getattr(path, 'key', None))
 			for question in questions or ():
-				ntiid = getattr(question, 'ntiid', None)
-				if ntiid:
-					self._get_items(ntiid, result)
+				q_ntiid = getattr(question, 'ntiid', None)
+				if q_ntiid:
+					self._get_items(q_ntiid, result)
 		return result
 	
-	def _scan_videos(self, result=None):
+	def _scan_videos(self, ntiid, result=None):
 		result = [] if result is None else result
 		video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
 		if video_map:
-			unit = self._get_library_path(self.ntiid)
-			ntiid = getattr(unit, 'ntiid', None)
-			videos = video_map.by_container.get(ntiid)
+			unit = self._get_library_path(ntiid)
+			u_ntiid = getattr(unit, 'ntiid', None)
+			videos = video_map.by_container.get(u_ntiid)
 			for video_id in videos or ():
 				self._get_items(video_id, result)
 		return result
@@ -107,8 +107,8 @@ class _RelevantUGDView(query_views._UGDView):
 	def __call__(self):
 		# gather data
 		items = self.getObjectsForId(self.user, self.ntiid)
-		self._scan_quizzes(items)
-		self._scan_videos(items)
+		self._scan_quizzes(self.ntiid, items)
+		self._scan_videos(self.ntiid, items)
 
 		# return
 		result = LocatedExternalDict()
