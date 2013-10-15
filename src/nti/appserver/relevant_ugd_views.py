@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope import interface
 
 from pyramid import httpexceptions as _hexc
 
@@ -20,13 +21,18 @@ from nti.appserver import ugd_query_views as query_views
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
+
+from nti.dataserver.mimetype import nti_mimetype_with_class
 
 union_operator = query_views.Operator.union
 intersection_operator = query_views.Operator.intersection
 
 class _RelevantUGDView(query_views._UGDView):
 	
+	lastModified = 0
+
 	def _make_accept_predicate( self ):
 		accept_types = ('application/vnd.nextthought.redaction',)
 		return self._MIME_FILTER_FACTORY(accept_types)
@@ -34,18 +40,21 @@ class _RelevantUGDView(query_views._UGDView):
 	def _make_complete_predicate(self, operator=union_operator):
 		# accepted mime_types
 		predicate = self._make_accept_predicate()
-		# top level objects and my own
-		filter_names = ('TopLevel', 'OnlyMe')
+
+		# top level objects
+		top_level_filter = 'TopLevel'
+		filter_names = (top_level_filter,)
 		for filter_name in filter_names:
 			the_filter = self.FILTER_NAMES[filter_name]
 			if isinstance(the_filter, tuple):
 				the_filter = the_filter[0](self.request)
 			predicate = query_views._combine_predicate(the_filter, predicate, operator=operator)
 
-		# things shared w/ me
+		# things shared w/ me and are top level
+		top_level = self.FILTER_NAMES[top_level_filter]
 		def filter_shared_with(x):
 			x_sharedWith = getattr(x, 'sharedWith', ())
-			if self.user.username in x_sharedWith:
+			if self.user.username in x_sharedWith and top_level(x):
 				return True
 		predicate = query_views._combine_predicate(filter_shared_with, predicate, operator=operator)
 
@@ -110,9 +119,16 @@ class _RelevantUGDView(query_views._UGDView):
 		self._scan_quizzes(self.ntiid, items)
 		self._scan_videos(self.ntiid, items)
 
+		# get last modified
+		LAST_MODIFIED = ext_interfaces.StandardExternalFields.LAST_MODIFIED
+		lmobj = reduce(lambda x, y: x if x.lastModified < y.lastModified else y, items, self)
+
 		# return
 		result = LocatedExternalDict()
 		result['Items'] = items
 		result['Total'] = len(items)
+		result.mimeType = nti_mimetype_with_class(None)
+		result.lastModified = result[LAST_MODIFIED] = lmobj.lastModified
+		interface.alsoProvides(result, app_interfaces.IUGDExternalCollection)
 		return result
 
