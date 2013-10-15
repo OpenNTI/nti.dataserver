@@ -184,7 +184,7 @@ class IRenderedBookIndexer(IRenderedBookTransformer):
 		:param book: The :class:`IRenderedBook`.
 		:param name: indexer name
 		"""
-		
+
 class IContentIndexer(interface.Interface):
 	"""
 	Creates an index using the contents in a given book
@@ -219,15 +219,10 @@ class INTICardIndexer(IContentIndexer):
 
 class IRenderedBookExtractor(IRenderedBookTransformer):
 	pass
-		
+
 class INTIVideoExtractor(IRenderedBookExtractor):
 	"""
 	Looks through the rendered book and extracts NTIVideos.
-	"""
-
-class IAssessmentExtractor(IRenderedBookExtractor):
-	"""
-	Looks through the rendered book and extracts assessment information.
 	"""
 
 class ICourseExtractor(IRenderedBookExtractor):
@@ -245,15 +240,10 @@ class IDiscussionExtractor(IRenderedBookExtractor):
 	Looks through the rendered book and extracts discussions.
 	"""
 
-class IHackExtractor(IRenderedBookExtractor):
-	"""
-	Looks through the rendered book and injects hacks.
-	"""
-
-class ILessonQuestionSetExtractor(IRenderedBookExtractor):
-	"""
-	Looks through the rendered book and extracts the question sets in a lesson.
-	"""
+#class IHackExtractor(IRenderedBookExtractor):
+#	"""
+#	Looks through the rendered book and injects hacks.
+#	"""
 
 class ISlideDeckExtractor(IRenderedBookExtractor):
 	"""
