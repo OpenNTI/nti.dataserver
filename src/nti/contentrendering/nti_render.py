@@ -309,22 +309,13 @@ def postRender(document, contentLocation='.', jobname='prealgebra', context=None
 	logger.info('Changing intra-content links')
 	ntiidlinksetter.transform(book)
 
-	# FIXME: This should not be a hardcoded list, it should
-	# use 'getAllUtilitiesRegisteredFor'
-
-	extractors = [('AssessmentExtractor', 'assessments'),
-				  ('CourseExtractor', 'course information'),
-				  ('NTIVideoExtractor', 'videos'),
-				  ('DiscussionExtractor', 'discussions'),
-				  ('LessonQuestionSetExtractor', 'lesson question sets'),
-				  ('RelatedWorkExtractor', 'related work information'),
-				  ('SlideDeckExtractor', 'slide decks')]
-
-	for name, msg in extractors:
-		extractor = component.queryUtility(interfaces.IRenderedBookTransformer, name=name)
-		if extractor:
-			logger.info("Extracting %s" % msg)
-			extractor.transform(book)
+	# NOTE: These used to come from a hardcoded list, which obviously
+	# isn't very modular. If there was some intrinsic order in that list
+	# that mattered, then it needs to be expressed through attributes on
+	# the utilities (or their names) and we need to sort based on that.
+	for extractor in component.getAllUtilitiesRegisteredFor(interfaces.IRenderedBookTransformer):
+		logger.info("Extracting %s", extractor)
+		extractor.transform(book)
 
 	logger.info("Creating JSONP content")
 	jsonpbuilder.transform(book)
