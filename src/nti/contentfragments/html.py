@@ -103,7 +103,7 @@ import re
 class FakeRe(object):
 
 	def match( self, regex, val ):
-		if regex == """^([:,;#%.\sa-zA-Z0-9!-]|\w-\w|'[\s\w]+'|"[\s\w]+"|\([\d,\s]+\))*$""":
+		if regex == """^([:,;#%.\sa-zA-Z0-9!]|\w-\w|'[\s\w]+'|"[\s\w]+"|\([\d,\s]+\))*$""":
 			regex = """^([:,;#%.\sa-zA-Z0-9!-]|\w-\w|'[\s\w-]+'|"[\s\w-]+"|\([\d,\s]+\))*$"""
 		return re.match( regex, val )
 
