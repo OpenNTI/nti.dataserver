@@ -74,6 +74,6 @@
 	places for \usepackage to look (once those directives are defined...)
 	-->
 
-	<includePlugins package="." file="plastex.zcml" />
+	<includePlugins package="." />
 
 </configure>
