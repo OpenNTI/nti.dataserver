@@ -26,7 +26,7 @@ class Course(purchasable.Purchasable):
 	Description = AdaptingFieldProperty(store_interfaces.IPurchasable['Description'])
 
 	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__, self.Description, self.NTIID)
+		return "%s(%s,%s)" % (self.__class__.__name__, self.Description, self.NTIID)
 
 	def __eq__(self, other):
 		try:
@@ -37,7 +37,7 @@ class Course(purchasable.Purchasable):
 
 def create_course(ntiid, name=None, provider=None, amount=None, currency=None, items=(), fee=None, title=None,
 				  license_=None, author=None, description=None, icon=None, thumbnail=None, discountable=False,
-				  bulk_purchase=False, communities=(), featured=False):
+				  bulk_purchase=False, communities=(), featured=False, preview=False):
 	if amount and not provider:
 		raise AssertionError("Must specfify a provider")
 
@@ -51,8 +51,9 @@ def create_course(ntiid, name=None, provider=None, amount=None, currency=None, i
 
 	result = Course(NTIID=ntiid, Name=name, Provider=provider, Title=title, Author=author,
 					Items=items, Description=description, Amount=amount, Currency=currency,
-					Fee=fee, License=license_, Discountable=discountable, BulkPurchase=bulk_purchase,
-				 	Icon=icon, Thumbnail=thumbnail, Communities=communities, Featured=featured)
+					Preview=preview, Fee=fee, License=license_, Discountable=discountable,
+					BulkPurchase=bulk_purchase, Icon=icon, Thumbnail=thumbnail,
+					Communities=communities, Featured=featured)
 
 	return result
 
