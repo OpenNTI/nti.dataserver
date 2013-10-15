@@ -5,7 +5,7 @@ Directives to be used in ZCML: registering static keys.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -49,6 +49,7 @@ class IRegisterCourseDirective(IRegisterPurchasableDirective):
 	amount = schema.Float(title="Cost amount", required=False)
 	currency = fields.TextLine(title="Currency amount", required=False)
 	provider = fields.TextLine(title='Course provider', required=False)
+	preview = fields.Bool(title='Preview item flag', required=False)
 	
 def registerPurchasable(_context, ntiid, provider, title, description=None, amount=None, currency=None,
 						items=None, fee=None, author=None, icon=None, thumbnail=None, license=None,
@@ -66,7 +67,7 @@ def registerPurchasable(_context, ntiid, provider, title, description=None, amou
 
 
 def registerCourse(_context, ntiid, title, description=None, provider=None, amount=None, currency=None,
-				   items=None, fee=None, author=None, icon=None, thumbnail=None, license=None,
+				   items=None, fee=None, author=None, icon=None, thumbnail=None, license=None, preview=None,
 				   discountable=False, bulk_purchase=False, name=None, communities=None, featured=False):
 	"""
 	Register a course
@@ -74,7 +75,7 @@ def registerCourse(_context, ntiid, title, description=None, provider=None, amou
 	description = _context.info.text.strip() if description is None else description
 	factory = functools.partial(create_course, ntiid=ntiid, provider=provider, title=title, author=author,
 								name=name, description=description, items=items, amount=amount,
-								currency=currency, icon=icon, fee=fee, license_=license,
+								currency=currency, icon=icon, fee=fee, license_=license, preview=preview,
 								thumbnail=thumbnail, communities=communities, discountable=discountable,
 								bulk_purchase=bulk_purchase, featured=featured)
 	utility(_context, provides=store_interfaces.ICourse, factory=factory, name=ntiid)

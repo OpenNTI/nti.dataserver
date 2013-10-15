@@ -21,7 +21,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, has_key, has_length, is_not, none, is_, greater_than_or_equal_to)
+from hamcrest import (assert_that, has_key, has_length, is_not, none, is_, greater_than_or_equal_to, has_property)
 
 class TestCourse(ConfiguringTestBase):
 
@@ -39,20 +39,21 @@ class TestCourse(ConfiguringTestBase):
 		assert_that(util.get_purchasable('tag:nextthought.com,2011-10:OU-course-CLC3403LawAndJustice'), is_not(none()))
 
 		ps = util.get_purchasable('tag:nextthought.com,2011-10:OU-course-CLC3403LawAndJustice')
-		assert_that(ps.NTIID, "tag:nextthought.com,2011-10:OU-course-CLC3403LawAndJustice")
-		assert_that(ps.Title, "CLC 3403 Law and Justice")
-		assert_that(ps.Description, has_length(greater_than_or_equal_to(140)))
-		assert_that(ps.Amount, is_(none()))
-		assert_that(ps.Currency, is_(none()))
-		assert_that(ps.Discountable, is_(False))
-		assert_that(ps.BulkPurchase, is_(False))
-		assert_that(ps.Featured, is_(True))
-		assert_that(ps.Items, has_length(1))
-		assert_that(ps.License, is_(none()))
-		assert_that(ps.Name, is_('CLC 3403'))
-		assert_that(ps.Icon, is_('http://www.ou.edu/icon.gif'))
-		assert_that(ps.Thumbnail, is_('http://www.ou.edu/thumbnail.gif'))
-		assert_that(ps.Communities, has_length(1))
+		assert_that(ps, has_property('NTIID', "tag:nextthought.com,2011-10:OU-course-CLC3403LawAndJustice"))
+		assert_that(ps, has_property('Title', "CLC 3403 Law and Justice"))
+		assert_that(ps, has_property('Description', has_length(greater_than_or_equal_to(140))))
+		assert_that(ps, has_property('Amount', is_(none())))
+		assert_that(ps, has_property('Currency', is_(none())))
+		assert_that(ps, has_property('Discountable', is_(False)))
+		assert_that(ps, has_property('BulkPurchase', is_(False)))
+		assert_that(ps, has_property('Featured', is_(True)))
+		assert_that(ps, has_property('Preview', is_(True)))
+		assert_that(ps, has_property('Items', has_length(1)))
+		assert_that(ps, has_property('License', is_(none())))
+		assert_that(ps, has_property('Name', is_('CLC 3403')))
+		assert_that(ps, has_property('Icon', is_('http://www.ou.edu/icon.gif')))
+		assert_that(ps, has_property('Thumbnail', is_('http://www.ou.edu/thumbnail.gif')))
+		assert_that(ps, has_property('Communities', has_length(1)))
 
 	@WithMockDSTrans
 	def test_available(self):

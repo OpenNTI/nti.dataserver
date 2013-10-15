@@ -31,6 +31,7 @@
 		description="The Process and Methods to Decipher Problems"
 		author="NTI"
 		featured="True"
+		preview="False"
 		icon="http://www.nextthought.com/icon.gif"
 		thumbnail="http://www.nextthought.com/thumbnail.gif"
 		items="tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.course_test_content" />
