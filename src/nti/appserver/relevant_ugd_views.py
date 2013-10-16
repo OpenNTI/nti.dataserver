@@ -43,7 +43,7 @@ class _RelevantUGDView(query_views._UGDView):
 
 		# top level objects
 		top_level_filter = 'TopLevel'
-		filter_names = (top_level_filter,)
+		filter_names = (top_level_filter, 'OnlyMe')
 		for filter_name in filter_names:
 			the_filter = self.FILTER_NAMES[filter_name]
 			if isinstance(the_filter, tuple):
