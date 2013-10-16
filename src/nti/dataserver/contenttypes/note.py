@@ -113,7 +113,7 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 			update_from_external_object(existing_object, ext_val, context=context, notify=False)
 			existing_object.updateLastMod()
 			body[i] = existing_object
-				
+
 		return body
 
 	__external_resolvers__ = { 'body': _resolve_external_body }
