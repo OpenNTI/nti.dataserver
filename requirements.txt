@@ -23,6 +23,7 @@ file:../lib/pywikipedia/#egg=pywikipedia
 # Also temporary, going away with buildout
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.testing/trunk#egg=nti.testing
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.testing/trunk#egg=nti.app.testing
+-e git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX
 
 
 ## Sadly, issue 328 prevents us from using local paths for these things,
