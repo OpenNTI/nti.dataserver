@@ -121,7 +121,7 @@ class _RelevantUGDView(query_views._UGDView):
 
 		# get last modified
 		LAST_MODIFIED = ext_interfaces.StandardExternalFields.LAST_MODIFIED
-		lmobj = reduce(lambda x, y: x if x.lastModified < y.lastModified else y, items, self)
+		lmobj = reduce(lambda x, y: x if x.lastModified > y.lastModified else y, items, self)
 
 		# return
 		result = LocatedExternalDict()
