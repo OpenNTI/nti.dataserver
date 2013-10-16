@@ -34,6 +34,10 @@ def _asm_rendered_textcontent(self, ignorable_renderables=()):
 	"""
 	Collects the rendered values of the children of self. Can only be used
 	while in the rendering process. Returns a `unicode` object.
+
+	:keyword ignorable_renderables: If given, a tuple (yes, tuple)
+		of classes. If a given child node is an instance of a
+		class in the tuple, it will be ignored and not rendered.
 	"""
 	childNodes = []
 	for item in self.childNodes:
