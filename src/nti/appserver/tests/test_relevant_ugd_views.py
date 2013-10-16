@@ -35,11 +35,12 @@ class TestRelevantUGDView(SharedApplicationTestBase):
 	def _setup_library(cls, *args, **kwargs):
 		return FileLibrary(os.path.join(os.path.dirname(__file__), 'ExLibrary'))
 
-	def _create_note(self, user, msg, title=None, containerId=None, sharedWith=()):
+	def _create_note(self, user, msg, title=None, containerId=None, sharedWith=(), inReplyTo=None):
 		note = Note()
 		note.updateLastMod()
 		note.body = [unicode(msg)]
 		note.creator = user.username
+		note.inReplyTo = inReplyTo
 		note.title = IPlainTextContentFragment(title) if title else None
 		note.containerId = containerId or make_ntiid(nttype='bleach', specific='manga')
 		with user.updates():
@@ -84,8 +85,9 @@ class TestRelevantUGDView(SharedApplicationTestBase):
 
 			self._create_note(ichigo, "tensa zangetsu", 'Bankai', containerId)
 			self._create_note(gin, "Kamishini no Yari", 'Bankai', containerId, sharedWith=(ichigo,))
-			self._create_note(aizen, "kyoka suigetsu", 'Bankai', containerId, sharedWith=(bankai,))
 			self._create_note(rukia, "Sode no Shirayuki", 'Bankai', containerId, sharedWith=(c,))
+			kyoka = self._create_note(aizen, "kyoka suigetsu", 'Bankai', containerId, sharedWith=(bankai,))
+			self._create_note(gin, "Kanzen Saimin", 'Bankai', containerId, sharedWith=(ichigo,), inReplyTo=kyoka)
 
 			self._create_redaction(ichigo, 'Fear', 'Zangetsu Gone', 'The Asauchi breaks away to reveal Hollow Ichigo', containerId)
 			self._create_redaction(rukia, 'Fear', 'Zangetsu Gone', 'The Asauchi breaks away to reveal Hollow Ichigo', containerId)
