@@ -324,6 +324,11 @@ setup(
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt >= 1.2',
+		# PageTemplate access to macros through zope.component
+		# as opposed to traversal (which is good for us; Zope
+		# pulls *all* templates into memory/ZODB so they are traversable,
+		# but we haven't done that).
+		'z3c.macro >= 2.0.0a1',
 		'z3c.password >= 1.0.0a1',	# password policies
 		'z3c.pt >= 3.0.0a1',  # Better ZPT support than plastex, add-in to Chameleon
 		'z3c.ptcompat >= 2.0.0a1',	# Make zope.pagetemplate also use the Chameleon-based ZPT

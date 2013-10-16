@@ -6,7 +6,7 @@
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>Welcome To NextThought</title>
-		<style metal:use-macro="options/master/macros/style">
+		<style metal:use-macro="macro:style">
 			#crimson-bar {
 			background-color: #981b1e;
 			width: 100%;
