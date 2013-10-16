@@ -18,7 +18,6 @@ from zope import interface
 from zope import component
 
 from nti.dataserver import users
-from nti.dataserver import providers
 from nti.dataserver import shards as nti_shards
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
@@ -26,7 +25,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.externalization.externalization import to_external_object
 
 _type_map = { 'user': users.User.create_user,
-			  'provider': providers.Provider.create_provider,
 			  'community': users.Community.create_community }
 
 def _create_user(factory, username, password, realname, communities=(), options=None):

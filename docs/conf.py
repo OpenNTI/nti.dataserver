@@ -28,7 +28,9 @@ try:
 
 	readability_path = os.path.dirname(os.path.abspath(sphinxtheme.__file__))
 	relative_path = os.path.relpath(readability_path, os.path.abspath('.'))
-
+	# Despite the install instructions, with 1.2b3 in buildout with sphinxbuilder,
+	# an absolute path is needed
+	relative_path = os.path.abspath( relative_path )
 	html_theme = 'readability'
 	html_theme_path = [relative_path]
 	html_theme_options = {
