@@ -330,6 +330,7 @@ setup(
 		'z3c.password >= 1.0.0a1',	# password policies
 		'z3c.pt >= 3.0.0a1',  # Better ZPT support than plastex, add-in to Chameleon
 		'z3c.ptcompat >= 2.0.0a1',	# Make zope.pagetemplate also use the Chameleon-based ZPT
+		'z3c.rml >= 2.3.0',
 		'z3c.table >= 2.0.0a1',	 # Flexible table rendering
 		'zc.blist >= 1.0b2',  # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
 		'zc.dict >= 1.3b1',	 # BTree based dicts that are subclassable

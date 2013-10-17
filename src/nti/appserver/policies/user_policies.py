@@ -37,6 +37,8 @@ from zope.lifecycleevent import IObjectModifiedEvent
 from zope.annotation.interfaces import IAnnotations
 from zope.schema import interfaces as sch_interfaces
 
+from z3c.rml import rml2pdf
+
 from nti.appserver import _email_utils
 from nti.appserver import MessageFactory as _
 from nti.appserver import httpexceptions as hexc
@@ -251,7 +253,12 @@ def send_consent_request_on_coppa_account( user, profile, email, request, rate_l
 	attachment_filename = 'coppa_consent_request_email_attachment.pdf'
 
 	# Prefill the fields.
-	attachment_stream = _alter_pdf( attachment_filename, user.username, profile.realname, email )
+	#attachment_stream = _alter_pdf( attachment_filename, user.username, profile.realname, email )
+	attachment_rml = render( "nti.appserver:templates/coppa_consent_request_email_attachment.rml.pt",
+							 {'user': user, 'profile': profile, 'context': user, 'email': email},
+							 request=request )
+	attachment_stream = rml2pdf.parseString( attachment_rml,
+											 filename=attachment_filename ).getvalue()
 	attachment = Attachment(attachment_filename, "application/pdf", attachment_stream )
 
 	_email_utils.queue_simple_html_text_email( 'coppa_consent_request_email',
