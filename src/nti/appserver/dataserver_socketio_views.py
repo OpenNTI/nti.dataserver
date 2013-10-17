@@ -4,22 +4,23 @@ Views to incorporate socket.io into a pyramid application.
 
 Only XHRPolling and WebSocket transports are supported. JSONP is not supported.
 
+$Id$
 """
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
+logger = __import__('logging').getLogger(__name__)
 
-import logging
-logger = logging.getLogger( __name__ )
+import transaction
 
 from zope import component
 from zope import interface
 from zope.deprecation import deprecate
-import transaction
 
-from pyramid.view import view_config
-import pyramid.security as sec
-import pyramid.httpexceptions as hexc
 import pyramid.interfaces
+import pyramid.security as sec
+from pyramid.view import view_config
+import pyramid.httpexceptions as hexc
 
 try:
 	import gevent
@@ -27,14 +28,13 @@ except ImportError:
 	gevent = None
 from geventwebsocket import interfaces as ws_interfaces
 
+from nti.appserver.policies import site_policies
+
+import nti.dataserver.interfaces as nti_interfaces
 
 import nti.socketio.interfaces
-import nti.dataserver.interfaces as nti_interfaces
 import nti.socketio.session_consumer
-
 from nti.socketio.persistent_session import AbstractSession
-
-from nti.appserver.policies import site_policies
 
 class Session( AbstractSession ):
 	"""
@@ -49,7 +49,6 @@ class Session( AbstractSession ):
 	"""
 
 	#originating_site_names = () # actually in the superclass for conflict resolution
-
 
 	wsgi_app_greenlet = True # TODO: Needed anymore?
 
@@ -107,7 +106,6 @@ socketio_server['Session'] = Session
 socketio_server.Session = Session
 sys.modules['nti.dataserver.socketio_server'] = socketio_server
 nti.dataserver.socketio_server = socketio_server
-
 
 RT_HANDSHAKE = 'socket.io.handshake'
 RT_CONNECT = 'socket.io.connect'
