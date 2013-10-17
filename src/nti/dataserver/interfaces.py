@@ -118,25 +118,6 @@ class IMemcacheClient(interface.Interface):
 	def delete(key):
 		"Remove the key from the cache."
 
-class IRQClient(interface.Interface):
-	"""
-	Marker interface for a Python RQ client.
-	"""
-
-	def all_queues():
-		"""
-		Returns an iterable of all Queues.
-		"""
-	def create_queue(**kwargs):
-		"""
-		Returns a Queue instance
-		"""
-
-class IMongoDBClient(interface.Interface):
-	"""
-	Marker interface for a MongoDB client.
-	"""
-
 class InappropriateSiteError(LookupError):
 	pass
 class SiteNotInstalledError(AssertionError):
