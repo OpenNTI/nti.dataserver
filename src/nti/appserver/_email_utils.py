@@ -117,14 +117,12 @@ def create_simple_html_text_email(base_template,
 	if request is None:
 		request = get_current_request()
 
-	master = get_renderer('nti.appserver:templates/master_email.pt').implementation()
 	def make_args(extension):
 		# Mako gets bitchy if 'context' comes in as an argument, but
 		# that's what Chameleon wants. To simplify things, we handle that
 		# for our callers. They just want to use 'context'
 		the_context_name = 'nti_context' if extension == text_template_extension and text_template_extension != '.txt' else 'context'
 		result = {}
-		result['master'] = master
 		if request:
 			result[the_context_name] = request.context
 		if template_args:
