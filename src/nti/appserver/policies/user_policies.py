@@ -254,6 +254,10 @@ def send_consent_request_on_coppa_account( user, profile, email, request, rate_l
 
 	# Prefill the fields.
 	#attachment_stream = _alter_pdf( attachment_filename, user.username, profile.realname, email )
+	# Using pagetemplates and z3c.rml and reportlab is very flexible, much
+	# more flexible than our previous solution of editing a binary
+	# PDF in place. It is about 30% slower though, or 48ms instead of 33ms
+	# on JAM's laptop. That seems worth it.
 	attachment_rml = render( "nti.appserver:templates/coppa_consent_request_email_attachment.rml.pt",
 							 {'user': user, 'profile': profile, 'context': user, 'email': email},
 							 request=request )
