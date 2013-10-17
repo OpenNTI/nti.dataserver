@@ -120,10 +120,7 @@ def _response_for_site_resource_with_marker( marker_interface, request, resource
 	marker, site_name = site_policies.queryUtilityInSite( marker_interface, request=request, return_site_name=True )
 	if marker:
 		logger.warn( "Site %s is still using legacy marker %s", site_name, marker )
-		new_path = request.path.split( '/' )[1:-1] # the path to the directory
-		new_path.append( site_name )
-		new_path.append( resource )
-		return hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path ) )
+		return LegacyResourceView( site_name, resource )(request.context, request)
 
 	# Nothing found
 	request.response.content_type = mime_type
@@ -158,7 +155,7 @@ def webapp_strings_view(request):
 	# a lot of burden on specific implementations for sites.
 	# Our hacky fix here is to adjust the PATH_INFO to reflect the desired name
 	assert request.environ['PATH_INFO'].endswith( 'site.js' )
-	request.environ['PATH_INFO'] = request.environ['PATH_INFO'][:-7] + 'strings.js'
+	request.environ['PATH_INFO'] = request.environ['PATH_INFO'][:-7] + b'strings.js'
 
 	return _response_for_site_resource_with_marker( ISiteStringsMarker,
 												   request,
