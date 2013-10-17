@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """
 Defines traversal views and resources for the dataserver.
+
+$Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__( 'logging' ).getLogger( __name__ )
@@ -83,6 +85,8 @@ class _GenericGetView(AbstractView):
 				result.__parent__ = self.request.context.__parent__
 		return result
 
+GenericGetView = _GenericGetView
+
 class _EmptyContainerGetView(AbstractView):
 
 	def __call__( self ):
@@ -91,6 +95,3 @@ class _EmptyContainerGetView(AbstractView):
 def _method_not_allowed(request):
 	raise hexc.HTTPMethodNotAllowed()
 
-def _provider_redirect_classes(request):
-	class_path = (request.path + '/Classes') + (('?' + request.query_string) if request.query_string else '')
-	raise hexc.HTTPFound(location=class_path)
