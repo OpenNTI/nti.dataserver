@@ -258,7 +258,7 @@ def send_consent_request_on_coppa_account( user, profile, email, request, rate_l
 							 {'user': user, 'profile': profile, 'context': user, 'email': email},
 							 request=request )
 	attachment_stream = rml2pdf.parseString( attachment_rml,
-											 filename=attachment_filename ).getvalue()
+											 filename=attachment_filename )
 	attachment = Attachment(attachment_filename, "application/pdf", attachment_stream )
 
 	_email_utils.queue_simple_html_text_email( 'coppa_consent_request_email',

@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!DOCTYPE document SYSTEM "rml_1_0.dtd">
-<document filename="coppa_consent_request_email_attachment.pdf" invariant="1">
+<document filename="coppa_consent_request_email_attachment.pdf"
+		  invariant="1"
+		  compression="1"
+		  title="COPPA Consent Request Form"
+		  creator="NextThought"
+		  author="NextThought">
 
 <template pagesize="letter" leftMargin="72" showBoundary="0">
 	<pageTemplate id="main" pagesize="(595,842)">
