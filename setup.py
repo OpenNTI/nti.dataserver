@@ -37,8 +37,7 @@ entry_points = {
 		# XXX: NOTE: The following technique is NOT reliable and fails
 		# under buildout or any other scenario that results in this package
 		# not being the /last/ package installed.
-		"pserve = nti.appserver.nti_pserve:main",  # This script overrides the one from pyramid
-		"rqworker = nti.appserver.nti_rqworker:main",  # This script overrides the one from rqworker
+		"pserve = nti.appserver.nti_pserve:main",  # This script overrides the one from pyramid d
 		"runzeo = nti.monkey.nti_runzeo:main",	# This script overrides the one from ZEO
 		"zodbconvert = nti.monkey.nti_zodbconvert:main",  # This script overrides the one from relstorage
 	],
