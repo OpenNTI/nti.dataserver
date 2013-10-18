@@ -40,13 +40,11 @@ def test_patch():
 
 	nf = nfile.NamedFile(data='data', contentType=b'text/plain', filename='foo.txt')
 	nbf = nfile.NamedBlobFile(data='data', contentType=b'text/plain', filename='foo.txt')
-	assert_that( nf,
-				 validly_provides(nfile_interfaces.IFile ) )
-	assert_that( nf, has_property( '__name__', 'foo.txt' ) )
-
-	assert_that( nbf,
-				 validly_provides(nfile_interfaces.IFile ) )
-	assert_that( nbf, has_property( '__name__', 'foo.txt' ) )
+	nif = nfile.NamedBlobFile(data='data', contentType=b'image/gif', filename='foo.txt')
+	for f in nf, nbf, nif:
+		assert_that( f,
+					 validly_provides(nfile_interfaces.IFile ) )
+		assert_that( f, has_property( '__name__', 'foo.txt' ) )
 
 
 	# Check that we sniff the data using zope.mimetype.
