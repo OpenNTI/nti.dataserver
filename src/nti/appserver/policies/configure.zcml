@@ -71,44 +71,57 @@
 		<include package="." file="configure_site_policy_columbia.zcml" />
 	</configure>
 
-	<configure zcml:condition="installed nti.app.sites.mathcounts">
-		<include package="nti.app.sites.mathcounts" />
-	</configure>
-	<configure zcml:condition="installed nti.app.sites.alpha">
-		<include package="nti.app.sites.alpha" />
-	</configure>
-	<configure zcml:condition="installed nti.app.sites.demo">
-		<include package="nti.app.sites.demo" />
-	</configure>
-	<configure zcml:condition="installed nti.app.sites.litworld">
-		<include package="nti.app.sites.litworld" />
-	</configure>
-	<configure zcml:condition="installed nti.app.sites.prmia">
-		<include package="nti.app.sites.prmia" />
-	</configure>
-	<configure zcml:condition="installed nti.app.sites.law">
-		<include package="nti.app.sites.law" />
-	</configure>
-	<configure zcml:condition="installed nti.app.sites.rwanda">
-		<include package="nti.app.sites.rwanda" />
-	</configure>
-	<configure zcml:condition="installed nti.app.sites.columbia">
-		<include package="nti.app.sites.columbia" />
-	</configure>
 
-
-	<!--
-		This is moving to nti.app.products.ou from its previous home
-		in egg nti.clients, package nti.integration.ou. The new
-		package includes backwards compatibility shims for that old
-		package, though, so an 'installed' test is not sufficient;
-		hence the exclusion if we are in a buildout.
-	-->
 	<configure zcml:condition="not-have in-buildout">
+		<!--
+			This is moving to nti.app.products.ou from its previous home
+			in egg nti.clients, package nti.integration.ou. The new
+			package includes backwards compatibility shims for that old
+			package, though, so an 'installed' test is not sufficient;
+			hence the exclusion if we are in a buildout.
+		-->
+		<!--
+		The new egg is now listed in our requirements.txt, but
+		old environmnets may still have this package hanging
+		around, so don't do it. Just the new one.
+		-->
+		<!--
 		<configure zcml:condition="installed nti.integration.ou">
 			<include package="." file="configure_site_policy_ou.zcml" />
 			<include package="." file="configure_site_policy_outest.zcml" />
 			<include package="." file="configure_site_policy_janux.zcml" />
+		</configure>
+		-->
+		<configure zcml:condition="installed nti.app.products.ou">
+			<include package="nti.app.products.ou" />
+		</configure>
+		<!--
+			These are all also auto-included from
+			slugs in buildout.
+		-->
+		<configure zcml:condition="installed nti.app.sites.mathcounts">
+			<include package="nti.app.sites.mathcounts" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.alpha">
+			<include package="nti.app.sites.alpha" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.demo">
+			<include package="nti.app.sites.demo" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.litworld">
+			<include package="nti.app.sites.litworld" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.prmia">
+			<include package="nti.app.sites.prmia" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.law">
+			<include package="nti.app.sites.law" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.rwanda">
+			<include package="nti.app.sites.rwanda" />
+		</configure>
+		<configure zcml:condition="installed nti.app.sites.columbia">
+			<include package="nti.app.sites.columbia" />
 		</configure>
 	</configure>
 
