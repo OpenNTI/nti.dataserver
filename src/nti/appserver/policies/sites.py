@@ -80,15 +80,6 @@ zope.deferredimport.deprecatedFrom(
 	"nti.app.sites.rwanda",
 	"RWANDA" )
 
-##
-# for OU
-# Left behind bending the migration to nti.app.products.ou,
-# which happens in buildout
-##
-OU = BaseComponents(BASEADULT, name='platform.ou.edu', bases=(BASEADULT,))
-OUTEST = BaseComponents(OU, name='ou-test.nextthought.com', bases=(OU,))
-JANUX = BaseComponents(OU, name='janux.ou.edu', bases=(OU,))
-
 def _find_sites():
 	"""
 	By using internal details, find all components
