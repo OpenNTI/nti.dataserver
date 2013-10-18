@@ -856,41 +856,6 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 		super(AdultCommunitySitePolicyEventListener, self).user_created(user, event)
 		self._join_community_user_created(user, event)
 
-#OU site policies
-# XXX: Deprecated and going away. moved to nti.app.products.ou
-@interface.implementer(ISitePolicyUserEventListener)
-class OUSitePolicyEventListener(AdultCommunitySitePolicyEventListener):
-	"""
-	Implements the policy for ``platform.ou.edu``.
-	"""
-
-	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = 'new_user_created_ou'
-	NEW_USER_CREATED_EMAIL_SUBJECT = _("Welcome to the OU Digital Course Platform")
-
-	COM_USERNAME = 'ou.nextthought.com'
-	COM_ALIAS = 'OU'
-	COM_REALNAME = "The University of Oklahoma"
-
-	def _censor_usernames(self, user):
-		pass
-
-	def user_will_create(self, user, event):
-		meta_data = getattr(event, 'meta_data', None) or {}
-
-		# check if username is a 4x4
-		if meta_data.get('check_4x4', True) and re.match('[a-zA-z]{2,4}[0-9]{4}', user.username):
-			raise InvalidUsernamePattern(_("The username is not allowed. Please choose another."),
-										'Username', user.username, value=user.username)
-		# continue w/ validation
-		super(OUSitePolicyEventListener, self).user_will_create(user, event)
-
-	def _check_realname(self, user):
-		names = user_interfaces.IFriendlyNamed(user)
-		if names.realname is None or not names.realname.strip():
-			raise nameparser.parser.BlankHumanNameError()
-		human_name = names.realname
-		names.alias = names.realname = unicode(human_name)
-
 @interface.implementer(ISitePolicyUserEventListener)
 class OUTestSitePolicyEventListener(OUSitePolicyEventListener):
 	"""
