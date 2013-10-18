@@ -64,6 +64,15 @@ import unittest
 class _AbstractValidationViewBase(SharedConfiguringTestBase):
 	""" Base for the things where validation should fail """
 
+	###
+	# XXX FIXME: The tests that require these
+	# site packages should move to those packages
+	###
+
+	set_up_packages = SharedConfiguringTestBase.set_up_packages + tuple(('nti.app.sites.' + x
+																		 for x in ('law','prmia','mathcounts',
+																				   'rwanda')))
+
 	the_view = None
 
 	def setUp(self):
@@ -191,6 +200,8 @@ class _AbstractNotDevmodeViewBase(SharedConfiguringTestBase):
 	# The tests that depend on not having devmode installed (stricter defailt validation) should be here
 	# Since they run so much slower due to the mimetype registration
 	features = ()
+
+	set_up_packages = _AbstractValidationViewBase.set_up_packages
 
 	the_view = None
 
