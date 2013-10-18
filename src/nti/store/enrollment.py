@@ -5,7 +5,7 @@ Enrollment functionality
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -28,13 +28,16 @@ class UserNotEnrolledException(Exception):
 class InvalidEnrollmentAttemptException(Exception):
 	pass
 
-def is_enrolled(user, course_id):
+def get_enrollment(user, course_id):
 	history = purchase_history.get_purchase_history_by_item(user, course_id)
-	if not history or len(history) != 1:
-		return False
-	else:
-		purchase = history[0]
-		return store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase)
+	for enrollment in history or ():
+		if store_interfaces.IEnrollmentPurchaseAttempt.providedBy(enrollment):
+			return enrollment
+	return None
+
+def is_enrolled(user, course_id):
+	enrollment = get_enrollment(user, course_id)
+	return enrollment is not None
 
 def enroll_course(user, course_id, description=None, request=None, registry=component):
 	if course.get_course(course_id, registry) is None:
@@ -44,7 +47,7 @@ def enroll_course(user, course_id, description=None, request=None, registry=comp
 	order = purchase_order.create_purchase_order(item, quantity=1)
 	purchase = purchase_attempt.create_errollment_attempt(order, description=description)
 	
-	if not purchase_history.has_history_by_item(user, course_id):
+	if not is_enrolled(user, course_id):
 		purchase_history.register_purchase_attempt(purchase, user)
 		notify(store_interfaces.EnrollmentAttemptSuccessful(purchase, request))
 		return True
@@ -54,11 +57,12 @@ def unenroll_course(user, course_id, request=None, registry=component):
 	if course.get_course(course_id, registry) is None:
 		raise CourseNotFoundException()
 
-	history = purchase_history.get_purchase_history_by_item(user, course_id)
-	if not history or len(history) != 1:
+	enrollment = get_enrollment(user, course_id)
+	if enrollment is None:
+		logger.debug("user %s is not enrolled in course %s" % (user, course_id))
 		raise UserNotEnrolledException()
 	else:
-		purchase = history[0]
+		purchase = enrollment
 		if not store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase):
 			raise InvalidEnrollmentAttemptException()
 		notify(store_interfaces.UnenrollmentAttemptSuccessful(purchase, request=request))
