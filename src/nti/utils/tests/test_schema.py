@@ -33,6 +33,7 @@ from nti.testing.matchers import verifiably_provides, validated_by, not_validate
 from nti.testing.base import module_setup, module_teardown
 
 from nti.utils.schema import HTTPURL, Variant, ObjectLen, Object
+from nti.utils.schema import DataURI
 from nti.utils.schema import IVariant
 from nti.utils.schema import Number
 from nti.utils.schema import ListOrTuple
@@ -69,6 +70,14 @@ def test_http_url():
 	assert_that( ex.exception, has_property( 'value', 'mailto:jason@nextthought.com' ) )
 	assert_that( ex.exception, has_property( 'message', 'The specified URI is not valid.' ) )
 
+def test_data_uri():
+	from .test_dataurl import GIF_DATAURL
+	field = DataURI(__name__='foo')
+
+	url = field.fromUnicode(GIF_DATAURL)
+
+	assert_that( url, has_property( 'mimeType', 'image/gif') )
+	assert_that( url, has_property( 'data', is_not( none() ) ) )
 
 
 def test_variant( ):

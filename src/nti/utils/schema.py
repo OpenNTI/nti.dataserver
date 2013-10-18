@@ -514,6 +514,24 @@ class HTTPURL(ValidURI):
 
 		return result
 
+from . import dataurl
+class DataURI(ValidURI):
+	"""
+	A URI field that ensures and requires its value to be
+	a data URI. The field value is a :class:`.DataURL`.
+	"""
+
+	def _validate(self, value):
+		super(DataURI,self)._validate(value)
+		if not value.startswith(b'data:'):
+			self._reraise_validation_error( sch_interfaces.InvalidURI(value),
+											value,
+											_raise=True )
+
+	def fromUnicode( self, value ):
+		result = super(DataURI,self).fromUnicode(value)
+		return dataurl.DataURL(value)
+
 class _ValueTypeAddingDocMixin(object):
 	"""
 	A mixin for fields that wrap a value type field (e.g., Object)
