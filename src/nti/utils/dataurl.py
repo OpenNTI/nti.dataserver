@@ -24,6 +24,8 @@ logger = __import__('logging').getLogger(__name__)
 from urllib import unquote, quote
 from base64 import b64decode, b64encode
 
+from .property import CachedProperty
+
 # Originally inspired by http://code.google.com/p/python-mom/source/browse/mom/net/scheme/dataurl.py?
 
 def decode(data_url):
@@ -37,6 +39,11 @@ def decode(data_url):
 		The mime_type string will not be parsed. See :func:`zope.contenttype.parse.parse` for that.
 	"""
 
+	if isinstance(data_url,DataURL):
+		return data_url.data, data_url.mimeType
+	return _do_decode(data_url)
+
+def _do_decode(data_url):
 
 	metadata, encoded = data_url.rsplit( b",", 1)
 	_, metadata = metadata.split( b"data:", 1 )
@@ -51,6 +58,24 @@ def decode(data_url):
 	mime_type = metadata_parts[0]
 	raw_bytes = _decode(encoded)
 	return raw_bytes, mime_type
+
+class DataURL(str): # native string on both py2 and py3
+	"""
+	Represents a data URL with convenient access
+	to its raw bytes and mime type.
+	"""
+
+	@CachedProperty
+	def _decoded(self):
+		return _do_decode(self)
+
+	@property
+	def data(self):
+		return self._decoded[0]
+
+	@property
+	def mimeType(self):
+		return self._decoded[1]
 
 _def_charset = b'US-ASCII',
 _marker = object()
