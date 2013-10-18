@@ -33,7 +33,12 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField
 from zope.schema.fieldproperty import createFieldProperties
 from zope.schema import Bool
 from zope.schema import Decimal
-
+from zope.schema import Float
+from zope.schema import List
+from zope.schema import TextLine
+from zope.schema import Int
+from zope.schema import Text
+from zope.schema import Dict
 
 try:
 	from Acquisition.interfaces import IAcquirer
@@ -529,6 +534,9 @@ class DataURI(ValidURI):
 											_raise=True )
 
 	def fromUnicode( self, value ):
+		if isinstance(value,dataurl.DataURL):
+			return value
+
 		result = super(DataURI,self).fromUnicode(value)
 		return dataurl.DataURL(value)
 
