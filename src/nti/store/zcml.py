@@ -44,12 +44,12 @@ class IRegisterPurchasableDirective(interface.Interface):
 class IRegisterCourseDirective(IRegisterPurchasableDirective):
 	name = schema.TextLine(title="Course name", required=False)
 	featured = schema.Bool(title="Featured flag", required=False)
+	preview = fields.Bool(title='Preview item flag', required=False, default=False)
 	communities = fields.Tokens(value_type=schema.TextLine(title='The community'), title="Course communities", required=False)
 	# overrides
 	amount = schema.Float(title="Cost amount", required=False)
 	currency = fields.TextLine(title="Currency amount", required=False)
 	provider = fields.TextLine(title='Course provider', required=False)
-	preview = fields.Bool(title='Preview item flag', required=False)
 	
 def registerPurchasable(_context, ntiid, provider, title, description=None, amount=None, currency=None,
 						items=None, fee=None, author=None, icon=None, thumbnail=None, license=None,
@@ -67,7 +67,7 @@ def registerPurchasable(_context, ntiid, provider, title, description=None, amou
 
 
 def registerCourse(_context, ntiid, title, description=None, provider=None, amount=None, currency=None,
-				   items=None, fee=None, author=None, icon=None, thumbnail=None, license=None, preview=None,
+				   items=None, fee=None, author=None, icon=None, thumbnail=None, license=None, preview=False,
 				   discountable=False, bulk_purchase=False, name=None, communities=None, featured=False):
 	"""
 	Register a course
