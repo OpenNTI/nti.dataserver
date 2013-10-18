@@ -8,7 +8,7 @@
 	<utility
 		component=".sites.JANUX"
 		provides="zope.component.interfaces.IComponents"
-		name="ou-test.nextthought.com" />
+		name="janux.ou.edu" />
 
 	<registerIn registry=".sites.JANUX">
 		<utility factory=".site_policies.OUSitePolicyEventListener" />
