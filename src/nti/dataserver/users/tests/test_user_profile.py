@@ -69,6 +69,18 @@ def test_default_user_profile():
 	assert_that( prof,
 				 verifiably_provides( interfaces.ICompleteUserProfile ) )
 
+def test_non_blank_fields():
+	user = User( username="foo@bar" )
+
+	prof = interfaces.ICompleteUserProfile( user )
+
+	for field in ('about', 'affiliation', 'role', 'location', 'description'):
+		with assert_raises(interfaces.FieldCannotBeOnlyWhitespace):
+			setattr( prof, field, '   ' ) # spaces
+		with assert_raises(interfaces.FieldCannotBeOnlyWhitespace):
+			setattr( prof, field, '\t' ) # tab
+
+		setattr( prof, field, '  \t bc' )
 
 def test_updating_realname_from_external():
 	user = User( username="foo@bar" )

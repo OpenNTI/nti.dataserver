@@ -51,12 +51,28 @@ class _InvalidData(nti.utils.schema.InvalidValue):
 			return self.i18n_message
 		return self.__class__.__doc__
 
-class UsernameCannotBeBlank(_InvalidData):
+class FieldCannotBeOnlyWhitespace(_InvalidData):
+
+	i18n_message = _("The field cannot be blank.") # TODO: Not very good
+
+	def __init__( self, field_name, value, field_external=None ):
+		super(FieldCannotBeOnlyWhitespace,self).__init__( self.i18n_message,
+														  field_external or (field_name and field_name.capitalize()),
+														  value,
+														  value=value )
+
+def checkCannotBeBlank(value):
+	if not value or not value.strip():
+		raise FieldCannotBeOnlyWhitespace( None, value )
+
+	return True
+
+class UsernameCannotBeBlank(FieldCannotBeOnlyWhitespace):
 
 	i18n_message = _("The username cannot be blank.")
 
 	def __init__( self, username ):
-		super(UsernameCannotBeBlank,self).__init__( self.i18n_message, 'Username', username, value=username )
+		super(UsernameCannotBeBlank,self).__init__( 'Username', username )
 
 class UsernameContainsIllegalChar(_InvalidData):
 
@@ -146,6 +162,9 @@ def _load_resource(n, f):
 
 
 # This list will need updated every few years
+# NOTE: There's a vocabulary for this already in
+# plone/i18n/locales/cctld;
+# we should use that
 _VALID_DOMAINS = _load_resource(__name__,'tlds-alpha-by-domain.txt' )
 # 2012-12-07: This list of passwords, identified by industry researchers,
 # as extremely common and in all the rainbow tables, etc, is forbidden
@@ -415,6 +434,7 @@ class ICompleteUserProfile(IRestrictedUserProfile):
 		required=False,
 		constraint=checkEmailAddress)
 	email.setTaggedValue( TAG_UI_TYPE, UI_TYPE_EMAIL )
+
 	opt_in_email_communication = schema.Bool(
 		title="Can we contact you by email?",
 		required=False,
@@ -432,33 +452,38 @@ class ICompleteUserProfile(IRestrictedUserProfile):
 					  "do. Will be displayed on your author page, linked "
 					  "from the items you create.",
 		max_length=140, # twitter
-		required=False)
+		required=False,
+		constraint=checkCannotBeBlank)
 
 	location = ValidTextLine(
 		title='Location',
 		description="Your location - either city and "
 					  "country - or in a company setting, where "
 					  "your office is located.",
-		required=False)
+		required=False,
+		constraint=checkCannotBeBlank)
 
 	# TODO: This probably comes from a vocabulary, at least for some users
 	affiliation = ValidTextLine(
 		title='Affiliation',
 		description="Your affiliation, such as school name",
 		max_length=140,
-		required=False)
+		required=False,
+		constraint=checkCannotBeBlank)
 
 	role = ValidTextLine(
 		title='Role',
 		description="Your role within your affiliation",
 		max_length=140,
-		required=False)
+		required=False,
+		constraint=checkCannotBeBlank)
 
 	about = ValidTextLine(
 		title='About',
 		description="A short description of a user",
 		max_length=500,
-		required=False)
+		required=False,
+		constraint=checkCannotBeBlank)
 
 class IEmailRequiredUserProfile(ICompleteUserProfile):
 	"""
