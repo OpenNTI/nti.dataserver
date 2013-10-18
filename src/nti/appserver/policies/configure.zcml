@@ -108,6 +108,7 @@
 		<configure zcml:condition="installed nti.integration.ou">
 			<include package="." file="configure_site_policy_ou.zcml" />
 			<include package="." file="configure_site_policy_outest.zcml" />
+			<include package="." file="configure_site_policy_janux.zcml" />
 		</configure>
 	</configure>
 

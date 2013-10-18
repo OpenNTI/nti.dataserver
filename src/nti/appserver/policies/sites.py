@@ -87,6 +87,7 @@ zope.deferredimport.deprecatedFrom(
 ##
 OU = BaseComponents(BASEADULT, name='platform.ou.edu', bases=(BASEADULT,))
 OUTEST = BaseComponents(OU, name='ou-test.nextthought.com', bases=(OU,))
+JANUX = BaseComponents(OU, name='janux.ou.edu', bases=(OU,))
 
 def _find_sites():
 	"""
