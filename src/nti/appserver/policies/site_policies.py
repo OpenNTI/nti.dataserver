@@ -856,16 +856,6 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 		super(AdultCommunitySitePolicyEventListener, self).user_created(user, event)
 		self._join_community_user_created(user, event)
 
-@interface.implementer(ISitePolicyUserEventListener)
-class OUTestSitePolicyEventListener(OUSitePolicyEventListener):
-	"""
-	Implements the policy for the ou test site.
-	"""
-
-	COM_USERNAME = 'ou.nextthought.com'
-	COM_ALIAS = '*OU*'
-	COM_REALNAME = '*The University of Oklahoma*'
-
 
 # BWC import for objects in the database
 zope.deferredimport.deprecatedFrom(
