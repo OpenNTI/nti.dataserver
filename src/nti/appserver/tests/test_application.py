@@ -248,6 +248,7 @@ class SharedApplicationTestBase(_AppTestBaseMixin,SharedConfiguringTestBase):
 	@classmethod
 	def setUpClass(cls):
 		__show__.off()
+		__traceback_info__ = cls
 		#self.ds = mock_dataserver.MockDataserver()
 		super(SharedApplicationTestBase,cls).setUpClass()
 		cls.app = createApplication( 8080,
