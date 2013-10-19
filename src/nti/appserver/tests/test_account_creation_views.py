@@ -64,15 +64,6 @@ import unittest
 class _AbstractValidationViewBase(SharedConfiguringTestBase):
 	""" Base for the things where validation should fail """
 
-	###
-	# XXX FIXME: The tests that require these
-	# site packages should move to those packages
-	###
-
-	set_up_packages = SharedConfiguringTestBase.set_up_packages + tuple(('nti.app.sites.' + x
-																		 for x in ('law',
-																				   )))
-
 	the_view = None
 
 	def setUp(self):
@@ -520,37 +511,6 @@ class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 
 		assert_that( e.exception.json_body, has_entry( 'code', 'DuplicateUsernameError' ) )
 
-	@WithMockDSTrans
-	def _do_test_create_site_policy( self, host, com_name ):
-		# see site_policies.[py|zcml]
-		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers[b'origin'] = b'http://' + host
-
-		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
-													 'password': 'pass123word',
-													 'realname': 'Jason Madden',
-													 'birthdate': '1982-01-31',
-													 'alias': 'Jason',
-													 'affiliation': 'NTI',
-													 # Email is copied automatically
-													 #'email': 'jason@test.nextthought.com'
-													 } )
-		new_user = account_create_view( self.request )
-		assert_that( new_user, has_property( 'usernames_of_dynamic_memberships', has_item( com_name ) ) )
-		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Jason Madden' ) )
-		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
-					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
-
-		assert_that( to_external_object( new_user ), has_entries( 'email', 'jason@test.nextthought.com',
-																  'birthdate', '1982-01-31',
-																  'affiliation', 'NTI' ) )
-
-		mailer = component.getUtility( ITestMailDelivery )
-		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
-
-	def test_create_law_policy( self ):
-		self._do_test_create_site_policy( b'law.nextthought.com', 'law.nextthought.com' )
 
 class TestCreateView(_AbstractValidationViewBase):
 
@@ -623,40 +583,6 @@ class TestCreateView(_AbstractValidationViewBase):
 		assert_that( new_user._p_jar.db(), has_property( 'database_name', 'content.nextthought.com' ) )
 
 		assert_that( new_user, has_property( '__parent__', IShardLayout( mock_dataserver.current_transaction ).users_folder ) )
-
-
-	@WithMockDSTrans
-	def _do_test_create_site_policy( self, host, com_name ):
-		# see site_policies.[py|zcml]
-		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers[b'origin'] = b'http://' + host
-
-		self.request.content_type = b'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
-													 'password': 'pass123word',
-													 'realname': 'Jason Madden',
-													 'birthdate': '1982-01-31',
-													 'alias': 'Jason',
-													 'affiliation': 'NTI',
-													 # Email is copied automatically
-													 #'email': 'jason@test.nextthought.com'
-													 } )
-		new_user = account_create_view( self.request )
-		assert_that( new_user, has_property( 'usernames_of_dynamic_memberships', has_item( com_name ) ) )
-		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'realname', 'Jason Madden' ) )
-		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason Madden' ) )
-		assert_that( user_interfaces.ICompleteUserProfile( new_user ),
-					 has_property( 'birthdate', datetime.date( 1982, 1, 31 ) ) )
-
-		assert_that( to_external_object( new_user ), has_entries( 'email', 'jason@test.nextthought.com',
-																  'birthdate', '1982-01-31',
-																  'affiliation', 'NTI' ) )
-
-		mailer = component.getUtility( ITestMailDelivery )
-		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
-
-	def test_create_law_policy( self ):
-		self._do_test_create_site_policy( b'law.nextthought.com', 'law.nextthought.com' )
 
 
 	@WithMockDSTrans
