@@ -23,6 +23,7 @@ import pkg_resources
 
 from zope import schema
 from zope import interface
+from zope import component
 from zope.i18n import translate
 from zope.interface import Interface
 from zope.interface.common.mapping import IMapping
@@ -30,6 +31,7 @@ from zope.interface.common.mapping import IMapping
 import zope.component.interfaces
 
 from z3c.password import interfaces as pwd_interfaces
+from plone.i18n.locales import interfaces as locale_interfaces
 
 import nti.utils.schema
 from nti.utils.schema import ValidText
@@ -154,18 +156,10 @@ def _load_resource(n, f):
 			continue
 		line = line.upper()
 
-		if line.startswith( 'XN--' ):
-			# skip the weird IDN stuff, a legacy from the TLD list
-			continue
 		domains.add( line )
 	return domains
 
 
-# This list will need updated every few years
-# NOTE: There's a vocabulary for this already in
-# plone/i18n/locales/cctld;
-# we should use that
-_VALID_DOMAINS = _load_resource(__name__,'tlds-alpha-by-domain.txt' )
 # 2012-12-07: This list of passwords, identified by industry researchers,
 # as extremely common and in all the rainbow tables, etc, is forbidden
 # see http://arstechnica.com/gadgets/2012/12/blackberry-has-had-it-up-to-here-with-your-terrible-passwords/
@@ -184,8 +178,9 @@ def _checkEmailAddress(address):
 	if not _DOMAIN_RE.match(address):
 		raise EmailAddressInvalid(address)
 
+	cctlds = component.getUtility(locale_interfaces.ICcTLDInformation)
 	domain = address.rsplit( '.', 1 )[-1]
-	if domain.upper() not in _VALID_DOMAINS:
+	if domain.lower() not in cctlds.getAvailableTLDs():
 		raise EmailAddressInvalid(address)
 	return True
 
