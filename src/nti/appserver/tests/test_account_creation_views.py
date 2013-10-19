@@ -71,7 +71,7 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 
 	set_up_packages = SharedConfiguringTestBase.set_up_packages + tuple(('nti.app.sites.' + x
 																		 for x in ('law',
-																				   'rwanda')))
+																				   )))
 
 	the_view = None
 
@@ -452,23 +452,6 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( e.exception.json_body, has_entry( 'code', bad_code ) )
 
 	@WithMockDSTrans
-	def test_create_rwanda_policy_avatar_choices( self ):
-		# see site_policies.[py|zcml]
-		assert_that( self.request.host, is_( 'example.com:80' ) )
-		self.request.headers[b'origin'] = b'http://rwanda.nextthought.com'
-
-		self.request.content_type = 'application/vnd.nextthought+json'
-		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
-													 'password': 'pass123word',
-													 'realname': 'Jason Madden',
-													 'birthdate': '1982-01-31',
-													 'alias': 'Jason',
-													 'affiliation': 'NTI',
-													 'email': 'jason@test.nextthought.com' } )
-		new_user = self.the_view( self.request )
-		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
-
-	@WithMockDSTrans
 	def test_preflight_username_only_with_email( self ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )
@@ -565,9 +548,6 @@ class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
-
-	def test_create_rwanda_policy( self ):
-		self._do_test_create_site_policy( b'rwanda.nextthought.com', 'CarnegieMellonUniversity' )
 
 	def test_create_law_policy( self ):
 		self._do_test_create_site_policy( b'law.nextthought.com', 'law.nextthought.com' )
@@ -674,9 +654,6 @@ class TestCreateView(_AbstractValidationViewBase):
 
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
-
-	def test_create_rwanda_policy( self ):
-		self._do_test_create_site_policy( b'rwanda.nextthought.com', 'CarnegieMellonUniversity' )
 
 	def test_create_law_policy( self ):
 		self._do_test_create_site_policy( b'law.nextthought.com', 'law.nextthought.com' )
