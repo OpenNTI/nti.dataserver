@@ -191,11 +191,20 @@ class _CheckObjectOnSetMixin(object):
 
 try:
 	from Acquisition.interfaces import IAcquirer
+	from Acquisition import aq_base
 	class AcquireObjectsOnReadMixin(object):
 		"""
 		Mix this in /before/ the container to support implicit
 		acquisition.
 		"""
+
+		def __setitem__( self, key, value ):
+			"""
+			Ensure that we do not put an acquisition wrapper
+			as the __parent__ key (self).
+			"""
+			self = aq_base(self)
+			super(AcquireObjectsOnReadMixin,self).__setitem__( key, value )
 
 		def __getitem__( self, key ):
 			result = super(AcquireObjectsOnReadMixin,self).__getitem__( key )

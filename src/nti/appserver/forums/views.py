@@ -528,6 +528,23 @@ class CommunityTopicPutDisabled(object):
 	def __call__(self):
 		raise hexc.HTTPForbidden()
 
+def _do_aq_delete(theObject):
+	"""
+	Delete an object from its parent container, noting
+	that the object's dict may not have
+	the correct (unwrapped) __parent__ due to errors
+	in previous versions. We should really do a migration.
+
+	(The BTree container loads the object from its internal
+	data by name, bypassing our higher level that would aq wrap
+	them. Since events are only fired if cont[key].__parent__ = cont,
+	aq wrappers in the dict screw us up).
+	"""
+
+	base_parent = aq_base(theObject.__parent__)
+	theObject.__dict__['__parent__'] = base_parent
+	del base_parent[theObject.__name__]
+
 @view_config(context=frm_interfaces.ICommunityHeadlineTopic)
 @view_config(context=frm_interfaces.IPersonalBlogEntry)
 @view_defaults(**_d_view_defaults)
@@ -539,7 +556,7 @@ class HeadlineTopicDeleteView(UGDDeleteView):
 
 	def _do_delete_object( self, theObject ):
 		# Delete from enclosing container
-		del aq_base(theObject.__parent__)[theObject.__name__]
+		_do_aq_delete(theObject)
 		return theObject
 
 @view_config(context=frm_interfaces.ICommunityForum)
@@ -551,7 +568,7 @@ class ForumDeleteView(UGDDeleteView):
 		# Standard delete from enclosing container. This
 		# dispatches to all the sublocations and thus removes
 		# the comments, etc, and into the activity streams
-		del aq_base(theObject.__parent__)[theObject.__name__]
+		_do_aq_delete(theObject)
 		return theObject
 
 @view_config(context=frm_interfaces.IGeneralForumComment)
