@@ -54,6 +54,8 @@ class TestCourse(ConfiguringTestBase):
 		assert_that(ps, has_property('Icon', is_('http://www.ou.edu/icon.gif')))
 		assert_that(ps, has_property('Thumbnail', is_('http://www.ou.edu/thumbnail.gif')))
 		assert_that(ps, has_property('Communities', has_length(1)))
+		assert_that(ps, has_property('Department', 'Law'))
+		assert_that(ps, has_property('Signature', has_length(146)))
 
 	@WithMockDSTrans
 	def test_available(self):
