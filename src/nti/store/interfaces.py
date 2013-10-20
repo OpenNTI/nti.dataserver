@@ -257,6 +257,9 @@ class IPurchaseAttempt(IContained):
 class IInvitationPurchaseAttempt(IPurchaseAttempt):
 	pass
 
+class IEnrollmentAttempt(IPurchaseAttempt):
+	pass
+
 class IRedeemedPurchaseAttempt(IPurchaseAttempt):
 	RedemptionTime = nti_schema.Number(title='Redemption time', required=True)
 	RedemptionCode = nti_schema.ValidTextLine(title='Redemption Code', required=True)
@@ -295,10 +298,14 @@ class IPurchaseAttemptReserved(IPurchaseAttemptStateEvent):
 class IPurchaseAttemptFailed(IPurchaseAttemptStateEvent):
 	error = interface.Attribute('Failure error')
 
-class IEnrollmentAttemptSuccessful(IPurchaseAttemptEvent):
+
+class IEnrollmentAttemptEvent(IPurchaseAttemptEvent):
+	object = schema.Object(IEnrollmentAttempt, title="The enrollment")
+
+class IEnrollmentAttemptSuccessful(IEnrollmentAttemptEvent):
 	request = interface.Attribute('Pyramid request')
 
-class IUnenrollmentAttemptSuccessful(IPurchaseAttemptEvent):
+class IUnenrollmentAttemptSuccessful(IEnrollmentAttemptEvent):
 	request = interface.Attribute('Pyramid request')
 
 @interface.implementer(IPurchaseAttemptEvent)
@@ -350,15 +357,19 @@ class PurchaseAttemptFailed(PurchaseAttemptEvent):
 		super(PurchaseAttemptFailed, self).__init__(purchase)
 		self.error = error
 
+@interface.implementer(IEnrollmentAttemptEvent)
+class EnrollmentAttemptEvent(PurchaseAttemptEvent):
+	pass
+
 @interface.implementer(IEnrollmentAttemptSuccessful)
-class EnrollmentAttemptSuccessful(PurchaseAttemptEvent):
+class EnrollmentAttemptSuccessful(EnrollmentAttemptEvent):
 
 	def __init__(self, purchase, request=None):
 		super(EnrollmentAttemptSuccessful, self).__init__(purchase)
 		self.request = request
 
 @interface.implementer(IUnenrollmentAttemptSuccessful)
-class UnenrollmentAttemptSuccessful(PurchaseAttemptEvent):
+class UnenrollmentAttemptSuccessful(EnrollmentAttemptEvent):
 
 	def __init__(self, purchase, request=None):
 		super(UnenrollmentAttemptSuccessful, self).__init__(purchase)
@@ -387,4 +398,3 @@ class IPurchaseHistory(IIterable):
 		"""
 class IStorePurchaseInvitation(interface.Interface):
 	pass
-
