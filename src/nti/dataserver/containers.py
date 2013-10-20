@@ -206,17 +206,28 @@ try:
 			self = aq_base(self)
 			super(AcquireObjectsOnReadMixin,self).__setitem__( key, value )
 
+		def __acquire( self, result ):
+			if IAcquirer.providedBy( result ):
+				# Make it __of__ this object. But if this object is itself
+				# already acquired, and from its own parent, then
+				# there's no good reason to acquire from the wrapper
+				# that is this object.
+				base_self = aq_base(self)
+				if base_self is self \
+				  or getattr(base_self, '__parent__', None) is getattr(self,'__parent__',None):
+					result = result.__of__( base_self )
+
+			return result
+
 		def __getitem__( self, key ):
 			result = super(AcquireObjectsOnReadMixin,self).__getitem__( key )
-			if IAcquirer.providedBy( result ):
-				result = result.__of__( self )
-			return result
+			return self.__acquire(result)
 
 		def get( self, key, default=None ):
 			result = super(AcquireObjectsOnReadMixin,self).get( key, default=default )
 			# BTreeFolder doesn't wrap the default
-			if IAcquirer.providedBy( result ) and result is not default:
-				result = result.__of__( self )
+			if result is not default:
+				result = self.__acquire( result )
 			return result
 
 		# TODO: Items? values?

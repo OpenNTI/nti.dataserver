@@ -156,8 +156,10 @@ def test_forum_container_multi_aq_wrap():
 	assert_that( forum.__dict__, has_entry( '__parent__', same_instance(board) ) )
 
 	# But multiple levels are wrapped
+	# ExtensionClass doesn't wrap __parent__, but
+	# Acquisition seems to. We workaround this in the container.
 	assert_that( board['forum']['topic'],
-				 has_property( '__parent__', is_not( same_instance(forum) ) ) )
+				 has_property( '__parent__', same_instance(forum) ) )
 
 def test_blog_externalizes():
 
