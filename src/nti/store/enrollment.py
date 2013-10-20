@@ -45,8 +45,8 @@ def enroll_course(user, course_id, description=None, request=None, registry=comp
 
 	item = purchase_order.create_purchase_item(course_id, 1)
 	order = purchase_order.create_purchase_order(item, quantity=1)
-	purchase = purchase_attempt.create_errollment_attempt(order, description=description)
-	
+	purchase = purchase_attempt.create_enrollment_attempt(order, description=description)
+
 	if not is_enrolled(user, course_id):
 		purchase_history.register_purchase_attempt(purchase, user)
 		notify(store_interfaces.EnrollmentAttemptSuccessful(purchase, request))
@@ -61,11 +61,10 @@ def unenroll_course(user, course_id, request=None, registry=component):
 	if enrollment is None:
 		logger.debug("user %s is not enrolled in course %s" % (user, course_id))
 		raise UserNotEnrolledException()
-	else:
-		purchase = enrollment
-		if not store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase):
-			raise InvalidEnrollmentAttemptException()
-		notify(store_interfaces.UnenrollmentAttemptSuccessful(purchase, request=request))
-		purchase_history.remove_purchase_attempt(purchase, user)
-		return True
-	return False
+
+	purchase = enrollment
+	assert store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase)
+
+	purchase_history.remove_purchase_attempt(purchase, user)
+	notify(store_interfaces.UnenrollmentAttemptSuccessful(purchase, request=request))
+	return True

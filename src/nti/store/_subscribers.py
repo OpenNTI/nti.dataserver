@@ -82,7 +82,8 @@ def _purchase_attempt_successful(event):
 	if not purchase.Quantity:
 		_activate_items(purchase)
 	if store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase):
-		_dynamic_memberships(purchase)
+		# legacy if block, ensure never hit
+		raise AssertionError("Should not be able to get here")
 	logger.info('%r completed successfully', purchase)
 
 def _return_items(purchase, user=None, remove_roles=True):
@@ -106,8 +107,8 @@ def _unenrollment_attempt_successful(event):
 def _purchase_attempt_refunded(event):
 	purchase = event.object
 	if store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase):
-		_dynamic_memberships(purchase, False)
-		return
+		# legacy if block, ensure never hit
+		raise AssertionError("Should not be able to get here")
 
 	purchase.EndTime = time.time()
 	_update_state(purchase, store_interfaces.PA_STATE_REFUNDED)
@@ -172,4 +173,3 @@ def _purchase_invitation_accepted(invitation, event):
 		# activate role(s)
 		lib_items = purchasable.get_content_items(original.Items)
 		content_roles.add_users_content_roles(event.user, lib_items)
-

@@ -206,10 +206,9 @@ def create_redeemed_purchase_attempt(purchase, redemption_code, redemption_time=
 	return result
 
 
-def create_errollment_attempt(order, processor=None, description=None, start_time=None):
+def create_enrollment_attempt(order, processor=None, description=None, start_time=None):
 	state = store_interfaces.PA_STATE_SUCCESS
 	start_time = start_time if start_time else time.time()
 	result = EnrollmentPurchaseAttempt(Order=order, Processor=processor, Description=description,
 									   State=state, StartTime=float(start_time))
 	return result
-
