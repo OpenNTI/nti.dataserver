@@ -468,6 +468,25 @@ class ntipreviouspage(Base.Command):
 class nticardname(Base.Command):
 	pass
 
+def _incoming_sources_as_plain_text(texts):
+	"""
+	Given the source of text nodes in a sequence, convert
+	them to a single string that should be viewable as plain text.
+	"""
+	# They come in from latex, so by definition they are latex content
+	# fragments. But they probably don't implement the interface.
+	# If we try to convert them, they will be assumed to be a
+	# plain text string and we will try to latex escape them, which would
+	# be wrong. So directly instantiate the prime class.
+	# NOTE: Actually, the callers of this are converting the children to
+	# unicode() in a rendering context, which actually should
+	# properly render them...to HTML. So really this is probably
+	# incoming HTML.
+	latex_string = cfg_interfaces.LatexContentFragment( ''.join( texts ).strip() )
+	# TODO: The latex-to-plain conversion is essentially a no-op.
+	# We can probably do better
+	return cfg_interfaces.IPlainTextContentFragment( latex_string )
+
 @interface.implementer(crd_interfaces.IEmbeddedContainer)
 class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 	"""
@@ -642,7 +661,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
 				texts.append( unicode( child ) )
 
-		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
+		return _incoming_sources_as_plain_text( texts )
 
 ###############################################################################
 # The following block of commands concern representing related readings
@@ -721,7 +740,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
 				texts.append( unicode( child ) )
 
-		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
+		return _incoming_sources_as_plain_text( texts )
 
 	def gen_target_ntiid(self):
 		logger.info('Computing target NTIID.')
@@ -863,5 +882,3 @@ def ProcessOptions( options, document ):
 	document.context.newcounter( 'relatedwork' )
 	document.context.newcounter( 'relatedworkref', initial=-1 )
 	document.context.newcounter( 'ntidiscussion' )
-
-
