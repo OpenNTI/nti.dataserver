@@ -86,6 +86,8 @@ class ICourse(IPurchasable):
 	Name = nti_schema.ValidTextLine(title='Course Name', required=False)
 	Featured = schema.Bool(title='Featured flag', required=False, default=False)
 	Preview = schema.Bool(title='Course preview flag', required=False)
+	Department = nti_schema.ValidTextLine(title='Course Department', required=False)
+	Signature = nti_schema.ValidText(title='Course/Professor Signature', required=False)
 	Communities = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The community identifier'), title="Communities")
 	# overrides
 	Amount = schema.Float(title="Cost amount", required=False, min=0.0)

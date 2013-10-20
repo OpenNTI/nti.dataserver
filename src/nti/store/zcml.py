@@ -17,8 +17,8 @@ from zope import interface
 from zope.configuration import fields
 from zope.component.zcml import utility
 
-from .course import create_course
-from .purchasable import create_purchasable
+from . import course
+from . import purchasable
 from . import interfaces as store_interfaces
 
 class IRegisterPurchasableDirective(interface.Interface):
@@ -45,6 +45,8 @@ class IRegisterCourseDirective(IRegisterPurchasableDirective):
 	name = schema.TextLine(title="Course name", required=False)
 	featured = schema.Bool(title="Featured flag", required=False)
 	preview = fields.Bool(title='Preview item flag', required=False, default=False)
+	department = fields.TextLine(title='Course department', required=False)
+	signature = fields.Text(title='Course/Professor signature', required=False)
 	communities = fields.Tokens(value_type=schema.TextLine(title='The community'), title="Course communities", required=False)
 	# overrides
 	amount = schema.Float(title="Cost amount", required=False)
@@ -58,26 +60,28 @@ def registerPurchasable(_context, ntiid, provider, title, description=None, amou
 	Register a purchasable
 	"""
 	description = _context.info.text.strip() if description is None else description
-	factory = functools.partial(create_purchasable, ntiid=ntiid, provider=provider, title=title, author=author,
-								description=description, items=items, amount=amount, thumbnail=thumbnail,
-								currency=currency, icon=icon, fee=fee, license_=license,
-								discountable=discountable, bulk_purchase=bulk_purchase)
+	factory = functools.partial(purchasable.create_purchasable, ntiid=ntiid, provider=provider,
+								title=title, author=author, description=description, items=items,
+								amount=amount, thumbnail=thumbnail, currency=currency, icon=icon,
+								fee=fee, license_=license, discountable=discountable, bulk_purchase=bulk_purchase)
 	utility(_context, provides=store_interfaces.IPurchasable, factory=factory, name=ntiid)
 	logger.debug("Purchasable '%s' has been registered", ntiid)
 
 
 def registerCourse(_context, ntiid, title, description=None, provider=None, amount=None, currency=None,
 				   items=None, fee=None, author=None, icon=None, thumbnail=None, license=None, preview=False,
-				   discountable=False, bulk_purchase=False, name=None, communities=None, featured=False):
+				   discountable=False, bulk_purchase=False, name=None, communities=None, featured=False,
+				   department=None, signature=None):
 	"""
 	Register a course
 	"""
 	description = _context.info.text.strip() if description is None else description
-	factory = functools.partial(create_course, ntiid=ntiid, provider=provider, title=title, author=author,
-								name=name, description=description, items=items, amount=amount,
-								currency=currency, icon=icon, fee=fee, license_=license, preview=preview,
-								thumbnail=thumbnail, communities=communities, discountable=discountable,
-								bulk_purchase=bulk_purchase, featured=featured)
+	factory = functools.partial(course.create_course, ntiid=ntiid, provider=provider, title=title,
+								author=author, name=name, description=description, items=items,
+								amount=amount, currency=currency, icon=icon, fee=fee, license_=license,
+								preview=preview, thumbnail=thumbnail, communities=communities,
+								discountable=discountable, bulk_purchase=bulk_purchase, featured=featured,
+								department=department, signature=signature)
 	utility(_context, provides=store_interfaces.ICourse, factory=factory, name=ntiid)
 	logger.debug("Course '%s' has been registered", ntiid)
 
