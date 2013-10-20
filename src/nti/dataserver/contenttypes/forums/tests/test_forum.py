@@ -19,6 +19,7 @@ from hamcrest import assert_that
 from hamcrest import has_key
 from hamcrest import all_of
 from hamcrest import has_property
+from hamcrest import same_instance
 from hamcrest import is_not
 from hamcrest import has_entries
 from hamcrest import has_entry
@@ -122,6 +123,8 @@ def test_forum_constraints():
 	forum['k'] = X()
 
 	assert_that( forum['k'], aq_inContextOf( forum ) )
+	# But the __parent__ is not aq wrapped
+	assert_that( forum['k'], has_property( '__parent__', same_instance(forum) ) )
 
 	with assert_raises( InvalidItemType ):
 		forum['z'] = Forum()
@@ -130,6 +133,31 @@ def test_forum_constraints():
 		container = CheckingLastModifiedBTreeContainer()
 		container['k'] = forum
 
+def test_forum_container_multi_aq_wrap():
+	# If we have something that is multiple levels
+	# of wrapping, the __parent__s are still correct
+	from ..board import Board
+	from ..topic import Topic
+
+	board = Board()
+	forum = Forum()
+	topic = Topic()
+
+
+	board['forum'] = forum
+	board['forum']['topic'] = topic
+
+	# One level of access and we're fine
+	assert_that( forum['topic'], has_property('__parent__',same_instance(forum) ) )
+	assert_that( board['forum'], has_property('__parent__',same_instance(board) ) )
+
+	# Because the __dict__ wound up with clean versions
+	assert_that( topic.__dict__, has_entry( '__parent__', same_instance(forum) ) )
+	assert_that( forum.__dict__, has_entry( '__parent__', same_instance(board) ) )
+
+	# But multiple levels are wrapped
+	assert_that( board['forum']['topic'],
+				 has_property( '__parent__', is_not( same_instance(forum) ) ) )
 
 def test_blog_externalizes():
 
@@ -152,4 +180,3 @@ def test_blog_externalizes():
 				 externalizes( has_entries( 'TopicCount', 1,
 											'NewestDescendantCreatedTime', 24,
 											'NewestDescendant', has_entry('Class', 'PersonalBlogEntry') ) ) )
-
