@@ -3,10 +3,12 @@
 """
 Defines purchase error object.
 
-$Id: purchase_attempt.py 18438 2013-04-19 04:17:47Z carlos.sanchez $
+$Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
@@ -14,13 +16,13 @@ from zope import interface
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
-from .utils import MetaStoreObject
+from . import utils
 from . import interfaces as store_interfaces
 
 @interface.implementer(store_interfaces.IPurchaseError)
 class PurchaseError(SchemaConfigured):
 
-	__metaclass__ = MetaStoreObject
+	__metaclass__ = utils.MetaStoreObject
 
 	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPurchaseError)

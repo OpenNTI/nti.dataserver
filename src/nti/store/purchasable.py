@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import six
 
 from zope import component
@@ -165,9 +167,7 @@ def get_content_items(purchased_items, registry=component):
 	return result
 
 def get_providers(purchasables):
-	result = set()
-	for p in purchasables or ():
-		result.add(p.Provider)
+	result = {p.Provider for p in purchasables or ()}
 	return sorted(result)
 
 @interface.implementer(nid_interfaces.INTIIDResolver)

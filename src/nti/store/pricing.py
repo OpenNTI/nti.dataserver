@@ -5,8 +5,10 @@ Defines priced objects.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
@@ -14,16 +16,16 @@ from zope.mimetype import interfaces as zmime_interfaces
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
+from . import utils
+from . import priceable
 from . import PricingException
 from . import InvalidPurchasable
-from .priceable import Priceable
-from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
 
 @interface.implementer(store_interfaces.IPricedItem, zmime_interfaces.IContentTypeAware)
-class PricedItem(Priceable):
+class PricedItem(priceable.Priceable):
 
-	__metaclass__ = MetaStoreObject
+	__metaclass__ = utils.MetaStoreObject
 
 	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPricedItem)
@@ -43,7 +45,8 @@ class PricedItem(Priceable):
 		xhash ^= hash(self.NTIID)
 		return xhash
 
-def create_priced_item(ntiid, purchase_price, purchase_fee=None, non_discounted_price=None, quantity=1, currency='USD'):
+def create_priced_item(ntiid, purchase_price, purchase_fee=None, non_discounted_price=None,
+					   quantity=1, currency='USD'):
 	quantity = 1 if quantity is None else int(quantity)
 	purchase_fee = float(purchase_fee) if purchase_fee is not None else None
 	non_discounted_price = float(non_discounted_price) if non_discounted_price is not None else None
@@ -54,12 +57,13 @@ def create_priced_item(ntiid, purchase_price, purchase_fee=None, non_discounted_
 @interface.implementer(store_interfaces.IPricingResults, zmime_interfaces.IContentTypeAware)
 class PricingResults(SchemaConfigured):
 
-	__metaclass__ = MetaStoreObject
+	__metaclass__ = utils.MetaStoreObject
 
 	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPricingResults)
 
-def create_pricing_results(items=None, purchase_price=0.0, purchase_fee=0.0, non_discounted_price=None, currency='USD'):
+def create_pricing_results(items=None, purchase_price=0.0, purchase_fee=0.0,
+						   non_discounted_price=None, currency='USD'):
 	items = list() if items is None else items
 	purchase_fee = float(purchase_fee) if purchase_fee is not None else None
 	non_discounted_price = float(non_discounted_price) if non_discounted_price is not None else None
