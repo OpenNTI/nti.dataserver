@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -55,7 +55,7 @@ class TestCourse(ConfiguringTestBase):
 		assert_that(ps, has_property('Thumbnail', is_('http://www.ou.edu/thumbnail.gif')))
 		assert_that(ps, has_property('Communities', has_length(1)))
 		assert_that(ps, has_property('Department', 'Law'))
-		assert_that(ps, has_property('Signature', has_length(146)))
+		assert_that(ps, has_property('StartDate', '2013-05-11'))
 
 	@WithMockDSTrans
 	def test_available(self):
