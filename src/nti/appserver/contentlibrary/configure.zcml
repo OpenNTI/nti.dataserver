@@ -9,6 +9,7 @@
 
 	<!-- Events -->
 	<subscriber	handler="._question_map.add_assessment_items_from_new_content" />
+	<subscriber	handler="._question_map.remove_assessment_items_from_oldcontent" />
 	<subscriber	handler="._videoindex_map.add_video_items_from_new_content" />
 	<subscriber	handler="._videoindex_map.remove_video_items_from_old_content" />
 	<subscriber	handler="._related_content_map.add_related_content_items_from_new_content" />
