@@ -73,7 +73,11 @@ def remove_related_content_items_from_old_content(content_package, event):
 
 	logger.debug("Clearing related content items from old content %s %s", content_package, event)
 
+	related_content = rc_map.by_container.pop(content_package.ntiid, ())
+	for rcid in related_content:
+		rc_map.pop(rcid, None)
+
 	for unit in library.childrenOfNTIID(content_package.ntiid):
 		related_content = rc_map.by_container.pop(unit.ntiid, ())
-		for vid in related_content:
-			rc_map.pop(vid, None)
+		for rcid in related_content:
+			rc_map.pop(rcid, None)

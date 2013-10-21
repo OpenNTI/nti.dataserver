@@ -51,7 +51,7 @@ class TestRelatedContentIndexMap(SharedConfiguringTestBase):
 							 is_([u'tag:nextthought.com,2011-10:NTI-RelatedWorkRef-CourseTestContent.relatedworkref.0'])))
 
 		assert_that(rc_map.by_container,
-					has_entry('tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.section_1',
+					has_entry('tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.course_test_content',
 							 is_([u'tag:nextthought.com,2011-10:NTI-RelatedWork-CourseTestContent.relatedwork.source1'])))
 
 
@@ -60,45 +60,3 @@ class TestRelatedContentIndexMap(SharedConfiguringTestBase):
 		assert_that(rc_map, has_length(0))
 		assert_that(rc_map, has_property('by_container', has_length(0)))
 
-
-if __name__ == '__main__':
-	import unittest
-	unittest.main()
-"""
-
-{
-    "Items": {
-        "tag:nextthought.com,2011-10:NTI-RelatedWorkRef-CourseTestContent.relatedworkref.0": {
-            "ntiid": "tag:nextthought.com,2011-10:NTI-RelatedWorkRef-CourseTestContent.relatedworkref.0",
-            "href": "tag:nextthought.com,2011-10:USSC-HTML-SeleniumTestContent.unified_video",
-            "target-ntiid": "tag:nextthought.com,2011-10:USSC-HTML-SeleniumTestContent.unified_video",
-            "creator": "NextThought, LLC",
-            "desc": "Unified Video 1",
-            "icon": "",
-            "type": "application/vnd.nextthought.content",
-            "section": "required",
-            "visibility": "everyone",
-            "label": "Selenium Tests"
-        },
-        "tag:nextthought.com,2011-10:NTI-RelatedWork-CourseTestContent.relatedwork.source1": {
-            "ntiid": "tag:nextthought.com,2011-10:NTI-RelatedWork-CourseTestContent.relatedwork.source1",
-            "href": "tag:nextthought.com,2011-10:USSC-HTML-SeleniumTestContent.selenium_tests",
-            "target-ntiid": "tag:nextthought.com,2011-10:USSC-HTML-SeleniumTestContent.selenium_tests",
-            "creator": "NextThought, LLC",
-            "desc": "Non-course test content.",
-            "icon": "../SeleniumTestContent/icons/chapters/generic_book.png",
-            "type": "application/vnd.nextthought.content",
-            "visibility": "everyone",
-            "label": "Selenium Tests"
-        }
-    },
-    "Containers": {
-        "tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.lesson1": [
-            "tag:nextthought.com,2011-10:NTI-RelatedWorkRef-CourseTestContent.relatedworkref.0"
-        ],
-        "tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.course_test_content": [
-            "tag:nextthought.com,2011-10:NTI-RelatedWork-CourseTestContent.relatedwork.source1"
-        ]
-    }
-}
-"""
