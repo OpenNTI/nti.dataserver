@@ -8,6 +8,10 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import six
+import datetime
+import dateutil.parser
+
 from zope import component
 from zope import interface
 
@@ -38,7 +42,7 @@ class Course(purchasable.Purchasable):
 def create_course(ntiid, name=None, provider=None, amount=None, currency=None, items=(), fee=None, title=None,
 				  license_=None, author=None, description=None, icon=None, thumbnail=None, discountable=False,
 				  bulk_purchase=False, communities=(), featured=False, preview=False, department=None,
-				  signature=None):
+				  signature=None, startdate=None):
 
 	if amount and not provider:
 		raise AssertionError("Must specfify a provider")
@@ -51,12 +55,17 @@ def create_course(ntiid, name=None, provider=None, amount=None, currency=None, i
 	communities = to_frozenset(communities) if items else None
 	items = to_frozenset(items) if items else frozenset((ntiid,))
 
+	if isinstance(startdate, six.string_types):
+		dateutil.parser.parse(startdate)
+	elif isinstance(startdate, datetime.date):
+		startdate = startdate.isoformat()
+
 	result = Course(NTIID=ntiid, Name=name, Provider=provider, Title=title, Author=author,
 					Items=items, Description=description, Amount=amount, Currency=currency,
 					Preview=preview, Fee=fee, License=license_, Discountable=discountable,
 					BulkPurchase=bulk_purchase, Icon=icon, Thumbnail=thumbnail,
 					Communities=communities, Featured=featured, Department=department,
-					Signature=signature)
+					Signature=signature, StartDate=startdate)
 
 	return result
 

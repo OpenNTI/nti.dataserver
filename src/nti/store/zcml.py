@@ -44,6 +44,7 @@ class IRegisterPurchasableDirective(interface.Interface):
 class IRegisterCourseDirective(IRegisterPurchasableDirective):
 	name = schema.TextLine(title="Course name", required=False)
 	featured = schema.Bool(title="Featured flag", required=False)
+	startdate = schema.TextLine(title="Start date", required=False)
 	preview = fields.Bool(title='Preview item flag', required=False, default=False)
 	department = fields.TextLine(title='Course department', required=False)
 	signature = fields.Text(title='Course/Professor signature', required=False)
@@ -71,7 +72,7 @@ def registerPurchasable(_context, ntiid, provider, title, description=None, amou
 def registerCourse(_context, ntiid, title, description=None, provider=None, amount=None, currency=None,
 				   items=None, fee=None, author=None, icon=None, thumbnail=None, license=None, preview=False,
 				   discountable=False, bulk_purchase=False, name=None, communities=None, featured=False,
-				   department=None, signature=None):
+				   department=None, signature=None, startdate=None):
 	"""
 	Register a course
 	"""
@@ -81,7 +82,7 @@ def registerCourse(_context, ntiid, title, description=None, provider=None, amou
 								amount=amount, currency=currency, icon=icon, fee=fee, license_=license,
 								preview=preview, thumbnail=thumbnail, communities=communities,
 								discountable=discountable, bulk_purchase=bulk_purchase, featured=featured,
-								department=department, signature=signature)
+								department=department, signature=signature, startdate=startdate)
 	utility(_context, provides=store_interfaces.ICourse, factory=factory, name=ntiid)
 	logger.debug("Course '%s' has been registered", ntiid)
 
