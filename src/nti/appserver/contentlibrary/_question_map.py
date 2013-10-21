@@ -202,8 +202,12 @@ def remove_assessment_items_from_oldcontent(content_package, event):
 
 	logger.info("Removing assessment items from old content %s %s", content_package, event)
 
+	# remvoe pkg ref
+	question_map.pop(content_package.ntiid, None)
+
+	# remove byfile
 	for unit in library.childrenOfNTIID(content_package.ntiid):
-		questions = question_map.by_file.pop(unit, ())
+		questions = question_map.by_file.pop(unit.key, ())
 		for question in questions:
 			ntiid = getattr(question, 'ntiid', u'')
 			question_map.pop(ntiid)

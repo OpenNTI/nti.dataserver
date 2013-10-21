@@ -26,8 +26,8 @@ class TestVideoIndexMap(SharedConfiguringTestBase):
 	def setUp(self):
 		library = FileLibrary(os.path.join(os.path.dirname(__file__), 'library'))
 		component.provideUtility(library, lib_interfaces.IFilesystemContentPackageLibrary)
-		videp_map = vim_module.VideoIndexMap()
-		component.provideUtility(videp_map, app_interfaces.IVideoIndexMap)
+		video_map = vim_module.VideoIndexMap()
+		component.provideUtility(video_map, app_interfaces.IVideoIndexMap)
 
 	def test_check_video_map(self):
 		library = component.getUtility(lib_interfaces.IFilesystemContentPackageLibrary)

@@ -69,6 +69,10 @@ def remove_video_items_from_old_content(content_package, event):
 
 	logger.debug("Clearing video items from old content %s %s", content_package, event)
 
+	videos = video_map.by_container.pop(content_package.ntiid, ())
+	for vid in videos:
+		video_map.pop(vid, None)
+
 	for unit in library.childrenOfNTIID(content_package.ntiid):
 		videos = video_map.by_container.pop(unit.ntiid, ())
 		for vid in videos:
