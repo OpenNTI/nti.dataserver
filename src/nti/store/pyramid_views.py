@@ -37,7 +37,6 @@ from nti.externalization.datastructures import LocatedExternalDict
 from nti.utils.maps import CaseInsensitiveDict
 
 from . import utils
-from . import payments
 from . import priceable
 from . import enrollment
 from . import invitations
@@ -46,7 +45,7 @@ from . import content_roles
 from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
-
+from .payments import pyramid_views as pyramid_payment
 # bwc
 is_valid_pve_int = utils.is_valid_pve_int
 raise_field_error = utils.raise_field_error
@@ -364,7 +363,7 @@ class GetContentRolesView(object):
 
 # aliases
 
-StripePaymentView = payments.pyramid_views.StripePaymentView
-CreateStripeTokenView = payments.pyramid_views.CreateStripeTokenView
-GetStripeConnectKeyView = payments.pyramid_views.GetStripeConnectKeyView
-PricePurchasableWithStripeCouponView = payments.pyramid_views.PricePurchasableWithStripeCouponView
+StripePaymentView = pyramid_payment.StripePaymentView
+CreateStripeTokenView = pyramid_payment.CreateStripeTokenView
+GetStripeConnectKeyView = pyramid_payment.GetStripeConnectKeyView
+PricePurchasableWithStripeCouponView = pyramid_payment.PricePurchasableWithStripeCouponView
