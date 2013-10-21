@@ -5,8 +5,10 @@ Defines purchase attempt object.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import time
 import BTrees
@@ -29,16 +31,21 @@ from nti.utils.schema import createDirectFieldProperties
 from nti.zodb import minmax
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
+from . import utils
 from . import purchase_order
-from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
 
 @functools.total_ordering
-@interface.implementer(store_interfaces.IPurchaseAttempt, an_interfaces.IAttributeAnnotatable, zmime_interfaces.IContentTypeAware)
-class PurchaseAttempt(ModDateTrackingObject, SchemaConfigured, zcontained.Contained, PersistentPropertyHolder):
+@interface.implementer(store_interfaces.IPurchaseAttempt,
+					   an_interfaces.IAttributeAnnotatable,
+					   zmime_interfaces.IContentTypeAware)
+class PurchaseAttempt(ModDateTrackingObject,
+					  SchemaConfigured,
+					  zcontained.Contained,
+					  PersistentPropertyHolder):
 
 	__external_class_name__ = "PurchaseAttempt"
-	__metaclass__ = MetaStoreObject
+	__metaclass__ = utils.MetaStoreObject
 
 	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPurchaseAttempt)
@@ -95,7 +102,9 @@ class PurchaseAttempt(ModDateTrackingObject, SchemaConfigured, zcontained.Contai
 		return xhash
 
 	def has_failed(self):
-		return self.State in (store_interfaces.PA_STATE_FAILED, store_interfaces.PA_STATE_FAILURE, store_interfaces.PA_STATE_CANCELED)
+		return self.State in (store_interfaces.PA_STATE_FAILED,
+							  store_interfaces.PA_STATE_FAILURE,
+							  store_interfaces.PA_STATE_CANCELED)
 
 	def has_succeeded(self):
 		return self.State == store_interfaces.PA_STATE_SUCCESS
@@ -199,10 +208,11 @@ def create_redeemed_purchase_attempt(purchase, redemption_code, redemption_time=
 	new_order.Quantity = None
 	purchase_order.replace_quantity(new_order, 1)
 
-	result = RedeemedPurchaseAttempt(Order=new_order, Processor=purchase.Processor, Description=purchase.Description,
-							 		 State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
-									 Error=purchase.Error, Synced=purchase.Synced, RedemptionTime=float(redemption_time),
-									 RedemptionCode=unicode(redemption_code))
+	result = RedeemedPurchaseAttempt(
+				Order=new_order, Processor=purchase.Processor, Description=purchase.Description,
+				State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
+				Error=purchase.Error, Synced=purchase.Synced, RedemptionTime=float(redemption_time),
+				RedemptionCode=unicode(redemption_code))
 	return result
 
 

@@ -5,8 +5,10 @@ Defines purchase charge object.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import functools
 from datetime import datetime
@@ -17,13 +19,13 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
 
-from .utils import MetaStoreObject
+from . import utils
 from . import interfaces as store_interfaces
 
 @interface.implementer(store_interfaces.IUserAddress, zmime_interfaces.IContentTypeAware)
 class UserAddress(SchemaConfigured):
 
-	__metaclass__ = MetaStoreObject
+	__metaclass__ = utils.MetaStoreObject
 
 	Street = FP(store_interfaces.IUserAddress['Street'])
 	City = FP(store_interfaces.IUserAddress['City'])
@@ -68,7 +70,7 @@ class UserAddress(SchemaConfigured):
 @interface.implementer(store_interfaces.IPaymentCharge, zmime_interfaces.IContentTypeAware)
 class PaymentCharge(SchemaConfigured):
 
-	__metaclass__ = MetaStoreObject
+	__metaclass__ = utils.MetaStoreObject
 
 	Amount = FP(store_interfaces.IPaymentCharge['Amount'])
 	Currency = FP(store_interfaces.IPaymentCharge['Currency'])

@@ -5,8 +5,10 @@ Defines priceable object.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
@@ -14,14 +16,14 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
 
-from .utils import MetaStoreObject
-from .purchasable import get_purchasable
+from . import utils
+from . import purchasable
 from . import interfaces as store_interfaces
 
 @interface.implementer(store_interfaces.IPriceable, zmime_interfaces.IContentTypeAware)
 class Priceable(SchemaConfigured):
 
-	__metaclass__ = MetaStoreObject
+	__metaclass__ = utils.MetaStoreObject
 
 	NTIID = FP(store_interfaces.IPriceable['NTIID'])
 	Quantity = FP(store_interfaces.IPriceable['Quantity'])
@@ -32,7 +34,7 @@ class Priceable(SchemaConfigured):
 
 	@property
 	def purchasable(self):
-		result = get_purchasable(self.NTIID)
+		result = purchasable.get_purchasable(self.NTIID)
 		return result
 
 	@property

@@ -5,8 +5,10 @@ Defines purchase order.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import collections
 
@@ -17,14 +19,14 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.schema import SchemaConfigured
 
+from . import utils
+from . import priceable
 from . import purchasable
-from . priceable import Priceable
-from .utils import MetaStoreObject
 from . import interfaces as store_interfaces
 
 @interface.implementer(store_interfaces.IPurchaseItem)
-class PurchaseItem(Priceable):
-	__metaclass__ = MetaStoreObject
+class PurchaseItem(priceable.Priceable):
+	__metaclass__ = utils.MetaStoreObject
 
 def create_purchase_item(ntiid, quantity=1, cls=PurchaseItem):
 	quantity = 1 if quantity is None else int(quantity)
@@ -34,7 +36,7 @@ def create_purchase_item(ntiid, quantity=1, cls=PurchaseItem):
 @interface.implementer(store_interfaces.IPurchaseOrder, an_interfaces.IAttributeAnnotatable)
 class PurchaseOrder(SchemaConfigured):
 
-	__metaclass__ = MetaStoreObject
+	__metaclass__ = utils.MetaStoreObject
 
 	Items = FP(store_interfaces.IPurchaseOrder['Items'])
 	Quantity = FP(store_interfaces.IPurchaseOrder['Quantity'])  # override items quantity
@@ -93,10 +95,8 @@ def get_currencies(order):
 	"""
 	return all currencies for the associated purchase
 	"""
-	result = set()
 	purchasables = get_purchasables(order)
-	for p in purchasables:
-		result.add(p.Currency)
+	result = {p.Currency for p in purchasables}
 	return list(result)
 
 def replace_quantity(po_or_items, quantity):

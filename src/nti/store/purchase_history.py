@@ -5,8 +5,10 @@ Defines purchase history.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import BTrees
 from BTrees.Length import Length
@@ -30,7 +32,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.zodb.containers import time_to_64bit_int
 
-from .utils import to_frozenset
+from . import utils
 from . import purchase_attempt
 from . import interfaces as store_interfaces
 
@@ -134,7 +136,7 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 		"""
 		register/activates the purchasables (NTIIDs)
 		"""
-		items = to_frozenset(items)
+		items = utils.to_frozenset(items)
 		self._items_activated.update(items)
 
 	def deactivate_items(self, items):
@@ -142,7 +144,7 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 		unregister the purchasables (NTIIDs)
 		"""
 		count = 0
-		items = to_frozenset(items)
+		items = utils.to_frozenset(items)
 		for item in items:
 			if item in self._items_activated:
 				count += 1
@@ -182,7 +184,7 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 				yield p
 
 	def get_pending_purchase_for(self, items):
-		items = to_frozenset(items)
+		items = utils.to_frozenset(items)
 		for p in self.values():
 			if (p.is_pending() or p.is_unknown()) and p.Items.intersection(items):
 				return p
