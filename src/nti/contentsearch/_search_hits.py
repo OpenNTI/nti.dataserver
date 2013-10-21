@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import six
 import uuid
 import collections
@@ -25,9 +27,8 @@ from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
 from nti.mimetype import mimetype
 
-from .common import get_type_name
-from .common import get_sort_order
-from ._content_utils import get_ntiid_path
+from . import common
+from . import _content_utils
 from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
 
@@ -282,7 +283,7 @@ class _ScoreSearchHitComparator(_CallableComparator):
 		if search_interfaces.ISearchHit.providedBy(item):
 			result = item.get(CLASS, u'')
 		elif search_interfaces.IBaseHit.providedBy(item):
-			result = get_type_name(item.obj)
+			result = common.get_type_name(item.obj)
 		else:
 			result = u''
 		return result or u''
@@ -321,8 +322,8 @@ class _TypeSearchHitComparator(_ScoreSearchHitComparator, _LastModifiedSearchHit
 
 	@classmethod
 	def compare_type(cls, a, b):
-		a_order = get_sort_order(cls.get_type_name(a))
-		b_order = get_sort_order(cls.get_type_name(b))
+		a_order = common.get_sort_order(cls.get_type_name(a))
+		b_order = common.get_sort_order(cls.get_type_name(b))
 		result = cmp(a_order, b_order)
 		return result
 
@@ -374,9 +375,9 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 	@classmethod
 	def get_ntiid_path(cls, item):
 		if isinstance(item, six.string_types):
-			result = get_ntiid_path(item)
+			result = _content_utils.get_ntiid_path(item)
 		elif search_interfaces.IBaseHit.providedBy(item):
-			result = get_ntiid_path(item.query.location)
+			result = _content_utils.get_ntiid_path(item.query.location)
 		else:
 			result = ()
 		return result
@@ -396,8 +397,8 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 	def compare(cls, a, b):
 		# compare location
 		location_path = cls.get_ntiid_path(a)
-		a_path = get_ntiid_path(cls.get_containerId(a))
-		b_path = get_ntiid_path(cls.get_containerId(b))
+		a_path = _content_utils.get_ntiid_path(cls.get_containerId(a))
+		b_path = _content_utils.get_ntiid_path(cls.get_containerId(b))
 		a_score_path = cls.score_path(location_path, a_path)
 		b_score_path = cls.score_path(location_path, b_path)
 		result = cmp(b_score_path, a_score_path)

@@ -4,8 +4,10 @@ Search externalization
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
@@ -22,10 +24,9 @@ from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceO
 
 from nti.dataserver.links import Link
 
-from ._search_hits import get_search_hit
+from . import _search_hits
+from . import _search_highlights
 from . import interfaces as search_interfaces
-from ._search_highlights import HighlightInfo
-from ._search_highlights import word_fragments_highlight
 
 from .constants import (tags_, content_, title_, replacementContent_, redactionExplanation_)
 from .constants import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
@@ -37,9 +38,9 @@ from .constants import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_H
 def _word_fragments_highlight(query=None, text=None):
 	query = search_interfaces.ISearchQuery(query, None)
 	if query and text:
-		result = word_fragments_highlight(query, text, query.language)
+		result = _search_highlights.word_fragments_highlight(query, text, query.language)
 	else:
-		result = HighlightInfo()
+		result = _search_highlights.HighlightInfo()
 	return result
 
 # search hits
@@ -218,7 +219,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			score = hit.score
 			query = hit.query
 
-			hit = get_search_hit(item, score, query)
+			hit = _search_hits.get_search_hit(item, score, query)
 			if hit.oid in self.seen:
 				continue
 

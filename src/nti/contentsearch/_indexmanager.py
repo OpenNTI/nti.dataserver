@@ -5,7 +5,7 @@ Search index manager.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -25,9 +25,9 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils.maps import CaseInsensitiveDict
 
+from . import _indexagent
+from . import _search_query
 from . import _search_results as srs
-from ._search_query import QueryObject
-from ._indexagent import handle_index_event
 from . import interfaces as search_interfaces
 
 def uim_search(username, query, indexmanager=None):
@@ -101,7 +101,7 @@ class IndexManager(object):
 
 	@metric
 	def search(self, query):
-		query = QueryObject.create(query)
+		query = _search_query.QueryObject.create(query)
 		cnt_results = self.content_search(query=query)
 		ugd_results = self.user_data_search(query=query)
 		results = srs.merge_search_results(cnt_results, ugd_results)
@@ -110,7 +110,7 @@ class IndexManager(object):
 
 	@metric
 	def suggest_and_search(self, query):
-		query = QueryObject.create(query)
+		query = _search_query.QueryObject.create(query)
 		cnt_results = self.content_suggest_and_search(query=query)
 		ugd_results = self.user_data_suggest_and_search(query=query)
 		results = srs.merge_suggest_and_search_results(cnt_results, ugd_results)
@@ -118,7 +118,7 @@ class IndexManager(object):
 
 	@metric
 	def suggest(self, query):
-		query = QueryObject.create(query)
+		query = _search_query.QueryObject.create(query)
 		cnt_results = self.content_suggest(query=query)
 		ugd_results = self.user_data_suggest(query=query)
 		results = srs.merge_suggest_results(cnt_results, ugd_results)
@@ -144,7 +144,7 @@ class IndexManager(object):
 		return  (query.indexid,) if query.indexid else ()
 
 	def content_search(self, query):
-		query = QueryObject.create(query)
+		query = _search_query.QueryObject.create(query)
 		results = srs.empty_search_results(query)
 		books = self._query_books(query)
 		for book in books:
@@ -154,7 +154,7 @@ class IndexManager(object):
 		return results
 
 	def content_suggest_and_search(self, query):
-		query = QueryObject.create(query)
+		query = _search_query.QueryObject.create(query)
 		results = srs.empty_suggest_and_search_results(query)
 		books = self._query_books(query)
 		for book in books:
@@ -164,7 +164,7 @@ class IndexManager(object):
 		return results
 
 	def content_suggest(self, query, *args, **kwargs):
-		query = QueryObject.create(query)
+		query = _search_query.QueryObject.create(query)
 		results = srs.empty_suggest_results(query)
 		books = self._query_books(query)
 		for book in books:
@@ -193,7 +193,7 @@ class IndexManager(object):
 		return result
 
 	def user_data_search(self, query):
-		query = QueryObject.create(query)
+		query = _search_query.QueryObject.create(query)
 		results = srs.empty_search_results(query)
 		entities = self._get_search_entities(query.username)
 		if self.parallel_search:
@@ -209,7 +209,7 @@ class IndexManager(object):
 		return results
 
 	def user_data_suggest_and_search(self, query):
-		query = QueryObject.create(query)
+		query = _search_query.QueryObject.create(query)
 		results = srs.empty_suggest_and_search_results(query)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.suggest_and_search(query=query)
@@ -217,7 +217,7 @@ class IndexManager(object):
 		return results
 
 	def user_data_suggest(self, query):
-		query = QueryObject.create(query)
+		query = _search_query.QueryObject.create(query)
 		results = srs.empty_suggest_results(query)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.suggest(query=query)
@@ -262,4 +262,4 @@ class IndexManager(object):
 
 	@classmethod
 	def onChange(cls, datasvr, msg, target=None, broadcast=None):
-		handle_index_event(cls.get_shared_indexmanager(), target, msg, broadcast=broadcast)
+		_indexagent.handle_index_event(cls.get_shared_indexmanager(), target, msg, broadcast=broadcast)

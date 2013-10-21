@@ -5,7 +5,7 @@ Index agent implementation
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -21,9 +21,8 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.ntiids import ntiids
 
+from . import common
 from . import get_indexable_types
-from .common import get_type_name
-from .common import normalize_type_name
 from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
 
@@ -39,7 +38,7 @@ def get_creator(obj):
 	return adapted.get_creator()
 
 def _check_event(target, change_type, data_type, data):
-	result = change_type in _event_types and normalize_type_name(data_type) in get_indexable_types()
+	result = change_type in _event_types and common.normalize_type_name(data_type) in get_indexable_types()
 	if result and _only_delete_by_owner and change_type == nti_interfaces.SC_DELETED:
 		username = target if isinstance(target, six.string_types) else target.username
 		creator = get_creator(data)
@@ -64,7 +63,7 @@ def _handle_event(indexmanager, entity, changeType, change_object, broadcast=Non
 
 	result = False
 	if should_process:
-		data_type = get_type_name(change_object)
+		data_type = common.get_type_name(change_object)
 		result = _process_event(indexmanager, entity, changeType, data_type, change_object)
 		logger.log(loglevels.TRACE, 'Index event target="%s", change=%s, data_type=%s, broadcast=%s handled=%s',
 				   entity, changeType, data_type, broadcast, result)
