@@ -306,6 +306,12 @@
 		view="zope.interface.Interface"
 		layer="zope.interface.Interface" />
 
+	<!-- TALES function namespaces  -->
+	<adapter
+		factory=".tales.Currency"
+		provides="zope.traversing.interfaces.IPathAdapter"
+		name="currency" />
+
 	<!-- Content restrictions -->
 	<!--
 	Sadly, the include overrides only works at the top-level (?)
