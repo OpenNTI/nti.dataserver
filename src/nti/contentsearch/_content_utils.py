@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import six
 import collections
 
@@ -31,7 +33,7 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.utils.maps import CaseInsensitiveDict
 
-from .common import to_list
+from . import common
 from . import interfaces as search_interfaces
 
 from .constants import (CLASS, BODY, ID, NTIID, CREATOR, CONTAINER_ID, AUTO_TAGS)
@@ -144,7 +146,7 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 
 	def get_references(self):
 		result = set()
-		items = to_list(getattr(self.obj, references_, ()))
+		items = common.to_list(getattr(self.obj, references_, ()))
 		for obj in items or ():
 			adapted = search_interfaces.INTIIDResolver(obj, None)
 			if adapted:
@@ -185,7 +187,7 @@ class _PartsContentResolver(object):
 
 	def _resolve(self, data):
 		result = []
-		items = to_list(data)
+		items = common.to_list(data)
 		for item in items or ():
 			adapted = search_interfaces.IContentResolver(item, None)
 			if adapted:
@@ -306,7 +308,7 @@ class _DictContentResolver(object):
 			elif clazz == messageinfo_ or clazz == note_ or clazz == post_:
 				result = []
 				data = source.get(body_, source.get(BODY, u''))
-				for item in to_list(data) or ():
+				for item in common.to_list(data) or ():
 					d = self.get_multipart_content(item)
 					if d: result.append(d)
 				result = ' '.join([x for x in result if x is not None])
@@ -372,7 +374,7 @@ class _DictContentResolver(object):
 		result = set()
 		data = self.obj.get(references_, u'')
 		objects = data.split() if hasattr(data, 'split') else data
-		for s in to_list(objects) or ():
+		for s in common.to_list(objects) or ():
 			result.add(unicode(s))
 		return list(result) if result else ()
 

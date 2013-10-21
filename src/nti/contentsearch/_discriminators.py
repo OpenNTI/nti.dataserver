@@ -4,8 +4,10 @@ Discriminators functions
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import zope.intid
 from zope import component
@@ -14,8 +16,10 @@ from nti.contentprocessing import compute_ngrams
 
 from nti.externalization import oids
 
-from ._content_utils import get_content
+from . import _content_utils
 from . import interfaces as search_interfaces
+
+get_content = _content_utils.get_content
 
 def get_oid(obj):
 	result = oids.to_external_ntiid_oid(obj)

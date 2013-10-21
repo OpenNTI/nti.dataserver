@@ -4,7 +4,7 @@ Define repoze query methods.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -30,7 +30,7 @@ from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 from nti.contentprocessing import split_content
 from nti.contentprocessing import interfaces as cp_interfaces
 
-from .common import is_all_query
+from . import common
 from . import interfaces as search_interfaces
 from .constants import (content_, ngrams_, title_, tags_, redactionExplanation_, replacementContent_)
 
@@ -192,7 +192,7 @@ class _DefaultPostRepozeQueryParser(_DefaultRepozeQueryParser):
 		return result
 
 def parse_query(qo, type_name):
-	is_all = is_all_query(qo.term)
+	is_all = common.is_all_query(qo.term)
 	if is_all:
 		return is_all, None
 	else:
