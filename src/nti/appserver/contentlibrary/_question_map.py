@@ -166,7 +166,6 @@ def add_assessment_items_from_new_content( content_package, event ):
 	asm_index_text = content_package.read_contents_of_sibling_entry( 'assessment_index.json' )
 	_populate_question_map_from_text( question_map, asm_index_text, content_package )
 
-
 def _populate_question_map_from_text( question_map, asm_index_text, content_package ):
 	if not asm_index_text:
 		return
@@ -196,7 +195,6 @@ def _populate_question_map_from_text( question_map, asm_index_text, content_pack
 
 @component.adapter(lib_interfaces.IContentPackage, IObjectRemovedEvent)
 def remove_assessment_items_from_oldcontent(content_package, event):
-
 	question_map = component.queryUtility(app_interfaces.IFileQuestionMap)
 	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 	if question_map is None or library is None:
