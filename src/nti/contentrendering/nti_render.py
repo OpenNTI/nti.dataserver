@@ -309,12 +309,12 @@ def postRender(document, contentLocation='.', jobname='prealgebra', context=None
 	logger.info('Changing intra-content links')
 	ntiidlinksetter.transform(book)
 
-	# NOTE: These used to come from a hardcoded list, which obviously
-	# isn't very modular. If there was some intrinsic order in that list
-	# that mattered, then it needs to be expressed through attributes on
-	# the utilities (or their names) and we need to sort based on that.
-	for extractor in component.getAllUtilitiesRegisteredFor(interfaces.IRenderedBookTransformer):
-		logger.info("Extracting %s", extractor)
+	# In case order matters, we sort by the name of the
+	# utility. To register, use patterns like 001, 002, etc.
+	# Ideally order shouldn't matter, and if it does it should be
+	# handled by a specialized dispatching utility.
+	for name, extractor in sorted(component.getUtilitiesFor(interfaces.IRenderedBookTransformer)):
+		logger.info("Extracting %s/%s", name, extractor)
 		extractor.transform(book)
 
 	logger.info("Creating JSONP content")

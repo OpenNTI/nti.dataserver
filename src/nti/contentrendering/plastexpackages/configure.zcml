@@ -10,7 +10,7 @@
 
 	<utility factory=".extractors._CourseExtractor"
 			 provides="nti.contentrendering.interfaces.ICourseExtractor"
-			 name="CourseExtractor" />
+			 name="010.CourseExtractor" />
 
 	<adapter factory=".extractors._RelatedWorkExtractor"
 			 for="nti.contentrendering.interfaces.IRenderedBook"
@@ -18,7 +18,7 @@
 
 	<utility factory=".extractors._RelatedWorkExtractor"
 			 provides="nti.contentrendering.interfaces.IRelatedWorkExtractor"
-			 name="RelatedWorkExtractor" />
+			 name="050.RelatedWorkExtractor" />
 
 	<adapter factory=".extractors._DiscussionExtractor"
 			 for="nti.contentrendering.interfaces.IRenderedBook"
@@ -26,7 +26,7 @@
 
 	<utility factory=".extractors._DiscussionExtractor"
 			 provides="nti.contentrendering.interfaces.IDiscussionExtractor"
-			 name="DiscussionExtractor" />
+			 name="030.DiscussionExtractor" />
 
 	<adapter factory=".extractors._NTIVideoExtractor"
 			 for="nti.contentrendering.interfaces.IRenderedBook"
@@ -34,7 +34,7 @@
 
 	<utility factory=".extractors._NTIVideoExtractor"
 			 provides="nti.contentrendering.interfaces.INTIVideoExtractor"
-			 name="NTIVideoExtractor" />
+			 name="020.NTIVideoExtractor" />
 
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">
 		<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />

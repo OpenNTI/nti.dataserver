@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope.dottedname import resolve as dottedname
 
 from pyramid.renderers import render
 from pyramid.renderers import get_renderer
@@ -28,6 +29,9 @@ def _get_renderer_spec_and_package(base_template,
 								   extension,
 								   package=None,
 								   level=3):
+	if isinstance(package,basestring):
+		package = dottedname.resolve(package)
+
 	# Did they give us a package, either in the name or as an argument?
 	# If not, we need to get the right package
 	if ':' not in base_template and package is None:

@@ -34,7 +34,7 @@ class TestSlideDeckExtractor(ConfiguringTestBase):
 		shutil.rmtree(self.temp_dir)
 
 	def test_utility(self):
-		u = component.queryUtility(interfaces.IRenderedBookExtractor, name="SlideDeckExtractor")
+		u = component.getUtility(interfaces.IRenderedBookExtractor, name="060.SlideDeckExtractor")
 		assert_that(u, verifiably_provides(interfaces.IRenderedBookExtractor) )
 
 	@fudge.patch('nti.contentrendering.RenderedBook.EclipseTOC.save')
