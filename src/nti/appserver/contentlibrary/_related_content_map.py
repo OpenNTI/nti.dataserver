@@ -68,9 +68,12 @@ def _populate_rc_map_from_text(rc_map, index_text, content_package):
 def remove_related_content_items_from_old_content(content_package, event):
 	rc_map = component.queryUtility(app_interfaces.IRelatedContentIndexMap)
 	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
-	if rc_map and library:  # pragma: no cover
-		logger.debug("Clearing related content items from old content %s %s", content_package, event)
-		for unit in library.childrenOfNTIID(content_package.ntiid):
-			related_content = rc_map.by_container.pop(unit.ntiid, ())
-			for vid in related_content:
-				rc_map.pop(vid)
+	if rc_map is None or library is None:
+		return
+
+	logger.debug("Clearing related content items from old content %s %s", content_package, event)
+
+	for unit in library.childrenOfNTIID(content_package.ntiid):
+		related_content = rc_map.by_container.pop(unit.ntiid, ())
+		for vid in related_content:
+			rc_map.pop(vid, None)

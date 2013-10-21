@@ -64,9 +64,12 @@ def _populate_video_map_from_text(video_map, video_index_text, content_package):
 def remove_video_items_from_old_content(content_package, event):
 	video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
 	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
-	if video_map and library:  # pragma: no cover
-		logger.debug("Clearing video items from old content %s %s", content_package, event)
-		for unit in library.childrenOfNTIID(content_package.ntiid):
-			videos = video_map.by_container.pop(unit.ntiid, ())
-			for vid in videos:
-				video_map.pop(vid)
+	if video_map is None or library is None:
+		return
+
+	logger.debug("Clearing video items from old content %s %s", content_package, event)
+
+	for unit in library.childrenOfNTIID(content_package.ntiid):
+		videos = video_map.by_container.pop(unit.ntiid, ())
+		for vid in videos:
+			video_map.pop(vid, None)
