@@ -6,7 +6,7 @@ functions to maintain it.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -16,7 +16,7 @@ import simplejson
 
 from zope import interface
 from zope import component
-from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent, IObjectRemovedEvent
 
 from nti.appserver import interfaces as app_interfaces
 
@@ -28,7 +28,7 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
 
-import nti.externalization.internalization
+from nti.externalization import internalization
 
 def _ntiid_object_hook( k, v, x ):
 	"""
@@ -61,10 +61,10 @@ class QuestionMap(dict):
 		for k, v in assessment_item_dict.items():
 			__traceback_info__ = k, v
 
-			factory = nti.externalization.internalization.find_factory_for( v )
+			factory = internalization.find_factory_for( v )
 			assert factory is not None
 			obj = factory()
-			nti.externalization.internalization.update_from_external_object( obj, v, require_updater=True, notify=False, object_hook=_ntiid_object_hook )
+			internalization.update_from_external_object(obj, v, require_updater=True, notify=False, object_hook=_ntiid_object_hook )
 			obj.ntiid = k
 			self[k] = obj
 
@@ -166,6 +166,7 @@ def add_assessment_items_from_new_content( content_package, event ):
 	asm_index_text = content_package.read_contents_of_sibling_entry( 'assessment_index.json' )
 	_populate_question_map_from_text( question_map, asm_index_text, content_package )
 
+
 def _populate_question_map_from_text( question_map, asm_index_text, content_package ):
 	if not asm_index_text:
 		return
@@ -193,6 +194,21 @@ def _populate_question_map_from_text( question_map, asm_index_text, content_pack
 		# since we shouldn't get content like this out of the rendering process
 		logger.exception( "Failed to load assessment items, invalid assessment_index for %s", content_package )
 
+@component.adapter(lib_interfaces.IContentPackage, IObjectRemovedEvent)
+def remove_assessment_items_from_oldcontent(content_package, event):
+
+	question_map = component.queryUtility(app_interfaces.IFileQuestionMap)
+	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
+	if question_map is None or library is None:
+		return
+
+	logger.info("Removing assessment items from old content %s %s", content_package, event)
+
+	for unit in library.childrenOfNTIID(content_package.ntiid):
+		questions = question_map.by_file.pop(unit, ())
+		for question in questions:
+			ntiid = getattr(question, 'ntiid', u'')
+			question_map.pop(ntiid)
 
 from nti.dataserver.authorization_acl import _AbstractDelimitedHierarchyEntryACLProvider
 
