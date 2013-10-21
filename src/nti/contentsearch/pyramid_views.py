@@ -14,16 +14,14 @@ from zope import component
 from zope import interface
 from zope.location import locate
 
-import pyramid.httpexceptions as hexc
+from pyramid import httpexceptions as hexc
 from pyramid.security import authenticated_userid
 
+from . import common
 from . import constants
-from .common import sort_search_types
-from .interfaces import IIndexManager
-from ._search_query import QueryObject
-from .common import get_type_from_mimetype
-from ._content_utils import get_content_translation_table
-from ._content_utils import get_collection_root_ntiid as get_collection
+from . import _search_query as search_query
+from . import _content_utils as content_utils
+from . import interfaces as search_interfaces
 
 class BaseView(object):
 
@@ -38,7 +36,7 @@ class BaseView(object):
 
 	@property
 	def indexmanager(self):
-		return self.request.registry.getUtility(IIndexManager)
+		return self.request.registry.getUtility(search_interfaces.IIndexManager)
 
 	def _locate(self, obj, parent):
 		# TODO: (Instead of modification info, we should be using etags here, anyway).
@@ -81,7 +79,7 @@ def clean_search_query(query, language='en'):
 		m = _extractor_pe.search(result)
 		result = m.group() if m else u''
 
-	table = get_content_translation_table(language)
+	table = content_utils.get_content_translation_table(language)
 	result = result.translate(table) if result else u''
 	result = unicode(result)
 
@@ -113,7 +111,7 @@ def create_queryobject(username, params, matchdict, registry=component):
 	if ntiid:
 		# make sure we register the location where the search query is being made
 		args['location'] = ntiid
-		indexid = get_collection(ntiid, registry=registry)
+		indexid = content_utils.get_collection_root_ntiid(ntiid, registry=registry)
 		if indexid is None:
 			logger.debug("Could not find collection for ntiid '%s'" % ntiid)
 		else:
@@ -121,18 +119,18 @@ def create_queryobject(username, params, matchdict, registry=component):
 	if accept:
 		aset = set(accept.split(','))
 		if '*/*' not in aset:
-			aset = {get_type_from_mimetype(e) for e in aset}
+			aset = {common.get_type_from_mimetype(e) for e in aset}
 			aset.discard(None)
 			aset = aset if aset else (constants.invalid_type_,)
-			args['searchOn'] = sort_search_types(aset)
+			args['searchOn'] = common.sort_search_types(aset)
 	elif exclude:
 		eset = set(exclude.split(','))
 		if '*/*' in eset:
 			args['searchOn'] = (constants.invalid_type_,)
 		else:
-			eset = {get_type_from_mimetype(e) for e in eset}
+			eset = {common.get_type_from_mimetype(e) for e in eset}
 			eset.discard(None)
-			args['searchOn'] = sort_search_types(indexable_type_names - eset)
+			args['searchOn'] = common.sort_search_types(indexable_type_names - eset)
 
 	batchSize = args.get('batchSize', None)
 	batchStart = args.get('batchStart', None)
@@ -145,7 +143,7 @@ def create_queryobject(username, params, matchdict, registry=component):
 		if batchSize <= 0 or batchStart < 0:
 			raise hexc.HTTPBadRequest()
 
-	return QueryObject(**args)
+	return search_query.QueryObject(**args)
 
 def get_queryobject(request):
 	username = request.matchdict.get('user', None)
