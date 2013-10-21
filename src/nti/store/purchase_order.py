@@ -41,10 +41,8 @@ class PurchaseOrder(SchemaConfigured):
 
 	@Lazy
 	def NTIIDs(self):
-		result = set()
-		for item in self.Items:
-			result.add(item.NTIID)
-		return frozenset(result)
+		result = frozenset([x.NTIID for x in self.Items])
+		return result
 
 	def copy(self):
 		items = [item.copy() for item in self.Items]
