@@ -36,6 +36,8 @@ from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.utils.maps import CaseInsensitiveDict
 
+from . import utils
+from . import payments
 from . import priceable
 from . import enrollment
 from . import invitations
@@ -44,8 +46,11 @@ from . import content_roles
 from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
-from .payments import pyramid_views as payment_pyramid
-from .utils import is_valid_pve_int, raise_field_error, is_valid_timestamp
+
+# bwc
+is_valid_pve_int = utils.is_valid_pve_int
+raise_field_error = utils.raise_field_error
+is_valid_timestamp = utils.is_valid_timestamp
 
 class _PurchaseAttemptView(object):
 
@@ -254,7 +259,11 @@ class UnenrollCourseView(_PostView):
 		try:
 			enrollment.unenroll_course(username, course_id, self.request)
 		except enrollment.CourseNotFoundException:
+			logger.error("Course %s not found" % course_id)
 			raise_field_error(self.request, 'courseID', 'course not found')
+		except enrollment.UserNotEnrolledException:
+			logger.error("User %s not enrolled in %s" % (username, course_id))
+			raise_field_error(self.request, 'username', 'User not enrolled')
 		except enrollment.InvalidEnrollmentAttemptException:
 			raise_field_error(self.request, 'courseID', 'Invalid enrollment attempt')
 
@@ -355,7 +364,7 @@ class GetContentRolesView(object):
 
 # aliases
 
-StripePaymentView = payment_pyramid.StripePaymentView
-CreateStripeTokenView = payment_pyramid.CreateStripeTokenView
-GetStripeConnectKeyView = payment_pyramid.GetStripeConnectKeyView
-PricePurchasableWithStripeCouponView = payment_pyramid.PricePurchasableWithStripeCouponView
+StripePaymentView = payments.pyramid_views.StripePaymentView
+CreateStripeTokenView = payments.pyramid_views.CreateStripeTokenView
+GetStripeConnectKeyView = payments.pyramid_views.GetStripeConnectKeyView
+PricePurchasableWithStripeCouponView = payments.pyramid_views.PricePurchasableWithStripeCouponView
