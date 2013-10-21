@@ -3,12 +3,12 @@
 """
 Supporting authorization implementations for pyramid.
 
-
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-logger = __import__( 'logging' ).getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
@@ -63,17 +63,15 @@ _marker = object()
 class _Fake(object):
 	pass
 
-
 class _Cache(dict):
 	pass
+
 def _get_cache( obj, name ):
 	cache = getattr( obj, name, None )
 	if cache is None:
 		cache = _Cache()
 		setattr( obj, name, cache )
 	return cache
-
-
 
 def _clear_caches():
 	req = get_current_request()
@@ -113,7 +111,6 @@ def _lineage_that_ensures_acls(obj):
 			else:
 				# Yes we can. So do so
 				yield ACLProxy( location, acl )
-
 
 def can_create(obj, request=None, skip_cache=False):
 	"""
@@ -190,7 +187,6 @@ def _get_effective_principals( request ):
 
 	principals = authn_policy.effective_principals(request) if request is not None else (psec.Everyone,)
 	return tuple(principals), authn_policy, reg
-
 
 def _has_permission( permission, context, reg, authn_policy, principals  ):
 	"""
