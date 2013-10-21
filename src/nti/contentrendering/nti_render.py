@@ -314,6 +314,8 @@ def postRender(document, contentLocation='.', jobname='prealgebra', context=None
 	# Ideally order shouldn't matter, and if it does it should be
 	# handled by a specialized dispatching utility.
 	for name, extractor in sorted(component.getUtilitiesFor(interfaces.IRenderedBookTransformer)):
+		if interfaces.IRenderedBookIndexer.providedBy(extractor):
+			continue
 		logger.info("Extracting %s/%s", name, extractor)
 		extractor.transform(book)
 
