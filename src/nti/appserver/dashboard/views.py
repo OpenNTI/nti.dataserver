@@ -42,6 +42,8 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_standard_external_created_time
 from nti.externalization.externalization import to_standard_external_last_modified_time
 
+from nti.ntiids import ntiids
+from .. import httpexceptions as hexc
 from nti.utils._compat import aq_base
 
 _view_defaults = dict(route_name='objects.generic.traversal', renderer='rest')
@@ -61,12 +63,12 @@ def _merge_map(ref, m):
 class _Recorder(object):
 
 	__slots__ = ('score', 'total', 'counter')
-	
+
 	def __init__(self):
 		self.score = 0
 		self.total = 0
 		self.counter = collections.defaultdict(int)
-		
+
 	def record(self, key, cnt=1, score=0.0):
 		self.total += cnt
 		self.score += score
@@ -86,6 +88,18 @@ class _Recorder(object):
 		self.score += other.score
 		_merge_map(self.counter, other.counter)
 		return self
+
+def _check_container(ntiid, user, registry=component):
+	if ntiid != ntiids.ROOT:
+		lib = registry.getUtility(lib_interfaces.IContentPackageLibrary)
+		if (user.getContainer(ntiid) is None
+			and user.getSharedContainer(ntiid, defaultValue=None) is None
+			and (lib is None
+				 or (
+					 getattr(lib, "pathToNTIID", None)
+					 and not lib.pathToNTIID(ntiid)))):
+			raise hexc.HTTPNotFound()
+
 
 class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 
@@ -148,7 +162,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 				by_type[mime_type] = by_type[mime_type] + 1
 
 		return result, by_type
-				
+
 	def _merge_maps(self, total_user_map, total_by_type, usr_map, by_type):
 		# merge by recoder objecrs
 		for username, m in usr_map.items():
@@ -187,7 +201,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 				ntiid = getattr(question, 'ntiid', None)
 				usr_map, by_type = self._get_summary_items(ntiid, False) if ntiid else ({}, {})
 				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
-	
+
 	def _scan_related_content(self, total_user_map, total_by_type):
 		rc_map = component.queryUtility(app_interfaces.IRelatedContentIndexMap)
 		if not rc_map:
@@ -210,7 +224,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
 		if not video_map:
 			return
-		
+
 		# gather all paths for the request ntiid
 		all_paths = self._get_self_and_children(self.ntiid)
 
@@ -224,6 +238,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 
 	def __call__(self):
 		# gather data
+		_check_container( self.ntiid, self.user )
 		total_ugd, total_by_type = self._get_summary_items(self.ntiid)
 		self._scan_quizzes(total_ugd, total_by_type)
 		self._scan_videos(total_ugd, total_by_type)
@@ -265,11 +280,11 @@ class _UniqueMinMaxSummaryView(_view_utils.AbstractAuthenticatedView):
 		else:
 			value = to_standard_external_created_time(obj) or 0
 		return value
-	
+
 	def _get_summary_items(self, ntiid):
 		recurse = self.request.params.get('recurse', 'False')
 		recurse = str(recurse).lower() in ('true', 't', 'yes', 'y', '1')
-		
+
 		# query objects
 		view = 	query_views._UGDView(self.request) if not recurse \
 				else query_views._RecursiveUGDView(self.request)
@@ -285,7 +300,7 @@ class _UniqueMinMaxSummaryView(_view_utils.AbstractAuthenticatedView):
 		is_ascending = sort_order == 'ascending'
 		if not attribute or sort_on not in ('lastModified', 'createdTime'):
 			return {}
-			
+
 		seen = {}
 		for o in query_views._flatten_list_and_dicts(all_objects):
 			if not hasattr(o, attribute):
@@ -307,6 +322,7 @@ class _UniqueMinMaxSummaryView(_view_utils.AbstractAuthenticatedView):
 
 	def __call__(self):
 		# gather data
+		_check_container( self.ntiid, self.user )
 		items = self._get_summary_items(self.ntiid)
 		result = LocatedExternalDict()
 		result['Items'] = list(items.values())
@@ -356,7 +372,7 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 			except ValueError:
 				raise _hexc.HTTPBadRequest(detail='Invalid decay factor')
 		return decay
-	
+
 	def _get_batch_size_start(self):
 		batch_size = self.request.params.get('batchSize', self._DEFAULT_BATCH_SIZE)
 		batch_start = self.request.params.get('batchStart', self._DEFAULT_BATCH_START)

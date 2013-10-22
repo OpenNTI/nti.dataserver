@@ -56,14 +56,14 @@ from nti.ntiids import ntiids
 class Operator(object):
 	union = 0
 	intersection = 1
-	
+
 	@classmethod
 	def fromUnicode(cls, x=None):
 		x = x or u"1"
 		if unicode(x).lower() not in (u"1", u"intersection"):
 			return Operator.union
 		return Operator.intersection
-	
+
 def _TRUE(x):
 	return True
 
@@ -367,13 +367,6 @@ def _communityforum_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 CommunityForum.xxx_isReadableByAnyIdOfUser = _communityforum_xxx_isReadableByAnyIdOfUser
 
-def check_container(ntiid, user, registry):
-	if ntiid != ntiids.ROOT:
-		lib = registry.getUtility(lib_interfaces.IContentPackageLibrary)
-		if 	lib is not None and getattr(lib, "pathToNTIID", None) and not lib.pathToNTIID(ntiid) and \
-			user.getContainer(ntiid) is None and user.getSharedContainer(ntiid, defaultValue=None) is None:
-			raise hexc.HTTPNotFound()
-
 class _UGDView(_view_utils.AbstractAuthenticatedView):
 	"""
 	The base view for user generated data.
@@ -425,12 +418,8 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			if self.user != self.remoteUser:
 				raise hexc.HTTPForbidden()
 
-	def check_container(self):
-		pass
-
 	def __call__( self ):
 		self.check_cross_user()
-		self.check_container()
 		# pre-flight the batch
 		self._get_batch_size_start()
 
@@ -454,7 +443,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 	def _get_filter_operator(self):
 		param = self.request.params.get( 'filterOperator',  None )
 		return Operator.fromUnicode(param)
-	
+
 	def _get_filter_names(self):
 		return self.__get_list_param( 'filter' )
 
@@ -739,7 +728,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			found (after all the filters are applied) then an empty batch is returned.
 			(Even if you supply this value, you should still supply a value for ``batchStart``
 			such as 1).
-			
+
 		filterOperator
 			A string parameter with to indiciate what operator (union, intersection) is to
 			be used when combining the filters. The values are ('0', 'union') for union operator or
@@ -922,9 +911,6 @@ class _RecursiveUGDView(_UGDView):
 	_iter_ntiids_stream_only = False
 	_iter_ntiids_include_stream = True
 
-	def check_container(self):
-		check_container(self.ntiid, self.user, self.request.registry)
-
 	def _get_filter_names( self ):
 		"""
 		Special case some things to account for some interesting patterns the app has.
@@ -1030,9 +1016,6 @@ class _UGDStreamView(_UGDView):
 
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
 
-	def check_container(self):
-		check_container(self.ntiid, self.user, self.request.registry)
-
 class _RecursiveUGDStreamView(_RecursiveUGDView):
 	"""
 	Accepts all the regular sorting and paging parameters (though note, you
@@ -1103,9 +1086,6 @@ class _UGDAndRecursiveStreamView(_UGDView):
 	def __init__(self, request ):
 		super(_UGDAndRecursiveStreamView,self).__init__( request )
 
-	def check_container(self):
-		check_container(self.ntiid, self.user, self.request.registry)
-
 	def __call__( self ):
 		"""
 		Overrides the normal mechanism to separate out the page
@@ -1114,7 +1094,6 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		# FIXME: This doesn't support paging or filtering or cross-user security
 		user, ntiid = self.user, self.ntiid
 		self.check_cross_user()
-		self.check_container()
 
 		page_data, stream_data = self._getAllObjects( user, ntiid )
 		all_data = []

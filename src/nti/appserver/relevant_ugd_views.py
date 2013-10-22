@@ -30,13 +30,13 @@ union_operator = query_views.Operator.union
 intersection_operator = query_views.Operator.intersection
 
 class _RelevantUGDView(query_views._UGDView):
-	
+
 	lastModified = 0
 
 	def _make_accept_predicate( self ):
 		accept_types = ('application/vnd.nextthought.redaction',)
 		return self._MIME_FILTER_FACTORY(accept_types)
-		
+
 	def _make_complete_predicate(self, operator=union_operator):
 		# accepted mime_types
 		predicate = self._make_accept_predicate()
@@ -101,7 +101,7 @@ class _RelevantUGDView(query_views._UGDView):
 				if q_ntiid:
 					self._get_items(q_ntiid, result)
 		return result
-	
+
 	def _scan_videos(self, ntiid, result=None):
 		result = [] if result is None else result
 		video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
@@ -131,4 +131,3 @@ class _RelevantUGDView(query_views._UGDView):
 		result.lastModified = result[LAST_MODIFIED] = lmobj.lastModified
 		interface.alsoProvides(result, app_interfaces.IUGDExternalCollection)
 		return result
-

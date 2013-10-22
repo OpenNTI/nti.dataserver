@@ -197,15 +197,12 @@ def _service_odata_views(pyramid_config):
 							permission=nauth.ACT_READ, request_method='GET')
 
 	# UGD in OData style
-	# Note: Objects should be parenthesized like this too.
-	pyramid_config.add_route(name='user.pages.odata.traversal', pattern='/dataserver2/users/{user}/Pages({group:[^)/].*})/{type}{_:/?}',
-							 factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory',
-							 traverse='/users/{user}/Pages/{group}/{type}')
+	# uses Pages(XXX)/.../
+	# Our previous use of routes for this was inflexible and a poor
+	# fit with traversal. We now make the ITraversable
+	# handle this, preserving traversal flexibility.
 
-	pyramid_config.add_view(route_name='user.pages.odata.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
-							name='', renderer='rest',
-							permission=nauth.ACT_READ, request_method='GET')
-
+	# TODO: This one should go away too!
 	pyramid_config.add_route(name='user.pages.odata.traversal.feeds',
 							 pattern='/dataserver2/users/{user}/Pages({group:[^)/].*})/RecursiveStream/feed.{type}',
 							 factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory',
@@ -246,15 +243,17 @@ def _external_view_settings(pyramid_config):
 
 def _ugd_odata_views(pyramid_config):
 
-	_route_names = ('objects.generic.traversal', 'user.pages.odata.traversal')
+	_route_names = ('objects.generic.traversal',)
 
-	def register_map(_m, module):
+	def register_map(_m, module, context='nti.appserver.interfaces.IPageContainerResource'):
 		for name, view in _m.items():
 			for route in _route_names:
 				pyramid_config.add_view(route_name=route, view='%s.%s' % (module, view),
-										context='nti.appserver.interfaces.IPageContainerResource',
-										name=name, renderer='rest',
-										permission=nauth.ACT_READ, request_method='GET')
+										context=context,
+										name=name,
+										renderer='rest',
+										permission=nauth.ACT_READ,
+										request_method='GET')
 
 	_m = {'UserGeneratedData': '_UGDView',
 		  'RecursiveUserGeneratedData': '_RecursiveUGDView',
@@ -263,8 +262,21 @@ def _ugd_odata_views(pyramid_config):
 		  'UserGeneratedDataAndRecursiveStream': '_UGDAndRecursiveStreamView' }
 	register_map(_m, 'nti.appserver.ugd_query_views')
 
+	# Relevant data we allow for both present and missing data
 	_m = {'RelevantUserGeneratedData': '_RelevantUGDView'}
 	register_map(_m, 'nti.appserver.relevant_ugd_views')
+	register_map(_m, 'nti.appserver.relevant_ugd_views',
+				 context='nti.appserver.interfaces.INewPageContainerResource')
+
+
+	# As we do with recursive data
+	_m = {
+		  'RecursiveUserGeneratedData': '_RecursiveUGDView',
+		  'RecursiveStream': '_RecursiveUGDStreamView',
+		  'UserGeneratedDataAndRecursiveStream': '_UGDAndRecursiveStreamView' }
+	register_map(_m, 'nti.appserver.ugd_query_views',
+				 context='nti.appserver.interfaces.INewPageContainerResource')
+
 
 def _modifying_ugd_views(pyramid_config):
 
@@ -277,10 +289,6 @@ def _modifying_ugd_views(pyramid_config):
 							renderer='rest',
 							context='nti.chatserver.interfaces.IMessageInfo',
 							permission=nauth.ACT_DELETE, request_method='DELETE')
-
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._EmptyContainerGetView',
-							renderer='rest', context='nti.appserver.interfaces.INewContainerResource',
-							permission=nauth.ACT_READ, request_method='GET')
 
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPostView',
 							renderer='rest', context=nti_interfaces.IUser,

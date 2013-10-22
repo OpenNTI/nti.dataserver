@@ -102,7 +102,7 @@ class _ContainerResource(object):
 
 		return contained_object
 
-# TODO: These next two classes inherit from _ContainerResource and hence
+# TODO: These next three classes inherit from _ContainerResource and hence
 # implement IContainerResource, but that doesn't match the interface
 # hierarchy. They should probably be separate.
 @interface.implementer(interfaces.INewContainerResource)
@@ -111,6 +111,17 @@ class _NewContainerResource(_ContainerResource):
 	A leaf on the traversal tree. Exists to be a named thing that
 	we can match views with. Generally we only POST to this thing;
 	everything behind it (with a few exceptions, like glossaries) will be 404.
+	"""
+
+	def traverse( self, key, remaining_path ):
+		raise loc_interfaces.LocationError( key )
+
+@interface.implementer(interfaces.INewPageContainerResource)
+class _NewPageContainerResource(_ContainerResource):
+	"""
+	A leaf on the traversal tree, existing only to be a named
+	thing that we can match views with for data that does
+	not yet exist.
 	"""
 
 	def traverse( self, key, remaining_path ):
@@ -177,8 +188,11 @@ class _PseudoTraversableMixin(object):
 	"""
 
 	#: Special virtual keys beneath this object's context. The value
-	#: is either a factory function or an interface; if an interface,
-	#: it names a global utility we look up.
+	#: is either a factory function or an interface. If an interface,
+	#: it names a global utility we look up. If a factory function,
+	#: it takes two arguments, the context and current request (allowing
+	#: it to be an adapter from those two things, such as an unnamed
+	#: IPathAdapter).
 	_pseudo_classes_ = { 'Objects': _ObjectsContainerResource,
 						 'NTIIDs': _NTIIDsContainerResource }
 
@@ -217,7 +231,7 @@ class Dataserver2RootTraversable(_PseudoTraversableMixin):
 		self.context = context
 		self.request = request
 
-	allowed_keys = ('users', 'providers')
+	allowed_keys = ('users',)
 
 	def traverse( self, key, remaining_path ):
 		if key in self.allowed_keys:
@@ -246,7 +260,6 @@ class _AbstractUserPseudoContainerResource(object):
 	resource = alias('context') # BWC. See GenericGetView
 
 
-
 @interface.implementer(trv_interfaces.ITraversable, interfaces.IPagesResource)
 class _PagesResource(_AbstractUserPseudoContainerResource):
 	"""
@@ -257,8 +270,45 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 	"""
 
 	def traverse( self, key, remaining_path ):
-		# CAS 2013-0729 PER JSG always return a _PageContainerResource whenever  /Pages /Pages(ID) is requested
-		resource = _PageContainerResource(self, self.request, name=key, parent=self.user)
+		resource = None
+		if key == ntiids.ROOT:
+			# The root is always available
+			resource = _PageContainerResource( self, self.request, name=key, parent=self.user )
+		# What about an owned container, or a shared container? The
+		# shared containers take into account our dynamic
+		# relationships...however, this is badly split between here
+		# and the view classes with each side implementing something
+		# of the logic, so that needs to be cleaned up (for example, this side
+		# doesn't handle 'MeOnly'; should it? And we wind up building the shared
+		# container twice, once here, once in the view)
+		elif self.user.getContainer( key ) is not None or self.user.getSharedContainer( key, defaultValue=None ) is not None:
+			resource = _PageContainerResource( self, self.request, name=key, parent=self.user )
+			# Note that the container itself doesn't matter
+			# much, the _PageContainerResource only supports a few child items
+		else:
+			# This page does not exist. But do we have a specific view
+			# registered for a pseudo-container at that location? If so, let it have it
+			# (e.g., Relevant/RecursiveUGD for grandparents)
+			# In general, it is VERY WRONG to lie about the existence of a
+			# container here by faking of a PageContainerResource. We WANT to return
+			# a 404 response in that circumstance, as it is generally
+			# not cacheable and more data may arrive in the future.
+			if not remaining_path or component.getSiteManager().adapters.lookup(
+					 					(IViewClassifier, self.request.request_iface, interfaces.INewPageContainerResource),
+					 					IView,
+					 					name=remaining_path[0] ) is None:
+				raise loc_interfaces.LocationError( key )
+
+
+			# OK, assume a new container.
+
+			# NOTE: This should be a LocationError as well. But it's
+			# not because of the dashboard and relevant UGD views.
+			resource = _NewPageContainerResource( None, self.request )
+			resource.__name__ = key
+			resource.__parent__ = self.context
+
+
 		# These have the same ACL as the user itself (for now)
 		resource.__acl__ = nacl.ACL( self.user )
 		return resource
@@ -292,13 +342,19 @@ class UserTraversable(_PseudoTraversableMixin):
 
 	def traverse( self, key, remaining_path ):
 		# First, some pseudo things the user
-		# doesn't actually have
+		# doesn't actually have.
+		# We also account for the odata-style traversal here too,
+		# by splitting out the key into two parts and traversing.
+		# This simplifies the route matching.
+		for pfx in 'Pages(', 'Objects(', 'NTIIDs(':
+			if key.startswith( pfx ) and  key.endswith( ')'):
+				remaining_path.insert( 0, key[len(pfx):-1] )
+				key = pfx[:-1]
 
 		try:
 			return self._pseudo_traverse( key, remaining_path )
 		except loc_interfaces.LocationError:
 			pass
-
 
 		resource = None
 		cont = self.context.getContainer( key )
@@ -310,25 +366,8 @@ class UserTraversable(_PseudoTraversableMixin):
 			# In the past, we accessed generic containers here for the legacy URL structure,
 			# but the better solution was to change the route configuration to make the legacy
 			# structure match the new structure's traversal
-		elif cont is not None:
-			raise loc_interfaces.LocationError( key ) # It exists, but you cannot access it at this URL
 		else:
-			if component.getSiteManager().adapters.lookup( (IViewClassifier, self.request.request_iface, interface.providedBy( self.context )),
-													  IView,
-													  name=key ):
-				# We have a specific view for this location. Therefore, do not try to pretend it
-				# is a new container.
-				raise loc_interfaces.LocationError( key )
-
-			# OK, assume a new container.
-			# TODO: This should be a LocationError as well. But it's not because
-			# of the glossary views. Note that there is a specific unnamed GET view registered
-			# for this resource to make it return a 404.
-			# This complicates the logic above that has to know so many more things
-			resource = _NewContainerResource( None, self.request )
-			resource.__name__ = key
-			resource.__parent__ = self.context
-
+			raise loc_interfaces.LocationError( key ) # It exists, but you cannot access it at this URL
 
 		# Allow the owner full permissions.
 		# These are the special containers, and no one else can have them.
@@ -370,32 +409,37 @@ class LibraryTraversable(object):
 			raise loc_interfaces.LocationError( key )
 
 
-## Attachments/Enclosures
+
 from zope.traversing.namespace import adapter
 
 class adapter_request(adapter):
 	"""
-	Implementation of the adapter namespace that attempts to pass the request along when getting an adapter.
+	Implementation of the adapter namespace that attempts to pass the
+	request along when getting an adapter.
 	"""
 
 	def __init__( self, context, request=None ):
-		adapter.__init__( self, context, request )
+		super(adapter_request,self).__init__( context, request )
 		self.request = request
 
 	def traverse( self, name, ignored ):
 		result = None
 		if self.request is not None:
-			result = component.queryMultiAdapter( (self.context, self.request),
-												  trv_interfaces.IPathAdapter,
-												  name )
+			result = component.queryMultiAdapter(
+							(self.context, self.request),
+							trv_interfaces.IPathAdapter,
+							name )
+
 
 		if result is None:
 			# Look for the single-adapter. Or raise location error
-			result = adapter.traverse( self, name, ignored )
+			result = super(adapter_request,self).traverse( name, ignored )
 
-		if nti_interfaces.IZContained.providedBy( result ) and result.__parent__ is None:
-			result.__parent__ = self.context
-			result.__name__ = name
+		# Some sanity checks on the returned object
+		__traceback_info__ = result, self.context, result.__parent__, result.__name__
+		assert nti_interfaces.IZContained.providedBy( result )
+		assert result.__parent__ is not None
+		assert result.__name__ == name
 
 		return result
 
@@ -406,10 +450,13 @@ class _resource_adapter_request(adapter_request):
 	"""
 
 	def __init__( self, context, request=None ):
-		adapter_request.__init__( self, context.resource, request=request )
+		super(_resource_adapter_request,self).__init__( context.resource, request=request )
 
+## Attachments/Enclosures
 
-@interface.implementer(trv_interfaces.IPathAdapter,trv_interfaces.ITraversable,nti_interfaces.IZContained)
+@interface.implementer(trv_interfaces.IPathAdapter,
+					   trv_interfaces.ITraversable,
+					   nti_interfaces.IZContained)
 @component.adapter(nti_interfaces.ISimpleEnclosureContainer)
 class EnclosureTraversable(object):
 	"""
@@ -420,10 +467,11 @@ class EnclosureTraversable(object):
 	can find further resources.)
 	"""
 	__parent__ = None
-	__name__ = None
+	__name__ = 'enclosures'
 
 	def __init__( self, context, request=None ):
 		self.context = context
+		self.__parent__ = context
 		self.request = request
 
 	def traverse( self, name, further_path ):

@@ -66,17 +66,12 @@ class GlossaryView(object):
 		self.request = request
 
 	@view_config( context=app_interfaces.IPageContainerResource )
-	@view_config( context=app_interfaces.INewContainerResource )
+	@view_config( context=app_interfaces.INewPageContainerResource )
 	def __call__(self):
 		request = self.request
 		term = request.subpath[0]
-		# Note that by registering on objects.generic.traversal, we will
-		# always get a INewContainerResource, with an ntiid of Pages(....), with
-		# the real value still parenthesized. We should register on one of the odata traversals
-		# to avoid this
+
 		ntiid = request.context.ntiid
-		if ntiid.startswith( 'Pages(' ) and ntiid.endswith( ')' ):
-			ntiid = ntiid[6:-1]
 
 		# Currently, we only support merging in content-specific glossary values
 		library = request.registry.queryUtility( lib_interfaces.IContentPackageLibrary )
