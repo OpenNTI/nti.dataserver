@@ -235,7 +235,7 @@ class IAuthenticatedUserLinkProvider(interface.Interface):
 class IUnauthenticatedUserLinkProvider(interface.Interface):
 	"""
 	Called during the logon process to get additional links that should be presented
-	when user has NOT been authenticated. 
+	when user has NOT been authenticated.
 
 	Normally these will be registered as subscribers adapting the user and the request.
 	"""
@@ -245,7 +245,7 @@ class IUnauthenticatedUserLinkProvider(interface.Interface):
 		Return an iterable of additional links to add. The semantics of each link
 		are specified independently, based on the link relationship.
 		"""
-		
+
 IUserEvent = nti_interfaces.IUserEvent
 
 class IUserLogonEvent(IUserEvent):
@@ -452,6 +452,9 @@ class IPageContainerResource(interface.Interface):
 	ntiid = schema.TextLine( title="The NTIID of the container" )
 
 class INewContainerResource(interface.Interface):
+	pass
+
+class INewPageContainerResource(interface.Interface):
 	pass
 
 class IPagesResource(interface.Interface):
