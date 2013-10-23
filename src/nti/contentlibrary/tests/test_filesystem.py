@@ -7,12 +7,15 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import is_not as does_not
 from hamcrest import none
 from hamcrest import has_property
 from hamcrest import contains
 from hamcrest import greater_than
 from hamcrest import has_length
 from hamcrest import has_entry
+from hamcrest import has_key
+
 from nti.testing.base import SharedConfiguringTestBase
 from nti.testing.matchers import verifiably_provides
 from nti.testing.matchers import validly_provides
@@ -82,7 +85,8 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 																  'type': 'I',
 																  'start': 5,
 																  'separator': '.' } } ) ) )
-		assert_that( ext_package, has_entry( 'isCourse', False ) )
+		assert_that( ext_package, does_not( has_key( 'isCourse' ) ) )
+		assert_that( ext_package, does_not( validly_provides( interfaces.ILegacyCourseConflatedContentPackage ) ) )
 
 		json.loads( json.dumps( ext_package ) ) # Round trips through JSON
 

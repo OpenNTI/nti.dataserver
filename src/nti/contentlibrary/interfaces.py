@@ -221,6 +221,14 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 	renderVersion = schema.Int(title="Version of the rendering process that produced this package.",
 							   default=1, min=1)
 
+class ILegacyCourseConflatedContentPackage(IContentPackage):
+	"""
+	Legacy properties from when we treated courses as simply a set
+	of attributes on content.
+
+	This is all deprecated but exists to distinguish these things.
+	"""
+
 	# Course support
 	# ALL OF THIS IS DEPRECATED
 	isCourse = schema.Bool(title="If this package is for a course.", default=False, required=False)
