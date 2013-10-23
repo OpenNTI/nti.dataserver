@@ -14,6 +14,7 @@ from zope import component
 from zope import interface
 from zope.annotation import factory as an_factory
 from zope.container import contained as zcontained
+from zope.deprecation import deprecated
 
 from persistent.mapping import PersistentMapping
 
@@ -24,7 +25,7 @@ from . import interfaces as user_interfaces
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(user_interfaces.IEntityPreferences)
 class EntityPreferences(zcontained.Contained, PersistentMapping):
-    
+
     @property
     def entity(self):
         return self.__parent__
@@ -34,3 +35,6 @@ class EntityPreferences(zcontained.Contained, PersistentMapping):
         return self.entity.username
 
 EntityPreferencesFactory = an_factory(EntityPreferences)
+
+deprecated( ('EntityPreferences','EntityPreferencesFactory'),
+			'Use zope.preferences')
