@@ -723,50 +723,6 @@ def _configure_pyramid_zodbconn( database_event, registry=None ):
 	registry.zodb_database = database_event.database # 0.2
 	registry._zodb_databases = { '': database_event.database } # 0.3, 0.4
 
-@component.adapter(lib_interfaces.IContentPackageLibrary, IRegistrationEvent)
-def _content_package_library_registered( library, event ):
-	# When a library is registered in a ZCA site, we need to provide
-	# for the things that go along with that registry,
-	# notably the assessment question map
-	utilities = ((_question_map.QuestionMap, app_interfaces.IFileQuestionMap),
-				 (_videoindex_map.VideoIndexMap, app_interfaces.IVideoIndexMap),
-				 (_related_content_map.RelatedContentIndexMap, app_interfaces.IRelatedContentIndexMap))
-
-	registry = event.object.registry
-	for factory, iface in utilities:
-		if registry.queryUtility(iface) is None:
-			registry.registerUtility(factory(), iface)
-
-	# Now fire the events letting listeners (e.g., index and question adders)
-	# know that we have content. Randomize the order of this across worker
-	# processes so that we don't collide too badly on downloading indexes if need be
-	# (only matters if we are not preloading).
-	# Do this in greenlets/parallel. This can radically speed up
-	# S3 loading when we need the network.
-
-	# TODO: If we are registering a library in a local site, via
-	# z3c.baseregistry, does the IRegistrationEvent still occur
-	# in the context of that site? I *think* so, need to prove it.
-	# We need to be careful to keep the correct site, then, as we fire off
-	# events in parallel
-	titles = list(library.titles)
-	random.seed()
-	random.shuffle(titles)
-
-	title_greenlets = []
-	current_site = getSite()
-
-	def _notify_in_site( title ):
-		# Need a level of functional redirection here
-		# to workaround python's awkward closure rules
-		with site(current_site):
-			lifecycleevent.created( title )
-
-	for title in titles:
-		title_greenlets.append( gevent.spawn( _notify_in_site, title ) )
-
-	gevent.joinall( title_greenlets, raise_error=True )
-
 @component.adapter(lib_interfaces.IFilesystemContentPackageLibrary)
 @interface.implementer(app_interfaces.ILibraryStaticFileConfigurator)
 class _FilesystemStaticFileConfigurator(object):

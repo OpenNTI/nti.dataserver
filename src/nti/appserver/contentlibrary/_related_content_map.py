@@ -33,7 +33,7 @@ class RelatedContentIndexMap(dict):
 		super(RelatedContentIndexMap, self).clear()
 		self.by_container.clear()
 
-@component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectCreatedEvent)
+@component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectAddedEvent)
 def add_related_content_items_from_new_content(content_package, event):
 	rc_map = component.queryUtility(app_interfaces.IRelatedContentIndexMap)
 	if rc_map is None:  # pragma: no cover

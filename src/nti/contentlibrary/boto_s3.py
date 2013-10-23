@@ -227,7 +227,7 @@ def _package_factory( key ):
 		temp_entry = BotoS3ContentUnit( key=toc_key )
 		return eclipse.EclipseContentPackage( temp_entry, BotoS3ContentPackage, BotoS3ContentUnit )
 
-class BotoS3BucketContentLibrary(library.AbstractCachedStaticLibrary):
+class BotoS3BucketContentLibrary(library.AbstractCachedNotifyingStaticLibrary):
 	"""
 	Enumerates the first level of a '/' delimited bucket and treats each
 	entry as a possible content package. Content packages are cached.

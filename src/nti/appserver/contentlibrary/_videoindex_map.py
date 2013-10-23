@@ -33,7 +33,7 @@ class VideoIndexMap(dict):
 		super(VideoIndexMap, self).clear()
 		self.by_container.clear()
 
-@component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectCreatedEvent)
+@component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectAddedEvent)
 def add_video_items_from_new_content(content_package, event):
 	#### from IPython.core.debugger import Tracer; Tracer()()  ####
 	video_map = component.queryUtility(app_interfaces.IVideoIndexMap)

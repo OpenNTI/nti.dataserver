@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 import numbers
 
 from zope import interface
+from zope import lifecycleevent
 from zope.cachedescriptors.property import Lazy
 
 from . import interfaces
@@ -39,7 +40,7 @@ class AbstractLibrary(object):
 	__name__ = 'Library'
 	__parent__ = None
 
-	def __init__(self, prefix=''):
+	def __init__(self, prefix='', **kwargs):
 		if prefix:
 			self.url_prefix = prefix
 
@@ -149,7 +150,9 @@ class AbstractLibrary(object):
 
 class AbstractStaticLibrary(AbstractLibrary):
 
-	def __init__(self, paths=() ):
+	possible_content_packages = ()
+
+	def __init__(self, *args, **kwargs):
 		"""
 		Creates a library that will examine the given paths.
 
@@ -157,8 +160,10 @@ class AbstractStaticLibrary(AbstractLibrary):
 			:class:`interfaces.IContentPackage` objects.
 
 		"""
-		super(AbstractStaticLibrary,self).__init__()
-		self.possible_content_packages = paths
+		paths = kwargs.pop("paths", ())
+		super(AbstractStaticLibrary,self).__init__(*args, **kwargs)
+		if paths: # avoid overwriting a subclass's class-level property or CachedProperty
+			self.possible_content_packages = paths
 
 
 class AbstractCachedStaticLibrary(AbstractStaticLibrary):
@@ -169,6 +174,63 @@ class AbstractCachedStaticLibrary(AbstractStaticLibrary):
 
 	contentPackages = Lazy(AbstractLibrary.contentPackages.fget)
 	titles = alias('contentPackages' )
+
+class AbstractCachedNotifyingStaticLibrary(AbstractCachedStaticLibrary):
+	"""
+	A static library that will broadcast :class:`zope.lifecycleevent.IObjectAddedEvent`
+	when content packages are added to the library (i.e., the
+	first time the library's content packages are enumerated).
+
+	In theory any library could broadcast adds and removes,
+	but a non-cached library would essentially have to act as a cached
+	library for that to work.
+
+	This library currently does not implement the ``__delitem__`` method,
+	so there is no way to trigger an :class:`.IObjectRemovedEvent`
+	"""
+
+	@Lazy
+	def contentPackages(self):
+		result = AbstractLibrary.contentPackages.fget(self)
+		# Now fire the events letting listeners (e.g., index and question adders)
+		# know that we have content. Randomize the order of this across worker
+		# processes so that we don't collide too badly on downloading indexes if need be
+		# (only matters if we are not preloading).
+		# Do this in greenlets/parallel. This can radically speed up
+		# S3 loading when we need the network.
+
+		# TODO: If we are registering a library in a local site, via
+		# z3c.baseregistry, does the IRegistrationEvent still occur
+		# in the context of that site? I *think* so, need to prove it.
+		# We need to be careful to keep the correct site, then, as we fire off
+		# events in parallel
+		titles = list(result)
+		try:
+			import gevent
+		except ImportError: # pragma: no cover
+			for title in titles:
+				lifecycleevent.added( title )
+		else:
+			import random
+			from zope.component.hooks import getSite, site
+			random.seed()
+			random.shuffle(titles)
+
+			title_greenlets = []
+			current_site = getSite()
+
+			def _notify_in_site( title ):
+				# Need a level of functional redirection here
+				# to workaround python's awkward closure rules
+				with site(current_site):
+					lifecycleevent.added( title )
+
+			for title in titles:
+				title_greenlets.append( gevent.spawn( _notify_in_site, title ) )
+
+			gevent.joinall( title_greenlets, raise_error=True )
+
+		return result
 
 def pathToPropertyValue( unit, prop, value ):
 	"""

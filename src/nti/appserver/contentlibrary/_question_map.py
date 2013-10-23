@@ -16,7 +16,7 @@ import simplejson
 
 from zope import interface
 from zope import component
-from zope.lifecycleevent.interfaces import IObjectCreatedEvent, IObjectRemovedEvent
+from zope.lifecycleevent.interfaces import IObjectAddedEvent, IObjectRemovedEvent
 
 from nti.appserver import interfaces as app_interfaces
 
@@ -151,13 +151,13 @@ class QuestionMap(dict):
 		for questions in self.by_file.values():
 			questions.sort( key=lambda q: q.__name__ )
 
-@component.adapter(lib_interfaces.IContentPackage,IObjectCreatedEvent)
+@component.adapter(lib_interfaces.IContentPackage,IObjectAddedEvent)
 def add_assessment_items_from_new_content( content_package, event ):
 	"""
 	Assessment items have their NTIID as their __name__, and the NTIID of their primary
 	container within this context as their __parent__ (that should really be the hierarchy entry)
 	"""
-	question_map = component.getUtility( app_interfaces.IFileQuestionMap )
+	question_map = component.queryUtility( app_interfaces.IFileQuestionMap )
 	if question_map is None: #pragma: no cover
 		return
 

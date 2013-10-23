@@ -20,6 +20,14 @@ from nti.utils.schema import Object
 class IContentPackageLibrary(interface.Interface):
 	"""
 	A library or catalog of all available packages of content.
+
+	When content packages are examined and before they are
+	added to the library it is expected that compliant
+	implementations will broadcast :class:`zope.lifecycleevent.IObjectCreatedEvent`,
+	and when they are actually added to the library an :class:`zope.lifecycleevent.IObjectAddedEvent`
+	should be broadcast. Note that only certain library implementations are
+	compliant with this protocol.
+
 	"""
 
 	def pathToNTIID(ntiid):
@@ -212,7 +220,7 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 						  required=False)
 	renderVersion = schema.Int(title="Version of the rendering process that produced this package.",
 							   default=1, min=1)
-	
+
 	# Course support
 	isCourse = schema.Bool(title="If this package is for a course.", default=False, required=False)
 	courseName = TextLine(title="Course name.", required=False)

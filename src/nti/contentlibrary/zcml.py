@@ -25,7 +25,7 @@ from zope.configuration.exceptions import ConfigurationError
 from zope.component.zcml import utility
 
 from .interfaces import IContentPackageLibrary
-from .filesystem import EnumerateOnceFilesystemLibrary
+from .filesystem import EnumerateImmediatelyFilesystemLibrary
 from .boto_s3 import BotoS3BucketContentLibrary
 from .boto_s3 import NameEqualityBucket
 from .externalization import map_all_buckets_to
@@ -68,7 +68,7 @@ def registerFilesystemLibrary( _context, directory=None, prefix="" ):
 	if prefix and not prefix.endswith( '/' ):
 		prefix = prefix + '/'
 
-	factory = functools.partial( EnumerateOnceFilesystemLibrary, directory, prefix=prefix )
+	factory = functools.partial( EnumerateImmediatelyFilesystemLibrary, root=directory, prefix=prefix )
 	utility( _context, factory=factory, provides=IContentPackageLibrary )
 
 class IS3Library(interface.Interface):

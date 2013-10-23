@@ -25,7 +25,7 @@ import os.path
 
 from zope import component
 
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
+from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
 from nti.assessment import interfaces as asm_interfaces, submission as asm_submission
 
 from nti.appserver import interfaces as app_interfaces

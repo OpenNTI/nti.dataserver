@@ -7,6 +7,30 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
+	<!-- Informative utilities -->
+	<!--
+	NOTE: These are global.
+	If we add sub-libraries, then depending on the visibility policy,
+	we would need to re-register a utility in the
+	same site (which by default would hide the parent) or
+	have them cooperate (in the same way that, e.g.,
+	zope.pluggableauth..principalfolder does.
+	-->
+	<!--
+	NOTE: Obviously the packaging is off here. Someone
+	started moving things and didn't finish, but it would be hard
+	to finish with this layout because the two packages are
+	interdependent...which is why they were a single package to start
+	with.
+	-->
+	<utility factory="._question_map.QuestionMap"
+			 provides="nti.appserver.interfaces.IFileQuestionMap"/>
+	<utility factory="._videoindex_map.VideoIndexMap"
+			 provides="nti.appserver.interfaces.IVideoIndexMap"/>
+	<utility factory="._related_content_map.RelatedContentIndexMap"
+			 provides="nti.appserver.interfaces.IRelatedContentIndexMap"/>
+
+
 	<!-- Events -->
 	<subscriber	handler="._question_map.add_assessment_items_from_new_content" />
 	<subscriber	handler="._question_map.remove_assessment_items_from_oldcontent" />
@@ -14,20 +38,20 @@
 	<subscriber	handler="._videoindex_map.remove_video_items_from_old_content" />
 	<subscriber	handler="._related_content_map.add_related_content_items_from_new_content" />
 	<subscriber	handler="._related_content_map.remove_related_content_items_from_old_content" />
-	
+
 	<adapter factory="._question_map._QuestionACLProvider" />
-		
+
 	<!-- Other decorators -->
 	<subscriber factory=".library_views._ContentUnitPreferencesDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
-				
+
 	<!-- Content card resolution; temporary? -->
 	<utility factory=".card_views._ContentCardResolver" name="NTICard" />
 	<utility factory=".card_views._ContentCardResolver" name="nticard" />
-	
+
 	<subscriber factory=".library_views._ContentUnitAssessmentItemDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
-				
+
 	<adapter factory=".library_views._ContainerContentUnitPreferencesFactory"
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
 			 provides="nti.appserver.interfaces.IContentUnitPreferences" />
@@ -42,7 +66,7 @@
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
-			 
+
 	<adapter factory=".library_views._ContainerFieldsTraversable"
 			 for="nti.dataserver.containers.LastModifiedBTreeContainer pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
@@ -52,7 +76,7 @@
 			 for="nti.contentlibrary.interfaces.IContentUnit"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
-			 
+
 	<adapter factory=".library_views._ContentUnitFieldsTraversable"
 			 for="nti.contentlibrary.interfaces.IContentUnit pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
