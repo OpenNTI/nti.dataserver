@@ -17,7 +17,8 @@ from zope.event import notify
 from .test_application import TestApp
 
 
-
+from nti.externalization.externalization import to_external_object
+from nti.externalization.internalization import update_from_external_object
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver import contenttypes, users
 from nti.contentrange import contentrange
@@ -83,7 +84,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			n = contenttypes.Note()
 			n.applicableRange = contentrange.ContentRangeDescription()
 			n.containerId = u'tag:nti:foo'
-			n.updateFromExternalObject( {'body': ['The first part']} )
+			update_from_external_object( n, {'body': ['The first part']} )
 			user.addContainedObject( n )
 			provided_by_n = list(interface.providedBy( n ).flattened())
 
@@ -91,7 +92,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			n2.applicableRange = contentrange.ContentRangeDescription()
 			canvas = contenttypes.Canvas()
 			canvas.append( contenttypes.NonpersistentCanvasTextShape( "This text is from the canvas" ) )
-			n2.updateFromExternalObject( {'body': [u'<p><em>This</em> part is HTML</p>', canvas]} )
+			update_from_external_object( n2, {'body': [u'<p><em>This</em> part is HTML</p>', canvas]} )
 			n2.containerId = u'tag:nti:foo'
 			user.addContainedObject( n2 )
 
@@ -167,7 +168,8 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			n2 = contenttypes.Note()
 			n2.applicableRange = contentrange.ContentRangeDescription()
 			n2.containerId = u'tag:nti:foo'
-			n2.updateFromExternalObject( {'body': ['<p><em>This</em> part is HTML</p><p>And spreads across paragraphs.</p>',
+			update_from_external_object( n2,
+										 {'body': ['<p><em>This</em> part is HTML</p><p>And spreads across paragraphs.</p>',
 												   contenttypes.Canvas()] } )
 			user.addContainedObject( n2 )
 			n2_ext_id = to_external_ntiid_oid( n2 )
@@ -205,7 +207,7 @@ class TestApplicationFlagging(SharedApplicationTestBase):
 			# Make sure it has a parent and oid
 			storage = chat_interfaces.IMessageInfoStorage( msg_info )
 			storage.add_message( msg_info )
-			msg_info.toExternalObject()
+			to_external_object( msg_info )
 			room = PersistentContainedExternal()
 			interface.alsoProvides( room, chat_interfaces.IMeeting )
 			room.creator = user.username
