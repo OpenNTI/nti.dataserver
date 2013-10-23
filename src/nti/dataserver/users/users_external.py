@@ -288,15 +288,6 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 _UserExternalObject = _UserPersonalSummaryExternalObject
 
-@component.adapter(nti_interfaces.IUser)
-class _UserPersonalSummaryPlusPreferencesExternalObject(_UserPersonalSummaryExternalObject):
-
-	def _do_toExternalObject(self):
-		extDict = super(_UserPersonalSummaryPlusPreferencesExternalObject, self)._do_toExternalObject()
-		prefs = interfaces.IEntityPreferences(self.entity, None) or {}
-		extDict['Preferences'] = dict(prefs)
-		return extDict
-
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject):
 
@@ -307,12 +298,3 @@ class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject
 		return extDict
 
 _CoppaUserExternalObject = _CoppaUserPersonalSummaryExternalObject
-
-@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
-class _CoppaUserPersonalSummaryPlusPreferencesExternalObject(_CoppaUserPersonalSummaryExternalObject):
-
-	def _do_toExternalObject(self):
-		extDict = super(_CoppaUserPersonalSummaryPlusPreferencesExternalObject, self)._do_toExternalObject()
-		prefs = interfaces.IEntityPreferences(self.entity, None) or {}
-		extDict['Preferences'] = dict(prefs)
-		return extDict

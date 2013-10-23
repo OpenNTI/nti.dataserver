@@ -529,7 +529,10 @@ def validateAccept(value):
 		return False
 	return True
 
+from zope.deprecation import deprecated
 class IEntityPreferences(IMapping):
 	"""
 	Something that can store key value data for an entity
 	"""
+
+deprecated('IEntityPreferences', 'Use zope.prefereces')

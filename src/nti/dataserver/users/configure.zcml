@@ -22,30 +22,26 @@
 
 	<adapter factory=".users_external._FriendListSummaryExternalObject"
 			 name="summary" />
-	
+
 	<adapter factory=".users_external._DynamicFriendListSummaryExternalObject"
 			 name="summary" />
-			 
+
 	<adapter factory=".users_external._EntityExternalObject" />
 	<adapter factory=".users_external._FriendsListExternalObject" />
 	<adapter factory=".users_external._DynamicFriendsListExternalObject" />
-	
+
 	<adapter factory=".users_external._UserExternalObject" />
 	<adapter factory=".users_external._UserSummaryExternalObject"
 			 name="summary" />
 	<adapter factory=".users_external._UserPersonalSummaryExternalObject"
 			 name="personal-summary" />
-	<adapter factory=".users_external._UserPersonalSummaryPlusPreferencesExternalObject"
-			 name="personal-summary-preferences" />
 
 	<adapter factory=".users_external._CoppaUserExternalObject" />
 	<adapter factory=".users_external._CoppaUserSummaryExternalObject"
 			 name="summary" />
 	<adapter factory=".users_external._CoppaUserPersonalSummaryExternalObject"
 			 name="personal-summary" />
-	<adapter factory=".users_external._CoppaUserPersonalSummaryPlusPreferencesExternalObject"
-			 name="personal-summary-preferences" />
-			 
+
 	<!-- Groups and ACLs -->
 	<!-- First, make something that can store group names on the user -->
 	<class class=".users.Entity">
@@ -125,9 +121,4 @@
 	<adapter factory=".user_profile.EmailRequiredUserProfileFactory"
 			 zcml:condition="not-have devmode" />
 
-	<!-- Entity adapters -->
-	<adapter factory=".preferences.EntityPreferencesFactory"
-			 for="nti.dataserver.interfaces.IEntity"
-			 provides=".interfaces.IEntityPreferences" />
-			 
 </configure>
