@@ -29,7 +29,7 @@ import nti.testing.base
 from nti.testing.matchers import validly_provides
 import nti.contentlibrary
 import nti.externalization
-
+from zope import interface
 from nti.externalization.interfaces import IExternalObject
 
 # Nose module-level setup and teardown
@@ -72,6 +72,7 @@ class TestExternalization(TestCase):
 			if not archive_unit.key.__parent__:
 				unit.archive_unit.key.__parent__ = filesystem.FilesystemBucket( name='prealgebra', parent=unit )
 
+		interface.alsoProvides( unit, interfaces.ILegacyCourseConflatedContentPackage )
 		result = IExternalObject( unit ).toExternalObject()
 		assert_that(result, has_entry('icon', prefix + '/prealgebra/icons/The%20Icon.png'))
 
@@ -135,6 +136,10 @@ class TestExternalization(TestCase):
 		key2 = bucket.key_class( bucket=bucket, name='prealgebra/index.html' )
 		assert_that( d.get( key2 ), is_( index ) )
 
-		self._do_test_escape_if_needed( boto_s3.BotoS3ContentPackage, key=key, index=index, prefix='http://content.nextthought.com',
-								  archive_unit=boto_s3.BotoS3ContentUnit( key=boto.s3.key.Key( bucket=bucket, name='prealgebra/archive.zip' ) ),
-								  installable=True	)
+		self._do_test_escape_if_needed(
+			boto_s3.BotoS3ContentPackage,
+			key=key,
+			index=index,
+			prefix='http://content.nextthought.com',
+			archive_unit=boto_s3.BotoS3ContentUnit( key=boto.s3.key.Key( bucket=bucket, name='prealgebra/archive.zip' ) ),
+				installable=True )

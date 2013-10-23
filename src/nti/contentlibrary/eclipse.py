@@ -127,7 +127,7 @@ def EclipseContentPackage( toc_entry,
 	except (IOError,etree.Error):
 		logger.debug( "Failed to parse TOC at %s", toc_entry, exc_info=True )
 		return None
-	
+
 	content_package = _tocItem( root, toc_entry, factory=package_factory, child_factory=unit_factory )
 	# NOTE: assuming only one level of hierarchy (or at least the accessibility given just the parent)
 	# TODO: root and index should probably be replaced with IDelimitedHierarchyEntry objects.
@@ -141,18 +141,21 @@ def EclipseContentPackage( toc_entry,
 	renderVersion = root.get( 'renderVersion' )
 	if renderVersion:
 		content_package.renderVersion = int(renderVersion)
-		
+
 	isCourse = root.get('isCourse')
-	isCourse = False if not isCourse else str(isCourse).lower() in ('1', 'true', 'yes', 'y', 't')
-	content_package.isCourse = isCourse
+	if isCourse is not None:
+		isCourse = False if not isCourse else str(isCourse).lower() in ('1', 'true', 'yes', 'y', 't')
 	if isCourse:
-		courses = root.xpath('/toc/course')
-		courseName = courses[0].get('courseName') if courses else None
-		courseTitle = courses[0].get('label') if courses else None
-	else:
-		courseTitle = courseName = None
-	content_package.courseName = courseName
-	content_package.courseTitle = courseTitle
+		interface.alsoProvides( content_package, ILegacyCourseConflatedContentPackage )
+		content_package.isCourse = isCourse
+		if isCourse:
+			courses = root.xpath('/toc/course')
+			courseName = courses[0].get('courseName') if courses else None
+			courseTitle = courses[0].get('label') if courses else None
+		else:
+			courseTitle = courseName = None
+		content_package.courseName = courseName
+		content_package.courseTitle = courseTitle
 
 	if content_package.does_sibling_entry_exist( ARCHIVE_FILENAME ):
 		content_package.archive = ARCHIVE_FILENAME

@@ -78,6 +78,7 @@ def _root_url_of_unit( unit ):
 DEFAULT_PRESENTATION_PROPERTIES_FILE = 'nti_default_presentation_properties.json'
 
 @interface.implementer(IExternalObject)
+@component.adapter(interfaces.IContentPackage)
 class _ContentPackageExternal(object):
 
 	def __init__( self, package ):
@@ -103,10 +104,6 @@ class _ContentPackageExternal(object):
 		result['version'] = '1.0' # This field was never defined. What does it mean?  I think we were thinking of generations
 		result['renderVersion'] = self.package.renderVersion
 		result[StandardExternalFields.NTIID] = self.package.ntiid
-
-		result['isCourse'] = getattr(self.package, 'isCourse', False)
-		result['courseName'] = getattr(self.package, 'courseName', u'')
-		result['courseTitle'] = getattr(self.package, 'courseTitle', u'')
 
 		result['installable'] = self.package.installable
 		if self.package.installable:
@@ -145,11 +142,16 @@ class _ContentPackageExternal(object):
 		return result
 
 
-@interface.implementer(IExternalObject)
-@component.adapter(interfaces.IFilesystemContentPackage)
-class _FilesystemContentPackageExternal(_ContentPackageExternal):
-	pass
+@component.adapter(interfaces.ILegacyCourseConflatedContentPackage)
+class _LegacyCourseConflatedContentPackageExternal(_ContentPackageExternal):
 
+	def toExternalObject( self ):
+		result = super(_LegacyCourseConflatedContentPackageExternal,self).toExternalObject()
+
+		result['isCourse'] = self.package.isCourse
+		result['courseName'] = self.package.courseName
+		result['courseTitle'] = self.package.courseTitle
+		return result
 
 from pyramid import traversal
 
@@ -186,12 +188,6 @@ class _FilesystemKeyHrefMapper(object):
 		if not href.startswith( '/' ):
 			href = '/' + href
 		self.href = href
-
-
-@interface.implementer(IExternalObject)
-@component.adapter(interfaces.IS3ContentPackage)
-class _S3ContentPackageExternal(_ContentPackageExternal):
-	pass
 
 
 @interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
