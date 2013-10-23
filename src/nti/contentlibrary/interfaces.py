@@ -222,6 +222,7 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 							   default=1, min=1)
 
 	# Course support
+	# ALL OF THIS IS DEPRECATED
 	isCourse = schema.Bool(title="If this package is for a course.", default=False, required=False)
 	courseName = TextLine(title="Course name.", required=False)
 	courseTitle = TextLine(title="Course title.", required=False)

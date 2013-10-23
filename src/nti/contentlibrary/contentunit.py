@@ -85,9 +85,9 @@ class ContentPackage(ContentUnit):
 	courseName = None
 	courseTitle = None
 
-	# : A tuple of things thrown by the implementation's
-	# : IO methods that represent transient states that may
-	# : clear up by themself
+	#: A tuple of things thrown by the implementation's
+	#: IO methods that represent transient states that may
+	#: clear up by themself
 	TRANSIENT_EXCEPTIONS = ()
 
 
