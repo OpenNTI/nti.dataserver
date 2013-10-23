@@ -274,7 +274,7 @@ setup(
 		'pyquery >= 1.2.6',
 		'pyramid >= 1.5a2' ,
 		'pyramid_chameleon >= 0.1',
-		'pyramid_mako >= 0.3',
+		'pyramid_mako == 0.3',
 		'pyramid_mailer >= 0.13',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
