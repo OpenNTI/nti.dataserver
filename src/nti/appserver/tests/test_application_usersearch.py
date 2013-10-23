@@ -152,8 +152,8 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			user2 = self._create_user( username=user.username + '2' )
 			# have to share a damn community
 			community = users.Community.create_community( username='TheCommunity' )
-			user.join_community( community )
-			user2.join_community( community )
+			user.record_dynamic_membership( community )
+			user2.record_dynamic_membership( community )
 
 		testapp = TestApp( self.app )
 		# We can resolve just ourself
@@ -176,8 +176,8 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			u2 = self._create_user( username='sjo2@nextthought.com' )
 			u3 = self._create_user( username='sjo3@nextthought.com' )
 			community = users.Community.create_community( username='TheCommunity' )
-			u1.join_community( community )
-			u2.join_community( community )
+			u1.record_dynamic_membership( community )
+			u2.record_dynamic_membership( community )
 
 		testapp = TestApp( self.app )
 
@@ -214,8 +214,8 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			user_interfaces.IFriendlyNamed( u2 ).realname = u"Steve Jay Johnson"
 			modified( u2 )
 			community = users.Community.create_community( username='TheCommunity' )
-			u1.join_community( community )
-			u2.join_community( community )
+			u1.record_dynamic_membership( community )
+			u2.record_dynamic_membership( community )
 
 		testapp = TestApp( self.app )
 

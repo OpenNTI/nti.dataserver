@@ -412,7 +412,7 @@ class ContainerCollectionDetailExternalizer(object):
 			if request and is_writable( v_, request ):
 				item.setdefault( StandardExternalFields.LINKS, [] )
 				if not any( [l['rel'] == 'edit' for l in item[StandardExternalFields.LINKS]]):
-					valid_traversal_path = traversal.normal_resource_path( v_ )
+					valid_traversal_path = nti_traversal.normal_resource_path( v_ )
 					if valid_traversal_path and not valid_traversal_path.startswith( '/' ):
 						valid_traversal_path = None
 					if valid_traversal_path:
