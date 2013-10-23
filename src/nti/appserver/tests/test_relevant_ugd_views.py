@@ -11,7 +11,7 @@ import os
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
+from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
 
 from nti.dataserver import users
 from nti.dataserver.contenttypes import Note

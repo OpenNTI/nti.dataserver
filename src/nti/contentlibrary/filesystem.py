@@ -15,6 +15,7 @@ from os.path import join as path_join
 import datetime
 
 from zope import interface
+from zope import lifecycleevent
 from zope.cachedescriptors.property import Lazy, readproperty
 from zope.location.interfaces import IContained as IZContained
 
@@ -56,6 +57,9 @@ def _package_factory(directory):
 	__traceback_info__ = directory, bucket, key, temp_entry, package
 	assert package.key.bucket == bucket
 	bucket.__parent__ = package
+
+	lifecycleevent.created( package )
+
 	return package
 
 @interface.implementer(IFilesystemContentPackageLibrary)
@@ -84,14 +88,16 @@ class StaticFilesystemLibrary(library.AbstractStaticLibrary):
 class DynamicFilesystemLibrary(library.AbstractLibrary):
 	"""
 	Implements a library by looking at the contents of a root
-	directory, everytime needed.
+	directory, every time needed.
 	"""
 
 	package_factory = staticmethod(_package_factory)
 
-	def __init__(self, root, **kwargs):
+	def __init__(self, root='', **kwargs):
+		if 'paths' in kwargs:
+			raise TypeError("DynamicFilesystemLibrary does not accept paths, just root")
 		super(DynamicFilesystemLibrary, self).__init__(**kwargs)
-		self._root = root
+		self._root = root or kwargs.pop('root')
 
 	def _query_possible_content_packages(self):
 		return [os.path.join(self._root, p)
@@ -107,12 +113,19 @@ class DynamicFilesystemLibrary(library.AbstractLibrary):
 	def lastModified(self):
 		return max(self._root_mtime, super(DynamicFilesystemLibrary, self).lastModified)
 
-class EnumerateOnceFilesystemLibrary(DynamicFilesystemLibrary):
+class EnumerateOnceFilesystemLibrary(DynamicFilesystemLibrary,
+									 library.AbstractCachedNotifyingStaticLibrary):
 	"""
-	A library that will examine the to find possible content packages
+	A library that will examine the root to find possible content packages
 	only the very first time that it is requested to. Changes after that
-	point will be ignored.
+	point will be ignored. The content packages and parsed
+	data will be cached in memory until this library is deleted.
+
+	This library will broadcast :class:`.IObjectCreatedEvent` and
+	:class:`.IObjectAddedEvent` for content packages.
 	"""
+
+	contentPackages = Lazy(library.AbstractCachedNotifyingStaticLibrary.contentPackages.data[0])
 
 	@CachedProperty
 	def possible_content_packages(self):
@@ -120,6 +133,13 @@ class EnumerateOnceFilesystemLibrary(DynamicFilesystemLibrary):
 
 	_root_mtime = Lazy(DynamicFilesystemLibrary._root_mtime.func)
 
+
+class EnumerateImmediatelyFilesystemLibrary(EnumerateOnceFilesystemLibrary):
+	"""
+	A library that immediately enumerates its contents on creation.
+	This ensures that the :class:`IObjectAddedEvent` and :class:`IObjectCreatedEvent`
+	are sent at deterministic times.
+	"""
 
 @interface.implementer(IFilesystemBucket, IZContained)
 class FilesystemBucket(object):
