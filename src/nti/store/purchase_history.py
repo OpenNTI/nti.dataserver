@@ -66,7 +66,7 @@ class _PurchaseIndex(Persistent):
 		if iid in self.purchases:
 			self.__len.change(-1)
 			self.purchases.remove(iid)
-			self.time_index.pop(time_to_64bit_int(purchase.StartTime))
+			self.time_index.pop(time_to_64bit_int(purchase.StartTime), None)
 			for item in purchase.Items:
 				item_set = self.item_index.get(item)
 				if item_set and item_set.has_key(iid):
