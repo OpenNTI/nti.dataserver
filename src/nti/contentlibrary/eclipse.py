@@ -14,7 +14,10 @@ logger = __import__('logging').getLogger(__name__)
 
 from lxml import etree
 
+from zope import interface
 from zope.dublincore import xmlmetadata
+
+from . import interfaces as lib_interfaces
 
 ###
 ## Constants for file names we know and care about
@@ -146,7 +149,7 @@ def EclipseContentPackage( toc_entry,
 	if isCourse is not None:
 		isCourse = False if not isCourse else str(isCourse).lower() in ('1', 'true', 'yes', 'y', 't')
 	if isCourse:
-		interface.alsoProvides( content_package, ILegacyCourseConflatedContentPackage )
+		interface.alsoProvides(content_package, lib_interfaces.ILegacyCourseConflatedContentPackage)
 		content_package.isCourse = isCourse
 		if isCourse:
 			courses = root.xpath('/toc/course')
