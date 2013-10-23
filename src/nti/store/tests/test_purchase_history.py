@@ -71,6 +71,17 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		hist.remove_purchase(pa_2)
 		assert_that(hist, has_length(1))
 
+	@WithMockDSTrans
+	def test_purchase_remove(self):
+		user = self._create_user()
+		hist = store_interfaces.IPurchaseHistory(user, None)
+		pa_1 = self._create_purchase_attempt()
+		hist.add_purchase(pa_1)
+		assert_that(hist, has_length(1))
+
+		r = hist.remove_purchase(pa_1)
+		assert_that(r, is_(True))
+		assert_that(hist, has_length(0))
 
 	@WithMockDSTrans
 	def test_purchase_has_history_by_item(self):
