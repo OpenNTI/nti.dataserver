@@ -127,12 +127,12 @@ class AbstractFeedView(object):
 
 		return response
 
-@view_config( route_name='user.pages.odata.traversal.feeds',
+@view_config( route_name='objects.generic.traversal',
 			  context='nti.appserver.interfaces.IPageContainerResource',
 			  name='feed.rss',
 			  permission=nauth.ACT_READ, request_method='GET',
 			  http_cache=datetime.timedelta(hours=1))
-@view_config( route_name='user.pages.odata.traversal.feeds',
+@view_config( route_name='objects.generic.traversal',
 			  context='nti.appserver.interfaces.IPageContainerResource',
 			  name='feed.atom',
 			  permission=nauth.ACT_READ, request_method='GET',
