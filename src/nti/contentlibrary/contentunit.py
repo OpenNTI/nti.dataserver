@@ -80,10 +80,12 @@ class ContentPackage(ContentUnit):
 	publisher = ''
 	description = ''
 
-	# Course support
+	# Legacy course support,
+	# ALL DEPRECATED
 	isCourse = False
-	courseName = None
-	courseTitle = None
+	courseName = ''
+	courseTitle = ''
+	courseInfoSrc = None
 
 	#: A tuple of things thrown by the implementation's
 	#: IO methods that represent transient states that may
