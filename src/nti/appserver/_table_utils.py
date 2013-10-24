@@ -147,13 +147,17 @@ class AbstractNoteContentProvider(ContentProviderBase):
 				parts.append( rendered )
 
 		parts.append( self.render_suffix() )
-
+		parts.append( '</div>' )
 		return ''.join( parts )
 
 @interface.implementer(cp_interfaces.IContentProvider)
 @component.adapter(nti_interfaces.INote, interface.Interface, NoteLikeBodyColumn)
 class NoteContentProvider(AbstractNoteContentProvider):
-	pass
+
+	def render_prefix(self):
+		if self.context.title:
+			return '<span style="font-weight: bold">' + self.context.title + '</span>'
+		return ''
 
 @interface.implementer(cp_interfaces.IContentProvider)
 @component.adapter(chat_interfaces.IMessageInfo, interface.Interface, NoteLikeBodyColumn)

@@ -16,6 +16,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import datetime
 import feedgenerator
+from collections import namedtuple
 
 from zope import interface
 from zope import component
@@ -33,7 +34,6 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.oids import to_external_ntiid_oid
 
-from ._table_utils import NoteContentProvider
 from .ugd_query_views import _RecursiveUGDStreamView
 
 class _BetterDateAtom1Feed(feedgenerator.Atom1Feed):
@@ -48,12 +48,17 @@ class _BetterDateAtom1Feed(feedgenerator.Atom1Feed):
 		if item.get('published') is not None:
 			handler.addQuickElement(u"published", feedgenerator.rfc3339_date(item['published']).decode('utf-8'))
 
+EntryDetails = namedtuple('EntryDetails',
+						  ['object', 'creator', 'title', 'categories'] )
+
 class AbstractFeedView(object):
 	"""
-	Primary view for producing Atom and RSS feeds. Accepts the same filtering
-	parameters as :class:`nti.appserver.ugd_query_views._RecursiveUGDStreamView`
-	so you can control what types of actions you see in the feed as well as the
-	length of the feed.
+	Primary view for producing Atom and RSS feeds.
+
+	Accepts the same filtering parameters as
+	:class:`nti.appserver.ugd_query_views._RecursiveUGDStreamView` so
+	you can control what types of actions you see in the feed as well
+	as the length of the feed.
 
 	"""
 
@@ -64,6 +69,25 @@ class AbstractFeedView(object):
 	_data_callable_factory = None
 
 	def _object_and_creator( self, data_item ):
+		"""
+		Returns an :class:`EntryDetails`, which is a named four tuple:
+		(object, creator, title, categories).
+
+		The ``object`` is the data object for the feed entry item.
+		An adapter between it, the request, and this view will
+		be queried to get an :class:`.IContentProvider` to render the body
+		of the item.
+
+		The ``creator`` is the user object that created the data object, or
+		is otherwise responsible for its appearance.
+
+		The ``title`` is the string giving the title of the entry.
+
+		The ``categories`` is a list of strings giving the categories of the
+		entry. Many RSS readers will present these specially; they might also be added
+		to the rendered body.
+
+		"""
 		raise NotImplementedError()
 
 	def _feed_title( self ):
@@ -107,14 +131,18 @@ class AbstractFeedView(object):
 				descr = renderer.render()
 
 			creator_profile = user_interfaces.IUserProfile( data_creator )
+			data_oid = to_external_ntiid_oid(data_object)
 			feed.add_item(
 				title=data_title,
-				link=request.application_url, # TODO: Not right
+				# Direct link to the object, using a fragment and
+				# assuming the app can interpret what that means.
+				# Better would be something that involved the server
+				link=request.application_url + '#!' + data_oid,
 				description=descr,
 				author_email=getattr( creator_profile, 'email', None ),
-				author_name=creator_profile.realname or creator_profile.alias or unicode(data_creator),
+				author_name=data_creator,
 				pubdate=dc_interfaces.IDCTimes( data_item ).created,
-				unique_id=to_external_ntiid_oid(data_object),
+				unique_id=data_oid,
 				categories=data_categories,
 				# extras. If we don't provide a 'published' date
 				updated=dc_interfaces.IDCTimes( data_item ).modified,
@@ -140,14 +168,32 @@ class AbstractFeedView(object):
 class UGDFeedView(AbstractFeedView):
 	_data_callable_factory = _RecursiveUGDStreamView
 
+	# TODO: Where should this be defined? Is it localizable strings?
+	# We could even customize titles by using adapters
+	_pretty_type_names = {'Note': 'note',
+						  'PersonalBlogEntry': 'blog entry',
+					 	  'CommunityHeadlineTopic': 'discussion',
+					 	  'GeneralForumComment': 'discussion comment'}
+
 	def _object_and_creator( self, change ):
 		creator_profile = user_interfaces.IUserProfile( change.creator )
-		title = "%s %s a %s" % (creator_profile.realname or creator_profile.alias or change.creator, \
-								change.type.lower(), change.object.__class__.__name__)
-		return change.object, change.creator, title, (change.type,)
+
+		prettyname_creator = creator_profile.realname or creator_profile.alias or unicode(change.creator)
+		prettyname_action_kind = change.type.lower()
+		prettyname_object_kind = change.object.__class__.__name__ # if it's proxied, type() would be wrong
+		prettyname_object_kind = self._pretty_type_names.get( prettyname_object_kind, prettyname_object_kind )
+
+		title = "%s %s a %s" % (prettyname_creator, prettyname_action_kind, prettyname_object_kind)
+		if getattr( change.object, 'title', None):
+			title = '%s: "%s"' % (title, change.object.title)
+
+		return EntryDetails(change.object, change.creator, title, (change.type,))
 
 	def _feed_title( self ):
 		return self.request.context.ntiid # TODO: Better title
+
+# TODO: Not sure these belong here, or where they belong
+from ._table_utils import NoteContentProvider
 
 @interface.implementer(IContentProvider)
 @component.adapter(nti_interfaces.INote, interface.Interface, AbstractFeedView)
