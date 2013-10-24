@@ -153,7 +153,7 @@ class ObjectDataManager(object):
 		assert not subtransaction
 
 	def tpc_vote(self, tx):
-		if not self._rolledback and self.vote:
+		if self.vote:
 			self.vote()
 
 	def tpc_finish(self, tx):
