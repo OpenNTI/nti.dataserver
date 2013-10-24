@@ -1088,51 +1088,6 @@ class TestApplication(SharedApplicationTestBase):
 		# Another user cannot
 		othertestapp.get( path, status=403 )
 
-	@WithSharedApplicationMockDSWithChanges
-	def test_note_in_feed(self):
-		self.ds.add_change_listener( users.onChange )
-
-		with mock_dataserver.mock_db_trans(self.ds):
-			_ = self._create_user()
-			_user2 = self._create_user( username='foo@bar' )
-
-		testapp = TestApp( self.app )
-		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_HTML, specific='1234' )
-		data = json.serialize( { 'Class': 'Note',
-								 'MimeType': 'application/vnd.nextthought.note',
-								 'ContainerId': containerId,
-								 'sharedWith': ['foo@bar'],
-								 'selectedText': 'This is the selected text',
-								 'body': ["The note body"],
-								 'applicableRange': {'Class': 'ContentRangeDescription'}} )
-
-		path = '/dataserver2/users/sjohnson@nextthought.com/Pages/'
-		res = testapp.post( path, data, extra_environ=self._make_extra_environ() )
-		assert_that( res.status_int, is_( 201 ) )
-
-		# And the feed for the other user (not ourself)
-		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream/feed.atom'
-		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
-		assert_that( res.content_type, is_( 'application/atom+xml'))
-		assert_that( res.body, contains_string( "The note body" ) )
-		#atom_res = res
-
-		path = '/dataserver2/users/foo@bar/Pages(' + ntiids.ROOT + ')/RecursiveStream/feed.rss'
-		res = testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'))
-		assert_that( res.content_type, is_( 'application/rss+xml'))
-		assert_that( res.content_type_params, has_entry( 'charset', 'utf-8' ) )
-		assert_that( res.body, contains_string( "The note body" ) )
-
-		#res._use_unicode = False # otherwise lxml complains when given a Unicode string to decode
-		#pq = res.pyquery
-
-		# We can deal with last modified requests (as is common in fead readers)
-		# by returning not modified
-		testapp.get( path, extra_environ=self._make_extra_environ(user='foo@bar'),
-					 headers={'If-Modified-Since': res.headers['Last-Modified']},
-					 status=304	)
-
-
 
 
 class TestApplicationSearch(SharedApplicationTestBase):

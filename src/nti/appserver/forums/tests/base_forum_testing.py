@@ -810,7 +810,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		titles = sorted( [x.text for x in pq( b'entry title' )] )
 		sums = sorted( [x.text for x in pq( b'entry summary')] )
 		assert_that( titles, contains( comment_data['title'] ) )
-		assert_that( sums, contains( '<div><br />' + comment_data['body'][0] ) )
+		assert_that( sums, contains( '<div><br />' + comment_data['body'][0] + '</div>' ) )
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases

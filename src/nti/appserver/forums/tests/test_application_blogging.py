@@ -177,7 +177,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		res._use_unicode = False
 		pq = PyQuery( res.body, parser='html', namespaces={u'atom': u'http://www.w3.org/2005/Atom'} ) # html to ignore namespaces. Sigh.
 		assert_that( pq( b'entry title' ).text(), is_( data['title'] ) )
-		assert_that( pq( b'entry summary' ).text(), is_( '<div><br />' + data['body'][0] ) )
+		assert_that( pq( b'entry summary' ).text(), is_( '<div><br />' + data['body'][0] + '</div>' ) )
 
 
 		# And in the user activity view
@@ -456,7 +456,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 			titles = sorted( [x.text for x in pq( b'entry title' )] )
 			sums = sorted( [x.text for x in pq( b'entry summary')] )
 			assert_that( titles, contains( 'A comment', 'Changed my title' ) )
-			assert_that( sums, contains( '<div><br />' + 'A comment body', '<div><br />' + data['body'][0]) )
+			assert_that( sums, contains( '<div><br />' + 'A comment body</div>', '<div><br />' + data['body'][0] + '</div>') )
 
 		# ... in the commenting user's activity stream, visible to all ...
 		for app in testapp, testapp2, testapp3:
