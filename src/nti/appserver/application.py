@@ -557,16 +557,6 @@ def createApplication( http_port,
 	# which we clearly do not want as these are plain text templates (only!)
 	# (NOTE: If you change this, you must manually remove any cached compiled templates)
 	pyramid_config.registry.settings['mako.default_filters'] = None
-	# As of 0.3, configuration must happen *before* we include this if we want
-	# our settings to work. And if testing set one up already, we're hosed:
-	# they are stored persistently in the registry. So take that out to get
-	# fresh configs.
-	from pyramid_mako import IMakoRendererFactory
-	pyramid_config.registry.unregisterUtility( pyramid_config.registry.queryUtility( IMakoRendererFactory,
-																					 name='mako.' ),
-											   IMakoRendererFactory,
-											   name='mako.'	)
-
 	pyramid_config.include('pyramid_mako')
 	pyramid_config.add_mako_renderer('.mako')
 	pyramid_config.add_mako_renderer('.mak')
