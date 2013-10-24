@@ -740,3 +740,27 @@ def sharing_listener_main():
 
 def index_listener_main():
 	pass
+
+def _patch_pyramid_router_traceback():
+	# An exact copy of pyramid.router:Router.__call__ as
+	# of 1.5a2, with added traceback_info to help diagnose
+	# weird "str is not callable"
+	# This should be a very temporary patch, that's why
+	# I'm not bothering to make it into an official monkey
+	def __call__(self, environ, start_response):
+		"""
+		Accept ``environ`` and ``start_response``; create a
+		:term:`request` and route the request to a :app:`Pyramid`
+		view based on introspection of :term:`view configuration`
+		within the application registry; call ``start_response`` and
+		return an iterable.
+		"""
+		request = self.request_factory(environ)
+		response = self.invoke_subrequest(request, use_tweens=True)
+		__traceback_info__ = response, request, environ, start_response
+		return response(request.environ, start_response)
+
+	import pyramid.router
+	pyramid.router.Router.__call__ = __call__
+
+_patch_pyramid_router_traceback()
