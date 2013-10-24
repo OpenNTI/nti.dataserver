@@ -202,11 +202,6 @@ def _service_odata_views(pyramid_config):
 	# fit with traversal. We now make the ITraversable
 	# handle this, preserving traversal flexibility.
 
-	# TODO: This one should go away too!
-	pyramid_config.add_route(name='user.pages.odata.traversal.feeds',
-							 pattern='/dataserver2/users/{user}/Pages({group:[^)/].*})/RecursiveStream/feed.{type}',
-							 factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory',
-							 traverse='/users/{user}/Pages/{group}/feed.{type}')
 
 def _renderer_settings(pyramid_config):
 	pyramid_config.add_renderer(name='rest', factory='nti.appserver.pyramid_renderers.REST')

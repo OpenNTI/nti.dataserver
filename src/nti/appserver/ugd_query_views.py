@@ -24,6 +24,9 @@ from z3c.batching.batch import Batch
 
 from pyramid.view import view_config
 from pyramid import security as psec
+from pyramid.interfaces import IView
+from pyramid.interfaces import IViewClassifier
+
 
 from nti.appserver import _util
 from nti.appserver import _view_utils
@@ -31,6 +34,7 @@ from nti.appserver import httpexceptions as hexc
 from nti.appserver._view_utils import get_remote_user
 from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.interfaces import IUGDExternalCollection
+from nti.appserver.interfaces import IPageContainerResource
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -910,6 +914,25 @@ class _RecursiveUGDView(_UGDView):
 
 	_iter_ntiids_stream_only = False
 	_iter_ntiids_include_stream = True
+
+	def __call__(self):
+		# A hack to accept subviews, specifically for feeds. This should
+		# probably change, and probably will have to when we do different
+		# authentication via tokens
+		if self.request.subpath:
+			view = component.getSiteManager().adapters.lookup(
+					(IViewClassifier, self.request.request_iface, IPageContainerResource),
+					IView,
+					name=self.request.subpath[0] )
+			if view is not None:
+				# Fake it out, it turns out to call back to us
+				self.request.view_name = self.request.subpath[0]
+				self.request.subpath = ()
+				return view(self.request.context, self.request)
+
+		return super(_RecursiveUGDView,self).__call__()
+
+
 
 	def _get_filter_names( self ):
 		"""
