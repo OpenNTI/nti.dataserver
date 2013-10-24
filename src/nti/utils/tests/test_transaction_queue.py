@@ -4,6 +4,7 @@ from __future__ import print_function, unicode_literals
 
 from nti.testing.base import AbstractTestBase
 from hamcrest import assert_that, is_
+from hamcrest import has_length
 
 import transaction
 
@@ -31,7 +32,7 @@ class PutQueueTest(AbstractTestBase):
 
 		assert_that( queue.get(block=False), is_( self ) )
 
-	def test_put_transaction_rollback(self):
+	def test_put_transaction_abort(self):
 		queue = Queue()
 		transaction.begin()
 		put_nowait( queue, 'aborted' )
@@ -43,6 +44,26 @@ class PutQueueTest(AbstractTestBase):
 
 		assert_that( queue.qsize(), is_( 1 ) )
 		assert_that( queue.get( block=False ), is_( 'committed' ) )
+
+	def test_put_transaction_savepoint(self):
+		queue = Queue()
+		transaction.begin()
+		put_nowait( queue, 'presavepoint' )
+		# we can get a non-optimistic savepoint
+		savepoint = transaction.savepoint(optimistic=False)
+		assert_that( savepoint._savepoints, has_length( 1 ) )
+		repr(savepoint._savepoints) # cover
+		put_nowait( queue, 'aftersavepoint' )
+
+		# If we rollback the savepoint now, what we just
+		# did will be lost, but the original work
+		# will still happen
+		savepoint.rollback()
+		transaction.commit()
+
+		assert_that( queue.qsize(), is_( 1 ) )
+		assert_that( queue.get( block=False ), is_( 'presavepoint' ) )
+
 
 	def test_put_multiple_correct_order(self):
 		# Early builds had a bug where the sort order of the datamanagers

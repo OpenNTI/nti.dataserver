@@ -32,7 +32,8 @@ add_abort_hooks = add_abort_hooks # pylint
 import sys
 import time
 
-@interface.implementer(transaction.interfaces.IDataManager)
+@interface.implementer(transaction.interfaces.ISavepointDataManager,
+					   transaction.interfaces.IDataManagerSavepoint)
 class ObjectDataManager(object):
 	"""
 	A generic (and therefore relatively expensive)
@@ -47,6 +48,20 @@ class ObjectDataManager(object):
 	These data managers have no guaranteed relationship to other data
 	managers in terms of the order of which they commit, except as
 	documented with :meth:`sortKey`.
+
+	Because these data managers execute exactly one operation on a
+	complete transaction commit, implementing a savepoint is trivial:
+	do nothing when it is rolled back. A savepoint is created to checkpoint
+	a transaction and rolled back to reverse actions taken *after* the
+	checkpoint. Only data managers that were active (joined) at the
+	time the transaction savepoint is created are asked to create
+	their own savepoint, and then potentially to roll it back. We do
+	no work until the transaction is committed, so we have nothing
+	to rollback. Moroever, if a transaction savepoint is activated
+	before a manager joins, then that manager is not asked for its own
+	savepoint: it is simply aborted and unjoined from the transaction if
+	the previos savepoint is rolledback.
+
 	"""
 
 	_EMPTY_KWARGS = {}
@@ -138,13 +153,29 @@ class ObjectDataManager(object):
 		assert not subtransaction
 
 	def tpc_vote(self, tx):
-		if self.vote:
+		if not self._rolledback and self.vote:
 			self.vote()
 
 	def tpc_finish(self, tx):
 		self.callable(*self.args, **self.kwargs)
 
 	tpc_abort = abort
+
+	def __repr__(self):
+		return '<%s.%s at %s for %s>' % (self.__class__.__module__, self.__class__.__name__,
+										 id(self),
+										 self.callable)
+
+	## ISavepointDataManager
+	def savepoint(self):
+		return self
+
+	## IDatamanagerSavepoint
+	def rollback(self):
+		# See class comments: we have nothing to rollback
+		# from because we take no action until commit
+		# anyway.
+		pass
 
 class _QueuePutDataManager(ObjectDataManager):
 	"""
