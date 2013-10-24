@@ -694,6 +694,45 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
+	def test_published_topic_is_in_feed(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, data = self._POST_and_publish_topic_entry()
+		parent_url = self.forum_pretty_url
+		feed_url = parent_url + '/feed.atom'
+
+		# ...It can be seen in the feed for the author by the author and the people it
+		# is shared with ...
+		for app in testapp, testapp2:
+			res = app.get( feed_url )
+			assert_that( res.content_type, is_( 'application/atom+xml'))
+
+			# lxml is a tightass and refuses to parse Unicode strings that
+			# contain a xml declaration of an encoding (raises ValueError).
+			# Yet webtest insists on passing the unicode body to the parser,
+			# and of course it carries an encoding. So we strip it here
+			assert_that( res.text, contains_string(	'<?xml version="1.0" encoding="utf-8"?>\n' ) )
+			res.text = res.text[len('<?xml version="1.0" encoding="utf-8"?>\n'):]
+			xml = res.lxml
+
+			assert_that( xml.xpath('//atom:entry/atom:summary/text()', namespaces={'atom':"http://www.w3.org/2005/Atom"} ),
+						 contains( contains_string( self.forum_headline_unique ) ) )
+
+
+		# Until it is unpublished,
+		testapp.post( self.require_link_href_with_rel( publish_res.json_body, 'unpublish' ) )
+		# When it is still in my feed
+		res = testapp.get( feed_url )
+		assert_that( res.text, contains_string( self.forum_headline_unique ) )
+		# but not the other users feed
+		res = testapp2.get( feed_url )
+		assert_that( res.text, does_not( contains_string( self.forum_headline_unique ) ) )
+
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
 	def test_published_topic_is_in_activity_until_DELETEd(self):
 		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
