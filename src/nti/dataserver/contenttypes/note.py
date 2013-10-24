@@ -61,7 +61,7 @@ class Note(ThreadableMixin,Highlight):
 	#: A sequence of properties we would like to copy from the parent
 	#: when a child reply is created. If the child already has them, they
 	#: are left alone.
-	#: This consists of the anchoring properties
+	#: This consists of the anchoring properties, and for some reason the title
 	_inheritable_properties_ = ( 'applicableRange', 'title' )
 
 	#: We override the default highlight style to suppress it.

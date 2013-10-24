@@ -7,7 +7,7 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	
+
 	<!-- NTIID Resolvers -->
 	<utility factory=".ntiids._OIDResolver" name="OID" />
 	<utility factory=".ntiids._ClassResolver" name="Class" />
@@ -40,5 +40,7 @@
 	<utility factory=".ntiids._ClassResolver" name="meetingroom:class" />
 	<utility factory=".ntiids._SectionResolver" name="classsection" />
 	<utility factory=".ntiids._SectionResolver" name="meetingroom:classsection" />
+	<utility factory=".ntiids._NamedEntityResolver" name="namedentity:user" />
+	<utility factory=".ntiids._NamedEntityResolver" name="namedentity:community" />
 
 </configure>
