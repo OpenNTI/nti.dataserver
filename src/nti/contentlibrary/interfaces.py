@@ -231,9 +231,17 @@ class ILegacyCourseConflatedContentPackage(IContentPackage):
 
 	# Course support
 	# ALL OF THIS IS DEPRECATED
-	isCourse = schema.Bool(title="If this package is for a course.", default=False, required=False)
-	courseName = TextLine(title="Course name.", required=False)
-	courseTitle = TextLine(title="Course title.", required=False)
+	isCourse = schema.Bool(title="If this package is for a course",
+						   default=False,
+						   required=True)
+	courseName = TextLine(title="Course name",
+						   required=True)
+	courseTitle = TextLine(title="Course title",
+						   required=True)
+	courseInfoSrc = TextLine(title="The relative path to a JSON file",
+							 description="This should be a IDelimitedHierarchyKey, but isn't; Assume it is a sibling",
+							 required=True,
+							 default='')
 
 class IDelimitedHierarchyContentUnit(IContentUnit, IDelimitedHierarchyEntry):
 	"""

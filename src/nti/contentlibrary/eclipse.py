@@ -86,12 +86,7 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 	return tocItem
 
 # Cache for content packages
-# In basic profiling, the cache can provide 3X or more speedups,
-# and dramatically reduces the variance
-from repoze.lru import LRUCache
-import zope.testing.cleanup
-_cache = LRUCache( 1000 ) # TODO: Constant for the cache size
-zope.testing.cleanup.addCleanUp( _cache.clear )
+# should be done at a higher level.
 
 def EclipseContentPackage( toc_entry,
 						   package_factory=None,
@@ -118,11 +113,6 @@ def EclipseContentPackage( toc_entry,
 	"""
 
 	try:
-		toc_last_modified = toc_entry.lastModified
-		content_package = _cache.get( toc_entry.key )
-		if content_package is not None and content_package.index_last_modified <= toc_last_modified:
-			return content_package
-
 		try:
 			root = etree.parse( toc_entry.filename ).getroot()
 		except AttributeError:
@@ -131,6 +121,7 @@ def EclipseContentPackage( toc_entry,
 		logger.debug( "Failed to parse TOC at %s", toc_entry, exc_info=True )
 		return None
 
+	toc_last_modified = toc_entry.lastModified
 	content_package = _tocItem( root, toc_entry, factory=package_factory, child_factory=unit_factory )
 	# NOTE: assuming only one level of hierarchy (or at least the accessibility given just the parent)
 	# TODO: root and index should probably be replaced with IDelimitedHierarchyEntry objects.
@@ -151,14 +142,20 @@ def EclipseContentPackage( toc_entry,
 	if isCourse:
 		interface.alsoProvides(content_package, lib_interfaces.ILegacyCourseConflatedContentPackage)
 		content_package.isCourse = isCourse
-		if isCourse:
-			courses = root.xpath('/toc/course')
-			courseName = courses[0].get('courseName') if courses else None
-			courseTitle = courses[0].get('label') if courses else None
-		else:
-			courseTitle = courseName = None
+		courses = root.xpath('/toc/course')
+		if not courses or len(courses) != 1:
+			raise ValueError("Invalid course: 'isCourse' is true, but wrong 'course' node")
+		course = courses[0]
+		courseName = course.get('courseName')
+		courseTitle = course.get('label')
+
 		content_package.courseName = courseName
 		content_package.courseTitle = courseTitle
+
+		info = course.xpath('info')
+		if info: # sigh
+			content_package.courseInfoSrc = info[0].get('src')
+
 
 	if content_package.does_sibling_entry_exist( ARCHIVE_FILENAME ):
 		content_package.archive = ARCHIVE_FILENAME
@@ -173,7 +170,5 @@ def EclipseContentPackage( toc_entry,
 		metadata = xmlmetadata.parseString( dcmetafile_contents )
 		if 'Creator' in metadata:
 			content_package.creators = metadata['Creator']
-
-	_cache.put( toc_entry.key, content_package )
 
 	return content_package

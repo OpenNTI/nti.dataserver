@@ -77,6 +77,14 @@ class StaticFilesystemLibrary(library.AbstractStaticLibrary):
 		"""
 		super(StaticFilesystemLibrary, self).__init__(paths=paths)
 
+class CachedNotifyingStaticFilesystemLibrary(library.AbstractCachedNotifyingStaticLibrary):
+	"""
+	A library that will examine the given paths just once,
+	notifying of anything that is added when enumeration happens.
+	"""
+
+	package_factory = staticmethod(_package_factory)
+
 
 # TODO: The DynamicFilesystemLibrary should be made to work
 # with the `watchdog` library for noticing changes.
