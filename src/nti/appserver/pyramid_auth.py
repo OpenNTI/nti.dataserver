@@ -37,6 +37,7 @@ from nti.dataserver import authorization as nti_authorization
 
 from . import httpexceptions as hexc
 from .pyramid_renderers import default_vary_on
+from .interfaces import IUserViewTokenCreator
 
 def _decode_username_request( request ):
 	"""
@@ -134,6 +135,9 @@ class _NTIUsersAuthenticatorPlugin(object):
 		except KeyError: # pragma: no cover
 			return None
 
+@interface.implementer(IAuthenticator,
+					   IIdentifier,
+					   IUserViewTokenCreator)
 class _KnownUrlTokenBasedAuthenticator(object):
 	"""
 	A :mod:`repoze.who` plugin that acts in the role of identifier
@@ -240,7 +244,7 @@ class _KnownUrlTokenBasedAuthenticator(object):
 
 		return None # No user or password has changed.
 
-	def tokenForUserid( self, userid ):
+	def getTokenForUserId( self, userid ):
 		"""
 		Given a logon for a user, return a token that can be
 		used to identify the user in the future. If the user
@@ -366,16 +370,24 @@ def _create_who_apifactory( secure_cookies=False,
 								   # it prevents any of the caching from kicking in
 								   userid_checker=User.get_user)
 
+	# Create a last-resort identifier and authenticator that
+	# can be used only for certain views, here, our
+	# known RSS/Atom views. This is clearly not very configurable.
+	token_tkt = _KnownUrlTokenBasedAuthenticator( cookie_secret,
+												  allowed_views=('feed.rss', 'feed.atom') )
 
 	# Claimed identity (username) can come from the cookie,
-	# or HTTP Basic auth
+	# or HTTP Basic auth, or in special cases, from the token query param
 	identifiers = [('auth_tkt', auth_tkt),
 				   ('basicauth-interactive', basicauth_interactive),
-				   ('basicauth', basicauth)]
+				   ('basicauth', basicauth),
+				   ('token_tkt', token_tkt)]
 	# Confirmation/authentication can come from the cookie (encryption)
-	# Or possibly HTTP Basic auth
+	# Or possibly HTTP Basic auth, or in special cases, from the
+	# token query param
 	authenticators = [('auth_tkt', auth_tkt),
-					  ('htpasswd', _NTIUsersAuthenticatorPlugin())]
+					  ('htpasswd', _NTIUsersAuthenticatorPlugin()),
+					  ('token_tkt', token_tkt)]
 	challengers = [ # Order matters when multiple classifications match
 				   ('basicauth-interactive', basicauth_interactive),
 				   ('basicauth', basicauth), ]
@@ -404,14 +416,16 @@ def create_authentication_policy( secure_cookies=False, cookie_secret='secret', 
 	:param str cookie_secret: The value used to encrypt cookies. Must be the same on
 		all instances in a given environment, but should be different in different
 		environments.
-	:return: A tuple of the authentication policy, and a forbidden view that must be installed
-		to make it effective.
+
+	:return: A tuple of the authentication policy, and a forbidden
+		view that must be installed to make it effective, and a :class:`.IUserViewTokenCreator`
+		that should be registered as a named utility.
 	"""
 	api_factory = _create_who_apifactory(secure_cookies=secure_cookies, cookie_secret=cookie_secret, cookie_timeout=cookie_timeout )
 	result = NTIAuthenticationPolicy(cookie_timeout=cookie_timeout,api_factory=api_factory)
 	# And make it capable of impersonation
 	result = nti_authentication.DelegatingImpersonatedAuthenticationPolicy( result )
-	return result, NTIForbiddenView(api_factory)
+	return result, NTIForbiddenView(api_factory), api_factory.authenticators[-1][1]
 
 @interface.implementer(IAuthenticationPolicy)
 class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):

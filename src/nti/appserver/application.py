@@ -606,13 +606,18 @@ def createApplication( http_port,
 	my_session_factory = UnencryptedCookieSessionFactoryConfig('ntidataservercookiesecretpass')
 	pyramid_config.set_session_factory( my_session_factory )
 
-	auth_policy, forbidden_view = pyramid_auth.create_authentication_policy(
-		secure_cookies=asbool( settings.get('secure_cookies', False) ),
-		cookie_secret=settings.get('cookie_secret', 'secret' ) )
+	auth_policy, forbidden_view, user_token_creator = pyramid_auth.create_authentication_policy(
+			secure_cookies=asbool( settings.get('secure_cookies', False) ),
+			cookie_secret=settings.get('cookie_secret', 'secret' ) )
 
 	pyramid_config.set_authorization_policy( pyramid_authorization.ACLAuthorizationPolicy() )
 	pyramid_config.set_authentication_policy( auth_policy )
 	pyramid_config.add_forbidden_view( forbidden_view )
+
+	for view_name in user_token_creator.allowed_views:
+		pyramid_config.registry.registerUtility( user_token_creator,
+												 app_interfaces.IUserViewTokenCreator,
+												 name=view_name )
 
 	_logon_account_views(pyramid_config)
 	_webapp_resource_views(pyramid_config, settings)

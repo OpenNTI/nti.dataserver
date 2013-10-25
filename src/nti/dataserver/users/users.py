@@ -93,7 +93,7 @@ class _Password(object):
 		"""
 		return component.getUtility( IPasswordManager, name=self.password_manager ).checkPassword( self.__encoded, password )
 
-	def getPasword( self ):
+	def getPassword( self ):
 		"""
 		Like the zope pluggableauth principals, we allow getting the raw
 		bytes of the password. Obviously these are somewhat valuable, even

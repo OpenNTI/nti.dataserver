@@ -176,6 +176,20 @@ class IContentUnitPreferences(ILocation,nti_interfaces.ILastModified):
 # Logon services
 ###
 
+class IUserViewTokenCreator(interface.Interface):
+	"""
+	Registered as a named utility that can create
+	tokens to authenticate specific views. The name
+	is the name of the view.
+	"""
+	# Or maybe this should be an adapter on the request?
+
+	def getTokenForUserId( userid ):
+		"""
+		Given a logon id for a user, return a long-lasting
+		token. If this cannot be done, return None.
+		"""
+
 class IMissingUser(interface.Interface):
 	"Stand-in for an :class:`nti_interfaces.IUser` when one does not yet exist."
 	# TODO: Convert to zope.authentication.IUnauthenticatedPrincipal?
