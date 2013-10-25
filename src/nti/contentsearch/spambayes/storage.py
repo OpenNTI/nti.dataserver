@@ -56,7 +56,10 @@ class SQL3Classifier(Trainer, ObjectDataManager):
 
 	def __init__(self, dbpath, *args, **kwargs):
 		Trainer.__init__(self, *args, **kwargs)
-		ObjectDataManager.__init__(self, call=self._do_commit)
+		def callable():
+			self.db.commit()
+			self._cursor = self.db.cursor()
+		ObjectDataManager.__init__(self, call=callable)
 		self.dbpath = dbpath
 		self._registered = False
 		self._load(dbpath)
