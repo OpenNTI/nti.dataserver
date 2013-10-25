@@ -870,17 +870,3 @@ zope.deferredimport.deprecatedFrom(
 	" The only valid use is existing ZODB objects",
 	"nti.app.sites.columbia.profile",
 	"ColumbiaBusinessUserProfile" )
-
-####
-# Make sure we load views from any registered site.
-####
-@interface.implementer(app_interfaces.IViewConfigurator)
-class _SiteViewConfigurator(object):
-	"""
-	Load any views that belong to an specific site
-	"""
-	# DEPRECATED: Do this with pyramid.zcml
-	def add_views(self, config):
-		for site in sites._find_sites():
-			for _, mapper in site.getUtilitiesFor(app_interfaces.ISiteViewConfigurator):
-				mapper.add_views(config)

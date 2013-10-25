@@ -11,4 +11,6 @@
 	<adapter factory=".ugd_feed_views.SelectedRangeFeedRenderer"
 			 provides="zope.contentprovider.interfaces.IContentProvider"/>
 
+	<!-- Default details. -->
+	<adapter factory=".ugd_feed_views.ChangePresentationDetails" />
 </configure>

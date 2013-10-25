@@ -19,6 +19,7 @@ from nti.appserver.policies import site_policies
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.contentfragments import interfaces as frg_interfaces
+from . import interfaces as app_interfaces
 
 from zope.event import notify
 from zope import component
@@ -60,7 +61,17 @@ def user_change_new_note_emailer( user, change ):
 		return
 
 	change_object = change.object
-	if not nti_interfaces.INote.providedBy( change_object ):
+	# TODO: There is not one unifying interface
+	# above objects that we want to send notices about
+	# (IModeledContent works for notes and posts, but not
+	# topics themselves).
+	#if not nti_interfaces.IModeledContent.providedBy( change_object ):
+	#	return
+	# So we drive this off whether we can get a
+	# presentation
+	change_presentation_details = component.queryMultiAdapter( (change_object, change),
+															   app_interfaces.IChangePresentationDetails )
+	if change_presentation_details is None:
 		return
 
 	profile = user_interfaces.IUserProfile( user )
@@ -98,7 +109,8 @@ def user_change_new_note_emailer( user, change ):
 		the_table.update()
 
 		queue_simple_html_text_email(
-			base_template, subject="New Note Created",
+			base_template,
+			subject=change_presentation_details.title,
 			recipients=[email],
 			template_args={'note': change_object,
 						   'change': change,
