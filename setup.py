@@ -302,7 +302,7 @@ setup(
 		 # stripe also depends on just the minimal part of the api (their setup.py doesn't
 		 # give a version) (?). grequests 0.1.0 is not compatible with this.
 		 # If something used hooks, a change from 1.1 to 1.2 might break it; no initial issues seen
-		'requests >= 2.0.0',
+		'requests >= 2.0.1',
 		'setproctitle >= 1.1.8',  # used by gunicorn
 		'setuptools >= 0.6c11',
 		'simplejson >= 3.3.1',
