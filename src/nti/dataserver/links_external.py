@@ -109,6 +109,9 @@ def render_link( link, nearest_site=None ):
 	if link.elements:
 		href = href + '/' + '/'.join( link.elements )
 		# TODO: quoting
+	if link.params:
+		href = href + '?' + ''.join( '%s=%s' % item for item in link.params.items() )
+		# TODO: AGAIN: quoting
 	result = component.getMultiAdapter( (), ext_interfaces.ILocatedExternalMapping )
 	result.update( { StandardExternalFields.CLASS: 'Link',
 					 StandardExternalFields.HREF: href,
@@ -179,5 +182,5 @@ class LinkExternalObjectDecorator(object):
 					links.append(rendered_linked)
 				except (TypeError, loc_interfaces.LocationError):
 					logger.error("Error rendering link %s" % link)
-					
+
 			obj[LINKS] = links

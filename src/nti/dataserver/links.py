@@ -32,8 +32,15 @@ class Link(object):
 	target_mime_type = None
 	method = None
 	title = None
+	params = None
 
-	def __init__(self, target, rel='alternate', elements=(), target_mime_type=None, method=None, title=None):
+	def __init__(self, target,
+				 rel='alternate',
+				 elements=(),
+				 target_mime_type=None,
+				 method=None,
+				 title=None,
+				 params=None):
 		"""
 		:param target: The destination object for this link. Required to be
 			non-``None``. The exact value of what is accepted depends on
@@ -47,6 +54,8 @@ class Link(object):
 			at this URL.
 		:keyword str title: If given, a human-readable description for the link
 			(usually localized).
+		:keyword dict params: If given, a dictionary of query string parameters
+			that will be added to the link.
 		"""
 		__traceback_info__ = target, rel, elements, target_mime_type
 		# If the target is None, it won't externalize correctly,
@@ -64,6 +73,8 @@ class Link(object):
 			self.method = method
 		if title:
 			self.title = title
+		if params:
+			self.params = params
 
 	# Make them non-picklable
 	def __reduce__( self, *args, **kwargs ):

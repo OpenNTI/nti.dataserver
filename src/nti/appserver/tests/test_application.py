@@ -244,6 +244,10 @@ class TestApplication(SharedApplicationTestBase):
 						   extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 200 ) )
 		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
+		feed_link = self.link_with_rel( res.json_body, 'alternate' )
+		assert_that( feed_link, has_entry( 'type', 'application/atom+xml' ) )
+		assert_that( feed_link, has_entry( 'title', 'RSS' ) )
+		assert_that( feed_link, has_entry( 'href', contains_string('?token=') ) )
 
 
 	@WithSharedApplicationMockDS

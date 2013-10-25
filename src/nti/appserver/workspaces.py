@@ -551,6 +551,7 @@ class ProviderEnumerationWorkspace(_ContainerWrapper):
 		providers = [p for k, p in self._container.iteritems() if not isSyntheticKey(k)]
 		return _collections( self, providers )
 
+from ._view_utils import get_remote_user
 @interface.implementer(app_interfaces.IContentUnitInfo)
 class _NTIIDEntry(object):
 
@@ -566,6 +567,7 @@ class _NTIIDEntry(object):
 					  'Glossary',
 					  'TopUserSummaryData', 'UniqueMinMaxSummary')
 
+	recursive_stream_supports_feeds = True
 	extra_links = ()
 	contentUnit = None
 	lastModified = 0
@@ -587,6 +589,32 @@ class _NTIIDEntry(object):
 			link = links.Link( target, rel=link )
 			# TODO: Rel should be a URI
 			result.append( link )
+
+		# If we support a feed, advertise it
+		# FIXME: We should probably not be doing this. We're making
+		# too many assumptions. And we're also duplicating some
+		# stuff that's being done for IForum and ITopic (though those
+		# are less important).
+		if self.recursive_stream_supports_feeds and 'RecursiveStream' in self.__operations__:
+			token_creator = component.queryUtility( app_interfaces.IUserViewTokenCreator,
+													name='feed.atom' )
+			remote_user = get_remote_user()
+			if token_creator and remote_user:
+				token = token_creator.getTokenForUserId( remote_user.username )
+				if token:
+					target = location.Location()
+					target.__name__ = 'RecursiveStream'
+					target.__parent__ = self.__parent__
+					link = links.Link( target,
+									   rel='alternate',
+									   target_mime_type='application/atom+xml',
+									   title='RSS',
+									   elements=('feed.atom',),
+									   params={'token': token} )
+					# TODO: Token
+					result.append( link )
+
+
 
 		result.extend( self.extra_links )
 		return result
