@@ -162,7 +162,7 @@ class ObjectDataManager(object):
 	tpc_abort = abort
 
 	def __repr__(self):
-		return '<%s.%s at %s for %s>' % (self.__class__.__module__, self.__class__.__name__,
+		return '<%s.%s at %s for %r>' % (self.__class__.__module__, self.__class__.__name__,
 										 id(self),
 										 self.callable)
 
