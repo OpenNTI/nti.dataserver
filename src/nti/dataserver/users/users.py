@@ -93,8 +93,17 @@ class _Password(object):
 		"""
 		return component.getUtility( IPasswordManager, name=self.password_manager ).checkPassword( self.__encoded, password )
 
+	def getPasword( self ):
+		"""
+		Like the zope pluggableauth principals, we allow getting the raw
+		bytes of the password. Obviously these are somewhat valuable, even
+		when encoded, so take care with them.
+		"""
+		return self.__encoded
+
 	# Deliberately has no __eq__ method, passwords cannot
-	# be compared
+	# be directly compared outside the context of their
+	# manager.
 
 
 def named_entity_ntiid(entity):

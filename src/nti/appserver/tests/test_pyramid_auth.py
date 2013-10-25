@@ -30,6 +30,8 @@ from nti.appserver.pyramid_auth import _nti_request_classifier
 from nti.appserver.pyramid_auth import CLASS_BROWSER_APP
 from repoze.who.interfaces import IChallenger, IRequestClassifier
 
+import unittest
+
 def test_non_challenging_challenge():
 
 	challenger = _NonChallengingBasicAuthPlugin('nti')
@@ -105,3 +107,40 @@ def test_decode_bad_auth():
 
 	assert_that( username, is_( '' ) )
 	assert_that( password, is_( 'foo' ) )
+
+
+from ..pyramid_auth import _KnownUrlTokenBasedAuthenticator
+import fudge
+class TestKnownUrlTokenBasedAuthenticator(unittest.TestCase):
+
+	def setUp(self):
+		self.plugin = _KnownUrlTokenBasedAuthenticator('secret', allowed_views=('feed.atom','test') )
+
+	def test_identify_empty_environ(self):
+		assert_that( self.plugin.identify( {} ), is_( none() ) )
+		assert_that( self.plugin.identify( {'QUERY_STRING': ''} ), is_( none() ) )
+
+		assert_that( self.plugin.identify( {'QUERY_STRING': 'token=foo'} ),
+					 is_( none() ) )
+
+	def test_identify_wrong_view(self):
+		assert_that( self.plugin.identify( {'QUERY_STRING': 'token',
+											'PATH_INFO': '/foo/bar'} ),
+					 is_( none() ) )
+
+	@fudge.patch('nti.appserver.pyramid_auth._NTIUsers.user_password')
+	def test_identify_token(self, mock_pwd):
+		mock_pwd.is_callable().returns_fake().provides( 'getPassword' ).returns( 'abcde' )
+
+		token = self.plugin.tokenForUserid( 'user' )
+		environ = {'QUERY_STRING': 'token=' + token,
+				   'PATH_INFO': '/feed.atom'}
+
+		identity = self.plugin.identify( environ )
+		assert_that( self.plugin.authenticate( environ, identity ),
+					 is_( 'user' ) )
+
+		# Password change behind the scenes
+		mock_pwd.is_callable().returns_fake().provides( 'getPassword' ).returns( '1234' )
+		assert_that( self.plugin.authenticate( environ, identity ),
+					 is_( none() ) )
