@@ -27,6 +27,7 @@ from zope.contentprovider.provider import ContentProviderBase
 from pyramid.view import view_config
 
 from nti.appserver import httpexceptions as hexc
+from .interfaces import IChangePresentationDetails
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
@@ -86,6 +87,9 @@ class AbstractFeedView(object):
 		The ``categories`` is a list of strings giving the categories of the
 		entry. Many RSS readers will present these specially; they might also be added
 		to the rendered body.
+
+		When the change is an :class:`.IStreamChangeEvent`, this will be a
+		:class:`.IChangePresentationDetails`.
 
 		"""
 		raise NotImplementedError()
@@ -155,6 +159,34 @@ class AbstractFeedView(object):
 
 		return response
 
+@interface.implementer(IChangePresentationDetails)
+@component.adapter(interface.Interface, nti_interfaces.IStreamChangeEvent)
+def ChangePresentationDetails(_, change):
+	# NOTE: This has too much logic and knows about
+	# too many types; this could be split out
+	# using the new adapter mechanism.
+	# Consequently, our registration is wrong.
+
+	# TODO: Where should this be defined? Is it localizable strings?
+	# We could even customize titles by using adapters
+	_pretty_type_names = {'Note': 'note',
+						  'PersonalBlogEntry': 'blog entry',
+					 	  'CommunityHeadlineTopic': 'discussion',
+					 	  'GeneralForumComment': 'discussion comment'}
+
+	creator_profile = user_interfaces.IUserProfile( change.creator )
+
+	prettyname_creator = creator_profile.realname or creator_profile.alias or unicode(change.creator)
+	prettyname_action_kind = change.type.lower()
+	prettyname_object_kind = change.object.__class__.__name__ # if it's proxied, type() would be wrong
+	prettyname_object_kind = _pretty_type_names.get( prettyname_object_kind, prettyname_object_kind )
+
+	title = "%s %s a %s" % (prettyname_creator, prettyname_action_kind, prettyname_object_kind)
+	if getattr( change.object, 'title', None):
+		title = '%s: "%s"' % (title, change.object.title)
+
+	return EntryDetails(change.object, change.creator, title, (change.type,))
+
 @view_config( route_name='objects.generic.traversal',
 			  context='nti.appserver.interfaces.IPageContainerResource',
 			  name='feed.rss',
@@ -168,26 +200,9 @@ class AbstractFeedView(object):
 class UGDFeedView(AbstractFeedView):
 	_data_callable_factory = _RecursiveUGDStreamView
 
-	# TODO: Where should this be defined? Is it localizable strings?
-	# We could even customize titles by using adapters
-	_pretty_type_names = {'Note': 'note',
-						  'PersonalBlogEntry': 'blog entry',
-					 	  'CommunityHeadlineTopic': 'discussion',
-					 	  'GeneralForumComment': 'discussion comment'}
 
 	def _object_and_creator( self, change ):
-		creator_profile = user_interfaces.IUserProfile( change.creator )
-
-		prettyname_creator = creator_profile.realname or creator_profile.alias or unicode(change.creator)
-		prettyname_action_kind = change.type.lower()
-		prettyname_object_kind = change.object.__class__.__name__ # if it's proxied, type() would be wrong
-		prettyname_object_kind = self._pretty_type_names.get( prettyname_object_kind, prettyname_object_kind )
-
-		title = "%s %s a %s" % (prettyname_creator, prettyname_action_kind, prettyname_object_kind)
-		if getattr( change.object, 'title', None):
-			title = '%s: "%s"' % (title, change.object.title)
-
-		return EntryDetails(change.object, change.creator, title, (change.type,))
+		return component.getMultiAdapter( (change.object, change), IChangePresentationDetails)
 
 	def _feed_title( self ):
 		return self.request.context.ntiid # TODO: Better title

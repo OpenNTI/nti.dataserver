@@ -10,6 +10,7 @@ from hamcrest import none
 from hamcrest import contains
 from hamcrest import has_entry
 from hamcrest import has_property
+from hamcrest import contains_string
 
 from nti.dataserver import users
 from nti.dataserver.users import interfaces as user_interfaces
@@ -50,6 +51,7 @@ class MockSessionManager(object):
 class MockSession(object):
 	owner = None
 
+@interface.implementer(nti_interfaces.IStreamChangeEvent)
 class MockChange(object):
 	type = "Type"
 	object = None
@@ -113,11 +115,13 @@ class TestEvents(ConfiguringTestBase):
 		assert_that( mailer.queue, has_length( 0 ) )
 
 		change.type = nti_interfaces.SC_CREATED
+		change.creator = user
 		user_change_new_note_emailer( user, change )
 		# Wrong object
 		assert_that( mailer.queue, has_length( 0 ) )
 
 		change.object = MockSession()
+		change.object.title = 'My Title'
 		interface.alsoProvides( change.object, nti_interfaces.INote )
 		user_change_new_note_emailer( user, change )
 		# no email
@@ -126,6 +130,7 @@ class TestEvents(ConfiguringTestBase):
 		profile = user_interfaces.IUserProfile( user )
 		profile.email = 'jason.madden@nextthought.com'
 		profile.opt_in_email_communication = True
+		profile.realname = 'Steve'
 
 		user_change_new_note_emailer( user, change )
 		# yes email, but no utility
@@ -138,3 +143,7 @@ class TestEvents(ConfiguringTestBase):
 		user_change_new_note_emailer( user, change )
 		# yes email, and yes utility
 		assert_that( mailer.queue, has_length( 1 ) )
+
+		msg = mailer.queue[0]
+		assert_that( msg, has_property( 'subject', 'Steve created a MockSession: "My Title"') )
+		assert_that( msg, has_property( 'body', contains_string( "Plain" ) ) )

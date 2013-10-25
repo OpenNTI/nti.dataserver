@@ -7,10 +7,6 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<!-- Pramid -->
-	<!-- DEPRECATED. Going away -->
-	<utility name="nti.sites.view.config" factory=".site_policies._SiteViewConfigurator" />
-
 	<!-- Account Creation -->
 	<utility factory=".site_policies.RequestAwareUserPlacer" />
 

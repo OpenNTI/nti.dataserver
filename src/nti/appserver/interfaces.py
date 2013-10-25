@@ -83,20 +83,6 @@ class ILibraryStaticFileConfigurator(interface.Interface):
 		Add the static views to the given configurator.
 		"""
 
-class IViewConfigurator(interface.Interface):
-	"""
-	Registered as an utility to configure pyramid
-	with external views.
-	"""
-
-	def add_views(context, pyramid_config):
-		"""
-		Add views to the given configurator.
-		"""
-
-class ISiteViewConfigurator(IViewConfigurator):
-	pass
-
 class IWorkspace(ILocation):
 	"""
 	A workspace (in the Atom sense) is a collection of collections.
@@ -171,6 +157,38 @@ class IContentUnitPreferences(ILocation,nti_interfaces.ILastModified):
 	# impossible to validate this schema.
 	sharedWith = schema.List( value_type=Object(IUnicode),
 							  title="List of usernames to share with" )
+
+###
+# Presentation
+###
+class IChangePresentationDetails(interface.Interface):
+	"""
+	An object with details about how to present a :class:`.IStreamChangeEvent`
+	to a user.
+
+	The ``object`` is the data object for the feed entry item.
+	An adapter between it, the request, and this view will
+	be queried to get an :class:`.IContentProvider` to render the body
+	of the item.
+
+	The ``creator`` is the user object that created the data object, or
+	is otherwise responsible for its appearance.
+
+	The ``title`` is the string giving the title of the entry.
+
+	The ``categories`` is a list of strings giving the categories of the
+	entry. Many RSS readers will present these specially; they might also be added
+	to the rendered body.
+
+	Typically these will be registered as multi-adapters
+	between the object of an :class:`.IStreamChangeEvent` and the change
+	event itself.
+	"""
+
+	object = interface.Attribute("The underlying object")
+	creator = interface.Attribute("The creator/author user object")
+	title = interface.Attribute("The pretty title to describe the entry")
+	categories = interface.Attribute("A sequence of short tags to caterogize this")
 
 ###
 # Logon services
