@@ -132,7 +132,7 @@ class TestKnownUrlTokenBasedAuthenticator(unittest.TestCase):
 	def test_identify_token(self, mock_pwd):
 		mock_pwd.is_callable().returns_fake().provides( 'getPassword' ).returns( 'abcde' )
 
-		token = self.plugin.tokenForUserid( 'user' )
+		token = self.plugin.getTokenForUserId( 'user' )
 		environ = {'QUERY_STRING': 'token=' + token,
 				   'PATH_INFO': '/feed.atom'}
 
