@@ -247,7 +247,7 @@ setup(
 		'joblib >= 0.7.1',	# Python functions as pipeline jobs.
 		'logilab-common >= 0.60.0',
 		'lxml >= 3.2.3',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
-		'nameparser >= 0.2.7',	# Human name parsing
+		'nameparser >= 0.2.8', # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
