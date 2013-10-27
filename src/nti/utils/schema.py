@@ -32,13 +32,15 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField
 # later re-implement them locally if needed
 from zope.schema.fieldproperty import createFieldProperties
 from zope.schema import Bool
+from zope.schema import Date
 from zope.schema import Decimal
-from zope.schema import Float
-from zope.schema import List
-from zope.schema import TextLine
-from zope.schema import Int
-from zope.schema import Text
 from zope.schema import Dict
+from zope.schema import Float
+from zope.schema import Int
+from zope.schema import List
+from zope.schema import Text
+from zope.schema import TextLine
+from zope.schema import Timedelta
 
 try:
 	from Acquisition.interfaces import IAcquirer

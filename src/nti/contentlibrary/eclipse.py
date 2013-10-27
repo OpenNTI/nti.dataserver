@@ -53,6 +53,7 @@ def _node_get( node, name, default=None ):
 
 def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 	tocItem = factory()
+	tocItem._v_toc_node = node # for testing and secret stuff
 	for i in _toc_item_attrs:
 		setattr( tocItem, i, _node_get( node, i ) )
 
