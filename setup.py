@@ -304,7 +304,7 @@ setup(
 		 # If something used hooks, a change from 1.1 to 1.2 might break it; no initial issues seen
 		'requests >= 2.0.1',
 		'setproctitle >= 1.1.8',  # used by gunicorn
-		'setuptools >= 0.6c11',
+		'setuptools >= 1.1.7',
 		'simplejson >= 3.3.1',
 		'six >= 1.4.1',
 		'sympy >= 0.7.3',
