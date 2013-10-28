@@ -271,23 +271,71 @@ def UserPreferredLanguages(user):
 
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.users import index as user_index
+from nti.dataserver.users.entity import Entity
 from zope.catalog.interfaces import ICatalog
 
+@interface.implementer(app_interfaces.IUserSearchPolicy)
+class _UsernameSearchPolicy(object):
+	"Queries strictly based on the username, doing prefix matching."
+
+	def __init__( self, context ):
+		self.context = context
+
+	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy, _result=None ):
+		dataserver = component.getUtility(nti_interfaces.IDataserver)
+		_users = nti_interfaces.IShardLayout( dataserver ).users_folder
+
+		result = _result or set()
+		# We used to have some nice heuristics about when to include uid-only
+		# matches. This became much less valuable when we started to never display
+		# anything except uid and sometimes to only want to search on UID:
+		## Searching the userid is generally not what we want
+		## now that we have username and alias (e.g,
+		## tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
+		## be very confused.). As a compromise, we include them
+		## if there are no other matches
+		# Therefore we say screw it and throw that heuristic out the window.
+		# It turns out that searching on contains for the UID is not very helpful.
+		# Instead, we make it a prefix match, which we can do with
+		# btrees: btrees.keys( [min,max) )
+		min_inclusive = search_term # start here
+		# Get all the keys up to the next one that is alphabetically after this
+		# one....note because it is a range we need to increment the *last*
+		# character in the prefix
+		max_exclusive = search_term[0:-1] + unichr(ord(search_term[-1]) + 1)
+		__traceback_info__ = _users
+		for entity_name in _users.iterkeys(min_inclusive,max_exclusive):
+			__traceback_info__ = entity_name, search_term, min_inclusive, max_exclusive
+			entity = None
+			# If we did this correct, that's a prefix match
+			assert entity_name.lower().startswith( search_term )
+			# Even though we could access this directly from the _users
+			# container, it's best to go through the Entity class
+			# in case it does acquisition wrapping or something
+			try:
+				entity = Entity.get_entity( entity_name, dataserver=dataserver )
+			except KeyError: # pragma: no cover
+				# Typically POSKeyError
+				logger.warning( "Failed to search entity %s", entity_name )
+
+			if entity is not None:
+				result.add( entity )
+
+		return result
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
 class _AliasUserSearchPolicy(object):
 	"""
-	Something that searches on the alias in addition to the implicitly searched-on
-	username.
+	Something that searches on the alias.
 	"""
-
-	def __init__( self, *args ):
-		pass
 
 	_index_names = ('alias',)
 
-	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy ):
-		matches = set()
+	def __init__( self, context ):
+		self.context = context
+
+	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy, _result=None ):
+		matches = _result or set()
 		ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
 		for ix in self._index_names:
 			_ix = ent_catalog[ix]
@@ -300,26 +348,41 @@ class _AliasUserSearchPolicy(object):
 
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
-class _ComprehensiveUserSearchPolicy(_AliasUserSearchPolicy):
+class _RealnameAliasUserSearchPolicy(_AliasUserSearchPolicy):
 	"""
-	Something that searches on the realname and alias in addition to the implicitly searched-on
-	username.
+	Something that searches on the realname and alias.
 	"""
 
 	_index_names = _AliasUserSearchPolicy._index_names + ('realname',)
 
+@interface.implementer(app_interfaces.IUserSearchPolicy)
+class _ComprehensiveUserSearchPolicy(object):
+	"""
+	Searches on username, plus the profile fields.
+	"""
+
+	def __init__( self, context ):
+		self.context = context
+		self._username_policy = _UsernameSearchPolicy(context)
+		self._name_policy = _RealnameAliasUserSearchPolicy(context)
+
+	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy ):
+		result = set()
+		result = self._username_policy.query( search_term, provided=provided, _result=result )
+		result = self._name_policy.query( search_term, provided=provided, _result=result )
+		return result
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
 class _NoOpUserSearchPolicy(object):
 	"""
-	Does no additional matching.
+	Does no additional matching beyond username.
 	"""
-
-	def __init__( self, *args ):
-		pass
+	# Turns out we're a singleton so we can't use
+	# ivars
+	username_policy = _UsernameSearchPolicy(None)
 
 	def query( self, search_term, provided=None ):
-		return ()
+		return self.username_policy.query( search_term, provided=provided )
 
 class _NoOpUserSearchPolicyAndRealnameStripper(_NoOpUserSearchPolicy,_UserRealnameStripper):
 	"""
