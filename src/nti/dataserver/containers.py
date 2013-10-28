@@ -267,16 +267,27 @@ class LastModifiedBTreeContainer(PersistentPropertyHolder,BTreeContainer):
 		return self.lastModified
 
 
-	# We know that these methods are implemented as iterators
+	# We know that these methods are implemented as iterators.
+	# This is not part of the IBTreeContainer interface, but it is
+	# dict-like.
+	# IBTreeContainer allows sending in exactly one min-key to
+	# keys(), items() and values(), but the underlying BTree
+	# supports a full range. We use that here.
 
-	def itervalues(self):
-		return self.values()
+	def itervalues(self, min=None, max=None):
+		if max is None or min is None:
+			return self.values(min)
+		return self._SampleContainer__data.values(min,max)
 
-	def iterkeys(self):
-		return self.keys()
+	def iterkeys(self, min=None, max=None):
+		if max is None or min is None:
+			return self.keys(min)
+		return self._SampleContainer__data.keys(min,max)
 
-	def iteritems(self):
-		return self.items()
+	def iteritems(self, min=None, max=None):
+		if max is None or min is None:
+			return self.items(min)
+		return self._SampleContainer__data.items(min,max)
 
 collections.Mapping.register( LastModifiedBTreeContainer )
 
@@ -511,6 +522,13 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		if key is not None:
 			key = _tx_key_insen( key )
 		return (v for v in self._SampleContainer__data.values(key))
+
+	def iterkeys(self, min=None, max=None):
+		if max is None or min is None:
+			return self.keys(min)
+		min = _tx_key_insen( min )
+		max = _tx_key_insen( max )
+		return (k.key for k in self._SampleContainer__data.keys(min,max))
 
 	def sublocations(self):
 		# We directly implement ISublocations instead of using the adapter for two reasons.

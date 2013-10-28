@@ -10,6 +10,8 @@ from hamcrest import is_
 from hamcrest import has_item
 from hamcrest import all_of
 from hamcrest import contains_string
+from hamcrest import contains
+from hamcrest import contains_inanyorder
 from hamcrest import has_property
 from hamcrest import none
 from hamcrest import has_items
@@ -111,7 +113,7 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 
 		testapp = TestApp( self.app )
 		res = testapp.get( '/dataserver2', extra_environ=self._make_extra_environ())
-		# The service do contains a link
+		# The service doc contains a link
 		assert_that( res.json_body['Items'], has_item( all_of(
 															has_entry( 'Title', 'Global' ),
 															has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/UserSearch' ) ) ) ) ) )
@@ -166,6 +168,45 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 2 ) )
+
+	@WithSharedApplicationMockDS
+	def test_user_search_username_is_prefix(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._create_user()
+			user_username = user.username
+			user2 = self._create_user( username=user.username + '2' )
+			user2_username = user2.username
+			# A user after it, alphabetically
+			user3 = self._create_user( username='z' + user.username )
+			user3_username = user3.username
+			# A user before it, alphabetically
+			user4 = self._create_user( username='a' + user.username )
+			user4_username = user4.username
+			# have to share a damn community...which incidentally comes
+			# after user2 but before user3
+			community = users.Community.create_community( username='TheCommunity' )
+			for u in user, user2, user3, user4:
+				u.record_dynamic_membership( community )
+
+		testapp = TestApp( self.app )
+		# We can always resolve just ourself
+		path = '/dataserver2/ResolveUser/sjohnson@nextthought.com'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_length( 1 ) )
+		assert_that( res.json_body['Items'], contains( has_entry( 'Username', user_username ) ) )
+
+		# We can search for ourself and the other user that shares the common prefix
+		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_length( 2 ) )
+		assert_that( res.json_body['Items'], contains_inanyorder( has_entry( 'Username', user_username ),
+																  has_entry( 'Username', user2_username ) ) )
+
+		# We can search for the entry before us and only find it
+		path = '/dataserver2/UserSearch/' + user4_username
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_length( 1 ) )
+		assert_that( res.json_body['Items'], contains( has_entry( 'Username', user4_username ) ) )
 
 	@WithSharedApplicationMockDS
 	def test_user_search_communities(self):

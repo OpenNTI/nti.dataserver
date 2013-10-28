@@ -81,7 +81,7 @@ def _UserSearchView(request):
 		# can be resolved
 		# NOTE2: Going through this API lets some private objects be found
 		# (DynamicFriendsLists, specifically). We should probably lock that down
-		result = _authenticated_search( request, remote_user, dataserver, partialMatch )
+		result = _authenticated_search( remote_user, dataserver, partialMatch )
 	elif partialMatch and remote_user:
 		# Even if it's not a valid global search, we still want to
 		# look at things local to the user
@@ -226,36 +226,12 @@ def _provide_location(result, dataserver):
 	result.__name__ = 'UserSearch'  # TODO: Hmm
 	return result
 
-def _authenticated_search( request, remote_user, dataserver, search_term ):
-	result = []
-	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
-	user_search_matcher = site_policies.queryAdapterInSite( remote_user, app_interfaces.IUserSearchPolicy, request=request )
-	# We used to have some nice heuristics about when to include uid-only
-	# matches. This became much less valuable when we started to never display
-	# anything except uid and sometimes to only want to search on UID:
-	## Searching the userid is generally not what we want
-	## now that we have username and alias (e.g,
-	## tfandango@gmail.com -> Troy Daley. Search for "Dan" and get Troy and
-	## be very confused.). As a compromise, we include them
-	## if there are no other matches
-	# Therefore we say screw it and throw that heuristic out the window.
-	for entity_name in _users.iterkeys():
-		__traceback_info__ = entity_name, search_term
-		entity = None
-		try:
-			if search_term in entity_name.lower():
-				entity = users.Entity.get_entity( entity_name, dataserver=dataserver )
-		except KeyError: # pragma: no cover
-			# Typically POSKeyError
-			logger.warning( "Failed to search entity %s", entity_name )
-
-		if entity is not None:
-			result.append( entity )
-
-	result.extend( user_search_matcher.query( search_term,
-											  # Match Users and Communities here. Do not match IFriendsLists, because that
-											  # would get private objects from other users.
-											  provided=lambda x: nti_interfaces.IUser.providedBy( x ) or nti_interfaces.ICommunity.providedBy(x) ) )
+def _authenticated_search( remote_user, dataserver, search_term ):
+	user_search_matcher = app_interfaces.IUserSearchPolicy( remote_user )
+	result = user_search_matcher.query( search_term,
+										# Match Users and Communities here. Do not match IFriendsLists, because that
+										# would get private objects from other users.
+										provided=lambda x: nti_interfaces.IUser.providedBy( x ) or nti_interfaces.ICommunity.providedBy(x) )
 
 	# FIXME: Hack in a policy of limiting searching to overlapping communities
 	test = _make_visibility_test( remote_user )
