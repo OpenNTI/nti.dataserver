@@ -27,17 +27,19 @@ from nti.utils.maps import CaseInsensitiveDict
 
 from . import _indexagent
 from . import _search_query
-from . import _search_results as srs
+from . import search_results
 from . import interfaces as search_interfaces
 
 def uim_search(username, query, indexmanager=None):
-	indexmanager = component.getUtility(search_interfaces.IIndexManager) if indexmanager is None else indexmanager
+	indexmanager = 	component.getUtility(search_interfaces.IIndexManager) \
+					if indexmanager is None else indexmanager
 	uim = indexmanager._get_user_index_manager(username)
 	result = uim.search(query=query) if uim is not None else None
 	return result
 
 def entity_ugd_search(username, query, trax=True):
-	transactionRunner = component.getUtility(nti_interfaces.IDataserverTransactionRunner) if trax else None
+	transactionRunner = \
+		component.getUtility(nti_interfaces.IDataserverTransactionRunner) if trax else None
 	func = functools.partial(uim_search, username=username, query=query)
 	result = transactionRunner(func) if trax else func()
 	return result
@@ -56,7 +58,8 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls)
 		return cls.indexmanager
 
-	def __init__(self, bookidx_manager_factory, useridx_manager_adapter, parallel_search=True):
+	def __init__(self, bookidx_manager_factory, useridx_manager_adapter,
+				 parallel_search=True):
 		self.books = CaseInsensitiveDict()
 		self.parallel_search = parallel_search
 		self.bookidx_manager_factory = bookidx_manager_factory
@@ -104,7 +107,7 @@ class IndexManager(object):
 		query = _search_query.QueryObject.create(query)
 		cnt_results = self.content_search(query=query)
 		ugd_results = self.user_data_search(query=query)
-		results = srs.merge_search_results(cnt_results, ugd_results)
+		results = search_results.merge_search_results(cnt_results, ugd_results)
 		logger.debug("Query '%s' returned %s hit(s)" % (query.term, len(results)))
 		return results
 
@@ -113,7 +116,7 @@ class IndexManager(object):
 		query = _search_query.QueryObject.create(query)
 		cnt_results = self.content_suggest_and_search(query=query)
 		ugd_results = self.user_data_suggest_and_search(query=query)
-		results = srs.merge_suggest_and_search_results(cnt_results, ugd_results)
+		results = search_results.merge_suggest_and_search_results(cnt_results, ugd_results)
 		return results
 
 	@metric
@@ -121,7 +124,7 @@ class IndexManager(object):
 		query = _search_query.QueryObject.create(query)
 		cnt_results = self.content_suggest(query=query)
 		ugd_results = self.user_data_suggest(query=query)
-		results = srs.merge_suggest_results(cnt_results, ugd_results)
+		results = search_results.merge_suggest_results(cnt_results, ugd_results)
 		return results
 
 	def get_book_index_manager(self, indexid):
@@ -145,32 +148,32 @@ class IndexManager(object):
 
 	def content_search(self, query):
 		query = _search_query.QueryObject.create(query)
-		results = srs.empty_search_results(query)
+		results = search_results.empty_search_results(query)
 		books = self._query_books(query)
 		for book in books:
 			bm = self.get_book_index_manager(book)
 			r = bm.search(query) if bm is not None else None
-			results = srs.merge_search_results(r, results) if r is not None else results
+			results = search_results.merge_search_results(r, results) if r is not None else results
 		return results
 
 	def content_suggest_and_search(self, query):
 		query = _search_query.QueryObject.create(query)
-		results = srs.empty_suggest_and_search_results(query)
+		results = search_results.empty_suggest_and_search_results(query)
 		books = self._query_books(query)
 		for book in books:
 			bm = self.get_book_index_manager(book)
 			r = bm.suggest_and_search(query) if bm is not None else None
-			results = srs.merge_suggest_and_search_results(r, results) if r is not None else results
+			results = search_results.merge_suggest_and_search_results(r, results) if r is not None else results
 		return results
 
 	def content_suggest(self, query, *args, **kwargs):
 		query = _search_query.QueryObject.create(query)
-		results = srs.empty_suggest_results(query)
+		results = search_results.empty_suggest_results(query)
 		books = self._query_books(query)
 		for book in books:
 			bm = self.get_book_index_manager(book)
 			r = bm.suggest(query) if bm is not None else None
-			results = srs.merge_suggest_results(r, results) if r is not None else results
+			results = search_results.merge_suggest_results(r, results) if r is not None else results
 		return results
 
 	def _get_user_index_manager(self, target, create=True):
@@ -194,34 +197,34 @@ class IndexManager(object):
 
 	def user_data_search(self, query):
 		query = _search_query.QueryObject.create(query)
-		results = srs.empty_search_results(query)
+		results = search_results.empty_search_results(query)
 		entities = self._get_search_entities(query.username)
 		if self.parallel_search:
 			procs = [gevent.spawn(entity_ugd_search, username, query) for username in entities]
 			gevent.joinall(procs)
 			for proc in procs:
 				rest = proc.value
-				results = srs.merge_search_results (results, rest)
+				results = search_results.merge_search_results (results, rest)
 		else:
 			for name in entities:
 				rest = uim_search(name, query, self)
-				results = srs.merge_search_results (results, rest)
+				results = search_results.merge_search_results (results, rest)
 		return results
 
 	def user_data_suggest_and_search(self, query):
 		query = _search_query.QueryObject.create(query)
-		results = srs.empty_suggest_and_search_results(query)
+		results = search_results.empty_suggest_and_search_results(query)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.suggest_and_search(query=query)
-			results = srs.merge_suggest_and_search_results (results, rest)
+			results = search_results.merge_suggest_and_search_results (results, rest)
 		return results
 
 	def user_data_suggest(self, query):
 		query = _search_query.QueryObject.create(query)
-		results = srs.empty_suggest_results(query)
+		results = search_results.empty_suggest_results(query)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.suggest(query=query)
-			results = srs.merge_suggest_results(results, rest)
+			results = search_results.merge_suggest_results(results, rest)
 		return results
 
 	def index_user_content(self, target, data, type_name=None):
@@ -262,4 +265,5 @@ class IndexManager(object):
 
 	@classmethod
 	def onChange(cls, datasvr, msg, target=None, broadcast=None):
-		_indexagent.handle_index_event(cls.get_shared_indexmanager(), target, msg, broadcast=broadcast)
+		_indexagent.handle_index_event(cls.get_shared_indexmanager(), target, msg,
+									   broadcast=broadcast)

@@ -21,11 +21,11 @@ from nti.ntiids.ntiids import make_ntiid
 
 from .._search_query import QueryObject
 from .. import interfaces as search_interfaces
-from .._search_results import empty_search_results
-from .._search_results import empty_suggest_results
-from .._search_results import merge_search_results
-from .._search_results import merge_suggest_results
-from .._search_results import empty_suggest_and_search_results
+from ..search_results import empty_search_results
+from ..search_results import empty_suggest_results
+from ..search_results import merge_search_results
+from ..search_results import merge_suggest_results
+from ..search_results import empty_suggest_and_search_results
 
 from . import zanpakuto_commands
 from . import ConfiguringTestBase

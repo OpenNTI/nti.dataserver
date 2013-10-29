@@ -17,14 +17,14 @@ from perfmetrics import metricmethod
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from ._search_results import IndexHit
+from .search_results import IndexHit
 from ._search_query import QueryObject
 from ._cloudsearch_query import parse_query
-from ._search_results import empty_search_results
-from ._search_results import empty_suggest_results
+from .search_results import empty_search_results
+from .search_results import empty_suggest_results
 from ._cloudsearch_index import search_stored_fields
 from ._search_indexmanager import _SearchEntityIndexManager
-from ._search_results import empty_suggest_and_search_results
+from .search_results import empty_suggest_and_search_results
 from . import _cloudsearch_interfaces as cloudsearch_interfaces
 
 from .constants import (username_, content_, intid_, type_)

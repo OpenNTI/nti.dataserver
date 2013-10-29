@@ -19,16 +19,21 @@ from nti.utils.maps import CaseInsensitiveDict
 from . import common
 from . import _whoosh_types
 from . import discriminators
+from . import search_results
 from ._search_query import QueryObject
 from ._whoosh_query import parse_query
 from . import _whoosh_schemas as wschs
-from . import _search_results as srlts
 
 from .constants import (channel_, content_, keywords_, references_, sharedWith_,
 						ntiid_, last_modified_, videoId_, creator_, containerId_,
 						replacementContent_, redactionExplanation_, tags_, intid_,
 					 	title_, quick_, end_timestamp_, start_timestamp_,
 					 	href_, target_ntiid_)
+
+
+# alias
+video_date_to_millis = common.video_date_to_millis
+empty_suggest_and_search_results = search_results.empty_suggest_and_search_results
 
 class _SearchableContent(object):
 	_schema = None
@@ -51,7 +56,7 @@ class _SearchableContent(object):
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
 		qo = QueryObject.create(query, **kwargs)
 		if ' ' in qo.term or qo.is_prefix_search or qo.is_phrase_search:
-			results = srlts.empty_suggest_and_search_results(qo)
+			results = empty_suggest_and_search_results(qo)
 			results += self.search(searcher, qo)
 		else:
 			result = self.suggest(searcher, qo)
@@ -60,12 +65,15 @@ class _SearchableContent(object):
 				suggestions = rank_words(qo.term, suggestions)
 				qo, parsed_query = self._parse_query(suggestions[0], **kwargs)
 
-				results = self._execute_search(searcher, parsed_query, qo,
-											   creator_method=srlts.empty_suggest_and_search_results)
+				results = \
+					self._execute_search(
+							searcher,
+							parsed_query, qo,
+							creator_method=empty_suggest_and_search_results)
 
 				results.add_suggestions(suggestions)
 			else:
-				results = srlts.empty_suggest_and_search_results(qo)
+				results = empty_suggest_and_search_results(qo)
 				results += self.search(searcher, qo)
 
 		return results
@@ -74,13 +82,14 @@ class _SearchableContent(object):
 		qo = QueryObject.create(word, **kwargs)
 		prefix = qo.prefix or len(qo.term)
 		maxdist = qo.maxdist or self.default_word_max_dist
-		results = srlts.empty_suggest_results(qo)
+		results = search_results.empty_suggest_results(qo)
 		records = searcher.suggest(content_, qo.term, maxdist=maxdist, prefix=prefix)
 		results.add(records)
 		return results
 
-	def _execute_search(self, searcher, parsed_query, queryobject, docids=None, creator_method=None):
-		creator_method = creator_method or srlts.empty_search_results
+	def _execute_search(self, searcher, parsed_query, queryobject, docids=None,
+						creator_method=None):
+		creator_method = creator_method or search_results.empty_search_results
 		results = creator_method(queryobject)
 
 		# execute search
@@ -121,7 +130,7 @@ class Book(_SearchableContent):
 									 			  title=hit[title_],
 									 			  content=hit[content_],
 									 			  last_modified=last_modified)
-				result.append(srlts.IndexHit(data, score))
+				result.append(search_results.IndexHit(data, score))
 		return result
 
 class VideoTranscript(_SearchableContent):
@@ -136,16 +145,16 @@ class VideoTranscript(_SearchableContent):
 			docnum = hit.docnum
 			score = hit.score or 1.0
 			data = _whoosh_types._VideoTranscriptContent(
-									score=score,
-									docnum=docnum,
-									title=hit[title_],
-									content=hit[content_],
-									videoId=hit[videoId_],
-						 			containerId=hit[containerId_],
-									last_modified=common.epoch_time(hit[last_modified_]),
-						 			end_millisecs=common.video_date_to_millis(hit[end_timestamp_]),
-						 			start_millisecs=common.video_date_to_millis(hit[start_timestamp_]))
-			result.append(srlts.IndexHit(data, score))
+							score=score,
+							docnum=docnum,
+							title=hit[title_],
+							content=hit[content_],
+							videoId=hit[videoId_],
+				 			containerId=hit[containerId_],
+							last_modified=common.epoch_time(hit[last_modified_]),
+				 			end_millisecs=video_date_to_millis(hit[end_timestamp_]),
+				 			start_millisecs=video_date_to_millis(hit[start_timestamp_]))
+			result.append(search_results.IndexHit(data, score))
 		return result
 
 class NTICard(_SearchableContent):
@@ -171,7 +180,7 @@ class NTICard(_SearchableContent):
 									last_modified=last_modified,
 							 		containerId=hit[containerId_],
 							 		target_ntiid=hit[target_ntiid_])
-			result.append(srlts.IndexHit(data, score))
+			result.append(search_results.IndexHit(data, score))
 		return result
 
 # ugd content getter
@@ -234,7 +243,7 @@ class UserIndexableContent(_SearchableContent):
 				score = hit.score or 1.0
 				obj = self.get_object(uid)  # make sure we have access and cache it
 				if obj is not None:
-					result.append(srlts.IndexHit(uid, score))
+					result.append(search_results.IndexHit(uid, score))
 		return result
 
 	def get_object(self, uid):

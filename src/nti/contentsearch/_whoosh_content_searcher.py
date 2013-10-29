@@ -22,10 +22,10 @@ from perfmetrics import metric
 from whoosh import index
 
 from . import constants
+from . import search_results
 from ._whoosh_index import Book
 from ._whoosh_index import NTICard
 from ._search_query import QueryObject
-from . import _search_results as srlts
 from ._whoosh_index import VideoTranscript
 from . import interfaces as search_interfaces
 from ._whoosh_indexstorage import DirectoryStorage
@@ -104,7 +104,8 @@ class WhooshContentSearcher(object):
 			indexname = prefix + baseindexname
 			if storage.index_exists(indexname):
 				index = storage.get_index(indexname)
-				self._searchables[indexname] = _Searchable(factory(), indexname, index, classsname)
+				self._searchables[indexname] = \
+						 _Searchable(factory(), indexname, index, classsname)
 
 	@property
 	def indices(self):
@@ -133,29 +134,29 @@ class WhooshContentSearcher(object):
 	@metric
 	def search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		results = srlts.empty_search_results(query)
+		results = search_results.empty_search_results(query)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
 				rs = s.search(query)
-				results = srlts.merge_search_results(results, rs)
+				results = search_results.merge_search_results(results, rs)
 		return results
 
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		results = srlts.empty_suggest_and_search_results(query)
+		results = search_results.empty_suggest_and_search_results(query)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
 				rs = s.suggest_and_search(query)
-				results = srlts.merge_suggest_and_search_results(results, rs)
+				results = search_results.merge_suggest_and_search_results(results, rs)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
-		results = srlts.empty_suggest_results(query)
+		results = search_results.empty_suggest_results(query)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
 				rs = s.suggest(query)
-				results = srlts.merge_suggest_results(results, rs)
+				results = search_results.merge_suggest_results(results, rs)
 		return results
 
 	def close(self):

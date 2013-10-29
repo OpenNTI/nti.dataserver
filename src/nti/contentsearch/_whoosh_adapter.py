@@ -25,10 +25,10 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils.maps import LFUMap
 
+from . import search_results
 from .common import get_type_name
 from .common import sort_search_types
 from ._search_query import QueryObject
-from . import _search_results as srlts
 from . import interfaces as search_interfaces
 from .constants import ugd_indexable_type_names
 from .common import normalize_type_name as _ntm
@@ -114,21 +114,22 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 
 	def _adapt_search_on_types(self, searchOn=None):
 		indexables = ugd_indexable_type_names
-		searchOn = [_ntm(x) for x in searchOn if _ntm(x) in indexables] if searchOn else indexables
+		searchOn = [_ntm(x) for x in searchOn if _ntm(x) in indexables] \
+					if searchOn else indexables
 		result = sort_search_types(searchOn)
 		return result
 
 	def _do_search(self, query, is_ngram_search=False, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(query.searchOn)
-		results = srlts.empty_search_results(query)
+		results = search_results.empty_search_results(query)
 		for type_name in searchOn:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = self.get_indexable_object(type_name)
 				with index.searcher() as searcher:
 					rs = indexable.search(searcher, query)
-					results = srlts.merge_search_results(results, rs)
+					results = search_results.merge_search_results(results, rs)
 		return results
 
 	def search(self, query, *args, **kwargs):
@@ -138,27 +139,27 @@ class _BaseWhooshEntityIndexManager(_SearchEntityIndexManager):
 	def suggest_and_search(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(query.searchOn)
-		results = srlts.empty_suggest_and_search_results(query)
+		results = search_results.empty_suggest_and_search_results(query)
 		for type_name in searchOn:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = self.get_indexable_object(type_name)
 				with index.searcher() as searcher:
 					rs = indexable.suggest_and_search(searcher, query)
-					results = srlts.merge_suggest_and_search_results(results, rs)
+					results = search_results.merge_suggest_and_search_results(results, rs)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
 		query = QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(query.searchOn)
-		results = srlts.empty_suggest_results(query)
+		results = search_results.empty_suggest_results(query)
 		for type_name in searchOn:
 			index = self._get_or_create_index(type_name)
 			with index:
 				indexable = self.get_indexable_object(type_name)
 				with index.searcher() as searcher:
 					rs = indexable.suggest(searcher, query)
-					results = srlts.merge_suggest_results(results, rs)
+					results = search_results.merge_suggest_results(results, rs)
 		return results
 
 	# -------------------

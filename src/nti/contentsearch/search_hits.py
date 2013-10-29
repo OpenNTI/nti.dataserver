@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Defines adaptes for search hits and hit comparators.
+Defines adapters for search hits and hit comparators.
 
 $Id$
 """

@@ -28,10 +28,11 @@ from . import search_hits
 from . import _search_highlights
 from . import interfaces as search_interfaces
 
-from .constants import (tags_, content_, title_, replacementContent_, redactionExplanation_)
+from .constants import (tags_, content_, title_, replacementContent_,
+					    redactionExplanation_)
 from .constants import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
-					 	SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS, FIELD, TYPE_COUNT,
-					 	HIT_META_DATA)
+					 	SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS, FIELD,
+					 	TYPE_COUNT, HIT_META_DATA)
 
 # highlight decorators
 
@@ -316,6 +317,6 @@ class _IndexHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
 	@classmethod
 	def _ap_enumerate_module_names(cls):
-		return ('_search_results',)
+		return ('search_results',)
 
 _IndexHitInternalObjectIO.__class_init__()

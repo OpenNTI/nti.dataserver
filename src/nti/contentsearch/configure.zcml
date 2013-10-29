@@ -156,9 +156,9 @@
 
 	<!-- Search results -->
 
-	<utility factory="._search_results._SearchResultCreator"  />
-	<utility factory="._search_results._SuggestResultsCreator"  />
-	<utility factory="._search_results._SuggestAndSearchResultsCreator"  />
+	<utility factory=".search_results._SearchResultCreator"  />
+	<utility factory=".search_results._SuggestResultsCreator"  />
+	<utility factory=".search_results._SuggestAndSearchResultsCreator"  />
 
 	<!-- Search query -->
 
@@ -175,5 +175,5 @@
 	<include package="nti.externalization" />
 	<ext:registerMimeFactories module="._search_query" />
 	<ext:registerMimeFactories module="._whoosh_types" />
-	<ext:registerMimeFactories module="._search_results" />
+	<ext:registerMimeFactories module=".search_results" />
 </configure>
