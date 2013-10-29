@@ -552,6 +552,8 @@ class IUserSearchPolicy(interface.Interface):
 		"""
 		Return all entity objects that match the query.
 
+		:param string search_term: The (already lowercased) term to search for.
+
 		:param provided: A predicate used to further filter results.
 			The default value checks for IEntity; you may use a custom value.
 

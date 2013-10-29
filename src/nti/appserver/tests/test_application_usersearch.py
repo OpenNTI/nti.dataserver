@@ -258,7 +258,7 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			modified( u1 ) # update catalog
 			u2 = self._create_user( username='sj2@nextthought.com' )
 			user_interfaces.IFriendlyNamed( u2 ).alias = u"Steve"
-			user_interfaces.IFriendlyNamed( u2 ).realname = u"Steve Jay Johnson"
+			user_interfaces.IFriendlyNamed( u2 ).realname = u"Stephen Jay Johnson"
 			modified( u2 )
 			community = users.Community.create_community( username='TheCommunity' )
 			u1.record_dynamic_membership( community )
@@ -273,14 +273,14 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sj2@nextthought.com' ) ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'alias', 'Steve' ) ) )
-		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Steve Jay Johnson' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Stephen Jay Johnson' ) ) )
 
-		path = '/dataserver2/UserSearch/JAY' # realname
+		path = '/dataserver2/UserSearch/JAY' # realname, this case the middlename
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'Username', 'sj2@nextthought.com' ) ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'alias', 'Steve' ) ) )
-		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Steve Jay Johnson' ) ) )
+		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Stephen Jay Johnson' ) ) )
 
 
 		# MC search is locked down to be only the username
