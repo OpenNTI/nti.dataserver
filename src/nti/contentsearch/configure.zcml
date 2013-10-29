@@ -14,7 +14,7 @@
 
 	<!-- make sure stop words are registered before evertything else -->
 
-	<utility factory="._content_utils._DefaultStopWords" />
+	<utility factory=".content_utils._DefaultStopWords" />
 
 	<!-- Externalization -->
 
@@ -98,55 +98,55 @@
 	
 	<!-- Content Resolvers -->
 
-	<adapter factory="._content_utils._StringContentResolver"
+	<adapter factory=".content_utils._StringContentResolver"
 			 provides=".interfaces.IContentResolver"
 			 for="basestring" />
 
-	<adapter factory="._content_utils._DictContentResolver"
+	<adapter factory=".content_utils._DictContentResolver"
 			 provides=".interfaces.IModeledContentResolver"
 			 for="dict" />
 
-	<adapter factory="._content_utils._HighLightContentResolver"
+	<adapter factory=".content_utils._HighLightContentResolver"
 			 provides=".interfaces.IHighlightContentResolver"
 			 for="nti.dataserver.interfaces.IHighlight" />
 
-	<adapter factory="._content_utils._RedactionContentResolver"
+	<adapter factory=".content_utils._RedactionContentResolver"
 			 provides=".interfaces.IRedactionContentResolver"
 			 for="nti.dataserver.interfaces.IRedaction" />
 
-	<adapter factory="._content_utils._NoteContentResolver"
+	<adapter factory=".content_utils._NoteContentResolver"
 			 provides=".interfaces.INoteContentResolver"
 			 for="nti.dataserver.interfaces.INote" />
 
-	<adapter factory="._content_utils._MessageInfoContentResolver"
+	<adapter factory=".content_utils._MessageInfoContentResolver"
 			 provides=".interfaces.IMessageInfoContentResolver"
 			 for="nti.chatserver.interfaces.IMessageInfo" />
 
-	<adapter factory="._content_utils._CanvasShapeContentResolver"
+	<adapter factory=".content_utils._CanvasShapeContentResolver"
 			 provides=".interfaces.IContentResolver"
 			 for="nti.dataserver.contenttypes.Canvas" />
 
-	<adapter factory="._content_utils._CanvasTextShapeContentResolver"
+	<adapter factory=".content_utils._CanvasTextShapeContentResolver"
 			 provides=".interfaces.IContentResolver"
 			 for="nti.dataserver.contenttypes.CanvasTextShape" />
 
-	<adapter factory="._content_utils._PostContentResolver"
+	<adapter factory=".content_utils._PostContentResolver"
 			 provides=".interfaces.IPostContentResolver"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
 			 
-	<adapter factory="._content_utils._HeadlineTopicContentResolver"
+	<adapter factory=".content_utils._HeadlineTopicContentResolver"
 			 provides=".interfaces.IHeadlineTopicContentResolver"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlineTopic" />
 			 
-	<adapter factory="._content_utils._VideoTranscriptContentResolver"
+	<adapter factory=".content_utils._VideoTranscriptContentResolver"
 			 provides=".interfaces.IVideoTranscriptContentResolver"
 			 for=".interfaces.IVideoTranscriptContent" />
 
-	<adapter factory="._content_utils._NTICardContentResolver"
+	<adapter factory=".content_utils._NTICardContentResolver"
 			 provides=".interfaces.INTICardContentResolver"
 			 for=".interfaces.INTICardContent" />
 			 
-	<adapter factory="._content_utils._BookContentResolver"
+	<adapter factory=".content_utils._BookContentResolver"
 			 provides=".interfaces.IBookContentResolver"
 			 for=".interfaces.IBookContent" />
 			 

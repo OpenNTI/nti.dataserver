@@ -16,10 +16,10 @@ from nti.contentprocessing import compute_ngrams
 
 from nti.externalization import oids
 
-from . import _content_utils
+from . import content_utils
 from . import interfaces as search_interfaces
 
-get_content = _content_utils.get_content
+get_content = content_utils.get_content
 
 def get_oid(obj):
 	result = oids.to_external_ntiid_oid(obj)

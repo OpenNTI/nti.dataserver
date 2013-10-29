@@ -56,9 +56,11 @@ def patch_zopyx():
 			module.intersectionResultSets = ntizopy_rs.intersectionResultSets
 	except ImportError, e:
 		logger.exeption("Error patching zopyx", e)
+		raise
 
 def patch_imports():
-	pass
+	from . import content_utils
+	sys.modules["nti.contentsearch._content_utils"] = content_utils
 
 def patch():
 	patch_zopyx()
