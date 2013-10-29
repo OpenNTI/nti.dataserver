@@ -349,10 +349,12 @@
 			 component=".pyramid_renderers._throw_action"
 			 provides=".pyramid_renderers.ICatchComponentAction" />
 
-	<!-- Pref setup. Note: This will be handled by buildout. -->
+	<!-- Additional package setup. Note: This will be handled by buildout. -->
 	<configure zcml:condition="not-have in-buildout">
 		<include package="nti.app.client_preferences"
 				 zcml:condition="installed nti.app.client_preferences" />
+		<include package="nti.app.products.courseware"
+				 zcml:condition="installed nti.app.products.courseware" />
 	</configure>
 
 </configure>
