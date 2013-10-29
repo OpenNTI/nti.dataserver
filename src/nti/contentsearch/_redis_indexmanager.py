@@ -14,8 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 
 from . import _indexmanager
+from . import discriminators
 from . import interfaces as search_interfaces
-from . import _discriminators as discriminators
 
 class _RedisIndexManager(_indexmanager.IndexManager):
 

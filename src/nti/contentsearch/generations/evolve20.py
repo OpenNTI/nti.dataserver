@@ -4,7 +4,7 @@ Content search generation 20.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -18,9 +18,9 @@ from ZODB.POSException import POSKeyError
 from zope.component.hooks import site, setHooks
 
 from ..common import post_
+from .. import discriminators
 from ..utils import find_all_posts
 from .. import interfaces as search_interfaces
-from .. import _discriminators as discriminators
 from ..utils._repoze_utils import remove_entity_catalogs
 
 def reindex_posts(user, users_get, ds_intid):

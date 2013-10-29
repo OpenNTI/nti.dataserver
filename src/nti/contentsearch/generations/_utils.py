@@ -4,19 +4,22 @@ Content search generation utilities.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import zope.intid
+
 from zope import component
+
 from zc import intid as zc_intid
+
 from ZODB.POSException import POSKeyError
 
-from ..utils import find_all_indexable_pairs
+from .. import utils
+from .. import discriminators
 from .. import interfaces as search_interfaces
-from .. import _discriminators as discriminators
 from ..utils._repoze_utils import remove_entity_indices
 
 def reindex_ugd(user, users_get, ds_intid):
@@ -24,7 +27,7 @@ def reindex_ugd(user, users_get, ds_intid):
 	logger.debug('Reindexing object(s) for %s' % username)
 
 	counter = 0
-	for e, obj in find_all_indexable_pairs(user):
+	for e, obj in utils.find_all_indexable_pairs(user):
 		try:
 			rim = search_interfaces.IRepozeEntityIndexManager(e, None)
 			catalog = rim.get_create_catalog(obj) if rim is not None else None

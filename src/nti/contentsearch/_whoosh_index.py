@@ -4,7 +4,7 @@ Whoosh content index classes.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -18,11 +18,11 @@ from nti.utils.maps import CaseInsensitiveDict
 
 from . import common
 from . import _whoosh_types
+from . import discriminators
 from ._search_query import QueryObject
 from ._whoosh_query import parse_query
 from . import _whoosh_schemas as wschs
 from . import _search_results as srlts
-from . import _discriminators as discriminators
 
 from .constants import (channel_, content_, keywords_, references_, sharedWith_,
 						ntiid_, last_modified_, videoId_, creator_, containerId_,

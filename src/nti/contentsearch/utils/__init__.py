@@ -4,7 +4,7 @@ Content search utilities.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,9 +15,9 @@ from zope.generations.utility import findObjectsProviding
 from nti.chatserver import interfaces as chat_interfaces
 
 from nti.contentsearch import common
+from nti.contentsearch import discriminators
 from nti.contentsearch import get_ugd_indexable_types
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch import _discriminators as discriminators
 
 from nti.dataserver import users
 from nti.deprecated import deprecated

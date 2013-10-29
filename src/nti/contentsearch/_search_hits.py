@@ -29,8 +29,8 @@ from nti.mimetype import mimetype
 
 from . import common
 from . import content_utils
+from . import discriminators
 from . import interfaces as search_interfaces
-from . import _discriminators as discriminators
 
 from .constants import (title_)
 from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, SNIPPET, HIT, ID, CONTENT, SCORE, OID,

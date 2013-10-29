@@ -4,7 +4,7 @@ Content search generation 23.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -12,15 +12,18 @@ logger = __import__('logging').getLogger(__name__)
 generation = 23
 
 import zope.intid
+
 from zope import component
-from zc import intid as zc_intid
-from ZODB.POSException import POSKeyError
 from zope.component.hooks import site, setHooks
 
+from zc import intid as zc_intid
+
+from ZODB.POSException import POSKeyError
+
+from .. import discriminators
 from ..constants import redaction_
 from ..utils import find_all_redactions
 from .. import interfaces as search_interfaces
-from .. import _discriminators as discriminators
 from ..utils._repoze_utils import remove_entity_catalogs
 
 def reindex_redactions(user, users_get, ds_intid):
