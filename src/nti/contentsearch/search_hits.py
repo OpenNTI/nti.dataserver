@@ -25,7 +25,7 @@ from nti.contentfragments import interfaces as frg_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
-from nti.mimetype import mimetype
+from nti.mimetype.mimetype import nti_mimetype_from_object
 
 from . import common
 from . import content_utils
@@ -33,9 +33,11 @@ from . import discriminators
 from . import interfaces as search_interfaces
 
 from .constants import (title_)
-from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE, SNIPPET, HIT, ID, CONTENT, SCORE, OID,
-						POST, MIME_TYPE, VIDEO_ID, BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT, VIDEO_TRANSCRIPT_MIME_TYPE,
-					 	START_MILLISECS, END_MILLISECS, NTI_CARD, NTI_CARD_MIME_TYPE, TITLE, HREF, TARGET_NTIID)
+from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
+						SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE, VIDEO_ID,
+						BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT, NTI_CARD, TITLE, HREF,
+						VIDEO_TRANSCRIPT_MIME_TYPE, START_MILLISECS, END_MILLISECS,
+						NTI_CARD_MIME_TYPE, TARGET_NTIID)
 
 def get_hit_id(obj):
 	if nti_interfaces.IModeledContent.providedBy(obj):
@@ -58,7 +60,7 @@ class _BaseSearchHit(dict):
 		self[CLASS] = HIT
 		self[SCORE] = score
 		self[TYPE] = original.__class__.__name__
-		self[MIME_TYPE] = mimetype.nti_mimetype_from_object(original, use_class=False) or u''
+		self[MIME_TYPE] = nti_mimetype_from_object(original, False) or u''
 
 	def get_query(self):
 		return self._query
@@ -100,7 +102,8 @@ class _SearchHit(_BaseSearchHit):
 	@classmethod
 	def get_snippet(cls, adpated):
 		text = cls.get_field(adpated, 'get_content') or u''
-		text = component.getAdapter(text, frg_interfaces.IPlainTextContentFragment, name='text')
+		text = component.getAdapter(text,
+									frg_interfaces.IPlainTextContentFragment, name='text')
 		return text
 
 	@classmethod
@@ -318,7 +321,8 @@ class _LastModifiedSearchHitComparator(_CallableComparator):
 		return cls.compare_lm(a, b)
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
-class _TypeSearchHitComparator(_ScoreSearchHitComparator, _LastModifiedSearchHitComparator):
+class _TypeSearchHitComparator(_ScoreSearchHitComparator,
+							   _LastModifiedSearchHitComparator):
 
 	@classmethod
 	def compare_type(cls, a, b):
@@ -387,7 +391,7 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 		if search_interfaces.ISearchHit.providedBy(item):
 			result = item.get(NTIID, None)
 		elif search_interfaces.IIndexHit.providedBy(item):
-			adapted = component.queryAdapter(item.obj, search_interfaces.IContainerIDResolver)
+			adapted = search_interfaces.IContainerIDResolver(item.obj, None)
 			result = adapted.get_containerId() if adapted else None
 		else:
 			result = None
@@ -407,7 +411,8 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 		if result == 0:
 			result = cls.compare_type(a, b)
 
-		# compare scores. Score comparation at the moment only make sense within the same types
-		# when we go to a unified index this we no longer need to compare the types
+		# compare scores. Score comparation at the moment only make sense within
+		# the same types  when we go to a unified index this we no longer need to
+		# compare the types
 		result = cls.compare_score(a, b) if result == 0 else result
 		return result
