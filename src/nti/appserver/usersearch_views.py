@@ -244,7 +244,7 @@ def _authenticated_search( remote_user, dataserver, search_term ):
 
 	return result
 
-def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains, fl_only=False, ignore_fl=False ):
+def _search_scope_to_remote_user( remote_user, search_term, op=unicode.startswith, fl_only=False, ignore_fl=False ):
 	"""
 
 	.. note:: This should be an extension point for new
@@ -253,8 +253,13 @@ def _search_scope_to_remote_user( remote_user, search_term, op=operator.contains
 
 	:param remote_user: The active User object.
 	:param search_term: The (lowercase) search string.
+	:keyword op: A callable of two string objects, a username to examine
+		and the search term. This means it can be something like :func:`operator.contains`
+		to do a partial substring match, or :func:`operator.eq` to do an equality
+		check. The default is :func:`unicode.startswith` to do a prefix
+		match.
 
-	:return: A set of matching objects, if any.
+	:return: A :class:`set` of matching objects, if any.
 	"""
 	result = set()
 	def check_entity( x ):
