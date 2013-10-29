@@ -17,7 +17,7 @@ import functools
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
-from . import _discriminators
+from . import discriminators
 from . import _redis_indexstore
 from . import interfaces as search_interfaces
 
@@ -25,7 +25,7 @@ from . import interfaces as search_interfaces
 class _RepozeStorageService(_redis_indexstore._RedisStorageService):
 
 	def index_content(self, docid, username):
-		obj = _discriminators.query_object(int(docid))
+		obj = discriminators.query_object(int(docid))
 		entity = users.Entity.get_entity(username)
 		um = search_interfaces.IRepozeEntityIndexManager(entity, None)
 		if obj is not None and um is not None:
@@ -33,7 +33,7 @@ class _RepozeStorageService(_redis_indexstore._RedisStorageService):
 		return False
 
 	def update_content(self, docid, username):
-		obj = _discriminators.query_object(int(docid))
+		obj = discriminators.query_object(int(docid))
 		entity = users.Entity.get_entity(username)
 		um = search_interfaces.IRepozeEntityIndexManager(entity, None)
 		if obj is not None and um is not None:

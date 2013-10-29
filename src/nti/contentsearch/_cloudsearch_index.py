@@ -20,9 +20,9 @@ from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
 from nti.chatserver import interfaces as chat_interfaces
 
+from . import discriminators
 from .common import get_type_name
 from . import interfaces as search_interfaces
-from . import _discriminators as discriminators
 from . import _cloudsearch_interfaces as cloudsearch_interfaces
 
 from .constants import (CLASS, CREATOR, last_modified_fields, ntiid_fields, INTID, container_id_fields)

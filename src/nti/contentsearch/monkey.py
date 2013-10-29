@@ -59,8 +59,12 @@ def patch_zopyx():
 		raise
 
 def patch_imports():
+	# TODO: can we use zope.deferedimport
 	from . import content_utils
 	sys.modules["nti.contentsearch._content_utils"] = content_utils
+
+	from . import discriminators
+	sys.modules["nti.contentsearch._discriminators"] = discriminators
 
 def patch():
 	patch_zopyx()

@@ -22,9 +22,9 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.ntiids import ntiids
 
 from . import common
+from . import discriminators
 from . import get_indexable_types
 from . import interfaces as search_interfaces
-from . import _discriminators as discriminators
 
 _event_types = { nti_interfaces.SC_CREATED: 'index_user_content',
 				 nti_interfaces.SC_SHARED:  'index_user_content',

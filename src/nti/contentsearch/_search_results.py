@@ -4,7 +4,7 @@ Search results
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import six
@@ -20,9 +20,9 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.utils.sort import isorted
 
+from . import discriminators
 from .common import get_type_name
 from . import interfaces as search_interfaces
-from . import _discriminators as discriminators
 
 @interface.implementer(search_interfaces.IIndexHit)
 class IndexHit(zcontained.Contained):
