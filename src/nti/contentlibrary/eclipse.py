@@ -153,9 +153,16 @@ def EclipseContentPackage( toc_entry,
 		content_package.courseName = courseName
 		content_package.courseTitle = courseTitle
 
+		# The newest renderings have an <info src="path_to_file.json" />
+		# node in them. But older renderings may also have a file
+		# just in their root called "course_info.json" (which in
+		# practice is also always the value of info[@src].
+		# Take whatever we can get.
 		info = course.xpath('info')
 		if info: # sigh
 			content_package.courseInfoSrc = info[0].get('src')
+		elif content_package.does_sibling_entry_exist( 'course_info.json' ):
+			content_package.courseInfoSrc = 'course_info.json'
 
 
 	if content_package.does_sibling_entry_exist( ARCHIVE_FILENAME ):
