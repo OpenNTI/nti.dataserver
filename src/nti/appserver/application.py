@@ -232,10 +232,6 @@ def _library_settings(pyramid_config, server, library):
 
 	return library
 
-def _external_view_settings(pyramid_config):
-	for _, mapper in component.getUtilitiesFor(app_interfaces.IViewConfigurator):
-		mapper.add_views(pyramid_config)
-
 def _ugd_odata_views(pyramid_config):
 
 	_route_names = ('objects.generic.traversal',)
@@ -649,10 +645,6 @@ def createApplication( http_port,
 	_enclosure_views(pyramid_config)
 
 	_patching_restore_views(pyramid_config)
-
-	if not os.getenv('DATASERVER_DIR_IS_BUILDOUT'): # XXX Temp hack
-		warnings.warn("External IViewConfigurators are deprecated and not used in buildouts; use pyramid.zcml")
-		_external_view_settings(pyramid_config)
 
 	# Now load the registered pyramid slugs from buildout
 	# XXX: HACK: The easiest way to do this, without
