@@ -24,14 +24,14 @@ from nti.externalization.internalization import update_from_external_object
 
 from ..common import get_type_name
 from .._whoosh_types import _BookContent
-from .._search_hits import _NoteSearchHit
-from .._search_hits import get_search_hit
+from ..search_hits import _NoteSearchHit
+from ..search_hits import get_search_hit
+from ..search_hits import _HighlightSearchHit
+from ..search_hits import _RedactionSearchHit
 from .. import interfaces as search_interfaces
-from .._search_hits import _HighlightSearchHit
-from .._search_hits import _RedactionSearchHit
-from .._search_hits import _WhooshBookSearchHit
-from .._search_hits import _MessageInfoSearchHit
-from .._search_hits import _RelevanceSearchHitComparator as RSHC
+from ..search_hits import _WhooshBookSearchHit
+from ..search_hits import _MessageInfoSearchHit
+from ..search_hits import _RelevanceSearchHitComparator as RSHC
 
 from ..constants import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET, ITEMS)
 

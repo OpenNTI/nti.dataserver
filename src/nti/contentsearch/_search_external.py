@@ -24,7 +24,7 @@ from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceO
 
 from nti.dataserver.links import Link
 
-from . import _search_hits
+from . import search_hits
 from . import _search_highlights
 from . import interfaces as search_interfaces
 
@@ -219,7 +219,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			score = hit.score
 			query = hit.query
 
-			hit = _search_hits.get_search_hit(item, score, query)
+			hit = search_hits.get_search_hit(item, score, query)
 			if hit.oid in self.seen:
 				continue
 

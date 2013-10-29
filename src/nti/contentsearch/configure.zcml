@@ -18,48 +18,48 @@
 
 	<!-- Externalization -->
 
-	<adapter factory="._search_hits._SearchHit"
+	<adapter factory=".search_hits._SearchHit"
 			 for="nti.dataserver.interfaces.IModeledContent"
 			 provides=".interfaces.ISearchHit" />
 
-	<adapter factory="._search_hits._HighlightSearchHit"
+	<adapter factory=".search_hits._HighlightSearchHit"
 			 for="nti.dataserver.interfaces.IHighlight"
 			 provides=".interfaces.IHighlightSearchHit" />
 
-	<adapter factory="._search_hits._NoteSearchHit"
+	<adapter factory=".search_hits._NoteSearchHit"
 			 for="nti.dataserver.interfaces.INote"
 			 provides=".interfaces.INoteSearchHit" />
 
-	<adapter factory="._search_hits._MessageInfoSearchHit"
+	<adapter factory=".search_hits._MessageInfoSearchHit"
 			 for="nti.chatserver.interfaces.IMessageInfo"
 			 provides=".interfaces.IMessageInfoSearchHit" />
 
-	<adapter factory="._search_hits._RedactionSearchHit"
+	<adapter factory=".search_hits._RedactionSearchHit"
 			 for="nti.dataserver.interfaces.IRedaction"
 			 provides=".interfaces.IRedactionSearchHit" />
 
-	<adapter factory="._search_hits._PostSearchHit"
+	<adapter factory=".search_hits._PostSearchHit"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
 			 provides=".interfaces.IPostSearchHit" />
 
-	<adapter factory="._search_hits._WhooshBookSearchHit"
+	<adapter factory=".search_hits._WhooshBookSearchHit"
 			 for=".interfaces.IWhooshBookContent"
 			 provides=".interfaces.IWhooshBookSearchHit" />
 
-	<adapter factory="._search_hits._WhooshVideoTranscriptSearchHit"
+	<adapter factory=".search_hits._WhooshVideoTranscriptSearchHit"
 			 for=".interfaces.IWhooshVideoTranscriptContent"
 			 provides=".interfaces.IWhooshVideoTranscriptSearchHit" />
 	
-	<adapter factory="._search_hits._WhooshNTICardSearchHit"
+	<adapter factory=".search_hits._WhooshNTICardSearchHit"
 			 for=".interfaces.IWhooshNTICardContent"
 			 provides=".interfaces.IWhooshNTICardSearchHit" />
 			 		 
 	<adapter factory="._search_external._SearchHitExternalizer" />
 
-	<utility factory="._search_hits._TypeSearchHitComparator" name="type" />
-	<utility factory="._search_hits._ScoreSearchHitComparator" name="score" />
-	<utility factory="._search_hits._RelevanceSearchHitComparator" name="relevance" />
-	<utility factory="._search_hits._LastModifiedSearchHitComparator" name="last_modified" />
+	<utility factory=".search_hits._TypeSearchHitComparator" name="type" />
+	<utility factory=".search_hits._ScoreSearchHitComparator" name="score" />
+	<utility factory=".search_hits._RelevanceSearchHitComparator" name="relevance" />
+	<utility factory=".search_hits._LastModifiedSearchHitComparator" name="last_modified" />
 
 	<adapter factory="._search_external._SearchResultsExternalizer" />
 	<adapter factory="._search_external._SuggestResultsExternalizer" />
