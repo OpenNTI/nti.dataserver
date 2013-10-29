@@ -91,17 +91,17 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			member = res.json_body['Items'][0]
 			assert_that( member, has_entry( 'Username', dfl_ntiid ) )
 
-		# UserSearch does substring match, resolve is exact
+		# UserSearch does prefix match, resolve is exact
 		for t, cnt in (("UserSearch",1), ('ResolveUser',0) ):
 			path = '/dataserver2/%s/Friend' % t
 			res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
 			assert_that( res.json_body['Items'], has_length( cnt ) )
 
-		# The substring match of usersearch can find the community as well
-		path = '/dataserver2/UserSearch/e'
+		# The prefix match of usersearch can find the community as well
+		path = '/dataserver2/UserSearch/f'
 		res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
-		assert_that( res.json_body['Items'], has_length( 2 ) )
-		assert_that( res.json_body['Items'], has_items( has_entry( 'alias', 'Public' ),
+		assert_that( res.json_body['Items'], has_length( 1 ) )
+		assert_that( res.json_body['Items'], has_items(
 														has_entry( 'alias', 'Friends' ) ) )
 
 	@WithSharedApplicationMockDS
@@ -234,10 +234,16 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		# Getting a 'Class' value back here really confuses the iPad
 		assert_that( res.json_body, does_not( has_key( 'Class' ) ) )
 
-		# We can search for the community
-		path = '/dataserver2/UserSearch/Community'
+		# We can search for the community by prefix...
+		path = '/dataserver2/UserSearch/TheComm'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 1 ) )
+
+		# ... but not by substring
+		path = '/dataserver2/UserSearch/Comm'
+		res = testapp.get( path, extra_environ=self._make_extra_environ())
+		assert_that( res.json_body['Items'], has_length( 0 ) )
+
 
 		# The user that's not in the community cannot
 		res = testapp.get( path, extra_environ=self._make_extra_environ(username=u3.username))
