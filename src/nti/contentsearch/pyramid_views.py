@@ -19,8 +19,8 @@ from pyramid.security import authenticated_userid
 
 from . import common
 from . import constants
+from . import content_utils
 from . import _search_query as search_query
-from . import _content_utils as content_utils
 from . import interfaces as search_interfaces
 
 class BaseView(object):

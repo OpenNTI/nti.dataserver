@@ -7,7 +7,7 @@ __docformat__ = "restructuredtext en"
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-from .._content_utils import get_content
+from ..content_utils import get_content
 
 from .._search_highlights import word_fragments_highlight
 

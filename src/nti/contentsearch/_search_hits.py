@@ -28,7 +28,7 @@ from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 from nti.mimetype import mimetype
 
 from . import common
-from . import _content_utils
+from . import content_utils
 from . import interfaces as search_interfaces
 from . import _discriminators as discriminators
 
@@ -375,9 +375,9 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 	@classmethod
 	def get_ntiid_path(cls, item):
 		if isinstance(item, six.string_types):
-			result = _content_utils.get_ntiid_path(item)
+			result = content_utils.get_ntiid_path(item)
 		elif search_interfaces.IBaseHit.providedBy(item):
-			result = _content_utils.get_ntiid_path(item.query.location)
+			result = content_utils.get_ntiid_path(item.query.location)
 		else:
 			result = ()
 		return result
@@ -397,8 +397,8 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 	def compare(cls, a, b):
 		# compare location
 		location_path = cls.get_ntiid_path(a)
-		a_path = _content_utils.get_ntiid_path(cls.get_containerId(a))
-		b_path = _content_utils.get_ntiid_path(cls.get_containerId(b))
+		a_path = content_utils.get_ntiid_path(cls.get_containerId(a))
+		b_path = content_utils.get_ntiid_path(cls.get_containerId(b))
 		a_score_path = cls.score_path(location_path, a_path)
 		b_score_path = cls.score_path(location_path, b_path)
 		result = cmp(b_score_path, a_score_path)
