@@ -26,7 +26,7 @@ from . import constants
 from . import _repoze_index
 from . import _repoze_query
 from . import _search_query
-from . import _search_results
+from . import search_results
 from . import _search_indexmanager
 from . import interfaces as search_interfaces
 from . import zopyxtxng3_interfaces as zopyx_search_interfaces
@@ -89,7 +89,7 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 		for docid, score in doc_weights.items():
 			obj = self.get_object(docid)  # make sure we have access and cache it
 			if obj is not None:
-				results.add(_search_results.IndexHit(docid, score))
+				results.add(search_results.IndexHit(docid, score))
 
 	@metricmethod
 	def _do_catalog_query(self, catalog, qo, type_name):
@@ -101,7 +101,7 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 		return result
 
 	def _do_search(self, qo, searchOn=(), creator_method=None):
-		creator_method = creator_method or _search_results.empty_search_results
+		creator_method = creator_method or search_results.empty_search_results
 		results = creator_method(qo)
 		if qo.is_empty: return results
 
@@ -122,7 +122,7 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 	def suggest(self, query, *args, **kwargs):
 		qo = _search_query.QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(qo.searchOn)
-		results = _search_results.empty_suggest_results(qo)
+		results = search_results.empty_suggest_results(qo)
 		if qo.is_empty: return results
 
 		threshold = qo.threshold
@@ -131,7 +131,9 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 			catalog = self.get_catalog(type_name)
 			textfield = catalog.get(constants.content_, None)
 			if zopyx_search_interfaces.ICatalogTextIndexNG3.providedBy(textfield):
-				words_t = textfield.suggest(term=qo.term, threshold=threshold, prefix=prefix)
+				words_t = textfield.suggest(term=qo.term,
+											threshold=threshold,
+											prefix=prefix)
 				results.add(map(lambda t: t[0], words_t))
 
 		return results
@@ -139,10 +141,13 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
 		queryobject = _search_query.QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(queryobject.searchOn)
-		if ' ' in queryobject.term or queryobject.is_prefix_search or queryobject.is_phrase_search:
-			results = self._do_search(queryobject,
-									  searchOn,
-									  creator_method=_search_results.empty_suggest_and_search_results)
+		if 	' ' in queryobject.term or queryobject.is_prefix_search or \
+			queryobject.is_phrase_search:
+			results = \
+				self._do_search(
+						queryobject,
+						searchOn,
+						creator_method=search_results.empty_suggest_and_search_results)
 		else:
 			result = self.suggest(queryobject, searchOn=searchOn)
 			suggestions = result.suggestions
@@ -150,9 +155,10 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 				suggestions = rank_words(query.term, suggestions)
 				queryobject.term = suggestions[0]
 
-			results = self._do_search(queryobject,
-									  searchOn,
-									  creator_method=_search_results.empty_suggest_and_search_results)
+			results = \
+				self._do_search(queryobject,
+						  searchOn,
+						  creator_method=search_results.empty_suggest_and_search_results)
 			results.add_suggestions(suggestions)
 
 		return results

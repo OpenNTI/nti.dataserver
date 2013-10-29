@@ -20,8 +20,8 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.utils.sort import isorted
 
+from . import common
 from . import discriminators
-from .common import get_type_name
 from . import interfaces as search_interfaces
 
 @interface.implementer(search_interfaces.IIndexHit)
@@ -96,7 +96,7 @@ class IndexHitMetaData(object):
 		self._last_modified = max(self._last_modified, last_modified or 0)
 
 		# type count
-		type_name = get_type_name(selected)
+		type_name = common.get_type_name(selected)
 		self._type_count[type_name] = self._type_count[type_name] + 1
 
 	def __iadd__(self, other):
@@ -156,7 +156,8 @@ class _BaseSearchResults(zcontained.Contained):
 	def __iter__(self):
 		return iter(self.hits)
 
-@interface.implementer(search_interfaces.ISearchResults, zmime_interfaces.IContentTypeAware)
+@interface.implementer(search_interfaces.ISearchResults,
+					   zmime_interfaces.IContentTypeAware)
 class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
@@ -202,7 +203,8 @@ class _SearchResults(_BaseSearchResults):
 
 	def sort(self, sortOn=None):
 		sortOn = sortOn or self.query.sortOn
-		comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortOn)
+		comparator = component.queryUtility(search_interfaces.ISearchHitComparator,
+											name=sortOn)
 		if comparator is not None:
 			self.sorted = True
 			reverse = not self.query.is_descending_sort_order
@@ -218,7 +220,8 @@ class _SearchResults(_BaseSearchResults):
 
 		return self
 
-@interface.implementer(search_interfaces.ISuggestResults, zmime_interfaces.IContentTypeAware)
+@interface.implementer(search_interfaces.ISuggestResults,
+					   zmime_interfaces.IContentTypeAware)
 class _SuggestResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
@@ -237,7 +240,8 @@ class _SuggestResults(_BaseSearchResults):
 	suggestions = hits
 
 	def add_suggestions(self, items):
-		items = [items] if isinstance(items, six.string_types) or not isinstance(items, collections.Iterable) else items
+		items = [items] if isinstance(items, six.string_types) or \
+						   not isinstance(items, collections.Iterable) else items
 		for item in items or ():
 			if isinstance(item, six.string_types):
 				self._words.add(unicode(item))
@@ -298,7 +302,8 @@ class _SuggestAndSearchResultsCreator(object):
 # sort
 
 def sort_hits(hits, reverse=False, sortOn=None):
-	comparator = component.queryUtility(search_interfaces.ISearchHitComparator, name=sortOn) if sortOn else None
+	comparator = component.queryUtility(search_interfaces.ISearchHitComparator,
+										name=sortOn) if sortOn else None
 	if comparator is not None:
 		if reverse:
 			comparator = lambda x, y: comparator(y, x)
