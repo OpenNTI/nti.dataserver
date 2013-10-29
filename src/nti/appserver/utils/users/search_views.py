@@ -22,9 +22,9 @@ import ZODB
 
 from nti.contentsearch import common
 from nti.contentsearch import constants
+from nti.contentsearch import discriminators
 from nti.contentsearch import utils as search_utils
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch import _discriminators as discriminators
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
