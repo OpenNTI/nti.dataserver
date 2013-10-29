@@ -273,6 +273,17 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.users import index as user_index
 from nti.dataserver.users.entity import Entity
 from zope.catalog.interfaces import ICatalog
+from zope.intid.interfaces import IIntIds
+from nameparser import HumanName
+
+def _make_min_max_btree_range( search_term ):
+	min_inclusive = search_term # start here
+	# Get all the keys up to the next one that is alphabetically after this
+	# one....note because it is a range we need to increment the *last*
+	# character in the prefix
+	max_exclusive = search_term[0:-1] + unichr(ord(search_term[-1]) + 1)
+	return min_inclusive, max_exclusive
+
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
 class _UsernameSearchPolicy(object):
@@ -298,11 +309,7 @@ class _UsernameSearchPolicy(object):
 		# It turns out that searching on contains for the UID is not very helpful.
 		# Instead, we make it a prefix match, which we can do with
 		# btrees: btrees.keys( [min,max) )
-		min_inclusive = search_term # start here
-		# Get all the keys up to the next one that is alphabetically after this
-		# one....note because it is a range we need to increment the *last*
-		# character in the prefix
-		max_exclusive = search_term[0:-1] + unichr(ord(search_term[-1]) + 1)
+		min_inclusive, max_exclusive = _make_min_max_btree_range( search_term )
 		__traceback_info__ = _users
 		for entity_name in _users.iterkeys(min_inclusive,max_exclusive):
 			__traceback_info__ = entity_name, search_term, min_inclusive, max_exclusive
@@ -329,21 +336,65 @@ class _AliasUserSearchPolicy(object):
 	Something that searches on the alias.
 	"""
 
+	#: Define here the names of the indexes in the user catalog
+	#: to search over. These indexes should be case-normalizing indexes
+	#: that store their keys in lower case (as the search term is
+	#: provided that way). You must define a matching `_iterindexitems_NAME`
+	#: method to determine the keys to get; each key will be treated
+	#: as a prefix match, and we assume the prefix match has already
+	#: been done.
 	_index_names = ('alias',)
 
 	def __init__( self, context ):
 		self.context = context
 
+	def _iterindexitems_alias(self, search_term, index):
+		"""
+		Return an iterable of the index keys we want to check,
+		given the search term.
+
+		For alias, it makes sense to only search by prefix (not substring)
+		like we do for usernames. This lets us use the same optimization to elide
+		keys outside the prefix range.
+		"""
+		# Each FieldIndex defines a `_fwd_index` private member
+		# that is an OOBTree mapping indexed values to docids.
+		# In order to know the full set of values in the system, we inspect
+		# this index.
+		return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ) )
+
+
 	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy, _result=None ):
 		matches = _result or set()
+
 		ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
-		for ix in self._index_names:
-			_ix = ent_catalog[ix]
-			for key in _ix._fwd_index.iterkeys(): # TODO: Private field
-				if search_term in key:
-					matches.update( (x for x in ent_catalog.searchResults( **{ix: (key,key)} ) if provided( x ) ) )
-					# TODO: For the multiple-index case, we could be more efficient by unioning the underlying
-					# intid sets before resolving objects. Not sure how much difference that makes
+		# We accumulate intermediate results in their intid format.
+		# Although each given object should show up in each index only
+		# once, we may be working with multiple indices that all match
+		# the same object, and we may have various profile versions
+		# around, when ultimately we only want the entity itself.
+		# Building a set of ints is in optimized C code and is much
+		# faster than a set of arbitrary objects using python
+		# comparisons.
+		matching_intids = ent_catalog.family.IF.TreeSet()
+
+		for index_name in self._index_names:
+			index = ent_catalog[index_name]
+			items = getattr( self, '_iterindexitems_' + index_name )( search_term, index )
+			for key, intids in items:
+				assert key.startswith(search_term)
+				# Yes, we like the things for this key. Add the ids of the
+				# things mapped to it to our set of matches
+				matching_intids = ent_catalog.family.IF.union( matching_intids, intids )
+
+		if matching_intids:
+			# Ok, resolve the intids to actual objects
+			id_util = component.getUtility(IIntIds)
+			for intid in matching_intids:
+				match = id_util.getObject( intid )
+				if provided( match ):
+					matches.add( match )
+
 		return matches
 
 
@@ -354,6 +405,20 @@ class _RealnameAliasUserSearchPolicy(_AliasUserSearchPolicy):
 	"""
 
 	_index_names = _AliasUserSearchPolicy._index_names + ('realname',)
+
+	def _iterindexitems_realname(self, search_term, index):
+		# For realnames, we want to do a prefix match on each identifiable
+		# component.
+		# Unfortunately, since we don't index each component separately,
+		# this means we must do a complete iteration of the index.
+		# We could parse these with nameparser, but probably
+		# simply splitting them is good enough
+		for basic_name, items in index._fwd_index.iteritems():
+			for part in basic_name.split():
+				if part and len(part) >= 3 and part.startswith( search_term ):
+					yield part, items
+					break
+
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
 class _ComprehensiveUserSearchPolicy(object):

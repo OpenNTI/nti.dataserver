@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 41
+generation = 42
 
 from zope.generations.generations import SchemaManager
 
@@ -146,7 +146,7 @@ def install_intids( dataserver_folder ):
 
 def install_user_catalog( dataserver_folder, intids ):
 	lsm = dataserver_folder.getSiteManager()
-	catalog = Catalog()
+	catalog = Catalog(family=BTrees.family64)
 
 	catalog.__name__ = user_index.CATALOG_NAME
 	catalog.__parent__ = dataserver_folder
