@@ -9,17 +9,19 @@
 	
 	<include file="configure_whoosh_content.zcml" />
 	
-	<utility factory="._whoosh_query._DefaultNoteWhooshQueryParser" name="note" />
-	<utility factory="._whoosh_query._DefaultPostWhooshQueryParser" name="post" />
-	<utility factory="._whoosh_query._DefaultHighlightWhooshQueryParser" name="highlight" />
-	<utility factory="._whoosh_query._DefaultRedactionWhooshQueryParser" name="redaction" />
-	<utility factory="._whoosh_query._DefaultMessageinfoWhooshQueryParser" name="messageinfo" />
+	<configure zcml:condition="have devmode">
+		<utility factory="._whoosh_query._DefaultNoteWhooshQueryParser" name="note" />
+		<utility factory="._whoosh_query._DefaultPostWhooshQueryParser" name="post" />
+		<utility factory="._whoosh_query._DefaultHighlightWhooshQueryParser" name="highlight" />
+		<utility factory="._whoosh_query._DefaultRedactionWhooshQueryParser" name="redaction" />
+		<utility factory="._whoosh_query._DefaultMessageinfoWhooshQueryParser" name="messageinfo" />
+		
+		<utility factory="._whoosh_indexstorage._create_default_whoosh_storage"
+				 provides=".interfaces.IWhooshIndexStorage" />
 	
-	<utility factory="._whoosh_indexstorage._create_default_whoosh_storage"
-			 provides=".interfaces.IWhooshIndexStorage" />
-
-	<adapter factory="._whoosh_adapter._WhooshEntityIndexManagerFactory"
-			 for="nti.dataserver.interfaces.IEntity"
-			 provides=".interfaces.IWhooshEntityIndexManager" />
-
+		<adapter factory="._whoosh_adapter._WhooshEntityIndexManagerFactory"
+				 for="nti.dataserver.interfaces.IEntity"
+				 provides=".interfaces.IWhooshEntityIndexManager" />
+	</configure>
+	
 </configure>
