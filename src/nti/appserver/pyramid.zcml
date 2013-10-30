@@ -4,6 +4,8 @@
 		   xmlns:pyramid="http://pylonshq.com/pyramid">
 	<include package="pyramid_zcml" />
 
+	<include package="zope.component" file="meta.zcml" />
+
 	<!-- The dictionary -->
 	<pyramid:route name="dictionary.word"
 				   pattern="/dictionary/{word}"
@@ -24,7 +26,6 @@
 					  route_name="stacktraces" />
 	</configure>
 
-	<!-- User search/resolution -->
 	<!--
 		 NOTE: The order of registration matters,
 		 especially since we are mixing traversal with pattern dispatch.
@@ -33,21 +34,10 @@
 		 no more routes can be added beneath it.
 	-->
 	<!--
-		TODO: The named routes beneath /dataserver2/
-		should become IPathAdapters. That way we don't
-		have the above problem, plus it's more flexible.
+		TODO: The named routes beneath /dataserver2/ should become
+		IPathAdapters or named views. That way we don't have the above
+		problem, plus it's more flexible and distributed.
 	-->
-	<pyramid:route name='search.users'
-				   pattern='/dataserver2/UserSearch/{term:.*}'
-				   traverse='/dataserver2' />
-
-	<pyramid:route name='search.resolve_user'
-				   pattern='/dataserver2/ResolveUser/{term:.*}'
-				   traverse='/dataserver2' />
-
-	<pyramid:route name='search.resolve_users'
-				   pattern='/dataserver2/ResolveUsers'
-				   traverse='/dataserver2' />
 
 	<!-- Normal Traversal -->
 	<pyramid:route name='objects.generic.traversal'

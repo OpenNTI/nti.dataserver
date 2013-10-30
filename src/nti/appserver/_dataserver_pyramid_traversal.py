@@ -299,7 +299,6 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 					 					name=remaining_path[0] ) is None:
 				raise loc_interfaces.LocationError( key )
 
-
 			# OK, assume a new container.
 
 			# NOTE: This should be a LocationError as well. But it's
@@ -439,6 +438,8 @@ class adapter_request(adapter):
 		__traceback_info__ = result, self.context, result.__parent__, result.__name__
 		assert nti_interfaces.IZContained.providedBy( result )
 		assert result.__parent__ is not None
+		if result.__name__ is None:
+			result.__name__ = name
 		assert result.__name__ == name
 
 		return result

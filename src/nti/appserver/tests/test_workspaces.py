@@ -2,10 +2,18 @@
 # unittests have too many methods for pylint. pylint can suck it.
 #pylint: disable=R0904
 
-from hamcrest import (assert_that, is_, none,
-					  has_entry, has_length, has_item,
-					  greater_than_or_equal_to, is_not,
-					  all_of, is_in)
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import has_item
+from hamcrest import has_items
+from hamcrest import greater_than_or_equal_to
+from hamcrest import is_not
+from hamcrest import all_of
+from hamcrest import is_in
+
 from hamcrest import has_property
 from hamcrest import has_value
 from hamcrest import has_entries
@@ -236,8 +244,8 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 		assert_that( ext_object, has_entry( 'CapabilityList', has_item( u'nti.platform.p2p.sharing' ) ) )
 		# The global workspace should have a Link
 		assert_that( ext_object['Items'][1], has_entry( 'Title', 'Global' ) )
-		assert_that( ext_object['Items'][1], has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/UserSearch' ) ) ) )
-
+		# Can't check links here, that comes from application configuration.
+		# See test_usersearch.
 		# And the User resource should have a Pages collection that also has
 		# a link--this one pre-rendered
 		user_ws = ext_object['Items'][0]
