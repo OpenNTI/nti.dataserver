@@ -350,18 +350,17 @@ class _AliasUserSearchPolicy(object):
 
 	def _iterindexitems_alias(self, search_term, index):
 		"""
-		Return an iterable of the index keys we want to check,
+		Return an iterable of tuples, (matching term, [intids])
 		given the search term.
 
 		For alias, it makes sense to only search by prefix (not substring)
 		like we do for usernames. This lets us use the same optimization to elide
 		keys outside the prefix range.
 		"""
-		# Each FieldIndex defines a `_fwd_index` private member
-		# that is an OOBTree mapping indexed values to docids.
-		# In order to know the full set of values in the system, we inspect
-		# this index.
-		return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ) )
+		# We can avoid using the _fwd_index by querying the alias
+		# index with its intended 'apply' method
+		return ( (search_term, index.apply( _make_min_max_btree_range( search_term ) )), )
+		#return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ) )
 
 
 	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy, _result=None ):
@@ -372,11 +371,15 @@ class _AliasUserSearchPolicy(object):
 		# Although each given object should show up in each index only
 		# once, we may be working with multiple indices that all match
 		# the same object, and we may have various profile versions
-		# around, when ultimately we only want the entity itself.
+		# around (though we SHOULD NOT have those in the index),
+		# when ultimately we only want the entity itself.
 		# Building a set of ints is in optimized C code and is much
 		# faster than a set of arbitrary objects using python
 		# comparisons.
-		matching_intids = ent_catalog.family.IF.TreeSet()
+		# Anecdotally, using a single call to multiunion is even faster
+		# (according to repoze.catalog) and paves the way to using intid sets
+		# through the entire query process
+		matching_intid_sets = list()
 
 		for index_name in self._index_names:
 			index = ent_catalog[index_name]
@@ -385,9 +388,10 @@ class _AliasUserSearchPolicy(object):
 				assert key.startswith(search_term)
 				# Yes, we like the things for this key. Add the ids of the
 				# things mapped to it to our set of matches
-				matching_intids = ent_catalog.family.IF.union( matching_intids, intids )
+				matching_intid_sets.append( intids )
 
-		if matching_intids:
+		if matching_intid_sets:
+			matching_intids = ent_catalog.family.IF.multiunion( matching_intid_sets )
 			# Ok, resolve the intids to actual objects
 			id_util = component.getUtility(IIntIds)
 			for intid in matching_intids:
@@ -404,20 +408,18 @@ class _RealnameAliasUserSearchPolicy(_AliasUserSearchPolicy):
 	Something that searches on the realname and alias.
 	"""
 
-	_index_names = _AliasUserSearchPolicy._index_names + ('realname',)
+	_index_names = _AliasUserSearchPolicy._index_names + ('realname_parts',)
 
-	def _iterindexitems_realname(self, search_term, index):
+	def _iterindexitems_realname_parts(self, search_term, index):
 		# For realnames, we want to do a prefix match on each identifiable
 		# component.
-		# Unfortunately, since we don't index each component separately,
-		# this means we must do a complete iteration of the index.
-		# We could parse these with nameparser, but probably
-		# simply splitting them is good enough
-		for basic_name, items in index._fwd_index.iteritems():
-			for part in basic_name.split():
-				if part and len(part) >= 3 and part.startswith( search_term ):
-					yield part, items
-					break
+		#
+		# This can be done manually by iterating the realname index keys
+		# and splitting each one, but we can also use a keyword index
+		# to maintain it for us, which lets us take advantage of prefix
+		# ranges (though this is not directly supported in the index
+		# interface).
+		return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ) )
 
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)

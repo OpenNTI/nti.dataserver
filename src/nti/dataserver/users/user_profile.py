@@ -18,6 +18,7 @@ import zope.annotation
 
 import persistent
 import hashlib
+import nameparser
 
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField
 
@@ -83,6 +84,14 @@ class FriendlyNamed(persistent.Persistent):
 	@property
 	def context(self):
 		return self.__parent__
+
+	def get_searchable_realname_parts(self):
+		# This implementation is quite naive, returning
+		# first middle and last if they are not blank. How does
+		# this handle more complex naming scenarios?
+		if self.realname:
+			return [x for x in nameparser.HumanName(self.realname)[1:4] if x]
+		# Returning none keeps the entity out of the index
 
 class _AvatarUrlProperty(urlproperty.UrlProperty):
 	"""
