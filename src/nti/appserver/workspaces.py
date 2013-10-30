@@ -291,7 +291,10 @@ class GlobalWorkspace(object):
 		super(GlobalWorkspace,self).__init__()
 		if parent:
 			self.__parent__ = parent
-		# TODO: Hardcoding both these things
+		# TODO: Hardcoding all these things
+		# We can fix it like so:
+		# component.getAdapters( (self.__parent__, request), IPathAdapter )
+		# returns a sequence of ("name", <adapter>)
 		lnks = []
 		for l in ('UserSearch', 'ResolveUser', 'ResolveUsers'):
 			link = links.Link( l, rel=l )
