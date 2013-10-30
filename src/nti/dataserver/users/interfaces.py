@@ -327,6 +327,13 @@ class IFriendlyNamed(Interface):
 		required=False,
 		constraint=checkRealname)
 
+	def get_searchable_realname_parts():
+		"""
+		Return an iterable of the parsed non-empty parts of the realname,
+		excluding such things as title and suffix (things typically not
+		helpful in search results).
+		"""
+
 class IImmutableFriendlyNamed(Interface):
 	"""
 	Apply this to a context object to mark that it should not allow mutation

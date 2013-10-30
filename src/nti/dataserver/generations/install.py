@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 42
+generation = 43
 
 from zope.generations.generations import SchemaManager
 
@@ -35,7 +35,6 @@ import zope.intid
 import zc.intid
 from zope.catalog.interfaces import ICatalog
 from zope.catalog.catalog import Catalog
-from zope.index.topic.index import TopicIndex
 
 
 import z3c.password.interfaces
@@ -158,16 +157,23 @@ def install_user_catalog( dataserver_folder, intids ):
 						 ('contact_email', user_index.ContactEmailIndex),
 						 ('password_recovery_email_hash', user_index.PasswordRecoveryEmailHashIndex),
 						 ('realname', user_index.RealnameIndex),
+						 ('realname_parts', user_index.RealnamePartsIndex),
 						 ('contact_email_recovery_hash', user_index.ContactEmailRecoveryHashIndex)):
 		index = clazz( family=BTrees.family64 )
 		intids.register( index )
-		catalog[name] = index
+		# As a very minor optimization for unit tests, if we
+		# already set the name and parent of the index,
+		# the ObjectAddedEvent won't be fired
+		# when we add the index to the catalog.
+		# ObjectAdded/Removed events *must* fire during evolution,
+		# though.
+		index.__name__ = name; index.__parent__ = catalog; catalog[name] = index
 
-	opt_in_comm_index = TopicIndex( family=BTrees.family64 )
+	opt_in_comm_index = user_index.TopicIndex( family=BTrees.family64 )
 	opt_in_comm_set = user_index.OptInEmailCommunicationFilteredSet( 'opt_in_email_communication', family=BTrees.family64 )
 	opt_in_comm_index.addFilter( opt_in_comm_set )
 	intids.register( opt_in_comm_index )
-	catalog['topics'] = opt_in_comm_index
+	opt_in_comm_index.__name__ = 'topics'; opt_in_comm_index.__parent__ = catalog; catalog['topics'] = opt_in_comm_index
 
 	return catalog
 

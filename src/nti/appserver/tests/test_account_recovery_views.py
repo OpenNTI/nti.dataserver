@@ -95,10 +95,8 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 			user = self._create_user( )
 			user_username = user.username
 			profile = user_interfaces.IUserProfile( user )
-			created( profile ) # fire events for the profile object to get it indexed
 			added( profile )
 			profile.email = 'jason.madden@nextthought.com'
-			modified( profile )
 			modified( user )
 
 		app = TestApp( self.app )
@@ -119,19 +117,15 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 			user = self._create_user( )
 			user_username = user.username
 			profile = user_interfaces.IUserProfile( user )
-			created( profile ) # fire events for the profile object to get it indexed
 			added( profile )
 			profile.email = 'jason.madden@nextthought.com'
-			modified( profile )
 			modified( user )
 
 			user2 = self._create_user( username='other.user@foo.bar' )
 			user2_username = user2.username
 			profile = user_interfaces.IUserProfile( user2 )
-			created( profile ) # fire events for the profile object to get it indexed
 			added( profile )
 			profile.email = 'jason.madden@nextthought.com'
-			modified( profile )
 			modified( user2 )
 
 
@@ -146,7 +140,7 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 		msg = mailer.queue[0]
 
 		assert_that( msg, has_property( 'body' ) )
-		assert_that( decodestring(msg.body), contains_string( user_username ) ) 
+		assert_that( decodestring(msg.body), contains_string( user_username ) )
 		assert_that( decodestring(msg.body), contains_string( user2_username ) )
 
 class TestApplicationPasswordRecovery(SharedApplicationTestBase):
@@ -221,10 +215,8 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 			user = self._create_user( )
 			username = user.username
 			profile = user_interfaces.IUserProfile( user )
-			created( profile ) # Fire events on the profile to get it in the index
 			added( profile )
 			profile.email = 'jason.madden@nextthought.com'
-			modified( profile )
 			modified( user )
 
 
@@ -250,11 +242,8 @@ class TestApplicationPasswordRecovery(SharedApplicationTestBase):
 			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 			username = user.username
 			profile = user_interfaces.IRestrictedUserProfileWithContactEmail( user )
-			created( profile ) # Fire events on the profile to get it in the index
-			added( profile )
 			profile.email = 'jason.madden@nextthought.com'
 			profile.contact_email = 'other.user@nextthought.com'
-			modified( profile )
 			modified( user )
 
 		app = TestApp( self.app )

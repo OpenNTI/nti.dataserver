@@ -16,10 +16,13 @@ from zope import interface
 from nti.dataserver.users import interfaces as user_interfaces
 
 from zope.catalog.field import IFieldIndex
+from zope.catalog.interfaces import ICatalogIndex
 from zope.catalog.attribute import AttributeIndex
+from zope.catalog.keyword import CaseInsensitiveKeywordIndex
 import zope.catalog.field
 
 import zope.index.field
+import zope.index.topic
 import zope.container.contained
 
 from zope.index.topic.filter import FilteredSetBase
@@ -59,6 +62,14 @@ class RealnameIndex(CaseInsensitiveFieldIndex):
 	default_field_name = 'realname'
 	default_interface = user_interfaces.IFriendlyNamed
 
+class RealnamePartsIndex(CaseInsensitiveKeywordIndex):
+
+	default_field_name = 'get_searchable_realname_parts'
+	default_interface = user_interfaces.IFriendlyNamed
+
+	def __init__( self, *args, **kwargs ):
+		super(RealnamePartsIndex,self).__init__( *args, **kwargs )
+		self.field_callable = True
 
 class EmailIndex(CaseInsensitiveFieldIndex):
 
@@ -98,3 +109,16 @@ class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 		else:
 			# The normal PythonFilteredSet seems to have a bug and never unindexes?
 			self.unindex_doc( docid )
+
+@interface.implementer(ICatalogIndex)
+class TopicIndex(zope.index.topic.TopicIndex,
+				 zope.container.contained.Contained):
+	"""
+	A topic index that implements IContained and ICatalogIndex for use with
+	OptInEmailCommunicationFilteredSet.
+	"""
+
+	# If we're not IContained, we get location proxied.
+
+	# If we're not ICatalogIndex, we don't get updated when
+	# we get put in a catalog.
