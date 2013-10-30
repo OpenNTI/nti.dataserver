@@ -17,10 +17,10 @@ from nti.contentprocessing import rank_words
 from nti.utils.maps import CaseInsensitiveDict
 
 from . import common
+from . import search_query
 from . import _whoosh_types
 from . import discriminators
 from . import search_results
-from ._search_query import QueryObject
 from ._whoosh_query import parse_query
 from . import _whoosh_schemas as wschs
 
@@ -44,7 +44,7 @@ class _SearchableContent(object):
 		return self._schema
 
 	def _parse_query(self, query, **kwargs):
-		qo = QueryObject.create(query, **kwargs)
+		qo = search_query.QueryObject.create(query, **kwargs)
 		parsed_query = parse_query(qo, self.schema, self.__class__.__name__.lower())
 		return qo, parsed_query
 
@@ -54,7 +54,7 @@ class _SearchableContent(object):
 		return results
 
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
-		qo = QueryObject.create(query, **kwargs)
+		qo = search_query.QueryObject.create(query, **kwargs)
 		if ' ' in qo.term or qo.is_prefix_search or qo.is_phrase_search:
 			results = empty_suggest_and_search_results(qo)
 			results += self.search(searcher, qo)
@@ -79,7 +79,7 @@ class _SearchableContent(object):
 		return results
 
 	def suggest(self, searcher, word, *args, **kwargs):
-		qo = QueryObject.create(word, **kwargs)
+		qo = search_query.QueryObject.create(word, **kwargs)
 		prefix = qo.prefix or len(qo.term)
 		maxdist = qo.maxdist or self.default_word_max_dist
 		results = search_results.empty_suggest_results(qo)

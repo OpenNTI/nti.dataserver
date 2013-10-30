@@ -4,8 +4,10 @@ Cloudsearch user search adapter.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import sys
 
@@ -18,7 +20,7 @@ from perfmetrics import metricmethod
 from nti.dataserver import interfaces as nti_interfaces
 
 from .search_results import IndexHit
-from ._search_query import QueryObject
+from .search_query import QueryObject
 from ._cloudsearch_query import parse_query
 from .search_results import empty_search_results
 from .search_results import empty_suggest_results
@@ -33,12 +35,8 @@ from .constants import (username_, content_, intid_, type_)
 @interface.implementer(cloudsearch_interfaces.ICloudSearchEntityIndexManager)
 class _CloudSearchEntityIndexManager(_SearchEntityIndexManager):
 
-	_v_store = None
-
 	def _get_cs_store(self):
-		if self._v_store is None:
-			self._v_store = component.getUtility(cloudsearch_interfaces.ICloudSearchStore)
-		return self._v_store
+		return component.getUtility(cloudsearch_interfaces.ICloudSearchStore)
 
 	def _get_search_hit(self, obj):
 		cloud_data = obj['data']

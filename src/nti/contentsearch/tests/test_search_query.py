@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 #disable: accessing protected members, too many methods
@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 import unittest
 
-from .._search_query import QueryObject
+from ..search_query import QueryObject
 
 from hamcrest import (assert_that, is_)
 

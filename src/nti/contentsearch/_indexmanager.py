@@ -26,7 +26,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.utils.maps import CaseInsensitiveDict
 
 from . import indexagent
-from . import _search_query
+from . import search_query
 from . import search_results
 from . import interfaces as search_interfaces
 
@@ -104,7 +104,7 @@ class IndexManager(object):
 
 	@metric
 	def search(self, query):
-		query = _search_query.QueryObject.create(query)
+		query = search_query.QueryObject.create(query)
 		cnt_results = self.content_search(query=query)
 		ugd_results = self.user_data_search(query=query)
 		results = search_results.merge_search_results(cnt_results, ugd_results)
@@ -113,7 +113,7 @@ class IndexManager(object):
 
 	@metric
 	def suggest_and_search(self, query):
-		query = _search_query.QueryObject.create(query)
+		query = search_query.QueryObject.create(query)
 		cnt_results = self.content_suggest_and_search(query=query)
 		ugd_results = self.user_data_suggest_and_search(query=query)
 		results = search_results.merge_suggest_and_search_results(cnt_results, ugd_results)
@@ -121,7 +121,7 @@ class IndexManager(object):
 
 	@metric
 	def suggest(self, query):
-		query = _search_query.QueryObject.create(query)
+		query = search_query.QueryObject.create(query)
 		cnt_results = self.content_suggest(query=query)
 		ugd_results = self.user_data_suggest(query=query)
 		results = search_results.merge_suggest_results(cnt_results, ugd_results)
@@ -147,7 +147,7 @@ class IndexManager(object):
 		return  (query.indexid,) if query.indexid else ()
 
 	def content_search(self, query):
-		query = _search_query.QueryObject.create(query)
+		query = search_query.QueryObject.create(query)
 		results = search_results.empty_search_results(query)
 		books = self._query_books(query)
 		for book in books:
@@ -157,7 +157,7 @@ class IndexManager(object):
 		return results
 
 	def content_suggest_and_search(self, query):
-		query = _search_query.QueryObject.create(query)
+		query = search_query.QueryObject.create(query)
 		results = search_results.empty_suggest_and_search_results(query)
 		books = self._query_books(query)
 		for book in books:
@@ -167,7 +167,7 @@ class IndexManager(object):
 		return results
 
 	def content_suggest(self, query, *args, **kwargs):
-		query = _search_query.QueryObject.create(query)
+		query = search_query.QueryObject.create(query)
 		results = search_results.empty_suggest_results(query)
 		books = self._query_books(query)
 		for book in books:
@@ -196,7 +196,7 @@ class IndexManager(object):
 		return result
 
 	def user_data_search(self, query):
-		query = _search_query.QueryObject.create(query)
+		query = search_query.QueryObject.create(query)
 		results = search_results.empty_search_results(query)
 		entities = self._get_search_entities(query.username)
 		if self.parallel_search:
@@ -212,7 +212,7 @@ class IndexManager(object):
 		return results
 
 	def user_data_suggest_and_search(self, query):
-		query = _search_query.QueryObject.create(query)
+		query = search_query.QueryObject.create(query)
 		results = search_results.empty_suggest_and_search_results(query)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.suggest_and_search(query=query)
@@ -220,7 +220,7 @@ class IndexManager(object):
 		return results
 
 	def user_data_suggest(self, query):
-		query = _search_query.QueryObject.create(query)
+		query = search_query.QueryObject.create(query)
 		results = search_results.empty_suggest_results(query)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.suggest(query=query)

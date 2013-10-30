@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -25,7 +25,7 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from .._search_query import QueryObject
+from ..search_query import QueryObject
 from .. import interfaces as search_interfaces
 from .._whoosh_schemas import create_book_schema
 from .._whoosh_indexstorage import create_directory_index
