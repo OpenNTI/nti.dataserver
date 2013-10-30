@@ -25,7 +25,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils.maps import CaseInsensitiveDict
 
-from . import _indexagent
+from . import indexagent
 from . import _search_query
 from . import search_results
 from . import interfaces as search_interfaces
@@ -265,5 +265,5 @@ class IndexManager(object):
 
 	@classmethod
 	def onChange(cls, datasvr, msg, target=None, broadcast=None):
-		_indexagent.handle_index_event(cls.get_shared_indexmanager(), target, msg,
-									   broadcast=broadcast)
+		indexagent.handle_index_event(cls.get_shared_indexmanager(), target, msg,
+									  broadcast=broadcast)
