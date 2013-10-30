@@ -27,7 +27,7 @@ class _MetaSearchWhooshContent(type):
 		return t
 
 @interface.implementer(search_interfaces.IWhooshBookContent)
-class _BookContent(SchemaConfigured):
+class BookContent(SchemaConfigured):
 	__metaclass__ = _MetaSearchWhooshContent
 	createDirectFieldProperties(search_interfaces.IWhooshBookContent)
 
@@ -40,7 +40,7 @@ class _BookContent(SchemaConfigured):
 		return self.ntiid
 
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
-class _VideoTranscriptContent(SchemaConfigured):
+class VideoTranscriptContent(SchemaConfigured):
 	__metaclass__ = _MetaSearchWhooshContent
 	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
 
@@ -49,7 +49,7 @@ class _VideoTranscriptContent(SchemaConfigured):
 		return self.videoId
 
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
-class _NTICardContent(SchemaConfigured):
+class NTICardContent(SchemaConfigured):
 	__metaclass__ = _MetaSearchWhooshContent
 	createDirectFieldProperties(search_interfaces.IWhooshNTICardContent)
 	
