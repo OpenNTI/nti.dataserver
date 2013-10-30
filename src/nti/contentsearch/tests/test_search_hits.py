@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -23,7 +23,7 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
 
 from ..common import get_type_name
-from .._whoosh_types import _BookContent
+from ..whoosh_types import BookContent
 from ..search_hits import _NoteSearchHit
 from ..search_hits import get_search_hit
 from ..search_hits import _HighlightSearchHit
@@ -172,7 +172,7 @@ class TestSearchHits(ConfiguringTestBase):
 
 	def test_search_hit_book(self):
 		containerId = make_ntiid(nttype='bleach', specific='manga')
-		hit = _BookContent()
+		hit = BookContent()
 		hit.docnum = 100
 		hit.title = 'Bleach'
 		hit.ntiid = containerId

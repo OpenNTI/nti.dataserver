@@ -301,7 +301,7 @@ class _SearchInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
 	@classmethod
 	def _ap_enumerate_module_names(cls):
-		return ('_whoosh_types', 'search_query')
+		return ('whoosh_types', 'search_query')
 
 _SearchInternalObjectIO.__class_init__()
 
