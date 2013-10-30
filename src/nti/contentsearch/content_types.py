@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Whoosh content types.
+Content types.
 
 $Id$
 """
