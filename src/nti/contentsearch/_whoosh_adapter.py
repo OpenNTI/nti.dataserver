@@ -4,7 +4,7 @@ Whoosh user search adapter.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -28,7 +28,7 @@ from nti.utils.maps import LFUMap
 from . import search_results
 from .common import get_type_name
 from .common import sort_search_types
-from ._search_query import QueryObject
+from .search_query import QueryObject
 from . import interfaces as search_interfaces
 from .constants import ugd_indexable_type_names
 from .common import normalize_type_name as _ntm

@@ -162,7 +162,7 @@
 
 	<!-- Search query -->
 
-	<adapter factory="._search_query._default_query_adapter"
+	<adapter factory=".search_query._default_query_adapter"
 			 provides=".interfaces.ISearchQuery"
 			 for="basestring" />
 
@@ -173,7 +173,7 @@
 	<!-- Mime factories -->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
-	<ext:registerMimeFactories module="._search_query" />
+	<ext:registerMimeFactories module=".search_query" />
 	<ext:registerMimeFactories module="._whoosh_types" />
 	<ext:registerMimeFactories module=".search_results" />
 </configure>

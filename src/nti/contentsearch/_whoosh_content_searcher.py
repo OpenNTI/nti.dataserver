@@ -4,8 +4,10 @@ Whoosh based book index manager
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 
@@ -25,7 +27,7 @@ from . import constants
 from . import search_results
 from ._whoosh_index import Book
 from ._whoosh_index import NTICard
-from ._search_query import QueryObject
+from .search_query import QueryObject
 from ._whoosh_index import VideoTranscript
 from . import interfaces as search_interfaces
 from ._whoosh_indexstorage import DirectoryStorage

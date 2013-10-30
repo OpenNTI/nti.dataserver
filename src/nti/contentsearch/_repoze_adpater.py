@@ -23,9 +23,9 @@ from nti.contentprocessing import rank_words
 
 from . import common
 from . import constants
+from . import search_query
 from . import _repoze_index
 from . import _repoze_query
-from . import _search_query
 from . import search_results
 from . import _search_indexmanager
 from . import interfaces as search_interfaces
@@ -114,13 +114,13 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 
 	@metricmethod
 	def search(self, query, *args, **kwargs):
-		qo = _search_query.QueryObject.create(query, **kwargs)
+		qo = search_query.QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(qo.searchOn)
 		results = self._do_search(qo, searchOn)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
-		qo = _search_query.QueryObject.create(query, **kwargs)
+		qo = search_query.QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(qo.searchOn)
 		results = search_results.empty_suggest_results(qo)
 		if qo.is_empty: return results
@@ -139,7 +139,7 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 		return results
 
 	def suggest_and_search(self, query, limit=None, *args, **kwargs):
-		queryobject = _search_query.QueryObject.create(query, **kwargs)
+		queryobject = search_query.QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(queryobject.searchOn)
 		if 	' ' in queryobject.term or queryobject.is_prefix_search or \
 			queryobject.is_phrase_search:
