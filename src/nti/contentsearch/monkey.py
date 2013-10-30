@@ -60,7 +60,7 @@ def patch_zopyx():
 
 def patch_imports():
 	# TODO: can we use zope.deferedimport
-	for name in ('content_utils', 'discriminators', 'search_hits'):
+	for name in ('content_utils', 'discriminators'):
 		old_module = 'nti.contentsearch._%s' % name
 		new_module = 'nti.contentsearch.%s' % name
 		sys.modules[old_module] = __import__(new_module)
