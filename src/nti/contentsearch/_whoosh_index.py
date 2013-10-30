@@ -18,7 +18,7 @@ from nti.utils.maps import CaseInsensitiveDict
 
 from . import common
 from . import search_query
-from . import whoosh_types
+from . import content_types
 from . import discriminators
 from . import search_results
 from ._whoosh_query import parse_query
@@ -124,12 +124,12 @@ class Book(_SearchableContent):
 
 				score = hit.score or 1.0
 				last_modified = common.epoch_time(hit[last_modified_])
-				data = whoosh_types.BookContent(docnum=docnum,
-												score=score,
-												ntiid=hit[ntiid_],
-									 			title=hit[title_],
-									 			content=hit[content_],
-									 			last_modified=last_modified)
+				data = content_types.BookContent(docnum=docnum,
+												 score=score,
+												 ntiid=hit[ntiid_],
+									 			 title=hit[title_],
+									 			 content=hit[content_],
+									 			 last_modified=last_modified)
 				result.append(search_results.IndexHit(data, score))
 		return result
 
@@ -144,7 +144,7 @@ class VideoTranscript(_SearchableContent):
 		for hit in search_hits:
 			docnum = hit.docnum
 			score = hit.score or 1.0
-			data = whoosh_types.VideoTranscriptContent(
+			data = content_types.VideoTranscriptContent(
 							score=score,
 							docnum=docnum,
 							title=hit[title_],
@@ -169,7 +169,7 @@ class NTICard(_SearchableContent):
 			docnum = hit.docnum
 			score = hit.score or 1.0
 			last_modified = common.epoch_time(hit[last_modified_])
-			data = whoosh_types.NTICardContent(
+			data = content_types.NTICardContent(
 									score=score,
 									docnum=docnum,
 									href=hit[href_],

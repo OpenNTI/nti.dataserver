@@ -174,6 +174,6 @@
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 	<ext:registerMimeFactories module=".search_query" />
-	<ext:registerMimeFactories module=".whoosh_types" />
+	<ext:registerMimeFactories module=".content_types" />
 	<ext:registerMimeFactories module=".search_results" />
 </configure>

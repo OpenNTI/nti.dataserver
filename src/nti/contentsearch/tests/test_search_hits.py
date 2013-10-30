@@ -23,7 +23,7 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
 
 from ..common import get_type_name
-from ..whoosh_types import BookContent
+from ..content_types import BookContent
 from ..search_hits import _NoteSearchHit
 from ..search_hits import get_search_hit
 from ..search_hits import _HighlightSearchHit
