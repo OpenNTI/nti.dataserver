@@ -113,10 +113,13 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 
 		testapp = TestApp( self.app )
 		res = testapp.get( '/dataserver2', extra_environ=self._make_extra_environ())
-		# The service doc contains a link
-		assert_that( res.json_body['Items'], has_item( all_of(
-															has_entry( 'Title', 'Global' ),
-															has_entry( 'Links', has_item( has_entry( 'href', '/dataserver2/UserSearch' ) ) ) ) ) )
+		# The service doc contains all the links
+		assert_that( res.json_body['Items'][1], has_entry( 'Links',
+														has_items(
+															has_entry( 'href', '/dataserver2/UserSearch' ),
+															has_entry( 'href', '/dataserver2/ResolveUser' ),
+															has_entry( 'href', '/dataserver2/ResolveUsers' ) ) ) )
+
 
 		# We can search for ourself
 		path = '/dataserver2/UserSearch/sjohnson@nextthought.com'

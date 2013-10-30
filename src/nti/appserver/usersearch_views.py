@@ -27,11 +27,13 @@ from nti.appserver.policies import site_policies
 from nti.appserver import httpexceptions as hexc
 from nti.appserver._view_utils import get_remote_user
 from nti.appserver import interfaces as app_interfaces
+from .interfaces import NamedLinkPathAdapter
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.dataserver import mimetype as nti_mimetype
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
@@ -49,8 +51,10 @@ def _is_valid_search( search_term, remote_user ):
 	"""
 	return remote_user and search_term and len(search_term) >= 3
 
-@view_config( route_name='search.users',
+@view_config( route_name='objects.generic.traversal',
+			  name='UserSearch',
 			  renderer='rest',
+			  context=IDataserverFolder,
 			  permission=nauth.ACT_SEARCH,
 			  request_method='GET' )
 def _UserSearchView(request):
@@ -66,7 +70,7 @@ def _UserSearchView(request):
 	remote_user = get_remote_user( request, dataserver )
 	assert remote_user is not None
 
-	partialMatch = request.matchdict['term'] or ''
+	partialMatch = request.subpath[0] if request.subpath else ''
 	if isinstance( partialMatch, bytes ):
 		partialMatch = partialMatch.decode('utf-8')
 
@@ -90,6 +94,7 @@ def _UserSearchView(request):
 	request.response.cache_control.max_age = 120
 
 	return _format_result( result, remote_user, dataserver )
+interface.directlyProvides(_UserSearchView, app_interfaces.INamedLinkView)
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -108,7 +113,9 @@ def _ResolveMyself(request):
 	# to do that ourself
 	return toExternalObject(request.context, name='personal-summary-preferences')
 
-@view_config( route_name='search.resolve_user',
+@view_config( route_name='objects.generic.traversal',
+			  context=IDataserverFolder,
+			  name='ResolveUser',
 			  renderer='rest',
 			  permission=nauth.ACT_SEARCH,
 			  request_method='GET' )
@@ -125,7 +132,7 @@ def _ResolveUserView(request):
 	remote_user = get_remote_user( request, dataserver )
 	assert remote_user is not None
 
-	exact_match = request.matchdict['term']
+	exact_match = request.subpath[0] if request.subpath else ''
 	if not exact_match:
 		raise hexc.HTTPNotFound()
 
@@ -152,7 +159,11 @@ def _ResolveUserView(request):
 	formatted = _format_result(result, remote_user, dataserver)
 	return formatted
 
-@view_config(route_name='search.resolve_users',
+interface.directlyProvides(_ResolveUserView, app_interfaces.INamedLinkView)
+
+@view_config(route_name='objects.generic.traversal',
+			 context=IDataserverFolder,
+			 name='ResolveUsers',
 			 renderer='rest',
 			 permission=nauth.ACT_SEARCH,
 			 request_method='POST')
@@ -178,6 +189,7 @@ def _ResolveUsersView(request):
 
 	result = LocatedExternalDict({'Last Modified': 0, 'Items': result, 'Total':len(result)})
 	return _provide_location(result, dataserver)
+interface.directlyProvides(_ResolveUsersView, app_interfaces.INamedLinkView)
 
 def _resolve_user(exact_match, remote_user):
 

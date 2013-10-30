@@ -10,6 +10,7 @@ from zope import schema
 from zope import interface
 from zope.interface.common import mapping
 from zope.location.interfaces import ILocation
+from zope.container.interfaces import IContained
 from zope.traversing import interfaces as trv_interfaces
 
 from pyramid import interfaces as pyramid_interfaces
@@ -468,6 +469,38 @@ class IExternalFieldTraversable(trv_interfaces.ITraversable):
 	Marker interface that says that this object traverses into the externally visible
 	fields or properties of an object. It generally will produce instances of :class:`IExternalFieldResource`,
 	but not necessarily.
+	"""
+
+class INamedLinkPathAdapter(trv_interfaces.IPathAdapter):
+	"""
+	A special type of path adapter that should be registered
+	to represent a named link that should be advertised
+	within its context.
+	"""
+
+@interface.implementer(IContained)
+class NamedLinkPathAdapter(object):
+	__name__ = None
+	def __init__(self, context, request):
+		self.__parent__ = context
+		self.request = request
+
+class IMissingRequest(interface.Interface):
+	"""
+	A marker interface to use for registering and
+	finding things that normally need a request
+	outside the context of a request. Obviously only
+	do this if they can fulfill their purpose in
+	other ways.
+	"""
+
+class MissingRequest(object):
+	pass
+
+class INamedLinkView(interface.Interface):
+	"""
+	Similar to INamedLinkPathAdapter, implement this (provide this)
+	from views that should be taken as named links.
 	"""
 
 ###

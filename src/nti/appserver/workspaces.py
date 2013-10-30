@@ -53,6 +53,9 @@ from . import traversal
 from .pyramid_authorization import is_readable
 from .pyramid_authorization import is_writable
 from .pyramid_authorization import has_permission
+from pyramid.interfaces import IView
+from pyramid.interfaces import IViewClassifier
+
 from ._util import link_belongs_to_user
 
 from pyramid.threadlocal import get_current_request
@@ -279,6 +282,7 @@ class LibraryCollectionDetailExternalizer(object):
 				 'titles' : [toExternalObject(x) for x in filter(test, library.titles)] }
 
 @interface.implementer(app_interfaces.IWorkspace)
+@component.adapter(nti_interfaces.IDataserverFolder)
 class GlobalWorkspace(object):
 	"""
 	Represents things that are global resolvers. Typically, these
@@ -291,18 +295,51 @@ class GlobalWorkspace(object):
 		super(GlobalWorkspace,self).__init__()
 		if parent:
 			self.__parent__ = parent
-		# TODO: Hardcoding all these things
-		# We can fix it like so:
-		# component.getAdapters( (self.__parent__, request), IPathAdapter )
-		# returns a sequence of ("name", <adapter>)
+
+	@property
+	def links(self):
+		# Introspect the component registry to find the things that
+		# want to live directly beneath the dataserver root globally.
+		# These can either be an IPathAdapter, if we intend
+		# to continue traversing, or a named view if we want to stop
+		# traversing (and possibly access the subpath)
+
+		request = get_current_request() or app_interfaces.MissingRequest()
 		lnks = []
-		for l in ('UserSearch', 'ResolveUser', 'ResolveUsers'):
-			link = links.Link( l, rel=l )
+		# Order matters. traversing wins, so views first
+		names = set()
+		# Pyramid's request_iface property is a dynamically generated
+		# interface class that incorporates the name of the route.
+		# Some tests provide a request object without that,
+		# and even then, the route that got is here isn't (yet)
+		# the traversable route we want. So look for the interface by route name.
+		request_iface = component.queryUtility( interface.Interface, name='objects.generic.traversal' )
+		# If it isn't loaded because the app hasn't been scanned, we have no
+		# way to route, and no views either. So we get None, which is a fine
+		# discriminator.
+
+		names.update( [name for name, view
+					   in component.getSiteManager().adapters.lookupAll( (IViewClassifier,
+																		  request_iface,
+																		  interface.providedBy(self.__parent__)),
+																		 IView)
+					   if (app_interfaces.INamedLinkView.providedBy(view)
+					   # Views created with the @view_config decorator tend to get wrapped
+					   # in a pyramid proxy, which would hide anything they declare to implement
+					   # (at least view functions). This is done at venusian scan time, which is after
+					   # the module is loaded. Fortunately, the underlying view seems to be preserved
+					   # through all the wrappings on the topmost layer of the onion as __original_view__,
+					   # so check it as well
+					   or app_interfaces.INamedLinkView.providedBy(getattr(view,'__original_view__',None)))] )
+		names.update( [name for name, _ in component.getAdapters( (self.__parent__, request ),
+																  app_interfaces.INamedLinkPathAdapter )] )
+		for name in names:
+			link = links.Link( name, rel=name )
 			link.__name__ = link.target
 			link.__parent__ = self.__parent__
 			interface.alsoProvides( link, loc_interfaces.ILocation )
 			lnks.append( link )
-		self.links = lnks
+		return lnks
 
 	@property
 	def name(self): return 'Global'
