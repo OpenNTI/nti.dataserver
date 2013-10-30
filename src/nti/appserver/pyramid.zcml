@@ -25,6 +25,18 @@
 	</configure>
 
 	<!-- User search/resolution -->
+	<!--
+		 NOTE: The order of registration matters,
+		 especially since we are mixing traversal with pattern dispatch.
+		 In all cases, the first registration wins.
+		 So once we add the traversal beneath /dataserver2/,
+		 no more routes can be added beneath it.
+	-->
+	<!--
+		TODO: The named routes beneath /dataserver2/
+		should become IPathAdapters. That way we don't
+		have the above problem, plus it's more flexible.
+	-->
 	<pyramid:route name='search.users'
 				   pattern='/dataserver2/UserSearch/{term:.*}'
 				   traverse='/dataserver2' />
