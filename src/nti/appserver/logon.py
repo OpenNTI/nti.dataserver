@@ -307,12 +307,27 @@ def handshake(request):
 		user = NoSuchUser(desired_username)
 
 	links = {}
+	# First collect the providers, then sort them, putting them in
+	# priority order by link type, basically. This is because the order of subscribers
+	# is non-deterministic when multiple registries are involved.
+	# If any provider raises the NotImplementedError when called, that link
+	# type will be dropped if it hasn't been seen yet.
+	providers = []
 	for provider in component.subscribers( (user,request), app_interfaces.ILogonLinkProvider ):
-		if provider.rel in links:
+		providers.append( (provider.rel, getattr(provider, 'priority', 0), provider ) )
+
+	ignored = set()
+	for rel, _, provider in sorted(providers, reverse=True):
+		if rel in links or rel in ignored:
 			continue
-		link = provider()
-		if link is not None:
-			links[link.rel] = link
+
+		try:
+			link = provider()
+		except NotImplementedError:
+			ignored.add( rel )
+		else:
+			if link is not None:
+				links[link.rel] = link
 
 
 	# Only allow one of login_google and login_openid. Both are

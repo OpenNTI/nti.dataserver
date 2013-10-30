@@ -226,8 +226,19 @@ class ILogonOptionLinkProvider(interface.Interface):
 	rel = schema.TextLine(
 		title=u"The link rel that this object may produce." )
 
+	priority = interface.Attribute("The priority of this provider among all providers that share a rel. Optional")
+
 	def __call__( ):
-		"Returns a single instance of :class:`nti_interfaces.ILink` object, or None."
+		"""
+		Returns a single instance of :class:`nti_interfaces.ILink` object, or None.
+
+		If there are multiple link providers for a given `rel`, they will be sorted by the
+		optional (descending) priority field before calling, and the first one that returns a
+		non-None result will win; the others won't even be called. If some provider
+		raises :class:`NotImplementedError` before that happens, the entire rel
+		will be ignored and no link of this rel will be returned. The default priority is
+		the integer 0.
+		"""
 
 ILogonLinkProvider = ILogonOptionLinkProvider # BWC
 

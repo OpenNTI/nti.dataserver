@@ -68,7 +68,7 @@ class _transaction_tween(TransactionLoop):
 			raise self.AbortException( str(e), "IOError on reading body" )
 
 	def should_abort_due_to_no_side_effects( self, request ):
-		return _is_side_effect_free( request )
+		return _is_side_effect_free( request ) and not request.environ.get('nti.request_had_transaction_side_effects')
 
 	def should_veto_commit( self, response, request ):
 		return _commit_veto( request, response ) or request.environ.get( 'nti.early_teardown_happened' ) # see zope_site_tween
