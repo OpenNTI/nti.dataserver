@@ -94,6 +94,8 @@ def forgot_username_view(request):
 
 
 	matching_users = find_users_with_email( email_assoc_with_account, request.registry.getUtility(nti_interfaces.IDataserver) )
+	if matching_users:
+		matching_users = filter( nti_interfaces.IUser.providedBy, matching_users ) # ensure only real users, not profiles or other matches
 	# Need to send both HTML and plain text if we send HTML, because
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 	# only works with a text part)
@@ -102,8 +104,7 @@ def forgot_username_view(request):
 	if not matching_users:
 		base_template = 'failed_' + base_template
 		text_ext = ".txt"
-	else:
-		matching_users = filter( nti_interfaces.IUser.providedBy, matching_users ) # ensure only real users, not profiles or other matches
+
 	queue_simple_html_text_email( base_template, subject=_("NextThought Username Reminder"),
 								  recipients=[email_assoc_with_account],
 								  template_args={'users': matching_users},
