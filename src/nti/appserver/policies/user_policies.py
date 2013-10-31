@@ -110,18 +110,18 @@ def veto_sharing_for_unsigned_coppa_edit( content, editor, event ):
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
-class CoppaUserWithoutAgreementCapabilityFilter(object):
+class CoppaUserWithoutAgreementCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
 	"""
 	This policy filters out things that users that are probably kids and
 	subject to COPPA cannot do.
 	"""
 
-	def __init__( self, context=None ):
-		pass
-
 	def filterCapabilities( self, capabilities ):
-		result = {'nti.platform.forums.communityforums'}
-		return result
+		capabilities = super(CoppaUserWithoutAgreementCapabilityFilter,self).filterCapabilities(capabilities)
+		for cap in set(capabilities):
+			if cap.startswith('nti.platform.p2p.') or cap.startswith('nti.platform.blogging.'):
+				capabilities.discard( cap )
+		return capabilities
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
 @component.adapter(nti_interfaces.IUser)

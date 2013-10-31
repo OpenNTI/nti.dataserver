@@ -882,6 +882,7 @@ class UserServiceExternalizer(ServiceExternalizer):
 		# TODO: This should probably be subscriber, not adapter, so that
 		# the logic doesn't have to be centralized in one place and can be additive (actually subtractive)
 		# Or vice-versa, when this becomes dynamic
+
 		cap_filter = component.queryAdapter( self.context.user, app_interfaces.IUserCapabilityFilter )
 		if cap_filter:
 			capabilities = cap_filter.filterCapabilities( capabilities )
