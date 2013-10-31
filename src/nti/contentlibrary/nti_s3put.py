@@ -91,8 +91,11 @@ SYNOPSIS
 	 If the -n option is provided, no files will be transferred to S3 but
 	 informational messages will be printed about what would happen.
 
-	 Certain content types will be gzipped on upload; pulls in the content fragment package
-	 to be sure the right types get set. Does not skip dot files.
+	 Certain content types will be gzipped on upload; pulls in the
+	 content fragment package to be sure the right types get set. Does
+	 not skip dot files, with the exception of certain version
+	 control directories (.svn and .git), Mac OS X barfs ('.DS_Store')
+	 and python/emacs configs..
 """
 
 import getopt, sys, os
@@ -205,8 +208,9 @@ def main():
 					if ignore in dirs:
 						dirs.remove(ignore)
 				for file in files:
-					#if file.startswith("."):
-					#	continue
+					if file in IGNORED_DOTFILES:
+						continue
+
 					fullpath = os.path.join(root, file)
 					key_name = get_key_name(fullpath, prefix)
 					copy_file = True
@@ -216,15 +220,19 @@ def main():
 							if not quiet:
 								print( 'Skipping %s as it exists in s3' % file )
 					if copy_file:
-						if not quiet:
+						if not quiet and no_op:
 							print( 'Copying %s to %s/%s' % (file, bucket_name, key_name) )
 						if not no_op:
 							k = b.new_key(key_name)
-							_upload_file( k, fullpath,
-									cb=cb, num_cb=num_cb,
-									policy=grant, reduced_redundancy=reduced,
-									headers=headers
-									)
+							file_headers = _upload_file( k, fullpath,
+														 cb=cb, num_cb=num_cb,
+														 policy=grant, reduced_redundancy=reduced,
+														 headers=headers  )
+							if not quiet:
+								print( 'Copied %s to %s/%s as type %s encoding %s'
+									   % (file, bucket_name, key_name,
+										  file_headers.get('Content-Type', 'application/octet-stream'),
+										  file_headers.get('Content-Encoding', 'identity') ) )
 					total += 1
 		elif os.path.isfile(path):
 			key_name = get_key_name(path, prefix)
@@ -233,7 +241,7 @@ def main():
 				if b.get_key(key_name):
 					copy_file = False
 					if not quiet:
-						print ('Skipping %s as it exists in s3' % path )
+						print( 'Skipping %s as it exists in s3' % path )
 			if copy_file:
 				k = b.new_key(key_name)
 				_upload_file(k, path, cb=cb, num_cb=num_cb,
@@ -242,9 +250,15 @@ def main():
 	else:
 		print( usage() )
 
-GZIP_TYPES = ('text/csv', 'text/html', 'text/xml', 'application/xml', 'application/json', 'application/javascript')
-# Anything we explicitly want to exclude, like .json data
+#: Content types we will gzip on upload
+GZIP_TYPES = ('text/csv', 'text/css', 'text/html', 'text/xml', 'application/xml', 'application/json', 'application/javascript')
+
+#: Anything we explicitly want to exclude from gzipping, like .json
+#: data
 NOT_GZIP_EXT = ()
+
+#: Unix dotfiles we will always ignore
+IGNORED_DOTFILES = ( '.svn', '.git', '.DS_Store', '.coverage', '.noseids', '.dir_locals.el', '.installed.cfg' )
 
 def _upload_file( key, fullpath, cb=None, num_cb=None,  policy=None, reduced_redundancy=None, headers=None ):
 	if headers is not None:
@@ -257,10 +271,12 @@ def _upload_file( key, fullpath, cb=None, num_cb=None,  policy=None, reduced_red
 		headers['Content-Type'] = mt[0]
 
 	if headers.get( 'Content-Type' ) in GZIP_TYPES and not os.path.splitext( fullpath )[-1] in NOT_GZIP_EXT:
+		mtime = os.stat( fullpath ).st_mtime
+		filename = os.path.basename( fullpath )
 		strio = StringIO()
-		gzipped = gzip.GzipFile( fileobj=strio, mode='wb' )
-		gzipped.write( open( fullpath, 'rb' ).read() )
-		gzipped.close()
+		with gzip.GzipFile( fileobj=strio, mode='wb', filename=filename, mtime=mtime ) as gzipped:
+			with open( fullpath, 'rb' ) as f:
+				gzipped.write( f.read() )
 		data = strio.getvalue()
 		headers['Content-Encoding'] = 'gzip'
 		key.set_contents_from_string( data, cb=cb, num_cb=num_cb,
@@ -270,6 +286,8 @@ def _upload_file( key, fullpath, cb=None, num_cb=None,  policy=None, reduced_red
 		key.set_contents_from_filename( fullpath, cb=cb, num_cb=num_cb,
 										policy=policy, reduced_redundancy=reduced_redundancy,
 										headers=headers )
+
+	return headers
 
 
 if __name__ == "__main__":
