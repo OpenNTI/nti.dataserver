@@ -69,7 +69,9 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		assert_that( res.body, contains_string( 'Jason' ) )
 
 		# OK, now let's approve it, then we should be back to an empty page.
-		# First, if we submit without an email, we don't get approval
+
+		# First, if we submit without an email, we don't get approval,
+		# we get an error message.
 		form = res.forms['subFormTable']
 		field_name = None
 		for key in form.fields:
@@ -88,6 +90,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, contains_string( 'ossmkitty' ) )
 		assert_that( res.body, contains_string( 'Jason' ) )
+		assert_that( res.body, contains_string( 'No contact email provided for ossmkitty' ) )
 
 		# Now, if we submit with an email, we do get approval
 		form = res.forms['subFormTable']
