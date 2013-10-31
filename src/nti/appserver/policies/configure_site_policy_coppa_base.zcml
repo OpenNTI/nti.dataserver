@@ -52,6 +52,12 @@
 		<adapter factory=".user_policies.CoppaUserWithoutAgreementCapabilityFilter"
 			 	 for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement"
 			 	 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
+		<adapter factory=".user_policies.MathCountsCapabilityFilter"
+				 for="nti.dataserver.interfaces.ICoppaUser"
+				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
+		<adapter factory=".user_policies.MathCountsCapabilityFilter"
+				 for="nti.dataserver.interfaces.ICoppaUserWithAgreement"
+				 provides="nti.appserver.interfaces.IUserCapabilityFilter" />
 
 		<!--
 			The policy for censoring things from regular, non-coppa
