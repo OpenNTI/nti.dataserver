@@ -78,11 +78,43 @@
 	</head>
 	<body class="normal-text">
 		<div metal:define-macro="header">
-		<div id="green-bar" style="background-color: #89be3c; width: 100%; height: 5px; margin-left: -30px; padding-right: 40px;"></div>
-		<div id="logo-bar">
-			<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
-			alt="NextThought Logo" />
-		</div>
+			<div id="green-bar" style="background-color: #89be3c; width: 100%; height: 5px; margin-left: -30px; padding-right: 40px;"></div>
+			<div id="logo-bar">
+				<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+					 alt="NextThought Logo" />
+			</div>
+			<!--! Flash messages -->
+			<div id="errors"
+					 tal:condition="python:getattr(request, 'session', None) is not None and request.session.peek_flash('errors')">
+				<h2>Errors</h2>
+				<ul>
+					<li tal:repeat="error python:request.session.pop_flash('errors')"
+						tal:content="error"
+						style="color: red">
+						An error.
+					</li>
+				</ul>
+			</div>
+			<div id="warn" tal:condition="python:getattr(request, 'session', None) is not None and request.session.peek_flash('warn')">
+				<h2>Warnings</h2>
+				<ul>
+					<li tal:repeat="warn python:request.session.pop_flash('warn')"
+						tal:content="warn"
+						style="color: red">
+						A warning.
+					</li>
+				</ul>
+			</div>
+			<div id="info" tal:condition="python:getattr(request, 'session', None) is not None and request.session.peek_flash()">
+				<h2>Info</h2>
+				<ul>
+					<li tal:repeat="info python:request.session.pop_flash()"
+						tal:content="info">
+						An info.
+					</li>
+				</ul>
+
+			</div>
 		</div>
 		<p>Hello <span tal:content="options/user/username">username</span>.</p>
 

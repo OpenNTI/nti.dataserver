@@ -35,7 +35,7 @@ from nti.utils.schema import find_most_derived_interface
 
 _USER_FILTER_PARAM = 'usersearch'
 
-def _coppa_table( request ):
+def _coppa_table_and_site( request, force_table=False ):
 	content = ()
 	site_policy, _pol_name = site_policies.find_site_policy( request )
 	if site_policy and getattr(site_policy, 'IF_WOUT_AGREEMENT', None):
@@ -55,13 +55,21 @@ def _coppa_table( request ):
 	else:
 		logger.warn( "No site policy (%s/%s) or policy (%s) does not specify users to find",
 					 site_policy, _pol_name, site_policy )
-	the_table = CoppaAdminTable( content,
-								 IBrowserRequest( request ) )
-	the_table.__parent__ = request.context
-	the_table.__name__ = 'coppa_admin.html'
-	the_table.startBatchingAt = 50
-	the_table.update()
-	return the_table
+
+	if site_policy or force_table:
+		the_table = CoppaAdminTable( content,
+									 IBrowserRequest( request ) )
+		the_table.__parent__ = request.context
+		the_table.__name__ = 'coppa_admin.html'
+		the_table.startBatchingAt = 50
+		the_table.update()
+	else:
+		the_table = None
+
+	return the_table, site_policy, _pol_name
+
+def _coppa_table( request ):
+	return _coppa_table_and_site( request, force_table=True )[0]
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='templates/coppa_user_approval.pt',
@@ -77,24 +85,36 @@ def coppa_admin( request ):
 			  request_method='POST',
 			  name='coppa_admin')
 def moderation_admin_post( request ):
-	the_table = _coppa_table( request )
+	the_table, site_policy, policy_name = _coppa_table_and_site( request )
 
-	if 'subFormTable.buttons.approve' in request.POST:
-		site_policy, policy_name = site_policies.find_site_policy( request )
-		if not site_policy: #pragma: no cover
-			logger.warn( "Unable to find site policy in %s", policy_name )
-		else:
-			email_col = the_table.columnByName['coppa-admin-contactemail']
-			for item in the_table.selectedItems:
-				contact_email = email_col.getItemValue( item ) or ''
-				contact_email = contact_email.strip()
-				if not contact_email:
-					# TODO: Need to put this is the flash queue or something so it can be displayed on the page
-					logger.warn( "No contact email provided for %s, not upgrading", item )
-					continue
-				logger.info( "Upgrading user %s to COPPA approved with contact email %s", item, contact_email )
-				user_interfaces.IUserProfile(item).contact_email = contact_email
-				site_policy.upgrade_user( item )
+	if not site_policy: #pragma: no cover
+		msg = "Unable to find site policy in %s" % policy_name
+		logger.warn( msg )
+		request.session.flash( msg, queue='warn' )
+	elif 'subFormTable.buttons.approve' not in request.POST:
+		msg = "POST request to coppa_admin without Approve button?"
+		logger.warn( msg )
+		request.session.flash( msg, queue='warn' )
+	elif not the_table.selectedItems:
+		msg = "No selected items in coppa_admin POST"
+		logger.warn( msg )
+		request.session.flash( msg, queue='warn' )
+	else:
+		email_col = the_table.columnByName['coppa-admin-contactemail']
+		for item in the_table.selectedItems:
+			contact_email = email_col.getItemValue( item ) or ''
+			contact_email = contact_email.strip()
+			if not contact_email:
+				msg = "No contact email provided for %s, not upgrading" % item
+				logger.warn( msg )
+				request.session.flash( msg, queue='warn' )
+				continue
+
+			msg = "Upgrading user %s to COPPA approved with contact email %s" % ( item, contact_email )
+			logger.info( msg )
+			request.session.flash( msg, queue='info' )
+			user_interfaces.IUserProfile(item).contact_email = contact_email
+			site_policy.upgrade_user( item )
 
 	# Else, no action.
 	# Redisplay the page with a get request to avoid the "re-send this POST?" problem

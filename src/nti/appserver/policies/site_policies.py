@@ -647,6 +647,9 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	def upgrade_user(self, user):
 		if not self.IF_WOUT_AGREEMENT.providedBy(user):
 			logger.debug("No need to upgrade user %s that doesn't provide %s", user, self.IF_WOUT_AGREEMENT)
+			request = get_current_request()
+			if request is not None and getattr(request, 'session', None) is not None:
+				request.session.flash( "User %s doesn't need to be upgraded" % user, queue='warn' )
 			return False
 
 		# Copy the profile info. First, adapt to the old profile:
