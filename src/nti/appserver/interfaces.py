@@ -533,6 +533,9 @@ class INewContainerResource(interface.Interface):
 class INewPageContainerResource(interface.Interface):
 	pass
 
+class IRootPageContainerResource(interface.Interface):
+	pass
+
 class IPagesResource(interface.Interface):
 	pass
 

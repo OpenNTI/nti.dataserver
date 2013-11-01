@@ -105,38 +105,37 @@ class _ContainerResource(object):
 # TODO: These next three classes inherit from _ContainerResource and hence
 # implement IContainerResource, but that doesn't match the interface
 # hierarchy. They should probably be separate.
+
+class _NonTraversableContainerResource(_ContainerResource):
+	def traverse( self, key, remaining_path ):
+		raise loc_interfaces.LocationError( key )
+
 @interface.implementer(interfaces.INewContainerResource)
-class _NewContainerResource(_ContainerResource):
+class _NewContainerResource(_NonTraversableContainerResource):
 	"""
 	A leaf on the traversal tree. Exists to be a named thing that
 	we can match views with. Generally we only POST to this thing;
 	everything behind it (with a few exceptions, like glossaries) will be 404.
 	"""
 
-	def traverse( self, key, remaining_path ):
-		raise loc_interfaces.LocationError( key )
-
 @interface.implementer(interfaces.INewPageContainerResource)
-class _NewPageContainerResource(_ContainerResource):
+class _NewPageContainerResource(_NonTraversableContainerResource):
 	"""
 	A leaf on the traversal tree, existing only to be a named
 	thing that we can match views with for data that does
 	not yet exist.
 	"""
 
-	def traverse( self, key, remaining_path ):
-		raise loc_interfaces.LocationError( key )
-
-
 @interface.implementer(interfaces.IPageContainerResource)
-class _PageContainerResource(_ContainerResource):
+class _PageContainerResource(_NonTraversableContainerResource):
 	"""
 	A leaf on the traversal tree. Exists to be a named thing that
 	we can match view names with. Should be followed by the view name.
 	"""
 
-	def traverse( self, key, remaining_path ):
-		raise loc_interfaces.LocationError( key )
+@interface.implementer(interfaces.IRootPageContainerResource)
+class _RootPageContainerResource(_NonTraversableContainerResource):
+	pass
 
 from nti.utils._compat import aq_base, IAcquirer
 @interface.implementer(interfaces.IObjectsContainerResource)
@@ -273,7 +272,7 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 		resource = None
 		if key == ntiids.ROOT:
 			# The root is always available
-			resource = _PageContainerResource( self, self.request, name=key, parent=self.user )
+			resource = _RootPageContainerResource( self, self.request, name=key, parent=self.user )
 		# What about an owned container, or a shared container? The
 		# shared containers take into account our dynamic
 		# relationships...however, this is badly split between here

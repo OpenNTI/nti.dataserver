@@ -16,6 +16,7 @@ import collections
 from datetime import datetime
 
 from zope import component
+from zope import interface
 
 from z3c.batching.batch import Batch
 
@@ -100,7 +101,7 @@ def _check_container(ntiid, user, registry=component):
 					 and not lib.pathToNTIID(ntiid)))):
 			raise hexc.HTTPNotFound()
 
-
+@interface.implementer(app_interfaces.INamedLinkView)
 class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 
 	def __init__(self, request, the_user=None, the_ntiid=None):
@@ -265,7 +266,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		return result
 
 ##### Min/Max dashboard view ####
-
+@interface.implementer(app_interfaces.INamedLinkView)
 class _UniqueMinMaxSummaryView(_view_utils.AbstractAuthenticatedView):
 
 	def __init__(self, request, the_user=None, the_ntiid=None):

@@ -281,6 +281,85 @@ class LibraryCollectionDetailExternalizer(object):
 				 'title': "Library",
 				 'titles' : [toExternalObject(x) for x in filter(test, library.titles)] }
 
+def _find_named_link_views(parent, provided=None):
+	"""
+	Introspect the component registry to find the things that
+	want to live directly beneath the given object.
+	These can either be an :class:`.INamedLinkPathAdapter`, if we intend
+	to continue traversing, or a named view (implementing :class:`.INamedLinkView`
+	if we want to stop
+	traversing (and possibly access the subpath).
+
+	Returns a set of names.
+	"""
+
+	request = get_current_request() or app_interfaces.MissingRequest()
+
+	# Order matters. traversing wins, so views first
+	names = set()
+	# Pyramid's request_iface property is a dynamically generated
+	# interface class that incorporates the name of the route.
+	# Some tests provide a request object without that,
+	# and even then, the route that got is here isn't (yet)
+	# the traversable route we want. So look for the interface by route name.
+	request_iface = component.queryUtility( interface.Interface,
+											name='objects.generic.traversal',
+											default=interface.Interface )
+	# If it isn't loaded because the app hasn't been scanned, we have no
+	# way to route, and no views either. So we get None, which is a fine
+	# discriminator.
+	if provided is None:
+		provided = interface.providedBy( parent )
+
+	def _test( name, view ):
+		# Views created with the @view_config decorator tend to get wrapped
+		# in a pyramid proxy, which would hide anything they declare to implement
+		# (at least view functions). This is done at venusian scan time, which is after
+		# the module is loaded. Fortunately, the underlying view seems to be preserved
+		# through all the wrappings on the topmost layer of the onion as __original_view__,
+		# so check it as well
+
+		for v in view, getattr(view, '__original_view__', None):
+			# View Functions will directly provide the interface;
+			# view classes, OTOH, will tend to implement it (because using
+			# the @implementer() decorator is easy)
+			if app_interfaces.INamedLinkView.providedBy( v ) or app_interfaces.INamedLinkView.implementedBy( v ):
+				return True
+
+	names.update( [name for name, view
+				   in component.getSiteManager().adapters.lookupAll( (IViewClassifier,
+																	  request_iface,
+																	  provided),
+																	 IView)
+				   if name and _test( name, view )] )
+	names.update( [name for name, _ in component.getAdapters( (parent, request ),
+															  app_interfaces.INamedLinkPathAdapter )] )
+
+	return names
+
+def _make_named_view_links( parent, pseudo_target=False, **kwargs ):
+	"""
+	Uses :func:`._find_named_link_views` to find named views
+	appropriate for the parent and returns a fresh
+	list of :class:`.ILink` objects representing them.
+	"""
+	names = _find_named_link_views( parent, **kwargs )
+	_links = []
+	for name in names:
+		target = name
+		if pseudo_target: # Hmm...
+			target = location.Location()
+			target.__name__ = name
+			target.__parent__ = parent
+
+		link = links.Link( target, rel=name )
+		link.__name__ = link.target
+		link.__parent__ = parent
+		interface.alsoProvides( link, loc_interfaces.ILocation )
+		_links.append( link )
+	return _links
+
+
 @interface.implementer(app_interfaces.IWorkspace)
 @component.adapter(nti_interfaces.IDataserverFolder)
 class GlobalWorkspace(object):
@@ -300,46 +379,7 @@ class GlobalWorkspace(object):
 	def links(self):
 		# Introspect the component registry to find the things that
 		# want to live directly beneath the dataserver root globally.
-		# These can either be an IPathAdapter, if we intend
-		# to continue traversing, or a named view if we want to stop
-		# traversing (and possibly access the subpath)
-
-		request = get_current_request() or app_interfaces.MissingRequest()
-		lnks = []
-		# Order matters. traversing wins, so views first
-		names = set()
-		# Pyramid's request_iface property is a dynamically generated
-		# interface class that incorporates the name of the route.
-		# Some tests provide a request object without that,
-		# and even then, the route that got is here isn't (yet)
-		# the traversable route we want. So look for the interface by route name.
-		request_iface = component.queryUtility( interface.Interface, name='objects.generic.traversal' )
-		# If it isn't loaded because the app hasn't been scanned, we have no
-		# way to route, and no views either. So we get None, which is a fine
-		# discriminator.
-
-		names.update( [name for name, view
-					   in component.getSiteManager().adapters.lookupAll( (IViewClassifier,
-																		  request_iface,
-																		  interface.providedBy(self.__parent__)),
-																		 IView)
-					   if (app_interfaces.INamedLinkView.providedBy(view)
-					   # Views created with the @view_config decorator tend to get wrapped
-					   # in a pyramid proxy, which would hide anything they declare to implement
-					   # (at least view functions). This is done at venusian scan time, which is after
-					   # the module is loaded. Fortunately, the underlying view seems to be preserved
-					   # through all the wrappings on the topmost layer of the onion as __original_view__,
-					   # so check it as well
-					   or app_interfaces.INamedLinkView.providedBy(getattr(view,'__original_view__',None)))] )
-		names.update( [name for name, _ in component.getAdapters( (self.__parent__, request ),
-																  app_interfaces.INamedLinkPathAdapter )] )
-		for name in names:
-			link = links.Link( name, rel=name )
-			link.__name__ = link.target
-			link.__parent__ = self.__parent__
-			interface.alsoProvides( link, loc_interfaces.ILocation )
-			lnks.append( link )
-		return lnks
+		return _make_named_view_links( self.__parent__ )
 
 	@property
 	def name(self): return 'Global'
@@ -576,21 +616,6 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
 		return result
 
-@interface.implementer(app_interfaces.IWorkspace)
-class ProviderEnumerationWorkspace(_ContainerWrapper):
-	"""
-	Given the provider enumeration creates collections for
-	each of those.
-	"""
-
-	def __init__( self, providers ):
-		super(ProviderEnumerationWorkspace,self).__init__( providers )
-
-	@property
-	def collections(self):
-		providers = [p for k, p in self._container.iteritems() if not isSyntheticKey(k)]
-		return _collections( self, providers )
-
 from ._view_utils import get_remote_user
 @interface.implementer(app_interfaces.IContentUnitInfo)
 class _NTIIDEntry(object):
@@ -598,15 +623,7 @@ class _NTIIDEntry(object):
 	__external_class_name__ = 'PageInfo'
 	mimeType = mimetype.nti_mimetype_with_class( __external_class_name__ )
 
-	# TODO: This list is defined again in dataserver_pyramid_views.py ( _PageContainerResource)
-	# application.py (_ugd_odata_views)
-	__operations__ = ('UserGeneratedData', 'RecursiveUserGeneratedData',
-					  'Stream', 'RecursiveStream',
-					  'UserGeneratedDataAndRecursiveStream',
-					  'RelevantUserGeneratedData',
-					  'Glossary',
-					  'TopUserSummaryData', 'UniqueMinMaxSummary')
-
+	link_provided = app_interfaces.IPageContainerResource
 	recursive_stream_supports_feeds = True
 	extra_links = ()
 	contentUnit = None
@@ -621,21 +638,16 @@ class _NTIIDEntry(object):
 
 	@property
 	def links(self):
-		result = []
-		for link in self.__operations__:
-			target = location.Location()
-			target.__name__ = link
-			target.__parent__ = self.__parent__
-			link = links.Link( target, rel=link )
-			# TODO: Rel should be a URI
-			result.append( link )
+		result = _make_named_view_links( self.__parent__,
+										 pseudo_target=True, # XXX: FIXME
+										 provided=self.link_provided )
 
 		# If we support a feed, advertise it
 		# FIXME: We should probably not be doing this. We're making
 		# too many assumptions. And we're also duplicating some
 		# stuff that's being done for IForum and ITopic (though those
 		# are less important).
-		if self.recursive_stream_supports_feeds and 'RecursiveStream' in self.__operations__:
+		if self.recursive_stream_supports_feeds and [x for x in result if x.rel == 'RecursiveStream']:
 			token_creator = component.queryUtility( app_interfaces.IUserViewTokenCreator,
 													name='feed.atom' )
 			remote_user = get_remote_user()
@@ -712,7 +724,7 @@ class _RootNTIIDEntry(_NTIIDEntry):
 	Defines the collection entry for the root pseudo-NTIID, which
 	is only meant for the use of the global stream.
 	"""
-	__operations__ = ('RecursiveStream', 'Glossary')
+	link_provided = app_interfaces.IRootPageContainerResource
 
 	def __init__( self, parent, _ ):
 		super(_RootNTIIDEntry,self).__init__( parent, ntiids.ROOT )
@@ -824,17 +836,15 @@ def _library_workspace( user_service ):
 
 @interface.implementer(app_interfaces.IUserService, mime_interfaces.IContentTypeAware)
 @component.adapter(nti_interfaces.IUser)
-class UserService(object):
-
-	# Is this an adapter? A multi adapter?
+class UserService(location.Location):
 
 	mimeType = mimetype.nti_mimetype_with_class( 'workspace' )
 
-	__name__ = 'users'
 	__parent__ = None
 
 	def __init__( self, user ):
 		self.user = user
+		self.__name__ = 'users'
 		self.__parent__ = component.getUtility( nti_interfaces.IDataserver ).root
 
 	@property
