@@ -7,6 +7,15 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import none
+from hamcrest import greater_than_or_equal_to
+
 import os
 
 from zope import component
@@ -23,13 +32,14 @@ from .. import priceable
 from .. import purchasable
 from .. import purchase_order
 from .. import purchase_attempt
+from .. import purchase_error
 from .. import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
 
-from hamcrest import (assert_that, is_, is_not, has_key, has_entry, has_length, none, greater_than_or_equal_to)
+
 
 class TestStoreExternal(ConfiguringTestBase):
 
@@ -62,20 +72,23 @@ class TestStoreExternal(ConfiguringTestBase):
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
 		pa = self._create_purchase_attempt(description='my charge', quantity=2)
+		pa.Error = purchase_error.create_purchase_error("An error",
+														type_='foo',
+														 code="a code")
 		hist.add_purchase(pa)
 
-		ext = to_external_object(pa)
-		assert_that(ext, has_key('MimeType'))
-		assert_that(ext, has_entry('Class', u'PurchaseAttempt'))
-		assert_that(ext, has_entry('State', 'Unknown'))
-		assert_that(ext, has_entry('OID', is_not(None)))
-		assert_that(ext, has_entry('Last Modified', is_not(None)))
-		assert_that(ext, has_entry('Processor', self.processor))
-		assert_that(ext, has_entry('StartTime', is_not(None)))
-		assert_that(ext, has_entry('EndTime', is_(None)))
-		assert_that(ext, has_entry('Error', is_(None)))
-		assert_that(ext, has_entry('Description', is_('my charge')))
-		assert_that(ext, has_entry('InvitationCode', is_not(none())))
+		ext = to_external_object( pa )
+		assert_that( ext, has_key('MimeType') )
+		assert_that( ext, has_entry( 'Class', 'PurchaseAttempt') )
+		assert_that( ext, has_entry( 'State', 'Unknown') )
+		assert_that( ext, has_entry( 'OID', is_not(None)) )
+		assert_that( ext, has_entry( 'Last Modified', is_not(none())) )
+		assert_that( ext, has_entry( 'Processor', self.processor) )
+		assert_that( ext, has_entry( 'StartTime', is_not(none())) )
+		assert_that( ext, has_entry( 'EndTime', is_(none())) )
+		assert_that( ext, has_entry( 'Description', is_('my charge')) )
+		assert_that( ext, has_entry( 'InvitationCode', is_not(none())) )
+		assert_that( ext, has_entry( 'Error', has_entry('Message', pa.Error.Message) ) )
 
 		# check order
 		assert_that(ext, has_key('Order'))
