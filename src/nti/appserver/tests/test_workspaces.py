@@ -45,10 +45,30 @@ from zc import intid as zc_intid
 from persistent import Persistent
 import transaction
 
+from pyramid.testing import setUp as psetUp
+from pyramid.testing import tearDown as ptearDown
+from nti.appserver.application import createApplication # TODO: Break this dep
 import nti.testing.base
 
-setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.appserver,), features=('devmode','forums') )
-tearDownModule = nti.testing.base.module_teardown
+def setUpModule():
+	# Must create the application so that the views
+	# are registered, since we depend on those
+	# registrations to generate links
+	config = psetUp(registry=component.getGlobalSiteManager(),request=None,hook_zca=False)
+	config.setup_registry()
+
+	createApplication( 8080,
+					   None,
+					   create_ds=False,
+					   force_create_indexmanager=True,
+					   pyramid_config=config,
+					   devmode=True,
+					   testmode=True,
+					   zcml_features=('devmode','forums') )
+
+def tearDownModule():
+	ptearDown()
+	nti.testing.base.module_teardown()
 
 class TestContainerEnumerationWorkspace(unittest.TestCase):
 
@@ -150,8 +170,8 @@ class TestUserEnumerationWorkspace(unittest.TestCase,tests.TestBaseMixin):
 		ext_obj = to_external_object( root )
 		__traceback_info__ = ext_obj
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
-		assert_that( ext_obj, has_entry( 'Links', has_length( greater_than_or_equal_to( 1 ) ) ) )
-		assert_that( ext_obj['Links'][1], has_entry( 'rel', 'RecursiveStream' ) )
+		self.require_link_href_with_rel( ext_obj, 'RecursiveStream' )
+
 
 	@mock_dataserver.WithMockDSTrans
 	def test_shared_container(self):
@@ -179,15 +199,20 @@ class TestUserEnumerationWorkspace(unittest.TestCase,tests.TestBaseMixin):
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
 		assert_that( ext_obj, has_entry( 'Class', 'PageInfo' ) )
 		assert_that( ext_obj, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
-		assert_that( ext_obj, has_entry( 'Links', has_length( greater_than_or_equal_to( 1 ) ) ) )
-		assert_that( ext_obj['Links'][1], has_entry( 'rel', 'RecursiveStream' ) )
+		self.require_link_href_with_rel( ext_obj, 'RecursiveStream' )
+
 
 
 		[shared] = [c for c in uew.pages_collection.container if c.ntiid == PersistentContained.containerId]
 		ext_obj = to_external_object( shared )
 		assert_that( ext_obj, has_entry( 'ID', PersistentContained.containerId ) )
-		#['UserGeneratedData', 'RecursiveUserGeneratedData', 'Stream', 'RecursiveStream', 'UserGeneratedDataAndRecursiveStream', 'Glossary']
-		assert_that( ext_obj, has_entry( 'Links', has_length( greater_than_or_equal_to( 6 ) ) ) )
+		for rel in ('UserGeneratedData', 'RecursiveUserGeneratedData',
+					'Stream', 'RecursiveStream',
+					'UserGeneratedDataAndRecursiveStream',
+					'RelevantUserGeneratedData',
+					'Glossary',
+					'TopUserSummaryData', 'UniqueMinMaxSummary'):
+			self.require_link_href_with_rel( ext_obj, rel )
 
 		transaction.doom()
 

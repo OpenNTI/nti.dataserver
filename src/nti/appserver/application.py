@@ -268,6 +268,11 @@ def _ugd_odata_views(pyramid_config):
 	register_map(_m, 'nti.appserver.ugd_query_views',
 				 context='nti.appserver.interfaces.INewPageContainerResource')
 
+	# The root is only for RecursiveStream and RecursiveUserGeneratedData
+	register_map( {'RecursiveStream': '_RecursiveUGDStreamView',
+				   'RecursiveUserGeneratedData': '_RecursiveUGDView'},
+				  'nti.appserver.ugd_query_views',
+				  context='nti.appserver.interfaces.IRootPageContainerResource' )
 
 def _modifying_ugd_views(pyramid_config):
 

@@ -36,6 +36,7 @@ logger = __import__('logging').getLogger(__name__)
 import datetime
 from cStringIO import StringIO
 
+from zope import interface
 from zope import component
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 
@@ -58,6 +59,7 @@ from nti.dictserver.storage import TrivialExcelCSVDataStorage
 			   request_method='GET',
 			   permission=nauth.ACT_READ,
 			   http_cache=datetime.timedelta(days=1) )
+@interface.implementer(app_interfaces.INamedLinkView)
 class GlossaryView(object):
 	"""
 	Primary reading glossary view.
@@ -67,6 +69,7 @@ class GlossaryView(object):
 
 	@view_config( context=app_interfaces.IPageContainerResource )
 	@view_config( context=app_interfaces.INewPageContainerResource )
+	@view_config( context=app_interfaces.IRootPageContainerResource )
 	def __call__(self):
 		request = self.request
 		term = request.subpath[0]

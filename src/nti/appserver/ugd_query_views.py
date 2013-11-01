@@ -35,6 +35,7 @@ from nti.appserver._view_utils import get_remote_user
 from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.interfaces import IUGDExternalCollection
 from nti.appserver.interfaces import IPageContainerResource
+from nti.appserver.interfaces import INamedLinkView
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -371,6 +372,7 @@ def _communityforum_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 CommunityForum.xxx_isReadableByAnyIdOfUser = _communityforum_xxx_isReadableByAnyIdOfUser
 
+@interface.implementer(INamedLinkView)
 class _UGDView(_view_utils.AbstractAuthenticatedView):
 	"""
 	The base view for user generated data.
@@ -904,6 +906,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 	def _update_last_modified_after_sort(self, objects, result ):
 		result['Last Modified'] = result.lastModified
 
+@interface.implementer(INamedLinkView)
 class _RecursiveUGDView(_UGDView):
 	"""
 	Just like a normal :class:`._UGDView`, but recurses through all the NTIID
@@ -1030,6 +1033,7 @@ class _ChangeMimeFilter(_MimeFilter):
 	def _object( self, o ):
 		return o.object
 
+@interface.implementer(INamedLinkView)
 class _UGDStreamView(_UGDView):
 
 	get_owned = users.User.getContainedStream
@@ -1039,6 +1043,7 @@ class _UGDStreamView(_UGDView):
 
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
 
+@interface.implementer(INamedLinkView)
 class _RecursiveUGDStreamView(_RecursiveUGDView):
 	"""
 	Accepts all the regular sorting and paging parameters (though note, you
@@ -1097,6 +1102,7 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 			raise hexc.HTTPNotFound()
 		return items
 
+@interface.implementer(INamedLinkView)
 class _UGDAndRecursiveStreamView(_UGDView):
 	"""
 	Returns both the generated data and the stream data.

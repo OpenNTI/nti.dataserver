@@ -197,6 +197,11 @@ def ChangePresentationDetails(_, change):
 			  name='feed.atom',
 			  permission=nauth.ACT_READ, request_method='GET',
 			  http_cache=datetime.timedelta(hours=1))
+@view_config( route_name='objects.generic.traversal',
+			  context='nti.appserver.interfaces.IRootPageContainerResource',
+			  name='feed.atom',
+			  permission=nauth.ACT_READ, request_method='GET',
+			  http_cache=datetime.timedelta(hours=1))
 class UGDFeedView(AbstractFeedView):
 	_data_callable_factory = _RecursiveUGDStreamView
 
