@@ -329,3 +329,8 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		# Resolving ourself uses a different caching strategy
 		res = self.resolve_user_response()
 		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_fetch_by_ntiid_lower(self):
+		# Resolving ourself uses a different caching strategy
+		self.testapp.get( '/dataserver2/Objects/tag:nextthought.com,2011-10:system-namedentity:user-sjohnson%40nextthought.com' )

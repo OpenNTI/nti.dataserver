@@ -890,6 +890,11 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( to_external_object( comm ),
 					 has_entry( 'NTIID', 'tag:nextthought.com,2011-10:system-NamedEntity:Community-everyone'))
 
+		# Lowercasing it works too...
+		assert_that( ntiids.find_object_with_ntiid( user1.NTIID.lower() ), is_( user1 ) )
+		assert_that( ntiids.find_object_with_ntiid( comm.NTIID.lower() ), is_( comm ) )
+
+
 from zope.event import notify
 from nti.apns.interfaces import APNSDeviceFeedback
 
