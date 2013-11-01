@@ -59,20 +59,7 @@ def patch_zopyx():
 		logger.exeption("Error patching zopyx", e)
 		raise
 
-def patch_imports():
-	logger.info("patching old imports")
-	try:
-		from . import content_utils as nti_content_utils
-		sys.modules['nti.contentsearch._content_utils'] = nti_content_utils
-
-		from . import discriminators as nti_discriminators
-		sys.modules['nti.contentsearch._discriminators'] = nti_discriminators
-	except ImportError, e:
-		logger.exeption("Error patching old imports", e)
-		raise
-
 def patch():
 	patch_zopyx()
 	patch_repoze()
-	patch_imports()
 	patch_zope_index()
