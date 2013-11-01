@@ -731,7 +731,7 @@ class _RootNTIIDEntry(_NTIIDEntry):
 
 @interface.implementer(app_interfaces.IContainerCollection)
 @component.adapter(app_interfaces.IUserWorkspace)
-class _UserPagesCollection(object):
+class _UserPagesCollection(location.Location):
 	"""
 	Turns a User into a ICollection of data for their pages (individual containers).
 	"""
@@ -742,12 +742,11 @@ class _UserPagesCollection(object):
 
 	def __init__( self, user_workspace ):
 		self.__parent__ = user_workspace
+		self._workspace = user_workspace
 
 	@property
 	def _user( self ):
-		# FIXME: See GenericGetView. This is a workaround to it
-		# reparenting us.
-		return getattr( self.__parent__, 'user', self.__parent__ )
+		return self._workspace.user
 
 	@property
 	def links(self):

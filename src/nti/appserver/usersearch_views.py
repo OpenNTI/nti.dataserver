@@ -102,7 +102,7 @@ interface.directlyProvides(_UserSearchView, app_interfaces.INamedLinkView)
 			  request_method='GET',
 			  context=nti_interfaces.IUser,
 			  custom_predicates=( (lambda context,request: get_remote_user(request) == context), ) )
-def _ResolveMyself(request):
+def _TraverseToMyself(request):
 	"""
 	Custom version of user resolution that only matches for ourself.
 	"""
@@ -112,6 +112,22 @@ def _ResolveMyself(request):
 	# We don't want the simple summary, we want the personal summary, so we have
 	# to do that ourself
 	return toExternalObject(request.context, name='personal-summary-preferences')
+
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  permission=nauth.ACT_READ,
+			  request_method='GET',
+			  context=nti_interfaces.IUser )
+def _TraverseToUser(request):
+	"""
+	When we traverse to a user, we don't want to wrap him in a collection
+	(as we used to) we want to treat it like user resolutaion
+	"""
+	remote_user = get_remote_user( request )
+	if _make_visibility_test(remote_user)(request.context):
+		return request.context
+	raise hexc.HTTPForbidden()
 
 @view_config( route_name='objects.generic.traversal',
 			  context=IDataserverFolder,
