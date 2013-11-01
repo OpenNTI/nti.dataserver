@@ -45,6 +45,11 @@ class PurchaseOrderExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = store_interfaces.IPurchaseOrder
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(store_interfaces.IPurchaseError)
+class PurchaseErrorExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = store_interfaces.IPurchaseError
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
 @component.adapter(store_interfaces.IPurchaseAttempt)
 class PurchaseAttemptExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = store_interfaces.IPurchaseAttempt
@@ -117,7 +122,7 @@ class PurchasableDecorator(object):
 			link = Link(price_href, rel="price", method='Post')
 			interface.alsoProvides(link, ILocation)
 			_links.append(link)
-		
+
 	def add_library_details(self, original, external):
 		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 		unit = library.get(original.NTIID) if library else None
@@ -169,4 +174,3 @@ class CourseDecorator(PurchasableDecorator):
 				link = Link(unerroll_path, rel="unenroll", method='Post')
 			interface.alsoProvides(link, ILocation)
 			external.setdefault(LINKS, []).append(link)
-

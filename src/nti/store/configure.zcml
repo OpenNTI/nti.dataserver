@@ -8,7 +8,7 @@
 	<include package="zope.component" />
 
 	<include package=".payments" file="configure.zcml" />
-		
+
 	<adapter factory=".purchase_history._PurchaseHistoryFactory"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IPurchaseHistory" />
@@ -28,23 +28,24 @@
 	<adapter factory=".externalization.PurchasableExternal" />
 	<adapter factory=".externalization.PurchaseItemExternal" />
 	<adapter factory=".externalization.PurchaseOrderExternal" />
+	<adapter factory=".externalization.PurchaseErrorExternal" />
 	<adapter factory=".externalization.PricingResultsExternal" />
 	<adapter factory=".externalization.PurchaseAttemptExternal" />
 	<adapter factory=".externalization.RedeemedPurchaseAttemptExternal" />
 	<adapter factory=".externalization.InvitationPurchaseAttemptExternal" />
-	
+
 	<adapter factory=".purchase_error.nti_store_exception_adpater"
 			 provides=".interfaces.IPurchaseError"
 			 for=".interfaces.INTIStoreException" />
-							 
+
 	<subscriber factory=".externalization.PurchasableDecorator"
 				for=".interfaces.IPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-	
+
 	<subscriber factory=".externalization.CourseDecorator"
 				for=".interfaces.ICourse"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-				
+
 	<subscriber factory=".externalization.PurchaseAttemptDecorator"
 				for=".interfaces.IPurchaseAttempt"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
@@ -52,9 +53,9 @@
 	<subscriber factory=".externalization.PricedItemDecorator"
 				for=".interfaces.IPricedItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-	
+
 	<utility factory=".purchasable.ZcmlPurchasableStore" />
-		
+
 	<utility component=".purchasable.PurchasableTokenVocabulary"
 			 provides="zope.schema.interfaces.IVocabularyFactory"
 			 name="nti.store.purchasable.vocabulary" />
@@ -63,7 +64,7 @@
 
 	<utility factory=".purchasable._PurchasableResolver" name="purchasable" />
 	<utility factory=".course._CourseResolver" name="course" />
-	
+
 	<!--
 		The purchasables included in here are only for test purposes
 	-->
