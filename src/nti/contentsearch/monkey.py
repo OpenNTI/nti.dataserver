@@ -22,6 +22,7 @@ def patch_repoze():
 	CatalogIndex.family = BTrees.family64
 
 def patch_zopyx():
+	logger.info("patching zopyx")
 	try:
 		from . import zopyxtxng3_logger as ntizopy_logger
 		sys.modules["zopyx.txng3.core.logger"] = ntizopy_logger
@@ -59,11 +60,16 @@ def patch_zopyx():
 		raise
 
 def patch_imports():
-	# TODO: can we use zope.deferedimport
-	for name in ('content_utils', 'discriminators'):
-		old_module = 'nti.contentsearch._%s' % name
-		new_module = 'nti.contentsearch.%s' % name
-		sys.modules[old_module] = __import__(new_module)
+	logger.info("patching old imports")
+	try:
+		from . import content_utils as nti_content_utils
+		sys.modules['nti.contentsearch._content_utils'] = nti_content_utils
+
+		from . import discriminators as nti_discriminators
+		sys.modules['nti.contentsearch._discriminators'] = nti_discriminators
+	except ImportError, e:
+		logger.exeption("Error patching old imports", e)
+		raise
 
 def patch():
 	patch_zopyx()
