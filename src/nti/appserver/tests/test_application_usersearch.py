@@ -332,5 +332,49 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_fetch_by_ntiid_lower(self):
-		# Resolving ourself uses a different caching strategy
-		self.testapp.get( '/dataserver2/Objects/tag:nextthought.com,2011-10:system-namedentity:user-sjohnson%40nextthought.com' )
+		# When we traverse to ourself, we do the same thing
+		# as hitting ResolveUser for ourself, getting the different caching
+		# strategy
+		res = self.testapp.get( '/dataserver2/Objects/tag:nextthought.com,2011-10:system-namedentity:user-sjohnson%40nextthought.com' )
+		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
+
+	@WithSharedApplicationMockDS
+	def test_fetch_other_by_ntiid(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user1 = self._create_user()
+			user2 = self._create_user(username='jason@nextthought.com' )
+			dfl = users.DynamicFriendsList( username='Friends' )
+			dfl.creator = user1
+			user1.addContainedObject( dfl )
+			dfl.addFriend( user2 )
+			dfl_ntiid = dfl.NTIID
+
+			user2_ntiid = user2.NTIID
+			user1_username = user1.username
+			user2_username = user2.username
+
+		testapp = TestApp( self.app )
+
+		# Traversal is denied due to permissioning until we share a community,
+		# whether by NTIID or by username
+		testapp.get( '/dataserver2/Objects/' + user2_ntiid, extra_environ=self._make_extra_environ(),
+					 status=403 )
+		testapp.get( '/dataserver2/users/' + user2_username, extra_environ=self._make_extra_environ(),
+					 status=403 )
+
+		# resolving "works" but returns no items
+		res = testapp.get( '/dataserver2/ResolveUser/' + user2_ntiid, extra_environ=self._make_extra_environ() )
+		assert_that( res.json_body, has_entry( 'Items', [] ) )
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			user1 = users.User.get_user(user1_username)
+			user2 = users.User.get_user( user2_username )
+			community = users.Community.create_community( username='TheCommunity' )
+			user1.record_dynamic_membership( community )
+			user2.record_dynamic_membership( community )
+
+		res = testapp.get( '/dataserver2/Objects/' + user2_ntiid, extra_environ=self._make_extra_environ() )
+		assert_that( res.json_body, has_entry( 'Class', 'User' ) )
+
+		res = testapp.get( '/dataserver2/users/' + user2_username, extra_environ=self._make_extra_environ() )
+		assert_that( res.json_body, has_entry( 'Class', 'User' ) )
