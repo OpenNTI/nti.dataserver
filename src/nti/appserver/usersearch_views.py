@@ -89,12 +89,13 @@ def _UserSearchView(request):
 	elif partialMatch and remote_user:
 		# Even if it's not a valid global search, we still want to
 		# look at things local to the user
-		result = _search_scope_to_remote_user( remote_user, partialMatch )
+		result = _search_scope_to_remote_user( remote_user,
+											   partialMatch )
 
 	request.response.cache_control.max_age = 120
 
 	return _format_result( result, remote_user, dataserver )
-interface.directlyProvides(_UserSearchView, app_interfaces.INamedLinkView)
+interface.directlyProvides( _UserSearchView, app_interfaces.INamedLinkView)
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -109,6 +110,7 @@ def _TraverseToMyself(request):
 	# Our custom predicate protects us
 	request.response.cache_control.max_age = 0
 	request.response.etag = None
+
 	# We don't want the simple summary, we want the personal summary, so we have
 	# to do that ourself
 	return toExternalObject(request.context, name='personal-summary-preferences')
