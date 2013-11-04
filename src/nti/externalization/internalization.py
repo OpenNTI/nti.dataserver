@@ -467,3 +467,21 @@ def _date_from_string( string ):
 		t, v, tb = sys.exc_info()
 		e = InvalidValue( *v.args, value=string )
 		raise e, None, tb
+
+@interface.implementer(interfaces.IInternalObjectExternalizer)
+class _date_to_string(object):
+
+	def __init__( self, date ):
+		self.date = date
+
+	def toExternalObject(self):
+		return isodate.date_isoformat(self.date)
+
+@interface.implementer(interfaces.IInternalObjectExternalizer)
+class _duration_to_string(object):
+
+	def __init__( self, date ):
+		self.date = date
+
+	def toExternalObject(self):
+		return isodate.duration_isoformat(self.date)
