@@ -119,7 +119,7 @@ class PasswordCannotConsistOfOnlyWhitespace(pwd_interfaces.NoPassword):
 	i18n_message = _("Your pasword cannot contain only whitespace. Please try again.")
 
 class InsecurePasswordIsForbidden(pwd_interfaces.InvalidPassword):
-	i18n_message = _("The password you supplied has been identified by security researches as commonly used and insecure. Please try again.")
+	i18n_message = _("The password you supplied has been identified by security researchers as commonly used and insecure. Please try again.")
 
 	def __init__( self, value=None ):
 		super(InsecurePasswordIsForbidden,self).__init__()
