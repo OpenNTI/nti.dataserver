@@ -30,14 +30,16 @@ import subprocess
 import contextlib
 import anyjson as json
 
-import warnings
-try:
+if not os.getenv('DATASERVER_DIR_IS_BUILDOUT'):
+	# Buildout puts it on the path
+	import warnings
+	try:
 
-	warnings.warn( "Using whatever phantomjs is on the PATH; supported version 1.9.2; version found at %s is %s"
-				   %(subprocess.check_output(['which', 'phantomjs']).strip(), subprocess.check_output( ['phantomjs', '-v'] ).strip() ),
-				   UserWarning, stacklevel=1)
-except subprocess.CalledProcessError:
-	warnings.warn( "Phantomjs not found on the PATH" )
+		warnings.warn( "Using whatever phantomjs is on the PATH; supported version 1.9.2; version found at %s is %s"
+					   %(subprocess.check_output(['which', 'phantomjs']).strip(), subprocess.check_output( ['phantomjs', '-v'] ).strip() ),
+					   UserWarning, stacklevel=1)
+	except subprocess.CalledProcessError:
+		warnings.warn( "Phantomjs not found on the PATH" )
 
 class _PhantomProducedUnexpectedOutputError(subprocess.CalledProcessError):
 
