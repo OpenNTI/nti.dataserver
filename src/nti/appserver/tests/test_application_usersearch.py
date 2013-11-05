@@ -114,11 +114,12 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		testapp = TestApp( self.app )
 		res = testapp.get( '/dataserver2', extra_environ=self._make_extra_environ())
 		# The service doc contains all the links
-		assert_that( res.json_body['Items'][1], has_entry( 'Links',
-														has_items(
-															has_entry( 'href', '/dataserver2/UserSearch' ),
-															has_entry( 'href', '/dataserver2/ResolveUser' ),
-															has_entry( 'href', '/dataserver2/ResolveUsers' ) ) ) )
+		glob_ws, = [x for x in res.json_body['Items'] if x['Title'] == 'Global']
+		assert_that( glob_ws, has_entry( 'Links',
+										 has_items(
+											 has_entry( 'href', '/dataserver2/UserSearch' ),
+											 has_entry( 'href', '/dataserver2/ResolveUser' ),
+											 has_entry( 'href', '/dataserver2/ResolveUsers' ) ) ) )
 
 
 		# We can search for ourself
