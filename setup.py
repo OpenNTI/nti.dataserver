@@ -438,7 +438,8 @@ setup(
 			# OK with websockets and greenlets.
 			# Depends on the system graphviz installation; an alternative is repoze.profile which has
 			# fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
-			'linesman >= 0.3.1',  # less that 0.3.0 conflicts with pillow (wanted PIL)
+			# Moved to buildout to reduce dep
+			# 'linesman >= 0.3.1',  # less that 0.3.0 conflicts with pillow (wanted PIL)
 			# 'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			#'dblatex >= 0.3.4',  # content rendering, convert docbook to tex. disabled due to sandbox violation
 			'epydoc >= 3.0.1',	# auto-api docs
