@@ -1092,6 +1092,29 @@ class TestApplication(SharedApplicationTestBase):
 		# Another user cannot
 		othertestapp.get( path, status=403 )
 
+	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
+	def test_transaction_tween_abort_ioerror(self):
+		# Commonly seen on socketio XHR post. If
+		# the wsgi.input raises an IOError, we don't 500
+
+		class Input(object):
+			def read(self, *args):
+				raise IOError("unexpected end of file while reading request at position 0")
+			# Make webtest lint happy
+			readline = read
+			readlines = readline
+			def __iter__(self):
+				return []
+
+		environ = {b'wsgi.input': Input(),
+				   b'REQUEST_METHOD': 'POST',
+					}
+		request = self.testapp.RequestClass.blank( '/socket.io/1/xhr-polling/0x22b3caa6de7a12d2',
+												   environ )
+		self.testapp.do_request( request,
+								 status=400, # Bad Request
+								 expect_errors=False)
+
 
 
 class TestApplicationSearch(SharedApplicationTestBase):

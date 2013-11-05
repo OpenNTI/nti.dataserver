@@ -4,12 +4,17 @@
 A tween that begins and ends transactions around its handler. This is initially
 very similar to :mod:`pyramid_tm`, but with the following changes:
 
-* The transaction is rolled back if the request is deemed to be side-effect free
-  (this has intimate knowledge of the paths that do not follow the HTTP rules for a GET being side-effect free)
+* The transaction is rolled back if the request is deemed to be
+  side-effect free (this has intimate knowledge of the paths that do
+  not follow the HTTP rules for a GET being side-effect free; however,
+  if you are a GET request and you violate the rules by having
+  side-effects, you can set the environment key
+  ``nti.request_had_transaction_side_effects`` to ``True``)
 
 * Logging is added to account for the time spent in aborts and commits.
 
 $Id$
+
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
@@ -17,7 +22,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from ZODB.loglevels import TRACE
 
+from pyramid.httpexceptions import HTTPBadRequest
 from nti.utils.transactions import TransactionLoop
 
 def _commit_veto(request, response):
@@ -61,11 +68,19 @@ class _transaction_tween(TransactionLoop):
 		try:
 			request.make_body_seekable()
 		except IOError as e:
-			# almost always " unexpected end of file "; at any
-			# rate, this is non-recoverable
+			# almost always " unexpected end of file reading request";
+			# (though it could also be a tempfile issue if we spool to
+			# disk?) at any rate,
+			# this is non-recoverable
+			logger.log( TRACE, "Failed to make request body seekable", exc_info=True )
 			# TODO: Should we do anything with the request.response? Set an error
 			# code? It won't make it anywhere...
-			raise self.AbortException( str(e), "IOError on reading body" )
+
+			# However, it is critical that we return a valid Response
+			# object, even if it is an exception response, so that
+			# Pyramid doesn't blow up
+
+			raise self.AbortException( HTTPBadRequest(str(e)), "IOError on reading body" )
 
 	def should_abort_due_to_no_side_effects( self, request ):
 		return _is_side_effect_free( request ) and not request.environ.get('nti.request_had_transaction_side_effects')
