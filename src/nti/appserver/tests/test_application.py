@@ -1285,6 +1285,7 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 		class Lib(object):
 			interface.implements( lib_interfaces.IContentPackageLibrary )
 			titles = ()
+			contentPackages = ()
 
 			def __getitem__(self, key):
 				if key != test_self.child_ntiid:
