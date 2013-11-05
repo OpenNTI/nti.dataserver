@@ -274,7 +274,9 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 		# See test_usersearch.
 		# And the User resource should have a Pages collection that also has
 		# a link--this one pre-rendered
-		user_ws = ext_object['Items'][0]
+		user_wss = [x for x in ext_object['Items'] if x['Title'] == user.username]
+		assert_that( user_wss, has_length( 1 ))
+		user_ws, = user_wss
 		assert_that( user_ws, has_entry( 'Title', user.username ) )
 		assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', 'Pages' ),
 																	has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Pages' ) ) ) ) )

@@ -611,10 +611,13 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
 	@property
 	def collections(self):
+		"The returned collections are sorted by name."
 		result = list(super(UserEnumerationWorkspace,self).collections)
-		result.extend( component.subscribers( (self,), app_interfaces.ICollection ) )
+		result.extend( [c
+						for c in component.subscribers( (self,), app_interfaces.ICollection )
+						if c] )
 
-		return result
+		return sorted( result, key=lambda x: x.name )
 
 from ._view_utils import get_remote_user
 @interface.implementer(app_interfaces.IContentUnitInfo)
@@ -857,8 +860,14 @@ class UserService(location.Location):
 		facilitates adding new workspaces from different parts of the code. It also
 		facilitates giving completely different workspaces to different sites (for example,
 		transaction history only if the store is enabled for a site).
+
+		The returned list is sorted by the name of the workspace.
 		"""
-		return [workspace for workspace in component.subscribers( (self,), app_interfaces.IWorkspace )]
+		return sorted( [workspace
+						for workspace
+						in component.subscribers( (self,), app_interfaces.IWorkspace )
+						if workspace],
+					   key=lambda w: w.name )
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(app_interfaces.IService)
