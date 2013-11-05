@@ -504,9 +504,13 @@ class ContainerCollectionDetailExternalizer(object):
 				# own href
 				# TODO: This if test is probably not needed anymore, with zope.location.traversing
 				# it will either work or raise
-				valid_traversal_path = traversal.normal_resource_path( v_ )
-				if valid_traversal_path and valid_traversal_path.startswith( '/' ):
-					item['href'] = valid_traversal_path
+				try:
+					valid_traversal_path = traversal.normal_resource_path( v_ )
+					if valid_traversal_path and valid_traversal_path.startswith( '/' ):
+						item['href'] = valid_traversal_path
+				except TypeError:
+					# Usually "Not enough context information to get all parents"
+					pass
 			return item
 
 		if isinstance( container, collections.Mapping ):

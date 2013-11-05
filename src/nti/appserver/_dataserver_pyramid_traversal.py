@@ -354,22 +354,31 @@ class UserTraversable(_PseudoTraversableMixin):
 		except loc_interfaces.LocationError:
 			pass
 
-		resource = None
+		# Is there a named path adapter?
+		try:
+			return adapter_request( self.context, self.request ).traverse( key, remaining_path )
+		except loc_interfaces.LocationError:
+			pass
+
+		# Is this an item in the user's workspace?
+		# TODO: Implement workspace traversal. That and named path
+		# adapters should obviate the need to look into
+		# containers
+
+		# Is this a specific, special container ( not the generic UGD
+		# containers)? IContainerResource has views registered on it
+		# for POST and GET, but the GET is generic, NOT the UGD GET;
+		# that's registered for IPageContainer. This should be replaced
+		# with one of the above methods.
 		cont = self.context.getContainer( key )
-		if nti_interfaces.INamedContainer.providedBy( cont ) or nti_interfaces.IHomogeneousTypeContainer.providedBy( cont ):
-			# Provide access here only to specific, special containers, not the generic UGD containers.
-			# IContainerResource has views registered on it for POST and GET, but the GET
-			# is generic, NOT the UGD GET; that's registered for IPageContainer
-			resource = _ContainerResource( cont, self.request )
-			# In the past, we accessed generic containers here for the legacy URL structure,
-			# but the better solution was to change the route configuration to make the legacy
-			# structure match the new structure's traversal
-		else:
-			raise loc_interfaces.LocationError( key ) # It exists, but you cannot access it at this URL
+		if not (nti_interfaces.INamedContainer.providedBy( cont )
+				or nti_interfaces.IHomogeneousTypeContainer.providedBy( cont )):
+			# It may or may not exist, but you cannot access it at this URL
+			raise loc_interfaces.LocationError( key )
 
-		# Allow the owner full permissions.
-		# These are the special containers, and no one else can have them.
-
+		resource = _ContainerResource( cont, self.request )
+		# Allow the owner full permissions. These are the special
+		# containers, and no one else can have them.
 		resource.__acl__ = nacl.acl_from_aces( nacl.ace_allowing( self.context, sec.ALL_PERMISSIONS, self ) )
 		if self._DENY_ALL:
 			resource.__acl__ = resource.__acl__ + nacl.ace_denying_all( self )

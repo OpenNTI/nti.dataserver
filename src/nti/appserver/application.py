@@ -221,6 +221,11 @@ def _library_settings(pyramid_config, server, library):
 		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 
 	if library is not None:
+		# Ensure the library is enumerated at this time during startup
+		# when we have loaded all the basic ZCML slugs but while
+		# we are in control of the site
+		getattr( library, 'contentPackages' )
+
 		# FIXME: This needs to move to the IRegistrationEvent listener, but
 		# we need access to the pyramid config...
 		# FIXME: This falls over in the presence of multiple libraries and/or
