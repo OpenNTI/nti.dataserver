@@ -97,14 +97,20 @@ class IAutoPackageExternalizationDirective(interface.Interface):
 	root_interfaces = zope.configuration.fields.Tokens(title="The root interfaces defined by the package.",
 													   value_type=zope.configuration.fields.GlobalInterface(),
 													   required=True)
-	modules = zope.configuration.fields.Tokens(title="Module names that define implementation factories.",
+	modules = zope.configuration.fields.Tokens(title="Module names that contain the implementations of the root_interfaces.",
 													value_type=zope.configuration.fields.GlobalObject(),
 													required=True)
+
+	factory_modules = zope.configuration.fields.Tokens(title="If given, module names that should be searched for internalization factories",
+													   description="If not given, all modules will be examined.",
+													   value_type=zope.configuration.fields.GlobalObject(),
+													   required=False)
+
 	iobase = zope.configuration.fields.GlobalObject(title="If given, a base class that will be used. You can customize aspects of externalization that way.",
 													required=False)
 
 from .autopackage import AutoPackageSearchingScopedInterfaceObjectIO
-def autoPackageExternalization(_context, root_interfaces, modules, iobase=None ):
+def autoPackageExternalization(_context, root_interfaces, modules, factory_modules=None, iobase=None ):
 
 	ext_module_name = root_interfaces[0].__module__
 	package_name = ext_module_name.rsplit( '.', 1 )[0]
@@ -136,5 +142,5 @@ def autoPackageExternalization(_context, root_interfaces, modules, iobase=None )
 					 callable=cls_iio.__class_init__,
 					 args=() )
 	# Now that it's initted, register the factories
-	for module in modules:
+	for module in (factory_modules or modules):
 		registerMimeFactories( _context, module )
