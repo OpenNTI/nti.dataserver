@@ -47,7 +47,6 @@ class IRegisterInternalizationMimeFactoriesDirective(interface.Interface):
 		required=True,
 		)
 
-
 def registerMimeFactories( _context, module ):
 	"""
 	Poke through the classes defined in `module`. If a class
@@ -86,3 +85,56 @@ def registerMimeFactories( _context, module ):
 			# There will be lots of things that don't get registered.
 			# Only complain if it looks like they tried and got it half right
 			logger.log( loglevels.TRACE, "Nothing to register on %s (mt: %s ext: %s mod: %s)", k, mime_type, ext_create, v_mod_name)
+
+
+class IAutoPackageExternalizationDirective(interface.Interface):
+	"""
+	This directive combines the effects of :class:`.IRegisterInternalizationMimeFactoriesDirective`
+	with that of :mod:`.autopackage`, removing all need to repeat root interfaces
+	and module names.
+	"""
+
+	root_interfaces = zope.configuration.fields.Tokens(title="The root interfaces defined by the package.",
+													   value_type=zope.configuration.fields.GlobalInterface(),
+													   required=True)
+	modules = zope.configuration.fields.Tokens(title="Module names that define implementation factories.",
+													value_type=zope.configuration.fields.GlobalObject(),
+													required=True)
+	iobase = zope.configuration.fields.GlobalObject(title="If given, a base class that will be used. You can customize aspects of externalization that way.",
+													required=False)
+
+from .autopackage import AutoPackageSearchingScopedInterfaceObjectIO
+def autoPackageExternalization(_context, root_interfaces, modules, iobase=None ):
+
+	ext_module_name = root_interfaces[0].__module__
+	package_name = ext_module_name.rsplit( '.', 1 )[0]
+
+	@classmethod
+	def _ap_enumerate_externalizable_root_interfaces( cls, ifaces ):
+		return root_interfaces
+	@classmethod
+	def _ap_enumerate_module_names( cls ):
+		return [m.__name__.split('.')[-1] for m in modules]
+	@classmethod
+	def _ap_find_package_name(cls):
+		return package_name
+
+	cls_dict = {'_ap_enumerate_module_names': _ap_enumerate_module_names,
+				'_ap_enumerate_externalizable_root_interfaces': _ap_enumerate_externalizable_root_interfaces,
+				'_ap_find_package_name': _ap_find_package_name }
+
+	cls_iio = type(b'AutoPackageSearchingScopedInterfaceObjectIO',
+				   (iobase, AutoPackageSearchingScopedInterfaceObjectIO,) if iobase else (AutoPackageSearchingScopedInterfaceObjectIO,),
+				   cls_dict )
+
+	for iface in root_interfaces:
+		component_zcml.adapter(_context, factory=(cls_iio,), for_=(iface,) )
+
+	# Now init the class so that it can add the things that internaliaztion
+	# needs
+	_context.action( discriminator=('class_init', tuple(modules)),
+					 callable=cls_iio.__class_init__,
+					 args=() )
+	# Now that it's initted, register the factories
+	for module in modules:
+		registerMimeFactories( _context, module )

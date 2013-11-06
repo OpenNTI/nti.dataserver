@@ -9,6 +9,11 @@
 		schema="nti.externalization.zcml.IRegisterInternalizationMimeFactoriesDirective"
 		handler="nti.externalization.zcml.registerMimeFactories"
 		/>
+	<meta:directive
+		name="registerAutoPackageIO"
+		schema="nti.externalization.zcml.IAutoPackageExternalizationDirective"
+		handler="nti.externalization.zcml.autoPackageExternalization"
+		/>
   </meta:directives>
 
 </configure>

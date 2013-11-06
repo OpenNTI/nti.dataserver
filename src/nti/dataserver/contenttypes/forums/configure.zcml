@@ -50,32 +50,14 @@
 	<subscriber handler=".forum._topic_added_to_forum" />
 
 	<!-- Externalization -->
-	<adapter factory=".externalization._ForumInternalObjectIO"
-			 for=".interfaces.IBoard" />
-
-	<adapter factory=".externalization._ForumInternalObjectIO"
-			 for=".interfaces.IForum" />
-
-	<adapter factory=".externalization._ForumInternalObjectIO"
-			 for=".interfaces.ITopic" />
-
-	<adapter factory=".externalization._ForumInternalObjectIO"
-			 for=".interfaces.IPost" />
-
-	<adapter factory=".externalization._ForumACEInternalObjectIO"
-			 for=".interfaces.IForumACE" />
-
-	<!--
-		 Make sure and do this after the .externalization package has
-		 worked its magic.
-	-->
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
-	<ext:registerMimeFactories module=".board" />
-	<ext:registerMimeFactories module=".forum" />
-	<ext:registerMimeFactories module=".post" />
-	<ext:registerMimeFactories module=".topic" />
-	<ext:registerMimeFactories module=".ace" />
+
+	<ext:registerAutoPackageIO
+		modules=".board .forum .post .topic .ace"
+		root_interfaces=".interfaces.IBoard .interfaces.IForum .interfaces.ITopic .interfaces.IPost .interfaces.IForumACE"
+		iobase="nti.dataserver.contenttypes.base.UserContentRootInternalObjectIOMixin"
+		/>
 
 	<!-- ACLs -->
 	<adapter factory=".acl._TopicACLProvider"
