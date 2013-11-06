@@ -194,33 +194,6 @@ class AbstractMappingAdaptingUserBasedResolver(AbstractAdaptingUserBasedResolver
 			return mapping.get( get_specific( ntiid ) )
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
-class _ClassResolver(_AbstractUserBasedResolver):
-
-	namespace = 'providers'
-	def _resolve(self, key, provider):
-		# TODO: Generalize this
-		# TODO: Should we track updates here?
-		# TODO: Why are there two id_type that mean the same?
-		result = None
-		for x in provider.classes.itervalues():
-			result = _match( x, key, False )
-			if result: break
-		return result
-
-@interface.implementer( nid_interfaces.INTIIDResolver )
-class _SectionResolver(_AbstractUserBasedResolver):
-
-	namespace = 'providers'
-	def _resolve(self, key, provider ):
-		result = None
-		for c in provider.classes.itervalues():
-			for s in getattr( c, 'Sections', () ):
-				result = _match( s, key, False )
-				if result: break
-			if result: break
-		return result
-
-@interface.implementer( nid_interfaces.INTIIDResolver )
 class _ContentResolver(object):
 
 	def resolve( self, key ):

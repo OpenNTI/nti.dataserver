@@ -10,10 +10,6 @@
 
 	<!-- NTIID Resolvers -->
 	<utility factory=".ntiids._OIDResolver" name="OID" />
-	<utility factory=".ntiids._ClassResolver" name="Class" />
-	<utility factory=".ntiids._ClassResolver" name="MeetingRoom:Class" />
-	<utility factory=".ntiids._SectionResolver" name="ClassSection" />
-	<utility factory=".ntiids._SectionResolver" name="MeetingRoom:ClassSection" />
 	<utility factory=".ntiids._ContentResolver" name="HTML" />
 	<utility factory=".ntiids._ContentResolver" name="Root" />
 	<utility factory=".ntiids._AssessmentResolver" name="NAQ" />
@@ -36,10 +32,6 @@
 	-->
 	<utility factory=".ntiids._MeetingRoomResolver" name="meetingroom" />
 	<utility factory=".ntiids._MeetingRoomResolver" name="meetingroom:group" />
-	<utility factory=".ntiids._ClassResolver" name="class" />
-	<utility factory=".ntiids._ClassResolver" name="meetingroom:class" />
-	<utility factory=".ntiids._SectionResolver" name="classsection" />
-	<utility factory=".ntiids._SectionResolver" name="meetingroom:classsection" />
 	<utility factory=".ntiids._NamedEntityResolver" name="namedentity:user" />
 	<utility factory=".ntiids._NamedEntityResolver" name="namedentity:community" />
 
