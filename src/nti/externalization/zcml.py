@@ -125,13 +125,18 @@ def autoPackageExternalization(_context, root_interfaces, modules, factory_modul
 	def _ap_find_package_name(cls):
 		return package_name
 
-	cls_dict = {'_ap_enumerate_module_names': _ap_enumerate_module_names,
-				'_ap_enumerate_externalizable_root_interfaces': _ap_enumerate_externalizable_root_interfaces,
-				'_ap_find_package_name': _ap_find_package_name }
+	# Items in a class dict and its name need to be native strings
+	# under both py2 and py3
+	cls_dict = {str('_ap_enumerate_module_names'): _ap_enumerate_module_names,
+				str('_ap_enumerate_externalizable_root_interfaces'): _ap_enumerate_externalizable_root_interfaces,
+				str('_ap_find_package_name'): _ap_find_package_name }
 
-	cls_iio = type(b'AutoPackageSearchingScopedInterfaceObjectIO',
+	cls_iio = type(str('AutoPackageSearchingScopedInterfaceObjectIO'),
 				   (iobase, AutoPackageSearchingScopedInterfaceObjectIO,) if iobase else (AutoPackageSearchingScopedInterfaceObjectIO,),
 				   cls_dict )
+	# If we don't set the __module__, it defaults to this module,
+	# which would be very confusing.
+	cls_iio.__module__ = _context.package.__name__ if _context.package else str('__dynamic__')
 
 	for iface in root_interfaces:
 		component_zcml.adapter(_context, factory=(cls_iio,), for_=(iface,) )
