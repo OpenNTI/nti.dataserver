@@ -274,7 +274,13 @@ def _authenticated_search( remote_user, dataserver, search_term ):
 
 	return result
 
-def _search_scope_to_remote_user( remote_user, search_term, op=unicode.startswith, fl_only=False, ignore_fl=False ):
+def _scoped_search_prefix_match(compare, search_term):
+	for k in compare.split():
+		if k.startswith( search_term ):
+			return True
+
+
+def _search_scope_to_remote_user( remote_user, search_term, op=_scoped_search_prefix_match, fl_only=False, ignore_fl=False ):
 	"""
 
 	.. note:: This should be an extension point for new
@@ -286,8 +292,7 @@ def _search_scope_to_remote_user( remote_user, search_term, op=unicode.startswit
 	:keyword op: A callable of two string objects, a username to examine
 		and the search term. This means it can be something like :func:`operator.contains`
 		to do a partial substring match, or :func:`operator.eq` to do an equality
-		check. The default is :func:`unicode.startswith` to do a prefix
-		match.
+		check. The default does a prefix match on each space separated component.
 
 	:return: A :class:`set` of matching objects, if any.
 	"""

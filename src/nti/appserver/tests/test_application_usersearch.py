@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
@@ -42,6 +42,7 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			user1 = self._create_user()
 			user2 = self._create_user(username='jason@nextthought.com' )
 			dfl = users.DynamicFriendsList( username='Friends' )
+			user_interfaces.IFriendlyNamed( dfl ).alias = "Close Associates"
 			dfl.creator = user1
 			user1.addContainedObject( dfl )
 			dfl.addFriend( user2 )
@@ -55,11 +56,18 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		ourself = res.json_body['Items'][0]
 		assert_that( ourself, has_entry( 'Username', 'sjohnson@nextthought.com' ) )
 
-		# we can search for our FL
-		path = '/dataserver2/UserSearch/Friends'
+		# we can search for our FL by username prefix
+		path = '/dataserver2/UserSearch/Friend'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Friends' ) ) )
 		#assert_that( ourself, has_entry( 'FriendsLists', has_key( 'Friends' ) ) )
+
+		# and by the prefix of each part of the alias
+		for term in ('clo', 'ass'):
+			path = '/dataserver2/UserSearch/' + term
+			__traceback_info__ = path
+			res = testapp.get( path, extra_environ=self._make_extra_environ())
+			assert_that( res.json_body['Items'], has_item( has_entry( 'realname', 'Friends' ) ) )
 
 
 		# We can search for the member, and we'll find our DFL listed in his
@@ -97,12 +105,12 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
 			assert_that( res.json_body['Items'], has_length( cnt ) )
 
-		# The prefix match of usersearch can find the community as well
+		# The prefix match of usersearch can find the dfl the other user belongs to as well
 		path = '/dataserver2/UserSearch/f'
 		res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 		assert_that( res.json_body['Items'], has_items(
-														has_entry( 'alias', 'Friends' ) ) )
+														has_entry( 'alias', 'Close Associates' ) ) )
 
 	@WithSharedApplicationMockDS
 	def test_user_search(self):
@@ -221,6 +229,7 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			u2 = self._create_user( username='sjo2@nextthought.com' )
 			u3 = self._create_user( username='sjo3@nextthought.com' )
 			community = users.Community.create_community( username='TheCommunity' )
+			user_interfaces.IFriendlyNamed( community ).alias = 'General People'
 			u1.record_dynamic_membership( community )
 			u2.record_dynamic_membership( community )
 
@@ -238,18 +247,25 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		# Getting a 'Class' value back here really confuses the iPad
 		assert_that( res.json_body, does_not( has_key( 'Class' ) ) )
 
-		# We can search for the community by prefix...
+		# We can search for the community by username prefix...
 		path = '/dataserver2/UserSearch/TheComm'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 
-		# ... but not by substring
+		# ... but not by username substring
 		path = '/dataserver2/UserSearch/Comm'
 		res = testapp.get( path, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 
+		# However, we can find it by prefix of both parts of the display name
+		for term in ('gen', 'peo'):
+			path = '/dataserver2/UserSearch/' + term
+			__traceback_info__ = path
+			res = testapp.get( path, extra_environ=self._make_extra_environ())
+			assert_that( res.json_body['Items'], has_length( 1 ) )
 
-		# The user that's not in the community cannot
+		# The user that's not in the community cannot find by username
+		path = '/dataserver2/UserSearch/TheComm'
 		res = testapp.get( path, extra_environ=self._make_extra_environ(username=u3.username))
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 
@@ -290,20 +306,20 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 		# MC search is locked down to be only the username
 		path = '/dataserver2/UserSearch/steve' # alias
 		environ = self._make_extra_environ()
-		environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
+		environ['HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
 		res = testapp.get( path, extra_environ=environ )
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 
 		# Even if it does find a hit, we don't get back a realname and the alias is set to the username
 		environ = self._make_extra_environ()
-		environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
+		environ['HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
 		res = testapp.get( b'/dataserver2/UserSearch/sj2@nextthought.com', extra_environ=environ )
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'alias', 'sj2@nextthought.com' ) ) )
 		assert_that( res.json_body['Items'], has_item( has_entry( 'realname', none() ) ) )
 
 		# But if the hit was us, we get back some special links to the privacy policy
-		environ['HTTP_ORIGIN'] = 'http://mathcounts.nextthought.com'
+		environ['HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
 		res = testapp.get( b'/dataserver2/UserSearch/' + str(u1.username), extra_environ=environ )
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 		found = res.json_body['Items'][0]
