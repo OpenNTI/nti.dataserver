@@ -109,6 +109,20 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 							setattr( implementation_class, 'containerId', None )
 		return _ClassNameRegistry
 
+	@classmethod
+	def _ap_find_package_name( cls ):
+		ext_module_name = cls.__module__
+		package_name = ext_module_name.rsplit( '.', 1 )[0]
+		return package_name
+
+	@classmethod
+	def _ap_find_package_interface_module(cls):
+		# First, get the correct working module
+		package_name = cls._ap_find_package_name()
+
+		# Now the interfaces
+		package_ifaces = dottedname.resolve( package_name + '.interfaces' )
+		return package_ifaces
 
 	@classmethod
 	def __class_init__( cls ): # ExtensionClass.Base class initializer
@@ -117,11 +131,10 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 			return
 
 		# First, get the correct working module
-		ext_module_name = cls.__module__
-		package_name = ext_module_name.rsplit( '.', 1 )[0]
+		package_name = cls._ap_find_package_name()
 
 		# Now the interfaces
-		package_ifaces = dottedname.resolve( package_name + '.interfaces' )
+		package_ifaces = cls._ap_find_package_interface_module()
 		cls._ext_search_module = package_ifaces
 
 		# Now tag them

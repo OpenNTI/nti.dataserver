@@ -149,8 +149,10 @@ class UserContentRootInternalObjectIOMixin(object):
 		# The pattern for subclasses is to pop the things that need special, non-dict handling,
 		# and then to call super. When super returns, handle the special case
 		sharedWith = parsed.pop( 'sharedWith', self )
-
-		self.context.updateLastMod()
+		try:
+			self.context.updateLastMod()
+		except AttributeError:
+			pass
 		super(UserContentRootInternalObjectIOMixin,self).updateFromExternalObject( parsed, *args, **kwargs )
 
 		if nti_interfaces.IWritableShared.providedBy( self.context ) and sharedWith is not self:
