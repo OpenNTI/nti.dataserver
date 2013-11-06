@@ -223,17 +223,14 @@ def _library_settings(pyramid_config, server, library):
 	if library is not None:
 		# Ensure the library is enumerated at this time during startup
 		# when we have loaded all the basic ZCML slugs but while
-		# we are in control of the site
+		# we are in control of the site.
+		# TODO: We may need to do this in a transaction with the dataserver site
+		# active so that subscribers can take action. However,
+		# that complicates things very much for testing, which, when using
+		# a SharedTestBase want to create an application/library only
+		# once, but which create new databases for each test run.
+		# Are layered demo storages the answer? Are zope test layers?
 		getattr( library, 'contentPackages' )
-
-		# FIXME: This needs to move to the IRegistrationEvent listener, but
-		# we need access to the pyramid config...
-		# FIXME: This falls over in the presence of multiple libraries and/or
-		# libraries configured only for specific sites. However, in those cases
-		# we are probably in production and so not serving our own files anyway
-		static_mapper = component.queryAdapter(library, app_interfaces.ILibraryStaticFileConfigurator)
-		if static_mapper:
-			static_mapper.add_static_views(pyramid_config)
 
 	return library
 
@@ -714,31 +711,6 @@ def _configure_pyramid_zodbconn( database_event, registry=None ):
 
 	registry.zodb_database = database_event.database # 0.2
 	registry._zodb_databases = { '': database_event.database } # 0.3, 0.4
-
-@component.adapter(lib_interfaces.IFilesystemContentPackageLibrary)
-@interface.implementer(app_interfaces.ILibraryStaticFileConfigurator)
-class _FilesystemStaticFileConfigurator(object):
-
-	def __init__(self, context):
-		self.context = context
-
-	def add_static_views(self, pyramid_config):
-		# We'll volunteer to serve all the files in the root directory
-		# Note that this is not dynamic (the library isn't either)
-		# but in production we expect to have static files served by
-		# nginx/apache; nor does it work with multiple trees of libraries
-		# spread across sites (using the ContentUnitHrefMapper gets us closer)
-
-		# Note: We are not configuring caching for these files, nor gzip. In production
-		# usage, we MUST be behind a webserver that will deal with static
-		# files correctly (nginx, apache) by applying ETags to allow caching and Content-Encoding
-		# for speed.
-		for package in self.context.contentPackages:
-			# The href for the package will come out to be index.html;
-			# we want to serve everything contained in that same directory
-			prefix = os.path.dirname( lib_interfaces.IContentUnitHrefMapper( package ).href ) # Posix assumption
-			path = package.dirname
-			pyramid_config.add_static_view( prefix, path )
 
 # These two functions exist for the sake of the installed executables
 # but they do nothing these days
