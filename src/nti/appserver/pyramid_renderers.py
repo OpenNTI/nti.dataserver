@@ -131,11 +131,16 @@ def render_externalizable(data, system):
 				body['href'] = request.path_qs
 			elif data:
 				# Can we find one?
-				# NOTE: This isn't quite right: There's no guarantee about what object was mutated
-				# or what's being returned. So long as the actual mutation was to the actual resource object
-				# that was returned this is fine, otherwise it's a bit of a lie.
-				# But returning nothing isn't on option we can get away with right now (Mar2013) either due to existing
-				# clients that also make assumptions about how and what resource was manipulated, so go with the lesser of two evils
+
+				# NOTE: This isn't quite right: There's no guarantee
+				# about what object was mutated or what's being
+				# returned. So long as the actual mutation was to the
+				# actual resource object that was returned this is
+				# fine, otherwise it's a bit of a lie. But returning
+				# nothing isn't on option we can get away with right
+				# now (Mar2013) either due to existing clients that
+				# also make assumptions about how and what resource
+				# was manipulated, so go with the lesser of two evils
 				# that mostly works.
 				try:
 					link = Link(to_external_ntiid_oid( data ) if not nti_interfaces.IShouldHaveTraversablePath.providedBy( data ) else data)
