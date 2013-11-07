@@ -19,6 +19,7 @@ from hamcrest import all_of
 from hamcrest import is_not
 from hamcrest import has_entries
 from hamcrest import has_entry
+from hamcrest import has_property
 from nose.tools import assert_raises
 
 from zope import interface
@@ -32,7 +33,7 @@ from nti.testing.matchers import verifiably_provides, validly_provides
 from nti.externalization.tests import externalizes
 from zope.container.interfaces import InvalidItemType
 
-from ..board import Board
+from ..board import Board, CommunityBoard
 from ..interfaces import IBoard, IForum
 
 
@@ -43,6 +44,12 @@ def test_board_interfaces():
 	post = Board()
 	assert_that( post, verifiably_provides( IBoard ) )
 	assert_that( post, validly_provides( IBoard ) )
+
+def test_community_board_interfaces():
+	post = CommunityBoard()
+	assert_that( post, has_property( 'mimeType', 'application/vnd.nextthought.forums.communityboard'))
+	assert_that( PersonalBlog, has_property( 'mimeType', 'application/vnd.nextthought.forums.communityboard'))
+
 
 def test_board_constraints():
 	@interface.implementer(IForum)
@@ -83,4 +90,3 @@ def test_blog_externalizes():
 	post['k'] = X()
 	assert_that( post,
 				 externalizes( has_entry( 'ForumCount', 1 ) ) )
-

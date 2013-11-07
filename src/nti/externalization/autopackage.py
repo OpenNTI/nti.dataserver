@@ -17,6 +17,8 @@ from zope import interface
 from zope.dottedname import resolve as dottedname
 from zope.mimetype.interfaces import IContentTypeAware
 
+from ZODB.loglevels import TRACE
+
 from nti.externalization.datastructures import ModuleScopedInterfaceObjectIO
 from nti.externalization.internalization import register_legacy_search_module
 
@@ -136,7 +138,7 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 		# Now the interfaces
 		package_ifaces = cls._ap_find_package_interface_module()
 		cls._ext_search_module = package_ifaces
-
+		logger.log( TRACE, "Autopackage tagging interfaces in %s", package_ifaces )
 		# Now tag them
 		for iface in cls._ap_enumerate_externalizable_root_interfaces( package_ifaces ):
 			iface.setTaggedValue( '__external_class_name__', cls._ap_compute_external_class_name_from_interface_and_instance )

@@ -78,10 +78,14 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 	forum_link_rel = 'Blog'
 	forum_content_type = 'application/vnd.nextthought.forums.personalblog+json'
 	forum_headline_class_type = 'Post'
-	forum_topic_content_type = PersonalBlogEntry.mimeType + '+json'
+	forum_topic_content_type = None
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:' + extra_environ_default_user + '-Topic:PersonalBlogEntry-'
 	forum_type = PersonalBlog
 	forum_topic_comment_content_type = 'application/vnd.nextthought.forums.personalblogcomment+json'
+
+	def setUp(self):
+		super(TestApplicationBlogging,self).setUp()
+		self.forum_topic_content_type = PersonalBlogEntry.mimeType + '+json'
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_has_default_blog_in_service_doc( self ):
