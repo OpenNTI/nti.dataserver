@@ -32,8 +32,6 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import LocatedExternalDict
 
-from nti.ntiids.ntiids import find_object_with_ntiid
-
 from nti.utils.maps import CaseInsensitiveDict
 
 from .. import is_true
@@ -101,7 +99,7 @@ def reindex_content(request):
 	values = simplejson.loads(unicode(request.body, request.charset)) if request.body else {}
 	values = CaseInsensitiveDict(**values)
 	username = values.get('username', authenticated_userid(request))
-	entity = users.User.get_entity(username) or find_object_with_ntiid(username)
+	entity = users.Entity.get_entity(username)
 	if entity is None or not nti_interfaces.IEntity.providedBy(entity):
 		raise hexc.HTTPNotFound(detail='Entity not found')
 
