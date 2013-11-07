@@ -13,6 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from nti.externalization.oids import to_external_ntiid_oid
+
 from . import _indexmanager
 from . import discriminators
 from . import interfaces as search_interfaces
@@ -33,15 +35,18 @@ class _RedisIndexManager(_indexmanager.IndexManager):
 	def index_user_content(self, target, data, type_name=None):
 		if data is not None and target is not None:
 			docid = discriminators.get_uid(data)
-			self.service.add(docid, username=target.username)
+			ntiid = to_external_ntiid_oid(target)
+			self.service.add(docid, username=ntiid)
 			return True
 
 	def update_user_content(self, target, data, type_name=None):
 		if data is not None and target is not None:
 			docid = discriminators.get_uid(data)
-			self.service.update(docid, username=target.username)
+			ntiid = to_external_ntiid_oid(target)
+			self.service.update(docid, username=ntiid)
 
 	def delete_user_content(self, target, data, type_name=None):
 		if data is not None and target is not None:
 			docid = discriminators.get_uid(data)
-			self.service.delete(docid, username=target.username)
+			ntiid = to_external_ntiid_oid(target)
+			self.service.delete(docid, username=ntiid)
