@@ -59,7 +59,7 @@ def get_sharedWith(obj):
 	result = rsr.get_sharedWith() if rsr is not None else ()
 	return result or ()
 
-def find_all_indexable_pairs(entity, condition=None):
+def find_all_indexable_pairs(entity, condition=None, processSharingTargets=True):
 	"""
 	Return a generator with all the objects that need to be indexed.
 	The genertor yield pairs (entity, obj) indicating that the object has to be indexed
@@ -88,10 +88,10 @@ def find_all_indexable_pairs(entity, condition=None):
 
 			yield (user, obj)
 
-			# check if object is shared
-			for shared_with in get_flattenedSharingTargets(obj):
-				if shared_with and shared_with != user:
-					yield (shared_with, obj)
+			if processSharingTargets:
+				for shared_with in get_flattenedSharingTargets(obj):
+					if shared_with and shared_with != user:
+						yield (shared_with, obj)
 
 def post_predicate():
 	condition = lambda x : forum_interfaces.IPost.providedBy(x) or \
