@@ -396,10 +396,6 @@ def test_replace_dfl_sharing_with_a_member():
 			note.addSharingTarget( ntusrs )
 			note = jmadden.addContainedObject( note )
 
-		notes = list(ntusrs.values())
-		assert_that(notes, has_length(1))
-		assert_that(notes[0], is_(note))
-
 		scnt = sjohnson.getSharedContainer(  u'c1' )
 		assert_that(note, is_in(scnt))
 
