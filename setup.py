@@ -246,7 +246,7 @@ setup(
 		'isodate >= 0.4.9',	 # ISO8601 date/time/duration parser and formatter
 		'joblib >= 0.7.1',	# Python functions as pipeline jobs.
 		'logilab-common >= 0.60.0',
-		'lxml >= 3.2.3',  # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
+		'lxml >= 3.2.4', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.8', # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
@@ -449,7 +449,7 @@ setup(
 			'logilab_astng >= 0.24.3',
 			'pip >= 1.3.1',
 			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
-			'pudb >= 2013.3.6',	 # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
+			'pudb >= 2013.4', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 1.0.0' if not IS_PYPY else '',  # install astroid
 			'pyramid_debugtoolbar >= 1.0.9',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
