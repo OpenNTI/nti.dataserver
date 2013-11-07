@@ -120,8 +120,11 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 		session_ids = _session_id_set_for_session_owner( session_owner, None, default={}, create=False )
 		if session_ids:
 			for sid in session_ids:
-				session = self.intids.getObject( sid )
-				self.intids.unregister( session )
+				try:
+					session = self.intids.getObject( sid )
+					self.intids.unregister( session )
+				except KeyError:
+					logger.warn("Session owner %s had corrupt data; missing session %s", session_owner, sid)
 			session_ids.clear()
 			logger.info( "Unregistered all sessions for %s", session_owner )
 
@@ -131,7 +134,12 @@ def _remove_sessions_for_removed_user( user, event ):
 	storage = component.queryUtility( nti_interfaces.ISessionServiceStorage )
 	# This is tightly coupled to OwnerBasedAnnotationSessionServiceStorage
 	if hasattr( storage, 'unregister_all_sessions_for_owner' ):
-		storage.unregister_all_sessions_for_owner( user )
+		try:
+			storage.unregister_all_sessions_for_owner( user )
+		except Exception:
+			# The consequence might be some extra storage space used
+			# but nothing dire
+			logger.exception("Failed to remove all sessions for %s", user)
 
 @component.adapter(nti_interfaces.IUser, IObjectCreatedEvent)
 def _create_sessions_for_new_user( user, event ):
