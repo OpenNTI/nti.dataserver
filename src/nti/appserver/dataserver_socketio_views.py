@@ -116,6 +116,10 @@ URL_CONNECT = '/socket.io/1/{transport}/{session_id}'
 
 
 def _create_new_session(request):
+	"""
+	Creates a session for the authenticated user of the request.
+	"""
+
 	username = sec.authenticated_userid( request )
 	if not username:
 		logger.debug( "Unauthenticated session request" )
@@ -138,12 +142,7 @@ def _handshake_view( request ):
 	requesting a new session, we send back the session id and some miscellaneous
 	information.
 	"""
-	# TODO: Always creating a session here is a potential DOS?
-	# We need to require them to be authenticated
-	try:
-		session = _create_new_session(request)
-	except KeyError: #Currently this means user DNE. see dataserver/session_storage.py # TODO: Something better
-		raise hexc.HTTPForbidden()
+	session = _create_new_session(request)
 
 	# data = "%s:15:10:jsonp-polling,htmlfile" % (session.session_id,)
 	# session_id:heartbeat_seconds:close_timeout:supported_type, supported_type,...
