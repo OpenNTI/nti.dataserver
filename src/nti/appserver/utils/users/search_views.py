@@ -36,6 +36,8 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.utils.maps import CaseInsensitiveDict
 
+from .. import is_true
+
 _func_map = {
 				constants.note_: search_utils.note_predicate,
 				constants.post_: search_utils.post_predicate,
@@ -68,10 +70,13 @@ def _remove_catalogs(entity, content_types=()):
 			count += 1
 	return count
 
-def _do_content_reindex(entity, predicate):
+def _do_content_reindex(entity, predicate, processSharingTargets=True):
 	t = time.time()
 	countermap = collections.defaultdict(int)
-	for e, obj in search_utils.find_all_indexable_pairs(entity, predicate):
+	for e, obj in search_utils.find_all_indexable_pairs(
+											entity,
+											predicate,
+											processSharingTargets):
 		try:
 			rim = search_interfaces.IRepozeEntityIndexManager(e)
 			catalog = rim.get_create_catalog(obj)
@@ -100,6 +105,9 @@ def reindex_content(request):
 	if entity is None or not nti_interfaces.IEntity.providedBy(entity):
 		raise hexc.HTTPNotFound(detail='Entity not found')
 
+	sharingTargets = values.get('processSharingTargets', 'T')
+	sharingTargets = is_true(sharingTargets)
+
 	mime_types = values.get('mime_types', values.get('mimeTypes'))
 	mime_types = _parse_mime_types(mime_types) if mime_types else ()
 	content_types = {common.get_type_from_mimetype(x) for x in mime_types}
@@ -114,7 +122,7 @@ def reindex_content(request):
 			predicate = _combine_predicate(predicate, f()) if f else predicate
 
 	_remove_catalogs(entity, content_types)
-	countermap, elapsed = _do_content_reindex(entity, predicate)
+	countermap, elapsed = _do_content_reindex(entity, predicate, sharingTargets)
 	result = LocatedExternalDict()
 	result['Elapsed'] = elapsed
 	result['Items'] = dict(countermap)
