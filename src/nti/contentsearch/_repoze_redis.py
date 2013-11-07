@@ -14,8 +14,9 @@ from zope import interface
 
 import functools
 
-from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from . import discriminators
 from . import _redis_indexstore
@@ -24,24 +25,24 @@ from . import interfaces as search_interfaces
 @interface.implementer(search_interfaces.IRedisStoreService)
 class _RepozeStorageService(_redis_indexstore._RedisStorageService):
 
-	def index_content(self, docid, username):
+	def index_content(self, docid, ntiid):
 		obj = discriminators.query_object(int(docid))
-		entity = users.Entity.get_entity(username)
+		entity = find_object_with_ntiid(ntiid)
 		um = search_interfaces.IRepozeEntityIndexManager(entity, None)
 		if obj is not None and um is not None:
 			return um.index_content(obj)
 		return False
 
-	def update_content(self, docid, username):
+	def update_content(self, docid, ntiid):
 		obj = discriminators.query_object(int(docid))
-		entity = users.Entity.get_entity(username)
+		entity = find_object_with_ntiid(ntiid)
 		um = search_interfaces.IRepozeEntityIndexManager(entity, None)
 		if obj is not None and um is not None:
 			return um.update_content(obj)
 		return False
 
-	def unindex(self, docid, username):
-		entity = users.Entity.get_entity(username)
+	def unindex(self, docid, ntiid):
+		entity = find_object_with_ntiid(ntiid)
 		um = search_interfaces.IRepozeEntityIndexManager(entity, None)
 		if um is not None:
 			return um.unindex(int(docid))
