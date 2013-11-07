@@ -311,7 +311,7 @@ class _UsernameSearchPolicy(object):
 		# btrees: btrees.keys( [min,max) )
 		min_inclusive, max_exclusive = _make_min_max_btree_range( search_term )
 		__traceback_info__ = _users
-		for entity_name in _users.iterkeys(min_inclusive,max_exclusive):
+		for entity_name in _users.iterkeys(min_inclusive,max_exclusive,excludemax=True):
 			__traceback_info__ = entity_name, search_term, min_inclusive, max_exclusive
 			entity = None
 			# If we did this correct, that's a prefix match
@@ -358,9 +358,10 @@ class _AliasUserSearchPolicy(object):
 		keys outside the prefix range.
 		"""
 		# We can avoid using the _fwd_index by querying the alias
-		# index with its intended 'apply' method
-		return ( (search_term, index.apply( _make_min_max_btree_range( search_term ) )), )
-		#return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ) )
+		# index with its intended 'apply' method, except that doesn't let
+		# us be specific about excluding the max
+		#return ( (search_term, index.apply( _make_min_max_btree_range( search_term ) )), )
+		return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ), excludemax=True )
 
 
 	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy, _result=None ):
@@ -419,7 +420,7 @@ class _RealnameAliasUserSearchPolicy(_AliasUserSearchPolicy):
 		# to maintain it for us, which lets us take advantage of prefix
 		# ranges (though this is not directly supported in the index
 		# interface).
-		return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ) )
+		return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ), excludemax=True )
 
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
