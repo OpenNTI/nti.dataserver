@@ -27,6 +27,37 @@ from ._external_object_io import read_body_as_external_object
 #: view to handle this feedback: :func:`send_feedback_view`
 REL_SEND_FEEDBACK = 'send-feedback'
 
+def _format_email( request, body_key, userid, report_type, subject, to ):
+
+	json_body = read_body_as_external_object( request )
+	if body_key not in json_body or not json_body[body_key] or not unicode(json_body[body_key]).strip():
+		raise hexc.HTTPBadRequest()
+
+	request_details = dict(json_body)
+	# No need to repeat it here
+	del request_details[body_key]
+	request_details.update( request.environ )
+
+	request_details_table = '\n\n    '.join( [k + '\t\t:' + repr(v) for k, v in sorted(request_details.items())] )
+
+	# The template expects 'body' so ensure that's what it gets
+	json_body['body'] = json_body[body_key]
+
+	_email_utils.queue_simple_html_text_email( 'platform_feedback_email',
+											   subject=subject % userid,
+											   recipients=[to],
+											   template_args={'userid': userid,
+															  'report_type': report_type,
+															  'data': json_body,
+															  'filled_body': '\n    '.join( textwrap.wrap( json_body[body_key], 60 ) ),
+															  'context': json_body,
+															  'request': request,
+															  'request_details': request_details,
+															  'request_details_table': request_details_table},
+											   request=request )
+
+	return hexc.HTTPNoContent()
+
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=nti_interfaces.IUser,
@@ -35,27 +66,33 @@ REL_SEND_FEEDBACK = 'send-feedback'
 			  name=REL_SEND_FEEDBACK )
 def send_feedback_view( request ):
 
-	json_body = read_body_as_external_object( request )
-	if 'body' not in json_body or not json_body['body'] or not unicode(json_body['body']).strip():
-		raise hexc.HTTPBadRequest()
-
-	request_details = dict(json_body)
-	del request_details['body']
-	request_details.update( request.environ )
-
-	request_details_table = '\n\n    '.join( [k + '\t\t:' + repr(v) for k, v in sorted(request_details.items())] )
+	return _format_email( request,
+						  'body',
+						  psec.authenticated_userid(request),
+						  'Feedback',
+						  'Feedback From %s',
+						  'feedback@nextthought.com' )
 
 
-	_email_utils.queue_simple_html_text_email( 'platform_feedback_email',
-											   subject="Feedback from %s" % psec.authenticated_userid(request),
-											   recipients=['feedback@nextthought.com'],
-											   template_args={'userid': psec.authenticated_userid(request),
-															  'data': json_body,
-															  'filled_body': '\n    '.join( textwrap.wrap( json_body['body'], 60 ) ),
-															  'context': json_body,
-															  'request': request,
-															  'request_details': request_details,
-															  'request_details_table': request_details_table},
-											   request=request )
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context=nti_interfaces.IDataserverFolder,
+			  request_method='POST',
+			  name="send-crash-report" )
+def send_crash_report_view( request ):
+	"""
+	This is a view that requires no authentication (which may open it to abuse)
+	and takes a small set of data the app sends it as a JSON dictionary containing
+	the ``message``, ``file`` and ``line`` entries and sends a support
+	email. To help prevent abuse, ``message`` is capped in size.
+	"""
+	# Not actually enforcing any of that now.
 
-	return hexc.HTTPNoContent()
+	userid = psec.authenticated_userid(request) or psec.unauthenticated_userid(request) or "unknown"
+
+	return _format_email( request,
+						  'message',
+						  userid,
+						  'Crash Report',
+						  'Crash Report From %s',
+						  'support@nextthought.com' )
