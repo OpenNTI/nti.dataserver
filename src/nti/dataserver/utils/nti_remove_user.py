@@ -14,11 +14,9 @@ import argparse
 from zope import component
 
 from nti.dataserver import users
-from nti.dataserver import providers
 from nti.dataserver.utils import run_with_dataserver
 
 _type_map = { 'user': (users.User.get_user, users.User.delete_user),
-			  'provider': (providers.Provider.get_entity, providers.Provider.delete_entity),
 			  'community': (users.Community.get_entity,  users.Community.delete_entity) }
 
 def _delete_user(factory, username, site=None):
