@@ -51,7 +51,10 @@ def resource_path( res ):
 	# also caching.
 	names = [''] # Bottom out at the root
 	for p in parents:
-		names.append( p. __name__ )
+		name = p.__name__
+		if name is None:
+			raise TypeError("Element in the hierarchy is missing __name__")
+		names.append( name )
 	return _join_path_tuple( tuple(names) )
 
 def normal_resource_path( res ):

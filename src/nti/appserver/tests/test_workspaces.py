@@ -161,6 +161,7 @@ class TestUserEnumerationWorkspace(unittest.TestCase,tests.TestBaseMixin):
 		uew = UEW( MockUser() )
 
 		uew.__parent__ = MockRoot()
+		uew.__parent__.__name__ = ''
 
 		# Expecting the pages collection at least
 		assert_that( uew.collections, has_length( greater_than_or_equal_to( 1 ) ) )

@@ -40,14 +40,14 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 	def _ap_compute_external_class_name_from_interface_and_instance( cls, iface, impl ):
 		"""
 		Assigned as the tagged value __external_class_name__ to each
-		interface.
+		interface. This will be called on an instance implementing iface.
 		"""
 		# Use the __class__, not type(), to work with proxies
 		return cls._ap_compute_external_class_name_from_concrete_class( impl.__class__ )
 
 	@classmethod
 	def _ap_compute_external_class_name_from_concrete_class( cls, a_type ):
-		return a_type.__name__
+		return getattr( a_type, '__external_class_name__', a_type.__name__ )
 
 	@classmethod
 	def _ap_compute_external_mimetype( cls, package_name, a_type, ext_class_name ):
