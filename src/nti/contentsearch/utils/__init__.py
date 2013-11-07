@@ -59,7 +59,7 @@ def get_sharedWith(obj):
 	result = rsr.get_sharedWith() if rsr is not None else ()
 	return result or ()
 
-def find_all_indexable_pairs(user, condition=None):
+def find_all_indexable_pairs(entity, condition=None):
 	"""
 	Return a generator with all the objects that need to be indexed.
 	The genertor yield pairs (entity, obj) indicating that the object has to be indexed
@@ -75,7 +75,7 @@ def find_all_indexable_pairs(user, condition=None):
 		condition = f
 
 	indexable_types = get_ugd_indexable_types()
-	for obj in findObjectsMatching(user, condition):
+	for obj in findObjectsMatching(entity, condition):
 
 		if forum_interfaces.IHeadlineTopic.providedBy(obj):
 			obj = obj.headline
