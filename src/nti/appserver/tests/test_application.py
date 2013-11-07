@@ -359,7 +359,7 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( other_res.json_body['Items'][0], has_entry( 'selectedText', data['selectedText'] ) )
 		# Which has the same timestamp, but not etag
 		# its actually slightly behind  due to the order of update events (constant is very fragile)
-		assert_that( _lm(other_res.last_modified), is_( greater_than_or_equal_to( _lm(owner_res.last_modified) - 5 ) ) )
+		assert_that(_lm(other_res.last_modified), is_(greater_than_or_equal_to(_lm(owner_res.last_modified) - 6)))
 		assert_that( other_res.etag, is_not( owner_res.etag ) )
 
 
