@@ -391,10 +391,8 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 		This is intended for use during migrations (enabling :func:`zope.generations.utility.findObjectsProviding`)
 		and not general use.
 		"""
-		for container in self.containersOfShared().values():
-			if not hasattr(container, 'values'):
-				continue
-			for o in container.values():
+		for container in self.containersOfShared.values():
+			for o in container:
 				yield o
 
 @interface.implementer(nti_interfaces.IUsernameIterable)
