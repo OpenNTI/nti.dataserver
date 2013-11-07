@@ -1,4 +1,4 @@
-Feedback from ${userid}:
+${report_type} from ${userid}:
 
 
     ${filled_body}

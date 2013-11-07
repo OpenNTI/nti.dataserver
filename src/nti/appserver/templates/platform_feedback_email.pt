@@ -46,7 +46,7 @@
 			alt="NextThought Logo" />
 		</div>
 		</div>
-		<p>Feedback received from <span tal:content="options/userid | options/profile/alias | options/user" class="realname tterm">John Doe</span>.</p>
+		<p>${options/report_type} received from <span tal:content="options/userid | options/profile/alias | options/user" class="realname tterm">John Doe</span>.</p>
 
 		<pre tal:content="options/data/body">
 
