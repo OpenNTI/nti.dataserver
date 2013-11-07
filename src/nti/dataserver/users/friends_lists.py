@@ -33,8 +33,6 @@ def _get_shared_dataserver(context=None,default=None):
 		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
 	return component.getUtility( nti_interfaces.IDataserver, context=context )
 
-
-
 @interface.implementer(nti_interfaces.IFriendsList,nti_interfaces.ISimpleEnclosureContainer)
 class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters for __setstate__
 	""" A FriendsList or Circle belongs to a user and
@@ -386,6 +384,18 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 			self.Locked = locked
 			self.updateLastMod()
 		return updated
+
+	def values(self):
+		"""
+		Returns something that iterates across all shared (owned) objects of this object.
+		This is intended for use during migrations (enabling :func:`zope.generations.utility.findObjectsProviding`)
+		and not general use.
+		"""
+		for container in self.containersOfShared().values():
+			if not hasattr(container, 'values'):
+				continue
+			for o in container.values():
+				yield o
 
 @interface.implementer(nti_interfaces.IUsernameIterable)
 @component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
