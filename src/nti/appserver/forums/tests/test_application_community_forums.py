@@ -71,11 +71,11 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-Forum.'
 
 	board_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Board:GeneralCommunity-DiscussionBoard'
-	board_content_type = CommunityBoard.mimeType + '+json'
+	board_content_type = None
 
 	forum_content_type = 'application/vnd.nextthought.forums.communityforum+json'
 	forum_headline_class_type = 'Post'
-	forum_topic_content_type = CommunityHeadlineTopic.mimeType + '+json'
+	forum_topic_content_type = None
 	board_link_rel = forum_link_rel = _BOARD_NAME
 	forum_title = _FORUM_NAME
 	forum_type = CommunityForum
@@ -85,6 +85,9 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 	def setUp( self ):
 		super(TestApplicationCommunityForums,self).setUp()
 		self.board_pretty_url = self.forum_pretty_url[:-(len(_FORUM_NAME) + 1)]
+
+		self.board_content_type = CommunityBoard.mimeType + '+json'
+		self.forum_topic_content_type = CommunityHeadlineTopic.mimeType + '+json'
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_default_board_in_links( self ):

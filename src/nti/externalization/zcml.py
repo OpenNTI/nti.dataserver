@@ -139,13 +139,21 @@ def autoPackageExternalization(_context, root_interfaces, modules, factory_modul
 	cls_iio.__module__ = _context.package.__name__ if _context.package else str('__dynamic__')
 
 	for iface in root_interfaces:
+		logger.log( loglevels.TRACE, "Registering ObjectIO for %s as %s", iface, cls_iio )
 		component_zcml.adapter(_context, factory=(cls_iio,), for_=(iface,) )
 
-	# Now init the class so that it can add the things that internaliaztion
-	# needs
-	_context.action( discriminator=('class_init', tuple(modules)),
-					 callable=cls_iio.__class_init__,
-					 args=() )
+	# Now init the class so that it can add the things that internalization
+	# needs.
+	# FIXME: We are doing this eagerly instead of when ZCML runs
+	# because it must be done before ``registerMimeFactories``
+	# is invoked in order to add the mimeType fields if they are missing.
+	# Rewrite so that this can be done as an ZCML action.
+	#_context.action( discriminator=('class_init', tuple(modules)),
+	#				 callable=cls_iio.__class_init__,
+	#				 args=() )
+	cls_iio.__class_init__()
+
 	# Now that it's initted, register the factories
 	for module in (factory_modules or modules):
+		logger.log( loglevels.TRACE, "Examining module %s for mime factories", module )
 		registerMimeFactories( _context, module )

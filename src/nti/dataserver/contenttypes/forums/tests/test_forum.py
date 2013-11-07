@@ -102,6 +102,8 @@ def test_blog_interfaces():
 	assert_that( post, verifiably_provides( IForum ) )
 	assert_that( post, validly_provides( IForum ) )
 	assert_that( post, validly_provides( IPersonalBlog ) )
+	assert_that( post, has_property( 'mimeType', 'application/vnd.nextthought.forums.personalblog'))
+	assert_that( PersonalBlog, has_property( 'mimeType', 'application/vnd.nextthought.forums.personalblog'))
 
 def test_community_adapter():
 
