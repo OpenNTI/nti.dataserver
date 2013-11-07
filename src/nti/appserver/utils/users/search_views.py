@@ -28,6 +28,7 @@ from nti.contentsearch import interfaces as search_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import LocatedExternalDict
 
@@ -96,7 +97,7 @@ def reindex_content(request):
 	values = CaseInsensitiveDict(**values)
 	username = values.get('username', authenticated_userid(request))
 	entity = users.User.get_entity(username) or find_object_with_ntiid(username)
-	if not entity:
+	if entity is None or not nti_interfaces.IEntity.providedBy(entity):
 		raise hexc.HTTPNotFound(detail='Entity not found')
 
 	mime_types = values.get('mime_types', values.get('mimeTypes'))
