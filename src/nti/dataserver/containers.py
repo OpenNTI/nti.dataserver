@@ -274,20 +274,20 @@ class LastModifiedBTreeContainer(PersistentPropertyHolder,BTreeContainer):
 	# keys(), items() and values(), but the underlying BTree
 	# supports a full range. We use that here.
 
-	def itervalues(self, min=None, max=None):
+	def itervalues(self, min=None, max=None, excludemin=False, excludemax=False ):
 		if max is None or min is None:
 			return self.values(min)
-		return self._SampleContainer__data.values(min,max)
+		return self._SampleContainer__data.values(min,max,excludemin,excludemax)
 
-	def iterkeys(self, min=None, max=None):
+	def iterkeys(self, min=None, max=None, excludemin=False, excludemax=False ):
 		if max is None or min is None:
 			return self.keys(min)
-		return self._SampleContainer__data.keys(min,max)
+		return self._SampleContainer__data.keys(min,max,excludemin,excludemax)
 
-	def iteritems(self, min=None, max=None):
+	def iteritems(self, min=None, max=None, excludemin=False, excludemax=False ):
 		if max is None or min is None:
 			return self.items(min)
-		return self._SampleContainer__data.items(min,max)
+		return self._SampleContainer__data.items(min,max,excludemin,excludemax)
 
 collections.Mapping.register( LastModifiedBTreeContainer )
 
@@ -523,12 +523,12 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 			key = _tx_key_insen( key )
 		return (v for v in self._SampleContainer__data.values(key))
 
-	def iterkeys(self, min=None, max=None):
+	def iterkeys(self, min=None, max=None, excludemin=False, excludemax=False ):
 		if max is None or min is None:
 			return self.keys(min)
 		min = _tx_key_insen( min )
 		max = _tx_key_insen( max )
-		return (k.key for k in self._SampleContainer__data.keys(min,max))
+		return (k.key for k in self._SampleContainer__data.keys(min,max,excludemin,excludemax))
 
 	def sublocations(self):
 		# We directly implement ISublocations instead of using the adapter for two reasons.

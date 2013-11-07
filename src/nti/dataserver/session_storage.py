@@ -50,6 +50,28 @@ def _session_id_set_for_session_owner( session_owner_or_user, family, default=No
 
 	return session_set
 
+def _read_current(obj):
+	"""
+	Invokes ZODB's readCurrent on the object's connection
+	(if it has one).
+	ReadCurrent ensures a higher level of consistency among
+	objects and should be used "when an object is read and the
+	information read is used to write a separate object."
+	"""
+	# For the *Tree* objects, does this actually have an effect?
+	# Because its the individual buckets that would be modified/read?
+	try:
+		# If we don't readCurrent on an activated object (i.e., we
+		# readCurrent on a ghost) we tend to get a _p_serial of 0,
+		# which will change as soon as it is activated, thus leading
+		# to lots of conflicts. The callers here are often passing us
+		# a freshly loaded ghost object.
+		obj._p_activate()
+		obj._p_jar.readCurrent(obj)
+	except (AttributeError,TypeError):
+		pass
+	return obj
+
 @interface.implementer(nti_interfaces.ISessionServiceStorage)
 class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 	"""
@@ -99,25 +121,42 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 
 	def get_sessions_by_owner( self, session_owner ):
 		session_ids = _session_id_set_for_session_owner( session_owner, self.family, default={}, create=False )
+		_read_current(session_ids)
+		_read_current(self.intids.refs)
+
 		for sid in session_ids:
 			__traceback_info__ = session_owner, session_ids, sid
-			session = self.intids.getObject( sid ) # If the object doesn't exist, we have an inconsistency!
-			# FIXME: The inconsistency has popped up a couple times in prod. How? Why? Who? What for?
-			yield session
+			# If the object doesn't exist, we have an inconsistency.
+			# This has happened about two or three times so far. How?
+			# We should at least detect it. It's probably not of much
+			# danger (just storage space), but ultimately should be
+			# repaired. Note that once we get in this state for a
+			# user, we're stuck in that state until it is repaired.
+			# It's possible that the uses of _read_current, which were inserted
+			# after the most recent known incident, will solve this.
+			try:
+				session = self.intids.getObject( sid )
+			except KeyError: # pragma: no cover
+				logger.exception("Session id %s for %s does not have a matching session object",
+								 sid, session_owner )
+			else:
+				yield session
 
 	def unregister_session( self, session ):
-		session_id = self.intids.queryId( session )
+		_read_current(self.intids.refs)
+		session_id = self.intids.queryId( _read_current( session ) )
 		if session_id is None:
 			# Not registered, or gone
 			return
 
-		discard( _session_id_set_for_session_owner( session.owner, self.family ),
+		discard( _read_current(_session_id_set_for_session_owner( session.owner, self.family )),
 				 session_id )
 		self.intids.unregister( session )
 		logger.info( "Unregistered session %s for %s", hex(session_id), session.owner )
 
 	def unregister_all_sessions_for_owner( self, session_owner ):
-		session_ids = _session_id_set_for_session_owner( session_owner, None, default={}, create=False )
+		_read_current(self.intids.refs)
+		session_ids = _read_current(_session_id_set_for_session_owner( session_owner, None, default={}, create=False ))
 		if session_ids:
 			for sid in session_ids:
 				try:
