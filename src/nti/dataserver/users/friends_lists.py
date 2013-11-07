@@ -385,16 +385,6 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 			self.updateLastMod()
 		return updated
 
-	def values(self):
-		"""
-		Returns something that iterates across all shared (owned) objects of this object.
-		This is intended for use during migrations (enabling :func:`zope.generations.utility.findObjectsProviding`)
-		and not general use.
-		"""
-		for container in self.containersOfShared.values():
-			for o in container:
-				yield o
-
 @interface.implementer(nti_interfaces.IUsernameIterable)
 @component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
 class _DynamicFriendsListUsernameIterable(_FriendsListUsernameIterable):

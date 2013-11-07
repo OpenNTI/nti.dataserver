@@ -14,6 +14,8 @@ import time
 import simplejson
 import collections
 
+from zope.proxy import ProxyBase
+
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 from pyramid.security import authenticated_userid
@@ -68,7 +70,18 @@ def _remove_catalogs(entity, content_types=()):
 			count += 1
 	return count
 
+class _DFLProxy(ProxyBase):
+
+	def values(self):
+		for container in self.containersOfShared.values():
+			for o in container:
+				yield o
+
 def _do_content_reindex(entity, predicate, processSharingTargets=True):
+
+	if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(entity):
+		entity = _DFLProxy(entity)
+
 	t = time.time()
 	countermap = collections.defaultdict(int)
 	for e, obj in search_utils.find_all_indexable_pairs(
