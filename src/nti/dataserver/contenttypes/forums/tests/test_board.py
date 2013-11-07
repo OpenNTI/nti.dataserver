@@ -47,8 +47,8 @@ def test_board_interfaces():
 
 def test_community_board_interfaces():
 	post = CommunityBoard()
-	assert_that( post, has_property( 'mimeType', 'application/vnd.nextthought.forums.communityboard'))
-	assert_that( PersonalBlog, has_property( 'mimeType', 'application/vnd.nextthought.forums.communityboard'))
+	assert_that(post, has_property('mimeType', 'application/vnd.nextthought.forums.communityboard'))
+	assert_that(post, has_property('mimeType', 'application/vnd.nextthought.forums.communityboard'))
 
 
 def test_board_constraints():
