@@ -127,7 +127,7 @@ class _SanitizerFilter(sanitizer.Filter):
 						   'font',
 						   'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr',
 						   'i', 'img',
-						   'p',
+						   'p', 'pre',
 						   'small', 'span', 'strong',
 						   'tt',
 						   'u']
