@@ -310,8 +310,8 @@ def _search_scope_to_remote_user( remote_user, search_term, op=_scoped_search_pr
 		else:
 			names = user_interfaces.IFriendlyNamed( x, None )
 			if names:
-				if	op((names.realname or '').lower(), search_term) \
-					or op((names.alias or '').lower(), search_term):
+				if (   (names.realname and op(names.realname.lower(), search_term))
+					or (names.alias and op(names.alias.lower(), search_term))):
 					result.add(x)
 
 	if not ignore_fl:
