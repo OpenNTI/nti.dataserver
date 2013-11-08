@@ -78,6 +78,10 @@ class IWorkspace(ILocation):
 	A workspace (in the Atom sense) is a collection of collections.
 	Collections can exist in multiple workspaces. A collection
 	is also known as a feed (again, in the Atom sense).
+
+	Workspaces should generally either be traversable by default
+	(providing a ``__getitem__``) or provide an adapter to ``ITraversable``
+	for their collections.
 	"""
 	name = schema.TextLine( title="The name of this workspace." )
 

@@ -133,3 +133,29 @@ def CachedProperty(*args):
 	return factory
 
 	return arg1
+
+class LazyOnClass(object):
+	"""
+	Like :class:`zope.cachedescriptors.property.Lazy`, but
+	when it caches, it caches on the class itself, not the instance,
+	thus sharing the value. Thus, the value should be immutable and
+	independent of any other state.
+	"""
+
+	def __init__( self, func ):
+		self._func = func
+		self.klass_cache_name = '_v__LazyOnClass_' + self._func.__name__
+
+	def __get__( self, inst, klass ):
+		if inst is None:
+			return self
+
+		# In order to let this be resetable, to keep access
+		# to this object and the original function, we
+		# use a different name
+		klass_cache_name = self.klass_cache_name
+		val = getattr( klass, klass_cache_name, self )
+		if val is self:
+			val = self._func(inst)
+			setattr( klass, klass_cache_name, val )
+		return val
