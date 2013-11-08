@@ -526,6 +526,10 @@ def _make_connect_databases(env, ini=None, root=None):
 			db = env.zeo_make_db()
 		else:
 			db = db_from_uri( env.zeo_uris )
+
+		# TODO: Conventionally, zope registers DBs in the component
+		# registry by name. We should probably do this as well.
+
 		# See notes in _configure_zeo about names and cases
 		# Sessions/Search DB has gone. Provide access to it if it is still in the config, otherwise
 		# fake it
