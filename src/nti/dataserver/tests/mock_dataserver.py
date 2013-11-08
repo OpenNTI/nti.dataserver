@@ -8,7 +8,7 @@ try:
 except ImportError:
 	# BTrees._fsBTree is missing usually
 	FileStorage = None
-from tempstorage.TemporaryStorage import TemporaryStorage
+
 
 import nti.dataserver as dataserver
 from nti.dataserver._Dataserver import Dataserver

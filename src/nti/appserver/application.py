@@ -398,12 +398,7 @@ def _create_server(create_ds, process_args=False):
 	if IDataserver.providedBy(create_ds):  # not isinstance( create_ds, bool ):
 		server = create_ds
 	elif not create_ds:
-		class MockServer(object):
-			_parentDir = '.'
-			_dataFileName = 'data.fs'
-			db = None
-			chatserver = None
-		server = MockServer()
+		raise ValueError("Must create a ds")
 	else:
 		ds_class = dataserver._Dataserver.Dataserver if not callable(create_ds) else create_ds
 		if process_args:
