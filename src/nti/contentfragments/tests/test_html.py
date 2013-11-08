@@ -92,6 +92,11 @@ def test_rejected_tags():
 	exp = '<html><body>foo <br />  <a href="http://google.com">http://google.com</a>  <br />  bar  <br />  <a href="http://yahoo.com">http://yahoo.com</a> </body></html>'
 	_check_sanitized(html, exp, frg_interfaces.ISanitizedHTMLContentFragment)
 
+def test_pre_allowed():
+	html = u'<html><body><pre>The text</pre></body></html>'
+	exp = html
+	_check_sanitized(html, exp)
+
 def test_blog_html_to_text():
 	exp = u'<html><body>Independence<br />America<br />Expecting<br />Spaces</body></html>'
 	plain_text = frg_interfaces.IPlainTextContentFragment(exp)
