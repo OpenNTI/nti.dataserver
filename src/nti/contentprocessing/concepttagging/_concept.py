@@ -4,14 +4,16 @@ Concept tagging objects
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from . import interfaces as cpct_interfaces
+from . import interfaces as ct_interfaces
 
-@interface.implementer(cpct_interfaces.IConceptSource)
+@interface.implementer(ct_interfaces.IConceptSource)
 class ConceptSource(object):
 
 	__slots__ = ('uri', 'source')
@@ -22,7 +24,8 @@ class ConceptSource(object):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self.source == other.source and self.uri == other.uri)
+			return self is other or (self.source == other.source
+									 and self.uri == other.uri)
 		except AttributeError:
 			return NotImplemented
 
@@ -36,10 +39,12 @@ class ConceptSource(object):
 		return self.source
 
 	def __repr__(self):
-		return '%s(%s, %s)' % (self.__class__, self.source, self.uri)
+		return '%s(%s, %s)' % (self.__class__.__name__, self.source, self.uri)
 
-@interface.implementer(cpct_interfaces.IConcept)
+@interface.implementer(ct_interfaces.IConcept)
 class Concept(object):
+
+	__slots__ = ('text', 'relevance', 'sources')
 
 	def __init__(self, text, relevance, sources=()):
 		self.text = text
@@ -55,4 +60,7 @@ class Concept(object):
 		return self.text
 
 	def __repr__(self):
-		return '%s(text=%s, relevance=%s, sources=%r)' % (self.__class__, self.text, self.relevance, self.sources)
+		return '%s(text=%s, relevance=%s, sources=%r)' % (self.__class__.__name__,
+														  self.text,
+														  self.relevance,
+														  self.sources)

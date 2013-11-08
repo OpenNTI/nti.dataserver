@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -10,7 +10,7 @@ __docformat__ = "restructuredtext en"
 import os
 import unittest
 
-from .._alchemy import _AlchemyAPIKConceptTaggger
+from .. import _alchemy
 
 from . import ConfiguringTestBase
 
@@ -27,7 +27,7 @@ class TestConceptTagger(ConfiguringTestBase):
 			cls.sample_content = f.read()
 
 	def test_alchemy_ct(self):
-		concepts = _AlchemyAPIKConceptTaggger()(self.sample_content, "NTI-TEST")
+		concepts = _alchemy.get_ranked_concepts(self.sample_content, "NTI-TEST")
 		assert_that(concepts, has_length(8))
 		concept = concepts[0]
 		assert_that(concept, is_not(None))
@@ -36,5 +36,8 @@ class TestConceptTagger(ConfiguringTestBase):
 		sm = concept.sourcemap
 		assert_that(sm, has_length(6))
 		assert_that(sm, has_entry('website', u'http://www.fbi.gov',))
-		assert_that(sm, has_entry(u'dbpedia', u'http://dbpedia.org/resource/Federal_Bureau_of_Investigation'))
-		assert_that(sm, has_entry(u'freebase', u'http://rdf.freebase.com/ns/guid.9202a8c04000641f8000000000017c33'))
+		assert_that(sm,
+					has_entry(
+						u'dbpedia',
+						u'http://dbpedia.org/resource/Federal_Bureau_of_Investigation'))
+		assert_that(sm, has_entry(u'freebase', u'http://rdf.freebase.com/ns/m.02_1m'))
