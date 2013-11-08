@@ -35,8 +35,8 @@ from zope import component
 from zope.event import notify
 from zope import lifecycleevent
 from zope.configuration import xmlconfig
-from zope.component.hooks import setHooks, getSite, site
-from zope.component.interfaces import IRegistrationEvent
+from zope.component.hooks import setHooks, site
+
 from zope.processlifetime import ProcessStarting, DatabaseOpenedWithRoot, IDatabaseOpenedWithRoot
 
 from nti.monkey import webob_cookie_escaping_patch_on_import
@@ -210,11 +210,6 @@ def _renderer_settings(pyramid_config):
 	pyramid_config.add_renderer(name='.pt', factory='nti.app.pyramid_zope.z3c_zpt.renderer_factory')
 
 def _library_settings(pyramid_config, server, library):
-	if server:
-		pyramid_config.registry.registerUtility(server, nti_interfaces.IDataserver)
-		if server.chatserver:
-			pyramid_config.registry.registerUtility(server.chatserver)
-
 	if library is not None:
 		component.getSiteManager().registerUtility(library, provided=lib_interfaces.IContentPackageLibrary)
 	else:
@@ -224,13 +219,12 @@ def _library_settings(pyramid_config, server, library):
 		# Ensure the library is enumerated at this time during startup
 		# when we have loaded all the basic ZCML slugs but while
 		# we are in control of the site.
-		# TODO: We may need to do this in a transaction with the dataserver site
-		# active so that subscribers can take action. However,
-		# that complicates things very much for testing, which, when using
-		# a SharedTestBase want to create an application/library only
-		# once, but which create new databases for each test run.
-		# Are layered demo storages the answer? Are zope test layers?
-		getattr( library, 'contentPackages' )
+		# NOTE: We are doing this in a transaction for the dataserver
+		# to allow loading the packages to make persistent changes.
+		with server.db.transaction() as conn:
+			ds_site = conn.root()['nti.dataserver']
+			with site(ds_site):
+				getattr( library, 'contentPackages' )
 
 	return library
 
@@ -508,6 +502,9 @@ def createApplication( http_port,
 	template_cache_dir = setupChameleonCache(config=True) # must do this early
 
 	server = _create_server(create_ds, process_args)
+	component.getGlobalSiteManager().registerUtility(server, nti_interfaces.IDataserver)
+	if server.chatserver:
+		component.getGlobalSiteManager().registerUtility(server.chatserver)
 
 	logger.debug( 'Finished starting dataserver' )
 
