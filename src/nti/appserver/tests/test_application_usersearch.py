@@ -233,6 +233,11 @@ class TestApplicationUserSearch(SharedApplicationTestBase):
 			u1.record_dynamic_membership( community )
 			u2.record_dynamic_membership( community )
 
+			# We had a bug when there was no alias
+			community_with_no_alias = users.Community.create_community(username='ZZZZ')
+			u1.record_dynamic_membership( community_with_no_alias )
+			u2.record_dynamic_membership( community_with_no_alias )
+
 		testapp = TestApp( self.app )
 
 		# We can search for ourself
