@@ -86,11 +86,11 @@ def find_all_indexable_pairs(entity, condition=None, processSharingTargets=True)
 				continue
 			seen.add(oid)
 
-			yield (user, obj)
+			yield (entity, obj)
 
 			if processSharingTargets:
 				for shared_with in get_flattenedSharingTargets(obj):
-					if shared_with and shared_with != user:
+					if shared_with and shared_with != entity:
 						yield (shared_with, obj)
 
 def post_predicate():
