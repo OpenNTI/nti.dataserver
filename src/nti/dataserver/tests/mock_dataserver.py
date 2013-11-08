@@ -30,8 +30,14 @@ class MockConfig(object):
 class ChangePassingMockDataserver(Dataserver ):
 
 	_mock_database = None
+	#: A demo storage will be created on top of this
+	#: storage. This can be used to create objects at
+	#: class or module set up time and have them available
+	#: to dataservers created at test method set up time.
+	_storage_base = None
 
 	def __init__( self, *args, **kwargs ):
+		self._storage_base = kwargs.pop('base_storage',None)
 		super(ChangePassingMockDataserver,self).__init__(*args, **kwargs)
 
 	def _setup_conf( self, *args, **kwargs ):
@@ -72,9 +78,8 @@ class ChangePassingMockDataserver(Dataserver ):
 			# objects, which breaks DemoStorages' base-to-change handling logic
 			# Blobs are used for storing "files", which are used for image data, which comes up
 			# in at least evolve25
-			NEED_BLOBS = True
-			factory = DemoStorage if NEED_BLOBS else TemporaryStorage
-			db = ZODB.DB( factory(), databases=databases, database_name='Users' )
+			storage = DemoStorage( base=self._storage_base )
+			db = ZODB.DB( storage, databases=databases, database_name='Users' )
 			return db
 
 		self.conf.zeo_make_db = make_db
@@ -116,11 +121,14 @@ import tempfile
 import shutil
 import os
 
-def _mock_ds_wrapper_for( func, factory=MockDataserver, teardown=None ):
+def _mock_ds_wrapper_for( func, factory=MockDataserver, teardown=None, base_storage=None ):
 
 	def f( *args ):
 		global current_mock_ds
-		ds = factory()
+		_base_storage = base_storage
+		if callable(_base_storage):
+			_base_storage = _base_storage( *args )
+		ds = factory(base_storage=_base_storage)
 		current_mock_ds = ds
 		sitemanc = SiteManagerContainer()
 		sitemanc.setSiteManager( LocalSiteManager(None) )
@@ -143,6 +151,15 @@ def _mock_ds_wrapper_for( func, factory=MockDataserver, teardown=None ):
 	return nose.tools.make_decorator( func )( f )
 
 def WithMockDS( *args, **kwargs ):
+	"""
+
+	:keyword base_storage: Either a storage instance that
+		will be used as the underlying storage for DemoStorage,
+		thus allowing some state to be reused, or a callable
+		taking the same arguments as the the function being
+		wrapped that returns a storage.
+
+	"""
 
 	teardown = lambda: None
 	if len(args) == 1 and not kwargs:
@@ -157,7 +174,7 @@ def WithMockDS( *args, **kwargs ):
 		mock_ds_factory = ChangePassingMockDataserver
 
 	if 'database' in kwargs:
-		def factory():
+		def factory(*args, **kwargs):
 			md = mock_ds_factory.__new__(mock_ds_factory)
 			md._mock_database = kwargs['database']
 			md.__init__()
@@ -166,7 +183,7 @@ def WithMockDS( *args, **kwargs ):
 
 		td = tempfile.mkdtemp()
 		teardown = lambda: shutil.rmtree( td, ignore_errors=True )
-		def factory():
+		def factory(*args, **kmargs):
 
 			databases = {}
 			db = ZODB.DB( FileStorage( os.path.join( td, 'data' ), create=True),
@@ -177,10 +194,9 @@ def WithMockDS( *args, **kwargs ):
 			md.__init__()
 			return md
 	else:
-		def factory():
-			return mock_ds_factory()
+		factory = mock_ds_factory
 
-	return lambda func: _mock_ds_wrapper_for( func, factory, teardown )
+	return lambda func: _mock_ds_wrapper_for( func, factory, teardown, base_storage=kwargs.get('base_storage') )
 
 
 
