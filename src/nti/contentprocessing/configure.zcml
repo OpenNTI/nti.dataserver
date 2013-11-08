@@ -49,7 +49,7 @@
 	<include package=".keyword" file="configure.zcml" />
 
 	<alchemy:registerAlchemyAPIKey
-		alias="NTI-TEST"
+		name="NTI-TEST"
 		value="afe98c5b8fb8586e930d1b2128386d40c136e6d3"
 		zcml:condition="have devmode"/>
 

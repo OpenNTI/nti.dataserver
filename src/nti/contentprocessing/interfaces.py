@@ -4,7 +4,7 @@ Content processing interfaces
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import schema
@@ -57,7 +57,7 @@ class IPunctuationCharPatternPlus(interface.Interface):
 	"""marker interface for punctuation + space regular expression pattern"""
 
 class IAlchemyAPIKey(interface.Interface):
-	alias = interface.Attribute("Key name or alias")
+	name = interface.Attribute("Key name or alias")
 	value = interface.Attribute("The actual key value")
 
 

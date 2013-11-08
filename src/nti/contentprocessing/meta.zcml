@@ -4,10 +4,10 @@
 			xmlns:meta="http://namespaces.zope.org/meta"
 			xmlns:zcml="http://namespaces.zope.org/zcml">
 
-  <meta:directives namespace="http://nextthought.com/ntp/alchemy">
-	<meta:directive	name="registerAlchemyAPIKey"
-					schema=".zcml.IRegisterAlchemyAPIKeyDirective"
-					handler=".zcml.registerAlchemyAPIKey" />
-  </meta:directives>
+	<meta:directives namespace="http://nextthought.com/ntp/alchemy">
+		<meta:directive	name="registerAlchemyAPIKey"
+						schema=".zcml.IRegisterAlchemyAPIKeyDirective"
+						handler=".zcml.registerAlchemyAPIKey" />
+ 	</meta:directives>
 
 </configure>
