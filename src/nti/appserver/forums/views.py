@@ -157,7 +157,9 @@ class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadReque
 class _AbstractForumPostView(_AbstractIPostPOSTView):
 	""" Given an incoming IPost, creates a new container in the context. """
 
-	_allowed_content_types = ('Post', Post.mimeType, 'Posts' )
+	@property
+	def _allowed_content_types(self):
+		return ('Post', Post.mimeType, 'Posts' )
 	_factory = None
 
 	def _constructor(self, external_value=None):
@@ -239,7 +241,9 @@ class PersonalBlogPostView(_AbstractForumPostView):
 	""" Given an incoming IPost, creates a new topic in the blog """
 
 	_constraint = frm_interfaces.IPersonalBlogEntryPost.providedBy
-	_override_content_type = PersonalBlogEntryPost.mimeType
+	@property
+	def _override_content_type(self):
+		return PersonalBlogEntryPost.mimeType
 	_factory = PersonalBlogEntry
 
 @view_config( name='' )
@@ -256,7 +260,9 @@ class CommunityBoardPostView(_AbstractForumPostView):
 	#: We always override the incoming content type and parse simply as an IPost.
 	#: All we care about is topic and description.
 	_allowed_content_types = None
-	_override_content_type = Post.mimeType
+	@property
+	def _override_content_type(self):
+		return Post.mimeType
 
 	def _constructor(self, external_value):
 		# TODO: cleaner way to handle community forums with ACL
@@ -279,13 +285,17 @@ class CommunityForumPostView(_AbstractForumPostView):
 	""" Given an incoming IPost, creates a new topic in the community forum """
 
 	_constraint = frm_interfaces.ICommunityHeadlinePost.providedBy
-	_override_content_type = CommunityHeadlinePost.mimeType
+	@property
+	def _override_content_type(self):
+		return CommunityHeadlinePost.mimeType
 	_factory = CommunityHeadlineTopic
 
 
 class _AbstractTopicPostView(_AbstractIPostPOSTView):
 
-	_allowed_content_types = ('Post', Post.mimeType, 'Posts')
+	@property
+	def _allowed_content_types(self):
+		return ('Post', Post.mimeType, 'Posts')
 
 	def _do_call( self ):
 		incoming_post, _ = self._read_incoming_post()
@@ -313,7 +323,9 @@ class _AbstractTopicPostView(_AbstractIPostPOSTView):
 class CommunityHeadlineTopicPostView(_AbstractTopicPostView):
 
 	_constraint = frm_interfaces.IGeneralForumComment.providedBy
-	_override_content_type = GeneralForumComment.mimeType
+	@property
+	def _override_content_type(self):
+		return GeneralForumComment.mimeType
 
 @view_config( name='' )
 @view_config( name=VIEW_CONTENTS )
@@ -322,7 +334,9 @@ class CommunityHeadlineTopicPostView(_AbstractTopicPostView):
 class PersonalBlogEntryPostView(_AbstractTopicPostView):
 
 	_constraint = frm_interfaces.IPersonalBlogComment.providedBy
-	_override_content_type = PersonalBlogComment.mimeType
+	@property
+	def _override_content_type(self):
+		return PersonalBlogComment.mimeType
 
 
 @view_config(context=frm_interfaces.IHeadlineTopic)
