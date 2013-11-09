@@ -7,8 +7,4 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<!-- Externalization -->
-	<subscriber factory=".decorators.PreferencesDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
-				
 </configure>
