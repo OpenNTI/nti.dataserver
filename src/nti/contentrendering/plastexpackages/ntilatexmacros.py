@@ -142,6 +142,9 @@ class ntiincludevideo(_OneText):
 		self.attributes['height'] = 360
 		_t = self.attributes['video_url'].split('/')
 		if 'youtube' in _t[2]:
+			# TODO: See https://github.com/coleifer/micawber
+			# for handling this; our poster and thumbnail are just
+			# guesses.
 			self.attributes['service'] = 'youtube'
 			self.attributes['video_id'] = _t[len(_t)-1].split('?')[0]
 			self.attributes['poster'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/0.jpg'

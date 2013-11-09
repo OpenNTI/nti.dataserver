@@ -134,6 +134,9 @@ def _get_metadata_from_mime_type( location, mime_type, args_factory ):
 
 	return result, args
 
+# NOTE: See also https://github.com/coleifer/micawber
+# for a library to find metadata about all kinds of things including youtube videos, etc
+
 def _get_metadata_from_url( urlscheme, location ):
 	# TODO: Need to redirect here based on url scheme
 
