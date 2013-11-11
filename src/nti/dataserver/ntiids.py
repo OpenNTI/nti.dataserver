@@ -210,7 +210,10 @@ class _ContentResolver(object):
 class _AssessmentResolver(object):
 
 	def resolve( self, key ):
-		result = component.queryUtility( asm_interfaces.IQuestionMap, default={} ).get( key )
+		# XXX: FIXME: This should move elsewhere
+		result = component.queryUtility( asm_interfaces.IQuestion, name=key )
+		if not result:
+			result = component.queryUtility( asm_interfaces.IQuestionSet, name=key )
 		if result:
 			# TODO: ACL Proxy can probably go away
 			result = nti_interfaces.ACLLocationProxy( result,

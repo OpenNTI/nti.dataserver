@@ -19,13 +19,9 @@ from zope import component
 from zope.lifecycleevent.interfaces import IObjectAddedEvent, IObjectRemovedEvent
 
 from nti.appserver import interfaces as app_interfaces
-
 from nti.assessment import interfaces as asm_interfaces
-
 from nti.contentfragments import interfaces as cfg_interfaces
-
 from nti.contentlibrary import interfaces as lib_interfaces
-
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization import internalization
@@ -67,6 +63,11 @@ class QuestionMap(dict):
 			internalization.update_from_external_object(obj, v, require_updater=True, notify=False, object_hook=_ntiid_object_hook )
 			obj.ntiid = k
 			self[k] = obj
+
+			component.getGlobalSiteManager().registerUtility( obj,
+															  provided=asm_interfaces.IQuestion if asm_interfaces.IQuestion.providedBy(obj) else asm_interfaces.IQuestionSet,
+															  name=k,
+															  event=False)
 
 			# Fixes for pyramid.traversal: must be sure that the things
 			# in the tree are actually, strictly, unicode objects, not subclasses.
@@ -195,6 +196,7 @@ def _populate_question_map_from_text( question_map, asm_index_text, content_pack
 
 @component.adapter(lib_interfaces.IContentPackage, IObjectRemovedEvent)
 def remove_assessment_items_from_oldcontent(content_package, event):
+	raise ValueError("Removing not supported yet")
 	question_map = component.queryUtility(app_interfaces.IFileQuestionMap)
 	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 	if question_map is None or library is None:
