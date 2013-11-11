@@ -9,17 +9,24 @@ __docformat__ = "restructuredtext en"
 
 import os
 
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import same_instance
+
 from zope import component
 
+from nti.assessment import interfaces as asm_interfaces
+
 from nti.contentlibrary import interfaces as lib_interfaces
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
+# NOTE: This does not work with a totally DynamicFilesystemLibrary,
+# as new packages are generated and annotations are lost!
+from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
 
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.contentlibrary import _question_map as qm_module
 
 from nti.app.testing.base import SharedConfiguringTestBase
-
-from hamcrest import (assert_that, has_length, has_property)
 
 class TestAssessmentIndexMap(SharedConfiguringTestBase):
 
@@ -32,9 +39,18 @@ class TestAssessmentIndexMap(SharedConfiguringTestBase):
 	def test_check_question_map(self):
 		library = component.getUtility(lib_interfaces.IFilesystemContentPackageLibrary)
 		content_package = library.contentPackages[0]
-		q_map = component.getUtility(app_interfaces.IFileQuestionMap)
-		qm_module.add_assessment_items_from_new_content(content_package, None)
+		component.getUtility(app_interfaces.IFileQuestionMap)
+		#qm_module.add_assessment_items_from_new_content(content_package, None)
+
+		# The question and sets are registered, and are the same instance
+		question_set = component.getUtility( asm_interfaces.IQuestionSet,
+											 name="tag:nextthought.com,2011-10:NTI-NAQ-CourseTestContent.naq.set.qset:QUIZ1_aristotle" )
+		for question in question_set.questions:
+			assert_that( question, is_( same_instance( component.getUtility( asm_interfaces.IQuestion,
+																			 name=question.ntiid ))))
 		# remove
 		qm_module.remove_assessment_items_from_oldcontent(content_package, None)
-		assert_that(q_map, has_length(0))
-		assert_that(q_map, has_property('by_file', has_length(0)))
+
+		# And everything is gone.
+		assert_that( component.queryUtility( asm_interfaces.IQuestionSet, question_set.ntiid ),
+					 is_( none() ) )

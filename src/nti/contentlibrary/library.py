@@ -112,8 +112,12 @@ class AbstractLibrary(object):
 		return None
 
 	def childrenOfNTIID( self, ntiid ):
-		""" Returns a flattened list of all the children entries of ntiid
-		in no particular order. If there are no children, returns []"""
+		"""
+		Returns a flattened list of all the children entries of ntiid in
+		no particular order. If there are no children, returns an empty list.
+
+		:return: Always returns a fresh list.
+		"""
 		path = self.pathToNTIID( ntiid )
 		result = []
 		if path:
@@ -205,6 +209,12 @@ class AbstractCachedNotifyingStaticLibrary(AbstractCachedStaticLibrary):
 		# We need to be careful to keep the correct site, then, as we fire off
 		# events in parallel
 		titles = list(result)
+
+		# NOTE that we immediately save the result of this
+		# so that if an event handler wants to also enumerate content
+		# packages we don't wind up notifying twice
+		self.__dict__['contentPackages'] = result
+
 		try:
 			import gevent
 		except ImportError: # pragma: no cover
@@ -216,19 +226,27 @@ class AbstractCachedNotifyingStaticLibrary(AbstractCachedStaticLibrary):
 			random.seed()
 			random.shuffle(titles)
 
-			title_greenlets = []
-			current_site = getSite()
 
-			def _notify_in_site( title ):
-				# Need a level of functional redirection here
-				# to workaround python's awkward closure rules
-				with site(current_site):
+			if False:
+				# Enumerating in parallel greenlets
+				# speeds up IO, but has issues reuising the
+				# same connection to ZODB if it is ZEO
+				title_greenlets = []
+				current_site = getSite()
+
+				def _notify_in_site( title ):
+					# Need a level of functional redirection here
+					# to workaround python's awkward closure rules
+					with site(current_site):
+						lifecycleevent.added( title )
+
+				for title in titles:
+					title_greenlets.append( gevent.spawn( _notify_in_site, title ) )
+
+				gevent.joinall( title_greenlets, raise_error=True )
+			else:
+				for title in titles:
 					lifecycleevent.added( title )
-
-			for title in titles:
-				title_greenlets.append( gevent.spawn( _notify_in_site, title ) )
-
-			gevent.joinall( title_greenlets, raise_error=True )
 
 		return result
 

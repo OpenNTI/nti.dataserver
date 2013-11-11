@@ -33,20 +33,10 @@ _view_defaults = dict( route_name='objects.generic.traversal',
 @view_config(accept=PAGE_INFO_MT_JSON.encode('ascii'), **_view_defaults)
 def pageinfo_from_question_view( request ):
 	assert request.accept
-
-	# See contentlibrary._question_map.
-	# The __parent__ of a IQuestion we looked up by NTIID turns out to be
-	# the unicode NTIID of the primary container where the question is defined.
-	# However, pyramid.traversal takes a shortcut when deciding whether it needs
-	# to encode the data or not: it uses `segment.__class__ is unicode` (traversal.py line 608 in 1.3.4)
-	# this causes a problem if (a) the context contains non ascii characters and (b) is an instance
-	# of the UnicodeContentFragment subclass of unicode: things don't get encoded. contentlibrary._question_map
-	# has been altered to ensure that this is unicode. we also assert it here.
-	__traceback_info__ =  request.context, request.context.__parent__
-	assert request.context.__parent__ and request.context.__parent__.__class__ is unicode, type(request.context.__parent__)
-
-	page_ntiid = request.context.__parent__
-	return find_page_info_view_helper( request, page_ntiid )
+	# questions are now generally held within their containing IContentUnit,
+	# but some old tests don't parent them correctly, using strings
+	content_unit_or_ntiid = request.context.__parent__
+	return find_page_info_view_helper( request, content_unit_or_ntiid )
 
 
 @view_config(accept=b'application/vnd.nextthought.link+json', **_view_defaults)
