@@ -10,6 +10,7 @@ from zope import interface
 from zope import schema
 from zope.location.interfaces import IContained as IZContained
 from zope.dublincore import interfaces as dub_interfaces
+from zope.annotation.interfaces import IAnnotatable
 
 from nti.utils.schema import Number, ValidTextLine as TextLine
 from nti.utils.schema import IndexedIterable
@@ -152,7 +153,9 @@ class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
 		"""
 
 
-class IContentUnit(IZContained, dub_interfaces.IDCDescriptiveProperties):
+class IContentUnit(IZContained,
+				   dub_interfaces.IDCDescriptiveProperties,
+				   IAnnotatable):
 	"""
 	One identified unit of content.
 

@@ -15,7 +15,9 @@ from zope import interface
 from nti.utils.property import alias
 from nti.contentlibrary.interfaces import IContentUnit, IContentPackage
 
-@interface.implementer(IContentUnit)
+from zope.annotation.interfaces import IAttributeAnnotatable
+
+@interface.implementer(IContentUnit, IAttributeAnnotatable)
 class ContentUnit(object):
 	"""
 	Simple implementation of :class:`IContentUnit`.
