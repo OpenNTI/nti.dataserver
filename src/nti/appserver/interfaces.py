@@ -552,7 +552,10 @@ class IUserCheckout(interface.Interface):
 # Assessment Support
 ###
 from nti.assessment import interfaces as asm_interfaces
-class IFileQuestionMap(asm_interfaces.IQuestionMap):
+class IFileQuestionMap(interface.Interface):
+	"""
+	.. note:: This is going away.
+	"""
 	by_file = schema.Dict( key_type=schema.Object( lib_interfaces.IDelimitedHierarchyKey, title="The key of the unit" ),
 						   value_type=schema.List( title="The questions contained in this file" ) )
 

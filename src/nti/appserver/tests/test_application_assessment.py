@@ -46,7 +46,7 @@ class TestApplicationAssessment(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_registered_utility(self):
-		qmap = component.getUtility( asm_interfaces.IQuestionMap )
+		qmap = component.getUtility( app_interfaces.IFileQuestionMap )
 		assert_that( qmap,
 					 verifiably_provides( app_interfaces.IFileQuestionMap ) )
 		assert_that( qmap,
