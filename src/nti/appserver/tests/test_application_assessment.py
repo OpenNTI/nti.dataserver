@@ -94,7 +94,7 @@ class TestApplicationAssessment(SharedApplicationTestBase):
 
 		# The content info we return points to an actual physical page
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entries( 'rel', 'content',
-																			   'href', '/WithAssessment/tag_nextthought_com_2011-10_MN-HTML-MiladyCosmetology_introduction.html' ) ) ) )
+																			   'href', '/WithAssessment/tag_nextthought_com_2011-10_mathcounts-HTML-MN_2012_0.html' ) ) ) )
 
 	@WithSharedApplicationMockDS(testapp=True,users=True)
 	def test_fetch_assessment_question_by_ntiid_accept_link(self):
