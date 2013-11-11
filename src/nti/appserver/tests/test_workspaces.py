@@ -59,7 +59,7 @@ def setUpModule():
 
 	createApplication( 8080,
 					   None,
-					   create_ds=False,
+					   create_ds=mock_dataserver.MockDataserver,
 					   force_create_indexmanager=True,
 					   pyramid_config=config,
 					   devmode=True,
