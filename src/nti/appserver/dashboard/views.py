@@ -31,6 +31,8 @@ from nti.appserver import interfaces as app_interfaces
 from nti.appserver import ugd_query_views as query_views
 from nti.appserver.pyramid_authorization import is_readable
 
+from nti.assessment.interfaces import IQAssessmentItemContainer
+
 from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver.links import Link
@@ -187,18 +189,12 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 		return result
 
 	def _scan_quizzes(self, total_user_map, total_by_type):
-		# check there are questions
-		question_map = component.queryUtility(app_interfaces.IFileQuestionMap)
-		if not question_map:
-			return
-
 		# gather all paths for the request ntiid
 		all_paths = self._get_self_and_children(self.ntiid)
 
 		# gather all ugd in the question containers
 		for unit in all_paths or ():
-			questions = question_map.by_file.get(getattr(unit, 'key', None))
-			for question in questions or ():
+			for question in IQAssessmentItemContainer(unit,()):
 				ntiid = getattr(question, 'ntiid', None)
 				usr_map, by_type = self._get_summary_items(ntiid, False) if ntiid else ({}, {})
 				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
