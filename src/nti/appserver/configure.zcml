@@ -150,14 +150,6 @@
 	<adapter factory=".pyramid_renderers.render_enclosure_factory" />
 
 	<!-- Assessment -->
-	<!-- Object transformers -->
-	<adapter factory=".ugd_edit_views._question_submission_transformer"
-			 for="nti.assessment.interfaces.IQuestionSubmission"
-			 provides=".interfaces.INewObjectTransformer" />
-
-	<adapter factory=".ugd_edit_views._question_set_submission_transformer"
-			 for="nti.assessment.interfaces.IQuestionSetSubmission"
-			 provides=".interfaces.INewObjectTransformer" />
 
 	<!-- Events -->
 
@@ -355,6 +347,8 @@
 				 zcml:condition="installed nti.app.client_preferences" />
 		<include package="nti.app.products.courseware"
 				 zcml:condition="installed nti.app.products.courseware" />
+		<include package="nti.app.assessment"
+				 zcml:condition="installed nti.app.assessment" />
 	</configure>
 
 </configure>

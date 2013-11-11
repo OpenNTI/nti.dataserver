@@ -19,6 +19,7 @@ file:../lib/pywikipedia/#egg=pywikipedia
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.wsgi.cors/trunk#egg=nti.wsgi.cors
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.openmath/trunk#egg=nti.openmath
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.assessment/trunk#egg=nti.assessment
+-e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.assessment/trunk#egg=nti.app.assessment
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.contenttypes.courses/trunk#egg=nti.contenttypes.courses
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.products.courseware/trunk#egg=nti.app.products.courseware
 -e svn+https://repos.nextthought.com/svn/nti-svn/nti.app.products.ou/trunk#egg=nti.app.products.ou

@@ -31,21 +31,7 @@ from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import ModeledContentEditRequestUtilsMixin
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
-from nti.assessment import interfaces as asm_interfaces
-
 def _id(x): return x
-
-#@component.adapter
-@interface.implementer(app_interfaces.INewObjectTransformer)
-def _question_submission_transformer( obj ):
-	# Grade it, by adapting the object into an IAssessedQuestion
-	return asm_interfaces.IQAssessedQuestion
-
-#@component.adapter
-@interface.implementer(app_interfaces.INewObjectTransformer)
-def _question_set_submission_transformer( obj ):
-	# Grade it, by adapting the object into an IAssessedQuestionSet
-	return asm_interfaces.IQAssessedQuestionSet
 
 
 class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
