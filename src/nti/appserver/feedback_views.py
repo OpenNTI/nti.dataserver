@@ -33,12 +33,22 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 	if body_key not in json_body or not json_body[body_key] or not unicode(json_body[body_key]).strip():
 		raise hexc.HTTPBadRequest()
 
-	request_details = dict(json_body)
+	request_info = dict(json_body)
 	# No need to repeat it here
-	del request_details[body_key]
-	request_details.update( request.environ )
+	del request_info[body_key]
 
-	request_details_table = '\n\n    '.join( [k + '\t\t:' + repr(v) for k, v in sorted(request_details.items())] )
+	def _format_table(tbl):
+		if not tbl:
+			return ''
+		key_width = len(max(tbl, key=len))
+
+		lines = [(str(k).ljust( key_width + 10 ) + repr(v))
+				 for k, v
+				 in sorted(tbl.items())]
+		return '\n\n    '.join( lines )
+
+	request_info_table = _format_table( request_info )
+	request_detail_table = _format_table( request.environ )
 
 	# The template expects 'body' so ensure that's what it gets
 	json_body['body'] = json_body[body_key]
@@ -52,8 +62,9 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 															  'filled_body': '\n    '.join( textwrap.wrap( json_body[body_key], 60 ) ),
 															  'context': json_body,
 															  'request': request,
-															  'request_details': request_details,
-															  'request_details_table': request_details_table},
+															  'request_info': request_info,
+															  'request_info_table': request_info_table,
+															  'request_details_table': request_detail_table },
 											   request=request )
 
 	return hexc.HTTPNoContent()
