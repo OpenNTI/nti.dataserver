@@ -11,15 +11,16 @@ import unittest
 
 from .. import maps
 
-from hamcrest import (assert_that, is_, has_length)
+from hamcrest import (assert_that, has_length, is_)
 
 class TestUtils(unittest.TestCase):
 
 	def test_case_insensitive_dict(self):
-		d = maps.CaseInsensitiveDict(ONE=1, two=2)
-		assert_that(d, has_length(2))
-		assert_that(d['OnE'], is_(1))
-		assert_that(d['one'], is_(1))
-		assert_that(d['TWO'], is_(2))
-
+		d1 = maps.CaseInsensitiveDict(ONE=1, two=2)
+		d2 = maps.CaseInsensitiveDict({'One':1, 'Two':2})
+		for m in (d1, d2):
+			assert_that(m, has_length(2))
+			assert_that(m['OnE'], is_(1))
+			assert_that(m['one'], is_(1))
+			assert_that(m['TWO'], is_(2))
 
