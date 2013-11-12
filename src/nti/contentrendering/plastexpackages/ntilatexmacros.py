@@ -746,7 +746,6 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 		return _incoming_sources_as_plain_text( texts )
 
 	def gen_target_ntiid(self):
-		logger.info('Computing target NTIID.')
 		from nti.ntiids.ntiids import is_valid_ntiid_string
 
 		uri = ''.join(render_children( self.renderer, self.uri ))
@@ -805,7 +804,6 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		return tok
 
 	def gen_target_ntiid(self):
-		logger.info('Computing target NTIID.')
 		from nti.ntiids.ntiids import is_valid_ntiid_string
 
 		uri = unicode(''.join(render_children( self.renderer, self.uri )))
