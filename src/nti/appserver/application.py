@@ -33,7 +33,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from zope import interface
 from zope import component
 from zope.event import notify
-from zope import lifecycleevent
 from zope.configuration import xmlconfig
 from zope.component.hooks import setHooks, site
 
@@ -53,9 +52,6 @@ from nti.appserver import pyramid_auth
 from nti.appserver import pyramid_authorization
 from nti.appserver import dataserver_socketio_views
 from nti.appserver import interfaces as app_interfaces
-from nti.appserver.contentlibrary import _question_map
-from nti.appserver.contentlibrary import _videoindex_map
-from nti.appserver.contentlibrary  import _related_content_map
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 
 from nti.utils import setupChameleonCache
