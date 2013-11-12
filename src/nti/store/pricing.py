@@ -82,10 +82,11 @@ class DefaultPurchasablePricer(object):
 		return fee_amount
 
 	def price(self, priceable):
+		__traceback_info__ = priceable
 		quantity = priceable.Quantity or 1
 		purchasable = priceable.purchasable
 		if purchasable is None:
-			raise InvalidPurchasable("must specify a valid purchasable")
+			raise InvalidPurchasable("'%s' is an invalid purchasable NTIID" % priceable.NTIID)
 
 		amount = purchasable.Amount
 		new_amount = amount * quantity
