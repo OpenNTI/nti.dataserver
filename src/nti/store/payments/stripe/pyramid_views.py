@@ -196,7 +196,8 @@ class StripePaymentView(_PostStripeView):
 			logger.info("Processing purchase %s", purchase_id)
 			try:
 				manager.process_purchase(purchase_id=purchase_id, username=username, token=token,
-										 expected_amount=expected_amount, api_key=stripe_key.PrivateKey)
+										 expected_amount=expected_amount, api_key=stripe_key.PrivateKey,
+										 request=request)
 			except NTIStoreException:
 				# TODO: How should this actually be handled?
 				logger.exception("Failed to process purchase %s", purchase_id)
