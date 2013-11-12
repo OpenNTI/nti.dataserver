@@ -316,7 +316,7 @@ setup(
 		# See http://pypi.python.org/pypi/user-agents/ for a high-level
 		# library to do web user agent detection
 		'webob >= 1.2.3',
-		'whoosh >= 2.5.4',
+		'whoosh >= 2.5.5',
 		'z3c.appconfig >= 1.0',
 		'z3c.autoinclude >= 0.3.5',
 		'z3c.baseregistry >= 2.0.0',  # ZCML configurable local component registries
