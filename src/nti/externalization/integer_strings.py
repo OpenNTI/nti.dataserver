@@ -1,23 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Functions to represent potentially large integers as the shortest possible
-human-readable and writable strings. The motivation is to be able to take int ids
-as produced by an :class:`zc.intid.IIntId` utility and produce something that can be
-written down and typed in by a human. To this end, the strings produced have to be:
+Functions to represent potentially large integers as the shortest
+possible human-readable and writable strings. The motivation is to be
+able to take int ids as produced by an :class:`zc.intid.IIntId`
+utility and produce something that can be written down and typed in by
+a human. To this end, the strings produced have to be:
 
 * One-to-one and onto the integer domain;
 * As short as possible;
 * While not being easily confused;
 * Or accidentaly permuted
 
-To meet those goals, we define an alphabet consisting of the ASCII digits and
-upper and lowercase letters, leaving out troublesome pairs (zero and upper and lower oh,
-one and upper and lower ell) (actually, those troublesome pairs will all map to the
-same character).
+To meet those goals, we define an alphabet consisting of the ASCII
+digits and upper and lowercase letters, leaving out troublesome pairs
+(zero and upper and lower oh and upper queue, one and upper and lower
+ell) (actually, those troublesome pairs will all map to the same
+character).
 
-We also put a version marker at the end of the string so we can evolve this algorithm
-gracefully but still honor codes in the wild.
+We also put a version marker at the end of the string so we can evolve
+this algorithm gracefully but still honor codes in the wild.
 
 $Id$
 """

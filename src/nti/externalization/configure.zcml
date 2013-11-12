@@ -31,15 +31,10 @@
 	<!-- Offer to adapt strings to dates -->
 	<!-- TODO: This is a bit ad-hoc. Surely there's a more formal set
 	of transforms somewhere? -->
-	<adapter for="basestring"
-			 provides="zope.interface.common.idatetime.IDate"
-			 factory=".internalization._date_from_string" />
-	<!-- Do the reverse as well. (in the internalization package to
-	keep locality; they should probably all move to a new module) -->
-	<adapter for="zope.interface.common.idatetime.IDate"
-			 factory=".internalization._date_to_string" />
-	<adapter for="zope.interface.common.idatetime.ITimeDelta"
-			 factory=".internalization._duration_to_string" />
+	<adapter factory=".datetime._date_from_string" />
+	<!-- Do the reverse as well.-->
+	<adapter factory=".datetime._date_to_string" />
+	<adapter factory=".datetime._duration_to_string" />
 
 
 	<!-- The "*" matches things that implement some interface -->
