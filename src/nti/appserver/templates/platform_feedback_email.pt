@@ -48,17 +48,33 @@
 		</div>
 		<p>${options/report_type} received from <span tal:content="options/userid | options/profile/alias | options/user" class="realname tterm">John Doe</span>.</p>
 
-		<pre tal:content="options/data/body">
-
+		<pre style="margin-left: 50px; margin-right: 100px;"
+			 tal:content="options/data/body">
+			This is some content as it came in from the user.
 		</pre>
 
-		<h2>Request Details</h2>
-		<table>
+		<tal:block tal:condition="options/request_info">
+		<h2>Request Information</h2>
+		<table style="margin-left: 30px; margin-right: 100px">
 			<thead>
 				<tr><td>Variable</td><td>Value</td></tr>
 			</thead>
-			<tbody>
-				<tr tal:repeat="item python: sorted(options['request_details'].items())">
+			<tbody style="font-family: monospace;">
+				<tr tal:repeat="item python: sorted(options['request_info'].items())">
+					<td tal:content="python:item[0]">Variable Name</td>
+					<td tal:content="python:item[1]">Variable Value</td>
+				</tr>
+			</tbody>
+		</table>
+		</tal:block>
+
+		<h2>Request Details</h2>
+		<table style="margin-left: 30px; margin-right: 100px">
+			<thead>
+				<tr><td>Variable</td><td>Value</td></tr>
+			</thead>
+			<tbody style="font-family: monospace;">
+				<tr tal:repeat="item python: sorted(request.environ.items())">
 					<td tal:content="python:item[0]">Variable Name</td>
 					<td tal:content="python:item[1]">Variable Value</td>
 				</tr>

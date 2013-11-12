@@ -32,7 +32,7 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 
 	extra_environ_default_user = 'ossmkitty'
 
-	def _do_test_email(self, url, subject, message_key):
+	def _do_test_email(self, url, subject, message_key, extra_data=None):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			coppa_user = users.User.get_user( self.extra_environ_default_user )
 			user_interfaces.IFriendlyNamed( coppa_user ).realname = u'Jason'
@@ -41,7 +41,10 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 		mailer = component.getUtility( ITestMailDelivery )
 
 		data = {message_key: 'Hi there. I love it. This is a string that is long enough to make the wrapping kick in.'
-				' It must be more than 60 or seventy characters.'}
+				' It must be more than 60 or seventy characters.',
+		}
+		if extra_data:
+			data.update(extra_data)
 
 		res = testapp.post_json( url, data )
 		assert_that( res, has_property( 'status_int', 204 ) )
@@ -51,6 +54,7 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 		assert_that( mailer, has_property( 'queue', contains( has_property( 'subject', subject ) ) ) )
 
 		assert_that( decodestring(mailer.queue[0].as_string()), contains_string( "Hi there. I love it." ) )
+		return mailer.queue[0]
 
 
 	@WithSharedApplicationMockDS(testapp=True, users=True)
@@ -85,4 +89,8 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS(testapp=True, users=True)
 	def test_post_crash_sends_email(self):
 		url = '/dataserver2/@@send-crash-report'
-		self._do_test_email(url, 'Crash Report From ossmkitty', 'message')
+		msg = self._do_test_email(url, 'Crash Report From ossmkitty', 'message',
+								  {'file': 'thing.js', 'line': 82 })
+
+		assert_that( decodestring(msg.as_string()),
+					 contains_string( "    file          u'thing.js'" ) )
