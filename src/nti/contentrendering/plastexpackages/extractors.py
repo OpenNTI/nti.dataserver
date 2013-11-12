@@ -461,17 +461,40 @@ class _NTIVideoExtractor(object):
 	def _process_videos(self, dom, els, outpath, topic_map):
 		items = {}
 		filename = 'video_index.json'
+		# We'd like these things, especially Containers, to be
+		# ordered as they are in the source. We can preserve it here,
+		# if we try. The original list of elements must be in order
+		# of how they appear in the source, and it is more-or-less.
+
+		# In practice, it's not nearly that simple because of the
+		# "overrides". In practice, all ntivideo elements are children
+		# of the document for some reason, and ntivideoref elements
+		# are scattered about through the content to refer to these
+		# elements. In turn, these ntivideoref elements get added to
+		# the ToC dom (NOT the content dom) as "<object>" tags...we go
+		# through and "re-parent" ntivideo elements in the Containers
+		# collection based on where references appear to them
+
+		# Therefore, we maintain yet another parallel data structure
+		# recording the original iteration order of the elements,
+		# and at the very end, when we have assigned videos
+		# to containers, we sort that list by this original order.
+
 		inverted = collections.defaultdict(set)
 		containers = collections.defaultdict(set)
 		video_index = {'Items': items, 'Containers':containers}
+		original_video_iteration_order = []
+
 		for el in els:
 			video, container = self._process_video(dom, el, topic_map)
 			items[video['ntiid']] = video
+			original_video_iteration_order.append(video['ntiid'])
 			if container:
 				containers[container].add(video['ntiid'])
 				inverted[video['ntiid']].add(container)
 
-		# add video objects to toc
+		# add video objects to toc and compute re-parent locations
+		# based on references
 		doc_ntiid = dom.documentElement.getAttribute('ntiid')
 		overrides = collections.defaultdict(set)
 		videos_in_toc = self._find_toc_videos(topic_map)
@@ -515,7 +538,15 @@ class _NTIVideoExtractor(object):
 			if not vid_ids:
 				containers.pop(ntiid)
 			else:
-				containers[ntiid] = list(vid_ids)  # Make JSON Serializable
+				# Make JSON Serializable (a plain list object),
+				# and also sort according to original iteration order.
+				# This is easily done as a selection sort:
+				# iterate across the videos in the original order, and if
+				# it is included in our set, output it
+				containers[ntiid] = [orig_video_id
+									 for orig_video_id
+									 in original_video_iteration_order
+									 if orig_video_id in vid_ids]
 
 		# Write the normal version
 		with open(os.path.join(outpath, filename), "wb") as fp:
