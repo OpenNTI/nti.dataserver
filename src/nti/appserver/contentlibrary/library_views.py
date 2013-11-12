@@ -32,7 +32,6 @@ from nti.appserver import interfaces as app_interfaces
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 from nti.appserver._view_utils import AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 
-from nti.assessment.interfaces import IQAssessmentItemContainer
 from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver import users
@@ -44,7 +43,6 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.mimetype import  nti_mimetype_with_class
 
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.externalization import to_external_object
 from nti.externalization.singleton import SingletonDecorator
 
 from nti.ntiids import ntiids
@@ -118,45 +116,6 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 		# NOTE: The preferences decorator may change this
 		info.lastModified = last_modified
 	return info
-
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(app_interfaces.IContentUnitInfo)
-class _ContentUnitAssessmentItemDecorator(object):
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalMapping( self, context, result_map ):
-		if context.contentUnit is None:
-			return
-
-		#questions = component.getUtility( app_interfaces.IFileQuestionMap )
-		#for_key = questions.by_file.get( getattr( context.contentUnit, 'key', None ) )
-		# When we return page info, we return questions
-		# for all of the embedded units as well
-		def same_file(unit1, unit2):
-			try:
-				return unit1.filename.split('#',1)[0] == unit2.filename.split('#',1)[0]
-			except (AttributeError,IndexError):
-				return False
-
-		def recur(unit,accum):
-			if same_file( unit, context.contentUnit ):
-				try:
-					qs = IQAssessmentItemContainer( unit, () )
-				except TypeError:
-					qs = []
-
-				accum.extend(qs)
-
-				for child in unit.children:
-					recur( child, accum )
-
-		result = []
-		recur( context.contentUnit, result )
-
-		if result:
-			### XXX FIXME: We need to be sure we don't send back the
-			# solutions and explanations right now
-			result_map['AssessmentItems'] = to_external_object( result  )
 
 ###
 # We look for content container preferences. For actual containers, we

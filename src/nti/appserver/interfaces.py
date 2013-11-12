@@ -548,17 +548,6 @@ class IUserCheckout(interface.Interface):
 		If the user validly contains the given object, return it. Otherwise return None.
 		"""
 
-###
-# Assessment Support
-###
-from nti.assessment import interfaces as asm_interfaces
-class IFileQuestionMap(interface.Interface):
-	"""
-	.. note:: This is going away.
-	"""
-	by_file = schema.Dict( key_type=schema.Object( lib_interfaces.IDelimitedHierarchyKey, title="The key of the unit" ),
-						   value_type=schema.List( title="The questions contained in this file" ) )
-
 class INewObjectTransformer(interface.Interface):
 	"""
 	Called to transform an object before storage on the user.
