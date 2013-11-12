@@ -64,7 +64,8 @@ class Purchasable(content_bundle.ContentBundle):
 	Description = AdaptingFieldProperty(store_interfaces.IPurchasable['Description'])
 
 	def __repr__(self):
-		return "%s(%s,%s,%s,%s)" % (self.__class__, self.Description, self.NTIID, self.Currency, self.Amount)
+		return "%s(%s,%s,%s,%s)" % (self.__class__, self.Description,
+									self.NTIID, self.Currency, self.Amount)
 
 	def __eq__(self, other):
 		try:
@@ -78,17 +79,20 @@ class Purchasable(content_bundle.ContentBundle):
 
 	@Lazy
 	def __acl__(self):
-		return (a_acl.ace_allowing(nti_interfaces.EVERYONE_USER_NAME, authorization.ACT_READ, self),)
+		return (a_acl.ace_allowing(nti_interfaces.EVERYONE_USER_NAME,
+								   authorization.ACT_READ, self),)
 
-def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=None, title=None, license_=None,
-					   author=None, description=None, icon=None, thumbnail=None,
-					   discountable=False, bulk_purchase=True):
+def create_purchasable(ntiid, provider, amount, currency='USD', items=(), fee=None,
+					   title=None, license_=None, author=None, description=None,
+					   icon=None, thumbnail=None, discountable=False,
+					   bulk_purchase=True):
 	fee = float(fee) if fee is not None else None
 	amount = float(amount) if amount is not None else amount
 	items = utils.to_frozenset(items) if items else frozenset((ntiid,))
-	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Author=author, Items=items,
-						 Description=description, Amount=amount, Currency=currency, Fee=fee,
-						 License=license_, Discountable=discountable, BulkPurchase=bulk_purchase,
+	result = Purchasable(NTIID=ntiid, Provider=provider, Title=title, Author=author,
+						 Items=items, Description=description, Amount=amount,
+						 Currency=currency, Fee=fee, License=license_,
+						 Discountable=discountable, BulkPurchase=bulk_purchase,
 						 Icon=icon, Thumbnail=thumbnail)
 	return result
 
@@ -120,14 +124,16 @@ class ZcmlPurchasableStore(object):
 
 DefaultPurchasableStore = ZcmlPurchasableStore
 
+def get_purchasable_store():
+	return DefaultPurchasableStore()
+
 def get_purchasable(pid, registry=component):
-	util = registry.getUtility(store_interfaces.IPurchasableStore)
-	result = util.get_purchasable(pid)
+	result = get_purchasable_store().get_purchasable(pid)
 	return result
 
 def get_all_purchasables(registry=component):
-	util = registry.queryUtility(store_interfaces.IPurchasableStore)
-	result = LocatedExternalList(util.get_all_purchasables()) if util else []
+	store = get_purchasable_store()
+	result = LocatedExternalList(store.get_all_purchasables())
 	return result
 
 def get_available_items(user, registry=component):
@@ -159,9 +165,9 @@ def get_content_items(purchased_items, registry=component):
 		purchased_items = utils.to_collection(purchased_items)
 
 	result = set()
-	util = registry.getUtility(store_interfaces.IPurchasableStore)
+	store = get_purchasable_store()
 	for item in purchased_items:
-		p = util.get_purchasable(item)
+		p = store.get_purchasable(item)
 		if p is not None:
 			result.update(p.Items)
 	return result
