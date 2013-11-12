@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import collections
+
 from brownie.caching import LFUCache
 
 class LFUMap(LFUCache):
@@ -25,10 +27,11 @@ class LFUMap(LFUCache):
 
 class CaseInsensitiveDict(dict):
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(CaseInsensitiveDict, self).__init__()
-        for key, value in kwargs.items():
-            self.__setitem__(key, value)
+        self.update(**kwargs)
+        for arg in args or ():
+            self.update(arg)
 
     def has_key(self, key):
         return super(CaseInsensitiveDict, self).has_key(key.lower())
@@ -47,3 +50,21 @@ class CaseInsensitiveDict(dict):
 
     def __delitem__(self, key):
         return super(CaseInsensitiveDict, self).__delitem__(key.lower())
+
+    def update(self, *args, **kwargs):
+
+        other = args[0] if len(args) >= 1 else ()
+
+        if isinstance(other, collections.Mapping):
+            for key in other:
+                self.__setitem__(str(key), other[key])
+        elif hasattr(other, "keys"):
+            for key in other.keys():
+                self.__setitem__(str(key), other[key])
+        else:
+            for key, value in other:
+                self.__setitem__(str(key), value)
+
+        for key, value in kwargs.items():
+            self.__setitem__(str(key), value)
+
