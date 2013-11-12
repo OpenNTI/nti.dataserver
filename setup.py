@@ -233,7 +233,7 @@ setup(
 		# A very simple (one module, no deps) RSS and Atom feed generator.
 		# 1.7 is a modern rewrite with much better unicode and Py3k support
 		'feedgenerator >= 1.7',
-		'futures >= 2.1.4',
+		'futures >= 2.1.5',
 		'gevent == 1.0dev', # Really 1.0rc3; see dependency_links
 		'greenlet >= 0.4.1',
 		'gunicorn >= 18.0',
