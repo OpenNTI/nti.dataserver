@@ -418,7 +418,7 @@ setup(
 		# Pulled in by ...?
 		'zope.structuredtext >= 4.0.0',
 		'zope.tal >= 4.0.0a1',
-		'zope.tales >= 4.0.1',
+		'zope.tales >= 4.0.2',
 		'zope.traversing >= 4.0.0a3',
 		# Plug to make zope.schema's vocabulary registry ZCA
 		# based and thus actually useful
