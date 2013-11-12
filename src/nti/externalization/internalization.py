@@ -14,7 +14,6 @@ logger = __import__('logging').getLogger(__name__)
 import six
 import sys
 import inspect
-import isodate
 import numbers
 import collections
 
@@ -28,8 +27,6 @@ from zope.lifecycleevent import ObjectModifiedEvent, Attributes
 from persistent.interfaces import IPersistent
 
 from . import interfaces
-
-from nti.utils.schema import InvalidValue
 
 LEGACY_FACTORY_SEARCH_MODULES = set()
 
@@ -449,39 +446,3 @@ def validate_named_field_value( self, iface, field_name, value ):
 	if sch_interfaces.IField.providedBy( field ):
 		return validate_field_value( self, field_name, field, value )
 	return lambda: setattr( self, field_name, value )
-
-
-def _date_from_string( string ):
-	# This:
-	#   datetime.date.fromtimestamp( zope.datetime.time( string ) )
-	# is simple, but seems to have confusing results, depending on what the
-	# timezone is? If we put in "1982-01-31" we get back <1982-01-30>
-	# This:
-	#   parsed = zope.datetime.parse( string )
-	#   return datetime.date( parsed[0], parsed[1], parsed[2] )
-	# accepts almost anything as a date (so it's great for human interfaces),
-	# but programatically we actually require ISO format
-	try:
-		return isodate.parse_date( string )
-	except isodate.ISO8601Error:
-		t, v, tb = sys.exc_info()
-		e = InvalidValue( *v.args, value=string )
-		raise e, None, tb
-
-@interface.implementer(interfaces.IInternalObjectExternalizer)
-class _date_to_string(object):
-
-	def __init__( self, date ):
-		self.date = date
-
-	def toExternalObject(self):
-		return isodate.date_isoformat(self.date)
-
-@interface.implementer(interfaces.IInternalObjectExternalizer)
-class _duration_to_string(object):
-
-	def __init__( self, date ):
-		self.date = date
-
-	def toExternalObject(self):
-		return isodate.duration_isoformat(self.date)
