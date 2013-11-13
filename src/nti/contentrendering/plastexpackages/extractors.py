@@ -63,6 +63,15 @@ class _CourseExtractor(object):
 		if courseinfo:
 			toc_el.setAttribute('courseInfo', courseinfo[0].ntiid)
 		units = doc_el.getElementsByTagName('courseunit')
+
+		# SAJ: Until the old courses have complete course_info.json files, only add
+		# the 'info' node for new courses. New courses are identified by looking for
+		# a course with no units.
+		if not units:
+			toc_el.appendChild(XMLDocument().createTextNode(u'\n		'))
+			info = XMLDocument().createElement('info')
+			info.setAttribute('src', u'course_info.json')
+			toc_el.appendChild(info)
 		for unit in units:
 			toc_el.appendChild(XMLDocument().createTextNode(u'\n		'))
 			toc_el.appendChild(self._process_unit(unit))
