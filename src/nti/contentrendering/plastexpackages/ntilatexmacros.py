@@ -716,6 +716,8 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 		def digest(self, tokens):
 			tok = super(relatedwork.worksource,self).digest(tokens)
 			self.parentNode.uri = self.attributes['uri']
+			if hasattr(self.parentNode.uri, 'source'):
+				self.parentNode.uri = self.parentNode.uri.source.replace( ' ', '' ).replace( '\\&', '&' ).replace( '\\_', '_' ).replace( '\\%', '%' ).replace(u'\u2013', u'--').replace(u'\u2014', u'---')
 			return tok
 
 	def digest(self, tokens):
@@ -748,7 +750,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 	def gen_target_ntiid(self):
 		from nti.ntiids.ntiids import is_valid_ntiid_string
 
-		uri = ''.join(render_children( self.renderer, self.uri ))
+		uri = self.uri
 		if is_valid_ntiid_string( uri ):
 			self.target_ntiid = uri
 			self.targetMimeType = 'application/vnd.nextthought.content'
@@ -796,6 +798,8 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 			self.visibility = options['visibility']
 
 		self.uri = self.attributes['uri']
+		if hasattr(self.uri, 'source'):
+			self.uri = self.uri.source.replace( ' ', '' ).replace( '\\&', '&' ).replace( '\\_', '_' )
 		self.description = self.attributes['desc']
 		self.relatedwork = self.idref['label']
 
@@ -816,7 +820,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 	def gen_target_ntiid(self):
 		from nti.ntiids.ntiids import is_valid_ntiid_string
 
-		uri = unicode(''.join(render_children( self.renderer, self.uri )))
+		uri = self.uri
 		if is_valid_ntiid_string( uri ):
 			self.target_ntiid = uri
 		else:
