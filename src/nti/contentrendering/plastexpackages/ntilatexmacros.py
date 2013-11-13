@@ -799,6 +799,16 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		self.description = self.attributes['desc']
 		self.relatedwork = self.idref['label']
 
+		# Remove the empty NTIID key so auto NTIID generation works
+
+		# SAJ: It is a hack to have this code here. The code in
+		# contentrendering.platexids should account for the possibility that the
+		# value of the 'NTIID' key could be 'None', however I have not evaluated what
+		# undesired side affects might come from changing the code in
+		# contentrendering.plastexids.
+		if 'NTIID' in self.attributes and self.attributes['NTIID'] is None:
+			del self.attributes['NTIID']
+
 		self.target_ntiid = None
 
 		return tok
