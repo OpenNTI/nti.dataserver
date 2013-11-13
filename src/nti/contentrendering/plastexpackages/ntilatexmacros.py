@@ -770,7 +770,7 @@ class relatedworkrefname(Base.Command):
 
 @interface.implementer(crd_interfaces.IEmbeddedContainer)
 class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
-	args = '[ options:dict ] label:idref uri:url desc:str'
+	args = '[ options:dict ] label:idref uri:url desc:str < NTIID:str >'
 
 	counter = 'relatedworkref'
 	blockType = True
