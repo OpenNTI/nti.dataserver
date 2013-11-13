@@ -185,12 +185,12 @@ class _RelatedWorkExtractor(object):
 
 					visibility = (ref_el.visibility or ref_el.relatedwork.visibility)
 
-					uri = unicode(''.join(render_children( ref_el.renderer, ref_el.uri )))
+					uri = ref_el.uri
 
 					if uri == '':
 						ref_el.uri = ref_el.relatedwork.uri
 						ref_el.gen_target_ntiid()
-						uri = unicode(''.join(render_children( ref_el.renderer, ref_el.uri )))
+						uri = ref_el.uri
 
 					if uri == '':
 						logger.warn('We are still empty!!!!!!!!!!!!!!!!!!!!!!!! %s %s' % (ref_el.ntiid, ref_el.relatedwork.ntiid))
@@ -231,7 +231,7 @@ class _RelatedWorkExtractor(object):
 			else:
 				icon = ''
 
-			uri = unicode(''.join(render_children( el.renderer, el.uri )))
+			uri = el.uri
 
 			if uri == '':
 				logger.warn('No URI specified for %s' % el.ntiid)
