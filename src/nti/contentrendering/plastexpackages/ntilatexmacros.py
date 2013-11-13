@@ -244,7 +244,7 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
 				texts.append( unicode( child ) )
 
-		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( ''.join( texts ).strip() ) )
+		return _incoming_sources_as_plain_text( texts )
 
 	@readproperty
 	def video_sources(self):
