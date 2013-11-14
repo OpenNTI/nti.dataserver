@@ -347,8 +347,8 @@ def _nti_challenge_decider( environ, status, headers ):
 	return 'repoze.who.identity' not in environ and forbidden_challenger( environ, status, headers )
 
 
-def _create_who_apifactory( secure_cookies=False,
-							cookie_secret='secret',
+def _create_who_apifactory( secure_cookies=True,
+							cookie_secret='$Id$',
 							cookie_timeout=ONE_WEEK ):
 
 	# Note that the cookie name and header names needs to be bytes,
@@ -408,11 +408,14 @@ def _create_who_apifactory( secure_cookies=False,
 
 	return api_factory
 
-def create_authentication_policy( secure_cookies=False, cookie_secret='secret', cookie_timeout=ONE_WEEK ):
+def create_authentication_policy( secure_cookies=True,
+								  cookie_secret='$Id$',
+								  cookie_timeout=ONE_WEEK ):
 	"""
-	:param bool secure_cookies: If ``True`` (not the default), then any cookies
+	:param bool secure_cookies: If ``True`` (the default), then any cookies
 		we create will only be sent over SSL and will additionally have the 'HttpOnly'
 		flag set, preventing them from being subject to cross-site vulnerabilities.
+		This must be explicitly turned off if not desired.
 	:param str cookie_secret: The value used to encrypt cookies. Must be the same on
 		all instances in a given environment, but should be different in different
 		environments.
