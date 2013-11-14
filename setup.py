@@ -205,7 +205,7 @@ setup(
 		# and changed version number (which is really 0.6@315d164172ef784fbbb2af543bf5104f8f5ddf46
 		# MySQL-python (aka MySQLdb) has been renamed to moist (https://github.com/farcepest/moist)
 		'umysql == 2.61',
-		'umysqldb >= 1.0.2',
+		'umysqldb == 1.0.2', # requires PyMySQL < 0.6
 		'RelStorage >= 1.5.1',
 		'PyMySQL == 0.7dev',
 		'python-memcached >= 1.53',	 # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
