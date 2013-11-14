@@ -397,6 +397,12 @@ class IUncacheableInResponse(interface.Interface):
 	Marker interface for things that should not be cached.
 	"""
 
+class IPrivateUncacheableInResponse(IUncacheableInResponse):
+	"""
+	Marker interface for things that should not be cached
+	because they are sensitive or pertain to authentication.
+	"""
+
 class IUnModifiedInResponse(interface.Interface):
 	"""
 	Marker interface for things that should not provide

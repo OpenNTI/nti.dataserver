@@ -266,7 +266,8 @@ def ping( request ):
 	links.sort() # for tests
 	return _Pong( links )
 
-@interface.implementer( ext_interfaces.IExternalObject )
+@interface.implementer( ext_interfaces.IExternalObject,
+						app_interfaces.IPrivateUncacheableInResponse)
 class _Pong(dict):
 
 	__external_class_name__ = 'Pong'
@@ -553,7 +554,8 @@ class _ExistingOpenIdUserLoginLinkProvider(object):
 								  params={'openid': self.user.identity_url} )
 
 
-@interface.implementer( ext_interfaces.IExternalObject )
+@interface.implementer( ext_interfaces.IExternalObject,
+						app_interfaces.IPrivateUncacheableInResponse)
 class _Handshake(dict):
 
 	__external_class_name__ = 'Handshake'
@@ -630,7 +632,11 @@ def _specified_username_logon( request, allow_no_username=True, require_matching
 		if audit:
 			# TODO: some real auditing scheme
 			logger.info( "[AUDIT] User %s has impersonated %s at %s", remote_user, desired_username, request )
-		response.cache_control.no_cache = True
+
+	# Mark this response up as if it were entirely private and not to be cached
+	private_data = _Handshake(())
+	app_interfaces.IResponseCacheController( private_data )( private_data, {'request': request} )
+
 	return response
 
 @view_config(route_name=REL_LOGIN_NTI_PASSWORD, request_method='GET', renderer='rest')

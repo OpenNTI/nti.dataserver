@@ -4,8 +4,15 @@ from __future__ import print_function, unicode_literals
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-from hamcrest import (assert_that, is_, not_none, ends_with, starts_with,)
-from hamcrest import  has_entry, has_length, has_key,  has_item
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import not_none
+from hamcrest import ends_with
+from hamcrest import starts_with
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import has_key
+from hamcrest import has_item
 from hamcrest import same_instance, greater_than_or_equal_to, greater_than
 from hamcrest import contains_string
 from hamcrest import contains
@@ -44,6 +51,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans#, WithMockDS
 
 from nti.testing.matchers import verifiably_provides
+from nti.testing.matchers import is_true
 
 import nti.dataserver.interfaces as nti_interfaces
 import nti.appserver.interfaces as app_interfaces
@@ -74,6 +82,9 @@ class TestApplicationLogon(SharedApplicationTestBase):
 
 		username = 'thomas.stockdale@example.com@mallowstreet.com'
 		res = testapp.post( '/dataserver2/logon.handshake', params={'username': username} )
+		assert_that( res.cache_control, has_property('private', '*') )
+		assert_that( res.cache_control, has_property('no_store', is_true() ))
+		assert_that( res.cache_control, has_property('no_cache', '*'))
 		self.require_link_href_with_rel( res.json_body, 'logon.openid' )
 		oid_link = self.link_with_rel( res.json_body, 'logon.openid' )
 		assert_that( oid_link, has_entry( 'title', 'Sign in with mallowstreet.com' ) )
@@ -135,8 +146,12 @@ class TestApplicationLogon(SharedApplicationTestBase):
 						   extra_environ=self._make_extra_environ() )
 		assert_that( testapp.cookies, has_key( 'nti.auth_tkt' ) )
 		assert_that( testapp.cookies, has_entry( 'username', other_user_username ) )
-		assert_that( res.cache_control, has_property( 'max_age', none() ) )
+		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
 		assert_that( res.cache_control, has_property( 'no_cache', '*' ) )
+		assert_that( res.cache_control, has_property('private', '*') )
+		assert_that( res.cache_control, has_property('no_store', is_true()))
+
+
 		# Test that the username cookie comes back correctly 'raw' as well
 		cookie_headers = res.headers.dict_of_lists()['set-cookie']
 		assert_that( cookie_headers, has_item( 'username=nobody@nowhere; Path=/' ) )
@@ -369,7 +384,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		assert_that( result, has_property( 'location', '/the/url/to/go/to' ) )
 
 	@WithMockDSTrans
-	def test_create_openid_from_external( self ):  
+	def test_create_openid_from_external( self ):
 		user = logon._deal_with_external_account( request=get_current_request(),
 												  username="jason.madden@nextthought.com",
 												  fname="Jason",
