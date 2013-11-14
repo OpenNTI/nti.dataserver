@@ -551,11 +551,29 @@ class IUserCheckout(interface.Interface):
 class INewObjectTransformer(interface.Interface):
 	"""
 	Called to transform an object before storage on the user.
+
+	These are typically found as adapters, registered on the incoming
+	content object. Alternatively, they may be registered as a multi-adapter
+	for the :class:`IRequest` and content object (this registration
+	takes precedence over the single incoming object registration).
+
+	The content object is passed to the ``__call__`` method to allow the adapter
+	factories to return singleton objects such as a function.
 	"""
 
 	def __call__( posted_object ):
 		"""
 		Given the object posted from external, return the object to actually store.
+
+		By the time this is called, the ``posted_object`` will have an appropriate
+		``creator`` attribute set. It will also have a ``_p_jar`` set if it is a persistent
+		object; however, it will not have a value for ``__parent__``.
+
+		This method should not fire any life cycle events, and the returned object
+		should not have a ``__parent__`` set. If the returned object has a
+		``containerId`` that is different from the ``posted_object``, then
+		the returned object's container will be used in preference. This allows the transformer
+		to change the storage destination of the object.
 		"""
 
 # ##
