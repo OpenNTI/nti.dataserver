@@ -53,33 +53,22 @@
 			This is some content as it came in from the user.
 		</pre>
 
-		<tal:block tal:condition="options/request_info">
-		<h2>Request Information</h2>
-		<table style="margin-left: 30px; margin-right: 100px">
-			<thead>
-				<tr><td>Variable</td><td>Value</td></tr>
-			</thead>
-			<tbody style="font-family: monospace;">
-				<tr tal:repeat="item python: sorted(options['request_info'].items())">
-					<td tal:content="python:item[0]">Variable Name</td>
-					<td tal:content="python:item[1]">Variable Value</td>
-				</tr>
-			</tbody>
-		</table>
+		<tal:block tal:repeat="table options/tables">
+			<tal:block tal:condition="table/data">
+				<h2 tal:content="table/name">Request Information</h2>
+				<table style="margin-left: 30px; margin-right: 100px">
+					<thead>
+						<tr><td>Variable</td><td>Value</td></tr>
+					</thead>
+					<tbody style="font-family: monospace;">
+						<tr tal:repeat="item table/data">
+							<td tal:content="python:item[0]">Variable Name</td>
+							<td tal:content="python:item[1]">Variable Value</td>
+						</tr>
+					</tbody>
+				</table>
+			</tal:block>
 		</tal:block>
-
-		<h2>Request Details</h2>
-		<table style="margin-left: 30px; margin-right: 100px">
-			<thead>
-				<tr><td>Variable</td><td>Value</td></tr>
-			</thead>
-			<tbody style="font-family: monospace;">
-				<tr tal:repeat="item python: sorted(request.environ.items())">
-					<td tal:content="python:item[0]">Variable Name</td>
-					<td tal:content="python:item[1]">Variable Value</td>
-				</tr>
-			</tbody>
-		</table>
 
 	</body>
 </html>
