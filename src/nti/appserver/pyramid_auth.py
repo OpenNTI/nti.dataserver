@@ -450,7 +450,16 @@ class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 		identity = {
 			'repoze.who.userid': principal,
 			'identifier': api.name_registry[self._identifier_id],
-			'max_age': str(self._cookie_timeout)
+			'max_age': str(self._cookie_timeout),
+			# For the auth tkt to also be able to set REMOTE_USER_DATA
+			# and REMOTE_USER_TOKENS, those also need to come in as
+			# 'tokens' and 'userdata'. Ideally we would construct
+			# those at some point during authentication and grab them from the
+			# identity dict, but for now we simply re-echo what we have
+			# The tokens is a tuple of (native) strings, while
+			# userdata is a single string
+			'tokens': request.environ.get('REMOTE_USER_TOKENS', ()),
+			'userdata': request.environ.get('REMOTE_USER_DATA', b'')
 			}
 		return api.remember(identity)
 

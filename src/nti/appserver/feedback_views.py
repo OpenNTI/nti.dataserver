@@ -67,8 +67,11 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 	tables = [{'name': 'Request Information', 'data': sorted(request_info.items())},
 			  {'name': 'Request Details',     'data': sorted(request_details.items())}]
 
+	cur_domain = request_details.get('HTTP_HOST', request_details.get('SERVER_NAME'))
+	cur_domain = cur_domain.split(':')[0] # drop port
+
 	_email_utils.queue_simple_html_text_email( 'platform_feedback_email',
-											   subject=subject % userid,
+											   subject=subject % (userid, cur_domain),
 											   recipients=[to],
 											   template_args={'userid': userid,
 															  'report_type': report_type,
@@ -95,7 +98,7 @@ def send_feedback_view( request ):
 						  'body',
 						  psec.authenticated_userid(request),
 						  'Feedback',
-						  'Feedback From %s',
+						  'Feedback From %s on %s',
 						  'feedback@nextthought.com' )
 
 
@@ -112,12 +115,10 @@ def send_crash_report_view( request ):
 	email. To help prevent abuse, ``message`` is capped in size.
 	"""
 	# Not actually enforcing any of that now.
-
 	userid = psec.authenticated_userid(request) or psec.unauthenticated_userid(request) or "unknown"
-
 	return _format_email( request,
 						  'message',
 						  userid,
 						  'Crash Report',
-						  'Crash Report From %s',
+						  'Crash Report From %s on %s',
 						  'crash.reports@nextthought.com' )

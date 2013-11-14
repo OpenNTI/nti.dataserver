@@ -60,7 +60,7 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS(testapp=True, users=True)
 	def test_post_feedback_sends_email(self):
 		url = '/dataserver2/users/ossmkitty/@@send-feedback'
-		self._do_test_email(url, 'Feedback From ossmkitty', 'body')
+		self._do_test_email(url, 'Feedback From ossmkitty on localhost', 'body')
 
 		href = self.require_link_href_with_rel( self.resolve_user(), REL_SEND_FEEDBACK )
 		assert_that( href, is_(url) )
@@ -89,7 +89,7 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 	@WithSharedApplicationMockDS(testapp=True, users=True)
 	def test_post_crash_sends_email(self):
 		url = '/dataserver2/@@send-crash-report'
-		msg = self._do_test_email(url, 'Crash Report From ossmkitty', 'message',
+		msg = self._do_test_email(url, 'Crash Report From ossmkitty on localhost', 'message',
 								  {'file': 'thing.js', 'line': 82 })
 
 		assert_that( decodestring(msg.as_string()),
@@ -99,3 +99,29 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 					 does_not( contains_string('HTTP_COOKIE')))
 
 		assert_that( msg, has_entry( 'To', 'crash.reports@nextthought.com'))
+
+	@WithSharedApplicationMockDS(testapp=True,
+								 users=('sjohnson@nextthought.com','nobody@nowhere.com'),
+								 default_authenticate=False)
+	def test_post_crash_sends_email_impersonated(self):
+		url = '/dataserver2/@@send-crash-report'
+		# Setup an impersonated session
+		testapp = self.testapp
+		testapp.get( '/dataserver2/logon.nti.impersonate', params={'username': 'nobody@nowhere.com'},
+					 extra_environ=self._make_extra_environ('sjohnson@nextthought.com'))
+
+		# In order for the domain-specific cookie we just set to get back
+		# to the server, we must switch out the policy
+		from cookielib import DefaultCookiePolicy
+		class Policy(DefaultCookiePolicy):
+			def set_ok( self, *args ):
+				return True
+			def return_ok(self, *args):
+				return True
+		testapp.cookiejar.set_policy(Policy())
+
+		msg = self._do_test_email(url, 'Crash Report From nobody@nowhere.com on localhost', 'message',
+								  {'file': 'thing.js', 'line': 82 })
+
+		assert_that( decodestring(msg.as_string()),
+					 contains_string( '    REMOTE_USER_DATA                    \'sjohnson@nextthought.com\'' ) )
