@@ -106,4 +106,4 @@ def send_crash_report_view( request ):
 						  userid,
 						  'Crash Report',
 						  'Crash Report From %s',
-						  'support@nextthought.com' )
+						  'crash.reports@nextthought.com' )
