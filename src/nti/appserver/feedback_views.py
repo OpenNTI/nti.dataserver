@@ -48,10 +48,24 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 		return '\n\n    '.join( lines )
 
 	request_info_table = _format_table( request_info )
-	request_detail_table = _format_table( request.environ )
+
+	# Some things we want to take out of the environment,
+	# notably cookies, which may contain sensitive information;
+	# in particular, our nti.auth_tkt cookie is NOT using
+	# IP address, so it could be used by anyone until it times out.
+	request_details = dict(request.environ)
+	# TODO: Preserve just the names? Blacklist only certain cookies?
+	for k in 'HTTP_COOKIE', 'paste.cookies', 'HTTP_AUTHORIZATION', 'repoze.who.api', 'repoze.who.identity':
+		request_details.pop(k, None)
+
+	request_detail_table = _format_table( request_details )
 
 	# The template expects 'body' so ensure that's what it gets
 	json_body['body'] = json_body[body_key]
+
+	# Pre sort and name the tables so the template doesn't have to
+	tables = [{'name': 'Request Information', 'data': sorted(request_info.items())},
+			  {'name': 'Request Details',     'data': sorted(request_details.items())}]
 
 	_email_utils.queue_simple_html_text_email( 'platform_feedback_email',
 											   subject=subject % userid,
@@ -62,7 +76,7 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 															  'filled_body': '\n    '.join( textwrap.wrap( json_body[body_key], 60 ) ),
 															  'context': json_body,
 															  'request': request,
-															  'request_info': request_info,
+															  'tables': tables,
 															  'request_info_table': request_info_table,
 															  'request_details_table': request_detail_table },
 											   request=request )

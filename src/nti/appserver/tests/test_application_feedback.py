@@ -11,6 +11,7 @@ from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest.library import has_property
 from hamcrest import contains
+from hamcrest import is_not as does_not
 
 from quopri import decodestring
 
@@ -93,5 +94,8 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 
 		assert_that( decodestring(msg.as_string()),
 					 contains_string( "    file          u'thing.js'" ) )
+
+		assert_that( decodestring(msg.as_string()),
+					 does_not( contains_string('HTTP_COOKIE')))
 
 		assert_that( msg, has_entry( 'To', 'crash.reports@nextthought.com'))
