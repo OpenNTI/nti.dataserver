@@ -7,6 +7,7 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import not_none
+from hamcrest import all_of
 from hamcrest import ends_with
 from hamcrest import starts_with
 from hamcrest import has_entry
@@ -145,6 +146,9 @@ class TestApplicationLogon(SharedApplicationTestBase):
 		res = testapp.get( '/dataserver2/logon.nti.impersonate', params={'username': other_user_username},
 						   extra_environ=self._make_extra_environ() )
 		assert_that( testapp.cookies, has_key( 'nti.auth_tkt' ) )
+		# The auth_tkt cookie contains both the original and new username
+		assert_that( testapp.cookies['nti.auth_tkt'], all_of( contains_string( 'nobody%40nowhere' ),
+															  contains_string( self.extra_environ_default_user.lower())))
 		assert_that( testapp.cookies, has_entry( 'username', other_user_username ) )
 		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
 		assert_that( res.cache_control, has_property( 'no_cache', '*' ) )

@@ -625,6 +625,12 @@ def _specified_username_logon( request, allow_no_username=True, require_matching
 		response = _create_failure_response( request ) # Usually a cookie/param mismatch
 	else:
 		try:
+			# If we're impersonating, record that fact in the cookie.
+			# This will later show up in the environment and error/feedback
+			# reports. This is a pretty basic version of that; if we use
+			# it for anything more than display, we need to formalize it more.
+			if desired_username != remote_user.username.lower():
+				request.environ['REMOTE_USER_DATA'] = str(remote_user.username.lower())
 			response = _create_success_response( request, desired_username )
 		except ValueError as e:
 			return _create_failure_response( request, error_factory=hexc.HTTPNotFound, error=e.args[0]) # No such user
