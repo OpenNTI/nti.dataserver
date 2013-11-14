@@ -5,20 +5,19 @@ from __future__ import print_function
 #pylint: disable=W0212,R0904
 
 from hamcrest import assert_that
-from hamcrest import  is_
+from hamcrest import is_
 from hamcrest import contains_string
 from hamcrest import has_length
+from hamcrest import has_entry
 from hamcrest.library import has_property
 from hamcrest import contains
 
 from quopri import decodestring
 
-from zope import interface
 from zope import component
 
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver import users
-from nti.appserver.policies import site_policies
 from nti.appserver.feedback_views import REL_SEND_FEEDBACK
 
 from nti.dataserver.tests import mock_dataserver
@@ -94,3 +93,5 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 
 		assert_that( decodestring(msg.as_string()),
 					 contains_string( "    file          u'thing.js'" ) )
+
+		assert_that( msg, has_entry( 'To', 'crash.reports@nextthought.com'))
