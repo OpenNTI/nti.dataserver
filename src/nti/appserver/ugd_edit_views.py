@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 import transaction
 
 from zope import interface
+from zope import component
 from zope import lifecycleevent
 from zope.container.interfaces import InvalidContainerType
 
@@ -26,7 +27,7 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 
 from nti.appserver import httpexceptions as hexc
-from nti.appserver import interfaces as app_interfaces
+from .interfaces import INewObjectTransformer
 from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver._view_utils import ModeledContentEditRequestUtilsMixin
 from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
@@ -38,11 +39,45 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 	""" HTTP says POST creates a NEW entity under the Request-URI """
 	# Therefore our context is a container, and we should respond created.
 
+	def _transform_incoming_object(self, containedObject):
+		try:
+			transformer = component.queryMultiAdapter( (self.request, containedObject),
+													   INewObjectTransformer )
+			if transformer is None:
+				transformer = component.queryAdapter( containedObject,
+													  INewObjectTransformer,
+													  default=_id)
+
+			transformedObject = transformer( containedObject )
+
+		except (TypeError,ValueError,AssertionError,KeyError) as e:
+			transaction.doom()
+			logger.warn( "Failed to transform incoming object", exc_info=True)
+			raise hexc.HTTPUnprocessableEntity( e.message )
+
+		# If we transformed, copy the container and creator
+		if transformedObject is not containedObject:
+			transformedObject.creator = containedObject.creator
+			if 	getattr(containedObject, StandardInternalFields.CONTAINER_ID, None) \
+				and not getattr(transformedObject, StandardInternalFields.CONTAINER_ID, None):
+				transformedObject.containerId = containedObject.containerId
+				# TODO: JAM: I really don't like doing this. Straighten out the
+				# location of IContained so that things like assessment can implement it
+				if not nti_interfaces.IContained.providedBy(transformedObject):
+					interface.alsoProvides(transformedObject, nti_interfaces.IContained)
+			containedObject = transformedObject
+
+		return containedObject
+
 	def _do_call( self ):
 		creator = self.getRemoteUser()
+		externalValue = self.readInput()
+		datatype = self.findContentType( externalValue )
+
 		context = self.request.context
 		# If our context contains a user resource, then that's where we should be trying to
-		# create things
+		# store things. This may be different than the creator if the remote
+		# user is an administrator (TODO: Revisit this.)
 		owner_root = traversal.find_interface( context, nti_interfaces.IUser )
 		if owner_root is not None:
 			owner_root = getattr( owner_root, 'user', owner_root ) # migration compat
@@ -52,8 +87,6 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 			owner_root = traversal.find_interface( context.container, nti_interfaces.IUser )
 
 		owner = owner_root if owner_root else creator
-		externalValue = self.readInput()
-		datatype = self.findContentType( externalValue )
 
 		containedObject = self.createAndCheckContentObject( owner, datatype, externalValue, creator )
 
@@ -71,25 +104,8 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		# Update the object, but don't fire any modified events. We don't know
 		# if we'll keep this object yet, and we haven't fired a created event
 		self.updateContentObject( containedObject, externalValue, set_id=True, notify=False )
-		try:
-			transformedObject = self.request.registry.queryAdapter( containedObject,
-																	app_interfaces.INewObjectTransformer,
-																	default=_id )( containedObject )
-		except (TypeError,ValueError,AssertionError,KeyError) as e:
-			transaction.doom()
-			logger.warn( "Failed to transform incoming object", exc_info=True)
-			raise hexc.HTTPUnprocessableEntity( e.message )
-		# If we transformed, copy the container and creator
-		if transformedObject is not containedObject:
-			transformedObject.creator = creator
-			if 	getattr(containedObject, StandardInternalFields.CONTAINER_ID, None) \
-				and not getattr(transformedObject, StandardInternalFields.CONTAINER_ID, None):
-				transformedObject.containerId = containedObject.containerId
-				# TODO: JAM: I really don't like doing this. Straighten out the
-				# location of IContained so that things like assessment can implement it
-				if not nti_interfaces.IContained.providedBy(transformedObject):
-					interface.alsoProvides(transformedObject, nti_interfaces.IContained)
-			containedObject = transformedObject
+		containedObject = self._transform_incoming_object(containedObject)
+
 		# TODO: The WSGI code would attempt to infer a containerID from the
 		# path. Should we?
 		if not getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ):
@@ -142,8 +158,10 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 
 class UGDDeleteView(AbstractAuthenticatedView,
 					ModeledContentEditRequestUtilsMixin):
-	""" DELETing an existing object is possible. Only the user
-	that owns the object can DELETE it."""
+	"""
+	DELETing an existing object is possible. Only the user that owns
+	the object can DELETE it.
+	"""
 
 	def __call__(self):
 		context = self.request.context
