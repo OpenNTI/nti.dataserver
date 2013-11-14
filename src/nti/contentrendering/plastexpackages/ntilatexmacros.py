@@ -799,7 +799,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 
 		self.uri = self.attributes['uri']
 		if hasattr(self.uri, 'source'):
-			self.uri = self.uri.source.replace( ' ', '' ).replace( '\\&', '&' ).replace( '\\_', '_' )
+			self.uri = self.uri.source.replace( ' ', '' ).replace( '\\&', '&' ).replace( '\\_', '_' ).replace( '\\%', '%' ).replace(u'\u2013', u'--').replace(u'\u2014', u'---')
 		self.description = self.attributes['desc']
 		self.relatedwork = self.idref['label']
 
