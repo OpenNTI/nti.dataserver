@@ -64,6 +64,7 @@
 	<include package="." file="configure_workspaces.zcml" />
 
 	<adapter factory=".pyramid_renderers.uncacheable_factory" />
+	<adapter factory=".pyramid_renderers.private_uncacheable_factory" />
 	<adapter factory=".pyramid_renderers.unmodified_factory" />
 	<adapter factory=".pyramid_renderers._EntityCacheController" />
 	<adapter factory=".pyramid_renderers._UserCacheController" />

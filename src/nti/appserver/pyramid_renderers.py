@@ -290,9 +290,9 @@ def default_cache_controller( data, system ):
 		#response.pragma = 'no-cache'
 		# so lets try something more subtle
 		response.cache_control.max_age = 0
-		response.cache_control.proxy_revalitade = True
-		response.cache_control.must_revalitade = True
-		response.expiration = 0
+		response.cache_control.proxy_revalidate = True
+		response.cache_control.must_revalidate = True
+		response.expires = 0
 
 	elif not response.cache_control.no_cache and not response.cache_control.no_store:
 		_prep_cache( response )
@@ -304,13 +304,49 @@ def uncacheable_cache_controller( data, system ):
 	request = system['request']
 	response = request.response
 
+	# No-cache should be enough to request that
+	# this is not used without revalidation;
+	# we explicitly turn on revalidation as well
 	response.cache_control.no_cache = True
+	response.cache_control.proxy_revalidate = True
+	response.cache_control.must_revalidate = True
+
+	# Further, the age
+	response.cache_control.max_age = 0
+
 	return response
 
 @interface.implementer(app_interfaces.IResponseCacheController)
 @component.adapter(app_interfaces.IUncacheableInResponse)
 def uncacheable_factory( data ):
 	return uncacheable_cache_controller
+
+@interface.provider(app_interfaces.IResponseCacheController)
+def private_uncacheable_cache_controller(data, system):
+	response = uncacheable_cache_controller(data, system)
+	# Our typical reason for doing this is
+	# sensitive or authentication related information,
+	# so being explicit that it's private serves as
+	# additional documentation
+	response.cache_control.private = True
+
+	# We already said not to cache, but because it's private
+	# also request not even any temporary storage
+	response.cache_control.no_store = True
+
+	# Likewise, try to vary on cookie in case we are
+	# doing authentication in cookies. (Note: pragmatically
+	# this doesn't seem to have any effect so it's also
+	# mostly documentation).
+	response.vary = list(response.vary or ()) + ['Cookie']
+
+	return response
+
+@interface.implementer(app_interfaces.IResponseCacheController)
+@component.adapter(app_interfaces.IPrivateUncacheableInResponse)
+def private_uncacheable_factory( data ):
+	return private_uncacheable_cache_controller
+
 
 @interface.provider( app_interfaces.IResponseCacheController )
 def unmodified_cache_controller( data, system ):
