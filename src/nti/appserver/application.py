@@ -598,8 +598,8 @@ def createApplication( http_port,
 	pyramid_config.set_session_factory( my_session_factory )
 
 	auth_policy, forbidden_view, user_token_creator = pyramid_auth.create_authentication_policy(
-			secure_cookies=asbool( settings.get('secure_cookies', False) ),
-			cookie_secret=settings.get('cookie_secret', 'secret' ) )
+			secure_cookies=asbool( settings.get('secure_cookies', True) ),
+			cookie_secret=settings.get('cookie_secret', '$Id$' ) )
 
 	pyramid_config.set_authorization_policy( pyramid_authorization.ACLAuthorizationPolicy() )
 	pyramid_config.set_authentication_policy( auth_policy )
