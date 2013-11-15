@@ -135,13 +135,15 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 class _ACLBasedProvider(object):
 
+	context = None
+
 	@classmethod
-	def _resolve_action(self, action):
+	def _resolve_action(cls, action):
 		result = ace_allowing if action == nti_interfaces.ACE_ACT_ALLOW else ace_denying
 		return result
 
 	@classmethod
-	def _resolve_perm(self, perm):
+	def _resolve_perm(cls, perm):
 		result = nauth.ACT_READ
 		if perm in (frm_interfaces.ALL_PERMISSIONS, frm_interfaces.WRITE_PERMISSION):
 			result = ALL_PERMISSIONS
@@ -152,7 +154,7 @@ class _ACLBasedProvider(object):
 		return result
 
 	@classmethod
-	def _resolve_entities(self, eid):
+	def _resolve_entities(cls, eid):
 		result = ()
 		if ntiids.is_valid_ntiid_string(eid):
 			dfl = ntiids.find_object_with_ntiid(eid)
