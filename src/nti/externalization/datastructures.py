@@ -275,15 +275,20 @@ class _InterfaceCache(object):
 class InterfaceObjectIO(AbstractDynamicObjectIO):
 	"""
 	Externalizes to a dictionary based on getting the attributes of an
-	object defined by an interface.
+	object defined by an interface. If any attribute has a true value
+	for the tagged value ``_ext_excluded_out``, it will not be considered
+	for reading or writing.
 
-	Meant to be used as an adapter, so accepts the object to externalize in the constructor,
-	as well as the interface to use to guide the process. The object is externalized
-	using the most-derived version of the interface given to the constructor that it
-	implements.
+	Meant to be used as an adapter, so accepts the object to
+	externalize in the constructor, as well as the interface to use to
+	guide the process. The object is externalized using the
+	most-derived version of the interface given to the constructor
+	that it implements.
 
-	If the interface (or an ancestor) has a tagged value ``_external_class_name,`` it can either be the value to
-	use for the ``Class`` key, or a callable `__external_class_name__( interface, object ) -> name.`
+	If the interface (or an ancestor) has a tagged value
+	``__external_class_name__``, it can either be the value to use for
+	the ``Class`` key, or a callable
+	``__external_class_name__(interface, object ) -> name.``
 
 	(TODO: In the future extend this to multiple, non-overlapping interfaces, and better
 	interface detection (see :class:`ModuleScopedInterfaceObjectIO` for a limited version of this.)
@@ -342,7 +347,6 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 
 		return result
 
-
 	def _ext_schemas_to_consider( self, ext_self ):
 		return interface.providedBy( ext_self )
 
@@ -353,7 +357,8 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		cache = _InterfaceCache.cache_for( self, self._ext_self )
 		if cache.ext_all_possible_keys is None:
 			cache.ext_all_possible_keys = [n for n in self._iface.names(all=True)
-										   if not interface.interfaces.IMethod.providedBy(self._iface[n]) and not self._iface[n].queryTaggedValue('_ext_excluded_out', False)]
+										   if not interface.interfaces.IMethod.providedBy(self._iface[n])
+										   and not self._iface[n].queryTaggedValue('_ext_excluded_out', False)]
 		return cache.ext_all_possible_keys
 
 	def _ext_getattr( self, ext_self, k ):

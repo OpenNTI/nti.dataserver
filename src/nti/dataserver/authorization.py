@@ -341,6 +341,11 @@ class _UserGroupAwarePrincipal(_UserPrincipal):
 def _UserGroupAwarePrincipalAnnotations( _ugaware_principal, *args ): # optional multi-adapt
 	return IAnnotations(_ugaware_principal.context)
 
+# Reverses that back to externalization
+from nti.externalization.interfaces import IExternalObject
+def _UserGroupAwarePrincipalExternalObject( _ugaware_principal ):
+	return IExternalObject(_ugaware_principal.context)
+
 @interface.implementer(nti_interfaces.IPrincipal)
 class _CommunityGroup(_UserPrincipal): # IGroup extends IPrincipal
 	pass
