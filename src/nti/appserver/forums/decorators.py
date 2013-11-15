@@ -93,7 +93,15 @@ class CommunityBoardLinkDecorator(object):
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	"""
-	Adds the appropriate publish or unpublish link
+	Adds the appropriate publish or unpublish link for the owner
+	of the object.
+
+	Also, because that information is useful to have for others to
+	which the post is visible (for cases where additional permissions
+	beyond default published are in use; in that case, visibility
+	doesn't necessarily imply publication), we also provide a
+	``PublicationState`` containing one of the values
+	``DefaultPublished`` or null.
 	"""
 	false_view = VIEW_PUBLISH
 	true_view = VIEW_UNPUBLISH
@@ -103,12 +111,13 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 			return True
 
 	def decorateExternalMapping( self, context, mapping ):
-		# Only for the owner
+		# The owner is the only one that gets the links
 		current_user = get_remote_user( get_current_request() )
-		if not current_user or current_user != context.creator:
-			return
-		super(PublishLinkDecorator,self).decorateExternalMapping( context, mapping )
-		
+		if current_user and current_user == context.creator:
+			super(PublishLinkDecorator,self).decorateExternalMapping( context, mapping )
+		# Everyone gets the status
+		mapping['PublicationState'] = 'DefaultPublished' if nti_interfaces.IDefaultPublished.providedBy(context) else None
+
 # Notice we do not declare what we adapt--we adapt too many things
 # that share no common ancestor. (We could be declared on IContainer,
 # but its not clear what if any IContainers we externalize besides
@@ -123,7 +132,7 @@ class ForumObjectContentsLinkProvider(object):
 	"""
 
 	__metaclass__ = SingletonDecorator
-	
+
 	@classmethod
 	def add_link(cls, rel, context, mapping, request, elements=None):
 		_links = mapping.setdefault(LINKS, [])

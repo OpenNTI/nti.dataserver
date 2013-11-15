@@ -423,7 +423,9 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		testapp.post( self.require_link_href_with_rel( topic_res1.json_body, 'publish' ) )
 		# ...and ask for it as the other user, that's what I see
 		forum_res = testapp2.get( self.forum_pretty_url )
-		assert_that( forum_res.json_body, has_entry( 'NewestDescendant', has_entry( 'href', topic_res1.json_body['href'] ) ) )
+		assert_that( forum_res.json_body, has_entry( 'NewestDescendant',
+													 has_entries( 'href', topic_res1.json_body['href'],
+																  'PublicationState', 'DefaultPublished') ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@time_monotonically_increases
