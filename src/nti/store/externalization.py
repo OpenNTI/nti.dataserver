@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import os
 import urllib
 
 from zope import interface
@@ -106,19 +105,19 @@ class PurchasableDecorator(object):
 
 	def set_links(self, request, username, original, external):
 		if original.Amount:
-			_ds_path = os.path.split(request.current_route_path())[0]
+			_ds_path = '/dataserver2/store/'
 			_links = external.setdefault(LINKS, [])
 
 			# insert history link
 			if purchase_history.has_history_by_item(username, original.NTIID):
-				history_path = _ds_path + '/get_purchase_history?purchasableID=%s'
+				history_path = _ds_path + 'get_purchase_history?purchasableID=%s'
 				history_href = history_path % urllib.quote(original.NTIID)
 				link = Link(history_href, rel="history")
 				interface.alsoProvides(link, ILocation)
 				_links.append(link)
 
 			# insert price link
-			price_href = _ds_path + '/price_purchasable'
+			price_href = _ds_path + 'price_purchasable'
 			link = Link(price_href, rel="price", method='Post')
 			interface.alsoProvides(link, ILocation)
 			_links.append(link)
@@ -165,12 +164,12 @@ class CourseDecorator(PurchasableDecorator):
 		if original.Amount is not None:
 			super(CourseDecorator, self).set_links(request, username, original, external)
 		else:
-			_ds_path = os.path.split(request.current_route_path())[0]
+			_ds_path = '/dataserver2/store/'
 			if not purchase_history.has_history_by_item(username, original.NTIID):
-				erroll_path = _ds_path + '/enroll_course'
+				erroll_path = _ds_path + 'enroll_course'
 				link = Link(erroll_path, rel="enroll", method='Post')
 			else:
-				unerroll_path = _ds_path + '/unenroll_course'
+				unerroll_path = _ds_path + 'unenroll_course'
 				link = Link(unerroll_path, rel="unenroll", method='Post')
 			interface.alsoProvides(link, ILocation)
 			external.setdefault(LINKS, []).append(link)
