@@ -1421,7 +1421,10 @@ var io = ('undefined' === typeof module ? {} : module.exports);
    */
 
   Transport.prototype.onHeartbeat = function (heartbeat) {
+    try { //JAM: Patching this for crash reports?
     this.packet({ type: 'heartbeat' });
+    }
+    catch(e) {}
   };
 
   /**
