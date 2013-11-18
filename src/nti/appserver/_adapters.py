@@ -274,7 +274,6 @@ from nti.dataserver.users import index as user_index
 from nti.dataserver.users.entity import Entity
 from zope.catalog.interfaces import ICatalog
 from zope.intid.interfaces import IIntIds
-from nameparser import HumanName
 
 def _make_min_max_btree_range( search_term ):
 	min_inclusive = search_term # start here
@@ -313,7 +312,6 @@ class _UsernameSearchPolicy(object):
 		__traceback_info__ = _users
 		for entity_name in _users.iterkeys(min_inclusive,max_exclusive,excludemax=True):
 			__traceback_info__ = entity_name, search_term, min_inclusive, max_exclusive
-			entity = None
 			# If we did this correct, that's a prefix match
 			assert entity_name.lower().startswith( search_term )
 			# Even though we could access this directly from the _users
@@ -321,12 +319,12 @@ class _UsernameSearchPolicy(object):
 			# in case it does acquisition wrapping or something
 			try:
 				entity = Entity.get_entity( entity_name, dataserver=dataserver )
+				if entity is not None:
+					result.add( entity )
 			except KeyError: # pragma: no cover
 				# Typically POSKeyError
 				logger.warning( "Failed to search entity %s", entity_name )
 
-			if entity is not None:
-				result.add( entity )
 
 		return result
 
