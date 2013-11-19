@@ -41,7 +41,7 @@ except ImportError:
 	html_theme = 'agogo'
 	pygments_style = 'sphinx'
 
-# JAM: repoz.sphinx.autointerface 0.7.1 does not handle cross-refs correctly.
+# JAM: repoze.sphinx.autointerface 0.7.1 does not handle cross-refs correctly.
 # A pull request is submitted (https://github.com/repoze/repoze.sphinx.autointerface/pull/3) with a
 # cleaner solution. Until then, this should do the trick.
 if True:
