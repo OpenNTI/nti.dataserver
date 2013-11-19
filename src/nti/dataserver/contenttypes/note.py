@@ -51,6 +51,7 @@ _style_field.default = 'suppressed'
 					   nti_interfaces.ILikeable,
 					   nti_interfaces.IFavoritable,
 					   nti_interfaces.IFlaggable,
+					   nti_interfaces.IRatable,
 					   # provides annotations
 					   an_interfaces.IAttributeAnnotatable )
 class Note(ThreadableMixin,Highlight):
