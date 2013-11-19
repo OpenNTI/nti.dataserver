@@ -31,6 +31,8 @@ import zope.site.interfaces
 from zope.schema import Bool
 from zope.schema import Iterable
 
+from contentratings.interfaces import IUserRatable
+
 from nti.contentfragments.schema import PlainText
 from nti.contentfragments.schema import PlainTextLine
 from nti.contentfragments.schema import SanitizedHTMLContentFragment
@@ -1314,6 +1316,12 @@ class IFlaggable(IAnnotatable):
 	Marker interface that promises that an implementing object
 	can be flagged for moderation. Typically, this will be applied
 	to a class of objects.
+	"""
+
+class IRatable(IAnnotatable, IUserRatable):
+	"""
+	Marker interface that promises that an implementing object may be
+	rated by users using the :class:`contentratings.interfaces.IUserRating` interface.
 	"""
 
 # from zope.interface.interfaces import IObjectEvent
