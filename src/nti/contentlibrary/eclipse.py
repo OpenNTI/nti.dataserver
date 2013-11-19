@@ -152,6 +152,16 @@ def EclipseContentPackage( toc_entry,
 
 		content_package.courseName = courseName
 		content_package.courseTitle = courseTitle
+		
+		content_package.publicScopeEntry = content_package.restrictedScopeEntry = None
+		for scope in course.xpath('scope'):
+			type_ = scope.get('type', u'')
+			entries = scope.xpath('entry')
+			if entries:
+				if type_.lower() == 'public':
+					content_package.publicScopeEntry = entries[0].text
+				elif type_.lower() == 'restricted':
+					content_package.restrictedScopeEntry = entries[0].text
 
 		# The newest renderings have an <info src="path_to_file.json" />
 		# node in them. But older renderings may also have a file

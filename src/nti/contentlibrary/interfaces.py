@@ -246,6 +246,9 @@ class ILegacyCourseConflatedContentPackage(IContentPackage):
 							 required=True,
 							 default='')
 
+	publicScopeEntry = TextLine(title="Entity id for public enrollment", required=False)
+	restrictedScopeEntry = TextLine(title="Entity id for restricted enrollment", required=False)
+
 class IDelimitedHierarchyContentUnit(IContentUnit, IDelimitedHierarchyEntry):
 	"""
 	The unification of :class:`IContentUnit` and :class:`IDelimitedHierarchyEntry`, to make writing adapters
