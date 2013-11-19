@@ -158,7 +158,7 @@ def EclipseContentPackage( toc_entry,
 			entries = scope.xpath('entry')
 			entity_id = entries[0].text if entries else None
 			if type_ in ('public', 'restricted'):
-				setattr(content_package, '%sScopeEntry' % type_, entity_id)
+				setattr(content_package, str('%sScopeEntry' % type_), entity_id)
 
 		# The newest renderings have an <info src="path_to_file.json" />
 		# node in them. But older renderings may also have a file
