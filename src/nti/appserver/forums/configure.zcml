@@ -166,21 +166,25 @@
 		may need some tweaking to keep this true.
 	-->
 	<class class="nti.dataserver.contenttypes.forums.topic.PersonalBlogEntry">
+		<implements interface="nti.dataserver.interfaces.IRatable" />
 		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
 		<implements interface="nti.dataserver.interfaces.IFavoritable" />
 	</class>
 	<class class="nti.dataserver.contenttypes.forums.post.PersonalBlogComment">
+		<implements interface="nti.dataserver.interfaces.IRatable" />
 		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
 		<implements interface="nti.dataserver.interfaces.IFavoritable" />
 	</class>
 	<class class="nti.dataserver.contenttypes.forums.topic.CommunityHeadlineTopic">
+		<implements interface="nti.dataserver.interfaces.IRatable" />
 		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
 		<implements interface="nti.dataserver.interfaces.IFavoritable" />
 	</class>
 	<class class="nti.dataserver.contenttypes.forums.post.GeneralForumComment">
+		<implements interface="nti.dataserver.interfaces.IRatable" />
 		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
 		<implements interface="nti.dataserver.interfaces.IFavoritable" />
