@@ -142,8 +142,8 @@ def update_last_mod(modified_object, event):
 
 	# An alternative to this would be to transform IObjectRatedEvent
 	# into IObjectModified event and let the normal handlers for that take over.
-	# But (in the future) there may be listeners to ObjectModified that do other things we wouldn't
-	# want to happen for a rating
+	# But (in the future) there may be listeners to ObjectModified that do other
+	# things we wouldn't want to happen for a rating
 
 	last_mod = modified_object.updateLastMod()
 	try:
