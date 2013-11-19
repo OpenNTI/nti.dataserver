@@ -1,0 +1,163 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+An implementation of rating adapters.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+import functools
+
+from zope import component
+from zope import interface
+from zope.event import notify
+from zope.annotation import interfaces as an_interfaces
+
+from contentratings.category import BASE_KEY
+from contentratings.events import ObjectRatedEvent
+from contentratings.storage import UserRatingStorage
+from contentratings import interfaces as cr_interfaces
+
+from nti.dataserver import interfaces
+
+from nti.externalization.oids import to_external_oid
+
+class IObjectUnratedEvent(cr_interfaces.IObjectRatedEvent):
+	pass
+	
+@interface.implementer(IObjectUnratedEvent)
+class ObjectUnratedEvent(ObjectRatedEvent):
+	pass
+
+def lookup_rating_for_read(context, cat_name, safe=False):
+	"""
+	:param context: Something that is :class:`.ILikeable`
+		and, for now, can be adapted to an :class:`contentratings.IUserRating`
+		with the name of `cat_name`.
+	:param string cat_name: The name of the ratings category to look up. One of
+		:const:`LIKE_CAT_NAME` or :const:`FAVR_CAT_NAME`.
+	:keyword bool safe: If ``False`` (the default) then this method can raise an
+		exception if it won't ever be possible to rate the given object (because
+		annotations and adapters are not set up). If ``True``, then this method
+		quetly returns None in that case.
+	:return: A user rating object, if one already exists. Otherwise :const:`None`.
+	"""
+
+	# While we're using the default storage objects, as soon as they
+	# are created the annotations are set, which can lead to too many conflicts.
+	# we thus try to defer that.
+	# This is a duplication of code from contentratings.cagetory
+
+	# Get the key from the storage, or use a default
+	key = getattr(UserRatingStorage, 'annotation_key', BASE_KEY)
+	# Append the category name to the dotted annotation key name
+	key = str(key + '.' + cat_name)
+	# Retrieve the storage from the annotation. Note that IAttributeAnnotatable
+	# default adapter does not create a OOBTree and set the __annotations__ attribute
+	# until it is written to, so this is safe
+	try:
+		annotations = an_interfaces.IAnnotations(context) \
+		if not safe else an_interfaces.IAnnotations(context, {})
+		storage = annotations.get( key )
+		if storage:
+			# Ok, we already have one. Use it.
+			return lookup_rating_for_write(context, cat_name=cat_name)
+	except (TypeError, LookupError):
+		if not safe:
+			raise
+
+def lookup_rating_for_write(context, cat_name):
+	return component.getAdapter(context, cr_interfaces.IUserRating, name=cat_name)
+
+def unrate_object(context, username, cat_name):
+	old_rating = None
+	rating = lookup_rating_for_read(context, cat_name)
+	if rating and rating.userRating(username) is not None:
+		old_rating = rating.remove_rating(username)
+		# NOTE: The default implementation of a category does not
+		# fire an event on unrating, so we do.
+		# Must include the rating so that the listeners can know who did it
+		notify(ObjectUnratedEvent(context, old_rating, cat_name))
+	return rating, old_rating
+
+def get_object_rating(context, username, cat_name, safe=False, default=False):
+	result = default
+	rating = lookup_rating_for_read(context, cat_name=cat_name, safe=safe)
+	if rating is not None:
+		user_rating = rating.userRating( username )
+		result = user_rating if user_rating is not None else False
+	return result
+
+def cached_decorator(key_func):
+	def factory(func):
+		@functools.wraps(func)
+		def _caching( *args, **kwargs ):
+			key = key_func(*args, **kwargs)
+			if key:
+				cache = component.queryUtility(interfaces.IMemcacheClient)
+				if cache:
+					cached = cache.get( key )
+					if cached is not None:
+						return cached
+
+			result = func(*args, **kwargs)
+
+			if key and cache:
+				__traceback_info__ = key, result, cache
+				cache.set( key, result )
+
+			return result
+		return _caching
+	return factory
+
+def generic_cache_key(context, cat_name, path):
+	try:
+		oid = to_external_oid(context)
+		return (oid + '/@@' + cat_name + '/' + path).encode('utf-8')
+	except TypeError: # to_external_oid throws if context not saved
+		return None
+
+def _rate_count_cache_key(context, cat_name):
+	return generic_cache_key(context, cat_name, 'count')
+
+@cached_decorator(_rate_count_cache_key)
+def rate_count(context, cat_name):
+	"""
+	Return the number of times this object has been rated the particular way.
+	Accepts any object, not just those that can be rated.
+	"""
+	ratings = lookup_rating_for_read(context, cat_name, safe=True)
+	result = ratings.numberOfRatings if ratings else 0
+	return result
+
+def update_last_mod(modified_object, event):
+	"""
+	When an object is rated (or unrated), its last modified time, and
+	that of its parent, should be updated.
+	"""
+
+	# An alternative to this would be to transform IObjectRatedEvent
+	# into IObjectModified event and let the normal handlers for that take over.
+	# But (in the future) there may be listeners to ObjectModified that do other things we wouldn't
+	# want to happen for a rating
+
+	last_mod = modified_object.updateLastMod()
+	try:
+		modified_object.__parent__.updateLastMod(last_mod)
+	except AttributeError:
+		# not contained or not contained in a ILastModified container
+		pass
+
+@component.adapter(interfaces.ILastModified, cr_interfaces.IObjectRatedEvent)
+def update_last_mod_on_rated(modified_object, event):
+	update_last_mod(modified_object, event)
+	cache = component.queryUtility(interfaces.IMemcacheClient)
+	if cache:
+		try:
+			cache.delete(_rate_count_cache_key(modified_object, event.category))
+		except cache.MemcachedKeyNoneError:  # not saved yet
+			pass
