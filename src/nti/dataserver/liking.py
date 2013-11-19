@@ -11,28 +11,22 @@ directly.]
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import functools
-
 from zope import interface
 from zope import component
-from zope.event import notify
-from zope.annotation import interfaces as an_interfaces
 
-import contentratings.events
 import contentratings.interfaces
-from contentratings.category import BASE_KEY
-from contentratings.storage import UserRatingStorage
 
 from nti.dataserver import interfaces
 
-from nti.externalization.oids import to_external_oid
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
+
+from . import ratings
 
 #: Category name for liking; use this as the name of the adapter
 LIKE_CAT_NAME = 'likes'
@@ -40,45 +34,14 @@ LIKE_CAT_NAME = 'likes'
 #: Category name for favorites; use this as the name of the adapter
 FAVR_CAT_NAME = 'favorites'
 
-def _lookup_like_rating_for_read( context, cat_name=LIKE_CAT_NAME, safe=False ):
-	"""
-	:param context: Something that is :class:`.ILikeable`
-		and, for now, can be adapted to an :class:`contentratings.IUserRating`
-		with the name of `cat_name`.
-	:param string cat_name: The name of the ratings category to look up. One of
-		:const:`LIKE_CAT_NAME` or :const:`FAVR_CAT_NAME`.
-	:keyword bool safe: If ``False`` (the default) then this method can raise an
-		exception if it won't ever be possible to rate the given object (because
-		annotations and adapters are not set up). If ``True``, then this method
-		quetly returns None in that case.
-	:return: A user rating object, if one already exists. Otherwise :const:`None`.
-	"""
+_cached = ratings.cached_decorator
+_rates_object = ratings.get_object_rating
 
-	# While we're using the default storage objects, as soon as they
-	# are created the annotations are set, which can lead to too many conflicts.
-	# we thus try to defer that.
-	# This is a duplication of code from contentratings.cagetory
+def _lookup_like_rating_for_read(context, cat_name=LIKE_CAT_NAME, safe=False):
+	return ratings.lookup_rating_for_read(context, cat_name, safe)
 
-	# Get the key from the storage, or use a default
-	key = getattr(UserRatingStorage, 'annotation_key', BASE_KEY)
-	# Append the category name to the dotted annotation key name
-	key = str(key + '.' + cat_name)
-	# Retrieve the storage from the annotation. Note that IAttributeAnnotatable
-	# default adapter does not create a OOBTree and set the __annotations__ attribute until
-	# it is written to, so this is safe
-	try:
-		annotations = an_interfaces.IAnnotations(context) if not safe else an_interfaces.IAnnotations(context,{})
-		storage = annotations.get( key )
-
-		if storage:
-			# Ok, we already have one. Use it.
-			return _lookup_like_rating_for_write( context, cat_name=cat_name )
-	except (TypeError, LookupError):
-		if not safe:
-			raise
-
-def _lookup_like_rating_for_write( context, cat_name=LIKE_CAT_NAME ):
-	return component.getAdapter( context, contentratings.interfaces.IUserRating, name=cat_name )
+def _lookup_like_rating_for_write(context, cat_name=LIKE_CAT_NAME):
+	return ratings.lookup_rating_for_write(context, cat_name)
 
 # We define likes simply as a rating of 1, and unlikes remove
 # the user from the list.
@@ -91,73 +54,17 @@ def _lookup_like_rating_for_write( context, cat_name=LIKE_CAT_NAME ):
 # such an event...the rating value will be None, so that's how a listener can
 # distinguish "rating added" from "rating removed"
 
-def _rate_object( context, username, cat_name ):
-
-	rating = _lookup_like_rating_for_write( context, cat_name )
+def _rate_object(context, username, cat_name):
+	rating = ratings.lookup_rating_for_write(context, cat_name)
 	if rating.userRating( username ) is None:
 		rating.rate( 1, username )
 		return rating
 
-def _unrate_object( context, username, cat_name ):
-
-	rating = _lookup_like_rating_for_read( context, cat_name )
-	if rating and rating.userRating( username ) is not None:
-		old_rating = rating.remove_rating( username )
+def _unrate_object(context, username, cat_name):
+	rating, old_rating = ratings.unrate_object(context, username, cat_name)
+	if old_rating is not None:
 		assert int(old_rating) is 0
-		# NOTE: The default implementation of a category does not
-		# fire an event on unrating, so we do.
-		# Must include the rating so that the listeners can know who did it
-		notify( contentratings.events.ObjectRatedEvent(context, old_rating, cat_name) )
 		return rating
-
-def _rates_object( context, username, cat_name, safe=False, default=False ):
-	result = default
-	rating = _lookup_like_rating_for_read( context, cat_name=cat_name, safe=safe )
-	if rating is not None:
-		user_rating = rating.userRating( username )
-		result = user_rating if user_rating is not None else False
-	return result
-
-
-def _cached(key_func):
-	def factory(func):
-		@functools.wraps(func)
-		def _caching( *args, **kwargs ):
-			key = key_func(*args, **kwargs)
-			if key:
-				cache = component.queryUtility(interfaces.IMemcacheClient)
-				if cache:
-					cached = cache.get( key )
-					if cached is not None:
-						return cached
-
-			result = func(*args, **kwargs)
-
-			if key and cache:
-				__traceback_info__ = key, result, cache
-				cache.set( key, result )
-
-			return result
-		return _caching
-	return factory
-
-def _rate_count_cache_key( context, cat_name ):
-	try:
-		return (to_external_oid(context) + '/@@' + cat_name + '/count' ).encode('utf-8')
-	except TypeError: # to_external_oid throws if context not saved
-		return None
-
-@_cached(_rate_count_cache_key)
-def _rate_count( context, cat_name ):
-	"""
-	Return the number of times this object has been rated the particular way.
-	Accepts any object, not just those that can be rated.
-	"""
-
-	ratings = _lookup_like_rating_for_read( context, cat_name, safe=True )
-	result = ratings.numberOfRatings if ratings else 0
-
-	return result
 
 def like_object( context, username ):
 	"""
@@ -171,7 +78,6 @@ def like_object( context, username ):
 	"""
 	return _rate_object( context, username, LIKE_CAT_NAME )
 
-
 def unlike_object( context, username ):
 	"""
 	Unlike the `object`, idempotently.
@@ -184,12 +90,8 @@ def unlike_object( context, username ):
 	"""
 	return _unrate_object( context, username, LIKE_CAT_NAME )
 
-def _likes_object_cache_key( context, username ):
-	# We can only do this for saved objects (mostly a test problem)
-	try:
-		return (to_external_oid(context) + '/@@' + LIKE_CAT_NAME + '/' + username).encode('utf-8')
-	except TypeError: # to_external_oid fails of the object not saved
-		return None
+def _likes_object_cache_key(context, username):
+	return ratings.generic_cache_key(context, LIKE_CAT_NAME, username)
 
 @_cached(_likes_object_cache_key)
 def likes_object( context, username ):
@@ -199,7 +101,8 @@ def likes_object( context, username ):
 	:param context: An :class:`~.ILikeable` object.
 	:param username: The name of the user liking the object. Should not be
 		empty.
-	:return: An object with a boolean value; if the user likes the object, the value is True-y.
+	:return: An object with a boolean value; if the user likes the object, the value
+		is True-y.
 	"""
 
 	result = _rates_object( context, username, LIKE_CAT_NAME )
@@ -213,7 +116,7 @@ def like_count( context ):
 		not limited to just :class:`~.ILikeable` objects).
 	:return: A non-negative integer.
 	"""
-	return _rate_count( context, LIKE_CAT_NAME )
+	return ratings.rate_count(context, LIKE_CAT_NAME)
 
 def favorite_object( context, username ):
 	"""
@@ -227,7 +130,6 @@ def favorite_object( context, username ):
 	"""
 	return _rate_object( context, username, FAVR_CAT_NAME )
 
-
 def unfavorite_object( context, username ):
 	"""
 	Unfavorite the ``object``, idempotently.
@@ -240,12 +142,8 @@ def unfavorite_object( context, username ):
 	"""
 	return _unrate_object( context, username, FAVR_CAT_NAME )
 
-def _favorites_object_cache_key( context, username, safe=False ):
-	# We can only do this for saved objects (mostly a test problem)
-	try:
-		return (to_external_oid(context) + '/@@' + FAVR_CAT_NAME + '/' + username).encode('utf-8')
-	except TypeError: # to_external_oid fails of the object not saved
-		return None
+def _favorites_object_cache_key(context, username, safe=False):
+	return ratings.generic_cache_key(context, FAVR_CAT_NAME, username)
 
 @_cached(_favorites_object_cache_key)
 def favorites_object( context, username, safe=False ):
@@ -260,7 +158,8 @@ def favorites_object( context, username, safe=False ):
 		annotations and adapters are not set up). If ``True``, then this method
 		quetly returns ``False`` in that case.
 
-	:return: An object with a boolean value; if the user likes the object, the value is True-y.
+	:return: An object with a boolean value; if the user likes the object, the value
+		is True-y.
 	"""
 	return _rates_object( context, username, FAVR_CAT_NAME, safe=safe )
 
@@ -285,7 +184,8 @@ from BTrees.Length import Length
 from contentratings.rating import NPRating
 
 
-@interface.implementer(contentratings.interfaces.IUserRating,contentratings.interfaces.IRatingStorage)
+@interface.implementer(contentratings.interfaces.IUserRating,
+					   contentratings.interfaces.IRatingStorage)
 class _BinaryUserRatings(Contained, Persistent):
 	"""
 	BTree-based storage for binary user ratings, where a user can either have rated
@@ -293,7 +193,8 @@ class _BinaryUserRatings(Contained, Persistent):
 	user is prohibited. This allows for optimizations in
 	storage and implementation.
 
-	Compare with :class:`contentratings.storage.UserRatingStorage` for a full implementation.
+	Compare with :class:`contentratings.storage.UserRatingStorage` for a full
+	implementation.
 	"""
 
 	scale = 1
@@ -361,38 +262,15 @@ class _BinaryUserRatings(Contained, Persistent):
 		# But it is a validated part of the interface, so we can't raise
 		return None
 
-
-def update_last_mod( modified_object, event ):
-	"""
-	When an object is rated (or unrated), its last modified time, and
-	that of its parent, should be updated.
-	"""
-
-	# An alternative to this would be to transform IObjectRatedEvent
-	# into IObjectModified event and let the normal handlers for that take over.
-	# But (in the future) there may be listeners to ObjectModified that do other things we wouldn't
-	# want to happen for a rating
-
-	last_mod = modified_object.updateLastMod()
-	try:
-		modified_object.__parent__.updateLastMod( last_mod )
-	except AttributeError:
-		# not contained or not contained in a ILastModified container
-		pass
-
-@component.adapter( interfaces.ILastModified, contentratings.interfaces.IObjectRatedEvent )
+@component.adapter(interfaces.ILastModified, contentratings.interfaces.IObjectRatedEvent)
 def update_last_mod_on_rated( modified_object, event ):
-
-	update_last_mod( modified_object, event )
-	# Clear the caches for it
 	cache = component.queryUtility(interfaces.IMemcacheClient)
 	if cache:
 		try:
-			cache.delete( _rate_count_cache_key( modified_object, event.category ) )
-
 			if event.category == LIKE_CAT_NAME:
-				cache.delete( _likes_object_cache_key( modified_object, event.rating.userid ) )
+				key_func = _likes_object_cache_key
 			elif event.category == FAVR_CAT_NAME:
-				cache.delete( _favorites_object_cache_key( modified_object, event.rating.userid ) )
+				key_func = _favorites_object_cache_key
+			cache.delete(key_func(modified_object, event.rating.userid))
 		except cache.MemcachedKeyNoneError: # not saved yet
 			pass
