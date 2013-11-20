@@ -156,7 +156,7 @@ class TestGeventApplicationWorker(nti.testing.base.SharedConfiguringTestBase):
 		# First, generate a request to read
 		rqst = Request.blank( '/pages?format=json', environ={b'REQUEST_METHOD': b'DELETE'} )
 		rqst.headers['X-FORWARDED-PROTOCOL'] = 'ssl'
-		rqst.headers['X-FORWARDED-FOR'] = '10.10.10.10'
+		rqst.headers['X-FORWARDED-FOR'] = '41.74.174.50,10.50.0.102'
 		rfile = StringIO(rqst.as_bytes() + b'\r\n\r\n')
 
 		# Now create a local handler, as if it was accepting a local connection (as in a proxy environment)
@@ -169,7 +169,7 @@ class TestGeventApplicationWorker(nti.testing.base.SharedConfiguringTestBase):
 		environ = handler.get_environ()
 
 		assert_that( environ, has_entry( 'wsgi.url_scheme', 'https' ) )
-		assert_that( environ, has_entry( 'REMOTE_ADDR', '10.10.10.10' ) )
+		assert_that( environ, has_entry( 'REMOTE_ADDR', '41.74.174.50' ) )
 		assert_that( environ, has_entry( 'REQUEST_METHOD', 'DELETE' ) )
 		assert_that( environ, has_entry( 'PATH_INFO', '/pages' ) )
 

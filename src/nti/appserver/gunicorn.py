@@ -110,6 +110,9 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 		request.body = environ['wsgi.input']
 		if environ.get('SERVER_PROTOCOL') == 'HTTP/1.1':
 			request.version = (1,1)
+
+		cfg = self.server.worker.cfg
+		cfg_x_forwarded_for_header = cfg.x_forwarded_for_header
 		for header in self.headers.headers:
 			# If we're not careful to split with a byte string here, we can
 			# run into UnicodeDecodeErrors: True, all the headers are supposed to be sent
@@ -118,13 +121,32 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 			# seen when it includes a fragment in the URI, which is also explicitly against
 			# section 14.36 of HTTP 1.1. Stupid IE).
 			k, v = header.split( b':', 1)
-			request.headers.append( (k.upper(), v.strip()) )
+			k = k.upper()
+			v = v.strip()
 
+			# In gunicorn .18, the x-forwarded-for value is parsed incorrectly.
+			# It takes only the last value instead of the first value,
+			# which means that if we're behind multiple proxies we get
+			# the wrong ip.
+			# I haven't submitted an issue/pull request because the implementation
+			# is changing in .19 (https://github.com/benoitc/gunicorn/pull/633)
+			# It looks like one way around this would be with the PROXY protocol
+			# (see the proxy_protocol configuration) that haproxy and stunnel support.
+			# The logic to accept and parse these values is somewhat complex, so rather
+			# than duplicate it, we reverse the value :)
+			if cfg_x_forwarded_for_header and k == cfg_x_forwarded_for_header:
+				if b',' in v:
+					parts = v.split(b',')
+					v = b','.join( reversed(parts) )
+
+			request.headers.append( (k, v) )
 		# The request arrived on self.socket, which is also environ['gunicorn.sock']. This
 		# is the "listener" argument as well that's needed for deriving the "HOST" value, if not present
-		_, gunicorn_env = gunicorn.http.wsgi.create(request, self.socket, self.client_address, self.socket.getsockname(), self.server.worker.cfg)
+		_, gunicorn_env = gunicorn.http.wsgi.create(request, self.socket, self.client_address, self.socket.getsockname(), cfg)
 
 		environ.update( gunicorn_env )
+
+
 		return environ
 
 
