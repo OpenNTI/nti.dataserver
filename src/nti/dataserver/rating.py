@@ -83,21 +83,20 @@ def lookup_rating_for_read(context, cat_name, safe=False):
 def lookup_rating_for_write(context, cat_name):
 	return component.getAdapter(context, cr_interfaces.IUserRating, name=cat_name)
 
-def rate_object(context, username, rate, cat_name=RATING_CAT_NAME):
-	assert rate >= 1 and rate <= 5
-	rating = lookup_rating_for_write(context, cat_name)
-	return rating.rate(rate, username)
+def rate_object(context, username, rating, cat_name=RATING_CAT_NAME):
+	storage = lookup_rating_for_write(context, cat_name)
+	return storage.rate(rating, username)
 
 def unrate_object(context, username, cat_name=RATING_CAT_NAME):
 	old_rating = None
-	rating = lookup_rating_for_read(context, cat_name)
-	if rating and rating.userRating(username) is not None:
-		old_rating = rating.remove_rating(username)
+	storage = lookup_rating_for_read(context, cat_name)
+	if storage and storage.userRating(username) is not None:
+		old_rating = storage.remove_rating(username)
 		# NOTE: The default implementation of a category does not
 		# fire an event on unrating, so we do.
 		# Must include the rating so that the listeners can know who did it
 		notify(ObjectUnratedEvent(context, old_rating, cat_name))
-	return rating, old_rating
+	return storage, old_rating
 
 def get_object_rating(context, username, cat_name, safe=False, default=None):
 	result = default
