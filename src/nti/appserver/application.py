@@ -217,10 +217,16 @@ def _library_settings(pyramid_config, server, library):
 		# we are in control of the site.
 		# NOTE: We are doing this in a transaction for the dataserver
 		# to allow loading the packages to make persistent changes.
-		with server.db.transaction() as conn:
+		import transaction
+		with transaction.manager:
+			# If we use db.transaction, we get a different transaction
+			# manager than the default, which causes problems at commit time
+			# if things tried to use transaction.get() to join it
+			conn = server.db.open()
 			ds_site = conn.root()['nti.dataserver']
 			with site(ds_site):
 				getattr( library, 'contentPackages' )
+		conn.close()
 
 	return library
 
