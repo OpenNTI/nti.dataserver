@@ -92,19 +92,38 @@ class _transaction_tween(TransactionLoop):
 	def describe_transaction( self, request ):
 		return request.url
 
-	def run_handler(self, *args, **kwargs):
+	def run_handler(self, request):
 		try:
-			return TransactionLoop.run_handler(self, *args, **kwargs) # Not super() for speed
+			return TransactionLoop.run_handler(self, request) # Not super() for speed
 		except HTTPException as e:
-			# Pyramid catches these and treats them
-			# as a response.
-			# We MUST catch them as well and let
-			# the normal transaction commit/doom/abort
-			# rules take over--if we don't catch them,
-			# everything appears to work, but the exception
-			# causes the transaction to be aborted, even though
-			# the client gets a response
+			# Pyramid catches these and treats them as a response. We
+			# MUST catch them as well and let the normal transaction
+			# commit/doom/abort rules take over--if we don't catch
+			# them, everything appears to work, but the exception
+			# causes the transaction to be aborted, even though the
+			# client gets a response.
+			#
+			# The problem with simply catching exceptions and returning
+			# them as responses is that it bypasses pyramid's notion
+			# of "exception views". At this writing, we are only
+			# using those to turn 403 into 401 when needed, but it
+			# can also be used for other things (such as redirecting what
+			# would otherwise be a 404).
+			# So we wrap up __call__ and also check for HTTPException there
+			# and raise it safely after transaction handling is done.
+			# Of course, this is only needed if the exception was actually
+			# raised, not deliberately returned (commonly HTTPFound and the like
+			# are returned)...raising those could have unintended consequences
+			request._nti_raised_exception = True
 			return e
+
+	def __call__(self, request):
+		result = TransactionLoop.__call__(self,request) # not super() for speed
+		if isinstance(result,HTTPException) and getattr(request, '_nti_raised_exception', False):
+			raise result
+		return result
+
+
 
 def transaction_tween_factory(handler, registry):
 	return _transaction_tween( handler )
