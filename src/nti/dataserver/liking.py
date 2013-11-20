@@ -43,7 +43,8 @@ def _lookup_like_rating_for_write(context, cat_name=LIKE_CAT_NAME):
 	return ratings.lookup_rating_for_write(context, cat_name)
 
 def _rates_object(context, username, cat_name, safe=False):
-	result = ratings.get_object_rating(context, username, safe=safe, default=False)
+	result = ratings.get_object_rating(context, username, cat_name, safe=safe,
+									   default=False)
 	return result
 
 # We define likes simply as a rating of 1, and unlikes remove
