@@ -83,7 +83,7 @@ def rate_object(context, username, rate, cat_name=RATING_CAT_NAME):
 	rating = lookup_rating_for_write(context, cat_name)
 	return rating.rate(rate, username)
 
-def unrate_object(context, username, cat_name):
+def unrate_object(context, username, cat_name=RATING_CAT_NAME):
 	old_rating = None
 	rating = lookup_rating_for_read(context, cat_name)
 	if rating and rating.userRating(username) is not None:

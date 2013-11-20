@@ -60,6 +60,7 @@
 	<pyramid:scan package='nti.appserver.usersearch_views' />
 	<pyramid:scan package='.liking_views' />
 	<pyramid:scan package='.flagging_views' />
+	<pyramid:scan package='.rating_views' />
 	<pyramid:scan package='._hacks' />
 	<pyramid:scan package='.account_creation_views' />
 	<pyramid:scan package='.zope_file_views' />
