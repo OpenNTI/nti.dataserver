@@ -23,7 +23,7 @@ from nti.appserver import _util
 
 from nti.externalization import interfaces as ext_interfaces
 
-from nti.dataserver import rating
+from nti.dataserver import rating as ranking
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -34,7 +34,7 @@ from nti.utils.maps import CaseInsensitiveDict
 class RatingLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	false_view = 'rate'
 	true_view = 'unrate'
-	predicate = staticmethod(rating.rates_object)
+	predicate = staticmethod(ranking.rates_object)
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -46,16 +46,16 @@ def _RateView(request):
 	data = unicode(request.body, request.charset)
 	values = simplejson.loads(data) if request.body else {}
 	values = CaseInsensitiveDict(**values)
-	rate = values.get('rating', values.get('ranking', values.get('rate', None)))
-	if rate is None:
+	rating = values.get('rating', values.get('ranking', values.get('rate', None)))
+	if rating is None:
 		raise hexc.HTTPUnprocessableEntity(detail='rating not specified')
 
 	try:
-		rate = float(rate)
+		rating = float(rating)
 	except ValueError:
 		raise hexc.HTTPUnprocessableEntity(detail='invaing rating')
 
-	rating.rate_object(request.context, authenticated_userid(request), rate)
+	ranking.rate_object(request.context, authenticated_userid(request), rating)
 	return _util.uncached_in_response( request.context )
 
 @view_config( route_name='objects.generic.traversal',
@@ -65,5 +65,5 @@ def _RateView(request):
 			  request_method='DELETE',
 			  name='unrate')
 def _RemoveRatingView(request):
-	rating.unrate_object(request.context, authenticated_userid(request))
+	ranking.unrate_object(request.context, authenticated_userid(request))
 	return _util.uncached_in_response(request.context)
