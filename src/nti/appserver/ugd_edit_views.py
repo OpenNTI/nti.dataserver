@@ -70,40 +70,8 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		return containedObject
 
 	def _do_call( self ):
-		creator = self.getRemoteUser()
-		externalValue = self.readInput()
-		datatype = self.findContentType( externalValue )
-
-		context = self.request.context
-		# If our context contains a user resource, then that's where we should be trying to
-		# store things. This may be different than the creator if the remote
-		# user is an administrator (TODO: Revisit this.)
-		owner_root = traversal.find_interface( context, nti_interfaces.IUser )
-		if owner_root is not None:
-			owner_root = getattr( owner_root, 'user', owner_root ) # migration compat
-		if owner_root is None:
-			owner_root = traversal.find_interface( context, nti_interfaces.IUser )
-		if owner_root is None and hasattr( context, 'container' ):
-			owner_root = traversal.find_interface( context.container, nti_interfaces.IUser )
-
-		owner = owner_root if owner_root else creator
-
-		containedObject = self.createAndCheckContentObject( owner, datatype, externalValue, creator )
-
-		containedObject.creator = creator
-
-		# The process of updating may need to index and create KeyReferences
-		# so we need to have a jar. We don't have a parent to inherit from just yet
-		# (If we try to set the wrong one, it messes with some events and some
-		# KeyError detection in the containers)
-		#containedObject.__parent__ = owner
-		owner_jar = getattr( owner, '_p_jar', None )
-		if owner_jar and getattr( containedObject, '_p_jar', self) is None:
-			owner_jar.add( containedObject )
-
-		# Update the object, but don't fire any modified events. We don't know
-		# if we'll keep this object yet, and we haven't fired a created event
-		self.updateContentObject( containedObject, externalValue, set_id=True, notify=False )
+		creator = self.remoteUser
+		containedObject, owner = self.readCreateUpdateContentObject( creator, search_owner=True )
 		containedObject = self._transform_incoming_object(containedObject)
 
 		# TODO: The WSGI code would attempt to infer a containerID from the
