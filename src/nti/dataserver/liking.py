@@ -35,13 +35,16 @@ LIKE_CAT_NAME = 'likes'
 FAVR_CAT_NAME = 'favorites'
 
 _cached = ratings.cached_decorator
-_rates_object = ratings.get_object_rating
 
 def _lookup_like_rating_for_read(context, cat_name=LIKE_CAT_NAME, safe=False):
 	return ratings.lookup_rating_for_read(context, cat_name, safe)
 
 def _lookup_like_rating_for_write(context, cat_name=LIKE_CAT_NAME):
 	return ratings.lookup_rating_for_write(context, cat_name)
+
+def _rates_object(context, username, cat_name, safe=False):
+	result = ratings.get_object_rating(context, username, safe=safe, default=False)
+	return result
 
 # We define likes simply as a rating of 1, and unlikes remove
 # the user from the list.
@@ -78,7 +81,7 @@ def like_object( context, username ):
 	"""
 	return _rate_object( context, username, LIKE_CAT_NAME )
 
-def unlike_object( context, username ):
+def unlike_object(context, username):
 	"""
 	Unlike the `object`, idempotently.
 
@@ -88,7 +91,7 @@ def unlike_object( context, username ):
 	:return: An object with a boolean value; if action was taken, the value is True-y.
 	:raises TypeError: If the `context` is not really likeable.
 	"""
-	return _unrate_object( context, username, LIKE_CAT_NAME )
+	return _unrate_object(context, username, LIKE_CAT_NAME)
 
 def _likes_object_cache_key(context, username):
 	return ratings.generic_cache_key(context, LIKE_CAT_NAME, username)
@@ -104,8 +107,7 @@ def likes_object( context, username ):
 	:return: An object with a boolean value; if the user likes the object, the value
 		is True-y.
 	"""
-
-	result = _rates_object( context, username, LIKE_CAT_NAME )
+	result = _rates_object(context, username, LIKE_CAT_NAME)
 	return result
 
 def like_count( context ):
@@ -118,7 +120,7 @@ def like_count( context ):
 	"""
 	return ratings.rate_count(context, LIKE_CAT_NAME)
 
-def favorite_object( context, username ):
+def favorite_object(context, username):
 	"""
 	Favorite the `context` idempotently.
 
@@ -128,9 +130,9 @@ def favorite_object( context, username ):
 	:return: An object with a boolean value; if action was taken, the value is True-y.
 	:raises TypeError: If the `context` is not really likeable.
 	"""
-	return _rate_object( context, username, FAVR_CAT_NAME )
+	return _rate_object(context, username, FAVR_CAT_NAME)
 
-def unfavorite_object( context, username ):
+def unfavorite_object(context, username):
 	"""
 	Unfavorite the ``object``, idempotently.
 
@@ -140,13 +142,13 @@ def unfavorite_object( context, username ):
 	:return: An object with a boolean value; if action was taken, the value is True-y.
 	:raises TypeError: If the `context` is not really likeable.
 	"""
-	return _unrate_object( context, username, FAVR_CAT_NAME )
+	return _unrate_object(context, username, FAVR_CAT_NAME)
 
 def _favorites_object_cache_key(context, username, safe=False):
 	return ratings.generic_cache_key(context, FAVR_CAT_NAME, username)
 
 @_cached(_favorites_object_cache_key)
-def favorites_object( context, username, safe=False ):
+def favorites_object(context, username, safe=False):
 	"""
 	Determine if the ``username`` has favorited the ``context``.
 
@@ -161,7 +163,7 @@ def favorites_object( context, username, safe=False ):
 	:return: An object with a boolean value; if the user likes the object, the value
 		is True-y.
 	"""
-	return _rates_object( context, username, FAVR_CAT_NAME, safe=safe )
+	return _rates_object(context, username, FAVR_CAT_NAME, safe=safe)
 
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
@@ -173,16 +175,18 @@ class LikeDecorator(object):
 	"""
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping( self, context, mapping ):
+	def decorateExternalMapping(self, context, mapping):
 		mapping['LikeCount'] = like_count( context ) # go through the function to be safe
 
 
 from zope.container.contained import Contained
-from persistent import Persistent
+
 import BTrees
 from BTrees.Length import Length
-from contentratings.rating import NPRating
 
+from persistent import Persistent
+
+from contentratings.rating import NPRating
 
 @interface.implementer(contentratings.interfaces.IUserRating,
 					   contentratings.interfaces.IRatingStorage)
