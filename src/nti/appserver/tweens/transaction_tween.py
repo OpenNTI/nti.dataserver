@@ -25,6 +25,7 @@ logger = __import__('logging').getLogger(__name__)
 from ZODB.loglevels import TRACE
 
 from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.httpexceptions import HTTPException
 from nti.utils.transactions import TransactionLoop
 
 def _commit_veto(request, response):
@@ -90,6 +91,20 @@ class _transaction_tween(TransactionLoop):
 
 	def describe_transaction( self, request ):
 		return request.url
+
+	def run_handler(self, *args, **kwargs):
+		try:
+			return TransactionLoop.run_handler(self, *args, **kwargs) # Not super() for speed
+		except HTTPException as e:
+			# Pyramid catches these and treats them
+			# as a response.
+			# We MUST catch them as well and let
+			# the normal transaction commit/doom/abort
+			# rules take over--if we don't catch them,
+			# everything appears to work, but the exception
+			# causes the transaction to be aborted, even though
+			# the client gets a response
+			return e
 
 def transaction_tween_factory(handler, registry):
 	return _transaction_tween( handler )
