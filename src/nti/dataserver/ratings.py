@@ -17,6 +17,9 @@ from zope import interface
 from zope.event import notify
 from zope.annotation import interfaces as an_interfaces
 
+from persistent.interfaces import IPersistent
+
+from contentratings.rating import NPRating
 from contentratings.category import BASE_KEY
 from contentratings.events import ObjectRatedEvent
 from contentratings.storage import UserRatingStorage
@@ -25,6 +28,8 @@ from contentratings import interfaces as cr_interfaces
 from nti.dataserver import interfaces
 
 from nti.externalization.oids import to_external_oid
+
+RATING_CAT_NAME = u'Rating'
 
 class IObjectUnratedEvent(cr_interfaces.IObjectRatedEvent):
 	pass
@@ -73,6 +78,11 @@ def lookup_rating_for_read(context, cat_name, safe=False):
 def lookup_rating_for_write(context, cat_name):
 	return component.getAdapter(context, cr_interfaces.IUserRating, name=cat_name)
 
+def rate_object(context, username, rate, cat_name=RATING_CAT_NAME):
+	assert rate >= 1 and rate <= 5
+	rating = lookup_rating_for_write(context, cat_name)
+	return rating.rate(rate, username)
+
 def unrate_object(context, username, cat_name):
 	old_rating = None
 	rating = lookup_rating_for_read(context, cat_name)
@@ -84,12 +94,12 @@ def unrate_object(context, username, cat_name):
 		notify(ObjectUnratedEvent(context, old_rating, cat_name))
 	return rating, old_rating
 
-def get_object_rating(context, username, cat_name, safe=False, default=False):
+def get_object_rating(context, username, cat_name, safe=False, default=None):
 	result = default
 	rating = lookup_rating_for_read(context, cat_name=cat_name, safe=safe)
 	if rating is not None:
 		user_rating = rating.userRating( username )
-		result = user_rating if user_rating is not None else False
+		result = user_rating if user_rating is not None else default
 	return result
 
 def cached_decorator(key_func):
@@ -132,6 +142,23 @@ def rate_count(context, cat_name):
 	"""
 	ratings = lookup_rating_for_read(context, cat_name, safe=True)
 	result = ratings.numberOfRatings if ratings else 0
+	return result
+
+def _rating_object_cache_key(context, username):
+	return generic_cache_key(context, RATING_CAT_NAME, username)
+
+@cached_decorator(_rating_object_cache_key)
+def rates_object(context, username):
+	"""
+	Determine if the `username` has rated the `context`.
+
+	:param context: An :class:`~.IRatable` object.
+	:param username: The name of the user that has rated the object.
+	:return: An object with a rating value;
+	"""
+	result = get_object_rating(context, username, RATING_CAT_NAME)
+	if result is not None and IPersistent.providedBy(result):
+		result = NPRating(float(result), username)
 	return result
 
 def update_last_mod(modified_object, event):
