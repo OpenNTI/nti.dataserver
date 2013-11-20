@@ -26,6 +26,7 @@ from zope.schema import interfaces as sch_interfaces
 
 from pyramid import security as sec
 from pyramid.threadlocal import get_current_request
+from pyramid import traversal
 import webob.datetime_utils
 
 from nti.appserver import httpexceptions as hexc
@@ -34,6 +35,7 @@ from nti.appserver import _external_object_io as obj_io
 
 from nti.dataserver import users
 from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IUser
 
 from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
 from nti.externalization.externalization import to_standard_external_last_modified_time
@@ -149,6 +151,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 	"""
 
 	inputClass = dict
+	content_predicate = id
 
 	def __call__( self ):
 		"""
@@ -224,8 +227,10 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		return obj_io.create_modeled_content_object( self.dataserver, user, datatype, externalValue, creator )
 
 	def createAndCheckContentObject( self, owner, datatype, externalValue, creator, predicate=None ):
+		if predicate is None:
+			predicate = self.content_predicate
 		containedObject = self.createContentObject( owner, datatype, externalValue, creator )
-		if containedObject is None or (predicate and not predicate(containedObject)):
+		if containedObject is None or not predicate(containedObject):
 			transaction.doom()
 			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s", datatype, externalValue )
 			raise hexc.HTTPUnprocessableEntity( 'Unsupported/missing Class' )
@@ -247,6 +252,57 @@ class ModeledContentUploadRequestUtilsMixin(object):
 				# to auto-assign
 				pass
 		return containedObject
+
+	def readCreateUpdateContentObject( self, user, search_owner=False  ):
+		"""
+		Combines reading the external input, deriving the expected data
+		type, creating the content object, and updating it in one step.
+
+		:keyword bool search_owner: If set to True (not the default), we will
+			look for a user along our context's lineage; the user
+			will be used by default. It will be returned. If False,
+			the return will only be the contained object.
+
+		"""
+		creator = user
+		externalValue = self.readInput()
+		datatype = self.findContentType( externalValue )
+
+		context = self.request.context
+		# If our context contains a user resource, then that's where we should be trying to
+		# store things. This may be different than the creator if the remote
+		# user is an administrator (TODO: Revisit this.)
+		owner_root = None
+		if search_owner:
+			owner_root = traversal.find_interface( context, IUser )
+			if owner_root is not None:
+				owner_root = getattr( owner_root, 'user', owner_root ) # migration compat
+			if owner_root is None:
+				owner_root = traversal.find_interface( context, IUser )
+			if owner_root is None and hasattr( context, 'container' ):
+				owner_root = traversal.find_interface( context.container, IUser )
+
+		owner = owner_root if owner_root else creator
+
+		containedObject = self.createAndCheckContentObject( owner, datatype, externalValue, creator )
+
+		containedObject.creator = creator
+
+		# The process of updating may need to index and create KeyReferences
+		# so we need to have a jar. We don't have a parent to inherit from just yet
+		# (If we try to set the wrong one, it messes with some events and some
+		# KeyError detection in the containers)
+		#containedObject.__parent__ = owner
+		owner_jar = getattr( owner, '_p_jar', None )
+		if owner_jar and getattr( containedObject, '_p_jar', self) is None:
+			owner_jar.add( containedObject )
+
+		# Update the object, but don't fire any modified events. We don't know
+		# if we'll keep this object yet, and we haven't fired a created event
+		self.updateContentObject( containedObject, externalValue, set_id=True, notify=False )
+
+		return (containedObject, owner) if search_owner else containedObject
+
 
 class ModeledContentEditRequestUtilsMixin(object):
 	"""
