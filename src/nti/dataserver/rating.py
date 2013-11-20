@@ -17,6 +17,9 @@ from zope import interface
 from zope.event import notify
 from zope.annotation import interfaces as an_interfaces
 
+from pyramid.security import authenticated_userid
+from pyramid.threadlocal import get_current_request
+
 from persistent.interfaces import IPersistent
 
 from contentratings.rating import NPRating
@@ -28,8 +31,10 @@ from contentratings import interfaces as cr_interfaces
 from nti.dataserver import interfaces
 
 from nti.externalization.oids import to_external_oid
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.singleton import SingletonDecorator
 
-RATING_CAT_NAME = u'Rating'
+RATING_CAT_NAME = u'rating'
 
 class IObjectUnratedEvent(cr_interfaces.IObjectRatedEvent):
 	pass
@@ -160,6 +165,20 @@ def rates_object(context, username):
 	if result is not None and IPersistent.providedBy(result):
 		result = NPRating(float(result), username)
 	return result
+
+@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@component.adapter(interfaces.IRatable)
+class RatingDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalMapping(self, context, mapping):
+		request = get_current_request()
+		username = authenticated_userid(request) if request else None
+		if username:
+			rating = rates_object(context, username)
+			if rating is not None:
+				mapping['Rating'] = float(rating)
 
 def update_last_mod(modified_object, event):
 	"""

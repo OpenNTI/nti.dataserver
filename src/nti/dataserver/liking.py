@@ -26,7 +26,7 @@ from nti.dataserver import interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 
-from . import ratings
+from . import rating as ranking
 
 #: Category name for liking; use this as the name of the adapter
 LIKE_CAT_NAME = 'likes'
@@ -34,17 +34,17 @@ LIKE_CAT_NAME = 'likes'
 #: Category name for favorites; use this as the name of the adapter
 FAVR_CAT_NAME = 'favorites'
 
-_cached = ratings.cached_decorator
+_cached = ranking.cached_decorator
 
 def _lookup_like_rating_for_read(context, cat_name=LIKE_CAT_NAME, safe=False):
-	return ratings.lookup_rating_for_read(context, cat_name, safe)
+	return ranking.lookup_rating_for_read(context, cat_name, safe)
 
 def _lookup_like_rating_for_write(context, cat_name=LIKE_CAT_NAME):
-	return ratings.lookup_rating_for_write(context, cat_name)
+	return ranking.lookup_rating_for_write(context, cat_name)
 
 def _rates_object(context, username, cat_name, safe=False):
-	result = ratings.get_object_rating(context, username, cat_name, safe=safe,
-									   default=False)
+	result = ranking.get_object_rating(context, username, cat_name, safe=safe,
+									   	  default=False)
 	return result
 
 # We define likes simply as a rating of 1, and unlikes remove
@@ -59,16 +59,16 @@ def _rates_object(context, username, cat_name, safe=False):
 # distinguish "rating added" from "rating removed"
 
 def _rate_object(context, username, cat_name):
-	rating = ratings.lookup_rating_for_write(context, cat_name)
-	if rating.userRating( username ) is None:
-		rating.rate( 1, username )
-		return rating
+	storage = ranking.lookup_rating_for_write(context, cat_name)
+	if storage.userRating(username) is None:
+		storage.rate(1, username)
+		return storage
 
 def _unrate_object(context, username, cat_name):
-	rating, old_rating = ratings.unrate_object(context, username, cat_name)
+	storage, old_rating = ranking.unrate_object(context, username, cat_name)
 	if old_rating is not None:
 		assert int(old_rating) is 0
-		return rating
+		return storage
 
 def like_object( context, username ):
 	"""
@@ -95,7 +95,7 @@ def unlike_object(context, username):
 	return _unrate_object(context, username, LIKE_CAT_NAME)
 
 def _likes_object_cache_key(context, username):
-	return ratings.generic_cache_key(context, LIKE_CAT_NAME, username)
+	return ranking.generic_cache_key(context, LIKE_CAT_NAME, username)
 
 @_cached(_likes_object_cache_key)
 def likes_object( context, username ):
@@ -119,7 +119,7 @@ def like_count( context ):
 		not limited to just :class:`~.ILikeable` objects).
 	:return: A non-negative integer.
 	"""
-	return ratings.rate_count(context, LIKE_CAT_NAME)
+	return ranking.rate_count(context, LIKE_CAT_NAME)
 
 def favorite_object(context, username):
 	"""
@@ -146,7 +146,7 @@ def unfavorite_object(context, username):
 	return _unrate_object(context, username, FAVR_CAT_NAME)
 
 def _favorites_object_cache_key(context, username, safe=False):
-	return ratings.generic_cache_key(context, FAVR_CAT_NAME, username)
+	return ranking.generic_cache_key(context, FAVR_CAT_NAME, username)
 
 @_cached(_favorites_object_cache_key)
 def favorites_object(context, username, safe=False):
