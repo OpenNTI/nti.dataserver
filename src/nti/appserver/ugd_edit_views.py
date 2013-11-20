@@ -141,6 +141,7 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 
 		# Respond with the generic location of the object, within
 		# the owner's Objects tree.
+		# TODO: Shouldn't this be the external OID NTIID ?
 		self.request.response.location = self.request.resource_url( owner,
 																	'Objects',
 																	toExternalOID( containedObject ) )

@@ -573,13 +573,25 @@ class INewObjectTransformer(interface.Interface):
 
 		By the time this is called, the ``posted_object`` will have an appropriate
 		``creator`` attribute set. It will also have a ``_p_jar`` set if it is a persistent
-		object; however, it will not have a value for ``__parent__``.
+		object; however, it will *not* have a value for ``__parent__``.
 
 		This method should not fire any life cycle events, and the returned object
 		should not have a ``__parent__`` set. If the returned object has a
 		``containerId`` that is different from the ``posted_object``, then
 		the returned object's container will be used in preference. This allows the transformer
 		to change the storage destination of the object.
+
+		If the transformer wishes to take all responsibility for creating
+		and storing the object (e.g., not in user contained data), it can
+		raise a :class:`pyramid.httpexceptions.HTTPCreated` exception. This
+		http response should already have a Location value filled out.
+
+		.. caution:: If you raise an HTTP response exception, you are responsible
+			for rendering the body. You probably want to call :func:`pyramid.response.render_to_response`
+
+		.. caution:: If you raise an HTTP response exception, you are
+			responsible for firing the lifecycle events (typically of the returned object)
+			appropriately.
 		"""
 
 # ##
