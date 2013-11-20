@@ -206,21 +206,6 @@ class _ContentResolver(object):
 			result = nti_interfaces.ACLLocationProxy( result, result.__parent__, result.__name__, nacl.ACL( result ) )
 		return result
 
-@interface.implementer( nid_interfaces.INTIIDResolver )
-class _AssessmentResolver(object):
-
-	def resolve( self, key ):
-		# XXX: FIXME: This should move elsewhere
-		result = component.queryUtility( asm_interfaces.IQuestion, name=key )
-		if not result:
-			result = component.queryUtility( asm_interfaces.IQuestionSet, name=key )
-		if result:
-			# TODO: ACL Proxy can probably go away
-			result = nti_interfaces.ACLLocationProxy( result,
-													  getattr( result, '__parent__', None ),
-													  getattr( result, '__name__', None ),
-													  nacl.ACL( result ) )
-		return result
 
 @interface.implementer( nid_interfaces.INTIIDResolver )
 class _MeetingRoomResolver(_AbstractUserBasedResolver):
