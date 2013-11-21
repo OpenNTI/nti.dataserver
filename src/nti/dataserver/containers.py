@@ -342,6 +342,9 @@ def contain_nested_objects( sequence, parent, event ):
 	New, incoming objects like a Canvas need to be added to the parent container
 	when a sequence containing them is set. (e.g., the body of a Note)
 	"""
+	if sequence is None:
+		return
+
 	for i, child in enumerate( sequence ):
 		if IContained.providedBy( child ):
 			name = getattr( child, '__name__', None ) or unicode(i)
