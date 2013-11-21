@@ -920,28 +920,6 @@ class IUserTaggedContent(interface.Interface):
 							unique=True,
 							default=())
 
-class IUserCategorizedContent(interface.Interface):
-	"""
-	Something that can contain categories.
-	"""
-
-	categories = TupleFromObject(title="Categories applied by the user.",
-						value_type=Tag(min_length=1, title="A single category",
-									   description=Tag.__doc__, __name__='categories'),
-						unique=True,
-						default=())
-
-class IUserKeywordedContent(interface.Interface):
-	"""
-	Something that can contain keywords.
-	"""
-
-	keywords = TupleFromObject(title="Keywords applied by the user.",
-						value_type=Tag(min_length=1, title="A single keyword",
-									   description=Tag.__doc__, __name__='keywords'),
-						unique=True,
-						default=())
-
 from nti.mimetype import interfaces as mime_interfaces
 class IModeledContent(IContent, IContained, mime_interfaces.IContentTypeMarker):
 	"""
@@ -1270,7 +1248,7 @@ class IEmbeddedAudio(IEmbeddedMedia):
 	"""
 
 class ISelectedRange(IShareableModeledContent, IAnchoredRepresentation,
-					 IUserTaggedContent, IUserCategorizedContent):
+					 IUserTaggedContent):
 	"""
 	A selected range of content that the user wishes to remember. This interface
 	attaches no semantic meaning to the selection; subclasses will do that.
