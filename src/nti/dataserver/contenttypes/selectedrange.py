@@ -31,6 +31,7 @@ class SelectedRange(UserContentRoot):
 	# most directly matches what the externalization is.
 	createDirectFieldProperties(nti_interfaces.IUserTaggedContent)  # tags
 	AutoTags = ()  # not currently in any interface
+	categories = ()
 
 	def __init__(self):
 		super(SelectedRange, self).__init__()
