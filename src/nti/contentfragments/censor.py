@@ -268,6 +268,9 @@ def censor_before_assign_components_of_sequence(sequence, target, event):
 
 	This package DOES NOT register this event.
 	"""
+	if sequence is None:
+		return
+
 	# There are many optimization opportunities here
 	s2 = []
 	_changed = False
