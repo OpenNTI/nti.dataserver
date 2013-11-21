@@ -399,7 +399,11 @@ class CommunityTraversable(_PseudoTraversableMixin):
 
 
 	def traverse( self, key, remaining_path ):
-		return self._pseudo_traverse( key, remaining_path )
+		try:
+			return self._pseudo_traverse( key, remaining_path )
+		except KeyError:
+			# Is there a named path adapter?
+			return adapter_request( self.context, self.request ).traverse( key, remaining_path )
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(lib_interfaces.IContentPackageLibrary, pyramid.interfaces.IRequest)
