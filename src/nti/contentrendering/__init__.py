@@ -31,7 +31,7 @@ import contextlib
 import anyjson as json
 
 if not os.getenv('DATASERVER_DIR_IS_BUILDOUT'):
-	# Buildout puts it on the path
+	# Buildout puts it first on the path
 	import warnings
 	try:
 
