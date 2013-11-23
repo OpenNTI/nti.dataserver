@@ -8,11 +8,16 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+import sys
 import os
 import re
 import subprocess
 import time
-from StringIO import StringIO
+try:
+	from cStringIO import StringIO
+except ImportError:
+	from StringIO import StringIO
+
 import codecs
 import shutil
 import tempfile
@@ -178,7 +183,9 @@ def _processBatchSource(generator, params, raise_exceptions=False):
 		# further problems.
 		if raise_exceptions:
 			raise
-		import traceback; traceback.print_exc()
+		from zope.exceptions import print_exception
+		t, v, tb = sys.exc_info()
+		print_exception(t, v, tb, with_filenames=False)
 
 	return ()
 
@@ -206,9 +213,13 @@ class AbstractDocumentCompilerDriver(object):
 
 	def __getstate__(self):
 		# In concurrency, we need to be pickled. The plasTeX document
-		# does not support this
+		# does not support this, and neither do cStringIO objects
 		d = dict(self.__dict__)
-		del d['_document']
+		# So we drop the document, which we won't access at all anymore
+		d['_document'] = None
+		# And we convert the string io object into a plain string; we will
+		# read from it but not write to it anymore
+		d['_writer'] = self.source_bytes()
 		return d
 
 	def size(self):
@@ -303,14 +314,15 @@ class AbstractDocumentCompilerDriver(object):
 
 		filename = os.path.join(tempdir, self.document_filename + '.' + self.document_extension )
 
-		self.source().seek(0)
-		with codecs.open(filename,'w',self._encoding ) as out:
-			out.write(self.source().read())
+		source_bytes = self.source_bytes()
+		__traceback_info__ = tempdir, filename, source_bytes
+
+		with codecs.open( filename, 'w', self._encoding ) as out:
+			out.write(source_bytes)
 
 		try:
 			self._run_compiler_on_file( filename )
 		except:
-			__traceback_info__ = self.source().getvalue()
 			# TODO: See Imagers/__init__.py. Can we get log file info here?
 			shutil.rmtree( tempdir, True ) # Try to clean up
 			raise
@@ -327,6 +339,13 @@ class AbstractDocumentCompilerDriver(object):
 
 	def source(self):
 		return self._writer
+
+	def source_bytes(self):
+		# May not be an StringIO object anymore
+		try:
+			return self.source().getvalue()
+		except AttributeError:
+			return self.source()
 
 	def write(self, data):
 		if data:

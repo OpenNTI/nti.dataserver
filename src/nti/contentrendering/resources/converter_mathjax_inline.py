@@ -93,15 +93,15 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 
 	def compileSource(self):
 		# TODO: A lot of this could be shared with the superclass
-		source = self._writer
-		source.seek(0)
-		htmlSource = source.read()
 
+		htmlSource = self.source_bytes()
 		tempdir = tempfile.mkdtemp()
-
 		# We need to copy the html file
 		htmlOutFile = os.path.join(tempdir, self.htmlfile)
-		codecs.open(htmlOutFile, 'w', 'utf-8').write(htmlSource)
+		__traceback_info__ = tempdir, htmlOutFile, htmlSource
+
+		with codecs.open(htmlOutFile, 'w', self._encoding) as f:
+			f.write(htmlSource)
 
 		copied_configs = []
 		try:
