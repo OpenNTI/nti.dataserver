@@ -91,6 +91,16 @@ def get_sharedWith(obj, default=None):
 	result = adapted.get_sharedWith() if adapted else None
 	return result or default
 
+def get_acl(obj, default=None):
+	result = []
+	creator = get_creator(obj)
+	if creator:
+		result.append(creator)
+	sharedWith = get_sharedWith(obj)
+	if creator:
+		result.extend(sharedWith)
+	return tuple(set(sharedWith)) if result else None
+
 def get_references(obj, default=None):
 	adapted = component.queryAdapter(obj, search_interfaces.INoteContentResolver)
 	result = adapted.get_references() if adapted else None
