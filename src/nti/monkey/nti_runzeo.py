@@ -26,6 +26,8 @@ relstorage_umysqldb_patch_on_import.patch()
 relstorage_timestamp_repr_patch_on_import.patch()
 relstorage_zlibstorage_patch_on_import.patch()
 
+# NOTE: Not importing patch_all, don't want gevent
+
 import sys
 from pkg_resources import load_entry_point, get_distribution
 
