@@ -89,7 +89,7 @@ def _patch():
 	# Now that pymysql doesn't have complex behaviour possible,
 	# the simplest thing to do as to adjust mapping in our own
 	# errorhandler when needed
-	from pymysql.err import Error,InterfaceError
+	from pymysql.err import Error,InterfaceError,DatabaseError
 	import sys
 	def defaulterrorhandler(connection, cursor, errorclass, errorvalue):
 		del cursor
@@ -126,18 +126,21 @@ def _patch():
 				 relstorage.adapters.mysql.MySQLdbConnectionManager ):
 		# close_exceptions: "to ignore when closing the connection"
 		attr.close_exceptions += (pymysql.err.Error, # The one usually mapped to
-								  IOError) # This one can escape mapping
+								  IOError, # This one can escape mapping
+								  DatabaseError)
 
 	for attr in (relstorage.adapters.mysql,
 				 relstorage.adapters.mysql.MySQLdbConnectionManager):
 		# disconnected_exceptions: "indicates the connection is disconnected"
-		attr.disconnected_exceptions += (IOError,) # This one can
-                                                   # escape mapping;
-                                                   # note we don't
-                                                   # make
-                                                   # pymysql.err.Error
-                                                   # indicate
-                                                   # disconnection
+
+		# Note we don't make the generic `pymysql.err.Error` indicate
+		# disconnection
+		attr.disconnected_exceptions += (IOError, # This one can escape mapping;
+										 # This one has only been seen as its subclass,
+										 # InternalError, as (0, 'Socket receive buffer full'),
+										 # which should probably be taken as disconnect
+										 DatabaseError,
+										 )
 
 	from . import relstorage_timestamp_repr_patch_on_import
 	relstorage_timestamp_repr_patch_on_import.patch()
