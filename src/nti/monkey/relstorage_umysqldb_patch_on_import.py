@@ -30,6 +30,7 @@ def _patch():
 	# to queries (as of 2012-09-13). Until it does, we need to do that
 	# because RelStorage uses that in a few places
 	from umysqldb.connections import encoders, notouch
+	from pymysql.err import InternalError
 	class Connection(umysqldb.connections.Connection):
 
 		def query( self, sql, args=() ):
@@ -41,7 +42,38 @@ def _patch():
 				sql = sql % args
 				# and delete the now useless args
 				args = ()
-			super(Connection,self).query( sql, args=args )
+			try:
+				super(Connection,self).query( sql, args=args )
+			except InternalError as e:
+
+				if e.args == (0, 'Socket receive buffer full'):
+					# This is very similar to https://github.com/esnme/ultramysql/issues/16
+					# (although that issue is claimed to be fixed).
+					# It causes issues when using the same connection to execute very
+					# many requests (in one example, slightly more than 2,630,000 queries).
+					# Most commonly, it has been seen when attempting a database
+					# pack or conversion on a large database. In that case, the MySQL-Python
+					# driver must be used, or the amount of data to query must otherwise
+					# be reduced.
+
+					# In theory, we can workaround the issue by replacing our now-bad _umysql_conn
+					# with a new one and trying again.
+					assert not self._umysql_conn.is_connected()
+					self._umysql_conn.close()
+					del self._umysql_conn
+					import umysql
+					self._umysql_conn = umysql.Connection()
+					self._connect() # Potentially this could raise again?
+					try:
+						return self.query(sql, args)
+					except InternalError:
+						raise
+						# However, in practice, this results in raising the same
+						# error with 2.61 of umysql; it's not clear why that is, but
+						# something seems to be holding on to the errno
+
+				raise
+
 
 
 	# Patching the module itself seems to be not needed because
