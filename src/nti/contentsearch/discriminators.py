@@ -46,20 +46,23 @@ def query_object(uid, default=None, intids=None):
 	return result
 
 def get_containerId(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IContainerIDResolver)
-	return adapted.get_containerId() or default
+	adapted = component.queryAdapter(obj, search_interfaces.IContainerIDResolver)
+	result = adapted.get_containerId() if adapted else None
+	return result or default
 
 def get_ntiid(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.INTIIDResolver)
-	return adapted.get_ntiid() or default
+	adapted = component.queryAdapter(obj, search_interfaces.INTIIDResolver)
+	result = adapted.get_ntiid() if adapted else None
+	return result or default
 
 def get_creator(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.ICreatorResolver)
-	return adapted.get_creator() or default
+	adapted = component.queryAdapter(obj, search_interfaces.ICreatorResolver)
+	result = adapted.get_creator() if adapted else None
+	return result or default
 
 def get_title(obj, default=None, language='en'):
-	adapted = component.getAdapter(obj, search_interfaces.ITitleResolver)
-	result = get_content(adapted.get_title(), language)
+	adapted = component.queryAdapter(obj, search_interfaces.ITitleResolver)
+	result = get_content(adapted.get_title(), language) if adapted else None
 	return result.lower() if result else default
 
 def get_title_and_ngrams(obj, default=None, language='en'):
@@ -69,8 +72,8 @@ def get_title_and_ngrams(obj, default=None, language='en'):
 	return result.lower() if result else default
 
 def get_last_modified(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.ILastModifiedResolver)
-	result = adapted.get_last_modified()
+	adapted = component.queryAdapter(obj, search_interfaces.ILastModifiedResolver)
+	result = adapted.get_last_modified() if adapted else None
 	return result if result else default
 
 def get_tags(obj, default=()):
@@ -94,23 +97,24 @@ def get_references(obj, default=None):
 	return result or default
 
 def get_channel(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
-	return adapted.get_channel() or default
+	adapted = component.queryAdapter(obj, search_interfaces.IMessageInfoContentResolver)
+	result = adapted.get_channel() if adapted else None
+	return result or default
 
 def get_recipients(obj, default=None):
-	adapted = component.getAdapter(obj, search_interfaces.IMessageInfoContentResolver)
-	result = adapted.get_recipients()
+	adapted = component.queryAdapter(obj, search_interfaces.IMessageInfoContentResolver)
+	result = adapted.get_recipients() if adapted else None
 	return result or default
 
 def get_replacement_content(obj, default=None, language='en'):
-	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
-	result = get_content(adapted.get_replacement_content(), language)
+	adapted = component.queryAdapter(obj, search_interfaces.IRedactionContentResolver)
+	result = get_content(adapted.get_replacement_content(), language) if adapted else None
 	return result.lower() if result else default
 get_replacementContent = get_replacement_content
 
 def get_redaction_explanation(obj, default=None, language='en'):
-	adapted = component.getAdapter(obj, search_interfaces.IRedactionContentResolver)
-	result = get_content(adapted.get_redaction_explanation(), language)
+	adapted = component.queryAdapter(obj, search_interfaces.IRedactionContentResolver)
+	result = get_content(adapted.get_redaction_explanation(), language) if adapted else None
 	return result.lower() if result else default
 get_redactionExplanation = get_redaction_explanation
 
@@ -122,7 +126,7 @@ def get_replacement_content_and_ngrams(obj, default=None, language='en'):
 
 def get_redaction_explanation_and_ngrams(obj, default=None, language='en'):
 	result = get_redaction_explanation(obj, default, language)
-	ngrams = compute_ngrams(result, language)
+	ngrams = compute_ngrams(result, language) if result else None
 	result = '%s %s' % (result, ngrams) if result else None
 	return result or default
 
