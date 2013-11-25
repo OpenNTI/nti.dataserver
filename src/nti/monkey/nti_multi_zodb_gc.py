@@ -9,6 +9,19 @@ with relstorage.
 	cannot monkey patch to use umysqldb due to errors. See
 	that patch for details.
 
+.. note:: Until such time as either the developers or we implement
+	a ``deleteObject`` method for RelStorage, this process is only
+	good for analyzing RelStorage into a separate analysis database.
+	It cannot perform actual GC.
+
+.. note:: History-free RelStorages do not require regular packing,
+	but they do require regular garbage collection. This can be
+	done only when ``pack-gc`` is set to ``true``, and, because
+	this script cannot be used to perform GC, only in a single database
+	at a time with ``zodbpack`` (NEVER in a multi-database).
+	(zodbpack could be used to pack history-preserving storages that are
+	part of a multi-database; they *must* have ``pack-gc`` set to false.)
+
 Note that we cannot use pypy; :mod:`zc.zodbgc` uses ``Unpickler.unload()``,
 which seems to be found only in cPython2 implementations. We would have to
 replace its dependency on that with the new :mod:`zodbpickle` package (and
