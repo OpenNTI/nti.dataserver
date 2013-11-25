@@ -90,6 +90,10 @@ def _lineage_that_ensures_acls(obj):
 	for location in _pyramid_lineage(obj):
 		try:
 			# Native ACL. Run with it.
+			# Note that as of 1.5a2 this can now be a callable object, which
+			# would permit objects to easily manage their own ACLs using
+			# our ACLProvider machinery and supporting caching on the object
+			# through zope.cachedescriptors
 			getattr( location, '__acl__' )
 			yield location
 		except AttributeError:
