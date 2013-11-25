@@ -178,6 +178,14 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 			dictionary. This should match the name of the property
 			(e.g., ``a = NumericPropertyDefaultingToZero( 'a',...)``) but is not required
 			to.
+		:param factory: The value object factory that determines the type of
+			conflict resolution used for this property. Typically :func:`NumericMaximum`,
+			:class:`NumericMinimum` or :class:`MergingCounter`.
+		:keyword bool as_number: If set to `True` (not the default), then
+			when an instance reads this property, the numeric value will be returned;
+			otherwise the ``factory`` class instance will be returned and you will
+			want to access its ``.value`` attribute. Setting this property always
+			takes the (raw) numeric value.
 		"""
 		self.__name__ = name
 		self.factory = factory
@@ -206,7 +214,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 		self.__activate( inst )
 		val = inst.__dict__.get( self.__name__, None )
 		if val is None:
-			if value == 0:
+			if not value:
 				return # not in dict, but they gave us the default value, so ignore it
 			val = self.factory( value )
 			inst.__dict__[self.__name__] = val
