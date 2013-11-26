@@ -97,7 +97,7 @@ def get_acl(obj, default=None):
 	if creator:
 		result.append(creator)
 	sharedWith = get_sharedWith(obj)
-	if creator:
+	if sharedWith:
 		result.extend(sharedWith)
 	return tuple(set(sharedWith)) if result else None
 
