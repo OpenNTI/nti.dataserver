@@ -235,7 +235,7 @@ setup(
 		# 1.7 is a modern rewrite with much better unicode and Py3k support
 		'feedgenerator >= 1.7',
 		'futures >= 2.1.5',
-		'gevent == 1.0dev', # Really 1.0rc3; see dependency_links
+		'gevent >= 1.0',
 		'greenlet >= 0.4.1',
 		'gunicorn >= 18.0',
 		'hiredis >= 0.1.1',	 # Redis C parser
@@ -479,7 +479,6 @@ setup(
 	},
 	dependency_links=[
 		'git+https://github.com/NextThought/nti.nose_traceback_info.git#egg=nti.nose_traceback_info',
-		'git+https://github.com/surfly/gevent.git@1.0rc3#egg=gevent-1.0dev', # tag is 1.0rc3, but setup.py says 1.0dev
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
