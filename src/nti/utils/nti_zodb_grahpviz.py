@@ -163,7 +163,7 @@ def referencesf(p, oids=None, pickle_db_name="", name_predicate=None):
 		# TODO: We would like to filter out __parent__, usually,
 		# so we only go down the tree. Without actually persistently
 		# loading, that's  hard.
-	except AttributeError,ImportError:
+	except (AttributeError,ImportError):
 		u = Unpickler(BytesIO(p))
 		u.persistent_load = refs.append
 		u.noload()
