@@ -16,6 +16,7 @@ from nti.contentprocessing import compute_ngrams
 
 from nti.externalization import oids
 
+from . import common
 from . import content_utils
 from . import interfaces as search_interfaces
 
@@ -44,6 +45,10 @@ def query_object(uid, default=None, intids=None):
 	intids = intids or component.getUtility(zope.intid.IIntIds)
 	result = intids.queryObject(int(uid), default)
 	return result
+
+def get_type(obj, default=None):
+	result = common.get_type_name(obj)
+	return result or default
 
 def get_containerId(obj, default=None):
 	adapted = component.queryAdapter(obj, search_interfaces.IContainerIDResolver)
