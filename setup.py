@@ -148,7 +148,7 @@ setup(
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
-		'Chameleon >= 2.13',  # (preferred) template rendering. pulled in by pyramid, but ensure latest version
+		'Chameleon >= 2.14', # (preferred) template rendering. pulled in by pyramid, but ensure latest version
 		'ExtensionClass >= 4.1a1',
 		'Mako >= 0.9.0',  # fallback plain-text template render. pulled in by pyramid, but ensure latest version
 		# 'friendly' fork of PIL, developed by Zope/Plone.
@@ -449,7 +449,7 @@ setup(
 			'logilab_astng >= 0.24.3',
 			'pip >= 1.3.1',
 			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
-			'pudb >= 2013.5', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
+			'pudb >= 2013.5.1', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint >= 1.0.0' if not IS_PYPY else '',  # install astroid
 			'pyramid_debugtoolbar >= 1.0.9',
 			'readline >= 6.2.4.1' if not IS_PYPY else '',
