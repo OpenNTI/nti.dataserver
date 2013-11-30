@@ -19,6 +19,7 @@ import sys
 from dm.zope.schema.schema import SchemaConfigured, schemadict, Object as ObjectBase
 ObjectBase.check_declaration = True
 
+import zope.interface.common.idatetime
 from zope import interface
 from zope import schema
 from zope import component
@@ -272,6 +273,25 @@ class FieldValidationMixin(object):
 		except sch_interfaces.ValidationError as e:
 			self._reraise_validation_error( e, value )
 
+@interface.implementer(sch_interfaces.IObject)
+class ValidDatetime(FieldValidationMixin,Datetime):
+	"""
+	Unlike the standard datetime, this will check that the
+	given object is an instance of IDatetime, and raise
+	the same error as object does.
+	"""
+
+	schema = zope.interface.common.idatetime.IDateTime
+
+	def _validate(self, value):
+		try:
+			super(ValidDatetime, self)._validate(value)
+		except sch_interfaces.WrongType as e:
+			raise sch_interfaces.SchemaNotProvided(value, e.__doc__, self.__name__, self.schema, list(interface.providedBy( value ) ))
+
+		# schema has to be provided by value
+		if not self.schema.providedBy(value): # pragma: no cover
+			raise sch_interfaces.SchemaNotProvided
 
 class Object(FieldValidationMixin,ObjectBase):
 
@@ -711,8 +731,9 @@ class AdaptingFieldProperty(FieldProperty):
 
 	def __init__( self, field, name=None ):
 		if not sch_interfaces.IObject.providedBy( field ):
-			raise sch_interfaces.WrongType()
+			raise sch_interfaces.WrongType("Don't know how to get schema from %s" % field)
 		self.schema = field.schema
+
 		super(AdaptingFieldProperty,self).__init__( field, name=name )
 
 	def __set__( self, inst, value ):

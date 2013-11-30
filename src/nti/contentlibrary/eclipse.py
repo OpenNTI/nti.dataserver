@@ -152,7 +152,9 @@ def EclipseContentPackage( toc_entry,
 
 		content_package.courseName = courseName
 		content_package.courseTitle = courseTitle
-		
+
+		# FIXME: Do not do this. This is only used in one place;
+		# it should do the parsing there and then.
 		for scope in course.xpath('scope'):
 			type_ = scope.get('type', u'').lower()
 			entries = scope.xpath('entry')

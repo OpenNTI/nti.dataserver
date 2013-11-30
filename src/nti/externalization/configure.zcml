@@ -32,8 +32,10 @@
 	<!-- TODO: This is a bit ad-hoc. Surely there's a more formal set
 	of transforms somewhere? -->
 	<adapter factory=".datetime._date_from_string" />
+	<adapter factory=".datetime._datetime_from_string" />
 	<!-- Do the reverse as well.-->
 	<adapter factory=".datetime._date_to_string" />
+	<adapter factory=".datetime._datetime_to_string" />
 	<adapter factory=".datetime._duration_to_string" />
 
 
