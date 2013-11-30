@@ -50,6 +50,10 @@ def get_type(obj, default=None):
 	result = common.get_type_name(obj)
 	return result or default
 
+def get_mimetype(obj, default=None):
+	result = getattr(obj, 'mimeType', None) or getattr(obj, 'mime_type', None)
+	return result or default
+
 def get_containerId(obj, default=None):
 	adapted = component.queryAdapter(obj, search_interfaces.IContainerIDResolver)
 	result = adapted.get_containerId() if adapted else None
