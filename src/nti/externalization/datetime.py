@@ -24,6 +24,15 @@ import sys
 import isodate
 from nti.utils.schema import InvalidValue
 
+def _parse_with(func, string):
+	try:
+		return func( string )
+	except isodate.ISO8601Error:
+		_, v, tb = sys.exc_info()
+		e = InvalidValue( *v.args, value=string )
+		raise e, None, tb
+
+
 @component.adapter(basestring)
 @interface.implementer(zope.interface.common.idatetime.IDate)
 def _date_from_string( string ):
@@ -45,12 +54,23 @@ def _date_from_string( string ):
 	#   return datetime.date( parsed[0], parsed[1], parsed[2] )
 	# accepts almost anything as a date (so it's great for human interfaces),
 	# but programatically we actually require ISO format
-	try:
-		return isodate.parse_date( string )
-	except isodate.ISO8601Error:
-		_, v, tb = sys.exc_info()
-		e = InvalidValue( *v.args, value=string )
-		raise e, None, tb
+	return _parse_with( isodate.parse_date, string )
+
+
+@component.adapter(basestring)
+@interface.implementer(zope.interface.common.idatetime.IDateTime)
+def _datetime_from_string( string ):
+	"""
+	This adapter allows any field which comes in as a string is
+	IOS8601 format to be transformed into a datetime. The schema field
+	should be an ``Object`` field with a type of ``IDateTime``
+	or an instance of ``ValidDateTime``
+
+	If you need a schema field that accepts human input, rather than
+	programattic input, you probably want to use a custom field that
+	uses :func:`zope.datetime.parse` in its ``fromUnicode`` method.
+	"""
+	return _parse_with( isodate.parse_datetime, string )
 
 @component.adapter(zope.interface.common.idatetime.IDate)
 @interface.implementer(interfaces.IInternalObjectExternalizer)
@@ -62,6 +82,17 @@ class _date_to_string(object):
 
 	def toExternalObject(self):
 		return isodate.date_isoformat(self.date)
+
+@component.adapter(zope.interface.common.idatetime.IDateTime)
+@interface.implementer(interfaces.IInternalObjectExternalizer)
+class _datetime_to_string(object):
+	"Produce an IOS8601 string from a datetime"
+
+	def __init__( self, date ):
+		self.date = date
+
+	def toExternalObject(self):
+		return isodate.datetime_isoformat(self.date)
 
 @component.adapter(zope.interface.common.idatetime.ITimeDelta)
 @interface.implementer(interfaces.IInternalObjectExternalizer)
