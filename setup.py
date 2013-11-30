@@ -200,14 +200,12 @@ setup(
 		#  >>  n = cursor.connection.insert_id()
 		#  AttributeError: 'weakref' object has no attribute 'insert_id'
 		# See https://github.com/PyMySQL/PyMySQL/issues/180.
-		# This is fixed in trunk, but not yet released, and it is impossible to install
-		# trunk from git because trunk still uses the 0.6 version number. Hence our fork
-		# and changed version number (which is really 0.6@315d164172ef784fbbb2af543bf5104f8f5ddf46
+		# This is fixed in 0.6.1, but umysqldb 1.0.3 already had a pin <0.6
 		# MySQL-python (aka MySQLdb) has been renamed to moist (https://github.com/farcepest/moist)
 		'umysql == 2.61',
-		'umysqldb == 1.0.2', # requires PyMySQL < 0.6
+		'umysqldb == 1.0.4dev', # requires PyMySQL < 0.6, but we want 0.6.1; hence our patch
 		'RelStorage >= 1.5.1',
-		'PyMySQL == 0.7dev',
+		'PyMySQL == 0.6.1',
 		'python-memcached >= 1.53',	 # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
@@ -482,10 +480,7 @@ setup(
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
-		'git+https://github.com/lecram/PyMySQL.git#egg=PyMySQL-0.5', # no tag for this sadly
-		'git+https://github.com/NextThought/PyMySQL.git#egg=PyMySQL-0.7dev',
-		# PyPI download is not available yet
-		'git+https://github.com/mstamy2/PyPDF2.git@83bbfc2dbe74c0ad802efc9a35e73b05a3df711b#egg=PyPDF2-1.19',
+		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev',
 		'https://pypi.python.org/packages/source/s/sympy/sympy-0.7.3-py2.7.tar.gz#egg=sympy-0.7.3',
 	],
 	packages=find_packages('src'),
