@@ -176,7 +176,7 @@ class ForumObjectContentsLinkProvider(object):
 		# This works because everytime one of the context's children is modified,
 		# our timestamp is also modified. We include the user asking just to be safe
 		# We also advertise that you can POST new items to this url, which is good for caching
-		elements=(VIEW_CONTENTS, md5_etag(context.lastModified, _get_remote_username()).replace('/','_'))
+		elements = (VIEW_CONTENTS, md5_etag(context.lastModified, _get_remote_username()).replace('/','_'))
 		self.add_link(VIEW_CONTENTS, context, mapping, request, elements)
 
 		current_user = get_remote_user(get_current_request())

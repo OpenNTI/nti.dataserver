@@ -372,10 +372,12 @@ class ForumGetView(GenericGetView):
 @view_defaults( name=VIEW_CONTENTS,
 				**_r_view_defaults )
 class ForumsContainerContentsGetView(UGDQueryView):
-	""" The /contents view for the forum objects we are using.
+	"""
+	The ``/contents`` view for the forum objects we are using.
 
-	The contents fully support the same sorting and paging parameters as
-	the UGD views. """
+	The contents fully support the same sorting and paging parameters
+	as the UGD views.
+	"""
 
 
 	def __init__( self, request ):
