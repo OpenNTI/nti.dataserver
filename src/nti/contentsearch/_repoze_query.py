@@ -27,19 +27,13 @@ from repoze.catalog.query import Any as IndexAny
 from repoze.catalog.query import Contains as IndexContains
 from repoze.catalog.query import DoesNotContain as IndexDoesNotContain
 
-from nti.contentprocessing import split_content
-from nti.contentprocessing import interfaces as cp_interfaces
-
 from . import common
+from . import content_utils
 from . import interfaces as search_interfaces
 from .constants import (content_, ngrams_, title_, tags_, redactionExplanation_, replacementContent_)
 
 def _can_use_ngram_field(qo):
-	tokens = split_content(qo.term)
-	__traceback_info__ = qo.term, tokens
-	ncomp = component.getUtility(cp_interfaces.INgramComputer, name=qo.language)
-	min_word = min(map(len, tokens)) if tokens else 0
-	return min_word >= ncomp.minsize
+	return content_utils.is_ngram_compatible(qo.term, qo.language)
 
 @interface.implementer(search_interfaces.IRepozeSearchQueryValidator)
 class _DefaultSearchQueryValiator(object):

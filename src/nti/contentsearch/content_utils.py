@@ -20,6 +20,7 @@ from dolmen.builtins import IDict
 from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.contentprocessing import split_content
+from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing import get_content_translation_table
 
 from nti.chatserver import interfaces as chat_interfaces
@@ -69,6 +70,13 @@ def get_content(text=None, language='en'):
 		result = split_content(text.translate(table), language)
 	result = ' '.join(result)
 	return unicode(result)
+
+def is_ngram_compatible(term, language='en'):
+	tokens = split_content(term)
+	__traceback_info__ = term, tokens
+	ncomp = component.getUtility(cp_interfaces.INgramComputer, name=language)
+	min_word = min(map(len, tokens)) if tokens else 0
+	return min_word >= ncomp.minsiz
 
 @interface.implementer(search_interfaces.IContentResolver)
 @component.adapter(basestring)
