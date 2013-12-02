@@ -42,6 +42,30 @@ relstorage_timestamp_repr_patch_on_import.patch()
 relstorage_zlibstorage_patch_on_import.patch()
 relstorage_external_gc_patch_on_import.patch()
 
+# zc.zodbdgc 0.6.1 has an issue dealing with new refs
+# that are empty. This copy of its function
+# fixes that and avoids an IndexError on line 287
+import cPickle
+import cStringIO
+def getrefs(p, rname, ignore):
+	refs = []
+	u = cPickle.Unpickler(cStringIO.StringIO(p))
+	u.persistent_load = refs
+	u.noload()
+	u.noload()
+	for ref in refs:
+		if isinstance(ref, tuple):
+			yield rname, ref[0]
+		elif isinstance(ref, str):
+			yield rname, ref
+		elif ref:
+			assert isinstance(ref, list)
+			ref = ref[1]
+			if ref[0] not in ignore:
+				yield ref[:2]
+import zc.zodbdgc
+zc.zodbdgc.getrefs = getrefs
+
 import sys
 # Not a threaded process, no need to check for switches
 sys.setcheckinterval( 100000 )
