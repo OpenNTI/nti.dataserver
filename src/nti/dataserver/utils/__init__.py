@@ -83,7 +83,7 @@ def run_with_dataserver( environment_dir=None, function=None,
 		"""Run the user-given function in the environment; print exceptions
 		in this env too."""
 		try:
-			function()
+			return function()
 		except Exception:
 			print_exception( *sys.exc_info() )
 			raise
@@ -173,7 +173,7 @@ def run( function=None, as_main=True, verbose=False, config_features=(), xmlconf
 			"""Run the user-given function in the environment; print exceptions
 			in this env too."""
 			try:
-				function()
+				return function()
 			except Exception:
 				print_exception( *sys.exc_info() )
 				raise
