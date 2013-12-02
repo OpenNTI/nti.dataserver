@@ -33,7 +33,7 @@ from . import interfaces as search_interfaces
 from .constants import (content_, ngrams_, title_, tags_, redactionExplanation_, replacementContent_)
 
 def _can_use_ngram_field(qo):
-	return content_utils.is_ngram_compatible(qo.term, qo.language)
+	return content_utils.is_covered_by_ngram_computer(qo.term, qo.language)
 
 @interface.implementer(search_interfaces.IRepozeSearchQueryValidator)
 class _DefaultSearchQueryValiator(object):

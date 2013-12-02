@@ -71,12 +71,12 @@ def get_content(text=None, language='en'):
 	result = ' '.join(result)
 	return unicode(result)
 
-def is_ngram_compatible(term, language='en'):
+def is_covered_by_ngram_computer(term, language='en'):
 	tokens = split_content(term)
 	__traceback_info__ = term, tokens
 	ncomp = component.getUtility(cp_interfaces.INgramComputer, name=language)
 	min_word = min(map(len, tokens)) if tokens else 0
-	return min_word >= ncomp.minsiz
+	return min_word >= ncomp.minsize
 
 @interface.implementer(search_interfaces.IContentResolver)
 @component.adapter(basestring)
