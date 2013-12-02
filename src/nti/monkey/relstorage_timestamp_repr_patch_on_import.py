@@ -27,6 +27,10 @@ def _patch_relstorage_for_newer_persistent():
 	import relstorage.storage
 	relstorage.storage.repr = _repr
 
+	# ZC.zodbdgc has the same issue
+	import zc.zodbdgc
+	zc.zodbdgc.repr = _repr
+
 
 _patch_relstorage_for_newer_persistent()
 
