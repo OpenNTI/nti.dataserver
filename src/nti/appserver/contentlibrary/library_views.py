@@ -500,15 +500,28 @@ def _RootLibraryTOCRedirectView(request):
 	return _create_page_info(request, None, ntiid )
 
 
-@view_config( name='Main',
+@view_config(
 			  context=lib_interfaces.IContentPackageLibrary,
 			  request_method='GET' )
 class MainLibraryGetView(GenericGetView):
-	"Invoked to return the contents of the 'Main' library."
-	# TODO: This is weirdly coupled to .workspaces.[LibraryWorkspace,LibraryCollection]
+	"Invoked to return the contents of a library."
 
 	def __call__(self):
 		# TODO: Should generic get view do this step?
 		controller = app_interfaces.IPreRenderResponseCacheController(self.request.context)
 		controller( self.request.context, {'request': self.request } )
+		# GenericGetView currently wants to try to turn the context into an ICollection
+		# for externalization. We would like to be specific about that here, but
+		# that causes problems when we try to find a CacheController for request.context
+		#self.request.context = ICollection(self.request.context)
 		return super(MainLibraryGetView,self).__call__()
+
+from nti.appserver.pyramid_renderers import AbstractReliableLastModifiedCacheController
+@component.adapter(lib_interfaces.IContentPackageLibrary)
+class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheController):
+
+	max_age = 120
+
+	@property
+	def _context_specific(self):
+		return sorted( [x.ntiid for x in self.context.contentPackages] )

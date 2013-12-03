@@ -29,8 +29,6 @@ from perfmetrics import metric
 from nti.appserver import traversal
 from nti.appserver import interfaces as app_interfaces
 
-from nti.contentlibrary import interfaces as lib_interfaces
-
 from nti.dataserver import flagging
 from nti.dataserver.links import Link
 from nti.dataserver import traversal as nti_traversal
@@ -396,7 +394,7 @@ def UseTheRequestContextCacheController(context):
 	return app_interfaces.IPreRenderResponseCacheController( get_current_request().context )
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)
-class _AbstractReliableLastModifiedCacheController(object):
+class AbstractReliableLastModifiedCacheController(object):
 	"""
 	Things that have reliable last modified dates go here
 	for pre-rendering etag support.
@@ -429,6 +427,8 @@ class _AbstractReliableLastModifiedCacheController(object):
 		response.cache_control.max_age = self.max_age # arbitrary
 		# Let this raise the not-modified if it will
 		return default_cache_controller( context, system )
+
+_AbstractReliableLastModifiedCacheController = AbstractReliableLastModifiedCacheController # BWC
 
 @component.adapter(zf_interfaces.IFile)
 class _ZopeFileCacheController(_AbstractReliableLastModifiedCacheController):
@@ -562,14 +562,6 @@ class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 			self.max_age = _LongerCachedUGDExternalCollectionCacheController.max_age
 		return _UGDExternalCollectionCacheController.__call__( self, context, system )
 
-@component.adapter(lib_interfaces.IContentPackageLibrary)
-class _ContentPackageLibraryCacheController(_AbstractReliableLastModifiedCacheController):
-
-	max_age = 120
-
-	@property
-	def _context_specific(self):
-		return sorted( [x.ntiid for x in self.context.contentPackages] )
 
 @interface.implementer(app_interfaces.IPreRenderResponseCacheController)
 @component.adapter(app_interfaces.IContentUnitInfo)

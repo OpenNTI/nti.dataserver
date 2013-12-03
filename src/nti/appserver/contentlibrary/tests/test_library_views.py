@@ -35,10 +35,12 @@ from ..library_views import _ContentUnitPreferencesPutView, _ContentUnitPreferen
 from ..library_views import find_page_info_view_helper
 from nti.appserver.httpexceptions import HTTPNotFound
 
+from hamcrest import is_
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import has_entry
 from hamcrest import has_key
+from hamcrest import has_entries
 from hamcrest import greater_than
 from nose.tools import assert_raises
 
@@ -273,3 +275,17 @@ class TestContainerPrefs(NewRequestSharedConfiguringTestBase):
 
 		assert_that( result_map, has_entry( 'sharingPreference',
 											has_entry( 'sharedWith', ['2@3'] ) ) )
+
+from nti.app.testing.application_webtest import SharedApplicationTestBase
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+class TestApplication(SharedApplicationTestBase):
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_library_main(self):
+		href = '/dataserver2/users/sjohnson@nextthought.com/Library/Main'
+		res = self.testapp.get( href )
+		assert_that( res.cache_control, has_property( 'max_age', 120 ) )
+		assert_that( res.json_body, has_entries( 'href', href,
+												 'titles', is_(list)))

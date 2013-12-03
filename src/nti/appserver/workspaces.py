@@ -50,9 +50,9 @@ import nti.appserver.pyramid_renderers as rest
 from nti.appserver.capabilities import interfaces as cap_interfaces
 
 from . import traversal
-from .pyramid_authorization import is_readable
+
 from .pyramid_authorization import is_writable
-from .pyramid_authorization import has_permission
+
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
 
@@ -203,83 +203,6 @@ class CollectionContentTypeAware(object):
 	def __init__( self, collection ):
 		pass
 
-@interface.implementer(app_interfaces.IWorkspace)
-@component.adapter(content_interfaces.IContentPackageLibrary)
-class LibraryWorkspace(object):
-
-	def __init__( self, lib ):
-		self._library = lib
-		self.__parent__ = None # ???
-
-	@property
-	def name(self):	return "Library"
-	__name__ = name
-
-	@property
-	def collections( self ):
-		# Right now, we're assuming one collection for the whole library
-		adapt = component.getAdapter( self._library, app_interfaces.ICollection )
-		adapt.__parent__ = self
-		return (adapt,)
-
-@interface.implementer(app_interfaces.ILibraryCollection)
-@component.adapter(content_interfaces.IContentPackageLibrary)
-class LibraryCollection(object):
-
-	def __init__( self, lib ):
-		self._library = lib
-		self.__parent__ = None
-
-	@property
-	def library(self): return self._library
-
-	@property
-	def name(self): return "Main"
-	__name__ = name
-
-	@property
-	def accepts(self):
-		# Cannot add to library
-		return ()
-
-@interface.implementer(ext_interfaces.IExternalObject)
-@component.adapter(app_interfaces.ILibraryCollection)
-class LibraryCollectionDetailExternalizer(object):
-	"""
-	Externalizes a Library wrapped as a collection.
-
-	.. note::
-		This is where ACLs on individual ContentPackages are applied
-		to the elements of the IContentPackageLibrary. We say that if
-		either the content package itself is readable, or any one of
-		its top-level children are readable, then we write the object
-		out to the user. This allows sampling of chapters, without making
-		the entire content package visible.
-	"""
-
-	# TODO: This doesn't do a good job of externalizing it,
-	# though. We're skipping all the actual Collection parts
-
-	def __init__(self, collection ):
-		self._collection = collection
-
-	def toExternalObject(self):
-		request = get_current_request()
-		test = None
-		if request:
-			def test( content_package ):
-				if is_readable( content_package, request ):
-					return True
-				# Nope. What about a top-level child?
-				return any( (is_readable(child, request) for child in content_package.children) )
-
-
-		# TODO: Standardize the way ACLs are applied during external writing
-		# This is weird and bad: we're overwriting what Library itself does
-		library = self._collection.library
-		return {
-				 'title': "Library",
-				 'titles' : [toExternalObject(x) for x in filter(test, library.titles)] }
 
 def _find_named_link_views(parent, provided=None):
 	"""
@@ -825,19 +748,6 @@ def _global_workspace( user_service ):
 	global_ws = GlobalWorkspace(parent=user_service.__parent__)
 	assert global_ws.__parent__
 	return global_ws
-
-@interface.implementer(app_interfaces.IWorkspace)
-@component.adapter(app_interfaces.IUserService)
-def _library_workspace( user_service ):
-	_library = component.queryUtility( content_interfaces.IContentPackageLibrary )
-	if _library:
-		# Inject the library at /users/ME/Library
-		tr = location.Location()
-		tr.__parent__ = user_service
-		tr.__name__ = user_service.user.username
-		lib_ws = LibraryWorkspace( _library )
-		lib_ws.__parent__ = tr
-		return lib_ws
 
 
 @interface.implementer(app_interfaces.IUserService, mime_interfaces.IContentTypeAware)
