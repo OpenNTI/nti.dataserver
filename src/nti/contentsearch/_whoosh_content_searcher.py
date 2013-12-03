@@ -25,18 +25,15 @@ from whoosh import index
 
 from . import constants
 from . import search_results
-from ._whoosh_index import Book
-from ._whoosh_index import NTICard
 from .search_query import QueryObject
-from ._whoosh_index import VideoTranscript
+from . import _whoosh_index as whoosh_index
 from . import interfaces as search_interfaces
 from ._whoosh_indexstorage import DirectoryStorage
 from ._whoosh_query import CosineScorerModel as CSM
-from .constants import (content_, videotranscript_, nticard_)
 
 class _BoundingProxy(ProxyBase):
 
-	_max_searchers = 64  # Max number of searchers. Set in a config?
+	_max_searchers = 64  # Max number of searchers.
 	_semaphore = BoundedSemaphore(_max_searchers)
 
 	def __init__(self, obj):
@@ -94,9 +91,12 @@ class _Searchable(object):
 @interface.implementer(search_interfaces.IWhooshContentSearcher)
 class WhooshContentSearcher(object):
 
-	idx_factories = (('', Book, content_),
-					 (constants.nticard_prefix, NTICard, nticard_),
-					 (constants.vtrans_prefix, VideoTranscript, videotranscript_),)
+	idx_factories = \
+	(
+		('', whoosh_index.Book, constants.content_),
+		(constants.nticard_prefix, whoosh_index.NTICard, constants.nticard_),
+		(constants.vtrans_prefix, whoosh_index.VideoTranscript, constants.videotranscript_)
+	)
 
 	def __init__(self, baseindexname, storage, ntiid=None):
 		self._searchables = {}
@@ -165,14 +165,12 @@ class WhooshContentSearcher(object):
 		for s in self._searchables.values():
 			s.close()
 
-def wbm_factory(*args, **kwargs):
-	def func(indexname, *fargs, **fkwargs):
-		ntiid = fkwargs.get('ntiid', None)
-		indexdir = fkwargs.get('indexdir', None)
-		if os.path.exists(indexdir):
+@interface.implementer(search_interfaces.IWhooshContentSearcherFactory)
+class _ContentSearcherFactory(object):
+
+	def __call__(self, indexname, ntiid=None, indexdir=None):
+		if indexdir and os.path.exists(indexdir):
 			storage = DirectoryStorage(indexdir)
 			searcher = WhooshContentSearcher(indexname, storage, ntiid)
 			return searcher if len(searcher) > 0 else None
-		else:
-			return None
-	return func
+		return None
