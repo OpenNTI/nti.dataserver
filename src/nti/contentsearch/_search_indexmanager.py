@@ -24,8 +24,8 @@ from nti.chatserver import interfaces as chat_interfaces
 from . import discriminators
 from . import interfaces as search_interfaces
 
-@interface.implementer(search_interfaces.IEntityIndexManager, IMapping)
-class _SearchEntityIndexManager(zcontained.Contained, PersistentMapping):
+@interface.implementer(search_interfaces.IEntityIndexManager)
+class BaseSearchEntityIndexManager(zcontained.Contained):
 
 	@property
 	def entity(self):
@@ -50,14 +50,16 @@ class _SearchEntityIndexManager(zcontained.Contained, PersistentMapping):
 			logger.debug('Could not find object with id %r' % uid)
 
 		if result is not None and not self.verify_access(result):
-			logger.log(loglevels.TRACE, '%s does not have access to %s', self.username, result)
+			logger.log(loglevels.TRACE, '%s does not have access to %s',
+					   self.username, result)
 			result = None
 
 		return result
 
 	def verify_access(self, obj):
 		result = chat_interfaces.IMessageInfo.providedBy(obj) or \
-				 (nti_interfaces.IShareableModeledContent.providedBy(obj) and obj.isSharedDirectlyWith(self.entity))
+				 (nti_interfaces.IShareableModeledContent.providedBy(obj) and \
+				  obj.isSharedDirectlyWith(self.entity))
 
 		if not result:
 			index_owner = self.username.lower()
@@ -90,6 +92,13 @@ class _SearchEntityIndexManager(zcontained.Contained, PersistentMapping):
 		raise NotImplementedError()
 
 	def __str__(self):
-		return '%s(%s, %s)' % (self.__class__.__name__, self.username, self.keys())
+		return '%s(%s)' % (self.__class__.__name__, self.username)
 
 	__repr__ = __str__
+
+@interface.implementer(IMapping)
+class _SearchEntityIndexManager(BaseSearchEntityIndexManager, PersistentMapping):
+
+	def __str__(self):
+		return '%s(%s, %s)' % (self.__class__.__name__, self.username, self.keys())
+
