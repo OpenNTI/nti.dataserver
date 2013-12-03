@@ -153,15 +153,6 @@ def EclipseContentPackage( toc_entry,
 		content_package.courseName = courseName
 		content_package.courseTitle = courseTitle
 
-		# FIXME: Do not do this. This is only used in one place;
-		# it should do the parsing there and then.
-		for scope in course.xpath('scope'):
-			type_ = scope.get('type', u'').lower()
-			entries = scope.xpath('entry')
-			entity_id = entries[0].text if entries else None
-			if type_ in ('public', 'restricted'):
-				setattr(content_package, str('%sScopeEntry' % type_), entity_id)
-
 		# The newest renderings have an <info src="path_to_file.json" />
 		# node in them. But older renderings may also have a file
 		# just in their root called "course_info.json" (which in
